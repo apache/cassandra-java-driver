@@ -57,11 +57,13 @@ public class BoundStatementTest extends CCMTestsSupport {
         try {
             statement.getString(0);
             fail("Expected codec not found error");
-        } catch (CodecNotFoundException e) { /* expected */ }
+        } catch (CodecNotFoundException e) { /* expected */
+        }
 
         try {
             statement.getString(3);
             fail("Expected index error");
-        } catch (IndexOutOfBoundsException e) { /* expected */ }
+        } catch (IndexOutOfBoundsException e) { /* expected */
+        }
     }
 }

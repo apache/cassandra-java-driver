@@ -612,7 +612,6 @@ public class NetworkTopologyStrategyTest extends AbstractReplicationStrategyTest
         assertReplicaPlacement(replicaMap, token("" + 99 * 256), currNode, socketAddress("127.0.0.0"));
     }
 
-
     @Test(groups = "unit")
     public void networkTopologyStrategyExampleTopologyTooManyReplicasTest() {
         Map<Token, Set<Host>> replicaMap = exampleStrategyTooManyReplicas.computeTokenToReplicaMap(keyspace, exampleTokenToPrimary, exampleRing);

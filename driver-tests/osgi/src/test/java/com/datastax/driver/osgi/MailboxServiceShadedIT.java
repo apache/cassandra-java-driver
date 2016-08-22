@@ -36,8 +36,7 @@ public class MailboxServiceShadedIT extends MailboxServiceTests {
                 extrasBundle(),
                 mappingBundle(),
                 driverBundle(true),
-                mailboxBundle()
-        );
+                mailboxBundle());
     }
 
     /**

@@ -56,7 +56,7 @@ public class Metadata {
             "local_quorum", "modify", "nan", "norecursive", "of", "on", "one", "order", "password",
             "primary", "quorum", "rename", "revoke", "schema", "select", "set", "table", "to",
             "token", "three", "truncate", "two", "unlogged", "update", "use", "using", "where", "with"
-    );
+            );
 
     Metadata(Cluster.Manager cluster) {
         this.cluster = cluster;
@@ -630,12 +630,12 @@ public class Metadata {
         private final Map<Token, Host> tokenToPrimary;
 
         private TokenMap(Token.Factory factory,
-                         List<Token> ring,
-                         Set<TokenRange> tokenRanges,
-                         Map<Token, Host> tokenToPrimary,
-                         Map<Host, Set<Token>> primaryToTokens,
-                         Map<String, Map<Token, Set<Host>>> tokenToHostsByKeyspace,
-                         Map<String, Map<Host, Set<TokenRange>>> hostsToRangesByKeyspace) {
+                List<Token> ring,
+                Set<TokenRange> tokenRanges,
+                Map<Token, Host> tokenToPrimary,
+                Map<Host, Set<Token>> primaryToTokens,
+                Map<String, Map<Token, Set<Host>>> tokenToHostsByKeyspace,
+                Map<String, Map<Host, Set<TokenRange>>> hostsToRangesByKeyspace) {
             this.factory = factory;
             this.ring = ring;
             this.tokenRanges = tokenRanges;

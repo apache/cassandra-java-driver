@@ -270,14 +270,14 @@ class Requests {
         final long defaultTimestamp;
 
         QueryProtocolOptions(Message.Request.Type requestType,
-                             ConsistencyLevel consistency,
-                             List<ByteBuffer> positionalValues,
-                             Map<String, ByteBuffer> namedValues,
-                             boolean skipMetadata,
-                             int pageSize,
-                             ByteBuffer pagingState,
-                             ConsistencyLevel serialConsistency,
-                             long defaultTimestamp) {
+                ConsistencyLevel consistency,
+                List<ByteBuffer> positionalValues,
+                Map<String, ByteBuffer> namedValues,
+                boolean skipMetadata,
+                int pageSize,
+                ByteBuffer pagingState,
+                ConsistencyLevel serialConsistency,
+                long defaultTimestamp) {
 
             Preconditions.checkArgument(positionalValues.isEmpty() || namedValues.isEmpty());
 
@@ -474,7 +474,8 @@ class Requests {
             StringBuilder sb = new StringBuilder();
             sb.append("BATCH of [");
             for (int i = 0; i < queryOrIdList.size(); i++) {
-                if (i > 0) sb.append(", ");
+                if (i > 0)
+                    sb.append(", ");
                 sb.append(queryOrIdList.get(i)).append(" with ").append(values.get(i).size()).append(" values");
             }
             sb.append("] with options ").append(options);

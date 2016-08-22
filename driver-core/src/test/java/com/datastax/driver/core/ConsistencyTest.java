@@ -52,8 +52,7 @@ import static org.testng.Assert.fail;
                 "phi_convict_threshold:5",
                 "read_request_timeout_in_ms:200000",
                 "write_request_timeout_in_ms:200000"
-        }
-)
+        })
 public class ConsistencyTest extends AbstractPoliciesTest {
 
     private static final Logger logger = LoggerFactory.getLogger(ConsistencyTest.class);
@@ -203,7 +202,7 @@ public class ConsistencyTest extends AbstractPoliciesTest {
         List<ConsistencyLevel> acceptedList = Arrays.asList(
                 ConsistencyLevel.ANY,
                 ConsistencyLevel.ONE
-        );
+                );
 
         List<ConsistencyLevel> failList = Arrays.asList(
                 ConsistencyLevel.TWO,
@@ -299,13 +298,12 @@ public class ConsistencyTest extends AbstractPoliciesTest {
                 ConsistencyLevel.QUORUM,
                 ConsistencyLevel.LOCAL_QUORUM,
                 ConsistencyLevel.EACH_QUORUM
-        );
+                );
 
         List<ConsistencyLevel> failList = Arrays.asList(
                 ConsistencyLevel.THREE,
                 ConsistencyLevel.ALL
-        );
-
+                );
 
         // Test successful writes
         for (ConsistencyLevel cl : acceptedList) {
@@ -324,7 +322,7 @@ public class ConsistencyTest extends AbstractPoliciesTest {
                 List<String> acceptableErrorMessages = Arrays.asList(
                         "ANY ConsistencyLevel is only supported for writes",
                         "EACH_QUORUM ConsistencyLevel is only supported for writes"
-                );
+                        );
                 assertTrue(acceptableErrorMessages.contains(e.getMessage()), "Got unexpected message " + e.getMessage());
             }
         }
@@ -358,7 +356,6 @@ public class ConsistencyTest extends AbstractPoliciesTest {
         }
     }
 
-
     @Test(groups = "long")
     @CCMConfig(numberOfNodes = 3,
             clusterProvider = "tokenAwareRoundRobinDowngrading")
@@ -376,7 +373,7 @@ public class ConsistencyTest extends AbstractPoliciesTest {
 
         List<ConsistencyLevel> acceptedList = singletonList(
                 ConsistencyLevel.ANY
-        );
+                );
 
         List<ConsistencyLevel> failList = Arrays.asList(
                 ConsistencyLevel.ONE,
@@ -429,7 +426,7 @@ public class ConsistencyTest extends AbstractPoliciesTest {
             } catch (InvalidQueryException e) {
                 List<String> acceptableErrorMessages = singletonList(
                         "EACH_QUORUM ConsistencyLevel is only supported for writes"
-                );
+                        );
                 assertTrue(acceptableErrorMessages.contains(e.getMessage()), "Got unexpected message " + e.getMessage());
             } catch (ReadTimeoutException e) {
                 // expected to fail when the client hasn't marked the
@@ -478,7 +475,7 @@ public class ConsistencyTest extends AbstractPoliciesTest {
                 List<String> acceptableErrorMessages = Arrays.asList(
                         "ANY ConsistencyLevel is only supported for writes",
                         "EACH_QUORUM ConsistencyLevel is only supported for writes"
-                );
+                        );
                 assertTrue(acceptableErrorMessages.contains(e.getMessage()), "Got unexpected message " + e.getMessage());
             }
         }
@@ -542,7 +539,7 @@ public class ConsistencyTest extends AbstractPoliciesTest {
                 List<String> acceptableErrorMessages = Arrays.asList(
                         "ANY ConsistencyLevel is only supported for writes",
                         "EACH_QUORUM ConsistencyLevel is only supported for writes"
-                );
+                        );
                 assertTrue(acceptableErrorMessages.contains(e.getMessage()), "Got unexpected message " + e.getMessage());
             }
         }
@@ -552,8 +549,8 @@ public class ConsistencyTest extends AbstractPoliciesTest {
     @CCMConfig(
             numberOfNodes = {3, 3},
             clusterProvider = "tokenAwareRoundRobinNoShuffleDowngrading"
-    )
-    public void testRFThreeDowngradingCLTwoDCs() throws Throwable {
+            )
+            public void testRFThreeDowngradingCLTwoDCs() throws Throwable {
         createMultiDCSchema(3, 3);
         init(12, ConsistencyLevel.TWO);
         query(12, ConsistencyLevel.TWO);
@@ -577,7 +574,7 @@ public class ConsistencyTest extends AbstractPoliciesTest {
                 ConsistencyLevel.ALL,
                 ConsistencyLevel.LOCAL_QUORUM,
                 ConsistencyLevel.EACH_QUORUM
-        );
+                );
 
         List<ConsistencyLevel> failList = emptyList();
 
@@ -639,8 +636,8 @@ public class ConsistencyTest extends AbstractPoliciesTest {
     @CCMConfig(
             numberOfNodes = {3, 3},
             clusterProvider = "tokenAwareDCAwareRoundRobinNoShuffleDowngrading"
-    )
-    public void testRFThreeDowngradingCLTwoDCsDCAware() throws Throwable {
+            )
+            public void testRFThreeDowngradingCLTwoDCsDCAware() throws Throwable {
         createMultiDCSchema(3, 3);
         init(12, ConsistencyLevel.TWO);
         query(12, ConsistencyLevel.TWO);
@@ -664,7 +661,7 @@ public class ConsistencyTest extends AbstractPoliciesTest {
                 ConsistencyLevel.ALL,
                 ConsistencyLevel.LOCAL_QUORUM,
                 ConsistencyLevel.EACH_QUORUM
-        );
+                );
 
         List<ConsistencyLevel> failList = emptyList();
 

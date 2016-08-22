@@ -142,7 +142,6 @@ public abstract class Clause extends Utils.Appendeable {
         }
     }
 
-
     static class ContainsKeyClause extends AbstractClause {
 
         private final Object value;
@@ -171,7 +170,6 @@ public abstract class Clause extends Utils.Appendeable {
             return Utils.containsBindMarker(value);
         }
     }
-
 
     static class CompoundClause extends Clause {
         private String op;

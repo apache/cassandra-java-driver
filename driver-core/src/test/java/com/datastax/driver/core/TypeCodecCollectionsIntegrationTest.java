@@ -54,15 +54,15 @@ public class TypeCodecCollectionsIntegrationTest extends CCMTestsSupport {
     @Override
     public void onTestContextInitialized() {
         execute(
-                "CREATE TABLE IF NOT EXISTS \"myTable2\" ("
-                        + "c_int int PRIMARY KEY, "
-                        + "l_int list<int>, "
-                        + "l_bigint list<bigint>, "
-                        + "s_float set<float>, "
-                        + "s_double set<double>, "
-                        + "m_varint map<int,varint>, "
-                        + "m_decimal map<int,decimal>"
-                        + ")");
+        "CREATE TABLE IF NOT EXISTS \"myTable2\" ("
+                + "c_int int PRIMARY KEY, "
+                + "l_int list<int>, "
+                + "l_bigint list<bigint>, "
+                + "s_float set<float>, "
+                + "s_double set<double>, "
+                + "m_varint map<int,varint>, "
+                + "m_decimal map<int,decimal>"
+                + ")");
     }
 
     @BeforeMethod(groups = "short")
@@ -104,14 +104,14 @@ public class TypeCodecCollectionsIntegrationTest extends CCMTestsSupport {
                 .setList(1, l_int)
                 .setList(2, l_bigint, Long.class) // variant with element type explicitly set
                 .setSet(3, s_float)
-                .setSet(4, s_double, TypeToken.of(Double.class))  // variant with element type explicitly set
+                .setSet(4, s_double, TypeToken.of(Double.class)) // variant with element type explicitly set
                 .setMap(5, m_varint)
-                .setMap(6, m_decimal, Integer.class, BigDecimal.class)  // variant with element type explicitly set
-        );
+                .setMap(6, m_decimal, Integer.class, BigDecimal.class) // variant with element type explicitly set
+                );
         PreparedStatement ps = session().prepare(selectQuery);
         ResultSet rows = session().execute(ps.bind()
-                        .setInt(0, n_int)
-        );
+                .setInt(0, n_int)
+                );
         Row row = rows.one();
         assertRow(row);
     }
@@ -119,18 +119,18 @@ public class TypeCodecCollectionsIntegrationTest extends CCMTestsSupport {
     @Test(groups = "short")
     public void should_use_collection_codecs_with_prepared_statements_3() {
         session().execute(session().prepare(insertQuery).bind()
-                        .setInt(0, n_int)
-                        .set(1, l_int, TypeTokens.listOf(Integer.class))
-                        .set(2, l_bigint, TypeTokens.listOf(Long.class))
-                        .set(3, s_float, TypeTokens.setOf(Float.class))
-                        .set(4, s_double, TypeTokens.setOf(Double.class))
-                        .set(5, m_varint, TypeTokens.mapOf(Integer.class, BigInteger.class))
-                        .set(6, m_decimal, TypeTokens.mapOf(Integer.class, BigDecimal.class))
-        );
+                .setInt(0, n_int)
+                .set(1, l_int, TypeTokens.listOf(Integer.class))
+                .set(2, l_bigint, TypeTokens.listOf(Long.class))
+                .set(3, s_float, TypeTokens.setOf(Float.class))
+                .set(4, s_double, TypeTokens.setOf(Double.class))
+                .set(5, m_varint, TypeTokens.mapOf(Integer.class, BigInteger.class))
+                .set(6, m_decimal, TypeTokens.mapOf(Integer.class, BigDecimal.class))
+                );
         PreparedStatement ps = session().prepare(selectQuery);
         ResultSet rows = session().execute(ps.bind()
-                        .setInt(0, n_int)
-        );
+                .setInt(0, n_int)
+                );
         Row row = rows.one();
         assertRow(row);
     }
@@ -138,18 +138,18 @@ public class TypeCodecCollectionsIntegrationTest extends CCMTestsSupport {
     @Test(groups = "short")
     public void should_use_collection_codecs_with_built_statements() {
         session().execute(session().prepare(insertStmt).bind()
-                        .setInt(0, n_int)
-                        .set(1, l_int, TypeTokens.listOf(Integer.class))
-                        .set(2, l_bigint, TypeTokens.listOf(Long.class))
-                        .set(3, s_float, TypeTokens.setOf(Float.class))
-                        .set(4, s_double, TypeTokens.setOf(Double.class))
-                        .set(5, m_varint, TypeTokens.mapOf(Integer.class, BigInteger.class))
-                        .set(6, m_decimal, TypeTokens.mapOf(Integer.class, BigDecimal.class))
-        );
+                .setInt(0, n_int)
+                .set(1, l_int, TypeTokens.listOf(Integer.class))
+                .set(2, l_bigint, TypeTokens.listOf(Long.class))
+                .set(3, s_float, TypeTokens.setOf(Float.class))
+                .set(4, s_double, TypeTokens.setOf(Double.class))
+                .set(5, m_varint, TypeTokens.mapOf(Integer.class, BigInteger.class))
+                .set(6, m_decimal, TypeTokens.mapOf(Integer.class, BigDecimal.class))
+                );
         PreparedStatement ps = session().prepare(selectStmt);
         ResultSet rows = session().execute(ps.bind()
-                        .setInt(0, n_int)
-        );
+                .setInt(0, n_int)
+                );
         Row row = rows.one();
         assertRow(row);
     }

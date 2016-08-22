@@ -43,8 +43,7 @@ public class TokenRangeTest {
                 .intersects(tokenRange(4, 8))
                 .intersects(tokenRange(3, 9))
                 .doesNotIntersect(tokenRange(9, 10))
-                .doesNotIntersect(tokenRange(10, 11))
-        ;
+                .doesNotIntersect(tokenRange(10, 11));
         assertThat(tokenRange(9, 3))
                 .doesNotIntersect(tokenRange(5, 7))
                 .doesNotIntersect(tokenRange(7, 8))
@@ -57,8 +56,7 @@ public class TokenRangeTest {
                 .intersects(tokenRange(10, 2))
                 .intersects(tokenRange(9, 3))
                 .doesNotIntersect(tokenRange(3, 4))
-                .doesNotIntersect(tokenRange(4, 5))
-        ;
+                .doesNotIntersect(tokenRange(4, 5));
         assertThat(tokenRange(3, 3)).doesNotIntersect(tokenRange(3, 3));
 
         // Reminder: minToken serves as both lower and upper bound
@@ -68,8 +66,7 @@ public class TokenRangeTest {
                 .intersects(tokenRange(6, 4))
                 .intersects(tokenRange(2, 4))
                 .intersects(tokenRange(minToken, 4))
-                .intersects(tokenRange(minToken, 5))
-        ;
+                .intersects(tokenRange(minToken, 5));
 
         assertThat(tokenRange(5, minToken))
                 .doesNotIntersect(tokenRange(3, 4))
@@ -77,15 +74,13 @@ public class TokenRangeTest {
                 .intersects(tokenRange(6, 7))
                 .intersects(tokenRange(4, 1))
                 .intersects(tokenRange(6, minToken))
-                .intersects(tokenRange(5, minToken))
-        ;
+                .intersects(tokenRange(5, minToken));
 
         assertThat(tokenRange(minToken, minToken))
                 .intersects(tokenRange(3, 4))
                 .intersects(tokenRange(3, minToken))
                 .intersects(tokenRange(minToken, 3))
-                .doesNotIntersect(tokenRange(3, 3))
-        ;
+                .doesNotIntersect(tokenRange(3, 3));
     }
 
     @Test(groups = "unit")

@@ -262,7 +262,7 @@ class ControlConnection implements Connection.Owner {
                     ProtocolEvent.Type.TOPOLOGY_CHANGE,
                     ProtocolEvent.Type.STATUS_CHANGE,
                     ProtocolEvent.Type.SCHEMA_CHANGE
-            );
+                    );
             connection.write(new Requests.Register(evs));
 
             // We need to refresh the node list first so we know about the cassandra version of

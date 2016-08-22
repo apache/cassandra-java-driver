@@ -331,7 +331,8 @@ public class AbstractReconnectionHandlerTest {
      */
     static class MockReconnectionWork {
         enum ReconnectBehavior {
-            SUCCEED, THROW_EXCEPTION
+            SUCCEED,
+            THROW_EXCEPTION
         }
 
         private final CyclicBarrier barrier = new CyclicBarrier(2);

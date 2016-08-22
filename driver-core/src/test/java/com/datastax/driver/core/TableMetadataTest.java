@@ -181,44 +181,44 @@ public class TableMetadataTest extends CCMTestsSupport {
         // Cassandra 3.0 +
         if (version.getMajor() > 2) {
             cql = String.format("CREATE TABLE %s.with_options (\n"
-                            + "    k text,\n"
-                            + "    c1 int,\n"
-                            + "    c2 int,\n"
-                            + "    i int,\n"
-                            + "    PRIMARY KEY (k, c1, c2)\n"
-                            + ") WITH CLUSTERING ORDER BY (c1 DESC, c2 ASC)\n"
-                            + "   AND read_repair_chance = 0.5\n"
-                            + "   AND dclocal_read_repair_chance = 0.6\n"
-                            + "   AND speculative_retry = '99.9PERCENTILE'\n"
-                            // replicate_on_write not supported anymore in 3.0
-                            + "   AND gc_grace_seconds = 42\n"
-                            + "   AND bloom_filter_fp_chance = 0.01\n"
-                            // older caching formats not supported anymore in 3.0
-                            + "   AND caching =  { 'keys' : 'ALL', 'rows_per_partition' : 10 }\n"
-                            + "   AND comment = 'My awesome table'\n"
-                            + "   AND compaction = { 'class' : 'org.apache.cassandra.db.compaction.LeveledCompactionStrategy', 'sstable_size_in_mb' : 15 }\n"
-                            + "   AND compression = { 'sstable_compression' : 'org.apache.cassandra.io.compress.SnappyCompressor', 'chunk_length_kb' : 128 }\n"
-                            + "   AND crc_check_chance = 0.5;", // available from C* 3.0
+                    + "    k text,\n"
+                    + "    c1 int,\n"
+                    + "    c2 int,\n"
+                    + "    i int,\n"
+                    + "    PRIMARY KEY (k, c1, c2)\n"
+                    + ") WITH CLUSTERING ORDER BY (c1 DESC, c2 ASC)\n"
+                    + "   AND read_repair_chance = 0.5\n"
+                    + "   AND dclocal_read_repair_chance = 0.6\n"
+                    + "   AND speculative_retry = '99.9PERCENTILE'\n"
+                    // replicate_on_write not supported anymore in 3.0
+                    + "   AND gc_grace_seconds = 42\n"
+                    + "   AND bloom_filter_fp_chance = 0.01\n"
+                    // older caching formats not supported anymore in 3.0
+                    + "   AND caching =  { 'keys' : 'ALL', 'rows_per_partition' : 10 }\n"
+                    + "   AND comment = 'My awesome table'\n"
+                    + "   AND compaction = { 'class' : 'org.apache.cassandra.db.compaction.LeveledCompactionStrategy', 'sstable_size_in_mb' : 15 }\n"
+                    + "   AND compression = { 'sstable_compression' : 'org.apache.cassandra.io.compress.SnappyCompressor', 'chunk_length_kb' : 128 }\n"
+                    + "   AND crc_check_chance = 0.5;", // available from C* 3.0
                     keyspace);
 
             // older versions
         } else {
             cql = String.format("CREATE TABLE %s.with_options (\n"
-                            + "    k text,\n"
-                            + "    c1 int,\n"
-                            + "    c2 int,\n"
-                            + "    i int,\n"
-                            + "    PRIMARY KEY (k, c1, c2)\n"
-                            + ") WITH CLUSTERING ORDER BY (c1 DESC, c2 ASC)\n"
-                            + "   AND read_repair_chance = 0.5\n"
-                            + "   AND dclocal_read_repair_chance = 0.6\n"
-                            + "   AND replicate_on_write = true\n"
-                            + "   AND gc_grace_seconds = 42\n"
-                            + "   AND bloom_filter_fp_chance = 0.01\n"
-                            + "   AND caching = 'ALL'\n"
-                            + "   AND comment = 'My awesome table'\n"
-                            + "   AND compaction = { 'class' : 'org.apache.cassandra.db.compaction.LeveledCompactionStrategy', 'sstable_size_in_mb' : 15 }\n"
-                            + "   AND compression = { 'sstable_compression' : 'org.apache.cassandra.io.compress.SnappyCompressor', 'chunk_length_kb' : 128 };",
+                    + "    k text,\n"
+                    + "    c1 int,\n"
+                    + "    c2 int,\n"
+                    + "    i int,\n"
+                    + "    PRIMARY KEY (k, c1, c2)\n"
+                    + ") WITH CLUSTERING ORDER BY (c1 DESC, c2 ASC)\n"
+                    + "   AND read_repair_chance = 0.5\n"
+                    + "   AND dclocal_read_repair_chance = 0.6\n"
+                    + "   AND replicate_on_write = true\n"
+                    + "   AND gc_grace_seconds = 42\n"
+                    + "   AND bloom_filter_fp_chance = 0.01\n"
+                    + "   AND caching = 'ALL'\n"
+                    + "   AND comment = 'My awesome table'\n"
+                    + "   AND compaction = { 'class' : 'org.apache.cassandra.db.compaction.LeveledCompactionStrategy', 'sstable_size_in_mb' : 15 }\n"
+                    + "   AND compression = { 'sstable_compression' : 'org.apache.cassandra.io.compress.SnappyCompressor', 'chunk_length_kb' : 128 };",
                     keyspace);
         }
 
@@ -389,10 +389,10 @@ public class TableMetadataTest extends CCMTestsSupport {
                     .contains("'sstable_compression' : 'org.apache.cassandra.io.compress.SnappyCompressor'")
                     .contains("'chunk_length_kb' : 128")
                     .contains("replicate_on_write = true")
-                    .doesNotContain("index_interval")  // 2.0
-                    .doesNotContain("min_index_interval")  // 2.1 +
-                    .doesNotContain("max_index_interval")  // 2.1 +
-                    .doesNotContain("speculative_retry")  // 2.0 +
+                    .doesNotContain("index_interval") // 2.0
+                    .doesNotContain("min_index_interval") // 2.1 +
+                    .doesNotContain("max_index_interval") // 2.1 +
+                    .doesNotContain("speculative_retry") // 2.0 +
                     .doesNotContain("default_time_to_live"); // 2.0 +
 
         }
@@ -411,13 +411,13 @@ public class TableMetadataTest extends CCMTestsSupport {
     public void should_parse_new_compression_options() {
         // given
         String cql = String.format("CREATE TABLE %s.new_compression_options (\n"
-                        + "    k text,\n"
-                        + "    c1 int,\n"
-                        + "    c2 int,\n"
-                        + "    i int,\n"
-                        + "    PRIMARY KEY (k, c1, c2)\n"
-                        + ") WITH CLUSTERING ORDER BY (c1 DESC, c2 ASC)\n"
-                        + "   AND compression = { 'class' : 'DeflateCompressor', 'chunk_length_in_kb' : 128 };",
+                + "    k text,\n"
+                + "    c1 int,\n"
+                + "    c2 int,\n"
+                + "    i int,\n"
+                + "    PRIMARY KEY (k, c1, c2)\n"
+                + ") WITH CLUSTERING ORDER BY (c1 DESC, c2 ASC)\n"
+                + "   AND compression = { 'class' : 'DeflateCompressor', 'chunk_length_in_kb' : 128 };",
                 keyspace);
 
         // when
@@ -434,8 +434,8 @@ public class TableMetadataTest extends CCMTestsSupport {
     public void should_escape_single_quote_table_comment() {
         // given
         String cql = String.format("CREATE TABLE %s.single_quote (\n"
-                        + "    c1 int PRIMARY KEY\n"
-                        + ") WITH  comment = 'comment with single quote '' should work'",
+                + "    c1 int PRIMARY KEY\n"
+                + ") WITH  comment = 'comment with single quote '' should work'",
                 keyspace);
         // when
         session().execute(cql);
@@ -565,8 +565,7 @@ public class TableMetadataTest extends CCMTestsSupport {
                 "DROP TABLE \"MyTable1\"",
                 "DROP TABLE \"MyTable2\"",
                 table1.asCQLQuery(),
-                table2.asCQLQuery()
-        );
+                table2.asCQLQuery());
     }
 
 }

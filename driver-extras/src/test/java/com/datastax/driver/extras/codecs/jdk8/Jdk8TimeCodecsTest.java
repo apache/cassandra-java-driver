@@ -47,17 +47,17 @@ public class Jdk8TimeCodecsTest extends CCMTestsSupport {
     @Override
     public void onTestContextInitialized() {
         execute(
-                "CREATE TABLE IF NOT EXISTS foo ("
-                        + "c1 text PRIMARY KEY, "
-                        + "cdate date, "
-                        + "ctime time, "
-                        + "ctimestamp timestamp, "
-                        + "ctuple tuple<timestamp,varchar>, "
-                        + "cdates frozen<list<date>>, "
-                        + "ctimes frozen<set<time>>, "
-                        + "ctimestamps frozen<map<text,timestamp>>, "
-                        + "ctuples frozen<map<tuple<timestamp,varchar>,varchar>>"
-                        + ")");
+        "CREATE TABLE IF NOT EXISTS foo ("
+                + "c1 text PRIMARY KEY, "
+                + "cdate date, "
+                + "ctime time, "
+                + "ctimestamp timestamp, "
+                + "ctuple tuple<timestamp,varchar>, "
+                + "cdates frozen<list<date>>, "
+                + "ctimes frozen<set<time>>, "
+                + "ctimestamps frozen<map<text,timestamp>>, "
+                + "ctuples frozen<map<tuple<timestamp,varchar>,varchar>>"
+                + ")");
     }
 
     @BeforeClass(groups = "short")

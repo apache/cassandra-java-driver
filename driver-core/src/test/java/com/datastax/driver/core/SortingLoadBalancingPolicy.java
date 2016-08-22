@@ -77,5 +77,6 @@ public class SortingLoadBalancingPolicy implements LoadBalancingPolicy {
     }
 
     @Override
-    public void close() {/*nothing to do*/}
+    public void close() {/*nothing to do*/
+    }
 }

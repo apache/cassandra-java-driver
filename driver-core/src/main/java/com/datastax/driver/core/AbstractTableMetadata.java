@@ -15,7 +15,6 @@
  */
 package com.datastax.driver.core;
 
-
 import com.google.common.base.Predicate;
 import com.google.common.collect.Iterables;
 
@@ -51,14 +50,14 @@ public abstract class AbstractTableMetadata {
     protected final VersionNumber cassandraVersion;
 
     protected AbstractTableMetadata(KeyspaceMetadata keyspace,
-                                    String name,
-                                    UUID id,
-                                    List<ColumnMetadata> partitionKey,
-                                    List<ColumnMetadata> clusteringColumns,
-                                    Map<String, ColumnMetadata> columns,
-                                    TableOptionsMetadata options,
-                                    List<ClusteringOrder> clusteringOrder,
-                                    VersionNumber cassandraVersion) {
+            String name,
+            UUID id,
+            List<ColumnMetadata> partitionKey,
+            List<ColumnMetadata> clusteringColumns,
+            Map<String, ColumnMetadata> columns,
+            TableOptionsMetadata options,
+            List<ClusteringOrder> clusteringOrder,
+            VersionNumber cassandraVersion) {
         this.keyspace = keyspace;
         this.name = name;
         this.id = id;
@@ -281,7 +280,8 @@ public abstract class AbstractTableMetadata {
     private StringBuilder appendClusteringOrder(StringBuilder sb) {
         sb.append("CLUSTERING ORDER BY (");
         for (int i = 0; i < clusteringColumns.size(); i++) {
-            if (i > 0) sb.append(", ");
+            if (i > 0)
+                sb.append(", ");
             sb.append(clusteringColumns.get(i).getName()).append(' ').append(clusteringOrder.get(i));
         }
         return sb.append(')');
@@ -292,8 +292,10 @@ public abstract class AbstractTableMetadata {
         sb.append("{ ");
         boolean first = true;
         for (Map.Entry<String, String> entry : m.entrySet()) {
-            if (first) first = false;
-            else sb.append(", ");
+            if (first)
+                first = false;
+            else
+                sb.append(", ");
             sb.append('\'').append(entry.getKey()).append('\'');
             sb.append(" : ");
             try {

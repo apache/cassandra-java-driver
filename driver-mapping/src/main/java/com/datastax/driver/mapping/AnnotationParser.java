@@ -64,7 +64,7 @@ class AnnotationParser {
                         "Error creating mapper for class %s, the @%s annotation declares no default keyspace, and the session is not currently logged to any keyspace",
                         entityClass.getSimpleName(),
                         Table.class.getSimpleName()
-                ));
+                        ));
         }
 
         EntityMapper<T> mapper = factory.create(entityClass, ksName, tableName, writeConsistency, readConsistency);
@@ -147,7 +147,7 @@ class AnnotationParser {
                         "Error creating UDT codec for class %s, the @%s annotation declares no default keyspace, and the session is not currently logged to any keyspace",
                         udtClass.getSimpleName(),
                         UDT.class.getSimpleName()
-                ));
+                        ));
         }
 
         UserType userType = mappingManager.getSession().getCluster().getMetadata().getKeyspace(ksName).getUserType(udtName);
@@ -277,7 +277,7 @@ class AnnotationParser {
             throw new IllegalArgumentException(String.format(
                     "Cannot create an instance of custom codec %s for field %s",
                     codecClass, field
-            ), e);
+                    ), e);
         }
     }
 

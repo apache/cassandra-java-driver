@@ -86,7 +86,7 @@ public class SpeculativeExecutionTest {
                 .withQuery("mock query")
                 .withRows(row("result", "result1"))
                 .build()
-        );
+                );
 
         long execStartCount = errors.getSpeculativeExecutions().getCount();
 
@@ -106,14 +106,14 @@ public class SpeculativeExecutionTest {
                 .withConsistency(Consistency.TWO)
                 .withResult(Result.read_request_timeout)
                 .build()
-        );
+                );
 
         scassandras.node(1).primingClient().prime(PrimingRequest.queryBuilder()
                 .withQuery("mock query")
                 .withConsistency(Consistency.ONE)
                 .withRows(row("result", "result1"))
                 .build()
-        );
+                );
 
         long execStartCount = errors.getSpeculativeExecutions().getCount();
         long retriesStartCount = errors.getRetriesOnUnavailable().getCount();
@@ -137,13 +137,13 @@ public class SpeculativeExecutionTest {
                 .withFixedDelay(400)
                 .withRows(row("result", "result1"))
                 .build()
-        );
+                );
 
         scassandras.node(2).primingClient().prime(PrimingRequest.queryBuilder()
                 .withQuery("mock query")
                 .withRows(row("result", "result2"))
                 .build()
-        );
+                );
         long execStartCount = errors.getSpeculativeExecutions().getCount();
 
         ResultSet rs = session.execute("mock query");

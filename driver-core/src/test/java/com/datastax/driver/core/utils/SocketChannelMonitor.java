@@ -138,7 +138,7 @@ public class SocketChannelMonitor implements Runnable, Closeable {
             Iterable<SocketChannel> closed = Iterables.filter(channels, Predicates.not(openChannels));
 
             logger.debug("Channel states: {} open, {} closed, live {}, total sockets created " +
-                            "(including those that don't match filter) {}.",
+                    "(including those that don't match filter) {}.",
                     Iterables.size(open),
                     Iterables.size(closed),
                     Iterables.size(channels),

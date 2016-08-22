@@ -102,12 +102,12 @@ class MethodMapper {
 
         if (method.getParameterTypes().length < names.size())
             throw new IllegalArgumentException(String.format("Not enough arguments for method %s, "
-                            + "found %d but it should be at least the number of unique bind parameter names in the @Query (%d)",
+                    + "found %d but it should be at least the number of unique bind parameter names in the @Query (%d)",
                     method.getName(), method.getParameterTypes().length, names.size()));
 
         if (method.getParameterTypes().length > variables.size())
             throw new IllegalArgumentException(String.format("Too many arguments for method %s, "
-                            + "found %d but it should be at most the number of bind parameters in the @Query (%d)",
+                    + "found %d but it should be at most the number of bind parameters in the @Query (%d)",
                     method.getName(), method.getParameterTypes().length, variables.size()));
 
         // TODO could go further, e.g. check that the types match, inspect @Param annotations to check that all names are bound...
@@ -195,7 +195,7 @@ class MethodMapper {
                 throw new IllegalArgumentException(String.format(
                         "Cannot create instance of codec %s for parameter %s",
                         codecClass, (paramName == null) ? paramIdx : paramName
-                ), e);
+                        ), e);
             }
         }
 

@@ -119,8 +119,7 @@ public class DataTypeCqlNameParserTest extends CCMTestsSupport {
     public void onTestContextInitialized() {
         execute(
                 String.format("CREATE TYPE %s.\"A\" (f1 int)", keyspace),
-                String.format("CREATE TYPE %s.\"Incr,edibly\"\" EvilTy<>><<><p\"\"e\" (a frozen<\"A\">)", keyspace)
-        );
+                String.format("CREATE TYPE %s.\"Incr,edibly\"\" EvilTy<>><<><p\"\"e\" (a frozen<\"A\">)", keyspace));
     }
 
 }

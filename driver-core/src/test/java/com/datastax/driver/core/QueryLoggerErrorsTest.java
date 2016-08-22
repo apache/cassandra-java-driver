@@ -95,7 +95,7 @@ public class QueryLoggerErrorsTest extends ScassandraTestBase.PerClassCluster {
                         .withQuery(query)
                         .withThen(then().withFixedDelay(100L))
                         .build()
-        );
+                );
         // when
         session.execute(query);
         // then
@@ -119,7 +119,7 @@ public class QueryLoggerErrorsTest extends ScassandraTestBase.PerClassCluster {
                         .withQuery(query)
                         .withThen(then().withFixedDelay(100L))
                         .build()
-        );
+                );
         // when
         try {
             session.execute(query);
@@ -169,7 +169,7 @@ public class QueryLoggerErrorsTest extends ScassandraTestBase.PerClassCluster {
                         .withQuery(query)
                         .withThen(then().withResult(result))
                         .build()
-        );
+                );
         // when
         try {
             session.execute(query);

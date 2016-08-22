@@ -30,7 +30,13 @@ import static com.datastax.driver.core.querybuilder.QueryBuilder.*;
 
 class QueryType {
 
-    private enum Kind {SAVE, GET, DEL, SLICE, REVERSED_SLICE}
+    private enum Kind {
+        SAVE,
+        GET,
+        DEL,
+        SLICE,
+        REVERSED_SLICE
+    }
 
     private final Kind kind;
 

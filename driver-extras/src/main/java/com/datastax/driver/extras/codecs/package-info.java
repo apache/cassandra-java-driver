@@ -53,3 +53,4 @@
  * </table>
  */
 package com.datastax.driver.extras.codecs;
+

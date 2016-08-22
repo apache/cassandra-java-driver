@@ -209,11 +209,13 @@ public class DataTypeTest {
     @Test(groups = "unit")
     public void parseFormatSetTest() {
         String toParse = "{'Foo','Bar','Foo''bar'}";
-        Set<String> toFormat = new LinkedHashSet<String>() {{
-            add("Foo");
-            add("Bar");
-            add("Foo'bar");
-        }};
+        Set<String> toFormat = new LinkedHashSet<String>() {
+            {
+                add("Foo");
+                add("Bar");
+                add("Foo'bar");
+            }
+        };
         DataType dt = DataType.set(DataType.text());
         assertEquals(codecRegistry.codecFor(dt).parse(toParse), toFormat);
         assertEquals(codecRegistry.codecFor(dt).format(toFormat), toParse);
@@ -223,11 +225,13 @@ public class DataTypeTest {
     @Test(groups = "unit")
     public void parseFormatMapTest() {
         String toParse = "{'Foo':3,'Bar':42,'Foo''bar':-24}";
-        Map<String, Integer> toFormat = new LinkedHashMap<String, Integer>() {{
-            put("Foo", 3);
-            put("Bar", 42);
-            put("Foo'bar", -24);
-        }};
+        Map<String, Integer> toFormat = new LinkedHashMap<String, Integer>() {
+            {
+                put("Foo", 3);
+                put("Bar", 42);
+                put("Foo'bar", -24);
+            }
+        };
         DataType dt = DataType.map(DataType.text(), DataType.cint());
         assertEquals(codecRegistry.codecFor(dt).parse(toParse), toFormat);
         assertEquals(codecRegistry.codecFor(dt).format(toFormat), toParse);
@@ -244,15 +248,17 @@ public class DataTypeTest {
                 new UserType.Field("i", DataType.cint()),
                 new UserType.Field("L", DataType.list(DataType.text())),
                 new UserType.Field("s", DataType.map(DataType.cint(), udt1))
-        ), protocolVersion, codecRegistry);
+                ), protocolVersion, codecRegistry);
 
         UDTValue toFormat = udt2.newValue();
         toFormat.setString("t", "fo'o");
         toFormat.setInt("i", 3);
         toFormat.setList("\"L\"", Arrays.<String>asList("a", "b"));
-        toFormat.setMap("s", new HashMap<Integer, UDTValue>() {{
-            put(3, udt1.newValue().setBytes("a", ByteBuffer.wrap(new byte[]{1})));
-        }});
+        toFormat.setMap("s", new HashMap<Integer, UDTValue>() {
+            {
+                put(3, udt1.newValue().setBytes("a", ByteBuffer.wrap(new byte[]{1})));
+            }
+        });
 
         assertEquals(codecRegistry.codecFor(udt2).parse(toParse), toFormat);
         assertEquals(codecRegistry.codecFor(udt2).format(toFormat), toParse);
@@ -293,7 +299,8 @@ public class DataTypeTest {
             ByteBuffer badValue = ByteBuffer.allocate(4);
             codec.deserialize(badValue, version);
             fail("This should not have worked");
-        } catch (InvalidTypeException e) { /* That's what we want */ }
+        } catch (InvalidTypeException e) { /* That's what we want */
+        }
     }
 
     @Test(groups = "unit")
@@ -315,7 +322,8 @@ public class DataTypeTest {
             codec = codecRegistry.codecFor(listOfBigint);
             codec.serialize(l, version);
             fail("This should not have worked");
-        } catch (InvalidTypeException e) { /* That's what we want */ }
+        } catch (InvalidTypeException e) { /* That's what we want */
+        }
     }
 
     @Test(groups = "unit")

@@ -95,7 +95,7 @@ public class DowngradingConsistencyRetryPolicy implements RetryPolicy {
         // a node up in some other datacenter
         if (knownOk == 1 || currentCL == ConsistencyLevel.EACH_QUORUM)
             return RetryDecision.retry(ConsistencyLevel.ONE);
-        
+
         return RetryDecision.rethrow();
     }
 

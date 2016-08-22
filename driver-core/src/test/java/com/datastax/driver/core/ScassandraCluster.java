@@ -54,12 +54,11 @@ public class ScassandraCluster {
 
     private static final java.util.UUID schemaVersion = UUIDs.random();
 
-
     private final Map<Integer, Map<Integer, Map<String, Object>>> forcedPeerInfos;
 
     ScassandraCluster(Integer[] nodes, String ipPrefix, int binaryPort, int adminPort,
-                      List<Map<String, ?>> keyspaceRows,
-                      Map<Integer, Map<Integer, Map<String, Object>>> forcedPeerInfos) {
+            List<Map<String, ?>> keyspaceRows,
+            Map<Integer, Map<Integer, Map<String, Object>>> forcedPeerInfos) {
         this.ipPrefix = ipPrefix;
         this.binaryPort = binaryPort;
         this.forcedPeerInfos = forcedPeerInfos;

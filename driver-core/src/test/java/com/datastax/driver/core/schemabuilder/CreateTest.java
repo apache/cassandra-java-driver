@@ -48,9 +48,9 @@ public class CreateTest {
 
         //Then
         assertThat(statement.getQueryString()).isEqualTo("\n\tCREATE TABLE test(\n\t\t" +
-                        "u frozen<user>,\n\t\t" +
-                        "PRIMARY KEY(u))"
-        );
+                "u frozen<user>,\n\t\t" +
+                "PRIMARY KEY(u))"
+                );
     }
 
     @Test(groups = "unit", expectedExceptions = IllegalStateException.class)

@@ -73,8 +73,7 @@ public class EnumCodecsTest extends CCMTestsSupport {
                         + "foobars map<int,text>, "
                         + "tup frozen<tuple<int,varchar>>, "
                         + "udt frozen<udt1>,"
-                        + "primary key (pk, foo))"
-        );
+                        + "primary key (pk, foo))");
     }
 
     @Override
@@ -83,7 +82,7 @@ public class EnumCodecsTest extends CCMTestsSupport {
                 new CodecRegistry()
                         .register(new EnumOrdinalCodec<Foo>(Foo.class))
                         .register(new EnumNameCodec<Bar>(Bar.class))
-        );
+                );
     }
 
     @BeforeMethod(groups = "short")
@@ -118,19 +117,19 @@ public class EnumCodecsTest extends CCMTestsSupport {
     @Test(groups = "short")
     public void should_use_enum_codecs_with_prepared_statements_2() {
         session().execute(session().prepare(insertQuery).bind()
-                        .setInt(0, pk)
-                        .set(1, FOO_1, Foo.class)
-                        .setList(2, foos, Foo.class)
-                        .set(3, BAR_1, Bar.class)
-                        .set(4, bars, TypeTokens.setOf(Bar.class))
-                        .setMap(5, foobars, Foo.class, Bar.class)
-                        .setTupleValue(6, tupleValue)
-                        .setUDTValue(7, udtValue)
-        );
+                .setInt(0, pk)
+                .set(1, FOO_1, Foo.class)
+                .setList(2, foos, Foo.class)
+                .set(3, BAR_1, Bar.class)
+                .set(4, bars, TypeTokens.setOf(Bar.class))
+                .setMap(5, foobars, Foo.class, Bar.class)
+                .setTupleValue(6, tupleValue)
+                .setUDTValue(7, udtValue)
+                );
         PreparedStatement ps = session().prepare(selectQuery);
         ResultSet rows = session().execute(ps.bind()
-                        .setInt(0, pk)
-        );
+                .setInt(0, pk)
+                );
         Row row = rows.one();
         assertRow(row);
     }
@@ -191,7 +190,7 @@ public class EnumCodecsTest extends CCMTestsSupport {
         assertThat(row.getObject(1)).isEqualTo(FOO_1.ordinal()); // uses the built-in IntCodec because CQL type is int
         assertThat(row.getInt("foo")).isEqualTo(FOO_1.ordinal()); // uses the built-in IntCodec
         assertThat(row.get(1, Integer.class)).isEqualTo(FOO_1.ordinal()); // forces IntCodec
-        assertThat(row.get("foo", Foo.class)).isEqualTo(FOO_1);  // forces EnumOrdinalCodec
+        assertThat(row.get("foo", Foo.class)).isEqualTo(FOO_1); // forces EnumOrdinalCodec
 
         assertThat(row.getObject(2)).isEqualTo(newArrayList(FOO_1.ordinal(), FOO_2.ordinal())); // uses the built-in ListCodec(IntCodec) because CQL type is list<int>
         assertThat(row.getList(2, Integer.class)).isEqualTo(newArrayList(FOO_1.ordinal(), FOO_2.ordinal()));
@@ -315,13 +314,14 @@ public class EnumCodecsTest extends CCMTestsSupport {
 
     }
 
-
     enum Foo {
-        FOO_1, FOO_2
+        FOO_1,
+        FOO_2
     }
 
     enum Bar {
-        BAR_1, BAR_2
+        BAR_1,
+        BAR_2
     }
 
 }

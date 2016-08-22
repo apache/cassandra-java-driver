@@ -221,11 +221,12 @@ public class IndexMetadata {
             @Override
             public boolean apply(Map.Entry<String, String> input) {
                 return
-                        !input.getKey().equals(TARGET_OPTION_NAME) &&
-                                !input.getKey().equals(CUSTOM_INDEX_OPTION_NAME);
+                !input.getKey().equals(TARGET_OPTION_NAME) &&
+                        !input.getKey().equals(CUSTOM_INDEX_OPTION_NAME);
             }
         });
-        if (Iterables.isEmpty(filtered)) return "";
+        if (Iterables.isEmpty(filtered))
+            return "";
         StringBuilder builder = new StringBuilder();
         builder.append("WITH OPTIONS = {");
         Iterator<Map.Entry<String, String>> it = filtered.iterator();

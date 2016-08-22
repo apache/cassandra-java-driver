@@ -37,20 +37,21 @@ abstract class SchemaParser {
     private static final SchemaParser V3_PARSER = new V3SchemaParser();
 
     static SchemaParser forVersion(VersionNumber cassandraVersion) {
-        if (cassandraVersion.getMajor() >= 3) return V3_PARSER;
+        if (cassandraVersion.getMajor() >= 3)
+            return V3_PARSER;
         return V2_PARSER;
     }
 
     abstract SystemRows fetchSystemRows(Cluster cluster,
-                                        SchemaElement targetType, String targetKeyspace, String targetName, List<String> targetSignature,
-                                        Connection connection, VersionNumber cassandraVersion)
+            SchemaElement targetType, String targetKeyspace, String targetName, List<String> targetSignature,
+            Connection connection, VersionNumber cassandraVersion)
             throws ConnectionException, BusyConnectionException, ExecutionException, InterruptedException;
 
     abstract String tableNameColumn();
 
     void refresh(Cluster cluster,
-                 SchemaElement targetType, String targetKeyspace, String targetName, List<String> targetSignature,
-                 Connection connection, VersionNumber cassandraVersion)
+            SchemaElement targetType, String targetKeyspace, String targetName, List<String> targetSignature,
+            Connection connection, VersionNumber cassandraVersion)
             throws ConnectionException, BusyConnectionException, ExecutionException, InterruptedException {
 
         SystemRows rows = fetchSystemRows(cluster, targetType, targetKeyspace, targetName, targetSignature, connection, cassandraVersion);
@@ -119,7 +120,7 @@ abstract class SchemaParser {
     }
 
     private Map<String, KeyspaceMetadata> buildKeyspaces(SystemRows rows,
-                                                         VersionNumber cassandraVersion, Cluster cluster) {
+            VersionNumber cassandraVersion, Cluster cluster) {
 
         Map<String, KeyspaceMetadata> keyspaces = new LinkedHashMap<String, KeyspaceMetadata>();
         for (Row keyspaceRow : rows.keyspaces) {
@@ -181,7 +182,7 @@ abstract class SchemaParser {
                 } catch (RuntimeException e) {
                     // See #refresh for why we'd rather not propagate this further
                     logger.error(String.format("Error parsing schema for table %s.%s: "
-                                    + "Cluster.getMetadata().getKeyspace(\"%s\").getTable(\"%s\") will be missing or incomplete",
+                            + "Cluster.getMetadata().getKeyspace(\"%s\").getTable(\"%s\") will be missing or incomplete",
                             keyspace.getName(), cfName, keyspace.getName(), cfName), e);
                 }
             }
@@ -249,7 +250,7 @@ abstract class SchemaParser {
                 } catch (RuntimeException e) {
                     // See #refresh for why we'd rather not propagate this further
                     logger.error(String.format("Error parsing schema for view %s.%s: "
-                                    + "Cluster.getMetadata().getKeyspace(\"%s\").getView(\"%s\") will be missing or incomplete",
+                            + "Cluster.getMetadata().getKeyspace(\"%s\").getView(\"%s\") will be missing or incomplete",
                             keyspace.getName(), viewName, keyspace.getName(), viewName), e);
                 }
             }
@@ -485,7 +486,7 @@ abstract class SchemaParser {
         final Map<String, Map<String, List<Row>>> indexes;
 
         public SystemRows(ResultSet keyspaces, Map<String, List<Row>> tables, Map<String, Map<String, Map<String, ColumnMetadata.Raw>>> columns, Map<String, List<Row>> udts, Map<String, List<Row>> functions,
-                          Map<String, List<Row>> aggregates, Map<String, List<Row>> views, Map<String, Map<String, List<Row>>> indexes) {
+                Map<String, List<Row>> aggregates, Map<String, List<Row>> views, Map<String, Map<String, List<Row>>> indexes) {
             this.keyspaces = keyspaces;
             this.tables = tables;
             this.columns = columns;
@@ -510,8 +511,8 @@ abstract class SchemaParser {
 
         @Override
         SystemRows fetchSystemRows(Cluster cluster,
-                                   SchemaElement targetType, String targetKeyspace, String targetName, List<String> targetSignature,
-                                   Connection connection, VersionNumber cassandraVersion)
+                SchemaElement targetType, String targetKeyspace, String targetName, List<String> targetSignature,
+                Connection connection, VersionNumber cassandraVersion)
                 throws ConnectionException, BusyConnectionException, ExecutionException, InterruptedException {
 
             boolean isSchemaOrKeyspace = (targetType == null || targetType == KEYSPACE);
@@ -529,12 +530,7 @@ abstract class SchemaParser {
                     whereClause += " AND aggregate_name = '" + targetName + "' AND signature = " + LIST_OF_TEXT_CODEC.format(targetSignature);
             }
 
-            ResultSetFuture ksFuture = null,
-                    udtFuture = null,
-                    cfFuture = null,
-                    colsFuture = null,
-                    functionsFuture = null,
-                    aggregatesFuture = null;
+            ResultSetFuture ksFuture = null, udtFuture = null, cfFuture = null, colsFuture = null, functionsFuture = null, aggregatesFuture = null;
 
             ProtocolVersion protocolVersion = cluster.getConfiguration().getProtocolOptions().getProtocolVersion();
 
@@ -600,14 +596,7 @@ abstract class SchemaParser {
 
             boolean isSchemaOrKeyspace = (targetType == null || targetType == KEYSPACE);
 
-            ResultSetFuture ksFuture = null,
-                    udtFuture = null,
-                    cfFuture = null,
-                    colsFuture = null,
-                    functionsFuture = null,
-                    aggregatesFuture = null,
-                    indexesFuture = null,
-                    viewsFuture = null;
+            ResultSetFuture ksFuture = null, udtFuture = null, cfFuture = null, colsFuture = null, functionsFuture = null, aggregatesFuture = null, indexesFuture = null, viewsFuture = null;
 
             ProtocolVersion protocolVersion = cluster.getConfiguration().getProtocolOptions().getProtocolVersion();
 
@@ -662,7 +651,6 @@ abstract class SchemaParser {
             }
             return whereClause;
         }
-
 
         @Override
         protected List<Row> maybeSortUdts(List<Row> udtRows, Cluster cluster, String keyspace) {

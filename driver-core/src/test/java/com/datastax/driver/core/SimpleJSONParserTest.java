@@ -32,4 +32,3 @@ public class SimpleJSONParserTest {
         assertEquals(ImmutableMap.of("foo", "bar", "bar", "foo"), SimpleJSONParser.parseStringMap("{\"foo\":\"bar\",\"bar\":\"foo\"}"));
     }
 }
-

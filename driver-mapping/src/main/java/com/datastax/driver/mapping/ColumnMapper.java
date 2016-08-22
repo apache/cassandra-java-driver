@@ -24,7 +24,12 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 abstract class ColumnMapper<T> {
 
-    enum Kind {PARTITION_KEY, CLUSTERING_COLUMN, REGULAR, COMPUTED}
+    enum Kind {
+        PARTITION_KEY,
+        CLUSTERING_COLUMN,
+        REGULAR,
+        COMPUTED
+    }
 
     private final String columnName;
     private final String alias;

@@ -41,7 +41,8 @@ public class FallthroughRetryPolicyIntegrationTest extends AbstractRetryPolicyIn
         try {
             query();
             fail("expected a ReadTimeoutException");
-        } catch (ReadTimeoutException e) {/*expected*/ }
+        } catch (ReadTimeoutException e) {/*expected*/
+        }
 
         assertOnReadTimeoutWasCalled(1);
         assertThat(errors.getRetriesOnReadTimeout().getCount()).isEqualTo(0);
@@ -57,7 +58,8 @@ public class FallthroughRetryPolicyIntegrationTest extends AbstractRetryPolicyIn
         try {
             query();
             fail("expected a WriteTimeoutException");
-        } catch (WriteTimeoutException e) {/*expected*/}
+        } catch (WriteTimeoutException e) {/*expected*/
+        }
 
         assertOnWriteTimeoutWasCalled(1);
         assertThat(errors.getRetriesOnWriteTimeout().getCount()).isEqualTo(0);
@@ -73,7 +75,8 @@ public class FallthroughRetryPolicyIntegrationTest extends AbstractRetryPolicyIn
         try {
             query();
             fail("expected an UnavailableException");
-        } catch (UnavailableException e) {/*expected*/}
+        } catch (UnavailableException e) {/*expected*/
+        }
 
         assertOnUnavailableWasCalled(1);
         assertThat(errors.getRetriesOnUnavailable().getCount()).isEqualTo(0);
@@ -88,16 +91,16 @@ public class FallthroughRetryPolicyIntegrationTest extends AbstractRetryPolicyIn
         try {
             scassandras
                     .node(1).primingClient().prime(PrimingRequest.queryBuilder()
-                    .withQuery("mock query")
-                    .withThen(then().withFixedDelay(1000L).withRows(row("result", "result1")))
-                    .build());
+                            .withQuery("mock query")
+                            .withThen(then().withFixedDelay(1000L).withRows(row("result", "result1")))
+                            .build());
             try {
                 query();
                 Fail.fail("expected an OperationTimedOutException");
             } catch (OperationTimedOutException e) {
                 assertThat(e.getMessage()).isEqualTo(
                         String.format("[%s] Timed out waiting for server response", host1.getSocketAddress())
-                );
+                        );
             }
             assertOnRequestErrorWasCalled(1, OperationTimedOutException.class);
             assertThat(errors.getRetries().getCount()).isEqualTo(0);
@@ -110,7 +113,6 @@ public class FallthroughRetryPolicyIntegrationTest extends AbstractRetryPolicyIn
             cluster.getConfiguration().getSocketOptions().setReadTimeoutMillis(SocketOptions.DEFAULT_READ_TIMEOUT_MILLIS);
         }
     }
-
 
     @Test(groups = "short", dataProvider = "serverSideErrors")
     public void should_rethrow_on_server_side_error(Result error, Class<? extends DriverException> exception) {
@@ -130,7 +132,6 @@ public class FallthroughRetryPolicyIntegrationTest extends AbstractRetryPolicyIn
         assertQueried(3, 0);
     }
 
-
     @Test(groups = "short", dataProvider = "connectionErrors")
     public void should_rethrow_on_connection_error(CloseType closeType) {
         simulateError(1, Result.closed_connection, new ClosedConnectionConfig(closeType));
@@ -140,7 +141,7 @@ public class FallthroughRetryPolicyIntegrationTest extends AbstractRetryPolicyIn
         } catch (TransportException e) {
             assertThat(e.getMessage()).isEqualTo(
                     String.format("[%s] Connection has been closed", host1.getSocketAddress())
-            );
+                    );
         }
         assertOnRequestErrorWasCalled(1, TransportException.class);
         assertThat(errors.getRetries().getCount()).isEqualTo(0);

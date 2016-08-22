@@ -23,6 +23,7 @@ package com.datastax.driver.core;
  */
 public enum ClusteringOrder {
 
-    ASC, DESC;
+    ASC,
+    DESC;
 
 }

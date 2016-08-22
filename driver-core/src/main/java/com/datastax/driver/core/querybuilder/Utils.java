@@ -125,8 +125,10 @@ abstract class Utils {
         sb.append('{');
         boolean first = true;
         for (Object elt : s) {
-            if (first) first = false;
-            else sb.append(',');
+            if (first)
+                first = false;
+            else
+                sb.append(',');
             appendValue(elt, codecRegistry, sb, variables);
         }
         sb.append('}');

@@ -196,8 +196,8 @@ abstract class ReplicationStrategy {
                     int achievedFactor = entry.getValue().size();
                     if (achievedFactor < expectedFactor && !warnedDcs.contains(dcName)) {
                         logger.warn("Error while computing token map for keyspace {} with datacenter {}: "
-                                        + "could not achieve replication factor {} (found {} replicas only), "
-                                        + "check your keyspace replication settings.",
+                                + "could not achieve replication factor {} (found {} replicas only), "
+                                + "check your keyspace replication settings.",
                                 keyspaceName, dcName, expectedFactor, achievedFactor);
                         // only warn once per DC
                         warnedDcs.add(dcName);

@@ -37,7 +37,7 @@ public class CodecNotFoundException extends DriverException {
         this(null, cause, cqlType, javaType);
     }
 
-    private CodecNotFoundException(String msg, Throwable cause, DataType cqlType, TypeToken<?>javaType) {
+    private CodecNotFoundException(String msg, Throwable cause, DataType cqlType, TypeToken<?> javaType) {
         super(msg, cause);
         this.cqlType = cqlType;
         this.javaType = javaType;

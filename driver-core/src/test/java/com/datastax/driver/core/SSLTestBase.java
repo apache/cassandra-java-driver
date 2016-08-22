@@ -80,7 +80,10 @@ public abstract class SSLTestBase extends CCMTestsSupport {
         cluster.connect();
     }
 
-    enum SslImplementation {JDK, NETTY_OPENSSL}
+    enum SslImplementation {
+        JDK,
+        NETTY_OPENSSL
+    }
 
     /**
      * @param sslImplementation the SSL implementation to use
@@ -101,7 +104,6 @@ public abstract class SSLTestBase extends CCMTestsSupport {
             tmf = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
             tmf.init(ks);
         }
-
 
         switch (sslImplementation) {
             case JDK:

@@ -46,11 +46,11 @@ public class CustomPayloadTest extends CCMTestsSupport {
         payload1 = ImmutableMap.of(
                 "k1", ByteBuffer.wrap(new byte[]{1, 2, 3}),
                 "k2", ByteBuffer.wrap(new byte[]{4, 5, 6})
-        );
+                );
         payload2 = ImmutableMap.of(
                 "k2", ByteBuffer.wrap(new byte[]{1, 2}),
                 "k3", ByteBuffer.wrap(new byte[]{3, 4})
-        );
+                );
     }
 
     // execute

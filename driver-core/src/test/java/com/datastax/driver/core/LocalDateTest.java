@@ -82,11 +82,13 @@ public class LocalDateTest {
         try {
             fromMillisSinceEpoch(TimeUnit.DAYS.toMillis((long) Integer.MIN_VALUE - 1));
             Assertions.fail("Expected an IllegalArgumentException");
-        } catch (IllegalArgumentException e) { /*expected*/ }
+        } catch (IllegalArgumentException e) { /*expected*/
+        }
         try {
             fromMillisSinceEpoch(TimeUnit.DAYS.toMillis((long) Integer.MAX_VALUE + 1));
             Assertions.fail("Expected an IllegalArgumentException");
-        } catch (IllegalArgumentException e) { /*expected*/ }
+        } catch (IllegalArgumentException e) { /*expected*/
+        }
     }
 
     @Test(groups = "unit")
@@ -115,29 +117,35 @@ public class LocalDateTest {
         try {
             fromYearMonthDay(1970, 0, 1);
             Assertions.fail("Expected an IllegalArgumentException");
-        } catch (IllegalArgumentException e) { /*expected*/ }
+        } catch (IllegalArgumentException e) { /*expected*/
+        }
         try {
             fromYearMonthDay(1970, 13, 1);
             Assertions.fail("Expected an IllegalArgumentException");
-        } catch (IllegalArgumentException e) { /*expected*/ }
+        } catch (IllegalArgumentException e) { /*expected*/
+        }
         try {
             fromYearMonthDay(1970, 1, 0);
             Assertions.fail("Expected an IllegalArgumentException");
-        } catch (IllegalArgumentException e) { /*expected*/ }
+        } catch (IllegalArgumentException e) { /*expected*/
+        }
         try {
             fromYearMonthDay(1970, 1, 32);
             Assertions.fail("Expected an IllegalArgumentException");
-        } catch (IllegalArgumentException e) { /*expected*/ }
+        } catch (IllegalArgumentException e) { /*expected*/
+        }
 
         // Resulting date out of bounds
         try {
             fromYearMonthDay(6000000, 1, 1);
             Assertions.fail("Expected an IllegalArgumentException");
-        } catch (IllegalArgumentException e) { /*expected*/ }
+        } catch (IllegalArgumentException e) { /*expected*/
+        }
         try {
             fromYearMonthDay(-6000000, 1, 1);
             Assertions.fail("Expected an IllegalArgumentException");
-        } catch (IllegalArgumentException e) { /*expected*/ }
+        } catch (IllegalArgumentException e) { /*expected*/
+        }
     }
 
     @Test(groups = "unit")

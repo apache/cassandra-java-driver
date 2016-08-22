@@ -1043,7 +1043,6 @@ public class Cluster implements Closeable {
             return this;
         }
 
-
         /**
          * Configures the {@link CodecRegistry} instance to use for the new cluster.
          * <p/>
@@ -1386,7 +1385,7 @@ public class Cluster implements Closeable {
                     queryOptions.getRefreshNodeListIntervalMillis(),
                     queryOptions.getMaxPendingRefreshNodeListRequests(),
                     EventDebouncer.DEFAULT_MAX_QUEUED_EVENTS
-            );
+                    );
             this.nodeRefreshRequestDebouncer = new EventDebouncer<NodeRefreshRequest>(
                     "Node refresh",
                     scheduledTasksExecutor,
@@ -1394,7 +1393,7 @@ public class Cluster implements Closeable {
                     queryOptions.getRefreshNodeIntervalMillis(),
                     queryOptions.getMaxPendingRefreshNodeRequests(),
                     EventDebouncer.DEFAULT_MAX_QUEUED_EVENTS
-            );
+                    );
             this.schemaRefreshRequestDebouncer = new EventDebouncer<SchemaRefreshRequest>(
                     "Schema refresh",
                     scheduledTasksExecutor,
@@ -1402,7 +1401,7 @@ public class Cluster implements Closeable {
                     queryOptions.getRefreshSchemaIntervalMillis(),
                     queryOptions.getMaxPendingRefreshSchemaRequests(),
                     EventDebouncer.DEFAULT_MAX_QUEUED_EVENTS
-            );
+                    );
 
             this.scheduledTasksExecutor.scheduleWithFixedDelay(new CleanupIdleConnectionsTask(), 10, 10, TimeUnit.SECONDS);
 
@@ -1477,7 +1476,8 @@ public class Cluster implements Closeable {
                 for (Host host : allHosts) {
                     // If the host is down at this stage, it's a contact point that the control connection failed to reach.
                     // Reconnection attempts are already scheduled, and the LBP and listeners have been notified above.
-                    if (host.state == Host.State.DOWN) continue;
+                    if (host.state == Host.State.DOWN)
+                        continue;
 
                     // Otherwise, we want to do the equivalent of onAdd(). But since we know for sure that no sessions or prepared
                     // statements exist at this point, we can skip some of the steps (plus this avoids scheduling concurrent pool
@@ -1645,7 +1645,7 @@ public class Cluster implements Closeable {
 
         void logClusterNameMismatch(Host host, String expectedClusterName, String actualClusterName) {
             logger.warn("Detected added or restarted Cassandra host {} but ignoring it since its cluster name '{}' does not match the one "
-                            + "currently known ({})",
+                    + "currently known ({})",
                     host, actualClusterName, expectedClusterName);
         }
 
@@ -2788,7 +2788,10 @@ public class Cluster implements Closeable {
     }
 
     private enum HostEvent {
-        UP, DOWN, ADDED, REMOVED
+        UP,
+        DOWN,
+        ADDED,
+        REMOVED
     }
 
     /**

@@ -96,9 +96,9 @@ public class ReconnectionPolicyTest extends AbstractPoliciesTest {
         assertTrue(schedule.nextDelayMs() == reconnectionPolicy.getMaxDelayMs());
 
         // Run integration test
-        long restartTime = 2 + 4 + 8 + 2;   // 16: 3 full cycles + 2 seconds
-        long retryTime = 30;                // 4th cycle start time
-        long breakTime = 62;                // time until next reconnection attempt
+        long restartTime = 2 + 4 + 8 + 2; // 16: 3 full cycles + 2 seconds
+        long retryTime = 30; // 4th cycle start time
+        long breakTime = 62; // time until next reconnection attempt
 
         // TODO: Try to sort out variance
         //reconnectionPolicyTest(restartTime, retryTime, breakTime);
@@ -137,9 +137,9 @@ public class ReconnectionPolicyTest extends AbstractPoliciesTest {
         assertTrue(schedule.nextDelayMs() == 10000);
 
         // Run integration test
-        long restartTime = 32;      // matches the above test
-        long retryTime = 40;        // 2nd cycle start time
-        long breakTime = 10;        // time until next reconnection attempt
+        long restartTime = 32; // matches the above test
+        long retryTime = 40; // 2nd cycle start time
+        long breakTime = 10; // time until next reconnection attempt
 
         // TODO: Try to sort out variance
         //reconnectionPolicyTest(restartTime, retryTime, breakTime);

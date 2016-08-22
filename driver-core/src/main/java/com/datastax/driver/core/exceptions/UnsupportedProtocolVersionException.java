@@ -71,5 +71,4 @@ public class UnsupportedProtocolVersionException extends DriverException impleme
         return new UnsupportedProtocolVersionException(address, unsupportedVersion, serverVersion, this);
     }
 
-
 }

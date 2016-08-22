@@ -151,7 +151,8 @@ public class MapperUDTTest extends CCMTestsSupport {
         // Dummy constant to test that static fields are properly ignored
         public static final int FOO = 1;
 
-        @Field // not strictly required, but we want to check that the annotation works without a name
+        @Field
+        // not strictly required, but we want to check that the annotation works without a name
         private String city;
 
         // Declared out of order compared to the UDT definition, to make sure that we serialize fields in the correct order (JAVA-884)
@@ -619,7 +620,6 @@ public class MapperUDTTest extends CCMTestsSupport {
             this.province = province;
         }
     }
-
 
     /**
      * Ensures that when attempting to create a {@link TypeCodec} from a class that has a field that does not exist in

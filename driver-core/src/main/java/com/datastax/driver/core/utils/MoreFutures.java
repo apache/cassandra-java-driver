@@ -33,7 +33,8 @@ public class MoreFutures {
      */
     public static abstract class SuccessCallback<V> implements FutureCallback<V> {
         @Override
-        public void onFailure(Throwable t) { /* nothing */ }
+        public void onFailure(Throwable t) { /* nothing */
+        }
     }
 
     /**
@@ -41,6 +42,7 @@ public class MoreFutures {
      */
     public static abstract class FailureCallback<V> implements FutureCallback<V> {
         @Override
-        public void onSuccess(V result) { /* nothing */ }
+        public void onSuccess(V result) { /* nothing */
+        }
     }
 }

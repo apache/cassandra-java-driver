@@ -86,7 +86,8 @@ public class Generators {
 
             try {
                 session.execute("DROP KEYSPACE stress;");
-            } catch (QueryValidationException e) { /* Fine, ignore */ }
+            } catch (QueryValidationException e) { /* Fine, ignore */
+            }
 
             session.execute("CREATE KEYSPACE stress WITH replication = { 'class' : 'SimpleStrategy', 'replication_factor' : 1 }");
 
@@ -123,7 +124,8 @@ public class Generators {
                     StringBuilder sb = new StringBuilder();
                     sb.append("UPDATE standard1 SET ");
                     for (int i = 0; i < columnsPerRow; ++i) {
-                        if (i > 0) sb.append(", ");
+                        if (i > 0)
+                            sb.append(", ");
                         sb.append('C').append(i).append("='").append(Bytes.toHexString(makeValue(valueSize))).append('\'');
                     }
                     sb.append(" WHERE key = ").append(prefix | iteration);
@@ -141,7 +143,8 @@ public class Generators {
             StringBuilder sb = new StringBuilder();
             sb.append("UPDATE standard1 SET ");
             for (int i = 0; i < columnsPerRow; ++i) {
-                if (i > 0) sb.append(", ");
+                if (i > 0)
+                    sb.append(", ");
                 sb.append('C').append(i).append("=?");
             }
             sb.append(" WHERE key = ?");

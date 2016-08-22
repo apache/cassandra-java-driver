@@ -67,8 +67,7 @@ public class ExecutionInfo {
                 newStatement,
                 schemaInAgreement,
                 newWarnings,
-                incomingPayload
-        );
+                incomingPayload);
     }
 
     ExecutionInfo withIncomingPayload(Map<String, ByteBuffer> incomingPayload) {

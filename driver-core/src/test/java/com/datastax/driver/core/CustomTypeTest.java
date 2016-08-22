@@ -58,8 +58,7 @@ public class CustomTypeTest extends CCMTestsSupport {
                         + "    k int PRIMARY KEY,"
                         + "    c1 list<'DynamicCompositeType(s => UTF8Type, i => Int32Type)'>,"
                         + "    c2 map<'DynamicCompositeType(s => UTF8Type, i => Int32Type)', 'DynamicCompositeType(s => UTF8Type, i => Int32Type)'>"
-                        + ")"
-        );
+                        + ")");
     }
 
     /**

@@ -120,7 +120,7 @@ public class PoolingOptions {
                     .put(MAX_REQUESTS_PER_CONNECTION_LOCAL_KEY, 1024)
                     .put(MAX_REQUESTS_PER_CONNECTION_REMOTE_KEY, 256)
                     .build()
-    );
+            );
 
     /**
      * The default value for {@link #getIdleTimeoutSeconds()} ({@value}).

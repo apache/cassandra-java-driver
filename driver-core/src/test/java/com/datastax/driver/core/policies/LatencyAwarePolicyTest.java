@@ -69,7 +69,7 @@ public class LatencyAwarePolicyTest extends ScassandraTestBase {
                 queryBuilder()
                         .withQuery(query)
                         .build()
-        );
+                );
         LatencyAwarePolicy latencyAwarePolicy = LatencyAwarePolicy.builder(new RoundRobinPolicy())
                 .withMininumMeasurements(1)
                 .build();
@@ -108,7 +108,7 @@ public class LatencyAwarePolicyTest extends ScassandraTestBase {
                         .withQuery(query)
                         .withResult(unavailable)
                         .build()
-        );
+                );
         LatencyAwarePolicy latencyAwarePolicy = LatencyAwarePolicy.builder(new RoundRobinPolicy())
                 .withMininumMeasurements(1)
                 .build();
@@ -152,7 +152,7 @@ public class LatencyAwarePolicyTest extends ScassandraTestBase {
                         .withQuery(query)
                         .withResult(read_request_timeout)
                         .build()
-        );
+                );
 
         LatencyAwarePolicy latencyAwarePolicy = LatencyAwarePolicy.builder(new RoundRobinPolicy())
                 .withMininumMeasurements(1)

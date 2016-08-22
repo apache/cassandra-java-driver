@@ -100,8 +100,8 @@ abstract class ArrayBackedResultSet implements ResultSet {
     }
 
     private static ExecutionInfo update(ExecutionInfo info, Responses.Result msg, SessionManager session,
-                                        ByteBuffer pagingState, ProtocolVersion protocolVersion, CodecRegistry codecRegistry,
-                                        Statement statement) {
+            ByteBuffer pagingState, ProtocolVersion protocolVersion, CodecRegistry codecRegistry,
+            Statement statement) {
         if (info == null)
             return null;
 
@@ -174,11 +174,11 @@ abstract class ArrayBackedResultSet implements ResultSet {
         private final ExecutionInfo info;
 
         private SinglePage(ColumnDefinitions metadata,
-                           Token.Factory tokenFactory,
-                           ProtocolVersion protocolVersion,
-                           CodecRegistry codecRegistry,
-                           Queue<List<ByteBuffer>> rows,
-                           ExecutionInfo info) {
+                Token.Factory tokenFactory,
+                ProtocolVersion protocolVersion,
+                CodecRegistry codecRegistry,
+                Queue<List<ByteBuffer>> rows,
+                ExecutionInfo info) {
             super(metadata, tokenFactory, rows.peek(), protocolVersion, codecRegistry);
             this.info = info;
             this.rows = rows;
@@ -245,13 +245,13 @@ abstract class ArrayBackedResultSet implements ResultSet {
         private final SessionManager session;
 
         private MultiPage(ColumnDefinitions metadata,
-                          Token.Factory tokenFactory,
-                          ProtocolVersion protocolVersion,
-                          CodecRegistry codecRegistry,
-                          Queue<List<ByteBuffer>> rows,
-                          ExecutionInfo info,
-                          ByteBuffer pagingState,
-                          SessionManager session) {
+                Token.Factory tokenFactory,
+                ProtocolVersion protocolVersion,
+                CodecRegistry codecRegistry,
+                Queue<List<ByteBuffer>> rows,
+                ExecutionInfo info,
+                ByteBuffer pagingState,
+                SessionManager session) {
 
             // Note: as of Cassandra 2.1.0, it turns out that the result of a CAS update is never paged, so
             // we could hard-code the result of wasApplied in this class to "true". However, we can not be sure
@@ -336,7 +336,6 @@ abstract class ArrayBackedResultSet implements ResultSet {
         private ListenableFuture<ResultSet> queryNextPage(ByteBuffer nextStart, final SettableFuture<ResultSet> future) {
 
             Statement statement = this.infos.peek().getStatement();
-
 
             assert !(statement instanceof BatchStatement);
 

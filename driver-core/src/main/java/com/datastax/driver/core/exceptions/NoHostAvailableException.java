@@ -97,7 +97,8 @@ public class NoHostAvailableException extends DriverException {
         int n = 0;
         boolean truncated = false;
         for (Map.Entry<InetSocketAddress, Throwable> entry : errors.entrySet()) {
-            if (n > 0) out.print(formatted ? "\n" : ", ");
+            if (n > 0)
+                out.print(formatted ? "\n" : ", ");
             out.print(entry.getKey());
             if (n < maxErrorsInMessage) {
                 if (includeStackTraces) {

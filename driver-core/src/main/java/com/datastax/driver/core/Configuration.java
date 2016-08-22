@@ -55,13 +55,13 @@ public class Configuration {
     private final CodecRegistry codecRegistry;
 
     private Configuration(Policies policies,
-                          ProtocolOptions protocolOptions,
-                          PoolingOptions poolingOptions,
-                          SocketOptions socketOptions,
-                          MetricsOptions metricsOptions,
-                          QueryOptions queryOptions,
-                          NettyOptions nettyOptions,
-                          CodecRegistry codecRegistry) {
+            ProtocolOptions protocolOptions,
+            PoolingOptions poolingOptions,
+            SocketOptions socketOptions,
+            MetricsOptions metricsOptions,
+            QueryOptions queryOptions,
+            NettyOptions nettyOptions,
+            CodecRegistry codecRegistry) {
         this.policies = policies;
         this.protocolOptions = protocolOptions;
         this.poolingOptions = poolingOptions;
@@ -86,8 +86,7 @@ public class Configuration {
                 toCopy.getMetricsOptions(),
                 toCopy.getQueryOptions(),
                 toCopy.getNettyOptions(),
-                toCopy.getCodecRegistry()
-        );
+                toCopy.getCodecRegistry());
     }
 
     void register(Cluster.Manager manager) {

@@ -50,16 +50,14 @@ public class JacksonJsonCodecTest extends CCMTestsSupport {
 
     @Override
     public void onTestContextInitialized() {
-        execute(
-                "CREATE TABLE t1 (c1 text, c2 text, c3 list<text>, PRIMARY KEY (c1, c2))"
-        );
+        execute("CREATE TABLE t1 (c1 text, c2 text, c3 list<text>, PRIMARY KEY (c1, c2))");
     }
 
     @Override
     public Cluster.Builder createClusterBuilder() {
         return Cluster.builder().withCodecRegistry(
                 new CodecRegistry().register(jsonCodec) // global User <-> varchar codec
-        );
+                );
     }
 
     @Test(groups = "unit")
@@ -137,18 +135,18 @@ public class JacksonJsonCodecTest extends CCMTestsSupport {
     @Test(groups = "short")
     public void should_use_custom_codec_with_prepared_statements_2() {
         session().execute(session().prepare(insertQuery).bind()
-                        .setString(0, notAJsonString)
-                        .set(1, alice, User.class)
-                        .setList(2, bobAndCharlie, User.class)
-        );
+                .setString(0, notAJsonString)
+                .set(1, alice, User.class)
+                .setList(2, bobAndCharlie, User.class)
+                );
         PreparedStatement ps = session().prepare(selectQuery);
         ResultSet rows = session().execute(ps.bind()
-                        .setString(0, notAJsonString)
-                                // this set() method conveys information about the java type of alice
-                                // so the registry will look for a codec accepting varchar <-> User
-                                // and will find jsonCodec because it is the only matching one
-                        .set(1, alice, User.class)
-        );
+                .setString(0, notAJsonString)
+                // this set() method conveys information about the java type of alice
+                // so the registry will look for a codec accepting varchar <-> User
+                // and will find jsonCodec because it is the only matching one
+                .set(1, alice, User.class)
+                );
         Row row = rows.one();
         assertRow(row);
     }

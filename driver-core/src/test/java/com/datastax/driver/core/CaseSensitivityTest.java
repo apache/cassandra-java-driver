@@ -53,5 +53,4 @@ public class CaseSensitivityTest extends CCMTestsSupport {
         assertNull(cluster().getMetadata().getKeyspace(name));
     }
 
-
 }

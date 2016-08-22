@@ -32,8 +32,7 @@ public class AsyncResultSetTest extends CCMTestsSupport {
 
     @Override
     public void onTestContextInitialized() {
-        execute(
-                "create table ints (i int primary key)");
+        execute("create table ints (i int primary key)");
     }
 
     @BeforeMethod(groups = "short")

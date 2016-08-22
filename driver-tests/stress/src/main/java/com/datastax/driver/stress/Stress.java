@@ -49,19 +49,21 @@ public class Stress {
     }
 
     private static OptionParser defaultParser() {
-        OptionParser parser = new OptionParser() {{
-            accepts("h", "Show this help message");
-            accepts("n", "Number of requests to perform (default: unlimited)").withRequiredArg().ofType(Integer.class);
-            accepts("t", "Level of concurrency to use").withRequiredArg().ofType(Integer.class).defaultsTo(50);
-            accepts("async", "Make asynchronous requests instead of blocking ones");
-            accepts("ip", "The hosts ip to connect to").withRequiredArg().ofType(String.class).defaultsTo("127.0.0.1");
-            accepts("report-file", "The name of csv file to use for reporting results").withRequiredArg().ofType(String.class).defaultsTo("last.csv");
-            accepts("print-delay", "The delay in seconds at which to report on the console").withRequiredArg().ofType(Integer.class).defaultsTo(5);
-            accepts("compression", "Use compression (SNAPPY)");
-            accepts("connections-per-host", "The number of connections per hosts (default: based on the number of threads)").withRequiredArg().ofType(Integer.class);
-            accepts("consistency-level", "Consistency level").withRequiredArg().withValuesConvertedBy(new ConsistencyLevelConverter())
-                    .ofType(ConsistencyLevel.class).defaultsTo(ConsistencyLevel.LOCAL_ONE);
-        }};
+        OptionParser parser = new OptionParser() {
+            {
+                accepts("h", "Show this help message");
+                accepts("n", "Number of requests to perform (default: unlimited)").withRequiredArg().ofType(Integer.class);
+                accepts("t", "Level of concurrency to use").withRequiredArg().ofType(Integer.class).defaultsTo(50);
+                accepts("async", "Make asynchronous requests instead of blocking ones");
+                accepts("ip", "The hosts ip to connect to").withRequiredArg().ofType(String.class).defaultsTo("127.0.0.1");
+                accepts("report-file", "The name of csv file to use for reporting results").withRequiredArg().ofType(String.class).defaultsTo("last.csv");
+                accepts("print-delay", "The delay in seconds at which to report on the console").withRequiredArg().ofType(Integer.class).defaultsTo(5);
+                accepts("compression", "Use compression (SNAPPY)");
+                accepts("connections-per-host", "The number of connections per hosts (default: based on the number of threads)").withRequiredArg().ofType(Integer.class);
+                accepts("consistency-level", "Consistency level").withRequiredArg().withValuesConvertedBy(new ConsistencyLevelConverter())
+                        .ofType(ConsistencyLevel.class).defaultsTo(ConsistencyLevel.LOCAL_ONE);
+            }
+        };
         String msg = "Where <generator> can be one of " + generators.keySet() + '\n'
                 + "You can get more help on a particular generator with: stress <generator> -h";
         parser.formatHelpWith(Help.formatFor("<generator>", msg));

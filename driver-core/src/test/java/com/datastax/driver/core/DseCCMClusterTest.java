@@ -78,8 +78,7 @@ import static com.datastax.driver.core.CCMAccess.Workload.*;
                 @CCMWorkload(solr),
                 @CCMWorkload({spark, solr}),
                 @CCMWorkload({cassandra, spark})
-        }
-)
+        })
 public class DseCCMClusterTest extends CCMTestsSupport {
 
     @Test(groups = "short")

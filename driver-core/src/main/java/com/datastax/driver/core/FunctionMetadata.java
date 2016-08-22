@@ -40,12 +40,12 @@ public class FunctionMetadata {
     private final DataType returnType;
 
     private FunctionMetadata(KeyspaceMetadata keyspace,
-                             String simpleName,
-                             Map<String, DataType> arguments,
-                             String body,
-                             boolean calledOnNullInput,
-                             String language,
-                             DataType returnType) {
+            String simpleName,
+            Map<String, DataType> arguments,
+            String body,
+            boolean calledOnNullInput,
+            String language,
+            DataType returnType) {
         this.keyspace = keyspace;
         this.simpleName = simpleName;
         this.arguments = arguments;
@@ -94,7 +94,7 @@ public class FunctionMetadata {
         if (argumentNames.size() != argumentTypes.size()) {
             String fullName = Metadata.fullFunctionName(simpleName, arguments.values());
             logger.error(String.format("Error parsing definition of function %1$s.%2$s: the number of argument names and types don't match."
-                            + "Cluster.getMetadata().getKeyspace(\"%1$s\").getFunction(\"%2$s\") will be missing.",
+                    + "Cluster.getMetadata().getKeyspace(\"%1$s\").getFunction(\"%2$s\") will be missing.",
                     ksm.getName(), fullName));
             return null;
         }

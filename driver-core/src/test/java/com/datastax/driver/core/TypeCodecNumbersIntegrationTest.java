@@ -39,16 +39,15 @@ public class TypeCodecNumbersIntegrationTest extends CCMTestsSupport {
     @Override
     public void onTestContextInitialized() {
         execute(
-                "CREATE TABLE \"myTable\" ("
-                        + "c_int int, "
-                        + "c_bigint bigint, "
-                        + "c_float float, "
-                        + "c_double double, "
-                        + "c_varint varint, "
-                        + "c_decimal decimal, "
-                        + "PRIMARY KEY (c_int, c_bigint)"
-                        + ")"
-        );
+        "CREATE TABLE \"myTable\" ("
+                + "c_int int, "
+                + "c_bigint bigint, "
+                + "c_float float, "
+                + "c_double double, "
+                + "c_varint varint, "
+                + "c_decimal decimal, "
+                + "PRIMARY KEY (c_int, c_bigint)"
+                + ")");
     }
 
     @Test(groups = "short")
@@ -72,18 +71,18 @@ public class TypeCodecNumbersIntegrationTest extends CCMTestsSupport {
     @Test(groups = "short")
     public void should_use_default_codecs_with_prepared_statements_2() {
         session().execute(session().prepare(insertQuery).bind()
-                        .setInt(0, n_int)
-                        .setLong(1, n_bigint)
-                        .setFloat(2, n_float)
-                        .setDouble(3, n_double)
-                        .setVarint(4, n_varint)
-                        .setDecimal(5, n_decimal)
-        );
+                .setInt(0, n_int)
+                .setLong(1, n_bigint)
+                .setFloat(2, n_float)
+                .setDouble(3, n_double)
+                .setVarint(4, n_varint)
+                .setDecimal(5, n_decimal)
+                );
         PreparedStatement ps = session().prepare(selectQuery);
         ResultSet rows = session().execute(ps.bind()
-                        .setInt(0, n_int)
-                        .setLong(1, n_bigint)
-        );
+                .setInt(0, n_int)
+                .setLong(1, n_bigint)
+                );
         Row row = rows.one();
         assertRow(row);
     }
@@ -91,18 +90,18 @@ public class TypeCodecNumbersIntegrationTest extends CCMTestsSupport {
     @Test(groups = "short")
     public void should_use_default_codecs_with_prepared_statements_3() {
         session().execute(session().prepare(insertQuery).bind()
-                        .set(0, n_int, Integer.class)
-                        .set(1, n_bigint, Long.class)
-                        .set(2, n_float, Float.class)
-                        .set(3, n_double, Double.class)
-                        .set(4, n_varint, BigInteger.class)
-                        .set(5, n_decimal, BigDecimal.class)
-        );
+                .set(0, n_int, Integer.class)
+                .set(1, n_bigint, Long.class)
+                .set(2, n_float, Float.class)
+                .set(3, n_double, Double.class)
+                .set(4, n_varint, BigInteger.class)
+                .set(5, n_decimal, BigDecimal.class)
+                );
         PreparedStatement ps = session().prepare(selectQuery);
         ResultSet rows = session().execute(ps.bind()
-                        .setInt(0, n_int)
-                        .setLong(1, n_bigint)
-        );
+                .setInt(0, n_int)
+                .setLong(1, n_bigint)
+                );
         Row row = rows.one();
         assertRow(row);
     }

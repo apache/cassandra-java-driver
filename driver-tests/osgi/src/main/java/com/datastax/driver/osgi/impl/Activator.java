@@ -120,7 +120,7 @@ public class Activator implements BundleActivator {
             Exception in thread "threadDeathWatcher-2-1" java.lang.NoClassDefFoundError: xxx
             Caused by: java.lang.ClassNotFoundException: Unable to load class 'xxx' because the bundle wiring for xxx is no longer valid.
             Although ugly, they are harmless and can be safely ignored.
-            */
+             */
             Thread.sleep(1000);
         }
     }

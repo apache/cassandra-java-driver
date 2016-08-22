@@ -45,16 +45,14 @@ public class Jsr353JsonCodecTest extends CCMTestsSupport {
 
     @Override
     public void onTestContextInitialized() {
-        execute(
-                "CREATE TABLE t1 (c1 text, c2 text, PRIMARY KEY (c1, c2))"
-        );
+        execute("CREATE TABLE t1 (c1 text, c2 text, PRIMARY KEY (c1, c2))");
     }
 
     @Override
     public Cluster.Builder createClusterBuilder() {
         return Cluster.builder().withCodecRegistry(
                 new CodecRegistry().register(jsonCodec) // global User <-> varchar codec
-        );
+                );
     }
 
     @DataProvider(name = "Jsr353JsonCodecTest")
@@ -133,14 +131,14 @@ public class Jsr353JsonCodecTest extends CCMTestsSupport {
     @Test(groups = "short", dataProvider = "Jsr353JsonCodecTest")
     public void should_use_custom_codec_with_prepared_statements_2(JsonStructure object) throws IOException {
         session().execute(session().prepare(insertQuery).bind()
-                        .setString(0, notAJsonString)
-                        .set(1, object, JsonStructure.class)
-        );
+                .setString(0, notAJsonString)
+                .set(1, object, JsonStructure.class)
+                );
         PreparedStatement ps = session().prepare(selectQuery);
         ResultSet rows = session().execute(ps.bind()
-                        .setString(0, notAJsonString)
-                        .set(1, object, JsonStructure.class)
-        );
+                .setString(0, notAJsonString)
+                .set(1, object, JsonStructure.class)
+                );
         Row row = rows.one();
         assertRow(row, object);
     }

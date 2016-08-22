@@ -29,7 +29,10 @@ import static org.assertj.core.api.Assertions.fail;
  * Fake Cassandra host that will cause a given error when the driver tries to connect to it.
  */
 public class FakeHost {
-    public enum Behavior {THROWING_CONNECT_TIMEOUTS, THROWING_OPERATION_TIMEOUTS}
+    public enum Behavior {
+        THROWING_CONNECT_TIMEOUTS,
+        THROWING_OPERATION_TIMEOUTS
+    }
 
     final String address;
     private final int port;

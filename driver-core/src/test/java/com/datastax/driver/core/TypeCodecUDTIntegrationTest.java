@@ -48,8 +48,7 @@ public class TypeCodecUDTIntegrationTest extends CCMTestsSupport {
         execute(
                 "CREATE TYPE IF NOT EXISTS \"phone\" (number text, tags set<text>)",
                 "CREATE TYPE IF NOT EXISTS \"address\" (street text, zipcode int, phones list<frozen<phone>>)",
-                "CREATE TABLE IF NOT EXISTS \"users\" (id uuid PRIMARY KEY, name text, address frozen<address>)"
-        );
+                "CREATE TABLE IF NOT EXISTS \"users\" (id uuid PRIMARY KEY, name text, address frozen<address>)");
     }
 
     @Test(groups = "short")
@@ -87,8 +86,7 @@ public class TypeCodecUDTIntegrationTest extends CCMTestsSupport {
         TypeCodec<UDTValue> phoneTypeCodec = TypeCodec.userType(phoneType);
         codecRegistry
                 .register(new AddressCodec(addressTypeCodec, Address.class))
-                .register(new PhoneCodec(phoneTypeCodec, Phone.class))
-        ;
+                .register(new PhoneCodec(phoneTypeCodec, Phone.class));
         session.execute(insertQuery, uuid, "John Doe", address);
         ResultSet rows = session.execute(selectQuery, uuid);
         Row row = rows.one();

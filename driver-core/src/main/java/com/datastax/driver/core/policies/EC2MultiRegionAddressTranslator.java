@@ -99,9 +99,9 @@ public class EC2MultiRegionAddressTranslator implements AddressTranslator {
 
     private String lookupPtrRecord(String reversedDomain) throws Exception {
         Attributes attrs = ctx.getAttributes(reversedDomain, new String[]{"PTR"});
-        for (NamingEnumeration ae = attrs.getAll(); ae.hasMoreElements(); ) {
+        for (NamingEnumeration ae = attrs.getAll(); ae.hasMoreElements();) {
             Attribute attr = (Attribute) ae.next();
-            for (Enumeration<?> vals = attr.getAll(); vals.hasMoreElements(); )
+            for (Enumeration<?> vals = attr.getAll(); vals.hasMoreElements();)
                 return vals.nextElement().toString();
         }
         return null;

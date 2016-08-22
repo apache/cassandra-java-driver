@@ -67,10 +67,7 @@ public class TestListener extends TestListenerAdapter implements IInvokedMethodL
     }
 
     static String formatIntoHHMMSS(long secondsTotal) {
-        long hours = secondsTotal / 3600,
-                remainder = secondsTotal % 3600,
-                minutes = remainder / 60,
-                seconds = remainder % 60;
+        long hours = secondsTotal / 3600, remainder = secondsTotal % 3600, minutes = remainder / 60, seconds = remainder % 60;
 
         return ((hours < 10 ? "0" : "") + hours
                 + ':' + (minutes < 10 ? "0" : "") + minutes

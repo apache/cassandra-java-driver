@@ -78,7 +78,8 @@ public class MemoryAppender extends WriterAppender {
         appendLock.lock();
         try {
             while (get().isEmpty()) {
-                if (nanos <= 0L) break; // timeout
+                if (nanos <= 0L)
+                    break; // timeout
                 nanos = append.awaitNanos(nanos);
             }
             return get();

@@ -51,7 +51,8 @@ public class IdempotenceAwareRetryPolicyIntegrationTest extends AbstractRetryPol
         try {
             query();
             fail("expected an WriteTimeoutException");
-        } catch (WriteTimeoutException e) {/* expected */}
+        } catch (WriteTimeoutException e) {/* expected */
+        }
         assertOnWriteTimeoutWasCalled(1);
         assertThat(errors.getWriteTimeouts().getCount()).isEqualTo(1);
         assertThat(errors.getRetries().getCount()).isEqualTo(0);
@@ -80,16 +81,16 @@ public class IdempotenceAwareRetryPolicyIntegrationTest extends AbstractRetryPol
         try {
             scassandras
                     .node(1).primingClient().prime(PrimingRequest.queryBuilder()
-                    .withQuery("mock query")
-                    .withThen(then().withFixedDelay(1000L).withRows(row("result", "result1")))
-                    .build());
+                            .withQuery("mock query")
+                            .withThen(then().withFixedDelay(1000L).withRows(row("result", "result1")))
+                            .build());
             try {
                 query();
                 fail("expected an OperationTimedOutException");
             } catch (OperationTimedOutException e) {
                 assertThat(e.getMessage()).isEqualTo(
                         String.format("[%s] Timed out waiting for server response", host1.getSocketAddress())
-                );
+                        );
             }
             assertOnRequestErrorWasCalled(1, OperationTimedOutException.class);
             assertThat(errors.getClientTimeouts().getCount()).isEqualTo(1);
@@ -109,9 +110,9 @@ public class IdempotenceAwareRetryPolicyIntegrationTest extends AbstractRetryPol
         try {
             scassandras
                     .node(1).primingClient().prime(PrimingRequest.queryBuilder()
-                    .withQuery("mock query")
-                    .withThen(then().withFixedDelay(1000L).withRows(row("result", "result1")))
-                    .build());
+                            .withQuery("mock query")
+                            .withThen(then().withFixedDelay(1000L).withRows(row("result", "result1")))
+                            .build());
             session.execute(new SimpleStatement("mock query").setIdempotent(true));
             assertOnRequestErrorWasCalled(1, OperationTimedOutException.class);
             assertThat(errors.getClientTimeouts().getCount()).isEqualTo(1);
@@ -124,7 +125,6 @@ public class IdempotenceAwareRetryPolicyIntegrationTest extends AbstractRetryPol
             cluster.getConfiguration().getSocketOptions().setReadTimeoutMillis(SocketOptions.DEFAULT_READ_TIMEOUT_MILLIS);
         }
     }
-
 
     @Test(groups = "short", dataProvider = "serverSideErrors")
     public void should_not_retry_on_server_error_if_statement_non_idempotent(Result error, Class<? extends DriverException> exception) {
@@ -169,7 +169,6 @@ public class IdempotenceAwareRetryPolicyIntegrationTest extends AbstractRetryPol
         assertQueried(3, 1);
     }
 
-
     @Test(groups = "short", dataProvider = "connectionErrors")
     public void should_not_retry_on_connection_error_if_statement_non_idempotent(ClosedConnectionConfig.CloseType closeType) {
         simulateError(1, closed_connection, new ClosedConnectionConfig(closeType));
@@ -181,7 +180,7 @@ public class IdempotenceAwareRetryPolicyIntegrationTest extends AbstractRetryPol
         } catch (TransportException e) {
             assertThat(e.getMessage()).isEqualTo(
                     String.format("[%s] Connection has been closed", host1.getSocketAddress())
-            );
+                    );
         }
         assertOnRequestErrorWasCalled(1, TransportException.class);
         assertThat(errors.getRetries().getCount()).isEqualTo(0);
@@ -192,7 +191,6 @@ public class IdempotenceAwareRetryPolicyIntegrationTest extends AbstractRetryPol
         assertQueried(2, 0);
         assertQueried(3, 0);
     }
-
 
     @Test(groups = "short", dataProvider = "connectionErrors")
     public void should_retry_on_connection_error_if_statement_idempotent(ClosedConnectionConfig.CloseType closeType) {
@@ -236,7 +234,6 @@ public class IdempotenceAwareRetryPolicyIntegrationTest extends AbstractRetryPol
 
         Mockito.verify(innerPolicyMock).close();
     }
-
 
     /**
      * Retries everything on the next host.

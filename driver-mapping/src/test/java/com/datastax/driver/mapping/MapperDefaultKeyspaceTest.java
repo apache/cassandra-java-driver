@@ -108,7 +108,6 @@ public class MapperDefaultKeyspaceTest extends CCMTestsSupport {
         manager.udtCodec(GroupName.class);
     }
 
-
     /*
      * An entity that does not specify a keyspace in its @Table annotation. When a keyspace is
      * not specified, the mapper uses the session's logged in keyspace.

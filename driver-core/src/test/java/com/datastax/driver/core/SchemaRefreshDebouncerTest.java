@@ -101,7 +101,6 @@ public class SchemaRefreshDebouncerTest extends CCMTestsSupport {
         assertThat(ksm).isNotNull().hasName(keyspace).isNotDurableWrites();
     }
 
-
     /**
      * Ensures that when a CREATED (keyspace) and CREATED (table) schema_change events are received
      * on a control connection with that table belonging to that keyspace within

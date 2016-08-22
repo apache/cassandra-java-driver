@@ -287,7 +287,6 @@ public class TupleTest extends CCMTestsSupport {
         // create table
         session().execute(String.format("CREATE TABLE mytable (k int PRIMARY KEY, %s)", Joiner.on(',').join(values)));
 
-
         int i = 0;
         // test tuple<list<datatype>>
         for (DataType datatype : DATA_TYPE_PRIMITIVES) {
@@ -418,11 +417,11 @@ public class TupleTest extends CCMTestsSupport {
 
         // create a table with multiple sizes of nested tuples
         session().execute(String.format("CREATE TABLE mytable (" +
-                        "k int PRIMARY KEY, " +
-                        "v_1 %s, " +
-                        "v_2 %s, " +
-                        "v_3 %s, " +
-                        "v_32 %s)", nestedTuplesSchemaHelper(1),
+                "k int PRIMARY KEY, " +
+                "v_1 %s, " +
+                "v_2 %s, " +
+                "v_3 %s, " +
+                "v_32 %s)", nestedTuplesSchemaHelper(1),
                 nestedTuplesSchemaHelper(2),
                 nestedTuplesSchemaHelper(3),
                 nestedTuplesSchemaHelper(32)));

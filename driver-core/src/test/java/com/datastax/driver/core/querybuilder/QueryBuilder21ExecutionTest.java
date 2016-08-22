@@ -42,8 +42,7 @@ public class QueryBuilder21ExecutionTest extends CCMTestsSupport {
                 "INSERT INTO products(id, description, price, categories, buyers, features_keys, features_values) " +
                         "VALUES (29412, '32-inch LED HDTV (black)', 929, {'tv', 'hdtv'}, [1,2,3], {'screen' : '32-inch', 'techno' : 'LED'}, {'screen' : '32-inch', 'techno' : 'LED'})",
                 "INSERT INTO products(id, description, price, categories, buyers, features_keys, features_values) " +
-                        "VALUES (38471, '32-inch LCD TV', 110, {'tv', 'used'}, [2,4], {'screen' : '32-inch', 'techno' : 'LCD'}, {'screen' : '32-inch', 'techno' : 'LCD'})"
-        );
+                        "VALUES (38471, '32-inch LCD TV', 110, {'tv', 'used'}, [2,4], {'screen' : '32-inch', 'techno' : 'LCD'}, {'screen' : '32-inch', 'techno' : 'LCD'})");
     }
 
     @Test(groups = "short")
@@ -87,7 +86,6 @@ public class QueryBuilder21ExecutionTest extends CCMTestsSupport {
         assertThat(row.getInt("id")).isEqualTo(29412);
         assertThat(row.getMap("features_values", String.class, String.class)).containsEntry("techno", "LED");
     }
-
 
     @Test(groups = "short")
     public void should_handle_contains_key_on_map_with_index() {

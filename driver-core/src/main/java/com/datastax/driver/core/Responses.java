@@ -544,7 +544,11 @@ class Responses {
 
         static class SchemaChange extends Result {
 
-            enum Change {CREATED, UPDATED, DROPPED}
+            enum Change {
+                CREATED,
+                UPDATED,
+                DROPPED
+            }
 
             final Change change;
             final SchemaElement targetType;

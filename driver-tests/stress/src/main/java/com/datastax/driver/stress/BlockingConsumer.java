@@ -28,8 +28,8 @@ public class BlockingConsumer implements Consumer {
     private final Reporter reporter;
 
     public BlockingConsumer(Session session,
-                            QueryGenerator requests,
-                            Reporter reporter) {
+            QueryGenerator requests,
+            Reporter reporter) {
         this.session = session;
         this.requests = requests;
         this.reporter = reporter;

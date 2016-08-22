@@ -267,7 +267,7 @@ public class IndexMetadataTest extends CCMTestsSupport {
                 wrap("CUSTOM"), // index type
                 wrap("org.apache.cassandra.db.marshal.UTF8Type"), // validator
                 wrap("{\"foo\" : \"bar\", \"class_name\" : \"dummy.DummyIndex\"}") // index options
-        );
+                );
         Row columnRow = ArrayBackedRow.fromData(legacyColumnDefs, M3PToken.FACTORY, protocolVersion, columnData);
         Raw columnRaw = Raw.fromRow(columnRow, VersionNumber.parse("2.1"));
         ColumnMetadata column = ColumnMetadata.fromRaw(table, columnRaw, DataType.varchar());
@@ -295,8 +295,8 @@ public class IndexMetadataTest extends CCMTestsSupport {
                         "foo", "bar",
                         IndexMetadata.CUSTOM_INDEX_OPTION_NAME, "dummy.DummyIndex",
                         IndexMetadata.TARGET_OPTION_NAME, "a, b, keys(c)"
-                ), protocolVersion) // options
-        );
+                        ), protocolVersion) // options
+                );
         Row indexRow = ArrayBackedRow.fromData(indexColumnDefs, M3PToken.FACTORY, protocolVersion, indexData);
         IndexMetadata index = IndexMetadata.fromRow(table, indexRow);
         assertThat(index)
@@ -330,7 +330,7 @@ public class IndexMetadataTest extends CCMTestsSupport {
                 wrap("KEYS"), // index type
                 wrap("org.apache.cassandra.db.marshal.BytesType"), // validator
                 wrap("null") // index options
-        );
+                );
         Row row = ArrayBackedRow.fromData(legacyColumnDefs, M3PToken.FACTORY, cluster().getConfiguration().getProtocolOptions().getProtocolVersion(), data);
         Raw raw = Raw.fromRow(row, VersionNumber.parse("2.1"));
         ColumnMetadata column = ColumnMetadata.fromRaw(table, raw, DataType.blob());

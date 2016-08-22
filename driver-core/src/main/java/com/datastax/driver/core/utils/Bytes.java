@@ -121,7 +121,6 @@ public final class Bytes {
             return "";
         }
 
-
         char[] array = new char[2 * (bytes.remaining())];
         return toRawHexString(bytes, array, 0);
     }

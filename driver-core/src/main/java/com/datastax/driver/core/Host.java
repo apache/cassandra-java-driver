@@ -52,7 +52,11 @@ public class Host {
     // specified otherwise in cassandra.yaml file.
     private volatile InetAddress listenAddress;
 
-    enum State {ADDED, DOWN, UP}
+    enum State {
+        ADDED,
+        DOWN,
+        UP
+    }
 
     volatile State state;
     /**

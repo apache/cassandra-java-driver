@@ -39,7 +39,6 @@ public class QueryOptionsTest {
     Session session = null;
     Host host1, host2, host3;
 
-
     @BeforeMethod(groups = "short")
     public void beforeMethod() {
         scassandra = ScassandraCluster.builder().withNodes(3).build();

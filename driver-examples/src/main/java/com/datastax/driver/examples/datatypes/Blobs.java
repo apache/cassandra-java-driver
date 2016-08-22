@@ -63,7 +63,8 @@ public class Blobs {
             insertConcurrent(session);
             insertFromAndRetrieveToFile(session);
         } finally {
-            if (cluster != null) cluster.close();
+            if (cluster != null)
+                cluster.close();
         }
     }
 
@@ -247,7 +248,8 @@ public class Blobs {
             try {
                 inputStream.close();
             } catch (IOException e) {
-                if (!threw) throw e; // else preserve original exception
+                if (!threw)
+                    throw e; // else preserve original exception
             }
     }
 }

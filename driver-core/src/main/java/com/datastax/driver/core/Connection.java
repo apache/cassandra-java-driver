@@ -64,7 +64,12 @@ class Connection {
 
     private static final boolean DISABLE_COALESCING = SystemProperties.getBoolean("com.datastax.driver.DISABLE_COALESCING", false);
 
-    enum State {OPEN, TRASHED, RESURRECTING, GONE}
+    enum State {
+        OPEN,
+        TRASHED,
+        RESURRECTING,
+        GONE
+    }
 
     final AtomicReference<State> state = new AtomicReference<State>(State.OPEN);
 
@@ -189,8 +194,8 @@ class Connection {
                     Exception e = (t instanceof ConnectionException || t instanceof DriverException || t instanceof InterruptedException)
                             ? (Exception) t
                             : new ConnectionException(Connection.this.address,
-                            String.format("Unexpected error during transport initialization (%s)", t),
-                            t);
+                                    String.format("Unexpected error during transport initialization (%s)", t),
+                                    t);
                     future.setException(defunct(e));
                 }
                 return future;
@@ -402,7 +407,6 @@ class Connection {
                 Host.statesLogger.trace("Defuncting " + this, e);
             else if (Host.statesLogger.isDebugEnabled())
                 Host.statesLogger.debug("Defuncting {} because: {}", this, e.getMessage());
-
 
             Host host = factory.manager.metadata.getHost(address);
             if (host != null) {
@@ -1314,7 +1318,7 @@ class Connection {
                 pipeline.addLast("ssl", sslOptions.newSSLHandler(channel));
             }
 
-//            pipeline.addLast("debug", new LoggingHandler(LogLevel.INFO));
+            //            pipeline.addLast("debug", new LoggingHandler(LogLevel.INFO));
 
             pipeline.addLast("frameDecoder", new Frame.Decoder());
             pipeline.addLast("frameEncoder", frameEncoder);

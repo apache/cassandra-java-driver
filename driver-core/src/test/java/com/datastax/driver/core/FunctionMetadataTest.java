@@ -171,8 +171,7 @@ public class FunctionMetadataTest extends CCMTestsSupport {
                         + "    zip int,"
                         + "    phones frozen<set<frozen<\"Phone\">>>,"
                         + "    location frozen<tuple<float, float>>"
-                        + ")", keyspace)
-        );
+                        + ")", keyspace));
     }
 
 }

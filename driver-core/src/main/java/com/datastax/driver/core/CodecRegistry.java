@@ -162,7 +162,7 @@ public final class CodecRegistry {
             TypeCodec.uuid(), // must be declared before TimeUUIDCodec so it gets chosen when CQL type not available
             TypeCodec.timeUUID(),
             TypeCodec.inet()
-    );
+            );
 
     /**
      * The default {@code CodecRegistry} instance.

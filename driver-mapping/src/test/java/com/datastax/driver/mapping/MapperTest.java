@@ -73,7 +73,8 @@ public class MapperTest extends CCMTestsSupport {
 
         private String name;
         private String email;
-        @Column // not strictly required, but we want to check that the annotation works without a name
+        @Column
+        // not strictly required, but we want to check that the annotation works without a name
         private int year;
 
         public User() {
@@ -156,7 +157,6 @@ public class MapperTest extends CCMTestsSupport {
         @PartitionKey
         @Column(name = "user_id")
         private UUID userId;
-
 
         private Set<String> tags;
 
@@ -262,7 +262,7 @@ public class MapperTest extends CCMTestsSupport {
         // somehow, but well, not a huge deal.
         @Query("SELECT * FROM posts WHERE user_id=:userId AND post_id=:postId")
         Post getOne(@Param("userId") UUID userId,
-                    @Param("postId") UUID postId);
+                @Param("postId") UUID postId);
 
         // Note that the following method will be asynchronous (it will use executeAsync
         // underneath) because it's return type is a ListenableFuture. Similarly, we know
@@ -502,7 +502,6 @@ public class MapperTest extends CCMTestsSupport {
         Statement deleteQuery = mapper.deleteQuery(u.getUserId());
         assertThat(saveQuery.isIdempotent()).isTrue();
     }
-
 
     @Table(name = "users")
     public static class UserUnknownColumn {

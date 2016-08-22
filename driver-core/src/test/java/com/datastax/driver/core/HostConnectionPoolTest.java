@@ -144,7 +144,8 @@ public class HostConnectionPoolTest extends ScassandraTestBase.PerClassCluster {
             try {
                 MockRequest.send(pool);
                 Assertions.fail("Expected a TimeoutException");
-            } catch (TimeoutException e) { /*expected*/}
+            } catch (TimeoutException e) { /*expected*/
+            }
         } finally {
             completeRequests(requests);
             cluster.close();
@@ -486,7 +487,6 @@ public class HostConnectionPoolTest extends ScassandraTestBase.PerClassCluster {
         }
     }
 
-
     /**
      * Ensures that if all connections on a host are closed that the host is marked
      * down and the control connection is notified of that fact and re-established
@@ -560,7 +560,6 @@ public class HostConnectionPoolTest extends ScassandraTestBase.PerClassCluster {
             cluster.close();
         }
     }
-
 
     /**
      * Ensures that if a connection on a host is lost that brings the number of active connections in a pool
@@ -868,7 +867,6 @@ public class HostConnectionPoolTest extends ScassandraTestBase.PerClassCluster {
         }
     }
 
-
     /**
      * Ensures that if all connections fail on pool init that the host and subsequently the
      * control connection is not marked down.  The test also ensures that when making requests
@@ -1059,7 +1057,12 @@ public class HostConnectionPoolTest extends ScassandraTestBase.PerClassCluster {
      */
     static class MockRequest implements Connection.ResponseCallback {
 
-        enum State {START, COMPLETED, FAILED, TIMED_OUT}
+        enum State {
+            START,
+            COMPLETED,
+            FAILED,
+            TIMED_OUT
+        }
 
         final Connection connection;
         private Connection.ResponseHandler responseHandler;

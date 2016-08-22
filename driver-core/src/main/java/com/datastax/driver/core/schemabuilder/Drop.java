@@ -22,7 +22,11 @@ import com.google.common.base.Optional;
  */
 public class Drop extends SchemaStatement {
 
-    enum DroppedItem {TABLE, TYPE, INDEX}
+    enum DroppedItem {
+        TABLE,
+        TYPE,
+        INDEX
+    }
 
     private Optional<String> keyspaceName = Optional.absent();
     private String itemName;

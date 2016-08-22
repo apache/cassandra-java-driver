@@ -36,13 +36,13 @@ public class SchemaBuilderIT extends CCMTestsSupport {
     public void should_modify_table_metadata() {
         // Create a table
         session().execute(SchemaBuilder.createTable("ks", "TableMetadata")
-                        .addPartitionKey("a", DataType.cint())
-                        .addPartitionKey("b", DataType.cint())
-                        .addClusteringColumn("c", DataType.cint())
-                        .addClusteringColumn("d", DataType.cint())
-                        .withOptions()
-                        .compactStorage()
-        );
+                .addPartitionKey("a", DataType.cint())
+                .addPartitionKey("b", DataType.cint())
+                .addClusteringColumn("c", DataType.cint())
+                .addClusteringColumn("d", DataType.cint())
+                .withOptions()
+                .compactStorage()
+                );
 
         // Modify the table metadata
         session().execute(SchemaBuilder.alterTable("TableMetadata")
@@ -132,24 +132,24 @@ public class SchemaBuilderIT extends CCMTestsSupport {
     public void should_create_a_table_and_a_udt() {
         // Create a UDT and a table
         session().execute(SchemaBuilder.createType("MyUDT")
-                        .ifNotExists()
-                        .addColumn("x", DataType.cint())
-        );
+                .ifNotExists()
+                .addColumn("x", DataType.cint())
+                );
         UDTType myUDT = UDTType.frozen("MyUDT");
         session().execute(SchemaBuilder.createTable("ks", "CreateTable")
-                        .ifNotExists()
-                        .addPartitionKey("a", DataType.cint())
-                        .addUDTPartitionKey("b", myUDT)
-                        .addClusteringColumn("c", DataType.ascii())
-                        .addUDTClusteringColumn("d", myUDT)
-                        .addUDTColumn("e", myUDT)
-                        .addStaticColumn("f", DataType.bigint())
-                        .addUDTStaticColumn("g", myUDT)
-                        .addUDTListColumn("h", myUDT)
-                        .addUDTMapColumn("i", DataType.cboolean(), myUDT)
-                        .addUDTMapColumn("j", myUDT, DataType.cboolean())
-                        .addUDTSetColumn("k", myUDT)
-        );
+                .ifNotExists()
+                .addPartitionKey("a", DataType.cint())
+                .addUDTPartitionKey("b", myUDT)
+                .addClusteringColumn("c", DataType.ascii())
+                .addUDTClusteringColumn("d", myUDT)
+                .addUDTColumn("e", myUDT)
+                .addStaticColumn("f", DataType.bigint())
+                .addUDTStaticColumn("g", myUDT)
+                .addUDTListColumn("h", myUDT)
+                .addUDTMapColumn("i", DataType.cboolean(), myUDT)
+                .addUDTMapColumn("j", myUDT, DataType.cboolean())
+                .addUDTSetColumn("k", myUDT)
+                );
 
         // Check columns a to k
         ResultSet rows = session().execute(
@@ -178,18 +178,18 @@ public class SchemaBuilderIT extends CCMTestsSupport {
     public void should_add_and_drop_a_column() {
         // Create a table, add a column to it with an alter table statement and delete that column
         session().execute(SchemaBuilder.createTable("ks", "DropColumn")
-                        .ifNotExists()
-                        .addPartitionKey("a", DataType.cint())
-        );
+                .ifNotExists()
+                .addPartitionKey("a", DataType.cint())
+                );
 
         // Add and then drop a column
         session().execute(SchemaBuilder.alterTable("ks", "DropColumn")
-                        .addColumn("b")
-                        .type(DataType.cint())
-        );
+                .addColumn("b")
+                .type(DataType.cint())
+                );
         session().execute(SchemaBuilder.alterTable("ks", "DropColumn")
-                        .dropColumn("b")
-        );
+                .dropColumn("b")
+                );
 
         // Check that only column a exist
         ResultSet rows = session().execute(
@@ -202,7 +202,7 @@ public class SchemaBuilderIT extends CCMTestsSupport {
     }
 
     private void verifyNextColumnDefinition(Iterator<Row> rowIterator, String columnName, String type,
-                                            String... validatorFragments) {
+            String... validatorFragments) {
         Row rowA = rowIterator.next();
         assertThat(rowA.getString("column_name")).isEqualTo(columnName);
         assertThat(rowA.getString("type")).isEqualTo(type);
@@ -215,8 +215,8 @@ public class SchemaBuilderIT extends CCMTestsSupport {
     public void should_drop_a_table() {
         // Create a table
         session().execute(SchemaBuilder.createTable("ks", "DropTable")
-                        .addPartitionKey("a", DataType.cint())
-        );
+                .addPartitionKey("a", DataType.cint())
+                );
 
         // Drop the table
         session().execute(SchemaBuilder.dropTable("ks", "DropTable"));
@@ -235,20 +235,20 @@ public class SchemaBuilderIT extends CCMTestsSupport {
     public void should_create_an_index() {
         // Create a table
         session().execute(SchemaBuilder.createTable("ks", "CreateIndex")
-                        .addPartitionKey("a", DataType.cint())
-                        .addClusteringColumn("b", DataType.cint())
-                        .addColumn("c", DataType.map(DataType.cint(), DataType.cint()))
-        );
+                .addPartitionKey("a", DataType.cint())
+                .addClusteringColumn("b", DataType.cint())
+                .addColumn("c", DataType.map(DataType.cint(), DataType.cint()))
+                );
 
         // Create an index on a regular column of the table
         session().execute(SchemaBuilder.createIndex("ks_Index")
-                        .onTable("ks", "CreateIndex")
-                        .andColumn("b")
-        );
+                .onTable("ks", "CreateIndex")
+                .andColumn("b")
+                );
         session().execute(SchemaBuilder.createIndex("ks_IndexOnMap")
-                        .onTable("ks", "CreateIndex")
-                        .andKeysOfColumn("c")
-        );
+                .onTable("ks", "CreateIndex")
+                .andKeysOfColumn("c")
+                );
 
         // Verify that the indexes exist on the right columns
         ResultSet rows = session().execute(
@@ -264,7 +264,7 @@ public class SchemaBuilderIT extends CCMTestsSupport {
     }
 
     private void verifyNextIndexDefinition(Iterator<Row> iterator, String name, String options, String type,
-                                           int index) {
+            int index) {
         Row nextIndex = iterator.next();
         assertThat(nextIndex.getString("index_name")).isEqualTo(name);
         assertThat(nextIndex.getString("index_options")).isEqualTo(options);
@@ -276,18 +276,18 @@ public class SchemaBuilderIT extends CCMTestsSupport {
     public void should_drop_an_index() {
         // Create a table
         session().execute(SchemaBuilder.createTable("ks", "DropIndex")
-                        .addPartitionKey("a", DataType.cint())
-                        .addClusteringColumn("b", DataType.cint())
-        );
+                .addPartitionKey("a", DataType.cint())
+                .addClusteringColumn("b", DataType.cint())
+                );
 
         // Create an index
         // Note: we have to pick a lower-case name because Cassandra uses the CamelCase index name at creation
         // but a lowercase index name at deletion
         // See : https://issues.apache.org/jira/browse/CASSANDRA-8365
         session().execute(SchemaBuilder.createIndex("ks_index")
-                        .onTable("ks", "DropIndex")
-                        .andColumn("b")
-        );
+                .onTable("ks", "DropIndex")
+                .andColumn("b")
+                );
 
         // Verify that the PK index and the secondary indexes both exist
         assertThat(numberOfIndexedColumns()).isEqualTo(1);

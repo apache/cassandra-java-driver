@@ -258,7 +258,7 @@ public class CodecRegistryTest {
                 .accepts(javaType);
         assertThat(new CodecRegistry().codecFor(new ArrayList<Integer>()))
                 .isNotNull()
-                        // empty collections are mapped to blob codec if no CQL type provided
+                // empty collections are mapped to blob codec if no CQL type provided
                 .accepts(list(blob()))
                 .accepts(listOf(ByteBuffer.class));
         assertThat(new CodecRegistry().codecFor(cqlType, new ArrayList<Integer>()))
@@ -289,7 +289,7 @@ public class CodecRegistryTest {
                 .accepts(javaType);
         assertThat(new CodecRegistry().codecFor(new HashSet<Integer>()))
                 .isNotNull()
-                        // empty collections are mapped to blob codec if no CQL type provided
+                // empty collections are mapped to blob codec if no CQL type provided
                 .accepts(set(blob()))
                 .accepts(setOf(ByteBuffer.class));
         assertThat(new CodecRegistry().codecFor(cqlType, new HashSet<Integer>()))
@@ -320,7 +320,7 @@ public class CodecRegistryTest {
                 .accepts(javaType);
         assertThat(new CodecRegistry().codecFor(new HashMap<Integer, List<String>>()))
                 .isNotNull()
-                        // empty collections are mapped to blob codec if no CQL type provided
+                // empty collections are mapped to blob codec if no CQL type provided
                 .accepts(map(blob(), blob()))
                 .accepts(mapOf(ByteBuffer.class, ByteBuffer.class));
         assertThat(new CodecRegistry().codecFor(cqlType, new HashMap<Integer, List<String>>()))
@@ -449,8 +449,7 @@ public class CodecRegistryTest {
 
         assertThat(logs.getNext()).contains("Ignoring codec MockCodec");
         assertThat(
-                registry.codecFor(cint(), Integer.class)
-        ).isNotSameAs(newCodec);
+                registry.codecFor(cint(), Integer.class)).isNotSameAs(newCodec);
 
         stopCapturingLogs(logs);
     }
@@ -470,8 +469,7 @@ public class CodecRegistryTest {
 
         assertThat(logs.getNext()).contains("Ignoring codec MockCodec");
         assertThat(
-                registry.codecFor(list(cint()), listOf(Integer.class))
-        ).isNotSameAs(newCodec);
+                registry.codecFor(list(cint()), listOf(Integer.class))).isNotSameAs(newCodec);
 
         stopCapturingLogs(logs);
     }

@@ -74,11 +74,11 @@ public class LatencyAwarePolicy implements ChainableLoadBalancingPolicy {
     private final long minMeasure;
 
     private LatencyAwarePolicy(LoadBalancingPolicy childPolicy,
-                               double exclusionThreshold,
-                               long scale,
-                               long retryPeriod,
-                               long updateRate,
-                               int minMeasure) {
+            double exclusionThreshold,
+            long scale,
+            long retryPeriod,
+            long updateRate,
+            int minMeasure) {
         this.childPolicy = childPolicy;
         this.retryPeriod = retryPeriod;
         this.scale = scale;
@@ -380,7 +380,7 @@ public class LatencyAwarePolicy implements ChainableLoadBalancingPolicy {
             BootstrappingException.class,
             UnpreparedException.class,
             QueryValidationException.class // query validation also happens at early stages in the coordinator
-    );
+            );
 
     private class Tracker implements LatencyTracker {
 
@@ -403,9 +403,11 @@ public class LatencyAwarePolicy implements ChainableLoadBalancingPolicy {
 
         private boolean shouldConsiderNewLatency(Statement statement, Exception exception) {
             // query was successful: always consider
-            if (exception == null) return true;
+            if (exception == null)
+                return true;
             // filter out "fast" errors
-            if (EXCLUDED_EXCEPTIONS.contains(exception.getClass())) return false;
+            if (EXCLUDED_EXCEPTIONS.contains(exception.getClass()))
+                return false;
             return true;
         }
 

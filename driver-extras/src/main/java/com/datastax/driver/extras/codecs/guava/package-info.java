@@ -20,3 +20,4 @@
  * serializing between CQL types and Guava-specific Java types.
  */
 package com.datastax.driver.extras.codecs.guava;
+

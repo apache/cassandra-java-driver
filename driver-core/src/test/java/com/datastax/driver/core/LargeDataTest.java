@@ -177,7 +177,6 @@ public class LargeDataTest extends CCMTestsSupport {
         }
     }
 
-
     /**
      * Test a wide row of size 1,000,000
      *

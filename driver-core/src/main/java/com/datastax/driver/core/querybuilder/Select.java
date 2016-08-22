@@ -54,11 +54,11 @@ public class Select extends BuiltStatement {
     }
 
     Select(String keyspace,
-           String table,
-           List<Object> routingKeyValues,
-           List<ColumnMetadata> partitionKey,
-           List<Object> columnNames,
-           boolean isDistinct) {
+            String table,
+            List<Object> routingKeyValues,
+            List<ColumnMetadata> partitionKey,
+            List<Object> columnNames,
+            boolean isDistinct) {
         super(keyspace, partitionKey, routingKeyValues);
         this.table = table;
         this.isDistinct = isDistinct;

@@ -164,7 +164,6 @@ public abstract class AbstractPoliciesTest extends CCMTestsSupport {
                 session().execute(new SimpleStatement(String.format("INSERT INTO %s(k, i) VALUES (0, 0)", tableName)).setConsistencyLevel(cl));
     }
 
-
     /**
      * Query methods that handle reads based on PreparedStatements and/or ConsistencyLevels.
      */

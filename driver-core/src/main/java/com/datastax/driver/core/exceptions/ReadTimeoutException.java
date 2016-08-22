@@ -42,8 +42,7 @@ public class ReadTimeoutException extends QueryConsistencyException {
                 String.format("Cassandra timeout during read query at consistency %s (%s)", consistency, formatDetails(received, required, dataPresent)),
                 consistency,
                 received,
-                required
-        );
+                required);
         this.dataPresent = dataPresent;
     }
 
@@ -85,8 +84,7 @@ public class ReadTimeoutException extends QueryConsistencyException {
                 getConsistencyLevel(),
                 getReceivedAcknowledgements(),
                 getRequiredAcknowledgements(),
-                wasDataRetrieved()
-        );
+                wasDataRetrieved());
     }
 
     /**
@@ -112,8 +110,7 @@ public class ReadTimeoutException extends QueryConsistencyException {
                 getConsistencyLevel(),
                 getReceivedAcknowledgements(),
                 getRequiredAcknowledgements(),
-                wasDataRetrieved()
-        );
+                wasDataRetrieved());
     }
 
 }
