@@ -491,9 +491,8 @@ public abstract class Statement {
      * Whether this statement is idempotent, i.e. whether it can be applied multiple times
      * without changing the result beyond the initial application.
      * <p/>
-     * Idempotence plays a role in {@link RetryPolicy retries} and
-     * {@link com.datastax.driver.core.policies.SpeculativeExecutionPolicy speculative executions}.
-     * If a statement is <em>not idempotent</em>, the driver will not schedule retries or speculative
+     * Idempotence plays a role in {@link com.datastax.driver.core.policies.SpeculativeExecutionPolicy speculative executions}.
+     * If a statement is <em>not idempotent</em>, the driver will not schedule speculative
      * executions for it.
      * <p/>
      * Note that this method can return {@code null}, in which case the driver will default to
