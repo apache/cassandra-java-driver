@@ -17,10 +17,7 @@ package com.datastax.driver.mapping;
 
 import com.datastax.driver.core.CCMTestsSupport;
 import com.datastax.driver.core.utils.CassandraVersion;
-import com.datastax.driver.mapping.annotations.Accessor;
-import com.datastax.driver.mapping.annotations.Param;
-import com.datastax.driver.mapping.annotations.Query;
-import com.datastax.driver.mapping.annotations.Table;
+import com.datastax.driver.mapping.annotations.*;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
@@ -31,7 +28,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 @SuppressWarnings("unused")
 @CassandraVersion(major = 3.0)
 public class MapperMaterializedViewTest extends CCMTestsSupport {
-
 
     @Override
     public void onTestContextInitialized() {
@@ -73,11 +69,28 @@ public class MapperMaterializedViewTest extends CCMTestsSupport {
         );
     }
 
+
+    private Mapper<AllTimeHigh> mapper;
+
     private ScoreAccessor accessor;
 
     @BeforeMethod(groups = "short")
     public void setUp() {
-        accessor = new MappingManager(session()).createAccessor(ScoreAccessor.class);
+        MappingManager mappingManager = new MappingManager(session());
+        mapper = mappingManager.mapper(AllTimeHigh.class);
+        accessor = mappingManager.createAccessor(ScoreAccessor.class);
+    }
+
+    /**
+     * Validates that a materialized view can be mapped as a regular table.
+     *
+     * @test_category materialized_view, mapper
+     * @jira_ticket JAVA-1258
+     */
+    @Test(groups = "short")
+    public void should_access_mapped_materialized_view() {
+        AllTimeHigh allTimeHigh = mapper.get("Coup", 4000, "pcmanus", 2015, 5, 1);
+        assertThat(allTimeHigh).isNotNull();
     }
 
     /**
@@ -159,14 +172,22 @@ public class MapperMaterializedViewTest extends CCMTestsSupport {
 
     @Table(name = "scores")
     public static class Score {
+
+        //primary key: user, game, year, month, day
+
+        @PartitionKey
         String user;
 
+        @ClusteringColumn(0)
         String game;
 
+        @ClusteringColumn(1)
         int year;
 
+        @ClusteringColumn(2)
         int month;
 
+        @ClusteringColumn(3)
         int day;
 
         int score;
@@ -276,5 +297,136 @@ public class MapperMaterializedViewTest extends CCMTestsSupport {
             result = 31 * result + score;
             return result;
         }
+    }
+
+    @Table(name = "alltimehigh")
+    public static class AllTimeHigh {
+
+        //primary key: game, score, user, year, month, day
+
+        @PartitionKey
+        String game;
+
+        @ClusteringColumn(0)
+        int score;
+
+        @ClusteringColumn(1)
+        String user;
+
+        @ClusteringColumn(2)
+        int year;
+
+        @ClusteringColumn(3)
+        int month;
+
+        @ClusteringColumn(4)
+        int day;
+
+        public AllTimeHigh() {
+        }
+
+        public AllTimeHigh(String user, String game, int year, int month, int day, int score) {
+            this.user = user;
+            this.game = game;
+            this.year = year;
+            this.month = month;
+            this.day = day;
+            this.score = score;
+        }
+
+        public String getUser() {
+            return user;
+        }
+
+        public void setUser(String user) {
+            this.user = user;
+        }
+
+        public String getGame() {
+            return game;
+        }
+
+        public void setGame(String game) {
+            this.game = game;
+        }
+
+        public int getYear() {
+            return year;
+        }
+
+        public void setYear(int year) {
+            this.year = year;
+        }
+
+        public int getMonth() {
+            return month;
+        }
+
+        public void setMonth(int month) {
+            this.month = month;
+        }
+
+        public int getDay() {
+            return day;
+        }
+
+        public void setDay(int day) {
+            this.day = day;
+        }
+
+        public int getScore() {
+            return score;
+        }
+
+        public void setScore(int score) {
+            this.score = score;
+        }
+
+        @Override
+        public String toString() {
+            return "AllTimeHigh{" +
+                    "user='" + user + '\'' +
+                    ", game='" + game + '\'' +
+                    ", year=" + year +
+                    ", month=" + month +
+                    ", day=" + day +
+                    ", score=" + score +
+                    '}';
+        }
+
+        @SuppressWarnings("SimplifiableIfStatement")
+        @Override
+        public boolean equals(Object o) {
+            if (this == o)
+                return true;
+            if (!(o instanceof Score))
+                return false;
+
+            Score score1 = (Score) o;
+
+            if (year != score1.year)
+                return false;
+            if (month != score1.month)
+                return false;
+            if (day != score1.day)
+                return false;
+            if (score != score1.score)
+                return false;
+            if (!user.equals(score1.user))
+                return false;
+            return game.equals(score1.game);
+        }
+
+        @Override
+        public int hashCode() {
+            int result = user.hashCode();
+            result = 31 * result + game.hashCode();
+            result = 31 * result + year;
+            result = 31 * result + month;
+            result = 31 * result + day;
+            result = 31 * result + score;
+            return result;
+        }
+
     }
 }
