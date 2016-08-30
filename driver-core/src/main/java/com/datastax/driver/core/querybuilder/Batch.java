@@ -15,10 +15,7 @@
  */
 package com.datastax.driver.core.querybuilder;
 
-import com.datastax.driver.core.CodecRegistry;
-import com.datastax.driver.core.ProtocolVersion;
-import com.datastax.driver.core.RegularStatement;
-import com.datastax.driver.core.SimpleStatement;
+import com.datastax.driver.core.*;
 
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
@@ -173,6 +170,14 @@ public class Batch extends BuiltStatement {
     @Override
     public String getKeyspace() {
         return statements.isEmpty() ? null : statements.get(0).getKeyspace();
+    }
+
+    @Override
+    public Boolean isIdempotent() {
+        if (idempotent != null) {
+            return idempotent;
+        }
+        return isBatchIdempotent(statements);
     }
 
     /**

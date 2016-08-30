@@ -23,6 +23,7 @@ import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
 
 import java.nio.ByteBuffer;
+import java.util.Collection;
 import java.util.Map;
 
 /**
@@ -490,19 +491,31 @@ public abstract class Statement {
      * Whether this statement is idempotent, i.e. whether it can be applied multiple times
      * without changing the result beyond the initial application.
      * <p/>
-     * Idempotence plays a role in {@link com.datastax.driver.core.policies.SpeculativeExecutionPolicy speculative executions}.
-     * If a statement is <em>not idempotent</em>, the driver will not schedule speculative
+     * Idempotence plays a role in {@link RetryPolicy retries} and
+     * {@link com.datastax.driver.core.policies.SpeculativeExecutionPolicy speculative executions}.
+     * If a statement is <em>not idempotent</em>, the driver will not schedule retries or speculative
      * executions for it.
      * <p/>
      * Note that this method can return {@code null}, in which case the driver will default to
      * {@link QueryOptions#getDefaultIdempotence()}.
      * <p/>
      * By default, this method returns {@code null} for all statements, except for
-     * {@link BuiltStatement}s, where the value will be inferred from the query: if it updates
-     * counters, prepends/appends to a list, or uses a function call or
+     * <ul>
+     * <li>{@link BuiltStatement} - value will be inferred  from the query: if it updates counters,
+     * prepends/appends to a list, or uses a function call or
      * {@link com.datastax.driver.core.querybuilder.QueryBuilder#raw(String)} anywhere in an inserted value,
      * the result will be {@code false}; otherwise it will be {@code true}.
-     * In all cases, calling {@link #setIdempotent(boolean)} forces a value that overrides every other mechanism.
+     * </li>
+     * <li>
+     * {@link com.datastax.driver.core.querybuilder.Batch} and {@link BatchStatement}:
+     * <ol>
+     * <li>If any statement in batch has isIdempotent() false - return false</li>
+     * <li>If no statements with isIdempotent() false, but some have isIdempotent() null - return null</li>
+     * <li>Otherwise - return true</li>
+     * </ol>
+     * </li>
+     * </ul>
+     * In all cases, calling {@link #setIdempotent(boolean)} forces a value that overrides calculated value.
      * <p/>
      * Note that when a statement is prepared ({@link Session#prepare(String)}), its idempotence flag will be propagated
      * to all {@link PreparedStatement}s created from it.
@@ -565,5 +578,18 @@ public abstract class Statement {
     public Statement setOutgoingPayload(Map<String, ByteBuffer> payload) {
         this.outgoingPayload = payload == null ? null : ImmutableMap.copyOf(payload);
         return this;
+    }
+
+    protected static Boolean isBatchIdempotent(Collection<? extends Statement> statements) {
+        boolean hasNullIdempotentStatements = false;
+        for (Statement statement : statements) {
+            Boolean innerIdempotent = statement.isIdempotent();
+            if (innerIdempotent == null) {
+                hasNullIdempotentStatements = true;
+            } else if (!innerIdempotent) {
+                return false;
+            }
+        }
+        return (hasNullIdempotentStatements) ? null : true;
     }
 }
