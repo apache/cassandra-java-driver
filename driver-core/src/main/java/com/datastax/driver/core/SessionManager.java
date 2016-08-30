@@ -673,10 +673,11 @@ class SessionManager extends AbstractSession {
         for (EventExecutor executor : connectionFactory.eventLoopGroup) {
             if (executor.inEventLoop()) {
                 throw new IllegalStateException(
-                        "Detected a synchronous Session call (execute() or prepare()) on an I/O thread, " +
-                                "this can cause deadlocks or unpredictable behavior. " +
-                                "Make sure your Future callbacks only use async calls, or schedule them on a " +
-                                "different executor.");
+                        "Detected a synchronous call on an I/O thread, this can cause deadlocks or unpredictable " +
+                                "behavior. This generally happens when a Future callback calls a synchronous Session " +
+                                "method (execute() or prepare()), or iterates a result set past the fetch size " +
+                                "(causing an internal synchronous fetch of the next page of results). " +
+                                "Avoid this in your callbacks, or schedule them on a different executor.");
             }
         }
     }
