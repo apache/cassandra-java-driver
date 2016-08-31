@@ -218,6 +218,35 @@ public class TypeCodecTest {
         assertThat(codecRegistry.codecFor(list(cint()), new TypeToken<List<B>>(){})).isNotNull().isEqualTo(new TypeCodec.ListCodec<B>(bCodec));
     }
 
+    @Test(groups = "unit")
+    public void should_deserialize_empty_buffer_as_tuple_with_null_values() {
+        CodecRegistry codecRegistry = new CodecRegistry();
+        TupleType tupleType = new TupleType(newArrayList(DataType.cint(), DataType.varchar(), DataType.cfloat()), ProtocolVersion.NEWEST_SUPPORTED, codecRegistry);
+        TupleValue expected = tupleType.newValue(null, null, null);
+
+        TupleValue actual = codecRegistry.codecFor(tupleType, TupleValue.class).deserialize(ByteBuffer.allocate(0), ProtocolVersion.NEWEST_SUPPORTED);
+        assertThat(actual).isNotNull();
+        assertThat(actual).isEqualTo(expected);
+    }
+
+    @Test(groups = "unit")
+    public void should_deserialize_empty_buffer_as_udt_with_null_values() {
+        CodecRegistry codecRegistry = new CodecRegistry();
+        UserType udt = new UserType("ks", "t", Arrays.asList(
+            new UserType.Field("t", DataType.text()),
+            new UserType.Field("i", DataType.cint()),
+            new UserType.Field("l", DataType.list(DataType.text()))
+        ), ProtocolVersion.NEWEST_SUPPORTED, codecRegistry);
+        UDTValue expected = udt.newValue();
+        expected.setString("t", null);
+        expected.setObject("i", null);
+        expected.setList("l", null);
+
+        UDTValue actual = codecRegistry.codecFor(udt, UDTValue.class).deserialize(ByteBuffer.allocate(0), ProtocolVersion.NEWEST_SUPPORTED);
+        assertThat(actual).isNotNull();
+        assertThat(actual).isEqualTo(expected);
+    }
+
 
     @Test(groups = "unit")
     public void should_deserialize_empty_buffer_as_tuple_with_null_values() {
