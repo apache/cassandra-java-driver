@@ -110,6 +110,10 @@ and provide hints about what's going wrong.
 * `com.datastax.driver.core.Message`
     * TRACE
         * Custom payloads
+* `com.datastax.driver.core.CodecRegistry`
+    * TRACE
+        * Codec registration
+        * Codec lookups
 
 ### Logging query latencies
 

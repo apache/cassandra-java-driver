@@ -129,8 +129,7 @@ Cluster cluster = new Cluster.builder().withCodecRegistry(myCodecRegistry).build
 ```
 
 Note: when you instantiate a new `CodecRegistry`, it automatically registers all the default codecs used by the driver.
-This ensures that the new registry will not lack of an essential codec. *You cannot deregister default codecs, only
-register new ones*.
+This ensures that the new registry will not lack of an essential codec.
 
 From now on, your custom codec is fully operational. It will be used every time the driver encounters
 a `MyPojo` instance when executing queries, or when you ask it to retrieve a `MyPojo` instance from a `ResultSet`.
@@ -313,6 +312,19 @@ That's also how the object mapper handles UDTs, and you can rely on the
 mapper to generate UDT codecs for you; see
 [this page](../object_mapper/custom_codecs/#implicit-udt-codecs) for more
 information.
+
+### Replacing (overriding) built-in codecs
+
+User-provided codecs should generally *enrich* the driver capabilities, e.g. by adding support
+for additional Java types; it is usually not recommended to register a codec that handles
+the exact same CQL-to-Java mapping as another already registered codec's. 
+
+Overriding a registered codec is however permitted, even if the driver will log a warning.
+
+The only cases that could justify overriding a codec are:
+ 
+ * The overriding codec returns a different implementation of a common Java interface;
+ * The overriding codec claims to perform better than the registered one.
 
 ### Limitations
 
