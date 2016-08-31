@@ -15,10 +15,13 @@
  */
 package com.datastax.driver.core;
 
+
 import java.util.*;
 
+import com.google.common.base.Objects;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Iterators;
+import com.google.common.hash.HashCode;
 
 /**
  * A User Defined Type (UDT).
@@ -170,8 +173,12 @@ public class UserType extends DataType implements Iterable<UserType.Field>{
     }
 
     @Override
-    public final int hashCode() {
-        return Arrays.hashCode(new Object[]{ name, keyspace, typeName, byIdx });
+    public int hashCode() {
+        int result = name.hashCode();
+        result = 31 * result + keyspace.hashCode();
+        result = 31 * result + typeName.hashCode();
+        result = 31 * result + Arrays.hashCode(byIdx);
+        return result;
     }
 
     @Override

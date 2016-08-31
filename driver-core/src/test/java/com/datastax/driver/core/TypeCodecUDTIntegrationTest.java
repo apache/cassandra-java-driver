@@ -159,7 +159,7 @@ public class TypeCodecUDTIntegrationTest extends CCMBridge.PerClassSingleNodeClu
 
         @Override
         protected UDTValue serialize(Address value) {
-            return value == null ? null : userType.newValue().setString("street", value.street).setInt("zipcode", value.zipcode).setList("phones", value.phones);
+            return value == null ? null : userType.newValue().setString("street", value.street).setInt("zipcode", value.zipcode).setList("phones", value.phones, Phone.class);
         }
     }
 

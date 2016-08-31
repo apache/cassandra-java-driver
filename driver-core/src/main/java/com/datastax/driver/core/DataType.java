@@ -47,6 +47,7 @@ public abstract class DataType {
         INET      (16),
         INT       (9),
         TEXT      (10){
+            @Override
             public boolean isCompatibleWith(Name that) {
                 return this == that || that == VARCHAR;
             }
@@ -54,6 +55,7 @@ public abstract class DataType {
         TIMESTAMP (11),
         UUID      (12),
         VARCHAR   (13){
+            @Override
             public boolean isCompatibleWith(Name that) {
                 return this == that || that == TEXT;
             }
@@ -637,7 +639,7 @@ public abstract class DataType {
 
         @Override
         public final int hashCode() {
-            return Arrays.hashCode(new Object[]{ name, typeArguments });
+            return Objects.hashCode(name, typeArguments);
         }
 
         @Override
@@ -682,7 +684,7 @@ public abstract class DataType {
 
         @Override
         public final int hashCode() {
-            return Arrays.hashCode(new Object[]{ name, customClassName });
+            return Objects.hashCode(name, customClassName);
         }
 
         @Override
