@@ -299,12 +299,32 @@ public final class CodecRegistry {
 
     /**
      * Register the given codec with this registry.
+     * <p>
+     * This method will log a warning and ignore the codec if it collides with a previously registered one.
+     * Note that this check is not done in a completely thread-safe manner; codecs should typically be registered
+     * at application startup, not in a highly concurrent context (if a race condition occurs, the worst outcome
+     * is that no warning gets logged, and the codec gets registered but will never actually be used).
      *
-     * @param codec The codec to add to the registry.
+     * @param newCodec The codec to add to the registry.
      * @return this CodecRegistry (for method chaining).
      */
-    public CodecRegistry register(TypeCodec<?> codec) {
-        return register(Collections.singleton(codec));
+    public CodecRegistry register(TypeCodec<?> newCodec) {
+        for (TypeCodec<?> oldCodec : codecs) {
+            if (oldCodec.accepts(newCodec.getCqlType()) && oldCodec.accepts(newCodec.getJavaType())) {
+                logger.warn("Ignoring codec {} because it collides with previously registered codec {}", newCodec, oldCodec);
+                return this;
+            }
+        }
+
+        CacheKey key = new CacheKey(newCodec.getCqlType(), newCodec.getJavaType());
+        TypeCodec<?> existing = cache.getIfPresent(key);
+        if (existing != null) {
+            logger.warn("Ignoring codec {} because it collides with previously generated codec {}", newCodec, existing);
+            return this;
+        }
+
+        this.codecs.add(newCodec);
+        return this;
     }
 
     /**
@@ -312,9 +332,13 @@ public final class CodecRegistry {
      *
      * @param codecs The codecs to add to the registry.
      * @return this Builder (for method chaining).
+     *
+     * @see #register(TypeCodec)
      */
     public CodecRegistry register(TypeCodec<?>... codecs) {
-        return register(Arrays.asList(codecs));
+        for (TypeCodec<?> codec : codecs)
+            register(codec);
+        return this;
     }
 
     /**
@@ -322,11 +346,12 @@ public final class CodecRegistry {
      *
      * @param codecs The codecs to add to the registry.
      * @return this Builder (for method chaining).
+     *
+     * @see #register(TypeCodec)
      */
     public CodecRegistry register(Iterable<? extends TypeCodec<?>> codecs) {
-        for (TypeCodec<?> codec : codecs) {
-            this.codecs.add(codec);
-        }
+        for (TypeCodec<?> codec : codecs)
+            register(codec);
         return this;
     }
 
