@@ -15,6 +15,7 @@
 - [bug] JAVA-1292: 'Adjusted frame length' error breaks driver's ability to read data.
 - [improvement] JAVA-1293: Make DecoderForStreamIdSize.MAX_FRAME_LENGTH configurable.
 - [improvement] JAVA-1053: Add a metric for authentication errors
+- [improvement] JAVA-1263: Eliminate unnecessary memory copies in FrameCompressor implementations.
 
 
 ### 3.0.3

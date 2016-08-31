@@ -285,7 +285,7 @@
                     </execution>
                 </executions>
                 <configuration>
-                    <comparisonVersion>3.0.2</comparisonVersion>
+                    <comparisonVersion>3.0.3</comparisonVersion>
                     <ignoredDifferencesFile>../clirr-ignores.xml</ignoredDifferencesFile>
                 </configuration>
                 <!--
