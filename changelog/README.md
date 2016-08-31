@@ -93,6 +93,9 @@ Merged from 2.1 branch:
 - [improvement] JAVA-1242: Fix driver-core dependency in driver-stress
 - [improvement] JAVA-1235: Move the query to the end of "re-preparing .." log message as a key value.
 
+- [improvement] JAVA-1147: Upgrade Netty to 4.0.37.
+- [bug] JAVA-1213: Updates and inserts to BLOB column using ReadOnly ByteBuffer fail.
+
 
 ### 3.0.2
 
