@@ -157,4 +157,59 @@ and we've had many reports where the problem turned out to be in user code.
 
 See [Blobs.java] in the `driver-examples` module for some examples and explanations.
 
+
+### Why am I seeing messages about `tombstone_warn_threshold` or `tombstone_fail_threshold` being exceeded in my Cassandra logs?
+
+Applications which use the object mapper or set `null` values in their 
+statements may observe that many tombstones are being stored in their tables
+which subsequently may lead to poor query performance, failed queries, or
+columns being mysteriously deleted.
+
+This is caused by INSERT/UPDATE statements containing `null` values for columns
+that a user does not intend to change.  Common circumstances around this come
+from using the object mapper or writing your own persistence layer and
+attempting to reuse the same `PreparedStatement` for inserting data, even with
+partial updates.
+
+Prior to cassandra 2.2, there was no means of reusing the same
+`PreparedStatement` for making partial updates to different columns.
+
+For example, given the following code:
+
+```java
+PreparedStatement prepared = session.prepare("INSERT INTO contacts (email, firstname, lastname) VALUES (?, ?, ?)");
+BoundStatement bound = prepared.bind();
+bound.set("email", "clint.barton@hawkeye.com");
+bound.set("firstname", "Barney");
+// creates a tombstone!!
+bound.set("lastname", null);
+```
+
+If one wanted to use this query to update only `firstname` this would not
+be achievable without binding the `lastname` parameter to `null`.  This would
+have an undesired side effect of creating a tombstone for `lastname` and thus
+to the user giving the impression that `lastname` was deleted.
+
+In cassandra 2.2 and later with protocol v4, bind parameters (`?`) can 
+optionally be left unset
+([CASSANDRA-7304]):
+ 
+ ```java
+ PreparedStatement prepared = session.prepare("INSERT INTO contacts (email, firstname, lastname) VALUES (?, ?, ?)");
+ BoundStatement bound = prepared.bind();
+ bound.set("email", "clint.barton@hawkeye.com");
+ bound.set("firstname", "Barney");
+ // lastname is left unset.
+ ```
+
+See [Parameters and Binding] for more details about unset parameters.
+
+Another possible root cause for this is using the object mapper and leaving
+fields set to `null`.  This also causes tombstones to be inserted unless
+setting `saveNullFields` option to false.  See [Mapper options] for more
+details.
+
 [Blobs.java]: https://github.com/datastax/java-driver/tree/3.0.x/driver-examples/src/main/java/com/datastax/driver/examples/datatypes/Blobs.java
+[CASSANDRA-7304]: https://issues.apache.org/jira/browse/CASSANDRA-7304
+[Parameters and Binding]: ../manual/statements/prepared/#parameters-and-binding
+[Mapper options]: ../manual/object_mapper/using/#mapper-options
