@@ -111,9 +111,9 @@ public class UUIDsTest {
     }
 
     private static void assertWithin(UUID uuid, UUID lowerBound, UUID upperBound) {
-        ByteBuffer uuidBytes = TypeCodec.UUIDCodec.instance.serialize(uuid, ProtocolVersion.V1);
-        ByteBuffer lb = TypeCodec.UUIDCodec.instance.serialize(lowerBound, ProtocolVersion.V1);
-        ByteBuffer ub = TypeCodec.UUIDCodec.instance.serialize(upperBound, ProtocolVersion.V1);
+        ByteBuffer uuidBytes = TypeCodec.uuidCodec().serialize(uuid, ProtocolVersion.V1);
+        ByteBuffer lb = TypeCodec.uuidCodec().serialize(lowerBound, ProtocolVersion.V1);
+        ByteBuffer ub = TypeCodec.uuidCodec().serialize(upperBound, ProtocolVersion.V1);
         assertTrue(compareTimestampBytes(lb, uuidBytes) <= 0);
         assertTrue(compareTimestampBytes(ub, uuidBytes) >= 0);
     }

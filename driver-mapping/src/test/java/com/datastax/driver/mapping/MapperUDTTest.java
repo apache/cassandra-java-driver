@@ -287,9 +287,9 @@ public class MapperUDTTest extends CCMBridge.PerClassSingleNodeCluster {
 
             // Create a user.
             session.execute("update users SET other_addresses['condo']={street: '101 Ocean Ln', city: 'Jacksonville, FL', zip_code: 89898, phones: {'8675309'}} " +
-                    " WHERE user_id=" + TypeCodec.UUIDCodec.instance.format(userId));
+                    " WHERE user_id=" + TypeCodec.uuidCodec().format(userId));
             session.execute("update users SET mainaddress={street: '42 Middle of Nowhere', city: 'Lake of the Woods', zip_code: 49553, phones: {'8675039'}} " +
-                    " WHERE user_Id=" + TypeCodec.UUIDCodec.instance.format(userId));
+                    " WHERE user_Id=" + TypeCodec.uuidCodec().format(userId));
 
             // Get the user.
             Row row = session.execute("select * from users where user_id=?", userId).one();

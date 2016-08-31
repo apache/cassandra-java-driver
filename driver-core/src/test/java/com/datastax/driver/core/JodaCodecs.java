@@ -58,12 +58,12 @@ public class JodaCodecs {
      * IMPORTANT: {@link LocalTime} as millisecond precision; nanoseconds below one millisecond will be lost
      * during deserialization.
      */
-    public static class LocalTimeCodec extends TypeCodec.MappingCodec<LocalTime, Long> {
+    public static class LocalTimeCodec extends MappingCodec<LocalTime, Long> {
 
         public static final LocalTimeCodec instance = new LocalTimeCodec();
 
         private LocalTimeCodec() {
-            super(TimeCodec.instance, LocalTime.class);
+            super(TypeCodec.timeCodec(), LocalTime.class);
         }
 
         @Override
@@ -87,12 +87,12 @@ public class JodaCodecs {
      * setting and retrieval of <code>date</code> columns as
      * {@link org.joda.time.LocalDate} instances.
      */
-    public static class LocalDateCodec extends TypeCodec.MappingCodec<org.joda.time.LocalDate, LocalDate> {
+    public static class LocalDateCodec extends MappingCodec<org.joda.time.LocalDate, LocalDate> {
 
         public static final LocalDateCodec instance = new LocalDateCodec();
 
         private LocalDateCodec() {
-            super(DateCodec.instance, org.joda.time.LocalDate.class);
+            super(TypeCodec.dateCodec(), org.joda.time.LocalDate.class);
         }
 
         @Override
@@ -120,12 +120,12 @@ public class JodaCodecs {
      *
      * @see TimeZonePreservingDateTimeCodec
      */
-    public static class DateTimeCodec extends TypeCodec.MappingCodec<DateTime, Date> {
+    public static class DateTimeCodec extends MappingCodec<DateTime, Date> {
 
         public static final DateTimeCodec instance = new DateTimeCodec();
 
         private DateTimeCodec() {
-            super(TimestampCodec.instance, DateTime.class);
+            super(TypeCodec.timestampCodec(), DateTime.class);
         }
 
         @Override
@@ -158,7 +158,7 @@ public class JodaCodecs {
      * </p>
      *
      */
-    public static class TimeZonePreservingDateTimeCodec extends TypeCodec.MappingCodec<DateTime, TupleValue> {
+    public static class TimeZonePreservingDateTimeCodec extends MappingCodec<DateTime, TupleValue> {
 
         private final TupleType tupleType;
 

@@ -31,7 +31,6 @@ import org.testng.annotations.Test;
 import static com.google.common.collect.Lists.newArrayList;
 import static org.testng.Assert.fail;
 
-import com.datastax.driver.core.TypeCodec.UDTCodec;
 import com.datastax.driver.core.UserType.Field;
 import com.datastax.driver.core.exceptions.CodecNotFoundException;
 import com.datastax.driver.core.exceptions.InvalidTypeException;
@@ -40,15 +39,13 @@ import static com.datastax.driver.core.Assertions.assertThat;
 import static com.datastax.driver.core.CodecUtils.listOf;
 import static com.datastax.driver.core.DataType.*;
 import static com.datastax.driver.core.ProtocolVersion.V3;
+import static com.datastax.driver.core.TypeCodec.*;
 
 public class TypeCodecTest {
 
     public static final DataType CUSTOM_FOO = DataType.custom("com.example.FooBar");
 
-    public static final TypeCodec.CustomCodec CUSTOM_FOO_CODEC = new TypeCodec.CustomCodec(CUSTOM_FOO);
-
-    private CodecRegistry codecRegistry = new CodecRegistry()
-        .register(CUSTOM_FOO_CODEC);
+    private CodecRegistry codecRegistry = new CodecRegistry();
 
     @Test(groups = "unit")
     public void testCustomList() throws Exception {
@@ -117,8 +114,8 @@ public class TypeCodecTest {
 
     @Test(groups = "unit")
     public void test_ascii_vs_utf8() {
-        TypeCodec.AsciiCodec asciiCodec = TypeCodec.AsciiCodec.instance;
-        TypeCodec.VarcharCodec utf8Codec = TypeCodec.VarcharCodec.instance;
+        TypeCodec<String> asciiCodec = TypeCodec.asciiCodec();
+        TypeCodec<String> utf8Codec = varcharCodec();
         String ascii = "The quick brown fox jumps over the lazy dog!";
         String utf8 = "Dès Noël, où un zéphyr haï me vêt de glaçons würmiens, je dîne d’exquis rôtis de bœuf au kir à l’aÿ d’âge mûr & cætera!";
         assertThat(asciiCodec)
@@ -143,17 +140,17 @@ public class TypeCodecTest {
 
     @Test(groups = "unit")
     public void test_varchar_vs_text() {
-        assertThat(TypeCodec.VarcharCodec.instance)
+        assertThat(varcharCodec())
             .accepts(String.class)
             .accepts(varchar())
             .accepts(text());
-        assertThat(new TypeCodec.ListCodec<String>(TypeCodec.VarcharCodec.instance))
+        assertThat(listCodec(varcharCodec()))
             .accepts(list(varchar()))
             .accepts(list(text()));
-        assertThat(new TypeCodec.SetCodec<String>(TypeCodec.VarcharCodec.instance))
+        assertThat(setCodec(varcharCodec()))
             .accepts(set(varchar()))
             .accepts(set(text()));
-        assertThat(new TypeCodec.MapCodec<String, String>(TypeCodec.VarcharCodec.instance, TypeCodec.VarcharCodec.instance))
+        assertThat(mapCodec(varcharCodec(), varcharCodec()))
             .accepts(map(varchar(), varchar()))
             .accepts(map(varchar(), text()))
             .accepts(map(text(), varchar()))
@@ -162,7 +159,7 @@ public class TypeCodecTest {
         TupleType t2 = new TupleType(newArrayList(text(), varchar()), V3, new CodecRegistry());
         TupleType t3 = new TupleType(newArrayList(varchar(), text()), V3, new CodecRegistry());
         TupleType t4 = new TupleType(newArrayList(text(), text()), V3, new CodecRegistry());
-        assertThat(new TypeCodec.TupleCodec(t1))
+        assertThat(tupleCodec(t1))
             .accepts(t2)
             .accepts(t3)
             .accepts(t4);
@@ -170,7 +167,7 @@ public class TypeCodecTest {
         UserType u2 = new UserType("ks", "table", newArrayList(new Field("f1", text()), new Field("f2", varchar())), V3, new CodecRegistry());
         UserType u3 = new UserType("ks", "table", newArrayList(new Field("f1", varchar()), new Field("f2", text())), V3, new CodecRegistry());
         UserType u4 = new UserType("ks", "table", newArrayList(new Field("f1", text()), new Field("f2", text())), V3, new CodecRegistry());
-        assertThat(new UDTCodec(u1))
+        assertThat(userTypeCodec(u1))
             .accepts(u2)
             .accepts(u3)
             .accepts(u4);
@@ -178,7 +175,7 @@ public class TypeCodecTest {
 
     @Test(groups = "unit")
     public void test_enum() {
-        TypeCodec.EnumStringCodec<FooBarQix> codec = new TypeCodec.EnumStringCodec<FooBarQix>(FooBarQix.class);
+        EnumStringCodec<FooBarQix> codec = new EnumStringCodec<FooBarQix>(FooBarQix.class);
         assertThat(codec)
             .canSerialize(FooBarQix.FOO);
     }
@@ -191,7 +188,10 @@ public class TypeCodecTest {
         assertThat(codecRegistry.codecFor(cint(), A.class)).isNotNull().isSameAs(aCodec);
         // inheritance works: B is assignable to A
         assertThat(codecRegistry.codecFor(cint(), B.class)).isNotNull().isSameAs(aCodec);
-        assertThat(codecRegistry.codecFor(list(cint()), new TypeToken<List<A>>(){})).isNotNull().isEqualTo(new TypeCodec.ListCodec<A>(aCodec));
+        TypeCodec<List<A>> expected = listCodec(aCodec);
+        TypeCodec<List<A>> actual = codecRegistry.codecFor(list(cint()), new TypeToken<List<A>>(){});
+        assertThat(actual.getCqlType()).isEqualTo(expected.getCqlType());
+        assertThat(actual.getJavaType()).isEqualTo(expected.getJavaType());
         // cannot work: List<B> is not assignable to List<A>
         try {
             codecRegistry.codecFor(list(cint()), new TypeToken<List<B>>(){});
@@ -215,7 +215,11 @@ public class TypeCodecTest {
         } catch (CodecNotFoundException e) {
             // ok
         }
-        assertThat(codecRegistry.codecFor(list(cint()), new TypeToken<List<B>>(){})).isNotNull().isEqualTo(new TypeCodec.ListCodec<B>(bCodec));
+        TypeCodec<List<B>> expectedB = listCodec(bCodec);
+        TypeCodec<List<B>> actualB = codecRegistry.codecFor(list(cint()), new TypeToken<List<B>>() {
+        });
+        assertThat(actualB.getCqlType()).isEqualTo(expectedB.getCqlType());
+        assertThat(actualB.getJavaType()).isEqualTo(expectedB.getJavaType());
     }
 
 
@@ -240,7 +244,7 @@ public class TypeCodecTest {
         ), ProtocolVersion.NEWEST_SUPPORTED, codecRegistry);
         UDTValue expected = udt.newValue();
         expected.setString("t", null);
-        expected.setObject("i", null);
+        expected.setToNull("i");
         expected.setList("l", null);
 
         UDTValue actual = codecRegistry.codecFor(udt, UDTValue.class).deserialize(ByteBuffer.allocate(0), ProtocolVersion.NEWEST_SUPPORTED);
@@ -251,7 +255,7 @@ public class TypeCodecTest {
 
     private class ListVarcharToListListInteger extends TypeCodec<List<List<Integer>>> {
 
-        private final ListCodec<String> codec = new ListCodec<String>(VarcharCodec.instance);
+        private final TypeCodec<List<String>> codec = listCodec(varcharCodec());
 
         protected ListVarcharToListListInteger() {
             super(list(varchar()), listOf(listOf(Integer.class)));

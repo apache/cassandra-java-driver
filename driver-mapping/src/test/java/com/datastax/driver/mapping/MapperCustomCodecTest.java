@@ -258,7 +258,7 @@ public class MapperCustomCodecTest extends CCMBridge.PerClassSingleNodeCluster {
         @PartitionKey
         private int i;
 
-        @Column(codec = TypeCodec.StringCodec.class)
+        @Column(codec = NoDefaultConstructorCodec.class)
         private long l;
 
         public int getI() {
@@ -345,7 +345,7 @@ public class MapperCustomCodecTest extends CCMBridge.PerClassSingleNodeCluster {
 
         @Query("update data1 set l = :l where i = :i")
         void setL(@Param("i") int i,
-                  @Param(value = "l", codec = TypeCodec.StringCodec.class) long l);
+                  @Param(value = "l", codec = NoDefaultConstructorCodec.class) long l);
     }
 
     @Accessor
@@ -469,12 +469,12 @@ public class MapperCustomCodecTest extends CCMBridge.PerClassSingleNodeCluster {
 
             @Override
             public ByteBuffer serialize(CustomInt value, ProtocolVersion protocolVersion) throws InvalidTypeException {
-                return TypeCodec.IntCodec.instance.serialize(value.value, protocolVersion);
+                return TypeCodec.intCodec().serialize(value.value, protocolVersion);
             }
 
             @Override
             public CustomInt deserialize(ByteBuffer bytes, ProtocolVersion protocolVersion) throws InvalidTypeException {
-                Integer i = TypeCodec.IntCodec.instance.deserialize(bytes, protocolVersion);
+                Integer i = TypeCodec.intCodec().deserialize(bytes, protocolVersion);
                 return new CustomInt(i);
             }
 
@@ -518,12 +518,12 @@ public class MapperCustomCodecTest extends CCMBridge.PerClassSingleNodeCluster {
 
             @Override
             public ByteBuffer serialize(CustomLong value, ProtocolVersion protocolVersion) throws InvalidTypeException {
-                return TypeCodec.BigintCodec.instance.serialize(value.value, protocolVersion);
+                return TypeCodec.bigintCodec().serialize(value.value, protocolVersion);
             }
 
             @Override
             public CustomLong deserialize(ByteBuffer bytes, ProtocolVersion protocolVersion) throws InvalidTypeException {
-                Long l = TypeCodec.BigintCodec.instance.deserialize(bytes, protocolVersion);
+                Long l = TypeCodec.bigintCodec().deserialize(bytes, protocolVersion);
                 return new CustomLong(l);
             }
 
@@ -555,4 +555,33 @@ public class MapperCustomCodecTest extends CCMBridge.PerClassSingleNodeCluster {
             super(registry.codecFor(DataType.text(), String.class));
         }
     }
+
+    private static class NoDefaultConstructorCodec extends TypeCodec<String> {
+
+        public NoDefaultConstructorCodec(DataType cqlType, Class<String> javaClass) {
+            super(cqlType, javaClass);
+        }
+
+        @Override
+        public ByteBuffer serialize(String value, ProtocolVersion protocolVersion) throws InvalidTypeException {
+            return null;
+        }
+
+        @Override
+        public String deserialize(ByteBuffer bytes, ProtocolVersion protocolVersion) throws InvalidTypeException {
+            return null;
+        }
+
+        @Override
+        public String parse(String value) throws InvalidTypeException {
+            return null;
+        }
+
+        @Override
+        public String format(String value) throws InvalidTypeException {
+            return null;
+        }
+
+    }
+
 }

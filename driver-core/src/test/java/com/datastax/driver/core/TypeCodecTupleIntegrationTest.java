@@ -69,11 +69,6 @@ public class TypeCodecTupleIntegrationTest extends CCMBridge.PerClassSingleNodeC
         rows = session.execute(selectQuery, uuid);
         row = rows.one();
         assertRow(row);
-        // bound with setObject
-        session.execute(ps.bind().setUUID(0, uuid).setString(1, "John Doe").setObject(2, locationValue));
-        rows = session.execute(selectQuery, uuid);
-        row = rows.one();
-        assertRow(row);
     }
 
     @Test(groups = "short")
@@ -95,11 +90,6 @@ public class TypeCodecTupleIntegrationTest extends CCMBridge.PerClassSingleNodeC
         rows = session.execute(selectQuery, uuid);
         row = rows.one();
         assertPartialRow(row);
-        // bound with setObject
-        session.execute(ps.bind().setUUID(0, uuid).setString(1, "John Doe").setObject(2, partialLocationValueInserted));
-        rows = session.execute(selectQuery, uuid);
-        row = rows.one();
-        assertPartialRow(row);
     }
 
     @Test(groups = "short")
@@ -114,7 +104,7 @@ public class TypeCodecTupleIntegrationTest extends CCMBridge.PerClassSingleNodeC
             Session session = cluster.connect(keyspace);
             setUpTupleTypes(cluster);
             codecRegistry
-                .register(new LocationCodec(new TypeCodec.TupleCodec(locationType)))
+                .register(new LocationCodec(TypeCodec.tupleCodec(locationType)))
             ;
             session.execute(insertQuery, uuid, "John Doe", locationValue);
             ResultSet rows = session.execute(selectQuery, uuid);
@@ -150,7 +140,7 @@ public class TypeCodecTupleIntegrationTest extends CCMBridge.PerClassSingleNodeC
             Session session = cluster.connect(keyspace);
             setUpTupleTypes(cluster);
             codecRegistry
-                .register(new LocationCodec(new TypeCodec.TupleCodec(locationType)))
+                .register(new LocationCodec(TypeCodec.tupleCodec(locationType)))
             ;
             session.execute(insertQuery, uuid, "John Doe", partialLocationValueInserted);
             ResultSet rows = session.execute(selectQuery, uuid);
@@ -211,7 +201,7 @@ public class TypeCodecTupleIntegrationTest extends CCMBridge.PerClassSingleNodeC
         partialLocation = new Location(37.387224f, 0.0f);
     }
 
-    static class LocationCodec extends TypeCodec.MappingCodec<Location, TupleValue> {
+    static class LocationCodec extends MappingCodec<Location, TupleValue> {
 
         private final TupleType tupleType;
 
@@ -251,9 +241,7 @@ public class TypeCodecTupleIntegrationTest extends CCMBridge.PerClassSingleNodeC
 
             Location location = (Location)o;
 
-            if (Float.compare(location.latitude, latitude) != 0)
-                return false;
-            return Float.compare(location.longitude, longitude) == 0;
+            return Float.compare(location.latitude, latitude) == 0 && Float.compare(location.longitude, longitude) == 0;
 
         }
 
