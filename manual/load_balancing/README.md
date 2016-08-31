@@ -178,8 +178,8 @@ statement.setKeyspace("testKs");
 // Set the routing key manually: serialize each partition key component to its target CQL type
 ProtocolVersion protocolVersion = cluster.getConfiguration().getProtocolOptions().getProtocolVersionEnum();
 statement.setRoutingKey(
-        DataType.cint().serialize(1, protocolVersion),
-        DataType.cint().serialize(2016, protocolVersion));
+        TypeCodec.cint().serialize(1, protocolVersion),
+        TypeCodec.cint().serialize(2016, protocolVersion));
 
 session.execute(statement);
 ```
