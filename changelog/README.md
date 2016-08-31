@@ -2,6 +2,8 @@
 
 ### 2.2.0-rc4 (in progress)
 
+- [improvement] Add BoundStatement#unset (JAVA-930)
+
 Merged from 2.0 branch:
 
 - [improvement] Log streamid at the trace level on sending request and receiving response (JAVA-718)

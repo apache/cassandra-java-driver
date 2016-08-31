@@ -56,7 +56,7 @@ abstract class AbstractData<T extends SettableData<T>> extends AbstractGettableD
 
     protected abstract int[] getAllIndexesOf(String name);
 
-    private T setValue(int i, ByteBuffer value) {
+    protected T setValue(int i, ByteBuffer value) {
         values[i] = value;
         return wrapped;
     }
