@@ -19,6 +19,8 @@ import com.datastax.driver.core.Responses.Result.SetKeyspace;
 import com.datastax.driver.core.exceptions.*;
 import com.datastax.driver.core.utils.MoreFutures;
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Function;
+import com.google.common.base.Objects;
 import com.google.common.collect.Lists;
 import com.google.common.collect.MapMaker;
 import com.google.common.util.concurrent.*;
@@ -95,8 +97,9 @@ class Connection {
 
     private final AtomicReference<Owner> ownerRef = new AtomicReference<Owner>();
 
+    private final ListenableFuture<Connection> thisFuture;
+
     /**
-     * /**
      * Create a new connection to a Cassandra node and associate it with the given pool.
      *
      * @param name    the connection name
@@ -111,6 +114,7 @@ class Connection {
         this.dispatcher = new Dispatcher();
         this.name = name;
         this.ownerRef.set(owner);
+        this.thisFuture = Futures.immediateFuture(this);
     }
 
     /**
@@ -483,16 +487,20 @@ class Connection {
         }
     }
 
-    ListenableFuture<Void> setKeyspaceAsync(final String keyspace) throws ConnectionException, BusyConnectionException {
+    ListenableFuture<Connection> setKeyspaceAsync(final String keyspace) throws ConnectionException, BusyConnectionException {
+        if (Objects.equal(this.keyspace, keyspace)) {
+            return thisFuture;
+        }
+
         logger.trace("{} Setting keyspace {}", this, keyspace);
         // Note: we quote the keyspace below, because the name is the one coming from Cassandra, so it's in the right case already
         Future future = write(new Requests.Query("USE \"" + keyspace + '"'));
-        return Futures.transform(future, new AsyncFunction<Message.Response, Void>() {
+        return Futures.transform(future, new Function<Message.Response, Connection>() {
             @Override
-            public ListenableFuture<Void> apply(Message.Response response) throws Exception {
+            public Connection apply(Message.Response response) {
                 if (response instanceof SetKeyspace) {
                     Connection.this.keyspace = ((SetKeyspace) response).keyspace;
-                    return MoreFutures.VOID_SUCCESS;
+                    return Connection.this;
                 } else if (response.type == ERROR) {
                     Responses.Error error = (Responses.Error) response;
                     throw defunct(error.asException(address));

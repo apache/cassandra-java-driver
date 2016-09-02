@@ -16,6 +16,7 @@
 - [improvement] JAVA-1293: Make DecoderForStreamIdSize.MAX_FRAME_LENGTH configurable.
 - [improvement] JAVA-1053: Add a metric for authentication errors
 - [improvement] JAVA-1263: Eliminate unnecessary memory copies in FrameCompressor implementations.
+- [improvement] JAVA-893: Make connection pool non-blocking
 
 
 ### 3.0.3
