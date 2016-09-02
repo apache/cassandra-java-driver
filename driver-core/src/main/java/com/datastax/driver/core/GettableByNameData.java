@@ -53,6 +53,22 @@ public interface GettableByNameData {
      *                                  type to a boolean.
      */
     public boolean getBool(String name);
+    
+    /**
+     * Returns the value for {@code name} as a boolean.
+     * <p/>
+     * This method uses the {@link CodecRegistry} to find a codec to convert the underlying CQL type to a Java {@code boolean}
+     * (for CQL type {@code boolean}, this will be the built-in codec).
+     *
+     * @param name the name to retrieve.
+     * @param defaultValue the default returned value if the value is NULL.
+     * @return the boolean value for {@code name}. If the value is NULL, {@code defaultValue} is returned.
+     * If you need to distinguish NULL and false values, check first with {@link #isNull(String)} or use {@code get(name, Boolean.class)}.
+     * @throws IllegalArgumentException if {@code name} is not valid name for this object.
+     * @throws CodecNotFoundException   if there is no registered codec to convert the underlying CQL
+     *                                  type to a boolean.
+     */
+    public boolean getBool(String name, boolean defaultValue);
 
     /**
      * Returns the value for {@code name} as a byte.
@@ -69,6 +85,23 @@ public interface GettableByNameData {
      *                                  type to a byte.
      */
     public byte getByte(String name);
+    
+    /**
+     * Returns the value for {@code name} as a byte.
+     * <p/>
+     * This method uses the {@link CodecRegistry} to find a codec to convert the underlying CQL type to a Java {@code byte}
+     * (for CQL type {@code tinyint}, this will be the built-in codec).
+     *
+     * @param name the name to retrieve.
+     * @param defaultValue the default returned value if the value is NULL.
+     * @return the value for {@code name} as a byte. If the value is NULL, {@code defaultValue} is returned.
+     * If you need to distinguish NULL and 0, check first with {@link #isNull(String)} or use {@code get(name, Byte.class)}.
+     * {@code 0} is returned.
+     * @throws IllegalArgumentException if {@code name} is not valid name for this object.
+     * @throws CodecNotFoundException   if there is no registered codec to convert the underlying CQL
+     *                                  type to a byte.
+     */
+    public byte getByte(String name, byte defaultValue);
 
     /**
      * Returns the value for {@code name} as a short.
@@ -85,6 +118,23 @@ public interface GettableByNameData {
      *                                  type to a short.
      */
     public short getShort(String name);
+    
+    /**
+     * Returns the value for {@code name} as a short.
+     * <p/>
+     * This method uses the {@link CodecRegistry} to find a codec to convert the underlying CQL type to a Java {@code short}
+     * (for CQL type {@code smallint}, this will be the built-in codec).
+     *
+     * @param name the name to retrieve.     
+     * @param defaultValue the default returned value if the value is NULL.
+     * @return the value for {@code name} as a short. If the value is NULL, {@code defaultValue} is returned.
+     * If you need to distinguish NULL and 0, check first with {@link #isNull(String)} or use {@code get(name, Short.class)}.
+     * {@code 0} is returned.
+     * @throws IllegalArgumentException if {@code name} is not valid name for this object.
+     * @throws CodecNotFoundException   if there is no registered codec to convert the underlying CQL
+     *                                  type to a short.
+     */
+    public short getShort(String name, short defaultValue);
 
     /**
      * Returns the value for {@code name} as an integer.
@@ -101,6 +151,23 @@ public interface GettableByNameData {
      *                                  type to an int.
      */
     public int getInt(String name);
+    
+    /**
+     * Returns the value for {@code name} as an integer.
+     * <p/>
+     * This method uses the {@link CodecRegistry} to find a codec to convert the underlying CQL type to a Java {@code int}
+     * (for CQL type {@code int}, this will be the built-in codec).
+     *
+     * @param name the name to retrieve.
+     * @param defaultValue the default returned value if the value is NULL.
+     * @return the value for {@code name} as an integer. If the value is NULL, {@code defaultValue} is returned.
+     * If you need to distinguish NULL and 0, check first with {@link #isNull(String)} or use {@code get(name, Integer.class)}.
+     * {@code 0} is returned.
+     * @throws IllegalArgumentException if {@code name} is not valid name for this object.
+     * @throws CodecNotFoundException   if there is no registered codec to convert the underlying CQL
+     *                                  type to an int.
+     */
+    public int getInt(String name, int defaultValue);
 
     /**
      * Returns the value for {@code name} as a long.
@@ -116,6 +183,22 @@ public interface GettableByNameData {
      *                                  type to a long.
      */
     public long getLong(String name);
+
+    /**
+     * Returns the value for {@code name} as a long.
+     * <p/>
+     * This method uses the {@link CodecRegistry} to find a codec to convert the underlying CQL type to a Java {@code byte}
+     * (for CQL types {@code bigint} and {@code counter}, this will be the built-in codec).
+     *
+     * @param name the name to retrieve.
+     * @param defaultValue the default returned value if the value is NULL.
+     * @return the value for {@code name} as a long. If the value is NULL, {@code defaultValue} is returned.
+     * If you need to distinguish NULL and 0L, check first with {@link #isNull(String)} or use {@code get(name, Long.class)}.
+     * @throws IllegalArgumentException if {@code name} is not valid name for this object.
+     * @throws CodecNotFoundException   if there is no registered codec to convert the underlying CQL
+     *                                  type to a long.
+     */
+    public long getLong(String name, long defaultValue);
 
     /**
      * Returns the value for {@code name} as a date.
@@ -176,6 +259,22 @@ public interface GettableByNameData {
      *                                  type to a float.
      */
     public float getFloat(String name);
+    
+    /**
+     * Returns the value for {@code name} as a float.
+     * <p/>
+     * This method uses the {@link CodecRegistry} to find a codec to convert the underlying CQL type to a Java {@code float}
+     * (for CQL type {@code float}, this will be the built-in codec).
+     *
+     * @param name the name to retrieve.
+     * @param defaultValue the default returned value if the value is NULL.
+     * @return the value for {@code name} as a float. If the value is NULL, {@code defaultValue} is returned.
+     * If you need to distinguish NULL and 0.0f, check first with {@link #isNull(String)} or use {@code get(name, Float.class)}.
+     * @throws IllegalArgumentException if {@code name} is not valid name for this object.
+     * @throws CodecNotFoundException   if there is no registered codec to convert the underlying CQL
+     *                                  type to a float.
+     */
+    public float getFloat(String name, float defaultValue);
 
     /**
      * Returns the value for {@code name} as a double.
@@ -191,6 +290,22 @@ public interface GettableByNameData {
      *                                  type to a double.
      */
     public double getDouble(String name);
+    
+    /**
+     * Returns the value for {@code name} as a double.
+     * <p/>
+     * This method uses the {@link CodecRegistry} to find a codec to convert the underlying CQL type to a Java {@code double}
+     * (for CQL type {@code double}, this will be the built-in codec).
+     *
+     * @param name the name to retrieve.
+     * @param defaultValue the default returned value if the value is NULL.
+     * @return the value for {@code name} as a double. If the value is NULL, {@code defaultValue} is returned.
+     * If you need to distinguish NULL and 0.0, check first with {@link #isNull(String)} or use {@code get(name, Double.class)}.
+     * @throws IllegalArgumentException if {@code name} is not valid name for this object.
+     * @throws CodecNotFoundException   if there is no registered codec to convert the underlying CQL
+     *                                  type to a double.
+     */
+    public double getDouble(String name, double defaultValue);
 
     /**
      * Returns the value for {@code name} as a ByteBuffer.

@@ -96,10 +96,18 @@ abstract class AbstractGettableByIndexData implements GettableByIndexData {
      */
     @Override
     public boolean getBool(int i) {
+         return getBool(i, false);
+    }
+    
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public boolean getBool(int i, boolean defaultValue) {
         ByteBuffer value = getValue(i);
         TypeCodec<Boolean> codec = codecFor(i, Boolean.class);
         if (codec instanceof TypeCodec.PrimitiveBooleanCodec)
-            return ((TypeCodec.PrimitiveBooleanCodec) codec).deserializeNoBoxing(value, protocolVersion);
+            return ((TypeCodec.PrimitiveBooleanCodec) codec).deserializeNoBoxing(value, protocolVersion, defaultValue);
         else
             return codec.deserialize(value, protocolVersion);
     }
@@ -109,10 +117,18 @@ abstract class AbstractGettableByIndexData implements GettableByIndexData {
      */
     @Override
     public byte getByte(int i) {
+    	return getByte(i, (byte)0);
+    }
+    
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public byte getByte(int i, byte defaultValue) {
         ByteBuffer value = getValue(i);
         TypeCodec<Byte> codec = codecFor(i, Byte.class);
         if (codec instanceof TypeCodec.PrimitiveByteCodec)
-            return ((TypeCodec.PrimitiveByteCodec) codec).deserializeNoBoxing(value, protocolVersion);
+            return ((TypeCodec.PrimitiveByteCodec) codec).deserializeNoBoxing(value, protocolVersion, defaultValue);
         else
             return codec.deserialize(value, protocolVersion);
     }
@@ -122,10 +138,18 @@ abstract class AbstractGettableByIndexData implements GettableByIndexData {
      */
     @Override
     public short getShort(int i) {
+        return getShort(i, (short)0);
+    }
+    
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public short getShort(int i, short defaultValue) {
         ByteBuffer value = getValue(i);
         TypeCodec<Short> codec = codecFor(i, Short.class);
         if (codec instanceof TypeCodec.PrimitiveShortCodec)
-            return ((TypeCodec.PrimitiveShortCodec) codec).deserializeNoBoxing(value, protocolVersion);
+            return ((TypeCodec.PrimitiveShortCodec) codec).deserializeNoBoxing(value, protocolVersion, defaultValue);
         else
             return codec.deserialize(value, protocolVersion);
     }
@@ -135,10 +159,20 @@ abstract class AbstractGettableByIndexData implements GettableByIndexData {
      */
     @Override
     public int getInt(int i) {
+    	return getInt(i, 0);
+    }
+    
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public int getInt(int i, int defaultValue) {
         ByteBuffer value = getValue(i);
+        if(value.remaining()==0)
+        	return 0;
         TypeCodec<Integer> codec = codecFor(i, Integer.class);
         if (codec instanceof TypeCodec.PrimitiveIntCodec)
-            return ((TypeCodec.PrimitiveIntCodec) codec).deserializeNoBoxing(value, protocolVersion);
+            return ((TypeCodec.PrimitiveIntCodec) codec).deserializeNoBoxing(value, protocolVersion, defaultValue);
         else
             return codec.deserialize(value, protocolVersion);
     }
@@ -148,10 +182,18 @@ abstract class AbstractGettableByIndexData implements GettableByIndexData {
      */
     @Override
     public long getLong(int i) {
+        return getLong(i, 0);
+    }
+    
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public long getLong(int i, long defaultValue) {
         ByteBuffer value = getValue(i);
         TypeCodec<Long> codec = codecFor(i, Long.class);
         if (codec instanceof TypeCodec.PrimitiveLongCodec)
-            return ((TypeCodec.PrimitiveLongCodec) codec).deserializeNoBoxing(value, protocolVersion);
+            return ((TypeCodec.PrimitiveLongCodec) codec).deserializeNoBoxing(value, protocolVersion, defaultValue);
         else
             return codec.deserialize(value, protocolVersion);
     }
@@ -192,10 +234,17 @@ abstract class AbstractGettableByIndexData implements GettableByIndexData {
      */
     @Override
     public float getFloat(int i) {
+        return getFloat(i, 0);
+    }
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public float getFloat(int i, float defaultValue) {
         ByteBuffer value = getValue(i);
         TypeCodec<Float> codec = codecFor(i, Float.class);
         if (codec instanceof TypeCodec.PrimitiveFloatCodec)
-            return ((TypeCodec.PrimitiveFloatCodec) codec).deserializeNoBoxing(value, protocolVersion);
+            return ((TypeCodec.PrimitiveFloatCodec) codec).deserializeNoBoxing(value, protocolVersion, defaultValue);
         else
             return codec.deserialize(value, protocolVersion);
     }
@@ -205,10 +254,18 @@ abstract class AbstractGettableByIndexData implements GettableByIndexData {
      */
     @Override
     public double getDouble(int i) {
+        return getDouble(i, 0);
+    }
+    
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public double getDouble(int i, double defaultValue) {
         ByteBuffer value = getValue(i);
         TypeCodec<Double> codec = codecFor(i, Double.class);
         if (codec instanceof TypeCodec.PrimitiveDoubleCodec)
-            return ((TypeCodec.PrimitiveDoubleCodec) codec).deserializeNoBoxing(value, protocolVersion);
+            return ((TypeCodec.PrimitiveDoubleCodec) codec).deserializeNoBoxing(value, protocolVersion, defaultValue);
         else
             return codec.deserialize(value, protocolVersion);
     }

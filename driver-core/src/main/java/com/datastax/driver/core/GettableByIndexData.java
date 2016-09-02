@@ -54,6 +54,22 @@ public interface GettableByIndexData {
      *                                   type to a boolean.
      */
     public boolean getBool(int i);
+    
+    /**
+     * Returns the {@code i}th value as a boolean.
+     * <p/>
+     * This method uses the {@link CodecRegistry} to find a codec to convert the underlying CQL type to a Java {@code boolean}
+     * (for CQL type {@code boolean}, this will be the built-in codec).
+     *
+     * @param i the index ({@code 0 <= i < size()}) to retrieve.
+     * @param defaultValue the default returned value if the value is NULL.
+     * @return the boolean value of the {@code i}th element. If the value is NULL, {@code defaultValue} is returned.
+     * If you need to distinguish NULL and false values, check first with {@link #isNull(int)} or use {@code get(i, Boolean.class)}.
+     * @throws IndexOutOfBoundsException if {@code i} is not a valid index for this object.
+     * @throws CodecNotFoundException    if there is no registered codec to convert the element's CQL
+     *                                   type to a boolean.
+     */
+    public boolean getBool(int i, boolean defaultValue);
 
     /**
      * Returns the {@code i}th value as a byte.
@@ -69,6 +85,23 @@ public interface GettableByIndexData {
      *                                   type to a byte.
      */
     public byte getByte(int i);
+    
+    /**
+     * Returns the {@code i}th value as a byte.
+     * <p/>
+     * This method uses the {@link CodecRegistry} to find a codec to convert the underlying CQL type to a Java {@code byte}
+     * (for CQL type {@code tinyint}, this will be the built-in codec).
+     *
+     * @param i the index ({@code 0 <= i < size()}) to retrieve.
+     * @param defaultValue the default returned value if the value is NULL.
+     * @return the value of the {@code i}th element as a byte. If the value is NULL, {@code defaultValue} is returned.
+     * If you need to distinguish NULL and 0, check first with {@link #isNull(int)} or use {@code get(i, Byte.class)}.
+     * @throws IndexOutOfBoundsException if {@code i} is not a valid index for this object.
+     * @throws CodecNotFoundException    if there is no registered codec to convert the element's CQL
+     *                                   type to a byte.
+     */
+    public byte getByte(int i, byte defaultValue);
+
 
     /**
      * Returns the {@code i}th value as a short.
@@ -84,6 +117,22 @@ public interface GettableByIndexData {
      *                                   type to a short.
      */
     public short getShort(int i);
+    
+    /**
+     * Returns the {@code i}th value as a short.
+     * <p/>
+     * This method uses the {@link CodecRegistry} to find a codec to convert the underlying CQL type to a Java {@code short}
+     * (for CQL type {@code smallint}, this will be the built-in codec).
+     *
+     * @param i the index ({@code 0 <= i < size()}) to retrieve.
+     * @param defaultValue the default returned value if the value is NULL.
+     * @return the value of the {@code i}th element as a short. If the value is NULL, {@code defaultValue} is returned.
+     * If you need to distinguish NULL and 0, check first with {@link #isNull(int)} or use {@code get(i, Short.class)}.
+     * @throws IndexOutOfBoundsException if {@code i} is not a valid index for this object.
+     * @throws CodecNotFoundException    if there is no registered codec to convert the element's CQL
+     *                                   type to a short.
+     */
+    public short getShort(int i, short defaultValue);
 
     /**
      * Returns the {@code i}th value as an integer.
@@ -99,6 +148,22 @@ public interface GettableByIndexData {
      *                                   type to an int.
      */
     public int getInt(int i);
+    
+    /**
+     * Returns the {@code i}th value as an integer.
+     * <p/>
+     * This method uses the {@link CodecRegistry} to find a codec to convert the underlying CQL type to a Java {@code int}
+     * (for CQL type {@code int}, this will be the built-in codec).
+     *
+     * @param i the index ({@code 0 <= i < size()}) to retrieve.
+     * @param defaultValue the default returned value if the value is NULL.
+     * @return the value of the {@code i}th element as an integer. If the value is NULL, {@code defaultValue} is returned.
+     * If you need to distinguish NULL and 0, check first with {@link #isNull(int)} or use {@code get(i, Integer.class)}.
+     * @throws IndexOutOfBoundsException if {@code i} is not a valid index for this object.
+     * @throws CodecNotFoundException    if there is no registered codec to convert the element's CQL
+     *                                   type to an int.
+     */
+	public int getInt(int i, int defaultValue);
 
     /**
      * Returns the {@code i}th value as a long.
@@ -114,6 +179,22 @@ public interface GettableByIndexData {
      *                                   type to a long.
      */
     public long getLong(int i);
+    
+    /**
+     * Returns the {@code i}th value as a long.
+     * <p/>
+     * This method uses the {@link CodecRegistry} to find a codec to convert the underlying CQL type to a Java {@code byte}
+     * (for CQL types {@code bigint} and {@code counter}, this will be the built-in codec).
+     *
+     * @param i the index ({@code 0 <= i < size()}) to retrieve.
+     * @param defaultValue the default returned value if the value is NULL.
+     * @return the value of the {@code i}th element as a long. If the value is NULL, {@code defaultValue} is returned.
+     * If you need to distinguish NULL and 0L, check first with {@link #isNull(int)} or use {@code get(i, Long.class)}.
+     * @throws IndexOutOfBoundsException if {@code i} is not a valid index for this object.
+     * @throws CodecNotFoundException    if there is no registered codec to convert the element's CQL
+     *                                   type to a long.
+     */    
+    public long getLong(int i, long defaultValue);
 
     /**
      * Returns the {@code i}th value as a date.
@@ -174,6 +255,23 @@ public interface GettableByIndexData {
      *                                   type to a float.
      */
     public float getFloat(int i);
+    
+    /**
+     * Returns the {@code i}th value as a float.
+     * <p/>
+     * This method uses the {@link CodecRegistry} to find a codec to convert the underlying CQL type to a Java {@code float}
+     * (for CQL type {@code float}, this will be the built-in codec).
+     *
+     * @param i the index ({@code 0 <= i < size()}) to retrieve.
+     * @param defaultValue the default returned value if the value is NULL.
+     * @return the value of the {@code i}th element as a float. If the value is NULL, {@code defaultValue} is returned.
+     * If you need to distinguish NULL and 0.0f, check first with {@link #isNull(int)} or use {@code get(i, Float.class)}.
+     * @throws IndexOutOfBoundsException if {@code i} is not a valid index for this object.
+     * @throws CodecNotFoundException    if there is no registered codec to convert the element's CQL
+     *                                   type to a float.
+     */
+    public float getFloat(int i, float defaultValue);
+
 
     /**
      * Returns the {@code i}th value as a double.
@@ -189,6 +287,23 @@ public interface GettableByIndexData {
      *                                   type to a double.
      */
     public double getDouble(int i);
+    
+    /**
+     * Returns the {@code i}th value as a double.
+     * <p/>
+     * This method uses the {@link CodecRegistry} to find a codec to convert the underlying CQL type to a Java {@code double}
+     * (for CQL type {@code double}, this will be the built-in codec).
+     *
+     * @param i the index ({@code 0 <= i < size()}) to retrieve.
+     * @param defaultValue the default returned value if the value is NULL.
+     * @return the value of the {@code i}th element as a double. If the value is NULL, {@code defaultValue} is returned.
+     * If you need to distinguish NULL and 0.0, check first with {@link #isNull(int)} or use {@code get(i, Double.class)}.
+     * @throws IndexOutOfBoundsException if {@code i} is not a valid index for this object.
+     * @throws CodecNotFoundException    if there is no registered codec to convert the element's CQL
+     *                                   type to a double.
+     */    
+    public double getDouble(int i, double defaultValue);
+
 
     /**
      * Returns the {@code i}th value as a {@code ByteBuffer}.

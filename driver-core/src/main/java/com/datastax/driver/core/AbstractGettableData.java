@@ -62,6 +62,14 @@ public abstract class AbstractGettableData extends AbstractGettableByIndexData i
     public boolean getBool(String name) {
         return getBool(getIndexOf(name));
     }
+    
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public boolean getBool(String name, boolean defaultValue) {
+        return getBool(getIndexOf(name), defaultValue);
+    }
 
     /**
      * {@inheritDoc}
@@ -69,6 +77,14 @@ public abstract class AbstractGettableData extends AbstractGettableByIndexData i
     @Override
     public byte getByte(String name) {
         return getByte(getIndexOf(name));
+    }
+    
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public byte getByte(String name, byte defaultValue) {
+        return getByte(getIndexOf(name), defaultValue);
     }
 
     /**
@@ -78,6 +94,14 @@ public abstract class AbstractGettableData extends AbstractGettableByIndexData i
     public short getShort(String name) {
         return getShort(getIndexOf(name));
     }
+    
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public short getShort(String name, short defaultValue) {
+        return getShort(getIndexOf(name), defaultValue);
+    }
 
     /**
      * {@inheritDoc}
@@ -86,6 +110,14 @@ public abstract class AbstractGettableData extends AbstractGettableByIndexData i
     public int getInt(String name) {
         return getInt(getIndexOf(name));
     }
+    
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public int getInt(String name, int defaultValue) {
+        return getInt(getIndexOf(name), defaultValue);
+    }
 
     /**
      * {@inheritDoc}
@@ -93,6 +125,14 @@ public abstract class AbstractGettableData extends AbstractGettableByIndexData i
     @Override
     public long getLong(String name) {
         return getLong(getIndexOf(name));
+    }
+    
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public long getLong(String name, long defaultValue) {
+        return getLong(getIndexOf(name), defaultValue);
     }
 
     /**
@@ -126,6 +166,14 @@ public abstract class AbstractGettableData extends AbstractGettableByIndexData i
     public float getFloat(String name) {
         return getFloat(getIndexOf(name));
     }
+    
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public float getFloat(String name, float defaultValue) {
+        return getFloat(getIndexOf(name), defaultValue);
+    }
 
     /**
      * {@inheritDoc}
@@ -133,6 +181,14 @@ public abstract class AbstractGettableData extends AbstractGettableByIndexData i
     @Override
     public double getDouble(String name) {
         return getDouble(getIndexOf(name));
+    }
+    
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public double getDouble(String name, double defaultValue) {
+        return getDouble(getIndexOf(name), defaultValue);
     }
 
     /**
