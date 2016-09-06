@@ -87,13 +87,35 @@ class MappedUDTCodec<T> extends TypeCodec.AbstractUDTCodec<T> {
 
     @Override
     protected String formatField(T source, String fieldName) {
-        // This codec implementation is internal-use only, and its format method is never used
-        throw new UnsupportedOperationException();
+        if (!fieldName.startsWith("\""))
+            fieldName = Metadata.quote(fieldName);
+
+        ColumnMapper<T> columnMapper = columnMappers.get(fieldName);
+
+        if (columnMapper == null)
+            return null;
+
+        Object value = columnMapper.getValue(source);
+
+        TypeCodec<Object> codec = columnMapper.getCustomCodec();
+        if (codec == null)
+            codec = codecRegistry.codecFor(cqlUserType.getFieldType(columnMapper.getColumnName()), columnMapper.getJavaType());
+
+        return codec.format(value);
     }
 
     @Override
     protected T parseAndSetField(String input, T target, String fieldName) {
-        // This codec implementation is internal-use only, and its parse method is never used
-        throw new UnsupportedOperationException();
+        if (!fieldName.startsWith("\""))
+            fieldName = Metadata.quote(fieldName);
+
+        ColumnMapper<T> columnMapper = columnMappers.get(fieldName);
+        if (columnMapper != null) {
+            TypeCodec<Object> codec = columnMapper.getCustomCodec();
+            if (codec == null)
+                codec = codecRegistry.codecFor(cqlUserType.getFieldType(columnMapper.getColumnName()), columnMapper.getJavaType());
+            columnMapper.setValue(target, codec.parse(input));
+        }
+        return target;
     }
 }
