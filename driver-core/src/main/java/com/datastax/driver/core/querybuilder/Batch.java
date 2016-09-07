@@ -66,7 +66,7 @@ public class Batch extends BuiltStatement {
                 builder.append(maybeAddSemicolon(bst.buildQueryString(variables, codecRegistry)));
 
             } else {
-                String str = stmt.getQueryString();
+                String str = stmt.getQueryString(codecRegistry);
                 builder.append(str);
                 if (!str.trim().endsWith(";"))
                     builder.append(';');

@@ -90,7 +90,7 @@ public class BatchStatement extends Statement {
             if (statement instanceof RegularStatement) {
                 RegularStatement st = (RegularStatement) statement;
                 ByteBuffer[] vals = st.getValues(protocolVersion, codecRegistry);
-                String query = st.getQueryString();
+                String query = st.getQueryString(codecRegistry);
                 idAndVals.ids.add(query);
                 idAndVals.values.add(vals == null ? Collections.<ByteBuffer>emptyList() : Arrays.asList(vals));
             } else {
