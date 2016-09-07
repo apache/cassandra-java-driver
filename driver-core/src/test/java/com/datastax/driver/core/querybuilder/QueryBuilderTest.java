@@ -727,16 +727,11 @@ public class QueryBuilderTest {
         assertTrue(query.isTracing());
     }
 
-    @Test(groups = "unit")
+    @Test(groups = "unit", expectedExceptions = CodecNotFoundException.class)
     public void rejectUnknownValueTest() throws Exception {
-        try {
-            RegularStatement s = update("foo").with(set("a", new byte[13])).where(eq("k", 2))
-                    .setForceNoValues(true);
-            s.getQueryString();
-            fail("should have failed to inline a byte[]");
-        } catch (CodecNotFoundException e) {
-            // Ok, that's what we expect
-        }
+        RegularStatement s = update("foo").with(set("a", new byte[13])).where(eq("k", 2))
+                .setForceNoValues(true);
+        s.getQueryString();
     }
 
     @Test(groups = "unit")
