@@ -26,7 +26,9 @@ import org.slf4j.LoggerFactory;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
+import java.nio.ByteBuffer;
 import java.util.Collection;
+import java.util.Map;
 import java.util.concurrent.*;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -145,6 +147,25 @@ public class AsyncQueryTest extends CCMTestsSupport {
     }
 
     @Test(groups = "short")
+    public void should_fail_when_synchronous_call_on_io_thread_with_session_wrapper() throws Exception {
+        final Session session = new SessionWrapper(session());
+        for (int i = 0; i < 1000; i++) {
+            ResultSetFuture f = session.executeAsync("select release_version from system.local");
+            ListenableFuture<Thread> f2 = Futures.transform(f, new Function<ResultSet, Thread>() {
+                @Override
+                public Thread apply(ResultSet input) {
+                    session.execute("select release_version from system.local");
+                    return Thread.currentThread();
+                }
+            });
+            if (isFailed(f2, IllegalStateException.class, "Detected a synchronous call on an I/O thread")) {
+                return;
+            }
+        }
+        fail("callback was not executed on io thread in 1000 attempts, something may be wrong.");
+    }
+
+    @Test(groups = "short")
     @CassandraVersion(major = 2.0, description = "Paging is not supported until 2.0")
     public void should_fail_when_auto_paging_on_io_thread() throws Exception {
         for (int i = 0; i < 1000; i++) {
@@ -206,5 +227,66 @@ public class AsyncQueryTest extends CCMTestsSupport {
         Collection<HostConnectionPool> pools = ((SessionManager) session).pools.values();
         assertEquals(pools.size(), 1);
         return pools.iterator().next();
+    }
+
+    private static class SessionWrapper extends AbstractSession {
+
+        private final Session session;
+
+        public SessionWrapper(Session session) {
+            this.session = session;
+        }
+
+        @Override
+        public ResultSet execute(Statement statement) {
+            // test a custom call to checkNotInEventLoop()
+            checkNotInEventLoop();
+            return executeAsync(statement).getUninterruptibly();
+        }
+
+        @Override
+        public String getLoggedKeyspace() {
+            return session.getLoggedKeyspace();
+        }
+
+        @Override
+        public Session init() {
+            return session.init();
+        }
+
+        @Override
+        public ListenableFuture<Session> initAsync() {
+            return session.initAsync();
+        }
+
+        @Override
+        public ResultSetFuture executeAsync(Statement statement) {
+            return session.executeAsync(statement);
+        }
+
+        @Override
+        public CloseFuture closeAsync() {
+            return session.closeAsync();
+        }
+
+        @Override
+        public boolean isClosed() {
+            return session.isClosed();
+        }
+
+        @Override
+        public Cluster getCluster() {
+            return session.getCluster();
+        }
+
+        @Override
+        public State getState() {
+            return session.getState();
+        }
+
+        @Override
+        protected ListenableFuture<PreparedStatement> prepareAsync(String query, Map<String, ByteBuffer> customPayload) {
+            return ((SessionManager) session).prepareAsync(query, customPayload);
+        }
     }
 }
