@@ -19,7 +19,7 @@ import com.datastax.driver.core.Cluster;
 import com.datastax.driver.core.ConsistencyLevel;
 import com.datastax.driver.core.Statement;
 import com.datastax.driver.core.WriteType;
-import com.datastax.driver.core.exceptions.DriverException;
+import com.datastax.driver.core.exceptions.*;
 
 /**
  * The default retry policy.
@@ -115,15 +115,33 @@ public class DefaultRetryPolicy implements RetryPolicy {
     /**
      * {@inheritDoc}
      * <p/>
-     * For historical reasons, this implementation triggers a retry on the next host in the query plan
-     * with the same consistency level, regardless of the statement's idempotence.
-     * Note that this breaks the general rule
+     * This implementation triggers a retry on the next host in the query plan
+     * with the same consistency level, for the following errors:
+     * <ol>
+     * <li>{@link ConnectionException} (including {@link OperationTimedOutException});</li>
+     * <li>{@link ServerError};</li>
+     * <li>{@link OverloadedException};</li>
+     * <li>{@link BootstrappingException}.</li>
+     * </ol>
+     * This choice is based on the fact that these errors are server-specific and the query
+     * is likely to succeed if tried on another, healthy server.
+     * For any other errors (e.g. {@link InvalidQueryException}, {@link UnauthorizedException}, etc.),
+     * the query is unlikely to succeed if retried, so this implementation returns {@link RetryDecision#rethrow()}.
+     * <p/>
+     * Note that, for historical reasons, this implementation does not take into account
+     * the statement's idempotence, which breaks the general rule
      * stated in {@link RetryPolicy#onRequestError(Statement, ConsistencyLevel, DriverException, int)}:
      * "a retry should only be attempted if the request is known to be idempotent".
      */
     @Override
     public RetryDecision onRequestError(Statement statement, ConsistencyLevel cl, DriverException e, int nbRetry) {
-        return RetryDecision.tryNextHost(cl);
+        if (e instanceof ConnectionException
+                || e instanceof ServerError
+                || e instanceof OverloadedException
+                || e instanceof BootstrappingException) {
+            return RetryDecision.tryNextHost(cl);
+        }
+        return RetryDecision.rethrow();
     }
 
     @Override
