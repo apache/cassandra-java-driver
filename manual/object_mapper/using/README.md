@@ -192,8 +192,8 @@ public interface UserAccessor {
 }
 ```
 
-The `MappingManager` can then process this class and generate an
-implementation:
+The `MappingManager` can then process this interface and automatically generate an
+implementation for it:
 
 ```java
 UserAccessor userAccessor = manager.createAccessor(UserAccessor.class);
