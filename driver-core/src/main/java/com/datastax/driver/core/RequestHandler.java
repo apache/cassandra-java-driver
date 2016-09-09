@@ -36,6 +36,10 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
+import static com.datastax.driver.core.ExceptionCode.SERVER_ERROR;
+import static com.datastax.driver.core.Message.Response.Type.RESULT;
+import static com.datastax.driver.core.Responses.Result.Kind.PREPARED;
+
 /**
  * Handles a request to cassandra, dealing with host failover and retries on
  * unavailable/timeout.
@@ -521,48 +525,6 @@ class RequestHandler {
                                         metrics().getErrorMetrics().getIgnoresOnUnavailable().inc();
                                 }
                                 break;
-                            case OVERLOADED:
-                                connection.release();
-                                assert exceptionToReport instanceof OverloadedException;
-                                logger.warn("Host {} is overloaded.", connection.address);
-                                retry = retryPolicy.onRequestError(statement,
-                                        request().consistency(),
-                                        (OverloadedException) exceptionToReport, retriesByPolicy);
-                                if (metricsEnabled()) {
-                                    metrics().getErrorMetrics().getOthers().inc();
-                                    if (retry.getType() == Type.RETRY)
-                                        metrics().getErrorMetrics().getRetriesOnOtherErrors().inc();
-                                    if (retry.getType() == Type.IGNORE)
-                                        metrics().getErrorMetrics().getIgnoresOnOtherErrors().inc();
-                                }
-                                break;
-                            case SERVER_ERROR:
-                                connection.release();
-                                assert exceptionToReport instanceof ServerError;
-                                logger.warn("{} replied with server error ({}), defuncting connection.", connection.address, err.message);
-                                // Defunct connection
-                                connection.defunct(exceptionToReport);
-                                retry = retryPolicy.onRequestError(statement,
-                                        request().consistency(),
-                                        (ServerError) exceptionToReport, retriesByPolicy);
-                                if (metricsEnabled()) {
-                                    metrics().getErrorMetrics().getOthers().inc();
-                                    if (retry.getType() == Type.RETRY)
-                                        metrics().getErrorMetrics().getRetriesOnOtherErrors().inc();
-                                    if (retry.getType() == Type.IGNORE)
-                                        metrics().getErrorMetrics().getIgnoresOnOtherErrors().inc();
-                                }
-                                break;
-                            case IS_BOOTSTRAPPING:
-                                connection.release();
-                                assert exceptionToReport instanceof BootstrappingException;
-                                logger.error("Query sent to {} but it is bootstrapping. This shouldn't happen but trying next host.", connection.address);
-                                if (metricsEnabled()) {
-                                    metrics().getErrorMetrics().getOthers().inc();
-                                }
-                                logError(connection.address, exceptionToReport);
-                                retry(false, null);
-                                return;
                             case UNPREPARED:
                                 // Do not release connection yet, because we might reuse it to send the PREPARE message (see write() call below)
                                 assert err.infos instanceof MD5Digest;
@@ -598,8 +560,19 @@ class RequestHandler {
                                 return;
                             default:
                                 connection.release();
-                                if (metricsEnabled())
+                                if (err.code == SERVER_ERROR)
+                                    // Defunct connection
+                                    connection.defunct(exceptionToReport);
+                                retry = retryPolicy.onRequestError(statement,
+                                        request().consistency(),
+                                        (DriverException) exceptionToReport, retriesByPolicy);
+                                if (metricsEnabled()) {
                                     metrics().getErrorMetrics().getOthers().inc();
+                                    if (retry.getType() == Type.RETRY)
+                                        metrics().getErrorMetrics().getRetriesOnOtherErrors().inc();
+                                    if (retry.getType() == Type.IGNORE)
+                                        metrics().getErrorMetrics().getIgnoresOnOtherErrors().inc();
+                                }
                                 break;
                         }
 
@@ -653,29 +626,22 @@ class RequestHandler {
                                 retryCount, queryState, queryStateRef.get());
                         return;
                     }
-
                     connection.release();
-
-                    switch (response.type) {
-                        case RESULT:
-                            if (((Responses.Result) response).kind == Responses.Result.Kind.PREPARED) {
-                                logger.debug("Scheduling retry now that query is prepared");
-                                retry(true, null);
-                            } else {
-                                logError(connection.address, new DriverException("Got unexpected response to prepare message: " + response));
-                                retry(false, null);
-                            }
-                            break;
-                        case ERROR:
-                            logError(connection.address, new DriverException("Error preparing query, got " + response));
-                            if (metricsEnabled())
-                                metrics().getErrorMetrics().getOthers().inc();
-                            retry(false, null);
-                            break;
-                        default:
-                            // Something's wrong, so we return but we let setFinalResult propagate the exception
-                            SpeculativeExecution.this.setFinalResult(connection, response);
-                            break;
+                    if (response.type == RESULT && ((Responses.Result) response).kind == PREPARED) {
+                        logger.debug("Scheduling retry now that query is prepared");
+                        retry(true, null);
+                    } else {
+                        DriverException exception = new DriverException("Error preparing query, got " + response);
+                        RetryPolicy retryPolicy = retryPolicy();
+                        RetryPolicy.RetryDecision decision = retryPolicy.onRequestError(statement, request().consistency(), exception, retriesByPolicy);
+                        if (metricsEnabled()) {
+                            metrics().getErrorMetrics().getOthers().inc();
+                            if (decision.getType() == Type.RETRY)
+                                metrics().getErrorMetrics().getRetriesOnOtherErrors().inc();
+                            if (decision.getType() == Type.IGNORE)
+                                metrics().getErrorMetrics().getIgnoresOnOtherErrors().inc();
+                        }
+                        processRetryDecision(decision, connection, exception);
                     }
                 }
 
@@ -686,17 +652,7 @@ class RequestHandler {
 
                 @Override
                 public boolean onTimeout(Connection connection, long latency, int retryCount) {
-                    QueryState queryState = queryStateRef.get();
-                    if (!queryState.isInProgressAt(retryCount) ||
-                            !queryStateRef.compareAndSet(queryState, queryState.complete())) {
-                        logger.debug("onTimeout triggered but the response was completed by another thread, cancelling (retryCount = {}, queryState = {}, queryStateRef = {})",
-                                retryCount, queryState, queryStateRef.get());
-                        return false;
-                    }
-                    connection.release();
-                    logError(connection.address, new OperationTimedOutException(connection.address, "Timed out waiting for response to PREPARE message"));
-                    retry(false, null);
-                    return true;
+                    return SpeculativeExecution.this.onTimeout(connection, latency, retryCount);
                 }
             };
         }
@@ -714,21 +670,16 @@ class RequestHandler {
             Host queriedHost = current;
             try {
                 connection.release();
-
-                if (exception instanceof ConnectionException) {
-                    RetryPolicy retryPolicy = retryPolicy();
-                    RetryPolicy.RetryDecision decision = retryPolicy.onRequestError(statement, request().consistency(), (ConnectionException) exception, retriesByPolicy);
-                    if (metricsEnabled()) {
-                        metrics().getErrorMetrics().getConnectionErrors().inc();
-                        if (decision.getType() == Type.RETRY)
-                            metrics().getErrorMetrics().getRetriesOnConnectionError().inc();
-                        if (decision.getType() == Type.IGNORE)
-                            metrics().getErrorMetrics().getIgnoresOnConnectionError().inc();
-                    }
-                    processRetryDecision(decision, connection, exception);
-                    return;
+                RetryPolicy retryPolicy = retryPolicy();
+                RetryPolicy.RetryDecision decision = retryPolicy.onRequestError(statement, request().consistency(), (DriverException) exception, retriesByPolicy);
+                if (metricsEnabled()) {
+                    metrics().getErrorMetrics().getConnectionErrors().inc();
+                    if (decision.getType() == Type.RETRY)
+                        metrics().getErrorMetrics().getRetriesOnConnectionError().inc();
+                    if (decision.getType() == Type.IGNORE)
+                        metrics().getErrorMetrics().getIgnoresOnConnectionError().inc();
                 }
-                setFinalException(connection, exception);
+                processRetryDecision(decision, connection, exception);
             } catch (Exception e) {
                 // This shouldn't happen, but if it does, we want to signal the callback, not let it hang indefinitely
                 setFinalException(null, new DriverInternalError("An unexpected error happened while handling exception " + exception, e));
