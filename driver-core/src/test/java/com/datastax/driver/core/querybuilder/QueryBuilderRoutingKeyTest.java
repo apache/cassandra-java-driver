@@ -29,11 +29,13 @@ public class QueryBuilderRoutingKeyTest extends CCMTestsSupport {
 
     private static final String TABLE_TEXT = "test_text";
     private static final String TABLE_INT = "test_int";
+    private static final String TABLE_CASE = "test_case";
 
     @Override
     public void onTestContextInitialized() {
         execute(String.format("CREATE TABLE %s (k text PRIMARY KEY, a int, b int)", TABLE_TEXT),
-                String.format("CREATE TABLE %s (k int PRIMARY KEY, a int, b int)", TABLE_INT));
+                String.format("CREATE TABLE %s (k int PRIMARY KEY, a int, b int)", TABLE_INT),
+                String.format("CREATE TABLE %s (theKey int PRIMARY KEY, a int, b int)", TABLE_CASE));
     }
 
     @Test(groups = "short")
@@ -54,6 +56,42 @@ public class QueryBuilderRoutingKeyTest extends CCMTestsSupport {
         assertEquals(query.getRoutingKey(protocolVersion, codecRegistry), ByteBuffer.wrap(txt.getBytes()));
         Row row = session().execute(query).one();
         assertEquals(row.getString("k"), txt);
+        assertEquals(row.getInt("a"), 1);
+        assertEquals(row.getInt("b"), 2);
+    }
+
+    @Test(groups = "short")
+    public void routingKeyColumnCaseSensitivityTest() throws Exception {
+
+        BuiltStatement query;
+        TableMetadata table = cluster().getMetadata().getKeyspace(keyspace).getTable(TABLE_CASE);
+        assertNotNull(table);
+        ProtocolVersion protocolVersion = cluster().getConfiguration().getProtocolOptions().getProtocolVersion();
+        CodecRegistry codecRegistry = CodecRegistry.DEFAULT_INSTANCE;
+
+        query = insertInto(table).values(new String[]{"theKey", "a", "b"}, new Object[]{42, 1, 2});
+        ByteBuffer bb = ByteBuffer.allocate(4);
+        bb.putInt(0, 42);
+        assertEquals(query.getRoutingKey(protocolVersion, codecRegistry), bb);
+        session().execute(query);
+
+        query = select().from(table).where(eq("theKey", 42));
+        assertEquals(query.getRoutingKey(protocolVersion, codecRegistry), bb);
+        Row row = session().execute(query).one();
+        assertEquals(row.getInt("theKey"), 42);
+        assertEquals(row.getInt("a"), 1);
+        assertEquals(row.getInt("b"), 2);
+
+        query = insertInto(table).values(new String[]{"ThEkEy", "a", "b"}, new Object[]{42, 1, 2});
+        bb = ByteBuffer.allocate(4);
+        bb.putInt(0, 42);
+        assertEquals(query.getRoutingKey(protocolVersion, codecRegistry), bb);
+        session().execute(query);
+
+        query = select().from(table).where(eq("ThEkEy", 42));
+        assertEquals(query.getRoutingKey(protocolVersion, codecRegistry), bb);
+        row = session().execute(query).one();
+        assertEquals(row.getInt("theKey"), 42);
         assertEquals(row.getInt("a"), 1);
         assertEquals(row.getInt("b"), 2);
     }

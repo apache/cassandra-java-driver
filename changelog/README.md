@@ -1,5 +1,8 @@
 ## Changelog
 
+### 3.2.0
+- [bug] JAVA-1285: Don't be case sensitive when comparing column names for determining routing key.
+
 ### 3.1.0
 
 - [new feature] JAVA-1153: Add PER PARTITION LIMIT to Select QueryBuilder.
