@@ -23,6 +23,7 @@ import java.nio.ByteBuffer;
 import static com.datastax.driver.core.querybuilder.QueryBuilder.*;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertNotNull;
+import static org.testng.Assert.assertNull;
 
 @CCMConfig(clusterProvider = "createClusterBuilderNoDebouncing")
 public class QueryBuilderRoutingKeyTest extends CCMTestsSupport {
@@ -30,12 +31,14 @@ public class QueryBuilderRoutingKeyTest extends CCMTestsSupport {
     private static final String TABLE_TEXT = "test_text";
     private static final String TABLE_INT = "test_int";
     private static final String TABLE_CASE = "test_case";
+    private static final String TABLE_CASE_QUOTED = "test_case_quoted";
 
     @Override
     public void onTestContextInitialized() {
         execute(String.format("CREATE TABLE %s (k text PRIMARY KEY, a int, b int)", TABLE_TEXT),
                 String.format("CREATE TABLE %s (k int PRIMARY KEY, a int, b int)", TABLE_INT),
-                String.format("CREATE TABLE %s (theKey int PRIMARY KEY, a int, b int)", TABLE_CASE));
+                String.format("CREATE TABLE %s (theKey int PRIMARY KEY, a int, b int)", TABLE_CASE),
+                String.format("CREATE TABLE %s (\"theKey\" int PRIMARY KEY, a int, b int, \"tHEkEY\" int)", TABLE_CASE_QUOTED));
     }
 
     @Test(groups = "short")
@@ -94,6 +97,28 @@ public class QueryBuilderRoutingKeyTest extends CCMTestsSupport {
         assertEquals(row.getInt("theKey"), 42);
         assertEquals(row.getInt("a"), 1);
         assertEquals(row.getInt("b"), 2);
+    }
+
+    @Test(groups = "short")
+    public void routingKeyColumnCaseSensitivityForQuotedIdentifiersTest() throws Exception {
+
+        BuiltStatement query;
+        TableMetadata table = cluster().getMetadata().getKeyspace(keyspace).getTable(TABLE_CASE_QUOTED);
+        assertNotNull(table);
+        ProtocolVersion protocolVersion = cluster().getConfiguration().getProtocolOptions().getProtocolVersion();
+        CodecRegistry codecRegistry = CodecRegistry.DEFAULT_INSTANCE;
+
+        query = insertInto(table).values(new String[]{"\"theKey\"", "a", "b", "\"tHEkEY\""}, new Object[]{42, 1, 2, 3});
+        ByteBuffer bb = ByteBuffer.allocate(4);
+        bb.putInt(0, 42);
+        assertEquals(query.getRoutingKey(protocolVersion, codecRegistry), bb);
+
+        query = insertInto(table).values(new String[]{"theKey", "a", "b", "\"tHEkEY\""}, new Object[]{42, 1, 2, 3});
+        assertNull(query.getRoutingKey(protocolVersion, codecRegistry));
+
+        query = insertInto(table).values(new String[]{"theKey", "a", "b", "theKey"}, new Object[]{42, 1, 2, 3});
+        assertNull(query.getRoutingKey(protocolVersion, codecRegistry));
+
     }
 
     @Test(groups = "short")

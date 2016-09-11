@@ -231,7 +231,7 @@ public abstract class BuiltStatement extends RegularStatement {
             return;
 
         for (int i = 0; i < partitionKey.size(); i++) {
-            if (name.equalsIgnoreCase(partitionKey.get(i).getName())) {
+            if (Metadata.handleId(name).equals(partitionKey.get(i).getName())) {
                 routingKeyValues.set(i, value);
                 return;
             }

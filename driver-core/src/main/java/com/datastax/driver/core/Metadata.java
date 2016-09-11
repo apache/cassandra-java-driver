@@ -126,7 +126,7 @@ public class Metadata {
      * - identifiers that are mixed-case or contain special characters should be quoted.
      * - unquoted identifiers will be lowercased: getKeyspace("Foo") will look for a keyspace named "foo"
      */
-    static String handleId(String id) {
+    public static String handleId(String id) {
         // Shouldn't really happen for this method, but no reason to fail here
         if (id == null)
             return null;
