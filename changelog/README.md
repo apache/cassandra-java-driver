@@ -2,6 +2,8 @@
 
 ### 3.1.1
 
+- [bug] JAVA-1284: ClockFactory should check system property before attempting to load Native class.
+
 Merged from 3.0.x:
 
 - [improvement] JAVA-1246: Driver swallows the real exception in a few cases

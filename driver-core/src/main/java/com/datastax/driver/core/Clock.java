@@ -48,7 +48,7 @@ class ClockFactory {
     private static final String USE_NATIVE_CLOCK_SYSTEM_PROPERTY = "com.datastax.driver.USE_NATIVE_CLOCK";
 
     static Clock newInstance() {
-        if (Native.isGettimeofdayAvailable() && SystemProperties.getBoolean(USE_NATIVE_CLOCK_SYSTEM_PROPERTY, true)) {
+        if (SystemProperties.getBoolean(USE_NATIVE_CLOCK_SYSTEM_PROPERTY, true) && Native.isGettimeofdayAvailable()) {
             LOGGER.info("Using native clock to generate timestamps.");
             return new NativeClock();
         } else {
