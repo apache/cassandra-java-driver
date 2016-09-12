@@ -67,6 +67,8 @@ public abstract class TableOptions<T extends TableOptions> extends SchemaStateme
 
     private Optional<SpeculativeRetryValue> speculativeRetry = Optional.absent();
 
+    private Optional<Boolean> cdc = Optional.absent();
+
     private List<String> customOptions = new ArrayList<String>();
 
     @SuppressWarnings("unchecked")
@@ -358,6 +360,21 @@ public abstract class TableOptions<T extends TableOptions> extends SchemaStateme
     }
 
     /**
+     * Define whether or not change data capture is enabled on this table.
+     * <p/>
+     * Note that using this option with a version of Apache Cassandra less than 3.8 will raise a syntax error.
+     * <p/>
+     * If no call is made to this method, the default value set by Cassandra is {@code false}.
+     *
+     * @param cdc Whether or not change data capture should be enabled for this table.
+     * @return this {@code TableOptions} object.
+     */
+    public T cdc(Boolean cdc) {
+        this.cdc = Optional.fromNullable(cdc);
+        return self;
+    }
+
+    /**
      * Define a free-form option as a key/value pair.
      * <p/>
      * This method is provided as a fallback if the SchemaBuilder is used with a more recent version of Cassandra that has new, unsupported options.
@@ -446,6 +463,10 @@ public abstract class TableOptions<T extends TableOptions> extends SchemaStateme
 
         if (speculativeRetry.isPresent()) {
             options.add("speculative_retry = " + speculativeRetry.get().value());
+        }
+
+        if (cdc.isPresent()) {
+            options.add("cdc = " + cdc.get());
         }
 
         options.addAll(customOptions);
