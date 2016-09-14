@@ -5,9 +5,35 @@
 Before starting to work on something, please comment in JIRA or ask on the mailing list
 to make sure nobody else is working on it.
 
-If your fix applies to multiple branches, base your work on the lowest active branch
-(currently 3.0.x for bug fixes and 3.0 for new features, but ask for confirmation).
-We regularly merge changes to higher branches.
+If your fix applies to multiple branches, base your work on the lowest active branch. Since version 3 of the driver,
+we've adopted [semantic versioning](http://semver.org/) and our branches use the following scheme:
+
+```
+            3.0.1      3.0.2 ...                3.1.1 ...
+         -----*----------*------> 3.0.x      -----*------> 3.1.x
+        /                                   /
+       /                                   /
+      /                                   /
+-----*-----------------------------------*-------------------------> 3.x
+   3.0.0                               3.1.0        ...
+
+Legend:
+ > branch
+ * tag
+```
+
+- new features are developed on "minor" branches such as `3.x`, where minor releases (ending in `.0`) happen.
+- bugfixes go to "patch" branches such as `3.0.x` and `3.1.x`, where patch releases (ending in `.1`, `.2`...) happen.
+- patch branches are regularly merged to the right (`3.0.x` to `3.1.x`) and to the bottom (`3.1.x` to `3.x`) so that
+  bugfixes are applied to newer versions too.
+
+The current active versions are 3.0 and 3.1. Therefore:
+
+- if you're fixing a bug on a feature that existed since 3.0, target `3.0.x`. Your changes will be available in future
+  3.0 and 3.1 patch versions.
+- if you're fixing a bug on a 3.1-only feature, target `3.1.x`. Your changes will be available in a future 3.1 patch
+  version.
+- if you're adding a new feature, target `3.x`. Your changes will be available in the upcoming 3.2.0.
 
 Before you send your pull request, make sure that:
 
