@@ -157,7 +157,7 @@ and we've had many reports where the problem turned out to be in user code.
 
 See [Blobs.java] in the `driver-examples` module for some examples and explanations.
 
-[Blobs.java]: https://github.com/datastax/java-driver/tree/3.0/driver-examples/src/main/java/com/datastax/driver/examples/datatypes/Blobs.java
+[Blobs.java]: https://github.com/datastax/java-driver/tree/3.x/driver-examples/src/main/java/com/datastax/driver/examples/datatypes/Blobs.java
 
 
 ### How do I use the driver in an OSGi application?
