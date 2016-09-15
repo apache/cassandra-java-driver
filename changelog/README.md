@@ -8,6 +8,7 @@
 - [bug] JAVA-1101: Batch and BatchStatement should consider inner statements to determine query idempotence
 - [improvement] JAVA-1262: Use ParseUtils for quoting & unquoting.
 - [improvement] JAVA-1275: Use Netty's default thread factory
+- [bug] JAVA-1285: QueryBuilder routing key auto-discovery should handle case-sensitive column names.
 
 
 ### 3.0.3

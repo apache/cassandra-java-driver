@@ -32,7 +32,39 @@ import static com.google.common.base.Preconditions.checkNotNull;
 // Static utilities private to the query builder
 abstract class Utils {
 
+    private static final Pattern alphanumeric = Pattern.compile("\\w+"); // this includes _
     private static final Pattern cnamePattern = Pattern.compile("\\w+(?:\\[.+\\])?");
+
+    /**
+     * Deal with case sensitivity for a given element id (keyspace, table, column, etc.)
+     *
+     * This method is used to convert identifiers provided by the client (through methods such as getKeyspace(String)),
+     * to the format used internally by the driver.
+     *
+     * We expect client-facing APIs to behave like cqlsh, that is:
+     * - identifiers that are mixed-case or contain special characters should be quoted.
+     * - unquoted identifiers will be lowercased: getKeyspace("Foo") will look for a keyspace named "foo"
+     *
+     * Copied from {@link Metadata#handleId(String)} to avoid making it public.
+     */
+    static String handleId(String id) {
+        // Shouldn't really happen for this method, but no reason to fail here
+        if (id == null)
+            return null;
+
+        if (alphanumeric.matcher(id).matches())
+            return id.toLowerCase();
+
+        // Check if it's enclosed in quotes. If it is, remove them and unescape internal double quotes
+        if (!id.isEmpty() && id.charAt(0) == '"' && id.charAt(id.length() - 1) == '"')
+            return id.substring(1, id.length() - 1).replaceAll("\"\"", "\"");
+
+        // Otherwise, just return the id.
+        // Note that this is a bit at odds with the rules explained above, because the client can pass an
+        // identifier that contains special characters, without the need to quote it.
+        // Still it's better to be lenient here rather than throwing an exception.
+        return id;
+    }
 
     static StringBuilder joinAndAppend(StringBuilder sb, CodecRegistry codecRegistry, String separator, List<? extends Appendeable> values, List<Object> variables) {
         for (int i = 0; i < values.size(); i++) {
