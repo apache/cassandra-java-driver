@@ -28,7 +28,6 @@ import com.google.common.base.Functions;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.*;
-import io.netty.util.concurrent.EventExecutor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -47,9 +46,6 @@ import java.util.concurrent.atomic.AtomicReference;
 class SessionManager extends AbstractSession {
 
     private static final Logger logger = LoggerFactory.getLogger(Session.class);
-
-    private static final boolean CHECK_IO_DEADLOCKS = SystemProperties.getBoolean(
-            "com.datastax.driver.CHECK_IO_DEADLOCKS", true);
 
     final Cluster cluster;
     final ConcurrentMap<Host, HostConnectionPool> pools;
@@ -662,23 +658,6 @@ class SessionManager extends AbstractSession {
     void cleanupIdleConnections(long now) {
         for (HostConnectionPool pool : pools.values()) {
             pool.cleanupIdleConnections(now);
-        }
-    }
-
-    @Override
-    protected void checkNotInEventLoop() {
-        Connection.Factory connectionFactory = cluster.manager.connectionFactory;
-        if (!CHECK_IO_DEADLOCKS || connectionFactory == null)
-            return;
-        for (EventExecutor executor : connectionFactory.eventLoopGroup) {
-            if (executor.inEventLoop()) {
-                throw new IllegalStateException(
-                        "Detected a synchronous call on an I/O thread, this can cause deadlocks or unpredictable " +
-                                "behavior. This generally happens when a Future callback calls a synchronous Session " +
-                                "method (execute() or prepare()), or iterates a result set past the fetch size " +
-                                "(causing an internal synchronous fetch of the next page of results). " +
-                                "Avoid this in your callbacks, or schedule them on a different executor.");
-            }
         }
     }
 

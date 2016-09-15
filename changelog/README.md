@@ -10,6 +10,7 @@
 - [improvement] JAVA-1275: Use Netty's default thread factory
 - [bug] JAVA-1285: QueryBuilder routing key auto-discovery should handle case-sensitive column names.
 - [bug] JAVA-1283: Don't cache failed query preparations in the mapper.
+- [improvement] JAVA-1277: Expose AbstractSession.checkNotInEventLoop.
 
 
 ### 3.0.3
