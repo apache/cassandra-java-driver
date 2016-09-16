@@ -11,6 +11,7 @@
 - [bug] JAVA-1285: QueryBuilder routing key auto-discovery should handle case-sensitive column names.
 - [bug] JAVA-1283: Don't cache failed query preparations in the mapper.
 - [improvement] JAVA-1277: Expose AbstractSession.checkNotInEventLoop.
+- [bug] JAVA-1272: BuiltStatement not able to print its query string if it contains mapped UDTs.
 
 
 ### 3.0.3
