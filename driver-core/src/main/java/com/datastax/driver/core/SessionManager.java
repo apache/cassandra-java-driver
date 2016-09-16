@@ -560,7 +560,7 @@ class SessionManager extends AbstractSession {
             List<ByteBuffer> positionalValues = rawPositionalValues == null ? Collections.<ByteBuffer>emptyList() : Arrays.asList(rawPositionalValues);
             Map<String, ByteBuffer> namedValues = rawNamedValues == null ? Collections.<String, ByteBuffer>emptyMap() : rawNamedValues;
 
-            String qString = rs.getQueryString();
+            String qString = rs.getQueryString(codecRegistry);
 
             Requests.QueryProtocolOptions options = new Requests.QueryProtocolOptions(Message.Request.Type.QUERY, consistency, positionalValues, namedValues,
                     false, fetchSize, usedPagingState, serialConsistency, defaultTimestamp);

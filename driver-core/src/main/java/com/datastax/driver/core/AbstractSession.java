@@ -135,12 +135,12 @@ public abstract class AbstractSession implements Session {
         if (statement.hasValues())
             throw new IllegalArgumentException("A statement to prepare should not have values");
 
-        ListenableFuture<PreparedStatement> prepared = prepareAsync(statement.getQueryString(), statement.getOutgoingPayload());
+        final CodecRegistry codecRegistry = getCluster().getConfiguration().getCodecRegistry();
+        ListenableFuture<PreparedStatement> prepared = prepareAsync(statement.getQueryString(codecRegistry), statement.getOutgoingPayload());
         return Futures.transform(prepared, new Function<PreparedStatement, PreparedStatement>() {
             @Override
             public PreparedStatement apply(PreparedStatement prepared) {
                 ProtocolVersion protocolVersion = getCluster().getConfiguration().getProtocolOptions().getProtocolVersion();
-                CodecRegistry codecRegistry = getCluster().getConfiguration().getCodecRegistry();
                 ByteBuffer routingKey = statement.getRoutingKey(protocolVersion, codecRegistry);
                 if (routingKey != null)
                     prepared.setRoutingKey(routingKey);

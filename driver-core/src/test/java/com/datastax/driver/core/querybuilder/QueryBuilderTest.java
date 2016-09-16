@@ -727,16 +727,11 @@ public class QueryBuilderTest {
         assertTrue(query.isTracing());
     }
 
-    @Test(groups = "unit")
+    @Test(groups = "unit", expectedExceptions = CodecNotFoundException.class)
     public void rejectUnknownValueTest() throws Exception {
-        try {
-            RegularStatement s = update("foo").with(set("a", new byte[13])).where(eq("k", 2))
-                    .setForceNoValues(true);
-            s.getQueryString();
-            fail("should have failed to inline a byte[]");
-        } catch (CodecNotFoundException e) {
-            // Ok, that's what we expect
-        }
+        RegularStatement s = update("foo").with(set("a", new byte[13])).where(eq("k", 2))
+                .setForceNoValues(true);
+        s.getQueryString();
     }
 
     @Test(groups = "unit")
@@ -997,6 +992,65 @@ public class QueryBuilderTest {
                     "Native protocol version 2 supports only elements with size up to 65535 bytes - " +
                             "but element size is 65536 bytes");
         }
+    }
+
+    static class Foo {
+        int bar;
+
+        public Foo(int bar) {
+            this.bar = bar;
+        }
+    }
+
+    static class FooCodec extends TypeCodec<Foo> {
+
+        public FooCodec() {
+            super(DataType.cint(), Foo.class);
+        }
+
+        @Override
+        public ByteBuffer serialize(Foo value, ProtocolVersion protocolVersion) throws InvalidTypeException {
+            // not relevant for this test
+            return null;
+        }
+
+        @Override
+        public Foo deserialize(ByteBuffer bytes, ProtocolVersion protocolVersion) throws InvalidTypeException {
+            // not relevant for this test
+            return null;
+        }
+
+        @Override
+        public Foo parse(String value) throws InvalidTypeException {
+            // not relevant for this test
+            return null;
+        }
+
+        @Override
+        public String format(Foo foo) throws InvalidTypeException {
+            return Integer.toString(foo.bar);
+        }
+    }
+
+    /**
+     * Ensures that a statement can be printed with and without
+     * a required custom codec.
+     * The expectation is that if the codec is not registered,
+     * then the query string should contain bind markers for all variables;
+     * if however all codecs are properly registered, then
+     * the query string should contain all variables inlined and formatted properly.
+     *
+     * @jira_ticket JAVA-1272
+     */
+    @Test(groups = "unit")
+    public void should_inline_custom_codec() throws Exception {
+        assertThat(
+                insertInto("users").value("id", new Foo(42)).toString())
+                .isEqualTo("INSERT INTO users (id) VALUES (?);");
+        CodecRegistry.DEFAULT_INSTANCE.register(new FooCodec());
+        assertThat(
+                insertInto("users").value("id", new Foo(42)).toString())
+                .isEqualTo("INSERT INTO users (id) VALUES (42);");
     }
 
 }
