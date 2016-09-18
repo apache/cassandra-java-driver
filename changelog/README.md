@@ -12,6 +12,8 @@
 - [bug] JAVA-1283: Don't cache failed query preparations in the mapper.
 - [improvement] JAVA-1277: Expose AbstractSession.checkNotInEventLoop.
 - [bug] JAVA-1272: BuiltStatement not able to print its query string if it contains mapped UDTs.
+- [bug] JAVA-1292: 'Adjusted frame length' error breaks driver's ability to read data.
+- [improvement] JAVA-1293: Make DecoderForStreamIdSize.MAX_FRAME_LENGTH configurable.
 
 
 ### 3.0.3

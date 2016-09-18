@@ -323,6 +323,7 @@
                                 <include>**/SSL*Test.java</include>
                                 <include>**/ControlConnectionTest.java</include>
                                 <include>**/ExtendedPeerCheckDisabledTest.java</include>
+                                <include>**/FrameLengthTest.java</include>
                             </includes>
                         </configuration>
                     </plugin>

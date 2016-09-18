@@ -27,6 +27,7 @@ import io.netty.channel.*;
 import io.netty.channel.group.ChannelGroup;
 import io.netty.channel.group.DefaultChannelGroup;
 import io.netty.channel.socket.SocketChannel;
+import io.netty.handler.codec.DecoderException;
 import io.netty.handler.timeout.IdleStateEvent;
 import io.netty.handler.timeout.IdleStateHandler;
 import io.netty.util.Timeout;
@@ -993,7 +994,7 @@ class Connection {
             ResponseHandler handler = pending.remove(streamId);
             streamIdHandler.release(streamId);
             if (handler == null) {
-                /**
+                /*
                  * During normal operation, we should not receive responses for which we don't have a handler. There is
                  * two cases however where this can happen:
                  *   1) The connection has been defuncted due to some internal error and we've raced between removing the
@@ -1046,6 +1047,27 @@ class Connection {
             if (writer.get() > 0)
                 return;
 
+            if (cause instanceof DecoderException) {
+                Throwable error = cause.getCause();
+                // Special case, if we encountered a FrameTooLongException, raise exception on handler and don't defunct it since
+                // the connection is in an ok state.
+                if (error != null && error instanceof FrameTooLongException) {
+                    FrameTooLongException ftle = (FrameTooLongException) error;
+                    int streamId = ftle.getStreamId();
+                    ResponseHandler handler = pending.remove(streamId);
+                    streamIdHandler.release(streamId);
+                    if (handler == null) {
+                        streamIdHandler.unmark(streamId);
+                        if (logger.isDebugEnabled())
+                            logger.debug("{} FrameTooLongException received on stream {} but no handler set anymore (either the request has "
+                                    + "timed out or it was closed due to another error).", Connection.this, streamId);
+                        return;
+                    }
+                    handler.cancelTimeout();
+                    handler.callback.onException(Connection.this, ftle, System.nanoTime() - handler.startTime, handler.retryCount);
+                    return;
+                }
+            }
             defunct(new TransportException(address, String.format("Unexpected exception triggered (%s)", cause), cause));
         }
 
