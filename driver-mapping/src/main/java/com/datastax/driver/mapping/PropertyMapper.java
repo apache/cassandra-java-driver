@@ -24,6 +24,7 @@ import java.beans.PropertyDescriptor;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
 import java.lang.reflect.Type;
 import java.util.Collection;
 import java.util.Map;
@@ -118,7 +119,7 @@ class PropertyMapper {
     }
 
     boolean isTransient() {
-        return hasAnnotation(Transient.class);
+        return hasAnnotation(Transient.class) || (this.field != null && Modifier.isTransient(this.field.getModifiers()));
     }
 
     boolean isPartitionKey() {
