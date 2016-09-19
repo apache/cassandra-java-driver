@@ -24,6 +24,7 @@ import java.util.concurrent.TimeUnit;
 
 import static com.datastax.driver.core.CreateCCM.TestMode.PER_METHOD;
 import static com.datastax.driver.core.TestUtils.findHost;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.*;
 
 /**
@@ -55,6 +56,7 @@ public class AuthenticationTest extends CCMTestsSupport {
                 .build();
         cluster.connect();
         verify(authProvider, atLeastOnce()).newAuthenticator(findHost(cluster, 1).getSocketAddress(), "org.apache.cassandra.auth.PasswordAuthenticator");
+        assertThat(cluster.getMetrics().getErrorMetrics().getAuthenticationErrors().getCount()).isEqualTo(0);
     }
 
     @Test(groups = "short", expectedExceptions = AuthenticationException.class)
@@ -64,7 +66,11 @@ public class AuthenticationTest extends CCMTestsSupport {
                 .withPort(ccm().getBinaryPort())
                 .withCredentials("bogus", "bogus")
                 .build());
-        cluster.connect();
+        try {
+            cluster.connect();
+        } finally {
+            assertThat(cluster.getMetrics().getErrorMetrics().getAuthenticationErrors().getCount()).isEqualTo(1);
+        }
     }
 
     @Test(groups = "short", expectedExceptions = AuthenticationException.class)
@@ -73,7 +79,11 @@ public class AuthenticationTest extends CCMTestsSupport {
                 .addContactPoints(getContactPoints())
                 .withPort(ccm().getBinaryPort())
                 .build());
-        cluster.connect();
+        try {
+            cluster.connect();
+        } finally {
+            assertThat(cluster.getMetrics().getErrorMetrics().getAuthenticationErrors().getCount()).isEqualTo(1);
+        }
     }
 
 }

@@ -268,6 +268,7 @@ public class Metrics {
     public class Errors {
 
         private final Counter connectionErrors = registry.counter("connection-errors");
+        private final Counter authenticationErrors = registry.counter("authentication-errors");
 
         private final Counter writeTimeouts = registry.counter("write-timeouts");
         private final Counter readTimeouts = registry.counter("read-timeouts");
@@ -309,6 +310,15 @@ public class Metrics {
          */
         public Counter getConnectionErrors() {
             return connectionErrors;
+        }
+
+        /**
+         * Returns the number of authentication errors while connecting to Cassandra nodes.
+         *
+         * @return the number of errors.
+         */
+        public Counter getAuthenticationErrors() {
+            return authenticationErrors;
         }
 
         /**

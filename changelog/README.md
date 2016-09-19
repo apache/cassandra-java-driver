@@ -14,6 +14,7 @@
 - [bug] JAVA-1272: BuiltStatement not able to print its query string if it contains mapped UDTs.
 - [bug] JAVA-1292: 'Adjusted frame length' error breaks driver's ability to read data.
 - [improvement] JAVA-1293: Make DecoderForStreamIdSize.MAX_FRAME_LENGTH configurable.
+- [improvement] JAVA-1053: Add a metric for authentication errors
 
 
 ### 3.0.3
