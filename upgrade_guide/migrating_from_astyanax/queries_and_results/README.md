@@ -1,15 +1,15 @@
 # Queries and Results
-There are many ressources such as [this post][planetCCqlLink] or [this post][dsBlogCqlLink] to learn
+There are many resources such as [this post][planetCCqlLink] or [this post][dsBlogCqlLink] to learn
 how to transform previous Thrift operations to CQL queries.
  
 The *Java driver* executes CQL queries through the `Session`. 
 The queries can either be simple *CQL* Strings or represented in the form of 
 `Statement`s. The driver offers 4 kinds of statements, `SimpleStatement`, 
-`Prepared/BoundStatement`, `BuiltStatement`, `BatchStatement`. All necessary 
-information can be [found here](../../../manual/statements/) about the natures of the different
+`Prepared/BoundStatement`, `BuiltStatement`, and `BatchStatement`. All necessary
+information can be [found here](../../../manual/statements/) about the nature of the different
 `Statement`s.
 
-As explained in [this documentation section](../../../manual/#running-queries),
+As explained in [the running section](../../../manual/#running-queries),
 results of a *CQL* query will be in the form of *Rows* from *Tables*, composed 
 of fixed set of columns, each with a type and a name. The driver exposes the 
 set of *Rows* returned from a query as a ResultSet, thus containing *Rows* on 

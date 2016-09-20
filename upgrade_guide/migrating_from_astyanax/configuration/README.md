@@ -3,12 +3,12 @@
 ## How Configuring the Java driver works
 
 The two basic components in the Java driver are the `Cluster` and the `Session`.
-The `Cluster` is the object to create first, and on to which apply all
-global configuration options. Connecting to the `Cluster` creates a
-`Session`. Queries are executed through the `Session`.
+The `Cluster` is the object to create first, and on to which all global configurations
+apply. Connecting to the `Cluster` creates a `Session`. Queries are executed 
+through the `Session`.
 
 The `Cluster` object then is to be viewed as the equivalent of the `AstyanaxContext`
-object. ’Starting’ an `AstyanaxContext` object typically returns a `Keyspace`
+object. "Starting" an `AstyanaxContext` object typically returns a `Keyspace`
 object, the `Keyspace` object is the equivalent of the *Java driver*’s `Session`.
 
 Configuring a `Cluster` works with the *Builder* pattern. The `Builder` takes all
@@ -16,7 +16,10 @@ the configurations into account before building the `Cluster`.
 
 Following are some examples of the most important configurations that were 
 possible with *Astyanax* and how to translate them into *DataStax Java driver*
-configurations.
+configurations. Please note that the Java driver has been optimized to handle most use
+cases at best and even though the following sections show how to tune some various 
+options, the driver should provide the best performances with the default configurations 
+and these options should not be changed unless there is a good reason to.
 
 ## Connection pools
 
@@ -26,7 +29,7 @@ that the *Java driver* has categorized in multiple *Option* and *Policy* kinds.
 
 ### Connections pools internals
 Everything concerning the internal pools of connections to the *Cassandra nodes*
-will be gathered in the Java driver in the `PoolingOptions` :
+will be gathered in the Java driver in the [`PoolingOptions`](../../manual/pooling):
 
 *Astyanax*:
 
@@ -42,14 +45,17 @@ ConnectionPoolConfigurationImpl cpool =
 ```java
 PoolingOptions poolingOptions =
        new PoolingOptions()
-           .setMaxRequestsPerConnection(HostDistance.LOCAL, 1024)
-           .setCoreConnectionsPerHost(HostDistance.LOCAL, 2)
-           .setMaxConnectionsPerHost(HostDistance.LOCAL, 3);
+           .setConnectionsPerHost(HostDistance.LOCAL, 2, 3)
 ```
+The first number is the initial number of connections, the second is the maximum number
+of connections the driver is allowed to create for each host.
 
 Note that the *Java driver* allows multiple simultaneous requests on one single
-connection, as it is based upon the *Native protocol*, an asynchronous binary
-protocol that can handle up to 32768 simultaneous requests.
+connection, as it is based upon the [*Native protocol*](../../manual/native_protocol), 
+an asynchronous binary protocol that can handle up to 32768 simultaneous requests on a 
+single connection. The Java driver is able to manage and distirbute simultaneous requests 
+by itself even under high contention, and changing the default `PoolingOptions` is not
+necessary most of the time except for very [specific use cases](../../../manual/pooling/#tuning-protocol-v3-for-very-high-throughputs).
 
 ### Timeouts
 
@@ -64,7 +70,7 @@ ConnectionPoolConfigurationImpl cpool =
                .setConnectTimeout(3000)
 ```
 
-*Java Driver :*
+*Java Driver:*
 
 ```java
 SocketOptions so =
@@ -72,6 +78,9 @@ SocketOptions so =
            .setReadTimeoutMillis(3000)
            .setConnectTimeoutMillis(3000);
 ```
+
+Changing the client timeout options might have more impacts than expected, **please make
+sure to properly document before changing these options.**
 
 ## Load Balancing
 Both *Astyanax* and the *Java driver* connect to multiple nodes of the *Cassandra*
@@ -86,7 +95,7 @@ the configuration is different and provides more options to tweak.
 Load balancing in the *Java driver* is a *Policy*, it is a class that will be
 plugged in the *Java driver*’s code and the Driver will call its methods when it 
 needs to. The *Java driver* comes with a preset of specific load balancing policies. 
-Here’s an equivalent code :
+Here’s an equivalent code:
 
 *Astyanax*:
 
@@ -118,12 +127,13 @@ to. So to get the same behaviour than the *TokenAware* pool type of *Astyanax*,
 users shouldn’t need to specify a load balancing policy since the default one 
 should cover it.
 
-Important : Note that since *CQL* is an abstraction of the Cassandra’s architecture, a simple 
+Important: Note that since *CQL* is an abstraction of the Cassandra’s architecture, a simple 
 query needs to have the *Row key* specified explicitly on a `Statement` in order 
 to benefit from the *TokenAware* routing (the *Row key* in the *Java driver* is 
 referenced as *Routing Key*), unlike the *Astyanax* driver. 
 Some differences occur related to the different kinds of `Statements` the *Java
-driver* provides. Please see [this link](../../../manual/statements) for specific information.
+driver* provides. Please see [this link](../../../manual/load_balancing/#token-aware-policy) 
+for specific information.
 
 Custom load balancing policies can easily be implemented by users, and supplied to 
 the *Java driver* for specific use cases. All information necessary is available
@@ -155,13 +165,13 @@ Level can be set per-statement, you can either set it on every statement, or use
 this case, setting the CL on the `PreparedStatement`, causes the `BoundStatements` to 
 inherit the CL from the prepared statements they were prepared from. More
 informations about how `Statement`s work in the *Java driver* are detailed
-in the [“Queries and Result” section](../queries_and_results/).
+in the [“Queries and Results” section](../queries_and_results/).
 
 
 ## Authentication
 
 Authentication settings are managed by the `AuthProvider` class in the *Java driver*.
-It can be highly customizable, but also comes with default simple implementations :
+It can be highly customizable, but also comes with default simple implementations:
 
 *Astyanax*:
 
@@ -184,7 +194,7 @@ documentation about the classes needed is [available there](../../../manual/auth
 ## Hosts and ports
 
 Setting the “seeds” or first hosts to connect to can be done directly on the 
-Cluster configuration Builder :
+Cluster configuration Builder:
 
 *Astyanax*:
 
@@ -210,7 +220,7 @@ phase*.
 
 ## Building the Cluster
 With all options previously presented, one may configure and create the
-`Cluster` object this way :
+`Cluster` object this way:
 
 *Java driver*:
 
@@ -238,5 +248,5 @@ advised, then a [deep dive in the Pools management mechanism](../../../manual/po
 provide enough insight.
 
 A lot more options are available in the different `XxxxOption`s classes, policies are
-also highly customizable since the base drivers implementations can easily be 
-extended and implement users specific actions.
+also highly customizable since the base Java driver's implementations can easily be
+extended and implement user-specific actions.

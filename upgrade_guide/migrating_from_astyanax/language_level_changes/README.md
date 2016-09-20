@@ -9,7 +9,7 @@ opposition to *Thrift* that aims to expose the low-level data structure directly
 of column-values. With *CQL*, the data is **tabular**, *ColumnFamily* gets viewed
 as a *Table*, the **Table Rows** get a **fixed and finite number of named columns**.
 *Thrift*’s columns inside the *Rows* get distributed in a tabular way through the
-_Table Rows_. See the following figure :
+_Table Rows_. See the following figure:
 
 ```ditaa
                                                      Thrift
@@ -61,6 +61,6 @@ also be composed of multiple columns (in the figure, column1 is the only column
 composing the *Clustering ColumnKey*).
 
 Here is the basic architectural concept of *CQL*, a detailed explanation and *CQL*
-examples can be found in this article : [http://www.planetcassandra.org/making-the-change-from-thrift-to-cql/].
+examples can be found in this article : [http://www.planetcassandra.org/making-the-change-from-thrift-to-cql/](http://www.planetcassandra.org/making-the-change-from-thrift-to-cql/).
 Understanding the *CQL* abstraction plays a key role in developing performing
 and scaling applications.
