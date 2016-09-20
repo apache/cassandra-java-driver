@@ -115,6 +115,8 @@ public class ReconnectionTest extends CCMTestsSupport {
             TimeUnit.SECONDS.sleep(5);
         } while (iterations < maxIterations && authProvider.count.get() <= initialCount);
         assertThat(iterations).isLessThan(maxIterations);
+        assertThat(cluster.getMetrics().getErrorMetrics().getAuthenticationErrors().getCount())
+                .isEqualTo(authProvider.count.get() - initialCount);
 
         // Fix the credentials
         authProvider.setPassword("cassandra");

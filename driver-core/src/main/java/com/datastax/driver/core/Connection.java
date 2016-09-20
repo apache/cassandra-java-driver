@@ -249,7 +249,13 @@ class Connection {
                         throw new TransportException(address, String.format("Error initializing connection: %s", error.message));
                     case AUTHENTICATE:
                         Responses.Authenticate authenticate = (Responses.Authenticate) response;
-                        Authenticator authenticator = factory.authProvider.newAuthenticator(address, authenticate.authenticator);
+                        Authenticator authenticator;
+                        try {
+                            authenticator = factory.authProvider.newAuthenticator(address, authenticate.authenticator);
+                        } catch (AuthenticationException e) {
+                            incrementAuthErrorMetric();
+                            throw e;
+                        }
                         switch (protocolVersion) {
                             case V1:
                                 if (authenticator instanceof ProtocolV1Authenticator)
@@ -320,6 +326,7 @@ class Connection {
                                 case READY:
                                     return checkClusterName(protocolVersion, executor);
                                 case ERROR:
+                                    incrementAuthErrorMetric();
                                     throw new AuthenticationException(address, ((Responses.Error) authResponse).message);
                                 default:
                                     throw new TransportException(address, String.format("Unexpected %s response message from server to a CREDENTIALS message", authResponse.type));
@@ -375,12 +382,19 @@ class Connection {
                         if (message.startsWith("java.lang.ArrayIndexOutOfBoundsException: 15"))
                             message = String.format("Cannot use authenticator %s with protocol version 1, "
                                     + "only plain text authentication is supported with this protocol version", authenticator);
+                        incrementAuthErrorMetric();
                         throw new AuthenticationException(address, message);
                     default:
                         throw new TransportException(address, String.format("Unexpected %s response message from server to authentication message", authResponse.type));
                 }
             }
         };
+    }
+
+    private void incrementAuthErrorMetric() {
+        if (factory.manager.configuration.getMetricsOptions().isEnabled()) {
+            factory.manager.metrics.getErrorMetrics().getAuthenticationErrors().inc();
+        }
     }
 
     private UnsupportedProtocolVersionException unsupportedProtocolVersionException(ProtocolVersion triedVersion, ProtocolVersion serverProtocolVersion) {
