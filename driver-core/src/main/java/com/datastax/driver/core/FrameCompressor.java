@@ -16,6 +16,7 @@
 package com.datastax.driver.core;
 
 import com.datastax.driver.core.exceptions.DriverInternalError;
+import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import net.jpountz.lz4.LZ4Factory;
 import org.slf4j.Logger;
@@ -23,6 +24,7 @@ import org.slf4j.LoggerFactory;
 import org.xerial.snappy.Snappy;
 
 import java.io.IOException;
+import java.nio.ByteBuffer;
 
 abstract class FrameCompressor {
 
@@ -58,23 +60,119 @@ abstract class FrameCompressor {
 
         @Override
         public Frame compress(Frame frame) throws IOException {
-            byte[] input = CBUtil.readRawBytes(frame.body);
-            byte[] output = new byte[Snappy.maxCompressedLength(input.length)];
+            ByteBuf input = frame.body;
+            int maxCompressedLength = Snappy.maxCompressedLength(input.readableBytes());
 
-            int written = Snappy.compress(input, 0, input.length, output, 0);
-            return frame.with(Unpooled.wrappedBuffer(output, 0, written));
+            final ByteBuf frameBody;
+            if (input.isDirect()) {
+                // If the input is direct we will allocate a direct output buffer as well as this will allow us to use
+                // Snappy.compress(ByteBuffer, ByteBuffer) and so eliminate memory copies.
+                ByteBuf output = input.alloc().directBuffer(maxCompressedLength);
+                try {
+                    // Using internalNioBuffer(...) as we only hold the reference in this method and so can
+                    // reduce Object allocations.
+                    ByteBuffer in = input.internalNioBuffer(input.readerIndex(), input.readableBytes());
+                    // Increase reader index.
+                    input.readerIndex(input.writerIndex());
+
+                    ByteBuffer out = output.internalNioBuffer(output.writerIndex(), output.writableBytes());
+                    int written = Snappy.compress(in, out);
+                    // Set the writer index so the amount of written bytes is reflected
+                    output.writerIndex(output.writerIndex() + written);
+                    frameBody = output;
+                } catch (IOException e) {
+                    // release output buffer so we not leak and rethrow exception.
+                    output.release();
+                    throw e;
+                }
+            } else {
+                int inOffset = input.arrayOffset() + input.readerIndex();
+                byte[] in = input.array();
+                int len = input.readableBytes();
+                // Increase reader index.
+                input.readerIndex(input.writerIndex());
+
+                // Allocate a heap buffer from the ByteBufAllocator as we may use a PooledByteBufAllocator and so
+                // can eliminate the overhead of allocate a new byte[].
+                ByteBuf output = input.alloc().heapBuffer(maxCompressedLength);
+                try {
+                    // Calculate the correct offset.
+                    int offset = output.arrayOffset() + output.writerIndex();
+                    byte[] out = output.array();
+                    int written = Snappy.compress(in, inOffset, len, out, offset);
+
+                    // Increase the writerIndex with the written bytes.
+                    output.writerIndex(output.writerIndex() + written);
+                    frameBody = output;
+                } catch (IOException e) {
+                    // release output buffer so we not leak and rethrow exception.
+                    output.release();
+                    throw e;
+                }
+            }
+            return frame.with(frameBody);
         }
 
         @Override
         public Frame decompress(Frame frame) throws IOException {
-            byte[] input = CBUtil.readRawBytes(frame.body);
+            ByteBuf input = frame.body;
+            final ByteBuf frameBody;
 
-            if (!Snappy.isValidCompressedBuffer(input, 0, input.length))
-                throw new DriverInternalError("Provided frame does not appear to be Snappy compressed");
+            if (input.isDirect()) {
+                // Using internalNioBuffer(...) as we only hold the reference in this method and so can
+                // reduce Object allocations.
+                ByteBuffer in = input.internalNioBuffer(input.readerIndex(), input.readableBytes());
+                // Increase reader index.
+                input.readerIndex(input.writerIndex());
 
-            byte[] output = new byte[Snappy.uncompressedLength(input)];
-            int size = Snappy.uncompress(input, 0, input.length, output, 0);
-            return frame.with(Unpooled.wrappedBuffer(output, 0, size));
+                if (!Snappy.isValidCompressedBuffer(in))
+                    throw new DriverInternalError("Provided frame does not appear to be Snappy compressed");
+
+                // If the input is direct we will allocate a direct output buffer as well as this will allow us to use
+                // Snappy.compress(ByteBuffer, ByteBuffer) and so eliminate memory copies.
+                ByteBuf output = frame.body.alloc().directBuffer(Snappy.uncompressedLength(in));
+                try {
+                    ByteBuffer out = output.internalNioBuffer(output.writerIndex(), output.writableBytes());
+
+                    int size = Snappy.uncompress(in, out);
+                    // Set the writer index so the amount of written bytes is reflected
+                    output.writerIndex(output.writerIndex() + size);
+                    frameBody = output;
+                } catch (IOException e) {
+                    // release output buffer so we not leak and rethrow exception.
+                    output.release();
+                    throw e;
+                }
+            } else {
+                // Not a direct buffer so use byte arrays...
+                int inOffset = input.arrayOffset() + input.readerIndex();
+                byte[] in = input.array();
+                int len = input.readableBytes();
+                // Increase reader index.
+                input.readerIndex(input.writerIndex());
+
+                if (!Snappy.isValidCompressedBuffer(in, inOffset, len))
+                    throw new DriverInternalError("Provided frame does not appear to be Snappy compressed");
+
+                // Allocate a heap buffer from the ByteBufAllocator as we may use a PooledByteBufAllocator and so
+                // can eliminate the overhead of allocate a new byte[].
+                ByteBuf output = input.alloc().heapBuffer(Snappy.uncompressedLength(in, inOffset, len));
+                try {
+                    // Calculate the correct offset.
+                    int offset = output.arrayOffset() + output.writerIndex();
+                    byte[] out = output.array();
+                    int written = Snappy.uncompress(in, inOffset, len, out, offset);
+
+                    // Increase the writerIndex with the written bytes.
+                    output.writerIndex(output.writerIndex() + written);
+                    frameBody = output;
+                } catch (IOException e) {
+                    // release output buffer so we not leak and rethrow exception.
+                    output.release();
+                    throw e;
+                }
+            }
+            return frame.with(frameBody);
         }
     }
 
