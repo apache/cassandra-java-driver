@@ -324,6 +324,7 @@
                                 <include>**/ControlConnectionTest.java</include>
                                 <include>**/ExtendedPeerCheckDisabledTest.java</include>
                                 <include>**/FrameLengthTest.java</include>
+                                <include>**/HeapCompressionTest.java</include>
                             </includes>
                         </configuration>
                     </plugin>
