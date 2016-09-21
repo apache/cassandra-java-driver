@@ -106,17 +106,19 @@ public class ReconnectionTest extends CCMTestsSupport {
         ccm().start(1);
         ccm().waitForUp(1);
 
-        // Wait a few iterations to ensure that our authProvider has returned the wrong credentials at least once
+        // Wait a few iterations to ensure that our authProvider has returned the wrong credentials at least twice
         // NB: authentication errors show up in the logs
         int initialCount = authProvider.count.get();
+        long initialMetricCount = cluster.getMetrics().getErrorMetrics().getAuthenticationErrors().getCount();
         int iterations = 0, maxIterations = 12; // make sure we don't wait indefinitely
         do {
             iterations += 1;
             TimeUnit.SECONDS.sleep(5);
-        } while (iterations < maxIterations && authProvider.count.get() <= initialCount);
+        } while (iterations < maxIterations && authProvider.count.get() <= initialCount + 1);
         assertThat(iterations).isLessThan(maxIterations);
+        // Number of authentication errors should have increased.
         assertThat(cluster.getMetrics().getErrorMetrics().getAuthenticationErrors().getCount())
-                .isEqualTo(authProvider.count.get() - initialCount);
+                .isGreaterThan(initialMetricCount);
 
         // Fix the credentials
         authProvider.setPassword("cassandra");
