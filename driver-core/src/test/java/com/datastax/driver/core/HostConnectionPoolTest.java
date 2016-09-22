@@ -16,8 +16,7 @@
 package com.datastax.driver.core;
 
 import com.codahale.metrics.Gauge;
-import com.datastax.driver.core.exceptions.BusyConnectionException;
-import com.datastax.driver.core.exceptions.ConnectionException;
+import com.datastax.driver.core.exceptions.*;
 import com.datastax.driver.core.policies.ConstantReconnectionPolicy;
 import com.datastax.driver.core.utils.MoreFutures;
 import com.google.common.base.Predicate;
@@ -112,10 +111,227 @@ public class HostConnectionPoolTest extends ScassandraTestBase.PerClassCluster {
             MockRequest failedBorrow = MockRequest.send(pool, maxQueueSize);
             try {
                 failedBorrow.getConnection();
-                fail("Expected a ConnectionException");
-            } catch (ConnectionException e) { /*expected*/}
+                fail("Expected a BusyPoolException");
+            } catch (BusyPoolException e) {/*expected*/}
         } finally {
             MockRequest.completeAll(allRequests);
+            cluster.close();
+        }
+    }
+
+    /**
+     * Ensures that any enqueued connection borrow requests are failed when their associated connection pool closes.
+     *
+     * @jira_ticket JAVA-839
+     * @test_category connection:connection_pool
+     * @since 3.0.4, 3.1.1
+     */
+    @Test(groups = "short")
+    public void requests_with_enqueued_borrow_requests_should_be_failed_when_pool_closes() {
+        Cluster cluster = createClusterBuilder().build();
+        List<MockRequest> requests = newArrayList();
+        try {
+            HostConnectionPool pool = createPool(cluster, 2, 2);
+            int maxQueueSize = 256;
+
+            assertThat(pool.connections.size()).isEqualTo(2);
+            List<Connection> coreConnections = newArrayList(pool.connections);
+            // fill connections
+            requests = MockRequest.sendMany(2 * 128, pool);
+            assertBorrowedConnections(requests, coreConnections);
+            // fill queue
+            List<MockRequest> queuedRequests = MockRequest.sendMany(maxQueueSize, pool, maxQueueSize);
+
+            // Closing the pool should fail all queued connections.
+            pool.closeAsync();
+
+            for (MockRequest queuedRequest : queuedRequests) {
+                // Future should be completed.
+                assertThat(queuedRequest.connectionFuture.isDone()).isTrue();
+                try {
+                    // Future should fail as result of the pool closing.
+                    queuedRequest.getConnection();
+                    fail("Expected a ConnectionException");
+                } catch (ConnectionException e) {/*expected*/}
+            }
+        } finally {
+            MockRequest.completeAll(requests);
+            cluster.close();
+        }
+    }
+
+    /**
+     * Validates that if the keyspace tied to the Session's pool state is different than the keyspace on the connection
+     * being used in dequeue that {@link Connection#setKeyspaceAsync(String)} is set on that connection and that
+     * "USE keyspace" is only called once since setKeyspaceAsync should not attempt setting the keyspace if there is
+     * already a request inflight that is doing this.
+     *
+     * @jira_ticket JAVA-839
+     * @test_category connection:connection_pool
+     * @since 3.0.4, 3.1.1
+     */
+    @Test(groups = "short")
+    public void should_adjust_connection_keyspace_on_dequeue_if_pool_state_is_different() throws TimeoutException, ExecutionException {
+        Cluster cluster = createClusterBuilder().build();
+        List<MockRequest> requests = newArrayList();
+        try {
+            HostConnectionPool pool = createPool(cluster, 1, 1);
+            int maxQueueSize = 256;
+
+            assertThat(pool.connections.size()).isEqualTo(1);
+            List<Connection> coreConnections = newArrayList(pool.connections);
+            // fill connections
+            requests = MockRequest.sendMany(128, pool);
+            assertBorrowedConnections(requests, coreConnections);
+            // fill queue
+            List<MockRequest> queuedRequests = MockRequest.sendMany(maxQueueSize, pool, maxQueueSize);
+
+            // Wait for connections to be borrowed before changing keyspace.
+            for (MockRequest request : requests) {
+                Uninterruptibles.getUninterruptibly(request.connectionFuture, 5, TimeUnit.SECONDS);
+            }
+            // Simulate change of keyspace on pool.  Prime a delay so existing requests can complete beforehand.
+            primingClient.prime(PrimingRequest.queryBuilder().withQuery("USE \"newkeyspace\"").withThen(PrimingRequest.then().withFixedDelay(2000L)));
+            pool.manager.poolsState.setKeyspace("newkeyspace");
+
+            // Complete all requests, this should cause dequeue on connection.
+            MockRequest.completeAll(requests);
+
+            // Check the status on queued request's connection futures.  We expect that dequeue should
+            // be called when connection is released by previous requests completing, and that one set
+            // keyspace attempt should be tried.
+
+            // Because Scassandra currently returns a 'ROWS' response for set keyspace, the attempt
+            // will fail, and thus the enqueued connection futures will fail in the following ways:
+            // 1. DriverInternalError for set keyspace returning 'ROWS' response
+            // 2. TransportException for connection being closed, when this happens we stop checking these futures.
+            // 3. Never completing because no connections are available.
+            boolean timeoutAcceptable = false;
+            for (MockRequest queuedRequest : queuedRequests) {
+                try {
+                    Uninterruptibles.getUninterruptibly(queuedRequest.connectionFuture, 5, TimeUnit.SECONDS);
+                    fail("Expected an exception (because Scassandra doesn't support 'USE keyspace'");
+                } catch (ExecutionException e) {
+                    try {
+                        throw e.getCause();
+                    } catch (DriverInternalError die) {
+                        assertThat(die.getMessage()).contains("Unexpected response while setting keyspace");
+                        // Subsequent futures may timeout because the connection is closed.
+                        timeoutAcceptable = true;
+                    } catch (TransportException ce) {
+                        /* expected, Scassandra returning a ROWS response for 'USE keyspace' should defunct and close the connection */
+                        // all remaining futures will timeout since there are no remaining connections.
+                        break;
+                    } catch (Throwable t) {
+                        fail("Unexpected cause of future failing", t);
+                    }
+                } catch (TimeoutException te) {
+                    assertThat(timeoutAcceptable).isTrue();
+                    break;
+                }
+            }
+
+            // We should only have gotten one 'USE newkeyspace' query since Connection#setKeyspaceAsync should only do
+            // this once if there is already a request in flight.
+            assertThat(activityClient.retrieveQueries()).extractingResultOf("getQuery").containsOnlyOnce("USE \"newkeyspace\"");
+        } finally {
+            MockRequest.completeAll(requests);
+            cluster.close();
+        }
+    }
+
+    /**
+     * Ensures that on borrowConnection if a set keyspace attempt is in progress on that connection for a different keyspace than the
+     * pool state that the borrowConnection future returned is failed.
+     *
+     * @jira_ticket JAVA-839
+     * @test_category connection:connection_pool
+     * @since 3.0.4, 3.1.1
+     */
+    @Test(groups = "short")
+    public void should_fail_in_borrowConnection_when_setting_keyspace_and_another_set_keyspace_attempt_is_in_flight() throws TimeoutException {
+        Cluster cluster = createClusterBuilder().build();
+        try {
+            HostConnectionPool pool = createPool(cluster, 1, 1);
+
+            // Respond to setting as slowks very slowly.
+            primingClient.prime(PrimingRequest.queryBuilder().withQuery("USE \"slowks\"").withThen(PrimingRequest.then().withFixedDelay(5000L)));
+
+            Connection connection = pool.connections.get(0);
+
+            connection.setKeyspaceAsync("slowks");
+
+            // Simulate change of keyspace on pool.
+            pool.manager.poolsState.setKeyspace("newks");
+
+            MockRequest request = MockRequest.send(pool);
+
+            try {
+                Uninterruptibles.getUninterruptibly(request.connectionFuture, 5, TimeUnit.SECONDS);
+                fail("Should have thrown exception");
+            } catch (ExecutionException e) {
+                assertThat(e.getCause()).isInstanceOf(DriverException.class);
+                assertThat(e.getCause().getMessage()).contains("Aborting attempt to set keyspace to 'newks' since there is already an in flight attempt to set keyspace to 'slowks'.");
+            }
+        } finally {
+            cluster.close();
+        }
+    }
+
+    /**
+     * Ensures that while dequeuing borrow connection requests that if a set keyspace attempt is in progress on that connection for a difference
+     * keyspace than the pool state that the future for that borrow attempt is failed.
+     *
+     * @jira_ticket JAVA-839
+     * @test_category connection:connection_pool
+     * @since 3.0.4, 3.1.1
+     */
+    @Test(groups = "short")
+    public void should_fail_in_dequeue_when_setting_keyspace_and_another_set_keyspace_attempt_is_in_flight() throws ExecutionException, TimeoutException {
+        Cluster cluster = createClusterBuilder().build();
+        List<MockRequest> requests = newArrayList();
+        try {
+            // Limit requests per connection to 100 so we don't exhaust stream ids.
+            cluster.getConfiguration().getPoolingOptions().setMaxRequestsPerConnection(HostDistance.LOCAL, 100);
+            HostConnectionPool pool = createPool(cluster, 1, 1);
+            int maxQueueSize = 256;
+
+            assertThat(pool.connections.size()).isEqualTo(1);
+            List<Connection> coreConnections = newArrayList(pool.connections);
+
+            // fill connections
+            requests = MockRequest.sendMany(100, pool);
+            assertBorrowedConnections(requests, coreConnections);
+
+            // send a request that will be queued.
+            MockRequest queuedRequest = MockRequest.send(pool, maxQueueSize);
+
+            // Wait for connections to be borrowed before changing keyspace.
+            for (MockRequest request : requests) {
+                Uninterruptibles.getUninterruptibly(request.connectionFuture, 5, TimeUnit.SECONDS);
+            }
+
+            // Respond to setting as slowks very slowly.
+            primingClient.prime(PrimingRequest.queryBuilder().withQuery("USE \"slowks\"").withThen(PrimingRequest.then().withFixedDelay(5000L)));
+            Connection connection = pool.connections.get(0);
+            connection.setKeyspaceAsync("slowks");
+
+            // Simulate change of keyspace on pool.
+            pool.manager.poolsState.setKeyspace("newkeyspace");
+
+            // Complete all requests, this should cause dequeue on connection.
+            MockRequest.completeAll(requests);
+
+            try {
+                Uninterruptibles.getUninterruptibly(queuedRequest.connectionFuture, 5, TimeUnit.SECONDS);
+                fail("Should have thrown exception");
+            } catch (ExecutionException e) {
+                assertThat(e.getCause()).isInstanceOf(DriverException.class);
+                assertThat(e.getCause().getMessage()).contains("Aborting attempt to set keyspace to 'newkeyspace' since there is already an in flight attempt to set keyspace to 'slowks'.");
+            }
+
+        } finally {
+            MockRequest.completeAll(requests);
             cluster.close();
         }
     }
@@ -129,7 +345,7 @@ public class HostConnectionPoolTest extends ScassandraTestBase.PerClassCluster {
      * @since 2.0.10, 2.1.6
      */
     @Test(groups = "short")
-    public void variable_size_pool_should_fill_its_connections_and_then_timeout() throws Exception {
+    public void variable_size_pool_should_fill_its_connections_and_then_reject() throws Exception {
         Cluster cluster = createClusterBuilder().build();
         List<MockRequest> allRequests = newArrayList();
         try {
@@ -163,8 +379,8 @@ public class HostConnectionPoolTest extends ScassandraTestBase.PerClassCluster {
             MockRequest failedBorrow = MockRequest.send(pool);
             try {
                 failedBorrow.getConnection();
-                fail("Expected a ConnectionException");
-            } catch (ConnectionException e) { /*expected*/}
+                fail("Expected a BusyPoolException");
+            } catch (BusyPoolException e) { /*expected*/}
         } finally {
             MockRequest.completeAll(allRequests);
             cluster.close();
@@ -474,7 +690,6 @@ public class HostConnectionPoolTest extends ScassandraTestBase.PerClassCluster {
         }
     }
 
-
     /**
      * Ensures that if all connections on a host are closed that the host is marked
      * down and the control connection is notified of that fact and re-established
@@ -548,7 +763,6 @@ public class HostConnectionPoolTest extends ScassandraTestBase.PerClassCluster {
             cluster.close();
         }
     }
-
 
     /**
      * Ensures that if a connection on a host is lost that brings the number of active connections in a pool
@@ -855,13 +1069,12 @@ public class HostConnectionPoolTest extends ScassandraTestBase.PerClassCluster {
             MockRequest failedBorrow = MockRequest.send(pool);
             try {
                 failedBorrow.getConnection();
-                fail("Expected a ConnectionException");
-            } catch (ConnectionException e) { /*expected*/}
+                fail("Expected a BusyPoolException");
+            } catch (BusyPoolException e) { /*expected*/}
         } finally {
             cluster.close();
         }
     }
-
 
     /**
      * Ensures that if all connections fail on pool init that the host and subsequently the

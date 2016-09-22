@@ -28,10 +28,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.*;
-import java.util.concurrent.ConcurrentLinkedQueue;
-import java.util.concurrent.CopyOnWriteArrayList;
-import java.util.concurrent.CopyOnWriteArraySet;
-import java.util.concurrent.Executor;
+import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -337,14 +334,37 @@ class HostConnectionPool implements Connection.Owner {
                 }
             }
 
-            SettableFuture<Connection> pendingBorrow = pendingBorrows.poll();
+            final SettableFuture<Connection> pendingBorrow = pendingBorrows.poll();
             if (pendingBorrow == null) {
                 // Another thread has emptied the queue since our last check, restore the count
                 connection.inFlight.decrementAndGet();
             } else {
                 totalInFlight.incrementAndGet();
                 pendingBorrowCount.decrementAndGet();
-                pendingBorrow.set(connection);
+                // Ensure that the keyspace set on the connection is the one set on the pool state, in the general case it will be.
+                ListenableFuture<Connection> setKeyspaceFuture = connection.setKeyspaceAsync(manager.poolsState.keyspace);
+                // Slight optimization, if the keyspace was already correct the future will be complete, so simply complete it here.
+                if (setKeyspaceFuture.isDone()) {
+                    try {
+                        pendingBorrow.set(Uninterruptibles.getUninterruptibly(setKeyspaceFuture));
+                    } catch (ExecutionException e) {
+                        pendingBorrow.setException(e.getCause());
+                    }
+                } else {
+                    // Otherwise the keyspace did need to be set, tie the pendingBorrow future to the set keyspace completion.
+                    Futures.addCallback(setKeyspaceFuture, new FutureCallback<Connection>() {
+
+                        @Override
+                        public void onSuccess(Connection c) {
+                            pendingBorrow.set(c);
+                        }
+
+                        @Override
+                        public void onFailure(Throwable t) {
+                            pendingBorrow.setException(t);
+                        }
+                    });
+                }
             }
         }
     }
@@ -413,6 +433,7 @@ class HostConnectionPool implements Connection.Owner {
                 }
                 logger.debug("Creating new connection on busy pool to {}", host);
                 newConnection = manager.connectionFactory().open(this);
+                newConnection.setKeyspace(manager.poolsState.keyspace);
             }
             connections.add(newConnection);
 
