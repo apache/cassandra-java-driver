@@ -67,6 +67,7 @@ If (!(Test-Path $maven_path)) {
   (new-object System.Net.WebClient).DownloadFile($maven_url, $maven_zip)
   [System.IO.Compression.ZipFile]::ExtractToDirectory($maven_zip, $maven_base)
 }
+$env:M2_HOME="$($maven_path)"
 $env:PATH="$($maven_path)\bin;$($env:PATH)"
 
 $jdks = @("1.6.0", "1.7.0", "1.8.0")
