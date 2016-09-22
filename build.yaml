@@ -1,3 +1,21 @@
+schedules:
+  commit:
+    # Run short suite on commit with enough C* versions to get full protocol version coverage.
+    schedule: per_commit
+    matrix:
+      exclude:
+        - java: [openjdk6, oraclejdk7]
+        - cassandra: ['2.2', '3.0']
+    env_vars: |
+      TEST_GROUP="short"
+  nightly:
+    # Run full suite nightly on change for all primary branches if they have changes.
+    schedule: nightly
+    branches:
+      # regex matches primary branch format (2.1, 3.x, 3.0.x, 3.1.x, etc).
+      include: ["/\\d+(\\.[\\dx]+)+/"]
+    env_vars: |
+      TEST_GROUP="long"
 java:
   - openjdk6
   - oraclejdk7
@@ -10,11 +28,11 @@ cassandra:
   - 2.1
   - 2.2
   - 3.0
-  - 3.7
+  - 3.9
 build:
   - type: maven
     version: 3.2.5
-    goals: verify --fail-never -Plong
+    goals: verify --fail-never -P$TEST_GROUP
     properties: |
       com.datastax.driver.TEST_BASE_NODE_WAIT=120
       com.datastax.driver.NEW_NODE_DELAY_SECONDS=100
