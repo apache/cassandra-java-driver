@@ -128,9 +128,15 @@ public class PoolingOptions {
     public static final int DEFAULT_IDLE_TIMEOUT_SECONDS = 120;
 
     /**
-     * The default value for {@link #getPoolTimeoutMillis()} ({@value}).
+     * @deprecated see {@link #setPoolTimeoutMillis(int)}
      */
+    @Deprecated
     public static final int DEFAULT_POOL_TIMEOUT_MILLIS = 5000;
+
+    /**
+     * The default value for {@link #getMaxQueueSize()} ({@value}).
+     */
+    public static final int DEFAULT_MAX_QUEUE_SIZE = 256;
 
     /**
      * The default value for {@link #getHeartbeatIntervalSeconds()} ({@value}).
@@ -151,7 +157,7 @@ public class PoolingOptions {
     private volatile int maxRequestsPerConnectionRemote = UNSET;
 
     private volatile int idleTimeoutSeconds = DEFAULT_IDLE_TIMEOUT_SECONDS;
-    private volatile int poolTimeoutMillis = DEFAULT_POOL_TIMEOUT_MILLIS;
+    private volatile int maxQueueSize = DEFAULT_MAX_QUEUE_SIZE;
     private volatile int heartbeatIntervalSeconds = DEFAULT_HEARTBEAT_INTERVAL_SECONDS;
 
     private volatile Executor initializationExecutor = DEFAULT_INITIALIZATION_EXECUTOR;
@@ -400,30 +406,48 @@ public class PoolingOptions {
     }
 
     /**
-     * Returns the timeout when trying to acquire a connection from a host's pool.
-     *
-     * @return the timeout.
+     * @deprecated see {@link #setPoolTimeoutMillis(int)}. This method always returns 0.
      */
+    @Deprecated
     public int getPoolTimeoutMillis() {
-        return poolTimeoutMillis;
+        return 0;
     }
 
     /**
-     * Sets the timeout when trying to acquire a connection from a host's pool.
-     * <p/>
-     * If no connection is available within that time, the driver will try the
-     * next host from the query plan.
-     * <p/>
-     * The default is 5 seconds. If this option is set to zero, the driver won't wait at all.
-     *
-     * @param poolTimeoutMillis the new value in milliseconds.
-     * @return this {@code PoolingOptions}
-     * @throws IllegalArgumentException if the timeout is negative.
+     * @deprecated the connection pool does not use a timeout anymore, incoming requests are now throttled with a
+     * threshold on the {@link #setMaxQueueSize(int) queue size}. This method has no effect.
      */
+    @Deprecated
     public PoolingOptions setPoolTimeoutMillis(int poolTimeoutMillis) {
-        if (poolTimeoutMillis < 0)
-            throw new IllegalArgumentException("Pool timeout must be positive");
-        this.poolTimeoutMillis = poolTimeoutMillis;
+        return this;
+    }
+
+    /**
+     * Returns the maximum number of requests that get enqueued if no connection is available.
+     *
+     * @return the maximum queue size.
+     */
+    public int getMaxQueueSize() {
+        return maxQueueSize;
+    }
+
+    /**
+     * Sets the maximum number of requests that get enqueued if no connection is available.
+     * <p/>
+     * If the queue grows past this value, new requests will be rejected immediately (and the driver will move to the
+     * next host in the query plan). This limit is per connection pool, not global to the driver.
+     * <p/>
+     * The default value is {@value DEFAULT_MAX_QUEUE_SIZE}. If this option is set to zero, the driver will never
+     * enqueue requests.
+     *
+     * @param maxQueueSize the new value.
+     * @return this {@code PoolingOptions}
+     * @throws IllegalArgumentException if the value is negative.
+     */
+    public PoolingOptions setMaxQueueSize(int maxQueueSize) {
+        if (maxQueueSize < 0)
+            throw new IllegalArgumentException("Max queue size must be positive");
+        this.maxQueueSize = maxQueueSize;
         return this;
     }
 

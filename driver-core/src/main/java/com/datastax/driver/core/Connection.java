@@ -19,6 +19,7 @@ import com.datastax.driver.core.Responses.Result.SetKeyspace;
 import com.datastax.driver.core.exceptions.*;
 import com.datastax.driver.core.utils.MoreFutures;
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Objects;
 import com.google.common.collect.Lists;
 import com.google.common.collect.MapMaker;
 import com.google.common.util.concurrent.*;
@@ -85,7 +86,9 @@ class Connection {
     final AtomicInteger inFlight = new AtomicInteger(0);
 
     private final AtomicInteger writer = new AtomicInteger(0);
-    private volatile String keyspace;
+
+    private final AtomicReference<SetKeyspaceAttempt> targetKeyspace;
+    private final SetKeyspaceAttempt defaultKeyspaceAttempt;
 
     private volatile boolean isInitialized;
     private final AtomicBoolean isDefunct = new AtomicBoolean();
@@ -95,8 +98,9 @@ class Connection {
 
     private final AtomicReference<Owner> ownerRef = new AtomicReference<Owner>();
 
+    private final ListenableFuture<Connection> thisFuture;
+
     /**
-     * /**
      * Create a new connection to a Cassandra node and associate it with the given pool.
      *
      * @param name    the connection name
@@ -111,6 +115,9 @@ class Connection {
         this.dispatcher = new Dispatcher();
         this.name = name;
         this.ownerRef.set(owner);
+        this.thisFuture = Futures.immediateFuture(this);
+        this.defaultKeyspaceAttempt = new SetKeyspaceAttempt(null, thisFuture);
+        this.targetKeyspace = new AtomicReference<SetKeyspaceAttempt>(defaultKeyspaceAttempt);
     }
 
     /**
@@ -418,7 +425,6 @@ class Connection {
             else if (Host.statesLogger.isDebugEnabled())
                 Host.statesLogger.debug("Defuncting {} because: {}", this, e.getMessage());
 
-
             Host host = factory.manager.metadata.getHost(address);
             if (host != null) {
                 // Sometimes close() can be called before defunct(); avoid decrementing the connection count twice, but
@@ -452,14 +458,14 @@ class Connection {
     }
 
     String keyspace() {
-        return keyspace;
+        return targetKeyspace.get().keyspace;
     }
 
     void setKeyspace(String keyspace) throws ConnectionException {
         if (keyspace == null)
             return;
 
-        if (this.keyspace != null && this.keyspace.equals(keyspace))
+        if (Objects.equal(keyspace(), keyspace))
             return;
 
         try {
@@ -483,24 +489,59 @@ class Connection {
         }
     }
 
-    ListenableFuture<Void> setKeyspaceAsync(final String keyspace) throws ConnectionException, BusyConnectionException {
-        logger.trace("{} Setting keyspace {}", this, keyspace);
-        // Note: we quote the keyspace below, because the name is the one coming from Cassandra, so it's in the right case already
-        Future future = write(new Requests.Query("USE \"" + keyspace + '"'));
-        return Futures.transform(future, new AsyncFunction<Message.Response, Void>() {
-            @Override
-            public ListenableFuture<Void> apply(Message.Response response) throws Exception {
-                if (response instanceof SetKeyspace) {
-                    Connection.this.keyspace = ((SetKeyspace) response).keyspace;
-                    return MoreFutures.VOID_SUCCESS;
-                } else if (response.type == ERROR) {
-                    Responses.Error error = (Responses.Error) response;
-                    throw defunct(error.asException(address));
-                } else {
-                    throw defunct(new DriverInternalError("Unexpected response while setting keyspace: " + response));
-                }
+    ListenableFuture<Connection> setKeyspaceAsync(final String keyspace) throws ConnectionException, BusyConnectionException {
+        SetKeyspaceAttempt existingAttempt = targetKeyspace.get();
+        if (Objects.equal(existingAttempt.keyspace, keyspace))
+            return existingAttempt.future;
+
+        final SettableFuture<Connection> ksFuture = SettableFuture.create();
+        final SetKeyspaceAttempt attempt = new SetKeyspaceAttempt(keyspace, ksFuture);
+
+        // Check for an existing keyspace attempt.
+        while (true) {
+            existingAttempt = targetKeyspace.get();
+            // if existing attempts' keyspace matches what we are trying to set, use it.
+            if (attempt.equals(existingAttempt)) {
+                return existingAttempt.future;
+            } else if (!existingAttempt.future.isDone()) {
+                // If the existing attempt is still in flight, fail this attempt immediately.
+                ksFuture.setException(new DriverException("Aborting attempt to set keyspace to '" + keyspace + "' since there is already an in flight attempt to set keyspace to '" + existingAttempt.keyspace + "'.  "
+                        + "This can happen if you try to USE different keyspaces from the same session simultaneously."));
+                return ksFuture;
+            } else if (targetKeyspace.compareAndSet(existingAttempt, attempt)) {
+                // Otherwise, if the existing attempt is done, start a new set keyspace attempt for the new keyspace.
+                logger.debug("{} Setting keyspace {}", this, keyspace);
+                // Note: we quote the keyspace below, because the name is the one coming from Cassandra, so it's in the right case already
+                Future future = write(new Requests.Query("USE \"" + keyspace + '"'));
+                Futures.addCallback(future, new FutureCallback<Message.Response>() {
+
+                    @Override
+                    public void onSuccess(Message.Response response) {
+                        if (response instanceof SetKeyspace) {
+                            logger.debug("{} Keyspace set to {}", Connection.this, keyspace);
+                            ksFuture.set(Connection.this);
+                        } else {
+                            // Unset this attempt so new attempts may be made for the same keyspace.
+                            targetKeyspace.compareAndSet(attempt, defaultKeyspaceAttempt);
+                            if (response.type == ERROR) {
+                                Responses.Error error = (Responses.Error) response;
+                                ksFuture.setException(defunct(error.asException(address)));
+                            } else {
+                                ksFuture.setException(defunct(new DriverInternalError("Unexpected response while setting keyspace: " + response)));
+                            }
+                        }
+                    }
+
+                    @Override
+                    public void onFailure(Throwable t) {
+                        targetKeyspace.compareAndSet(attempt, defaultKeyspaceAttempt);
+                        ksFuture.setException(t);
+                    }
+                }, factory.manager.configuration.getPoolingOptions().getInitializationExecutor());
+
+                return ksFuture;
             }
-        }, factory.manager.configuration.getPoolingOptions().getInitializationExecutor());
+        }
     }
 
     /**
@@ -1181,6 +1222,34 @@ class Connection {
         }
     }
 
+    private class SetKeyspaceAttempt {
+        private final String keyspace;
+        private final ListenableFuture<Connection> future;
+
+        SetKeyspaceAttempt(String keyspace, ListenableFuture<Connection> future) {
+            this.keyspace = keyspace;
+            this.future = future;
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o)
+                return true;
+            if (!(o instanceof SetKeyspaceAttempt))
+                return false;
+
+            SetKeyspaceAttempt that = (SetKeyspaceAttempt) o;
+
+            return keyspace != null ? keyspace.equals(that.keyspace) : that.keyspace == null;
+
+        }
+
+        @Override
+        public int hashCode() {
+            return keyspace != null ? keyspace.hashCode() : 0;
+        }
+    }
+
     static class Future extends AbstractFuture<Message.Response> implements RequestHandler.Callback {
 
         private final Message.Request request;
@@ -1350,7 +1419,7 @@ class Connection {
                 pipeline.addLast("ssl", sslOptions.newSSLHandler(channel));
             }
 
-//            pipeline.addLast("debug", new LoggingHandler(LogLevel.INFO));
+            //            pipeline.addLast("debug", new LoggingHandler(LogLevel.INFO));
 
             pipeline.addLast("frameDecoder", new Frame.Decoder());
             pipeline.addLast("frameEncoder", frameEncoder);
