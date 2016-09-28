@@ -1,6 +1,6 @@
 ## Changelog
 
-### 3.0.4 (in progress)
+### 3.0.4
 
 - [improvement] JAVA-1246: Driver swallows the real exception in a few cases
 - [improvement] JAVA-1261: Throw error when attempting to page in I/O thread.
