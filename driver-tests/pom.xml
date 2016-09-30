@@ -20,7 +20,7 @@
     <parent>
         <groupId>com.datastax.cassandra</groupId>
         <artifactId>cassandra-driver-parent</artifactId>
-        <version>3.2.0-SNAPSHOT</version>
+        <version>3.1.1-SNAPSHOT</version>
     </parent>
     <artifactId>cassandra-driver-tests-parent</artifactId>
     <packaging>pom</packaging>
