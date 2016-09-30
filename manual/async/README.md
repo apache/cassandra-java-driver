@@ -130,21 +130,9 @@ There are still a few places where the driver will block internally
   issues, you should create your `Cluster` instances while bootstrapping
   your application, and call `init` immediately. If you need to create new
   instances at runtime, make sure this does not happen on an I/O thread.
-* if a connection pool is busy, the driver will block until a connection
-  becomes available. To avoid this, set
-  [PoolingOptions.poolTimeoutMillis][setPoolTimeoutMillis] to 0; the
-  driver will not block, just move to the next host immediately.
-* if the session is set to a specific keyspace (either at startup or by
-  issuing a `USE` statement on a running session), the keyspace needs to
-  be propagated to any newly created connection. This is done when the
-  connection is first borrowed from the connection pool, and currently
-  blocks. To avoid any issue, only use a session with no keyspace set
-  (i.e. created by `Cluster#connect()`). This will be addressed in
-  [JAVA-893](https://datastax-oss.atlassian.net/browse/JAVA-893).
 * trying to read fields from a [query trace] will block if the trace
   hasn't been fetched already.
 
 [ListenableFuture]: https://code.google.com/p/guava-libraries/wiki/ListenableFutureExplained
 [init]: http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/core/Cluster.html#init--
-[setPoolTimeoutMillis]: http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/core/PoolingOptions.html#setPoolTimeoutMillis-int-
 [query trace]: http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/core/QueryTrace.html

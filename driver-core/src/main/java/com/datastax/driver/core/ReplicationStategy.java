@@ -29,6 +29,7 @@ import java.util.*;
  * Note: it's not an interface mainly because we don't want to expose it.
  */
 abstract class ReplicationStrategy {
+    private static final Logger logger = LoggerFactory.getLogger(ReplicationStrategy.class);
 
     static ReplicationStrategy create(Map<String, String> replicationOptions) {
 
@@ -55,6 +56,7 @@ abstract class ReplicationStrategy {
             }
         } catch (NumberFormatException e) {
             // Cassandra wouldn't let that pass in the first place so this really should never happen
+            logger.error("Failed to parse replication options: " + replicationOptions, e);
             return null;
         }
     }

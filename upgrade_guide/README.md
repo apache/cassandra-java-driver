@@ -35,6 +35,22 @@ The driver logs a warning the first time it ignores a non-idempotent request; th
 3.2.0.
 
 
+### 3.0.4
+
+The connection pool is now fully non-blocking ([JAVA-893](https://datastax-oss.atlassian.net/browse/JAVA-893)),
+which greatly improves asynchronous programming:
+
+* `Session.executeAsync` won't ever block the user thread anymore;
+* you can now safely run async queries on a session connected to a keyspace.
+
+This new implementation brings a couple of changes:
+
+* pool saturation is no longer handled by a timeout, but instead by a bounded queue. As a consequence,
+  `PoolingOptions.setPoolTimeoutMillis` has been deprecated, and replaced by `setMaxQueueSize`;
+* a saturated pool will now throw `BusyPoolException` instead of `TimeoutException` (note that this exception is not
+  rethrown directly to the client, but wrapped in `NoHostAvailableException.getErrors()`).
+
+
 ### 3.0.0
 
 This version brings parity with Cassandra 2.2 and 3.0.

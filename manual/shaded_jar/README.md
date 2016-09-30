@@ -56,16 +56,16 @@ non-shaded JAR:
 
 ### Limitations
 
-When using the shaded jar, it is not possible to configure the Netty layer. 
+When using the shaded jar, it is not possible to configure the Netty layer.
 
-Extending [NettyOptions] is not an option because `NettyOptions` API 
-exposes Netty classes, and as such it should only be extended 
-by clients using the non-shaded version of driver. 
-Attempting to extend `NettyOptions` with shaded Netty classes is not supported, 
-and in particular for OSGi applications, 
+Extending [NettyOptions] is not an option because `NettyOptions` API
+exposes Netty classes, and as such it should only be extended
+by clients using the non-shaded version of driver.
+Attempting to extend `NettyOptions` with shaded Netty classes is not supported,
+and in particular for OSGi applications,
 it is likely that such a configuration would lead to compile and/or runtime errors.
 
-Also, with shaded Netty classes, it is not possible to benefit 
+Also, with shaded Netty classes, it is not possible to benefit
 from [Netty native transports].
 
 It is therefore normal to see the following log line when the driver starts and

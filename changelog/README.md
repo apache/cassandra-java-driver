@@ -1,5 +1,26 @@
 ## Changelog
 
+### 3.1.1
+
+Merged from 3.0.x:
+
+- [improvement] JAVA-1246: Driver swallows the real exception in a few cases
+- [improvement] JAVA-1261: Throw error when attempting to page in I/O thread.
+- [bug] JAVA-1258: Regression: Mapper cannot map a materialized view after JAVA-1126.
+- [bug] JAVA-1101: Batch and BatchStatement should consider inner statements to determine query idempotence
+- [improvement] JAVA-1262: Use ParseUtils for quoting & unquoting.
+- [improvement] JAVA-1275: Use Netty's default thread factory
+- [bug] JAVA-1285: QueryBuilder routing key auto-discovery should handle case-sensitive column names.
+- [bug] JAVA-1283: Don't cache failed query preparations in the mapper.
+- [improvement] JAVA-1277: Expose AbstractSession.checkNotInEventLoop.
+- [bug] JAVA-1272: BuiltStatement not able to print its query string if it contains mapped UDTs.
+- [bug] JAVA-1292: 'Adjusted frame length' error breaks driver's ability to read data.
+- [improvement] JAVA-1293: Make DecoderForStreamIdSize.MAX_FRAME_LENGTH configurable.
+- [improvement] JAVA-1053: Add a metric for authentication errors
+- [improvement] JAVA-1263: Eliminate unnecessary memory copies in FrameCompressor implementations.
+- [improvement] JAVA-893: Make connection pool non-blocking
+
+
 ### 3.1.0
 
 - [new feature] JAVA-1153: Add PER PARTITION LIMIT to Select QueryBuilder.

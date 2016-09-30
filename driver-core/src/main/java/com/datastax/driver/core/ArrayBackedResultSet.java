@@ -307,6 +307,7 @@ abstract class ArrayBackedResultSet implements ResultSet {
                 // We need to know if there is more result, so fetch the next page and
                 // wait on it.
                 try {
+                    session.checkNotInEventLoop();
                     Uninterruptibles.getUninterruptibly(fetchMoreResults());
                 } catch (ExecutionException e) {
                     throw DriverThrowables.propagateCause(e);

@@ -89,7 +89,10 @@ public class NettyOptions {
      *
      * @param threadFactory The {@link ThreadFactory} to use when creating a new {@code EventLoopGroup} instance;
      *                      The driver will provide its own internal thread factory here.
-     *                      It is safe to ignore it and use another thread factory.
+     *                      It is safe to ignore it and use another thread factory. Note however that for optimal
+     *                      performance it is recommended to use a factory that returns
+     *                      {@link io.netty.util.concurrent.FastThreadLocalThread} instances (such as Netty's
+     *                      {@link java.util.concurrent.Executors.DefaultThreadFactory}).
      * @return the {@code EventLoopGroup} instance to use.
      */
     public EventLoopGroup eventLoopGroup(ThreadFactory threadFactory) {
@@ -205,7 +208,10 @@ public class NettyOptions {
      *
      * @param threadFactory The {@link ThreadFactory} to use when creating a new {@link HashedWheelTimer} instance;
      *                      The driver will provide its own internal thread factory here.
-     *                      It is safe to ignore it and use another thread factory.
+     *                      It is safe to ignore it and use another thread factory. Note however that for optimal
+     *                      performance it is recommended to use a factory that returns
+     *                      {@link io.netty.util.concurrent.FastThreadLocalThread} instances (such as Netty's
+     *                      {@link java.util.concurrent.Executors.DefaultThreadFactory}).
      * @return the {@link Timer} instance to use.
      */
     public Timer timer(ThreadFactory threadFactory) {

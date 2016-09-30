@@ -28,7 +28,6 @@ import com.google.common.base.Functions;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.*;
-import io.netty.util.concurrent.EventExecutor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -47,9 +46,6 @@ import java.util.concurrent.atomic.AtomicReference;
 class SessionManager extends AbstractSession {
 
     private static final Logger logger = LoggerFactory.getLogger(Session.class);
-
-    private static final boolean CHECK_IO_DEADLOCKS = SystemProperties.getBoolean(
-            "com.datastax.driver.CHECK_IO_DEADLOCKS", true);
 
     final Cluster cluster;
     final ConcurrentMap<Host, HostConnectionPool> pools;
@@ -564,7 +560,7 @@ class SessionManager extends AbstractSession {
             List<ByteBuffer> positionalValues = rawPositionalValues == null ? Collections.<ByteBuffer>emptyList() : Arrays.asList(rawPositionalValues);
             Map<String, ByteBuffer> namedValues = rawNamedValues == null ? Collections.<String, ByteBuffer>emptyMap() : rawNamedValues;
 
-            String qString = rs.getQueryString();
+            String qString = rs.getQueryString(codecRegistry);
 
             Requests.QueryProtocolOptions options = new Requests.QueryProtocolOptions(Message.Request.Type.QUERY, consistency, positionalValues, namedValues,
                     false, fetchSize, usedPagingState, serialConsistency, defaultTimestamp);
@@ -627,22 +623,30 @@ class SessionManager extends AbstractSession {
 
             try {
                 // Preparing is not critical: if it fails, it will fix itself later when the user tries to execute
-                // the prepared query. So don't block if no connection is available, simply abort.
-                final Connection c = entry.getValue().borrowConnection(0, TimeUnit.MILLISECONDS);
-                ListenableFuture<Response> future = c.write(new Requests.Prepare(query));
-                Futures.addCallback(future, new FutureCallback<Response>() {
-                    @Override
-                    public void onSuccess(Response result) {
-                        c.release();
-                    }
+                // the prepared query. So don't wait if no connection is available, simply abort.
+                ListenableFuture<Connection> connectionFuture = entry.getValue().borrowConnection(0);
+                ListenableFuture<Response> prepareFuture = Futures.transform(connectionFuture,
+                        new AsyncFunction<Connection, Response>() {
+                            @Override
+                            public ListenableFuture<Response> apply(final Connection c) throws Exception {
+                                Connection.Future responseFuture = c.write(new Requests.Prepare(query));
+                                Futures.addCallback(responseFuture, new FutureCallback<Response>() {
+                                    @Override
+                                    public void onSuccess(Response result) {
+                                        c.release();
+                                    }
 
-                    @Override
-                    public void onFailure(Throwable t) {
-                        logger.debug(String.format("Unexpected error while preparing query (%s) on %s", query, entry.getKey()), t);
-                        c.release();
-                    }
-                });
-                futures.add(future);
+                                    @Override
+                                    public void onFailure(Throwable t) {
+                                        logger.debug(String.format("Unexpected error while preparing query (%s) on %s",
+                                                query, entry.getKey()), t);
+                                        c.release();
+                                    }
+                                });
+                                return responseFuture;
+                            }
+                        });
+                futures.add(prepareFuture);
             } catch (Exception e) {
                 // Again, not being able to prepare the query right now is no big deal, so just ignore
             }
@@ -662,22 +666,6 @@ class SessionManager extends AbstractSession {
     void cleanupIdleConnections(long now) {
         for (HostConnectionPool pool : pools.values()) {
             pool.cleanupIdleConnections(now);
-        }
-    }
-
-    @Override
-    protected void checkNotInEventLoop() {
-        Connection.Factory connectionFactory = cluster.manager.connectionFactory;
-        if (!CHECK_IO_DEADLOCKS || connectionFactory == null)
-            return;
-        for (EventExecutor executor : connectionFactory.eventLoopGroup) {
-            if (executor.inEventLoop()) {
-                throw new IllegalStateException(
-                        "Detected a synchronous Session call (execute() or prepare()) on an I/O thread, " +
-                                "this can cause deadlocks or unpredictable behavior. " +
-                                "Make sure your Future callbacks only use async calls, or schedule them on a " +
-                                "different executor.");
-            }
         }
     }
 

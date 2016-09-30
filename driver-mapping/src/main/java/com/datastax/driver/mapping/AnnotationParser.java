@@ -15,11 +15,7 @@
  */
 package com.datastax.driver.mapping;
 
-import com.datastax.driver.core.ConsistencyLevel;
-import com.datastax.driver.core.Metadata;
-import com.datastax.driver.core.TableMetadata;
-import com.datastax.driver.core.TypeCodec;
-import com.datastax.driver.core.UserType;
+import com.datastax.driver.core.*;
 import com.datastax.driver.mapping.MethodMapper.ParamMapper;
 import com.datastax.driver.mapping.annotations.*;
 import com.google.common.base.Strings;
@@ -95,11 +91,18 @@ class AnnotationParser {
             ksName = Metadata.quote(loggedKeyspace);
         }
 
-        EntityMapper<T> mapper = new EntityMapper<T>(entityClass, ksName, tableName, writeConsistency, readConsistency);
-        TableMetadata tableMetadata = mappingManager.getSession().getCluster().getMetadata().getKeyspace(ksName).getTable(tableName);
+        KeyspaceMetadata keyspaceMetadata = mappingManager.getSession().getCluster().getMetadata().getKeyspace(ksName);
+        if (keyspaceMetadata == null)
+            throw new IllegalArgumentException(String.format("Keyspace %s does not exist", ksName));
 
-        if (tableMetadata == null)
-            throw new IllegalArgumentException(String.format("Table %s does not exist in keyspace %s", tableName, ksName));
+        AbstractTableMetadata tableMetadata = keyspaceMetadata.getTable(tableName);
+        if (tableMetadata == null) {
+            tableMetadata = keyspaceMetadata.getMaterializedView(tableName);
+            if (tableMetadata == null)
+                throw new IllegalArgumentException(String.format("Table or materialized view %s does not exist in keyspace %s", tableName, ksName));
+        }
+
+        EntityMapper<T> mapper = new EntityMapper<T>(entityClass, ksName, tableName, writeConsistency, readConsistency);
 
         List<PropertyMapper> pks = new ArrayList<PropertyMapper>();
         List<PropertyMapper> ccs = new ArrayList<PropertyMapper>();
@@ -169,7 +172,11 @@ class AnnotationParser {
             ksName = Metadata.quote(loggedKeyspace);
         }
 
-        UserType userType = mappingManager.getSession().getCluster().getMetadata().getKeyspace(ksName).getUserType(udtName);
+        KeyspaceMetadata keyspaceMetadata = mappingManager.getSession().getCluster().getMetadata().getKeyspace(ksName);
+        if (keyspaceMetadata == null)
+            throw new IllegalArgumentException(String.format("Keyspace %s does not exist", ksName));
+
+        UserType userType = keyspaceMetadata.getUserType(udtName);
         if (userType == null)
             throw new IllegalArgumentException(String.format("User type %s does not exist in keyspace %s", udtName, ksName));
 
