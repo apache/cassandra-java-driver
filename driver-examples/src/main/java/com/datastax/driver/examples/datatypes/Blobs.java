@@ -17,11 +17,11 @@ package com.datastax.driver.examples.datatypes;
 
 import com.datastax.driver.core.*;
 import com.datastax.driver.core.utils.Bytes;
-import com.google.common.collect.ImmutableMap;
 
 import java.io.*;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
+import java.util.HashMap;
 import java.util.Map;
 
 /**
@@ -89,8 +89,10 @@ public class Blobs {
         // Now position is back to the beginning, so the driver will see all 16 bytes.
         assert buffer.limit() - buffer.position() == 16;
 
+        Map<String, ByteBuffer> map = new HashMap<String, ByteBuffer>();
+        map.put("test", buffer);
         session.execute("INSERT INTO examples.blobs (k, b, m) VALUES (1, ?, ?)",
-                buffer, ImmutableMap.of("test", buffer));
+                buffer, map);
     }
 
     private static void retrieveSimpleColumn(Session session) {
