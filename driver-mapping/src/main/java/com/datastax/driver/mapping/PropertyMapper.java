@@ -27,12 +27,13 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Type;
 import java.util.Collection;
 import java.util.Map;
+import java.util.Set;
 
 import static com.google.common.base.Preconditions.checkArgument;
 
 /**
  * Maps a Java bean property to a table column or a UDT field.
- * <p>
+ * <p/>
  * Properties can be either accessed through getter and setter pairs,
  * or by direct field access, depending on what is available in the
  * entity/UDT class.
@@ -47,14 +48,16 @@ class PropertyMapper {
     final int position;
 
     private final Field field;
+    private final Set<String> classLevelTransients;
     private final Method getter;
     private final Method setter;
     private final Map<Class<? extends Annotation>, Annotation> annotations;
 
-    PropertyMapper(Class<?> baseClass, String propertyName, String alias, Field field, PropertyDescriptor property) {
+    PropertyMapper(Class<?> baseClass, String propertyName, String alias, Field field, PropertyDescriptor property, Set<String> classLevelTransients) {
         this.propertyName = propertyName;
         this.alias = alias;
         this.field = field;
+        this.classLevelTransients = classLevelTransients;
         getter = ReflectionUtils.findGetter(property);
         setter = ReflectionUtils.findSetter(baseClass, property);
         annotations = ReflectionUtils.scanPropertyAnnotations(field, property);
@@ -118,7 +121,15 @@ class PropertyMapper {
     }
 
     boolean isTransient() {
-        return hasAnnotation(Transient.class);
+        return hasAnnotation(Transient.class) ||
+                // If a property is both annotated and declared as transient in the class annotation, the property
+                // annotations take precedence (the property will not be transient)
+                classLevelTransients.contains(propertyName)
+                        && !hasAnnotation(PartitionKey.class)
+                        && !hasAnnotation(ClusteringColumn.class)
+                        && !hasAnnotation(Column.class)
+                        && !hasAnnotation(com.datastax.driver.mapping.annotations.Field.class)
+                        && !hasAnnotation(Computed.class);
     }
 
     boolean isPartitionKey() {
