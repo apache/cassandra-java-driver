@@ -82,9 +82,9 @@ These codecs require an explicit dependency on Joda Time in your application:
 
 Like for JDK8, there is a codec for each time type:
 
-* [InstantCodec][InstantCodec_joda]: [Instant][Instant_joda] to `timestamp`;
-* [LocalDateCodec][LocalDateCodec_joda]: [LocalDate][LocalDate_joda] to `date`;
-* [LocalTime][LocalTime_joda]: [LocalTime][LocalTime_joda] to `time`.
+* [InstantCodec][InstantCodec_joda]: maps [Instant][Instant_joda] to `timestamp`;
+* [LocalDateCodec][LocalDateCodec_joda]: maps [LocalDate][LocalDate_joda] to `date`;
+* [LocalTimeCodec][LocalTimeCodec_joda]: maps [LocalTime][LocalTime_joda] to `time`.
 
 ```java
 import com.datastax.driver.extras.codecs.joda.InstantCodec;
@@ -127,7 +127,7 @@ Time can also be expressed as simple durations:
 
 * [SimpleTimestampCodec] maps `timestamp` to a primitive Java `long` representing the number of milliseconds since the
   Epoch;
-* [SimpleDateCodec] maps `date` to a primitive Java `int` representing the number of milliseconds since the Epoch.
+* [SimpleDateCodec] maps `date` to a primitive Java `int` representing the number of days since the Epoch.
 
 There is no extra codec for `time`, because by default the driver already maps that type to a `long` representing the
 number of milliseconds since midnight.
@@ -166,14 +166,10 @@ session.execute("insert into ordinal_example (id, state) values (1, ?)", State.I
 // state saved as 0
 ```
 
-Note that if you registered both codecs at the same time, there would be a problem: because `session.execute` uses a
-[simple statement](../../statements/simple/), the target CQL type is not known in advance, so the driver picks the first
-codec that accepts a `State`. So one of the statements would serialize its value to the wrong type, and the request
-would fail on the server side.
+Note that if you registered an `EnumNameCodec` and an `EnumOrdinalCodec` _for the same enum_ at the same time, there could be a problem when executing [simple statements](../../statements/simple/), because in a simple statement, the target CQL type of a given query parameter is not known in advance, so the driver, on a best-effort attempt, will pick one or the other, whichever was registered first. If the chosen codec proves to be the wrong one, the request would fail on the server side.
 
 In practice, this is unlikely to happen, because you'll probably stick to a single CQL type for a given enum type;
-however, if you ever run into that issue, the workaround is to use [prepared statements](../../statements/prepared/),
-for which the driver knows the CQL type and can pick the exact codec.
+however, if you ever run into that issue, the workaround is to use [prepared statements](../../statements/prepared/), for which the driver knows the CQL type and can pick the exact codec.
 
 [EnumNameCodec]: http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/extras/codecs/enums/EnumNameCodec.html
 [EnumOrdinalCodec]: http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/extras/codecs/enums/EnumOrdinalCodec.html
@@ -231,7 +227,7 @@ session.execute("insert into example (id, owner) values (1, ?)",
 
 It requires an explicit dependency on the JSR-353 API and an implementation:
 
-```java
+```xml
 <dependency>
   <groupId>javax.json</groupId>
   <artifactId>javax.json-api</artifactId>
@@ -337,8 +333,7 @@ OptionalCodec<Integer> optionalIntCodec = new OptionalCodec<Integer>(intCodec);
 cluster.getConfiguration().getCodecRegistry()
         .register(optionalIntCodec);
 
-TypeToken<Optional<Integer>> optionalIntToken = new TypeToken<Optional<Integer>>() {
-};
+TypeToken<Optional<Integer>> optionalIntToken = new TypeToken<Optional<Integer>>() {};
 
 // schema: create table example (id int primary key, v int);
 PreparedStatement pst = session.prepare("insert into example (id, v) values (?, ?)");
