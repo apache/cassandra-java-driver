@@ -498,20 +498,22 @@ public class MapperUDTTest extends CCMTestsSupport {
             mapper.save(user);
             fail("Expected InvalidQueryException");
         } catch (InvalidQueryException e) {
-            assertThat(e.getMessage()).isEqualTo("Unknown identifier mainaddress");
+            // Error message varies by C* version.
+            assertThat(e.getMessage()).isIn("Unknown identifier mainaddress", "Undefined column name mainaddress");
         }
         try {
             mapper.get(user.getUserId());
             fail("Expected InvalidQueryException");
         } catch (InvalidQueryException e) {
-            assertThat(e.getMessage()).isEqualTo("Undefined name mainaddress in selection clause");
+            // Error message varies by C* version.
+            assertThat(e.getMessage()).isIn("Undefined name mainaddress in selection clause", "Undefined column name mainaddress");
         }
         // trying to use a new mapper
         try {
             manager.mapper(User.class);
             fail("Expected IllegalArgumentException");
         } catch (IllegalArgumentException e) {
-            assertThat(e.getMessage()).isEqualTo(String.format("Column \"mainaddress\" does not exist in table %s.users", keyspace));
+            assertThat(e.getMessage()).isIn(String.format("Column \"mainaddress\" does not exist in table %s.users", keyspace));
         }
     }
 
@@ -621,7 +623,6 @@ public class MapperUDTTest extends CCMTestsSupport {
             this.province = province;
         }
     }
-
 
     /**
      * Ensures that when attempting to create a {@link TypeCodec} from a class that has a field that does not exist in
