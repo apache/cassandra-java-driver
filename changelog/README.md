@@ -4,6 +4,7 @@
 
 - [bug] JAVA-1284: ClockFactory should check system property before attempting to load Native class.
 - [bug] JAVA-1255: Allow nested UDTs to be used in Mapper.
+- [bug] JAVA-1279: Mapper should exclude Groovy's "metaClass" property when looking for mapped properties
 
 Merged from 3.0.x:
 
@@ -22,7 +23,6 @@ Merged from 3.0.x:
 - [improvement] JAVA-1053: Add a metric for authentication errors
 - [improvement] JAVA-1263: Eliminate unnecessary memory copies in FrameCompressor implementations.
 - [improvement] JAVA-893: Make connection pool non-blocking
-- [bug] JAVA-1279: Mapper should exclude Groovy's "metaClass" property when looking for mapped properties
 
 
 ### 3.1.0
