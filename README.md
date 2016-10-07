@@ -8,7 +8,7 @@ not yet have been released. You can find the documentation for latest
 version through [Java driver
 docs](http://datastax.github.io/java-driver/) or via the release tags,
 [e.g.
-3.1.0](https://github.com/datastax/java-driver/tree/3.1.0).*
+3.1.1](https://github.com/datastax/java-driver/tree/3.1.1).*
 
 A modern, [feature-rich](manual/) and highly tunable Java client
 library for Apache Cassandra (1.2+) and DataStax Enterprise (3.1+) using
@@ -56,7 +56,7 @@ The driver contains the following modules:
   [here](manual/) with more technical details.
 - API: http://www.datastax.com/drivers/java/3.0
 - [changelog](changelog/)
-- [binary tarball](http://downloads.datastax.com/java-driver/cassandra-java-driver-3.1.0.tar.gz)
+- [binary tarball](http://downloads.datastax.com/java-driver/cassandra-java-driver-3.1.1.tar.gz)
 
 **Feeback requested:** help us focus our efforts, provide your input on the [Platform and Runtime Survey](http://goo.gl/forms/qwUE6qnL7U) (we kept it short).  
 
@@ -69,7 +69,7 @@ it in your application using the following Maven dependency:
 <dependency>
   <groupId>com.datastax.cassandra</groupId>
   <artifactId>cassandra-driver-core</artifactId>
-  <version>3.1.0</version>
+  <version>3.1.1</version>
 </dependency>
 ```
 
@@ -79,7 +79,7 @@ Note that the object mapper is published as a separate artifact:
 <dependency>
   <groupId>com.datastax.cassandra</groupId>
   <artifactId>cassandra-driver-mapping</artifactId>
-  <version>3.1.0</version>
+  <version>3.1.1</version>
 </dependency>
 ```
 
@@ -89,7 +89,7 @@ The 'extras' module is also published as a separate artifact:
 <dependency>
   <groupId>com.datastax.cassandra</groupId>
   <artifactId>cassandra-driver-extras</artifactId>
-  <version>3.1.0</version>
+  <version>3.1.1</version>
 </dependency>
 ```
 
@@ -98,12 +98,12 @@ We also provide a [shaded JAR](manual/shaded_jar/)
 to avoid the explicit dependency to Netty.
 
 If you can't use a dependency management tool, a
-[binary tarball](http://downloads.datastax.com/java-driver/cassandra-java-driver-3.1.0.tar.gz)
+[binary tarball](http://downloads.datastax.com/java-driver/cassandra-java-driver-3.1.1.tar.gz)
 is available for download.
 
 ## Compatibility
 
-The Java client driver 3.1.0 ([branch 3.0](https://github.com/datastax/java-driver/tree/3.0)) is compatible with Apache
+The Java client driver 3.1.1 ([branch 3.0](https://github.com/datastax/java-driver/tree/3.0)) is compatible with Apache
 Cassandra 1.2, 2.0, 2.1, 2.2 and 3.0 (see [this page](http://datastax.github.io/java-driver/manual/native_protocol) for
 the most up-to-date compatibility information).
 

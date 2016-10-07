@@ -1,6 +1,6 @@
 ## Changelog
 
-### 3.1.1 (in progress)
+### 3.1.1
 
 - [bug] JAVA-1284: ClockFactory should check system property before attempting to load Native class.
 - [bug] JAVA-1255: Allow nested UDTs to be used in Mapper.
