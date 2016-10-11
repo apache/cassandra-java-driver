@@ -197,7 +197,7 @@ class Frame {
             if (buffer.readableBytes() < 1)
                 return;
 
-            int version = buffer.getByte(0);
+            int version = buffer.getByte(buffer.readerIndex());
             // version first bit is the "direction" of the frame (request or response)
             version = version & 0x7F;
 
@@ -223,7 +223,7 @@ class Frame {
                         return null;
 
                     // Validate the opcode (this will throw if it's not a response)
-                    Message.Response.Type.fromOpcode(buffer.getByte(opcodeOffset));
+                    Message.Response.Type.fromOpcode(buffer.getByte(buffer.readerIndex() + opcodeOffset));
 
                     ByteBuf frame = (ByteBuf) super.decode(ctx, buffer);
                     if (frame == null) {
