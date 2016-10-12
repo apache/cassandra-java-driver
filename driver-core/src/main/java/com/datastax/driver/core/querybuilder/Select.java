@@ -513,6 +513,7 @@ public class Select extends BuiltStatement {
         public Select from(String keyspace, String table) {
             if (previousSelection != null)
                 addName(previousSelection);
+            previousSelection = null;
             return super.from(keyspace, table);
         }
 
@@ -520,6 +521,7 @@ public class Select extends BuiltStatement {
         public Select from(TableMetadata table) {
             if (previousSelection != null)
                 addName(previousSelection);
+            previousSelection = null;
             return super.from(table);
         }
     }

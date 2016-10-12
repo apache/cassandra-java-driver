@@ -1,5 +1,10 @@
 ## Changelog
 
+### 3.0.5 (in progress)
+
+- [bug] JAVA-1312: QueryBuilder modifies selected columns when manually selected.
+
+
 ### 3.0.4
 
 - [improvement] JAVA-1246: Driver swallows the real exception in a few cases
