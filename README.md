@@ -56,9 +56,7 @@ The driver contains the following modules:
   driver releases and important announcements (low frequency).
   [@DataStaxEng](https://twitter.com/datastaxeng) has more news including
   other drivers, Cassandra, and DSE.
-- DOCS: the [user guide](http://docs.datastax.com/en/developer/java-driver/2.0/java-driver/whatsNew2.html)
-  has introductory material. We are progressively migrating the doc
-  [here](features/) with more technical details.
+- DOCS: http://docs.datastax.com/en/developer/java-driver/2.0
 - API: http://docs.datastax.com/en/drivers/java/2.0
 
 **Feeback requested:** help us focus our efforts, provide your input on the [Platform and Runtime Survey](http://goo.gl/forms/qwUE6qnL7U) (we kept it short).
