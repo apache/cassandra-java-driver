@@ -51,10 +51,9 @@ The driver contains the following modules:
   driver releases and important announcements (low frequency).
   [@DataStaxEng](https://twitter.com/datastaxeng) has more news including
   other drivers, Cassandra, and DSE.
-- DOCS: the [user guide](http://docs.datastax.com/en/developer/java-driver/2.1/java-driver/whatsNew2.html)
-  has introductory material. We are progressively migrating the doc
-  [here](manual/) with more technical details.
-- API: http://www.datastax.com/drivers/java/3.0
+- DOCS: the [manual](http://docs.datastax.com/en/developer/java-driver/3.1/manual/) has quick
+  start material and technical details about the driver and its features.
+- API: http://www.datastax.com/drivers/java/3.1
 - [changelog](changelog/)
 - [binary tarball](http://downloads.datastax.com/java-driver/cassandra-java-driver-3.1.1.tar.gz)
 
