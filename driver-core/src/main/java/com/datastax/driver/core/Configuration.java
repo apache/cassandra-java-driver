@@ -51,6 +51,7 @@ public class Configuration {
     private final SocketOptions socketOptions;
     private final MetricsOptions metricsOptions;
     private final QueryOptions queryOptions;
+    private final ThreadingOptions threadingOptions;
     private final NettyOptions nettyOptions;
     private final CodecRegistry codecRegistry;
 
@@ -60,6 +61,7 @@ public class Configuration {
                           SocketOptions socketOptions,
                           MetricsOptions metricsOptions,
                           QueryOptions queryOptions,
+                          ThreadingOptions threadingOptions,
                           NettyOptions nettyOptions,
                           CodecRegistry codecRegistry) {
         this.policies = policies;
@@ -68,6 +70,7 @@ public class Configuration {
         this.socketOptions = socketOptions;
         this.metricsOptions = metricsOptions;
         this.queryOptions = queryOptions;
+        this.threadingOptions = threadingOptions;
         this.nettyOptions = nettyOptions;
         this.codecRegistry = codecRegistry;
     }
@@ -85,6 +88,7 @@ public class Configuration {
                 toCopy.getSocketOptions(),
                 toCopy.getMetricsOptions(),
                 toCopy.getQueryOptions(),
+                toCopy.getThreadingOptions(),
                 toCopy.getNettyOptions(),
                 toCopy.getCodecRegistry()
         );
@@ -154,6 +158,13 @@ public class Configuration {
     }
 
     /**
+     * @return the threading options for this configuration.
+     */
+    public ThreadingOptions getThreadingOptions() {
+        return threadingOptions;
+    }
+
+    /**
      * Returns the {@link NettyOptions} instance for this configuration.
      *
      * @return the {@link NettyOptions} instance for this configuration.
@@ -186,6 +197,7 @@ public class Configuration {
         private SocketOptions socketOptions;
         private MetricsOptions metricsOptions;
         private QueryOptions queryOptions;
+        private ThreadingOptions threadingOptions;
         private NettyOptions nettyOptions;
         private CodecRegistry codecRegistry;
 
@@ -261,6 +273,17 @@ public class Configuration {
         }
 
         /**
+         * Sets the threading options for this cluster.
+         *
+         * @param threadingOptions the threading options to set.
+         * @return this builder.
+         */
+        public Builder withThreadingOptions(ThreadingOptions threadingOptions) {
+            this.threadingOptions = threadingOptions;
+            return this;
+        }
+
+        /**
          * Sets the Netty options for this cluster.
          *
          * @param nettyOptions the Netty options.
@@ -297,6 +320,7 @@ public class Configuration {
                     socketOptions != null ? socketOptions : new SocketOptions(),
                     metricsOptions != null ? metricsOptions : new MetricsOptions(),
                     queryOptions != null ? queryOptions : new QueryOptions(),
+                    threadingOptions != null ? threadingOptions : new ThreadingOptions(),
                     nettyOptions != null ? nettyOptions : NettyOptions.DEFAULT_INSTANCE,
                     codecRegistry != null ? codecRegistry : CodecRegistry.DEFAULT_INSTANCE);
         }

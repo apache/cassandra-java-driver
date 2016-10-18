@@ -766,9 +766,11 @@ class Connection {
             this.authProvider = configuration.getProtocolOptions().getAuthProvider();
             this.protocolVersion = configuration.getProtocolOptions().initialProtocolVersion;
             this.nettyOptions = configuration.getNettyOptions();
-            this.eventLoopGroup = nettyOptions.eventLoopGroup(manager.threadFactory("nio-worker"));
+            this.eventLoopGroup = nettyOptions.eventLoopGroup(
+                    manager.configuration.getThreadingOptions().createThreadFactory(manager.clusterName, "nio-worker"));
             this.channelClass = nettyOptions.channelClass();
-            this.timer = nettyOptions.timer(manager.threadFactory("timeouter"));
+            this.timer = nettyOptions.timer(
+                    manager.configuration.getThreadingOptions().createThreadFactory(manager.clusterName, "timeouter"));
         }
 
         int getPort() {
