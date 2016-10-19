@@ -27,7 +27,8 @@ import java.util.List;
 
 import static com.datastax.driver.core.Assertions.assertThat;
 import static com.datastax.driver.core.CreateCCM.TestMode.PER_METHOD;
-import static com.datastax.driver.core.TestUtils.*;
+import static com.datastax.driver.core.TestUtils.CREATE_KEYSPACE_SIMPLE_FORMAT;
+import static com.datastax.driver.core.TestUtils.nonQuietClusterCloseOptions;
 
 @CreateCCM(PER_METHOD)
 @CCMConfig(createCcm = false)
@@ -306,6 +307,77 @@ public class TokenAwarePolicyTest extends CCMTestsSupport {
             queryTracker.assertQueried(sCluster, 1, 2, 0);
             queryTracker.assertQueried(sCluster, 1, 3, 0);
             queryTracker.assertQueried(sCluster, 1, 4, 10);
+        } finally {
+            cluster.close();
+            sCluster.stop();
+        }
+    }
+
+    /**
+     * Validates that when overriding a routing key on a {@link BoundStatement}
+     * using {@link BoundStatement#setRoutingKey(ByteBuffer...)} and
+     * {@link BoundStatement#setRoutingKey(ByteBuffer)} that this routing key is used to determine
+     * which hosts to route queries to.
+     *
+     * @test_category load_balancing:token_aware
+     */
+    @Test(groups = "short")
+    public void should_use_provided_routing_key_boundstatement() {
+        // given: A 4 node cluster using TokenAwarePolicy with a replication factor of 1.
+        ScassandraCluster sCluster = ScassandraCluster.builder()
+                .withNodes(4)
+                .withSimpleKeyspace("keyspace", 1)
+                .build();
+        Cluster cluster = Cluster.builder()
+                .addContactPoints(sCluster.address(2).getAddress())
+                .withPort(sCluster.getBinaryPort())
+                .withNettyOptions(nonQuietClusterCloseOptions)
+                // Don't shuffle replicas just to keep test deterministic.
+                .withLoadBalancingPolicy(new TokenAwarePolicy(new RoundRobinPolicy(), false))
+                .build();
+
+        try {
+            sCluster.init();
+
+            Session session = cluster.connect("keyspace");
+
+            PreparedStatement preparedStatement = session.prepare("insert into tbl (k0, v) values (?, ?)");
+            // bind text values since scassandra defaults to use varchar if not primed.
+            // this is inconsequential in this case since we are explicitly providing the routing key.
+            BoundStatement bs = preparedStatement.bind("a", "b");
+
+            // Derive a routing key for single routing key component, this should resolve to
+            // '4891967783720036163'
+            ByteBuffer routingKey = TypeCodec.bigint().serialize(33L, ProtocolVersion.NEWEST_SUPPORTED);
+            bs.setRoutingKey(routingKey);
+
+            queryTracker.query(session, 10, bs);
+
+            // Expect only node 3 to have been queried, give it has ownership of that partition
+            // (token range is (4611686018427387902, 6917529027641081853])
+            queryTracker.assertQueried(sCluster, 1, 1, 0);
+            queryTracker.assertQueried(sCluster, 1, 2, 0);
+            queryTracker.assertQueried(sCluster, 1, 3, 0);
+            queryTracker.assertQueried(sCluster, 1, 4, 10);
+
+            // reset counts.
+            queryTracker.reset();
+
+            // Derive a routing key for multiple routing key components, this should resolve to
+            // '3735658072872431718'
+            bs = preparedStatement.bind("a", "b");
+            ByteBuffer routingKeyK0Part = TypeCodec.bigint().serialize(42L, ProtocolVersion.NEWEST_SUPPORTED);
+            ByteBuffer routingKeyK1Part = TypeCodec.varchar().serialize("hello_world", ProtocolVersion.NEWEST_SUPPORTED);
+            bs.setRoutingKey(routingKeyK0Part, routingKeyK1Part);
+
+            queryTracker.query(session, 10, bs);
+
+            // Expect only node 3 to have been queried, give it has ownership of that partition
+            // (token range is (2305843009213693951, 4611686018427387902])
+            queryTracker.assertQueried(sCluster, 1, 1, 0);
+            queryTracker.assertQueried(sCluster, 1, 2, 0);
+            queryTracker.assertQueried(sCluster, 1, 3, 10);
+            queryTracker.assertQueried(sCluster, 1, 4, 0);
         } finally {
             cluster.close();
             sCluster.stop();
