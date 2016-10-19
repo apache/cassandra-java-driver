@@ -228,7 +228,12 @@ public class CCMBridge implements CCMAccess {
         this.thriftPort = thriftPort;
         this.binaryPort = binaryPort;
         this.isDSE = isDSE;
-        this.jvmArgs = jvmArgs;
+        // use unsafesystem system property by default to speed up schema changes (see: CASSANDRA-5704)
+        if(!jvmArgs.contains("-Dcassandra.unsafesystem")) {
+            this.jvmArgs = jvmArgs + " --jvm_arg=-Dcassandra.unsafesystem=true";
+        } else {
+            this.jvmArgs = jvmArgs;
+        }
         this.ccmDir = Files.createTempDir();
     }
 
