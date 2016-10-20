@@ -1156,4 +1156,17 @@ public class QueryBuilderTest {
                 .isEqualTo("INSERT INTO users (id) VALUES (42);");
     }
 
+    /**
+     * @jira_ticket JAVA-1312
+     */
+    @Test(groups = "unit")
+    public void should_not_append_last_column_twice() throws Exception {
+        Select.SelectionOrAlias select = select().column("a").column("b");
+        Select fromUsers1 = select.from("users");
+        Select fromUsers2 = select.from("users");
+        assertThat(fromUsers1.getQueryString())
+                .isEqualTo(fromUsers2.getQueryString())
+                .isEqualTo("SELECT a,b FROM users;");
+    }
+
 }

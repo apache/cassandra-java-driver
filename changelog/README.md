@@ -1,5 +1,14 @@
 ## Changelog
 
+### 3.1.2 (in progress)
+
+Merged from 3.0.x:
+
+- [bug] JAVA-1312: QueryBuilder modifies selected columns when manually selected.
+- [improvement] JAVA-1303: Add missing BoundStatement.setRoutingKey(ByteBuffer...)
+- [improvement] JAVA-262: Make internal executors customizable
+
+
 ### 3.1.1
 
 - [bug] JAVA-1284: ClockFactory should check system property before attempting to load Native class.
@@ -93,6 +102,32 @@ Merged from 2.1 branch:
 - [new feature] JAVA-1019: SchemaBuilder support for CREATE/ALTER/DROP KEYSPACE.
 - [bug] JAVA-727: Allow monotonic timestamp generators to drift in the future + use microsecond precision when possible.
 - [improvement] JAVA-444: Add Java process information to UUIDs.makeNode() hash.
+
+
+### 3.0.5
+
+- [bug] JAVA-1312: QueryBuilder modifies selected columns when manually selected.
+- [improvement] JAVA-1303: Add missing BoundStatement.setRoutingKey(ByteBuffer...)
+- [improvement] JAVA-262: Make internal executors customizable
+
+
+### 3.0.4
+
+- [improvement] JAVA-1246: Driver swallows the real exception in a few cases
+- [improvement] JAVA-1261: Throw error when attempting to page in I/O thread.
+- [bug] JAVA-1258: Regression: Mapper cannot map a materialized view after JAVA-1126.
+- [bug] JAVA-1101: Batch and BatchStatement should consider inner statements to determine query idempotence
+- [improvement] JAVA-1262: Use ParseUtils for quoting & unquoting.
+- [improvement] JAVA-1275: Use Netty's default thread factory
+- [bug] JAVA-1285: QueryBuilder routing key auto-discovery should handle case-sensitive column names.
+- [bug] JAVA-1283: Don't cache failed query preparations in the mapper.
+- [improvement] JAVA-1277: Expose AbstractSession.checkNotInEventLoop.
+- [bug] JAVA-1272: BuiltStatement not able to print its query string if it contains mapped UDTs.
+- [bug] JAVA-1292: 'Adjusted frame length' error breaks driver's ability to read data.
+- [improvement] JAVA-1293: Make DecoderForStreamIdSize.MAX_FRAME_LENGTH configurable.
+- [improvement] JAVA-1053: Add a metric for authentication errors
+- [improvement] JAVA-1263: Eliminate unnecessary memory copies in FrameCompressor implementations.
+- [improvement] JAVA-893: Make connection pool non-blocking
 
 
 ### 3.0.3

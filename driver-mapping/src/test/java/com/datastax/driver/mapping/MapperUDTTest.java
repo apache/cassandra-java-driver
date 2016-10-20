@@ -513,7 +513,7 @@ public class MapperUDTTest extends CCMTestsSupport {
             manager.mapper(User.class);
             fail("Expected IllegalArgumentException");
         } catch (IllegalArgumentException e) {
-            assertThat(e.getMessage()).isEqualTo(String.format("Column mainaddress does not exist in table \"%s\".users", keyspace));
+            assertThat(e.getMessage()).isIn(String.format("Column mainaddress does not exist in table \"%s\".users", keyspace));
         }
     }
 
