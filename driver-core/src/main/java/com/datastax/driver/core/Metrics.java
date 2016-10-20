@@ -20,6 +20,8 @@ import com.datastax.driver.core.policies.SpeculativeExecutionPolicy;
 
 import java.util.HashSet;
 import java.util.Set;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.ThreadPoolExecutor;
 
 /**
  * Metrics exposed by the driver.
@@ -78,36 +80,25 @@ public class Metrics {
         }
     });
 
-    private final Gauge<Integer> executorQueueDepth = registry.register("executor-queue-depth", new Gauge<Integer>() {
-        @Override
-        public Integer getValue() {
-            return manager.executorQueue.size();
-        }
-    });
-
-    private final Gauge<Integer> blockingExecutorQueueDepth = registry.register("blocking-executor-queue-depth", new Gauge<Integer>() {
-        @Override
-        public Integer getValue() {
-            return manager.blockingExecutorQueue.size();
-        }
-    });
-
-    private final Gauge<Integer> reconnectionSchedulerQueueSize = registry.register("reconnection-scheduler-task-count", new Gauge<Integer>() {
-        @Override
-        public Integer getValue() {
-            return manager.reconnectionExecutor.getQueue().size();
-        }
-    });
-
-    private final Gauge<Integer> taskSchedulerQueueSize = registry.register("task-scheduler-task-count", new Gauge<Integer>() {
-        @Override
-        public Integer getValue() {
-            return manager.scheduledTasksExecutor.getQueue().size();
-        }
-    });
+    private final Gauge<Integer> executorQueueDepth;
+    private final Gauge<Integer> blockingExecutorQueueDepth;
+    private final Gauge<Integer> reconnectionSchedulerQueueSize;
+    private final Gauge<Integer> taskSchedulerQueueSize;
 
     Metrics(Cluster.Manager manager) {
         this.manager = manager;
+        this.executorQueueDepth = registry.register(
+                "executor-queue-depth",
+                buildQueueSizeGauge(manager.executorQueue));
+        this.blockingExecutorQueueDepth = registry.register(
+                "blocking-executor-queue-depth",
+                buildQueueSizeGauge(manager.blockingExecutorQueue));
+        this.reconnectionSchedulerQueueSize = registry.register(
+                "reconnection-scheduler-task-count",
+                buildQueueSizeGauge(manager.reconnectionExecutorQueue));
+        this.taskSchedulerQueueSize = registry.register(
+                "task-scheduler-task-count",
+                buildQueueSizeGauge(manager.scheduledTasksExecutorQueue));
         if (manager.configuration.getMetricsOptions().isJMXReportingEnabled()) {
             this.jmxReporter = JmxReporter.forRegistry(registry).inDomain(manager.clusterName + "-metrics").build();
             this.jmxReporter.start();
@@ -228,30 +219,58 @@ public class Metrics {
     }
 
     /**
-     * @return The number of queued up tasks in the non-blocking executor (Cassandra Java Driver workers).
+     * Returns the number of queued up tasks in the {@link ThreadingOptions#createExecutor(String) main internal executor}.
+     * <p/>
+     * If the executor's task queue is not accessible – which happens when the executor
+     * is not an instance of {@link ThreadPoolExecutor} – then this gauge returns -1.
+     *
+     * @return The number of queued up tasks in the main internal executor,
+     * or -1, if that number is unknown.
      */
     public Gauge<Integer> getExecutorQueueDepth() {
         return executorQueueDepth;
     }
 
     /**
-     * @return The number of queued up tasks in the blocking executor (Cassandra Java Driver blocking tasks worker).
+     * Returns the number of queued up tasks in the {@link ThreadingOptions#createBlockingExecutor(String) blocking executor}.
+     * <p/>
+     * If the executor's task queue is not accessible – which happens when the executor
+     * is not an instance of {@link ThreadPoolExecutor} – then this gauge returns -1.
+     *
+     * @return The number of queued up tasks in the blocking executor,
+     * or -1, if that number is unknown.
      */
     public Gauge<Integer> getBlockingExecutorQueueDepth() {
         return blockingExecutorQueueDepth;
     }
 
     /**
-     * @return The size of the work queue for the reconnection scheduler (Reconnection).  A queue size > 0 does not
+     * Returns the number of queued up tasks in the {@link ThreadingOptions#createReconnectionExecutor(String) reconnection executor}.
+     * <p/>
+     * A queue size > 0 does not
      * necessarily indicate a backlog as some tasks may not have been scheduled to execute yet.
+     * <p/>
+     * If the executor's task queue is not accessible – which happens when the executor
+     * is not an instance of {@link ThreadPoolExecutor} – then this gauge returns -1.
+     *
+     * @return The size of the work queue for the reconnection executor,
+     * or -1, if that number is unknown.
      */
     public Gauge<Integer> getReconnectionSchedulerQueueSize() {
         return reconnectionSchedulerQueueSize;
     }
 
     /**
-     * @return The size of the work queue for the task scheduler (Scheduled Tasks).  A queue size > 0 does not
+     * Returns the number of queued up tasks in the {@link ThreadingOptions#createScheduledTasksExecutor(String) scheduled tasks executor}.
+     * <p/>
+     * A queue size > 0 does not
      * necessarily indicate a backlog as some tasks may not have been scheduled to execute yet.
+     * <p/>
+     * If the executor's task queue is not accessible – which happens when the executor
+     * is not an instance of {@link ThreadPoolExecutor} – then this gauge returns -1.
+     *
+     * @return The size of the work queue for the scheduled tasks executor,
+     * or -1, if that number is unknown.
      */
     public Gauge<Integer> getTaskSchedulerQueueSize() {
         return taskSchedulerQueueSize;
@@ -260,6 +279,24 @@ public class Metrics {
     void shutdown() {
         if (jmxReporter != null)
             jmxReporter.stop();
+    }
+
+    private static Gauge<Integer> buildQueueSizeGauge(final BlockingQueue<?> queue) {
+        if (queue != null) {
+            return new Gauge<Integer>() {
+                @Override
+                public Integer getValue() {
+                    return queue.size();
+                }
+            };
+        } else {
+            return new Gauge<Integer>() {
+                @Override
+                public Integer getValue() {
+                    return -1;
+                }
+            };
+        }
     }
 
     /**

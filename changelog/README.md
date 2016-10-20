@@ -4,6 +4,7 @@
 
 - [bug] JAVA-1312: QueryBuilder modifies selected columns when manually selected.
 - [improvement] JAVA-1303: Add missing BoundStatement.setRoutingKey(ByteBuffer...)
+- [improvement] JAVA-262: Make internal executors customizable
 
 
 ### 3.0.4
