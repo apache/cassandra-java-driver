@@ -1432,4 +1432,24 @@ public class BoundStatement extends Statement implements SettableData<BoundState
             index += 1;
         }
     }
+
+    @Override
+    public String toString() {
+        StringBuilder sb = new StringBuilder("BoundStatement(" + statement.getQueryString() + ",[");
+        for (int i = 0; i < wrapper.values.length; i++) {
+            if (i > 0) {
+                sb.append(",");
+            }
+
+            DataType type = statement.getVariables().getType(i);
+            String formatted = type.format(wrapper.getValue(i));
+            if (DataType.blob().equals(type) && formatted.length() > 50) {
+               sb.append(formatted.substring(0, 50)).append("... [truncated output]");
+            } else {
+               sb.append(formatted);
+            }
+        }
+        sb.append("])");
+        return sb.toString();
+    }
 }
