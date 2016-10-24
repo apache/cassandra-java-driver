@@ -1,5 +1,10 @@
 ## Changelog
 
+### 3.1.1 (in progress)
+
+- [bug] JAVA-1321: Wrong OSGi dependency version for Guava.
+
+
 ### 3.1.0
 
 - [new feature] JAVA-1153: Add PER PARTITION LIMIT to Select QueryBuilder.
