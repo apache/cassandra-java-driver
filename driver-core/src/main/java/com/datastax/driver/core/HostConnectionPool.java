@@ -200,11 +200,10 @@ class HostConnectionPool implements Connection.Owner {
                 int coreSize = options().getCoreConnectionsPerHost(hostDistance);
                 if (coreSize == 0) {
                     maybeSpawnNewConnection();
-                } else {
+                } else if (scheduledForCreation.compareAndSet(0, coreSize)) {
                     for (int i = 0; i < coreSize; i++) {
                         // We don't respect MAX_SIMULTANEOUS_CREATION here because it's  only to
                         // protect against creating connection in excess of core too quickly
-                        scheduledForCreation.incrementAndGet();
                         manager.blockingExecutor().submit(newConnectionTask);
                     }
                 }
