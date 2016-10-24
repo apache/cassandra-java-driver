@@ -97,7 +97,7 @@ public class ThreadingOptions {
                 2, 2,
                 DEFAULT_THREAD_KEEP_ALIVE_SECONDS, TimeUnit.SECONDS,
                 new LinkedBlockingQueue<Runnable>(),
-                createThreadFactory(clusterName, "worker"));
+                createThreadFactory(clusterName, "blocking-task-worker"));
         executor.allowCoreThreadTimeOut(true);
         return executor;
     }
