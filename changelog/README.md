@@ -2,6 +2,8 @@
 
 ### 3.1.2 (in progress)
 
+- [bug] JAVA-1321: Wrong OSGi dependency version for Guava.
+
 Merged from 3.0.x:
 
 - [bug] JAVA-1312: QueryBuilder modifies selected columns when manually selected.
