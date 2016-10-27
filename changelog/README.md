@@ -1,6 +1,6 @@
 ## Changelog
 
-### 3.1.2 (in progress)
+### 3.1.2
 
 - [bug] JAVA-1321: Wrong OSGi dependency version for Guava.
 
