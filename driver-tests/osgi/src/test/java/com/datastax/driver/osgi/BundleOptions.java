@@ -93,7 +93,7 @@ public class BundleOptions {
     }
 
     public static CompositeOption nettyBundles() {
-        final String nettyVersion = "4.0.33.Final";
+        final String nettyVersion = "4.1.6.Final";
         return new CompositeOption() {
 
             @Override
