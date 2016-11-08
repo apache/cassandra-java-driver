@@ -269,6 +269,8 @@
                                         <resource>META-INF/maven/io.netty/netty-common/pom.xml</resource>
                                         <resource>META-INF/maven/io.netty/netty-handler/pom.properties</resource>
                                         <resource>META-INF/maven/io.netty/netty-handler/pom.xml</resource>
+                                        <resource>META-INF/maven/io.netty/netty-resolver/pom.properties</resource>
+                                        <resource>META-INF/maven/io.netty/netty-resolver/pom.xml</resource>
                                         <resource>META-INF/maven/io.netty/netty-transport/pom.properties</resource>
                                         <resource>META-INF/maven/io.netty/netty-transport/pom.xml</resource>
                                     </resources>
