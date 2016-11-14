@@ -783,21 +783,61 @@ public class QueryBuilderTest {
         select = select().all().from("foo").where(eq("k", 4)).and(lte(Arrays.asList("c1", "c2"), Arrays.<Object>asList("a", 2)));
         assertEquals(select.toString(), query);
 
-        query = "SELECT * FROM foo WHERE k=4 AND (c1,c2) IN ((1,2),('foo','bar'));";
+        query = "SELECT * FROM foo WHERE k=4 AND (c1,c2) IN ((1,'foo'),(2,'bar'),(3,'qix'));";
         List<String> names = ImmutableList.of("c1", "c2");
-        List<List<?>> values = ImmutableList.<List<?>>of(
-                ImmutableList.of(1, 2),
-                ImmutableList.of("foo", "bar"));
+        List<?> values = ImmutableList.<List<?>>of(
+                ImmutableList.of(1, "foo"),
+                ImmutableList.of(2, "bar"),
+                ImmutableList.of(3, "qix"));
         select = select().all().from("foo").where(eq("k", 4)).and(in(names, values));
         assertEquals(select.toString(), query);
 
-        query = "SELECT * FROM foo WHERE k=4 AND (c1,c2) IN ((1,2),?);";
+        query = "SELECT * FROM foo WHERE k=4 AND (c1,c2) IN ((1,'foo'),(2,?),?);";
         names = ImmutableList.of("c1", "c2");
-        values = ImmutableList.<List<?>>of(
-                ImmutableList.of(1, 2),
-                ImmutableList.of(bindMarker()));
+        values = ImmutableList.of(
+                ImmutableList.of(1, "foo"),
+                ImmutableList.of(2, bindMarker()),
+                bindMarker());
         select = select().all().from("foo").where(eq("k", 4)).and(in(names, values));
         assertEquals(select.toString(), query);
+
+        // special case, single element list with bind marker should be (?) instead of ((?))
+        query = "SELECT * FROM foo WHERE k=4 AND (c1) IN (?);";
+        names = ImmutableList.of("c1");
+        values = ImmutableList.of(ImmutableList.of(bindMarker()));
+        select = select().all().from("foo").where(eq("k", 4)).and(in(names, values));
+        assertEquals(select.toString(), query);
+    }
+
+    @Test(groups = "unit", expectedExceptions = IllegalArgumentException.class, expectedExceptionsMessageRegExp = "Too many values for IN clause, the maximum allowed is 65535")
+    public void should_fail_if_compound_in_clause_has_too_many_values() {
+        List<Object> values = Collections.<Object>nCopies(65536, "a");
+        select().all().from("foo").where(eq("k", 4)).and(in(ImmutableList.of("name"), values));
+    }
+
+    @Test(groups = "unit", expectedExceptions = IllegalArgumentException.class, expectedExceptionsMessageRegExp = "Missing values for IN clause")
+    public void should_fail_if_compound_in_clause_given_null_values() {
+        select().all().from("foo").where(eq("k", 4)).and(in(ImmutableList.of("name"), null));
+    }
+
+    @Test(groups = "unit", expectedExceptions = IllegalArgumentException.class, expectedExceptionsMessageRegExp = "The number of names \\(4\\) and values \\(3\\) don't match")
+    public void should_fail_if_compound_in_clause_has_mismatch_of_names_and_values() {
+        select().all().from("foo").where(eq("k", 4)).and(in(ImmutableList.of("a", "b", "c", "d"),
+                ImmutableList.of(
+                        ImmutableList.of(1, 2, 3, 4), // Adequately sized (4)
+                        ImmutableList.of(1, 2, 3) // Inadequately sized (3)
+                )));
+    }
+
+    @Test(groups = "unit", expectedExceptions = IllegalArgumentException.class, expectedExceptionsMessageRegExp = "Wrong element type for values list, expected List or BindMarker, got java.lang.Integer")
+    public void shoud_fail_if_compound_in_clause_has_value_pair_that_is_not_list_or_bind_marker() {
+        select().all().from("foo").where(eq("k", 4)).and(in(ImmutableList.of("a", "b", "c", "d"),
+                ImmutableList.of(1))); // Invalid value 1, must be list or bind marker.
+    }
+
+    @Test(groups = "unit", expectedExceptions = IllegalArgumentException.class, expectedExceptionsMessageRegExp = "Missing values for IN clause")
+    public void should_fail_if_in_clause_has_null_values() {
+        select().all().from("foo").where(in("bar", (List<?>) null));
     }
 
     @Test(groups = "unit", expectedExceptions = IllegalArgumentException.class)

@@ -227,9 +227,23 @@ public abstract class Clause extends Utils.Appendeable {
 
     static class CompoundInClause extends Clause {
         private final List<String> names;
-        private final List<List<?>> valueLists;
+        private final List<?> valueLists;
 
-        public CompoundInClause(List<String> names, List<List<?>> valueLists) {
+        public CompoundInClause(List<String> names, List<?> valueLists) {
+            if (valueLists == null)
+                throw new IllegalArgumentException("Missing values for IN clause");
+            if (valueLists.size() > 65535)
+                throw new IllegalArgumentException("Too many values for IN clause, the maximum allowed is 65535");
+            for (Object value : valueLists) {
+                if (value instanceof List) {
+                    List<?> tuple = (List<?>) value;
+                    if (tuple.size() != names.size()) {
+                        throw new IllegalArgumentException(String.format("The number of names (%d) and values (%d) don't match", names.size(), tuple.size()));
+                    }
+                } else if (!(value instanceof BindMarker)) {
+                    throw new IllegalArgumentException(String.format("Wrong element type for values list, expected List or BindMarker, got %s", value.getClass().getName()));
+                }
+            }
             this.names = names;
             this.valueLists = valueLists;
         }
@@ -250,11 +264,7 @@ public abstract class Clause extends Utils.Appendeable {
 
         @Override
         boolean containsBindMarker() {
-            for (List<?> values : valueLists)
-                for (Object value : values)
-                    if (Utils.containsBindMarker(value))
-                        return true;
-            return false;
+            return Utils.containsBindMarker(valueLists);
         }
 
         @Override
@@ -270,14 +280,19 @@ public abstract class Clause extends Utils.Appendeable {
                 if (i > 0)
                     sb.append(",");
 
-                List<?> values = valueLists.get(i);
+                Object elt = valueLists.get(i);
 
-                // Special case when there is only one bind marker: "IN ?" instead of "IN (?)"
-                if (values.size() == 1 && values.get(0) instanceof BindMarker) {
-                    sb.append(values.get(0));
+                if (elt instanceof BindMarker) {
+                    sb.append(elt);
                 } else {
-                    sb.append("(");
-                    Utils.joinAndAppendValues(sb, codecRegistry, ",", values, variables).append(')');
+                    List<?> tuple = (List<?>) elt;
+                    if (tuple.size() == 1 && tuple.get(0) instanceof BindMarker) {
+                        // Special case when there is only one bind marker: "IN ?" instead of "IN (?)"
+                        sb.append(tuple.get(0));
+                    } else {
+                        sb.append("(");
+                        Utils.joinAndAppendValues(sb, codecRegistry, ",", (List<?>) tuple, variables).append(')');
+                    }
                 }
             }
             sb.append(")");
