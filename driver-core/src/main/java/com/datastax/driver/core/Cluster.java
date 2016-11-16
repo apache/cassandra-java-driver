@@ -877,6 +877,39 @@ public class Cluster implements Closeable {
         }
 
         /**
+         * Adds only the contact points that could be resolved.
+         * <p/>
+         * See {@link Builder#addContactPoint} for more details on contact
+         * points.
+         *
+         * @param addresses addresses of the nodes to add as contact point.
+         * @return this Builder.
+         * @throws IllegalArgumentException if no IP address for all
+         *                                  of {@code addresses} could be found
+         * @throws SecurityException        if a security manager is present and
+         *                                  permission to resolve the host name is denied.
+         * @see Builder#addContactPoint
+         * @since 3.1.3
+         */
+        public Builder addKnownContactPointsOnly(String... addresses) {
+            boolean found = false;
+            for (String address : addresses) {
+                try {
+                    addContactPoint(address);
+                    // One host could be resolved
+                    found = true;
+                } catch (IllegalArgumentException e) {
+                    // This host could not be resolved so we log a message and keep going
+                    logger.warn("The host {} is unknown so it will be ignored", address);
+                }
+            }
+            if (!found) {
+                throw new IllegalArgumentException("All provided hosts are unknown");
+            }
+            return this;
+        }
+
+        /**
          * Adds contact points.
          * <p/>
          * See {@link Builder#addContactPoint} for more details on contact
