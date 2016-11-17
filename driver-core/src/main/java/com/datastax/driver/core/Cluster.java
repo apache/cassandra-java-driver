@@ -889,7 +889,7 @@ public class Cluster implements Closeable {
          * @throws SecurityException        if a security manager is present and
          *                                  permission to resolve the host name is denied.
          * @see Builder#addContactPoint
-         * @since 3.1.3
+         * @since 3.2
          */
         public Builder addKnownContactPointsOnly(String... addresses) {
             boolean found = false;
