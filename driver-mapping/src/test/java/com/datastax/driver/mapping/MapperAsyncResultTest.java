@@ -94,7 +94,7 @@ public class MapperAsyncResultTest extends CCMTestsSupport {
         Mapper<User> mapper = new MappingManager(session()).mapper(User.class);
         ResultsAccumulator accumulator = new ResultsAccumulator();
         ListenableFuture<Result<User>> results = mapper.mapAsync(session().executeAsync(statement));
-        ListenableFuture<Result<User>> future = Futures.transform(
+        ListenableFuture<Result<User>> future = Futures.transformAsync(
                 results,
                 accumulator);
         Futures.getUnchecked(future);
@@ -120,7 +120,7 @@ public class MapperAsyncResultTest extends CCMTestsSupport {
             if (wasLastPage)
                 return Futures.immediateFuture(users);
             else
-                return Futures.transform(users.fetchMoreResults(), this);
+                return Futures.transformAsync(users.fetchMoreResults(), this);
         }
     }
 }

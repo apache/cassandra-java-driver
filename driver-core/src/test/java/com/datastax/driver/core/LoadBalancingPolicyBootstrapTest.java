@@ -18,6 +18,7 @@ package com.datastax.driver.core;
 import com.datastax.driver.core.policies.DelegatingLoadBalancingPolicy;
 import com.datastax.driver.core.policies.LoadBalancingPolicy;
 import com.datastax.driver.core.policies.RoundRobinPolicy;
+import com.google.common.base.MoreObjects;
 import com.google.common.base.Objects;
 import com.google.common.collect.Lists;
 import org.slf4j.Logger;
@@ -153,7 +154,7 @@ public class LoadBalancingPolicyBootstrapTest extends CCMTestsSupport {
 
             @Override
             public String toString() {
-                return Objects.toStringHelper(this).add("action", action).add("host", host).toString();
+                return MoreObjects.toStringHelper(this).add("action", action).add("host", host).toString();
             }
         }
 

@@ -62,7 +62,7 @@ class SanityChecks {
             throw new IllegalStateException(
                     "Detected Guava issue #1635 which indicates that a version of Guava less than 16.01 is in use.  "
                             + "This introduces codec resolution issues and potentially other incompatibility issues in the driver.  "
-                            + "Please upgrade to Guava 16.01 or later.");
+                            + "Please upgrade to Guava 19.0 or later.");
         }
     }
 

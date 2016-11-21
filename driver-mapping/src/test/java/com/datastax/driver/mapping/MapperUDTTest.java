@@ -21,6 +21,7 @@ import com.datastax.driver.core.exceptions.InvalidQueryException;
 import com.datastax.driver.core.utils.CassandraVersion;
 import com.datastax.driver.core.utils.UUIDs;
 import com.datastax.driver.mapping.annotations.*;
+import com.google.common.base.MoreObjects;
 import com.google.common.base.Objects;
 import com.google.common.collect.Maps;
 import org.assertj.core.data.MapEntry;
@@ -136,7 +137,7 @@ public class MapperUDTTest extends CCMTestsSupport {
 
         @Override
         public String toString() {
-            return Objects.toStringHelper(User.class)
+            return MoreObjects.toStringHelper(User.class)
                     .add("userId", userId)
                     .add("name", name)
                     .add("mainAddress", mainAddress)
@@ -226,7 +227,7 @@ public class MapperUDTTest extends CCMTestsSupport {
 
         @Override
         public String toString() {
-            return Objects.toStringHelper(Address.class)
+            return MoreObjects.toStringHelper(Address.class)
                     .add("street", street)
                     .add("city", city)
                     .add("zip", zipCode)

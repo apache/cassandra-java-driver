@@ -26,24 +26,24 @@ import static com.datastax.driver.osgi.BundleOptions.*;
 import static org.ops4j.pax.exam.CoreOptions.options;
 
 @Listeners({CCMBridgeListener.class, PaxExam.class})
-public class MailboxServiceGuava17IT extends MailboxServiceTests {
+public class MailboxServiceGuava20IT extends MailboxServiceTests {
 
     @Configuration
-    public Option[] guava17Config() {
+    public Option[] guava19Config() {
         return options(
                 defaultOptions(),
                 nettyBundles(),
-                guavaBundle().version("17.0"),
+                guavaBundle().version("20.0"),
                 driverBundle(),
-                mappingBundle(),
                 extrasBundle(),
+                mappingBundle(),
                 mailboxBundle()
         );
     }
 
     /**
      * Exercises a 'mailbox' service provided by an OSGi bundle that depends on the driver with
-     * Guava 17 explicitly enforced.
+     * Guava 20 explicitly enforced.
      *
      * @test_category packaging
      * @expected_result Can create, retrieve and delete data using the mailbox service.
@@ -51,7 +51,7 @@ public class MailboxServiceGuava17IT extends MailboxServiceTests {
      * @since 2.0.10, 2.1.5
      */
     @Test(groups = "short")
-    public void test_guava_17() throws MailboxException {
+    public void test_guava_20() throws MailboxException {
         checkService();
     }
 }
