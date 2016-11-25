@@ -15,10 +15,7 @@
  */
 package com.datastax.driver.core.querybuilder;
 
-import com.datastax.driver.core.CodecRegistry;
-import com.datastax.driver.core.ColumnMetadata;
-import com.datastax.driver.core.DataType;
-import com.datastax.driver.core.TableMetadata;
+import com.datastax.driver.core.*;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -47,8 +44,8 @@ public class Select extends BuiltStatement {
     }
 
     Select(TableMetadata table, List<Object> columnNames, boolean isDistinct, boolean isJson) {
-        this(escapeId(table.getKeyspace().getName()),
-                escapeId(table.getName()),
+        this(Metadata.quoteIfNecessary(table.getKeyspace().getName()),
+                Metadata.quoteIfNecessary(table.getName()),
                 Arrays.asList(new Object[table.getPartitionKey().size()]),
                 table.getPartitionKey(),
                 columnNames,

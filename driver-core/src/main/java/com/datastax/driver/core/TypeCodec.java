@@ -2132,7 +2132,7 @@ public abstract class TypeCodec<T> {
             ByteBuffer[] elements = new ByteBuffer[length];
             int i = 0;
             for (UserType.Field field : definition) {
-                elements[i] = serializeField(value, Metadata.escapeId(field.getName()), protocolVersion);
+                elements[i] = serializeField(value, Metadata.quoteIfNecessary(field.getName()), protocolVersion);
                 size += 4 + (elements[i] == null ? 0 : elements[i].remaining());
                 i++;
             }
@@ -2161,7 +2161,7 @@ public abstract class TypeCodec<T> {
                         break;
                     int n = input.getInt();
                     ByteBuffer element = n < 0 ? null : CodecUtils.readBytes(input, n);
-                    value = deserializeAndSetField(element, value, Metadata.escapeId(field.getName()), protocolVersion);
+                    value = deserializeAndSetField(element, value, Metadata.quoteIfNecessary(field.getName()), protocolVersion);
                 }
                 return value;
             } catch (BufferUnderflowException e) {
@@ -2178,9 +2178,9 @@ public abstract class TypeCodec<T> {
             for (UserType.Field field : definition) {
                 if (i > 0)
                     sb.append(",");
-                sb.append(Metadata.escapeId(field.getName()));
+                sb.append(Metadata.quoteIfNecessary(field.getName()));
                 sb.append(":");
-                sb.append(formatField(value, Metadata.escapeId(field.getName())));
+                sb.append(formatField(value, Metadata.quoteIfNecessary(field.getName())));
                 i += 1;
             }
             sb.append("}");

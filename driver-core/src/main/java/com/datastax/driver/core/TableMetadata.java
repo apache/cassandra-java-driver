@@ -398,7 +398,7 @@ public class TableMetadata extends AbstractTableMetadata {
     @Override
     protected String asCQLQuery(boolean formatted) {
         StringBuilder sb = new StringBuilder();
-        sb.append("CREATE TABLE ").append(Metadata.escapeId(keyspace.getName())).append('.').append(Metadata.escapeId(name)).append(" (");
+        sb.append("CREATE TABLE ").append(Metadata.quoteIfNecessary(keyspace.getName())).append('.').append(Metadata.quoteIfNecessary(name)).append(" (");
         newLine(sb, formatted);
         for (ColumnMetadata cm : columns.values())
             newLine(sb.append(spaces(4, formatted)).append(cm).append(',').append(spaces(1, !formatted)), formatted);
@@ -406,7 +406,7 @@ public class TableMetadata extends AbstractTableMetadata {
         // PK
         sb.append(spaces(4, formatted)).append("PRIMARY KEY (");
         if (partitionKey.size() == 1) {
-            sb.append(Metadata.escapeId(partitionKey.get(0).getName()));
+            sb.append(Metadata.quoteIfNecessary(partitionKey.get(0).getName()));
         } else {
             sb.append('(');
             boolean first = true;
@@ -415,12 +415,12 @@ public class TableMetadata extends AbstractTableMetadata {
                     first = false;
                 else
                     sb.append(", ");
-                sb.append(Metadata.escapeId(cm.getName()));
+                sb.append(Metadata.quoteIfNecessary(cm.getName()));
             }
             sb.append(')');
         }
         for (ColumnMetadata cm : clusteringColumns)
-            sb.append(", ").append(Metadata.escapeId(cm.getName()));
+            sb.append(", ").append(Metadata.quoteIfNecessary(cm.getName()));
         sb.append(')');
         newLine(sb, formatted);
         // end PK

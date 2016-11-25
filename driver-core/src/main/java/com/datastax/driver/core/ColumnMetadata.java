@@ -121,7 +121,7 @@ public class ColumnMetadata {
 
     @Override
     public String toString() {
-        String str = Metadata.escapeId(name) + ' ' + type;
+        String str = Metadata.quoteIfNecessary(name) + ' ' + type;
         return isStatic ? str + " static" : str;
     }
 

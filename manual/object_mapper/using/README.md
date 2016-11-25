@@ -297,3 +297,49 @@ public ListenableFuture<Result<User>> getAllAsync();
 ```
 
 [@QueryParameters]: http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/mapping/annotations/QueryParameters.html
+
+
+### Mapping configuration
+
+[MappingConfiguration] lets you configure low-level aspects of the object mapper. It is configured
+when initializing the mapping manager:
+
+```java
+PropertyMapper propertyMapper = ... ; // see examples below
+MappingConfiguration configuration = 
+        MappingConfiguration.builder()
+                .withPropertyMapper(propertyMapper)
+                .build();
+MappingManager manager = new MappingManager(session, configuration);
+```
+
+The main component in the configuration is [PropertyMapper], which controls how annotated classes
+will relate to database objects. The best way to plug in specific behavior is to create an instance of
+[DefaultPropertyMapper] and customize it.
+
+For example, the mapper's default behavior is to try to map all the properties of your Java objects.
+You might want to take the opposite approach and only map the ones that are specifically annotated
+with `@Column` or `@Field`:
+
+```java
+PropertyMapper propertyMapper = new DefaultPropertyMapper()
+        .setPropertyTransienceStrategy(PropertyTransienceStrategy.OPT_IN);
+```
+
+Another common need is to customize the way Cassandra column names are inferred. Out of the box, Java
+property names are simply lowercased, so a `userName` property would be mapped to the `username` column.
+To map to `user_name` instead, use the following:
+
+```java
+PropertyMapper propertyMapper = new DefaultPropertyMapper()
+        .setNamingStrategy(new DefaultNamingStrategy(
+                NamingConventions.LOWER_CAMEL_CASE, 
+                NamingConventions.LOWER_SNAKE_CASE));
+```
+
+There is more to `DefaultPropertyMapper`; see the Javadocs and implementation for details.
+
+
+[MappingConfiguration]: http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/mapping/MappingConfiguration.html
+[PropertyMapper]: http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/mapping/PropertyMapper.html
+[DefaultPropertyMapper]: http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/mapping/DefaultPropertyMapper.html

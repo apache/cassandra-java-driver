@@ -15,28 +15,13 @@
  */
 package com.datastax.driver.mapping;
 
-import java.util.Set;
+class AliasedMappedProperty<T> {
 
-/**
- * A pluggable component that maps
- * Java properties to a Cassandra objects.
- */
-public interface PropertyMapper {
+    final MappedProperty<T> mappedProperty;
+    final String alias;
 
-    /**
-     * Maps the given table class.
-     *
-     * @param tableClass the table class.
-     * @return a set of mapped properties for the given class.
-     */
-    Set<? extends MappedProperty<?>> mapTable(Class<?> tableClass);
-
-    /**
-     * Maps the given UDT class.
-     *
-     * @param udtClass the UDT class.
-     * @return a set of mapped properties for the given class.
-     */
-    Set<? extends MappedProperty<?>> mapUdt(Class<?> udtClass);
-
+    AliasedMappedProperty(MappedProperty<T> mappedProperty, String alias) {
+        this.mappedProperty = mappedProperty;
+        this.alias = alias;
+    }
 }

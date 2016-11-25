@@ -16,6 +16,8 @@
 package com.datastax.driver.mapping.annotations;
 
 import com.datastax.driver.core.TypeCodec;
+import com.datastax.driver.mapping.MappingConfiguration;
+import com.datastax.driver.mapping.NamingStrategy;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
@@ -37,18 +39,20 @@ import java.lang.annotation.Target;
 @Retention(RetentionPolicy.RUNTIME)
 public @interface Column {
     /**
-     * Name of the column being mapped in Cassandra. By default, the name of the
-     * field or Java bean property will be used.
+     * Name of the column being mapped in Cassandra. By default, the name returned
+     * by the {@link NamingStrategy} of the current
+     * {@link MappingConfiguration}.
      *
      * @return the name of the mapped column in Cassandra, or {@code ""} to use
-     * the field name.
+     * the naming strategy.
      */
     String name() default "";
 
     /**
-     * Whether the column name is a case sensitive one.
+     * Whether the value return by {@link #name()} is case-sensitive (this has no
+     * effect if no name is provided in the annotation).
      *
-     * @return whether the column name is a case sensitive one.
+     * @return whether the column name is case-sensitive.
      */
     boolean caseSensitive() default false;
 

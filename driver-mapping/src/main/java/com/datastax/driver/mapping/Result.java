@@ -31,10 +31,6 @@ public class Result<T> implements PagingIterable<Result<T>, T> {
     private final EntityMapper<T> mapper;
     private final boolean useAlias;
 
-    Result(ResultSet rs, EntityMapper<T> mapper) {
-        this(rs, mapper, false);
-    }
-
     Result(ResultSet rs, EntityMapper<T> mapper, boolean useAlias) {
         this.rs = rs;
         this.mapper = mapper;
@@ -43,32 +39,35 @@ public class Result<T> implements PagingIterable<Result<T>, T> {
 
     private T map(Row row) {
         T entity = mapper.newEntity();
-        for (PropertyMapper col : mapper.allColumns) {
-            String name = col.alias != null && this.useAlias ? col.alias : col.columnName;
+        for (AliasedMappedProperty<?> c : mapper.allColumns) {
+            @SuppressWarnings("unchecked")
+            AliasedMappedProperty<Object> col = (AliasedMappedProperty<Object>) c;
+            String name = col.alias != null && this.useAlias ? col.alias : col.mappedProperty.getMappedName();
             if (!row.getColumnDefinitions().contains(name))
                 continue;
 
             Object value;
-            TypeCodec<Object> customCodec = col.customCodec;
+            TypeCodec<Object> customCodec = col.mappedProperty.getCustomCodec();
             if (customCodec != null)
                 value = row.get(name, customCodec);
             else
-                value = row.get(name, col.javaType);
+                value = row.get(name, col.mappedProperty.getPropertyType());
 
             if (shouldSetValue(value)) {
-                col.setValue(entity, value);
+                col.mappedProperty.setValue(entity, value);
             }
         }
         return entity;
     }
 
+    @SuppressWarnings("SimplifiableIfStatement")
     private static boolean shouldSetValue(Object value) {
         if (value == null)
             return false;
         if (value instanceof Collection)
-            return !((Collection) value).isEmpty();
+            return !((Collection<?>) value).isEmpty();
         if (value instanceof Map)
-            return !((Map) value).isEmpty();
+            return !((Map<?, ?>) value).isEmpty();
         return true;
     }
 

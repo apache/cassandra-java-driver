@@ -113,7 +113,7 @@ public class IndexMetadata {
     }
 
     private static String targetFromLegacyOptions(ColumnMetadata column, Map<String, String> options) {
-        String columnName = Metadata.escapeId(column.getName());
+        String columnName = Metadata.quoteIfNecessary(column.getName());
         if (options.containsKey(INDEX_KEYS_OPTION_NAME))
             return String.format("keys(%s)", columnName);
         if (options.containsKey(INDEX_ENTRIES_OPTION_NAME))
@@ -202,9 +202,9 @@ public class IndexMetadata {
      * @return the 'CREATE INDEX' query corresponding to this index.
      */
     public String asCQLQuery() {
-        String keyspaceName = Metadata.escapeId(table.getKeyspace().getName());
-        String tableName = Metadata.escapeId(table.getName());
-        String indexName = Metadata.escapeId(this.name);
+        String keyspaceName = Metadata.quoteIfNecessary(table.getKeyspace().getName());
+        String tableName = Metadata.quoteIfNecessary(table.getName());
+        String indexName = Metadata.quoteIfNecessary(this.name);
         return isCustomIndex()
                 ? String.format("CREATE CUSTOM INDEX %s ON %s.%s (%s) USING '%s' %s;", indexName, keyspaceName, tableName, getTarget(), getIndexClassName(), getOptionsAsCql())
                 : String.format("CREATE INDEX %s ON %s.%s (%s);", indexName, keyspaceName, tableName, getTarget());

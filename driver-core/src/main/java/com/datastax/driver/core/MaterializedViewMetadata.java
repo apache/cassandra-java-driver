@@ -155,9 +155,9 @@ public class MaterializedViewMetadata extends AbstractTableMetadata {
     @Override
     protected String asCQLQuery(boolean formatted) {
 
-        String keyspaceName = Metadata.escapeId(keyspace.getName());
-        String baseTableName = Metadata.escapeId(baseTable.getName());
-        String viewName = Metadata.escapeId(name);
+        String keyspaceName = Metadata.quoteIfNecessary(keyspace.getName());
+        String baseTableName = Metadata.quoteIfNecessary(baseTable.getName());
+        String viewName = Metadata.quoteIfNecessary(name);
 
         StringBuilder sb = new StringBuilder();
         sb.append("CREATE MATERIALIZED VIEW ")
@@ -173,7 +173,7 @@ public class MaterializedViewMetadata extends AbstractTableMetadata {
             Iterator<ColumnMetadata> it = columns.values().iterator();
             while (it.hasNext()) {
                 ColumnMetadata column = it.next();
-                sb.append(spaces(4, formatted)).append(Metadata.escapeId(column.getName()));
+                sb.append(spaces(4, formatted)).append(Metadata.quoteIfNecessary(column.getName()));
                 if (it.hasNext()) sb.append(",");
                 sb.append(" ");
                 newLine(sb, formatted);
@@ -191,7 +191,7 @@ public class MaterializedViewMetadata extends AbstractTableMetadata {
         // PK
         sb.append("PRIMARY KEY (");
         if (partitionKey.size() == 1) {
-            sb.append(Metadata.escapeId(partitionKey.get(0).getName()));
+            sb.append(Metadata.quoteIfNecessary(partitionKey.get(0).getName()));
         } else {
             sb.append('(');
             boolean first = true;
@@ -200,12 +200,12 @@ public class MaterializedViewMetadata extends AbstractTableMetadata {
                     first = false;
                 else
                     sb.append(", ");
-                sb.append(Metadata.escapeId(cm.getName()));
+                sb.append(Metadata.quoteIfNecessary(cm.getName()));
             }
             sb.append(')');
         }
         for (ColumnMetadata cm : clusteringColumns)
-            sb.append(", ").append(Metadata.escapeId(cm.getName()));
+            sb.append(", ").append(Metadata.quoteIfNecessary(cm.getName()));
         sb.append(')');
 
         appendOptions(sb, formatted);
