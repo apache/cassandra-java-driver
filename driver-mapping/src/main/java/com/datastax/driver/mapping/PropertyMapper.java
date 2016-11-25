@@ -18,6 +18,7 @@ package com.datastax.driver.mapping;
 import com.datastax.driver.core.Metadata;
 import com.datastax.driver.core.TypeCodec;
 import com.datastax.driver.mapping.annotations.*;
+import com.google.common.collect.ImmutableSet;
 import com.google.common.reflect.TypeToken;
 
 import java.beans.PropertyDescriptor;
@@ -40,6 +41,14 @@ import static com.google.common.base.Preconditions.checkArgument;
  */
 class PropertyMapper {
 
+    private static final Set<Class<? extends Annotation>> COLUMN_ANNOTATIONS = ImmutableSet.of(
+            PartitionKey.class,
+            ClusteringColumn.class,
+            Column.class,
+            com.datastax.driver.mapping.annotations.Field.class,
+            Computed.class
+    );
+
     private final String propertyName;
     final String alias;
     final String columnName;
@@ -52,12 +61,14 @@ class PropertyMapper {
     private final Method getter;
     private final Method setter;
     private final Map<Class<? extends Annotation>, Annotation> annotations;
+    private final MapperConfiguration mapperConfiguration;
 
-    PropertyMapper(Class<?> baseClass, String propertyName, String alias, Field field, PropertyDescriptor property, Set<String> classLevelTransients) {
+    PropertyMapper(Class<?> baseClass, String propertyName, String alias, Field field, PropertyDescriptor property, Set<String> classLevelTransients, MapperConfiguration mapperConfiguration) {
         this.propertyName = propertyName;
         this.alias = alias;
         this.field = field;
         this.classLevelTransients = classLevelTransients;
+        this.mapperConfiguration = mapperConfiguration;
         getter = ReflectionUtils.findGetter(property);
         setter = ReflectionUtils.findSetter(baseClass, property);
         annotations = ReflectionUtils.scanPropertyAnnotations(field, property);
@@ -121,15 +132,27 @@ class PropertyMapper {
     }
 
     boolean isTransient() {
-        return hasAnnotation(Transient.class) ||
-                // If a property is both annotated and declared as transient in the class annotation, the property
-                // annotations take precedence (the property will not be transient)
-                classLevelTransients.contains(propertyName)
-                        && !hasAnnotation(PartitionKey.class)
-                        && !hasAnnotation(ClusteringColumn.class)
-                        && !hasAnnotation(Column.class)
-                        && !hasAnnotation(com.datastax.driver.mapping.annotations.Field.class)
-                        && !hasAnnotation(Computed.class);
+        // JAVA-1310: Make transient properties configurable at mapper level
+        // (should properties be transient by default or not)
+        switch (mapperConfiguration.getPropertyScanConfiguration().getPropertyMappingStrategy()) {
+            case BLACK_LIST:
+                return hasAnnotation(Transient.class) ||
+                        // If a property is both annotated and declared as transient in the class annotation, the property
+                        // annotations take precedence (the property will not be transient)
+                        classLevelTransients.contains(propertyName) && !hasColumnAnnotation();
+            case WHITE_LIST:
+                return !hasColumnAnnotation();
+        }
+        throw new IllegalArgumentException("Unhandled PropertyMappingStrategy" + mapperConfiguration.getPropertyScanConfiguration().getPropertyMappingStrategy().name());
+    }
+
+    boolean hasColumnAnnotation() {
+        for (Class<? extends Annotation> columnAnnotation : COLUMN_ANNOTATIONS) {
+            if (hasAnnotation(columnAnnotation)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     boolean isPartitionKey() {

@@ -147,4 +147,18 @@
         <justification>False positive, the enclosing class is package-private so this was never exposed</justification>
     </difference>
 
+    <difference>
+        <differenceType>7012</differenceType> <!-- method added to interface -->
+        <className>com/datastax/driver/mapping/annotations/Table</className>
+        <method>java.lang.String[] transientProperties()</method>
+        <justification>False positive, it's an annotation and the new method has a default value</justification>
+    </difference>
+
+    <difference>
+        <differenceType>7012</differenceType> <!-- method added to interface -->
+        <className>com/datastax/driver/mapping/annotations/UDT</className>
+        <method>java.lang.String[] transientProperties()</method>
+        <justification>False positive, it's an annotation and the new method has a default value</justification>
+    </difference>
+
 </differences>
