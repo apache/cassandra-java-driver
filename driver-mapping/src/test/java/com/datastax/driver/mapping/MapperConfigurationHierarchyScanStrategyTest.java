@@ -31,7 +31,6 @@ import static org.assertj.core.api.Assertions.assertThat;
  * - configure max depth ancestor
  */
 public class MapperConfigurationHierarchyScanStrategyTest extends CCMTestsSupport {
-    private MappingManager mappingManager;
 
     @Override
     public void onTestContextInitialized() {
@@ -39,13 +38,9 @@ public class MapperConfigurationHierarchyScanStrategyTest extends CCMTestsSuppor
         execute("INSERT INTO foo (k, v) VALUES (1, 1)");
     }
 
-    @BeforeClass(groups = "short")
-    public void setup() {
-        mappingManager = new MappingManager(session());
-    }
-
     @Test(groups = "short")
     public void should_not_inherit_properties() {
+        MappingManager mappingManager = new MappingManager(session());
         MapperConfiguration conf = new MapperConfiguration();
         MapperConfiguration.PropertyScanConfiguration scanConf = new MapperConfiguration.PropertyScanConfiguration();
         MapperConfiguration.HierarchyScanStrategy scanStrategy = new MapperConfiguration.HierarchyScanStrategy();
@@ -81,6 +76,7 @@ public class MapperConfigurationHierarchyScanStrategyTest extends CCMTestsSuppor
 
     @Test(groups = "short")
     public void should_inherit_only_boo() {
+        MappingManager mappingManager = new MappingManager(session());
         MapperConfiguration conf = new MapperConfiguration();
         MapperConfiguration.PropertyScanConfiguration scanConf = new MapperConfiguration.PropertyScanConfiguration();
         MapperConfiguration.HierarchyScanStrategy scanStrategy = new MapperConfiguration.HierarchyScanStrategy();
@@ -132,6 +128,7 @@ public class MapperConfigurationHierarchyScanStrategyTest extends CCMTestsSuppor
 
     @Test(groups = "short")
     public void ignore_non_annotated_classes() {
+        MappingManager mappingManager = new MappingManager(session());
         MapperConfiguration conf = new MapperConfiguration();
         MapperConfiguration.PropertyScanConfiguration scanConf = new MapperConfiguration.PropertyScanConfiguration();
         MapperConfiguration.HierarchyScanStrategy scanStrategy = new MapperConfiguration.HierarchyScanStrategy();

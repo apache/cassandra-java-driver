@@ -27,10 +27,7 @@ import java.beans.Introspector;
 import java.beans.PropertyDescriptor;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.*;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 /**
  * Utility methods related to reflection.
@@ -90,7 +87,7 @@ class ReflectionUtils {
         if (!scanConfiguration.getPropertyScanScope().isScanFields()) {
             return fields;
         }
-        Set<Class<?>> classesToScan = calculateClassesToScan(baseClass, scanConfiguration);
+        List<Class<?>> classesToScan = calculateClassesToScan(baseClass, scanConfiguration);
         for (Class<?> clazz : classesToScan) {
             for (Field field : clazz.getDeclaredFields()) {
                 if (field.isSynthetic() || Modifier.isStatic(field.getModifiers()))
@@ -110,7 +107,7 @@ class ReflectionUtils {
         if (!scanConfiguration.getPropertyScanScope().isScanGetters()) {
             return properties;
         }
-        Set<Class<?>> classesToScan = calculateClassesToScan(baseClass, scanConfiguration);
+        List<Class<?>> classesToScan = calculateClassesToScan(baseClass, scanConfiguration);
         for (Class<?> clazz : classesToScan) {
             // each time extract only current class properties
             BeanInfo beanInfo;
@@ -120,16 +117,18 @@ class ReflectionUtils {
                 throw Throwables.propagate(e);
             }
             for (PropertyDescriptor property : beanInfo.getPropertyDescriptors()) {
-                properties.put(property.getName(), property);
+                if (!properties.containsKey(property.getName())) {
+                    properties.put(property.getName(), property);
+                }
             }
         }
         return properties;
     }
 
-    private static Set<Class<?>> calculateClassesToScan(Class<?> baseClass, MapperConfiguration.PropertyScanConfiguration scanConfiguration) {
+    private static List<Class<?>> calculateClassesToScan(Class<?> baseClass, MapperConfiguration.PropertyScanConfiguration scanConfiguration) {
         // JAVA-1310: Make the class hierarchy scan configurable at mapper level
         // (scan the whole hierarchy, or just annotated classes)
-        Set<Class<?>> classesToScan = new HashSet<Class<?>>();
+        List<Class<?>> classesToScan = new ArrayList<Class<?>>();
         MapperConfiguration.HierarchyScanStrategy scanStrategy = scanConfiguration.getHierarchyScanStrategy();
         Class<?> stopCondition = calculateStopConditionClass(baseClass, scanStrategy);
         for (Class<?> clazz = baseClass; clazz != null && !clazz.equals(stopCondition); clazz = clazz.getSuperclass()) {

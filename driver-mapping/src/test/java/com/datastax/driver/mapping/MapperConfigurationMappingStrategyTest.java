@@ -28,7 +28,6 @@ import static org.assertj.core.api.Assertions.assertThat;
  * Test for JAVA-1310 - validate ability configure property mapping strategy - whitelist vs. blacklist
  */
 public class MapperConfigurationMappingStrategyTest extends CCMTestsSupport {
-    private MappingManager mappingManager;
 
     @Override
     public void onTestContextInitialized() {
@@ -36,13 +35,9 @@ public class MapperConfigurationMappingStrategyTest extends CCMTestsSupport {
         execute("INSERT INTO foo (k, v) VALUES (1, 1)");
     }
 
-    @BeforeClass
-    public void setup() {
-        mappingManager = new MappingManager(session());
-    }
-
     @Test(groups = "short")
     public void should_map_only_non_transient() {
+        MappingManager mappingManager = new MappingManager(session());
         MapperConfiguration conf = new MapperConfiguration();
         MapperConfiguration.PropertyScanConfiguration scanConf = new MapperConfiguration.PropertyScanConfiguration();
         scanConf.setPropertyMappingStrategy(MapperConfiguration.PropertyMappingStrategy.BLACK_LIST);
@@ -81,6 +76,7 @@ public class MapperConfigurationMappingStrategyTest extends CCMTestsSupport {
 
     @Test(groups = "short")
     public void should_map_only_annotated() {
+        MappingManager mappingManager = new MappingManager(session());
         MapperConfiguration conf = new MapperConfiguration();
         MapperConfiguration.PropertyScanConfiguration scanConf = new MapperConfiguration.PropertyScanConfiguration();
         scanConf.setPropertyMappingStrategy(MapperConfiguration.PropertyMappingStrategy.WHITE_LIST);

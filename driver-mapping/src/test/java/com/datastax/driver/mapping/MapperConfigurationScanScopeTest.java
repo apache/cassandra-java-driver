@@ -29,7 +29,6 @@ import static org.assertj.core.api.Assertions.assertThat;
  * Test for JAVA-1310 - validate ability configure property scope - getters vs. fields
  */
 public class MapperConfigurationScanScopeTest extends CCMTestsSupport {
-    private MappingManager mappingManager;
 
     @Override
     public void onTestContextInitialized() {
@@ -37,13 +36,9 @@ public class MapperConfigurationScanScopeTest extends CCMTestsSupport {
         execute("INSERT INTO foo (k, v) VALUES (1, 1)");
     }
 
-    @BeforeClass
-    public void setup() {
-        mappingManager = new MappingManager(session());
-    }
-
     @Test(groups = "short")
     public void should_ignore_fields() {
+        MappingManager mappingManager = new MappingManager(session());
         MapperConfiguration conf = new MapperConfiguration();
         MapperConfiguration.PropertyScanConfiguration scanConf = new MapperConfiguration.PropertyScanConfiguration();
         MapperConfiguration.PropertyScanScope scope = new MapperConfiguration.PropertyScanScope()
@@ -72,6 +67,7 @@ public class MapperConfigurationScanScopeTest extends CCMTestsSupport {
 
     @Test(groups = "short")
     public void should_ignore_getters() {
+        MappingManager mappingManager = new MappingManager(session());
         MapperConfiguration conf = new MapperConfiguration();
         MapperConfiguration.PropertyScanConfiguration scanConf = new MapperConfiguration.PropertyScanConfiguration();
         MapperConfiguration.PropertyScanScope scope = new MapperConfiguration.PropertyScanScope()
@@ -99,6 +95,7 @@ public class MapperConfigurationScanScopeTest extends CCMTestsSupport {
 
     @Test(groups = "short")
     public void should_map_fields_and_getters() {
+        MappingManager mappingManager = new MappingManager(session());
         MapperConfiguration conf = new MapperConfiguration();
         MapperConfiguration.PropertyScanConfiguration scanConf = new MapperConfiguration.PropertyScanConfiguration();
         MapperConfiguration.PropertyScanScope scope = new MapperConfiguration.PropertyScanScope()

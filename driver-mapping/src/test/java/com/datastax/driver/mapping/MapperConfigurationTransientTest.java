@@ -30,7 +30,6 @@ import static org.assertj.core.api.Assertions.assertThat;
  * Test for JAVA-1310 - validate ability to transient properties at manager and mapper levels
  */
 public class MapperConfigurationTransientTest extends CCMTestsSupport {
-    private MappingManager mappingManager;
 
     @Override
     public void onTestContextInitialized() {
@@ -38,13 +37,9 @@ public class MapperConfigurationTransientTest extends CCMTestsSupport {
         execute("INSERT INTO foo (k, v) VALUES (1, 1)");
     }
 
-    @BeforeClass
-    public void setup() {
-        mappingManager = new MappingManager(session());
-    }
-
     @Test(groups = "short")
     public void should_ignore_property_if_field_annotated_transient() {
+        MappingManager mappingManager = new MappingManager(session());
         mappingManager.mapper(Foo1.class);
     }
 
@@ -58,6 +53,7 @@ public class MapperConfigurationTransientTest extends CCMTestsSupport {
 
     @Test(groups = "short")
     public void should_ignore_property_if_getter_annotated_transient() {
+        MappingManager mappingManager = new MappingManager(session());
         mappingManager.mapper(Foo2.class);
     }
 
@@ -75,6 +71,7 @@ public class MapperConfigurationTransientTest extends CCMTestsSupport {
 
     @Test(groups = "short")
     public void should_ignore_property_if_declared_transient_in_class_annotation() {
+        MappingManager mappingManager = new MappingManager(session());
         mappingManager.mapper(Foo3.class);
     }
 
@@ -87,6 +84,7 @@ public class MapperConfigurationTransientTest extends CCMTestsSupport {
 
     @Test(groups = "short")
     public void should_ignore_property_if_declared_transient_in_mapper_configuration() {
+        MappingManager mappingManager = new MappingManager(session());
         MapperConfiguration configuration = new MapperConfiguration();
         MapperConfiguration.PropertyScanConfiguration scanConf = new MapperConfiguration.PropertyScanConfiguration();
         scanConf.setExcludedProperties(ImmutableSet.of("notAColumn"));

@@ -26,7 +26,6 @@ import org.testng.annotations.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 
 public class MapperTransientTest extends CCMTestsSupport {
-    private MappingManager mappingManager;
 
     @Override
     public void onTestContextInitialized() {
@@ -34,13 +33,9 @@ public class MapperTransientTest extends CCMTestsSupport {
         execute("INSERT INTO foo (k, v) VALUES (1, 1)");
     }
 
-    @BeforeClass
-    public void setup() {
-        mappingManager = new MappingManager(session());
-    }
-
     @Test(groups = "short")
     public void should_ignore_property_if_field_annotated_transient() {
+        MappingManager mappingManager = new MappingManager(session());
         mappingManager.mapper(Foo1.class);
     }
 
@@ -54,6 +49,7 @@ public class MapperTransientTest extends CCMTestsSupport {
 
     @Test(groups = "short")
     public void should_ignore_property_if_getter_annotated_transient() {
+        MappingManager mappingManager = new MappingManager(session());
         mappingManager.mapper(Foo2.class);
     }
 
@@ -71,6 +67,7 @@ public class MapperTransientTest extends CCMTestsSupport {
 
     @Test(groups = "short")
     public void should_ignore_property_if_declared_transient_in_class_annotation() {
+        MappingManager mappingManager = new MappingManager(session());
         mappingManager.mapper(Foo3.class);
     }
 
@@ -83,6 +80,7 @@ public class MapperTransientTest extends CCMTestsSupport {
 
     @Test(groups = "short")
     public void should_not_ignore_property_if_ignored_at_class_level_but_annotated() {
+        MappingManager mappingManager = new MappingManager(session());
         Foo4 foo = mappingManager.mapper(Foo4.class).get(1);
         assertThat(foo.getV()).isEqualTo(1);
     }
