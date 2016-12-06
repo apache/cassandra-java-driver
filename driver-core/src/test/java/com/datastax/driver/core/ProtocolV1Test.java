@@ -25,7 +25,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 /**
  * Tests targeting protocol v1 specifically.
  */
-@CCMConfig(version = "1.2.19")
+@CCMConfig(version = "1.2.19", dse = false)
 public class ProtocolV1Test extends CCMTestsSupport {
 
     @Override
