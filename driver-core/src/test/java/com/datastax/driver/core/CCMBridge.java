@@ -34,8 +34,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import static com.datastax.driver.core.TestUtils.executeNoFail;
-import static com.datastax.driver.core.TestUtils.findAvailablePort;
+import static com.datastax.driver.core.TestUtils.*;
 
 public class CCMBridge implements CCMAccess {
 
@@ -236,7 +235,9 @@ public class CCMBridge implements CCMAccess {
 
     private boolean closed = false;
 
-    private CCMBridge(String clusterName, boolean isDSE, VersionNumber version, int storagePort, int thriftPort, int binaryPort, String jvmArgs) {
+    private final int[] nodes;
+
+    private CCMBridge(String clusterName, boolean isDSE, VersionNumber version, int storagePort, int thriftPort, int binaryPort, String jvmArgs, int[] nodes) {
         this.clusterName = clusterName;
         this.version = version;
         this.storagePort = storagePort;
@@ -244,6 +245,7 @@ public class CCMBridge implements CCMAccess {
         this.binaryPort = binaryPort;
         this.isDSE = isDSE;
         this.jvmArgs = jvmArgs;
+        this.nodes = nodes;
         this.ccmDir = Files.createTempDir();
     }
 
@@ -394,6 +396,21 @@ public class CCMBridge implements CCMAccess {
         logger.debug("Closed: {}", this);
     }
 
+    /**
+     * Based on C* version, return the wait arguments.
+     *
+     * @return For C* 1.x, --wait-other-notice otherwise --no-wait
+     */
+    private String getStartWaitArguments() {
+        // make a small exception for C* 1.2 as it has a bug where it starts listening on the binary
+        // interface slightly before it joins the cluster.
+        if (getCassandraVersion().startsWith("1.")) {
+            return " --wait-other-notice";
+        } else {
+            return " --no-wait";
+        }
+    }
+
     @Override
     public synchronized void start() {
         if (started)
@@ -401,11 +418,23 @@ public class CCMBridge implements CCMAccess {
         if (logger.isDebugEnabled())
             logger.debug("Starting: {} - free memory: {} MB", this, TestUtils.getFreeMemoryMB());
         try {
-            String cmd = CCM_COMMAND + " start --wait-other-notice --wait-for-binary-proto" + jvmArgs;
+            String cmd = CCM_COMMAND + " start " + jvmArgs + getStartWaitArguments();
             if (isWindows() && this.version.compareTo(VersionNumber.parse("2.2.4")) >= 0) {
                 cmd += " --quiet-windows";
             }
             execute(cmd);
+
+            // Wait for binary interface on each node.
+            int n = 1;
+            for (int dc = 1; dc <= nodes.length; dc++) {
+                int nodesInDc = nodes[dc - 1];
+                for (int i = 0; i < nodesInDc; i++) {
+                    InetSocketAddress addr = new InetSocketAddress(ipOfNode(n), binaryPort);
+                    logger.debug("Waiting for binary protocol to show up for {}", addr);
+                    TestUtils.waitUntilPortIsUp(addr);
+                    n++;
+                }
+            }
         } catch (CCMException e) {
             logger.error("Could not start " + this, e);
             logger.error("CCM output:\n{}", e.getOut());
@@ -463,11 +492,15 @@ public class CCMBridge implements CCMAccess {
     public void start(int n) {
         logger.debug(String.format("Starting: node %s (%s%s:%s) in %s", n, TestUtils.IP_PREFIX, n, binaryPort, this));
         try {
-            String cmd = CCM_COMMAND + " node%d start --wait-other-notice --wait-for-binary-proto" + jvmArgs;
+            String cmd = CCM_COMMAND + " node%d start " + jvmArgs + getStartWaitArguments();
             if (isWindows() && this.version.compareTo(VersionNumber.parse("2.2.4")) >= 0) {
                 cmd += " --quiet-windows";
             }
             execute(cmd, n);
+            // Wait for binary interface
+            InetSocketAddress addr = new InetSocketAddress(ipOfNode(n), binaryPort);
+            logger.debug("Waiting for binary protocol to show up for {}", addr);
+            TestUtils.waitUntilPortIsUp(addr);
         } catch (CCMException e) {
             logger.error(String.format("Could not start node %s in %s", n, this), e);
             logger.error("CCM output:\n{}", e.getOut());
@@ -875,7 +908,7 @@ public class CCMBridge implements CCMAccess {
             int storagePort = Integer.parseInt(cassandraConfiguration.get("storage_port").toString());
             int thriftPort = Integer.parseInt(cassandraConfiguration.get("rpc_port").toString());
             int binaryPort = Integer.parseInt(cassandraConfiguration.get("native_transport_port").toString());
-            final CCMBridge ccm = new CCMBridge(clusterName, dse, version, storagePort, thriftPort, binaryPort, joinJvmArgs());
+            final CCMBridge ccm = new CCMBridge(clusterName, dse, version, storagePort, thriftPort, binaryPort, joinJvmArgs(), nodes);
 
             Runtime.getRuntime().addShutdownHook(new Thread() {
                 @Override

@@ -919,12 +919,6 @@ public class CCMTestsSupport {
             }
             LOGGER.debug("Using {}", ccm);
         }
-
-        // Check to ensure binary protocol is listening before proceeding.
-        for (InetSocketAddress node : getContactPointsWithPorts()) {
-            LOGGER.debug("Waiting for binary protocol to show up for {}", node);
-            TestUtils.waitUntilPortIsUp(node);
-        }
     }
 
     protected void initTestCluster(Object testInstance) throws Exception {
