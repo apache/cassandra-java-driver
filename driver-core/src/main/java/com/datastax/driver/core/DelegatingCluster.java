@@ -122,6 +122,16 @@ public abstract class DelegatingCluster extends Cluster {
     }
 
     @Override
+    public Cluster register(SchemaChangeListener listener) {
+        return delegate().register(listener);
+    }
+
+    @Override
+    public Cluster unregister(SchemaChangeListener listener) {
+        return delegate().unregister(listener);
+    }
+
+    @Override
     public CloseFuture closeAsync() {
         return delegate().closeAsync();
     }

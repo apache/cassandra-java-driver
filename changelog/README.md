@@ -1,5 +1,10 @@
 ## Changelog
 
+### 3.0.6 (in progress)
+
+- [bug] JAVA-1330: Add un/register for SchemaChangeListener in DelegatingCluster
+
+
 ### 3.0.5
 
 - [bug] JAVA-1312: QueryBuilder modifies selected columns when manually selected.
