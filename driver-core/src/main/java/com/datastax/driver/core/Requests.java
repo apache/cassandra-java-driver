@@ -63,7 +63,7 @@ class Requests {
         }
 
         @Override
-        Request copy() {
+        protected Request copyInternal() {
             return new Startup(compression);
         }
 
@@ -99,7 +99,7 @@ class Requests {
         }
 
         @Override
-        Request copy() {
+        protected Request copyInternal() {
             return new Credentials(credentials);
         }
     }
@@ -122,7 +122,7 @@ class Requests {
         }
 
         @Override
-        Request copy() {
+        protected Request copyInternal() {
             return new Options();
         }
 
@@ -162,12 +162,12 @@ class Requests {
         }
 
         @Override
-        Request copy() {
+        protected Request copyInternal() {
             return new Query(this.query, options, isTracingRequested());
         }
 
         @Override
-        Request copy(ConsistencyLevel newConsistencyLevel) {
+        protected Request copyInternal(ConsistencyLevel newConsistencyLevel) {
             return new Query(this.query, options.copy(newConsistencyLevel), isTracingRequested());
         }
 
@@ -203,12 +203,12 @@ class Requests {
         }
 
         @Override
-        Request copy() {
+        protected Request copyInternal() {
             return new Execute(statementId, options, isTracingRequested());
         }
 
         @Override
-        Request copy(ConsistencyLevel newConsistencyLevel) {
+        protected Request copyInternal(ConsistencyLevel newConsistencyLevel) {
             return new Execute(statementId, options.copy(newConsistencyLevel), isTracingRequested());
         }
 
@@ -460,12 +460,12 @@ class Requests {
         }
 
         @Override
-        Request copy() {
+        protected Request copyInternal() {
             return new Batch(type, queryOrIdList, values, options, isTracingRequested());
         }
 
         @Override
-        Request copy(ConsistencyLevel newConsistencyLevel) {
+        protected Request copyInternal(ConsistencyLevel newConsistencyLevel) {
             return new Batch(type, queryOrIdList, values, options.copy(newConsistencyLevel), isTracingRequested());
         }
 
@@ -571,7 +571,7 @@ class Requests {
         }
 
         @Override
-        Request copy() {
+        protected Request copyInternal() {
             return new Prepare(query);
         }
 
@@ -608,7 +608,7 @@ class Requests {
         }
 
         @Override
-        Request copy() {
+        protected Request copyInternal() {
             return new Register(eventTypes);
         }
 
@@ -641,7 +641,7 @@ class Requests {
         }
 
         @Override
-        Request copy() {
+        protected Request copyInternal() {
             return new AuthResponse(token);
         }
     }

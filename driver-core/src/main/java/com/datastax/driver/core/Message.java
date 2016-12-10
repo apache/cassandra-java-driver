@@ -180,9 +180,21 @@ abstract class Message {
             }
         }
 
-        abstract Request copy();
+        Request copy() {
+            Request request = copyInternal();
+            request.setCustomPayload(this.getCustomPayload());
+            return request;
+        }
+
+        protected abstract Request copyInternal();
 
         Request copy(ConsistencyLevel newConsistencyLevel) {
+            Request request = copyInternal(newConsistencyLevel);
+            request.setCustomPayload(this.getCustomPayload());
+            return request;
+        }
+
+        protected Request copyInternal(ConsistencyLevel newConsistencyLevel) {
             throw new UnsupportedOperationException();
         }
     }

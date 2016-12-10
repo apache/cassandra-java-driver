@@ -1,5 +1,11 @@
 ## Changelog
 
+### 3.1.3 (in progress)
+
+- [bug] JAVA-1330: Add un/register for SchemaChangeListener in DelegatingCluster
+- [bug] JAVA-1351: Include Custom Payload in Request.copy.
+
+
 ### 3.1.2
 
 - [bug] JAVA-1321: Wrong OSGi dependency version for Guava.
