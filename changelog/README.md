@@ -4,6 +4,7 @@
 
 - [bug] JAVA-1330: Add un/register for SchemaChangeListener in DelegatingCluster
 - [bug] JAVA-1351: Include Custom Payload in Request.copy.
+- [bug] JAVA-1346: Reset heartbeat only on client reads (not writes).
 
 
 ### 3.0.5
