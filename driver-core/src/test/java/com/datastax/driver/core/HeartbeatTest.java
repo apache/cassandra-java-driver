@@ -63,40 +63,44 @@ public class HeartbeatTest extends CCMTestsSupport {
                         .setHeartbeatIntervalSeconds(3))
                 .build());
 
-        // Don't create any session, only the control connection will be established
-        cluster.init();
+        try {
+            // Don't create any session, only the control connection will be established
+            cluster.init();
 
-        for (int i = 0; i < 5; i++) {
-            triggerRequestOnControlConnection(cluster);
-            SECONDS.sleep(1);
+            for (int i = 0; i < 5; i++) {
+                triggerRequestOnControlConnection(cluster);
+                SECONDS.sleep(1);
+            }
+            assertThat(logs.getNext()).doesNotContain("sending heartbeat");
+
+            // Ensure heartbeat is sent after no activity.
+            SECONDS.sleep(4);
+            assertThat(logs.getNext())
+                    .contains("sending heartbeat")
+                    .contains("heartbeat query succeeded");
+
+            // Ensure heartbeat is sent after continued inactivity.
+            SECONDS.sleep(4);
+            assertThat(logs.getNext())
+                    .contains("sending heartbeat")
+                    .contains("heartbeat query succeeded");
+
+            // Ensure heartbeat is not sent after activity.
+            logs.getNext();
+            for (int i = 0; i < 5; i++) {
+                triggerRequestOnControlConnection(cluster);
+                SECONDS.sleep(1);
+            }
+            assertThat(logs.getNext()).doesNotContain("sending heartbeat");
+
+            // Finally, ensure heartbeat is sent after inactivity.
+            SECONDS.sleep(4);
+            assertThat(logs.getNext())
+                    .contains("sending heartbeat")
+                    .contains("heartbeat query succeeded");
+        } finally {
+            cluster.close();
         }
-        assertThat(logs.getNext()).doesNotContain("sending heartbeat");
-
-        // Ensure heartbeat is sent after no activity.
-        SECONDS.sleep(4);
-        assertThat(logs.getNext())
-                .contains("sending heartbeat")
-                .contains("heartbeat query succeeded");
-
-        // Ensure heartbeat is sent after continued inactivity.
-        SECONDS.sleep(4);
-        assertThat(logs.getNext())
-                .contains("sending heartbeat")
-                .contains("heartbeat query succeeded");
-
-        // Ensure heartbeat is not sent after activity.
-        logs.getNext();
-        for (int i = 0; i < 5; i++) {
-            triggerRequestOnControlConnection(cluster);
-            SECONDS.sleep(1);
-        }
-        assertThat(logs.getNext()).doesNotContain("sending heartbeat");
-
-        // Finally, ensure heartbeat is sent after inactivity.
-        SECONDS.sleep(4);
-        assertThat(logs.getNext())
-                .contains("sending heartbeat")
-                .contains("heartbeat query succeeded");
     }
 
     /**
@@ -119,18 +123,22 @@ public class HeartbeatTest extends CCMTestsSupport {
                         .setHeartbeatIntervalSeconds(0))
                 .build());
 
-        // Don't create any session, only the control connection will be established
-        cluster.init();
+        try {
+            // Don't create any session, only the control connection will be established
+            cluster.init();
 
-        for (int i = 0; i < 5; i++) {
-            triggerRequestOnControlConnection(cluster);
-            SECONDS.sleep(1);
+            for (int i = 0; i < 5; i++) {
+                triggerRequestOnControlConnection(cluster);
+                SECONDS.sleep(1);
+            }
+            assertThat(logs.get()).doesNotContain("sending heartbeat");
+
+            // Sleep for a while and ensure no heartbeat is sent.
+            SECONDS.sleep(32);
+            assertThat(logs.get()).doesNotContain("sending heartbeat");
+        } finally {
+            cluster.close();
         }
-        assertThat(logs.get()).doesNotContain("sending heartbeat");
-
-        // Sleep for a while and ensure no heartbeat is sent.
-        SECONDS.sleep(32);
-        assertThat(logs.get()).doesNotContain("sending heartbeat");
     }
 
     // Simulates activity on the control connection via the internal API

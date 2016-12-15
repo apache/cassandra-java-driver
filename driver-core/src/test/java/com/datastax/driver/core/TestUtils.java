@@ -739,7 +739,7 @@ public abstract class TestUtils {
      * @return The desired target protocol version based on the 'cassandra.version' System property.
      */
     public static ProtocolVersion getDesiredProtocolVersion() {
-        String version = System.getProperty("cassandra.version");
+        String version = CCMBridge.getCassandraVersion();
         String[] versionArray = version.split("\\.|-");
         double major = Double.parseDouble(versionArray[0] + "." + versionArray[1]);
         if (major < 2.0) {

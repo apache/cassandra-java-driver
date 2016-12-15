@@ -4,7 +4,12 @@ schedules:
     schedule: per_commit
     matrix:
       exclude:
-        - java: [openjdk6, oraclejdk7]
+        # Exclude all java 7 builds
+        - java: oraclejdk7
+        # Exclude java6 with all versions except latest
+        - java: openjdk6
+          cassandra: ['1.2', '2.0', '2.1', '2.2', '3.0']
+        # Exclude 2.2 and 3.0 always since 3.X provides latest protocol version
         - cassandra: ['2.2', '3.0']
     env_vars: |
       TEST_GROUP="short"
@@ -39,6 +44,7 @@ build:
       cassandra.version=$CCM_CASSANDRA_VERSION
       ccm.java.home=$CCM_JAVA_HOME
       ccm.path=$CCM_JAVA_HOME/bin
+      ccm.maxNumberOfNodes=3
       failIfNoTests=false
       maven.test.failure.ignore=true
       maven.javadoc.skip=true
@@ -51,6 +57,7 @@ build:
       cassandra.version=$CCM_CASSANDRA_VERSION
       ccm.java.home=$CCM_JAVA_HOME
       ccm.path=$CCM_JAVA_HOME/bin
+      ccm.maxNumberOfNodes=3
       failIfNoTests=false
       maven.test.failure.ignore=true
       maven.javadoc.skip=true
