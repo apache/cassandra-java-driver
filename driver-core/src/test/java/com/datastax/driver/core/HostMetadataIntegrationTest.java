@@ -16,16 +16,23 @@
 package com.datastax.driver.core;
 
 import com.datastax.driver.core.utils.DseVersion;
+import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Lists;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
+import org.scassandra.cql.PrimitiveType;
+import org.scassandra.http.client.PrimingRequest;
 import org.testng.annotations.Test;
 
 import java.net.InetAddress;
+import java.util.List;
+import java.util.Map;
 
 import static com.datastax.driver.core.Assertions.assertThat;
 import static com.datastax.driver.core.CCMAccess.Workload.solr;
 import static com.datastax.driver.core.CCMAccess.Workload.spark;
 import static com.datastax.driver.core.TestUtils.nonQuietClusterCloseOptions;
+import static org.scassandra.http.client.types.ColumnMetadata.column;
 
 public class HostMetadataIntegrationTest {
 
@@ -355,6 +362,111 @@ public class HostMetadataIntegrationTest {
             assertThat(cluster).host(2).hasListenAddress(listenAddress);
             // - Host 3 should have no listen address as it wasn't provided.
             assertThat(cluster).host(3).hasNoListenAddress();
+        } finally {
+            cluster.close();
+            scassandraCluster.stop();
+        }
+    }
+
+    /**
+     * Validates that when invoking {@link Metadata#getReplicas(String, TokenRange)} with a {@link TokenRange} that
+     * spans multiple hosts and those hosts and all their replicas are included in the result.
+     * <p>
+     * Also ensures that if a {@link TokenRange} is given that covers a full host, that it only returns that host and
+     * its replicas.
+     * <p>
+     * Lastly, ensures that is a {@link TokenRange} representing the entire ring is provided as input, that all hosts
+     * are returned.
+     *
+     * @test_category host:metadata
+     * @jira_ticket JAVA-1355.
+     */
+    @Test(groups = "short")
+    public void should_return_all_replicas_for_range_over_multiple_hosts() {
+        // Set up a 6 node cluster..
+        ScassandraCluster scassandraCluster = ScassandraCluster.builder()
+                .withIpPrefix(TestUtils.IP_PREFIX)
+                .withNodes(6)
+                .build();
+
+        Cluster cluster = Cluster.builder()
+                .addContactPoints(scassandraCluster.address(1).getAddress())
+                .withPort(scassandraCluster.getBinaryPort())
+                .withNettyOptions(nonQuietClusterCloseOptions)
+                .build();
+
+        try {
+            scassandraCluster.init();
+
+            // Create ksX for X=1,2,6 where RF=X.
+            List<Map<String, ? extends Object>> ksRows = Lists.newArrayListWithExpectedSize(3);
+            for (Integer rf : Lists.newArrayList(1, 2, 6)) {
+                ksRows.add(ImmutableMap.<String, Object>builder()
+                        .put("keyspace_name", "rf" + rf)
+                        .put("durable_writes", true)
+                        .put("strategy_class", "SimpleStrategy")
+                        .put("strategy_options", "{\"replication_factor\":\"" + rf + "\"}")
+                        .build());
+            }
+
+            // Prime keyspace query, note that this is only applicable for C* < 2.2.
+            scassandraCluster.node(1, 1).primingClient()
+                    .prime(PrimingRequest.queryBuilder().withQuery("SELECT * FROM system.schema_keyspaces")
+                            .withThen(PrimingRequest.then().withColumnTypes(
+                                    column("keyspace_name", PrimitiveType.TEXT),
+                                    column("durable_writes", PrimitiveType.BOOLEAN),
+                                    column("strategy_class", PrimitiveType.TEXT),
+                                    column("strategy_options", PrimitiveType.TEXT))
+                                    .withRows(ksRows)));
+
+            cluster.init();
+
+            // Expected token ranges:
+            // /127.0.1.1 []7686143364045646505, 0]]
+            // /127.0.1.2 []0, 1537228672809129301]]
+            // /127.0.1.3 []1537228672809129301, 3074457345618258602]]
+            // /127.0.1.4 []3074457345618258602, 4611686018427387903]]
+            // /127.0.1.5 []4611686018427387903, 6148914691236517204]]
+            // /127.0.1.6 []6148914691236517204, 7686143364045646505]]
+
+            Metadata metadata = cluster.getMetadata();
+
+            // A token somewhere in the primary range belonging to host2.
+            Token r2Token = metadata.tokenFactory().fromString("1037228672809129301");
+            // A token somewhere in the primary range belonging to host3.
+            Token r3Token = metadata.tokenFactory().fromString("2074457345618258602");
+            // A range starting somewhere in r2's primary range and ending somewhere in r3's primary range.
+            TokenRange r2r3Range = metadata.newTokenRange(r2Token, r3Token);
+
+            Host host1 = scassandraCluster.host(cluster, 1, 1);
+            Host host2 = scassandraCluster.host(cluster, 1, 2);
+            Host host3 = scassandraCluster.host(cluster, 1, 3);
+            Host host4 = scassandraCluster.host(cluster, 1, 4);
+
+            // With RF = 1, we expect host2 and host3 to be returned since the range spans host2 and host3.
+            assertThat(metadata.getReplicas("rf1", r2r3Range))
+                    .containsOnly(host2, host3);
+
+            // With RF = 2, we expect host2, 3 and 4 to be returned since the range spans host2 and host3 and host4
+            // is a replica of host3.
+            assertThat(metadata.getReplicas("rf2", r2r3Range))
+                    .containsOnly(host2, host3, host4);
+
+            // With RF = 6, we expect all hosts to be returned.
+            assertThat(metadata.getReplicas("rf6", r2r3Range)).containsAll(metadata.getAllHosts());
+
+            // Validate that behavior prior to JAVA-1355 is maintained if using a host's range.
+            TokenRange host1Range = metadata.getTokenRanges("rf1", host1).iterator().next();
+            // With RF = 1, we expect only host 1.
+            assertThat(metadata.getReplicas("rf1", host1Range)).containsOnly(host1);
+            // With RF = 2, we expect host1 and it's replica, host2.
+            assertThat(metadata.getReplicas("rf2", host1Range)).containsOnly(host1, host2);
+            // With RF = 6, we expect all hosts.
+            assertThat(metadata.getReplicas("rf6", host1Range)).containsAll(metadata.getAllHosts());
+
+            // With a range covering entire ring, expect all hosts to be returned.
+            TokenRange ring = metadata.newTokenRange(metadata.tokenFactory().minToken(), metadata.tokenFactory().minToken());
+            assertThat(metadata.getReplicas("rf1", ring).containsAll(metadata.getAllHosts()));
         } finally {
             cluster.close();
             scassandraCluster.stop();
