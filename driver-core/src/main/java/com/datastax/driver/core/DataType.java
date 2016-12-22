@@ -488,7 +488,7 @@ public abstract class DataType {
      * Returns a Custom type.
      * <p/>
      * A custom type is defined by the name of the class used on the Cassandra
-     * side to implement it. Note that the support for custom type by the
+     * side to implement it. Note that the support for custom types by the
      * driver is limited.
      * <p/>
      * The use of custom types is rarely useful and is thus not encouraged.
@@ -499,7 +499,22 @@ public abstract class DataType {
     public static DataType.CustomType custom(String typeClassName) {
         if (typeClassName == null)
             throw new NullPointerException();
-        return new DataType.CustomType(Name.CUSTOM, typeClassName);
+        return DataTypeClassNameParser.isDuration(typeClassName)
+                ? DataType.duration()
+                : new DataType.CustomType(Name.CUSTOM, typeClassName);
+    }
+
+    /**
+     * Returns the Duration type, introduced in Cassandra 3.10.
+     * <p/>
+     * Note that a Duration type does not have a native representation in CQL, and
+     * technically, is merely a special {@link DataType#custom(String) custom type}
+     * from the driver's point of view.
+     *
+     * @return the Duration type. The returned instance is a singleton.
+     */
+    public static DurationType duration() {
+        return DurationType.instance;
     }
 
     /**
@@ -759,4 +774,25 @@ public abstract class DataType {
             return String.format("'%s'", customClassName);
         }
     }
+
+    /**
+     * The Duration type, introduced in Cassandra 3.10.
+     * <p/>
+     * This class is a singleton; to obtain its unique instance,
+     * call {@link #duration()}.
+     */
+    public static class DurationType extends CustomType {
+
+        private static final DurationType instance = new DurationType();
+
+        private DurationType() {
+            super(Name.CUSTOM, "org.apache.cassandra.db.marshal.DurationType");
+        }
+
+        @Override
+        public String toString() {
+            return "duration";
+        }
+    }
+
 }

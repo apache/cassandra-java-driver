@@ -1,5 +1,10 @@
 ## Changelog
 
+### 3.2.0 (in progress)
+
+- [new feature] JAVA-1347: Add support for duration type.
+
+
 ### 3.1.3
 
 Merged from 3.0.x branch:

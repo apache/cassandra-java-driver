@@ -17,8 +17,12 @@ package com.datastax.driver.core;
 
 import com.datastax.driver.core.exceptions.InvalidTypeException;
 import com.datastax.driver.core.utils.Bytes;
+import com.google.common.io.ByteArrayDataOutput;
+import com.google.common.io.ByteStreams;
 import com.google.common.reflect.TypeToken;
 
+import java.io.DataInput;
+import java.io.IOException;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.net.InetAddress;
@@ -399,6 +403,21 @@ public abstract class TypeCodec<T> {
      */
     public static TypeCodec<ByteBuffer> custom(CustomType type) {
         return new CustomCodec(type);
+    }
+
+    /**
+     * Returns the default codec for the {@link DataType#duration() Duration type}.
+     * <p/>
+     * This codec maps duration types to the driver's built-in {@link Duration} class,
+     * thus providing a more user-friendly mapping than the low-level mapping provided by regular
+     * {@link #custom(CustomType) custom type codecs}.
+     * <p/>
+     * The returned instance is a singleton.
+     *
+     * @return the default codec for the Duration type.
+     */
+    public static TypeCodec<Duration> duration() {
+        return DurationCodec.instance;
     }
 
     protected final TypeToken<T> javaType;
@@ -2559,6 +2578,70 @@ public abstract class TypeCodec<T> {
             TypeCodec<Object> codec = definition.getCodecRegistry().codecFor(elementType);
             target.set(index, codec.parse(input), codec.getJavaType());
             return target;
+        }
+
+    }
+
+    private static class DurationCodec extends TypeCodec<Duration> {
+
+        private static final DurationCodec instance = new DurationCodec();
+
+        private DurationCodec() {
+            super(DataType.duration(), Duration.class);
+        }
+
+        @Override
+        public ByteBuffer serialize(Duration duration, ProtocolVersion protocolVersion) throws InvalidTypeException {
+            if (duration == null)
+                return null;
+            long months = duration.getMonths();
+            long days = duration.getDays();
+            long nanoseconds = duration.getNanoseconds();
+            int size = VIntCoding.computeVIntSize(months)
+                    + VIntCoding.computeVIntSize(days)
+                    + VIntCoding.computeVIntSize(nanoseconds);
+            ByteArrayDataOutput out = ByteStreams.newDataOutput(size);
+            try {
+                VIntCoding.writeVInt(months, out);
+                VIntCoding.writeVInt(days, out);
+                VIntCoding.writeVInt(nanoseconds, out);
+            } catch (IOException e) {
+                // cannot happen
+                throw new AssertionError();
+            }
+            return ByteBuffer.wrap(out.toByteArray());
+        }
+
+        @Override
+        public Duration deserialize(ByteBuffer bytes, ProtocolVersion protocolVersion) throws InvalidTypeException {
+            if (bytes == null || bytes.remaining() == 0) {
+                return null;
+            } else {
+                DataInput in = ByteStreams.newDataInput(Bytes.getArray(bytes));
+                try {
+                    int months = (int) VIntCoding.readVInt(in);
+                    int days = (int) VIntCoding.readVInt(in);
+                    long nanoseconds = VIntCoding.readVInt(in);
+                    return Duration.newInstance(months, days, nanoseconds);
+                } catch (IOException e) {
+                    // cannot happen
+                    throw new AssertionError();
+                }
+            }
+        }
+
+        @Override
+        public Duration parse(String value) throws InvalidTypeException {
+            if (value == null || value.isEmpty() || value.equalsIgnoreCase("NULL"))
+                return null;
+            return Duration.from(value);
+        }
+
+        @Override
+        public String format(Duration value) throws InvalidTypeException {
+            if (value == null)
+                return "NULL";
+            return value.toString();
         }
 
     }

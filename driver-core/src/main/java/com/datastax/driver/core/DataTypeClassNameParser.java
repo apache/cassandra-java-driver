@@ -48,6 +48,7 @@ class DataTypeClassNameParser {
     private static final String MAP_TYPE = "org.apache.cassandra.db.marshal.MapType";
     private static final String UDT_TYPE = "org.apache.cassandra.db.marshal.UserType";
     private static final String TUPLE_TYPE = "org.apache.cassandra.db.marshal.TupleType";
+    private static final String DURATION_TYPE = "org.apache.cassandra.db.marshal.DurationType";
 
     private static ImmutableMap<String, DataType> cassTypeToDataType =
             new ImmutableMap.Builder<String, DataType>()
@@ -70,6 +71,7 @@ class DataTypeClassNameParser {
                     .put("org.apache.cassandra.db.marshal.TimeUUIDType", DataType.timeuuid())
                     .put("org.apache.cassandra.db.marshal.ByteType", DataType.tinyint())
                     .put("org.apache.cassandra.db.marshal.ShortType", DataType.smallint())
+                    .put(DURATION_TYPE, DataType.duration())
                     .build();
 
     static DataType parseOne(String className, ProtocolVersion protocolVersion, CodecRegistry codecRegistry) {
@@ -159,6 +161,10 @@ class DataTypeClassNameParser {
 
     private static boolean isCollection(String className) {
         return className.startsWith(COLLECTION_TYPE);
+    }
+
+    public static boolean isDuration(String className) {
+        return className.equals(DURATION_TYPE);
     }
 
     static ParseResult parseWithComposite(String className, ProtocolVersion protocolVersion, CodecRegistry codecRegistry) {
@@ -285,9 +291,7 @@ class DataTypeClassNameParser {
                 try {
                     list.add(readOne());
                 } catch (DriverInternalError e) {
-                    DriverInternalError ex = new DriverInternalError(String.format("Exception while parsing '%s' around char %d", str, idx));
-                    ex.initCause(e);
-                    throw ex;
+                    throw new DriverInternalError(String.format("Exception while parsing '%s' around char %d", str, idx), e);
                 }
             }
             throw new DriverInternalError(String.format("Syntax error parsing '%s' at char %d: unexpected end of string", str, idx));
@@ -333,9 +337,7 @@ class DataTypeClassNameParser {
                 try {
                     map.put(name, readOne());
                 } catch (DriverInternalError e) {
-                    DriverInternalError ex = new DriverInternalError(String.format("Exception while parsing '%s' around char %d", str, idx));
-                    ex.initCause(e);
-                    throw ex;
+                    throw new DriverInternalError(String.format("Exception while parsing '%s' around char %d", str, idx), e);
                 }
             }
             throw new DriverInternalError(String.format("Syntax error parsing '%s' at char %d: unexpected end of string", str, idx));
@@ -389,11 +391,6 @@ class DataTypeClassNameParser {
                 ++idx;
 
             return str.substring(i, idx);
-        }
-
-        public char readNextChar() {
-            skipBlank();
-            return str.charAt(idx++);
         }
 
         @Override
