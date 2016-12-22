@@ -17,6 +17,15 @@ In 3.1.0, the driver would log a warning the first time it would skip
 a retry for a non-idempotent request; this warning has now been 
 removed as users should now have adjusted their applications accordingly.
 
+The behavior of `Metadata.getReplicas(String, TokenRange)` has changed with
+[JAVA-1355](https://datastax-oss.atlassian.net/browse/JAVA-1355).
+This method now accurately reports all the replicas for those 
+hosts whose ranges intersect the input range, not just the replicas
+for the last token in that range.
+If you need the old behavior, use the newly-introduced method:
+`Metadata.getReplicas(String, Token)` and pass the last token
+in your range, e.g. `metadata.getReplicas("myKeyspace", myRange.getEnd())`.
+
 
 ### 3.1.0
 
