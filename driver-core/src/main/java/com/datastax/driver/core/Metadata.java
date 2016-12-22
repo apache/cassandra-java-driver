@@ -18,6 +18,7 @@ package com.datastax.driver.core;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Maps;
+import com.google.common.collect.Sets;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -303,7 +304,8 @@ public class Metadata {
     }
 
     /**
-     * Returns the set of hosts that are replica for a given token range.
+     * Returns the set of hosts that are replica for hosts having a {@link TokenRange} that
+     * {@link TokenRange#intersects(TokenRange)} the given range.
      * <p/>
      * Note that this information is refreshed asynchronously by the control
      * connection, when schema or ring topology changes. It might occasionally
@@ -321,8 +323,25 @@ public class Metadata {
         if (current == null) {
             return Collections.emptySet();
         } else {
-            Set<Host> hosts = current.getReplicas(keyspace, range.getEnd());
-            return hosts == null ? Collections.<Host>emptySet() : hosts;
+            Set<Host> replicas = Sets.newHashSet();
+            Set<Host> allHosts = getAllHosts();
+            // for each host's range, if it intersects with the input range, include that range's replicas.
+            // this is a bit repetitive as we may evaluate the same ranges multiple times.
+            for (Host h : allHosts) {
+                for (TokenRange r : getTokenRanges(keyspace, h)) {
+                    if (range.intersects(r)) {
+                        Set<Host> rHosts = current.getReplicas(keyspace, r.getEnd());
+                        if (rHosts != null) {
+                            replicas.addAll(rHosts);
+                            // if all hosts included, return
+                            if (replicas.size() == allHosts.size()) {
+                                return replicas;
+                            }
+                        }
+                    }
+                }
+            }
+            return replicas;
         }
     }
 
