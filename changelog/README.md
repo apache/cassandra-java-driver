@@ -1,5 +1,10 @@
 ## Changelog
 
+### 3.2.0 (in progress)
+
+- [bug] JAVA-1355: Update getReplicas to handle range covering multiple hosts
+
+
 ### 3.1.0
 
 - [new feature] JAVA-1153: Add PER PARTITION LIMIT to Select QueryBuilder.
