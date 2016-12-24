@@ -18,6 +18,7 @@ package com.datastax.driver.mapping;
 import com.datastax.driver.core.Metadata;
 import com.datastax.driver.core.TypeCodec;
 import com.datastax.driver.mapping.annotations.*;
+import com.datastax.driver.mapping.configuration.MapperConfiguration;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.reflect.TypeToken;
 
@@ -167,20 +168,26 @@ class PropertyMapper {
         if (isComputed()) {
             return annotation(Computed.class).value();
         }
-        boolean caseSensitive = false;
-        String columnName = propertyName;
+        String columnName = mapperConfiguration.getNamingStrategy().toCassandra(propertyName);
         if (hasAnnotation(Column.class)) {
             Column column = annotation(Column.class);
-            caseSensitive = column.caseSensitive();
-            if (!column.name().isEmpty())
+            if (!column.name().isEmpty()) {
                 columnName = column.name();
-        } else if (hasAnnotation(com.datastax.driver.mapping.annotations.Field.class)) {
-            com.datastax.driver.mapping.annotations.Field udtField = annotation(com.datastax.driver.mapping.annotations.Field.class);
-            caseSensitive = udtField.caseSensitive();
-            if (!udtField.name().isEmpty())
-                columnName = udtField.name();
+            }
+            else if (column.caseSensitive()) {
+                columnName = propertyName;
+            }
         }
-        return caseSensitive ? Metadata.quote(columnName) : columnName.toLowerCase();
+        else if (hasAnnotation(com.datastax.driver.mapping.annotations.Field.class)) {
+            com.datastax.driver.mapping.annotations.Field udtField = annotation(com.datastax.driver.mapping.annotations.Field.class);
+            if (!udtField.name().isEmpty()) {
+                columnName = udtField.name();
+            }
+            else if (udtField.caseSensitive()) {
+                columnName = propertyName;
+            }
+        }
+        return Metadata.quote(columnName);
     }
 
     @SuppressWarnings("unchecked")

@@ -19,7 +19,7 @@ import com.datastax.driver.core.CCMTestsSupport;
 import com.datastax.driver.mapping.annotations.Column;
 import com.datastax.driver.mapping.annotations.PartitionKey;
 import com.datastax.driver.mapping.annotations.Table;
-import org.testng.annotations.BeforeClass;
+import com.datastax.driver.mapping.configuration.MapperConfiguration;
 import org.testng.annotations.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;

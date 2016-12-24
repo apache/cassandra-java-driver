@@ -18,6 +18,7 @@ package com.datastax.driver.mapping;
 import com.datastax.driver.mapping.annotations.Accessor;
 import com.datastax.driver.mapping.annotations.Table;
 import com.datastax.driver.mapping.annotations.UDT;
+import com.datastax.driver.mapping.configuration.MapperConfiguration;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableSet;
 

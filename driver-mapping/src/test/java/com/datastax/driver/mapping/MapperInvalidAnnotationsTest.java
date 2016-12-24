@@ -17,6 +17,7 @@ package com.datastax.driver.mapping;
 
 import com.datastax.driver.core.*;
 import com.datastax.driver.mapping.annotations.*;
+import com.datastax.driver.mapping.configuration.MapperConfiguration;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
