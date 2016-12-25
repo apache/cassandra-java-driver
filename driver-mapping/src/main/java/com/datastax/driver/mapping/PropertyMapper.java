@@ -42,6 +42,8 @@ import static com.google.common.base.Preconditions.checkArgument;
  */
 class PropertyMapper {
 
+    private static final String UNQUOTED_COLUMN_NAME_REGEXP = "([a-z0-9_])*";
+
     private static final Set<Class<? extends Annotation>> COLUMN_ANNOTATIONS = ImmutableSet.of(
             PartitionKey.class,
             ClusteringColumn.class,
@@ -187,7 +189,7 @@ class PropertyMapper {
                 columnName = propertyName;
             }
         }
-        return Metadata.quote(columnName);
+        return columnName.matches(UNQUOTED_COLUMN_NAME_REGEXP) ? columnName : Metadata.quote(columnName);
     }
 
     @SuppressWarnings("unchecked")
