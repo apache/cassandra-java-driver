@@ -25,6 +25,10 @@ import org.testng.annotations.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+/**
+ * Test for JAVA-1316 - validate ability to automatically translate property names
+ * across different naming conventions.
+ */
 @SuppressWarnings("unused")
 public class PropertyNamingStrategyTest extends CCMTestsSupport {
 
