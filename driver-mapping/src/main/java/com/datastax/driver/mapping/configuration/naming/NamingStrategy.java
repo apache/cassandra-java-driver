@@ -26,6 +26,7 @@ public class NamingStrategy {
     public NamingStrategy(NamingConvention javaConvention, NamingConvention cassandraConvention) {
         setJavaConvention(javaConvention);
         setCassandraConvention(cassandraConvention);
+        enable();
     }
 
     public NamingStrategy(NamingStrategy toCopy) {

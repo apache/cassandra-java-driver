@@ -18,7 +18,8 @@ package com.datastax.driver.mapping;
 import com.datastax.driver.mapping.annotations.Accessor;
 import com.datastax.driver.mapping.annotations.Table;
 import com.datastax.driver.mapping.annotations.UDT;
-import com.datastax.driver.mapping.configuration.MapperConfiguration;
+import com.datastax.driver.mapping.configuration.scan.HierarchyScanStrategy;
+import com.datastax.driver.mapping.configuration.scan.PropertyScanConfiguration;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableSet;
 
@@ -65,7 +66,7 @@ class ReflectionUtils {
     // for each key representing a property name,
     // value[0] contains a Field object, value[1] contains a PropertyDescriptor object;
     // they cannot be both null at the same time
-    static <T> Map<String, Object[]> scanFieldsAndProperties(Class<T> baseClass, MapperConfiguration.PropertyScanConfiguration scanConfiguration) {
+    static <T> Map<String, Object[]> scanFieldsAndProperties(Class<T> baseClass, PropertyScanConfiguration scanConfiguration) {
         Map<String, Object[]> fieldsAndProperties = new HashMap<String, Object[]>();
         Map<String, Field> fields = scanFields(baseClass, scanConfiguration);
         for (Map.Entry<String, Field> entry : fields.entrySet()) {
@@ -81,7 +82,7 @@ class ReflectionUtils {
         return fieldsAndProperties;
     }
 
-    private static <T> Map<String, Field> scanFields(Class<T> baseClass, MapperConfiguration.PropertyScanConfiguration scanConfiguration) {
+    private static <T> Map<String, Field> scanFields(Class<T> baseClass, PropertyScanConfiguration scanConfiguration) {
         HashMap<String, Field> fields = new HashMap<String, Field>();
         // JAVA-1310: Make the annotation parsing logic configurable at mapper level
         // (only fields, only getters, or both)
@@ -101,7 +102,7 @@ class ReflectionUtils {
         return fields;
     }
 
-    private static <T> Map<String, PropertyDescriptor> scanProperties(Class<T> baseClass, MapperConfiguration.PropertyScanConfiguration scanConfiguration) {
+    private static <T> Map<String, PropertyDescriptor> scanProperties(Class<T> baseClass, PropertyScanConfiguration scanConfiguration) {
         Map<String, PropertyDescriptor> properties = new HashMap<String, PropertyDescriptor>();
         // JAVA-1310: Make the annotation parsing logic configurable at mapper level
         // (only fields, only getters, or both)
@@ -126,11 +127,11 @@ class ReflectionUtils {
         return properties;
     }
 
-    private static List<Class<?>> calculateClassesToScan(Class<?> baseClass, MapperConfiguration.PropertyScanConfiguration scanConfiguration) {
+    private static List<Class<?>> calculateClassesToScan(Class<?> baseClass, PropertyScanConfiguration scanConfiguration) {
         // JAVA-1310: Make the class hierarchy scan configurable at mapper level
         // (scan the whole hierarchy, or just annotated classes)
         List<Class<?>> classesToScan = new ArrayList<Class<?>>();
-        MapperConfiguration.HierarchyScanStrategy scanStrategy = scanConfiguration.getHierarchyScanStrategy();
+        HierarchyScanStrategy scanStrategy = scanConfiguration.getHierarchyScanStrategy();
         Class<?> stopCondition = calculateStopConditionClass(baseClass, scanStrategy);
         for (Class<?> clazz = baseClass; clazz != null && !clazz.equals(stopCondition); clazz = clazz.getSuperclass()) {
             if (!scanStrategy.isScanOnlyAnnotatedClasses() || isClassAnnotated(clazz)) {
@@ -140,7 +141,7 @@ class ReflectionUtils {
         return classesToScan;
     }
 
-    private static Class<?> calculateStopConditionClass(Class<?> baseClass, MapperConfiguration.HierarchyScanStrategy scanStrategy) {
+    private static Class<?> calculateStopConditionClass(Class<?> baseClass, HierarchyScanStrategy scanStrategy) {
         // if scan is not enabled, stop at first parent
         if (!scanStrategy.isHierarchyScanEnabled()) {
             return baseClass.getSuperclass();

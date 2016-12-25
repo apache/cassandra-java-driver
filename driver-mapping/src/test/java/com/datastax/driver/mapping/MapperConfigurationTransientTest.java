@@ -20,6 +20,7 @@ import com.datastax.driver.mapping.annotations.PartitionKey;
 import com.datastax.driver.mapping.annotations.Table;
 import com.datastax.driver.mapping.annotations.Transient;
 import com.datastax.driver.mapping.configuration.MapperConfiguration;
+import com.datastax.driver.mapping.configuration.scan.PropertyScanConfiguration;
 import com.google.common.collect.ImmutableSet;
 import org.testng.annotations.Test;
 
@@ -85,7 +86,7 @@ public class MapperConfigurationTransientTest extends CCMTestsSupport {
     public void should_ignore_property_if_declared_transient_in_mapper_configuration() {
         MappingManager mappingManager = new MappingManager(session());
         MapperConfiguration configuration = new MapperConfiguration();
-        MapperConfiguration.PropertyScanConfiguration scanConf = new MapperConfiguration.PropertyScanConfiguration();
+        PropertyScanConfiguration scanConf = new PropertyScanConfiguration();
         scanConf.setExcludedProperties(ImmutableSet.of("notAColumn"));
         configuration.setPropertyScanConfiguration(scanConf);
         mappingManager.mapper(Foo3.class, configuration);

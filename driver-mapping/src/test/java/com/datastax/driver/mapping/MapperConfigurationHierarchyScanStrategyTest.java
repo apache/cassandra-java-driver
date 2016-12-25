@@ -20,6 +20,8 @@ import com.datastax.driver.mapping.annotations.Column;
 import com.datastax.driver.mapping.annotations.PartitionKey;
 import com.datastax.driver.mapping.annotations.Table;
 import com.datastax.driver.mapping.configuration.MapperConfiguration;
+import com.datastax.driver.mapping.configuration.scan.HierarchyScanStrategy;
+import com.datastax.driver.mapping.configuration.scan.PropertyScanConfiguration;
 import org.testng.annotations.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -42,8 +44,8 @@ public class MapperConfigurationHierarchyScanStrategyTest extends CCMTestsSuppor
     public void should_not_inherit_properties() {
         MappingManager mappingManager = new MappingManager(session());
         MapperConfiguration conf = new MapperConfiguration();
-        MapperConfiguration.PropertyScanConfiguration scanConf = new MapperConfiguration.PropertyScanConfiguration();
-        MapperConfiguration.HierarchyScanStrategy scanStrategy = new MapperConfiguration.HierarchyScanStrategy();
+        PropertyScanConfiguration scanConf = new PropertyScanConfiguration();
+        HierarchyScanStrategy scanStrategy = new HierarchyScanStrategy();
         scanStrategy.setHierarchyScanEnabled(false);
         scanConf.setHierarchyScanStrategy(scanStrategy);
         conf.setPropertyScanConfiguration(scanConf);
@@ -78,8 +80,8 @@ public class MapperConfigurationHierarchyScanStrategyTest extends CCMTestsSuppor
     public void should_inherit_only_boo() {
         MappingManager mappingManager = new MappingManager(session());
         MapperConfiguration conf = new MapperConfiguration();
-        MapperConfiguration.PropertyScanConfiguration scanConf = new MapperConfiguration.PropertyScanConfiguration();
-        MapperConfiguration.HierarchyScanStrategy scanStrategy = new MapperConfiguration.HierarchyScanStrategy();
+        PropertyScanConfiguration scanConf = new PropertyScanConfiguration();
+        HierarchyScanStrategy scanStrategy = new HierarchyScanStrategy();
         scanStrategy.setDeepestAllowedAncestor(Boo2.class);
         scanConf.setHierarchyScanStrategy(scanStrategy);
         conf.setPropertyScanConfiguration(scanConf);
@@ -130,8 +132,8 @@ public class MapperConfigurationHierarchyScanStrategyTest extends CCMTestsSuppor
     public void ignore_non_annotated_classes() {
         MappingManager mappingManager = new MappingManager(session());
         MapperConfiguration conf = new MapperConfiguration();
-        MapperConfiguration.PropertyScanConfiguration scanConf = new MapperConfiguration.PropertyScanConfiguration();
-        MapperConfiguration.HierarchyScanStrategy scanStrategy = new MapperConfiguration.HierarchyScanStrategy();
+        PropertyScanConfiguration scanConf = new PropertyScanConfiguration();
+        HierarchyScanStrategy scanStrategy = new HierarchyScanStrategy();
         scanStrategy.setScanOnlyAnnotatedClasses(true);
         scanConf.setHierarchyScanStrategy(scanStrategy);
         conf.setPropertyScanConfiguration(scanConf);

@@ -20,6 +20,8 @@ import com.datastax.driver.mapping.annotations.PartitionKey;
 import com.datastax.driver.mapping.annotations.Table;
 import com.datastax.driver.mapping.annotations.Transient;
 import com.datastax.driver.mapping.configuration.MapperConfiguration;
+import com.datastax.driver.mapping.configuration.scan.PropertyMappingStrategy;
+import com.datastax.driver.mapping.configuration.scan.PropertyScanConfiguration;
 import org.testng.annotations.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -39,8 +41,8 @@ public class MapperConfigurationMappingStrategyTest extends CCMTestsSupport {
     public void should_map_only_non_transient() {
         MappingManager mappingManager = new MappingManager(session());
         MapperConfiguration conf = new MapperConfiguration();
-        MapperConfiguration.PropertyScanConfiguration scanConf = new MapperConfiguration.PropertyScanConfiguration();
-        scanConf.setPropertyMappingStrategy(MapperConfiguration.PropertyMappingStrategy.BLACK_LIST);
+        PropertyScanConfiguration scanConf = new PropertyScanConfiguration();
+        scanConf.setPropertyMappingStrategy(PropertyMappingStrategy.BLACK_LIST);
         conf.setPropertyScanConfiguration(scanConf);
         Mapper<Foo1> mapper = mappingManager.mapper(Foo1.class, conf);
         assertThat(mapper.get(1).getV()).isEqualTo(1);
@@ -78,8 +80,8 @@ public class MapperConfigurationMappingStrategyTest extends CCMTestsSupport {
     public void should_map_only_annotated() {
         MappingManager mappingManager = new MappingManager(session());
         MapperConfiguration conf = new MapperConfiguration();
-        MapperConfiguration.PropertyScanConfiguration scanConf = new MapperConfiguration.PropertyScanConfiguration();
-        scanConf.setPropertyMappingStrategy(MapperConfiguration.PropertyMappingStrategy.WHITE_LIST);
+        PropertyScanConfiguration scanConf = new PropertyScanConfiguration();
+        scanConf.setPropertyMappingStrategy(PropertyMappingStrategy.WHITE_LIST);
         conf.setPropertyScanConfiguration(scanConf);
         mappingManager.mapper(Foo2.class, conf);
     }

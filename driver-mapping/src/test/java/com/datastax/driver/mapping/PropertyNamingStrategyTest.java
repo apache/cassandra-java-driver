@@ -16,27 +16,295 @@
 package com.datastax.driver.mapping;
 
 import com.datastax.driver.core.CCMTestsSupport;
+import com.datastax.driver.mapping.annotations.Column;
+import com.datastax.driver.mapping.annotations.PartitionKey;
+import com.datastax.driver.mapping.annotations.Table;
+import com.datastax.driver.mapping.configuration.MapperConfiguration;
 import com.datastax.driver.mapping.configuration.naming.CommonNamingConventions;
-import com.datastax.driver.mapping.configuration.naming.NamingStrategy;
 import org.testng.annotations.Test;
 
-import static org.testng.Assert.fail;
+import static org.assertj.core.api.Assertions.assertThat;
 
 @SuppressWarnings("unused")
 public class PropertyNamingStrategyTest extends CCMTestsSupport {
 
     @Override
     public void onTestContextInitialized() {
-//        execute("CREATE TABLE foo (k int primary key, v int)");
-//        execute("INSERT INTO foo (k, v) VALUES (1, 1)");
+        createTable("camel_case_table", "myXmlParser", "other");
+        createTable("snake_case_table", "my_xml_parser", "other");
+        createTable("lower_case_table", "myxmlparser", "other");
+    }
+
+    private void createTable(String tableName, String propertyOne, String propertyTwo) {
+        execute(String.format("CREATE TABLE %s (\"%s\" int primary key, \"%s\" int)", tableName, propertyOne, propertyTwo));
+        execute(String.format("INSERT INTO %s (\"%s\", \"%s\") VALUES (1, 2)", tableName, propertyOne, propertyTwo));
     }
 
     @Test(groups = "short")
-    public void should_not_inherit_properties() {
-        NamingStrategy strategy = new NamingStrategy(new CommonNamingConventions.LowerCamelCase(), new CommonNamingConventions.LowerSnakeCase());
-        String x = strategy.toJava("camel_case_is_shit");
-        x = strategy.toCassandra("m_MySQLPlayer");
-        int i = 1;
+    public void camel_case_to_camel_case() {
+        MapperConfiguration conf = new MapperConfiguration();
+        conf.getNamingStrategy()
+                .setJavaConvention(new CommonNamingConventions.LowerCamelCase())
+                .setCassandraConvention(new CommonNamingConventions.LowerCamelCase());
+        MappingManager mappingManager = new MappingManager(session(), conf);
+        Mapper<CamelCaseToCamelCase> mapper = mappingManager.mapper(CamelCaseToCamelCase.class);
+        assertThat(mapper.get(1).getMyXmlParser()).isEqualTo(1);
+        assertThat(mapper.get(1).getOther()).isEqualTo(2);
+    }
+
+    @Table(name = "camel_case_table")
+    public static class CamelCaseToCamelCase {
+
+        @PartitionKey
+        private int myXmlParser;
+
+        private int other;
+
+        public int getMyXmlParser() {
+            return myXmlParser;
+        }
+
+        public void setMyXmlParser(int myXmlParser) {
+            this.myXmlParser = myXmlParser;
+        }
+
+        public int getOther() {
+            return other;
+        }
+
+        public void setOther(int other) {
+            this.other = other;
+        }
+
+    }
+
+    @Test(groups = "short")
+    public void camel_case_to_snake_case() {
+        MapperConfiguration conf = new MapperConfiguration();
+        conf.getNamingStrategy()
+                .setJavaConvention(new CommonNamingConventions.LowerCamelCase())
+                .setCassandraConvention(new CommonNamingConventions.LowerSnakeCase());
+        MappingManager mappingManager = new MappingManager(session(), conf);
+        Mapper<CamelCaseToSnakeCase> mapper = mappingManager.mapper(CamelCaseToSnakeCase.class);
+        assertThat(mapper.get(1).getMyXmlParser()).isEqualTo(1);
+        assertThat(mapper.get(1).getOther()).isEqualTo(2);
+    }
+
+    @Table(name = "snake_case_table")
+    public static class CamelCaseToSnakeCase {
+
+        @PartitionKey
+        private int myXmlParser;
+
+        private int other;
+
+        public int getMyXmlParser() {
+            return myXmlParser;
+        }
+
+        public void setMyXmlParser(int myXmlParser) {
+            this.myXmlParser = myXmlParser;
+        }
+
+        public int getOther() {
+            return other;
+        }
+
+        public void setOther(int other) {
+            this.other = other;
+        }
+
+    }
+
+    @Test(groups = "short")
+    public void camel_case_to_lower_case() {
+        MapperConfiguration conf = new MapperConfiguration();
+        conf.getNamingStrategy()
+                .setJavaConvention(new CommonNamingConventions.LowerCamelCase())
+                .setCassandraConvention(new CommonNamingConventions.LowerCase());
+        MappingManager mappingManager = new MappingManager(session(), conf);
+        Mapper<CamelCaseToLowerCase> mapper = mappingManager.mapper(CamelCaseToLowerCase.class);
+        assertThat(mapper.get(1).getMyXmlParser()).isEqualTo(1);
+        assertThat(mapper.get(1).getOther()).isEqualTo(2);
+    }
+
+    @Table(name = "lower_case_table")
+    public static class CamelCaseToLowerCase {
+
+        @PartitionKey
+        private int myXmlParser;
+
+        private int other;
+
+        public int getMyXmlParser() {
+            return myXmlParser;
+        }
+
+        public void setMyXmlParser(int myXmlParser) {
+            this.myXmlParser = myXmlParser;
+        }
+
+        public int getOther() {
+            return other;
+        }
+
+        public void setOther(int other) {
+            this.other = other;
+        }
+
+    }
+
+    @Test(groups = "short")
+    public void camel_case_abbreviation_to_camel_case() {
+        MapperConfiguration conf = new MapperConfiguration();
+        conf.getNamingStrategy()
+                .setJavaConvention(new CommonNamingConventions.LowerCamelCase(true))
+                .setCassandraConvention(new CommonNamingConventions.LowerCamelCase());
+        MappingManager mappingManager = new MappingManager(session(), conf);
+        Mapper<CamelCaseAbbreviationToCamelCase> mapper = mappingManager.mapper(CamelCaseAbbreviationToCamelCase.class);
+        assertThat(mapper.get(1).getMyXMLParser()).isEqualTo(1);
+        assertThat(mapper.get(1).getOther()).isEqualTo(2);
+    }
+
+    @Table(name = "camel_case_table")
+    public static class CamelCaseAbbreviationToCamelCase {
+
+        @PartitionKey
+        private int myXMLParser;
+
+        private int other;
+
+        public int getMyXMLParser() {
+            return myXMLParser;
+        }
+
+        public void setMyXMLParser(int myXMLParser) {
+            this.myXMLParser = myXMLParser;
+        }
+
+        public int getOther() {
+            return other;
+        }
+
+        public void setOther(int other) {
+            this.other = other;
+        }
+
+    }
+
+    @Test(groups = "short")
+    public void snake_case_to_camel_case() {
+        MapperConfiguration conf = new MapperConfiguration();
+        conf.getNamingStrategy()
+                .setJavaConvention(new CommonNamingConventions.LowerSnakeCase())
+                .setCassandraConvention(new CommonNamingConventions.LowerCamelCase());
+        MappingManager mappingManager = new MappingManager(session(), conf);
+        Mapper<SnakeCaseToCamelCase> mapper = mappingManager.mapper(SnakeCaseToCamelCase.class);
+        assertThat(mapper.get(1).getMy_xml_parser()).isEqualTo(1);
+        assertThat(mapper.get(1).getOther()).isEqualTo(2);
+    }
+
+    @Table(name = "camel_case_table")
+    public static class SnakeCaseToCamelCase {
+
+        @PartitionKey
+        private int my_xml_parser;
+
+        private int other;
+
+        public int getMy_xml_parser() {
+            return my_xml_parser;
+        }
+
+        public void setMy_xml_parser(int my_xml_parser) {
+            this.my_xml_parser = my_xml_parser;
+        }
+
+        public int getOther() {
+            return other;
+        }
+
+        public void setOther(int other) {
+            this.other = other;
+        }
+
+    }
+
+    @Test(groups = "short")
+    public void test_overrides() {
+        MapperConfiguration conf = new MapperConfiguration();
+        conf.getNamingStrategy()
+                .setJavaConvention(new CommonNamingConventions.LowerSnakeCase())
+                .setCassandraConvention(new CommonNamingConventions.LowerCamelCase());
+        MappingManager mappingManager = new MappingManager(session(), conf);
+        Mapper<TestOverrides> mapper = mappingManager.mapper(TestOverrides.class);
+        assertThat(mapper.get(1).getMyXmlParser()).isEqualTo(1);
+        assertThat(mapper.get(1).getGoo()).isEqualTo(2);
+    }
+
+    @Table(name = "camel_case_table")
+    public static class TestOverrides {
+
+        @PartitionKey
+        @Column(caseSensitive = true)
+        private int myXmlParser;
+
+        @Column(name = "other")
+        private int goo;
+
+        public int getMyXmlParser() {
+            return myXmlParser;
+        }
+
+        public void setMyXmlParser(int myXmlParser) {
+            this.myXmlParser = myXmlParser;
+        }
+
+        public int getGoo() {
+            return goo;
+        }
+
+        public void setGoo(int goo) {
+            this.goo = goo;
+        }
+
+    }@Test(groups = "short")
+
+    public void test_recommended_settings() {
+        MapperConfiguration conf = new MapperConfiguration();
+        conf.getNamingStrategy()
+                .setJavaConvention(new CommonNamingConventions.LowerCamelCase("m", "_"))
+                .setCassandraConvention(new CommonNamingConventions.LowerSnakeCase());
+        MappingManager mappingManager = new MappingManager(session(), conf);
+        Mapper<TestRecommendedSettings> mapper = mappingManager.mapper(TestRecommendedSettings.class);
+        assertThat(mapper.get(1).getmMyXmlParser()).isEqualTo(1);
+        assertThat(mapper.get(1).get_other()).isEqualTo(2);
+    }
+
+    @Table(name = "snake_case_table")
+    public static class TestRecommendedSettings {
+
+        @PartitionKey
+        private int mMyXmlParser;
+
+        private int _other;
+
+        public int getmMyXmlParser() {
+            return mMyXmlParser;
+        }
+
+        public void setmMyXmlParser(int mMyXmlParser) {
+            this.mMyXmlParser = mMyXmlParser;
+        }
+
+        public int get_other() {
+            return _other;
+        }
+
+        public void set_other(int _other) {
+            this._other = _other;
+        }
+
     }
 
 }

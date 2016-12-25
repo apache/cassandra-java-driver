@@ -20,6 +20,8 @@ import com.datastax.driver.mapping.annotations.PartitionKey;
 import com.datastax.driver.mapping.annotations.Table;
 import com.datastax.driver.mapping.annotations.Transient;
 import com.datastax.driver.mapping.configuration.MapperConfiguration;
+import com.datastax.driver.mapping.configuration.scan.PropertyScanConfiguration;
+import com.datastax.driver.mapping.configuration.scan.PropertyScanScope;
 import org.testng.annotations.Test;
 
 import static javax.swing.UIManager.get;
@@ -40,8 +42,8 @@ public class MapperConfigurationScanScopeTest extends CCMTestsSupport {
     public void should_ignore_fields() {
         MappingManager mappingManager = new MappingManager(session());
         MapperConfiguration conf = new MapperConfiguration();
-        MapperConfiguration.PropertyScanConfiguration scanConf = new MapperConfiguration.PropertyScanConfiguration();
-        MapperConfiguration.PropertyScanScope scope = new MapperConfiguration.PropertyScanScope()
+        PropertyScanConfiguration scanConf = new PropertyScanConfiguration();
+        PropertyScanScope scope = new PropertyScanScope()
                 .setScanFields(false)
                 .setScanGetters(true);
         scanConf.setPropertyScanScope(scope);
@@ -69,8 +71,8 @@ public class MapperConfigurationScanScopeTest extends CCMTestsSupport {
     public void should_ignore_getters() {
         MappingManager mappingManager = new MappingManager(session());
         MapperConfiguration conf = new MapperConfiguration();
-        MapperConfiguration.PropertyScanConfiguration scanConf = new MapperConfiguration.PropertyScanConfiguration();
-        MapperConfiguration.PropertyScanScope scope = new MapperConfiguration.PropertyScanScope()
+        PropertyScanConfiguration scanConf = new PropertyScanConfiguration();
+        PropertyScanScope scope = new PropertyScanScope()
                 .setScanFields(true)
                 .setScanGetters(false);
         scanConf.setPropertyScanScope(scope);
@@ -97,8 +99,8 @@ public class MapperConfigurationScanScopeTest extends CCMTestsSupport {
     public void should_map_fields_and_getters() {
         MappingManager mappingManager = new MappingManager(session());
         MapperConfiguration conf = new MapperConfiguration();
-        MapperConfiguration.PropertyScanConfiguration scanConf = new MapperConfiguration.PropertyScanConfiguration();
-        MapperConfiguration.PropertyScanScope scope = new MapperConfiguration.PropertyScanScope()
+        PropertyScanConfiguration scanConf = new PropertyScanConfiguration();
+        PropertyScanScope scope = new PropertyScanScope()
                 .setScanFields(true)
                 .setScanGetters(true);
         scanConf.setPropertyScanScope(scope);
