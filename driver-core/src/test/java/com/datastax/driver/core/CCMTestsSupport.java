@@ -271,12 +271,12 @@ public class CCMTestsSupport {
         }
 
         @SuppressWarnings("SimplifiableIfStatement")
-        private boolean dse() {
+        private Boolean dse() {
             for (CCMConfig ann : annotations) {
                 if (ann != null && ann.dse().length > 0)
                     return ann.dse()[0];
             }
-            return false;
+            return null;
         }
 
         @SuppressWarnings("SimplifiableIfStatement")
@@ -430,8 +430,14 @@ public class CCMTestsSupport {
                 }
                 if (version() != null)
                     ccmBuilder.withVersion(version());
-                if (dse())
-                    ccmBuilder.withDSE();
+                Boolean dse = dse();
+                if (dse != null) {
+                    if (dse) {
+                        ccmBuilder.withDSE();
+                    } else {
+                        ccmBuilder.withoutDSE();
+                    }
+                }
                 if (ssl())
                     ccmBuilder.withSSL();
                 if (auth())

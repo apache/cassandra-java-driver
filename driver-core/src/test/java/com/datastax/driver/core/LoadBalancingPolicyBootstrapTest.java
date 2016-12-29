@@ -53,12 +53,16 @@ public class LoadBalancingPolicyBootstrapTest extends CCMTestsSupport {
                 .withLoadBalancingPolicy(policy)
                 .build());
 
-        cluster.init();
+        try {
+            cluster.init();
 
-        assertThat(policy.history).containsOnly(
-                entry(INIT, TestUtils.findHost(cluster, 1)),
-                entry(INIT, TestUtils.findHost(cluster, 2))
-        );
+            assertThat(policy.history).containsOnly(
+                    entry(INIT, TestUtils.findHost(cluster, 1)),
+                    entry(INIT, TestUtils.findHost(cluster, 2))
+            );
+        } finally {
+            cluster.close();
+        }
     }
 
     /**
@@ -95,27 +99,31 @@ public class LoadBalancingPolicyBootstrapTest extends CCMTestsSupport {
                     .withLoadBalancingPolicy(policy)
                     .build());
 
-            cluster.init();
+            try {
+                cluster.init();
 
-            if (policy.history.contains(entry(DOWN, TestUtils.findHost(cluster, nodeToStop)))) {
-                // This is the situation we're testing, the control connection tried the stopped node first.
-                assertThat(policy.history).containsExactly(
-                        entry(INIT, TestUtils.findHost(cluster, activeNode)),
-                        entry(DOWN, TestUtils.findHost(cluster, nodeToStop))
-                );
-                break;
-            } else {
-                assertThat(policy.history).containsOnly(
-                        entry(INIT, TestUtils.findHost(cluster, 1)),
-                        entry(INIT, TestUtils.findHost(cluster, 2))
-                );
+                if (policy.history.contains(entry(DOWN, TestUtils.findHost(cluster, nodeToStop)))) {
+                    // This is the situation we're testing, the control connection tried the stopped node first.
+                    assertThat(policy.history).containsExactly(
+                            entry(INIT, TestUtils.findHost(cluster, activeNode)),
+                            entry(DOWN, TestUtils.findHost(cluster, nodeToStop))
+                    );
+                    break;
+                } else {
+                    assertThat(policy.history).containsOnly(
+                            entry(INIT, TestUtils.findHost(cluster, 1)),
+                            entry(INIT, TestUtils.findHost(cluster, 2))
+                    );
 
-                logger.info("Could not get first contact point to fail, retrying");
+                    logger.info("Could not get first contact point to fail, retrying");
 
+                    cluster.close();
+
+                    ccm().start(nodeToStop);
+                    ccm().waitForUp(nodeToStop);
+                }
+            } finally {
                 cluster.close();
-
-                ccm().start(nodeToStop);
-                ccm().waitForUp(nodeToStop);
             }
         }
 

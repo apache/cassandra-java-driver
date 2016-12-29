@@ -50,7 +50,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
 import static com.datastax.driver.core.Message.Response.Type.ERROR;
-import static io.netty.handler.timeout.IdleState.ALL_IDLE;
+import static io.netty.handler.timeout.IdleState.READER_IDLE;
 
 // For LoggingHandler
 //import org.jboss.netty.handler.logging.LoggingHandler;
@@ -1077,7 +1077,7 @@ class Connection {
 
         @Override
         public void userEventTriggered(ChannelHandlerContext ctx, Object evt) throws Exception {
-            if (!isClosed() && evt instanceof IdleStateEvent && ((IdleStateEvent) evt).state() == ALL_IDLE) {
+            if (!isClosed() && evt instanceof IdleStateEvent && ((IdleStateEvent) evt).state() == READER_IDLE) {
                 logger.debug("{} was inactive for {} seconds, sending heartbeat", Connection.this, factory.configuration.getPoolingOptions().getHeartbeatIntervalSeconds());
                 write(HEARTBEAT_CALLBACK);
             }
@@ -1406,7 +1406,7 @@ class Connection {
             this.sslOptions = sslOptions;
             this.nettyOptions = nettyOptions;
             this.codecRegistry = codecRegistry;
-            this.idleStateHandler = new IdleStateHandler(0, 0, heartBeatIntervalSeconds);
+            this.idleStateHandler = new IdleStateHandler(heartBeatIntervalSeconds, 0, 0);
         }
 
         @Override

@@ -2,15 +2,19 @@
 
 ### 3.1.3 (in progress)
 
+Merged from 3.0.x branch:
+
 - [bug] JAVA-1330: Add un/register for SchemaChangeListener in DelegatingCluster
 - [bug] JAVA-1351: Include Custom Payload in Request.copy.
+- [bug] JAVA-1346: Reset heartbeat only on client reads (not writes).
+- [improvement] JAVA-866: Support tuple notation in QueryBuilder.eq/in.
 
 
 ### 3.1.2
 
 - [bug] JAVA-1321: Wrong OSGi dependency version for Guava.
 
-Merged from 3.0.x:
+Merged from 3.0.x branch:
 
 - [bug] JAVA-1312: QueryBuilder modifies selected columns when manually selected.
 - [improvement] JAVA-1303: Add missing BoundStatement.setRoutingKey(ByteBuffer...)
@@ -23,7 +27,7 @@ Merged from 3.0.x:
 - [bug] JAVA-1255: Allow nested UDTs to be used in Mapper.
 - [bug] JAVA-1279: Mapper should exclude Groovy's "metaClass" property when looking for mapped properties
 
-Merged from 3.0.x:
+Merged from 3.0.x branch:
 
 - [improvement] JAVA-1246: Driver swallows the real exception in a few cases
 - [improvement] JAVA-1261: Throw error when attempting to page in I/O thread.

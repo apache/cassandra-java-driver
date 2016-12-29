@@ -34,8 +34,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import static com.datastax.driver.core.TestUtils.executeNoFail;
-import static com.datastax.driver.core.TestUtils.findAvailablePort;
+import static com.datastax.driver.core.TestUtils.*;
 
 public class CCMBridge implements CCMAccess {
 
@@ -86,11 +85,26 @@ public class CCMBridge implements CCMAccess {
      * {@link #getCassandraVersion()}.  If C* version cannot be derived, the method makes a 'best guess'.
      */
     private static final Map<String, String> dseToCassandraVersions = ImmutableMap.<String, String>builder()
-            .put("5.0", "3.0")
+            .put("5.0.4", "3.0.10")
+            .put("5.0.3", "3.0.9")
+            .put("5.0.2", "3.0.8")
+            .put("5.0.1", "3.0.7")
+            .put("5.0", "3.0.7")
+            .put("4.8.11", "2.1.17")
+            .put("4.8.10", "2.1.15")
+            .put("4.8.9", "2.1.15")
+            .put("4.8.8", "2.1.14")
+            .put("4.8.7", "2.1.14")
+            .put("4.8.6", "2.1.13")
+            .put("4.8.5", "2.1.13")
+            .put("4.8.4", "2.1.12")
             .put("4.8.3", "2.1.11")
             .put("4.8.2", "2.1.11")
             .put("4.8.1", "2.1.11")
             .put("4.8", "2.1.9")
+            .put("4.7.9", "2.1.15")
+            .put("4.7.8", "2.1.13")
+            .put("4.7.7", "2.1.12")
             .put("4.7.6", "2.1.11")
             .put("4.7.5", "2.1.11")
             .put("4.7.4", "2.1.11")
@@ -221,7 +235,9 @@ public class CCMBridge implements CCMAccess {
 
     private boolean closed = false;
 
-    private CCMBridge(String clusterName, boolean isDSE, VersionNumber version, int storagePort, int thriftPort, int binaryPort, String jvmArgs) {
+    private final int[] nodes;
+
+    private CCMBridge(String clusterName, boolean isDSE, VersionNumber version, int storagePort, int thriftPort, int binaryPort, String jvmArgs, int[] nodes) {
         this.clusterName = clusterName;
         this.version = version;
         this.storagePort = storagePort;
@@ -229,6 +245,7 @@ public class CCMBridge implements CCMAccess {
         this.binaryPort = binaryPort;
         this.isDSE = isDSE;
         this.jvmArgs = jvmArgs;
+        this.nodes = nodes;
         this.ccmDir = Files.createTempDir();
     }
 
@@ -379,6 +396,21 @@ public class CCMBridge implements CCMAccess {
         logger.debug("Closed: {}", this);
     }
 
+    /**
+     * Based on C* version, return the wait arguments.
+     *
+     * @return For C* 1.x, --wait-other-notice otherwise --no-wait
+     */
+    private String getStartWaitArguments() {
+        // make a small exception for C* 1.2 as it has a bug where it starts listening on the binary
+        // interface slightly before it joins the cluster.
+        if (getCassandraVersion().startsWith("1.")) {
+            return " --wait-other-notice";
+        } else {
+            return " --no-wait";
+        }
+    }
+
     @Override
     public synchronized void start() {
         if (started)
@@ -386,11 +418,23 @@ public class CCMBridge implements CCMAccess {
         if (logger.isDebugEnabled())
             logger.debug("Starting: {} - free memory: {} MB", this, TestUtils.getFreeMemoryMB());
         try {
-            String cmd = CCM_COMMAND + " start --wait-other-notice --wait-for-binary-proto" + jvmArgs;
+            String cmd = CCM_COMMAND + " start " + jvmArgs + getStartWaitArguments();
             if (isWindows() && this.version.compareTo(VersionNumber.parse("2.2.4")) >= 0) {
                 cmd += " --quiet-windows";
             }
             execute(cmd);
+
+            // Wait for binary interface on each node.
+            int n = 1;
+            for (int dc = 1; dc <= nodes.length; dc++) {
+                int nodesInDc = nodes[dc - 1];
+                for (int i = 0; i < nodesInDc; i++) {
+                    InetSocketAddress addr = new InetSocketAddress(ipOfNode(n), binaryPort);
+                    logger.debug("Waiting for binary protocol to show up for {}", addr);
+                    TestUtils.waitUntilPortIsUp(addr);
+                    n++;
+                }
+            }
         } catch (CCMException e) {
             logger.error("Could not start " + this, e);
             logger.error("CCM output:\n{}", e.getOut());
@@ -448,11 +492,15 @@ public class CCMBridge implements CCMAccess {
     public void start(int n) {
         logger.debug(String.format("Starting: node %s (%s%s:%s) in %s", n, TestUtils.IP_PREFIX, n, binaryPort, this));
         try {
-            String cmd = CCM_COMMAND + " node%d start --wait-other-notice --wait-for-binary-proto" + jvmArgs;
+            String cmd = CCM_COMMAND + " node%d start " + jvmArgs + getStartWaitArguments();
             if (isWindows() && this.version.compareTo(VersionNumber.parse("2.2.4")) >= 0) {
                 cmd += " --quiet-windows";
             }
             execute(cmd, n);
+            // Wait for binary interface
+            InetSocketAddress addr = new InetSocketAddress(ipOfNode(n), binaryPort);
+            logger.debug("Waiting for binary protocol to show up for {}", addr);
+            TestUtils.waitUntilPortIsUp(addr);
         } catch (CCMException e) {
             logger.error(String.format("Could not start node %s in %s", n, this), e);
             logger.error("CCM output:\n{}", e.getOut());
@@ -698,7 +746,7 @@ public class CCMBridge implements CCMAccess {
 
         int[] nodes = {1};
         private boolean start = true;
-        private boolean isDSE = isDSE();
+        private Boolean isDSE = null;
         private String version = getCassandraVersion();
         private Set<String> createOptions = new LinkedHashSet<String>(getInstallArguments());
         private Set<String> jvmArgs = new LinkedHashSet<String>();
@@ -759,8 +807,15 @@ public class CCMBridge implements CCMAccess {
          * Sets this cluster to be a DSE cluster (defaults to {@link #isDSE()} if this is never called).
          */
         public Builder withDSE() {
-            this.createOptions.add("--dse");
             this.isDSE = true;
+            return this;
+        }
+
+        /**
+         * Sets this cluster to be a non-DSE cluster (defaults to {@link #isDSE()} if this is never called).
+         */
+        public Builder withoutDSE() {
+            this.isDSE = false;
             return this;
         }
 
@@ -846,24 +901,38 @@ public class CCMBridge implements CCMAccess {
         public CCMBridge build() {
             // be careful NOT to alter internal state (hashCode/equals) during build!
             String clusterName = TestUtils.generateIdentifier("ccm_");
+            boolean dse = isDSE == null ? isDSE() : isDSE;
+
             Map<String, Object> cassandraConfiguration = randomizePorts(this.cassandraConfiguration);
-            Map<String, Object> dseConfiguration = randomizePorts(this.dseConfiguration);
             VersionNumber version = VersionNumber.parse(this.version);
             int storagePort = Integer.parseInt(cassandraConfiguration.get("storage_port").toString());
             int thriftPort = Integer.parseInt(cassandraConfiguration.get("rpc_port").toString());
             int binaryPort = Integer.parseInt(cassandraConfiguration.get("native_transport_port").toString());
-            final CCMBridge ccm = new CCMBridge(clusterName, isDSE, version, storagePort, thriftPort, binaryPort, joinJvmArgs());
+            final CCMBridge ccm = new CCMBridge(clusterName, dse, version, storagePort, thriftPort, binaryPort, joinJvmArgs(), nodes);
+
             Runtime.getRuntime().addShutdownHook(new Thread() {
                 @Override
                 public void run() {
                     ccm.close();
                 }
             });
-            ccm.execute(buildCreateCommand(clusterName));
+            ccm.execute(buildCreateCommand(clusterName, dse));
             updateNodeConf(ccm);
             ccm.updateConfig(cassandraConfiguration);
-            if (!dseConfiguration.isEmpty())
-                ccm.updateDSEConfig(dseConfiguration);
+            if (dse) {
+                Map<String, Object> dseConfiguration = Maps.newLinkedHashMap(this.dseConfiguration);
+                /* TODO: Use version passed in if present, there is currently a conflation of C* and DSE versions
+                 * when it comes to this that don't want to disturb.  No tests are currently using withVersion with
+                 * dse, so its not an issue at the moment. */
+                if (VersionNumber.parse(CCMBridge.getDSEVersion()).getMajor() >= 5) {
+                    // randomize DSE specific ports if dse present and greater than 5.0
+                    dseConfiguration.put("lease_netty_server_port", RANDOM_PORT);
+                    dseConfiguration.put("internode_messaging_options.port", RANDOM_PORT);
+                }
+                dseConfiguration = randomizePorts(dseConfiguration);
+                if (!dseConfiguration.isEmpty())
+                    ccm.updateDSEConfig(dseConfiguration);
+            }
             for (Map.Entry<Integer, Workload[]> entry : workloads.entrySet()) {
                 ccm.setWorkload(entry.getKey(), entry.getValue());
             }
@@ -895,7 +964,7 @@ public class CCMBridge implements CCMAccess {
             return allJvmArgs.toString();
         }
 
-        private String buildCreateCommand(String clusterName) {
+        private String buildCreateCommand(String clusterName, boolean dse) {
             StringBuilder result = new StringBuilder(CCM_COMMAND + " create");
             result.append(" ").append(clusterName);
             result.append(" -i ").append(TestUtils.IP_PREFIX);
@@ -909,7 +978,20 @@ public class CCMBridge implements CCMAccess {
                     result.append(node);
                 }
             }
-            result.append(" ").append(Joiner.on(" ").join(randomizePorts(createOptions)));
+
+            // If not DSE, remove --dse if in createOptions.
+            Set<String> lCreateOptions = new LinkedHashSet<String>(createOptions);
+            if (!dse) {
+                Iterator<String> it = lCreateOptions.iterator();
+                while (it.hasNext()) {
+                    String option = it.next();
+                    // remove any version previously set and
+                    // install-dir, which is incompatible
+                    if (option.equals("--dse"))
+                        it.remove();
+                }
+            }
+            result.append(" ").append(Joiner.on(" ").join(randomizePorts(lCreateOptions)));
             return result.toString();
         }
 
@@ -1000,14 +1082,14 @@ public class CCMBridge implements CCMAccess {
             if (this == o) return true;
             if (o == null || getClass() != o.getClass()) return false;
             Builder builder = (Builder) o;
-            if (isDSE != builder.isDSE) return false;
             if (!Arrays.equals(nodes, builder.nodes)) return false;
+            if (isDSE != null ? !isDSE.equals(builder.isDSE) : builder.isDSE != null) return false;
+            if (!version.equals(builder.version)) return false;
             if (!createOptions.equals(builder.createOptions)) return false;
             if (!jvmArgs.equals(builder.jvmArgs)) return false;
             if (!cassandraConfiguration.equals(builder.cassandraConfiguration)) return false;
             if (!dseConfiguration.equals(builder.dseConfiguration)) return false;
-            if (!workloads.equals(builder.workloads)) return false;
-            return version.equals(builder.version);
+            return workloads.equals(builder.workloads);
         }
 
         @Override
@@ -1015,7 +1097,7 @@ public class CCMBridge implements CCMAccess {
             // do not include cluster name and start, only
             // properties relevant to the settings of the cluster
             int result = Arrays.hashCode(nodes);
-            result = 31 * result + (isDSE ? 1 : 0);
+            result = 31 * result + (isDSE != null ? isDSE.hashCode() : 0);
             result = 31 * result + createOptions.hashCode();
             result = 31 * result + jvmArgs.hashCode();
             result = 31 * result + cassandraConfiguration.hashCode();
