@@ -719,10 +719,7 @@ public abstract class DataType {
         } catch (IllegalArgumentException e) {
             throw new IllegalArgumentException(String.format("Could not serialize value of type %s", value.getClass()), e);
         } catch (InvalidTypeException e) {
-            // In theory we couldn't get that if getDataTypeFor does his job correctly,
-            // but there is no point in sending an exception that the user won't expect if we're
-            // wrong on that.
-            throw new IllegalArgumentException(e.getMessage());
+            throw new IllegalArgumentException(e);
         }
     }
 
