@@ -1,5 +1,9 @@
 ## Changelog
 
+### 3.2.0
+
+- [improvement] JAVA-1229: Mapper now supports specifying the keyspace for individual queries.
+
 ### 3.1.0
 
 - [new feature] JAVA-1153: Add PER PARTITION LIMIT to Select QueryBuilder.
