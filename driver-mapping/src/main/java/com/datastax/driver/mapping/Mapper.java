@@ -321,7 +321,7 @@ public class Mapper<T> {
     }
 
     private ListenableFuture<Void> submitVoidQueryAsync(ListenableFuture<BoundStatement> bsFuture) {
-        ListenableFuture<ResultSet> rsFuture = Futures.transform(bsFuture, new AsyncFunction<BoundStatement, ResultSet>() {
+        ListenableFuture<ResultSet> rsFuture = Futures.transformAsync(bsFuture, new AsyncFunction<BoundStatement, ResultSet>() {
             @Override
             public ListenableFuture<ResultSet> apply(BoundStatement bs) throws Exception {
                 return session().executeAsync(bs);
@@ -446,7 +446,7 @@ public class Mapper<T> {
      */
     public ListenableFuture<T> getAsync(final Object... objects) {
         ListenableFuture<BoundStatement> bsFuture = getQueryAsync(objects);
-        ListenableFuture<ResultSet> rsFuture = Futures.transform(bsFuture, new AsyncFunction<BoundStatement, ResultSet>() {
+        ListenableFuture<ResultSet> rsFuture = Futures.transformAsync(bsFuture, new AsyncFunction<BoundStatement, ResultSet>() {
             @Override
             public ListenableFuture<ResultSet> apply(BoundStatement bs) throws Exception {
                 return session().executeAsync(bs);

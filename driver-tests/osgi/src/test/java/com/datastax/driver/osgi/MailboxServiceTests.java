@@ -48,11 +48,10 @@ public abstract class MailboxServiceTests {
      * <p/>
      * The following configurations are tried (defined via methods with the @Configuration annotation):
      * <ol>
-     * <li>Default bundle (Driver with all of it's dependencies and Guava 16.0.1)</li>
-     * <li>Shaded bundle (Driver with netty shaded and Guava 16.0.1)</li>
-     * <li>With Guava 17</li>
-     * <li>With Guava 18</li>
+     * <li>Default bundle (Driver with all of it's dependencies and Guava 20.0)</li>
+     * <li>Shaded bundle (Driver with netty shaded and Guava 20.0)</li>
      * <li>With Guava 19</li>
+     * <li>With Guava 20</li>
      * </ol>
      */
     protected void checkService() throws MailboxException {

@@ -40,8 +40,8 @@ import java.util.concurrent.locks.ReentrantLock;
 public class LimitingLoadBalancingPolicy extends DelegatingLoadBalancingPolicy {
     private final int maxHosts;
     private final int threshold;
-    private final Set<Host> liveHosts = Sets.newSetFromMap(new ConcurrentHashMap<Host, Boolean>());
-    private final Set<Host> chosenHosts = Sets.newSetFromMap(new ConcurrentHashMap<Host, Boolean>());
+    private final Set<Host> liveHosts = Collections.newSetFromMap(new ConcurrentHashMap<Host, Boolean>());
+    private final Set<Host> chosenHosts = Collections.newSetFromMap(new ConcurrentHashMap<Host, Boolean>());
     private final Lock updateLock = new ReentrantLock();
 
     private volatile Cluster cluster;

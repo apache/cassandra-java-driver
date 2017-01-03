@@ -137,7 +137,7 @@ public class PoolingOptions {
      */
     public static final int DEFAULT_HEARTBEAT_INTERVAL_SECONDS = 30;
 
-    private static final Executor DEFAULT_INITIALIZATION_EXECUTOR = MoreExecutors.sameThreadExecutor();
+    private static final Executor DEFAULT_INITIALIZATION_EXECUTOR = MoreExecutors.directExecutor();
 
     private volatile Cluster.Manager manager;
     private volatile ProtocolVersion protocolVersion;

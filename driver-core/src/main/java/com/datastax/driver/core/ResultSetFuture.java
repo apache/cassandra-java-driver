@@ -26,7 +26,7 @@ import java.util.concurrent.TimeoutException;
 /**
  * A future on a {@link ResultSet}.
  * <p/>
- * Note that this class implements <a href="http://code.google.com/p/guava-libraries/">Guava</a>'s {@code
+ * Note that this class implements <a href="https://github.com/google/guava/">Guava</a>'s {@code
  * ListenableFuture} and can so be used with Guava's future utilities.
  */
 public interface ResultSetFuture extends ListenableFuture<ResultSet> {

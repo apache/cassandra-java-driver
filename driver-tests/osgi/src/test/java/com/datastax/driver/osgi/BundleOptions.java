@@ -50,7 +50,7 @@ public class BundleOptions {
     }
 
     public static MavenArtifactProvisionOption guavaBundle() {
-        return mavenBundle("com.google.guava", "guava", "16.0.1");
+        return mavenBundle("com.google.guava", "guava", "20.0");
     }
 
     public static CompositeOption lz4Bundle() {

@@ -19,10 +19,7 @@ import com.datastax.driver.core.exceptions.*;
 import com.datastax.driver.core.policies.*;
 import com.datastax.driver.core.utils.MoreFutures;
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.base.Functions;
-import com.google.common.base.Predicates;
-import com.google.common.base.Strings;
-import com.google.common.base.Throwables;
+import com.google.common.base.*;
 import com.google.common.collect.*;
 import com.google.common.util.concurrent.*;
 import org.slf4j.Logger;
@@ -338,15 +335,15 @@ public class Cluster implements Closeable {
             return sessionInitialized;
         } else {
             final String useQuery = "USE " + keyspace;
-            ListenableFuture<ResultSet> keyspaceSet = Futures.transform(sessionInitialized, new AsyncFunction<Session, ResultSet>() {
+            ListenableFuture<ResultSet> keyspaceSet = Futures.transformAsync(sessionInitialized, new AsyncFunction<Session, ResultSet>() {
                 @Override
-                public ListenableFuture<ResultSet> apply(Session session) throws Exception {
+                public ListenableFuture<ResultSet> apply(Session session) {
                     return session.executeAsync(useQuery);
                 }
             });
-            ListenableFuture<ResultSet> withErrorHandling = Futures.withFallback(keyspaceSet, new FutureFallback<ResultSet>() {
+            ListenableFuture<ResultSet> withErrorHandling = Futures.catchingAsync(keyspaceSet, Throwable.class, new AsyncFunction<Throwable, ResultSet>() {
                 @Override
-                public ListenableFuture<ResultSet> create(Throwable t) throws Exception {
+                public ListenableFuture<ResultSet> apply(Throwable t) throws Exception {
                     session.closeAsync();
                     if (t instanceof SyntaxError) {
                         // Give a more explicit message, because it's probably caused by a bad keyspace name
@@ -2311,7 +2308,7 @@ public class Cluster implements Closeable {
                                 rs.getExecutionInfo().setSchemaInAgreement(finalSchemaInAgreement);
                                 future.setResult(rs);
                             }
-                        }, MoreExecutors.sameThreadExecutor());
+                        }, MoreExecutors.newDirectExecutorService());
 
                     } catch (Exception e) {
                         logger.warn("Error while waiting for schema agreement", e);

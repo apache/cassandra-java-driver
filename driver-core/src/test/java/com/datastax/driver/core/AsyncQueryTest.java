@@ -94,7 +94,7 @@ public class AsyncQueryTest extends CCMTestsSupport {
     @Test(groups = "short", dataProvider = "keyspace", enabled = false,
             description = "disabled because the blocking USE call in the current pool implementation makes it deadlock")
     public void should_chain_query_on_async_session_init_with_same_executor(String keyspace) throws Exception {
-        ListenableFuture<Integer> resultFuture = connectAndQuery(keyspace, MoreExecutors.sameThreadExecutor());
+        ListenableFuture<Integer> resultFuture = connectAndQuery(keyspace, MoreExecutors.directExecutor());
 
         Integer result = Uninterruptibles.getUninterruptibly(resultFuture);
         assertThat(result).isEqualTo(1);
@@ -114,7 +114,7 @@ public class AsyncQueryTest extends CCMTestsSupport {
 
     @Test(groups = "short")
     public void should_propagate_error_to_chained_query_if_session_init_fails() throws Exception {
-        ListenableFuture<Integer> resultFuture = connectAndQuery("wrong_keyspace", MoreExecutors.sameThreadExecutor());
+        ListenableFuture<Integer> resultFuture = connectAndQuery("wrong_keyspace", MoreExecutors.directExecutor());
 
         try {
             Uninterruptibles.getUninterruptibly(resultFuture);
@@ -159,7 +159,7 @@ public class AsyncQueryTest extends CCMTestsSupport {
 
     private ListenableFuture<Integer> connectAndQuery(String keyspace, Executor executor) {
         ListenableFuture<Session> sessionFuture = cluster().connectAsync(keyspace);
-        ListenableFuture<ResultSet> queryFuture = Futures.transform(sessionFuture, new AsyncFunction<Session, ResultSet>() {
+        ListenableFuture<ResultSet> queryFuture = Futures.transformAsync(sessionFuture, new AsyncFunction<Session, ResultSet>() {
             @Override
             public ListenableFuture<ResultSet> apply(Session session) throws Exception {
                 return session.executeAsync("select v from foo where k = 1");

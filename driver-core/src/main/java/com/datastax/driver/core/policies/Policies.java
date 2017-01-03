@@ -17,6 +17,7 @@ package com.datastax.driver.core.policies;
 
 import com.datastax.driver.core.AtomicMonotonicTimestampGenerator;
 import com.datastax.driver.core.TimestampGenerator;
+import com.google.common.base.MoreObjects;
 import com.google.common.base.Objects;
 
 /**
@@ -281,11 +282,11 @@ public class Policies {
         public Policies build() {
             return new Policies(
                     loadBalancingPolicy == null ? Policies.defaultLoadBalancingPolicy() : loadBalancingPolicy,
-                    Objects.firstNonNull(reconnectionPolicy, Policies.defaultReconnectionPolicy()),
-                    Objects.firstNonNull(retryPolicy, Policies.defaultRetryPolicy()),
-                    Objects.firstNonNull(addressTranslator, Policies.defaultAddressTranslator()),
-                    Objects.firstNonNull(timestampGenerator, Policies.defaultTimestampGenerator()),
-                    Objects.firstNonNull(speculativeExecutionPolicy, Policies.defaultSpeculativeExecutionPolicy()));
+                    MoreObjects.firstNonNull(reconnectionPolicy, Policies.defaultReconnectionPolicy()),
+                    MoreObjects.firstNonNull(retryPolicy, Policies.defaultRetryPolicy()),
+                    MoreObjects.firstNonNull(addressTranslator, Policies.defaultAddressTranslator()),
+                    MoreObjects.firstNonNull(timestampGenerator, Policies.defaultTimestampGenerator()),
+                    MoreObjects.firstNonNull(speculativeExecutionPolicy, Policies.defaultSpeculativeExecutionPolicy()));
         }
     }
 }

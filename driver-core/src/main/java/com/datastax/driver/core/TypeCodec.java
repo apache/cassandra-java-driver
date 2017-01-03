@@ -19,6 +19,7 @@ import com.datastax.driver.core.exceptions.InvalidTypeException;
 import com.datastax.driver.core.utils.Bytes;
 import com.google.common.reflect.TypeToken;
 
+import java.lang.reflect.Type;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.net.InetAddress;
@@ -608,7 +609,7 @@ public abstract class TypeCodec<T> {
      * Implementation notes:
      * <ol>
      * <li>The default implementation is <em>covariant</em> with respect to the passed
-     * argument (through the usage of {@link TypeToken#isAssignableFrom(TypeToken)}
+     * argument (through the usage of {@link TypeToken#isSupertypeOf(Type)}
      * and <em>it's strongly recommended not to modify this behavior</em>.
      * This means that, by default, a codec will accept
      * <em>any subtype</em> of the Java type that it has been created for.</li>
@@ -628,7 +629,7 @@ public abstract class TypeCodec<T> {
      */
     public boolean accepts(Object value) {
         checkNotNull(value, "Parameter value cannot be null");
-        return this.javaType.isAssignableFrom(TypeToken.of(value.getClass()));
+        return this.javaType.isSupertypeOf(TypeToken.of(value.getClass()));
     }
 
     @Override
