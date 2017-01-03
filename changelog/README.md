@@ -1,5 +1,9 @@
 ## Changelog
 
+### 3.2.0
+
+- [improvement] JAVA-1334: Provide the counterpart of the method addContactPoints that silently fail when a host is unknown
+
 ### 3.1.0
 
 - [new feature] JAVA-1153: Add PER PARTITION LIMIT to Select QueryBuilder.
