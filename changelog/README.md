@@ -1,6 +1,6 @@
 ## Changelog
 
-### 3.0.6 (in progress)
+### 3.0.6
 
 - [bug] JAVA-1330: Add un/register for SchemaChangeListener in DelegatingCluster
 - [bug] JAVA-1351: Include Custom Payload in Request.copy.
