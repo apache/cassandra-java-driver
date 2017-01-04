@@ -726,16 +726,11 @@ public class QueryBuilderTest {
         assertTrue(query.isTracing());
     }
 
-    @Test(groups = "unit")
+    @Test(groups = "unit", expectedExceptions = CodecNotFoundException.class)
     public void rejectUnknownValueTest() throws Exception {
-        try {
-            RegularStatement s = update("foo").with(set("a", new byte[13])).where(eq("k", 2))
-                    .setForceNoValues(true);
-            s.getQueryString();
-            fail("should have failed to inline a byte[]");
-        } catch (CodecNotFoundException e) {
-            // Ok, that's what we expect
-        }
+        RegularStatement s = update("foo").with(set("a", new byte[13])).where(eq("k", 2))
+                .setForceNoValues(true);
+        s.getQueryString();
     }
 
     @Test(groups = "unit")
@@ -787,21 +782,61 @@ public class QueryBuilderTest {
         select = select().all().from("foo").where(eq("k", 4)).and(lte(Arrays.asList("c1", "c2"), Arrays.<Object>asList("a", 2)));
         assertEquals(select.toString(), query);
 
-        query = "SELECT * FROM foo WHERE k=4 AND (c1,c2) IN ((1,2),('foo','bar'));";
+        query = "SELECT * FROM foo WHERE k=4 AND (c1,c2) IN ((1,'foo'),(2,'bar'),(3,'qix'));";
         List<String> names = ImmutableList.of("c1", "c2");
-        List<List<?>> values = ImmutableList.<List<?>>of(
-                ImmutableList.of(1, 2),
-                ImmutableList.of("foo", "bar"));
+        List<?> values = ImmutableList.<List<?>>of(
+                ImmutableList.of(1, "foo"),
+                ImmutableList.of(2, "bar"),
+                ImmutableList.of(3, "qix"));
         select = select().all().from("foo").where(eq("k", 4)).and(in(names, values));
         assertEquals(select.toString(), query);
 
-        query = "SELECT * FROM foo WHERE k=4 AND (c1,c2) IN ((1,2),?);";
+        query = "SELECT * FROM foo WHERE k=4 AND (c1,c2) IN ((1,'foo'),(2,?),?);";
         names = ImmutableList.of("c1", "c2");
-        values = ImmutableList.<List<?>>of(
-                ImmutableList.of(1, 2),
-                ImmutableList.of(bindMarker()));
+        values = ImmutableList.of(
+                ImmutableList.of(1, "foo"),
+                ImmutableList.of(2, bindMarker()),
+                bindMarker());
         select = select().all().from("foo").where(eq("k", 4)).and(in(names, values));
         assertEquals(select.toString(), query);
+
+        // special case, single element list with bind marker should be (?) instead of ((?))
+        query = "SELECT * FROM foo WHERE k=4 AND (c1) IN (?);";
+        names = ImmutableList.of("c1");
+        values = ImmutableList.of(ImmutableList.of(bindMarker()));
+        select = select().all().from("foo").where(eq("k", 4)).and(in(names, values));
+        assertEquals(select.toString(), query);
+    }
+
+    @Test(groups = "unit", expectedExceptions = IllegalArgumentException.class, expectedExceptionsMessageRegExp = "Too many values for IN clause, the maximum allowed is 65535")
+    public void should_fail_if_compound_in_clause_has_too_many_values() {
+        List<Object> values = Collections.<Object>nCopies(65536, "a");
+        select().all().from("foo").where(eq("k", 4)).and(in(ImmutableList.of("name"), values));
+    }
+
+    @Test(groups = "unit", expectedExceptions = IllegalArgumentException.class, expectedExceptionsMessageRegExp = "Missing values for IN clause")
+    public void should_fail_if_compound_in_clause_given_null_values() {
+        select().all().from("foo").where(eq("k", 4)).and(in(ImmutableList.of("name"), null));
+    }
+
+    @Test(groups = "unit", expectedExceptions = IllegalArgumentException.class, expectedExceptionsMessageRegExp = "The number of names \\(4\\) and values \\(3\\) don't match")
+    public void should_fail_if_compound_in_clause_has_mismatch_of_names_and_values() {
+        select().all().from("foo").where(eq("k", 4)).and(in(ImmutableList.of("a", "b", "c", "d"),
+                ImmutableList.of(
+                        ImmutableList.of(1, 2, 3, 4), // Adequately sized (4)
+                        ImmutableList.of(1, 2, 3) // Inadequately sized (3)
+                )));
+    }
+
+    @Test(groups = "unit", expectedExceptions = IllegalArgumentException.class, expectedExceptionsMessageRegExp = "Wrong element type for values list, expected List or BindMarker, got java.lang.Integer")
+    public void shoud_fail_if_compound_in_clause_has_value_pair_that_is_not_list_or_bind_marker() {
+        select().all().from("foo").where(eq("k", 4)).and(in(ImmutableList.of("a", "b", "c", "d"),
+                ImmutableList.of(1))); // Invalid value 1, must be list or bind marker.
+    }
+
+    @Test(groups = "unit", expectedExceptions = IllegalArgumentException.class, expectedExceptionsMessageRegExp = "Missing values for IN clause")
+    public void should_fail_if_in_clause_has_null_values() {
+        select().all().from("foo").where(in("bar", (List<?>) null));
     }
 
     @Test(groups = "unit", expectedExceptions = IllegalArgumentException.class)
@@ -1102,5 +1137,76 @@ public class QueryBuilderTest {
                 .isEqualTo("INSERT INTO users (id) VALUES (fromJson(:id));");
     }
 
+    static class Foo {
+        int bar;
+
+        public Foo(int bar) {
+            this.bar = bar;
+        }
+    }
+
+    static class FooCodec extends TypeCodec<Foo> {
+
+        public FooCodec() {
+            super(DataType.cint(), Foo.class);
+        }
+
+        @Override
+        public ByteBuffer serialize(Foo value, ProtocolVersion protocolVersion) throws InvalidTypeException {
+            // not relevant for this test
+            return null;
+        }
+
+        @Override
+        public Foo deserialize(ByteBuffer bytes, ProtocolVersion protocolVersion) throws InvalidTypeException {
+            // not relevant for this test
+            return null;
+        }
+
+        @Override
+        public Foo parse(String value) throws InvalidTypeException {
+            // not relevant for this test
+            return null;
+        }
+
+        @Override
+        public String format(Foo foo) throws InvalidTypeException {
+            return Integer.toString(foo.bar);
+        }
+    }
+
+    /**
+     * Ensures that a statement can be printed with and without
+     * a required custom codec.
+     * The expectation is that if the codec is not registered,
+     * then the query string should contain bind markers for all variables;
+     * if however all codecs are properly registered, then
+     * the query string should contain all variables inlined and formatted properly.
+     *
+     * @jira_ticket JAVA-1272
+     */
+    @Test(groups = "unit")
+    public void should_inline_custom_codec() throws Exception {
+        assertThat(
+                insertInto("users").value("id", new Foo(42)).toString())
+                .isEqualTo("INSERT INTO users (id) VALUES (?);");
+        CodecRegistry.DEFAULT_INSTANCE.register(new FooCodec());
+        assertThat(
+                insertInto("users").value("id", new Foo(42)).toString())
+                .isEqualTo("INSERT INTO users (id) VALUES (42);");
+    }
+
+    /**
+     * @jira_ticket JAVA-1312
+     */
+    @Test(groups = "unit")
+    public void should_not_append_last_column_twice() throws Exception {
+        Select.SelectionOrAlias select = select().column("a").column("b");
+        Select fromUsers1 = select.from("users");
+        Select fromUsers2 = select.from("users");
+        assertThat(fromUsers1.getQueryString())
+                .isEqualTo(fromUsers2.getQueryString())
+                .isEqualTo("SELECT a,b FROM users;");
+    }
 
 }

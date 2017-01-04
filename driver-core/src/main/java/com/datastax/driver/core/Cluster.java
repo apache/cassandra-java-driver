@@ -70,16 +70,12 @@ public class Cluster implements Closeable {
 
     @VisibleForTesting
     static final int NEW_NODE_DELAY_SECONDS = SystemProperties.getInt("com.datastax.driver.NEW_NODE_DELAY_SECONDS", 1);
-    private static final int NON_BLOCKING_EXECUTOR_SIZE = SystemProperties.getInt("com.datastax.driver.NON_BLOCKING_EXECUTOR_SIZE",
-            Runtime.getRuntime().availableProcessors());
 
     private static final ResourceBundle driverProperties = ResourceBundle.getBundle("com.datastax.driver.core.Driver");
 
     // Some per-JVM number that allows to generate unique cluster names when
     // multiple Cluster instance are created in the same JVM.
     private static final AtomicInteger CLUSTER_ID = new AtomicInteger(0);
-
-    private static final int DEFAULT_THREAD_KEEP_ALIVE = 30;
 
     private static final int NOTIF_LOCK_TIMEOUT_SECONDS = SystemProperties.getInt("com.datastax.driver.NOTIF_LOCK_TIMEOUT_SECONDS", 60);
 
@@ -852,7 +848,7 @@ public class Cluster implements Closeable {
                 addContactPoints(InetAddress.getAllByName(address));
                 return this;
             } catch (UnknownHostException e) {
-                throw new IllegalArgumentException(e.getMessage());
+                throw new IllegalArgumentException("Failed to add contact point: " + address, e);
             }
         }
 
@@ -1227,6 +1223,19 @@ public class Cluster implements Closeable {
         }
 
         /**
+         * Sets the threading options to use for the newly created Cluster.
+         * <p/>
+         * If no options are set through this method, a new instance of {@link ThreadingOptions} will be used.
+         *
+         * @param options the options.
+         * @return this builder.
+         */
+        public Builder withThreadingOptions(ThreadingOptions options) {
+            configurationBuilder.withThreadingOptions(options);
+            return this;
+        }
+
+        /**
          * Set the {@link NettyOptions} to use for the newly created Cluster.
          * <p/>
          * If no Netty options are set through this method, {@link NettyOptions#DEFAULT_INSTANCE}
@@ -1315,20 +1324,15 @@ public class Cluster implements Closeable {
 
         final ConvictionPolicy.Factory convictionPolicyFactory = new ConvictionPolicy.DefaultConvictionPolicy.Factory();
 
-        ScheduledThreadPoolExecutor reconnectionExecutor;
-        ScheduledThreadPoolExecutor scheduledTasksExecutor;
-
-        // Executor used for tasks that shouldn't be executed on an IO thread. Used for short-lived, generally non-blocking tasks
         ListeningExecutorService executor;
-
-        // Work Queue used by executor.
-        LinkedBlockingQueue<Runnable> executorQueue;
-
-        // An executor for tasks that might block some time, like creating new connection, but are generally not too critical.
         ListeningExecutorService blockingExecutor;
+        ScheduledExecutorService reconnectionExecutor;
+        ScheduledExecutorService scheduledTasksExecutor;
 
-        // Work Queue used by blockingExecutor.
-        LinkedBlockingQueue<Runnable> blockingExecutorQueue;
+        BlockingQueue<Runnable> executorQueue;
+        BlockingQueue<Runnable> blockingExecutorQueue;
+        BlockingQueue<Runnable> reconnectionExecutorQueue;
+        BlockingQueue<Runnable> scheduledTasksExecutorQueue;
 
         ConnectionReaper reaper;
 
@@ -1367,16 +1371,31 @@ public class Cluster implements Closeable {
 
             this.configuration.register(this);
 
-            this.executorQueue = new LinkedBlockingQueue<Runnable>();
-            this.executor = makeExecutor(NON_BLOCKING_EXECUTOR_SIZE, "worker", executorQueue);
-            this.blockingExecutorQueue = new LinkedBlockingQueue<Runnable>();
-            this.blockingExecutor = makeExecutor(2, "blocking-task-worker", blockingExecutorQueue);
-            this.reconnectionExecutor = new ScheduledThreadPoolExecutor(2, threadFactory("reconnection"));
-            // scheduledTasksExecutor is used to process C* notifications. So having it mono-threaded ensures notifications are
-            // applied in the order received.
-            this.scheduledTasksExecutor = new ScheduledThreadPoolExecutor(1, threadFactory("scheduled-task-worker"));
+            ThreadingOptions threadingOptions = this.configuration.getThreadingOptions();
 
-            this.reaper = new ConnectionReaper(this);
+            // executor
+            ExecutorService tmpExecutor = threadingOptions.createExecutor(clusterName);
+            this.executorQueue = (tmpExecutor instanceof ThreadPoolExecutor)
+                    ? ((ThreadPoolExecutor) tmpExecutor).getQueue() : null;
+            this.executor = MoreExecutors.listeningDecorator(tmpExecutor);
+
+            // blocking executor
+            ExecutorService tmpBlockingExecutor = threadingOptions.createBlockingExecutor(clusterName);
+            this.blockingExecutorQueue = (tmpBlockingExecutor instanceof ThreadPoolExecutor)
+                    ? ((ThreadPoolExecutor) tmpBlockingExecutor).getQueue() : null;
+            this.blockingExecutor = MoreExecutors.listeningDecorator(tmpBlockingExecutor);
+
+            // reconnection executor
+            this.reconnectionExecutor = threadingOptions.createReconnectionExecutor(clusterName);
+            this.reconnectionExecutorQueue = (reconnectionExecutor instanceof ThreadPoolExecutor)
+                    ? ((ThreadPoolExecutor) reconnectionExecutor).getQueue() : null;
+
+            // scheduled tasks executor
+            this.scheduledTasksExecutor = threadingOptions.createScheduledTasksExecutor(clusterName);
+            this.scheduledTasksExecutorQueue = (scheduledTasksExecutor instanceof ThreadPoolExecutor)
+                    ? ((ThreadPoolExecutor) scheduledTasksExecutor).getQueue() : null;
+
+            this.reaper = new ConnectionReaper(threadingOptions.createReaperExecutor(clusterName));
             this.metadata = new Metadata(this);
             this.connectionFactory = new Connection.Factory(this, configuration);
             this.controlConnection = new ControlConnection(this);
@@ -1541,22 +1560,6 @@ public class Cluster implements Closeable {
 
         ProtocolVersion protocolVersion() {
             return connectionFactory.protocolVersion;
-        }
-
-        ThreadFactory threadFactory(String name) {
-            return new ThreadFactoryBuilder().setNameFormat(clusterName + "-" + name + "-%d").build();
-        }
-
-        private ListeningExecutorService makeExecutor(int threads, String name, LinkedBlockingQueue<Runnable> workQueue) {
-            ThreadPoolExecutor executor = new ThreadPoolExecutor(threads,
-                    threads,
-                    DEFAULT_THREAD_KEEP_ALIVE,
-                    TimeUnit.SECONDS,
-                    workQueue,
-                    threadFactory(name));
-
-            executor.allowCoreThreadTimeOut(true);
-            return MoreExecutors.listeningDecorator(executor);
         }
 
         Cluster getCluster() {
@@ -2856,9 +2859,9 @@ public class Cluster implements Closeable {
             }
         };
 
-        ConnectionReaper(Cluster.Manager manager) {
-            executor = Executors.newScheduledThreadPool(1, manager.threadFactory("connection-reaper"));
-            executor.scheduleWithFixedDelay(reaperTask, INTERVAL_MS, INTERVAL_MS, TimeUnit.MILLISECONDS);
+        ConnectionReaper(ScheduledExecutorService executor) {
+            this.executor = executor;
+            this.executor.scheduleWithFixedDelay(reaperTask, INTERVAL_MS, INTERVAL_MS, TimeUnit.MILLISECONDS);
         }
 
         void register(Connection connection, long terminateTime) {

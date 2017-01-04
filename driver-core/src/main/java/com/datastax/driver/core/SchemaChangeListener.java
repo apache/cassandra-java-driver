@@ -24,7 +24,7 @@ package com.datastax.driver.core;
  * Note that the methods defined by this interface will be executed by internal driver threads, and are
  * therefore expected to have short execution times. If you need to perform long computations or blocking
  * calls in response to schema change events, it is strongly recommended to schedule them asynchronously
- * on a separate thread provided by our application code.
+ * on a separate thread provided by your application code.
  */
 public interface SchemaChangeListener {
 

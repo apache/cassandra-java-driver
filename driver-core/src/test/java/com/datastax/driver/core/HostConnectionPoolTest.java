@@ -16,10 +16,11 @@
 package com.datastax.driver.core;
 
 import com.codahale.metrics.Gauge;
-import com.datastax.driver.core.exceptions.BusyConnectionException;
-import com.datastax.driver.core.exceptions.ConnectionException;
+import com.datastax.driver.core.exceptions.*;
 import com.datastax.driver.core.policies.ConstantReconnectionPolicy;
+import com.datastax.driver.core.utils.MoreFutures;
 import com.google.common.base.Predicate;
+import com.google.common.base.Throwables;
 import com.google.common.util.concurrent.*;
 import org.scassandra.cql.PrimitiveType;
 import org.scassandra.http.client.PrimingRequest;
@@ -27,6 +28,7 @@ import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
 import java.net.InetSocketAddress;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.*;
@@ -35,8 +37,8 @@ import java.util.concurrent.atomic.AtomicReference;
 
 import static com.datastax.driver.core.Assertions.assertThat;
 import static com.datastax.driver.core.ConditionChecker.check;
+import static com.datastax.driver.core.PoolingOptions.NEW_CONNECTION_THRESHOLD_LOCAL_KEY;
 import static com.google.common.collect.Lists.newArrayList;
-import static java.util.Collections.singletonList;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.mockito.Mockito.*;
 import static org.scassandra.http.client.ClosedConnectionReport.CloseType.CLOSE;
@@ -44,6 +46,9 @@ import static org.scassandra.http.client.PrimingRequest.then;
 import static org.testng.Assert.fail;
 
 public class HostConnectionPoolTest extends ScassandraTestBase.PerClassCluster {
+
+    static final Integer NEW_CONNECTION_THRESHOLD = PoolingOptions.DEFAULTS.get(ProtocolVersion.V1)
+            .get(NEW_CONNECTION_THRESHOLD_LOCAL_KEY);
 
     @BeforeClass(groups = {"short", "long"})
     public void reinitializeCluster() {
@@ -67,136 +72,317 @@ public class HostConnectionPoolTest extends ScassandraTestBase.PerClassCluster {
                 }).becomesTrue();
     }
 
-    /**
-     * Sends 101 requests on pool, asserting that the connection used is in expectedConnections, except for the last request.
-     */
-    private List<MockRequest> fillConnectionToThreshold(HostConnectionPool pool, List<Connection> expectedConnections) throws ConnectionException, BusyConnectionException, TimeoutException {
-        List<MockRequest> requests = sendRequests(100, pool, expectedConnections);
-        requests.add(MockRequest.send(pool));
-        return requests;
-    }
-
-    /**
-     * Sends count requests on pool.
-     */
-    private List<MockRequest> sendRequests(int count, HostConnectionPool pool) throws ConnectionException, BusyConnectionException, TimeoutException {
-        return sendRequests(count, pool, null);
-    }
-
-    /**
-     * Sends count requests on pool, asserting that the connection used is in expectedConnections.
-     */
-    private List<MockRequest> sendRequests(int count, HostConnectionPool pool, List<Connection> expectedConnections) throws ConnectionException, BusyConnectionException, TimeoutException {
-        List<MockRequest> requests = newArrayList();
-        for (int i = 0; i < count; i++) {
-            MockRequest request = MockRequest.send(pool);
-            requests.add(request);
-            if (expectedConnections != null)
-                assertThat(expectedConnections).contains(request.connection);
-        }
-        return requests;
-    }
-
-    /**
-     * Completes count requests by simulating a successful response.
-     */
-    private void completeRequests(int count, List<MockRequest> requests) {
-        Iterator<MockRequest> requestIt = requests.iterator();
-        for (int i = 0; i < count; i++) {
-            if (requestIt.hasNext()) {
-                MockRequest request = requestIt.next();
-                request.simulateSuccessResponse();
-                requestIt.remove();
-            } else {
-                break;
-            }
-        }
-    }
-
-    /**
-     * Completes all requests by simulating a successful response.
-     */
-    private void completeRequests(List<MockRequest> requests) {
+    private void assertBorrowedConnections(Iterable<MockRequest> requests, List<Connection> expectedConnections) {
         for (MockRequest request : requests) {
-            request.simulateSuccessResponse();
+            assertThat(expectedConnections).contains(request.getConnection());
         }
     }
 
+    private void assertBorrowedConnection(Iterable<MockRequest> requests, Connection expectedConnection) {
+        assertBorrowedConnections(requests, Collections.singletonList(expectedConnection));
+    }
+
     /**
-     * Ensures that if a fixed-sized pool has filled its core connections that borrowConnection will timeout instead
-     * of creating a new connection.
+     * Ensures that if a fixed-sized pool has filled its core connections and reached its maximum number of enqueued
+     * requests, then borrowConnection will fail instead of creating a new connection.
      *
      * @jira_ticket JAVA-419
      * @test_category connection:connection_pool
      * @since 2.0.10, 2.1.6
      */
     @Test(groups = "short")
-    public void fixed_size_pool_should_fill_its_core_connections_and_then_timeout() throws ConnectionException, TimeoutException, BusyConnectionException {
+    public void fixed_size_pool_should_fill_its_core_connections_and_queue_and_then_reject() {
+        Cluster cluster = createClusterBuilder().build();
+        List<MockRequest> allRequests = newArrayList();
+        try {
+            HostConnectionPool pool = createPool(cluster, 2, 2);
+            int maxQueueSize = 256;
+
+            assertThat(pool.connections.size()).isEqualTo(2);
+            List<Connection> coreConnections = newArrayList(pool.connections);
+            // fill connections
+            List<MockRequest> requests = MockRequest.sendMany(2 * 128, pool);
+            assertBorrowedConnections(requests, coreConnections);
+            allRequests.addAll(requests);
+            // fill queue
+            allRequests.addAll(MockRequest.sendMany(maxQueueSize, pool, maxQueueSize));
+
+            // add one more request, it should be rejected because the queue is full
+            MockRequest failedBorrow = MockRequest.send(pool, maxQueueSize);
+            try {
+                failedBorrow.getConnection();
+                fail("Expected a BusyPoolException");
+            } catch (BusyPoolException e) {/*expected*/}
+        } finally {
+            MockRequest.completeAll(allRequests);
+            cluster.close();
+        }
+    }
+
+    /**
+     * Ensures that any enqueued connection borrow requests are failed when their associated connection pool closes.
+     *
+     * @jira_ticket JAVA-839
+     * @test_category connection:connection_pool
+     * @since 3.0.4, 3.1.1
+     */
+    @Test(groups = "short")
+    public void requests_with_enqueued_borrow_requests_should_be_failed_when_pool_closes() {
         Cluster cluster = createClusterBuilder().build();
         List<MockRequest> requests = newArrayList();
         try {
             HostConnectionPool pool = createPool(cluster, 2, 2);
+            int maxQueueSize = 256;
 
             assertThat(pool.connections.size()).isEqualTo(2);
             List<Connection> coreConnections = newArrayList(pool.connections);
-            requests.addAll(sendRequests(256, pool, coreConnections));
+            // fill connections
+            requests = MockRequest.sendMany(2 * 128, pool);
+            assertBorrowedConnections(requests, coreConnections);
+            // fill queue
+            List<MockRequest> queuedRequests = MockRequest.sendMany(maxQueueSize, pool, maxQueueSize);
+
+            // Closing the pool should fail all queued connections.
+            pool.closeAsync();
+
+            for (MockRequest queuedRequest : queuedRequests) {
+                // Future should be completed.
+                assertThat(queuedRequest.connectionFuture.isDone()).isTrue();
+                try {
+                    // Future should fail as result of the pool closing.
+                    queuedRequest.getConnection();
+                    fail("Expected a ConnectionException");
+                } catch (ConnectionException e) {/*expected*/}
+            }
+        } finally {
+            MockRequest.completeAll(requests);
+            cluster.close();
+        }
+    }
+
+    /**
+     * Validates that if the keyspace tied to the Session's pool state is different than the keyspace on the connection
+     * being used in dequeue that {@link Connection#setKeyspaceAsync(String)} is set on that connection and that
+     * "USE keyspace" is only called once since setKeyspaceAsync should not attempt setting the keyspace if there is
+     * already a request inflight that is doing this.
+     *
+     * @jira_ticket JAVA-839
+     * @test_category connection:connection_pool
+     * @since 3.0.4, 3.1.1
+     */
+    @Test(groups = "short")
+    public void should_adjust_connection_keyspace_on_dequeue_if_pool_state_is_different() throws TimeoutException, ExecutionException {
+        Cluster cluster = createClusterBuilder().build();
+        List<MockRequest> requests = newArrayList();
+        try {
+            HostConnectionPool pool = createPool(cluster, 1, 1);
+            int maxQueueSize = 256;
+
+            assertThat(pool.connections.size()).isEqualTo(1);
+            List<Connection> coreConnections = newArrayList(pool.connections);
+            // fill connections
+            requests = MockRequest.sendMany(128, pool);
+            assertBorrowedConnections(requests, coreConnections);
+            // fill queue
+            List<MockRequest> queuedRequests = MockRequest.sendMany(maxQueueSize, pool, maxQueueSize);
+
+            // Wait for connections to be borrowed before changing keyspace.
+            for (MockRequest request : requests) {
+                Uninterruptibles.getUninterruptibly(request.connectionFuture, 5, TimeUnit.SECONDS);
+            }
+            // Simulate change of keyspace on pool.  Prime a delay so existing requests can complete beforehand.
+            primingClient.prime(PrimingRequest.queryBuilder().withQuery("USE \"newkeyspace\"").withThen(PrimingRequest.then().withFixedDelay(2000L)));
+            pool.manager.poolsState.setKeyspace("newkeyspace");
+
+            // Complete all requests, this should cause dequeue on connection.
+            MockRequest.completeAll(requests);
+
+            // Check the status on queued request's connection futures.  We expect that dequeue should
+            // be called when connection is released by previous requests completing, and that one set
+            // keyspace attempt should be tried.
+
+            // Because Scassandra currently returns a 'ROWS' response for set keyspace, the attempt
+            // will fail, and thus the enqueued connection futures will fail in the following ways:
+            // 1. DriverInternalError for set keyspace returning 'ROWS' response
+            // 2. TransportException for connection being closed, when this happens we stop checking these futures.
+            // 3. Never completing because no connections are available.
+            boolean timeoutAcceptable = false;
+            for (MockRequest queuedRequest : queuedRequests) {
+                try {
+                    Uninterruptibles.getUninterruptibly(queuedRequest.connectionFuture, 5, TimeUnit.SECONDS);
+                    fail("Expected an exception (because Scassandra doesn't support 'USE keyspace'");
+                } catch (ExecutionException e) {
+                    try {
+                        throw e.getCause();
+                    } catch (DriverInternalError die) {
+                        assertThat(die.getMessage()).contains("Unexpected response while setting keyspace");
+                        // Subsequent futures may timeout because the connection is closed.
+                        timeoutAcceptable = true;
+                    } catch (TransportException ce) {
+                        /* expected, Scassandra returning a ROWS response for 'USE keyspace' should defunct and close the connection */
+                        // all remaining futures will timeout since there are no remaining connections.
+                        break;
+                    } catch (Throwable t) {
+                        fail("Unexpected cause of future failing", t);
+                    }
+                } catch (TimeoutException te) {
+                    assertThat(timeoutAcceptable).isTrue();
+                    break;
+                }
+            }
+
+            // We should only have gotten one 'USE newkeyspace' query since Connection#setKeyspaceAsync should only do
+            // this once if there is already a request in flight.
+            assertThat(activityClient.retrieveQueries()).extractingResultOf("getQuery").containsOnlyOnce("USE \"newkeyspace\"");
+        } finally {
+            MockRequest.completeAll(requests);
+            cluster.close();
+        }
+    }
+
+    /**
+     * Ensures that on borrowConnection if a set keyspace attempt is in progress on that connection for a different keyspace than the
+     * pool state that the borrowConnection future returned is failed.
+     *
+     * @jira_ticket JAVA-839
+     * @test_category connection:connection_pool
+     * @since 3.0.4, 3.1.1
+     */
+    @Test(groups = "short")
+    public void should_fail_in_borrowConnection_when_setting_keyspace_and_another_set_keyspace_attempt_is_in_flight() throws TimeoutException {
+        Cluster cluster = createClusterBuilder().build();
+        try {
+            HostConnectionPool pool = createPool(cluster, 1, 1);
+
+            // Respond to setting as slowks very slowly.
+            primingClient.prime(PrimingRequest.queryBuilder().withQuery("USE \"slowks\"").withThen(PrimingRequest.then().withFixedDelay(5000L)));
+
+            Connection connection = pool.connections.get(0);
+
+            connection.setKeyspaceAsync("slowks");
+
+            // Simulate change of keyspace on pool.
+            pool.manager.poolsState.setKeyspace("newks");
+
+            MockRequest request = MockRequest.send(pool);
 
             try {
-                MockRequest.send(pool);
-                Assertions.fail("Expected a TimeoutException");
-            } catch (TimeoutException e) { /*expected*/}
+                Uninterruptibles.getUninterruptibly(request.connectionFuture, 5, TimeUnit.SECONDS);
+                fail("Should have thrown exception");
+            } catch (ExecutionException e) {
+                assertThat(e.getCause()).isInstanceOf(DriverException.class);
+                assertThat(e.getCause().getMessage()).contains("Aborting attempt to set keyspace to 'newks' since there is already an in flight attempt to set keyspace to 'slowks'.");
+            }
         } finally {
-            completeRequests(requests);
+            cluster.close();
+        }
+    }
+
+    /**
+     * Ensures that while dequeuing borrow connection requests that if a set keyspace attempt is in progress on that connection for a difference
+     * keyspace than the pool state that the future for that borrow attempt is failed.
+     *
+     * @jira_ticket JAVA-839
+     * @test_category connection:connection_pool
+     * @since 3.0.4, 3.1.1
+     */
+    @Test(groups = "short")
+    public void should_fail_in_dequeue_when_setting_keyspace_and_another_set_keyspace_attempt_is_in_flight() throws ExecutionException, TimeoutException {
+        Cluster cluster = createClusterBuilder().build();
+        List<MockRequest> requests = newArrayList();
+        try {
+            // Limit requests per connection to 100 so we don't exhaust stream ids.
+            cluster.getConfiguration().getPoolingOptions().setMaxRequestsPerConnection(HostDistance.LOCAL, 100);
+            HostConnectionPool pool = createPool(cluster, 1, 1);
+            int maxQueueSize = 256;
+
+            assertThat(pool.connections.size()).isEqualTo(1);
+            List<Connection> coreConnections = newArrayList(pool.connections);
+
+            // fill connections
+            requests = MockRequest.sendMany(100, pool);
+            assertBorrowedConnections(requests, coreConnections);
+
+            // send a request that will be queued.
+            MockRequest queuedRequest = MockRequest.send(pool, maxQueueSize);
+
+            // Wait for connections to be borrowed before changing keyspace.
+            for (MockRequest request : requests) {
+                Uninterruptibles.getUninterruptibly(request.connectionFuture, 5, TimeUnit.SECONDS);
+            }
+
+            // Respond to setting as slowks very slowly.
+            primingClient.prime(PrimingRequest.queryBuilder().withQuery("USE \"slowks\"").withThen(PrimingRequest.then().withFixedDelay(5000L)));
+            Connection connection = pool.connections.get(0);
+            connection.setKeyspaceAsync("slowks");
+
+            // Simulate change of keyspace on pool.
+            pool.manager.poolsState.setKeyspace("newkeyspace");
+
+            // Complete all requests, this should cause dequeue on connection.
+            MockRequest.completeAll(requests);
+
+            try {
+                Uninterruptibles.getUninterruptibly(queuedRequest.connectionFuture, 5, TimeUnit.SECONDS);
+                fail("Should have thrown exception");
+            } catch (ExecutionException e) {
+                assertThat(e.getCause()).isInstanceOf(DriverException.class);
+                assertThat(e.getCause().getMessage()).contains("Aborting attempt to set keyspace to 'newkeyspace' since there is already an in flight attempt to set keyspace to 'slowks'.");
+            }
+
+        } finally {
+            MockRequest.completeAll(requests);
             cluster.close();
         }
     }
 
     /**
      * Ensures that if a variable-sized pool has filled up to its maximum connections that borrowConnection will
-     * timeout instead of creating a new connection.
+     * return a failed future instead of creating a new connection.
      *
      * @jira_ticket JAVA-419
      * @test_category connection:connection_pool
      * @since 2.0.10, 2.1.6
      */
     @Test(groups = "short")
-    public void variable_size_pool_should_fill_its_connections_and_then_timeout() throws Exception {
+    public void variable_size_pool_should_fill_its_connections_and_then_reject() throws Exception {
         Cluster cluster = createClusterBuilder().build();
-        List<MockRequest> requests = newArrayList();
+        List<MockRequest> allRequests = newArrayList();
         try {
             HostConnectionPool pool = createPool(cluster, 1, 2);
             Connection.Factory factory = spy(cluster.manager.connectionFactory);
             cluster.manager.connectionFactory = factory;
 
             assertThat(pool.connections.size()).isEqualTo(1);
-            List<Connection> coreConnections = newArrayList(pool.connections);
+            Connection coreConnection = pool.connections.get(0);
 
             // Fill enough connections to hit the threshold.
-            requests.addAll(fillConnectionToThreshold(pool, coreConnections));
+            List<MockRequest> requests = MockRequest.sendMany(NEW_CONNECTION_THRESHOLD, pool);
+            assertBorrowedConnection(requests, coreConnection);
+            allRequests.addAll(requests);
+            allRequests.add(MockRequest.send(pool));
 
             // Allow time for new connection to be spawned.
             verify(factory, after(2000).times(1)).open(any(HostConnectionPool.class));
             assertPoolSize(pool, 2);
 
             // Borrow more and ensure the connection returned is a non-core connection.
-            for (int i = 0; i < 100; i++) {
+            for (int i = 0; i < NEW_CONNECTION_THRESHOLD; i++) {
                 MockRequest request = MockRequest.send(pool);
-                assertThat(coreConnections).doesNotContain(request.connection);
-                requests.add(request);
+                assertThat(request.getConnection()).isNotEqualTo(coreConnection);
+                allRequests.add(request);
             }
 
             // Fill remaining connections (28 + 28) - 1
-            requests.addAll(sendRequests(55, pool));
+            allRequests.addAll(MockRequest.sendMany(55, pool));
 
-            boolean timedOut = false;
+            MockRequest failedBorrow = MockRequest.send(pool);
             try {
-                MockRequest.send(pool);
-            } catch (TimeoutException e) {
-                timedOut = true;
-            }
-            assertThat(timedOut).isTrue();
+                failedBorrow.getConnection();
+                fail("Expected a BusyPoolException");
+            } catch (BusyPoolException e) { /*expected*/}
         } finally {
-            completeRequests(requests);
+            MockRequest.completeAll(allRequests);
             cluster.close();
         }
     }
@@ -211,7 +397,7 @@ public class HostConnectionPoolTest extends ScassandraTestBase.PerClassCluster {
     @Test(groups = "short")
     public void should_add_extra_connection_when_core_full() throws Exception {
         Cluster cluster = createClusterBuilder().build();
-        List<MockRequest> requests = newArrayList();
+        List<MockRequest> allRequests = newArrayList();
         try {
             HostConnectionPool pool = createPool(cluster, 1, 2);
             Connection.Factory factory = spy(cluster.manager.connectionFactory);
@@ -219,13 +405,16 @@ public class HostConnectionPoolTest extends ScassandraTestBase.PerClassCluster {
             Connection core = pool.connections.get(0);
 
             // Fill core connection + 1
-            requests.addAll(fillConnectionToThreshold(pool, singletonList(core)));
+            List<MockRequest> requests = MockRequest.sendMany(NEW_CONNECTION_THRESHOLD, pool);
+            assertBorrowedConnection(requests, core);
+            allRequests.addAll(requests);
+            allRequests.add(MockRequest.send(pool));
 
             // Reaching the threshold should have triggered the creation of an extra one
             verify(factory, after(2000).times(1)).open(any(HostConnectionPool.class));
             assertPoolSize(pool, 2);
         } finally {
-            completeRequests(requests);
+            MockRequest.completeAll(allRequests);
             cluster.close();
         }
     }
@@ -241,14 +430,17 @@ public class HostConnectionPoolTest extends ScassandraTestBase.PerClassCluster {
     @Test(groups = "long")
     public void should_resurrect_trashed_connection_within_idle_timeout() throws Exception {
         Cluster cluster = createClusterBuilder().withPoolingOptions(new PoolingOptions().setIdleTimeoutSeconds(20)).build();
-        List<MockRequest> requests = newArrayList();
+        List<MockRequest> allRequests = newArrayList();
         try {
             HostConnectionPool pool = createPool(cluster, 1, 2);
             Connection.Factory factory = spy(cluster.manager.connectionFactory);
             cluster.manager.connectionFactory = factory;
             Connection connection1 = pool.connections.get(0);
 
-            requests.addAll(fillConnectionToThreshold(pool, singletonList(connection1)));
+            List<MockRequest> requests = MockRequest.sendMany(NEW_CONNECTION_THRESHOLD, pool);
+            assertBorrowedConnections(requests, Collections.singletonList(connection1));
+            allRequests.addAll(requests);
+            allRequests.add(MockRequest.send(pool));
 
             verify(factory, after(2000).times(1)).open(any(HostConnectionPool.class));
             assertPoolSize(pool, 2);
@@ -258,7 +450,7 @@ public class HostConnectionPoolTest extends ScassandraTestBase.PerClassCluster {
             assertThat(connection2.inFlight.get()).isEqualTo(0);
 
             // Go back under the capacity of 1 connection
-            completeRequests(51, requests);
+            MockRequest.completeMany(51, allRequests);
 
             assertThat(connection1.inFlight.get()).isEqualTo(50);
             assertThat(connection2.inFlight.get()).isEqualTo(0);
@@ -269,7 +461,7 @@ public class HostConnectionPoolTest extends ScassandraTestBase.PerClassCluster {
             assertThat(pool.trash).containsExactly(connection1);
 
             // Now borrow enough to go just under the 1 connection threshold
-            requests.addAll(sendRequests(50, pool));
+            allRequests.addAll(MockRequest.sendMany(50, pool));
 
             assertThat(pool.connections).containsExactly(connection2);
             assertThat(pool.trash).containsExactly(connection1);
@@ -277,7 +469,7 @@ public class HostConnectionPoolTest extends ScassandraTestBase.PerClassCluster {
             assertThat(connection2.inFlight.get()).isEqualTo(50);
 
             // Borrowing one more time should resurrect the trashed connection
-            requests.addAll(sendRequests(1, pool));
+            allRequests.addAll(MockRequest.sendMany(1, pool));
             verify(factory, after(2000).times(1)).open(any(HostConnectionPool.class));
             assertPoolSize(pool, 2);
 
@@ -286,7 +478,7 @@ public class HostConnectionPoolTest extends ScassandraTestBase.PerClassCluster {
             assertThat(connection1.inFlight.get()).isEqualTo(50);
             assertThat(connection2.inFlight.get()).isEqualTo(51);
         } finally {
-            completeRequests(requests);
+            MockRequest.completeAll(allRequests);
             cluster.close();
         }
     }
@@ -302,14 +494,17 @@ public class HostConnectionPoolTest extends ScassandraTestBase.PerClassCluster {
     @Test(groups = "long")
     public void should_not_resurrect_trashed_connection_after_idle_timeout() throws Exception {
         Cluster cluster = createClusterBuilder().withPoolingOptions(new PoolingOptions().setIdleTimeoutSeconds(20)).build();
-        List<MockRequest> requests = newArrayList();
+        List<MockRequest> allRequests = newArrayList();
         try {
             HostConnectionPool pool = createPool(cluster, 1, 2);
             Connection.Factory factory = spy(cluster.manager.connectionFactory);
             cluster.manager.connectionFactory = factory;
             Connection connection1 = pool.connections.get(0);
 
-            requests.addAll(fillConnectionToThreshold(pool, singletonList(connection1)));
+            List<MockRequest> requests = MockRequest.sendMany(NEW_CONNECTION_THRESHOLD, pool);
+            assertBorrowedConnection(requests, connection1);
+            allRequests.addAll(requests);
+            allRequests.add(MockRequest.send(pool));
 
             verify(factory, after(2000).times(1)).open(any(HostConnectionPool.class));
             assertPoolSize(pool, 2);
@@ -320,7 +515,7 @@ public class HostConnectionPoolTest extends ScassandraTestBase.PerClassCluster {
             assertThat(connection2.inFlight.get()).isEqualTo(0);
 
             // Go back under the capacity of 1 connection
-            completeRequests(51, requests);
+            MockRequest.completeMany(51, allRequests);
 
             assertThat(connection1.inFlight.get()).isEqualTo(50);
             assertThat(connection2.inFlight.get()).isEqualTo(0);
@@ -331,7 +526,7 @@ public class HostConnectionPoolTest extends ScassandraTestBase.PerClassCluster {
             assertThat(pool.trash).containsExactly(connection1);
 
             // Return trashed connection down to 0 inFlight
-            completeRequests(50, requests);
+            MockRequest.completeMany(50, allRequests);
             assertThat(connection1.inFlight.get()).isEqualTo(0);
 
             // Give enough time for trashed connection to be cleaned up from the trash:
@@ -341,19 +536,22 @@ public class HostConnectionPoolTest extends ScassandraTestBase.PerClassCluster {
             assertThat(connection1.isClosed()).isTrue();
 
             // Fill the live connection to go over the threshold where a second one is needed
-            requests.addAll(fillConnectionToThreshold(pool, singletonList(connection2)));
+            requests = MockRequest.sendMany(NEW_CONNECTION_THRESHOLD, pool);
+            assertBorrowedConnection(requests, connection2);
+            allRequests.addAll(requests);
+            allRequests.add(MockRequest.send(pool));
             assertThat(connection2.inFlight.get()).isEqualTo(101);
             verify(factory, after(2000).times(1)).open(any(HostConnectionPool.class));
             assertPoolSize(pool, 2);
 
             // Borrow again to get the new connection
             MockRequest request = MockRequest.send(pool);
-            requests.add(request);
-            assertThat(request.connection)
+            allRequests.add(request);
+            assertThat(request.getConnection())
                     .isNotEqualTo(connection2) // should not be the full connection
                     .isNotEqualTo(connection1); // should not be the previously trashed one
         } finally {
-            completeRequests(requests);
+            MockRequest.completeAll(allRequests);
             cluster.close();
         }
     }
@@ -368,7 +566,7 @@ public class HostConnectionPoolTest extends ScassandraTestBase.PerClassCluster {
     @Test(groups = "long")
     public void should_not_close_trashed_connection_until_no_in_flight() throws Exception {
         Cluster cluster = createClusterBuilder().withPoolingOptions(new PoolingOptions().setIdleTimeoutSeconds(20)).build();
-        List<MockRequest> requests = newArrayList();
+        List<MockRequest> allRequests = newArrayList();
 
         try {
             HostConnectionPool pool = createPool(cluster, 1, 2);
@@ -377,13 +575,16 @@ public class HostConnectionPoolTest extends ScassandraTestBase.PerClassCluster {
             Connection connection1 = pool.connections.get(0);
 
             // Fill core connection enough to trigger creation of another one
-            requests.addAll(fillConnectionToThreshold(pool, singletonList(connection1)));
+            List<MockRequest> requests = MockRequest.sendMany(NEW_CONNECTION_THRESHOLD, pool);
+            assertBorrowedConnections(requests, Collections.singletonList(connection1));
+            allRequests.addAll(requests);
+            allRequests.add(MockRequest.send(pool));
 
             verify(factory, after(2000).times(1)).open(any(HostConnectionPool.class));
             assertThat(pool.connections).hasSize(2);
 
             // Return enough times to get back under the threshold where one connection is enough
-            completeRequests(50, requests);
+            MockRequest.completeMany(50, allRequests);
 
             // Give enough time for one connection to be trashed. Due to the implementation, this will be the first one.
             // It still has in-flight requests so should not get closed.
@@ -393,7 +594,7 @@ public class HostConnectionPoolTest extends ScassandraTestBase.PerClassCluster {
             assertThat(connection1.isClosed()).isFalse();
 
             // Consume all inFlight requests on the trashed connection.
-            completeRequests(51, requests);
+            MockRequest.completeMany(51, allRequests);
 
             // Sleep enough time for the connection to be consider idled and closed.
             Uninterruptibles.sleepUninterruptibly(30, TimeUnit.SECONDS);
@@ -404,7 +605,7 @@ public class HostConnectionPoolTest extends ScassandraTestBase.PerClassCluster {
             assertThat(pool.connections).doesNotContain(connection1);
             assertThat(pool.trash).doesNotContain(connection1);
         } finally {
-            completeRequests(requests);
+            MockRequest.completeAll(allRequests);
             cluster.close();
         }
     }
@@ -420,14 +621,17 @@ public class HostConnectionPoolTest extends ScassandraTestBase.PerClassCluster {
     @Test(groups = "short")
     public void should_trash_on_returning_connection_with_insufficient_streams() throws Exception {
         Cluster cluster = createClusterBuilder().build();
-        List<MockRequest> requests = newArrayList();
+        List<MockRequest> allRequests = newArrayList();
         try {
             HostConnectionPool pool = createPool(cluster, 1, 2);
             Connection.Factory factory = spy(cluster.manager.connectionFactory);
             cluster.manager.connectionFactory = factory;
             Connection core = pool.connections.get(0);
 
-            requests.addAll(fillConnectionToThreshold(pool, singletonList(core)));
+            List<MockRequest> requests = MockRequest.sendMany(NEW_CONNECTION_THRESHOLD, pool);
+            assertBorrowedConnections(requests, Collections.singletonList(core));
+            allRequests.addAll(requests);
+            allRequests.add(MockRequest.send(pool));
 
             verify(factory, after(2000).times(1)).open(any(HostConnectionPool.class));
             assertThat(pool.connections).hasSize(2);
@@ -437,7 +641,7 @@ public class HostConnectionPoolTest extends ScassandraTestBase.PerClassCluster {
             pool.connections.set(1, extra1);
 
             // Borrow 10 times to ensure pool is utilized.
-            requests.addAll(sendRequests(10, pool));
+            allRequests.addAll(MockRequest.sendMany(10, pool));
             assertThat(pool.connections).hasSize(2);
 
             // stub the maxAvailableStreams method to return 0, indicating there are no remaining streams.
@@ -449,7 +653,7 @@ public class HostConnectionPoolTest extends ScassandraTestBase.PerClassCluster {
             pool.returnConnection(extra1);
             assertThat(pool.trash).hasSize(1);
         } finally {
-            completeRequests(requests);
+            MockRequest.completeAll(allRequests);
             cluster.close();
         }
     }
@@ -485,7 +689,6 @@ public class HostConnectionPoolTest extends ScassandraTestBase.PerClassCluster {
             cluster.close();
         }
     }
-
 
     /**
      * Ensures that if all connections on a host are closed that the host is marked
@@ -561,7 +764,6 @@ public class HostConnectionPoolTest extends ScassandraTestBase.PerClassCluster {
         }
     }
 
-
     /**
      * Ensures that if a connection on a host is lost that brings the number of active connections in a pool
      * under core connection count that up to core connections are re-established, but only after the
@@ -580,7 +782,7 @@ public class HostConnectionPoolTest extends ScassandraTestBase.PerClassCluster {
                         .setConnectTimeoutMillis(readTimeout)
                         .setReadTimeoutMillis(reconnectInterval))
                 .withReconnectionPolicy(new ConstantReconnectionPolicy(1000)).build();
-        List<MockRequest> requests = newArrayList();
+        List<MockRequest> allRequests = newArrayList();
         try {
             cluster.init();
 
@@ -608,8 +810,8 @@ public class HostConnectionPoolTest extends ScassandraTestBase.PerClassCluster {
 
             // The borrowed connection should be the open one.
             MockRequest request = MockRequest.send(pool);
-            requests.add(request);
-            assertThat(request.connection).isEqualTo(core1);
+            allRequests.add(request);
+            assertThat(request.getConnection()).isEqualTo(core1);
 
             // Should not have tried to create a new core connection since reconnection time had not elapsed.
             verify(factory, never()).open(any(HostConnectionPool.class));
@@ -620,8 +822,8 @@ public class HostConnectionPoolTest extends ScassandraTestBase.PerClassCluster {
             // Attempt to borrow connection, this should trigger ensureCoreConnections thus spawning a new connection.
             blockingExecutor.reset();
             request = MockRequest.send(pool);
-            requests.add(request);
-            assertThat(request.connection).isEqualTo(core1);
+            allRequests.add(request);
+            assertThat(request.getConnection()).isEqualTo(core1);
 
             // Should have tried to open up to core connections as result of borrowing a connection past reconnect time and not being at core.
             blockingExecutor.blockUntilNextTaskCompleted();
@@ -638,23 +840,23 @@ public class HostConnectionPoolTest extends ScassandraTestBase.PerClassCluster {
 
             // Try to borrow a connection, the pool should grow.
             blockingExecutor.reset();
-            requests.add(MockRequest.send(pool));
+            allRequests.add(MockRequest.send(pool));
             blockingExecutor.blockUntilNextTaskCompleted();
             verify(factory).open(any(HostConnectionPool.class));
             reset(factory);
 
             // Another core connection should be opened as result of another request to get us up to core connections.
             blockingExecutor.reset();
-            requests.add(MockRequest.send(pool));
+            allRequests.add(MockRequest.send(pool));
             blockingExecutor.blockUntilNextTaskCompleted();
             verify(factory).open(any(HostConnectionPool.class));
             reset(factory);
 
             // Sending another request should not grow the pool any more, since we are now at core connections.
-            requests.add(MockRequest.send(pool));
+            allRequests.add(MockRequest.send(pool));
             verify(factory, after((reconnectInterval + readTimeout) * 2).never()).open(any(HostConnectionPool.class));
         } finally {
-            completeRequests(requests);
+            MockRequest.completeAll(allRequests);
             cluster.close();
         }
     }
@@ -677,7 +879,7 @@ public class HostConnectionPoolTest extends ScassandraTestBase.PerClassCluster {
                         .setConnectTimeoutMillis(readTimeout)
                         .setReadTimeoutMillis(reconnectInterval))
                 .withReconnectionPolicy(new ConstantReconnectionPolicy(1000)).build();
-        List<MockRequest> requests = newArrayList();
+        List<MockRequest> allRequests = newArrayList();
         try {
             cluster.init();
 
@@ -691,7 +893,7 @@ public class HostConnectionPoolTest extends ScassandraTestBase.PerClassCluster {
             List<MockRequest> core0requests = newArrayList();
             for (int i = 0; i < 101; i++) {
                 MockRequest request = MockRequest.send(pool);
-                assertThat(request.connection).isEqualTo(core0);
+                assertThat(request.getConnection()).isEqualTo(core0);
                 core0requests.add(request);
             }
 
@@ -712,13 +914,15 @@ public class HostConnectionPoolTest extends ScassandraTestBase.PerClassCluster {
 
             // Since core0 was closed, all of it's requests should have errored.
             for (MockRequest request : core0requests) {
-                verify(request, times(1)).onException(any(Connection.class), any(Exception.class), anyLong(), anyInt());
+                assertThat(request.state.get()).isEqualTo(MockRequest.State.FAILED);
             }
 
             assertThat(cluster).host(1).hasState(Host.State.UP);
 
             // Create enough inFlight requests to fill connection.
-            requests.addAll(sendRequests(100, pool, singletonList(extra1)));
+            List<MockRequest> requests = MockRequest.sendMany(100, pool);
+            assertBorrowedConnections(requests, Collections.singletonList(extra1));
+            allRequests.addAll(requests);
             assertThat(pool.connections).hasSize(1);
 
             // A new connection should never have been spawned since we didn't max out core.
@@ -726,8 +930,8 @@ public class HostConnectionPoolTest extends ScassandraTestBase.PerClassCluster {
 
             // Borrow another connection, since we exceed max another connection should be opened.
             MockRequest request = MockRequest.send(pool);
-            requests.add(request);
-            assertThat(request.connection).isEqualTo(extra1);
+            allRequests.add(request);
+            assertThat(request.getConnection()).isEqualTo(extra1);
 
             // After some time the a connection should attempt to be opened (but will fail).
             verify(factory, timeout(readTimeout)).open(any(HostConnectionPool.class));
@@ -745,8 +949,8 @@ public class HostConnectionPoolTest extends ScassandraTestBase.PerClassCluster {
 
             // Borrow another connection, since we exceed max another connection should be opened.
             request = MockRequest.send(pool);
-            requests.add(request);
-            assertThat(request.connection).isEqualTo(extra1);
+            allRequests.add(request);
+            assertThat(request.getConnection()).isEqualTo(extra1);
 
             // Wait some reasonable amount of time for connection to reestablish then check pool size.
             Uninterruptibles.sleepUninterruptibly(readTimeout, TimeUnit.MILLISECONDS);
@@ -755,10 +959,10 @@ public class HostConnectionPoolTest extends ScassandraTestBase.PerClassCluster {
 
             // Borrowed connection should be the newly spawned connection since the other one has some inflight requests.
             request = MockRequest.send(pool);
-            requests.add(request);
-            assertThat(request.connection).isNotEqualTo(core0).isNotEqualTo(extra1);
+            allRequests.add(request);
+            assertThat(request.getConnection()).isNotEqualTo(core0).isNotEqualTo(extra1);
         } finally {
-            completeRequests(requests);
+            MockRequest.completeAll(allRequests);
             cluster.close();
         }
     }
@@ -781,7 +985,7 @@ public class HostConnectionPoolTest extends ScassandraTestBase.PerClassCluster {
                         .setConnectTimeoutMillis(readTimeout)
                         .setReadTimeoutMillis(reconnectInterval))
                 .withReconnectionPolicy(new ConstantReconnectionPolicy(1000)).build();
-        List<MockRequest> requests = newArrayList();
+        List<MockRequest> allRequests = newArrayList();
         try {
             cluster.init();
 
@@ -811,13 +1015,13 @@ public class HostConnectionPoolTest extends ScassandraTestBase.PerClassCluster {
             // we need to wait for connections to be established between requests for the pool
             // to spawn new connections (since it only allows one simultaneous creation).
             for (int i = 5; i <= 8; i++) {
-                requests.add(MockRequest.send(pool));
+                allRequests.add(MockRequest.send(pool));
                 verify(factory, timeout(readTimeout)).open(any(HostConnectionPool.class));
                 reset(factory);
                 assertPoolSize(pool, i);
             }
         } finally {
-            completeRequests(requests);
+            MockRequest.completeAll(allRequests);
             cluster.close();
         }
     }
@@ -825,15 +1029,15 @@ public class HostConnectionPoolTest extends ScassandraTestBase.PerClassCluster {
     /**
      * Ensures that if all connections fail on pool init that the host and subsequently the
      * control connection is not marked down since the control connection is still active.
-     * on the pool that a TimeoutException is yielded if we are still in the reconnection window
+     * The test also ensures that borrow attempts on the pool fail if we are still in the reconnection window
      * according to the ConvictionPolicy.
      *
      * @jira_ticket JAVA-544
      * @test_category connection:connection_pool
      * @since 2.0.11
      */
-    @Test(groups = "short", expectedExceptions = TimeoutException.class)
-    public void should_throw_exception_if_convicted_and_no_connections_available() throws Exception {
+    @Test(groups = "short")
+    public void should_throw_exception_if_convicted_and_no_connections_available() {
         int readTimeout = 1000;
         int reconnectInterval = 1000;
         Cluster cluster = this.createClusterBuilder()
@@ -862,16 +1066,19 @@ public class HostConnectionPoolTest extends ScassandraTestBase.PerClassCluster {
             assertThat(cluster).host(1).hasState(Host.State.UP);
             assertThat(cluster).hasOpenControlConnection();
 
-            MockRequest.send(pool);
+            MockRequest failedBorrow = MockRequest.send(pool);
+            try {
+                failedBorrow.getConnection();
+                fail("Expected a BusyPoolException");
+            } catch (BusyPoolException e) { /*expected*/}
         } finally {
             cluster.close();
         }
     }
 
-
     /**
      * Ensures that if all connections fail on pool init that the host and subsequently the
-     * control connection is not marked down.  The test also ensures that when making requests
+     * control connection is not marked down. The test also ensures that when making requests
      * on the pool after the conviction period that all core connections are created.
      *
      * @jira_ticket JAVA-544
@@ -912,12 +1119,13 @@ public class HostConnectionPoolTest extends ScassandraTestBase.PerClassCluster {
             Uninterruptibles.sleepUninterruptibly(reconnectInterval, TimeUnit.MILLISECONDS);
 
             reset(factory);
-            MockRequest request = MockRequest.send(pool);
-            request.simulateSuccessResponse();
+            MockRequest request = MockRequest.send(pool, 1);
 
             // Should create up to core connections.
             verify(factory, timeout(readTimeout * 8).times(8)).open(any(HostConnectionPool.class));
             assertPoolSize(pool, 8);
+
+            request.simulateSuccessResponse();
         } finally {
             cluster.close();
         }
@@ -946,6 +1154,9 @@ public class HostConnectionPoolTest extends ScassandraTestBase.PerClassCluster {
             cluster.init();
             assertThat(cluster).hasOpenControlConnection();
 
+            Connection.Factory factory = spy(cluster.manager.connectionFactory);
+            cluster.manager.connectionFactory = factory;
+
             HostConnectionPool pool = createPool(cluster, 0, 2);
 
             // Pool should be empty.
@@ -955,12 +1166,14 @@ public class HostConnectionPoolTest extends ScassandraTestBase.PerClassCluster {
             assertThat(cluster).host(1).hasState(Host.State.UP);
             assertThat(cluster).hasOpenControlConnection();
 
-            // Send a request, this should create a connection.
-            MockRequest request = MockRequest.send(pool);
-            request.simulateSuccessResponse();
+            reset(factory);
+            MockRequest request = MockRequest.send(pool, 1);
 
             // Should create up to core connections.
+            verify(factory, timeout(readTimeout).times(1)).open(any(HostConnectionPool.class));
             assertThat(pool.connections).hasSize(1);
+
+            request.simulateSuccessResponse();
         } finally {
             cluster.close();
         }
@@ -979,10 +1192,10 @@ public class HostConnectionPoolTest extends ScassandraTestBase.PerClassCluster {
     }
 
     /**
-     * <p>
+     * <p/>
      * This test uses a table named "Java349" with 1000 column and performs asynchronously 100k insertions. While the
      * insertions are being executed, the number of opened connection is monitored.
-     * <p>
+     * <p/>
      * If at anytime, the number of opened connections is negative, this test will fail.
      *
      * @jira_ticket JAVA-349
@@ -1061,51 +1274,115 @@ public class HostConnectionPoolTest extends ScassandraTestBase.PerClassCluster {
 
         enum State {START, COMPLETED, FAILED, TIMED_OUT}
 
-        final Connection connection;
-        private Connection.ResponseHandler responseHandler;
+        final ListenableFuture<Connection> connectionFuture;
+        private volatile Connection.ResponseHandler responseHandler;
 
-        private final AtomicReference<State> state = new AtomicReference<State>(State.START);
+        final AtomicReference<State> state = new AtomicReference<State>(State.START);
 
-        static MockRequest send(HostConnectionPool pool) throws ConnectionException, BusyConnectionException, TimeoutException {
-            // Create a MockRequest and spy on it.  Create a response handler and add it to the connection's dispatcher.
-            MockRequest request = spy(new MockRequest(pool));
-            request.responseHandler = new Connection.ResponseHandler(request.connection, -1, request);
-            request.connection.dispatcher.add(request.responseHandler);
-            return request;
+        static MockRequest send(HostConnectionPool pool) {
+            return send(pool, 0);
         }
 
-        private MockRequest(HostConnectionPool pool) throws ConnectionException, TimeoutException, BusyConnectionException {
-            connection = pool.borrowConnection(500, TimeUnit.MILLISECONDS);
+        static MockRequest send(HostConnectionPool pool, int maxQueueSize) throws ConnectionException, BusyConnectionException {
+            return new MockRequest(pool, maxQueueSize);
+        }
+
+        private static List<MockRequest> sendMany(int count, HostConnectionPool pool) throws ConnectionException {
+            return sendMany(count, pool, 0);
+        }
+
+        private static List<MockRequest> sendMany(int count, HostConnectionPool pool, int maxQueueSize) throws ConnectionException {
+            List<MockRequest> requests = newArrayList();
+            for (int i = 0; i < count; i++) {
+                MockRequest request = send(pool, maxQueueSize);
+                requests.add(request);
+            }
+            return requests;
+        }
+
+        /**
+         * Completes count requests by simulating a successful response.
+         */
+        private static void completeMany(int count, List<MockRequest> requests) {
+            Iterator<MockRequest> requestIt = requests.iterator();
+            for (int i = 0; i < count; i++) {
+                if (requestIt.hasNext()) {
+                    MockRequest request = requestIt.next();
+                    request.simulateSuccessResponse();
+                    requestIt.remove();
+                } else {
+                    break;
+                }
+            }
+        }
+
+        /**
+         * Completes all requests by simulating a successful response.
+         */
+        private static void completeAll(List<MockRequest> requests) {
+            for (MockRequest request : requests) {
+                request.simulateSuccessResponse();
+            }
+        }
+
+        private MockRequest(HostConnectionPool pool, int maxQueueSize) throws ConnectionException {
+            this.connectionFuture = pool.borrowConnection(maxQueueSize);
+            Futures.addCallback(this.connectionFuture, new MoreFutures.SuccessCallback<Connection>() {
+                @Override
+                public void onSuccess(Connection connection) {
+                    MockRequest thisRequest = MockRequest.this;
+                    thisRequest.responseHandler = new Connection.ResponseHandler(connection, -1, thisRequest);
+                    connection.dispatcher.add(thisRequest.responseHandler);
+                }
+            });
         }
 
         void simulateSuccessResponse() {
-            onSet(connection, null, 0, 0);
+            onSet(getConnection(), null, 0, 0);
         }
 
         @SuppressWarnings("unused")
         void simulateErrorResponse() {
-            onException(connection, null, 0, 0);
+            onException(getConnection(), null, 0, 0);
         }
 
         @SuppressWarnings("unused")
         void simulateTimeout() {
-            if (onTimeout(connection, 0, 0))
+            if (onTimeout(getConnection(), 0, 0))
                 responseHandler.cancelHandler();
+        }
+
+        // Get the connection, assuming pool acquisition completed
+        Connection getConnection() {
+            try {
+                if (!connectionFuture.isDone()) {
+                    throw new AssertionError("Borrow call did not complete");
+                }
+                return Uninterruptibles.getUninterruptibly(connectionFuture);
+            } catch (ExecutionException e) {
+                throw Throwables.propagate(e.getCause());
+            }
         }
 
         @Override
         public void onSet(Connection connection, Message.Response response, long latency, int retryCount) {
+            assertThat(connectionFuture.isDone()).isTrue();
+            try {
+                assertThat(Uninterruptibles.getUninterruptibly(connectionFuture)).isNotNull();
+            } catch (ExecutionException e) {
+                Throwables.propagate(e.getCause());
+            }
             if (state.compareAndSet(State.START, State.COMPLETED)) {
-                connection.release();
                 connection.dispatcher.removeHandler(responseHandler, true);
+                connection.release();
             }
         }
 
         @Override
         public void onException(Connection connection, Exception exception, long latency, int retryCount) {
             if (state.compareAndSet(State.START, State.FAILED)) {
-                connection.release();
                 connection.dispatcher.removeHandler(responseHandler, true);
+                connection.release();
             }
         }
 

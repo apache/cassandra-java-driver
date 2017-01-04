@@ -146,13 +146,13 @@ the client a chance to customize the statement before executing it.
 - `Mapper.getQuery(userId)`: returns a statement to select a row in the
   database, selected on the given `userId`, and matching the mapped
   object structure.
-- `Mapper.deleteQuery(userID)`: returns a statement delete a row in the
+- `Mapper.deleteQuery(userID)`: returns a statement to delete a row in the
   database given the `userId` provided. This method can also accept a
   mapped object instance.
 
 #### Manual mapping
 
-`Mapper#map` provides a way to converts the results of a regular query:
+`Mapper#map` provides a way to convert the results of a regular query:
 
 ```java
 ResultSet results = session.execute("SELECT * FROM user");
@@ -192,8 +192,8 @@ public interface UserAccessor {
 }
 ```
 
-The `MappingManager` can then process this class and generate an
-implementation:
+The `MappingManager` can then process this interface and automatically generate an
+implementation for it:
 
 ```java
 UserAccessor userAccessor = manager.createAccessor(UserAccessor.class);

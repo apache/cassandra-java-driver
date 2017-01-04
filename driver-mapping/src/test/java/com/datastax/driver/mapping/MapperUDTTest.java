@@ -18,6 +18,7 @@ package com.datastax.driver.mapping;
 import com.datastax.driver.core.*;
 import com.datastax.driver.core.exceptions.CodecNotFoundException;
 import com.datastax.driver.core.exceptions.InvalidQueryException;
+import com.datastax.driver.core.querybuilder.BuiltStatement;
 import com.datastax.driver.core.utils.CassandraVersion;
 import com.datastax.driver.core.utils.UUIDs;
 import com.datastax.driver.mapping.annotations.*;
@@ -31,6 +32,7 @@ import org.testng.annotations.Test;
 import java.util.*;
 
 import static com.datastax.driver.core.CreateCCM.TestMode.PER_METHOD;
+import static com.datastax.driver.core.querybuilder.QueryBuilder.*;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
 import static org.testng.Assert.*;
@@ -471,7 +473,7 @@ public class MapperUDTTest extends CCMTestsSupport {
             manager.mapper(User.class);
             fail("Expected IllegalArgumentException");
         } catch (IllegalArgumentException e) {
-            assertThat(e.getMessage()).isEqualTo("Table users does not exist in keyspace \"" + keyspace + "\"");
+            assertThat(e.getMessage()).isEqualTo("Table or materialized view users does not exist in keyspace \"" + keyspace + "\"");
         }
     }
 
@@ -511,7 +513,7 @@ public class MapperUDTTest extends CCMTestsSupport {
             manager.mapper(User.class);
             fail("Expected IllegalArgumentException");
         } catch (IllegalArgumentException e) {
-            assertThat(e.getMessage()).isEqualTo(String.format("Column mainaddress does not exist in table \"%s\".users", keyspace));
+            assertThat(e.getMessage()).isIn(String.format("Column mainaddress does not exist in table \"%s\".users", keyspace));
         }
     }
 
@@ -727,6 +729,49 @@ public class MapperUDTTest extends CCMTestsSupport {
     public void should_fail_to_create_mapper_if_class_has_udt_field_class_that_has_field_not_in_udt() {
         MappingManager manager = new MappingManager(session());
         manager.mapper(UserWithAddressUnknownField.class);
+    }
+
+    /**
+     * Ensures that MappedUDTCodec is able to properly format UDTs when printing the query string of a BuiltStatement.
+     *
+     * @jira_ticket JAVA-1272
+     * @test_category object_mapper
+     */
+    @Test(groups = "short")
+    public void should_format_mapped_udt() throws Exception {
+        MappingManager manager = new MappingManager(session());
+        UUID uuid = UUIDs.random();
+        BuiltStatement update =
+                update("users")
+                        .with(set("mainaddress", new Address("12 4th Street", "Springfield", 12345, "12341343", "435423245")))
+                        .where(eq("user_id", uuid));
+        CodecRegistry codecRegistry = cluster().getConfiguration().getCodecRegistry();
+        codecRegistry.register(manager.udtCodec(Address.class));
+        String queryString = update.getQueryString(codecRegistry);
+        assertThat(queryString)
+                .isEqualTo("UPDATE users SET mainaddress=? WHERE user_id=?;");
+        update.setForceNoValues(true);
+        queryString = update.getQueryString(codecRegistry);
+        assertThat(queryString).isEqualTo(
+                "UPDATE users " +
+                        "SET mainaddress={street:'12 4th Street',city:'Springfield',\"ZIP_code\":12345,phones:{'435423245','12341343'}} " +
+                        "WHERE user_id=" + uuid + ";");
+        // check that the query string is valid
+        session().execute(queryString);
+    }
+
+    /**
+     * Ensures that MappedUDTCodec is able to properly parse UDTs.
+     *
+     * @jira_ticket JAVA-1272
+     * @test_category object_mapper
+     */
+    @Test(groups = "short")
+    public void should_parse_mapped_udt() throws Exception {
+        MappingManager manager = new MappingManager(session());
+        TypeCodec<Address> codec = manager.udtCodec(Address.class);
+        Address actual = codec.parse("{street:'12 4th Street',city:'Springfield',\"ZIP_code\":12345,phones:{'435423245','12341343'}}");
+        assertThat(actual).isEqualTo(new Address("12 4th Street", "Springfield", 12345, "12341343", "435423245"));
     }
 
 }
