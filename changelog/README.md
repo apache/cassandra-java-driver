@@ -116,6 +116,14 @@ Merged from 2.1 branch:
 - [improvement] JAVA-444: Add Java process information to UUIDs.makeNode() hash.
 
 
+### 3.0.6
+
+- [bug] JAVA-1330: Add un/register for SchemaChangeListener in DelegatingCluster
+- [bug] JAVA-1351: Include Custom Payload in Request.copy.
+- [bug] JAVA-1346: Reset heartbeat only on client reads (not writes).
+- [improvement] JAVA-866: Support tuple notation in QueryBuilder.eq/in.
+
+
 ### 3.0.5
 
 - [bug] JAVA-1312: QueryBuilder modifies selected columns when manually selected.
