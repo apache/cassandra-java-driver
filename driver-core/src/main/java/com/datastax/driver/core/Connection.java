@@ -1311,7 +1311,8 @@ class Connection {
             ChannelPipeline pipeline = channel.pipeline();
 
             if (sslOptions != null) {
-                pipeline.addLast("ssl", sslOptions.newSSLHandler(channel));
+                InetSocketAddress addr = new InetSocketAddress(connection.address.getAddress(), connection.address.getPort());
+                pipeline.addLast("ssl", sslOptions.newSSLHandler(channel, addr));
             }
 
 //            pipeline.addLast("debug", new LoggingHandler(LogLevel.INFO));
