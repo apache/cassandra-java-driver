@@ -20,6 +20,9 @@ import io.netty.handler.ssl.SslHandler;
 
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLEngine;
+
+import java.net.InetAddress;
+import java.net.InetSocketAddress;
 import java.security.NoSuchAlgorithmException;
 
 /**
@@ -51,8 +54,8 @@ public class JdkSSLOptions implements SSLOptions {
     }
 
     @Override
-    public SslHandler newSSLHandler(SocketChannel channel) {
-        SSLEngine engine = newSSLEngine(channel);
+    public SslHandler newSSLHandler(SocketChannel channel, InetSocketAddress address) {
+        SSLEngine engine = newSSLEngine(channel, address);
         return new SslHandler(engine);
     }
 
@@ -64,10 +67,11 @@ public class JdkSSLOptions implements SSLOptions {
      * (for example enabling hostname verification).
      *
      * @param channel the Netty channel for that connection.
+     * @param address remote address for the connection
      * @return the engine.
      */
-    protected SSLEngine newSSLEngine(SocketChannel channel) {
-        SSLEngine engine = context.createSSLEngine();
+    protected SSLEngine newSSLEngine(SocketChannel channel, InetSocketAddress address) {
+        SSLEngine engine = context.createSSLEngine(address.getHostName(), address.getPort());
         engine.setUseClientMode(true);
         if (cipherSuites != null)
             engine.setEnabledCipherSuites(cipherSuites);

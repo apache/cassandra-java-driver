@@ -15,6 +15,8 @@
  */
 package com.datastax.driver.core;
 
+import java.net.InetSocketAddress;
+
 import io.netty.channel.socket.SocketChannel;
 import io.netty.handler.ssl.SslHandler;
 
@@ -38,5 +40,5 @@ public interface SSLOptions {
      * @param channel the channel.
      * @return the handler.
      */
-    SslHandler newSSLHandler(SocketChannel channel);
+    SslHandler newSSLHandler(SocketChannel channel, InetSocketAddress address);
 }
