@@ -567,6 +567,11 @@ class Requests {
             @Override
             public void encode(Prepare msg, ByteBuf dest, ProtocolVersion version) {
                 CBUtil.writeLongString(msg.query, dest);
+
+                if (version.compareTo(ProtocolVersion.V5) >= 0) {
+                    // Write empty flags for now, to communicate that no keyspace is being set.
+                    dest.writeInt(0);
+                }
             }
 
             @Override
