@@ -268,7 +268,9 @@ abstract class CBUtil { // TODO rename
         }
 
         cb.writeInt(bytes.remaining());
-        cb.writeBytes(bytes.duplicate());
+        int oldPosition = bytes.position();
+        cb.writeBytes(bytes);
+        bytes.position(oldPosition);
     }
 
     public static int sizeOfValue(byte[] bytes) {
