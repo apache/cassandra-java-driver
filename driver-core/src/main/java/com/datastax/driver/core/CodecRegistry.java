@@ -16,7 +16,7 @@
 package com.datastax.driver.core;
 
 import com.datastax.driver.core.exceptions.CodecNotFoundException;
-import com.google.common.base.Objects;
+import com.datastax.driver.core.utils.MoreObjects;
 import com.google.common.cache.*;
 import com.google.common.reflect.TypeToken;
 import com.google.common.util.concurrent.UncheckedExecutionException;
@@ -216,12 +216,12 @@ public final class CodecRegistry {
             if (o == null || getClass() != o.getClass())
                 return false;
             CacheKey cacheKey = (CacheKey) o;
-            return Objects.equal(cqlType, cacheKey.cqlType) && Objects.equal(javaType, cacheKey.javaType);
+            return MoreObjects.equal(cqlType, cacheKey.cqlType) && MoreObjects.equal(javaType, cacheKey.javaType);
         }
 
         @Override
         public int hashCode() {
-            return Objects.hashCode(cqlType, javaType);
+            return MoreObjects.hashCode(cqlType, javaType);
         }
 
     }

@@ -15,8 +15,8 @@
  */
 package com.datastax.driver.core;
 
+import com.datastax.driver.core.utils.MoreObjects;
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.base.Objects;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 
@@ -295,15 +295,15 @@ public final class TokenRange implements Comparable<TokenRange> {
             return true;
         if (other instanceof TokenRange) {
             TokenRange that = (TokenRange) other;
-            return Objects.equal(this.start, that.start) &&
-                    Objects.equal(this.end, that.end);
+            return MoreObjects.equal(this.start, that.start) &&
+                    MoreObjects.equal(this.end, that.end);
         }
         return false;
     }
 
     @Override
     public int hashCode() {
-        return Objects.hashCode(start, end);
+        return MoreObjects.hashCode(start, end);
     }
 
     @Override

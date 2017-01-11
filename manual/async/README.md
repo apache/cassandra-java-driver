@@ -133,6 +133,6 @@ There are still a few places where the driver will block internally
 * trying to read fields from a [query trace] will block if the trace
   hasn't been fetched already.
 
-[ListenableFuture]: https://code.google.com/p/guava-libraries/wiki/ListenableFutureExplained
+[ListenableFuture]: https://github.com/google/guava/wiki/ListenableFutureExplained
 [init]: http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/core/Cluster.html#init--
 [query trace]: http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/core/QueryTrace.html

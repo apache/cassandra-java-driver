@@ -15,12 +15,12 @@
  */
 package com.datastax.driver.osgi.api;
 
+import com.datastax.driver.core.utils.MoreObjects;
 import com.datastax.driver.extras.codecs.date.SimpleTimestampCodec;
 import com.datastax.driver.mapping.annotations.ClusteringColumn;
 import com.datastax.driver.mapping.annotations.Column;
 import com.datastax.driver.mapping.annotations.PartitionKey;
 import com.datastax.driver.mapping.annotations.Table;
-import com.google.common.base.Objects;
 
 import static com.datastax.driver.osgi.api.MailboxMessage.TABLE;
 
@@ -94,13 +94,13 @@ public class MailboxMessage {
         if (o == null || getClass() != o.getClass()) return false;
         MailboxMessage that = (MailboxMessage) o;
         return date == that.date &&
-                Objects.equal(recipient, that.recipient) &&
-                Objects.equal(sender, that.sender) &&
-                Objects.equal(body, that.body);
+                MoreObjects.equal(recipient, that.recipient) &&
+                MoreObjects.equal(sender, that.sender) &&
+                MoreObjects.equal(body, that.body);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hashCode(recipient, date, sender, body);
+        return MoreObjects.hashCode(recipient, date, sender, body);
     }
 }

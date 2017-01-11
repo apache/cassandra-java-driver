@@ -17,8 +17,8 @@ package com.datastax.driver.mapping;
 
 import com.datastax.driver.core.CCMTestsSupport;
 import com.datastax.driver.core.utils.CassandraVersion;
+import com.datastax.driver.core.utils.MoreObjects;
 import com.datastax.driver.mapping.annotations.*;
-import com.google.common.base.Objects;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Sets;
 import org.testng.annotations.Test;
@@ -78,7 +78,7 @@ public class MapperUDTCollectionsTest extends CCMTestsSupport {
 
         @Override
         public int hashCode() {
-            return Objects.hashCode(i);
+            return MoreObjects.hashCode(i);
         }
     }
 
@@ -170,12 +170,12 @@ public class MapperUDTCollectionsTest extends CCMTestsSupport {
         public boolean equals(Object other) {
             if (other instanceof CollectionExamples) {
                 CollectionExamples that = (CollectionExamples) other;
-                return Objects.equal(this.id, that.id) &&
-                        Objects.equal(this.l, that.l) &&
-                        Objects.equal(this.s, that.s) &&
-                        Objects.equal(this.m1, that.m1) &&
-                        Objects.equal(this.m2, that.m2) &&
-                        Objects.equal(this.m3, that.m3);
+                return MoreObjects.equal(this.id, that.id) &&
+                        MoreObjects.equal(this.l, that.l) &&
+                        MoreObjects.equal(this.s, that.s) &&
+                        MoreObjects.equal(this.m1, that.m1) &&
+                        MoreObjects.equal(this.m2, that.m2) &&
+                        MoreObjects.equal(this.m3, that.m3);
             }
             return false;
         }

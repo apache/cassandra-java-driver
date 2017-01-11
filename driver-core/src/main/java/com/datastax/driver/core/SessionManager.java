@@ -87,7 +87,7 @@ class SessionManager extends AbstractSession {
 
         Collection<Host> hosts = cluster.getMetadata().allHosts();
         ListenableFuture<?> allPoolsCreatedFuture = createPools(hosts);
-        ListenableFuture<?> allPoolsUpdatedFuture = Futures.transform(allPoolsCreatedFuture,
+        ListenableFuture<?> allPoolsUpdatedFuture = GuavaCompatibility.INSTANCE.transformAsync(allPoolsCreatedFuture,
                 new AsyncFunction<Object, Object>() {
                     @Override
                     @SuppressWarnings("unchecked")
@@ -193,7 +193,7 @@ class SessionManager extends AbstractSession {
     }
 
     private ListenableFuture<PreparedStatement> toPreparedStatement(final String query, final Connection.Future future) {
-        return Futures.transform(future, new AsyncFunction<Response, PreparedStatement>() {
+        return GuavaCompatibility.INSTANCE.transformAsync(future, new AsyncFunction<Response, PreparedStatement>() {
             @Override
             public ListenableFuture<PreparedStatement> apply(Response response) {
                 switch (response.type) {
@@ -433,7 +433,7 @@ class SessionManager extends AbstractSession {
         // Wait pool creation before removing, so we don't lose connectivity
         ListenableFuture<?> allPoolsCreatedFuture = Futures.successfulAsList(poolCreatedFutures);
 
-        return Futures.transform(allPoolsCreatedFuture, new AsyncFunction<Object, List<Void>>() {
+        return GuavaCompatibility.INSTANCE.transformAsync(allPoolsCreatedFuture, new AsyncFunction<Object, List<Void>>() {
             @Override
             public ListenableFuture<List<Void>> apply(Object input) throws Exception {
                 List<ListenableFuture<Void>> poolRemovedFuture = Lists.newArrayListWithCapacity(toRemove.size());
@@ -626,7 +626,7 @@ class SessionManager extends AbstractSession {
                 // the prepared query. So don't wait if no connection is available, simply abort.
                 ListenableFuture<Connection> connectionFuture = entry.getValue().borrowConnection(
                         0, TimeUnit.MILLISECONDS, 0);
-                ListenableFuture<Response> prepareFuture = Futures.transform(connectionFuture,
+                ListenableFuture<Response> prepareFuture = GuavaCompatibility.INSTANCE.transformAsync(connectionFuture,
                         new AsyncFunction<Connection, Response>() {
                             @Override
                             public ListenableFuture<Response> apply(final Connection c) throws Exception {

@@ -18,8 +18,8 @@ package com.datastax.driver.core;
 import com.datastax.driver.core.Responses.Result.SetKeyspace;
 import com.datastax.driver.core.exceptions.*;
 import com.datastax.driver.core.utils.MoreFutures;
+import com.datastax.driver.core.utils.MoreObjects;
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.base.Objects;
 import com.google.common.collect.Lists;
 import com.google.common.collect.MapMaker;
 import com.google.common.util.concurrent.*;
@@ -179,13 +179,13 @@ class Connection {
 
         Executor initExecutor = factory.manager.configuration.getPoolingOptions().getInitializationExecutor();
 
-        ListenableFuture<Void> initializeTransportFuture = Futures.transform(channelReadyFuture,
+        ListenableFuture<Void> initializeTransportFuture = GuavaCompatibility.INSTANCE.transformAsync(channelReadyFuture,
                 onChannelReady(protocolVersion, initExecutor), initExecutor);
 
         // Fallback on initializeTransportFuture so we can properly propagate specific exceptions.
-        ListenableFuture<Void> initFuture = Futures.withFallback(initializeTransportFuture, new FutureFallback<Void>() {
+        ListenableFuture<Void> initFuture = GuavaCompatibility.INSTANCE.withFallback(initializeTransportFuture, new AsyncFunction<Throwable, Void>() {
             @Override
-            public ListenableFuture<Void> create(Throwable t) throws Exception {
+            public ListenableFuture<Void> apply(Throwable t) throws Exception {
                 SettableFuture<Void> future = SettableFuture.create();
                 // Make sure the connection gets properly closed.
                 if (t instanceof ClusterNameMismatchException || t instanceof UnsupportedProtocolVersionException) {
@@ -233,7 +233,7 @@ class Connection {
             public ListenableFuture<Void> apply(Void input) throws Exception {
                 ProtocolOptions.Compression compression = factory.configuration.getProtocolOptions().getCompression();
                 Future startupResponseFuture = write(new Requests.Startup(compression));
-                return Futures.transform(startupResponseFuture,
+                return GuavaCompatibility.INSTANCE.transformAsync(startupResponseFuture,
                         onStartupResponse(protocolVersion, initExecutor), initExecutor);
             }
         };
@@ -297,7 +297,7 @@ class Connection {
         DefaultResultSetFuture clusterNameFuture = new DefaultResultSetFuture(null, protocolVersion, new Requests.Query("select cluster_name from system.local"));
         try {
             write(clusterNameFuture);
-            return Futures.transform(clusterNameFuture,
+            return GuavaCompatibility.INSTANCE.transformAsync(clusterNameFuture,
                     new AsyncFunction<ResultSet, Void>() {
                         @Override
                         public ListenableFuture<Void> apply(ResultSet rs) throws Exception {
@@ -323,7 +323,7 @@ class Connection {
         Requests.Credentials creds = new Requests.Credentials(((ProtocolV1Authenticator) authenticator).getCredentials());
         try {
             Future authResponseFuture = write(creds);
-            return Futures.transform(authResponseFuture,
+            return GuavaCompatibility.INSTANCE.transformAsync(authResponseFuture,
                     new AsyncFunction<Message.Response, Void>() {
                         @Override
                         public ListenableFuture<Void> apply(Message.Response authResponse) throws Exception {
@@ -350,7 +350,7 @@ class Connection {
 
         try {
             Future authResponseFuture = write(new Requests.AuthResponse(initialResponse));
-            return Futures.transform(authResponseFuture, onV2AuthResponse(authenticator, protocolVersion, executor), executor);
+            return GuavaCompatibility.INSTANCE.transformAsync(authResponseFuture, onV2AuthResponse(authenticator, protocolVersion, executor), executor);
         } catch (Exception e) {
             return Futures.immediateFailedFuture(e);
         }
@@ -376,7 +376,7 @@ class Connection {
                             // Otherwise, send the challenge response back to the server
                             logger.trace("{} Sending Auth response to challenge", this);
                             Future nextResponseFuture = write(new Requests.AuthResponse(responseToServer));
-                            return Futures.transform(nextResponseFuture, onV2AuthResponse(authenticator, protocolVersion, executor), executor);
+                            return GuavaCompatibility.INSTANCE.transformAsync(nextResponseFuture, onV2AuthResponse(authenticator, protocolVersion, executor), executor);
                         }
                     case ERROR:
                         // This is not very nice, but we're trying to identify if we
@@ -471,7 +471,7 @@ class Connection {
         if (keyspace == null)
             return;
 
-        if (Objects.equal(keyspace(), keyspace))
+        if (MoreObjects.equal(keyspace(), keyspace))
             return;
 
         try {
@@ -497,7 +497,7 @@ class Connection {
 
     ListenableFuture<Connection> setKeyspaceAsync(final String keyspace) throws ConnectionException, BusyConnectionException {
         SetKeyspaceAttempt existingAttempt = targetKeyspace.get();
-        if (Objects.equal(existingAttempt.keyspace, keyspace))
+        if (MoreObjects.equal(existingAttempt.keyspace, keyspace))
             return existingAttempt.future;
 
         final SettableFuture<Connection> ksFuture = SettableFuture.create();

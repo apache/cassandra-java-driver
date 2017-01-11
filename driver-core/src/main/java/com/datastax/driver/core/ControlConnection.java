@@ -16,8 +16,8 @@
 package com.datastax.driver.core;
 
 import com.datastax.driver.core.exceptions.*;
+import com.datastax.driver.core.utils.MoreObjects;
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.base.Objects;
 import com.google.common.util.concurrent.ListenableFuture;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -519,7 +519,7 @@ class ControlConnection implements Connection.Owner {
     }
 
     private static void updateLocationInfo(Host host, String datacenter, String rack, boolean isInitialConnection, Cluster.Manager cluster) {
-        if (Objects.equal(host.getDatacenter(), datacenter) && Objects.equal(host.getRack(), rack))
+        if (MoreObjects.equal(host.getDatacenter(), datacenter) && MoreObjects.equal(host.getRack(), rack))
             return;
 
         // If the dc/rack information changes for an existing node, we need to update the load balancing policy.

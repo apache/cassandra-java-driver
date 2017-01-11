@@ -20,9 +20,9 @@ import com.datastax.driver.core.exceptions.CodecNotFoundException;
 import com.datastax.driver.core.exceptions.InvalidQueryException;
 import com.datastax.driver.core.querybuilder.BuiltStatement;
 import com.datastax.driver.core.utils.CassandraVersion;
+import com.datastax.driver.core.utils.MoreObjects;
 import com.datastax.driver.core.utils.UUIDs;
 import com.datastax.driver.mapping.annotations.*;
-import com.google.common.base.Objects;
 import com.google.common.collect.Maps;
 import org.assertj.core.data.MapEntry;
 import org.testng.annotations.AfterMethod;
@@ -123,27 +123,23 @@ public class MapperUDTTest extends CCMTestsSupport {
                 return true;
             if (other instanceof User) {
                 User that = (User) other;
-                return Objects.equal(this.userId, that.userId) &&
-                        Objects.equal(this.name, that.name) &&
-                        Objects.equal(this.mainAddress, that.mainAddress) &&
-                        Objects.equal(this.otherAddresses, that.otherAddresses);
+                return MoreObjects.equal(this.userId, that.userId) &&
+                        MoreObjects.equal(this.name, that.name) &&
+                        MoreObjects.equal(this.mainAddress, that.mainAddress) &&
+                        MoreObjects.equal(this.otherAddresses, that.otherAddresses);
             }
             return false;
         }
 
         @Override
         public int hashCode() {
-            return Objects.hashCode(this.userId, this.name, this.mainAddress, this.otherAddresses);
+            return MoreObjects.hashCode(this.userId, this.name, this.mainAddress, this.otherAddresses);
         }
 
         @Override
         public String toString() {
-            return Objects.toStringHelper(User.class)
-                    .add("userId", userId)
-                    .add("name", name)
-                    .add("mainAddress", mainAddress)
-                    .add("otherAddresses", otherAddresses)
-                    .toString();
+            return String.format("User(userId=%s, name=%s, mainAddress=%s, otherAddresses=%s)",
+                    userId, name, mainAddress, otherAddresses);
         }
     }
 
@@ -213,27 +209,23 @@ public class MapperUDTTest extends CCMTestsSupport {
                 return true;
             if (other instanceof Address) {
                 Address that = (Address) other;
-                return Objects.equal(this.street, that.street) &&
-                        Objects.equal(this.city, that.city) &&
-                        Objects.equal(this.zipCode, that.zipCode) &&
-                        Objects.equal(this.phones, that.phones);
+                return MoreObjects.equal(this.street, that.street) &&
+                        MoreObjects.equal(this.city, that.city) &&
+                        MoreObjects.equal(this.zipCode, that.zipCode) &&
+                        MoreObjects.equal(this.phones, that.phones);
             }
             return false;
         }
 
         @Override
         public int hashCode() {
-            return Objects.hashCode(this.street, this.city, this.zipCode, this.phones);
+            return MoreObjects.hashCode(this.street, this.city, this.zipCode, this.phones);
         }
 
         @Override
         public String toString() {
-            return Objects.toStringHelper(Address.class)
-                    .add("street", street)
-                    .add("city", city)
-                    .add("zip", zipCode)
-                    .add("phones", phones)
-                    .toString();
+            return String.format("Address(street=%s, city=%s, zip=%d, phones=%s)",
+                    street, city, zipCode, phones);
         }
     }
 

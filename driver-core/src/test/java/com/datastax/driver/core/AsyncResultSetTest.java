@@ -58,7 +58,7 @@ public class AsyncResultSetTest extends CCMTestsSupport {
         Statement statement = new SimpleStatement("select * from ints").setFetchSize(fetchSize);
         ResultsAccumulator results = new ResultsAccumulator();
 
-        ListenableFuture<ResultSet> future = Futures.transform(
+        ListenableFuture<ResultSet> future = GuavaCompatibility.INSTANCE.transformAsync(
                 session().executeAsync(statement),
                 results);
 
@@ -85,7 +85,7 @@ public class AsyncResultSetTest extends CCMTestsSupport {
             if (wasLastPage)
                 return Futures.immediateFuture(rs);
             else
-                return Futures.transform(rs.fetchMoreResults(), this);
+                return GuavaCompatibility.INSTANCE.transformAsync(rs.fetchMoreResults(), this);
         }
     }
 }

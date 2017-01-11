@@ -15,7 +15,7 @@
  */
 package com.datastax.driver.core;
 
-import com.google.common.base.Objects;
+import com.datastax.driver.core.utils.MoreObjects;
 import com.google.common.collect.ImmutableMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -321,6 +321,6 @@ public class FunctionMetadata {
 
     @Override
     public int hashCode() {
-        return Objects.hashCode(keyspace.getName(), arguments, body, calledOnNullInput, language, returnType);
+        return MoreObjects.hashCode(keyspace.getName(), arguments, body, calledOnNullInput, language, returnType);
     }
 }

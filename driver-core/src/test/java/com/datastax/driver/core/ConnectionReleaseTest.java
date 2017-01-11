@@ -18,7 +18,6 @@ package com.datastax.driver.core;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.AsyncFunction;
-import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import org.scassandra.http.client.PrimingRequest;
 import org.testng.annotations.Test;
@@ -97,7 +96,7 @@ public class ConnectionReleaseTest extends ScassandraTestBase {
                 mockFutures.add(session.executeAsync("mock query"));
 
 
-            ListenableFuture<ResultSet> future = Futures.transform(session.executeAsync("select c from test1 where k=1"),
+            ListenableFuture<ResultSet> future = GuavaCompatibility.INSTANCE.transformAsync(session.executeAsync("select c from test1 where k=1"),
                     new AsyncFunction<ResultSet, ResultSet>() {
                         @Override
                         public ListenableFuture<ResultSet> apply(ResultSet result) {

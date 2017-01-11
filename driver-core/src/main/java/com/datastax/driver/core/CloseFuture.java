@@ -28,7 +28,7 @@ import java.util.List;
  * additional {@link #force} method that can be used to expedite the shutdown
  * process (see below).
  * <p/>
- * Note that this class implements <a href="http://code.google.com/p/guava-libraries/">Guava</a>'s {@code
+ * Note that this class implements <a href="http://github.com/google/guava/">Guava</a>'s {@code
  * ListenableFuture} and can so be used with Guava's future utilities.
  */
 public abstract class CloseFuture extends AbstractFuture<Void> {

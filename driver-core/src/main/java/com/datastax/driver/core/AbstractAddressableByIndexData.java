@@ -15,7 +15,7 @@
  */
 package com.datastax.driver.core;
 
-import com.google.common.base.Objects;
+import com.datastax.driver.core.utils.MoreObjects;
 import com.google.common.reflect.TypeToken;
 
 import java.math.BigDecimal;
@@ -280,7 +280,7 @@ abstract class AbstractAddressableByIndexData<T extends SettableByIndexData<T>> 
 
             Object thisValue = this.codecFor(i).deserialize(this.values[i], this.protocolVersion);
             Object thatValue = that.codecFor(i).deserialize(that.values[i], that.protocolVersion);
-            if (!Objects.equal(thisValue, thatValue))
+            if (!MoreObjects.equal(thisValue, thatValue))
                 return false;
         }
         return true;

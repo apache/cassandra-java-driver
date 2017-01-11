@@ -19,7 +19,6 @@ import com.datastax.driver.core.Cluster;
 import com.datastax.driver.core.Host;
 import com.datastax.driver.core.HostDistance;
 import com.datastax.driver.core.Statement;
-import com.google.common.collect.Sets;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -40,8 +39,8 @@ import java.util.concurrent.locks.ReentrantLock;
 public class LimitingLoadBalancingPolicy extends DelegatingLoadBalancingPolicy {
     private final int maxHosts;
     private final int threshold;
-    private final Set<Host> liveHosts = Sets.newSetFromMap(new ConcurrentHashMap<Host, Boolean>());
-    private final Set<Host> chosenHosts = Sets.newSetFromMap(new ConcurrentHashMap<Host, Boolean>());
+    private final Set<Host> liveHosts = Collections.newSetFromMap(new ConcurrentHashMap<Host, Boolean>());
+    private final Set<Host> chosenHosts = Collections.newSetFromMap(new ConcurrentHashMap<Host, Boolean>());
     private final Lock updateLock = new ReentrantLock();
 
     private volatile Cluster cluster;

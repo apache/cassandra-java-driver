@@ -18,7 +18,7 @@ package com.datastax.driver.core;
 import com.datastax.driver.core.exceptions.InvalidTypeException;
 import com.datastax.driver.core.querybuilder.BuiltStatement;
 import com.datastax.driver.core.utils.CassandraVersion;
-import com.google.common.base.Objects;
+import com.datastax.driver.core.utils.MoreObjects;
 import com.google.common.reflect.TypeParameter;
 import com.google.common.reflect.TypeToken;
 import org.testng.annotations.BeforeMethod;
@@ -274,12 +274,12 @@ public class TypeCodecEncapsulationIntegrationTest extends CCMTestsSupport {
             if (o == null || getClass() != o.getClass())
                 return false;
             NumberBox numberBox = (NumberBox) o;
-            return Objects.equal(number, numberBox.number);
+            return MoreObjects.equal(number, numberBox.number);
         }
 
         @Override
         public int hashCode() {
-            return Objects.hashCode(number);
+            return MoreObjects.hashCode(number);
         }
     }
 }

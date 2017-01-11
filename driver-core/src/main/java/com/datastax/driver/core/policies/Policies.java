@@ -17,7 +17,6 @@ package com.datastax.driver.core.policies;
 
 import com.datastax.driver.core.AtomicMonotonicTimestampGenerator;
 import com.datastax.driver.core.TimestampGenerator;
-import com.google.common.base.Objects;
 
 /**
  * Policies configured for a {@link com.datastax.driver.core.Cluster} instance.
@@ -280,12 +279,12 @@ public class Policies {
          */
         public Policies build() {
             return new Policies(
-                    loadBalancingPolicy == null ? Policies.defaultLoadBalancingPolicy() : loadBalancingPolicy,
-                    Objects.firstNonNull(reconnectionPolicy, Policies.defaultReconnectionPolicy()),
-                    Objects.firstNonNull(retryPolicy, Policies.defaultRetryPolicy()),
-                    Objects.firstNonNull(addressTranslator, Policies.defaultAddressTranslator()),
-                    Objects.firstNonNull(timestampGenerator, Policies.defaultTimestampGenerator()),
-                    Objects.firstNonNull(speculativeExecutionPolicy, Policies.defaultSpeculativeExecutionPolicy()));
+                    loadBalancingPolicy == null ? defaultLoadBalancingPolicy() : loadBalancingPolicy,
+                    reconnectionPolicy == null ? defaultReconnectionPolicy() : reconnectionPolicy,
+                    retryPolicy == null ? defaultRetryPolicy() : retryPolicy,
+                    addressTranslator == null ? defaultAddressTranslator() : addressTranslator,
+                    timestampGenerator == null ? defaultTimestampGenerator() : timestampGenerator,
+                    speculativeExecutionPolicy == null ? defaultSpeculativeExecutionPolicy() : speculativeExecutionPolicy);
         }
     }
 }

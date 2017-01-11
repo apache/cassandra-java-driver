@@ -15,7 +15,7 @@
  */
 package com.datastax.driver.core;
 
-import com.google.common.base.Objects;
+import com.datastax.driver.core.utils.MoreObjects;
 import com.google.common.base.Predicate;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Iterables;
@@ -240,7 +240,7 @@ public class IndexMetadata {
     }
 
     public int hashCode() {
-        return Objects.hashCode(name, kind, target, options);
+        return MoreObjects.hashCode(name, kind, target, options);
     }
 
     public boolean equals(Object obj) {
@@ -252,10 +252,10 @@ public class IndexMetadata {
 
         IndexMetadata other = (IndexMetadata) obj;
 
-        return Objects.equal(name, other.name)
-                && Objects.equal(kind, other.kind)
-                && Objects.equal(target, other.target)
-                && Objects.equal(options, other.options);
+        return MoreObjects.equal(name, other.name)
+                && MoreObjects.equal(kind, other.kind)
+                && MoreObjects.equal(target, other.target)
+                && MoreObjects.equal(options, other.options);
     }
 
 }

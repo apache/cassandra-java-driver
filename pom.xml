@@ -50,7 +50,7 @@
         <java.version>1.6</java.version>
         <log4j.version>1.2.17</log4j.version>
         <slf4j-log4j12.version>1.7.6</slf4j-log4j12.version>
-        <guava.version>16.0.1</guava.version>
+        <guava.version>19.0</guava.version>
         <netty.version>4.1.8.Final</netty.version>
         <metrics.version>3.1.2</metrics.version>
         <snappy.version>1.1.2.6</snappy.version>
@@ -247,7 +247,7 @@
                     </bottom>
                     <links>
                         <link>https://docs.oracle.com/javase/8/docs/api/</link>
-                        <link>http://docs.guava-libraries.googlecode.com/git-history/v16.0.1/javadoc/</link>
+                        <link>https://google.github.io/guava/releases/19.0/api/docs/</link>
                         <link>http://netty.io/4.0/api/</link>
                         <!-- dependencies from driver-extras -->
                         <link>http://www.joda.org/joda-time/apidocs/</link>

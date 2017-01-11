@@ -16,8 +16,8 @@
 package com.datastax.driver.core.schemabuilder;
 
 import com.datastax.driver.core.DataType;
+import com.datastax.driver.core.utils.MoreObjects;
 import com.google.common.base.Joiner;
-import com.google.common.base.Objects;
 import com.google.common.base.Optional;
 import com.google.common.collect.Lists;
 
@@ -238,14 +238,14 @@ public class Create extends AbstractCreateStatement<Create> {
                 }
                 if (o instanceof ClusteringOrder) {
                     ClusteringOrder that = (ClusteringOrder) o;
-                    return Objects.equal(this.clusteringColumnName, that.clusteringColumnName) && Objects.equal(this.direction, that.direction);
+                    return MoreObjects.equal(this.clusteringColumnName, that.clusteringColumnName) && MoreObjects.equal(this.direction, that.direction);
                 }
                 return false;
             }
 
             @Override
             public int hashCode() {
-                return Objects.hashCode(clusteringColumnName, direction);
+                return MoreObjects.hashCode(clusteringColumnName, direction);
             }
         }
 

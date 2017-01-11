@@ -17,7 +17,6 @@ package com.datastax.driver.core;
 
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.util.concurrent.MoreExecutors;
 
 import java.util.Map;
 import java.util.concurrent.Executor;
@@ -142,7 +141,7 @@ public class PoolingOptions {
      */
     public static final int DEFAULT_HEARTBEAT_INTERVAL_SECONDS = 30;
 
-    private static final Executor DEFAULT_INITIALIZATION_EXECUTOR = MoreExecutors.sameThreadExecutor();
+    private static final Executor DEFAULT_INITIALIZATION_EXECUTOR = GuavaCompatibility.INSTANCE.sameThreadExecutor();
 
     private volatile Cluster.Manager manager;
     private volatile ProtocolVersion protocolVersion;
