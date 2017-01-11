@@ -67,7 +67,6 @@ public class HeartbeatTest extends ScassandraTestBase {
         Cluster cluster = Cluster.builder()
                 .addContactPoints(hostAddress.getAddress())
                 .withPort(scassandra.getBinaryPort())
-                .withProtocolVersion(ProtocolVersion.V2)
                 .withPoolingOptions(new PoolingOptions().setHeartbeatIntervalSeconds(3))
                 .build();
 
@@ -157,7 +156,6 @@ public class HeartbeatTest extends ScassandraTestBase {
         Cluster cluster = Cluster.builder()
                 .addContactPoints(hostAddress.getAddress())
                 .withPort(scassandra.getBinaryPort())
-                .withProtocolVersion(ProtocolVersion.V2)
                 .withPoolingOptions(new PoolingOptions().setHeartbeatIntervalSeconds(3).setConnectionsPerHost(HostDistance.LOCAL, 1, 1))
                 .build();
 
@@ -257,7 +255,6 @@ public class HeartbeatTest extends ScassandraTestBase {
                 .withPort(scassandra.getBinaryPort())
                 .withPoolingOptions(new PoolingOptions()
                         .setHeartbeatIntervalSeconds(0))
-                .withProtocolVersion(ProtocolVersion.V2)
                 .build();
 
         try {
