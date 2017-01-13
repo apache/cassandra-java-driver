@@ -1311,7 +1311,11 @@ class Connection {
             ChannelPipeline pipeline = channel.pipeline();
 
             if (sslOptions != null) {
-                pipeline.addLast("ssl", sslOptions.newSSLHandler(channel));
+                if (sslOptions instanceof AddressAwareSSLOptions) {
+                    pipeline.addLast("ssl", ((AddressAwareSSLOptions)sslOptions).newSSLHandler(channel, connection.address));
+                } else {
+                    pipeline.addLast("ssl", sslOptions.newSSLHandler(channel));
+                }
             }
 
 //            pipeline.addLast("debug", new LoggingHandler(LogLevel.INFO));
