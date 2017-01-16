@@ -3,6 +3,7 @@
 ### 3.2.0 (in progress)
 
 - [new feature] JAVA-1347: Add support for duration type.
+- [new feature] JAVA-1248: Implement "beta" flag for native protocol v5.
 
 
 ### 3.1.3
