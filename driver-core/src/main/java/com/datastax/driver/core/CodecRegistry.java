@@ -161,7 +161,8 @@ public final class CodecRegistry {
             TypeCodec.time(),
             TypeCodec.uuid(), // must be declared before TimeUUIDCodec so it gets chosen when CQL type not available
             TypeCodec.timeUUID(),
-            TypeCodec.inet()
+            TypeCodec.inet(),
+            TypeCodec.duration()
     );
 
     /**
