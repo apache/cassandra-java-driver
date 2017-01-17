@@ -16,15 +16,15 @@
 package com.datastax.driver.core;
 
 import com.datastax.driver.core.utils.DseVersion;
+import com.google.common.collect.Sets;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.testng.annotations.Test;
 
 import java.net.InetAddress;
+import java.util.Collections;
 
 import static com.datastax.driver.core.Assertions.assertThat;
-import static com.datastax.driver.core.CCMAccess.Workload.solr;
-import static com.datastax.driver.core.CCMAccess.Workload.spark;
 import static com.datastax.driver.core.TestUtils.nonQuietClusterCloseOptions;
 
 public class HostMetadataIntegrationTest {
@@ -47,8 +47,8 @@ public class HostMetadataIntegrationTest {
         CCMBridge.Builder builder = CCMBridge.builder()
                 .withNodes(3)
                 .withDSE()
-                .withWorkload(2, solr)
-                .withWorkload(3, spark);
+                .withWorkload(2, "solr")
+                .withWorkload(3, "spark");
         CCMAccess ccm = CCMCache.get(builder);
 
         VersionNumber version = VersionNumber.parse(CCMBridge.getDSEVersion());
@@ -360,4 +360,51 @@ public class HostMetadataIntegrationTest {
             scassandraCluster.stop();
         }
     }
+
+
+    /**
+     * Validates that {@link Host#getDseWorkloads()} returns values defined in
+     * the <code>workloads</code> column if they are present in <code>system.local</code>
+     * or <code>system.peers</code>, otherwise they return an empty set.
+     *
+     * @test_category host:metadata
+     * @jira_ticket JAVA-1354
+     */
+    @Test(groups = "short")
+    public void should_parse_dse_workloads_if_available() {
+        // given: A 5 node cluster with all nodes having a workload and dse_version except node 2.
+        ScassandraCluster scassandraCluster = ScassandraCluster.builder()
+                .withIpPrefix(TestUtils.IP_PREFIX)
+                .withNodes(5)
+                .forcePeerInfo(1, 1, "workloads", Collections.singleton("Cassandra"))
+                .forcePeerInfo(1, 2, "workloads", Collections.singleton("Search"))
+                .forcePeerInfo(1, 3, "workloads", Sets.newHashSet("Search", "Analytics", "Graph"))
+                .forcePeerInfo(1, 4, "workloads", Collections.emptySet())
+                // peers 5 has no such column
+                .build();
+
+        Cluster cluster = Cluster.builder()
+                .addContactPoints(scassandraCluster.address(1).getAddress())
+                .withPort(scassandraCluster.getBinaryPort())
+                .withNettyOptions(nonQuietClusterCloseOptions)
+                .build();
+
+        try {
+            scassandraCluster.init();
+            // when: initializing a cluster instance.
+            cluster.init();
+
+            // then: All nodes except node 2 should have a workload and dse version.
+            assertThat(cluster).host(1).hasWorkload("Cassandra");
+            assertThat(cluster).host(2).hasWorkload("Search");
+            assertThat(cluster).host(3).hasWorkload("Search", "Analytics", "Graph");
+            assertThat(cluster).host(4).hasNoWorkload();
+            assertThat(cluster).host(5).hasNoWorkload();
+        } finally {
+            cluster.close();
+            scassandraCluster.stop();
+        }
+    }
+
+
 }

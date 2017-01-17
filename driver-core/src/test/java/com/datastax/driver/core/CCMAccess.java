@@ -22,8 +22,6 @@ import java.util.Map;
 
 public interface CCMAccess extends Closeable {
 
-    enum Workload {cassandra, solr, hadoop, spark, cfs, graph}
-
     // Inspection methods
 
     /**
@@ -221,7 +219,7 @@ public interface CCMAccess extends Closeable {
      *
      * @param n the node number (starting from 1).
      */
-    void setWorkload(int n, Workload... workload);
+    void setWorkload(int n, String... workload);
 
 
     // Methods blocking until nodes are up or down

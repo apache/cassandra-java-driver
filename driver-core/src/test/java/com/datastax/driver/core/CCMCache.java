@@ -201,7 +201,7 @@ public class CCMCache {
         }
 
         @Override
-        public void setWorkload(int n, Workload... workload) {
+        public void setWorkload(int n, String... workload) {
             ccm.setWorkload(n, workload);
         }
 
