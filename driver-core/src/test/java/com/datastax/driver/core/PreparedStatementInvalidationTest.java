@@ -23,28 +23,27 @@ import org.testng.annotations.Test;
 import static com.datastax.driver.core.Assertions.assertThat;
 import static com.datastax.driver.core.DataType.cint;
 
-@CCMConfig(clusterProvider = "createClusterBuilderNoDebouncing")
 //TODO enable when CASSANDRA-10786 gets merged
 @Test(enabled = false)
 public class PreparedStatementInvalidationTest extends CCMTestsSupport {
 
     @BeforeMethod(groups = "short")
     public void createTable() throws Exception {
-        execute("CREATE TABLE simpletable (a int PRIMARY KEY, b int, c int);");
+        execute("CREATE TABLE PreparedStatementInvalidationTest (a int PRIMARY KEY, b int, c int);");
     }
 
     @AfterMethod(groups = "short")
     public void dropTable() throws Exception {
-        execute("DROP TABLE IF EXISTS simpletable");
+        execute("DROP TABLE IF EXISTS PreparedStatementInvalidationTest");
     }
 
     @Test(groups = "short")
     public void should_update_statement_id_when_metadata_changed() {
         // given
-        PreparedStatement ps = session().prepare("SELECT * FROM simpletable WHERE a = ?");
+        PreparedStatement ps = session().prepare("SELECT * FROM PreparedStatementInvalidationTest WHERE a = ?");
         MD5Digest idBefore = ps.getPreparedId().getValues().getId();
         // when
-        session().execute("ALTER TABLE simpletable ADD d int");
+        session().execute("ALTER TABLE PreparedStatementInvalidationTest ADD d int");
         BoundStatement bs = ps.bind(1);
         ResultSet rows = session().execute(bs);
         // then
@@ -68,8 +67,8 @@ public class PreparedStatementInvalidationTest extends CCMTestsSupport {
         Session session2 = cluster().connect();
         useKeyspace(session2, keyspace);
 
-        PreparedStatement ps1 = session1.prepare("SELECT * FROM simpletable WHERE a = ?");
-        PreparedStatement ps2 = session2.prepare("SELECT * FROM simpletable WHERE a = ?");
+        PreparedStatement ps1 = session1.prepare("SELECT * FROM PreparedStatementInvalidationTest WHERE a = ?");
+        PreparedStatement ps2 = session2.prepare("SELECT * FROM PreparedStatementInvalidationTest WHERE a = ?");
 
         MD5Digest id1a = ps1.getPreparedId().getValues().getId();
         MD5Digest id2a = ps2.getPreparedId().getValues().getId();
@@ -98,7 +97,7 @@ public class PreparedStatementInvalidationTest extends CCMTestsSupport {
                 .containsVariable("b", cint())
                 .containsVariable("c", cint());
 
-        session1.execute("ALTER TABLE simpletable ADD d int");
+        session1.execute("ALTER TABLE PreparedStatementInvalidationTest ADD d int");
 
         rows1 = session1.execute(ps1.bind(1));
         rows2 = session2.execute(ps2.bind(1));
