@@ -24,6 +24,8 @@ import static com.datastax.driver.core.Assertions.assertThat;
 import static com.datastax.driver.core.DataType.cint;
 
 @CCMConfig(clusterProvider = "createClusterBuilderNoDebouncing")
+//TODO enable when CASSANDRA-10786 gets merged
+@Test(enabled = false)
 public class PreparedStatementInvalidationTest extends CCMTestsSupport {
 
     @BeforeMethod(groups = "short")
