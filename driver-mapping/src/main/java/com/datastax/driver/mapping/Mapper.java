@@ -64,6 +64,7 @@ public class Mapper<T> {
     private static final EnumMap<Option.Type, Option> NO_OPTIONS = new EnumMap<Option.Type, Option>(Option.Type.class);
 
     private final Function<ResultSet, T> mapOneFunction;
+    private final Function<ResultSet, List<T>> mapAllFunction;
     final Function<ResultSet, T> mapOneFunctionWithoutAliases;
     final Function<ResultSet, Result<T>> mapAllFunctionWithoutAliases;
 
@@ -74,6 +75,13 @@ public class Mapper<T> {
 
         KeyspaceMetadata keyspace = session().getCluster().getMetadata().getKeyspace(mapper.keyspace);
         this.tableMetadata = keyspace == null ? null : keyspace.getTable(mapper.table);
+		
+		this.mapAllFunction = new Function<ResultSet, List<T>>() {
+            @Override
+            public List<T> apply(ResultSet rs) {
+                return Mapper.this.map(rs).all();
+            }
+        };
 
         this.mapOneFunction = new Function<ResultSet, T>() {
             @Override
@@ -432,6 +440,84 @@ public class Mapper<T> {
             throw DriverThrowables.propagateCause(e);
         }
     }
+	
+	/**
+	 * Fetch a list of entities based on the partition key.
+	 *
+	 * @param objects the partition key of the entity to fetch, or more
+	 * precisely the values for the columns of said partition key in the order
+	 * of the partition key. Can be followed by {@link Option} to include in the
+	 * DELETE query.
+	 *
+	 * @return the list of entities fetched or {@code null} if no results are
+	 * found.
+	 *
+	 * @throws if the number of value provided differ from the number of columns
+	 * composing the PARTITIONING KEY of the mapped class, or if at least one of
+	 * those values is {@code null}.
+	 *
+	 * @since 2017-01-20
+	 */
+	public List<T> getByPartitionKey(Object... objects) {
+
+		// Map passed parameters to query strings and options
+		final List<Object> pks = new ArrayList<Object>();
+		final EnumMap<Option.Type, Option> options = new EnumMap<Option.Type, Option>(defaultGetOptions);
+		for (Object o : objects) {
+			if (o instanceof Option) {
+				Option option = (Option) o;
+				options.put(option.type, option);
+			} else {
+				pks.add(o);
+			}
+		}
+
+		if (pks.size() != mapper.partitionKeys.size()) {
+			throw new IllegalArgumentException(String.format("Invalid number of PARTITIONING KEY columns provided, %d expected but got %d", mapper.primaryKeySize(), pks.size()));
+		}
+
+		// construct the bound statement
+		ListenableFuture<BoundStatement> bsFuture = Futures.transform(getPreparedQueryAsync(QueryType.GET_BY_PARTITION_KEY, options), new Function<PreparedStatement, BoundStatement>() {
+			@Override
+			public BoundStatement apply(PreparedStatement input) {
+				BoundStatement bs = new MapperBoundStatement(input);
+				int i = 0;
+				for (Object value : pks) {
+					PropertyMapper column = mapper.getPrimaryKeyColumn(i);
+					if (value == null) {
+						throw new IllegalArgumentException(String.format("Invalid null value for PARTITIONING KEY column %s (argument %d)", column.columnName, i));
+					}
+					setObject(bs, i++, value, column);
+				}
+
+				if (mapper.readConsistency != null) {
+					bs.setConsistencyLevel(mapper.readConsistency);
+				}
+
+				for (Option opt : options.values()) {
+					opt.checkValidFor(QueryType.GET_BY_PARTITION_KEY, manager);
+					opt.addToPreparedStatement(bs, i);
+					if (opt.isIncludedInQuery()) {
+						i++;
+					}
+				}
+				return bs;
+			}
+		});
+
+		ListenableFuture<ResultSet> rsFuture = Futures.transform(bsFuture, new AsyncFunction<BoundStatement, ResultSet>() {
+			@Override
+			public ListenableFuture<ResultSet> apply(BoundStatement bs) throws Exception {
+				return session().executeAsync(bs);
+			}
+		});
+
+		try {
+			return Uninterruptibles.getUninterruptibly(Futures.transform(rsFuture, mapAllFunction));
+		} catch (ExecutionException e) {
+			throw DriverThrowables.propagateCause(e);
+		}
+	}
 
     /**
      * Fetch an entity based on its primary key asynchronously.

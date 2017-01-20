@@ -78,6 +78,38 @@ enum QueryType {
             return select.toString();
         }
     },
+	
+	GET_BY_PARTITION_KEY {
+        @Override
+        String makePreparedQueryString(TableMetadata table, EntityMapper<?> mapper, MappingManager manager, Set<PropertyMapper> columns, Collection<Mapper.Option> options) {
+            Select.Selection selection = select();
+            for (PropertyMapper col : mapper.allColumns) {
+                Select.SelectionOrAlias column = col.isComputed()
+                        ? selection.raw(col.columnName)
+                        : selection.column(col.columnName);
+
+                if (col.alias == null) {
+                    selection = column;
+                } else {
+                    selection = column.as(col.alias);
+                }
+            }
+            Select select;
+            if (table == null) {
+                select = selection.from(mapper.keyspace, mapper.table);
+            } else {
+                select = selection.from(table);
+            }
+            Select.Where where = select.where();
+			// in where clause, we need to restrict just the partition keys
+            for (int i = 0; i < mapper.partitionKeys.size(); i++)
+                where.and(eq(mapper.getPrimaryKeyColumn(i).columnName, bindMarker()));
+
+            for (Mapper.Option opt : options)
+                opt.checkValidFor(QueryType.GET, manager); // same with get one
+            return select.toString();
+        }
+    },
 
     DEL {
         @Override
