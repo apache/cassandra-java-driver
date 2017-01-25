@@ -903,13 +903,18 @@ public class CCMBridge implements CCMAccess {
             String clusterName = TestUtils.generateIdentifier("ccm_");
             boolean dse = isDSE == null ? isDSE() : isDSE;
 
-            Map<String, Object> cassandraConfiguration = randomizePorts(this.cassandraConfiguration);
             VersionNumber version = VersionNumber.parse(this.version);
+            Map<String, Object> cassandraConfiguration = randomizePorts(this.cassandraConfiguration);
             int storagePort = Integer.parseInt(cassandraConfiguration.get("storage_port").toString());
             int thriftPort = Integer.parseInt(cassandraConfiguration.get("rpc_port").toString());
             int binaryPort = Integer.parseInt(cassandraConfiguration.get("native_transport_port").toString());
+            if (version.compareTo(VersionNumber.parse("4.0")) >= 0) {
+                // remove thrift configuration
+                cassandraConfiguration.remove("start_rpc");
+                cassandraConfiguration.remove("rpc_port");
+                cassandraConfiguration.remove("thrift_prepared_statements_cache_size_mb");
+            }
             final CCMBridge ccm = new CCMBridge(clusterName, dse, version, storagePort, thriftPort, binaryPort, joinJvmArgs(), nodes);
-
             Runtime.getRuntime().addShutdownHook(new Thread() {
                 @Override
                 public void run() {

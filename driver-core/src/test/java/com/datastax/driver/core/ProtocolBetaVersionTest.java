@@ -102,12 +102,11 @@ public class ProtocolBetaVersionTest extends CCMTestsSupport {
     public void should_connect_with_beta_when_no_version_explicitly_required_and_flag_set() throws Exception {
         // Note: when the driver's ProtocolVersion.NEWEST_SUPPORTED will be incremented to V6 or higher
         // a renegotiation will start taking place here and will downgrade the version from V6 to V5,
-        // but the test should remain valid
+        // but the test should remain valid since it's executed against 3.10 exclusively
         Cluster cluster = Cluster.builder()
                 .addContactPoints(getContactPoints())
                 .withPort(ccm().getBinaryPort())
                 .allowBetaProtocolVersion()
-                // no version explicitly required -> renegotiation allowed
                 .build();
         cluster.connect();
         assertThat(cluster.getConfiguration().getProtocolOptions().getProtocolVersion()).isEqualTo(V5);
@@ -125,11 +124,10 @@ public class ProtocolBetaVersionTest extends CCMTestsSupport {
     public void should_connect_after_renegotiation_when_no_version_explicitly_required_and_flag_not_set() throws Exception {
         // Note: when the driver's ProtocolVersion.NEWEST_SUPPORTED will be incremented to V6 or higher
         // the renegotiation will start downgrading the version from V6 to V4 instead of V5 to V4,
-        // but the test should remain valid
+        // but the test should remain valid since it's executed against 3.10 exclusively
         Cluster cluster = Cluster.builder()
                 .addContactPoints(getContactPoints())
                 .withPort(ccm().getBinaryPort())
-                // no version explicitly required -> renegotiation allowed
                 .build();
         cluster.connect();
         assertThat(cluster.getConfiguration().getProtocolOptions().getProtocolVersion()).isEqualTo(V4);
