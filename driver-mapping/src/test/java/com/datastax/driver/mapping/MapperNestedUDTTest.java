@@ -29,7 +29,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @SuppressWarnings({"unused"})
-@CassandraVersion(major = 2.1)
+@CassandraVersion("2.1.0")
 public class MapperNestedUDTTest extends CCMTestsSupport {
 
     @Override

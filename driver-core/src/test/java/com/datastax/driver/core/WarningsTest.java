@@ -24,7 +24,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @CCMConfig(config = {"batch_size_warn_threshold_in_kb:5"})
-@CassandraVersion(major = 2.2)
+@CassandraVersion("2.2.0")
 public class WarningsTest extends CCMTestsSupport {
 
     @Override

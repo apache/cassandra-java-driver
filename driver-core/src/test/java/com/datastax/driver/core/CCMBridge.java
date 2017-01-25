@@ -282,6 +282,21 @@ public class CCMBridge implements CCMAccess {
     }
 
     /**
+     * @return {@link VersionNumber} representation of {@link CCMBridge#getCassandraVersion()}
+     */
+    public static VersionNumber getCassandraVersionNumber() {
+        return VersionNumber.parse(getCassandraVersion());
+    }
+
+    /**
+     * @param compareVersion The given version to compare with.
+     * @return Whether or not the configured cassandra version is greater than or equal to the given version.
+     */
+    public static boolean isCassandraVersionAtLeast(String compareVersion) {
+        return getCassandraVersionNumber().compareTo(VersionNumber.parse(compareVersion)) >= 0;
+    }
+
+    /**
      * @return The configured DSE version if '-Ddse=true' specified, otherwise null.
      */
     public static String getDSEVersion() {
@@ -290,6 +305,22 @@ public class CCMBridge implements CCMAccess {
         } else {
             return null;
         }
+    }
+
+    /**
+     * @return {@link VersionNumber} representation of {@link CCMBridge#getDSEVersion()}
+     */
+    public static VersionNumber getDSEVersionNumber() {
+        return VersionNumber.parse(getDSEVersion());
+    }
+
+    /**
+     * @param compareVersion The given version to compare with.
+     * @return Whether or not the configured dse version is greater than or equal to the given version.
+     */
+    public static boolean isDSEVersionAtLeast(String compareVersion) {
+        VersionNumber dseVersion = getDSEVersionNumber();
+        return dseVersion != null && dseVersion.compareTo(VersionNumber.parse(compareVersion)) >= 0;
     }
 
     /**
@@ -549,7 +580,12 @@ public class CCMBridge implements CCMAccess {
     @Override
     public void decommission(int n) {
         logger.debug(String.format("Decommissioning: node %s (%s%s:%s) from %s", n, TestUtils.IP_PREFIX, n, binaryPort, this));
-        execute(CCM_COMMAND + " node%d decommission", n);
+        // Special case for C* 3.12+, DSE 5.1+, force decommission (see CASSANDRA-12510)
+        String cmd = CCM_COMMAND + " node%d decommission";
+        if ((!isDSE() && isCassandraVersionAtLeast("3.12")) || (isDSE() && isDSEVersionAtLeast("5.1"))) {
+            cmd += " --force";
+        }
+        execute(cmd, n);
     }
 
     @Override
@@ -908,7 +944,7 @@ public class CCMBridge implements CCMAccess {
             int storagePort = Integer.parseInt(cassandraConfiguration.get("storage_port").toString());
             int thriftPort = Integer.parseInt(cassandraConfiguration.get("rpc_port").toString());
             int binaryPort = Integer.parseInt(cassandraConfiguration.get("native_transport_port").toString());
-            if (version.compareTo(VersionNumber.parse("4.0")) >= 0) {
+            if (!isThriftSupported(dse, version)) {
                 // remove thrift configuration
                 cassandraConfiguration.remove("start_rpc");
                 cassandraConfiguration.remove("rpc_port");
@@ -926,10 +962,7 @@ public class CCMBridge implements CCMAccess {
             ccm.updateConfig(cassandraConfiguration);
             if (dse) {
                 Map<String, Object> dseConfiguration = Maps.newLinkedHashMap(this.dseConfiguration);
-                /* TODO: Use version passed in if present, there is currently a conflation of C* and DSE versions
-                 * when it comes to this that don't want to disturb.  No tests are currently using withVersion with
-                 * dse, so its not an issue at the moment. */
-                if (VersionNumber.parse(CCMBridge.getDSEVersion()).getMajor() >= 5) {
+                if (dse && version.getMajor() >= 5) {
                     // randomize DSE specific ports if dse present and greater than 5.0
                     dseConfiguration.put("lease_netty_server_port", RANDOM_PORT);
                     dseConfiguration.put("internode_messaging_options.port", RANDOM_PORT);
@@ -944,6 +977,10 @@ public class CCMBridge implements CCMAccess {
             if (start)
                 ccm.start();
             return ccm;
+        }
+
+        private static boolean isThriftSupported(boolean dse, VersionNumber version) {
+            return dse || version.compareTo(VersionNumber.parse("4.0")) < 0;
         }
 
         public int weight() {

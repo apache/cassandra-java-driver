@@ -23,7 +23,7 @@ import java.util.UUID;
 
 import static com.datastax.driver.core.Assertions.assertThat;
 
-@CassandraVersion(major = 3.10)
+@CassandraVersion("3.10")
 public class DurationIntegrationTest extends CCMTestsSupport {
 
     @Override

@@ -36,7 +36,7 @@ import static java.util.concurrent.TimeUnit.MINUTES;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertNotEquals;
 
-@CassandraVersion(major = 2.1)
+@CassandraVersion("2.1.0")
 public class UserTypesTest extends CCMTestsSupport {
 
     private final static List<DataType> DATA_TYPE_PRIMITIVES = new ArrayList<DataType>(DataType.allPrimitiveTypes(TestUtils.getDesiredProtocolVersion()));

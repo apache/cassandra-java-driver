@@ -464,7 +464,7 @@ public class PreparedStatementTest extends CCMTestsSupport {
      * @since 2.2.0
      */
     @Test(groups = "short")
-    @CassandraVersion(major = 2.0)
+    @CassandraVersion("2.0.0")
     public void should_not_allow_unbound_value_on_batch_statement_when_protocol_lesser_than_v4() {
         Cluster cluster = register(Cluster.builder()
                 .addContactPoints(getContactPoints())
@@ -494,7 +494,7 @@ public class PreparedStatementTest extends CCMTestsSupport {
      * @since 2.2.0
      */
     @Test(groups = "short")
-    @CassandraVersion(major = 2.2)
+    @CassandraVersion("2.2.0")
     public void should_not_create_tombstone_when_unbound_value_on_bound_statement_and_protocol_v4() {
         PreparedStatement prepared = session().prepare("INSERT INTO " + SIMPLE_TABLE + " (k, i) VALUES (?, ?)");
         BoundStatement st1 = prepared.bind();
@@ -524,7 +524,7 @@ public class PreparedStatementTest extends CCMTestsSupport {
      * @since 2.2.0
      */
     @Test(groups = "short")
-    @CassandraVersion(major = 2.2)
+    @CassandraVersion("2.2.0")
     public void should_unset_value_by_index() {
         PreparedStatement prepared = session().prepare("INSERT INTO " + SIMPLE_TABLE + " (k, i) VALUES (?, ?)");
         BoundStatement bound = prepared.bind();
@@ -555,7 +555,7 @@ public class PreparedStatementTest extends CCMTestsSupport {
      * @since 2.2.0
      */
     @Test(groups = "short")
-    @CassandraVersion(major = 2.2)
+    @CassandraVersion("2.2.0")
     public void should_unset_value_by_name() {
         PreparedStatement prepared = session().prepare("INSERT INTO " + SIMPLE_TABLE + " (k, i) VALUES (:k, :i)");
         BoundStatement bound = prepared.bind();
@@ -587,7 +587,7 @@ public class PreparedStatementTest extends CCMTestsSupport {
      * @since 2.2.0
      */
     @Test(groups = "short")
-    @CassandraVersion(major = 2.2)
+    @CassandraVersion("2.2.0")
     public void should_not_create_tombstone_when_unbound_value_on_batch_statement_and_protocol_v4() {
         PreparedStatement prepared = session().prepare("INSERT INTO " + SIMPLE_TABLE + " (k, i) VALUES (?, ?)");
         BoundStatement st1 = prepared.bind();
@@ -640,7 +640,7 @@ public class PreparedStatementTest extends CCMTestsSupport {
      * @since 2.2.0
      */
     @Test(groups = "short")
-    @CassandraVersion(major = 2.0)
+    @CassandraVersion("2.0.0")
     public void should_create_tombstone_when_null_value_on_batch_statement() {
         PreparedStatement prepared = session().prepare("INSERT INTO " + SIMPLE_TABLE + " (k, i) VALUES (?, ?)");
         BoundStatement st1 = prepared.bind();

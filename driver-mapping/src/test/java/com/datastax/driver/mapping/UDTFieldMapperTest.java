@@ -27,7 +27,7 @@ import org.testng.annotations.Test;
 import java.util.HashMap;
 import java.util.Map;
 
-@CassandraVersion(major = 2.1)
+@CassandraVersion("2.1.0")
 @CCMConfig(createCluster = false)
 @SuppressWarnings("unused")
 public class UDTFieldMapperTest extends CCMTestsSupport {

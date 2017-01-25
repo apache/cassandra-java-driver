@@ -20,7 +20,7 @@ import com.datastax.driver.core.CCMTestsSupport;
 import com.datastax.driver.core.utils.CassandraVersion;
 import org.testng.annotations.Test;
 
-@CassandraVersion(major = 2.2)
+@CassandraVersion("2.2.0")
 @CCMConfig(config = "enable_user_defined_functions:true")
 public class FunctionExecutionExceptionTest extends CCMTestsSupport {
 

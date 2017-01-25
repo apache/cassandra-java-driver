@@ -32,7 +32,7 @@ import static org.assertj.core.api.Assertions.fail;
 public class SchemaBuilderIT extends CCMTestsSupport {
 
     @Test(groups = "short")
-    @CassandraVersion(major = 2.1, minor = 2)
+    @CassandraVersion("2.1.2")
     public void should_modify_table_metadata() {
         // Create a table
         session().execute(SchemaBuilder.createTable("ks", "TableMetadata")
@@ -128,7 +128,7 @@ public class SchemaBuilderIT extends CCMTestsSupport {
     }
 
     @Test(groups = "short")
-    @CassandraVersion(major = 2.1)
+    @CassandraVersion("2.1.0")
     public void should_create_a_table_and_a_udt() {
         // Create a UDT and a table
         session().execute(SchemaBuilder.createType("MyUDT")

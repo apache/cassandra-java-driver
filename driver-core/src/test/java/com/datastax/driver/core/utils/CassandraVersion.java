@@ -22,19 +22,15 @@ import java.lang.annotation.RetentionPolicy;
  * <p>Annotation for a Class or Method that defines a Cassandra Version requirement.  If the cassandra version in use
  * does not meet the version requirement, the test is skipped.</p>
  *
- * @see {@link com.datastax.driver.core.TestListener#beforeInvocation(org.testng.IInvokedMethod, org.testng.ITestResult)} for usage.
+ * @see com.datastax.driver.core.TestListener#beforeInvocation(org.testng.IInvokedMethod, org.testng.ITestResult)
  */
 @Retention(RetentionPolicy.RUNTIME)
 public @interface CassandraVersion {
-    /**
-     * @return The major version required to execute this test, i.e. "2.0"
-     */
-    double major();
 
     /**
-     * @return The minor version required to execute this test, i.e. "0"
+     * @return The minimum version required to execute this test, i.e. "2.0.13"
      */
-    int minor() default 0;
+    String value();
 
     /**
      * @return The description returned if this version requirement is not met.
