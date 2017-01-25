@@ -128,9 +128,8 @@ public class PoolingOptions {
     public static final int DEFAULT_IDLE_TIMEOUT_SECONDS = 120;
 
     /**
-     * @deprecated see {@link #setPoolTimeoutMillis(int)}
+     * The default value for {@link #getPoolTimeoutMillis()} ({@value}).
      */
-    @Deprecated
     public static final int DEFAULT_POOL_TIMEOUT_MILLIS = 5000;
 
     /**
@@ -157,6 +156,7 @@ public class PoolingOptions {
     private volatile int maxRequestsPerConnectionRemote = UNSET;
 
     private volatile int idleTimeoutSeconds = DEFAULT_IDLE_TIMEOUT_SECONDS;
+    private volatile int poolTimeoutMillis = DEFAULT_POOL_TIMEOUT_MILLIS;
     private volatile int maxQueueSize = DEFAULT_MAX_QUEUE_SIZE;
     private volatile int heartbeatIntervalSeconds = DEFAULT_HEARTBEAT_INTERVAL_SECONDS;
 
@@ -406,19 +406,39 @@ public class PoolingOptions {
     }
 
     /**
-     * @deprecated see {@link #setPoolTimeoutMillis(int)}. This method always returns 0.
+     * Returns the timeout when trying to acquire a connection from a host's pool.
+     *
+     * @return the timeout.
      */
-    @Deprecated
     public int getPoolTimeoutMillis() {
-        return 0;
+        return poolTimeoutMillis;
     }
 
     /**
-     * @deprecated the connection pool does not use a timeout anymore, incoming requests are now throttled with a
-     * threshold on the {@link #setMaxQueueSize(int) queue size}. This method has no effect.
+     * Sets the timeout when trying to acquire a connection from a host's pool.
+     * <p/>
+     * This option works in concert with {@link #setMaxQueueSize(int)} to determine what happens if the driver tries
+     * to borrow a connection from the pool but none is available:
+     * <ul>
+     *     <li>if either option is set to zero, the attempt is rejected immediately;</li>
+     *     <li>else if more than {@code maxQueueSize} requests are already waiting for a connection, the attempt is also
+     *     rejected;</li>
+     *     <li>otherwise, the attempt is enqueued; if a connection becomes available before {@code poolTimeoutMillis}
+     *     has elapsed, then the attempt succeeds, otherwise it is rejected.</li>
+     * </ul>
+     * If the attempt is rejected, the driver will move to the next host in the
+     * {@link com.datastax.driver.core.policies.LoadBalancingPolicy#newQueryPlan(String, Statement)}  query plan}.
+     * <p/>
+     * The default is 5 seconds. If this option is set to zero, the driver won't wait at all.
+     *
+     * @param poolTimeoutMillis the new value in milliseconds.
+     * @return this {@code PoolingOptions}
+     * @throws IllegalArgumentException if the timeout is negative.
      */
-    @Deprecated
     public PoolingOptions setPoolTimeoutMillis(int poolTimeoutMillis) {
+        if (poolTimeoutMillis < 0)
+            throw new IllegalArgumentException("Pool timeout must be positive");
+        this.poolTimeoutMillis = poolTimeoutMillis;
         return this;
     }
 
@@ -434,8 +454,17 @@ public class PoolingOptions {
     /**
      * Sets the maximum number of requests that get enqueued if no connection is available.
      * <p/>
-     * If the queue grows past this value, new requests will be rejected immediately (and the driver will move to the
-     * next host in the query plan). This limit is per connection pool, not global to the driver.
+     * This option works in concert with {@link #setPoolTimeoutMillis(int)} to determine what happens if the driver
+     * tries to borrow a connection from the pool but none is available:
+     * <ul>
+     *     <li>if either options is set to zero, the attempt is rejected immediately;</li>
+     *     <li>else if more than {@code maxQueueSize} requests are already waiting for a connection, the attempt is also
+     *     rejected;</li>
+     *     <li>otherwise, the attempt is enqueued; if a connection becomes available before {@code poolTimeoutMillis}
+     *     has elapsed, then the attempt succeeds, otherwise it is rejected.</li>
+     * </ul>
+     * If the attempt is rejected, the driver will move to the next host in the
+     * {@link com.datastax.driver.core.policies.LoadBalancingPolicy#newQueryPlan(String, Statement)}  query plan}.
      * <p/>
      * The default value is {@value DEFAULT_MAX_QUEUE_SIZE}. If this option is set to zero, the driver will never
      * enqueue requests.

@@ -1,5 +1,10 @@
 ## Changelog
 
+### 3.0.7 (in progress)
+
+- [bug] JAVA-1371: Reintroduce connection pool timeout.
+
+
 ### 3.0.6
 
 - [bug] JAVA-1330: Add un/register for SchemaChangeListener in DelegatingCluster
