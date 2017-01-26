@@ -243,7 +243,7 @@ class RequestHandler {
      */
     class SpeculativeExecution implements Connection.ResponseCallback {
         final String id;
-        private final Message.Request request;
+        private volatile Message.Request request;
         private volatile Host current;
         private volatile ConsistencyLevel retryConsistencyLevel;
         private final AtomicReference<QueryState> queryStateRef;
@@ -617,7 +617,7 @@ class RequestHandler {
                                                 + "Seeing this message a few times is fine, but seeing it a lot may be source of performance problems",
                                         toPrepare.getQueryString(), connection.address);
 
-                                write(connection, prepareAndRetry(toPrepare.getQueryString()));
+                                write(connection, prepareAndRetry(toPrepare));
                                 // we're done for now, the prepareAndRetry callback will handle the rest
                                 return;
                             default:
@@ -648,7 +648,7 @@ class RequestHandler {
             }
         }
 
-        private Connection.ResponseCallback prepareAndRetry(final String toPrepare) {
+        private Connection.ResponseCallback prepareAndRetry(final PreparedStatement unprepared) {
             // do not bother inspecting retry policy at this step, no other decision
             // makes sense than retry on the same host if the query was prepared,
             // or on another host, if an error/timeout occurred.
@@ -658,7 +658,7 @@ class RequestHandler {
 
                 @Override
                 public Message.Request request() {
-                    Requests.Prepare request = new Requests.Prepare(toPrepare);
+                    Requests.Prepare request = new Requests.Prepare(unprepared.getQueryString());
                     // propagate the original custom payload in the prepare request
                     request.setCustomPayload(statement.getOutgoingPayload());
                     return request;
@@ -683,8 +683,21 @@ class RequestHandler {
 
                     switch (response.type) {
                         case RESULT:
-                            if (((Responses.Result) response).kind == Responses.Result.Kind.PREPARED) {
-                                logger.debug("Scheduling retry now that query is prepared");
+                            Responses.Result result = (Responses.Result) response;
+                            if (result.kind == Responses.Result.Kind.PREPARED) {
+                                logger.info("Scheduling retry now that query is prepared");
+                                // JAVA-1196: Include hash of result set metadata in prepared statement id
+                                // (see CASSANDRA-10786)
+                                Responses.Result.Prepared prepared = (Responses.Result.Prepared) result;
+                                MD5Digest newId = prepared.statementId;
+                                MD5Digest oldId = unprepared.getPreparedId().getValues().getId();
+                                if (!newId.equals(oldId)) {
+                                    logger.info("Statement ID has changed from {} to {}, table has probably been ALTERed ({})", oldId, newId, unprepared.getQueryString());
+                                    manager.cluster.manager.removePrepared(unprepared);
+                                    unprepared.getPreparedId().swap(PreparedId.fromMessage(prepared, manager.cluster));
+                                    manager.cluster.manager.addPrepared(unprepared);
+                                    request = ((Requests.Execute) request).copy(newId);
+                                }
                                 retry(true, null);
                             } else {
                                 logError(connection.address, new DriverException("Got unexpected response to prepare message: " + response));

@@ -91,4 +91,8 @@ public class Assertions extends org.assertj.core.api.Assertions {
         return new ResultSetAssert(rows);
     }
 
+    public static ColumnDefinitionsAssert assertThat(ColumnDefinitions variables) {
+        return new ColumnDefinitionsAssert(variables);
+    }
+
 }

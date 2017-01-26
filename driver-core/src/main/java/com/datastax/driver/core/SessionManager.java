@@ -37,7 +37,6 @@ import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
 /**
@@ -567,16 +566,18 @@ class SessionManager extends AbstractSession {
             request = new Requests.Query(qString, options, statement.isTracing());
         } else if (statement instanceof BoundStatement) {
             BoundStatement bs = (BoundStatement) statement;
-            if (!cluster.manager.preparedQueries.containsKey(bs.statement.getPreparedId().id)) {
+            PreparedId.Values values = bs.statement.getPreparedId().getValues();
+            MD5Digest statementId = values.getId();
+            if (!cluster.manager.preparedQueries.containsKey(statementId)) {
                 throw new InvalidQueryException(String.format("Tried to execute unknown prepared query : %s. "
-                        + "You may have used a PreparedStatement that was created with another Cluster instance.", bs.statement.getPreparedId().id));
+                        + "You may have used a PreparedStatement that was created with another Cluster instance.", statementId));
             }
             if (protocolVersion.compareTo(ProtocolVersion.V4) < 0)
                 bs.ensureAllSet();
-            boolean skipMetadata = protocolVersion != ProtocolVersion.V1 && bs.statement.getPreparedId().resultSetMetadata != null;
+            boolean skipMetadata = protocolVersion != ProtocolVersion.V1 && values.getResultSetMetadata() != null;
             Requests.QueryProtocolOptions options = new Requests.QueryProtocolOptions(Message.Request.Type.EXECUTE, consistency, Arrays.asList(bs.wrapper.values), Collections.<String, ByteBuffer>emptyMap(),
                     skipMetadata, fetchSize, usedPagingState, serialConsistency, defaultTimestamp);
-            request = new Requests.Execute(bs.statement.getPreparedId().id, options, statement.isTracing());
+            request = new Requests.Execute(statementId, options, statement.isTracing());
         } else {
             assert statement instanceof BatchStatement : statement;
             assert pagingState == null;

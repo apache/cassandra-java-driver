@@ -193,7 +193,7 @@ public class BoundStatement extends Statement implements SettableData<BoundState
             if (value == null) {
                 wrapper.values[i] = null;
             } else {
-                ProtocolVersion protocolVersion = statement.getPreparedId().protocolVersion;
+                ProtocolVersion protocolVersion = statement.getPreparedId().getValues().getProtocolVersion();
                 if (value instanceof Token)
                     // bypass CodecRegistry for token values
                     wrapper.values[i] = ((Token) value).serialize(protocolVersion);
@@ -236,7 +236,7 @@ public class BoundStatement extends Statement implements SettableData<BoundState
             return statement.getRoutingKey();
         }
 
-        int[] rkIndexes = statement.getPreparedId().routingKeyIndexes;
+        int[] rkIndexes = statement.getPreparedId().getValues().getRoutingKeyIndexes();
         if (rkIndexes != null) {
             if (rkIndexes.length == 1) {
                 return wrapper.values[rkIndexes[0]];
@@ -293,7 +293,8 @@ public class BoundStatement extends Statement implements SettableData<BoundState
      */
     @Override
     public String getKeyspace() {
-        return statement.getPreparedId().metadata.size() == 0 ? null : statement.getPreparedId().metadata.getKeyspace(0);
+        ColumnDefinitions variables = statement.getPreparedId().getValues().getVariables();
+        return variables.size() == 0 ? null : variables.getKeyspace(0);
     }
 
     /**
@@ -1380,7 +1381,7 @@ public class BoundStatement extends Statement implements SettableData<BoundState
     static class DataWrapper extends AbstractData<BoundStatement> {
 
         DataWrapper(BoundStatement wrapped, int size) {
-            super(wrapped.statement.getPreparedId().protocolVersion, wrapped, size);
+            super(wrapped.statement.getPreparedId().getValues().getProtocolVersion(), wrapped, size);
         }
 
         protected int[] getAllIndexesOf(String name) {
