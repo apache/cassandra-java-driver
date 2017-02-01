@@ -16,10 +16,7 @@
 package com.datastax.driver.core;
 
 import com.codahale.metrics.Gauge;
-import com.datastax.driver.core.exceptions.BusyConnectionException;
-import com.datastax.driver.core.exceptions.BusyPoolException;
-import com.datastax.driver.core.exceptions.ConnectionException;
-import com.datastax.driver.core.exceptions.DriverException;
+import com.datastax.driver.core.exceptions.*;
 import com.datastax.driver.core.policies.ConstantReconnectionPolicy;
 import com.datastax.driver.core.utils.MoreFutures;
 import com.google.common.base.Predicate;
@@ -31,6 +28,7 @@ import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
 import java.net.InetSocketAddress;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
@@ -42,10 +40,13 @@ import static com.datastax.driver.core.Assertions.assertThat;
 import static com.datastax.driver.core.ConditionChecker.check;
 import static com.datastax.driver.core.PoolingOptions.NEW_CONNECTION_THRESHOLD_LOCAL_KEY;
 import static com.google.common.collect.Lists.newArrayList;
+import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.mockito.Mockito.*;
 import static org.scassandra.http.client.ClosedConnectionReport.CloseType.CLOSE;
+import static org.scassandra.http.client.PrimingRequest.queryBuilder;
 import static org.scassandra.http.client.PrimingRequest.then;
+import static org.scassandra.http.client.Result.server_error;
 import static org.testng.Assert.fail;
 
 public class HostConnectionPoolTest extends ScassandraTestBase.PerClassCluster {
@@ -115,9 +116,91 @@ public class HostConnectionPoolTest extends ScassandraTestBase.PerClassCluster {
             try {
                 failedBorrow.getConnection();
                 fail("Expected a BusyPoolException");
-            } catch (BusyPoolException e) {/*expected*/}
+            } catch (BusyPoolException e) {
+                assertThat(e).hasMessageContaining("reached its max size");
+            }
         } finally {
             MockRequest.completeAll(allRequests);
+            cluster.close();
+        }
+    }
+
+    /**
+     * Ensures that if a fixed-sized pool has filled its core connections and reached a number of requests to cause
+     * it to be enqueued, that if the request is not serviced within 100ms, a BusyPoolException is raised with a timeout.
+     *
+     * @jira_ticket JAVA-1371
+     * @test_category connection:connection_pool
+     * @since 3.0.7 3.1.4 3.2.0
+     */
+    @Test(groups = "short")
+    public void should_reject_if_enqueued_and_timeout_reached() {
+        Cluster cluster = createClusterBuilder().build();
+        List<MockRequest> allRequests = newArrayList();
+        try {
+            HostConnectionPool pool = createPool(cluster, 1, 1);
+            List<MockRequest> requests = MockRequest.sendMany(128, pool);
+            allRequests.addAll(requests);
+
+            // pool is now full, this request will be enqueued
+            MockRequest failedBorrow = MockRequest.send(pool, 100, 128);
+            try {
+                failedBorrow.getConnection();
+                fail("Expected a BusyPoolException");
+            } catch (BusyPoolException e) {
+                assertThat(e).hasMessageContaining("timed out");
+            }
+        } finally {
+            MockRequest.completeAll(allRequests);
+            cluster.close();
+        }
+    }
+
+    /**
+     * Validates that if a borrow request is enqueued into a pool for a Host that is currently
+     * within the window of reconnecting after an error that the future tied to that query times out
+     * after {@link PoolingOptions#setPoolTimeoutMillis(int)}.
+     * <p>
+     * This primarily serves to demonstrate that the use case described in JAVA-1371 is fixed by using
+     * {@link Session#execute(Statement)} shortly after a server error on a connection.
+     *
+     * @jira_ticket JAVA-1371
+     * @test_category connection:connection_pool
+     * @since 3.0.7 3.1.4 3.2.0
+     */
+    @Test(groups = "short")
+    public void should_not_hang_when_executing_sync_queries() {
+        primingClient.prime(
+                queryBuilder()
+                        .withQuery("server_error query")
+                        .withThen(then().withResult(server_error))
+                        .build()
+        );
+
+        Cluster cluster = createClusterBuilder()
+                .withReconnectionPolicy(new ConstantReconnectionPolicy(10000)).build();
+        // reduce timeout so test runs faster.
+        cluster.getConfiguration().getPoolingOptions().setPoolTimeoutMillis(500);
+        try {
+            Session session = cluster.connect();
+            try {
+                session.execute("server_error query");
+                fail("Exception expected");
+            } catch (Exception e) {
+                // error is expected in this case.
+            }
+
+            try {
+                session.execute("this should not block indefinitely");
+            } catch (NoHostAvailableException nhae) {
+                // should raise a NHAE with a BusyPoolException.
+                Collection<Throwable> errors = nhae.getErrors().values();
+                assertThat(errors).hasSize(1);
+                Throwable e = errors.iterator().next();
+                assertThat(e).isInstanceOf(BusyPoolException.class);
+                assertThat(e).hasMessageContaining("timed out");
+            }
+        } finally {
             cluster.close();
         }
     }
@@ -209,8 +292,11 @@ public class HostConnectionPoolTest extends ScassandraTestBase.PerClassCluster {
                 try {
                     Uninterruptibles.getUninterruptibly(queuedRequest.connectionFuture, 5, TimeUnit.SECONDS);
                     count++;
-                } catch (TimeoutException te) {
+                } catch (ExecutionException e) {
                     // 128th request should timeout since all in flight requests are used.
+                    assertThat(e.getCause())
+                            .isInstanceOf(BusyPoolException.class)
+                            .hasMessageContaining("timed out after");
                     assertThat(count).isEqualTo(128);
                     break;
                 }
@@ -1156,8 +1242,8 @@ public class HostConnectionPoolTest extends ScassandraTestBase.PerClassCluster {
 
             // Should create up to core connections.
             verify(factory, timeout(readTimeout).times(1)).open(any(HostConnectionPool.class));
-            assertThat(pool.connections).hasSize(1);
 
+            assertPoolSize(pool, 1);
             request.simulateSuccessResponse();
         } finally {
             cluster.close();
@@ -1271,7 +1357,11 @@ public class HostConnectionPoolTest extends ScassandraTestBase.PerClassCluster {
         }
 
         static MockRequest send(HostConnectionPool pool, int maxQueueSize) throws ConnectionException, BusyConnectionException {
-            return new MockRequest(pool, maxQueueSize);
+            return send(pool, 5000, maxQueueSize);
+        }
+
+        static MockRequest send(HostConnectionPool pool, int timeoutMillis, int maxQueueSize) throws ConnectionException, BusyConnectionException {
+            return new MockRequest(pool, timeoutMillis, maxQueueSize);
         }
 
         private static List<MockRequest> sendMany(int count, HostConnectionPool pool) throws ConnectionException {
@@ -1312,8 +1402,8 @@ public class HostConnectionPoolTest extends ScassandraTestBase.PerClassCluster {
             }
         }
 
-        private MockRequest(HostConnectionPool pool, int maxQueueSize) throws ConnectionException {
-            this.connectionFuture = pool.borrowConnection(maxQueueSize);
+        private MockRequest(HostConnectionPool pool, int timeoutMillis, int maxQueueSize) throws ConnectionException {
+            this.connectionFuture = pool.borrowConnection(timeoutMillis, MILLISECONDS, maxQueueSize);
             Futures.addCallback(this.connectionFuture, new MoreFutures.SuccessCallback<Connection>() {
                 @Override
                 public void onSuccess(Connection connection) {
@@ -1339,15 +1429,14 @@ public class HostConnectionPoolTest extends ScassandraTestBase.PerClassCluster {
                 responseHandler.cancelHandler();
         }
 
-        // Get the connection, assuming pool acquisition completed
         Connection getConnection() {
             try {
-                if (!connectionFuture.isDone()) {
-                    throw new AssertionError("Borrow call did not complete");
-                }
-                return Uninterruptibles.getUninterruptibly(connectionFuture);
+                return Uninterruptibles.getUninterruptibly(connectionFuture, 500, MILLISECONDS);
             } catch (ExecutionException e) {
                 throw Throwables.propagate(e.getCause());
+            } catch (TimeoutException e) {
+                fail("Timed out getting connection");
+                return null; // never reached
             }
         }
 
