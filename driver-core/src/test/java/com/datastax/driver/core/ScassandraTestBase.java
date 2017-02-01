@@ -79,8 +79,6 @@ public abstract class ScassandraTestBase {
                 .withPort(scassandra.getBinaryPort())
                 .addContactPoints(hostAddress.getAddress())
                 .withPort(scassandra.getBinaryPort())
-                // Scassandra does not support V3 yet, and V4 may cause the server to crash
-                .withProtocolVersion(TestUtils.getDesiredProtocolVersion(ProtocolVersion.V2))
                 .withPoolingOptions(new PoolingOptions()
                         .setCoreConnectionsPerHost(HostDistance.LOCAL, 1)
                         .setMaxConnectionsPerHost(HostDistance.LOCAL, 1)

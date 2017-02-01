@@ -26,7 +26,6 @@ import org.scassandra.http.client.PrimingClient;
 import org.scassandra.http.client.PrimingRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.testng.SkipException;
 import org.testng.annotations.Test;
 
 import java.net.InetAddress;
@@ -55,9 +54,6 @@ public class ClusterInitTest {
      */
     @Test(groups = "short")
     public void should_handle_failing_or_missing_contact_points() throws UnknownHostException {
-        if (TestUtils.getDesiredProtocolVersion().compareTo(ProtocolVersion.V2) > 0)
-            throw new SkipException("Scassandra does not yet support protocol >= V3");
-
         Cluster cluster = null;
         Scassandra scassandra = null;
         List<FakeHost> failingHosts = Lists.newArrayList();
@@ -107,7 +103,6 @@ public class ClusterInitTest {
                     .withSocketOptions(socketOptions)
                     .withReconnectionPolicy(reconnectionPolicy)
                     .withPoolingOptions(poolingOptions)
-                    .withProtocolVersion(TestUtils.getDesiredProtocolVersion())
                     .build();
             cluster.connect();
 
