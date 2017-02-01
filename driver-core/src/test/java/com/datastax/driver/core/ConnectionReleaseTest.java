@@ -86,7 +86,6 @@ public class ConnectionReleaseTest extends ScassandraTestBase {
             cluster = Cluster.builder()
                     .addContactPoints(hostAddress.getAddress())
                     .withPort(scassandra.getBinaryPort())
-                    .withProtocolVersion(ProtocolVersion.V2)
                     .withPoolingOptions(new PoolingOptions()
                             .setCoreConnectionsPerHost(HostDistance.LOCAL, 1)
                             .setMaxConnectionsPerHost(HostDistance.LOCAL, 1))

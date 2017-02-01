@@ -1,5 +1,12 @@
 ## Changelog
 
+### 3.1.4 (in progress)
+
+Merged from 3.0.x branch:
+
+- [bug] JAVA-1371: Reintroduce connection pool timeout.
+
+
 ### 3.1.3
 
 Merged from 3.0.x branch:

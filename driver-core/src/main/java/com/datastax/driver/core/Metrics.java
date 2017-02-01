@@ -26,13 +26,13 @@ import java.util.concurrent.ThreadPoolExecutor;
 /**
  * Metrics exposed by the driver.
  * <p/>
- * The metrics exposed by this class use the <a href="http://metrics.codahale.com/">Metrics</a>
- * library and you should refer its <a href="http://metrics.codahale.com/manual/">documentation</a>
- * for details on how to handle the exposed metric objects.
+ * The metrics exposed by this class use the <a href="http://metrics.dropwizard.io/">Metrics</a>
+ * library and you should refer its documentation for details on how to handle the exposed
+ * metric objects.
  * <p/>
  * By default, metrics are exposed through JMX, which is very useful for
  * development and browsing, but for production environments you may want to
- * have a look at the <a href="http://metrics.codahale.com/manual/core/#reporters">reporters</a>
+ * have a look at the <a href="http://metrics.dropwizard.io/3.1.0/manual/core/#reporters">reporters</a>
  * provided by the Metrics library which could be more efficient/adapted.
  */
 public class Metrics {
@@ -111,7 +111,7 @@ public class Metrics {
      * Returns the registry containing all metrics.
      * <p/>
      * The metrics registry allows you to easily use the reporters that ship
-     * with <a href="http://metrics.codahale.com/manual/core/#reporters">Metrics</a>
+     * with <a href="http://metrics.dropwizard.io/3.1.0/manual/core/#reporters">Metrics</a>
      * or a custom written one.
      * <p/>
      * For instance, if {@code metrics} is {@code this} object, you could export the
