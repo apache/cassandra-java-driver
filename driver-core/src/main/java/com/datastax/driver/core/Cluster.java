@@ -750,6 +750,7 @@ public class Cluster implements Closeable {
          * <p/>
          * Use with caution, refer to the server and protocol documentation for the details
          * on latest protocol version.
+         *
          * @return this Builder.
          */
         public Builder allowBetaProtocolVersion() {
@@ -1504,18 +1505,7 @@ public class Cluster implements Closeable {
             Set<Host> contactPointHosts = Sets.newHashSet(allHosts);
 
             try {
-                try {
-                    controlConnection.connect();
-                } catch (UnsupportedProtocolVersionException e) {
-                    logger.debug("Cannot connect with protocol {}, trying {}", e.getUnsupportedVersion(), e.getServerVersion());
-
-                    connectionFactory.protocolVersion = e.getServerVersion();
-                    try {
-                        controlConnection.connect();
-                    } catch (UnsupportedProtocolVersionException e1) {
-                        throw new DriverInternalError("Cannot connect to node with its own version, this makes no sense", e);
-                    }
-                }
+                negotiateProtocolVersionAndConnect();
 
                 // The control connection can mark hosts down if it failed to connect to them, or remove them if they weren't found
                 // in the control host's system.peers. Separate them:
@@ -1567,7 +1557,7 @@ public class Cluster implements Closeable {
                     // creations if a session is created right after this method returns).
                     logger.info("New Cassandra host {} added", host);
 
-                    if (!connectionFactory.protocolVersion.isSupportedBy(host)) {
+                    if (!host.supports(connectionFactory.protocolVersion)) {
                         logUnsupportedVersionProtocol(host, connectionFactory.protocolVersion);
                         continue;
                     }
@@ -1590,6 +1580,30 @@ public class Cluster implements Closeable {
             } catch (NoHostAvailableException e) {
                 close();
                 throw e;
+            }
+        }
+
+        private void negotiateProtocolVersionAndConnect() {
+            boolean shouldNegotiate = (configuration.getProtocolOptions().initialProtocolVersion == null);
+            while (true) {
+                try {
+                    controlConnection.connect();
+                    return;
+                } catch (UnsupportedProtocolVersionException e) {
+                    if (!shouldNegotiate) {
+                        throw e;
+                    }
+                    // Do not trust version of server's response, as C* behavior in case of protocol negotiation is not
+                    // properly documented, and varies over time (specially after CASSANDRA-11464). Instead, always
+                    // retry at attempted version - 1, if such a version exists; and otherwise, stop and fail.
+                    ProtocolVersion attemptedVersion = e.getUnsupportedVersion();
+                    ProtocolVersion retryVersion = attemptedVersion.getLowerSupported();
+                    if (retryVersion == null) {
+                        throw e;
+                    }
+                    logger.info("Cannot connect with protocol version {}, trying with {}", attemptedVersion, retryVersion);
+                    connectionFactory.protocolVersion = retryVersion;
+                }
             }
         }
 
@@ -1734,7 +1748,7 @@ public class Cluster implements Closeable {
             if (isClosed())
                 return;
 
-            if (!connectionFactory.protocolVersion.isSupportedBy(host)) {
+            if (!host.supports(connectionFactory.protocolVersion)) {
                 logUnsupportedVersionProtocol(host, connectionFactory.protocolVersion);
                 return;
             }
@@ -2028,7 +2042,7 @@ public class Cluster implements Closeable {
             if (isClosed())
                 return;
 
-            if (!connectionFactory.protocolVersion.isSupportedBy(host)) {
+            if (!host.supports(connectionFactory.protocolVersion)) {
                 logUnsupportedVersionProtocol(host, connectionFactory.protocolVersion);
                 return;
             }

@@ -26,38 +26,36 @@ import java.util.Map;
  */
 public enum ProtocolVersion {
 
-    V1("1.2.0", 1),
-    V2("2.0.0", 2),
-    V3("2.1.0", 3),
-    V4("2.2.0", 4),
-    V5("3.10.0", 5);
+    V1("1.2.0", 1, null),
+    V2("2.0.0", 2, V1),
+    V3("2.1.0", 3, V2),
+    V4("2.2.0", 4, V3),
+    V5("3.10.0", 5, V4);
 
     /**
      * The most recent protocol version supported by the driver.
      */
     public static final ProtocolVersion NEWEST_SUPPORTED = V4;
 
+    /**
+     * The most recent beta protocol version supported by the driver.
+     */
     public static final ProtocolVersion NEWEST_BETA = V5;
 
     private final VersionNumber minCassandraVersion;
+
     private final int asInt;
 
-    private ProtocolVersion(String minCassandraVersion, int asInt) {
+    private final ProtocolVersion lowerSupported;
+
+    private ProtocolVersion(String minCassandraVersion, int asInt, ProtocolVersion lowerSupported) {
         this.minCassandraVersion = VersionNumber.parse(minCassandraVersion);
         this.asInt = asInt;
-    }
-
-    boolean isSupportedBy(Host host) {
-        return host.getCassandraVersion() == null ||
-                isSupportedBy(host.getCassandraVersion());
+        this.lowerSupported = lowerSupported;
     }
 
     VersionNumber minCassandraVersion() {
         return minCassandraVersion;
-    }
-
-    private boolean isSupportedBy(VersionNumber cassandraVersion) {
-        return minCassandraVersion.compareTo(cassandraVersion.nextStable()) <= 0;
     }
 
     DriverInternalError unsupported() {
@@ -71,6 +69,16 @@ public enum ProtocolVersion {
      */
     public int toInt() {
         return asInt;
+    }
+
+    /**
+     * Returns the highest supported version that is lower than this version.
+     * Returns {@code null} if there isn't such a version.
+     *
+     * @return the highest supported version that is lower than this version.
+     */
+    public ProtocolVersion getLowerSupported() {
+        return lowerSupported;
     }
 
     private static final Map<Integer, ProtocolVersion> INT_TO_VERSION;

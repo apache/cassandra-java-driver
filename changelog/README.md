@@ -5,6 +5,7 @@
 - [new feature] JAVA-1347: Add support for duration type.
 - [new feature] JAVA-1248: Implement "beta" flag for native protocol v5.
 - [new feature] JAVA-1362: Send query options flags as [int] for Protocol V5+.
+- [improvement] JAVA-1367: Make protocol negotiation more resilient.
 
 
 ### 3.1.3

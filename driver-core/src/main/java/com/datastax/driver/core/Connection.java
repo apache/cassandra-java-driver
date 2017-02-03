@@ -248,10 +248,7 @@ class Connection {
                         return checkClusterName(protocolVersion, initExecutor);
                     case ERROR:
                         Responses.Error error = (Responses.Error) response;
-                        // Testing for a specific string is a tad fragile but well, we don't have much choice
-                        // C* 2.1 reports a server error instead of protocol error, see CASSANDRA-9451
-                        if ((error.code == ExceptionCode.PROTOCOL_ERROR || error.code == ExceptionCode.SERVER_ERROR) &&
-                                error.message.contains("Invalid or unsupported protocol version"))
+                        if (isUnsupportedProtocolVersion(error))
                             throw unsupportedProtocolVersionException(protocolVersion, error.serverProtocolVersion);
                         throw new TransportException(address, String.format("Error initializing connection: %s", error.message));
                     case AUTHENTICATE:
@@ -405,9 +402,17 @@ class Connection {
         }
     }
 
+    private boolean isUnsupportedProtocolVersion(Responses.Error error) {
+        // Testing for a specific string is a tad fragile but well, we don't have much choice
+        // C* 2.1 reports a server error instead of protocol error, see CASSANDRA-9451
+        return (error.code == ExceptionCode.PROTOCOL_ERROR || error.code == ExceptionCode.SERVER_ERROR) &&
+                error.message.contains("Invalid or unsupported protocol version");
+    }
+
     private UnsupportedProtocolVersionException unsupportedProtocolVersionException(ProtocolVersion triedVersion, ProtocolVersion serverProtocolVersion) {
-        logger.debug("Got unsupported protocol version error from {} for version {} server supports version {}", address, triedVersion, serverProtocolVersion);
-        return new UnsupportedProtocolVersionException(address, triedVersion, serverProtocolVersion);
+        UnsupportedProtocolVersionException e = new UnsupportedProtocolVersionException(address, triedVersion, serverProtocolVersion);
+        logger.debug(e.getMessage());
+        return e;
     }
 
     boolean isDefunct() {
@@ -1000,7 +1005,7 @@ class Connection {
             ProtocolVersion protocolVersion = factory.protocolVersion;
             if (protocolVersion == null) {
                 // This happens for the first control connection because the protocol version has not been
-                // negociated yet.
+                // negotiated yet.
                 protocolVersion = ProtocolVersion.V2;
             }
             streamIdHandler = StreamIdGenerator.newInstance(protocolVersion);

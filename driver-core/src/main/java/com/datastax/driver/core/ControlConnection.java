@@ -211,7 +211,7 @@ class ControlConnection implements Connection.Owner {
                 } catch (UnsupportedProtocolVersionException e) {
                     // If it's the very first node we've connected to, rethrow the exception and
                     // Cluster.init() will handle it. Otherwise, just mark this node in error.
-                    if (cluster.protocolVersion() == null)
+                    if (isInitialConnection)
                         throw e;
                     logger.debug("Ignoring host {}: {}", host, e.getMessage());
                     errors = logError(host, e, errors, iter);
@@ -225,8 +225,7 @@ class ControlConnection implements Connection.Owner {
             Thread.currentThread().interrupt();
 
             // Indicates that all remaining hosts are skipped due to the interruption
-            if (host != null)
-                errors = logError(host, new DriverException("Connection thread interrupted"), errors, iter);
+            errors = logError(host, new DriverException("Connection thread interrupted"), errors, iter);
             while (iter.hasNext())
                 errors = logError(iter.next(), new DriverException("Connection thread interrupted"), errors, iter);
         }
