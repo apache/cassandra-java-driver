@@ -51,7 +51,7 @@ public class MapperOptionTest extends CCMTestsSupport {
     }
 
     @Test(groups = "short")
-    @CassandraVersion(major = 2.0)
+    @CassandraVersion("2.0.0")
     void should_use_save_options() throws Exception {
         Long tsValue = futureTimestamp();
         mapper.save(new User(42, "helloworld"), Option.timestamp(tsValue), Option.tracing(true));
@@ -61,7 +61,7 @@ public class MapperOptionTest extends CCMTestsSupport {
     }
 
     @Test(groups = "short")
-    @CassandraVersion(major = 2.0)
+    @CassandraVersion("2.0.0")
     void should_use_delete_options() {
         User todelete = new User(45, "todelete");
         mapper.save(todelete);
@@ -72,7 +72,7 @@ public class MapperOptionTest extends CCMTestsSupport {
     }
 
     @Test(groups = "short", expectedExceptions = {IllegalArgumentException.class})
-    @CassandraVersion(major = 2.0)
+    @CassandraVersion("2.0.0")
     void should_use_get_options() {
         User user = new User(45, "toget");
         mapper.save(user);
@@ -90,7 +90,7 @@ public class MapperOptionTest extends CCMTestsSupport {
     }
 
     @Test(groups = "short")
-    @CassandraVersion(major = 2.0)
+    @CassandraVersion("2.0.0")
     void should_use_options_only_once() {
         Long tsValue = futureTimestamp();
         mapper.save(new User(43, "helloworld"), Option.timestamp(tsValue));
@@ -101,7 +101,7 @@ public class MapperOptionTest extends CCMTestsSupport {
     }
 
     @Test(groups = "short")
-    @CassandraVersion(major = 2.0)
+    @CassandraVersion("2.0.0")
     void should_use_default_options() {
         mapper.setDefaultSaveOptions(Option.timestamp(644746L), Option.ttl(76324));
         BoundStatement bs = (BoundStatement) mapper.saveQuery(new User(46, "rjhrgce"));
@@ -134,7 +134,7 @@ public class MapperOptionTest extends CCMTestsSupport {
     }
 
     @Test(groups = "short")
-    @CassandraVersion(major = 2.0)
+    @CassandraVersion("2.0.0")
     void should_prioritize_option_over_model_consistency() {
         // Generate Write Query and ensure User model writeConsistency is used.
         User user = new User(1859, "Steve");
@@ -155,7 +155,7 @@ public class MapperOptionTest extends CCMTestsSupport {
     }
 
     @Test(groups = "short")
-    @CassandraVersion(major = 2.0)
+    @CassandraVersion("2.0.0")
     void should_use_explicit_options_over_default_options() {
         long defaultTimestamp = futureTimestamp();
         long explicitTimestamp = futureTimestamp();
@@ -171,7 +171,7 @@ public class MapperOptionTest extends CCMTestsSupport {
      * Cover all versions of save() to check that methods that call each other properly propagate the options
      */
     @Test(groups = "short")
-    @CassandraVersion(major = 2.0)
+    @CassandraVersion("2.0.0")
     void should_use_save_options_for_all_variants() throws ExecutionException, InterruptedException {
         Long timestamp = futureTimestamp();
         User user = new User(42, "helloworld");
@@ -210,7 +210,7 @@ public class MapperOptionTest extends CCMTestsSupport {
     }
 
     @Test(groups = "short")
-    @CassandraVersion(major = 2.0)
+    @CassandraVersion("2.0.0")
     void should_use_get_options_for_all_variants() throws InterruptedException {
         try {
             mapper.get(42, Option.consistencyLevel(TWO));
@@ -251,7 +251,7 @@ public class MapperOptionTest extends CCMTestsSupport {
     }
 
     @Test(groups = "short")
-    @CassandraVersion(major = 2.0)
+    @CassandraVersion("2.0.0")
     void should_use_delete_options_for_all_variants() throws InterruptedException {
         User user = new User(42, "helloworld");
 

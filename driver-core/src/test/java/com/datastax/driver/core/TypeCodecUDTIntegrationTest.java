@@ -26,7 +26,7 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CassandraVersion(major = 2.1)
+@CassandraVersion("2.1.0")
 public class TypeCodecUDTIntegrationTest extends CCMTestsSupport {
 
     private final String insertQuery = "INSERT INTO users (id, name, address) VALUES (?, ?, ?)";

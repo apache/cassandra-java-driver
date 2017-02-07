@@ -99,7 +99,7 @@ public class Jsr353JsonCodecTest extends CCMTestsSupport {
     }
 
     @Test(groups = "short", dataProvider = "Jsr353JsonCodecTest")
-    @CassandraVersion(major = 2.0)
+    @CassandraVersion("2.0.0")
     public void should_use_custom_codec_with_simple_statements(JsonStructure object) throws IOException {
         session().execute(insertQuery, notAJsonString, object);
         ResultSet rows = session().execute(selectQuery, notAJsonString, object);

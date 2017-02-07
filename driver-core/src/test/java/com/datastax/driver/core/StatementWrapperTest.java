@@ -87,7 +87,7 @@ public class StatementWrapperTest extends CCMTestsSupport {
         assertThat(retryPolicy.customStatementsHandled.get()).isEqualTo(1);
     }
 
-    @CassandraVersion(major = 2.0)
+    @CassandraVersion("2.0.0")
     @Test(groups = "short")
     public void should_execute_wrapped_simple_statement() {
         session().execute(new CustomStatement(new SimpleStatement(INSERT_QUERY, "key_simple", 1)));
@@ -106,7 +106,7 @@ public class StatementWrapperTest extends CCMTestsSupport {
         assertThat(rs.one().getInt("v")).isEqualTo(1);
     }
 
-    @CassandraVersion(major = 2.0)
+    @CassandraVersion("2.0.0")
     @Test(groups = "short")
     public void should_execute_wrapped_batch_statement() {
         BatchStatement batchStatement = new BatchStatement();
@@ -118,7 +118,7 @@ public class StatementWrapperTest extends CCMTestsSupport {
         assertThat(rs.one().getInt("v")).isEqualTo(1);
     }
 
-    @CassandraVersion(major = 2.0)
+    @CassandraVersion("2.0.0")
     @Test(groups = "short")
     public void should_add_wrapped_batch_statement_to_batch_statement() {
         BatchStatement batchStatementForWrapping = new BatchStatement();

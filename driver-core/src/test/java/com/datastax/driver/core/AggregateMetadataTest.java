@@ -24,7 +24,7 @@ import static com.datastax.driver.core.DataType.cint;
 import static com.datastax.driver.core.DataType.text;
 import static com.datastax.driver.core.TestUtils.serializeForDynamicCompositeType;
 
-@CassandraVersion(major = 2.2)
+@CassandraVersion("2.2.0")
 @CCMConfig(config = "enable_user_defined_functions:true")
 public class AggregateMetadataTest extends CCMTestsSupport {
 
@@ -183,7 +183,7 @@ public class AggregateMetadataTest extends CCMTestsSupport {
      * @since 3.0.1
      */
     @Test(groups = "short")
-    @CassandraVersion(major = 2.2)
+    @CassandraVersion("2.2.0")
     public void should_parse_and_format_aggregate_with_composite_type_literal_initcond() {
         VersionNumber ver = VersionNumber.parse(CCMBridge.getCassandraVersion());
         if (ver.getMajor() == 3) {
@@ -204,7 +204,7 @@ public class AggregateMetadataTest extends CCMTestsSupport {
      * @since 3.0.1
      */
     @Test(groups = "short")
-    @CassandraVersion(major = 3.0, minor = 4)
+    @CassandraVersion("3.4")
     public void should_parse_and_format_aggregate_with_composite_type_hex_initcond() {
         VersionNumber ver = VersionNumber.parse(CCMBridge.getCassandraVersion());
         if ((ver.getMinor() >= 1 && ver.getMinor() < 4)) {

@@ -25,7 +25,7 @@ import org.testng.annotations.Test;
 import static com.datastax.driver.core.Assertions.assertThat;
 import static com.datastax.driver.core.querybuilder.QueryBuilder.*;
 
-@CassandraVersion(major = 2.1)
+@CassandraVersion("2.1.0")
 public class QueryBuilder21ExecutionTest extends CCMTestsSupport {
 
     @Override

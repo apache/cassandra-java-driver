@@ -19,10 +19,11 @@ import com.datastax.driver.core.utils.CassandraVersion;
 import org.testng.annotations.Test;
 
 import static com.datastax.driver.core.Assertions.assertThat;
-import static com.datastax.driver.core.DataType.*;
+import static com.datastax.driver.core.DataType.cint;
+import static com.datastax.driver.core.DataType.map;
 import static org.assertj.core.api.Assertions.entry;
 
-@CassandraVersion(major = 2.2)
+@CassandraVersion("2.2.0")
 @CCMConfig(config = "enable_user_defined_functions:true")
 public class FunctionMetadataTest extends CCMTestsSupport {
 

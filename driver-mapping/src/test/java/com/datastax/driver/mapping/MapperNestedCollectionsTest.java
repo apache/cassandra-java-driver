@@ -31,7 +31,7 @@ import java.util.Set;
 
 import static com.datastax.driver.core.Assertions.assertThat;
 
-@CassandraVersion(major = 2.1, minor = 3)
+@CassandraVersion("2.1.3")
 @SuppressWarnings("unused")
 public class MapperNestedCollectionsTest extends CCMTestsSupport {
 
