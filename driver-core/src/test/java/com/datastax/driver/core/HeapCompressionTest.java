@@ -47,7 +47,7 @@ public class HeapCompressionTest extends CompressionTest {
      * @expected_result session established and queries made successfully using it.
      */
     @Test(groups = "isolated")
-    @CassandraVersion(major = 2.0)
+    @CassandraVersion("2.0.0")
     public void should_function_with_lz4_compression() throws Exception {
         compressionTest(ProtocolOptions.Compression.LZ4);
     }

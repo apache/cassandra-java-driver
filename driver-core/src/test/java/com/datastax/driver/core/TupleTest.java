@@ -27,7 +27,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.fail;
 
-@CassandraVersion(major = 2.1)
+@CassandraVersion("2.1.0")
 public class TupleTest extends CCMTestsSupport {
 
     ProtocolVersion protocolVersion = TestUtils.getDesiredProtocolVersion();

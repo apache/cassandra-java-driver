@@ -33,7 +33,7 @@ import java.util.Map;
 import static com.google.common.collect.Lists.newArrayList;
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CassandraVersion(major = 2.2)
+@CassandraVersion("2.2.0")
 public class SimpleDateCodecsTest extends CCMTestsSupport {
 
     @Override

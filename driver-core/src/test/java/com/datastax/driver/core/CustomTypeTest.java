@@ -19,7 +19,6 @@ import com.datastax.driver.core.utils.CassandraVersion;
 import org.testng.annotations.Test;
 
 import java.nio.ByteBuffer;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -153,7 +152,7 @@ public class CustomTypeTest extends CCMTestsSupport {
      * @test_category metadata
      */
     @Test(groups = "short")
-    @CassandraVersion(major = 2.1)
+    @CassandraVersion("2.1.0")
     public void should_handle_udt_with_custom_type() {
         // Given: a UDT with custom types, and a table using it.
         session().execute("CREATE TYPE custom_udt (regular int, c1 'DynamicCompositeType(s => UTF8Type, i => Int32Type)', c2 'LongType')");

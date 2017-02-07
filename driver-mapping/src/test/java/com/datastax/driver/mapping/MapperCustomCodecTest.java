@@ -33,7 +33,7 @@ import java.util.Map;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
 
-@CassandraVersion(major = 2.1)
+@CassandraVersion("2.1.0")
 @SuppressWarnings("unused")
 public class MapperCustomCodecTest extends CCMTestsSupport {
 

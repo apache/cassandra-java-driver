@@ -27,7 +27,7 @@ import static org.testng.Assert.assertTrue;
 /**
  * Tests the behavior of client-provided timestamps with protocol v3.
  */
-@CassandraVersion(major = 2.1)
+@CassandraVersion("2.1.0")
 public class QueryTimestampTest extends CCMTestsSupport {
 
     private volatile long timestampFromGenerator;

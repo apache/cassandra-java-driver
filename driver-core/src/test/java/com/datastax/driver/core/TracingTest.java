@@ -26,7 +26,7 @@ import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CassandraVersion(major = 2.0)
+@CassandraVersion("2.0.0")
 public class TracingTest extends CCMTestsSupport {
 
     private static final String KEY = "tracing_test";

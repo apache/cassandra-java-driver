@@ -34,7 +34,7 @@ import static org.testng.Assert.assertEquals;
  * Tests mapping of collections of UDTs.
  */
 @SuppressWarnings("unused")
-@CassandraVersion(major = 2.1)
+@CassandraVersion("2.1.0")
 public class MapperUDTCollectionsTest extends CCMTestsSupport {
 
     @Override

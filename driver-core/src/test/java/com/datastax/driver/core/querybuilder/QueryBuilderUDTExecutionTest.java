@@ -29,7 +29,7 @@ import static com.datastax.driver.core.querybuilder.QueryBuilder.*;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.testng.Assert.assertEquals;
 
-@CassandraVersion(major = 2.1, minor = 3)
+@CassandraVersion("2.1.3")
 public class QueryBuilderUDTExecutionTest extends CCMTestsSupport {
 
     @Override

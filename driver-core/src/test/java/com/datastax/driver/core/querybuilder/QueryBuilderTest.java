@@ -20,7 +20,6 @@ import com.datastax.driver.core.exceptions.CodecNotFoundException;
 import com.datastax.driver.core.exceptions.InvalidQueryException;
 import com.datastax.driver.core.exceptions.InvalidTypeException;
 import com.datastax.driver.core.utils.Bytes;
-import com.datastax.driver.core.utils.CassandraVersion;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
@@ -861,7 +860,6 @@ public class QueryBuilderTest {
     }
 
     @Test(groups = "unit")
-    @CassandraVersion(major = 2.1, minor = 3)
     public void should_handle_nested_collections() {
         String query;
         Statement statement;
