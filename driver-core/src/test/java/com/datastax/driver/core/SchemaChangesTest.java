@@ -209,7 +209,7 @@ public class SchemaChangesTest extends CCMTestsSupport {
 
     @SuppressWarnings("RedundantCast")
     @Test(groups = "short", dataProvider = "existingKeyspaceName")
-    @CassandraVersion(major = 2.1)
+    @CassandraVersion("2.1.0")
     public void should_notify_of_udt_creation(String keyspace) {
         session1.execute(String.format("CREATE TYPE %s.type1(i int)", keyspace));
         for (SchemaChangeListener listener : listeners) {
@@ -223,7 +223,7 @@ public class SchemaChangesTest extends CCMTestsSupport {
     }
 
     @Test(groups = "short", dataProvider = "existingKeyspaceName")
-    @CassandraVersion(major = 2.1)
+    @CassandraVersion("2.1.0")
     public void should_notify_of_udt_update(String keyspace) {
         session1.execute(String.format("CREATE TYPE %s.type1(i int)", keyspace));
         session1.execute(String.format("ALTER TYPE %s.type1 ADD j int", keyspace));
@@ -240,7 +240,7 @@ public class SchemaChangesTest extends CCMTestsSupport {
 
     @SuppressWarnings("RedundantCast")
     @Test(groups = "short", dataProvider = "existingKeyspaceName")
-    @CassandraVersion(major = 2.1)
+    @CassandraVersion("2.1.0")
     public void should_notify_of_udt_drop(String keyspace) {
         session1.execute(String.format("CREATE TYPE %s.type1(i int)", keyspace));
         session1.execute(String.format("DROP TYPE %s.type1", keyspace));
@@ -254,7 +254,7 @@ public class SchemaChangesTest extends CCMTestsSupport {
     }
 
     @Test(groups = "short", dataProvider = "existingKeyspaceName")
-    @CassandraVersion(major = 2.2)
+    @CassandraVersion("2.2.0")
     public void should_notify_of_function_creation(String keyspace) {
         session1.execute(String.format("CREATE FUNCTION %s.\"ID\"(i int) RETURNS NULL ON NULL INPUT RETURNS int LANGUAGE java AS 'return i;'", keyspace));
         for (SchemaChangeListener listener : listeners) {
@@ -270,7 +270,7 @@ public class SchemaChangesTest extends CCMTestsSupport {
     }
 
     @Test(groups = "short", dataProvider = "existingKeyspaceName")
-    @CassandraVersion(major = 2.2)
+    @CassandraVersion("2.2.0")
     public void should_notify_of_function_update(String keyspace) {
         session1.execute(String.format("CREATE FUNCTION %s.\"ID\"(i int) RETURNS NULL ON NULL INPUT RETURNS int LANGUAGE java AS 'return i;'", keyspace));
         for (SchemaChangeListener listener : listeners) {
@@ -297,7 +297,7 @@ public class SchemaChangesTest extends CCMTestsSupport {
     }
 
     @Test(groups = "short", dataProvider = "existingKeyspaceName")
-    @CassandraVersion(major = 2.2)
+    @CassandraVersion("2.2.0")
     public void should_notify_of_function_drop(String keyspace) {
         session1.execute(String.format("CREATE FUNCTION %s.\"ID\"(i int) RETURNS NULL ON NULL INPUT RETURNS int LANGUAGE java AS 'return i;'", keyspace));
         session1.execute(String.format("DROP FUNCTION %s.\"ID\"", keyspace));
@@ -314,7 +314,7 @@ public class SchemaChangesTest extends CCMTestsSupport {
     }
 
     @Test(groups = "short", dataProvider = "existingKeyspaceName")
-    @CassandraVersion(major = 2.2)
+    @CassandraVersion("2.2.0")
     public void should_notify_of_aggregate_creation(String keyspace) {
         session1.execute(String.format("CREATE FUNCTION %s.\"PLUS\"(s int, v int) RETURNS NULL ON NULL INPUT RETURNS int LANGUAGE java"
                 + " AS 'return s+v;'", keyspace));
@@ -332,7 +332,7 @@ public class SchemaChangesTest extends CCMTestsSupport {
     }
 
     @Test(groups = "short", dataProvider = "existingKeyspaceName")
-    @CassandraVersion(major = 2.2)
+    @CassandraVersion("2.2.0")
     public void should_notify_of_aggregate_update(String keyspace) {
         session1.execute(String.format("CREATE FUNCTION %s.\"PLUS\"(s int, v int) RETURNS NULL ON NULL INPUT RETURNS int LANGUAGE java"
                 + " AS 'return s+v;'", keyspace));
@@ -361,7 +361,7 @@ public class SchemaChangesTest extends CCMTestsSupport {
     }
 
     @Test(groups = "short", dataProvider = "existingKeyspaceName")
-    @CassandraVersion(major = 2.2)
+    @CassandraVersion("2.2.0")
     public void should_notify_of_aggregate_drop(String keyspace) {
         session1.execute(String.format("CREATE FUNCTION %s.\"PLUS\"(s int, v int) RETURNS NULL ON NULL INPUT RETURNS int LANGUAGE java"
                 + " AS 'return s+v;'", keyspace));
@@ -380,7 +380,7 @@ public class SchemaChangesTest extends CCMTestsSupport {
     }
 
     @Test(groups = "short", dataProvider = "existingKeyspaceName")
-    @CassandraVersion(major = 3.0)
+    @CassandraVersion("3.0")
     public void should_notify_of_view_creation(String keyspace) {
         session1.execute(String.format("CREATE TABLE %s.table1 (pk int PRIMARY KEY, c int)", keyspace));
         session1.execute(String.format("CREATE MATERIALIZED VIEW %s.mv1 AS SELECT c FROM %s.table1 WHERE c IS NOT NULL PRIMARY KEY (pk, c)", keyspace, keyspace));
@@ -395,7 +395,7 @@ public class SchemaChangesTest extends CCMTestsSupport {
     }
 
     @Test(groups = "short", dataProvider = "existingKeyspaceName")
-    @CassandraVersion(major = 3.0)
+    @CassandraVersion("3.0")
     public void should_notify_of_view_update(String keyspace) {
         session1.execute(String.format("CREATE TABLE %s.table1 (pk int PRIMARY KEY, c int)", keyspace));
         session1.execute(String.format("CREATE MATERIALIZED VIEW %s.mv1 AS SELECT c FROM %s.table1 WHERE c IS NOT NULL PRIMARY KEY (pk, c) WITH compaction = { 'class' : 'SizeTieredCompactionStrategy' }", keyspace, keyspace));
@@ -424,7 +424,7 @@ public class SchemaChangesTest extends CCMTestsSupport {
     }
 
     @Test(groups = "short", dataProvider = "existingKeyspaceName")
-    @CassandraVersion(major = 3.0)
+    @CassandraVersion("3.0")
     public void should_notify_of_view_drop(String keyspace) {
         session1.execute(String.format("CREATE TABLE %s.table1 (pk int PRIMARY KEY, c int)", keyspace));
         session1.execute(String.format("CREATE MATERIALIZED VIEW %s.mv1 AS SELECT c FROM %s.table1 WHERE c IS NOT NULL PRIMARY KEY (pk, c)", keyspace, keyspace));

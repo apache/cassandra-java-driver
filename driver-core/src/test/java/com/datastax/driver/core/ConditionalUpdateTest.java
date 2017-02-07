@@ -24,7 +24,7 @@ import static org.testng.Assert.assertTrue;
 /**
  * Test {@link ResultSet#wasApplied()} for conditional updates.
  */
-@CassandraVersion(major = 2.0, description = "Conditional Updates requires 2.0+.")
+@CassandraVersion(value = "2.0.0", description = "Conditional Updates requires 2.0+.")
 public class ConditionalUpdateTest extends CCMTestsSupport {
 
     @Override

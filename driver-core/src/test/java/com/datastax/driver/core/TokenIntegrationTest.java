@@ -191,7 +191,7 @@ public abstract class TokenIntegrationTest extends CCMTestsSupport {
      * </ol>
      */
     @Test(groups = "short")
-    @CassandraVersion(major = 2)
+    @CassandraVersion("2.0")
     public void should_get_token_from_row_and_set_token_in_query_with_binding_and_aliasing() {
         Row row = session().execute("SELECT token(i) AS t FROM foo WHERE i = 1").one();
         Token token = row.getToken("t");

@@ -25,7 +25,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 import static org.testng.Assert.fail;
 
-@CassandraVersion(major = 2.1)
+@CassandraVersion("2.1.0")
 public class SingleConnectionPoolTest extends CCMTestsSupport {
 
     @Test(groups = "short")

@@ -53,7 +53,7 @@ public class SpeculativeExecutionIntegrationTest extends CCMTestsSupport {
      * @expected_result timestamp generator invoked only once for a query that caused two executions.
      */
     @Test(groups = "short")
-    @CassandraVersion(major = 2.1)
+    @CassandraVersion("2.1.0")
     public void should_use_same_default_timestamp_for_all_executions() {
         Metrics.Errors errors = cluster().getMetrics().getErrorMetrics();
 

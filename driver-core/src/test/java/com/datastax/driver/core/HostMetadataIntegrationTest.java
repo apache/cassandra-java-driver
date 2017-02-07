@@ -42,7 +42,7 @@ public class HostMetadataIntegrationTest {
      * @see HostMetadataIntegrationTest#should_parse_dse_workload_and_version_if_available()
      */
     @Test(groups = "long")
-    @DseVersion(major = 5.0)
+    @DseVersion("5.0.0")
     public void test_mixed_dse_workload() {
         CCMBridge.Builder builder = CCMBridge.builder()
                 .withNodes(3)

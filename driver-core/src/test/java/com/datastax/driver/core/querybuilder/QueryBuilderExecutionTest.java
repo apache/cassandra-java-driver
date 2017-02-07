@@ -213,7 +213,7 @@ public class QueryBuilderExecutionTest extends CCMTestsSupport {
      * @since 3.0.1
      */
     @Test(groups = "short")
-    @CassandraVersion(major = 3.2)
+    @CassandraVersion("3.2")
     public void should_support_cast_function_on_column() {
         //when
         ResultSet r = session().execute(select().cast("f", DataType.cint()).as("fint").column("i").from(TABLE2).where(eq("k", "cast_t")));
@@ -256,7 +256,7 @@ public class QueryBuilderExecutionTest extends CCMTestsSupport {
      * @since 3.0.1
      */
     @Test(groups = "short")
-    @CassandraVersion(major = 3.2)
+    @CassandraVersion("3.2")
     public void should_support_fcall_on_cast_column() {
         //when
         ResultSet ar = session().execute(select().fcall("avg", cast(column("i"), DataType.cfloat())).as("iavg").from(TABLE2).where(eq("k", "cast_t")));
@@ -281,7 +281,7 @@ public class QueryBuilderExecutionTest extends CCMTestsSupport {
      * @since 3.0.1
      */
     @Test(groups = "short")
-    @CassandraVersion(major = 3.6)
+    @CassandraVersion("3.6")
     public void should_retrieve_using_like_operator_on_table_with_sasi_index() {
         //given
         String table = "s_table";
@@ -320,7 +320,7 @@ public class QueryBuilderExecutionTest extends CCMTestsSupport {
      * @jira_ticket JAVA-1153
      * @since 3.1.0
      */
-    @CassandraVersion(major = 3.6, description = "Support for PER PARTITION LIMIT was added to C* 3.6 (CASSANDRA-7017)")
+    @CassandraVersion(value = "3.6", description = "Support for PER PARTITION LIMIT was added to C* 3.6 (CASSANDRA-7017)")
     @Test(groups = "short")
     public void should_support_per_partition_limit() throws Exception {
         assertThat(session().execute(select().all().from("test_ppl").perPartitionLimit(2)))

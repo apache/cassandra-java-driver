@@ -27,7 +27,7 @@ import static com.datastax.driver.core.Metadata.quote;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @CCMConfig(createKeyspace = false)
-@CassandraVersion(major = 2.1)
+@CassandraVersion("2.1.0")
 public class MapperCaseSensitivityTest extends CCMTestsSupport {
 
     static final String KS = "ks_MapperCaseSensitivityTest";

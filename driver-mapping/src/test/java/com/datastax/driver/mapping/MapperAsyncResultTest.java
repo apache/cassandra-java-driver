@@ -38,7 +38,7 @@ import static org.assertj.core.api.Assertions.assertThat;
  * @jira_ticket JAVA-1157
  */
 @SuppressWarnings("unused")
-@CassandraVersion(major = 2.0, description = "uses paging")
+@CassandraVersion(value = "2.0", description = "uses paging")
 public class MapperAsyncResultTest extends CCMTestsSupport {
 
     @Override

@@ -52,7 +52,7 @@ public class MapperAccessorTest extends CCMTestsSupport {
     }
 
     @Test(groups = "short")
-    @CassandraVersion(major = 2.0)
+    @CassandraVersion("2.0.0")
     public void should_allow_null_argument_in_accessor_when_set_by_name() {
         FooAccessor accessor = new MappingManager(session())
                 .createAccessor(FooAccessor.class);

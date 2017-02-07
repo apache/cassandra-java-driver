@@ -102,7 +102,7 @@ public class TypeCodecEncapsulationIntegrationTest extends CCMTestsSupport {
     }
 
     @Test(groups = "short")
-    @CassandraVersion(major = 2.0)
+    @CassandraVersion("2.0.0")
     public void should_use_custom_codecs_with_simple_statements() {
         session().execute(insertQuery,
                 n_int,
