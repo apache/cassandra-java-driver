@@ -63,7 +63,6 @@ class HostConnectionPool implements Connection.Owner {
     private final AtomicInteger maxTotalInFlight = new AtomicInteger();
     final Set<Connection> trash = new CopyOnWriteArraySet<Connection>();
 
-    private volatile int waiter = 0;
     private final Lock waitLock = new ReentrantLock(true);
     private final Condition hasAvailableConnection = waitLock.newCondition();
 
@@ -276,20 +275,14 @@ class HostConnectionPool implements Connection.Owner {
 
     private void awaitAvailableConnection(long timeout, TimeUnit unit) throws InterruptedException {
         waitLock.lock();
-        waiter++;
         try {
             hasAvailableConnection.await(timeout, unit);
         } finally {
-            waiter--;
             waitLock.unlock();
         }
     }
 
     private void signalAvailableConnection() {
-        // Quick check if it's worth signaling to avoid locking
-        if (waiter == 0)
-            return;
-
         waitLock.lock();
         try {
             hasAvailableConnection.signal();
@@ -299,10 +292,6 @@ class HostConnectionPool implements Connection.Owner {
     }
 
     private void signalAllAvailableConnection() {
-        // Quick check if it's worth signaling to avoid locking
-        if (waiter == 0)
-            return;
-
         waitLock.lock();
         try {
             hasAvailableConnection.signalAll();
