@@ -1,0 +1,17 @@
+Manifest-Version: 1.0
+Bundle-ManifestVersion: 2
+Bundle-Name: DataStax Java Driver for Apache Cassandra Examples - Eclipse RCP - Mailbox Service Tests
+Bundle-SymbolicName: com.datastax.driver.examples.rcp.mailbox.tests;singleton:=true
+Bundle-Version: 0.0.1.qualifier
+Bundle-Vendor: DataStax
+Bundle-RequiredExecutionEnvironment: JavaSE-1.7
+Require-Bundle: com.datastax.driver.examples.rcp.mailbox,
+ com.datastax.driver.core;bundle-version="2.1.5",
+ com.datastax.cassandra.driver-core.tests;bundle-version="2.1.5"
+Import-Package: org.junit,
+ org.junit.rules,
+ org.osgi.framework;version="1.3.0",
+ org.slf4j;version="1.7.12",
+ org.slf4j.impl
+Bundle-ActivationPolicy: lazy
+Bundle-Activator: com.datastax.driver.examples.rcp.mailbox.tests.MailboxTestsActivator
