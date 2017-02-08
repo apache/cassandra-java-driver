@@ -190,6 +190,7 @@ available again.
 
 Two options control that queue: a maximum size ([PoolingOptions.setMaxQueueSize][smqs]) and a timeout 
 ([PoolingOptions.setPoolTimeoutMillis][sptm]).
+
 * if either option is set to zero, the attempt is rejected immediately;
 * else if more than `maxQueueSize` requests are already waiting for a connection, the attempt is also rejected;
 * otherwise, the attempt is enqueued; if a connection becomes available before `poolTimeoutMillis` has elapsed,
