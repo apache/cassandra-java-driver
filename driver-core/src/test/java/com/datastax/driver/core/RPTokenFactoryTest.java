@@ -15,14 +15,26 @@
  */
 package com.datastax.driver.core;
 
+import com.datastax.driver.core.utils.Bytes;
 import org.testng.annotations.Test;
 
+import java.nio.ByteBuffer;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 public class RPTokenFactoryTest {
     Token.Factory factory = Token.RPToken.FACTORY;
+
+    @Test(groups = "unit")
+    public void should_hash_consistently() {
+        ByteBuffer byteBuffer = Bytes.fromHexString("0xCAFEBABE");
+        Token tokenA = factory.hash(byteBuffer);
+        Token tokenB = factory.hash(byteBuffer);
+        assertThat(tokenA)
+                .isEqualTo(factory.fromString("59959303159920881837560881824507314222"))
+                .isEqualTo(tokenB);
+    }
 
     @Test(groups = "unit")
     public void should_split_range() {

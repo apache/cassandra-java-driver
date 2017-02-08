@@ -10,6 +10,7 @@
 - [improvement] JAVA-1308: CodecRegistry performance improvements.
 - [improvement] JAVA-1241: Upgrade Netty to 4.1.x.
 - [improvement] JAVA-1287: Add CDC to TableOptionsMetadata and Schema Builder.
+- [improvement] JAVA-1392: Reduce lock contention in RPTokenFactory.
 
 Merged from 3.1.x branch:
 
