@@ -45,7 +45,7 @@ public class SocketOptions {
     private volatile Boolean keepAlive;
     private volatile Boolean reuseAddress;
     private volatile Integer soLinger;
-    private volatile Boolean tcpNoDelay = Boolean.TRUE;
+    private volatile Boolean tcpNoDelay = Boolean.FALSE;
     private volatile Integer receiveBufferSize;
     private volatile Integer sendBufferSize;
 
