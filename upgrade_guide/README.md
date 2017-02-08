@@ -3,6 +3,17 @@
 The purpose of this guide is to detail changes made by successive
 versions of the Java driver.
 
+### 3.2.0
+
+The `SSLOptions` interface is now deprecated in favor of
+`RemoteEndpointAwareSSLOptions`. 
+Similarly, the two existing implementations of that interface, 
+`JdkSSLOptions` and `NettySSLOptions`, 
+are now deprecated in favor of `RemoteEndpointAwareJdkSSLOptions` 
+and `RemoteEndpointAwareNettySSLOptions` respectively (see 
+[JAVA-1364](https://datastax-oss.atlassian.net/browse/JAVA-1364)).
+
+
 ### 3.1.0
 
 This version introduces an important change in the default retry behavior: statements that are not idempotent are not

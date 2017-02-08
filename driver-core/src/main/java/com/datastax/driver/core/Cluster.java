@@ -1173,7 +1173,7 @@ public class Cluster implements Closeable {
          * Enables the use of SSL for the created {@code Cluster}.
          * <p/>
          * Calling this method will use the JDK-based implementation with the default options
-         * (see {@link JdkSSLOptions.Builder}).
+         * (see {@link RemoteEndpointAwareJdkSSLOptions.Builder}).
          * This is thus a shortcut for {@code withSSL(JdkSSLOptions.builder().build())}.
          * <p/>
          * Note that if SSL is enabled, the driver will not connect to any
@@ -1184,7 +1184,7 @@ public class Cluster implements Closeable {
          * @return this builder.
          */
         public Builder withSSL() {
-            this.sslOptions = JdkSSLOptions.builder().build();
+            this.sslOptions = RemoteEndpointAwareJdkSSLOptions.builder().build();
             return this;
         }
 

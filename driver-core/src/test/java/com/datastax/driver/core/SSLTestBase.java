@@ -119,7 +119,7 @@ public abstract class SSLTestBase extends CCMTestsSupport {
                 SSLContext sslContext = SSLContext.getInstance("TLS");
                 sslContext.init(kmf != null ? kmf.getKeyManagers() : null, tmf != null ? tmf.getTrustManagers() : null, new SecureRandom());
 
-                return JdkSSLOptions.builder().withSSLContext(sslContext).build();
+                return RemoteEndpointAwareJdkSSLOptions.builder().withSSLContext(sslContext).build();
 
             case NETTY_OPENSSL:
                 SslContextBuilder builder = SslContextBuilder
@@ -131,7 +131,7 @@ public abstract class SSLTestBase extends CCMTestsSupport {
                     builder.keyManager(CCMBridge.DEFAULT_CLIENT_CERT_CHAIN_FILE, CCMBridge.DEFAULT_CLIENT_PRIVATE_KEY_FILE);
                 }
 
-                return new NettySSLOptions(builder.build());
+                return new RemoteEndpointAwareNettySSLOptions(builder.build());
             default:
                 fail("Unsupported SSL implementation: " + sslImplementation);
                 return null;
