@@ -61,7 +61,7 @@ class HostConnectionPool implements Connection.Owner {
     final Set<Connection> trash = new CopyOnWriteArraySet<Connection>();
 
     private volatile int waiter = 0;
-    private final Lock waitLock = new ReentrantLock(true);
+    private final Lock waitLock = new ReentrantLock();
     private final Condition hasAvailableConnection = waitLock.newCondition();
 
     private final Runnable newConnectionTask;
