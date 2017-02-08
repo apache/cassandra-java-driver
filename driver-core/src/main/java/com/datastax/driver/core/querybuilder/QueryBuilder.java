@@ -286,6 +286,18 @@ public final class QueryBuilder {
     public static Clause in(String name, Object... values) {
         return new Clause.InClause(name, Arrays.asList(values));
     }
+	
+    /**
+     * Create an "in" where clause stating the provided column must be equal
+     * to one of the provided values.
+     *
+     * @param name the column name
+     * @param values the values
+     * @return the corresponding where clause.
+     */
+	public static Clause in(String name, List<Object> values) {
+		return new Clause.InClause(name, values);
+	}
 
     /**
      * Create an "in" where clause stating the provided column must be equal
