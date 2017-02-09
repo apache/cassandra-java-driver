@@ -23,6 +23,7 @@ import org.slf4j.LoggerFactory;
 
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
+import java.util.Collections;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.ReentrantLock;
@@ -74,8 +75,8 @@ public class Host {
 
     private volatile Set<Token> tokens;
 
-    private volatile String dseWorkload;
-    private volatile boolean dseGraphEnabled;
+    private volatile Set<String> dseWorkloads = Collections.emptySet();
+    private volatile Boolean dseGraphEnabled;
     private volatile VersionNumber dseVersion;
 
     // ClusterMetadata keeps one Host object per inet address and we rely on this (more precisely,
@@ -129,8 +130,8 @@ public class Host {
         this.dseVersion = versionNumber;
     }
 
-    void setDseWorkload(String dseWorkload) {
-        this.dseWorkload = dseWorkload;
+    void setDseWorkloads(Set<String> dseWorkloads) {
+        this.dseWorkloads = Collections.unmodifiableSet(dseWorkloads);
     }
 
     void setDseGraphEnabled(boolean dseGraphEnabled) {
@@ -267,25 +268,63 @@ public class Host {
     }
 
     /**
-     * The DSE Workload the host is running.
+     * The main DSE Workload the host is running.
      * <p/>
      * It is also possible for this information to be unavailable. In that case
      * this method returns {@code null}, and the caller should always be aware of this
      * possibility.
      *
      * @return the DSE workload the host is running.
+     * @deprecated This method returns only the first workload reported by the host;
+     * use {@link #getDseWorkloads()} instead.
      */
+    @Deprecated
     public String getDseWorkload() {
-        return dseWorkload;
+        return dseWorkloads.isEmpty() ? null : dseWorkloads.iterator().next();
+    }
+
+    /**
+     * The DSE Workloads the host is running.
+     * <p/>
+     * This is based on the "workload" or "workloads" columns in {@code system.local} and {@code system.peers}.
+     * <p/>
+     * Workload labels may vary depending on the DSE version in use;
+     * e.g. DSE 5.1 may report two distinct workloads: {@code Search} and
+     * {@code Analytics}, while DSE 5.0 would report a single
+     * {@code SearchAnalytics} workload instead.
+     * It is up to users to deal with such discrepancies;
+     * the driver simply returns the workload labels as reported by DSE, without
+     * any form of pre-processing.
+     * <p/>
+     * The returned set is immutable.
+     * It is also possible for this information to be unavailable. In that case
+     * this method returns an empty set, and the caller should always be aware of this
+     * possibility.
+     *
+     * @return the DSE workloads the host is running.
+     */
+    public Set<String> getDseWorkloads() {
+        return dseWorkloads;
     }
 
     /**
      * Returns whether the host is running DSE Graph.
+     * <p/>
+     * This is based on the "graph" column in {@code system.local} and {@code system.peers}.
      *
      * @return whether the node is running DSE Graph.
+     * @deprecated As of DSE 5.1, users should determine whether
+     * this host has the graph workload enabled by inspecting the contents of
+     * {@link #getDseWorkloads()} instead. Note that this method will throw {@link UnsupportedOperationException} if the
+     * system tables do not contain a "graph" column.
      */
+    @Deprecated
     public boolean isDseGraphEnabled() {
-        return dseGraphEnabled;
+        if (dseGraphEnabled == null) {
+            throw new UnsupportedOperationException("No 'graph' column in system tables. Try getDseWorkloads() instead.");
+        } else {
+            return dseGraphEnabled;
+        }
     }
 
     /**

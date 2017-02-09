@@ -15,7 +15,6 @@
  */
 package com.datastax.driver.core;
 
-import com.datastax.driver.core.CCMAccess.Workload;
 import com.datastax.driver.core.CreateCCM.TestMode;
 import com.datastax.driver.core.exceptions.InvalidQueryException;
 import com.google.common.base.Throwables;
@@ -223,7 +222,7 @@ public class CCMTestsSupport {
         }
 
         @Override
-        public void setWorkload(int node, Workload... workload) {
+        public void setWorkload(int node, String... workload) {
             throw new UnsupportedOperationException("This CCM cluster is read-only");
         }
 
@@ -361,11 +360,11 @@ public class CCMTestsSupport {
             return args;
         }
 
-        private List<Workload[]> workloads() {
+        private List<String[]> workloads() {
             int total = 0;
             for (int perDc : numberOfNodes())
                 total += perDc;
-            List<Workload[]> workloads = new ArrayList<Workload[]>(Collections.<Workload[]>nCopies(total, null));
+            List<String[]> workloads = new ArrayList<String[]>(Collections.<String[]>nCopies(total, null));
             for (int i = annotations.size() - 1; i >= 0; i--) {
                 CCMConfig ann = annotations.get(i);
                 CCMWorkload[] annWorkloads = ann.workloads();
@@ -454,9 +453,9 @@ public class CCMTestsSupport {
                 for (String arg : jvmArgs()) {
                     ccmBuilder.withJvmArgs(arg);
                 }
-                List<Workload[]> workloads = workloads();
+                List<String[]> workloads = workloads();
                 for (int i = 0; i < workloads.size(); i++) {
-                    Workload[] workload = workloads.get(i);
+                    String[] workload = workloads.get(i);
                     if (workload != null)
                         ccmBuilder.withWorkload(i + 1, workload);
                 }

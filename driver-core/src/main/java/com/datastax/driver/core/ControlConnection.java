@@ -504,9 +504,14 @@ class ControlConnection implements Connection.Owner {
                 : null;
         host.setListenAddress(listenAddress);
 
-        if (row.getColumnDefinitions().contains("workload")) {
+        if (row.getColumnDefinitions().contains("workloads")) {
+            Set<String> dseWorkloads = row.getSet("workloads", String.class);
+            host.setDseWorkloads(dseWorkloads);
+        } else if (row.getColumnDefinitions().contains("workload") && row.getString("workload") != null) {
             String dseWorkload = row.getString("workload");
-            host.setDseWorkload(dseWorkload);
+            host.setDseWorkloads(Collections.singleton(dseWorkload));
+        } else {
+            host.setDseWorkloads(Collections.<String>emptySet());
         }
         if (row.getColumnDefinitions().contains("graph")) {
             boolean isDseGraph = row.getBool("graph");
@@ -587,7 +592,7 @@ class ControlConnection implements Connection.Owner {
         List<Set<Token>> allTokens = new ArrayList<Set<Token>>();
         List<String> dseVersions = new ArrayList<String>();
         List<Boolean> dseGraphEnabled = new ArrayList<Boolean>();
-        List<String> dseWorkloads = new ArrayList<String>();
+        List<Set<String>> dseWorkloads = new ArrayList<Set<String>>();
 
         for (Row row : peersFuture.get()) {
             if (!isValidPeer(row, logInvalidPeers))
@@ -611,8 +616,12 @@ class ControlConnection implements Connection.Owner {
             }
             InetAddress listenAddress = row.getColumnDefinitions().contains("listen_address") ? row.getInet("listen_address") : null;
             listenAddresses.add(listenAddress);
-            String dseWorkload = row.getColumnDefinitions().contains("workload") ? row.getString("workload") : null;
-            dseWorkloads.add(dseWorkload);
+            if (row.getColumnDefinitions().contains("workloads"))
+                dseWorkloads.add(row.getSet("workloads", String.class));
+            else if (row.getColumnDefinitions().contains("workload") && row.getString("workload") != null)
+                dseWorkloads.add(Collections.singleton(row.getString("workload")));
+            else
+                dseWorkloads.add(null);
             Boolean isDseGraph = row.getColumnDefinitions().contains("graph") ? row.getBool("graph") : null;
             dseGraphEnabled.add(isDseGraph);
             String dseVersion = row.getColumnDefinitions().contains("dse_version") ? row.getString("dse_version") : null;
@@ -647,7 +656,7 @@ class ControlConnection implements Connection.Owner {
             if (dseVersions.get(i) != null)
                 host.setDseVersion(dseVersions.get(i));
             if (dseWorkloads.get(i) != null)
-                host.setDseWorkload(dseWorkloads.get(i));
+                host.setDseWorkloads(dseWorkloads.get(i));
             if (dseGraphEnabled.get(i) != null)
                 host.setDseGraphEnabled(dseGraphEnabled.get(i));
 

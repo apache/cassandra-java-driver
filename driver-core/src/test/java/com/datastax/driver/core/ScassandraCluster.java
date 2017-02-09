@@ -21,6 +21,7 @@ import org.scassandra.Scassandra;
 import org.scassandra.ScassandraFactory;
 import org.scassandra.http.client.PrimingClient;
 import org.scassandra.http.client.PrimingRequest;
+import org.scassandra.http.client.types.ColumnMetadata;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -28,11 +29,11 @@ import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.TreeSet;
 import java.util.concurrent.TimeUnit;
 
 import static com.datastax.driver.core.Assertions.assertThat;
-import static org.scassandra.cql.MapType.map;
 import static org.scassandra.cql.PrimitiveType.*;
 import static org.scassandra.cql.SetType.set;
 import static org.scassandra.http.client.PrimingRequest.then;
@@ -269,25 +270,23 @@ public class ScassandraCluster {
         return tokens;
     }
 
+    @SuppressWarnings("unchecked")
     private void primeMetadata(Scassandra node) {
         PrimingClient client = node.primingClient();
         int nodeCount = 0;
 
         ImmutableList.Builder<Map<String, ?>> rows = ImmutableList.builder();
+        Set<ColumnMetadata> localMetadata = Sets.newHashSet(SELECT_LOCAL);
+        Set<ColumnMetadata> peersMetadata = Sets.newHashSet(SELECT_PEERS);
         for (Integer dc : new TreeSet<Integer>(dcNodeMap.keySet())) {
             List<Scassandra> nodesInDc = dcNodeMap.get(dc);
             List<Long> tokens = getTokensForDC(dc);
             for (int n = 0; n < nodesInDc.size(); n++) {
                 String address = ipPrefix + ++nodeCount;
                 Scassandra peer = nodesInDc.get(n);
-                String query;
                 Map<String, Object> row;
-                org.scassandra.http.client.types.ColumnMetadata[] metadata;
                 if (node == peer) { // prime system.local.
-                    metadata = SELECT_LOCAL;
-                    query = "SELECT * FROM system.local WHERE key='local'";
-
-                    row = Maps.newHashMap();
+                    row = Maps.newLinkedHashMap();
                     addPeerInfo(row, dc, n + 1, "key", "local");
                     addPeerInfo(row, dc, n + 1, "bootstrapped", "COMPLETED");
                     addPeerInfo(row, dc, n + 1, "broadcast_address", address);
@@ -302,14 +301,22 @@ public class ScassandraCluster {
                     addPeerInfo(row, dc, n + 1, "schema_version", schemaVersion);
                     addPeerInfo(row, dc, n + 1, "graph", false);
 
-                    // These columns might not always be present, we don't have to specify them in the scassandra
-                    // column metadata as it will default them to text columns.
-                    addPeerInfoIfExists(row, dc, n + 1, "dse_version");
-                    addPeerInfoIfExists(row, dc, n + 1, "workload");
+                    if (addPeerInfoIfExists(row, dc, n + 1, "dse_version"))
+                        localMetadata.add(column("dse_version", TEXT));
+                    if (addPeerInfoIfExists(row, dc, n + 1, "workload"))
+                        localMetadata.add(column("workload", TEXT));
+                    if (addPeerInfoIfExists(row, dc, n + 1, "workloads"))
+                        localMetadata.add(column("workloads", set(TEXT)));
+                    client.prime(PrimingRequest.queryBuilder()
+                            .withQuery("SELECT * FROM system.local WHERE key='local'")
+                            .withThen(then()
+                                    .withColumnTypes(localMetadata.toArray(new ColumnMetadata[localMetadata.size()]))
+                                    .withRows(row)
+                                    .build())
+                            .build());
+
                 } else { // prime system.peers.
-                    query = "SELECT * FROM system.peers WHERE peer='" + address + "'";
-                    metadata = SELECT_PEERS;
-                    row = Maps.newHashMap();
+                    row = Maps.newLinkedHashMap();
                     addPeerInfo(row, dc, n + 1, "peer", address);
                     addPeerInfo(row, dc, n + 1, "rpc_address", address);
                     addPeerInfo(row, dc, n + 1, "data_center", datacenter(dc));
@@ -320,26 +327,29 @@ public class ScassandraCluster {
                     addPeerInfo(row, dc, n + 1, "schema_version", schemaVersion);
                     addPeerInfo(row, dc, n + 1, "graph", false);
 
-                    addPeerInfoIfExists(row, dc, n + 1, "listen_address");
-                    addPeerInfoIfExists(row, dc, n + 1, "dse_version");
-                    addPeerInfoIfExists(row, dc, n + 1, "workload");
-
+                    if (addPeerInfoIfExists(row, dc, n + 1, "listen_address"))
+                        peersMetadata.add(column("listen_address", INET));
+                    if (addPeerInfoIfExists(row, dc, n + 1, "dse_version"))
+                        peersMetadata.add(column("dse_version", TEXT));
+                    if (addPeerInfoIfExists(row, dc, n + 1, "workload"))
+                        peersMetadata.add(column("workload", TEXT));
+                    if (addPeerInfoIfExists(row, dc, n + 1, "workloads"))
+                        peersMetadata.add(column("workloads", set(TEXT)));
                     rows.add(row);
+                    client.prime(PrimingRequest.queryBuilder()
+                            .withQuery("SELECT * FROM system.peers WHERE peer='" + address + "'")
+                            .withThen(then()
+                                    .withColumnTypes(peersMetadata.toArray(new ColumnMetadata[peersMetadata.size()]))
+                                    .withRows(row)
+                                    .build())
+                            .build());
                 }
-                client.prime(PrimingRequest.queryBuilder()
-                        .withQuery(query)
-                        .withThen(then()
-                                .withColumnTypes(metadata)
-                                .withRows(row)
-                                .build())
-                        .build());
             }
         }
-
         client.prime(PrimingRequest.queryBuilder()
                 .withQuery("SELECT * FROM system.peers")
                 .withThen(then()
-                        .withColumnTypes(SELECT_PEERS)
+                        .withColumnTypes(peersMetadata.toArray(new ColumnMetadata[peersMetadata.size()]))
                         .withRows(rows.build())
                         .build())
                 .build());
@@ -373,17 +383,20 @@ public class ScassandraCluster {
         }
     }
 
-    private void addPeerInfoIfExists(Map<String, Object> input, int dc, int node, String property) {
+    private boolean addPeerInfoIfExists(Map<String, Object> input, int dc, int node, String property) {
         Map<Integer, Map<String, Object>> forDc = forcedPeerInfos.get(dc);
         if (forDc == null)
-            return;
+            return false;
 
         Map<String, Object> forNode = forDc.get(node);
         if (forNode == null)
-            return;
+            return false;
 
-        if (forNode.containsKey(property))
+        if (forNode.containsKey(property)) {
             input.put(property, forNode.get(property));
+            return true;
+        }
+        return false;
     }
 
     private Object getPeerInfo(int dc, int node, String property, Object defaultValue) {
@@ -438,51 +451,6 @@ public class ScassandraCluster {
             column("keyspace_name", TEXT),
             column("strategy_class", TEXT),
             column("strategy_options", TEXT)
-    };
-
-    static final org.scassandra.http.client.types.ColumnMetadata[] SELECT_SCHEMA_COLUMN_FAMILIES = {
-            column("bloom_filter_fp_chance", DOUBLE),
-            column("caching", TEXT),
-            column("cf_id", UUID),
-            column("column_aliases", TEXT),
-            column("columnfamily_name", TEXT),
-            column("comment", TEXT),
-            column("compaction_strategy_class", TEXT),
-            column("compaction_strategy_options", TEXT),
-            column("comparator", TEXT),
-            column("compression_parameters", TEXT),
-            column("default_time_to_live", INT),
-            column("default_validator", TEXT),
-            column("dropped_columns", map(TEXT, BIG_INT)),
-            column("gc_grace_seconds", INT),
-            column("index_interval", INT),
-            column("is_dense", BOOLEAN),
-            column("key_aliases", TEXT),
-            column("key_validator", TEXT),
-            column("keyspace_name", TEXT),
-            column("local_read_repair_chance", DOUBLE),
-            column("max_compaction_threshold", INT),
-            column("max_index_interval", INT),
-            column("memtable_flush_period_in_ms", INT),
-            column("min_compaction_threshold", INT),
-            column("min_index_interval", INT),
-            column("read_repair_chance", DOUBLE),
-            column("speculative_retry", TEXT),
-            column("subcomparator", TEXT),
-            column("type", TEXT),
-            column("value_alias", TEXT)
-    };
-
-    static final org.scassandra.http.client.types.ColumnMetadata[] SELECT_SCHEMA_COLUMNS = {
-            column("column_name", TEXT),
-            column("columnfamily_name", TEXT),
-            column("component_index", INT),
-            column("index_name", TEXT),
-            column("index_options", TEXT),
-            column("index_type", TEXT),
-            column("keyspace_name", TEXT),
-            column("type", TEXT),
-            column("validator", TEXT),
     };
 
     public static ScassandraClusterBuilder builder() {

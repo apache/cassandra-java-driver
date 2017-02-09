@@ -30,8 +30,8 @@ public @interface CCMWorkload {
     /**
      * The workloads to assign to a specific node.
      *
-     * @return The workloads to assign to a specifc node.
+     * @return The workloads to assign to a specific node.
      */
-    CCMAccess.Workload[] value() default {};
+    String[] value() default {};
 
 }

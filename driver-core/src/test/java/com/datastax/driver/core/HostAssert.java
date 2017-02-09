@@ -21,6 +21,7 @@ import com.datastax.driver.core.policies.LoadBalancingPolicy;
 import org.assertj.core.api.AbstractAssert;
 
 import java.net.InetAddress;
+import java.util.Arrays;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -141,13 +142,13 @@ public class HostAssert extends AbstractAssert<HostAssert, Host> {
         return this;
     }
 
-    public HostAssert hasWorkload(String workload) {
-        assertThat(actual.getDseWorkload()).isNotNull().isEqualTo(workload);
+    public HostAssert hasWorkload(String... workloads) {
+        assertThat(actual.getDseWorkloads()).isNotNull().containsAll(Arrays.asList(workloads));
         return this;
     }
 
     public HostAssert hasNoWorkload() {
-        assertThat(actual.getDseWorkload()).isNull();
+        assertThat(actual.getDseWorkloads()).isEmpty();
         return this;
     }
 
