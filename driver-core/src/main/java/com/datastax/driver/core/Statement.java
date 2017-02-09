@@ -63,6 +63,7 @@ public abstract class Statement {
     private volatile ConsistencyLevel consistency;
     private volatile ConsistencyLevel serialConsistency;
     private volatile boolean traceQuery;
+    private volatile boolean recordMetric;
     private volatile int fetchSize;
     private volatile long defaultTimestamp = Long.MIN_VALUE;
     private volatile int readTimeoutMillis = Integer.MIN_VALUE;
@@ -174,6 +175,25 @@ public abstract class Statement {
      */
     public boolean isTracing() {
         return traceQuery;
+    }
+    
+    /**
+     * Disables metricing for this query.
+     *
+     * @return this {@code Statement} object.
+     */
+    public Statement disableMetricing() {
+        this.traceQuery = false;
+        return this;
+    }        
+    /**
+     * Returns whether metricing is enabled for this query or not.
+     *
+     * @return {@code true} if this query has metricing enabled, {@code false}
+     * otherwise.
+     */
+    public boolean isMetricing() {
+        return recordMetric;
     }
 
     /**
