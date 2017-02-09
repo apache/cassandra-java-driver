@@ -86,7 +86,7 @@ public class Select extends BuiltStatement {
         if (columnNames == null) {
             builder.append('*');
         } else {
-            Utils.joinAndAppendNames(builder, codecRegistry, ",", columnNames);
+            Utils.joinAndAppendNames(builder, codecRegistry, columnNames);
         }
         builder.append(" FROM ");
         if (keyspace != null)
@@ -553,6 +553,32 @@ public class Select extends BuiltStatement {
         }
 
         /**
+         * Selects the provided path.
+         * <p/>
+         * All given path {@code segments} will be concatenated together with dots.
+         * If any segment contains an identifier that needs quoting,
+         * caller code is expected to call {@link QueryBuilder#quote(String)} prior to
+         * invoking this method.
+         * <p/>
+         * This method is currently only useful when accessing individual fields of a
+         * {@link com.datastax.driver.core.UserType user-defined type} (UDT),
+         * which is only possible since CASSANDRA-7423.
+         * <p/>
+         * Note that currently nested UDT fields are not supported and
+         * will be rejected by the server as a
+         * {@link com.datastax.driver.core.exceptions.SyntaxError syntax error}.
+         *
+         * @param segments the segments of the path to create.
+         * @return this in-build SELECT statement
+         * @see <a href="https://issues.apache.org/jira/browse/CASSANDRA-7423">CASSANDRA-7423</a>
+         */
+        public SelectionOrAlias path(String... segments) {
+            // This method should be abstract like others here. But adding an abstract method is not binary-compatible,
+            // so we add this dummy implementation to make Clirr happy.
+            throw new UnsupportedOperationException("Not implemented. This should only happen if you've written your own implementation of Selection");
+        }
+
+        /**
          * Creates a {@code toJson()} function call.
          * This is a shortcut for {@code fcall("toJson", QueryBuilder.column(name))}.
          * <p>
@@ -663,6 +689,11 @@ public class Select extends BuiltStatement {
         @Override
         public SelectionOrAlias raw(String rawString) {
             return queueName(QueryBuilder.raw(rawString));
+        }
+
+        @Override
+        public SelectionOrAlias path(String... segments) {
+            return queueName(QueryBuilder.path(segments));
         }
 
         @Override
