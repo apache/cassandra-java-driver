@@ -183,7 +183,7 @@ public abstract class Statement {
      * @return this {@code Statement} object.
      */
     public Statement disableMetricing() {
-        this.traceQuery = false;
+        this.recordMetric = false;
         return this;
     }        
     /**
