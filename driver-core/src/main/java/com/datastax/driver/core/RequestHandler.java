@@ -85,7 +85,7 @@ class RequestHandler {
                 && statement.isIdempotentWithDefault(manager.configuration().getQueryOptions());
         this.statement = statement;
 
-        this.timerContext = metricsEnabled() && statement.isMetricing()
+        this.timerContext = metricsEnabled()
                 ? metrics().getRequestsTimer().time()
                 : null;
         this.startTime = System.nanoTime();
@@ -212,7 +212,7 @@ class RequestHandler {
     }
 
     private boolean metricsEnabled() {
-        return manager.configuration().getMetricsOptions().isEnabled();
+        return manager.configuration().getMetricsOptions().isEnabled() && statement.isMetricing();
     }
 
     private Metrics metrics() {
