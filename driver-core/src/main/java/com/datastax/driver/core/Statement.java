@@ -63,7 +63,7 @@ public abstract class Statement {
     private volatile ConsistencyLevel consistency;
     private volatile ConsistencyLevel serialConsistency;
     private volatile boolean traceQuery;
-    private volatile boolean recordMetric;
+    private volatile boolean recordMetric = true;
     private volatile int fetchSize;
     private volatile long defaultTimestamp = Long.MIN_VALUE;
     private volatile int readTimeoutMillis = Integer.MIN_VALUE;
