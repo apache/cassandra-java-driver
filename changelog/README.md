@@ -4,6 +4,7 @@
 
 - [bug] JAVA-1371: Reintroduce connection pool timeout.
 - [bug] JAVA-1313: Copy SerialConsistencyLevel to PreparedStatement.
+- [documentation] JAVA-1334: Clarify documentation of method `addContactPoints`.
 
 
 ### 3.0.6
