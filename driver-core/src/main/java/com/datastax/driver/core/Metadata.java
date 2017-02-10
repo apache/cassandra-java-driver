@@ -305,7 +305,12 @@ public class Metadata {
     /**
      * Returns the set of hosts that are replica for a given token range.
      * <p/>
-     * Note that this information is refreshed asynchronously by the control
+     * Note that it is assumed that the input range does not overlap across multiple host ranges.
+     * If the range extends over multiple hosts, it only returns the replicas for those hosts
+     * that are replicas for the last token of the range.  This behavior may change in a future
+     * release, see <a href="https://datastax-oss.atlassian.net/browse/JAVA-1355">JAVA-1355</a>.
+     * <p/>
+     * Also note that this information is refreshed asynchronously by the control
      * connection, when schema or ring topology changes. It might occasionally
      * be stale (or even empty).
      *

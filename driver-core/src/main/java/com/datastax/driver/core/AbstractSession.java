@@ -144,7 +144,10 @@ public abstract class AbstractSession implements Session {
                 ByteBuffer routingKey = statement.getRoutingKey(protocolVersion, codecRegistry);
                 if (routingKey != null)
                     prepared.setRoutingKey(routingKey);
-                prepared.setConsistencyLevel(statement.getConsistencyLevel());
+                if (statement.getConsistencyLevel() != null)
+                    prepared.setConsistencyLevel(statement.getConsistencyLevel());
+                if (statement.getSerialConsistencyLevel() != null)
+                    prepared.setSerialConsistencyLevel(statement.getSerialConsistencyLevel());
                 if (statement.isTracing())
                     prepared.enableTracing();
                 prepared.setRetryPolicy(statement.getRetryPolicy());

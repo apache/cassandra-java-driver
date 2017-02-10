@@ -809,7 +809,7 @@ public class Cluster implements Closeable {
         }
 
         /**
-         * Adds a contact point - or many if it host resolves to multiple
+         * Adds a contact point - or many if the given address resolves to multiple
          * <code>InetAddress</code>s (A records).
          * <p/>
          * Contact points are addresses of Cassandra nodes that the driver uses
@@ -820,7 +820,7 @@ public class Cluster implements Closeable {
          * the driver cannot initialize itself correctly.
          * <p/>
          * Note that by default (that is, unless you use the {@link #withLoadBalancingPolicy})
-         * method of this builder), the first succesfully contacted host will be used
+         * method of this builder), the first successfully contacted host will be used
          * to define the local data-center for the client. If follows that if you are
          * running Cassandra in a  multiple data-center setting, it is a good idea to
          * only provide contact points that are in the same datacenter than the client,
@@ -830,15 +830,15 @@ public class Cluster implements Closeable {
          * returned will be used. Make sure that all resulting <code>InetAddress</code>s returned
          * point to the same cluster and datacenter.
          *
-         * @param address the address of the node(s) to connect to
+         * @param address the address of the node(s) to connect to.
          * @return this Builder.
-         * @throws IllegalArgumentException if no IP address for {@code address}
-         *                                  could be found
+         * @throws IllegalArgumentException if the given {@code address}
+         *                                  could not be resolved.
          * @throws SecurityException        if a security manager is present and
          *                                  permission to resolve the host name is denied.
          */
         public Builder addContactPoint(String address) {
-            // We explicitely check for nulls because InetAdress.getByName() will happily
+            // We explicitly check for nulls because InetAdress.getByName() will happily
             // accept it and use localhost (while a null here almost likely mean a user error,
             // not "connect to localhost")
             if (address == null)
@@ -857,11 +857,14 @@ public class Cluster implements Closeable {
          * <p/>
          * See {@link Builder#addContactPoint} for more details on contact
          * points.
+         * <p/>
+         * Note that all contact points must be resolvable;
+         * if <em>any</em> of them cannot be resolved, this method will fail.
          *
-         * @param addresses addresses of the nodes to add as contact point.
+         * @param addresses addresses of the nodes to add as contact points.
          * @return this Builder.
-         * @throws IllegalArgumentException if no IP address for at least one
-         *                                  of {@code addresses} could be found
+         * @throws IllegalArgumentException if any of the given {@code addresses}
+         *                                  could not be resolved.
          * @throws SecurityException        if a security manager is present and
          *                                  permission to resolve the host name is denied.
          * @see Builder#addContactPoint
@@ -877,9 +880,16 @@ public class Cluster implements Closeable {
          * <p/>
          * See {@link Builder#addContactPoint} for more details on contact
          * points.
+         * <p/>
+         * Note that all contact points must be resolvable;
+         * if <em>any</em> of them cannot be resolved, this method will fail.
          *
-         * @param addresses addresses of the nodes to add as contact point.
+         * @param addresses addresses of the nodes to add as contact points.
          * @return this Builder.
+         * @throws IllegalArgumentException if any of the given {@code addresses}
+         *                                  could not be resolved.
+         * @throws SecurityException        if a security manager is present and
+         *                                  permission to resolve the host name is denied.
          * @see Builder#addContactPoint
          */
         public Builder addContactPoints(InetAddress... addresses) {
@@ -893,7 +903,7 @@ public class Cluster implements Closeable {
          * See {@link Builder#addContactPoint} for more details on contact
          * points.
          *
-         * @param addresses addresses of the nodes to add as contact point
+         * @param addresses addresses of the nodes to add as contact points.
          * @return this Builder
          * @see Builder#addContactPoint
          */
@@ -907,19 +917,19 @@ public class Cluster implements Closeable {
          * <p/>
          * See {@link Builder#addContactPoint} for more details on contact
          * points. Contrarily to other {@code addContactPoints} methods, this method
-         * allow to provide a different port for each contact points. Since Cassandra
-         * nodes must always all listen on the same port, this is rarelly what you
+         * allows to provide a different port for each contact point. Since Cassandra
+         * nodes must always all listen on the same port, this is rarely what you
          * want and most users should prefer other {@code addContactPoints} methods to
          * this one. However, this can be useful if the Cassandra nodes are behind
          * a router and are not accessed directly. Note that if you are in this
          * situation (Cassandra nodes are behind a router, not directly accessible),
-         * you almost surely want to provide a specific {@code AddressTranslator}
+         * you almost surely want to provide a specific {@link AddressTranslator}
          * (through {@link #withAddressTranslator}) to translate actual Cassandra node
          * addresses to the addresses the driver should use, otherwise the driver
          * will not be able to auto-detect new nodes (and will generally not function
          * optimally).
          *
-         * @param addresses addresses of the nodes to add as contact point
+         * @param addresses addresses of the nodes to add as contact points.
          * @return this Builder
          * @see Builder#addContactPoint
          */
@@ -933,19 +943,19 @@ public class Cluster implements Closeable {
          * <p/>
          * See {@link Builder#addContactPoint} for more details on contact
          * points. Contrarily to other {@code addContactPoints} methods, this method
-         * allow to provide a different port for each contact points. Since Cassandra
-         * nodes must always all listen on the same port, this is rarelly what you
+         * allows to provide a different port for each contact point. Since Cassandra
+         * nodes must always all listen on the same port, this is rarely what you
          * want and most users should prefer other {@code addContactPoints} methods to
          * this one. However, this can be useful if the Cassandra nodes are behind
          * a router and are not accessed directly. Note that if you are in this
          * situation (Cassandra nodes are behind a router, not directly accessible),
-         * you almost surely want to provide a specific {@code AddressTranslator}
+         * you almost surely want to provide a specific {@link AddressTranslator}
          * (through {@link #withAddressTranslator}) to translate actual Cassandra node
          * addresses to the addresses the driver should use, otherwise the driver
          * will not be able to auto-detect new nodes (and will generally not function
          * optimally).
          *
-         * @param addresses addresses of the nodes to add as contact point
+         * @param addresses addresses of the nodes to add as contact points.
          * @return this Builder
          * @see Builder#addContactPoint
          */
