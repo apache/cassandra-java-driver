@@ -20,6 +20,7 @@ import com.datastax.driver.core.Statement;
 
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Indicates that a connection pool has run out of available connections.
@@ -44,22 +45,30 @@ public class BusyPoolException extends DriverException implements CoordinatorExc
     private static final long serialVersionUID = 0;
 
     private final InetSocketAddress address;
-    private final int queueSize;
 
     public BusyPoolException(InetSocketAddress address, int queueSize) {
-        this(address, queueSize, null);
+        this(address, buildMessage(address, queueSize), null);
     }
 
-    private BusyPoolException(InetSocketAddress address, int queueSize, Throwable cause) {
-        super(buildMessage(address, queueSize), cause);
+    public BusyPoolException(InetSocketAddress address, long timeout, TimeUnit unit) {
+        this(address, buildMessage(address, timeout, unit), null);
+    }
+
+    private BusyPoolException(InetSocketAddress address, String message, Throwable cause) {
+        super(message, cause);
         this.address = address;
-        this.queueSize = queueSize;
     }
 
     private static String buildMessage(InetSocketAddress address, int queueSize) {
         return String.format("[%s] Pool is busy (no available connection and the queue has reached its max size %d)",
                 address.getAddress(),
                 queueSize);
+    }
+
+    private static String buildMessage(InetSocketAddress address, long timeout, TimeUnit unit) {
+        return String.format("[%s] Pool is busy (no available connection and timed out after %d %s)",
+                address.getAddress(),
+                timeout, unit);
     }
 
     @Override
@@ -74,7 +83,7 @@ public class BusyPoolException extends DriverException implements CoordinatorExc
 
     @Override
     public BusyPoolException copy() {
-        return new BusyPoolException(address, queueSize, this);
+        return new BusyPoolException(address, getMessage(), this);
     }
 
 }

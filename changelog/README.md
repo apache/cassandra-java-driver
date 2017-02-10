@@ -7,6 +7,13 @@
 - [new feature] JAVA-1362: Send query options flags as [int] for Protocol V5+.
 - [improvement] JAVA-1367: Make protocol negotiation more resilient.
 
+Merged from 3.1.x branch:
+
+- [bug] JAVA-1371: Reintroduce connection pool timeout.
+- [bug] JAVA-1313: Copy SerialConsistencyLevel to PreparedStatement.
+- [documentation] JAVA-1334: Clarify documentation of method `addContactPoints`.
+- [improvement] JAVA-1357: Document that getReplicas only returns replicas of the last token in range.
+
 
 ### 3.1.3
 

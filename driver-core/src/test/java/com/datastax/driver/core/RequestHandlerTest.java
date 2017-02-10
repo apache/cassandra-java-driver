@@ -46,8 +46,6 @@ public class RequestHandlerTest {
             cluster = Cluster.builder()
                     .addContactPoint(TestUtils.ipOfNode(1))
                     .withPort(scassandra.getBinaryPort())
-                    // Scassandra does not support V3 nor V4 yet, and V4 may cause the server to crash
-                    .withProtocolVersion(ProtocolVersion.V2)
                     .withPoolingOptions(new PoolingOptions()
                             .setCoreConnectionsPerHost(HostDistance.LOCAL, 1)
                             .setMaxConnectionsPerHost(HostDistance.LOCAL, 1)

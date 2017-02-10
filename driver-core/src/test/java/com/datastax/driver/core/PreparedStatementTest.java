@@ -17,7 +17,10 @@ package com.datastax.driver.core;
 
 import com.datastax.driver.core.exceptions.InvalidQueryException;
 import com.datastax.driver.core.exceptions.UnsupportedFeatureException;
+import com.datastax.driver.core.policies.FallthroughRetryPolicy;
+import com.datastax.driver.core.utils.Bytes;
 import com.datastax.driver.core.utils.CassandraVersion;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.util.concurrent.Uninterruptibles;
 import org.testng.annotations.Test;
 
@@ -25,6 +28,7 @@ import java.net.InetAddress;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 
+import static com.datastax.driver.core.ProtocolVersion.V4;
 import static com.datastax.driver.core.TestUtils.*;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.testng.Assert.*;
@@ -334,13 +338,30 @@ public class PreparedStatementTest extends CCMTestsSupport {
 
         RegularStatement toPrepare = new SimpleStatement("SELECT * FROM test WHERE k=?");
         toPrepare.setConsistencyLevel(ConsistencyLevel.QUORUM);
+        toPrepare.setSerialConsistencyLevel(ConsistencyLevel.LOCAL_SERIAL);
+        toPrepare.setRetryPolicy(FallthroughRetryPolicy.INSTANCE);
+        if (TestUtils.getDesiredProtocolVersion().compareTo(V4) >= 0)
+            toPrepare.setOutgoingPayload(ImmutableMap.of("foo", Bytes.fromHexString("0xcafebabe")));
+        toPrepare.setIdempotent(true);
         toPrepare.enableTracing();
 
         PreparedStatement prepared = session().prepare(toPrepare);
-        BoundStatement bs = prepared.bind("someValue");
+        assertThat(prepared.getConsistencyLevel()).isEqualTo(ConsistencyLevel.QUORUM);
+        assertThat(prepared.getSerialConsistencyLevel()).isEqualTo(ConsistencyLevel.LOCAL_SERIAL);
+        assertThat(prepared.getRetryPolicy()).isEqualTo(FallthroughRetryPolicy.INSTANCE);
+        if (TestUtils.getDesiredProtocolVersion().compareTo(V4) >= 0)
+            assertThat(prepared.getOutgoingPayload()).isEqualTo(ImmutableMap.of("foo", Bytes.fromHexString("0xcafebabe")));
+        assertThat(prepared.isIdempotent()).isTrue();
+        assertThat(prepared.isTracing()).isTrue();
 
-        assertEquals(ConsistencyLevel.QUORUM, bs.getConsistencyLevel());
-        assertTrue(bs.isTracing());
+        BoundStatement bs = prepared.bind("someValue");
+        assertThat(bs.getConsistencyLevel()).isEqualTo(ConsistencyLevel.QUORUM);
+        assertThat(bs.getSerialConsistencyLevel()).isEqualTo(ConsistencyLevel.LOCAL_SERIAL);
+        assertThat(bs.getRetryPolicy()).isEqualTo(FallthroughRetryPolicy.INSTANCE);
+        if (TestUtils.getDesiredProtocolVersion().compareTo(V4) >= 0)
+            assertThat(bs.getOutgoingPayload()).isEqualTo(ImmutableMap.of("foo", Bytes.fromHexString("0xcafebabe")));
+        assertThat(bs.isIdempotent()).isTrue();
+        assertThat(bs.isTracing()).isTrue();
     }
 
     /**

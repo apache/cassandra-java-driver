@@ -21,6 +21,7 @@ import com.datastax.driver.core.policies.RetryPolicy;
 import com.datastax.driver.core.policies.SpeculativeExecutionPolicy;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+import org.mockito.Mockito;
 import org.scassandra.http.client.Consistency;
 import org.scassandra.http.client.PrimingRequest;
 import org.scassandra.http.client.Result;
@@ -55,7 +56,6 @@ public class SpeculativeExecutionTest {
         cluster = Cluster.builder()
                 .addContactPoints(scassandras.address(2).getAddress())
                 .withPort(scassandras.getBinaryPort())
-                .withProtocolVersion(ProtocolVersion.V2) // Scassandra does not support V3 nor V4 yet
                 .withLoadBalancingPolicy(loadBalancingPolicy)
                 .withSpeculativeExecutionPolicy(new ConstantSpeculativeExecutionPolicy(speculativeExecutionDelay, 1))
                 .withQueryOptions(new QueryOptions().setDefaultIdempotence(true))
@@ -208,8 +208,6 @@ public class SpeculativeExecutionTest {
         Cluster cluster = Cluster.builder()
                 .addContactPoints(scassandras.address(2).getAddress())
                 .withPort(scassandras.getBinaryPort())
-                // Scassandra does not support V3 nor V4 yet, and V4 may cause the server to crash
-                .withProtocolVersion(ProtocolVersion.V2)
                 .withSpeculativeExecutionPolicy(mockPolicy)
                 .build();
 
@@ -222,6 +220,52 @@ public class SpeculativeExecutionTest {
         } finally {
             cluster.close();
             verify(mockPolicy, times(1)).close();
+        }
+    }
+
+    /**
+     * Validates that if a query gets speculatively re-executed, the second execution uses the same default timestamp.
+     *
+     * @test_category tracing
+     * @jira_ticket JAVA-724
+     * @expected_result timestamp generator invoked only once for a query that caused two executions.
+     */
+    @Test(groups = "short")
+    public void should_use_same_default_timestamp_for_all_executions() {
+        TimestampGenerator timestampGenerator = Mockito.spy(ServerSideTimestampGenerator.INSTANCE);
+        Cluster cluster = Cluster.builder()
+                .addContactPoints(scassandras.address(2).getAddress())
+                .withPort(scassandras.getBinaryPort())
+                .withLoadBalancingPolicy(loadBalancingPolicy)
+                .withTimestampGenerator(timestampGenerator)
+                .withSpeculativeExecutionPolicy(new ConstantSpeculativeExecutionPolicy(1, 2))
+                .withNettyOptions(nonQuietClusterCloseOptions)
+                .build();
+
+        try {
+            scassandras.node(1).primingClient()
+                    // execution1 starts with host1, which will time out at t=1000
+                    .prime(PrimingRequest.queryBuilder()
+                            .withQuery("mock query")
+                            .withFixedDelay(2000)
+                            .withRows(row("result", "result1"))
+                            .build());
+
+            Session session = cluster.connect();
+            Metrics.Errors errors = cluster.getMetrics().getErrorMetrics();
+
+            long execStartCount = errors.getSpeculativeExecutions().getCount();
+
+            SimpleStatement statement = new SimpleStatement("mock query");
+            statement.setIdempotent(true);
+            session.execute(statement);
+
+            // Should have only requested one timestamp.
+            if (errors.getSpeculativeExecutions().getCount() == execStartCount + 1) {
+                Mockito.verify(timestampGenerator, times(1)).next();
+            }
+        } finally {
+            cluster.close();
         }
     }
 

@@ -188,11 +188,16 @@ all connections are already handling their maximum number of in flight
 requests), the acquisition attempt gets enqueued until a connection becomes
 available again.
 
-The size of that queue is controlled by [PoolingOptions.setMaxQueueSize][smqs].
-If the queue has already reached its limit, further attempts to acquire a
-connection will be rejected immediately: the driver will move on and try to
-acquire a connection from the next host's pool. The limit can be set to 0 to
-disable queueing entirely.
+Two options control that queue: a maximum size ([PoolingOptions.setMaxQueueSize][smqs]) and a timeout 
+([PoolingOptions.setPoolTimeoutMillis][sptm]).
+
+* if either option is set to zero, the attempt is rejected immediately;
+* else if more than `maxQueueSize` requests are already waiting for a connection, the attempt is also rejected;
+* otherwise, the attempt is enqueued; if a connection becomes available before `poolTimeoutMillis` has elapsed,
+  then the attempt succeeds, otherwise it is rejected.
+
+If the attempt is rejected, the driver will move to the next host in the [query plan](../load_balancing/#query-plan),
+and try to acquire a connection again.
 
 If all hosts are busy with a full queue, the request will fail with a
 [NoHostAvailableException][nhae]. If you inspect the map returns by this
@@ -286,6 +291,7 @@ either:
 [sits]:              http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/core/PoolingOptions.html#setIdleTimeoutSeconds-int-
 [rtm]:               http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/core/SocketOptions.html#getReadTimeoutMillis--
 [smqs]:              http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/core/PoolingOptions.html#setMaxQueueSize-int-
+[sptm]:              http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/core/PoolingOptions.html#setPoolTimeoutMillis-int-
 [nhae]:              http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/core/exceptions/NoHostAvailableException.html
 [getErrors]:         http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/core/exceptions/NoHostAvailableException.html#getErrors--
 [get_state]:         http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/core/Session.html#getState--
