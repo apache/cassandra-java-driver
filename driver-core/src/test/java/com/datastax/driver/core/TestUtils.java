@@ -19,6 +19,7 @@ import com.datastax.driver.core.policies.RoundRobinPolicy;
 import com.datastax.driver.core.policies.WhiteListPolicy;
 import com.google.common.base.Predicate;
 import com.google.common.base.Throwables;
+import com.google.common.collect.Sets;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.Uninterruptibles;
 import com.sun.management.OperatingSystemMXBean;
@@ -461,6 +462,26 @@ public abstract class TestUtils {
             throw new RuntimeException(e);
         }
         throw new RuntimeException("Missing handling of " + type);
+    }
+
+    /**
+     * Returns a set of all primitive types supported by the given protocolVersion.
+     * <p>
+     * Primitive types are defined as the types that don't have type arguments
+     * (that is excluding lists, sets, and maps, tuples and udts).
+     * </p>
+     *
+     * @param protocolVersion protocol version to get types for.
+     * @return returns a set of all the primitive types for the given protocolVersion.
+     */
+    static Set<DataType> allPrimitiveTypes(final ProtocolVersion protocolVersion) {
+        return Sets.filter(DataType.allPrimitiveTypes(), new Predicate<DataType>() {
+
+            @Override
+            public boolean apply(DataType dataType) {
+                return protocolVersion.compareTo(dataType.getName().minProtocolVersion) >= 0;
+            }
+        });
     }
 
     // Wait for a node to be up and running

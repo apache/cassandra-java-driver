@@ -48,10 +48,11 @@ public class PreparedStatementTest extends CCMTestsSupport {
     private static final String SIMPLE_TABLE = "test";
     private static final String SIMPLE_TABLE2 = "test2";
 
-    private final Collection<DataType> primitiveTypes = DataType.allPrimitiveTypes(TestUtils.getDesiredProtocolVersion());
+    private final Collection<DataType> primitiveTypes = allPrimitiveTypes(TestUtils.getDesiredProtocolVersion());
 
     private boolean exclude(DataType t) {
-        return t.getName() == DataType.Name.COUNTER;
+        // duration is not supported in collections
+        return t.getName() == DataType.Name.COUNTER || t.getName() == DataType.Name.DURATION;
     }
 
     @Override
