@@ -40,7 +40,7 @@ public class DataTypeTest {
     ProtocolVersion protocolVersion = TestUtils.getDesiredProtocolVersion();
 
     static boolean exclude(DataType t) {
-        return t.getName() == DataType.Name.COUNTER;
+        return t.getName() == DataType.Name.COUNTER || t.getName() == DataType.Name.DURATION;
     }
 
     /**
@@ -316,23 +316,5 @@ public class DataTypeTest {
             codec.serialize(l, version);
             fail("This should not have worked");
         } catch (InvalidTypeException e) { /* That's what we want */ }
-    }
-
-    @Test(groups = "unit")
-    public void should_not_return_v4_types_in_all_primitive_types_with_v3() {
-        Set<DataType> dataTypes = DataType.allPrimitiveTypes(ProtocolVersion.V3);
-
-        // Ensure it does not contain specific newer types tinyint and smallint.
-        assertThat(dataTypes).doesNotContainAnyElementsOf(newArrayList(DataType.tinyint(), DataType.smallint()));
-
-        // Ensure all values are <= V3.
-        for (DataType dataType : dataTypes) {
-            assertThat(dataType.getName().minProtocolVersion).isLessThanOrEqualTo(ProtocolVersion.V3);
-        }
-    }
-
-    @Test(groups = "unit")
-    public void should_return_same_elements_with_all_primitive_types_using_latest_protocol_version() {
-        assertThat(DataType.allPrimitiveTypes(ProtocolVersion.NEWEST_SUPPORTED)).isEqualTo(DataType.allPrimitiveTypes());
     }
 }
