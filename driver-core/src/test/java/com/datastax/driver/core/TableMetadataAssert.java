@@ -61,6 +61,12 @@ public class TableMetadataAssert extends AbstractAssert<TableMetadataAssert, Tab
         return this;
     }
 
+    public TableMetadataAssert doesNotHaveColumn(String columnName) {
+        ColumnMetadata column = actual.getColumn(columnName);
+        assertThat(column).isNull();
+        return this;
+    }
+
     public TableMetadataAssert isCompactStorage() {
         assertThat(actual.getOptions().isCompactStorage()).isTrue();
         return this;
