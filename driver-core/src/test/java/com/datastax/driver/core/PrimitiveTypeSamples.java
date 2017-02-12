@@ -40,7 +40,7 @@ public class PrimitiveTypeSamples {
 
     private static Map<DataType, Object> generateAll() {
         try {
-            final Collection<DataType> primitiveTypes = DataType.allPrimitiveTypes(TestUtils.getDesiredProtocolVersion());
+            final Collection<DataType> primitiveTypes = TestUtils.allPrimitiveTypes(TestUtils.getDesiredProtocolVersion());
             ImmutableMap<DataType, Object> data = ImmutableMap.<DataType, Object>builder()
                     .put(DataType.ascii(), "ascii")
                     .put(DataType.bigint(), Long.MAX_VALUE)

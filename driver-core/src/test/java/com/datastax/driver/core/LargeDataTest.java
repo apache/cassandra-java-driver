@@ -180,11 +180,9 @@ public class LargeDataTest extends CCMTestsSupport {
 
     /**
      * Test a wide row of size 1,000,000
-     *
-     * @throws Throwable
      */
     @Test(groups = "stress")
-    @CassandraVersion(major = 2.0, minor = 0, description = "< 2.0 is skipped as 1.2 does not handle reading wide rows well.")
+    @CassandraVersion(value = "2.0.0", description = "< 2.0 is skipped as 1.2 does not handle reading wide rows well.")
     public void wideRows() throws Throwable {
         session().execute(String.format(CREATE_KEYSPACE_SIMPLE_FORMAT, "large_data", 1));
         session().execute("USE large_data");
@@ -194,11 +192,9 @@ public class LargeDataTest extends CCMTestsSupport {
 
     /**
      * Test a batch that writes a row of size 4,000 (just below the error threshold for 2.2).
-     *
-     * @throws Throwable
      */
     @Test(groups = "stress")
-    @CassandraVersion(major = 2.0, minor = 0, description = "< 2.0 is skipped as 1.2 does not handle large batches well.")
+    @CassandraVersion(value = "2.0.0", description = "< 2.0 is skipped as 1.2 does not handle large batches well.")
     public void wideBatchRows() throws Throwable {
         session().execute(String.format(CREATE_KEYSPACE_SIMPLE_FORMAT, "large_data", 1));
         session().execute("USE large_data");
@@ -208,8 +204,6 @@ public class LargeDataTest extends CCMTestsSupport {
 
     /**
      * Test a wide row of size 1,000,000 consisting of a ByteBuffer
-     *
-     * @throws Throwable
      */
     @Test(groups = "stress")
     public void wideByteRows() throws Throwable {
@@ -221,8 +215,6 @@ public class LargeDataTest extends CCMTestsSupport {
 
     /**
      * Test a row with a single extra large text value
-     *
-     * @throws Throwable
      */
     @Test(groups = "stress")
     public void largeText() throws Throwable {
@@ -234,8 +226,6 @@ public class LargeDataTest extends CCMTestsSupport {
 
     /**
      * Creates a table with 330 columns
-     *
-     * @throws Throwable
      */
     @Test(groups = "stress")
     public void wideTable() throws Throwable {
@@ -255,8 +245,6 @@ public class LargeDataTest extends CCMTestsSupport {
 
     /**
      * Tests 10 random tests consisting of the other methods in this class
-     *
-     * @throws Throwable
      */
     @Test(groups = "duration")
     @CCMConfig(numberOfNodes = 3)

@@ -119,8 +119,6 @@ public class DefaultRetryPolicyIntegrationTest extends AbstractRetryPolicyIntegr
         Cluster whiteListedCluster = Cluster.builder()
                 .addContactPoints(scassandras.address(1).getAddress())
                 .withPort(scassandras.getBinaryPort())
-                // Scassandra does not support V3 nor V4 yet, and V4 may cause the server to crash
-                .withProtocolVersion(ProtocolVersion.V2)
                 .withRetryPolicy(retryPolicy)
                 .withLoadBalancingPolicy(firstHostOnlyPolicy)
                 .build();

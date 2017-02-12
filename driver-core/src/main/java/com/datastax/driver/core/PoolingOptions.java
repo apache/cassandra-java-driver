@@ -133,6 +133,11 @@ public class PoolingOptions {
     public static final int DEFAULT_POOL_TIMEOUT_MILLIS = 5000;
 
     /**
+     * The default value for {@link #getMaxQueueSize()} ({@value}).
+     */
+    public static final int DEFAULT_MAX_QUEUE_SIZE = 256;
+
+    /**
      * The default value for {@link #getHeartbeatIntervalSeconds()} ({@value}).
      */
     public static final int DEFAULT_HEARTBEAT_INTERVAL_SECONDS = 30;
@@ -152,6 +157,7 @@ public class PoolingOptions {
 
     private volatile int idleTimeoutSeconds = DEFAULT_IDLE_TIMEOUT_SECONDS;
     private volatile int poolTimeoutMillis = DEFAULT_POOL_TIMEOUT_MILLIS;
+    private volatile int maxQueueSize = DEFAULT_MAX_QUEUE_SIZE;
     private volatile int heartbeatIntervalSeconds = DEFAULT_HEARTBEAT_INTERVAL_SECONDS;
 
     private volatile Executor initializationExecutor = DEFAULT_INITIALIZATION_EXECUTOR;
@@ -411,8 +417,17 @@ public class PoolingOptions {
     /**
      * Sets the timeout when trying to acquire a connection from a host's pool.
      * <p/>
-     * If no connection is available within that time, the driver will try the
-     * next host from the query plan.
+     * This option works in concert with {@link #setMaxQueueSize(int)} to determine what happens if the driver tries
+     * to borrow a connection from the pool but none is available:
+     * <ul>
+     *     <li>if either option is set to zero, the attempt is rejected immediately;</li>
+     *     <li>else if more than {@code maxQueueSize} requests are already waiting for a connection, the attempt is also
+     *     rejected;</li>
+     *     <li>otherwise, the attempt is enqueued; if a connection becomes available before {@code poolTimeoutMillis}
+     *     has elapsed, then the attempt succeeds, otherwise it is rejected.</li>
+     * </ul>
+     * If the attempt is rejected, the driver will move to the next host in the
+     * {@link com.datastax.driver.core.policies.LoadBalancingPolicy#newQueryPlan(String, Statement)}  query plan}.
      * <p/>
      * The default is 5 seconds. If this option is set to zero, the driver won't wait at all.
      *
@@ -424,6 +439,44 @@ public class PoolingOptions {
         if (poolTimeoutMillis < 0)
             throw new IllegalArgumentException("Pool timeout must be positive");
         this.poolTimeoutMillis = poolTimeoutMillis;
+        return this;
+    }
+
+    /**
+     * Returns the maximum number of requests that get enqueued if no connection is available.
+     *
+     * @return the maximum queue size.
+     */
+    public int getMaxQueueSize() {
+        return maxQueueSize;
+    }
+
+    /**
+     * Sets the maximum number of requests that get enqueued if no connection is available.
+     * <p/>
+     * This option works in concert with {@link #setPoolTimeoutMillis(int)} to determine what happens if the driver
+     * tries to borrow a connection from the pool but none is available:
+     * <ul>
+     *     <li>if either options is set to zero, the attempt is rejected immediately;</li>
+     *     <li>else if more than {@code maxQueueSize} requests are already waiting for a connection, the attempt is also
+     *     rejected;</li>
+     *     <li>otherwise, the attempt is enqueued; if a connection becomes available before {@code poolTimeoutMillis}
+     *     has elapsed, then the attempt succeeds, otherwise it is rejected.</li>
+     * </ul>
+     * If the attempt is rejected, the driver will move to the next host in the
+     * {@link com.datastax.driver.core.policies.LoadBalancingPolicy#newQueryPlan(String, Statement)}  query plan}.
+     * <p/>
+     * The default value is {@value DEFAULT_MAX_QUEUE_SIZE}. If this option is set to zero, the driver will never
+     * enqueue requests.
+     *
+     * @param maxQueueSize the new value.
+     * @return this {@code PoolingOptions}
+     * @throws IllegalArgumentException if the value is negative.
+     */
+    public PoolingOptions setMaxQueueSize(int maxQueueSize) {
+        if (maxQueueSize < 0)
+            throw new IllegalArgumentException("Max queue size must be positive");
+        this.maxQueueSize = maxQueueSize;
         return this;
     }
 

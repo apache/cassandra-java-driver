@@ -1,5 +1,67 @@
 ## Changelog
 
+### 3.2.0 (in progress)
+
+- [new feature] JAVA-1347: Add support for duration type.
+- [new feature] JAVA-1248: Implement "beta" flag for native protocol v5.
+- [new feature] JAVA-1362: Send query options flags as [int] for Protocol V5+.
+- [improvement] JAVA-1367: Make protocol negotiation more resilient.
+- [bug] JAVA-1397: Handle duration as native datatype in protocol v5+.
+
+Merged from 3.1.x branch:
+
+- [bug] JAVA-1371: Reintroduce connection pool timeout.
+- [bug] JAVA-1313: Copy SerialConsistencyLevel to PreparedStatement.
+- [documentation] JAVA-1334: Clarify documentation of method `addContactPoints`.
+- [improvement] JAVA-1357: Document that getReplicas only returns replicas of the last token in range.
+
+
+### 3.1.3
+
+Merged from 3.0.x branch:
+
+- [bug] JAVA-1330: Add un/register for SchemaChangeListener in DelegatingCluster
+- [bug] JAVA-1351: Include Custom Payload in Request.copy.
+- [bug] JAVA-1346: Reset heartbeat only on client reads (not writes).
+- [improvement] JAVA-866: Support tuple notation in QueryBuilder.eq/in.
+
+
+### 3.1.2
+
+- [bug] JAVA-1321: Wrong OSGi dependency version for Guava.
+
+Merged from 3.0.x branch:
+
+- [bug] JAVA-1312: QueryBuilder modifies selected columns when manually selected.
+- [improvement] JAVA-1303: Add missing BoundStatement.setRoutingKey(ByteBuffer...)
+- [improvement] JAVA-262: Make internal executors customizable
+
+
+### 3.1.1
+
+- [bug] JAVA-1284: ClockFactory should check system property before attempting to load Native class.
+- [bug] JAVA-1255: Allow nested UDTs to be used in Mapper.
+- [bug] JAVA-1279: Mapper should exclude Groovy's "metaClass" property when looking for mapped properties
+
+Merged from 3.0.x branch:
+
+- [improvement] JAVA-1246: Driver swallows the real exception in a few cases
+- [improvement] JAVA-1261: Throw error when attempting to page in I/O thread.
+- [bug] JAVA-1258: Regression: Mapper cannot map a materialized view after JAVA-1126.
+- [bug] JAVA-1101: Batch and BatchStatement should consider inner statements to determine query idempotence
+- [improvement] JAVA-1262: Use ParseUtils for quoting & unquoting.
+- [improvement] JAVA-1275: Use Netty's default thread factory
+- [bug] JAVA-1285: QueryBuilder routing key auto-discovery should handle case-sensitive column names.
+- [bug] JAVA-1283: Don't cache failed query preparations in the mapper.
+- [improvement] JAVA-1277: Expose AbstractSession.checkNotInEventLoop.
+- [bug] JAVA-1272: BuiltStatement not able to print its query string if it contains mapped UDTs.
+- [bug] JAVA-1292: 'Adjusted frame length' error breaks driver's ability to read data.
+- [improvement] JAVA-1293: Make DecoderForStreamIdSize.MAX_FRAME_LENGTH configurable.
+- [improvement] JAVA-1053: Add a metric for authentication errors
+- [improvement] JAVA-1263: Eliminate unnecessary memory copies in FrameCompressor implementations.
+- [improvement] JAVA-893: Make connection pool non-blocking
+
+
 ### 3.1.0
 
 - [new feature] JAVA-1153: Add PER PARTITION LIMIT to Select QueryBuilder.
@@ -68,6 +130,41 @@ Merged from 2.1 branch:
 - [new feature] JAVA-1019: SchemaBuilder support for CREATE/ALTER/DROP KEYSPACE.
 - [bug] JAVA-727: Allow monotonic timestamp generators to drift in the future + use microsecond precision when possible.
 - [improvement] JAVA-444: Add Java process information to UUIDs.makeNode() hash.
+
+
+### 3.0.6
+
+- [bug] JAVA-1330: Add un/register for SchemaChangeListener in DelegatingCluster
+- [bug] JAVA-1351: Include Custom Payload in Request.copy.
+- [bug] JAVA-1346: Reset heartbeat only on client reads (not writes).
+- [improvement] JAVA-866: Support tuple notation in QueryBuilder.eq/in.
+
+
+### 3.0.5
+
+- [bug] JAVA-1312: QueryBuilder modifies selected columns when manually selected.
+- [improvement] JAVA-1303: Add missing BoundStatement.setRoutingKey(ByteBuffer...)
+- [improvement] JAVA-262: Make internal executors customizable
+- [bug] JAVA-1320: prevent unnecessary task creation on empty pool
+
+
+### 3.0.4
+
+- [improvement] JAVA-1246: Driver swallows the real exception in a few cases
+- [improvement] JAVA-1261: Throw error when attempting to page in I/O thread.
+- [bug] JAVA-1258: Regression: Mapper cannot map a materialized view after JAVA-1126.
+- [bug] JAVA-1101: Batch and BatchStatement should consider inner statements to determine query idempotence
+- [improvement] JAVA-1262: Use ParseUtils for quoting & unquoting.
+- [improvement] JAVA-1275: Use Netty's default thread factory
+- [bug] JAVA-1285: QueryBuilder routing key auto-discovery should handle case-sensitive column names.
+- [bug] JAVA-1283: Don't cache failed query preparations in the mapper.
+- [improvement] JAVA-1277: Expose AbstractSession.checkNotInEventLoop.
+- [bug] JAVA-1272: BuiltStatement not able to print its query string if it contains mapped UDTs.
+- [bug] JAVA-1292: 'Adjusted frame length' error breaks driver's ability to read data.
+- [improvement] JAVA-1293: Make DecoderForStreamIdSize.MAX_FRAME_LENGTH configurable.
+- [improvement] JAVA-1053: Add a metric for authentication errors
+- [improvement] JAVA-1263: Eliminate unnecessary memory copies in FrameCompressor implementations.
+- [improvement] JAVA-893: Make connection pool non-blocking
 
 
 ### 3.0.3

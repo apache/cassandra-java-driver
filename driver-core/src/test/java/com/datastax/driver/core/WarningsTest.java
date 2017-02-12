@@ -23,6 +23,8 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CCMConfig(config = {"batch_size_warn_threshold_in_kb:5"})
+@CassandraVersion("2.2.0")
 public class WarningsTest extends CCMTestsSupport {
 
     @Override
@@ -30,7 +32,6 @@ public class WarningsTest extends CCMTestsSupport {
         execute("CREATE TABLE foo(k int primary key, v text)");
     }
 
-    @CassandraVersion(major = 2.2)
     @Test(groups = "short")
     public void should_expose_warnings_on_execution_info() {
         // the default batch size warn threshold is 5 * 1024 bytes, but after CASSANDRA-10876 there must be

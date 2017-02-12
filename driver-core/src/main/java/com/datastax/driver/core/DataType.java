@@ -17,10 +17,8 @@ package com.datastax.driver.core;
 
 import com.datastax.driver.core.exceptions.DriverInternalError;
 import com.google.common.base.Objects;
-import com.google.common.base.Predicate;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.Sets;
 import io.netty.buffer.ByteBuf;
 
 import java.util.*;
@@ -35,6 +33,7 @@ public abstract class DataType {
      */
     public enum Name {
 
+        CUSTOM(0),
         ASCII(1),
         BIGINT(2),
         BLOB(3),
@@ -43,7 +42,6 @@ public abstract class DataType {
         DECIMAL(6),
         DOUBLE(7),
         FLOAT(8),
-        INET(16),
         INT(9),
         TEXT(10) {
             @Override
@@ -61,16 +59,17 @@ public abstract class DataType {
         },
         VARINT(14),
         TIMEUUID(15),
-        LIST(32),
-        SET(34),
-        MAP(33),
-        CUSTOM(0),
-        UDT(48, ProtocolVersion.V3),
-        TUPLE(49, ProtocolVersion.V3),
+        INET(16),
+        DATE(17, ProtocolVersion.V4),
+        TIME(18, ProtocolVersion.V4),
         SMALLINT(19, ProtocolVersion.V4),
         TINYINT(20, ProtocolVersion.V4),
-        DATE(17, ProtocolVersion.V4),
-        TIME(18, ProtocolVersion.V4);
+        DURATION(21, ProtocolVersion.V5),
+        LIST(32),
+        MAP(33),
+        SET(34),
+        UDT(48, ProtocolVersion.V3),
+        TUPLE(49, ProtocolVersion.V3);
 
         final int protocolId;
 
@@ -147,6 +146,7 @@ public abstract class DataType {
         primitiveTypeMap.put(Name.TINYINT, new DataType.NativeType(Name.TINYINT));
         primitiveTypeMap.put(Name.DATE, new DataType.NativeType(Name.DATE));
         primitiveTypeMap.put(Name.TIME, new DataType.NativeType(Name.TIME));
+        primitiveTypeMap.put(Name.DURATION, new DataType.NativeType(Name.DURATION));
     }
 
     private static final Set<DataType> primitiveTypeSet = ImmutableSet.copyOf(primitiveTypeMap.values());
@@ -162,9 +162,14 @@ public abstract class DataType {
         switch (name) {
             case CUSTOM:
                 String className = CBUtil.readString(buffer);
-                return DataTypeClassNameParser.isUserType(className) || DataTypeClassNameParser.isTupleType(className)
-                        ? DataTypeClassNameParser.parseOne(className, protocolVersion, codecRegistry)
-                        : custom(className);
+                if (DataTypeClassNameParser.isDuration(className)) {
+                    return DataType.duration();
+                } else if (DataTypeClassNameParser.isUserType(className) ||
+                        DataTypeClassNameParser.isTupleType(className)) {
+                    return DataTypeClassNameParser.parseOne(className, protocolVersion, codecRegistry);
+                } else {
+                    return custom(className);
+                }
             case LIST:
                 return list(decode(buffer, protocolVersion, codecRegistry));
             case SET:
@@ -488,7 +493,7 @@ public abstract class DataType {
      * Returns a Custom type.
      * <p/>
      * A custom type is defined by the name of the class used on the Cassandra
-     * side to implement it. Note that the support for custom type by the
+     * side to implement it. Note that the support for custom types by the
      * driver is limited.
      * <p/>
      * The use of custom types is rarely useful and is thus not encouraged.
@@ -500,6 +505,19 @@ public abstract class DataType {
         if (typeClassName == null)
             throw new NullPointerException();
         return new DataType.CustomType(Name.CUSTOM, typeClassName);
+    }
+
+    /**
+     * Returns the Duration type, introduced in Cassandra 3.10.
+     * <p/>
+     * Note that a Duration type does not have a native representation in CQL, and
+     * technically, is merely a special {@link DataType#custom(String) custom type}
+     * from the driver's point of view.
+     *
+     * @return the Duration type. The returned instance is a singleton.
+     */
+    public static DataType duration() {
+        return primitiveTypeMap.get(Name.DURATION);
     }
 
     /**
@@ -561,26 +579,6 @@ public abstract class DataType {
      */
     public static Set<DataType> allPrimitiveTypes() {
         return primitiveTypeSet;
-    }
-
-    /**
-     * Returns a set of all primitive types supported by the given protocolVersion.
-     * <p>
-     * Primitive types are defined as the types that don't have type arguments
-     * (that is excluding lists, sets, and maps, tuples and udts).
-     * </p>
-     *
-     * @param protocolVersion protocol version to get types for.
-     * @return returns a set of all the primitive types for the given protocolVersion.
-     */
-    static Set<DataType> allPrimitiveTypes(final ProtocolVersion protocolVersion) {
-        return Sets.filter(primitiveTypeSet, new Predicate<DataType>() {
-
-            @Override
-            public boolean apply(DataType dataType) {
-                return protocolVersion.compareTo(dataType.getName().minProtocolVersion) >= 0;
-            }
-        });
     }
 
     /**
@@ -759,4 +757,5 @@ public abstract class DataType {
             return String.format("'%s'", customClassName);
         }
     }
+
 }

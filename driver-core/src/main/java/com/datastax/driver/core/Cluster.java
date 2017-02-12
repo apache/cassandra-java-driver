@@ -70,16 +70,12 @@ public class Cluster implements Closeable {
 
     @VisibleForTesting
     static final int NEW_NODE_DELAY_SECONDS = SystemProperties.getInt("com.datastax.driver.NEW_NODE_DELAY_SECONDS", 1);
-    private static final int NON_BLOCKING_EXECUTOR_SIZE = SystemProperties.getInt("com.datastax.driver.NON_BLOCKING_EXECUTOR_SIZE",
-            Runtime.getRuntime().availableProcessors());
 
     private static final ResourceBundle driverProperties = ResourceBundle.getBundle("com.datastax.driver.core.Driver");
 
     // Some per-JVM number that allows to generate unique cluster names when
     // multiple Cluster instance are created in the same JVM.
     private static final AtomicInteger CLUSTER_ID = new AtomicInteger(0);
-
-    private static final int DEFAULT_THREAD_KEEP_ALIVE = 30;
 
     private static final int NOTIF_LOCK_TIMEOUT_SECONDS = SystemProperties.getInt("com.datastax.driver.NOTIF_LOCK_TIMEOUT_SECONDS", 60);
 
@@ -690,6 +686,7 @@ public class Cluster implements Closeable {
         private SSLOptions sslOptions = null;
         private boolean metricsEnabled = true;
         private boolean jmxEnabled = true;
+        private boolean allowBetaProtocolVersion = false;
 
         private Collection<Host.StateListener> listeners;
 
@@ -744,6 +741,28 @@ public class Cluster implements Closeable {
         }
 
         /**
+         * Create cluster connection using latest development protocol version,
+         * which is currently in beta. Calling this method will result into setting
+         * USE_BETA flag in all outgoing messages, which allows server to negotiate
+         * the supported protocol version even if it is currently in beta.
+         * <p/>
+         * This feature is only available starting with version {@link ProtocolVersion#V5 V5}.
+         * <p/>
+         * Use with caution, refer to the server and protocol documentation for the details
+         * on latest protocol version.
+         *
+         * @return this Builder.
+         */
+        public Builder allowBetaProtocolVersion() {
+            if (protocolVersion != null)
+                throw new IllegalArgumentException("Can't use beta flag with initial protocol version of " + protocolVersion);
+
+            this.allowBetaProtocolVersion = true;
+            this.protocolVersion = ProtocolVersion.NEWEST_BETA;
+            return this;
+        }
+
+        /**
          * Sets the maximum time to wait for schema agreement before returning from a DDL query.
          * <p/>
          * If not set through this method, the default value (10 seconds) will be used.
@@ -763,7 +782,7 @@ public class Cluster implements Closeable {
         /**
          * The native protocol version to use.
          * <p/>
-         * The driver supports versions 1 to 3 of the native protocol. Higher versions
+         * The driver supports versions 1 to 5 of the native protocol. Higher versions
          * of the protocol have more features and should be preferred, but this also depends
          * on the Cassandra version:
          * <p/>
@@ -773,6 +792,8 @@ public class Cluster implements Closeable {
          * <tr><td>1</td><td>1.2</td></tr>
          * <tr><td>2</td><td>2.0</td></tr>
          * <tr><td>3</td><td>2.1</td></tr>
+         * <tr><td>4</td><td>2.2</td></tr>
+         * <tr><td>5</td><td>3.10</td></tr>
          * </table>
          * <p/>
          * By default, the driver will "auto-detect" which protocol version it can use
@@ -783,6 +804,11 @@ public class Cluster implements Closeable {
          * the driver connects to is a Cassandra 1.2 node and auto-detection is used
          * (the default), then the native protocol version 1 will be use for the lifetime
          * of the Cluster instance.
+         * <p/>
+         * By using {@link Builder#allowBetaProtocolVersion()}, it is
+         * possible to force driver to connect to Cassandra node that supports the latest
+         * protocol beta version. Leaving this flag out will let client to connect with
+         * latest released version.
          * <p/>
          * This method allows to force the use of a particular protocol version. Forcing
          * version 1 is always fine since all Cassandra version (at least all those
@@ -808,12 +834,18 @@ public class Cluster implements Closeable {
          * @return this Builder.
          */
         public Builder withProtocolVersion(ProtocolVersion version) {
+            if (allowBetaProtocolVersion)
+                throw new IllegalStateException("Can not set the version explicitly if `allowBetaProtocolVersion` was used.");
+            if (version.compareTo(ProtocolVersion.NEWEST_SUPPORTED) > 0)
+                throw new IllegalArgumentException("Can not use " + version + " protocol version. " +
+                        "Newest supported protocol version is: " + ProtocolVersion.NEWEST_SUPPORTED + ". " +
+                        "For beta versions, use `allowBetaProtocolVersion` instead");
             this.protocolVersion = version;
             return this;
         }
 
         /**
-         * Adds a contact point - or many if it host resolves to multiple
+         * Adds a contact point - or many if the given address resolves to multiple
          * <code>InetAddress</code>s (A records).
          * <p/>
          * Contact points are addresses of Cassandra nodes that the driver uses
@@ -824,7 +856,7 @@ public class Cluster implements Closeable {
          * the driver cannot initialize itself correctly.
          * <p/>
          * Note that by default (that is, unless you use the {@link #withLoadBalancingPolicy})
-         * method of this builder), the first succesfully contacted host will be used
+         * method of this builder), the first successfully contacted host will be used
          * to define the local data-center for the client. If follows that if you are
          * running Cassandra in a  multiple data-center setting, it is a good idea to
          * only provide contact points that are in the same datacenter than the client,
@@ -834,15 +866,15 @@ public class Cluster implements Closeable {
          * returned will be used. Make sure that all resulting <code>InetAddress</code>s returned
          * point to the same cluster and datacenter.
          *
-         * @param address the address of the node(s) to connect to
+         * @param address the address of the node(s) to connect to.
          * @return this Builder.
-         * @throws IllegalArgumentException if no IP address for {@code address}
-         *                                  could be found
+         * @throws IllegalArgumentException if the given {@code address}
+         *                                  could not be resolved.
          * @throws SecurityException        if a security manager is present and
          *                                  permission to resolve the host name is denied.
          */
         public Builder addContactPoint(String address) {
-            // We explicitely check for nulls because InetAdress.getByName() will happily
+            // We explicitly check for nulls because InetAdress.getByName() will happily
             // accept it and use localhost (while a null here almost likely mean a user error,
             // not "connect to localhost")
             if (address == null)
@@ -852,7 +884,7 @@ public class Cluster implements Closeable {
                 addContactPoints(InetAddress.getAllByName(address));
                 return this;
             } catch (UnknownHostException e) {
-                throw new IllegalArgumentException(e.getMessage());
+                throw new IllegalArgumentException("Failed to add contact point: " + address, e);
             }
         }
 
@@ -861,11 +893,14 @@ public class Cluster implements Closeable {
          * <p/>
          * See {@link Builder#addContactPoint} for more details on contact
          * points.
+         * <p/>
+         * Note that all contact points must be resolvable;
+         * if <em>any</em> of them cannot be resolved, this method will fail.
          *
-         * @param addresses addresses of the nodes to add as contact point.
+         * @param addresses addresses of the nodes to add as contact points.
          * @return this Builder.
-         * @throws IllegalArgumentException if no IP address for at least one
-         *                                  of {@code addresses} could be found
+         * @throws IllegalArgumentException if any of the given {@code addresses}
+         *                                  could not be resolved.
          * @throws SecurityException        if a security manager is present and
          *                                  permission to resolve the host name is denied.
          * @see Builder#addContactPoint
@@ -881,9 +916,16 @@ public class Cluster implements Closeable {
          * <p/>
          * See {@link Builder#addContactPoint} for more details on contact
          * points.
+         * <p/>
+         * Note that all contact points must be resolvable;
+         * if <em>any</em> of them cannot be resolved, this method will fail.
          *
-         * @param addresses addresses of the nodes to add as contact point.
+         * @param addresses addresses of the nodes to add as contact points.
          * @return this Builder.
+         * @throws IllegalArgumentException if any of the given {@code addresses}
+         *                                  could not be resolved.
+         * @throws SecurityException        if a security manager is present and
+         *                                  permission to resolve the host name is denied.
          * @see Builder#addContactPoint
          */
         public Builder addContactPoints(InetAddress... addresses) {
@@ -897,7 +939,7 @@ public class Cluster implements Closeable {
          * See {@link Builder#addContactPoint} for more details on contact
          * points.
          *
-         * @param addresses addresses of the nodes to add as contact point
+         * @param addresses addresses of the nodes to add as contact points.
          * @return this Builder
          * @see Builder#addContactPoint
          */
@@ -911,19 +953,19 @@ public class Cluster implements Closeable {
          * <p/>
          * See {@link Builder#addContactPoint} for more details on contact
          * points. Contrarily to other {@code addContactPoints} methods, this method
-         * allow to provide a different port for each contact points. Since Cassandra
-         * nodes must always all listen on the same port, this is rarelly what you
+         * allows to provide a different port for each contact point. Since Cassandra
+         * nodes must always all listen on the same port, this is rarely what you
          * want and most users should prefer other {@code addContactPoints} methods to
          * this one. However, this can be useful if the Cassandra nodes are behind
          * a router and are not accessed directly. Note that if you are in this
          * situation (Cassandra nodes are behind a router, not directly accessible),
-         * you almost surely want to provide a specific {@code AddressTranslator}
+         * you almost surely want to provide a specific {@link AddressTranslator}
          * (through {@link #withAddressTranslator}) to translate actual Cassandra node
          * addresses to the addresses the driver should use, otherwise the driver
          * will not be able to auto-detect new nodes (and will generally not function
          * optimally).
          *
-         * @param addresses addresses of the nodes to add as contact point
+         * @param addresses addresses of the nodes to add as contact points.
          * @return this Builder
          * @see Builder#addContactPoint
          */
@@ -937,19 +979,19 @@ public class Cluster implements Closeable {
          * <p/>
          * See {@link Builder#addContactPoint} for more details on contact
          * points. Contrarily to other {@code addContactPoints} methods, this method
-         * allow to provide a different port for each contact points. Since Cassandra
-         * nodes must always all listen on the same port, this is rarelly what you
+         * allows to provide a different port for each contact point. Since Cassandra
+         * nodes must always all listen on the same port, this is rarely what you
          * want and most users should prefer other {@code addContactPoints} methods to
          * this one. However, this can be useful if the Cassandra nodes are behind
          * a router and are not accessed directly. Note that if you are in this
          * situation (Cassandra nodes are behind a router, not directly accessible),
-         * you almost surely want to provide a specific {@code AddressTranslator}
+         * you almost surely want to provide a specific {@link AddressTranslator}
          * (through {@link #withAddressTranslator}) to translate actual Cassandra node
          * addresses to the addresses the driver should use, otherwise the driver
          * will not be able to auto-detect new nodes (and will generally not function
          * optimally).
          *
-         * @param addresses addresses of the nodes to add as contact point
+         * @param addresses addresses of the nodes to add as contact points.
          * @return this Builder
          * @see Builder#addContactPoint
          */
@@ -1227,6 +1269,19 @@ public class Cluster implements Closeable {
         }
 
         /**
+         * Sets the threading options to use for the newly created Cluster.
+         * <p/>
+         * If no options are set through this method, a new instance of {@link ThreadingOptions} will be used.
+         *
+         * @param options the options.
+         * @return this builder.
+         */
+        public Builder withThreadingOptions(ThreadingOptions options) {
+            configurationBuilder.withThreadingOptions(options);
+            return this;
+        }
+
+        /**
          * Set the {@link NettyOptions} to use for the newly created Cluster.
          * <p/>
          * If no Netty options are set through this method, {@link NettyOptions#DEFAULT_INSTANCE}
@@ -1315,20 +1370,15 @@ public class Cluster implements Closeable {
 
         final ConvictionPolicy.Factory convictionPolicyFactory = new ConvictionPolicy.DefaultConvictionPolicy.Factory();
 
-        ScheduledThreadPoolExecutor reconnectionExecutor;
-        ScheduledThreadPoolExecutor scheduledTasksExecutor;
-
-        // Executor used for tasks that shouldn't be executed on an IO thread. Used for short-lived, generally non-blocking tasks
         ListeningExecutorService executor;
-
-        // Work Queue used by executor.
-        LinkedBlockingQueue<Runnable> executorQueue;
-
-        // An executor for tasks that might block some time, like creating new connection, but are generally not too critical.
         ListeningExecutorService blockingExecutor;
+        ScheduledExecutorService reconnectionExecutor;
+        ScheduledExecutorService scheduledTasksExecutor;
 
-        // Work Queue used by blockingExecutor.
-        LinkedBlockingQueue<Runnable> blockingExecutorQueue;
+        BlockingQueue<Runnable> executorQueue;
+        BlockingQueue<Runnable> blockingExecutorQueue;
+        BlockingQueue<Runnable> reconnectionExecutorQueue;
+        BlockingQueue<Runnable> scheduledTasksExecutorQueue;
 
         ConnectionReaper reaper;
 
@@ -1367,16 +1417,31 @@ public class Cluster implements Closeable {
 
             this.configuration.register(this);
 
-            this.executorQueue = new LinkedBlockingQueue<Runnable>();
-            this.executor = makeExecutor(NON_BLOCKING_EXECUTOR_SIZE, "worker", executorQueue);
-            this.blockingExecutorQueue = new LinkedBlockingQueue<Runnable>();
-            this.blockingExecutor = makeExecutor(2, "blocking-task-worker", blockingExecutorQueue);
-            this.reconnectionExecutor = new ScheduledThreadPoolExecutor(2, threadFactory("reconnection"));
-            // scheduledTasksExecutor is used to process C* notifications. So having it mono-threaded ensures notifications are
-            // applied in the order received.
-            this.scheduledTasksExecutor = new ScheduledThreadPoolExecutor(1, threadFactory("scheduled-task-worker"));
+            ThreadingOptions threadingOptions = this.configuration.getThreadingOptions();
 
-            this.reaper = new ConnectionReaper(this);
+            // executor
+            ExecutorService tmpExecutor = threadingOptions.createExecutor(clusterName);
+            this.executorQueue = (tmpExecutor instanceof ThreadPoolExecutor)
+                    ? ((ThreadPoolExecutor) tmpExecutor).getQueue() : null;
+            this.executor = MoreExecutors.listeningDecorator(tmpExecutor);
+
+            // blocking executor
+            ExecutorService tmpBlockingExecutor = threadingOptions.createBlockingExecutor(clusterName);
+            this.blockingExecutorQueue = (tmpBlockingExecutor instanceof ThreadPoolExecutor)
+                    ? ((ThreadPoolExecutor) tmpBlockingExecutor).getQueue() : null;
+            this.blockingExecutor = MoreExecutors.listeningDecorator(tmpBlockingExecutor);
+
+            // reconnection executor
+            this.reconnectionExecutor = threadingOptions.createReconnectionExecutor(clusterName);
+            this.reconnectionExecutorQueue = (reconnectionExecutor instanceof ThreadPoolExecutor)
+                    ? ((ThreadPoolExecutor) reconnectionExecutor).getQueue() : null;
+
+            // scheduled tasks executor
+            this.scheduledTasksExecutor = threadingOptions.createScheduledTasksExecutor(clusterName);
+            this.scheduledTasksExecutorQueue = (scheduledTasksExecutor instanceof ThreadPoolExecutor)
+                    ? ((ThreadPoolExecutor) scheduledTasksExecutor).getQueue() : null;
+
+            this.reaper = new ConnectionReaper(threadingOptions.createReaperExecutor(clusterName));
             this.metadata = new Metadata(this);
             this.connectionFactory = new Connection.Factory(this, configuration);
             this.controlConnection = new ControlConnection(this);
@@ -1450,18 +1515,7 @@ public class Cluster implements Closeable {
             Set<Host> contactPointHosts = Sets.newHashSet(allHosts);
 
             try {
-                try {
-                    controlConnection.connect();
-                } catch (UnsupportedProtocolVersionException e) {
-                    logger.debug("Cannot connect with protocol {}, trying {}", e.getUnsupportedVersion(), e.getServerVersion());
-
-                    connectionFactory.protocolVersion = e.getServerVersion();
-                    try {
-                        controlConnection.connect();
-                    } catch (UnsupportedProtocolVersionException e1) {
-                        throw new DriverInternalError("Cannot connect to node with its own version, this makes no sense", e);
-                    }
-                }
+                negotiateProtocolVersionAndConnect();
 
                 // The control connection can mark hosts down if it failed to connect to them, or remove them if they weren't found
                 // in the control host's system.peers. Separate them:
@@ -1513,7 +1567,7 @@ public class Cluster implements Closeable {
                     // creations if a session is created right after this method returns).
                     logger.info("New Cassandra host {} added", host);
 
-                    if (!connectionFactory.protocolVersion.isSupportedBy(host)) {
+                    if (!host.supports(connectionFactory.protocolVersion)) {
                         logUnsupportedVersionProtocol(host, connectionFactory.protocolVersion);
                         continue;
                     }
@@ -1539,24 +1593,32 @@ public class Cluster implements Closeable {
             }
         }
 
+        private void negotiateProtocolVersionAndConnect() {
+            boolean shouldNegotiate = (configuration.getProtocolOptions().initialProtocolVersion == null);
+            while (true) {
+                try {
+                    controlConnection.connect();
+                    return;
+                } catch (UnsupportedProtocolVersionException e) {
+                    if (!shouldNegotiate) {
+                        throw e;
+                    }
+                    // Do not trust version of server's response, as C* behavior in case of protocol negotiation is not
+                    // properly documented, and varies over time (specially after CASSANDRA-11464). Instead, always
+                    // retry at attempted version - 1, if such a version exists; and otherwise, stop and fail.
+                    ProtocolVersion attemptedVersion = e.getUnsupportedVersion();
+                    ProtocolVersion retryVersion = attemptedVersion.getLowerSupported();
+                    if (retryVersion == null) {
+                        throw e;
+                    }
+                    logger.info("Cannot connect with protocol version {}, trying with {}", attemptedVersion, retryVersion);
+                    connectionFactory.protocolVersion = retryVersion;
+                }
+            }
+        }
+
         ProtocolVersion protocolVersion() {
             return connectionFactory.protocolVersion;
-        }
-
-        ThreadFactory threadFactory(String name) {
-            return new ThreadFactoryBuilder().setNameFormat(clusterName + "-" + name + "-%d").build();
-        }
-
-        private ListeningExecutorService makeExecutor(int threads, String name, LinkedBlockingQueue<Runnable> workQueue) {
-            ThreadPoolExecutor executor = new ThreadPoolExecutor(threads,
-                    threads,
-                    DEFAULT_THREAD_KEEP_ALIVE,
-                    TimeUnit.SECONDS,
-                    workQueue,
-                    threadFactory(name));
-
-            executor.allowCoreThreadTimeOut(true);
-            return MoreExecutors.listeningDecorator(executor);
         }
 
         Cluster getCluster() {
@@ -1696,7 +1758,7 @@ public class Cluster implements Closeable {
             if (isClosed())
                 return;
 
-            if (!connectionFactory.protocolVersion.isSupportedBy(host)) {
+            if (!host.supports(connectionFactory.protocolVersion)) {
                 logUnsupportedVersionProtocol(host, connectionFactory.protocolVersion);
                 return;
             }
@@ -1990,7 +2052,7 @@ public class Cluster implements Closeable {
             if (isClosed())
                 return;
 
-            if (!connectionFactory.protocolVersion.isSupportedBy(host)) {
+            if (!host.supports(connectionFactory.protocolVersion)) {
                 logUnsupportedVersionProtocol(host, connectionFactory.protocolVersion);
                 return;
             }
@@ -2856,9 +2918,9 @@ public class Cluster implements Closeable {
             }
         };
 
-        ConnectionReaper(Cluster.Manager manager) {
-            executor = Executors.newScheduledThreadPool(1, manager.threadFactory("connection-reaper"));
-            executor.scheduleWithFixedDelay(reaperTask, INTERVAL_MS, INTERVAL_MS, TimeUnit.MILLISECONDS);
+        ConnectionReaper(ScheduledExecutorService executor) {
+            this.executor = executor;
+            this.executor.scheduleWithFixedDelay(reaperTask, INTERVAL_MS, INTERVAL_MS, TimeUnit.MILLISECONDS);
         }
 
         void register(Connection connection, long terminateTime) {

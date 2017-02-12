@@ -16,6 +16,7 @@
 package com.datastax.driver.mapping;
 
 import com.google.common.base.Throwables;
+import com.google.common.collect.ImmutableSet;
 
 import java.beans.BeanInfo;
 import java.beans.IntrospectionException;
@@ -25,11 +26,18 @@ import java.lang.annotation.Annotation;
 import java.lang.reflect.*;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * Utility methods related to reflection.
  */
 class ReflectionUtils {
+
+    private static final Set<String> EXCLUDED_PROPERTIES = ImmutableSet.of(
+            "class",
+            // JAVA-1279: exclude Groovy's metaClass property
+            "metaClass"
+    );
 
     static <T> T newInstance(Class<T> clazz) {
         Constructor<T> publicConstructor;
@@ -75,7 +83,7 @@ class ReflectionUtils {
         HashMap<String, Field> fields = new HashMap<String, Field>();
         for (Class<?> clazz = baseClass; !clazz.equals(Object.class); clazz = clazz.getSuperclass()) {
             for (Field field : clazz.getDeclaredFields()) {
-                if (field.getName().equals("class") || field.isSynthetic() || Modifier.isStatic(field.getModifiers()))
+                if (field.isSynthetic() || Modifier.isStatic(field.getModifiers()) || isPropertyExcluded(field.getName()))
                     continue;
                 // never override a more specific field masking another one declared in a superclass
                 if (!fields.containsKey(field.getName()))
@@ -94,11 +102,15 @@ class ReflectionUtils {
         }
         Map<String, PropertyDescriptor> properties = new HashMap<String, PropertyDescriptor>();
         for (PropertyDescriptor property : beanInfo.getPropertyDescriptors()) {
-            if (property.getName().equals("class"))
+            if (isPropertyExcluded(property.getName()))
                 continue;
             properties.put(property.getName(), property);
         }
         return properties;
+    }
+
+    private static boolean isPropertyExcluded(String name) {
+        return EXCLUDED_PROPERTIES.contains(name);
     }
 
     static Map<Class<? extends Annotation>, Annotation> scanPropertyAnnotations(Field field, PropertyDescriptor property) {

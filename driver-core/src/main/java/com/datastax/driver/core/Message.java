@@ -180,9 +180,21 @@ abstract class Message {
             }
         }
 
-        abstract Request copy();
+        Request copy() {
+            Request request = copyInternal();
+            request.setCustomPayload(this.getCustomPayload());
+            return request;
+        }
+
+        protected abstract Request copyInternal();
 
         Request copy(ConsistencyLevel newConsistencyLevel) {
+            Request request = copyInternal(newConsistencyLevel);
+            request.setCustomPayload(this.getCustomPayload());
+            return request;
+        }
+
+        protected Request copyInternal(ConsistencyLevel newConsistencyLevel) {
             throw new UnsupportedOperationException();
         }
     }
@@ -302,6 +314,8 @@ abstract class Message {
             EnumSet<Frame.Header.Flag> flags = EnumSet.noneOf(Frame.Header.Flag.class);
             if (request.isTracingRequested())
                 flags.add(Frame.Header.Flag.TRACING);
+            if (protocolVersion == ProtocolVersion.NEWEST_BETA)
+                flags.add(Frame.Header.Flag.USE_BETA);
             Map<String, ByteBuffer> customPayload = request.getCustomPayload();
             if (customPayload != null) {
                 if (protocolVersion.compareTo(ProtocolVersion.V4) < 0)

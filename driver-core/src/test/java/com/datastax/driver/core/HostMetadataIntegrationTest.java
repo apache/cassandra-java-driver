@@ -15,6 +15,7 @@
  */
 package com.datastax.driver.core;
 
+import com.datastax.driver.core.utils.DseVersion;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.testng.annotations.Test;
@@ -35,24 +36,22 @@ public class HostMetadataIntegrationTest {
      * This test is disabled as running DSE with workloads is intensive and has unreliable results
      * when running CCM with multiple workloads.
      * <p/>
-     * FIXME: this test is currently disabled because nodes with specific workload
-     * do not seem to come up within the allocated time.
      *
      * @test_category host:metadata
-     * @jira_ticket JAVA1042
+     * @jira_ticket JAVA-1042
      * @see HostMetadataIntegrationTest#should_parse_dse_workload_and_version_if_available()
      */
-    @Test(groups = "long", enabled = false)
+    @Test(groups = "long")
+    @DseVersion("5.0.0")
     public void test_mixed_dse_workload() {
         CCMBridge.Builder builder = CCMBridge.builder()
                 .withNodes(3)
                 .withDSE()
-                .withVersion("4.8.3")
                 .withWorkload(2, solr)
                 .withWorkload(3, spark);
         CCMAccess ccm = CCMCache.get(builder);
 
-        VersionNumber version = VersionNumber.parse("4.8.3");
+        VersionNumber version = VersionNumber.parse(CCMBridge.getDSEVersion());
 
         Cluster cluster = Cluster.builder()
                 .addContactPoints(ccm.addressOfNode(1).getAddress())

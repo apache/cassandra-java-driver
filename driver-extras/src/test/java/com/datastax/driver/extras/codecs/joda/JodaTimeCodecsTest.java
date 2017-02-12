@@ -42,7 +42,7 @@ import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static java.util.concurrent.TimeUnit.NANOSECONDS;
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CassandraVersion(major = 2.2)
+@CassandraVersion("2.2.0")
 public class JodaTimeCodecsTest extends CCMTestsSupport {
 
     @Override

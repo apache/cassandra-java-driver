@@ -33,7 +33,7 @@ import static com.google.common.collect.Lists.newArrayList;
 import static com.google.common.collect.Sets.newHashSet;
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CassandraVersion(major = 2.0)
+@CassandraVersion("2.0.0")
 public class TypeCodecCollectionsIntegrationTest extends CCMTestsSupport {
 
     private final String insertQuery = "INSERT INTO \"myTable2\" (c_int, l_int, l_bigint, s_float, s_double, m_varint, m_decimal) VALUES (?, ?, ?, ?, ?, ?, ?)";

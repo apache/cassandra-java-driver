@@ -16,6 +16,7 @@
 package com.datastax.driver.core;
 
 import com.datastax.driver.core.exceptions.DriverInternalError;
+import com.datastax.driver.core.exceptions.FrameTooLongException;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelHandlerContext;
@@ -110,6 +111,7 @@ class Frame {
                 return fullFrame.readByte();
             case V3:
             case V4:
+            case V5:
                 return fullFrame.readShort();
             default:
                 throw version.unsupported();
@@ -152,6 +154,7 @@ class Frame {
                     return 8;
                 case V3:
                 case V4:
+                case V5:
                     return 9;
                 default:
                     throw version.unsupported();
@@ -163,7 +166,8 @@ class Frame {
             COMPRESSED,
             TRACING,
             CUSTOM_PAYLOAD,
-            WARNING;
+            WARNING,
+            USE_BETA;
 
             static EnumSet<Flag> deserialize(int flags) {
                 EnumSet<Flag> set = EnumSet.noneOf(Flag.class);
@@ -189,42 +193,44 @@ class Frame {
     }
 
     static final class Decoder extends ByteToMessageDecoder {
-        static final DecoderForStreamIdSize decoderV1 = new DecoderForStreamIdSize(1);
-        static final DecoderForStreamIdSize decoderV3 = new DecoderForStreamIdSize(2);
+        private DecoderForStreamIdSize decoder;
 
         @Override
         protected void decode(ChannelHandlerContext ctx, ByteBuf buffer, List<Object> out) throws Exception {
             if (buffer.readableBytes() < 1)
                 return;
 
-            int version = buffer.getByte(0);
-            // version first bit is the "direction" of the frame (request or response)
-            version = version & 0x7F;
+            // Initialize sub decoder on first message.  No synchronization needed as
+            // decode is always called from same thread.
+            if (decoder == null) {
+                int version = buffer.getByte(buffer.readerIndex());
+                // version first bit is the "direction" of the frame (request or response)
+                version = version & 0x7F;
+                decoder = new DecoderForStreamIdSize(version, version >= 3 ? 2 : 1);
+            }
 
-            DecoderForStreamIdSize decoder = (version >= 3) ? decoderV3 : decoderV1;
             Object frame = decoder.decode(ctx, buffer);
             if (frame != null)
                 out.add(frame);
         }
 
         static class DecoderForStreamIdSize extends LengthFieldBasedFrameDecoder {
-            private static final int MAX_FRAME_LENGTH = 256 * 1024 * 1024; // 256 MB
-            private final int opcodeOffset;
+            // The maximum response frame length allowed.  Note that C* does not currently restrict the length of its responses (CASSANDRA-12630).
+            private static final int MAX_FRAME_LENGTH = SystemProperties.getInt("com.datastax.driver.NATIVE_TRANSPORT_MAX_FRAME_SIZE_IN_MB", 256) * 1024 * 1024; // 256 MB
+            private final int protocolVersion;
 
-            DecoderForStreamIdSize(int streamIdSize) {
+            DecoderForStreamIdSize(int protocolVersion, int streamIdSize) {
                 super(MAX_FRAME_LENGTH, /*lengthOffset=*/ 3 + streamIdSize, 4, 0, 0, true);
-                this.opcodeOffset = 2 + streamIdSize;
+                this.protocolVersion = protocolVersion;
             }
 
             @Override
             protected Object decode(ChannelHandlerContext ctx, ByteBuf buffer) throws Exception {
+                // Capture current index in case we need to get the stream id.
+                // If a TooLongFrameException is thrown the readerIndex will advance to the end of
+                // the buffer (or past the frame) so we need the position as we entered this method.
+                int curIndex = buffer.readerIndex();
                 try {
-                    if (buffer.readableBytes() < opcodeOffset + 1)
-                        return null;
-
-                    // Validate the opcode (this will throw if it's not a response)
-                    Message.Response.Type.fromOpcode(buffer.getByte(opcodeOffset));
-
                     ByteBuf frame = (ByteBuf) super.decode(ctx, buffer);
                     if (frame == null) {
                         return null;
@@ -232,11 +238,17 @@ class Frame {
                     // Do not deallocate `frame` just yet, because it is stored as Frame.body and will be used
                     // in Message.ProtocolDecoder or Frame.Decompressor if compression is enabled (we deallocate
                     // it there).
-                    return Frame.create(frame);
+                    Frame theFrame = Frame.create(frame);
+                    // Validate the opcode (this will throw if it's not a response)
+                    Message.Response.Type.fromOpcode(theFrame.header.opcode);
+                    return theFrame;
                 } catch (CorruptedFrameException e) {
-                    throw new DriverInternalError(e.getMessage());
+                    throw new DriverInternalError(e);
                 } catch (TooLongFrameException e) {
-                    throw new DriverInternalError(e.getMessage());
+                    int streamId = protocolVersion > 2 ?
+                            buffer.getShort(curIndex + 2) :
+                            buffer.getByte(curIndex + 2);
+                    throw new FrameTooLongException(streamId);
                 }
             }
         }
@@ -268,6 +280,7 @@ class Frame {
                     break;
                 case V3:
                 case V4:
+                case V5:
                     header.writeShort(streamId);
                     break;
                 default:

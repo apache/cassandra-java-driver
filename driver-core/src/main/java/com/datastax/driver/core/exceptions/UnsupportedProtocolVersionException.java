@@ -35,17 +35,23 @@ public class UnsupportedProtocolVersionException extends DriverException impleme
     private final ProtocolVersion serverVersion;
 
     public UnsupportedProtocolVersionException(InetSocketAddress address, ProtocolVersion unsupportedVersion, ProtocolVersion serverVersion) {
-        super(String.format("[%s] Host does not support protocol version %s but %s", address, unsupportedVersion, serverVersion));
+        super(makeErrorMessage(address, unsupportedVersion, serverVersion));
         this.address = address;
         this.unsupportedVersion = unsupportedVersion;
         this.serverVersion = serverVersion;
     }
 
     public UnsupportedProtocolVersionException(InetSocketAddress address, ProtocolVersion unsupportedVersion, ProtocolVersion serverVersion, Throwable cause) {
-        super(String.format("[%s] Host does not support protocol version %s but %s", address, unsupportedVersion, serverVersion), cause);
+        super(makeErrorMessage(address, unsupportedVersion, serverVersion), cause);
         this.address = address;
         this.unsupportedVersion = unsupportedVersion;
         this.serverVersion = serverVersion;
+    }
+
+    private static String makeErrorMessage(InetSocketAddress address, ProtocolVersion unsupportedVersion, ProtocolVersion serverVersion) {
+        return unsupportedVersion == serverVersion
+                ? String.format("[%s] Host does not support protocol version %s", address, unsupportedVersion)
+                : String.format("[%s] Host does not support protocol version %s but %s", address, unsupportedVersion, serverVersion);
     }
 
     @Override
@@ -58,10 +64,26 @@ public class UnsupportedProtocolVersionException extends DriverException impleme
         return address;
     }
 
+    /**
+     * The version with which the server replied.
+     * <p/>
+     * Note that this version is not necessarily a supported version.
+     * While this is usually the case, in rare situations,
+     * the server might respond with an unsupported version,
+     * to ensure that the client can decode its response properly.
+     * See CASSANDRA-11464 for more details.
+     *
+     * @return The version with which the server replied.
+     */
     public ProtocolVersion getServerVersion() {
         return serverVersion;
     }
 
+    /**
+     * The version with which the client sent its request.
+     *
+     * @return The version with which the client sent its request.
+     */
     public ProtocolVersion getUnsupportedVersion() {
         return unsupportedVersion;
     }

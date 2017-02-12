@@ -135,14 +135,7 @@ public class Metadata {
             return id.toLowerCase();
 
         // Check if it's enclosed in quotes. If it is, remove them and unescape internal double quotes
-        if (!id.isEmpty() && id.charAt(0) == '"' && id.charAt(id.length() - 1) == '"')
-            return id.substring(1, id.length() - 1).replaceAll("\"\"", "\"");
-
-        // Otherwise, just return the id.
-        // Note that this is a bit at odds with the rules explained above, because the client can pass an
-        // identifier that contains special characters, without the need to quote it.
-        // Still it's better to be lenient here rather than throwing an exception.
-        return id;
+        return ParseUtils.unDoubleQuote(id);
     }
 
     // Escape a CQL3 identifier based on its value as read from the schema
@@ -217,7 +210,7 @@ public class Metadata {
      * or even {@link Cluster#connect(String)}.
      */
     public static String quote(String id) {
-        return '"' + id.replace("\"", "\"\"") + '"';
+        return ParseUtils.doubleQuote(id);
     }
 
     /**
@@ -312,7 +305,12 @@ public class Metadata {
     /**
      * Returns the set of hosts that are replica for a given token range.
      * <p/>
-     * Note that this information is refreshed asynchronously by the control
+     * Note that it is assumed that the input range does not overlap across multiple host ranges.
+     * If the range extends over multiple hosts, it only returns the replicas for those hosts
+     * that are replicas for the last token of the range.  This behavior may change in a future
+     * release, see <a href="https://datastax-oss.atlassian.net/browse/JAVA-1355">JAVA-1355</a>.
+     * <p/>
+     * Also note that this information is refreshed asynchronously by the control
      * connection, when schema or ring topology changes. It might occasionally
      * be stale (or even empty).
      *

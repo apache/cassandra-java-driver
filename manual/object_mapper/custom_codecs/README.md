@@ -58,7 +58,7 @@ This also works in accessors:
 ```java
 @Accessor
 interface UserAccessor {
-  @Query("update user set birth = :b where id = :i)
+  @Query("update user set birth = :b where id = :i")
   void updateBirth(@Param("i") int id,
                    @Param("b") MyCustomDate birth);
 }

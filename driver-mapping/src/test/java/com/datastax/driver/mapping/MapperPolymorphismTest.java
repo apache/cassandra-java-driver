@@ -34,7 +34,7 @@ import static org.assertj.core.api.Assertions.assertThat;
  * JAVA-636 Allow @Column annotations on getters/setters as well as fields
  */
 @SuppressWarnings({"unused", "WeakerAccess"})
-@CassandraVersion(major = 2.1)
+@CassandraVersion("2.1.0")
 public class MapperPolymorphismTest extends CCMTestsSupport {
 
     Circle circle = new Circle(new Point2D(11, 22), 12.34);

@@ -137,6 +137,11 @@ public class Host {
         this.dseGraphEnabled = dseGraphEnabled;
     }
 
+    boolean supports(ProtocolVersion version) {
+        return getCassandraVersion() == null
+                || version.minCassandraVersion().compareTo(getCassandraVersion().nextStable()) <= 0;
+    }
+
     /**
      * Returns the address that the driver will use to connect to the node.
      * <p/>

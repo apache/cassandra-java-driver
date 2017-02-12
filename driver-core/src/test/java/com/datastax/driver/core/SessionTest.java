@@ -16,7 +16,6 @@
 package com.datastax.driver.core;
 
 import com.datastax.driver.core.exceptions.SyntaxError;
-import com.datastax.driver.core.utils.CassandraVersion;
 import com.google.common.util.concurrent.ListenableFuture;
 import org.testng.annotations.Test;
 
@@ -81,7 +80,7 @@ public class SessionTest extends CCMTestsSupport {
         checkExecuteResultSet(session().executeAsync(bs.setConsistencyLevel(ConsistencyLevel.ONE)).getUninterruptibly(), key);
     }
 
-    private static void checkExecuteResultSet(ResultSet rs, String key) {
+    static void checkExecuteResultSet(ResultSet rs, String key) {
         assertThat(rs.isExhausted()).isFalse();
         Row row = rs.one();
         assertThat(rs.isExhausted()).isTrue();
@@ -102,56 +101,6 @@ public class SessionTest extends CCMTestsSupport {
         List<Row> rows = rs.all();
         assertThat(rows).hasSize(1);
         assertThat(rows.get(0).getLong("c")).isEqualTo(2L);
-    }
-
-    /**
-     * Validates that a session can be established using snappy compression and executes some queries that inserts and
-     * retrieves data using that session().
-     *
-     * @test_category connection:compression
-     * @expected_result session established and queries made successfully using it.
-     */
-    @Test(groups = "short")
-    public void should_function_with_snappy_compression() throws Exception {
-        compressionTest(ProtocolOptions.Compression.SNAPPY);
-    }
-
-    /**
-     * Validates that a session can be established using lz4 compression and executes some queries that inserts and
-     * retrieves data using that session().
-     *
-     * @test_category connection:compression
-     * @expected_result session established and queries made successfully using it.
-     */
-    @Test(groups = "short")
-    @CassandraVersion(major = 2.0)
-    public void should_function_with_lz4_compression() throws Exception {
-        compressionTest(ProtocolOptions.Compression.LZ4);
-    }
-
-    public void compressionTest(ProtocolOptions.Compression compression) {
-        cluster().getConfiguration().getProtocolOptions().setCompression(compression);
-        try {
-            Session compressedSession = cluster().connect(keyspace);
-
-            // Simple calls to all versions of the execute/executeAsync methods
-            String key = "execute_compressed_test_" + compression;
-            ResultSet rs = compressedSession.execute(String.format(Locale.US, "INSERT INTO %s (k, t, i, f) VALUES ('%s', '%s', %d, %f)", TABLE3, key, "foo", 42, 24.03f));
-            assertThat(rs.isExhausted()).isTrue();
-
-            String SELECT_ALL = String.format(TestUtils.SELECT_ALL_FORMAT + " WHERE k = '%s'", TABLE3, key);
-
-            // execute
-            checkExecuteResultSet(compressedSession.execute(SELECT_ALL), key);
-            checkExecuteResultSet(compressedSession.execute(new SimpleStatement(SELECT_ALL).setConsistencyLevel(ConsistencyLevel.ONE)), key);
-
-            // executeAsync
-            checkExecuteResultSet(compressedSession.executeAsync(SELECT_ALL).getUninterruptibly(), key);
-            checkExecuteResultSet(compressedSession.executeAsync(new SimpleStatement(SELECT_ALL).setConsistencyLevel(ConsistencyLevel.ONE)).getUninterruptibly(), key);
-
-        } finally {
-            cluster().getConfiguration().getProtocolOptions().setCompression(ProtocolOptions.Compression.NONE);
-        }
     }
 
     /**

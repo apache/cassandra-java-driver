@@ -48,7 +48,7 @@ class ClockFactory {
     private static final String USE_NATIVE_CLOCK_SYSTEM_PROPERTY = "com.datastax.driver.USE_NATIVE_CLOCK";
 
     static Clock newInstance() {
-        if (Native.isGettimeofdayAvailable() && SystemProperties.getBoolean(USE_NATIVE_CLOCK_SYSTEM_PROPERTY, true)) {
+        if (SystemProperties.getBoolean(USE_NATIVE_CLOCK_SYSTEM_PROPERTY, true) && Native.isGettimeofdayAvailable()) {
             LOGGER.info("Using native clock to generate timestamps.");
             return new NativeClock();
         } else {
@@ -82,7 +82,7 @@ class SystemClock implements Clock {
  * to get the current time, which is good enough an accuracy for our purpose (see CASSANDRA-6106).
  * <p/>
  * This reduces the cost of the call to {@link NativeClock#currentTimeMicros()} to levels comparable
- * to those of a call to {@link System#currentTimeMillis()}.
+ * to those of a call to {@link System#nanoTime()}.
  */
 class NativeClock implements Clock {
 

@@ -271,6 +271,24 @@ public class BoundStatement extends Statement implements SettableData<BoundState
     }
 
     /**
+     * Sets the routing key for this bound statement, when the query partition key is composite and the routing key must
+     * be built from multiple values.
+     * <p/>
+     * This is useful when the routing key can neither be set on the {@code PreparedStatement} this bound statement
+     * was built from, nor automatically computed from bound variables. In particular, this is the case if the
+     * partition key is composite and only some of its components are bound.
+     *
+     * @param routingKeyComponents the raw (binary) values to compose to obtain
+     *                             the routing key.
+     * @return this {@code BoundStatement} object.
+     * @see BoundStatement#getRoutingKey
+     */
+    public BoundStatement setRoutingKey(ByteBuffer... routingKeyComponents) {
+        this.routingKey = SimpleStatement.compose(routingKeyComponents);
+        return this;
+    }
+
+    /**
      * {@inheritDoc}
      */
     @Override

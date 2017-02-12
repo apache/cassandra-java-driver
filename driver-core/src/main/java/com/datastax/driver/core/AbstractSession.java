@@ -19,6 +19,7 @@ import com.google.common.base.Function;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.Uninterruptibles;
+import io.netty.util.concurrent.EventExecutor;
 
 import java.nio.ByteBuffer;
 import java.util.Map;
@@ -30,6 +31,9 @@ import java.util.concurrent.ExecutionException;
  * This is primarly intended to make mocking easier.
  */
 public abstract class AbstractSession implements Session {
+
+    private static final boolean CHECK_IO_DEADLOCKS = SystemProperties.getBoolean(
+            "com.datastax.driver.CHECK_IO_DEADLOCKS", true);
 
     /**
      * {@inheritDoc}
@@ -131,16 +135,19 @@ public abstract class AbstractSession implements Session {
         if (statement.hasValues())
             throw new IllegalArgumentException("A statement to prepare should not have values");
 
-        ListenableFuture<PreparedStatement> prepared = prepareAsync(statement.getQueryString(), statement.getOutgoingPayload());
+        final CodecRegistry codecRegistry = getCluster().getConfiguration().getCodecRegistry();
+        ListenableFuture<PreparedStatement> prepared = prepareAsync(statement.getQueryString(codecRegistry), statement.getOutgoingPayload());
         return Futures.transform(prepared, new Function<PreparedStatement, PreparedStatement>() {
             @Override
             public PreparedStatement apply(PreparedStatement prepared) {
                 ProtocolVersion protocolVersion = getCluster().getConfiguration().getProtocolOptions().getProtocolVersion();
-                CodecRegistry codecRegistry = getCluster().getConfiguration().getCodecRegistry();
                 ByteBuffer routingKey = statement.getRoutingKey(protocolVersion, codecRegistry);
                 if (routingKey != null)
                     prepared.setRoutingKey(routingKey);
-                prepared.setConsistencyLevel(statement.getConsistencyLevel());
+                if (statement.getConsistencyLevel() != null)
+                    prepared.setConsistencyLevel(statement.getConsistencyLevel());
+                if (statement.getSerialConsistencyLevel() != null)
+                    prepared.setSerialConsistencyLevel(statement.getSerialConsistencyLevel());
                 if (statement.isTracing())
                     prepared.enableTracing();
                 prepared.setRetryPolicy(statement.getRetryPolicy());
@@ -179,9 +186,30 @@ public abstract class AbstractSession implements Session {
     /**
      * Checks that the current thread is not one of the Netty I/O threads used by the driver.
      * <p/>
-     * This is called from the synchronous methods of this class to prevent deadlock issues.
+     * This method is called from all the synchronous methods of this class to prevent deadlock issues.
+     * <p/>
+     * User code extending this class can also call this method at any time to check if any code
+     * making blocking calls is being wrongly executed on a Netty I/O thread.
+     * <p/>
+     * Note that the check performed by this method has a small overhead; if
+     * that is an issue, checks can be disabled by setting the System property
+     * {@code com.datastax.driver.CHECK_IO_DEADLOCKS} to {@code false}.
+     *
+     * @throws IllegalStateException if the current thread is one of the Netty I/O thread used by the driver.
      */
-    protected void checkNotInEventLoop() {
-        // This method is concrete only to avoid a breaking change. See subclass for the actual implementation.
+    public void checkNotInEventLoop() {
+        Connection.Factory connectionFactory = getCluster().manager.connectionFactory;
+        if (!CHECK_IO_DEADLOCKS || connectionFactory == null)
+            return;
+        for (EventExecutor executor : connectionFactory.eventLoopGroup) {
+            if (executor.inEventLoop()) {
+                throw new IllegalStateException(
+                        "Detected a synchronous call on an I/O thread, this can cause deadlocks or unpredictable " +
+                                "behavior. This generally happens when a Future callback calls a synchronous Session " +
+                                "method (execute() or prepare()), or iterates a result set past the fetch size " +
+                                "(causing an internal synchronous fetch of the next page of results). " +
+                                "Avoid this in your callbacks, or schedule them on a different executor.");
+            }
+        }
     }
 }

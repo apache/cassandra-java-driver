@@ -200,7 +200,7 @@
                         <_include>-osgi.bnd</_include>
                         <Import-Package>
                             <!-- JNR does not provide OSGi bundles, so exclude it; the driver can live without it -->
-                            <![CDATA[com.google.common*;version="[14.0,20)",!jnr.*,*]]></Import-Package>
+                            <![CDATA[com.google.common*;version="[${guava.version},20)",!jnr.*,*]]></Import-Package>
                     </instructions>
                     <supportedProjectTypes>
                         <supportedProjectType>jar</supportedProjectType>
@@ -224,7 +224,7 @@
                                     JNR does not provide OSGi bundles, so exclude it; the driver can live without it
                                     Explicitly import javax.security.cert because it's required by Netty, but Netty has been explicitly excluded
                                     -->
-                                    <![CDATA[com.google.common.*;version="[14.0,19)",!jnr.*,!io.netty.*,javax.security.cert,*]]></Import-Package>
+                                    <![CDATA[com.google.common.*;version="[${guava.version},20)",!jnr.*,!io.netty.*,javax.security.cert,*]]></Import-Package>
                                 <Private-Package>com.datastax.shaded.*</Private-Package>
                             </instructions>
                         </configuration>
@@ -342,6 +342,8 @@
                                 <include>**/ControlConnectionTest.java</include>
                                 <include>**/ExtendedPeerCheckDisabledTest.java</include>
                                 <include>**/UUIDsPID*.java</include>
+                                <include>**/FrameLengthTest.java</include>
+                                <include>**/HeapCompressionTest.java</include>
                             </includes>
                         </configuration>
                     </plugin>

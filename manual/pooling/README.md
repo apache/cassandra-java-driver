@@ -180,24 +180,29 @@ Implementation note: the dummy request sent by heartbeat is an
 message.
 
 
-#### Acquisition timeout
+#### Acquisition queue
 
 When the driver tries to send a request to a host, it will first try to
 acquire a connection from this host's pool. If the pool is busy (i.e.
 all connections are already handling their maximum number of in flight
-requests), the client thread will block for a while, until a connection
-becomes available (note that this will block even if you're using the
-asynchronous API, like [Session.executeAsync][exec_async]).
+requests), the acquisition attempt gets enqueued until a connection becomes
+available again.
 
-The time that the driver blocks is controlled by
-[PoolingOptions.setPoolTimeoutMillis][ptm]. If there is still no connection
-available after this timeout, the driver will try the next host.
+Two options control that queue: a maximum size ([PoolingOptions.setMaxQueueSize][smqs]) and a timeout 
+([PoolingOptions.setPoolTimeoutMillis][sptm]).
 
-For some applications, blocking is not acceptable, and it is preferable
-to fail fast if the request cannot be fulfilled. If that's your case,
-set the pool timeout to 0. If all hosts are busy, you will get a
-[NoHostAvailableException][nhae] (if you look at the exception's details, you
-will see a `java.util.concurrent.TimeoutException` for each host).
+* if either option is set to zero, the attempt is rejected immediately;
+* else if more than `maxQueueSize` requests are already waiting for a connection, the attempt is also rejected;
+* otherwise, the attempt is enqueued; if a connection becomes available before `poolTimeoutMillis` has elapsed,
+  then the attempt succeeds, otherwise it is rejected.
+
+If the attempt is rejected, the driver will move to the next host in the [query plan](../load_balancing/#query-plan),
+and try to acquire a connection again.
+
+If all hosts are busy with a full queue, the request will fail with a
+[NoHostAvailableException][nhae]. If you inspect the map returns by this
+exception's [getErrors] method, you will see a [BusyPoolException] for
+each host.
 
 
 ### Monitoring and tuning the pool
@@ -278,14 +283,16 @@ either:
   [newConnectionThreshold][nct] so that enough connections are added by
   the time you reach the bottleneck.
 
-[result_set_future]:http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/core/ResultSetFuture.html
-[pooling_options]:http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/core/PoolingOptions.html
-[lbp]:http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/core/policies/LoadBalancingPolicy.html
-[nct]:http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/core/PoolingOptions.html#setNewConnectionThreshold-com.datastax.driver.core.HostDistance-int-
-[mrpc]: http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/core/PoolingOptions.html#setMaxRequestsPerConnection-com.datastax.driver.core.HostDistance-int-
-[sits]: http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/core/PoolingOptions.html#setIdleTimeoutSeconds-int-
-[rtm]:http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/core/SocketOptions.html#getReadTimeoutMillis--
-[exec_async]:http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/core/Session.html#executeAsync-com.datastax.driver.core.Statement-
-[ptm]:http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/core/PoolingOptions.html#setPoolTimeoutMillis-int-
-[nhae]:http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/core/exceptions/NoHostAvailableException.html
-[get_state]:http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/core/Session.html#getState--
+[result_set_future]: http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/core/ResultSetFuture.html
+[pooling_options]:   http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/core/PoolingOptions.html
+[lbp]:               http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/core/policies/LoadBalancingPolicy.html
+[nct]:               http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/core/PoolingOptions.html#setNewConnectionThreshold-com.datastax.driver.core.HostDistance-int-
+[mrpc]:              http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/core/PoolingOptions.html#setMaxRequestsPerConnection-com.datastax.driver.core.HostDistance-int-
+[sits]:              http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/core/PoolingOptions.html#setIdleTimeoutSeconds-int-
+[rtm]:               http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/core/SocketOptions.html#getReadTimeoutMillis--
+[smqs]:              http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/core/PoolingOptions.html#setMaxQueueSize-int-
+[sptm]:              http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/core/PoolingOptions.html#setPoolTimeoutMillis-int-
+[nhae]:              http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/core/exceptions/NoHostAvailableException.html
+[getErrors]:         http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/core/exceptions/NoHostAvailableException.html#getErrors--
+[get_state]:         http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/core/Session.html#getState--
+[BusyPoolException]: http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/core/exceptions/BusyPoolException.html

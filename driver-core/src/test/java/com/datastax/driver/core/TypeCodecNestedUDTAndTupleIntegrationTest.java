@@ -28,7 +28,7 @@ import static org.assertj.core.api.Assertions.assertThat;
  *
  * @jira_ticket JAVA-847
  */
-@CassandraVersion(major = 2.1)
+@CassandraVersion("2.1.0")
 public class TypeCodecNestedUDTAndTupleIntegrationTest extends CCMTestsSupport {
 
     @Override

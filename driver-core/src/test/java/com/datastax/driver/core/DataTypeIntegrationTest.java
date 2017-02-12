@@ -36,7 +36,6 @@ import static org.assertj.core.api.Assertions.fail;
  * (protocol > v2 only) and a prepared statement.
  * This is repeated with a large number of datatypes.
  */
-@CCMConfig(clusterProvider = "createClusterBuilderNoDebouncing")
 public class DataTypeIntegrationTest extends CCMTestsSupport {
     private static final Logger logger = LoggerFactory.getLogger(DataTypeIntegrationTest.class);
 
@@ -71,7 +70,7 @@ public class DataTypeIntegrationTest extends CCMTestsSupport {
     }
 
     @Test(groups = "long")
-    @CassandraVersion(major = 2.0, description = "Uses parameterized simple statements, which are only available with protocol v2")
+    @CassandraVersion(value = "2.0", description = "Uses parameterized simple statements, which are only available with protocol v2")
     public void should_insert_and_retrieve_data_with_parameterized_simple_statements() {
         should_insert_and_retrieve_data(StatementType.SIMPLE_WITH_PARAM);
     }
@@ -213,7 +212,7 @@ public class DataTypeIntegrationTest extends CCMTestsSupport {
         List<TestTable> tables = Lists.newArrayList();
         // Create a test table for each primitive type testing with null values.  If the
         // type maps to a java primitive type it's value will by the default value instead of null.
-        for (DataType dataType : DataType.allPrimitiveTypes(TestUtils.getDesiredProtocolVersion())) {
+        for (DataType dataType : TestUtils.allPrimitiveTypes(TestUtils.getDesiredProtocolVersion())) {
             Object expectedPrimitiveValue = null;
             switch (dataType.getName()) {
                 case BIGINT:
@@ -238,11 +237,14 @@ public class DataTypeIntegrationTest extends CCMTestsSupport {
                 case BOOLEAN:
                     expectedPrimitiveValue = false;
                     break;
+                case COUNTER:
+                case DURATION:
+                    // Duration is handled separately in DurationIntegrationTest, because it has specific restrictions (e.g.
+                    // not allowed in collections).
+                    continue;
             }
 
-            if (!dataType.getName().equals(DataType.Name.COUNTER)) {
-                tables.add(new TestTable(dataType, null, null, expectedPrimitiveValue, "1.2.0"));
-            }
+            tables.add(new TestTable(dataType, null, null, expectedPrimitiveValue, "1.2.0"));
         }
         return tables;
 

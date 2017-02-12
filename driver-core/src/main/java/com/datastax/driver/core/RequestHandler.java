@@ -21,6 +21,9 @@ import com.datastax.driver.core.policies.RetryPolicy;
 import com.datastax.driver.core.policies.RetryPolicy.RetryDecision.Type;
 import com.datastax.driver.core.policies.SpeculativeExecutionPolicy.SpeculativeExecutionPlan;
 import com.google.common.collect.Sets;
+import com.google.common.util.concurrent.FutureCallback;
+import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.ListenableFuture;
 import io.netty.util.Timeout;
 import io.netty.util.TimerTask;
 import org.slf4j.Logger;
@@ -109,7 +112,7 @@ class RequestHandler {
 
         SpeculativeExecution execution = new SpeculativeExecution(request, position);
         runningExecutions.add(execution);
-        execution.sendRequest();
+        execution.findNextHostAndQuery();
     }
 
     private void scheduleExecution(long delayMillis) {
@@ -262,12 +265,10 @@ class RequestHandler {
                 logger.trace("[{}] Starting", id);
         }
 
-        void sendRequest() {
+        void findNextHostAndQuery() {
             try {
                 Host host;
                 while (!isDone.get() && (host = queryPlan.next()) != null && !queryStateRef.get().isCancelled()) {
-                    if (logger.isTraceEnabled())
-                        logger.trace("[{}] Querying node {}", id, host);
                     if (query(host))
                         return;
                 }
@@ -279,48 +280,65 @@ class RequestHandler {
         }
 
         private boolean query(final Host host) {
-            HostConnectionPool currentPool = manager.pools.get(host);
-            if (currentPool == null || currentPool.isClosed())
+            HostConnectionPool pool = manager.pools.get(host);
+            if (pool == null || pool.isClosed())
                 return false;
+
+            if (logger.isTraceEnabled())
+                logger.trace("[{}] Querying node {}", id, host);
 
             if (allowSpeculativeExecutions && nextExecutionScheduled.compareAndSet(false, true))
                 scheduleExecution(speculativeExecutionPlan.nextExecution(host));
 
-            Connection connection = null;
-            try {
-                connection = currentPool.borrowConnection(manager.configuration().getPoolingOptions().getPoolTimeoutMillis(), TimeUnit.MILLISECONDS);
-                if (current != null) {
-                    if (triedHosts == null)
-                        triedHosts = new CopyOnWriteArrayList<Host>();
-                    triedHosts.add(current);
+            PoolingOptions poolingOptions = manager.configuration().getPoolingOptions();
+            ListenableFuture<Connection> connectionFuture = pool.borrowConnection(
+                    poolingOptions.getPoolTimeoutMillis(), TimeUnit.MILLISECONDS,
+                    poolingOptions.getMaxQueueSize());
+            Futures.addCallback(connectionFuture, new FutureCallback<Connection>() {
+                @Override
+                public void onSuccess(Connection connection) {
+                    if (current != null) {
+                        if (triedHosts == null)
+                            triedHosts = new CopyOnWriteArrayList<Host>();
+                        triedHosts.add(current);
+                    }
+                    current = host;
+                    try {
+                        write(connection, SpeculativeExecution.this);
+                    } catch (ConnectionException e) {
+                        // If we have any problem with the connection, move to the next node.
+                        if (metricsEnabled())
+                            metrics().getErrorMetrics().getConnectionErrors().inc();
+                        if (connection != null)
+                            connection.release();
+                        logError(host.getSocketAddress(), e);
+                        findNextHostAndQuery();
+                    } catch (BusyConnectionException e) {
+                        // The pool shouldn't have give us a busy connection unless we've maxed up the pool, so move on to the next host.
+                        connection.release();
+                        logError(host.getSocketAddress(), e);
+                        findNextHostAndQuery();
+                    } catch (RuntimeException e) {
+                        if (connection != null)
+                            connection.release();
+                        logger.error("Unexpected error while querying " + host.getAddress(), e);
+                        logError(host.getSocketAddress(), e);
+                        findNextHostAndQuery();
+                    }
                 }
-                current = host;
-                write(connection, this);
-                return true;
-            } catch (ConnectionException e) {
-                // If we have any problem with the connection, move to the next node.
-                if (metricsEnabled())
-                    metrics().getErrorMetrics().getConnectionErrors().inc();
-                if (connection != null)
-                    connection.release();
-                logError(host.getSocketAddress(), e);
-                return false;
-            } catch (BusyConnectionException e) {
-                // The pool shouldn't have give us a busy connection unless we've maxed up the pool, so move on to the next host.
-                connection.release();
-                logError(host.getSocketAddress(), e);
-                return false;
-            } catch (TimeoutException e) {
-                // We timeout, log it but move to the next node.
-                logError(host.getSocketAddress(), new DriverException("Timeout while trying to acquire available connection (you may want to increase the driver number of per-host connections)", e));
-                return false;
-            } catch (RuntimeException e) {
-                if (connection != null)
-                    connection.release();
-                logger.error("Unexpected error while querying " + host.getAddress(), e);
-                logError(host.getSocketAddress(), e);
-                return false;
-            }
+
+                @Override
+                public void onFailure(Throwable t) {
+                    if (t instanceof BusyPoolException) {
+                        logError(host.getSocketAddress(), t);
+                    } else {
+                        logger.error("Unexpected error while querying " + host.getAddress(), t);
+                        logError(host.getSocketAddress(), t);
+                    }
+                    findNextHostAndQuery();
+                }
+            });
+            return true;
         }
 
         private void write(Connection connection, Connection.ResponseCallback responseCallback) throws ConnectionException, BusyConnectionException {
@@ -415,23 +433,11 @@ class RequestHandler {
             if (newConsistencyLevel != null)
                 this.retryConsistencyLevel = newConsistencyLevel;
 
-            // We should not retry on the current thread as this will be an IO thread.
-            manager.executor().execute(new Runnable() {
-                @Override
-                public void run() {
-                    if (queryStateRef.get().isCancelled())
-                        return;
-                    try {
-                        if (retryCurrent) {
-                            if (query(h))
-                                return;
-                        }
-                        sendRequest();
-                    } catch (Exception e) {
-                        setFinalException(null, new DriverInternalError("Unexpected exception while retrying query", e));
-                    }
-                }
-            });
+            if (queryStateRef.get().isCancelled())
+                return;
+
+            if (!retryCurrent || !query(h))
+                findNextHostAndQuery();
         }
 
         private void logError(InetSocketAddress address, Throwable exception) {

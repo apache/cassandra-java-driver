@@ -23,7 +23,7 @@ import static com.datastax.driver.core.DataType.*;
 import static com.datastax.driver.core.DataTypeCqlNameParser.parse;
 import static com.datastax.driver.core.Metadata.quote;
 
-@CassandraVersion(major = 3.0)
+@CassandraVersion("3.0")
 public class DataTypeCqlNameParserTest extends CCMTestsSupport {
 
     @Test(groups = "short")

@@ -18,3 +18,5 @@ environment; please refer to our [OSGi examples repository].
 
 Please read our [OSGi-specific FAQ section](../../faq/osgi/) to find tips
 for troubleshooting OSGi applications.
+
+[OSGi]:https://www.osgi.org

@@ -145,7 +145,7 @@ public class RecommissionedNodeTest {
     }
 
     @Test(groups = "long")
-    @CassandraVersion(major = 2.0)
+    @CassandraVersion("2.0.0")
     public void should_ignore_node_that_does_not_support_protocol_version_on_session_init() throws Exception {
         // Simulate the bug before starting the cluster
         mainCcmBuilder = CCMBridge.builder().withNodes(2);
@@ -157,6 +157,7 @@ public class RecommissionedNodeTest {
                 .withStoragePort(mainCcm.getStoragePort())
                 .withThriftPort(mainCcm.getThriftPort())
                 .withBinaryPort(mainCcm.getBinaryPort())
+                .withoutDSE()
                 .withVersion("1.2.19");
         otherCcm = CCMCache.get(otherCcmBuilder);
         otherCcm.waitForUp(1);

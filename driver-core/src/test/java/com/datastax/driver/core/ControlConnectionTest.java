@@ -94,7 +94,7 @@ public class ControlConnectionTest extends CCMTestsSupport {
      * Therefore we use two different driver instances in this test.
      */
     @Test(groups = "short")
-    @CassandraVersion(major = 2.1)
+    @CassandraVersion("2.1.0")
     public void should_parse_UDT_definitions_when_using_default_protocol_version() {
         // First driver instance: create UDT
         Cluster cluster = register(Cluster.builder()

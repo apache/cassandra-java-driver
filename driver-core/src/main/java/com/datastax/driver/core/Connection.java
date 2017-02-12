@@ -19,6 +19,7 @@ import com.datastax.driver.core.Responses.Result.SetKeyspace;
 import com.datastax.driver.core.exceptions.*;
 import com.datastax.driver.core.utils.MoreFutures;
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Objects;
 import com.google.common.collect.Lists;
 import com.google.common.collect.MapMaker;
 import com.google.common.util.concurrent.*;
@@ -27,6 +28,7 @@ import io.netty.channel.*;
 import io.netty.channel.group.ChannelGroup;
 import io.netty.channel.group.DefaultChannelGroup;
 import io.netty.channel.socket.SocketChannel;
+import io.netty.handler.codec.DecoderException;
 import io.netty.handler.timeout.IdleStateEvent;
 import io.netty.handler.timeout.IdleStateHandler;
 import io.netty.util.Timeout;
@@ -48,7 +50,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
 import static com.datastax.driver.core.Message.Response.Type.ERROR;
-import static io.netty.handler.timeout.IdleState.ALL_IDLE;
+import static io.netty.handler.timeout.IdleState.READER_IDLE;
 
 // For LoggingHandler
 //import org.jboss.netty.handler.logging.LoggingHandler;
@@ -84,7 +86,9 @@ class Connection {
     final AtomicInteger inFlight = new AtomicInteger(0);
 
     private final AtomicInteger writer = new AtomicInteger(0);
-    private volatile String keyspace;
+
+    private final AtomicReference<SetKeyspaceAttempt> targetKeyspace;
+    private final SetKeyspaceAttempt defaultKeyspaceAttempt;
 
     private volatile boolean isInitialized;
     private final AtomicBoolean isDefunct = new AtomicBoolean();
@@ -94,8 +98,9 @@ class Connection {
 
     private final AtomicReference<Owner> ownerRef = new AtomicReference<Owner>();
 
+    private final ListenableFuture<Connection> thisFuture;
+
     /**
-     * /**
      * Create a new connection to a Cassandra node and associate it with the given pool.
      *
      * @param name    the connection name
@@ -110,6 +115,9 @@ class Connection {
         this.dispatcher = new Dispatcher();
         this.name = name;
         this.ownerRef.set(owner);
+        this.thisFuture = Futures.immediateFuture(this);
+        this.defaultKeyspaceAttempt = new SetKeyspaceAttempt(null, thisFuture);
+        this.targetKeyspace = new AtomicReference<SetKeyspaceAttempt>(defaultKeyspaceAttempt);
     }
 
     /**
@@ -240,15 +248,18 @@ class Connection {
                         return checkClusterName(protocolVersion, initExecutor);
                     case ERROR:
                         Responses.Error error = (Responses.Error) response;
-                        // Testing for a specific string is a tad fragile but well, we don't have much choice
-                        // C* 2.1 reports a server error instead of protocol error, see CASSANDRA-9451
-                        if ((error.code == ExceptionCode.PROTOCOL_ERROR || error.code == ExceptionCode.SERVER_ERROR) &&
-                                error.message.contains("Invalid or unsupported protocol version"))
+                        if (isUnsupportedProtocolVersion(error))
                             throw unsupportedProtocolVersionException(protocolVersion, error.serverProtocolVersion);
                         throw new TransportException(address, String.format("Error initializing connection: %s", error.message));
                     case AUTHENTICATE:
                         Responses.Authenticate authenticate = (Responses.Authenticate) response;
-                        Authenticator authenticator = factory.authProvider.newAuthenticator(address, authenticate.authenticator);
+                        Authenticator authenticator;
+                        try {
+                            authenticator = factory.authProvider.newAuthenticator(address, authenticate.authenticator);
+                        } catch (AuthenticationException e) {
+                            incrementAuthErrorMetric();
+                            throw e;
+                        }
                         switch (protocolVersion) {
                             case V1:
                                 if (authenticator instanceof ProtocolV1Authenticator)
@@ -259,6 +270,7 @@ class Connection {
                             case V2:
                             case V3:
                             case V4:
+                            case V5:
                                 return authenticateV2(authenticator, protocolVersion, initExecutor);
                             default:
                                 throw defunct(protocolVersion.unsupported());
@@ -319,6 +331,7 @@ class Connection {
                                 case READY:
                                     return checkClusterName(protocolVersion, executor);
                                 case ERROR:
+                                    incrementAuthErrorMetric();
                                     throw new AuthenticationException(address, ((Responses.Error) authResponse).message);
                                 default:
                                     throw new TransportException(address, String.format("Unexpected %s response message from server to a CREDENTIALS message", authResponse.type));
@@ -374,6 +387,7 @@ class Connection {
                         if (message.startsWith("java.lang.ArrayIndexOutOfBoundsException: 15"))
                             message = String.format("Cannot use authenticator %s with protocol version 1, "
                                     + "only plain text authentication is supported with this protocol version", authenticator);
+                        incrementAuthErrorMetric();
                         throw new AuthenticationException(address, message);
                     default:
                         throw new TransportException(address, String.format("Unexpected %s response message from server to authentication message", authResponse.type));
@@ -382,9 +396,23 @@ class Connection {
         };
     }
 
+    private void incrementAuthErrorMetric() {
+        if (factory.manager.configuration.getMetricsOptions().isEnabled()) {
+            factory.manager.metrics.getErrorMetrics().getAuthenticationErrors().inc();
+        }
+    }
+
+    private boolean isUnsupportedProtocolVersion(Responses.Error error) {
+        // Testing for a specific string is a tad fragile but well, we don't have much choice
+        // C* 2.1 reports a server error instead of protocol error, see CASSANDRA-9451
+        return (error.code == ExceptionCode.PROTOCOL_ERROR || error.code == ExceptionCode.SERVER_ERROR) &&
+                error.message.contains("Invalid or unsupported protocol version");
+    }
+
     private UnsupportedProtocolVersionException unsupportedProtocolVersionException(ProtocolVersion triedVersion, ProtocolVersion serverProtocolVersion) {
-        logger.debug("Got unsupported protocol version error from {} for version {} server supports version {}", address, triedVersion, serverProtocolVersion);
-        return new UnsupportedProtocolVersionException(address, triedVersion, serverProtocolVersion);
+        UnsupportedProtocolVersionException e = new UnsupportedProtocolVersionException(address, triedVersion, serverProtocolVersion);
+        logger.debug(e.getMessage());
+        return e;
     }
 
     boolean isDefunct() {
@@ -402,7 +430,6 @@ class Connection {
                 Host.statesLogger.trace("Defuncting " + this, e);
             else if (Host.statesLogger.isDebugEnabled())
                 Host.statesLogger.debug("Defuncting {} because: {}", this, e.getMessage());
-
 
             Host host = factory.manager.metadata.getHost(address);
             if (host != null) {
@@ -437,14 +464,14 @@ class Connection {
     }
 
     String keyspace() {
-        return keyspace;
+        return targetKeyspace.get().keyspace;
     }
 
     void setKeyspace(String keyspace) throws ConnectionException {
         if (keyspace == null)
             return;
 
-        if (this.keyspace != null && this.keyspace.equals(keyspace))
+        if (Objects.equal(keyspace(), keyspace))
             return;
 
         try {
@@ -468,24 +495,59 @@ class Connection {
         }
     }
 
-    ListenableFuture<Void> setKeyspaceAsync(final String keyspace) throws ConnectionException, BusyConnectionException {
-        logger.trace("{} Setting keyspace {}", this, keyspace);
-        // Note: we quote the keyspace below, because the name is the one coming from Cassandra, so it's in the right case already
-        Future future = write(new Requests.Query("USE \"" + keyspace + '"'));
-        return Futures.transform(future, new AsyncFunction<Message.Response, Void>() {
-            @Override
-            public ListenableFuture<Void> apply(Message.Response response) throws Exception {
-                if (response instanceof SetKeyspace) {
-                    Connection.this.keyspace = ((SetKeyspace) response).keyspace;
-                    return MoreFutures.VOID_SUCCESS;
-                } else if (response.type == ERROR) {
-                    Responses.Error error = (Responses.Error) response;
-                    throw defunct(error.asException(address));
-                } else {
-                    throw defunct(new DriverInternalError("Unexpected response while setting keyspace: " + response));
-                }
+    ListenableFuture<Connection> setKeyspaceAsync(final String keyspace) throws ConnectionException, BusyConnectionException {
+        SetKeyspaceAttempt existingAttempt = targetKeyspace.get();
+        if (Objects.equal(existingAttempt.keyspace, keyspace))
+            return existingAttempt.future;
+
+        final SettableFuture<Connection> ksFuture = SettableFuture.create();
+        final SetKeyspaceAttempt attempt = new SetKeyspaceAttempt(keyspace, ksFuture);
+
+        // Check for an existing keyspace attempt.
+        while (true) {
+            existingAttempt = targetKeyspace.get();
+            // if existing attempts' keyspace matches what we are trying to set, use it.
+            if (attempt.equals(existingAttempt)) {
+                return existingAttempt.future;
+            } else if (!existingAttempt.future.isDone()) {
+                // If the existing attempt is still in flight, fail this attempt immediately.
+                ksFuture.setException(new DriverException("Aborting attempt to set keyspace to '" + keyspace + "' since there is already an in flight attempt to set keyspace to '" + existingAttempt.keyspace + "'.  "
+                        + "This can happen if you try to USE different keyspaces from the same session simultaneously."));
+                return ksFuture;
+            } else if (targetKeyspace.compareAndSet(existingAttempt, attempt)) {
+                // Otherwise, if the existing attempt is done, start a new set keyspace attempt for the new keyspace.
+                logger.debug("{} Setting keyspace {}", this, keyspace);
+                // Note: we quote the keyspace below, because the name is the one coming from Cassandra, so it's in the right case already
+                Future future = write(new Requests.Query("USE \"" + keyspace + '"'));
+                Futures.addCallback(future, new FutureCallback<Message.Response>() {
+
+                    @Override
+                    public void onSuccess(Message.Response response) {
+                        if (response instanceof SetKeyspace) {
+                            logger.debug("{} Keyspace set to {}", Connection.this, keyspace);
+                            ksFuture.set(Connection.this);
+                        } else {
+                            // Unset this attempt so new attempts may be made for the same keyspace.
+                            targetKeyspace.compareAndSet(attempt, defaultKeyspaceAttempt);
+                            if (response.type == ERROR) {
+                                Responses.Error error = (Responses.Error) response;
+                                ksFuture.setException(defunct(error.asException(address)));
+                            } else {
+                                ksFuture.setException(defunct(new DriverInternalError("Unexpected response while setting keyspace: " + response)));
+                            }
+                        }
+                    }
+
+                    @Override
+                    public void onFailure(Throwable t) {
+                        targetKeyspace.compareAndSet(attempt, defaultKeyspaceAttempt);
+                        ksFuture.setException(t);
+                    }
+                }, factory.manager.configuration.getPoolingOptions().getInitializationExecutor());
+
+                return ksFuture;
             }
-        }, factory.manager.configuration.getPoolingOptions().getInitializationExecutor());
+        }
     }
 
     /**
@@ -710,9 +772,11 @@ class Connection {
             this.authProvider = configuration.getProtocolOptions().getAuthProvider();
             this.protocolVersion = configuration.getProtocolOptions().initialProtocolVersion;
             this.nettyOptions = configuration.getNettyOptions();
-            this.eventLoopGroup = nettyOptions.eventLoopGroup(manager.threadFactory("nio-worker"));
+            this.eventLoopGroup = nettyOptions.eventLoopGroup(
+                    manager.configuration.getThreadingOptions().createThreadFactory(manager.clusterName, "nio-worker"));
             this.channelClass = nettyOptions.channelClass();
-            this.timer = nettyOptions.timer(manager.threadFactory("timeouter"));
+            this.timer = nettyOptions.timer(
+                    manager.configuration.getThreadingOptions().createThreadFactory(manager.clusterName, "timeouter"));
         }
 
         int getPort() {
@@ -941,7 +1005,7 @@ class Connection {
             ProtocolVersion protocolVersion = factory.protocolVersion;
             if (protocolVersion == null) {
                 // This happens for the first control connection because the protocol version has not been
-                // negociated yet.
+                // negotiated yet.
                 protocolVersion = ProtocolVersion.V2;
             }
             streamIdHandler = StreamIdGenerator.newInstance(protocolVersion);
@@ -993,7 +1057,7 @@ class Connection {
             ResponseHandler handler = pending.remove(streamId);
             streamIdHandler.release(streamId);
             if (handler == null) {
-                /**
+                /*
                  * During normal operation, we should not receive responses for which we don't have a handler. There is
                  * two cases however where this can happen:
                  *   1) The connection has been defuncted due to some internal error and we've raced between removing the
@@ -1019,7 +1083,7 @@ class Connection {
 
         @Override
         public void userEventTriggered(ChannelHandlerContext ctx, Object evt) throws Exception {
-            if (!isClosed() && evt instanceof IdleStateEvent && ((IdleStateEvent) evt).state() == ALL_IDLE) {
+            if (!isClosed() && evt instanceof IdleStateEvent && ((IdleStateEvent) evt).state() == READER_IDLE) {
                 logger.debug("{} was inactive for {} seconds, sending heartbeat", Connection.this, factory.configuration.getPoolingOptions().getHeartbeatIntervalSeconds());
                 write(HEARTBEAT_CALLBACK);
             }
@@ -1046,6 +1110,27 @@ class Connection {
             if (writer.get() > 0)
                 return;
 
+            if (cause instanceof DecoderException) {
+                Throwable error = cause.getCause();
+                // Special case, if we encountered a FrameTooLongException, raise exception on handler and don't defunct it since
+                // the connection is in an ok state.
+                if (error != null && error instanceof FrameTooLongException) {
+                    FrameTooLongException ftle = (FrameTooLongException) error;
+                    int streamId = ftle.getStreamId();
+                    ResponseHandler handler = pending.remove(streamId);
+                    streamIdHandler.release(streamId);
+                    if (handler == null) {
+                        streamIdHandler.unmark(streamId);
+                        if (logger.isDebugEnabled())
+                            logger.debug("{} FrameTooLongException received on stream {} but no handler set anymore (either the request has "
+                                    + "timed out or it was closed due to another error).", Connection.this, streamId);
+                        return;
+                    }
+                    handler.cancelTimeout();
+                    handler.callback.onException(Connection.this, ftle, System.nanoTime() - handler.startTime, handler.retryCount);
+                    return;
+                }
+            }
             defunct(new TransportException(address, String.format("Unexpected exception triggered (%s)", cause), cause));
         }
 
@@ -1142,6 +1227,34 @@ class Connection {
                 }
             });
             return this;
+        }
+    }
+
+    private class SetKeyspaceAttempt {
+        private final String keyspace;
+        private final ListenableFuture<Connection> future;
+
+        SetKeyspaceAttempt(String keyspace, ListenableFuture<Connection> future) {
+            this.keyspace = keyspace;
+            this.future = future;
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o)
+                return true;
+            if (!(o instanceof SetKeyspaceAttempt))
+                return false;
+
+            SetKeyspaceAttempt that = (SetKeyspaceAttempt) o;
+
+            return keyspace != null ? keyspace.equals(that.keyspace) : that.keyspace == null;
+
+        }
+
+        @Override
+        public int hashCode() {
+            return keyspace != null ? keyspace.hashCode() : 0;
         }
     }
 
@@ -1282,6 +1395,7 @@ class Connection {
         private static final Message.ProtocolEncoder messageEncoderV2 = new Message.ProtocolEncoder(ProtocolVersion.V2);
         private static final Message.ProtocolEncoder messageEncoderV3 = new Message.ProtocolEncoder(ProtocolVersion.V3);
         private static final Message.ProtocolEncoder messageEncoderV4 = new Message.ProtocolEncoder(ProtocolVersion.V4);
+        private static final Message.ProtocolEncoder messageEncoderV5 = new Message.ProtocolEncoder(ProtocolVersion.V5);
         private static final Frame.Encoder frameEncoder = new Frame.Encoder();
 
         private final ProtocolVersion protocolVersion;
@@ -1299,7 +1413,7 @@ class Connection {
             this.sslOptions = sslOptions;
             this.nettyOptions = nettyOptions;
             this.codecRegistry = codecRegistry;
-            this.idleStateHandler = new IdleStateHandler(0, 0, heartBeatIntervalSeconds);
+            this.idleStateHandler = new IdleStateHandler(heartBeatIntervalSeconds, 0, 0);
         }
 
         @Override
@@ -1314,7 +1428,7 @@ class Connection {
                 pipeline.addLast("ssl", sslOptions.newSSLHandler(channel));
             }
 
-//            pipeline.addLast("debug", new LoggingHandler(LogLevel.INFO));
+            //            pipeline.addLast("debug", new LoggingHandler(LogLevel.INFO));
 
             pipeline.addLast("frameDecoder", new Frame.Decoder());
             pipeline.addLast("frameEncoder", frameEncoder);
@@ -1344,6 +1458,8 @@ class Connection {
                     return messageEncoderV3;
                 case V4:
                     return messageEncoderV4;
+                case V5:
+                    return messageEncoderV5;
                 default:
                     throw new DriverInternalError("Unsupported protocol version " + protocolVersion);
             }

@@ -86,7 +86,6 @@ public class ConnectionReleaseTest extends ScassandraTestBase {
             cluster = Cluster.builder()
                     .addContactPoints(hostAddress.getAddress())
                     .withPort(scassandra.getBinaryPort())
-                    .withProtocolVersion(ProtocolVersion.V2)
                     .withPoolingOptions(new PoolingOptions()
                             .setCoreConnectionsPerHost(HostDistance.LOCAL, 1)
                             .setMaxConnectionsPerHost(HostDistance.LOCAL, 1))
@@ -110,9 +109,7 @@ public class ConnectionReleaseTest extends ScassandraTestBase {
                         }
                     });
 
-            // Wait for up to pool timeout for response.  If future is not complete by then, we can assume
-            // that it is likely that the execute is hung because the connection wasn't released yet.
-            long waitTimeInMs = cluster.getConfiguration().getPoolingOptions().getPoolTimeoutMillis();
+            long waitTimeInMs = 2000;
             try {
                 ResultSet result = future.get(waitTimeInMs, TimeUnit.MILLISECONDS);
                 assertThat(result.one().getString("n")).isEqualTo("world");
