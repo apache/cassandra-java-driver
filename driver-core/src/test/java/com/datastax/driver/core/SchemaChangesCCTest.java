@@ -103,7 +103,7 @@ public class SchemaChangesCCTest extends CCMTestsSupport {
         session2.execute("drop keyspace ks2");
         session2.execute("drop table ks1.tbl2");
         session2.execute("alter keyspace ks1 with durable_writes=false");
-        session2.execute("alter table ks1.tbl1 alter v type blob");
+        session2.execute("alter table ks1.tbl1 add new_col varchar");
         session2.execute(String.format(CREATE_KEYSPACE_SIMPLE_FORMAT, "ks3", 1));
         session2.execute("create table ks1.tbl3 (k text primary key, v text)");
 
@@ -165,14 +165,14 @@ public class SchemaChangesCCTest extends CCMTestsSupport {
         assertThat(originalTable.getValue())
                 .isInKeyspace("ks1")
                 .hasName("tbl1")
-                .hasColumn("v", DataType.text())
+                .doesNotHaveColumn("new_col")
                 .isEqualTo(prealteredTable);
 
         // New metadata should reflect that the column type changed.
         assertThat(alteredTable.getValue())
                 .isInKeyspace("ks1")
                 .hasName("tbl1")
-                .hasColumn("v", DataType.blob());
+                .hasColumn("new_col", DataType.varchar());
 
         // Ensure the add keyspace event shows up.
         ArgumentCaptor<KeyspaceMetadata> addedKeyspace = ArgumentCaptor.forClass(KeyspaceMetadata.class);
