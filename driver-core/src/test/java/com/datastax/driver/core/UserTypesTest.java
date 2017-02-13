@@ -39,11 +39,8 @@ import static org.testng.Assert.assertNotEquals;
 @CassandraVersion("2.1.0")
 public class UserTypesTest extends CCMTestsSupport {
 
-    private final static List<DataType> DATA_TYPE_PRIMITIVES = new ArrayList<DataType>(DataType.allPrimitiveTypes(TestUtils.getDesiredProtocolVersion()));
-
-    static {
-        DATA_TYPE_PRIMITIVES.remove(DataType.counter());
-    }
+    private List<DataType> DATA_TYPE_PRIMITIVES;
+    private Map<DataType, Object> samples;
 
     private final static List<DataType.Name> DATA_TYPE_NON_PRIMITIVE_NAMES =
             new ArrayList<DataType.Name>(EnumSet.of(DataType.Name.LIST, DataType.Name.SET, DataType.Name.MAP, DataType.Name.TUPLE));
@@ -57,6 +54,10 @@ public class UserTypesTest extends CCMTestsSupport {
 
     @Override
     public void onTestContextInitialized() {
+        ProtocolVersion protocolVersion = ccm().getProtocolVersion();
+        DATA_TYPE_PRIMITIVES = new ArrayList<DataType>(DataType.allPrimitiveTypes(protocolVersion));
+        DATA_TYPE_PRIMITIVES.remove(DataType.counter());
+        samples = PrimitiveTypeSamples.samples(protocolVersion);
         String type1 = "CREATE TYPE phone (alias text, number text)";
         String type2 = "CREATE TYPE \"\"\"User Address\"\"\" (street text, \"ZIP\"\"\" int, phones set<frozen<phone>>)";
         String table = "CREATE TABLE user (id int PRIMARY KEY, addr frozen<\"\"\"User Address\"\"\">)";
@@ -229,10 +230,11 @@ public class UserTypesTest extends CCMTestsSupport {
         UserType alldatatypesDef = cluster().getMetadata().getKeyspace("testPrimitiveDatatypes").getUserType("alldatatypes");
         UDTValue alldatatypes = alldatatypesDef.newValue();
 
+
         for (int i = 0; i < DATA_TYPE_PRIMITIVES.size(); i++) {
             DataType dataType = DATA_TYPE_PRIMITIVES.get(i);
             String index = Character.toString((char) (startIndex + i));
-            Object sampleData = PrimitiveTypeSamples.ALL.get(dataType);
+            Object sampleData = samples.get(dataType);
 
             switch (dataType.getName()) {
                 case ASCII:
@@ -360,7 +362,7 @@ public class UserTypesTest extends CCMTestsSupport {
                 DataType dataType = DATA_TYPE_PRIMITIVES.get(j);
 
                 String index = Character.toString((char) (startIndex + i)) + "_" + Character.toString((char) (startIndex + j));
-                Object sampleElement = PrimitiveTypeSamples.ALL.get(dataType);
+                Object sampleElement = samples.get(dataType);
                 switch (name) {
                     case LIST:
                         alldatatypes.setList(index, Lists.newArrayList(sampleElement));

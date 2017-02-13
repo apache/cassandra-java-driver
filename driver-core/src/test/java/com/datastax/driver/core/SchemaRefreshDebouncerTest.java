@@ -189,7 +189,7 @@ public class SchemaRefreshDebouncerTest extends CCMTestsSupport {
      */
     @Test(groups = "short")
     public void should_debounce_and_coalesce_multiple_alter_events_on_same_table_into_refresh_table() throws Exception {
-        if (ccm().getVersion().getMajor() > 2 || ccm().getVersion().getMajor() == 2 && ccm().getVersion().getMinor() > 1)
+        if (ccm().getCassandraVersion().compareTo(VersionNumber.parse("2.2")) >= 0)
             throw new SkipException("Disabled in Cassandra 2.2+ because of CASSANDRA-9996");
 
         String keyspace = TestUtils.generateIdentifier("ks_");

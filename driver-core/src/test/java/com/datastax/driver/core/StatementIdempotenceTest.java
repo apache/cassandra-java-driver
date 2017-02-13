@@ -41,7 +41,7 @@ public class StatementIdempotenceTest {
         when(cluster.getConfiguration()).thenReturn(configuration);
         when(configuration.getCodecRegistry()).thenReturn(codecRegistry);
         when(configuration.getProtocolOptions()).thenReturn(protocolOptions);
-        when(protocolOptions.getProtocolVersion()).thenReturn(TestUtils.getDesiredProtocolVersion());
+        when(protocolOptions.getProtocolVersion()).thenReturn(ProtocolVersion.NEWEST_SUPPORTED);
     }
 
     @Test(groups = "unit")

@@ -736,33 +736,6 @@ public abstract class TestUtils {
     }
 
     /**
-     * @return The desired target protocol version based on the 'cassandra.version' System property.
-     */
-    public static ProtocolVersion getDesiredProtocolVersion() {
-        String version = CCMBridge.getCassandraVersion();
-        String[] versionArray = version.split("\\.|-");
-        double major = Double.parseDouble(versionArray[0] + "." + versionArray[1]);
-        if (major < 2.0) {
-            return ProtocolVersion.V1;
-        } else if (major < 2.1) {
-            return ProtocolVersion.V2;
-        } else if (major < 2.2) {
-            return ProtocolVersion.V3;
-        } else {
-            return ProtocolVersion.V4;
-        }
-    }
-
-    /**
-     * @param maximumAllowed The maximum protocol version to use.
-     * @return The desired protocolVersion or maximumAllowed if {@link #getDesiredProtocolVersion} is greater.
-     */
-    public static ProtocolVersion getDesiredProtocolVersion(ProtocolVersion maximumAllowed) {
-        ProtocolVersion versionToUse = getDesiredProtocolVersion();
-        return versionToUse.compareTo(maximumAllowed) > 0 ? maximumAllowed : versionToUse;
-    }
-
-    /**
      * @return a {@link Cluster} instance that connects only to the control host of the given cluster.
      */
     public static Cluster buildControlCluster(Cluster cluster, CCMAccess ccm) {
@@ -838,7 +811,7 @@ public abstract class TestUtils {
 
     /**
      * Helper for generating a DynamicCompositeType {@link ByteBuffer} from the given parameters.
-     *
+     * <p/>
      * Any of params given as an Integer will be considered with a field name of 'i', any as String will
      * be considered with a field name of 's'.
      *
@@ -881,7 +854,7 @@ public abstract class TestUtils {
 
     /**
      * Helper for generating a Composite {@link ByteBuffer} from the given parameters.
-     *
+     * <p/>
      * Expects Integer and String types for parameters.
      *
      * @param params params to serialize.

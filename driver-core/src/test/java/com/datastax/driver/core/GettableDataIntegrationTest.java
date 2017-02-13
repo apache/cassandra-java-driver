@@ -45,7 +45,7 @@ public class GettableDataIntegrationTest extends CCMTestsSupport {
 
     @Override
     public void onTestContextInitialized() {
-        is21 = ccm().getVersion().compareTo(VersionNumber.parse("2.1.3")) > 0;
+        is21 = ccm().getCassandraVersion().compareTo(VersionNumber.parse("2.1.3")) > 0;
         // only add tuples / nested collections at > 2.1.3.
         execute("CREATE TABLE codec_mapping (k int PRIMARY KEY, "
                 + "v int, l list<int>, m map<int,int>" +

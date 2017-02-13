@@ -157,8 +157,7 @@ public class RecommissionedNodeTest {
                 .withStoragePort(mainCcm.getStoragePort())
                 .withThriftPort(mainCcm.getThriftPort())
                 .withBinaryPort(mainCcm.getBinaryPort())
-                .withoutDSE()
-                .withVersion("1.2.19");
+                .withVersion(VersionNumber.parse("1.2.19"));
         otherCcm = CCMCache.get(otherCcmBuilder);
         otherCcm.waitForUp(1);
 

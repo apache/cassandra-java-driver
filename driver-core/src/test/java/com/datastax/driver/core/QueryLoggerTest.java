@@ -49,41 +49,9 @@ import static org.mockito.Mockito.mock;
  */
 public class QueryLoggerTest extends CCMTestsSupport {
 
-    private static final List<DataType> dataTypes = new ArrayList<DataType>(
-            Sets.filter(DataType.allPrimitiveTypes(TestUtils.getDesiredProtocolVersion()), new Predicate<DataType>() {
-                @Override
-                public boolean apply(DataType type) {
-                    return type != DataType.counter();
-                }
-            }));
-
-    private static final List<Object> values = Lists.transform(dataTypes, new Function<DataType, Object>() {
-                @Override
-                public Object apply(DataType type) {
-                    return getFixedValue(type);
-                }
-            }
-    );
-
-    private static final String definitions = Joiner.on(", ").join(
-            Lists.transform(dataTypes, new Function<DataType, String>() {
-                        @Override
-                        public String apply(DataType type) {
-                            return "c_" + type + " " + type;
-                        }
-                    }
-            )
-    );
-
-    private static final String assignments = Joiner.on(", ").join(
-            Lists.transform(dataTypes, new Function<DataType, String>() {
-                        @Override
-                        public String apply(DataType type) {
-                            return "c_" + type + " = ?";
-                        }
-                    }
-            )
-    );
+    private List<DataType> dataTypes;
+    private List<Object> values;
+    private String assignments;
 
     private Logger normal = Logger.getLogger(NORMAL_LOGGER.getName());
     private Logger slow = Logger.getLogger(SLOW_LOGGER.getName());
@@ -97,6 +65,47 @@ public class QueryLoggerTest extends CCMTestsSupport {
     private Level originalNormal;
     private Level originalSlow;
     private Level originalError;
+
+    @Override
+    public void onTestContextInitialized() {
+        dataTypes = new ArrayList<DataType>(
+                Sets.filter(DataType.allPrimitiveTypes(ccm().getProtocolVersion()), new Predicate<DataType>() {
+                    @Override
+                    public boolean apply(DataType type) {
+                        return type != DataType.counter();
+                    }
+                }));
+
+        values = Lists.transform(dataTypes, new Function<DataType, Object>() {
+                    @Override
+                    public Object apply(DataType type) {
+                        return getFixedValue(type);
+                    }
+                }
+        );
+
+        String definitions = Joiner.on(", ").join(
+                Lists.transform(dataTypes, new Function<DataType, String>() {
+                            @Override
+                            public String apply(DataType type) {
+                                return "c_" + type + " " + type;
+                            }
+                        }
+                )
+        );
+
+        assignments = Joiner.on(", ").join(
+                Lists.transform(dataTypes, new Function<DataType, String>() {
+                            @Override
+                            public String apply(DataType type) {
+                                return "c_" + type + " = ?";
+                            }
+                        }
+                )
+        );
+
+        execute("CREATE TABLE test (pk int PRIMARY KEY, " + definitions + ")");
+    }
 
     @BeforeMethod(groups = {"short", "unit"})
     public void startCapturingLogs() {
@@ -1062,11 +1071,6 @@ public class QueryLoggerTest extends CCMTestsSupport {
                 .contains(query)
                 .contains("param2:42")
                 .contains("param1:'foo'");
-    }
-
-    @Override
-    public void onTestContextInitialized() {
-        execute("CREATE TABLE test (pk int PRIMARY KEY, " + definitions + ")");
     }
 
 }

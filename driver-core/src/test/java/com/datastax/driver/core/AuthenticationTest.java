@@ -41,7 +41,7 @@ public class AuthenticationTest extends CCMTestsSupport {
     public void sleepIf12() {
         // For C* 1.2, sleep before attempting to connect as there is a small delay between
         // user being created.
-        if (ccm().getVersion().getMajor() < 2) {
+        if (ccm().getCassandraVersion().getMajor() < 2) {
             Uninterruptibles.sleepUninterruptibly(1, TimeUnit.SECONDS);
         }
     }
