@@ -15,26 +15,36 @@
  */
 package com.datastax.driver.core;
 
-import com.datastax.driver.core.exceptions.CodecNotFoundException;
-import com.google.common.base.Objects;
-import com.google.common.cache.*;
-import com.google.common.collect.ImmutableSet;
-import com.google.common.reflect.TypeToken;
-import com.google.common.util.concurrent.UncheckedExecutionException;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import static com.datastax.driver.core.DataType.Name.LIST;
+import static com.datastax.driver.core.DataType.Name.MAP;
+import static com.datastax.driver.core.DataType.Name.SET;
+import static com.google.common.base.Preconditions.checkNotNull;
 
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.nio.ByteBuffer;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ExecutionException;
 
-import static com.datastax.driver.core.DataType.Name.*;
-import static com.google.common.base.Preconditions.checkNotNull;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import com.datastax.driver.core.exceptions.CodecNotFoundException;
+import com.google.common.base.Objects;
+import com.google.common.cache.CacheBuilder;
+import com.google.common.cache.CacheLoader;
+import com.google.common.cache.LoadingCache;
+import com.google.common.cache.RemovalListener;
+import com.google.common.cache.RemovalNotification;
+import com.google.common.cache.Weigher;
+import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Iterables;
+import com.google.common.reflect.TypeToken;
+import com.google.common.util.concurrent.UncheckedExecutionException;
 
 /**
  * A registry for {@link TypeCodec}s. When the driver needs to serialize or deserialize a Java type to/from CQL,
@@ -142,28 +152,30 @@ public final class CodecRegistry {
     private static final Logger logger = LoggerFactory.getLogger(CodecRegistry.class);
 
     @SuppressWarnings("unchecked")
-    private static final ImmutableSet<TypeCodec<?>> PRIMITIVE_CODECS = ImmutableSet.of(
-            TypeCodec.blob(),
-            TypeCodec.cboolean(),
-            TypeCodec.smallInt(),
-            TypeCodec.tinyInt(),
-            TypeCodec.cint(),
-            TypeCodec.bigint(),
-            TypeCodec.counter(),
-            TypeCodec.cdouble(),
-            TypeCodec.cfloat(),
-            TypeCodec.varint(),
-            TypeCodec.decimal(),
-            TypeCodec.varchar(), // must be declared before AsciiCodec so it gets chosen when CQL type not available
-            TypeCodec.ascii(),
-            TypeCodec.timestamp(),
-            TypeCodec.date(),
-            TypeCodec.time(),
-            TypeCodec.uuid(), // must be declared before TimeUUIDCodec so it gets chosen when CQL type not available
-            TypeCodec.timeUUID(),
-            TypeCodec.inet(),
-            TypeCodec.duration()
-    );
+    private static final ImmutableMap<DataType, TypeCodec<?>> PRIMITIVE_CODECS = ImmutableMap.copyOf(
+            new LinkedHashMap<DataType, TypeCodec<?>>() {
+        {
+            put(TypeCodec.blob().getCqlType(), TypeCodec.blob());
+            put(TypeCodec.cboolean().getCqlType(), TypeCodec.cboolean());
+            put(TypeCodec.smallInt().getCqlType(), TypeCodec.smallInt());
+            put(TypeCodec.tinyInt().getCqlType(), TypeCodec.tinyInt());
+            put(TypeCodec.cint().getCqlType(), TypeCodec.cint());
+            put(TypeCodec.bigint().getCqlType(), TypeCodec.bigint());
+            put(TypeCodec.counter().getCqlType(), TypeCodec.counter());
+            put(TypeCodec.cdouble().getCqlType(), TypeCodec.cdouble());
+            put(TypeCodec.cfloat().getCqlType(), TypeCodec.cfloat());
+            put(TypeCodec.varint().getCqlType(), TypeCodec.varint());
+            put(TypeCodec.decimal().getCqlType(), TypeCodec.decimal());
+            put(TypeCodec.varchar().getCqlType(), TypeCodec.varchar()); // must be declared before AsciiCodec so it gets chosen when CQL type not available
+            put(TypeCodec.ascii().getCqlType(), TypeCodec.ascii());
+            put(TypeCodec.timestamp().getCqlType(), TypeCodec.timestamp());
+            put(TypeCodec.date().getCqlType(), TypeCodec.date());
+            put(TypeCodec.time().getCqlType(), TypeCodec.time());
+            put(TypeCodec.uuid().getCqlType(), TypeCodec.uuid()); // must be declared before TimeUUIDCodec so it gets chosen when CQL type not available
+            put(TypeCodec.timeUUID().getCqlType(), TypeCodec.timeUUID());
+            put(TypeCodec.inet().getCqlType(), TypeCodec.inet());
+        }
+    });
 
     /**
      * The default {@code CodecRegistry} instance.
@@ -209,7 +221,7 @@ public final class CodecRegistry {
     private class TypeCodecCacheLoader extends CacheLoader<CacheKey, TypeCodec<?>> {
         @Override
         public TypeCodec<?> load(CacheKey cacheKey) {
-            return findCodec(cacheKey.cqlType, cacheKey.javaType);
+            return findNonPrimitiveCodecs(cacheKey.cqlType, cacheKey.javaType);
         }
     }
 
@@ -294,7 +306,7 @@ public final class CodecRegistry {
      * Creates a new instance initialized with built-in codecs for all the base CQL types.
      */
     public CodecRegistry() {
-        this.codecs = new CopyOnWriteArrayList<TypeCodec<?>>(PRIMITIVE_CODECS);
+        this.codecs = new CopyOnWriteArrayList<TypeCodec<?>>();
         this.cache = defaultCacheBuilder().build(new TypeCodecCacheLoader());
     }
 
@@ -323,7 +335,7 @@ public final class CodecRegistry {
      * @return this CodecRegistry (for method chaining).
      */
     public CodecRegistry register(TypeCodec<?> newCodec) {
-        for (TypeCodec<?> oldCodec : codecs) {
+        for (TypeCodec<?> oldCodec : Iterables.concat(PRIMITIVE_CODECS.values(), codecs)) {
             if (oldCodec.accepts(newCodec.getCqlType()) && oldCodec.accepts(newCodec.getJavaType())) {
                 logger.warn("Ignoring codec {} because it collides with previously registered codec {}", newCodec, oldCodec);
                 return this;
@@ -476,9 +488,14 @@ public final class CodecRegistry {
         checkNotNull(cqlType, "Parameter cqlType cannot be null");
         if (logger.isTraceEnabled())
             logger.trace("Querying cache for codec [{} <-> {}]", toString(cqlType), toString(javaType));
-        CacheKey cacheKey = new CacheKey(cqlType, javaType);
         try {
-            TypeCodec<?> codec = cache.get(cacheKey);
+            TypeCodec<?> codec = PRIMITIVE_CODECS.get(cqlType);
+            if (codec != null && (javaType == null || codec.accepts(javaType))) {
+                logger.trace("Returning cached codec {}", codec);
+                return (TypeCodec<T>) codec;
+            }
+            CacheKey cacheKey = new CacheKey(cqlType, javaType);
+            codec = cache.get(cacheKey);
             logger.trace("Returning cached codec {}", codec);
             return (TypeCodec<T>) codec;
         } catch (UncheckedExecutionException e) {
@@ -494,10 +511,34 @@ public final class CodecRegistry {
     }
 
     @SuppressWarnings("unchecked")
+    private <T> TypeCodec<T> findNonPrimitiveCodecs(DataType cqlType, TypeToken<T> javaType) {
+        checkNotNull(cqlType, "Parameter cqlType cannot be null");
+        if (logger.isTraceEnabled())
+            logger.trace("Looking for codec [{} <-> {}]", toString(cqlType), toString(javaType));
+        for (TypeCodec<?> codec : codecs) {
+            if (codec.accepts(cqlType) && (javaType == null || codec.accepts(javaType))) {
+                logger.trace("Codec found: {}", codec);
+                return (TypeCodec<T>) codec;
+            }
+        }
+        return createCodec(cqlType, javaType);
+    }
+
+    @SuppressWarnings("unchecked")
     private <T> TypeCodec<T> findCodec(DataType cqlType, TypeToken<T> javaType) {
         checkNotNull(cqlType, "Parameter cqlType cannot be null");
         if (logger.isTraceEnabled())
             logger.trace("Looking for codec [{} <-> {}]", toString(cqlType), toString(javaType));
+
+        // Look at the built-in codecs first
+        for (TypeCodec<?> codec : PRIMITIVE_CODECS.values()) {
+            if (codec.accepts(cqlType) && (javaType == null || codec.accepts(javaType))) {
+                logger.trace("Codec found: {}", codec);
+                return (TypeCodec<T>) codec;
+            }
+        }
+
+        // Look at the additional codecs next
         for (TypeCodec<?> codec : codecs) {
             if (codec.accepts(cqlType) && (javaType == null || codec.accepts(javaType))) {
                 logger.trace("Codec found: {}", codec);
@@ -512,6 +553,16 @@ public final class CodecRegistry {
         checkNotNull(value, "Parameter value cannot be null");
         if (logger.isTraceEnabled())
             logger.trace("Looking for codec [{} <-> {}]", toString(cqlType), value.getClass());
+
+        // Look at the built-in codecs first
+        for (TypeCodec<?> codec : PRIMITIVE_CODECS.values()) {
+            if ((cqlType == null || codec.accepts(cqlType)) && codec.accepts(value)) {
+                logger.trace("Codec found: {}", codec);
+                return (TypeCodec<T>) codec;
+            }
+        }
+
+        // Look at the additional codecs next
         for (TypeCodec<?> codec : codecs) {
             if ((cqlType == null || codec.accepts(cqlType)) && codec.accepts(value)) {
                 logger.trace("Codec found: {}", codec);
