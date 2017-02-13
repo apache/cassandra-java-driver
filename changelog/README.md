@@ -1,6 +1,6 @@
 ## Changelog
 
-### 3.1.4 (in progress)
+### 3.1.4
 
 Merged from 3.0.x branch:
 
