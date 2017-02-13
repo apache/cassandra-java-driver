@@ -32,13 +32,21 @@ public interface CCMAccess extends Closeable {
     String getClusterName();
 
     /**
-     * Returns the Cassandra version of this CCM cluster.
+     * Returns the Cassandra version of this CCM cluster.  If {@link #getDSEVersion()} is non-null it is assumed
+     * that this value is only used for representing the compatible Cassandra version for that DSE version.
      * <p/>
-     * By default the version is equal to {@link CCMBridge#getCassandraVersion()}.
      *
      * @return The version of this CCM cluster.
      */
-    VersionNumber getVersion();
+    VersionNumber getCassandraVersion();
+
+    /**
+     * Returns the DSE version of this CCM cluster if this is a DSE cluster, otherwise null.
+     * <p/>
+     *
+     * @return The version of this CCM cluster.
+     */
+    VersionNumber getDSEVersion();
 
     /**
      * @return The config directory for this CCM cluster.
@@ -236,4 +244,19 @@ public interface CCMAccess extends Closeable {
      */
     void waitForDown(int node);
 
+    /**
+     * @return The target protocolVersion to use when connecting to this CCM cluster.
+     * <p/>
+     * This should be based on the highest protocol version that both the cluster and driver support.
+     * <p/>
+     * For example, C* 2.0.17 should return {@link ProtocolVersion#V2} since C* supports up to V2 and the driver
+     * supports that version.
+     */
+    ProtocolVersion getProtocolVersion();
+
+    /**
+     * @param maximumAllowed The maximum protocol version to use.
+     * @return The target protocolVersion or maximumAllowed if {@link #getProtocolVersion} is greater.
+     */
+    ProtocolVersion getProtocolVersion(ProtocolVersion maximumAllowed);
 }
