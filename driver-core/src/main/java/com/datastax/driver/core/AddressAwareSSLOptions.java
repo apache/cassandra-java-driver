@@ -22,26 +22,17 @@ import io.netty.handler.ssl.SslHandler;
 
 /**
  * Defines how the driver configures SSL connections.
- *
- * @see JdkSSLOptions
- * @see NettySSLOptions
+ * 
+ * Child interface to SSLOptions with the possibility to pass remote endpoint data
+ * when instantiating SSLHandlers (and, by extension, SSLContext). This is needed
+ * when hostname verification is required, for example. The reason this is a
+ * child interface is to keep backward compatibility alive for SSLContext. This 
+ * interface maybe be merged into SSLOptions in a later major release.
+ * 
+ * @see <a href="https://datastax-oss.atlassian.net/browse/JAVA-1364">JAVA-1364</a>
  */
-public interface SSLOptions {
+public interface AddressAwareSSLOptions extends SSLOptions {
 
-    /**
-     * Creates a new SSL handler for the given Netty channel.
-     * <p/>
-     * This gets called each time the driver opens a new connection to a Cassandra host. The newly created handler will be added
-     * to the channel's pipeline to provide SSL support for the connection.
-     * <p/>
-     * You don't necessarily need to implement this method directly; see the provided implementations: {@link JdkSSLOptions} and
-     * {@link NettySSLOptions}.
-     *
-     * @deprecated please use AddressAwareSSLOptions.newSSLHandler(SocketChannel channel, InetSocketAddress address)
-     * @param channel the channel.
-     * @return the handler.
-     * 
-     */
-	@Deprecated
-    SslHandler newSSLHandler(SocketChannel channel);
+    SslHandler newSSLHandler(SocketChannel channel, InetSocketAddress address);
+
 }
