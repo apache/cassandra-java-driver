@@ -142,7 +142,7 @@
         <dependency>
             <groupId>io.netty</groupId>
             <artifactId>netty-tcnative</artifactId>
-            <version>1.1.33.Fork18</version>
+            <version>1.1.33.Fork23</version>
             <classifier>${os.detected.classifier}</classifier>
             <scope>test</scope>
         </dependency>
@@ -269,6 +269,8 @@
                                         <resource>META-INF/maven/io.netty/netty-common/pom.xml</resource>
                                         <resource>META-INF/maven/io.netty/netty-handler/pom.properties</resource>
                                         <resource>META-INF/maven/io.netty/netty-handler/pom.xml</resource>
+                                        <resource>META-INF/maven/io.netty/netty-resolver/pom.properties</resource>
+                                        <resource>META-INF/maven/io.netty/netty-resolver/pom.xml</resource>
                                         <resource>META-INF/maven/io.netty/netty-transport/pom.properties</resource>
                                         <resource>META-INF/maven/io.netty/netty-transport/pom.xml</resource>
                                     </resources>
