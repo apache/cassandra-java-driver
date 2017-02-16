@@ -23,6 +23,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Mapping manager from which to obtain entity mappers.
@@ -34,9 +35,10 @@ public class MappingManager {
     private final Session session;
     final boolean isCassandraV1;
 
-    private volatile Map<Class<?>, Mapper<?>> mappers = Collections.emptyMap();
-    private volatile Map<Class<?>, MappedUDTCodec<?>> udtCodecs = Collections.emptyMap();
-    private volatile Map<Class<?>, Object> accessors = Collections.emptyMap();
+    private final ConcurrentHashMap<Class<?>, Mapper<?>> mappers = new ConcurrentHashMap<Class<?>, Mapper<?>>();
+    private final ConcurrentHashMap<Class<?>, MappedUDTCodec<?>> udtCodecs = new ConcurrentHashMap<Class<?>, MappedUDTCodec<?>>();
+    private final ConcurrentHashMap<Class<?>, Object> accessors = new ConcurrentHashMap<Class<?>, Object>();
+
 
     /**
      * Creates a new {@code MappingManager} using the provided {@code Session}.
@@ -220,15 +222,11 @@ public class MappingManager {
     private <T> Mapper<T> getMapper(Class<T> klass) {
         Mapper<T> mapper = (Mapper<T>) mappers.get(klass);
         if (mapper == null) {
-            synchronized (mappers) {
-                mapper = (Mapper<T>) mappers.get(klass);
-                if (mapper == null) {
-                    EntityMapper<T> entityMapper = AnnotationParser.parseEntity(klass, this);
-                    mapper = new Mapper<T>(this, klass, entityMapper);
-                    Map<Class<?>, Mapper<?>> newMappers = new HashMap<Class<?>, Mapper<?>>(mappers);
-                    newMappers.put(klass, mapper);
-                    mappers = newMappers;
-                }
+            EntityMapper<T> entityMapper = AnnotationParser.parseEntity(klass, this);
+            mapper = new Mapper<T>(this, klass, entityMapper);
+            Mapper<T> old = (Mapper<T>) mappers.putIfAbsent(klass, mapper);
+            if (old != null) {
+                mapper = old;
             }
         }
         return mapper;
@@ -238,16 +236,11 @@ public class MappingManager {
     <T> TypeCodec<T> getUDTCodec(Class<T> mappedClass) {
         MappedUDTCodec<T> codec = (MappedUDTCodec<T>) udtCodecs.get(mappedClass);
         if (codec == null) {
-            synchronized (udtCodecs) {
-                codec = (MappedUDTCodec<T>) udtCodecs.get(mappedClass);
-                if (codec == null) {
-                    codec = AnnotationParser.parseUDT(mappedClass, this);
-                    session.getCluster().getConfiguration().getCodecRegistry().register(codec);
-
-                    HashMap<Class<?>, MappedUDTCodec<?>> newCodecs = new HashMap<Class<?>, MappedUDTCodec<?>>(udtCodecs);
-                    newCodecs.put(mappedClass, codec);
-                    udtCodecs = newCodecs;
-                }
+            codec = AnnotationParser.parseUDT(mappedClass, this);
+            session.getCluster().getConfiguration().getCodecRegistry().register(codec);
+            MappedUDTCodec<T> old = (MappedUDTCodec<T>) udtCodecs.putIfAbsent(mappedClass, codec);
+            if (old != null) {
+                codec = old;
             }
         }
         return codec;
@@ -257,16 +250,12 @@ public class MappingManager {
     private <T> T getAccessor(Class<T> klass) {
         T accessor = (T) accessors.get(klass);
         if (accessor == null) {
-            synchronized (accessors) {
-                accessor = (T) accessors.get(klass);
-                if (accessor == null) {
-                    AccessorMapper<T> mapper = AnnotationParser.parseAccessor(klass, this);
-                    mapper.prepare(this);
-                    accessor = mapper.createProxy();
-                    Map<Class<?>, Object> newAccessors = new HashMap<Class<?>, Object>(accessors);
-                    newAccessors.put(klass, accessor);
-                    accessors = newAccessors;
-                }
+            AccessorMapper<T> mapper = AnnotationParser.parseAccessor(klass, this);
+            mapper.prepare(this);
+            accessor = mapper.createProxy();
+            T old = (T) accessors.putIfAbsent(klass, accessor);
+            if (old != null) {
+                accessor = old;
             }
         }
         return accessor;
