@@ -230,7 +230,6 @@ public abstract class Token implements Comparable<Token> {
                         k1 *= c2;
                         h1 ^= k1;
                 }
-                ;
 
                 //----------
                 // finalization
@@ -569,14 +568,43 @@ public abstract class Token implements Comparable<Token> {
             private static final Token MIN_TOKEN = new RPToken(MIN_VALUE);
             private static final Token MAX_TOKEN = new RPToken(MAX_VALUE);
 
-            private BigInteger md5(ByteBuffer data) {
+            private final MessageDigest prototype;
+            private final boolean supportsClone;
+
+            private RPTokenFactory() {
+                prototype = createMessageDigest();
+                boolean supportsClone;
                 try {
-                    MessageDigest digest = MessageDigest.getInstance("MD5");
-                    digest.update(data.duplicate());
-                    return new BigInteger(digest.digest()).abs();
+                    prototype.clone();
+                    supportsClone = true;
+                } catch (CloneNotSupportedException e) {
+                    supportsClone = false;
+                }
+                this.supportsClone = supportsClone;
+            }
+
+            private static MessageDigest createMessageDigest() {
+                try {
+                    return MessageDigest.getInstance("MD5");
                 } catch (NoSuchAlgorithmException e) {
                     throw new RuntimeException("MD5 doesn't seem to be available on this JVM", e);
                 }
+            }
+
+            private MessageDigest newMessageDigest() {
+                if (supportsClone) {
+                    try {
+                        return (MessageDigest) prototype.clone();
+                    } catch (CloneNotSupportedException ignored) {
+                    }
+                }
+                return createMessageDigest();
+            }
+
+            private BigInteger md5(ByteBuffer data) {
+                MessageDigest digest = newMessageDigest();
+                digest.update(data.duplicate());
+                return new BigInteger(digest.digest()).abs();
             }
 
             @Override
