@@ -107,7 +107,8 @@ public class AlterTest {
                 .populateIOCacheOnFlush(true)
                 .replicateOnWrite(true)
                 .readRepairChance(0.42)
-                .speculativeRetry(always());
+                .speculativeRetry(always())
+                .cdc(true);
 
         SchemaStatement statementWith21Caching = alterTable("test").withOptions()
                 .caching(KeyCaching.NONE, rows(100));
@@ -129,7 +130,8 @@ public class AlterTest {
                 "AND populate_io_cache_on_flush = true " +
                 "AND read_repair_chance = 0.42 " +
                 "AND replicate_on_write = true " +
-                "AND speculative_retry = 'ALWAYS'");
+                "AND speculative_retry = 'ALWAYS' " +
+                "AND cdc = true");
 
         assertThat(statementWith21Caching.getQueryString()).isEqualTo("\n\tALTER TABLE test\n\t" +
                 "WITH caching = {'keys' : 'none', 'rows_per_partition' : 100}");

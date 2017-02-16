@@ -234,8 +234,50 @@ public class TableMetadataTest extends CCMTestsSupport {
         assertThat(table.getColumns().get(3)).isNotNull().hasName("i").isRegularColumn().hasType(cint());
         assertThat(table);
 
-        // Cassandra 3.0 +
-        if (version.getMajor() > 2) {
+        // Cassandra 3.8 +
+        if (version.getMajor() > 3 || (version.getMajor() == 3 && version.getMinor() >= 8)) {
+
+            assertThat(table.getOptions().getReadRepairChance()).isEqualTo(0.5);
+            assertThat(table.getOptions().getLocalReadRepairChance()).isEqualTo(0.6);
+            assertThat(table.getOptions().getGcGraceInSeconds()).isEqualTo(42);
+            assertThat(table.getOptions().getBloomFilterFalsePositiveChance()).isEqualTo(0.01);
+            assertThat(table.getOptions().getComment()).isEqualTo("My awesome table");
+            assertThat(table.getOptions().getCaching()).contains(entry("keys", "ALL"));
+            assertThat(table.getOptions().getCaching()).contains(entry("rows_per_partition", "10"));
+            assertThat(table.getOptions().getCompaction()).contains(entry("class", "org.apache.cassandra.db.compaction.LeveledCompactionStrategy"));
+            assertThat(table.getOptions().getCompaction()).contains(entry("sstable_size_in_mb", "15"));
+            assertThat(table.getOptions().getCompression()).contains(entry("class", "org.apache.cassandra.io.compress.SnappyCompressor")); // sstable_compression becomes class
+            assertThat(table.getOptions().getCompression()).contains(entry("chunk_length_in_kb", "128")); // note the "in" prefix
+            assertThat(table.getOptions().getDefaultTimeToLive()).isEqualTo(0);
+            assertThat(table.getOptions().getSpeculativeRetry()).isEqualTo("99.9PERCENTILE");
+            assertThat(table.getOptions().getIndexInterval()).isNull();
+            assertThat(table.getOptions().getMinIndexInterval()).isEqualTo(128);
+            assertThat(table.getOptions().getMaxIndexInterval()).isEqualTo(2048);
+            assertThat(table.getOptions().getReplicateOnWrite()).isTrue(); // default
+            assertThat(table.getOptions().getCrcCheckChance()).isEqualTo(0.5);
+            assertThat(table.getOptions().getExtensions()).isEmpty(); // default
+            assertThat(table.asCQLQuery())
+                    .contains("read_repair_chance = 0.5")
+                    .contains("dclocal_read_repair_chance = 0.6")
+                    .contains("gc_grace_seconds = 42")
+                    .contains("bloom_filter_fp_chance = 0.01")
+                    .contains("comment = 'My awesome table'")
+                    .contains("'keys' : 'ALL'")
+                    .contains("'rows_per_partition' : 10")
+                    .contains("'class' : 'org.apache.cassandra.db.compaction.LeveledCompactionStrategy'")
+                    .contains("'sstable_size_in_mb' : 15")
+                    .contains("'class' : 'org.apache.cassandra.io.compress.SnappyCompressor'") // sstable_compression becomes class
+                    .contains("'chunk_length_in_kb' : 128") // note the "in" prefix
+                    .contains("default_time_to_live = 0")
+                    .contains("speculative_retry = '99.9PERCENTILE'")
+                    .contains("min_index_interval = 128")
+                    .contains("max_index_interval = 2048")
+                    .contains("crc_check_chance = 0.5")
+                    .contains("cdc = false")
+                    .doesNotContain(" index_interval")
+                    .doesNotContain("replicate_on_write");
+            // Cassandra 3.0 +
+        } else if (version.getMajor() > 2) {
 
             assertThat(table.getOptions().getReadRepairChance()).isEqualTo(0.5);
             assertThat(table.getOptions().getLocalReadRepairChance()).isEqualTo(0.6);
@@ -274,7 +316,8 @@ public class TableMetadataTest extends CCMTestsSupport {
                     .contains("max_index_interval = 2048")
                     .contains("crc_check_chance = 0.5")
                     .doesNotContain(" index_interval")
-                    .doesNotContain("replicate_on_write");
+                    .doesNotContain("replicate_on_write")
+                    .doesNotContain("cdc"); // 3.8+
 
             // Cassandra 2.1 and 2.2
         } else if (version.getMajor() == 2 && version.getMinor() > 0) {
@@ -315,7 +358,8 @@ public class TableMetadataTest extends CCMTestsSupport {
                     .contains("min_index_interval = 128")
                     .contains("max_index_interval = 2048")
                     .doesNotContain(" index_interval")
-                    .doesNotContain("replicate_on_write");
+                    .doesNotContain("replicate_on_write")
+                    .doesNotContain("cdc");
 
             // Cassandra 2.0
         } else if (version.getMajor() == 2 && version.getMinor() == 0) {
@@ -354,7 +398,8 @@ public class TableMetadataTest extends CCMTestsSupport {
                     .contains("speculative_retry = '99.0PERCENTILE'")
                     .contains("default_time_to_live = 0")
                     .doesNotContain("min_index_interval") // 2.1 +
-                    .doesNotContain("max_index_interval"); // 2.1 +
+                    .doesNotContain("max_index_interval") // 2.1 +
+                    .doesNotContain("cdc");
 
             // Cassandra 1.2
         } else {
@@ -393,7 +438,8 @@ public class TableMetadataTest extends CCMTestsSupport {
                     .doesNotContain("min_index_interval")  // 2.1 +
                     .doesNotContain("max_index_interval")  // 2.1 +
                     .doesNotContain("speculative_retry")  // 2.0 +
-                    .doesNotContain("default_time_to_live"); // 2.0 +
+                    .doesNotContain("default_time_to_live") // 2.0 +
+                    .doesNotContain("cdc");
 
         }
 
