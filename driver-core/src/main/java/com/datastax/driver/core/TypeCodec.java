@@ -579,7 +579,7 @@ public abstract class TypeCodec<T> {
      * the given {@code javaType}, and {@code false} otherwise.
      * @throws NullPointerException if {@code javaType} is {@code null}.
      */
-    public boolean accepts(TypeToken javaType) {
+    public boolean accepts(TypeToken<?> javaType) {
         checkNotNull(javaType, "Parameter javaType cannot be null");
         return this.javaType.equals(javaType.wrap());
     }

@@ -62,7 +62,8 @@ public class CodecRegistryTest {
                 {DataType.time(), TypeCodec.time()},
                 {DataType.uuid(), TypeCodec.uuid()},
                 {DataType.timeuuid(), TypeCodec.timeUUID()},
-                {DataType.inet(), TypeCodec.inet()}
+                {DataType.inet(), TypeCodec.inet()},
+                {DataType.duration(), TypeCodec.duration()}
         };
     }
 
@@ -87,7 +88,8 @@ public class CodecRegistryTest {
                 {DataType.time(), Long.class, TypeCodec.time()},
                 {DataType.uuid(), UUID.class, TypeCodec.uuid()},
                 {DataType.timeuuid(), UUID.class, TypeCodec.timeUUID()},
-                {DataType.inet(), InetAddress.class, TypeCodec.inet()}
+                {DataType.inet(), InetAddress.class, TypeCodec.inet()},
+                {DataType.duration(), Duration.class, TypeCodec.duration()}
         };
     }
 
@@ -108,7 +110,8 @@ public class CodecRegistryTest {
                 {new Date(42), TypeCodec.timestamp()},
                 {LocalDate.fromDaysSinceEpoch(42), TypeCodec.date()},
                 {UUID.randomUUID(), TypeCodec.uuid()},
-                {mock(InetAddress.class), TypeCodec.inet()}
+                {mock(InetAddress.class), TypeCodec.inet()},
+                {Duration.from("1mo2d3h"), TypeCodec.duration()}
         };
     }
 
@@ -133,7 +136,8 @@ public class CodecRegistryTest {
                 {DataType.time(), 42L, TypeCodec.time()},
                 {DataType.uuid(), UUID.randomUUID(), TypeCodec.uuid()},
                 {DataType.timeuuid(), UUID.randomUUID(), TypeCodec.timeUUID()},
-                {DataType.inet(), mock(InetAddress.class), TypeCodec.inet()}
+                {DataType.inet(), mock(InetAddress.class), TypeCodec.inet()},
+                {DataType.duration(), Duration.from("1mo2d3h"), TypeCodec.duration()}
         };
     }
 
@@ -195,7 +199,7 @@ public class CodecRegistryTest {
     public void should_find_newly_registered_codec_by_cql_type() {
         // given
         CodecRegistry registry = new CodecRegistry();
-        TypeCodec expected = mockCodec(list(text()), listOf(String.class));
+        TypeCodec<?> expected = mockCodec(list(text()), listOf(String.class));
         registry.register(expected);
         // when
         TypeCodec<?> actual = registry.codecFor(list(text()));
@@ -209,7 +213,7 @@ public class CodecRegistryTest {
     public void should_find_default_codec_if_cql_type_already_registered() {
         // given
         CodecRegistry registry = new CodecRegistry();
-        TypeCodec newCodec = mockCodec(text(), of(StringBuilder.class));
+        TypeCodec<?> newCodec = mockCodec(text(), of(StringBuilder.class));
         registry.register(newCodec);
         // when
         TypeCodec<?> actual = registry.codecFor(text());
@@ -226,7 +230,7 @@ public class CodecRegistryTest {
     public void should_find_newly_registered_codec_by_cql_type_and_java_type() {
         // given
         CodecRegistry registry = new CodecRegistry();
-        TypeCodec expected = mockCodec(list(text()), listOf(String.class));
+        TypeCodec<?> expected = mockCodec(list(text()), listOf(String.class));
         registry.register(expected);
         // when
         TypeCodec<?> actual = registry.codecFor(list(text()), listOf(String.class));
@@ -443,7 +447,7 @@ public class CodecRegistryTest {
 
         CodecRegistry registry = new CodecRegistry();
 
-        TypeCodec newCodec = mockCodec(cint(), of(Integer.class));
+        TypeCodec<?> newCodec = mockCodec(cint(), of(Integer.class));
 
         registry.register(newCodec);
 
@@ -464,7 +468,7 @@ public class CodecRegistryTest {
         // Force generation of a list token from the default token
         registry.codecFor(list(cint()), listOf(Integer.class));
 
-        TypeCodec newCodec = mockCodec(list(cint()), listOf(Integer.class));
+        TypeCodec<?> newCodec = mockCodec(list(cint()), listOf(Integer.class));
 
         registry.register(newCodec);
 
@@ -490,8 +494,9 @@ public class CodecRegistryTest {
         registryLogger.removeAppender(logs);
     }
 
-    private TypeCodec<?> mockCodec(DataType cqlType, TypeToken<?> javaType) {
-        TypeCodec newCodec = mock(TypeCodec.class);
+    private <T> TypeCodec<T> mockCodec(DataType cqlType, TypeToken<T> javaType) {
+        @SuppressWarnings("unchecked")
+        TypeCodec<T> newCodec = mock(TypeCodec.class);
         when(newCodec.getCqlType()).thenReturn(cqlType);
         when(newCodec.getJavaType()).thenReturn(javaType);
         when(newCodec.accepts(cqlType)).thenReturn(true);
