@@ -116,7 +116,7 @@ We've also seized the opportunity to remove code that was deprecated in 2.1.
       for `null` inputs.
 
 3.  The driver now depends on Guava 16.0.1 (instead of 14.0.1).
-    This update has been mainly motivated by Guava's [Issue #1635](https://code.google.com/p/guava-libraries/issues/detail?id=1635),
+    This update has been mainly motivated by Guava's [Issue #1635](https://github.com/google/guava/issues/1635),
     which affects `TypeToken`, and hence all `TypeCodec` implementations handling parameterized types.
 
 4.  `UDTMapper` (the type previously used to convert `@UDT`-annotated

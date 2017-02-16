@@ -18,7 +18,7 @@ package com.datastax.driver.core;
 import com.datastax.driver.core.exceptions.InvalidTypeException;
 import com.datastax.driver.core.querybuilder.BuiltStatement;
 import com.datastax.driver.core.utils.CassandraVersion;
-import com.google.common.base.Objects;
+import com.datastax.driver.core.utils.MoreObjects;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.reflect.TypeToken;
 import org.testng.annotations.BeforeClass;
@@ -168,12 +168,12 @@ public class TypeCodecNestedCollectionsIntegrationTest extends CCMTestsSupport {
             if (o == null || getClass() != o.getClass())
                 return false;
             MyInt myInt = (MyInt) o;
-            return Objects.equal(i, myInt.i);
+            return MoreObjects.equal(i, myInt.i);
         }
 
         @Override
         public int hashCode() {
-            return Objects.hashCode(i);
+            return MoreObjects.hashCode(i);
         }
     }
 

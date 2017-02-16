@@ -15,7 +15,7 @@
  */
 package com.datastax.driver.core;
 
-import com.google.common.base.Objects;
+import com.datastax.driver.core.utils.MoreObjects;
 import com.google.common.collect.ImmutableMap;
 
 import java.nio.ByteBuffer;
@@ -398,30 +398,30 @@ public class TableOptionsMetadata {
 
         TableOptionsMetadata that = (TableOptionsMetadata) other;
         return this.isCompactStorage == that.isCompactStorage &&
-                Objects.equal(this.comment, that.comment) &&
+                MoreObjects.equal(this.comment, that.comment) &&
                 this.readRepair == that.readRepair &&
                 this.localReadRepair == that.localReadRepair &&
                 this.replicateOnWrite == that.replicateOnWrite &&
                 this.gcGrace == that.gcGrace &&
                 this.bfFpChance == that.bfFpChance &&
-                Objects.equal(this.caching, that.caching) &&
+                MoreObjects.equal(this.caching, that.caching) &&
                 this.populateCacheOnFlush == that.populateCacheOnFlush &&
                 this.memtableFlushPeriodMs == that.memtableFlushPeriodMs &&
                 this.defaultTTL == that.defaultTTL &&
                 this.cdc == that.cdc &&
-                Objects.equal(this.speculativeRetry, that.speculativeRetry) &&
-                Objects.equal(this.indexInterval, that.indexInterval) &&
-                Objects.equal(this.minIndexInterval, that.minIndexInterval) &&
-                Objects.equal(this.maxIndexInterval, that.maxIndexInterval) &&
-                Objects.equal(this.compaction, that.compaction) &&
-                Objects.equal(this.compression, that.compression) &&
-                Objects.equal(this.crcCheckChance, that.crcCheckChance) &&
-                Objects.equal(this.extensions, that.extensions);
+                MoreObjects.equal(this.speculativeRetry, that.speculativeRetry) &&
+                MoreObjects.equal(this.indexInterval, that.indexInterval) &&
+                MoreObjects.equal(this.minIndexInterval, that.minIndexInterval) &&
+                MoreObjects.equal(this.maxIndexInterval, that.maxIndexInterval) &&
+                MoreObjects.equal(this.compaction, that.compaction) &&
+                MoreObjects.equal(this.compression, that.compression) &&
+                MoreObjects.equal(this.crcCheckChance, that.crcCheckChance) &&
+                MoreObjects.equal(this.extensions, that.extensions);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hashCode(isCompactStorage, comment, readRepair, localReadRepair, replicateOnWrite, gcGrace,
+        return MoreObjects.hashCode(isCompactStorage, comment, readRepair, localReadRepair, replicateOnWrite, gcGrace,
                 bfFpChance, caching, populateCacheOnFlush, memtableFlushPeriodMs, defaultTTL, speculativeRetry,
                 indexInterval, minIndexInterval, maxIndexInterval, compaction, compression, crcCheckChance, extensions,
                 cdc);

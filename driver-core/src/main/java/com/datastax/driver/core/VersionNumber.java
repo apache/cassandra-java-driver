@@ -15,7 +15,7 @@
  */
 package com.datastax.driver.core;
 
-import com.google.common.base.Objects;
+import com.datastax.driver.core.utils.MoreObjects;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -228,12 +228,12 @@ public class VersionNumber implements Comparable<VersionNumber> {
                 && this.patch == that.patch
                 && this.dsePatch == that.dsePatch
                 && (this.preReleases == null ? that.preReleases == null : Arrays.equals(this.preReleases, that.preReleases))
-                && Objects.equal(this.build, that.build);
+                && MoreObjects.equal(this.build, that.build);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hashCode(major, minor, patch, dsePatch, preReleases, build);
+        return MoreObjects.hashCode(major, minor, patch, dsePatch, preReleases, build);
     }
 
     @Override

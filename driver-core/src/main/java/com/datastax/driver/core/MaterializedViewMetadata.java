@@ -16,7 +16,7 @@
 package com.datastax.driver.core;
 
 
-import com.google.common.base.Objects;
+import com.datastax.driver.core.utils.MoreObjects;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -221,20 +221,19 @@ public class MaterializedViewMetadata extends AbstractTableMetadata {
             return false;
 
         MaterializedViewMetadata that = (MaterializedViewMetadata) other;
-        return Objects.equal(this.name, that.name) &&
-                Objects.equal(this.id, that.id) &&
-                Objects.equal(this.partitionKey, that.partitionKey) &&
-                Objects.equal(this.clusteringColumns, that.clusteringColumns) &&
-                Objects.equal(this.columns, that.columns) &&
-                Objects.equal(this.options, that.options) &&
-                Objects.equal(this.clusteringOrder, that.clusteringOrder) &&
-                Objects.equal(this.baseTable.getName(), that.baseTable.getName()) &&
+        return MoreObjects.equal(this.name, that.name) &&
+                MoreObjects.equal(this.id, that.id) &&
+                MoreObjects.equal(this.partitionKey, that.partitionKey) &&
+                MoreObjects.equal(this.clusteringColumns, that.clusteringColumns) &&
+                MoreObjects.equal(this.columns, that.columns) &&
+                MoreObjects.equal(this.options, that.options) &&
+                MoreObjects.equal(this.clusteringOrder, that.clusteringOrder) &&
+                MoreObjects.equal(this.baseTable.getName(), that.baseTable.getName()) &&
                 this.includeAllColumns == that.includeAllColumns;
     }
 
     @Override
     public int hashCode() {
-        return Objects.hashCode(name, id, partitionKey, clusteringColumns, columns, options, clusteringOrder,
-                baseTable.getName(), includeAllColumns);
+        return MoreObjects.hashCode(name, id, partitionKey, clusteringColumns, columns, options, clusteringOrder, baseTable.getName(), includeAllColumns);
     }
 }

@@ -64,8 +64,8 @@ public class Cluster implements Closeable {
     private static final Logger logger = LoggerFactory.getLogger(Cluster.class);
 
     static {
-        // Perform sanity checks to inform user of possible environment misconfiguration.
-        SanityChecks.check();
+        // Force initialization to fail fast if there is an issue detecting the version
+        GuavaCompatibility.init();
     }
 
     @VisibleForTesting
@@ -334,15 +334,15 @@ public class Cluster implements Closeable {
             return sessionInitialized;
         } else {
             final String useQuery = "USE " + keyspace;
-            ListenableFuture<ResultSet> keyspaceSet = Futures.transform(sessionInitialized, new AsyncFunction<Session, ResultSet>() {
+            ListenableFuture<ResultSet> keyspaceSet = GuavaCompatibility.INSTANCE.transformAsync(sessionInitialized, new AsyncFunction<Session, ResultSet>() {
                 @Override
                 public ListenableFuture<ResultSet> apply(Session session) throws Exception {
                     return session.executeAsync(useQuery);
                 }
             });
-            ListenableFuture<ResultSet> withErrorHandling = Futures.withFallback(keyspaceSet, new FutureFallback<ResultSet>() {
+            ListenableFuture<ResultSet> withErrorHandling = GuavaCompatibility.INSTANCE.withFallback(keyspaceSet, new AsyncFunction<Throwable, ResultSet>() {
                 @Override
-                public ListenableFuture<ResultSet> create(Throwable t) throws Exception {
+                public ListenableFuture<ResultSet> apply(Throwable t) throws Exception {
                     session.closeAsync();
                     if (t instanceof SyntaxError) {
                         // Give a more explicit message, because it's probably caused by a bad keyspace name
@@ -2373,7 +2373,7 @@ public class Cluster implements Closeable {
                                 rs.getExecutionInfo().setSchemaInAgreement(finalSchemaInAgreement);
                                 future.setResult(rs);
                             }
-                        }, MoreExecutors.sameThreadExecutor());
+                        }, GuavaCompatibility.INSTANCE.sameThreadExecutor());
 
                     } catch (Exception e) {
                         logger.warn("Error while waiting for schema agreement", e);

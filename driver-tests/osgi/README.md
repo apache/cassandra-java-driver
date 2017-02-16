@@ -45,6 +45,7 @@ configurations:
 
 1. Default (default classifier with all dependencies)
 2. Netty-Shaded (shaded classifier with all dependencies w/o Netty)
-5. Guava 17
-6. Guava 18
-7. Guava 19
+3. Guava 17
+4. Guava 18
+5. Guava 19
+6. Guava 20

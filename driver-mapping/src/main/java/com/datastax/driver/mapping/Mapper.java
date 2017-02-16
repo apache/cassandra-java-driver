@@ -19,12 +19,12 @@ import com.datastax.driver.core.*;
 import com.datastax.driver.core.querybuilder.Delete;
 import com.datastax.driver.core.querybuilder.Insert;
 import com.datastax.driver.core.querybuilder.QueryBuilder;
+import com.datastax.driver.core.utils.MoreObjects;
 import com.datastax.driver.mapping.Mapper.Option.SaveNullFields;
 import com.datastax.driver.mapping.annotations.Accessor;
 import com.datastax.driver.mapping.annotations.Computed;
 import com.google.common.base.Function;
 import com.google.common.base.Functions;
-import com.google.common.base.Objects;
 import com.google.common.base.Preconditions;
 import com.google.common.util.concurrent.*;
 import org.slf4j.Logger;
@@ -324,7 +324,7 @@ public class Mapper<T> {
     }
 
     private ListenableFuture<Void> submitVoidQueryAsync(ListenableFuture<BoundStatement> bsFuture) {
-        ListenableFuture<ResultSet> rsFuture = Futures.transform(bsFuture, new AsyncFunction<BoundStatement, ResultSet>() {
+        ListenableFuture<ResultSet> rsFuture = GuavaCompatibility.INSTANCE.transformAsync(bsFuture, new AsyncFunction<BoundStatement, ResultSet>() {
             @Override
             public ListenableFuture<ResultSet> apply(BoundStatement bs) throws Exception {
                 return session().executeAsync(bs);
@@ -449,7 +449,7 @@ public class Mapper<T> {
      */
     public ListenableFuture<T> getAsync(final Object... objects) {
         ListenableFuture<BoundStatement> bsFuture = getQueryAsync(objects);
-        ListenableFuture<ResultSet> rsFuture = Futures.transform(bsFuture, new AsyncFunction<BoundStatement, ResultSet>() {
+        ListenableFuture<ResultSet> rsFuture = GuavaCompatibility.INSTANCE.transformAsync(bsFuture, new AsyncFunction<BoundStatement, ResultSet>() {
             @Override
             public ListenableFuture<ResultSet> apply(BoundStatement bs) throws Exception {
                 return session().executeAsync(bs);
@@ -1161,7 +1161,7 @@ public class Mapper<T> {
 
         @Override
         public int hashCode() {
-            return Objects.hashCode(queryType, optionTypes, columns);
+            return MoreObjects.hashCode(queryType, optionTypes, columns);
         }
     }
 }

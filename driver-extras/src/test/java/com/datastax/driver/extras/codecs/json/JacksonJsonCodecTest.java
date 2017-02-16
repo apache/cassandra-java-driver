@@ -18,9 +18,9 @@ package com.datastax.driver.extras.codecs.json;
 import com.datastax.driver.core.*;
 import com.datastax.driver.core.querybuilder.BuiltStatement;
 import com.datastax.driver.core.utils.CassandraVersion;
+import com.datastax.driver.core.utils.MoreObjects;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.google.common.base.Objects;
 import com.google.common.collect.Lists;
 import org.testng.annotations.Test;
 
@@ -204,13 +204,13 @@ public class JacksonJsonCodecTest extends CCMTestsSupport {
             if (o == null || getClass() != o.getClass())
                 return false;
             User user = (User) o;
-            return Objects.equal(id, user.id) &&
-                    Objects.equal(name, user.name);
+            return MoreObjects.equal(id, user.id) &&
+                    MoreObjects.equal(name, user.name);
         }
 
         @Override
         public int hashCode() {
-            return Objects.hashCode(id, name);
+            return MoreObjects.hashCode(id, name);
         }
     }
 }

@@ -19,12 +19,12 @@ import com.datastax.driver.core.CCMTestsSupport;
 import com.datastax.driver.core.Cluster;
 import com.datastax.driver.core.Session;
 import com.datastax.driver.core.utils.MoreFutures.SuccessCallback;
+import com.datastax.driver.core.utils.MoreObjects;
 import com.datastax.driver.core.utils.UUIDs;
 import com.datastax.driver.mapping.annotations.Column;
 import com.datastax.driver.mapping.annotations.PartitionKey;
 import com.datastax.driver.mapping.annotations.Table;
 import com.google.common.base.Function;
-import com.google.common.base.Objects;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.Uninterruptibles;
@@ -172,14 +172,14 @@ public class MapperAsyncTest extends CCMTestsSupport {
                 return false;
 
             User that = (User) other;
-            return Objects.equal(userId, that.userId)
-                    && Objects.equal(name, that.name)
-                    && Objects.equal(email, that.email);
+            return MoreObjects.equal(userId, that.userId)
+                    && MoreObjects.equal(name, that.name)
+                    && MoreObjects.equal(email, that.email);
         }
 
         @Override
         public int hashCode() {
-            return Objects.hashCode(userId, name, email);
+            return MoreObjects.hashCode(userId, name, email);
         }
     }
 

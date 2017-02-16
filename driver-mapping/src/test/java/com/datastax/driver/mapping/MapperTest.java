@@ -17,9 +17,9 @@ package com.datastax.driver.mapping;
 
 import com.datastax.driver.core.*;
 import com.datastax.driver.core.utils.CassandraVersion;
+import com.datastax.driver.core.utils.MoreObjects;
 import com.datastax.driver.core.utils.UUIDs;
 import com.datastax.driver.mapping.annotations.*;
-import com.google.common.base.Objects;
 import com.google.common.util.concurrent.ListenableFuture;
 import org.testng.annotations.Test;
 
@@ -122,15 +122,15 @@ public class MapperTest extends CCMTestsSupport {
                 return false;
 
             User that = (User) other;
-            return Objects.equal(userId, that.userId)
-                    && Objects.equal(name, that.name)
-                    && Objects.equal(email, that.email)
-                    && Objects.equal(year, that.year);
+            return MoreObjects.equal(userId, that.userId)
+                    && MoreObjects.equal(name, that.name)
+                    && MoreObjects.equal(email, that.email)
+                    && MoreObjects.equal(year, that.year);
         }
 
         @Override
         public int hashCode() {
-            return Objects.hashCode(userId, name, email, year);
+            return MoreObjects.hashCode(userId, name, email, year);
         }
     }
 
@@ -222,17 +222,17 @@ public class MapperTest extends CCMTestsSupport {
                 return false;
 
             Post that = (Post) other;
-            return Objects.equal(userId, that.userId)
-                    && Objects.equal(postId, that.postId)
-                    && Objects.equal(title, that.title)
-                    && Objects.equal(content, that.content)
-                    && Objects.equal(device, that.device)
-                    && Objects.equal(tags, that.tags);
+            return MoreObjects.equal(userId, that.userId)
+                    && MoreObjects.equal(postId, that.postId)
+                    && MoreObjects.equal(title, that.title)
+                    && MoreObjects.equal(content, that.content)
+                    && MoreObjects.equal(device, that.device)
+                    && MoreObjects.equal(tags, that.tags);
         }
 
         @Override
         public int hashCode() {
-            return Objects.hashCode(userId, postId, title, content, device, tags);
+            return MoreObjects.hashCode(userId, postId, title, content, device, tags);
         }
     }
 

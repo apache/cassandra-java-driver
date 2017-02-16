@@ -158,7 +158,7 @@
                         <Bundle-SymbolicName>com.datastax.driver.mapping</Bundle-SymbolicName>
                         <Bundle-Version>${project.version}</Bundle-Version>
                         <_include>-osgi.bnd</_include>
-                        <Import-Package><![CDATA[com.google.common*;version="[16.0.1,20)",*]]></Import-Package>
+                        <Import-Package><![CDATA[com.google.common*;version="[16.0.1,21)",*]]></Import-Package>
                     </instructions>
                     <supportedProjectTypes>
                         <supportedProjectType>jar</supportedProjectType>
