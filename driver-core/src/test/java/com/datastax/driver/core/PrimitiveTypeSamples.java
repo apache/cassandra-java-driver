@@ -40,7 +40,8 @@ public class PrimitiveTypeSamples {
 
     private static Map<DataType, Object> generateAll() {
         try {
-            final Collection<DataType> primitiveTypes = TestUtils.allPrimitiveTypes(TestUtils.getDesiredProtocolVersion());
+            final ProtocolVersion protocolVersion = TestUtils.getDesiredProtocolVersion();
+            final Collection<DataType> primitiveTypes = TestUtils.allPrimitiveTypes(protocolVersion);
             ImmutableMap<DataType, Object> data = ImmutableMap.<DataType, Object>builder()
                     .put(DataType.ascii(), "ascii")
                     .put(DataType.bigint(), Long.MAX_VALUE)
@@ -70,12 +71,19 @@ public class PrimitiveTypeSamples {
                 }
             });
 
-            // Check that we cover all types (except counter)
+            // Check that we cover all types (except counter and duration)
+            // Duration is excluded because it can't be used in collections and udts.   It is tested separately
+            // in DurationIntegrationTest.
             List<DataType> tmp = Lists.newArrayList(primitiveTypes);
             tmp.removeAll(result.keySet());
+
+            List<DataType> expectedFilteredTypes = protocolVersion.compareTo(ProtocolVersion.V5) >= 0 ?
+                    Lists.newArrayList(DataType.counter(), DataType.duration()) :
+                    Lists.newArrayList(DataType.counter());
+
             assertThat(tmp)
                     .as("new datatype not covered in test")
-                    .containsOnly(DataType.counter());
+                    .containsOnlyElementsOf(expectedFilteredTypes);
 
             return result;
         } catch (UnknownHostException e) {
