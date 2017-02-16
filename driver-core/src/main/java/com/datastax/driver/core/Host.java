@@ -261,7 +261,12 @@ public class Host {
      * possibility.
      *
      * @return the DSE version the host is running.
+     * @deprecated Please use the
+     * <a href="https://github.com/datastax/java-driver-dse">Java driver for DSE</a>
+     * if you are connecting to a DataStax Enterprise (DSE) cluster.
+     * This method might not function properly with future versions of DSE.
      */
+    @Deprecated
     public VersionNumber getDseVersion() {
         return dseVersion;
     }
@@ -274,7 +279,12 @@ public class Host {
      * possibility.
      *
      * @return the DSE workload the host is running.
+     * @deprecated Please use the
+     * <a href="https://github.com/datastax/java-driver-dse">Java driver for DSE</a>
+     * if you are connecting to a DataStax Enterprise (DSE) cluster.
+     * This method might not function properly with future versions of DSE.
      */
+    @Deprecated
     public String getDseWorkload() {
         return dseWorkload;
     }
@@ -283,7 +293,12 @@ public class Host {
      * Returns whether the host is running DSE Graph.
      *
      * @return whether the node is running DSE Graph.
+     * @deprecated Please use the
+     * <a href="https://github.com/datastax/java-driver-dse">Java driver for DSE</a>
+     * if you are connecting to a DataStax Enterprise (DSE) cluster.
+     * This method might not function properly with future versions of DSE.
      */
+    @Deprecated
     public boolean isDseGraphEnabled() {
         return dseGraphEnabled;
     }
