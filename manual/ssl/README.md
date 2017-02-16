@@ -154,7 +154,7 @@ add it to your dependencies.
 
 There are known runtime incompatibilities between newer versions of
 netty-tcnative and the version of netty that the driver uses.  For best
-results, use version 1.1.33.Fork18.
+results, use version 1.1.33.Fork26.
 
 Using netty-tcnative requires JDK 1.7 or above and requires the presence of
 OpenSSL on the system.  It will not fall back to the JDK implementation.

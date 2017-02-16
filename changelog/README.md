@@ -8,6 +8,7 @@
 - [improvement] JAVA-1367: Make protocol negotiation more resilient.
 - [bug] JAVA-1397: Handle duration as native datatype in protocol v5+.
 - [improvement] JAVA-1308: CodecRegistry performance improvements.
+- [improvement] JAVA-1241: Upgrade Netty to 4.1.x.
 
 Merged from 3.1.x branch:
 
