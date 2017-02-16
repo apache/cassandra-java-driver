@@ -187,6 +187,47 @@
             </build>
         </profile>
 
+        <!--
+        This profile excludes all JDK 8 dependent tests from being
+        run with legacy JDKs (6 or 7).
+        It is automatically activated when a legacy JDK is in use.
+        Note that running tests with a legacy JDK require
+        that you provide a non-legacy JDK for CCM through the
+        system property ccm.java.home.
+        -->
+        <profile>
+            <id>legacy-jdks</id>
+            <activation>
+                <jdk>[,1.8)</jdk>
+            </activation>
+            <build>
+                <plugins>
+                    <plugin>
+                        <!-- exclude Jdk8* test classes from being compiled -->
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-compiler-plugin</artifactId>
+                        <configuration>
+                            <testExcludes>
+                                <exclude>**/Jdk8*.java</exclude>
+                            </testExcludes>
+                        </configuration>
+                    </plugin>
+                    <plugin>
+                        <!-- exclude Jdk* test classes from being run
+                        This is needed in event that code was built with JDK8
+                        and tests are ran with JDK6 or 7. -->
+                        <artifactId>maven-surefire-plugin</artifactId>
+                        <version>2.16</version>
+                        <configuration>
+                            <excludes>
+                                <exclude>**/Jdk8*.java</exclude>
+                            </excludes>
+                        </configuration>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+
     </profiles>
 
     <build>

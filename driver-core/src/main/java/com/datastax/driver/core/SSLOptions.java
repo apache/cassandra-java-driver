@@ -18,12 +18,19 @@ package com.datastax.driver.core;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.handler.ssl.SslHandler;
 
+import java.net.InetSocketAddress;
+
 /**
  * Defines how the driver configures SSL connections.
+ * <p/>
+ * Note: since version 3.2.0, users are encouraged to implement
+ * {@link RemoteEndpointAwareSSLOptions} instead.
  *
+ * @see RemoteEndpointAwareSSLOptions
  * @see JdkSSLOptions
  * @see NettySSLOptions
  */
+@SuppressWarnings("deprecation")
 public interface SSLOptions {
 
     /**
@@ -37,6 +44,10 @@ public interface SSLOptions {
      *
      * @param channel the channel.
      * @return the handler.
+     * @deprecated use {@link RemoteEndpointAwareSSLOptions#newSSLHandler(SocketChannel, InetSocketAddress)} instead.
+     *
      */
+    @SuppressWarnings("DeprecatedIsStillUsed")
+    @Deprecated
     SslHandler newSSLHandler(SocketChannel channel);
 }
