@@ -13,6 +13,7 @@
 - [improvement] JAVA-1287: Add CDC to TableOptionsMetadata and Schema Builder.
 - [improvement] JAVA-1392: Reduce lock contention in RPTokenFactory.
 - [improvement] JAVA-1328: Provide compatibility with Guava 20.
+- [improvement] JAVA-1247: Disable idempotence warnings.
 
 Merged from 3.1.x branch:
 

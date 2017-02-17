@@ -13,6 +13,10 @@ are now deprecated in favor of `RemoteEndpointAwareJdkSSLOptions`
 and `RemoteEndpointAwareNettySSLOptions` respectively (see 
 [JAVA-1364](https://datastax-oss.atlassian.net/browse/JAVA-1364)).
 
+In 3.1.0, the driver would log a warning the first time it would skip 
+a retry for a non-idempotent request; this warning has now been 
+removed as users should now have adjusted their applications accordingly.
+
 
 ### 3.1.0
 
