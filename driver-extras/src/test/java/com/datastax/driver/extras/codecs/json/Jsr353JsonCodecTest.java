@@ -59,7 +59,7 @@ public class Jsr353JsonCodecTest extends CCMTestsSupport {
                 insertInto(TABLE1).value("k", "key0").value(quote("miXeD"), "d").value("i", 4).value("f", 5.0).toString()
         );
 
-        if (TestUtils.getDesiredProtocolVersion().compareTo(ProtocolVersion.V3) >= 0) {
+        if (ccm().getProtocolVersion().compareTo(ProtocolVersion.V3) >= 0) {
             execute(
                     "CREATE TYPE address (street text, zipcode int, phones list<text>)",
                     String.format("CREATE TABLE %s (k text PRIMARY KEY, v frozen<address>)", TABLE2)
@@ -184,7 +184,7 @@ public class Jsr353JsonCodecTest extends CCMTestsSupport {
      * @since 3.1.0
      */
     @Test(groups = "short")
-    @CassandraVersion(major = 2.2)
+    @CassandraVersion("2.2")
     public void should_support_select_json_output() throws Exception {
         // when
         ResultSet r = session().execute(select().json().from(TABLE1).where(eq("k", "key0")));
@@ -234,7 +234,7 @@ public class Jsr353JsonCodecTest extends CCMTestsSupport {
      * @since 3.1.0
      */
     @Test(groups = "short")
-    @CassandraVersion(major = 2.2)
+    @CassandraVersion("2.2")
     public void should_support_insert_json() throws Exception {
         // when
         String key = "should_support_insert_json_with_codec_format";
@@ -262,7 +262,7 @@ public class Jsr353JsonCodecTest extends CCMTestsSupport {
      * @since 3.1.0
      */
     @Test(groups = "short")
-    @CassandraVersion(major = 2.2)
+    @CassandraVersion("2.2")
     public void should_support_fromJson_and_toJson() throws Exception {
         String key = "should_support_fromJson_and_toJson";
         JsonObject inputAddr = Json.createObjectBuilder()
