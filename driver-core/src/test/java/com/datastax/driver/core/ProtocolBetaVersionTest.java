@@ -15,6 +15,7 @@
  */
 package com.datastax.driver.core;
 
+import com.datastax.driver.core.utils.CassandraVersion;
 import org.testng.annotations.Test;
 
 import static com.datastax.driver.core.ProtocolVersion.V4;
@@ -26,7 +27,7 @@ import static org.assertj.core.api.Assertions.fail;
  * Tests for the new USE_BETA flag introduced in protocol v5
  * and Cassandra 3.10.
  */
-@CCMConfig(version = "3.10")
+@CassandraVersion("3.10")
 public class ProtocolBetaVersionTest extends CCMTestsSupport {
 
     /**

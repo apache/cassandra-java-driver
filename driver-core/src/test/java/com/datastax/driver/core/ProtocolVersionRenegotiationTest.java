@@ -16,42 +16,53 @@
 package com.datastax.driver.core;
 
 import com.datastax.driver.core.exceptions.UnsupportedProtocolVersionException;
+import com.datastax.driver.core.utils.CassandraVersion;
+import org.testng.SkipException;
+import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import static com.datastax.driver.core.ProtocolVersion.*;
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CreateCCM(CreateCCM.TestMode.PER_METHOD)
 public class ProtocolVersionRenegotiationTest extends CCMTestsSupport {
 
-    /**
-     * @jira_ticket JAVA-1367
-     */
-    @Test(groups = "short")
-    @CCMConfig(version = "2.1.16", createCluster = false)
-    public void should_succeed_when_version_provided_and_matches() throws Exception {
-        Cluster cluster = connectWithVersion(V3);
-        assertThat(actualProtocolVersion(cluster)).isEqualTo(V3);
+    private ProtocolVersion protocolVersion;
+
+    @BeforeMethod(groups = "short")
+    public void setUp() {
+        protocolVersion = ccm().getProtocolVersion();
     }
 
     /**
      * @jira_ticket JAVA-1367
      */
     @Test(groups = "short")
-    @CCMConfig(version = "3.6", createCluster = false)
-    public void should_fail_when_version_provided_and_too_low_3_6() throws Exception {
+    public void should_succeed_when_version_provided_and_matches() throws Exception {
+        Cluster cluster = connectWithVersion(protocolVersion);
+        assertThat(actualProtocolVersion(cluster)).isEqualTo(protocolVersion);
+    }
+
+    /**
+     * @jira_ticket JAVA-1367
+     */
+    @Test(groups = "short")
+    @CassandraVersion("3.0")
+    public void should_fail_when_version_provided_and_too_low_less_than_3_8() throws Exception {
+        if (ccm().getCassandraVersion().compareTo(VersionNumber.parse("3.8")) >= 0) {
+            throw new SkipException("CASSANDRA-11464 (3.8+) uses the attempted protocol version");
+        }
         UnsupportedProtocolVersionException e = connectWithUnsupportedVersion(V1);
         assertThat(e.getUnsupportedVersion()).isEqualTo(V1);
         // pre-CASSANDRA-11464: server replies with its own version
-        assertThat(e.getServerVersion()).isEqualTo(V4);
+        assertThat(e.getServerVersion()).isEqualTo(protocolVersion);
     }
 
     /**
      * @jira_ticket JAVA-1367
      */
     @Test(groups = "short")
-    @CCMConfig(version = "3.10", createCluster = false)
-    public void should_fail_when_version_provided_and_too_low_3_10() throws Exception {
+    @CassandraVersion("3.8")
+    public void should_fail_when_version_provided_and_too_low_3_8_plus() throws Exception {
         UnsupportedProtocolVersionException e = connectWithUnsupportedVersion(V1);
         assertThat(e.getUnsupportedVersion()).isEqualTo(V1);
         // post-CASSANDRA-11464: server replies with client's version
@@ -62,24 +73,26 @@ public class ProtocolVersionRenegotiationTest extends CCMTestsSupport {
      * @jira_ticket JAVA-1367
      */
     @Test(groups = "short")
-    @CCMConfig(version = "1.2.19", createCluster = false)
     public void should_fail_when_version_provided_and_too_high() throws Exception {
+        if (ccm().getCassandraVersion().compareTo(VersionNumber.parse("2.2")) >= 0) {
+            throw new SkipException("Server supports protocol V4");
+        }
         UnsupportedProtocolVersionException e = connectWithUnsupportedVersion(V4);
         assertThat(e.getUnsupportedVersion()).isEqualTo(V4);
         // pre-CASSANDRA-11464: server replies with its own version
-        assertThat(e.getServerVersion()).isEqualTo(V1);
+        assertThat(e.getServerVersion()).isEqualTo(protocolVersion);
     }
 
     /**
      * @jira_ticket JAVA-1367
      */
     @Test(groups = "short")
-    @CCMConfig(version = "2.1.16", createCluster = false)
     public void should_fail_when_beta_allowed_and_too_high() throws Exception {
+        if (ccm().getCassandraVersion().compareTo(VersionNumber.parse("3.10")) >= 0) {
+            throw new SkipException("Server supports protocol protocol V5 beta");
+        }
         UnsupportedProtocolVersionException e = connectWithUnsupportedBetaVersion();
         assertThat(e.getUnsupportedVersion()).isEqualTo(V5);
-        // pre-CASSANDRA-11464: server replies with its own version
-        assertThat(e.getServerVersion()).isEqualTo(V3);
     }
 
     /**
@@ -88,8 +101,11 @@ public class ProtocolVersionRenegotiationTest extends CCMTestsSupport {
     @Test(groups = "short")
     @CCMConfig(version = "2.1.16", createCluster = false)
     public void should_negotiate_when_no_version_provided() throws Exception {
+        if (protocolVersion.compareTo(ProtocolVersion.NEWEST_SUPPORTED) >= 0) {
+            throw new SkipException("Server supports newest protocol version driver supports");
+        }
         Cluster cluster = connectWithoutVersion();
-        assertThat(actualProtocolVersion(cluster)).isEqualTo(V3);
+        assertThat(actualProtocolVersion(cluster)).isEqualTo(protocolVersion);
     }
 
     private UnsupportedProtocolVersionException connectWithUnsupportedVersion(ProtocolVersion version) {
