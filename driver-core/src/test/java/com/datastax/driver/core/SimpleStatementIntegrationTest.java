@@ -100,7 +100,7 @@ public class SimpleStatementIntegrationTest extends CCMTestsSupport {
     @Test(groups = "short", expectedExceptions = UnsupportedFeatureException.class)
     @CassandraVersion("2.0.0")
     public void should_fail_if_query_with_named_values_if_protocol_is_V2() {
-        if (ccm().getVersion().getMajor() >= 3) {
+        if (ccm().getCassandraVersion().getMajor() >= 3) {
             throw new SkipException("Skipping since Cassandra 3.0+ does not support protocol v2");
         }
         useNamedValuesWithProtocol(ProtocolVersion.V2);
@@ -109,7 +109,7 @@ public class SimpleStatementIntegrationTest extends CCMTestsSupport {
     @Test(groups = "short", expectedExceptions = UnsupportedFeatureException.class)
     @CassandraVersion("2.0.0")
     public void should_fail_if_query_with_named_values_if_protocol_is_V1() {
-        if (ccm().getVersion().getMajor() >= 3) {
+        if (ccm().getCassandraVersion().getMajor() >= 3) {
             throw new SkipException("Skipping since Cassandra 3.0+ does not support protocol v1");
         }
         useNamedValuesWithProtocol(ProtocolVersion.V1);

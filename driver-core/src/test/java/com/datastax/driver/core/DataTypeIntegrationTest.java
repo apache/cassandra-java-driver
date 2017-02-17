@@ -39,13 +39,19 @@ import static org.assertj.core.api.Assertions.fail;
 public class DataTypeIntegrationTest extends CCMTestsSupport {
     private static final Logger logger = LoggerFactory.getLogger(DataTypeIntegrationTest.class);
 
-    List<TestTable> tables = allTables();
-    VersionNumber cassandraVersion;
+    private Map<DataType, Object> samples;
+
+    private List<TestTable> tables;
+
+    private VersionNumber cassandraVersion;
 
     enum StatementType {RAW_STRING, SIMPLE_WITH_PARAM, PREPARED}
 
     @Override
     public void onTestContextInitialized() {
+        ProtocolVersion protocolVersion = ccm().getProtocolVersion();
+        samples = PrimitiveTypeSamples.samples(protocolVersion);
+        tables = allTables();
         Host host = cluster().getMetadata().getAllHosts().iterator().next();
         cassandraVersion = host.getCassandraVersion().nextStable();
         List<String> statements = Lists.newArrayList();
@@ -188,7 +194,7 @@ public class DataTypeIntegrationTest extends CCMTestsSupport {
         }
     }
 
-    private static List<TestTable> allTables() {
+    private List<TestTable> allTables() {
         List<TestTable> tables = Lists.newArrayList();
 
         tables.addAll(tablesWithPrimitives());
@@ -201,18 +207,18 @@ public class DataTypeIntegrationTest extends CCMTestsSupport {
         return ImmutableList.copyOf(tables);
     }
 
-    private static List<TestTable> tablesWithPrimitives() {
+    private List<TestTable> tablesWithPrimitives() {
         List<TestTable> tables = Lists.newArrayList();
-        for (Map.Entry<DataType, Object> entry : PrimitiveTypeSamples.ALL.entrySet())
+        for (Map.Entry<DataType, Object> entry : samples.entrySet())
             tables.add(new TestTable(entry.getKey(), entry.getValue(), "1.2.0"));
         return tables;
     }
 
-    private static List<TestTable> tablesWithPrimitivesNull() {
+    private List<TestTable> tablesWithPrimitivesNull() {
         List<TestTable> tables = Lists.newArrayList();
         // Create a test table for each primitive type testing with null values.  If the
         // type maps to a java primitive type it's value will by the default value instead of null.
-        for (DataType dataType : TestUtils.allPrimitiveTypes(TestUtils.getDesiredProtocolVersion())) {
+        for (DataType dataType : TestUtils.allPrimitiveTypes(ccm().getProtocolVersion())) {
             Object expectedPrimitiveValue = null;
             switch (dataType.getName()) {
                 case BIGINT:
@@ -250,9 +256,9 @@ public class DataTypeIntegrationTest extends CCMTestsSupport {
 
     }
 
-    private static List<TestTable> tablesWithCollectionsOfPrimitives() {
+    private List<TestTable> tablesWithCollectionsOfPrimitives() {
         List<TestTable> tables = Lists.newArrayList();
-        for (Map.Entry<DataType, Object> entry : PrimitiveTypeSamples.ALL.entrySet()) {
+        for (Map.Entry<DataType, Object> entry : samples.entrySet()) {
 
             DataType elementType = entry.getKey();
             Object elementSample = entry.getValue();
@@ -263,12 +269,12 @@ public class DataTypeIntegrationTest extends CCMTestsSupport {
         return tables;
     }
 
-    private static List<TestTable> tablesWithMapsOfPrimitives() {
+    private List<TestTable> tablesWithMapsOfPrimitives() {
         List<TestTable> tables = Lists.newArrayList();
-        for (Map.Entry<DataType, Object> keyEntry : PrimitiveTypeSamples.ALL.entrySet()) {
+        for (Map.Entry<DataType, Object> keyEntry : samples.entrySet()) {
             DataType keyType = keyEntry.getKey();
             Object keySample = keyEntry.getValue();
-            for (Map.Entry<DataType, Object> valueEntry : PrimitiveTypeSamples.ALL.entrySet()) {
+            for (Map.Entry<DataType, Object> valueEntry : samples.entrySet()) {
                 DataType valueType = valueEntry.getKey();
                 Object valueSample = valueEntry.getValue();
 
@@ -280,7 +286,7 @@ public class DataTypeIntegrationTest extends CCMTestsSupport {
         return tables;
     }
 
-    private static Collection<? extends TestTable> tablesWithNestedCollections() {
+    private Collection<? extends TestTable> tablesWithNestedCollections() {
         List<TestTable> tables = Lists.newArrayList();
 
         // To avoid combinatorial explosion, only use int as the primitive type, and two levels of nesting.
@@ -311,7 +317,7 @@ public class DataTypeIntegrationTest extends CCMTestsSupport {
         return tables;
     }
 
-    private static Collection<? extends TestTable> tablesWithRandomlyGeneratedNestedCollections() {
+    private Collection<? extends TestTable> tablesWithRandomlyGeneratedNestedCollections() {
         List<TestTable> tables = Lists.newArrayList();
 
         DataType nestedListType = buildNestedType(DataType.Name.LIST, 5);
@@ -327,7 +333,7 @@ public class DataTypeIntegrationTest extends CCMTestsSupport {
     /**
      * Populate a nested collection based on the given type and it's arguments.
      */
-    public static Object nestedObject(DataType type) {
+    public Object nestedObject(DataType type) {
 
         int typeIdx = type.getTypeArguments().size() > 1 ? 1 : 0;
         DataType argument = type.getTypeArguments().get(typeIdx);
@@ -377,7 +383,7 @@ public class DataTypeIntegrationTest extends CCMTestsSupport {
      * @return a DataType that is a nested collection with the given baseType with the
      * given depth.
      */
-    public static DataType buildNestedType(DataType.Name baseType, int depth) {
+    public DataType buildNestedType(DataType.Name baseType, int depth) {
         Random r = new Random();
         DataType t = null;
 

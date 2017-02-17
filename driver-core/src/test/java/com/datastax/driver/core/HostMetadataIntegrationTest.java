@@ -15,7 +15,6 @@
  */
 package com.datastax.driver.core;
 
-import com.datastax.driver.core.utils.DseVersion;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.testng.annotations.Test;
@@ -23,51 +22,9 @@ import org.testng.annotations.Test;
 import java.net.InetAddress;
 
 import static com.datastax.driver.core.Assertions.assertThat;
-import static com.datastax.driver.core.CCMAccess.Workload.solr;
-import static com.datastax.driver.core.CCMAccess.Workload.spark;
 import static com.datastax.driver.core.TestUtils.nonQuietClusterCloseOptions;
 
 public class HostMetadataIntegrationTest {
-
-    /**
-     * Validates that when given a DSE cluster that the workload and dse versions are properly
-     * parsed and set on the respective {@link Host} instances.
-     * <p/>
-     * This test is disabled as running DSE with workloads is intensive and has unreliable results
-     * when running CCM with multiple workloads.
-     * <p/>
-     *
-     * @test_category host:metadata
-     * @jira_ticket JAVA-1042
-     * @see HostMetadataIntegrationTest#should_parse_dse_workload_and_version_if_available()
-     */
-    @Test(groups = "long")
-    @DseVersion("5.0.0")
-    public void test_mixed_dse_workload() {
-        CCMBridge.Builder builder = CCMBridge.builder()
-                .withNodes(3)
-                .withDSE()
-                .withWorkload(2, solr)
-                .withWorkload(3, spark);
-        CCMAccess ccm = CCMCache.get(builder);
-
-        VersionNumber version = VersionNumber.parse(CCMBridge.getDSEVersion());
-
-        Cluster cluster = Cluster.builder()
-                .addContactPoints(ccm.addressOfNode(1).getAddress())
-                .withPort(ccm.getBinaryPort())
-                .build();
-        try {
-            cluster.connect();
-
-            assertThat(cluster).host(1).hasWorkload("Cassandra").hasDseVersion(version);
-            assertThat(cluster).host(2).hasWorkload("Search").hasDseVersion(version);
-            assertThat(cluster).host(3).hasWorkload("Analytics").hasDseVersion(version);
-        } finally {
-            cluster.close();
-            ccm.close();
-        }
-    }
 
     /**
      * Validates that {@link Host#getDseVersion()} and {@link Host#getDseWorkload()} return values defined in

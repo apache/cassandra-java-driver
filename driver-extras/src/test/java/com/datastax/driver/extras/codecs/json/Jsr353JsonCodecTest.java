@@ -59,7 +59,7 @@ public class Jsr353JsonCodecTest extends CCMTestsSupport {
                 insertInto(TABLE1).value("k", "key0").value(quote("miXeD"), "d").value("i", 4).value("f", 5.0).toString()
         );
 
-        if (TestUtils.getDesiredProtocolVersion().compareTo(ProtocolVersion.V3) >= 0) {
+        if (ccm().getProtocolVersion().compareTo(ProtocolVersion.V3) >= 0) {
             execute(
                     "CREATE TYPE address (street text, zipcode int, phones list<text>)",
                     String.format("CREATE TABLE %s (k text PRIMARY KEY, v frozen<address>)", TABLE2)

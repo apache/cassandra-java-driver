@@ -185,7 +185,7 @@ public class AggregateMetadataTest extends CCMTestsSupport {
     @Test(groups = "short")
     @CassandraVersion("2.2.0")
     public void should_parse_and_format_aggregate_with_composite_type_literal_initcond() {
-        VersionNumber ver = VersionNumber.parse(CCMBridge.getCassandraVersion());
+        VersionNumber ver = ccm().getCassandraVersion();
         if (ver.getMajor() == 3) {
             if ((ver.getMinor() >= 1 && ver.getMinor() < 4) || (ver.getMinor() == 0 && ver.getPatch() < 4)) {
                 throw new SkipException("Requires C* 2.2.X, 3.0.4+ or 3.4.X+");
@@ -206,7 +206,7 @@ public class AggregateMetadataTest extends CCMTestsSupport {
     @Test(groups = "short")
     @CassandraVersion("3.4")
     public void should_parse_and_format_aggregate_with_composite_type_hex_initcond() {
-        VersionNumber ver = VersionNumber.parse(CCMBridge.getCassandraVersion());
+        VersionNumber ver = ccm().getCassandraVersion();
         if ((ver.getMinor() >= 1 && ver.getMinor() < 4)) {
             throw new SkipException("Requires 3.0.4+ or 3.4.X+");
         }

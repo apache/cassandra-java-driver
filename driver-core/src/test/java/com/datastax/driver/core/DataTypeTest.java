@@ -37,7 +37,7 @@ public class DataTypeTest {
 
     CodecRegistry codecRegistry = new CodecRegistry();
 
-    ProtocolVersion protocolVersion = TestUtils.getDesiredProtocolVersion();
+    ProtocolVersion protocolVersion = ProtocolVersion.NEWEST_SUPPORTED;
 
     static boolean exclude(DataType t) {
         return t.getName() == DataType.Name.COUNTER || t.getName() == DataType.Name.DURATION;

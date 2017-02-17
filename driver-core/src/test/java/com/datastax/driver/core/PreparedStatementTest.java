@@ -48,7 +48,8 @@ public class PreparedStatementTest extends CCMTestsSupport {
     private static final String SIMPLE_TABLE = "test";
     private static final String SIMPLE_TABLE2 = "test2";
 
-    private final Collection<DataType> primitiveTypes = allPrimitiveTypes(TestUtils.getDesiredProtocolVersion());
+    private ProtocolVersion protocolVersion;
+    private Collection<DataType> primitiveTypes;
 
     private boolean exclude(DataType t) {
         // duration is not supported in collections
@@ -57,6 +58,8 @@ public class PreparedStatementTest extends CCMTestsSupport {
 
     @Override
     public void onTestContextInitialized() {
+        protocolVersion = ccm().getProtocolVersion();
+        primitiveTypes = TestUtils.allPrimitiveTypes(protocolVersion);
         execute(createTestFixtures());
     }
 
@@ -341,7 +344,7 @@ public class PreparedStatementTest extends CCMTestsSupport {
         toPrepare.setConsistencyLevel(ConsistencyLevel.QUORUM);
         toPrepare.setSerialConsistencyLevel(ConsistencyLevel.LOCAL_SERIAL);
         toPrepare.setRetryPolicy(FallthroughRetryPolicy.INSTANCE);
-        if (TestUtils.getDesiredProtocolVersion().compareTo(V4) >= 0)
+        if (protocolVersion.compareTo(V4) >= 0)
             toPrepare.setOutgoingPayload(ImmutableMap.of("foo", Bytes.fromHexString("0xcafebabe")));
         toPrepare.setIdempotent(true);
         toPrepare.enableTracing();
@@ -350,7 +353,7 @@ public class PreparedStatementTest extends CCMTestsSupport {
         assertThat(prepared.getConsistencyLevel()).isEqualTo(ConsistencyLevel.QUORUM);
         assertThat(prepared.getSerialConsistencyLevel()).isEqualTo(ConsistencyLevel.LOCAL_SERIAL);
         assertThat(prepared.getRetryPolicy()).isEqualTo(FallthroughRetryPolicy.INSTANCE);
-        if (TestUtils.getDesiredProtocolVersion().compareTo(V4) >= 0)
+        if (protocolVersion.compareTo(V4) >= 0)
             assertThat(prepared.getOutgoingPayload()).isEqualTo(ImmutableMap.of("foo", Bytes.fromHexString("0xcafebabe")));
         assertThat(prepared.isIdempotent()).isTrue();
         assertThat(prepared.isTracing()).isTrue();
@@ -359,7 +362,7 @@ public class PreparedStatementTest extends CCMTestsSupport {
         assertThat(bs.getConsistencyLevel()).isEqualTo(ConsistencyLevel.QUORUM);
         assertThat(bs.getSerialConsistencyLevel()).isEqualTo(ConsistencyLevel.LOCAL_SERIAL);
         assertThat(bs.getRetryPolicy()).isEqualTo(FallthroughRetryPolicy.INSTANCE);
-        if (TestUtils.getDesiredProtocolVersion().compareTo(V4) >= 0)
+        if (protocolVersion.compareTo(V4) >= 0)
             assertThat(bs.getOutgoingPayload()).isEqualTo(ImmutableMap.of("foo", Bytes.fromHexString("0xcafebabe")));
         assertThat(bs.isIdempotent()).isTrue();
         assertThat(bs.isTracing()).isTrue();
@@ -461,7 +464,7 @@ public class PreparedStatementTest extends CCMTestsSupport {
         Cluster cluster = register(Cluster.builder()
                 .addContactPoints(getContactPoints())
                 .withPort(ccm().getBinaryPort())
-                .withProtocolVersion(TestUtils.getDesiredProtocolVersion(ProtocolVersion.V3))
+                .withProtocolVersion(ccm().getProtocolVersion(ProtocolVersion.V3))
                 .build());
         Session session = cluster.connect();
         try {
@@ -491,7 +494,7 @@ public class PreparedStatementTest extends CCMTestsSupport {
         Cluster cluster = register(Cluster.builder()
                 .addContactPoints(getContactPoints())
                 .withPort(ccm().getBinaryPort())
-                .withProtocolVersion(TestUtils.getDesiredProtocolVersion(ProtocolVersion.V3))
+                .withProtocolVersion(ccm().getProtocolVersion(ProtocolVersion.V3))
                 .build());
         Session session = cluster.connect();
         try {

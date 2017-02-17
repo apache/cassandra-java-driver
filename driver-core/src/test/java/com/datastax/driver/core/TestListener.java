@@ -119,12 +119,13 @@ public class TestListener extends TestListenerAdapter implements IInvokedMethodL
     }
 
     private static void cassandraVersionCheck(CassandraVersion version) {
-        versionCheck(CCMBridge.getCassandraVersionNumber(), VersionNumber.parse(version.value()), version.description());
+        versionCheck(CCMBridge.getGlobalCassandraVersion(), VersionNumber.parse(version.value()), version.description());
     }
 
     private static void dseVersionCheck(DseVersion version) {
-        if (CCMBridge.isDSE()) {
-            versionCheck(CCMBridge.getDSEVersionNumber(), VersionNumber.parse(version.value()), version.description());
+        VersionNumber dseVersion = CCMBridge.getGlobalDSEVersion();
+        if (dseVersion != null) {
+            versionCheck(CCMBridge.getGlobalDSEVersion(), VersionNumber.parse(version.value()), version.description());
         } else {
             throw new SkipException("Skipping test because not configured for DataStax Enterprise cluster.");
         }

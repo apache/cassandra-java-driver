@@ -40,11 +40,11 @@ public class CCMBridge implements CCMAccess {
 
     private static final Logger logger = LoggerFactory.getLogger(CCMBridge.class);
 
-    private static final String CASSANDRA_VERSION;
+    private static final VersionNumber GLOBAL_CASSANDRA_VERSION_NUMBER;
+
+    private static final VersionNumber GLOBAL_DSE_VERSION_NUMBER;
 
     private static final Set<String> CASSANDRA_INSTALL_ARGS;
-
-    private static final boolean IS_DSE;
 
     public static final String DEFAULT_CLIENT_TRUSTSTORE_PASSWORD = "cassandra1sfun";
     public static final String DEFAULT_CLIENT_TRUSTSTORE_PATH = "/client.truststore";
@@ -81,8 +81,8 @@ public class CCMBridge implements CCMAccess {
     private static final Map<String, String> ENVIRONMENT_MAP;
 
     /**
-     * A mapping of full DSE versions to their C* counterpart.  This is not meant to be comprehensive.  Used by
-     * {@link #getCassandraVersion()}.  If C* version cannot be derived, the method makes a 'best guess'.
+     * A mapping of full DSE versions to their C* counterpart.  This is not meant to be comprehensive.
+     * If C* version cannot be derived, the method makes a 'best guess'.
      */
     private static final Map<String, String> dseToCassandraVersions = ImmutableMap.<String, String>builder()
             .put("5.0.4", "3.0.10")
@@ -144,14 +144,14 @@ public class CCMBridge implements CCMAccess {
     private static final String CCM_COMMAND;
 
     static {
-        CASSANDRA_VERSION = System.getProperty("cassandra.version");
+        String inputCassandraVersion = System.getProperty("cassandra.version");
         String installDirectory = System.getProperty("cassandra.directory");
         String branch = System.getProperty("cassandra.branch");
 
         String dseProperty = System.getProperty("dse");
         // If -Ddse, if the value is empty interpret it as enabled,
         // otherwise if there is a value, parse as boolean.
-        IS_DSE = dseProperty != null && (dseProperty.isEmpty() || Boolean.parseBoolean(dseProperty));
+        boolean isDse = dseProperty != null && (dseProperty.isEmpty() || Boolean.parseBoolean(dseProperty));
 
         ImmutableSet.Builder<String> installArgs = ImmutableSet.builder();
         if (installDirectory != null && !installDirectory.trim().isEmpty()) {
@@ -159,10 +159,10 @@ public class CCMBridge implements CCMAccess {
         } else if (branch != null && !branch.trim().isEmpty()) {
             installArgs.add("-v git:" + branch.trim().replaceAll("\"", ""));
         } else {
-            installArgs.add("-v " + CASSANDRA_VERSION);
+            installArgs.add("-v " + inputCassandraVersion);
         }
 
-        if (IS_DSE) {
+        if (isDse) {
             installArgs.add("--dse");
         }
 
@@ -193,12 +193,57 @@ public class CCMBridge implements CCMAccess {
         }
         ENVIRONMENT_MAP = ImmutableMap.copyOf(envMap);
 
-        if (CCMBridge.isDSE()) {
+        if (isDse) {
+            GLOBAL_DSE_VERSION_NUMBER = VersionNumber.parse(inputCassandraVersion);
+            GLOBAL_CASSANDRA_VERSION_NUMBER = CCMBridge.getCassandraVersion(GLOBAL_DSE_VERSION_NUMBER);
             logger.info("Tests requiring CCM will by default use DSE version {} (C* {}, install arguments: {})",
-                    CCMBridge.getDSEVersion(), CCMBridge.getCassandraVersion(), CCMBridge.getInstallArguments());
+                    GLOBAL_DSE_VERSION_NUMBER, GLOBAL_CASSANDRA_VERSION_NUMBER, CASSANDRA_INSTALL_ARGS);
         } else {
+            GLOBAL_CASSANDRA_VERSION_NUMBER = VersionNumber.parse(inputCassandraVersion);
+            GLOBAL_DSE_VERSION_NUMBER = null;
             logger.info("Tests requiring CCM will by default use Cassandra version {} (install arguments: {})",
-                    CCMBridge.getCassandraVersion(), CCMBridge.getInstallArguments());
+                    GLOBAL_CASSANDRA_VERSION_NUMBER, CASSANDRA_INSTALL_ARGS);
+        }
+    }
+
+    /**
+     * @return {@link VersionNumber} configured for Cassandra based on system properties.
+     */
+    public static VersionNumber getGlobalCassandraVersion() {
+        return GLOBAL_CASSANDRA_VERSION_NUMBER;
+    }
+
+    /**
+     * @return {@link VersionNumber} configured for DSE based on system properties.
+     */
+    public static VersionNumber getGlobalDSEVersion() {
+        return GLOBAL_DSE_VERSION_NUMBER;
+    }
+
+    /**
+     * @return The mapped cassandra version to the given dseVersion.
+     * If the DSE version can't be derived the following logic is used:
+     * <ol>
+     * <li>If <= 3.X, use C* 1.2</li>
+     * <li>If 4.X, use 2.1 for >= 4.7, 2.0 otherwise.</li>
+     * <li>Otherwise 3.0</li>
+     * </ol>
+     */
+    public static VersionNumber getCassandraVersion(VersionNumber dseVersion) {
+        String cassandraVersion = dseToCassandraVersions.get(dseVersion.toString());
+        if (cassandraVersion != null) {
+            return VersionNumber.parse(cassandraVersion);
+        } else if (dseVersion.getMajor() <= 3) {
+            return VersionNumber.parse("1.2");
+        } else if (dseVersion.getMajor() == 4) {
+            if (dseVersion.getMinor() >= 7) {
+                return VersionNumber.parse("2.1");
+            } else {
+                return VersionNumber.parse("2.0");
+            }
+        } else {
+            // Fallback on 3.0 by default.
+            return VersionNumber.parse("3.0");
         }
     }
 
@@ -215,7 +260,9 @@ public class CCMBridge implements CCMAccess {
 
     private final String clusterName;
 
-    private final VersionNumber version;
+    private final VersionNumber cassandraVersion;
+
+    private final VersionNumber dseVersion;
 
     private final int storagePort;
 
@@ -237,104 +284,18 @@ public class CCMBridge implements CCMAccess {
 
     private final int[] nodes;
 
-    private CCMBridge(String clusterName, boolean isDSE, VersionNumber version, int storagePort, int thriftPort, int binaryPort, String jvmArgs, int[] nodes) {
+    private CCMBridge(String clusterName, VersionNumber cassandraVersion, VersionNumber dseVersion,
+                      int storagePort, int thriftPort, int binaryPort, String jvmArgs, int[] nodes) {
         this.clusterName = clusterName;
-        this.version = version;
+        this.cassandraVersion = cassandraVersion;
+        this.dseVersion = dseVersion;
         this.storagePort = storagePort;
         this.thriftPort = thriftPort;
         this.binaryPort = binaryPort;
-        this.isDSE = isDSE;
+        this.isDSE = dseVersion != null;
         this.jvmArgs = jvmArgs;
         this.nodes = nodes;
         this.ccmDir = Files.createTempDir();
-    }
-
-    /**
-     * @return The configured cassandra version.  If -Ddse=true was used, this value is derived from the
-     * DSE version provided.  If the DSE version can't be derived the following logic is used:
-     * <ol>
-     * <li>If <= 3.X, use C* 1.2</li>
-     * <li>If 4.X, use 2.1 for >= 4.7, 2.0 otherwise.</li>
-     * <li>Otherwise 3.0</li>
-     * </ol>
-     */
-    public static String getCassandraVersion() {
-        if (isDSE()) {
-            String cassandraVersion = dseToCassandraVersions.get(CASSANDRA_VERSION);
-            if (cassandraVersion != null) {
-                return cassandraVersion;
-            } else if (CASSANDRA_VERSION.startsWith("3.") || CASSANDRA_VERSION.compareTo("3") <= 0) {
-                return "1.2";
-            } else if (CASSANDRA_VERSION.startsWith("4.")) {
-                if (CASSANDRA_VERSION.compareTo("4.7") >= 0) {
-                    return "2.1";
-                } else {
-                    return "2.0";
-                }
-            } else {
-                // Fallback on 3.0 by default.
-                return "3.0";
-            }
-
-        } else {
-            return CASSANDRA_VERSION;
-        }
-    }
-
-    /**
-     * @return {@link VersionNumber} representation of {@link CCMBridge#getCassandraVersion()}
-     */
-    public static VersionNumber getCassandraVersionNumber() {
-        return VersionNumber.parse(getCassandraVersion());
-    }
-
-    /**
-     * @param compareVersion The given version to compare with.
-     * @return Whether or not the configured cassandra version is greater than or equal to the given version.
-     */
-    public static boolean isCassandraVersionAtLeast(String compareVersion) {
-        return getCassandraVersionNumber().compareTo(VersionNumber.parse(compareVersion)) >= 0;
-    }
-
-    /**
-     * @return The configured DSE version if '-Ddse=true' specified, otherwise null.
-     */
-    public static String getDSEVersion() {
-        if (isDSE()) {
-            return CASSANDRA_VERSION;
-        } else {
-            return null;
-        }
-    }
-
-    /**
-     * @return {@link VersionNumber} representation of {@link CCMBridge#getDSEVersion()}
-     */
-    public static VersionNumber getDSEVersionNumber() {
-        return VersionNumber.parse(getDSEVersion());
-    }
-
-    /**
-     * @param compareVersion The given version to compare with.
-     * @return Whether or not the configured dse version is greater than or equal to the given version.
-     */
-    public static boolean isDSEVersionAtLeast(String compareVersion) {
-        VersionNumber dseVersion = getDSEVersionNumber();
-        return dseVersion != null && dseVersion.compareTo(VersionNumber.parse(compareVersion)) >= 0;
-    }
-
-    /**
-     * @return Whether or not DSE was configured via '-Ddse=true'.
-     */
-    public static boolean isDSE() {
-        return IS_DSE;
-    }
-
-    /**
-     * @return The install arguments to pass to CCM when creating the cluster.
-     */
-    public static Set<String> getInstallArguments() {
-        return CASSANDRA_INSTALL_ARGS;
     }
 
     public static Builder builder() {
@@ -352,8 +313,13 @@ public class CCMBridge implements CCMAccess {
     }
 
     @Override
-    public VersionNumber getVersion() {
-        return version;
+    public VersionNumber getCassandraVersion() {
+        return cassandraVersion;
+    }
+
+    @Override
+    public VersionNumber getDSEVersion() {
+        return dseVersion;
     }
 
     @Override
@@ -435,7 +401,7 @@ public class CCMBridge implements CCMAccess {
     private String getStartWaitArguments() {
         // make a small exception for C* 1.2 as it has a bug where it starts listening on the binary
         // interface slightly before it joins the cluster.
-        if (getCassandraVersion().startsWith("1.")) {
+        if (this.cassandraVersion.getMajor() == 1) {
             return " --wait-other-notice";
         } else {
             return " --no-wait";
@@ -450,7 +416,7 @@ public class CCMBridge implements CCMAccess {
             logger.debug("Starting: {} - free memory: {} MB", this, TestUtils.getFreeMemoryMB());
         try {
             String cmd = CCM_COMMAND + " start " + jvmArgs + getStartWaitArguments();
-            if (isWindows() && this.version.compareTo(VersionNumber.parse("2.2.4")) >= 0) {
+            if (isWindows() && this.cassandraVersion.compareTo(VersionNumber.parse("2.2.4")) >= 0) {
                 cmd += " --quiet-windows";
             }
             execute(cmd);
@@ -524,7 +490,7 @@ public class CCMBridge implements CCMAccess {
         logger.debug(String.format("Starting: node %s (%s%s:%s) in %s", n, TestUtils.IP_PREFIX, n, binaryPort, this));
         try {
             String cmd = CCM_COMMAND + " node%d start " + jvmArgs + getStartWaitArguments();
-            if (isWindows() && this.version.compareTo(VersionNumber.parse("2.2.4")) >= 0) {
+            if (isWindows() && this.cassandraVersion.compareTo(VersionNumber.parse("2.2.4")) >= 0) {
                 cmd += " --quiet-windows";
             }
             execute(cmd, n);
@@ -582,7 +548,7 @@ public class CCMBridge implements CCMAccess {
         logger.debug(String.format("Decommissioning: node %s (%s%s:%s) from %s", n, TestUtils.IP_PREFIX, n, binaryPort, this));
         // Special case for C* 3.12+, DSE 5.1+, force decommission (see CASSANDRA-12510)
         String cmd = CCM_COMMAND + " node%d decommission";
-        if ((!isDSE() && isCassandraVersionAtLeast("3.12")) || (isDSE() && isDSEVersionAtLeast("5.1"))) {
+        if (this.cassandraVersion.compareTo(VersionNumber.parse("3.12")) >= 0) {
             cmd += " --force";
         }
         execute(cmd, n);
@@ -724,6 +690,26 @@ public class CCMBridge implements CCMAccess {
         TestUtils.waitUntilPortIsDown(addressOfNode(node));
     }
 
+    @Override
+    public ProtocolVersion getProtocolVersion() {
+        VersionNumber version = getCassandraVersion();
+        if (version.compareTo(VersionNumber.parse("2.0")) < 0) {
+            return ProtocolVersion.V1;
+        } else if (version.compareTo(VersionNumber.parse("2.1")) < 0) {
+            return ProtocolVersion.V2;
+        } else if (version.compareTo(VersionNumber.parse("2.2")) < 0) {
+            return ProtocolVersion.V3;
+        } else {
+            return ProtocolVersion.V4;
+        }
+    }
+
+    @Override
+    public ProtocolVersion getProtocolVersion(ProtocolVersion maximumAllowed) {
+        ProtocolVersion versionToUse = getProtocolVersion();
+        return versionToUse.compareTo(maximumAllowed) > 0 ? maximumAllowed : versionToUse;
+    }
+
     /**
      * <p>
      * Extracts a keystore from the classpath into a temporary file.
@@ -782,9 +768,9 @@ public class CCMBridge implements CCMAccess {
 
         int[] nodes = {1};
         private boolean start = true;
-        private Boolean isDSE = null;
-        private String version = getCassandraVersion();
-        private Set<String> createOptions = new LinkedHashSet<String>(getInstallArguments());
+        private boolean dse = false;
+        private VersionNumber version = null;
+        private Set<String> createOptions = new LinkedHashSet<String>();
         private Set<String> jvmArgs = new LinkedHashSet<String>();
         private final Map<String, Object> cassandraConfiguration = Maps.newLinkedHashMap();
         private final Map<String, Object> dseConfiguration = Maps.newLinkedHashMap();
@@ -840,41 +826,24 @@ public class CCMBridge implements CCMAccess {
         }
 
         /**
-         * Sets this cluster to be a DSE cluster (defaults to {@link #isDSE()} if this is never called).
+         * The Cassandra or DSE version to use.  If not specified the globally configured version is used instead.
          */
-        public Builder withDSE() {
-            this.isDSE = true;
-            return this;
-        }
-
-        /**
-         * Sets this cluster to be a non-DSE cluster (defaults to {@link #isDSE()} if this is never called).
-         */
-        public Builder withoutDSE() {
-            this.isDSE = false;
-            return this;
-        }
-
-        /**
-         * The Cassandra or DSE version to use (defaults to {@link #getCassandraVersion()} if this is never called).
-         */
-        public Builder withVersion(String version) {
-            Iterator<String> it = createOptions.iterator();
-            while (it.hasNext()) {
-                String option = it.next();
-                // remove any version previously set and
-                // install-dir, which is incompatible
-                if (option.startsWith("-v ") || option.startsWith("--install-dir"))
-                    it.remove();
-            }
-            this.createOptions.add("-v " + version);
+        public Builder withVersion(VersionNumber version) {
             this.version = version;
             return this;
         }
 
         /**
+         * Indicates whether or not this cluster is meant to be a DSE cluster.
+         */
+        public Builder withDSE(boolean dse) {
+            this.dse = dse;
+            return this;
+        }
+
+        /**
          * Free-form options that will be added at the end of the {@code ccm create} command
-         * (defaults to {@link #getInstallArguments()} if this is never called).
+         * (defaults to {@link #CASSANDRA_INSTALL_ARGS} if this is never called).
          */
         public Builder withCreateOptions(String... createOptions) {
             Collections.addAll(this.createOptions, createOptions);
@@ -937,32 +906,49 @@ public class CCMBridge implements CCMAccess {
         public CCMBridge build() {
             // be careful NOT to alter internal state (hashCode/equals) during build!
             String clusterName = TestUtils.generateIdentifier("ccm_");
-            boolean dse = isDSE == null ? isDSE() : isDSE;
 
-            VersionNumber version = VersionNumber.parse(this.version);
+
+            VersionNumber dseVersion;
+            VersionNumber cassandraVersion;
+            boolean versionConfigured = this.version != null;
+            // No version was explicitly provided, fallback on global config.
+            if (!versionConfigured) {
+                dseVersion = GLOBAL_DSE_VERSION_NUMBER;
+                cassandraVersion = GLOBAL_CASSANDRA_VERSION_NUMBER;
+            } else if (dse) {
+                // given version is the DSE version, base cassandra version on DSE version.
+                dseVersion = this.version;
+                cassandraVersion = getCassandraVersion(dseVersion);
+            } else {
+                // given version is cassandra version.
+                dseVersion = null;
+                cassandraVersion = this.version;
+            }
+
             Map<String, Object> cassandraConfiguration = randomizePorts(this.cassandraConfiguration);
             int storagePort = Integer.parseInt(cassandraConfiguration.get("storage_port").toString());
             int thriftPort = Integer.parseInt(cassandraConfiguration.get("rpc_port").toString());
             int binaryPort = Integer.parseInt(cassandraConfiguration.get("native_transport_port").toString());
-            if (!isThriftSupported(dse, version)) {
+            if (!isThriftSupported(cassandraVersion)) {
                 // remove thrift configuration
                 cassandraConfiguration.remove("start_rpc");
                 cassandraConfiguration.remove("rpc_port");
                 cassandraConfiguration.remove("thrift_prepared_statements_cache_size_mb");
             }
-            final CCMBridge ccm = new CCMBridge(clusterName, dse, version, storagePort, thriftPort, binaryPort, joinJvmArgs(), nodes);
+            final CCMBridge ccm = new CCMBridge(clusterName, cassandraVersion, dseVersion, storagePort, thriftPort, binaryPort, joinJvmArgs(), nodes);
+
             Runtime.getRuntime().addShutdownHook(new Thread() {
                 @Override
                 public void run() {
                     ccm.close();
                 }
             });
-            ccm.execute(buildCreateCommand(clusterName, dse));
+            ccm.execute(buildCreateCommand(clusterName, versionConfigured, cassandraVersion, dseVersion));
             updateNodeConf(ccm);
             ccm.updateConfig(cassandraConfiguration);
-            if (dse) {
+            if (dseVersion != null) {
                 Map<String, Object> dseConfiguration = Maps.newLinkedHashMap(this.dseConfiguration);
-                if (dse && version.getMajor() >= 5) {
+                if (dseVersion.getMajor() >= 5) {
                     // randomize DSE specific ports if dse present and greater than 5.0
                     dseConfiguration.put("lease_netty_server_port", RANDOM_PORT);
                     dseConfiguration.put("internode_messaging_options.port", RANDOM_PORT);
@@ -979,8 +965,8 @@ public class CCMBridge implements CCMAccess {
             return ccm;
         }
 
-        private static boolean isThriftSupported(boolean dse, VersionNumber version) {
-            return dse || version.compareTo(VersionNumber.parse("4.0")) < 0;
+        private static boolean isThriftSupported(VersionNumber cassandraVersion) {
+            return cassandraVersion.compareTo(VersionNumber.parse("4.0")) < 0;
         }
 
         public int weight() {
@@ -1006,7 +992,8 @@ public class CCMBridge implements CCMAccess {
             return allJvmArgs.toString();
         }
 
-        private String buildCreateCommand(String clusterName, boolean dse) {
+        private String buildCreateCommand(String clusterName, boolean versionConfigured, VersionNumber
+                cassandraVersion, VersionNumber dseVersion) {
             StringBuilder result = new StringBuilder(CCM_COMMAND + " create");
             result.append(" ").append(clusterName);
             result.append(" -i ").append(TestUtils.IP_PREFIX);
@@ -1021,16 +1008,18 @@ public class CCMBridge implements CCMAccess {
                 }
             }
 
-            // If not DSE, remove --dse if in createOptions.
             Set<String> lCreateOptions = new LinkedHashSet<String>(createOptions);
-            if (!dse) {
-                Iterator<String> it = lCreateOptions.iterator();
-                while (it.hasNext()) {
-                    String option = it.next();
-                    // remove any version previously set and
-                    // install-dir, which is incompatible
-                    if (option.equals("--dse"))
-                        it.remove();
+            if (!versionConfigured) {
+                // If no version was provided, use the default install ags.
+                lCreateOptions.addAll(CASSANDRA_INSTALL_ARGS);
+            } else {
+                if (dseVersion != null) {
+                    lCreateOptions.add("--dse");
+                    lCreateOptions.add("-v");
+                    lCreateOptions.add(dseVersion.toString());
+                } else {
+                    lCreateOptions.add("-v");
+                    lCreateOptions.add(cassandraVersion.toString());
                 }
             }
             result.append(" ").append(Joiner.on(" ").join(randomizePorts(lCreateOptions)));
@@ -1119,14 +1108,15 @@ public class CCMBridge implements CCMAccess {
         @Override
         @SuppressWarnings("SimplifiableIfStatement")
         public boolean equals(Object o) {
-            // do not include cluster name and start, only
-            // properties relevant to the settings of the cluster
+            // do not include start as it is not relevant to the settings of the cluster.
             if (this == o) return true;
             if (o == null || getClass() != o.getClass()) return false;
+
             Builder builder = (Builder) o;
+
+            if (dse != builder.dse) return false;
             if (!Arrays.equals(nodes, builder.nodes)) return false;
-            if (isDSE != null ? !isDSE.equals(builder.isDSE) : builder.isDSE != null) return false;
-            if (!version.equals(builder.version)) return false;
+            if (version != null ? !version.equals(builder.version) : builder.version != null) return false;
             if (!createOptions.equals(builder.createOptions)) return false;
             if (!jvmArgs.equals(builder.jvmArgs)) return false;
             if (!cassandraConfiguration.equals(builder.cassandraConfiguration)) return false;
@@ -1136,19 +1126,17 @@ public class CCMBridge implements CCMAccess {
 
         @Override
         public int hashCode() {
-            // do not include cluster name and start, only
-            // properties relevant to the settings of the cluster
+            // do not include start as it is not relevant to the settings of the cluster.
             int result = Arrays.hashCode(nodes);
-            result = 31 * result + (isDSE != null ? isDSE.hashCode() : 0);
+            result = 31 * result + (dse ? 1 : 0);
+            result = 31 * result + (version != null ? version.hashCode() : 0);
             result = 31 * result + createOptions.hashCode();
             result = 31 * result + jvmArgs.hashCode();
             result = 31 * result + cassandraConfiguration.hashCode();
             result = 31 * result + dseConfiguration.hashCode();
             result = 31 * result + workloads.hashCode();
-            result = 31 * result + version.hashCode();
             return result;
         }
-
     }
 
 }
