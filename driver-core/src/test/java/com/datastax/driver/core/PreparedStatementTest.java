@@ -48,7 +48,8 @@ public class PreparedStatementTest extends CCMTestsSupport {
     private static final String SIMPLE_TABLE = "test";
     private static final String SIMPLE_TABLE2 = "test2";
 
-    private final Collection<DataType> primitiveTypes = DataType.allPrimitiveTypes(TestUtils.getDesiredProtocolVersion());
+    private ProtocolVersion protocolVersion;
+    private Collection<DataType> primitiveTypes;
 
     private boolean exclude(DataType t) {
         return t.getName() == DataType.Name.COUNTER;
@@ -56,6 +57,8 @@ public class PreparedStatementTest extends CCMTestsSupport {
 
     @Override
     public void onTestContextInitialized() {
+        protocolVersion = ccm().getProtocolVersion();
+        primitiveTypes = DataType.allPrimitiveTypes(protocolVersion);
         execute(createTestFixtures());
     }
 
@@ -340,7 +343,7 @@ public class PreparedStatementTest extends CCMTestsSupport {
         toPrepare.setConsistencyLevel(ConsistencyLevel.QUORUM);
         toPrepare.setSerialConsistencyLevel(ConsistencyLevel.LOCAL_SERIAL);
         toPrepare.setRetryPolicy(FallthroughRetryPolicy.INSTANCE);
-        if (TestUtils.getDesiredProtocolVersion().compareTo(V4) >= 0)
+        if (protocolVersion.compareTo(V4) >= 0)
             toPrepare.setOutgoingPayload(ImmutableMap.of("foo", Bytes.fromHexString("0xcafebabe")));
         toPrepare.setIdempotent(true);
         toPrepare.enableTracing();
@@ -349,7 +352,7 @@ public class PreparedStatementTest extends CCMTestsSupport {
         assertThat(prepared.getConsistencyLevel()).isEqualTo(ConsistencyLevel.QUORUM);
         assertThat(prepared.getSerialConsistencyLevel()).isEqualTo(ConsistencyLevel.LOCAL_SERIAL);
         assertThat(prepared.getRetryPolicy()).isEqualTo(FallthroughRetryPolicy.INSTANCE);
-        if (TestUtils.getDesiredProtocolVersion().compareTo(V4) >= 0)
+        if (protocolVersion.compareTo(V4) >= 0)
             assertThat(prepared.getOutgoingPayload()).isEqualTo(ImmutableMap.of("foo", Bytes.fromHexString("0xcafebabe")));
         assertThat(prepared.isIdempotent()).isTrue();
         assertThat(prepared.isTracing()).isTrue();
@@ -358,7 +361,7 @@ public class PreparedStatementTest extends CCMTestsSupport {
         assertThat(bs.getConsistencyLevel()).isEqualTo(ConsistencyLevel.QUORUM);
         assertThat(bs.getSerialConsistencyLevel()).isEqualTo(ConsistencyLevel.LOCAL_SERIAL);
         assertThat(bs.getRetryPolicy()).isEqualTo(FallthroughRetryPolicy.INSTANCE);
-        if (TestUtils.getDesiredProtocolVersion().compareTo(V4) >= 0)
+        if (protocolVersion.compareTo(V4) >= 0)
             assertThat(bs.getOutgoingPayload()).isEqualTo(ImmutableMap.of("foo", Bytes.fromHexString("0xcafebabe")));
         assertThat(bs.isIdempotent()).isTrue();
         assertThat(bs.isTracing()).isTrue();
@@ -460,7 +463,7 @@ public class PreparedStatementTest extends CCMTestsSupport {
         Cluster cluster = register(Cluster.builder()
                 .addContactPoints(getContactPoints())
                 .withPort(ccm().getBinaryPort())
-                .withProtocolVersion(TestUtils.getDesiredProtocolVersion(ProtocolVersion.V3))
+                .withProtocolVersion(ccm().getProtocolVersion(ProtocolVersion.V3))
                 .build());
         Session session = cluster.connect();
         try {
@@ -485,12 +488,12 @@ public class PreparedStatementTest extends CCMTestsSupport {
      * @since 2.2.0
      */
     @Test(groups = "short")
-    @CassandraVersion(major = 2.0)
+    @CassandraVersion("2.0.0")
     public void should_not_allow_unbound_value_on_batch_statement_when_protocol_lesser_than_v4() {
         Cluster cluster = register(Cluster.builder()
                 .addContactPoints(getContactPoints())
                 .withPort(ccm().getBinaryPort())
-                .withProtocolVersion(TestUtils.getDesiredProtocolVersion(ProtocolVersion.V3))
+                .withProtocolVersion(ccm().getProtocolVersion(ProtocolVersion.V3))
                 .build());
         Session session = cluster.connect();
         try {
@@ -515,7 +518,7 @@ public class PreparedStatementTest extends CCMTestsSupport {
      * @since 2.2.0
      */
     @Test(groups = "short")
-    @CassandraVersion(major = 2.2)
+    @CassandraVersion("2.2.0")
     public void should_not_create_tombstone_when_unbound_value_on_bound_statement_and_protocol_v4() {
         PreparedStatement prepared = session().prepare("INSERT INTO " + SIMPLE_TABLE + " (k, i) VALUES (?, ?)");
         BoundStatement st1 = prepared.bind();
@@ -545,7 +548,7 @@ public class PreparedStatementTest extends CCMTestsSupport {
      * @since 2.2.0
      */
     @Test(groups = "short")
-    @CassandraVersion(major = 2.2)
+    @CassandraVersion("2.2.0")
     public void should_unset_value_by_index() {
         PreparedStatement prepared = session().prepare("INSERT INTO " + SIMPLE_TABLE + " (k, i) VALUES (?, ?)");
         BoundStatement bound = prepared.bind();
@@ -576,7 +579,7 @@ public class PreparedStatementTest extends CCMTestsSupport {
      * @since 2.2.0
      */
     @Test(groups = "short")
-    @CassandraVersion(major = 2.2)
+    @CassandraVersion("2.2.0")
     public void should_unset_value_by_name() {
         PreparedStatement prepared = session().prepare("INSERT INTO " + SIMPLE_TABLE + " (k, i) VALUES (:k, :i)");
         BoundStatement bound = prepared.bind();
@@ -608,7 +611,7 @@ public class PreparedStatementTest extends CCMTestsSupport {
      * @since 2.2.0
      */
     @Test(groups = "short")
-    @CassandraVersion(major = 2.2)
+    @CassandraVersion("2.2.0")
     public void should_not_create_tombstone_when_unbound_value_on_batch_statement_and_protocol_v4() {
         PreparedStatement prepared = session().prepare("INSERT INTO " + SIMPLE_TABLE + " (k, i) VALUES (?, ?)");
         BoundStatement st1 = prepared.bind();
@@ -661,7 +664,7 @@ public class PreparedStatementTest extends CCMTestsSupport {
      * @since 2.2.0
      */
     @Test(groups = "short")
-    @CassandraVersion(major = 2.0)
+    @CassandraVersion("2.0.0")
     public void should_create_tombstone_when_null_value_on_batch_statement() {
         PreparedStatement prepared = session().prepare("INSERT INTO " + SIMPLE_TABLE + " (k, i) VALUES (?, ?)");
         BoundStatement st1 = prepared.bind();

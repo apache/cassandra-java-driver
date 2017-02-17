@@ -27,7 +27,7 @@ import java.util.concurrent.ConcurrentSkipListSet;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CassandraVersion(major = 2.0, description = "uses paging")
+@CassandraVersion(value = "2.0.0", description = "uses paging")
 public class AsyncResultSetTest extends CCMTestsSupport {
 
     @Override

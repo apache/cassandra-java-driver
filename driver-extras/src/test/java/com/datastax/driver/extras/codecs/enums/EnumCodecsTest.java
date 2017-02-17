@@ -43,7 +43,7 @@ import static org.assertj.core.api.Assertions.assertThat;
  * and ints (with EnumOrdinalCodec).
  * It also validates that both codecs may coexist in the same CodecRegistry.
  */
-@CassandraVersion(major = 2.1)
+@CassandraVersion("2.1.0")
 public class EnumCodecsTest extends CCMTestsSupport {
 
     private final String insertQuery = "INSERT INTO t1 (pk, foo, foos, bar, bars, foobars, tup, udt) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";

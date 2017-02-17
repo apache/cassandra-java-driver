@@ -166,7 +166,7 @@ public class AsyncQueryTest extends CCMTestsSupport {
     }
 
     @Test(groups = "short")
-    @CassandraVersion(major = 2.0, description = "Paging is not supported until 2.0")
+    @CassandraVersion(value = "2.0.0", description = "Paging is not supported until 2.0")
     public void should_fail_when_auto_paging_on_io_thread() throws Exception {
         for (int i = 0; i < 1000; i++) {
             Statement statement = new SimpleStatement("select v from asyncquerytest.foo where k = 1");

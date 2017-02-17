@@ -26,7 +26,7 @@ import java.util.Iterator;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @SuppressWarnings("unused")
-@CassandraVersion(major = 3.0)
+@CassandraVersion("3.0")
 public class MapperMaterializedViewTest extends CCMTestsSupport {
 
     @Override

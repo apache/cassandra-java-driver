@@ -61,7 +61,7 @@ public class MapperComputedFieldsTest extends CCMTestsSupport {
     }
 
     @Test(groups = "short")
-    @CassandraVersion(major = 2.0)
+    @CassandraVersion("2.0.0")
     void should_save_and_get_entity_with_computed_fields() {
         long writeTime = System.currentTimeMillis() * 1000;
         User newUser = new User("testlogin2", "blah");
@@ -87,7 +87,7 @@ public class MapperComputedFieldsTest extends CCMTestsSupport {
     }
 
     @Test(groups = "short")
-    @CassandraVersion(major = 2.0)
+    @CassandraVersion("2.0.0")
     void should_add_aliases_for_fields_in_select_queries() {
         BoundStatement bs = (BoundStatement) userMapper.getQuery("test");
         assertThat(bs.preparedStatement().getQueryString())
@@ -95,7 +95,7 @@ public class MapperComputedFieldsTest extends CCMTestsSupport {
     }
 
     @Test(groups = "short")
-    @CassandraVersion(major = 2.0)
+    @CassandraVersion("2.0.0")
     public void should_map_aliased_resultset_to_objects() {
         Statement getQuery = userMapper.getQuery("testlogin");
         getQuery.setConsistencyLevel(ConsistencyLevel.QUORUM);
@@ -108,7 +108,7 @@ public class MapperComputedFieldsTest extends CCMTestsSupport {
     }
 
     @Test(groups = "short")
-    @CassandraVersion(major = 2.0)
+    @CassandraVersion("2.0.0")
     void should_map_unaliased_resultset_to_objects() {
         UserAccessor userAccessor = mappingManager.createAccessor(UserAccessor.class);
         ResultSet rs = userAccessor.all();
@@ -120,7 +120,7 @@ public class MapperComputedFieldsTest extends CCMTestsSupport {
     }
 
     @Test(groups = "short", expectedExceptions = CodecNotFoundException.class)
-    @CassandraVersion(major = 2.0)
+    @CassandraVersion("2.0.0")
     void should_fail_if_computed_field_is_not_right_type() {
         Mapper<User_WrongComputedType> mapper = mappingManager.mapper(User_WrongComputedType.class);
 
@@ -128,7 +128,7 @@ public class MapperComputedFieldsTest extends CCMTestsSupport {
     }
 
     @Test(groups = "short", expectedExceptions = IllegalArgumentException.class)
-    @CassandraVersion(major = 2.0)
+    @CassandraVersion("2.0.0")
     void should_fail_if_computed_field_marked_with_column_annotation() {
         mappingManager.mapper(User_WrongAnnotationForComputed.class);
     }

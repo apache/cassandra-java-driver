@@ -27,7 +27,7 @@ import java.nio.ByteBuffer;
 
 import static org.testng.Assert.assertEquals;
 
-@CassandraVersion(major = 2.2)
+@CassandraVersion("2.2.0")
 public class MapperPrimitiveTypes22Test extends CCMTestsSupport {
 
     @Override

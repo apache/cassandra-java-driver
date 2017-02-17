@@ -25,7 +25,7 @@ import static org.testng.Assert.*;
 
 public class DataTypeClassNameParserTest {
 
-    private ProtocolVersion protocolVersion = TestUtils.getDesiredProtocolVersion();
+    private ProtocolVersion protocolVersion = ProtocolVersion.NEWEST_SUPPORTED;
     private CodecRegistry codecRegistry = new CodecRegistry();
 
     @Test(groups = "unit")

@@ -41,7 +41,7 @@ import static com.google.common.collect.Lists.newArrayList;
 import static com.google.common.collect.Sets.newHashSet;
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CassandraVersion(major = 2.2)
+@CassandraVersion("2.2.0")
 public class Jdk8TimeCodecsTest extends CCMTestsSupport {
 
     @Override

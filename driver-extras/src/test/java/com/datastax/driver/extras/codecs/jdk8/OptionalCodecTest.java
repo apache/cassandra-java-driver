@@ -69,7 +69,7 @@ public class OptionalCodecTest extends CCMTestsSupport {
      * @since 2.2.0
      */
     @Test(groups = "short")
-    @CassandraVersion(major = 2.2)
+    @CassandraVersion("2.2.0")
     public void should_map_unset_value_to_empty() {
         PreparedStatement insertPrep = session().prepare(this.insertStmt);
         PreparedStatement selectPrep = session().prepare(this.selectStmt);

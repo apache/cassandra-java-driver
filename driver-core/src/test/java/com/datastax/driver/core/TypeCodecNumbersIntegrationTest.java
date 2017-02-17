@@ -52,7 +52,7 @@ public class TypeCodecNumbersIntegrationTest extends CCMTestsSupport {
     }
 
     @Test(groups = "short")
-    @CassandraVersion(major = 2.0)
+    @CassandraVersion("2.0.0")
     public void should_use_defaut_codecs_with_simple_statements() {
         session().execute(insertQuery, n_int, n_bigint, n_float, n_double, n_varint, n_decimal);
         ResultSet rows = session().execute(selectQuery, n_int, n_bigint);

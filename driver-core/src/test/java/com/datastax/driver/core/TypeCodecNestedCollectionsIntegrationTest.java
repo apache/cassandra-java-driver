@@ -35,7 +35,7 @@ import static org.assertj.core.api.Assertions.assertThat;
  * Validates that nested collections are properly encoded,
  * even if some inner type requires a custom codec.
  */
-@CassandraVersion(major = 2.1)
+@CassandraVersion("2.1.0")
 public class TypeCodecNestedCollectionsIntegrationTest extends CCMTestsSupport {
 
     private final String insertQuery = "INSERT INTO \"myTable\" (pk, v) VALUES (?, ?)";

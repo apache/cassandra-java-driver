@@ -82,7 +82,7 @@ public class Jsr353JsonCodecTest extends CCMTestsSupport {
     }
 
     @Test(groups = "short", dataProvider = "Jsr353JsonCodecTest")
-    @CassandraVersion(major = 2.0)
+    @CassandraVersion("2.0.0")
     public void should_use_custom_codec_with_simple_statements(JsonStructure object) throws IOException {
         session().execute(insertQuery, notAJsonString, object);
         ResultSet rows = session().execute(selectQuery, notAJsonString, object);
@@ -133,13 +133,13 @@ public class Jsr353JsonCodecTest extends CCMTestsSupport {
     @Test(groups = "short", dataProvider = "Jsr353JsonCodecTest")
     public void should_use_custom_codec_with_prepared_statements_2(JsonStructure object) throws IOException {
         session().execute(session().prepare(insertQuery).bind()
-                        .setString(0, notAJsonString)
-                        .set(1, object, JsonStructure.class)
+                .setString(0, notAJsonString)
+                .set(1, object, JsonStructure.class)
         );
         PreparedStatement ps = session().prepare(selectQuery);
         ResultSet rows = session().execute(ps.bind()
-                        .setString(0, notAJsonString)
-                        .set(1, object, JsonStructure.class)
+                .setString(0, notAJsonString)
+                .set(1, object, JsonStructure.class)
         );
         Row row = rows.one();
         assertRow(row, object);

@@ -25,7 +25,7 @@ import java.util.Iterator;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CassandraVersion(major = 2.0)
+@CassandraVersion("2.0.0")
 public class PagingStateTest extends CCMTestsSupport {
 
     private static final Logger logger = LoggerFactory.getLogger(PagingStateTest.class);
@@ -141,7 +141,7 @@ public class PagingStateTest extends CCMTestsSupport {
      * from the first query.
      */
     @Test(groups = "short")
-    @CassandraVersion(major = 2.0)
+    @CassandraVersion("2.0.0")
     public void should_be_able_to_use_state_with_bound_statement() {
         PreparedStatement prepared = session().prepare("SELECT v from test where k=?");
         BoundStatement bs = prepared.bind(KEY);
@@ -164,7 +164,7 @@ public class PagingStateTest extends CCMTestsSupport {
      * @expected_result A failure is thrown when setting paging state on a different {@link BoundStatement}.
      */
     @Test(groups = "short", expectedExceptions = {PagingStateException.class})
-    @CassandraVersion(major = 2.0)
+    @CassandraVersion("2.0.0")
     public void should_not_be_able_to_use_state_with_different_bound_statement() {
         PreparedStatement prepared = session().prepare("SELECT v from test where k=?");
         BoundStatement bs0 = prepared.bind(KEY);
