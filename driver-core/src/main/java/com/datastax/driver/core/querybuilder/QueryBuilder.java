@@ -260,7 +260,7 @@ public final class QueryBuilder {
     public static String token(String... columnNames) {
         StringBuilder sb = new StringBuilder();
         sb.append("token(");
-        Utils.joinAndAppendNames(sb, null, ",", Arrays.asList((Object[]) columnNames));
+        Utils.joinAndAppendNames(sb, null, Arrays.asList((Object[]) columnNames));
         sb.append(')');
         return sb.toString();
     }
@@ -349,7 +349,7 @@ public final class QueryBuilder {
      * @param values the values
      * @return the corresponding where clause.
      * @throws IllegalArgumentException if the size of any tuple in {@code values} is not equal to {@code names.size()},
-     * or if {@code values} contains elements that are neither {@link List lists} nor {@link #bindMarker() bind markers}.
+     *                                  or if {@code values} contains elements that are neither {@link List lists} nor {@link #bindMarker() bind markers}.
      */
     public static Clause in(List<String> names, List<?> values) {
         return new Clause.CompoundInClause(names, values);
@@ -578,13 +578,59 @@ public final class QueryBuilder {
     /**
      * Simple "set" assignment of a value to a column.
      * <p/>
-     * This will generate: {@code name = value}.
+     * This will generate:
+     * <pre>
+     * name = value
+     * </pre>
+     * The column name will only be quoted if it contains special characters, as in:
+     * <pre>
+     * "a name that contains spaces" = value
+     * </pre>
+     * Otherwise, if you want to force case sensitivity, use
+     * {@link #quote(String)}:
+     * <pre>
+     * set(quote("aCaseSensitiveName"), value)
+     * </pre>
+     * This method won't work to set UDT fields; use {@link #set(Object, Object)} with a
+     * {@link #path(String...) path} instead:
+     * <pre>
+     * set(path("udt", "field"), value)
+     * </pre>
      *
      * @param name  the column name
      * @param value the value to assign
      * @return the correspond assignment (to use in an update query)
      */
     public static Assignment set(String name, Object value) {
+        return new Assignment.SetAssignment(name, value);
+    }
+
+    /**
+     * Advanced "set" assignment of a value to a column or a
+     * {@link com.datastax.driver.core.UserType UDT} field.
+     * <p/>
+     * This method is seldom preferable to {@link #set(String, Object)}; it is only useful:
+     * <ul>
+     * <li>when assigning values to individual fields of a UDT (see {@link #path(String...)}):
+     * <pre>
+     * set(path("udt", "field"), value)
+     * </pre>
+     * </li>
+     * <li>if you wish to pass a "raw" string that will get appended as-is to the query (see {@link #raw(String)}).
+     * There is no practical usage for this the time of writing, but it will serve as a workaround if new features are
+     * added to Cassandra and you're using a older driver version that is not yet aware of them:
+     * <pre>
+     * set(raw("some custom string"), value)
+     * </pre>
+     * </li>
+     * </ul>
+     * If the runtime type of {@code name} is {@code String}, this method is equivalent to {@link #set(String, Object)}.
+     *
+     * @param name  the column or UDT field name
+     * @param value the value to assign
+     * @return the correspond assignment (to use in an update query)
+     */
+    public static Assignment set(Object name, Object value) {
         return new Assignment.SetAssignment(name, value);
     }
 
@@ -1052,6 +1098,30 @@ public final class QueryBuilder {
      */
     public static Object column(String name) {
         return new Utils.CName(name);
+    }
+
+    /**
+     * Creates a path composed of the given path {@code segments}.
+     * <p/>
+     * All provided path segments will be concatenated together with dots.
+     * If any segment contains an identifier that needs quoting,
+     * caller code is expected to call {@link #quote(String)} prior to
+     * invoking this method.
+     * <p/>
+     * This method is currently only useful when accessing individual fields of a
+     * {@link com.datastax.driver.core.UserType user-defined type} (UDT),
+     * which is only possible since CASSANDRA-7423.
+     * <p/>
+     * Note that currently nested UDT fields are not supported and
+     * will be rejected by the server as a
+     * {@link com.datastax.driver.core.exceptions.SyntaxError syntax error}.
+     *
+     * @param segments the segments of the path to create.
+     * @return the segments concatenated as a single path.
+     * @see <a href="https://issues.apache.org/jira/browse/CASSANDRA-7423">CASSANDRA-7423</a>
+     */
+    public static Object path(String... segments) {
+        return new Utils.Path(segments);
     }
 
     /**

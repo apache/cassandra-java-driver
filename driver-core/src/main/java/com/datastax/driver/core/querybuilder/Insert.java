@@ -72,9 +72,9 @@ public class Insert extends BuiltStatement {
             Utils.appendValue(json, codecRegistry, builder, variables);
         } else {
             builder.append("(");
-            Utils.joinAndAppendNames(builder, codecRegistry, ",", names);
+            Utils.joinAndAppendNames(builder, codecRegistry, names);
             builder.append(") VALUES (");
-            Utils.joinAndAppendValues(builder, codecRegistry, ",", values, variables);
+            Utils.joinAndAppendValues(builder, codecRegistry, values, variables);
             builder.append(')');
         }
 

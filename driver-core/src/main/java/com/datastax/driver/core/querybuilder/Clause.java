@@ -96,7 +96,7 @@ public abstract class Clause extends Utils.Appendeable {
             }
 
             Utils.appendName(name, sb).append(" IN (");
-            Utils.joinAndAppendValues(sb, codecRegistry, ",", values, variables).append(')');
+            Utils.joinAndAppendValues(sb, codecRegistry, values, variables).append(')');
         }
 
         @Override
@@ -291,7 +291,7 @@ public abstract class Clause extends Utils.Appendeable {
                         sb.append(tuple.get(0));
                     } else {
                         sb.append("(");
-                        Utils.joinAndAppendValues(sb, codecRegistry, ",", (List<?>) tuple, variables).append(')');
+                        Utils.joinAndAppendValues(sb, codecRegistry, (List<?>) tuple, variables).append(')');
                     }
                 }
             }

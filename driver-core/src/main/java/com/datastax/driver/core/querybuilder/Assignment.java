@@ -24,9 +24,9 @@ import static com.datastax.driver.core.querybuilder.Utils.appendValue;
 
 public abstract class Assignment extends Utils.Appendeable {
 
-    final String name;
+    final Object name;
 
-    private Assignment(String name) {
+    private Assignment(Object name) {
         this.name = name;
     }
 
@@ -36,7 +36,7 @@ public abstract class Assignment extends Utils.Appendeable {
      * @return the name of the column this assignment applies to.
      */
     public String getColumnName() {
-        return name;
+        return name.toString();
     }
 
     abstract boolean isIdempotent();
@@ -45,14 +45,14 @@ public abstract class Assignment extends Utils.Appendeable {
 
         private final Object value;
 
-        SetAssignment(String name, Object value) {
+        SetAssignment(Object name, Object value) {
             super(name);
             this.value = value;
         }
 
         @Override
         void appendTo(StringBuilder sb, List<Object> variables, CodecRegistry codecRegistry) {
-            appendName(name, sb);
+            appendName(name, codecRegistry, sb);
             sb.append('=');
             appendValue(value, codecRegistry, sb, variables);
         }
@@ -86,8 +86,8 @@ public abstract class Assignment extends Utils.Appendeable {
 
         @Override
         void appendTo(StringBuilder sb, List<Object> variables, CodecRegistry codecRegistry) {
-            appendName(name, sb).append('=');
-            appendName(name, sb).append(isIncr ? "+" : "-");
+            appendName(name, codecRegistry, sb).append('=');
+            appendName(name, codecRegistry, sb).append(isIncr ? "+" : "-");
             appendValue(value, codecRegistry, sb, variables);
         }
 
@@ -113,10 +113,10 @@ public abstract class Assignment extends Utils.Appendeable {
 
         @Override
         void appendTo(StringBuilder sb, List<Object> variables, CodecRegistry codecRegistry) {
-            appendName(name, sb).append('=');
+            appendName(name, codecRegistry, sb).append('=');
             appendValue(value, codecRegistry, sb, variables);
             sb.append('+');
-            appendName(name, sb);
+            appendName(name, codecRegistry, sb);
         }
 
         @Override
@@ -143,7 +143,7 @@ public abstract class Assignment extends Utils.Appendeable {
 
         @Override
         void appendTo(StringBuilder sb, List<Object> variables, CodecRegistry codecRegistry) {
-            appendName(name, sb).append('[').append(idx).append("]=");
+            appendName(name, codecRegistry, sb).append('[').append(idx).append("]=");
             appendValue(value, codecRegistry, sb, variables);
         }
 
@@ -177,8 +177,8 @@ public abstract class Assignment extends Utils.Appendeable {
 
         @Override
         void appendTo(StringBuilder sb, List<Object> variables, CodecRegistry codecRegistry) {
-            appendName(name, sb).append('=');
-            appendName(name, sb).append(isAdd ? "+" : "-");
+            appendName(name, codecRegistry, sb).append('=');
+            appendName(name, codecRegistry, sb).append(isAdd ? "+" : "-");
             appendValue(collection, codecRegistry, sb, variables);
         }
 
@@ -206,7 +206,7 @@ public abstract class Assignment extends Utils.Appendeable {
 
         @Override
         void appendTo(StringBuilder sb, List<Object> variables, CodecRegistry codecRegistry) {
-            appendName(name, sb).append('[');
+            appendName(name, codecRegistry, sb).append('[');
             appendValue(key, codecRegistry, sb, variables);
             sb.append("]=");
             appendValue(value, codecRegistry, sb, variables);
