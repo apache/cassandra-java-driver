@@ -22,7 +22,7 @@ import static com.datastax.driver.core.Assertions.assertThat;
 import static com.datastax.driver.core.ClusteringOrder.DESC;
 import static com.datastax.driver.core.DataType.cint;
 
-@CassandraVersion(major = 3)
+@CassandraVersion("3.0")
 public class MaterializedViewMetadataTest extends CCMTestsSupport {
 
     /**

@@ -32,7 +32,7 @@ import static com.datastax.driver.core.ColumnMetadata.*;
 import static com.datastax.driver.core.DataType.*;
 import static com.datastax.driver.core.IndexMetadata.Kind.*;
 
-@CassandraVersion(major = 1.2)
+@CassandraVersion("1.2.0")
 public class IndexMetadataTest extends CCMTestsSupport {
 
     /**
@@ -75,7 +75,7 @@ public class IndexMetadataTest extends CCMTestsSupport {
                 + "\"MixedCaseColumn\" list<text>,"
                 +
                 // Frozen collections was introduced only in C* 2.1.3
-                (ccm().getVersion().compareTo(VersionNumber.parse("2.1.3")) >= 0
+                (ccm().getCassandraVersion().compareTo(VersionNumber.parse("2.1.3")) >= 0
                         ?
                         ", map_full frozen<map<text, int>>,"
                                 + "set_full frozen<set<text>>,"
@@ -103,10 +103,10 @@ public class IndexMetadataTest extends CCMTestsSupport {
     }
 
     @Test(groups = "short")
-    @CassandraVersion(major = 2.1, description = "index names with quoted identifiers and collection indexes not supported until 2.1")
+    @CassandraVersion(value = "2.1", description = "index names with quoted identifiers and collection indexes not supported until 2.1")
     public void should_create_metadata_for_values_index_on_mixed_case_column() {
         // 3.0 assumes the 'values' keyword if index on a collection
-        String createValuesIndex = ccm().getVersion().getMajor() > 2 ?
+        String createValuesIndex = ccm().getCassandraVersion().getMajor() > 2 ?
                 String.format("CREATE INDEX \"MixedCaseIndex\" ON %s.indexing (values(\"MixedCaseColumn\"));", keyspace) :
                 String.format("CREATE INDEX \"MixedCaseIndex\" ON %s.indexing (\"MixedCaseColumn\");", keyspace);
         session().execute(createValuesIndex);
@@ -116,17 +116,17 @@ public class IndexMetadataTest extends CCMTestsSupport {
                 .hasName("MixedCaseIndex")
                 .hasParent((TableMetadata) column.getParent())
                 .isNotCustomIndex()
-                .hasTarget(ccm().getVersion().getMajor() > 2 ? "values(\"MixedCaseColumn\")" : "\"MixedCaseColumn\"")
+                .hasTarget(ccm().getCassandraVersion().getMajor() > 2 ? "values(\"MixedCaseColumn\")" : "\"MixedCaseColumn\"")
                 .hasKind(COMPOSITES)
                 .asCqlQuery(createValuesIndex);
         assertThat((TableMetadata) column.getParent()).hasIndex(index);
     }
 
     @Test(groups = "short")
-    @CassandraVersion(major = 2.1)
+    @CassandraVersion("2.1.0")
     public void should_create_metadata_for_index_on_map_values() {
         // 3.0 assumes the 'values' keyword if index on a collection
-        String createValuesIndex = ccm().getVersion().getMajor() > 2 ?
+        String createValuesIndex = ccm().getCassandraVersion().getMajor() > 2 ?
                 String.format("CREATE INDEX map_values_index ON %s.indexing (values(map_values));", keyspace) :
                 String.format("CREATE INDEX map_values_index ON %s.indexing (map_values);", keyspace);
         session().execute(createValuesIndex);
@@ -136,14 +136,14 @@ public class IndexMetadataTest extends CCMTestsSupport {
                 .hasName("map_values_index")
                 .hasParent((TableMetadata) column.getParent())
                 .isNotCustomIndex()
-                .hasTarget(ccm().getVersion().getMajor() > 2 ? "values(map_values)" : "map_values")
+                .hasTarget(ccm().getCassandraVersion().getMajor() > 2 ? "values(map_values)" : "map_values")
                 .hasKind(COMPOSITES)
                 .asCqlQuery(createValuesIndex);
         assertThat((TableMetadata) column.getParent()).hasIndex(index);
     }
 
     @Test(groups = "short")
-    @CassandraVersion(major = 2.1)
+    @CassandraVersion("2.1.0")
     public void should_create_metadata_for_index_on_map_keys() {
         String createKeysIndex = String.format("CREATE INDEX map_keys_index ON %s.indexing (keys(map_keys));", keyspace);
         session().execute(createKeysIndex);
@@ -160,7 +160,7 @@ public class IndexMetadataTest extends CCMTestsSupport {
     }
 
     @Test(groups = "short")
-    @CassandraVersion(major = 2.1, minor = 3)
+    @CassandraVersion("2.1.3")
     public void should_create_metadata_for_full_index_on_map() {
         String createFullIndex = String.format("CREATE INDEX map_full_index ON %s.indexing (full(map_full));", keyspace);
         session().execute(createFullIndex);
@@ -177,7 +177,7 @@ public class IndexMetadataTest extends CCMTestsSupport {
     }
 
     @Test(groups = "short")
-    @CassandraVersion(major = 2.1, minor = 3)
+    @CassandraVersion("2.1.3")
     public void should_create_metadata_for_full_index_on_set() {
         String createFullIndex = String.format("CREATE INDEX set_full_index ON %s.indexing (full(set_full));", keyspace);
         session().execute(createFullIndex);
@@ -194,7 +194,7 @@ public class IndexMetadataTest extends CCMTestsSupport {
     }
 
     @Test(groups = "short")
-    @CassandraVersion(major = 2.1, minor = 3)
+    @CassandraVersion("2.1.3")
     public void should_create_metadata_for_full_index_on_list() {
         String createFullIndex = String.format("CREATE INDEX list_full_index ON %s.indexing (full(list_full));", keyspace);
         session().execute(createFullIndex);
@@ -211,7 +211,7 @@ public class IndexMetadataTest extends CCMTestsSupport {
     }
 
     @Test(groups = "short")
-    @CassandraVersion(major = 2.2)
+    @CassandraVersion("2.2.0")
     public void should_create_metadata_for_index_on_map_entries() {
         String createEntriesIndex = String.format("CREATE INDEX map_entries_index ON %s.indexing (entries(map_entries));", keyspace);
         session().execute(createEntriesIndex);
@@ -228,7 +228,7 @@ public class IndexMetadataTest extends CCMTestsSupport {
     }
 
     @Test(groups = "short")
-    @CassandraVersion(major = 3.0)
+    @CassandraVersion("3.0")
     public void should_allow_multiple_indexes_on_map_column() {
         String createEntriesIndex = String.format("CREATE INDEX map_all_entries_index ON %s.indexing (entries(map_all));", keyspace);
         session().execute(createEntriesIndex);

@@ -49,41 +49,9 @@ import static org.mockito.Mockito.mock;
  */
 public class QueryLoggerTest extends CCMTestsSupport {
 
-    private static final List<DataType> dataTypes = new ArrayList<DataType>(
-            Sets.filter(DataType.allPrimitiveTypes(TestUtils.getDesiredProtocolVersion()), new Predicate<DataType>() {
-                @Override
-                public boolean apply(DataType type) {
-                    return type != DataType.counter();
-                }
-            }));
-
-    private static final List<Object> values = Lists.transform(dataTypes, new Function<DataType, Object>() {
-                @Override
-                public Object apply(DataType type) {
-                    return getFixedValue(type);
-                }
-            }
-    );
-
-    private static final String definitions = Joiner.on(", ").join(
-            Lists.transform(dataTypes, new Function<DataType, String>() {
-                        @Override
-                        public String apply(DataType type) {
-                            return "c_" + type + " " + type;
-                        }
-                    }
-            )
-    );
-
-    private static final String assignments = Joiner.on(", ").join(
-            Lists.transform(dataTypes, new Function<DataType, String>() {
-                        @Override
-                        public String apply(DataType type) {
-                            return "c_" + type + " = ?";
-                        }
-                    }
-            )
-    );
+    private List<DataType> dataTypes;
+    private List<Object> values;
+    private String assignments;
 
     private Logger normal = Logger.getLogger(NORMAL_LOGGER.getName());
     private Logger slow = Logger.getLogger(SLOW_LOGGER.getName());
@@ -97,6 +65,47 @@ public class QueryLoggerTest extends CCMTestsSupport {
     private Level originalNormal;
     private Level originalSlow;
     private Level originalError;
+
+    @Override
+    public void onTestContextInitialized() {
+        dataTypes = new ArrayList<DataType>(
+                Sets.filter(DataType.allPrimitiveTypes(ccm().getProtocolVersion()), new Predicate<DataType>() {
+                    @Override
+                    public boolean apply(DataType type) {
+                        return type != DataType.counter();
+                    }
+                }));
+
+        values = Lists.transform(dataTypes, new Function<DataType, Object>() {
+                    @Override
+                    public Object apply(DataType type) {
+                        return getFixedValue(type);
+                    }
+                }
+        );
+
+        String definitions = Joiner.on(", ").join(
+                Lists.transform(dataTypes, new Function<DataType, String>() {
+                            @Override
+                            public String apply(DataType type) {
+                                return "c_" + type + " " + type;
+                            }
+                        }
+                )
+        );
+
+        assignments = Joiner.on(", ").join(
+                Lists.transform(dataTypes, new Function<DataType, String>() {
+                            @Override
+                            public String apply(DataType type) {
+                                return "c_" + type + " = ?";
+                            }
+                        }
+                )
+        );
+
+        execute("CREATE TABLE test (pk int PRIMARY KEY, " + definitions + ")");
+    }
 
     @BeforeMethod(groups = {"short", "unit"})
     public void startCapturingLogs() {
@@ -171,7 +180,7 @@ public class QueryLoggerTest extends CCMTestsSupport {
     }
 
     @Test(groups = "short")
-    @CassandraVersion(major = 2.0)
+    @CassandraVersion("2.0.0")
     public void should_log_batch_statements() throws Exception {
         // given
         normal.setLevel(DEBUG);
@@ -202,7 +211,7 @@ public class QueryLoggerTest extends CCMTestsSupport {
     }
 
     @Test(groups = "short")
-    @CassandraVersion(major = 2.0)
+    @CassandraVersion("2.0.0")
     public void should_log_unlogged_batch_statements() throws Exception {
         // given
         normal.setLevel(DEBUG);
@@ -233,7 +242,7 @@ public class QueryLoggerTest extends CCMTestsSupport {
     }
 
     @Test(groups = "short")
-    @CassandraVersion(major = 2.0)
+    @CassandraVersion("2.0.0")
     public void should_log_counter_batch_statements() throws Exception {
         // Create a special table for testing with counters.
         session().execute(
@@ -376,7 +385,7 @@ public class QueryLoggerTest extends CCMTestsSupport {
     // Tests with query parameters (log level TRACE)
 
     @Test(groups = "short")
-    @CassandraVersion(major = 2.0)
+    @CassandraVersion("2.0.0")
     public void should_log_non_null_named_parameter_bound_statements() throws Exception {
         // given
         normal.setLevel(TRACE);
@@ -426,7 +435,7 @@ public class QueryLoggerTest extends CCMTestsSupport {
     }
 
     @Test(groups = "short")
-    @CassandraVersion(major = 2.0)
+    @CassandraVersion("2.0.0")
     public void should_log_non_null_positional_parameter_simple_statements() throws Exception {
         // given
         normal.setLevel(TRACE);
@@ -470,7 +479,7 @@ public class QueryLoggerTest extends CCMTestsSupport {
     }
 
     @Test(groups = "short")
-    @CassandraVersion(major = 2.0)
+    @CassandraVersion("2.0.0")
     public void should_log_null_parameter_simple_statements() throws Exception {
         // given
         normal.setLevel(TRACE);
@@ -491,7 +500,7 @@ public class QueryLoggerTest extends CCMTestsSupport {
     }
 
     @Test(groups = "short")
-    @CassandraVersion(major = 3.0)
+    @CassandraVersion("3.0")
     public void should_log_unset_parameter() throws Exception {
         // given
         normal.setLevel(TRACE);
@@ -514,7 +523,7 @@ public class QueryLoggerTest extends CCMTestsSupport {
     }
 
     @Test(groups = "short")
-    @CassandraVersion(major = 2.0)
+    @CassandraVersion("2.0.0")
     public void should_log_bound_statement_parameters_inside_batch_statement() throws Exception {
         // given
         normal.setLevel(TRACE);
@@ -541,7 +550,7 @@ public class QueryLoggerTest extends CCMTestsSupport {
     }
 
     @Test(groups = "short")
-    @CassandraVersion(major = 2.0)
+    @CassandraVersion("2.0.0")
     public void should_log_simple_statement_parameters_inside_batch_statement() throws Exception {
         // given
         normal.setLevel(TRACE);
@@ -596,7 +605,7 @@ public class QueryLoggerTest extends CCMTestsSupport {
     }
 
     @Test(groups = "short")
-    @CassandraVersion(major = 2.0)
+    @CassandraVersion("2.0.0")
     public void should_log_all_parameter_types_simple_statements() throws Exception {
         // given
         normal.setLevel(TRACE);
@@ -648,7 +657,7 @@ public class QueryLoggerTest extends CCMTestsSupport {
                 .doesNotContain(query);
     }
 
-    @CassandraVersion(major = 2.0)
+    @CassandraVersion("2.0.0")
     @Test(groups = "short")
     public void should_show_total_statements_for_batches_even_if_query_truncated() throws Exception {
         // given
@@ -695,7 +704,7 @@ public class QueryLoggerTest extends CCMTestsSupport {
                 .doesNotContain(TRUNCATED_OUTPUT);
     }
 
-    @CassandraVersion(major = 2.0)
+    @CassandraVersion("2.0.0")
     @Test(groups = "short")
     public void should_truncate_parameter_when_max_length_exceeded_bound_statements() throws Exception {
         // given
@@ -720,7 +729,7 @@ public class QueryLoggerTest extends CCMTestsSupport {
                 .doesNotContain("123456");
     }
 
-    @CassandraVersion(major = 2.0)
+    @CassandraVersion("2.0.0")
     @Test(groups = "short")
     public void should_truncate_parameter_when_max_length_exceeded_simple_statements() throws Exception {
         // given
@@ -767,7 +776,7 @@ public class QueryLoggerTest extends CCMTestsSupport {
     }
 
     @Test(groups = "short")
-    @CassandraVersion(major = 2.0)
+    @CassandraVersion("2.0.0")
     public void should_truncate_blob_parameter_when_max_length_exceeded_simple_statements() throws Exception {
         // given
         normal.setLevel(TRACE);
@@ -813,7 +822,7 @@ public class QueryLoggerTest extends CCMTestsSupport {
     }
 
     @Test(groups = "short")
-    @CassandraVersion(major = 2.0)
+    @CassandraVersion("2.0.0")
     public void should_not_truncate_parameter_when_max_length_unlimited_simple_statements() throws Exception {
         // given
         normal.setLevel(TRACE);
@@ -860,7 +869,7 @@ public class QueryLoggerTest extends CCMTestsSupport {
     }
 
     @Test(groups = "short")
-    @CassandraVersion(major = 2.0)
+    @CassandraVersion("2.0.0")
     public void should_not_log_exceeding_number_of_parameters_simple_statements() throws Exception {
         // given
         normal.setLevel(TRACE);
@@ -883,7 +892,7 @@ public class QueryLoggerTest extends CCMTestsSupport {
     }
 
     @Test(groups = "short")
-    @CassandraVersion(major = 2.1)
+    @CassandraVersion("2.1.0")
     public void should_not_log_exceeding_number_of_parameters_simple_statements_with_named_values() throws Exception {
         // given
         normal.setLevel(TRACE);
@@ -909,7 +918,7 @@ public class QueryLoggerTest extends CCMTestsSupport {
     }
 
     @Test(groups = "short")
-    @CassandraVersion(major = 2.0)
+    @CassandraVersion("2.0.0")
     public void should_not_log_exceeding_number_of_parameters_in_batch_statement_bound_statements() throws Exception {
         // given
         normal.setLevel(TRACE);
@@ -939,7 +948,7 @@ public class QueryLoggerTest extends CCMTestsSupport {
     }
 
     @Test(groups = "short")
-    @CassandraVersion(major = 2.0)
+    @CassandraVersion("2.0.0")
     public void should_not_log_exceeding_number_of_parameters_in_batch_statement_simple_statements() throws Exception {
         // given
         normal.setLevel(TRACE);
@@ -991,7 +1000,7 @@ public class QueryLoggerTest extends CCMTestsSupport {
     }
 
     @Test(groups = "short")
-    @CassandraVersion(major = 2.0)
+    @CassandraVersion("2.0.0")
     public void should_log_all_parameters_when_max_unlimited_simple_statements() throws Exception {
         // given
         normal.setLevel(TRACE);
@@ -1013,7 +1022,7 @@ public class QueryLoggerTest extends CCMTestsSupport {
     }
 
     @Test(groups = "short")
-    @CassandraVersion(major = 2.1)
+    @CassandraVersion("2.1.0")
     public void should_log_all_parameters_when_max_unlimited_simple_statements_with_named_values() throws Exception {
         // given
         normal.setLevel(TRACE);
@@ -1037,7 +1046,7 @@ public class QueryLoggerTest extends CCMTestsSupport {
                 .contains("42");
     }
 
-    @CassandraVersion(major = 2.0)
+    @CassandraVersion("2.0.0")
     @Test(groups = "short")
     public void should_log_wrapped_bound_statement() throws Exception {
         // given
@@ -1062,11 +1071,6 @@ public class QueryLoggerTest extends CCMTestsSupport {
                 .contains(query)
                 .contains("param2:42")
                 .contains("param1:'foo'");
-    }
-
-    @Override
-    public void onTestContextInitialized() {
-        execute("CREATE TABLE test (pk int PRIMARY KEY, " + definitions + ")");
     }
 
 }

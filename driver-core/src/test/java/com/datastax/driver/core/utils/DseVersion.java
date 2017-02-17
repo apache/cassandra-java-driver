@@ -22,19 +22,15 @@ import java.lang.annotation.RetentionPolicy;
  * <p>Annotation for a Class or Method that defines a DataStax Enterprise Version requirement.
  * If the version in use does not meet the version requirement or DSE is not used, the test is skipped.</p>
  *
- * @see {@link com.datastax.driver.core.TestListener#beforeInvocation(org.testng.IInvokedMethod, org.testng.ITestResult)} for usage.
+ * @see com.datastax.driver.core.TestListener#beforeInvocation(org.testng.IInvokedMethod, org.testng.ITestResult)
  */
 @Retention(RetentionPolicy.RUNTIME)
 public @interface DseVersion {
-    /**
-     * @return The major version required to execute this test, i.e. "4.8"
-     */
-    double major() default 0.0;
 
     /**
-     * @return The minor version required to execute this test, i.e. "3"
+     * @return The minimum version required to execute this test, i.e. "2.0.13"
      */
-    int minor() default 0;
+    String value();
 
     /**
      * @return The description returned if this version requirement is not met.

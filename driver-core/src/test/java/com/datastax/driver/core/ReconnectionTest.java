@@ -83,7 +83,7 @@ public class ReconnectionTest extends CCMTestsSupport {
     public void should_keep_reconnecting_on_authentication_error() throws InterruptedException {
         // For C* 1.2, sleep before attempting to connect as there is a small delay between
         // user being created.
-        if (ccm().getVersion().getMajor() < 2) {
+        if (ccm().getCassandraVersion().getMajor() < 2) {
             Uninterruptibles.sleepUninterruptibly(1, TimeUnit.SECONDS);
         }
         CountingReconnectionPolicy reconnectionPolicy = new CountingReconnectionPolicy(new ConstantReconnectionPolicy(reconnectionDelayMillis));
@@ -223,7 +223,7 @@ public class ReconnectionTest extends CCMTestsSupport {
                 .withReconnectionPolicy(new ConstantReconnectionPolicy(5000))
                 .withLoadBalancingPolicy(loadBalancingPolicy)
                 .withSocketOptions(socketOptions)
-                .withProtocolVersion(TestUtils.getDesiredProtocolVersion())
+                .withProtocolVersion(ccm().getProtocolVersion())
                 .build());
         // Create two sessions to have multiple pools
         cluster.connect();

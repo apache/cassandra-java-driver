@@ -38,7 +38,7 @@ import static org.assertj.core.api.Assertions.fail;
 import static org.testng.Assert.*;
 
 @SuppressWarnings({"unused", "WeakerAccess"})
-@CassandraVersion(major = 2.1)
+@CassandraVersion("2.1.0")
 @CreateCCM(PER_METHOD)
 public class MapperUDTTest extends CCMTestsSupport {
 

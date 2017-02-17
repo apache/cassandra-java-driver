@@ -20,6 +20,7 @@ import com.datastax.driver.core.utils.DseVersion;
 import org.testng.*;
 import org.testng.internal.ConstructorOrMethod;
 
+import java.lang.reflect.AnnotatedElement;
 import java.lang.reflect.Method;
 import java.util.concurrent.TimeUnit;
 
@@ -87,27 +88,29 @@ public class TestListener extends TestListenerAdapter implements IInvokedMethodL
 
         Class<?> clazz = testNgMethod.getInstance().getClass();
         if (clazz != null) {
-            if (clazz.isAnnotationPresent(CassandraVersion.class)) {
-                CassandraVersion cassandraVersion = clazz.getAnnotation(CassandraVersion.class);
-                cassandraVersionCheck(cassandraVersion);
-            }
-            if (clazz.isAnnotationPresent(DseVersion.class)) {
-                DseVersion dseVersion = clazz.getAnnotation(DseVersion.class);
-                dseVersionCheck(dseVersion);
-            }
+            do {
+                if (scanAnnotatedElement(clazz))
+                    break;
+            } while (!(clazz = clazz.getSuperclass()).equals(Object.class));
         }
-
         Method method = constructorOrMethod.getMethod();
         if (method != null) {
-            if (method.isAnnotationPresent(CassandraVersion.class)) {
-                CassandraVersion cassandraVersion = method.getAnnotation(CassandraVersion.class);
-                cassandraVersionCheck(cassandraVersion);
-            }
-            if (method.isAnnotationPresent(DseVersion.class)) {
-                DseVersion dseVersion = method.getAnnotation(DseVersion.class);
-                dseVersionCheck(dseVersion);
-            }
+            scanAnnotatedElement(method);
         }
+    }
+
+    private boolean scanAnnotatedElement(AnnotatedElement element) {
+        if (element.isAnnotationPresent(CassandraVersion.class)) {
+            CassandraVersion cassandraVersion = element.getAnnotation(CassandraVersion.class);
+            cassandraVersionCheck(cassandraVersion);
+            return true;
+        }
+        if (element.isAnnotationPresent(DseVersion.class)) {
+            DseVersion dseVersion = element.getAnnotation(DseVersion.class);
+            dseVersionCheck(dseVersion);
+            return true;
+        }
+        return false;
     }
 
     @Override
@@ -116,29 +119,26 @@ public class TestListener extends TestListenerAdapter implements IInvokedMethodL
     }
 
     private static void cassandraVersionCheck(CassandraVersion version) {
-        versionCheck(CCMBridge.getCassandraVersion(), version.major(), version.minor(), version.description());
+        versionCheck(CCMBridge.getGlobalCassandraVersion(), VersionNumber.parse(version.value()), version.description());
     }
 
     private static void dseVersionCheck(DseVersion version) {
-        if (CCMBridge.isDSE()) {
-            versionCheck(CCMBridge.getDSEVersion(), version.major(), version.minor(), version.description());
+        VersionNumber dseVersion = CCMBridge.getGlobalDSEVersion();
+        if (dseVersion != null) {
+            versionCheck(CCMBridge.getGlobalDSEVersion(), VersionNumber.parse(version.value()), version.description());
         } else {
             throw new SkipException("Skipping test because not configured for DataStax Enterprise cluster.");
         }
     }
 
-    private static void versionCheck(String version, double majorCheck, int minorCheck, String skipString) {
-        if (version == null) {
+    private static void versionCheck(VersionNumber current, VersionNumber required, String skipString) {
+        if (current == null) {
             throw new SkipException("Skipping test because provided version is null");
         } else {
-            String[] versionArray = version.split("\\.|-");
-            double major = Double.parseDouble(versionArray[0] + "." + versionArray[1]);
-            // If there is no minor version, assume latest version of whatever was provided.
-            int minor = versionArray.length >= 3 ? Integer.parseInt(versionArray[2]) : Integer.MAX_VALUE;
-
-            if (major < majorCheck || (major == majorCheck && minor < minorCheck)) {
-                throw new SkipException("Version >= " + majorCheck + "." + minorCheck + " required.  " +
-                        "Description: " + skipString);
+            if (current.compareTo(required) < 0) {
+                throw new SkipException(
+                        String.format("Version >= %s required, but found %s. Justification: %s",
+                                required, current, skipString));
             }
         }
     }

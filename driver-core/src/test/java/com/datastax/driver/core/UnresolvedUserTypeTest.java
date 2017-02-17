@@ -23,7 +23,7 @@ import java.util.concurrent.ExecutionException;
 import static com.datastax.driver.core.Assertions.assertThat;
 import static com.datastax.driver.core.DataType.*;
 
-@CassandraVersion(major = 3.0)
+@CassandraVersion("3.0")
 public class UnresolvedUserTypeTest extends CCMTestsSupport {
 
     @Override

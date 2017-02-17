@@ -35,7 +35,7 @@ public class SimpleStatementIntegrationTest extends CCMTestsSupport {
     }
 
     @Test(groups = "short")
-    @CassandraVersion(major = 2.1)
+    @CassandraVersion("2.1.0")
     public void should_execute_query_with_named_values() {
         // Given
         SimpleStatement statement = new SimpleStatement("SELECT * FROM users WHERE id = :id and id2 = :id2",
@@ -50,7 +50,7 @@ public class SimpleStatementIntegrationTest extends CCMTestsSupport {
     }
 
     @Test(groups = "short", expectedExceptions = InvalidQueryException.class)
-    @CassandraVersion(major = 2.1)
+    @CassandraVersion("2.1.0")
     public void should_fail_if_query_with_named_values_but_missing_parameter() {
         // Given a Statement missing named parameters.
         SimpleStatement statement = new SimpleStatement("SELECT * FROM users WHERE id = :id and id2 = :id2",
@@ -64,7 +64,7 @@ public class SimpleStatementIntegrationTest extends CCMTestsSupport {
     }
 
     @Test(groups = "short", expectedExceptions = InvalidQueryException.class)
-    @CassandraVersion(major = 2.1)
+    @CassandraVersion("2.1.0")
     public void should_fail_if_query_with_named_values_but_using_wrong_type() {
         // Given a Statement using a named parameter with the wrong value for the type (id is of type int, using double)
         SimpleStatement statement = new SimpleStatement("SELECT * FROM users WHERE id = :id and id2 = :id2",
@@ -98,18 +98,18 @@ public class SimpleStatementIntegrationTest extends CCMTestsSupport {
     }
 
     @Test(groups = "short", expectedExceptions = UnsupportedFeatureException.class)
-    @CassandraVersion(major = 2.0)
+    @CassandraVersion("2.0.0")
     public void should_fail_if_query_with_named_values_if_protocol_is_V2() {
-        if (ccm().getVersion().getMajor() >= 3) {
+        if (ccm().getCassandraVersion().getMajor() >= 3) {
             throw new SkipException("Skipping since Cassandra 3.0+ does not support protocol v2");
         }
         useNamedValuesWithProtocol(ProtocolVersion.V2);
     }
 
     @Test(groups = "short", expectedExceptions = UnsupportedFeatureException.class)
-    @CassandraVersion(major = 2.0)
+    @CassandraVersion("2.0.0")
     public void should_fail_if_query_with_named_values_if_protocol_is_V1() {
-        if (ccm().getVersion().getMajor() >= 3) {
+        if (ccm().getCassandraVersion().getMajor() >= 3) {
             throw new SkipException("Skipping since Cassandra 3.0+ does not support protocol v1");
         }
         useNamedValuesWithProtocol(ProtocolVersion.V1);

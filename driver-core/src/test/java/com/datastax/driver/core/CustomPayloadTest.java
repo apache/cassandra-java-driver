@@ -33,7 +33,7 @@ import static org.apache.log4j.Level.TRACE;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Fail.fail;
 
-@CassandraVersion(major = 2.2)
+@CassandraVersion("2.2.0")
 @CCMConfig(jvmArgs = "-Dcassandra.custom_query_handler_class=org.apache.cassandra.cql3.CustomPayloadMirroringQueryHandler")
 public class CustomPayloadTest extends CCMTestsSupport {
 
@@ -85,8 +85,6 @@ public class CustomPayloadTest extends CCMTestsSupport {
 
     /**
      * Ensures that an incoming payload is propagated from prepared to bound statements.
-     *
-     * @throws Exception
      */
     @Test(groups = "short")
     public void should_propagate_incoming_payload_to_bound_statement() throws Exception {
@@ -113,8 +111,6 @@ public class CustomPayloadTest extends CCMTestsSupport {
     /**
      * Ensures that an incoming payload is overridden by an explicitly set outgoing payload
      * when propagated to bound statements.
-     *
-     * @throws Exception
      */
     @Test(groups = "short")
     public void should_override_incoming_payload_when_outgoing_payload_explicitly_set_on_preparing_statement() throws Exception {
@@ -141,8 +137,6 @@ public class CustomPayloadTest extends CCMTestsSupport {
     /**
      * Ensures that payloads can still be set individually on bound statements
      * if the prepared statement does not have a default payload.
-     *
-     * @throws Exception
      */
     @Test(groups = "short")
     public void should_not_set_any_payload_on_bound_statement() throws Exception {
@@ -171,8 +165,6 @@ public class CustomPayloadTest extends CCMTestsSupport {
 
     /**
      * Ensures that a custom payload is propagated throughout pages.
-     *
-     * @throws Exception
      */
     @Test(groups = "short")
     public void should_echo_custom_payload_when_paginating() throws Exception {
@@ -253,8 +245,6 @@ public class CustomPayloadTest extends CCMTestsSupport {
 
     /**
      * Ensures that when debugging custom payloads, the driver will print appropriate log messages.
-     *
-     * @throws Exception
      */
     @Test(groups = "short")
     public void should_print_log_message_when_level_trace() throws Exception {

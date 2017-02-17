@@ -23,7 +23,7 @@ import java.util.UUID;
 import static com.datastax.driver.core.DataType.cfloat;
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CassandraVersion(major = 2.1)
+@CassandraVersion("2.1.0")
 public class TypeCodecTupleIntegrationTest extends CCMTestsSupport {
 
     private final String insertQuery = "INSERT INTO users (id, name, location) VALUES (?, ?, ?)";

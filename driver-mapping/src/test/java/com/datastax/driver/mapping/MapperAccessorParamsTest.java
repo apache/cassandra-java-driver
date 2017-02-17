@@ -41,7 +41,7 @@ public class MapperAccessorParamsTest extends CCMTestsSupport {
     }
 
     @Test(groups = "short")
-    @CassandraVersion(major = 2.0, description = "Uses named parameters")
+    @CassandraVersion(value = "2.0", description = "Uses named parameters")
     public void should_allow_less_parameters_than_bind_markers_if_there_are_repeated_names() {
         UserPhoneAccessor accessor = new MappingManager(session())
                 .createAccessor(UserPhoneAccessor.class);

@@ -71,7 +71,7 @@ public class BatchStatementTest extends CCMTestsSupport {
     }
 
     @Test(groups = "short")
-    @CassandraVersion(major = 2.0, minor = 9, description = "This will only work with C* 2.0.9 (CASSANDRA-7337)")
+    @CassandraVersion(value = "2.0.9", description = "This will only work with C* 2.0.9 (CASSANDRA-7337)")
     public void casBatchTest() {
         PreparedStatement st = session().prepare("INSERT INTO test (k, v) VALUES (?, ?) IF NOT EXISTS");
 
