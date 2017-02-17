@@ -320,7 +320,7 @@ public class QueryBuilderExecutionTest extends CCMTestsSupport {
      * @jira_ticket JAVA-1153
      * @since 3.1.0
      */
-    @CassandraVersion(major = 3.6, description = "Support for PER PARTITION LIMIT was added to C* 3.6 (CASSANDRA-7017)")
+    @CassandraVersion(value = "3.6", description = "Support for PER PARTITION LIMIT was added to C* 3.6 (CASSANDRA-7017)")
     @Test(groups = "short")
     public void should_support_per_partition_limit() throws Exception {
         assertThat(session().execute(select().all().from("test_ppl").perPartitionLimit(2)))
