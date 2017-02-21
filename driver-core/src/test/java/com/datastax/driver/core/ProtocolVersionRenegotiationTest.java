@@ -38,8 +38,8 @@ public class ProtocolVersionRenegotiationTest extends CCMTestsSupport {
      * @jira_ticket JAVA-1367
      */
     @Test(groups = "short")
-    @CCMConfig(version = "3.6", createCluster = false)
-    public void should_fail_when_version_provided_and_too_low_3_6() throws Exception {
+    @CCMConfig(version = "3.7", createCluster = false)
+    public void should_fail_when_version_provided_and_too_low_3_7() throws Exception {
         UnsupportedProtocolVersionException e = connectWithUnsupportedVersion(V1);
         assertThat(e.getUnsupportedVersion()).isEqualTo(V1);
         // pre-CASSANDRA-11464: server replies with its own version
