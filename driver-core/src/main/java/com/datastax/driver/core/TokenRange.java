@@ -179,11 +179,11 @@ public final class TokenRange implements Comparable<TokenRange> {
      */
     public boolean contains(TokenRange that) {
         // Empty ranges never contain any other range
-        if (this.isEmpty() || that.isEmpty())
+        if (this.isEmpty() || that.isEmpty() || !this.intersects(that))
             return false;
 
-        return this.contains(that.start, true)
-                && this.contains(that.end, false);
+        List<TokenRange> intersection = this.intersectWith(that);
+        return intersection.size() == 1 && intersection.get(0).equals(that);
     }
 
     /**

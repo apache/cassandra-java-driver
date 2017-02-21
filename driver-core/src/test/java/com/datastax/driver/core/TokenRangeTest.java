@@ -243,6 +243,7 @@ public class TokenRangeTest {
         assertThat(tokenRange(3, 9))
                 .doesNotContain(tokenRange(3, 3)) // empty
                 .doesNotContain(tokenRange(9, 9)) // empty
+                .doesNotContain(tokenRange(8, 4))
                 .doesNotContain(tokenRange(11, 1))
                 .doesNotContain(tokenRange(1, 2))
                 .doesNotContain(tokenRange(11, 3))
