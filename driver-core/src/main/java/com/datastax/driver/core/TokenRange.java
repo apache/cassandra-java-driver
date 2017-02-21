@@ -166,6 +166,27 @@ public final class TokenRange implements Comparable<TokenRange> {
     }
 
     /**
+     * Returns whether this range contains the given range.
+     * <p/>
+     * For example:
+     * <ul>
+     * <li>{@code ]3,5]} contains {@code ]3,4]} and {@code ]4,5]};</li>
+     * <li>{@code ]3,5]} does not contain {@code ]1,2]}, {@code ]2,3]}, {@code ]5,7]}...</li>
+     * </ul>
+     *
+     * @param that the other range.
+     * @return whether this range contains the given range.
+     */
+    public boolean contains(TokenRange that) {
+        // Empty ranges never contain any other range
+        if (this.isEmpty() || that.isEmpty())
+            return false;
+
+        return this.contains(that.start, true)
+                && this.contains(that.end, false);
+    }
+
+    /**
      * Computes the intersection of this range with another one.
      * <p/>
      * If either of these ranges overlap the the ring, they are unwrapped and the unwrapped
@@ -215,7 +236,7 @@ public final class TokenRange implements Comparable<TokenRange> {
      * Checks whether this range contains a given token.
      *
      * @param token the token to check for.
-     * @return whether this range contains the token, i.e. {@code range.start &lt; token &lt;= range.end}.
+     * @return whether this range contains the token, i.e. {@code range.start < token <= range.end}.
      */
     public boolean contains(Token token) {
         return contains(token, false);
@@ -226,9 +247,8 @@ public final class TokenRange implements Comparable<TokenRange> {
     // * ]1,2] does not contain 1, but it contains the start of ]1,3]
     private boolean contains(Token token, boolean isStart) {
         boolean isAfterStart = isStart ? token.compareTo(start) >= 0 : token.compareTo(start) > 0;
-        boolean isBeforeEnd = end.equals(factory.minToken()) ||
-                (isStart ? token.compareTo(end) < 0 : token.compareTo(end) <= 0);
-        return isWrappedAround()
+        boolean isBeforeEnd = isStart ? token.compareTo(end) < 0 : token.compareTo(end) <= 0;
+        return isWrappedAround() || end.equals(factory.minToken())
                 ? isAfterStart || isBeforeEnd
                 : isAfterStart && isBeforeEnd;
     }

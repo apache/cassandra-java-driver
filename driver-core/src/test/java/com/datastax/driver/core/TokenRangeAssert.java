@@ -99,4 +99,23 @@ public class TokenRangeAssert extends AbstractAssert<TokenRangeAssert, TokenRang
         }
         return this;
     }
+
+    public TokenRangeAssert contains(TokenRange... that) {
+        for (TokenRange thatRange : that) {
+            assertThat(actual.contains(thatRange))
+                    .as("%s should contain %s", actual, thatRange)
+                    .isTrue();
+        }
+        return this;
+    }
+
+    public TokenRangeAssert doesNotContain(TokenRange... that) {
+        for (TokenRange thatRange : that) {
+            assertThat(actual.contains(thatRange))
+                    .as("%s should not contain %s", actual, thatRange)
+                    .isFalse();
+        }
+        return this;
+    }
+
 }
