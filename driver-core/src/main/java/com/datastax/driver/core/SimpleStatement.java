@@ -152,12 +152,7 @@ public class SimpleStatement extends RegularStatement {
         return convert(namedValues, protocolVersion, codecRegistry);
     }
 
-    /**
-     * The number of values for this statement, that is the size of the array
-     * that will be returned by {@code getValues}.
-     *
-     * @return the number of values.
-     */
+    @Override
     public int valuesCount() {
         if (values != null)
             return values.length;
@@ -165,6 +160,11 @@ public class SimpleStatement extends RegularStatement {
             return namedValues.size();
         else
             return 0;
+    }
+
+    @Override
+    public int valuesCount(CodecRegistry codecRegistry) {
+        return valuesCount();
     }
 
     @Override

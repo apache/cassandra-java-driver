@@ -80,6 +80,54 @@ public class BatchStatement extends Statement {
         this.batchType = batchType;
     }
 
+    /**
+     * Returns the type of this batch statement.
+     *
+     * @return the type of this batch statement.
+     */
+    public Type getBatchType() {
+        return batchType;
+    }
+
+    /**
+     * The number of values for this statement, or zero, if this
+     * statement does not have values.
+     *
+     * @return the number of values.
+     */
+    public int valuesCount() {
+        return valuesCount(CodecRegistry.DEFAULT_INSTANCE);
+    }
+
+    /**
+     * The number of values for this statement, or zero, if this
+     * statement does not have values.
+     *
+     * @param codecRegistry the codec registry that will be used if the actual
+     *                      implementation needs to serialize Java objects in the
+     *                      process of determining if the query has values.
+     *                      Note that it might be possible to use the no-arg
+     *                      {@link #valuesCount()} depending on the type of
+     *                      statement this is called on.
+     * @return the number of values.
+     */
+    public int valuesCount(CodecRegistry codecRegistry) {
+        int count = 0;
+        for (Statement statement : statements) {
+            if (statement instanceof StatementWrapper)
+                statement = ((StatementWrapper) statement).getWrappedStatement();
+            if (statement instanceof RegularStatement) {
+                   count +=  ((RegularStatement) statement).valuesCount(codecRegistry);
+            } else {
+                // We handle BatchStatement in add() so ...
+                assert statement instanceof BoundStatement;
+                BoundStatement st = (BoundStatement) statement;
+                count += st.wrapper.values.length;
+            }
+        }
+        return count;
+    }
+
     IdAndValues getIdAndValues(ProtocolVersion protocolVersion, CodecRegistry codecRegistry) {
         IdAndValues idAndVals = new IdAndValues(statements.size());
         for (Statement statement : statements) {

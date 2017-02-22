@@ -111,16 +111,7 @@ public abstract class BuiltStatement extends RegularStatement {
         return cache;
     }
 
-    /**
-     * The number of values for this statement, or zero, if this
-     * statement does not have values.
-     * @param codecRegistry the codec registry that will be used if the statement must be
-     *                      rebuilt in order to determine if it has values, and Java objects
-     *                      must be inlined in the process (see {@link BuiltStatement} for
-     *                      more explanations on why this is so).
-     *
-     * @return the number of values.
-     */
+    @Override
     public int valuesCount(CodecRegistry codecRegistry) {
         maybeRebuildCache(codecRegistry);
         if (values != null)

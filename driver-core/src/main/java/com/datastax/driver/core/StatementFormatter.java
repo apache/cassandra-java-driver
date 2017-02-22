@@ -561,20 +561,6 @@ public final class StatementFormatter {
             return this;
         }
 
-        public StatementWriter appendBoundValue(int index, ByteBuffer serialized, DataType type) {
-            if (maxAppendedBoundValuesExceeded())
-                return this;
-            return appendBoundValue(Integer.toString(index), serialized, type);
-        }
-
-        public StatementWriter appendBoundValue(String name, ByteBuffer serialized, DataType type) {
-            if (maxAppendedBoundValuesExceeded())
-                return this;
-            TypeCodec<Object> codec = codecRegistry.codecFor(type);
-            Object value = codec.deserialize(serialized, protocolVersion);
-            return appendBoundValue(name, value, type);
-        }
-
         public StatementWriter appendBoundValue(int index, Object value, DataType type) {
             if (maxAppendedBoundValuesExceeded())
                 return this;
@@ -862,7 +848,7 @@ public final class StatementFormatter {
                         if (i > 0)
                             out.append(listElementSeparator);
                         if (statement.isSet(i))
-                            out.appendBoundValue(metadata.getName(i), statement.wrapper.values[i], metadata.getType(i));
+                            out.appendBoundValue(metadata.getName(i), statement.getObject(i), metadata.getType(i));
                         else
                             out.appendUnsetBoundValue(metadata.getName(i));
                         if (out.maxAppendedBoundValuesExceeded())
@@ -886,14 +872,11 @@ public final class StatementFormatter {
         public void print(BatchStatement statement, StatementWriter out, StatementFormatVerbosity verbosity) {
             out.appendClassNameAndHashCode(statement);
             out.append(summaryStart);
-            out.append(getBatchType(statement));
+            out.append(statement.getBatchType());
             out.append(listElementSeparator);
             out.append(String.format(statementsCount, statement.size()));
             out.append(listElementSeparator);
-            int totalBoundValuesCount = 0;
-            for (List<ByteBuffer> values : getValues(statement, out)) {
-                totalBoundValuesCount += values.size();
-            }
+            int totalBoundValuesCount = statement.valuesCount(out.getCodecRegistry());
             out.append(String.format(boundValuesCount, totalBoundValuesCount));
             out.append(summaryEnd);
             if (verbosity.compareTo(StatementFormatVerbosity.NORMAL) >= 0 && out.getLimits().maxInnerStatements > 0) {
@@ -912,14 +895,6 @@ public final class StatementFormatter {
                     printer.print(stmt, out.createChildWriter(), verbosity);
                 }
             }
-        }
-
-        protected BatchStatement.Type getBatchType(BatchStatement statement) {
-            return statement.batchType;
-        }
-
-        protected List<List<ByteBuffer>> getValues(BatchStatement statement, StatementWriter out) {
-            return statement.getIdAndValues(out.getProtocolVersion(), out.getCodecRegistry()).values;
         }
 
     }
