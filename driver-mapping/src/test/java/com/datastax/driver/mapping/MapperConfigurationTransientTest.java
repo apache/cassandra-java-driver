@@ -16,16 +16,20 @@
 package com.datastax.driver.mapping;
 
 import com.datastax.driver.core.CCMTestsSupport;
-import com.datastax.driver.mapping.annotations.Column;
 import com.datastax.driver.mapping.annotations.PartitionKey;
 import com.datastax.driver.mapping.annotations.Table;
 import com.datastax.driver.mapping.annotations.Transient;
-import org.testng.annotations.BeforeClass;
+import com.datastax.driver.mapping.configuration.MapperConfiguration;
+import com.datastax.driver.mapping.configuration.scan.PropertyScanConfiguration;
+import com.google.common.collect.ImmutableSet;
 import org.testng.annotations.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-public class MapperTransientTest extends CCMTestsSupport {
+/**
+ * Test for JAVA-1310 - validate ability to transient properties at manager and mapper levels
+ */
+public class MapperConfigurationTransientTest extends CCMTestsSupport {
 
     @Override
     public void onTestContextInitialized() {
@@ -79,33 +83,20 @@ public class MapperTransientTest extends CCMTestsSupport {
     }
 
     @Test(groups = "short")
-    public void should_not_ignore_property_if_ignored_at_class_level_but_annotated() {
+    public void should_ignore_property_if_declared_transient_in_mapper_configuration() {
         MappingManager mappingManager = new MappingManager(session());
-        Foo4 foo = mappingManager.mapper(Foo4.class).get(1);
-        assertThat(foo.getV()).isEqualTo(1);
+        MapperConfiguration configuration = new MapperConfiguration();
+        PropertyScanConfiguration scanConf = new PropertyScanConfiguration();
+        scanConf.setExcludedProperties(ImmutableSet.of("notAColumn"));
+        configuration.setPropertyScanConfiguration(scanConf);
+        mappingManager.mapper(Foo3.class, configuration);
     }
 
-    @Table(name = "foo", transientProperties = {"class", "v"})
+    @Table(name = "foo")
     public static class Foo4 {
         @PartitionKey
         private int k;
-        @Column
-        private int v;
-
-        public int getK() {
-            return k;
-        }
-
-        public void setK(int k) {
-            this.k = k;
-        }
-
-        public int getV() {
-            return v;
-        }
-
-        public void setV(int v) {
-            this.v = v;
-        }
+        private int notAColumn;
     }
+
 }
