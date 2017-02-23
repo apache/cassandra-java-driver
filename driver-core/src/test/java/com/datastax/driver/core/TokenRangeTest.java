@@ -78,6 +78,7 @@ public class TokenRangeTest {
                 .intersects(tokenRange(4, 1))
                 .intersects(tokenRange(6, minToken))
                 .intersects(tokenRange(5, minToken))
+                .intersects(tokenRange(4, minToken))
         ;
 
         assertThat(tokenRange(minToken, minToken))
@@ -233,6 +234,88 @@ public class TokenRangeTest {
                 assertThat(tr.isEmpty());
             }
         }
+    }
+
+    @Test(groups = "unit")
+    public void should_check_containment() {
+
+        // NB - to make the test more visual, we use watch face numbers
+        assertThat(tokenRange(3, 9))
+                .doesNotContain(tokenRange(3, 3)) // empty
+                .doesNotContain(tokenRange(9, 9)) // empty
+                .doesNotContain(tokenRange(8, 4))
+                .doesNotContain(tokenRange(11, 1))
+                .doesNotContain(tokenRange(1, 2))
+                .doesNotContain(tokenRange(11, 3))
+                .doesNotContain(tokenRange(2, 3))
+                .doesNotContain(tokenRange(2, 6))
+                .doesNotContain(tokenRange(2, 10))
+                .doesNotContain(tokenRange(6, 10))
+                .contains(tokenRange(4, 8))
+                .contains(tokenRange(3, 9))
+                .doesNotContain(tokenRange(9, 10))
+                .doesNotContain(tokenRange(10, 11))
+        ;
+        assertThat(tokenRange(9, 3))
+                .doesNotContain(tokenRange(3, 3)) // empty
+                .doesNotContain(tokenRange(9, 9)) // empty
+                .doesNotContain(tokenRange(5, 7))
+                .doesNotContain(tokenRange(7, 8))
+                .doesNotContain(tokenRange(5, 9))
+                .doesNotContain(tokenRange(8, 9))
+                .doesNotContain(tokenRange(9, 9))
+                .doesNotContain(tokenRange(8, 2))
+                .doesNotContain(tokenRange(8, 4))
+                .doesNotContain(tokenRange(2, 4))
+                .contains(tokenRange(10, 2))
+                .contains(tokenRange(9, 3))
+                .doesNotContain(tokenRange(3, 4))
+                .doesNotContain(tokenRange(4, 5))
+        ;
+        assertThat(tokenRange(3, 3))
+                .doesNotContain(tokenRange(3, 3)) // empty
+                .doesNotContain(tokenRange(9, 9)) // empty
+                .doesNotContain(tokenRange(5, 7))
+                .doesNotContain(tokenRange(7, 8))
+                .doesNotContain(tokenRange(5, 9))
+                .doesNotContain(tokenRange(8, 9))
+                .doesNotContain(tokenRange(9, 9))
+                .doesNotContain(tokenRange(8, 2))
+                .doesNotContain(tokenRange(8, 4))
+                .doesNotContain(tokenRange(2, 4))
+                .doesNotContain(tokenRange(10, 2))
+                .doesNotContain(tokenRange(9, 3))
+                .doesNotContain(tokenRange(3, 4))
+                .doesNotContain(tokenRange(4, 5))
+        ;
+
+        // Reminder: minToken serves as both lower and upper bound
+        assertThat(tokenRange(minToken, 5))
+                .doesNotContain(tokenRange(6, 7))
+                .doesNotContain(tokenRange(6, minToken))
+                .doesNotContain(tokenRange(6, 4))
+                .contains(tokenRange(2, 4))
+                .contains(tokenRange(minToken, 4))
+                .contains(tokenRange(minToken, 5))
+                .doesNotContain(tokenRange(minToken, 6))
+        ;
+
+        assertThat(tokenRange(5, minToken))
+                .doesNotContain(tokenRange(3, 4))
+                .doesNotContain(tokenRange(minToken, 4))
+                .contains(tokenRange(6, 7))
+                .doesNotContain(tokenRange(4, 1))
+                .contains(tokenRange(6, minToken))
+                .contains(tokenRange(5, minToken))
+                .doesNotContain(tokenRange(4, minToken))
+        ;
+
+        assertThat(tokenRange(minToken, minToken))
+                .contains(tokenRange(3, 4))
+                .contains(tokenRange(3, minToken))
+                .contains(tokenRange(minToken, 3))
+                .doesNotContain(tokenRange(3, 3))
+        ;
     }
 
     private TokenRange tokenRange(long start, long end) {
