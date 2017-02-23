@@ -158,23 +158,23 @@ public class MappingManager {
             @Override
             public void onUserTypeChanged(UserType current, UserType previous) {
                 synchronized (udtCodecs) {
-                    Set<Class<?>> udtClasses = new HashSet<Class<?>>();
+                    Set<MappedUDTCodec<?>> deletedCodecs = new HashSet<MappedUDTCodec<?>>();
                     Iterator<MappedUDTCodec<?>> it = udtCodecs.values().iterator();
                     while (it.hasNext()) {
                         MappedUDTCodec<?> codec = it.next();
                         if (previous.equals(codec.getCqlType())) {
                             LOGGER.warn("User type {} has been altered; existing mappers for @UDT annotated {} might not work properly anymore",
                                     previous, codec.getUdtClass());
-                            udtClasses.add(codec.getUdtClass());
+                            deletedCodecs.add(codec);
                             it.remove();
                         }
                     }
-                    for (Class<?> udtClass : udtClasses) {
+                    for (MappedUDTCodec<?> deletedCodec : deletedCodecs) {
                         // try to register an updated version of the previous codec
                         try {
-                            getUDTCodec(udtClass, defaultConfiguration); // TODO - this will update with default configuration even though previously loaded with a custom one. Solution may be to pass the MappedUDTCodec it's configuration on creation time, and then at this point we are able to get it from the previous instance
+                            getUDTCodec(deletedCodec.getUdtClass(), deletedCodec.getConfiguration());
                         } catch (Exception e) {
-                            LOGGER.error("Could not update mapping for @UDT annotated " + udtClass, e);
+                            LOGGER.error("Could not update mapping for @UDT annotated " + deletedCodec.getUdtClass(), e);
                         }
                     }
                 }
