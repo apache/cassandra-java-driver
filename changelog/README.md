@@ -1,5 +1,12 @@
 ## Changelog
 
+### 3.1.5 (in progress)
+
+Merged from 3.0.x branch:
+
+- [bug] JAVA-1404: Fix min token handling in TokenRange.contains.
+
+
 ### 3.1.4
 
 Merged from 3.0.x branch:
@@ -124,6 +131,19 @@ Merged from 2.1 branch:
 - [new feature] JAVA-1019: SchemaBuilder support for CREATE/ALTER/DROP KEYSPACE.
 - [bug] JAVA-727: Allow monotonic timestamp generators to drift in the future + use microsecond precision when possible.
 - [improvement] JAVA-444: Add Java process information to UUIDs.makeNode() hash.
+
+
+### 3.0.8 (in progress)
+
+- [bug] JAVA-1404: Fix min token handling in TokenRange.contains.
+
+
+### 3.0.7
+
+- [bug] JAVA-1371: Reintroduce connection pool timeout.
+- [bug] JAVA-1313: Copy SerialConsistencyLevel to PreparedStatement.
+- [documentation] JAVA-1334: Clarify documentation of method `addContactPoints`.
+- [improvement] JAVA-1357: Document that getReplicas only returns replicas of the last token in range.
 
 
 ### 3.0.6
