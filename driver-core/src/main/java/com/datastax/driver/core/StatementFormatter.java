@@ -24,6 +24,9 @@ import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
+import static com.datastax.driver.core.StatementFormatter.StatementFormatVerbosity.EXTENDED;
+import static com.datastax.driver.core.StatementFormatter.StatementFormatVerbosity.NORMAL;
+import static com.datastax.driver.core.StatementFormatter.StatementFormatterLimits.UNLIMITED;
 import static com.datastax.driver.core.StatementFormatter.StatementWriter.*;
 
 /**
@@ -78,6 +81,9 @@ import static com.datastax.driver.core.StatementFormatter.StatementWriter.*;
  */
 public final class StatementFormatter {
 
+    /**
+     * The default {@code StatementFormatter} instance.
+     */
     public static final StatementFormatter DEFAULT_INSTANCE = StatementFormatter.builder().build();
 
     /**
@@ -277,13 +283,14 @@ public final class StatementFormatter {
          * @return The best {@link StatementPrinter printer} for the given
          * statement. Cannot be {@code null}.
          */
-        @SuppressWarnings("unchecked")
         public <S extends Statement> StatementPrinter<? super S> findPrinter(S statement) {
             StatementPrinter<?> printer = lookupPrinter(statement, printers);
             if (printer == null)
                 printer = lookupPrinter(statement, BUILT_IN_PRINTERS);
             assert printer != null;
-            return (StatementPrinter<? super S>) printer;
+            @SuppressWarnings("unchecked")
+            StatementPrinter<? super S> sp = (StatementPrinter<? super S>) printer;
+            return sp;
         }
 
         private static StatementPrinter<?> lookupPrinter(Statement statement, Map<Class<?>, StatementPrinter<?>> map) {
@@ -316,21 +323,25 @@ public final class StatementFormatter {
      */
     public static final class StatementWriter implements Appendable {
 
-        public static final String summaryStart = " [";
-        public static final String summaryEnd = "]";
-        public static final String boundValuesCount = "%s bound values";
-        public static final String statementsCount = "%s inner statements";
-        public static final String queryStringStart = ": ";
-        public static final String queryStringEnd = " ";
-        public static final String boundValuesStart = "{ ";
-        public static final String boundValuesEnd = " }";
-        public static final String outgoingPayloadStart = "< ";
-        public static final String outgoingPayloadEnd = " >";
-        public static final String truncatedOutput = "...";
-        public static final String nullValue = "<NULL>";
-        public static final String unsetValue = "<UNSET>";
-        public static final String listElementSeparator = ", ";
-        public static final String nameValueSeparator = " : ";
+        protected static final String summaryStart = " [";
+        protected static final String summaryEnd = "]";
+        protected static final String boundValuesCount = "%s values";
+        protected static final String statementsCount = "%s stmts";
+        protected static final String queryStringStart = ": ";
+        protected static final String boundValuesStart = " { ";
+        protected static final String boundValuesEnd = " }";
+        protected static final String outgoingPayloadStart = " < ";
+        protected static final String outgoingPayloadEnd = " >";
+        protected static final String truncatedOutput = "...";
+        protected static final String nullValue = "<NULL>";
+        protected static final String unsetValue = "<?>";
+        protected static final String listElementSeparator = ", ";
+        protected static final String nameValueSeparator = " : ";
+        protected static final String idempotent = "IDP : %s";
+        protected static final String consistencyLevel = "CL : %s";
+        protected static final String serialConsistencyLevel = "SCL : %s";
+        protected static final String defaultTimestamp = "DTS : %s";
+        protected static final String readTimeoutMillis = "RTM : %s";
 
         private static final int MAX_EXCEEDED = -2;
 
@@ -352,10 +363,10 @@ public final class StatementFormatter {
             this.limits = limits;
             this.protocolVersion = protocolVersion;
             this.codecRegistry = codecRegistry;
-            remainingQueryStringChars = limits.maxQueryStringLength == StatementFormatterLimits.UNLIMITED
+            remainingQueryStringChars = limits.maxQueryStringLength == UNLIMITED
                     ? Integer.MAX_VALUE
                     : limits.maxQueryStringLength;
-            remainingBoundValues = limits.maxBoundValues == StatementFormatterLimits.UNLIMITED
+            remainingBoundValues = limits.maxBoundValues == UNLIMITED
                     ? Integer.MAX_VALUE
                     : limits.maxBoundValues;
         }
@@ -498,7 +509,7 @@ public final class StatementFormatter {
                 return this;
             else if (queryStringFragment.isEmpty())
                 return this;
-            else if (limits.maxQueryStringLength == StatementFormatterLimits.UNLIMITED)
+            else if (limits.maxQueryStringLength == UNLIMITED)
                 buffer.append(queryStringFragment);
             else if (queryStringFragment.length() > remainingQueryStringChars) {
                 if (remainingQueryStringChars > 0) {
@@ -526,7 +537,7 @@ public final class StatementFormatter {
             if (it.hasNext()) {
                 buffer.append(outgoingPayloadStart);
                 while (it.hasNext()) {
-                    if (limits.maxOutgoingPayloadEntries != StatementFormatterLimits.UNLIMITED && remaining == 0) {
+                    if (limits.maxOutgoingPayloadEntries != UNLIMITED && remaining == 0) {
                         buffer.append(truncatedOutput);
                         break;
                     }
@@ -540,7 +551,7 @@ public final class StatementFormatter {
                     if (value == null) {
                         formatted = nullValue;
                     } else {
-                        if (limits.maxOutgoingPayloadValueLength != StatementFormatterLimits.UNLIMITED) {
+                        if (limits.maxOutgoingPayloadValueLength != UNLIMITED) {
                             // prevent large blobs from being converted to strings
                             lengthExceeded = value.remaining() > limits.maxOutgoingPayloadValueLength;
                             if (lengthExceeded)
@@ -553,7 +564,7 @@ public final class StatementFormatter {
                         buffer.append(truncatedOutput);
                     if (it.hasNext())
                         buffer.append(listElementSeparator);
-                    if (limits.maxOutgoingPayloadEntries != StatementFormatterLimits.UNLIMITED)
+                    if (limits.maxOutgoingPayloadEntries != UNLIMITED)
                         remaining--;
                 }
                 buffer.append(outgoingPayloadEnd);
@@ -573,7 +584,7 @@ public final class StatementFormatter {
             if (value == null) {
                 doAppendBoundValue(name, nullValue);
                 return this;
-            } else if (value instanceof ByteBuffer && limits.maxBoundValueLength != StatementFormatterLimits.UNLIMITED) {
+            } else if (value instanceof ByteBuffer && limits.maxBoundValueLength != UNLIMITED) {
                 ByteBuffer byteBuffer = (ByteBuffer) value;
                 int maxBufferLengthInBytes = Math.max(2, limits.maxBoundValueLength / 2) - 1;
                 boolean bufferLengthExceeded = byteBuffer.remaining() > maxBufferLengthInBytes;
@@ -611,7 +622,7 @@ public final class StatementFormatter {
                 return;
             }
             boolean lengthExceeded = false;
-            if (limits.maxBoundValueLength != StatementFormatterLimits.UNLIMITED && value.length() > limits.maxBoundValueLength) {
+            if (limits.maxBoundValueLength != UNLIMITED && value.length() > limits.maxBoundValueLength) {
                 value = value.substring(0, limits.maxBoundValueLength);
                 lengthExceeded = true;
             }
@@ -622,7 +633,7 @@ public final class StatementFormatter {
             buffer.append(value);
             if (lengthExceeded)
                 buffer.append(truncatedOutput);
-            if (limits.maxBoundValues != StatementFormatterLimits.UNLIMITED)
+            if (limits.maxBoundValues != UNLIMITED)
                 remainingBoundValues--;
         }
 
@@ -672,9 +683,9 @@ public final class StatementFormatter {
         @Override
         public void print(S statement, StatementWriter out, StatementFormatVerbosity verbosity) {
             printHeader(statement, out, verbosity);
-            if (verbosity.compareTo(StatementFormatVerbosity.NORMAL) >= 0) {
+            if (verbosity.compareTo(NORMAL) >= 0) {
                 printQueryString(statement, out, verbosity);
-                if (verbosity.compareTo(StatementFormatVerbosity.EXTENDED) >= 0) {
+                if (verbosity.compareTo(EXTENDED) >= 0) {
                     printBoundValues(statement, out, verbosity);
                     printOutgoingPayload(statement, out, verbosity);
                 }
@@ -684,28 +695,35 @@ public final class StatementFormatter {
 
         protected void printHeader(S statement, StatementWriter out, StatementFormatVerbosity verbosity) {
             out.appendClassNameAndHashCode(statement);
-            out.append(summaryStart);
-            printSummary(statement, out, verbosity);
-            out.append(summaryEnd);
+            List<String> properties = collectStatementProperties(statement, out, verbosity);
+            if (properties != null && !properties.isEmpty()) {
+                out.append(summaryStart);
+                Iterator<String> it = properties.iterator();
+                while (it.hasNext()) {
+                    String property = it.next();
+                    out.append(property);
+                    if (it.hasNext())
+                        out.append(listElementSeparator);
+                }
+                out.append(summaryEnd);
+            }
         }
 
-        protected void printSummary(S statement, StatementWriter out, StatementFormatVerbosity verbosity) {
-            Boolean idempotent = statement.isIdempotent();
-            ConsistencyLevel consistencyLevel = statement.getConsistencyLevel();
-            out.append(String.format("idempotent=%s", idempotent == null ? unsetValue : idempotent));
-            out.append(listElementSeparator);
-            out.append(String.format("CL=%s", consistencyLevel == null ? unsetValue : consistencyLevel));
-            if (verbosity.compareTo(StatementFormatVerbosity.NORMAL) > 0) {
-                ConsistencyLevel serialConsistencyLevel = statement.getSerialConsistencyLevel();
-                long defaultTimestamp = statement.getDefaultTimestamp();
-                int readTimeoutMillis = statement.getReadTimeoutMillis();
-                out.append(listElementSeparator);
-                out.append(String.format("SCL=%s", serialConsistencyLevel == null ? unsetValue : serialConsistencyLevel));
-                out.append(listElementSeparator);
-                out.append(String.format("defaultTimestamp=%s", defaultTimestamp == Long.MIN_VALUE ? unsetValue : defaultTimestamp));
-                out.append(listElementSeparator);
-                out.append(String.format("readTimeoutMillis=%s", readTimeoutMillis == Integer.MIN_VALUE ? unsetValue : readTimeoutMillis));
+        protected List<String> collectStatementProperties(S statement, StatementWriter out, StatementFormatVerbosity verbosity) {
+            List<String> properties = new ArrayList<String>();
+            if (verbosity.compareTo(NORMAL) > 0) {
+                if (statement.isIdempotent() != null)
+                    properties.add(String.format(idempotent, statement.isIdempotent()));
+                if (statement.getConsistencyLevel() != null)
+                    properties.add(String.format(consistencyLevel, statement.getConsistencyLevel()));
+                if (statement.getSerialConsistencyLevel() != null)
+                    properties.add(String.format(serialConsistencyLevel, statement.getSerialConsistencyLevel()));
+                if (statement.getDefaultTimestamp() != Long.MIN_VALUE)
+                    properties.add(String.format(defaultTimestamp, statement.getDefaultTimestamp()));
+                if (statement.getReadTimeoutMillis() != Integer.MIN_VALUE)
+                    properties.add(String.format(readTimeoutMillis, statement.getReadTimeoutMillis()));
             }
+            return properties;
         }
 
         protected void printQueryString(S statement, StatementWriter out, StatementFormatVerbosity verbosity) {
@@ -738,7 +756,6 @@ public final class StatementFormatter {
         protected void printQueryString(S statement, StatementWriter out, StatementFormatVerbosity verbosity) {
             out.append(queryStringStart);
             out.appendQueryStringFragment(statement.getQueryString(out.getCodecRegistry()));
-            out.append(queryStringEnd);
         }
 
     }
@@ -750,10 +767,10 @@ public final class StatementFormatter {
         }
 
         @Override
-        protected void printSummary(SimpleStatement statement, StatementWriter out, StatementFormatVerbosity verbosity) {
-            super.printSummary(statement, out, verbosity);
-            out.append(listElementSeparator);
-            out.append(String.format(boundValuesCount, statement.valuesCount()));
+        protected List<String> collectStatementProperties(SimpleStatement statement, StatementWriter out, StatementFormatVerbosity verbosity) {
+            List<String> properties = super.collectStatementProperties(statement, out, verbosity);
+            properties.add(0, String.format(boundValuesCount, statement.valuesCount()));
+            return properties;
         }
 
         @Override
@@ -793,10 +810,10 @@ public final class StatementFormatter {
         }
 
         @Override
-        protected void printSummary(BuiltStatement statement, StatementWriter out, StatementFormatVerbosity verbosity) {
-            super.printSummary(statement, out, verbosity);
-            out.append(listElementSeparator);
-            out.append(String.format(boundValuesCount, statement.valuesCount(out.getCodecRegistry())));
+        protected List<String> collectStatementProperties(BuiltStatement statement, StatementWriter out, StatementFormatVerbosity verbosity) {
+            List<String> properties = super.collectStatementProperties(statement, out, verbosity);
+            properties.add(0, String.format(boundValuesCount, statement.valuesCount(out.getCodecRegistry())));
+            return properties;
         }
 
         @Override
@@ -824,18 +841,17 @@ public final class StatementFormatter {
         }
 
         @Override
-        protected void printSummary(BoundStatement statement, StatementWriter out, StatementFormatVerbosity verbosity) {
-            super.printSummary(statement, out, verbosity);
-            out.append(listElementSeparator);
+        protected List<String> collectStatementProperties(BoundStatement statement, StatementWriter out, StatementFormatVerbosity verbosity) {
+            List<String> properties = super.collectStatementProperties(statement, out, verbosity);
             ColumnDefinitions metadata = statement.preparedStatement().getVariables();
-            out.append(String.format(boundValuesCount, metadata.size()));
+            properties.add(0, String.format(boundValuesCount, metadata.size()));
+            return properties;
         }
 
         @Override
         protected void printQueryString(BoundStatement statement, StatementWriter out, StatementFormatVerbosity verbosity) {
             out.append(queryStringStart);
-                out.appendQueryStringFragment(statement.preparedStatement().getQueryString());
-            out.append(queryStringEnd);
+            out.appendQueryStringFragment(statement.preparedStatement().getQueryString());
         }
 
         @Override
@@ -875,11 +891,12 @@ public final class StatementFormatter {
             out.append(statement.getBatchType());
             out.append(listElementSeparator);
             out.append(String.format(statementsCount, statement.size()));
-            out.append(listElementSeparator);
-            int totalBoundValuesCount = statement.valuesCount(out.getCodecRegistry());
-            out.append(String.format(boundValuesCount, totalBoundValuesCount));
+            if (verbosity.compareTo(NORMAL) > 0) {
+                out.append(listElementSeparator);
+                out.append(String.format(boundValuesCount, statement.valuesCount(out.getCodecRegistry())));
+            }
             out.append(summaryEnd);
-            if (verbosity.compareTo(StatementFormatVerbosity.NORMAL) >= 0 && out.getLimits().maxInnerStatements > 0) {
+            if (verbosity.compareTo(NORMAL) >= 0 && out.getLimits().maxInnerStatements > 0) {
                 out.append(' ');
                 int i = 1;
                 for (Statement stmt : statement.getStatements()) {
@@ -890,7 +907,7 @@ public final class StatementFormatter {
                         break;
                     }
                     out.append(i++);
-                    out.append(listElementSeparator);
+                    out.append(nameValueSeparator);
                     StatementPrinter<? super Statement> printer = out.getPrinterRegistry().findPrinter(stmt);
                     printer.print(stmt, out.createChildWriter(), verbosity);
                 }
@@ -1012,7 +1029,7 @@ public final class StatementFormatter {
          * @return this (for method chaining).
          */
         public Builder withMaxQueryStringLength(int maxQueryStringLength) {
-            if (maxQueryStringLength <= 0 && maxQueryStringLength != StatementFormatterLimits.UNLIMITED)
+            if (maxQueryStringLength <= 0 && maxQueryStringLength != UNLIMITED)
                 throw new IllegalArgumentException("Invalid maxQueryStringLength, should be > 0 or -1 (unlimited), got " + maxQueryStringLength);
             this.maxQueryStringLength = maxQueryStringLength;
             return this;
@@ -1032,7 +1049,7 @@ public final class StatementFormatter {
          * @return this (for method chaining).
          */
         public Builder withMaxBoundValueLength(int maxBoundValueLength) {
-            if (maxBoundValueLength <= 0 && maxBoundValueLength != StatementFormatterLimits.UNLIMITED)
+            if (maxBoundValueLength <= 0 && maxBoundValueLength != UNLIMITED)
                 throw new IllegalArgumentException("Invalid maxBoundValueLength, should be > 0 or -1 (unlimited), got " + maxBoundValueLength);
             this.maxBoundValueLength = maxBoundValueLength;
             return this;
@@ -1050,7 +1067,7 @@ public final class StatementFormatter {
          * @return this (for method chaining).
          */
         public Builder withMaxBoundValues(int maxBoundValues) {
-            if (maxBoundValues <= 0 && maxBoundValues != StatementFormatterLimits.UNLIMITED)
+            if (maxBoundValues <= 0 && maxBoundValues != UNLIMITED)
                 throw new IllegalArgumentException("Invalid maxBoundValues, should be > 0 or -1 (unlimited), got " + maxBoundValues);
             this.maxBoundValues = maxBoundValues;
             return this;
@@ -1075,7 +1092,7 @@ public final class StatementFormatter {
          * @return this (for method chaining).
          */
         public Builder withMaxInnerStatements(int maxInnerStatements) {
-            if (maxInnerStatements < 0 && maxInnerStatements != StatementFormatterLimits.UNLIMITED)
+            if (maxInnerStatements < 0 && maxInnerStatements != UNLIMITED)
                 throw new IllegalArgumentException("Invalid maxInnerStatements, should be >= 0 or -1 (unlimited), got " + maxInnerStatements);
             this.maxInnerStatements = maxInnerStatements;
             return this;
@@ -1093,7 +1110,7 @@ public final class StatementFormatter {
          * @return this (for method chaining).
          */
         public Builder withMaxOutgoingPayloadEntries(int maxOutgoingPayloadEntries) {
-            if (maxOutgoingPayloadEntries <= 0 && maxOutgoingPayloadEntries != StatementFormatterLimits.UNLIMITED)
+            if (maxOutgoingPayloadEntries <= 0 && maxOutgoingPayloadEntries != UNLIMITED)
                 throw new IllegalArgumentException("Invalid maxOutgoingPayloadEntries, should be > 0 or -1 (unlimited), got " + maxOutgoingPayloadEntries);
             this.maxOutgoingPayloadEntries = maxOutgoingPayloadEntries;
             return this;
@@ -1111,7 +1128,7 @@ public final class StatementFormatter {
          * @return this (for method chaining).
          */
         public Builder withMaxOutgoingPayloadValueLength(int maxOutgoingPayloadValueLength) {
-            if (maxOutgoingPayloadValueLength <= 0 && maxOutgoingPayloadValueLength != StatementFormatterLimits.UNLIMITED)
+            if (maxOutgoingPayloadValueLength <= 0 && maxOutgoingPayloadValueLength != UNLIMITED)
                 throw new IllegalArgumentException("Invalid maxOutgoingPayloadValueLength, should be > 0 or -1 (unlimited), got " + maxOutgoingPayloadValueLength);
             this.maxOutgoingPayloadValueLength = maxOutgoingPayloadValueLength;
             return this;

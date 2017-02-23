@@ -514,7 +514,7 @@ public class EnhancedQueryLoggerTest extends CCMTestsSupport {
                 .contains(ipOfNode(1))
                 .contains(query)
                 .contains("pk : 42")
-                .contains("c_text : <UNSET>");
+                .contains("c_text : <?>");
     }
 
     @Test(groups = "short")
@@ -683,7 +683,7 @@ public class EnhancedQueryLoggerTest extends CCMTestsSupport {
                 .contains(ipOfNode(1))
                 .doesNotContain(query1)
                 .doesNotContain(query2)
-                .contains("2 inner statements");
+                .contains("2 stmts");
     }
 
     @Test(groups = "short")

@@ -129,11 +129,17 @@ public class StatementFormatterTest {
     @Test(groups = "unit")
     public void should_format_simple_statement() throws Exception {
         StatementFormatter formatter = StatementFormatter.builder().build();
-        Statement statement = new SimpleStatement("SELECT * FROM t WHERE c1 = ? AND c2 = ?", "foo", 42);
+        Statement statement = new SimpleStatement("SELECT * FROM t WHERE c1 = ? AND c2 = ?", "foo", 42)
+                .setIdempotent(true)
+                .setConsistencyLevel(ConsistencyLevel.QUORUM)
+                .setSerialConsistencyLevel(ConsistencyLevel.SERIAL)
+                .setDefaultTimestamp(12345L)
+                .setReadTimeoutMillis(12345);
         String s = formatter.format(statement, EXTENDED, version, codecRegistry);
         assertThat(s)
                 .contains("SimpleStatement@")
-                .contains("2 bound values")
+                .contains("IDP : true, CL : QUORUM, SCL : SERIAL, DTS : 12345, RTM : 12345")
+                .contains("2 values")
                 .contains("SELECT * FROM t WHERE c1 = ? AND c2 = ?")
                 .contains("{ 0 : 'foo', 1 : 42 }");
     }
@@ -146,7 +152,12 @@ public class StatementFormatterTest {
         String s = formatter.format(statement, EXTENDED, version, codecRegistry);
         assertThat(s)
                 .contains("SimpleStatement@")
-                .contains("2 bound values")
+                .doesNotContain("IDP")
+                .doesNotContain("CL")
+                .doesNotContain("SCL")
+                .doesNotContain("DTS")
+                .doesNotContain("RTM")
+                .contains("2 values")
                 .contains("SELECT * FROM t WHERE c1 = ? AND c2 = ?")
                 .contains("{ c1 : 'foo', c2 : 42 }");
     }
@@ -158,7 +169,7 @@ public class StatementFormatterTest {
         String s = formatter.format(statement, EXTENDED, version, codecRegistry);
         assertThat(s)
                 .contains("SimpleStatement@")
-                .contains("0 bound values")
+                .contains("0 values")
                 .contains("SELECT * FROM t WHERE c1 = 42")
                 .doesNotContain("{");
     }
@@ -170,7 +181,7 @@ public class StatementFormatterTest {
         String s = formatter.format(statement, EXTENDED, version, codecRegistry);
         assertThat(s)
                 .contains("BuiltStatement@")
-                .contains("2 bound values")
+                .contains("2 values")
                 .contains("SELECT * FROM t WHERE c1=? AND c2=42 AND c3=?")
                 .contains("{ 0 : 'foo', 1 : false }");
     }
@@ -199,9 +210,9 @@ public class StatementFormatterTest {
         String s = formatter.format(statement, EXTENDED, version, codecRegistry);
         assertThat(s)
                 .contains("BoundStatement@")
-                .contains("3 bound values")
+                .contains("3 values")
                 .contains("SELECT * FROM t WHERE c1 = ? AND c2 = ? AND c3 = ?")
-                .contains("{ c1 : 'foo', c2 : <NULL>, c3 : <UNSET> }");
+                .contains("{ c1 : 'foo', c2 : <NULL>, c3 : <?> }");
     }
 
     @Test(groups = "unit")
@@ -217,10 +228,10 @@ public class StatementFormatterTest {
         String s = formatter.format(statement, EXTENDED, version, codecRegistry);
         assertThat(s)
                 .contains("BatchStatement@")
-                .contains("[UNLOGGED, 3 inner statements, 6 bound values]")
-                .contains(formatter.format(inner1, EXTENDED, version, codecRegistry))
-                .contains(formatter.format(inner2, EXTENDED, version, codecRegistry))
-                .contains(formatter.format(inner3, EXTENDED, version, codecRegistry));
+                .contains("[UNLOGGED, 3 stmts, 6 values]")
+                .contains("1 : " + formatter.format(inner1, EXTENDED, version, codecRegistry))
+                .contains("2 : " + formatter.format(inner2, EXTENDED, version, codecRegistry))
+                .contains("3 : " + formatter.format(inner3, EXTENDED, version, codecRegistry));
     }
 
     @Test(groups = "unit")
@@ -231,7 +242,7 @@ public class StatementFormatterTest {
         String s = formatter.format(statement, EXTENDED, version, codecRegistry);
         assertThat(s)
                 .contains("SimpleStatement@")
-                .contains("0 bound values")
+                .contains("0 values")
                 .contains("SELECT * FROM t WHERE c1 = 42")
                 .doesNotContain("{");
     }
@@ -245,7 +256,12 @@ public class StatementFormatterTest {
         String s = formatter.format(statement, ABRIDGED, version, codecRegistry);
         assertThat(s)
                 .contains("SimpleStatement@")
-                .contains("2 bound values")
+                .doesNotContain("IDP")
+                .doesNotContain("CL")
+                .doesNotContain("SCL")
+                .doesNotContain("RTM")
+                .doesNotContain("DTP")
+                .contains("2 values")
                 .doesNotContain("SELECT * FROM t WHERE c1 = ? AND c2 = ?")
                 .doesNotContain("{ 0 : 'foo', 1 : 42 }");
     }
@@ -257,7 +273,13 @@ public class StatementFormatterTest {
         String s = formatter.format(statement, NORMAL, version, codecRegistry);
         assertThat(s)
                 .contains("SimpleStatement@")
-                .contains("2 bound values")
+                .doesNotContain("IDP")
+                .doesNotContain("CL")
+                .doesNotContain("SCL")
+                .doesNotContain("SCL")
+                .doesNotContain("RTM")
+                .doesNotContain("DTP")
+                .contains("2 values")
                 .contains("SELECT * FROM t WHERE c1 = ? AND c2 = ?")
                 .doesNotContain("{ 0 : 'foo', 1 : 42 }");
     }
@@ -336,7 +358,7 @@ public class StatementFormatterTest {
         String s = formatter.format(statement, EXTENDED, version, codecRegistry);
         assertThat(s)
                 .contains("BatchStatement@")
-                .contains("[UNLOGGED, 3 inner statements, 6 bound values]")
+                .contains("[UNLOGGED, 3 stmts, 6 values]")
                 .contains(formatter.format(inner1, EXTENDED, version, codecRegistry))
                 .contains(formatter.format(inner2, EXTENDED, version, codecRegistry))
                 .doesNotContain(formatter.format(inner3, EXTENDED, version, codecRegistry))
