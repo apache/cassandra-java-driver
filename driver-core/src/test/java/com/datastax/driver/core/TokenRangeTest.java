@@ -235,6 +235,45 @@ public class TokenRangeTest {
         }
     }
 
+    @Test(groups = "unit")
+    public void should_check_if_range_contains_token() {
+        // ]1,2] contains 2, but it does not contain the start of ]2,3]
+        assertThat(tokenRange(1, 2))
+                .contains(newM3PToken(2), false)
+                .doesNotContain(newM3PToken(2), true);
+        // ]1,2] does not contain 1, but it contains the start of ]1,3]
+        assertThat(tokenRange(1, 2))
+                .doesNotContain(newM3PToken(1), false)
+                .contains(newM3PToken(1), true);
+
+        // ]2,1] contains the start of ]min,5]
+        assertThat(tokenRange(2, 1))
+                .contains(minToken, true);
+
+        // ]min, 1] does not contain min, but it contains the start of ]min, 2]
+        assertThat(tokenRange(minToken, 1))
+                .doesNotContain(minToken, false)
+                .contains(minToken, true);
+        // ]1, min] contains min, but not the start of ]min, 2]
+        assertThat(tokenRange(1, minToken))
+                .contains(minToken, false)
+                .doesNotContain(minToken, true);
+
+        // An empty range contains nothing
+        assertThat(tokenRange(1, 1))
+                .doesNotContain(newM3PToken(1), true)
+                .doesNotContain(newM3PToken(1), false)
+                .doesNotContain(minToken, true)
+                .doesNotContain(minToken, false);
+
+        // The whole ring contains everything
+        assertThat(tokenRange(minToken, minToken))
+                .contains(minToken, true)
+                .contains(minToken, false)
+                .contains(newM3PToken(1), true)
+                .contains(newM3PToken(1), false);
+    }
+
     private TokenRange tokenRange(long start, long end) {
         return new TokenRange(newM3PToken(start), newM3PToken(end), factory);
     }

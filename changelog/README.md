@@ -1,5 +1,10 @@
 ## Changelog
 
+### 3.0.8 (in progress)
+
+- [bug] JAVA-1404: Fix min token handling in TokenRange.contains.
+
+
 ### 3.0.7
 
 - [bug] JAVA-1371: Reintroduce connection pool timeout.

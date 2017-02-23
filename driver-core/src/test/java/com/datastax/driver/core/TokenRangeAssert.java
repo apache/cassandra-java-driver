@@ -99,4 +99,14 @@ public class TokenRangeAssert extends AbstractAssert<TokenRangeAssert, TokenRang
         }
         return this;
     }
+
+    public TokenRangeAssert contains(Token token, boolean isStart) {
+        assertThat(actual.contains(token, isStart)).isTrue();
+        return this;
+    }
+
+    public TokenRangeAssert doesNotContain(Token token, boolean isStart) {
+        assertThat(actual.contains(token, isStart)).isFalse();
+        return this;
+    }
 }
