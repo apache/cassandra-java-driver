@@ -230,23 +230,9 @@
                 <configuration>
                     <verbose>false</verbose>
                     <additionalparam>${javadoc.opts}</additionalparam>
-                    <!-- I can haz math in my javadoc (see http://zverovich.net/2012/01/14/beautiful-math-in-javadoc.html) -->
-                    <header>
-                        &lt;script type="text/javascript"
-                        src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"&gt;&lt;/script&gt;
-                    </header>
-                    <!-- open external links in a separate window -->
-                    <bottom>
-                        &lt;script type="text/javascript"&gt;
-                        for(var i in document.links) {
-                        var link = document.links[i];
-                        if (link.href.indexOf('is-external=true') != -1) link.target = '_blank';
-                        }
-                        &lt;/script&gt;
-                    </bottom>
                     <links>
                         <link>https://docs.oracle.com/javase/8/docs/api/</link>
-                        <link>http://docs.guava-libraries.googlecode.com/git-history/v16.0.1/javadoc/</link>
+                        <link>http://google.github.io/guava/releases/16.0.1/api/docs/</link>
                         <link>http://netty.io/4.0/api/</link>
                         <!-- dependencies from driver-extras -->
                         <link>http://www.joda.org/joda-time/apidocs/</link>
