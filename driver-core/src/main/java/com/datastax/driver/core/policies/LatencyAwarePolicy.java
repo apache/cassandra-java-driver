@@ -589,18 +589,16 @@ public class LatencyAwarePolicy implements ChainableLoadBalancingPolicy {
          * Sets the scale to use for the resulting latency aware policy.
          * <p/>
          * The {@code scale} provides control on how the weight given to older latencies
-         * decreases over time. For a given host, if a new latency \(l\) is received at
-         * time \(t\), and the previously calculated average is \(prev\) calculated at
-         * time \(t'\), then the newly calculated average \(avg\) for that host is calculated
+         * decreases over time. For a given host, if a new latency {@code l} is received at
+         * time {@code t}, and the previously calculated average is {@code prev} calculated at
+         * time {@code t'}, then the newly calculated average {@code avg} for that host is calculated
          * thusly:
-         * \[
-         * d = \frac{t - t'}{scale} \\
-         * \alpha = 1 - \left(\frac{\ln(d+1)}{d}\right) \\
-         * avg = \alpha * l + (1-\alpha) * prev
-         * \]
+         * <pre>{@code d = (t - t') / scale
+         * alpha = 1 - (ln(d+1) / d)
+         * avg = alpha * l + (1 - alpha * prev)}</pre>
          * Typically, with a {@code scale} of 100 milliseconds (the default), if a new
-         * latency is measured and the previous measure is 10 millisecond old (so \(d=0.1\)),
-         * then \(\alpha\) will be around \(0.05\). In other words, the new latency will
+         * latency is measured and the previous measure is 10 millisecond old (so {@code d=0.1}),
+         * then {@code alpha} will be around {@code 0.05}. In other words, the new latency will
          * weight 5% of the updated average. A bigger scale will get less weight to new
          * measurements (compared to previous ones), a smaller one will give them more weight.
          * <p/>
@@ -612,7 +610,7 @@ public class LatencyAwarePolicy implements ChainableLoadBalancingPolicy {
          * @param scale the scale to use.
          * @param unit  the unit of {@code scale}.
          * @return this builder.
-         * @throws IllegalArgumentException if {@code scale &lte; 0}.
+         * @throws IllegalArgumentException if {@code scale <= 0}.
          */
         public Builder withScale(long scale, TimeUnit unit) {
             if (scale <= 0)
