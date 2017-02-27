@@ -69,10 +69,23 @@
         </fileSet>
         <fileSet>
             <directory>..</directory>
+            <outputDirectory>.</outputDirectory>
             <includes>
-                <include>changelog/README.md</include>
-                <include>upgrade_guide/README.md</include>
+                <include>README*</include>
+                <include>LICENSE*</include>
             </includes>
+        </fileSet>
+        <fileSet>
+            <directory>../changelog</directory>
+        </fileSet>
+        <fileSet>
+            <directory>../faq</directory>
+        </fileSet>
+        <fileSet>
+            <directory>../manual</directory>
+        </fileSet>
+        <fileSet>
+            <directory>../upgrade_guide</directory>
         </fileSet>
     </fileSets>
 </assembly>
