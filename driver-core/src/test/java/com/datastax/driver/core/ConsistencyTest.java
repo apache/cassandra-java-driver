@@ -135,7 +135,6 @@ public class ConsistencyTest {
      */
     @Test(groups = "short")
     public void should_use_global_default_cl_when_none_specified() throws Throwable {
-
         //Build a cluster with no CL level set in the query options.
         Cluster cluster = builder().build();
         try {
