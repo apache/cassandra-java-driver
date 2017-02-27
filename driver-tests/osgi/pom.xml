@@ -229,7 +229,6 @@
                         <Export-Package>com.datastax.driver.osgi.api,!com.datastax.driver.osgi.impl</Export-Package>
                         <Bundle-Activator>com.datastax.driver.osgi.impl.Activator</Bundle-Activator>
                         <_include>-osgi.bnd</_include>
-                        <Import-Package><![CDATA[com.google.common*;version="[16.0.1,21)",*]]></Import-Package>
                     </instructions>
                     <supportedProjectTypes>
                         <supportedProjectType>jar</supportedProjectType>
