@@ -112,12 +112,13 @@ public class AbstractRetryPolicyIntegrationTest {
     }
 
     protected void simulateError(int hostNumber, Result result, Config config) {
-        PrimingRequestBuilder builder = PrimingRequest.queryBuilder()
-                .withQuery("mock query")
-                .withThen(then().withResult(result));
+        PrimingRequest.Then.ThenBuilder then = then().withResult(result);
+        PrimingRequestBuilder builder = PrimingRequest.queryBuilder().withQuery("mock query");
 
         if (config != null)
-            builder = builder.withThen(then().withConfig(config));
+            then = then.withConfig(config);
+
+        builder = builder.withThen(then);
 
         scassandras.node(hostNumber).primingClient().prime(builder.build());
     }
