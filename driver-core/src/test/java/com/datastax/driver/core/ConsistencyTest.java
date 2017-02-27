@@ -22,6 +22,7 @@ import org.scassandra.http.client.PreparedStatementExecution;
 import org.scassandra.http.client.Query;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.testng.annotations.AfterClass;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
@@ -37,14 +38,19 @@ public class ConsistencyTest {
     private static final Logger logger = LoggerFactory.getLogger(ConsistencyTest.class);
     private ScassandraCluster sCluster;
 
-    @BeforeClass
+    @BeforeClass(groups = "short")
     public void setUp() {
         sCluster = ScassandraCluster.builder().withNodes(1).build();
         sCluster.init();
 
     }
 
-    @AfterMethod
+    @AfterClass(groups = "short")
+    public void tearDownClass() {
+        sCluster.stop();
+    }
+
+    @AfterMethod(groups = "short")
     public void tearDown() {
         clearActivityLog();
     }
@@ -63,12 +69,13 @@ public class ConsistencyTest {
                 .withPort(sCluster.getBinaryPort()).withNettyOptions(nonQuietClusterCloseOptions);
     }
 
+    /**
+     * This method checks the expected/sent serial consistency level against that which is received.
+     * ConsistencyLevel.SERIAL is the default serial consistency level, so even when sent it will return
+     * as null.
+     */
     public void checkSerialCLMatch(ConsistencyLevel expected, String received) {
-        /**
-         * This method checks the expected/sent serial consistency level against that which is received.
-         * ConsistencyLevel.SERIAL is the default serial consistency level, so even when sent it will return
-         * as null.
-         */
+
         if (expected.equals(ConsistencyLevel.SERIAL)) {
             assertNull(received);
 
