@@ -95,6 +95,17 @@
                 </configuration>
             </plugin>
             <plugin>
+                <artifactId>maven-jar-plugin</artifactId>
+                <version>3.0.2</version>
+                <!-- http://stackoverflow.com/questions/13218313/unable-to-disable-generation-of-empty-jar-maven-jar-plugin -->
+                <executions>
+                    <execution>
+                        <id>default-jar</id>
+                        <phase>none</phase>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-install-plugin</artifactId>
                 <version>2.5.1</version>
