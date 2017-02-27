@@ -123,6 +123,7 @@ public class HostAssert extends AbstractAssert<HostAssert, Host> {
     public HostAssert goesDownWithin(long duration, TimeUnit unit) {
         final CountDownLatch downSignal = new CountDownLatch(1);
         StateListener upListener = new StateListenerBase() {
+            @Override
             public void onDown(Host host) {
                 downSignal.countDown();
             }
@@ -141,31 +142,37 @@ public class HostAssert extends AbstractAssert<HostAssert, Host> {
         return this;
     }
 
+    @SuppressWarnings("deprecation")
     public HostAssert hasWorkload(String workload) {
         assertThat(actual.getDseWorkload()).isNotNull().isEqualTo(workload);
         return this;
     }
 
+    @SuppressWarnings("deprecation")
     public HostAssert hasNoWorkload() {
         assertThat(actual.getDseWorkload()).isNull();
         return this;
     }
 
+    @SuppressWarnings("deprecation")
     public HostAssert hasDseVersion(VersionNumber versionNumber) {
         assertThat(actual.getDseVersion()).isNotNull().isEqualTo(versionNumber);
         return this;
     }
 
+    @SuppressWarnings("deprecation")
     public HostAssert hasNoDseVersion() {
         assertThat(actual.getDseVersion()).isNull();
         return this;
     }
 
+    @SuppressWarnings("deprecation")
     public HostAssert hasDseGraph() {
         assertThat(actual.isDseGraphEnabled()).isTrue();
         return this;
     }
 
+    @SuppressWarnings("deprecation")
     public HostAssert hasNoDseGraph() {
         assertThat(actual.isDseGraphEnabled()).isFalse();
         return this;

@@ -117,7 +117,9 @@ public class ClusterInitTest {
             // - 0 or 1 for the missing host. We can't know for sure because contact points are randomized. If it's tried
             //   before the live host there will be a connection attempt, otherwise it will be removed directly because
             //   it's not in the live host's system.peers.
+            //noinspection ResultOfMethodCallIgnored
             verify(socketOptions, atLeast(6)).getKeepAlive();
+            //noinspection ResultOfMethodCallIgnored
             verify(socketOptions, atMost(7)).getKeepAlive();
 
             assertThat(cluster).host(1).isNotNull().isUp();
