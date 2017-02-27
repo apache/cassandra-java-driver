@@ -24,7 +24,7 @@
     </parent>
 
     <artifactId>cassandra-driver-tests-osgi</artifactId>
-    <packaging>bundle</packaging>
+    <packaging>jar</packaging>
     <name>DataStax Java Driver for Apache Cassandra Tests - OSGi</name>
     <description>A test for the DataStax Java Driver in an OSGi container.</description>
     <url>https://github.com/datastax/java-driver</url>
