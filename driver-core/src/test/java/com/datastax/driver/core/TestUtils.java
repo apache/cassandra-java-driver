@@ -129,13 +129,13 @@ public abstract class TestUtils {
                 data.setUUID(i, (UUID) value);
                 break;
             case LIST:
-                data.setList(i, (List) value);
+                data.setList(i, (List<?>) value);
                 break;
             case SET:
-                data.setSet(i, (Set) value);
+                data.setSet(i, (Set<?>) value);
                 break;
             case MAP:
-                data.setMap(i, (Map) value);
+                data.setMap(i, (Map<?, ?>) value);
                 break;
             default:
                 throw new RuntimeException("Missing handling of " + type);

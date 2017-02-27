@@ -20,10 +20,14 @@ import org.scassandra.Scassandra;
 import org.scassandra.http.client.PrimingRequest;
 import org.testng.annotations.Test;
 
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.scassandra.http.client.PrimingRequest.then;
 
 public class RequestHandlerTest {
 
@@ -35,11 +39,11 @@ public class RequestHandlerTest {
         try {
             // Use a mock server that takes a constant time to reply
             scassandra.start();
+            List<Map<String, ?>> rows = Collections.<Map<String, ?>>singletonList(ImmutableMap.of("key", 1));
             scassandra.primingClient().prime(
                     PrimingRequest.queryBuilder()
                             .withQuery("mock query")
-                            .withRows(ImmutableMap.of("key", 1))
-                            .withFixedDelay(10)
+                            .withThen(then().withRows(rows).withFixedDelay(10L))
                             .build()
             );
 

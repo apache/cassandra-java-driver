@@ -24,7 +24,7 @@ import com.datastax.driver.core.exceptions.DriverException;
 /**
  * A retry policy that never retries (nor ignores).
  * <p/>
- * All of the methods of this retry policy unconditionally return {@link RetryDecision#rethrow()}.
+ * All of the methods of this retry policy unconditionally return {@link RetryPolicy.RetryDecision#rethrow()}.
  * If this policy is used, retry logic will have to be implemented in business code.
  */
 public class FallthroughRetryPolicy implements RetryPolicy {

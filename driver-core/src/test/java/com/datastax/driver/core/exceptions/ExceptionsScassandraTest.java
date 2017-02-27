@@ -30,6 +30,7 @@ import java.util.Map;
 import static com.datastax.driver.core.ConsistencyLevel.LOCAL_ONE;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
+import static org.scassandra.http.client.PrimingRequest.then;
 import static org.scassandra.http.client.Result.*;
 
 public class ExceptionsScassandraTest {
@@ -115,7 +116,7 @@ public class ExceptionsScassandraTest {
     protected void simulateError(int hostNumber, Result result) {
         scassandras.node(hostNumber).primingClient().prime(PrimingRequest.queryBuilder()
                 .withQuery("mock query")
-                .withResult(result)
+                .withThen(then().withResult(result))
                 .build());
     }
 

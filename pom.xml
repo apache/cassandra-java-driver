@@ -226,6 +226,7 @@
                 <version>2.9.1</version>
                 <inherited>true</inherited>
                 <configuration>
+                    <quiet>true</quiet>
                     <verbose>false</verbose>
                     <additionalparam>${javadoc.opts}</additionalparam>
                     <links>
@@ -238,6 +239,49 @@
                         <link>http://fasterxml.github.io/jackson-databind/javadoc/2.6/</link>
                         <link>https://javaee-spec.java.net/nonav/javadocs/</link>
                     </links>
+                    <!-- optional dependencies from other modules (must be explicitly declared here in order to be correctly resolved) -->
+                    <additionalDependencies>
+                        <additionalDependency>
+                            <groupId>org.xerial.snappy</groupId>
+                            <artifactId>snappy-java</artifactId>
+                            <version>${snappy.version}</version>
+                        </additionalDependency>
+                        <additionalDependency>
+                            <groupId>net.jpountz.lz4</groupId>
+                            <artifactId>lz4</artifactId>
+                            <version>${lz4.version}</version>
+                        </additionalDependency>
+                        <additionalDependency>
+                            <groupId>org.hdrhistogram</groupId>
+                            <artifactId>HdrHistogram</artifactId>
+                            <version>${hdr.version}</version>
+                        </additionalDependency>
+                        <additionalDependency>
+                            <groupId>com.fasterxml.jackson.core</groupId>
+                            <artifactId>jackson-core</artifactId>
+                            <version>${jackson.version}</version>
+                        </additionalDependency>
+                        <additionalDependency>
+                            <groupId>com.fasterxml.jackson.core</groupId>
+                            <artifactId>jackson-annotations</artifactId>
+                            <version>${jackson.version}</version>
+                        </additionalDependency>
+                        <additionalDependency>
+                            <groupId>com.fasterxml.jackson.core</groupId>
+                            <artifactId>jackson-databind</artifactId>
+                            <version>${jackson.version}</version>
+                        </additionalDependency>
+                        <additionalDependency>
+                            <groupId>joda-time</groupId>
+                            <artifactId>joda-time</artifactId>
+                            <version>${joda.version}</version>
+                        </additionalDependency>
+                        <additionalDependency>
+                            <groupId>javax.json</groupId>
+                            <artifactId>javax.json-api</artifactId>
+                            <version>${jsr353-api.version}</version>
+                        </additionalDependency>
+                    </additionalDependencies>
                 </configuration>
                 <executions>
                     <execution>

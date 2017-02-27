@@ -57,7 +57,7 @@ class AnnotationChecks {
     /**
      * Checks that a field is only annotated with the given mapping annotations, and that its "frozen" annotations are valid.
      */
-    static void validateAnnotations(Field field, String classDescription, Class<? extends Annotation>... allowed) {
+    static void validateAnnotations(Field field, String classDescription, Class<?>... allowed) {
         Class<? extends Annotation> invalid = validateAnnotations(field.getAnnotations(), allowed);
         if (invalid != null)
             throw new IllegalArgumentException(String.format("Annotation @%s is not allowed on field %s of %s %s",
@@ -69,7 +69,7 @@ class AnnotationChecks {
     }
 
     // Returns the offending annotation if there is one
-    private static Class<? extends Annotation> validateAnnotations(Annotation[] annotations, Class<? extends Annotation>... allowed) {
+    private static Class<? extends Annotation> validateAnnotations(Annotation[] annotations, Class<?>... allowed) {
         for (Annotation annotation : annotations) {
             Class<? extends Annotation> actual = annotation.annotationType();
             if (actual.getPackage().equals(MAPPING_PACKAGE) && !contains(allowed, actual))
@@ -85,7 +85,7 @@ class AnnotationChecks {
         return false;
     }
 
-    static void checkValidComputed(Field field) {
+    private static void checkValidComputed(Field field) {
         Computed computed = field.getAnnotation(Computed.class);
         if (computed != null && computed.value().isEmpty()) {
             throw new IllegalArgumentException(String.format("Field %s: attribute 'value' of annotation @Computed is mandatory for computed fields", field.getName()));
