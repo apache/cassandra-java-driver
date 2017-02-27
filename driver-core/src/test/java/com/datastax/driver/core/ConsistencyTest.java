@@ -15,7 +15,6 @@
  */
 package com.datastax.driver.core;
 
-
 import org.scassandra.Scassandra;
 import org.scassandra.http.client.BatchExecution;
 import org.scassandra.http.client.PreparedStatementExecution;
@@ -34,7 +33,6 @@ import static org.testng.Assert.*;
 
 public class ConsistencyTest {
 
-
     private static final Logger logger = LoggerFactory.getLogger(ConsistencyTest.class);
     private ScassandraCluster sCluster;
 
@@ -42,7 +40,6 @@ public class ConsistencyTest {
     public void setUp() {
         sCluster = ScassandraCluster.builder().withNodes(1).build();
         sCluster.init();
-
     }
 
     @AfterClass(groups = "short")
@@ -54,7 +51,6 @@ public class ConsistencyTest {
     public void tearDown() {
         clearActivityLog();
     }
-
 
     public void clearActivityLog() {
         for (Scassandra node : sCluster.nodes()) {
@@ -75,10 +71,8 @@ public class ConsistencyTest {
      * as null.
      */
     public void checkSerialCLMatch(ConsistencyLevel expected, String received) {
-
         if (expected.equals(ConsistencyLevel.SERIAL)) {
             assertNull(received);
-
         } else {
             assertTrue(received.equals(expected.toString()));
         }
@@ -162,8 +156,6 @@ public class ConsistencyTest {
             String batchStateString = "batch_default_cl";
             BatchExecution batch = executeBatch(session, batchStateString, null, null);
             assertTrue(batch.getConsistency().equals(ConsistencyLevel.LOCAL_ONE.toString()));
-
-
         } finally {
             cluster.close();
         }
@@ -194,11 +186,9 @@ public class ConsistencyTest {
             String batchStateString = "batch_query_cl";
             BatchExecution batch = executeBatch(session, batchStateString, null, null);
             assertTrue(batch.getConsistency().equals(cl.toString()));
-
         } finally {
             cluster.close();
         }
-
     }
 
     /**
@@ -230,7 +220,6 @@ public class ConsistencyTest {
         } finally {
             cluster.close();
         }
-
     }
 
     /**
@@ -246,7 +235,6 @@ public class ConsistencyTest {
         //Build a cluster with no CL set in the query options.
         Cluster cluster = builder().withQueryOptions(new QueryOptions().setConsistencyLevel(cl_one)).build();
         try {
-
 
             Session session = cluster.connect();
 
@@ -274,7 +262,6 @@ public class ConsistencyTest {
             pse = executePrepared(session, prepareString, cl_all, null);
             assertTrue(pse.getConsistency().equals(cl_all.toString()));
 
-
             //Check order of precedence for batch statements
             //Construct unique batch statement with no CL defined.
             String batchString = "batch_opts_cl";
@@ -286,11 +273,9 @@ public class ConsistencyTest {
             batchString = "prep_stm_cl";
             batch = executeBatch(session, batchString, cl_all, null);
             assertTrue(batch.getConsistency().equals(cl_all.toString()));
-
         } finally {
             cluster.close();
         }
-
     }
 
     /**
@@ -309,7 +294,6 @@ public class ConsistencyTest {
             Query clQuery = executeSimple(session, queryString, null, cl);
             checkSerialCLMatch(cl, clQuery.getSerialConsistency());
 
-
             //Check prepared statement CL
             String prepareString = "preapred_statement_serial_cl";
             PreparedStatementExecution pse = executePrepared(session, prepareString, null, null);
@@ -319,11 +303,9 @@ public class ConsistencyTest {
             String batchStateString = "batch_statement_serial_cl";
             BatchExecution batch = executeBatch(session, batchStateString, null, null);
             checkSerialCLMatch(cl, batch.getSerialConsistency());
-
         } finally {
             cluster.close();
         }
-
     }
 
     /**
@@ -351,11 +333,8 @@ public class ConsistencyTest {
             String batchStateString = "batch_statement_serial_cl";
             BatchExecution batch = executeBatch(session, batchStateString, null, cl);
             checkSerialCLMatch(cl, batch.getSerialConsistency());
-
         } finally {
             cluster.close();
         }
-
     }
-
 }
