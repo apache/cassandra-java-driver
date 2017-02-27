@@ -39,6 +39,7 @@ import static com.datastax.driver.core.TestUtils.nonQuietClusterCloseOptions;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Matchers.*;
 import static org.mockito.Mockito.times;
+import static org.scassandra.http.client.PrimingRequest.then;
 import static org.scassandra.http.client.Result.overloaded;
 import static org.scassandra.http.client.Result.server_error;
 
@@ -113,10 +114,10 @@ public class AbstractRetryPolicyIntegrationTest {
     protected void simulateError(int hostNumber, Result result, Config config) {
         PrimingRequestBuilder builder = PrimingRequest.queryBuilder()
                 .withQuery("mock query")
-                .withResult(result);
+                .withThen(then().withResult(result));
 
         if (config != null)
-            builder = builder.withConfig(config);
+            builder = builder.withThen(then().withConfig(config));
 
         scassandras.node(hostNumber).primingClient().prime(builder.build());
     }
@@ -124,7 +125,7 @@ public class AbstractRetryPolicyIntegrationTest {
     protected void simulateNormalResponse(int hostNumber) {
         scassandras.node(hostNumber).primingClient().prime(PrimingRequest.queryBuilder()
                 .withQuery("mock query")
-                .withRows(row("result", "result1"))
+                .withThen(then().withRows(row("result", "result1")))
                 .build());
     }
 

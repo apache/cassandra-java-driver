@@ -27,6 +27,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.scassandra.http.client.PrimingRequest.then;
 import static org.testng.Assert.fail;
 
 public class ConnectionReleaseTest extends ScassandraTestBase {
@@ -65,20 +66,20 @@ public class ConnectionReleaseTest extends ScassandraTestBase {
             primingClient.prime(
                     PrimingRequest.queryBuilder()
                             .withQuery("mock query")
-                            .withRows(ImmutableMap.of("key", 1))
-                            .withFixedDelay(10000)
+                            .withThen(then().withRows(ImmutableMap.of("key", 1))
+                                    .withFixedDelay(10000L))
                             .build()
             );
             primingClient.prime(
                     PrimingRequest.queryBuilder()
                             .withQuery("select c from test1 where k=1")
-                            .withRows(ImmutableMap.of("c", "hello"))
+                            .withThen(then().withRows(ImmutableMap.of("c", "hello")))
                             .build()
             );
             primingClient.prime(
                     PrimingRequest.queryBuilder()
                             .withQuery("select n from test2 where c='hello'")
-                            .withRows(ImmutableMap.of("n", "world"))
+                            .withThen(then().withRows(ImmutableMap.of("n", "world")))
                             .build()
             );
 
