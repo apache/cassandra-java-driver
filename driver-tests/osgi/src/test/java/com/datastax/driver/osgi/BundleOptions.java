@@ -16,6 +16,7 @@
 package com.datastax.driver.osgi;
 
 import com.datastax.driver.core.CCMBridge;
+import com.datastax.driver.core.Cluster;
 import com.datastax.driver.core.ProtocolOptions;
 import com.datastax.driver.core.TestUtils;
 import com.google.common.collect.Lists;
@@ -27,7 +28,6 @@ import org.ops4j.pax.exam.util.PathUtils;
 
 import java.util.List;
 
-import static com.datastax.driver.osgi.VersionProvider.projectVersion;
 import static org.ops4j.pax.exam.CoreOptions.*;
 
 public class BundleOptions {
@@ -38,15 +38,15 @@ public class BundleOptions {
 
     public static UrlProvisionOption driverBundle(boolean useShaded) {
         String classifier = useShaded ? "-shaded" : "";
-        return bundle("reference:file:" + PathUtils.getBaseDir() + "/../../driver-core/target/cassandra-driver-core-" + projectVersion() + classifier + ".jar");
+        return bundle("reference:file:" + PathUtils.getBaseDir() + "/../../driver-core/target/cassandra-driver-core-" + Cluster.getDriverVersion() + classifier + ".jar");
     }
 
-    public static UrlProvisionOption mappingBundle() {
-        return bundle("reference:file:" + PathUtils.getBaseDir() + "/../../driver-mapping/target/cassandra-driver-mapping-" + projectVersion() + ".jar");
+    public static MavenArtifactProvisionOption mappingBundle() {
+        return mavenBundle("com.datastax.cassandra", "cassandra-driver-mapping", Cluster.getDriverVersion());
     }
 
-    public static UrlProvisionOption extrasBundle() {
-        return bundle("reference:file:" + PathUtils.getBaseDir() + "/../../driver-extras/target/cassandra-driver-extras-" + projectVersion() + ".jar");
+    public static MavenArtifactProvisionOption extrasBundle() {
+        return mavenBundle("com.datastax.cassandra", "cassandra-driver-extras", Cluster.getDriverVersion());
     }
 
     public static MavenArtifactProvisionOption guavaBundle() {
@@ -60,7 +60,7 @@ public class BundleOptions {
             public Option[] getOptions() {
                 return options(
                         systemProperty("cassandra.compression").value(ProtocolOptions.Compression.LZ4.name()),
-                        mavenBundle("net.jpountz.lz4", "lz4", "1.3.0")
+                        mavenBundle("net.jpountz.lz4", "lz4", getVersion("lz4.version"))
                 );
             }
         };
@@ -73,7 +73,7 @@ public class BundleOptions {
             public Option[] getOptions() {
                 return options(
                         systemProperty("cassandra.compression").value(ProtocolOptions.Compression.SNAPPY.name()),
-                        mavenBundle("org.xerial.snappy", "snappy-java", "1.1.2.6")
+                        mavenBundle("org.xerial.snappy", "snappy-java", getVersion("snappy.version"))
                 );
             }
         };
@@ -86,14 +86,14 @@ public class BundleOptions {
             public Option[] getOptions() {
                 return options(
                         systemProperty("cassandra.usePercentileSpeculativeExecutionPolicy").value("true"),
-                        mavenBundle("org.hdrhistogram", "HdrHistogram", "2.1.9")
+                        mavenBundle("org.hdrhistogram", "HdrHistogram", getVersion("hdr.version"))
                 );
             }
         };
     }
 
     public static CompositeOption nettyBundles() {
-        final String nettyVersion = "4.1.8.Final";
+        final String nettyVersion = getVersion("netty.version");
         return new CompositeOption() {
 
             @Override
@@ -126,11 +126,11 @@ public class BundleOptions {
                         systemProperty("cassandra.version").value(CCMBridge.getGlobalCassandraVersion().toString()),
                         systemProperty("cassandra.contactpoints").value(TestUtils.IP_PREFIX + 1),
                         systemProperty("logback.configurationFile").value("file:" + PathUtils.getBaseDir() + "/src/test/resources/logback.xml"),
-                        mavenBundle("org.slf4j", "slf4j-api", "1.7.5"),
-                        mavenBundle("ch.qos.logback", "logback-classic", "1.1.3"),
-                        mavenBundle("ch.qos.logback", "logback-core", "1.1.3"),
-                        mavenBundle("io.dropwizard.metrics", "metrics-core", "3.1.2"),
-                        mavenBundle("org.testng", "testng", "6.8.8"),
+                        mavenBundle("org.slf4j", "slf4j-api", getVersion("slf4j.version")),
+                        mavenBundle("ch.qos.logback", "logback-classic", getVersion("logback.version")),
+                        mavenBundle("ch.qos.logback", "logback-core", getVersion("logback.version")),
+                        mavenBundle("io.dropwizard.metrics", "metrics-core", getVersion("metrics.version")),
+                        mavenBundle("org.testng", "testng", getVersion("testng.version")),
                         systemPackages("org.testng", "org.junit", "org.junit.runner", "org.junit.runner.manipulation",
                                 "org.junit.runner.notification", "com.jcabi.manifests")
                 );
@@ -145,5 +145,13 @@ public class BundleOptions {
                 return options.toArray(new Option[options.size()]);
             }
         };
+    }
+
+    private static String getVersion(String propertyName) {
+        String value = System.getProperty(propertyName);
+        if (value == null) {
+            throw new IllegalArgumentException(propertyName + " system property is not set.");
+        }
+        return value;
     }
 }
