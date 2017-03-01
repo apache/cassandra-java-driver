@@ -95,8 +95,10 @@ import static com.google.common.base.Preconditions.checkNotNull;
  * the wrapper Java class instead, and implement the appropriate interface
  * (e.g. {@link com.datastax.driver.core.TypeCodec.PrimitiveBooleanCodec} for primitive {@code boolean} types;
  * there is one such interface for each Java primitive type).</li>
- * <li>TypeCodec implementations should not consume {@link ByteBuffer} instances by performing read operations
- * that modify their current position; if necessary, codecs should {@link ByteBuffer#duplicate()} duplicate} them.</li>
+ * <li>When deserializing, TypeCodec implementations should not consume {@link ByteBuffer} instances
+ * by performing relative read operations that modify their current position;
+ * codecs should instead prefer absolute read methods, or, if necessary, they should
+ * {@link ByteBuffer#duplicate() duplicate} their byte buffers prior to reading them.</li>
  * </ol>
  *
  * @param <T> The codec's Java type
@@ -402,7 +404,7 @@ public abstract class TypeCodec<T> {
      * @param type the custom type this codec should handle.
      * @return A newly-created codec for the given CQL custom type.
      */
-    public static TypeCodec<ByteBuffer> custom(CustomType type) {
+    public static TypeCodec<ByteBuffer> custom(DataType.CustomType type) {
         return new CustomCodec(type);
     }
 
@@ -411,7 +413,7 @@ public abstract class TypeCodec<T> {
      * <p/>
      * This codec maps duration types to the driver's built-in {@link Duration} class,
      * thus providing a more user-friendly mapping than the low-level mapping provided by regular
-     * {@link #custom(CustomType) custom type codecs}.
+     * {@link #custom(DataType.CustomType) custom type codecs}.
      * <p/>
      * The returned instance is a singleton.
      *

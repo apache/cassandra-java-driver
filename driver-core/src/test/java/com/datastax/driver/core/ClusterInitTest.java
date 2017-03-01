@@ -44,6 +44,7 @@ import static com.datastax.driver.core.HostDistance.LOCAL;
 import static com.datastax.driver.core.TestUtils.ipOfNode;
 import static com.datastax.driver.core.TestUtils.nonQuietClusterCloseOptions;
 import static org.mockito.Mockito.*;
+import static org.scassandra.http.client.PrimingRequest.then;
 
 public class ClusterInitTest {
     private static final Logger logger = LoggerFactory.getLogger(ClusterInitTest.class);
@@ -116,7 +117,9 @@ public class ClusterInitTest {
             // - 0 or 1 for the missing host. We can't know for sure because contact points are randomized. If it's tried
             //   before the live host there will be a connection attempt, otherwise it will be removed directly because
             //   it's not in the live host's system.peers.
+            //noinspection ResultOfMethodCallIgnored
             verify(socketOptions, atLeast(6)).getKeepAlive();
+            //noinspection ResultOfMethodCallIgnored
             verify(socketOptions, atMost(7)).getKeepAlive();
 
             assertThat(cluster).host(1).isNotNull().isUp();
@@ -278,8 +281,7 @@ public class ClusterInitTest {
         primingClient.prime(
                 PrimingRequest.queryBuilder()
                         .withQuery("SELECT * FROM system.peers")
-                        .withColumnTypes(ScassandraCluster.SELECT_PEERS)
-                        .withRows(rows)
+                        .withThen(then().withRows(rows).withColumnTypes(ScassandraCluster.SELECT_PEERS))
                         .build());
     }
 }

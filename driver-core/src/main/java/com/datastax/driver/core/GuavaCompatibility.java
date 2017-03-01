@@ -28,7 +28,6 @@ import java.lang.reflect.Type;
 import java.net.URL;
 import java.util.Enumeration;
 import java.util.concurrent.Executor;
-import java.util.concurrent.ThreadPoolExecutor;
 import java.util.jar.Attributes;
 import java.util.jar.Manifest;
 import java.util.regex.Matcher;
@@ -127,7 +126,7 @@ public abstract class GuavaCompatibility {
 
     /**
      * Returns an {@link Executor} that runs each task in the thread that invokes
-     * {@link Executor#execute execute}, as in {@link ThreadPoolExecutor.CallerRunsPolicy}.
+     * {@link Executor#execute execute}, as in {@link java.util.concurrent.ThreadPoolExecutor.CallerRunsPolicy}.
      *
      * @see MoreExecutors#sameThreadExecutor()
      * @see MoreExecutors#directExecutor()

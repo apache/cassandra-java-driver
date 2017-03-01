@@ -150,7 +150,7 @@ public class ForwardPagingRestUi {
      * This is also the place where you would normally configure JSON serialization, etc.
      * <p>
      * Note that in this example, we rely on the automatic discovery and configuration of
-     * Jackson through {@link org.glassfish.jersey.jackson.JacksonFeature}.
+     * Jackson through {@code org.glassfish.jersey.jackson.JacksonFeature}.
      */
     public static class VideoApplication extends ResourceConfig {
 
