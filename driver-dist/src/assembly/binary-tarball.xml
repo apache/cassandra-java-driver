@@ -23,13 +23,14 @@
         <format>tar.gz</format>
     </formats>
     <includeBaseDirectory>true</includeBaseDirectory>
+
     <moduleSets>
+
+        <!-- dependencies of module cassandra-driver-core -->
         <moduleSet>
             <useAllReactorProjects>true</useAllReactorProjects>
             <includes>
                 <include>com.datastax.cassandra:cassandra-driver-core</include>
-                <include>com.datastax.cassandra:cassandra-driver-mapping</include>
-                <include>com.datastax.cassandra:cassandra-driver-extras</include>
             </includes>
             <binaries>
                 <unpack>false</unpack>
@@ -37,19 +38,75 @@
                     <dependencySet>
                         <outputDirectory>lib</outputDirectory>
                         <excludes>
-                            <exclude>com.datastax.cassandra:*</exclude>
+                            <!-- reactor projects -->
+                            <exclude>com.datastax.cassandra:cassandra-driver-core</exclude>
+                            <exclude>com.datastax.cassandra:cassandra-driver-mapping</exclude>
+                            <exclude>com.datastax.cassandra:cassandra-driver-extras</exclude>
+                            <!-- platform-dependent -->
                             <exclude>io.netty:netty-transport-native-epoll:*</exclude>
                         </excludes>
+                        <useTransitiveFiltering>true</useTransitiveFiltering>
                     </dependencySet>
                 </dependencySets>
             </binaries>
         </moduleSet>
+
+        <!-- dependencies of module cassandra-driver-mapping -->
+        <moduleSet>
+            <useAllReactorProjects>true</useAllReactorProjects>
+            <includes>
+                <include>com.datastax.cassandra:cassandra-driver-mapping</include>
+            </includes>
+            <binaries>
+                <unpack>false</unpack>
+                <dependencySets>
+                    <dependencySet>
+                        <outputDirectory>lib/mapping</outputDirectory>
+                        <excludes>
+                            <!-- reactor projects -->
+                            <exclude>com.datastax.cassandra:cassandra-driver-core</exclude>
+                            <exclude>com.datastax.cassandra:cassandra-driver-mapping</exclude>
+                            <exclude>com.datastax.cassandra:cassandra-driver-extras</exclude>
+                        </excludes>
+                        <useTransitiveFiltering>true</useTransitiveFiltering>
+                    </dependencySet>
+                </dependencySets>
+            </binaries>
+        </moduleSet>
+
+        <!-- dependencies of module cassandra:cassandra-driver-extras -->
+        <moduleSet>
+            <useAllReactorProjects>true</useAllReactorProjects>
+            <includes>
+                <include>com.datastax.cassandra:cassandra-driver-extras</include>
+            </includes>
+            <binaries>
+                <unpack>false</unpack>
+                <dependencySets>
+                    <dependencySet>
+                        <outputDirectory>lib/extras</outputDirectory>
+                        <excludes>
+                            <!-- reactor projects -->
+                            <exclude>com.datastax.cassandra:cassandra-driver-core</exclude>
+                            <exclude>com.datastax.cassandra:cassandra-driver-mapping</exclude>
+                            <exclude>com.datastax.cassandra:cassandra-driver-extras</exclude>
+                            <!-- already included in lib/core -->
+                            <exclude>com.google.guava:guava</exclude>
+                        </excludes>
+                        <useTransitiveFiltering>true</useTransitiveFiltering>
+                    </dependencySet>
+                </dependencySets>
+            </binaries>
+        </moduleSet>
+
+        <!-- sources for all modules -->
         <moduleSet>
             <useAllReactorProjects>true</useAllReactorProjects>
             <includes>
                 <include>com.datastax.cassandra:cassandra-driver-core</include>
                 <include>com.datastax.cassandra:cassandra-driver-mapping</include>
                 <include>com.datastax.cassandra:cassandra-driver-extras</include>
+                <include>com.datastax.cassandra:cassandra-driver-examples</include>
             </includes>
             <binaries>
                 <unpack>false</unpack>
@@ -61,18 +118,41 @@
                 </excludes>
             </binaries>
         </moduleSet>
+
     </moduleSets>
+
     <fileSets>
+
         <fileSet>
             <directory>target/apidocs</directory>
             <outputDirectory>apidocs</outputDirectory>
         </fileSet>
+
         <fileSet>
             <directory>..</directory>
+            <outputDirectory>.</outputDirectory>
             <includes>
-                <include>changelog/README.md</include>
-                <include>upgrade_guide/README.md</include>
+                <include>README*</include>
+                <include>LICENSE*</include>
             </includes>
         </fileSet>
+
+        <fileSet>
+            <directory>../changelog</directory>
+        </fileSet>
+
+        <fileSet>
+            <directory>../faq</directory>
+        </fileSet>
+
+        <fileSet>
+            <directory>../manual</directory>
+        </fileSet>
+
+        <fileSet>
+            <directory>../upgrade_guide</directory>
+        </fileSet>
+
     </fileSets>
+
 </assembly>
