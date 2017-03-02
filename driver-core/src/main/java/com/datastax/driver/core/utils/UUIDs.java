@@ -53,7 +53,7 @@ import java.util.concurrent.atomic.AtomicLong;
  * </li>
  * </ol>
  *
- * @jira_ticket JAVA-444
+ * @see <a href="https://datastax-oss.atlassian.net/browse/JAVA-444">JAVA-444</a>
  * @see <a href="http://www.ietf.org/rfc/rfc4122.txt">A Universally Unique IDentifier (UUID) URN Namespace (RFC 4122)</a>
  */
 public final class UUIDs {
@@ -68,7 +68,6 @@ public final class UUIDs {
     private UUIDs() {
     }
 
-    // http://www.ietf.org/rfc/rfc4122.txt
     private static final long START_EPOCH = makeEpoch();
     private static final long CLOCK_SEQ_AND_NODE = makeClockSeqAndNode();
 
