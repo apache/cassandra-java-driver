@@ -15,716 +15,325 @@
  */
 package com.datastax.driver.core;
 
-import com.datastax.driver.core.exceptions.InvalidQueryException;
-import com.datastax.driver.core.exceptions.ReadTimeoutException;
-import com.datastax.driver.core.exceptions.UnavailableException;
-import com.datastax.driver.core.exceptions.WriteTimeoutException;
-import com.datastax.driver.core.policies.DCAwareRoundRobinPolicy;
-import com.datastax.driver.core.policies.DowngradingConsistencyRetryPolicy;
-import com.datastax.driver.core.policies.RoundRobinPolicy;
-import com.datastax.driver.core.policies.TokenAwarePolicy;
-import com.google.common.util.concurrent.Uninterruptibles;
+import org.scassandra.Scassandra;
+import org.scassandra.http.client.BatchExecution;
+import org.scassandra.http.client.PreparedStatementExecution;
+import org.scassandra.http.client.Query;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.AfterMethod;
+import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
-import java.util.Arrays;
-import java.util.EnumSet;
 import java.util.List;
-import java.util.Set;
-import java.util.concurrent.TimeUnit;
 
-import static com.datastax.driver.core.CreateCCM.TestMode.PER_METHOD;
-import static com.datastax.driver.core.TestUtils.IP_PREFIX;
-import static com.datastax.driver.core.TestUtils.ipOfNode;
-import static java.util.Collections.emptyList;
-import static java.util.Collections.singletonList;
-import static org.testng.Assert.assertTrue;
-import static org.testng.Assert.fail;
+import static com.datastax.driver.core.TestUtils.nonQuietClusterCloseOptions;
+import static org.testng.Assert.*;
 
-@SuppressWarnings("unused")
-@CreateCCM(PER_METHOD)
-@CCMConfig(
-        dirtiesContext = true,
-        createKeyspace = false,
-        config = {
-                // tests fail often with write or read timeouts
-                "phi_convict_threshold:5",
-                "read_request_timeout_in_ms:200000",
-                "write_request_timeout_in_ms:200000"
-        }
-)
-public class ConsistencyTest extends AbstractPoliciesTest {
+public class ConsistencyTest {
 
     private static final Logger logger = LoggerFactory.getLogger(ConsistencyTest.class);
+    private ScassandraCluster sCluster;
 
-    private Cluster.Builder tokenAwareRoundRobin() {
+    @BeforeClass(groups = "short")
+    public void setUp() {
+        sCluster = ScassandraCluster.builder().withNodes(1).build();
+        sCluster.init();
+    }
+
+    @AfterClass(groups = "short")
+    public void tearDownClass() {
+        sCluster.stop();
+    }
+
+    @AfterMethod(groups = "short")
+    public void tearDown() {
+        clearActivityLog();
+    }
+
+    public void clearActivityLog() {
+        for (Scassandra node : sCluster.nodes()) {
+            node.activityClient().clearAllRecordedActivity();
+        }
+    }
+
+    public Cluster.Builder builder() {
+        //Note: nonQuietClusterCloseOptions is used to speed up tests
         return Cluster.builder()
-                .withSocketOptions(new SocketOptions().setReadTimeoutMillis(300000))
-                .withLoadBalancingPolicy(new TokenAwarePolicy(new RoundRobinPolicy()));
+                .addContactPoints(sCluster.address(1).getAddress())
+                .withPort(sCluster.getBinaryPort()).withNettyOptions(nonQuietClusterCloseOptions);
     }
 
-    private Cluster.Builder tokenAwareRoundRobinNoShuffle() {
-        return Cluster.builder()
-                .withSocketOptions(new SocketOptions().setReadTimeoutMillis(300000))
-                .withLoadBalancingPolicy(new TokenAwarePolicy(new RoundRobinPolicy(), false));
-    }
-
-    private Cluster.Builder tokenAwareRoundRobinDowngrading() {
-        return Cluster.builder()
-                .withSocketOptions(new SocketOptions().setReadTimeoutMillis(300000))
-                .withLoadBalancingPolicy(new TokenAwarePolicy(new RoundRobinPolicy()))
-                .withRetryPolicy(DowngradingConsistencyRetryPolicy.INSTANCE);
-    }
-
-    private Cluster.Builder tokenAwareRoundRobinNoShuffleDowngrading() {
-        return Cluster.builder()
-                .withSocketOptions(new SocketOptions().setReadTimeoutMillis(300000))
-                .withLoadBalancingPolicy(new TokenAwarePolicy(new RoundRobinPolicy(), false))
-                .withRetryPolicy(DowngradingConsistencyRetryPolicy.INSTANCE);
-    }
-
-    private Cluster.Builder roundRobinDowngrading() {
-        return Cluster.builder()
-                .withSocketOptions(new SocketOptions().setReadTimeoutMillis(300000))
-                .withLoadBalancingPolicy(new RoundRobinPolicy())
-                .withRetryPolicy(DowngradingConsistencyRetryPolicy.INSTANCE);
-    }
-
-    private Cluster.Builder tokenAwareDCAwareRoundRobinNoShuffleDowngrading() {
-        return Cluster.builder()
-                .withSocketOptions(new SocketOptions().setReadTimeoutMillis(300000))
-                .withLoadBalancingPolicy(new TokenAwarePolicy(DCAwareRoundRobinPolicy.builder().withLocalDc("dc2").build(), false))
-                .withRetryPolicy(DowngradingConsistencyRetryPolicy.INSTANCE);
-    }
-
-    @Test(groups = "long")
-    @CCMConfig(
-            numberOfNodes = 3,
-            clusterProvider = "tokenAwareRoundRobin")
-    public void testRFOneTokenAware() throws Throwable {
-
-        createSchema(1);
-        init(12, ConsistencyLevel.ONE);
-        query(12, ConsistencyLevel.ONE);
-
-        assertQueried(IP_PREFIX + '1', 0);
-        assertQueried(IP_PREFIX + '2', 12);
-        assertQueried(IP_PREFIX + '3', 0);
-
-        resetCoordinators();
-        stopAndWait(2);
-
-        List<ConsistencyLevel> acceptedList = singletonList(ConsistencyLevel.ANY);
-
-        List<ConsistencyLevel> failList = Arrays.asList(
-                ConsistencyLevel.ONE,
-                ConsistencyLevel.TWO,
-                ConsistencyLevel.THREE,
-                ConsistencyLevel.QUORUM,
-                ConsistencyLevel.ALL,
-                ConsistencyLevel.LOCAL_QUORUM,
-                ConsistencyLevel.EACH_QUORUM);
-
-        // Test successful writes
-        for (ConsistencyLevel cl : acceptedList) {
-            try {
-                init(12, cl);
-            } catch (Exception e) {
-                fail(String.format("Test failed at CL.%s with message: %s", cl, e.getMessage()));
-            }
-        }
-
-        // Test successful reads
-        for (ConsistencyLevel cl : acceptedList) {
-            try {
-                query(12, cl);
-            } catch (InvalidQueryException e) {
-                List<String> acceptableErrorMessages = singletonList(
-                        "ANY ConsistencyLevel is only supported for writes");
-                assertTrue(acceptableErrorMessages.contains(e.getMessage()));
-            }
-        }
-
-        // Test writes which should fail
-        for (ConsistencyLevel cl : failList) {
-            try {
-                init(12, cl);
-                fail(String.format("Test passed at CL.%s.", cl));
-            } catch (InvalidQueryException e) {
-                List<String> acceptableErrorMessages = Arrays.asList(
-                        "consistency level LOCAL_QUORUM not compatible with replication strategy (org.apache.cassandra.locator.SimpleStrategy)",
-                        "consistency level EACH_QUORUM not compatible with replication strategy (org.apache.cassandra.locator.SimpleStrategy)");
-                assertTrue(acceptableErrorMessages.contains(e.getMessage()), String.format("Received: %s", e.getMessage()));
-            } catch (UnavailableException e) {
-                // expected to fail when the client has already marked the
-                // node as DOWN
-            } catch (WriteTimeoutException e) {
-                // expected to fail when the client hasn't marked the
-                // node as DOWN yet
-            }
-        }
-
-        // Test reads which should fail
-        for (ConsistencyLevel cl : failList) {
-            try {
-                query(12, cl);
-                fail(String.format("Test passed at CL.%s.", cl));
-            } catch (InvalidQueryException e) {
-                List<String> acceptableErrorMessages = Arrays.asList(
-                        "consistency level LOCAL_QUORUM not compatible with replication strategy (org.apache.cassandra.locator.SimpleStrategy)",
-                        "EACH_QUORUM ConsistencyLevel is only supported for writes");
-                assertTrue(acceptableErrorMessages.contains(e.getMessage()), String.format("Received: %s", e.getMessage()));
-            } catch (ReadTimeoutException e) {
-                // expected to fail when the client hasn't marked the
-                // node as DOWN yet
-            } catch (UnavailableException e) {
-                // expected to fail when the client has already marked the
-                // node as DOWN
-            }
+    /**
+     * This method checks the expected/sent serial consistency level against that which is received.
+     * ConsistencyLevel.SERIAL is the default serial consistency level, so even when sent it will return
+     * as null.
+     */
+    public void checkSerialCLMatch(ConsistencyLevel expected, String received) {
+        if (expected.equals(ConsistencyLevel.SERIAL)) {
+            assertNull(received);
+        } else {
+            assertTrue(received.equals(expected.toString()));
         }
     }
 
-    @Test(groups = "long")
-    @CCMConfig(numberOfNodes = 3,
-            clusterProvider = "tokenAwareRoundRobinNoShuffle")
-    public void testRFTwoTokenAware() throws Throwable {
-        createSchema(2);
-        init(12, ConsistencyLevel.TWO);
-        query(12, ConsistencyLevel.TWO);
-
-        assertQueried(IP_PREFIX + '1', 0);
-        assertQueried(IP_PREFIX + '2', 12);
-        assertQueried(IP_PREFIX + '3', 0);
-
-        resetCoordinators();
-        stopAndWait(2);
-
-        List<ConsistencyLevel> acceptedList = Arrays.asList(
-                ConsistencyLevel.ANY,
-                ConsistencyLevel.ONE
-        );
-
-        List<ConsistencyLevel> failList = Arrays.asList(
-                ConsistencyLevel.TWO,
-                ConsistencyLevel.QUORUM,
-                ConsistencyLevel.THREE,
-                ConsistencyLevel.ALL,
-                ConsistencyLevel.LOCAL_QUORUM,
-                ConsistencyLevel.EACH_QUORUM);
-
-        // Test successful writes
-        for (ConsistencyLevel cl : acceptedList) {
-            try {
-                init(12, cl);
-            } catch (Exception e) {
-                fail(String.format("Test failed at CL.%s with message: %s", cl, e.getMessage()));
-            }
+    public PreparedStatementExecution executePrepared(Session session, String statement, ConsistencyLevel level, ConsistencyLevel serialLevel) {
+        PreparedStatement ps = session.prepare(statement);
+        BoundStatement bound = ps.bind();
+        if (level != null) {
+            bound.setConsistencyLevel(level);
         }
-
-        // Test successful reads
-        for (ConsistencyLevel cl : acceptedList) {
-            try {
-                query(12, cl);
-            } catch (InvalidQueryException e) {
-                List<String> acceptableErrorMessages = singletonList(
-                        "ANY ConsistencyLevel is only supported for writes");
-                assertTrue(acceptableErrorMessages.contains(e.getMessage()));
-            }
+        if (serialLevel != null) {
+            bound.setSerialConsistencyLevel(serialLevel);
         }
-
-        // Test writes which should fail
-        for (ConsistencyLevel cl : failList) {
-            try {
-                init(12, cl);
-                fail(String.format("Test passed at CL.%s.", cl));
-            } catch (InvalidQueryException e) {
-                List<String> acceptableErrorMessages = Arrays.asList(
-                        "consistency level LOCAL_QUORUM not compatible with replication strategy (org.apache.cassandra.locator.SimpleStrategy)",
-                        "consistency level EACH_QUORUM not compatible with replication strategy (org.apache.cassandra.locator.SimpleStrategy)");
-                assertTrue(acceptableErrorMessages.contains(e.getMessage()), String.format("Received: %s", e.getMessage()));
-            } catch (UnavailableException e) {
-                // expected to fail when the client has already marked the
-                // node as DOWN
-            } catch (WriteTimeoutException e) {
-                // expected to fail when the client hasn't marked the
-                // node as DOWN yet
-            }
-        }
-
-        // Test reads which should fail
-        for (ConsistencyLevel cl : failList) {
-            try {
-                query(12, cl);
-                fail(String.format("Test passed at CL.%s.", cl));
-            } catch (InvalidQueryException e) {
-                List<String> acceptableErrorMessages = Arrays.asList(
-                        "consistency level LOCAL_QUORUM not compatible with replication strategy (org.apache.cassandra.locator.SimpleStrategy)",
-                        "EACH_QUORUM ConsistencyLevel is only supported for writes");
-                assertTrue(acceptableErrorMessages.contains(e.getMessage()), String.format("Received: %s", e.getMessage()));
-            } catch (ReadTimeoutException e) {
-                // expected to fail when the client hasn't marked the
-                // node as DOWN yet
-            } catch (UnavailableException e) {
-                // expected to fail when the client has already marked the
-                // node as DOWN
-            }
-        }
+        session.execute(bound);
+        List<PreparedStatementExecution> pses = sCluster.node(1).activityClient().retrievePreparedStatementExecutions();
+        PreparedStatementExecution pse = pses.get(0);
+        assertTrue(pse.getPreparedStatementText().equals(statement));
+        return pse;
     }
 
-    @Test(groups = "long")
-    @CCMConfig(numberOfNodes = 3,
-            clusterProvider = "tokenAwareRoundRobinNoShuffle")
-    public void testRFThreeTokenAware() throws Throwable {
-        createSchema(3);
-        init(12, ConsistencyLevel.TWO);
-        query(12, ConsistencyLevel.TWO);
+    public BatchExecution executeBatch(Session session, String statement, ConsistencyLevel level, ConsistencyLevel serialLevel) {
+        BatchStatement batch = new BatchStatement();
+        batch.add(new SimpleStatement(statement));
 
-        assertQueried(IP_PREFIX + '1', 0);
-        assertQueried(IP_PREFIX + '2', 12);
-        assertQueried(IP_PREFIX + '3', 0);
-
-        resetCoordinators();
-        stopAndWait(2);
-
-        Set<ConsistencyLevel> cls = EnumSet.allOf(ConsistencyLevel.class);
-        // Remove serial consistencies as they require conditional read/writes
-        cls.remove(ConsistencyLevel.SERIAL);
-        cls.remove(ConsistencyLevel.LOCAL_SERIAL);
-
-        List<ConsistencyLevel> acceptedList = Arrays.asList(
-                ConsistencyLevel.ANY,
-                ConsistencyLevel.ONE,
-                ConsistencyLevel.TWO,
-                ConsistencyLevel.QUORUM,
-                ConsistencyLevel.LOCAL_QUORUM,
-                ConsistencyLevel.EACH_QUORUM
-        );
-
-        List<ConsistencyLevel> failList = Arrays.asList(
-                ConsistencyLevel.THREE,
-                ConsistencyLevel.ALL
-        );
-
-
-        // Test successful writes
-        for (ConsistencyLevel cl : acceptedList) {
-            try {
-                init(12, cl);
-            } catch (Exception e) {
-                fail(String.format("Test failed at CL.%s with message: %s", cl, e.getMessage()));
-            }
+        if (level != null) {
+            batch.setConsistencyLevel(level);
         }
-
-        // Test successful reads
-        for (ConsistencyLevel cl : acceptedList) {
-            try {
-                query(12, cl);
-            } catch (InvalidQueryException e) {
-                List<String> acceptableErrorMessages = Arrays.asList(
-                        "ANY ConsistencyLevel is only supported for writes",
-                        "EACH_QUORUM ConsistencyLevel is only supported for writes"
-                );
-                assertTrue(acceptableErrorMessages.contains(e.getMessage()), "Got unexpected message " + e.getMessage());
-            }
+        if (serialLevel != null) {
+            batch.setSerialConsistencyLevel(serialLevel);
         }
-
-        // Test writes which should fail
-        for (ConsistencyLevel cl : failList) {
-            try {
-                init(12, cl);
-                fail(String.format("Test passed at CL.%s.", cl));
-            } catch (UnavailableException e) {
-                // expected to fail when the client has already marked the
-                // node as DOWN
-            } catch (WriteTimeoutException e) {
-                // expected to fail when the client hasn't marked the
-                // node as DOWN yet
-            }
-        }
-
-        // Test reads which should fail
-        for (ConsistencyLevel cl : failList) {
-            try {
-                query(12, cl);
-                fail(String.format("Test passed at CL.%s.", cl));
-            } catch (ReadTimeoutException e) {
-                // expected to fail when the client hasn't marked the
-                // node as DOWN yet
-            } catch (UnavailableException e) {
-                // expected to fail when the client has already marked the
-                // node as DOWN
-            }
-        }
+        session.execute(batch);
+        List<BatchExecution> batches = sCluster.node(1).activityClient().retrieveBatches();
+        assertEquals(batches.size(), 1);
+        return batches.get(0);
     }
 
-
-    @Test(groups = "long")
-    @CCMConfig(numberOfNodes = 3,
-            clusterProvider = "tokenAwareRoundRobinDowngrading")
-    public void testRFOneDowngradingCL() throws Throwable {
-        createSchema(1);
-        init(12, ConsistencyLevel.ONE);
-        query(12, ConsistencyLevel.ONE);
-
-        assertQueried(IP_PREFIX + '1', 0);
-        assertQueried(IP_PREFIX + '2', 12);
-        assertQueried(IP_PREFIX + '3', 0);
-
-        resetCoordinators();
-        stopAndWait(2);
-
-        List<ConsistencyLevel> acceptedList = singletonList(
-                ConsistencyLevel.ANY
-        );
-
-        List<ConsistencyLevel> failList = Arrays.asList(
-                ConsistencyLevel.ONE,
-                ConsistencyLevel.TWO,
-                ConsistencyLevel.THREE,
-                ConsistencyLevel.QUORUM,
-                ConsistencyLevel.ALL,
-                ConsistencyLevel.LOCAL_QUORUM,
-                ConsistencyLevel.EACH_QUORUM);
-
-        // Test successful writes
-        for (ConsistencyLevel cl : acceptedList) {
-            try {
-                init(12, cl);
-            } catch (Exception e) {
-                fail(String.format("Test failed at CL.%s with message: %s", cl, e.getMessage()));
-            }
+    public Query executeSimple(Session session, String statement, ConsistencyLevel level, ConsistencyLevel serialLevel) {
+        SimpleStatement simpleStatement = new SimpleStatement(statement);
+        if (level != null) {
+            simpleStatement.setConsistencyLevel(level);
         }
-
-        // Test successful reads
-        for (ConsistencyLevel cl : acceptedList) {
-            try {
-                query(12, cl);
-            } catch (InvalidQueryException e) {
-                List<String> acceptableErrorMessages = singletonList(
-                        "ANY ConsistencyLevel is only supported for writes");
-                assertTrue(acceptableErrorMessages.contains(e.getMessage()));
-            }
+        if (serialLevel != null) {
+            simpleStatement.setSerialConsistencyLevel(serialLevel);
         }
-
-        // Test writes which should fail
-        for (ConsistencyLevel cl : failList) {
-            try {
-                init(12, cl);
-                fail(String.format("Test passed at CL.%s.", cl));
-            } catch (UnavailableException e) {
-                // expected to fail when the client has already marked the
-                // node as DOWN
-            } catch (WriteTimeoutException e) {
-                // expected to fail when the client hasn't marked the
-                // node as DOWN yet
-            }
+        session.execute(simpleStatement);
+        //Find the unique query in the activity log.
+        List<Query> queries = sCluster.node(1).activityClient().retrieveQueries();
+        for (Query query : queries) {
+            if (query.getQuery().equals(statement))
+                return query;
         }
-
-        // Test reads which should fail
-        for (ConsistencyLevel cl : failList) {
-            try {
-                query(12, cl);
-                fail(String.format("Test passed at CL.%s.", cl));
-            } catch (InvalidQueryException e) {
-                List<String> acceptableErrorMessages = singletonList(
-                        "EACH_QUORUM ConsistencyLevel is only supported for writes"
-                );
-                assertTrue(acceptableErrorMessages.contains(e.getMessage()), "Got unexpected message " + e.getMessage());
-            } catch (ReadTimeoutException e) {
-                // expected to fail when the client hasn't marked the
-                // node as DOWN yet
-            } catch (UnavailableException e) {
-                // expected to fail when the client has already marked the
-                // node as DOWN
-            }
-        }
+        return null;
     }
 
-    @Test(groups = "long")
-    @CCMConfig(numberOfNodes = 3,
-            clusterProvider = "tokenAwareRoundRobinNoShuffleDowngrading")
-    public void testRFTwoDowngradingCL() throws Throwable {
-        createSchema(2);
-        init(12, ConsistencyLevel.TWO);
-        query(12, ConsistencyLevel.TWO);
-
-        assertQueried(IP_PREFIX + '1', 0);
-        assertQueried(IP_PREFIX + '2', 12);
-        assertQueried(IP_PREFIX + '3', 0);
-
-        resetCoordinators();
-        stopAndWait(2);
-
-        Set<ConsistencyLevel> acceptedList = EnumSet.allOf(ConsistencyLevel.class);
-        // Remove serial consistencies as they require conditional read/writes
-        acceptedList.remove(ConsistencyLevel.SERIAL);
-        acceptedList.remove(ConsistencyLevel.LOCAL_SERIAL);
-
-        // Test successful writes
-        for (ConsistencyLevel cl : acceptedList) {
-            try {
-                init(12, cl);
-            } catch (Exception e) {
-                fail(String.format("Test failed at CL.%s with message: %s", cl, e.getMessage()));
-            }
-        }
-
-        // Test successful reads
-        for (ConsistencyLevel cl : acceptedList) {
-            try {
-                query(12, cl);
-            } catch (InvalidQueryException e) {
-                List<String> acceptableErrorMessages = Arrays.asList(
-                        "ANY ConsistencyLevel is only supported for writes",
-                        "EACH_QUORUM ConsistencyLevel is only supported for writes"
-                );
-                assertTrue(acceptableErrorMessages.contains(e.getMessage()), "Got unexpected message " + e.getMessage());
-            }
-        }
-    }
-
-    @Test(groups = "long")
-    @CCMConfig(numberOfNodes = 3,
-            clusterProvider = "roundRobinDowngrading")
-    public void testRFThreeRoundRobinDowngradingCL() throws Throwable {
-        testRFThreeDowngradingCL();
-    }
-
-    @Test(groups = "long")
-    @CCMConfig(numberOfNodes = 3,
-            clusterProvider = "tokenAwareRoundRobinNoShuffleDowngrading")
-    public void testRFThreeTokenAwareDowngradingCL() throws Throwable {
-        testRFThreeDowngradingCL();
-    }
-
-    private void testRFThreeDowngradingCL() throws Throwable {
-
-        createSchema(3);
-        init(12, ConsistencyLevel.ALL);
-        query(12, ConsistencyLevel.ALL);
-
+    /**
+     * When no consistency level is defined the default of LOCAL_ONE should be used.
+     *
+     * @test_category consistency
+     */
+    @Test(groups = "short")
+    public void should_use_global_default_cl_when_none_specified() throws Throwable {
+        //Build a cluster with no CL level set in the query options.
+        Cluster cluster = builder().build();
         try {
-            // This test catches TokenAwarePolicy
-            // However, full tests in LoadBalancingPolicyTest.java
-            assertQueried(IP_PREFIX + '1', 0);
-            assertQueried(IP_PREFIX + '2', 12);
-            assertQueried(IP_PREFIX + '3', 0);
-        } catch (AssertionError e) {
-            // This test catches RoundRobinPolicy
-            assertQueried(IP_PREFIX + '1', 4);
-            assertQueried(IP_PREFIX + '2', 4);
-            assertQueried(IP_PREFIX + '3', 4);
-        }
+            Session session = cluster.connect();
 
-        resetCoordinators();
-        stopAndWait(2);
+            //Construct unique simple statement query, with no CL defined.
+            //Check to ensure
+            String queryString = "default_cl";
+            Query clQuery = executeSimple(session, queryString, null, null);
+            assertTrue(clQuery.getConsistency().equals(ConsistencyLevel.LOCAL_ONE.toString()));
 
-        Set<ConsistencyLevel> acceptedList = EnumSet.allOf(ConsistencyLevel.class);
-        // Remove serial consistencies as they require conditional read/writes
-        acceptedList.remove(ConsistencyLevel.SERIAL);
-        acceptedList.remove(ConsistencyLevel.LOCAL_SERIAL);
+            //Check prepared statement default CL
+            String prepareString = "prepared_default_cl";
+            PreparedStatementExecution pse = executePrepared(session, prepareString, null, null);
+            assertTrue(pse.getConsistency().equals(ConsistencyLevel.LOCAL_ONE.toString()));
 
-        // Test successful writes
-        for (ConsistencyLevel cl : acceptedList) {
-            try {
-                init(12, cl);
-            } catch (Exception e) {
-                fail(String.format("Test failed at CL.%s with message: %s", cl, e.getMessage()));
-            }
-        }
-
-        // Test successful reads
-        for (ConsistencyLevel cl : acceptedList) {
-            try {
-                query(12, cl);
-            } catch (InvalidQueryException e) {
-                List<String> acceptableErrorMessages = Arrays.asList(
-                        "ANY ConsistencyLevel is only supported for writes",
-                        "EACH_QUORUM ConsistencyLevel is only supported for writes"
-                );
-                assertTrue(acceptableErrorMessages.contains(e.getMessage()), "Got unexpected message " + e.getMessage());
-            }
+            //Check batch statement default CL
+            String batchStateString = "batch_default_cl";
+            BatchExecution batch = executeBatch(session, batchStateString, null, null);
+            assertTrue(batch.getConsistency().equals(ConsistencyLevel.LOCAL_ONE.toString()));
+        } finally {
+            cluster.close();
         }
     }
 
-    @Test(groups = "long")
-    @CCMConfig(
-            numberOfNodes = {3, 3},
-            clusterProvider = "tokenAwareRoundRobinNoShuffleDowngrading"
-    )
-    public void testRFThreeDowngradingCLTwoDCs() throws Throwable {
-        createMultiDCSchema(3, 3);
-        init(12, ConsistencyLevel.TWO);
-        query(12, ConsistencyLevel.TWO);
+    /**
+     * Exhaustively tests all consistency levels when they are set via QueryOptions.
+     *
+     * @test_category consistency
+     */
+    @Test(groups = "short", dataProvider = "consistencyLevels", dataProviderClass = DataProviders.class)
+    public void should_use_query_option_cl(ConsistencyLevel cl) throws Throwable {
+        //Build a cluster with a CL level set in the query options.
+        Cluster cluster = builder().withQueryOptions(new QueryOptions().setConsistencyLevel(cl)).build();
+        try {
+            Session session = cluster.connect();
+            //Construct unique query, with no CL defined.
+            String queryString = "query_cl";
+            Query clQuery = executeSimple(session, queryString, null, null);
+            assertTrue(clQuery.getConsistency().equals(cl.toString()));
 
-        assertQueried(IP_PREFIX + '1', 0);
-        assertQueried(IP_PREFIX + '2', 12);
-        assertQueried(IP_PREFIX + '3', 0);
-        assertQueried(IP_PREFIX + '4', 0);
-        assertQueried(IP_PREFIX + '5', 0);
-        assertQueried(IP_PREFIX + '6', 0);
+            //Check prepared statement CL
+            String prepareString = "preapred_query_cl";
+            PreparedStatementExecution pse = executePrepared(session, prepareString, null, null);
+            assertTrue(pse.getConsistency().equals(cl.toString()));
 
-        resetCoordinators();
-        stopAndWait(3);
-
-        List<ConsistencyLevel> acceptedList = Arrays.asList(
-                ConsistencyLevel.ANY,
-                ConsistencyLevel.ONE,
-                ConsistencyLevel.TWO,
-                ConsistencyLevel.QUORUM,
-                ConsistencyLevel.THREE,
-                ConsistencyLevel.ALL,
-                ConsistencyLevel.LOCAL_QUORUM,
-                ConsistencyLevel.EACH_QUORUM
-        );
-
-        List<ConsistencyLevel> failList = emptyList();
-
-        // Test successful writes
-        for (ConsistencyLevel cl : acceptedList) {
-            logger.debug("Test successful init(): " + cl);
-            try {
-                init(12, cl);
-            } catch (Exception e) {
-                fail(String.format("Test failed at CL.%s with message: %s", cl, e.getMessage()));
-            }
-        }
-
-        // Test successful reads
-        for (ConsistencyLevel cl : acceptedList) {
-            logger.debug("Test successful query(): " + cl);
-            try {
-                query(12, cl);
-            } catch (InvalidQueryException e) {
-                List<String> acceptableErrorMessages = Arrays.asList(
-                        "EACH_QUORUM ConsistencyLevel is only supported for writes",
-                        "ANY ConsistencyLevel is only supported for writes");
-                assertTrue(acceptableErrorMessages.contains(e.getMessage()), String.format("Received: %s", e.getMessage()));
-            }
-        }
-
-        // Test writes which should fail
-        for (ConsistencyLevel cl : failList) {
-            logger.debug("Test failure init(): " + cl);
-            try {
-                init(12, cl);
-                fail(String.format("Test passed at CL.%s.", cl));
-            } catch (UnavailableException e) {
-                // expected to fail when the client has already marked the
-                // node as DOWN
-            } catch (WriteTimeoutException e) {
-                // expected to fail when the client hasn't marked the
-                // node as DOWN yet
-            }
-        }
-
-        // Test reads which should fail
-        for (ConsistencyLevel cl : failList) {
-            logger.debug("Test failure query(): " + cl);
-            try {
-                query(12, cl);
-                fail(String.format("Test passed at CL.%s.", cl));
-            } catch (ReadTimeoutException e) {
-                // expected to fail when the client hasn't marked the
-                // node as DOWN yet
-            } catch (UnavailableException e) {
-                // expected to fail when the client has already marked the
-                // node as DOWN
-            }
+            //Check batch statement CL
+            String batchStateString = "batch_query_cl";
+            BatchExecution batch = executeBatch(session, batchStateString, null, null);
+            assertTrue(batch.getConsistency().equals(cl.toString()));
+        } finally {
+            cluster.close();
         }
     }
 
-    @Test(groups = "long")
-    @CCMConfig(
-            numberOfNodes = {3, 3},
-            clusterProvider = "tokenAwareDCAwareRoundRobinNoShuffleDowngrading"
-    )
-    public void testRFThreeDowngradingCLTwoDCsDCAware() throws Throwable {
-        createMultiDCSchema(3, 3);
-        init(12, ConsistencyLevel.TWO);
-        query(12, ConsistencyLevel.TWO);
+    /**
+     * Exhaustively tests all consistency levels when they are set at the statement level.
+     *
+     * @test_category consistency
+     */
+    @Test(groups = "short", dataProvider = "consistencyLevels", dataProviderClass = DataProviders.class)
+    public void should_use_statement_cl(ConsistencyLevel cl) throws Throwable {
+        //Build a cluster with no CL set in the query options.
+        //Note: nonQuietClusterCloseOptions is used to speed up tests
+        Cluster cluster = builder().build();
+        try {
+            Session session = cluster.connect();
+            //Construct unique query statement with a CL defined.
+            String queryString = "statement_cl";
+            Query clQuery = executeSimple(session, queryString, cl, null);
+            assertTrue(clQuery.getConsistency().equals(cl.toString()));
 
-        assertQueried(IP_PREFIX + '1', 0);
-        assertQueried(IP_PREFIX + '2', 0);
-        assertQueried(IP_PREFIX + '3', 0);
-        assertQueried(IP_PREFIX + '4', 0);
-        assertQueried(IP_PREFIX + '5', 12);
-        assertQueried(IP_PREFIX + '6', 0);
+            //Check prepared statement CL
+            String prepareString = "preapred_statement_cl";
+            PreparedStatementExecution pse = executePrepared(session, prepareString, cl, null);
+            assertTrue(pse.getConsistency().equals(cl.toString()));
 
-        resetCoordinators();
-        stopAndWait(2);
-
-        List<ConsistencyLevel> acceptedList = Arrays.asList(
-                ConsistencyLevel.ANY,
-                ConsistencyLevel.ONE,
-                ConsistencyLevel.TWO,
-                ConsistencyLevel.QUORUM,
-                ConsistencyLevel.THREE,
-                ConsistencyLevel.ALL,
-                ConsistencyLevel.LOCAL_QUORUM,
-                ConsistencyLevel.EACH_QUORUM
-        );
-
-        List<ConsistencyLevel> failList = emptyList();
-
-        // Test successful writes
-        for (ConsistencyLevel cl : acceptedList) {
-            try {
-                init(12, cl);
-            } catch (Exception e) {
-                fail(String.format("Test failed at CL.%s with message: %s", cl, e.getMessage()));
-            }
-        }
-
-        // Test successful reads
-        for (ConsistencyLevel cl : acceptedList) {
-            try {
-                query(12, cl);
-            } catch (InvalidQueryException e) {
-                List<String> acceptableErrorMessages = Arrays.asList(
-                        "EACH_QUORUM ConsistencyLevel is only supported for writes",
-                        "ANY ConsistencyLevel is only supported for writes");
-                assertTrue(acceptableErrorMessages.contains(e.getMessage()), String.format("Received: %s", e.getMessage()));
-            }
-        }
-
-        // Test writes which should fail
-        for (ConsistencyLevel cl : failList) {
-            try {
-                init(12, cl);
-                fail(String.format("Test passed at CL.%s.", cl));
-            } catch (UnavailableException e) {
-                // expected to fail when the client has already marked the
-                // node as DOWN
-            } catch (WriteTimeoutException e) {
-                // expected to fail when the client hasn't marked the
-                // node as DOWN yet
-            }
-        }
-
-        // Test reads which should fail
-        for (ConsistencyLevel cl : failList) {
-            try {
-                query(12, cl);
-                fail(String.format("Test passed at CL.%s.", cl));
-            } catch (ReadTimeoutException e) {
-                // expected to fail when the client hasn't marked the
-                // node as DOWN yet
-            } catch (UnavailableException e) {
-                // expected to fail when the client has already marked the
-                // node as DOWN
-            }
+            //Check batch statement CL
+            String batchStateString = "batch_statement_cl";
+            BatchExecution batch = executeBatch(session, batchStateString, cl, null);
+            assertTrue(batch.getConsistency().equals(cl.toString()));
+        } finally {
+            cluster.close();
         }
     }
 
-    private void stopAndWait(int node) {
-        logger.debug("Stopping node " + node);
-        ccm().stop(node);
-        ccm().waitForDown(node);// this uses port ping
-        TestUtils.waitForDown(ipOfNode(node), cluster()); // this uses UP/DOWN events
-        logger.debug("Node " + node + " stopped, sleeping one extra minute to allow nodes to gossip");
-        Uninterruptibles.sleepUninterruptibly(1, TimeUnit.MINUTES);
+    /**
+     * Tests that order of precedence is followed when defining CLs.
+     * Statement level CL should be honored above QueryOptions.
+     * QueryOptions should be honored above default CL.
+     *
+     * @test_category consistency
+     */
+    @Test(groups = "short")
+    public void should_use_appropriate_cl_when_multiple_defined() throws Throwable {
+        ConsistencyLevel cl_one = ConsistencyLevel.ONE;
+        //Build a cluster with no CL set in the query options.
+        Cluster cluster = builder().withQueryOptions(new QueryOptions().setConsistencyLevel(cl_one)).build();
+        try {
+
+            Session session = cluster.connect();
+
+            //Check order of precedence for simple statements
+            //Construct unique query statement with no CL defined.
+            String queryString = "opts_cl";
+            Query clQuery = executeSimple(session, queryString, null, null);
+            assertTrue(clQuery.getConsistency().equals(cl_one.toString()));
+
+            //Construct unique query statement with a CL defined.
+            ConsistencyLevel cl_all = ConsistencyLevel.ALL;
+            queryString = "stm_cl";
+            clQuery = executeSimple(session, queryString, cl_all, null);
+            assertTrue(clQuery.getConsistency().equals(cl_all.toString()));
+
+            //Check order of precedence for prepared statements
+            //Construct unique prepared statement with no CL defined.
+            String prepareString = "prep_opts_cl";
+            PreparedStatementExecution pse = executePrepared(session, prepareString, null, null);
+            assertTrue(pse.getConsistency().equals(cl_one.toString()));
+            clearActivityLog();
+
+            //Construct unique prepared statement with a CL defined.
+            prepareString = "prep_stm_cl";
+            pse = executePrepared(session, prepareString, cl_all, null);
+            assertTrue(pse.getConsistency().equals(cl_all.toString()));
+
+            //Check order of precedence for batch statements
+            //Construct unique batch statement with no CL defined.
+            String batchString = "batch_opts_cl";
+            BatchExecution batch = executeBatch(session, batchString, null, null);
+            assertTrue(batch.getConsistency().equals(cl_one.toString()));
+            clearActivityLog();
+
+            //Construct unique prepared statement with a CL defined.
+            batchString = "prep_stm_cl";
+            batch = executeBatch(session, batchString, cl_all, null);
+            assertTrue(batch.getConsistency().equals(cl_all.toString()));
+        } finally {
+            cluster.close();
+        }
     }
 
+    /**
+     * Exhaustively tests all serial consistency levels when they are set via QueryOptions.
+     *
+     * @test_category consistency
+     */
+    @Test(groups = "short", dataProvider = "serialConsistencyLevels", dataProviderClass = DataProviders.class)
+    public void should_use_query_option_serial_cl(ConsistencyLevel cl) throws Throwable {
+        //Build a cluster with a CL level set in the query options.
+        Cluster cluster = builder().withQueryOptions(new QueryOptions().setSerialConsistencyLevel(cl)).build();
+        try {
+            Session session = cluster.connect();
+            //Construct unique query, with no CL defined.
+            String queryString = "serial_query_cl";
+            Query clQuery = executeSimple(session, queryString, null, cl);
+            checkSerialCLMatch(cl, clQuery.getSerialConsistency());
+
+            //Check prepared statement CL
+            String prepareString = "preapred_statement_serial_cl";
+            PreparedStatementExecution pse = executePrepared(session, prepareString, null, null);
+            checkSerialCLMatch(cl, pse.getSerialConsistency());
+
+            //Check batch statement CL
+            String batchStateString = "batch_statement_serial_cl";
+            BatchExecution batch = executeBatch(session, batchStateString, null, null);
+            checkSerialCLMatch(cl, batch.getSerialConsistency());
+        } finally {
+            cluster.close();
+        }
+    }
+
+    /**
+     * Exhaustively tests all serial consistency levels when they are set at the statement level.
+     *
+     * @test_category consistency
+     */
+    @Test(groups = "short", dataProvider = "serialConsistencyLevels", dataProviderClass = DataProviders.class)
+    public void should_use_statement_serial_cl(ConsistencyLevel cl) throws Throwable {
+        //Build a cluster with no CL set in the query options.
+        Cluster cluster = builder().build();
+        try {
+            Session session = cluster.connect();
+            //Construct unique query statement with a CL defined.
+            String queryString = "statement_serial_cl";
+            Query clQuery = executeSimple(session, queryString, null, cl);
+            checkSerialCLMatch(cl, clQuery.getSerialConsistency());
+
+            //Check prepared statement CL
+            String prepareString = "preapred_statement_serial_cl";
+            PreparedStatementExecution pse = executePrepared(session, prepareString, null, cl);
+            checkSerialCLMatch(cl, pse.getSerialConsistency());
+
+            //Check batch statement CL
+            String batchStateString = "batch_statement_serial_cl";
+            BatchExecution batch = executeBatch(session, batchStateString, null, cl);
+            checkSerialCLMatch(cl, batch.getSerialConsistency());
+        } finally {
+            cluster.close();
+        }
+    }
 }

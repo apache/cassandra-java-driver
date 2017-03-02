@@ -165,7 +165,8 @@ public class ErrorAwarePolicy implements ChainableLoadBalancingPolicy {
          * Defines the maximum number of errors allowed per minute for each host.
          * <p/>
          * The policy keeps track of the number of errors on each host (filtered by
-         * {@link #withErrorsFilter(ErrorFilter)}) over a sliding 1-minute window. If a host had more than this number
+         * {@link Builder#withErrorsFilter(com.datastax.driver.core.policies.ErrorAwarePolicy.ErrorFilter)})
+         * over a sliding 1-minute window. If a host had more than this number
          * of errors, it will be excluded from the query plan for the duration defined by
          * {@link #withRetryPeriod(long, TimeUnit)}.
          * <p/>

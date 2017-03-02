@@ -24,7 +24,7 @@
     </parent>
 
     <artifactId>cassandra-driver-tests-osgi</artifactId>
-    <packaging>bundle</packaging>
+    <packaging>jar</packaging>
     <name>DataStax Java Driver for Apache Cassandra Tests - OSGi</name>
     <description>A test for the DataStax Java Driver in an OSGi container.</description>
     <url>https://github.com/datastax/java-driver</url>
@@ -36,6 +36,7 @@
         <pax-exam.version>3.6.0</pax-exam.version>
         <url.version>2.4.0</url.version>
         <logback.version>1.1.3</logback.version>
+        <slf4j.version>1.7.5</slf4j.version>
         <test.groups>none</test.groups>
         <!--
         Skip tests by default, short or long profile is required to run tests in this module
@@ -75,7 +76,7 @@
         <dependency>
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-api</artifactId>
-            <version>1.7.5</version>
+            <version>${slf4j.version}</version>
         </dependency>
 
         <dependency>
@@ -124,13 +125,6 @@
         <dependency>
             <groupId>javax.transaction</groupId>
             <artifactId>jta</artifactId>
-            <version>1.1</version>
-            <scope>test</scope>
-        </dependency>
-
-        <dependency>
-            <groupId>com.jcabi</groupId>
-            <artifactId>jcabi-manifests</artifactId>
             <version>1.1</version>
             <scope>test</scope>
         </dependency>
@@ -203,6 +197,16 @@
                     <groups>${test.groups}</groups>
                     <systemPropertyVariables>
                         <cassandra.version>${cassandra.version}</cassandra.version>
+                        <!-- pull in declared version properties, this ensures we test with the same versions used by the driver -->
+                        <guava.version>${guava.version}</guava.version>
+                        <lz4.version>${lz4.version}</lz4.version>
+                        <snappy.version>${snappy.version}</snappy.version>
+                        <hdr.version>${hdr.version}</hdr.version>
+                        <netty.version>${netty.version}</netty.version>
+                        <slf4j.version>${slf4j.version}</slf4j.version>
+                        <logback.version>${logback.version}</logback.version>
+                        <metrics.version>${metrics.version}</metrics.version>
+                        <testng.version>${testng.version}</testng.version>
                         <ipprefix>${ipprefix}</ipprefix>
                     </systemPropertyVariables>
                 </configuration>
@@ -229,13 +233,8 @@
                         <Export-Package>com.datastax.driver.osgi.api,!com.datastax.driver.osgi.impl</Export-Package>
                         <Bundle-Activator>com.datastax.driver.osgi.impl.Activator</Bundle-Activator>
                         <_include>-osgi.bnd</_include>
-                        <Import-Package><![CDATA[com.google.common*;version="[16.0.1,21)",*]]></Import-Package>
+                        <Import-Package><![CDATA[com.google.common.*;version="[16.0.1,20)",*]]></Import-Package>
                     </instructions>
-                    <supportedProjectTypes>
-                        <supportedProjectType>jar</supportedProjectType>
-                        <supportedProjectType>bundle</supportedProjectType>
-                        <supportedProjectType>pom</supportedProjectType>
-                    </supportedProjectTypes>
                 </configuration>
                 <executions>
                     <execution>

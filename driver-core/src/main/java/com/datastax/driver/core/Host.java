@@ -478,10 +478,11 @@ public class Host {
         /**
          * Gets invoked when the listener is registered with a cluster, or at cluster startup if the
          * listener was registered at initialization with
-         * {@link com.datastax.driver.core.Cluster.Initializer#register(StateListener)}.
+         * {@link com.datastax.driver.core.Cluster#register(Host.StateListener)}.
          *
          * @param cluster the cluster that this listener is registered with.
          */
+        @Override
         void onRegister(Cluster cluster);
 
         /**
@@ -490,6 +491,7 @@ public class Host {
          *
          * @param cluster the cluster that this listener was registered with.
          */
+        @Override
         void onUnregister(Cluster cluster);
     }
 }

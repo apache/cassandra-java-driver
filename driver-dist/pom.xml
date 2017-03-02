@@ -70,51 +70,13 @@
                         </goals>
                         <configuration>
                             <includeDependencySources>true</includeDependencySources>
-                            <!-- optional dependencies from other modules (must be explicitly declared here in order to be correctly resolved) -->
-                            <additionalDependencies>
-                                <additionalDependency>
-                                    <groupId>org.xerial.snappy</groupId>
-                                    <artifactId>snappy-java</artifactId>
-                                    <version>${snappy.version}</version>
-                                </additionalDependency>
-                                <additionalDependency>
-                                    <groupId>net.jpountz.lz4</groupId>
-                                    <artifactId>lz4</artifactId>
-                                    <version>${lz4.version}</version>
-                                </additionalDependency>
-                                <additionalDependency>
-                                    <groupId>org.hdrhistogram</groupId>
-                                    <artifactId>HdrHistogram</artifactId>
-                                    <version>${hdr.version}</version>
-                                </additionalDependency>
-                                <additionalDependency>
-                                    <groupId>com.fasterxml.jackson.core</groupId>
-                                    <artifactId>jackson-core</artifactId>
-                                    <version>${jackson.version}</version>
-                                </additionalDependency>
-                                <additionalDependency>
-                                    <groupId>com.fasterxml.jackson.core</groupId>
-                                    <artifactId>jackson-databind</artifactId>
-                                    <version>${jackson.version}</version>
-                                </additionalDependency>
-                                <additionalDependency>
-                                    <groupId>joda-time</groupId>
-                                    <artifactId>joda-time</artifactId>
-                                    <version>${joda.version}</version>
-                                </additionalDependency>
-                                <additionalDependency>
-                                    <groupId>javax.json</groupId>
-                                    <artifactId>javax.json-api</artifactId>
-                                    <version>${jsr353-api.version}</version>
-                                </additionalDependency>
-                            </additionalDependencies>
                         </configuration>
                     </execution>
                 </executions>
             </plugin>
             <plugin>
                 <artifactId>maven-assembly-plugin</artifactId>
-                <version>2.6</version>
+                <version>3.0.0</version>
                 <executions>
                     <execution>
                         <id>assemble-binary-tarball</id>
@@ -131,6 +93,17 @@
                     </descriptors>
                     <tarLongFileMode>posix</tarLongFileMode>
                 </configuration>
+            </plugin>
+            <plugin>
+                <artifactId>maven-jar-plugin</artifactId>
+                <version>3.0.2</version>
+                <!-- http://stackoverflow.com/questions/13218313/unable-to-disable-generation-of-empty-jar-maven-jar-plugin -->
+                <executions>
+                    <execution>
+                        <id>default-jar</id>
+                        <phase>none</phase>
+                    </execution>
+                </executions>
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>

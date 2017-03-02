@@ -44,6 +44,7 @@ import static com.datastax.driver.core.HostDistance.LOCAL;
 import static com.datastax.driver.core.TestUtils.ipOfNode;
 import static com.datastax.driver.core.TestUtils.nonQuietClusterCloseOptions;
 import static org.mockito.Mockito.*;
+import static org.scassandra.http.client.PrimingRequest.then;
 
 public class ClusterInitTest {
     private static final Logger logger = LoggerFactory.getLogger(ClusterInitTest.class);
@@ -278,8 +279,7 @@ public class ClusterInitTest {
         primingClient.prime(
                 PrimingRequest.queryBuilder()
                         .withQuery("SELECT * FROM system.peers")
-                        .withColumnTypes(ScassandraCluster.SELECT_PEERS)
-                        .withRows(rows)
+                        .withThen(then().withRows(rows).withColumnTypes(ScassandraCluster.SELECT_PEERS))
                         .build());
     }
 }

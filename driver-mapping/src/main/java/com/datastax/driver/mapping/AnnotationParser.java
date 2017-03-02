@@ -36,12 +36,12 @@ import java.util.concurrent.atomic.AtomicInteger;
  * - {@link #parseUDT(Class, MappingManager)}: UDT classes into {@link MappedUDTCodec} instances.
  * - {@link #parseAccessor(Class, MappingManager)}: Accessor interfaces into {@link AccessorMapper} instances.
  */
-@SuppressWarnings({"unchecked", "WeakerAccess"})
 class AnnotationParser {
 
     /**
      * Annotations allowed on a property that maps to a table column.
      */
+    @SuppressWarnings("unchecked")
     private static final Set<Class<? extends Annotation>> VALID_COLUMN_ANNOTATIONS = ImmutableSet.of(
             Column.class,
             Computed.class,

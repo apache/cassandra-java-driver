@@ -1217,6 +1217,7 @@ class Connection {
 
             ChannelFuture future = channel.close();
             future.addListener(new ChannelFutureListener() {
+                @Override
                 public void operationComplete(ChannelFuture future) {
                     factory.allChannels.remove(channel);
                     if (future.cause() != null) {
@@ -1432,7 +1433,7 @@ class Connection {
                     pipeline.addLast("ssl", sslOptions.newSSLHandler(channel));
             }
 
-            //            pipeline.addLast("debug", new LoggingHandler(LogLevel.INFO));
+            // pipeline.addLast("debug", new LoggingHandler(LogLevel.INFO));
 
             pipeline.addLast("frameDecoder", new Frame.Decoder());
             pipeline.addLast("frameEncoder", frameEncoder);
