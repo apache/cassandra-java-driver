@@ -404,7 +404,7 @@ public abstract class TypeCodec<T> {
      * @param type the custom type this codec should handle.
      * @return A newly-created codec for the given CQL custom type.
      */
-    public static TypeCodec<ByteBuffer> custom(CustomType type) {
+    public static TypeCodec<ByteBuffer> custom(DataType.CustomType type) {
         return new CustomCodec(type);
     }
 
@@ -413,7 +413,7 @@ public abstract class TypeCodec<T> {
      * <p/>
      * This codec maps duration types to the driver's built-in {@link Duration} class,
      * thus providing a more user-friendly mapping than the low-level mapping provided by regular
-     * {@link #custom(CustomType) custom type codecs}.
+     * {@link #custom(DataType.CustomType) custom type codecs}.
      * <p/>
      * The returned instance is a singleton.
      *
