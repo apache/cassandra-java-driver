@@ -68,6 +68,7 @@ public final class UUIDs {
     private UUIDs() {
     }
 
+    // http://www.ietf.org/rfc/rfc4122.txt
     private static final long START_EPOCH = makeEpoch();
     private static final long CLOCK_SEQ_AND_NODE = makeClockSeqAndNode();
 

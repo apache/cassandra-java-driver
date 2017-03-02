@@ -49,9 +49,7 @@ class AnnotationChecks {
         return instance;
     }
 
-    @SuppressWarnings("unchecked")
     private static void validateAnnotations(Class<?> clazz, Class<? extends Annotation> allowed) {
-        @SuppressWarnings("unchecked")
         Collection<Annotation> classAnnotations = new HashSet<Annotation>();
         Collections.addAll(classAnnotations, clazz.getAnnotations());
         Class<? extends Annotation> invalid = validateAnnotations(classAnnotations, Collections.singleton(allowed));
