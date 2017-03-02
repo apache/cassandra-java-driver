@@ -90,8 +90,10 @@ import static com.google.common.base.Preconditions.checkNotNull;
  * the wrapper Java class instead, and implement the appropriate interface
  * (e.g. {@link com.datastax.driver.core.TypeCodec.PrimitiveBooleanCodec} for primitive {@code boolean} types;
  * there is one such interface for each Java primitive type).</li>
- * <li>TypeCodec implementations should not consume {@link ByteBuffer} instances by performing read operations
- * that modify their current position; if necessary, codecs should {@link ByteBuffer#duplicate()} duplicate} them.</li>
+ * <li>When deserializing, TypeCodec implementations should not consume {@link ByteBuffer} instances
+ * by performing relative read operations that modify their current position;
+ * codecs should instead prefer absolute read methods, or, if necessary, they should
+ * {@link ByteBuffer#duplicate() duplicate} their byte buffers prior to reading them.</li>
  * </ol>
  *
  * @param <T> The codec's Java type
