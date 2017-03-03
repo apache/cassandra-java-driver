@@ -53,20 +53,6 @@ public class NamingStrategy {
     }
 
     /**
-     * Receive a String input assumed to be in the Cassandra naming convention configured,
-     * returns the String translation to the Java naming convention.
-     *
-     * @param input value to translate
-     * @return Java naming convention translation of the input
-     */
-    public String toJava(String input) {
-        if (!enabled || javaConvention.equals(cassandraConvention)) {
-            return input;
-        }
-        return javaConvention.join(cassandraConvention.split(input));
-    }
-
-    /**
      * Enables the naming strategy, allowing it to auto translate properties that haven't been
      * explicitly translated.
      */
