@@ -9,9 +9,13 @@ platform: x64
 install:
   - ps: .\ci\appveyor.ps1
 build_script:
-  - mvn -B install -DskipTests=true
+  - ps: |
+      $env:JAVA_HOME="$($env:JAVA_8_HOME)"
+      mvn install -DskipTests=true -D"maven.javadoc.skip"=true -B -V
 test_script:
-  - "mvn -B -Dccm.java.home=\"%JAVA_8_HOME%\" -Dccm.maxNumberOfNodes=1 -Dcassandra.version=%cassandra_version% verify -P%test_profile%"
+  - ps: |
+      $env:JAVA_HOME="$($env:JAVA_PLATFORM_HOME)"
+      mvn -B -D"ccm.java.home"="$($env:JAVA_8_HOME)" -D"ccm.maxNumberOfNodes"=1 -D"cassandra.version"=$($env:cassandra_version) test -P $($env:test_profile)
 on_finish:
   - ps: .\ci\uploadtests.ps1
 cache:
