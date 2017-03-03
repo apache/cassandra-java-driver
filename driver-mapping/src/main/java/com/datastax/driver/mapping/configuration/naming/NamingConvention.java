@@ -19,7 +19,7 @@ import java.util.List;
 
 /**
  * Represent a naming convention (e.g. snake_case, camelCase, etc...) to be used when
- * auto-translating java property names to cassandra column names and vise-versa.
+ * auto-translating java property names to cassandra column names and vice versa.
  *
  * This interface may be implemented to define custom naming convention.
  */
