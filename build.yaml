@@ -43,6 +43,15 @@ cassandra:
   - '3.0'
   - '3.10'
 build:
+  - script: |
+      . /usr/local/bin/jdk_switcher.sh
+      jdk_switcher use oraclejdk8
+      export MAVEN_HOME=/home/jenkins/.mvn/apache-maven-3.2.5
+      export PATH=$MAVEN_HOME/bin:$PATH
+      mvn -B -V install -DskipTests
+  - script: |
+      . /usr/local/bin/jdk_switcher.sh
+      jdk_switcher use $JAVA_VERSION
   - type: maven
     version: 3.2.5
     goals: verify --fail-never -P$TEST_GROUP
