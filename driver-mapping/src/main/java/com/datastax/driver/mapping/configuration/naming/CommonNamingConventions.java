@@ -23,26 +23,52 @@ import java.util.*;
 public class CommonNamingConventions {
 
     /**
-     * E.g. myXmlParser / myXMLParser
-     * When constructing, upperCaseAbbreviations may be used to decide:
+     * @link "https://en.wikipedia.org/wiki/Camel_case"
+     *
+     * Represents camel case naming convention with a lower cased first letter.
+     * E.g. "myXmlParser" and "myXMLParser", Note that both examples are valid
+     * lower camel case forms. The first one takes abbreviations as any other
+     * words where the first letter is upper case, and the rest are lower case
+     * (hence - "Xml"), while the latter upper cases all letters of an abbreviation
+     * (hence - "XML").
+     *
+     * Additionally, many different Java naming conventions introduce prefixes
+     * for field naming, some examples:
      * <ul>
-     * <li>{@code false} - myXmlParser (default)</li>
-     * <li>{@code true} - myXMLParser</li>
+     *     <li>Android - @link "http://source.android.com/source/code-style.html#follow-field-naming-conventions"</li>
+     *     <li>Hungarian Notation - @link "https://en.wikipedia.org/wiki/Hungarian_notation"</li>
+     *     <li>Underscore - @link "http://stackoverflow.com/questions/1899683/is-there-a-standard-in-java-for-underscore-in-front-of-variable-or-class-nam"</li>
      * </ul>
+     * Those prefixes can be supported so that for example if java convention is
+     * set to LowerCamelCase with `ignorablePrefixes` set to "_" and cassandra
+     * convention is set to LowerSnakeCase, then a field named "_myXmlParser" will be
+     * translated to "my_xml_parser".
      */
     public static class LowerCamelCase extends CamelCase {
 
         private final boolean upperCaseAbbreviations;
 
+        /**
+         * @param upperCaseAbbreviations  {@code true} to uppercase all abbreviations,
+         *                                {@code false} to treat abbreviations as any other word
+         * @param ignorablePrefixes       string prefixes to trim if constant field name prefixes are used
+         */
         public LowerCamelCase(boolean upperCaseAbbreviations, String... ignorablePrefixes) {
             super(ignorablePrefixes);
             this.upperCaseAbbreviations = upperCaseAbbreviations;
         }
 
+        /**
+         * @param ignorablePrefixes       string prefixes to trim if constant field name prefixes are used
+         */
         public LowerCamelCase(String... ignorablePrefixes) {
             this(false, ignorablePrefixes);
         }
 
+        /**
+         * @param upperCaseAbbreviations  {@code true} to uppercase all abbreviations,
+         *                                {@code false} to treat abbreviations as any other word
+         */
         public LowerCamelCase(boolean upperCaseAbbreviations) {
             this(upperCaseAbbreviations, new String[0]);
         }
@@ -77,26 +103,52 @@ public class CommonNamingConventions {
     }
 
     /**
-     * E.g. MyXmlParser / MyXMLParser
-     * When constructing, upperCaseAbbreviations may be used to decide:
+     * @link "https://en.wikipedia.org/wiki/Camel_case"
+     *
+     * Represents camel case naming convention with an upper cased first letter.
+     * E.g. "MyXmlParser" and "MyXMLParser", Note that both examples are valid
+     * upper camel case forms. The first one takes abbreviations as any other
+     * words where the first letter is upper case, and the rest are lower case
+     * (hence - "Xml"), while the latter upper cases all letters of an abbreviation
+     * (hence - "XML").
+     *
+     * Additionally, many different Java naming conventions introduce prefixes
+     * for field naming, some examples:
      * <ul>
-     * <li>{@code false} - MyXmlParser (default)</li>
-     * <li>{@code true} - MyXMLParser</li>
+     *     <li>Android - @link "http://source.android.com/source/code-style.html#follow-field-naming-conventions"</li>
+     *     <li>Hungarian Notation - @link "https://en.wikipedia.org/wiki/Hungarian_notation"</li>
+     *     <li>Underscore - @link "http://stackoverflow.com/questions/1899683/is-there-a-standard-in-java-for-underscore-in-front-of-variable-or-class-nam"</li>
      * </ul>
+     * Those prefixes can be supported so that for example if java convention is
+     * set to UpperCamelCase with `ignorablePrefixes` set to "_" and cassandra
+     * convention is set to LowerSnakeCase, then a field named "_MyXmlParser" will be
+     * translated to "my_xml_parser".
      */
     public static class UpperCamelCase extends CamelCase {
 
         private final boolean upperCaseAbbreviations;
 
+        /**
+         * @param upperCaseAbbreviations  {@code true} to uppercase all abbreviations,
+         *                                {@code false} to treat abbreviations as any other word
+         * @param ignorablePrefixes       string prefixes to trim if constant field name prefixes are used
+         */
         public UpperCamelCase(boolean upperCaseAbbreviations, String... ignorablePrefixes) {
             super(ignorablePrefixes);
             this.upperCaseAbbreviations = upperCaseAbbreviations;
         }
 
+        /**
+         * @param ignorablePrefixes       string prefixes to trim if constant field name prefixes are used
+         */
         public UpperCamelCase(String... ignorablePrefixes) {
             this(false, ignorablePrefixes);
         }
 
+        /**
+         * @param upperCaseAbbreviations  {@code true} to uppercase all abbreviations,
+         *                                {@code false} to treat abbreviations as any other word
+         */
         public UpperCamelCase(boolean upperCaseAbbreviations) {
             this(upperCaseAbbreviations, new String[0]);
         }
@@ -127,7 +179,10 @@ public class CommonNamingConventions {
     }
 
     /**
-     * E.g. my_xml_parser
+     * @link "https://en.wikipedia.org/wiki/Snake_case"
+     *
+     * Represents snake case naming convention, meaning all letters are lower cased,
+     * and words are separated by an underscore ("_"). E.g. "my_xml_parser".
      */
     public static class LowerSnakeCase extends CharDelimitedNamingConvention {
 
@@ -138,7 +193,10 @@ public class CommonNamingConventions {
     }
 
     /**
-     * E.g. MY_XML_PARSER
+     * @link "https://en.wikipedia.org/wiki/Snake_case"
+     *
+     * Represents snake case naming convention, meaning all letters are upper cased,
+     * and words are separated by an underscore ("_"). E.g. "MY_XML_PARSER".
      */
     public static class UpperSnakeCase extends CharDelimitedNamingConvention {
 
@@ -149,7 +207,10 @@ public class CommonNamingConventions {
     }
 
     /**
-     * E.g. my-xml-parser
+     * @link "https://en.wikipedia.org/wiki/Letter_case#Special_case_styles" (see Kebab-Case)
+     *
+     * Represents a naming convention where all letters are lower cased,
+     * and words are separated by a dash sign ("-"). E.g. "my-xml-parser"
      */
     public static class LowerLispCase extends CharDelimitedNamingConvention {
 
@@ -160,7 +221,10 @@ public class CommonNamingConventions {
     }
 
     /**
-     * E.g. MY-XML-PARSER
+     * @link "https://en.wikipedia.org/wiki/Letter_case#Special_case_styles" (see Kebab-Case)
+     *
+     * Represents a naming convention where all letters are upper cased,
+     * and words are separated by a dash sign ("-"). E.g. "MY-XML-PARSER".
      */
     public static class UpperLispCase extends CharDelimitedNamingConvention {
 
@@ -171,7 +235,8 @@ public class CommonNamingConventions {
     }
 
     /**
-     * E.g. myxmlparser
+     * Represents a naming convention where all letters are lower cased,
+     * and words are not separated by any special character. E.g. "myxmlparser".
      */
     public static class LowerCase implements NamingConvention {
 
