@@ -24,9 +24,12 @@ public class NamingStrategy {
     private NamingConvention cassandraConvention;
 
     public NamingStrategy(NamingConvention javaConvention, NamingConvention cassandraConvention) {
-        setJavaConvention(javaConvention);
-        setCassandraConvention(cassandraConvention);
-        enable();
+        if (javaConvention == null || cassandraConvention == null) {
+            throw new IllegalArgumentException("input/output NamingConvention cannot be null");
+        }
+        this.javaConvention = javaConvention;
+        this.cassandraConvention = cassandraConvention;
+        this.enabled = true;
     }
 
     public NamingStrategy(NamingStrategy toCopy) {
