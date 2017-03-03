@@ -19,6 +19,8 @@ If ($env:PLATFORM -eq "X64") {
 }
 
 $env:JAVA_HOME="C:\Program Files\Java\jdk$($env:java_version)"
+# The configured java version to test with.
+$env:JAVA_PLATFORM_HOME="$($env:JAVA_HOME)"
 $env:JAVA_8_HOME="C:\Program Files\Java\jdk1.8.0"
 $env:PATH="$($env:PYTHON);$($env:PYTHON)\Scripts;$($env:JAVA_HOME)\bin;$($env:OPENSSL_PATH)\bin;$($env:PATH)"
 $env:CCM_PATH="$($dep_dir)\ccm"
