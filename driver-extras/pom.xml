@@ -230,7 +230,7 @@
                         <Bundle-SymbolicName>com.datastax.driver.extras</Bundle-SymbolicName>
                         <Bundle-Version>${project.version}</Bundle-Version>
                         <_include>-osgi.bnd</_include>
-                        <Import-Package><![CDATA[com.google.common*;version="[16.0.1,21)",*]]></Import-Package>
+                        <Import-Package><![CDATA[com.google.common.*;version="[16.0.1,22)",*]]></Import-Package>
                     </instructions>
                     <supportedProjectTypes>
                         <supportedProjectType>jar</supportedProjectType>
