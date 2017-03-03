@@ -151,9 +151,9 @@ public class CommonNamingConventions {
     /**
      * E.g. my-xml-parser
      */
-    public static class LowerKebabCase extends CharDelimitedNamingConvention {
+    public static class LowerLispCase extends CharDelimitedNamingConvention {
 
-        public LowerKebabCase() {
+        public LowerLispCase() {
             super("-", false);
         }
 
@@ -162,9 +162,9 @@ public class CommonNamingConventions {
     /**
      * E.g. MY-XML-PARSER
      */
-    public static class UpperKebabCase extends CharDelimitedNamingConvention {
+    public static class UpperLispCase extends CharDelimitedNamingConvention {
 
-        public UpperKebabCase() {
+        public UpperLispCase() {
             super("-", true);
         }
 
