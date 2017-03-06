@@ -15,6 +15,7 @@
 - [improvement] JAVA-1328: Provide compatibility with Guava 20.
 - [improvement] JAVA-1247: Disable idempotence warnings.
 - [improvement] JAVA-1286: Support setting and retrieving udt fields in QueryBuilder.
+- [new feature] JAVA-1257: Implement a customizable StatementFormatter.
 
 Merged from 3.1.x branch:
 

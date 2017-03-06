@@ -27,6 +27,7 @@ import org.slf4j.LoggerFactory;
 
 import java.util.Set;
 import java.util.concurrent.*;
+import java.util.concurrent.TimeUnit;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static java.util.concurrent.TimeUnit.*;
@@ -39,7 +40,7 @@ import static java.util.concurrent.TimeUnit.*;
  * determined by {@link #computeKey(Host, Statement, Exception)}.
  * <p/>
  * This class is used by percentile-aware components such as
- * {@link QueryLogger.Builder#withDynamicThreshold(PercentileTracker, double)}  QueryLogger} and
+ * {@link EnhancedQueryLogger.Builder#withDynamicThreshold(PercentileTracker, double)}  QueryLogger} and
  * {@link com.datastax.driver.core.policies.PercentileSpeculativeExecutionPolicy}.
  * <p/>
  * It uses <a href="http://hdrhistogram.github.io/HdrHistogram/">HdrHistogram</a> to record latencies:

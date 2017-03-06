@@ -69,7 +69,12 @@ public abstract class StatementWrapper extends Statement {
         this.wrapped = wrapped;
     }
 
-    Statement getWrappedStatement() {
+    /**
+     * Returns the wrapped {@link Statement}.
+     *
+     * @return the wrapped {@link Statement}.
+     */
+    public Statement getWrappedStatement() {
         // Protect against multiple levels of wrapping (even though there is no practical reason for that)
         return (wrapped instanceof StatementWrapper)
                 ? ((StatementWrapper) wrapped).getWrappedStatement()

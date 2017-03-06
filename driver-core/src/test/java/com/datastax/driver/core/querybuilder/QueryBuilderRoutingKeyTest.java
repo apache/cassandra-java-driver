@@ -169,7 +169,7 @@ public class QueryBuilderRoutingKeyTest extends CCMTestsSupport {
                 .add(insertInto(table).values(new String[]{"k", "a"}, new Object[]{42, 1}))
                 .add(update(table).using(ttl(400)));
         assertEquals(batch.getRoutingKey(protocolVersion, codecRegistry), bb);
-        assertEquals(batch.toString(), batch_query);
+        assertEquals(batch.getQueryString(), batch_query);
         // TODO: rs = session().execute(batch); // Not guaranteed to be valid CQL
 
         batch_query = "BEGIN BATCH ";
@@ -177,7 +177,7 @@ public class QueryBuilderRoutingKeyTest extends CCMTestsSupport {
         batch_query += "APPLY BATCH;";
         batch = batch(query);
         assertEquals(batch.getRoutingKey(protocolVersion, codecRegistry), bb);
-        assertEquals(batch.toString(), batch_query);
+        assertEquals(batch.getQueryString(), batch_query);
         // TODO: rs = session().execute(batch); // Not guaranteed to be valid CQL
 
         batch_query = "BEGIN BATCH ";
@@ -185,7 +185,7 @@ public class QueryBuilderRoutingKeyTest extends CCMTestsSupport {
         batch_query += "APPLY BATCH;";
         batch = batch().add(select().from("foo").where(eq("k", 42)));
         assertEquals(batch.getRoutingKey(protocolVersion, codecRegistry), null);
-        assertEquals(batch.toString(), batch_query);
+        assertEquals(batch.getQueryString(), batch_query);
         // TODO: rs = session().execute(batch); // Not guaranteed to be valid CQL
 
         batch_query = "BEGIN BATCH USING TIMESTAMP 42 ";
@@ -193,7 +193,7 @@ public class QueryBuilderRoutingKeyTest extends CCMTestsSupport {
         batch_query += "APPLY BATCH;";
         batch = batch().using(timestamp(42)).add(insertInto("foo", "bar").value("a", 123));
         assertEquals(batch.getRoutingKey(protocolVersion, codecRegistry), null);
-        assertEquals(batch.toString(), batch_query);
+        assertEquals(batch.getQueryString(), batch_query);
         // TODO: rs = session().execute(batch); // Not guaranteed to be valid CQL
     }
 }

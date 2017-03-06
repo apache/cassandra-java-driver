@@ -190,20 +190,37 @@ public abstract class RegularStatement extends Statement {
     }
 
     /**
-     * Returns this statement as a CQL query string.
+     * The number of values for this statement, or zero, if this
+     * statement does not have values.
      * <p/>
-     * It is important to note that the query string is merely
-     * a CQL representation of this statement, but it does
-     * <em>not</em> convey all the information stored in {@link Statement}
-     * objects.
-     * <p/>
-     * See the javadocs of {@link #getQueryString()} for more information.
+     * This implementation simply delegates to {@link #valuesCount(CodecRegistry)}.
      *
-     * @return this statement as a CQL query string.
-     * @see #getQueryString()
+     * @return the number of values.
+     * @see #valuesCount(CodecRegistry)
      */
-    @Override
-    public String toString() {
-        return getQueryString();
+    public int valuesCount() {
+        return valuesCount(CodecRegistry.DEFAULT_INSTANCE);
     }
+
+    /**
+     * The number of values for this statement, or zero, if this
+     * statement does not have values.
+     * <p/>
+     * The default implementation simply counts the number of items
+     * returned by {@link #getValues(ProtocolVersion, CodecRegistry)}.
+     * Subclasses may wish to override this method if they have a more efficient
+     * way to count the number of values.
+     *
+     * @param codecRegistry the codec registry that will be used if the actual
+     *                      implementation needs to serialize Java objects in the
+     *                      process of determining if the query has values.
+     *                      Note that it might be possible to use the no-arg
+     *                      {@link #valuesCount()} depending on the type of
+     *                      statement this is called on.
+     * @return the number of values.
+     */
+    public int valuesCount(CodecRegistry codecRegistry) {
+        return getValues(ProtocolVersion.NEWEST_SUPPORTED, codecRegistry).length;
+    }
+
 }

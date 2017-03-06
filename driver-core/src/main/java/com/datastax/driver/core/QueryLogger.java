@@ -87,7 +87,11 @@ import static java.util.concurrent.TimeUnit.NANOSECONDS;
  * This class is thread-safe.
  *
  * @since 2.0.10
+ * @deprecated since 3.2.0, use the more easily configurable {@link EnhancedQueryLogger} instead.
+ * This class might be removed in a future major version.
  */
+@SuppressWarnings("DeprecatedIsStillUsed")
+@Deprecated
 public abstract class QueryLogger implements LatencyTracker {
 
     /**
@@ -230,6 +234,7 @@ public abstract class QueryLogger implements LatencyTracker {
      * This implementation is the default and should be preferred to {@link DynamicThresholdQueryLogger}
      * which is still in beta state.
      */
+    @Deprecated
     public static class ConstantThresholdQueryLogger extends QueryLogger {
 
         private volatile long slowQueryLatencyThresholdMillis;
@@ -289,6 +294,7 @@ public abstract class QueryLogger implements LatencyTracker {
      * Dynamic thresholds are based on per-host latency percentiles, as computed
      * by {@link PercentileTracker}.
      */
+    @Deprecated
     public static class DynamicThresholdQueryLogger extends QueryLogger {
 
         private volatile double slowQueryLatencyThresholdPercentile;

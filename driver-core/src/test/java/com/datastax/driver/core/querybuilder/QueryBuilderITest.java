@@ -38,13 +38,13 @@ public class QueryBuilderITest extends CCMTestsSupport {
     @Test(groups = "short")
     public void remainingDeleteTests() throws Exception {
 
-        Statement query;
+        BuiltStatement query;
         TableMetadata table = cluster().getMetadata().getKeyspace(keyspace).getTable(TABLE_TEXT);
         assertNotNull(table);
 
         String expected = String.format("DELETE k FROM %s.test_text;", keyspace);
         query = delete("k").from(table);
-        assertEquals(query.toString(), expected);
+        assertEquals(query.getQueryString(), expected);
         try {
             session().execute(query);
             fail();
@@ -57,7 +57,7 @@ public class QueryBuilderITest extends CCMTestsSupport {
     public void selectInjectionTests() throws Exception {
 
         String query;
-        Statement select;
+        BuiltStatement select;
         PreparedStatement ps;
         BoundStatement bs;
 
@@ -65,9 +65,9 @@ public class QueryBuilderITest extends CCMTestsSupport {
 
         query = "SELECT * FROM foo WHERE k=?;";
         select = select().all().from("foo").where(eq("k", bindMarker()));
-        ps = session().prepare(select.toString());
+        ps = session().prepare(select.getQueryString());
         bs = ps.bind();
-        assertEquals(select.toString(), query);
+        assertEquals(select.getQueryString(), query);
         session().execute(bs.setString("k", "4 AND c=5"));
     }
 
