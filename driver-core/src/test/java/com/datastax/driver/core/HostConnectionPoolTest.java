@@ -18,7 +18,7 @@ package com.datastax.driver.core;
 import com.codahale.metrics.Gauge;
 import com.datastax.driver.core.exceptions.*;
 import com.datastax.driver.core.policies.ConstantReconnectionPolicy;
-import com.datastax.driver.core.utils.MoreFutures;
+import com.google.common.base.Function;
 import com.google.common.base.Predicate;
 import com.google.common.base.Throwables;
 import com.google.common.util.concurrent.*;
@@ -290,7 +290,7 @@ public class HostConnectionPoolTest extends ScassandraTestBase.PerClassCluster {
             int count = 0;
             for (MockRequest queuedRequest : queuedRequests) {
                 try {
-                    Uninterruptibles.getUninterruptibly(queuedRequest.connectionFuture, 5, TimeUnit.SECONDS);
+                    Uninterruptibles.getUninterruptibly(queuedRequest.connectionFuture, 10, TimeUnit.SECONDS);
                     count++;
                 } catch (ExecutionException e) {
                     // 128th request should timeout since all in flight requests are used.
@@ -400,7 +400,6 @@ public class HostConnectionPoolTest extends ScassandraTestBase.PerClassCluster {
                 assertThat(e.getCause()).isInstanceOf(DriverException.class);
                 assertThat(e.getCause().getMessage()).contains("Aborting attempt to set keyspace to 'newkeyspace' since there is already an in flight attempt to set keyspace to 'slowks'.");
             }
-
         } finally {
             MockRequest.completeAll(requests);
             cluster.close();
@@ -1242,8 +1241,8 @@ public class HostConnectionPoolTest extends ScassandraTestBase.PerClassCluster {
 
             // Should create up to core connections.
             verify(factory, timeout(readTimeout).times(1)).open(any(HostConnectionPool.class));
-
             assertPoolSize(pool, 1);
+            Uninterruptibles.getUninterruptibly(request.requestInitialized, 10, TimeUnit.SECONDS);
             request.simulateSuccessResponse();
         } finally {
             cluster.close();
@@ -1348,6 +1347,9 @@ public class HostConnectionPoolTest extends ScassandraTestBase.PerClassCluster {
         enum State {START, COMPLETED, FAILED, TIMED_OUT}
 
         final ListenableFuture<Connection> connectionFuture;
+
+        final ListenableFuture<Connection.ResponseHandler> requestInitialized;
+
         private volatile Connection.ResponseHandler responseHandler;
 
         final AtomicReference<State> state = new AtomicReference<State>(State.START);
@@ -1404,12 +1406,13 @@ public class HostConnectionPoolTest extends ScassandraTestBase.PerClassCluster {
 
         private MockRequest(HostConnectionPool pool, int timeoutMillis, int maxQueueSize) throws ConnectionException {
             this.connectionFuture = pool.borrowConnection(timeoutMillis, MILLISECONDS, maxQueueSize);
-            Futures.addCallback(this.connectionFuture, new MoreFutures.SuccessCallback<Connection>() {
+            requestInitialized = Futures.transform(this.connectionFuture, new Function<Connection, Connection.ResponseHandler>() {
                 @Override
-                public void onSuccess(Connection connection) {
+                public Connection.ResponseHandler apply(Connection connection) {
                     MockRequest thisRequest = MockRequest.this;
                     thisRequest.responseHandler = new Connection.ResponseHandler(connection, -1, thisRequest);
                     connection.dispatcher.add(thisRequest.responseHandler);
+                    return responseHandler;
                 }
             });
         }
