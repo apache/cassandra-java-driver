@@ -27,7 +27,6 @@ import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.locks.ReentrantLock;
-import java.util.regex.Pattern;
 
 /**
  * Keeps metadata on the connected cluster, including known nodes and schema definitions.
@@ -44,9 +43,6 @@ public class Metadata {
     private volatile TokenMap tokenMap;
 
     final ReentrantLock lock = new ReentrantLock();
-
-    private static final Pattern alphanumeric = Pattern.compile("\\w+"); // this includes _
-    private static final Pattern lowercaseAlphanumeric = Pattern.compile("[a-z][a-z0-9_]*");
 
     // See https://github.com/apache/cassandra/blob/trunk/doc/cql3/CQL.textile#appendixA
     private static final Set<String> RESERVED_KEYWORDS = ImmutableSet.of(
@@ -131,22 +127,59 @@ public class Metadata {
         if (id == null)
             return null;
 
-        if (alphanumeric.matcher(id).matches())
+        if (isAlphanumeric(id))
             return id.toLowerCase();
 
         // Check if it's enclosed in quotes. If it is, remove them and unescape internal double quotes
         return ParseUtils.unDoubleQuote(id);
     }
 
+    private static boolean isAlphanumeric(String s) {
+        for (int i = 0; i < s.length(); i++) {
+            char c = s.charAt(i);
+            if (!(
+                    (c >= 48 && c <= 57) // 0-9
+                            || (c >= 65 && c <= 90) // A-Z
+                            || (c == 95) // _ (underscore)
+                            || (c >= 97 && c <= 122) // a-z
+            ))
+                return false;
+        }
+        return true;
+    }
+
     // Escape a CQL3 identifier based on its value as read from the schema
     // tables. Because it comes from Cassandra, we could just always quote it,
     // but to get a nicer output we don't do it if it's not necessary.
     static String escapeId(String ident) {
-        // we don't need to escape if it's lowercase and match non-quoted CQL3 ids,
-        // and if it's not a CQL reserved keyword
-        return lowercaseAlphanumeric.matcher(ident).matches()
-                && !isReservedCqlKeyword(ident) ?
-                ident : quote(ident);
+        return needsQuote(ident)
+                ? quote(ident)
+                : ident;
+    }
+
+    /**
+     * We don't need to escape an identifier if it
+     * matches non-quoted CQL3 ids ([a-z][a-z0-9_]*),
+     * and if it's not a CQL reserved keyword.
+     */
+    private static boolean needsQuote(String s) {
+        // this method should only be called for C*-provided identifiers,
+        // so we expect it to be non-null and non-empty.
+        assert s != null && !s.isEmpty();
+        char c = s.charAt(0);
+        if (!(c >= 97 && c <= 122)) // a-z
+            return true;
+        for (int i = 1; i < s.length(); i++) {
+            c = s.charAt(i);
+            if (!(
+                    (c >= 48 && c <= 57) // 0-9
+                            || (c == 95) // _
+                            || (c >= 97 && c <= 122) // a-z
+            )) {
+                return true;
+            }
+        }
+        return isReservedCqlKeyword(s);
     }
 
     /**

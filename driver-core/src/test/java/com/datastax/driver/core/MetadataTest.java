@@ -143,4 +143,22 @@ public class MetadataTest extends CCMTestsSupport {
     public void handleId_should_preserve_unquoted_non_alphanumeric_identifiers() {
         assertThat(Metadata.handleId("Foo Bar")).isEqualTo("Foo Bar");
     }
+
+    @Test(groups = "unit")
+    public void escapeId_should_not_quote_lowercase_identifiers() {
+        String id = "this_does_not_need_quoting_0123456789abcdefghijklmnopqrstuvwxyz";
+        assertThat(Metadata.escapeId(id)).isEqualTo(id);
+    }
+
+    @Test(groups = "unit")
+    public void escapeId_should_quote_non_lowercase_identifiers() {
+        assertThat(Metadata.escapeId("This_Needs_Quoting_1234")).isEqualTo("\"This_Needs_Quoting_1234\"");
+        assertThat(Metadata.escapeId("This Needs Quoting 1234!!")).isEqualTo("\"This Needs Quoting 1234!!\"");
+    }
+
+    @Test(groups = "unit")
+    public void escapeId_should_quote_reserved_cql_keywords() {
+        assertThat(Metadata.escapeId("columnfamily")).isEqualTo("\"columnfamily\"");
+    }
+
 }

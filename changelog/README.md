@@ -18,6 +18,7 @@
 - [bug] JAVA-1415: Correctly report if a UDT column is frozen.
 - [bug] JAVA-1418: Make Guava version detection more reliable.
 - [new feature] JAVA-1174: Add ifNotExists option to mapper.
+- [improvement] JAVA-1414: Optimize Metadata.escapeId and Metadata.handleId.
 
 Merged from 3.1.x branch:
 
