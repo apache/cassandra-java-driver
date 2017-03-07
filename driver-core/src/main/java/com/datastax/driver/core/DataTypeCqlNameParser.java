@@ -137,7 +137,7 @@ class DataTypeCqlNameParser {
         // We need to remove escaped double quotes within the type name as it is stored unescaped.
         // Otherwise it's a UDT. If we only want a shallow definition build it, otherwise search known definitions.
         if (shallowUserTypes)
-            return new UserType.Shallow(currentKeyspaceName, Metadata.handleId(type));
+            return new UserType.Shallow(currentKeyspaceName, Metadata.handleId(type), frozen);
 
         UserType userType = null;
         if (currentUserTypes != null)
@@ -148,7 +148,7 @@ class DataTypeCqlNameParser {
         if (userType == null)
             throw new UnresolvedUserTypeException(currentKeyspaceName, type);
         else
-            return userType;
+            return userType.copy(frozen);
     }
 
     private static class Parser {

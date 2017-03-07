@@ -362,25 +362,25 @@ public class CodecRegistryTest {
     @Test(groups = "unit")
     public void should_create_udt_codec() {
         CodecRegistry registry = new CodecRegistry();
-        UserType udt = new UserType("ks", "test", Collections.<UserType.Field>emptyList(), V4, registry);
+        UserType udt = new UserType("ks", "test", false, Collections.<UserType.Field>emptyList(), V4, registry);
         assertThat(registry.codecFor(udt))
                 .isNotNull()
                 .accepts(udt)
                 .accepts(UDTValue.class);
         registry = new CodecRegistry();
-        udt = new UserType("ks", "test", Collections.<UserType.Field>emptyList(), V4, registry);
+        udt = new UserType("ks", "test", false, Collections.<UserType.Field>emptyList(), V4, registry);
         assertThat(registry.codecFor(udt, UDTValue.class))
                 .isNotNull()
                 .accepts(udt)
                 .accepts(UDTValue.class);
         registry = new CodecRegistry();
-        udt = new UserType("ks", "test", Collections.<UserType.Field>emptyList(), V4, registry);
+        udt = new UserType("ks", "test", false, Collections.<UserType.Field>emptyList(), V4, registry);
         assertThat(registry.codecFor(new UDTValue(udt)))
                 .isNotNull()
                 .accepts(udt)
                 .accepts(UDTValue.class);
         registry = new CodecRegistry();
-        udt = new UserType("ks", "test", Collections.<UserType.Field>emptyList(), V4, registry);
+        udt = new UserType("ks", "test", false, Collections.<UserType.Field>emptyList(), V4, registry);
         assertThat(registry.codecFor(udt, new UDTValue(udt)))
                 .isNotNull()
                 .accepts(udt)

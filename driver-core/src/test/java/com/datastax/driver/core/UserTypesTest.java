@@ -59,8 +59,9 @@ public class UserTypesTest extends CCMTestsSupport {
         samples = PrimitiveTypeSamples.samples(protocolVersion);
         String type1 = "CREATE TYPE phone (alias text, number text)";
         String type2 = "CREATE TYPE \"\"\"User Address\"\"\" (street text, \"ZIP\"\"\" int, phones set<frozen<phone>>)";
+        String type3 = "CREATE TYPE type_for_frozen_test(i int)";
         String table = "CREATE TABLE user (id int PRIMARY KEY, addr frozen<\"\"\"User Address\"\"\">)";
-        execute(type1, type2, table);
+        execute(type1, type2, type3, table);
         // Ci tests fail with "unconfigured columnfamily user"
         check().that(userTableExists).before(5, MINUTES).becomesTrue();
     }
@@ -467,5 +468,51 @@ public class UserTypesTest extends CCMTestsSupport {
 
         userType = userTypeDef.newValue().setList(0, new ArrayList<Object>());
         assertThat(row.getUDTValue("b")).isEqualTo(userType);
+    }
+
+    @Test(groups = "short")
+    public void should_indicate_user_type_is_frozen() {
+        session().execute("CREATE TABLE frozen_table(k int primary key, v frozen<type_for_frozen_test>)");
+
+        KeyspaceMetadata keyspaceMetadata = cluster().getMetadata().getKeyspace(this.keyspace);
+
+        assertThat(keyspaceMetadata.getUserType("type_for_frozen_test"))
+                .isNotFrozen();
+
+        assertThat(keyspaceMetadata.getTable("frozen_table").getColumn("v").getType())
+                .isFrozen();
+
+        // The frozen flag is not set for result set definitions (the protocol does not provide
+        // that information and it's not really useful in that situation). We always return false.
+        ResultSet rs = session().execute("SELECT v FROM frozen_table WHERE k = 1");
+        assertThat(rs.getColumnDefinitions().getType(0))
+                .isNotFrozen();
+
+        // Same thing for prepared statements
+        PreparedStatement pst = session().prepare("SELECT v FROM frozen_table WHERE k = ?");
+        assertThat(pst.getVariables().getType(0))
+                .isNotFrozen();
+    }
+
+    @Test(groups = "short")
+    @CassandraVersion(value = "3.6", description = "Non-frozen UDTs were introduced in C* 3.6")
+    public void should_indicate_user_type_is_not_frozen() {
+        session().execute("CREATE TABLE not_frozen_table(k int primary key, v type_for_frozen_test)");
+
+        KeyspaceMetadata keyspaceMetadata = cluster().getMetadata().getKeyspace(this.keyspace);
+
+        assertThat(keyspaceMetadata.getUserType("type_for_frozen_test"))
+                .isNotFrozen();
+
+        assertThat(keyspaceMetadata.getTable("not_frozen_table").getColumn("v").getType())
+                .isNotFrozen();
+
+        ResultSet rs = session().execute("SELECT v FROM not_frozen_table WHERE k = 1");
+        assertThat(rs.getColumnDefinitions().getType(0))
+                .isNotFrozen();
+
+        PreparedStatement pst = session().prepare("SELECT v FROM not_frozen_table WHERE k = ?");
+        assertThat(pst.getVariables().getType(0))
+                .isNotFrozen();
     }
 }

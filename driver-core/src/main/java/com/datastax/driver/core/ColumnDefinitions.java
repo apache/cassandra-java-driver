@@ -145,6 +145,10 @@ public class ColumnDefinitions implements Iterable<ColumnDefinitions.Definition>
 
     /**
      * Returns the type of the {@code i}th column in this metadata.
+     * <p>
+     * Note that this method does not set the {@link DataType#isFrozen()} flag on the returned
+     * object, it will always default to {@code false}. Use {@link Cluster#getMetadata()} to
+     * determine if a column is frozen.
      *
      * @param i the index in this metadata.
      * @return the type of the {@code i}th column in this metadata.
@@ -156,6 +160,10 @@ public class ColumnDefinitions implements Iterable<ColumnDefinitions.Definition>
 
     /**
      * Returns the type of the first occurrence of {@code name} in this metadata.
+     * <p>
+     * Note that this method does not set the {@link DataType#isFrozen()} flag on the returned
+     * object, it will always default to {@code false}. Use {@link Cluster#getMetadata()} to
+     * determine if a column is frozen.
      *
      * @param name the name of the column.
      * @return the type of (the first occurrence of) {@code name} in this metadata.

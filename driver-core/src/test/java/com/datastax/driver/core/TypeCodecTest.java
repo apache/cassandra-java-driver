@@ -148,10 +148,10 @@ public class TypeCodecTest {
                 .accepts(t2)
                 .accepts(t3)
                 .accepts(t4);
-        UserType u1 = new UserType("ks", "table", newArrayList(new Field("f1", varchar()), new Field("f2", varchar())), V3, new CodecRegistry());
-        UserType u2 = new UserType("ks", "table", newArrayList(new Field("f1", text()), new Field("f2", varchar())), V3, new CodecRegistry());
-        UserType u3 = new UserType("ks", "table", newArrayList(new Field("f1", varchar()), new Field("f2", text())), V3, new CodecRegistry());
-        UserType u4 = new UserType("ks", "table", newArrayList(new Field("f1", text()), new Field("f2", text())), V3, new CodecRegistry());
+        UserType u1 = new UserType("ks", "table", false, newArrayList(new Field("f1", varchar()), new Field("f2", varchar())), V3, new CodecRegistry());
+        UserType u2 = new UserType("ks", "table", false, newArrayList(new Field("f1", text()), new Field("f2", varchar())), V3, new CodecRegistry());
+        UserType u3 = new UserType("ks", "table", false, newArrayList(new Field("f1", varchar()), new Field("f2", text())), V3, new CodecRegistry());
+        UserType u4 = new UserType("ks", "table", false, newArrayList(new Field("f1", text()), new Field("f2", text())), V3, new CodecRegistry());
         assertThat(TypeCodec.userType(u1))
                 .accepts(u2)
                 .accepts(u3)
@@ -219,7 +219,7 @@ public class TypeCodecTest {
     @Test(groups = "unit")
     public void should_deserialize_empty_buffer_as_udt_with_null_values() {
         CodecRegistry codecRegistry = new CodecRegistry();
-        UserType udt = new UserType("ks", "t", Arrays.asList(
+        UserType udt = new UserType("ks", "t", false, Arrays.asList(
                 new UserType.Field("t", DataType.text()),
                 new UserType.Field("i", DataType.cint()),
                 new UserType.Field("l", DataType.list(DataType.text()))
