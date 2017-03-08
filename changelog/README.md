@@ -16,6 +16,7 @@
 - [improvement] JAVA-1247: Disable idempotence warnings.
 - [improvement] JAVA-1286: Support setting and retrieving udt fields in QueryBuilder.
 - [bug] JAVA-1415: Correctly report if a UDT column is frozen.
+- [bug] JAVA-1418: Make Guava version detection more reliable.
 
 Merged from 3.1.x branch:
 

@@ -16,22 +16,17 @@
 package com.datastax.driver.core;
 
 import com.datastax.driver.core.exceptions.DriverInternalError;
-import com.google.common.base.Preconditions;
+import com.google.common.collect.BiMap;
+import com.google.common.collect.Maps;
 import com.google.common.reflect.TypeToken;
 import com.google.common.util.concurrent.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
-import java.io.InputStream;
+import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
-import java.net.URL;
-import java.util.Enumeration;
+import java.util.Map;
 import java.util.concurrent.Executor;
-import java.util.jar.Attributes;
-import java.util.jar.Manifest;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 /**
  * A compatibility layer to support a wide range of Guava versions.
@@ -50,7 +45,6 @@ import java.util.regex.Pattern;
 public abstract class GuavaCompatibility {
 
     private static final Logger logger = LoggerFactory.getLogger(GuavaCompatibility.class);
-    private static final Pattern GA_VERSION_EXTRACTOR = Pattern.compile("(\\d+\\.\\d+\\.\\d+).*");
 
     /**
      * The unique instance of this class, that is compatible with the Guava version found in the classpath.
@@ -134,61 +128,15 @@ public abstract class GuavaCompatibility {
     public abstract Executor sameThreadExecutor();
 
     private static GuavaCompatibility selectImplementation() {
-        String fullVersion = getBundleVersion(loadGuavaManifest());
-        // Get rid of potential rc qualifier, as it could throw off the lexical comparisons
-        String version = stripQualifiers(fullVersion);
-        if (version.compareTo("16.0.1") < 0) {
-            throw new DriverInternalError(String.format(
-                    "Detected incompatible version of Guava in the classpath (%s). " +
-                            "You need 16.0.1 or higher.", fullVersion));
-        } else if (version.compareTo("19.0") < 0) {
-            logger.info("Detected Guava {} in the classpath, using pre-19 compatibility layer", fullVersion);
+        if (isGuava_19_0_OrHigher()) {
+            logger.info("Detected Guava >= 19 in the classpath, using modern compatibility layer");
+            return new Version19OrHigher();
+        } else if (isGuava_16_0_1_OrHigher()) {
+            logger.info("Detected Guava < 19 in the classpath, using legacy compatibility layer");
             return new Version18OrLower();
         } else {
-            logger.info("Detected Guava {} in the classpath, using 19+ compatibility layer", fullVersion);
-            return new Version19OrHigher();
-        }
-    }
-
-    private static Manifest loadGuavaManifest() {
-        InputStream in = null;
-        try {
-            Enumeration<URL> resources = Preconditions.class.getClassLoader()
-                    .getResources("META-INF/MANIFEST.MF");
-            while (resources.hasMoreElements()) {
-                in = resources.nextElement().openStream();
-                Manifest manifest = new Manifest(in);
-                Attributes mainAttributes = manifest.getMainAttributes();
-                String symbolicName = mainAttributes.getValue("Bundle-SymbolicName");
-                if ("com.google.guava".equals(symbolicName)) {
-                    return manifest;
-                }
-            }
-            throw new DriverInternalError("Error while looking up Guava manifest: " +
-                    "no manifest with symbolic name 'com.google.guava' found in classpath.");
-        } catch (Exception e) {
-            throw new DriverInternalError("Error while looking up Guava manifest", e);
-        } finally {
-            if (in != null) {
-                try {
-                    in.close();
-                } catch (IOException e) {
-                    // ignore
-                }
-            }
-        }
-    }
-
-    private static String getBundleVersion(Manifest manifest) {
-        return manifest.getMainAttributes().getValue("Bundle-Version");
-    }
-
-    private static String stripQualifiers(String fullVersion) {
-        Matcher matcher = GA_VERSION_EXTRACTOR.matcher(fullVersion);
-        if (matcher.matches()) {
-            return matcher.group(1);
-        } else {
-            throw new DriverInternalError(String.format("Could not strip qualifiers from full Guava version %s", fullVersion));
+            throw new DriverInternalError("Detected incompatible version of Guava in the classpath. " +
+                    "You need 16.0.1 or higher.");
         }
     }
 
@@ -270,6 +218,44 @@ public abstract class GuavaCompatibility {
         @Override
         public Executor sameThreadExecutor() {
             return MoreExecutors.directExecutor();
+        }
+    }
+
+    private static boolean isGuava_19_0_OrHigher() {
+        return methodExists(Futures.class, "transformAsync", ListenableFuture.class, AsyncFunction.class);
+    }
+
+    private static boolean isGuava_16_0_1_OrHigher() {
+        // Cheap check for < 16.0
+        if (!methodExists(Maps.class, "asConverter", BiMap.class)) {
+            return false;
+        }
+        // More elaborate check to filter out 16.0, which has a bug in TypeToken. We need 16.0.1.
+        boolean resolved = false;
+        TypeToken<Map<String, String>> mapOfString = TypeTokens.mapOf(String.class, String.class);
+        Type type = mapOfString.getType();
+        if (type instanceof ParameterizedType) {
+            ParameterizedType pType = (ParameterizedType) type;
+            Type[] types = pType.getActualTypeArguments();
+            if (types.length == 2) {
+                TypeToken valueType = TypeToken.of(types[1]);
+                resolved = valueType.getRawType().equals(String.class);
+            }
+        }
+        if (!resolved) {
+            logger.debug("Detected Guava issue #1635 which indicates that version 16.0 is in the classpath");
+        }
+        return resolved;
+    }
+
+    private static boolean methodExists(Class<?> declaringClass, String methodName, Class<?>... parameterTypes) {
+        try {
+            declaringClass.getMethod(methodName, parameterTypes);
+            return true;
+        } catch (Exception e) {
+            logger.debug("Error while checking existence of method " +
+                    declaringClass.getSimpleName() + "." + methodName, e);
+            return false;
         }
     }
 }
