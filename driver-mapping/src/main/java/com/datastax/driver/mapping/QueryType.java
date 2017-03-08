@@ -37,11 +37,9 @@ enum QueryType {
                 if (!col.isComputed())
                     insert.value(col.columnName, bindMarker());
 
-            Insert.Options usings = insert.using();
             for (Mapper.Option opt : options) {
-                opt.checkValidFor(QueryType.SAVE, manager);
-                if (opt.isIncludedInQuery())
-                    opt.appendTo(usings);
+                opt.validate(QueryType.SAVE, manager);
+                opt.modifyQueryString(insert);
             }
             return insert.toString();
         }
@@ -73,8 +71,10 @@ enum QueryType {
             for (int i = 0; i < mapper.primaryKeySize(); i++)
                 where.and(eq(mapper.getPrimaryKeyColumn(i).columnName, bindMarker()));
 
-            for (Mapper.Option opt : options)
-                opt.checkValidFor(QueryType.GET, manager);
+            for (Mapper.Option option : options) {
+                option.validate(QueryType.GET, manager);
+                option.modifyQueryString(select);
+            }
             return select.toString();
         }
     },
@@ -88,12 +88,10 @@ enum QueryType {
             Delete.Where where = delete.where();
             for (int i = 0; i < mapper.primaryKeySize(); i++)
                 where.and(eq(mapper.getPrimaryKeyColumn(i).columnName, bindMarker()));
-            Delete.Options usings = delete.using();
-            for (Mapper.Option opt : options) {
-                opt.checkValidFor(QueryType.DEL, manager);
-                if (opt.isIncludedInQuery())
-                    opt.appendTo(usings);
-                    }
+            for (Mapper.Option option : options) {
+                option.validate(QueryType.DEL, manager);
+                option.modifyQueryString(delete);
+            }
             return delete.toString();
         }
     };
