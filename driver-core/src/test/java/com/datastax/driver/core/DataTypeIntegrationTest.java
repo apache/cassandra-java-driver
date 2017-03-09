@@ -264,7 +264,9 @@ public class DataTypeIntegrationTest extends CCMTestsSupport {
             Object elementSample = entry.getValue();
 
             tables.add(new TestTable(DataType.list(elementType), Lists.newArrayList(elementSample, elementSample), "1.2.0"));
-            tables.add(new TestTable(DataType.set(elementType), Sets.newHashSet(elementSample), "1.2.0"));
+            // Duration not supported in Set
+            if (elementType != DataType.duration())
+                tables.add(new TestTable(DataType.set(elementType), Sets.newHashSet(elementSample), "1.2.0"));
         }
         return tables;
     }
@@ -272,7 +274,11 @@ public class DataTypeIntegrationTest extends CCMTestsSupport {
     private List<TestTable> tablesWithMapsOfPrimitives() {
         List<TestTable> tables = Lists.newArrayList();
         for (Map.Entry<DataType, Object> keyEntry : samples.entrySet()) {
+            // Duration not supported as Map key
             DataType keyType = keyEntry.getKey();
+            if (keyType == DataType.duration())
+                continue;
+
             Object keySample = keyEntry.getValue();
             for (Map.Entry<DataType, Object> valueEntry : samples.entrySet()) {
                 DataType valueType = valueEntry.getKey();
@@ -467,6 +473,8 @@ public class DataTypeIntegrationTest extends CCMTestsSupport {
                 return data.getMap(0,
                         codecRegistry.codecFor(dataType.getTypeArguments().get(0)).getJavaType(),
                         codecRegistry.codecFor(dataType.getTypeArguments().get(1)).getJavaType());
+            case DURATION:
+                return data.get(0, Duration.class);
             case CUSTOM:
             case COUNTER:
             default:

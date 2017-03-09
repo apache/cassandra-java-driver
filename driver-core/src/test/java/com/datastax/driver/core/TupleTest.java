@@ -277,12 +277,16 @@ public class TupleTest extends CCMTestsSupport {
 
         // create set values
         for (DataType datatype : DATA_TYPE_PRIMITIVES) {
-            values.add(String.format("v_%s frozen<tuple<set<%s>>>", values.size(), datatype));
+            // Duration not supported in Set.
+            if (datatype != DataType.duration())
+                values.add(String.format("v_%s frozen<tuple<set<%s>>>", values.size(), datatype));
         }
 
         // create map values
         for (DataType datatype : DATA_TYPE_PRIMITIVES) {
-            values.add(String.format("v_%s frozen<tuple<map<%s, %s>>>", values.size(), datatype, datatype));
+            // Duration not supported as Map key.
+            if (datatype != DataType.duration())
+                values.add(String.format("v_%s frozen<tuple<map<%s, %s>>>", values.size(), datatype, datatype));
         }
 
         // create table
@@ -315,6 +319,9 @@ public class TupleTest extends CCMTestsSupport {
 
         // test tuple<set<datatype>>
         for (DataType datatype : DATA_TYPE_PRIMITIVES) {
+            if (datatype == DataType.duration())
+                continue;
+
             // create tuple
             ArrayList<DataType> dataTypes = new ArrayList<DataType>();
             ArrayList<Object> createdValues = new ArrayList<Object>();
@@ -338,6 +345,8 @@ public class TupleTest extends CCMTestsSupport {
 
         // test tuple<map<datatype, datatype>>
         for (DataType datatype : DATA_TYPE_PRIMITIVES) {
+            if (datatype == DataType.duration())
+                continue;
             // create tuple
             ArrayList<DataType> dataTypes = new ArrayList<DataType>();
             ArrayList<Object> createdValues = new ArrayList<Object>();
