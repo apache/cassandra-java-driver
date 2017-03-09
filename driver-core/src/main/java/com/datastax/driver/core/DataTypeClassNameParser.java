@@ -113,7 +113,8 @@ class DataTypeClassNameParser {
             List<UserType.Field> fields = new ArrayList<UserType.Field>(rawFields.size());
             for (Map.Entry<String, String> entry : rawFields.entrySet())
                 fields.add(new UserType.Field(entry.getKey(), parseOne(entry.getValue(), protocolVersion, codecRegistry)));
-            return new UserType(keyspace, typeName, fields, protocolVersion, codecRegistry);
+            // create a frozen UserType since C* 2.x UDTs are always frozen.
+            return new UserType(keyspace, typeName, true, fields, protocolVersion, codecRegistry);
         }
 
         if (isTupleType(next)) {

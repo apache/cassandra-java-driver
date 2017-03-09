@@ -238,8 +238,8 @@ public class DataTypeTest {
     public void parseFormatUDTTest() {
         String toParse = "{t:'fo''o',i:3,\"L\":['a','b'],s:{3:{a:0x01}}}";
 
-        final UserType udt1 = new UserType("ks", "t", Arrays.asList(new UserType.Field("a", DataType.blob())), protocolVersion, codecRegistry);
-        UserType udt2 = new UserType("ks", "t", Arrays.asList(
+        final UserType udt1 = new UserType("ks", "t", false, Arrays.asList(new UserType.Field("a", DataType.blob())), protocolVersion, codecRegistry);
+        UserType udt2 = new UserType("ks", "t", false, Arrays.asList(
                 new UserType.Field("t", DataType.text()),
                 new UserType.Field("i", DataType.cint()),
                 new UserType.Field("L", DataType.list(DataType.text())),

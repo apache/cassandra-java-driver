@@ -33,8 +33,11 @@ public class UserType extends DataType implements Iterable<UserType.Field> {
 
     private final String keyspace;
     private final String typeName;
+    private final boolean frozen;
     private final ProtocolVersion protocolVersion;
 
+    // can be null, if this object is being constructed from a response message
+    // see Responses.Result.Rows.Metadata.decode()
     private volatile CodecRegistry codecRegistry;
 
     // Note that we don't expose the order of fields, from an API perspective this is a map
@@ -46,20 +49,31 @@ public class UserType extends DataType implements Iterable<UserType.Field> {
     // implementation.
     final Map<String, int[]> byName;
 
-    UserType(String keyspace, String typeName, Collection<Field> fields, ProtocolVersion protocolVersion, CodecRegistry codecRegistry) {
-        super(DataType.Name.UDT);
+    private UserType(Name name, String keyspace, String typeName, boolean frozen, ProtocolVersion protocolVersion, CodecRegistry codecRegistry, Field[] byIdx, Map<String, int[]> byName) {
+        super(name);
         this.keyspace = keyspace;
         this.typeName = typeName;
+        this.frozen = frozen;
         this.protocolVersion = protocolVersion;
-        // codecRegistry can be null, if this object is being constructed from a response message
-        // see Responses.Result.Rows.Metadata.decode()
         this.codecRegistry = codecRegistry;
-        this.byIdx = fields.toArray(new Field[fields.size()]);
+        this.byIdx = byIdx;
+        this.byName = byName;
+    }
 
+    UserType(String keyspace, String typeName, boolean frozen, Collection<Field> fields, ProtocolVersion protocolVersion, CodecRegistry codecRegistry) {
+        this(DataType.Name.UDT, keyspace, typeName, frozen, protocolVersion, codecRegistry,
+                fields.toArray(new Field[fields.size()]),
+                mapByName(fields));
+    }
+
+    private static ImmutableMap<String, int[]> mapByName(Collection<Field> fields) {
         ImmutableMap.Builder<String, int[]> builder = new ImmutableMap.Builder<String, int[]>();
-        for (int i = 0; i < byIdx.length; i++)
-            builder.put(byIdx[i].getName(), new int[]{i});
-        this.byName = builder.build();
+        int i = 0;
+        for (Field field : fields) {
+            builder.put(field.getName(), new int[]{i});
+            i += 1;
+        }
+        return builder.build();
     }
 
     static UserType build(KeyspaceMetadata ksm, Row row, VersionNumber version, Cluster cluster, Map<String, UserType> userTypes) {
@@ -82,7 +96,7 @@ public class UserType extends DataType implements Iterable<UserType.Field> {
             }
             fields.add(new Field(fieldNames.get(i), fieldType));
         }
-        return new UserType(keyspace, name, fields, protocolVersion, codecRegistry);
+        return new UserType(keyspace, name, false, fields, protocolVersion, codecRegistry);
     }
 
     /**
@@ -174,7 +188,15 @@ public class UserType extends DataType implements Iterable<UserType.Field> {
 
     @Override
     public boolean isFrozen() {
-        return true;
+        return frozen;
+    }
+
+    public UserType copy(boolean newFrozen) {
+        if (newFrozen == frozen) {
+            return this;
+        } else {
+            return new UserType(name, keyspace, typeName, newFrozen, protocolVersion, codecRegistry, byIdx, byName);
+        }
     }
 
     @Override
@@ -340,16 +362,18 @@ public class UserType extends DataType implements Iterable<UserType.Field> {
 
         final String keyspaceName;
         final String typeName;
+        final boolean frozen;
 
-        Shallow(String keyspaceName, String typeName) {
+        Shallow(String keyspaceName, String typeName, boolean frozen) {
             super(Name.UDT);
             this.keyspaceName = keyspaceName;
             this.typeName = typeName;
+            this.frozen = frozen;
         }
 
         @Override
         public boolean isFrozen() {
-            return false;
+            return frozen;
         }
     }
 }

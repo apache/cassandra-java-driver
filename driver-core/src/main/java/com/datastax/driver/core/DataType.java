@@ -188,7 +188,7 @@ public abstract class DataType {
                     DataType fieldType = decode(buffer, protocolVersion, codecRegistry);
                     fields.add(new UserType.Field(fieldName, fieldType));
                 }
-                return new UserType(keyspace, type, fields, protocolVersion, codecRegistry);
+                return new UserType(keyspace, type, false, fields, protocolVersion, codecRegistry);
             case TUPLE:
                 nFields = buffer.readShort() & 0xffff;
                 List<DataType> types = new ArrayList<DataType>(nFields);
