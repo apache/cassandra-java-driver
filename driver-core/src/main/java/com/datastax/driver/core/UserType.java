@@ -291,7 +291,10 @@ public class UserType extends DataType implements Iterable<UserType.Field> {
 
     @Override
     public String toString() {
-        return "frozen<" + Metadata.escapeId(getKeyspace()) + '.' + Metadata.escapeId(getTypeName()) + ">";
+        String str = Metadata.escapeId(getKeyspace()) + "." + Metadata.escapeId(getTypeName());
+        return isFrozen() ?
+                "frozen<" + str + ">" :
+                str;
     }
 
     @Override
