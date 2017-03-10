@@ -217,7 +217,7 @@ public class DataTypeIntegrationTest extends CCMTestsSupport {
     private List<TestTable> tablesWithPrimitivesNull() {
         List<TestTable> tables = Lists.newArrayList();
         // Create a test table for each primitive type testing with null values.  If the
-        // type maps to a java primitive type it's value will by the default value instead of null.
+        // type maps to a java primitive type it's value will be the default one specified here instead of null.
         for (DataType dataType : TestUtils.allPrimitiveTypes(ccm().getProtocolVersion())) {
             Object expectedPrimitiveValue = null;
             switch (dataType.getName()) {
@@ -243,10 +243,8 @@ public class DataTypeIntegrationTest extends CCMTestsSupport {
                 case BOOLEAN:
                     expectedPrimitiveValue = false;
                     break;
-                case COUNTER:
-                case DURATION:
-                    // Duration is handled separately in DurationIntegrationTest, because it has specific restrictions (e.g.
-                    // not allowed in collections).
+                default:
+                    // not a Java primitive type
                     continue;
             }
 
