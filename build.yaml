@@ -9,8 +9,6 @@ schedules:
         # Exclude java6 with all versions except latest
         - java: openjdk6
           cassandra: ['1.2', '2.0', '2.1', '2.2', '3.0']
-        # Exclude 2.2 and 3.0 always since 3.X provides latest protocol version
-        - cassandra: ['2.2', '3.0']
     env_vars: |
       TEST_GROUP="short"
   nightly:
