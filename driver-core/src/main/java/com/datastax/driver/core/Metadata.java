@@ -175,11 +175,7 @@ public class Metadata {
             if (argumentType instanceof UserType) {
                 UserType userType = (UserType) argumentType;
                 String typeName = Metadata.escapeId(userType.getTypeName());
-                if (userType.isFrozen())
-                    sb.append("frozen<");
                 sb.append(typeName);
-                if (userType.isFrozen())
-                    sb.append(">");
             } else {
                 sb.append(argumentType);
             }
