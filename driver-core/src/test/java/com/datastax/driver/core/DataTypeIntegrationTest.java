@@ -217,7 +217,7 @@ public class DataTypeIntegrationTest extends CCMTestsSupport {
     private List<TestTable> tablesWithPrimitivesNull() {
         List<TestTable> tables = Lists.newArrayList();
         // Create a test table for each primitive type testing with null values.  If the
-        // type maps to a java primitive type it's value will by the default value instead of null.
+        // type maps to a java primitive type it's value will be the default one specified here instead of null.
         for (DataType dataType : TestUtils.allPrimitiveTypes(ccm().getProtocolVersion())) {
             Object expectedPrimitiveValue = null;
             switch (dataType.getName()) {
@@ -243,10 +243,8 @@ public class DataTypeIntegrationTest extends CCMTestsSupport {
                 case BOOLEAN:
                     expectedPrimitiveValue = false;
                     break;
-                case COUNTER:
-                case DURATION:
-                    // Duration is handled separately in DurationIntegrationTest, because it has specific restrictions (e.g.
-                    // not allowed in collections).
+                default:
+                    // not a Java primitive type
                     continue;
             }
 
@@ -264,7 +262,9 @@ public class DataTypeIntegrationTest extends CCMTestsSupport {
             Object elementSample = entry.getValue();
 
             tables.add(new TestTable(DataType.list(elementType), Lists.newArrayList(elementSample, elementSample), "1.2.0"));
-            tables.add(new TestTable(DataType.set(elementType), Sets.newHashSet(elementSample), "1.2.0"));
+            // Duration not supported in Set
+            if (elementType != DataType.duration())
+                tables.add(new TestTable(DataType.set(elementType), Sets.newHashSet(elementSample), "1.2.0"));
         }
         return tables;
     }
@@ -272,7 +272,11 @@ public class DataTypeIntegrationTest extends CCMTestsSupport {
     private List<TestTable> tablesWithMapsOfPrimitives() {
         List<TestTable> tables = Lists.newArrayList();
         for (Map.Entry<DataType, Object> keyEntry : samples.entrySet()) {
+            // Duration not supported as Map key
             DataType keyType = keyEntry.getKey();
+            if (keyType == DataType.duration())
+                continue;
+
             Object keySample = keyEntry.getValue();
             for (Map.Entry<DataType, Object> valueEntry : samples.entrySet()) {
                 DataType valueType = valueEntry.getKey();
@@ -467,6 +471,8 @@ public class DataTypeIntegrationTest extends CCMTestsSupport {
                 return data.getMap(0,
                         codecRegistry.codecFor(dataType.getTypeArguments().get(0)).getJavaType(),
                         codecRegistry.codecFor(dataType.getTypeArguments().get(1)).getJavaType());
+            case DURATION:
+                return data.get(0, Duration.class);
             case CUSTOM:
             case COUNTER:
             default:

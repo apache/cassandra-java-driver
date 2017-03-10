@@ -51,6 +51,7 @@ public class PrimitiveTypeSamples {
                     .put(DataType.tinyint(), Byte.MAX_VALUE)
                     .put(DataType.smallint(), Short.MAX_VALUE)
                     .put(DataType.cint(), Integer.MAX_VALUE)
+                    .put(DataType.duration(), Duration.from("PT30H20M"))
                     .put(DataType.text(), "text")
                     .put(DataType.timestamp(), new Date(872835240000L))
                     .put(DataType.date(), LocalDate.fromDaysSinceEpoch(16071))
@@ -74,9 +75,7 @@ public class PrimitiveTypeSamples {
             List<DataType> tmp = Lists.newArrayList(primitiveTypes);
             tmp.removeAll(result.keySet());
 
-            List<DataType> expectedFilteredTypes = protocolVersion.compareTo(ProtocolVersion.V5) >= 0 ?
-                    Lists.newArrayList(DataType.counter(), DataType.duration()) :
-                    Lists.newArrayList(DataType.counter());
+            List<DataType> expectedFilteredTypes = Lists.newArrayList(DataType.counter());
 
             assertThat(tmp)
                     .as("new datatype not covered in test")

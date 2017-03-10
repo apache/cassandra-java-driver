@@ -216,6 +216,7 @@ public class UserTypesTest extends CCMTestsSupport {
                     break;
                 case DURATION:
                     alldatatypes.set(index, Duration.from(sampleData.toString()), Duration.class);
+                    break;
                 case FLOAT:
                     alldatatypes.setFloat(index, (Float) sampleData);
                     break;
