@@ -480,8 +480,9 @@ public class UserTypesTest extends CCMTestsSupport {
         assertThat(keyspaceMetadata.getUserType("type_for_frozen_test"))
                 .isNotFrozen();
 
-        assertThat(keyspaceMetadata.getTable("frozen_table").getColumn("v").getType())
-                .isFrozen();
+        DataType userType = keyspaceMetadata.getTable("frozen_table").getColumn("v").getType();
+        assertThat(userType).isFrozen();
+        assertThat(userType.toString()).isEqualTo("frozen<" + keyspace + ".type_for_frozen_test>");
 
         // The frozen flag is not set for result set definitions (the protocol does not provide
         // that information and it's not really useful in that situation). We always return false.
@@ -505,8 +506,9 @@ public class UserTypesTest extends CCMTestsSupport {
         assertThat(keyspaceMetadata.getUserType("type_for_frozen_test"))
                 .isNotFrozen();
 
-        assertThat(keyspaceMetadata.getTable("not_frozen_table").getColumn("v").getType())
-                .isNotFrozen();
+        DataType userType = keyspaceMetadata.getTable("not_frozen_table").getColumn("v").getType();
+        assertThat(userType).isNotFrozen();
+        assertThat(userType.toString()).isEqualTo(keyspace + ".type_for_frozen_test");
 
         ResultSet rs = session().execute("SELECT v FROM not_frozen_table WHERE k = 1");
         assertThat(rs.getColumnDefinitions().getType(0))
