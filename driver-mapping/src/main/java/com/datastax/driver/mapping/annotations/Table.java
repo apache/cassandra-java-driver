@@ -69,4 +69,21 @@ public @interface Table {
      * @return the consistency level to use for the read operations provded by the {@link Mapper} class.
      */
     String readConsistency() default "";
+
+    /**
+     * A list of properties to exclude from the mapping.
+     * <p/>
+     * This serves the same purpose as {@link Transient}, but also works on properties inherited from parent classes
+     * that you don't have control over.
+     * <p/>
+     * Note that this has lower precedence than explicitly annotated properties; that is, if a property both appears
+     * here and is annotated with {@link Column}, it will be mapped.
+     * <p/>
+     * If you override this property, do not forget to include the default values (currently: {@code class}, and
+     * {@code metaClass} if you're using Groovy).
+     */
+    String[] transientProperties() default {
+            "class",
+            // JAVA-1279: exclude Groovy's metaClass property
+            "metaClass"};
 }

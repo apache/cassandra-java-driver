@@ -16,7 +16,6 @@
 package com.datastax.driver.mapping;
 
 import com.google.common.base.Throwables;
-import com.google.common.collect.ImmutableSet;
 
 import java.beans.BeanInfo;
 import java.beans.IntrospectionException;
@@ -26,18 +25,11 @@ import java.lang.annotation.Annotation;
 import java.lang.reflect.*;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Set;
 
 /**
  * Utility methods related to reflection.
  */
 class ReflectionUtils {
-
-    private static final Set<String> EXCLUDED_PROPERTIES = ImmutableSet.of(
-            "class",
-            // JAVA-1279: exclude Groovy's metaClass property
-            "metaClass"
-    );
 
     static <T> T newInstance(Class<T> clazz) {
         Constructor<T> publicConstructor;
@@ -83,7 +75,7 @@ class ReflectionUtils {
         HashMap<String, Field> fields = new HashMap<String, Field>();
         for (Class<?> clazz = baseClass; !clazz.equals(Object.class); clazz = clazz.getSuperclass()) {
             for (Field field : clazz.getDeclaredFields()) {
-                if (field.isSynthetic() || Modifier.isStatic(field.getModifiers()) || isPropertyExcluded(field.getName()))
+                if (field.isSynthetic() || Modifier.isStatic(field.getModifiers()))
                     continue;
                 // never override a more specific field masking another one declared in a superclass
                 if (!fields.containsKey(field.getName()))
@@ -102,15 +94,9 @@ class ReflectionUtils {
         }
         Map<String, PropertyDescriptor> properties = new HashMap<String, PropertyDescriptor>();
         for (PropertyDescriptor property : beanInfo.getPropertyDescriptors()) {
-            if (isPropertyExcluded(property.getName()))
-                continue;
             properties.put(property.getName(), property);
         }
         return properties;
-    }
-
-    private static boolean isPropertyExcluded(String name) {
-        return EXCLUDED_PROPERTIES.contains(name);
     }
 
     static Map<Class<? extends Annotation>, Annotation> scanPropertyAnnotations(Field field, PropertyDescriptor property) {
@@ -138,11 +124,11 @@ class ReflectionUtils {
         }
         // 2. Class hierarchy: check for annotations in overridden methods in superclasses
         Class<?> getterClass = method.getDeclaringClass();
-        for (Class<?> clazz = getterClass.getSuperclass(); !clazz.equals(Object.class); clazz = clazz.getSuperclass()) {
+        for (Class<?> clazz = getterClass.getSuperclass(); clazz != null && !clazz.equals(Object.class); clazz = clazz.getSuperclass()) {
             maybeAddOverriddenMethodAnnotations(annotations, method, clazz);
         }
         // 3. Interfaces: check for annotations in implemented interfaces
-        for (Class<?> clazz = getterClass; !clazz.equals(Object.class); clazz = clazz.getSuperclass()) {
+        for (Class<?> clazz = getterClass; clazz != null && !clazz.equals(Object.class); clazz = clazz.getSuperclass()) {
             for (Class<?> itf : clazz.getInterfaces()) {
                 maybeAddOverriddenMethodAnnotations(annotations, method, itf);
             }
