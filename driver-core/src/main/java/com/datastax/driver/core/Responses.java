@@ -20,12 +20,12 @@ import com.datastax.driver.core.exceptions.*;
 import com.datastax.driver.core.utils.Bytes;
 import io.netty.buffer.ByteBuf;
 
+import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
 import java.util.*;
 
 import static com.datastax.driver.core.ProtocolVersion.V4;
-import static com.datastax.driver.core.ProtocolVersion.V5;
 import static com.datastax.driver.core.SchemaElement.*;
 
 class Responses {
@@ -69,12 +69,23 @@ class Responses {
                         received = body.readInt();
                         blockFor = body.readInt();
                         int failures = body.readInt();
+                        Map<InetAddress, Integer> failuresMap;
+                        if (version.compareTo(ProtocolVersion.V5) < 0) {
+                            failuresMap = Collections.emptyMap();
+                        } else {
+                            failuresMap = new HashMap<InetAddress, Integer>();
+                            for (int i = 0; i < failures; i++) {
+                                InetAddress address = CBUtil.readInetWithoutPort(body);
+                                int reasonCode = body.readUnsignedShort();
+                                failuresMap.put(address, reasonCode);
+                            }
+                        }
                         if (code == ExceptionCode.WRITE_FAILURE) {
                             WriteType writeType = Enum.valueOf(WriteType.class, CBUtil.readString(body));
-                            infos = new WriteFailureException(clt, writeType, received, blockFor, failures);
+                            infos = new WriteFailureException(clt, writeType, received, blockFor, failures, failuresMap);
                         } else {
                             byte dataPresent = body.readByte();
-                            infos = new ReadFailureException(clt, received, blockFor, failures, dataPresent != 0);
+                            infos = new ReadFailureException(clt, received, blockFor, failures, failuresMap, dataPresent != 0);
                         }
                         break;
                     case UNPREPARED:

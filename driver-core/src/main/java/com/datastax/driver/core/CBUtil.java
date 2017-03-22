@@ -369,12 +369,23 @@ abstract class CBUtil { // TODO rename
     }
 
     public static InetSocketAddress readInet(ByteBuf cb) {
-        int addrSize = cb.readByte();
+        int addrSize = cb.readByte() & 0xFF;
         byte[] address = new byte[addrSize];
         cb.readBytes(address);
         int port = cb.readInt();
         try {
             return new InetSocketAddress(InetAddress.getByAddress(address), port);
+        } catch (UnknownHostException e) {
+            throw new DriverInternalError(String.format("Invalid IP address (%d.%d.%d.%d) while deserializing inet address", address[0], address[1], address[2], address[3]));
+        }
+    }
+
+    public static InetAddress readInetWithoutPort(ByteBuf cb) {
+        int addrSize = cb.readByte() & 0xFF;
+        byte[] address = new byte[addrSize];
+        cb.readBytes(address);
+        try {
+            return InetAddress.getByAddress(address);
         } catch (UnknownHostException e) {
             throw new DriverInternalError(String.format("Invalid IP address (%d.%d.%d.%d) while deserializing inet address", address[0], address[1], address[2], address[3]));
         }

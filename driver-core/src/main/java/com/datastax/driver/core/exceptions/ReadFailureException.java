@@ -17,7 +17,10 @@ package com.datastax.driver.core.exceptions;
 
 import com.datastax.driver.core.ConsistencyLevel;
 
+import java.net.InetAddress;
 import java.net.InetSocketAddress;
+import java.util.Collections;
+import java.util.Map;
 
 /**
  * A non-timeout error during a read query.
@@ -29,29 +32,48 @@ public class ReadFailureException extends QueryConsistencyException {
 
     private final int failed;
     private final boolean dataPresent;
+    private final Map<InetAddress, Integer> failuresMap;
 
     /**
      * This constructor should only be used internally by the driver
      * when decoding error responses.
      */
-    public ReadFailureException(ConsistencyLevel consistency, int received, int required, int failed, boolean dataPresent) {
-        this(null, consistency, received, required, failed, dataPresent);
+    public ReadFailureException(ConsistencyLevel consistency, int received, int required, int failed, Map<InetAddress, Integer> failuresMap, boolean dataPresent) {
+        this(null, consistency, received, required, failed, failuresMap, dataPresent);
     }
 
-    public ReadFailureException(InetSocketAddress address, ConsistencyLevel consistency, int received, int required, int failed, boolean dataPresent) {
+    /**
+     * @deprecated Legacy constructor for backward compatibility.
+     */
+    @Deprecated
+    public ReadFailureException(ConsistencyLevel consistency, int received, int required, int failed, boolean dataPresent) {
+        this(null, consistency, received, required, failed, Collections.<InetAddress, Integer>emptyMap(), dataPresent);
+    }
+
+    public ReadFailureException(InetSocketAddress address, ConsistencyLevel consistency, int received, int required, int failed, Map<InetAddress, Integer> failuresMap, boolean dataPresent) {
         super(address, String.format("Cassandra failure during read query at consistency %s "
-                                + "(%d responses were required but only %d replica responded, %d failed)",
-                        consistency, required, received, failed),
+                        + "(%d responses were required but only %d replica responded, %d failed)",
+                consistency, required, received, failed),
                 consistency,
                 received,
                 required);
         this.failed = failed;
+        this.failuresMap = failuresMap;
         this.dataPresent = dataPresent;
     }
 
-    private ReadFailureException(InetSocketAddress address, String msg, Throwable cause, ConsistencyLevel consistency, int received, int required, int failed, boolean dataPresent) {
+    /**
+     * @deprecated Legacy constructor for backward compatibility.
+     */
+    @Deprecated
+    public ReadFailureException(InetSocketAddress address, ConsistencyLevel consistency, int received, int required, int failed, boolean dataPresent) {
+        this(address, consistency, received, required, failed, Collections.<InetAddress, Integer>emptyMap(), dataPresent);
+    }
+
+    private ReadFailureException(InetSocketAddress address, String msg, Throwable cause, ConsistencyLevel consistency, int received, int required, int failed, Map<InetAddress, Integer> failuresMap, boolean dataPresent) {
         super(address, msg, cause, consistency, received, required);
         this.failed = failed;
+        this.failuresMap = failuresMap;
         this.dataPresent = dataPresent;
     }
 
@@ -62,6 +84,29 @@ public class ReadFailureException extends QueryConsistencyException {
      */
     public int getFailures() {
         return failed;
+    }
+
+    /**
+     * Returns the a failure reason code for each node that failed.
+     * <p/>
+     * At the time of writing, the existing reason codes are:
+     * <ul>
+     * <li>{@code 0x0000}: the error does not have a specific code assigned yet, or the cause is
+     * unknown.</li>
+     * <li>{@code 0x0001}: The read operation scanned too many tombstones (as defined by
+     * {@code tombstone_failure_threshold} in {@code cassandra.yaml}, causing a
+     * {@code TombstoneOverwhelmingException}.</li>
+     * </ul>
+     * (please refer to the Cassandra documentation for your version for the most up-to-date list
+     * of errors)
+     * <p/>
+     * This feature is available for protocol v5 or above only. With lower protocol versions, the
+     * map will always be empty.
+     *
+     * @return a map of IP addresses to failure codes.
+     */
+    public Map<InetAddress, Integer> getFailuresMap() {
+        return failuresMap;
     }
 
     /**
@@ -82,7 +127,7 @@ public class ReadFailureException extends QueryConsistencyException {
     @Override
     public ReadFailureException copy() {
         return new ReadFailureException(getAddress(), getMessage(), this, getConsistencyLevel(), getReceivedAcknowledgements(),
-                getRequiredAcknowledgements(), getFailures(), wasDataRetrieved());
+                getRequiredAcknowledgements(), getFailures(), getFailuresMap(), wasDataRetrieved());
     }
 
     public ReadFailureException copy(InetSocketAddress address) {
@@ -94,6 +139,7 @@ public class ReadFailureException extends QueryConsistencyException {
                 getReceivedAcknowledgements(),
                 getRequiredAcknowledgements(),
                 failed,
+                getFailuresMap(),
                 dataPresent);
     }
 }
