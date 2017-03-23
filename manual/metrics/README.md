@@ -9,4 +9,4 @@ TODO cover:
 - getMetrics() returns null until Cluster initialized
 -->
 
-[Metrics]: http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/core/Metrics.html
+[Metrics]: http://docs.datastax.com/en/drivers/java/3.2/com/datastax/driver/core/Metrics.html

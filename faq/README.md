@@ -35,7 +35,7 @@ row.getBool(0);       // this is equivalent row.getBool("applied")
 
 Note that, unlike manual inspection, `wasApplied` does not consume the first row.
 
-[wasApplied]: http://docs.datastax.com/en/drivers/java/2.1/com/datastax/driver/core/ResultSet.html#wasApplied--
+[wasApplied]: http://docs.datastax.com/en/drivers/java/3.2/com/datastax/driver/core/ResultSet.html#wasApplied--
 
 
 ### What is a parameterized statement and how can I use it?

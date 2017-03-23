@@ -117,15 +117,15 @@ To clarify:
 
 We might rename `SocketOptions.setReadTimeoutMillis` in a future version to clear up any confusion.
 
-[SocketOptions]:              http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/core/SocketOptions.html
-[setReadTimeoutMillis]:       http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/core/SocketOptions.html#setReadTimeoutMillis-int-
-[setConnectTimeoutMillis]:    http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/core/SocketOptions.html#setConnectTimeoutMillis-int-
-[setKeepAlive]:               http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/core/SocketOptions.html#setKeepAlive-boolean-
-[setReceiveBufferSize]:       http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/core/SocketOptions.html#setReceiveBufferSize-int-
-[setReuseAddress]:            http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/core/SocketOptions.html#setReuseAddress-boolean-
-[setSendBufferSize]:          http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/core/SocketOptions.html#setSendBufferSize-int-
-[setSoLinger]:                http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/core/SocketOptions.html#setSoLinger-int-
-[setTcpNoDelay]:              http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/core/SocketOptions.html#setTcpNoDelay-boolean-
-[onReadTimeout]:              http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/core/policies/RetryPolicy.html#onReadTimeout-com.datastax.driver.core.Statement-com.datastax.driver.core.ConsistencyLevel-int-int-boolean-int-
-[onRequestError]:             http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/core/policies/RetryPolicy.html#onRequestError-com.datastax.driver.core.Statement-com.datastax.driver.core.ConsistencyLevel-com.datastax.driver.core.exceptions.DriverException-int-
-[OperationTimedOutException]: http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/core/exceptions/OperationTimedOutException.html
+[SocketOptions]:              http://docs.datastax.com/en/drivers/java/3.2/com/datastax/driver/core/SocketOptions.html
+[setReadTimeoutMillis]:       http://docs.datastax.com/en/drivers/java/3.2/com/datastax/driver/core/SocketOptions.html#setReadTimeoutMillis-int-
+[setConnectTimeoutMillis]:    http://docs.datastax.com/en/drivers/java/3.2/com/datastax/driver/core/SocketOptions.html#setConnectTimeoutMillis-int-
+[setKeepAlive]:               http://docs.datastax.com/en/drivers/java/3.2/com/datastax/driver/core/SocketOptions.html#setKeepAlive-boolean-
+[setReceiveBufferSize]:       http://docs.datastax.com/en/drivers/java/3.2/com/datastax/driver/core/SocketOptions.html#setReceiveBufferSize-int-
+[setReuseAddress]:            http://docs.datastax.com/en/drivers/java/3.2/com/datastax/driver/core/SocketOptions.html#setReuseAddress-boolean-
+[setSendBufferSize]:          http://docs.datastax.com/en/drivers/java/3.2/com/datastax/driver/core/SocketOptions.html#setSendBufferSize-int-
+[setSoLinger]:                http://docs.datastax.com/en/drivers/java/3.2/com/datastax/driver/core/SocketOptions.html#setSoLinger-int-
+[setTcpNoDelay]:              http://docs.datastax.com/en/drivers/java/3.2/com/datastax/driver/core/SocketOptions.html#setTcpNoDelay-boolean-
+[onReadTimeout]:              http://docs.datastax.com/en/drivers/java/3.2/com/datastax/driver/core/policies/RetryPolicy.html#onReadTimeout-com.datastax.driver.core.Statement-com.datastax.driver.core.ConsistencyLevel-int-int-boolean-int-
+[onRequestError]:             http://docs.datastax.com/en/drivers/java/3.2/com/datastax/driver/core/policies/RetryPolicy.html#onRequestError-com.datastax.driver.core.Statement-com.datastax.driver.core.ConsistencyLevel-com.datastax.driver.core.exceptions.DriverException-int-
+[OperationTimedOutException]: http://docs.datastax.com/en/drivers/java/3.2/com/datastax/driver/core/exceptions/OperationTimedOutException.html

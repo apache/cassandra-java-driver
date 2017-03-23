@@ -58,10 +58,10 @@ session.execute("INSERT INTO example (id, t) VALUES (1, ?)",
         ZonedDateTime.parse("2010-06-30T01:20:47.999+01:00"));
 ```
 
-[InstantCodec]: http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/extras/codecs/jdk8/InstantCodec.html
-[LocalDateCodec]: http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/extras/codecs/jdk8/LocalDateCodec.html
-[LocalTimeCodec]: http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/extras/codecs/jdk8/LocalTimeCodec.html
-[ZonedDateTimeCodec]: http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/extras/codecs/jdk8/ZonedDateTimeCodec.html
+[InstantCodec]: http://docs.datastax.com/en/drivers/java/3.2/com/datastax/driver/extras/codecs/jdk8/InstantCodec.html
+[LocalDateCodec]: http://docs.datastax.com/en/drivers/java/3.2/com/datastax/driver/extras/codecs/jdk8/LocalDateCodec.html
+[LocalTimeCodec]: http://docs.datastax.com/en/drivers/java/3.2/com/datastax/driver/extras/codecs/jdk8/LocalTimeCodec.html
+[ZonedDateTimeCodec]: http://docs.datastax.com/en/drivers/java/3.2/com/datastax/driver/extras/codecs/jdk8/ZonedDateTimeCodec.html
 [Instant]: https://docs.oracle.com/javase/8/docs/api/java/time/Instant.html
 [LocalDate]: https://docs.oracle.com/javase/8/docs/api/java/time/LocalDate.html
 [LocalTime]: https://docs.oracle.com/javase/8/docs/api/java/time/LocalTime.html
@@ -111,10 +111,10 @@ session.execute("INSERT INTO example (id, t) VALUES (1, ?)",
         DateTime.parse("2010-06-30T01:20:47.999+01:00"));
 ```
 
-[InstantCodec_joda]: http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/extras/codecs/joda/InstantCodec.html
-[LocalDateCodec_joda]: http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/extras/codecs/joda/LocalDateCodec.html
-[LocalTimeCodec_joda]: http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/extras/codecs/joda/LocalTimeCodec.html
-[DateTimeCodec]: http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/extras/codecs/joda/DateTimeCodec.html
+[InstantCodec_joda]: http://docs.datastax.com/en/drivers/java/3.2/com/datastax/driver/extras/codecs/joda/InstantCodec.html
+[LocalDateCodec_joda]: http://docs.datastax.com/en/drivers/java/3.2/com/datastax/driver/extras/codecs/joda/LocalDateCodec.html
+[LocalTimeCodec_joda]: http://docs.datastax.com/en/drivers/java/3.2/com/datastax/driver/extras/codecs/joda/LocalTimeCodec.html
+[DateTimeCodec]: http://docs.datastax.com/en/drivers/java/3.2/com/datastax/driver/extras/codecs/joda/DateTimeCodec.html
 [DateTime]: http://www.joda.org/joda-time/apidocs/org/joda/time/DateTime.html
 [Instant_joda]: http://www.joda.org/joda-time/apidocs/org/joda/time/Instant.html
 [LocalDate_joda]: http://www.joda.org/joda-time/apidocs/org/joda/time/LocalDate.html
@@ -132,8 +132,8 @@ Time can also be expressed as simple durations:
 There is no extra codec for `time`, because by default the driver already maps that type to a `long` representing the
 number of milliseconds since midnight.
 
-[SimpleTimestampCodec]: http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/extras/codecs/date/SimpleTimestampCodec.html
-[SimpleDateCodec]: http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/extras/codecs/date/SimpleDateCodec.html
+[SimpleTimestampCodec]: http://docs.datastax.com/en/drivers/java/3.2/com/datastax/driver/extras/codecs/date/SimpleTimestampCodec.html
+[SimpleDateCodec]: http://docs.datastax.com/en/drivers/java/3.2/com/datastax/driver/extras/codecs/date/SimpleDateCodec.html
 
 
 ### Enums
@@ -171,8 +171,8 @@ Note that if you registered an `EnumNameCodec` and an `EnumOrdinalCodec` _for th
 In practice, this is unlikely to happen, because you'll probably stick to a single CQL type for a given enum type;
 however, if you ever run into that issue, the workaround is to use [prepared statements](../../statements/prepared/), for which the driver knows the CQL type and can pick the exact codec.
 
-[EnumNameCodec]: http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/extras/codecs/enums/EnumNameCodec.html
-[EnumOrdinalCodec]: http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/extras/codecs/enums/EnumOrdinalCodec.html
+[EnumNameCodec]: http://docs.datastax.com/en/drivers/java/3.2/com/datastax/driver/extras/codecs/enums/EnumNameCodec.html
+[EnumOrdinalCodec]: http://docs.datastax.com/en/drivers/java/3.2/com/datastax/driver/extras/codecs/enums/EnumOrdinalCodec.html
 [name]: https://docs.oracle.com/javase/8/docs/api/java/lang/Enum.html#name--
 [ordinal]: https://docs.oracle.com/javase/8/docs/api/java/lang/Enum.html#ordinal--
 
@@ -217,7 +217,7 @@ session.execute("insert into example (id, owner) values (1, ?)",
 // owner saved as '{"id":1,"name":"root"}'
 ```
 
-[JacksonJsonCodec]: http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/extras/codecs/json/JacksonJsonCodec.html
+[JacksonJsonCodec]: http://docs.datastax.com/en/drivers/java/3.2/com/datastax/driver/extras/codecs/json/JacksonJsonCodec.html
 [Jackson]: http://wiki.fasterxml.com/JacksonHome
 
 
@@ -256,7 +256,7 @@ session.execute("insert into example (id, owner) values (1, ?)",
 ```
 
 
-[Jsr353JsonCodec]: http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/extras/codecs/json/Jsr353JsonCodec.html
+[Jsr353JsonCodec]: http://docs.datastax.com/en/drivers/java/3.2/com/datastax/driver/extras/codecs/json/Jsr353JsonCodec.html
 [JsonStructure]: https://javaee-spec.java.net/nonav/javadocs/javax/json/JsonStructure.html
 
 
@@ -309,7 +309,7 @@ For the same reason, we need to give a type hint when setting "v", in the form o
 anonymous inner class; we recommend storing these tokens as constants in a utility class, to avoid creating them too
 often.
 
-[OptionalCodec]: http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/extras/codecs/jdk8/OptionalCodec.html
+[OptionalCodec]: http://docs.datastax.com/en/drivers/java/3.2/com/datastax/driver/extras/codecs/jdk8/OptionalCodec.html
 [Optional]: https://docs.oracle.com/javase/8/docs/api/java/util/Optional.html
 [TypeToken]: http://docs.guava-libraries.googlecode.com/git/javadoc/com/google/common/reflect/TypeToken.html
 
@@ -353,7 +353,7 @@ session.execute(pst.bind()
 
 See the JDK8 Optional section above for explanations about [TypeToken].
 
-[OptionalCodec_guava]: http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/extras/codecs/guava/OptionalCodec.html
+[OptionalCodec_guava]: http://docs.datastax.com/en/drivers/java/3.2/com/datastax/driver/extras/codecs/guava/OptionalCodec.html
 [Optional_guava]: http://docs.guava-libraries.googlecode.com/git-history/v16.0.1/javadoc/com/google/common/base/Optional.html
 
 
@@ -378,9 +378,9 @@ session.execute("insert into example (i, l) values (1, ?)",
 Package [com.datastax.driver.extras.codecs.arrays][arrays] contains similar codecs for all primitive types, and
 [ObjectArrayCodec] to map arrays of objects.
 
-[IntArrayCodec]: http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/extras/codecs/arrays/IntArrayCodec.html
-[ObjectArrayCodec]: http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/extras/codecs/arrays/ObjectArrayCodec.html
-[arrays]: http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/extras/codecs/arrays/package-summary.html
+[IntArrayCodec]: http://docs.datastax.com/en/drivers/java/3.2/com/datastax/driver/extras/codecs/arrays/IntArrayCodec.html
+[ObjectArrayCodec]: http://docs.datastax.com/en/drivers/java/3.2/com/datastax/driver/extras/codecs/arrays/ObjectArrayCodec.html
+[arrays]: http://docs.datastax.com/en/drivers/java/3.2/com/datastax/driver/extras/codecs/arrays/package-summary.html
 
 ### Abstract utilities
 
@@ -410,5 +410,5 @@ These two classes are convenient, but since they perform conversions in two step
 optimal approach. If performance is paramount, it's better to start from scratch and convert your objects to
 `ByteBuffer` directly.
 
-[MappingCodec]: http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/extras/codecs/MappingCodec.html
-[ParsingCodec]: http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/extras/codecs/ParsingCodec.html
+[MappingCodec]: http://docs.datastax.com/en/drivers/java/3.2/com/datastax/driver/extras/codecs/MappingCodec.html
+[ParsingCodec]: http://docs.datastax.com/en/drivers/java/3.2/com/datastax/driver/extras/codecs/ParsingCodec.html

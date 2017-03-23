@@ -176,8 +176,8 @@ if (nextPage != null) {
 }
 ```
 
-[result_set]:http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/core/ResultSet.html
-[paging_state]:http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/core/PagingState.html
+[result_set]:http://docs.datastax.com/en/drivers/java/3.2/com/datastax/driver/core/ResultSet.html
+[paging_state]:http://docs.datastax.com/en/drivers/java/3.2/com/datastax/driver/core/PagingState.html
 
 
 Due to internal implementation details, `PagingState` instances are not

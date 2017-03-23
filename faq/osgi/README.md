@@ -195,7 +195,7 @@ it is also normal to see the following log lines when starting the driver:
 [BND]:http://www.aqute.biz/Bnd
 [Maven bundle plugin]:https://cwiki.apache.org/confluence/display/FELIX/Apache+Felix+Maven+Bundle+Plugin+%28BND%29
 [OSGi examples repository]:https://github.com/datastax/java-driver-examples-osgi
-[without metrics]:http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/core/Cluster.Builder.html#withoutMetrics--
+[without metrics]:http://docs.datastax.com/en/drivers/java/3.2/com/datastax/driver/core/Cluster.Builder.html#withoutMetrics--
 [SLF4J]:http://www.slf4j.org/
 [Logback]:http://logback.qos.ch/
 [Tycho]:https://eclipse.org/tycho/

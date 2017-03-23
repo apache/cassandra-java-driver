@@ -74,5 +74,5 @@ detects that shaded Netty classes are being used:
     Detected shaded Netty classes in the classpath; native epoll transport will not work properly, defaulting to NIO.
 
 
-[NettyOptions]:http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/core/NettyOptions.html
+[NettyOptions]:http://docs.datastax.com/en/drivers/java/3.2/com/datastax/driver/core/NettyOptions.html
 [Netty native transports]:http://netty.io/wiki/native-transports.html

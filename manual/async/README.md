@@ -51,8 +51,8 @@ to the current page, and [fetchMoreResults] to get a future to the next
 page (see also the section on [paging](../paging/)).
 Here is a full example:
 
-[getAvailableWithoutFetching]: http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/core/ResultSet.html#getAvailableWithoutFetching--
-[fetchMoreResults]: http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/core/ResultSet.html#fetchMoreResults--
+[getAvailableWithoutFetching]: http://docs.datastax.com/en/drivers/java/3.2/com/datastax/driver/core/ResultSet.html#getAvailableWithoutFetching--
+[fetchMoreResults]: http://docs.datastax.com/en/drivers/java/3.2/com/datastax/driver/core/ResultSet.html#fetchMoreResults--
 
 ```java
 Statement statement = new SimpleStatement("select * from foo").setFetchSize(20);
@@ -134,5 +134,5 @@ There are still a few places where the driver will block internally
   hasn't been fetched already.
 
 [ListenableFuture]: https://github.com/google/guava/wiki/ListenableFutureExplained
-[init]: http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/core/Cluster.html#init--
-[query trace]: http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/core/QueryTrace.html
+[init]: http://docs.datastax.com/en/drivers/java/3.2/com/datastax/driver/core/Cluster.html#init--
+[query trace]: http://docs.datastax.com/en/drivers/java/3.2/com/datastax/driver/core/QueryTrace.html

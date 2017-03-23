@@ -42,8 +42,8 @@ statement.setDefaultTimestamp(1234567890);
 session.execute(statement);
 ```
 
-[tsg]: http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/core/TimestampGenerator.html
-[amtsg]: http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/core/AtomicMonotonicTimestampGenerator.html
+[tsg]: http://docs.datastax.com/en/drivers/java/3.2/com/datastax/driver/core/TimestampGenerator.html
+[amtsg]: http://docs.datastax.com/en/drivers/java/3.2/com/datastax/driver/core/AtomicMonotonicTimestampGenerator.html
 
 
 ### Server-side generation
@@ -70,8 +70,8 @@ that there is a risk of timestamp collision with this generator when accessed by
 thread; only use it when threads are not in direct competition for timestamp ties (i.e., they are executing
 independent statements).
 
-[amtsg]:  http://docs.datastax.com/en/drivers/java/2.1/com/datastax/driver/core/AtomicMonotonicTimestampGenerator.html
-[tlmtsg]: http://docs.datastax.com/en/drivers/java/2.1/com/datastax/driver/core/ThreadLocalMonotonicTimestampGenerator.html
+[amtsg]:  http://docs.datastax.com/en/drivers/java/3.2/com/datastax/driver/core/AtomicMonotonicTimestampGenerator.html
+[tlmtsg]: http://docs.datastax.com/en/drivers/java/3.2/com/datastax/driver/core/ThreadLocalMonotonicTimestampGenerator.html
 
 #### Accuracy
 

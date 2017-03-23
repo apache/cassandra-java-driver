@@ -32,11 +32,11 @@ If you use custom policies ([RetryPolicy], [LoadBalancingPolicy],
 properties that influence statement execution. To achieve this, you can
 wrap your statements in a custom [StatementWrapper] implementation.
 
-[Statement]:                  http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/core/Statement.html
-[QueryBuilder]:               http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/core/querybuilder/QueryBuilder.html
-[StatementWrapper]:           http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/core/StatementWrapper.html
-[RetryPolicy]:                http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/core/policies/RetryPolicy.html
-[LoadBalancingPolicy]:        http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/core/policies/LoadBalancingPolicy.html
-[SpeculativeExecutionPolicy]: http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/core/policies/SpeculativeExecutionPolicy.html
-[execute]:                    http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/core/Session.html#execute-com.datastax.driver.core.Statement-
-[executeAsync]:               http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/core/Session.html#executeAsync-com.datastax.driver.core.Statement-
+[Statement]:                  http://docs.datastax.com/en/drivers/java/3.2/com/datastax/driver/core/Statement.html
+[QueryBuilder]:               http://docs.datastax.com/en/drivers/java/3.2/com/datastax/driver/core/querybuilder/QueryBuilder.html
+[StatementWrapper]:           http://docs.datastax.com/en/drivers/java/3.2/com/datastax/driver/core/StatementWrapper.html
+[RetryPolicy]:                http://docs.datastax.com/en/drivers/java/3.2/com/datastax/driver/core/policies/RetryPolicy.html
+[LoadBalancingPolicy]:        http://docs.datastax.com/en/drivers/java/3.2/com/datastax/driver/core/policies/LoadBalancingPolicy.html
+[SpeculativeExecutionPolicy]: http://docs.datastax.com/en/drivers/java/3.2/com/datastax/driver/core/policies/SpeculativeExecutionPolicy.html
+[execute]:                    http://docs.datastax.com/en/drivers/java/3.2/com/datastax/driver/core/Session.html#execute-com.datastax.driver.core.Statement-
+[executeAsync]:               http://docs.datastax.com/en/drivers/java/3.2/com/datastax/driver/core/Session.html#executeAsync-com.datastax.driver.core.Statement-

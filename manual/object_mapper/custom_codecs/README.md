@@ -98,9 +98,9 @@ instance (one per column) and cache it for future use.
 
 This also works with [@Field][field] and [@Param][param] annotations.
 
-[column]:http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/mapping/annotations/Column.html
-[field]:http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/mapping/annotations/Field.html
-[param]:http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/mapping/annotations/Param.html
+[column]:http://docs.datastax.com/en/drivers/java/3.2/com/datastax/driver/mapping/annotations/Column.html
+[field]:http://docs.datastax.com/en/drivers/java/3.2/com/datastax/driver/mapping/annotations/Field.html
+[param]:http://docs.datastax.com/en/drivers/java/3.2/com/datastax/driver/mapping/annotations/Param.html
 
 
 ## Implicit UDT codecs

@@ -185,8 +185,8 @@ Cluster cluster = Cluster.builder()
   .build();
 ```
 
-[RemoteEndpointAwareSSLOptions]:      http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/core/RemoteEndpointAwareSSLOptions.html
-[RemoteEndpointAwareJdkSSLOptions]:   http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/core/RemoteEndpointAwareJdkSSLOptions.html
-[newSSLEngine]:                       http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/core/RemoteEndpointAwareJdkSSLOptions.html#newSSLEngine-io.netty.channel.socket.SocketChannel-java.net.InetSocketAddress-
-[RemoteEndpointAwareNettySSLOptions]: http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/core/RemoteEndpointAwareNettySSLOptions.html
-[NettyOptions]:                       http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/core/NettyOptions.html
+[RemoteEndpointAwareSSLOptions]:      http://docs.datastax.com/en/drivers/java/3.2/com/datastax/driver/core/RemoteEndpointAwareSSLOptions.html
+[RemoteEndpointAwareJdkSSLOptions]:   http://docs.datastax.com/en/drivers/java/3.2/com/datastax/driver/core/RemoteEndpointAwareJdkSSLOptions.html
+[newSSLEngine]:                       http://docs.datastax.com/en/drivers/java/3.2/com/datastax/driver/core/RemoteEndpointAwareJdkSSLOptions.html#newSSLEngine-io.netty.channel.socket.SocketChannel-java.net.InetSocketAddress-
+[RemoteEndpointAwareNettySSLOptions]: http://docs.datastax.com/en/drivers/java/3.2/com/datastax/driver/core/RemoteEndpointAwareNettySSLOptions.html
+[NettyOptions]:                       http://docs.datastax.com/en/drivers/java/3.2/com/datastax/driver/core/NettyOptions.html
