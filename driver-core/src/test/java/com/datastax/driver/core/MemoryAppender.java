@@ -15,6 +15,7 @@
  */
 package com.datastax.driver.core;
 
+import org.apache.log4j.Logger;
 import org.apache.log4j.PatternLayout;
 import org.apache.log4j.WriterAppender;
 import org.apache.log4j.spi.LoggingEvent;
@@ -95,4 +96,49 @@ public class MemoryAppender extends WriterAppender {
         nextLogIdx += next.length();
         return next;
     }
+
+    public MemoryAppender enableFor(Class<?>... loggers) {
+        for (Class<?> logger : loggers) {
+            enableFor(logger.getName());
+        }
+        return this;
+    }
+
+    public MemoryAppender enableFor(org.slf4j.Logger... loggers) {
+        for (org.slf4j.Logger logger : loggers) {
+            enableFor(logger.getName());
+        }
+        return this;
+    }
+
+    public MemoryAppender enableFor(String... loggers) {
+        for (String logger : loggers) {
+            Logger log4jLogger = Logger.getLogger(logger);
+            log4jLogger.addAppender(this);
+        }
+        return this;
+    }
+
+    public MemoryAppender disableFor(Class<?>... loggers) {
+        for (Class<?> logger : loggers) {
+            disableFor(logger.getName());
+        }
+        return this;
+    }
+
+    public MemoryAppender disableFor(org.slf4j.Logger... loggers) {
+        for (org.slf4j.Logger logger : loggers) {
+            disableFor(logger.getName());
+        }
+        return this;
+    }
+
+    public MemoryAppender disableFor(String... loggers) {
+        for (String logger : loggers) {
+            Logger log4jLogger = Logger.getLogger(logger);
+            log4jLogger.removeAppender(this);
+        }
+        return this;
+    }
+
 }

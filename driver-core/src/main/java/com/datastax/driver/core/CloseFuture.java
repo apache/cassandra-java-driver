@@ -51,7 +51,7 @@ public abstract class CloseFuture extends AbstractFuture<Void> {
      * Try to force the completion of the shutdown this is a future of.
      * <p/>
      * This method will do its best to expedite the shutdown process. In
-     * particular, all connections will be closed right away, even if there is
+     * particular, all connections will be closed right away, even if there are
      * ongoing queries at the time this method is called.
      * <p/>
      * Note that this method does not block. The completion of this method does

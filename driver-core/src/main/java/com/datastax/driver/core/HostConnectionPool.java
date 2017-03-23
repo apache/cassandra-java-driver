@@ -174,11 +174,14 @@ class HostConnectionPool implements Connection.Owner {
                 // accordingly in SessionManager#maybeAddPool.
                 Throwables.propagateIfInstanceOf(t, ClusterNameMismatchException.class);
                 Throwables.propagateIfInstanceOf(t, UnsupportedProtocolVersionException.class);
+                Throwables.propagateIfInstanceOf(t, AuthenticationException.class);
 
                 // We don't want to swallow Errors either as they probably indicate a more serious issue (OOME...)
                 Throwables.propagateIfInstanceOf(t, Error.class);
 
-                // Otherwise, return success. The pool will simply ignore this connection when it sees that it's been closed.
+                // Otherwise, log the exception but return success.
+                // The pool will simply ignore this connection when it sees that it's been closed.
+                logger.warn("Error creating connection to " + host, t);
                 return MoreFutures.VOID_SUCCESS;
             }
         }, executor);
