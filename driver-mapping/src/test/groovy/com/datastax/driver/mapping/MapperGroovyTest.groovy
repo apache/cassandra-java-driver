@@ -13,26 +13,26 @@ import static org.assertj.core.api.Assertions.assertThat
  *
  * @jira_ticket JAVA-1279
  */
-public class MapperGroovyTest extends CCMTestsSupport {
+class MapperGroovyTest extends CCMTestsSupport {
 
     @Table(name = "users")
     static class User {
 
         @PartitionKey
         @Column(name = "user_id")
-        def UUID userId
+        UUID userId
 
-        def String name
+        String name
 
     }
 
     @Override
-    public void onTestContextInitialized() {
+    void onTestContextInitialized() {
         execute("CREATE TABLE users (user_id uuid PRIMARY KEY, name text)")
     }
 
     @Test(groups = "short")
-    public void should_map_groovy_class() {
+    void should_map_groovy_class() {
         def mapper = new MappingManager(session()).mapper(User)
         def user1 = new User()
         user1.userId = UUID.randomUUID()

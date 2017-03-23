@@ -26,12 +26,15 @@ import static org.mockito.Mockito.*;
 public class MapperInvalidAnnotationsTest {
 
     MappingManager mappingManager;
+    MappingConfiguration mappingConfiguration;
 
     @BeforeClass(groups = "unit")
     public void setup() {
         mappingManager = mock(MappingManager.class);
+        mappingConfiguration = MappingConfiguration.builder().build();
         Session session = mock(Session.class);
         when(mappingManager.getSession()).thenReturn(session);
+        when(mappingManager.getConfiguration()).thenReturn(mappingConfiguration);
         Cluster cluster = mock(Cluster.class);
         when(session.getCluster()).thenReturn(cluster);
         Metadata metadata = mock(Metadata.class);

@@ -148,13 +148,31 @@ public class Metadata {
         return true;
     }
 
-    // Escape a CQL3 identifier based on its value as read from the schema
-    // tables. Because it comes from Cassandra, we could just always quote it,
-    // but to get a nicer output we don't do it if it's not necessary.
-    static String escapeId(String ident) {
-        return needsQuote(ident)
-                ? quote(ident)
-                : ident;
+    /**
+     * Quotes a CQL identifier if necessary.
+     * <p/>
+     * This is similar to {@link #quote(String)}, except that it won't quote the input string
+     * if it can safely be used as-is. For example:
+     * <ul>
+     * <li>{@code quoteIfNecessary("foo").equals("foo")} (no need to quote).</li>
+     * <li>{@code quoteIfNecessary("Foo").equals("\"Foo\"")} (identifier is mixed case so case
+     * sensitivity is required)</li>
+     * <li>{@code quoteIfNecessary("foo bar").equals("\"foo bar\"")} (identifier contains
+     * special characters)</li>
+     * <li>{@code quoteIfNecessary("table").equals("\"table\"")} (identifier is a reserved CQL
+     * keyword)</li>
+     * </ul>
+     *
+     * @param id the "internal" form of the identifier. That is, the identifier as it would
+     *           appear in Cassandra system tables (such as {@code system_schema.tables},
+     *           {@code system_schema.columns}, etc.)
+     * @return the identifier as it would appear in a CQL query string. This is also how you need
+     * to pass it to public driver methods, such as {@link #getKeyspace(String)}.
+     */
+    public static String quoteIfNecessary(String id) {
+        return needsQuote(id)
+                ? quote(id)
+                : id;
     }
 
     /**
@@ -207,7 +225,7 @@ public class Metadata {
             // they appear in a schema change event (in targetSignature)
             if (argumentType instanceof UserType) {
                 UserType userType = (UserType) argumentType;
-                String typeName = Metadata.escapeId(userType.getTypeName());
+                String typeName = Metadata.quoteIfNecessary(userType.getTypeName());
                 sb.append(typeName);
             } else {
                 sb.append(argumentType);

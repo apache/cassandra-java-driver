@@ -277,7 +277,7 @@ public class UserType extends DataType implements Iterable<UserType.Field> {
     private String asCQLQuery(boolean formatted) {
         StringBuilder sb = new StringBuilder();
 
-        sb.append("CREATE TYPE ").append(Metadata.escapeId(keyspace)).append('.').append(Metadata.escapeId(typeName)).append(" (");
+        sb.append("CREATE TYPE ").append(Metadata.quoteIfNecessary(keyspace)).append('.').append(Metadata.quoteIfNecessary(typeName)).append(" (");
         TableMetadata.newLine(sb, formatted);
         for (int i = 0; i < byIdx.length; i++) {
             sb.append(TableMetadata.spaces(4, formatted)).append(byIdx[i]);
@@ -291,7 +291,7 @@ public class UserType extends DataType implements Iterable<UserType.Field> {
 
     @Override
     public String toString() {
-        String str = Metadata.escapeId(getKeyspace()) + "." + Metadata.escapeId(getTypeName());
+        String str = Metadata.quoteIfNecessary(getKeyspace()) + "." + Metadata.quoteIfNecessary(getTypeName());
         return isFrozen() ?
                 "frozen<" + str + ">" :
                 str;
@@ -299,7 +299,7 @@ public class UserType extends DataType implements Iterable<UserType.Field> {
 
     @Override
     public String asFunctionParameterString() {
-        return Metadata.escapeId(getTypeName());
+        return Metadata.quoteIfNecessary(getTypeName());
     }
 
     /**
@@ -349,7 +349,7 @@ public class UserType extends DataType implements Iterable<UserType.Field> {
 
         @Override
         public String toString() {
-            return Metadata.escapeId(name) + ' ' + type;
+            return Metadata.quoteIfNecessary(name) + ' ' + type;
         }
     }
 

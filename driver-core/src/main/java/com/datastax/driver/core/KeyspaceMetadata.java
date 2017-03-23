@@ -292,7 +292,7 @@ public class KeyspaceMetadata {
     public String asCQLQuery() {
         StringBuilder sb = new StringBuilder();
 
-        sb.append("CREATE KEYSPACE ").append(Metadata.escapeId(name)).append(" WITH ");
+        sb.append("CREATE KEYSPACE ").append(Metadata.quoteIfNecessary(name)).append(" WITH ");
         sb.append("REPLICATION = { 'class' : '").append(replication.get("class")).append('\'');
         for (Map.Entry<String, String> entry : replication.entrySet()) {
             if (entry.getKey().equals("class"))

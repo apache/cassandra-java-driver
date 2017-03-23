@@ -19,6 +19,8 @@
 - [bug] JAVA-1418: Make Guava version detection more reliable.
 - [new feature] JAVA-1174: Add ifNotExists option to mapper.
 - [improvement] JAVA-1414: Optimize Metadata.escapeId and Metadata.handleId.
+- [improvement] JAVA-1310: Make mapper's ignored properties configurable.
+- [improvement] JAVA-1316: Add strategy for resolving properties into CQL names.
 
 Merged from 3.1.x branch:
 

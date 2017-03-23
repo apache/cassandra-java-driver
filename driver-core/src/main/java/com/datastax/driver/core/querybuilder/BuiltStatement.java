@@ -99,10 +99,12 @@ public abstract class BuiltStatement extends RegularStatement {
         this.keyspace = keyspace;
     }
 
-    // Same as Metadata.escapeId, but we don't have access to it here.
+    /**
+     * @deprecated preserved for backward compatibility, use {@link Metadata#quoteIfNecessary(String)} instead.
+     */
+    @Deprecated
     protected static String escapeId(String ident) {
-        // we don't need to escape if it's lowercase and match non-quoted CQL3 ids.
-        return lowercaseAlphanumeric.matcher(ident).matches() ? ident : Metadata.quote(ident);
+        return Metadata.quoteIfNecessary(ident);
     }
 
     @Override

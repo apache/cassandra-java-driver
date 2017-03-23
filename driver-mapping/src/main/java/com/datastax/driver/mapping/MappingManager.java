@@ -22,7 +22,9 @@ import com.datastax.driver.mapping.annotations.UDT;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.*;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -33,6 +35,7 @@ public class MappingManager {
     private static final Logger LOGGER = LoggerFactory.getLogger(MappingManager.class);
 
     private final Session session;
+    private final MappingConfiguration configuration;
     final boolean isCassandraV1;
 
     private final ConcurrentHashMap<Class<?>, Mapper<?>> mappers = new ConcurrentHashMap<Class<?>, Mapper<?>>();
@@ -41,7 +44,8 @@ public class MappingManager {
 
 
     /**
-     * Creates a new {@code MappingManager} using the provided {@code Session}.
+     * Creates a new {@code MappingManager} using the provided {@code Session} with default
+     * {@code MapperConfiguration}.
      * <p/>
      * Note that this constructor forces the initialization of the session (see
      * {@link #MappingManager(Session, ProtocolVersion)} if that is a problem for you).
@@ -58,7 +62,8 @@ public class MappingManager {
     }
 
     /**
-     * Creates a new {@code MappingManager} using the provided {@code Session}.
+     * Creates a new {@code MappingManager} using the provided {@code Session} with default
+     * {@code MapperConfiguration}.
      * <p/>
      * This constructor is only provided for backward compatibility: before 2.1.7, {@code MappingManager} could be
      * built from an uninitialized session; since 2.1.7, the mapper needs to know the active protocol version to
@@ -70,7 +75,39 @@ public class MappingManager {
      * @since 2.1.7
      */
     public MappingManager(Session session, ProtocolVersion protocolVersion) {
+        this(session, MappingConfiguration.builder().build(), protocolVersion);
+    }
+
+    /**
+     * Creates a new {@code MappingManager} using the provided {@code Session} with custom configuration
+     * to be inherited to each instantiated mapper.
+     * <p/>
+     * Note that this constructor forces the initialization of the session (see
+     * {@link #MappingManager(Session, ProtocolVersion)} if that is a problem for you).
+     *
+     * @param session       the {@code Session} to use.
+     * @param configuration the {@code MapperConfiguration} to use be used as default for instantiated mappers.
+     */
+    public MappingManager(Session session, MappingConfiguration configuration) {
+        this(session, configuration, getProtocolVersion(session));
+    }
+
+    /**
+     * Creates a new {@code MappingManager} using the provided {@code Session} with default
+     * {@code MapperConfiguration}.
+     * <p/>
+     * This constructor is only provided for backward compatibility: before 2.1.7, {@code MappingManager} could be
+     * built from an uninitialized session; since 2.1.7, the mapper needs to know the active protocol version to
+     * adapt its internal requests, so {@link #MappingManager(Session)} will now initialize the session if needed.
+     * If you rely on the session not being initialized, use this constructor and provide the version manually.
+     *
+     * @param session         the {@code Session} to use.
+     * @param configuration   the {@code MapperConfiguration} to use be used as default for instantiated mappers.
+     * @param protocolVersion the protocol version that will be used with this session.
+     */
+    public MappingManager(Session session, MappingConfiguration configuration, ProtocolVersion protocolVersion) {
         this.session = session;
+        this.configuration = configuration;
         // This is not strictly correct because we could connect to C* 2.0 with the v1 protocol.
         // But mappers need to make a decision early so that generated queries are compatible, and we don't know in advance
         // which nodes might join the cluster later.
@@ -125,23 +162,23 @@ public class MappingManager {
             @Override
             public void onUserTypeChanged(UserType current, UserType previous) {
                 synchronized (udtCodecs) {
-                    Set<Class<?>> udtClasses = new HashSet<Class<?>>();
+                    Set<MappedUDTCodec<?>> deletedCodecs = new HashSet<MappedUDTCodec<?>>();
                     Iterator<MappedUDTCodec<?>> it = udtCodecs.values().iterator();
                     while (it.hasNext()) {
                         MappedUDTCodec<?> codec = it.next();
                         if (previous.equals(codec.getCqlType())) {
                             LOGGER.warn("User type {} has been altered; existing mappers for @UDT annotated {} might not work properly anymore",
                                     previous, codec.getUdtClass());
-                            udtClasses.add(codec.getUdtClass());
+                            deletedCodecs.add(codec);
                             it.remove();
                         }
                     }
-                    for (Class<?> udtClass : udtClasses) {
+                    for (MappedUDTCodec<?> deletedCodec : deletedCodecs) {
                         // try to register an updated version of the previous codec
                         try {
-                            getUDTCodec(udtClass);
+                            getUDTCodec(deletedCodec.getUdtClass());
                         } catch (Exception e) {
-                            LOGGER.error("Could not update mapping for @UDT annotated " + udtClass, e);
+                            LOGGER.error("Could not update mapping for @UDT annotated " + deletedCodec.getUdtClass(), e);
                         }
                     }
                 }
@@ -151,9 +188,9 @@ public class MappingManager {
     }
 
     /**
-     * The underlying {@code Session} used by this manager.
+     * The underlying {@link Session} used by this manager.
      * <p/>
-     * Note that you can get obtain the {@code Cluster} object corresponding
+     * Note that you can get obtain the {@link Cluster} object corresponding
      * to that session using {@code getSession().getCluster()}.
      * <p/>
      * It is inadvisable to close the returned Session while this manager and
@@ -163,6 +200,15 @@ public class MappingManager {
      */
     public Session getSession() {
         return session;
+    }
+
+    /**
+     * Returns the {@link MappingConfiguration configuration} used by this manager.
+     *
+     * @return the {@link MappingConfiguration configuration} used by this manager.
+     */
+    public MappingConfiguration getConfiguration() {
+        return configuration;
     }
 
     /**

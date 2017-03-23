@@ -195,21 +195,21 @@ public class AggregateMetadata {
     private String asCQLQuery(boolean formatted) {
 
         StringBuilder sb = new StringBuilder("CREATE AGGREGATE ")
-                .append(Metadata.escapeId(keyspace.getName()))
+                .append(Metadata.quoteIfNecessary(keyspace.getName()))
                 .append('.');
 
         appendSignature(sb);
 
         TableMetadata.spaceOrNewLine(sb, formatted)
                 .append("SFUNC ")
-                .append(Metadata.escapeId(stateFuncSimpleName))
+                .append(Metadata.quoteIfNecessary(stateFuncSimpleName))
                 .append(" STYPE ")
                 .append(stateType.asFunctionParameterString());
 
         if (finalFuncSimpleName != null)
             TableMetadata.spaceOrNewLine(sb, formatted)
                     .append("FINALFUNC ")
-                    .append(Metadata.escapeId(finalFuncSimpleName));
+                    .append(Metadata.quoteIfNecessary(finalFuncSimpleName));
 
         if (initCond != null)
             TableMetadata.spaceOrNewLine(sb, formatted)
@@ -234,7 +234,7 @@ public class AggregateMetadata {
 
     private void appendSignature(StringBuilder sb) {
         sb
-                .append(Metadata.escapeId(simpleName))
+                .append(Metadata.quoteIfNecessary(simpleName))
                 .append('(');
         boolean first = true;
         for (DataType type : argumentTypes) {

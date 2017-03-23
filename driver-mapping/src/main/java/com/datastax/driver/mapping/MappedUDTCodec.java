@@ -29,10 +29,10 @@ import java.util.Map;
 class MappedUDTCodec<T> extends TypeCodec.AbstractUDTCodec<T> {
     private final UserType cqlUserType;
     private final Class<T> udtClass;
-    private final Map<String, PropertyMapper> columnMappers;
+    private final Map<String, AliasedMappedProperty<?>> columnMappers;
     private final CodecRegistry codecRegistry;
 
-    MappedUDTCodec(UserType cqlUserType, Class<T> udtClass, Map<String, PropertyMapper> columnMappers, MappingManager mappingManager) {
+    MappedUDTCodec(UserType cqlUserType, Class<T> udtClass, Map<String, AliasedMappedProperty<?>> columnMappers, MappingManager mappingManager) {
         super(cqlUserType, udtClass);
         this.cqlUserType = cqlUserType;
         this.udtClass = udtClass;
@@ -51,52 +51,64 @@ class MappedUDTCodec<T> extends TypeCodec.AbstractUDTCodec<T> {
 
     @Override
     protected ByteBuffer serializeField(T source, String fieldName, ProtocolVersion protocolVersion) {
-        PropertyMapper propertyMapper = columnMappers.get(fieldName);
+        @SuppressWarnings("unchecked")
+        AliasedMappedProperty<Object> aliasedMappedProperty = (AliasedMappedProperty<Object>) columnMappers.get(fieldName);
 
-        if (propertyMapper == null)
+        if (aliasedMappedProperty == null)
             return null;
 
-        Object value = propertyMapper.getValue(source);
+        Object value = aliasedMappedProperty.mappedProperty.getValue(source);
 
-        TypeCodec<Object> codec = propertyMapper.customCodec;
+        TypeCodec<Object> codec = aliasedMappedProperty.mappedProperty.getCustomCodec();
         if (codec == null)
-            codec = codecRegistry.codecFor(cqlUserType.getFieldType(propertyMapper.columnName), propertyMapper.javaType);
+            codec = codecRegistry.codecFor(cqlUserType.getFieldType(
+                    aliasedMappedProperty.mappedProperty.getMappedName()),
+                    aliasedMappedProperty.mappedProperty.getPropertyType());
 
         return codec.serialize(value, protocolVersion);
     }
 
     @Override
     protected T deserializeAndSetField(ByteBuffer input, T target, String fieldName, ProtocolVersion protocolVersion) {
-        PropertyMapper propertyMapper = columnMappers.get(fieldName);
-        if (propertyMapper != null) {
-            TypeCodec<Object> codec = propertyMapper.customCodec;
+        @SuppressWarnings("unchecked")
+        AliasedMappedProperty<Object> aliasedMappedProperty = (AliasedMappedProperty<Object>) columnMappers.get(fieldName);
+        if (aliasedMappedProperty != null) {
+            TypeCodec<Object> codec = aliasedMappedProperty.mappedProperty.getCustomCodec();
             if (codec == null)
-                codec = codecRegistry.codecFor(cqlUserType.getFieldType(propertyMapper.columnName), propertyMapper.javaType);
-            propertyMapper.setValue(target, codec.deserialize(input, protocolVersion));
+                codec = codecRegistry.codecFor(cqlUserType.getFieldType(
+                        aliasedMappedProperty.mappedProperty.getMappedName()),
+                        aliasedMappedProperty.mappedProperty.getPropertyType());
+            aliasedMappedProperty.mappedProperty.setValue(target, codec.deserialize(input, protocolVersion));
         }
         return target;
     }
 
     @Override
     protected String formatField(T source, String fieldName) {
-        PropertyMapper propertyMapper = columnMappers.get(fieldName);
-        if (propertyMapper == null)
+        @SuppressWarnings("unchecked")
+        AliasedMappedProperty<Object> aliasedMappedProperty = (AliasedMappedProperty<Object>) columnMappers.get(fieldName);
+        if (aliasedMappedProperty == null)
             return null;
-        Object value = propertyMapper.getValue(source);
-        TypeCodec<Object> codec = propertyMapper.customCodec;
+        Object value = aliasedMappedProperty.mappedProperty.getValue(source);
+        TypeCodec<Object> codec = aliasedMappedProperty.mappedProperty.getCustomCodec();
         if (codec == null)
-            codec = codecRegistry.codecFor(cqlUserType.getFieldType(propertyMapper.columnName), propertyMapper.javaType);
+            codec = codecRegistry.codecFor(cqlUserType.getFieldType(
+                    aliasedMappedProperty.mappedProperty.getMappedName()),
+                    aliasedMappedProperty.mappedProperty.getPropertyType());
         return codec.format(value);
     }
 
     @Override
     protected T parseAndSetField(String input, T target, String fieldName) {
-        PropertyMapper propertyMapper = columnMappers.get(fieldName);
-        if (propertyMapper != null) {
-            TypeCodec<Object> codec = propertyMapper.customCodec;
+        @SuppressWarnings("unchecked")
+        AliasedMappedProperty<Object> aliasedMappedProperty = (AliasedMappedProperty<Object>) columnMappers.get(fieldName);
+        if (aliasedMappedProperty != null) {
+            TypeCodec<Object> codec = aliasedMappedProperty.mappedProperty.getCustomCodec();
             if (codec == null)
-                codec = codecRegistry.codecFor(cqlUserType.getFieldType(propertyMapper.columnName), propertyMapper.javaType);
-            propertyMapper.setValue(target, codec.parse(input));
+                codec = codecRegistry.codecFor(cqlUserType.getFieldType(
+                        aliasedMappedProperty.mappedProperty.getMappedName()),
+                        aliasedMappedProperty.mappedProperty.getPropertyType());
+            aliasedMappedProperty.mappedProperty.setValue(target, codec.parse(input));
         }
         return target;
     }

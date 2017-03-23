@@ -17,6 +17,12 @@ In 3.1.0, the driver would log a warning the first time it would skip
 a retry for a non-idempotent request; this warning has now been 
 removed as users should now have adjusted their applications accordingly.
 
+The `caseSensitive` field on `@Column` and `@Field` annotation now only
+applies to the `name` field on the annotation and not the name of the
+variable / method itself.  If you were previously depending on the
+name of the field, you should add a `name` field to the annotation,
+i.e.:  `@Column(name="userName", caseSensitive=true)`.
+
 
 ### 3.1.0
 
