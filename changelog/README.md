@@ -31,6 +31,7 @@ Merged from 3.1.x branch:
 - [documentation] JAVA-1334: Clarify documentation of method `addContactPoints`.
 - [improvement] JAVA-1357: Document that getReplicas only returns replicas of the last token in range.
 - [bug] JAVA-1404: Fix min token handling in TokenRange.contains.
+- [bug] JAVA-1429: Prevent heartbeats until connection is fully initialized.
 
 
 ### 3.1.5 (in progress)
@@ -38,6 +39,7 @@ Merged from 3.1.x branch:
 Merged from 3.0.x branch:
 
 - [bug] JAVA-1404: Fix min token handling in TokenRange.contains.
+- [bug] JAVA-1429: Prevent heartbeats until connection is fully initialized.
 
 
 ### 3.1.4
