@@ -17,6 +17,7 @@ package com.datastax.driver.mapping;
 
 import com.datastax.driver.core.BoundStatement;
 import com.datastax.driver.core.CCMTestsSupport;
+import com.datastax.driver.core.utils.CassandraVersion;
 import com.datastax.driver.mapping.Mapper.Option;
 import com.datastax.driver.mapping.annotations.PartitionKey;
 import com.datastax.driver.mapping.annotations.Table;
@@ -40,6 +41,7 @@ public class MapperSaveNullFieldsTest extends CCMTestsSupport {
         mapper = new MappingManager(session()).mapper(User.class);
     }
 
+    @CassandraVersion("2.1.0")
     @Test(groups = "short")
     void should_save_null_fields_if_requested() {
         should_save_null_fields(true, Option.saveNullFields(true));
