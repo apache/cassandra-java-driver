@@ -138,10 +138,12 @@
                         <artifactId>maven-surefire-plugin</artifactId>
                         <version>2.16</version>
                         <configuration>
-                            <property>
-                                <name>usedefaultlisteners</name>
-                                <value>false</value> <!-- disable default listeners as some of the html reports do a lot of File I/O -->
-                            </property>
+                            <properties>
+                                <property>
+                                    <name>usedefaultlisteners</name>
+                                    <value>false</value> <!-- disable default listeners as some of the html reports do a lot of File I/O -->
+                                </property>
+                            </properties>
                             <skip>true</skip>
                             <forkCount>1</forkCount>
                             <reuseForks>false</reuseForks>
