@@ -169,6 +169,20 @@ public interface CCMAccess extends Closeable {
     void forceStop(int n);
 
     /**
+     * Pauses the {@code nth} host in the CCM cluster.
+     *
+     * @param n the node number (starting from 1).
+     */
+    void pause(int n);
+
+    /**
+     * Resumes the {@code nth} host in the CCM cluster.
+     *
+     * @param n the node number (starting from 1).
+     */
+    void resume(int n);
+
+    /**
      * Removes the {@code nth} host in the CCM cluster.
      *
      * @param n the node number (starting from 1).

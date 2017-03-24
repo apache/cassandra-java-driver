@@ -20,6 +20,9 @@ import com.google.common.util.concurrent.Uninterruptibles;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
+import java.net.InetSocketAddress;
+import java.util.Timer;
+import java.util.TimerTask;
 import java.util.concurrent.TimeUnit;
 
 import static com.datastax.driver.core.CreateCCM.TestMode.PER_METHOD;
@@ -84,6 +87,49 @@ public class AuthenticationTest extends CCMTestsSupport {
         } finally {
             assertThat(cluster.getMetrics().getErrorMetrics().getAuthenticationErrors().getCount()).isEqualTo(1);
         }
+    }
+
+    /**
+     * Ensures that authentication is possible even if the server is busy during
+     * SASL handshake.
+     *
+     * @jira_ticket JAVA-1429
+     */
+    @Test(groups = "short")
+    @CCMConfig(dirtiesContext = true)
+    public void should_connect_with_slow_server() throws InterruptedException {
+        Cluster cluster = Cluster.builder()
+                .addContactPoints(getContactPoints())
+                .withPort(ccm().getBinaryPort())
+                .withAuthProvider(new SlowAuthProvider())
+                .withPoolingOptions(new PoolingOptions()
+                        .setHeartbeatIntervalSeconds(1))
+                .build();
+        cluster.connect();
+    }
+
+    private class SlowAuthProvider extends PlainTextAuthProvider {
+
+        public SlowAuthProvider() {
+            super("cassandra", "cassandra");
+        }
+
+        @Override
+        public Authenticator newAuthenticator(InetSocketAddress host, String authenticator) throws AuthenticationException {
+            simulateBusyServer();
+            return super.newAuthenticator(host, authenticator);
+        }
+
+    }
+
+    private void simulateBusyServer() {
+        ccm().pause(1);
+        new Timer().schedule(new TimerTask() {
+            @Override
+            public void run() {
+                ccm().resume(1);
+            }
+        }, 2000);
     }
 
 }
