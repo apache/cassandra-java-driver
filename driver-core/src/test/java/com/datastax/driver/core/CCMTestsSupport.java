@@ -178,6 +178,16 @@ public class CCMTestsSupport {
         }
 
         @Override
+        public void pause(int n) {
+            throw new UnsupportedOperationException("This CCM cluster is read-only");
+        }
+
+        @Override
+        public void resume(int n) {
+            throw new UnsupportedOperationException("This CCM cluster is read-only");
+        }
+
+        @Override
         public void remove(int n) {
             throw new UnsupportedOperationException("This CCM cluster is read-only");
         }

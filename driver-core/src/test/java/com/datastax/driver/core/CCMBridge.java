@@ -522,6 +522,18 @@ public class CCMBridge implements CCMAccess {
     }
 
     @Override
+    public void pause(int n) {
+        logger.debug(String.format("Pausing: node %s (%s%s:%s) in %s", n, TestUtils.IP_PREFIX, n, binaryPort, this));
+        execute(CCM_COMMAND + " node%d pause", n);
+    }
+
+    @Override
+    public void resume(int n) {
+        logger.debug(String.format("Resuming: node %s (%s%s:%s) in %s", n, TestUtils.IP_PREFIX, n, binaryPort, this));
+        execute(CCM_COMMAND + " node%d resume", n);
+    }
+
+    @Override
     public void remove(int n) {
         logger.debug(String.format("Removing: node %s (%s%s:%s) from %s", n, TestUtils.IP_PREFIX, n, binaryPort, this));
         execute(CCM_COMMAND + " node%d remove", n);
@@ -679,6 +691,7 @@ public class CCMBridge implements CCMAccess {
     /**
      * Waits for a host to be up by pinging the TCP socket directly, without using the Java driver's API.
      */
+    @Override
     public void waitForUp(int node) {
         TestUtils.waitUntilPortIsUp(addressOfNode(node));
     }
@@ -686,6 +699,7 @@ public class CCMBridge implements CCMAccess {
     /**
      * Waits for a host to be down by pinging the TCP socket directly, without using the Java driver's API.
      */
+    @Override
     public void waitForDown(int node) {
         TestUtils.waitUntilPortIsDown(addressOfNode(node));
     }
