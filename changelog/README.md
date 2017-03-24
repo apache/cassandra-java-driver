@@ -5,6 +5,7 @@
 Merged from 3.0.x branch:
 
 - [bug] JAVA-1404: Fix min token handling in TokenRange.contains.
+- [bug] JAVA-1429: Prevent heartbeats until connection is fully initialized.
 
 
 ### 3.1.4
