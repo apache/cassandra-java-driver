@@ -9,7 +9,6 @@
 - [improvement] JAVA-1367: Make protocol negotiation more resilient.
 - [bug] JAVA-1397: Handle duration as native datatype in protocol v5+.
 - [improvement] JAVA-1308: CodecRegistry performance improvements.
-- [improvement] JAVA-1241: Upgrade Netty to 4.1.x.
 - [improvement] JAVA-1287: Add CDC to TableOptionsMetadata and Schema Builder.
 - [improvement] JAVA-1392: Reduce lock contention in RPTokenFactory.
 - [improvement] JAVA-1328: Provide compatibility with Guava 20.
@@ -22,7 +21,6 @@
 - [improvement] JAVA-1310: Make mapper's ignored properties configurable.
 - [improvement] JAVA-1316: Add strategy for resolving properties into CQL names.
 - [bug] JAVA-1424: Handle new WRITE_FAILURE and READ_FAILURE format in v5 protocol.
-- revert JAVA-1241 (go back to Netty 4.0)
 
 Merged from 3.1.x branch:
 
