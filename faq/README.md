@@ -216,7 +216,7 @@ fields set to `null`.  This also causes tombstones to be inserted unless
 setting `saveNullFields` option to false.  See [Mapper options] for more
 details.
 
-[Blobs.java]: https://github.com/datastax/java-driver/tree/3.0.x/driver-examples/src/main/java/com/datastax/driver/examples/datatypes/Blobs.java
+[Blobs.java]: https://github.com/datastax/java-driver/tree/3.2.0/driver-examples/src/main/java/com/datastax/driver/examples/datatypes/Blobs.java
 [CASSANDRA-7304]: https://issues.apache.org/jira/browse/CASSANDRA-7304
 [Parameters and Binding]: ../manual/statements/prepared/#parameters-and-binding
 [Mapper options]: ../manual/object_mapper/using/#mapper-options

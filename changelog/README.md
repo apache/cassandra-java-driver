@@ -1,6 +1,6 @@
 ## Changelog
 
-### 3.2.0 (in progress)
+### 3.2.0
 
 - [new feature] JAVA-1347: Add support for duration type.
 - [new feature] JAVA-1248: Implement "beta" flag for native protocol v5.
@@ -28,14 +28,6 @@ Merged from 3.1.x branch:
 - [bug] JAVA-1313: Copy SerialConsistencyLevel to PreparedStatement.
 - [documentation] JAVA-1334: Clarify documentation of method `addContactPoints`.
 - [improvement] JAVA-1357: Document that getReplicas only returns replicas of the last token in range.
-- [bug] JAVA-1404: Fix min token handling in TokenRange.contains.
-- [bug] JAVA-1429: Prevent heartbeats until connection is fully initialized.
-
-
-### 3.1.5 (in progress)
-
-Merged from 3.0.x branch:
-
 - [bug] JAVA-1404: Fix min token handling in TokenRange.contains.
 - [bug] JAVA-1429: Prevent heartbeats until connection is fully initialized.
 
@@ -164,12 +156,6 @@ Merged from 2.1 branch:
 - [new feature] JAVA-1019: SchemaBuilder support for CREATE/ALTER/DROP KEYSPACE.
 - [bug] JAVA-727: Allow monotonic timestamp generators to drift in the future + use microsecond precision when possible.
 - [improvement] JAVA-444: Add Java process information to UUIDs.makeNode() hash.
-
-
-### 3.0.8 (in progress)
-
-- [bug] JAVA-1404: Fix min token handling in TokenRange.contains.
-- [bug] JAVA-1429: Prevent heartbeats until connection is fully initialized.
 
 
 ### 3.0.7
