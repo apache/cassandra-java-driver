@@ -25,18 +25,47 @@
   <version>4.0.0-SNAPSHOT</version>
   <packaging>pom</packaging>
 
-  <name>DataStax Java driver for Apache Cassandra™</name>
+  <name>DataStax Java driver for Apache Cassandra®</name>
   <description>
-    A driver for Apache Cassandra™ 2.1+ that works exclusively with the Cassandra Query Language
+    A driver for Apache Cassandra® 2.1+ that works exclusively with the Cassandra Query Language
     version 3 (CQL3) and Cassandra's native protocol versions 3 and above.
   </description>
   <url>https://github.com/datastax/java-driver</url>
   <inceptionYear>2017</inceptionYear>
 
+  <modules>
+    <module>core</module>
+  </modules>
+
   <properties>
     <format.validateOnly>true</format.validateOnly>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
   </properties>
+
+  <dependencyManagement>
+    <dependencies>
+      <dependency>
+        <groupId>com.datastax.oss</groupId>
+        <artifactId>native-protocol</artifactId>
+        <version>1.4.0-SNAPSHOT</version>
+      </dependency>
+      <dependency>
+        <groupId>io.netty</groupId>
+        <artifactId>netty-handler</artifactId>
+        <version>4.1.9.Final</version>
+      </dependency>
+      <dependency>
+        <groupId>org.testng</groupId>
+        <artifactId>testng</artifactId>
+        <version>6.11</version>
+      </dependency>
+      <dependency>
+        <groupId>org.assertj</groupId>
+        <artifactId>assertj-core</artifactId>
+        <version>3.6.2</version>
+      </dependency>
+    </dependencies>
+  </dependencyManagement>
 
   <build>
     <pluginManagement>
