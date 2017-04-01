@@ -1,0 +1,99 @@
+/*
+ * Copyright (C) 2017-2017 DataStax Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package com.datastax.oss.driver.internal.core.channel;
+
+import com.datastax.oss.driver.api.core.config.CoreDriverOption;
+import com.datastax.oss.driver.api.core.config.DriverConfigProfile;
+import com.datastax.oss.protocol.internal.Message;
+import com.datastax.oss.protocol.internal.request.Options;
+import com.datastax.oss.protocol.internal.response.Supported;
+import io.netty.channel.ChannelHandlerContext;
+import io.netty.handler.timeout.IdleState;
+import io.netty.handler.timeout.IdleStateEvent;
+import io.netty.handler.timeout.IdleStateHandler;
+import java.util.concurrent.TimeUnit;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+class HeartbeatHandler extends IdleStateHandler {
+
+  private static final Logger LOG = LoggerFactory.getLogger(HeartbeatHandler.class);
+
+  private final DriverConfigProfile defaultConfigProfile;
+
+  private HeartbeatRequest request;
+
+  HeartbeatHandler(DriverConfigProfile defaultConfigProfile) {
+    super(
+        (int)
+            defaultConfigProfile.getDuration(
+                CoreDriverOption.CONNECTION_HEARTBEAT_INTERVAL, TimeUnit.SECONDS),
+        0,
+        0);
+    this.defaultConfigProfile = defaultConfigProfile;
+  }
+
+  @Override
+  protected void channelIdle(ChannelHandlerContext ctx, IdleStateEvent evt) throws Exception {
+    if (evt.state() == IdleState.READER_IDLE) {
+      if (this.request != null) {
+        LOG.warn(
+            "Not sending heartbeat because a previous one is still in progress. "
+                + "Check that {} is not lower than {}.",
+            CoreDriverOption.CONNECTION_HEARTBEAT_INTERVAL.getPath(),
+            CoreDriverOption.CONNECTION_HEARTBEAT_TIMEOUT.getPath());
+      } else {
+        long timeoutMillis =
+            defaultConfigProfile.getDuration(
+                CoreDriverOption.CONNECTION_HEARTBEAT_TIMEOUT, TimeUnit.MILLISECONDS);
+        this.request = new HeartbeatRequest(ctx, timeoutMillis);
+        this.request.send();
+      }
+    }
+  }
+
+  private class HeartbeatRequest extends InternalRequest {
+
+    HeartbeatRequest(ChannelHandlerContext ctx, long timeoutMillis) {
+      super(ctx, timeoutMillis);
+    }
+
+    @Override
+    String describe() {
+      return "heartbeat";
+    }
+
+    @Override
+    Message getRequest() {
+      return Options.INSTANCE;
+    }
+
+    @Override
+    void onResponse(Message response) {
+      if (response instanceof Supported) {
+        LOG.debug("{} Heartbeat query succeeded", ctx.channel());
+        HeartbeatHandler.this.request = null;
+      } else {
+        failOnUnexpected(response);
+      }
+    }
+
+    @Override
+    void fail(Throwable cause) {
+      ctx.fireExceptionCaught(cause);
+    }
+  }
+}

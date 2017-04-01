@@ -15,6 +15,7 @@
  */
 package com.datastax.oss.driver.internal.core.protocol;
 
+import com.datastax.oss.driver.internal.core.util.ByteBufs;
 import com.datastax.oss.protocol.internal.util.Bytes;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufAllocator;
@@ -34,15 +35,15 @@ public class ByteBufPrimitiveCodecTest {
 
   @Test
   public void should_concatenate() {
-    ByteBuf left = wrap(0xca, 0xfe);
-    ByteBuf right = wrap(0xba, 0xbe);
+    ByteBuf left = ByteBufs.wrap(0xca, 0xfe);
+    ByteBuf right = ByteBufs.wrap(0xba, 0xbe);
     assertThat(codec.concat(left, right)).containsExactly("0xcafebabe");
   }
 
   @Test
   public void should_concatenate_slices() {
-    ByteBuf left = wrap(0x00, 0xca, 0xfe, 0x00).slice(1, 2);
-    ByteBuf right = wrap(0x00, 0x00, 0xba, 0xbe, 0x00).slice(2, 2);
+    ByteBuf left = ByteBufs.wrap(0x00, 0xca, 0xfe, 0x00).slice(1, 2);
+    ByteBuf right = ByteBufs.wrap(0x00, 0x00, 0xba, 0xbe, 0x00).slice(2, 2);
 
     assertThat(codec.concat(left, right)).containsExactly("0xcafebabe");
   }
@@ -50,7 +51,7 @@ public class ByteBufPrimitiveCodecTest {
   @Test
   public void should_read_inet_v4() {
     ByteBuf source =
-        wrap(
+        ByteBufs.wrap(
             // length (as a byte)
             0x04,
             // address
@@ -78,7 +79,7 @@ public class ByteBufPrimitiveCodecTest {
         codec.concat(
             lengthAndAddress,
             // port (as an int)
-            wrap(0x00, 0x00, 0x23, 0x52));
+            ByteBufs.wrap(0x00, 0x00, 0x23, 0x52));
     InetSocketAddress inet = codec.readInet(source);
     assertThat(inet.getAddress().getHostAddress()).isEqualTo("0:0:0:0:0:0:0:1");
     assertThat(inet.getPort()).isEqualTo(9042);
@@ -90,7 +91,7 @@ public class ByteBufPrimitiveCodecTest {
   )
   public void should_fail_to_read_inet_if_length_invalid() {
     ByteBuf source =
-        wrap(
+        ByteBufs.wrap(
             // length (as a byte)
             0x03,
             // address
@@ -108,7 +109,7 @@ public class ByteBufPrimitiveCodecTest {
   @Test
   public void should_read_inetaddr_v4() {
     ByteBuf source =
-        wrap(
+        ByteBufs.wrap(
             // length (as a byte)
             0x04,
             // address
@@ -136,7 +137,7 @@ public class ByteBufPrimitiveCodecTest {
   )
   public void should_fail_to_read_inetaddr_if_length_invalid() {
     ByteBuf source =
-        wrap(
+        ByteBufs.wrap(
             // length (as a byte)
             0x03,
             // address
@@ -149,7 +150,7 @@ public class ByteBufPrimitiveCodecTest {
   @Test
   public void should_read_bytes() {
     ByteBuf source =
-        wrap(
+        ByteBufs.wrap(
             // length (as an int)
             0x00,
             0x00,
@@ -166,14 +167,14 @@ public class ByteBufPrimitiveCodecTest {
 
   @Test
   public void should_read_null_bytes() {
-    ByteBuf source = wrap(0xFF, 0xFF, 0xFF, 0xFF); // -1 (as an int)
+    ByteBuf source = ByteBufs.wrap(0xFF, 0xFF, 0xFF, 0xFF); // -1 (as an int)
     assertThat(codec.readBytes(source)).isNull();
   }
 
   @Test
   public void should_read_short_bytes() {
     ByteBuf source =
-        wrap(
+        ByteBufs.wrap(
             // length (as an unsigned short)
             0x00,
             0x04,
@@ -188,7 +189,7 @@ public class ByteBufPrimitiveCodecTest {
   @Test
   public void should_read_string() {
     ByteBuf source =
-        wrap(
+        ByteBufs.wrap(
             // length (as an unsigned short)
             0x00,
             0x05,
@@ -216,7 +217,7 @@ public class ByteBufPrimitiveCodecTest {
   @Test
   public void should_read_long_string() {
     ByteBuf source =
-        wrap(
+        ByteBufs.wrap(
             // length (as an int)
             0x00,
             0x00,
@@ -343,14 +344,6 @@ public class ByteBufPrimitiveCodecTest {
     ByteBuf dest = allocate(4);
     codec.writeBytes(null, dest);
     assertThat(dest).containsExactly("0xFFFFFFFF");
-  }
-
-  private static ByteBuf wrap(int... bytes) {
-    ByteBuf bb = ByteBufAllocator.DEFAULT.buffer(bytes.length);
-    for (int b : bytes) {
-      bb.writeByte(b);
-    }
-    return bb;
   }
 
   private static ByteBuf allocate(int length) {

@@ -1,0 +1,67 @@
+/*
+ * Copyright (C) 2017-2017 DataStax Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package com.datastax.oss.driver.internal.core;
+
+import java.util.concurrent.CompletionStage;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
+import java.util.function.Consumer;
+import org.assertj.core.api.AbstractAssert;
+
+import static org.assertj.core.api.Assertions.fail;
+
+public class CompletionStageAssert<V>
+    extends AbstractAssert<CompletionStageAssert<V>, CompletionStage<V>> {
+
+  public CompletionStageAssert(CompletionStage<V> actual) {
+    super(actual, CompletionStageAssert.class);
+  }
+
+  public CompletionStageAssert<V> isSuccess(Consumer<V> valueAssertions) {
+    try {
+      V value = actual.toCompletableFuture().get(100, TimeUnit.MILLISECONDS);
+      valueAssertions.accept(value);
+    } catch (TimeoutException e) {
+      fail("Future did not complete within the timeout");
+    } catch (Throwable t) {
+      fail("Unexpected error while waiting on the future", t);
+    }
+    return this;
+  }
+
+  public CompletionStageAssert<V> isSuccess() {
+    return isSuccess(v -> {});
+  }
+
+  public CompletionStageAssert<V> isFailed(Consumer<Throwable> failureAssertions) {
+    try {
+      actual.toCompletableFuture().get(100, TimeUnit.MILLISECONDS);
+      fail("Expected completion stage to fail");
+    } catch (TimeoutException e) {
+      fail("Future did not complete within the timeout");
+    } catch (InterruptedException e) {
+      fail("Interrupted while waiting for future to fail");
+    } catch (ExecutionException e) {
+      failureAssertions.accept(e.getCause());
+    }
+    return this;
+  }
+
+  public CompletionStageAssert<V> isFailed() {
+    return isFailed(f -> {});
+  }
+}

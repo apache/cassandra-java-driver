@@ -15,10 +15,28 @@
  */
 package com.datastax.oss.driver;
 
+import com.datastax.oss.driver.api.core.config.DriverConfig;
+import com.datastax.oss.driver.internal.core.CompletionStageAssert;
+import com.datastax.oss.driver.internal.core.DriverConfigAssert;
+import com.datastax.oss.driver.internal.core.NettyFutureAssert;
 import io.netty.buffer.ByteBuf;
+import io.netty.util.concurrent.Future;
+import java.util.concurrent.CompletionStage;
 
 public class Assertions extends org.assertj.core.api.Assertions {
   public static ByteBufAssert assertThat(ByteBuf actual) {
     return new ByteBufAssert(actual);
+  }
+
+  public static DriverConfigAssert assertThat(DriverConfig actual) {
+    return new DriverConfigAssert(actual);
+  }
+
+  public static <V> NettyFutureAssert<V> assertThat(Future<V> actual) {
+    return new NettyFutureAssert<>(actual);
+  }
+
+  public static <V> CompletionStageAssert<V> assertThat(CompletionStage<V> actual) {
+    return new CompletionStageAssert<>(actual);
   }
 }
