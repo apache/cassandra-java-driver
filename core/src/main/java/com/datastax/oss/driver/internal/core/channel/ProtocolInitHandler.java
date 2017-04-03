@@ -25,7 +25,6 @@ import com.datastax.oss.driver.api.core.config.DriverConfigProfile;
 import com.datastax.oss.driver.api.core.connection.ConnectionException;
 import com.datastax.oss.driver.internal.core.DriverContext;
 import com.datastax.oss.driver.internal.core.util.ProtocolUtils;
-import com.datastax.oss.driver.internal.core.util.netty.ConnectInitHandler;
 import com.datastax.oss.protocol.internal.Message;
 import com.datastax.oss.protocol.internal.ProtocolConstants;
 import com.datastax.oss.protocol.internal.request.AuthResponse;
