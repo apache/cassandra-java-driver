@@ -19,6 +19,8 @@ import com.datastax.oss.driver.api.core.auth.AuthProvider;
 import com.datastax.oss.driver.api.core.config.CoreDriverOption;
 import com.datastax.oss.driver.api.core.config.DriverConfig;
 import com.datastax.oss.driver.api.core.config.DriverConfigProfile;
+import com.datastax.oss.driver.internal.core.channel.DefaultWriteCoalescer;
+import com.datastax.oss.driver.internal.core.channel.WriteCoalescer;
 import com.datastax.oss.driver.internal.core.config.typesafe.TypeSafeDriverConfig;
 import com.datastax.oss.driver.internal.core.protocol.ByteBufPrimitiveCodec;
 import com.datastax.oss.driver.internal.core.util.Reflection;
@@ -57,6 +59,8 @@ public class DefaultDriverContext implements DriverContext {
       new LazyReference<>("ioEventLoopGroup", this::buildIoEventLoopGroup);
   private final LazyReference<AuthProvider> authProvider =
       new LazyReference<>("authProvider", this::buildAuthProvider);
+  private final LazyReference<WriteCoalescer> writeCoalescer =
+      new LazyReference<>("writeCoalescer", this::buildWriteCoalescer);
 
   private DriverConfig buildDriverConfig() {
     return new TypeSafeDriverConfig(
@@ -98,6 +102,10 @@ public class DefaultDriverContext implements DriverContext {
     }
   }
 
+  private WriteCoalescer buildWriteCoalescer() {
+    return new DefaultWriteCoalescer(5);
+  }
+
   @Override
   public DriverConfig config() {
     return config.get();
@@ -136,5 +144,10 @@ public class DefaultDriverContext implements DriverContext {
   @Override
   public AuthProvider authProvider() {
     return authProvider.get();
+  }
+
+  @Override
+  public WriteCoalescer writeCoalescer() {
+    return writeCoalescer.get();
   }
 }

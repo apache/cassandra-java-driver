@@ -18,12 +18,12 @@ package com.datastax.oss.driver.internal.core.channel;
 import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.protocol.internal.Message;
 import io.netty.channel.Channel;
-import io.netty.channel.ChannelFuture;
 import io.netty.util.AttributeKey;
 import io.netty.util.concurrent.Future;
 import io.netty.util.concurrent.Promise;
 import java.nio.ByteBuffer;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * A thin wrapper around a Netty {@link Channel}, to send requests to a Cassandra node and receive
@@ -31,12 +31,16 @@ import java.util.Map;
  */
 public class DriverChannel {
   static final AttributeKey<String> CLUSTER_NAME_KEY = AttributeKey.newInstance("cluster_name");
-  static final Object FORCE_CLOSE_EVENT = new Object();
+  static final Object GRACEFUL_CLOSE_MESSAGE = new Object();
+  static final Object FORCEFUL_CLOSE_MESSAGE = new Object();
 
   private final Channel channel;
+  private final WriteCoalescer writeCoalescer;
+  private final AtomicBoolean closing = new AtomicBoolean();
 
-  DriverChannel(Channel channel) {
+  DriverChannel(Channel channel, WriteCoalescer writeCoalescer) {
     this.channel = channel;
+    this.writeCoalescer = writeCoalescer;
   }
 
   /**
@@ -48,8 +52,11 @@ public class DriverChannel {
       boolean tracing,
       Map<String, ByteBuffer> customPayload,
       ResponseCallback responseCallback) {
+    if (closing.get()) {
+      throw new IllegalStateException("Driver channel is closing");
+    }
     RequestMessage message = new RequestMessage(request, tracing, customPayload, responseCallback);
-    return channel.writeAndFlush(message); //TODO coalesce flushes
+    return writeCoalescer.writeAndFlush(channel, message);
   }
 
   /**
@@ -86,14 +93,27 @@ public class DriverChannel {
     return channel.attr(CLUSTER_NAME_KEY).get();
   }
 
+  /**
+   * Initiates a graceful shutdown: no new requests will be accepted, but all pending requests will
+   * be allowed to complete before the underlying channel is closed.
+   */
   public Future<Void> close() {
-    return channel.close();
+    if (closing.compareAndSet(false, true)) {
+      // go through the coalescer: this guarantees that we won't reject writes that were submitted
+      // before, but had not been coalesced yet.
+      writeCoalescer.writeAndFlush(channel, GRACEFUL_CLOSE_MESSAGE);
+    }
+    return channel.closeFuture();
   }
 
+  /**
+   * Initiates a forced shutdown: any pending request will be aborted and the underlying channel
+   * will be closed.
+   */
   public Future<Void> forceClose() {
-    ChannelFuture closeFuture = channel.close();
-    channel.pipeline().fireUserEventTriggered(FORCE_CLOSE_EVENT);
-    return closeFuture;
+    closing.set(true);
+    writeCoalescer.writeAndFlush(channel, FORCEFUL_CLOSE_MESSAGE);
+    return channel.closeFuture();
   }
 
   // This is essentially a stripped-down Frame. We can't materialize the frame before writing,

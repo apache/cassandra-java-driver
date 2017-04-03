@@ -27,8 +27,6 @@ import com.datastax.oss.protocol.internal.response.result.Void;
 import com.google.common.collect.ImmutableList;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelPromise;
-import java.util.LinkedList;
-import java.util.Queue;
 import java.util.concurrent.TimeUnit;
 import org.mockito.Mock;
 import org.mockito.Mockito;
@@ -136,11 +134,11 @@ public class InFlightHandlerTest extends ChannelHandlerTestBase {
         new DriverChannel.RequestMessage(QUERY, false, Frame.NO_PAYLOAD, responseCallback));
 
     // When
-    ChannelFuture closeFuture = channel.close();
+    channel.write(DriverChannel.GRACEFUL_CLOSE_MESSAGE);
 
     // Then
     // not closed yet because there is one pending request
-    assertThat(closeFuture).isNotDone();
+    assertThat(channel.closeFuture()).isNotDone();
 
     // When
     // completing pending request
@@ -148,7 +146,33 @@ public class InFlightHandlerTest extends ChannelHandlerTestBase {
     writeInboundFrame(requestFrame, Void.INSTANCE);
 
     // Then
-    assertThat(closeFuture).isSuccess();
+    assertThat(channel.closeFuture()).isSuccess();
+  }
+
+  @Test
+  public void should_refuse_new_writes_during_orderly_close() {
+    // Given
+    Mockito.when(streamIds.acquire()).thenReturn(42);
+    MockResponseCallback responseCallback = new MockResponseCallback();
+    channel.writeAndFlush(
+        new DriverChannel.RequestMessage(QUERY, false, Frame.NO_PAYLOAD, responseCallback));
+
+    // When
+    channel.write(DriverChannel.GRACEFUL_CLOSE_MESSAGE);
+
+    // Then
+    // not closed yet because there is one pending request
+    assertThat(channel.closeFuture()).isNotDone();
+    // should not allow other write
+    ChannelFuture otherWriteFuture =
+        channel.writeAndFlush(
+            new DriverChannel.RequestMessage(QUERY, false, Frame.NO_PAYLOAD, responseCallback));
+    assertThat(otherWriteFuture)
+        .isFailed(
+            e ->
+                assertThat(e)
+                    .isInstanceOf(IllegalStateException.class)
+                    .hasMessage("Channel is closing"));
   }
 
   @Test
@@ -163,12 +187,10 @@ public class InFlightHandlerTest extends ChannelHandlerTestBase {
         new DriverChannel.RequestMessage(QUERY, false, Frame.NO_PAYLOAD, responseCallback2));
 
     // When
-    ChannelFuture closeFuture = channel.close();
-    assertThat(closeFuture).isNotDone();
-    channel.pipeline().fireUserEventTriggered(DriverChannel.FORCE_CLOSE_EVENT);
+    channel.write(DriverChannel.FORCEFUL_CLOSE_MESSAGE);
 
     // Then
-    assertThat(closeFuture).isSuccess();
+    assertThat(channel.closeFuture()).isSuccess();
     for (MockResponseCallback callback : ImmutableList.of(responseCallback1, responseCallback2)) {
       assertThat(callback.getFailure())
           .isInstanceOf(ConnectionException.class)
@@ -270,48 +292,5 @@ public class InFlightHandlerTest extends ChannelHandlerTestBase {
 
     // Then
     assertThat(setKeyspacePromise).isFailed();
-  }
-
-  static class MockResponseCallback implements ResponseCallback {
-    private final boolean holdStreamId;
-    private final Queue<Object> responses = new LinkedList<>();
-
-    private volatile int streamId = -1;
-
-    MockResponseCallback() {
-      this(false);
-    }
-
-    MockResponseCallback(boolean holdStreamId) {
-      this.holdStreamId = holdStreamId;
-    }
-
-    @Override
-    public void onResponse(Frame responseFrame) {
-      responses.offer(responseFrame);
-    }
-
-    @Override
-    public void onFailure(Throwable error) {
-      responses.offer(error);
-    }
-
-    @Override
-    public boolean holdStreamId() {
-      return holdStreamId;
-    }
-
-    @Override
-    public void onStreamIdAssigned(int streamId) {
-      this.streamId = streamId;
-    }
-
-    Frame getLastResponse() {
-      return (Frame) responses.poll();
-    }
-
-    Throwable getFailure() {
-      return (Throwable) responses.poll();
-    }
   }
 }

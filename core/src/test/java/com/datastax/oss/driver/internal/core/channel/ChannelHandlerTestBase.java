@@ -54,6 +54,12 @@ public class ChannelHandlerTestBase {
     return ((Frame) o);
   }
 
+  protected void assertNoOutboundFrame() {
+    channel.runPendingTasks();
+    Object o = channel.readOutbound();
+    assertThat(o).isNull();
+  }
+
   /** Writes a response frame for the tested handler to read. */
   protected void writeInboundFrame(Frame responseFrame) {
     channel.writeInbound(responseFrame);

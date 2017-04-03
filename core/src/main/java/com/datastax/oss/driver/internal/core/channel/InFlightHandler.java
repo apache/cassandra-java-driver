@@ -27,7 +27,6 @@ import com.datastax.oss.protocol.internal.Frame;
 import com.datastax.oss.protocol.internal.Message;
 import com.datastax.oss.protocol.internal.request.Query;
 import com.datastax.oss.protocol.internal.response.result.SetKeyspace;
-import com.google.common.base.Preconditions;
 import com.google.common.collect.Maps;
 import io.netty.channel.ChannelDuplexHandler;
 import io.netty.channel.ChannelFuture;
@@ -42,7 +41,7 @@ public class InFlightHandler extends ChannelDuplexHandler {
   private final StreamIdGenerator streamIds;
   private final Map<Integer, ResponseCallback> inFlight;
   private final long setKeyspaceTimeoutMillis;
-  private ChannelPromise closePromise;
+  private boolean closingGracefully;
   private SetKeyspaceRequest setKeyspaceRequest;
 
   InFlightHandler(
@@ -54,10 +53,16 @@ public class InFlightHandler extends ChannelDuplexHandler {
   }
 
   @Override
-  public void write(ChannelHandlerContext ctx, Object msg, ChannelPromise promise)
-      throws Exception {
-    if (closePromise != null) {
+  public void write(ChannelHandlerContext ctx, Object in, ChannelPromise promise) throws Exception {
+    if (closingGracefully) {
       promise.setFailure(new IllegalStateException("Channel is closing"));
+      return;
+    } else if (in == DriverChannel.GRACEFUL_CLOSE_MESSAGE) {
+      closingGracefully = true;
+      return;
+    } else if (in == DriverChannel.FORCEFUL_CLOSE_MESSAGE) {
+      abortAllInFlight(new ConnectionException("Channel was force-closed"));
+      ctx.channel().close();
       return;
     }
 
@@ -73,7 +78,7 @@ public class InFlightHandler extends ChannelDuplexHandler {
       return;
     }
 
-    RequestMessage message = (RequestMessage) msg;
+    RequestMessage message = (RequestMessage) in;
     Frame frame =
         Frame.forRequest(
             protocolVersion.getCode(),
@@ -126,25 +131,8 @@ public class InFlightHandler extends ChannelDuplexHandler {
   }
 
   @Override
-  public void close(ChannelHandlerContext ctx, ChannelPromise promise) throws Exception {
-    // Delay the actual close if there are pending requests
-    if (inFlight.isEmpty()) {
-      super.close(ctx, promise);
-    } else {
-      this.closePromise = promise;
-    }
-  }
-
-  @Override
   public void userEventTriggered(ChannelHandlerContext ctx, Object event) throws Exception {
-    if (event == DriverChannel.FORCE_CLOSE_EVENT) {
-      Preconditions.checkState(
-          closePromise != null, "Channel should be closed before sending FORCE_CLOSE event");
-      // Note: this is guaranteed by DriverChannel.forceClose
-
-      abortAllInFlight(new ConnectionException("Channel was force-closed"));
-      super.close(ctx, closePromise);
-    } else if (event instanceof ReleaseEvent) {
+    if (event instanceof ReleaseEvent) {
       release(((ReleaseEvent) event).streamId, ctx);
     } else if (event instanceof SetKeyspaceEvent) {
       SetKeyspaceEvent setKeyspaceEvent = (SetKeyspaceEvent) event;
@@ -167,12 +155,8 @@ public class InFlightHandler extends ChannelDuplexHandler {
     streamIds.release(streamId);
     // If we're in the middle of an orderly close and this was the last request, actually close
     // the channel now
-    if (closePromise != null && inFlight.isEmpty()) {
-      try {
-        super.close(ctx, closePromise);
-      } catch (Exception e) {
-        ctx.fireExceptionCaught(e);
-      }
+    if (closingGracefully && inFlight.isEmpty()) {
+      ctx.channel().close();
     }
     return responseCallback;
   }
