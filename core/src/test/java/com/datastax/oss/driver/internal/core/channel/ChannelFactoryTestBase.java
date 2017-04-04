@@ -21,6 +21,7 @@ import com.datastax.oss.driver.api.core.config.CoreDriverOption;
 import com.datastax.oss.driver.api.core.config.DriverConfig;
 import com.datastax.oss.driver.api.core.config.DriverConfigProfile;
 import com.datastax.oss.driver.internal.core.DriverContext;
+import com.datastax.oss.driver.internal.core.NettyOptions;
 import com.datastax.oss.driver.internal.core.ProtocolVersionRegistry;
 import com.datastax.oss.driver.internal.core.protocol.ByteBufPrimitiveCodec;
 import com.datastax.oss.protocol.internal.Compressor;
@@ -75,6 +76,7 @@ abstract class ChannelFactoryTestBase {
   @Mock DriverContext driverContext;
   @Mock DriverConfig driverConfig;
   @Mock DriverConfigProfile defaultConfigProfile;
+  @Mock NettyOptions nettyOptions;
   @Mock ProtocolVersionRegistry protocolVersionRegistry;
 
   // The server's I/O thread will store the last received request here, and block until the test
@@ -110,8 +112,10 @@ abstract class ChannelFactoryTestBase {
         .thenReturn(1);
 
     Mockito.when(driverContext.protocolVersionRegistry()).thenReturn(protocolVersionRegistry);
-    Mockito.when(driverContext.ioEventLoopGroup()).thenReturn(clientGroup);
-    Mockito.when(driverContext.channelClass()).thenAnswer((Answer<Object>) i -> LocalChannel.class);
+    Mockito.when(driverContext.nettyOptions()).thenReturn(nettyOptions);
+    Mockito.when(nettyOptions.ioEventLoopGroup()).thenReturn(clientGroup);
+    Mockito.when(nettyOptions.channelClass()).thenAnswer((Answer<Object>) i -> LocalChannel.class);
+    Mockito.when(nettyOptions.allocator()).thenReturn(ByteBufAllocator.DEFAULT);
     Mockito.when(driverContext.frameCodec())
         .thenReturn(
             FrameCodec.defaultClient(

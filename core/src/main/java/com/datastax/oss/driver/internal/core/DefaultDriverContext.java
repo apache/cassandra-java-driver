@@ -27,15 +27,9 @@ import com.datastax.oss.driver.internal.core.util.Reflection;
 import com.datastax.oss.driver.internal.core.util.concurrent.LazyReference;
 import com.datastax.oss.protocol.internal.Compressor;
 import com.datastax.oss.protocol.internal.FrameCodec;
-import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.typesafe.config.ConfigFactory;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufAllocator;
-import io.netty.channel.Channel;
-import io.netty.channel.EventLoopGroup;
-import io.netty.channel.nio.NioEventLoopGroup;
-import io.netty.channel.socket.nio.NioSocketChannel;
-import java.util.concurrent.ThreadFactory;
 
 /**
  * Default implementation of the driver context.
@@ -53,10 +47,8 @@ public class DefaultDriverContext implements DriverContext {
       new LazyReference<>("frameCodec", this::buildFrameCodec);
   private final LazyReference<ProtocolVersionRegistry> protocolVersionRegistry =
       new LazyReference<>("protocolVersionRegistry", this::buildProtocolVersionRegistry);
-  private final LazyReference<ThreadFactory> ioThreadFactory =
-      new LazyReference<>("ioThreadFactory", this::buildIoThreadFactory);
-  private final LazyReference<EventLoopGroup> ioEventLoopGroup =
-      new LazyReference<>("ioEventLoopGroup", this::buildIoEventLoopGroup);
+  private final LazyReference<NettyOptions> nettyOptions =
+      new LazyReference<>("nettyOptions", this::buildNettyOptions);
   private final LazyReference<AuthProvider> authProvider =
       new LazyReference<>("authProvider", this::buildAuthProvider);
   private final LazyReference<WriteCoalescer> writeCoalescer =
@@ -74,20 +66,15 @@ public class DefaultDriverContext implements DriverContext {
 
   protected FrameCodec<ByteBuf> buildFrameCodec() {
     return FrameCodec.defaultClient(
-        new ByteBufPrimitiveCodec(ByteBufAllocator.DEFAULT), compressor());
+        new ByteBufPrimitiveCodec(nettyOptions().allocator()), compressor());
   }
 
   protected ProtocolVersionRegistry buildProtocolVersionRegistry() {
     return new ProtocolVersionRegistry();
   }
 
-  protected ThreadFactory buildIoThreadFactory() {
-    // TODO use the driver instance's name
-    return new ThreadFactoryBuilder().build();
-  }
-
-  protected EventLoopGroup buildIoEventLoopGroup() {
-    return new NioEventLoopGroup(0, ioThreadFactory());
+  protected NettyOptions buildNettyOptions() {
+    return new DefaultNettyOptions();
   }
 
   protected AuthProvider buildAuthProvider() {
@@ -127,18 +114,8 @@ public class DefaultDriverContext implements DriverContext {
   }
 
   @Override
-  public ThreadFactory ioThreadFactory() {
-    return ioThreadFactory.get();
-  }
-
-  @Override
-  public EventLoopGroup ioEventLoopGroup() {
-    return ioEventLoopGroup.get();
-  }
-
-  @Override
-  public Class<? extends Channel> channelClass() {
-    return NioSocketChannel.class;
+  public NettyOptions nettyOptions() {
+    return nettyOptions.get();
   }
 
   @Override

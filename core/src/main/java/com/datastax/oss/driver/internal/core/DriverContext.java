@@ -45,11 +45,7 @@ public interface DriverContext {
 
   ProtocolVersionRegistry protocolVersionRegistry();
 
-  ThreadFactory ioThreadFactory();
-
-  EventLoopGroup ioEventLoopGroup();
-
-  Class<? extends Channel> channelClass();
+  NettyOptions nettyOptions();
 
   AuthProvider authProvider();
 

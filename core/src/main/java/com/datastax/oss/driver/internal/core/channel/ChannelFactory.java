@@ -21,6 +21,7 @@ import com.datastax.oss.driver.api.core.UnsupportedProtocolVersionException;
 import com.datastax.oss.driver.api.core.config.CoreDriverOption;
 import com.datastax.oss.driver.api.core.config.DriverConfigProfile;
 import com.datastax.oss.driver.internal.core.DriverContext;
+import com.datastax.oss.driver.internal.core.NettyOptions;
 import com.datastax.oss.driver.internal.core.protocol.FrameDecoder;
 import com.datastax.oss.driver.internal.core.protocol.FrameEncoder;
 import com.google.common.annotations.VisibleForTesting;
@@ -28,6 +29,7 @@ import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelInitializer;
+import io.netty.channel.ChannelOption;
 import java.net.SocketAddress;
 import java.util.List;
 import java.util.Optional;
@@ -88,11 +90,17 @@ public class ChannelFactory {
       List<ProtocolVersion> attemptedVersions,
       CompletableFuture<DriverChannel> resultFuture) {
 
+    NettyOptions nettyOptions = driverContext.nettyOptions();
+
     Bootstrap bootstrap =
         new Bootstrap()
-            .group(driverContext.ioEventLoopGroup())
-            .channel(driverContext.channelClass())
+            .group(nettyOptions.ioEventLoopGroup())
+            .channel(nettyOptions.channelClass())
+            .option(ChannelOption.ALLOCATOR, nettyOptions.allocator())
             .handler(initializer(currentVersion, keyspace));
+
+    nettyOptions.afterBootstrapInitialized(bootstrap);
+
     ChannelFuture connectFuture = bootstrap.connect(address);
 
     connectFuture.addListener(
@@ -149,7 +157,6 @@ public class ChannelFactory {
             defaultConfigProfile.getInt(CoreDriverOption.CONNECTION_MAX_REQUESTS);
 
         // TODO SSL
-        // TODO hook to add custom handlers
         InFlightHandler inFlightHandler =
             new InFlightHandler(
                 protocolVersion,
@@ -164,6 +171,8 @@ public class ChannelFactory {
             .addLast("inflight", inFlightHandler)
             .addLast("heartbeat", new HeartbeatHandler(defaultConfigProfile))
             .addLast("init", initHandler);
+
+        driverContext.nettyOptions().afterChannelInitialized(channel);
       }
     };
   }
