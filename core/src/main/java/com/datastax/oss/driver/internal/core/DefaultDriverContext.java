@@ -29,7 +29,6 @@ import com.datastax.oss.protocol.internal.Compressor;
 import com.datastax.oss.protocol.internal.FrameCodec;
 import com.typesafe.config.ConfigFactory;
 import io.netty.buffer.ByteBuf;
-import io.netty.buffer.ByteBufAllocator;
 
 /**
  * Default implementation of the driver context.
@@ -39,19 +38,19 @@ import io.netty.buffer.ByteBufAllocator;
  */
 public class DefaultDriverContext implements DriverContext {
 
-  private final LazyReference<DriverConfig> config =
+  private final LazyReference<DriverConfig> configRef =
       new LazyReference<>("config", this::buildDriverConfig);
-  private final LazyReference<Compressor<ByteBuf>> compressor =
+  private final LazyReference<Compressor<ByteBuf>> compressorRef =
       new LazyReference<>("compressor", this::buildCompressor);
-  private final LazyReference<FrameCodec<ByteBuf>> frameCodec =
+  private final LazyReference<FrameCodec<ByteBuf>> frameCodecRef =
       new LazyReference<>("frameCodec", this::buildFrameCodec);
-  private final LazyReference<ProtocolVersionRegistry> protocolVersionRegistry =
+  private final LazyReference<ProtocolVersionRegistry> protocolVersionRegistryRef =
       new LazyReference<>("protocolVersionRegistry", this::buildProtocolVersionRegistry);
-  private final LazyReference<NettyOptions> nettyOptions =
+  private final LazyReference<NettyOptions> nettyOptionsRef =
       new LazyReference<>("nettyOptions", this::buildNettyOptions);
-  private final LazyReference<AuthProvider> authProvider =
+  private final LazyReference<AuthProvider> authProviderRef =
       new LazyReference<>("authProvider", this::buildAuthProvider);
-  private final LazyReference<WriteCoalescer> writeCoalescer =
+  private final LazyReference<WriteCoalescer> writeCoalescerRef =
       new LazyReference<>("writeCoalescer", this::buildWriteCoalescer);
 
   private DriverConfig buildDriverConfig() {
@@ -95,36 +94,36 @@ public class DefaultDriverContext implements DriverContext {
 
   @Override
   public DriverConfig config() {
-    return config.get();
+    return configRef.get();
   }
 
   @Override
   public Compressor<ByteBuf> compressor() {
-    return compressor.get();
+    return compressorRef.get();
   }
 
   @Override
   public FrameCodec<ByteBuf> frameCodec() {
-    return frameCodec.get();
+    return frameCodecRef.get();
   }
 
   @Override
   public ProtocolVersionRegistry protocolVersionRegistry() {
-    return protocolVersionRegistry.get();
+    return protocolVersionRegistryRef.get();
   }
 
   @Override
   public NettyOptions nettyOptions() {
-    return nettyOptions.get();
+    return nettyOptionsRef.get();
   }
 
   @Override
   public AuthProvider authProvider() {
-    return authProvider.get();
+    return authProviderRef.get();
   }
 
   @Override
   public WriteCoalescer writeCoalescer() {
-    return writeCoalescer.get();
+    return writeCoalescerRef.get();
   }
 }
