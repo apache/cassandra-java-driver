@@ -22,33 +22,35 @@ import java.net.SocketAddress;
 import java.nio.ByteBuffer;
 
 /**
- * A simple {@code AuthProvider} implementation.
+ * A simple authentication provider that supports SASL authentication using the PLAIN mechanism for
+ * version 3 (or above) of the CQL native protocol.
  *
- * <p>This provider allows to programmatically define authentication information that will then
- * apply to all hosts. The {@link Authenticator} instances it returns support SASL authentication
- * using the PLAIN mechanism for version 2 (or above) of the CQL native protocol.
+ * <p>To activate this provider, an {@code authentication} section must be included in the driver
+ * configuration, for example:
+ *
+ * <pre>
+ * datastax-java-driver {
+ *   authentication {
+ *     provider-class = com.datastax.driver.api.core.auth.PlainTextAuthProvider
+ *     config {
+ *       username = cassandra
+ *       password = cassandra
+ *     }
+ *   }
+ * }
+ * </pre>
+ *
+ * See the {@code reference.conf} file included with the driver for more information.
  */
 public class PlainTextAuthProvider implements AuthProvider {
 
   private final DriverConfigProfile config;
 
-  /**
-   * Create a new simple authentication information provider with the supplied credentials.
-   *
-   * @param config the configuration of the driver (default profile).
-   */
+  /** Builds a new instance from the driver configuration. */
   public PlainTextAuthProvider(DriverConfigProfile config) {
     this.config = config;
   }
 
-  /**
-   * Use the supplied credentials and the SASL PLAIN mechanism to login to the server.
-   *
-   * @param host the Cassandra host with which we want to authenticate.
-   * @param serverAuthenticator the configured authenticator on the host.
-   * @return an authenticator instance which can be used to perform authentication negotiations on
-   *     behalf of the client.
-   */
   @Override
   public Authenticator newAuthenticator(SocketAddress host, String serverAuthenticator) {
     String username = config.getString(CoreDriverOption.AUTHENTICATION_CONFIG_USERNAME);
@@ -56,10 +58,6 @@ public class PlainTextAuthProvider implements AuthProvider {
     return new PlainTextAuthenticator(username, password);
   }
 
-  /**
-   * Simple implementation of {@link Authenticator} which can perform authentication against
-   * Cassandra servers configured with {@code PasswordAuthenticator}.
-   */
   private static class PlainTextAuthenticator implements SyncAuthenticator {
 
     private final ByteBuffer initialToken;
