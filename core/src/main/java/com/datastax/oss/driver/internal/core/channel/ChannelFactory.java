@@ -30,6 +30,7 @@ import io.netty.channel.Channel;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.ChannelOption;
+import io.netty.channel.ChannelPipeline;
 import java.net.SocketAddress;
 import java.util.List;
 import java.util.Optional;
@@ -97,7 +98,7 @@ public class ChannelFactory {
             .group(nettyOptions.ioEventLoopGroup())
             .channel(nettyOptions.channelClass())
             .option(ChannelOption.ALLOCATOR, nettyOptions.allocator())
-            .handler(initializer(currentVersion, keyspace));
+            .handler(initializer(address, currentVersion, keyspace));
 
     nettyOptions.afterBootstrapInitialized(bootstrap);
 
@@ -142,7 +143,7 @@ public class ChannelFactory {
 
   @VisibleForTesting
   ChannelInitializer<Channel> initializer(
-      final ProtocolVersion protocolVersion, final CqlIdentifier keyspace) {
+      SocketAddress address, final ProtocolVersion protocolVersion, final CqlIdentifier keyspace) {
     return new ChannelInitializer<Channel>() {
       @Override
       protected void initChannel(Channel channel) throws Exception {
@@ -164,8 +165,13 @@ public class ChannelFactory {
                 setKeyspaceTimeoutMillis);
         ProtocolInitHandler initHandler =
             new ProtocolInitHandler(driverContext, protocolVersion, clusterName, keyspace);
-        channel
-            .pipeline()
+
+        ChannelPipeline pipeline = channel.pipeline();
+        driverContext
+            .sslHandlerFactory()
+            .newSslHandler(channel, address)
+            .map(h -> pipeline.addLast("ssl", h));
+        pipeline
             .addLast("encoder", new FrameEncoder(driverContext.frameCodec()))
             .addLast("decoder", new FrameDecoder(driverContext.frameCodec(), maxFrameLength))
             .addLast("inflight", inFlightHandler)

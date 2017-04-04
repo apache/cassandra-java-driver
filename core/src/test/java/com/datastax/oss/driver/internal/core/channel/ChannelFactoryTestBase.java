@@ -24,6 +24,7 @@ import com.datastax.oss.driver.internal.core.DriverContext;
 import com.datastax.oss.driver.internal.core.NettyOptions;
 import com.datastax.oss.driver.internal.core.ProtocolVersionRegistry;
 import com.datastax.oss.driver.internal.core.protocol.ByteBufPrimitiveCodec;
+import com.datastax.oss.driver.internal.core.ssl.SslHandlerFactory;
 import com.datastax.oss.protocol.internal.Compressor;
 import com.datastax.oss.protocol.internal.Frame;
 import com.datastax.oss.protocol.internal.FrameCodec;
@@ -39,6 +40,7 @@ import io.netty.channel.DefaultEventLoopGroup;
 import io.netty.channel.local.LocalAddress;
 import io.netty.channel.local.LocalChannel;
 import io.netty.channel.local.LocalServerChannel;
+import java.net.SocketAddress;
 import java.util.Collections;
 import java.util.concurrent.Exchanger;
 import java.util.concurrent.TimeUnit;
@@ -120,6 +122,7 @@ abstract class ChannelFactoryTestBase {
         .thenReturn(
             FrameCodec.defaultClient(
                 new ByteBufPrimitiveCodec(ByteBufAllocator.DEFAULT), Compressor.none()));
+    Mockito.when(driverContext.sslHandlerFactory()).thenReturn(SslHandlerFactory.NONE);
 
     // Start local server
     ServerBootstrap serverBootstrap =
@@ -195,7 +198,7 @@ abstract class ChannelFactoryTestBase {
 
     @Override
     ChannelInitializer<Channel> initializer(
-        ProtocolVersion protocolVersion, CqlIdentifier keyspace) {
+        SocketAddress address, ProtocolVersion protocolVersion, CqlIdentifier keyspace) {
       return new ChannelInitializer<Channel>() {
         @Override
         protected void initChannel(Channel channel) throws Exception {

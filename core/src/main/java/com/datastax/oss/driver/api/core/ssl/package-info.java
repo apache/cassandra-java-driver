@@ -13,26 +13,5 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.datastax.oss.driver.api.core.config;
-
-import java.util.List;
-import java.util.concurrent.TimeUnit;
-
-/**
- * A profile in the driver's configuration.
- *
- * @see DriverConfig
- */
-public interface DriverConfigProfile {
-  boolean isDefined(DriverOption option);
-
-  int getInt(DriverOption option);
-
-  String getString(DriverOption option);
-
-  List<String> getStringList(DriverOption option);
-
-  long getBytes(DriverOption option);
-
-  long getDuration(DriverOption option, TimeUnit targetUnit);
-}
+/** Support for secured communication between the driver and Cassandra nodes. */
+package com.datastax.oss.driver.api.core.ssl;

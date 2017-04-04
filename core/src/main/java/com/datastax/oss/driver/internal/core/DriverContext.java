@@ -18,6 +18,7 @@ package com.datastax.oss.driver.internal.core;
 import com.datastax.oss.driver.api.core.auth.AuthProvider;
 import com.datastax.oss.driver.api.core.config.DriverConfig;
 import com.datastax.oss.driver.internal.core.channel.WriteCoalescer;
+import com.datastax.oss.driver.internal.core.ssl.SslHandlerFactory;
 import com.datastax.oss.protocol.internal.Compressor;
 import com.datastax.oss.protocol.internal.FrameCodec;
 import io.netty.buffer.ByteBuf;
@@ -50,4 +51,6 @@ public interface DriverContext {
   AuthProvider authProvider();
 
   WriteCoalescer writeCoalescer();
+
+  SslHandlerFactory sslHandlerFactory();
 }

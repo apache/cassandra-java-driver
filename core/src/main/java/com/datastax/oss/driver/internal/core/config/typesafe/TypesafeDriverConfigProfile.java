@@ -18,6 +18,7 @@ package com.datastax.oss.driver.internal.core.config.typesafe;
 import com.datastax.oss.driver.api.core.config.DriverConfigProfile;
 import com.datastax.oss.driver.api.core.config.DriverOption;
 import com.typesafe.config.Config;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 public class TypesafeDriverConfigProfile implements DriverConfigProfile {
@@ -45,6 +46,11 @@ public class TypesafeDriverConfigProfile implements DriverConfigProfile {
   @Override
   public String getString(DriverOption option) {
     return config.getString(option.getPath());
+  }
+
+  @Override
+  public List<String> getStringList(DriverOption option) {
+    return config.getStringList(option.getPath());
   }
 
   @Override

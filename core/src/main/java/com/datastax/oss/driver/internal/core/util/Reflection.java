@@ -16,6 +16,7 @@
 package com.datastax.oss.driver.internal.core.util;
 
 import com.datastax.oss.driver.api.core.config.DriverConfigProfile;
+import com.datastax.oss.driver.api.core.config.DriverOption;
 import com.google.common.base.Preconditions;
 import java.lang.reflect.Constructor;
 
@@ -43,17 +44,31 @@ public class Reflection {
   }
 
   /**
-   * Builds a new instance of a class given its name, expecting a public constructor that takes the
-   * driver's configuration as argument.
+   * Tries to create an instance of a class, given its name defined in the driver configuration.
+   *
+   * @param config the driver configuration.
+   * @param classNameOption the configuration option that contains the fully-qualified name of the
+   *     class to instantiate. It must have a constructor that takes the configuration as an
+   *     argument.
+   * @param expectedSuperType a super-type that the class is expected to implement/extend.
+   * @return the new instance, or {@code null} if {@code classNameOption} is not defined in the
+   *     configuration.
    */
-  public static <T> T buildWithConfig(
-      String className, Class<T> expectedSuperType, DriverConfigProfile config, String source) {
-    Class<?> clazz = loadClass(className, source);
+  public static <T> T buildFromConfig(
+      DriverConfigProfile config, DriverOption classNameOption, Class<T> expectedSuperType) {
+
+    if (!config.isDefined(classNameOption)) {
+      return null;
+    }
+
+    String className = config.getString(classNameOption);
+    String configPath = classNameOption.getPath();
+    Class<?> clazz = loadClass(className, configPath);
     Preconditions.checkArgument(
         expectedSuperType.isAssignableFrom(clazz),
         "Expected class %s (specified by %s) to be a subtype of %s",
         className,
-        source,
+        configPath,
         expectedSuperType.getName());
 
     Constructor<?> constructor;
@@ -64,14 +79,15 @@ public class Reflection {
           String.format(
               "Expected class %s (specified by %s) "
                   + "to have an accessible constructor with a single %s argument",
-              className, source, DriverConfigProfile.class.getSimpleName()));
+              className, configPath, DriverConfigProfile.class.getSimpleName()));
     }
     try {
       Object instance = constructor.newInstance(config);
       return expectedSuperType.cast(instance);
     } catch (Exception e) {
       throw new IllegalArgumentException(
-          String.format("Error instantiating class %s (specified by %s)", className, source), e);
+          String.format("Error instantiating class %s (specified by %s)", className, configPath),
+          e);
     }
   }
 }

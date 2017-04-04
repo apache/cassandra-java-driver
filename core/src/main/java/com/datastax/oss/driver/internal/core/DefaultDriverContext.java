@@ -18,11 +18,13 @@ package com.datastax.oss.driver.internal.core;
 import com.datastax.oss.driver.api.core.auth.AuthProvider;
 import com.datastax.oss.driver.api.core.config.CoreDriverOption;
 import com.datastax.oss.driver.api.core.config.DriverConfig;
-import com.datastax.oss.driver.api.core.config.DriverConfigProfile;
+import com.datastax.oss.driver.api.core.ssl.SslEngineFactory;
 import com.datastax.oss.driver.internal.core.channel.DefaultWriteCoalescer;
 import com.datastax.oss.driver.internal.core.channel.WriteCoalescer;
 import com.datastax.oss.driver.internal.core.config.typesafe.TypeSafeDriverConfig;
 import com.datastax.oss.driver.internal.core.protocol.ByteBufPrimitiveCodec;
+import com.datastax.oss.driver.internal.core.ssl.JdkSslHandlerFactory;
+import com.datastax.oss.driver.internal.core.ssl.SslHandlerFactory;
 import com.datastax.oss.driver.internal.core.util.Reflection;
 import com.datastax.oss.driver.internal.core.util.concurrent.LazyReference;
 import com.datastax.oss.protocol.internal.Compressor;
@@ -52,6 +54,8 @@ public class DefaultDriverContext implements DriverContext {
       new LazyReference<>("authProvider", this::buildAuthProvider);
   private final LazyReference<WriteCoalescer> writeCoalescerRef =
       new LazyReference<>("writeCoalescer", this::buildWriteCoalescer);
+  private final LazyReference<SslHandlerFactory> sslHandlerFactoryRef =
+      new LazyReference<>("sslHandlerFactory", this::buildSslHandlerFactory);
 
   private DriverConfig buildDriverConfig() {
     return new TypeSafeDriverConfig(
@@ -77,15 +81,25 @@ public class DefaultDriverContext implements DriverContext {
   }
 
   protected AuthProvider buildAuthProvider() {
-    DriverConfigProfile defaultConfig = config().defaultProfile();
-    CoreDriverOption classOption = CoreDriverOption.AUTHENTICATION_PROVIDER_CLASS;
-    if (defaultConfig.isDefined(classOption)) {
-      String className = defaultConfig.getString(classOption);
-      return Reflection.buildWithConfig(
-          className, AuthProvider.class, defaultConfig, classOption.getPath());
-    } else {
-      return AuthProvider.NONE;
-    }
+    AuthProvider configuredProvider =
+        Reflection.buildFromConfig(
+            config().defaultProfile(),
+            CoreDriverOption.AUTHENTICATION_PROVIDER_CLASS,
+            AuthProvider.class);
+    return (configuredProvider == null) ? AuthProvider.NONE : configuredProvider;
+  }
+
+  protected SslHandlerFactory buildSslHandlerFactory() {
+    // If a JDK-based factory was provided through the public API, wrap that, otherwise no SSL.
+    SslEngineFactory sslEngineFactory =
+        Reflection.buildFromConfig(
+            config().defaultProfile(), CoreDriverOption.SSL_FACTORY_CLASS, SslEngineFactory.class);
+    return (sslEngineFactory == null)
+        ? SslHandlerFactory.NONE
+        : new JdkSslHandlerFactory(sslEngineFactory);
+
+    // For more advanced options (like using Netty's native OpenSSL support instead of the JDK),
+    // extend DefaultDriverContext and override this method
   }
 
   private WriteCoalescer buildWriteCoalescer() {
@@ -125,5 +139,10 @@ public class DefaultDriverContext implements DriverContext {
   @Override
   public WriteCoalescer writeCoalescer() {
     return writeCoalescerRef.get();
+  }
+
+  @Override
+  public SslHandlerFactory sslHandlerFactory() {
+    return sslHandlerFactoryRef.get();
   }
 }

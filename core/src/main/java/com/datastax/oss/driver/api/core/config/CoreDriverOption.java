@@ -27,7 +27,11 @@ public enum CoreDriverOption implements DriverOption {
 
   AUTHENTICATION_PROVIDER_CLASS("authentication.provider-class", false),
   AUTHENTICATION_CONFIG_USERNAME("authentication.config.username", false),
-  AUTHENTICATION_CONFIG_PASSWORD("authentication.config.password", false);
+  AUTHENTICATION_CONFIG_PASSWORD("authentication.config.password", false),
+
+  SSL_FACTORY_CLASS("ssl.factory-class", false),
+  SSL_CONFIG_CIPHER_SUITES("ssl.config.cipher-suites", false),
+  ;
 
   private final String path;
   private final boolean required;
