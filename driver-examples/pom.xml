@@ -30,7 +30,6 @@
     <url>https://github.com/datastax/java-driver</url>
 
     <properties>
-        <main.basedir>${project.parent.basedir}</main.basedir>
         <jax-rs.version>2.0.1</jax-rs.version>
         <jersey.version>2.23.1</jersey.version>
         <hk2.version>2.4.0-b34</hk2.version>

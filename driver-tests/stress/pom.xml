@@ -28,10 +28,6 @@
     <description>A stress test example for DataStax Java Driver for Apache Cassandra.</description>
     <url>https://github.com/datastax/java-driver</url>
 
-    <properties>
-        <main.basedir>${project.parent.parent.basedir}</main.basedir>
-    </properties>
-
     <dependencies>
         <dependency>
             <groupId>com.datastax.cassandra</groupId>

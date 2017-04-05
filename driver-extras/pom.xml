@@ -30,7 +30,6 @@
     <url>https://github.com/datastax/java-driver</url>
 
     <properties>
-        <main.basedir>${project.parent.basedir}</main.basedir>
         <test.groups>unit</test.groups>
         <jdk8.excludes>none</jdk8.excludes>
     </properties>

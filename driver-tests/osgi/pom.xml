@@ -42,7 +42,6 @@
         test with no matching methods.
         -->
         <test.skip>true</test.skip>
-        <main.basedir>${project.parent.parent.basedir}</main.basedir>
     </properties>
 
     <dependencies>

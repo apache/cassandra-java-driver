@@ -29,7 +29,6 @@
     <url>https://github.com/datastax/java-driver</url>
 
     <properties>
-        <main.basedir>${project.parent.basedir}</main.basedir>
         <groovy.version>2.4.7</groovy.version>
     </properties>
 
