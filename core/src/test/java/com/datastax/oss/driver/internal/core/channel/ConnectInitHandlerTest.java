@@ -15,8 +15,6 @@
  */
 package com.datastax.oss.driver.internal.core.channel;
 
-import com.datastax.oss.driver.internal.core.channel.ChannelHandlerTestBase;
-import com.datastax.oss.driver.internal.core.channel.ConnectInitHandler;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelHandlerContext;
 import java.net.InetSocketAddress;

@@ -19,7 +19,6 @@ import com.datastax.oss.driver.api.core.config.CoreDriverOption;
 import com.datastax.oss.driver.api.core.config.DriverConfig;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
-import java.util.List;
 import org.testng.annotations.Test;
 
 import static com.datastax.oss.driver.Assertions.assertThat;
