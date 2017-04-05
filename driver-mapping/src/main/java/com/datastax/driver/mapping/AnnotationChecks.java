@@ -95,9 +95,9 @@ class AnnotationChecks {
         }
     }
 
-    static void validateOrder(List<AliasedMappedProperty<?>> properties, String annotation) {
+    static void validateOrder(List<AliasedMappedProperty> properties, String annotation) {
         for (int i = 0; i < properties.size(); i++) {
-            AliasedMappedProperty<?> property = properties.get(i);
+            AliasedMappedProperty property = properties.get(i);
             int pos = property.mappedProperty.getPosition();
             if (pos != i)
                 throw new IllegalArgumentException(String.format("Invalid ordering value %d for annotation %s of property '%s', was expecting %d",

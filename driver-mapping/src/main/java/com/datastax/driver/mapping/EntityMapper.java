@@ -29,10 +29,10 @@ class EntityMapper<T> {
     final ConsistencyLevel writeConsistency;
     final ConsistencyLevel readConsistency;
 
-    final List<AliasedMappedProperty<?>> partitionKeys = new ArrayList<AliasedMappedProperty<?>>();
-    final List<AliasedMappedProperty<?>> clusteringColumns = new ArrayList<AliasedMappedProperty<?>>();
+    final List<AliasedMappedProperty> partitionKeys = new ArrayList<AliasedMappedProperty>();
+    final List<AliasedMappedProperty> clusteringColumns = new ArrayList<AliasedMappedProperty>();
 
-    final List<AliasedMappedProperty<?>> allColumns = new ArrayList<AliasedMappedProperty<?>>();
+    final List<AliasedMappedProperty> allColumns = new ArrayList<AliasedMappedProperty>();
 
     EntityMapper(Class<T> entityClass, String keyspace, String table, ConsistencyLevel writeConsistency, ConsistencyLevel readConsistency) {
         this.entityClass = entityClass;
@@ -46,11 +46,11 @@ class EntityMapper<T> {
         return partitionKeys.size() + clusteringColumns.size();
     }
 
-    AliasedMappedProperty<?> getPrimaryKeyColumn(int i) {
+    AliasedMappedProperty getPrimaryKeyColumn(int i) {
         return i < partitionKeys.size() ? partitionKeys.get(i) : clusteringColumns.get(i - partitionKeys.size());
     }
 
-    void addColumns(List<AliasedMappedProperty<?>> pks, List<AliasedMappedProperty<?>> ccs, List<AliasedMappedProperty<?>> rgs) {
+    void addColumns(List<AliasedMappedProperty> pks, List<AliasedMappedProperty> ccs, List<AliasedMappedProperty> rgs) {
         partitionKeys.addAll(pks);
         clusteringColumns.addAll(ccs);
         allColumns.addAll(pks);

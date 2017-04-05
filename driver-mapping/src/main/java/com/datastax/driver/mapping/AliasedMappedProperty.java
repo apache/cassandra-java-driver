@@ -15,13 +15,14 @@
  */
 package com.datastax.driver.mapping;
 
-class AliasedMappedProperty<T> {
+class AliasedMappedProperty {
 
-    final MappedProperty<T> mappedProperty;
+    final MappedProperty<Object> mappedProperty;
     final String alias;
 
-    AliasedMappedProperty(MappedProperty<T> mappedProperty, String alias) {
-        this.mappedProperty = mappedProperty;
+    @SuppressWarnings("unchecked")
+    AliasedMappedProperty(MappedProperty<?> mappedProperty, String alias) {
+        this.mappedProperty = (MappedProperty<Object>) mappedProperty;
         this.alias = alias;
     }
 }
