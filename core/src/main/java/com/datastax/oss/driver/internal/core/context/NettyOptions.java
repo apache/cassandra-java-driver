@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.datastax.oss.driver.internal.core;
+package com.datastax.oss.driver.internal.core.context;
 
 import io.netty.bootstrap.Bootstrap;
 import io.netty.buffer.ByteBufAllocator;
@@ -35,8 +35,8 @@ public interface NettyOptions {
 
   /**
    * The byte buffer allocator to use. This must always return the same instance. Note that this is
-   * also used by the default implementation of {@link DriverContext#frameCodec()}, and the built-in
-   * {@link com.datastax.oss.protocol.internal.Compressor} implementations.
+   * also used by the default implementation of {@link InternalDriverContext#frameCodec()}, and the
+   * built-in {@link com.datastax.oss.protocol.internal.Compressor} implementations.
    */
   ByteBufAllocator allocator();
 

@@ -17,8 +17,10 @@ package com.datastax.oss.driver.internal.core.util;
 
 import com.datastax.oss.driver.api.core.config.DriverConfigProfile;
 import com.datastax.oss.driver.api.core.config.DriverOption;
+import com.datastax.oss.driver.api.core.context.DriverContext;
 import com.google.common.base.Preconditions;
 import java.lang.reflect.Constructor;
+import java.util.Optional;
 
 public class Reflection {
   /**
@@ -46,19 +48,24 @@ public class Reflection {
   /**
    * Tries to create an instance of a class, given its name defined in the driver configuration.
    *
-   * @param config the driver configuration.
+   * <p>By convention, a class instantiated through this method must have a constructor that takes a
+   * {@link DriverContext} as its single argument.
+   *
+   * @param context the driver context.
    * @param classNameOption the configuration option that contains the fully-qualified name of the
-   *     class to instantiate. It must have a constructor that takes the configuration as an
-   *     argument.
+   *     class to instantiate. It will be looked up in the default profile of the configuration
+   *     stored in the context.
    * @param expectedSuperType a super-type that the class is expected to implement/extend.
-   * @return the new instance, or {@code null} if {@code classNameOption} is not defined in the
+   * @return the new instance, or empty if {@code classNameOption} is not defined in the
    *     configuration.
    */
-  public static <T> T buildFromConfig(
-      DriverConfigProfile config, DriverOption classNameOption, Class<T> expectedSuperType) {
+  public static <T> Optional<T> buildFromConfig(
+      DriverContext context, DriverOption classNameOption, Class<T> expectedSuperType) {
+
+    DriverConfigProfile config = context.config().defaultProfile();
 
     if (!config.isDefined(classNameOption)) {
-      return null;
+      return Optional.empty();
     }
 
     String className = config.getString(classNameOption);
@@ -73,7 +80,7 @@ public class Reflection {
 
     Constructor<?> constructor;
     try {
-      constructor = clazz.getConstructor(DriverConfigProfile.class);
+      constructor = clazz.getConstructor(DriverContext.class);
     } catch (NoSuchMethodException e) {
       throw new IllegalArgumentException(
           String.format(
@@ -82,8 +89,8 @@ public class Reflection {
               className, configPath, DriverConfigProfile.class.getSimpleName()));
     }
     try {
-      Object instance = constructor.newInstance(config);
-      return expectedSuperType.cast(instance);
+      Object instance = constructor.newInstance(context);
+      return Optional.of(expectedSuperType.cast(instance));
     } catch (Exception e) {
       throw new IllegalArgumentException(
           String.format("Error instantiating class %s (specified by %s)", className, configPath),

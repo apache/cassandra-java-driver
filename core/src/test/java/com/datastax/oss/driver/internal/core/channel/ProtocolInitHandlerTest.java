@@ -22,9 +22,9 @@ import com.datastax.oss.driver.api.core.auth.AuthenticationException;
 import com.datastax.oss.driver.api.core.config.CoreDriverOption;
 import com.datastax.oss.driver.api.core.config.DriverConfig;
 import com.datastax.oss.driver.api.core.config.DriverConfigProfile;
-import com.datastax.oss.driver.internal.core.DriverContext;
 import com.datastax.oss.driver.internal.core.ProtocolVersionRegistry;
 import com.datastax.oss.driver.internal.core.TestResponses;
+import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
 import com.datastax.oss.protocol.internal.Frame;
 import com.datastax.oss.protocol.internal.ProtocolConstants;
 import com.datastax.oss.protocol.internal.request.AuthResponse;
@@ -39,6 +39,7 @@ import com.datastax.oss.protocol.internal.response.result.SetKeyspace;
 import com.datastax.oss.protocol.internal.util.Bytes;
 import io.netty.channel.ChannelFuture;
 import java.net.InetSocketAddress;
+import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import org.mockito.Mock;
 import org.mockito.Mockito;
@@ -52,7 +53,7 @@ public class ProtocolInitHandlerTest extends ChannelHandlerTestBase {
 
   private static final long QUERY_TIMEOUT_MILLIS = 100L;
 
-  @Mock private DriverContext driverContext;
+  @Mock private InternalDriverContext internalDriverContext;
   @Mock private DriverConfig driverConfig;
   @Mock private DriverConfigProfile defaultConfigProfile;
   private ProtocolVersionRegistry protocolVersionRegistry = new ProtocolVersionRegistry();
@@ -62,13 +63,14 @@ public class ProtocolInitHandlerTest extends ChannelHandlerTestBase {
   public void setup() {
     super.setup();
     MockitoAnnotations.initMocks(this);
-    Mockito.when(driverContext.config()).thenReturn(driverConfig);
+    Mockito.when(internalDriverContext.config()).thenReturn(driverConfig);
     Mockito.when(driverConfig.defaultProfile()).thenReturn(defaultConfigProfile);
     Mockito.when(
             defaultConfigProfile.getDuration(
                 CoreDriverOption.CONNECTION_INIT_QUERY_TIMEOUT, TimeUnit.MILLISECONDS))
         .thenReturn(QUERY_TIMEOUT_MILLIS);
-    Mockito.when(driverContext.protocolVersionRegistry()).thenReturn(protocolVersionRegistry);
+    Mockito.when(internalDriverContext.protocolVersionRegistry())
+        .thenReturn(protocolVersionRegistry);
 
     channel
         .pipeline()
@@ -82,7 +84,8 @@ public class ProtocolInitHandlerTest extends ChannelHandlerTestBase {
     channel
         .pipeline()
         .addLast(
-            "init", new ProtocolInitHandler(driverContext, CoreProtocolVersion.V4, null, null));
+            "init",
+            new ProtocolInitHandler(internalDriverContext, CoreProtocolVersion.V4, null, null));
 
     ChannelFuture connectFuture = channel.connect(new InetSocketAddress("localhost", 9042));
 
@@ -110,7 +113,8 @@ public class ProtocolInitHandlerTest extends ChannelHandlerTestBase {
     channel
         .pipeline()
         .addLast(
-            "init", new ProtocolInitHandler(driverContext, CoreProtocolVersion.V4, null, null));
+            "init",
+            new ProtocolInitHandler(internalDriverContext, CoreProtocolVersion.V4, null, null));
 
     ChannelFuture connectFuture = channel.connect(new InetSocketAddress("localhost", 9042));
 
@@ -128,14 +132,15 @@ public class ProtocolInitHandlerTest extends ChannelHandlerTestBase {
     channel
         .pipeline()
         .addLast(
-            "init", new ProtocolInitHandler(driverContext, CoreProtocolVersion.V4, null, null));
+            "init",
+            new ProtocolInitHandler(internalDriverContext, CoreProtocolVersion.V4, null, null));
 
     String serverAuthenticator = "mockServerAuthenticator";
     AuthProvider authProvider = Mockito.mock(AuthProvider.class);
     MockAuthenticator authenticator = new MockAuthenticator();
     Mockito.when(authProvider.newAuthenticator(channel.remoteAddress(), serverAuthenticator))
         .thenReturn(authenticator);
-    Mockito.when(driverContext.authProvider()).thenReturn(authProvider);
+    Mockito.when(internalDriverContext.authProvider()).thenReturn(Optional.of(authProvider));
 
     ChannelFuture connectFuture = channel.connect(new InetSocketAddress("localhost", 9042));
 
@@ -184,14 +189,15 @@ public class ProtocolInitHandlerTest extends ChannelHandlerTestBase {
     channel
         .pipeline()
         .addLast(
-            "init", new ProtocolInitHandler(driverContext, CoreProtocolVersion.V4, null, null));
+            "init",
+            new ProtocolInitHandler(internalDriverContext, CoreProtocolVersion.V4, null, null));
 
     String serverAuthenticator = "mockServerAuthenticator";
     AuthProvider authProvider = Mockito.mock(AuthProvider.class);
     MockAuthenticator authenticator = new MockAuthenticator();
     Mockito.when(authProvider.newAuthenticator(channel.remoteAddress(), serverAuthenticator))
         .thenReturn(authenticator);
-    Mockito.when(driverContext.authProvider()).thenReturn(authProvider);
+    Mockito.when(internalDriverContext.authProvider()).thenReturn(Optional.of(authProvider));
 
     ChannelFuture connectFuture = channel.connect(new InetSocketAddress("localhost", 9042));
 
@@ -224,7 +230,7 @@ public class ProtocolInitHandlerTest extends ChannelHandlerTestBase {
         .addLast(
             "init",
             new ProtocolInitHandler(
-                driverContext, CoreProtocolVersion.V4, "expectedClusterName", null));
+                internalDriverContext, CoreProtocolVersion.V4, "expectedClusterName", null));
 
     ChannelFuture connectFuture = channel.connect(new InetSocketAddress("localhost", 9042));
 
@@ -249,7 +255,7 @@ public class ProtocolInitHandlerTest extends ChannelHandlerTestBase {
         .addLast(
             "init",
             new ProtocolInitHandler(
-                driverContext, CoreProtocolVersion.V4, "expectedClusterName", null));
+                internalDriverContext, CoreProtocolVersion.V4, "expectedClusterName", null));
 
     ChannelFuture connectFuture = channel.connect(new InetSocketAddress("localhost", 9042));
 
@@ -273,7 +279,7 @@ public class ProtocolInitHandlerTest extends ChannelHandlerTestBase {
         .addLast(
             "init",
             new ProtocolInitHandler(
-                driverContext, CoreProtocolVersion.V4, null, CqlIdentifier.fromCql("ks")));
+                internalDriverContext, CoreProtocolVersion.V4, null, CqlIdentifier.fromCql("ks")));
 
     ChannelFuture connectFuture = channel.connect(new InetSocketAddress("localhost", 9042));
 

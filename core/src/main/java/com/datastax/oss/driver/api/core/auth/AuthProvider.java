@@ -26,19 +26,6 @@ import java.net.SocketAddress;
 public interface AuthProvider {
 
   /**
-   * A provider that provides no authentication capability.
-   *
-   * <p>This is only useful as a placeholder when no authentication is to be used.
-   */
-  AuthProvider NONE =
-      (host, serverAuthenticator) -> {
-        throw new AuthenticationException(
-            host,
-            String.format(
-                "Host %s requires authentication, but no authenticator configured", host));
-      };
-
-  /**
    * The authenticator to use when connecting to {@code host}.
    *
    * @param host the Cassandra host to connect to.

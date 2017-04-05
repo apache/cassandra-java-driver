@@ -17,6 +17,7 @@ package com.datastax.oss.driver.api.core.ssl;
 
 import com.datastax.oss.driver.api.core.config.CoreDriverOption;
 import com.datastax.oss.driver.api.core.config.DriverConfigProfile;
+import com.datastax.oss.driver.api.core.context.DriverContext;
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
 import java.security.NoSuchAlgorithmException;
@@ -45,16 +46,17 @@ import javax.net.ssl.SSLEngine;
  */
 public class DefaultSslEngineFactory implements SslEngineFactory {
 
-  private final SSLContext context;
+  private final SSLContext sslContext;
   private final String[] cipherSuites;
 
   /** Builds a new instance from the driver configuration. */
-  public DefaultSslEngineFactory(DriverConfigProfile config) {
+  public DefaultSslEngineFactory(DriverContext driverContext) {
     try {
-      this.context = SSLContext.getDefault();
+      this.sslContext = SSLContext.getDefault();
     } catch (NoSuchAlgorithmException e) {
       throw new IllegalStateException("Cannot initialize SSL Context", e);
     }
+    DriverConfigProfile config = driverContext.config().defaultProfile();
     if (config.isDefined(CoreDriverOption.SSL_CONFIG_CIPHER_SUITES)) {
       List<String> list = config.getStringList(CoreDriverOption.SSL_CONFIG_CIPHER_SUITES);
       String tmp[] = new String[list.size()];
@@ -69,9 +71,9 @@ public class DefaultSslEngineFactory implements SslEngineFactory {
     SSLEngine engine;
     if (remoteEndpoint instanceof InetSocketAddress) {
       InetSocketAddress address = (InetSocketAddress) remoteEndpoint;
-      engine = context.createSSLEngine(address.getHostName(), address.getPort());
+      engine = sslContext.createSSLEngine(address.getHostName(), address.getPort());
     } else {
-      engine = context.createSSLEngine();
+      engine = sslContext.createSSLEngine();
     }
     engine.setUseClientMode(true);
     if (cipherSuites != null) {

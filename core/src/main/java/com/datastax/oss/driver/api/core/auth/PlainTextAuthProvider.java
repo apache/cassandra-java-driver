@@ -17,6 +17,7 @@ package com.datastax.oss.driver.api.core.auth;
 
 import com.datastax.oss.driver.api.core.config.CoreDriverOption;
 import com.datastax.oss.driver.api.core.config.DriverConfigProfile;
+import com.datastax.oss.driver.api.core.context.DriverContext;
 import com.google.common.base.Charsets;
 import java.net.SocketAddress;
 import java.nio.ByteBuffer;
@@ -46,9 +47,9 @@ public class PlainTextAuthProvider implements AuthProvider {
 
   private final DriverConfigProfile config;
 
-  /** Builds a new instance from the driver configuration. */
-  public PlainTextAuthProvider(DriverConfigProfile config) {
-    this.config = config;
+  /** Builds a new instance. */
+  public PlainTextAuthProvider(DriverContext context) {
+    this.config = context.config().defaultProfile();
   }
 
   @Override

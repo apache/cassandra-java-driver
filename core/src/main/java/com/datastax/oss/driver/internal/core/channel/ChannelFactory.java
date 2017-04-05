@@ -20,8 +20,8 @@ import com.datastax.oss.driver.api.core.ProtocolVersion;
 import com.datastax.oss.driver.api.core.UnsupportedProtocolVersionException;
 import com.datastax.oss.driver.api.core.config.CoreDriverOption;
 import com.datastax.oss.driver.api.core.config.DriverConfigProfile;
-import com.datastax.oss.driver.internal.core.DriverContext;
-import com.datastax.oss.driver.internal.core.NettyOptions;
+import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
+import com.datastax.oss.driver.internal.core.context.NettyOptions;
 import com.datastax.oss.driver.internal.core.protocol.FrameDecoder;
 import com.datastax.oss.driver.internal.core.protocol.FrameEncoder;
 import com.google.common.annotations.VisibleForTesting;
@@ -47,20 +47,20 @@ public class ChannelFactory {
 
   private static final Logger LOG = LoggerFactory.getLogger(ChannelFactory.class);
 
-  protected final DriverContext driverContext;
+  protected final InternalDriverContext internalDriverContext;
 
   /** either set from the configuration, or null and will be negotiated */
   @VisibleForTesting ProtocolVersion protocolVersion;
 
   @VisibleForTesting volatile String clusterName;
 
-  public ChannelFactory(DriverContext driverContext) {
-    this.driverContext = driverContext;
+  public ChannelFactory(InternalDriverContext internalDriverContext) {
+    this.internalDriverContext = internalDriverContext;
 
-    DriverConfigProfile defaultConfig = driverContext.config().defaultProfile();
+    DriverConfigProfile defaultConfig = internalDriverContext.config().defaultProfile();
     if (defaultConfig.isDefined(CoreDriverOption.PROTOCOL_VERSION)) {
       String versionName = defaultConfig.getString(CoreDriverOption.PROTOCOL_VERSION);
-      this.protocolVersion = driverContext.protocolVersionRegistry().fromName(versionName);
+      this.protocolVersion = internalDriverContext.protocolVersionRegistry().fromName(versionName);
     } // else it will be negotiated with the first opened connection
   }
 
@@ -75,7 +75,7 @@ public class ChannelFactory {
       currentVersion = protocolVersion;
       isNegotiating = false;
     } else {
-      currentVersion = driverContext.protocolVersionRegistry().highestNonBeta();
+      currentVersion = internalDriverContext.protocolVersionRegistry().highestNonBeta();
       isNegotiating = true;
     }
 
@@ -91,7 +91,7 @@ public class ChannelFactory {
       List<ProtocolVersion> attemptedVersions,
       CompletableFuture<DriverChannel> resultFuture) {
 
-    NettyOptions nettyOptions = driverContext.nettyOptions();
+    NettyOptions nettyOptions = internalDriverContext.nettyOptions();
 
     Bootstrap bootstrap =
         new Bootstrap()
@@ -108,7 +108,7 @@ public class ChannelFactory {
         cf -> {
           if (connectFuture.isSuccess()) {
             DriverChannel driverChannel =
-                new DriverChannel(connectFuture.channel(), driverContext.writeCoalescer());
+                new DriverChannel(connectFuture.channel(), internalDriverContext.writeCoalescer());
             // If this is the first successful connection, remember the protocol version and
             // cluster name for future connections.
             if (isNegotiating) {
@@ -123,7 +123,7 @@ public class ChannelFactory {
             if (error instanceof UnsupportedProtocolVersionException && isNegotiating) {
               attemptedVersions.add(currentVersion);
               Optional<ProtocolVersion> downgraded =
-                  driverContext.protocolVersionRegistry().downgrade(currentVersion);
+                  internalDriverContext.protocolVersionRegistry().downgrade(currentVersion);
               if (downgraded.isPresent()) {
                 LOG.info(
                     "Failed to connect with protocol {}, retrying with {}",
@@ -147,7 +147,7 @@ public class ChannelFactory {
     return new ChannelInitializer<Channel>() {
       @Override
       protected void initChannel(Channel channel) throws Exception {
-        DriverConfigProfile defaultConfigProfile = driverContext.config().defaultProfile();
+        DriverConfigProfile defaultConfigProfile = internalDriverContext.config().defaultProfile();
 
         long setKeyspaceTimeoutMillis =
             defaultConfigProfile.getDuration(
@@ -164,21 +164,22 @@ public class ChannelFactory {
                 new StreamIdGenerator(maxRequestsPerConnection),
                 setKeyspaceTimeoutMillis);
         ProtocolInitHandler initHandler =
-            new ProtocolInitHandler(driverContext, protocolVersion, clusterName, keyspace);
+            new ProtocolInitHandler(internalDriverContext, protocolVersion, clusterName, keyspace);
 
         ChannelPipeline pipeline = channel.pipeline();
-        driverContext
+        internalDriverContext
             .sslHandlerFactory()
-            .newSslHandler(channel, address)
+            .map(f -> f.newSslHandler(channel, address))
             .map(h -> pipeline.addLast("ssl", h));
         pipeline
-            .addLast("encoder", new FrameEncoder(driverContext.frameCodec()))
-            .addLast("decoder", new FrameDecoder(driverContext.frameCodec(), maxFrameLength))
+            .addLast("encoder", new FrameEncoder(internalDriverContext.frameCodec()))
+            .addLast(
+                "decoder", new FrameDecoder(internalDriverContext.frameCodec(), maxFrameLength))
             .addLast("inflight", inFlightHandler)
             .addLast("heartbeat", new HeartbeatHandler(defaultConfigProfile))
             .addLast("init", initHandler);
 
-        driverContext.nettyOptions().afterChannelInitialized(channel);
+        internalDriverContext.nettyOptions().afterChannelInitialized(channel);
       }
     };
   }

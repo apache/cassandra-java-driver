@@ -19,7 +19,6 @@ import com.datastax.oss.driver.api.core.ssl.SslEngineFactory;
 import io.netty.channel.Channel;
 import io.netty.handler.ssl.SslHandler;
 import java.net.SocketAddress;
-import java.util.Optional;
 import javax.net.ssl.SSLEngine;
 
 /** SSL handler factory used when JDK-based SSL was configured through the driver's public API. */
@@ -31,8 +30,8 @@ public class JdkSslHandlerFactory implements SslHandlerFactory {
   }
 
   @Override
-  public Optional<SslHandler> newSslHandler(Channel channel, SocketAddress remoteEndpoint) {
+  public SslHandler newSslHandler(Channel channel, SocketAddress remoteEndpoint) {
     SSLEngine engine = sslEngineFactory.newSslEngine(remoteEndpoint);
-    return Optional.of(new SslHandler(engine));
+    return new SslHandler(engine);
   }
 }

@@ -20,8 +20,8 @@ import com.datastax.oss.driver.api.core.ProtocolVersion;
 import com.datastax.oss.driver.api.core.config.CoreDriverOption;
 import com.datastax.oss.driver.api.core.config.DriverConfig;
 import com.datastax.oss.driver.api.core.config.DriverConfigProfile;
-import com.datastax.oss.driver.internal.core.DriverContext;
-import com.datastax.oss.driver.internal.core.NettyOptions;
+import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
+import com.datastax.oss.driver.internal.core.context.NettyOptions;
 import com.datastax.oss.driver.internal.core.ProtocolVersionRegistry;
 import com.datastax.oss.driver.internal.core.protocol.ByteBufPrimitiveCodec;
 import com.datastax.oss.driver.internal.core.ssl.SslHandlerFactory;
@@ -42,6 +42,7 @@ import io.netty.channel.local.LocalChannel;
 import io.netty.channel.local.LocalServerChannel;
 import java.net.SocketAddress;
 import java.util.Collections;
+import java.util.Optional;
 import java.util.concurrent.Exchanger;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -75,7 +76,7 @@ abstract class ChannelFactoryTestBase {
   DefaultEventLoopGroup serverGroup;
   DefaultEventLoopGroup clientGroup;
 
-  @Mock DriverContext driverContext;
+  @Mock InternalDriverContext internalDriverContext;
   @Mock DriverConfig driverConfig;
   @Mock DriverConfigProfile defaultConfigProfile;
   @Mock NettyOptions nettyOptions;
@@ -98,7 +99,7 @@ abstract class ChannelFactoryTestBase {
     serverGroup = new DefaultEventLoopGroup(1);
     clientGroup = new DefaultEventLoopGroup(1);
 
-    Mockito.when(driverContext.config()).thenReturn(driverConfig);
+    Mockito.when(internalDriverContext.config()).thenReturn(driverConfig);
     Mockito.when(driverConfig.defaultProfile()).thenReturn(defaultConfigProfile);
     Mockito.when(defaultConfigProfile.isDefined(CoreDriverOption.AUTHENTICATION_PROVIDER_CLASS))
         .thenReturn(false);
@@ -113,16 +114,17 @@ abstract class ChannelFactoryTestBase {
     Mockito.when(defaultConfigProfile.getInt(CoreDriverOption.CONNECTION_MAX_REQUESTS))
         .thenReturn(1);
 
-    Mockito.when(driverContext.protocolVersionRegistry()).thenReturn(protocolVersionRegistry);
-    Mockito.when(driverContext.nettyOptions()).thenReturn(nettyOptions);
+    Mockito.when(internalDriverContext.protocolVersionRegistry())
+        .thenReturn(protocolVersionRegistry);
+    Mockito.when(internalDriverContext.nettyOptions()).thenReturn(nettyOptions);
     Mockito.when(nettyOptions.ioEventLoopGroup()).thenReturn(clientGroup);
     Mockito.when(nettyOptions.channelClass()).thenAnswer((Answer<Object>) i -> LocalChannel.class);
     Mockito.when(nettyOptions.allocator()).thenReturn(ByteBufAllocator.DEFAULT);
-    Mockito.when(driverContext.frameCodec())
+    Mockito.when(internalDriverContext.frameCodec())
         .thenReturn(
             FrameCodec.defaultClient(
                 new ByteBufPrimitiveCodec(ByteBufAllocator.DEFAULT), Compressor.none()));
-    Mockito.when(driverContext.sslHandlerFactory()).thenReturn(SslHandlerFactory.NONE);
+    Mockito.when(internalDriverContext.sslHandlerFactory()).thenReturn(Optional.empty());
 
     // Start local server
     ServerBootstrap serverBootstrap =
@@ -184,7 +186,7 @@ abstract class ChannelFactoryTestBase {
   }
 
   ChannelFactory newChannelFactory() {
-    return new TestChannelFactory(driverContext);
+    return new TestChannelFactory(internalDriverContext);
   }
 
   // A simplified channel factory to use in the tests.
@@ -192,8 +194,8 @@ abstract class ChannelFactoryTestBase {
   // Frame objects on the server side, which is simpler to test.
   private static class TestChannelFactory extends ChannelFactory {
 
-    private TestChannelFactory(DriverContext driverContext) {
-      super(driverContext);
+    private TestChannelFactory(InternalDriverContext internalDriverContext) {
+      super(internalDriverContext);
     }
 
     @Override
@@ -202,7 +204,8 @@ abstract class ChannelFactoryTestBase {
       return new ChannelInitializer<Channel>() {
         @Override
         protected void initChannel(Channel channel) throws Exception {
-          DriverConfigProfile defaultConfigProfile = driverContext.config().defaultProfile();
+          DriverConfigProfile defaultConfigProfile =
+              internalDriverContext.config().defaultProfile();
 
           long setKeyspaceTimeoutMillis =
               defaultConfigProfile.getDuration(
@@ -216,7 +219,8 @@ abstract class ChannelFactoryTestBase {
                   new StreamIdGenerator(maxRequestsPerConnection),
                   setKeyspaceTimeoutMillis);
           ProtocolInitHandler initHandler =
-              new ProtocolInitHandler(driverContext, protocolVersion, clusterName, keyspace);
+              new ProtocolInitHandler(
+                  internalDriverContext, protocolVersion, clusterName, keyspace);
           channel.pipeline().addLast("inflight", inFlightHandler).addLast("init", initHandler);
         }
       };

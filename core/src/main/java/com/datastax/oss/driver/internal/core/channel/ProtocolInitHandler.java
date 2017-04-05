@@ -23,7 +23,7 @@ import com.datastax.oss.driver.api.core.auth.Authenticator;
 import com.datastax.oss.driver.api.core.config.CoreDriverOption;
 import com.datastax.oss.driver.api.core.config.DriverConfigProfile;
 import com.datastax.oss.driver.api.core.connection.ConnectionException;
-import com.datastax.oss.driver.internal.core.DriverContext;
+import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
 import com.datastax.oss.driver.internal.core.util.ProtocolUtils;
 import com.datastax.oss.protocol.internal.Message;
 import com.datastax.oss.protocol.internal.ProtocolConstants;
@@ -40,6 +40,7 @@ import com.datastax.oss.protocol.internal.response.result.SetKeyspace;
 import com.datastax.oss.protocol.internal.util.Bytes;
 import com.google.common.base.Charsets;
 import io.netty.channel.ChannelHandlerContext;
+import java.net.SocketAddress;
 import java.nio.ByteBuffer;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
@@ -55,7 +56,7 @@ class ProtocolInitHandler extends ConnectInitHandler {
   private static final Query CLUSTER_NAME_QUERY =
       new Query("SELECT cluster_name FROM system.local");
 
-  private final DriverContext driverContext;
+  private final InternalDriverContext internalDriverContext;
   private final long timeoutMillis;
   private final ProtocolVersion initialProtocolVersion;
   private final CqlIdentifier keyspaceName;
@@ -63,14 +64,14 @@ class ProtocolInitHandler extends ConnectInitHandler {
   private final String expectedClusterName;
 
   ProtocolInitHandler(
-      DriverContext driverContext,
+      InternalDriverContext internalDriverContext,
       ProtocolVersion protocolVersion,
       String expectedClusterName,
       CqlIdentifier keyspaceName) {
 
-    this.driverContext = driverContext;
+    this.internalDriverContext = internalDriverContext;
 
-    DriverConfigProfile defaultConfig = driverContext.config().defaultProfile();
+    DriverConfigProfile defaultConfig = internalDriverContext.config().defaultProfile();
 
     this.timeoutMillis =
         defaultConfig.getDuration(
@@ -138,10 +139,7 @@ class ProtocolInitHandler extends ConnectInitHandler {
           send();
         } else if (step == Step.STARTUP && response instanceof Authenticate) {
           Authenticate authenticate = (Authenticate) response;
-          authenticator =
-              driverContext
-                  .authProvider()
-                  .newAuthenticator(channel.remoteAddress(), authenticate.authenticator);
+          authenticator = buildAuthenticator(channel.remoteAddress(), authenticate.authenticator);
           authenticator
               .initialResponse()
               .whenCompleteAsync(
@@ -239,6 +237,19 @@ class ProtocolInitHandler extends ConnectInitHandler {
     @Override
     void fail(Throwable cause) {
       setConnectFailure(cause);
+    }
+
+    private Authenticator buildAuthenticator(SocketAddress address, String authenticator) {
+      return internalDriverContext
+          .authProvider()
+          .map(p -> p.newAuthenticator(address, authenticator))
+          .orElseThrow(
+              () ->
+                  new AuthenticationException(
+                      address,
+                      String.format(
+                          "Host %s requires authentication (%s), but no authenticator configured",
+                          address, authenticator)));
     }
   }
 
