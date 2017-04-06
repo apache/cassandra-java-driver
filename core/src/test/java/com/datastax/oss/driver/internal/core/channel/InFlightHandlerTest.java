@@ -51,7 +51,8 @@ public class InFlightHandlerTest extends ChannelHandlerTestBase {
     channel
         .pipeline()
         .addLast(
-            new InFlightHandler(CoreProtocolVersion.V3, streamIds, SET_KEYSPACE_TIMEOUT_MILLIS));
+            new InFlightHandler(
+                CoreProtocolVersion.V3, streamIds, SET_KEYSPACE_TIMEOUT_MILLIS, null));
   }
 
   @Test

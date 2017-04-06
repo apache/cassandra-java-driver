@@ -17,9 +17,6 @@ package com.datastax.oss.driver.internal.core.channel;
 
 import com.datastax.oss.driver.api.core.CoreProtocolVersion;
 import com.datastax.oss.driver.api.core.config.CoreDriverOption;
-import com.datastax.oss.driver.internal.core.TestResponses;
-import com.datastax.oss.protocol.internal.Frame;
-import com.datastax.oss.protocol.internal.response.Ready;
 import io.netty.channel.local.LocalAddress;
 import java.util.concurrent.CompletionStage;
 import org.mockito.Mockito;
@@ -38,13 +35,13 @@ public class ChannelFactoryEventsTest extends ChannelFactoryTestBase {
     Mockito.verify(eventBus, never()).fire(any(ChannelEvent.class));
 
     // Clean up
-    completeChannelInit();
+    completeSimpleChannelInit();
   }
 
   @Test
   public void should_fire_open_event_when_initialization_completes() {
     CompletionStage<DriverChannel> connectFuture = connect(SERVER_ADDRESS);
-    completeChannelInit();
+    completeSimpleChannelInit();
     assertThat(connectFuture)
         .isSuccess(
             channel ->
@@ -55,7 +52,7 @@ public class ChannelFactoryEventsTest extends ChannelFactoryTestBase {
   @Test
   public void should_fire_close_event_when_channel_closes() {
     CompletionStage<DriverChannel> connectFuture = connect(SERVER_ADDRESS);
-    completeChannelInit();
+    completeSimpleChannelInit();
     assertThat(connectFuture)
         .isSuccess(
             channel ->
@@ -73,14 +70,6 @@ public class ChannelFactoryEventsTest extends ChannelFactoryTestBase {
         .thenReturn("V4");
     Mockito.when(protocolVersionRegistry.fromName("V4")).thenReturn(CoreProtocolVersion.V4);
 
-    return newChannelFactory().connect(address, null);
-  }
-
-  private void completeChannelInit() {
-    Frame requestFrame = readOutboundFrame();
-    writeInboundFrame(requestFrame, new Ready());
-
-    requestFrame = readOutboundFrame();
-    writeInboundFrame(requestFrame, TestResponses.clusterNameResponse("mockClusterName"));
+    return newChannelFactory().connect(address, null, false);
   }
 }

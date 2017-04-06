@@ -65,9 +65,12 @@ public class ChannelFactory {
     } // else it will be negotiated with the first opened connection
   }
 
+  /** @param reportAvailableIds whether {@link DriverChannel#availableIds()} should be maintained */
   public CompletionStage<DriverChannel> connect(
-      final SocketAddress address, CqlIdentifier keyspace) {
+      final SocketAddress address, CqlIdentifier keyspace, boolean reportAvailableIds) {
     CompletableFuture<DriverChannel> resultFuture = new CompletableFuture<>();
+
+    AvailableIdsHolder availableIdsHolder = reportAvailableIds ? new AvailableIdsHolder() : null;
 
     ProtocolVersion currentVersion;
     boolean isNegotiating;
@@ -80,13 +83,21 @@ public class ChannelFactory {
       isNegotiating = true;
     }
 
-    connect(address, keyspace, currentVersion, isNegotiating, attemptedVersions, resultFuture);
+    connect(
+        address,
+        keyspace,
+        availableIdsHolder,
+        currentVersion,
+        isNegotiating,
+        attemptedVersions,
+        resultFuture);
     return resultFuture;
   }
 
   private void connect(
       SocketAddress address,
       CqlIdentifier keyspace,
+      AvailableIdsHolder availableIdsHolder,
       final ProtocolVersion currentVersion,
       boolean isNegotiating,
       List<ProtocolVersion> attemptedVersions,
@@ -99,7 +110,7 @@ public class ChannelFactory {
             .group(nettyOptions.ioEventLoopGroup())
             .channel(nettyOptions.channelClass())
             .option(ChannelOption.ALLOCATOR, nettyOptions.allocator())
-            .handler(initializer(address, currentVersion, keyspace));
+            .handler(initializer(address, currentVersion, keyspace, availableIdsHolder));
 
     nettyOptions.afterBootstrapInitialized(bootstrap);
 
@@ -109,7 +120,8 @@ public class ChannelFactory {
         cf -> {
           if (connectFuture.isSuccess()) {
             Channel channel = connectFuture.channel();
-            DriverChannel driverChannel = new DriverChannel(channel, context.writeCoalescer());
+            DriverChannel driverChannel =
+                new DriverChannel(channel, context.writeCoalescer(), availableIdsHolder);
             // If this is the first successful connection, remember the protocol version and
             // cluster name for future connections.
             if (isNegotiating) {
@@ -135,7 +147,14 @@ public class ChannelFactory {
                     "Failed to connect with protocol {}, retrying with {}",
                     currentVersion,
                     downgraded.get());
-                connect(address, keyspace, downgraded.get(), true, attemptedVersions, resultFuture);
+                connect(
+                    address,
+                    keyspace,
+                    availableIdsHolder,
+                    downgraded.get(),
+                    true,
+                    attemptedVersions,
+                    resultFuture);
               } else {
                 resultFuture.completeExceptionally(
                     UnsupportedProtocolVersionException.forNegotiation(address, attemptedVersions));
@@ -149,7 +168,10 @@ public class ChannelFactory {
 
   @VisibleForTesting
   ChannelInitializer<Channel> initializer(
-      SocketAddress address, final ProtocolVersion protocolVersion, final CqlIdentifier keyspace) {
+      SocketAddress address,
+      final ProtocolVersion protocolVersion,
+      final CqlIdentifier keyspace,
+      AvailableIdsHolder availableIdsHolder) {
     return new ChannelInitializer<Channel>() {
       @Override
       protected void initChannel(Channel channel) throws Exception {
@@ -168,7 +190,8 @@ public class ChannelFactory {
             new InFlightHandler(
                 protocolVersion,
                 new StreamIdGenerator(maxRequestsPerConnection),
-                setKeyspaceTimeoutMillis);
+                setKeyspaceTimeoutMillis,
+                availableIdsHolder);
         ProtocolInitHandler initHandler =
             new ProtocolInitHandler(context, protocolVersion, clusterName, keyspace);
 

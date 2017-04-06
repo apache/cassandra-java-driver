@@ -23,7 +23,11 @@ public enum CoreDriverOption implements DriverOption {
   CONNECTION_MAX_FRAME_LENGTH("connection.max-frame-length", true),
   CONNECTION_MAX_REQUESTS("connection.max-requests-per-connection", true),
   CONNECTION_HEARTBEAT_INTERVAL("connection.heartbeat.interval", true),
-  CONNECTION_HEARTBEAT_TIMEOUT("connection.heartbeat.interval", true),
+  CONNECTION_HEARTBEAT_TIMEOUT("connection.heartbeat.timeout", true),
+
+  RECONNECTION_POLICY_CLASS("connection.reconnection-policy.provider-class", true),
+  RECONNECTION_CONFIG_BASE_DELAY("connection.reconnection-policy.config.base-delay", true),
+  RECONNECTION_CONFIG_MAX_DELAY("connection.reconnection-policy.config.max-delay", true),
 
   AUTHENTICATION_PROVIDER_CLASS("authentication.provider-class", false),
   AUTHENTICATION_CONFIG_USERNAME("authentication.config.username", false),

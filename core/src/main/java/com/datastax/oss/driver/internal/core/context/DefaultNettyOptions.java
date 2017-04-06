@@ -19,24 +19,36 @@ import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.buffer.ByteBufAllocator;
 import io.netty.channel.Channel;
+import io.netty.channel.DefaultEventLoopGroup;
 import io.netty.channel.EventLoopGroup;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.nio.NioSocketChannel;
+import io.netty.util.concurrent.EventExecutorGroup;
 import io.netty.util.concurrent.Future;
 import java.util.concurrent.ThreadFactory;
 
 public class DefaultNettyOptions implements NettyOptions {
-  private final NioEventLoopGroup ioEventLoopGroup;
+  private final EventLoopGroup ioEventLoopGroup;
+  private final EventLoopGroup adminEventLoopGroup;
 
   public DefaultNettyOptions() {
-    // TODO use the driver instance's name
-    ThreadFactory ioThreadFactory = new ThreadFactoryBuilder().build();
+    // TODO inject the cluster name in thread names
+    ThreadFactory ioThreadFactory = new ThreadFactoryBuilder().setNameFormat("io-%d").build();
     this.ioEventLoopGroup = new NioEventLoopGroup(0, ioThreadFactory);
+
+    ThreadFactory adminThreadFactory = new ThreadFactoryBuilder().setNameFormat("admin-%d").build();
+    int adminThreadCount = Math.min(2, Runtime.getRuntime().availableProcessors());
+    this.adminEventLoopGroup = new DefaultEventLoopGroup(adminThreadCount, adminThreadFactory);
   }
 
   @Override
   public EventLoopGroup ioEventLoopGroup() {
     return ioEventLoopGroup;
+  }
+
+  @Override
+  public EventExecutorGroup adminEventExecutorGroup() {
+    return adminEventLoopGroup;
   }
 
   @Override

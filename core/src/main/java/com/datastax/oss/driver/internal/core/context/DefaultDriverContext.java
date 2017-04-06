@@ -18,8 +18,10 @@ package com.datastax.oss.driver.internal.core.context;
 import com.datastax.oss.driver.api.core.auth.AuthProvider;
 import com.datastax.oss.driver.api.core.config.CoreDriverOption;
 import com.datastax.oss.driver.api.core.config.DriverConfig;
+import com.datastax.oss.driver.api.core.connection.ReconnectionPolicy;
 import com.datastax.oss.driver.api.core.ssl.SslEngineFactory;
 import com.datastax.oss.driver.internal.core.ProtocolVersionRegistry;
+import com.datastax.oss.driver.internal.core.channel.ChannelFactory;
 import com.datastax.oss.driver.internal.core.channel.DefaultWriteCoalescer;
 import com.datastax.oss.driver.internal.core.channel.WriteCoalescer;
 import com.datastax.oss.driver.internal.core.config.typesafe.TypeSafeDriverConfig;
@@ -59,6 +61,8 @@ public class DefaultDriverContext implements InternalDriverContext {
 
   private final LazyReference<DriverConfig> configRef =
       new LazyReference<>("config", this::buildDriverConfig, cycleDetector);
+  private final LazyReference<ReconnectionPolicy> reconnectionPolicyRef =
+      new LazyReference<>("reconnectionPolicy", this::buildReconnectionPolicy, cycleDetector);
   private final LazyReference<Optional<AuthProvider>> authProviderRef =
       new LazyReference<>("authProvider", this::buildAuthProvider, cycleDetector);
   private final LazyReference<Optional<SslEngineFactory>> sslEngineFactoryRef =
@@ -79,10 +83,23 @@ public class DefaultDriverContext implements InternalDriverContext {
       new LazyReference<>("writeCoalescer", this::buildWriteCoalescer, cycleDetector);
   private final LazyReference<Optional<SslHandlerFactory>> sslHandlerFactoryRef =
       new LazyReference<>("sslHandlerFactory", this::buildSslHandlerFactory, cycleDetector);
+  private final LazyReference<ChannelFactory> channelFactoryRef =
+      new LazyReference<>("channelFactory", this::buildChannelFactory, cycleDetector);
 
-  private DriverConfig buildDriverConfig() {
+  protected DriverConfig buildDriverConfig() {
     return new TypeSafeDriverConfig(
         ConfigFactory.load().getConfig("datastax-java-driver"), CoreDriverOption.values());
+  }
+
+  protected ReconnectionPolicy buildReconnectionPolicy() {
+    CoreDriverOption classOption = CoreDriverOption.RECONNECTION_POLICY_CLASS;
+    return Reflection.buildFromConfig(this, classOption, ReconnectionPolicy.class)
+        .orElseThrow(
+            () ->
+                new IllegalArgumentException(
+                    String.format(
+                        "Missing reconnection policy, check your configuration (%s)",
+                        classOption)));
   }
 
   protected Optional<AuthProvider> buildAuthProvider() {
@@ -129,9 +146,18 @@ public class DefaultDriverContext implements InternalDriverContext {
     return new DefaultWriteCoalescer(5);
   }
 
+  private ChannelFactory buildChannelFactory() {
+    return new ChannelFactory(this);
+  }
+
   @Override
   public DriverConfig config() {
     return configRef.get();
+  }
+
+  @Override
+  public ReconnectionPolicy reconnectionPolicy() {
+    return reconnectionPolicyRef.get();
   }
 
   @Override
@@ -177,5 +203,10 @@ public class DefaultDriverContext implements InternalDriverContext {
   @Override
   public Optional<SslHandlerFactory> sslHandlerFactory() {
     return sslHandlerFactoryRef.get();
+  }
+
+  @Override
+  public ChannelFactory channelFactory() {
+    return channelFactoryRef.get();
   }
 }

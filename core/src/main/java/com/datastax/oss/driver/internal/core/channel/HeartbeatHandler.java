@@ -17,6 +17,7 @@ package com.datastax.oss.driver.internal.core.channel;
 
 import com.datastax.oss.driver.api.core.config.CoreDriverOption;
 import com.datastax.oss.driver.api.core.config.DriverConfigProfile;
+import com.datastax.oss.driver.api.core.connection.HeartbeatException;
 import com.datastax.oss.protocol.internal.Message;
 import com.datastax.oss.protocol.internal.request.Options;
 import com.datastax.oss.protocol.internal.response.Supported;
@@ -56,6 +57,10 @@ class HeartbeatHandler extends IdleStateHandler {
             CoreDriverOption.CONNECTION_HEARTBEAT_INTERVAL.getPath(),
             CoreDriverOption.CONNECTION_HEARTBEAT_TIMEOUT.getPath());
       } else {
+        LOG.debug(
+            "Connection was inactive for {} seconds, sending heartbeat",
+            defaultConfigProfile.getDuration(
+                CoreDriverOption.CONNECTION_HEARTBEAT_INTERVAL, TimeUnit.SECONDS));
         long timeoutMillis =
             defaultConfigProfile.getDuration(
                 CoreDriverOption.CONNECTION_HEARTBEAT_TIMEOUT, TimeUnit.MILLISECONDS);
@@ -92,8 +97,16 @@ class HeartbeatHandler extends IdleStateHandler {
     }
 
     @Override
-    void fail(Throwable cause) {
-      ctx.fireExceptionCaught(cause);
+    void fail(String message, Throwable cause) {
+      if (cause instanceof HeartbeatException) {
+        // Ignore: this happens when the heartbeat query times out and the inflight handler aborts
+        // all queries (including the heartbeat query itself)
+        return;
+      }
+      LOG.debug(ctx.channel().toString() + " Heartbeat query failed: " + message, cause);
+      // Notify InFlightHandler (fireExceptionCaught wouldn't work because the error has to go downstream)
+      ctx.write(new HeartbeatException(message, cause));
+      HeartbeatHandler.this.request = null;
     }
   }
 }

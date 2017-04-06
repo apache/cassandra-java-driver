@@ -21,6 +21,7 @@ import com.datastax.oss.driver.api.core.config.CoreDriverOption;
 import com.datastax.oss.driver.api.core.config.DriverConfig;
 import com.datastax.oss.driver.api.core.config.DriverConfigProfile;
 import com.datastax.oss.driver.internal.core.ProtocolVersionRegistry;
+import com.datastax.oss.driver.internal.core.TestResponses;
 import com.datastax.oss.driver.internal.core.context.EventBus;
 import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
 import com.datastax.oss.driver.internal.core.context.NettyOptions;
@@ -29,6 +30,7 @@ import com.datastax.oss.protocol.internal.Compressor;
 import com.datastax.oss.protocol.internal.Frame;
 import com.datastax.oss.protocol.internal.FrameCodec;
 import com.datastax.oss.protocol.internal.Message;
+import com.datastax.oss.protocol.internal.response.Ready;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.buffer.ByteBufAllocator;
 import io.netty.channel.Channel;
@@ -187,6 +189,18 @@ abstract class ChannelFactoryTestBase {
             response));
   }
 
+  /**
+   * Simulate the sequence of roundtrips to initialize a simple channel without authentication or
+   * keyspace (avoids repeating it in subclasses).
+   */
+  protected void completeSimpleChannelInit() {
+    Frame requestFrame = readOutboundFrame();
+    writeInboundFrame(requestFrame, new Ready());
+
+    requestFrame = readOutboundFrame();
+    writeInboundFrame(requestFrame, TestResponses.clusterNameResponse("mockClusterName"));
+  }
+
   ChannelFactory newChannelFactory() {
     return new TestChannelFactory(context);
   }
@@ -202,7 +216,10 @@ abstract class ChannelFactoryTestBase {
 
     @Override
     ChannelInitializer<Channel> initializer(
-        SocketAddress address, ProtocolVersion protocolVersion, CqlIdentifier keyspace) {
+        SocketAddress address,
+        ProtocolVersion protocolVersion,
+        CqlIdentifier keyspace,
+        AvailableIdsHolder availableIdsHolder) {
       return new ChannelInitializer<Channel>() {
         @Override
         protected void initChannel(Channel channel) throws Exception {
@@ -218,7 +235,8 @@ abstract class ChannelFactoryTestBase {
               new InFlightHandler(
                   protocolVersion,
                   new StreamIdGenerator(maxRequestsPerConnection),
-                  setKeyspaceTimeoutMillis);
+                  setKeyspaceTimeoutMillis,
+                  availableIdsHolder);
           ProtocolInitHandler initHandler =
               new ProtocolInitHandler(context, protocolVersion, clusterName, keyspace);
           channel.pipeline().addLast("inflight", inFlightHandler).addLast("init", initHandler);

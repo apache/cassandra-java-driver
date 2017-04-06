@@ -25,6 +25,7 @@ import com.datastax.oss.driver.api.core.config.DriverConfigProfile;
 import com.datastax.oss.driver.api.core.connection.ConnectionException;
 import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
 import com.datastax.oss.driver.internal.core.util.ProtocolUtils;
+import com.datastax.oss.driver.internal.core.util.concurrent.UncaughtExceptions;
 import com.datastax.oss.protocol.internal.Message;
 import com.datastax.oss.protocol.internal.ProtocolConstants;
 import com.datastax.oss.protocol.internal.request.AuthResponse;
@@ -145,14 +146,17 @@ class ProtocolInitHandler extends ConnectInitHandler {
               .whenCompleteAsync(
                   (token, error) -> {
                     if (error != null) {
-                      fail(new ConnectionException("authenticator threw an exception", error));
+                      fail(
+                          new AuthenticationException(
+                              channel.remoteAddress(), "authenticator threw an exception", error));
                     } else {
                       step = Step.AUTH_RESPONSE;
                       authReponseToken = token;
                       send();
                     }
                   },
-                  channel.eventLoop());
+                  channel.eventLoop())
+              .exceptionally(UncaughtExceptions::log);
         } else if (step == Step.AUTH_RESPONSE && response instanceof AuthChallenge) {
           ByteBuffer challenge = ((AuthChallenge) response).token;
           authenticator
@@ -160,14 +164,17 @@ class ProtocolInitHandler extends ConnectInitHandler {
               .whenCompleteAsync(
                   (token, error) -> {
                     if (error != null) {
-                      fail(new ConnectionException("authenticator threw an exception", error));
+                      fail(
+                          new AuthenticationException(
+                              channel.remoteAddress(), "authenticator threw an exception", error));
                     } else {
                       step = Step.AUTH_RESPONSE;
                       authReponseToken = token;
                       send();
                     }
                   },
-                  channel.eventLoop());
+                  channel.eventLoop())
+              .exceptionally(UncaughtExceptions::log);
         } else if (step == Step.AUTH_RESPONSE && response instanceof AuthSuccess) {
           ByteBuffer token = ((AuthSuccess) response).token;
           authenticator
@@ -175,13 +182,16 @@ class ProtocolInitHandler extends ConnectInitHandler {
               .whenCompleteAsync(
                   (ignored, error) -> {
                     if (error != null) {
-                      fail(new ConnectionException("authenticator threw an exception", error));
+                      fail(
+                          new AuthenticationException(
+                              channel.remoteAddress(), "authenticator threw an exception", error));
                     } else {
                       step = Step.GET_CLUSTER_NAME;
                       send();
                     }
                   },
-                  channel.eventLoop());
+                  channel.eventLoop())
+              .exceptionally(UncaughtExceptions::log);
         } else if (step == Step.AUTH_RESPONSE
             && response instanceof Error
             && ((Error) response).code == ProtocolConstants.ErrorCode.AUTH_ERROR) {
@@ -235,8 +245,10 @@ class ProtocolInitHandler extends ConnectInitHandler {
     }
 
     @Override
-    void fail(Throwable cause) {
-      setConnectFailure(cause);
+    void fail(String message, Throwable cause) {
+      Throwable finalException =
+          (message == null) ? cause : new ConnectionException(message, cause);
+      setConnectFailure(finalException);
     }
 
     private Authenticator buildAuthenticator(SocketAddress address, String authenticator) {

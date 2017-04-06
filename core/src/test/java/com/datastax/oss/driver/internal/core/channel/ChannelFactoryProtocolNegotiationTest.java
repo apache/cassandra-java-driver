@@ -44,13 +44,9 @@ public class ChannelFactoryProtocolNegotiationTest extends ChannelFactoryTestBas
     ChannelFactory factory = newChannelFactory();
 
     // When
-    CompletionStage<DriverChannel> channelFuture = factory.connect(SERVER_ADDRESS, null);
+    CompletionStage<DriverChannel> channelFuture = factory.connect(SERVER_ADDRESS, null, false);
 
-    Frame requestFrame = readOutboundFrame();
-    writeInboundFrame(requestFrame, new Ready());
-
-    requestFrame = readOutboundFrame();
-    writeInboundFrame(requestFrame, TestResponses.clusterNameResponse("mockClusterName"));
+    completeSimpleChannelInit();
 
     // Then
     assertThat(channelFuture)
@@ -69,7 +65,7 @@ public class ChannelFactoryProtocolNegotiationTest extends ChannelFactoryTestBas
     ChannelFactory factory = newChannelFactory();
 
     // When
-    CompletionStage<DriverChannel> channelFuture = factory.connect(SERVER_ADDRESS, null);
+    CompletionStage<DriverChannel> channelFuture = factory.connect(SERVER_ADDRESS, null, false);
 
     Frame requestFrame = readOutboundFrame();
     assertThat(requestFrame.protocolVersion).isEqualTo(CoreProtocolVersion.V4.getCode());
@@ -98,7 +94,7 @@ public class ChannelFactoryProtocolNegotiationTest extends ChannelFactoryTestBas
     ChannelFactory factory = newChannelFactory();
 
     // When
-    CompletionStage<DriverChannel> channelFuture = factory.connect(SERVER_ADDRESS, null);
+    CompletionStage<DriverChannel> channelFuture = factory.connect(SERVER_ADDRESS, null, false);
 
     Frame requestFrame = readOutboundFrame();
     assertThat(requestFrame.protocolVersion).isEqualTo(CoreProtocolVersion.V4.getCode());
@@ -124,7 +120,7 @@ public class ChannelFactoryProtocolNegotiationTest extends ChannelFactoryTestBas
     ChannelFactory factory = newChannelFactory();
 
     // When
-    CompletionStage<DriverChannel> channelFuture = factory.connect(SERVER_ADDRESS, null);
+    CompletionStage<DriverChannel> channelFuture = factory.connect(SERVER_ADDRESS, null, false);
 
     Frame requestFrame = readOutboundFrame();
     assertThat(requestFrame.protocolVersion).isEqualTo(CoreProtocolVersion.V4.getCode());
@@ -158,7 +154,7 @@ public class ChannelFactoryProtocolNegotiationTest extends ChannelFactoryTestBas
     ChannelFactory factory = newChannelFactory();
 
     // When
-    CompletionStage<DriverChannel> channelFuture = factory.connect(SERVER_ADDRESS, null);
+    CompletionStage<DriverChannel> channelFuture = factory.connect(SERVER_ADDRESS, null, false);
 
     Frame requestFrame = readOutboundFrame();
     assertThat(requestFrame.protocolVersion).isEqualTo(CoreProtocolVersion.V4.getCode());

@@ -36,7 +36,7 @@ public class ChannelFactoryClusterNameTest extends ChannelFactoryTestBase {
     ChannelFactory factory = newChannelFactory();
 
     // When
-    CompletionStage<DriverChannel> channelFuture = factory.connect(SERVER_ADDRESS, null);
+    CompletionStage<DriverChannel> channelFuture = factory.connect(SERVER_ADDRESS, null, false);
 
     writeInboundFrame(readOutboundFrame(), new Ready());
     writeInboundFrame(readOutboundFrame(), TestResponses.clusterNameResponse("mockClusterName"));
@@ -55,13 +55,13 @@ public class ChannelFactoryClusterNameTest extends ChannelFactoryTestBase {
     ChannelFactory factory = newChannelFactory();
 
     // When
-    CompletionStage<DriverChannel> channelFuture = factory.connect(SERVER_ADDRESS, null);
+    CompletionStage<DriverChannel> channelFuture = factory.connect(SERVER_ADDRESS, null, false);
     // open a first connection that will define the cluster name
     writeInboundFrame(readOutboundFrame(), new Ready());
     writeInboundFrame(readOutboundFrame(), TestResponses.clusterNameResponse("mockClusterName"));
     assertThat(channelFuture).isSuccess();
     // open a second connection that returns the same cluster name
-    channelFuture = factory.connect(SERVER_ADDRESS, null);
+    channelFuture = factory.connect(SERVER_ADDRESS, null, false);
     writeInboundFrame(readOutboundFrame(), new Ready());
     writeInboundFrame(readOutboundFrame(), TestResponses.clusterNameResponse("mockClusterName"));
 
@@ -70,7 +70,7 @@ public class ChannelFactoryClusterNameTest extends ChannelFactoryTestBase {
 
     // When
     // open a third connection that returns a different cluster name
-    channelFuture = factory.connect(SERVER_ADDRESS, null);
+    channelFuture = factory.connect(SERVER_ADDRESS, null, false);
     writeInboundFrame(readOutboundFrame(), new Ready());
     writeInboundFrame(readOutboundFrame(), TestResponses.clusterNameResponse("wrongClusterName"));
 

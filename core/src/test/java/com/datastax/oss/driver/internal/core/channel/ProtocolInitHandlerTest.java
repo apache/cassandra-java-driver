@@ -76,7 +76,7 @@ public class ProtocolInitHandlerTest extends ChannelHandlerTestBase {
         .pipeline()
         .addLast(
             "inflight",
-            new InFlightHandler(CoreProtocolVersion.V4, new StreamIdGenerator(100), 100));
+            new InFlightHandler(CoreProtocolVersion.V4, new StreamIdGenerator(100), 100, null));
   }
 
   @Test

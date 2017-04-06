@@ -24,7 +24,11 @@ public class AuthenticationException extends RuntimeException {
   private final SocketAddress address;
 
   public AuthenticationException(SocketAddress address, String message) {
-    super(String.format("Authentication error on host %s: %s", address, message));
+    this(address, message, null);
+  }
+
+  public AuthenticationException(SocketAddress address, String message, Throwable cause) {
+    super(String.format("Authentication error on host %s: %s", address, message), cause);
     this.address = address;
   }
 }

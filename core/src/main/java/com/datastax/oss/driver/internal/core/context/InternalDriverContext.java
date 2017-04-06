@@ -17,6 +17,7 @@ package com.datastax.oss.driver.internal.core.context;
 
 import com.datastax.oss.driver.api.core.context.DriverContext;
 import com.datastax.oss.driver.internal.core.ProtocolVersionRegistry;
+import com.datastax.oss.driver.internal.core.channel.ChannelFactory;
 import com.datastax.oss.driver.internal.core.channel.WriteCoalescer;
 import com.datastax.oss.driver.internal.core.ssl.SslHandlerFactory;
 import com.datastax.oss.protocol.internal.Compressor;
@@ -40,4 +41,6 @@ public interface InternalDriverContext extends DriverContext {
   WriteCoalescer writeCoalescer();
 
   Optional<SslHandlerFactory> sslHandlerFactory();
+
+  ChannelFactory channelFactory();
 }

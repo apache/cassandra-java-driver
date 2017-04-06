@@ -19,6 +19,7 @@ import io.netty.bootstrap.Bootstrap;
 import io.netty.buffer.ByteBufAllocator;
 import io.netty.channel.Channel;
 import io.netty.channel.EventLoopGroup;
+import io.netty.util.concurrent.EventExecutorGroup;
 import io.netty.util.concurrent.Future;
 
 /** Low-level hooks to control certain aspects of Netty usage in the driver. */
@@ -32,6 +33,15 @@ public interface NettyOptions {
    * #ioEventLoopGroup()}.
    */
   Class<? extends Channel> channelClass();
+
+  /**
+   * An event executor group that will be used to schedule all tasks not related to request I/O:
+   * cluster events, refreshing metadata, reconnection, etc.
+   *
+   * <p>This must always return the same instance (it can be the same object as {@link
+   * #ioEventLoopGroup()}).
+   */
+  EventExecutorGroup adminEventExecutorGroup();
 
   /**
    * The byte buffer allocator to use. This must always return the same instance. Note that this is

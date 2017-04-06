@@ -15,7 +15,6 @@
  */
 package com.datastax.oss.driver.internal.core.channel;
 
-import com.datastax.oss.driver.api.core.connection.ConnectionException;
 import com.datastax.oss.driver.internal.core.util.ProtocolUtils;
 import com.datastax.oss.protocol.internal.Frame;
 import com.datastax.oss.protocol.internal.Message;
@@ -49,7 +48,16 @@ abstract class InternalRequest implements ResponseCallback {
 
   abstract void onResponse(Message response);
 
-  abstract void fail(Throwable cause);
+  /** either message or cause can be null */
+  abstract void fail(String message, Throwable cause);
+
+  void fail(String message) {
+    fail(message, null);
+  }
+
+  void fail(Throwable cause) {
+    fail(null, cause);
+  }
 
   void send() {
     assert channel.eventLoop().inEventLoop();
@@ -64,7 +72,7 @@ abstract class InternalRequest implements ResponseCallback {
       timeoutFuture =
           channel.eventLoop().schedule(this::onTimeout, timeoutMillis, TimeUnit.MILLISECONDS);
     } else {
-      fail(new ConnectionException(describe() + ": error writing ", writeFuture.cause()));
+      fail(describe() + ": error writing ", writeFuture.cause());
     }
   }
 
@@ -77,7 +85,7 @@ abstract class InternalRequest implements ResponseCallback {
   @Override
   public final void onFailure(Throwable error) {
     timeoutFuture.cancel(true);
-    fail(new ConnectionException(describe() + ": unexpected failure", error));
+    fail(describe() + ": unexpected failure", error);
   }
 
   private void onTimeout() {
@@ -88,16 +96,14 @@ abstract class InternalRequest implements ResponseCallback {
     if (response instanceof Error) {
       Error error = (Error) response;
       fail(
-          new ConnectionException(
-              String.format(
-                  "%s: unexpected server error [%s] %s",
-                  describe(), ProtocolUtils.errorCodeString(error.code), error.message)));
+          String.format(
+              "%s: unexpected server error [%s] %s",
+              describe(), ProtocolUtils.errorCodeString(error.code), error.message));
     } else {
       fail(
-          new ConnectionException(
-              String.format(
-                  "%s: unexpected server response opcode=%s",
-                  describe(), ProtocolUtils.opcodeString(response.opcode))));
+          String.format(
+              "%s: unexpected server response opcode=%s",
+              describe(), ProtocolUtils.opcodeString(response.opcode)));
     }
   }
 }

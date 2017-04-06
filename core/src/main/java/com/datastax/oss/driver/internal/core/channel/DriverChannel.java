@@ -18,6 +18,7 @@ package com.datastax.oss.driver.internal.core.channel;
 import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.protocol.internal.Message;
 import io.netty.channel.Channel;
+import io.netty.channel.ChannelFuture;
 import io.netty.util.AttributeKey;
 import io.netty.util.concurrent.Future;
 import io.netty.util.concurrent.Promise;
@@ -31,16 +32,24 @@ import java.util.concurrent.atomic.AtomicBoolean;
  */
 public class DriverChannel {
   static final AttributeKey<String> CLUSTER_NAME_KEY = AttributeKey.newInstance("cluster_name");
-  static final Object GRACEFUL_CLOSE_MESSAGE = new Object();
-  static final Object FORCEFUL_CLOSE_MESSAGE = new Object();
+
+  @SuppressWarnings("RedundantStringConstructorCall")
+  static final Object GRACEFUL_CLOSE_MESSAGE = new String("GRACEFUL_CLOSE_MESSAGE");
+
+  @SuppressWarnings("RedundantStringConstructorCall")
+  static final Object FORCEFUL_CLOSE_MESSAGE = new String("FORCEFUL_CLOSE_MESSAGE");
 
   private final Channel channel;
   private final WriteCoalescer writeCoalescer;
+  private final AvailableIdsHolder availableIdsHolder;
   private final AtomicBoolean closing = new AtomicBoolean();
+  private final AtomicBoolean forceClosing = new AtomicBoolean();
 
-  DriverChannel(Channel channel, WriteCoalescer writeCoalescer) {
+  DriverChannel(
+      Channel channel, WriteCoalescer writeCoalescer, AvailableIdsHolder availableIdsHolder) {
     this.channel = channel;
     this.writeCoalescer = writeCoalescer;
+    this.availableIdsHolder = availableIdsHolder;
   }
 
   /**
@@ -94,6 +103,15 @@ public class DriverChannel {
   }
 
   /**
+   * @return the number of available stream ids on the channel. This is used to weigh channels in
+   *     the pool. Note that for performance reasons this is only maintained if the channel is part
+   *     of a pool that has a size bigger than 1, otherwise it will always return -1.
+   */
+  public int availableIds() {
+    return (availableIdsHolder == null) ? -1 : availableIdsHolder.value;
+  }
+
+  /**
    * Initiates a graceful shutdown: no new requests will be accepted, but all pending requests will
    * be allowed to complete before the underlying channel is closed.
    */
@@ -111,8 +129,15 @@ public class DriverChannel {
    * will be closed.
    */
   public Future<Void> forceClose() {
-    closing.set(true);
-    writeCoalescer.writeAndFlush(channel, FORCEFUL_CLOSE_MESSAGE);
+    this.close();
+    if (forceClosing.compareAndSet(false, true)) {
+      writeCoalescer.writeAndFlush(channel, FORCEFUL_CLOSE_MESSAGE);
+    }
+    return channel.closeFuture();
+  }
+
+  /** Does not close the channel, but returns a future that will complete when it does. */
+  public ChannelFuture closeFuture() {
     return channel.closeFuture();
   }
 

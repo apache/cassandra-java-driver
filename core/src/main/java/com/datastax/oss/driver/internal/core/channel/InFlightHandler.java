@@ -19,6 +19,7 @@ import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.ProtocolVersion;
 import com.datastax.oss.driver.api.core.connection.BusyConnectionException;
 import com.datastax.oss.driver.api.core.connection.ConnectionException;
+import com.datastax.oss.driver.api.core.connection.HeartbeatException;
 import com.datastax.oss.driver.internal.core.channel.DriverChannel.ReleaseEvent;
 import com.datastax.oss.driver.internal.core.channel.DriverChannel.RequestMessage;
 import com.datastax.oss.driver.internal.core.channel.DriverChannel.SetKeyspaceEvent;
@@ -34,30 +35,37 @@ import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelPromise;
 import io.netty.util.concurrent.Promise;
 import java.util.Map;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /** Manages requests that are currently executing on a channel. */
 public class InFlightHandler extends ChannelDuplexHandler {
+  private static final Logger LOG = LoggerFactory.getLogger(InFlightHandler.class);
+
   private final ProtocolVersion protocolVersion;
   private final StreamIdGenerator streamIds;
   private final Map<Integer, ResponseCallback> inFlight;
   private final long setKeyspaceTimeoutMillis;
+  private final AvailableIdsHolder availableIdsHolder;
   private boolean closingGracefully;
   private SetKeyspaceRequest setKeyspaceRequest;
 
   InFlightHandler(
-      ProtocolVersion protocolVersion, StreamIdGenerator streamIds, long setKeyspaceTimeoutMillis) {
+      ProtocolVersion protocolVersion,
+      StreamIdGenerator streamIds,
+      long setKeyspaceTimeoutMillis,
+      AvailableIdsHolder availableIdsHolder) {
     this.protocolVersion = protocolVersion;
     this.streamIds = streamIds;
+    reportAvailableIds();
     this.inFlight = Maps.newHashMapWithExpectedSize(streamIds.getMaxAvailableIds());
     this.setKeyspaceTimeoutMillis = setKeyspaceTimeoutMillis;
+    this.availableIdsHolder = availableIdsHolder;
   }
 
   @Override
   public void write(ChannelHandlerContext ctx, Object in, ChannelPromise promise) throws Exception {
-    if (closingGracefully) {
-      promise.setFailure(new IllegalStateException("Channel is closing"));
-      return;
-    } else if (in == DriverChannel.GRACEFUL_CLOSE_MESSAGE) {
+    if (in == DriverChannel.GRACEFUL_CLOSE_MESSAGE) {
       if (inFlight.isEmpty()) {
         ctx.channel().close();
       } else {
@@ -68,8 +76,16 @@ public class InFlightHandler extends ChannelDuplexHandler {
       abortAllInFlight(new ConnectionException("Channel was force-closed"));
       ctx.channel().close();
       return;
+    } else if (in instanceof HeartbeatException) {
+      abortAllInFlight((HeartbeatException) in);
+      ctx.close();
     }
 
+    assert in instanceof RequestMessage;
+    if (closingGracefully) {
+      promise.setFailure(new IllegalStateException("Channel is closing"));
+      return;
+    }
     int streamId = streamIds.acquire();
     if (streamId < 0) {
       promise.setFailure(new BusyConnectionException(streamIds.getMaxAvailableIds()));
@@ -81,6 +97,8 @@ public class InFlightHandler extends ChannelDuplexHandler {
           new IllegalStateException("Found pending callback for stream id " + streamId));
       return;
     }
+
+    reportAvailableIds();
 
     RequestMessage message = (RequestMessage) in;
     Frame frame =
@@ -143,8 +161,7 @@ public class InFlightHandler extends ChannelDuplexHandler {
       if (this.setKeyspaceRequest != null) {
         setKeyspaceEvent.promise.setFailure(
             new IllegalStateException(
-                "Got a keyspace change request while another one was already in progress. "
-                    + "This is generally a sign that your application issues USE queries too rapidly."));
+                "Can't call setKeyspace while a keyspace switch is already in progress"));
       } else {
         this.setKeyspaceRequest = new SetKeyspaceRequest(ctx, setKeyspaceEvent);
         this.setKeyspaceRequest.send();
@@ -157,6 +174,7 @@ public class InFlightHandler extends ChannelDuplexHandler {
   private ResponseCallback release(int streamId, ChannelHandlerContext ctx) {
     ResponseCallback responseCallback = inFlight.remove(streamId);
     streamIds.release(streamId);
+    reportAvailableIds();
     // If we're in the middle of an orderly close and this was the last request, actually close
     // the channel now
     if (closingGracefully && inFlight.isEmpty()) {
@@ -166,12 +184,28 @@ public class InFlightHandler extends ChannelDuplexHandler {
   }
 
   private void abortAllInFlight(Throwable cause) {
+    abortAllInFlight(cause, null);
+  }
+
+  /**
+   * @param ignore the ResponseCallback that called this method, if applicable (avoids a recursive
+   *     loop)
+   */
+  private void abortAllInFlight(Throwable cause, ResponseCallback ignore) {
     for (ResponseCallback responseCallback : inFlight.values()) {
-      responseCallback.onFailure(cause);
+      if (responseCallback != ignore) {
+        responseCallback.onFailure(cause);
+      }
     }
     inFlight.clear();
     // It's not necessary to release the stream ids, since we always call this method right before
     // closing the channel
+  }
+
+  private void reportAvailableIds() {
+    if (availableIdsHolder != null) {
+      availableIdsHolder.value = streamIds.getAvailableIds();
+    }
   }
 
   private class SetKeyspaceRequest extends InternalRequest {
@@ -207,9 +241,19 @@ public class InFlightHandler extends ChannelDuplexHandler {
     }
 
     @Override
-    void fail(Throwable cause) {
-      if (promise.tryFailure(cause)) {
+    void fail(String message, Throwable cause) {
+      Throwable setKeyspaceException =
+          (message == null) ? cause : new ConnectionException(message, cause);
+      if (promise.tryFailure(setKeyspaceException)) {
         InFlightHandler.this.setKeyspaceRequest = null;
+        // setKeyspace queries are not triggered directly by the user, but only as a response to a
+        // successful "USE... query", so the keyspace name should generally be valid. If the
+        // keyspace switch fails, this could be due to a schema disagreement or a more serious
+        // error. Rescheduling the switch is impractical, we can't do much better than closing the
+        // channel and letting it reconnect.
+        LOG.warn("Unexpected error while switching keyspace", setKeyspaceException);
+        abortAllInFlight(setKeyspaceException, this);
+        ctx.channel().close();
       }
     }
   }

@@ -17,6 +17,7 @@ package com.datastax.oss.driver.api.core.context;
 
 import com.datastax.oss.driver.api.core.auth.AuthProvider;
 import com.datastax.oss.driver.api.core.config.DriverConfig;
+import com.datastax.oss.driver.api.core.connection.ReconnectionPolicy;
 import com.datastax.oss.driver.api.core.ssl.SslEngineFactory;
 import java.util.Optional;
 
@@ -25,6 +26,9 @@ public interface DriverContext {
 
   /** The driver's configuration. */
   DriverConfig config();
+
+  /** The configured reconnection policy. */
+  ReconnectionPolicy reconnectionPolicy();
 
   /** The authentication provider, if authentication was configured. */
   Optional<AuthProvider> authProvider();
