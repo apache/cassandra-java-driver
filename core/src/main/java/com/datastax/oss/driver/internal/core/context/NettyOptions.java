@@ -15,6 +15,7 @@
  */
 package com.datastax.oss.driver.internal.core.context;
 
+import com.datastax.oss.driver.internal.core.util.concurrent.BlockingOperation;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.buffer.ByteBufAllocator;
 import io.netty.channel.Channel;
@@ -25,7 +26,13 @@ import io.netty.util.concurrent.Future;
 /** Low-level hooks to control certain aspects of Netty usage in the driver. */
 public interface NettyOptions {
 
-  /** The event loop group that will be used for I/O. This must always return the same instance. */
+  /**
+   * The event loop group that will be used for I/O. This must always return the same instance.
+   *
+   * <p>It is highly recommended that the threads in this event loop group be created by a {@link
+   * BlockingOperation.SafeThreadFactory}, so that the driver can protect against deadlocks
+   * introduced by bad client code.
+   */
   EventLoopGroup ioEventLoopGroup();
 
   /**
@@ -40,6 +47,10 @@ public interface NettyOptions {
    *
    * <p>This must always return the same instance (it can be the same object as {@link
    * #ioEventLoopGroup()}).
+   *
+   * <p>It is highly recommended that the threads in this event loop group be created by a {@link
+   * BlockingOperation.SafeThreadFactory}, so that the driver can protect against deadlocks
+   * introduced by bad client code.
    */
   EventExecutorGroup adminEventExecutorGroup();
 

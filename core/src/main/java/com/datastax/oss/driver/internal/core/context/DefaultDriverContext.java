@@ -15,16 +15,22 @@
  */
 package com.datastax.oss.driver.internal.core.context;
 
+import com.datastax.oss.driver.api.core.addresstranslation.AddressTranslator;
 import com.datastax.oss.driver.api.core.auth.AuthProvider;
 import com.datastax.oss.driver.api.core.config.CoreDriverOption;
 import com.datastax.oss.driver.api.core.config.DriverConfig;
 import com.datastax.oss.driver.api.core.connection.ReconnectionPolicy;
+import com.datastax.oss.driver.api.core.loadbalancing.LoadBalancingPolicy;
 import com.datastax.oss.driver.api.core.ssl.SslEngineFactory;
 import com.datastax.oss.driver.internal.core.ProtocolVersionRegistry;
 import com.datastax.oss.driver.internal.core.channel.ChannelFactory;
 import com.datastax.oss.driver.internal.core.channel.DefaultWriteCoalescer;
 import com.datastax.oss.driver.internal.core.channel.WriteCoalescer;
-import com.datastax.oss.driver.internal.core.config.typesafe.TypeSafeDriverConfig;
+import com.datastax.oss.driver.internal.core.control.ControlConnection;
+import com.datastax.oss.driver.internal.core.metadata.DefaultTopologyMonitor;
+import com.datastax.oss.driver.internal.core.metadata.LoadBalancingPolicyWrapper;
+import com.datastax.oss.driver.internal.core.metadata.MetadataManager;
+import com.datastax.oss.driver.internal.core.metadata.TopologyMonitor;
 import com.datastax.oss.driver.internal.core.protocol.ByteBufPrimitiveCodec;
 import com.datastax.oss.driver.internal.core.ssl.JdkSslHandlerFactory;
 import com.datastax.oss.driver.internal.core.ssl.SslHandlerFactory;
@@ -33,7 +39,6 @@ import com.datastax.oss.driver.internal.core.util.concurrent.CycleDetector;
 import com.datastax.oss.driver.internal.core.util.concurrent.LazyReference;
 import com.datastax.oss.protocol.internal.Compressor;
 import com.datastax.oss.protocol.internal.FrameCodec;
-import com.typesafe.config.ConfigFactory;
 import io.netty.buffer.ByteBuf;
 import java.util.Optional;
 
@@ -59,10 +64,12 @@ public class DefaultDriverContext implements InternalDriverContext {
   private final CycleDetector cycleDetector =
       new CycleDetector("Detected cycle in context initialization");
 
-  private final LazyReference<DriverConfig> configRef =
-      new LazyReference<>("config", this::buildDriverConfig, cycleDetector);
+  private final LazyReference<LoadBalancingPolicy> loadBalancingPolicyRef =
+      new LazyReference<>("loadBalancingPolicy", this::buildLoadBalancingPolicy, cycleDetector);
   private final LazyReference<ReconnectionPolicy> reconnectionPolicyRef =
       new LazyReference<>("reconnectionPolicy", this::buildReconnectionPolicy, cycleDetector);
+  private final LazyReference<AddressTranslator> addressTranslatorRef =
+      new LazyReference<>("addressTranslator", this::buildAddressTranslator, cycleDetector);
   private final LazyReference<Optional<AuthProvider>> authProviderRef =
       new LazyReference<>("authProvider", this::buildAuthProvider, cycleDetector);
   private final LazyReference<Optional<SslEngineFactory>> sslEngineFactoryRef =
@@ -85,10 +92,31 @@ public class DefaultDriverContext implements InternalDriverContext {
       new LazyReference<>("sslHandlerFactory", this::buildSslHandlerFactory, cycleDetector);
   private final LazyReference<ChannelFactory> channelFactoryRef =
       new LazyReference<>("channelFactory", this::buildChannelFactory, cycleDetector);
+  private final LazyReference<TopologyMonitor> topologyMonitorRef =
+      new LazyReference<>("topologyMonitor", this::buildTopologyMonitor, cycleDetector);
+  private final LazyReference<MetadataManager> metadataManagerRef =
+      new LazyReference<>("metadataManager", this::buildMetadataManager, cycleDetector);
+  private final LazyReference<LoadBalancingPolicyWrapper> loadBalancingPolicyWrapperRef =
+      new LazyReference<>(
+          "loadBalancingPolicyWrapper", this::buildLoadBalancingPolicyWrapper, cycleDetector);
+  private final LazyReference<ControlConnection> controlConnectionRef =
+      new LazyReference<>("controlConnection", this::buildControlConnection, cycleDetector);
 
-  protected DriverConfig buildDriverConfig() {
-    return new TypeSafeDriverConfig(
-        ConfigFactory.load().getConfig("datastax-java-driver"), CoreDriverOption.values());
+  private final DriverConfig config;
+
+  public DefaultDriverContext(DriverConfig config) {
+    this.config = config;
+  }
+
+  protected LoadBalancingPolicy buildLoadBalancingPolicy() {
+    CoreDriverOption classOption = CoreDriverOption.LOAD_BALANCING_POLICY_CLASS;
+    return Reflection.buildFromConfig(this, classOption, LoadBalancingPolicy.class)
+        .orElseThrow(
+            () ->
+                new IllegalArgumentException(
+                    String.format(
+                        "Missing load balancing policy, check your configuration (%s)",
+                        classOption)));
   }
 
   protected ReconnectionPolicy buildReconnectionPolicy() {
@@ -102,6 +130,16 @@ public class DefaultDriverContext implements InternalDriverContext {
                         classOption)));
   }
 
+  protected AddressTranslator buildAddressTranslator() {
+    CoreDriverOption classOption = CoreDriverOption.ADDRESS_TRANSLATOR_CLASS;
+    return Reflection.buildFromConfig(this, classOption, AddressTranslator.class)
+        .orElseThrow(
+            () ->
+                new IllegalArgumentException(
+                    String.format(
+                        "Missing address translator, check your configuration (%s)", classOption)));
+  }
+
   protected Optional<AuthProvider> buildAuthProvider() {
     return Reflection.buildFromConfig(
         this, CoreDriverOption.AUTHENTICATION_PROVIDER_CLASS, AuthProvider.class);
@@ -112,11 +150,11 @@ public class DefaultDriverContext implements InternalDriverContext {
         this, CoreDriverOption.SSL_FACTORY_CLASS, SslEngineFactory.class);
   }
 
-  private EventBus buildEventBus() {
+  protected EventBus buildEventBus() {
     return new EventBus();
   }
 
-  private Compressor<ByteBuf> buildCompressor() {
+  protected Compressor<ByteBuf> buildCompressor() {
     // TODO build alternate implementation if specified in conf
     return Compressor.none();
   }
@@ -142,22 +180,48 @@ public class DefaultDriverContext implements InternalDriverContext {
     // extend DefaultDriverContext and override this method
   }
 
-  private WriteCoalescer buildWriteCoalescer() {
+  protected WriteCoalescer buildWriteCoalescer() {
     return new DefaultWriteCoalescer(5);
   }
 
-  private ChannelFactory buildChannelFactory() {
+  protected ChannelFactory buildChannelFactory() {
     return new ChannelFactory(this);
+  }
+
+  protected TopologyMonitor buildTopologyMonitor() {
+    return new DefaultTopologyMonitor(this);
+  }
+
+  protected MetadataManager buildMetadataManager() {
+    return new MetadataManager(this);
+  }
+
+  protected LoadBalancingPolicyWrapper buildLoadBalancingPolicyWrapper() {
+    return new LoadBalancingPolicyWrapper(this, loadBalancingPolicy());
+  }
+
+  protected ControlConnection buildControlConnection() {
+    return new ControlConnection(this);
   }
 
   @Override
   public DriverConfig config() {
-    return configRef.get();
+    return config;
+  }
+
+  @Override
+  public LoadBalancingPolicy loadBalancingPolicy() {
+    return loadBalancingPolicyRef.get();
   }
 
   @Override
   public ReconnectionPolicy reconnectionPolicy() {
     return reconnectionPolicyRef.get();
+  }
+
+  @Override
+  public AddressTranslator addressTranslator() {
+    return addressTranslatorRef.get();
   }
 
   @Override
@@ -208,5 +272,25 @@ public class DefaultDriverContext implements InternalDriverContext {
   @Override
   public ChannelFactory channelFactory() {
     return channelFactoryRef.get();
+  }
+
+  @Override
+  public TopologyMonitor topologyMonitor() {
+    return topologyMonitorRef.get();
+  }
+
+  @Override
+  public MetadataManager metadataManager() {
+    return metadataManagerRef.get();
+  }
+
+  @Override
+  public LoadBalancingPolicyWrapper loadBalancingPolicyWrapper() {
+    return loadBalancingPolicyWrapperRef.get();
+  }
+
+  @Override
+  public ControlConnection controlConnection() {
+    return controlConnectionRef.get();
   }
 }

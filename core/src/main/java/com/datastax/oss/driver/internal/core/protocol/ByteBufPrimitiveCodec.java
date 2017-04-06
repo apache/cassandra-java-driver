@@ -21,7 +21,6 @@ import io.netty.buffer.ByteBufAllocator;
 import io.netty.buffer.CompositeByteBuf;
 import io.netty.util.CharsetUtil;
 import java.net.InetAddress;
-import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
@@ -73,15 +72,6 @@ public class ByteBufPrimitiveCodec implements PrimitiveCodec<ByteBuf> {
   @Override
   public int readInt(ByteBuf source) {
     return source.readInt();
-  }
-
-  @Override
-  public InetSocketAddress readInet(ByteBuf source) {
-    int length = readByte(source) & 0xFF;
-    byte[] bytes = new byte[length];
-    source.readBytes(bytes);
-    int port = source.readInt();
-    return new InetSocketAddress(newInetAddress(bytes), port);
   }
 
   @Override
@@ -143,12 +133,6 @@ public class ByteBufPrimitiveCodec implements PrimitiveCodec<ByteBuf> {
   @Override
   public void writeInt(int i, ByteBuf dest) {
     dest.writeInt(i);
-  }
-
-  @Override
-  public void writeInet(InetSocketAddress inet, ByteBuf dest) {
-    writeInetAddr(inet.getAddress(), dest);
-    writeInt(inet.getPort(), dest);
   }
 
   @Override

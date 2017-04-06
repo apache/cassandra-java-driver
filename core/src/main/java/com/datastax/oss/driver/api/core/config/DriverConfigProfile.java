@@ -15,6 +15,7 @@
  */
 package com.datastax.oss.driver.api.core.config;
 
+import java.time.Duration;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
@@ -26,6 +27,8 @@ import java.util.concurrent.TimeUnit;
 public interface DriverConfigProfile {
   boolean isDefined(DriverOption option);
 
+  boolean getBoolean(DriverOption option);
+
   int getInt(DriverOption option);
 
   String getString(DriverOption option);
@@ -33,6 +36,8 @@ public interface DriverConfigProfile {
   List<String> getStringList(DriverOption option);
 
   long getBytes(DriverOption option);
+
+  Duration getDuration(DriverOption option);
 
   long getDuration(DriverOption option, TimeUnit targetUnit);
 }

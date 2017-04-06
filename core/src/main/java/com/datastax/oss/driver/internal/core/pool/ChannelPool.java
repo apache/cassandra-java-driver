@@ -16,10 +16,14 @@
 package com.datastax.oss.driver.internal.core.pool;
 
 import com.datastax.oss.driver.api.core.CqlIdentifier;
+import com.datastax.oss.driver.internal.core.channel.ChannelEvent;
 import com.datastax.oss.driver.internal.core.channel.ChannelFactory;
+import com.datastax.oss.driver.internal.core.channel.ClusterNameMismatchException;
 import com.datastax.oss.driver.internal.core.channel.DriverChannel;
 import com.datastax.oss.driver.internal.core.channel.DriverChannelOptions;
+import com.datastax.oss.driver.internal.core.context.EventBus;
 import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
+import com.datastax.oss.driver.internal.core.metadata.TopologyEvent;
 import com.datastax.oss.driver.internal.core.util.concurrent.CompletableFutures;
 import com.datastax.oss.driver.internal.core.util.concurrent.Reconnection;
 import com.datastax.oss.driver.internal.core.util.concurrent.RunOrSchedule;
@@ -28,7 +32,7 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.Sets;
 import io.netty.util.concurrent.EventExecutor;
 import io.netty.util.concurrent.Future;
-import java.net.SocketAddress;
+import java.net.InetSocketAddress;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
@@ -61,7 +65,7 @@ public class ChannelPool {
    * channels (i.e. {@link #next()} return {@code null}) and is reconnecting.
    */
   public static CompletionStage<ChannelPool> init(
-      SocketAddress address,
+      InetSocketAddress address,
       CqlIdentifier keyspaceName,
       int channelCount,
       InternalDriverContext context) {
@@ -76,7 +80,7 @@ public class ChannelPool {
   private final SingleThreaded singleThreaded;
 
   private ChannelPool(
-      SocketAddress address,
+      InetSocketAddress address,
       CqlIdentifier keyspaceName,
       int channelCount,
       InternalDriverContext context) {
@@ -142,8 +146,9 @@ public class ChannelPool {
   /** Holds all administration tasks, that are confined to the admin executor. */
   private class SingleThreaded {
 
-    private final SocketAddress address;
+    private final InetSocketAddress address;
     private final ChannelFactory channelFactory;
+    private final EventBus eventBus;
     // The channels that are currently connecting
     private final List<CompletionStage<DriverChannel>> pendingChannels = new ArrayList<>();
     private final Reconnection reconnection;
@@ -158,7 +163,7 @@ public class ChannelPool {
     private CqlIdentifier keyspaceName;
 
     private SingleThreaded(
-        SocketAddress address,
+        InetSocketAddress address,
         CqlIdentifier keyspaceName,
         int wantedCount,
         InternalDriverContext context) {
@@ -166,8 +171,14 @@ public class ChannelPool {
       this.keyspaceName = keyspaceName;
       this.wantedCount = wantedCount;
       this.channelFactory = context.channelFactory();
+      this.eventBus = context.eventBus();
       this.reconnection =
-          new Reconnection(adminExecutor, context.reconnectionPolicy(), this::addMissingChannels);
+          new Reconnection(
+              adminExecutor,
+              context.reconnectionPolicy(),
+              this::addMissingChannels,
+              () -> eventBus.fire(ChannelEvent.reconnectionStarted(this.address)),
+              () -> eventBus.fire(ChannelEvent.reconnectionStopped(this.address)));
     }
 
     private void connect() {
@@ -210,6 +221,7 @@ public class ChannelPool {
 
     private boolean onAllConnected(@SuppressWarnings("unused") Void v) {
       assert adminExecutor.inEventLoop();
+      ClusterNameMismatchException clusterNameMismatch = null;
       for (CompletionStage<DriverChannel> pendingChannel : pendingChannels) {
         CompletableFuture<DriverChannel> future = pendingChannel.toCompletableFuture();
         assert future.isDone();
@@ -224,6 +236,7 @@ public class ChannelPool {
           } else {
             LOG.debug("{} new channel added {}", ChannelPool.this, channel);
             channels.add(channel);
+            eventBus.fire(ChannelEvent.channelOpened(address));
             channel
                 .closeFuture()
                 .addListener(
@@ -235,12 +248,26 @@ public class ChannelPool {
         } catch (InterruptedException e) {
           // can't happen, the future is done
         } catch (ExecutionException e) {
-          // TODO handle ClusterNameMismatchException
           LOG.debug(ChannelPool.this + " error while opening new channel", e.getCause());
           // TODO we don't log at a higher level because it's not a fatal error, but this should probably be recorded somewhere (metric?)
+
+          // TODO auth exception => WARN and keep reconnecting
+          // TODO protocol error => WARN and force down
+
+          if (e.getCause() instanceof ClusterNameMismatchException) {
+            // This will likely be thrown by all channels, but finish the loop cleanly
+            clusterNameMismatch = (ClusterNameMismatchException) e.getCause();
+          }
         }
       }
       pendingChannels.clear();
+
+      if (clusterNameMismatch != null) {
+        LOG.warn(clusterNameMismatch.getMessage());
+        eventBus.fire(TopologyEvent.forceDown(address));
+        // Don't bother continuing, the pool will get shut down soon anyway
+        return true;
+      }
 
       shrinkIfTooManyChannels(); // Can happen if the pool was shrinked during the reconnection
 
@@ -258,12 +285,13 @@ public class ChannelPool {
       assert adminExecutor.inEventLoop();
       LOG.debug("{} lost channel {}", ChannelPool.this, channel);
       channels.remove(channel);
+      eventBus.fire(ChannelEvent.channelClosed(address));
       if (!isClosing && !reconnection.isRunning()) {
         reconnection.start();
       }
     }
 
-    public void resize(int newChannelCount) {
+    private void resize(int newChannelCount) {
       assert adminExecutor.inEventLoop();
       if (newChannelCount > wantedCount) {
         LOG.debug("{} growing ({} => {} channels)", ChannelPool.this, wantedCount, newChannelCount);
@@ -296,6 +324,7 @@ public class ChannelPool {
         for (DriverChannel channel : toRemove) {
           channels.remove(channel);
           channel.close();
+          eventBus.fire(ChannelEvent.channelClosed(address));
         }
       }
     }
@@ -333,7 +362,10 @@ public class ChannelPool {
       reconnection.stop();
 
       forAllChannels(
-          DriverChannel::close,
+          channel -> {
+            eventBus.fire(ChannelEvent.channelClosed(address));
+            return channel.close();
+          },
           () -> closeFuture.complete(ChannelPool.this),
           (channel, error) ->
               LOG.warn(ChannelPool.this + " error closing channel " + channel, error));

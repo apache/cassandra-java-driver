@@ -16,12 +16,16 @@
 package com.datastax.oss.driver.internal.core.channel;
 
 import com.datastax.oss.driver.api.core.CqlIdentifier;
+import com.datastax.oss.driver.api.core.ProtocolVersion;
 import com.datastax.oss.protocol.internal.Message;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelFuture;
+import io.netty.channel.EventLoop;
 import io.netty.util.AttributeKey;
 import io.netty.util.concurrent.Future;
 import io.netty.util.concurrent.Promise;
+import java.net.InetSocketAddress;
+import java.net.SocketAddress;
 import java.nio.ByteBuffer;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -42,14 +46,19 @@ public class DriverChannel {
   private final Channel channel;
   private final WriteCoalescer writeCoalescer;
   private final AvailableIdsHolder availableIdsHolder;
+  private final ProtocolVersion protocolVersion;
   private final AtomicBoolean closing = new AtomicBoolean();
   private final AtomicBoolean forceClosing = new AtomicBoolean();
 
   DriverChannel(
-      Channel channel, WriteCoalescer writeCoalescer, AvailableIdsHolder availableIdsHolder) {
+      Channel channel,
+      WriteCoalescer writeCoalescer,
+      AvailableIdsHolder availableIdsHolder,
+      ProtocolVersion protocolVersion) {
     this.channel = channel;
     this.writeCoalescer = writeCoalescer;
     this.availableIdsHolder = availableIdsHolder;
+    this.protocolVersion = protocolVersion;
   }
 
   /**
@@ -109,6 +118,18 @@ public class DriverChannel {
    */
   public int availableIds() {
     return (availableIdsHolder == null) ? -1 : availableIdsHolder.value;
+  }
+
+  public EventLoop eventLoop() {
+    return channel.eventLoop();
+  }
+
+  public ProtocolVersion protocolVersion() {
+    return protocolVersion;
+  }
+
+  public SocketAddress address() {
+    return channel.remoteAddress();
   }
 
   /**

@@ -18,6 +18,7 @@ package com.datastax.oss.driver.internal.core.config.typesafe;
 import com.datastax.oss.driver.api.core.config.DriverConfigProfile;
 import com.datastax.oss.driver.api.core.config.DriverOption;
 import com.typesafe.config.Config;
+import java.time.Duration;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
@@ -34,8 +35,18 @@ public class TypesafeDriverConfigProfile implements DriverConfigProfile {
   }
 
   @Override
+  public boolean getBoolean(DriverOption option) {
+    return config.getBoolean(option.getPath());
+  }
+
+  @Override
   public int getInt(DriverOption option) {
     return config.getInt(option.getPath());
+  }
+
+  @Override
+  public Duration getDuration(DriverOption option) {
+    return config.getDuration(option.getPath());
   }
 
   @Override

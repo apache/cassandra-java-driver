@@ -15,10 +15,14 @@
  */
 package com.datastax.oss.driver.internal.core.util.concurrent;
 
+import com.datastax.oss.driver.api.core.DriverException;
+import com.google.common.base.Throwables;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Supplier;
 
 public class CompletableFutures {
 
@@ -28,7 +32,7 @@ public class CompletableFutures {
     return future;
   }
 
-  /** Completes {@code target} with the outcome of {@code source} */
+  /** Completes {@code target} with the outcome of {@code source}. */
   public static <T> void completeFrom(CompletionStage<T> source, CompletableFuture<T> target) {
     source.whenComplete(
         (t, error) -> {
@@ -54,5 +58,26 @@ public class CompletableFutures {
           });
     }
     return result;
+  }
+
+  public static <T> T getUninterruptibly(CompletableFuture<T> future) {
+    boolean interrupted = false;
+    try {
+      while (true) {
+        try {
+          return future.get();
+        } catch (InterruptedException e) {
+          interrupted = true;
+        } catch (ExecutionException e) {
+          Throwable cause = e.getCause();
+          Throwables.throwIfUnchecked(cause);
+          throw new DriverException(cause);
+        }
+      }
+    } finally {
+      if (interrupted) {
+        Thread.currentThread().interrupt();
+      }
+    }
   }
 }

@@ -281,8 +281,8 @@ public class ProtocolInitHandlerTest extends ChannelHandlerTestBase {
             e ->
                 assertThat(e)
                     .isInstanceOf(ClusterNameMismatchException.class)
-                    .hasMessage(
-                        "Host embedded reports cluster name 'differentClusterName' that doesn't match our cluster name 'expectedClusterName'."));
+                    .hasMessageContaining(
+                        "Node embedded reports cluster name 'differentClusterName' that doesn't match our cluster name 'expectedClusterName'."));
   }
 
   @Test

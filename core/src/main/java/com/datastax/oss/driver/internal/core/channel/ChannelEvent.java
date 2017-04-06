@@ -18,14 +18,36 @@ package com.datastax.oss.driver.internal.core.channel;
 import java.net.SocketAddress;
 import java.util.Objects;
 
-/** An event to notify other driver components when a channel has been opened or closed. */
+/** Events relating to driver channels. */
 public class ChannelEvent {
   public enum Type {
     OPENED,
-    CLOSED
+    CLOSED,
+    RECONNECTION_STARTED,
+    RECONNECTION_STOPPED
+  }
+
+  public static ChannelEvent channelOpened(SocketAddress address) {
+    return new ChannelEvent(Type.OPENED, address);
+  }
+
+  public static ChannelEvent channelClosed(SocketAddress address) {
+    return new ChannelEvent(Type.CLOSED, address);
+  }
+
+  public static ChannelEvent reconnectionStarted(SocketAddress address) {
+    return new ChannelEvent(Type.RECONNECTION_STARTED, address);
+  }
+
+  public static ChannelEvent reconnectionStopped(SocketAddress address) {
+    return new ChannelEvent(Type.RECONNECTION_STOPPED, address);
   }
 
   public final Type type;
+  /**
+   * We use SocketAddress because some of our tests use the local Netty transport, but in production
+   * it will always be InetSocketAddress.
+   */
   public final SocketAddress address;
 
   public ChannelEvent(Type type, SocketAddress address) {
@@ -48,5 +70,10 @@ public class ChannelEvent {
   @Override
   public int hashCode() {
     return Objects.hash(type, address);
+  }
+
+  @Override
+  public String toString() {
+    return "ChannelEvent(" + type + ", " + address + ")";
   }
 }

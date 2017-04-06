@@ -44,7 +44,7 @@ public class UncaughtExceptions {
   private static final Logger LOG = LoggerFactory.getLogger(UncaughtExceptions.class);
 
   public static <T> void log(Future<T> future) {
-    if (!future.isSuccess()) {
+    if (!future.isSuccess() && !future.isCancelled()) {
       LOG.warn("Uncaught exception in scheduled task", future.cause());
     }
   }

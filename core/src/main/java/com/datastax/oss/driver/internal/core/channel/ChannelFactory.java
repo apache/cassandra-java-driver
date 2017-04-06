@@ -19,7 +19,6 @@ import com.datastax.oss.driver.api.core.ProtocolVersion;
 import com.datastax.oss.driver.api.core.UnsupportedProtocolVersionException;
 import com.datastax.oss.driver.api.core.config.CoreDriverOption;
 import com.datastax.oss.driver.api.core.config.DriverConfigProfile;
-import com.datastax.oss.driver.internal.core.channel.ChannelEvent.Type;
 import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
 import com.datastax.oss.driver.internal.core.context.NettyOptions;
 import com.datastax.oss.driver.internal.core.protocol.FrameDecoder;
@@ -31,6 +30,7 @@ import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.ChannelOption;
 import io.netty.channel.ChannelPipeline;
+import java.net.InetSocketAddress;
 import java.net.SocketAddress;
 import java.util.List;
 import java.util.Optional;
@@ -120,7 +120,8 @@ public class ChannelFactory {
           if (connectFuture.isSuccess()) {
             Channel channel = connectFuture.channel();
             DriverChannel driverChannel =
-                new DriverChannel(channel, context.writeCoalescer(), availableIdsHolder);
+                new DriverChannel(
+                    channel, context.writeCoalescer(), availableIdsHolder, currentVersion);
             // If this is the first successful connection, remember the protocol version and
             // cluster name for future connections.
             if (isNegotiating) {
@@ -130,11 +131,6 @@ public class ChannelFactory {
               ChannelFactory.this.clusterName = driverChannel.getClusterName();
             }
             resultFuture.complete(driverChannel);
-
-            context.eventBus().fire(new ChannelEvent(Type.OPENED, address));
-            channel
-                .closeFuture()
-                .addListener(f -> context.eventBus().fire(new ChannelEvent(Type.CLOSED, address)));
           } else {
             Throwable error = connectFuture.cause();
             if (error instanceof UnsupportedProtocolVersionException && isNegotiating) {
@@ -184,7 +180,6 @@ public class ChannelFactory {
         int maxRequestsPerConnection =
             defaultConfigProfile.getInt(CoreDriverOption.CONNECTION_MAX_REQUESTS);
 
-        // TODO SSL
         InFlightHandler inFlightHandler =
             new InFlightHandler(
                 protocolVersion,

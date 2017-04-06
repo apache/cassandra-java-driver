@@ -20,6 +20,7 @@ import io.netty.util.concurrent.Future;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
+import java.util.function.Consumer;
 
 /**
  * Utility to run a task on a Netty event executor (i.e. thread). If we're already on the executor,
@@ -55,6 +56,16 @@ public class RunOrSchedule {
     } else {
       executor.submit(task).addListener(UncaughtExceptions::log);
     }
+  }
+
+  public static <T> Consumer<T> on(EventExecutor executor, Consumer<T> task) {
+    return (t) -> {
+      if (executor.inEventLoop()) {
+        task.accept(t);
+      } else {
+        executor.submit(() -> task.accept(t)).addListener(UncaughtExceptions::log);
+      }
+    };
   }
 
   public static <T> CompletionStage<T> on(

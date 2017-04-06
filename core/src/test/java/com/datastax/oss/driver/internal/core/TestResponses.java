@@ -35,6 +35,7 @@ public class TestResponses {
             "system",
             "local",
             "cluster_name",
+            0,
             RawType.PRIMITIVES.get(ProtocolConstants.DataType.VARCHAR));
     RowsMetadata metadata = new RowsMetadata(ImmutableList.of(colSpec), null, null);
     Queue<List<ByteBuffer>> data = Lists.newLinkedList();

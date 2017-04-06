@@ -15,6 +15,7 @@
  */
 package com.datastax.oss.driver.internal.core.context;
 
+import com.datastax.oss.driver.internal.core.util.concurrent.BlockingOperation;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.buffer.ByteBufAllocator;
@@ -33,10 +34,13 @@ public class DefaultNettyOptions implements NettyOptions {
 
   public DefaultNettyOptions() {
     // TODO inject the cluster name in thread names
-    ThreadFactory ioThreadFactory = new ThreadFactoryBuilder().setNameFormat("io-%d").build();
+    ThreadFactory safeFactory = new BlockingOperation.SafeThreadFactory();
+    ThreadFactory ioThreadFactory =
+        new ThreadFactoryBuilder().setThreadFactory(safeFactory).setNameFormat("io-%d").build();
     this.ioEventLoopGroup = new NioEventLoopGroup(0, ioThreadFactory);
 
-    ThreadFactory adminThreadFactory = new ThreadFactoryBuilder().setNameFormat("admin-%d").build();
+    ThreadFactory adminThreadFactory =
+        new ThreadFactoryBuilder().setThreadFactory(safeFactory).setNameFormat("admin-%d").build();
     int adminThreadCount = Math.min(2, Runtime.getRuntime().availableProcessors());
     this.adminEventLoopGroup = new DefaultEventLoopGroup(adminThreadCount, adminThreadFactory);
   }

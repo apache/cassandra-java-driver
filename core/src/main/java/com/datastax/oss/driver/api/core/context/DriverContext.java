@@ -15,20 +15,24 @@
  */
 package com.datastax.oss.driver.api.core.context;
 
+import com.datastax.oss.driver.api.core.addresstranslation.AddressTranslator;
 import com.datastax.oss.driver.api.core.auth.AuthProvider;
 import com.datastax.oss.driver.api.core.config.DriverConfig;
 import com.datastax.oss.driver.api.core.connection.ReconnectionPolicy;
+import com.datastax.oss.driver.api.core.loadbalancing.LoadBalancingPolicy;
 import com.datastax.oss.driver.api.core.ssl.SslEngineFactory;
 import java.util.Optional;
 
 /** Holds common components that are shared throughout a driver instance. */
 public interface DriverContext {
 
-  /** The driver's configuration. */
   DriverConfig config();
 
-  /** The configured reconnection policy. */
+  LoadBalancingPolicy loadBalancingPolicy();
+
   ReconnectionPolicy reconnectionPolicy();
+
+  AddressTranslator addressTranslator();
 
   /** The authentication provider, if authentication was configured. */
   Optional<AuthProvider> authProvider();

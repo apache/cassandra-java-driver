@@ -13,22 +13,25 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import com.datastax.oss.driver.api.core.Cluster;
-import com.google.common.collect.ImmutableSet;
+package com.datastax.oss.driver.api.core.addresstranslation;
+
+import com.datastax.oss.driver.api.core.context.DriverContext;
 import java.net.InetSocketAddress;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeUnit;
 
-public class Tmp {
-  public static void main(String[] args) throws InterruptedException, ExecutionException {
-    Cluster cluster =
-        Cluster.builder()
-            .withContactPoints(ImmutableSet.of(new InetSocketAddress("127.0.0.1", 9042)))
-            .build();
+/** An address translator that always returns the same address unchanged. */
+public class PassThroughAddressTranslator implements AddressTranslator {
 
-    System.out.println("Cluster initialized");
+  public PassThroughAddressTranslator(@SuppressWarnings("unused") DriverContext context) {
+    // nothing to do
+  }
 
-    System.out.println(cluster.getMetadata().getNodes());
-    TimeUnit.HOURS.sleep(1);
+  @Override
+  public InetSocketAddress translate(InetSocketAddress address) {
+    return address;
+  }
+
+  @Override
+  public void close() {
+    // nothing to do
   }
 }

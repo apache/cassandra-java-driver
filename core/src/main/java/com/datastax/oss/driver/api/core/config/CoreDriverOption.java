@@ -15,7 +15,14 @@
  */
 package com.datastax.oss.driver.api.core.config;
 
+/**
+ * Built-in driver options for the core driver.
+ *
+ * <p>Refer to {@code reference.conf} in the driver codebase for a full description of each option.
+ */
 public enum CoreDriverOption implements DriverOption {
+  CONTACT_POINTS("contact-points", false),
+
   PROTOCOL_VERSION("protocol.version", false),
 
   CONNECTION_INIT_QUERY_TIMEOUT("connection.init-query-timeout", true),
@@ -25,9 +32,16 @@ public enum CoreDriverOption implements DriverOption {
   CONNECTION_HEARTBEAT_INTERVAL("connection.heartbeat.interval", true),
   CONNECTION_HEARTBEAT_TIMEOUT("connection.heartbeat.timeout", true),
 
-  RECONNECTION_POLICY_CLASS("connection.reconnection-policy.provider-class", true),
-  RECONNECTION_CONFIG_BASE_DELAY("connection.reconnection-policy.config.base-delay", true),
-  RECONNECTION_CONFIG_MAX_DELAY("connection.reconnection-policy.config.max-delay", true),
+  CONTROL_CONNECTION_TIMEOUT("connection.control-connection.timeout", true),
+  CONTROL_CONNECTION_PAGE_SIZE("connection.control-connection.page-size", true),
+
+  LOAD_BALANCING_POLICY_CLASS("load-balancing.policy-class", true),
+
+  RECONNECTION_POLICY_CLASS("connection.reconnection.policy-class", true),
+  RECONNECTION_CONFIG_BASE_DELAY("connection.reconnection.config.base-delay", true),
+  RECONNECTION_CONFIG_MAX_DELAY("connection.reconnection.config.max-delay", true),
+
+  ADDRESS_TRANSLATOR_CLASS("address-translation.translator-class", true),
 
   AUTHENTICATION_PROVIDER_CLASS("authentication.provider-class", false),
   AUTHENTICATION_CONFIG_USERNAME("authentication.config.username", false),
@@ -35,6 +49,9 @@ public enum CoreDriverOption implements DriverOption {
 
   SSL_FACTORY_CLASS("ssl.factory-class", false),
   SSL_CONFIG_CIPHER_SUITES("ssl.config.cipher-suites", false),
+
+  METADATA_TOPOLOGY_WINDOW("metadata.topology-event-debouncer.window", true),
+  METADATA_TOPOLOGY_MAX_EVENTS("metadata.topology-event-debouncer.max-events", true),
   ;
 
   private final String path;

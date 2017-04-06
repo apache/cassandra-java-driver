@@ -22,6 +22,7 @@ import io.netty.util.concurrent.Future;
 import io.netty.util.concurrent.ScheduledFuture;
 import java.time.Duration;
 import java.util.concurrent.Callable;
+import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.TimeUnit;
 import org.slf4j.Logger;
@@ -40,7 +41,10 @@ public class Reconnection {
   private final EventExecutor executor;
   private final ReconnectionPolicy reconnectionPolicy;
   private final Callable<CompletionStage<Boolean>> reconnectionTask;
+  private final Runnable onStart;
+  private final Runnable onStop;
 
+  private boolean isRunning;
   private ReconnectionPolicy.ReconnectionSchedule reconnectionSchedule;
   private ScheduledFuture<CompletionStage<Boolean>> nextAttempt;
 
@@ -51,28 +55,80 @@ public class Reconnection {
   public Reconnection(
       EventExecutor executor,
       ReconnectionPolicy reconnectionPolicy,
-      Callable<CompletionStage<Boolean>> reconnectionTask) {
+      Callable<CompletionStage<Boolean>> reconnectionTask,
+      Runnable onStart,
+      Runnable onStop) {
     this.executor = executor;
     this.reconnectionPolicy = reconnectionPolicy;
     this.reconnectionTask = reconnectionTask;
+    this.onStart = onStart;
+    this.onStop = onStop;
+  }
+
+  public Reconnection(
+      EventExecutor executor,
+      ReconnectionPolicy reconnectionPolicy,
+      Callable<CompletionStage<Boolean>> reconnectionTask) {
+    this(executor, reconnectionPolicy, reconnectionTask, () -> {}, () -> {});
   }
 
   public boolean isRunning() {
     assert executor.inEventLoop();
-    return nextAttempt != null;
+    return isRunning;
   }
 
   /** @throws IllegalStateException if the reconnection is already running */
   public void start() {
     assert executor.inEventLoop();
-    Preconditions.checkState(nextAttempt == null, "Already running");
+    Preconditions.checkState(!isRunning, "Already running");
     reconnectionSchedule = reconnectionPolicy.newSchedule();
-
+    isRunning = true;
+    onStart.run();
     scheduleNextAttempt();
+  }
+
+  /**
+   * Forces a reconnection now, without waiting for the next scheduled attempt.
+   *
+   * @param forceIfStopped if true and the reconnection is not running, it will get started. If
+   *     false and the reconnection is not running, no attempt is scheduled.
+   */
+  public void reconnectNow(boolean forceIfStopped) {
+    assert executor.inEventLoop();
+    if (isRunning || forceIfStopped) {
+      LOG.debug("{} forcing next attempt now", this);
+      isRunning = true;
+      if (nextAttempt != null) {
+        nextAttempt.cancel(true);
+      }
+      try {
+        onNextAttemptStarted(reconnectionTask.call());
+      } catch (Exception e) {
+        LOG.warn("Uncaught error while starting reconnection attempt", e);
+        scheduleNextAttempt();
+      }
+    }
+  }
+
+  public void stop() {
+    assert executor.inEventLoop();
+    if (isRunning) {
+      isRunning = false;
+      LOG.debug("{} stopping reconnection", this);
+      if (nextAttempt != null) {
+        nextAttempt.cancel(true);
+      }
+      onStop.run();
+      nextAttempt = null;
+      reconnectionSchedule = null;
+    }
   }
 
   private void scheduleNextAttempt() {
     assert executor.inEventLoop();
+    if (reconnectionSchedule == null) { // happens if reconnectNow() while we were stopped
+      reconnectionSchedule = reconnectionPolicy.newSchedule();
+    }
     Duration nextInterval = reconnectionSchedule.nextDelay();
     LOG.debug("{} scheduling next reconnection in {}", this, nextInterval);
     nextAttempt = executor.schedule(reconnectionTask, nextInterval.toNanos(), TimeUnit.NANOSECONDS);
@@ -80,7 +136,7 @@ public class Reconnection {
         (Future<CompletionStage<Boolean>> f) -> {
           if (f.isSuccess()) {
             onNextAttemptStarted(f.getNow());
-          } else {
+          } else if (!f.isCancelled()) {
             LOG.warn("Uncaught error while starting reconnection attempt", f.cause());
             scheduleNextAttempt();
           }
@@ -102,22 +158,12 @@ public class Reconnection {
       LOG.debug("{} reconnection successful", this);
       stop();
     } else {
-      if (error != null) {
+      if (error != null && !(error instanceof CancellationException)) {
         LOG.warn("Uncaught error while starting reconnection attempt", error);
       }
-      if (isRunning()) {
+      if (isRunning) { // can be false if stop() was called
         scheduleNextAttempt();
       }
     }
-  }
-
-  public void stop() {
-    assert executor.inEventLoop();
-    LOG.debug("{} stopping reconnection", this);
-    if (nextAttempt != null) {
-      nextAttempt.cancel(true);
-    }
-    nextAttempt = null;
-    reconnectionSchedule = null;
   }
 }

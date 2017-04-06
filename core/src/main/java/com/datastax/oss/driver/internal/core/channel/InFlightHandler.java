@@ -135,7 +135,11 @@ public class InFlightHandler extends ChannelDuplexHandler {
         LOG.debug("Received event {} but no callback was registered", event);
       } else {
         LOG.debug("Received event {}, notifying callback", event);
-        eventCallback.onEvent(event);
+        try {
+          eventCallback.onEvent(event);
+        } catch (Throwable t) {
+          LOG.warn("Unexpected error while invoking event handler", t);
+        }
       }
     } else {
       ResponseCallback responseCallback = inFlight.get(streamId);
@@ -143,7 +147,11 @@ public class InFlightHandler extends ChannelDuplexHandler {
         if (!responseCallback.holdStreamId()) {
           release(streamId, ctx);
         }
-        responseCallback.onResponse(responseFrame);
+        try {
+          responseCallback.onResponse(responseFrame);
+        } catch (Throwable t) {
+          LOG.warn("Unexpected error while invoking response handler", t);
+        }
       }
     }
     super.channelRead(ctx, msg);
@@ -152,12 +160,19 @@ public class InFlightHandler extends ChannelDuplexHandler {
   /** Called if an exception was thrown while processing an inbound event (i.e. a response). */
   @Override
   public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
-    int streamId;
-    if (cause instanceof FrameDecodingException
-        && (streamId = ((FrameDecodingException) cause).streamId) >= 0) {
-      // We know which request matches the failing response, fail that one only
-      ResponseCallback responseCallback = release(streamId, ctx);
-      responseCallback.onFailure(cause.getCause());
+    if (cause instanceof FrameDecodingException) {
+      int streamId = ((FrameDecodingException) cause).streamId;
+      if (streamId >= 0) {
+        // We know which request matches the failing response, fail that one only
+        ResponseCallback responseCallback = release(streamId, ctx);
+        try {
+          responseCallback.onFailure(cause.getCause());
+        } catch (Throwable t) {
+          LOG.warn("Unexpected error while invoking failure handler", t);
+        }
+      } else {
+        LOG.warn("Unexpected error while decoding incoming event frame", cause.getCause());
+      }
     } else {
       // Otherwise fail all pending requests
       abortAllInFlight(new ConnectionException("Unexpected error on channel", cause));
