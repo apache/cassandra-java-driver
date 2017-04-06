@@ -63,6 +63,9 @@ public class DefaultDriverContext implements InternalDriverContext {
       new LazyReference<>("authProvider", this::buildAuthProvider, cycleDetector);
   private final LazyReference<Optional<SslEngineFactory>> sslEngineFactoryRef =
       new LazyReference<>("sslEngineFactory", this::buildSslEngineFactory, cycleDetector);
+
+  private final LazyReference<EventBus> eventBusRef =
+      new LazyReference<>("eventBus", this::buildEventBus, cycleDetector);
   private final LazyReference<Compressor<ByteBuf>> compressorRef =
       new LazyReference<>("compressor", this::buildCompressor, cycleDetector);
   private final LazyReference<FrameCodec<ByteBuf>> frameCodecRef =
@@ -90,6 +93,10 @@ public class DefaultDriverContext implements InternalDriverContext {
   protected Optional<SslEngineFactory> buildSslEngineFactory() {
     return Reflection.buildFromConfig(
         this, CoreDriverOption.SSL_FACTORY_CLASS, SslEngineFactory.class);
+  }
+
+  private EventBus buildEventBus() {
+    return new EventBus();
   }
 
   private Compressor<ByteBuf> buildCompressor() {
@@ -135,6 +142,11 @@ public class DefaultDriverContext implements InternalDriverContext {
   @Override
   public Optional<SslEngineFactory> sslEngineFactory() {
     return sslEngineFactoryRef.get();
+  }
+
+  @Override
+  public EventBus eventBus() {
+    return eventBusRef.get();
   }
 
   @Override

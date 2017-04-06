@@ -126,7 +126,7 @@ public class InFlightHandlerTest extends ChannelHandlerTestBase {
   }
 
   @Test
-  public void should_delay_close_until_all_pending_complete() {
+  public void should_delay_graceful_close_until_all_pending_complete() {
     // Given
     Mockito.when(streamIds.acquire()).thenReturn(42);
     MockResponseCallback responseCallback = new MockResponseCallback();
@@ -150,7 +150,16 @@ public class InFlightHandlerTest extends ChannelHandlerTestBase {
   }
 
   @Test
-  public void should_refuse_new_writes_during_orderly_close() {
+  public void should_graceful_close_immediately_if_no_pending() {
+    // When
+    channel.write(DriverChannel.GRACEFUL_CLOSE_MESSAGE);
+
+    // Then
+    assertThat(channel.closeFuture()).isSuccess();
+  }
+
+  @Test
+  public void should_refuse_new_writes_during_graceful_close() {
     // Given
     Mockito.when(streamIds.acquire()).thenReturn(42);
     MockResponseCallback responseCallback = new MockResponseCallback();

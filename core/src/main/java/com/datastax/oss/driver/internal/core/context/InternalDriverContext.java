@@ -27,6 +27,8 @@ import java.util.Optional;
 /** Extends the driver context with additional components that are not exposed by our public API. */
 public interface InternalDriverContext extends DriverContext {
 
+  EventBus eventBus();
+
   Compressor<ByteBuf> compressor();
 
   FrameCodec<ByteBuf> frameCodec();

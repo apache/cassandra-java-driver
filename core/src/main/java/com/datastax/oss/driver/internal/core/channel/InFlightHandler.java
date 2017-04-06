@@ -58,7 +58,11 @@ public class InFlightHandler extends ChannelDuplexHandler {
       promise.setFailure(new IllegalStateException("Channel is closing"));
       return;
     } else if (in == DriverChannel.GRACEFUL_CLOSE_MESSAGE) {
-      closingGracefully = true;
+      if (inFlight.isEmpty()) {
+        ctx.channel().close();
+      } else {
+        closingGracefully = true;
+      }
       return;
     } else if (in == DriverChannel.FORCEFUL_CLOSE_MESSAGE) {
       abortAllInFlight(new ConnectionException("Channel was force-closed"));
