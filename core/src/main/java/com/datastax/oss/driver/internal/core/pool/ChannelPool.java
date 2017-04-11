@@ -24,11 +24,13 @@ import com.datastax.oss.driver.internal.core.util.concurrent.Reconnection;
 import com.datastax.oss.driver.internal.core.util.concurrent.RunOrSchedule;
 import com.datastax.oss.driver.internal.core.util.concurrent.UncaughtExceptions;
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.collect.Sets;
 import io.netty.util.concurrent.EventExecutor;
 import io.netty.util.concurrent.Future;
 import java.net.SocketAddress;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ExecutionException;
@@ -98,6 +100,10 @@ public class ChannelPool {
     return channels.next();
   }
 
+  public void resize(int newChannelCount) {
+    RunOrSchedule.on(adminExecutor, () -> singleThreaded.resize(newChannelCount));
+  }
+
   /**
    * Changes the keyspace name on all the channels in this pool.
    *
@@ -136,12 +142,12 @@ public class ChannelPool {
   private class SingleThreaded {
 
     private final SocketAddress address;
-    private final int wantedCount;
     private final ChannelFactory channelFactory;
     // The channels that are currently connecting
     private final List<CompletionStage<DriverChannel>> pendingChannels = new ArrayList<>();
     private final Reconnection reconnection;
 
+    private int wantedCount;
     private CompletableFuture<ChannelPool> connectFuture = new CompletableFuture<>();
     private boolean isConnecting;
     private CompletableFuture<ChannelPool> closeFuture = new CompletableFuture<>();
@@ -231,6 +237,8 @@ public class ChannelPool {
       }
       pendingChannels.clear();
 
+      shrinkIfTooManyChannels(); // Can happen if the pool was shrinked during the reconnection
+
       int currentCount = channels.size();
       LOG.debug(
           "{} reconnection attempt complete, {}/{} channels",
@@ -247,6 +255,43 @@ public class ChannelPool {
       channels.remove(channel);
       if (!isClosing && !reconnection.isRunning()) {
         reconnection.start();
+      }
+    }
+
+    public void resize(int newChannelCount) {
+      assert adminExecutor.inEventLoop();
+      if (newChannelCount > wantedCount) {
+        LOG.debug("{} growing ({} => {} channels)", ChannelPool.this, wantedCount, newChannelCount);
+        wantedCount = newChannelCount;
+        if (!reconnection.isRunning()) {
+          reconnection.start();
+        }
+      } else if (newChannelCount < wantedCount) {
+        LOG.debug(
+            "{} shrinking ({} => {} channels)", ChannelPool.this, wantedCount, newChannelCount);
+        wantedCount = newChannelCount;
+        if (!reconnection.isRunning()) {
+          shrinkIfTooManyChannels();
+        } // else it will be handled at the end of the reconnection attempt
+      }
+    }
+
+    private void shrinkIfTooManyChannels() {
+      assert adminExecutor.inEventLoop();
+      int extraCount = channels.size() - wantedCount;
+      if (extraCount > 0) {
+        LOG.debug("{} closing {} extra channels", ChannelPool.this, extraCount);
+        Set<DriverChannel> toRemove = Sets.newHashSetWithExpectedSize(extraCount);
+        for (DriverChannel channel : channels) {
+          toRemove.add(channel);
+          if (--extraCount == 0) {
+            break;
+          }
+        }
+        for (DriverChannel channel : toRemove) {
+          channels.remove(channel);
+          channel.close();
+        }
       }
     }
 

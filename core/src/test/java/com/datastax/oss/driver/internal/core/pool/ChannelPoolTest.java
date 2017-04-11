@@ -51,6 +51,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isNull;
+import static org.mockito.Mockito.times;
 
 public class ChannelPoolTest {
   private static final SocketAddress ADDRESS = new LocalAddress("test");
@@ -101,11 +102,11 @@ public class ChannelPoolTest {
         ChannelPool.init(ADDRESS, null, channelCount, context);
 
     // Pool init should have called the channel factory. Complete the responses:
-    DriverChannel channel1 = newMockDriverChannel();
+    DriverChannel channel1 = newMockDriverChannel(1);
     channelFactoryFutures.take().complete(channel1);
-    DriverChannel channel2 = newMockDriverChannel();
+    DriverChannel channel2 = newMockDriverChannel(2);
     channelFactoryFutures.take().complete(channel2);
-    DriverChannel channel3 = newMockDriverChannel();
+    DriverChannel channel3 = newMockDriverChannel(3);
     channelFactoryFutures.take().complete(channel3);
 
     waitForPendingAdminTasks();
@@ -142,7 +143,7 @@ public class ChannelPoolTest {
 
     // 1 channel fails, the other succeeds
     channelFactoryFutures.take().completeExceptionally(new Exception("mock channel init failure"));
-    DriverChannel channel1 = newMockDriverChannel();
+    DriverChannel channel1 = newMockDriverChannel(1);
     channelFactoryFutures.take().complete(channel1);
 
     waitForPendingAdminTasks();
@@ -154,7 +155,7 @@ public class ChannelPoolTest {
     // A reconnection should have been scheduled
     Mockito.verify(reconnectionSchedule).nextDelay();
 
-    DriverChannel channel2 = newMockDriverChannel();
+    DriverChannel channel2 = newMockDriverChannel(2);
     channelFactoryFutures.take().complete(channel2);
 
     waitForPendingAdminTasks();
@@ -171,9 +172,9 @@ public class ChannelPoolTest {
         ChannelPool.init(ADDRESS, null, channelCount, context);
 
     // The 2 channels succeed
-    DriverChannel channel1 = newMockDriverChannel();
+    DriverChannel channel1 = newMockDriverChannel(1);
     channelFactoryFutures.take().complete(channel1);
-    DriverChannel channel2 = newMockDriverChannel();
+    DriverChannel channel2 = newMockDriverChannel(2);
     channelFactoryFutures.take().complete(channel2);
 
     waitForPendingAdminTasks();
@@ -190,12 +191,159 @@ public class ChannelPoolTest {
 
     Mockito.verify(reconnectionSchedule).nextDelay();
 
-    DriverChannel channel3 = newMockDriverChannel();
+    DriverChannel channel3 = newMockDriverChannel(3);
     channelFactoryFutures.take().complete(channel3);
 
     waitForPendingAdminTasks();
 
     assertThat(pool.channels).containsOnly(channel1, channel3);
+  }
+
+  @Test
+  public void should_shrink_outside_of_reconnection() throws Exception {
+    int channelCount = 4;
+    CompletionStage<ChannelPool> poolFuture =
+        ChannelPool.init(ADDRESS, null, channelCount, context);
+
+    DriverChannel channel1 = newMockDriverChannel(1);
+    channelFactoryFutures.take().complete(channel1);
+    DriverChannel channel2 = newMockDriverChannel(2);
+    channelFactoryFutures.take().complete(channel2);
+    DriverChannel channel3 = newMockDriverChannel(3);
+    channelFactoryFutures.take().complete(channel3);
+    DriverChannel channel4 = newMockDriverChannel(4);
+    channelFactoryFutures.take().complete(channel4);
+
+    waitForPendingAdminTasks();
+
+    assertThat(poolFuture).isSuccess();
+    ChannelPool pool = poolFuture.toCompletableFuture().get();
+    assertThat(pool.channels).containsOnly(channel1, channel2, channel3, channel4);
+
+    pool.resize(2);
+
+    waitForPendingAdminTasks();
+
+    assertThat(pool.channels).containsOnly(channel3, channel4);
+  }
+
+  @Test
+  public void should_shrink_during_reconnection() throws Exception {
+    Mockito.when(reconnectionSchedule.nextDelay()).thenReturn(Duration.ofNanos(1));
+
+    int channelCount = 4;
+    CompletionStage<ChannelPool> poolFuture =
+        ChannelPool.init(ADDRESS, null, channelCount, context);
+
+    DriverChannel channel1 = newMockDriverChannel(1);
+    channelFactoryFutures.take().complete(channel1);
+    DriverChannel channel2 = newMockDriverChannel(2);
+    channelFactoryFutures.take().complete(channel2);
+    channelFactoryFutures.take().completeExceptionally(new Exception("mock channel init failure"));
+    channelFactoryFutures.take().completeExceptionally(new Exception("mock channel init failure"));
+
+    waitForPendingAdminTasks();
+
+    assertThat(poolFuture).isSuccess();
+    ChannelPool pool = poolFuture.toCompletableFuture().get();
+    assertThat(pool.channels).containsOnly(channel1, channel2);
+
+    // A reconnection should have been scheduled to add the missing channels, don't complete yet
+    Mockito.verify(reconnectionSchedule).nextDelay();
+
+    pool.resize(2);
+
+    waitForPendingAdminTasks();
+
+    // Now allow the reconnected channel to complete initialization
+    DriverChannel channel3 = newMockDriverChannel(3);
+    channelFactoryFutures.take().complete(channel3);
+    DriverChannel channel4 = newMockDriverChannel(4);
+    channelFactoryFutures.take().complete(channel4);
+
+    waitForPendingAdminTasks();
+
+    assertThat(pool.channels).containsOnly(channel3, channel4);
+  }
+
+  @Test
+  public void should_grow_outside_of_reconnection() throws Exception {
+    Mockito.when(reconnectionSchedule.nextDelay()).thenReturn(Duration.ofNanos(1));
+    int channelCount = 2;
+    CompletionStage<ChannelPool> poolFuture =
+        ChannelPool.init(ADDRESS, null, channelCount, context);
+
+    DriverChannel channel1 = newMockDriverChannel(1);
+    channelFactoryFutures.take().complete(channel1);
+    DriverChannel channel2 = newMockDriverChannel(2);
+    channelFactoryFutures.take().complete(channel2);
+
+    waitForPendingAdminTasks();
+
+    assertThat(poolFuture).isSuccess();
+    ChannelPool pool = poolFuture.toCompletableFuture().get();
+    assertThat(pool.channels).containsOnly(channel1, channel2);
+
+    pool.resize(4);
+
+    waitForPendingAdminTasks();
+
+    // The resizing should have triggered a reconnection
+    Mockito.verify(reconnectionSchedule).nextDelay();
+
+    DriverChannel channel3 = newMockDriverChannel(3);
+    channelFactoryFutures.take().complete(channel3);
+    DriverChannel channel4 = newMockDriverChannel(4);
+    channelFactoryFutures.take().complete(channel4);
+
+    waitForPendingAdminTasks();
+
+    assertThat(pool.channels).containsOnly(channel1, channel2, channel3, channel4);
+  }
+
+  @Test
+  public void should_grow_during_reconnection() throws Exception {
+    Mockito.when(reconnectionSchedule.nextDelay()).thenReturn(Duration.ofNanos(1));
+    int channelCount = 2;
+    CompletionStage<ChannelPool> poolFuture =
+        ChannelPool.init(ADDRESS, null, channelCount, context);
+
+    DriverChannel channel1 = newMockDriverChannel(1);
+    channelFactoryFutures.take().complete(channel1);
+    channelFactoryFutures.take().completeExceptionally(new Exception("mock channel init failure"));
+
+    waitForPendingAdminTasks();
+
+    assertThat(poolFuture).isSuccess();
+    ChannelPool pool = poolFuture.toCompletableFuture().get();
+    assertThat(pool.channels).containsOnly(channel1);
+
+    // A reconnection should have been scheduled to add the missing channel, don't complete yet
+    Mockito.verify(reconnectionSchedule).nextDelay();
+
+    pool.resize(4);
+
+    waitForPendingAdminTasks();
+
+    // Complete the channel for the first reconnection, bringing the count to 2
+    DriverChannel channel2 = newMockDriverChannel(2);
+    channelFactoryFutures.take().complete(channel2);
+
+    waitForPendingAdminTasks();
+
+    assertThat(pool.channels).containsOnly(channel1, channel2);
+
+    // Another reconnection should have been scheduled when evaluating the first attempt
+    Mockito.verify(reconnectionSchedule, times(2)).nextDelay();
+
+    DriverChannel channel3 = newMockDriverChannel(3);
+    channelFactoryFutures.take().complete(channel3);
+    DriverChannel channel4 = newMockDriverChannel(4);
+    channelFactoryFutures.take().complete(channel4);
+
+    waitForPendingAdminTasks();
+
+    assertThat(pool.channels).containsOnly(channel1, channel2, channel3, channel4);
   }
 
   @Test
@@ -205,9 +353,9 @@ public class ChannelPoolTest {
         ChannelPool.init(ADDRESS, null, channelCount, context);
 
     // The 2 channels succeed
-    DriverChannel channel1 = newMockDriverChannel();
+    DriverChannel channel1 = newMockDriverChannel(1);
     channelFactoryFutures.take().complete(channel1);
-    DriverChannel channel2 = newMockDriverChannel();
+    DriverChannel channel2 = newMockDriverChannel(2);
     channelFactoryFutures.take().complete(channel2);
 
     waitForPendingAdminTasks();
@@ -252,9 +400,9 @@ public class ChannelPoolTest {
     assertThat(setKeyspaceFuture).isSuccess();
 
     // Now let the two channels succeed to complete the reconnection
-    DriverChannel channel1 = newMockDriverChannel();
+    DriverChannel channel1 = newMockDriverChannel(1);
     channelFactoryFutures.take().complete(channel1);
-    DriverChannel channel2 = newMockDriverChannel();
+    DriverChannel channel2 = newMockDriverChannel(2);
     channelFactoryFutures.take().complete(channel2);
 
     waitForPendingAdminTasks();
@@ -271,9 +419,9 @@ public class ChannelPoolTest {
     CompletionStage<ChannelPool> poolFuture =
         ChannelPool.init(ADDRESS, null, channelCount, context);
 
-    DriverChannel channel1 = newMockDriverChannel();
+    DriverChannel channel1 = newMockDriverChannel(1);
     channelFactoryFutures.take().complete(channel1);
-    DriverChannel channel2 = newMockDriverChannel();
+    DriverChannel channel2 = newMockDriverChannel(2);
     channelFactoryFutures.take().complete(channel2);
     channelFactoryFutures.take().completeExceptionally(new Exception("mock channel init failure"));
 
@@ -287,7 +435,7 @@ public class ChannelPoolTest {
     CompletionStage<ChannelPool> closeFuture = pool.close();
 
     // Complete the reconnection after the pool was closed
-    DriverChannel channel3 = newMockDriverChannel();
+    DriverChannel channel3 = newMockDriverChannel(3);
     channelFactoryFutures.take().complete(channel3);
 
     waitForPendingAdminTasks();
@@ -315,9 +463,9 @@ public class ChannelPoolTest {
     CompletionStage<ChannelPool> poolFuture =
         ChannelPool.init(ADDRESS, null, channelCount, context);
 
-    DriverChannel channel1 = newMockDriverChannel();
+    DriverChannel channel1 = newMockDriverChannel(1);
     channelFactoryFutures.take().complete(channel1);
-    DriverChannel channel2 = newMockDriverChannel();
+    DriverChannel channel2 = newMockDriverChannel(2);
     channelFactoryFutures.take().complete(channel2);
     channelFactoryFutures.take().completeExceptionally(new Exception("mock channel init failure"));
 
@@ -331,7 +479,7 @@ public class ChannelPoolTest {
     CompletionStage<ChannelPool> closeFuture = pool.forceClose();
 
     // Complete the reconnection after the pool was closed
-    DriverChannel channel3 = newMockDriverChannel();
+    DriverChannel channel3 = newMockDriverChannel(3);
     channelFactoryFutures.take().complete(channel3);
 
     waitForPendingAdminTasks();
@@ -351,7 +499,7 @@ public class ChannelPoolTest {
     assertThat(closeFuture).isSuccess();
   }
 
-  private DriverChannel newMockDriverChannel() {
+  private DriverChannel newMockDriverChannel(int id) {
     DriverChannel channel = Mockito.mock(DriverChannel.class);
     EventLoop adminExecutor = adminEventLoopGroup.next();
     DefaultChannelPromise closeFuture = new DefaultChannelPromise(null, adminExecutor);
@@ -360,6 +508,7 @@ public class ChannelPoolTest {
     Mockito.when(channel.closeFuture()).thenReturn(closeFuture);
     Mockito.when(channel.setKeyspace(any(CqlIdentifier.class)))
         .thenReturn(adminExecutor.newSucceededFuture(null));
+    Mockito.when(channel.toString()).thenReturn("channel" + id);
     return channel;
   }
 
