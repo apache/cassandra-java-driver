@@ -18,10 +18,7 @@ package com.datastax.driver.core;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.Lists;
 
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -43,7 +40,7 @@ public class KeyspaceMetadata {
 
     final Map<String, TableMetadata> tables = new ConcurrentHashMap<String, TableMetadata>();
     final Map<String, MaterializedViewMetadata> views = new ConcurrentHashMap<String, MaterializedViewMetadata>();
-    final Map<String, UserType> userTypes = new ConcurrentHashMap<String, UserType>();
+    final Map<String, UserType> userTypes = Collections.synchronizedMap(new LinkedHashMap<String, UserType>());
     final Map<String, FunctionMetadata> functions = new ConcurrentHashMap<String, FunctionMetadata>();
     final Map<String, AggregateMetadata> aggregates = new ConcurrentHashMap<String, AggregateMetadata>();
 

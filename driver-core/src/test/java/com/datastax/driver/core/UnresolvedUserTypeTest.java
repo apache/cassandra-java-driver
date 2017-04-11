@@ -18,6 +18,8 @@ package com.datastax.driver.core;
 import com.datastax.driver.core.utils.CassandraVersion;
 import org.testng.annotations.Test;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.ExecutionException;
 
 import static com.datastax.driver.core.Assertions.assertThat;
@@ -92,5 +94,24 @@ public class UnresolvedUserTypeTest extends CCMTestsSupport {
         assertThat(f).hasField("f1", h);
         assertThat(g).hasField("f1", cint());
         assertThat(h).hasField("f1", cint());
+
+        // JAVA-1407: ensure udts are listed in topological order
+        List<UserType> userTypes = new ArrayList<UserType>(keyspaceMetadata.getUserTypes());
+
+        assertThat(userTypes.subList(0, 2)).containsOnly(g, h);
+        assertThat(userTypes.subList(2, 4)).containsOnly(e, f);
+        assertThat(userTypes.subList(4, 5)).containsOnly(d);
+        assertThat(userTypes.subList(5, 7)).containsOnly(b, c);
+        assertThat(userTypes.subList(7, 8)).containsOnly(a);
+
+        String script = keyspaceMetadata.exportAsString();
+
+        assertThat(script.indexOf(a.exportAsString())).isGreaterThan(script.indexOf(b.exportAsString())).isGreaterThan(script.indexOf(c.exportAsString()));
+        assertThat(script.indexOf(b.exportAsString())).isGreaterThan(script.indexOf(d.exportAsString()));
+        assertThat(script.indexOf(c.exportAsString())).isGreaterThan(script.indexOf(d.exportAsString()));
+        assertThat(script.indexOf(d.exportAsString())).isGreaterThan(script.indexOf(e.exportAsString())).isGreaterThan(script.indexOf(f.exportAsString()));
+        assertThat(script.indexOf(e.exportAsString())).isGreaterThan(script.indexOf(g.exportAsString())).isGreaterThan(script.indexOf(h.exportAsString()));
+        assertThat(script.indexOf(f.exportAsString())).isGreaterThan(script.indexOf(g.exportAsString())).isGreaterThan(script.indexOf(h.exportAsString()));
+
     }
 }
