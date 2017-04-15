@@ -15,7 +15,6 @@
  */
 package com.datastax.oss.driver.internal.core.channel;
 
-import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.ProtocolVersion;
 import com.datastax.oss.driver.api.core.config.CoreDriverOption;
 import com.datastax.oss.driver.api.core.config.DriverConfig;
@@ -218,7 +217,7 @@ abstract class ChannelFactoryTestBase {
     ChannelInitializer<Channel> initializer(
         SocketAddress address,
         ProtocolVersion protocolVersion,
-        CqlIdentifier keyspace,
+        DriverChannelOptions options,
         AvailableIdsHolder availableIdsHolder) {
       return new ChannelInitializer<Channel>() {
         @Override
@@ -236,9 +235,10 @@ abstract class ChannelFactoryTestBase {
                   protocolVersion,
                   new StreamIdGenerator(maxRequestsPerConnection),
                   setKeyspaceTimeoutMillis,
-                  availableIdsHolder);
+                  availableIdsHolder,
+                  null);
           ProtocolInitHandler initHandler =
-              new ProtocolInitHandler(context, protocolVersion, clusterName, keyspace);
+              new ProtocolInitHandler(context, protocolVersion, clusterName, options);
           channel.pipeline().addLast("inflight", inFlightHandler).addLast("init", initHandler);
         }
       };

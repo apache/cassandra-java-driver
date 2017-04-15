@@ -47,6 +47,7 @@ public class InFlightHandler extends ChannelDuplexHandler {
   private final Map<Integer, ResponseCallback> inFlight;
   private final long setKeyspaceTimeoutMillis;
   private final AvailableIdsHolder availableIdsHolder;
+  private final EventCallback eventCallback;
   private boolean closingGracefully;
   private SetKeyspaceRequest setKeyspaceRequest;
 
@@ -54,13 +55,15 @@ public class InFlightHandler extends ChannelDuplexHandler {
       ProtocolVersion protocolVersion,
       StreamIdGenerator streamIds,
       long setKeyspaceTimeoutMillis,
-      AvailableIdsHolder availableIdsHolder) {
+      AvailableIdsHolder availableIdsHolder,
+      EventCallback eventCallback) {
     this.protocolVersion = protocolVersion;
     this.streamIds = streamIds;
     reportAvailableIds();
     this.inFlight = Maps.newHashMapWithExpectedSize(streamIds.getMaxAvailableIds());
     this.setKeyspaceTimeoutMillis = setKeyspaceTimeoutMillis;
     this.availableIdsHolder = availableIdsHolder;
+    this.eventCallback = eventCallback;
   }
 
   @Override
@@ -126,12 +129,22 @@ public class InFlightHandler extends ChannelDuplexHandler {
     Frame responseFrame = (Frame) msg;
     int streamId = responseFrame.streamId;
 
-    ResponseCallback responseCallback = inFlight.get(streamId);
-    if (responseCallback != null) {
-      if (!responseCallback.holdStreamId()) {
-        release(streamId, ctx);
+    if (streamId < 0) {
+      Message event = responseFrame.message;
+      if (eventCallback == null) {
+        LOG.debug("Received event {} but no callback was registered", event);
+      } else {
+        LOG.debug("Received event {}, notifying callback", event);
+        eventCallback.onEvent(event);
       }
-      responseCallback.onResponse(responseFrame);
+    } else {
+      ResponseCallback responseCallback = inFlight.get(streamId);
+      if (responseCallback != null) {
+        if (!responseCallback.holdStreamId()) {
+          release(streamId, ctx);
+        }
+        responseCallback.onResponse(responseFrame);
+      }
     }
     super.channelRead(ctx, msg);
   }

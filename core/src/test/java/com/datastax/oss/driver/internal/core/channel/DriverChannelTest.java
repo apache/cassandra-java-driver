@@ -52,7 +52,7 @@ public class DriverChannelTest extends ChannelHandlerTestBase {
         .pipeline()
         .addLast(
             new InFlightHandler(
-                CoreProtocolVersion.V3, streamIds, SET_KEYSPACE_TIMEOUT_MILLIS, null));
+                CoreProtocolVersion.V3, streamIds, SET_KEYSPACE_TIMEOUT_MILLIS, null, null));
     writeCoalescer = new MockWriteCoalescer();
     driverChannel = new DriverChannel(channel, writeCoalescer, null);
   }

@@ -18,6 +18,7 @@ package com.datastax.oss.driver.internal.core.pool;
 import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.internal.core.channel.ChannelFactory;
 import com.datastax.oss.driver.internal.core.channel.DriverChannel;
+import com.datastax.oss.driver.internal.core.channel.DriverChannelOptions;
 import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
 import com.datastax.oss.driver.internal.core.util.concurrent.CompletableFutures;
 import com.datastax.oss.driver.internal.core.util.concurrent.Reconnection;
@@ -194,9 +195,13 @@ public class ChannelPool {
 
       int missing = wantedCount - channels.size();
       LOG.debug("{} trying to create {} missing channels", ChannelPool.this, missing);
+      DriverChannelOptions options =
+          DriverChannelOptions.builder()
+              .withKeyspace(keyspaceName)
+              .reportAvailableIds(wantedCount > 1)
+              .build();
       for (int i = 0; i < missing; i++) {
-        CompletionStage<DriverChannel> channelFuture =
-            channelFactory.connect(address, keyspaceName, wantedCount > 1);
+        CompletionStage<DriverChannel> channelFuture = channelFactory.connect(address, options);
         pendingChannels.add(channelFuture);
       }
       return CompletableFutures.whenAllDone(pendingChannels)

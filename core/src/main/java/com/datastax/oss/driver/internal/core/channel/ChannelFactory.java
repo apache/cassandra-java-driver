@@ -15,7 +15,6 @@
  */
 package com.datastax.oss.driver.internal.core.channel;
 
-import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.ProtocolVersion;
 import com.datastax.oss.driver.api.core.UnsupportedProtocolVersionException;
 import com.datastax.oss.driver.api.core.config.CoreDriverOption;
@@ -65,12 +64,12 @@ public class ChannelFactory {
     } // else it will be negotiated with the first opened connection
   }
 
-  /** @param reportAvailableIds whether {@link DriverChannel#availableIds()} should be maintained */
   public CompletionStage<DriverChannel> connect(
-      final SocketAddress address, CqlIdentifier keyspace, boolean reportAvailableIds) {
+      final SocketAddress address, DriverChannelOptions options) {
     CompletableFuture<DriverChannel> resultFuture = new CompletableFuture<>();
 
-    AvailableIdsHolder availableIdsHolder = reportAvailableIds ? new AvailableIdsHolder() : null;
+    AvailableIdsHolder availableIdsHolder =
+        options.reportAvailableIds ? new AvailableIdsHolder() : null;
 
     ProtocolVersion currentVersion;
     boolean isNegotiating;
@@ -85,7 +84,7 @@ public class ChannelFactory {
 
     connect(
         address,
-        keyspace,
+        options,
         availableIdsHolder,
         currentVersion,
         isNegotiating,
@@ -96,7 +95,7 @@ public class ChannelFactory {
 
   private void connect(
       SocketAddress address,
-      CqlIdentifier keyspace,
+      DriverChannelOptions options,
       AvailableIdsHolder availableIdsHolder,
       final ProtocolVersion currentVersion,
       boolean isNegotiating,
@@ -110,7 +109,7 @@ public class ChannelFactory {
             .group(nettyOptions.ioEventLoopGroup())
             .channel(nettyOptions.channelClass())
             .option(ChannelOption.ALLOCATOR, nettyOptions.allocator())
-            .handler(initializer(address, currentVersion, keyspace, availableIdsHolder));
+            .handler(initializer(address, currentVersion, options, availableIdsHolder));
 
     nettyOptions.afterBootstrapInitialized(bootstrap);
 
@@ -149,7 +148,7 @@ public class ChannelFactory {
                     downgraded.get());
                 connect(
                     address,
-                    keyspace,
+                    options,
                     availableIdsHolder,
                     downgraded.get(),
                     true,
@@ -170,7 +169,7 @@ public class ChannelFactory {
   ChannelInitializer<Channel> initializer(
       SocketAddress address,
       final ProtocolVersion protocolVersion,
-      final CqlIdentifier keyspace,
+      final DriverChannelOptions options,
       AvailableIdsHolder availableIdsHolder) {
     return new ChannelInitializer<Channel>() {
       @Override
@@ -191,9 +190,10 @@ public class ChannelFactory {
                 protocolVersion,
                 new StreamIdGenerator(maxRequestsPerConnection),
                 setKeyspaceTimeoutMillis,
-                availableIdsHolder);
+                availableIdsHolder,
+                options.eventCallback);
         ProtocolInitHandler initHandler =
-            new ProtocolInitHandler(context, protocolVersion, clusterName, keyspace);
+            new ProtocolInitHandler(context, protocolVersion, clusterName, options);
 
         ChannelPipeline pipeline = channel.pipeline();
         context

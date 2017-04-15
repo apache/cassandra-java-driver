@@ -54,7 +54,9 @@ public class ChannelFactoryAvailableIdsTest extends ChannelFactoryTestBase {
     ChannelFactory factory = newChannelFactory();
 
     // When
-    CompletionStage<DriverChannel> channelFuture = factory.connect(SERVER_ADDRESS, null, true);
+    CompletionStage<DriverChannel> channelFuture =
+        factory.connect(
+            SERVER_ADDRESS, DriverChannelOptions.builder().reportAvailableIds(true).build());
     completeSimpleChannelInit();
 
     // Then
@@ -85,7 +87,8 @@ public class ChannelFactoryAvailableIdsTest extends ChannelFactoryTestBase {
     ChannelFactory factory = newChannelFactory();
 
     // When
-    CompletionStage<DriverChannel> channelFuture = factory.connect(SERVER_ADDRESS, null, false);
+    CompletionStage<DriverChannel> channelFuture =
+        factory.connect(SERVER_ADDRESS, DriverChannelOptions.DEFAULT);
     completeSimpleChannelInit();
 
     // Then

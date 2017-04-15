@@ -15,7 +15,6 @@
  */
 package com.datastax.oss.driver.internal.core.channel;
 
-import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.ProtocolVersion;
 import com.datastax.oss.driver.api.core.UnsupportedProtocolVersionException;
 import com.datastax.oss.driver.api.core.auth.AuthenticationException;
@@ -30,6 +29,7 @@ import com.datastax.oss.protocol.internal.Message;
 import com.datastax.oss.protocol.internal.ProtocolConstants;
 import com.datastax.oss.protocol.internal.request.AuthResponse;
 import com.datastax.oss.protocol.internal.request.Query;
+import com.datastax.oss.protocol.internal.request.Register;
 import com.datastax.oss.protocol.internal.request.Startup;
 import com.datastax.oss.protocol.internal.response.AuthChallenge;
 import com.datastax.oss.protocol.internal.response.AuthSuccess;
@@ -60,7 +60,7 @@ class ProtocolInitHandler extends ConnectInitHandler {
   private final InternalDriverContext internalDriverContext;
   private final long timeoutMillis;
   private final ProtocolVersion initialProtocolVersion;
-  private final CqlIdentifier keyspaceName;
+  private final DriverChannelOptions options;
   // might be null if this is the first channel to this cluster
   private final String expectedClusterName;
 
@@ -68,7 +68,7 @@ class ProtocolInitHandler extends ConnectInitHandler {
       InternalDriverContext internalDriverContext,
       ProtocolVersion protocolVersion,
       String expectedClusterName,
-      CqlIdentifier keyspaceName) {
+      DriverChannelOptions options) {
 
     this.internalDriverContext = internalDriverContext;
 
@@ -79,7 +79,7 @@ class ProtocolInitHandler extends ConnectInitHandler {
             CoreDriverOption.CONNECTION_INIT_QUERY_TIMEOUT, TimeUnit.MILLISECONDS);
     this.initialProtocolVersion = protocolVersion;
     this.expectedClusterName = expectedClusterName;
-    this.keyspaceName = keyspaceName;
+    this.options = options;
   }
 
   @Override
@@ -91,7 +91,8 @@ class ProtocolInitHandler extends ConnectInitHandler {
     STARTUP,
     GET_CLUSTER_NAME,
     SET_KEYSPACE,
-    AUTH_RESPONSE
+    AUTH_RESPONSE,
+    REGISTER,
   }
 
   private class InitRequest extends InternalRequest {
@@ -119,9 +120,11 @@ class ProtocolInitHandler extends ConnectInitHandler {
         case GET_CLUSTER_NAME:
           return CLUSTER_NAME_QUERY;
         case SET_KEYSPACE:
-          return new Query("USE " + keyspaceName.asCql());
+          return new Query("USE " + options.keyspace.asCql());
         case AUTH_RESPONSE:
           return new AuthResponse(authReponseToken);
+        case REGISTER:
+          return new Register(options.eventTypes);
         default:
           throw new AssertionError("unhandled step: " + step);
       }
@@ -212,14 +215,24 @@ class ProtocolInitHandler extends ConnectInitHandler {
               // Store the actual name so that it can be retrieved from the factory
               channel.attr(DriverChannel.CLUSTER_NAME_KEY).set(actualClusterName);
             }
-            if (keyspaceName == null) {
-              setConnectSuccess();
-            } else {
+            if (options.keyspace != null) {
               step = Step.SET_KEYSPACE;
               send();
+            } else if (!options.eventTypes.isEmpty()) {
+              step = Step.REGISTER;
+              send();
+            } else {
+              setConnectSuccess();
             }
           }
         } else if (step == Step.SET_KEYSPACE && response instanceof SetKeyspace) {
+          if (!options.eventTypes.isEmpty()) {
+            step = Step.REGISTER;
+            send();
+          } else {
+            setConnectSuccess();
+          }
+        } else if (step == Step.REGISTER && response instanceof Ready) {
           setConnectSuccess();
         } else if (response instanceof Error) {
           Error error = (Error) response;

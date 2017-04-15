@@ -21,13 +21,18 @@ import com.datastax.oss.driver.api.core.connection.BusyConnectionException;
 import com.datastax.oss.driver.api.core.connection.ConnectionException;
 import com.datastax.oss.driver.internal.core.protocol.FrameDecodingException;
 import com.datastax.oss.protocol.internal.Frame;
+import com.datastax.oss.protocol.internal.ProtocolConstants;
 import com.datastax.oss.protocol.internal.request.Query;
+import com.datastax.oss.protocol.internal.response.event.StatusChangeEvent;
 import com.datastax.oss.protocol.internal.response.result.SetKeyspace;
 import com.datastax.oss.protocol.internal.response.result.Void;
 import com.google.common.collect.ImmutableList;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelPromise;
+import java.net.InetSocketAddress;
+import java.util.Collections;
 import java.util.concurrent.TimeUnit;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
@@ -39,7 +44,7 @@ import static org.mockito.Mockito.never;
 
 public class InFlightHandlerTest extends ChannelHandlerTestBase {
   private static final Query QUERY = new Query("select * from foo");
-  public static final int SET_KEYSPACE_TIMEOUT_MILLIS = 100;
+  private static final int SET_KEYSPACE_TIMEOUT_MILLIS = 100;
 
   @Mock private StreamIdGenerator streamIds;
 
@@ -48,16 +53,12 @@ public class InFlightHandlerTest extends ChannelHandlerTestBase {
   public void setup() {
     super.setup();
     MockitoAnnotations.initMocks(this);
-    channel
-        .pipeline()
-        .addLast(
-            new InFlightHandler(
-                CoreProtocolVersion.V3, streamIds, SET_KEYSPACE_TIMEOUT_MILLIS, null));
   }
 
   @Test
   public void should_fail_if_connection_busy() throws Throwable {
     // Given
+    addToPipeline();
     Mockito.when(streamIds.acquire()).thenReturn(-1);
 
     // When
@@ -74,6 +75,7 @@ public class InFlightHandlerTest extends ChannelHandlerTestBase {
   @Test
   public void should_assign_streamid_and_send_frame() {
     // Given
+    addToPipeline();
     Mockito.when(streamIds.acquire()).thenReturn(42);
     MockResponseCallback responseCallback = new MockResponseCallback();
 
@@ -94,6 +96,7 @@ public class InFlightHandlerTest extends ChannelHandlerTestBase {
   @Test
   public void should_notify_callback_of_response() {
     // Given
+    addToPipeline();
     Mockito.when(streamIds.acquire()).thenReturn(42);
     MockResponseCallback responseCallback = new MockResponseCallback();
     channel.writeAndFlush(
@@ -112,6 +115,7 @@ public class InFlightHandlerTest extends ChannelHandlerTestBase {
   @Test
   public void should_notify_response_promise_when_decoding_fails() throws Throwable {
     // Given
+    addToPipeline();
     Mockito.when(streamIds.acquire()).thenReturn(42);
     MockResponseCallback responseCallback = new MockResponseCallback();
     channel.writeAndFlush(
@@ -129,6 +133,7 @@ public class InFlightHandlerTest extends ChannelHandlerTestBase {
   @Test
   public void should_delay_graceful_close_until_all_pending_complete() {
     // Given
+    addToPipeline();
     Mockito.when(streamIds.acquire()).thenReturn(42);
     MockResponseCallback responseCallback = new MockResponseCallback();
     channel.writeAndFlush(
@@ -152,6 +157,9 @@ public class InFlightHandlerTest extends ChannelHandlerTestBase {
 
   @Test
   public void should_graceful_close_immediately_if_no_pending() {
+    // Given
+    addToPipeline();
+
     // When
     channel.write(DriverChannel.GRACEFUL_CLOSE_MESSAGE);
 
@@ -162,6 +170,7 @@ public class InFlightHandlerTest extends ChannelHandlerTestBase {
   @Test
   public void should_refuse_new_writes_during_graceful_close() {
     // Given
+    addToPipeline();
     Mockito.when(streamIds.acquire()).thenReturn(42);
     MockResponseCallback responseCallback = new MockResponseCallback();
     channel.writeAndFlush(
@@ -188,6 +197,7 @@ public class InFlightHandlerTest extends ChannelHandlerTestBase {
   @Test
   public void should_fail_all_pending_when_force_closed() throws Throwable {
     // Given
+    addToPipeline();
     Mockito.when(streamIds.acquire()).thenReturn(42, 43);
     MockResponseCallback responseCallback1 = new MockResponseCallback();
     MockResponseCallback responseCallback2 = new MockResponseCallback();
@@ -211,6 +221,7 @@ public class InFlightHandlerTest extends ChannelHandlerTestBase {
   @Test
   public void should_fail_all_pending_and_close_on_unexpected_inbound_exception() throws Throwable {
     // Given
+    addToPipeline();
     Mockito.when(streamIds.acquire()).thenReturn(42, 43);
     MockResponseCallback responseCallback1 = new MockResponseCallback();
     MockResponseCallback responseCallback2 = new MockResponseCallback();
@@ -235,6 +246,7 @@ public class InFlightHandlerTest extends ChannelHandlerTestBase {
   @Test
   public void should_hold_stream_id_if_required() {
     // Given
+    addToPipeline();
     Mockito.when(streamIds.acquire()).thenReturn(42);
     MockResponseCallback responseCallback = new MockResponseCallback(true);
 
@@ -274,6 +286,7 @@ public class InFlightHandlerTest extends ChannelHandlerTestBase {
   @Test
   public void should_set_keyspace() {
     // Given
+    addToPipeline();
     ChannelPromise setKeyspacePromise = channel.newPromise();
     DriverChannel.SetKeyspaceEvent setKeyspaceEvent =
         new DriverChannel.SetKeyspaceEvent(CqlIdentifier.fromCql("ks"), setKeyspacePromise);
@@ -291,6 +304,7 @@ public class InFlightHandlerTest extends ChannelHandlerTestBase {
   @Test
   public void should_fail_to_set_keyspace_if_query_times_out() throws InterruptedException {
     // Given
+    addToPipeline();
     ChannelPromise setKeyspacePromise = channel.newPromise();
     DriverChannel.SetKeyspaceEvent setKeyspaceEvent =
         new DriverChannel.SetKeyspaceEvent(CqlIdentifier.fromCql("ks"), setKeyspacePromise);
@@ -302,5 +316,47 @@ public class InFlightHandlerTest extends ChannelHandlerTestBase {
 
     // Then
     assertThat(setKeyspacePromise).isFailed();
+  }
+
+  @Test
+  public void should_notify_callback_of_events() {
+    // Given
+    EventCallback eventCallback = Mockito.mock(EventCallback.class);
+    addToPipelineWithEventCallback(eventCallback);
+
+    // When
+    StatusChangeEvent event =
+        new StatusChangeEvent(
+            ProtocolConstants.StatusChangeType.UP, new InetSocketAddress("127.0.0.1", 9042));
+    Frame eventFrame =
+        Frame.forResponse(
+            CoreProtocolVersion.V3.getCode(),
+            -1,
+            null,
+            Collections.emptyMap(),
+            Collections.emptyList(),
+            event);
+    writeInboundFrame(eventFrame);
+
+    // Then
+    ArgumentCaptor<StatusChangeEvent> captor = ArgumentCaptor.forClass(StatusChangeEvent.class);
+    Mockito.verify(eventCallback).onEvent(captor.capture());
+    assertThat(captor.getValue()).isSameAs(event);
+  }
+
+  private void addToPipeline() {
+    addToPipelineWithEventCallback(null);
+  }
+
+  private void addToPipelineWithEventCallback(EventCallback eventCallback) {
+    channel
+        .pipeline()
+        .addLast(
+            new InFlightHandler(
+                CoreProtocolVersion.V3,
+                streamIds,
+                SET_KEYSPACE_TIMEOUT_MILLIS,
+                null,
+                eventCallback));
   }
 }

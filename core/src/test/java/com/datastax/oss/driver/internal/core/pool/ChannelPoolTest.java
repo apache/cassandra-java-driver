@@ -20,6 +20,7 @@ import com.datastax.oss.driver.api.core.connection.ReconnectionPolicy;
 import com.datastax.oss.driver.api.core.connection.ReconnectionPolicy.ReconnectionSchedule;
 import com.datastax.oss.driver.internal.core.channel.ChannelFactory;
 import com.datastax.oss.driver.internal.core.channel.DriverChannel;
+import com.datastax.oss.driver.internal.core.channel.DriverChannelOptions;
 import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
 import com.datastax.oss.driver.internal.core.context.NettyOptions;
 import com.google.common.util.concurrent.Uninterruptibles;
@@ -48,9 +49,7 @@ import org.testng.annotations.Test;
 import static com.datastax.oss.driver.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.times;
 
 public class ChannelPoolTest {
@@ -75,7 +74,7 @@ public class ChannelPoolTest {
     Mockito.when(context.channelFactory()).thenReturn(channelFactory);
 
     channelFactoryFutures = new ArrayBlockingQueue<>(10);
-    Mockito.when(channelFactory.connect(eq(ADDRESS), isNull(), anyBoolean()))
+    Mockito.when(channelFactory.connect(eq(ADDRESS), any(DriverChannelOptions.class)))
         .thenAnswer(
             invocation -> {
               CompletableFuture<DriverChannel> channelFuture = new CompletableFuture<>();

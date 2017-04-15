@@ -29,6 +29,7 @@ import com.datastax.oss.protocol.internal.Frame;
 import com.datastax.oss.protocol.internal.ProtocolConstants;
 import com.datastax.oss.protocol.internal.request.AuthResponse;
 import com.datastax.oss.protocol.internal.request.Query;
+import com.datastax.oss.protocol.internal.request.Register;
 import com.datastax.oss.protocol.internal.request.Startup;
 import com.datastax.oss.protocol.internal.response.AuthChallenge;
 import com.datastax.oss.protocol.internal.response.AuthSuccess;
@@ -37,8 +38,10 @@ import com.datastax.oss.protocol.internal.response.Error;
 import com.datastax.oss.protocol.internal.response.Ready;
 import com.datastax.oss.protocol.internal.response.result.SetKeyspace;
 import com.datastax.oss.protocol.internal.util.Bytes;
+import com.google.common.collect.ImmutableList;
 import io.netty.channel.ChannelFuture;
 import java.net.InetSocketAddress;
+import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import org.mockito.Mock;
@@ -76,7 +79,8 @@ public class ProtocolInitHandlerTest extends ChannelHandlerTestBase {
         .pipeline()
         .addLast(
             "inflight",
-            new InFlightHandler(CoreProtocolVersion.V4, new StreamIdGenerator(100), 100, null));
+            new InFlightHandler(
+                CoreProtocolVersion.V4, new StreamIdGenerator(100), 100, null, null));
   }
 
   @Test
@@ -85,7 +89,8 @@ public class ProtocolInitHandlerTest extends ChannelHandlerTestBase {
         .pipeline()
         .addLast(
             "init",
-            new ProtocolInitHandler(internalDriverContext, CoreProtocolVersion.V4, null, null));
+            new ProtocolInitHandler(
+                internalDriverContext, CoreProtocolVersion.V4, null, DriverChannelOptions.DEFAULT));
 
     ChannelFuture connectFuture = channel.connect(new InetSocketAddress("localhost", 9042));
 
@@ -133,7 +138,8 @@ public class ProtocolInitHandlerTest extends ChannelHandlerTestBase {
         .pipeline()
         .addLast(
             "init",
-            new ProtocolInitHandler(internalDriverContext, CoreProtocolVersion.V4, null, null));
+            new ProtocolInitHandler(
+                internalDriverContext, CoreProtocolVersion.V4, null, DriverChannelOptions.DEFAULT));
 
     String serverAuthenticator = "mockServerAuthenticator";
     AuthProvider authProvider = Mockito.mock(AuthProvider.class);
@@ -190,7 +196,8 @@ public class ProtocolInitHandlerTest extends ChannelHandlerTestBase {
         .pipeline()
         .addLast(
             "init",
-            new ProtocolInitHandler(internalDriverContext, CoreProtocolVersion.V4, null, null));
+            new ProtocolInitHandler(
+                internalDriverContext, CoreProtocolVersion.V4, null, DriverChannelOptions.DEFAULT));
 
     String serverAuthenticator = "mockServerAuthenticator";
     AuthProvider authProvider = Mockito.mock(AuthProvider.class);
@@ -230,7 +237,10 @@ public class ProtocolInitHandlerTest extends ChannelHandlerTestBase {
         .addLast(
             "init",
             new ProtocolInitHandler(
-                internalDriverContext, CoreProtocolVersion.V4, "expectedClusterName", null));
+                internalDriverContext,
+                CoreProtocolVersion.V4,
+                "expectedClusterName",
+                DriverChannelOptions.DEFAULT));
 
     ChannelFuture connectFuture = channel.connect(new InetSocketAddress("localhost", 9042));
 
@@ -255,7 +265,10 @@ public class ProtocolInitHandlerTest extends ChannelHandlerTestBase {
         .addLast(
             "init",
             new ProtocolInitHandler(
-                internalDriverContext, CoreProtocolVersion.V4, "expectedClusterName", null));
+                internalDriverContext,
+                CoreProtocolVersion.V4,
+                "expectedClusterName",
+                DriverChannelOptions.DEFAULT));
 
     ChannelFuture connectFuture = channel.connect(new InetSocketAddress("localhost", 9042));
 
@@ -274,12 +287,13 @@ public class ProtocolInitHandlerTest extends ChannelHandlerTestBase {
 
   @Test
   public void should_initialize_with_keyspace() {
+    DriverChannelOptions options =
+        DriverChannelOptions.builder().withKeyspace(CqlIdentifier.fromCql("ks")).build();
     channel
         .pipeline()
         .addLast(
             "init",
-            new ProtocolInitHandler(
-                internalDriverContext, CoreProtocolVersion.V4, null, CqlIdentifier.fromCql("ks")));
+            new ProtocolInitHandler(internalDriverContext, CoreProtocolVersion.V4, null, options));
 
     ChannelFuture connectFuture = channel.connect(new InetSocketAddress("localhost", 9042));
 
@@ -290,6 +304,66 @@ public class ProtocolInitHandlerTest extends ChannelHandlerTestBase {
     assertThat(requestFrame.message).isInstanceOf(Query.class);
     assertThat(((Query) requestFrame.message).query).isEqualTo("USE \"ks\"");
     writeInboundFrame(requestFrame, new SetKeyspace("ks"));
+
+    assertThat(connectFuture).isSuccess();
+  }
+
+  @Test
+  public void should_initialize_with_events() {
+    List<String> eventTypes = ImmutableList.of("foo", "bar");
+    EventCallback eventCallback = Mockito.mock(EventCallback.class);
+    DriverChannelOptions driverChannelOptions =
+        DriverChannelOptions.builder().withEvents(eventTypes, eventCallback).build();
+    channel
+        .pipeline()
+        .addLast(
+            "init",
+            new ProtocolInitHandler(
+                internalDriverContext, CoreProtocolVersion.V4, null, driverChannelOptions));
+
+    ChannelFuture connectFuture = channel.connect(new InetSocketAddress("localhost", 9042));
+
+    writeInboundFrame(readOutboundFrame(), new Ready());
+    writeInboundFrame(readOutboundFrame(), TestResponses.clusterNameResponse("someClusterName"));
+
+    Frame requestFrame = readOutboundFrame();
+    assertThat(requestFrame.message).isInstanceOf(Register.class);
+    assertThat(((Register) requestFrame.message).eventTypes).containsExactly("foo", "bar");
+    writeInboundFrame(requestFrame, new Ready());
+
+    assertThat(connectFuture).isSuccess();
+  }
+
+  @Test
+  public void should_initialize_with_keyspace_and_events() {
+    List<String> eventTypes = ImmutableList.of("foo", "bar");
+    EventCallback eventCallback = Mockito.mock(EventCallback.class);
+    DriverChannelOptions driverChannelOptions =
+        DriverChannelOptions.builder()
+            .withKeyspace(CqlIdentifier.fromCql("ks"))
+            .withEvents(eventTypes, eventCallback)
+            .build();
+    channel
+        .pipeline()
+        .addLast(
+            "init",
+            new ProtocolInitHandler(
+                internalDriverContext, CoreProtocolVersion.V4, null, driverChannelOptions));
+
+    ChannelFuture connectFuture = channel.connect(new InetSocketAddress("localhost", 9042));
+
+    writeInboundFrame(readOutboundFrame(), new Ready());
+    writeInboundFrame(readOutboundFrame(), TestResponses.clusterNameResponse("someClusterName"));
+
+    Frame requestFrame = readOutboundFrame();
+    assertThat(requestFrame.message).isInstanceOf(Query.class);
+    assertThat(((Query) requestFrame.message).query).isEqualTo("USE \"ks\"");
+    writeInboundFrame(requestFrame, new SetKeyspace("ks"));
+
+    requestFrame = readOutboundFrame();
+    assertThat(requestFrame.message).isInstanceOf(Register.class);
+    assertThat(((Register) requestFrame.message).eventTypes).containsExactly("foo", "bar");
+    writeInboundFrame(requestFrame, new Ready());
 
     assertThat(connectFuture).isSuccess();
   }

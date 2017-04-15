@@ -70,6 +70,6 @@ public class ChannelFactoryEventsTest extends ChannelFactoryTestBase {
         .thenReturn("V4");
     Mockito.when(protocolVersionRegistry.fromName("V4")).thenReturn(CoreProtocolVersion.V4);
 
-    return newChannelFactory().connect(address, null, false);
+    return newChannelFactory().connect(address, DriverChannelOptions.DEFAULT);
   }
 }
