@@ -371,22 +371,33 @@ public class Mapper<T> {
         // Order and duplicates matter for primary keys
         List<Object> pks = new ArrayList<Object>();
         EnumMap<Option.Type, Option> options = new EnumMap<Option.Type, Option>(defaultGetOptions);
+        Set<ColumnMapper<?>> columns = new HashSet<ColumnMapper<?>>(); 
         for (Object o : objects) {
             if (o instanceof Option) {
                 Option option = (Option) o;
                 options.put(option.type, option);
+            } else if (o instanceof Set) {
+                final Set<String> requiredColumns = (Set<String>) o;
+                for (ColumnMapper cm : mapper.allColumns()) {
+                    if (requiredColumns.contains(cm.getColumnName(false))) {
+                        columns.add(cm);
+                        if (columns.size() >= requiredColumns.size()) {
+                            break;
+                        }
+                    }
+                }
             } else {
                 pks.add(o);
             }
         }
-        return getQueryAsync(pks, options);
+        return getQueryAsync(pks, columns, options);
     }
 
-    private ListenableFuture<BoundStatement> getQueryAsync(final List<Object> primaryKeys, final EnumMap<Option.Type, Option> options) {
+    private ListenableFuture<BoundStatement> getQueryAsync(final List<Object> primaryKeys, final Set<ColumnMapper<?>> columns, final EnumMap<Option.Type, Option> options) {
         if (primaryKeys.size() != mapper.primaryKeySize())
             throw new IllegalArgumentException(String.format("Invalid number of PRIMARY KEY columns provided, %d expected but got %d", mapper.primaryKeySize(), primaryKeys.size()));
 
-        return Futures.transform(getPreparedQueryAsync(QueryType.GET, options), new Function<PreparedStatement, BoundStatement>() {
+        return Futures.transform(getPreparedQueryAsync(QueryType.GET, columns, options), new Function<PreparedStatement, BoundStatement>() {
             @Override
             public BoundStatement apply(PreparedStatement input) {
                 BoundStatement bs = new MapperBoundStatement(input);
