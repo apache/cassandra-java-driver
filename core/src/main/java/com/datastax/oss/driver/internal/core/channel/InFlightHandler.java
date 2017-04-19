@@ -154,7 +154,6 @@ public class InFlightHandler extends ChannelDuplexHandler {
         }
       }
     }
-    super.channelRead(ctx, msg);
   }
 
   /** Called if an exception was thrown while processing an inbound event (i.e. a response). */
