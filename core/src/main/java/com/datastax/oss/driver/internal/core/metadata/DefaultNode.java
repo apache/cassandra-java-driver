@@ -15,10 +15,14 @@
  */
 package com.datastax.oss.driver.internal.core.metadata;
 
+import com.datastax.oss.driver.api.core.CassandraVersion;
 import com.datastax.oss.driver.api.core.loadbalancing.NodeDistance;
 import com.datastax.oss.driver.api.core.metadata.Node;
 import com.datastax.oss.driver.api.core.metadata.NodeState;
+import java.net.InetAddress;
 import java.net.InetSocketAddress;
+import java.util.Map;
+import java.util.Optional;
 
 /**
  * Implementation note: all the mutable state in this class is read concurrently, but only mutated
@@ -28,10 +32,18 @@ public class DefaultNode implements Node {
 
   private final InetSocketAddress connectAddress;
 
+  volatile Optional<InetAddress> broadcastAddress;
+  volatile Optional<InetAddress> listenAddress;
+  volatile String datacenter;
+  volatile String rack;
+  volatile CassandraVersion cassandraVersion;
+  volatile Map<String, Object> extras;
+
   // These 3 fields are read concurrently, but only mutated on NodeStateManager's admin thread
   volatile NodeState state;
   volatile int openConnections;
   volatile int reconnections;
+
   volatile NodeDistance distance;
 
   public DefaultNode(InetSocketAddress connectAddress) {
@@ -46,6 +58,36 @@ public class DefaultNode implements Node {
   }
 
   @Override
+  public Optional<InetAddress> getBroadcastAddress() {
+    return broadcastAddress;
+  }
+
+  @Override
+  public Optional<InetAddress> getListenAddress() {
+    return listenAddress;
+  }
+
+  @Override
+  public String getDatacenter() {
+    return datacenter;
+  }
+
+  @Override
+  public String getRack() {
+    return rack;
+  }
+
+  @Override
+  public CassandraVersion getCassandraVersion() {
+    return cassandraVersion;
+  }
+
+  @Override
+  public Map<String, Object> getExtras() {
+    return extras;
+  }
+
+  @Override
   public NodeState getState() {
     return state;
   }
@@ -57,6 +99,11 @@ public class DefaultNode implements Node {
   @Override
   public boolean isReconnecting() {
     return reconnections > 0;
+  }
+
+  @Override
+  public NodeDistance getDistance() {
+    return distance;
   }
 
   @Override

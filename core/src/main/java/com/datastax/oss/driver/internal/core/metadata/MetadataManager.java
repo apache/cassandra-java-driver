@@ -102,15 +102,12 @@ public class MetadataManager {
 
     private void initNodes(
         Set<InetSocketAddress> addresses, CompletableFuture<Void> initNodesFuture) {
-      assert adminExecutor.inEventLoop();
-      metadata = metadata.initNodes(addresses);
+      refresh(new InitContactPointsRefresh(metadata, addresses));
       initNodesFuture.complete(null);
     }
 
     private Void refreshNodes(Iterable<TopologyMonitor.NodeInfo> nodeInfos) {
-      metadata = metadata.refreshNodes(nodeInfos);
-      // TODO init LBP if needed
-      return null;
+      return refresh(new FullNodeListRefresh(metadata, nodeInfos));
     }
 
     private Void addNode(TopologyMonitor.NodeInfo nodeInfo) {
@@ -121,6 +118,17 @@ public class MetadataManager {
     private void removeNode(InetSocketAddress address) {
       LOG.debug("Removing node {}", address);
       metadata = metadata.removeNode(address);
+      // TODO recompute token map
+    }
+
+    private Void refresh(MetadataRefresh refresh) {
+      assert adminExecutor.inEventLoop();
+      refresh.compute();
+      metadata = refresh.newMetadata;
+      for (Object event : refresh.events) {
+        context.eventBus().fire(event);
+      }
+      return null;
     }
   }
 }

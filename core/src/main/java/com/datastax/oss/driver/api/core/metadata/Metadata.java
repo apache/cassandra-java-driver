@@ -15,16 +15,18 @@
  */
 package com.datastax.oss.driver.api.core.metadata;
 
+import com.datastax.oss.driver.api.core.Cluster;
 import java.net.InetSocketAddress;
 import java.util.Map;
 
 /**
  * The metadata of the Cassandra cluster that this driver instance is connected to.
  *
- * <p>Updates to this object are guaranteed to be atomic: the node list, schema, and token metadata
- * are immutable, and will always be consistent for a given metadata instance. The node instances
- * are the only mutable objects in the hierarchy, and some of their fields will be modified
- * dynamically (in particular the node state).
+ * @see Cluster#getMetadata()
+ *     <p>Updates to this object are guaranteed to be atomic: the node list, schema, and token
+ *     metadata are immutable, and will always be consistent for a given metadata instance. The node
+ *     instances are the only mutable objects in the hierarchy, and some of their fields will be
+ *     modified dynamically (in particular the node state).
  */
 public interface Metadata {
   /**

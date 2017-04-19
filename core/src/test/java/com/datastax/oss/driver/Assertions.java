@@ -15,6 +15,8 @@
  */
 package com.datastax.oss.driver;
 
+import com.datastax.oss.driver.api.core.CassandraVersion;
+import com.datastax.oss.driver.api.core.CassandraVersionAssert;
 import com.datastax.oss.driver.api.core.config.DriverConfig;
 import com.datastax.oss.driver.internal.core.CompletionStageAssert;
 import com.datastax.oss.driver.internal.core.DriverConfigAssert;
@@ -38,5 +40,9 @@ public class Assertions extends org.assertj.core.api.Assertions {
 
   public static <V> CompletionStageAssert<V> assertThat(CompletionStage<V> actual) {
     return new CompletionStageAssert<>(actual);
+  }
+
+  public static CassandraVersionAssert assertThat(CassandraVersion actual) {
+    return new CassandraVersionAssert(actual);
   }
 }

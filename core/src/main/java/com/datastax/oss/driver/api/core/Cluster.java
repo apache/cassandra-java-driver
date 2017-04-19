@@ -17,6 +17,7 @@ package com.datastax.oss.driver.api.core;
 
 import com.datastax.oss.driver.api.core.context.DriverContext;
 import com.datastax.oss.driver.api.core.metadata.Metadata;
+import com.datastax.oss.driver.api.core.metadata.Node;
 
 /** An instance of the driver, that connects to a Cassandra cluster. */
 public interface Cluster {
@@ -25,6 +26,22 @@ public interface Cluster {
     return new ClusterBuilder();
   }
 
+  /**
+   * Returns a snapshot of the Cassandra cluster's topology and schema metadata.
+   *
+   * <p>In order to provide atomic updates, this method returns an immutable object: the node list,
+   * token map, and schema contained in a given instance will always be consistent with each other
+   * (but note that {@link Node} itself is not immutable: some of its properties will be updated
+   * dynamically, in particular {@link Node#getState()}).
+   *
+   * <p>As a consequence of the above, you should call this method each time you need a fresh view
+   * of the metadata. <b>Do not</b> call it once and store the result, because it is a frozen
+   * snapshot that will become stale over time.
+   *
+   * <p>If a metadata refresh triggers events (such as node added/removed, or schema events), then
+   * the new version of the metadata is guaranteed to be visible by the time you receive these
+   * events.
+   */
   Metadata getMetadata();
 
   DriverContext getContext();

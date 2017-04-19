@@ -18,15 +18,9 @@ package com.datastax.oss.driver.internal.core.metadata;
 import com.datastax.oss.driver.api.core.metadata.Metadata;
 import com.datastax.oss.driver.api.core.metadata.Node;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Sets;
 import java.net.InetSocketAddress;
 import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Map;
-import java.util.Set;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * This class is immutable, so that metadata changes are atomic for the client. Every mutation
@@ -34,12 +28,11 @@ import org.slf4j.LoggerFactory;
  * MetadataManager}'s volatile field.
  */
 public class DefaultMetadata implements Metadata {
-  private static final Logger LOG = LoggerFactory.getLogger(DefaultMetadata.class);
-
   public static final DefaultMetadata EMPTY = new DefaultMetadata(Collections.emptyMap());
 
   private final Map<InetSocketAddress, Node> nodes;
-  // TODO add metadata and schema
+  // TODO schema
+  // TODO token map
 
   public DefaultMetadata(Map<InetSocketAddress, Node> nodes) {
     this.nodes = ImmutableMap.copyOf(nodes);
@@ -48,59 +41,6 @@ public class DefaultMetadata implements Metadata {
   @Override
   public Map<InetSocketAddress, Node> getNodes() {
     return nodes;
-  }
-
-  /** Create minimal node info about the contact points, before the first connection. */
-  public DefaultMetadata initNodes(Set<InetSocketAddress> addresses) {
-    assert nodes.isEmpty();
-    ImmutableMap.Builder<InetSocketAddress, Node> newNodes = ImmutableMap.builder();
-    for (InetSocketAddress address : addresses) {
-      newNodes.put(address, new DefaultNode(address));
-    }
-    return new DefaultMetadata(newNodes.build());
-  }
-
-  public DefaultMetadata refreshNodes(Iterable<TopologyMonitor.NodeInfo> nodeInfos) {
-    Map<InetSocketAddress, Node> added = new HashMap<>();
-    Set<InetSocketAddress> seen = new HashSet<>();
-
-    for (TopologyMonitor.NodeInfo nodeInfo : nodeInfos) {
-      InetSocketAddress address = nodeInfo.getConnectAddress();
-      if (address == null) {
-        // TODO more advanced row validation (see 3.x), here or in TopologyMonitor?
-        LOG.debug("Ignoring node info with missing connect address");
-        continue;
-      }
-      seen.add(address);
-      DefaultNode node = (DefaultNode) nodes.get(address);
-      if (node == null) {
-        node = new DefaultNode(address);
-        LOG.debug("Adding new node {}", node);
-        added.put(address, node);
-      }
-      copyInfos(nodeInfo, node);
-    }
-
-    Set<InetSocketAddress> removed = Sets.difference(nodes.keySet(), seen);
-
-    if (added.isEmpty() && removed.isEmpty()) {
-      return this;
-    } else {
-      ImmutableMap.Builder<InetSocketAddress, Node> builder = ImmutableMap.builder();
-      builder.putAll(added);
-      for (Map.Entry<InetSocketAddress, Node> entry : nodes.entrySet()) {
-        if (!removed.contains(entry.getKey())) {
-          builder.put(entry.getKey(), entry.getValue());
-        }
-      }
-      // TODO fire node added/removed events
-      // TODO recompute token map
-      return new DefaultMetadata(builder.build());
-    }
-  }
-
-  private void copyInfos(TopologyMonitor.NodeInfo nodeInfo, DefaultNode node) {
-    // TODO add new properties in Node, fill them
   }
 
   public DefaultMetadata addNode(Node toAdd) {
