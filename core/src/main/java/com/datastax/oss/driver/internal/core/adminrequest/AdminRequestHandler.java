@@ -113,13 +113,17 @@ public class AdminRequestHandler implements ResponseCallback {
 
   @Override
   public void onFailure(Throwable error) {
-    timeoutFuture.cancel(true);
+    if (timeoutFuture != null) {
+      timeoutFuture.cancel(true);
+    }
     result.completeExceptionally(error);
   }
 
   @Override
   public void onResponse(Frame responseFrame) {
-    timeoutFuture.cancel(true);
+    if (timeoutFuture != null) {
+      timeoutFuture.cancel(true);
+    }
     Message message = responseFrame.message;
     if (message instanceof Rows) {
       Rows rows = (Rows) message;
