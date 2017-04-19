@@ -117,6 +117,19 @@
           <artifactId>maven-javadoc-plugin</artifactId>
           <version>2.10.4</version>
         </plugin>
+        <!-- See console.scala in the submodules -->
+        <plugin>
+          <groupId>net.alchim31.maven</groupId>
+          <artifactId>scala-maven-plugin</artifactId>
+          <version>3.2.1</version>
+          <configuration>
+            <scalaVersion>2.11</scalaVersion>
+            <args>
+              <arg>-i</arg>
+              <arg>console.scala</arg>
+            </args>
+          </configuration>
+        </plugin>
       </plugins>
     </pluginManagement>
     <plugins>
