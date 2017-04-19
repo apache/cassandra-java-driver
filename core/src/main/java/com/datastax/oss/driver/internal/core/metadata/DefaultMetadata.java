@@ -57,21 +57,4 @@ public class DefaultMetadata implements Metadata {
       return new DefaultMetadata(newNodes);
     }
   }
-
-  public DefaultMetadata removeNode(InetSocketAddress toRemove) {
-    Map<InetSocketAddress, Node> newNodes;
-    if (!nodes.containsKey(toRemove)) {
-      return this;
-    } else {
-      ImmutableMap.Builder<InetSocketAddress, Node> builder = ImmutableMap.builder();
-      for (Map.Entry<InetSocketAddress, Node> entry : nodes.entrySet()) {
-        if (!entry.getKey().equals(toRemove)) {
-          builder.put(entry.getKey(), entry.getValue());
-        }
-      }
-      newNodes = builder.build();
-      // TODO recompute token map
-      return new DefaultMetadata(newNodes);
-    }
-  }
 }

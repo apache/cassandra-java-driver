@@ -58,7 +58,11 @@ public class AdminRequestHandler implements ResponseCallback {
         new Query(
             query,
             buildQueryOptions(pageSize, serialize(parameters, channel.protocolVersion()), null));
-    return new AdminRequestHandler(channel, message, timeout);
+    String debugString = "query '" + query + "'";
+    if (!parameters.isEmpty()) {
+      debugString += " with parameters " + parameters;
+    }
+    return new AdminRequestHandler(channel, message, timeout, debugString);
   }
 
   public static AdminRequestHandler query(
@@ -67,32 +71,29 @@ public class AdminRequestHandler implements ResponseCallback {
   }
 
   public static AdminRequestHandler prepare(DriverChannel channel, String query, Duration timeout) {
-    return new AdminRequestHandler(channel, new Prepare(query), timeout);
+    String debugString = "prepare '" + query + "'";
+    return new AdminRequestHandler(channel, new Prepare(query), timeout, debugString);
   }
 
   private final DriverChannel channel;
   private final Message message;
   private final Duration timeout;
+  private final String debugString;
   private final CompletableFuture<AdminResult> result = new CompletableFuture<>();
 
   // This is only ever accessed on the channel's event loop, so it doesn't need to be volatile
   private ScheduledFuture<?> timeoutFuture;
 
-  private AdminRequestHandler(DriverChannel channel, Message message, Duration timeout) {
+  private AdminRequestHandler(
+      DriverChannel channel, Message message, Duration timeout, String debugString) {
     this.channel = channel;
     this.message = message;
     this.timeout = timeout;
+    this.debugString = debugString;
   }
 
   public CompletionStage<AdminResult> start() {
-    if (LOG.isDebugEnabled()) {
-      if (message instanceof Query) {
-        Query query = (Query) this.message;
-        LOG.debug("Executing query '{}' with values {}", query.query, query.options.namedValues);
-      } else if (message instanceof Prepare) {
-        LOG.debug("Preparing {}", ((Prepare) message).cqlQuery);
-      }
-    }
+    LOG.debug("Executing {}", this);
     channel.write(message, false, Frame.NO_PAYLOAD, this).addListener(this::onWriteComplete);
     return result;
   }
@@ -146,7 +147,8 @@ public class AdminRequestHandler implements ResponseCallback {
     QueryOptions currentOptions = current.options;
     QueryOptions newOptions =
         buildQueryOptions(currentOptions.pageSize, currentOptions.namedValues, pagingState);
-    return new AdminRequestHandler(channel, new Query(current.query, newOptions), timeout);
+    return new AdminRequestHandler(
+        channel, new Query(current.query, newOptions), timeout, debugString);
   }
 
   private static QueryOptions buildQueryOptions(
@@ -184,5 +186,10 @@ public class AdminRequestHandler implements ResponseCallback {
       throw new IllegalArgumentException(
           "Unsupported variable type for admin query: " + parameter.getClass());
     }
+  }
+
+  @Override
+  public String toString() {
+    return debugString;
   }
 }

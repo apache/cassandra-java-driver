@@ -113,7 +113,7 @@ public class TopologyEvent {
    *
    * <p>The driver will ignore this event if the node is already present in its metadata, or if
    * information about the node can't be refreshed (i.e. {@link
-   * TopologyMonitor#refreshNode(InetSocketAddress)} fails).
+   * TopologyMonitor#getNewNodeInfo(InetSocketAddress)} fails).
    */
   public static TopologyEvent suggestAdded(InetSocketAddress address) {
     return new TopologyEvent(Type.SUGGEST_ADDED, address);

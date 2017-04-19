@@ -26,7 +26,7 @@ import java.util.Set;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-class FullNodeListRefresh extends NodeListRefresh {
+class FullNodeListRefresh extends NodesRefresh {
 
   private static final Logger LOG = LoggerFactory.getLogger(FullNodeListRefresh.class);
   private final Iterable<TopologyMonitor.NodeInfo> nodeInfos;

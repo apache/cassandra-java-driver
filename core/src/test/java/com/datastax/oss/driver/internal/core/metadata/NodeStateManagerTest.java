@@ -33,6 +33,7 @@ import io.netty.channel.DefaultEventLoopGroup;
 import io.netty.util.concurrent.Future;
 import java.net.InetSocketAddress;
 import java.time.Duration;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -47,6 +48,7 @@ import static com.datastax.oss.driver.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
 
 public class NodeStateManagerTest {
   private static final InetSocketAddress NEW_ADDRESS = new InetSocketAddress("127.0.0.3", 9042);
@@ -89,6 +91,8 @@ public class NodeStateManagerTest {
             .build();
     Mockito.when(metadata.getNodes()).thenReturn(nodes);
     Mockito.when(metadataManager.getMetadata()).thenReturn(metadata);
+    Mockito.when(metadataManager.refreshNode(any(Node.class)))
+        .thenReturn(CompletableFuture.completedFuture(null));
     Mockito.when(context.metadataManager()).thenReturn(metadataManager);
   }
 
@@ -119,6 +123,7 @@ public class NodeStateManagerTest {
   public void should_apply_up_event_if_node_is_unknown_or_down() {
     new NodeStateManager(context);
 
+    int i = 0;
     for (NodeState oldState : ImmutableList.of(NodeState.UNKNOWN, NodeState.DOWN)) {
       // Given
       node1.state = oldState;
@@ -129,6 +134,7 @@ public class NodeStateManagerTest {
 
       // Then
       assertThat(node1.state).isEqualTo(NodeState.UP);
+      Mockito.verify(metadataManager, times(++i)).refreshNode(node1);
       Mockito.verify(eventBus).fire(NodeStateEvent.changed(oldState, NodeState.UP, node1));
     }
   }
@@ -281,6 +287,7 @@ public class NodeStateManagerTest {
   public void should_apply_force_up_event_if_node_is_not_up() {
     new NodeStateManager(context);
 
+    int i = 0;
     for (NodeState oldState :
         ImmutableList.of(NodeState.UNKNOWN, NodeState.DOWN, NodeState.FORCED_DOWN)) {
       // Given
@@ -293,6 +300,7 @@ public class NodeStateManagerTest {
       // Then
       assertThat(node1.state).isEqualTo(NodeState.UP);
       Mockito.verify(eventBus).fire(NodeStateEvent.changed(oldState, NodeState.UP, node1));
+      Mockito.verify(metadataManager, times(++i)).refreshNode(node1);
     }
   }
 

@@ -24,11 +24,11 @@ import java.util.Map;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-abstract class NodeListRefresh extends MetadataRefresh {
+abstract class NodesRefresh extends MetadataRefresh {
 
-  private static final Logger LOG = LoggerFactory.getLogger(NodeListRefresh.class);
+  private static final Logger LOG = LoggerFactory.getLogger(NodesRefresh.class);
 
-  protected NodeListRefresh(DefaultMetadata current) {
+  protected NodesRefresh(DefaultMetadata current) {
     super(current);
   }
 
@@ -42,7 +42,7 @@ abstract class NodeListRefresh extends MetadataRefresh {
     // TODO recompute token map (even if node list hasn't changed, b/c tokens might have changed)
   }
 
-  protected void copyInfos(TopologyMonitor.NodeInfo nodeInfo, DefaultNode node) {
+  protected static void copyInfos(TopologyMonitor.NodeInfo nodeInfo, DefaultNode node) {
     node.broadcastAddress = nodeInfo.getBroadcastAddress();
     node.listenAddress = nodeInfo.getListenAddress();
     node.datacenter = nodeInfo.getDatacenter();

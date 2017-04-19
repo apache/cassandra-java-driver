@@ -16,6 +16,7 @@
 package com.datastax.oss.driver.internal.core.metadata;
 
 import com.datastax.oss.driver.api.core.Cluster;
+import com.datastax.oss.driver.api.core.addresstranslation.AddressTranslator;
 import com.datastax.oss.driver.api.core.metadata.Node;
 import com.datastax.oss.driver.internal.core.context.EventBus;
 import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
@@ -51,16 +52,32 @@ public interface TopologyMonitor {
   CompletionStage<Void> init();
 
   /**
-   * Invoked when the driver needs to refresh information about a node.
+   * Invoked when the drive needs to refresh the information about an existing node. This is called
+   * when the node was back and comes back up.
    *
    * <p>This will be invoked directly from a driver's internal thread; if the refresh involves
    * blocking I/O or heavy computations, it should be scheduled on a separate thread.
    *
-   * @param address the address that the driver uses to connect to the node. This is the node's
-   *     broadcast RPC address, <b>transformed by the address translator</b> if one is configured.
-   * @return a future that completes with the information.
+   * @param node the node to refresh.
+   * @return a future that completes with the information. If the monitor can't fulfill the request
+   *     at this time, it should reply with {@link Optional#empty()}, and the driver will carry on
+   *     with its current information.
    */
-  CompletionStage<NodeInfo> refreshNode(InetSocketAddress address);
+  CompletionStage<Optional<NodeInfo>> refreshNode(Node node);
+
+  /**
+   * Invoked when the driver needs to get information about a newly discovered node.
+   *
+   * <p>This will be invoked directly from a driver's internal thread; if the refresh involves
+   * blocking I/O or heavy computations, it should be scheduled on a separate thread.
+   *
+   * @param connectAddress the address that the driver uses to connect to the node. This is the
+   *     node's broadcast RPC address, <b>transformed by the {@link AddressTranslator}</b> if one is
+   *     configured.
+   * @return a future that completes with the information. If the monitor doesn't know any node with
+   *     this address, it should reply with {@link Optional#empty()}; the new node will be ignored.
+   */
+  CompletionStage<Optional<NodeInfo>> getNewNodeInfo(InetSocketAddress connectAddress);
 
   /**
    * Invoked when the driver needs to refresh information about all the nodes.
@@ -86,17 +103,25 @@ public interface TopologyMonitor {
   interface NodeInfo {
     /**
      * The address that the driver uses to connect to the node. This is the node's broadcast RPC
-     * address, <b>transformed by the address translator</b> if one is configured.
+     * address, <b>transformed by the {@link AddressTranslator}</b> if one is configured.
      */
     InetSocketAddress getConnectAddress();
 
     /**
      * The node's broadcast address. That is, the address that other nodes use to communicate with
      * that node.
+     *
+     * <p>This is only used by the default topology monitor, so if you are writing a custom one and
+     * don't need this information, you can leave it empty.
      */
     Optional<InetAddress> getBroadcastAddress();
 
-    /** The node's listen address. That is, the address that the Cassandra process binds to. */
+    /**
+     * The node's listen address. That is, the address that the Cassandra process binds to.
+     *
+     * <p>This is currently not used anywhere in the driver. If you write a custom topology monitor
+     * and don't need this information, you can leave it empty.
+     */
     Optional<InetAddress> getListenAddress();
 
     String getDatacenter();

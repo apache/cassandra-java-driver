@@ -198,7 +198,25 @@ public class NodeStateManager {
     if (oldState != newState) {
       LOG.debug("Transitioning {} {}=>{} (because {})", node, oldState, newState, reason);
       node.state = newState;
-      eventBus.fire(NodeStateEvent.changed(oldState, newState, node));
+      if (newState != NodeState.UP) {
+        // Fire the event immediately
+        eventBus.fire(NodeStateEvent.changed(oldState, newState, node));
+      } else {
+        // Refresh the node first (but still fire event if that fails)
+        metadataManager
+            .refreshNode(node)
+            .whenComplete(
+                (success, error) -> {
+                  try {
+                    if (error != null) {
+                      LOG.debug("Error while refreshing info for " + node, error);
+                    }
+                    eventBus.fire(NodeStateEvent.changed(oldState, newState, node));
+                  } catch (Throwable t) {
+                    LOG.warn("Unexpected exception", t);
+                  }
+                });
+      }
     }
   }
 }

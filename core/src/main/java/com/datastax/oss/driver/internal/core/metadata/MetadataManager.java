@@ -16,11 +16,14 @@
 package com.datastax.oss.driver.internal.core.metadata;
 
 import com.datastax.oss.driver.api.core.metadata.Metadata;
+import com.datastax.oss.driver.api.core.metadata.Node;
 import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
+import com.datastax.oss.driver.internal.core.metadata.TopologyMonitor.NodeInfo;
 import com.datastax.oss.driver.internal.core.util.concurrent.RunOrSchedule;
 import io.netty.util.concurrent.EventExecutor;
 import java.net.InetSocketAddress;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
@@ -66,20 +69,41 @@ public class MetadataManager {
         .thenApplyAsync(singleThreaded::refreshNodes, adminExecutor);
   }
 
+  public CompletionStage<Void> refreshNode(Node node) {
+    return context
+        .topologyMonitor()
+        .refreshNode(node)
+        // The callback only updates volatile fields so no need to schedule it on adminExecutor
+        .thenApply(
+            maybeInfo -> {
+              if (maybeInfo.isPresent()) {
+                NodesRefresh.copyInfos(maybeInfo.get(), (DefaultNode) node);
+              } else {
+                LOG.debug(
+                    "Topology monitor did not return any info for the refresh of {}, skipping",
+                    node);
+              }
+              return null;
+            });
+  }
+
   public void addNode(InetSocketAddress address) {
     context
         .topologyMonitor()
-        .refreshNode(address)
-        .thenApplyAsync(singleThreaded::addNode, adminExecutor)
-        .exceptionally(
-            e -> {
-              LOG.debug(
-                  "Error adding node "
-                      + address
-                      + ", this will be retried on the next full refresh",
-                  e);
-              return null;
-            });
+        .getNewNodeInfo(address)
+        .whenCompleteAsync(
+            (info, error) -> {
+              if (error != null) {
+                LOG.debug(
+                    "Error refreshing node info for "
+                        + address
+                        + ", this will be retried on the next full refresh",
+                    error);
+              } else {
+                singleThreaded.addNode(address, info);
+              }
+            },
+            adminExecutor);
   }
 
   public void removeNode(InetSocketAddress address) {
@@ -106,19 +130,37 @@ public class MetadataManager {
       initNodesFuture.complete(null);
     }
 
-    private Void refreshNodes(Iterable<TopologyMonitor.NodeInfo> nodeInfos) {
+    private Void refreshNodes(Iterable<NodeInfo> nodeInfos) {
       return refresh(new FullNodeListRefresh(metadata, nodeInfos));
     }
 
-    private Void addNode(TopologyMonitor.NodeInfo nodeInfo) {
-      //TODO
-      return null;
+    private void addNode(InetSocketAddress address, Optional<NodeInfo> maybeInfo) {
+      try {
+        if (maybeInfo.isPresent()) {
+          NodeInfo info = maybeInfo.get();
+          if (!address.equals(info.getConnectAddress())) {
+            // This would be a bug in the TopologyMonitor, protect against it
+            LOG.warn(
+                "Received a request to add a node for {}, "
+                    + "but the provided info uses the address {}, ignoring it",
+                address,
+                info.getBroadcastAddress());
+          } else {
+            refresh(new AddNodeRefresh(metadata, info));
+          }
+        } else {
+          LOG.debug(
+              "Ignoring node addition for {} because the "
+                  + "topology monitor didn't return any information",
+              address);
+        }
+      } catch (Throwable t) {
+        LOG.warn("Unexpected exception while handling added node", t);
+      }
     }
 
     private void removeNode(InetSocketAddress address) {
-      LOG.debug("Removing node {}", address);
-      metadata = metadata.removeNode(address);
-      // TODO recompute token map
+      refresh(new RemoveNodeRefresh(metadata, address));
     }
 
     private Void refresh(MetadataRefresh refresh) {
