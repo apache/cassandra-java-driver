@@ -110,6 +110,8 @@ abstract class ControlConnectionTestBase {
               return queryPlan;
             });
 
+    Mockito.when(metadataManager.refreshNodes())
+        .thenReturn(CompletableFuture.completedFuture(null));
     Mockito.when(context.metadataManager()).thenReturn(metadataManager);
 
     addressTranslator = Mockito.spy(new PassThroughAddressTranslator(context));

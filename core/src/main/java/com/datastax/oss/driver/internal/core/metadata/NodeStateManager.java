@@ -198,7 +198,7 @@ public class NodeStateManager {
     if (oldState != newState) {
       LOG.debug("Transitioning {} {}=>{} (because {})", node, oldState, newState, reason);
       node.state = newState;
-      eventBus.fire(new NodeStateEvent(newState, node));
+      eventBus.fire(NodeStateEvent.changed(oldState, newState, node));
     }
   }
 }

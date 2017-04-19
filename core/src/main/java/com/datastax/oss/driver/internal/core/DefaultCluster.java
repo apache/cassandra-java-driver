@@ -100,7 +100,22 @@ public class DefaultCluster implements Cluster {
                 initFuture.complete(DefaultCluster.this);
 
                 // Launch a full refresh asynchronously
-                metadataManager.refreshNodes();
+                metadataManager
+                    .refreshNodes()
+                    .whenComplete(
+                        (result, error) -> {
+                          if (error != null) {
+                            LOG.debug("Error while refreshing node list", error);
+                          } else {
+                            try {
+                              context.loadBalancingPolicyWrapper().init();
+                            } catch (Throwable t) {
+                              LOG.warn(
+                                  "Unexpected error while initializing load balancing policy", t);
+                            }
+                          }
+                        });
+
                 // TODO schedule full schema refresh
               })
           .exceptionally(

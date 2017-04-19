@@ -16,14 +16,31 @@
 package com.datastax.oss.driver.internal.core.metadata;
 
 import com.datastax.oss.driver.api.core.metadata.NodeState;
+import com.google.common.base.Preconditions;
 import java.util.Objects;
 
 public class NodeStateEvent {
+  public static NodeStateEvent changed(NodeState oldState, NodeState newState, DefaultNode node) {
+    Preconditions.checkNotNull(oldState);
+    Preconditions.checkNotNull(newState);
+    return new NodeStateEvent(oldState, newState, node);
+  }
+
+  public static NodeStateEvent added(DefaultNode node) {
+    return new NodeStateEvent(null, NodeState.UNKNOWN, node);
+  }
+
+  public static NodeStateEvent removed(DefaultNode node) {
+    return new NodeStateEvent(null, null, node);
+  }
+
+  public final NodeState oldState;
   public final NodeState newState;
   public final DefaultNode node;
 
-  public NodeStateEvent(NodeState newState, DefaultNode node) {
+  private NodeStateEvent(NodeState oldState, NodeState newState, DefaultNode node) {
     this.node = node;
+    this.oldState = oldState;
     this.newState = newState;
   }
 
@@ -33,7 +50,8 @@ public class NodeStateEvent {
       return true;
     } else if (other instanceof NodeStateEvent) {
       NodeStateEvent that = (NodeStateEvent) other;
-      return this.newState == that.newState
+      return this.oldState == that.oldState
+          && this.newState == that.newState
           && Objects.equals(this.node.getConnectAddress(), that.node.getConnectAddress());
     } else {
       return false;
@@ -42,11 +60,11 @@ public class NodeStateEvent {
 
   @Override
   public int hashCode() {
-    return Objects.hash(newState, node.getConnectAddress());
+    return Objects.hash(oldState, newState, node.getConnectAddress());
   }
 
   @Override
   public String toString() {
-    return "NodeStateEvent(" + newState + ", " + node.getConnectAddress() + ")";
+    return "NodeStateEvent(" + oldState + "=>" + newState + ", " + node.getConnectAddress() + ")";
   }
 }

@@ -47,7 +47,6 @@ import static com.datastax.oss.driver.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.times;
 
 public class NodeStateManagerTest {
   private static final InetSocketAddress NEW_ADDRESS = new InetSocketAddress("127.0.0.3", 9042);
@@ -120,7 +119,6 @@ public class NodeStateManagerTest {
   public void should_apply_up_event_if_node_is_unknown_or_down() {
     new NodeStateManager(context);
 
-    int i = 0;
     for (NodeState oldState : ImmutableList.of(NodeState.UNKNOWN, NodeState.DOWN)) {
       // Given
       node1.state = oldState;
@@ -131,7 +129,7 @@ public class NodeStateManagerTest {
 
       // Then
       assertThat(node1.state).isEqualTo(NodeState.UP);
-      Mockito.verify(eventBus, times(++i)).fire(new NodeStateEvent(NodeState.UP, node1));
+      Mockito.verify(eventBus).fire(NodeStateEvent.changed(oldState, NodeState.UP, node1));
     }
   }
 
@@ -169,7 +167,6 @@ public class NodeStateManagerTest {
 
   @Test
   public void should_ignore_down_event_if_node_has_active_connections() {
-    // Given
     new NodeStateManager(context);
     node1.state = NodeState.UP;
     eventBus.fire(ChannelEvent.channelOpened(node1.getConnectAddress()));
@@ -187,18 +184,21 @@ public class NodeStateManagerTest {
 
   @Test
   public void should_apply_down_event_if_node_has_no_active_connections() {
-    // Given
     new NodeStateManager(context);
-    node1.state = NodeState.UP;
-    assertThat(node1.openConnections).isEqualTo(0);
 
-    // When
-    eventBus.fire(TopologyEvent.suggestDown(node1.getConnectAddress()));
-    waitForPendingAdminTasks();
+    for (NodeState oldState : ImmutableList.of(NodeState.UP, NodeState.UNKNOWN)) {
+      // Given
+      node1.state = oldState;
+      assertThat(node1.openConnections).isEqualTo(0);
 
-    // Then
-    assertThat(node1.state).isEqualTo(NodeState.DOWN);
-    Mockito.verify(eventBus).fire(new NodeStateEvent(NodeState.DOWN, node1));
+      // When
+      eventBus.fire(TopologyEvent.suggestDown(node1.getConnectAddress()));
+      waitForPendingAdminTasks();
+
+      // Then
+      assertThat(node1.state).isEqualTo(NodeState.DOWN);
+      Mockito.verify(eventBus).fire(NodeStateEvent.changed(oldState, NodeState.DOWN, node1));
+    }
   }
 
   @Test
@@ -234,7 +234,6 @@ public class NodeStateManagerTest {
   public void should_apply_force_down_event_over_any_other_state() {
     new NodeStateManager(context);
 
-    int i = 0;
     for (NodeState oldState : ImmutableList.of(NodeState.UNKNOWN, NodeState.DOWN, NodeState.UP)) {
       // Given
       node1.state = oldState;
@@ -245,7 +244,7 @@ public class NodeStateManagerTest {
 
       // Then
       assertThat(node1.state).isEqualTo(NodeState.FORCED_DOWN);
-      Mockito.verify(eventBus, times(++i)).fire(new NodeStateEvent(NodeState.FORCED_DOWN, node1));
+      Mockito.verify(eventBus).fire(NodeStateEvent.changed(oldState, NodeState.FORCED_DOWN, node1));
     }
   }
 
@@ -282,7 +281,6 @@ public class NodeStateManagerTest {
   public void should_apply_force_up_event_if_node_is_not_up() {
     new NodeStateManager(context);
 
-    int i = 0;
     for (NodeState oldState :
         ImmutableList.of(NodeState.UNKNOWN, NodeState.DOWN, NodeState.FORCED_DOWN)) {
       // Given
@@ -294,7 +292,7 @@ public class NodeStateManagerTest {
 
       // Then
       assertThat(node1.state).isEqualTo(NodeState.UP);
-      Mockito.verify(eventBus, times(++i)).fire(new NodeStateEvent(NodeState.UP, node1));
+      Mockito.verify(eventBus).fire(NodeStateEvent.changed(oldState, NodeState.UP, node1));
     }
   }
 
@@ -412,7 +410,6 @@ public class NodeStateManagerTest {
   public void should_mark_node_up_if_down_or_unknown_and_connection_opened() {
     new NodeStateManager(context);
 
-    int i = 0;
     for (NodeState oldState : ImmutableList.of(NodeState.DOWN, NodeState.UNKNOWN)) {
       // Given
       node1.state = oldState;
@@ -423,7 +420,7 @@ public class NodeStateManagerTest {
 
       // Then
       assertThat(node1.state).isEqualTo(NodeState.UP);
-      Mockito.verify(eventBus, times(++i)).fire(new NodeStateEvent(NodeState.UP, node1));
+      Mockito.verify(eventBus).fire(NodeStateEvent.changed(oldState, NodeState.UP, node1));
     }
   }
 
@@ -470,7 +467,7 @@ public class NodeStateManagerTest {
     waitForPendingAdminTasks();
 
     assertThat(node1.state).isEqualTo(NodeState.DOWN);
-    Mockito.verify(eventBus).fire(new NodeStateEvent(NodeState.DOWN, node1));
+    Mockito.verify(eventBus).fire(NodeStateEvent.changed(NodeState.UP, NodeState.DOWN, node1));
   }
 
   @Test

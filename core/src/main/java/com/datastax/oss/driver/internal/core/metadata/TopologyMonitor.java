@@ -19,6 +19,7 @@ import com.datastax.oss.driver.api.core.Cluster;
 import com.datastax.oss.driver.api.core.metadata.Node;
 import com.datastax.oss.driver.internal.core.context.EventBus;
 import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
+import com.datastax.oss.driver.internal.core.control.ControlConnection;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.util.Map;
@@ -67,10 +68,13 @@ public interface TopologyMonitor {
    * <p>This will be invoked directly from a driver's internal thread; if the refresh involves
    * blocking I/O or heavy computations, it should be scheduled on a separate thread.
    *
-   * <p>Implementation note: as shown by the signature, it is assumed that the full node list will
-   * always be returned in a single message (no paging).
+   * <p>The driver calls this at initialization; if that initial call fails, the load balancing
+   * policy is not initialized, and the driver is unable to execute queries. You should schedule
+   * retries to ensure that the call eventually succeeds (see how the default implementation does it
+   * in {@link ControlConnection.SingleThreaded#onSuccessfulReconnect()}).
    *
-   * @return a future that completes with the information.
+   * @return a future that completes with the information. We assume that the full node list will
+   *     always be returned in a single message (no paging).
    */
   CompletionStage<Iterable<NodeInfo>> refreshNodeList();
 

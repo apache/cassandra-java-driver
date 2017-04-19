@@ -161,6 +161,8 @@ public class ControlConnectionTest extends ControlConnectionTestBase {
     assertThat(controlConnection.channel()).isEqualTo(channel2);
     Mockito.verify(eventBus).fire(ChannelEvent.channelClosed(ADDRESS1));
     Mockito.verify(eventBus).fire(ChannelEvent.channelOpened(ADDRESS2));
+    Mockito.verify(metadataManager).refreshNodes();
+    Mockito.verify(loadBalancingPolicyWrapper).init();
 
     factoryHelper.verifyNoMoreCalls();
   }

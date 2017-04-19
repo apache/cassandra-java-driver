@@ -208,7 +208,14 @@ public class ControlConnection implements EventCallback {
       assert adminExecutor.inEventLoop();
       Queue<Node> nodes = context.loadBalancingPolicyWrapper().newQueryPlan();
       CompletableFuture<Boolean> result = new CompletableFuture<>();
-      connect(nodes, null, () -> result.complete(true), error -> result.complete(false));
+      connect(
+          nodes,
+          null,
+          () -> {
+            result.complete(true);
+            onSuccessfulReconnect();
+          },
+          error -> result.complete(false));
       return result;
     }
 
@@ -269,6 +276,28 @@ public class ControlConnection implements EventCallback {
                 },
                 adminExecutor);
       }
+    }
+
+    private void onSuccessfulReconnect() {
+      // Always perform a full refresh (we don't know how long we were disconnected)
+      context
+          .metadataManager()
+          .refreshNodes()
+          .whenComplete(
+              (result, error) -> {
+                if (error != null) {
+                  LOG.debug("Error while refreshing node list", error);
+                } else {
+                  try {
+                    // This does nothing if the LBP is initialized already
+                    context.loadBalancingPolicyWrapper().init();
+                  } catch (Throwable t) {
+                    LOG.warn("Unexpected error while initializing load balancing policy", t);
+                  }
+                }
+              });
+
+      // TODO refresh schema metadata
     }
 
     private void onChannelClosed(DriverChannel channel) {

@@ -17,19 +17,28 @@ package com.datastax.oss.driver.api.core.loadbalancing;
 
 import com.datastax.oss.driver.api.core.context.DriverContext;
 import com.datastax.oss.driver.api.core.metadata.Node;
-import com.google.common.collect.ImmutableList;
 import java.util.Queue;
 import java.util.Set;
 import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.IntUnaryOperator;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+/**
+ * A round-robin load balancing policy.
+ *
+ * <p>It assigns distance {@link NodeDistance#LOCAL} to all up nodes. Each query plan returns all
+ * the nodes, starting at an incrementing index and traversing the list in a circular fashion.
+ */
 public class RoundRobinLoadBalancingPolicy implements LoadBalancingPolicy {
+  private static final Logger LOG = LoggerFactory.getLogger(RoundRobinLoadBalancingPolicy.class);
 
   private static final IntUnaryOperator INCREMENT = i -> (i == Integer.MAX_VALUE) ? 0 : i + 1;
 
   private final AtomicInteger startIndex = new AtomicInteger();
-  private ImmutableList<Node> nodes;
+  private final CopyOnWriteArrayList<Node> liveNodes = new CopyOnWriteArrayList<>();
 
   public RoundRobinLoadBalancingPolicy(@SuppressWarnings("unused") DriverContext context) {
     // nothing to do
@@ -37,21 +46,43 @@ public class RoundRobinLoadBalancingPolicy implements LoadBalancingPolicy {
 
   @Override
   public void init(Set<Node> nodes, DistanceReporter distanceReporter) {
-    // TODO handle node states (this is a temporary impl. to kickstart things)
-    this.nodes = ImmutableList.copyOf(nodes);
-    for (Node node : this.nodes) {
+    LOG.debug("Initializing with {}", nodes);
+    this.liveNodes.addAll(nodes);
+    for (Node node : nodes) {
       distanceReporter.setDistance(node, NodeDistance.LOCAL);
     }
   }
 
   @Override
   public Queue<Node> newQueryPlan() {
+    Object[] snapshot = liveNodes.toArray();
     int myStartIndex = startIndex.getAndUpdate(INCREMENT);
     ConcurrentLinkedQueue<Node> plan = new ConcurrentLinkedQueue<>();
-    for (int i = 0; i < nodes.size(); i++) {
-      plan.offer(nodes.get((myStartIndex + i) % nodes.size()));
+    for (int i = 0; i < snapshot.length; i++) {
+      Node node = (Node) snapshot[(myStartIndex + i) % liveNodes.size()];
+      plan.offer(node);
     }
     return plan;
+  }
+
+  @Override
+  public void onAdd(Node node) {
+    onUp(node);
+  }
+
+  @Override
+  public void onUp(Node node) {
+    liveNodes.add(node);
+  }
+
+  @Override
+  public void onDown(Node node) {
+    liveNodes.remove(node);
+  }
+
+  @Override
+  public void onRemove(Node node) {
+    onDown(node);
   }
 
   @Override

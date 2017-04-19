@@ -16,6 +16,7 @@
 package com.datastax.oss.driver.api.core.loadbalancing;
 
 import com.datastax.oss.driver.api.core.metadata.Node;
+import com.datastax.oss.driver.api.core.metadata.NodeState;
 import java.util.Queue;
 import java.util.Set;
 
@@ -27,6 +28,11 @@ public interface LoadBalancingPolicy {
    *
    * <p>This method is guaranteed to be called exactly once per instance, and before any other
    * method in this class.
+   *
+   * @param nodes the nodes discovered by the driver when it connected to the cluster. When this
+   *     method is invoked, their state is guaranteed to be either {@link NodeState#UP} or {@link
+   *     NodeState#UNKNOWN}. Node states may be updated concurrently while this method executes, but
+   *     if so you will receive a notification
    */
   void init(Set<Node> nodes, DistanceReporter distanceReporter);
 
@@ -40,8 +46,28 @@ public interface LoadBalancingPolicy {
    */
   Queue<Node> newQueryPlan(/*TODO keyspace, statement*/ );
 
-  // TODO node state methods (onUp, etc.)
-  // TODO way to emit distance events
+  /**
+   * Called when a node is added to the cluster.
+   *
+   * <p>The new node will have the state {@link NodeState#UNKNOWN}. The actual state will be known
+   * when:
+   *
+   * <ul>
+   *   <li>the load balancing policy signals an active distance for the node, and the driver tries
+   *       to connect to it.
+   *   <li>or a topology event is received from the cluster.
+   * </ul>
+   */
+  void onAdd(Node node);
+
+  /** Called when a node is determined to be up. */
+  void onUp(Node node);
+
+  /** Called when a node is determined to be down. */
+  void onDown(Node node);
+
+  /** Called when a node is removed from the cluster. */
+  void onRemove(Node node);
 
   /**
    * Invoked at cluster shutdown. This gives the policy the opportunity to perform some cleanup, for
@@ -49,7 +75,7 @@ public interface LoadBalancingPolicy {
    */
   void close();
 
-  /** An object that the policy uses to push the decisions it makes about node distances. */
+  /** An object that the policy uses to signal decisions it makes about node distances. */
   interface DistanceReporter {
     void setDistance(Node node, NodeDistance distance);
   }
