@@ -138,7 +138,7 @@ public class UdtCodec implements TypeCodec<UdtValue> {
         sb.append(",");
       }
       CqlIdentifier elementName = cqlType.getFieldNames().get(i);
-      sb.append(elementName.asPrettyCql());
+      sb.append(elementName.asCql(true));
       sb.append(":");
       DataType elementType = cqlType.getFieldTypes().get(i);
       TypeCodec<Object> codec = registry.codecFor(elementType);

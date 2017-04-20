@@ -24,6 +24,11 @@ public interface CustomType extends DataType {
    */
   String getClassName();
 
+  @Override
+  default String asCql(boolean includeFrozen, boolean pretty) {
+    return String.format("'%s'", getClassName());
+  }
+
   default int getProtocolCode() {
     return ProtocolConstants.DataType.CUSTOM;
   }

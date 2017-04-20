@@ -51,19 +51,19 @@ public class CqlIdentifierTest {
 
   @Test
   public void should_format_as_cql() {
-    assertThat(CqlIdentifier.fromInternal("foo").asCql()).isEqualTo("\"foo\"");
-    assertThat(CqlIdentifier.fromInternal("Foo").asCql()).isEqualTo("\"Foo\"");
-    assertThat(CqlIdentifier.fromInternal("foo bar").asCql()).isEqualTo("\"foo bar\"");
-    assertThat(CqlIdentifier.fromInternal("foo\"bar").asCql()).isEqualTo("\"foo\"\"bar\"");
-    assertThat(CqlIdentifier.fromInternal("create").asCql()).isEqualTo("\"create\"");
+    assertThat(CqlIdentifier.fromInternal("foo").asCql(false)).isEqualTo("\"foo\"");
+    assertThat(CqlIdentifier.fromInternal("Foo").asCql(false)).isEqualTo("\"Foo\"");
+    assertThat(CqlIdentifier.fromInternal("foo bar").asCql(false)).isEqualTo("\"foo bar\"");
+    assertThat(CqlIdentifier.fromInternal("foo\"bar").asCql(false)).isEqualTo("\"foo\"\"bar\"");
+    assertThat(CqlIdentifier.fromInternal("create").asCql(false)).isEqualTo("\"create\"");
   }
 
   @Test
   public void should_format_as_pretty_cql() {
-    assertThat(CqlIdentifier.fromInternal("foo").asPrettyCql()).isEqualTo("foo");
-    assertThat(CqlIdentifier.fromInternal("Foo").asPrettyCql()).isEqualTo("\"Foo\"");
-    assertThat(CqlIdentifier.fromInternal("foo bar").asPrettyCql()).isEqualTo("\"foo bar\"");
-    assertThat(CqlIdentifier.fromInternal("foo\"bar").asPrettyCql()).isEqualTo("\"foo\"\"bar\"");
-    assertThat(CqlIdentifier.fromInternal("create").asPrettyCql()).isEqualTo("\"create\"");
+    assertThat(CqlIdentifier.fromInternal("foo").asCql(true)).isEqualTo("foo");
+    assertThat(CqlIdentifier.fromInternal("Foo").asCql(true)).isEqualTo("\"Foo\"");
+    assertThat(CqlIdentifier.fromInternal("foo bar").asCql(true)).isEqualTo("\"foo bar\"");
+    assertThat(CqlIdentifier.fromInternal("foo\"bar").asCql(true)).isEqualTo("\"foo\"\"bar\"");
+    assertThat(CqlIdentifier.fromInternal("create").asCql(true)).isEqualTo("\"create\"");
   }
 }

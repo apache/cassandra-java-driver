@@ -15,6 +15,7 @@
  */
 package com.datastax.oss.driver.api.core.type;
 
+import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.detach.Detachable;
 import java.io.Serializable;
 
@@ -26,4 +27,16 @@ import java.io.Serializable;
 public interface DataType extends Detachable, Serializable {
   /** The code of the data type in the native protocol specification. */
   int getProtocolCode();
+
+  /**
+   * Builds an appropriate representation for use in a CQL query.
+   *
+   * @param includeFrozen whether to include the {@code frozen<...>} keyword if applicable. This
+   *     will need to be set depending on where the result is used: for example, {@code CREATE
+   *     TABLE} statements use the frozen keyword, whereas it should never appear in {@code CREATE
+   *     FUNCTION}.
+   * @param pretty whether to pretty-print UDT names (as described in {@link
+   *     CqlIdentifier#asCql(boolean)}.
+   */
+  String asCql(boolean includeFrozen, boolean pretty);
 }

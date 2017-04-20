@@ -24,6 +24,15 @@ public interface MapType extends DataType {
 
   boolean isFrozen();
 
+  @Override
+  default String asCql(boolean includeFrozen, boolean pretty) {
+    String template = (isFrozen() && includeFrozen) ? "frozen<map<%s, %s>>" : "map<%s, %s>";
+    return String.format(
+        template,
+        getKeyType().asCql(includeFrozen, pretty),
+        getValueType().asCql(includeFrozen, pretty));
+  }
+
   default int getProtocolCode() {
     return ProtocolConstants.DataType.MAP;
   }

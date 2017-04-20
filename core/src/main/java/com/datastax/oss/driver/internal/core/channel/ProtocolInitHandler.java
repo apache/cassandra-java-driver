@@ -144,7 +144,7 @@ class ProtocolInitHandler extends ConnectInitHandler {
         case GET_CLUSTER_NAME:
           return CLUSTER_NAME_QUERY;
         case SET_KEYSPACE:
-          return new Query("USE " + options.keyspace.asCql());
+          return new Query("USE " + options.keyspace.asCql(false));
         case AUTH_RESPONSE:
           return new AuthResponse(authReponseToken);
         case REGISTER:

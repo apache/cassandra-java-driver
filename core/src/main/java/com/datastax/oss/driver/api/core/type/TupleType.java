@@ -27,6 +27,26 @@ public interface TupleType extends DataType {
 
   AttachmentPoint getAttachmentPoint();
 
+  @Override
+  default String asCql(boolean includeFrozen, boolean pretty) {
+    StringBuilder builder = new StringBuilder();
+    // Tuples are always frozen
+    if (includeFrozen) {
+      builder.append("frozen<");
+    }
+    boolean first = true;
+    for (DataType type : getComponentTypes()) {
+      builder.append(first ? "tuple<" : ", ");
+      first = false;
+      builder.append(type.asCql(includeFrozen, pretty));
+    }
+    builder.append('>');
+    if (includeFrozen) {
+      builder.append('>');
+    }
+    return builder.toString();
+  }
+
   default int getProtocolCode() {
     return ProtocolConstants.DataType.TUPLE;
   }

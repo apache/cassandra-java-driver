@@ -32,6 +32,7 @@ public class UserDefinedTypeBuilder {
 
   private final CqlIdentifier keyspaceName;
   private final CqlIdentifier typeName;
+  private boolean frozen;
   private final ImmutableList.Builder<CqlIdentifier> fieldNames;
   private final ImmutableList.Builder<DataType> fieldTypes;
 
@@ -52,8 +53,14 @@ public class UserDefinedTypeBuilder {
     return this;
   }
 
+  /** Makes the type frozen (by default, it is not). */
+  public UserDefinedTypeBuilder frozen() {
+    this.frozen = true;
+    return this;
+  }
+
   public UserDefinedType build() {
     return new DefaultUserDefinedType(
-        keyspaceName, typeName, fieldNames.build(), fieldTypes.build());
+        keyspaceName, typeName, frozen, fieldNames.build(), fieldTypes.build());
   }
 }

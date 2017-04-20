@@ -18,7 +18,6 @@ package com.datastax.oss.driver.internal.core.control;
 import com.datastax.oss.driver.internal.core.channel.DriverChannel;
 import com.datastax.oss.driver.internal.core.channel.DriverChannelOptions;
 import com.datastax.oss.driver.internal.core.channel.EventCallback;
-import com.datastax.oss.driver.internal.core.metadata.SchemaElementKind;
 import com.datastax.oss.driver.internal.core.metadata.TopologyEvent;
 import com.datastax.oss.protocol.internal.ProtocolConstants;
 import com.datastax.oss.protocol.internal.response.event.SchemaChangeEvent;
@@ -45,7 +44,7 @@ public class ControlConnectionEventsTest extends ControlConnectionTestBase {
         .thenReturn(CompletableFuture.completedFuture(channel1));
 
     // When
-    controlConnection.init(true);
+    controlConnection.init(true, false);
     waitForPendingAdminTasks();
     DriverChannelOptions channelOptions = optionsCaptor.getValue();
 
@@ -68,7 +67,7 @@ public class ControlConnectionEventsTest extends ControlConnectionTestBase {
         .thenReturn(CompletableFuture.completedFuture(channel1));
 
     // When
-    controlConnection.init(false);
+    controlConnection.init(false, false);
     waitForPendingAdminTasks();
     DriverChannelOptions channelOptions = optionsCaptor.getValue();
 
@@ -86,7 +85,7 @@ public class ControlConnectionEventsTest extends ControlConnectionTestBase {
         ArgumentCaptor.forClass(DriverChannelOptions.class);
     Mockito.when(channelFactory.connect(eq(ADDRESS1), optionsCaptor.capture()))
         .thenReturn(CompletableFuture.completedFuture(channel1));
-    controlConnection.init(true);
+    controlConnection.init(true, false);
     waitForPendingAdminTasks();
     EventCallback callback = optionsCaptor.getValue().eventCallback;
     StatusChangeEvent event =
@@ -108,7 +107,7 @@ public class ControlConnectionEventsTest extends ControlConnectionTestBase {
         ArgumentCaptor.forClass(DriverChannelOptions.class);
     Mockito.when(channelFactory.connect(eq(ADDRESS1), optionsCaptor.capture()))
         .thenReturn(CompletableFuture.completedFuture(channel1));
-    controlConnection.init(true);
+    controlConnection.init(true, false);
     waitForPendingAdminTasks();
     EventCallback callback = optionsCaptor.getValue().eventCallback;
     TopologyChangeEvent event =
@@ -130,7 +129,7 @@ public class ControlConnectionEventsTest extends ControlConnectionTestBase {
         ArgumentCaptor.forClass(DriverChannelOptions.class);
     Mockito.when(channelFactory.connect(eq(ADDRESS1), optionsCaptor.capture()))
         .thenReturn(CompletableFuture.completedFuture(channel1));
-    controlConnection.init(false);
+    controlConnection.init(false, false);
     waitForPendingAdminTasks();
     EventCallback callback = optionsCaptor.getValue().eventCallback;
     SchemaChangeEvent event =
@@ -145,7 +144,6 @@ public class ControlConnectionEventsTest extends ControlConnectionTestBase {
     callback.onEvent(event);
 
     // Then
-    Mockito.verify(metadataManager)
-        .refreshSchema(SchemaElementKind.FUNCTION, "ks", "fn", ImmutableList.of("text", "text"));
+    Mockito.verify(metadataManager).refreshSchema("ks", false, false);
   }
 }

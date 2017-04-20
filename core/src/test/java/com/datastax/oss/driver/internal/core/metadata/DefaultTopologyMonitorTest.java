@@ -21,6 +21,7 @@ import com.datastax.oss.driver.api.core.config.CoreDriverOption;
 import com.datastax.oss.driver.api.core.config.DriverConfig;
 import com.datastax.oss.driver.api.core.config.DriverConfigProfile;
 import com.datastax.oss.driver.internal.core.adminrequest.AdminResult;
+import com.datastax.oss.driver.internal.core.adminrequest.AdminRow;
 import com.datastax.oss.driver.internal.core.channel.DriverChannel;
 import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
 import com.datastax.oss.driver.internal.core.control.ControlConnection;
@@ -97,7 +98,7 @@ public class DefaultTopologyMonitorTest {
     topologyMonitor.init();
 
     // Then
-    Mockito.verify(controlConnection).init(true);
+    Mockito.verify(controlConnection).init(true, false);
   }
 
   @Test
@@ -137,8 +138,8 @@ public class DefaultTopologyMonitorTest {
   public void should_refresh_node_from_peers_if_broadcast_address_is_not_present() {
     // Given
     node2.broadcastAddress = Optional.empty();
-    AdminResult.Row peer3 = mockPeersRow(3);
-    AdminResult.Row peer2 = mockPeersRow(2);
+    AdminRow peer3 = mockPeersRow(3);
+    AdminRow peer2 = mockPeersRow(2);
     topologyMonitor.stubQueries(
         new StubbedQuery("SELECT * FROM system.peers", mockResult(peer3, peer2)));
 
@@ -167,9 +168,9 @@ public class DefaultTopologyMonitorTest {
   @Test
   public void should_get_new_node_from_peers() {
     // Given
-    AdminResult.Row peer3 = mockPeersRow(3);
-    AdminResult.Row peer2 = mockPeersRow(2);
-    AdminResult.Row peer1 = mockPeersRow(1);
+    AdminRow peer3 = mockPeersRow(3);
+    AdminRow peer2 = mockPeersRow(2);
+    AdminRow peer1 = mockPeersRow(1);
     topologyMonitor.stubQueries(
         new StubbedQuery("SELECT * FROM system.peers", mockResult(peer3, peer2, peer1)));
 
@@ -202,8 +203,8 @@ public class DefaultTopologyMonitorTest {
   @Test
   public void should_refresh_node_list_from_local_and_peers() {
     // Given
-    AdminResult.Row peer3 = mockPeersRow(3);
-    AdminResult.Row peer2 = mockPeersRow(2);
+    AdminRow peer3 = mockPeersRow(3);
+    AdminRow peer2 = mockPeersRow(2);
     topologyMonitor.stubQueries(
         new StubbedQuery("SELECT * FROM system.local", mockResult(mockLocalRow(1))),
         new StubbedQuery("SELECT * FROM system.peers", mockResult(peer3, peer2)));
@@ -284,9 +285,9 @@ public class DefaultTopologyMonitorTest {
     }
   }
 
-  private AdminResult.Row mockLocalRow(int i) {
+  private AdminRow mockLocalRow(int i) {
     try {
-      AdminResult.Row row = Mockito.mock(AdminResult.Row.class);
+      AdminRow row = Mockito.mock(AdminRow.class);
       Mockito.when(row.getInetAddress("broadcast_address"))
           .thenReturn(InetAddress.getByName("127.0.0." + i));
       Mockito.when(row.getString("data_center")).thenReturn("dc" + i);
@@ -307,9 +308,9 @@ public class DefaultTopologyMonitorTest {
     }
   }
 
-  private AdminResult.Row mockPeersRow(int i) {
+  private AdminRow mockPeersRow(int i) {
     try {
-      AdminResult.Row row = Mockito.mock(AdminResult.Row.class);
+      AdminRow row = Mockito.mock(AdminRow.class);
       Mockito.when(row.getInetAddress("peer")).thenReturn(InetAddress.getByName("127.0.0." + i));
       Mockito.when(row.getString("data_center")).thenReturn("dc" + i);
       Mockito.when(row.getString("rack")).thenReturn("rack" + i);
@@ -324,7 +325,7 @@ public class DefaultTopologyMonitorTest {
     }
   }
 
-  private AdminResult mockResult(AdminResult.Row... rows) {
+  private AdminResult mockResult(AdminRow... rows) {
     AdminResult result = Mockito.mock(AdminResult.class);
     Mockito.when(result.iterator()).thenReturn(Iterators.forArray(rows));
     return result;

@@ -18,13 +18,17 @@ package com.datastax.oss.driver.api.core.type;
 import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.data.UdtValue;
 import com.datastax.oss.driver.api.core.detach.AttachmentPoint;
+import com.datastax.oss.driver.api.core.metadata.schema.Describable;
+import com.datastax.oss.driver.internal.core.metadata.schema.ScriptBuilder;
 import com.datastax.oss.protocol.internal.ProtocolConstants;
 import java.util.List;
 
-public interface UserDefinedType extends DataType {
+public interface UserDefinedType extends DataType, Describable {
   CqlIdentifier getKeyspace();
 
   CqlIdentifier getName();
+
+  boolean isFrozen();
 
   List<CqlIdentifier> getFieldNames();
 
@@ -42,9 +46,50 @@ public interface UserDefinedType extends DataType {
 
   List<DataType> getFieldTypes();
 
+  UserDefinedType copy(boolean newFrozen);
+
   UdtValue newValue();
 
   AttachmentPoint getAttachmentPoint();
+
+  @Override
+  default String asCql(boolean includeFrozen, boolean pretty) {
+    String template = (isFrozen() && includeFrozen) ? "frozen<%s.%s>" : "%s.%s";
+    return String.format(template, getKeyspace().asCql(pretty), getName().asCql(pretty));
+  }
+
+  @Override
+  default String describe(boolean pretty) {
+    ScriptBuilder builder = new ScriptBuilder(pretty);
+
+    builder
+        .append("CREATE TYPE ")
+        .append(getKeyspace())
+        .append(".")
+        .append(getName())
+        .append(" (")
+        .newLine()
+        .increaseIndent();
+
+    List<CqlIdentifier> fieldNames = getFieldNames();
+    List<DataType> fieldTypes = getFieldTypes();
+    int fieldCount = fieldNames.size();
+    for (int i = 0; i < fieldCount; i++) {
+      builder.append(fieldNames.get(i)).append(" ").append(fieldTypes.get(i).asCql(true, pretty));
+      if (i < fieldCount - 1) {
+        builder.append(",");
+      }
+      builder.newLine();
+    }
+    builder.decreaseIndent().append(");");
+    return builder.build();
+  }
+
+  @Override
+  default String describeWithChildren(boolean pretty) {
+    // No children (if it uses other types, they're considered dependencies, not sub-elements)
+    return describe(pretty);
+  }
 
   default int getProtocolCode() {
     return ProtocolConstants.DataType.UDT;

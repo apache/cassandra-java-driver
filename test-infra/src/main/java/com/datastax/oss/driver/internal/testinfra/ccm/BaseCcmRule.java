@@ -114,7 +114,7 @@ public abstract class BaseCcmRule extends CassandraResourceRule {
 
   @Override
   public ProtocolVersion getHighestProtocolVersion() {
-    if (cassandraVersion.compareTo(CassandraVersion.parse("2.2")) >= 0) {
+    if (cassandraVersion.compareTo(CassandraVersion.V2_2_0) >= 0) {
       return CoreProtocolVersion.V4;
     } else {
       return CoreProtocolVersion.V3;

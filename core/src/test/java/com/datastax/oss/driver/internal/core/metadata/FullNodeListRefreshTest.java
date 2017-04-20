@@ -41,14 +41,14 @@ public class FullNodeListRefreshTest {
         ImmutableList.of(
             DefaultNodeInfo.builder().withConnectAddress(ADDRESS2).build(),
             DefaultNodeInfo.builder().withConnectAddress(ADDRESS3).build());
-    FullNodeListRefresh refresh = new FullNodeListRefresh(oldMetadata, newInfos, "test");
+    FullNodeListRefresh refresh = new FullNodeListRefresh(newInfos, "test");
 
     // When
-    refresh.compute();
+    MetadataRefresh.Result result = refresh.compute(oldMetadata);
 
     // Then
-    assertThat(refresh.newMetadata.getNodes()).containsOnlyKeys(ADDRESS2, ADDRESS3);
-    assertThat(refresh.events)
+    assertThat(result.newMetadata.getNodes()).containsOnlyKeys(ADDRESS2, ADDRESS3);
+    assertThat(result.events)
         .containsOnly(NodeStateEvent.removed(node1), NodeStateEvent.added(node3));
   }
 
@@ -69,17 +69,17 @@ public class FullNodeListRefreshTest {
                 .withDatacenter("dc1")
                 .withRack("rack2")
                 .build());
-    FullNodeListRefresh refresh = new FullNodeListRefresh(oldMetadata, newInfos, "test");
+    FullNodeListRefresh refresh = new FullNodeListRefresh(newInfos, "test");
 
     // When
-    refresh.compute();
+    MetadataRefresh.Result result = refresh.compute(oldMetadata);
 
     // Then
-    assertThat(refresh.newMetadata.getNodes()).containsOnlyKeys(ADDRESS1, ADDRESS2);
+    assertThat(result.newMetadata.getNodes()).containsOnlyKeys(ADDRESS1, ADDRESS2);
     assertThat(node1.getDatacenter()).isEqualTo("dc1");
     assertThat(node1.getRack()).isEqualTo("rack1");
     assertThat(node2.getDatacenter()).isEqualTo("dc1");
     assertThat(node2.getRack()).isEqualTo("rack2");
-    assertThat(refresh.events).isEmpty();
+    assertThat(result.events).isEmpty();
   }
 }

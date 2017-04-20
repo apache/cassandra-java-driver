@@ -149,7 +149,7 @@ public class DataTypeIT {
                   || dataType == DataTypes.SMALLINT
                   || dataType == DataTypes.DATE
                   || dataType == DataTypes.TIME) {
-                return version.compareTo(CassandraVersion.parse("2.2.0")) >= 0;
+                return version.compareTo(CassandraVersion.V2_2_0) >= 0;
               }
               return true;
             })
@@ -233,6 +233,7 @@ public class DataTypeIT {
                   new DefaultUserDefinedType(
                       cluster.keyspace(),
                       CqlIdentifier.fromCql(userTypeFor(types)),
+                      false,
                       typeNames,
                       types);
 
@@ -729,7 +730,7 @@ public class DataTypeIT {
 
         for (int i = 0; i < exUdtValue.getType().getFieldTypes().size(); i++) {
           DataType compType = exUdtValue.getType().getFieldTypes().get(i);
-          String compName = exUdtValue.getType().getFieldNames().get(i).asCql();
+          String compName = exUdtValue.getType().getFieldNames().get(i).asCql(false);
 
           TypeCodec<?> typeCodec =
               cluster.cluster().getContext().codecRegistry().codecFor(compType);
@@ -783,7 +784,7 @@ public class DataTypeIT {
       // Create type if it doesn't already exist.
       List<String> fieldParts = new ArrayList<>();
       for (int i = 0; i < udt.getFieldNames().size(); i++) {
-        String fieldName = udt.getFieldNames().get(i).asCql();
+        String fieldName = udt.getFieldNames().get(i).asCql(false);
         String fieldType = typeFor(udt.getFieldTypes().get(i));
         fieldParts.add(fieldName + " " + fieldType);
       }
@@ -794,11 +795,11 @@ public class DataTypeIT {
               SimpleStatement.builder(
                       String.format(
                           "CREATE TYPE IF NOT EXISTS %s (%s)",
-                          udt.getName().asCql(), String.join(",", fieldParts)))
+                          udt.getName().asCql(false), String.join(",", fieldParts)))
                   .withConfigProfile(cluster.slowProfile())
                   .build());
 
-      typeName = "frozen<" + udt.getName().asCql() + ">";
+      typeName = "frozen<" + udt.getName().asCql(false) + ">";
     } else {
       typeName = dataType.toString();
     }

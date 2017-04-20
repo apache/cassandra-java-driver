@@ -37,6 +37,10 @@ public class DefaultUserDefinedType implements UserDefinedType {
   private final CqlIdentifier keyspace;
   /** @serial */
   private final CqlIdentifier name;
+
+  // Data types are only [de]serialized as part of a row, frozenness doesn't matter in that context
+  private final transient boolean frozen;
+
   /** @serial */
   private final List<CqlIdentifier> fieldNames;
   /** @serial */
@@ -48,6 +52,7 @@ public class DefaultUserDefinedType implements UserDefinedType {
   public DefaultUserDefinedType(
       CqlIdentifier keyspace,
       CqlIdentifier name,
+      boolean frozen,
       List<CqlIdentifier> fieldNames,
       List<DataType> fieldTypes,
       AttachmentPoint attachmentPoint) {
@@ -60,6 +65,7 @@ public class DefaultUserDefinedType implements UserDefinedType {
         "There should be the same number of field names and types");
     this.keyspace = keyspace;
     this.name = name;
+    this.frozen = frozen;
     this.fieldNames = ImmutableList.copyOf(fieldNames);
     this.fieldTypes = ImmutableList.copyOf(fieldTypes);
     this.index = new IdentifierIndex(this.fieldNames);
@@ -69,9 +75,10 @@ public class DefaultUserDefinedType implements UserDefinedType {
   public DefaultUserDefinedType(
       CqlIdentifier keyspace,
       CqlIdentifier name,
+      boolean frozen,
       List<CqlIdentifier> fieldNames,
       List<DataType> fieldTypes) {
-    this(keyspace, name, fieldNames, fieldTypes, AttachmentPoint.NONE);
+    this(keyspace, name, frozen, fieldNames, fieldTypes, AttachmentPoint.NONE);
   }
 
   @Override
@@ -82,6 +89,11 @@ public class DefaultUserDefinedType implements UserDefinedType {
   @Override
   public CqlIdentifier getName() {
     return name;
+  }
+
+  @Override
+  public boolean isFrozen() {
+    return frozen;
   }
 
   @Override
@@ -102,6 +114,14 @@ public class DefaultUserDefinedType implements UserDefinedType {
   @Override
   public List<DataType> getFieldTypes() {
     return fieldTypes;
+  }
+
+  @Override
+  public UserDefinedType copy(boolean newFrozen) {
+    return (newFrozen == frozen)
+        ? this
+        : new DefaultUserDefinedType(
+            keyspace, name, newFrozen, fieldNames, fieldTypes, attachmentPoint);
   }
 
   @Override
@@ -133,6 +153,7 @@ public class DefaultUserDefinedType implements UserDefinedType {
       return true;
     } else if (other instanceof UserDefinedType) {
       UserDefinedType that = (UserDefinedType) other;
+      // frozen is ignored in comparisons
       return this.keyspace.equals(that.getKeyspace())
           && this.name.equals(that.getName())
           && this.fieldNames.equals(that.getFieldNames())
@@ -149,7 +170,7 @@ public class DefaultUserDefinedType implements UserDefinedType {
 
   @Override
   public String toString() {
-    return "UDT(" + keyspace.asPrettyCql() + "." + name.asPrettyCql() + ")";
+    return "UDT(" + keyspace.asCql(true) + "." + name.asCql(true) + ")";
   }
 
   private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {

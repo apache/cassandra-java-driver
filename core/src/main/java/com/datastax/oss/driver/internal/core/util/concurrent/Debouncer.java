@@ -103,12 +103,14 @@ public class Debouncer<T, R> {
     }
   }
 
-  private void flushNow() {
+  public void flushNow() {
     assert adminExecutor.inEventLoop();
     LOG.debug("Flushing now");
     cancelNextFlush();
-    onFlush.accept(coalescer.apply(currentBatch));
-    currentBatch = new ArrayList<>();
+    if (!currentBatch.isEmpty()) {
+      onFlush.accept(coalescer.apply(currentBatch));
+      currentBatch = new ArrayList<>();
+    }
   }
 
   private void scheduleFlush() {

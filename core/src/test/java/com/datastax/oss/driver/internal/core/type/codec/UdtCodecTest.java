@@ -72,6 +72,7 @@ public class UdtCodecTest extends CodecTestBase<UdtValue> {
         new DefaultUserDefinedType(
             CqlIdentifier.fromInternal("ks"),
             CqlIdentifier.fromInternal("type"),
+            false,
             ImmutableList.of(
                 CqlIdentifier.fromInternal("field1"),
                 CqlIdentifier.fromInternal("field2"),

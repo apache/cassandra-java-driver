@@ -124,11 +124,11 @@ public class ParseUtils {
     throw new IllegalArgumentException();
   }
 
-  private static boolean isBlank(int c) {
+  public static boolean isBlank(int c) {
     return c == ' ' || c == '\t' || c == '\n';
   }
 
-  private static boolean isCqlIdentifierChar(int c) {
+  public static boolean isCqlIdentifierChar(int c) {
     return (c >= '0' && c <= '9')
         || (c >= 'a' && c <= 'z')
         || (c >= 'A' && c <= 'Z')

@@ -16,7 +16,7 @@
 package com.datastax.oss.driver.internal.core.metadata;
 
 import com.datastax.oss.driver.api.core.Cluster;
-import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -27,22 +27,32 @@ import java.util.List;
  * we are doing the refresh (by contract, the new copy of the metadata needs to be visible before
  * the events are sent). This also makes unit testing very easy.
  *
- * <p>This is only instantiated and called from the metadata manager's admin thread, therefore
+ * <p>This is only instantiated and called from {@link MetadataManager}'s admin thread, therefore
  * implementations don't need to be thread-safe.
  *
  * @see Cluster#getMetadata()
  */
-abstract class MetadataRefresh {
-  final DefaultMetadata oldMetadata;
-  DefaultMetadata newMetadata;
-  final List<Object> events;
+public abstract class MetadataRefresh {
+
   protected final String logPrefix;
 
-  protected MetadataRefresh(DefaultMetadata current, String logPrefix) {
-    this.oldMetadata = current;
+  protected MetadataRefresh(String logPrefix) {
     this.logPrefix = logPrefix;
-    this.events = new ArrayList<>();
   }
 
-  abstract void compute();
+  public abstract Result compute(DefaultMetadata oldMetadata);
+
+  public static class Result {
+    public final DefaultMetadata newMetadata;
+    public final List<Object> events;
+
+    public Result(DefaultMetadata newMetadata, List<Object> events) {
+      this.newMetadata = newMetadata;
+      this.events = events;
+    }
+
+    public Result(DefaultMetadata newMetadata) {
+      this(newMetadata, Collections.emptyList());
+    }
+  }
 }

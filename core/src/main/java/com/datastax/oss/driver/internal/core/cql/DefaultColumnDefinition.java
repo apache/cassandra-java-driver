@@ -75,12 +75,6 @@ public class DefaultColumnDefinition implements ColumnDefinition {
 
   @Override
   public String toString() {
-    return keyspace.asPrettyCql()
-        + "."
-        + table.asPrettyCql()
-        + "."
-        + name.asPrettyCql()
-        + " "
-        + type;
+    return keyspace.asCql(true) + "." + table.asCql(true) + "." + name.asCql(true) + " " + type;
   }
 }

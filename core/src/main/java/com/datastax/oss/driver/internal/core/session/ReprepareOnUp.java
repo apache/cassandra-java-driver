@@ -19,6 +19,7 @@ import com.datastax.oss.driver.api.core.config.CoreDriverOption;
 import com.datastax.oss.driver.api.core.config.DriverConfig;
 import com.datastax.oss.driver.internal.core.adminrequest.AdminRequestHandler;
 import com.datastax.oss.driver.internal.core.adminrequest.AdminResult;
+import com.datastax.oss.driver.internal.core.adminrequest.AdminRow;
 import com.datastax.oss.driver.internal.core.channel.DriverChannel;
 import com.datastax.oss.driver.internal.core.cql.CqlRequestHandlerBase;
 import com.datastax.oss.driver.internal.core.pool.ChannelPool;
@@ -134,7 +135,7 @@ class ReprepareOnUp {
           error.toString());
       gatherPayloadsToReprepare();
     } else {
-      for (AdminResult.Row row : rows) {
+      for (AdminRow row : rows) {
         serverKnownIds.add(row.getByteBuffer("prepared_id"));
       }
       if (rows.hasNextPage()) {

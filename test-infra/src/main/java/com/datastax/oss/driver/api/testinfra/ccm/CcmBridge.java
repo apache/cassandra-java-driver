@@ -303,6 +303,9 @@ public class CcmBridge implements AutoCloseable {
     }
 
     public CcmBridge build() {
+      if (cassandraVersion.compareTo(CassandraVersion.V2_2_0) >= 0) {
+        cassandraConfiguration.put("enable_user_defined_functions", "true");
+      }
       return new CcmBridge(
           directory, cassandraVersion, nodes, ipPrefix, cassandraConfiguration, jvmArgs);
     }

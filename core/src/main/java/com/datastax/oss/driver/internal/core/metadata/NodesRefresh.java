@@ -16,11 +16,8 @@
 package com.datastax.oss.driver.internal.core.metadata;
 
 import com.datastax.oss.driver.api.core.CassandraVersion;
-import com.datastax.oss.driver.api.core.metadata.Node;
 import com.google.common.collect.ImmutableMap;
-import java.net.InetSocketAddress;
 import java.util.Collections;
-import java.util.Map;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -28,18 +25,8 @@ abstract class NodesRefresh extends MetadataRefresh {
 
   private static final Logger LOG = LoggerFactory.getLogger(NodesRefresh.class);
 
-  protected NodesRefresh(DefaultMetadata current, String logPrefix) {
-    super(current, logPrefix);
-  }
-
-  /** @return null if the nodes haven't changed */
-  protected abstract Map<InetSocketAddress, Node> computeNewNodes();
-
-  @Override
-  void compute() {
-    Map<InetSocketAddress, Node> newNodes = computeNewNodes();
-    newMetadata = (newNodes == null) ? oldMetadata : new DefaultMetadata(newNodes);
-    // TODO recompute token map (even if node list hasn't changed, b/c tokens might have changed)
+  protected NodesRefresh(String logPrefix) {
+    super(logPrefix);
   }
 
   protected static void copyInfos(NodeInfo nodeInfo, DefaultNode node, String logPrefix) {

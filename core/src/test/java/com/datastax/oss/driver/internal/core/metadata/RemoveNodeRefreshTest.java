@@ -34,27 +34,27 @@ public class RemoveNodeRefreshTest {
     // Given
     DefaultMetadata oldMetadata =
         new DefaultMetadata(ImmutableMap.of(ADDRESS1, node1, ADDRESS2, node2));
-    RemoveNodeRefresh refresh = new RemoveNodeRefresh(oldMetadata, ADDRESS2, "test");
+    RemoveNodeRefresh refresh = new RemoveNodeRefresh(ADDRESS2, "test");
 
     // When
-    refresh.compute();
+    MetadataRefresh.Result result = refresh.compute(oldMetadata);
 
     // Then
-    assertThat(refresh.newMetadata.getNodes()).containsOnlyKeys(ADDRESS1);
-    assertThat(refresh.events).containsExactly(NodeStateEvent.removed(node2));
+    assertThat(result.newMetadata.getNodes()).containsOnlyKeys(ADDRESS1);
+    assertThat(result.events).containsExactly(NodeStateEvent.removed(node2));
   }
 
   @Test
   public void should_not_remove_nonexistent_node() {
     // Given
     DefaultMetadata oldMetadata = new DefaultMetadata(ImmutableMap.of(ADDRESS1, node1));
-    RemoveNodeRefresh refresh = new RemoveNodeRefresh(oldMetadata, ADDRESS2, "test");
+    RemoveNodeRefresh refresh = new RemoveNodeRefresh(ADDRESS2, "test");
 
     // When
-    refresh.compute();
+    MetadataRefresh.Result result = refresh.compute(oldMetadata);
 
     // Then
-    assertThat(refresh.newMetadata.getNodes()).containsOnlyKeys(ADDRESS1);
-    assertThat(refresh.events).isEmpty();
+    assertThat(result.newMetadata.getNodes()).containsOnlyKeys(ADDRESS1);
+    assertThat(result.events).isEmpty();
   }
 }
