@@ -16,6 +16,7 @@
 package com.datastax.driver.core.policies;
 
 import com.datastax.driver.core.*;
+import com.google.common.collect.AbstractIterator;
 
 import java.nio.ByteBuffer;
 import java.util.*;
@@ -116,27 +117,47 @@ public class TokenAwarePolicy implements ChainableLoadBalancingPolicy {
         if (keyspace == null)
             keyspace = loggedKeyspace;
 
+        final Iterator<Host> childIterator = childPolicy.newQueryPlan(keyspace, statement);
+
         if (partitionKey == null || keyspace == null)
-            return childPolicy.newQueryPlan(keyspace, statement);
+            return childIterator;
 
-        Set<Host> replicas = clusterMetadata.getReplicas(Metadata.quote(keyspace), partitionKey);
-
-        Iterator<Host> childIterator = childPolicy.newQueryPlan(loggedKeyspace, statement);
-
+        final Set<Host> replicas = clusterMetadata.getReplicas(Metadata.quote(keyspace), partitionKey);
         if (replicas.isEmpty())
             return childIterator;
 
-        List<Host> queryPlan = new ArrayList<Host>();
-        int i = 0;
-        while (childIterator.hasNext()) {
-            Host host = childIterator.next();
-            if (host.isUp() && childPolicy.distance(host) == HostDistance.LOCAL && replicas.contains(host))
-                queryPlan.add(i++, host);
-            else
-                queryPlan.add(host);
-        }
-        return queryPlan.iterator();
+        return new AbstractIterator<Host>() {
 
+            private Iterator<Host> nonReplicaIter;
+            private List<Host> nonReplicas = new ArrayList<Host>();
+
+            @Override
+            protected Host computeNext() {
+
+                while (childIterator.hasNext()) {
+
+                    Host host = childIterator.next();
+
+                    if (host.isUp() && replicas.contains(host) && childPolicy.distance(host) == HostDistance.LOCAL) {
+                        // UP replicas should be prioritized, retaining order from childPolicy
+                        return host;
+                    } else {
+                        // save for later
+                        nonReplicas.add(host);
+                    }
+
+                }
+
+                // This should only engage if all local replicas are DOWN
+                if (nonReplicaIter == null)
+                    nonReplicaIter = nonReplicas.iterator();
+
+                if (nonReplicaIter.hasNext())
+                    return nonReplicaIter.next();
+
+                return endOfData();
+            }
+        };
     }
 
     @Override
