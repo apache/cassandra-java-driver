@@ -24,13 +24,16 @@ import com.datastax.oss.driver.internal.core.adminrequest.AdminResult;
 import com.datastax.oss.driver.internal.core.channel.DriverChannel;
 import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
 import com.datastax.oss.driver.internal.core.control.ControlConnection;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableMap;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.time.Duration;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
@@ -52,7 +55,7 @@ public class DefaultTopologyMonitor implements TopologyMonitor {
   private final AddressTranslator addressTranslator;
   private final Duration timeout;
 
-  private volatile int port = -1;
+  @VisibleForTesting volatile int port = -1;
 
   public DefaultTopologyMonitor(InternalDriverContext context) {
     this.controlConnection = context.controlConnection();
@@ -77,18 +80,13 @@ public class DefaultTopologyMonitor implements TopologyMonitor {
       LOG.debug("Ignoring refresh of control node");
       return CompletableFuture.completedFuture(Optional.empty());
     } else if (node.getBroadcastAddress().isPresent()) {
-      return AdminRequestHandler.query(
+      return query(
               channel,
               "SELECT * FROM system.peers WHERE peer = :address",
-              ImmutableMap.of("address", node.getBroadcastAddress().get()),
-              timeout,
-              INFINITE_PAGE_SIZE)
-          .start()
+              ImmutableMap.of("address", node.getBroadcastAddress().get()))
           .thenApply(this::buildNodeInfoFromFirstRow);
     } else {
-      return AdminRequestHandler.query(
-              channel, "SELECT * FROM system.peers", timeout, INFINITE_PAGE_SIZE)
-          .start()
+      return query(channel, "SELECT * FROM system.peers")
           .thenApply(result -> this.findInPeers(result, node.getConnectAddress()));
     }
   }
@@ -97,9 +95,7 @@ public class DefaultTopologyMonitor implements TopologyMonitor {
   public CompletionStage<Optional<NodeInfo>> getNewNodeInfo(InetSocketAddress connectAddress) {
     LOG.debug("Fetching info for new node {}", connectAddress);
     DriverChannel channel = controlConnection.channel();
-    return AdminRequestHandler.query(
-            channel, "SELECT * FROM system.peers", timeout, INFINITE_PAGE_SIZE)
-        .start()
+    return query(channel, "SELECT * FROM system.peers")
         .thenApply(result -> this.findInPeers(result, connectAddress));
   }
 
@@ -109,17 +105,11 @@ public class DefaultTopologyMonitor implements TopologyMonitor {
     DriverChannel channel = controlConnection.channel();
     savePort(channel);
 
-    CompletionStage<AdminResult> controlNodeStage =
-        AdminRequestHandler.query(
-                channel, "SELECT * FROM system.local", timeout, INFINITE_PAGE_SIZE)
-            .start();
-    CompletionStage<AdminResult> peersStage =
-        AdminRequestHandler.query(
-                channel, "SELECT * FROM system.peers", timeout, INFINITE_PAGE_SIZE)
-            .start();
+    CompletionStage<AdminResult> localQuery = query(channel, "SELECT * FROM system.local");
+    CompletionStage<AdminResult> peersQuery = query(channel, "SELECT * FROM system.peers");
 
-    return controlNodeStage.thenCombine(
-        peersStage,
+    return localQuery.thenCombine(
+        peersQuery,
         (controlNodeResult, peersResult) -> {
           List<NodeInfo> nodeInfos = new ArrayList<>();
           nodeInfos.add(buildNodeInfo(controlNodeResult.iterator().next()));
@@ -130,14 +120,26 @@ public class DefaultTopologyMonitor implements TopologyMonitor {
         });
   }
 
-  private NodeInfo buildNodeInfo(AdminResult.Row row) {
-    DefaultNodeInfo.Builder builder = DefaultNodeInfo.builder();
+  @VisibleForTesting
+  protected CompletionStage<AdminResult> query(
+      DriverChannel channel, String queryString, Map<String, Object> parameters) {
+    return AdminRequestHandler.query(channel, queryString, parameters, timeout, INFINITE_PAGE_SIZE)
+        .start();
+  }
 
+  private CompletionStage<AdminResult> query(DriverChannel channel, String queryString) {
+    return query(channel, queryString, Collections.emptyMap());
+  }
+
+  private NodeInfo buildNodeInfo(AdminResult.Row row) {
     InetAddress broadcastRpcAddress = row.getInet("rpc_address");
-    if (broadcastRpcAddress != null) {
-      builder.withConnectAddress(
-          addressTranslator.translate(new InetSocketAddress(broadcastRpcAddress, port)));
-    }
+    InetSocketAddress connectAddress =
+        addressTranslator.translate(new InetSocketAddress(broadcastRpcAddress, port));
+    return buildNodeInfo(row, connectAddress);
+  }
+
+  private NodeInfo buildNodeInfo(AdminResult.Row row, InetSocketAddress connectAddress) {
+    DefaultNodeInfo.Builder builder = DefaultNodeInfo.builder().withConnectAddress(connectAddress);
 
     InetAddress broadcastAddress = row.getInet("broadcast_address"); // in system.local
     if (broadcastAddress == null) {
@@ -145,7 +147,7 @@ public class DefaultTopologyMonitor implements TopologyMonitor {
     }
     builder.withBroadcastAddress(broadcastAddress);
 
-    builder.withListenAddress(row.getInet("listen"));
+    builder.withListenAddress(row.getInet("listen_address"));
     builder.withDatacenter(row.getVarchar("data_center"));
     builder.withRack(row.getVarchar("rack"));
     builder.withCassandraVersion(row.getVarchar("release_version"));
@@ -172,7 +174,7 @@ public class DefaultTopologyMonitor implements TopologyMonitor {
           && addressTranslator
               .translate(new InetSocketAddress(broadcastRpcAddress, port))
               .equals(connectAddress)) {
-        return Optional.of(buildNodeInfo(row));
+        return Optional.of(buildNodeInfo(row, connectAddress));
       }
     }
     LOG.debug("Could not find any peer row matching {}", connectAddress);
