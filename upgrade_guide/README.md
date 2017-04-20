@@ -3,6 +3,19 @@
 The purpose of this guide is to detail changes made by successive
 versions of the Java driver.
 
+### 3.3.0
+
+The `TokenAwarePolicy` now honors its child policy's ordering, i.e., replicas
+are now returned in the same relative order as in the child policy's query plan.
+As an example, if the child policy returns the plan [A, B, C, D], and the replicas 
+for the query being routed are [D, A, B], then the token aware policy would return 
+the plan [A, B, D, C].
+
+As a consequence, the `TokenAwarePolicy` does not offer the option to shuffle 
+replicas anymore. The constructor taking a boolean parameter `shuffleReplicas` 
+is now deprecated and will be removed in the next major release.
+
+
 ### 3.2.0
 
 The `SSLOptions` interface is now deprecated in favor of

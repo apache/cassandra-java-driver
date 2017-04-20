@@ -17,117 +17,15 @@ package com.datastax.driver.core.policies;
 
 import com.datastax.driver.core.*;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Lists;
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
 import java.nio.ByteBuffer;
-import java.util.List;
 
 import static com.datastax.driver.core.Assertions.assertThat;
-import static com.datastax.driver.core.CreateCCM.TestMode.PER_METHOD;
 import static com.datastax.driver.core.TestUtils.CREATE_KEYSPACE_SIMPLE_FORMAT;
 import static com.datastax.driver.core.TestUtils.nonQuietClusterCloseOptions;
 
-@CreateCCM(PER_METHOD)
-@CCMConfig(createCcm = false)
-public class TokenAwarePolicyTest extends CCMTestsSupport {
-
-    QueryTracker queryTracker;
-
-    @BeforeMethod(groups = "short")
-    public void setUp() {
-        queryTracker = new QueryTracker();
-    }
-
-    @DataProvider(name = "shuffleProvider")
-    public Object[][] shuffleProvider() {
-        return new Object[][]{
-                {true},
-                {false},
-                {null}
-        };
-    }
-
-    /**
-     * Ensures that {@link TokenAwarePolicy} will shuffle discovered replicas depending on the value of shuffleReplicas
-     * used when constructing with {@link TokenAwarePolicy#TokenAwarePolicy(LoadBalancingPolicy, boolean)} and that if not
-     * provided replicas are shuffled by default when using {@link TokenAwarePolicy#TokenAwarePolicy(LoadBalancingPolicy, boolean)}.
-     *
-     * @test_category load_balancing:token_aware
-     */
-    @Test(groups = "short", dataProvider = "shuffleProvider")
-    public void should_shuffle_replicas_based_on_configuration(Boolean shuffleReplicas) {
-        // given: an 8 node cluster using TokenAwarePolicy and some shuffle replica configuration with a keyspace with replication factor of 3.
-        ScassandraCluster sCluster = ScassandraCluster.builder()
-                .withNodes(8)
-                .withSimpleKeyspace("keyspace", 3)
-                .build();
-
-        LoadBalancingPolicy loadBalancingPolicy;
-        if (shuffleReplicas == null) {
-            loadBalancingPolicy = new TokenAwarePolicy(new RoundRobinPolicy());
-            shuffleReplicas = true;
-        } else {
-            loadBalancingPolicy = new TokenAwarePolicy(new RoundRobinPolicy(), shuffleReplicas);
-        }
-
-        Cluster cluster = Cluster.builder()
-                .addContactPoints(sCluster.address(1).getAddress())
-                .withPort(sCluster.getBinaryPort())
-                .withNettyOptions(nonQuietClusterCloseOptions)
-                .withLoadBalancingPolicy(loadBalancingPolicy)
-                .build();
-
-        try {
-            sCluster.init();
-
-            Session session = cluster.connect();
-
-            // given: A routing key that falls in the token range of node 6.
-
-            // Encodes into murmur hash '4874351301193663061' which should belong be owned by node 6 with replicas 7 and 8.
-            ByteBuffer routingKey = TypeCodec.varchar().serialize("This is some sample text", ProtocolVersion.NEWEST_SUPPORTED);
-
-            // then: The replicas resolved from the cluster metadata must match node 6 and its replicas.
-            List<Host> replicas = Lists.newArrayList(cluster.getMetadata().getReplicas("keyspace", routingKey));
-            assertThat(replicas).containsExactly(
-                    sCluster.host(cluster, 1, 6),
-                    sCluster.host(cluster, 1, 7),
-                    sCluster.host(cluster, 1, 8));
-
-            // then: generating a query plan on a statement using that routing key should properly prioritize node 6 and its replicas.
-            // Actual query does not matter, only the keyspace and routing key will be used
-            SimpleStatement statement = new SimpleStatement("select * from table where k=5");
-            statement.setRoutingKey(routingKey);
-            statement.setKeyspace("keyspace");
-
-            boolean shuffledAtLeastOnce = false;
-            for (int i = 0; i < 1024; i++) {
-                List<Host> queryPlan = Lists.newArrayList(loadBalancingPolicy.newQueryPlan(null, statement));
-                assertThat(queryPlan).containsOnlyElementsOf(cluster.getMetadata().getAllHosts());
-
-                List<Host> firstThree = queryPlan.subList(0, 3);
-                // then: if shuffle replicas was used or using default, the first three hosts returned should be 6,7,8 in any order.
-                //       if shuffle replicas was not used, the first three hosts returned should be 6,7,8 in that order.
-                if (shuffleReplicas) {
-                    assertThat(firstThree).containsOnlyElementsOf(replicas);
-                    if (!firstThree.equals(replicas)) {
-                        shuffledAtLeastOnce = true;
-                    }
-                } else {
-                    assertThat(firstThree).containsExactlyElementsOf(replicas);
-                }
-            }
-
-            // then: given 1024 query plans, the replicas should be shuffled at least once.
-            assertThat(shuffledAtLeastOnce).isEqualTo(shuffleReplicas);
-        } finally {
-            cluster.close();
-            sCluster.stop();
-        }
-    }
+public class TokenAwarePolicyTest {
 
     /**
      * Ensures that {@link TokenAwarePolicy} will properly prioritize replicas if a provided
@@ -162,6 +60,7 @@ public class TokenAwarePolicyTest extends CCMTestsSupport {
                     .setRoutingKey(routingKey)
                     .setKeyspace("keyspace");
 
+            QueryTracker queryTracker = new QueryTracker();
             queryTracker.query(session, 10, statement);
 
             // then: The host having that token should be queried.
@@ -210,6 +109,7 @@ public class TokenAwarePolicyTest extends CCMTestsSupport {
                     .setRoutingKey(routingKey)
                     .setKeyspace("keyspace");
 
+            QueryTracker queryTracker = new QueryTracker();
             queryTracker.query(session, 10, statement);
 
             // then: The local replica (2:1) should be queried and never the remote one.
@@ -239,8 +139,7 @@ public class TokenAwarePolicyTest extends CCMTestsSupport {
                 .addContactPoints(sCluster.address(2).getAddress())
                 .withPort(sCluster.getBinaryPort())
                 .withNettyOptions(nonQuietClusterCloseOptions)
-                // Don't shuffle replicas just to keep test deterministic.
-                .withLoadBalancingPolicy(new TokenAwarePolicy(new RoundRobinPolicy(), false))
+                .withLoadBalancingPolicy(new TokenAwarePolicy(new SortingLoadBalancingPolicy()))
                 .build();
 
         try {
@@ -255,58 +154,60 @@ public class TokenAwarePolicyTest extends CCMTestsSupport {
                     .setRoutingKey(routingKey)
                     .setKeyspace("keyspace");
 
+            QueryTracker queryTracker = new QueryTracker();
             queryTracker.query(session, 10, statement);
 
-            // then: The node that is the primary for that key's hash is chosen.
-            queryTracker.assertQueried(sCluster, 1, 1, 0);
-            queryTracker.assertQueried(sCluster, 1, 2, 0);
-            queryTracker.assertQueried(sCluster, 1, 3, 0);
-            queryTracker.assertQueried(sCluster, 1, 4, 10);
-
-            // when: The primary node owning that key goes down and a query is made.
-            queryTracker.reset();
-            sCluster.stop(cluster, 4);
-            queryTracker.query(session, 10, statement);
-
-            // then: The next replica having that data should be chosen (node 1).
+            // then: primary replica is 4, secondary is 1; since the child policy returns [1,2,3,4], the
+            // TAP reorders the plan to [1,4,2,3]. Only 1 should be queried
             queryTracker.assertQueried(sCluster, 1, 1, 10);
             queryTracker.assertQueried(sCluster, 1, 2, 0);
             queryTracker.assertQueried(sCluster, 1, 3, 0);
             queryTracker.assertQueried(sCluster, 1, 4, 0);
 
-            // when: All nodes having that token are down and a query is made.
+            // when: The secondary node owning that key (1) goes down and a query is made.
             queryTracker.reset();
             sCluster.stop(cluster, 1);
             queryTracker.query(session, 10, statement);
 
-            // then: The remaining nodes which are non-replicas of that token should be used
-            // delegating to the child policy (RoundRobin).
-            queryTracker.assertQueried(sCluster, 1, 1, 0);
-            queryTracker.assertQueried(sCluster, 1, 2, 5);
-            queryTracker.assertQueried(sCluster, 1, 3, 5);
-            queryTracker.assertQueried(sCluster, 1, 4, 0);
-
-            // when: A replica having that key becomes up and a query is made.
-            queryTracker.reset();
-            sCluster.start(cluster, 1);
-            queryTracker.query(session, 10, statement);
-
-            // then: The newly up replica should be queried.
-            queryTracker.assertQueried(sCluster, 1, 1, 10);
-            queryTracker.assertQueried(sCluster, 1, 2, 0);
-            queryTracker.assertQueried(sCluster, 1, 3, 0);
-            queryTracker.assertQueried(sCluster, 1, 4, 0);
-
-            // when: The primary replicas becomes up and a query is made.
-            queryTracker.reset();
-            sCluster.start(cluster, 4);
-            queryTracker.query(session, 10, statement);
-
-            // then: The primary replica which is now up should be queried.
+            // then: The next replica having that data should be chosen (node 4 - primary replica).
             queryTracker.assertQueried(sCluster, 1, 1, 0);
             queryTracker.assertQueried(sCluster, 1, 2, 0);
             queryTracker.assertQueried(sCluster, 1, 3, 0);
             queryTracker.assertQueried(sCluster, 1, 4, 10);
+
+            // when: All nodes having that token are down and a query is made.
+            queryTracker.reset();
+            sCluster.stop(cluster, 4);
+            queryTracker.query(session, 10, statement);
+
+            // then: The remaining nodes which are non-replicas of that token should be used
+            // delegating to the child policy.
+            queryTracker.assertQueried(sCluster, 1, 1, 0);
+            queryTracker.assertQueried(sCluster, 1, 2, 10);
+            queryTracker.assertQueried(sCluster, 1, 3, 0);
+            queryTracker.assertQueried(sCluster, 1, 4, 0);
+
+            // when: A replica having that key (4) becomes up and a query is made.
+            queryTracker.reset();
+            sCluster.start(cluster, 4);
+            queryTracker.query(session, 10, statement);
+
+            // then: The newly up replica should be queried.
+            queryTracker.assertQueried(sCluster, 1, 1, 0);
+            queryTracker.assertQueried(sCluster, 1, 2, 0);
+            queryTracker.assertQueried(sCluster, 1, 3, 0);
+            queryTracker.assertQueried(sCluster, 1, 4, 10);
+
+            // when: The other replica becomes up and a query is made.
+            queryTracker.reset();
+            sCluster.start(cluster, 1);
+            queryTracker.query(session, 10, statement);
+
+            // then: The secondary replica (1) which is now up should be queried.
+            queryTracker.assertQueried(sCluster, 1, 1, 10);
+            queryTracker.assertQueried(sCluster, 1, 2, 0);
+            queryTracker.assertQueried(sCluster, 1, 3, 0);
+            queryTracker.assertQueried(sCluster, 1, 4, 0);
         } finally {
             cluster.close();
             sCluster.stop();
@@ -332,8 +233,7 @@ public class TokenAwarePolicyTest extends CCMTestsSupport {
                 .addContactPoints(sCluster.address(2).getAddress())
                 .withPort(sCluster.getBinaryPort())
                 .withNettyOptions(nonQuietClusterCloseOptions)
-                // Don't shuffle replicas just to keep test deterministic.
-                .withLoadBalancingPolicy(new TokenAwarePolicy(new RoundRobinPolicy(), false))
+                .withLoadBalancingPolicy(new TokenAwarePolicy(new RoundRobinPolicy()))
                 .build();
 
         try {
@@ -351,6 +251,7 @@ public class TokenAwarePolicyTest extends CCMTestsSupport {
             ByteBuffer routingKey = TypeCodec.bigint().serialize(33L, ProtocolVersion.NEWEST_SUPPORTED);
             bs.setRoutingKey(routingKey);
 
+            QueryTracker queryTracker = new QueryTracker();
             queryTracker.query(session, 10, bs);
 
             // Expect only node 3 to have been queried, give it has ownership of that partition
@@ -391,43 +292,57 @@ public class TokenAwarePolicyTest extends CCMTestsSupport {
      * @test_category load_balancing:token_aware
      * @jira_ticket JAVA-123 (to ensure routing key buffers are not destroyed).
      */
-    @CCMConfig(createCcm = true, numberOfNodes = 3, createCluster = false)
     @Test(groups = "long")
     public void should_properly_generate_and_use_routing_key_for_composite_partition_key() {
+
         // given: a 3 node cluster with a keyspace with RF 1.
-        Cluster cluster = register(Cluster.builder()
+        CCMBridge ccm = CCMBridge.builder()
+                .withNodes(3)
+                .build();
+
+        ccm.start();
+
+        Cluster cluster = Cluster.builder()
+                .addContactPoints(ccm.addressOfNode(1).getAddress())
+                .withPort(ccm.getBinaryPort())
+                .withNettyOptions(nonQuietClusterCloseOptions)
                 .withLoadBalancingPolicy(new TokenAwarePolicy(new RoundRobinPolicy()))
-                .addContactPoints(getContactPoints().get(0))
-                .withPort(ccm().getBinaryPort())
-                .build());
-        Session session = cluster.connect();
+                .build();
 
-        String table = "composite";
-        String ks = TestUtils.generateIdentifier("ks_");
-        session.execute(String.format(CREATE_KEYSPACE_SIMPLE_FORMAT, ks, 1));
-        session.execute("USE " + ks);
-        session.execute(String.format("CREATE TABLE %s (k1 int, k2 int, i int, PRIMARY KEY ((k1, k2)))", table));
+        try {
 
-        // (1,2) resolves to token '4881097376275569167' which belongs to node 1 so all queries should go to that node.
-        PreparedStatement insertPs = session.prepare("INSERT INTO " + table + "(k1, k2, i) VALUES (?, ?, ?)");
-        BoundStatement insertBs = insertPs.bind(1, 2, 3);
+            Session session = cluster.connect();
 
-        PreparedStatement selectPs = session.prepare("SELECT * FROM " + table + " WHERE k1=? and k2=?");
-        BoundStatement selectBs = selectPs.bind(1, 2);
+            String ks = TestUtils.generateIdentifier("ks_");
+            session.execute(String.format(CREATE_KEYSPACE_SIMPLE_FORMAT, ks, 1));
+            session.execute("USE " + ks);
+            session.execute("CREATE TABLE composite (k1 int, k2 int, i int, PRIMARY KEY ((k1, k2)))");
 
-        // when: executing a prepared statement with a composite partition key.
-        // then: should query the correct node (1) in for both insert and select queries.
-        for (int i = 0; i < 10; i++) {
-            ResultSet rs = session.execute(insertBs);
-            assertThat(rs.getExecutionInfo().getQueriedHost()).isEqualTo(TestUtils.findHost(cluster, 1));
+            // (0,1) resolves to token '-5343711339996600080' which belongs to node 2 so all queries should go to that node.
+            PreparedStatement insertPs = session.prepare("INSERT INTO composite(k1, k2, i) VALUES (?, ?, ?)");
+            BoundStatement insertBs = insertPs.bind(0, 1, 2);
 
-            rs = session.execute(selectBs);
-            assertThat(rs.getExecutionInfo().getQueriedHost()).isEqualTo(TestUtils.findHost(cluster, 1));
-            assertThat(rs.isExhausted()).isFalse();
-            Row r = rs.one();
-            assertThat(rs.isExhausted()).isTrue();
+            PreparedStatement selectPs = session.prepare("SELECT * FROM composite WHERE k1=? and k2=?");
+            BoundStatement selectBs = selectPs.bind(0, 1);
 
-            assertThat(r.getInt("i")).isEqualTo(3);
+            // when: executing a prepared statement with a composite partition key.
+            // then: should query the correct node (2) in for both insert and select queries.
+            for (int i = 0; i < 10; i++) {
+                ResultSet rs = session.execute(insertBs);
+                assertThat(rs.getExecutionInfo().getQueriedHost().getSocketAddress()).isEqualTo(ccm.addressOfNode(2));
+
+                rs = session.execute(selectBs);
+                assertThat(rs.getExecutionInfo().getQueriedHost().getSocketAddress()).isEqualTo(ccm.addressOfNode(2));
+                assertThat(rs.isExhausted()).isFalse();
+                Row r = rs.one();
+                assertThat(rs.isExhausted()).isTrue();
+
+                assertThat(r.getInt("i")).isEqualTo(2);
+            }
+        } finally {
+            cluster.close();
+            ccm.remove();
         }
     }
+
 }
