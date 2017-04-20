@@ -22,6 +22,12 @@ public interface ListType extends DataType {
 
   boolean isFrozen();
 
+  @Override
+  default String asCql(boolean includeFrozen, boolean pretty) {
+    String template = (isFrozen() && includeFrozen) ? "frozen<list<%s>>" : "list<%s>";
+    return String.format(template, getElementType().asCql(includeFrozen, pretty));
+  }
+
   default int getProtocolCode() {
     return ProtocolConstants.DataType.LIST;
   }

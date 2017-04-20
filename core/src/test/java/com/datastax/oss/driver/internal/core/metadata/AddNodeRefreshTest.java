@@ -39,18 +39,18 @@ public class AddNodeRefreshTest {
             .withDatacenter("dc1")
             .withRack("rack2")
             .build();
-    AddNodeRefresh refresh = new AddNodeRefresh(oldMetadata, newNodeInfo, "test");
+    AddNodeRefresh refresh = new AddNodeRefresh(newNodeInfo, "test");
 
     // When
-    refresh.compute();
+    MetadataRefresh.Result result = refresh.compute(oldMetadata);
 
     // Then
-    Map<InetSocketAddress, Node> newNodes = refresh.newMetadata.getNodes();
+    Map<InetSocketAddress, Node> newNodes = result.newMetadata.getNodes();
     assertThat(newNodes).containsOnlyKeys(ADDRESS1, ADDRESS2);
     Node node2 = newNodes.get(ADDRESS2);
     assertThat(node2.getDatacenter()).isEqualTo("dc1");
     assertThat(node2.getRack()).isEqualTo("rack2");
-    assertThat(refresh.events).containsExactly(NodeStateEvent.added((DefaultNode) node2));
+    assertThat(result.events).containsExactly(NodeStateEvent.added((DefaultNode) node2));
   }
 
   @Test
@@ -63,16 +63,16 @@ public class AddNodeRefreshTest {
             .withDatacenter("dc1")
             .withRack("rack2")
             .build();
-    AddNodeRefresh refresh = new AddNodeRefresh(oldMetadata, newNodeInfo, "test");
+    AddNodeRefresh refresh = new AddNodeRefresh(newNodeInfo, "test");
 
     // When
-    refresh.compute();
+    MetadataRefresh.Result result = refresh.compute(oldMetadata);
 
     // Then
-    assertThat(refresh.newMetadata.getNodes()).containsOnlyKeys(ADDRESS1);
+    assertThat(result.newMetadata.getNodes()).containsOnlyKeys(ADDRESS1);
     // Info is not copied over:
     assertThat(node1.getDatacenter()).isNull();
     assertThat(node1.getRack()).isNull();
-    assertThat(refresh.events).isEmpty();
+    assertThat(result.events).isEmpty();
   }
 }

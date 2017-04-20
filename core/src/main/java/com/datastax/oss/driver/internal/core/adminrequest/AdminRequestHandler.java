@@ -195,7 +195,7 @@ public class AdminRequestHandler implements ResponseCallback {
     } else if (parameter instanceof List && ((List) parameter).get(0) instanceof String) {
       @SuppressWarnings("unchecked")
       List<String> l = (List<String>) parameter;
-      return AdminResult.Row.LIST_OF_TEXT.encode(l, protocolVersion);
+      return AdminRow.LIST_OF_TEXT.encode(l, protocolVersion);
     } else {
       throw new IllegalArgumentException(
           "Unsupported variable type for admin query: " + parameter.getClass());

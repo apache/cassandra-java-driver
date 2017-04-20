@@ -67,6 +67,7 @@ public class DataTypeHelper {
           return new DefaultUserDefinedType(
               CqlIdentifier.fromInternal(rawUdt.keyspace),
               CqlIdentifier.fromInternal(rawUdt.typeName),
+              false,
               fieldNames.build(),
               fieldTypes.build(),
               attachmentPoint);

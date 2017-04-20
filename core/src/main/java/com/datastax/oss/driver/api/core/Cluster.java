@@ -19,6 +19,7 @@ import com.datastax.oss.driver.api.core.config.CoreDriverOption;
 import com.datastax.oss.driver.api.core.context.DriverContext;
 import com.datastax.oss.driver.api.core.metadata.Metadata;
 import com.datastax.oss.driver.api.core.metadata.Node;
+import com.datastax.oss.driver.api.core.metadata.schema.SchemaChangeListener;
 import com.datastax.oss.driver.api.core.session.CqlSession;
 import com.datastax.oss.driver.api.core.session.Session;
 import com.datastax.oss.driver.internal.core.util.concurrent.BlockingOperation;
@@ -75,6 +76,46 @@ public interface Cluster<SessionT extends Session> extends AsyncAutoCloseable {
    */
   Metadata getMetadata();
 
+  /** Whether schema metadata is currently enabled. */
+  boolean isSchemaMetadataEnabled();
+
+  /**
+   * Enable or disable schema metadata programmatically.
+   *
+   * <p>Use this method to override the value defined in the driver's configuration; one typical use
+   * case is to temporarily disable schema metadata while the client issues a sequence of DDL
+   * statements.
+   *
+   * <p>If calling this method re-enables the metadata (that is, {@link #isSchemaMetadataEnabled()}
+   * was false before, and becomes true as a result of the call), a refresh is also triggered.
+   *
+   * @param newValue a boolean value to enable or disable schema metadata programmatically, or
+   *     {@code null} to use the driver's configuration.
+   * @see CoreDriverOption#METADATA_SCHEMA_ENABLED
+   * @return if this call triggered a refresh, a future that will complete when that refresh is
+   *     complete. Otherwise, a completed future with the current metadata.
+   */
+  CompletionStage<Metadata> setSchemaMetadataEnabled(Boolean newValue);
+
+  /**
+   * Force an immediate refresh of the schema metadata, even if it is currently disabled (either in
+   * the configuration or via {@link #setSchemaMetadataEnabled(Boolean)}).
+   *
+   * <p>The new metadata is returned in the resulting future (and will also be reflected by {@link
+   * #getMetadata()} when that future completes).
+   */
+  CompletionStage<Metadata> refreshSchemaAsync();
+
+  /**
+   * Convenience method to call {@link #refreshSchemaAsync()} and block for the result.
+   *
+   * <p>This must not be called on a driver thread.
+   */
+  default Metadata refreshSchema() {
+    BlockingOperation.checkNotDriverThread();
+    return CompletableFutures.getUninterruptibly(refreshSchemaAsync());
+  }
+
   /** Returns a context that provides access to all the policies used by this driver instance. */
   DriverContext getContext();
 
@@ -108,4 +149,18 @@ public interface Cluster<SessionT extends Session> extends AsyncAutoCloseable {
   default SessionT connect() {
     return connect(null);
   }
+
+  /**
+   * Registers the provided schema change listener.
+   *
+   * <p>This is a no-op if the listener was registered already.
+   */
+  Cluster register(SchemaChangeListener listener);
+
+  /**
+   * Unregisters the provided schema change listener.
+   *
+   * <p>This is a no-op if the listener was not registered.
+   */
+  Cluster unregister(SchemaChangeListener listener);
 }

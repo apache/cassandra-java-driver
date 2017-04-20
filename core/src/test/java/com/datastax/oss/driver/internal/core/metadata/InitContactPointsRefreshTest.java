@@ -30,14 +30,13 @@ public class InitContactPointsRefreshTest {
   public void should_create_nodes() {
     // Given
     InitContactPointsRefresh refresh =
-        new InitContactPointsRefresh(
-            DefaultMetadata.EMPTY, ImmutableSet.of(ADDRESS1, ADDRESS2), "test");
+        new InitContactPointsRefresh(ImmutableSet.of(ADDRESS1, ADDRESS2), "test");
 
     // When
-    refresh.compute();
+    MetadataRefresh.Result result = refresh.compute(DefaultMetadata.EMPTY);
 
     // Then
-    assertThat(refresh.newMetadata.getNodes()).containsOnlyKeys(ADDRESS1, ADDRESS2);
-    assertThat(refresh.events).isEmpty();
+    assertThat(result.newMetadata.getNodes()).containsOnlyKeys(ADDRESS1, ADDRESS2);
+    assertThat(result.events).isEmpty();
   }
 }

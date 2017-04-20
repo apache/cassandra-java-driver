@@ -38,6 +38,10 @@ public class CassandraVersion implements Comparable<CassandraVersion> {
       "(\\d+)\\.(\\d+)(\\.\\d+)?(\\.\\d+)?([~\\-]\\w[.\\w]*(?:\\-\\w[.\\w]*)*)?(\\+[.\\w]+)?";
   private static final Pattern pattern = Pattern.compile(VERSION_REGEXP);
 
+  public static final CassandraVersion V2_1_0 = parse("2.1.0");
+  public static final CassandraVersion V2_2_0 = parse("2.2.0");
+  public static final CassandraVersion V3_0_0 = parse("3.0.0");
+
   private final int major;
   private final int minor;
   private final int patch;

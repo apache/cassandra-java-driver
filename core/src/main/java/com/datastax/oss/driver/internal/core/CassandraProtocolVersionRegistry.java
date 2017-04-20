@@ -46,9 +46,6 @@ public class CassandraProtocolVersionRegistry implements ProtocolVersionRegistry
 
   private static final Logger LOG = LoggerFactory.getLogger(CassandraProtocolVersionRegistry.class);
 
-  private static final CassandraVersion CASSANDRA_210 = CassandraVersion.parse("2.1.0");
-  private static final CassandraVersion CASSANDRA_220 = CassandraVersion.parse("2.2.0");
-
   private final String logPrefix;
   private final NavigableMap<Integer, ProtocolVersion> versionsByCode;
 
@@ -133,7 +130,7 @@ public class CassandraProtocolVersionRegistry implements ProtocolVersionRegistry
         continue;
       }
       cassandraVersion = cassandraVersion.nextStable();
-      if (cassandraVersion.compareTo(CASSANDRA_210) < 0) {
+      if (cassandraVersion.compareTo(CassandraVersion.V2_1_0) < 0) {
         throw new UnsupportedProtocolVersionException(
             node.getConnectAddress(),
             String.format(
@@ -148,7 +145,7 @@ public class CassandraProtocolVersionRegistry implements ProtocolVersionRegistry
           logPrefix,
           node.getConnectAddress(),
           cassandraVersion);
-      if (cassandraVersion.compareTo(CASSANDRA_220) < 0
+      if (cassandraVersion.compareTo(CassandraVersion.V2_2_0) < 0
           && candidates.remove(CoreProtocolVersion.V4)) {
         LOG.debug("[{}] Excluding protocol V4", logPrefix);
       }

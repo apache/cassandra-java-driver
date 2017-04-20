@@ -60,17 +60,39 @@ public class DataTypes {
   }
 
   public static ListType listOf(DataType elementType) {
-    // frozen == true is only used in column definitions, it's unlikely that end users will need to
-    // create such instances.
     return new DefaultListType(elementType, false);
+  }
+
+  public static ListType listOf(DataType elementType, boolean frozen) {
+    return new DefaultListType(elementType, frozen);
+  }
+
+  public static ListType frozenListOf(DataType elementType) {
+    return new DefaultListType(elementType, true);
   }
 
   public static SetType setOf(DataType elementType) {
     return new DefaultSetType(elementType, false);
   }
 
+  public static SetType setOf(DataType elementType, boolean frozen) {
+    return new DefaultSetType(elementType, frozen);
+  }
+
+  public static SetType frozenSetOf(DataType elementType) {
+    return new DefaultSetType(elementType, true);
+  }
+
   public static MapType mapOf(DataType keyType, DataType valueType) {
     return new DefaultMapType(keyType, valueType, false);
+  }
+
+  public static MapType mapOf(DataType keyType, DataType valueType, boolean frozen) {
+    return new DefaultMapType(keyType, valueType, frozen);
+  }
+
+  public static MapType frozenMapOf(DataType keyType, DataType valueType) {
+    return new DefaultMapType(keyType, valueType, true);
   }
 
   /**

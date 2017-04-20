@@ -17,6 +17,7 @@ package com.datastax.oss.driver.internal.core.metadata;
 
 import com.datastax.oss.driver.api.core.metadata.Node;
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Sets;
 import java.net.InetSocketAddress;
@@ -33,13 +34,13 @@ class FullNodeListRefresh extends NodesRefresh {
 
   @VisibleForTesting final Iterable<NodeInfo> nodeInfos;
 
-  FullNodeListRefresh(DefaultMetadata current, Iterable<NodeInfo> nodeInfos, String logPrefix) {
-    super(current, logPrefix);
+  FullNodeListRefresh(Iterable<NodeInfo> nodeInfos, String logPrefix) {
+    super(logPrefix);
     this.nodeInfos = nodeInfos;
   }
 
-  protected Map<InetSocketAddress, Node> computeNewNodes() {
-
+  @Override
+  public Result compute(DefaultMetadata oldMetadata) {
     Map<InetSocketAddress, Node> oldNodes = oldMetadata.getNodes();
 
     Map<InetSocketAddress, Node> added = new HashMap<>();
@@ -64,9 +65,11 @@ class FullNodeListRefresh extends NodesRefresh {
     Set<InetSocketAddress> removed = Sets.difference(oldNodes.keySet(), seen);
 
     if (added.isEmpty() && removed.isEmpty()) {
-      return oldNodes;
+      return new Result(oldMetadata);
     } else {
       ImmutableMap.Builder<InetSocketAddress, Node> newNodesBuilder = ImmutableMap.builder();
+      ImmutableList.Builder<Object> eventsBuilder = ImmutableList.builder();
+
       newNodesBuilder.putAll(added);
       for (Map.Entry<InetSocketAddress, Node> entry : oldNodes.entrySet()) {
         if (!removed.contains(entry.getKey())) {
@@ -75,14 +78,14 @@ class FullNodeListRefresh extends NodesRefresh {
       }
 
       for (Node node : added.values()) {
-        events.add(NodeStateEvent.added((DefaultNode) node));
+        eventsBuilder.add(NodeStateEvent.added((DefaultNode) node));
       }
       for (InetSocketAddress address : removed) {
         Node node = oldNodes.get(address);
-        events.add(NodeStateEvent.removed((DefaultNode) node));
+        eventsBuilder.add(NodeStateEvent.removed((DefaultNode) node));
       }
 
-      return newNodesBuilder.build();
+      return new Result(oldMetadata.withNodes(newNodesBuilder.build()), eventsBuilder.build());
     }
   }
 }

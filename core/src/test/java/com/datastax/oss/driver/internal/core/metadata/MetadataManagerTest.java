@@ -15,15 +15,22 @@
  */
 package com.datastax.oss.driver.internal.core.metadata;
 
+import com.datastax.oss.driver.api.core.config.CoreDriverOption;
+import com.datastax.oss.driver.api.core.config.DriverConfig;
+import com.datastax.oss.driver.api.core.config.DriverConfigProfile;
 import com.datastax.oss.driver.api.core.metadata.Node;
+import com.datastax.oss.driver.internal.core.context.EventBus;
 import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
 import com.datastax.oss.driver.internal.core.context.NettyOptions;
+import com.datastax.oss.driver.internal.core.metadata.schema.parsing.SchemaParserFactory;
+import com.datastax.oss.driver.internal.core.metadata.schema.queries.SchemaQueriesFactory;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.util.concurrent.Uninterruptibles;
 import io.netty.channel.DefaultEventLoopGroup;
 import io.netty.util.concurrent.Future;
 import java.net.InetSocketAddress;
+import java.time.Duration;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
@@ -38,6 +45,7 @@ import org.junit.Test;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
+import org.mockito.junit.MockitoJUnitRunner;
 
 import static com.datastax.oss.driver.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
@@ -51,6 +59,11 @@ public class MetadataManagerTest {
   @Mock private InternalDriverContext context;
   @Mock private NettyOptions nettyOptions;
   @Mock private TopologyMonitor topologyMonitor;
+  @Mock private DriverConfig config;
+  @Mock private DriverConfigProfile defaultProfile;
+  @Mock private EventBus eventBus;
+  @Mock private SchemaQueriesFactory schemaQueriesFactory;
+  @Mock private SchemaParserFactory schemaParserFactory;
 
   private DefaultEventLoopGroup adminEventLoopGroup;
 
@@ -65,6 +78,16 @@ public class MetadataManagerTest {
     Mockito.when(context.nettyOptions()).thenReturn(nettyOptions);
 
     Mockito.when(context.topologyMonitor()).thenReturn(topologyMonitor);
+
+    Mockito.when(defaultProfile.getDuration(CoreDriverOption.METADATA_SCHEMA_WINDOW))
+        .thenReturn(Duration.ZERO);
+    Mockito.when(defaultProfile.getInt(CoreDriverOption.METADATA_SCHEMA_MAX_EVENTS)).thenReturn(1);
+    Mockito.when(config.getDefaultProfile()).thenReturn(defaultProfile);
+    Mockito.when(context.config()).thenReturn(config);
+
+    Mockito.when(context.eventBus()).thenReturn(eventBus);
+    Mockito.when(context.schemaQueriesFactory()).thenReturn(schemaQueriesFactory);
+    Mockito.when(context.schemaParserFactory()).thenReturn(schemaParserFactory);
 
     metadataManager = new TestMetadataManager(context);
   }
@@ -214,7 +237,7 @@ public class MetadataManagerTest {
     }
 
     @Override
-    Void refresh(MetadataRefresh refresh) {
+    Void apply(MetadataRefresh refresh) {
       // Do not execute refreshes, just store them for inspection in the test
       refreshes.add(refresh);
       return null;

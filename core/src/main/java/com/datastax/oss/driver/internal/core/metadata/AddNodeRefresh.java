@@ -17,6 +17,7 @@ package com.datastax.oss.driver.internal.core.metadata;
 
 import com.datastax.oss.driver.api.core.metadata.Node;
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import java.net.InetSocketAddress;
 import java.util.Map;
@@ -25,24 +26,26 @@ public class AddNodeRefresh extends NodesRefresh {
 
   @VisibleForTesting final NodeInfo newNodeInfo;
 
-  AddNodeRefresh(DefaultMetadata oldMetadata, NodeInfo newNodeInfo, String logPrefix) {
-    super(oldMetadata, logPrefix);
+  AddNodeRefresh(NodeInfo newNodeInfo, String logPrefix) {
+    super(logPrefix);
     this.newNodeInfo = newNodeInfo;
   }
 
   @Override
-  protected Map<InetSocketAddress, Node> computeNewNodes() {
+  public Result compute(DefaultMetadata oldMetadata) {
     Map<InetSocketAddress, Node> oldNodes = oldMetadata.getNodes();
     if (oldNodes.containsKey(newNodeInfo.getConnectAddress())) {
-      return oldNodes;
+      return new Result(oldMetadata);
     } else {
       DefaultNode newNode = new DefaultNode(newNodeInfo.getConnectAddress());
       copyInfos(newNodeInfo, newNode, logPrefix);
-      events.add(NodeStateEvent.added(newNode));
-      return ImmutableMap.<InetSocketAddress, Node>builder()
-          .putAll(oldNodes)
-          .put(newNode.getConnectAddress(), newNode)
-          .build();
+      Map<InetSocketAddress, Node> newNodes =
+          ImmutableMap.<InetSocketAddress, Node>builder()
+              .putAll(oldNodes)
+              .put(newNode.getConnectAddress(), newNode)
+              .build();
+      return new Result(
+          oldMetadata.withNodes(newNodes), ImmutableList.of(NodeStateEvent.added(newNode)));
     }
   }
 }

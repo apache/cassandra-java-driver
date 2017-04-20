@@ -359,7 +359,7 @@ public class InFlightHandler extends ChannelDuplexHandler {
 
     @Override
     Message getRequest() {
-      return new Query("USE " + keyspaceName.asCql());
+      return new Query("USE " + keyspaceName.asCql(false));
     }
 
     @Override

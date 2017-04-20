@@ -17,6 +17,7 @@ package com.datastax.oss.driver.internal.core.metadata;
 
 import com.datastax.oss.driver.api.core.metadata.Node;
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import java.net.InetSocketAddress;
 import java.util.Map;
@@ -29,29 +30,30 @@ public class RemoveNodeRefresh extends NodesRefresh {
 
   @VisibleForTesting final InetSocketAddress toRemove;
 
-  RemoveNodeRefresh(DefaultMetadata current, InetSocketAddress toRemove, String logPrefix) {
-    super(current, logPrefix);
+  RemoveNodeRefresh(InetSocketAddress toRemove, String logPrefix) {
+    super(logPrefix);
     this.toRemove = toRemove;
   }
 
   @Override
-  protected Map<InetSocketAddress, Node> computeNewNodes() {
+  public Result compute(DefaultMetadata oldMetadata) {
     Map<InetSocketAddress, Node> oldNodes = oldMetadata.getNodes();
     Node node = oldNodes.get(toRemove);
     if (node == null) {
       // Normally this should already be checked before calling MetadataManager, but it doesn't
       // hurt to fail gracefully just in case
-      return null;
+      return new Result(oldMetadata);
     } else {
       LOG.debug("[{}] Removing node {}", logPrefix, node);
-      events.add(NodeStateEvent.removed((DefaultNode) node));
       ImmutableMap.Builder<InetSocketAddress, Node> newNodesBuilder = ImmutableMap.builder();
       for (Map.Entry<InetSocketAddress, Node> entry : oldNodes.entrySet()) {
         if (!entry.getKey().equals(toRemove)) {
           newNodesBuilder.put(entry.getKey(), entry.getValue());
         }
       }
-      return newNodesBuilder.build();
+      return new Result(
+          oldMetadata.withNodes(newNodesBuilder.build()),
+          ImmutableList.of(NodeStateEvent.removed((DefaultNode) node)));
     }
   }
 }

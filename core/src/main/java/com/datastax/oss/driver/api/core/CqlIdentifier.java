@@ -102,22 +102,17 @@ public class CqlIdentifier implements Serializable {
   /**
    * Returns the identifier in a format appropriate for concatenation in a CQL query.
    *
-   * @return the double-quoted form, always. Note that this is not the most compact representation
-   *     of case-insensitive identifiers (see {@link #asPrettyCql()}.
+   * @param pretty if {@code true}, use the shortest possible representation: if the identifier is
+   *     case-insensitive, an unquoted, lower-case string, otherwise the double-quoted form. If
+   *     {@code false}, always use the double-quoted form (this is slightly more efficient since we
+   *     don't need to inspect the string).
    */
-  public String asCql() {
-    return Strings.doubleQuote(internal);
-  }
-
-  /**
-   * Returns the identifier in a format appropriate for concatenation in a CQL query, using the
-   * simplest possible representation.
-   *
-   * @return if the identifier is case-insensitive, an unquoted, lower-case string. Otherwise, the
-   *     double-quoted form.
-   */
-  public String asPrettyCql() {
-    return Strings.needsDoubleQuotes(internal) ? Strings.doubleQuote(internal) : internal;
+  public String asCql(boolean pretty) {
+    if (pretty) {
+      return Strings.needsDoubleQuotes(internal) ? Strings.doubleQuote(internal) : internal;
+    } else {
+      return Strings.doubleQuote(internal);
+    }
   }
 
   @Override

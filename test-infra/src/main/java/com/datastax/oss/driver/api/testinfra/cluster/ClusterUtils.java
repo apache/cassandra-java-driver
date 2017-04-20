@@ -84,7 +84,7 @@ public class ClusterUtils {
           SimpleStatement.builder(
                   String.format(
                       "CREATE KEYSPACE %s WITH REPLICATION = { 'class' : 'SimpleStrategy', 'replication_factor' : 1 };",
-                      keyspace.asCql()))
+                      keyspace.asCql(false)))
               .withConfigProfile(profile)
               .build();
       session.execute(createKeyspace);
@@ -108,7 +108,8 @@ public class ClusterUtils {
       Cluster<CqlSession> cluster, CqlIdentifier keyspace, DriverConfigProfile profile) {
     try (CqlSession session = cluster.connect()) {
       session.execute(
-          SimpleStatement.builder(String.format("DROP KEYSPACE IF EXISTS %s", keyspace.asCql()))
+          SimpleStatement.builder(
+                  String.format("DROP KEYSPACE IF EXISTS %s", keyspace.asCql(false)))
               .withConfigProfile(profile)
               .build());
     }

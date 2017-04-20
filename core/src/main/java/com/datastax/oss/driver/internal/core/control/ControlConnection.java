@@ -17,6 +17,7 @@ package com.datastax.oss.driver.internal.core.control;
 
 import com.datastax.oss.driver.api.core.AllNodesFailedException;
 import com.datastax.oss.driver.api.core.AsyncAutoCloseable;
+import com.datastax.oss.driver.api.core.config.DriverConfigProfile;
 import com.datastax.oss.driver.api.core.loadbalancing.NodeDistance;
 import com.datastax.oss.driver.api.core.metadata.Node;
 import com.datastax.oss.driver.api.core.metadata.NodeState;
@@ -27,7 +28,6 @@ import com.datastax.oss.driver.internal.core.channel.EventCallback;
 import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
 import com.datastax.oss.driver.internal.core.metadata.DistanceEvent;
 import com.datastax.oss.driver.internal.core.metadata.NodeStateEvent;
-import com.datastax.oss.driver.internal.core.metadata.SchemaElementKind;
 import com.datastax.oss.driver.internal.core.metadata.TopologyEvent;
 import com.datastax.oss.driver.internal.core.metadata.TopologyMonitor;
 import com.datastax.oss.driver.internal.core.util.concurrent.Reconnection;
@@ -86,9 +86,13 @@ public class ControlConnection implements EventCallback, AsyncAutoCloseable {
    * @param listenToClusterEvents whether to register for TOPOLOGY_CHANGE and STATUS_CHANGE events.
    *     If the control connection has already initialized with another value, this is ignored.
    *     SCHEMA_CHANGE events are always registered.
+   * @param reconnectOnFailure whether to schedule a reconnection if the initial attempt fails (this
+   *     does not affect the returned future, which always represent the outcome of the initial
+   *     attempt only).
    */
-  public CompletionStage<Void> init(boolean listenToClusterEvents) {
-    RunOrSchedule.on(adminExecutor, () -> singleThreaded.init(listenToClusterEvents));
+  public CompletionStage<Void> init(boolean listenToClusterEvents, boolean reconnectOnFailure) {
+    RunOrSchedule.on(
+        adminExecutor, () -> singleThreaded.init(listenToClusterEvents, reconnectOnFailure));
     return singleThreaded.initFuture;
   }
 
@@ -187,13 +191,7 @@ public class ControlConnection implements EventCallback, AsyncAutoCloseable {
 
   private void processSchemaChange(Event event) {
     SchemaChangeEvent sce = (SchemaChangeEvent) event;
-    context
-        .metadataManager()
-        .refreshSchema(
-            SchemaElementKind.fromProtocolString(sce.target),
-            sce.keyspace,
-            sce.object,
-            sce.arguments);
+    context.metadataManager().refreshSchema(sce.keyspace, false, false);
   }
 
   private class SingleThreaded {
@@ -221,7 +219,7 @@ public class ControlConnection implements EventCallback, AsyncAutoCloseable {
           .register(NodeStateEvent.class, RunOrSchedule.on(adminExecutor, this::onStateEvent));
     }
 
-    private void init(boolean listenToClusterEvents) {
+    private void init(boolean listenToClusterEvents, boolean reconnectOnFailure) {
       assert adminExecutor.inEventLoop();
       if (initWasCalled) {
         return;
@@ -237,7 +235,16 @@ public class ControlConnection implements EventCallback, AsyncAutoCloseable {
 
       Queue<Node> nodes = context.loadBalancingPolicyWrapper().newQueryPlan();
 
-      connect(nodes, null, () -> initFuture.complete(null), initFuture::completeExceptionally);
+      connect(
+          nodes,
+          null,
+          () -> initFuture.complete(null),
+          error -> {
+            if (reconnectOnFailure && !closeWasCalled) {
+              reconnection.start();
+            }
+            initFuture.completeExceptionally(error);
+          });
     }
 
     private CompletionStage<Boolean> reconnect() {
@@ -356,7 +363,8 @@ public class ControlConnection implements EventCallback, AsyncAutoCloseable {
                   try {
                     // This does nothing if the LBP is initialized already
                     context.loadBalancingPolicyWrapper().init();
-                    context.metadataManager().refreshSchema(null, null, null, null);
+                    context.metadataManager().refreshSchema(null, false, true);
+                    // TODO avoid refreshing the token map twice
                   } catch (Throwable t) {
                     LOG.warn("[{}] Unexpected error on control connection reconnect", logPrefix, t);
                   }

@@ -395,7 +395,12 @@ public abstract class CqlRequestHandlerBase {
         Message responseMessage = responseFrame.message;
         if (responseMessage instanceof SchemaChange) {
           // TODO schema agreement, and chain setFinalResult to the result
-          setFinalResult((Result) responseMessage, responseFrame, this);
+          SchemaChange schemaChange = (SchemaChange) responseMessage;
+          context
+              .metadataManager()
+              .refreshSchema(schemaChange.keyspace, false, false)
+              .whenComplete(
+                  ((metadata, error) -> setFinalResult(schemaChange, responseFrame, this)));
         } else if (responseMessage instanceof Result) {
           LOG.debug("[{}] Got result, completing", logPrefix);
           setFinalResult((Result) responseMessage, responseFrame, this);

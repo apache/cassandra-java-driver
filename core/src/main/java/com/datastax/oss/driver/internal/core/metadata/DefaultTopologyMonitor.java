@@ -21,6 +21,7 @@ import com.datastax.oss.driver.api.core.config.DriverConfigProfile;
 import com.datastax.oss.driver.api.core.metadata.Node;
 import com.datastax.oss.driver.internal.core.adminrequest.AdminRequestHandler;
 import com.datastax.oss.driver.internal.core.adminrequest.AdminResult;
+import com.datastax.oss.driver.internal.core.adminrequest.AdminRow;
 import com.datastax.oss.driver.internal.core.channel.DriverChannel;
 import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
 import com.datastax.oss.driver.internal.core.control.ControlConnection;
@@ -74,7 +75,7 @@ public class DefaultTopologyMonitor implements TopologyMonitor {
     if (closeFuture.isDone()) {
       return CompletableFutures.failedFuture(new IllegalStateException("closed"));
     }
-    return controlConnection.init(true);
+    return controlConnection.init(true, false);
   }
 
   @Override
@@ -138,7 +139,7 @@ public class DefaultTopologyMonitor implements TopologyMonitor {
           // reports the normal RPC address instead of the broadcast one (CASSANDRA-11181). We
           // already know the address since we've just used it to query.
           nodeInfos.add(buildNodeInfo(controlNodeResult.iterator().next(), controlAddress));
-          for (AdminResult.Row row : peersResult) {
+          for (AdminRow row : peersResult) {
             nodeInfos.add(buildNodeInfo(row));
           }
           return nodeInfos;
@@ -173,7 +174,7 @@ public class DefaultTopologyMonitor implements TopologyMonitor {
     return query(channel, queryString, Collections.emptyMap());
   }
 
-  private NodeInfo buildNodeInfo(AdminResult.Row row) {
+  private NodeInfo buildNodeInfo(AdminRow row) {
     InetAddress broadcastRpcAddress = row.getInetAddress("rpc_address");
     if (broadcastRpcAddress == null) {
       throw new IllegalArgumentException("Missing rpc_address in system row, can't refresh node");
@@ -183,7 +184,7 @@ public class DefaultTopologyMonitor implements TopologyMonitor {
     return buildNodeInfo(row, connectAddress);
   }
 
-  private NodeInfo buildNodeInfo(AdminResult.Row row, InetSocketAddress connectAddress) {
+  private NodeInfo buildNodeInfo(AdminRow row, InetSocketAddress connectAddress) {
     DefaultNodeInfo.Builder builder = DefaultNodeInfo.builder().withConnectAddress(connectAddress);
 
     InetAddress broadcastAddress = row.getInetAddress("broadcast_address"); // in system.local
@@ -202,7 +203,7 @@ public class DefaultTopologyMonitor implements TopologyMonitor {
   }
 
   private Optional<NodeInfo> buildNodeInfoFromFirstRow(AdminResult result) {
-    Iterator<AdminResult.Row> iterator = result.iterator();
+    Iterator<AdminRow> iterator = result.iterator();
     if (iterator.hasNext()) {
       return Optional.of(buildNodeInfo(iterator.next()));
     } else {
@@ -213,7 +214,7 @@ public class DefaultTopologyMonitor implements TopologyMonitor {
   private Optional<NodeInfo> findInPeers(AdminResult result, InetSocketAddress connectAddress) {
     // The peers table is keyed by broadcast_address, but we only have the translated
     // broadcast_rpc_address, so we have to traverse the whole table and check the rows one by one.
-    for (AdminResult.Row row : result) {
+    for (AdminRow row : result) {
       InetAddress broadcastRpcAddress = row.getInetAddress("rpc_address");
       if (broadcastRpcAddress != null
           && addressTranslator

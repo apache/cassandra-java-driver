@@ -40,6 +40,10 @@ import com.datastax.oss.driver.internal.core.metadata.DefaultTopologyMonitor;
 import com.datastax.oss.driver.internal.core.metadata.LoadBalancingPolicyWrapper;
 import com.datastax.oss.driver.internal.core.metadata.MetadataManager;
 import com.datastax.oss.driver.internal.core.metadata.TopologyMonitor;
+import com.datastax.oss.driver.internal.core.metadata.schema.parsing.DefaultSchemaParserFactory;
+import com.datastax.oss.driver.internal.core.metadata.schema.parsing.SchemaParserFactory;
+import com.datastax.oss.driver.internal.core.metadata.schema.queries.DefaultSchemaQueriesFactory;
+import com.datastax.oss.driver.internal.core.metadata.schema.queries.SchemaQueriesFactory;
 import com.datastax.oss.driver.internal.core.pool.ChannelPoolFactory;
 import com.datastax.oss.driver.internal.core.protocol.ByteBufPrimitiveCodec;
 import com.datastax.oss.driver.internal.core.session.RequestProcessorRegistry;
@@ -124,6 +128,10 @@ public class DefaultDriverContext implements InternalDriverContext {
       new LazyReference<>("controlConnection", this::buildControlConnection, cycleDetector);
   private final LazyReference<TimestampGenerator> timestampGeneratorRef =
       new LazyReference<>("timestampGenerator", this::buildTimestampGenerator, cycleDetector);
+  private final LazyReference<SchemaQueriesFactory> schemaQueriesFactoryRef =
+      new LazyReference<>("schemaQueriesFactory", this::buildSchemaQueriesFactory, cycleDetector);
+  private final LazyReference<SchemaParserFactory> schemaParserFactoryRef =
+      new LazyReference<>("schemaParserFactory", this::buildSchemaParserFactory, cycleDetector);
 
   private final DriverConfig config;
   private final DriverConfigLoader configLoader;
@@ -280,6 +288,14 @@ public class DefaultDriverContext implements InternalDriverContext {
                         "Missing timestamp generator, check your configuration (%s)", rootOption)));
   }
 
+  protected SchemaQueriesFactory buildSchemaQueriesFactory() {
+    return new DefaultSchemaQueriesFactory(this);
+  }
+
+  protected SchemaParserFactory buildSchemaParserFactory() {
+    return new DefaultSchemaParserFactory(this);
+  }
+
   @Override
   public String clusterName() {
     return clusterName;
@@ -403,6 +419,16 @@ public class DefaultDriverContext implements InternalDriverContext {
   @Override
   public TimestampGenerator timestampGenerator() {
     return timestampGeneratorRef.get();
+  }
+
+  @Override
+  public SchemaQueriesFactory schemaQueriesFactory() {
+    return schemaQueriesFactoryRef.get();
+  }
+
+  @Override
+  public SchemaParserFactory schemaParserFactory() {
+    return schemaParserFactoryRef.get();
   }
 
   @Override

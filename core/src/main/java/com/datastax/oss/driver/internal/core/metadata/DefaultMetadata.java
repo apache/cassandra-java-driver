@@ -15,8 +15,10 @@
  */
 package com.datastax.oss.driver.internal.core.metadata;
 
+import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.metadata.Metadata;
 import com.datastax.oss.driver.api.core.metadata.Node;
+import com.datastax.oss.driver.api.core.metadata.schema.KeyspaceMetadata;
 import com.google.common.collect.ImmutableMap;
 import java.net.InetSocketAddress;
 import java.util.Collections;
@@ -31,11 +33,17 @@ public class DefaultMetadata implements Metadata {
   public static final DefaultMetadata EMPTY = new DefaultMetadata(Collections.emptyMap());
 
   private final Map<InetSocketAddress, Node> nodes;
-  // TODO schema
+  private final Map<CqlIdentifier, KeyspaceMetadata> keyspaces;
   // TODO token map
 
   public DefaultMetadata(Map<InetSocketAddress, Node> nodes) {
-    this.nodes = ImmutableMap.copyOf(nodes);
+    this(ImmutableMap.copyOf(nodes), Collections.emptyMap());
+  }
+
+  private DefaultMetadata(
+      Map<InetSocketAddress, Node> nodes, Map<CqlIdentifier, KeyspaceMetadata> keyspaces) {
+    this.nodes = nodes;
+    this.keyspaces = keyspaces;
   }
 
   @Override
@@ -43,18 +51,18 @@ public class DefaultMetadata implements Metadata {
     return nodes;
   }
 
-  public DefaultMetadata addNode(Node toAdd) {
-    Map<InetSocketAddress, Node> newNodes;
-    if (nodes.containsKey(toAdd.getConnectAddress())) {
-      return this;
-    } else {
-      newNodes =
-          ImmutableMap.<InetSocketAddress, Node>builder()
-              .putAll(nodes)
-              .put(toAdd.getConnectAddress(), toAdd)
-              .build();
-      // TODO recompute token map
-      return new DefaultMetadata(newNodes);
-    }
+  @Override
+  public Map<CqlIdentifier, KeyspaceMetadata> getKeyspaces() {
+    return keyspaces;
+  }
+
+  public DefaultMetadata withNodes(Map<InetSocketAddress, Node> newNodes) {
+    // TODO recompute token map
+    return new DefaultMetadata(ImmutableMap.copyOf(newNodes), this.keyspaces);
+  }
+
+  public DefaultMetadata withKeyspaces(Map<CqlIdentifier, KeyspaceMetadata> newKeyspaces) {
+    // TODO recompute token map
+    return new DefaultMetadata(this.nodes, ImmutableMap.copyOf(newKeyspaces));
   }
 }

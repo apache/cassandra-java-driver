@@ -19,6 +19,7 @@ import com.datastax.oss.driver.api.core.Cluster;
 import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.context.DriverContext;
 import com.datastax.oss.driver.api.core.metadata.Metadata;
+import com.datastax.oss.driver.api.core.metadata.schema.SchemaChangeListener;
 import com.datastax.oss.driver.api.core.session.Session;
 import java.util.concurrent.CompletionStage;
 
@@ -45,6 +46,21 @@ public abstract class ClusterWrapper<SourceSessionT extends Session, TargetSessi
   }
 
   @Override
+  public boolean isSchemaMetadataEnabled() {
+    return delegate.isSchemaMetadataEnabled();
+  }
+
+  @Override
+  public CompletionStage<Metadata> setSchemaMetadataEnabled(Boolean newValue) {
+    return delegate.setSchemaMetadataEnabled(newValue);
+  }
+
+  @Override
+  public CompletionStage<Metadata> refreshSchemaAsync() {
+    return delegate.refreshSchemaAsync();
+  }
+
+  @Override
   public DriverContext getContext() {
     return delegate.getContext();
   }
@@ -52,6 +68,16 @@ public abstract class ClusterWrapper<SourceSessionT extends Session, TargetSessi
   @Override
   public CompletionStage<TargetSessionT> connectAsync(CqlIdentifier keyspace) {
     return delegate.connectAsync(keyspace).thenApply(this::wrap);
+  }
+
+  @Override
+  public Cluster register(SchemaChangeListener listener) {
+    return delegate.register(listener);
+  }
+
+  @Override
+  public Cluster unregister(SchemaChangeListener listener) {
+    return delegate.unregister(listener);
   }
 
   @Override

@@ -294,7 +294,7 @@ public class DefaultSession implements CqlSession {
       }
       if (allInvalidKeyspaces) {
         initFuture.completeExceptionally(
-            new InvalidKeyspaceException("Invalid keyspace " + keyspace.asPrettyCql()));
+            new InvalidKeyspaceException("Invalid keyspace " + keyspace.asCql(true)));
         forceClose();
       } else {
         LOG.debug("[{}] Initialization complete, ready", logPrefix);

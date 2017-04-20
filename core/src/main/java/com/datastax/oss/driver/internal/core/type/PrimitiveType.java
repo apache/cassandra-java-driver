@@ -61,6 +61,11 @@ public class PrimitiveType implements DataType {
   }
 
   @Override
+  public String asCql(boolean includeFrozen, boolean pretty) {
+    return codeName(protocolCode).toLowerCase();
+  }
+
+  @Override
   public String toString() {
     return codeName(protocolCode);
   }
