@@ -42,7 +42,7 @@ abstract class NodesRefresh extends MetadataRefresh {
     // TODO recompute token map (even if node list hasn't changed, b/c tokens might have changed)
   }
 
-  protected static void copyInfos(TopologyMonitor.NodeInfo nodeInfo, DefaultNode node) {
+  protected static void copyInfos(NodeInfo nodeInfo, DefaultNode node) {
     node.broadcastAddress = nodeInfo.getBroadcastAddress();
     node.listenAddress = nodeInfo.getListenAddress();
     node.datacenter = nodeInfo.getDatacenter();

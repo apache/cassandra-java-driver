@@ -18,7 +18,6 @@ package com.datastax.oss.driver.internal.core.metadata;
 import com.datastax.oss.driver.api.core.metadata.Metadata;
 import com.datastax.oss.driver.api.core.metadata.Node;
 import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
-import com.datastax.oss.driver.internal.core.metadata.TopologyMonitor.NodeInfo;
 import com.datastax.oss.driver.internal.core.util.concurrent.RunOrSchedule;
 import com.google.common.annotations.VisibleForTesting;
 import io.netty.util.concurrent.EventExecutor;
@@ -143,9 +142,9 @@ public class MetadataManager {
             // This would be a bug in the TopologyMonitor, protect against it
             LOG.warn(
                 "Received a request to add a node for {}, "
-                    + "but the provided info uses the address {}, ignoring it",
+                    + "but the provided info uses the connect address {}, ignoring it",
                 address,
-                info.getBroadcastAddress());
+                info.getConnectAddress());
           } else {
             refresh(new AddNodeRefresh(metadata, info));
           }

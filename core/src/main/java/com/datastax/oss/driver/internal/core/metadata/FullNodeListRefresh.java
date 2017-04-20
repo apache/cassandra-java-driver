@@ -31,9 +31,9 @@ class FullNodeListRefresh extends NodesRefresh {
 
   private static final Logger LOG = LoggerFactory.getLogger(FullNodeListRefresh.class);
 
-  @VisibleForTesting final Iterable<TopologyMonitor.NodeInfo> nodeInfos;
+  @VisibleForTesting final Iterable<NodeInfo> nodeInfos;
 
-  FullNodeListRefresh(DefaultMetadata current, Iterable<TopologyMonitor.NodeInfo> nodeInfos) {
+  FullNodeListRefresh(DefaultMetadata current, Iterable<NodeInfo> nodeInfos) {
     super(current);
     this.nodeInfos = nodeInfos;
   }
@@ -45,11 +45,10 @@ class FullNodeListRefresh extends NodesRefresh {
     Map<InetSocketAddress, Node> added = new HashMap<>();
     Set<InetSocketAddress> seen = new HashSet<>();
 
-    for (TopologyMonitor.NodeInfo nodeInfo : nodeInfos) {
+    for (NodeInfo nodeInfo : nodeInfos) {
       InetSocketAddress address = nodeInfo.getConnectAddress();
       if (address == null) {
-        // TODO more advanced row validation (see 3.x), here or in TopologyMonitor?
-        LOG.debug("Ignoring node info with missing connect address");
+        LOG.warn("Got node info with no connect address, ignoring");
         continue;
       }
       seen.add(address);

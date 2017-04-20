@@ -23,7 +23,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
-public class DefaultNodeInfo implements TopologyMonitor.NodeInfo {
+public class DefaultNodeInfo implements NodeInfo {
   public static Builder builder() {
     return new Builder();
   }

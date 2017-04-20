@@ -21,11 +21,8 @@ import com.datastax.oss.driver.api.core.metadata.Node;
 import com.datastax.oss.driver.internal.core.context.EventBus;
 import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
 import com.datastax.oss.driver.internal.core.control.ControlConnection;
-import java.net.InetAddress;
 import java.net.InetSocketAddress;
-import java.util.Map;
 import java.util.Optional;
-import java.util.Set;
 import java.util.concurrent.CompletionStage;
 
 /**
@@ -94,48 +91,4 @@ public interface TopologyMonitor {
    *     always be returned in a single message (no paging).
    */
   CompletionStage<Iterable<NodeInfo>> refreshNodeList();
-
-  /**
-   * Information about a node, as it will be returned by the monitor.
-   *
-   * <p>This is distinct from what we expose in the public driver metadata.
-   */
-  interface NodeInfo {
-    /**
-     * The address that the driver uses to connect to the node. This is the node's broadcast RPC
-     * address, <b>transformed by the {@link AddressTranslator}</b> if one is configured.
-     */
-    InetSocketAddress getConnectAddress();
-
-    /**
-     * The node's broadcast address. That is, the address that other nodes use to communicate with
-     * that node.
-     *
-     * <p>This is only used by the default topology monitor, so if you are writing a custom one and
-     * don't need this information, you can leave it empty.
-     */
-    Optional<InetAddress> getBroadcastAddress();
-
-    /**
-     * The node's listen address. That is, the address that the Cassandra process binds to.
-     *
-     * <p>This is currently not used anywhere in the driver. If you write a custom topology monitor
-     * and don't need this information, you can leave it empty.
-     */
-    Optional<InetAddress> getListenAddress();
-
-    String getDatacenter();
-
-    String getRack();
-
-    String getCassandraVersion();
-
-    Set<String> getTokens();
-
-    /**
-     * An additional map of free-form properties, that can be used by custom implementations. They
-     * will be copied as-is into the driver metadata's {@link Node}.
-     */
-    Map<String, Object> getExtras();
-  }
 }

@@ -23,9 +23,9 @@ import java.util.Map;
 
 public class AddNodeRefresh extends NodesRefresh {
 
-  @VisibleForTesting final TopologyMonitor.NodeInfo newNodeInfo;
+  @VisibleForTesting final NodeInfo newNodeInfo;
 
-  public AddNodeRefresh(DefaultMetadata oldMetadata, TopologyMonitor.NodeInfo newNodeInfo) {
+  AddNodeRefresh(DefaultMetadata oldMetadata, NodeInfo newNodeInfo) {
     super(oldMetadata);
     this.newNodeInfo = newNodeInfo;
   }

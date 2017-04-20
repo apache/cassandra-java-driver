@@ -37,7 +37,7 @@ public class FullNodeListRefreshTest {
     // Given
     DefaultMetadata oldMetadata =
         new DefaultMetadata(ImmutableMap.of(ADDRESS1, node1, ADDRESS2, node2));
-    Iterable<TopologyMonitor.NodeInfo> newInfos =
+    Iterable<NodeInfo> newInfos =
         ImmutableList.of(
             DefaultNodeInfo.builder().withConnectAddress(ADDRESS2).build(),
             DefaultNodeInfo.builder().withConnectAddress(ADDRESS3).build());
@@ -57,7 +57,7 @@ public class FullNodeListRefreshTest {
     // Given
     DefaultMetadata oldMetadata =
         new DefaultMetadata(ImmutableMap.of(ADDRESS1, node1, ADDRESS2, node2));
-    Iterable<TopologyMonitor.NodeInfo> newInfos =
+    Iterable<NodeInfo> newInfos =
         ImmutableList.of(
             DefaultNodeInfo.builder()
                 .withConnectAddress(ADDRESS1)
