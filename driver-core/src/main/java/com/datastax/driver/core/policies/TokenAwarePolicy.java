@@ -128,8 +128,8 @@ public class TokenAwarePolicy implements ChainableLoadBalancingPolicy {
 
         return new AbstractIterator<Host>() {
 
-            private Iterator<Host> nonReplicaIter;
-            private List<Host> nonReplicas = new ArrayList<Host>();
+            private List<Host> nonReplicas;
+            private Iterator<Host> nonReplicasIterator;
 
             @Override
             protected Host computeNext() {
@@ -143,17 +143,22 @@ public class TokenAwarePolicy implements ChainableLoadBalancingPolicy {
                         return host;
                     } else {
                         // save for later
+                        if (nonReplicas == null)
+                            nonReplicas = new ArrayList<Host>();
                         nonReplicas.add(host);
                     }
 
                 }
 
                 // This should only engage if all local replicas are DOWN
-                if (nonReplicaIter == null)
-                    nonReplicaIter = nonReplicas.iterator();
+                if (nonReplicas != null) {
 
-                if (nonReplicaIter.hasNext())
-                    return nonReplicaIter.next();
+                    if (nonReplicasIterator == null)
+                        nonReplicasIterator = nonReplicas.iterator();
+
+                    if (nonReplicasIterator.hasNext())
+                        return nonReplicasIterator.next();
+                }
 
                 return endOfData();
             }
