@@ -16,6 +16,7 @@
 package com.datastax.oss.driver.internal.core.metadata;
 
 import com.datastax.oss.driver.api.core.metadata.Node;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableMap;
 import java.net.InetSocketAddress;
 import java.util.Map;
@@ -26,7 +27,7 @@ public class RemoveNodeRefresh extends NodesRefresh {
 
   private static final Logger LOG = LoggerFactory.getLogger(RemoveNodeRefresh.class);
 
-  private final InetSocketAddress toRemove;
+  @VisibleForTesting final InetSocketAddress toRemove;
 
   RemoveNodeRefresh(DefaultMetadata current, InetSocketAddress toRemove) {
     super(current);

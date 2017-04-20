@@ -16,6 +16,7 @@
 package com.datastax.oss.driver.internal.core.metadata;
 
 import com.datastax.oss.driver.api.core.metadata.Node;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Sets;
 import java.net.InetSocketAddress;
@@ -29,7 +30,8 @@ import org.slf4j.LoggerFactory;
 class FullNodeListRefresh extends NodesRefresh {
 
   private static final Logger LOG = LoggerFactory.getLogger(FullNodeListRefresh.class);
-  private final Iterable<TopologyMonitor.NodeInfo> nodeInfos;
+
+  @VisibleForTesting final Iterable<TopologyMonitor.NodeInfo> nodeInfos;
 
   FullNodeListRefresh(DefaultMetadata current, Iterable<TopologyMonitor.NodeInfo> nodeInfos) {
     super(current);

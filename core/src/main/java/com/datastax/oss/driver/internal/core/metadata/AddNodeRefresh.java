@@ -16,12 +16,14 @@
 package com.datastax.oss.driver.internal.core.metadata;
 
 import com.datastax.oss.driver.api.core.metadata.Node;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableMap;
 import java.net.InetSocketAddress;
 import java.util.Map;
 
 public class AddNodeRefresh extends NodesRefresh {
-  private final TopologyMonitor.NodeInfo newNodeInfo;
+
+  @VisibleForTesting final TopologyMonitor.NodeInfo newNodeInfo;
 
   public AddNodeRefresh(DefaultMetadata oldMetadata, TopologyMonitor.NodeInfo newNodeInfo) {
     super(oldMetadata);

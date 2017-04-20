@@ -20,6 +20,7 @@ import com.datastax.oss.driver.api.core.metadata.Node;
 import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
 import com.datastax.oss.driver.internal.core.metadata.TopologyMonitor.NodeInfo;
 import com.datastax.oss.driver.internal.core.util.concurrent.RunOrSchedule;
+import com.google.common.annotations.VisibleForTesting;
 import io.netty.util.concurrent.EventExecutor;
 import java.net.InetSocketAddress;
 import java.util.List;
@@ -162,15 +163,16 @@ public class MetadataManager {
     private void removeNode(InetSocketAddress address) {
       refresh(new RemoveNodeRefresh(metadata, address));
     }
+  }
 
-    private Void refresh(MetadataRefresh refresh) {
-      assert adminExecutor.inEventLoop();
-      refresh.compute();
-      metadata = refresh.newMetadata;
-      for (Object event : refresh.events) {
-        context.eventBus().fire(event);
-      }
-      return null;
+  @VisibleForTesting
+  Void refresh(MetadataRefresh refresh) {
+    assert adminExecutor.inEventLoop();
+    refresh.compute();
+    metadata = refresh.newMetadata;
+    for (Object event : refresh.events) {
+      context.eventBus().fire(event);
     }
+    return null;
   }
 }

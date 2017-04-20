@@ -16,6 +16,7 @@
 package com.datastax.oss.driver.internal.core.metadata;
 
 import com.datastax.oss.driver.api.core.metadata.Node;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableMap;
 import java.net.InetSocketAddress;
 import java.util.Set;
@@ -26,7 +27,7 @@ import org.slf4j.LoggerFactory;
 class InitContactPointsRefresh extends MetadataRefresh {
   private static final Logger LOG = LoggerFactory.getLogger(InitContactPointsRefresh.class);
 
-  private final Set<InetSocketAddress> contactPoints;
+  @VisibleForTesting final Set<InetSocketAddress> contactPoints;
 
   InitContactPointsRefresh(DefaultMetadata current, Set<InetSocketAddress> contactPoints) {
     super(current);
