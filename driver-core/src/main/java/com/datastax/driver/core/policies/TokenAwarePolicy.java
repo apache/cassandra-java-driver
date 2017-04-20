@@ -23,31 +23,70 @@ import java.nio.ByteBuffer;
 import java.util.*;
 
 /**
- * A wrapper load balancing policy that add token awareness to a child policy.
+ * A wrapper load balancing policy that adds token awareness to a child policy.
  * <p/>
  * This policy encapsulates another policy. The resulting policy works in
  * the following way:
  * <ul>
  * <li>the {@code distance} method is inherited from the child policy.</li>
- * <li>the iterator return by the {@code newQueryPlan} method will first
- * return the {@code LOCAL} replicas for the query (based on {@link Statement#getRoutingKey})
- * <i>if possible</i> (i.e. if the query {@code getRoutingKey} method
- * doesn't return {@code null} and if {@link Metadata#getReplicas}
- * returns a non empty set of replicas for that partition key). If no
- * local replica can be either found or successfully contacted, the rest
- * of the query plan will fallback to one of the child policy.</li>
+ * <li>the iterator returned by the {@code newQueryPlan} method will first
+ * return the {@link HostDistance#LOCAL LOCAL} replicas for the query
+ * <em>if possible</em> (i.e. if the query's
+ * {@link Statement#getRoutingKey(ProtocolVersion, CodecRegistry) routing key}
+ * is not {@code null} and if the
+ * {@link Metadata#getReplicas(String, ByteBuffer) set of replicas}
+ * for that partition key is not empty). If no local replica can be either found
+ * or successfully contacted, the rest of the query plan will fallback
+ * to the child policy's one.</li>
  * </ul>
+ * The exact order in which local replicas are returned is dictated by the
+ * {@link ReplicaOrdering strategy} provided at instantiation.
  * <p/>
- * Do note that only replica for which the child policy {@code distance}
- * method returns {@code HostDistance.LOCAL} will be considered having
+ * Do note that only replicas for which the child policy's
+ * {@link LoadBalancingPolicy#distance(Host) distance}
+ * method returns {@link HostDistance#LOCAL LOCAL} will be considered having
  * priority. For example, if you wrap {@link DCAwareRoundRobinPolicy} with this
  * token aware policy, replicas from remote data centers may only be
- * returned after all the host of the local data center.
+ * returned after all the hosts of the local data center.
  */
 public class TokenAwarePolicy implements ChainableLoadBalancingPolicy {
 
+    /**
+     * Strategies for replica ordering.
+     */
+    public enum ReplicaOrdering {
+
+        /**
+         * Order replicas by token ring topology, i.e. always return the "primary" replica first,
+         * then the second, etc., according to the placement of replicas around the token ring.
+         * <p/>
+         * This strategy is the only one guaranteed to order replicas in a deterministic and
+         * constant way. This increases the effectiveness of server-side row caching (especially
+         * at consistency level ONE), but may create hotspots, since the primary replica is always
+         * tried first.
+         */
+        TOPOLOGICAL,
+
+        /**
+         * Return replicas in a different, random order for each query plan.
+         * <p/>
+         * This strategy fans out writes and thus can alleviate hotspots caused by "fat" partitions,
+         * but its randomness makes server-side caching less efficient.
+         */
+        RANDOM,
+
+        /**
+         * Return the replicas in the exact same order in which they appear in the child
+         * policy's query plan.
+         * <p/>
+         * This is the only strategy that fully respects the child policy's replica ordering.
+         * Use it when it is important to keep that order intact (e.g. when using the {@link LatencyAwarePolicy}).
+         */
+        NEUTRAL
+    }
+
     private final LoadBalancingPolicy childPolicy;
-    private final boolean shuffleReplicas;
+    private final ReplicaOrdering replicaOrdering;
     private volatile Metadata clusterMetadata;
     private volatile ProtocolVersion protocolVersion;
     private volatile CodecRegistry codecRegistry;
@@ -56,28 +95,36 @@ public class TokenAwarePolicy implements ChainableLoadBalancingPolicy {
      * Creates a new {@code TokenAware} policy.
      *
      * @param childPolicy     the load balancing policy to wrap with token awareness.
-     * @param shuffleReplicas whether to shuffle the replicas returned by {@code getRoutingKey}.
-     *                        Note that setting this parameter to {@code true} might decrease the
-     *                        effectiveness of caching (especially at consistency level ONE), since
-     *                        the same row will be retrieved from any replica (instead of only the
-     *                        "primary" replica without shuffling).
-     *                        On the other hand, shuffling will better distribute writes, and can
-     *                        alleviate hotspots caused by "fat" partitions.
+     * @param replicaOrdering the strategy to use to order replicas.
      */
-    public TokenAwarePolicy(LoadBalancingPolicy childPolicy, boolean shuffleReplicas) {
+    public TokenAwarePolicy(LoadBalancingPolicy childPolicy, ReplicaOrdering replicaOrdering) {
         this.childPolicy = childPolicy;
-        this.shuffleReplicas = shuffleReplicas;
+        this.replicaOrdering = replicaOrdering;
     }
 
     /**
-     * Creates a new {@code TokenAware} policy with shuffling of replicas.
+     * Creates a new {@code TokenAware} policy.
      *
-     * @param childPolicy the load balancing policy to wrap with token
-     *                    awareness.
-     * @see #TokenAwarePolicy(LoadBalancingPolicy, boolean)
+     * @param childPolicy     the load balancing policy to wrap with token awareness.
+     * @param shuffleReplicas whether or not to shuffle the replicas.
+     *                        If {@code true}, then the {@link ReplicaOrdering#RANDOM RANDOM} strategy will be used,
+     *                        otherwise the {@link ReplicaOrdering#TOPOLOGICAL TOPOLOGICAL} one will be used.
+     * @deprecated Use {@link #TokenAwarePolicy(LoadBalancingPolicy, ReplicaOrdering)} instead.
+     * This constructor will be removed in the next major release.
+     */
+    @SuppressWarnings("DeprecatedIsStillUsed")
+    @Deprecated
+    public TokenAwarePolicy(LoadBalancingPolicy childPolicy, boolean shuffleReplicas) {
+        this(childPolicy, shuffleReplicas ? ReplicaOrdering.RANDOM : ReplicaOrdering.TOPOLOGICAL);
+    }
+
+    /**
+     * Creates a new {@code TokenAware} policy with {@link ReplicaOrdering#TOPOLOGICAL TOPOLOGICAL} replica ordering.
+     *
+     * @param childPolicy the load balancing policy to wrap with token awareness.
      */
     public TokenAwarePolicy(LoadBalancingPolicy childPolicy) {
-        this(childPolicy, true);
+        this(childPolicy, ReplicaOrdering.TOPOLOGICAL);
     }
 
     @Override
@@ -94,10 +141,9 @@ public class TokenAwarePolicy implements ChainableLoadBalancingPolicy {
     }
 
     /**
-     * Return the HostDistance for the provided host.
-     *
-     * @param host the host of which to return the distance of.
-     * @return the HostDistance to {@code host} as returned by the wrapped policy.
+     * {@inheritDoc}
+     * <p/>
+     * This implementation always returns distances as reported by the wrapped policy.
      */
     @Override
     public HostDistance distance(Host host) {
@@ -105,15 +151,13 @@ public class TokenAwarePolicy implements ChainableLoadBalancingPolicy {
     }
 
     /**
-     * Returns the hosts to use for a new query.
+     * {@inheritDoc}
      * <p/>
-     * The returned plan will first return replicas (whose {@code HostDistance}
-     * for the child policy is {@code LOCAL}) for the query if it can determine
-     * them (i.e. mainly if {@code statement.getRoutingKey()} is not {@code null}).
-     * Following what it will return the plan of the child policy.
-     *
-     * @param statement the query for which to build the plan.
-     * @return the new query plan.
+     * The returned plan will first return local replicas for the query (i.e.
+     * replicas whose {@link HostDistance distance} according to the child policy is {@code LOCAL}),
+     * if it can determine them (i.e. mainly if the statement's
+     * {@link Statement#getRoutingKey(ProtocolVersion, CodecRegistry)} routing key}
+     * is not {@code null}); following what it will return the rest of the child policy's original query plan.
      */
     @Override
     public Iterator<Host> newQueryPlan(final String loggedKeyspace, final Statement statement) {
@@ -130,39 +174,86 @@ public class TokenAwarePolicy implements ChainableLoadBalancingPolicy {
         if (replicas.isEmpty())
             return childPolicy.newQueryPlan(loggedKeyspace, statement);
 
-        final Iterator<Host> iter;
-        if (shuffleReplicas) {
-            List<Host> l = Lists.newArrayList(replicas);
-            Collections.shuffle(l);
-            iter = l.iterator();
+        if (replicaOrdering == ReplicaOrdering.NEUTRAL) {
+
+            final Iterator<Host> childIterator = childPolicy.newQueryPlan(keyspace, statement);
+
+            return new AbstractIterator<Host>() {
+
+                private List<Host> nonReplicas;
+                private Iterator<Host> nonReplicasIterator;
+
+                @Override
+                protected Host computeNext() {
+
+                    while (childIterator.hasNext()) {
+
+                        Host host = childIterator.next();
+
+                        if (host.isUp() && replicas.contains(host) && childPolicy.distance(host) == HostDistance.LOCAL) {
+                            // UP replicas should be prioritized, retaining order from childPolicy
+                            return host;
+                        } else {
+                            // save for later
+                            if (nonReplicas == null)
+                                nonReplicas = new ArrayList<Host>();
+                            nonReplicas.add(host);
+                        }
+
+                    }
+
+                    // This should only engage if all local replicas are DOWN
+                    if (nonReplicas != null) {
+
+                        if (nonReplicasIterator == null)
+                            nonReplicasIterator = nonReplicas.iterator();
+
+                        if (nonReplicasIterator.hasNext())
+                            return nonReplicasIterator.next();
+                    }
+
+                    return endOfData();
+                }
+            };
+
         } else {
-            iter = replicas.iterator();
+
+            final Iterator<Host> replicasIterator;
+
+            if (replicaOrdering == ReplicaOrdering.RANDOM) {
+                List<Host> replicasList = Lists.newArrayList(replicas);
+                Collections.shuffle(replicasList);
+                replicasIterator = replicasList.iterator();
+            } else {
+                replicasIterator = replicas.iterator();
+            }
+
+            return new AbstractIterator<Host>() {
+
+                private Iterator<Host> childIterator;
+
+                @Override
+                protected Host computeNext() {
+                    while (replicasIterator.hasNext()) {
+                        Host host = replicasIterator.next();
+                        if (host.isUp() && childPolicy.distance(host) == HostDistance.LOCAL)
+                            return host;
+                    }
+
+                    if (childIterator == null)
+                        childIterator = childPolicy.newQueryPlan(loggedKeyspace, statement);
+
+                    while (childIterator.hasNext()) {
+                        Host host = childIterator.next();
+                        // Skip it if it was already a local replica
+                        if (!replicas.contains(host) || childPolicy.distance(host) != HostDistance.LOCAL)
+                            return host;
+                    }
+                    return endOfData();
+                }
+            };
         }
 
-        return new AbstractIterator<Host>() {
-
-            private Iterator<Host> childIterator;
-
-            @Override
-            protected Host computeNext() {
-                while (iter.hasNext()) {
-                    Host host = iter.next();
-                    if (host.isUp() && childPolicy.distance(host) == HostDistance.LOCAL)
-                        return host;
-                }
-
-                if (childIterator == null)
-                    childIterator = childPolicy.newQueryPlan(loggedKeyspace, statement);
-
-                while (childIterator.hasNext()) {
-                    Host host = childIterator.next();
-                    // Skip it if it was already a local replica
-                    if (!replicas.contains(host) || childPolicy.distance(host) != HostDistance.LOCAL)
-                        return host;
-                }
-                return endOfData();
-            }
-        };
     }
 
     @Override
