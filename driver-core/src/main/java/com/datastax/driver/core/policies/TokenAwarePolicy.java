@@ -16,38 +16,38 @@
 package com.datastax.driver.core.policies;
 
 import com.datastax.driver.core.*;
-import com.google.common.collect.AbstractIterator;
-import com.google.common.collect.Lists;
 
 import java.nio.ByteBuffer;
 import java.util.*;
 
 /**
- * A wrapper load balancing policy that add token awareness to a child policy.
+ * A wrapper load balancing policy that adds token awareness to a child policy.
  * <p/>
  * This policy encapsulates another policy. The resulting policy works in
  * the following way:
  * <ul>
  * <li>the {@code distance} method is inherited from the child policy.</li>
- * <li>the iterator return by the {@code newQueryPlan} method will first
- * return the {@code LOCAL} replicas for the query (based on {@link Statement#getRoutingKey})
- * <i>if possible</i> (i.e. if the query {@code getRoutingKey} method
- * doesn't return {@code null} and if {@link Metadata#getReplicas}
- * returns a non empty set of replicas for that partition key). If no
- * local replica can be either found or successfully contacted, the rest
- * of the query plan will fallback to one of the child policy.</li>
+ * <li>the iterator returned by the {@code newQueryPlan} method will first
+ * return the {@link HostDistance#LOCAL LOCAL} replicas for the query
+ * <em>if possible</em> (i.e. if the query's
+ * {@link Statement#getRoutingKey(ProtocolVersion, CodecRegistry) routing key}
+ * is not {@code null} and if the
+ * {@link Metadata#getReplicas(String, ByteBuffer) set of replicas}
+ * for that partition key is not empty). If no local replica can be either found
+ * or successfully contacted, the rest of the query plan will fallback
+ * to the child policy's one.</li>
  * </ul>
  * <p/>
- * Do note that only replica for which the child policy {@code distance}
- * method returns {@code HostDistance.LOCAL} will be considered having
+ * Do note that only replicas for which the child policy's
+ * {@link LoadBalancingPolicy#distance(Host) distance}
+ * method returns {@link HostDistance#LOCAL LOCAL} will be considered having
  * priority. For example, if you wrap {@link DCAwareRoundRobinPolicy} with this
  * token aware policy, replicas from remote data centers may only be
- * returned after all the host of the local data center.
+ * returned after all the hosts of the local data center.
  */
 public class TokenAwarePolicy implements ChainableLoadBalancingPolicy {
 
     private final LoadBalancingPolicy childPolicy;
-    private final boolean shuffleReplicas;
     private volatile Metadata clusterMetadata;
     private volatile ProtocolVersion protocolVersion;
     private volatile CodecRegistry codecRegistry;
@@ -56,28 +56,24 @@ public class TokenAwarePolicy implements ChainableLoadBalancingPolicy {
      * Creates a new {@code TokenAware} policy.
      *
      * @param childPolicy     the load balancing policy to wrap with token awareness.
-     * @param shuffleReplicas whether to shuffle the replicas returned by {@code getRoutingKey}.
-     *                        Note that setting this parameter to {@code true} might decrease the
-     *                        effectiveness of caching (especially at consistency level ONE), since
-     *                        the same row will be retrieved from any replica (instead of only the
-     *                        "primary" replica without shuffling).
-     *                        On the other hand, shuffling will better distribute writes, and can
-     *                        alleviate hotspots caused by "fat" partitions.
+     * @param shuffleReplicas ignored.
+     * @deprecated The parameter {@code shuffleReplicas} has been deprecated and has no effect anymore.
+     * Use {@link #TokenAwarePolicy(LoadBalancingPolicy)} instead. This constructor will be removed
+     * in the next major release.
      */
-    public TokenAwarePolicy(LoadBalancingPolicy childPolicy, boolean shuffleReplicas) {
+    @SuppressWarnings("DeprecatedIsStillUsed")
+    @Deprecated
+    public TokenAwarePolicy(LoadBalancingPolicy childPolicy, @SuppressWarnings("unused") boolean shuffleReplicas) {
         this.childPolicy = childPolicy;
-        this.shuffleReplicas = shuffleReplicas;
     }
 
     /**
-     * Creates a new {@code TokenAware} policy with shuffling of replicas.
+     * Creates a new {@code TokenAware} policy.
      *
-     * @param childPolicy the load balancing policy to wrap with token
-     *                    awareness.
-     * @see #TokenAwarePolicy(LoadBalancingPolicy, boolean)
+     * @param childPolicy the load balancing policy to wrap with token awareness.
      */
     public TokenAwarePolicy(LoadBalancingPolicy childPolicy) {
-        this(childPolicy, true);
+        this.childPolicy = childPolicy;
     }
 
     @Override
@@ -94,10 +90,9 @@ public class TokenAwarePolicy implements ChainableLoadBalancingPolicy {
     }
 
     /**
-     * Return the HostDistance for the provided host.
-     *
-     * @param host the host of which to return the distance of.
-     * @return the HostDistance to {@code host} as returned by the wrapped policy.
+     * {@inheritDoc}
+     * <p/>
+     * This implementation always returns distances as reported by the wrapped policy.
      */
     @Override
     public HostDistance distance(Host host) {
@@ -105,15 +100,13 @@ public class TokenAwarePolicy implements ChainableLoadBalancingPolicy {
     }
 
     /**
-     * Returns the hosts to use for a new query.
+     * {@inheritDoc}
      * <p/>
-     * The returned plan will first return replicas (whose {@code HostDistance}
-     * for the child policy is {@code LOCAL}) for the query if it can determine
-     * them (i.e. mainly if {@code statement.getRoutingKey()} is not {@code null}).
-     * Following what it will return the plan of the child policy.
-     *
-     * @param statement the query for which to build the plan.
-     * @return the new query plan.
+     * The returned plan will first return local replicas for the query (i.e.
+     * replicas whose {@link HostDistance distance} according to the child policy is {@code LOCAL}),
+     * if it can determine them (i.e. mainly if the statement's
+     * {@link Statement#getRoutingKey(ProtocolVersion, CodecRegistry)} routing key}
+     * is not {@code null}); following what it will return the child policy's original query plan.
      */
     @Override
     public Iterator<Host> newQueryPlan(final String loggedKeyspace, final Statement statement) {
@@ -126,43 +119,24 @@ public class TokenAwarePolicy implements ChainableLoadBalancingPolicy {
         if (partitionKey == null || keyspace == null)
             return childPolicy.newQueryPlan(keyspace, statement);
 
-        final Set<Host> replicas = clusterMetadata.getReplicas(Metadata.quote(keyspace), partitionKey);
+        Set<Host> replicas = clusterMetadata.getReplicas(Metadata.quote(keyspace), partitionKey);
+
+        Iterator<Host> childIterator = childPolicy.newQueryPlan(loggedKeyspace, statement);
+
         if (replicas.isEmpty())
-            return childPolicy.newQueryPlan(loggedKeyspace, statement);
+            return childIterator;
 
-        final Iterator<Host> iter;
-        if (shuffleReplicas) {
-            List<Host> l = Lists.newArrayList(replicas);
-            Collections.shuffle(l);
-            iter = l.iterator();
-        } else {
-            iter = replicas.iterator();
+        List<Host> queryPlan = new ArrayList<Host>();
+        int i = 0;
+        while (childIterator.hasNext()) {
+            Host host = childIterator.next();
+            if (host.isUp() && childPolicy.distance(host) == HostDistance.LOCAL && replicas.contains(host))
+                queryPlan.add(i++, host);
+            else
+                queryPlan.add(host);
         }
+        return queryPlan.iterator();
 
-        return new AbstractIterator<Host>() {
-
-            private Iterator<Host> childIterator;
-
-            @Override
-            protected Host computeNext() {
-                while (iter.hasNext()) {
-                    Host host = iter.next();
-                    if (host.isUp() && childPolicy.distance(host) == HostDistance.LOCAL)
-                        return host;
-                }
-
-                if (childIterator == null)
-                    childIterator = childPolicy.newQueryPlan(loggedKeyspace, statement);
-
-                while (childIterator.hasNext()) {
-                    Host host = childIterator.next();
-                    // Skip it if it was already a local replica
-                    if (!replicas.contains(host) || childPolicy.distance(host) != HostDistance.LOCAL)
-                        return host;
-                }
-                return endOfData();
-            }
-        };
     }
 
     @Override
