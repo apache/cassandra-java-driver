@@ -18,9 +18,16 @@ package com.datastax.oss.driver.internal.type;
 import com.datastax.oss.driver.api.type.DataType;
 import com.datastax.oss.driver.api.type.SetType;
 import com.google.common.base.Preconditions;
+import java.io.IOException;
+import java.io.ObjectInputStream;
 
 public class DefaultSetType implements SetType {
+
+  private static final long serialVersionUID = 1;
+
+  /** @serial */
   private final DataType elementType;
+  /** @serial */
   private final boolean frozen;
 
   public DefaultSetType(DataType elementType, boolean frozen) {
@@ -60,5 +67,10 @@ public class DefaultSetType implements SetType {
   @Override
   public String toString() {
     return "Set(" + elementType + ", " + (frozen ? "" : "not ") + "frozen)";
+  }
+
+  private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
+    in.defaultReadObject();
+    Preconditions.checkNotNull(elementType);
   }
 }

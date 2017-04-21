@@ -23,8 +23,6 @@ import com.google.common.collect.ImmutableMap;
 /**
  * Helper class to build {@link UserDefinedType} instances.
  *
- * <p>
- *
  * <p>This is not part of the public API, because building user defined types manually can be
  * tricky: the fields must be defined in the exact same order as the database definition, otherwise
  * you will insert corrupt data in your database. If you decide to use this class anyway, make sure

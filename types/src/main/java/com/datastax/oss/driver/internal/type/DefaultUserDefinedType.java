@@ -19,14 +19,22 @@ import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.type.DataType;
 import com.datastax.oss.driver.api.type.UserDefinedType;
 import com.google.common.base.Preconditions;
+import com.google.common.collect.ImmutableMap;
+import java.io.IOException;
+import java.io.ObjectInputStream;
 import java.util.Map;
 import java.util.Objects;
 
 public class DefaultUserDefinedType implements UserDefinedType {
 
+  private static final long serialVersionUID = 1;
+
+  /** @serial */
   private final CqlIdentifier keyspace;
+  /** @serial */
   private final CqlIdentifier name;
-  private final Map<CqlIdentifier, DataType> fieldTypes;
+  /** @serial */
+  private final ImmutableMap<CqlIdentifier, DataType> fieldTypes;
 
   public DefaultUserDefinedType(
       CqlIdentifier keyspace, CqlIdentifier name, Map<CqlIdentifier, DataType> fieldTypes) {
@@ -35,7 +43,7 @@ public class DefaultUserDefinedType implements UserDefinedType {
     Preconditions.checkNotNull(fieldTypes);
     this.keyspace = keyspace;
     this.name = name;
-    this.fieldTypes = fieldTypes;
+    this.fieldTypes = ImmutableMap.copyOf(fieldTypes);
   }
 
   @Override
@@ -75,5 +83,12 @@ public class DefaultUserDefinedType implements UserDefinedType {
   @Override
   public String toString() {
     return "UDT(" + keyspace.asPrettyCql() + "." + name.asPrettyCql() + ")";
+  }
+
+  private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
+    in.defaultReadObject();
+    Preconditions.checkNotNull(keyspace);
+    Preconditions.checkNotNull(name);
+    Preconditions.checkNotNull(fieldTypes);
   }
 }

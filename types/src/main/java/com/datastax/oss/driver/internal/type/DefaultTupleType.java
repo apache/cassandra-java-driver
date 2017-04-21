@@ -19,15 +19,21 @@ import com.datastax.oss.driver.api.type.DataType;
 import com.datastax.oss.driver.api.type.TupleType;
 import com.google.common.base.Joiner;
 import com.google.common.base.Preconditions;
+import com.google.common.collect.ImmutableList;
+import java.io.IOException;
+import java.io.ObjectInputStream;
 import java.util.List;
 
 public class DefaultTupleType implements TupleType {
 
-  private final List<DataType> componentTypes;
+  private static final long serialVersionUID = 1;
+
+  /** @serial */
+  private final ImmutableList<DataType> componentTypes;
 
   public DefaultTupleType(List<DataType> componentTypes) {
     Preconditions.checkNotNull(componentTypes);
-    this.componentTypes = componentTypes;
+    this.componentTypes = ImmutableList.copyOf(componentTypes);
   }
 
   @Override
@@ -58,4 +64,9 @@ public class DefaultTupleType implements TupleType {
   }
 
   private static final Joiner WITH_COMMA = Joiner.on(", ");
+
+  private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
+    in.defaultReadObject();
+    Preconditions.checkNotNull(componentTypes);
+  }
 }

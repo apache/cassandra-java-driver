@@ -17,8 +17,14 @@ package com.datastax.oss.driver.internal.type;
 
 import com.datastax.oss.driver.api.type.CustomType;
 import com.google.common.base.Preconditions;
+import java.io.IOException;
+import java.io.ObjectInputStream;
 
 public class DefaultCustomType implements CustomType {
+
+  private static final long serialVersionUID = 1;
+
+  /** @serial */
   private final String className;
 
   public DefaultCustomType(String className) {
@@ -51,5 +57,10 @@ public class DefaultCustomType implements CustomType {
   @Override
   public String toString() {
     return "Custom(" + className + ")";
+  }
+
+  private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
+    in.defaultReadObject();
+    Preconditions.checkNotNull(className);
   }
 }

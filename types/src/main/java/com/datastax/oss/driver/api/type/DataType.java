@@ -15,9 +15,11 @@
  */
 package com.datastax.oss.driver.api.type;
 
+import java.io.Serializable;
+
 /**
  * The type of a CQL column or function argument.
  *
  * @see DataTypes
  */
-public interface DataType {}
+public interface DataType extends Serializable {}
