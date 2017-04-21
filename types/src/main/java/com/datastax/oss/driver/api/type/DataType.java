@@ -13,12 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.datastax.oss.driver.api.types;
+package com.datastax.oss.driver.api.type;
 
-public interface CustomType {
-  /**
-   * The fully qualified name of the subtype of {@code org.apache.cassandra.db.marshal.AbstractType}
-   * that represents this type server-side.
-   */
-  String getClassName();
-}
+/**
+ * The type of a CQL column or function argument.
+ *
+ * @see DataTypes
+ */
+public interface DataType {}

@@ -13,14 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.datastax.oss.driver.api.types;
+package com.datastax.oss.driver.api.type;
 
-import com.datastax.oss.driver.internal.types.DefaultCustomType;
-import com.datastax.oss.driver.internal.types.DefaultListType;
-import com.datastax.oss.driver.internal.types.DefaultMapType;
-import com.datastax.oss.driver.internal.types.DefaultSetType;
-import com.datastax.oss.driver.internal.types.DefaultTupleType;
-import com.datastax.oss.driver.internal.types.PrimitiveType;
+import com.datastax.oss.driver.internal.type.DefaultCustomType;
+import com.datastax.oss.driver.internal.type.DefaultListType;
+import com.datastax.oss.driver.internal.type.DefaultMapType;
+import com.datastax.oss.driver.internal.type.DefaultSetType;
+import com.datastax.oss.driver.internal.type.DefaultTupleType;
+import com.datastax.oss.driver.internal.type.PrimitiveType;
 import com.datastax.oss.protocol.internal.ProtocolConstants;
 import com.google.common.collect.ImmutableList;
 import java.util.Arrays;

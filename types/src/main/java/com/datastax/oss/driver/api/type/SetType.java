@@ -13,11 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.datastax.oss.driver.api.types;
+package com.datastax.oss.driver.api.type;
 
-import com.datastax.oss.driver.api.types.DataType;
-
-public interface ListType {
+public interface SetType {
   public DataType getElementType();
 
   public boolean isFrozen();

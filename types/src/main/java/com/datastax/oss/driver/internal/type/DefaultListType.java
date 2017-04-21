@@ -13,17 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.datastax.oss.driver.internal.types;
+package com.datastax.oss.driver.internal.type;
 
-import com.datastax.oss.driver.api.types.DataType;
-import com.datastax.oss.driver.api.types.SetType;
+import com.datastax.oss.driver.api.type.DataType;
+import com.datastax.oss.driver.api.type.ListType;
 import com.google.common.base.Preconditions;
 
-public class DefaultSetType implements SetType {
+public class DefaultListType implements ListType {
   private final DataType elementType;
   private final boolean frozen;
 
-  public DefaultSetType(DataType elementType, boolean frozen) {
+  public DefaultListType(DataType elementType, boolean frozen) {
     Preconditions.checkNotNull(elementType);
     this.elementType = elementType;
     this.frozen = frozen;
@@ -43,8 +43,8 @@ public class DefaultSetType implements SetType {
   public boolean equals(Object other) {
     if (other == this) {
       return true;
-    } else if (other instanceof SetType) {
-      SetType that = (SetType) other;
+    } else if (other instanceof ListType) {
+      ListType that = (ListType) other;
       // frozen is not taken into account
       return this.elementType.equals(that.getElementType());
     } else {
@@ -59,6 +59,6 @@ public class DefaultSetType implements SetType {
 
   @Override
   public String toString() {
-    return "Set(" + elementType + ", " + (frozen ? "" : "not ") + "frozen)";
+    return "List(" + elementType + ", " + (frozen ? "" : "not ") + "frozen)";
   }
 }

@@ -13,11 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.datastax.oss.driver.api.types;
+package com.datastax.oss.driver.api.type;
 
-/**
- * The type of a CQL column or function argument.
- *
- * @see DataTypes
- */
-public interface DataType {}
+public interface MapType {
+  public DataType getKeyType();
+
+  public DataType getValueType();
+
+  public boolean isFrozen();
+}

@@ -13,14 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.datastax.oss.driver.api.types;
+package com.datastax.oss.driver.api.type;
 
-import com.datastax.oss.driver.api.types.DataType;
+import com.datastax.oss.driver.api.core.CqlIdentifier;
+import java.util.Map;
 
-public interface MapType {
-  public DataType getKeyType();
+public interface UserDefinedType {
+  CqlIdentifier getKeyspace();
 
-  public DataType getValueType();
+  CqlIdentifier getName();
 
-  public boolean isFrozen();
+  Map<CqlIdentifier, DataType> getFieldTypes();
 }

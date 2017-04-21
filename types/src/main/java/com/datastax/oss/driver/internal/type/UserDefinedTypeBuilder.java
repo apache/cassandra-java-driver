@@ -13,11 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.datastax.oss.driver.internal.types;
+package com.datastax.oss.driver.internal.type;
 
 import com.datastax.oss.driver.api.core.CqlIdentifier;
-import com.datastax.oss.driver.api.types.DataType;
-import com.datastax.oss.driver.api.types.UserDefinedType;
+import com.datastax.oss.driver.api.type.DataType;
+import com.datastax.oss.driver.api.type.UserDefinedType;
 import com.google.common.collect.ImmutableMap;
 
 /**

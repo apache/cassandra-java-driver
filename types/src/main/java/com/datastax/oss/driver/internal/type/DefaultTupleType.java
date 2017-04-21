@@ -13,31 +13,35 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.datastax.oss.driver.internal.types;
+package com.datastax.oss.driver.internal.type;
 
-import com.datastax.oss.driver.api.types.CustomType;
+import com.datastax.oss.driver.api.type.DataType;
+import com.datastax.oss.driver.api.type.TupleType;
+import com.google.common.base.Joiner;
 import com.google.common.base.Preconditions;
+import java.util.List;
 
-public class DefaultCustomType implements CustomType {
-  private final String className;
+public class DefaultTupleType implements TupleType {
 
-  public DefaultCustomType(String className) {
-    Preconditions.checkNotNull(className);
-    this.className = className;
+  private final List<DataType> componentTypes;
+
+  public DefaultTupleType(List<DataType> componentTypes) {
+    Preconditions.checkNotNull(componentTypes);
+    this.componentTypes = componentTypes;
   }
 
   @Override
-  public String getClassName() {
-    return className;
+  public List<DataType> getComponentTypes() {
+    return componentTypes;
   }
 
   @Override
   public boolean equals(Object other) {
     if (other == this) {
       return true;
-    } else if (other instanceof CustomType) {
-      CustomType that = (CustomType) other;
-      return this.className.equals(that.getClassName());
+    } else if (other instanceof TupleType) {
+      TupleType that = (TupleType) other;
+      return this.componentTypes.equals(that.getComponentTypes());
     } else {
       return false;
     }
@@ -45,11 +49,13 @@ public class DefaultCustomType implements CustomType {
 
   @Override
   public int hashCode() {
-    return className.hashCode();
+    return componentTypes.hashCode();
   }
 
   @Override
   public String toString() {
-    return "Custom(" + className + ")";
+    return "Tuple(" + WITH_COMMA.join(componentTypes) + ")";
   }
+
+  private static final Joiner WITH_COMMA = Joiner.on(", ");
 }

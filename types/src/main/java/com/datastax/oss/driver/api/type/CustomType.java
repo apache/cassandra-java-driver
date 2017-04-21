@@ -13,15 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.datastax.oss.driver.api.types;
+package com.datastax.oss.driver.api.type;
 
-import com.datastax.oss.driver.api.core.CqlIdentifier;
-import java.util.Map;
-
-public interface UserDefinedType {
-  CqlIdentifier getKeyspace();
-
-  CqlIdentifier getName();
-
-  Map<CqlIdentifier, DataType> getFieldTypes();
+public interface CustomType {
+  /**
+   * The fully qualified name of the subtype of {@code org.apache.cassandra.db.marshal.AbstractType}
+   * that represents this type server-side.
+   */
+  String getClassName();
 }

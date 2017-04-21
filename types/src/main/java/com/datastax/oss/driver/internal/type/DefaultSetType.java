@@ -13,34 +13,25 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.datastax.oss.driver.internal.types;
+package com.datastax.oss.driver.internal.type;
 
-import com.datastax.oss.driver.api.types.DataType;
-import com.datastax.oss.driver.api.types.MapType;
+import com.datastax.oss.driver.api.type.DataType;
+import com.datastax.oss.driver.api.type.SetType;
 import com.google.common.base.Preconditions;
-import java.util.Objects;
 
-public class DefaultMapType implements MapType {
-  private final DataType keyType;
-  private final DataType valueType;
+public class DefaultSetType implements SetType {
+  private final DataType elementType;
   private final boolean frozen;
 
-  public DefaultMapType(DataType keyType, DataType valueType, boolean frozen) {
-    Preconditions.checkNotNull(keyType);
-    Preconditions.checkNotNull(valueType);
-    this.keyType = keyType;
-    this.valueType = valueType;
+  public DefaultSetType(DataType elementType, boolean frozen) {
+    Preconditions.checkNotNull(elementType);
+    this.elementType = elementType;
     this.frozen = frozen;
   }
 
   @Override
-  public DataType getKeyType() {
-    return keyType;
-  }
-
-  @Override
-  public DataType getValueType() {
-    return valueType;
+  public DataType getElementType() {
+    return elementType;
   }
 
   @Override
@@ -52,10 +43,10 @@ public class DefaultMapType implements MapType {
   public boolean equals(Object other) {
     if (other == this) {
       return true;
-    } else if (other instanceof MapType) {
-      MapType that = (MapType) other;
+    } else if (other instanceof SetType) {
+      SetType that = (SetType) other;
       // frozen is not taken into account
-      return this.keyType.equals(that.getKeyType()) && this.valueType.equals(that.getValueType());
+      return this.elementType.equals(that.getElementType());
     } else {
       return false;
     }
@@ -63,11 +54,11 @@ public class DefaultMapType implements MapType {
 
   @Override
   public int hashCode() {
-    return Objects.hash(keyType, valueType);
+    return this.elementType.hashCode();
   }
 
   @Override
   public String toString() {
-    return "Map(" + keyType + " => " + valueType + ", " + (frozen ? "" : "not ") + "frozen)";
+    return "Set(" + elementType + ", " + (frozen ? "" : "not ") + "frozen)";
   }
 }

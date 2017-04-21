@@ -13,9 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.datastax.oss.driver.internal.types;
+package com.datastax.oss.driver.internal.type;
 
-import com.datastax.oss.driver.api.types.DataType;
+import com.datastax.oss.driver.api.type.DataType;
 import com.datastax.oss.protocol.internal.ProtocolConstants;
 
 public class PrimitiveType implements DataType {
