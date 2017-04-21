@@ -17,7 +17,7 @@ package com.datastax.oss.driver.api.core;
 
 import org.testng.annotations.Test;
 
-import static com.datastax.oss.driver.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThat;
 
 public class CqlIdentifierTest {
   @Test

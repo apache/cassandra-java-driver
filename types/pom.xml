@@ -33,6 +33,10 @@
 
   <dependencies>
     <dependency>
+      <groupId>com.datastax.oss</groupId>
+      <artifactId>native-protocol</artifactId>
+    </dependency>
+    <dependency>
       <groupId>com.google.guava</groupId>
       <artifactId>guava</artifactId>
     </dependency>
