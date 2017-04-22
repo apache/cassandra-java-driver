@@ -17,6 +17,7 @@ package com.datastax.oss.driver.api.type.reflect;
 
 import com.google.common.reflect.TypeToken;
 import java.util.List;
+import java.util.Map;
 import org.testng.annotations.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -34,5 +35,18 @@ public class GenericTypeTest {
     GenericType<List<String>> stringListType = new GenericType<List<String>>() {};
     TypeToken<List<String>> stringListToken = new TypeToken<List<String>>() {};
     assertThat(stringListType.__getToken()).isEqualTo(stringListToken);
+  }
+
+  @Test
+  public void should_wrap_classes_in_collection() {
+    GenericType<Map<String, Integer>> mapType = GenericType.mapOf(String.class, Integer.class);
+    assertThat(mapType.__getToken()).isEqualTo(new TypeToken<Map<String, Integer>>() {});
+  }
+
+  @Test
+  public void should_wrap_types_in_collection() {
+    GenericType<Map<String, List<Integer>>> mapType =
+        GenericType.mapOf(GenericType.of(String.class), GenericType.listOf(Integer.class));
+    assertThat(mapType.__getToken()).isEqualTo(new TypeToken<Map<String, List<Integer>>>() {});
   }
 }

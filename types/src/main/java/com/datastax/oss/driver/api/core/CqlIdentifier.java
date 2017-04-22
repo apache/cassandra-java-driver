@@ -17,6 +17,9 @@ package com.datastax.oss.driver.api.core;
 
 import com.datastax.oss.driver.internal.core.util.Strings;
 import com.google.common.base.Preconditions;
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.Serializable;
 
 /**
  * The identifier of CQL element (keyspace, table, column, etc).
@@ -51,7 +54,9 @@ import com.google.common.base.Preconditions;
  *
  * <p>There is no internal caching; if you reuse the same identifiers often,
  */
-public class CqlIdentifier {
+public class CqlIdentifier implements Serializable {
+
+  private static final long serialVersionUID = 1;
 
   // IMPLEMENTATION NOTES:
   // This is used internally, and for all API methods where the overhead of requiring the client to
@@ -78,6 +83,7 @@ public class CqlIdentifier {
     return new CqlIdentifier(internal);
   }
 
+  /** @serial */
   private final String internal;
 
   private CqlIdentifier(String internal) {
@@ -129,5 +135,10 @@ public class CqlIdentifier {
   @Override
   public int hashCode() {
     return internal.hashCode();
+  }
+
+  private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
+    in.defaultReadObject();
+    Preconditions.checkNotNull(internal, "internal must not be null");
   }
 }

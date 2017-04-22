@@ -153,17 +153,17 @@ public class DefaultTopologyMonitorTest {
             });
     // The rpc_address in each row should have been tried, only the last row should have been
     // converted
-    Mockito.verify(peer3).getInet("rpc_address");
+    Mockito.verify(peer3).getInetAddress("rpc_address");
     Mockito.verify(addressTranslator).translate(new InetSocketAddress("127.0.0.3", 9042));
-    Mockito.verify(peer3, never()).getVarchar(anyString());
+    Mockito.verify(peer3, never()).getString(anyString());
 
-    Mockito.verify(peer2).getInet("rpc_address");
+    Mockito.verify(peer2).getInetAddress("rpc_address");
     Mockito.verify(addressTranslator).translate(new InetSocketAddress("127.0.0.2", 9042));
-    Mockito.verify(peer2, never()).getVarchar(anyString());
+    Mockito.verify(peer2, never()).getString(anyString());
 
-    Mockito.verify(peer1).getInet("rpc_address");
+    Mockito.verify(peer1).getInetAddress("rpc_address");
     Mockito.verify(addressTranslator).translate(new InetSocketAddress("127.0.0.1", 9042));
-    Mockito.verify(peer1).getVarchar("data_center");
+    Mockito.verify(peer1).getString("data_center");
   }
 
   @Test
@@ -188,17 +188,17 @@ public class DefaultTopologyMonitorTest {
             });
     // The rpc_address in each row should have been tried, only the last row should have been
     // converted
-    Mockito.verify(peer3).getInet("rpc_address");
+    Mockito.verify(peer3).getInetAddress("rpc_address");
     Mockito.verify(addressTranslator).translate(new InetSocketAddress("127.0.0.3", 9042));
-    Mockito.verify(peer3, never()).getVarchar(anyString());
+    Mockito.verify(peer3, never()).getString(anyString());
 
-    Mockito.verify(peer2).getInet("rpc_address");
+    Mockito.verify(peer2).getInetAddress("rpc_address");
     Mockito.verify(addressTranslator).translate(new InetSocketAddress("127.0.0.2", 9042));
-    Mockito.verify(peer2, never()).getVarchar(anyString());
+    Mockito.verify(peer2, never()).getString(anyString());
 
-    Mockito.verify(peer1).getInet("rpc_address");
+    Mockito.verify(peer1).getInetAddress("rpc_address");
     Mockito.verify(addressTranslator).translate(new InetSocketAddress("127.0.0.1", 9042));
-    Mockito.verify(peer1).getVarchar("data_center");
+    Mockito.verify(peer1).getString("data_center");
   }
 
   @Test
@@ -268,14 +268,16 @@ public class DefaultTopologyMonitorTest {
   private AdminResult.Row mockLocalRow(int i) {
     try {
       AdminResult.Row row = Mockito.mock(AdminResult.Row.class);
-      Mockito.when(row.getInet("broadcast_address"))
+      Mockito.when(row.getInetAddress("broadcast_address"))
           .thenReturn(InetAddress.getByName("127.0.0." + i));
-      Mockito.when(row.getVarchar("data_center")).thenReturn("dc" + i);
-      Mockito.when(row.getInet("listen_address")).thenReturn(InetAddress.getByName("127.0.0." + i));
-      Mockito.when(row.getVarchar("rack")).thenReturn("rack" + i);
-      Mockito.when(row.getVarchar("release_version")).thenReturn("release_version" + i);
-      Mockito.when(row.getInet("rpc_address")).thenReturn(InetAddress.getByName("127.0.0." + i));
-      Mockito.when(row.getSetOfVarchar("tokens")).thenReturn(ImmutableSet.of("token" + i));
+      Mockito.when(row.getString("data_center")).thenReturn("dc" + i);
+      Mockito.when(row.getInetAddress("listen_address"))
+          .thenReturn(InetAddress.getByName("127.0.0." + i));
+      Mockito.when(row.getString("rack")).thenReturn("rack" + i);
+      Mockito.when(row.getString("release_version")).thenReturn("release_version" + i);
+      Mockito.when(row.getInetAddress("rpc_address"))
+          .thenReturn(InetAddress.getByName("127.0.0." + i));
+      Mockito.when(row.getSetOfString("tokens")).thenReturn(ImmutableSet.of("token" + i));
       return row;
     } catch (UnknownHostException e) {
       fail("unexpected", e);
@@ -286,12 +288,13 @@ public class DefaultTopologyMonitorTest {
   private AdminResult.Row mockPeersRow(int i) {
     try {
       AdminResult.Row row = Mockito.mock(AdminResult.Row.class);
-      Mockito.when(row.getInet("peer")).thenReturn(InetAddress.getByName("127.0.0." + i));
-      Mockito.when(row.getVarchar("data_center")).thenReturn("dc" + i);
-      Mockito.when(row.getVarchar("rack")).thenReturn("rack" + i);
-      Mockito.when(row.getVarchar("release_version")).thenReturn("release_version" + i);
-      Mockito.when(row.getInet("rpc_address")).thenReturn(InetAddress.getByName("127.0.0." + i));
-      Mockito.when(row.getSetOfVarchar("tokens")).thenReturn(ImmutableSet.of("token" + i));
+      Mockito.when(row.getInetAddress("peer")).thenReturn(InetAddress.getByName("127.0.0." + i));
+      Mockito.when(row.getString("data_center")).thenReturn("dc" + i);
+      Mockito.when(row.getString("rack")).thenReturn("rack" + i);
+      Mockito.when(row.getString("release_version")).thenReturn("release_version" + i);
+      Mockito.when(row.getInetAddress("rpc_address"))
+          .thenReturn(InetAddress.getByName("127.0.0." + i));
+      Mockito.when(row.getSetOfString("tokens")).thenReturn(ImmutableSet.of("token" + i));
       return row;
     } catch (UnknownHostException e) {
       fail("unexpected", e);

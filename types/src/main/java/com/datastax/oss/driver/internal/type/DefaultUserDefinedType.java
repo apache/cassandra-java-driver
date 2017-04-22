@@ -16,13 +16,17 @@
 package com.datastax.oss.driver.internal.type;
 
 import com.datastax.oss.driver.api.core.CqlIdentifier;
+import com.datastax.oss.driver.api.core.data.UdtValue;
+import com.datastax.oss.driver.api.core.detach.AttachmentPoint;
 import com.datastax.oss.driver.api.type.DataType;
 import com.datastax.oss.driver.api.type.UserDefinedType;
+import com.datastax.oss.driver.internal.core.data.DefaultUdtValue;
+import com.datastax.oss.driver.internal.core.data.IdentifierIndex;
 import com.google.common.base.Preconditions;
-import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableList;
 import java.io.IOException;
 import java.io.ObjectInputStream;
-import java.util.Map;
+import java.util.List;
 import java.util.Objects;
 
 public class DefaultUserDefinedType implements UserDefinedType {
@@ -34,16 +38,40 @@ public class DefaultUserDefinedType implements UserDefinedType {
   /** @serial */
   private final CqlIdentifier name;
   /** @serial */
-  private final ImmutableMap<CqlIdentifier, DataType> fieldTypes;
+  private final List<CqlIdentifier> fieldNames;
+  /** @serial */
+  private final List<DataType> fieldTypes;
+
+  private transient IdentifierIndex index;
+  private transient volatile AttachmentPoint attachmentPoint;
 
   public DefaultUserDefinedType(
-      CqlIdentifier keyspace, CqlIdentifier name, Map<CqlIdentifier, DataType> fieldTypes) {
+      CqlIdentifier keyspace,
+      CqlIdentifier name,
+      List<CqlIdentifier> fieldNames,
+      List<DataType> fieldTypes,
+      AttachmentPoint attachmentPoint) {
     Preconditions.checkNotNull(keyspace);
     Preconditions.checkNotNull(name);
-    Preconditions.checkNotNull(fieldTypes);
+    Preconditions.checkArgument(
+        fieldNames != null && fieldNames.size() > 0, "Field names list can't be null or empty");
+    Preconditions.checkArgument(
+        fieldTypes != null && fieldTypes.size() == fieldNames.size(),
+        "There should be the same number of field names and types");
     this.keyspace = keyspace;
     this.name = name;
-    this.fieldTypes = ImmutableMap.copyOf(fieldTypes);
+    this.fieldNames = ImmutableList.copyOf(fieldNames);
+    this.fieldTypes = ImmutableList.copyOf(fieldTypes);
+    this.index = new IdentifierIndex(this.fieldNames);
+    this.attachmentPoint = attachmentPoint;
+  }
+
+  public DefaultUserDefinedType(
+      CqlIdentifier keyspace,
+      CqlIdentifier name,
+      List<CqlIdentifier> fieldNames,
+      List<DataType> fieldTypes) {
+    this(keyspace, name, fieldNames, fieldTypes, AttachmentPoint.NONE);
   }
 
   @Override
@@ -57,8 +85,46 @@ public class DefaultUserDefinedType implements UserDefinedType {
   }
 
   @Override
-  public Map<CqlIdentifier, DataType> getFieldTypes() {
+  public List<CqlIdentifier> getFieldNames() {
+    return fieldNames;
+  }
+
+  @Override
+  public int firstIndexOf(CqlIdentifier id) {
+    return index.firstIndexOf(id);
+  }
+
+  @Override
+  public int firstIndexOf(String name) {
+    return index.firstIndexOf(name);
+  }
+
+  @Override
+  public List<DataType> getFieldTypes() {
     return fieldTypes;
+  }
+
+  @Override
+  public UdtValue newValue() {
+    return new DefaultUdtValue(this);
+  }
+
+  @Override
+  public boolean isDetached() {
+    return attachmentPoint == null;
+  }
+
+  @Override
+  public void attach(AttachmentPoint attachmentPoint) {
+    this.attachmentPoint = attachmentPoint;
+    for (DataType fieldType : fieldTypes) {
+      fieldType.attach(attachmentPoint);
+    }
+  }
+
+  @Override
+  public AttachmentPoint getAttachmentPoint() {
+    return attachmentPoint;
   }
 
   @Override
@@ -69,6 +135,7 @@ public class DefaultUserDefinedType implements UserDefinedType {
       UserDefinedType that = (UserDefinedType) other;
       return this.keyspace.equals(that.getKeyspace())
           && this.name.equals(that.getName())
+          && this.fieldNames.equals(that.getFieldNames())
           && this.fieldTypes.equals(that.getFieldTypes());
     } else {
       return false;
@@ -77,7 +144,7 @@ public class DefaultUserDefinedType implements UserDefinedType {
 
   @Override
   public int hashCode() {
-    return Objects.hash(keyspace, name, fieldTypes);
+    return Objects.hash(keyspace, name, fieldNames, fieldTypes);
   }
 
   @Override
@@ -89,6 +156,11 @@ public class DefaultUserDefinedType implements UserDefinedType {
     in.defaultReadObject();
     Preconditions.checkNotNull(keyspace);
     Preconditions.checkNotNull(name);
-    Preconditions.checkNotNull(fieldTypes);
+    Preconditions.checkArgument(
+        fieldNames != null && fieldNames.size() > 0, "Field names list can't be null or empty");
+    Preconditions.checkArgument(
+        fieldTypes != null && fieldTypes.size() == fieldNames.size(),
+        "There should be the same number of field names and types");
+    this.index = new IdentifierIndex(this.fieldNames);
   }
 }

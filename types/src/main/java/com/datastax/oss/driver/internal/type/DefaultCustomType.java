@@ -15,6 +15,7 @@
  */
 package com.datastax.oss.driver.internal.type;
 
+import com.datastax.oss.driver.api.core.detach.AttachmentPoint;
 import com.datastax.oss.driver.api.type.CustomType;
 import com.google.common.base.Preconditions;
 import java.io.IOException;
@@ -35,6 +36,16 @@ public class DefaultCustomType implements CustomType {
   @Override
   public String getClassName() {
     return className;
+  }
+
+  @Override
+  public boolean isDetached() {
+    return false;
+  }
+
+  @Override
+  public void attach(AttachmentPoint attachmentPoint) {
+    // nothing to do
   }
 
   @Override

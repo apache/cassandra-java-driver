@@ -15,8 +15,14 @@
  */
 package com.datastax.oss.driver.api.type;
 
-public interface SetType {
-  public DataType getElementType();
+import com.datastax.oss.protocol.internal.ProtocolConstants;
 
-  public boolean isFrozen();
+public interface SetType extends DataType {
+  DataType getElementType();
+
+  boolean isFrozen();
+
+  default int getProtocolCode() {
+    return ProtocolConstants.DataType.SET;
+  }
 }

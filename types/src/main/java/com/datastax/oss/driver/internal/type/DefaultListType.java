@@ -15,6 +15,7 @@
  */
 package com.datastax.oss.driver.internal.type;
 
+import com.datastax.oss.driver.api.core.detach.AttachmentPoint;
 import com.datastax.oss.driver.api.type.DataType;
 import com.datastax.oss.driver.api.type.ListType;
 import com.google.common.base.Preconditions;
@@ -44,6 +45,16 @@ public class DefaultListType implements ListType {
   @Override
   public boolean isFrozen() {
     return frozen;
+  }
+
+  @Override
+  public boolean isDetached() {
+    return elementType.isDetached();
+  }
+
+  @Override
+  public void attach(AttachmentPoint attachmentPoint) {
+    elementType.attach(attachmentPoint);
   }
 
   @Override

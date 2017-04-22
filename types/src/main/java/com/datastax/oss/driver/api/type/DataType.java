@@ -15,11 +15,15 @@
  */
 package com.datastax.oss.driver.api.type;
 
+import com.datastax.oss.driver.api.core.detach.Detachable;
 import java.io.Serializable;
 
 /**
- * The type of a CQL column or function argument.
+ * The type of a CQL column, field or function argument.
  *
  * @see DataTypes
  */
-public interface DataType extends Serializable {}
+public interface DataType extends Detachable, Serializable {
+  /** The code of the data type in the native protocol specification. */
+  int getProtocolCode();
+}

@@ -1,0 +1,201 @@
+/*
+ * Copyright (C) 2017-2017 DataStax Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package com.datastax.oss.driver.internal.type.codec;
+
+import com.datastax.oss.driver.api.core.ProtocolVersion;
+import com.datastax.oss.driver.api.core.data.TupleValue;
+import com.datastax.oss.driver.api.type.DataType;
+import com.datastax.oss.driver.api.type.TupleType;
+import com.datastax.oss.driver.api.type.codec.TypeCodec;
+import com.datastax.oss.driver.api.type.codec.registry.CodecRegistry;
+import com.datastax.oss.driver.api.type.reflect.GenericType;
+import java.nio.BufferUnderflowException;
+import java.nio.ByteBuffer;
+
+public class TupleCodec implements TypeCodec<TupleValue> {
+
+  private final TupleType cqlType;
+
+  public TupleCodec(TupleType cqlType) {
+    this.cqlType = cqlType;
+  }
+
+  @Override
+  public GenericType<TupleValue> getJavaType() {
+    return GenericType.TUPLE_VALUE;
+  }
+
+  @Override
+  public DataType getCqlType() {
+    return cqlType;
+  }
+
+  @Override
+  public boolean canEncode(Object value) {
+    return (value instanceof TupleValue) && ((TupleValue) value).getType().equals(cqlType);
+  }
+
+  @Override
+  public ByteBuffer encode(TupleValue value, ProtocolVersion protocolVersion) {
+    if (value == null) {
+      return null;
+    }
+    if (!value.getType().equals(cqlType)) {
+      throw new IllegalArgumentException(
+          String.format("Invalid tuple type, expected %s but got %s", cqlType, value.getType()));
+    }
+    // Encoding: each field as a [bytes] value ([bytes] = int length + contents, null is
+    // represented by -1)
+    int toAllocate = 0;
+    for (int i = 0; i < value.size(); i++) {
+      ByteBuffer field = value.getBytesUnsafe(i);
+      toAllocate += 4 + (field == null ? 0 : field.remaining());
+    }
+    ByteBuffer result = ByteBuffer.allocate(toAllocate);
+    for (int i = 0; i < value.size(); i++) {
+      ByteBuffer field = value.getBytesUnsafe(i);
+      if (field == null) {
+        result.putInt(-1);
+      } else {
+        result.putInt(field.remaining());
+        result.put(field.duplicate());
+      }
+    }
+    return (ByteBuffer) result.flip();
+  }
+
+  @Override
+  public TupleValue decode(ByteBuffer bytes, ProtocolVersion protocolVersion) {
+    if (bytes == null) {
+      return null;
+    }
+    // empty byte buffers will result in empty values
+    try {
+      ByteBuffer input = bytes.duplicate();
+      TupleValue value = cqlType.newValue();
+      int i = 0;
+      while (input.hasRemaining()) {
+        if (i > cqlType.getComponentTypes().size()) {
+          throw new IllegalArgumentException(
+              String.format(
+                  "Too many fields in encoded tuple, expected %d",
+                  cqlType.getComponentTypes().size()));
+        }
+        int elementSize = input.getInt();
+        ByteBuffer element;
+        if (elementSize == -1) {
+          element = null;
+        } else {
+          element = input.slice();
+          element.limit(elementSize);
+          input.position(input.position() + elementSize);
+        }
+        value.setBytesUnsafe(i, element);
+        i += 1;
+      }
+      return value;
+    } catch (BufferUnderflowException e) {
+      throw new IllegalArgumentException("Not enough bytes to deserialize a tuple", e);
+    }
+  }
+
+  @Override
+  public String format(TupleValue value) {
+    if (value == null) {
+      return "NULL";
+    }
+    if (!value.getType().equals(cqlType)) {
+      throw new IllegalArgumentException(
+          String.format("Invalid tuple type, expected %s but got %s", cqlType, value.getType()));
+    }
+    CodecRegistry registry = cqlType.getAttachmentPoint().codecRegistry();
+
+    StringBuilder sb = new StringBuilder("(");
+    boolean first = true;
+    for (int i = 0; i < value.size(); i++) {
+      if (first) {
+        first = false;
+      } else {
+        sb.append(",");
+      }
+      DataType elementType = cqlType.getComponentTypes().get(i);
+      TypeCodec<Object> codec = registry.codecFor(elementType);
+      sb.append(codec.format(value.get(i, codec)));
+    }
+    sb.append(")");
+    return sb.toString();
+  }
+
+  @Override
+  public TupleValue parse(String value) {
+    if (value == null || value.isEmpty() || value.equalsIgnoreCase("NULL")) {
+      return null;
+    }
+
+    TupleValue tuple = cqlType.newValue();
+
+    int position = ParseUtils.skipSpaces(value, 0);
+    if (value.charAt(position++) != '(') {
+      throw new IllegalArgumentException(
+          String.format(
+              "Cannot parse tuple value from \"%s\", at character %d expecting '(' but got '%c'",
+              value, position, value.charAt(position)));
+    }
+
+    position = ParseUtils.skipSpaces(value, position);
+
+    if (value.charAt(position) == ')') {
+      return tuple;
+    }
+
+    CodecRegistry registry = cqlType.getAttachmentPoint().codecRegistry();
+
+    int i = 0;
+    while (position < value.length()) {
+      int n;
+      try {
+        n = ParseUtils.skipCQLValue(value, position);
+      } catch (IllegalArgumentException e) {
+        throw new IllegalArgumentException(
+            String.format(
+                "Cannot parse tuple value from \"%s\", invalid CQL value at character %d",
+                value, position),
+            e);
+      }
+
+      String fieldValue = value.substring(position, n);
+      DataType elementType = cqlType.getComponentTypes().get(i);
+      TypeCodec<Object> codec = registry.codecFor(elementType);
+      tuple.set(i, codec.parse(fieldValue), codec);
+
+      position = n;
+      i += 1;
+
+      position = ParseUtils.skipSpaces(value, position);
+      if (value.charAt(position) == ')') return tuple;
+      if (value.charAt(position) != ',')
+        throw new IllegalArgumentException(
+            String.format(
+                "Cannot parse tuple value from \"%s\", at character %d expecting ',' but got '%c'",
+                value, position, value.charAt(position)));
+      ++position; // skip ','
+
+      position = ParseUtils.skipSpaces(value, position);
+    }
+    throw new IllegalArgumentException(
+        String.format("Malformed tuple value \"%s\", missing closing ')'", value));
+  }
+}

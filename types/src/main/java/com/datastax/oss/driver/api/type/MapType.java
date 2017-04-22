@@ -15,10 +15,16 @@
  */
 package com.datastax.oss.driver.api.type;
 
-public interface MapType {
-  public DataType getKeyType();
+import com.datastax.oss.protocol.internal.ProtocolConstants;
 
-  public DataType getValueType();
+public interface MapType extends DataType {
+  DataType getKeyType();
 
-  public boolean isFrozen();
+  DataType getValueType();
+
+  boolean isFrozen();
+
+  default int getProtocolCode() {
+    return ProtocolConstants.DataType.MAP;
+  }
 }

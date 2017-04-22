@@ -235,6 +235,24 @@ public class Strings {
     return id != null && RESERVED_KEYWORDS.contains(id.toLowerCase());
   }
 
+  /**
+   * Check whether the given string corresponds to a valid CQL long literal. Long literals are
+   * composed solely by digits, but can have an optional leading minus sign.
+   *
+   * @param str The string to inspect.
+   * @return {@code true} if the given string corresponds to a valid CQL integer literal, {@code
+   *     false} otherwise.
+   */
+  public static boolean isLongLiteral(String str) {
+    if (str == null || str.isEmpty()) return false;
+    char[] chars = str.toCharArray();
+    for (int i = 0; i < chars.length; i++) {
+      char c = chars[i];
+      if ((c < '0' && (i != 0 || c != '-')) || c > '9') return false;
+    }
+    return true;
+  }
+
   private Strings() {}
 
   private static final Set<String> RESERVED_KEYWORDS =

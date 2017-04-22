@@ -15,8 +15,11 @@
  */
 package com.datastax.oss.driver.internal.type;
 
+import com.datastax.oss.driver.api.core.data.TupleValue;
+import com.datastax.oss.driver.api.core.detach.AttachmentPoint;
 import com.datastax.oss.driver.api.type.DataType;
 import com.datastax.oss.driver.api.type.TupleType;
+import com.datastax.oss.driver.internal.core.data.DefaultTupleValue;
 import com.google.common.base.Joiner;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
@@ -31,14 +34,44 @@ public class DefaultTupleType implements TupleType {
   /** @serial */
   private final ImmutableList<DataType> componentTypes;
 
-  public DefaultTupleType(List<DataType> componentTypes) {
+  private transient volatile AttachmentPoint attachmentPoint;
+
+  public DefaultTupleType(List<DataType> componentTypes, AttachmentPoint attachmentPoint) {
     Preconditions.checkNotNull(componentTypes);
     this.componentTypes = ImmutableList.copyOf(componentTypes);
+    this.attachmentPoint = attachmentPoint;
+  }
+
+  public DefaultTupleType(List<DataType> componentTypes) {
+    this(componentTypes, AttachmentPoint.NONE);
   }
 
   @Override
   public List<DataType> getComponentTypes() {
     return componentTypes;
+  }
+
+  @Override
+  public TupleValue newValue() {
+    return new DefaultTupleValue(this);
+  }
+
+  @Override
+  public boolean isDetached() {
+    return attachmentPoint != AttachmentPoint.NONE;
+  }
+
+  @Override
+  public void attach(AttachmentPoint attachmentPoint) {
+    this.attachmentPoint = attachmentPoint;
+    for (DataType componentType : componentTypes) {
+      componentType.attach(attachmentPoint);
+    }
+  }
+
+  @Override
+  public AttachmentPoint getAttachmentPoint() {
+    return attachmentPoint;
   }
 
   @Override
@@ -68,5 +101,6 @@ public class DefaultTupleType implements TupleType {
   private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
     in.defaultReadObject();
     Preconditions.checkNotNull(componentTypes);
+    this.attachmentPoint = AttachmentPoint.NONE;
   }
 }

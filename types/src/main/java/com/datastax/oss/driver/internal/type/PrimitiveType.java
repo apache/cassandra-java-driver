@@ -15,15 +15,33 @@
  */
 package com.datastax.oss.driver.internal.type;
 
+import com.datastax.oss.driver.api.core.detach.AttachmentPoint;
 import com.datastax.oss.driver.api.type.DataType;
 import com.datastax.oss.protocol.internal.ProtocolConstants;
 
 public class PrimitiveType implements DataType {
 
-  public final int protocolCode;
+  private final int protocolCode;
+
+  private transient volatile boolean attached;
 
   public PrimitiveType(int protocolCode) {
     this.protocolCode = protocolCode;
+  }
+
+  @Override
+  public int getProtocolCode() {
+    return protocolCode;
+  }
+
+  @Override
+  public boolean isDetached() {
+    return false;
+  }
+
+  @Override
+  public void attach(AttachmentPoint attachmentPoint) {
+    // nothing to do
   }
 
   @Override

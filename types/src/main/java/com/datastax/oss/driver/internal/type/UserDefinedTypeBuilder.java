@@ -18,7 +18,7 @@ package com.datastax.oss.driver.internal.type;
 import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.type.DataType;
 import com.datastax.oss.driver.api.type.UserDefinedType;
-import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableList;
 
 /**
  * Helper class to build {@link UserDefinedType} instances.
@@ -32,24 +32,28 @@ public class UserDefinedTypeBuilder {
 
   private final CqlIdentifier keyspaceName;
   private final CqlIdentifier typeName;
-  private final ImmutableMap.Builder<CqlIdentifier, DataType> fieldTypesBuilder;
+  private final ImmutableList.Builder<CqlIdentifier> fieldNames;
+  private final ImmutableList.Builder<DataType> fieldTypes;
 
   public UserDefinedTypeBuilder(CqlIdentifier keyspaceName, CqlIdentifier typeName) {
     this.keyspaceName = keyspaceName;
     this.typeName = typeName;
-    this.fieldTypesBuilder = ImmutableMap.builder();
+    this.fieldNames = ImmutableList.builder();
+    this.fieldTypes = ImmutableList.builder();
   }
 
   /**
    * Adds a new field. The fields in the resulting type will be in the order of the calls to this
    * method.
    */
-  public UserDefinedTypeBuilder withField(CqlIdentifier name, DataType dataType) {
-    fieldTypesBuilder.put(name, dataType);
+  public UserDefinedTypeBuilder withField(CqlIdentifier name, DataType type) {
+    fieldNames.add(name);
+    fieldTypes.add(type);
     return this;
   }
 
   public UserDefinedType build() {
-    return new DefaultUserDefinedType(keyspaceName, typeName, fieldTypesBuilder.build());
+    return new DefaultUserDefinedType(
+        keyspaceName, typeName, fieldNames.build(), fieldTypes.build());
   }
 }

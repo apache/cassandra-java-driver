@@ -16,12 +16,37 @@
 package com.datastax.oss.driver.api.type;
 
 import com.datastax.oss.driver.api.core.CqlIdentifier;
-import java.util.Map;
+import com.datastax.oss.driver.api.core.data.UdtValue;
+import com.datastax.oss.driver.api.core.detach.AttachmentPoint;
+import com.datastax.oss.protocol.internal.ProtocolConstants;
+import java.util.List;
 
-public interface UserDefinedType {
+public interface UserDefinedType extends DataType {
   CqlIdentifier getKeyspace();
 
   CqlIdentifier getName();
 
-  Map<CqlIdentifier, DataType> getFieldTypes();
+  List<CqlIdentifier> getFieldNames();
+
+  int firstIndexOf(CqlIdentifier id);
+
+  int firstIndexOf(String name);
+
+  default boolean contains(CqlIdentifier id) {
+    return firstIndexOf(id) >= 0;
+  }
+
+  default boolean contains(String name) {
+    return firstIndexOf(name) >= 0;
+  }
+
+  List<DataType> getFieldTypes();
+
+  UdtValue newValue();
+
+  AttachmentPoint getAttachmentPoint();
+
+  default int getProtocolCode() {
+    return ProtocolConstants.DataType.UDT;
+  }
 }

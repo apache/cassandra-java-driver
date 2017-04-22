@@ -132,7 +132,7 @@ public class DefaultTopologyMonitor implements TopologyMonitor {
   }
 
   private NodeInfo buildNodeInfo(AdminResult.Row row) {
-    InetAddress broadcastRpcAddress = row.getInet("rpc_address");
+    InetAddress broadcastRpcAddress = row.getInetAddress("rpc_address");
     InetSocketAddress connectAddress =
         addressTranslator.translate(new InetSocketAddress(broadcastRpcAddress, port));
     return buildNodeInfo(row, connectAddress);
@@ -141,17 +141,17 @@ public class DefaultTopologyMonitor implements TopologyMonitor {
   private NodeInfo buildNodeInfo(AdminResult.Row row, InetSocketAddress connectAddress) {
     DefaultNodeInfo.Builder builder = DefaultNodeInfo.builder().withConnectAddress(connectAddress);
 
-    InetAddress broadcastAddress = row.getInet("broadcast_address"); // in system.local
+    InetAddress broadcastAddress = row.getInetAddress("broadcast_address"); // in system.local
     if (broadcastAddress == null) {
-      broadcastAddress = row.getInet("peer"); // in system.peers
+      broadcastAddress = row.getInetAddress("peer"); // in system.peers
     }
     builder.withBroadcastAddress(broadcastAddress);
 
-    builder.withListenAddress(row.getInet("listen_address"));
-    builder.withDatacenter(row.getVarchar("data_center"));
-    builder.withRack(row.getVarchar("rack"));
-    builder.withCassandraVersion(row.getVarchar("release_version"));
-    builder.withTokens(row.getSetOfVarchar("tokens"));
+    builder.withListenAddress(row.getInetAddress("listen_address"));
+    builder.withDatacenter(row.getString("data_center"));
+    builder.withRack(row.getString("rack"));
+    builder.withCassandraVersion(row.getString("release_version"));
+    builder.withTokens(row.getSetOfString("tokens"));
 
     return builder.build();
   }
@@ -169,7 +169,7 @@ public class DefaultTopologyMonitor implements TopologyMonitor {
     // The peers table is keyed by broadcast_address, but we only have the translated
     // broadcast_rpc_address, so we have to traverse the whole table and check the rows one by one.
     for (AdminResult.Row row : result) {
-      InetAddress broadcastRpcAddress = row.getInet("rpc_address");
+      InetAddress broadcastRpcAddress = row.getInetAddress("rpc_address");
       if (broadcastRpcAddress != null
           && addressTranslator
               .translate(new InetSocketAddress(broadcastRpcAddress, port))

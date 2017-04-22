@@ -15,10 +15,16 @@
  */
 package com.datastax.oss.driver.api.type;
 
-public interface CustomType {
+import com.datastax.oss.protocol.internal.ProtocolConstants;
+
+public interface CustomType extends DataType {
   /**
    * The fully qualified name of the subtype of {@code org.apache.cassandra.db.marshal.AbstractType}
    * that represents this type server-side.
    */
   String getClassName();
+
+  default int getProtocolCode() {
+    return ProtocolConstants.DataType.CUSTOM;
+  }
 }

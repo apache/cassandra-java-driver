@@ -15,6 +15,7 @@
  */
 package com.datastax.oss.driver.api.type;
 
+import com.datastax.oss.driver.api.core.detach.Detachable;
 import com.datastax.oss.driver.internal.type.DefaultCustomType;
 import com.datastax.oss.driver.internal.type.DefaultListType;
 import com.datastax.oss.driver.internal.type.DefaultMapType;
@@ -25,7 +26,7 @@ import com.datastax.oss.protocol.internal.ProtocolConstants;
 import com.google.common.collect.ImmutableList;
 import java.util.Arrays;
 
-/** Utility class to get or build {@link DataType} instances. */
+/** Constants and factory methods to obtain data type instances. */
 public class DataTypes {
 
   public static final DataType ASCII = new PrimitiveType(ProtocolConstants.DataType.ASCII);
@@ -49,8 +50,13 @@ public class DataTypes {
   public static final DataType TINYINT = new PrimitiveType(ProtocolConstants.DataType.TINYINT);
   public static final DataType DURATION = new PrimitiveType(ProtocolConstants.DataType.DURATION);
 
-  public static CustomType custom(String className) {
-    return new DefaultCustomType(className);
+  public static DataType custom(String className) {
+    // In protocol v4, duration is implemented as a custom type
+    if ("org.apache.cassandra.db.marshal.DurationType".equals(className)) {
+      return DURATION;
+    } else {
+      return new DefaultCustomType(className);
+    }
   }
 
   public static ListType listOf(DataType elementType) {
@@ -67,6 +73,11 @@ public class DataTypes {
     return new DefaultMapType(keyType, valueType, false);
   }
 
+  /**
+   * Builds a new, <em>detached</em> tuple type.
+   *
+   * @see Detachable
+   */
   public static TupleType tupleOf(DataType... componentTypes) {
     return new DefaultTupleType(ImmutableList.copyOf(Arrays.asList(componentTypes)));
   }

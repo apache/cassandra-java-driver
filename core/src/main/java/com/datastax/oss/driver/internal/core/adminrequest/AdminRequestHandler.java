@@ -17,7 +17,7 @@ package com.datastax.oss.driver.internal.core.adminrequest;
 
 import com.datastax.oss.driver.api.core.DriverException;
 import com.datastax.oss.driver.api.core.ProtocolVersion;
-import com.datastax.oss.driver.internal.core.adminrequest.codec.TypeCodecs;
+import com.datastax.oss.driver.api.type.codec.TypeCodecs;
 import com.datastax.oss.driver.internal.core.channel.DriverChannel;
 import com.datastax.oss.driver.internal.core.channel.ResponseCallback;
 import com.datastax.oss.driver.internal.core.util.concurrent.UncaughtExceptions;
@@ -175,13 +175,13 @@ public class AdminRequestHandler implements ResponseCallback {
 
   private static ByteBuffer serialize(Object parameter, ProtocolVersion protocolVersion) {
     if (parameter instanceof String) {
-      return TypeCodecs.VARCHAR.encode((String) parameter, protocolVersion);
+      return TypeCodecs.TEXT.encode((String) parameter, protocolVersion);
     } else if (parameter instanceof InetAddress) {
       return TypeCodecs.INET.encode((InetAddress) parameter, protocolVersion);
     } else if (parameter instanceof List && ((List) parameter).get(0) instanceof String) {
       @SuppressWarnings("unchecked")
       List<String> l = (List<String>) parameter;
-      return TypeCodecs.LIST_OF_VARCHAR.encode(l, protocolVersion);
+      return AdminResult.Row.LIST_OF_TEXT.encode(l, protocolVersion);
     } else {
       throw new IllegalArgumentException(
           "Unsupported variable type for admin query: " + parameter.getClass());

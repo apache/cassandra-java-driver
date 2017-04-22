@@ -15,6 +15,7 @@
  */
 package com.datastax.oss.driver.internal.type;
 
+import com.datastax.oss.driver.api.core.detach.AttachmentPoint;
 import com.datastax.oss.driver.api.type.DataType;
 import com.datastax.oss.driver.api.type.MapType;
 import com.google.common.base.Preconditions;
@@ -54,6 +55,17 @@ public class DefaultMapType implements MapType {
   @Override
   public boolean isFrozen() {
     return frozen;
+  }
+
+  @Override
+  public boolean isDetached() {
+    return keyType.isDetached() && valueType.isDetached();
+  }
+
+  @Override
+  public void attach(AttachmentPoint attachmentPoint) {
+    keyType.attach(attachmentPoint);
+    valueType.attach(attachmentPoint);
   }
 
   @Override

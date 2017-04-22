@@ -15,8 +15,19 @@
  */
 package com.datastax.oss.driver.api.type;
 
+import com.datastax.oss.driver.api.core.data.TupleValue;
+import com.datastax.oss.driver.api.core.detach.AttachmentPoint;
+import com.datastax.oss.protocol.internal.ProtocolConstants;
 import java.util.List;
 
-public interface TupleType {
+public interface TupleType extends DataType {
   List<DataType> getComponentTypes();
+
+  TupleValue newValue();
+
+  AttachmentPoint getAttachmentPoint();
+
+  default int getProtocolCode() {
+    return ProtocolConstants.DataType.TUPLE;
+  }
 }

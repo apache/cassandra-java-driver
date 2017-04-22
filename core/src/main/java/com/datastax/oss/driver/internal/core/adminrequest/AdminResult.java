@@ -16,11 +16,12 @@
 package com.datastax.oss.driver.internal.core.adminrequest;
 
 import com.datastax.oss.driver.api.core.ProtocolVersion;
-import com.datastax.oss.driver.internal.core.adminrequest.codec.TypeCodec;
-import com.datastax.oss.driver.internal.core.adminrequest.codec.TypeCodecs;
+import com.datastax.oss.driver.api.type.codec.TypeCodec;
+import com.datastax.oss.driver.api.type.codec.TypeCodecs;
 import com.datastax.oss.driver.internal.core.util.concurrent.CompletableFutures;
 import com.datastax.oss.protocol.internal.response.result.ColumnSpec;
 import com.datastax.oss.protocol.internal.response.result.Rows;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.AbstractIterator;
 import com.google.common.collect.ImmutableMap;
 import java.net.InetAddress;
@@ -79,6 +80,18 @@ public class AdminResult implements Iterable<AdminResult.Row> {
   }
 
   public static class Row {
+    private static final TypeCodec<Map<String, String>> MAP_OF_TEXT_TO_TEXT =
+        TypeCodecs.mapOf(TypeCodecs.TEXT, TypeCodecs.TEXT);
+    private static final TypeCodec<Map<String, ByteBuffer>> MAP_OF_TEXT_TO_BLOB =
+        TypeCodecs.mapOf(TypeCodecs.TEXT, TypeCodecs.BLOB);
+    private static final TypeCodec<Map<UUID, ByteBuffer>> MAP_OF_UUID_TO_BLOB =
+        TypeCodecs.mapOf(TypeCodecs.UUID, TypeCodecs.BLOB);
+
+    @VisibleForTesting
+    static final TypeCodec<List<String>> LIST_OF_TEXT = TypeCodecs.listOf(TypeCodecs.TEXT);
+
+    private static final TypeCodec<Set<String>> SET_OF_TEXT = TypeCodecs.setOf(TypeCodecs.TEXT);
+
     private final Map<String, ColumnSpec> columnSpecs;
     private final List<ByteBuffer> data;
     private final ProtocolVersion protocolVersion;
@@ -96,7 +109,7 @@ public class AdminResult implements Iterable<AdminResult.Row> {
       return get(columnName, TypeCodecs.BOOLEAN);
     }
 
-    public Integer getInt(String columnName) {
+    public Integer getInteger(String columnName) {
       return get(columnName, TypeCodecs.INT);
     }
 
@@ -104,40 +117,40 @@ public class AdminResult implements Iterable<AdminResult.Row> {
       return get(columnName, TypeCodecs.DOUBLE);
     }
 
-    public String getVarchar(String columnName) {
-      return get(columnName, TypeCodecs.VARCHAR);
+    public String getString(String columnName) {
+      return get(columnName, TypeCodecs.TEXT);
     }
 
     public UUID getUuid(String columnName) {
       return get(columnName, TypeCodecs.UUID);
     }
 
-    public ByteBuffer getBlob(String columnName) {
+    public ByteBuffer getByteBuffer(String columnName) {
       return get(columnName, TypeCodecs.BLOB);
     }
 
-    public InetAddress getInet(String columnName) {
+    public InetAddress getInetAddress(String columnName) {
       return get(columnName, TypeCodecs.INET);
     }
 
-    public List<String> getListOfVarchar(String columnName) {
-      return get(columnName, TypeCodecs.LIST_OF_VARCHAR);
+    public List<String> getListOfString(String columnName) {
+      return get(columnName, LIST_OF_TEXT);
     }
 
-    public Set<String> getSetOfVarchar(String columnName) {
-      return get(columnName, TypeCodecs.SET_OF_VARCHAR);
+    public Set<String> getSetOfString(String columnName) {
+      return get(columnName, SET_OF_TEXT);
     }
 
-    public Map<String, String> getMapOfVarcharToVarchar(String columnName) {
-      return get(columnName, TypeCodecs.MAP_OF_VARCHAR_TO_VARCHAR);
+    public Map<String, String> getMapOfStringToString(String columnName) {
+      return get(columnName, MAP_OF_TEXT_TO_TEXT);
     }
 
-    public Map<String, ByteBuffer> getMapOfVarcharToBlob(String columnName) {
-      return get(columnName, TypeCodecs.MAP_OF_VARCHAR_TO_BLOB);
+    public Map<String, ByteBuffer> getMapOfStringToByteBuffer(String columnName) {
+      return get(columnName, MAP_OF_TEXT_TO_BLOB);
     }
 
-    public Map<UUID, ByteBuffer> getMapOfUuidToBlob(String columnName) {
-      return get(columnName, TypeCodecs.MAP_OF_UUID_TO_BLOB);
+    public Map<UUID, ByteBuffer> getMapOfUuidToByteBuffer(String columnName) {
+      return get(columnName, MAP_OF_UUID_TO_BLOB);
     }
 
     private <T> T get(String columnName, TypeCodec<T> codec) {
