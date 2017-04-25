@@ -35,6 +35,16 @@ public class UuidCodec implements TypeCodec<UUID> {
   }
 
   @Override
+  public boolean canEncode(Object value) {
+    return value instanceof UUID;
+  }
+
+  @Override
+  public boolean canEncode(Class<?> javaClass) {
+    return javaClass == UUID.class;
+  }
+
+  @Override
   public ByteBuffer encode(UUID value, ProtocolVersion protocolVersion) {
     if (value == null) {
       return null;

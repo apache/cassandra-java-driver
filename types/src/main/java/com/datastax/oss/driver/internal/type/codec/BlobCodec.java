@@ -35,6 +35,16 @@ public class BlobCodec implements TypeCodec<ByteBuffer> {
   }
 
   @Override
+  public boolean canEncode(Object value) {
+    return value instanceof ByteBuffer;
+  }
+
+  @Override
+  public boolean canEncode(Class<?> javaClass) {
+    return ByteBuffer.class.isAssignableFrom(javaClass);
+  }
+
+  @Override
   public ByteBuffer encode(ByteBuffer value, ProtocolVersion protocolVersion) {
     return (value == null) ? null : value.duplicate();
   }

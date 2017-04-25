@@ -36,6 +36,16 @@ public class VarIntCodec implements TypeCodec<BigInteger> {
   }
 
   @Override
+  public boolean canEncode(Object value) {
+    return value instanceof BigInteger;
+  }
+
+  @Override
+  public boolean canEncode(Class<?> javaClass) {
+    return BigInteger.class.isAssignableFrom(javaClass);
+  }
+
+  @Override
   public ByteBuffer encode(BigInteger value, ProtocolVersion protocolVersion) {
     return (value == null) ? null : ByteBuffer.wrap(value.toByteArray());
   }

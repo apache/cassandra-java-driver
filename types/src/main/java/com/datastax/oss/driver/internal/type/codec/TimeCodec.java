@@ -41,6 +41,16 @@ public class TimeCodec implements TypeCodec<LocalTime> {
   }
 
   @Override
+  public boolean canEncode(Object value) {
+    return value instanceof LocalTime;
+  }
+
+  @Override
+  public boolean canEncode(Class<?> javaClass) {
+    return javaClass == LocalTime.class;
+  }
+
+  @Override
   public ByteBuffer encode(LocalTime value, ProtocolVersion protocolVersion) {
     return (value == null)
         ? null

@@ -45,6 +45,16 @@ public class StringCodec implements TypeCodec<String> {
   }
 
   @Override
+  public boolean canEncode(Object value) {
+    return value instanceof String;
+  }
+
+  @Override
+  public boolean canEncode(Class<?> javaClass) {
+    return javaClass == String.class;
+  }
+
+  @Override
   public ByteBuffer encode(String value, ProtocolVersion protocolVersion) {
     return (value == null) ? null : ByteBuffer.wrap(value.getBytes(charset));
   }

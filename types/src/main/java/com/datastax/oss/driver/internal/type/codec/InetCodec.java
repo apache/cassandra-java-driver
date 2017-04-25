@@ -38,6 +38,16 @@ public class InetCodec implements TypeCodec<InetAddress> {
   }
 
   @Override
+  public boolean canEncode(Object value) {
+    return value instanceof InetAddress;
+  }
+
+  @Override
+  public boolean canEncode(Class<?> javaClass) {
+    return InetAddress.class.isAssignableFrom(javaClass);
+  }
+
+  @Override
   public ByteBuffer encode(InetAddress value, ProtocolVersion protocolVersion) {
     return (value == null) ? null : ByteBuffer.wrap(value.getAddress());
   }

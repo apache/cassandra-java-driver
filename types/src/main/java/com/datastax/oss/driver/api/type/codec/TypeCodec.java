@@ -49,10 +49,15 @@ public interface TypeCodec<T> {
    *
    * <p>The default implementation wraps the class in a generic type and calls {@link
    * #canEncode(GenericType)}, therefore it is invariant as well.
+   *
+   * <p>Implementors are encouraged to override this method if there is a more efficient way. In
+   * particular, if the codec targets a non-generic class, the check can be done with {@code
+   * Class#isAssignableFrom}. Or even better, with {@code ==} if that class also happens to be
+   * final.
    */
-  default boolean canEncode(Class<?> javaType) {
-    Preconditions.checkNotNull(javaType);
-    return canEncode(GenericType.of(javaType));
+  default boolean canEncode(Class<?> javaClass) {
+    Preconditions.checkNotNull(javaClass);
+    return canEncode(GenericType.of(javaClass));
   }
 
   /**
@@ -72,10 +77,13 @@ public interface TypeCodec<T> {
    * <p>Similarly, codecs that only accept a partial subset of all possible values must override
    * this method and manually inspect the object to check if it complies or not with the codec's
    * limitations.
+   *
+   * <p>Finally, if the codec targets a non-generic Java class, it might be possible to implement
+   * this method with a simple {@code instanceof} check.
    */
-  default boolean canEncode(Object object) {
-    Preconditions.checkNotNull(object);
-    return getJavaType().__getToken().isSupertypeOf(TypeToken.of(object.getClass()));
+  default boolean canEncode(Object value) {
+    Preconditions.checkNotNull(value);
+    return getJavaType().__getToken().isSupertypeOf(TypeToken.of(value.getClass()));
   }
 
   /** Whether this codec is capable of decoding the given CQL type. */

@@ -132,13 +132,6 @@ public abstract class CachingCodecRegistry implements CodecRegistry {
     Preconditions.checkNotNull(value);
     LOG.trace("Looking up codec for object {}", value);
 
-    // Quick check for two trivial cases
-    if (value instanceof TupleValue) {
-      return safeCast(codecFor(((TupleValue) value).getType(), TupleValue.class));
-    } else if (value instanceof UdtValue) {
-      return safeCast(codecFor(((UdtValue) value).getType(), UdtValue.class));
-    }
-
     for (TypeCodec<?> primitiveCodec : PRIMITIVE_CODECS) {
       if (primitiveCodec.canEncode(value)) {
         LOG.trace("Found matching primitive codec {}", primitiveCodec);
@@ -151,6 +144,13 @@ public abstract class CachingCodecRegistry implements CodecRegistry {
         return safeCast(userCodec);
       }
     }
+
+    if (value instanceof TupleValue) {
+      return safeCast(codecFor(((TupleValue) value).getType(), TupleValue.class));
+    } else if (value instanceof UdtValue) {
+      return safeCast(codecFor(((UdtValue) value).getType(), UdtValue.class));
+    }
+
     GenericType<?> javaType = inspectType(value);
     LOG.trace("Continuing based on inferred type {}", javaType);
     return safeCast(getCachedCodec(null, javaType));

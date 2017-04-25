@@ -18,6 +18,7 @@ package com.datastax.oss.driver.internal.type.codec;
 import com.datastax.oss.driver.api.core.ProtocolVersion;
 import com.datastax.oss.driver.api.type.DataType;
 import com.datastax.oss.driver.api.type.DataTypes;
+import com.datastax.oss.driver.api.type.reflect.GenericType;
 import java.nio.ByteBuffer;
 import java.util.UUID;
 
@@ -29,7 +30,12 @@ public class TimeUuidCodec extends UuidCodec {
 
   @Override
   public boolean canEncode(Object value) {
-    return super.canEncode(value) && ((UUID) value).version() == 1;
+    return value instanceof UUID && ((UUID) value).version() == 1;
+  }
+
+  @Override
+  public boolean canEncode(Class<?> javaClass) {
+    return javaClass == UUID.class;
   }
 
   @Override

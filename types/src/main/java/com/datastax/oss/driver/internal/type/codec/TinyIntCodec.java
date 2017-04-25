@@ -34,6 +34,16 @@ public class TinyIntCodec implements PrimitiveByteCodec {
   }
 
   @Override
+  public boolean canEncode(Object value) {
+    return value instanceof Byte;
+  }
+
+  @Override
+  public boolean canEncode(Class<?> javaClass) {
+    return javaClass == Byte.class;
+  }
+
+  @Override
   public ByteBuffer encodePrimitive(byte value, ProtocolVersion protocolVersion) {
     ByteBuffer bytes = ByteBuffer.allocate(1);
     bytes.put(0, value);

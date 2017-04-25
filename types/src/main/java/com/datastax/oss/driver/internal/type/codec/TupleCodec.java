@@ -49,6 +49,11 @@ public class TupleCodec implements TypeCodec<TupleValue> {
   }
 
   @Override
+  public boolean canEncode(Class<?> javaClass) {
+    return TupleValue.class.isAssignableFrom(javaClass);
+  }
+
+  @Override
   public ByteBuffer encode(TupleValue value, ProtocolVersion protocolVersion) {
     if (value == null) {
       return null;

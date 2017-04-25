@@ -34,6 +34,16 @@ public class BigIntCodec implements PrimitiveLongCodec {
   }
 
   @Override
+  public boolean canEncode(Object value) {
+    return value instanceof Long;
+  }
+
+  @Override
+  public boolean canEncode(Class<?> javaClass) {
+    return javaClass == Long.class;
+  }
+
+  @Override
   public ByteBuffer encodePrimitive(long value, ProtocolVersion protocolVersion) {
     ByteBuffer bytes = ByteBuffer.allocate(8);
     bytes.putLong(0, value);

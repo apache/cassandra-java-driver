@@ -35,6 +35,16 @@ public class IntCodec implements PrimitiveIntCodec {
   }
 
   @Override
+  public boolean canEncode(Object value) {
+    return value instanceof Integer;
+  }
+
+  @Override
+  public boolean canEncode(Class<?> javaClass) {
+    return javaClass == Integer.class;
+  }
+
+  @Override
   public ByteBuffer encodePrimitive(int value, ProtocolVersion protocolVersion) {
     ByteBuffer bytes = ByteBuffer.allocate(4);
     bytes.putInt(0, value);

@@ -34,6 +34,16 @@ public class DoubleCodec implements PrimitiveDoubleCodec {
   }
 
   @Override
+  public boolean canEncode(Object value) {
+    return value instanceof Double;
+  }
+
+  @Override
+  public boolean canEncode(Class<?> javaClass) {
+    return javaClass == Double.class;
+  }
+
+  @Override
   public ByteBuffer encodePrimitive(double value, ProtocolVersion protocolVersion) {
     ByteBuffer bytes = ByteBuffer.allocate(8);
     bytes.putDouble(0, value);

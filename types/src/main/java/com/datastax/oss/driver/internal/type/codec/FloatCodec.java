@@ -34,6 +34,16 @@ public class FloatCodec implements PrimitiveFloatCodec {
   }
 
   @Override
+  public boolean canEncode(Object value) {
+    return value instanceof Float;
+  }
+
+  @Override
+  public boolean canEncode(Class<?> javaClass) {
+    return javaClass == Float.class;
+  }
+
+  @Override
   public ByteBuffer encodePrimitive(float value, ProtocolVersion protocolVersion) {
     ByteBuffer bytes = ByteBuffer.allocate(4);
     bytes.putFloat(0, value);

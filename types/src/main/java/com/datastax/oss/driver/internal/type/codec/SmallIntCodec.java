@@ -34,6 +34,16 @@ public class SmallIntCodec implements PrimitiveShortCodec {
   }
 
   @Override
+  public boolean canEncode(Object value) {
+    return value instanceof Short;
+  }
+
+  @Override
+  public boolean canEncode(Class<?> javaClass) {
+    return javaClass == Short.class;
+  }
+
+  @Override
   public ByteBuffer encodePrimitive(short value, ProtocolVersion protocolVersion) {
     ByteBuffer bytes = ByteBuffer.allocate(2);
     bytes.putShort(0, value);

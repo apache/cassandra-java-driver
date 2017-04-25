@@ -41,6 +41,16 @@ public class CqlDurationCodec implements TypeCodec<CqlDuration> {
   }
 
   @Override
+  public boolean canEncode(Object value) {
+    return value instanceof CqlDuration;
+  }
+
+  @Override
+  public boolean canEncode(Class<?> javaClass) {
+    return javaClass == CqlDuration.class;
+  }
+
+  @Override
   public ByteBuffer encode(CqlDuration value, ProtocolVersion protocolVersion) {
     if (value == null) {
       return null;

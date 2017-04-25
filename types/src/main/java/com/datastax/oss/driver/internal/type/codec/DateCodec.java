@@ -44,6 +44,16 @@ public class DateCodec implements TypeCodec<LocalDate> {
   }
 
   @Override
+  public boolean canEncode(Object value) {
+    return value instanceof LocalDate;
+  }
+
+  @Override
+  public boolean canEncode(Class<?> javaClass) {
+    return javaClass == LocalDate.class;
+  }
+
+  @Override
   public ByteBuffer encode(LocalDate value, ProtocolVersion protocolVersion) {
     if (value == null) {
       return null;
