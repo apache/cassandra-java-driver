@@ -17,6 +17,7 @@ package com.datastax.oss.driver.internal.core.pool;
 
 import com.datastax.oss.driver.api.core.AsyncAutoCloseable;
 import com.datastax.oss.driver.api.core.CqlIdentifier;
+import com.datastax.oss.driver.api.core.InvalidKeyspaceException;
 import com.datastax.oss.driver.internal.core.channel.ChannelEvent;
 import com.datastax.oss.driver.internal.core.channel.ChannelFactory;
 import com.datastax.oss.driver.internal.core.channel.ClusterNameMismatchException;
@@ -79,6 +80,7 @@ public class ChannelPool implements AsyncAutoCloseable {
 
   private final EventExecutor adminExecutor;
   private final SingleThreaded singleThreaded;
+  private volatile boolean invalidKeyspace;
 
   private ChannelPool(
       InetSocketAddress address,
@@ -86,13 +88,21 @@ public class ChannelPool implements AsyncAutoCloseable {
       int channelCount,
       InternalDriverContext context) {
 
-    adminExecutor = context.nettyOptions().adminEventExecutorGroup().next();
+    this.adminExecutor = context.nettyOptions().adminEventExecutorGroup().next();
     this.singleThreaded = new SingleThreaded(address, keyspaceName, channelCount, context);
   }
 
   private CompletionStage<ChannelPool> connect() {
     RunOrSchedule.on(adminExecutor, singleThreaded::connect);
     return singleThreaded.connectFuture;
+  }
+
+  /**
+   * Whether all channels failed due to an invalid keyspace. This is only used at initialization. We
+   * don't make the decision to close the pool here yet, that's done at the session level.
+   */
+  public boolean isInvalidKeyspace() {
+    return invalidKeyspace;
   }
 
   /**
@@ -217,6 +227,7 @@ public class ChannelPool implements AsyncAutoCloseable {
     private boolean onAllConnected(@SuppressWarnings("unused") Void v) {
       assert adminExecutor.inEventLoop();
       ClusterNameMismatchException clusterNameMismatch = null;
+      int invalidKeyspaceErrors = 0;
       for (CompletionStage<DriverChannel> pendingChannel : pendingChannels) {
         CompletableFuture<DriverChannel> future = pendingChannel.toCompletableFuture();
         assert future.isDone();
@@ -243,18 +254,23 @@ public class ChannelPool implements AsyncAutoCloseable {
         } catch (InterruptedException e) {
           // can't happen, the future is done
         } catch (ExecutionException e) {
-          LOG.debug(ChannelPool.this + " error while opening new channel", e.getCause());
+          Throwable cause = e.getCause();
+          LOG.debug(ChannelPool.this + " error while opening new channel", cause);
           // TODO we don't log at a higher level because it's not a fatal error, but this should probably be recorded somewhere (metric?)
 
           // TODO auth exception => WARN and keep reconnecting
           // TODO protocol error => WARN and force down
 
-          if (e.getCause() instanceof ClusterNameMismatchException) {
+          if (cause instanceof ClusterNameMismatchException) {
             // This will likely be thrown by all channels, but finish the loop cleanly
-            clusterNameMismatch = (ClusterNameMismatchException) e.getCause();
+            clusterNameMismatch = (ClusterNameMismatchException) cause;
+          } else if (cause instanceof InvalidKeyspaceException) {
+            invalidKeyspaceErrors += 1;
           }
         }
       }
+      // If all channels failed, assume the keyspace is wrong
+      invalidKeyspace = (invalidKeyspaceErrors == pendingChannels.size());
       pendingChannels.clear();
 
       if (clusterNameMismatch != null) {

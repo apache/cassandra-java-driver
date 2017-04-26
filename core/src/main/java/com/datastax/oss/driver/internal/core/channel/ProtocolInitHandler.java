@@ -15,6 +15,7 @@
  */
 package com.datastax.oss.driver.internal.core.channel;
 
+import com.datastax.oss.driver.api.core.InvalidKeyspaceException;
 import com.datastax.oss.driver.api.core.ProtocolVersion;
 import com.datastax.oss.driver.api.core.UnsupportedProtocolVersionException;
 import com.datastax.oss.driver.api.core.auth.AuthenticationException;
@@ -246,6 +247,9 @@ class ProtocolInitHandler extends ConnectInitHandler {
             fail(
                 UnsupportedProtocolVersionException.forSingleAttempt(
                     channel.remoteAddress(), initialProtocolVersion));
+          } else if (step == Step.SET_KEYSPACE
+              && error.code == ProtocolConstants.ErrorCode.INVALID) {
+            fail(new InvalidKeyspaceException(error.message));
           } else {
             failOnUnexpected(error);
           }

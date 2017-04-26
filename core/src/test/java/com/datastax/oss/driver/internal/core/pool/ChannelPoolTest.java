@@ -16,6 +16,7 @@
 package com.datastax.oss.driver.internal.core.pool;
 
 import com.datastax.oss.driver.api.core.CqlIdentifier;
+import com.datastax.oss.driver.api.core.InvalidKeyspaceException;
 import com.datastax.oss.driver.api.core.connection.ReconnectionPolicy;
 import com.datastax.oss.driver.api.core.connection.ReconnectionPolicy.ReconnectionSchedule;
 import com.datastax.oss.driver.internal.core.channel.ChannelEvent;
@@ -134,6 +135,24 @@ public class ChannelPoolTest {
     Mockito.verify(eventBus, never()).fire(ChannelEvent.channelOpened(ADDRESS));
 
     factoryHelper.verifyNoMoreCalls();
+  }
+
+  @Test
+  public void should_indicate_when_keyspace_failed_on_all_channels() {
+    int poolSize = 3;
+
+    MockChannelFactoryHelper factoryHelper =
+        MockChannelFactoryHelper.builder(channelFactory)
+            .failure(ADDRESS, new InvalidKeyspaceException("invalid keyspace"))
+            .failure(ADDRESS, new InvalidKeyspaceException("invalid keyspace"))
+            .failure(ADDRESS, new InvalidKeyspaceException("invalid keyspace"))
+            .build();
+
+    CompletionStage<ChannelPool> poolFuture = ChannelPool.init(ADDRESS, null, poolSize, context);
+
+    factoryHelper.waitForCalls(ADDRESS, 3);
+    waitForPendingAdminTasks();
+    assertThat(poolFuture).isSuccess(pool -> assertThat(pool.isInvalidKeyspace()).isTrue());
   }
 
   @Test

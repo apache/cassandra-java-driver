@@ -17,6 +17,7 @@ package com.datastax.oss.driver.internal.core.channel;
 
 import com.datastax.oss.driver.api.core.CoreProtocolVersion;
 import com.datastax.oss.driver.api.core.CqlIdentifier;
+import com.datastax.oss.driver.api.core.InvalidKeyspaceException;
 import com.datastax.oss.driver.api.core.auth.AuthProvider;
 import com.datastax.oss.driver.api.core.auth.AuthenticationException;
 import com.datastax.oss.driver.api.core.config.CoreDriverOption;
@@ -366,5 +367,35 @@ public class ProtocolInitHandlerTest extends ChannelHandlerTestBase {
     writeInboundFrame(requestFrame, new Ready());
 
     assertThat(connectFuture).isSuccess();
+  }
+
+  @Test
+  public void should_fail_to_initialize_if_keyspace_is_invalid() {
+    DriverChannelOptions driverChannelOptions =
+        DriverChannelOptions.builder().withKeyspace(CqlIdentifier.fromCql("ks")).build();
+    channel
+        .pipeline()
+        .addLast(
+            "init",
+            new ProtocolInitHandler(
+                internalDriverContext, CoreProtocolVersion.V4, null, driverChannelOptions));
+
+    ChannelFuture connectFuture = channel.connect(new InetSocketAddress("localhost", 9042));
+
+    writeInboundFrame(readOutboundFrame(), new Ready());
+    writeInboundFrame(readOutboundFrame(), TestResponses.clusterNameResponse("someClusterName"));
+
+    Frame requestFrame = readOutboundFrame();
+    assertThat(requestFrame.message).isInstanceOf(Query.class);
+    assertThat(((Query) requestFrame.message).query).isEqualTo("USE \"ks\"");
+    writeInboundFrame(
+        requestFrame, new Error(ProtocolConstants.ErrorCode.INVALID, "invalid keyspace"));
+
+    assertThat(connectFuture)
+        .isFailed(
+            error ->
+                assertThat(error)
+                    .isInstanceOf(InvalidKeyspaceException.class)
+                    .hasMessage("invalid keyspace"));
   }
 }
