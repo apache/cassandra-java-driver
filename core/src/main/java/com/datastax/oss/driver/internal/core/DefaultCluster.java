@@ -32,7 +32,6 @@ import java.util.List;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
-import java.util.concurrent.ExecutionException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -166,8 +165,7 @@ public class DefaultCluster implements Cluster {
         LOG.debug("Closing {}", closeable);
         childrenCloseFutures.add(closeable.closeAsync());
       }
-      CompletableFutures.whenAllDone(childrenCloseFutures)
-          .whenCompleteAsync(this::onChildrenClosed, adminExecutor);
+      CompletableFutures.whenAllDone(childrenCloseFutures, this::onChildrenClosed, adminExecutor);
     }
 
     private void forceClose() {
@@ -192,48 +190,33 @@ public class DefaultCluster implements Cluster {
           LOG.debug("Force-closing {}", closeable);
           childrenCloseFutures.add(closeable.forceCloseAsync());
         }
-        CompletableFutures.whenAllDone(childrenCloseFutures)
-            .whenCompleteAsync(this::onChildrenClosed, adminExecutor);
+        CompletableFutures.whenAllDone(childrenCloseFutures, this::onChildrenClosed, adminExecutor);
       }
     }
 
-    private void onChildrenClosed(@SuppressWarnings("unused") Void ignored, Throwable error) {
+    private void onChildrenClosed() {
       assert adminExecutor.inEventLoop();
-      if (error != null) {
-        LOG.warn("Unexpected error while closing", error);
+      for (CompletionStage<Void> future : childrenCloseFutures) {
+        warnIfFailed(future);
       }
-      try {
-        for (CompletionStage<Void> future : childrenCloseFutures) {
-          warnIfFailed(future);
-        }
-        context
-            .nettyOptions()
-            .onClose()
-            .addListener(
-                f -> {
-                  if (!f.isSuccess()) {
-                    closeFuture.completeExceptionally(f.cause());
-                  } else {
-                    closeFuture.complete(null);
-                  }
-                });
-      } catch (Throwable t) {
-        // Being paranoid here, but we don't want to risk swallowing an exception and leaving close
-        // hanging
-        LOG.warn("Unexpected error while closing", t);
-      }
+      context
+          .nettyOptions()
+          .onClose()
+          .addListener(
+              f -> {
+                if (!f.isSuccess()) {
+                  closeFuture.completeExceptionally(f.cause());
+                } else {
+                  closeFuture.complete(null);
+                }
+              });
     }
 
     private void warnIfFailed(CompletionStage<Void> stage) {
       CompletableFuture<Void> future = stage.toCompletableFuture();
       assert future.isDone();
       if (future.isCompletedExceptionally()) {
-        try {
-          future.get();
-        } catch (InterruptedException | ExecutionException e) {
-          // InterruptedException can't happen actually, but including it to make compiler happy
-          LOG.warn("Unexpected error while closing", e.getCause());
-        }
+        LOG.warn("Unexpected error while closing", CompletableFutures.getFailed(future));
       }
     }
 

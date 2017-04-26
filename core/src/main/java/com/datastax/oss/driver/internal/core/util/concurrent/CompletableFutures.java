@@ -16,13 +16,14 @@
 package com.datastax.oss.driver.internal.core.util.concurrent;
 
 import com.datastax.oss.driver.api.core.DriverException;
+import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Executor;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.function.Supplier;
 
 public class CompletableFutures {
 
@@ -45,7 +46,7 @@ public class CompletableFutures {
   }
 
   /** @return a completion stage that completes when all inputs are done (success or failure). */
-  public static <T> CompletionStage<Void> whenAllDone(List<CompletionStage<T>> inputs) {
+  public static <T> CompletionStage<Void> allDone(List<CompletionStage<T>> inputs) {
     CompletableFuture<Void> result = new CompletableFuture<>();
     final int todo = inputs.size();
     final AtomicInteger done = new AtomicInteger();
@@ -58,6 +59,38 @@ public class CompletableFutures {
           });
     }
     return result;
+  }
+
+  /** Do something when all inputs are done (success or failure). */
+  public static <T> void whenAllDone(
+      List<CompletionStage<T>> inputs, Runnable callback, Executor executor) {
+    allDone(inputs)
+        .thenAcceptAsync(success -> callback.run(), executor)
+        .exceptionally(UncaughtExceptions::log);
+  }
+
+  /** Get the result now, when we know for sure that the future is complete. */
+  public static <T> T getCompleted(CompletableFuture<T> future) {
+    Preconditions.checkArgument(future.isDone() && !future.isCompletedExceptionally());
+    try {
+      return future.get();
+    } catch (InterruptedException | ExecutionException e) {
+      // Neither can happen given the precondition
+      throw new AssertionError("Unexpected error", e);
+    }
+  }
+
+  /** Get the error now, when we know for sure that the future is failed. */
+  public static Throwable getFailed(CompletableFuture<?> future) {
+    Preconditions.checkArgument(future.isCompletedExceptionally());
+    try {
+      future.get();
+      throw new AssertionError("future should be failed");
+    } catch (InterruptedException e) {
+      throw new AssertionError("Unexpected error", e);
+    } catch (ExecutionException e) {
+      return e.getCause();
+    }
   }
 
   public static <T> T getUninterruptibly(CompletableFuture<T> future) {

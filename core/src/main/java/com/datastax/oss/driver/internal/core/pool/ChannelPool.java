@@ -220,7 +220,7 @@ public class ChannelPool implements AsyncAutoCloseable {
         CompletionStage<DriverChannel> channelFuture = channelFactory.connect(address, options);
         pendingChannels.add(channelFuture);
       }
-      return CompletableFutures.whenAllDone(pendingChannels)
+      return CompletableFutures.allDone(pendingChannels)
           .thenApplyAsync(this::onAllConnected, adminExecutor);
     }
 
@@ -231,8 +231,22 @@ public class ChannelPool implements AsyncAutoCloseable {
       for (CompletionStage<DriverChannel> pendingChannel : pendingChannels) {
         CompletableFuture<DriverChannel> future = pendingChannel.toCompletableFuture();
         assert future.isDone();
-        try {
-          DriverChannel channel = future.get();
+        if (future.isCompletedExceptionally()) {
+          Throwable error = CompletableFutures.getFailed(future);
+          LOG.debug(ChannelPool.this + " error while opening new channel", error);
+          // TODO we don't log at a higher level because it's not a fatal error, but this should probably be recorded somewhere (metric?)
+
+          // TODO auth exception => WARN and keep reconnecting
+          // TODO protocol error => WARN and force down
+
+          if (error instanceof ClusterNameMismatchException) {
+            // This will likely be thrown by all channels, but finish the loop cleanly
+            clusterNameMismatch = (ClusterNameMismatchException) error;
+          } else if (error instanceof InvalidKeyspaceException) {
+            invalidKeyspaceErrors += 1;
+          }
+        } else {
+          DriverChannel channel = CompletableFutures.getCompleted(future);
           if (isClosing) {
             LOG.debug(
                 "{} new channel added ({}) but the pool was closed, closing it",
@@ -251,26 +265,11 @@ public class ChannelPool implements AsyncAutoCloseable {
                             .submit(() -> onChannelClosed(channel))
                             .addListener(UncaughtExceptions::log));
           }
-        } catch (InterruptedException e) {
-          // can't happen, the future is done
-        } catch (ExecutionException e) {
-          Throwable cause = e.getCause();
-          LOG.debug(ChannelPool.this + " error while opening new channel", cause);
-          // TODO we don't log at a higher level because it's not a fatal error, but this should probably be recorded somewhere (metric?)
-
-          // TODO auth exception => WARN and keep reconnecting
-          // TODO protocol error => WARN and force down
-
-          if (cause instanceof ClusterNameMismatchException) {
-            // This will likely be thrown by all channels, but finish the loop cleanly
-            clusterNameMismatch = (ClusterNameMismatchException) cause;
-          } else if (cause instanceof InvalidKeyspaceException) {
-            invalidKeyspaceErrors += 1;
-          }
         }
       }
       // If all channels failed, assume the keyspace is wrong
       invalidKeyspace = (invalidKeyspaceErrors == pendingChannels.size());
+
       pendingChannels.clear();
 
       if (clusterNameMismatch != null) {
