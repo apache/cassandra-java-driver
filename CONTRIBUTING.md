@@ -112,4 +112,9 @@ ln -s ../../pre-commit.sh .git/hooks/pre-commit
 ```
 
 This will only allow commits if the tests pass. It is also a good reminder to keep the test suite
-short. 
+short.
+
+Note: the tests run on the current state of the working directory. I tried to add a `git stash` in
+the script to only test what's actually being committed, but I couldn't get it to run reliably
+(it's still in there but commented). Keep this in mind when you commit, and don't forget to re-add
+the changes if the first attempt failed and you fixed the tests.
