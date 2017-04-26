@@ -15,6 +15,7 @@
  */
 package com.datastax.oss.driver.internal.core.channel;
 
+import com.datastax.oss.driver.api.core.metadata.Node;
 import java.net.SocketAddress;
 import java.util.Objects;
 
@@ -27,32 +28,28 @@ public class ChannelEvent {
     RECONNECTION_STOPPED
   }
 
-  public static ChannelEvent channelOpened(SocketAddress address) {
-    return new ChannelEvent(Type.OPENED, address);
+  public static ChannelEvent channelOpened(Node node) {
+    return new ChannelEvent(Type.OPENED, node);
   }
 
-  public static ChannelEvent channelClosed(SocketAddress address) {
-    return new ChannelEvent(Type.CLOSED, address);
+  public static ChannelEvent channelClosed(Node node) {
+    return new ChannelEvent(Type.CLOSED, node);
   }
 
-  public static ChannelEvent reconnectionStarted(SocketAddress address) {
-    return new ChannelEvent(Type.RECONNECTION_STARTED, address);
+  public static ChannelEvent reconnectionStarted(Node node) {
+    return new ChannelEvent(Type.RECONNECTION_STARTED, node);
   }
 
-  public static ChannelEvent reconnectionStopped(SocketAddress address) {
-    return new ChannelEvent(Type.RECONNECTION_STOPPED, address);
+  public static ChannelEvent reconnectionStopped(Node node) {
+    return new ChannelEvent(Type.RECONNECTION_STOPPED, node);
   }
 
   public final Type type;
-  /**
-   * We use SocketAddress because some of our tests use the local Netty transport, but in production
-   * it will always be InetSocketAddress.
-   */
-  public final SocketAddress address;
+  public final Node node;
 
-  public ChannelEvent(Type type, SocketAddress address) {
+  public ChannelEvent(Type type, Node node) {
     this.type = type;
-    this.address = address;
+    this.node = node;
   }
 
   @Override
@@ -61,7 +58,7 @@ public class ChannelEvent {
       return true;
     } else if (other instanceof ChannelEvent) {
       ChannelEvent that = (ChannelEvent) other;
-      return this.type == that.type && Objects.equals(this.address, that.address);
+      return this.type == that.type && Objects.equals(this.node, that.node);
     } else {
       return false;
     }
@@ -69,11 +66,11 @@ public class ChannelEvent {
 
   @Override
   public int hashCode() {
-    return Objects.hash(type, address);
+    return Objects.hash(type, node);
   }
 
   @Override
   public String toString() {
-    return "ChannelEvent(" + type + ", " + address + ")";
+    return "ChannelEvent(" + type + ", " + node + ")";
   }
 }

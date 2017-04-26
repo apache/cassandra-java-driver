@@ -18,6 +18,7 @@ package com.datastax.oss.driver.internal.core.pool;
 import com.datastax.oss.driver.api.core.AsyncAutoCloseable;
 import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.InvalidKeyspaceException;
+import com.datastax.oss.driver.api.core.metadata.Node;
 import com.datastax.oss.driver.internal.core.channel.ChannelEvent;
 import com.datastax.oss.driver.internal.core.channel.ChannelFactory;
 import com.datastax.oss.driver.internal.core.channel.ClusterNameMismatchException;
@@ -34,13 +35,11 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.Sets;
 import io.netty.util.concurrent.EventExecutor;
 import io.netty.util.concurrent.Future;
-import java.net.InetSocketAddress;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
@@ -67,34 +66,33 @@ public class ChannelPool implements AsyncAutoCloseable {
    * channels (i.e. {@link #next()} return {@code null}) and is reconnecting.
    */
   public static CompletionStage<ChannelPool> init(
-      InetSocketAddress address,
-      CqlIdentifier keyspaceName,
-      int channelCount,
-      InternalDriverContext context) {
-    ChannelPool pool = new ChannelPool(address, keyspaceName, channelCount, context);
+      Node node, CqlIdentifier keyspaceName, int channelCount, InternalDriverContext context) {
+    ChannelPool pool = new ChannelPool(node, keyspaceName, channelCount, context);
     return pool.connect();
   }
 
   // This is read concurrently, but only mutated on adminExecutor (by methods in SingleThreaded)
   @VisibleForTesting final ChannelSet channels = new ChannelSet();
 
+  private final Node node;
   private final EventExecutor adminExecutor;
   private final SingleThreaded singleThreaded;
   private volatile boolean invalidKeyspace;
 
   private ChannelPool(
-      InetSocketAddress address,
-      CqlIdentifier keyspaceName,
-      int channelCount,
-      InternalDriverContext context) {
-
+      Node node, CqlIdentifier keyspaceName, int channelCount, InternalDriverContext context) {
+    this.node = node;
     this.adminExecutor = context.nettyOptions().adminEventExecutorGroup().next();
-    this.singleThreaded = new SingleThreaded(address, keyspaceName, channelCount, context);
+    this.singleThreaded = new SingleThreaded(keyspaceName, channelCount, context);
   }
 
   private CompletionStage<ChannelPool> connect() {
     RunOrSchedule.on(adminExecutor, singleThreaded::connect);
     return singleThreaded.connectFuture;
+  }
+
+  public Node getNode() {
+    return node;
   }
 
   /**
@@ -151,7 +149,6 @@ public class ChannelPool implements AsyncAutoCloseable {
   /** Holds all administration tasks, that are confined to the admin executor. */
   private class SingleThreaded {
 
-    private final InetSocketAddress address;
     private final ChannelFactory channelFactory;
     private final EventBus eventBus;
     // The channels that are currently connecting
@@ -168,11 +165,7 @@ public class ChannelPool implements AsyncAutoCloseable {
     private CqlIdentifier keyspaceName;
 
     private SingleThreaded(
-        InetSocketAddress address,
-        CqlIdentifier keyspaceName,
-        int wantedCount,
-        InternalDriverContext context) {
-      this.address = address;
+        CqlIdentifier keyspaceName, int wantedCount, InternalDriverContext context) {
       this.keyspaceName = keyspaceName;
       this.wantedCount = wantedCount;
       this.channelFactory = context.channelFactory();
@@ -182,8 +175,8 @@ public class ChannelPool implements AsyncAutoCloseable {
               adminExecutor,
               context.reconnectionPolicy(),
               this::addMissingChannels,
-              () -> eventBus.fire(ChannelEvent.reconnectionStarted(this.address)),
-              () -> eventBus.fire(ChannelEvent.reconnectionStopped(this.address)));
+              () -> eventBus.fire(ChannelEvent.reconnectionStarted(node)),
+              () -> eventBus.fire(ChannelEvent.reconnectionStopped(node)));
     }
 
     private void connect() {
@@ -217,7 +210,8 @@ public class ChannelPool implements AsyncAutoCloseable {
               .reportAvailableIds(wantedCount > 1)
               .build();
       for (int i = 0; i < missing; i++) {
-        CompletionStage<DriverChannel> channelFuture = channelFactory.connect(address, options);
+        CompletionStage<DriverChannel> channelFuture =
+            channelFactory.connect(node.getConnectAddress(), options);
         pendingChannels.add(channelFuture);
       }
       return CompletableFutures.allDone(pendingChannels)
@@ -256,7 +250,7 @@ public class ChannelPool implements AsyncAutoCloseable {
           } else {
             LOG.debug("{} new channel added {}", ChannelPool.this, channel);
             channels.add(channel);
-            eventBus.fire(ChannelEvent.channelOpened(address));
+            eventBus.fire(ChannelEvent.channelOpened(node));
             channel
                 .closeFuture()
                 .addListener(
@@ -274,7 +268,7 @@ public class ChannelPool implements AsyncAutoCloseable {
 
       if (clusterNameMismatch != null) {
         LOG.warn(clusterNameMismatch.getMessage());
-        eventBus.fire(TopologyEvent.forceDown(address));
+        eventBus.fire(TopologyEvent.forceDown(node.getConnectAddress()));
         // Don't bother continuing, the pool will get shut down soon anyway
         return true;
       }
@@ -295,7 +289,7 @@ public class ChannelPool implements AsyncAutoCloseable {
       assert adminExecutor.inEventLoop();
       LOG.debug("{} lost channel {}", ChannelPool.this, channel);
       channels.remove(channel);
-      eventBus.fire(ChannelEvent.channelClosed(address));
+      eventBus.fire(ChannelEvent.channelClosed(node));
       if (!isClosing && !reconnection.isRunning()) {
         reconnection.start();
       }
@@ -334,7 +328,7 @@ public class ChannelPool implements AsyncAutoCloseable {
         for (DriverChannel channel : toRemove) {
           channels.remove(channel);
           channel.close();
-          eventBus.fire(ChannelEvent.channelClosed(address));
+          eventBus.fire(ChannelEvent.channelClosed(node));
         }
       }
     }
@@ -373,7 +367,7 @@ public class ChannelPool implements AsyncAutoCloseable {
 
       forAllChannels(
           channel -> {
-            eventBus.fire(ChannelEvent.channelClosed(address));
+            eventBus.fire(ChannelEvent.channelClosed(node));
             return channel.close();
           },
           () -> closeFuture.complete(null),

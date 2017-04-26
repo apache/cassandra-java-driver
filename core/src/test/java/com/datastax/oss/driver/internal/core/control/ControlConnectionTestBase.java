@@ -56,6 +56,8 @@ import static org.mockito.ArgumentMatchers.any;
 abstract class ControlConnectionTestBase {
   protected static final InetSocketAddress ADDRESS1 = new InetSocketAddress("127.0.0.1", 9042);
   protected static final InetSocketAddress ADDRESS2 = new InetSocketAddress("127.0.0.2", 9042);
+  protected static final DefaultNode NODE1 = new DefaultNode(ADDRESS1);
+  protected static final DefaultNode NODE2 = new DefaultNode(ADDRESS2);
 
   @Mock protected InternalDriverContext context;
   @Mock protected ReconnectionPolicy reconnectionPolicy;
@@ -97,16 +99,13 @@ abstract class ControlConnectionTestBase {
     // it.
     Mockito.when(reconnectionSchedule.nextDelay()).thenReturn(Duration.ofDays(1));
 
-    DefaultNode node1 = new DefaultNode(ADDRESS1);
-    DefaultNode node2 = new DefaultNode(ADDRESS2);
-
     Mockito.when(context.loadBalancingPolicyWrapper()).thenReturn(loadBalancingPolicyWrapper);
     Mockito.when(loadBalancingPolicyWrapper.newQueryPlan())
         .thenAnswer(
             i -> {
               ConcurrentLinkedQueue<Node> queryPlan = new ConcurrentLinkedQueue<>();
-              queryPlan.offer(node1);
-              queryPlan.offer(node2);
+              queryPlan.offer(NODE1);
+              queryPlan.offer(NODE2);
               return queryPlan;
             });
 

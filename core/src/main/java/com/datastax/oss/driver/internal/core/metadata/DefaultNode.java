@@ -107,6 +107,23 @@ public class DefaultNode implements Node {
   }
 
   @Override
+  public boolean equals(Object other) {
+    if (other == this) {
+      return true;
+    } else if (other instanceof Node) {
+      Node that = (Node) other;
+      return this.connectAddress.equals(that.getConnectAddress());
+    } else {
+      return false;
+    }
+  }
+
+  @Override
+  public int hashCode() {
+    return connectAddress.hashCode();
+  }
+
+  @Override
   public String toString() {
     return connectAddress.toString();
   }

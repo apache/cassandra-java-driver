@@ -175,7 +175,7 @@ public class NodeStateManagerTest {
   public void should_ignore_down_event_if_node_has_active_connections() {
     new NodeStateManager(context);
     node1.state = NodeState.UP;
-    eventBus.fire(ChannelEvent.channelOpened(node1.getConnectAddress()));
+    eventBus.fire(ChannelEvent.channelOpened(node1));
     waitForPendingAdminTasks();
     assertThat(node1.openConnections).isEqualTo(1);
 
@@ -404,12 +404,12 @@ public class NodeStateManagerTest {
 
     assertThat(node1.openConnections).isEqualTo(0);
 
-    eventBus.fire(ChannelEvent.channelOpened(node1.getConnectAddress()));
-    eventBus.fire(ChannelEvent.channelOpened(node1.getConnectAddress()));
+    eventBus.fire(ChannelEvent.channelOpened(node1));
+    eventBus.fire(ChannelEvent.channelOpened(node1));
     waitForPendingAdminTasks();
     assertThat(node1.openConnections).isEqualTo(2);
 
-    eventBus.fire(ChannelEvent.channelClosed(node1.getConnectAddress()));
+    eventBus.fire(ChannelEvent.channelClosed(node1));
     waitForPendingAdminTasks();
     assertThat(node1.openConnections).isEqualTo(1);
   }
@@ -423,7 +423,7 @@ public class NodeStateManagerTest {
       node1.state = oldState;
 
       // When
-      eventBus.fire(ChannelEvent.channelOpened(node1.getConnectAddress()));
+      eventBus.fire(ChannelEvent.channelOpened(node1));
       waitForPendingAdminTasks();
 
       // Then
@@ -439,7 +439,7 @@ public class NodeStateManagerTest {
     node1.state = NodeState.FORCED_DOWN;
 
     // When
-    eventBus.fire(ChannelEvent.channelOpened(node1.getConnectAddress()));
+    eventBus.fire(ChannelEvent.channelOpened(node1));
     waitForPendingAdminTasks();
 
     // Then
@@ -453,12 +453,12 @@ public class NodeStateManagerTest {
 
     assertThat(node1.reconnections).isEqualTo(0);
 
-    eventBus.fire(ChannelEvent.reconnectionStarted(node1.getConnectAddress()));
-    eventBus.fire(ChannelEvent.reconnectionStarted(node1.getConnectAddress()));
+    eventBus.fire(ChannelEvent.reconnectionStarted(node1));
+    eventBus.fire(ChannelEvent.reconnectionStarted(node1));
     waitForPendingAdminTasks();
     assertThat(node1.reconnections).isEqualTo(2);
 
-    eventBus.fire(ChannelEvent.reconnectionStopped(node1.getConnectAddress()));
+    eventBus.fire(ChannelEvent.reconnectionStopped(node1));
     waitForPendingAdminTasks();
     assertThat(node1.reconnections).isEqualTo(1);
   }
@@ -470,8 +470,8 @@ public class NodeStateManagerTest {
     node1.state = NodeState.UP;
     node1.openConnections = 1;
 
-    eventBus.fire(ChannelEvent.channelClosed(node1.getConnectAddress()));
-    eventBus.fire(ChannelEvent.reconnectionStarted(node1.getConnectAddress()));
+    eventBus.fire(ChannelEvent.channelClosed(node1));
+    eventBus.fire(ChannelEvent.reconnectionStarted(node1));
     waitForPendingAdminTasks();
 
     assertThat(node1.state).isEqualTo(NodeState.DOWN);
@@ -485,8 +485,8 @@ public class NodeStateManagerTest {
     node1.state = NodeState.UP;
     node1.openConnections = 2;
 
-    eventBus.fire(ChannelEvent.channelClosed(node1.getConnectAddress()));
-    eventBus.fire(ChannelEvent.reconnectionStarted(node1.getConnectAddress()));
+    eventBus.fire(ChannelEvent.channelClosed(node1));
+    eventBus.fire(ChannelEvent.reconnectionStarted(node1));
     waitForPendingAdminTasks();
 
     assertThat(node1.state).isEqualTo(NodeState.UP);
@@ -500,7 +500,7 @@ public class NodeStateManagerTest {
 
     manager.close();
 
-    eventBus.fire(ChannelEvent.reconnectionStarted(node1.getConnectAddress()));
+    eventBus.fire(ChannelEvent.reconnectionStarted(node1));
     waitForPendingAdminTasks();
 
     assertThat(node1.reconnections).isEqualTo(0);

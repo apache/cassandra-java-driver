@@ -104,8 +104,7 @@ public class NodeStateManager implements AsyncAutoCloseable {
         return;
       }
       LOG.debug("Processing {}", event);
-      @SuppressWarnings("SuspiciousMethodCalls")
-      DefaultNode node = (DefaultNode) metadataManager.getMetadata().getNodes().get(event.address);
+      DefaultNode node = (DefaultNode) event.node;
       assert node != null;
       switch (event.type) {
         case OPENED:

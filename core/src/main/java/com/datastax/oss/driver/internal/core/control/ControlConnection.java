@@ -272,13 +272,13 @@ public class ControlConnection implements EventCallback, AsyncAutoCloseable {
                         previousChannel.forceClose();
                       }
                       ControlConnection.this.channel = channel;
-                      context.eventBus().fire(ChannelEvent.channelOpened(node.getConnectAddress()));
+                      context.eventBus().fire(ChannelEvent.channelOpened(node));
                       channel
                           .closeFuture()
                           .addListener(
                               f ->
                                   adminExecutor
-                                      .submit(() -> onChannelClosed(channel))
+                                      .submit(() -> onChannelClosed(channel, node))
                                       .addListener(UncaughtExceptions::log));
                       onSuccess.run();
                     }
@@ -312,10 +312,10 @@ public class ControlConnection implements EventCallback, AsyncAutoCloseable {
       // TODO refresh schema metadata
     }
 
-    private void onChannelClosed(DriverChannel channel) {
+    private void onChannelClosed(DriverChannel channel, Node node) {
       assert adminExecutor.inEventLoop();
       LOG.debug("Lost channel {}", channel);
-      context.eventBus().fire(ChannelEvent.channelClosed(channel.address()));
+      context.eventBus().fire(ChannelEvent.channelClosed(node));
       if (!closeWasCalled && !reconnection.isRunning()) {
         reconnection.start();
       }
