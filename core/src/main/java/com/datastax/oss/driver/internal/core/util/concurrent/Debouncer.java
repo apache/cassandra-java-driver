@@ -50,6 +50,7 @@ public class Debouncer<T, R> {
 
   private List<T> currentBatch = new ArrayList<>();
   private ScheduledFuture<?> nextFlush;
+  private boolean stopped;
 
   /**
    * Creates a new instance.
@@ -77,6 +78,9 @@ public class Debouncer<T, R> {
   /** This must be called on eventExecutor too. */
   public void receive(T element) {
     assert adminExecutor.inEventLoop();
+    if (stopped) {
+      return;
+    }
     if (window.isZero() || maxEvents == 1) {
       LOG.debug(
           "Received {}, flushing immediately (window = {}, maxEvents = {})",
@@ -121,6 +125,18 @@ public class Debouncer<T, R> {
       if (cancelled) {
         LOG.debug("Cancelled existing scheduled flush");
       }
+    }
+  }
+
+  /**
+   * Stop debouncing: the next flush is cancelled, and all pending and future events will be
+   * ignored.
+   */
+  public void stop() {
+    assert adminExecutor.inEventLoop();
+    if (!stopped) {
+      stopped = true;
+      cancelNextFlush();
     }
   }
 }

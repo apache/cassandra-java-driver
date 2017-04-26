@@ -15,17 +15,24 @@
  */
 package com.datastax.oss.driver.internal.core;
 
+import com.datastax.oss.driver.api.core.AsyncAutoCloseable;
 import com.datastax.oss.driver.api.core.Cluster;
 import com.datastax.oss.driver.api.core.context.DriverContext;
 import com.datastax.oss.driver.api.core.metadata.Metadata;
 import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
 import com.datastax.oss.driver.internal.core.metadata.MetadataManager;
 import com.datastax.oss.driver.internal.core.metadata.NodeStateManager;
+import com.datastax.oss.driver.internal.core.util.concurrent.CompletableFutures;
 import com.datastax.oss.driver.internal.core.util.concurrent.RunOrSchedule;
+import com.google.common.collect.ImmutableList;
 import io.netty.util.concurrent.EventExecutor;
 import java.net.InetSocketAddress;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
+import java.util.concurrent.ExecutionException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -66,15 +73,38 @@ public class DefaultCluster implements Cluster {
     return context;
   }
 
+  @Override
+  public CompletionStage<Void> closeFuture() {
+    return singleThreaded.closeFuture;
+  }
+
+  @Override
+  public CompletionStage<Void> closeAsync() {
+    RunOrSchedule.on(adminExecutor, singleThreaded::close);
+    return singleThreaded.closeFuture;
+  }
+
+  @Override
+  public CompletionStage<Void> forceCloseAsync() {
+    RunOrSchedule.on(adminExecutor, singleThreaded::forceClose);
+    return singleThreaded.closeFuture;
+  }
+
   private class SingleThreaded {
 
     private final InternalDriverContext context;
     private final Set<InetSocketAddress> initialContactPoints;
+    private final NodeStateManager nodeStateManager;
     private final CompletableFuture<Cluster> initFuture = new CompletableFuture<>();
     private boolean initWasCalled;
+    private final CompletableFuture<Void> closeFuture = new CompletableFuture<>();
+    private boolean closeWasCalled;
+    private boolean forceCloseWasCalled;
+    private List<CompletionStage<Void>> childrenCloseFutures;
 
     private SingleThreaded(InternalDriverContext context, Set<InetSocketAddress> contactPoints) {
       this.context = context;
+      this.nodeStateManager = new NodeStateManager(context);
       this.initialContactPoints = contactPoints;
     }
 
@@ -84,8 +114,6 @@ public class DefaultCluster implements Cluster {
         return;
       }
       initWasCalled = true;
-
-      new NodeStateManager(context);
 
       // If any contact points were provided, store them in the metadata right away (the
       // control connection will need them if it has to initialize)
@@ -123,6 +151,98 @@ public class DefaultCluster implements Cluster {
                 initFuture.completeExceptionally(error);
                 return null;
               });
+    }
+
+    private void close() {
+      assert adminExecutor.inEventLoop();
+      if (closeWasCalled) {
+        return;
+      }
+      closeWasCalled = true;
+
+      LOG.debug("Closing {}", this);
+      childrenCloseFutures = new ArrayList<>();
+      for (AsyncAutoCloseable closeable : internalComponentsToClose()) {
+        LOG.debug("Closing {}", closeable);
+        childrenCloseFutures.add(closeable.closeAsync());
+      }
+      CompletableFutures.whenAllDone(childrenCloseFutures)
+          .whenCompleteAsync(this::onChildrenClosed, adminExecutor);
+    }
+
+    private void forceClose() {
+      assert adminExecutor.inEventLoop();
+      if (forceCloseWasCalled) {
+        return;
+      }
+      forceCloseWasCalled = true;
+
+      LOG.debug("Force-closing {} (was {}closed before)", this, (closeWasCalled ? "" : "not "));
+
+      if (closeWasCalled) {
+        // childrenCloseFutures is already created, and onChildrenClosed has already been called
+        for (AsyncAutoCloseable closeable : internalComponentsToClose()) {
+          LOG.debug("Force-closing {}", closeable);
+          closeable.forceCloseAsync();
+        }
+      } else {
+        closeWasCalled = true;
+        childrenCloseFutures = new ArrayList<>();
+        for (AsyncAutoCloseable closeable : internalComponentsToClose()) {
+          LOG.debug("Force-closing {}", closeable);
+          childrenCloseFutures.add(closeable.forceCloseAsync());
+        }
+        CompletableFutures.whenAllDone(childrenCloseFutures)
+            .whenCompleteAsync(this::onChildrenClosed, adminExecutor);
+      }
+    }
+
+    private void onChildrenClosed(@SuppressWarnings("unused") Void ignored, Throwable error) {
+      assert adminExecutor.inEventLoop();
+      if (error != null) {
+        LOG.warn("Unexpected error while closing", error);
+      }
+      try {
+        for (CompletionStage<Void> future : childrenCloseFutures) {
+          warnIfFailed(future);
+        }
+        context
+            .nettyOptions()
+            .onClose()
+            .addListener(
+                f -> {
+                  if (!f.isSuccess()) {
+                    closeFuture.completeExceptionally(f.cause());
+                  } else {
+                    closeFuture.complete(null);
+                  }
+                });
+      } catch (Throwable t) {
+        // Being paranoid here, but we don't want to risk swallowing an exception and leaving close
+        // hanging
+        LOG.warn("Unexpected error while closing", t);
+      }
+    }
+
+    private void warnIfFailed(CompletionStage<Void> stage) {
+      CompletableFuture<Void> future = stage.toCompletableFuture();
+      assert future.isDone();
+      if (future.isCompletedExceptionally()) {
+        try {
+          future.get();
+        } catch (InterruptedException | ExecutionException e) {
+          // InterruptedException can't happen actually, but including it to make compiler happy
+          LOG.warn("Unexpected error while closing", e.getCause());
+        }
+      }
+    }
+
+    private List<AsyncAutoCloseable> internalComponentsToClose() {
+      return ImmutableList.of(
+          nodeStateManager,
+          metadataManager,
+          context.topologyMonitor(),
+          context.controlConnection());
     }
   }
 }

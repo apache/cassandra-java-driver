@@ -15,6 +15,7 @@
  */
 package com.datastax.oss.driver.internal.core.metadata;
 
+import com.datastax.oss.driver.api.core.AsyncAutoCloseable;
 import com.datastax.oss.driver.api.core.metadata.Metadata;
 import com.datastax.oss.driver.api.core.metadata.Node;
 import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
@@ -31,7 +32,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /** Holds the immutable instance of the {@link Metadata}, and handles requests to update it. */
-public class MetadataManager {
+public class MetadataManager implements AsyncAutoCloseable {
   private static final Logger LOG = LoggerFactory.getLogger(MetadataManager.class);
 
   private final InternalDriverContext context;
@@ -42,7 +43,7 @@ public class MetadataManager {
   public MetadataManager(InternalDriverContext context) {
     this.context = context;
     this.adminExecutor = context.nettyOptions().adminEventExecutorGroup().next();
-    this.singleThreaded = new SingleThreaded(context);
+    this.singleThreaded = new SingleThreaded();
     this.metadata = DefaultMetadata.EMPTY;
   }
 
@@ -115,14 +116,27 @@ public class MetadataManager {
     // TODO refresh schema metadata
   }
 
-  // TODO user-controlled refresh, shutdown?
+  // TODO user-controlled refresh?
+
+  @Override
+  public CompletionStage<Void> closeFuture() {
+    return singleThreaded.closeFuture;
+  }
+
+  @Override
+  public CompletionStage<Void> closeAsync() {
+    RunOrSchedule.on(adminExecutor, singleThreaded::close);
+    return singleThreaded.closeFuture;
+  }
+
+  @Override
+  public CompletionStage<Void> forceCloseAsync() {
+    return this.closeAsync();
+  }
 
   private class SingleThreaded {
-    private final InternalDriverContext context;
-
-    private SingleThreaded(InternalDriverContext context) {
-      this.context = context;
-    }
+    private final CompletableFuture<Void> closeFuture = new CompletableFuture<>();
+    private boolean closeWasCalled;
 
     private void initNodes(
         Set<InetSocketAddress> addresses, CompletableFuture<Void> initNodesFuture) {
@@ -162,15 +176,25 @@ public class MetadataManager {
     private void removeNode(InetSocketAddress address) {
       refresh(new RemoveNodeRefresh(metadata, address));
     }
+
+    private void close() {
+      if (closeWasCalled) {
+        return;
+      }
+      closeWasCalled = true;
+      closeFuture.complete(null);
+    }
   }
 
   @VisibleForTesting
   Void refresh(MetadataRefresh refresh) {
     assert adminExecutor.inEventLoop();
-    refresh.compute();
-    metadata = refresh.newMetadata;
-    for (Object event : refresh.events) {
-      context.eventBus().fire(event);
+    if (!singleThreaded.closeWasCalled) {
+      refresh.compute();
+      metadata = refresh.newMetadata;
+      for (Object event : refresh.events) {
+        context.eventBus().fire(event);
+      }
     }
     return null;
   }

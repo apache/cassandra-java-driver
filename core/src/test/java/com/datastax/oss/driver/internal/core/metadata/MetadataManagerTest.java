@@ -69,6 +69,11 @@ public class MetadataManagerTest {
     metadataManager = new TestMetadataManager(context);
   }
 
+  @AfterMethod
+  public void teardown() {
+    adminEventLoopGroup.shutdownGracefully(100, 200, TimeUnit.MILLISECONDS);
+  }
+
   @Test
   public void should_add_contact_points() {
     // When
@@ -198,11 +203,6 @@ public class MetadataManagerTest {
     assertThat(metadataManager.refreshes).hasSize(1);
     RemoveNodeRefresh refresh = (RemoveNodeRefresh) metadataManager.refreshes.get(0);
     assertThat(refresh.toRemove).isEqualTo(ADDRESS1);
-  }
-
-  @AfterMethod
-  public void teardown() {
-    adminEventLoopGroup.shutdownGracefully(100, 200, TimeUnit.MILLISECONDS);
   }
 
   private class TestMetadataManager extends MetadataManager {

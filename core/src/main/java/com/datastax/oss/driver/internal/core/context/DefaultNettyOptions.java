@@ -76,7 +76,7 @@ public class DefaultNettyOptions implements NettyOptions {
   }
 
   @Override
-  public Future<?> onShutdown() {
+  public Future<?> onClose() {
     return ioEventLoopGroup.shutdownGracefully();
   }
 }

@@ -493,6 +493,19 @@ public class NodeStateManagerTest {
     Mockito.verify(eventBus, never()).fire(any(NodeStateEvent.class));
   }
 
+  @Test
+  public void should_ignore_events_when_closed() throws Exception {
+    NodeStateManager manager = new NodeStateManager(context);
+    assertThat(node1.reconnections).isEqualTo(0);
+
+    manager.close();
+
+    eventBus.fire(ChannelEvent.reconnectionStarted(node1.getConnectAddress()));
+    waitForPendingAdminTasks();
+
+    assertThat(node1.reconnections).isEqualTo(0);
+  }
+
   // Wait for all the tasks on the pool's admin executor to complete.
   private void waitForPendingAdminTasks() {
     // This works because the event loop group is single-threaded

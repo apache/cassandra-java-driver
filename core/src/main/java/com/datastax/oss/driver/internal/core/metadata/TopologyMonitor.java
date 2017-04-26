@@ -15,6 +15,7 @@
  */
 package com.datastax.oss.driver.internal.core.metadata;
 
+import com.datastax.oss.driver.api.core.AsyncAutoCloseable;
 import com.datastax.oss.driver.api.core.Cluster;
 import com.datastax.oss.driver.api.core.addresstranslation.AddressTranslator;
 import com.datastax.oss.driver.api.core.metadata.Node;
@@ -37,7 +38,7 @@ import java.util.concurrent.CompletionStage;
  * refreshes are done with queries to system tables. If you prefer to rely on an external monitoring
  * tool, this can be completely overridden.
  */
-public interface TopologyMonitor {
+public interface TopologyMonitor extends AsyncAutoCloseable {
 
   /**
    * Triggers the initialization of the monitor.

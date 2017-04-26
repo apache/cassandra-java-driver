@@ -79,5 +79,5 @@ public interface NettyOptions {
    * that you have allocated elsewhere in this component, for example shut down custom event loop
    * groups.
    */
-  Future<?> onShutdown();
+  Future<?> onClose();
 }

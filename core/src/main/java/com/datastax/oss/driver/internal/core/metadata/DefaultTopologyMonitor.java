@@ -24,6 +24,7 @@ import com.datastax.oss.driver.internal.core.adminrequest.AdminResult;
 import com.datastax.oss.driver.internal.core.channel.DriverChannel;
 import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
 import com.datastax.oss.driver.internal.core.control.ControlConnection;
+import com.datastax.oss.driver.internal.core.util.concurrent.CompletableFutures;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableMap;
 import java.net.InetAddress;
@@ -54,23 +55,31 @@ public class DefaultTopologyMonitor implements TopologyMonitor {
   private final ControlConnection controlConnection;
   private final AddressTranslator addressTranslator;
   private final Duration timeout;
+  private final CompletableFuture<Void> closeFuture;
 
   @VisibleForTesting volatile int port = -1;
 
   public DefaultTopologyMonitor(InternalDriverContext context) {
     this.controlConnection = context.controlConnection();
-    addressTranslator = context.addressTranslator();
+    this.addressTranslator = context.addressTranslator();
     DriverConfigProfile config = context.config().defaultProfile();
     this.timeout = config.getDuration(CoreDriverOption.CONTROL_CONNECTION_TIMEOUT);
+    this.closeFuture = new CompletableFuture<>();
   }
 
   @Override
   public CompletionStage<Void> init() {
+    if (closeFuture.isDone()) {
+      return CompletableFutures.failedFuture(new IllegalStateException("closed"));
+    }
     return controlConnection.init(true);
   }
 
   @Override
   public CompletionStage<Optional<NodeInfo>> refreshNode(Node node) {
+    if (closeFuture.isDone()) {
+      return CompletableFutures.failedFuture(new IllegalStateException("closed"));
+    }
     LOG.debug("Refreshing info for {}", node);
     DriverChannel channel = controlConnection.channel();
     if (node.getConnectAddress().equals(channel.address())) {
@@ -93,6 +102,9 @@ public class DefaultTopologyMonitor implements TopologyMonitor {
 
   @Override
   public CompletionStage<Optional<NodeInfo>> getNewNodeInfo(InetSocketAddress connectAddress) {
+    if (closeFuture.isDone()) {
+      return CompletableFutures.failedFuture(new IllegalStateException("closed"));
+    }
     LOG.debug("Fetching info for new node {}", connectAddress);
     DriverChannel channel = controlConnection.channel();
     return query(channel, "SELECT * FROM system.peers")
@@ -101,6 +113,9 @@ public class DefaultTopologyMonitor implements TopologyMonitor {
 
   @Override
   public CompletionStage<Iterable<NodeInfo>> refreshNodeList() {
+    if (closeFuture.isDone()) {
+      return CompletableFutures.failedFuture(new IllegalStateException("closed"));
+    }
     LOG.debug("Refreshing node list");
     DriverChannel channel = controlConnection.channel();
     savePort(channel);
@@ -118,6 +133,22 @@ public class DefaultTopologyMonitor implements TopologyMonitor {
           }
           return nodeInfos;
         });
+  }
+
+  @Override
+  public CompletionStage<Void> closeFuture() {
+    return closeFuture;
+  }
+
+  @Override
+  public CompletionStage<Void> closeAsync() {
+    closeFuture.complete(null);
+    return closeFuture;
+  }
+
+  @Override
+  public CompletionStage<Void> forceCloseAsync() {
+    return closeAsync();
   }
 
   @VisibleForTesting

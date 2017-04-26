@@ -16,6 +16,7 @@
 package com.datastax.oss.driver.internal.core.control;
 
 import com.datastax.oss.driver.api.core.AllNodesFailedException;
+import com.datastax.oss.driver.api.core.AsyncAutoCloseable;
 import com.datastax.oss.driver.api.core.metadata.Node;
 import com.datastax.oss.driver.internal.core.channel.ChannelEvent;
 import com.datastax.oss.driver.internal.core.channel.DriverChannel;
@@ -57,7 +58,7 @@ import org.slf4j.LoggerFactory;
  * <p>If a custom {@link TopologyMonitor} is used, the control connection is used only for schema
  * refreshes; if schema metadata is also disabled, the control connection never initializes.
  */
-public class ControlConnection implements EventCallback {
+public class ControlConnection implements EventCallback, AsyncAutoCloseable {
   private static final Logger LOG = LoggerFactory.getLogger(ControlConnection.class);
 
   private final InternalDriverContext context;
@@ -103,8 +104,19 @@ public class ControlConnection implements EventCallback {
     RunOrSchedule.on(adminExecutor, singleThreaded::reconnectNow);
   }
 
-  /** Note: control queries are never critical, so there is no graceful close. */
-  public CompletionStage<Void> forceClose() {
+  @Override
+  public CompletionStage<Void> closeFuture() {
+    return singleThreaded.closeFuture;
+  }
+
+  @Override
+  public CompletionStage<Void> closeAsync() {
+    // Control queries are never critical, so there is no graceful close.
+    return forceCloseAsync();
+  }
+
+  @Override
+  public CompletionStage<Void> forceCloseAsync() {
     RunOrSchedule.on(adminExecutor, singleThreaded::forceClose);
     return singleThreaded.closeFuture;
   }

@@ -15,6 +15,7 @@
  */
 package com.datastax.oss.driver.internal.core.pool;
 
+import com.datastax.oss.driver.api.core.AsyncAutoCloseable;
 import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.internal.core.channel.ChannelEvent;
 import com.datastax.oss.driver.internal.core.channel.ChannelFactory;
@@ -53,7 +54,7 @@ import org.slf4j.LoggerFactory;
  * <p>If one or more channels go down, a reconnection process starts in order to replace them; it
  * runs until the channel count is back to its intended target.
  */
-public class ChannelPool {
+public class ChannelPool implements AsyncAutoCloseable {
   private static final Logger LOG = LoggerFactory.getLogger(ChannelPool.class);
 
   /**
@@ -120,26 +121,20 @@ public class ChannelPool {
     return RunOrSchedule.on(adminExecutor, () -> singleThreaded.setKeyspace(newKeyspaceName));
   }
 
-  /**
-   * Closes the pool gracefully: subsequent calls to {@link #next()} will fail, but the pool's
-   * channels will be closed gracefully (allowing pending requests to complete).
-   */
-  public CompletionStage<ChannelPool> close() {
+  @Override
+  public CompletionStage<Void> closeFuture() {
+    return singleThreaded.closeFuture;
+  }
+
+  @Override
+  public CompletionStage<Void> closeAsync() {
     RunOrSchedule.on(adminExecutor, singleThreaded::close);
     return singleThreaded.closeFuture;
   }
 
-  /**
-   * Closes the pool forcefully: subsequent calls to {@link #next()} will fail, and the pool's
-   * channels will be closed forcefully (aborting pending requests).
-   */
-  public CompletionStage<ChannelPool> forceClose() {
+  @Override
+  public CompletionStage<Void> forceCloseAsync() {
     RunOrSchedule.on(adminExecutor, singleThreaded::forceClose);
-    return singleThreaded.closeFuture;
-  }
-
-  /** Does not close the pool, but returns a completion stage that will complete when it does. */
-  public CompletionStage<ChannelPool> closeFuture() {
     return singleThreaded.closeFuture;
   }
 
@@ -156,7 +151,7 @@ public class ChannelPool {
     private int wantedCount;
     private CompletableFuture<ChannelPool> connectFuture = new CompletableFuture<>();
     private boolean isConnecting;
-    private CompletableFuture<ChannelPool> closeFuture = new CompletableFuture<>();
+    private CompletableFuture<Void> closeFuture = new CompletableFuture<>();
     private boolean isClosing;
     private CompletableFuture<Void> setKeyspaceFuture;
 
@@ -366,7 +361,7 @@ public class ChannelPool {
             eventBus.fire(ChannelEvent.channelClosed(address));
             return channel.close();
           },
-          () -> closeFuture.complete(ChannelPool.this),
+          () -> closeFuture.complete(null),
           (channel, error) ->
               LOG.warn(ChannelPool.this + " error closing channel " + channel, error));
     }

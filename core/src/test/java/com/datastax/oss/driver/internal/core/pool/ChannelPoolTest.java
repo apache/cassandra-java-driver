@@ -589,7 +589,7 @@ public class ChannelPoolTest {
     Mockito.verify(reconnectionSchedule).nextDelay();
     factoryHelper.waitForCalls(ADDRESS, 1);
 
-    CompletionStage<ChannelPool> closeFuture = pool.close();
+    CompletionStage<Void> closeFuture = pool.closeAsync();
     waitForPendingAdminTasks();
 
     // The two original channels were closed normally
@@ -651,7 +651,7 @@ public class ChannelPoolTest {
     Mockito.verify(reconnectionSchedule).nextDelay();
     factoryHelper.waitForCalls(ADDRESS, 1);
 
-    CompletionStage<ChannelPool> closeFuture = pool.forceClose();
+    CompletionStage<Void> closeFuture = pool.forceCloseAsync();
     waitForPendingAdminTasks();
 
     // The two original channels were force-closed

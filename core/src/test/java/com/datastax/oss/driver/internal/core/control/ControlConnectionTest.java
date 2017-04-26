@@ -33,7 +33,7 @@ public class ControlConnectionTest extends ControlConnectionTestBase {
   @Test
   public void should_close_successfully_if_it_was_never_init() {
     // When
-    CompletionStage<Void> closeFuture = controlConnection.forceClose();
+    CompletionStage<Void> closeFuture = controlConnection.forceCloseAsync();
 
     // Then
     assertThat(closeFuture).isSuccess();
@@ -261,7 +261,7 @@ public class ControlConnectionTest extends ControlConnectionTestBase {
     factoryHelper.waitForCall(ADDRESS1);
     waitForPendingAdminTasks();
     assertThat(initFuture).isSuccess();
-    CompletionStage<Void> closeFuture = controlConnection.forceClose();
+    CompletionStage<Void> closeFuture = controlConnection.forceCloseAsync();
     assertThat(closeFuture).isSuccess();
 
     // When
@@ -287,7 +287,7 @@ public class ControlConnectionTest extends ControlConnectionTestBase {
     assertThat(initFuture).isSuccess();
 
     // When
-    CompletionStage<Void> closeFuture = controlConnection.forceClose();
+    CompletionStage<Void> closeFuture = controlConnection.forceCloseAsync();
     waitForPendingAdminTasks();
 
     // Then
@@ -331,7 +331,7 @@ public class ControlConnectionTest extends ControlConnectionTestBase {
 
     // When
     // the control connection gets closed before channel2 initialization is complete
-    controlConnection.forceClose();
+    controlConnection.forceCloseAsync();
     waitForPendingAdminTasks();
     channel2Future.complete(channel2);
     waitForPendingAdminTasks();
@@ -377,7 +377,7 @@ public class ControlConnectionTest extends ControlConnectionTestBase {
 
     // When
     // the control connection gets closed before channel1 initialization fails
-    controlConnection.forceClose();
+    controlConnection.forceCloseAsync();
     channel1Future.completeExceptionally(new Exception("mock failure"));
     waitForPendingAdminTasks();
 

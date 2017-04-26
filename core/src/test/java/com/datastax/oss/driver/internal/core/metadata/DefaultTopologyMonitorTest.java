@@ -224,6 +224,19 @@ public class DefaultTopologyMonitorTest {
             });
   }
 
+  @Test
+  public void should_stop_executing_queries_once_closed() throws Exception {
+    // Given
+    topologyMonitor.close();
+
+    // When
+    CompletionStage<Iterable<NodeInfo>> futureInfos = topologyMonitor.refreshNodeList();
+
+    // Then
+    assertThat(futureInfos)
+        .isFailed(error -> assertThat(error).isInstanceOf(IllegalStateException.class));
+  }
+
   /** Mocks the query execution logic. */
   private static class TestTopologyMonitor extends DefaultTopologyMonitor {
 

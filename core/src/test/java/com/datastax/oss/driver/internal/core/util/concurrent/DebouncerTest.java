@@ -162,4 +162,36 @@ public class DebouncerTest {
     Mockito.verify(scheduledFuture, times(9)).cancel(true);
     assertThat(results).containsExactly("0,1,2,3,4,5,6,7,8,9");
   }
+
+  @Test
+  public void should_cancel_next_flush_when_stopped() {
+    Debouncer<Integer, String> debouncer =
+        new Debouncer<>(
+            adminExecutor, this::coalesce, this::flush, DEFAULT_WINDOW, DEFAULT_MAX_EVENTS);
+
+    debouncer.receive(1);
+    Mockito.verify(adminExecutor)
+        .schedule(
+            Mockito.any(Runnable.class),
+            Mockito.eq(DEFAULT_WINDOW.toNanos()),
+            Mockito.eq(TimeUnit.NANOSECONDS));
+
+    debouncer.stop();
+    Mockito.verify(scheduledFuture).cancel(true);
+  }
+
+  @Test
+  public void should_ignore_new_events_when_flushed() {
+    Debouncer<Integer, String> debouncer =
+        new Debouncer<>(
+            adminExecutor, this::coalesce, this::flush, DEFAULT_WINDOW, DEFAULT_MAX_EVENTS);
+    debouncer.stop();
+
+    debouncer.receive(1);
+    Mockito.verify(adminExecutor, never())
+        .schedule(
+            Mockito.any(Runnable.class),
+            Mockito.eq(DEFAULT_WINDOW.toNanos()),
+            Mockito.eq(TimeUnit.NANOSECONDS));
+  }
 }

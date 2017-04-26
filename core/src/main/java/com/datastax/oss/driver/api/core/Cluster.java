@@ -18,9 +18,10 @@ package com.datastax.oss.driver.api.core;
 import com.datastax.oss.driver.api.core.context.DriverContext;
 import com.datastax.oss.driver.api.core.metadata.Metadata;
 import com.datastax.oss.driver.api.core.metadata.Node;
+import java.util.concurrent.CompletionStage;
 
 /** An instance of the driver, that connects to a Cassandra cluster. */
-public interface Cluster {
+public interface Cluster extends AsyncAutoCloseable {
   /** Returns a builder to create a new instance of the default implementation. */
   static ClusterBuilder builder() {
     return new ClusterBuilder();
@@ -44,5 +45,6 @@ public interface Cluster {
    */
   Metadata getMetadata();
 
+  /** Returns a context that provides access to all the policies used by this driver instance. */
   DriverContext getContext();
 }
