@@ -84,7 +84,7 @@ class AnnotationParser {
 
         MappingConfiguration configuration = mappingManager.getConfiguration();
         Set<? extends MappedProperty<?>> properties = configuration.getPropertyMapper().mapTable(entityClass);
-        AtomicInteger columnCounter = mappingManager.isCassandraV1 ? null : new AtomicInteger(0);
+        AtomicInteger columnCounter = mappingManager.protocolVersionAsInt == 1 ? null : new AtomicInteger(0);
 
         for (MappedProperty<?> mappedProperty : properties) {
 
@@ -94,7 +94,7 @@ class AnnotationParser {
 
             AliasedMappedProperty<?> aliasedMappedProperty = new AliasedMappedProperty(mappedProperty, alias);
 
-            if (mappingManager.isCassandraV1 && mappedProperty.isComputed())
+            if (mappingManager.protocolVersionAsInt == 1 && mappedProperty.isComputed())
                 throw new UnsupportedOperationException("Computed properties are not supported with native protocol v1");
 
             if (!mappedProperty.isComputed() && tableMetadata.getColumn(mappedProperty.getMappedName()) == null)

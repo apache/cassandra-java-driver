@@ -88,7 +88,8 @@ underlying query:
 - `saveNullFields`: if set to true, fields with value `null` in an
   instance that is to be persisted will be explicitly written as `null`
   in the query. If set to false, fields with null value won't be included
-  in the write query (thus avoiding tombstones).  If not specified, the 
+  in the write query (thus avoiding tombstones), or if using Protocol V4+ 
+  unset() will be used for null values.  If not specified, the 
   default behavior is to persist `null` fields.
 - `ifNotExists`: if set to true, adds an `IF NOT EXISTS` clause to the
   save operation (use `ifNotExists(false)` if you enabled the option by
@@ -106,13 +107,13 @@ mapper.save(new User(userId, "helloworld"),
 Some options don't apply to all operations:
 
 <table border="1" style="text-align:center; width:100%;margin-bottom:1em;">
-    <tr> <td><b>Option</b></td>    <td><b>save/saveQuery</b></td> <td><b>get/getQuery</b></td> <td><b>delete/deleteQuery</b></td></tr>
-    <tr> <td>Ttl</td>              <td>yes</td>                   <td>no</td>                  <td>no</td> </tr>
-    <tr> <td>Timestamp</td>        <td>yes</td>                   <td>no</td>                  <td>yes</td> </tr>
-    <tr> <td>ConsistencyLevel</td> <td>yes</td>                   <td>yes</td>                 <td>yes</td> </tr>
-    <tr> <td>Tracing</td>          <td>yes</td>                   <td>yes</td>                 <td>yes</td> </tr>
-    <tr> <td>SaveNullFields</td>   <td>yes</td>                   <td>no</td>                  <td>no</td> </tr>
-    <tr> <td>IfNotExists</td>      <td>yes</td>                   <td>no</td>                  <td>no</td> </tr>
+    <tr> <td><b>Option</b></td>         <td><b>save/saveQuery</b></td> <td><b>get/getQuery</b></td> <td><b>delete/deleteQuery</b></td></tr>
+    <tr> <td>Ttl</td>                   <td>yes</td>                   <td>no</td>                  <td>no</td> </tr>
+    <tr> <td>Timestamp</td>             <td>yes</td>                   <td>no</td>                  <td>yes</td> </tr>
+    <tr> <td>ConsistencyLevel</td>      <td>yes</td>                   <td>yes</td>                 <td>yes</td> </tr>
+    <tr> <td>Tracing</td>               <td>yes</td>                   <td>yes</td>                 <td>yes</td> </tr>
+    <tr> <td>SaveNullFields</td>        <td>yes</td>                   <td>no</td>                  <td>no</td> </tr>
+    <tr> <td>IfNotExists</td>           <td>yes</td>                   <td>no</td>                  <td>no</td> </tr>
 </table>
 
 Note that `Option.consistencyLevel` is redundant with the consistency

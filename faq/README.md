@@ -198,7 +198,7 @@ have an undesired side effect of creating a tombstone for `lastname` and thus
 to the user giving the impression that `lastname` was deleted.
 
 In cassandra 2.2 and later with protocol v4, bind parameters (`?`) can
-optionally be left unset
+optionally be left unset.
 ([CASSANDRA-7304]):
 
  ```java
@@ -213,8 +213,8 @@ See [Parameters and Binding] for more details about unset parameters.
 
 Another possible root cause for this is using the object mapper and leaving
 fields set to `null`.  This also causes tombstones to be inserted unless
-setting `saveNullFields` option to false.  See [Mapper options] for more
-details.
+setting `saveNullFields` option to false.
+See [Mapper options] for more details.
 
 [Blobs.java]: https://github.com/datastax/java-driver/tree/3.2.0/driver-examples/src/main/java/com/datastax/driver/examples/datatypes/Blobs.java
 [CASSANDRA-7304]: https://issues.apache.org/jira/browse/CASSANDRA-7304
