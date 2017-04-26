@@ -11,6 +11,8 @@
  * Use Ctrl+C instead.
  */
 import com.datastax.oss.driver.api.core._
+import com.datastax.oss.driver.internal.core.metadata.TopologyEvent
+import com.datastax.oss.driver.internal.core.context.InternalDriverContext
 import java.net.InetSocketAddress
 import scala.collection.JavaConversions._
 
@@ -22,3 +24,12 @@ val address5 = new InetSocketAddress("127.0.0.5", 9042)
 val address6 = new InetSocketAddress("127.0.0.6", 9042)
 
 val builder = Cluster.builder().withContactPoints(Set(address1))
+
+println("********************************************")
+println("*   To start a driver instance, run:       *")
+println("*   implicit val cluster = builder.build   *")
+println("********************************************")
+
+def fire(event: AnyRef)(implicit cluster: Cluster): Unit = {
+  cluster.getContext.asInstanceOf[InternalDriverContext].eventBus().fire(event)
+}

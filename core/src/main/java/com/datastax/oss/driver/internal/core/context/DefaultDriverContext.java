@@ -31,6 +31,7 @@ import com.datastax.oss.driver.internal.core.metadata.DefaultTopologyMonitor;
 import com.datastax.oss.driver.internal.core.metadata.LoadBalancingPolicyWrapper;
 import com.datastax.oss.driver.internal.core.metadata.MetadataManager;
 import com.datastax.oss.driver.internal.core.metadata.TopologyMonitor;
+import com.datastax.oss.driver.internal.core.pool.ChannelPoolFactory;
 import com.datastax.oss.driver.internal.core.protocol.ByteBufPrimitiveCodec;
 import com.datastax.oss.driver.internal.core.ssl.JdkSslHandlerFactory;
 import com.datastax.oss.driver.internal.core.ssl.SslHandlerFactory;
@@ -103,6 +104,7 @@ public class DefaultDriverContext implements InternalDriverContext {
       new LazyReference<>("controlConnection", this::buildControlConnection, cycleDetector);
 
   private final DriverConfig config;
+  private final ChannelPoolFactory channelPoolFactory = new ChannelPoolFactory();
 
   public DefaultDriverContext(DriverConfig config) {
     this.config = config;
@@ -272,6 +274,11 @@ public class DefaultDriverContext implements InternalDriverContext {
   @Override
   public ChannelFactory channelFactory() {
     return channelFactoryRef.get();
+  }
+
+  @Override
+  public ChannelPoolFactory channelPoolFactory() {
+    return channelPoolFactory;
   }
 
   @Override

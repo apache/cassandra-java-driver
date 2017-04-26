@@ -17,13 +17,19 @@ package com.datastax.oss.driver.internal.core;
 
 import com.datastax.oss.driver.api.core.AsyncAutoCloseable;
 import com.datastax.oss.driver.api.core.Cluster;
+import com.datastax.oss.driver.api.core.CqlIdentifier;
+import com.datastax.oss.driver.api.core.DriverException;
 import com.datastax.oss.driver.api.core.context.DriverContext;
+import com.datastax.oss.driver.api.core.cql.CqlSession;
 import com.datastax.oss.driver.api.core.metadata.Metadata;
+import com.datastax.oss.driver.api.core.session.Session;
 import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
 import com.datastax.oss.driver.internal.core.metadata.MetadataManager;
 import com.datastax.oss.driver.internal.core.metadata.NodeStateManager;
+import com.datastax.oss.driver.internal.core.session.DefaultSession;
 import com.datastax.oss.driver.internal.core.util.concurrent.CompletableFutures;
 import com.datastax.oss.driver.internal.core.util.concurrent.RunOrSchedule;
+import com.datastax.oss.driver.internal.core.util.concurrent.UncaughtExceptions;
 import com.google.common.collect.ImmutableList;
 import io.netty.util.concurrent.EventExecutor;
 import java.net.InetSocketAddress;
@@ -73,6 +79,13 @@ public class DefaultCluster implements Cluster {
   }
 
   @Override
+  public CompletionStage<CqlSession> connectAsync(CqlIdentifier keyspace) {
+    CompletableFuture<CqlSession> connectFuture = new CompletableFuture<>();
+    RunOrSchedule.on(adminExecutor, () -> singleThreaded.connect(keyspace, connectFuture));
+    return connectFuture;
+  }
+
+  @Override
   public CompletionStage<Void> closeFuture() {
     return singleThreaded.closeFuture;
   }
@@ -99,12 +112,15 @@ public class DefaultCluster implements Cluster {
     private final CompletableFuture<Void> closeFuture = new CompletableFuture<>();
     private boolean closeWasCalled;
     private boolean forceCloseWasCalled;
-    private List<CompletionStage<Void>> childrenCloseFutures;
+    // Note: closed sessions are not removed from the list. If this creates a memory issue, there
+    // is something really wrong in the client program
+    private List<Session> sessions;
 
     private SingleThreaded(InternalDriverContext context, Set<InetSocketAddress> contactPoints) {
       this.context = context;
       this.nodeStateManager = new NodeStateManager(context);
       this.initialContactPoints = contactPoints;
+      this.sessions = new ArrayList<>();
     }
 
     private void init() {
@@ -152,6 +168,30 @@ public class DefaultCluster implements Cluster {
               });
     }
 
+    private void connect(CqlIdentifier keyspace, CompletableFuture<CqlSession> connectFuture) {
+      assert adminExecutor.inEventLoop();
+      if (closeWasCalled) {
+        connectFuture.completeExceptionally(new DriverException("Cluster was closed"));
+      } else {
+        DefaultSession.init(context, keyspace)
+            .whenCompleteAsync(
+                (session, error) -> {
+                  if (error != null) {
+                    connectFuture.completeExceptionally(error);
+                  } else if (closeWasCalled) {
+                    connectFuture.completeExceptionally(
+                        new DriverException("Cluster was closed while session was initializing"));
+                    session.forceCloseAsync();
+                  } else {
+                    sessions.add(session);
+                    connectFuture.complete(session);
+                  }
+                },
+                adminExecutor)
+            .exceptionally(UncaughtExceptions::log);
+      }
+    }
+
     private void close() {
       assert adminExecutor.inEventLoop();
       if (closeWasCalled) {
@@ -160,12 +200,13 @@ public class DefaultCluster implements Cluster {
       closeWasCalled = true;
 
       LOG.debug("Closing {}", this);
-      childrenCloseFutures = new ArrayList<>();
+      List<CompletionStage<Void>> childrenCloseStages = new ArrayList<>();
       for (AsyncAutoCloseable closeable : internalComponentsToClose()) {
         LOG.debug("Closing {}", closeable);
-        childrenCloseFutures.add(closeable.closeAsync());
+        childrenCloseStages.add(closeable.closeAsync());
       }
-      CompletableFutures.whenAllDone(childrenCloseFutures, this::onChildrenClosed, adminExecutor);
+      CompletableFutures.whenAllDone(
+          childrenCloseStages, () -> onChildrenClosed(childrenCloseStages), adminExecutor);
     }
 
     private void forceClose() {
@@ -178,26 +219,27 @@ public class DefaultCluster implements Cluster {
       LOG.debug("Force-closing {} (was {}closed before)", this, (closeWasCalled ? "" : "not "));
 
       if (closeWasCalled) {
-        // childrenCloseFutures is already created, and onChildrenClosed has already been called
+        // onChildrenClosed has already been called
         for (AsyncAutoCloseable closeable : internalComponentsToClose()) {
           LOG.debug("Force-closing {}", closeable);
           closeable.forceCloseAsync();
         }
       } else {
         closeWasCalled = true;
-        childrenCloseFutures = new ArrayList<>();
+        List<CompletionStage<Void>> childrenCloseStages = new ArrayList<>();
         for (AsyncAutoCloseable closeable : internalComponentsToClose()) {
           LOG.debug("Force-closing {}", closeable);
-          childrenCloseFutures.add(closeable.forceCloseAsync());
+          childrenCloseStages.add(closeable.forceCloseAsync());
         }
-        CompletableFutures.whenAllDone(childrenCloseFutures, this::onChildrenClosed, adminExecutor);
+        CompletableFutures.whenAllDone(
+            childrenCloseStages, () -> onChildrenClosed(childrenCloseStages), adminExecutor);
       }
     }
 
-    private void onChildrenClosed() {
+    private void onChildrenClosed(List<CompletionStage<Void>> childrenCloseStages) {
       assert adminExecutor.inEventLoop();
-      for (CompletionStage<Void> future : childrenCloseFutures) {
-        warnIfFailed(future);
+      for (CompletionStage<Void> stage : childrenCloseStages) {
+        warnIfFailed(stage);
       }
       context
           .nettyOptions()
@@ -221,11 +263,14 @@ public class DefaultCluster implements Cluster {
     }
 
     private List<AsyncAutoCloseable> internalComponentsToClose() {
-      return ImmutableList.of(
-          nodeStateManager,
-          metadataManager,
-          context.topologyMonitor(),
-          context.controlConnection());
+      return ImmutableList.<AsyncAutoCloseable>builder()
+          .addAll(sessions)
+          .add(
+              nodeStateManager,
+              metadataManager,
+              context.topologyMonitor(),
+              context.controlConnection())
+          .build();
     }
   }
 }

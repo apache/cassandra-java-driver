@@ -93,12 +93,12 @@ public class CompletableFutures {
     }
   }
 
-  public static <T> T getUninterruptibly(CompletableFuture<T> future) {
+  public static <T> T getUninterruptibly(CompletionStage<T> stage) {
     boolean interrupted = false;
     try {
       while (true) {
         try {
-          return future.get();
+          return stage.toCompletableFuture().get();
         } catch (InterruptedException e) {
           interrupted = true;
         } catch (ExecutionException e) {

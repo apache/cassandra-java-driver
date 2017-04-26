@@ -15,6 +15,7 @@
  */
 package com.datastax.oss.driver.api.core.session;
 
+import com.datastax.oss.driver.api.core.AsyncAutoCloseable;
 import com.datastax.oss.driver.api.core.cql.CqlSession;
 
 /**
@@ -24,7 +25,7 @@ import com.datastax.oss.driver.api.core.cql.CqlSession;
  * registered a custom request processor with the driver). For regular CQL queries, see {@link
  * CqlSession}.
  */
-public interface Session {
+public interface Session extends AsyncAutoCloseable {
   <SyncResultT, AsyncResultT> SyncResultT execute(Request<SyncResultT, AsyncResultT> request);
 
   <SyncResultT, AsyncResultT> AsyncResultT executeAsync(Request<SyncResultT, AsyncResultT> request);

@@ -22,6 +22,7 @@ import java.util.concurrent.TimeoutException;
 import java.util.function.Consumer;
 import org.assertj.core.api.AbstractAssert;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
 
 public class CompletionStageAssert<V>
@@ -63,5 +64,10 @@ public class CompletionStageAssert<V>
 
   public CompletionStageAssert<V> isFailed() {
     return isFailed(f -> {});
+  }
+
+  public CompletionStageAssert<V> isNotDone() {
+    assertThat(actual.toCompletableFuture().isDone()).isFalse();
+    return this;
   }
 }

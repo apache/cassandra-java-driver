@@ -121,7 +121,7 @@ public class ClusterBuilder {
   /** Convenience method to call {@link #buildAsync()} and block on the result. */
   public Cluster build() {
     BlockingOperation.checkNotDriverThread();
-    return CompletableFutures.getUninterruptibly(buildAsync().toCompletableFuture());
+    return CompletableFutures.getUninterruptibly(buildAsync());
   }
 
   private static <T> T buildIfNull(T value, Supplier<T> builder) {

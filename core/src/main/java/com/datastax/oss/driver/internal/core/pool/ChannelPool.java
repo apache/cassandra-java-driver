@@ -132,6 +132,10 @@ public class ChannelPool implements AsyncAutoCloseable {
     return RunOrSchedule.on(adminExecutor, () -> singleThreaded.setKeyspace(newKeyspaceName));
   }
 
+  public void reconnectNow() {
+    RunOrSchedule.on(adminExecutor, singleThreaded::reconnectNow);
+  }
+
   @Override
   public CompletionStage<Void> closeFuture() {
     return singleThreaded.closeFuture;
@@ -360,6 +364,11 @@ public class ChannelPool implements AsyncAutoCloseable {
       }
 
       return setKeyspaceFuture;
+    }
+
+    private void reconnectNow() {
+      assert adminExecutor.inEventLoop();
+      reconnection.reconnectNow(false);
     }
 
     private void close() {

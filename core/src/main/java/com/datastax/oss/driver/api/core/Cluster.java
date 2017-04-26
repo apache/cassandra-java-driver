@@ -16,8 +16,12 @@
 package com.datastax.oss.driver.api.core;
 
 import com.datastax.oss.driver.api.core.context.DriverContext;
+import com.datastax.oss.driver.api.core.cql.CqlSession;
 import com.datastax.oss.driver.api.core.metadata.Metadata;
 import com.datastax.oss.driver.api.core.metadata.Node;
+import com.datastax.oss.driver.api.core.session.Session;
+import com.datastax.oss.driver.internal.core.util.concurrent.BlockingOperation;
+import com.datastax.oss.driver.internal.core.util.concurrent.CompletableFutures;
 import java.util.concurrent.CompletionStage;
 
 /** An instance of the driver, that connects to a Cassandra cluster. */
@@ -47,4 +51,35 @@ public interface Cluster extends AsyncAutoCloseable {
 
   /** Returns a context that provides access to all the policies used by this driver instance. */
   DriverContext getContext();
+
+  /** Creates a new session to execute requests against a given keyspace. */
+  CompletionStage<CqlSession> connectAsync(CqlIdentifier keyspace);
+
+  /**
+   * Creates a new session not tied to any keyspace.
+   *
+   * <p>This is equivalent to {@code this.connectAsync(null)}.
+   */
+  default CompletionStage<CqlSession> connectAsync() {
+    return connectAsync(null);
+  }
+
+  /**
+   * Convenience method to call {@link #connectAsync(CqlIdentifier)} and block for the result.
+   *
+   * <p>This must not be called on a driver thread.
+   */
+  default CqlSession connect(CqlIdentifier keyspace) {
+    BlockingOperation.checkNotDriverThread();
+    return CompletableFutures.getUninterruptibly(connectAsync(keyspace));
+  }
+
+  /**
+   * Convenience method to call {@link #connectAsync()} and block for the result.
+   *
+   * <p>This must not be called on a driver thread.
+   */
+  default CqlSession connect() {
+    return connect(null);
+  }
 }
