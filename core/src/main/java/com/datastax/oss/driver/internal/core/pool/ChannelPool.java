@@ -18,6 +18,9 @@ package com.datastax.oss.driver.internal.core.pool;
 import com.datastax.oss.driver.api.core.AsyncAutoCloseable;
 import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.InvalidKeyspaceException;
+import com.datastax.oss.driver.api.core.config.CoreDriverOption;
+import com.datastax.oss.driver.api.core.config.DriverConfig;
+import com.datastax.oss.driver.api.core.loadbalancing.NodeDistance;
 import com.datastax.oss.driver.api.core.metadata.Node;
 import com.datastax.oss.driver.internal.core.channel.ChannelEvent;
 import com.datastax.oss.driver.internal.core.channel.ChannelFactory;
@@ -66,8 +69,8 @@ public class ChannelPool implements AsyncAutoCloseable {
    * channels (i.e. {@link #next()} return {@code null}) and is reconnecting.
    */
   public static CompletionStage<ChannelPool> init(
-      Node node, CqlIdentifier keyspaceName, int channelCount, InternalDriverContext context) {
-    ChannelPool pool = new ChannelPool(node, keyspaceName, channelCount, context);
+      Node node, CqlIdentifier keyspaceName, NodeDistance distance, InternalDriverContext context) {
+    ChannelPool pool = new ChannelPool(node, keyspaceName, distance, context);
     return pool.connect();
   }
 
@@ -80,10 +83,10 @@ public class ChannelPool implements AsyncAutoCloseable {
   private volatile boolean invalidKeyspace;
 
   private ChannelPool(
-      Node node, CqlIdentifier keyspaceName, int channelCount, InternalDriverContext context) {
+      Node node, CqlIdentifier keyspaceName, NodeDistance distance, InternalDriverContext context) {
     this.node = node;
     this.adminExecutor = context.nettyOptions().adminEventExecutorGroup().next();
-    this.singleThreaded = new SingleThreaded(keyspaceName, channelCount, context);
+    this.singleThreaded = new SingleThreaded(keyspaceName, distance, context);
   }
 
   private CompletionStage<ChannelPool> connect() {
@@ -114,8 +117,8 @@ public class ChannelPool implements AsyncAutoCloseable {
     return channels.next();
   }
 
-  public void resize(int newChannelCount) {
-    RunOrSchedule.on(adminExecutor, () -> singleThreaded.resize(newChannelCount));
+  public void resize(NodeDistance newDistance) {
+    RunOrSchedule.on(adminExecutor, () -> singleThreaded.resize(newDistance));
   }
 
   /**
@@ -149,6 +152,7 @@ public class ChannelPool implements AsyncAutoCloseable {
   /** Holds all administration tasks, that are confined to the admin executor. */
   private class SingleThreaded {
 
+    private final DriverConfig config;
     private final ChannelFactory channelFactory;
     private final EventBus eventBus;
     // The channels that are currently connecting
@@ -165,9 +169,10 @@ public class ChannelPool implements AsyncAutoCloseable {
     private CqlIdentifier keyspaceName;
 
     private SingleThreaded(
-        CqlIdentifier keyspaceName, int wantedCount, InternalDriverContext context) {
+        CqlIdentifier keyspaceName, NodeDistance distance, InternalDriverContext context) {
       this.keyspaceName = keyspaceName;
-      this.wantedCount = wantedCount;
+      this.config = context.config();
+      this.wantedCount = computeSize(distance);
       this.channelFactory = context.channelFactory();
       this.eventBus = context.eventBus();
       this.reconnection =
@@ -295,8 +300,9 @@ public class ChannelPool implements AsyncAutoCloseable {
       }
     }
 
-    private void resize(int newChannelCount) {
+    private void resize(NodeDistance newDistance) {
       assert adminExecutor.inEventLoop();
+      int newChannelCount = computeSize(newDistance);
       if (newChannelCount > wantedCount) {
         LOG.debug("{} growing ({} => {} channels)", ChannelPool.this, wantedCount, newChannelCount);
         wantedCount = newChannelCount;
@@ -408,6 +414,15 @@ public class ChannelPool implements AsyncAutoCloseable {
       for (DriverChannel channel : channels) {
         channel.forceClose();
       }
+    }
+
+    private int computeSize(NodeDistance distance) {
+      return config
+          .defaultProfile()
+          .getInt(
+              (distance == NodeDistance.LOCAL)
+                  ? CoreDriverOption.POOLING_LOCAL_CONNECTIONS
+                  : CoreDriverOption.POOLING_REMOTE_CONNECTIONS);
     }
   }
 }
