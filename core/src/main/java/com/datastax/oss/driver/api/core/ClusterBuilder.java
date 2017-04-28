@@ -18,6 +18,7 @@ package com.datastax.oss.driver.api.core;
 import com.datastax.oss.driver.api.core.config.CoreDriverOption;
 import com.datastax.oss.driver.api.core.config.DriverConfig;
 import com.datastax.oss.driver.api.core.config.DriverConfigProfile;
+import com.datastax.oss.driver.api.type.codec.TypeCodec;
 import com.datastax.oss.driver.internal.core.ContactPoints;
 import com.datastax.oss.driver.internal.core.DefaultCluster;
 import com.datastax.oss.driver.internal.core.config.typesafe.TypeSafeDriverConfig;
@@ -37,6 +38,7 @@ import java.util.function.Supplier;
 public class ClusterBuilder {
   private DriverConfig config;
   private Set<InetSocketAddress> programmaticContactPoints = Collections.emptySet();
+  private List<TypeCodec<?>> typeCodecs = Collections.emptyList();
 
   /**
    * Sets the configuration to use.
@@ -97,6 +99,12 @@ public class ClusterBuilder {
     return this;
   }
 
+  /** Registers additional codecs for custom type mappings. */
+  public ClusterBuilder withTypeCodecs(List<TypeCodec<?>> typeCodecs) {
+    this.typeCodecs = typeCodecs;
+    return this;
+  }
+
   /**
    * Creates the cluster with the options set by this builder.
    *
@@ -114,7 +122,7 @@ public class ClusterBuilder {
     Set<InetSocketAddress> contactPoints =
         ContactPoints.merge(programmaticContactPoints, configContactPoints);
 
-    InternalDriverContext context = new DefaultDriverContext(config);
+    InternalDriverContext context = new DefaultDriverContext(config, typeCodecs);
     return DefaultCluster.init(context, contactPoints);
   }
 

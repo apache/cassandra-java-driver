@@ -19,6 +19,7 @@ import com.datastax.oss.driver.api.core.metadata.Node;
 import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Iterables;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -27,11 +28,25 @@ import java.util.Map;
  */
 public class AllNodesFailedException extends DriverException {
   public static AllNodesFailedException fromErrors(Map<Node, Throwable> errors) {
-    if (errors == null || errors.size() == 0) {
+    if (errors == null || errors.isEmpty()) {
       return new NoNodeAvailableException();
     } else {
       return new AllNodesFailedException(ImmutableMap.copyOf(errors));
     }
+  }
+
+  public static AllNodesFailedException fromErrors(List<Map.Entry<Node, Throwable>> errors) {
+    Map<Node, Throwable> map;
+    if (errors == null || errors.isEmpty()) {
+      map = null;
+    } else {
+      ImmutableMap.Builder<Node, Throwable> builder = ImmutableMap.builder();
+      for (Map.Entry<Node, Throwable> entry : errors) {
+        builder.put(entry);
+      }
+      map = builder.build();
+    }
+    return fromErrors(map);
   }
 
   private final Map<Node, Throwable> errors;

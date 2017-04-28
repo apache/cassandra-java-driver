@@ -15,4 +15,34 @@
  */
 package com.datastax.oss.driver.api.core.cql;
 
-public interface AsyncResultSet {}
+import java.util.concurrent.CompletionStage;
+
+/**
+ * The result of an asynchronous CQL query.
+ *
+ * <p>If the query is paged, the rows returned by {@link #iterator()} represent <b>only the current
+ * page</b>. To keep iterating beyond that, use {@link #fetchNextPage()}.
+ *
+ * <p>Note that this object can only be iterated once: rows are "consumed" as they are read,
+ * subsequent calls to {@code iterator()} will return an empty iterator.
+ */
+public interface AsyncResultSet extends Iterable<Row> {
+
+  ColumnDefinitions getColumnDefinitions();
+
+  ExecutionInfo getExecutionInfo();
+
+  /**
+   * Whether there are more pages of results. If so, call {@link #fetchNextPage()} to fetch the next
+   * one asynchronously.
+   */
+  boolean hasMorePages();
+
+  /**
+   * Fetch the next page of results asynchronously.
+   *
+   * @throws IllegalStateException if there are no more pages. Use {@link #hasMorePages()} to check
+   *     if you can call this method.
+   */
+  CompletionStage<AsyncResultSet> fetchNextPage() throws IllegalStateException;
+}

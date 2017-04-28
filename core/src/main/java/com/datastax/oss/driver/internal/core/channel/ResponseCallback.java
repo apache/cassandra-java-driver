@@ -30,10 +30,15 @@ public interface ResponseCallback {
   void onResponse(Frame responseFrame);
 
   /**
-   * Invoked if there was an error while waiting for the response.
+   * Invoked if we couldn't get the response.
    *
-   * <p>This is generally triggered when a channel fails (for example because of a heartbeat
-   * failure) and all pending requests are aborted.
+   * <p>This can be triggered in two cases:
+   *
+   * <ul>
+   *   <li>the connection was closed (for example, because of a heartbeat failure) before the
+   *       response was received;
+   *   <li>the response was received but there was an error while decoding it.
+   * </ul>
    */
   void onFailure(Throwable error);
 

@@ -124,7 +124,7 @@ public class ChannelPool implements AsyncAutoCloseable {
   /**
    * Changes the keyspace name on all the channels in this pool.
    *
-   * <p>Note that this is not called directly by the user, but happens only on a SetKeypsace
+   * <p>Note that this is not called directly by the user, but happens only on a SetKeyspace
    * response after a successful "USE ..." query, so the name should be valid. If the keyspace
    * switch fails on any channel, that channel is closed and a reconnection is started.
    */

@@ -19,18 +19,25 @@ import com.datastax.oss.driver.api.core.addresstranslation.AddressTranslator;
 import com.datastax.oss.driver.api.core.auth.AuthProvider;
 import com.datastax.oss.driver.api.core.config.DriverConfig;
 import com.datastax.oss.driver.api.core.connection.ReconnectionPolicy;
+import com.datastax.oss.driver.api.core.detach.AttachmentPoint;
 import com.datastax.oss.driver.api.core.loadbalancing.LoadBalancingPolicy;
+import com.datastax.oss.driver.api.core.retry.RetryPolicy;
+import com.datastax.oss.driver.api.core.specex.SpeculativeExecutionPolicy;
 import com.datastax.oss.driver.api.core.ssl.SslEngineFactory;
 import java.util.Optional;
 
 /** Holds common components that are shared throughout a driver instance. */
-public interface DriverContext {
+public interface DriverContext extends AttachmentPoint {
 
   DriverConfig config();
 
   LoadBalancingPolicy loadBalancingPolicy();
 
   ReconnectionPolicy reconnectionPolicy();
+
+  RetryPolicy retryPolicy();
+
+  SpeculativeExecutionPolicy speculativeExecutionPolicy();
 
   AddressTranslator addressTranslator();
 

@@ -24,13 +24,13 @@ import com.datastax.oss.driver.internal.core.context.NettyOptions;
 import com.datastax.oss.driver.internal.core.protocol.FrameDecoder;
 import com.datastax.oss.driver.internal.core.protocol.FrameEncoder;
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Preconditions;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.ChannelOption;
 import io.netty.channel.ChannelPipeline;
-import java.net.InetSocketAddress;
 import java.net.SocketAddress;
 import java.util.List;
 import java.util.Optional;
@@ -62,6 +62,13 @@ public class ChannelFactory {
       String versionName = defaultConfig.getString(CoreDriverOption.PROTOCOL_VERSION);
       this.protocolVersion = context.protocolVersionRegistry().fromName(versionName);
     } // else it will be negotiated with the first opened connection
+  }
+
+  public ProtocolVersion protocolVersion() {
+    ProtocolVersion result = this.protocolVersion;
+    Preconditions.checkState(
+        result != null, "Protocol version not known yet, this should only be called after init");
+    return result;
   }
 
   public CompletionStage<DriverChannel> connect(

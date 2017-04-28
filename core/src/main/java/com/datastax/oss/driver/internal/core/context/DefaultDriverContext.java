@@ -15,13 +15,18 @@
  */
 package com.datastax.oss.driver.internal.core.context;
 
+import com.datastax.oss.driver.api.core.ProtocolVersion;
 import com.datastax.oss.driver.api.core.addresstranslation.AddressTranslator;
 import com.datastax.oss.driver.api.core.auth.AuthProvider;
 import com.datastax.oss.driver.api.core.config.CoreDriverOption;
 import com.datastax.oss.driver.api.core.config.DriverConfig;
 import com.datastax.oss.driver.api.core.connection.ReconnectionPolicy;
 import com.datastax.oss.driver.api.core.loadbalancing.LoadBalancingPolicy;
+import com.datastax.oss.driver.api.core.retry.RetryPolicy;
+import com.datastax.oss.driver.api.core.specex.SpeculativeExecutionPolicy;
 import com.datastax.oss.driver.api.core.ssl.SslEngineFactory;
+import com.datastax.oss.driver.api.type.codec.TypeCodec;
+import com.datastax.oss.driver.api.type.codec.registry.CodecRegistry;
 import com.datastax.oss.driver.internal.core.ProtocolVersionRegistry;
 import com.datastax.oss.driver.internal.core.channel.ChannelFactory;
 import com.datastax.oss.driver.internal.core.channel.DefaultWriteCoalescer;
@@ -33,14 +38,17 @@ import com.datastax.oss.driver.internal.core.metadata.MetadataManager;
 import com.datastax.oss.driver.internal.core.metadata.TopologyMonitor;
 import com.datastax.oss.driver.internal.core.pool.ChannelPoolFactory;
 import com.datastax.oss.driver.internal.core.protocol.ByteBufPrimitiveCodec;
+import com.datastax.oss.driver.internal.core.session.RequestProcessorRegistry;
 import com.datastax.oss.driver.internal.core.ssl.JdkSslHandlerFactory;
 import com.datastax.oss.driver.internal.core.ssl.SslHandlerFactory;
 import com.datastax.oss.driver.internal.core.util.Reflection;
 import com.datastax.oss.driver.internal.core.util.concurrent.CycleDetector;
 import com.datastax.oss.driver.internal.core.util.concurrent.LazyReference;
+import com.datastax.oss.driver.internal.type.codec.registry.DefaultCodecRegistry;
 import com.datastax.oss.protocol.internal.Compressor;
 import com.datastax.oss.protocol.internal.FrameCodec;
 import io.netty.buffer.ByteBuf;
+import java.util.List;
 import java.util.Optional;
 
 /**
@@ -69,6 +77,11 @@ public class DefaultDriverContext implements InternalDriverContext {
       new LazyReference<>("loadBalancingPolicy", this::buildLoadBalancingPolicy, cycleDetector);
   private final LazyReference<ReconnectionPolicy> reconnectionPolicyRef =
       new LazyReference<>("reconnectionPolicy", this::buildReconnectionPolicy, cycleDetector);
+  private final LazyReference<RetryPolicy> retryPolicyRef =
+      new LazyReference<>("retryPolicy", this::buildRetryPolicy, cycleDetector);
+  private final LazyReference<SpeculativeExecutionPolicy> speculativeExecutionPolicyRef =
+      new LazyReference<>(
+          "speculativeExecutionPolicy", this::buildSpeculativeExecutionPolicy, cycleDetector);
   private final LazyReference<AddressTranslator> addressTranslatorRef =
       new LazyReference<>("addressTranslator", this::buildAddressTranslator, cycleDetector);
   private final LazyReference<Optional<AuthProvider>> authProviderRef =
@@ -105,9 +118,11 @@ public class DefaultDriverContext implements InternalDriverContext {
 
   private final DriverConfig config;
   private final ChannelPoolFactory channelPoolFactory = new ChannelPoolFactory();
+  private final CodecRegistry codecRegistry;
 
-  public DefaultDriverContext(DriverConfig config) {
+  public DefaultDriverContext(DriverConfig config, List<TypeCodec<?>> typeCodecs) {
     this.config = config;
+    this.codecRegistry = buildCodecRegistry(typeCodecs);
   }
 
   protected LoadBalancingPolicy buildLoadBalancingPolicy() {
@@ -129,6 +144,27 @@ public class DefaultDriverContext implements InternalDriverContext {
                 new IllegalArgumentException(
                     String.format(
                         "Missing reconnection policy, check your configuration (%s)",
+                        classOption)));
+  }
+
+  protected RetryPolicy buildRetryPolicy() {
+    CoreDriverOption classOption = CoreDriverOption.RETRY_POLICY_CLASS;
+    return Reflection.buildFromConfig(this, classOption, RetryPolicy.class)
+        .orElseThrow(
+            () ->
+                new IllegalArgumentException(
+                    String.format(
+                        "Missing retry policy, check your configuration (%s)", classOption)));
+  }
+
+  protected SpeculativeExecutionPolicy buildSpeculativeExecutionPolicy() {
+    CoreDriverOption classOption = CoreDriverOption.SPECULATIVE_EXECUTION_POLICY_CLASS;
+    return Reflection.buildFromConfig(this, classOption, SpeculativeExecutionPolicy.class)
+        .orElseThrow(
+            () ->
+                new IllegalArgumentException(
+                    String.format(
+                        "Missing speculative execution policy, check your configuration (%s)",
                         classOption)));
   }
 
@@ -175,7 +211,7 @@ public class DefaultDriverContext implements InternalDriverContext {
   }
 
   protected Optional<SslHandlerFactory> buildSslHandlerFactory() {
-    // If a JDK-based factory was provided through the public API, wrap it
+    // If a JDK-based factory was provided through the public API, syncWrapper it
     return buildSslEngineFactory().map(JdkSslHandlerFactory::new);
 
     // For more advanced options (like using Netty's native OpenSSL support instead of the JDK),
@@ -206,6 +242,11 @@ public class DefaultDriverContext implements InternalDriverContext {
     return new ControlConnection(this);
   }
 
+  protected CodecRegistry buildCodecRegistry(List<TypeCodec<?>> codecs) {
+    TypeCodec<?>[] array = new TypeCodec<?>[codecs.size()];
+    return new DefaultCodecRegistry(codecs.toArray(array));
+  }
+
   @Override
   public DriverConfig config() {
     return config;
@@ -219,6 +260,16 @@ public class DefaultDriverContext implements InternalDriverContext {
   @Override
   public ReconnectionPolicy reconnectionPolicy() {
     return reconnectionPolicyRef.get();
+  }
+
+  @Override
+  public RetryPolicy retryPolicy() {
+    return retryPolicyRef.get();
+  }
+
+  @Override
+  public SpeculativeExecutionPolicy speculativeExecutionPolicy() {
+    return speculativeExecutionPolicyRef.get();
   }
 
   @Override
@@ -299,5 +350,20 @@ public class DefaultDriverContext implements InternalDriverContext {
   @Override
   public ControlConnection controlConnection() {
     return controlConnectionRef.get();
+  }
+
+  @Override
+  public RequestProcessorRegistry requestProcessorRegistry() {
+    return RequestProcessorRegistry.DEFAULT;
+  }
+
+  @Override
+  public CodecRegistry codecRegistry() {
+    return codecRegistry;
+  }
+
+  @Override
+  public ProtocolVersion protocolVersion() {
+    return channelFactory().protocolVersion();
   }
 }

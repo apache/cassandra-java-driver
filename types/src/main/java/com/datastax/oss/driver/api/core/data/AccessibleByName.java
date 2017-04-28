@@ -22,7 +22,7 @@ import com.datastax.oss.driver.api.type.DataType;
  * A data structure where the values are accessible via a name string.
  *
  * <p>This is an optimized version of {@link AccessibleById}, in case the overhead of having to
- * create a {@link CqlIdentifier} for each value is too much overhead.
+ * create a {@link CqlIdentifier} for each value is too much.
  *
  * <p>By default, case is ignored when matching names. If multiple names only differ by their case,
  * then the first one is chosen. You can force an exact match by double-quoting the name.

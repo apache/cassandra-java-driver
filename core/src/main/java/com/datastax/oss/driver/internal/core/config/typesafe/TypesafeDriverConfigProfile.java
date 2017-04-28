@@ -15,6 +15,7 @@
  */
 package com.datastax.oss.driver.internal.core.config.typesafe;
 
+import com.datastax.oss.driver.api.core.ConsistencyLevel;
 import com.datastax.oss.driver.api.core.config.DriverConfigProfile;
 import com.datastax.oss.driver.api.core.config.DriverOption;
 import com.typesafe.config.Config;
@@ -67,5 +68,11 @@ public class TypesafeDriverConfigProfile implements DriverConfigProfile {
   @Override
   public long getBytes(DriverOption option) {
     return config.getBytes(option.getPath());
+  }
+
+  @Override
+  public ConsistencyLevel getConsistencyLevel(DriverOption option) {
+    String name = getString(option);
+    return ConsistencyLevel.valueOf(name);
   }
 }

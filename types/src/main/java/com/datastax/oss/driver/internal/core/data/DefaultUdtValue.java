@@ -90,6 +90,7 @@ public class DefaultUdtValue implements UdtValue {
   public ProtocolVersion protocolVersion() {
     return type.getAttachmentPoint().protocolVersion();
   }
+
   /**
    * @serialData The type of the tuple, followed by an array of byte arrays representing the values
    *     (null values are represented by {@code null}).

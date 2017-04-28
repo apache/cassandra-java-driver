@@ -18,6 +18,7 @@ package com.datastax.oss.driver.api.core.cql;
 import com.datastax.oss.driver.api.core.session.Request;
 import java.util.concurrent.CompletionStage;
 
+/** A request to prepare a CQL query. */
 public interface PrepareRequest
     extends Request<PreparedStatement, CompletionStage<PreparedStatement>> {
 

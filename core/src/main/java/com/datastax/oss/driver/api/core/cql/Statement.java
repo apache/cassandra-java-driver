@@ -16,5 +16,10 @@
 package com.datastax.oss.driver.api.core.cql;
 
 import com.datastax.oss.driver.api.core.session.Request;
+import java.util.concurrent.CompletionStage;
 
-public interface Statement extends Request<ResultSet, AsyncResultSet> {}
+/** A request to execute a CQL query. */
+public interface Statement extends Request<ResultSet, CompletionStage<AsyncResultSet>> {
+  // Implementation note: "CqlRequest" would be a better name, but we keep "Statement" to match
+  // previous driver versions.
+}

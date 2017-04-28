@@ -15,6 +15,7 @@
  */
 package com.datastax.oss.driver.api.core.config;
 
+import com.datastax.oss.driver.api.core.ConsistencyLevel;
 import java.time.Duration;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
@@ -40,4 +41,6 @@ public interface DriverConfigProfile {
   Duration getDuration(DriverOption option);
 
   long getDuration(DriverOption option, TimeUnit targetUnit);
+
+  ConsistencyLevel getConsistencyLevel(DriverOption option);
 }

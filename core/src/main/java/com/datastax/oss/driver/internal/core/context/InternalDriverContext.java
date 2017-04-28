@@ -16,6 +16,7 @@
 package com.datastax.oss.driver.internal.core.context;
 
 import com.datastax.oss.driver.api.core.context.DriverContext;
+import com.datastax.oss.driver.api.type.codec.registry.CodecRegistry;
 import com.datastax.oss.driver.internal.core.ProtocolVersionRegistry;
 import com.datastax.oss.driver.internal.core.channel.ChannelFactory;
 import com.datastax.oss.driver.internal.core.channel.WriteCoalescer;
@@ -24,6 +25,7 @@ import com.datastax.oss.driver.internal.core.metadata.LoadBalancingPolicyWrapper
 import com.datastax.oss.driver.internal.core.metadata.MetadataManager;
 import com.datastax.oss.driver.internal.core.metadata.TopologyMonitor;
 import com.datastax.oss.driver.internal.core.pool.ChannelPoolFactory;
+import com.datastax.oss.driver.internal.core.session.RequestProcessorRegistry;
 import com.datastax.oss.driver.internal.core.ssl.SslHandlerFactory;
 import com.datastax.oss.protocol.internal.Compressor;
 import com.datastax.oss.protocol.internal.FrameCodec;
@@ -58,4 +60,6 @@ public interface InternalDriverContext extends DriverContext {
   LoadBalancingPolicyWrapper loadBalancingPolicyWrapper();
 
   ControlConnection controlConnection();
+
+  RequestProcessorRegistry requestProcessorRegistry();
 }

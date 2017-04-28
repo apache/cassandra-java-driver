@@ -32,10 +32,19 @@ public enum CoreDriverOption implements DriverOption {
   CONNECTION_HEARTBEAT_INTERVAL("connection.heartbeat.interval", true),
   CONNECTION_HEARTBEAT_TIMEOUT("connection.heartbeat.timeout", true),
 
+  REQUEST_TIMEOUT("request.timeout", true),
+  REQUEST_CONSISTENCY("request.consistency", true),
+  REQUEST_PAGE_SIZE("request.page-size", true),
+  REQUEST_SERIAL_CONSISTENCY("request.serial-consistency", true),
+
   CONTROL_CONNECTION_TIMEOUT("connection.control-connection.timeout", true),
   CONTROL_CONNECTION_PAGE_SIZE("connection.control-connection.page-size", true),
 
+  RETRY_POLICY_CLASS("retry.policy-class", true),
+
   LOAD_BALANCING_POLICY_CLASS("load-balancing.policy-class", true),
+
+  SPECULATIVE_EXECUTION_POLICY_CLASS("speculative-execution.policy-class", true),
 
   RECONNECTION_POLICY_CLASS("connection.reconnection.policy-class", true),
   RECONNECTION_CONFIG_BASE_DELAY("connection.reconnection.config.base-delay", true),

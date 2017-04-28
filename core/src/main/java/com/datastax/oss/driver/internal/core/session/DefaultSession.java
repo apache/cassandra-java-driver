@@ -17,6 +17,8 @@ package com.datastax.oss.driver.internal.core.session;
 
 import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.InvalidKeyspaceException;
+import com.datastax.oss.driver.api.core.config.DriverConfig;
+import com.datastax.oss.driver.api.core.config.DriverConfigProfile;
 import com.datastax.oss.driver.api.core.cql.CqlSession;
 import com.datastax.oss.driver.api.core.loadbalancing.LoadBalancingPolicy;
 import com.datastax.oss.driver.api.core.loadbalancing.NodeDistance;
@@ -71,8 +73,11 @@ public class DefaultSession implements CqlSession {
     return new DefaultSession(context, keyspace).init();
   }
 
+  private final InternalDriverContext context;
+  private final DriverConfig config;
   private final EventExecutor adminExecutor;
   private final SingleThreaded singleThreaded;
+  private final RequestProcessorRegistry processorRegistry;
 
   @VisibleForTesting
   final ConcurrentMap<Node, ChannelPool> pools =
@@ -84,7 +89,10 @@ public class DefaultSession implements CqlSession {
 
   private DefaultSession(InternalDriverContext context, CqlIdentifier keyspace) {
     this.adminExecutor = context.nettyOptions().adminEventExecutorGroup().next();
+    this.context = context;
+    this.config = context.config();
     this.singleThreaded = new SingleThreaded(context, keyspace);
+    this.processorRegistry = context.requestProcessorRegistry();
   }
 
   private CompletionStage<CqlSession> init() {
@@ -95,13 +103,18 @@ public class DefaultSession implements CqlSession {
   @Override
   public <SyncResultT, AsyncResultT> SyncResultT execute(
       Request<SyncResultT, AsyncResultT> request) {
-    throw new UnsupportedOperationException("TODO");
+    return newHandler(request).syncResult();
   }
 
   @Override
   public <SyncResultT, AsyncResultT> AsyncResultT executeAsync(
       Request<SyncResultT, AsyncResultT> request) {
-    throw new UnsupportedOperationException("TODO");
+    return newHandler(request).asyncResult();
+  }
+
+  private <SyncResultT, AsyncResultT> RequestHandler<SyncResultT, AsyncResultT> newHandler(
+      Request<SyncResultT, AsyncResultT> request) {
+    return processorRegistry.processorFor(request).newHandler(request, pools, context);
   }
 
   @Override

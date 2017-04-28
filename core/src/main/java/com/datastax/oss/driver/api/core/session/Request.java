@@ -25,4 +25,8 @@ package com.datastax.oss.driver.api.core.session;
  * @param <SyncResultT> the type of response when this request is executed synchronously.
  * @param <AsyncResultT> the type of response when this request is executed asynchronously.
  */
-public interface Request<SyncResultT, AsyncResultT> {}
+public interface Request<SyncResultT, AsyncResultT> {
+
+  /** The name of the configuration profile that will be used for execution. */
+  String getConfigProfile();
+}
