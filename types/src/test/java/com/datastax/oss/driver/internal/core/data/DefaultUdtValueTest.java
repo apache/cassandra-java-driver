@@ -19,9 +19,15 @@ import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.data.UdtValue;
 import com.datastax.oss.driver.api.core.detach.AttachmentPoint;
 import com.datastax.oss.driver.api.type.DataType;
+import com.datastax.oss.driver.api.type.DataTypes;
 import com.datastax.oss.driver.api.type.UserDefinedType;
+import com.datastax.oss.driver.internal.SerializationHelper;
 import com.datastax.oss.driver.internal.type.UserDefinedTypeBuilder;
+import com.datastax.oss.protocol.internal.util.Bytes;
 import java.util.List;
+import org.testng.annotations.Test;
+
+import static org.assertj.core.api.Assertions.assertThat;
 
 public class DefaultUdtValueTest extends AccessibleByIdTestBase<UdtValue> {
 
@@ -36,5 +42,25 @@ public class DefaultUdtValueTest extends AccessibleByIdTestBase<UdtValue> {
     UserDefinedType userDefinedType = builder.build();
     userDefinedType.attach(attachmentPoint);
     return userDefinedType.newValue();
+  }
+
+  @Test
+  public void should_serialize_and_deserialize() {
+    UserDefinedType type =
+        new UserDefinedTypeBuilder(
+                CqlIdentifier.fromInternal("ks"), CqlIdentifier.fromInternal("type"))
+            .withField(CqlIdentifier.fromInternal("field1"), DataTypes.INT)
+            .withField(CqlIdentifier.fromInternal("field2"), DataTypes.TEXT)
+            .build();
+    UdtValue in = type.newValue();
+    in.setBytesUnsafe(0, Bytes.fromHexString("0x00000001"));
+    in.setBytesUnsafe(1, Bytes.fromHexString("0x61"));
+
+    UdtValue out = SerializationHelper.serializeAndDeserialize(in);
+
+    assertThat(out.getType()).isEqualTo(in.getType());
+    assertThat(out.getType().isDetached()).isTrue();
+    assertThat(Bytes.toHexString(out.getBytesUnsafe(0))).isEqualTo("0x00000001");
+    assertThat(Bytes.toHexString(out.getBytesUnsafe(1))).isEqualTo("0x61");
   }
 }
