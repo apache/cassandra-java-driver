@@ -21,9 +21,8 @@ import com.datastax.oss.protocol.internal.ProtocolConstants;
 
 public class PrimitiveType implements DataType {
 
+  /** @serial */
   private final int protocolCode;
-
-  private transient volatile boolean attached;
 
   public PrimitiveType(int protocolCode) {
     this.protocolCode = protocolCode;

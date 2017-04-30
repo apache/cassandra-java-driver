@@ -59,7 +59,7 @@ public class DefaultMapType implements MapType {
 
   @Override
   public boolean isDetached() {
-    return keyType.isDetached() && valueType.isDetached();
+    return keyType.isDetached() || valueType.isDetached();
   }
 
   @Override

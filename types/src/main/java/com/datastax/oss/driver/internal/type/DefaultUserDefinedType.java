@@ -111,7 +111,7 @@ public class DefaultUserDefinedType implements UserDefinedType {
 
   @Override
   public boolean isDetached() {
-    return attachmentPoint == null;
+    return attachmentPoint == AttachmentPoint.NONE;
   }
 
   @Override
@@ -161,6 +161,7 @@ public class DefaultUserDefinedType implements UserDefinedType {
     Preconditions.checkArgument(
         fieldTypes != null && fieldTypes.size() == fieldNames.size(),
         "There should be the same number of field names and types");
+    this.attachmentPoint = AttachmentPoint.NONE;
     this.index = new IdentifierIndex(this.fieldNames);
   }
 }
