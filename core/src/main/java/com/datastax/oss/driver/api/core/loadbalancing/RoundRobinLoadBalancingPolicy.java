@@ -21,6 +21,7 @@ import java.util.Queue;
 import java.util.Set;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.CopyOnWriteArraySet;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.IntUnaryOperator;
 import org.slf4j.Logger;
@@ -38,7 +39,7 @@ public class RoundRobinLoadBalancingPolicy implements LoadBalancingPolicy {
   private static final IntUnaryOperator INCREMENT = i -> (i == Integer.MAX_VALUE) ? 0 : i + 1;
 
   private final AtomicInteger startIndex = new AtomicInteger();
-  private final CopyOnWriteArrayList<Node> liveNodes = new CopyOnWriteArrayList<>();
+  private final CopyOnWriteArraySet<Node> liveNodes = new CopyOnWriteArraySet<>();
 
   public RoundRobinLoadBalancingPolicy(@SuppressWarnings("unused") DriverContext context) {
     // nothing to do
