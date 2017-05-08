@@ -17,10 +17,10 @@ package com.datastax.oss.driver.api.core.loadbalancing;
 
 import com.datastax.oss.driver.api.core.context.DriverContext;
 import com.datastax.oss.driver.api.core.metadata.Node;
+import com.datastax.oss.driver.api.core.metadata.NodeState;
 import java.util.Queue;
 import java.util.Set;
 import java.util.concurrent.ConcurrentLinkedQueue;
-import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.CopyOnWriteArraySet;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.IntUnaryOperator;
@@ -48,9 +48,11 @@ public class RoundRobinLoadBalancingPolicy implements LoadBalancingPolicy {
   @Override
   public void init(Set<Node> nodes, DistanceReporter distanceReporter) {
     LOG.debug("Initializing with {}", nodes);
-    this.liveNodes.addAll(nodes);
     for (Node node : nodes) {
       distanceReporter.setDistance(node, NodeDistance.LOCAL);
+      if (node.getState() == NodeState.UNKNOWN || node.getState() == NodeState.UP) {
+        this.liveNodes.add(node);
+      }
     }
   }
 
