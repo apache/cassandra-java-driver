@@ -219,8 +219,7 @@ public class ChannelPool implements AsyncAutoCloseable {
               .reportAvailableIds(wantedCount > 1)
               .build();
       for (int i = 0; i < missing; i++) {
-        CompletionStage<DriverChannel> channelFuture =
-            channelFactory.connect(node.getConnectAddress(), options);
+        CompletionStage<DriverChannel> channelFuture = channelFactory.connect(node, options);
         pendingChannels.add(channelFuture);
       }
       return CompletableFutures.allDone(pendingChannels)

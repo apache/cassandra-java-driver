@@ -17,6 +17,7 @@ package com.datastax.oss.driver.internal.core.channel;
 
 import com.datastax.oss.driver.api.core.CoreProtocolVersion;
 import com.datastax.oss.driver.api.core.config.CoreDriverOption;
+import com.datastax.oss.driver.api.core.metadata.Node;
 import com.datastax.oss.protocol.internal.Frame;
 import com.datastax.oss.protocol.internal.request.Query;
 import com.datastax.oss.protocol.internal.response.result.Void;
@@ -55,8 +56,7 @@ public class ChannelFactoryAvailableIdsTest extends ChannelFactoryTestBase {
 
     // When
     CompletionStage<DriverChannel> channelFuture =
-        factory.connect(
-            SERVER_ADDRESS, DriverChannelOptions.builder().reportAvailableIds(true).build());
+        factory.connect(node, DriverChannelOptions.builder().reportAvailableIds(true).build());
     completeSimpleChannelInit();
 
     // Then
@@ -75,7 +75,8 @@ public class ChannelFactoryAvailableIdsTest extends ChannelFactoryTestBase {
 
                         // Complete the request, should increase again
                         writeInboundFrame(readOutboundFrame(), Void.INSTANCE);
-                        Mockito.verify(responseCallback, timeout(100)).onResponse(any(Frame.class));
+                        Mockito.verify(responseCallback, timeout(100))
+                            .onResponse(any(Frame.class), any(Node.class));
                         assertThat(channel.availableIds()).isEqualTo(128);
                       });
             });
@@ -88,7 +89,7 @@ public class ChannelFactoryAvailableIdsTest extends ChannelFactoryTestBase {
 
     // When
     CompletionStage<DriverChannel> channelFuture =
-        factory.connect(SERVER_ADDRESS, DriverChannelOptions.DEFAULT);
+        factory.connect(node, DriverChannelOptions.DEFAULT);
     completeSimpleChannelInit();
 
     // Then
@@ -106,7 +107,8 @@ public class ChannelFactoryAvailableIdsTest extends ChannelFactoryTestBase {
                         assertThat(channel.availableIds()).isEqualTo(-1);
 
                         writeInboundFrame(readOutboundFrame(), Void.INSTANCE);
-                        Mockito.verify(responseCallback, timeout(100)).onResponse(any(Frame.class));
+                        Mockito.verify(responseCallback, timeout(100))
+                            .onResponse(any(Frame.class), any(Node.class));
                         assertThat(channel.availableIds()).isEqualTo(-1);
                       });
             });

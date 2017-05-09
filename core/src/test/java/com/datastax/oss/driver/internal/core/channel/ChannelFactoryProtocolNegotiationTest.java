@@ -45,7 +45,7 @@ public class ChannelFactoryProtocolNegotiationTest extends ChannelFactoryTestBas
 
     // When
     CompletionStage<DriverChannel> channelFuture =
-        factory.connect(SERVER_ADDRESS, DriverChannelOptions.DEFAULT);
+        factory.connect(node, DriverChannelOptions.DEFAULT);
 
     completeSimpleChannelInit();
 
@@ -67,7 +67,7 @@ public class ChannelFactoryProtocolNegotiationTest extends ChannelFactoryTestBas
 
     // When
     CompletionStage<DriverChannel> channelFuture =
-        factory.connect(SERVER_ADDRESS, DriverChannelOptions.DEFAULT);
+        factory.connect(node, DriverChannelOptions.DEFAULT);
 
     Frame requestFrame = readOutboundFrame();
     assertThat(requestFrame.protocolVersion).isEqualTo(CoreProtocolVersion.V4.getCode());
@@ -97,7 +97,7 @@ public class ChannelFactoryProtocolNegotiationTest extends ChannelFactoryTestBas
 
     // When
     CompletionStage<DriverChannel> channelFuture =
-        factory.connect(SERVER_ADDRESS, DriverChannelOptions.DEFAULT);
+        factory.connect(node, DriverChannelOptions.DEFAULT);
 
     Frame requestFrame = readOutboundFrame();
     assertThat(requestFrame.protocolVersion).isEqualTo(CoreProtocolVersion.V4.getCode());
@@ -124,7 +124,7 @@ public class ChannelFactoryProtocolNegotiationTest extends ChannelFactoryTestBas
 
     // When
     CompletionStage<DriverChannel> channelFuture =
-        factory.connect(SERVER_ADDRESS, DriverChannelOptions.DEFAULT);
+        factory.connect(node, DriverChannelOptions.DEFAULT);
 
     Frame requestFrame = readOutboundFrame();
     assertThat(requestFrame.protocolVersion).isEqualTo(CoreProtocolVersion.V4.getCode());
@@ -159,7 +159,7 @@ public class ChannelFactoryProtocolNegotiationTest extends ChannelFactoryTestBas
 
     // When
     CompletionStage<DriverChannel> channelFuture =
-        factory.connect(SERVER_ADDRESS, DriverChannelOptions.DEFAULT);
+        factory.connect(node, DriverChannelOptions.DEFAULT);
 
     Frame requestFrame = readOutboundFrame();
     assertThat(requestFrame.protocolVersion).isEqualTo(CoreProtocolVersion.V4.getCode());

@@ -244,7 +244,7 @@ public class ControlConnection implements EventCallback, AsyncAutoCloseable {
         LOG.debug("Trying to establish a connection to {}", node);
         context
             .channelFactory()
-            .connect(node.getConnectAddress(), channelOptions)
+            .connect(node, channelOptions)
             .whenCompleteAsync(
                 (channel, error) -> {
                   try {

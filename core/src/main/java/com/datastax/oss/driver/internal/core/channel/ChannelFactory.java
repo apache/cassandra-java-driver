@@ -19,6 +19,7 @@ import com.datastax.oss.driver.api.core.ProtocolVersion;
 import com.datastax.oss.driver.api.core.UnsupportedProtocolVersionException;
 import com.datastax.oss.driver.api.core.config.CoreDriverOption;
 import com.datastax.oss.driver.api.core.config.DriverConfigProfile;
+import com.datastax.oss.driver.api.core.metadata.Node;
 import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
 import com.datastax.oss.driver.internal.core.context.NettyOptions;
 import com.datastax.oss.driver.internal.core.protocol.FrameDecoder;
@@ -30,7 +31,6 @@ import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.ChannelOption;
 import io.netty.channel.ChannelPipeline;
-import java.net.InetSocketAddress;
 import java.net.SocketAddress;
 import java.util.List;
 import java.util.Optional;
@@ -64,8 +64,7 @@ public class ChannelFactory {
     } // else it will be negotiated with the first opened connection
   }
 
-  public CompletionStage<DriverChannel> connect(
-      final SocketAddress address, DriverChannelOptions options) {
+  public CompletionStage<DriverChannel> connect(final Node node, DriverChannelOptions options) {
     CompletableFuture<DriverChannel> resultFuture = new CompletableFuture<>();
 
     AvailableIdsHolder availableIdsHolder =
@@ -83,7 +82,7 @@ public class ChannelFactory {
     }
 
     connect(
-        address,
+        node,
         options,
         availableIdsHolder,
         currentVersion,
@@ -94,7 +93,7 @@ public class ChannelFactory {
   }
 
   private void connect(
-      SocketAddress address,
+      Node node,
       DriverChannelOptions options,
       AvailableIdsHolder availableIdsHolder,
       final ProtocolVersion currentVersion,
@@ -109,11 +108,11 @@ public class ChannelFactory {
             .group(nettyOptions.ioEventLoopGroup())
             .channel(nettyOptions.channelClass())
             .option(ChannelOption.ALLOCATOR, nettyOptions.allocator())
-            .handler(initializer(address, currentVersion, options, availableIdsHolder));
+            .handler(initializer(node, currentVersion, options, availableIdsHolder));
 
     nettyOptions.afterBootstrapInitialized(bootstrap);
 
-    ChannelFuture connectFuture = bootstrap.connect(address);
+    ChannelFuture connectFuture = bootstrap.connect(getConnectAddress(node));
 
     connectFuture.addListener(
         cf -> {
@@ -143,7 +142,7 @@ public class ChannelFactory {
                     currentVersion,
                     downgraded.get());
                 connect(
-                    address,
+                    node,
                     options,
                     availableIdsHolder,
                     downgraded.get(),
@@ -152,7 +151,7 @@ public class ChannelFactory {
                     resultFuture);
               } else {
                 resultFuture.completeExceptionally(
-                    UnsupportedProtocolVersionException.forNegotiation(address, attemptedVersions));
+                    UnsupportedProtocolVersionException.forNegotiation(node, attemptedVersions));
               }
             } else {
               resultFuture.completeExceptionally(error);
@@ -163,7 +162,7 @@ public class ChannelFactory {
 
   @VisibleForTesting
   ChannelInitializer<Channel> initializer(
-      SocketAddress address,
+      Node node,
       final ProtocolVersion protocolVersion,
       final DriverChannelOptions options,
       AvailableIdsHolder availableIdsHolder) {
@@ -182,18 +181,19 @@ public class ChannelFactory {
 
         InFlightHandler inFlightHandler =
             new InFlightHandler(
+                node,
                 protocolVersion,
                 new StreamIdGenerator(maxRequestsPerConnection),
                 setKeyspaceTimeoutMillis,
                 availableIdsHolder,
                 options.eventCallback);
         ProtocolInitHandler initHandler =
-            new ProtocolInitHandler(context, protocolVersion, clusterName, options);
+            new ProtocolInitHandler(node, context, protocolVersion, clusterName, options);
 
         ChannelPipeline pipeline = channel.pipeline();
         context
             .sslHandlerFactory()
-            .map(f -> f.newSslHandler(channel, address))
+            .map(f -> f.newSslHandler(channel, getConnectAddress(node)))
             .map(h -> pipeline.addLast("ssl", h));
         pipeline
             .addLast("encoder", new FrameEncoder(context.frameCodec()))
@@ -205,5 +205,10 @@ public class ChannelFactory {
         context.nettyOptions().afterChannelInitialized(channel);
       }
     };
+  }
+
+  @VisibleForTesting
+  protected SocketAddress getConnectAddress(Node node) {
+    return node.getConnectAddress();
   }
 }
