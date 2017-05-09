@@ -16,7 +16,6 @@
 package com.datastax.oss.driver.internal.core.channel;
 
 import com.datastax.oss.driver.api.core.metadata.Node;
-import java.net.SocketAddress;
 import java.util.Objects;
 
 /** Events relating to driver channels. */

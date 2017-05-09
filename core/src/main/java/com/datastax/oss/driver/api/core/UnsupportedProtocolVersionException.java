@@ -17,7 +17,6 @@ package com.datastax.oss.driver.api.core;
 
 import com.datastax.oss.driver.api.core.metadata.Node;
 import com.google.common.collect.ImmutableList;
-import java.net.SocketAddress;
 import java.util.Collections;
 import java.util.List;
 

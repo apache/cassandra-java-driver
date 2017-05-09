@@ -24,7 +24,6 @@ import com.datastax.oss.driver.api.type.codec.PrimitiveIntCodec;
 import com.datastax.oss.driver.api.type.codec.TypeCodec;
 import com.datastax.oss.driver.api.type.codec.TypeCodecs;
 import com.datastax.oss.driver.api.type.codec.registry.CodecRegistry;
-import com.datastax.oss.driver.internal.core.data.DefaultTupleValue;
 import com.datastax.oss.driver.internal.type.DefaultTupleType;
 import com.datastax.oss.protocol.internal.util.Bytes;
 import com.google.common.collect.ImmutableList;

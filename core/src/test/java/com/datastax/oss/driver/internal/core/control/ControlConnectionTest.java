@@ -21,14 +21,12 @@ import com.datastax.oss.driver.internal.core.channel.MockChannelFactoryHelper;
 import java.time.Duration;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
-import org.mockito.ArgumentCaptor;
 import org.mockito.Mockito;
 import org.testng.annotations.Test;
 
 import static com.datastax.oss.driver.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.times;
 
 public class ControlConnectionTest extends ControlConnectionTestBase {
 

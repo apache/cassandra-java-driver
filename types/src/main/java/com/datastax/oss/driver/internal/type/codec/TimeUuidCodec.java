@@ -18,7 +18,6 @@ package com.datastax.oss.driver.internal.type.codec;
 import com.datastax.oss.driver.api.core.ProtocolVersion;
 import com.datastax.oss.driver.api.type.DataType;
 import com.datastax.oss.driver.api.type.DataTypes;
-import com.datastax.oss.driver.api.type.reflect.GenericType;
 import java.nio.ByteBuffer;
 import java.util.UUID;
 

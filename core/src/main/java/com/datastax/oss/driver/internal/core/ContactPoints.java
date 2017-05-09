@@ -16,8 +16,6 @@
 package com.datastax.oss.driver.internal.core;
 
 import com.google.common.base.Splitter;
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;

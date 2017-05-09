@@ -17,7 +17,6 @@ package com.datastax.oss.driver.internal.type.codec;
 
 import com.datastax.oss.driver.api.type.codec.TypeCodecs;
 import java.time.Instant;
-import java.time.LocalDate;
 import org.testng.annotations.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;

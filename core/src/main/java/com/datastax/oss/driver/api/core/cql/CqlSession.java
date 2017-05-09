@@ -15,8 +15,8 @@
  */
 package com.datastax.oss.driver.api.core.cql;
 
-import com.datastax.oss.driver.api.core.session.Session;
 import com.datastax.oss.driver.api.core.session.Request;
+import com.datastax.oss.driver.api.core.session.Session;
 import java.util.concurrent.CompletionStage;
 
 public interface CqlSession extends Session {
