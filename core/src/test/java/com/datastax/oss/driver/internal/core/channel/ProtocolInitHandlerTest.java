@@ -23,7 +23,6 @@ import com.datastax.oss.driver.api.core.auth.AuthenticationException;
 import com.datastax.oss.driver.api.core.config.CoreDriverOption;
 import com.datastax.oss.driver.api.core.config.DriverConfig;
 import com.datastax.oss.driver.api.core.config.DriverConfigProfile;
-import com.datastax.oss.driver.api.core.metadata.Node;
 import com.datastax.oss.driver.internal.core.ProtocolVersionRegistry;
 import com.datastax.oss.driver.internal.core.TestResponses;
 import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
@@ -58,7 +57,6 @@ public class ProtocolInitHandlerTest extends ChannelHandlerTestBase {
 
   private static final long QUERY_TIMEOUT_MILLIS = 100L;
 
-  @Mock private Node node;
   @Mock private InternalDriverContext internalDriverContext;
   @Mock private DriverConfig driverConfig;
   @Mock private DriverConfigProfile defaultConfigProfile;
@@ -83,7 +81,7 @@ public class ProtocolInitHandlerTest extends ChannelHandlerTestBase {
         .addLast(
             "inflight",
             new InFlightHandler(
-                node, CoreProtocolVersion.V4, new StreamIdGenerator(100), 100, null, null));
+                CoreProtocolVersion.V4, new StreamIdGenerator(100), 100, null, null));
   }
 
   @Test
@@ -93,11 +91,7 @@ public class ProtocolInitHandlerTest extends ChannelHandlerTestBase {
         .addLast(
             "init",
             new ProtocolInitHandler(
-                node,
-                internalDriverContext,
-                CoreProtocolVersion.V4,
-                null,
-                DriverChannelOptions.DEFAULT));
+                internalDriverContext, CoreProtocolVersion.V4, null, DriverChannelOptions.DEFAULT));
 
     ChannelFuture connectFuture = channel.connect(new InetSocketAddress("localhost", 9042));
 
@@ -126,8 +120,7 @@ public class ProtocolInitHandlerTest extends ChannelHandlerTestBase {
         .pipeline()
         .addLast(
             "init",
-            new ProtocolInitHandler(
-                node, internalDriverContext, CoreProtocolVersion.V4, null, null));
+            new ProtocolInitHandler(internalDriverContext, CoreProtocolVersion.V4, null, null));
 
     ChannelFuture connectFuture = channel.connect(new InetSocketAddress("localhost", 9042));
 
@@ -147,11 +140,7 @@ public class ProtocolInitHandlerTest extends ChannelHandlerTestBase {
         .addLast(
             "init",
             new ProtocolInitHandler(
-                node,
-                internalDriverContext,
-                CoreProtocolVersion.V4,
-                null,
-                DriverChannelOptions.DEFAULT));
+                internalDriverContext, CoreProtocolVersion.V4, null, DriverChannelOptions.DEFAULT));
 
     String serverAuthenticator = "mockServerAuthenticator";
     AuthProvider authProvider = Mockito.mock(AuthProvider.class);
@@ -209,11 +198,7 @@ public class ProtocolInitHandlerTest extends ChannelHandlerTestBase {
         .addLast(
             "init",
             new ProtocolInitHandler(
-                node,
-                internalDriverContext,
-                CoreProtocolVersion.V4,
-                null,
-                DriverChannelOptions.DEFAULT));
+                internalDriverContext, CoreProtocolVersion.V4, null, DriverChannelOptions.DEFAULT));
 
     String serverAuthenticator = "mockServerAuthenticator";
     AuthProvider authProvider = Mockito.mock(AuthProvider.class);
@@ -253,7 +238,6 @@ public class ProtocolInitHandlerTest extends ChannelHandlerTestBase {
         .addLast(
             "init",
             new ProtocolInitHandler(
-                node,
                 internalDriverContext,
                 CoreProtocolVersion.V4,
                 "expectedClusterName",
@@ -282,7 +266,6 @@ public class ProtocolInitHandlerTest extends ChannelHandlerTestBase {
         .addLast(
             "init",
             new ProtocolInitHandler(
-                node,
                 internalDriverContext,
                 CoreProtocolVersion.V4,
                 "expectedClusterName",
@@ -300,7 +283,7 @@ public class ProtocolInitHandlerTest extends ChannelHandlerTestBase {
                 assertThat(e)
                     .isInstanceOf(ClusterNameMismatchException.class)
                     .hasMessageContaining(
-                        "Node node reports cluster name 'differentClusterName' that doesn't match our cluster name 'expectedClusterName'."));
+                        "Node embedded reports cluster name 'differentClusterName' that doesn't match our cluster name 'expectedClusterName'."));
   }
 
   @Test
@@ -311,8 +294,7 @@ public class ProtocolInitHandlerTest extends ChannelHandlerTestBase {
         .pipeline()
         .addLast(
             "init",
-            new ProtocolInitHandler(
-                node, internalDriverContext, CoreProtocolVersion.V4, null, options));
+            new ProtocolInitHandler(internalDriverContext, CoreProtocolVersion.V4, null, options));
 
     ChannelFuture connectFuture = channel.connect(new InetSocketAddress("localhost", 9042));
 
@@ -338,7 +320,7 @@ public class ProtocolInitHandlerTest extends ChannelHandlerTestBase {
         .addLast(
             "init",
             new ProtocolInitHandler(
-                node, internalDriverContext, CoreProtocolVersion.V4, null, driverChannelOptions));
+                internalDriverContext, CoreProtocolVersion.V4, null, driverChannelOptions));
 
     ChannelFuture connectFuture = channel.connect(new InetSocketAddress("localhost", 9042));
 
@@ -367,7 +349,7 @@ public class ProtocolInitHandlerTest extends ChannelHandlerTestBase {
         .addLast(
             "init",
             new ProtocolInitHandler(
-                node, internalDriverContext, CoreProtocolVersion.V4, null, driverChannelOptions));
+                internalDriverContext, CoreProtocolVersion.V4, null, driverChannelOptions));
 
     ChannelFuture connectFuture = channel.connect(new InetSocketAddress("localhost", 9042));
 
@@ -396,7 +378,7 @@ public class ProtocolInitHandlerTest extends ChannelHandlerTestBase {
         .addLast(
             "init",
             new ProtocolInitHandler(
-                node, internalDriverContext, CoreProtocolVersion.V4, null, driverChannelOptions));
+                internalDriverContext, CoreProtocolVersion.V4, null, driverChannelOptions));
 
     ChannelFuture connectFuture = channel.connect(new InetSocketAddress("localhost", 9042));
 

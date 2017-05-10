@@ -19,7 +19,6 @@ import com.datastax.oss.driver.api.core.ProtocolVersion;
 import com.datastax.oss.driver.api.core.config.CoreDriverOption;
 import com.datastax.oss.driver.api.core.config.DriverConfig;
 import com.datastax.oss.driver.api.core.config.DriverConfigProfile;
-import com.datastax.oss.driver.api.core.metadata.Node;
 import com.datastax.oss.driver.internal.core.ProtocolVersionRegistry;
 import com.datastax.oss.driver.internal.core.TestResponses;
 import com.datastax.oss.driver.internal.core.context.EventBus;
@@ -78,7 +77,6 @@ abstract class ChannelFactoryTestBase {
   DefaultEventLoopGroup serverGroup;
   DefaultEventLoopGroup clientGroup;
 
-  @Mock Node node;
   @Mock InternalDriverContext context;
   @Mock DriverConfig driverConfig;
   @Mock DriverConfigProfile defaultConfigProfile;
@@ -103,7 +101,6 @@ abstract class ChannelFactoryTestBase {
     serverGroup = new DefaultEventLoopGroup(1);
     clientGroup = new DefaultEventLoopGroup(1);
 
-    Mockito.when(node.getConnectAddress()).thenAnswer(i -> SERVER_ADDRESS);
     Mockito.when(context.config()).thenReturn(driverConfig);
     Mockito.when(driverConfig.defaultProfile()).thenReturn(defaultConfigProfile);
     Mockito.when(defaultConfigProfile.isDefined(CoreDriverOption.AUTHENTICATION_PROVIDER_CLASS))
@@ -218,7 +215,7 @@ abstract class ChannelFactoryTestBase {
 
     @Override
     ChannelInitializer<Channel> initializer(
-        Node node,
+        SocketAddress address,
         ProtocolVersion protocolVersion,
         DriverChannelOptions options,
         AvailableIdsHolder availableIdsHolder) {
@@ -235,22 +232,16 @@ abstract class ChannelFactoryTestBase {
 
           InFlightHandler inFlightHandler =
               new InFlightHandler(
-                  node,
                   protocolVersion,
                   new StreamIdGenerator(maxRequestsPerConnection),
                   setKeyspaceTimeoutMillis,
                   availableIdsHolder,
                   null);
           ProtocolInitHandler initHandler =
-              new ProtocolInitHandler(node, context, protocolVersion, clusterName, options);
+              new ProtocolInitHandler(context, protocolVersion, clusterName, options);
           channel.pipeline().addLast("inflight", inFlightHandler).addLast("init", initHandler);
         }
       };
-    }
-
-    @Override
-    protected SocketAddress getConnectAddress(Node node) {
-      return SERVER_ADDRESS;
     }
   }
 

@@ -15,7 +15,6 @@
  */
 package com.datastax.oss.driver.api.core;
 
-import com.datastax.oss.driver.api.core.metadata.Node;
 import com.google.common.collect.ImmutableList;
 import java.util.Collections;
 import java.util.List;
@@ -27,37 +26,37 @@ import java.util.List;
 public class UnsupportedProtocolVersionException extends RuntimeException {
   private static final long serialVersionUID = 0;
 
-  private final Node node;
+  private final SocketAddress address;
   private final List<ProtocolVersion> attemptedVersions;
 
   public static UnsupportedProtocolVersionException forSingleAttempt(
-      Node node, ProtocolVersion attemptedVersion) {
+      SocketAddress address, ProtocolVersion attemptedVersion) {
     String message =
-        String.format("[%s] Host does not support protocol version %s", node, attemptedVersion);
+        String.format("[%s] Host does not support protocol version %s", address, attemptedVersion);
     return new UnsupportedProtocolVersionException(
-        node, message, Collections.singletonList(attemptedVersion));
+        address, message, Collections.singletonList(attemptedVersion));
   }
 
   public static UnsupportedProtocolVersionException forNegotiation(
-      Node node, List<ProtocolVersion> attemptedVersions) {
+      SocketAddress address, List<ProtocolVersion> attemptedVersions) {
     String message =
         String.format(
             "[%s] Protocol negotiation failed: could not find a common version (attempted: %s)",
-            node, attemptedVersions);
+            address, attemptedVersions);
     return new UnsupportedProtocolVersionException(
-        node, message, ImmutableList.copyOf(attemptedVersions));
+        address, message, ImmutableList.copyOf(attemptedVersions));
   }
 
   private UnsupportedProtocolVersionException(
-      Node node, String message, List<ProtocolVersion> attemptedVersions) {
+      SocketAddress address, String message, List<ProtocolVersion> attemptedVersions) {
     super(message);
-    this.node = node;
+    this.address = address;
     this.attemptedVersions = attemptedVersions;
   }
 
-  /** The node that threw the error. */
-  public Node getNode() {
-    return node;
+  /** The address of the node that threw the error. */
+  public SocketAddress getAddress() {
+    return address;
   }
 
   /** The versions that were attempted. */

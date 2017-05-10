@@ -15,7 +15,6 @@
  */
 package com.datastax.oss.driver.internal.core.channel;
 
-import com.datastax.oss.driver.api.core.metadata.Node;
 import com.datastax.oss.protocol.internal.Frame;
 import java.util.LinkedList;
 import java.util.Queue;
@@ -35,12 +34,12 @@ class MockResponseCallback implements ResponseCallback {
   }
 
   @Override
-  public void onResponse(Frame responseFrame, Node node) {
+  public void onResponse(Frame responseFrame) {
     responses.offer(responseFrame);
   }
 
   @Override
-  public void onFailure(Throwable error, Node node) {
+  public void onFailure(Throwable error) {
     responses.offer(error);
   }
 
@@ -50,7 +49,7 @@ class MockResponseCallback implements ResponseCallback {
   }
 
   @Override
-  public void onStreamIdAssigned(int streamId, Node node) {
+  public void onStreamIdAssigned(int streamId) {
     this.streamId = streamId;
   }
 

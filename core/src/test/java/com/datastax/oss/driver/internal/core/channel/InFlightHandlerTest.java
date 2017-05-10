@@ -19,7 +19,6 @@ import com.datastax.oss.driver.api.core.CoreProtocolVersion;
 import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.connection.BusyConnectionException;
 import com.datastax.oss.driver.api.core.connection.ConnectionException;
-import com.datastax.oss.driver.api.core.metadata.Node;
 import com.datastax.oss.driver.internal.core.protocol.FrameDecodingException;
 import com.datastax.oss.protocol.internal.Frame;
 import com.datastax.oss.protocol.internal.ProtocolConstants;
@@ -47,7 +46,6 @@ public class InFlightHandlerTest extends ChannelHandlerTestBase {
   private static final Query QUERY = new Query("select * from foo");
   private static final int SET_KEYSPACE_TIMEOUT_MILLIS = 100;
 
-  @Mock private Node node;
   @Mock private StreamIdGenerator streamIds;
 
   @BeforeMethod
@@ -355,7 +353,6 @@ public class InFlightHandlerTest extends ChannelHandlerTestBase {
         .pipeline()
         .addLast(
             new InFlightHandler(
-                node,
                 CoreProtocolVersion.V3,
                 streamIds,
                 SET_KEYSPACE_TIMEOUT_MILLIS,

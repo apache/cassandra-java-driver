@@ -15,7 +15,6 @@
  */
 package com.datastax.oss.driver.internal.core.channel;
 
-import com.datastax.oss.driver.api.core.metadata.Node;
 import com.datastax.oss.protocol.internal.Frame;
 
 /**
@@ -28,7 +27,7 @@ public interface ResponseCallback {
   /**
    * Invoked when the server replies (note that the response frame might contain an error message).
    */
-  void onResponse(Frame responseFrame, Node node);
+  void onResponse(Frame responseFrame);
 
   /**
    * Invoked if there was an error while waiting for the response.
@@ -36,20 +35,19 @@ public interface ResponseCallback {
    * <p>This is generally triggered when a channel fails (for example because of a heartbeat
    * failure) and all pending requests are aborted.
    */
-  void onFailure(Throwable error, Node node);
+  void onFailure(Throwable error);
 
   /**
    * Whether to hold the stream id beyond the first response.
    *
    * <p>By default, this is false, and the channel will release the stream id (and make it available
-   * for other requests) as soon as {@link #onResponse(Frame, Node)} or {@link #onFailure(Throwable,
-   * Node)} gets invoked.
+   * for other requests) as soon as {@link #onResponse(Frame)} or {@link #onFailure(Throwable)} gets
+   * invoked.
    *
    * <p>If this is true, the channel will keep the stream id assigned to this request, and {@code
-   * onResponse} might be invoked multiple times. {@link #onStreamIdAssigned(int, Node)} will be
-   * called to notify the caller of the stream id, and it is the caller's responsibility to
-   * determine when the request is over, and then call {@link DriverChannel#release(int)} to release
-   * the stream id.
+   * onResponse} might be invoked multiple times. {@link #onStreamIdAssigned(int)} will be called to
+   * notify the caller of the stream id, and it is the caller's responsibility to determine when the
+   * request is over, and then call {@link DriverChannel#release(int)} to release the stream id.
    *
    * <p>This is intended to allow streaming requests, that would send multiple chunks of data in
    * response to a single request (this feature does not exist yet in Cassandra but might be
@@ -64,7 +62,7 @@ public interface ResponseCallback {
    *
    * <p>By default, this will never get called.
    */
-  default void onStreamIdAssigned(int streamId, Node node) {
+  default void onStreamIdAssigned(int streamId) {
     // nothing to do by default
   }
 }

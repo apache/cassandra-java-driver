@@ -17,7 +17,6 @@ package com.datastax.oss.driver.internal.core.adminrequest;
 
 import com.datastax.oss.driver.api.core.DriverException;
 import com.datastax.oss.driver.api.core.ProtocolVersion;
-import com.datastax.oss.driver.api.core.metadata.Node;
 import com.datastax.oss.driver.api.type.codec.TypeCodecs;
 import com.datastax.oss.driver.internal.core.channel.DriverChannel;
 import com.datastax.oss.driver.internal.core.channel.ResponseCallback;
@@ -114,7 +113,7 @@ public class AdminRequestHandler implements ResponseCallback {
   }
 
   @Override
-  public void onFailure(Throwable error, Node node) {
+  public void onFailure(Throwable error) {
     if (timeoutFuture != null) {
       timeoutFuture.cancel(true);
     }
@@ -122,7 +121,7 @@ public class AdminRequestHandler implements ResponseCallback {
   }
 
   @Override
-  public void onResponse(Frame responseFrame, Node node) {
+  public void onResponse(Frame responseFrame) {
     if (timeoutFuture != null) {
       timeoutFuture.cancel(true);
     }

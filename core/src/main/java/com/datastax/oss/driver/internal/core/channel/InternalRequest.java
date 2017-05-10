@@ -15,7 +15,6 @@
  */
 package com.datastax.oss.driver.internal.core.channel;
 
-import com.datastax.oss.driver.api.core.metadata.Node;
 import com.datastax.oss.driver.internal.core.util.ProtocolUtils;
 import com.datastax.oss.protocol.internal.Frame;
 import com.datastax.oss.protocol.internal.Message;
@@ -78,13 +77,13 @@ abstract class InternalRequest implements ResponseCallback {
   }
 
   @Override
-  public final void onResponse(Frame responseFrame, Node node) {
+  public final void onResponse(Frame responseFrame) {
     timeoutFuture.cancel(true);
     onResponse(responseFrame.message);
   }
 
   @Override
-  public final void onFailure(Throwable error, Node node) {
+  public final void onFailure(Throwable error) {
     timeoutFuture.cancel(true);
     fail(describe() + ": unexpected failure", error);
   }

@@ -17,7 +17,6 @@ package com.datastax.oss.driver.internal.core.channel;
 
 import com.datastax.oss.driver.api.core.CoreProtocolVersion;
 import com.datastax.oss.driver.api.core.connection.ConnectionException;
-import com.datastax.oss.driver.api.core.metadata.Node;
 import com.datastax.oss.protocol.internal.Frame;
 import com.datastax.oss.protocol.internal.request.Query;
 import com.datastax.oss.protocol.internal.response.result.Void;
@@ -37,12 +36,11 @@ import org.testng.annotations.Test;
 import static com.datastax.oss.driver.Assertions.assertThat;
 
 public class DriverChannelTest extends ChannelHandlerTestBase {
-  private static final int SET_KEYSPACE_TIMEOUT_MILLIS = 100;
+  public static final int SET_KEYSPACE_TIMEOUT_MILLIS = 100;
 
   private DriverChannel driverChannel;
   private MockWriteCoalescer writeCoalescer;
 
-  @Mock private Node node;
   @Mock private StreamIdGenerator streamIds;
 
   @BeforeMethod
@@ -54,7 +52,7 @@ public class DriverChannelTest extends ChannelHandlerTestBase {
         .pipeline()
         .addLast(
             new InFlightHandler(
-                node, CoreProtocolVersion.V3, streamIds, SET_KEYSPACE_TIMEOUT_MILLIS, null, null));
+                CoreProtocolVersion.V3, streamIds, SET_KEYSPACE_TIMEOUT_MILLIS, null, null));
     writeCoalescer = new MockWriteCoalescer();
     driverChannel = new DriverChannel(channel, writeCoalescer, null, CoreProtocolVersion.V3);
   }

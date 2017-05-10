@@ -20,7 +20,6 @@ import com.datastax.oss.driver.api.core.ProtocolVersion;
 import com.datastax.oss.driver.api.core.connection.BusyConnectionException;
 import com.datastax.oss.driver.api.core.connection.ConnectionException;
 import com.datastax.oss.driver.api.core.connection.HeartbeatException;
-import com.datastax.oss.driver.api.core.metadata.Node;
 import com.datastax.oss.driver.internal.core.channel.DriverChannel.ReleaseEvent;
 import com.datastax.oss.driver.internal.core.channel.DriverChannel.RequestMessage;
 import com.datastax.oss.driver.internal.core.channel.DriverChannel.SetKeyspaceEvent;
@@ -43,7 +42,6 @@ import org.slf4j.LoggerFactory;
 public class InFlightHandler extends ChannelDuplexHandler {
   private static final Logger LOG = LoggerFactory.getLogger(InFlightHandler.class);
 
-  private final Node node;
   private final ProtocolVersion protocolVersion;
   private final StreamIdGenerator streamIds;
   private final Map<Integer, ResponseCallback> inFlight;
@@ -54,13 +52,11 @@ public class InFlightHandler extends ChannelDuplexHandler {
   private SetKeyspaceRequest setKeyspaceRequest;
 
   InFlightHandler(
-      Node node,
       ProtocolVersion protocolVersion,
       StreamIdGenerator streamIds,
       long setKeyspaceTimeoutMillis,
       AvailableIdsHolder availableIdsHolder,
       EventCallback eventCallback) {
-    this.node = node;
     this.protocolVersion = protocolVersion;
     this.streamIds = streamIds;
     reportAvailableIds();
@@ -122,7 +118,7 @@ public class InFlightHandler extends ChannelDuplexHandler {
       writeFuture.addListener(
           future -> {
             if (future.isSuccess()) {
-              message.responseCallback.onStreamIdAssigned(streamId, node);
+              message.responseCallback.onStreamIdAssigned(streamId);
             }
           });
     }
@@ -152,7 +148,7 @@ public class InFlightHandler extends ChannelDuplexHandler {
           release(streamId, ctx);
         }
         try {
-          responseCallback.onResponse(responseFrame, node);
+          responseCallback.onResponse(responseFrame);
         } catch (Throwable t) {
           LOG.warn("Unexpected error while invoking response handler", t);
         }
@@ -169,7 +165,7 @@ public class InFlightHandler extends ChannelDuplexHandler {
         // We know which request matches the failing response, fail that one only
         ResponseCallback responseCallback = release(streamId, ctx);
         try {
-          responseCallback.onFailure(cause.getCause(), node);
+          responseCallback.onFailure(cause.getCause());
         } catch (Throwable t) {
           LOG.warn("Unexpected error while invoking failure handler", t);
         }
@@ -225,7 +221,7 @@ public class InFlightHandler extends ChannelDuplexHandler {
   private void abortAllInFlight(Throwable cause, ResponseCallback ignore) {
     for (ResponseCallback responseCallback : inFlight.values()) {
       if (responseCallback != ignore) {
-        responseCallback.onFailure(cause, node);
+        responseCallback.onFailure(cause);
       }
     }
     inFlight.clear();

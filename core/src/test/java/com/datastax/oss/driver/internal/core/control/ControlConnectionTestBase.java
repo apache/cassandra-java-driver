@@ -34,6 +34,7 @@ import io.netty.channel.DefaultEventLoopGroup;
 import io.netty.channel.EventLoop;
 import io.netty.util.concurrent.Future;
 import java.net.InetSocketAddress;
+import java.net.SocketAddress;
 import java.time.Duration;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentLinkedQueue;
@@ -84,7 +85,7 @@ abstract class ControlConnectionTestBase {
     Mockito.when(context.channelFactory()).thenReturn(channelFactory);
 
     channelFactoryFuture = new Exchanger<>();
-    Mockito.when(channelFactory.connect(any(Node.class), any(DriverChannelOptions.class)))
+    Mockito.when(channelFactory.connect(any(SocketAddress.class), any(DriverChannelOptions.class)))
         .thenAnswer(
             invocation -> {
               CompletableFuture<DriverChannel> channelFuture = new CompletableFuture<>();

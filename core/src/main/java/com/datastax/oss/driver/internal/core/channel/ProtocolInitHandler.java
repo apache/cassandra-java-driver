@@ -23,7 +23,6 @@ import com.datastax.oss.driver.api.core.auth.Authenticator;
 import com.datastax.oss.driver.api.core.config.CoreDriverOption;
 import com.datastax.oss.driver.api.core.config.DriverConfigProfile;
 import com.datastax.oss.driver.api.core.connection.ConnectionException;
-import com.datastax.oss.driver.api.core.metadata.Node;
 import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
 import com.datastax.oss.driver.internal.core.util.ProtocolUtils;
 import com.datastax.oss.driver.internal.core.util.concurrent.UncaughtExceptions;
@@ -59,7 +58,6 @@ class ProtocolInitHandler extends ConnectInitHandler {
   private static final Query CLUSTER_NAME_QUERY =
       new Query("SELECT cluster_name FROM system.local");
 
-  private final Node node;
   private final InternalDriverContext internalDriverContext;
   private final long timeoutMillis;
   private final ProtocolVersion initialProtocolVersion;
@@ -68,13 +66,11 @@ class ProtocolInitHandler extends ConnectInitHandler {
   private final String expectedClusterName;
 
   ProtocolInitHandler(
-      Node node,
       InternalDriverContext internalDriverContext,
       ProtocolVersion protocolVersion,
       String expectedClusterName,
       DriverChannelOptions options) {
 
-    this.node = node;
     this.internalDriverContext = internalDriverContext;
 
     DriverConfigProfile defaultConfig = internalDriverContext.config().defaultProfile();
@@ -212,7 +208,9 @@ class ProtocolInitHandler extends ConnectInitHandler {
           List<ByteBuffer> row = rows.data.poll();
           String actualClusterName = getString(row, 0);
           if (expectedClusterName != null && !expectedClusterName.equals(actualClusterName)) {
-            fail(new ClusterNameMismatchException(node, actualClusterName, expectedClusterName));
+            fail(
+                new ClusterNameMismatchException(
+                    channel.remoteAddress(), actualClusterName, expectedClusterName));
           } else {
             if (expectedClusterName == null) {
               // Store the actual name so that it can be retrieved from the factory
@@ -247,7 +245,8 @@ class ProtocolInitHandler extends ConnectInitHandler {
                   || error.code == ProtocolConstants.ErrorCode.SERVER_ERROR)
               && error.message.contains("Invalid or unsupported protocol version")) {
             fail(
-                UnsupportedProtocolVersionException.forSingleAttempt(node, initialProtocolVersion));
+                UnsupportedProtocolVersionException.forSingleAttempt(
+                    channel.remoteAddress(), initialProtocolVersion));
           } else if (step == Step.SET_KEYSPACE
               && error.code == ProtocolConstants.ErrorCode.INVALID) {
             fail(new InvalidKeyspaceException(error.message));
