@@ -16,6 +16,7 @@
 package com.datastax.driver.mapping;
 
 import com.datastax.driver.core.*;
+import com.datastax.driver.mapping.annotations.Defaults;
 import com.google.common.collect.Sets;
 import com.google.common.reflect.TypeToken;
 import com.google.common.util.concurrent.Futures;
@@ -186,14 +187,7 @@ class MethodMapper {
             this.paramName = paramName;
             this.paramIdx = paramIdx;
             this.paramType = (TypeToken<Object>) paramType;
-            try {
-                this.codec = (codecClass == null) ? null : (TypeCodec<Object>) codecClass.newInstance();
-            } catch (Exception e) {
-                throw new IllegalArgumentException(String.format(
-                        "Cannot create instance of codec %s for parameter %s",
-                        codecClass, (paramName == null) ? paramIdx : paramName
-                ), e);
-            }
+            this.codec = codecClass == null || codecClass.equals(Defaults.NoCodec.class) ? null : (TypeCodec<Object>) ReflectionUtils.newInstance(codecClass);
         }
 
         void setValue(BoundStatement boundStatement, Object arg) {
