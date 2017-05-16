@@ -179,10 +179,7 @@ See the `QueryLogger` [API docs][query_logger] for examples of how to truncate t
 
 Currently the `QueryLogger` can be configured to track slow queries using either 
 a constant threshold in milliseconds (which is the default behavior), or 
-a dynamic threshold based on per-host latency percentiles, as computed by `PerHostPercentileTracker`.
-
-**Dynamic thresholds are still a beta feature: they haven't been extensively 
-tested yet, and the API is still subject to change.**
+a dynamic threshold based on per-host latency percentiles, as computed by a `PercentileTracker`.
 
 Refer to the `QueryLogger` [API docs][query_logger] for an example of usage.
 
