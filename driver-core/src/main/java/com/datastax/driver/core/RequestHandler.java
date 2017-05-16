@@ -20,6 +20,7 @@ import com.datastax.driver.core.exceptions.*;
 import com.datastax.driver.core.policies.RetryPolicy;
 import com.datastax.driver.core.policies.RetryPolicy.RetryDecision.Type;
 import com.datastax.driver.core.policies.SpeculativeExecutionPolicy.SpeculativeExecutionPlan;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Sets;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
@@ -69,7 +70,7 @@ class RequestHandler {
     private final long startTime;
 
     private final AtomicBoolean isDone = new AtomicBoolean();
-    private final AtomicInteger executionCount = new AtomicInteger();
+    private final AtomicInteger executionIndex = new AtomicInteger();
 
     public RequestHandler(SessionManager manager, Callback callback, Statement statement) {
         this.id = Long.toString(System.identityHashCode(this));
@@ -110,7 +111,7 @@ class RequestHandler {
             return;
 
         Message.Request request = callback.request();
-        int position = executionCount.incrementAndGet();
+        int position = executionIndex.getAndIncrement();
 
         SpeculativeExecution execution = new SpeculativeExecution(request, position);
         runningExecutions.add(execution);
@@ -166,16 +167,22 @@ class RequestHandler {
             if (timerContext != null)
                 timerContext.stop();
 
-            ExecutionInfo info = execution.current.defaultExecutionInfo;
-            if (triedHosts != null) {
-                triedHosts.add(execution.current);
-                info = new ExecutionInfo(triedHosts);
+            ExecutionInfo info;
+            int speculativeExecutions = executionIndex.get() - 1;
+            // Avoid creating a new instance if we can reuse the host's default one
+            if (execution.position == 0 && speculativeExecutions == 0 && triedHosts == null && execution.retryConsistencyLevel == null
+                    && response.getCustomPayload() == null) {
+                info = execution.current.defaultExecutionInfo;
+            } else {
+                List<Host> hosts;
+                if (triedHosts == null) {
+                    hosts = ImmutableList.of(execution.current);
+                } else {
+                    hosts = triedHosts;
+                    hosts.add(execution.current);
+                }
+                info = new ExecutionInfo(speculativeExecutions, execution.position, hosts, execution.retryConsistencyLevel, response.getCustomPayload());
             }
-            if (execution.retryConsistencyLevel != null)
-                info = info.withAchievedConsistency(execution.retryConsistencyLevel);
-            if (response.getCustomPayload() != null)
-                info = info.withIncomingPayload(response.getCustomPayload());
-
             callback.onSet(connection, response, info, statement, System.nanoTime() - startTime);
         } catch (Exception e) {
             callback.onException(connection,
@@ -246,6 +253,7 @@ class RequestHandler {
     class SpeculativeExecution implements Connection.ResponseCallback {
         final String id;
         private final Message.Request request;
+        private final int position;
         private volatile Host current;
         private volatile ConsistencyLevel retryConsistencyLevel;
         private final AtomicReference<QueryState> queryStateRef;
@@ -262,6 +270,7 @@ class RequestHandler {
         SpeculativeExecution(Message.Request request, int position) {
             this.id = RequestHandler.this.id + "-" + position;
             this.request = request;
+            this.position = position;
             this.queryStateRef = new AtomicReference<QueryState>(QueryState.INITIAL);
             if (logger.isTraceEnabled())
                 logger.trace("[{}] Starting", id);
@@ -273,6 +282,11 @@ class RequestHandler {
                 while (!isDone.get() && (host = queryPlan.next()) != null && !queryStateRef.get().isCancelled()) {
                     if (query(host))
                         return;
+                }
+                if (current != null) {
+                    if (triedHosts == null)
+                        triedHosts = new CopyOnWriteArrayList<Host>();
+                    triedHosts.add(current);
                 }
                 reportNoMoreHosts(this);
             } catch (Exception e) {
@@ -299,6 +313,10 @@ class RequestHandler {
             Futures.addCallback(connectionFuture, new FutureCallback<Connection>() {
                 @Override
                 public void onSuccess(Connection connection) {
+                    if (isDone.get()) {
+                        connection.release();
+                        return;
+                    }
                     if (current != null) {
                         if (triedHosts == null)
                             triedHosts = new CopyOnWriteArrayList<Host>();

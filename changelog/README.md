@@ -16,6 +16,7 @@
 - [improvement] JAVA-1443: Add groupBy method to Select statement.
 - [improvement] JAVA-1458: Check thread in mapper sync methods.
 - [improvement] JAVA-1488: Upgrade Netty to 4.0.47.Final.
+- [improvement] JAVA-1460: Add speculative execution number to ExecutionInfo
 
 
 ### 3.2.0
