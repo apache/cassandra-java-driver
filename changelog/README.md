@@ -10,6 +10,7 @@
 - [bug] JAVA-1470: Querying multiple pages overrides WrappedStatement.
 - [improvement] JAVA-1428: Upgrade logback and jackson dependencies.
 - [documentation] JAVA-1463: Revisit speculative execution docs.
+- [documentation] JAVA-1466: Revisit timestamp docs.
 
 
 ### 3.2.0
