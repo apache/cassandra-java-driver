@@ -49,6 +49,18 @@
         </dependency>
 
         <dependency>
+            <groupId>com.google.guava</groupId>
+            <artifactId>guava</artifactId>
+            <version>${guava.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-api</artifactId>
+            <version>${slf4j.version}</version>
+        </dependency>
+
+        <dependency>
             <groupId>org.testng</groupId>
             <artifactId>testng</artifactId>
             <version>${testng.version}</version>
@@ -78,22 +90,10 @@
 
         <dependency>
             <groupId>org.ow2.asm</groupId>
-            <artifactId>asm-all</artifactId>
+            <artifactId>asm</artifactId>
             <version>5.0.3</version>
             <scope>test</scope>
         </dependency>
-        <!--
-        <dependency>
-          <groupId>org.ow2.asm</groupId>
-          <artifactId>asm</artifactId>
-          <version>4.1</version>
-        </dependency>
-        <dependency>
-          <groupId>org.ow2.asm</groupId>
-          <artifactId>asm-util</artifactId>
-          <version>4.1</version>
-        </dependency>
-      -->
 
         <dependency>
             <groupId>log4j</groupId>

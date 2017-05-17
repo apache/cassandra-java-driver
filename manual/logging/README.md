@@ -19,7 +19,7 @@ For example, if you intend to use [Logback](http://logback.qos.ch), add the foll
 <dependency>
 	<groupId>ch.qos.logback</groupId>
 	<artifactId>logback-classic</artifactId>
-	<version>1.1.3</version>
+	<version>1.2.3</version>
 </dependency>
 ```
 
@@ -29,7 +29,7 @@ If you are using Log4J 1.2 instead, add the following dependency:
 <dependency>
   <groupId>org.slf4j</groupId>
   <artifactId>slf4j-log4j12</artifactId>
-  <version>1.7.12</version>
+  <version>1.7.25</version>
 </dependency>
 ```
 

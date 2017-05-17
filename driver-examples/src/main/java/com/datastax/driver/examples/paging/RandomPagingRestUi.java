@@ -16,7 +16,6 @@
 package com.datastax.driver.examples.paging;
 
 import com.datastax.driver.core.*;
-import com.google.common.collect.Lists;
 import com.sun.net.httpserver.HttpServer;
 import org.glassfish.hk2.utilities.binding.AbstractBinder;
 import org.glassfish.jersey.jdkhttp.JdkHttpServerFactory;
@@ -31,6 +30,7 @@ import javax.ws.rs.core.UriBuilder;
 import javax.ws.rs.core.UriInfo;
 import java.io.IOException;
 import java.net.URI;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
@@ -227,7 +227,7 @@ public class RandomPagingRestUi {
                 videos = Collections.emptyList();
             } else {
                 int remaining = ITEMS_PER_PAGE;
-                videos = Lists.newArrayListWithExpectedSize(remaining);
+                videos = new ArrayList<UserVideo>(remaining);
                 for (Row row : rs) {
                     UserVideo video = new UserVideo(
                             row.getInt("videoid"),
