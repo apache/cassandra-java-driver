@@ -30,6 +30,9 @@ public class StatementWrapperTest extends CCMTestsSupport {
     private static final String INSERT_QUERY = "insert into test (k, v) values (?, ?)";
     private static final String SELECT_QUERY = "select * from test where k = ?";
 
+    private static final String INSERT_MULTIPAGE_QUERY = "insert into test_multipage (k, v) values (?, ?)";
+    private static final String SELECT_MULTIPAGE_QUERY = "select * from test_multipage where k = ?";
+
     CustomLoadBalancingPolicy loadBalancingPolicy = new CustomLoadBalancingPolicy();
     CustomSpeculativeExecutionPolicy speculativeExecutionPolicy = new CustomSpeculativeExecutionPolicy();
     CustomRetryPolicy retryPolicy = new CustomRetryPolicy();
@@ -37,6 +40,7 @@ public class StatementWrapperTest extends CCMTestsSupport {
     @Override
     public void onTestContextInitialized() {
         execute("create table test (k text primary key, v int)");
+        execute("create table test_multipage (k text, v int, primary key (k, v))");
     }
 
     @Override
@@ -57,6 +61,65 @@ public class StatementWrapperTest extends CCMTestsSupport {
 
         session().execute(new CustomStatement(s));
         assertThat(loadBalancingPolicy.customStatementsHandled.get()).isEqualTo(1);
+    }
+
+    @Test(groups = "short")
+    public void should_reuse_wrapped_simple_statement_for_multipage_query() {
+        loadBalancingPolicy.customStatementsHandled.set(0);
+
+        for (int v = 1; v <= 100; v++)
+            session().execute(new SimpleStatement(INSERT_MULTIPAGE_QUERY, "key_simple_multipage", v));
+
+        SimpleStatement s = new SimpleStatement(SELECT_MULTIPAGE_QUERY, "key_simple_multipage");
+        s.setFetchSize(1);
+
+        CustomStatement customStatement = new CustomStatement(s);
+
+        ResultSet rs = session().execute(customStatement);
+        assertThat(loadBalancingPolicy.customStatementsHandled.get()).isEqualTo(1);
+
+        Iterator<Row> it = rs.iterator();
+
+        assertThat(it.hasNext()).isTrue();
+        it.next();
+        assertThat(rs.getExecutionInfo().getStatement()).isEqualTo(customStatement);
+        assertThat(loadBalancingPolicy.customStatementsHandled.get()).isEqualTo(1);
+
+        assertThat(it.hasNext()).isTrue();
+        it.next();
+        assertThat(rs.getExecutionInfo().getStatement()).isEqualTo(customStatement);
+
+        assertThat(loadBalancingPolicy.customStatementsHandled.get()).isEqualTo(2);
+    }
+
+    @Test(groups = "short")
+    public void should_reuse_wrapped_bound_statement_for_multipage_query() {
+        loadBalancingPolicy.customStatementsHandled.set(0);
+
+        for (int v = 1; v <= 100; v++)
+            session().execute(new SimpleStatement(INSERT_MULTIPAGE_QUERY, "key_prepared_multipage", v));
+
+        PreparedStatement ps = session().prepare(SELECT_MULTIPAGE_QUERY);
+        BoundStatement bs = ps.bind("key_prepared_multipage");
+        bs.setFetchSize(1);
+
+        CustomStatement customStatement = new CustomStatement(bs);
+
+        ResultSet rs = session().execute(customStatement);
+        assertThat(loadBalancingPolicy.customStatementsHandled.get()).isEqualTo(1);
+
+        Iterator<Row> it = rs.iterator();
+
+        assertThat(it.hasNext()).isTrue();
+        it.next();
+        assertThat(rs.getExecutionInfo().getStatement()).isEqualTo(customStatement);
+        assertThat(loadBalancingPolicy.customStatementsHandled.get()).isEqualTo(1);
+
+        assertThat(it.hasNext()).isTrue();
+        it.next();
+        assertThat(rs.getExecutionInfo().getStatement()).isEqualTo(customStatement);
+
+        assertThat(loadBalancingPolicy.customStatementsHandled.get()).isEqualTo(2);
     }
 
     @Test(groups = "short")

@@ -1,7 +1,7 @@
 ## Changelog
 
 ### 3.3.0 (in progress)
-
+- [bug] JAVA-1470: Querying multiple pages overrides WrappedStatement
 
 ### 3.2.0
 
