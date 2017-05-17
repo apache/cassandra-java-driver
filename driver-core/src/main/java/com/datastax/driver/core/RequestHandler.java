@@ -268,6 +268,11 @@ class RequestHandler {
                 while (!isDone.get() && (host = queryPlan.next()) != null && !queryStateRef.get().isCancelled()) {
                     if (logger.isTraceEnabled())
                         logger.trace("[{}] Querying node {}", id, host);
+                    if (metricsEnabled()) {
+                        metrics().getRegistry()
+                                .counter("LoadBalancingPolicy.hits." + host.getSocketAddress())
+                                .inc();
+                    }
                     if (query(host))
                         return;
                 }
