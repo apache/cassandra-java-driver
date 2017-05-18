@@ -239,12 +239,22 @@ public class LatencyAwarePolicy implements ChainableLoadBalancingPolicy {
                     // If we haven't had enough data point yet to have a score, or the last update of the score
                     // is just too old, include the host.
                     if (min < 0 || latency == null || latency.nbMeasure < minMeasure || (now - latency.timestamp) > retryPeriod) {
+                        if (metrics != null) {
+                            metrics.getRegistry()
+                                    .counter("LatencyAwarePolicy.inclusions-nodata." + host.getSocketAddress())
+                                    .inc();
+                        }
                         return host;
                     }
 
                     // If the host latency is within acceptable bound of the faster known host, return
                     // that host. Otherwise, skip it.
                     if (latency.average <= ((long) (exclusionThreshold * (double) min))) {
+                        if (metrics != null) {
+                            metrics.getRegistry()
+                                    .counter("LatencyAwarePolicy.inclusions." + host.getSocketAddress())
+                                    .inc();
+                        }
                         return host;
                     }
 
