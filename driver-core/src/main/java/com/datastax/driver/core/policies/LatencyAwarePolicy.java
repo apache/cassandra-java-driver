@@ -241,7 +241,7 @@ public class LatencyAwarePolicy implements ChainableLoadBalancingPolicy {
                     if (min < 0 || latency == null || latency.nbMeasure < minMeasure || (now - latency.timestamp) > retryPeriod) {
                         if (metrics != null) {
                             metrics.getRegistry()
-                                    .counter("LatencyAwarePolicy.inclusions-nodata." + host.getSocketAddress())
+                                    .counter(MetricsUtil.hostMetricName("LatencyAwarePolicy.inclusions-nodata.", host))
                                     .inc();
                         }
                         return host;
@@ -252,7 +252,7 @@ public class LatencyAwarePolicy implements ChainableLoadBalancingPolicy {
                     if (latency.average <= ((long) (exclusionThreshold * (double) min))) {
                         if (metrics != null) {
                             metrics.getRegistry()
-                                    .counter("LatencyAwarePolicy.inclusions." + host.getSocketAddress())
+                                    .counter(MetricsUtil.hostMetricName("LatencyAwarePolicy.inclusions.", host))
                                     .inc();
                         }
                         return host;
@@ -265,7 +265,7 @@ public class LatencyAwarePolicy implements ChainableLoadBalancingPolicy {
                     skipped.offer(host);
                     if (metrics != null) {
                         metrics.getRegistry()
-                                .counter("LatencyAwarePolicy.exclusions." + host.getSocketAddress())
+                                .counter(MetricsUtil.hostMetricName("LatencyAwarePolicy.exclusions.", host))
                                 .inc();
                     }
                 }
@@ -274,7 +274,7 @@ public class LatencyAwarePolicy implements ChainableLoadBalancingPolicy {
                     Host host = skipped.poll();
                     if (metrics != null) {
                         metrics.getRegistry()
-                                .counter("LatencyAwarePolicy.hits-while-excluded." + host.getSocketAddress())
+                                .counter(MetricsUtil.hostMetricName("LatencyAwarePolicy.hits-while-excluded.", host))
                                 .inc();
                     }
                     return host;
@@ -440,7 +440,7 @@ public class LatencyAwarePolicy implements ChainableLoadBalancingPolicy {
                     if (metrics != null) {
                         logger.info("Adding gauge LatencyAwarePolicy.latencies." + host.getSocketAddress());
                         metrics.getRegistry().register(
-                                "LatencyAwarePolicy.latencies." + host.getSocketAddress(),
+                                MetricsUtil.hostMetricName("LatencyAwarePolicy.latencies.", host),
                                 new Gauge<Long>() {
                                     @Override
                                     public Long getValue() {

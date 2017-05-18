@@ -270,7 +270,7 @@ class RequestHandler {
                         logger.trace("[{}] Querying node {}", id, host);
                     if (metricsEnabled()) {
                         metrics().getRegistry()
-                                .counter("LoadBalancingPolicy.hits." + host.getSocketAddress())
+                                .counter(MetricsUtil.hostMetricName("LoadBalancingPolicy.hits.", host))
                                 .inc();
                     }
                     if (query(host))
