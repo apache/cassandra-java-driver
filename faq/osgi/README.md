@@ -192,7 +192,7 @@ it is also normal to see the following log lines when starting the driver:
 [Felix]:https://cwiki.apache.org/confluence/display/FELIX/Index
 [JAVA-1203]:https://datastax-oss.atlassian.net/browse/JAVA-1203
 [JAVA-1127]:https://datastax-oss.atlassian.net/browse/JAVA-1127
-[BND]:http://www.aqute.biz/Bnd
+[BND]:http://bnd.bndtools.org/
 [Maven bundle plugin]:https://cwiki.apache.org/confluence/display/FELIX/Apache+Felix+Maven+Bundle+Plugin+%28BND%29
 [OSGi examples repository]:https://github.com/datastax/java-driver-examples-osgi
 [without metrics]:http://docs.datastax.com/en/drivers/java/3.2/com/datastax/driver/core/Cluster.Builder.html#withoutMetrics--

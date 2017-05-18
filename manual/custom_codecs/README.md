@@ -456,14 +456,14 @@ consider using prepared statements all the time.
 [accepts]: http://docs.datastax.com/en/drivers/java/3.2/com/datastax/driver/core/TypeCodec.html#accepts-com.datastax.driver.core.DataType-
 [CodecRegistry]: http://docs.datastax.com/en/drivers/java/3.2/com/datastax/driver/core/CodecRegistry.html
 [CodecNotFoundException]: http://docs.datastax.com/en/drivers/java/3.2/com/datastax/driver/core/exceptions/CodecNotFoundException.html
-[Jackson]: http://wiki.fasterxml.com/JacksonHome
+[Jackson]: https://github.com/FasterXML/jackson
 [AbstractType]: https://github.com/apache/cassandra/blob/trunk/src/java/org/apache/cassandra/db/marshal/AbstractType.java
 [UserType]: http://docs.datastax.com/en/drivers/java/3.2/com/datastax/driver/core/UserType.html
 [UDTValue]: http://docs.datastax.com/en/drivers/java/3.2/com/datastax/driver/core/UDTValue.html
 [TupleType]: http://docs.datastax.com/en/drivers/java/3.2/com/datastax/driver/core/TupleType.html
 [TupleValue]: http://docs.datastax.com/en/drivers/java/3.2/com/datastax/driver/core/TupleValue.html
 [CustomType]: http://docs.datastax.com/en/drivers/java/3.2/com/datastax/driver/core/DataType.CustomType.html
-[TypeToken]: http://docs.guava-libraries.googlecode.com/git/javadoc/com/google/common/reflect/TypeToken.html
+[TypeToken]: http://google.github.io/guava/releases/21.0/api/docs/com/google/common/reflect/TypeToken.html
 [SimpleStatement]: http://docs.datastax.com/en/drivers/java/3.2/com/datastax/driver/core/SimpleStatement.html
 [BuiltStatement]: http://docs.datastax.com/en/drivers/java/3.2/com/datastax/driver/core/querybuilder/BuiltStatement.html
 [setList]: http://docs.datastax.com/en/drivers/java/3.2/com/datastax/driver/core/SettableByIndexData.html#setList-int-java.util.List-
