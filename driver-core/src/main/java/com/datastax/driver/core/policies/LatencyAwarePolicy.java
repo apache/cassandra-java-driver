@@ -428,6 +428,7 @@ public class LatencyAwarePolicy implements ChainableLoadBalancingPolicy {
                     if (old != null)
                         hostTracker = old;
                     if (metrics != null) {
+                        logger.info("Adding gauge LatencyAwarePolicy.latencies." + host.getSocketAddress());
                         metrics.getRegistry().register(
                                 "LatencyAwarePolicy.latencies." + host.getSocketAddress(),
                                 new Gauge<Long>() {
