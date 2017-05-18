@@ -74,6 +74,8 @@ public class LatencyAwarePolicy implements ChainableLoadBalancingPolicy {
     private final long retryPeriod;
     private final long minMeasure;
 
+    private final Map<Host, Boolean> isIncluded = new ConcurrentHashMap<Host, Boolean>();
+
     private volatile Metrics metrics;
 
     private LatencyAwarePolicy(LoadBalancingPolicy childPolicy,
@@ -243,6 +245,12 @@ public class LatencyAwarePolicy implements ChainableLoadBalancingPolicy {
                             metrics.getRegistry()
                                     .counter(MetricsUtil.hostMetricName("LatencyAwarePolicy.inclusions-nodata.", host))
                                     .inc();
+                            Boolean old = isIncluded.put(host, true);
+                            if (old != null && !old) {
+                                metrics.getRegistry()
+                                        .meter(MetricsUtil.hostMetricName("LatencyAwarePolicy.flip.", host))
+                                        .mark();
+                            }
                         }
                         return host;
                     }
@@ -254,11 +262,18 @@ public class LatencyAwarePolicy implements ChainableLoadBalancingPolicy {
                             metrics.getRegistry()
                                     .counter(MetricsUtil.hostMetricName("LatencyAwarePolicy.inclusions.", host))
                                     .inc();
+                            Boolean old = isIncluded.put(host, true);
+                            if (old != null && !old) {
+                                metrics.getRegistry()
+                                        .meter(MetricsUtil.hostMetricName("LatencyAwarePolicy.flip.", host))
+                                        .mark();
+                            }
                         }
                         return host;
                     }
 
                     // Else skip the host
+                    isIncluded.put(host, false);
                     if (skipped == null) {
                         skipped = new ArrayDeque<Host>();
                     }
