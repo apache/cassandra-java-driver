@@ -15,6 +15,9 @@
  */
 package com.datastax.driver.core;
 
+import java.net.InetAddress;
+import java.net.UnknownHostException;
+
 public class MetricsUtil {
 
     public static String hostMetricName(String prefix, Host host) {
@@ -26,7 +29,7 @@ public class MetricsUtil {
             } else {
                 result.append('_');
             }
-            result.append(b);
+            result.append(b & 0xFF);
         }
         return result.toString();
     }
