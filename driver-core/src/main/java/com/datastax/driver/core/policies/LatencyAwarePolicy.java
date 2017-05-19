@@ -481,9 +481,11 @@ public class LatencyAwarePolicy implements ChainableLoadBalancingPolicy {
             long newMin = Long.MAX_VALUE;
             long now = System.nanoTime();
             for (HostLatencyTracker tracker : latencies.values()) {
-                TimestampedAverage latency = tracker.getCurrentAverage();
-                if (latency != null && latency.average >= 0 && latency.nbMeasure >= minMeasure && (now - latency.timestamp) <= retryPeriod)
-                    newMin = Math.min(newMin, latency.average);
+                if (tracker != null) {
+                    TimestampedAverage latency = tracker.getCurrentAverage();
+                    if (latency != null && latency.average >= 0 && latency.nbMeasure >= minMeasure && (now - latency.timestamp) <= retryPeriod)
+                        newMin = Math.min(newMin, latency.average);
+                }
             }
             if (newMin != Long.MAX_VALUE)
                 cachedMin = newMin;
