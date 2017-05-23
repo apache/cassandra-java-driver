@@ -316,8 +316,10 @@ public class LatencyAwarePolicy implements ChainableLoadBalancingPolicy {
         for (Map.Entry<Host, TimestampedAverage> entry : currentLatencies.entrySet()) {
             Host host = entry.getKey();
             TimestampedAverage latency = entry.getValue();
-            Snapshot.Stats stats = new Snapshot.Stats(now - latency.timestamp, latency.average, latency.nbMeasure);
-            builder.put(host, stats);
+            if (latency != null) {
+                Snapshot.Stats stats = new Snapshot.Stats(now - latency.timestamp, latency.average, latency.nbMeasure);
+                builder.put(host, stats);
+            }
         }
         return new Snapshot(builder.build());
     }
