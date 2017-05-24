@@ -134,8 +134,8 @@ public class Metrics {
                     String reportFileLocation = resource.getFile();
                     ReporterConfig.loadFromFile(reportFileLocation).enableAll(registry);
                 }
-            } catch (Exception e) {
-                LOG.warn("Failed to load metrics-reporter-config, metric sinks will not be activated", e);
+            } catch (Throwable t) {
+                LOG.warn("Failed to load metrics-reporter-config, metric sinks will not be activated", t);
             }
         }
     }
