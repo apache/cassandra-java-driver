@@ -15,9 +15,13 @@
  */
 package com.datastax.driver.core;
 
+import com.addthis.metrics3.reporter.config.ReporterConfig;
 import com.codahale.metrics.*;
 import com.datastax.driver.core.policies.SpeculativeExecutionPolicy;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+import java.net.URL;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -34,6 +38,8 @@ import java.util.Set;
  * provided by the Metrics library which could be more efficient/adapted.
  */
 public class Metrics {
+
+    private static final Logger LOG = LoggerFactory.getLogger(Metrics.class);
 
     private final Cluster.Manager manager;
     private final MetricRegistry registry = new MetricRegistry();
@@ -113,6 +119,24 @@ public class Metrics {
             this.jmxReporter.start();
         } else {
             this.jmxReporter = null;
+        }
+
+        // metric-reporters
+        String metricsReporterConfigFile = System.getProperty("cassandra.metricsReporterConfigFile");
+        if (metricsReporterConfigFile != null) {
+            LOG.info("Trying to load metrics-reporter-config from file: {}", metricsReporterConfigFile);
+            try {
+                // initialize metrics-reporter-config from yaml file
+                URL resource = Metrics.class.getClassLoader().getResource(metricsReporterConfigFile);
+                if (resource == null) {
+                    LOG.warn("Failed to load metrics-reporter-config, file does not exist: {}", metricsReporterConfigFile);
+                } else {
+                    String reportFileLocation = resource.getFile();
+                    ReporterConfig.loadFromFile(reportFileLocation).enableAll(registry);
+                }
+            } catch (Exception e) {
+                LOG.warn("Failed to load metrics-reporter-config, metric sinks will not be activated", e);
+            }
         }
     }
 
