@@ -52,11 +52,11 @@ api_docs:
   2.0: http://docs.datastax.com/en/drivers/java/2.0
 versions:
   - name: '3.2'
-    ref: '3.2.0'
+    ref: '3.2_docfixes'
   - name: '3.1'
-    ref: '3.1.4'
+    ref: '3.1_docfixes'
   - name: '3.0'
-    ref: '3.0.7'
+    ref: '3.0_docfixes'
   - name: '2.1'
     ref: '2.1.10.3'
   - name: '2.0'
