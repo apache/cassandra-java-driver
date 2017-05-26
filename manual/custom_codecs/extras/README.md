@@ -130,7 +130,7 @@ Time can also be expressed as simple durations:
 * [SimpleDateCodec] maps `date` to a primitive Java `int` representing the number of days since the Epoch.
 
 There is no extra codec for `time`, because by default the driver already maps that type to a `long` representing the
-number of milliseconds since midnight.
+number of nanoseconds since midnight.
 
 [SimpleTimestampCodec]: http://docs.datastax.com/en/drivers/java/3.2/com/datastax/driver/extras/codecs/date/SimpleTimestampCodec.html
 [SimpleDateCodec]: http://docs.datastax.com/en/drivers/java/3.2/com/datastax/driver/extras/codecs/date/SimpleDateCodec.html
