@@ -7,6 +7,7 @@
 - [bug] JAVA-1407: KeyspaceMetadata exportAsString should export user types in topological sort order.
 - [bug] JAVA-1455: Mapper support using unset for null values.
 - [bug] JAVA-1464: Allow custom codecs with non public constructors in @Param.
+- [bug] JAVA-1470: Querying multiple pages overrides WrappedStatement.
 
 
 ### 3.2.0
