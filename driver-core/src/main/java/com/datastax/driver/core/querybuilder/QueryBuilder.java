@@ -45,23 +45,36 @@ public final class QueryBuilder {
     }
 
     /**
-     * Start building a new SELECT query that selects the provided names.
+     * Starts building a new {@code SELECT} query that selects the provided names.
      * <p/>
-     * Note that {@code select(c1, c2)} is just a shortcut for {@code select().column(c1).column(c2) }.
+     * Note that {@code select(c1, c2)} is just a shortcut for {@code select().column(c1).column(c2)}.
      *
      * @param columns the columns names that should be selected by the query.
-     * @return an in-construction SELECT query (you will need to provide at
-     * least a FROM clause to complete the query).
+     * @return an in-construction {@code SELECT} query (you will need to provide at
+     * least a {@code FROM} clause to complete the query).
      */
     public static Select.Builder select(String... columns) {
-        return new Select.Builder(Arrays.asList((Object[]) columns));
+        return select((Object[]) columns);
     }
 
     /**
-     * Start building a new SELECT query.
+     * Starts building a new {@code SELECT} query that selects the provided names.
+     * <p/>
+     * Note that {@code select(c1, c2)} is just a shortcut for {@code select().column(c1).column(c2)}.
      *
-     * @return an in-construction SELECT query (you will need to provide a
-     * column selection and at least a FROM clause to complete the query).
+     * @param columns the columns names that should be selected by the query.
+     * @return an in-construction {@code SELECT} query (you will need to provide at
+     * least a {@code FROM} clause to complete the query).
+     */
+    public static Select.Builder select(Object... columns) {
+        return new Select.Builder(Arrays.asList(columns));
+    }
+
+    /**
+     * Starts building a new {@code SELECT} query.
+     *
+     * @return an in-construction {@code SELECT} query (you will need to provide a
+     * column selection and at least a {@code FROM} clause to complete the query).
      */
     public static Select.Selection select() {
         // Note: the fact we return Select.Selection as return type is on purpose.
@@ -69,41 +82,41 @@ public final class QueryBuilder {
     }
 
     /**
-     * Start building a new INSERT query.
+     * Starts building a new {@code INSERT} query.
      *
      * @param table the name of the table in which to insert.
-     * @return an in-construction INSERT query.
+     * @return an in-construction {@code INSERT} query.
      */
     public static Insert insertInto(String table) {
         return new Insert(null, table);
     }
 
     /**
-     * Start building a new INSERT query.
+     * Starts building a new {@code INSERT} query.
      *
      * @param keyspace the name of the keyspace to use.
      * @param table    the name of the table to insert into.
-     * @return an in-construction INSERT query.
+     * @return an in-construction {@code INSERT} query.
      */
     public static Insert insertInto(String keyspace, String table) {
         return new Insert(keyspace, table);
     }
 
     /**
-     * Start building a new INSERT query.
+     * Starts building a new {@code INSERT} query.
      *
      * @param table the name of the table to insert into.
-     * @return an in-construction INSERT query.
+     * @return an in-construction {@code INSERT} query.
      */
     public static Insert insertInto(TableMetadata table) {
         return new Insert(table);
     }
 
     /**
-     * Start building a new UPDATE query.
+     * Starts building a new {@code UPDATE} query.
      *
      * @param table the name of the table to update.
-     * @return an in-construction UPDATE query (at least a SET and a WHERE
+     * @return an in-construction {@code UPDATE} query (at least a {@code SET} and a {@code WHERE}
      * clause needs to be provided to complete the query).
      */
     public static Update update(String table) {
@@ -111,11 +124,11 @@ public final class QueryBuilder {
     }
 
     /**
-     * Start building a new UPDATE query.
+     * Starts building a new {@code UPDATE} query.
      *
      * @param keyspace the name of the keyspace to use.
      * @param table    the name of the table to update.
-     * @return an in-construction UPDATE query (at least a SET and a WHERE
+     * @return an in-construction {@code UPDATE} query (at least a {@code SET} and a {@code WHERE}
      * clause needs to be provided to complete the query).
      */
     public static Update update(String keyspace, String table) {
@@ -123,10 +136,10 @@ public final class QueryBuilder {
     }
 
     /**
-     * Start building a new UPDATE query.
+     * Starts building a new {@code UPDATE} query.
      *
      * @param table the name of the table to update.
-     * @return an in-construction UPDATE query (at least a SET and a WHERE
+     * @return an in-construction {@code UPDATE} query (at least a {@code SET} and a {@code WHERE}
      * clause needs to be provided to complete the query).
      */
     public static Update update(TableMetadata table) {
@@ -134,10 +147,10 @@ public final class QueryBuilder {
     }
 
     /**
-     * Start building a new DELETE query that deletes the provided names.
+     * Starts building a new {@code DELETE} query that deletes the provided names.
      *
      * @param columns the columns names that should be deleted by the query.
-     * @return an in-construction DELETE query (At least a FROM and a WHERE
+     * @return an in-construction {@code DELETE} query (At least a {@code FROM} and a {@code WHERE}
      * clause needs to be provided to complete the query).
      */
     public static Delete.Builder delete(String... columns) {
@@ -145,10 +158,10 @@ public final class QueryBuilder {
     }
 
     /**
-     * Start building a new DELETE query.
+     * Starts building a new {@code DELETE} query.
      *
-     * @return an in-construction SELECT query (you will need to provide a
-     * column selection and at least a FROM and a WHERE clause to complete the
+     * @return an in-construction {@code DELETE} query (you will need to provide a
+     * column selection and at least a {@code FROM} and a {@code WHERE} clause to complete the
      * query).
      */
     public static Delete.Selection delete() {
@@ -156,12 +169,12 @@ public final class QueryBuilder {
     }
 
     /**
-     * Built a new BATCH query on the provided statements.
+     * Builds a new {@code BATCH} query on the provided statements.
      * <p/>
      * This method will build a logged batch (this is the default in CQL3). To
      * create unlogged batches, use {@link #unloggedBatch}. Also note that
      * for convenience, if the provided statements are counter statements, this
-     * method will create a COUNTER batch even though COUNTER batches are never
+     * method will create a {@code COUNTER} batch even though COUNTER batches are never
      * logged (so for counters, using this method is effectively equivalent to
      * using {@link #unloggedBatch}).
      *
@@ -173,7 +186,7 @@ public final class QueryBuilder {
     }
 
     /**
-     * Built a new UNLOGGED BATCH query on the provided statements.
+     * Builds a new {@code UNLOGGED BATCH} query on the provided statements.
      * <p/>
      * Compared to logged batches (the default), unlogged batch don't
      * use the distributed batch log server side and as such are not
@@ -183,7 +196,7 @@ public final class QueryBuilder {
      * faster than logged batch.
      * <p/>
      * If the statements added to the batch are counter statements, the
-     * resulting batch will be a COUNTER one.
+     * resulting batch will be a {@code COUNTER} one.
      *
      * @param statements the statements to batch.
      * @return a new {@code RegularStatement} that batch {@code statements} without
@@ -194,7 +207,7 @@ public final class QueryBuilder {
     }
 
     /**
-     * Creates a new TRUNCATE query.
+     * Creates a new {@code TRUNCATE} query.
      *
      * @param table the name of the table to truncate.
      * @return the truncation query.
@@ -204,7 +217,7 @@ public final class QueryBuilder {
     }
 
     /**
-     * Creates a new TRUNCATE query.
+     * Creates a new {@code TRUNCATE} query.
      *
      * @param keyspace the name of the keyspace to use.
      * @param table    the name of the table to truncate.
@@ -215,7 +228,7 @@ public final class QueryBuilder {
     }
 
     /**
-     * Creates a new TRUNCATE query.
+     * Creates a new {@code TRUNCATE} query.
      *
      * @param table the table to truncate.
      * @return the truncation query.
@@ -225,7 +238,7 @@ public final class QueryBuilder {
     }
 
     /**
-     * Quotes a columnName to make it case sensitive.
+     * Quotes a column name to make it case sensitive.
      *
      * @param columnName the column name to quote.
      * @return the quoted column name.
@@ -260,13 +273,23 @@ public final class QueryBuilder {
     public static String token(String... columnNames) {
         StringBuilder sb = new StringBuilder();
         sb.append("token(");
-        Utils.joinAndAppendNames(sb, null, Arrays.asList((Object[]) columnNames));
+        Utils.joinAndAppendNames(sb, null, Arrays.asList(columnNames));
         sb.append(')');
         return sb.toString();
     }
 
     /**
-     * Creates an "equal" where clause stating the provided column must be
+     * Returns a generic {@code token} function call.
+     *
+     * @param values the arguments of the {@code token} function.
+     * @return {@code token} function call.
+     */
+    public static Object token(Object... values) {
+        return new Utils.FCall("token", values);
+    }
+
+    /**
+     * Creates an "equal" {@code WHERE} clause stating the provided column must be
      * equal to the provided value.
      *
      * @param name  the column name
@@ -278,10 +301,10 @@ public final class QueryBuilder {
     }
 
     /**
-     * Creates an "equal" where clause for a group of clustering columns.
+     * Creates an "equal" {@code WHERE} clause for a group of clustering columns.
      * <p/>
      * For instance, {@code eq(Arrays.asList("a", "b"), Arrays.asList(2, "test"))}
-     * will generate the CQL WHERE clause {@code (a, b) = (2, 'test') }.
+     * will generate the CQL {@code WHERE} clause {@code (a, b) = (2, 'test') }.
      * <p/>
      * Please note that this variant is only supported starting with Cassandra 2.0.6.
      *
@@ -298,7 +321,7 @@ public final class QueryBuilder {
     }
 
     /**
-     * Creates a "like" where clause stating that the provided column must be equal to the provided value.
+     * Creates a "like" {@code WHERE} clause stating that the provided column must be equal to the provided value.
      *
      * @param name  the column name.
      * @param value the value.
@@ -309,7 +332,7 @@ public final class QueryBuilder {
     }
 
     /**
-     * Create an "in" where clause stating the provided column must be equal
+     * Create an "in" {@code WHERE} clause stating the provided column must be equal
      * to one of the provided values.
      *
      * @param name   the column name
@@ -321,7 +344,7 @@ public final class QueryBuilder {
     }
 
     /**
-     * Create an "in" where clause stating the provided column must be equal
+     * Create an "in" {@code WHERE} clause stating the provided column must be equal
      * to one of the provided values.
      *
      * @param name   the column name
@@ -333,10 +356,10 @@ public final class QueryBuilder {
     }
 
     /**
-     * Creates an "in" where clause for a group of clustering columns (a.k.a. "multi-column IN restriction").
+     * Creates an "in" {@code WHERE} clause for a group of clustering columns (a.k.a. "multi-column IN restriction").
      * <p/>
      * For instance, {@code in(Arrays.asList("a", "b"), Arrays.asList(Arrays.asList(1, "foo"), Arrays.asList(2, "bar")))}
-     * will generate the CQL WHERE clause {@code (a, b) IN ((1, 'foo'), (2, 'bar'))}.
+     * will generate the CQL {@code WHERE} clause {@code (a, b) IN ((1, 'foo'), (2, 'bar'))}.
      * <p/>
      * Each element in {@code values} must be either a {@link List list} containing exactly as many values
      * as there are columns to match in {@code names},
@@ -356,7 +379,7 @@ public final class QueryBuilder {
     }
 
     /**
-     * Creates a "contains" where clause stating the provided column must contain
+     * Creates a "contains" {@code WHERE} clause stating the provided column must contain
      * the value provided.
      *
      * @param name  the column name
@@ -368,7 +391,7 @@ public final class QueryBuilder {
     }
 
     /**
-     * Creates a "contains key" where clause stating the provided column must contain
+     * Creates a "contains key" {@code WHERE} clause stating the provided column must contain
      * the key provided.
      *
      * @param name the column name
@@ -380,7 +403,7 @@ public final class QueryBuilder {
     }
 
     /**
-     * Creates a "lesser than" where clause stating the provided column must be less than
+     * Creates a "lesser than" {@code WHERE} clause stating the provided column must be less than
      * the provided value.
      *
      * @param name  the column name
@@ -392,10 +415,10 @@ public final class QueryBuilder {
     }
 
     /**
-     * Creates a "lesser than" where clause for a group of clustering columns.
+     * Creates a "lesser than" {@code WHERE} clause for a group of clustering columns.
      * <p/>
      * For instance, {@code lt(Arrays.asList("a", "b"), Arrays.asList(2, "test"))}
-     * will generate the CQL WHERE clause {@code (a, b) &lt; (2, 'test') }.
+     * will generate the CQL {@code WHERE} clause {@code (a, b) &lt; (2, 'test') }.
      * <p/>
      * Please note that this variant is only supported starting with Cassandra 2.0.6.
      *
@@ -412,7 +435,7 @@ public final class QueryBuilder {
     }
 
     /**
-     * Creates a "lesser than or equal" where clause stating the provided column must
+     * Creates a "lesser than or equal" {@code WHERE} clause stating the provided column must
      * be lesser than or equal to the provided value.
      *
      * @param name  the column name
@@ -424,10 +447,10 @@ public final class QueryBuilder {
     }
 
     /**
-     * Creates a "lesser than or equal" where clause for a group of clustering columns.
+     * Creates a "lesser than or equal" {@code WHERE} clause for a group of clustering columns.
      * <p/>
      * For instance, {@code lte(Arrays.asList("a", "b"), Arrays.asList(2, "test"))}
-     * will generate the CQL WHERE clause {@code (a, b) &lte; (2, 'test') }.
+     * will generate the CQL {@code WHERE} clause {@code (a, b) &lte; (2, 'test') }.
      * <p/>
      * Please note that this variant is only supported starting with Cassandra 2.0.6.
      *
@@ -444,7 +467,7 @@ public final class QueryBuilder {
     }
 
     /**
-     * Creates a "greater than" where clause stating the provided column must
+     * Creates a "greater than" {@code WHERE} clause stating the provided column must
      * be greater to the provided value.
      *
      * @param name  the column name
@@ -456,10 +479,10 @@ public final class QueryBuilder {
     }
 
     /**
-     * Creates a "greater than" where clause for a group of clustering columns.
+     * Creates a "greater than" {@code WHERE} clause for a group of clustering columns.
      * <p/>
      * For instance, {@code gt(Arrays.asList("a", "b"), Arrays.asList(2, "test"))}
-     * will generate the CQL WHERE clause {@code (a, b) &gt; (2, 'test') }.
+     * will generate the CQL {@code WHERE} clause {@code (a, b) &gt; (2, 'test') }.
      * <p/>
      * Please note that this variant is only supported starting with Cassandra 2.0.6.
      *
@@ -476,7 +499,7 @@ public final class QueryBuilder {
     }
 
     /**
-     * Creates a "greater than or equal" where clause stating the provided
+     * Creates a "greater than or equal" {@code WHERE} clause stating the provided
      * column must be greater than or equal to the provided value.
      *
      * @param name  the column name
@@ -488,10 +511,10 @@ public final class QueryBuilder {
     }
 
     /**
-     * Creates a "greater than or equal" where clause for a group of clustering columns.
+     * Creates a "greater than or equal" {@code WHERE} clause for a group of clustering columns.
      * <p/>
      * For instance, {@code gte(Arrays.asList("a", "b"), Arrays.asList(2, "test"))}
-     * will generate the CQL WHERE clause {@code (a, b) &gte; (2, 'test') }.
+     * will generate the CQL {@code WHERE} clause {@code (a, b) &gte; (2, 'test') }.
      * <p/>
      * Please note that this variant is only supported starting with Cassandra 2.0.6.
      *
@@ -1169,6 +1192,108 @@ public final class QueryBuilder {
      */
     public static Object fromJson(Object json) {
         return fcall("fromJson", json);
+    }
+
+    /**
+     * Creates a {@code toJson()} function call.
+     * This is a shortcut for {@code fcall("toJson", QueryBuilder.column(name))}.
+     * <p/>
+     * Support for JSON functions has been added in Cassandra 2.2.
+     * The {@code toJson()} function is similar to {@code SELECT JSON} statements,
+     * but applies to a single column value instead of the entire row,
+     * and produces a JSON-encoded string representing the normal Cassandra column value.
+     * <p/>
+     * It may only be used in the selection clause of a {@code SELECT} statement.
+     *
+     * @param column the column to retrieve JSON from.
+     * @return the function call.
+     * @see <a href="http://cassandra.apache.org/doc/cql3/CQL-2.2.html#json">JSON Support for CQL</a>
+     * @see <a href="http://www.datastax.com/dev/blog/whats-new-in-cassandra-2-2-json-support">JSON Support in Cassandra 2.2</a>
+     */
+    public static Object toJson(Object column) {
+        // consider a String literal as a column name for user convenience,
+        // as CQL literals are not allowed here.
+        if (column instanceof String)
+            column = column(((String) column));
+        return new Utils.FCall("toJson", column);
+    }
+
+    /**
+     * Creates an alias for a given column.
+     * <p/>
+     * This is most useful when used with the method {@link #select(Object...)}.
+     *
+     * @param column The column to create an alias for.
+     * @param alias  The column alias.
+     * @return a column alias.
+     */
+    public static Object alias(Object column, String alias) {
+        return new Utils.Alias(column, alias);
+    }
+
+    /**
+     * Creates a {@code count(x)} built-in function call.
+     *
+     * @return the function call.
+     */
+    public static Object count(Object column) {
+        // consider a String literal as a column name for user convenience,
+        // as CQL literals are not allowed here.
+        if (column instanceof String)
+            column = column(((String) column));
+        return new Utils.FCall("count", column);
+    }
+
+    /**
+     * Creates a {@code max(x)} built-in function call.
+     *
+     * @return the function call.
+     */
+    public static Object max(Object column) {
+        // consider a String literal as a column name for user convenience,
+        // as CQL literals are not allowed here.
+        if (column instanceof String)
+            column = column(((String) column));
+        return new Utils.FCall("max", column);
+    }
+
+    /**
+     * Creates a {@code min(x)} built-in function call.
+     *
+     * @return the function call.
+     */
+    public static Object min(Object column) {
+        // consider a String literal as a column name for user convenience,
+        // as CQL literals are not allowed here.
+        if (column instanceof String)
+            column = column(((String) column));
+        return new Utils.FCall("min", column);
+    }
+
+    /**
+     * Creates a {@code sum(x)} built-in function call.
+     *
+     * @return the function call.
+     */
+    public static Object sum(Object column) {
+        // consider a String literal as a column name for user convenience,
+        // as CQL literals are not allowed here.
+        if (column instanceof String)
+            column = column(((String) column));
+        return new Utils.FCall("sum", column);
+    }
+
+    /**
+     * Creates an {@code avg(x)} built-in function call.
+     *
+     * @return the function call.
+     */
+    public static Object avg(Object column) {
+        // consider a String literal as a column name for user convenience,
+        // as CQL literals are not allowed here.
+        if (column instanceof String)
+            column = column(((String) column));
+        return new Utils.FCall("avg", column);
     }
 
 }

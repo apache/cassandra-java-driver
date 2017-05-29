@@ -35,6 +35,7 @@ public class Select extends BuiltStatement {
     private final List<Object> columnNames;
     private final Where where;
     private List<Ordering> orderings;
+    private List<Object> groupByColumnNames;
     private Object limit;
     private Object perPartitionLimit;
     private boolean allowFiltering;
@@ -95,6 +96,11 @@ public class Select extends BuiltStatement {
             Utils.joinAndAppend(builder, codecRegistry, " AND ", where.clauses, variables);
         }
 
+        if (groupByColumnNames != null) {
+            builder.append(" GROUP BY ");
+            Utils.joinAndAppendNames(builder, codecRegistry, groupByColumnNames);
+        }
+
         if (orderings != null) {
             builder.append(" ORDER BY ");
             Utils.joinAndAppend(builder, codecRegistry, ",", orderings, variables);
@@ -116,7 +122,7 @@ public class Select extends BuiltStatement {
     }
 
     /**
-     * Adds a WHERE clause to this statement.
+     * Adds a {@code WHERE} clause to this statement.
      * <p/>
      * This is a shorter/more readable version for {@code where().and(clause)}.
      *
@@ -128,7 +134,7 @@ public class Select extends BuiltStatement {
     }
 
     /**
-     * Returns a Where statement for this query without adding clause.
+     * Returns a {@code WHERE} statement for this query without adding clause.
      *
      * @return the where clause of this query to which more clause can be added.
      */
@@ -137,11 +143,11 @@ public class Select extends BuiltStatement {
     }
 
     /**
-     * Adds an ORDER BY clause to this statement.
+     * Adds an {@code ORDER BY} clause to this statement.
      *
      * @param orderings the orderings to define for this query.
      * @return this statement.
-     * @throws IllegalStateException if an ORDER BY clause has already been
+     * @throws IllegalStateException if an {@code ORDER BY} clause has already been
      *                               provided.
      */
     public Select orderBy(Ordering... orderings) {
@@ -149,8 +155,26 @@ public class Select extends BuiltStatement {
             throw new IllegalStateException("An ORDER BY clause has already been provided");
 
         this.orderings = Arrays.asList(orderings);
-        for (int i = 0; i < orderings.length; i++)
-            checkForBindMarkers(orderings[i]);
+        for (Ordering ordering : orderings)
+            checkForBindMarkers(ordering);
+        return this;
+    }
+
+    /**
+     * Adds a {@code GROUP BY} clause to this statement.
+     * <p/>
+     * Note: support for {@code GROUP BY} clause is only available from
+     * Cassandra 3.10 onwards.
+     *
+     * @param columns the columns to group by.
+     * @return this statement.
+     * @throws IllegalStateException if a {@code GROUP BY} clause has already been provided.
+     */
+    public Select groupBy(Object... columns) {
+        if (this.groupByColumnNames != null)
+            throw new IllegalStateException("A GROUP BY clause has already been provided");
+
+        this.groupByColumnNames = Arrays.asList(columns);
         return this;
     }
 
@@ -194,7 +218,7 @@ public class Select extends BuiltStatement {
 
     /**
      * Adds a {@code PER PARTITION LIMIT} clause to this statement.
-     * <p>
+     * <p/>
      * Note: support for {@code PER PARTITION LIMIT} clause is only available from
      * Cassandra 3.6 onwards.
      *
@@ -221,7 +245,7 @@ public class Select extends BuiltStatement {
 
     /**
      * Adds a prepared {@code PER PARTITION LIMIT} clause to this statement.
-     * <p>
+     * <p/>
      * Note: support for {@code PER PARTITION LIMIT} clause is only available from
      * Cassandra 3.6 onwards.
      *
@@ -243,7 +267,7 @@ public class Select extends BuiltStatement {
     }
 
     /**
-     * Adds an ALLOW FILTERING directive to this statement.
+     * Adds an {@code ALLOW FILTERING} directive to this statement.
      *
      * @return this statement.
      */
@@ -253,7 +277,7 @@ public class Select extends BuiltStatement {
     }
 
     /**
-     * The WHERE clause of a SELECT statement.
+     * The {@code WHERE} clause of a {@code SELECT} statement.
      */
     public static class Where extends BuiltStatement.ForwardingStatement<Select> {
 
@@ -264,10 +288,10 @@ public class Select extends BuiltStatement {
         }
 
         /**
-         * Adds the provided clause to this WHERE clause.
+         * Adds the provided clause to this {@code WHERE} clause.
          *
          * @param clause the clause to add.
-         * @return this WHERE clause.
+         * @return this {@code WHERE} clause.
          */
         public Where and(Clause clause) {
             clauses.add(clause);
@@ -277,24 +301,37 @@ public class Select extends BuiltStatement {
         }
 
         /**
-         * Adds an ORDER BY clause to the SELECT statement this WHERE clause if
+         * Adds an ORDER BY clause to the {@code SELECT} statement this {@code WHERE} clause if
          * part of.
          *
          * @param orderings the orderings to add.
-         * @return the select statement this Where clause if part of.
-         * @throws IllegalStateException if an ORDER BY clause has already been
-         *                               provided.
+         * @return the {@code SELECT} statement this {@code WHERE} clause is part of.
+         * @throws IllegalStateException if an {@code ORDER BY} clause has already been provided.
          */
         public Select orderBy(Ordering... orderings) {
             return statement.orderBy(orderings);
         }
 
         /**
+         * Adds a {@code GROUP BY} clause to this statement.
+         * <p/>
+         * Note: support for {@code GROUP BY} clause is only available from
+         * Cassandra 3.10 onwards.
+         *
+         * @param columns the columns to group by.
+         * @return the {@code SELECT} statement this {@code WHERE} clause is part of.
+         * @throws IllegalStateException if a {@code GROUP BY} clause has already been provided.
+         */
+        public Select groupBy(Object... columns) {
+            return statement.groupBy(columns);
+        }
+
+        /**
          * Adds a {@code LIMIT} clause to the {@code SELECT} statement this
-         * {@code WHERE} clause if part of.
+         * {@code WHERE} clause is part of.
          *
          * @param limit the limit to set.
-         * @return the {@code SELECT} statement this {@code WHERE} clause if part of.
+         * @return the {@code SELECT} statement this {@code WHERE} clause is part of.
          * @throws IllegalArgumentException if {@code limit <= 0}.
          * @throws IllegalStateException    if a {@code LIMIT} clause has already been
          *                                  provided.
@@ -305,10 +342,10 @@ public class Select extends BuiltStatement {
 
         /**
          * Adds a bind marker for the {@code LIMIT} clause to the {@code SELECT} statement this
-         * {@code WHERE} clause if part of.
+         * {@code WHERE} clause is part of.
          *
          * @param limit the bind marker to use as limit.
-         * @return the {@code SELECT} statement this {@code WHERE} clause if part of.
+         * @return the {@code SELECT} statement this {@code WHERE} clause is part of.
          * @throws IllegalStateException if a {@code LIMIT} clause has already been
          *                               provided.
          */
@@ -318,16 +355,15 @@ public class Select extends BuiltStatement {
 
         /**
          * Adds a {@code PER PARTITION LIMIT} clause to the {@code SELECT} statement this
-         * {@code WHERE} clause if part of.
+         * {@code WHERE} clause is part of.
          * <p>
          * Note: support for {@code PER PARTITION LIMIT} clause is only available from
          * Cassandra 3.6 onwards.
          *
          * @param perPartitionLimit the limit to set per partition.
-         * @return the {@code SELECT} statement this {@code WHERE} clause if part of.
+         * @return the {@code SELECT} statement this {@code WHERE} clause is part of.
          * @throws IllegalArgumentException if {@code perPartitionLimit <= 0}.
-         * @throws IllegalStateException    if a {@code PER PARTITION LIMIT} clause has already been
-         *                                  provided.
+         * @throws IllegalStateException    if a {@code PER PARTITION LIMIT} clause has already been provided.
          * @throws IllegalStateException    if this statement is a {@code SELECT DISTINCT} statement.
          */
         public Select perPartitionLimit(int perPartitionLimit) {
@@ -336,21 +372,29 @@ public class Select extends BuiltStatement {
 
         /**
          * Adds a bind marker for the {@code PER PARTITION LIMIT} clause to the {@code SELECT} statement this
-         * {@code WHERE} clause if part of.
+         * {@code WHERE} clause is part of.
          * <p>
          * Note: support for {@code PER PARTITION LIMIT} clause is only available from
          * Cassandra 3.6 onwards.
          *
          * @param limit the bind marker to use as limit per partition.
-         * @return the {@code SELECT} statement this {@code WHERE} clause if part of.
-         * @throws IllegalStateException if a {@code PER PARTITION LIMIT} clause has already been
-         *                               provided.
+         * @return the {@code SELECT} statement this {@code WHERE} clause is part of.
+         * @throws IllegalStateException if a {@code PER PARTITION LIMIT} clause has already been provided.
          * @throws IllegalStateException if this statement is a {@code SELECT DISTINCT} statement.
          */
         public Select perPartitionLimit(BindMarker limit) {
             return statement.perPartitionLimit(limit);
         }
 
+        /**
+         * Adds an {@code ALLOW FILTERING} directive to the {@code SELECT} statement this
+         * {@code WHERE} clause is part of.
+         *
+         * @return the {@code SELECT} statement this {@code WHERE} clause is part of.
+         */
+        public Select allowFiltering() {
+            return statement.allowFiltering();
+        }
     }
 
     /**
@@ -578,23 +622,80 @@ public class Select extends BuiltStatement {
         /**
          * Creates a {@code toJson()} function call.
          * This is a shortcut for {@code fcall("toJson", QueryBuilder.column(name))}.
-         * <p>
+         * <p/>
          * Support for JSON functions has been added in Cassandra 2.2.
          * The {@code toJson()} function is similar to {@code SELECT JSON} statements,
          * but applies to a single column value instead of the entire row,
          * and produces a JSON-encoded string representing the normal Cassandra column value.
-         * <p>
+         * <p/>
          * It may only be used in the selection clause of a {@code SELECT} statement.
          *
+         * @param column the column to retrieve JSON from.
          * @return the function call.
          * @see <a href="http://cassandra.apache.org/doc/cql3/CQL-2.2.html#json">JSON Support for CQL</a>
          * @see <a href="http://www.datastax.com/dev/blog/whats-new-in-cassandra-2-2-json-support">JSON Support in Cassandra 2.2</a>
          */
-        public SelectionOrAlias toJson(String name) {
+        public SelectionOrAlias toJson(String column) {
             // This method should be abstract like others here. But adding an abstract method is not binary-compatible,
             // so we add this dummy implementation to make Clirr happy.
             throw new UnsupportedOperationException("Not implemented. This should only happen if you've written your own implementation of Selection");
         }
+
+        /**
+         * Creates a {@code count(x)} built-in function call.
+         *
+         * @return the function call.
+         */
+        public SelectionOrAlias count(Object column) {
+            // This method should be abstract like others here. But adding an abstract method is not binary-compatible,
+            // so we add this dummy implementation to make Clirr happy.
+            throw new UnsupportedOperationException("Not implemented. This should only happen if you've written your own implementation of Selection");
+        }
+
+        /**
+         * Creates a {@code max(x)} built-in function call.
+         *
+         * @return the function call.
+         */
+        public SelectionOrAlias max(Object column) {
+            // This method should be abstract like others here. But adding an abstract method is not binary-compatible,
+            // so we add this dummy implementation to make Clirr happy.
+            throw new UnsupportedOperationException("Not implemented. This should only happen if you've written your own implementation of Selection");
+        }
+
+        /**
+         * Creates a {@code min(x)} built-in function call.
+         *
+         * @return the function call.
+         */
+        public SelectionOrAlias min(Object column) {
+            // This method should be abstract like others here. But adding an abstract method is not binary-compatible,
+            // so we add this dummy implementation to make Clirr happy.
+            throw new UnsupportedOperationException("Not implemented. This should only happen if you've written your own implementation of Selection");
+        }
+
+        /**
+         * Creates a {@code sum(x)} built-in function call.
+         *
+         * @return the function call.
+         */
+        public SelectionOrAlias sum(Object column) {
+            // This method should be abstract like others here. But adding an abstract method is not binary-compatible,
+            // so we add this dummy implementation to make Clirr happy.
+            throw new UnsupportedOperationException("Not implemented. This should only happen if you've written your own implementation of Selection");
+        }
+
+        /**
+         * Creates an {@code avg(x)} built-in function call.
+         *
+         * @return the function call.
+         */
+        public SelectionOrAlias avg(Object column) {
+            // This method should be abstract like others here. But adding an abstract method is not binary-compatible,
+            // so we add this dummy implementation to make Clirr happy.
+            throw new UnsupportedOperationException("Not implemented. This should only happen if you've written your own implementation of Selection");
+        }
+
     }
 
     /**
@@ -680,7 +781,7 @@ public class Select extends BuiltStatement {
 
         @Override
         public SelectionOrAlias cast(Object column, DataType targetType) {
-            return queueName(new Utils.Cast(column, targetType));
+            return queueName(QueryBuilder.cast(column, targetType));
         }
 
         @Override
@@ -695,7 +796,32 @@ public class Select extends BuiltStatement {
 
         @Override
         public SelectionOrAlias toJson(String name) {
-            return queueName(new Utils.FCall("toJson", new Utils.CName(name)));
+            return queueName(QueryBuilder.toJson(name));
+        }
+
+        @Override
+        public SelectionOrAlias count(Object column) {
+            return queueName(QueryBuilder.count(column));
+        }
+
+        @Override
+        public SelectionOrAlias max(Object column) {
+            return queueName(QueryBuilder.max(column));
+        }
+
+        @Override
+        public SelectionOrAlias min(Object column) {
+            return queueName(QueryBuilder.min(column));
+        }
+
+        @Override
+        public SelectionOrAlias sum(Object column) {
+            return queueName(QueryBuilder.sum(column));
+        }
+
+        @Override
+        public SelectionOrAlias avg(Object column) {
+            return queueName(QueryBuilder.avg(column));
         }
 
         @Override

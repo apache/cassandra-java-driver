@@ -13,6 +13,7 @@
 - [documentation] JAVA-1466: Revisit timestamp docs.
 - [documentation] JAVA-1445: Clarify how nodes are penalized in LatencyAwarePolicy docs.
 - [improvement] JAVA-1446: Support 'DEFAULT UNSET' in Query Builder JSON Insert.
+- [improvement] JAVA-1443: Add groupBy method to Select statement.
 
 
 ### 3.2.0
