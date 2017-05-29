@@ -110,7 +110,7 @@ public class LoggingRetryPolicyIntegrationTest extends AbstractRetryPolicyIntegr
     }
 
     @Test(groups = "short")
-    public void should_log_ignored_unavailabe() throws InterruptedException {
+    public void should_log_ignored_unavailable() throws InterruptedException {
         simulateError(1, unavailable);
         retryDecision = ignore();
         query();
@@ -133,7 +133,7 @@ public class LoggingRetryPolicyIntegrationTest extends AbstractRetryPolicyIntegr
         retryDecision = ignore();
         query();
         String line = appender.waitAndGet(5000);
-        assertThat(line.trim()).isEqualTo(expectedMessage(IGNORING_REQUEST_ERROR, defaultCL, 0, new ServerError(host1.getSocketAddress(), "Server Error")));
+        assertThat(line.trim()).isEqualTo(expectedMessage(IGNORING_REQUEST_ERROR, defaultCL, 0, new ServerError(host1.getSocketAddress(), "Server Error").toString()));
     }
 
     @Test(groups = "short")
@@ -142,7 +142,7 @@ public class LoggingRetryPolicyIntegrationTest extends AbstractRetryPolicyIntegr
         retryDecision = tryNextHost(LOCAL_ONE);
         query();
         String line = appender.waitAndGet(5000);
-        assertThat(line.trim()).isEqualTo(expectedMessage(RETRYING_ON_REQUEST_ERROR, "next host", LOCAL_ONE, defaultCL, 0, new ServerError(host1.getSocketAddress(), "Server Error")));
+        assertThat(line.trim()).isEqualTo(expectedMessage(RETRYING_ON_REQUEST_ERROR, "next host", LOCAL_ONE, defaultCL, 0, new ServerError(host1.getSocketAddress(), "Server Error").toString()));
     }
 
     @Test(groups = "short")

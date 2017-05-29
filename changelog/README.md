@@ -2,6 +2,8 @@
 
 ### 3.3.0 (in progress)
 
+- [bug] JAVA-1469: Update LoggingRetryPolicy to deal with SLF4J-353.
+
 
 ### 3.2.0
 

@@ -139,10 +139,10 @@ public class LoggingRetryPolicy implements RetryPolicy {
         RetryDecision decision = policy.onRequestError(statement, cl, e, nbRetry);
         switch (decision.getType()) {
             case IGNORE:
-                logDecision(IGNORING_REQUEST_ERROR, cl, nbRetry, e);
+                logDecision(IGNORING_REQUEST_ERROR, cl, nbRetry, e.toString());
                 break;
             case RETRY:
-                logDecision(RETRYING_ON_REQUEST_ERROR, host(decision), cl(cl, decision), cl, nbRetry, e);
+                logDecision(RETRYING_ON_REQUEST_ERROR, host(decision), cl(cl, decision), cl, nbRetry, e.toString());
                 break;
         }
         return decision;
