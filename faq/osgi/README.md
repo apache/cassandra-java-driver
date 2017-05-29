@@ -127,43 +127,6 @@ Some OSGi containers might require additional configuration.
 Please consult their documentation for further details.
                 
 
-### I'm getting the error: "Unable to access `sun.misc.Unsafe`"
-
-Some of the driver dependencies try to access non-API packages
-such as `sun.misc`, which is usually not available in an OSGi container.
-
-Most of these libraries are smart enough to check if this package
-is available or not before actually trying to use it.
-
-However, the [metrics library](../../manual/metrics/) used by the driver
-attempts to load `sun.misc.Unsafe` without
-probing for it first, which may lead to bundle activation errors.
-
-[JAVA-1203] has been created to track this issue, which
-should be fixed in the next major release of the library.
-
-There are a few workarounds:
-
-- Add `sun.misc` to the list of system packages (i.e., packages
-exported by the system bundle), or to the list of boot delegation
-packages (i.e., defer loading of `sun.misc` to the boot classloader).
-This is the best option as it benefits to other libraries as well.
-With Felix, this can be achieved with one of the following start options:
-
-    ```
-    --bootDelegation=sun.misc
-    --systemPackages=sun.misc
-    ```
-
-- Disable metrics altogether:
-
-    ```java
-    Cluster cluster = Cluster.builder()
-            .addContactPoints(...)
-            .withoutMetrics()
-            .build();
-    ```
-
 ### I'm getting the error: "Could not load JNR C Library"
 
 The driver is able to perform native system calls through JNR in some cases,
@@ -190,7 +153,6 @@ it is also normal to see the following log lines when starting the driver:
 
 [OSGi]:https://www.osgi.org
 [Felix]:https://cwiki.apache.org/confluence/display/FELIX/Index
-[JAVA-1203]:https://datastax-oss.atlassian.net/browse/JAVA-1203
 [JAVA-1127]:https://datastax-oss.atlassian.net/browse/JAVA-1127
 [BND]:http://bnd.bndtools.org/
 [Maven bundle plugin]:https://cwiki.apache.org/confluence/display/FELIX/Apache+Felix+Maven+Bundle+Plugin+%28BND%29

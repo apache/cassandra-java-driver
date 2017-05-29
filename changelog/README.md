@@ -3,6 +3,7 @@
 ### 3.3.0 (in progress)
 
 - [bug] JAVA-1469: Update LoggingRetryPolicy to deal with SLF4J-353.
+- [improvement] JAVA-1203: Upgrade Metrics to allow usage in OSGi.
 
 
 ### 3.2.0

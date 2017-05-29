@@ -23,11 +23,15 @@ import com.datastax.driver.mapping.MappingManager;
 import com.datastax.driver.osgi.api.MailboxException;
 import com.datastax.driver.osgi.api.MailboxMessage;
 import com.datastax.driver.osgi.api.MailboxService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static com.datastax.driver.core.querybuilder.QueryBuilder.*;
 import static com.datastax.driver.osgi.api.MailboxMessage.TABLE;
 
 public class MailboxImpl implements MailboxService {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(MailboxImpl.class);
 
     private final Session session;
 
@@ -60,6 +64,9 @@ public class MailboxImpl implements MailboxService {
         MappingManager mappingManager = new MappingManager(session);
 
         mapper = mappingManager.mapper(MailboxMessage.class);
+
+        // Exercise metrics
+        LOGGER.info("Number of requests: {}", session.getCluster().getMetrics().getRequestsTimer().getCount());
 
         initialized = true;
     }
