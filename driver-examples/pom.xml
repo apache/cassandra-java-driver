@@ -15,25 +15,19 @@
     limitations under the License.
 
 -->
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
-    <parent>
-        <artifactId>cassandra-driver-parent</artifactId>
-        <groupId>com.datastax.cassandra</groupId>
-        <version>3.2.1-SNAPSHOT</version>
-    </parent>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+
     <modelVersion>4.0.0</modelVersion>
 
-    <artifactId>cassandra-driver-examples</artifactId>
+    <parent>
+        <groupId>com.datastax.cassandra</groupId>
+        <artifactId>cassandra-driver-parent</artifactId>
+        <version>3.3.0-SNAPSHOT</version>
+    </parent>
 
+    <artifactId>cassandra-driver-examples</artifactId>
     <name>DataStax Java Driver for Apache Cassandra - Examples</name>
     <description>A collection of examples to demonstrate DataStax Java Driver for Apache Cassandra.</description>
-    <url>https://github.com/datastax/java-driver</url>
-
-    <properties>
-        <jax-rs.version>2.0.1</jax-rs.version>
-        <jersey.version>2.23.1</jersey.version>
-        <hk2.version>2.4.0-b34</hk2.version>
-    </properties>
 
     <dependencies>
 
@@ -42,13 +36,11 @@
         <dependency>
             <groupId>com.datastax.cassandra</groupId>
             <artifactId>cassandra-driver-core</artifactId>
-            <version>${project.parent.version}</version>
         </dependency>
 
         <dependency>
             <groupId>com.datastax.cassandra</groupId>
             <artifactId>cassandra-driver-extras</artifactId>
-            <version>${project.parent.version}</version>
             <optional>true</optional>
         </dependency>
 
@@ -57,14 +49,12 @@
         <dependency>
             <groupId>com.fasterxml.jackson.core</groupId>
             <artifactId>jackson-annotations</artifactId>
-            <version>${jackson.version}</version>
             <optional>true</optional>
         </dependency>
 
         <dependency>
             <groupId>com.fasterxml.jackson.core</groupId>
             <artifactId>jackson-databind</artifactId>
-            <version>${jackson-databind.version}</version>
             <optional>true</optional>
         </dependency>
 
@@ -73,14 +63,12 @@
         <dependency>
             <groupId>javax.json</groupId>
             <artifactId>javax.json-api</artifactId>
-            <version>${jsr353-api.version}</version>
             <optional>true</optional>
         </dependency>
 
         <dependency>
             <groupId>org.glassfish</groupId>
             <artifactId>javax.json</artifactId>
-            <version>${jsr353-ri.version}</version>
             <optional>true</optional>
             <scope>runtime</scope>
         </dependency>
@@ -90,7 +78,6 @@
         <dependency>
             <groupId>javax.ws.rs</groupId>
             <artifactId>javax.ws.rs-api</artifactId>
-            <version>${jax-rs.version}</version>
             <optional>true</optional>
         </dependency>
 
@@ -99,21 +86,18 @@
         <dependency>
             <groupId>org.glassfish.jersey.core</groupId>
             <artifactId>jersey-server</artifactId>
-            <version>${jersey.version}</version>
             <optional>true</optional>
         </dependency>
 
         <dependency>
             <groupId>org.glassfish.jersey.media</groupId>
             <artifactId>jersey-media-json-jackson</artifactId>
-            <version>${jersey.version}</version>
             <optional>true</optional>
         </dependency>
 
         <dependency>
             <groupId>org.glassfish.jersey.containers</groupId>
             <artifactId>jersey-container-jdk-http</artifactId>
-            <version>${jersey.version}</version>
             <optional>true</optional>
         </dependency>
 
@@ -122,7 +106,6 @@
         <dependency>
             <groupId>org.glassfish.hk2</groupId>
             <artifactId>hk2-api</artifactId>
-            <version>${hk2.version}</version>
             <optional>true</optional>
         </dependency>
 
@@ -131,14 +114,12 @@
         <dependency>
             <groupId>javax.inject</groupId>
             <artifactId>javax.inject</artifactId>
-            <version>1</version>
             <optional>true</optional>
         </dependency>
 
         <dependency>
             <groupId>javax.annotation</groupId>
             <artifactId>javax.annotation-api</artifactId>
-            <version>1.2</version>
             <optional>true</optional>
         </dependency>
 
@@ -147,7 +128,6 @@
         <dependency>
             <groupId>ch.qos.logback</groupId>
             <artifactId>logback-classic</artifactId>
-            <version>${logback.version}</version>
         </dependency>
 
     </dependencies>
@@ -159,7 +139,6 @@
             <plugin>
                 <groupId>org.codehaus.mojo</groupId>
                 <artifactId>animal-sniffer-maven-plugin</artifactId>
-                <version>1.15</version>
                 <configuration>
                     <skip>true</skip>
                 </configuration>
@@ -168,25 +147,34 @@
             <plugin>
                 <groupId>org.codehaus.mojo</groupId>
                 <artifactId>clirr-maven-plugin</artifactId>
-                <version>2.7</version>
                 <configuration>
                     <skip>true</skip>
                 </configuration>
             </plugin>
 
             <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-javadoc-plugin</artifactId>
+                <configuration>
+                    <skip>true</skip>
+                </configuration>
+            </plugin>
+
+            <plugin>
+                <artifactId>maven-gpg-plugin</artifactId>
+                <configuration>
+                    <skip>true</skip>
+                </configuration>
+            </plugin>
+
+            <plugin>
                 <artifactId>maven-install-plugin</artifactId>
-                <version>2.5.1</version>
                 <configuration>
                     <skip>true</skip>
                 </configuration>
             </plugin>
 
             <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-deploy-plugin</artifactId>
-                <version>2.8.1</version>
                 <configuration>
                     <skip>true</skip>
                 </configuration>
@@ -196,27 +184,23 @@
 
     </build>
 
-    <licenses>
-        <license>
-            <name>Apache 2</name>
-            <url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
-            <distribution>repo</distribution>
-            <comments>Apache License Version 2.0</comments>
-        </license>
-    </licenses>
+    <profiles>
 
-    <scm>
-        <connection>scm:git:git@github.com:datastax/java-driver.git</connection>
-        <developerConnection>scm:git:git@github.com:datastax/java-driver.git</developerConnection>
-        <url>https://github.com/datastax/java-driver</url>
-        <tag>HEAD</tag>
-    </scm>
-
-    <developers>
-        <developer>
-            <name>Various</name>
-            <organization>DataStax</organization>
-        </developer>
-    </developers>
+        <profile>
+            <id>release</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.sonatype.plugins</groupId>
+                        <artifactId>nexus-staging-maven-plugin</artifactId>
+                        <configuration>
+                            <skipNexusStagingDeployMojo>true</skipNexusStagingDeployMojo>
+                        </configuration>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+        
+    </profiles>
 
 </project>
