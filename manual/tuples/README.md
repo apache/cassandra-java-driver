@@ -14,8 +14,8 @@ CREATE TABLE ks.collect_things (
 
 ### Fetching Tuples from Rows results
 
-The DataStax Java driver exposes a special [TupleValue] class to handle such columns. 
-[TupleValue] exposes getters allowing to extract from the tuple all the data types 
+The DataStax Java driver exposes a special [`TupleValue`][TupleValue] class to handle such columns. 
+[`TupleValue`][TupleValue] exposes getters allowing to extract from the tuple all the data types 
 supported by Cassandra:
 
 ```java
@@ -33,7 +33,7 @@ Float thirdValueInTuple = tupleValue.getFloat(2);
 ### Using tuples as statement parameters
 
 A prepared statement may contain a Tuple as a query parameter. In such cases, users 
-will need to create or gather a [TupleType] first, in order to be able to create a [TupleValue] 
+will need to create or gather a [`TupleType`][TupleType] first, in order to be able to create a [`TupleValue`][TupleValue] 
 to bind:
 
 ```java
@@ -50,12 +50,12 @@ bs.setTupleValue("v", tupleType.newValue(1, "hello", 2.3f));
 session.execute(bs);
 ```
 
-The method [newValue(Object...)][newValueVararg] follows the same rules as `new SimpleStatement(String, Object...)`, 
+The method [`newValue(Object...)`][newValueVararg] follows the same rules as `new SimpleStatement(String, Object...)`;
 there can be ambiguities due to the fact that the driver will infer the data types from the values
 given in parameters of the method, whereas the data types required may differ (numeric 
 literals are always interpreted as `int`).
 
-To avoid such ambiguities, a [TupleValue] returned by [newValue()][newValue] also exposes specific 
+To avoid such ambiguities, a [`TupleValue`][TupleValue] returned by [`newValue()`][newValue] also exposes specific 
 setters for all the existing Cassandra data types:
 
 ```java
@@ -83,7 +83,7 @@ session.execute(bs);
 
 More generally, the `IN` keyword in a `SELECT` query will be used to define a *list* of 
 desired values of the filtered clustering keys, those would simply be bound as a list of 
-[TupleValue] with the Java driver:
+[`TupleValue`][TupleValue] with the Java driver:
 
 ```java
 TupleType oneTimeUsageTuple = cluster.getMetadata().newTupleType(DataType.text(), DataType.text());
@@ -98,5 +98,5 @@ session.execute(bs);
 
 [TupleType]: http://docs.datastax.com/en/drivers/java/3.2/com/datastax/driver/core/TupleType.html
 [TupleValue]: http://docs.datastax.com/en/drivers/java/3.2/com/datastax/driver/core/TupleValue.html
-[GettableByIndexData]: http://docs.datastax.com/en/drivers/java/3.2/com/datastax/driver/core/GettableByIndexData.html[newValueVararg]: http://docs.datastax.com/en/drivers/java/3.2/com/datastax/driver/core/TupleType.html#newValue-java.lang.Object...-
+[newValueVararg]: http://docs.datastax.com/en/drivers/java/3.2/com/datastax/driver/core/TupleType.html#newValue-java.lang.Object...-
 [newValue]: http://docs.datastax.com/en/drivers/java/3.2/com/datastax/driver/core/TupleType.html#newValue--
