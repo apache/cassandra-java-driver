@@ -36,9 +36,9 @@ import java.util.concurrent.atomic.AtomicInteger;
  */
 class AnnotationParser {
 
-    private static final Comparator<AliasedMappedProperty<?>> POSITION_COMPARATOR = new Comparator<AliasedMappedProperty<?>>() {
+    private static final Comparator<AliasedMappedProperty> POSITION_COMPARATOR = new Comparator<AliasedMappedProperty>() {
         @Override
-        public int compare(AliasedMappedProperty<?> o1, AliasedMappedProperty<?> o2) {
+        public int compare(AliasedMappedProperty o1, AliasedMappedProperty o2) {
             return o1.mappedProperty.getPosition() - o2.mappedProperty.getPosition();
         }
     };
@@ -78,9 +78,9 @@ class AnnotationParser {
 
         EntityMapper<T> mapper = new EntityMapper<T>(entityClass, ksName, tableName, writeConsistency, readConsistency);
 
-        List<AliasedMappedProperty<?>> pks = new ArrayList<AliasedMappedProperty<?>>();
-        List<AliasedMappedProperty<?>> ccs = new ArrayList<AliasedMappedProperty<?>>();
-        List<AliasedMappedProperty<?>> rgs = new ArrayList<AliasedMappedProperty<?>>();
+        List<AliasedMappedProperty> pks = new ArrayList<AliasedMappedProperty>();
+        List<AliasedMappedProperty> ccs = new ArrayList<AliasedMappedProperty>();
+        List<AliasedMappedProperty> rgs = new ArrayList<AliasedMappedProperty>();
 
         MappingConfiguration configuration = mappingManager.getConfiguration();
         Set<? extends MappedProperty<?>> properties = configuration.getPropertyMapper().mapTable(entityClass);
@@ -92,7 +92,7 @@ class AnnotationParser {
                     ? "col" + columnCounter.incrementAndGet()
                     : null;
 
-            AliasedMappedProperty<?> aliasedMappedProperty = new AliasedMappedProperty(mappedProperty, alias);
+            AliasedMappedProperty aliasedMappedProperty = new AliasedMappedProperty(mappedProperty, alias);
 
             if (mappingManager.protocolVersionAsInt == 1 && mappedProperty.isComputed())
                 throw new UnsupportedOperationException("Computed properties are not supported with native protocol v1");
@@ -147,14 +147,14 @@ class AnnotationParser {
         if (userType == null)
             throw new IllegalArgumentException(String.format("User type %s does not exist in keyspace %s", udtName, ksName));
 
-        Map<String, AliasedMappedProperty<?>> propertyMappers = new HashMap<String, AliasedMappedProperty<?>>();
+        Map<String, AliasedMappedProperty> propertyMappers = new HashMap<String, AliasedMappedProperty>();
 
         MappingConfiguration configuration = mappingManager.getConfiguration();
         Set<? extends MappedProperty<?>> properties = configuration.getPropertyMapper().mapUdt(udtClass);
 
         for (MappedProperty<?> mappedProperty : properties) {
 
-            AliasedMappedProperty<?> aliasedMappedProperty = new AliasedMappedProperty(mappedProperty, null);
+            AliasedMappedProperty aliasedMappedProperty = new AliasedMappedProperty(mappedProperty, null);
 
             if (!userType.contains(mappedProperty.getMappedName()))
                 throw new IllegalArgumentException(String.format("Field %s does not exist in type %s.%s",
