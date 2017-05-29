@@ -27,9 +27,13 @@ import java.util.List;
 import static com.google.common.base.Preconditions.checkState;
 
 /**
- * A built INSERT statement.
+ * A built {@code INSERT} statement.
  */
 public class Insert extends BuiltStatement {
+
+    private enum JsonDefault {
+        NULL, UNSET
+    }
 
     private final String table;
     private final List<Object> names = new ArrayList<Object>();
@@ -37,6 +41,7 @@ public class Insert extends BuiltStatement {
     private final Options usings;
     private boolean ifNotExists;
     private Object json;
+    private JsonDefault jsonDefault;
 
     Insert(String keyspace, String table) {
         this(keyspace, table, null, null);
@@ -71,6 +76,10 @@ public class Insert extends BuiltStatement {
         if (json != null) {
             builder.append("JSON ");
             Utils.appendValue(json, codecRegistry, builder, variables);
+            if (jsonDefault == JsonDefault.UNSET)
+                builder.append(" DEFAULT UNSET");
+            else if (jsonDefault == JsonDefault.NULL)
+                builder.append(" DEFAULT NULL");
         } else {
             builder.append("(");
             Utils.joinAndAppendNames(builder, codecRegistry, names);
@@ -90,17 +99,17 @@ public class Insert extends BuiltStatement {
     }
 
     /**
-     * Adds a column/value pair to the values inserted by this INSERT statement.
+     * Adds a column/value pair to the values inserted by this {@code INSERT} statement.
      *
      * @param name  the name of the column to insert/update.
      * @param value the value to insert/update for {@code name}.
-     * @return this INSERT statement.
+     * @return this {@code INSERT} statement.
      * @throws IllegalStateException if this method is called and the {@link #json(Object)}
      *                               method has been called before, because it's not possible
      *                               to mix {@code INSERT JSON} syntax with regular {@code INSERT} syntax.
      */
     public Insert value(String name, Object value) {
-        checkState(json == null, "Cannot mix INSERT JSON syntax with regular INSERT syntax");
+        checkState(json == null && jsonDefault == null, "Cannot mix INSERT JSON syntax with regular INSERT syntax");
         names.add(name);
         values.add(value);
         checkForBindMarkers(value);
@@ -143,7 +152,7 @@ public class Insert extends BuiltStatement {
     public Insert values(List<String> names, List<Object> values) {
         if (names.size() != values.size())
             throw new IllegalArgumentException(String.format("Got %d names but %d values", names.size(), values.size()));
-        checkState(json == null, "Cannot mix INSERT JSON syntax with regular INSERT syntax");
+        checkState(json == null && jsonDefault == null, "Cannot mix INSERT JSON syntax with regular INSERT syntax");
         this.names.addAll(names);
         this.values.addAll(values);
         for (int i = 0; i < names.size(); i++) {
@@ -219,28 +228,60 @@ public class Insert extends BuiltStatement {
     }
 
     /**
-     * Adds a new options for this INSERT statement.
+     * Appends a {@code DEFAULT UNSET} clause to this {@code INSERT INTO ... JSON} statement.
+     * <p/>
+     * Support for {@code DEFAULT UNSET} has been introduced in Cassandra 3.10.
+     *
+     * @return this {@code INSERT} statement.
+     * @throws IllegalStateException if this method is called and any of the {@code value} or {@code values}
+     *                               methods have been called before, because it's not possible
+     *                               to mix {@code INSERT JSON} syntax with regular {@code INSERT} syntax.
+     */
+    public Insert defaultUnset() {
+        checkState(values.isEmpty() && names.isEmpty(), "Cannot mix INSERT JSON syntax with regular INSERT syntax");
+        this.jsonDefault = JsonDefault.UNSET;
+        return this;
+    }
+
+    /**
+     * Appends a {@code DEFAULT NULL} clause to this {@code INSERT INTO ... JSON} statement.
+     * <p/>
+     * Support for {@code DEFAULT NULL} has been introduced in Cassandra 3.10.
+     *
+     * @return this {@code INSERT} statement.
+     * @throws IllegalStateException if this method is called and any of the {@code value} or {@code values}
+     *                               methods have been called before, because it's not possible
+     *                               to mix {@code INSERT JSON} syntax with regular {@code INSERT} syntax.
+     */
+    public Insert defaultNull() {
+        checkState(values.isEmpty() && names.isEmpty(), "Cannot mix INSERT JSON syntax with regular INSERT syntax");
+        this.jsonDefault = JsonDefault.NULL;
+        return this;
+    }
+
+    /**
+     * Adds a new options for this {@code INSERT} statement.
      *
      * @param using the option to add.
-     * @return the options of this INSERT statement.
+     * @return the options of this {@code INSERT} statement.
      */
     public Options using(Using using) {
         return usings.and(using);
     }
 
     /**
-     * Returns the options for this INSERT statement.
+     * Returns the options for this {@code INSERT} statement.
      * <p/>
      * Chain this with {@link Options#and(Using)} to add options.
      *
-     * @return the options of this INSERT statement.
+     * @return the options of this {@code INSERT} statement.
      */
     public Options using() {
         return usings;
     }
 
     /**
-     * Sets the 'IF NOT EXISTS' option for this INSERT statement.
+     * Sets the 'IF NOT EXISTS' option for this {@code INSERT} statement.
      * <p/>
      * An insert with that option will not succeed unless the row does not
      * exist at the time the insertion is executed. The existence check and
@@ -254,7 +295,7 @@ public class Insert extends BuiltStatement {
      * This will configure the statement as non-idempotent, see {@link com.datastax.driver.core.Statement#isIdempotent()}
      * for more information.
      *
-     * @return this INSERT statement.
+     * @return this {@code INSERT} statement.
      */
     public Insert ifNotExists() {
         this.setNonIdempotentOps();
@@ -263,7 +304,7 @@ public class Insert extends BuiltStatement {
     }
 
     /**
-     * The options of an INSERT statement.
+     * The options of an {@code INSERT} statement.
      */
     public static class Options extends BuiltStatement.ForwardingStatement<Insert> {
 
@@ -276,7 +317,7 @@ public class Insert extends BuiltStatement {
         /**
          * Adds the provided option.
          *
-         * @param using an INSERT option.
+         * @param using an {@code INSERT} option.
          * @return this {@code Options} object.
          */
         public Options and(Using using) {
@@ -286,24 +327,24 @@ public class Insert extends BuiltStatement {
         }
 
         /**
-         * Adds a column/value pair to the values inserted by this INSERT statement.
+         * Adds a column/value pair to the values inserted by this {@code INSERT} statement.
          *
          * @param name  the name of the column to insert/update.
          * @param value the value to insert/update for {@code name}.
-         * @return the INSERT statement those options are part of.
+         * @return the {@code INSERT} statement those options are part of.
          */
         public Insert value(String name, Object value) {
             return statement.value(name, value);
         }
 
         /**
-         * Adds multiple column/value pairs to the values inserted by this INSERT statement.
+         * Adds multiple column/value pairs to the values inserted by this {@code INSERT} statement.
          *
          * @param names  a list of column names to insert/update.
          * @param values a list of values to insert/update. The {@code i}th
          *               value in {@code values} will be inserted for the {@code i}th column
          *               in {@code names}.
-         * @return the INSERT statement those options are part of.
+         * @return the {@code INSERT} statement those options are part of.
          * @throws IllegalArgumentException if {@code names.length != values.length}.
          */
         public Insert values(String[] names, Object[] values) {

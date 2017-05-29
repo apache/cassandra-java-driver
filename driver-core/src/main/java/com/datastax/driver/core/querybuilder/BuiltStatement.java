@@ -23,7 +23,6 @@ import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.regex.Pattern;
 
 /**
  * Common ancestor to statements generated with the {@link QueryBuilder}.
@@ -75,8 +74,6 @@ import java.util.regex.Pattern;
  * a {@link CodecNotFoundException}.
  */
 public abstract class BuiltStatement extends RegularStatement {
-
-    private static final Pattern lowercaseAlphanumeric = Pattern.compile("[a-z][a-z0-9_]*");
 
     private final List<ColumnMetadata> partitionKey;
     private final List<Object> routingKeyValues;
