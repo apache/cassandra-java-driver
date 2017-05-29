@@ -36,7 +36,7 @@ public class MappingManager {
 
     private final Session session;
     private final MappingConfiguration configuration;
-    final boolean isCassandraV1;
+    final int protocolVersionAsInt;
 
     private final ConcurrentHashMap<Class<?>, Mapper<?>> mappers = new ConcurrentHashMap<Class<?>, Mapper<?>>();
     private final ConcurrentHashMap<Class<?>, MappedUDTCodec<?>> udtCodecs = new ConcurrentHashMap<Class<?>, MappedUDTCodec<?>>();
@@ -108,11 +108,13 @@ public class MappingManager {
     public MappingManager(Session session, MappingConfiguration configuration, ProtocolVersion protocolVersion) {
         this.session = session;
         this.configuration = configuration;
-        // This is not strictly correct because we could connect to C* 2.0 with the v1 protocol.
+
+        // This is not strictly correct in clusters with mixed C* node versions, which typically can occur when upgrading to
+        // a major version in Cassandra that has a protocol change.
         // But mappers need to make a decision early so that generated queries are compatible, and we don't know in advance
         // which nodes might join the cluster later.
         // At least if protocol >=2 we know there won't be any 1.2 nodes ever.
-        this.isCassandraV1 = (protocolVersion == ProtocolVersion.V1);
+        this.protocolVersionAsInt = protocolVersion.toInt();
         session.getCluster().register(new SchemaChangeListenerBase() {
 
             @Override

@@ -216,25 +216,26 @@ public class Mapper<T> {
     }
 
     private ListenableFuture<BoundStatement> saveQueryAsync(T entity, final EnumMap<Option.Type, Option> options) {
-        final Map<AliasedMappedProperty, Object> values = new HashMap<AliasedMappedProperty, Object>();
-        boolean saveNullFields = shouldSaveNullFields(options);
+        final Map<AliasedMappedProperty, Object> columnToValue = new HashMap<AliasedMappedProperty, Object>();
+        final boolean useUnsetForNullValue = !shouldSaveNullFields(options) && manager.protocolVersionAsInt >= 4;
+        final boolean includeColumnsWithNullValue = shouldSaveNullFields(options) || useUnsetForNullValue;
 
         for (AliasedMappedProperty col : mapper.allColumns) {
             Object value = col.mappedProperty.getValue(entity);
-            if (!col.mappedProperty.isComputed() && (saveNullFields || value != null)) {
-                values.put(col, value);
+            if (!col.mappedProperty.isComputed() && (includeColumnsWithNullValue || value != null)) {
+                columnToValue.put(col, value);
             }
         }
 
-        return Futures.transform(getPreparedQueryAsync(QueryType.SAVE, values.keySet(), options), new Function<PreparedStatement, BoundStatement>() {
+        return Futures.transform(getPreparedQueryAsync(QueryType.SAVE, columnToValue.keySet(), options), new Function<PreparedStatement, BoundStatement>() {
             @Override
             public BoundStatement apply(PreparedStatement input) {
                 BoundStatement bs = input.bind();
                 int i = 0;
-                for (Map.Entry<AliasedMappedProperty, Object> entry : values.entrySet()) {
+                for (Map.Entry<AliasedMappedProperty, Object> entry : columnToValue.entrySet()) {
                     AliasedMappedProperty mapper = entry.getKey();
                     Object value = entry.getValue();
-                    setObject(bs, i++, value, mapper);
+                    setObject(bs, i++, value, mapper, useUnsetForNullValue);
                 }
 
                 if (mapper.writeConsistency != null)
@@ -255,9 +256,11 @@ public class Mapper<T> {
         return option == null || option.saveNullFields;
     }
 
-    private static <T> void setObject(BoundStatement bs, int i, T value, AliasedMappedProperty<T> mapper) {
+    private static <T> void setObject(BoundStatement bs, int i, T value, AliasedMappedProperty<T> mapper, boolean saveNullFieldsAsUnset) {
         TypeCodec<T> customCodec = mapper.mappedProperty.getCustomCodec();
-        if (customCodec != null)
+        if (saveNullFieldsAsUnset && value == null)
+            bs.unset(i);
+        else if (customCodec != null)
             bs.set(i, value, customCodec);
         else
             bs.set(i, value, mapper.mappedProperty.getPropertyType());
@@ -400,7 +403,7 @@ public class Mapper<T> {
                                 String.format("Invalid null value for PRIMARY KEY column %s (argument %d)",
                                         column.mappedProperty.getMappedName(), i));
                     }
-                    setObject(bs, i++, value, column);
+                    setObject(bs, i++, value, column, false);
                 }
 
                 if (mapper.readConsistency != null)
@@ -607,7 +610,7 @@ public class Mapper<T> {
                         throw new IllegalArgumentException(String.format("Invalid null value for PRIMARY KEY column %s (argument %d)",
                                 column.mappedProperty.getMappedName(), i));
                     }
-                    setObject(bs, i++, value, column);
+                    setObject(bs, i++, value, column, false);
                     columnNumber++;
                 }
                 return bs;
@@ -728,7 +731,7 @@ public class Mapper<T> {
      * and vice-versa.
      */
     public Result<T> map(ResultSet resultSet) {
-        boolean useAlias = !manager.isCassandraV1 && isFromMapperQuery(resultSet);
+        boolean useAlias = (manager.protocolVersionAsInt > 1) && isFromMapperQuery(resultSet);
         return new Result<T>(resultSet, mapper, useAlias);
     }
 
@@ -765,7 +768,7 @@ public class Mapper<T> {
      */
     @Deprecated
     public Result<T> mapAliased(ResultSet resultSet) {
-        return (manager.isCassandraV1)
+        return (manager.protocolVersionAsInt == 1)
                 ? map(resultSet) // no aliases
                 : new Result<T>(resultSet, mapper, true);
     }
@@ -1007,7 +1010,7 @@ public class Mapper<T> {
 
             @Override
             void validate(QueryType qt, MappingManager manager) {
-                checkArgument(!manager.isCassandraV1, "TTL option requires native protocol v2 or above");
+                checkArgument(!(manager.protocolVersionAsInt < 2), "TTL option requires native protocol v2 or above");
                 checkArgument(qt == QueryType.SAVE, "TTL option is only allowed in save queries");
             }
 
@@ -1057,7 +1060,7 @@ public class Mapper<T> {
 
             @Override
             void validate(QueryType qt, MappingManager manager) {
-                checkArgument(!manager.isCassandraV1, "Timestamp option requires native protocol v2 or above");
+                checkArgument(!(manager.protocolVersionAsInt < 2), "Timestamp option requires native protocol v2 or above");
                 checkArgument(qt == QueryType.SAVE || qt == QueryType.DEL, "Timestamp option is only allowed in save and delete queries");
             }
 
