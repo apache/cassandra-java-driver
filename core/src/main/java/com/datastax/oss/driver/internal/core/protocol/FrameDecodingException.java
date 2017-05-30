@@ -17,6 +17,11 @@ package com.datastax.oss.driver.internal.core.protocol;
 
 import io.netty.handler.codec.DecoderException;
 
+/**
+ * Wraps an error while decoding an incoming protocol frame.
+ *
+ * <p>This is only used internally, never exposed to the client.
+ */
 public class FrameDecodingException extends DecoderException {
   public final int streamId;
 
