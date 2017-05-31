@@ -15,7 +15,7 @@
  */
 package com.datastax.oss.driver.internal.core.adminrequest;
 
-import com.datastax.oss.driver.api.core.DriverException;
+import com.datastax.oss.driver.api.core.DriverTimeoutException;
 import com.datastax.oss.driver.api.core.ProtocolVersion;
 import com.datastax.oss.driver.api.type.codec.TypeCodecs;
 import com.datastax.oss.driver.internal.core.channel.DriverChannel;
@@ -44,7 +44,7 @@ import java.util.concurrent.TimeUnit;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-/** Handles the lifecyle of an admin request. */
+/** Handles the lifecyle of an admin request (such as a node refresh or schema refresh query). */
 public class AdminRequestHandler implements ResponseCallback {
   private static final Logger LOG = LoggerFactory.getLogger(AdminRequestHandler.class);
 
@@ -109,7 +109,8 @@ public class AdminRequestHandler implements ResponseCallback {
   }
 
   private void fireTimeout() {
-    result.completeExceptionally(new DriverException("Query timed out"));
+    result.completeExceptionally(
+        new DriverTimeoutException(String.format("%s timed out after %s", debugString, timeout)));
   }
 
   @Override
@@ -137,7 +138,10 @@ public class AdminRequestHandler implements ResponseCallback {
       result.complete(null);
     } else {
       result.completeExceptionally(
-          new DriverException("Unexpected response to control query: " + message));
+          // The actual exception type does not really matters, this is only logged, never
+          // returned to the client
+          new IllegalArgumentException(
+              String.format("%s got unexpected response %s", debugString, message)));
     }
   }
 

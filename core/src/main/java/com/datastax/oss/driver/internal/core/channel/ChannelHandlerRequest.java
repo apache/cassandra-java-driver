@@ -15,6 +15,7 @@
  */
 package com.datastax.oss.driver.internal.core.channel;
 
+import com.datastax.oss.driver.api.core.DriverTimeoutException;
 import com.datastax.oss.driver.internal.core.util.ProtocolUtils;
 import com.datastax.oss.protocol.internal.Frame;
 import com.datastax.oss.protocol.internal.Message;
@@ -25,10 +26,9 @@ import io.netty.channel.ChannelHandlerContext;
 import io.netty.util.concurrent.Future;
 import io.netty.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 
 /** Common infrastructure to send a native protocol request from a channel handler. */
-abstract class InternalRequest implements ResponseCallback {
+abstract class ChannelHandlerRequest implements ResponseCallback {
 
   final Channel channel;
   final ChannelHandlerContext ctx;
@@ -36,7 +36,7 @@ abstract class InternalRequest implements ResponseCallback {
 
   private ScheduledFuture<?> timeoutFuture;
 
-  InternalRequest(ChannelHandlerContext ctx, long timeoutMillis) {
+  ChannelHandlerRequest(ChannelHandlerContext ctx, long timeoutMillis) {
     this.ctx = ctx;
     this.channel = ctx.channel();
     this.timeoutMillis = timeoutMillis;
@@ -50,10 +50,6 @@ abstract class InternalRequest implements ResponseCallback {
 
   /** either message or cause can be null */
   abstract void fail(String message, Throwable cause);
-
-  void fail(String message) {
-    fail(message, null);
-  }
 
   void fail(Throwable cause) {
     fail(null, cause);
@@ -89,21 +85,23 @@ abstract class InternalRequest implements ResponseCallback {
   }
 
   private void onTimeout() {
-    fail(new TimeoutException(describe() + ": timed out after " + timeoutMillis + " ms"));
+    fail(new DriverTimeoutException(describe() + ": timed out after " + timeoutMillis + " ms"));
   }
 
   void failOnUnexpected(Message response) {
     if (response instanceof Error) {
       Error error = (Error) response;
       fail(
-          String.format(
-              "%s: unexpected server error [%s] %s",
-              describe(), ProtocolUtils.errorCodeString(error.code), error.message));
+          new IllegalArgumentException(
+              String.format(
+                  "%s: unexpected server error [%s] %s",
+                  describe(), ProtocolUtils.errorCodeString(error.code), error.message)));
     } else {
       fail(
-          String.format(
-              "%s: unexpected server response opcode=%s",
-              describe(), ProtocolUtils.opcodeString(response.opcode)));
+          new IllegalArgumentException(
+              String.format(
+                  "%s: unexpected server response opcode=%s",
+                  describe(), ProtocolUtils.opcodeString(response.opcode))));
     }
   }
 }

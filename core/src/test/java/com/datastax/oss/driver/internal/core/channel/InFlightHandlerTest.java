@@ -18,7 +18,7 @@ package com.datastax.oss.driver.internal.core.channel;
 import com.datastax.oss.driver.api.core.CoreProtocolVersion;
 import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.connection.BusyConnectionException;
-import com.datastax.oss.driver.api.core.connection.ConnectionException;
+import com.datastax.oss.driver.api.core.connection.ClosedConnectionException;
 import com.datastax.oss.driver.internal.core.protocol.FrameDecodingException;
 import com.datastax.oss.protocol.internal.Frame;
 import com.datastax.oss.protocol.internal.ProtocolConstants;
@@ -213,7 +213,7 @@ public class InFlightHandlerTest extends ChannelHandlerTestBase {
     assertThat(channel.closeFuture()).isSuccess();
     for (MockResponseCallback callback : ImmutableList.of(responseCallback1, responseCallback2)) {
       assertThat(callback.getFailure())
-          .isInstanceOf(ConnectionException.class)
+          .isInstanceOf(ClosedConnectionException.class)
           .hasMessageContaining("Channel was force-closed");
     }
   }
@@ -238,7 +238,7 @@ public class InFlightHandlerTest extends ChannelHandlerTestBase {
     assertThat(channel.closeFuture()).isSuccess();
     for (MockResponseCallback callback : ImmutableList.of(responseCallback1, responseCallback2)) {
       Throwable failure = callback.getFailure();
-      assertThat(failure).isInstanceOf(ConnectionException.class);
+      assertThat(failure).isInstanceOf(ClosedConnectionException.class);
       assertThat(failure.getCause()).isSameAs(mockException);
     }
   }

@@ -18,8 +18,8 @@ package com.datastax.oss.driver.internal.core.channel;
 import java.net.SocketAddress;
 
 /**
- * Indicates that we've attempted to connect to a node with a cluster name doesn't match that of the
- * other nodes known to the driver.
+ * Indicates that we've attempted to connect to a node with a cluster name that doesn't match that
+ * of the other nodes known to the driver.
  *
  * <p>The driver runs the following query on each newly established connection:
  *
@@ -30,8 +30,12 @@ import java.net.SocketAddress;
  * The first connection sets the cluster name for this driver instance, all subsequent connections
  * must match it or they will get rejected. This is intended to filter out errors in the discovery
  * process (for example, stale entries in {@code system.peers}).
+ *
+ * <p>This error is never returned directly to the client. If we detect a mismatch, it will always
+ * be after the driver has connected successfully; the error will be logged and the offending node
+ * forced down.
  */
-public class ClusterNameMismatchException extends Exception {
+public class ClusterNameMismatchException extends RuntimeException {
 
   private static final long serialVersionUID = 0;
 

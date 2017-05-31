@@ -15,13 +15,28 @@
  */
 package com.datastax.oss.driver.api.core.connection;
 
-public class HeartbeatException extends ConnectionException {
+import com.datastax.oss.driver.api.core.DriverException;
+import java.net.SocketAddress;
 
-  public HeartbeatException(String message) {
-    super(message);
+/**
+ * Thrown when a heartbeat query fails.
+ *
+ * <p>Heartbeat queries are sent automatically on idle connections, to ensure that they are still
+ * alive. If a heartbeat query fails, the connection is closed, and all pending queries are aborted.
+ * Depending on the retry policy, the heartbeat exception can either be rethrown directly to the
+ * client, or the driver tries the next host in the query plan.
+ */
+public class HeartbeatException extends DriverException {
+
+  private final SocketAddress address;
+
+  public HeartbeatException(SocketAddress address, String message, Throwable cause) {
+    super(message, cause);
+    this.address = address;
   }
 
-  public HeartbeatException(String message, Throwable cause) {
-    super(message, cause);
+  /** The address of the node that encountered the error. */
+  public SocketAddress getAddress() {
+    return address;
   }
 }

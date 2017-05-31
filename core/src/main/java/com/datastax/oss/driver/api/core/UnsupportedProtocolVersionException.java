@@ -23,8 +23,12 @@ import java.util.List;
 /**
  * Indicates that we've attempted to connect to a Cassandra node with a protocol version that it
  * cannot handle (e.g., connecting to a C* 2.1 node with protocol version 4).
+ *
+ * <p>The only time when this is returned directly to the client (wrapped in a {@link
+ * AllNodesFailedException}) is at initialization. If it happens later when the driver is already
+ * connected, it is just logged an the corresponding node is forced down.
  */
-public class UnsupportedProtocolVersionException extends RuntimeException {
+public class UnsupportedProtocolVersionException extends DriverException {
   private static final long serialVersionUID = 0;
 
   private final SocketAddress address;

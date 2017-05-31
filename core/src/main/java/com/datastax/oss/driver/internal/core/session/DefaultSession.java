@@ -16,7 +16,6 @@
 package com.datastax.oss.driver.internal.core.session;
 
 import com.datastax.oss.driver.api.core.CqlIdentifier;
-import com.datastax.oss.driver.api.core.DriverException;
 import com.datastax.oss.driver.api.core.InvalidKeyspaceException;
 import com.datastax.oss.driver.api.core.cql.CqlSession;
 import com.datastax.oss.driver.api.core.loadbalancing.LoadBalancingPolicy;
@@ -379,7 +378,7 @@ public class DefaultSession implements CqlSession {
         }
       }
       if (firstError != null) {
-        closeFuture.completeExceptionally(new DriverException("Error closing pool(s)", firstError));
+        closeFuture.completeExceptionally(firstError);
       } else {
         closeFuture.complete(null);
       }

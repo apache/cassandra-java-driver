@@ -13,34 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.datastax.oss.driver.api.core.auth;
+package com.datastax.oss.driver.api.core.connection;
 
 import com.datastax.oss.driver.api.core.AllNodesFailedException;
-import java.net.SocketAddress;
+import com.datastax.oss.driver.api.core.DriverException;
 
 /**
- * Indicates an error during the authentication phase while connecting to a node.
+ * Indicates a generic error while initializing a connection.
  *
  * <p>The only time when this is returned directly to the client (wrapped in a {@link
  * AllNodesFailedException}) is at initialization. If it happens later when the driver is already
- * connected, it is just logged and the connection will be reattempted.
+ * connected, it is just logged an the connection is reattempted.
  */
-public class AuthenticationException extends RuntimeException {
-  private static final long serialVersionUID = 0;
-
-  private final SocketAddress address;
-
-  public AuthenticationException(SocketAddress address, String message) {
-    this(address, message, null);
-  }
-
-  public AuthenticationException(SocketAddress address, String message, Throwable cause) {
-    super(String.format("Authentication error on host %s: %s", address, message), cause);
-    this.address = address;
-  }
-
-  /** The address of the node that encountered the error. */
-  public SocketAddress getAddress() {
-    return address;
+public class ConnectionInitException extends DriverException {
+  public ConnectionInitException(String message, Throwable cause) {
+    super(message, cause);
   }
 }

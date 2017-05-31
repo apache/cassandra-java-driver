@@ -22,7 +22,7 @@ import com.datastax.oss.driver.api.core.auth.AuthenticationException;
 import com.datastax.oss.driver.api.core.auth.Authenticator;
 import com.datastax.oss.driver.api.core.config.CoreDriverOption;
 import com.datastax.oss.driver.api.core.config.DriverConfigProfile;
-import com.datastax.oss.driver.api.core.connection.ConnectionException;
+import com.datastax.oss.driver.api.core.connection.ConnectionInitException;
 import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
 import com.datastax.oss.driver.internal.core.util.ProtocolUtils;
 import com.datastax.oss.driver.internal.core.util.concurrent.UncaughtExceptions;
@@ -96,7 +96,7 @@ class ProtocolInitHandler extends ConnectInitHandler {
     REGISTER,
   }
 
-  private class InitRequest extends InternalRequest {
+  private class InitRequest extends ChannelHandlerRequest {
     // This class is a finite-state automaton, that sends a different query depending on the step
     // in the initialization sequence.
     private Step step;
@@ -264,7 +264,7 @@ class ProtocolInitHandler extends ConnectInitHandler {
     @Override
     void fail(String message, Throwable cause) {
       Throwable finalException =
-          (message == null) ? cause : new ConnectionException(message, cause);
+          (message == null) ? cause : new ConnectionInitException(message, cause);
       setConnectFailure(finalException);
     }
 

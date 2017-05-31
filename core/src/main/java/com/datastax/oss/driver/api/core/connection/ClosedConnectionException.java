@@ -19,23 +19,21 @@ import com.datastax.oss.driver.api.core.AllNodesFailedException;
 import com.datastax.oss.driver.api.core.DriverException;
 
 /**
- * Indicates that a write was attempted on a connection that already handles too many simultaneous
- * requests.
+ * Thrown when the connection on which a request was executing is closed due to an unrelated event.
  *
- * <p>This might happen under heavy load. The driver will automatically try the next node in the
- * query plan. Therefore the only way that the client can observe this exception is as part of a
- * {@link AllNodesFailedException}.
+ * <p>For example, this can happen if the node is unresponsive and a heartbeat query failed, or if
+ * the node was forced down.
+ *
+ * <p>The driver will always retry these requests on the next node transparently. Therefore, the
+ * only way to observe this exception is as part of an {@link AllNodesFailedException}.
  */
-public class BusyConnectionException extends DriverException {
+public class ClosedConnectionException extends DriverException {
 
-  public BusyConnectionException(int maxAvailableIds) {
-    super(
-        String.format(
-            "Connection has exceeded its maximum of %d simultaneous requests", maxAvailableIds));
+  public ClosedConnectionException(String message) {
+    super(message);
   }
 
-  @Override
-  public synchronized Throwable fillInStackTrace() {
-    return this;
+  public ClosedConnectionException(String message, Throwable cause) {
+    super(message, cause);
   }
 }

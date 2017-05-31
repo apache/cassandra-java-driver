@@ -18,7 +18,7 @@ package com.datastax.oss.driver.internal.core.channel;
 import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.ProtocolVersion;
 import com.datastax.oss.driver.api.core.connection.BusyConnectionException;
-import com.datastax.oss.driver.api.core.connection.ConnectionException;
+import com.datastax.oss.driver.api.core.connection.ClosedConnectionException;
 import com.datastax.oss.driver.api.core.connection.HeartbeatException;
 import com.datastax.oss.driver.internal.core.channel.DriverChannel.ReleaseEvent;
 import com.datastax.oss.driver.internal.core.channel.DriverChannel.RequestMessage;
@@ -76,11 +76,12 @@ public class InFlightHandler extends ChannelDuplexHandler {
       }
       return;
     } else if (in == DriverChannel.FORCEFUL_CLOSE_MESSAGE) {
-      abortAllInFlight(new ConnectionException("Channel was force-closed"));
+      abortAllInFlight(new ClosedConnectionException("Channel was force-closed"));
       ctx.channel().close();
       return;
     } else if (in instanceof HeartbeatException) {
-      abortAllInFlight((HeartbeatException) in);
+      abortAllInFlight(
+          new ClosedConnectionException("Heartbeat query failed", ((HeartbeatException) in)));
       ctx.close();
     }
 
@@ -174,7 +175,7 @@ public class InFlightHandler extends ChannelDuplexHandler {
       }
     } else {
       // Otherwise fail all pending requests
-      abortAllInFlight(new ConnectionException("Unexpected error on channel", cause));
+      abortAllInFlight(new ClosedConnectionException("Unexpected error on channel", cause));
       ctx.close();
     }
   }
@@ -210,7 +211,7 @@ public class InFlightHandler extends ChannelDuplexHandler {
     return responseCallback;
   }
 
-  private void abortAllInFlight(Throwable cause) {
+  private void abortAllInFlight(ClosedConnectionException cause) {
     abortAllInFlight(cause, null);
   }
 
@@ -218,7 +219,7 @@ public class InFlightHandler extends ChannelDuplexHandler {
    * @param ignore the ResponseCallback that called this method, if applicable (avoids a recursive
    *     loop)
    */
-  private void abortAllInFlight(Throwable cause, ResponseCallback ignore) {
+  private void abortAllInFlight(ClosedConnectionException cause, ResponseCallback ignore) {
     for (ResponseCallback responseCallback : inFlight.values()) {
       if (responseCallback != ignore) {
         responseCallback.onFailure(cause);
@@ -235,7 +236,7 @@ public class InFlightHandler extends ChannelDuplexHandler {
     }
   }
 
-  private class SetKeyspaceRequest extends InternalRequest {
+  private class SetKeyspaceRequest extends ChannelHandlerRequest {
 
     private final CqlIdentifier keyspaceName;
     private final Promise<Void> promise;
@@ -269,8 +270,8 @@ public class InFlightHandler extends ChannelDuplexHandler {
 
     @Override
     void fail(String message, Throwable cause) {
-      Throwable setKeyspaceException =
-          (message == null) ? cause : new ConnectionException(message, cause);
+      ClosedConnectionException setKeyspaceException =
+          new ClosedConnectionException(message, cause);
       if (promise.tryFailure(setKeyspaceException)) {
         InFlightHandler.this.setKeyspaceRequest = null;
         // setKeyspace queries are not triggered directly by the user, but only as a response to a

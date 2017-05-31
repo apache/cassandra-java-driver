@@ -15,16 +15,28 @@
  */
 package com.datastax.oss.driver.api.core;
 
-public class DriverException extends RuntimeException {
-  public DriverException(String message) {
+/**
+ * Base class for all exceptions thrown by the driver.
+ *
+ * <p>Note that, for obvious programming errors (for example, calling {@link Cluster#connect()} on a
+ * cluster instance that was previously closed), the driver might throw JDK runtime exceptions, such
+ * as {@link IllegalArgumentException} or {@link IllegalStateException}. In all other cases, it will
+ * be an instance of this class.
+ *
+ * <p>One special case is when the driver tried multiple nodes to complete a request, and they all
+ * failed; the error returned to the client will be an {@link AllNodesFailedException}, which wraps
+ * a map of errors per node.
+ */
+public abstract class DriverException extends RuntimeException {
+  protected DriverException(String message) {
     super(message);
   }
 
-  public DriverException(String message, Throwable cause) {
+  protected DriverException(String message, Throwable cause) {
     super(message, cause);
   }
 
-  public DriverException(Throwable cause) {
+  protected DriverException(Throwable cause) {
     super(cause);
   }
 }

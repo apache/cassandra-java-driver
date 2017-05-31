@@ -171,7 +171,7 @@ public class DefaultCluster implements Cluster {
     private void connect(CqlIdentifier keyspace, CompletableFuture<CqlSession> connectFuture) {
       assert adminExecutor.inEventLoop();
       if (closeWasCalled) {
-        connectFuture.completeExceptionally(new DriverException("Cluster was closed"));
+        connectFuture.completeExceptionally(new IllegalStateException("Cluster was closed"));
       } else {
         DefaultSession.init(context, keyspace)
             .whenCompleteAsync(
@@ -180,7 +180,8 @@ public class DefaultCluster implements Cluster {
                     connectFuture.completeExceptionally(error);
                   } else if (closeWasCalled) {
                     connectFuture.completeExceptionally(
-                        new DriverException("Cluster was closed while session was initializing"));
+                        new IllegalStateException(
+                            "Cluster was closed while session was initializing"));
                     session.forceCloseAsync();
                   } else {
                     sessions.add(session);

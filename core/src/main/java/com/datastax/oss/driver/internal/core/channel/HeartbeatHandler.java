@@ -70,7 +70,7 @@ class HeartbeatHandler extends IdleStateHandler {
     }
   }
 
-  private class HeartbeatRequest extends InternalRequest {
+  private class HeartbeatRequest extends ChannelHandlerRequest {
 
     HeartbeatRequest(ChannelHandlerContext ctx, long timeoutMillis) {
       super(ctx, timeoutMillis);
@@ -105,7 +105,7 @@ class HeartbeatHandler extends IdleStateHandler {
       }
       LOG.debug(ctx.channel().toString() + " Heartbeat query failed: " + message, cause);
       // Notify InFlightHandler (fireExceptionCaught wouldn't work because the error has to go downstream)
-      ctx.write(new HeartbeatException(message, cause));
+      ctx.write(new HeartbeatException(ctx.channel().remoteAddress(), message, cause));
       HeartbeatHandler.this.request = null;
     }
   }

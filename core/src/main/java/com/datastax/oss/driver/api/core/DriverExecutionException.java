@@ -13,15 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.datastax.oss.driver.api.core.connection;
+package com.datastax.oss.driver.api.core;
 
-/** A generic error on a connection to a node. */
-public class ConnectionException extends RuntimeException {
-  public ConnectionException(String message) {
-    super(message);
-  }
-
-  public ConnectionException(String message, Throwable cause) {
-    super(message, cause);
+/**
+ * Thrown by synchronous wrapper methods (such as {@link Cluster#connect()}, when the underlying
+ * future was completed with a <em>checked</em> exception.
+ *
+ * <p>This exception should be rarely thrown (if ever). Most of the time, the driver uses unchecked
+ * exceptions, which will be rethrown directly instead of being wrapped in this class.
+ */
+public class DriverExecutionException extends DriverException {
+  public DriverExecutionException(Throwable cause) {
+    super(cause);
   }
 }

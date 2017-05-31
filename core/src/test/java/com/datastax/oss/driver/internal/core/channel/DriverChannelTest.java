@@ -16,7 +16,7 @@
 package com.datastax.oss.driver.internal.core.channel;
 
 import com.datastax.oss.driver.api.core.CoreProtocolVersion;
-import com.datastax.oss.driver.api.core.connection.ConnectionException;
+import com.datastax.oss.driver.api.core.connection.ClosedConnectionException;
 import com.datastax.oss.protocol.internal.Frame;
 import com.datastax.oss.protocol.internal.request.Query;
 import com.datastax.oss.protocol.internal.response.result.Void;
@@ -129,7 +129,7 @@ public class DriverChannelTest extends ChannelHandlerTestBase {
     // Then
     assertThat(closeFuture).isSuccess();
     assertThat(responseCallback.getFailure())
-        .isInstanceOf(ConnectionException.class)
+        .isInstanceOf(ClosedConnectionException.class)
         .hasMessageContaining("Channel was force-closed");
   }
 
