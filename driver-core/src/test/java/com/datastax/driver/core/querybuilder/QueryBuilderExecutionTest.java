@@ -15,27 +15,32 @@
  */
 package com.datastax.driver.core.querybuilder;
 
-import com.datastax.driver.core.*;
-import com.datastax.driver.core.utils.CassandraVersion;
-import org.assertj.core.api.iterable.Extractor;
-import org.testng.annotations.Test;
-
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import org.assertj.core.api.iterable.Extractor;
+import org.testng.annotations.Test;
+
+import static org.assertj.core.data.MapEntry.entry;
+import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertFalse;
+import static org.testng.Assert.assertTrue;
+import static org.testng.Assert.fail;
+
+import com.datastax.driver.core.*;
+import com.datastax.driver.core.utils.CassandraVersion;
+
 import static com.datastax.driver.core.Assertions.assertThat;
 import static com.datastax.driver.core.ResultSetAssert.row;
 import static com.datastax.driver.core.querybuilder.QueryBuilder.*;
 import static com.datastax.driver.core.schemabuilder.SchemaBuilder.createTable;
-import static org.assertj.core.data.MapEntry.entry;
-import static org.testng.Assert.*;
 
 public class QueryBuilderExecutionTest extends CCMTestsSupport {
 
-    private static final String TABLE1 = "test1";
-    private static final String TABLE2 = "test2";
+    private static final String TABLE1 = TestUtils.generateIdentifier("test1");
+    private static final String TABLE2 = TestUtils.generateIdentifier("test2");
 
     @Override
     public void onTestContextInitialized() {
