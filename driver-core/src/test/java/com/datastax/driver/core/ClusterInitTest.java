@@ -270,7 +270,9 @@ public class ClusterInitTest {
                     .put("rpc_address", address)
                     .put("data_center", "datacenter1")
                     .put("rack", "rack1")
-                    .put("release_version", "2.0.1")
+                    // Base release version on min cassandra version as this is important for the driver
+                    // to consider the node.
+                    .put("release_version", ProtocolVersion.NEWEST_SUPPORTED.minCassandraVersion().toString())
                     .put("tokens", ImmutableSet.of(Long.toString(Long.MIN_VALUE + i++)))
                     .put("host_id", UUID.randomUUID())
                     .build());
