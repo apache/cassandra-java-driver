@@ -27,4 +27,9 @@ public class NoNodeAvailableException extends AllNodesFailedException {
   public NoNodeAvailableException() {
     super("No node was available to execute the query", Collections.emptyMap());
   }
+
+  @Override
+  public DriverException copy() {
+    return new NoNodeAvailableException();
+  }
 }

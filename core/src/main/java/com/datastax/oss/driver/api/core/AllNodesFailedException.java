@@ -37,7 +37,7 @@ public class AllNodesFailedException extends DriverException {
   private final Map<Node, Throwable> errors;
 
   protected AllNodesFailedException(String message, Map<Node, Throwable> errors) {
-    super(message);
+    super(message, null, true);
     this.errors = errors;
   }
 
@@ -58,5 +58,10 @@ public class AllNodesFailedException extends DriverException {
   /** The details of the individual error on each node. */
   public Map<Node, Throwable> getErrors() {
     return errors;
+  }
+
+  @Override
+  public DriverException copy() {
+    return new AllNodesFailedException(getMessage(), errors);
   }
 }

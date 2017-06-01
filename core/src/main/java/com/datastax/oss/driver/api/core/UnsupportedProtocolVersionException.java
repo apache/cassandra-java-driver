@@ -54,7 +54,7 @@ public class UnsupportedProtocolVersionException extends DriverException {
 
   private UnsupportedProtocolVersionException(
       SocketAddress address, String message, List<ProtocolVersion> attemptedVersions) {
-    super(message);
+    super(message, null, true);
     this.address = address;
     this.attemptedVersions = attemptedVersions;
   }
@@ -67,5 +67,10 @@ public class UnsupportedProtocolVersionException extends DriverException {
   /** The versions that were attempted. */
   public List<ProtocolVersion> getAttemptedVersions() {
     return attemptedVersions;
+  }
+
+  @Override
+  public DriverException copy() {
+    return new UnsupportedProtocolVersionException(address, getMessage(), attemptedVersions);
   }
 }

@@ -31,12 +31,17 @@ public class HeartbeatException extends DriverException {
   private final SocketAddress address;
 
   public HeartbeatException(SocketAddress address, String message, Throwable cause) {
-    super(message, cause);
+    super(message, cause, true);
     this.address = address;
   }
 
   /** The address of the node that encountered the error. */
   public SocketAddress getAddress() {
     return address;
+  }
+
+  @Override
+  public DriverException copy() {
+    return new HeartbeatException(address, getMessage(), getCause());
   }
 }

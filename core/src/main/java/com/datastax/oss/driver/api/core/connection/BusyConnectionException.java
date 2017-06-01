@@ -29,13 +29,18 @@ import com.datastax.oss.driver.api.core.DriverException;
 public class BusyConnectionException extends DriverException {
 
   public BusyConnectionException(int maxAvailableIds) {
-    super(
+    this(
         String.format(
-            "Connection has exceeded its maximum of %d simultaneous requests", maxAvailableIds));
+            "Connection has exceeded its maximum of %d simultaneous requests", maxAvailableIds),
+        false);
+  }
+
+  private BusyConnectionException(String message, boolean writableStackTrace) {
+    super(message, null, writableStackTrace);
   }
 
   @Override
-  public synchronized Throwable fillInStackTrace() {
-    return this;
+  public DriverException copy() {
+    return new BusyConnectionException(getMessage(), true);
   }
 }

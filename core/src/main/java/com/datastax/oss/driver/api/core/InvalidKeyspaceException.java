@@ -18,6 +18,11 @@ package com.datastax.oss.driver.api.core;
 /** Thrown when a session gets created with an invalid keyspace. */
 public class InvalidKeyspaceException extends DriverException {
   public InvalidKeyspaceException(String message) {
-    super(message);
+    super(message, null, true);
+  }
+
+  @Override
+  public DriverException copy() {
+    return new InvalidKeyspaceException(getMessage());
   }
 }

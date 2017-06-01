@@ -27,6 +27,11 @@ import com.datastax.oss.driver.api.core.DriverException;
  */
 public class ConnectionInitException extends DriverException {
   public ConnectionInitException(String message, Throwable cause) {
-    super(message, cause);
+    super(message, cause, true);
+  }
+
+  @Override
+  public DriverException copy() {
+    return new ConnectionInitException(getMessage(), getCause());
   }
 }

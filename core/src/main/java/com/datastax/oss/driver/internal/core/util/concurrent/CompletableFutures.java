@@ -15,6 +15,7 @@
  */
 package com.datastax.oss.driver.internal.core.util.concurrent;
 
+import com.datastax.oss.driver.api.core.DriverException;
 import com.datastax.oss.driver.api.core.DriverExecutionException;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
@@ -103,6 +104,9 @@ public class CompletableFutures {
           interrupted = true;
         } catch (ExecutionException e) {
           Throwable cause = e.getCause();
+          if (cause instanceof DriverException) {
+            throw ((DriverException) cause).copy();
+          }
           Throwables.throwIfUnchecked(cause);
           throw new DriverExecutionException(cause);
         }

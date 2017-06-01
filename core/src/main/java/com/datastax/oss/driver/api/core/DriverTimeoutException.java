@@ -18,6 +18,11 @@ package com.datastax.oss.driver.api.core;
 /** Thrown when a driver request timed out. */
 public class DriverTimeoutException extends DriverException {
   public DriverTimeoutException(String message) {
-    super(message);
+    super(message, null, true);
+  }
+
+  @Override
+  public DriverException copy() {
+    return new DriverTimeoutException(getMessage());
   }
 }

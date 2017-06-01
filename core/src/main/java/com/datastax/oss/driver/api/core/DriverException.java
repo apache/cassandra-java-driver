@@ -26,17 +26,30 @@ package com.datastax.oss.driver.api.core;
  * <p>One special case is when the driver tried multiple nodes to complete a request, and they all
  * failed; the error returned to the client will be an {@link AllNodesFailedException}, which wraps
  * a map of errors per node.
+ *
+ * <p>Some implementations make the stack trace not writable to improve performance (see {@link
+ * Throwable#Throwable(String, Throwable, boolean, boolean)}). This is only done when the exception
+ * is thrown in a small number of well-known cases, and the stack trace wouldn't add any useful
+ * information (for example, server error responses). Instances returned by {@link #copy()} always
+ * have a stack trace.
  */
 public abstract class DriverException extends RuntimeException {
-  protected DriverException(String message) {
-    super(message);
+  protected DriverException(String message, Throwable cause, boolean writableStackTrace) {
+    super(message, cause, true, writableStackTrace);
   }
 
-  protected DriverException(String message, Throwable cause) {
-    super(message, cause);
-  }
-
-  protected DriverException(Throwable cause) {
-    super(cause);
-  }
+  /**
+   * Copy the exception.
+   *
+   * <p>This returns a new exception, equivalent to the original one, except that because a new
+   * object is created in the current thread, the top-most element in the stacktrace of the
+   * exception will refer to the current thread. The original exception may or may not be included
+   * as the copy's cause, depending on whether that is deemed useful (this is left to the discretion
+   * of each implementation).
+   *
+   * <p>This is intended for the synchronous wrapper methods of the driver, in order to produce a
+   * more user-friendly stack trace (that includes the line in the user code where the driver
+   * rethrew the error).
+   */
+  public abstract DriverException copy();
 }

@@ -24,6 +24,11 @@ package com.datastax.oss.driver.api.core;
  */
 public class DriverExecutionException extends DriverException {
   public DriverExecutionException(Throwable cause) {
-    super(cause);
+    super(null, cause, true);
+  }
+
+  @Override
+  public DriverException copy() {
+    return new DriverExecutionException(getCause());
   }
 }

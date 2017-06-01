@@ -30,10 +30,19 @@ import com.datastax.oss.driver.api.core.DriverException;
 public class ClosedConnectionException extends DriverException {
 
   public ClosedConnectionException(String message) {
-    super(message);
+    this(message, null, false);
   }
 
   public ClosedConnectionException(String message, Throwable cause) {
-    super(message, cause);
+    this(message, cause, false);
+  }
+
+  private ClosedConnectionException(String message, Throwable cause, boolean writableStackTrace) {
+    super(message, cause, writableStackTrace);
+  }
+
+  @Override
+  public DriverException copy() {
+    return new ClosedConnectionException(getMessage(), getCause(), true);
   }
 }
