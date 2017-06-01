@@ -370,10 +370,7 @@ public class DefaultSession implements CqlSession {
           if (firstError == null) {
             firstError = error;
           } else {
-            LOG.error(
-                "Error closing multiple pools in the same session, logging because only "
-                    + "the first one is included in the session's failed future",
-                error);
+            firstError.addSuppressed(error);
           }
         }
       }
