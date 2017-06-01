@@ -15,12 +15,12 @@
  */
 package com.datastax.driver.core.exceptions;
 
-import com.beust.jcommander.internal.Maps;
-import org.testng.annotations.Test;
-
 import java.io.PrintWriter;
 import java.net.InetSocketAddress;
+import java.util.HashMap;
 import java.util.Map;
+
+import org.testng.annotations.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -67,7 +67,7 @@ public class NoHostAvailableExceptionTest {
     }
 
     private static Map<InetSocketAddress, Throwable> buildMockErrors(int count) {
-        Map<InetSocketAddress, Throwable> errors = Maps.newHashMap();
+        Map<InetSocketAddress, Throwable> errors = new HashMap<InetSocketAddress, Throwable>();
         for (int i = 1; i <= count; i++) {
             errors.put(new InetSocketAddress("127.0.0." + i, 9042), new MockError(i));
         }
