@@ -15,15 +15,18 @@
  */
 package com.datastax.driver.core;
 
-import com.datastax.driver.core.exceptions.SyntaxError;
-import com.google.common.util.concurrent.ListenableFuture;
-import org.testng.annotations.Test;
-
 import java.util.List;
 import java.util.Locale;
 import java.util.concurrent.*;
 
-import static com.datastax.driver.core.Assertions.*;
+import com.google.common.util.concurrent.ListenableFuture;
+import org.testng.annotations.Test;
+
+import com.datastax.driver.core.exceptions.SyntaxError;
+
+import static com.datastax.driver.core.Assertions.assertThat;
+import static com.datastax.driver.core.Assertions.fail;
+import static com.datastax.driver.core.Assertions.offset;
 import static com.datastax.driver.core.TestUtils.nonQuietClusterCloseOptions;
 
 /**
@@ -31,10 +34,10 @@ import static com.datastax.driver.core.TestUtils.nonQuietClusterCloseOptions;
  */
 public class SessionTest extends CCMTestsSupport {
 
-    private static final String TABLE1 = "test1";
-    private static final String TABLE2 = "test2";
-    private static final String TABLE3 = "test3";
-    private static final String COUNTER_TABLE = "counters";
+    private static final String TABLE1 = TestUtils.generateIdentifier("test1");
+    private static final String TABLE2 = TestUtils.generateIdentifier("test2");
+    private static final String TABLE3 = TestUtils.generateIdentifier("test3");
+    private static final String COUNTER_TABLE = TestUtils.generateIdentifier("counters");
 
     @Override
     public void onTestContextInitialized() {

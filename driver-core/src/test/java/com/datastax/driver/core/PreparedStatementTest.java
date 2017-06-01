@@ -15,23 +15,32 @@
  */
 package com.datastax.driver.core;
 
+import java.net.InetAddress;
+import java.util.*;
+import java.util.concurrent.TimeUnit;
+
+import com.google.common.collect.ImmutableMap;
+import com.google.common.util.concurrent.Uninterruptibles;
+import org.testng.annotations.AfterMethod;
+import org.testng.annotations.Test;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertFalse;
+import static org.testng.Assert.assertTrue;
+import static org.testng.Assert.fail;
+
 import com.datastax.driver.core.exceptions.InvalidQueryException;
 import com.datastax.driver.core.exceptions.UnsupportedFeatureException;
 import com.datastax.driver.core.policies.FallthroughRetryPolicy;
 import com.datastax.driver.core.utils.Bytes;
 import com.datastax.driver.core.utils.CassandraVersion;
-import com.google.common.collect.ImmutableMap;
-import com.google.common.util.concurrent.Uninterruptibles;
-import org.testng.annotations.Test;
-
-import java.net.InetAddress;
-import java.util.*;
-import java.util.concurrent.TimeUnit;
 
 import static com.datastax.driver.core.ProtocolVersion.V4;
-import static com.datastax.driver.core.TestUtils.*;
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.testng.Assert.*;
+import static com.datastax.driver.core.TestUtils.getFixedValue;
+import static com.datastax.driver.core.TestUtils.getFixedValue2;
+import static com.datastax.driver.core.TestUtils.getValue;
+import static com.datastax.driver.core.TestUtils.setValue;
 
 /**
  * Prepared statement tests.
@@ -61,6 +70,18 @@ public class PreparedStatementTest extends CCMTestsSupport {
         protocolVersion = ccm().getProtocolVersion();
         primitiveTypes = TestUtils.allPrimitiveTypes(protocolVersion);
         execute(createTestFixtures());
+    }
+
+    @AfterMethod(groups = "short")
+    public void tearDown() throws Exception {
+        execute(
+            String.format("TRUNCATE %s", ALL_NATIVE_TABLE),
+            String.format("TRUNCATE %s", ALL_LIST_TABLE),
+            String.format("TRUNCATE %s", ALL_SET_TABLE),
+            String.format("TRUNCATE %s", ALL_MAP_TABLE),
+            String.format("TRUNCATE %s", SIMPLE_TABLE),
+            String.format("TRUNCATE %s", SIMPLE_TABLE2)
+        );
     }
 
     private List<String> createTestFixtures() {
