@@ -24,6 +24,7 @@ import com.google.common.base.Predicates;
 import com.google.common.base.Strings;
 import com.google.common.base.Throwables;
 import com.google.common.collect.*;
+import com.google.common.net.HostAndPort;
 import com.google.common.util.concurrent.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -688,6 +689,7 @@ public class Cluster implements Closeable {
         private boolean jmxEnabled = true;
         private boolean allowBetaProtocolVersion = false;
         private boolean noCompact = false;
+        private boolean allowServerPortDiscovery = false;
 
         private Collection<Host.StateListener> listeners;
 
@@ -728,10 +730,16 @@ public class Cluster implements Closeable {
         }
 
         /**
-         * The port to use to connect to the Cassandra host.
+         * The port to use to connect to the Cassandra host..
          * <p/>
          * If not set through this method, the default port (9042) will be used
          * instead.
+         * <p/>
+         * This port number will be ignored if allowServerPortDiscovery() is called
+         * and the cluster has published a port number. If you are using SSL and
+         * the server is listening on a separate SSL port you will not get the desired
+         * behavior because it will connect to the regular port. Make sure SSL connections
+         * are accepted on the regular port in this scenario.
          *
          * @param port the port to set.
          * @return this Builder.
@@ -760,6 +768,21 @@ public class Cluster implements Closeable {
 
             this.allowBetaProtocolVersion = true;
             this.protocolVersion = ProtocolVersion.NEWEST_BETA;
+            return this;
+        }
+
+        /**
+         * If the cluster publishes a port number use the published version
+         * instead of the port set in the builder which may not reflect the port the server is listening on
+         * in configurations where nodes are not all listening on the same port.
+         * <p/>
+         * Port discovery will never discover SSL ports. It will only discover regular ports (potentially
+         * with StartTLS enabled). If you are using SSL or want to use SSL you will need to enable StartTLS
+         * on the server for it work. If you are not using SSL then you can safely enable this.
+         * @return this Builder.
+         */
+        public Builder allowServerPortDiscovery() {
+            allowServerPortDiscovery = true;
             return this;
         }
 
@@ -882,7 +905,14 @@ public class Cluster implements Closeable {
                 throw new NullPointerException();
 
             try {
-                addContactPoints(InetAddress.getAllByName(address));
+                HostAndPort hap = HostAndPort.fromString(address);
+                if (hap.hasPort()) {
+                    for (InetAddress addr : InetAddress.getAllByName(hap.getHostText())) {
+                        addContactPointsWithPorts(new InetSocketAddress(addr, hap.getPort()));
+                    }
+                } else {
+                    addContactPoints(InetAddress.getAllByName(address));
+                }
                 return this;
             } catch (UnknownHostException e) {
                 throw new IllegalArgumentException("Failed to add contact point: " + address, e);
@@ -1326,7 +1356,7 @@ public class Cluster implements Closeable {
         @Override
         public Configuration getConfiguration() {
             ProtocolOptions protocolOptions = new ProtocolOptions(port, protocolVersion, maxSchemaAgreementWaitSeconds, sslOptions, authProvider, noCompact)
-                    .setCompression(compression);
+                    .setCompression(compression).setAllowServerPortDiscovery(allowServerPortDiscovery);
 
             MetricsOptions metricsOptions = new MetricsOptions(metricsEnabled, jmxEnabled);
 
@@ -1656,8 +1686,8 @@ public class Cluster implements Closeable {
             return configuration.getPolicies().getReconnectionPolicy();
         }
 
-        InetSocketAddress translateAddress(InetAddress address) {
-            InetSocketAddress sa = new InetSocketAddress(address, connectionFactory.getPort());
+        InetSocketAddress translateAddress(InetAddress address, Integer port) {
+            InetSocketAddress sa = new InetSocketAddress(address, port != null & configuration.getProtocolOptions().getAllowServerPortDiscovery() ? port : connectionFactory.getPort());
             InetSocketAddress translated = configuration.getPolicies().getAddressTranslator().translate(sa);
             return translated == null ? sa : translated;
         }
@@ -2417,7 +2447,7 @@ public class Cluster implements Closeable {
             switch (event.type) {
                 case TOPOLOGY_CHANGE:
                     ProtocolEvent.TopologyChange tpc = (ProtocolEvent.TopologyChange) event;
-                    InetSocketAddress tpAddr = translateAddress(tpc.node.getAddress());
+                    InetSocketAddress tpAddr = translateAddress(tpc.node.getAddress(), tpc.node.getPort());
                     Host.statesLogger.debug("[{}] received event {}", tpAddr, tpc.change);
                     switch (tpc.change) {
                         case NEW_NODE:
@@ -2433,7 +2463,7 @@ public class Cluster implements Closeable {
                     break;
                 case STATUS_CHANGE:
                     ProtocolEvent.StatusChange stc = (ProtocolEvent.StatusChange) event;
-                    InetSocketAddress stAddr = translateAddress(stc.node.getAddress());
+                    InetSocketAddress stAddr = translateAddress(stc.node.getAddress(), stc.node.getPort());
                     Host.statesLogger.debug("[{}] received event {}", stAddr, stc.status);
                     switch (stc.status) {
                         case UP:

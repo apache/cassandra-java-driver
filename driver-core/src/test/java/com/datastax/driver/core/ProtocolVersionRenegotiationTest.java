@@ -73,11 +73,11 @@ public class ProtocolVersionRenegotiationTest extends CCMTestsSupport {
      */
     @Test(groups = "short")
     public void should_fail_when_beta_allowed_and_too_high() throws Exception {
-        if (ccm().getCassandraVersion().compareTo(VersionNumber.parse("3.10")) >= 0) {
+        if (ccm().getCassandraVersion().compareTo(VersionNumber.parse("4.0")) >= 0) {
             throw new SkipException("Server supports protocol protocol V5 beta");
         }
         UnsupportedProtocolVersionException e = connectWithUnsupportedBetaVersion();
-        assertThat(e.getUnsupportedVersion()).isEqualTo(V5);
+        assertThat(e.getUnsupportedVersion()).isEqualTo(V6);
     }
 
     /**

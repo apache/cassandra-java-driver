@@ -15,15 +15,21 @@
  */
 package com.datastax.driver.core;
 
+import com.datastax.driver.core.policies.RoundRobinPolicy;
+import com.datastax.driver.core.policies.WhiteListPolicy;
+import com.datastax.driver.core.utils.CassandraVersion;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Maps;
 import org.testng.annotations.Test;
-
+import java.net.InetAddress;
+import java.net.InetSocketAddress;
 import java.util.Map;
 
 import static com.datastax.driver.core.Assertions.assertThat;
 import static com.datastax.driver.core.CreateCCM.TestMode.PER_METHOD;
 import static com.datastax.driver.core.TestUtils.nonDebouncingQueryOptions;
 import static com.datastax.driver.core.TestUtils.waitForUp;
+import static org.junit.Assert.assertEquals;
 
 @CreateCCM(PER_METHOD)
 public class MetadataTest extends CCMTestsSupport {
@@ -108,6 +114,90 @@ public class MetadataTest extends CCMTestsSupport {
         // The ring should be fully accounted for.
         assertThat(cluster).hasValidTokenRanges("test");
         assertThat(cluster).hasValidTokenRanges();
+    }
+
+    /**
+     * Test that the RPC port is not discovered, and that the configured one is used.
+     * The broadcast port should still be discovered if it is available.
+     */
+    @Test(groups = "long")
+    @CassandraVersion("4.0.0")
+    @CCMConfig(numberOfNodes = 1, dirtiesContext = true, createCluster = false)
+    public void should_not_discover_server_ports() throws Exception {
+        Cluster cluster = register(Cluster.builder()
+                .addContactPoints(getContactPoints().get(0))
+                .withPort(ccm().getBinaryPort())
+                .withQueryOptions(nonDebouncingQueryOptions())
+                .withLoadBalancingPolicy(new WhiteListPolicy(new RoundRobinPolicy(), ImmutableList.of(new InetSocketAddress(getContactPoints().get(0), ccm().getBinaryPort()))))
+                .build());
+        Session session = cluster.connect();
+        session.execute(new SimpleStatement("insert into system.peers_v2 (peer, peer_port, data_center, host_id, native_address, native_port, preferred_ip, preferred_port, rack, tokens) VALUES"
+                + "('127.1.1.2', 666, 'datacenter1', 123e4567-e89b-12d3-a456-426655440000, '127.1.1.1', 667, '127.1.1.1', 666, 'rack1', {'3074457345618258601'})").setConsistencyLevel(ConsistencyLevel.ALL).enableTracing());
+        session.close();
+        cluster.close();
+
+        cluster = register(Cluster.builder()
+                .addContactPoints(getContactPoints().get(0))
+                .withPort(ccm().getBinaryPort())
+                .withQueryOptions(nonDebouncingQueryOptions())
+                .withLoadBalancingPolicy(new WhiteListPolicy(new RoundRobinPolicy(), ImmutableList.of(new InetSocketAddress(getContactPoints().get(0), ccm().getBinaryPort()))))
+                .build());
+        session = cluster.connect();
+        InetAddress expectedAddress = InetAddress.getByName("127.1.1.2");
+        for (Host h : cluster.getMetadata().getAllHosts())
+        {
+            if (h.getSocketAddress().getAddress().equals(expectedAddress))
+            {
+                assertEquals(expectedAddress, h.getSocketAddress().getAddress());
+                assertEquals(ccm().getBinaryPort(), h.getSocketAddress().getPort());
+                assertEquals(InetAddress.getByName("127.1.1.2"), h.getBroadcastAddressOptPort().address);
+                assertEquals(ccm().getStoragePort(), h.getBroadcastAddressOptPort().getPort());
+            }
+        }
+    }
+
+    /**
+     * Test that the RPC port is discovered, and that the configured one is ignored.
+     * The broadcast port should always be discovered.
+     */
+    @Test(groups = "long")
+    @CassandraVersion("4.0.0")
+    @CCMConfig(numberOfNodes = 1, dirtiesContext = true, createCluster = false)
+    public void should_discover_server_ports() throws Exception {
+        Cluster cluster = register(Cluster.builder()
+                .addContactPoints(getContactPoints().get(0))
+                .withPort(ccm().getBinaryPort())
+                .withQueryOptions(nonDebouncingQueryOptions())
+                .withLoadBalancingPolicy(new WhiteListPolicy(new RoundRobinPolicy(), ImmutableList.of(new InetSocketAddress(getContactPoints().get(0), ccm().getBinaryPort()))))
+                .allowServerPortDiscovery()
+                .build());
+        Session session = cluster.connect();
+        session.execute(new SimpleStatement("insert into system.peers_v2 (peer, peer_port, data_center, host_id, native_address, native_port, preferred_ip, preferred_port, rack, tokens) VALUES"
+                                      + "('127.1.1.2', 666, 'datacenter1', 123e4567-e89b-12d3-a456-426655440000, '127.1.1.1', 667, '127.1.1.1', 666, 'rack1', {'3074457345618258601'})").setConsistencyLevel(ConsistencyLevel.ALL).enableTracing());
+        session.close();
+        cluster.close();
+
+        cluster = register(Cluster.builder()
+                .addContactPoints(getContactPoints().get(0))
+                .withPort(ccm().getBinaryPort())
+                .withQueryOptions(nonDebouncingQueryOptions())
+                .withLoadBalancingPolicy(new WhiteListPolicy(new RoundRobinPolicy(), ImmutableList.of(new InetSocketAddress(getContactPoints().get(0), ccm().getBinaryPort()))))
+                .allowServerPortDiscovery()
+                .build());
+        session = cluster.connect();
+        InetAddress expectedAddress = InetAddress.getByName("127.1.1.2");
+        for (Host h : cluster.getMetadata().getAllHosts())
+        {
+            System.out.println(h.getBroadcastAddressOptPort());
+            System.out.println(h.getSocketAddress());
+            if (h.getSocketAddress().getAddress().equals(expectedAddress))
+            {
+                assertEquals(expectedAddress, h.getSocketAddress().getAddress());
+                assertEquals(666, h.getSocketAddress().getPort());
+                assertEquals(InetAddress.getByName("127.1.1.2"), h.getBroadcastAddressOptPort().address);
+                assertEquals(667, h.getBroadcastAddressOptPort().getPort());
+            }
+        }
     }
 
     /**

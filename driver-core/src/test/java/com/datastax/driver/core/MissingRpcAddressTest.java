@@ -64,6 +64,9 @@ public class MissingRpcAddressTest extends CCMTestsSupport {
         String deleteStmt = String.format("DELETE rpc_address FROM system.peers WHERE peer = '%s'",
                 ccm().addressOfNode(2).getHostName());
         session.execute(deleteStmt);
+        deleteStmt = String.format("DELETE native_address, native_port FROM system.peers_v2 WHERE peer = '%s' AND peer_port = %d",
+                ccm().addressOfNode(2).getHostName(), ccm().getStoragePort());
+        session.execute(deleteStmt);
         session.close();
         cluster.close();
     }
