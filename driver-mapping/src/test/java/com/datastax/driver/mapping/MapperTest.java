@@ -20,7 +20,12 @@ import com.datastax.driver.core.utils.CassandraVersion;
 import com.datastax.driver.core.utils.MoreObjects;
 import com.datastax.driver.core.utils.UUIDs;
 import com.datastax.driver.mapping.annotations.*;
+import com.google.common.base.Function;
+import com.google.common.base.Throwables;
+import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.testng.annotations.Test;
 
 import java.net.InetAddress;
@@ -29,7 +34,10 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.UUID;
 
+import static com.datastax.driver.core.ConsistencyLevel.ONE;
+import static com.datastax.driver.mapping.Mapper.Option.consistencyLevel;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.fail;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertTrue;
 
@@ -38,6 +46,8 @@ import static org.testng.Assert.assertTrue;
  */
 @SuppressWarnings({"unused", "WeakerAccess"})
 public class MapperTest extends CCMTestsSupport {
+
+    Logger logger = LoggerFactory.getLogger(MapperTest.class);
 
     @Override
     public void onTestContextInitialized() {
@@ -155,7 +165,6 @@ public class MapperTest extends CCMTestsSupport {
         @PartitionKey
         @Column(name = "user_id")
         private UUID userId;
-
 
         private Set<String> tags;
 
@@ -367,7 +376,128 @@ public class MapperTest extends CCMTestsSupport {
         m.delete(p3.getUserId(), p3.getPostId());
 
         assertTrue(postAccessor.getAllAsync(u1.getUserId()).get().isExhausted());
+    }
 
+    /**
+     * Iterates over all the places where we check for io thread re-use and ensures that we throw
+     * the appropriate exception when io thread re-use is attempted.
+     *
+     * @jira_ticket JAVA-1458
+     * @test_category object_mapper
+     */
+    @Test(groups = "short")
+    public void should_fail_when_io_thread_used() throws Exception {
+        MappingManager manager = new MappingManager(session());
+        final Mapper<User> mapper = manager.mapper(User.class);
+        final User u = new User("Paul", "paul@yahoo.com");
+        ListenableFuture<Void> f = mapper.saveAsync(u);
+
+        //Get function
+        executeFunctionAndTestForException(u, mapper, new Function<Void, Thread>() {
+            @Override
+            public Thread apply(Void v) {
+                mapper.get(u);
+                return Thread.currentThread();
+            }
+        });
+        //GetQuery function
+        executeFunctionAndTestForException(u, mapper, new Function<Void, Thread>() {
+            @Override
+            public Thread apply(Void v) {
+                mapper.getQuery(u.getUserId());
+                return Thread.currentThread();
+            }
+        });
+        //Save functions
+        executeFunctionAndTestForException(u, mapper, new Function<Void, Thread>() {
+            @Override
+            public Thread apply(Void v) {
+                mapper.save(u);
+                return Thread.currentThread();
+            }
+        });
+        executeFunctionAndTestForException(u, mapper, new Function<Void, Thread>() {
+            @Override
+            public Thread apply(Void v) {
+                mapper.save(u, consistencyLevel(ONE));
+                return Thread.currentThread();
+            }
+        });
+        //SaveQuery functions
+        executeFunctionAndTestForException(u, mapper, new Function<Void, Thread>() {
+            @Override
+            public Thread apply(Void v) {
+                mapper.saveQuery(u);
+                return Thread.currentThread();
+            }
+        });
+
+        executeFunctionAndTestForException(u, mapper, new Function<Void, Thread>() {
+            @Override
+            public Thread apply(Void v) {
+                mapper.saveQuery(u, consistencyLevel(ONE));
+                return Thread.currentThread();
+            }
+        });
+        //Delete functions
+        executeFunctionAndTestForException(u, mapper, new Function<Void, Thread>() {
+            @Override
+            public Thread apply(Void v) {
+                mapper.delete(u);
+                return Thread.currentThread();
+            }
+        });
+        executeFunctionAndTestForException(u, mapper, new Function<Void, Thread>() {
+            @Override
+            public Thread apply(Void v) {
+                mapper.delete(u, consistencyLevel(ONE));
+                return Thread.currentThread();
+            }
+        });
+
+        //DeleteQuery functions
+        executeFunctionAndTestForException(u, mapper, new Function<Void, Thread>() {
+            @Override
+            public Thread apply(Void v) {
+                mapper.deleteQuery(u);
+                return Thread.currentThread();
+            }
+        });
+        executeFunctionAndTestForException(u, mapper, new Function<Void, Thread>() {
+            @Override
+            public Thread apply(Void v) {
+                mapper.deleteQuery(u, consistencyLevel(ONE));
+                return Thread.currentThread();
+            }
+        });
+        executeFunctionAndTestForException(u, mapper, new Function<Void, Thread>() {
+            @Override
+            public Thread apply(Void v) {
+                mapper.deleteQuery(u.getUserId());
+                return Thread.currentThread();
+            }
+        });
+    }
+
+    private void executeFunctionAndTestForException(User u, Mapper<User> mapper, Function<Void, Thread> f2) {
+        ListenableFuture<Void> f = mapper.saveAsync(u);
+        ListenableFuture<Thread> toTest = Futures.transform(f, f2);
+        try {
+            Thread executedThread = toTest.get();
+            if (executedThread == Thread.currentThread()) {
+                // Callback was invoked on the same thread, which indicates that the future completed
+                // before the transform callback was registered. Try again to produce case where callback
+                // is called on io thread.
+                logger.warn("Future completed before transform callback registered, will try again.");
+                executeFunctionAndTestForException(u, mapper, f2);
+            } else {
+                fail("Expected a failed future, callback was executed on " + executedThread);
+            }
+        } catch (Exception e) {
+            assertThat(Throwables.getRootCause(e))
+                    .isInstanceOf(IllegalStateException.class)
+                    .hasMessageContaining("Detected a synchronous call on an I/O thread");
+        }
     }
 
     @Test(groups = "short")
@@ -501,7 +631,6 @@ public class MapperTest extends CCMTestsSupport {
         Statement deleteQuery = mapper.deleteQuery(u.getUserId());
         assertThat(saveQuery.isIdempotent()).isTrue();
     }
-
 
     @Table(name = "users")
     public static class UserUnknownColumn {
