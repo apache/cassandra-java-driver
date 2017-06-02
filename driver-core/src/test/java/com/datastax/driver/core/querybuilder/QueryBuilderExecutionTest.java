@@ -390,4 +390,61 @@ public class QueryBuilderExecutionTest extends CCMTestsSupport {
                         row(2, 3, 3));
     }
 
+    /**
+     * Validates that {@link QueryBuilder} can construct an INSERT INTO ... JSON query using the 'DEFAULT UNSET/NULL' clause.
+     *
+     * @test_category queries:builder
+     * @jira_ticket JAVA-1446
+     * @since 3.3.0
+     */
+    @CassandraVersion(value = "3.10", description = "Support for DEFAULT UNSET/NULL was added to C* 3.10 (CASSANDRA-11424)")
+    @Test(groups = "short")
+    public void should_support_insert_json_with_default_unset_and_default_null() throws Throwable {
+
+        String table = TestUtils.generateIdentifier("table");
+        execute(
+                String.format("CREATE TABLE %s (k int primary key, v1 int, v2 int)", table),
+                String.format("INSERT INTO %s JSON '{\"k\": 0, \"v1\": 0, \"v2\": 0}'", table)
+        );
+
+        // leave v1 unset
+        session().execute(session().prepare(insertInto(table).json(bindMarker()).defaultUnset()).bind("{\"k\": 0, \"v2\": 2}"));
+        assertThat(session().execute(select().from(table))).containsExactly(
+                row(0, 0, 2)
+        );
+
+        // explicit specification DEFAULT NULL
+        session().execute(session().prepare(insertInto(table).json(bindMarker()).defaultNull()).bind("{\"k\": 0, \"v2\": 2}"));
+        assertThat(session().execute(select().from(table))).containsExactly(
+                row(0, null, 2)
+        );
+
+        // implicitly setting v2 to null
+        session().execute(session().prepare(insertInto(table).json(bindMarker()).defaultNull()).bind("{\"k\": 0}"));
+        assertThat(session().execute(select().from(table))).containsExactly(
+                row(0, null, null)
+        );
+
+        // mix setting null explicitly with default unset:
+        // set values for all fields
+        session().execute(session().prepare(insertInto(table).json(bindMarker())).bind("{\"k\": 1, \"v1\": 1, \"v2\": 1}"));
+        // explicitly set v1 to null while leaving v2 unset which retains its value
+        session().execute(session().prepare(insertInto(table).json(bindMarker()).defaultUnset()).bind("{\"k\": 1, \"v1\": null}"));
+        assertThat(session().execute(select().from(table).where(eq("k", 1)))).containsExactly(
+                row(1, null, 1)
+        );
+
+        // test string literal instead of bind marker
+        session().execute(insertInto(table).json("{\"k\": 2, \"v1\": 2, \"v2\": 2}"));
+        // explicitly set v1 to null while leaving v2 unset which retains its value
+        session().execute(insertInto(table).json("{\"k\": 2, \"v1\": null}").defaultUnset());
+        assertThat(session().execute(select().from(table).where(eq("k", 2)))).containsExactly(
+                row(2, null, 2)
+        );
+        session().execute(insertInto(table).json("{\"k\": 2}").defaultNull());
+        assertThat(session().execute(select().from(table).where(eq("k", 2)))).containsExactly(
+                row(2, null, null)
+        );
+    }
+
 }

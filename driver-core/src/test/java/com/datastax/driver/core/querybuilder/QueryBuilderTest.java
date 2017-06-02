@@ -1109,6 +1109,12 @@ public class QueryBuilderTest {
         assertThat(
                 insertInto("users").json(bindMarker("json")).toString())
                 .isEqualTo("INSERT INTO users JSON :json;");
+        assertThat(
+                insertInto("example").json("{\"id\": 0, \"tupleval\": [1, \"abc\"], \"numbers\": [1, 2, 3], \"letters\": [\"a\", \"b\", \"c\"]}").defaultNull().toString())
+                .isEqualTo("INSERT INTO example JSON '{\"id\": 0, \"tupleval\": [1, \"abc\"], \"numbers\": [1, 2, 3], \"letters\": [\"a\", \"b\", \"c\"]}' DEFAULT NULL;");
+        assertThat(
+                insertInto("example").json("{\"id\": 0, \"tupleval\": [1, \"abc\"], \"numbers\": [1, 2, 3], \"letters\": [\"a\", \"b\", \"c\"]}").defaultUnset().toString())
+                .isEqualTo("INSERT INTO example JSON '{\"id\": 0, \"tupleval\": [1, \"abc\"], \"numbers\": [1, 2, 3], \"letters\": [\"a\", \"b\", \"c\"]}' DEFAULT UNSET;");
     }
 
     @Test(groups = "unit")
