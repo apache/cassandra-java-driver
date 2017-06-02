@@ -1125,6 +1125,12 @@ public class QueryBuilderTest {
         assertThat(
                 select().distinct().toJson("id").as("id").from("users").toString())
                 .isEqualTo("SELECT DISTINCT toJson(id) AS id FROM users;");
+        assertThat(
+                select(alias(toJson("id"), "id"), alias(toJson("age"), "age")).from("users").toString())
+                .isEqualTo("SELECT toJson(id) AS id,toJson(age) AS age FROM users;");
+        assertThat(
+                select(alias(toJson("id"), "id")).distinct().from("users").toString())
+                .isEqualTo("SELECT DISTINCT toJson(id) AS id FROM users;");
     }
 
     @Test(groups = "unit")
@@ -1243,6 +1249,46 @@ public class QueryBuilderTest {
                         .raw("c.\"D\"")
                         .from("tbl").getQueryString())
                 .isEqualTo("SELECT a.\"B\",c.\"D\" FROM tbl;");
+    }
+
+    /**
+     * @test_category queries:builder
+     * @jira_ticket JAVA-1443
+     * @jira_ticket CASSANDRA-10707
+     */
+    @Test(groups = "unit")
+    public void should_handle_group_by_clause() {
+        assertThat(
+                select().all().from("foo").groupBy("c1", column("c2"), raw("c3")).toString())
+                .isEqualTo("SELECT * FROM foo GROUP BY c1,c2,c3;");
+        assertThat(
+                select().all().from("foo").groupBy("c1", column("c2"), raw("c3")).orderBy(asc("c1")).toString())
+                .isEqualTo("SELECT * FROM foo GROUP BY c1,c2,c3 ORDER BY c1 ASC;");
+        assertThat(
+                select().all().from("foo").where(eq("x", 42)).groupBy("c1", column("c2"), raw("c3")).toString())
+                .isEqualTo("SELECT * FROM foo WHERE x=42 GROUP BY c1,c2,c3;");
+        assertThat(
+                select().all().from("foo").where(eq("x", 42)).groupBy("c1", column("c2"), raw("c3")).orderBy(asc("c1")).toString())
+                .isEqualTo("SELECT * FROM foo WHERE x=42 GROUP BY c1,c2,c3 ORDER BY c1 ASC;");
+        try {
+            select().all().from("foo").groupBy("foo").groupBy("bar");
+            fail("Should not allow GROUP BY twice");
+        } catch (IllegalStateException e) {
+            assertThat(e).hasMessage("A GROUP BY clause has already been provided");
+        }
+    }
+
+    /**
+     * @test_category queries:builder
+     */
+    @Test(groups = "unit")
+    public void should_handle_allow_filtering() {
+        assertThat(
+                select().all().from("foo").allowFiltering().toString())
+                .isEqualTo("SELECT * FROM foo ALLOW FILTERING;");
+        assertThat(
+                select().all().from("foo").where(eq("x", 42)).allowFiltering().toString())
+                .isEqualTo("SELECT * FROM foo WHERE x=42 ALLOW FILTERING;");
     }
 
 }
