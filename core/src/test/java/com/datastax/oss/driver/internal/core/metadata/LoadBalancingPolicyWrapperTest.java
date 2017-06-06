@@ -199,6 +199,7 @@ public class LoadBalancingPolicyWrapperTest {
             throw new RuntimeException(e);
           }
           eventBus.fire(NodeStateEvent.changed(NodeState.UNKNOWN, NodeState.DOWN, node1));
+          initLatch.countDown();
         };
     Thread thread = new Thread(runnable);
     thread.start();
