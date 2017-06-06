@@ -15,6 +15,7 @@
 - [improvement] JAVA-1446: Support 'DEFAULT UNSET' in Query Builder JSON Insert.
 - [improvement] JAVA-1443: Add groupBy method to Select statement.
 - [improvement] JAVA-1458: Check thread in mapper sync methods.
+- [improvement] JAVA-1488: Upgrade Netty to 4.0.47.Final.
 
 
 ### 3.2.0
