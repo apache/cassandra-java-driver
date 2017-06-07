@@ -28,7 +28,7 @@ import com.datastax.oss.driver.internal.core.context.NettyOptions;
 import com.datastax.oss.driver.internal.core.metadata.LoadBalancingPolicyWrapper;
 import com.datastax.oss.driver.internal.core.pool.ChannelPool;
 import com.datastax.oss.driver.internal.core.util.concurrent.ScheduledTaskCapturingEventLoop;
-import com.datastax.oss.driver.internal.type.codec.registry.DefaultCodecRegistry;
+import com.datastax.oss.driver.internal.core.type.codec.registry.DefaultCodecRegistry;
 import com.datastax.oss.protocol.internal.Frame;
 import io.netty.channel.EventLoopGroup;
 import java.time.Duration;

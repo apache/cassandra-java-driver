@@ -16,7 +16,6 @@
 package com.datastax.oss.driver.internal.core.context;
 
 import com.datastax.oss.driver.api.core.context.DriverContext;
-import com.datastax.oss.driver.api.type.codec.registry.CodecRegistry;
 import com.datastax.oss.driver.internal.core.ProtocolVersionRegistry;
 import com.datastax.oss.driver.internal.core.channel.ChannelFactory;
 import com.datastax.oss.driver.internal.core.channel.WriteCoalescer;

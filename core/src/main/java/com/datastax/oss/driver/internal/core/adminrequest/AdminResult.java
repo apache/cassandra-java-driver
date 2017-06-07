@@ -16,8 +16,8 @@
 package com.datastax.oss.driver.internal.core.adminrequest;
 
 import com.datastax.oss.driver.api.core.ProtocolVersion;
-import com.datastax.oss.driver.api.type.codec.TypeCodec;
-import com.datastax.oss.driver.api.type.codec.TypeCodecs;
+import com.datastax.oss.driver.api.core.type.codec.TypeCodec;
+import com.datastax.oss.driver.api.core.type.codec.TypeCodecs;
 import com.datastax.oss.driver.internal.core.util.concurrent.CompletableFutures;
 import com.datastax.oss.protocol.internal.response.result.ColumnSpec;
 import com.datastax.oss.protocol.internal.response.result.Rows;

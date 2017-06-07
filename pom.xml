@@ -34,7 +34,6 @@
   <inceptionYear>2017</inceptionYear>
 
   <modules>
-    <module>types</module>
     <module>core</module>
   </modules>
 

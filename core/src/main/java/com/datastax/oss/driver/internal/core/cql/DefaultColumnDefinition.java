@@ -18,8 +18,8 @@ package com.datastax.oss.driver.internal.core.cql;
 import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.cql.ColumnDefinition;
 import com.datastax.oss.driver.api.core.detach.AttachmentPoint;
-import com.datastax.oss.driver.api.type.DataType;
-import com.datastax.oss.driver.internal.type.DataTypeHelper;
+import com.datastax.oss.driver.api.core.type.DataType;
+import com.datastax.oss.driver.internal.core.type.DataTypeHelper;
 import com.datastax.oss.protocol.internal.response.result.ColumnSpec;
 
 public class DefaultColumnDefinition implements ColumnDefinition {

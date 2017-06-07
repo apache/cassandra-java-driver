@@ -18,7 +18,7 @@ package com.datastax.oss.driver.api.core;
 import com.datastax.oss.driver.api.core.config.CoreDriverOption;
 import com.datastax.oss.driver.api.core.config.DriverConfig;
 import com.datastax.oss.driver.api.core.config.DriverConfigProfile;
-import com.datastax.oss.driver.api.type.codec.TypeCodec;
+import com.datastax.oss.driver.api.core.type.codec.TypeCodec;
 import com.datastax.oss.driver.internal.core.ContactPoints;
 import com.datastax.oss.driver.internal.core.DefaultCluster;
 import com.datastax.oss.driver.internal.core.config.typesafe.TypeSafeDriverConfig;

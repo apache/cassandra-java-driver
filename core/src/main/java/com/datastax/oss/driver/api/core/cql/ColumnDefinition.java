@@ -17,7 +17,7 @@ package com.datastax.oss.driver.api.core.cql;
 
 import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.detach.Detachable;
-import com.datastax.oss.driver.api.type.DataType;
+import com.datastax.oss.driver.api.core.type.DataType;
 import java.io.Serializable;
 
 /** Metadata about a CQL column. */
