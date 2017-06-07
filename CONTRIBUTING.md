@@ -71,7 +71,6 @@ in the documented item's signature.
 Builder withLimit(int limit) {
 ```
 
-
 ## Coding style -- test code
 
 Static imports are permitted in a couple of places:
@@ -93,6 +92,11 @@ We use AssertJ (`assertThat`) for assertions. Don't use TestNG's assertions (`as
 Don't try to generify at all cost: a bit of duplication is acceptable, if that helps keep the tests
 simple to understand (a newcomer should be able to understand how to fix a failing test without
 having to read too much code).
+
+Test classes can be a bit longer, since they often enumerate similar test cases. You can also
+factor some common code in a parent abstract class named with "XxxTestBase", and then split
+different families of tests into separate child classes. For example, `CqlRequestHandlerTestBase`,
+`CqlRequestHandlerRetryTest`, `CqlRequestHandlerSpeculativeExecutionTest`...
 
 ## License headers
 
@@ -118,3 +122,68 @@ Note: the tests run on the current state of the working directory. I tried to ad
 the script to only test what's actually being committed, but I couldn't get it to run reliably
 (it's still in there but commented). Keep this in mind when you commit, and don't forget to re-add
 the changes if the first attempt failed and you fixed the tests.
+
+## Commits
+
+Keep your changes **focused**. Each commit should have a single, clear purpose expressed in its 
+message. (Note: these rules can be somewhat relaxed during the initial developement phase, when
+adding a feature sometimes requires other semi-related features).
+
+Resist the urge to "fix" cosmetic issues (add/remove blank lines, etc.) in existing code. This adds
+cognitive load for reviewers, who have to figure out which changes are relevant to the actual
+issue. If you see legitimate issues, like typos, address them in a separate commit (it's fine to
+group multiple typo fixes in a single commit).
+
+Commit message subjects start with a capital letter, use the imperative form and do **not** end
+with a period:
+
+* correct: "Add test for CQL request handler"
+* incorrect: "~~Added test for CQL request handler~~"
+* incorrect: "~~New test for CQL request handler~~"
+
+Avoid catch-all messages like "Minor cleanup", "Various fixes", etc. They don't provide any useful
+information to reviewers, and might be a sign that your commit contains unrelated changes.
+ 
+We don't enforce a particular subject line length limit, but try to keep it short.
+
+You can add more details after the subject line, separated by a blank line. The following pattern
+(inspired by [Netty](http://netty.io/wiki/writing-a-commit-message.html)) is not mandatory, but
+welcome for complex changes:
+
+```
+One line description of your change
+ 
+Motivation:
+
+Explain here the context, and why you're making that change.
+What is the problem you're trying to solve.
+ 
+Modifications:
+
+Describe the modifications you've done.
+ 
+Result:
+
+After your change, what will change.
+```
+
+## Pull requests
+
+Like commits, pull requests should be focused on a single, clearly stated goal.
+
+Avoid basing a pull request onto another one. If possible, the first one should be merged in first,
+and only then should the second one be created.
+
+If you have to address feedback, avoid rebasing your branch and force-pushing (this makes the
+reviewers' job harder, because they have to re-read the full diff and figure out where your new
+changes are). Instead, push a new commit on top of the existing history; it will be squashed later
+when the PR gets merged. If the history is complex, it's a good idea to indicate in the message
+where the changes should be squashed:
+
+```
+* 20c88f4 - Address feedback (to squash with "Add metadata parsing logic") (36 minutes ago)
+* 7044739 - Fix various typos in Javadocs (2 days ago)
+* 574dd08 - Add metadata parsing logic (2 days ago)
+```
+
+(Note that the message refers to the other commit's subject line, not the SHA-1.)
