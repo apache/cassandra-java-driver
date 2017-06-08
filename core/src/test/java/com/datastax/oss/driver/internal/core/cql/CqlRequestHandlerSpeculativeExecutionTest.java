@@ -48,7 +48,7 @@ public class CqlRequestHandlerSpeculativeExecutionTest extends CqlRequestHandler
       Mockito.when(speculativeExecutionPolicy.nextExecution(null, SIMPLE_STATEMENT, 3))
           .thenReturn(0L);
 
-      new CqlRequestHandler(SIMPLE_STATEMENT, harness.getPools(), harness.getContext())
+      new CqlRequestHandler(SIMPLE_STATEMENT, harness.getSession(), harness.getContext())
           .asyncResult();
 
       node1Behavior.verifyWrite();
@@ -90,7 +90,7 @@ public class CqlRequestHandlerSpeculativeExecutionTest extends CqlRequestHandler
           .thenReturn(firstExecutionDelay);
 
       CompletionStage<AsyncResultSet> resultSetFuture =
-          new CqlRequestHandler(SIMPLE_STATEMENT, harness.getPools(), harness.getContext())
+          new CqlRequestHandler(SIMPLE_STATEMENT, harness.getSession(), harness.getContext())
               .asyncResult();
       node1Behavior.verifyWrite();
 
@@ -132,7 +132,7 @@ public class CqlRequestHandlerSpeculativeExecutionTest extends CqlRequestHandler
           .thenReturn(firstExecutionDelay);
 
       CompletionStage<AsyncResultSet> resultSetFuture =
-          new CqlRequestHandler(SIMPLE_STATEMENT, harness.getPools(), harness.getContext())
+          new CqlRequestHandler(SIMPLE_STATEMENT, harness.getSession(), harness.getContext())
               .asyncResult();
       node1Behavior.verifyWrite();
       // do not simulate a response from node1. The request will stay hanging for the rest of this test
@@ -170,7 +170,7 @@ public class CqlRequestHandlerSpeculativeExecutionTest extends CqlRequestHandler
           .thenReturn(firstExecutionDelay);
 
       CompletionStage<AsyncResultSet> resultSetFuture =
-          new CqlRequestHandler(SIMPLE_STATEMENT, harness.getPools(), harness.getContext())
+          new CqlRequestHandler(SIMPLE_STATEMENT, harness.getSession(), harness.getContext())
               .asyncResult();
       node1Behavior.verifyWrite();
 

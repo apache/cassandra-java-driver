@@ -27,6 +27,7 @@ import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
 import com.datastax.oss.driver.internal.core.context.NettyOptions;
 import com.datastax.oss.driver.internal.core.metadata.LoadBalancingPolicyWrapper;
 import com.datastax.oss.driver.internal.core.pool.ChannelPool;
+import com.datastax.oss.driver.internal.core.session.DefaultSession;
 import com.datastax.oss.driver.internal.core.util.concurrent.ScheduledTaskCapturingEventLoop;
 import com.datastax.oss.driver.internal.core.type.codec.registry.DefaultCodecRegistry;
 import com.datastax.oss.protocol.internal.Frame;
@@ -57,9 +58,9 @@ public class RequestHandlerTestHarness implements AutoCloseable {
   }
 
   private final ScheduledTaskCapturingEventLoop schedulingEventGroup;
-  private final Map<Node, ChannelPool> pools;
 
   @Mock private InternalDriverContext context;
+  @Mock private DefaultSession session;
   @Mock private EventLoopGroup eventLoopGroup;
   @Mock private NettyOptions nettyOptions;
   @Mock private DriverConfig config;
@@ -97,11 +98,12 @@ public class RequestHandlerTestHarness implements AutoCloseable {
 
     Mockito.when(context.codecRegistry()).thenReturn(new DefaultCodecRegistry());
 
-    pools = builder.buildMockPools();
+    Map<Node, ChannelPool> pools = builder.buildMockPools();
+    Mockito.when(session.getPools()).thenReturn(pools);
   }
 
-  public Map<Node, ChannelPool> getPools() {
-    return pools;
+  public DefaultSession getSession() {
+    return session;
   }
 
   public InternalDriverContext getContext() {

@@ -15,19 +15,15 @@
  */
 package com.datastax.oss.driver.internal.core.cql;
 
-import com.datastax.oss.driver.api.core.config.DriverConfigProfile;
 import com.datastax.oss.driver.api.core.cql.AsyncResultSet;
 import com.datastax.oss.driver.api.core.cql.ResultSet;
 import com.datastax.oss.driver.api.core.cql.Statement;
-import com.datastax.oss.driver.api.core.metadata.Node;
 import com.datastax.oss.driver.api.core.session.Request;
 import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
-import com.datastax.oss.driver.internal.core.pool.ChannelPool;
+import com.datastax.oss.driver.internal.core.session.DefaultSession;
 import com.datastax.oss.driver.internal.core.session.RequestHandler;
 import com.datastax.oss.driver.internal.core.session.RequestProcessor;
-import java.util.Map;
 import java.util.concurrent.CompletionStage;
-import java.util.concurrent.ConcurrentMap;
 
 public class CqlRequestProcessor
     implements RequestProcessor<ResultSet, CompletionStage<AsyncResultSet>> {
@@ -40,8 +36,8 @@ public class CqlRequestProcessor
   @Override
   public RequestHandler<ResultSet, CompletionStage<AsyncResultSet>> newHandler(
       Request<ResultSet, CompletionStage<AsyncResultSet>> request,
-      Map<Node, ChannelPool> pools,
+      DefaultSession session,
       InternalDriverContext context) {
-    return new CqlRequestHandler((Statement) request, pools, context);
+    return new CqlRequestHandler((Statement) request, session, context);
   }
 }

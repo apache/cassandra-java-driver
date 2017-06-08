@@ -38,6 +38,7 @@ import com.datastax.oss.driver.internal.core.channel.DriverChannel;
 import com.datastax.oss.driver.internal.core.channel.ResponseCallback;
 import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
 import com.datastax.oss.driver.internal.core.pool.ChannelPool;
+import com.datastax.oss.driver.internal.core.session.DefaultSession;
 import com.datastax.oss.driver.internal.core.session.RequestHandlerBase;
 import com.datastax.oss.driver.internal.core.util.concurrent.BlockingOperation;
 import com.datastax.oss.driver.internal.core.util.concurrent.CompletableFutures;
@@ -47,6 +48,7 @@ import com.datastax.oss.protocol.internal.ProtocolConstants;
 import com.datastax.oss.protocol.internal.response.Error;
 import com.datastax.oss.protocol.internal.response.Result;
 import com.datastax.oss.protocol.internal.response.result.Rows;
+import com.datastax.oss.protocol.internal.response.result.SchemaChange;
 import com.datastax.oss.protocol.internal.response.result.SetKeyspace;
 import com.datastax.oss.protocol.internal.response.result.Void;
 import io.netty.util.concurrent.EventExecutor;
@@ -89,9 +91,8 @@ public class CqlRequestHandler
   // We don't use a map because nodes can appear multiple times.
   private volatile List<Map.Entry<Node, Throwable>> errors;
 
-  CqlRequestHandler(
-      Statement statement, Map<Node, ChannelPool> pools, InternalDriverContext context) {
-    super(statement, pools, context);
+  CqlRequestHandler(Statement statement, DefaultSession session, InternalDriverContext context) {
+    super(statement, session, context);
     this.result = new CompletableFuture<>();
     this.result.exceptionally(
         t -> {
@@ -115,7 +116,6 @@ public class CqlRequestHandler
     this.executions = new AtomicInteger(0);
 
     // Start the initial execution
-    CqlIdentifier keyspace = null; // TODO pull keyspace from session
     long nextExecution = context.speculativeExecutionPolicy().nextExecution(keyspace, request, 1);
     if (nextExecution > 0) {
       LOG.trace("Scheduling first speculative execution in {} ms", nextExecution);
@@ -156,7 +156,6 @@ public class CqlRequestHandler
     if (!result.isDone()) {
       int execution = executions.incrementAndGet();
       LOG.trace("Starting speculative execution {}", execution);
-      CqlIdentifier keyspace = null; // TODO pull keyspace from session
       long nextDelay = speculativeExecutionPolicy.nextExecution(keyspace, request, execution + 1);
       if (nextDelay > 0) {
         LOG.trace("Scheduling {}th speculative execution in {} ms", execution + 1, nextDelay);
@@ -203,7 +202,7 @@ public class CqlRequestHandler
   }
 
   private DriverChannel getChannel(Node node) {
-    ChannelPool pool = pools.get(node);
+    ChannelPool pool = session.getPools().get(node);
     if (pool == null) {
       LOG.trace("No pool to {}, skipping", node);
       return null;
@@ -255,10 +254,9 @@ public class CqlRequestHandler
       if (result.complete(resultSet)) {
         cancelScheduledTasks();
         if (resultMessage instanceof SetKeyspace) {
-          CqlIdentifier keyspace =
+          CqlIdentifier newKeyspace =
               CqlIdentifier.fromInternal(((SetKeyspace) resultMessage).keyspace);
-          // TODO set keyspace on the session
-          throw new UnsupportedOperationException("TODO set keyspace on session after USE query");
+          session.setKeyspace(newKeyspace);
         }
       }
     } catch (Throwable error) {
@@ -318,7 +316,7 @@ public class CqlRequestHandler
       }
       try {
         Message responseMessage = responseFrame.message;
-        if (responseMessage instanceof SetKeyspace) {
+        if (responseMessage instanceof SchemaChange) {
           // TODO schema agreement, and chain setFinalResult to the result
           setFinalError(new UnsupportedOperationException("TODO handle schema agreement"));
         } else if (responseMessage instanceof Result) {

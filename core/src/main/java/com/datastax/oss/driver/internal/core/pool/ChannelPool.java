@@ -78,6 +78,7 @@ public class ChannelPool implements AsyncAutoCloseable {
   @VisibleForTesting final ChannelSet channels = new ChannelSet();
 
   private final Node node;
+  private final CqlIdentifier initialKeyspaceName;
   private final EventExecutor adminExecutor;
   private final SingleThreaded singleThreaded;
   private volatile boolean invalidKeyspace;
@@ -85,6 +86,7 @@ public class ChannelPool implements AsyncAutoCloseable {
   private ChannelPool(
       Node node, CqlIdentifier keyspaceName, NodeDistance distance, InternalDriverContext context) {
     this.node = node;
+    this.initialKeyspaceName = keyspaceName;
     this.adminExecutor = context.nettyOptions().adminEventExecutorGroup().next();
     this.singleThreaded = new SingleThreaded(keyspaceName, distance, context);
   }
@@ -96,6 +98,14 @@ public class ChannelPool implements AsyncAutoCloseable {
 
   public Node getNode() {
     return node;
+  }
+
+  /**
+   * The keyspace with which the pool was initialized (therefore a constant, it's not updated if the
+   * keyspace is switched later).
+   */
+  public CqlIdentifier getInitialKeyspaceName() {
+    return initialKeyspaceName;
   }
 
   /**

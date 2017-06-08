@@ -18,7 +18,6 @@ package com.datastax.oss.driver.internal.core.session;
 import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.InvalidKeyspaceException;
 import com.datastax.oss.driver.api.core.config.DriverConfig;
-import com.datastax.oss.driver.api.core.config.DriverConfigProfile;
 import com.datastax.oss.driver.api.core.cql.CqlSession;
 import com.datastax.oss.driver.api.core.loadbalancing.LoadBalancingPolicy;
 import com.datastax.oss.driver.api.core.loadbalancing.NodeDistance;
@@ -35,7 +34,6 @@ import com.datastax.oss.driver.internal.core.util.concurrent.CompletableFutures;
 import com.datastax.oss.driver.internal.core.util.concurrent.ReplayingEventFilter;
 import com.datastax.oss.driver.internal.core.util.concurrent.RunOrSchedule;
 import com.datastax.oss.driver.internal.core.util.concurrent.UncaughtExceptions;
-import com.google.common.annotations.VisibleForTesting;
 import io.netty.util.concurrent.EventExecutor;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -79,8 +77,10 @@ public class DefaultSession implements CqlSession {
   private final SingleThreaded singleThreaded;
   private final RequestProcessorRegistry processorRegistry;
 
-  @VisibleForTesting
-  final ConcurrentMap<Node, ChannelPool> pools =
+  // This is read concurrently, but only updated from adminExecutor
+  private volatile CqlIdentifier keyspace;
+
+  private final ConcurrentMap<Node, ChannelPool> pools =
       new ConcurrentHashMap<>(
           16,
           0.75f,
@@ -91,13 +91,37 @@ public class DefaultSession implements CqlSession {
     this.adminExecutor = context.nettyOptions().adminEventExecutorGroup().next();
     this.context = context;
     this.config = context.config();
-    this.singleThreaded = new SingleThreaded(context, keyspace);
+    this.singleThreaded = new SingleThreaded(context);
     this.processorRegistry = context.requestProcessorRegistry();
+    this.keyspace = keyspace;
   }
 
   private CompletionStage<CqlSession> init() {
     RunOrSchedule.on(adminExecutor, singleThreaded::init);
     return singleThreaded.initFuture;
+  }
+
+  @Override
+  public CqlIdentifier getKeyspace() {
+    return keyspace;
+  }
+
+  /**
+   * <b>INTERNAL USE ONLY</b> -- switches the session to a new keyspace.
+   *
+   * <p>This is called by the driver when a {@code USE} query is successfully executed through the
+   * session. Calling it from anywhere else is highly discouraged, as an invalid keyspace would
+   * wreak havoc (close all connections and make the session unusable).
+   */
+  public void setKeyspace(CqlIdentifier newKeyspace) {
+    if (!this.keyspace.equals(newKeyspace)) {
+      this.keyspace = newKeyspace;
+      RunOrSchedule.on(adminExecutor, () -> singleThreaded.setKeyspace(newKeyspace));
+    }
+  }
+
+  public Map<Node, ChannelPool> getPools() {
+    return pools;
   }
 
   @Override
@@ -114,7 +138,7 @@ public class DefaultSession implements CqlSession {
 
   private <SyncResultT, AsyncResultT> RequestHandler<SyncResultT, AsyncResultT> newHandler(
       Request<SyncResultT, AsyncResultT> request) {
-    return processorRegistry.processorFor(request).newHandler(request, pools, context);
+    return processorRegistry.processorFor(request).newHandler(request, this, context);
   }
 
   @Override
@@ -155,12 +179,9 @@ public class DefaultSession implements CqlSession {
     private final Map<Node, DistanceEvent> pendingDistanceEvents = new HashMap<>();
     private final Map<Node, NodeStateEvent> pendingStateEvents = new HashMap<>();
 
-    private CqlIdentifier keyspace;
-
-    private SingleThreaded(InternalDriverContext context, CqlIdentifier keyspace) {
+    private SingleThreaded(InternalDriverContext context) {
       this.context = context;
       this.channelPoolFactory = context.channelPoolFactory();
-      this.keyspace = keyspace;
       this.distanceListenerKey =
           context
               .eventBus()
@@ -317,6 +338,12 @@ public class DefaultSession implements CqlSession {
         pool.forceCloseAsync();
       } else {
         LOG.debug("New pool to {} initialized", node);
+        // If the session's keyspace changed while the pool was initializing, switch it now. Don't
+        // try too hard to wait until we expose the pool to clients, switching keyspaces is
+        // inherently unsafe anyway.
+        if (!keyspace.equals(pool.getInitialKeyspaceName())) {
+          pool.setKeyspace(keyspace);
+        }
         pending.remove(node);
         pools.put(node, pool);
         DistanceEvent distanceEvent = pendingDistanceEvents.remove(node);
@@ -329,6 +356,16 @@ public class DefaultSession implements CqlSession {
               "Received {} while the pool was initializing, processing it now", distanceEvent);
           processDistanceEvent(distanceEvent);
         }
+      }
+    }
+
+    private void setKeyspace(CqlIdentifier newKeyspace) {
+      assert adminExecutor.inEventLoop();
+      if (closeWasCalled) {
+        return;
+      }
+      for (ChannelPool pool : pools.values()) {
+        pool.setKeyspace(newKeyspace);
       }
     }
 

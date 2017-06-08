@@ -15,14 +15,10 @@
  */
 package com.datastax.oss.driver.internal.core.session;
 
-import com.datastax.oss.driver.api.core.config.DriverConfigProfile;
 import com.datastax.oss.driver.api.core.cql.PrepareRequest;
 import com.datastax.oss.driver.api.core.cql.Statement;
-import com.datastax.oss.driver.api.core.metadata.Node;
 import com.datastax.oss.driver.api.core.session.Request;
 import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
-import com.datastax.oss.driver.internal.core.pool.ChannelPool;
-import java.util.Map;
 
 /**
  * Handles a type of request in the driver.
@@ -46,6 +42,6 @@ public interface RequestProcessor<SyncResultT, AsyncResultT> {
   /** Builds a new handler to process a given request. */
   RequestHandler<SyncResultT, AsyncResultT> newHandler(
       Request<SyncResultT, AsyncResultT> request,
-      Map<Node, ChannelPool> pools,
+      DefaultSession session,
       InternalDriverContext context);
 }

@@ -127,7 +127,8 @@ public class DefaultSessionTest {
     assertThat(initFuture)
         .isSuccess(
             session ->
-                assertThat(((DefaultSession) session).pools).containsValues(pool1, pool2, pool3));
+                assertThat(((DefaultSession) session).getPools())
+                    .containsValues(pool1, pool2, pool3));
   }
 
   @Test
@@ -150,7 +151,8 @@ public class DefaultSessionTest {
     waitForPendingAdminTasks();
     assertThat(initFuture)
         .isSuccess(
-            session -> assertThat(((DefaultSession) session).pools).containsValues(pool1, pool3));
+            session ->
+                assertThat(((DefaultSession) session).getPools()).containsValues(pool1, pool3));
   }
 
   @Test
@@ -173,7 +175,8 @@ public class DefaultSessionTest {
     waitForPendingAdminTasks();
     assertThat(initFuture)
         .isSuccess(
-            session -> assertThat(((DefaultSession) session).pools).containsValues(pool1, pool3));
+            session ->
+                assertThat(((DefaultSession) session).getPools()).containsValues(pool1, pool3));
   }
 
   @Test
@@ -213,7 +216,8 @@ public class DefaultSessionTest {
     assertThat(initFuture)
         .isSuccess(
             session ->
-                assertThat(((DefaultSession) session).pools).containsValues(pool1, pool2, pool3));
+                assertThat(((DefaultSession) session).getPools())
+                    .containsValues(pool1, pool2, pool3));
   }
 
   @Test
@@ -252,7 +256,8 @@ public class DefaultSessionTest {
 
     assertThat(initFuture)
         .isSuccess(
-            session -> assertThat(((DefaultSession) session).pools).containsValues(pool1, pool3));
+            session ->
+                assertThat(((DefaultSession) session).getPools()).containsValues(pool1, pool3));
   }
 
   @Test
@@ -291,7 +296,8 @@ public class DefaultSessionTest {
 
     assertThat(initFuture)
         .isSuccess(
-            session -> assertThat(((DefaultSession) session).pools).containsValues(pool1, pool3));
+            session ->
+                assertThat(((DefaultSession) session).getPools()).containsValues(pool1, pool3));
   }
 
   @Test
@@ -342,7 +348,7 @@ public class DefaultSessionTest {
     Mockito.verify(pool2, timeout(100)).closeAsync();
 
     CqlSession session = CompletableFutures.getCompleted(initFuture.toCompletableFuture());
-    assertThat(((DefaultSession) session).pools).containsValues(pool1, pool3);
+    assertThat(((DefaultSession) session).getPools()).containsValues(pool1, pool3);
   }
 
   @Test
@@ -368,13 +374,13 @@ public class DefaultSessionTest {
     waitForPendingAdminTasks();
     assertThat(initFuture).isSuccess();
     CqlSession session = CompletableFutures.getCompleted(initFuture.toCompletableFuture());
-    assertThat(((DefaultSession) session).pools).containsValues(pool1, pool3);
+    assertThat(((DefaultSession) session).getPools()).containsValues(pool1, pool3);
 
     eventBus.fire(new DistanceEvent(NodeDistance.LOCAL, node2));
 
     factoryHelper.waitForCall(node2, KEYSPACE, NodeDistance.LOCAL);
     waitForPendingAdminTasks();
-    assertThat(((DefaultSession) session).pools).containsValues(pool1, pool2, pool3);
+    assertThat(((DefaultSession) session).getPools()).containsValues(pool1, pool2, pool3);
   }
 
   @Test
@@ -401,7 +407,7 @@ public class DefaultSessionTest {
     Mockito.verify(pool2, timeout(100)).closeAsync();
 
     CqlSession session = CompletableFutures.getCompleted(initFuture.toCompletableFuture());
-    assertThat(((DefaultSession) session).pools).containsValues(pool1, pool3);
+    assertThat(((DefaultSession) session).getPools()).containsValues(pool1, pool3);
   }
 
   @Test
@@ -427,12 +433,12 @@ public class DefaultSessionTest {
     waitForPendingAdminTasks();
     assertThat(initFuture).isSuccess();
     CqlSession session = CompletableFutures.getCompleted(initFuture.toCompletableFuture());
-    assertThat(((DefaultSession) session).pools).containsValues(pool1, pool3);
+    assertThat(((DefaultSession) session).getPools()).containsValues(pool1, pool3);
 
     eventBus.fire(NodeStateEvent.changed(NodeState.FORCED_DOWN, NodeState.UP, node2));
     factoryHelper.waitForCall(node2, KEYSPACE, NodeDistance.LOCAL);
     waitForPendingAdminTasks();
-    assertThat(((DefaultSession) session).pools).containsValues(pool1, pool2, pool3);
+    assertThat(((DefaultSession) session).getPools()).containsValues(pool1, pool2, pool3);
   }
 
   @Test
@@ -459,7 +465,7 @@ public class DefaultSessionTest {
     waitForPendingAdminTasks();
     assertThat(initFuture).isSuccess();
     CqlSession session = CompletableFutures.getCompleted(initFuture.toCompletableFuture());
-    assertThat(((DefaultSession) session).pools).containsValues(pool1, pool3);
+    assertThat(((DefaultSession) session).getPools()).containsValues(pool1, pool3);
 
     eventBus.fire(new DistanceEvent(NodeDistance.LOCAL, node2));
 
@@ -475,7 +481,7 @@ public class DefaultSessionTest {
     // Pool should have been adjusted
     Mockito.verify(pool2).resize(NodeDistance.REMOTE);
 
-    assertThat(((DefaultSession) session).pools).containsValues(pool1, pool2, pool3);
+    assertThat(((DefaultSession) session).getPools()).containsValues(pool1, pool2, pool3);
   }
 
   @Test
@@ -502,7 +508,7 @@ public class DefaultSessionTest {
     waitForPendingAdminTasks();
     assertThat(initFuture).isSuccess();
     CqlSession session = CompletableFutures.getCompleted(initFuture.toCompletableFuture());
-    assertThat(((DefaultSession) session).pools).containsValues(pool1, pool3);
+    assertThat(((DefaultSession) session).getPools()).containsValues(pool1, pool3);
 
     eventBus.fire(new DistanceEvent(NodeDistance.LOCAL, node2));
 
@@ -518,7 +524,7 @@ public class DefaultSessionTest {
     // Pool should have been closed
     Mockito.verify(pool2).closeAsync();
 
-    assertThat(((DefaultSession) session).pools).containsValues(pool1, pool3);
+    assertThat(((DefaultSession) session).getPools()).containsValues(pool1, pool3);
   }
 
   @Test
@@ -545,7 +551,7 @@ public class DefaultSessionTest {
     waitForPendingAdminTasks();
     assertThat(initFuture).isSuccess();
     CqlSession session = CompletableFutures.getCompleted(initFuture.toCompletableFuture());
-    assertThat(((DefaultSession) session).pools).containsValues(pool1, pool3);
+    assertThat(((DefaultSession) session).getPools()).containsValues(pool1, pool3);
 
     eventBus.fire(new DistanceEvent(NodeDistance.LOCAL, node2));
 
@@ -561,7 +567,7 @@ public class DefaultSessionTest {
     // Pool should have been closed
     Mockito.verify(pool2).closeAsync();
 
-    assertThat(((DefaultSession) session).pools).containsValues(pool1, pool3);
+    assertThat(((DefaultSession) session).getPools()).containsValues(pool1, pool3);
   }
 
   @Test
@@ -648,7 +654,7 @@ public class DefaultSessionTest {
     waitForPendingAdminTasks();
     assertThat(initFuture).isSuccess();
     CqlSession session = CompletableFutures.getCompleted(initFuture.toCompletableFuture());
-    assertThat(((DefaultSession) session).pools).containsValues(pool1, pool3);
+    assertThat(((DefaultSession) session).getPools()).containsValues(pool1, pool3);
 
     // node2 comes back up, start initializing a pool for it
     eventBus.fire(NodeStateEvent.changed(NodeState.FORCED_DOWN, NodeState.UP, node2));
@@ -665,6 +671,82 @@ public class DefaultSessionTest {
 
     // Pool should have been closed
     Mockito.verify(pool2).forceCloseAsync();
+  }
+
+  @Test
+  public void should_set_keyspace_on_all_pools() {
+    ChannelPool pool1 = mockPool(node1);
+    ChannelPool pool2 = mockPool(node2);
+    ChannelPool pool3 = mockPool(node3);
+    MockChannelPoolFactoryHelper factoryHelper =
+        MockChannelPoolFactoryHelper.builder(channelPoolFactory)
+            .success(node1, KEYSPACE, NodeDistance.LOCAL, pool1)
+            .success(node2, KEYSPACE, NodeDistance.LOCAL, pool2)
+            .success(node3, KEYSPACE, NodeDistance.LOCAL, pool3)
+            .build();
+
+    CompletionStage<CqlSession> initFuture = DefaultSession.init(context, KEYSPACE);
+
+    factoryHelper.waitForCall(node1, KEYSPACE, NodeDistance.LOCAL);
+    factoryHelper.waitForCall(node2, KEYSPACE, NodeDistance.LOCAL);
+    factoryHelper.waitForCall(node3, KEYSPACE, NodeDistance.LOCAL);
+    waitForPendingAdminTasks();
+    assertThat(initFuture).isSuccess();
+    CqlSession session = CompletableFutures.getCompleted(initFuture.toCompletableFuture());
+
+    CqlIdentifier newKeyspace = CqlIdentifier.fromInternal("newKeyspace");
+    ((DefaultSession) session).setKeyspace(newKeyspace);
+    waitForPendingAdminTasks();
+
+    Mockito.verify(pool1).setKeyspace(newKeyspace);
+    Mockito.verify(pool2).setKeyspace(newKeyspace);
+    Mockito.verify(pool3).setKeyspace(newKeyspace);
+  }
+
+  @Test
+  public void should_set_keyspace_on_pool_if_recreated_while_switching_keyspace() {
+    Mockito.when(node2.getState()).thenReturn(NodeState.FORCED_DOWN);
+
+    ChannelPool pool1 = mockPool(node1);
+    ChannelPool pool2 = mockPool(node2);
+    CompletableFuture<ChannelPool> pool2Future = new CompletableFuture<>();
+    ChannelPool pool3 = mockPool(node3);
+    MockChannelPoolFactoryHelper factoryHelper =
+        MockChannelPoolFactoryHelper.builder(channelPoolFactory)
+            // init
+            .success(node1, KEYSPACE, NodeDistance.LOCAL, pool1)
+            .success(node3, KEYSPACE, NodeDistance.LOCAL, pool3)
+            // when node2 comes back up
+            .pending(node2, KEYSPACE, NodeDistance.LOCAL, pool2Future)
+            .build();
+
+    CompletionStage<CqlSession> initFuture = DefaultSession.init(context, KEYSPACE);
+
+    factoryHelper.waitForCall(node1, KEYSPACE, NodeDistance.LOCAL);
+    factoryHelper.waitForCall(node3, KEYSPACE, NodeDistance.LOCAL);
+    waitForPendingAdminTasks();
+    assertThat(initFuture).isSuccess();
+    DefaultSession session =
+        (DefaultSession) CompletableFutures.getCompleted(initFuture.toCompletableFuture());
+    assertThat(session.getPools()).containsValues(pool1, pool3);
+
+    // node2 comes back up, start initializing a pool for it
+    eventBus.fire(NodeStateEvent.changed(NodeState.FORCED_DOWN, NodeState.UP, node2));
+    factoryHelper.waitForCall(node2, KEYSPACE, NodeDistance.LOCAL);
+
+    // Keyspace gets changed on the session in the meantime, node2's pool will miss it
+    CqlIdentifier newKeyspace = CqlIdentifier.fromInternal("newKeyspace");
+    session.setKeyspace(newKeyspace);
+    waitForPendingAdminTasks();
+    Mockito.verify(pool1).setKeyspace(newKeyspace);
+    Mockito.verify(pool3).setKeyspace(newKeyspace);
+
+    // now pool init completes
+    pool2Future.complete(pool2);
+    waitForPendingAdminTasks();
+
+    // Pool should have been closed
+    Mockito.verify(pool2).setKeyspace(newKeyspace);
   }
 
   private ChannelPool mockPool(Node node) {

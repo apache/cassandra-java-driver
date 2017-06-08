@@ -15,16 +15,19 @@
  */
 package com.datastax.oss.driver.internal.core.cql;
 
+import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.DriverTimeoutException;
 import com.datastax.oss.driver.api.core.config.CoreDriverOption;
 import com.datastax.oss.driver.api.core.cql.AsyncResultSet;
 import com.datastax.oss.driver.api.core.cql.ExecutionInfo;
 import com.datastax.oss.driver.api.core.cql.Row;
 import com.datastax.oss.driver.internal.core.util.concurrent.ScheduledTaskCapturingEventLoop;
+import com.datastax.oss.protocol.internal.response.result.SetKeyspace;
 import java.time.Duration;
 import java.util.Iterator;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.TimeUnit;
+import org.mockito.Mockito;
 import org.testng.annotations.Test;
 
 import static com.datastax.oss.driver.Assertions.assertThat;
@@ -39,7 +42,7 @@ public class CqlRequestHandlerTest extends CqlRequestHandlerTestBase {
             .build()) {
 
       CompletionStage<AsyncResultSet> resultSetFuture =
-          new CqlRequestHandler(SIMPLE_STATEMENT, harness.getPools(), harness.getContext())
+          new CqlRequestHandler(SIMPLE_STATEMENT, harness.getSession(), harness.getContext())
               .asyncResult();
 
       assertThat(resultSetFuture)
@@ -70,7 +73,7 @@ public class CqlRequestHandlerTest extends CqlRequestHandlerTestBase {
     try (RequestHandlerTestHarness harness = harnessBuilder.build()) {
 
       CompletionStage<AsyncResultSet> resultSetFuture =
-          new CqlRequestHandler(SIMPLE_STATEMENT, harness.getPools(), harness.getContext())
+          new CqlRequestHandler(SIMPLE_STATEMENT, harness.getSession(), harness.getContext())
               .asyncResult();
 
       // First scheduled task is the timeout, run it before node1 has responded
@@ -87,6 +90,25 @@ public class CqlRequestHandlerTest extends CqlRequestHandlerTestBase {
 
       assertThat(resultSetFuture)
           .isFailed(t -> assertThat(t).isInstanceOf(DriverTimeoutException.class));
+    }
+  }
+
+  @Test
+  public void should_switch_keyspace_on_session_after_successful_use_statement() {
+    try (RequestHandlerTestHarness harness =
+        RequestHandlerTestHarness.builder()
+            .withResponse(node1, defaultFrameOf(new SetKeyspace("newKeyspace")))
+            .build()) {
+
+      CompletionStage<AsyncResultSet> resultSetFuture =
+          new CqlRequestHandler(SIMPLE_STATEMENT, harness.getSession(), harness.getContext())
+              .asyncResult();
+
+      assertThat(resultSetFuture)
+          .isSuccess(
+              resultSet ->
+                  Mockito.verify(harness.getSession())
+                      .setKeyspace(CqlIdentifier.fromInternal("newKeyspace")));
     }
   }
 }

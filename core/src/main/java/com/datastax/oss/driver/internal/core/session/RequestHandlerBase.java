@@ -15,13 +15,12 @@
  */
 package com.datastax.oss.driver.internal.core.session;
 
+import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.config.DriverConfig;
 import com.datastax.oss.driver.api.core.config.DriverConfigProfile;
 import com.datastax.oss.driver.api.core.metadata.Node;
 import com.datastax.oss.driver.api.core.session.Request;
 import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
-import com.datastax.oss.driver.internal.core.pool.ChannelPool;
-import java.util.Map;
 import java.util.Queue;
 
 /** Factors code that should be common to most request handler implementations. */
@@ -29,17 +28,19 @@ public abstract class RequestHandlerBase<SyncResultT, AsyncResultT>
     implements RequestHandler<SyncResultT, AsyncResultT> {
 
   protected final Request<SyncResultT, AsyncResultT> request;
-  protected final Map<Node, ChannelPool> pools;
+  protected final DefaultSession session;
+  protected final CqlIdentifier keyspace;
   protected final InternalDriverContext context;
   protected final Queue<Node> queryPlan;
   protected final DriverConfigProfile configProfile;
 
   protected RequestHandlerBase(
       Request<SyncResultT, AsyncResultT> request,
-      Map<Node, ChannelPool> pools,
+      DefaultSession session,
       InternalDriverContext context) {
     this.request = request;
-    this.pools = pools;
+    this.session = session;
+    this.keyspace = session.getKeyspace();
     this.context = context;
     this.queryPlan = context.loadBalancingPolicyWrapper().newQueryPlan();
 
