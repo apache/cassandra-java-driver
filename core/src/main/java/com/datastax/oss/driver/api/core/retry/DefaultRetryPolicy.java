@@ -26,7 +26,7 @@ import com.datastax.oss.driver.api.core.session.Request;
  */
 public class DefaultRetryPolicy implements RetryPolicy {
 
-  public DefaultRetryPolicy(DriverContext context) {
+  public DefaultRetryPolicy(@SuppressWarnings("unused") DriverContext context) {
     // nothing to do
   }
 
