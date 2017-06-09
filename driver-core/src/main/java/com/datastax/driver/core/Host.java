@@ -88,7 +88,7 @@ public class Host {
         this.address = address;
         this.convictionPolicy = convictionPolicyFactory.create(this, manager.reconnectionPolicy());
         this.manager = manager;
-        this.defaultExecutionInfo = new ExecutionInfo(ImmutableList.of(this));
+        this.defaultExecutionInfo = new ExecutionInfo(this);
         this.state = State.ADDED;
     }
 

@@ -16,6 +16,7 @@
 package com.datastax.driver.core;
 
 import com.datastax.driver.core.utils.Bytes;
+import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 
@@ -28,6 +29,8 @@ import java.util.Map;
  * Basic information on the execution of a query.
  */
 public class ExecutionInfo {
+    private final int speculativeExecutions;
+    private final int successfulExecutionIndex;
     private final List<Host> triedHosts;
     private final ConsistencyLevel achievedConsistency;
     private final QueryTrace trace;
@@ -39,7 +42,9 @@ public class ExecutionInfo {
     private final List<String> warnings;
     private final Map<String, ByteBuffer> incomingPayload;
 
-    private ExecutionInfo(List<Host> triedHosts, ConsistencyLevel achievedConsistency, QueryTrace trace, ByteBuffer pagingState, ProtocolVersion protocolVersion, CodecRegistry codecRegistry, Statement statement, boolean schemaAgreement, List<String> warnings, Map<String, ByteBuffer> incomingPayload) {
+    private ExecutionInfo(int speculativeExecutions, int successfulExecutionIndex, List<Host> triedHosts, ConsistencyLevel achievedConsistency, QueryTrace trace, ByteBuffer pagingState, ProtocolVersion protocolVersion, CodecRegistry codecRegistry, Statement statement, boolean schemaAgreement, List<String> warnings, Map<String, ByteBuffer> incomingPayload) {
+        this.speculativeExecutions = speculativeExecutions;
+        this.successfulExecutionIndex = successfulExecutionIndex;
         this.triedHosts = triedHosts;
         this.achievedConsistency = achievedConsistency;
         this.trace = trace;
@@ -52,16 +57,16 @@ public class ExecutionInfo {
         this.incomingPayload = incomingPayload;
     }
 
-    ExecutionInfo(List<Host> triedHosts) {
-        this(triedHosts, null, null, null, null, null, null, true, Collections.<String>emptyList(), null);
+    ExecutionInfo(Host singleHost) {
+        this(0, 0, ImmutableList.of(singleHost), null, null, null, null, null, null, true, Collections.<String>emptyList(), null);
     }
 
-    ExecutionInfo withAchievedConsistency(ConsistencyLevel newConsistency) {
-        return new ExecutionInfo(triedHosts, newConsistency, trace, pagingState, protocolVersion, codecRegistry, statement, schemaInAgreement, warnings, incomingPayload);
+    public ExecutionInfo(int speculativeExecutions, int successfulExecutionIndex, List<Host> triedHosts, ConsistencyLevel achievedConsistency, Map<String, ByteBuffer> customPayload) {
+        this(speculativeExecutions, successfulExecutionIndex, triedHosts, achievedConsistency, null, null, null, null, null, false, null, customPayload);
     }
 
     ExecutionInfo with(QueryTrace newTrace, List<String> newWarnings, ByteBuffer newPagingState, Statement newStatement, ProtocolVersion protocolVersion, CodecRegistry codecRegistry) {
-        return new ExecutionInfo(this.triedHosts, this.achievedConsistency,
+        return new ExecutionInfo(speculativeExecutions, successfulExecutionIndex, triedHosts, achievedConsistency,
                 newTrace,
                 newPagingState, protocolVersion, codecRegistry,
                 newStatement,
@@ -69,10 +74,6 @@ public class ExecutionInfo {
                 newWarnings,
                 incomingPayload
         );
-    }
-
-    ExecutionInfo withIncomingPayload(Map<String, ByteBuffer> incomingPayload) {
-        return new ExecutionInfo(triedHosts, achievedConsistency, trace, pagingState, protocolVersion, codecRegistry, statement, schemaInAgreement, warnings, incomingPayload);
     }
 
     /**
@@ -87,7 +88,10 @@ public class ExecutionInfo {
      * {@link com.datastax.driver.core.policies.RetryPolicy} may retry the
      * query on the same host, so the same host might appear twice.</li>
      * <li>if {@link com.datastax.driver.core.policies.SpeculativeExecutionPolicy speculative executions}
-     * are enabled, other hosts might have been tried speculatively as well.</li>
+     * are enabled, this will also contain hosts that were tried by other executions (however, note that
+     * this only contains hosts which timed out, or for which a response was received; if an execution is
+     * waiting for a response from a host and another execution completes the request in the meantime, then
+     * the host of the first execution will not be in that list).</li>
      * </ul>
      * <p/>
      * If you are only interested in fetching the final (and often only) node
@@ -103,12 +107,39 @@ public class ExecutionInfo {
     /**
      * Return the Cassandra host that coordinated this query.
      * <p/>
-     * This is a shortcut for {@code getTriedHosts().get(getTriedHosts().size())}.
+     * This is a shortcut for {@code getTriedHosts().get(getTriedHosts().size() - 1)}.
      *
      * @return return the Cassandra host that coordinated this query.
      */
     public Host getQueriedHost() {
         return triedHosts.get(triedHosts.size() - 1);
+    }
+
+    /**
+     * The number of speculative executions that were started for this query.
+     * <p>
+     * This does not include the initial, normal execution of the query. Therefore, if speculative
+     * executions are disabled, this will always be 0. If they are enabled and one speculative
+     * execution was triggered in addition to the initial execution, this will be 1, etc.
+     *
+     * @see #getSuccessfulExecutionIndex()
+     * @see Cluster.Builder#withSpeculativeExecutionPolicy(com.datastax.driver.core.policies.SpeculativeExecutionPolicy)
+     */
+    public int getSpeculativeExecutions() {
+        return speculativeExecutions;
+    }
+
+    /**
+     * The index of the execution that completed this query.
+     * <p>
+     * 0 represents the initial, normal execution of the query, 1 represents the first speculative
+     * execution, etc.
+     *
+     * @see #getSpeculativeExecutions()
+     * @see Cluster.Builder#withSpeculativeExecutionPolicy(com.datastax.driver.core.policies.SpeculativeExecutionPolicy)
+     */
+    public int getSuccessfulExecutionIndex() {
+        return successfulExecutionIndex;
     }
 
     /**
