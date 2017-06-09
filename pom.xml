@@ -16,23 +16,21 @@
 
 -->
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+
     <modelVersion>4.0.0</modelVersion>
-    <parent>
-        <groupId>org.sonatype.oss</groupId>
-        <artifactId>oss-parent</artifactId>
-        <version>7</version>
-        <relativePath />
-    </parent>
 
     <groupId>com.datastax.cassandra</groupId>
     <artifactId>cassandra-driver-parent</artifactId>
-    <version>3.2.1-SNAPSHOT</version>
+    <version>3.3.0-SNAPSHOT</version>
     <packaging>pom</packaging>
     <name>DataStax Java Driver for Apache Cassandra</name>
-    <description>A driver for Apache Cassandra 1.2+ that works exclusively with the Cassandra Query Language version 3
+    <description>
+        A driver for Apache Cassandra 1.2+ that works exclusively with the Cassandra Query Language version 3
         (CQL3) and Cassandra's binary protocol.
     </description>
+
     <url>https://github.com/datastax/java-driver</url>
+
     <inceptionYear>2012</inceptionYear>
 
     <modules>
@@ -46,6 +44,7 @@
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
         <cassandra.version>3.10</cassandra.version>
         <java.version>1.6</java.version>
         <log4j.version>1.2.17</log4j.version>
@@ -57,7 +56,6 @@
         <snappy.version>1.1.2.6</snappy.version>
         <lz4.version>1.3.0</lz4.version>
         <hdr.version>2.1.9</hdr.version>
-        <!-- driver-extras module -->
         <jackson.version>2.8.8</jackson.version>
         <!-- jackson-databind 2.7.x is the last to support java 6 -->
         <jackson-databind.version>2.7.9.1</jackson-databind.version>
@@ -66,7 +64,14 @@
         <jsr353-ri.version>1.0.4</jsr353-ri.version>
         <jnr-ffi.version>2.0.7</jnr-ffi.version>
         <jnr-posix.version>3.0.27</jnr-posix.version>
-        <!-- test dependency versions -->
+        <groovy.version>2.4.7</groovy.version>
+        <jax-rs.version>2.0.1</jax-rs.version>
+        <jersey.version>2.23.1</jersey.version>
+        <hk2.version>2.4.0-b34</hk2.version>
+        <felix.version>4.4.1</felix.version>
+        <!-- more recent versions of pax-exam require JDK7+ -->
+        <pax-exam.version>3.6.0</pax-exam.version>
+        <url.version>2.4.0</url.version>
         <testng.version>6.8.8</testng.version>
         <assertj.version>1.7.0</assertj.version>
         <mockito.version>1.10.8</mockito.version>
@@ -74,319 +79,577 @@
         <scassandra.version>1.1.2</scassandra.version>
         <logback.version>1.2.3</logback.version>
         <ipprefix>127.0.1.</ipprefix>
+        <!-- defaults below are overridden by profiles and/or submodules -->
         <test.groups>unit</test.groups>
-        <!-- Set default javadoc.opts, overriden by profiles -->
+        <test.osgi.skip>true</test.osgi.skip>
         <javadoc.opts />
     </properties>
 
-    <profiles>
-        <profile>
-            <id>default</id>
-            <properties>
-                <env>default</env>
-                <test.groups>unit</test.groups>
-            </properties>
-            <activation>
-                <activeByDefault>true</activeByDefault>
-            </activation>
-        </profile>
+    <dependencyManagement>
 
-        <profile>
-            <id>doclint-java8-disable</id>
-            <activation>
-                <jdk>[1.8,)</jdk>
-            </activation>
-            <properties>
-                <javadoc.opts>-Xdoclint:none</javadoc.opts>
-            </properties>
-        </profile>
+        <dependencies>
 
-        <profile>
-            <id>short</id>
-            <properties>
-                <env>default</env>
-                <test.groups>unit,short</test.groups>
-            </properties>
-        </profile>
-        <profile>
-            <id>long</id>
-            <properties>
-                <env>default</env>
-                <test.groups>unit,short,long</test.groups>
-            </properties>
-        </profile>
-        <profile>
-            <id>duration</id>
-            <properties>
-                <env>default</env>
-                <test.groups>unit,short,long,duration</test.groups>
-            </properties>
-        </profile>
-        <profile>
-            <id>doc</id>
-            <properties>
-                <env>default</env>
-                <test.groups>unit,doc</test.groups>
-            </properties>
-        </profile>
-        <profile>
-            <!-- default profile settings for 'isolated' test group, will skip tests unless overridden in child module. -->
-            <id>isolated</id>
-            <properties>
-                <env>default</env>
-                <test.groups>isolated</test.groups>
-            </properties>
-            <build>
-                <plugins>
-                    <plugin>
-                        <groupId>org.apache.maven.plugins</groupId>
-                        <artifactId>maven-surefire-plugin</artifactId>
-                        <version>2.16</version>
-                        <configuration>
-                            <properties>
-                                <property>
-                                    <name>usedefaultlisteners</name>
-                                    <value>false
-                                    </value> <!-- disable default listeners as some of the html reports do a lot of File I/O -->
-                                </property>
-                            </properties>
-                            <skip>true</skip>
-                            <forkCount>1</forkCount>
-                            <reuseForks>false</reuseForks>
-                            <reportNameSuffix>isolated</reportNameSuffix>
-                            <!-- This requires includes to be explicitly specified by implementing classes.
-                                 This is needed to prevent creating a JVM fork for each test, even those that don't
-                                 have the isolated group. -->
-                            <includes />
-                        </configuration>
-                    </plugin>
-                </plugins>
-            </build>
-        </profile>
+            <dependency>
+                <groupId>com.datastax.cassandra</groupId>
+                <artifactId>cassandra-driver-core</artifactId>
+                <version>${project.parent.version}</version>
+            </dependency>
 
-        <profile>
-            <id>enforce-java8</id>
-            <build>
-                <plugins>
-                    <plugin>
-                        <groupId>org.apache.maven.plugins</groupId>
-                        <artifactId>maven-enforcer-plugin</artifactId>
-                        <version>1.4.1</version>
-                        <executions>
-                            <execution>
-                                <id>enforce-java8</id>
-                                <goals>
-                                    <goal>enforce</goal>
-                                </goals>
-                                <configuration>
-                                    <rules>
-                                        <requireJavaVersion>
-                                            <version>1.8</version>
-                                        </requireJavaVersion>
-                                    </rules>
-                                </configuration>
-                            </execution>
-                        </executions>
-                    </plugin>
-                </plugins>
-            </build>
-        </profile>
+            <dependency>
+                <groupId>com.datastax.cassandra</groupId>
+                <artifactId>cassandra-driver-core</artifactId>
+                <version>${project.parent.version}</version>
+                <type>test-jar</type>
+            </dependency>
 
-        <!--
-        This profile excludes all JDK 8 dependent tests from being
-        run with legacy JDKs (6 or 7).
-        It is automatically activated when a legacy JDK is in use.
-        Note that running tests with a legacy JDK require
-        that you provide a non-legacy JDK for CCM through the
-        system property ccm.java.home.
-        -->
-        <profile>
-            <id>legacy-jdks</id>
-            <activation>
-                <jdk>[,1.8)</jdk>
-            </activation>
-            <build>
-                <plugins>
-                    <plugin>
-                        <!-- exclude Jdk8* test classes from being compiled -->
-                        <groupId>org.apache.maven.plugins</groupId>
-                        <artifactId>maven-compiler-plugin</artifactId>
-                        <configuration>
-                            <testExcludes>
-                                <exclude>**/Jdk8*.java</exclude>
-                            </testExcludes>
-                        </configuration>
-                    </plugin>
-                    <plugin>
-                        <!-- exclude Jdk* test classes from being run
-                        This is needed in event that code was built with JDK8
-                        and tests are ran with JDK6 or 7. -->
-                        <artifactId>maven-surefire-plugin</artifactId>
-                        <version>2.16</version>
-                        <configuration>
-                            <excludes>
-                                <exclude>**/Jdk8*.java</exclude>
-                            </excludes>
-                        </configuration>
-                    </plugin>
-                </plugins>
-            </build>
-        </profile>
+            <dependency>
+                <groupId>com.datastax.cassandra</groupId>
+                <artifactId>cassandra-driver-mapping</artifactId>
+                <version>${project.parent.version}</version>
+            </dependency>
 
-    </profiles>
+            <dependency>
+                <groupId>com.datastax.cassandra</groupId>
+                <artifactId>cassandra-driver-extras</artifactId>
+                <version>${project.parent.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>com.google.guava</groupId>
+                <artifactId>guava</artifactId>
+                <version>${guava.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>io.netty</groupId>
+                <artifactId>netty-handler</artifactId>
+                <version>${netty.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>io.dropwizard.metrics</groupId>
+                <artifactId>metrics-core</artifactId>
+                <version>${metrics.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.slf4j</groupId>
+                <artifactId>slf4j-api</artifactId>
+                <version>${slf4j.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>com.github.jnr</groupId>
+                <artifactId>jnr-ffi</artifactId>
+                <version>${jnr-ffi.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>com.github.jnr</groupId>
+                <artifactId>jnr-posix</artifactId>
+                <version>${jnr-posix.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.xerial.snappy</groupId>
+                <artifactId>snappy-java</artifactId>
+                <version>${snappy.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>net.jpountz.lz4</groupId>
+                <artifactId>lz4</artifactId>
+                <version>${lz4.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>io.netty</groupId>
+                <artifactId>netty-transport-native-epoll</artifactId>
+                <version>${netty.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.hdrhistogram</groupId>
+                <artifactId>HdrHistogram</artifactId>
+                <version>${hdr.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>com.fasterxml.jackson.core</groupId>
+                <artifactId>jackson-core</artifactId>
+                <version>${jackson.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>com.fasterxml.jackson.core</groupId>
+                <artifactId>jackson-databind</artifactId>
+                <version>${jackson-databind.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>com.fasterxml.jackson.core</groupId>
+                <artifactId>jackson-annotations</artifactId>
+                <version>${jackson.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.glassfish</groupId>
+                <artifactId>javax.json</artifactId>
+                <version>${jsr353-ri.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>javax.json</groupId>
+                <artifactId>javax.json-api</artifactId>
+                <version>${jsr353-api.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>javax.ws.rs</groupId>
+                <artifactId>javax.ws.rs-api</artifactId>
+                <version>${jax-rs.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.glassfish.jersey.core</groupId>
+                <artifactId>jersey-server</artifactId>
+                <version>${jersey.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.glassfish.jersey.media</groupId>
+                <artifactId>jersey-media-json-jackson</artifactId>
+                <version>${jersey.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.glassfish.jersey.containers</groupId>
+                <artifactId>jersey-container-jdk-http</artifactId>
+                <version>${jersey.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.glassfish.hk2</groupId>
+                <artifactId>hk2-api</artifactId>
+                <version>${hk2.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>javax.inject</groupId>
+                <artifactId>javax.inject</artifactId>
+                <version>1</version>
+            </dependency>
+
+            <dependency>
+                <groupId>javax.annotation</groupId>
+                <artifactId>javax.annotation-api</artifactId>
+                <version>1.2</version>
+            </dependency>
+
+            <dependency>
+                <groupId>javax.transaction</groupId>
+                <artifactId>jta</artifactId>
+                <version>1.1</version>
+            </dependency>
+
+            <dependency>
+                <groupId>joda-time</groupId>
+                <artifactId>joda-time</artifactId>
+                <version>${joda.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.apache.felix</groupId>
+                <artifactId>org.apache.felix.framework</artifactId>
+                <version>${felix.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.ops4j.pax.exam</groupId>
+                <artifactId>pax-exam</artifactId>
+                <version>${pax-exam.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.ops4j.pax.exam</groupId>
+                <artifactId>pax-exam-testng</artifactId>
+                <version>${pax-exam.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.ops4j.pax.exam</groupId>
+                <artifactId>pax-exam-container-forked</artifactId>
+                <version>${pax-exam.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.ops4j.pax.exam</groupId>
+                <artifactId>pax-exam-link-mvn</artifactId>
+                <version>${pax-exam.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.ops4j.pax.url</groupId>
+                <artifactId>pax-url-reference</artifactId>
+                <version>${url.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.testng</groupId>
+                <artifactId>testng</artifactId>
+                <version>${testng.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.assertj</groupId>
+                <artifactId>assertj-core</artifactId>
+                <version>${assertj.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.mockito</groupId>
+                <artifactId>mockito-all</artifactId>
+                <version>${mockito.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.scassandra</groupId>
+                <artifactId>java-client</artifactId>
+                <version>${scassandra.version}</version>
+                <exclusions>
+                    <exclusion>
+                        <groupId>ch.qos.logback</groupId>
+                        <artifactId>logback-classic</artifactId>
+                    </exclusion>
+                </exclusions>
+            </dependency>
+
+            <dependency>
+                <groupId>org.apache.commons</groupId>
+                <artifactId>commons-exec</artifactId>
+                <version>${commons-exec.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>io.netty</groupId>
+                <artifactId>netty-tcnative</artifactId>
+                <version>2.0.1.Final</version>
+                <classifier>${os.detected.classifier}</classifier>
+            </dependency>
+
+            <dependency>
+                <groupId>log4j</groupId>
+                <artifactId>log4j</artifactId>
+                <version>${log4j.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.slf4j</groupId>
+                <artifactId>slf4j-log4j12</artifactId>
+                <version>${slf4j-log4j12.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>ch.qos.logback</groupId>
+                <artifactId>logback-classic</artifactId>
+                <version>${logback.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.ow2.asm</groupId>
+                <artifactId>asm</artifactId>
+                <version>5.0.3</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.codehaus.groovy</groupId>
+                <artifactId>groovy-all</artifactId>
+                <version>${groovy.version}</version>
+            </dependency>
+
+        </dependencies>
+
+    </dependencyManagement>
 
     <build>
-        <plugins>
-            <plugin>
-                <artifactId>maven-compiler-plugin</artifactId>
-                <version>3.3</version>
-                <configuration>
-                    <source>${java.version}</source>
-                    <target>${java.version}</target>
-                    <optimize>true</optimize>
-                    <showDeprecation>true</showDeprecation>
-                    <showWarnings>true</showWarnings>
+
+        <extensions>
+
+            <extension>
+                <groupId>kr.motd.maven</groupId>
+                <artifactId>os-maven-plugin</artifactId>
+                <version>1.4.1.Final</version>
+            </extension>
+
+        </extensions>
+
+        <!--
+        Run the following command to check if plugin updates are available:
+        mvn versions:display-plugin-updates
+        -->
+        <pluginManagement>
+
+            <plugins>
+
+                <plugin>
+                    <artifactId>maven-clean-plugin</artifactId>
+                    <version>3.0.0</version>
+                </plugin>
+
+                <plugin>
+                    <artifactId>maven-resources-plugin</artifactId>
+                    <version>3.0.2</version>
+                </plugin>
+
+                <plugin>
+                    <artifactId>maven-site-plugin</artifactId>
+                    <version>3.6</version>
+                </plugin>
+
+                <plugin>
+                    <groupId>org.codehaus.mojo</groupId>
+                    <artifactId>build-helper-maven-plugin</artifactId>
+                    <!-- last version compatible with Java 6 -->
+                    <version>1.9.1</version>
+                </plugin>
+
+                <plugin>
+                    <artifactId>maven-enforcer-plugin</artifactId>
+                    <version>1.4.1</version>
+                </plugin>
+
+                <plugin>
+                    <artifactId>maven-compiler-plugin</artifactId>
+                    <version>3.6.1</version>
+                    <configuration>
+                        <source>${java.version}</source>
+                        <target>${java.version}</target>
+                        <optimize>true</optimize>
+                        <showDeprecation>true</showDeprecation>
+                        <showWarnings>true</showWarnings>
+                        <!--
+                        Avoids warnings when cross-compiling to older source levels, see
+                        https://blogs.oracle.com/darcy/entry/bootclasspath_older_source
+                        -->
+                        <compilerArgument>-Xlint:-options</compilerArgument>
+                        <!-- this actually means: use incremental compilation -->
+                        <useIncrementalCompilation>false</useIncrementalCompilation>
+                    </configuration>
+                </plugin>
+
+                <plugin>
+                    <groupId>org.codehaus.gmaven</groupId>
+                    <artifactId>gmaven-plugin</artifactId>
+                    <version>1.5</version>
+                    <extensions>true</extensions>
+                    <executions>
+                        <execution>
+                            <goals>
+                                <goal>testCompile</goal>
+                            </goals>
+                            <configuration>
+                                <sources>
+                                    <fileset>
+                                        <directory>${pom.basedir}/src/test/groovy</directory>
+                                        <includes>
+                                            <include>**/*.groovy</include>
+                                        </includes>
+                                    </fileset>
+                                </sources>
+                            </configuration>
+                        </execution>
+                    </executions>
+                    <dependencies>
+                        <dependency>
+                            <groupId>org.codehaus.groovy</groupId>
+                            <artifactId>groovy-all</artifactId>
+                            <version>${groovy.version}</version>
+                        </dependency>
+                    </dependencies>
+                </plugin>
+
+                <plugin>
+                    <artifactId>maven-source-plugin</artifactId>
+                    <version>3.0.1</version>
+                    <executions>
+                        <execution>
+                            <id>attach-sources</id>
+                            <phase>package</phase>
+                            <goals>
+                                <goal>jar-no-fork</goal>
+                            </goals>
+                        </execution>
+                    </executions>
+                </plugin>
+
+                <plugin>
+                    <artifactId>maven-javadoc-plugin</artifactId>
+                    <version>2.10.4</version>
+                    <inherited>true</inherited>
+                    <configuration>
+                        <quiet>true</quiet>
+                        <verbose>false</verbose>
+                        <additionalparam>${javadoc.opts}</additionalparam>
+                        <links>
+                            <link>https://docs.oracle.com/javase/8/docs/api/</link>
+                            <link>https://google.github.io/guava/releases/19.0/api/docs/</link>
+                            <link>http://netty.io/4.0/api/</link>
+                            <link>http://www.joda.org/joda-time/apidocs/</link>
+                            <link>http://fasterxml.github.io/jackson-core/javadoc/2.8/</link>
+                            <link>http://fasterxml.github.io/jackson-databind/javadoc/2.7/</link>
+                            <link>https://javaee-spec.java.net/nonav/javadocs/</link>
+                        </links>
+                        <!-- optional dependencies from other modules (must be explicitly declared here in order to be correctly resolved) -->
+                        <additionalDependencies>
+                            <additionalDependency>
+                                <groupId>org.xerial.snappy</groupId>
+                                <artifactId>snappy-java</artifactId>
+                                <version>${snappy.version}</version>
+                            </additionalDependency>
+                            <additionalDependency>
+                                <groupId>net.jpountz.lz4</groupId>
+                                <artifactId>lz4</artifactId>
+                                <version>${lz4.version}</version>
+                            </additionalDependency>
+                            <additionalDependency>
+                                <groupId>org.hdrhistogram</groupId>
+                                <artifactId>HdrHistogram</artifactId>
+                                <version>${hdr.version}</version>
+                            </additionalDependency>
+                            <additionalDependency>
+                                <groupId>com.fasterxml.jackson.core</groupId>
+                                <artifactId>jackson-core</artifactId>
+                                <version>${jackson.version}</version>
+                            </additionalDependency>
+                            <additionalDependency>
+                                <groupId>com.fasterxml.jackson.core</groupId>
+                                <artifactId>jackson-annotations</artifactId>
+                                <version>${jackson.version}</version>
+                            </additionalDependency>
+                            <additionalDependency>
+                                <groupId>com.fasterxml.jackson.core</groupId>
+                                <artifactId>jackson-databind</artifactId>
+                                <version>${jackson-databind.version}</version>
+                            </additionalDependency>
+                            <additionalDependency>
+                                <groupId>joda-time</groupId>
+                                <artifactId>joda-time</artifactId>
+                                <version>${joda.version}</version>
+                            </additionalDependency>
+                            <additionalDependency>
+                                <groupId>javax.json</groupId>
+                                <artifactId>javax.json-api</artifactId>
+                                <version>${jsr353-api.version}</version>
+                            </additionalDependency>
+                        </additionalDependencies>
+                    </configuration>
+                    <executions>
+                        <execution>
+                            <id>attach-javadocs</id>
+                            <goals>
+                                <goal>jar</goal>
+                            </goals>
+                        </execution>
+                    </executions>
+                </plugin>
+
+                <plugin>
+                    <artifactId>maven-jar-plugin</artifactId>
+                    <version>3.0.2</version>
+                </plugin>
+
+                <plugin>
+                    <groupId>org.apache.felix</groupId>
+                    <artifactId>maven-bundle-plugin</artifactId>
+                    <extensions>true</extensions>
+                    <!-- last version compatible with Java 6 -->
+                    <version>2.5.4</version>
+                    <configuration>
+                        <instructions>
+                            <Bundle-Version>${project.version}</Bundle-Version>
+                            <_include>-osgi.bnd</_include>
+                        </instructions>
+                        <supportedProjectTypes>
+                            <supportedProjectType>jar</supportedProjectType>
+                            <supportedProjectType>bundle</supportedProjectType>
+                            <supportedProjectType>pom</supportedProjectType>
+                        </supportedProjectTypes>
+                    </configuration>
+                </plugin>
+
+                <plugin>
+                    <artifactId>maven-shade-plugin</artifactId>
+                    <version>3.0.0</version>
+                </plugin>
+
+                <plugin>
+                    <artifactId>maven-release-plugin</artifactId>
+                    <version>2.5.3</version>
+                    <configuration>
+                        <tagNameFormat>@{project.version}</tagNameFormat>
+                        <autoVersionSubmodules>true</autoVersionSubmodules>
+                        <useReleaseProfile>false</useReleaseProfile>
+                        <releaseProfiles>release</releaseProfiles>
+                        <goals>deploy</goals>
+                    </configuration>
+                </plugin>
+
+                <plugin>
+                    <artifactId>maven-assembly-plugin</artifactId>
+                    <version>3.0.0</version>
+                </plugin>
+
+                <plugin>
+                    <artifactId>maven-install-plugin</artifactId>
+                    <version>2.5.2</version>
+                </plugin>
+
+                <plugin>
+                    <artifactId>maven-deploy-plugin</artifactId>
+                    <version>2.8.2</version>
+                </plugin>
+
+                <plugin>
+                    <groupId>org.codehaus.mojo</groupId>
+                    <artifactId>clirr-maven-plugin</artifactId>
+                    <!-- Last version compatible with Java 6 -->
+                    <version>2.7</version>
+                    <executions>
+                        <execution>
+                            <phase>compile</phase>
+                            <goals>
+                                <goal>check</goal>
+                            </goals>
+                        </execution>
+                    </executions>
+                    <configuration>
+                        <comparisonVersion>3.2.0</comparisonVersion>
+                        <ignoredDifferencesFile>../clirr-ignores.xml</ignoredDifferencesFile>
+                        <excludes>
+                            <exclude>com/datastax/shaded/**</exclude>
+                        </excludes>
+                    </configuration>
                     <!--
-                    Avoids warnings when cross-compiling to older source levels, see
-                    https://blogs.oracle.com/darcy/entry/bootclasspath_older_source
+                    Workaround to make clirr plugin work with Java 8.
+                    The bug is actually in the BCEL library,
+                    see https://issues.apache.org/jira/browse/BCEL-173.
+                    See also https://github.com/RichardWarburton/lambda-behave/issues/31#issuecomment-86052095
                     -->
-                    <compilerArgument>-Xlint:-options</compilerArgument>
-                    <!-- this actually means: use incremental compilation -->
-                    <useIncrementalCompilation>false</useIncrementalCompilation>
-                </configuration>
-            </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-source-plugin</artifactId>
-                <version>2.2.1</version>
-                <executions>
-                    <execution>
-                        <id>attach-sources</id>
-                        <phase>package</phase>
-                        <goals>
-                            <goal>jar-no-fork</goal>
-                        </goals>
-                    </execution>
-                </executions>
-            </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-javadoc-plugin</artifactId>
-                <version>2.9.1</version>
-                <inherited>true</inherited>
-                <configuration>
-                    <quiet>true</quiet>
-                    <verbose>false</verbose>
-                    <additionalparam>${javadoc.opts}</additionalparam>
-                    <links>
-                        <link>https://docs.oracle.com/javase/8/docs/api/</link>
-                        <link>https://google.github.io/guava/releases/19.0/api/docs/</link>
-                        <link>http://netty.io/4.0/api/</link>
-                        <!-- dependencies from driver-extras -->
-                        <link>http://www.joda.org/joda-time/apidocs/</link>
-                        <link>http://fasterxml.github.io/jackson-core/javadoc/2.8/</link>
-                        <link>http://fasterxml.github.io/jackson-databind/javadoc/2.7/</link>
-                        <link>https://javaee-spec.java.net/nonav/javadocs/</link>
-                    </links>
-                    <!-- optional dependencies from other modules (must be explicitly declared here in order to be correctly resolved) -->
-                    <additionalDependencies>
-                        <additionalDependency>
-                            <groupId>org.xerial.snappy</groupId>
-                            <artifactId>snappy-java</artifactId>
-                            <version>${snappy.version}</version>
-                        </additionalDependency>
-                        <additionalDependency>
-                            <groupId>net.jpountz.lz4</groupId>
-                            <artifactId>lz4</artifactId>
-                            <version>${lz4.version}</version>
-                        </additionalDependency>
-                        <additionalDependency>
-                            <groupId>org.hdrhistogram</groupId>
-                            <artifactId>HdrHistogram</artifactId>
-                            <version>${hdr.version}</version>
-                        </additionalDependency>
-                        <additionalDependency>
-                            <groupId>com.fasterxml.jackson.core</groupId>
-                            <artifactId>jackson-core</artifactId>
-                            <version>${jackson.version}</version>
-                        </additionalDependency>
-                        <additionalDependency>
-                            <groupId>com.fasterxml.jackson.core</groupId>
-                            <artifactId>jackson-annotations</artifactId>
-                            <version>${jackson.version}</version>
-                        </additionalDependency>
-                        <additionalDependency>
-                            <groupId>com.fasterxml.jackson.core</groupId>
-                            <artifactId>jackson-databind</artifactId>
-                            <version>${jackson-databind.version}</version>
-                        </additionalDependency>
-                        <additionalDependency>
-                            <groupId>joda-time</groupId>
-                            <artifactId>joda-time</artifactId>
-                            <version>${joda.version}</version>
-                        </additionalDependency>
-                        <additionalDependency>
-                            <groupId>javax.json</groupId>
-                            <artifactId>javax.json-api</artifactId>
-                            <version>${jsr353-api.version}</version>
-                        </additionalDependency>
-                    </additionalDependencies>
-                </configuration>
-                <executions>
-                    <execution>
-                        <id>attach-javadocs</id>
-                        <goals>
-                            <goal>jar</goal>
-                        </goals>
-                    </execution>
-                </executions>
-            </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-release-plugin</artifactId>
-                <version>2.5</version>
-                <configuration>
-                    <tagNameFormat>@{project.version}</tagNameFormat>
-                    <preparationGoals>clean verify -Penforce-java8</preparationGoals>
-                    <!-- do NOT specify arguments tag here as it would override the arguments tag in this plugin's definition in the parent POM -->
-                </configuration>
-            </plugin>
-            <plugin>
-                <groupId>org.codehaus.mojo</groupId>
-                <artifactId>clirr-maven-plugin</artifactId>
-                <version>2.7</version>
-                <executions>
-                    <execution>
-                        <phase>compile</phase>
-                        <goals>
-                            <goal>check</goal>
-                        </goals>
-                    </execution>
-                </executions>
-                <configuration>
-                    <comparisonVersion>3.1.4</comparisonVersion>
-                    <ignoredDifferencesFile>../clirr-ignores.xml</ignoredDifferencesFile>
-                </configuration>
-                <!--
-                Workaround to make clirr plugin work with Java 8.
-                The bug is actually in the BCEL library,
-                see https://issues.apache.org/jira/browse/BCEL-173.
-                See also https://github.com/RichardWarburton/lambda-behave/issues/31#issuecomment-86052095
-                -->
-                <dependencies>
-                    <dependency>
-                        <groupId>com.google.code.findbugs</groupId>
-                        <artifactId>bcel-findbugs</artifactId>
-                        <version>6.0</version>
-                    </dependency>
-                </dependencies>
-            </plugin>
-            <plugin>
-                <groupId>com.mycila</groupId>
-                <artifactId>license-maven-plugin</artifactId>
-                <version>3.0</version>
-                <configuration>
-                    <inlineHeader><![CDATA[
+                    <dependencies>
+                        <dependency>
+                            <groupId>com.google.code.findbugs</groupId>
+                            <artifactId>bcel-findbugs</artifactId>
+                            <version>6.0</version>
+                        </dependency>
+                    </dependencies>
+                </plugin>
+
+                <plugin>
+                    <groupId>com.mycila</groupId>
+                    <artifactId>license-maven-plugin</artifactId>
+                    <version>3.0</version>
+                    <configuration>
+                        <inlineHeader><![CDATA[
 
 Copyright (C) 2012-2017 DataStax Inc.
 
@@ -403,105 +666,389 @@ See the License for the specific language governing permissions and
 limitations under the License.
 
 ]]>
-                    </inlineHeader>
-                    <includes>
-                        <include>src/**/*.java</include>
-                        <include>src/**/*.xml</include>
-                        <include>src/**/*.properties</include>
-                        <include>**/pom.xml</include>
-                    </includes>
-                    <mapping>
-                        <java>SLASHSTAR_STYLE</java>
-                        <properties>SCRIPT_STYLE</properties>
-                    </mapping>
-                    <strictCheck>true</strictCheck>
-                </configuration>
-                <executions>
-                    <execution>
-                        <id>check-license</id>
-                        <phase>initialize</phase>
-                        <goals>
-                            <goal>check</goal>
-                        </goals>
-                    </execution>
-                </executions>
-            </plugin>
+                        </inlineHeader>
+                        <includes>
+                            <include>src/**/*.java</include>
+                            <include>src/**/*.xml</include>
+                            <include>src/**/*.properties</include>
+                            <include>**/pom.xml</include>
+                        </includes>
+                        <mapping>
+                            <java>SLASHSTAR_STYLE</java>
+                            <properties>SCRIPT_STYLE</properties>
+                        </mapping>
+                        <strictCheck>true</strictCheck>
+                    </configuration>
+                    <executions>
+                        <execution>
+                            <id>check-license</id>
+                            <phase>initialize</phase>
+                            <goals>
+                                <goal>check</goal>
+                            </goals>
+                        </execution>
+                    </executions>
+                </plugin>
+
+                <plugin>
+                    <groupId>org.codehaus.mojo</groupId>
+                    <artifactId>animal-sniffer-maven-plugin</artifactId>
+                    <version>1.15</version>
+                    <executions>
+                        <execution>
+                            <id>check-jdk6</id>
+                            <phase>process-classes</phase>
+                            <goals>
+                                <goal>check</goal>
+                            </goals>
+                            <configuration>
+                                <signature>
+                                    <groupId>org.codehaus.mojo.signature</groupId>
+                                    <artifactId>java16</artifactId>
+                                    <version>1.0</version>
+                                </signature>
+                                <annotations>
+                                    <annotation>com.datastax.driver.extras.codecs.jdk8.IgnoreJDK6Requirement
+                                    </annotation>
+                                </annotations>
+                            </configuration>
+                        </execution>
+                        <execution>
+                            <id>check-jdk8</id>
+                            <goals>
+                                <goal>check</goal>
+                            </goals>
+                            <configuration>
+                                <signature>
+                                    <groupId>org.codehaus.mojo.signature</groupId>
+                                    <artifactId>java18</artifactId>
+                                    <version>1.0</version>
+                                </signature>
+                            </configuration>
+                        </execution>
+                    </executions>
+                </plugin>
+
+                <plugin>
+                    <artifactId>maven-surefire-plugin</artifactId>
+                    <!-- do not upgrade until https://issues.apache.org/jira/browse/SUREFIRE-1302 is fixed -->
+                    <version>2.18</version>
+                    <configuration>
+                        <groups>${test.groups}</groups>
+                        <useFile>false</useFile>
+                        <systemPropertyVariables>
+                            <cassandra.version>${cassandra.version}</cassandra.version>
+                            <ipprefix>${ipprefix}</ipprefix>
+                            <com.datastax.driver.NEW_NODE_DELAY_SECONDS>60</com.datastax.driver.NEW_NODE_DELAY_SECONDS>
+                        </systemPropertyVariables>
+                        <classpathDependencyExcludes>
+                            <classpathDependencyExcludes>io.netty:netty-transport-native-epoll</classpathDependencyExcludes>
+                        </classpathDependencyExcludes>
+                        <properties>
+                            <property>
+                                <name>usedefaultlisteners</name>
+                                <value>false
+                                </value> <!-- disable default listeners as some of the html reports do a lot of File I/O -->
+                            </property>
+                            <property>
+                                <!-- Don't skip tests after a @Before method throws a SkipException -->
+                                <name>configfailurepolicy</name>
+                                <value>continue</value>
+                            </property>
+                        </properties>
+                    </configuration>
+                </plugin>
+
+                <plugin>
+                    <artifactId>maven-failsafe-plugin</artifactId>
+                    <!-- do not upgrade until https://issues.apache.org/jira/browse/SUREFIRE-1302 is fixed -->
+                    <version>2.18</version>
+                    <configuration>
+                        <groups>${test.groups}</groups>
+                        <useFile>false</useFile>
+                        <systemPropertyVariables>
+                            <cassandra.version>${cassandra.version}</cassandra.version>
+                            <ipprefix>${ipprefix}</ipprefix>
+                            <com.datastax.driver.NEW_NODE_DELAY_SECONDS>60</com.datastax.driver.NEW_NODE_DELAY_SECONDS>
+                        </systemPropertyVariables>
+                        <classpathDependencyExcludes>
+                            <classpathDependencyExcludes>io.netty:netty-transport-native-epoll</classpathDependencyExcludes>
+                        </classpathDependencyExcludes>
+                        <properties>
+                            <property>
+                                <name>usedefaultlisteners</name>
+                                <value>false
+                                </value> <!-- disable default listeners as some of the html reports do a lot of File I/O -->
+                            </property>
+                            <property>
+                                <!-- Don't skip tests after a @Before method throws a SkipException -->
+                                <name>configfailurepolicy</name>
+                                <value>continue</value>
+                            </property>
+                        </properties>
+                    </configuration>
+                    <executions>
+                        <execution>
+                            <goals>
+                                <goal>integration-test</goal>
+                                <goal>verify</goal>
+                            </goals>
+                        </execution>
+                    </executions>
+                </plugin>
+
+                <plugin>
+                    <artifactId>maven-gpg-plugin</artifactId>
+                    <version>1.5</version>
+                </plugin>
+
+                <plugin>
+                    <groupId>org.sonatype.plugins</groupId>
+                    <artifactId>nexus-staging-maven-plugin</artifactId>
+                    <version>1.6.8</version>
+                    <extensions>true</extensions>
+                </plugin>
+
+                <plugin>
+                    <groupId>org.ops4j</groupId>
+                    <artifactId>maven-pax-plugin</artifactId>
+                    <version>1.6.0</version>
+                    <configuration>
+                        <framework>felix</framework>
+                        <showWarnings>true</showWarnings>
+                        <provision>
+                            <param>--platform=felix</param>
+                            <param>--version=${felix.version}</param>
+                            <param>--log=debug</param>
+                            <param>--systemPackages=sun.misc</param>
+                        </provision>
+                    </configuration>
+                </plugin>
+
+                <!--This plugin's configuration is used to store Eclipse m2e settings only. It has no influence on the Maven build itself.-->
+                <plugin>
+                    <groupId>org.eclipse.m2e</groupId>
+                    <artifactId>lifecycle-mapping</artifactId>
+                    <version>1.0.0</version>
+                    <configuration>
+                        <lifecycleMappingMetadata>
+                            <pluginExecutions>
+                                <pluginExecution>
+                                    <pluginExecutionFilter>
+                                        <artifactId>maven-jar-plugin</artifactId>
+                                        <versionRange>[2.2,)</versionRange>
+                                        <goals>
+                                            <goal>test-jar</goal>
+                                        </goals>
+                                    </pluginExecutionFilter>
+                                    <action>
+                                        <ignore/>
+                                    </action>
+                                </pluginExecution>
+                            </pluginExecutions>
+                        </lifecycleMappingMetadata>
+                    </configuration>
+                </plugin>
+
+            </plugins>
+
+        </pluginManagement>
+
+        <plugins>
+
             <plugin>
                 <groupId>org.codehaus.mojo</groupId>
                 <artifactId>animal-sniffer-maven-plugin</artifactId>
-                <version>1.15</version>
-                <configuration>
-                    <signature>
-                        <groupId>org.codehaus.mojo.signature</groupId>
-                        <artifactId>java16</artifactId>
-                        <version>1.0</version>
-                    </signature>
-                </configuration>
-                <executions>
-                    <execution>
-                        <id>check</id>
-                        <phase>compile</phase>
-                        <goals>
-                            <goal>check</goal>
-                        </goals>
-                    </execution>
-                </executions>
             </plugin>
+
             <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-surefire-plugin</artifactId>
-                <version>2.16</version>
-                <configuration>
-                    <groups>${test.groups}</groups>
-                    <useFile>false</useFile>
-                    <systemPropertyVariables>
-                        <cassandra.version>${cassandra.version}</cassandra.version>
-                        <ipprefix>${ipprefix}</ipprefix>
-                        <com.datastax.driver.NEW_NODE_DELAY_SECONDS>60</com.datastax.driver.NEW_NODE_DELAY_SECONDS>
-                    </systemPropertyVariables>
-                    <classpathDependencyExcludes>
-                        <classpathDependencyExcludes>io.netty:netty-transport-native-epoll</classpathDependencyExcludes>
-                    </classpathDependencyExcludes>
-                    <properties>
-                        <property>
-                            <name>usedefaultlisteners</name>
-                            <value>false
-                            </value> <!-- disable default listeners as some of the html reports do a lot of File I/O -->
-                        </property>
-                        <property>
-                            <!-- Don't skip tests after a @Before method throws a SkipException -->
-                            <name>configfailurepolicy</name>
-                            <value>continue</value>
-                        </property>
-                    </properties>
-                </configuration>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>clirr-maven-plugin</artifactId>
             </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-failsafe-plugin</artifactId>
-                <version>2.16</version>
-                <configuration>
-                    <groups>${test.groups}</groups>
-                    <useFile>false</useFile>
-                    <systemPropertyVariables>
-                        <cassandra.version>${cassandra.version}</cassandra.version>
-                        <ipprefix>${ipprefix}</ipprefix>
-                        <com.datastax.driver.NEW_NODE_DELAY_SECONDS>60</com.datastax.driver.NEW_NODE_DELAY_SECONDS>
-                    </systemPropertyVariables>
-                    <classpathDependencyExcludes>
-                        <classpathDependencyExcludes>io.netty:netty-transport-native-epoll</classpathDependencyExcludes>
-                    </classpathDependencyExcludes>
-                    <properties>
-                        <property>
-                            <!-- Don't skip tests after a @Before method throws a SkipException -->
-                            <name>configfailurepolicy</name>
-                            <value>continue</value>
-                        </property>
-                    </properties>
-                </configuration>
-            </plugin>
+
         </plugins>
+
     </build>
+
+    <profiles>
+
+        <profile>
+            <id>short</id>
+            <properties>
+                <test.groups>unit,short</test.groups>
+                <test.osgi.skip>false</test.osgi.skip>
+            </properties>
+        </profile>
+
+        <profile>
+            <id>long</id>
+            <properties>
+                <test.groups>unit,short,long</test.groups>
+                <test.osgi.skip>false</test.osgi.skip>
+            </properties>
+        </profile>
+
+        <profile>
+            <id>duration</id>
+            <properties>
+                <test.groups>unit,short,long,duration</test.groups>
+                <test.osgi.skip>false</test.osgi.skip>
+            </properties>
+        </profile>
+
+        <profile>
+            <id>doc</id>
+            <properties>
+                <test.groups>unit,doc</test.groups>
+            </properties>
+        </profile>
+
+        <!-- default profile settings for 'isolated' test group, will skip tests unless overridden in child module. -->
+        <profile>
+            <id>isolated</id>
+            <properties>
+                <test.groups>isolated</test.groups>
+            </properties>
+            <build>
+                <plugins>
+                    <plugin>
+                        <artifactId>maven-surefire-plugin</artifactId>
+                        <configuration>
+                            <skip>true</skip>
+                            <forkCount>1</forkCount>
+                            <reuseForks>false</reuseForks>
+                            <reportNameSuffix>isolated</reportNameSuffix>
+                            <!-- This requires includes to be explicitly specified by implementing classes.
+                                 This is needed to prevent creating a JVM fork for each test, even those that don't
+                                 have the isolated group. -->
+                            <includes/>
+                        </configuration>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+
+        <!--
+        Profile activated when releasing. See:
+        http://central.sonatype.org/pages/apache-maven.html
+        -->
+        <profile>
+            <id>release</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <artifactId>maven-enforcer-plugin</artifactId>
+                        <executions>
+                            <execution>
+                                <id>enforce-java8</id>
+                                <goals>
+                                    <goal>enforce</goal>
+                                </goals>
+                                <configuration>
+                                    <rules>
+                                        <requireJavaVersion>
+                                            <version>1.8</version>
+                                        </requireJavaVersion>
+                                    </rules>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+                    <plugin>
+                        <artifactId>maven-source-plugin</artifactId>
+                        <executions>
+                            <execution>
+                                <id>attach-sources</id>
+                                <goals>
+                                    <goal>jar-no-fork</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                    </plugin>
+                    <plugin>
+                        <artifactId>maven-javadoc-plugin</artifactId>
+                        <executions>
+                            <execution>
+                                <id>attach-javadocs</id>
+                                <goals>
+                                    <goal>jar</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                    </plugin>
+                    <plugin>
+                        <artifactId>maven-gpg-plugin</artifactId>
+                        <executions>
+                            <execution>
+                                <id>sign-artifacts</id>
+                                <phase>verify</phase>
+                                <goals>
+                                    <goal>sign</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                    </plugin>
+                    <plugin>
+                        <groupId>org.sonatype.plugins</groupId>
+                        <artifactId>nexus-staging-maven-plugin</artifactId>
+                        <extensions>true</extensions>
+                        <configuration>
+                            <serverId>ossrh</serverId>
+                            <nexusUrl>https://oss.sonatype.org/</nexusUrl>
+                            <autoReleaseAfterClose>false</autoReleaseAfterClose>
+                            <skipLocalStaging>true</skipLocalStaging>
+                        </configuration>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+
+        <profile>
+            <id>modern-jdks</id>
+            <activation>
+                <jdk>[1.8,)</jdk>
+            </activation>
+            <properties>
+                <javadoc.opts>-Xdoclint:none</javadoc.opts>
+            </properties>
+        </profile>
+
+        <profile>
+            <id>legacy-jdks</id>
+            <activation>
+                <jdk>[,1.8)</jdk>
+            </activation>
+            <build>
+                <plugins>
+                    <plugin>
+                        <!--
+                        Exclude Jdk* test classes from being run
+                        This is needed in event that code was built with JDK8
+                        and tests are ran with JDK6 or 7.
+                        Note that running CCM tests with a legacy JDK require
+                        setting two system properties: ccm.java.home and ccm.path;
+                        both should point to a valid JDK8+ installation.
+                        -->
+                        <artifactId>maven-surefire-plugin</artifactId>
+                        <configuration>
+                            <excludes>
+                                <exclude>**/jdk8/*.java</exclude>
+                                <exclude>**/Jdk8*.java</exclude>
+                            </excludes>
+                        </configuration>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+
+    </profiles>
+
+    <distributionManagement>
+        <repository>
+            <id>ossrh</id>
+            <url>https://oss.sonatype.org/service/local/staging/deploy/maven2/</url>
+        </repository>
+    </distributionManagement>
 
     <licenses>
         <license>
@@ -525,4 +1072,5 @@ limitations under the License.
             <organization>DataStax</organization>
         </developer>
     </developers>
+
 </project>

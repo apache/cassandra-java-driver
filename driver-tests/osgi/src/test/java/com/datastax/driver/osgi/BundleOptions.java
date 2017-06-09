@@ -20,16 +20,32 @@ import com.datastax.driver.core.Cluster;
 import com.datastax.driver.core.ProtocolOptions;
 import com.datastax.driver.core.TestUtils;
 import com.google.common.collect.Lists;
+import java.util.List;
 import org.ops4j.pax.exam.Option;
 import org.ops4j.pax.exam.options.CompositeOption;
 import org.ops4j.pax.exam.options.MavenArtifactProvisionOption;
 import org.ops4j.pax.exam.options.UrlProvisionOption;
 import org.ops4j.pax.exam.util.PathUtils;
 
-import java.util.List;
+import static org.ops4j.pax.exam.CoreOptions.bootDelegationPackage;
+import static org.ops4j.pax.exam.CoreOptions.bundle;
+import static org.ops4j.pax.exam.CoreOptions.mavenBundle;
+import static org.ops4j.pax.exam.CoreOptions.options;
+import static org.ops4j.pax.exam.CoreOptions.systemPackages;
+import static org.ops4j.pax.exam.CoreOptions.systemProperty;
 
-import static org.ops4j.pax.exam.CoreOptions.*;
-
+/**
+ * To check that all driver bundles are correctly provisioned, or to debug provisioning problems,
+ * run the Maven Pax Runner plugin:
+ * <pre>
+ * mvn pax:run
+ * </pre>
+ * The plugin will start a Felix Gogo interactive shell and attempt to provision the driver bundles.
+ * <p/>
+ * Note: you MUST run 'mvn install' on the entire project before!
+ *
+ * @see <a href="http://felix.apache.org/documentation/subprojects/apache-felix-gogo.html">Apache Felix Gogo Documentation</a>
+ */
 public class BundleOptions {
 
     public static UrlProvisionOption driverBundle() {

@@ -15,71 +15,60 @@
     limitations under the License.
 
 -->
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
-    <parent>
-        <artifactId>cassandra-driver-parent</artifactId>
-        <groupId>com.datastax.cassandra</groupId>
-        <version>3.2.1-SNAPSHOT</version>
-    </parent>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+
     <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>com.datastax.cassandra</groupId>
+        <artifactId>cassandra-driver-parent</artifactId>
+        <version>3.3.0-SNAPSHOT</version>
+    </parent>
 
     <artifactId>cassandra-driver-extras</artifactId>
     <packaging>bundle</packaging>
     <name>DataStax Java Driver for Apache Cassandra - Extras</name>
     <description>Extended functionality for the Java driver.</description>
-    <url>https://github.com/datastax/java-driver</url>
-
-    <properties>
-        <test.groups>unit</test.groups>
-        <jdk8.excludes>none</jdk8.excludes>
-    </properties>
 
     <dependencies>
 
         <dependency>
             <groupId>com.datastax.cassandra</groupId>
             <artifactId>cassandra-driver-core</artifactId>
-            <version>${project.parent.version}</version>
         </dependency>
 
         <dependency>
             <groupId>com.google.guava</groupId>
             <artifactId>guava</artifactId>
-            <version>${guava.version}</version>
         </dependency>
 
         <dependency>
             <groupId>com.fasterxml.jackson.core</groupId>
             <artifactId>jackson-core</artifactId>
-            <version>${jackson.version}</version>
             <optional>true</optional>
         </dependency>
         
         <dependency>
             <groupId>com.fasterxml.jackson.core</groupId>
             <artifactId>jackson-databind</artifactId>
-            <version>${jackson-databind.version}</version>
             <optional>true</optional>
         </dependency>
 
         <dependency>
             <groupId>joda-time</groupId>
             <artifactId>joda-time</artifactId>
-            <version>${joda.version}</version>
             <optional>true</optional>
         </dependency>
 
         <dependency>
             <groupId>javax.json</groupId>
             <artifactId>javax.json-api</artifactId>
-            <version>${jsr353-api.version}</version>
             <optional>true</optional>
         </dependency>
 
         <dependency>
             <groupId>com.datastax.cassandra</groupId>
             <artifactId>cassandra-driver-core</artifactId>
-            <version>${project.parent.version}</version>
             <type>test-jar</type>
             <scope>test</scope>
         </dependency>
@@ -87,63 +76,48 @@
         <dependency>
             <groupId>com.datastax.cassandra</groupId>
             <artifactId>cassandra-driver-mapping</artifactId>
-            <version>${project.parent.version}</version>
             <scope>test</scope>
         </dependency>
 
         <dependency>
             <groupId>org.testng</groupId>
             <artifactId>testng</artifactId>
-            <version>${testng.version}</version>
             <scope>test</scope>
         </dependency>
 
         <dependency>
             <groupId>org.assertj</groupId>
             <artifactId>assertj-core</artifactId>
-            <version>${assertj.version}</version>
-            <scope>test</scope>
-        </dependency>
-
-        <dependency>
-            <groupId>org.mockito</groupId>
-            <artifactId>mockito-all</artifactId>
-            <version>${mockito.version}</version>
             <scope>test</scope>
         </dependency>
 
         <dependency>
             <groupId>com.fasterxml.jackson.core</groupId>
             <artifactId>jackson-annotations</artifactId>
-            <version>${jackson.version}</version>
-            <scope>test</scope>
-        </dependency>
-
-        <dependency>
-            <groupId>org.apache.commons</groupId>
-            <artifactId>commons-exec</artifactId>
-            <version>${commons-exec.version}</version>
             <scope>test</scope>
         </dependency>
 
         <dependency>
             <groupId>org.glassfish</groupId>
             <artifactId>javax.json</artifactId>
-            <version>${jsr353-ri.version}</version>
+            <scope>test</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-exec</artifactId>
             <scope>test</scope>
         </dependency>
 
         <dependency>
             <groupId>log4j</groupId>
             <artifactId>log4j</artifactId>
-            <version>${log4j.version}</version>
             <scope>test</scope>
         </dependency>
 
         <dependency>
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-log4j12</artifactId>
-            <version>${slf4j-log4j12.version}</version>
             <scope>test</scope>
         </dependency>
 
@@ -154,162 +128,18 @@
         <plugins>
 
             <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-compiler-plugin</artifactId>
-                <configuration>
-                    <excludes>
-                        <exclude>${jdk8.excludes}</exclude>
-                    </excludes>
-                    <testExcludes>
-                        <exclude>${jdk8.excludes}</exclude>
-                    </testExcludes>
-                </configuration>
-            </plugin>
-
-            <plugin>
-                <groupId>org.codehaus.mojo</groupId>
-                <artifactId>animal-sniffer-maven-plugin</artifactId>
-                <executions>
-                    <execution>
-                        <id>check</id>
-                        <phase>process-classes</phase>
-                        <goals>
-                            <goal>check</goal>
-                        </goals>
-                        <configuration>
-                            <signature>
-                                <groupId>org.codehaus.mojo.signature</groupId>
-                                <artifactId>java16</artifactId>
-                                <version>1.0</version>
-                            </signature>
-                            <annotations>
-                                <annotation>com.datastax.driver.extras.codecs.jdk8.IgnoreJDK6Requirement</annotation>
-                            </annotations>
-                        </configuration>
-                    </execution>
-                    <execution>
-                        <id>check-jdk8</id>
-                        <phase>process-classes</phase>
-                        <goals>
-                            <goal>check</goal>
-                        </goals>
-                        <configuration>
-                            <signature>
-                                <groupId>org.codehaus.mojo.signature</groupId>
-                                <artifactId>java18</artifactId>
-                                <version>1.0</version>
-                            </signature>
-                        </configuration>
-                    </execution>
-                </executions>
-            </plugin>
-
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-surefire-plugin</artifactId>
-                <version>2.16</version>
-                <configuration>
-                    <groups>${test.groups}</groups>
-                    <useFile>false</useFile>
-                    <systemPropertyVariables>
-                        <cassandra.version>${cassandra.version}</cassandra.version>
-                        <ipprefix>${ipprefix}</ipprefix>
-                    </systemPropertyVariables>
-                    <classpathDependencyExcludes>
-                        <classpathDependencyExcludes>io.netty:netty-transport-native-epoll</classpathDependencyExcludes>
-                    </classpathDependencyExcludes>
-                    <excludes>
-                        <exclude>${jdk8.excludes}</exclude>
-                    </excludes>
-                </configuration>
-            </plugin>
-
-            <plugin>
                 <groupId>org.apache.felix</groupId>
                 <artifactId>maven-bundle-plugin</artifactId>
-                <extensions>true</extensions>
-                <version>2.4.0</version>
-                <executions>
-                    <execution>
-                        <id>bundle-manifest</id>
-                        <phase>process-classes</phase>
-                        <goals>
-                            <goal>manifest</goal>
-                        </goals>
-                    </execution>
-                </executions>
                 <configuration>
                     <instructions>
                         <Bundle-SymbolicName>com.datastax.driver.extras</Bundle-SymbolicName>
-                        <Bundle-Version>${project.version}</Bundle-Version>
-                        <_include>-osgi.bnd</_include>
                         <Import-Package><![CDATA[com.google.common.*;version="[16.0.1,22)",*]]></Import-Package>
                     </instructions>
-                    <supportedProjectTypes>
-                        <supportedProjectType>jar</supportedProjectType>
-                        <supportedProjectType>bundle</supportedProjectType>
-                        <supportedProjectType>pom</supportedProjectType>
-                    </supportedProjectTypes>
                 </configuration>
             </plugin>
 
         </plugins>
 
     </build>
-
-    <profiles>
-
-        <profile>
-            <id>short</id>
-            <properties>
-                <test.groups>unit,short</test.groups>
-            </properties>
-        </profile>
-
-        <profile>
-            <id>long</id>
-            <properties>
-                <test.groups>unit,short,long</test.groups>
-            </properties>
-        </profile>
-
-        <!--
-        This profile excludes all JDK 8 dependent classes from
-        compilation. Use this when running tests with a legacy JDK (6 or 7)
-        -->
-        <profile>
-            <id>legacy-jdks</id>
-            <activation>
-                <jdk>[,1.8)</jdk>
-            </activation>
-            <properties>
-                <jdk8.excludes>**/jdk8/*.java</jdk8.excludes>
-            </properties>
-        </profile>
-
-    </profiles>
-
-    <licenses>
-        <license>
-            <name>Apache 2</name>
-            <url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
-            <distribution>repo</distribution>
-            <comments>Apache License Version 2.0</comments>
-        </license>
-    </licenses>
-
-    <scm>
-        <connection>scm:git:git@github.com:datastax/java-driver.git</connection>
-        <developerConnection>scm:git:git@github.com:datastax/java-driver.git</developerConnection>
-        <url>https://github.com/datastax/java-driver</url>
-        <tag>HEAD</tag>
-    </scm>
-
-    <developers>
-        <developer>
-            <name>Various</name>
-            <organization>DataStax</organization>
-        </developer>
-    </developers>
 
 </project>
