@@ -17,6 +17,7 @@
 - [improvement] JAVA-1458: Check thread in mapper sync methods.
 - [improvement] JAVA-1488: Upgrade Netty to 4.0.47.Final.
 - [improvement] JAVA-1460: Add speculative execution number to ExecutionInfo
+- [improvement] JAVA-1431: Improve error handling during pool initialization.
 
 
 ### 3.2.0

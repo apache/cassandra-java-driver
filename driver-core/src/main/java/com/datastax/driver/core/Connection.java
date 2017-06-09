@@ -193,8 +193,8 @@ class Connection {
                     future.setException(t);
                 } else {
                     // Defunct to ensure that the error will be signaled (marking the host down)
-                    Exception e = (t instanceof ConnectionException || t instanceof DriverException || t instanceof InterruptedException)
-                            ? (Exception) t
+                    Throwable e = (t instanceof ConnectionException || t instanceof DriverException || t instanceof InterruptedException || t instanceof Error)
+                            ? t
                             : new ConnectionException(Connection.this.address,
                             String.format("Unexpected error during transport initialization (%s)", t),
                             t);
@@ -422,7 +422,7 @@ class Connection {
         return dispatcher.streamIdHandler.maxAvailableStreams();
     }
 
-    <E extends Exception> E defunct(E e) {
+    <E extends Throwable> E defunct(E e) {
         if (isDefunct.compareAndSet(false, true)) {
 
             if (Host.statesLogger.isTraceEnabled())
@@ -846,6 +846,8 @@ class Connection {
                 throw (ClusterNameMismatchException) t;
             if (t instanceof DriverException)
                 throw (DriverException) t;
+            if (t instanceof Error)
+                throw (Error) t;
 
             return new RuntimeException("Unexpected exception during connection initialization", t);
         }

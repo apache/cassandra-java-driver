@@ -24,6 +24,7 @@ import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.Uninterruptibles;
 import com.sun.management.OperatingSystemMXBean;
 import io.netty.channel.EventLoopGroup;
+import org.apache.log4j.Level;
 import org.scassandra.Scassandra;
 import org.scassandra.ScassandraFactory;
 import org.slf4j.Logger;
@@ -914,6 +915,21 @@ public abstract class TestUtils {
             res.put(bb);
         res.flip();
         return res;
+    }
+
+    public static Level setLogLevel(Class<?> logger, Level newLevel) {
+        return setLogLevel(logger.getName(), newLevel);
+    }
+
+    public static Level setLogLevel(Logger logger, Level newLevel) {
+        return setLogLevel(logger.getName(), newLevel);
+    }
+
+    public static Level setLogLevel(String logger, Level newLevel) {
+        org.apache.log4j.Logger log4jLogger = org.apache.log4j.Logger.getLogger(logger);
+        Level oldLevel = log4jLogger.getLevel();
+        log4jLogger.setLevel(newLevel);
+        return oldLevel;
     }
 
 }

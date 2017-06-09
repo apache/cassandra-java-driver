@@ -17,6 +17,7 @@ package com.datastax.driver.core;
 
 import com.datastax.driver.core.exceptions.AuthenticationException;
 import com.google.common.util.concurrent.Uninterruptibles;
+import org.apache.log4j.Level;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
@@ -130,6 +131,40 @@ public class AuthenticationTest extends CCMTestsSupport {
                 ccm().resume(1);
             }
         }, 2000);
+    }
+
+    /**
+     * Ensures that when a host replies with AuthenticationException
+     * during connection pool initialization the pool creation is aborted.
+     *
+     * @jira_ticket JAVA-1431
+     */
+    @Test(groups = "short")
+    public void should_not_create_pool_with_wrong_credentials() throws InterruptedException {
+        PlainTextAuthProvider authProvider = new PlainTextAuthProvider("cassandra", "cassandra");
+        Cluster cluster = register(Cluster.builder()
+                .addContactPoints(getContactPoints())
+                .withPort(ccm().getBinaryPort())
+                .withAuthProvider(authProvider)
+                .build());
+        cluster.init();
+        authProvider.setPassword("wrong");
+        Level previous = TestUtils.setLogLevel(Session.class, Level.WARN);
+        MemoryAppender logs = new MemoryAppender().enableFor(Session.class);
+        Session session;
+        try {
+            session = cluster.connect();
+        } finally {
+            TestUtils.setLogLevel(Session.class, previous);
+            logs.disableFor(Session.class);
+        }
+        assertThat(session.getState().getConnectedHosts()).isEmpty();
+        InetSocketAddress host = ccm().addressOfNode(1);
+        assertThat(logs.get())
+                .contains(
+                        "Error creating pool to " + host,
+                        "Authentication error on host " + host,
+                        AuthenticationException.class.getSimpleName());
     }
 
 }
