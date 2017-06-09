@@ -19,6 +19,8 @@ import com.datastax.oss.driver.api.core.cql.AsyncResultSet;
 import com.datastax.oss.driver.api.core.cql.ColumnDefinitions;
 import com.datastax.oss.driver.api.core.cql.ExecutionInfo;
 import com.datastax.oss.driver.api.core.cql.Row;
+import com.datastax.oss.driver.api.core.cql.Statement;
+import com.datastax.oss.driver.api.core.session.Session;
 import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
 import com.datastax.oss.driver.internal.core.util.CountingIterator;
 import java.nio.ByteBuffer;
@@ -27,21 +29,27 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Queue;
 import java.util.concurrent.CompletionStage;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class DefaultAsyncResultSet implements AsyncResultSet {
 
+  private static final Logger LOG = LoggerFactory.getLogger(DefaultAsyncResultSet.class);
+
   private final ColumnDefinitions definitions;
   private final ExecutionInfo executionInfo;
+  private final Session session;
   private final CountingIterator<Row> iterator;
-  private final InternalDriverContext context;
 
   public DefaultAsyncResultSet(
       ColumnDefinitions definitions,
       ExecutionInfo executionInfo,
       Queue<List<ByteBuffer>> data,
+      Session session,
       InternalDriverContext context) {
     this.definitions = definitions;
     this.executionInfo = executionInfo;
+    this.session = session;
     this.iterator =
         new CountingIterator<Row>(data.size()) {
           @Override
@@ -50,7 +58,6 @@ public class DefaultAsyncResultSet implements AsyncResultSet {
             return (rowData == null) ? endOfData() : new DefaultRow(definitions, rowData, context);
           }
         };
-    this.context = context;
   }
 
   @Override
@@ -75,12 +82,20 @@ public class DefaultAsyncResultSet implements AsyncResultSet {
 
   @Override
   public boolean hasMorePages() {
-    return false;
+    return executionInfo.getPagingState() != null;
   }
 
   @Override
   public CompletionStage<AsyncResultSet> fetchNextPage() throws IllegalStateException {
-    throw new UnsupportedOperationException("TODO implement paging");
+    ByteBuffer nextState = executionInfo.getPagingState();
+    if (nextState == null) {
+      throw new IllegalStateException(
+          "No next page. Use #hasMorePages before calling this method to avoid this error.");
+    }
+    Statement statement = executionInfo.getStatement();
+    LOG.debug("Fetching next page for {}", statement);
+    Statement nextStatement = statement.copy(nextState);
+    return session.executeAsync(nextStatement);
   }
 
   static AsyncResultSet empty(final ExecutionInfo executionInfo) {
@@ -107,7 +122,8 @@ public class DefaultAsyncResultSet implements AsyncResultSet {
 
       @Override
       public CompletionStage<AsyncResultSet> fetchNextPage() throws IllegalStateException {
-        throw new IllegalStateException("Empty result set has no next page");
+        throw new IllegalStateException(
+            "No next page. Use #hasMorePages before calling this method to avoid this error.");
       }
 
       @Override

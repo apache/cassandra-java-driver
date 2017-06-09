@@ -250,7 +250,8 @@ public class CqlRequestHandler
       Result resultMessage, Frame responseFrame, NodeResponseCallback callback) {
     try {
       ExecutionInfo executionInfo = buildExecutionInfo(callback, resultMessage, responseFrame);
-      AsyncResultSet resultSet = Conversions.toResultSet(resultMessage, executionInfo, context);
+      AsyncResultSet resultSet =
+          Conversions.toResultSet(resultMessage, executionInfo, session, context);
       if (result.complete(resultSet)) {
         cancelScheduledTasks();
         if (resultMessage instanceof SetKeyspace) {
@@ -269,7 +270,13 @@ public class CqlRequestHandler
     ByteBuffer pagingState =
         (resultMessage instanceof Rows) ? ((Rows) resultMessage).metadata.pagingState : null;
     return new DefaultExecutionInfo(
-        callback.node, callback.execution, executions.get(), errors, pagingState, responseFrame);
+        (Statement) request,
+        callback.node,
+        callback.execution,
+        executions.get(),
+        errors,
+        pagingState,
+        responseFrame);
   }
 
   private void setFinalError(Throwable error) {

@@ -16,6 +16,7 @@
 package com.datastax.oss.driver.internal.core.cql;
 
 import com.datastax.oss.driver.api.core.cql.SimpleStatement;
+import java.nio.ByteBuffer;
 import java.util.List;
 
 public class DefaultSimpleStatement implements SimpleStatement {
@@ -23,11 +24,18 @@ public class DefaultSimpleStatement implements SimpleStatement {
   private final String query;
   private final List<Object> values;
   private final String configProfile;
+  private final ByteBuffer pagingState;
 
   public DefaultSimpleStatement(String query, List<Object> values, String configProfile) {
+    this(query, values, configProfile, null);
+  }
+
+  private DefaultSimpleStatement(
+      String query, List<Object> values, String configProfile, ByteBuffer pagingState) {
     this.query = query;
     this.values = values;
     this.configProfile = configProfile;
+    this.pagingState = pagingState;
   }
 
   @Override
@@ -43,5 +51,15 @@ public class DefaultSimpleStatement implements SimpleStatement {
   @Override
   public String getConfigProfile() {
     return configProfile;
+  }
+
+  @Override
+  public ByteBuffer getPagingState() {
+    return pagingState;
+  }
+
+  @Override
+  public DefaultSimpleStatement copy(ByteBuffer newPagingState) {
+    return new DefaultSimpleStatement(query, values, configProfile, newPagingState);
   }
 }

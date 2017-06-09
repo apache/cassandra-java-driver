@@ -16,10 +16,20 @@
 package com.datastax.oss.driver.api.core.cql;
 
 import com.datastax.oss.driver.api.core.session.Request;
+import java.nio.ByteBuffer;
 import java.util.concurrent.CompletionStage;
 
 /** A request to execute a CQL query. */
 public interface Statement extends Request<ResultSet, CompletionStage<AsyncResultSet>> {
   // Implementation note: "CqlRequest" would be a better name, but we keep "Statement" to match
   // previous driver versions.
+
+  ByteBuffer getPagingState();
+
+  /** Creates a new statement with a different paging state. */
+  // Implementation note: this is a simplistic first draft in order to move forward with paging,
+  // however more thought is needed about statement attributes: which belong to the API and which
+  // belong to DriverConfig, how you override them for a specific statement, whether statement
+  // implementations are immutable, etc.
+  Statement copy(ByteBuffer newPagingState);
 }

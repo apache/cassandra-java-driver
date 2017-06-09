@@ -16,6 +16,7 @@
 package com.datastax.oss.driver.internal.core.cql;
 
 import com.datastax.oss.driver.api.core.cql.ExecutionInfo;
+import com.datastax.oss.driver.api.core.cql.Statement;
 import com.datastax.oss.driver.api.core.metadata.Node;
 import com.datastax.oss.protocol.internal.Frame;
 import java.nio.ByteBuffer;
@@ -26,6 +27,7 @@ import java.util.UUID;
 
 public class DefaultExecutionInfo implements ExecutionInfo {
 
+  private final Statement statement;
   private final Node coordinator;
   private final int speculativeExecutionCount;
   private final int successfulExecutionIndex;
@@ -36,12 +38,14 @@ public class DefaultExecutionInfo implements ExecutionInfo {
   private final Map<String, ByteBuffer> customPayload;
 
   public DefaultExecutionInfo(
+      Statement statement,
       Node coordinator,
       int speculativeExecutionCount,
       int successfulExecutionIndex,
       List<Map.Entry<Node, Throwable>> errors,
       ByteBuffer pagingState,
       Frame frame) {
+    this.statement = statement;
     this.coordinator = coordinator;
     this.speculativeExecutionCount = speculativeExecutionCount;
     this.successfulExecutionIndex = successfulExecutionIndex;
@@ -52,6 +56,11 @@ public class DefaultExecutionInfo implements ExecutionInfo {
     // Note: the collections returned by the protocol layer are already unmodifiable
     this.warnings = (frame == null) ? Collections.emptyList() : frame.warnings;
     this.customPayload = (frame == null) ? Collections.emptyMap() : frame.customPayload;
+  }
+
+  @Override
+  public Statement getStatement() {
+    return statement;
   }
 
   @Override
