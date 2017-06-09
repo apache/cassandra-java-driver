@@ -137,8 +137,8 @@ public class CqlRequestHandler
   @Override
   public ResultSet syncResult() {
     BlockingOperation.checkNotDriverThread();
-    AsyncResultSet asyncResultSet = CompletableFutures.getUninterruptibly(asyncResult());
-    return new DefaultResultSet(asyncResultSet);
+    AsyncResultSet firstPage = CompletableFutures.getUninterruptibly(asyncResult());
+    return ResultSets.newInstance(firstPage);
   }
 
   private ScheduledFuture<?> scheduleTimeout(Duration timeout) {

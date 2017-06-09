@@ -25,12 +25,18 @@ import java.util.concurrent.CompletionStage;
  *
  * <p>Note that this object can only be iterated once: rows are "consumed" as they are read,
  * subsequent calls to {@code iterator()} will return an empty iterator.
+ *
+ * @see CqlSession#executeAsync(Statement)
+ * @see CqlSession#executeAsync(String)
  */
 public interface AsyncResultSet extends Iterable<Row> {
 
   ColumnDefinitions getColumnDefinitions();
 
   ExecutionInfo getExecutionInfo();
+
+  /** How many rows are left before the current page is exhausted. */
+  int remaining();
 
   /**
    * Whether there are more pages of results. If so, call {@link #fetchNextPage()} to fetch the next

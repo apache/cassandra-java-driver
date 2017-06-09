@@ -20,7 +20,7 @@ import com.datastax.oss.driver.api.core.cql.ColumnDefinitions;
 import com.datastax.oss.driver.api.core.cql.ExecutionInfo;
 import com.datastax.oss.driver.api.core.cql.Row;
 import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
-import com.google.common.collect.AbstractIterator;
+import com.datastax.oss.driver.internal.core.util.CountingIterator;
 import java.nio.ByteBuffer;
 import java.util.Collections;
 import java.util.Iterator;
@@ -32,7 +32,7 @@ public class DefaultAsyncResultSet implements AsyncResultSet {
 
   private final ColumnDefinitions definitions;
   private final ExecutionInfo executionInfo;
-  private final Queue<List<ByteBuffer>> data;
+  private final CountingIterator<Row> iterator;
   private final InternalDriverContext context;
 
   public DefaultAsyncResultSet(
@@ -42,7 +42,14 @@ public class DefaultAsyncResultSet implements AsyncResultSet {
       InternalDriverContext context) {
     this.definitions = definitions;
     this.executionInfo = executionInfo;
-    this.data = data;
+    this.iterator =
+        new CountingIterator<Row>(data.size()) {
+          @Override
+          protected Row computeNext() {
+            List<ByteBuffer> rowData = data.poll();
+            return (rowData == null) ? endOfData() : new DefaultRow(definitions, rowData, context);
+          }
+        };
     this.context = context;
   }
 
@@ -58,18 +65,17 @@ public class DefaultAsyncResultSet implements AsyncResultSet {
 
   @Override
   public Iterator<Row> iterator() {
-    return new AbstractIterator<Row>() {
-      @Override
-      protected Row computeNext() {
-        List<ByteBuffer> rowData = data.poll();
-        return (rowData == null) ? endOfData() : new DefaultRow(definitions, rowData, context);
-      }
-    };
+    return iterator;
+  }
+
+  @Override
+  public int remaining() {
+    return iterator.remaining();
   }
 
   @Override
   public boolean hasMorePages() {
-    throw new UnsupportedOperationException("TODO implement paging");
+    return false;
   }
 
   @Override
@@ -87,6 +93,11 @@ public class DefaultAsyncResultSet implements AsyncResultSet {
       @Override
       public ExecutionInfo getExecutionInfo() {
         return executionInfo;
+      }
+
+      @Override
+      public int remaining() {
+        return 0;
       }
 
       @Override
