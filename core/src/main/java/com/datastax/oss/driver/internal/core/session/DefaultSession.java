@@ -17,6 +17,7 @@ package com.datastax.oss.driver.internal.core.session;
 
 import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.InvalidKeyspaceException;
+import com.datastax.oss.driver.api.core.config.CoreDriverOption;
 import com.datastax.oss.driver.api.core.config.DriverConfig;
 import com.datastax.oss.driver.api.core.cql.CqlSession;
 import com.datastax.oss.driver.api.core.loadbalancing.LoadBalancingPolicy;
@@ -40,6 +41,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ConcurrentHashMap;
@@ -114,7 +116,17 @@ public class DefaultSession implements CqlSession {
    * wreak havoc (close all connections and make the session unusable).
    */
   public void setKeyspace(CqlIdentifier newKeyspace) {
-    if (!this.keyspace.equals(newKeyspace)) {
+    CqlIdentifier oldKeyspace = this.keyspace;
+    if (!Objects.equals(oldKeyspace, newKeyspace)) {
+      if (config.defaultProfile().getBoolean(CoreDriverOption.REQUEST_WARN_IF_SET_KEYSPACE)) {
+        LOG.warn(
+            "Detected a keyspace change at runtime ({} => {}). "
+                + "This is an anti-pattern that should be avoided in production "
+                + "(see '{}' in the configuration).",
+            (oldKeyspace == null) ? "<none>" : oldKeyspace.asInternal(),
+            newKeyspace.asInternal(),
+            CoreDriverOption.REQUEST_WARN_IF_SET_KEYSPACE.getPath());
+      }
       this.keyspace = newKeyspace;
       RunOrSchedule.on(adminExecutor, () -> singleThreaded.setKeyspace(newKeyspace));
     }

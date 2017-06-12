@@ -36,6 +36,7 @@ public enum CoreDriverOption implements DriverOption {
   REQUEST_CONSISTENCY("request.consistency", true),
   REQUEST_PAGE_SIZE("request.page-size", true),
   REQUEST_SERIAL_CONSISTENCY("request.serial-consistency", true),
+  REQUEST_WARN_IF_SET_KEYSPACE("request.warn-if-set-keyspace", true),
 
   CONTROL_CONNECTION_TIMEOUT("connection.control-connection.timeout", true),
   CONTROL_CONNECTION_PAGE_SIZE("connection.control-connection.page-size", true),

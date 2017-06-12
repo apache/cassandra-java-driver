@@ -16,6 +16,9 @@
 package com.datastax.oss.driver.internal.core.session;
 
 import com.datastax.oss.driver.api.core.CqlIdentifier;
+import com.datastax.oss.driver.api.core.config.CoreDriverOption;
+import com.datastax.oss.driver.api.core.config.DriverConfig;
+import com.datastax.oss.driver.api.core.config.DriverConfigProfile;
 import com.datastax.oss.driver.api.core.cql.CqlSession;
 import com.datastax.oss.driver.api.core.loadbalancing.NodeDistance;
 import com.datastax.oss.driver.api.core.metadata.Metadata;
@@ -60,6 +63,8 @@ public class DefaultSessionTest {
   @Mock private ChannelPoolFactory channelPoolFactory;
   @Mock private MetadataManager metadataManager;
   @Mock private Metadata metadata;
+  @Mock private DriverConfig config;
+  @Mock private DriverConfigProfile defaultConfigProfile;
 
   private DefaultNode node1;
   private DefaultNode node2;
@@ -91,6 +96,11 @@ public class DefaultSessionTest {
     Mockito.when(metadata.getNodes()).thenReturn(nodes);
     Mockito.when(metadataManager.getMetadata()).thenReturn(metadata);
     Mockito.when(context.metadataManager()).thenReturn(metadataManager);
+
+    Mockito.when(defaultConfigProfile.getBoolean(CoreDriverOption.REQUEST_WARN_IF_SET_KEYSPACE))
+        .thenReturn(true);
+    Mockito.when(config.defaultProfile()).thenReturn(defaultConfigProfile);
+    Mockito.when(context.config()).thenReturn(config);
   }
 
   @Test
