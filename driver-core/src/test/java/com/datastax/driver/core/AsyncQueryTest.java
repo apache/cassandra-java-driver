@@ -20,7 +20,10 @@ import com.datastax.driver.core.utils.CassandraVersion;
 import com.google.common.base.Function;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Lists;
-import com.google.common.util.concurrent.*;
+import com.google.common.util.concurrent.AsyncFunction;
+import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.Uninterruptibles;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.testng.annotations.DataProvider;
@@ -83,15 +86,19 @@ public class AsyncQueryTest extends CCMTestsSupport {
         Cluster cluster2 = register(Cluster.builder()
                 .addContactPointsWithPorts(Lists.newArrayList(host.getSocketAddress()))
                 .build());
-        Session session2 = cluster2.newSession();
+        try {
+            Session session2 = cluster2.newSession();
 
-        // Neither cluster2 nor session2 are initialized at this point
-        assertThat(cluster2.manager.metadata).isNull();
+            // Neither cluster2 nor session2 are initialized at this point
+            assertThat(cluster2.manager.metadata).isNull();
 
-        ResultSetFuture future = session2.executeAsync("select release_version from system.local");
-        Row row = Uninterruptibles.getUninterruptibly(future).one();
+            ResultSetFuture future = session2.executeAsync("select release_version from system.local");
+            Row row = Uninterruptibles.getUninterruptibly(future).one();
 
-        assertThat(row.getString(0)).isNotEmpty();
+            assertThat(row.getString(0)).isNotEmpty();
+        } finally {
+            cluster2.close();
+        }
     }
 
     @Test(groups = "short", dataProvider = "keyspace", enabled = false,
