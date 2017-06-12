@@ -37,7 +37,6 @@ import com.datastax.oss.driver.api.core.specex.SpeculativeExecutionPolicy;
 import com.datastax.oss.driver.internal.core.channel.DriverChannel;
 import com.datastax.oss.driver.internal.core.channel.ResponseCallback;
 import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
-import com.datastax.oss.driver.internal.core.pool.ChannelPool;
 import com.datastax.oss.driver.internal.core.session.DefaultSession;
 import com.datastax.oss.driver.internal.core.session.RequestHandlerBase;
 import com.datastax.oss.driver.internal.core.util.concurrent.BlockingOperation;
@@ -206,25 +205,6 @@ public class CqlRequestHandler
     }
   }
 
-  private DriverChannel getChannel(Node node) {
-    ChannelPool pool = session.getPools().get(node);
-    if (pool == null) {
-      LOG.trace("No pool to {}, skipping", node);
-      return null;
-    } else {
-      DriverChannel channel = pool.next();
-      if (channel == null) {
-        LOG.trace("Pool returned no channel for {}, skipping", node);
-        return null;
-      } else if (channel.closeFuture().isDone()) {
-        LOG.trace("Pool returned closed connection to {}, skipping", node);
-        return null;
-      } else {
-        return channel;
-      }
-    }
-  }
-
   private void recordError(Node node, Throwable error) {
     // Use a local variable to do only a single single volatile read in the nominal case
     List<Map.Entry<Node, Throwable>> errorsSnapshot = this.errors;
@@ -336,8 +316,7 @@ public class CqlRequestHandler
         } else if (responseMessage instanceof Error) {
           processErrorResponse((Error) responseMessage);
         } else {
-          result.completeExceptionally(
-              new IllegalStateException("Unexpected response " + responseMessage));
+          setFinalError(new IllegalStateException("Unexpected response " + responseMessage));
         }
       } catch (Throwable t) {
         setFinalError(t);

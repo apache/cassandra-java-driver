@@ -21,12 +21,18 @@ import com.datastax.oss.driver.api.core.config.DriverConfig;
 import com.datastax.oss.driver.api.core.config.DriverConfigProfile;
 import com.datastax.oss.driver.api.core.metadata.Node;
 import com.datastax.oss.driver.api.core.session.Request;
+import com.datastax.oss.driver.internal.core.channel.DriverChannel;
 import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
+import com.datastax.oss.driver.internal.core.pool.ChannelPool;
 import java.util.Queue;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /** Factors code that should be common to most request handler implementations. */
 public abstract class RequestHandlerBase<SyncResultT, AsyncResultT>
     implements RequestHandler<SyncResultT, AsyncResultT> {
+
+  private static final Logger LOG = LoggerFactory.getLogger(RequestHandlerBase.class);
 
   protected final Request<SyncResultT, AsyncResultT> request;
   protected final boolean isIdempotent;
@@ -60,5 +66,24 @@ public abstract class RequestHandlerBase<SyncResultT, AsyncResultT>
         (request.isIdempotent() == null)
             ? configProfile.getBoolean(CoreDriverOption.REQUEST_DEFAULT_IDEMPOTENCE)
             : request.isIdempotent();
+  }
+
+  protected DriverChannel getChannel(Node node) {
+    ChannelPool pool = session.getPools().get(node);
+    if (pool == null) {
+      LOG.trace("No pool to {}, skipping", node);
+      return null;
+    } else {
+      DriverChannel channel = pool.next();
+      if (channel == null) {
+        LOG.trace("Pool returned no channel for {}, skipping", node);
+        return null;
+      } else if (channel.closeFuture().isDone()) {
+        LOG.trace("Pool returned closed connection to {}, skipping", node);
+        return null;
+      } else {
+        return channel;
+      }
+    }
   }
 }

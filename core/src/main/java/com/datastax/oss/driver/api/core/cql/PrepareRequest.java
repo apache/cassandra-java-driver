@@ -15,28 +15,69 @@
  */
 package com.datastax.oss.driver.api.core.cql;
 
+import com.datastax.oss.driver.api.core.config.DriverConfigProfile;
+import com.datastax.oss.driver.api.core.retry.RetryPolicy;
 import com.datastax.oss.driver.api.core.session.Request;
+import java.nio.ByteBuffer;
+import java.util.Map;
 import java.util.concurrent.CompletionStage;
 
-/** A request to prepare a CQL query. */
+/**
+ * A request to prepare a CQL query.
+ *
+ * <p>Driver clients should rarely have to deal directly with this type, it's used internally by
+ * {@link CqlSession}'s prepare methods. However a {@link RetryPolicy} implementation might use it
+ * if it needs a custom behavior for prepare requests.
+ */
 public interface PrepareRequest
     extends Request<PreparedStatement, CompletionStage<PreparedStatement>> {
 
-  static PrepareRequest from(String query) {
-    throw new UnsupportedOperationException("TODO");
-  }
+  /** The CQL query to prepare. */
+  String getQuery();
 
-  static PrepareRequest from(Statement statement) {
-    throw new UnsupportedOperationException("TODO");
-  }
-
+  /**
+   * {@inheritDoc}
+   *
+   * <p>Note that this refers to the prepare query itself, not to the bound statements that will be
+   * created from the prepared statement (see {@link #areBoundStatementsIdempotent()}).
+   */
   @Override
   default Boolean isIdempotent() {
-    return true; // Retrying to prepare is always safe
+    // Retrying to prepare is always safe
+    return true;
   }
 
   @Override
   default boolean isTracing() {
+    // Tracing prepare requests is unlikely to be useful, we don't expose an API for it.
     return false;
   }
+
+  /**
+   * The name of the driver configuration profile to use for the bound statements that will be
+   * created from the prepared statement.
+   *
+   * <p>Note that this will be ignored if {@link #getConfigProfileForBoundStatements()} returns a
+   * non-null value.
+   */
+  String getConfigProfileNameForBoundStatements();
+
+  /**
+   * The configuration profile to use for the bound statements that will be created from the
+   * prepared statement.
+   */
+  DriverConfigProfile getConfigProfileForBoundStatements();
+
+  /**
+   * Returns the custom payload to send alongside the bound statements that will be created from the
+   * prepared statement.
+   */
+  Map<String, ByteBuffer> getCustomPayloadForBoundStatements();
+
+  /**
+   * Whether bound statements that will be created from the prepared statement are idempotent.
+   *
+   * <p>This follows the same semantics as {@link #isIdempotent()}.
+   */
+  Boolean areBoundStatementsIdempotent();
 }

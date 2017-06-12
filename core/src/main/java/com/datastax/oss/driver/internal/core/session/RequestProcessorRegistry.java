@@ -16,6 +16,7 @@
 package com.datastax.oss.driver.internal.core.session;
 
 import com.datastax.oss.driver.api.core.session.Request;
+import com.datastax.oss.driver.internal.core.cql.CqlPrepareProcessor;
 import com.datastax.oss.driver.internal.core.cql.CqlRequestProcessor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -25,10 +26,7 @@ public class RequestProcessorRegistry {
   private static final Logger LOG = LoggerFactory.getLogger(RequestProcessorRegistry.class);
 
   public static final RequestProcessorRegistry DEFAULT =
-      new RequestProcessorRegistry(
-          new CqlRequestProcessor()
-          // TODO add CqlPrepareProcessor
-          );
+      new RequestProcessorRegistry(new CqlRequestProcessor(), new CqlPrepareProcessor());
 
   // Effectively immutable: the contents are never modified after construction
   private final RequestProcessor<?, ?>[] processors;

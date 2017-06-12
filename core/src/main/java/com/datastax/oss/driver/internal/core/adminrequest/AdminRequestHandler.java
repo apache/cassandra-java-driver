@@ -70,11 +70,6 @@ public class AdminRequestHandler implements ResponseCallback {
     return query(channel, query, Collections.emptyMap(), timeout, pageSize);
   }
 
-  public static AdminRequestHandler prepare(DriverChannel channel, String query, Duration timeout) {
-    String debugString = "prepare '" + query + "'";
-    return new AdminRequestHandler(channel, new Prepare(query), timeout, debugString);
-  }
-
   private final DriverChannel channel;
   private final Message message;
   private final Duration timeout;
@@ -84,7 +79,7 @@ public class AdminRequestHandler implements ResponseCallback {
   // This is only ever accessed on the channel's event loop, so it doesn't need to be volatile
   private ScheduledFuture<?> timeoutFuture;
 
-  private AdminRequestHandler(
+  public AdminRequestHandler(
       DriverChannel channel, Message message, Duration timeout, String debugString) {
     this.channel = channel;
     this.message = message;

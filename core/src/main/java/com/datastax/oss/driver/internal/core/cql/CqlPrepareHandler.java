@@ -1,0 +1,335 @@
+/*
+ * Copyright (C) 2017-2017 DataStax Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package com.datastax.oss.driver.internal.core.cql;
+
+import com.datastax.oss.driver.api.core.AllNodesFailedException;
+import com.datastax.oss.driver.api.core.DriverTimeoutException;
+import com.datastax.oss.driver.api.core.config.CoreDriverOption;
+import com.datastax.oss.driver.api.core.cql.PrepareRequest;
+import com.datastax.oss.driver.api.core.cql.PreparedStatement;
+import com.datastax.oss.driver.api.core.metadata.Node;
+import com.datastax.oss.driver.api.core.retry.RetryDecision;
+import com.datastax.oss.driver.api.core.retry.RetryPolicy;
+import com.datastax.oss.driver.api.core.servererrors.BootstrappingException;
+import com.datastax.oss.driver.api.core.servererrors.FunctionFailureException;
+import com.datastax.oss.driver.api.core.servererrors.ProtocolError;
+import com.datastax.oss.driver.api.core.servererrors.QueryValidationException;
+import com.datastax.oss.driver.internal.core.adminrequest.AdminRequestHandler;
+import com.datastax.oss.driver.internal.core.channel.DriverChannel;
+import com.datastax.oss.driver.internal.core.channel.ResponseCallback;
+import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
+import com.datastax.oss.driver.internal.core.session.DefaultSession;
+import com.datastax.oss.driver.internal.core.session.RequestHandlerBase;
+import com.datastax.oss.driver.internal.core.util.concurrent.BlockingOperation;
+import com.datastax.oss.driver.internal.core.util.concurrent.CompletableFutures;
+import com.datastax.oss.protocol.internal.Frame;
+import com.datastax.oss.protocol.internal.Message;
+import com.datastax.oss.protocol.internal.ProtocolConstants;
+import com.datastax.oss.protocol.internal.request.Prepare;
+import com.datastax.oss.protocol.internal.response.Error;
+import com.datastax.oss.protocol.internal.response.result.Prepared;
+import io.netty.util.concurrent.EventExecutor;
+import io.netty.util.concurrent.Future;
+import io.netty.util.concurrent.GenericFutureListener;
+import io.netty.util.concurrent.ScheduledFuture;
+import java.time.Duration;
+import java.util.AbstractMap;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.CancellationException;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
+import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.TimeUnit;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+/** Handles the lifecycle of the preparation of a CQL statement. */
+public class CqlPrepareHandler
+    extends RequestHandlerBase<PreparedStatement, CompletionStage<PreparedStatement>> {
+
+  private static final Logger LOG = LoggerFactory.getLogger(CqlPrepareHandler.class);
+
+  private final CompletableFuture<PreparedStatement> result;
+  private final Message message;
+  private final EventExecutor scheduler;
+  private final Duration timeout;
+  private final ScheduledFuture<?> timeoutFuture;
+  private final RetryPolicy retryPolicy;
+  private final CqlPrepareProcessor processor;
+
+  // The errors on the nodes that were already tried (lazily initialized on the first error).
+  // We don't use a map because nodes can appear multiple times.
+  private volatile List<Map.Entry<Node, Throwable>> errors;
+
+  CqlPrepareHandler(
+      PrepareRequest request,
+      CqlPrepareProcessor processor,
+      DefaultSession session,
+      InternalDriverContext context) {
+    super(request, session, context);
+    this.processor = processor;
+    this.result = new CompletableFuture<>();
+    this.result.exceptionally(
+        t -> {
+          try {
+            if (t instanceof CancellationException) {
+              cancelTimeout();
+            }
+          } catch (Throwable t2) {
+            LOG.warn("Uncaught exception", t2);
+          }
+          return null;
+        });
+    this.message = new Prepare(request.getQuery());
+    this.scheduler = context.nettyOptions().ioEventLoopGroup().next();
+
+    timeout = configProfile.getDuration(CoreDriverOption.REQUEST_TIMEOUT);
+    this.timeoutFuture = scheduleTimeout(timeout);
+    this.retryPolicy = context.retryPolicy();
+    sendRequest(null, 0);
+  }
+
+  @Override
+  public CompletionStage<PreparedStatement> asyncResult() {
+    return result;
+  }
+
+  @Override
+  public PreparedStatement syncResult() {
+    BlockingOperation.checkNotDriverThread();
+    return CompletableFutures.getUninterruptibly(asyncResult());
+  }
+
+  private ScheduledFuture<?> scheduleTimeout(Duration timeout) {
+    if (timeout.toNanos() > 0) {
+      return scheduler.schedule(
+          () -> setFinalError(new DriverTimeoutException("Query timed out after " + timeout)),
+          timeout.toNanos(),
+          TimeUnit.NANOSECONDS);
+    } else {
+      return null;
+    }
+  }
+
+  private void cancelTimeout() {
+    if (this.timeoutFuture != null) {
+      this.timeoutFuture.cancel(false);
+    }
+  }
+
+  private void sendRequest(Node node, int retryCount) {
+    if (result.isDone()) {
+      return;
+    }
+    DriverChannel channel = null;
+    if (node == null || (channel = getChannel(node)) == null) {
+      while (!result.isDone() && (node = queryPlan.poll()) != null) {
+        channel = getChannel(node);
+        if (channel != null) {
+          break;
+        }
+      }
+    }
+    if (channel == null) {
+      setFinalError(AllNodesFailedException.fromErrors(this.errors));
+    } else {
+      InitialPrepareCallback initialPrepareCallback = new InitialPrepareCallback(node, retryCount);
+      channel
+          .write(message, false, Frame.NO_PAYLOAD, initialPrepareCallback)
+          .addListener(initialPrepareCallback);
+    }
+  }
+
+  private void recordError(Node node, Throwable error) {
+    // Use a local variable to do only a single single volatile read in the nominal case
+    List<Map.Entry<Node, Throwable>> errorsSnapshot = this.errors;
+    if (errorsSnapshot == null) {
+      synchronized (CqlPrepareHandler.this) {
+        errorsSnapshot = this.errors;
+        if (errorsSnapshot == null) {
+          this.errors = errorsSnapshot = new CopyOnWriteArrayList<>();
+        }
+      }
+    }
+    errorsSnapshot.add(new AbstractMap.SimpleEntry<>(node, error));
+  }
+
+  private void setFinalResult(Prepared prepared) {
+    DefaultPreparedStatement newStatement =
+        Conversions.toPreparedStatement(prepared, (PrepareRequest) request, context);
+
+    DefaultPreparedStatement cachedStatement = processor.cache(newStatement);
+
+    if (cachedStatement != newStatement) {
+      // The statement already existed in the cache, assume it's because the client called
+      // prepare() twice, and therefore it's already been prepared on other nodes.
+      result.complete(cachedStatement);
+    } else {
+      prepareOnOtherNodes()
+          .thenRun(() -> result.complete(cachedStatement))
+          .exceptionally(
+              error -> {
+                result.completeExceptionally(error);
+                return null;
+              });
+    }
+  }
+
+  private CompletionStage<Void> prepareOnOtherNodes() {
+    List<CompletionStage<Void>> otherNodesFutures = new ArrayList<>();
+    // Only process the rest of the query plan. Any node before that is either the coordinator, or
+    // a node that failed (we assume that retrying right now has little chance of success).
+    for (Node node : queryPlan) {
+      otherNodesFutures.add(prepareOnOtherNode(node));
+    }
+    return CompletableFutures.allDone(otherNodesFutures);
+  }
+
+  // Try to reprepare on another node, after the initial query has succeeded. Errors are not
+  // blocking, the preparation will be retried later on that node. Simply warn and move on.
+  private CompletionStage<Void> prepareOnOtherNode(Node node) {
+    LOG.debug("Repreparing on {}", node);
+    DriverChannel channel = getChannel(node);
+    if (channel == null) {
+      LOG.warn("Could not get a channel to reprepare on {}", node);
+      return CompletableFuture.completedFuture(null);
+    } else {
+      AdminRequestHandler handler =
+          new AdminRequestHandler(channel, message, timeout, message.toString());
+      return handler
+          .start()
+          .handle(
+              (result, error) -> {
+                if (error != null) {
+                  LOG.warn("Error while repreparing on {}", node);
+                }
+                return null;
+              });
+    }
+  }
+
+  private void setFinalError(Throwable error) {
+    if (result.completeExceptionally(error)) {
+      cancelTimeout();
+    }
+  }
+
+  private class InitialPrepareCallback
+      implements ResponseCallback, GenericFutureListener<Future<java.lang.Void>> {
+    private final Node node;
+    // How many times we've invoked the retry policy and it has returned a "retry" decision (0 for
+    // the first attempt of each execution).
+    private final int retryCount;
+
+    private InitialPrepareCallback(Node node, int retryCount) {
+      this.node = node;
+      this.retryCount = retryCount;
+    }
+
+    // this gets invoked once the write completes.
+    @Override
+    public void operationComplete(Future<java.lang.Void> future) throws Exception {
+      if (!future.isSuccess()) {
+        recordError(node, future.cause());
+        sendRequest(null, retryCount); // try next host
+      }
+    }
+
+    @Override
+    public void onResponse(Frame responseFrame) {
+      if (result.isDone()) {
+        return;
+      }
+      try {
+        Message responseMessage = responseFrame.message;
+        if (responseMessage instanceof Prepared) {
+          setFinalResult((Prepared) responseMessage);
+        } else if (responseMessage instanceof Error) {
+          processErrorResponse((Error) responseMessage);
+        } else {
+          setFinalError(new IllegalStateException("Unexpected response " + responseMessage));
+        }
+      } catch (Throwable t) {
+        setFinalError(t);
+      }
+    }
+
+    private void processErrorResponse(Error errorMessage) {
+      if (errorMessage.code == ProtocolConstants.ErrorCode.UNPREPARED
+          || errorMessage.code == ProtocolConstants.ErrorCode.ALREADY_EXISTS
+          || errorMessage.code == ProtocolConstants.ErrorCode.READ_FAILURE
+          || errorMessage.code == ProtocolConstants.ErrorCode.READ_TIMEOUT
+          || errorMessage.code == ProtocolConstants.ErrorCode.WRITE_FAILURE
+          || errorMessage.code == ProtocolConstants.ErrorCode.WRITE_TIMEOUT
+          || errorMessage.code == ProtocolConstants.ErrorCode.UNAVAILABLE
+          || errorMessage.code == ProtocolConstants.ErrorCode.TRUNCATE_ERROR) {
+        setFinalError(
+            new IllegalStateException(
+                "Unexpected server error for a PREPARE query" + errorMessage));
+        return;
+      }
+      Throwable error = Conversions.toThrowable(node, errorMessage);
+      if (error instanceof BootstrappingException) {
+        // Do not call the retry policy, always try the next node
+        recordError(node, error);
+        sendRequest(null, retryCount);
+      } else if (error instanceof QueryValidationException
+          || error instanceof FunctionFailureException
+          || error instanceof ProtocolError) {
+        // Do not call the retry policy, always rethrow
+        setFinalError(error);
+      } else {
+        // Because prepare requests are known to always be idempotent, we call the retry policy
+        // directly, without checking the flag.
+        RetryDecision decision = retryPolicy.onErrorResponse(request, error, retryCount);
+        processRetryDecision(decision, error);
+      }
+    }
+
+    private void processRetryDecision(RetryDecision decision, Throwable error) {
+      switch (decision) {
+        case RETRY_SAME:
+          recordError(node, error);
+          sendRequest(node, retryCount + 1);
+          break;
+        case RETRY_NEXT:
+          recordError(node, error);
+          sendRequest(null, retryCount + 1);
+          break;
+        case RETHROW:
+          setFinalError(error);
+          break;
+        case IGNORE:
+          setFinalError(
+              new IllegalArgumentException(
+                  "IGNORE decisions are not allowed for prepare requests, "
+                      + "please fix your retry policy."));
+          break;
+      }
+    }
+
+    @Override
+    public void onFailure(Throwable error) {
+      if (result.isDone()) {
+        return;
+      }
+      RetryDecision decision = retryPolicy.onRequestAborted(request, error, retryCount);
+      processRetryDecision(decision, error);
+    }
+  }
+}

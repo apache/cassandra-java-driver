@@ -15,4 +15,27 @@
  */
 package com.datastax.oss.driver.api.core.cql;
 
-public interface PreparedStatement {}
+import java.nio.ByteBuffer;
+
+public interface PreparedStatement {
+
+  /**
+   * A unique identifier for this prepared statement.
+   *
+   * <p>Note: the returned buffer is read-only.
+   */
+  ByteBuffer getId();
+
+  String getQuery();
+
+  /** A description of the bind variables of this prepared statement. */
+  ColumnDefinitions getVariableDefinitions();
+
+  /**
+   * A description of the result set that will be returned when this prepared statement is bound and
+   * executed.
+   */
+  ColumnDefinitions getResultSetDefinitions();
+
+  BoundStatement bind();
+}

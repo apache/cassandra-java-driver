@@ -18,6 +18,7 @@ package com.datastax.oss.driver.api.core.cql;
 import com.datastax.oss.driver.api.core.session.Request;
 import com.datastax.oss.driver.api.core.session.Session;
 import java.util.concurrent.CompletionStage;
+import com.datastax.oss.driver.internal.core.cql.DefaultPrepareRequest;
 
 public interface CqlSession extends Session {
 
@@ -40,18 +41,18 @@ public interface CqlSession extends Session {
   }
 
   default PreparedStatement prepare(String query) {
-    return execute(PrepareRequest.from(query));
+    return execute(new DefaultPrepareRequest(query));
   }
 
-  default PreparedStatement prepare(Statement query) {
-    return execute(PrepareRequest.from(query));
+  default PreparedStatement prepare(SimpleStatement query) {
+    return execute(new DefaultPrepareRequest(query));
   }
 
   default CompletionStage<PreparedStatement> prepareAsync(String query) {
-    return executeAsync(PrepareRequest.from(query));
+    return executeAsync(new DefaultPrepareRequest(query));
   }
 
-  default CompletionStage<PreparedStatement> prepareAsync(Statement query) {
-    return executeAsync(PrepareRequest.from(query));
+  default CompletionStage<PreparedStatement> prepareAsync(SimpleStatement query) {
+    return executeAsync(new DefaultPrepareRequest(query));
   }
 }

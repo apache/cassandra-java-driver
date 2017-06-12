@@ -21,8 +21,11 @@ import com.datastax.oss.driver.api.core.auth.AuthenticationException;
 import com.datastax.oss.driver.api.core.config.CoreDriverOption;
 import com.datastax.oss.driver.api.core.config.DriverConfigProfile;
 import com.datastax.oss.driver.api.core.cql.AsyncResultSet;
+import com.datastax.oss.driver.api.core.cql.BoundStatement;
 import com.datastax.oss.driver.api.core.cql.ColumnDefinition;
+import com.datastax.oss.driver.api.core.cql.ColumnDefinitions;
 import com.datastax.oss.driver.api.core.cql.ExecutionInfo;
+import com.datastax.oss.driver.api.core.cql.PrepareRequest;
 import com.datastax.oss.driver.api.core.cql.SimpleStatement;
 import com.datastax.oss.driver.api.core.cql.Statement;
 import com.datastax.oss.driver.api.core.metadata.Node;
@@ -48,6 +51,7 @@ import com.datastax.oss.driver.api.core.type.codec.registry.CodecRegistry;
 import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
 import com.datastax.oss.protocol.internal.Message;
 import com.datastax.oss.protocol.internal.ProtocolConstants;
+import com.datastax.oss.protocol.internal.request.Execute;
 import com.datastax.oss.protocol.internal.request.Query;
 import com.datastax.oss.protocol.internal.request.query.QueryOptions;
 import com.datastax.oss.protocol.internal.response.Error;
@@ -61,6 +65,8 @@ import com.datastax.oss.protocol.internal.response.error.WriteTimeout;
 import com.datastax.oss.protocol.internal.response.result.ColumnSpec;
 import com.datastax.oss.protocol.internal.response.result.Prepared;
 import com.datastax.oss.protocol.internal.response.result.Rows;
+import com.datastax.oss.protocol.internal.response.result.RowsMetadata;
+import com.datastax.oss.protocol.internal.util.Bytes;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import java.nio.ByteBuffer;
@@ -78,6 +84,12 @@ class Conversions {
 
   static Message toMessage(
       Statement statement, DriverConfigProfile config, InternalDriverContext context) {
+    int consistency =
+        config.getConsistencyLevel(CoreDriverOption.REQUEST_CONSISTENCY).getProtocolCode();
+    int pageSize = config.getInt(CoreDriverOption.REQUEST_PAGE_SIZE);
+    int serialConsistency =
+        config.getConsistencyLevel(CoreDriverOption.REQUEST_SERIAL_CONSISTENCY).getProtocolCode();
+    long timestamp = Long.MIN_VALUE; // TODO timestamp generator
     if (statement instanceof SimpleStatement) {
       SimpleStatement simpleStatement = (SimpleStatement) statement;
 
@@ -86,15 +98,8 @@ class Conversions {
         throw new IllegalArgumentException(
             "Can't have both positional and named values in a statement.");
       }
-
       CodecRegistry codecRegistry = context.codecRegistry();
       ProtocolVersion protocolVersion = context.protocolVersion();
-      int consistency =
-          config.getConsistencyLevel(CoreDriverOption.REQUEST_CONSISTENCY).getProtocolCode();
-      int pageSize = config.getInt(CoreDriverOption.REQUEST_PAGE_SIZE);
-      int serialConsistency =
-          config.getConsistencyLevel(CoreDriverOption.REQUEST_SERIAL_CONSISTENCY).getProtocolCode();
-      long timestamp = Long.MIN_VALUE; // TODO timestamp generator
       QueryOptions queryOptions =
           new QueryOptions(
               consistency,
@@ -106,6 +111,20 @@ class Conversions {
               serialConsistency,
               timestamp);
       return new Query(simpleStatement.getQuery(), queryOptions);
+    } else if (statement instanceof BoundStatement) {
+      BoundStatement boundStatement = (BoundStatement) statement;
+      QueryOptions queryOptions =
+          new QueryOptions(
+              consistency,
+              boundStatement.getValues(),
+              Collections.emptyMap(),
+              true,
+              pageSize,
+              statement.getPagingState(),
+              serialConsistency,
+              timestamp);
+      ByteBuffer id = boundStatement.getPreparedStatement().getId();
+      return new Execute(Bytes.getArray(id), queryOptions);
     }
     // TODO handle other types of statements
     throw new UnsupportedOperationException("TODO handle other types of statements");
@@ -143,16 +162,13 @@ class Conversions {
       Result result, ExecutionInfo executionInfo, Session session, InternalDriverContext context) {
     if (result instanceof Rows) {
       Rows rows = (Rows) result;
-      ImmutableList.Builder<ColumnDefinition> definitions = ImmutableList.builder();
-      for (ColumnSpec columnSpec : rows.metadata.columnSpecs) {
-        definitions.add(new DefaultColumnDefinition(columnSpec, context));
-      }
+      Statement statement = executionInfo.getStatement();
+      ColumnDefinitions columnDefinitions =
+          (statement instanceof BoundStatement)
+              ? ((BoundStatement) statement).getPreparedStatement().getResultSetDefinitions()
+              : toColumnDefinitions(rows.metadata, context);
       return new DefaultAsyncResultSet(
-          new DefaultColumnDefinitions(definitions.build()),
-          executionInfo,
-          rows.data,
-          session,
-          context);
+          columnDefinitions, executionInfo, rows.data, session, context);
     } else if (result instanceof Prepared) {
       // This should never happen
       throw new IllegalArgumentException("Unexpected PREPARED response to a CQL query");
@@ -160,6 +176,31 @@ class Conversions {
       // Void, SetKeyspace, SchemaChange
       return DefaultAsyncResultSet.empty(executionInfo);
     }
+  }
+
+  static DefaultPreparedStatement toPreparedStatement(
+      Prepared response, PrepareRequest request, InternalDriverContext context) {
+    return new DefaultPreparedStatement(
+        ByteBuffer.wrap(response.preparedQueryId).asReadOnlyBuffer(),
+        request.getQuery(),
+        toColumnDefinitions(response.variablesMetadata, context),
+        toColumnDefinitions(response.resultMetadata, context),
+        request.getConfigProfileNameForBoundStatements(),
+        request.getConfigProfileForBoundStatements(),
+        request.getKeyspace(),
+        request.getCustomPayloadForBoundStatements(),
+        request.areBoundStatementsIdempotent(),
+        context.codecRegistry(),
+        context.protocolVersion());
+  }
+
+  private static DefaultColumnDefinitions toColumnDefinitions(
+      RowsMetadata metadata, InternalDriverContext context) {
+    ImmutableList.Builder<ColumnDefinition> definitions = ImmutableList.builder();
+    for (ColumnSpec columnSpec : metadata.columnSpecs) {
+      definitions.add(new DefaultColumnDefinition(columnSpec, context));
+    }
+    return new DefaultColumnDefinitions(definitions.build());
   }
 
   static Throwable toThrowable(Node node, Error errorMessage) {

@@ -241,7 +241,7 @@ public class DefaultSession implements CqlSession {
       assert adminExecutor.inEventLoop();
       LOG.debug("{}: all pools have finished initializing", DefaultSession.this);
       // We will only propagate an invalid keyspace error if all pools get it
-      boolean allInvalidKeyspaces = true;
+      boolean allInvalidKeyspaces = poolStages.size() > 0;
       for (CompletionStage<ChannelPool> poolStage : poolStages) {
         // Note: pool init always succeeds
         ChannelPool pool = CompletableFutures.getCompleted(poolStage.toCompletableFuture());

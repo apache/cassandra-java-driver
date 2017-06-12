@@ -49,15 +49,19 @@ public class CompletableFutures {
   /** @return a completion stage that completes when all inputs are done (success or failure). */
   public static <T> CompletionStage<Void> allDone(List<CompletionStage<T>> inputs) {
     CompletableFuture<Void> result = new CompletableFuture<>();
-    final int todo = inputs.size();
-    final AtomicInteger done = new AtomicInteger();
-    for (CompletionStage<?> input : inputs) {
-      input.whenComplete(
-          (v, error) -> {
-            if (done.incrementAndGet() == todo) {
-              result.complete(null);
-            }
-          });
+    if (inputs.isEmpty()) {
+      result.complete(null);
+    } else {
+      final int todo = inputs.size();
+      final AtomicInteger done = new AtomicInteger();
+      for (CompletionStage<?> input : inputs) {
+        input.whenComplete(
+            (v, error) -> {
+              if (done.incrementAndGet() == todo) {
+                result.complete(null);
+              }
+            });
+      }
     }
     return result;
   }

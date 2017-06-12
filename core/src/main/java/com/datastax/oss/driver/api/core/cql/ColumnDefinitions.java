@@ -17,17 +17,58 @@ package com.datastax.oss.driver.api.core.cql;
 
 import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.data.AccessibleByName;
-import com.datastax.oss.driver.api.core.detach.AttachmentPoint;
 import com.datastax.oss.driver.api.core.detach.Detachable;
 import java.io.Serializable;
-import java.util.Collections;
-import java.util.Iterator;
 
 /** Metadata about a set of CQL columns. */
 public interface ColumnDefinitions extends Iterable<ColumnDefinition>, Detachable, Serializable {
   int size();
 
   ColumnDefinition get(int i);
+
+  /**
+   * Get a definition by name.
+   *
+   * <p>This is the equivalent of:
+   *
+   * <pre>
+   *   get(firstIndexOf(name))
+   * </pre>
+   *
+   * @throws IllegalArgumentException if the name does not exist (in other words, if {@code
+   *     !contains(name))}).
+   * @see #contains(String)
+   * @see #firstIndexOf(String)
+   */
+  default ColumnDefinition get(String name) {
+    if (!contains(name)) {
+      throw new IllegalArgumentException("No definition named " + name);
+    } else {
+      return get(firstIndexOf(name));
+    }
+  }
+
+  /**
+   * Get a definition by name.
+   *
+   * <p>This is the equivalent of:
+   *
+   * <pre>
+   *   get(firstIndexOf(name))
+   * </pre>
+   *
+   * @throws IllegalArgumentException if the name does not exist (in other words, if {@code
+   *     !contains(name))}).
+   * @see #contains(CqlIdentifier)
+   * @see #firstIndexOf(CqlIdentifier)
+   */
+  default ColumnDefinition get(CqlIdentifier name) {
+    if (!contains(name)) {
+      throw new IllegalArgumentException("No definition named " + name);
+    } else {
+      return get(firstIndexOf(name));
+    }
+  }
 
   /**
    * Whether there is a definition using the given name.
