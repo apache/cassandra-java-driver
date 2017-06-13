@@ -84,14 +84,13 @@ public class SessionErrorTest extends ScassandraTestBase {
             Session session = cluster.connect();
             // Pool to host1 should be still open because host1 is the control host,
             // but its pool should have no active connection
-            // Pool to host2 should have been closed because host2 has no
-            // more active connections
+            // Pool to host2 may be either closed because host2 was marked down before initialization
+            // was complete, or open and empty, if host2 was marked down after.
             Session.State state = session.getState();
             Host host1 = scassandra.host(cluster, 1, 1);
             Host host2 = scassandra.host(cluster, 1, 2);
-            assertThat(state.getConnectedHosts()).hasSize(1).containsExactly(host1);
             assertThat(state.getOpenConnections(host1)).isEqualTo(0); // pool open but empty
-            assertThat(state.getOpenConnections(host2)).isEqualTo(0); // pool closed
+            assertThat(state.getOpenConnections(host2)).isEqualTo(0); // pool closed or open but empty
             assertThat(logs.get())
                     .contains(
                             "Unexpected error during transport initialization",
