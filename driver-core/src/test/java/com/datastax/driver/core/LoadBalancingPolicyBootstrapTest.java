@@ -19,7 +19,6 @@ import com.datastax.driver.core.policies.DelegatingLoadBalancingPolicy;
 import com.datastax.driver.core.policies.LoadBalancingPolicy;
 import com.datastax.driver.core.policies.RoundRobinPolicy;
 import com.datastax.driver.core.utils.MoreObjects;
-import com.google.common.base.Objects;
 import com.google.common.collect.Lists;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -28,11 +27,13 @@ import org.testng.annotations.Test;
 import java.util.Collection;
 import java.util.List;
 
+import static com.datastax.driver.core.CreateCCM.TestMode.PER_METHOD;
 import static com.datastax.driver.core.LoadBalancingPolicyBootstrapTest.HistoryPolicy.Action.*;
 import static com.datastax.driver.core.LoadBalancingPolicyBootstrapTest.HistoryPolicy.entry;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @CCMConfig(numberOfNodes = 2, dirtiesContext = true, createCluster = false)
+@CreateCCM(PER_METHOD)
 public class LoadBalancingPolicyBootstrapTest extends CCMTestsSupport {
 
     private static final Logger logger = LoggerFactory.getLogger(LoadBalancingPolicyBootstrapTest.class);
@@ -76,7 +77,7 @@ public class LoadBalancingPolicyBootstrapTest extends CCMTestsSupport {
      * @jira_ticket JAVA-613
      * @since 2.0.10, 2.1.5
      */
-    @Test(groups = "short", dependsOnMethods = "should_init_policy_with_up_contact_points")
+    @Test(groups = "long")
     public void should_send_down_notifications_after_init_when_contact_points_are_down() throws Exception {
 
         // In order to validate this behavior, we need to stop the first node that would be attempted to be
