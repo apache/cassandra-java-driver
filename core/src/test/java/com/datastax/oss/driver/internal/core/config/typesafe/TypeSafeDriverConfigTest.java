@@ -16,7 +16,6 @@
 package com.datastax.oss.driver.internal.core.config.typesafe;
 
 import com.datastax.oss.driver.api.core.config.CoreDriverOption;
-import com.datastax.oss.driver.api.core.config.DriverConfig;
 import com.datastax.oss.driver.api.core.config.DriverConfigProfile;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
@@ -28,13 +27,13 @@ public class TypeSafeDriverConfigTest {
 
   @Test
   public void should_load_minimal_config_with_required_options_and_no_profiles() {
-    DriverConfig config = parse("required_int = 42");
+    TypeSafeDriverConfig config = parse("required_int = 42");
     assertThat(config).hasIntOption(MockOptions.REQUIRED_INT, 42);
   }
 
   @Test
   public void should_load_config_with_no_profiles_and_optional_values() {
-    DriverConfig config = parse("required_int = 42\n optional_int = 43");
+    TypeSafeDriverConfig config = parse("required_int = 42\n optional_int = 43");
     assertThat(config).hasIntOption(MockOptions.REQUIRED_INT, 42);
     assertThat(config).hasIntOption(MockOptions.OPTIONAL_INT, 43);
   }
@@ -49,7 +48,7 @@ public class TypeSafeDriverConfigTest {
 
   @Test
   public void should_inherit_option_in_profile() {
-    DriverConfig config = parse("required_int = 42\n profiles { profile1 { } }");
+    TypeSafeDriverConfig config = parse("required_int = 42\n profiles { profile1 { } }");
     assertThat(config)
         .hasIntOption(MockOptions.REQUIRED_INT, 42)
         .hasIntOption("profile1", MockOptions.REQUIRED_INT, 42);
@@ -57,7 +56,8 @@ public class TypeSafeDriverConfigTest {
 
   @Test
   public void should_override_option_in_profile() {
-    DriverConfig config = parse("required_int = 42\n profiles { profile1 { required_int = 43 } }");
+    TypeSafeDriverConfig config =
+        parse("required_int = 42\n profiles { profile1 { required_int = 43 } }");
     assertThat(config)
         .hasIntOption(MockOptions.REQUIRED_INT, 42)
         .hasIntOption("profile1", MockOptions.REQUIRED_INT, 43);
@@ -71,27 +71,61 @@ public class TypeSafeDriverConfigTest {
   }
 
   @Test
-  public void should_create_on_the_fly_profile_with_new_option() {
-    DriverConfig config = parse("required_int = 42");
+  public void should_create_derived_profile_with_new_option() {
+    TypeSafeDriverConfig config = parse("required_int = 42");
     DriverConfigProfile base = config.defaultProfile();
-    DriverConfigProfile copy = base.withInt(MockOptions.OPTIONAL_INT, 43);
+    DriverConfigProfile derived = base.withInt(MockOptions.OPTIONAL_INT, 43);
 
     assertThat(base.isDefined(MockOptions.OPTIONAL_INT)).isFalse();
-    assertThat(copy.isDefined(MockOptions.OPTIONAL_INT)).isTrue();
-    assertThat(copy.getInt(MockOptions.OPTIONAL_INT)).isEqualTo(43);
+    assertThat(derived.isDefined(MockOptions.OPTIONAL_INT)).isTrue();
+    assertThat(derived.getInt(MockOptions.OPTIONAL_INT)).isEqualTo(43);
   }
 
   @Test
-  public void should_create_on_the_fly_profile_overriding_option() {
-    DriverConfig config = parse("required_int = 42");
+  public void should_create_derived_profile_overriding_option() {
+    TypeSafeDriverConfig config = parse("required_int = 42");
     DriverConfigProfile base = config.defaultProfile();
-    DriverConfigProfile copy = base.withInt(MockOptions.REQUIRED_INT, 43);
+    DriverConfigProfile derived = base.withInt(MockOptions.REQUIRED_INT, 43);
 
     assertThat(base.getInt(MockOptions.REQUIRED_INT)).isEqualTo(42);
-    assertThat(copy.getInt(MockOptions.REQUIRED_INT)).isEqualTo(43);
+    assertThat(derived.getInt(MockOptions.REQUIRED_INT)).isEqualTo(43);
   }
 
-  private DriverConfig parse(String configString) {
+  @Test
+  public void should_reload() {
+    TypeSafeDriverConfig config =
+        parse("required_int = 42\n profiles { profile1 { required_int = 43 } }");
+
+    config.reload(
+        ConfigFactory.parseString(
+            "required_int = 44\n profiles { profile1 { required_int = 45 } }"));
+    assertThat(config)
+        .hasIntOption(MockOptions.REQUIRED_INT, 44)
+        .hasIntOption("profile1", MockOptions.REQUIRED_INT, 45);
+  }
+
+  @Test
+  public void should_update_derived_profiles_after_reloading() {
+    TypeSafeDriverConfig config =
+        parse("required_int = 42\n profiles { profile1 { required_int = 43 } }");
+
+    DriverConfigProfile derivedFromDefault =
+        config.defaultProfile().withInt(MockOptions.OPTIONAL_INT, 50);
+    DriverConfigProfile derivedFromProfile1 =
+        config.getProfile("profile1").withInt(MockOptions.OPTIONAL_INT, 51);
+
+    config.reload(
+        ConfigFactory.parseString(
+            "required_int = 44\n profiles { profile1 { required_int = 45 } }"));
+
+    assertThat(derivedFromDefault.getInt(MockOptions.REQUIRED_INT)).isEqualTo(44);
+    assertThat(derivedFromDefault.getInt(MockOptions.OPTIONAL_INT)).isEqualTo(50);
+
+    assertThat(derivedFromProfile1.getInt(MockOptions.REQUIRED_INT)).isEqualTo(45);
+    assertThat(derivedFromProfile1.getInt(MockOptions.OPTIONAL_INT)).isEqualTo(51);
+  }
+
+  private TypeSafeDriverConfig parse(String configString) {
     Config config = ConfigFactory.parseString(configString);
     return new TypeSafeDriverConfig(config, MockOptions.values());
   }

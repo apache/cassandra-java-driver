@@ -18,54 +18,115 @@ package com.datastax.oss.driver.internal.core.config.typesafe;
 import com.datastax.oss.driver.api.core.config.DriverConfig;
 import com.datastax.oss.driver.api.core.config.DriverConfigProfile;
 import com.datastax.oss.driver.api.core.config.DriverOption;
+import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableMap;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigObject;
 import com.typesafe.config.ConfigValue;
 import java.util.Collection;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
+import java.util.Collections;
+import java.util.Map;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static com.typesafe.config.ConfigValueType.OBJECT;
 
 public class TypeSafeDriverConfig implements DriverConfig {
 
-  private final TypesafeDriverConfigProfile defaultProfile;
-  private final ConcurrentMap<String, TypesafeDriverConfigProfile> profiles;
+  private static final Logger LOG = LoggerFactory.getLogger(TypeSafeDriverConfig.class);
+  private static final String DEFAULT_PROFILE_KEY = "__default_internal__";
+
+  private final Collection<DriverOption> options;
+  private final TypesafeDriverConfigProfile.Base defaultProfile;
+  private final Map<String, TypesafeDriverConfigProfile.Base> profiles;
 
   public TypeSafeDriverConfig(Config config, DriverOption[]... optionArrays) {
-    Collection<DriverOption> options = merge(optionArrays);
+    this.options = merge(optionArrays);
 
-    // Process the raw configuration to extract profiles. For example:
-    //     {
-    //         foo = 1, bar = 2
-    //         profiles {
-    //             custom1 { bar = 3 }
-    //         }
-    //     }
-    // Would produce a map with the following entries:
-    //     "default" => { foo = 1, bar = 2 }
-    //     "custom1" => { foo = 1, bar = 3 }
+    Map<String, Config> profileConfigs = extractProfiles(config);
+    this.defaultProfile =
+        new TypesafeDriverConfigProfile.Base(profileConfigs.get(DEFAULT_PROFILE_KEY));
 
-    Config defaultProfileConfig = config.withoutPath("profiles");
-    validateRequired(defaultProfileConfig, options);
-    this.defaultProfile = new TypesafeDriverConfigProfile(defaultProfileConfig);
+    if (profileConfigs.size() == 1) {
+      this.profiles = Collections.emptyMap();
+    } else {
+      ImmutableMap.Builder<String, TypesafeDriverConfigProfile.Base> builder =
+          ImmutableMap.builder();
+      for (Map.Entry<String, Config> entry : profileConfigs.entrySet()) {
+        String profileName = entry.getKey();
+        if (!profileName.equals(DEFAULT_PROFILE_KEY)) {
+          builder.put(profileName, new TypesafeDriverConfigProfile.Base(entry.getValue()));
+        }
+      }
+      this.profiles = builder.build();
+    }
+  }
 
-    this.profiles = new ConcurrentHashMap<>();
-    ConfigObject rootObject = config.root();
-    if (rootObject.containsKey("profiles") && rootObject.get("profiles").valueType() == OBJECT) {
-      ConfigObject profileConfigs = (ConfigObject) rootObject.get("profiles");
-      for (String profileName : profileConfigs.keySet()) {
-        ConfigValue profileValue = profileConfigs.get(profileName);
-        if (profileValue.valueType() == OBJECT) {
-          Config profileConfig = ((ConfigObject) profileValue).toConfig();
-          this.profiles.put(
-              profileName,
-              new TypesafeDriverConfigProfile(profileConfig.withFallback(defaultProfileConfig)));
+  public void reload(Config config) {
+    Map<String, Config> profileConfigs = extractProfiles(config);
+    this.defaultProfile.refresh(profileConfigs.get(DEFAULT_PROFILE_KEY));
+    if (profileConfigs.size() > 1) {
+      for (Map.Entry<String, Config> entry : profileConfigs.entrySet()) {
+        String profileName = entry.getKey();
+        if (!profileName.equals(DEFAULT_PROFILE_KEY)) {
+          TypesafeDriverConfigProfile.Base profile = this.profiles.get(profileName);
+          if (profile == null) {
+            LOG.warn(
+                String.format(
+                    "Unknown profile '%s' while reloading configuration. "
+                        + "Adding profiles at runtime is not supported.",
+                    profileName));
+          } else {
+            profile.refresh(entry.getValue());
+          }
         }
       }
     }
+  }
+
+  /*
+   * Processes the raw configuration to extract profiles. For example:
+   *     {
+   *         foo = 1, bar = 2
+   *         profiles {
+   *             custom1 { bar = 3 }
+   *         }
+   *     }
+   * Would produce:
+   *     DEFAULT_PROFILE_KEY => { foo = 1, bar = 2 }
+   *     "custom1"           => { foo = 1, bar = 3 }
+   */
+  private Map<String, Config> extractProfiles(Config sourceConfig) {
+    ImmutableMap.Builder<String, Config> result = ImmutableMap.builder();
+
+    Config defaultProfileConfig = sourceConfig.withoutPath("profiles");
+    validateRequired(defaultProfileConfig, options);
+    result.put(DEFAULT_PROFILE_KEY, defaultProfileConfig);
+
+    // The rest of the method is a bit confusing because we navigate between Typesafe config's two
+    // APIs, see https://github.com/typesafehub/config#understanding-config-and-configobject
+    // In an attempt to clarify:
+    //    xxxObject = `ConfigObject` API (config as a hierarchical structure)
+    //    xxxConfig = `Config` API (config as a flat set of options with hierarchical paths)
+    ConfigObject rootObject = sourceConfig.root();
+    if (rootObject.containsKey("profiles") && rootObject.get("profiles").valueType() == OBJECT) {
+      ConfigObject profilesObject = (ConfigObject) rootObject.get("profiles");
+      for (String profileName : profilesObject.keySet()) {
+        if (profileName.equals(DEFAULT_PROFILE_KEY)) {
+          throw new IllegalArgumentException(
+              String.format(
+                  "Can't have %s as a profile name because it's used internally. Pick another name.",
+                  profileName));
+        }
+        ConfigValue profileObject = profilesObject.get(profileName);
+        if (profileObject.valueType() == OBJECT) {
+          Config profileConfig = ((ConfigObject) profileObject).toConfig();
+          result.put(profileName, profileConfig.withFallback(defaultProfileConfig));
+        }
+      }
+    }
+    return result.build();
   }
 
   @Override

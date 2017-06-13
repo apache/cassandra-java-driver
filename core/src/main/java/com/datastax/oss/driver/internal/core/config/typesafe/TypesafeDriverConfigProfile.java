@@ -18,38 +18,34 @@ package com.datastax.oss.driver.internal.core.config.typesafe;
 import com.datastax.oss.driver.api.core.ConsistencyLevel;
 import com.datastax.oss.driver.api.core.config.DriverConfigProfile;
 import com.datastax.oss.driver.api.core.config.DriverOption;
+import com.google.common.collect.MapMaker;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
 import com.typesafe.config.ConfigValueFactory;
 import java.time.Duration;
+import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 
-public class TypesafeDriverConfigProfile implements DriverConfigProfile {
-  // The base options loaded from the driver's configuration
-  private volatile Config base;
-  // Any extras that were configured manually using withXxx methods
-  private final Config extras;
-  // The actual options returned by getXxx methods (which is a merge of the previous two)
-  private volatile Config actual;
+public abstract class TypesafeDriverConfigProfile implements DriverConfigProfile {
 
-  public TypesafeDriverConfigProfile(Config base) {
-    this(base, ConfigFactory.empty());
-  }
+  /** The original profile in the driver's configuration that this profile was derived from. */
+  protected abstract Base getBaseProfile();
 
-  private TypesafeDriverConfigProfile(Config base, Config extras) {
-    this.base = base;
-    this.extras = extras;
-    this.actual = extras.withFallback(base);
-  }
+  /** The extra options that were added with {@code withXxx} methods. */
+  protected abstract Config getAddedOptions();
+
+  /** The actual options that will be used to answer {@code getXxx} calls. */
+  protected abstract Config getEffectiveOptions();
 
   @Override
   public boolean isDefined(DriverOption option) {
-    return actual.hasPath(option.getPath());
+    return getEffectiveOptions().hasPath(option.getPath());
   }
 
   @Override
   public boolean getBoolean(DriverOption option) {
-    return actual.getBoolean(option.getPath());
+    return getEffectiveOptions().getBoolean(option.getPath());
   }
 
   @Override
@@ -59,7 +55,7 @@ public class TypesafeDriverConfigProfile implements DriverConfigProfile {
 
   @Override
   public int getInt(DriverOption option) {
-    return actual.getInt(option.getPath());
+    return getEffectiveOptions().getInt(option.getPath());
   }
 
   @Override
@@ -69,7 +65,7 @@ public class TypesafeDriverConfigProfile implements DriverConfigProfile {
 
   @Override
   public Duration getDuration(DriverOption option) {
-    return actual.getDuration(option.getPath());
+    return getEffectiveOptions().getDuration(option.getPath());
   }
 
   @Override
@@ -79,7 +75,7 @@ public class TypesafeDriverConfigProfile implements DriverConfigProfile {
 
   @Override
   public String getString(DriverOption option) {
-    return actual.getString(option.getPath());
+    return getEffectiveOptions().getString(option.getPath());
   }
 
   @Override
@@ -89,7 +85,7 @@ public class TypesafeDriverConfigProfile implements DriverConfigProfile {
 
   @Override
   public List<String> getStringList(DriverOption option) {
-    return actual.getStringList(option.getPath());
+    return getEffectiveOptions().getStringList(option.getPath());
   }
 
   @Override
@@ -99,7 +95,7 @@ public class TypesafeDriverConfigProfile implements DriverConfigProfile {
 
   @Override
   public long getBytes(DriverOption option) {
-    return actual.getBytes(option.getPath());
+    return getEffectiveOptions().getBytes(option.getPath());
   }
 
   @Override
@@ -118,8 +114,102 @@ public class TypesafeDriverConfigProfile implements DriverConfigProfile {
     return with(option, value.toString());
   }
 
-  private DriverConfigProfile with(DriverOption option, Object v) {
-    return new TypesafeDriverConfigProfile(
-        base, extras.withValue(option.getPath(), ConfigValueFactory.fromAnyRef(v)));
+  private DriverConfigProfile with(DriverOption option, Object value) {
+    Base base = getBaseProfile();
+    // Add the new option to any already derived options
+    Config newAdded =
+        getAddedOptions().withValue(option.getPath(), ConfigValueFactory.fromAnyRef(value));
+    Derived derived = new Derived(base, newAdded);
+    base.register(derived);
+    return derived;
+  }
+
+  /** A profile that was loaded directly from the driver's configuration. */
+  static class Base extends TypesafeDriverConfigProfile {
+
+    private volatile Config options;
+    private volatile Set<Derived> derivedProfiles;
+
+    Base(Config options) {
+      this.options = options;
+    }
+
+    @Override
+    protected Base getBaseProfile() {
+      return this;
+    }
+
+    @Override
+    protected Config getAddedOptions() {
+      return ConfigFactory.empty();
+    }
+
+    @Override
+    protected Config getEffectiveOptions() {
+      return options;
+    }
+
+    void refresh(Config newOptions) {
+      this.options = newOptions;
+      if (derivedProfiles != null) {
+        for (Derived derivedProfile : derivedProfiles) {
+          derivedProfile.refresh();
+        }
+      }
+    }
+
+    void register(Derived derivedProfile) {
+      getDerivedProfiles().add(derivedProfile);
+    }
+
+    // Lazy init
+    private Set<Derived> getDerivedProfiles() {
+      Set<Derived> result = derivedProfiles;
+      if (result == null) {
+        synchronized (this) {
+          result = derivedProfiles;
+          if (result == null) {
+            derivedProfiles =
+                result = Collections.newSetFromMap(new MapMaker().weakKeys().makeMap());
+          }
+        }
+      }
+      return result;
+    }
+  }
+
+  /**
+   * A profile that was copied from another profile programatically using {@code withXxx} methods.
+   */
+  static class Derived extends TypesafeDriverConfigProfile {
+
+    private final Base baseProfile;
+    private final Config addedOptions;
+    private volatile Config effectiveOptions;
+
+    Derived(Base baseProfile, Config addedOptions) {
+      this.baseProfile = baseProfile;
+      this.addedOptions = addedOptions;
+      refresh();
+    }
+
+    void refresh() {
+      this.effectiveOptions = addedOptions.withFallback(baseProfile.getEffectiveOptions());
+    }
+
+    @Override
+    protected Base getBaseProfile() {
+      return baseProfile;
+    }
+
+    @Override
+    protected Config getAddedOptions() {
+      return addedOptions;
+    }
+
+    @Override
+    protected Config getEffectiveOptions() {
+      return effectiveOptions;
+    }
   }
 }

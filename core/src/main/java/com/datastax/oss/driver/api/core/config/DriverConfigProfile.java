@@ -26,11 +26,11 @@ import java.util.List;
  *
  * <p>Getters (such as {@link #getBoolean(DriverOption)}) are self-explanatory.
  *
- * <p>{@code withXxx} methods (such as {@link #withBoolean(DriverOption, boolean)}) create an
- * on-the-fly <b>copy</b> of the profile with the new value (which might be a new option, or
- * overwrite an existing one). Such on-the-fly profiles should be used sparingly: each call creates
- * a new instance; if you have multiple option to customize, it is better to create a profile in the
- * base configuration.
+ * <p>{@code withXxx} methods (such as {@link #withBoolean(DriverOption, boolean)}) create a
+ * "derived" profile, which is an on-the-fly <b>copy</b> of the profile with the new value (which
+ * might be a new option, or overwrite an existing one). If the original configuration is reloaded,
+ * all derived profiles get updated as well. For best performance, such derived profiles should be
+ * used sparingly; it is better to have built-in profiles for common scenarios.
  *
  * @see DriverConfig
  */
