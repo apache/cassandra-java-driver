@@ -40,8 +40,6 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static java.util.concurrent.TimeUnit.MILLISECONDS;
-
 /** Builds {@link DriverChannel} objects for an instance of the driver. */
 public class ChannelFactory {
 
@@ -180,8 +178,9 @@ public class ChannelFactory {
         DriverConfigProfile defaultConfigProfile = context.config().defaultProfile();
 
         long setKeyspaceTimeoutMillis =
-            defaultConfigProfile.getDuration(
-                CoreDriverOption.CONNECTION_SET_KEYSPACE_TIMEOUT, MILLISECONDS);
+            defaultConfigProfile
+                .getDuration(CoreDriverOption.CONNECTION_SET_KEYSPACE_TIMEOUT)
+                .toMillis();
         int maxFrameLength =
             (int) defaultConfigProfile.getBytes(CoreDriverOption.CONNECTION_MAX_FRAME_LENGTH);
         int maxRequestsPerConnection =

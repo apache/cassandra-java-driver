@@ -19,6 +19,7 @@ import com.datastax.oss.driver.api.core.ConsistencyLevel;
 import com.datastax.oss.driver.api.core.config.DriverConfigProfile;
 import com.datastax.oss.driver.api.core.config.DriverOption;
 import com.typesafe.config.Config;
+import com.typesafe.config.ConfigValueFactory;
 import java.time.Duration;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
@@ -48,11 +49,6 @@ public class TypesafeDriverConfigProfile implements DriverConfigProfile {
   @Override
   public Duration getDuration(DriverOption option) {
     return config.getDuration(option.getPath());
-  }
-
-  @Override
-  public long getDuration(DriverOption option, TimeUnit targetUnit) {
-    return config.getDuration(option.getPath(), targetUnit);
   }
 
   @Override

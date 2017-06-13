@@ -36,9 +36,8 @@ public class ExponentialReconnectionPolicy implements ReconnectionPolicy {
   public ExponentialReconnectionPolicy(DriverContext context) {
     DriverConfigProfile config = context.config().defaultProfile();
     this.baseDelayMs =
-        config.getDuration(CoreDriverOption.RECONNECTION_CONFIG_BASE_DELAY, TimeUnit.MILLISECONDS);
-    this.maxDelayMs =
-        config.getDuration(CoreDriverOption.RECONNECTION_CONFIG_MAX_DELAY, TimeUnit.MILLISECONDS);
+        config.getDuration(CoreDriverOption.RECONNECTION_CONFIG_BASE_DELAY).toMillis();
+    this.maxDelayMs = config.getDuration(CoreDriverOption.RECONNECTION_CONFIG_MAX_DELAY).toMillis();
 
     Preconditions.checkArgument(
         baseDelayMs > 0,

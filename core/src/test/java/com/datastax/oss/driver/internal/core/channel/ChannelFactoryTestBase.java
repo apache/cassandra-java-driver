@@ -42,6 +42,7 @@ import io.netty.channel.local.LocalAddress;
 import io.netty.channel.local.LocalChannel;
 import io.netty.channel.local.LocalServerChannel;
 import java.net.SocketAddress;
+import java.time.Duration;
 import java.util.Collections;
 import java.util.Optional;
 import java.util.concurrent.Exchanger;
@@ -105,14 +106,10 @@ abstract class ChannelFactoryTestBase {
     Mockito.when(driverConfig.defaultProfile()).thenReturn(defaultConfigProfile);
     Mockito.when(defaultConfigProfile.isDefined(CoreDriverOption.AUTHENTICATION_PROVIDER_CLASS))
         .thenReturn(false);
-    Mockito.when(
-            defaultConfigProfile.getDuration(
-                CoreDriverOption.CONNECTION_INIT_QUERY_TIMEOUT, TimeUnit.MILLISECONDS))
-        .thenReturn(100L);
-    Mockito.when(
-            defaultConfigProfile.getDuration(
-                CoreDriverOption.CONNECTION_SET_KEYSPACE_TIMEOUT, MILLISECONDS))
-        .thenReturn(100L);
+    Mockito.when(defaultConfigProfile.getDuration(CoreDriverOption.CONNECTION_INIT_QUERY_TIMEOUT))
+        .thenReturn(Duration.ofMillis(100));
+    Mockito.when(defaultConfigProfile.getDuration(CoreDriverOption.CONNECTION_SET_KEYSPACE_TIMEOUT))
+        .thenReturn(Duration.ofMillis(100));
     Mockito.when(defaultConfigProfile.getInt(CoreDriverOption.CONNECTION_MAX_REQUESTS))
         .thenReturn(1);
 
@@ -225,8 +222,9 @@ abstract class ChannelFactoryTestBase {
           DriverConfigProfile defaultConfigProfile = context.config().defaultProfile();
 
           long setKeyspaceTimeoutMillis =
-              defaultConfigProfile.getDuration(
-                  CoreDriverOption.CONNECTION_SET_KEYSPACE_TIMEOUT, MILLISECONDS);
+              defaultConfigProfile
+                  .getDuration(CoreDriverOption.CONNECTION_SET_KEYSPACE_TIMEOUT)
+                  .toMillis();
           int maxRequestsPerConnection =
               defaultConfigProfile.getInt(CoreDriverOption.CONNECTION_MAX_REQUESTS);
 

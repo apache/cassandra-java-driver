@@ -45,7 +45,6 @@ import io.netty.channel.ChannelHandlerContext;
 import java.net.SocketAddress;
 import java.nio.ByteBuffer;
 import java.util.List;
-import java.util.concurrent.TimeUnit;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -76,8 +75,7 @@ class ProtocolInitHandler extends ConnectInitHandler {
     DriverConfigProfile defaultConfig = internalDriverContext.config().defaultProfile();
 
     this.timeoutMillis =
-        defaultConfig.getDuration(
-            CoreDriverOption.CONNECTION_INIT_QUERY_TIMEOUT, TimeUnit.MILLISECONDS);
+        defaultConfig.getDuration(CoreDriverOption.CONNECTION_INIT_QUERY_TIMEOUT).toMillis();
     this.initialProtocolVersion = protocolVersion;
     this.expectedClusterName = expectedClusterName;
     this.options = options;

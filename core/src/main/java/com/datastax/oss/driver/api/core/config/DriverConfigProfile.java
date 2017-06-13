@@ -40,7 +40,5 @@ public interface DriverConfigProfile {
 
   Duration getDuration(DriverOption option);
 
-  long getDuration(DriverOption option, TimeUnit targetUnit);
-
   ConsistencyLevel getConsistencyLevel(DriverOption option);
 }

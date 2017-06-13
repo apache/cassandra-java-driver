@@ -42,6 +42,7 @@ import com.datastax.oss.protocol.internal.util.Bytes;
 import com.google.common.collect.ImmutableList;
 import io.netty.channel.ChannelFuture;
 import java.net.InetSocketAddress;
+import java.time.Duration;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
@@ -69,10 +70,8 @@ public class ProtocolInitHandlerTest extends ChannelHandlerTestBase {
     MockitoAnnotations.initMocks(this);
     Mockito.when(internalDriverContext.config()).thenReturn(driverConfig);
     Mockito.when(driverConfig.defaultProfile()).thenReturn(defaultConfigProfile);
-    Mockito.when(
-            defaultConfigProfile.getDuration(
-                CoreDriverOption.CONNECTION_INIT_QUERY_TIMEOUT, TimeUnit.MILLISECONDS))
-        .thenReturn(QUERY_TIMEOUT_MILLIS);
+    Mockito.when(defaultConfigProfile.getDuration(CoreDriverOption.CONNECTION_INIT_QUERY_TIMEOUT))
+        .thenReturn(Duration.ofMillis(QUERY_TIMEOUT_MILLIS));
     Mockito.when(internalDriverContext.protocolVersionRegistry())
         .thenReturn(protocolVersionRegistry);
 

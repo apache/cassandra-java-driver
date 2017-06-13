@@ -25,7 +25,6 @@ import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.timeout.IdleState;
 import io.netty.handler.timeout.IdleStateEvent;
 import io.netty.handler.timeout.IdleStateHandler;
-import java.util.concurrent.TimeUnit;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -40,8 +39,9 @@ class HeartbeatHandler extends IdleStateHandler {
   HeartbeatHandler(DriverConfigProfile defaultConfigProfile) {
     super(
         (int)
-            defaultConfigProfile.getDuration(
-                CoreDriverOption.CONNECTION_HEARTBEAT_INTERVAL, TimeUnit.SECONDS),
+            defaultConfigProfile
+                .getDuration(CoreDriverOption.CONNECTION_HEARTBEAT_INTERVAL)
+                .getSeconds(),
         0,
         0);
     this.defaultConfigProfile = defaultConfigProfile;
@@ -59,11 +59,13 @@ class HeartbeatHandler extends IdleStateHandler {
       } else {
         LOG.debug(
             "Connection was inactive for {} seconds, sending heartbeat",
-            defaultConfigProfile.getDuration(
-                CoreDriverOption.CONNECTION_HEARTBEAT_INTERVAL, TimeUnit.SECONDS));
+            defaultConfigProfile
+                .getDuration(CoreDriverOption.CONNECTION_HEARTBEAT_INTERVAL)
+                .getSeconds());
         long timeoutMillis =
-            defaultConfigProfile.getDuration(
-                CoreDriverOption.CONNECTION_HEARTBEAT_TIMEOUT, TimeUnit.MILLISECONDS);
+            defaultConfigProfile
+                .getDuration(CoreDriverOption.CONNECTION_HEARTBEAT_TIMEOUT)
+                .toMillis();
         this.request = new HeartbeatRequest(ctx, timeoutMillis);
         this.request.send();
       }
