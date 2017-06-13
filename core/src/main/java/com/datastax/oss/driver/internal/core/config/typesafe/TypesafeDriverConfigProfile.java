@@ -19,56 +19,107 @@ import com.datastax.oss.driver.api.core.ConsistencyLevel;
 import com.datastax.oss.driver.api.core.config.DriverConfigProfile;
 import com.datastax.oss.driver.api.core.config.DriverOption;
 import com.typesafe.config.Config;
+import com.typesafe.config.ConfigFactory;
 import com.typesafe.config.ConfigValueFactory;
 import java.time.Duration;
 import java.util.List;
-import java.util.concurrent.TimeUnit;
 
 public class TypesafeDriverConfigProfile implements DriverConfigProfile {
-  private volatile Config config;
+  // The base options loaded from the driver's configuration
+  private volatile Config base;
+  // Any extras that were configured manually using withXxx methods
+  private final Config extras;
+  // The actual options returned by getXxx methods (which is a merge of the previous two)
+  private volatile Config actual;
 
-  public TypesafeDriverConfigProfile(Config config) {
-    this.config = config;
+  public TypesafeDriverConfigProfile(Config base) {
+    this(base, ConfigFactory.empty());
+  }
+
+  private TypesafeDriverConfigProfile(Config base, Config extras) {
+    this.base = base;
+    this.extras = extras;
+    this.actual = extras.withFallback(base);
   }
 
   @Override
   public boolean isDefined(DriverOption option) {
-    return config.hasPath(option.getPath());
+    return actual.hasPath(option.getPath());
   }
 
   @Override
   public boolean getBoolean(DriverOption option) {
-    return config.getBoolean(option.getPath());
+    return actual.getBoolean(option.getPath());
+  }
+
+  @Override
+  public DriverConfigProfile withBoolean(DriverOption option, boolean value) {
+    return with(option, value);
   }
 
   @Override
   public int getInt(DriverOption option) {
-    return config.getInt(option.getPath());
+    return actual.getInt(option.getPath());
+  }
+
+  @Override
+  public DriverConfigProfile withInt(DriverOption option, int value) {
+    return with(option, value);
   }
 
   @Override
   public Duration getDuration(DriverOption option) {
-    return config.getDuration(option.getPath());
+    return actual.getDuration(option.getPath());
+  }
+
+  @Override
+  public DriverConfigProfile withDuration(DriverOption option, Duration value) {
+    return with(option, value);
   }
 
   @Override
   public String getString(DriverOption option) {
-    return config.getString(option.getPath());
+    return actual.getString(option.getPath());
+  }
+
+  @Override
+  public DriverConfigProfile withString(DriverOption option, String value) {
+    return with(option, value);
   }
 
   @Override
   public List<String> getStringList(DriverOption option) {
-    return config.getStringList(option.getPath());
+    return actual.getStringList(option.getPath());
+  }
+
+  @Override
+  public DriverConfigProfile withStringList(DriverOption option, List<String> value) {
+    return with(option, value);
   }
 
   @Override
   public long getBytes(DriverOption option) {
-    return config.getBytes(option.getPath());
+    return actual.getBytes(option.getPath());
+  }
+
+  @Override
+  public DriverConfigProfile withBytes(DriverOption option, long value) {
+    return with(option, value);
   }
 
   @Override
   public ConsistencyLevel getConsistencyLevel(DriverOption option) {
     String name = getString(option);
     return ConsistencyLevel.valueOf(name);
+  }
+
+  @Override
+  public DriverConfigProfile withConsistencyLevel(DriverOption option, ConsistencyLevel value) {
+    return with(option, value.toString());
+  }
+
+  private DriverConfigProfile with(DriverOption option, Object v) {
+    return new TypesafeDriverConfigProfile(
+        base, extras.withValue(option.getPath(), ConfigValueFactory.fromAnyRef(v)));
   }
 }

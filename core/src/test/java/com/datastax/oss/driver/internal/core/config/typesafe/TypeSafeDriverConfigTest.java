@@ -17,6 +17,7 @@ package com.datastax.oss.driver.internal.core.config.typesafe;
 
 import com.datastax.oss.driver.api.core.config.CoreDriverOption;
 import com.datastax.oss.driver.api.core.config.DriverConfig;
+import com.datastax.oss.driver.api.core.config.DriverConfigProfile;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
 import org.testng.annotations.Test;
@@ -67,6 +68,27 @@ public class TypeSafeDriverConfigTest {
     // No assertions here, but this validates that `reference.conf` is well-formed.
     new TypeSafeDriverConfig(
         ConfigFactory.load().getConfig("datastax-java-driver"), CoreDriverOption.values());
+  }
+
+  @Test
+  public void should_create_on_the_fly_profile_with_new_option() {
+    DriverConfig config = parse("required_int = 42");
+    DriverConfigProfile base = config.defaultProfile();
+    DriverConfigProfile copy = base.withInt(MockOptions.OPTIONAL_INT, 43);
+
+    assertThat(base.isDefined(MockOptions.OPTIONAL_INT)).isFalse();
+    assertThat(copy.isDefined(MockOptions.OPTIONAL_INT)).isTrue();
+    assertThat(copy.getInt(MockOptions.OPTIONAL_INT)).isEqualTo(43);
+  }
+
+  @Test
+  public void should_create_on_the_fly_profile_overriding_option() {
+    DriverConfig config = parse("required_int = 42");
+    DriverConfigProfile base = config.defaultProfile();
+    DriverConfigProfile copy = base.withInt(MockOptions.REQUIRED_INT, 43);
+
+    assertThat(base.getInt(MockOptions.REQUIRED_INT)).isEqualTo(42);
+    assertThat(copy.getInt(MockOptions.REQUIRED_INT)).isEqualTo(43);
   }
 
   private DriverConfig parse(String configString) {
