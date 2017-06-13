@@ -86,10 +86,10 @@ public class SessionErrorTest extends ScassandraTestBase {
             // but its pool should have no active connection
             // Pool to host2 should have been closed because host2 has no
             // more active connections
-            Session.State state = session.getState();
             Host host1 = scassandra.host(cluster, 1, 1);
             Host host2 = scassandra.host(cluster, 1, 2);
-            assertThat(state.getConnectedHosts()).hasSize(1).containsExactly(host1);
+            TestUtils.waitForDown(TestUtils.ipOfNode(2), cluster);
+            Session.State state = session.getState();
             assertThat(state.getOpenConnections(host1)).isEqualTo(0); // pool open but empty
             assertThat(state.getOpenConnections(host2)).isEqualTo(0); // pool closed
             assertThat(logs.get())
@@ -98,6 +98,11 @@ public class SessionErrorTest extends ScassandraTestBase {
                             "not really",
                             NullPointerException.class.getSimpleName(),
                             "com.datastax.driver.core.Connection$4.apply");
+            HostConnectionPool pool1 = ((SessionManager)session).pools.get(host1);
+            HostConnectionPool pool2 = ((SessionManager)session).pools.get(host2);
+            assertThat(pool1).isNotNull();
+            assertThat(pool1.isClosed()).isFalse();
+            assertThat(pool2).isNull(); // pool2 should have been removed
         } finally {
             TestUtils.setLogLevel(HostConnectionPool.class, previous);
             logs.disableFor(HostConnectionPool.class);
