@@ -98,6 +98,11 @@ public class SessionErrorTest extends ScassandraTestBase {
                             "not really",
                             NullPointerException.class.getSimpleName(),
                             "com.datastax.driver.core.Connection$4.apply");
+            HostConnectionPool pool1 = ((SessionManager)session).pools.get(host1);
+            HostConnectionPool pool2 = ((SessionManager)session).pools.get(host2);
+            assertThat(pool1).isNotNull();
+            assertThat(pool1.isClosed()).isFalse();
+            assertThat(pool2).isNull(); // pool2 should have been removed
         } finally {
             TestUtils.setLogLevel(HostConnectionPool.class, previous);
             logs.disableFor(HostConnectionPool.class);
