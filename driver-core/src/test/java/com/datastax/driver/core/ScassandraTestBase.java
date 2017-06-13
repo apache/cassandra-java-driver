@@ -51,7 +51,7 @@ public abstract class ScassandraTestBase {
     protected static String ip = TestUtils.ipOfNode(1);
 
     @BeforeClass(groups = {"short", "long"})
-    public void startScassandra() {
+    public void beforeTestClass() {
         scassandra = TestUtils.createScassandraServer();
         scassandra.start();
         primingClient = scassandra.primingClient();
@@ -61,7 +61,7 @@ public abstract class ScassandraTestBase {
     }
 
     @AfterClass(groups = {"short", "long"})
-    public void stopScassandra() {
+    public void afterTestClass() {
         if (scassandra != null)
             scassandra.stop();
     }
@@ -105,26 +105,20 @@ public abstract class ScassandraTestBase {
 
         protected Host host;
 
-        @BeforeClass(groups = {"short", "long"}, dependsOnMethods = "startScassandra")
-        public void initCluster() {
+        @BeforeClass(groups = {"short", "long"})
+        public void beforeTestClass() {
+            super.beforeTestClass();
             Cluster.Builder builder = createClusterBuilder();
             cluster = builder.build();
             host = retrieveSingleHost(cluster);
             session = cluster.connect();
         }
 
-        @AfterClass(groups = {"short", "long"}, alwaysRun = true)
-        public void closeCluster() {
+        @AfterClass(groups = {"short", "long"})
+        public void afterTestClass() {
             if (cluster != null)
                 cluster.close();
+            super.afterTestClass();
         }
-
-        @AfterClass(groups = {"short", "long"}, dependsOnMethods = "closeCluster", alwaysRun = true)
-        @Override
-        public void stopScassandra() {
-            super.stopScassandra();
-        }
-
     }
-
 }
