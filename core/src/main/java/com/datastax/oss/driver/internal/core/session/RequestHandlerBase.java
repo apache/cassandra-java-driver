@@ -16,6 +16,7 @@
 package com.datastax.oss.driver.internal.core.session;
 
 import com.datastax.oss.driver.api.core.CqlIdentifier;
+import com.datastax.oss.driver.api.core.config.CoreDriverOption;
 import com.datastax.oss.driver.api.core.config.DriverConfig;
 import com.datastax.oss.driver.api.core.config.DriverConfigProfile;
 import com.datastax.oss.driver.api.core.metadata.Node;
@@ -28,6 +29,7 @@ public abstract class RequestHandlerBase<SyncResultT, AsyncResultT>
     implements RequestHandler<SyncResultT, AsyncResultT> {
 
   protected final Request<SyncResultT, AsyncResultT> request;
+  protected final boolean isIdempotent;
   protected final DefaultSession session;
   protected final CqlIdentifier keyspace;
   protected final InternalDriverContext context;
@@ -44,11 +46,19 @@ public abstract class RequestHandlerBase<SyncResultT, AsyncResultT>
     this.context = context;
     this.queryPlan = context.loadBalancingPolicyWrapper().newQueryPlan();
 
-    DriverConfig config = context.config();
-    String profileName = request.getConfigProfile();
-    configProfile =
-        (profileName == null || profileName.isEmpty())
-            ? config.defaultProfile()
-            : config.getProfile(profileName);
+    if (request.getConfigProfile() != null) {
+      this.configProfile = request.getConfigProfile();
+    } else {
+      DriverConfig config = context.config();
+      String profileName = request.getConfigProfileName();
+      this.configProfile =
+          (profileName == null || profileName.isEmpty())
+              ? config.defaultProfile()
+              : config.getProfile(profileName);
+    }
+    this.isIdempotent =
+        (request.isIdempotent() == null)
+            ? configProfile.getBoolean(CoreDriverOption.REQUEST_DEFAULT_IDEMPOTENCE)
+            : request.isIdempotent();
   }
 }

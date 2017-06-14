@@ -86,6 +86,8 @@ public class RequestHandlerTestHarness implements AutoCloseable {
     Mockito.when(
             defaultConfigProfile.getConsistencyLevel(CoreDriverOption.REQUEST_SERIAL_CONSISTENCY))
         .thenReturn(ConsistencyLevel.SERIAL);
+    Mockito.when(defaultConfigProfile.getBoolean(CoreDriverOption.REQUEST_DEFAULT_IDEMPOTENCE))
+        .thenReturn(builder.defaultIdempotence);
 
     Mockito.when(config.defaultProfile()).thenReturn(defaultConfigProfile);
     Mockito.when(context.config()).thenReturn(config);
@@ -126,6 +128,7 @@ public class RequestHandlerTestHarness implements AutoCloseable {
   public static class Builder {
     private final ScheduledTaskCapturingEventLoop schedulingEventLoop;
     private final List<PoolBehavior> poolBehaviors = new ArrayList<>();
+    private boolean defaultIdempotence;
 
     public Builder() {
       this.schedulingEventLoop = new ScheduledTaskCapturingEventLoop(null);
@@ -172,6 +175,11 @@ public class RequestHandlerTestHarness implements AutoCloseable {
       behavior.setWriteSuccess();
       behavior.setResponseSuccess(response);
       poolBehaviors.add(behavior);
+      return this;
+    }
+
+    public Builder withDefaultIdempotence(boolean defaultIdempotence) {
+      this.defaultIdempotence = defaultIdempotence;
       return this;
     }
 

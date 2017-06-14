@@ -42,7 +42,8 @@ public class CqlRequestHandlerTest extends CqlRequestHandlerTestBase {
             .build()) {
 
       CompletionStage<AsyncResultSet> resultSetFuture =
-          new CqlRequestHandler(SIMPLE_STATEMENT, harness.getSession(), harness.getContext())
+          new CqlRequestHandler(
+                  UNDEFINED_IDEMPOTENCE_STATEMENT, harness.getSession(), harness.getContext())
               .asyncResult();
 
       assertThat(resultSetFuture)
@@ -73,7 +74,8 @@ public class CqlRequestHandlerTest extends CqlRequestHandlerTestBase {
     try (RequestHandlerTestHarness harness = harnessBuilder.build()) {
 
       CompletionStage<AsyncResultSet> resultSetFuture =
-          new CqlRequestHandler(SIMPLE_STATEMENT, harness.getSession(), harness.getContext())
+          new CqlRequestHandler(
+                  UNDEFINED_IDEMPOTENCE_STATEMENT, harness.getSession(), harness.getContext())
               .asyncResult();
 
       // First scheduled task is the timeout, run it before node1 has responded
@@ -101,7 +103,8 @@ public class CqlRequestHandlerTest extends CqlRequestHandlerTestBase {
             .build()) {
 
       CompletionStage<AsyncResultSet> resultSetFuture =
-          new CqlRequestHandler(SIMPLE_STATEMENT, harness.getSession(), harness.getContext())
+          new CqlRequestHandler(
+                  UNDEFINED_IDEMPOTENCE_STATEMENT, harness.getSession(), harness.getContext())
               .asyncResult();
 
       assertThat(resultSetFuture)

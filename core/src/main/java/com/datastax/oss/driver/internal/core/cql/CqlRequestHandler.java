@@ -115,16 +115,21 @@ public class CqlRequestHandler
     this.speculativeExecutionPolicy = context.speculativeExecutionPolicy();
     this.executions = new AtomicInteger(0);
 
-    // Start the initial execution
-    long nextExecution = context.speculativeExecutionPolicy().nextExecution(keyspace, request, 1);
-    if (nextExecution > 0) {
-      LOG.trace("Scheduling first speculative execution in {} ms", nextExecution);
-      this.pendingExecutions = new CopyOnWriteArrayList<>();
-      this.pendingExecutions.add(
-          scheduler.schedule(this::startExecution, nextExecution, TimeUnit.MILLISECONDS));
+    if (isIdempotent) {
+      // Start the initial execution
+      long nextExecution = context.speculativeExecutionPolicy().nextExecution(keyspace, request, 1);
+      if (nextExecution > 0) {
+        LOG.trace("Scheduling first speculative execution in {} ms", nextExecution);
+        this.pendingExecutions = new CopyOnWriteArrayList<>();
+        this.pendingExecutions.add(
+            scheduler.schedule(this::startExecution, nextExecution, TimeUnit.MILLISECONDS));
+      } else {
+        LOG.trace("Speculative execution policy returned {}, no next execution", nextExecution);
+        this.pendingExecutions = null; // we'll never need this so avoid allocation
+      }
     } else {
-      LOG.trace("Speculative execution policy returned {}, no next execution", nextExecution);
-      this.pendingExecutions = null; // we'll never need this so avoid allocation
+      LOG.trace("Request is not idempotent, no speculative executions");
+      this.pendingExecutions = null;
     }
     sendRequest(null, 0, 0);
   }
@@ -196,7 +201,7 @@ public class CqlRequestHandler
       NodeResponseCallback nodeResponseCallback =
           new NodeResponseCallback(node, execution, retryCount);
       channel
-          .write(message, false, Frame.NO_PAYLOAD, nodeResponseCallback)
+          .write(message, request.isTracing(), request.getCustomPayload(), nodeResponseCallback)
           .addListener(nodeResponseCallback);
     }
   }
@@ -359,34 +364,43 @@ public class CqlRequestHandler
         if (error instanceof ReadTimeoutException) {
           ReadTimeoutException readTimeout = (ReadTimeoutException) error;
           decision =
-              retryPolicy.onReadTimeout(
-                  request,
-                  readTimeout.getConsistencyLevel(),
-                  readTimeout.getBlockFor(),
-                  readTimeout.getReceived(),
-                  readTimeout.wasDataPresent(),
-                  retryCount);
+              isIdempotent
+                  ? retryPolicy.onReadTimeout(
+                      request,
+                      readTimeout.getConsistencyLevel(),
+                      readTimeout.getBlockFor(),
+                      readTimeout.getReceived(),
+                      readTimeout.wasDataPresent(),
+                      retryCount)
+                  : RetryDecision.RETHROW;
         } else if (error instanceof WriteTimeoutException) {
           WriteTimeoutException writeTimeout = (WriteTimeoutException) error;
           decision =
-              retryPolicy.onWriteTimeout(
-                  request,
-                  writeTimeout.getConsistencyLevel(),
-                  writeTimeout.getWriteType(),
-                  writeTimeout.getBlockFor(),
-                  writeTimeout.getReceived(),
-                  retryCount);
+              isIdempotent
+                  ? retryPolicy.onWriteTimeout(
+                      request,
+                      writeTimeout.getConsistencyLevel(),
+                      writeTimeout.getWriteType(),
+                      writeTimeout.getBlockFor(),
+                      writeTimeout.getReceived(),
+                      retryCount)
+                  : RetryDecision.RETHROW;
         } else if (error instanceof UnavailableException) {
           UnavailableException unavailable = (UnavailableException) error;
           decision =
-              retryPolicy.onUnavailable(
-                  request,
-                  unavailable.getConsistencyLevel(),
-                  unavailable.getRequired(),
-                  unavailable.getAlive(),
-                  retryCount);
+              isIdempotent
+                  ? retryPolicy.onUnavailable(
+                      request,
+                      unavailable.getConsistencyLevel(),
+                      unavailable.getRequired(),
+                      unavailable.getAlive(),
+                      retryCount)
+                  : RetryDecision.RETHROW;
         } else {
-          decision = retryPolicy.onErrorResponse(request, error, retryCount);
+          decision =
+              isIdempotent
+                  ? retryPolicy.onErrorResponse(request, error, retryCount)
+                  : RetryDecision.RETHROW;
         }
         processRetryDecision(decision, error);
       }
@@ -416,7 +430,10 @@ public class CqlRequestHandler
       if (result.isDone()) {
         return;
       }
-      RetryDecision decision = retryPolicy.onRequestAborted(request, error, retryCount);
+      RetryDecision decision =
+          isIdempotent
+              ? retryPolicy.onRequestAborted(request, error, retryCount)
+              : RetryDecision.RETHROW;
       processRetryDecision(decision, error);
     }
   }

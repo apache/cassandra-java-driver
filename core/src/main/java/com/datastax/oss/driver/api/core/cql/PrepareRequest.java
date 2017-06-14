@@ -29,4 +29,14 @@ public interface PrepareRequest
   static PrepareRequest from(Statement statement) {
     throw new UnsupportedOperationException("TODO");
   }
+
+  @Override
+  default Boolean isIdempotent() {
+    return true; // Retrying to prepare is always safe
+  }
+
+  @Override
+  default boolean isTracing() {
+    return false;
+  }
 }

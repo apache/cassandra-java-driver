@@ -16,6 +16,7 @@
 package com.datastax.oss.driver.internal.core.cql;
 
 import com.datastax.oss.driver.api.core.cql.AsyncResultSet;
+import com.datastax.oss.driver.api.core.cql.SimpleStatement;
 import com.datastax.oss.driver.api.core.specex.SpeculativeExecutionPolicy;
 import com.datastax.oss.driver.internal.core.util.concurrent.ScheduledTaskCapturingEventLoop;
 import com.datastax.oss.protocol.internal.ProtocolConstants;
@@ -29,9 +30,33 @@ import static com.datastax.oss.driver.Assertions.assertThat;
 
 public class CqlRequestHandlerSpeculativeExecutionTest extends CqlRequestHandlerTestBase {
 
-  @Test
-  public void should_schedule_speculative_executions() {
-    RequestHandlerTestHarness.Builder harnessBuilder = RequestHandlerTestHarness.builder();
+  @Test(dataProvider = "nonIdempotentConfig")
+  public void should_not_schedule_speculative_executions_if_not_idempotent(
+      boolean defaultIdempotence, SimpleStatement statement) {
+    RequestHandlerTestHarness.Builder harnessBuilder =
+        RequestHandlerTestHarness.builder().withDefaultIdempotence(defaultIdempotence);
+    PoolBehavior node1Behavior = harnessBuilder.customBehavior(node1);
+
+    try (RequestHandlerTestHarness harness = harnessBuilder.build()) {
+      SpeculativeExecutionPolicy speculativeExecutionPolicy =
+          harness.getContext().speculativeExecutionPolicy();
+
+      new CqlRequestHandler(statement, harness.getSession(), harness.getContext()).asyncResult();
+
+      node1Behavior.verifyWrite();
+
+      harness.nextScheduledTask(); // Discard the timeout task
+      assertThat(harness.nextScheduledTask()).isNull();
+
+      Mockito.verifyNoMoreInteractions(speculativeExecutionPolicy);
+    }
+  }
+
+  @Test(dataProvider = "idempotentConfig")
+  public void should_schedule_speculative_executions(
+      boolean defaultIdempotence, SimpleStatement statement) {
+    RequestHandlerTestHarness.Builder harnessBuilder =
+        RequestHandlerTestHarness.builder().withDefaultIdempotence(defaultIdempotence);
     PoolBehavior node1Behavior = harnessBuilder.customBehavior(node1);
     PoolBehavior node2Behavior = harnessBuilder.customBehavior(node2);
     PoolBehavior node3Behavior = harnessBuilder.customBehavior(node3);
@@ -41,15 +66,13 @@ public class CqlRequestHandlerSpeculativeExecutionTest extends CqlRequestHandler
           harness.getContext().speculativeExecutionPolicy();
       long firstExecutionDelay = 100L;
       long secondExecutionDelay = 200L;
-      Mockito.when(speculativeExecutionPolicy.nextExecution(null, SIMPLE_STATEMENT, 1))
+      Mockito.when(speculativeExecutionPolicy.nextExecution(null, statement, 1))
           .thenReturn(firstExecutionDelay);
-      Mockito.when(speculativeExecutionPolicy.nextExecution(null, SIMPLE_STATEMENT, 2))
+      Mockito.when(speculativeExecutionPolicy.nextExecution(null, statement, 2))
           .thenReturn(secondExecutionDelay);
-      Mockito.when(speculativeExecutionPolicy.nextExecution(null, SIMPLE_STATEMENT, 3))
-          .thenReturn(0L);
+      Mockito.when(speculativeExecutionPolicy.nextExecution(null, statement, 3)).thenReturn(0L);
 
-      new CqlRequestHandler(SIMPLE_STATEMENT, harness.getSession(), harness.getContext())
-          .asyncResult();
+      new CqlRequestHandler(statement, harness.getSession(), harness.getContext()).asyncResult();
 
       node1Behavior.verifyWrite();
 
@@ -76,9 +99,11 @@ public class CqlRequestHandlerSpeculativeExecutionTest extends CqlRequestHandler
     }
   }
 
-  @Test
-  public void should_not_start_execution_if_result_complete() {
-    RequestHandlerTestHarness.Builder harnessBuilder = RequestHandlerTestHarness.builder();
+  @Test(dataProvider = "idempotentConfig")
+  public void should_not_start_execution_if_result_complete(
+      boolean defaultIdempotence, SimpleStatement statement) {
+    RequestHandlerTestHarness.Builder harnessBuilder =
+        RequestHandlerTestHarness.builder().withDefaultIdempotence(defaultIdempotence);
     PoolBehavior node1Behavior = harnessBuilder.customBehavior(node1);
     PoolBehavior node2Behavior = harnessBuilder.customBehavior(node2);
 
@@ -86,11 +111,11 @@ public class CqlRequestHandlerSpeculativeExecutionTest extends CqlRequestHandler
       SpeculativeExecutionPolicy speculativeExecutionPolicy =
           harness.getContext().speculativeExecutionPolicy();
       long firstExecutionDelay = 100L;
-      Mockito.when(speculativeExecutionPolicy.nextExecution(null, SIMPLE_STATEMENT, 1))
+      Mockito.when(speculativeExecutionPolicy.nextExecution(null, statement, 1))
           .thenReturn(firstExecutionDelay);
 
       CompletionStage<AsyncResultSet> resultSetFuture =
-          new CqlRequestHandler(SIMPLE_STATEMENT, harness.getSession(), harness.getContext())
+          new CqlRequestHandler(statement, harness.getSession(), harness.getContext())
               .asyncResult();
       node1Behavior.verifyWrite();
 
@@ -117,9 +142,11 @@ public class CqlRequestHandlerSpeculativeExecutionTest extends CqlRequestHandler
     }
   }
 
-  @Test
-  public void should_retry_in_speculative_executions() {
-    RequestHandlerTestHarness.Builder harnessBuilder = RequestHandlerTestHarness.builder();
+  @Test(dataProvider = "idempotentConfig")
+  public void should_retry_in_speculative_executions(
+      boolean defaultIdempotence, SimpleStatement statement) {
+    RequestHandlerTestHarness.Builder harnessBuilder =
+        RequestHandlerTestHarness.builder().withDefaultIdempotence(defaultIdempotence);
     PoolBehavior node1Behavior = harnessBuilder.customBehavior(node1);
     PoolBehavior node2Behavior = harnessBuilder.customBehavior(node2);
     harnessBuilder.withResponse(node3, defaultFrameOf(singleRow()));
@@ -128,11 +155,11 @@ public class CqlRequestHandlerSpeculativeExecutionTest extends CqlRequestHandler
       SpeculativeExecutionPolicy speculativeExecutionPolicy =
           harness.getContext().speculativeExecutionPolicy();
       long firstExecutionDelay = 100L;
-      Mockito.when(speculativeExecutionPolicy.nextExecution(null, SIMPLE_STATEMENT, 1))
+      Mockito.when(speculativeExecutionPolicy.nextExecution(null, statement, 1))
           .thenReturn(firstExecutionDelay);
 
       CompletionStage<AsyncResultSet> resultSetFuture =
-          new CqlRequestHandler(SIMPLE_STATEMENT, harness.getSession(), harness.getContext())
+          new CqlRequestHandler(statement, harness.getSession(), harness.getContext())
               .asyncResult();
       node1Behavior.verifyWrite();
       // do not simulate a response from node1. The request will stay hanging for the rest of this test
@@ -155,9 +182,11 @@ public class CqlRequestHandlerSpeculativeExecutionTest extends CqlRequestHandler
     }
   }
 
-  @Test
-  public void should_stop_retrying_other_executions_if_result_complete() {
-    RequestHandlerTestHarness.Builder harnessBuilder = RequestHandlerTestHarness.builder();
+  @Test(dataProvider = "idempotentConfig")
+  public void should_stop_retrying_other_executions_if_result_complete(
+      boolean defaultIdempotence, SimpleStatement statement) {
+    RequestHandlerTestHarness.Builder harnessBuilder =
+        RequestHandlerTestHarness.builder().withDefaultIdempotence(defaultIdempotence);
     PoolBehavior node1Behavior = harnessBuilder.customBehavior(node1);
     PoolBehavior node2Behavior = harnessBuilder.customBehavior(node2);
     PoolBehavior node3Behavior = harnessBuilder.customBehavior(node3);
@@ -166,11 +195,11 @@ public class CqlRequestHandlerSpeculativeExecutionTest extends CqlRequestHandler
       SpeculativeExecutionPolicy speculativeExecutionPolicy =
           harness.getContext().speculativeExecutionPolicy();
       long firstExecutionDelay = 100L;
-      Mockito.when(speculativeExecutionPolicy.nextExecution(null, SIMPLE_STATEMENT, 1))
+      Mockito.when(speculativeExecutionPolicy.nextExecution(null, statement, 1))
           .thenReturn(firstExecutionDelay);
 
       CompletionStage<AsyncResultSet> resultSetFuture =
-          new CqlRequestHandler(SIMPLE_STATEMENT, harness.getSession(), harness.getContext())
+          new CqlRequestHandler(statement, harness.getSession(), harness.getContext())
               .asyncResult();
       node1Behavior.verifyWrite();
 

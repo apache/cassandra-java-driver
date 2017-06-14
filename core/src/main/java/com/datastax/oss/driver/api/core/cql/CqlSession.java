@@ -17,8 +17,6 @@ package com.datastax.oss.driver.api.core.cql;
 
 import com.datastax.oss.driver.api.core.session.Request;
 import com.datastax.oss.driver.api.core.session.Session;
-import com.datastax.oss.driver.internal.core.cql.DefaultSimpleStatement;
-import java.util.Collections;
 import java.util.concurrent.CompletionStage;
 
 public interface CqlSession extends Session {
@@ -34,11 +32,11 @@ public interface CqlSession extends Session {
   }
 
   default ResultSet execute(String query) {
-    return execute(new DefaultSimpleStatement(query, Collections.emptyList(), null));
+    return execute(SimpleStatement.newInstance(query));
   }
 
   default CompletionStage<AsyncResultSet> executeAsync(String query) {
-    return executeAsync(new DefaultSimpleStatement(query, Collections.emptyList(), null));
+    return executeAsync(SimpleStatement.newInstance(query));
   }
 
   default PreparedStatement prepare(String query) {

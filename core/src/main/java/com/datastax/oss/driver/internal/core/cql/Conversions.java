@@ -16,6 +16,7 @@
 package com.datastax.oss.driver.internal.core.cql;
 
 import com.datastax.oss.driver.api.core.ConsistencyLevel;
+import com.datastax.oss.driver.api.core.ProtocolVersion;
 import com.datastax.oss.driver.api.core.auth.AuthenticationException;
 import com.datastax.oss.driver.api.core.config.CoreDriverOption;
 import com.datastax.oss.driver.api.core.config.DriverConfigProfile;
@@ -61,10 +62,12 @@ import com.datastax.oss.protocol.internal.response.result.ColumnSpec;
 import com.datastax.oss.protocol.internal.response.result.Prepared;
 import com.datastax.oss.protocol.internal.response.result.Rows;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Utility methods to convert to/from protocol messages.
@@ -78,15 +81,16 @@ class Conversions {
     if (statement instanceof SimpleStatement) {
       SimpleStatement simpleStatement = (SimpleStatement) statement;
 
-      CodecRegistry codecRegistry = context.codecRegistry();
-      List<Object> values = simpleStatement.getValues();
-      List<ByteBuffer> encodedValues = new ArrayList<>(values.size());
-      for (Object value : values) {
-        encodedValues.add(codecRegistry.codecFor(value).encode(value, context.protocolVersion()));
+      if (!simpleStatement.getPositionalValues().isEmpty()
+          && !simpleStatement.getNamedValues().isEmpty()) {
+        throw new IllegalArgumentException(
+            "Can't have both positional and named values in a statement.");
       }
+
+      CodecRegistry codecRegistry = context.codecRegistry();
+      ProtocolVersion protocolVersion = context.protocolVersion();
       int consistency =
           config.getConsistencyLevel(CoreDriverOption.REQUEST_CONSISTENCY).getProtocolCode();
-      boolean skipMetadata = false; // TODO set for bound statements
       int pageSize = config.getInt(CoreDriverOption.REQUEST_PAGE_SIZE);
       int serialConsistency =
           config.getConsistencyLevel(CoreDriverOption.REQUEST_SERIAL_CONSISTENCY).getProtocolCode();
@@ -94,9 +98,9 @@ class Conversions {
       QueryOptions queryOptions =
           new QueryOptions(
               consistency,
-              encodedValues,
-              Collections.emptyMap(),
-              skipMetadata,
+              encode(simpleStatement.getPositionalValues(), codecRegistry, protocolVersion),
+              encode(simpleStatement.getNamedValues(), codecRegistry, protocolVersion),
+              false,
               pageSize,
               statement.getPagingState(),
               serialConsistency,
@@ -105,6 +109,34 @@ class Conversions {
     }
     // TODO handle other types of statements
     throw new UnsupportedOperationException("TODO handle other types of statements");
+  }
+
+  private static List<ByteBuffer> encode(
+      List<Object> values, CodecRegistry codecRegistry, ProtocolVersion protocolVersion) {
+    if (values.isEmpty()) {
+      return Collections.emptyList();
+    } else {
+      List<ByteBuffer> encodedValues = new ArrayList<>(values.size());
+      for (Object value : values) {
+        encodedValues.add(codecRegistry.codecFor(value).encode(value, protocolVersion));
+      }
+      return encodedValues;
+    }
+  }
+
+  private static Map<String, ByteBuffer> encode(
+      Map<String, Object> values, CodecRegistry codecRegistry, ProtocolVersion protocolVersion) {
+    if (values.isEmpty()) {
+      return Collections.emptyMap();
+    } else {
+      ImmutableMap.Builder<String, ByteBuffer> encodedValues = ImmutableMap.builder();
+      for (Map.Entry<String, Object> entry : values.entrySet()) {
+        encodedValues.put(
+            entry.getKey(),
+            codecRegistry.codecFor(entry.getValue()).encode(entry.getValue(), protocolVersion));
+      }
+      return encodedValues.build();
+    }
   }
 
   static AsyncResultSet toResultSet(

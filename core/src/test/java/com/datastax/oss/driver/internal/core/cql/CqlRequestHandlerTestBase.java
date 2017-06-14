@@ -15,7 +15,9 @@
  */
 package com.datastax.oss.driver.internal.core.cql;
 
+import com.datastax.oss.driver.TestDataProviders;
 import com.datastax.oss.driver.api.core.CoreProtocolVersion;
+import com.datastax.oss.driver.api.core.cql.SimpleStatement;
 import com.datastax.oss.driver.api.core.metadata.Node;
 import com.datastax.oss.protocol.internal.Frame;
 import com.datastax.oss.protocol.internal.Message;
@@ -34,11 +36,16 @@ import java.util.Queue;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.DataProvider;
 
 abstract class CqlRequestHandlerTestBase {
 
-  protected static final DefaultSimpleStatement SIMPLE_STATEMENT =
-      new DefaultSimpleStatement("mock query", Collections.emptyList(), null);
+  protected static final SimpleStatement UNDEFINED_IDEMPOTENCE_STATEMENT =
+      SimpleStatement.newInstance("mock query");
+  protected static final SimpleStatement IDEMPOTENT_STATEMENT =
+      SimpleStatement.builder("mock query").withIdempotence(true).build();
+  protected static final SimpleStatement NON_IDEMPOTENT_STATEMENT =
+      SimpleStatement.builder("mock query").withIdempotence(false).build();
 
   @Mock protected Node node1;
   @Mock protected Node node2;
@@ -75,5 +82,36 @@ abstract class CqlRequestHandlerTestBase {
     Queue<List<ByteBuffer>> data = new LinkedList<>();
     data.add(ImmutableList.of(Bytes.fromHexString("0x68656C6C6F2C20776F726C64")));
     return new Rows(metadata, data);
+  }
+
+  /**
+   * The combination of the default idempotence option and statement setting that produce an
+   * idempotent statement.
+   */
+  @DataProvider
+  public static Object[][] idempotentConfig() {
+    return new Object[][] {
+      new Object[] {true, UNDEFINED_IDEMPOTENCE_STATEMENT},
+      new Object[] {false, IDEMPOTENT_STATEMENT},
+      new Object[] {true, IDEMPOTENT_STATEMENT},
+    };
+  }
+
+  /**
+   * The combination of the default idempotence option and statement setting that produce a non
+   * idempotent statement.
+   */
+  @DataProvider
+  public static Object[][] nonIdempotentConfig() {
+    return new Object[][] {
+      new Object[] {false, UNDEFINED_IDEMPOTENCE_STATEMENT},
+      new Object[] {true, NON_IDEMPOTENT_STATEMENT},
+      new Object[] {false, NON_IDEMPOTENT_STATEMENT},
+    };
+  }
+
+  @DataProvider
+  public static Object[][] allIdempotenceConfigs() {
+    return TestDataProviders.concat(idempotentConfig(), nonIdempotentConfig());
   }
 }

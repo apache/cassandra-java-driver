@@ -21,6 +21,7 @@ import com.datastax.oss.driver.api.core.connection.HeartbeatException;
 import com.datastax.oss.driver.api.core.cql.AsyncResultSet;
 import com.datastax.oss.driver.api.core.cql.ExecutionInfo;
 import com.datastax.oss.driver.api.core.cql.Row;
+import com.datastax.oss.driver.api.core.cql.SimpleStatement;
 import com.datastax.oss.driver.api.core.metadata.Node;
 import com.datastax.oss.driver.api.core.retry.RetryDecision;
 import com.datastax.oss.driver.api.core.retry.RetryPolicy;
@@ -48,10 +49,12 @@ import static org.mockito.ArgumentMatchers.eq;
 
 public class CqlRequestHandlerRetryTest extends CqlRequestHandlerTestBase {
 
-  @Test
-  public void should_always_try_next_node_if_bootstrapping() {
+  @Test(dataProvider = "allIdempotenceConfigs")
+  public void should_always_try_next_node_if_bootstrapping(
+      boolean defaultIdempotence, SimpleStatement statement) {
     try (RequestHandlerTestHarness harness =
         RequestHandlerTestHarness.builder()
+            .withDefaultIdempotence(defaultIdempotence)
             .withResponse(
                 node1,
                 defaultFrameOf(
@@ -60,7 +63,7 @@ public class CqlRequestHandlerRetryTest extends CqlRequestHandlerTestBase {
             .build()) {
 
       CompletionStage<AsyncResultSet> resultSetFuture =
-          new CqlRequestHandler(SIMPLE_STATEMENT, harness.getSession(), harness.getContext())
+          new CqlRequestHandler(statement, harness.getSession(), harness.getContext())
               .asyncResult();
 
       assertThat(resultSetFuture)
@@ -87,17 +90,19 @@ public class CqlRequestHandlerRetryTest extends CqlRequestHandlerTestBase {
     }
   }
 
-  @Test
-  public void should_always_rethrow_query_validation_error() {
+  @Test(dataProvider = "allIdempotenceConfigs")
+  public void should_always_rethrow_query_validation_error(
+      boolean defaultIdempotence, SimpleStatement statement) {
     try (RequestHandlerTestHarness harness =
         RequestHandlerTestHarness.builder()
+            .withDefaultIdempotence(defaultIdempotence)
             .withResponse(
                 node1,
                 defaultFrameOf(new Error(ProtocolConstants.ErrorCode.INVALID, "mock message")))
             .build()) {
 
       CompletionStage<AsyncResultSet> resultSetFuture =
-          new CqlRequestHandler(SIMPLE_STATEMENT, harness.getSession(), harness.getContext())
+          new CqlRequestHandler(statement, harness.getSession(), harness.getContext())
               .asyncResult();
 
       assertThat(resultSetFuture)
@@ -111,9 +116,11 @@ public class CqlRequestHandlerRetryTest extends CqlRequestHandlerTestBase {
     }
   }
 
-  @Test(dataProvider = "failureScenarios")
-  public void should_try_next_node_if_retry_policy_decides_so(FailureScenario failureScenario) {
-    RequestHandlerTestHarness.Builder harnessBuilder = RequestHandlerTestHarness.builder();
+  @Test(dataProvider = "failureAndIdempotent")
+  public void should_try_next_node_if_idempotent_and_retry_policy_decides_so(
+      FailureScenario failureScenario, boolean defaultIdempotence, SimpleStatement statement) {
+    RequestHandlerTestHarness.Builder harnessBuilder =
+        RequestHandlerTestHarness.builder().withDefaultIdempotence(defaultIdempotence);
     failureScenario.mockRequestError(harnessBuilder, node1);
     harnessBuilder.withResponse(node2, defaultFrameOf(singleRow()));
 
@@ -122,7 +129,7 @@ public class CqlRequestHandlerRetryTest extends CqlRequestHandlerTestBase {
           harness.getContext().retryPolicy(), RetryDecision.RETRY_NEXT);
 
       CompletionStage<AsyncResultSet> resultSetFuture =
-          new CqlRequestHandler(SIMPLE_STATEMENT, harness.getSession(), harness.getContext())
+          new CqlRequestHandler(statement, harness.getSession(), harness.getContext())
               .asyncResult();
 
       assertThat(resultSetFuture)
@@ -140,9 +147,11 @@ public class CqlRequestHandlerRetryTest extends CqlRequestHandlerTestBase {
     }
   }
 
-  @Test(dataProvider = "failureScenarios")
-  public void should_try_same_node_if_retry_policy_decides_so(FailureScenario failureScenario) {
-    RequestHandlerTestHarness.Builder harnessBuilder = RequestHandlerTestHarness.builder();
+  @Test(dataProvider = "failureAndIdempotent")
+  public void should_try_same_node_if_idempotent_and_retry_policy_decides_so(
+      FailureScenario failureScenario, boolean defaultIdempotence, SimpleStatement statement) {
+    RequestHandlerTestHarness.Builder harnessBuilder =
+        RequestHandlerTestHarness.builder().withDefaultIdempotence(defaultIdempotence);
     failureScenario.mockRequestError(harnessBuilder, node1);
     harnessBuilder.withResponse(node1, defaultFrameOf(singleRow()));
 
@@ -151,7 +160,7 @@ public class CqlRequestHandlerRetryTest extends CqlRequestHandlerTestBase {
           harness.getContext().retryPolicy(), RetryDecision.RETRY_SAME);
 
       CompletionStage<AsyncResultSet> resultSetFuture =
-          new CqlRequestHandler(SIMPLE_STATEMENT, harness.getSession(), harness.getContext())
+          new CqlRequestHandler(statement, harness.getSession(), harness.getContext())
               .asyncResult();
 
       assertThat(resultSetFuture)
@@ -169,9 +178,11 @@ public class CqlRequestHandlerRetryTest extends CqlRequestHandlerTestBase {
     }
   }
 
-  @Test(dataProvider = "failureScenarios")
-  public void should_ignore_error_if_retry_policy_decides_so(FailureScenario failureScenario) {
-    RequestHandlerTestHarness.Builder harnessBuilder = RequestHandlerTestHarness.builder();
+  @Test(dataProvider = "failureAndIdempotent")
+  public void should_ignore_error_if_idempotent_and_retry_policy_decides_so(
+      FailureScenario failureScenario, boolean defaultIdempotence, SimpleStatement statement) {
+    RequestHandlerTestHarness.Builder harnessBuilder =
+        RequestHandlerTestHarness.builder().withDefaultIdempotence(defaultIdempotence);
     failureScenario.mockRequestError(harnessBuilder, node1);
 
     try (RequestHandlerTestHarness harness = harnessBuilder.build()) {
@@ -179,7 +190,7 @@ public class CqlRequestHandlerRetryTest extends CqlRequestHandlerTestBase {
           harness.getContext().retryPolicy(), RetryDecision.IGNORE);
 
       CompletionStage<AsyncResultSet> resultSetFuture =
-          new CqlRequestHandler(SIMPLE_STATEMENT, harness.getSession(), harness.getContext())
+          new CqlRequestHandler(statement, harness.getSession(), harness.getContext())
               .asyncResult();
 
       assertThat(resultSetFuture)
@@ -195,9 +206,11 @@ public class CqlRequestHandlerRetryTest extends CqlRequestHandlerTestBase {
     }
   }
 
-  @Test(dataProvider = "failureScenarios")
-  public void should_rethrow_error_if_retry_policy_decides_so(FailureScenario failureScenario) {
-    RequestHandlerTestHarness.Builder harnessBuilder = RequestHandlerTestHarness.builder();
+  @Test(dataProvider = "failureAndIdempotent")
+  public void should_rethrow_error_if_idempotent_and_retry_policy_decides_so(
+      FailureScenario failureScenario, boolean defaultIdempotence, SimpleStatement statement) {
+    RequestHandlerTestHarness.Builder harnessBuilder =
+        RequestHandlerTestHarness.builder().withDefaultIdempotence(defaultIdempotence);
     failureScenario.mockRequestError(harnessBuilder, node1);
 
     try (RequestHandlerTestHarness harness = harnessBuilder.build()) {
@@ -206,12 +219,35 @@ public class CqlRequestHandlerRetryTest extends CqlRequestHandlerTestBase {
           harness.getContext().retryPolicy(), RetryDecision.RETHROW);
 
       CompletionStage<AsyncResultSet> resultSetFuture =
-          new CqlRequestHandler(SIMPLE_STATEMENT, harness.getSession(), harness.getContext())
+          new CqlRequestHandler(statement, harness.getSession(), harness.getContext())
               .asyncResult();
 
       assertThat(resultSetFuture)
           .isFailed(
               error -> assertThat(error).isInstanceOf(failureScenario.expectedExceptionClass));
+    }
+  }
+
+  @Test(dataProvider = "failureAndNotIdempotent")
+  public void should_rethrow_error_if_not_idempotent(
+      FailureScenario failureScenario, boolean defaultIdempotence, SimpleStatement statement) {
+    RequestHandlerTestHarness.Builder harnessBuilder =
+        RequestHandlerTestHarness.builder().withDefaultIdempotence(defaultIdempotence);
+    failureScenario.mockRequestError(harnessBuilder, node1);
+    harnessBuilder.withResponse(node2, defaultFrameOf(singleRow()));
+
+    try (RequestHandlerTestHarness harness = harnessBuilder.build()) {
+      CompletionStage<AsyncResultSet> resultSetFuture =
+          new CqlRequestHandler(statement, harness.getSession(), harness.getContext())
+              .asyncResult();
+
+      assertThat(resultSetFuture)
+          .isFailed(
+              error -> {
+                assertThat(error).isInstanceOf(failureScenario.expectedExceptionClass);
+                // When non idempotent, the policy is bypassed completely:
+                Mockito.verifyNoMoreInteractions(harness.getContext().retryPolicy());
+              });
     }
   }
 
@@ -232,7 +268,7 @@ public class CqlRequestHandlerRetryTest extends CqlRequestHandlerTestBase {
   }
 
   @DataProvider
-  public static Object[][] failureScenarios() {
+  public static Object[][] failure() {
     return TestDataProviders.fromList(
         new FailureScenario(ReadTimeoutException.class) {
           @Override
@@ -248,7 +284,12 @@ public class CqlRequestHandlerRetryTest extends CqlRequestHandlerTestBase {
           public void mockRetryPolicyDecision(RetryPolicy policy, RetryDecision decision) {
             Mockito.when(
                     policy.onReadTimeout(
-                        SIMPLE_STATEMENT, ConsistencyLevel.LOCAL_ONE, 2, 1, true, 0))
+                        any(SimpleStatement.class),
+                        eq(ConsistencyLevel.LOCAL_ONE),
+                        eq(2),
+                        eq(1),
+                        eq(true),
+                        eq(0)))
                 .thenReturn(decision);
           }
         },
@@ -270,7 +311,12 @@ public class CqlRequestHandlerRetryTest extends CqlRequestHandlerTestBase {
           public void mockRetryPolicyDecision(RetryPolicy policy, RetryDecision decision) {
             Mockito.when(
                     policy.onWriteTimeout(
-                        SIMPLE_STATEMENT, ConsistencyLevel.LOCAL_ONE, WriteType.SIMPLE, 2, 1, 0))
+                        any(SimpleStatement.class),
+                        eq(ConsistencyLevel.LOCAL_ONE),
+                        eq(WriteType.SIMPLE),
+                        eq(2),
+                        eq(1),
+                        eq(0)))
                 .thenReturn(decision);
           }
         },
@@ -287,7 +333,12 @@ public class CqlRequestHandlerRetryTest extends CqlRequestHandlerTestBase {
           @Override
           public void mockRetryPolicyDecision(RetryPolicy policy, RetryDecision decision) {
             Mockito.when(
-                    policy.onUnavailable(SIMPLE_STATEMENT, ConsistencyLevel.LOCAL_ONE, 2, 1, 0))
+                    policy.onUnavailable(
+                        any(SimpleStatement.class),
+                        eq(ConsistencyLevel.LOCAL_ONE),
+                        eq(2),
+                        eq(1),
+                        eq(0)))
                 .thenReturn(decision);
           }
         },
@@ -303,7 +354,8 @@ public class CqlRequestHandlerRetryTest extends CqlRequestHandlerTestBase {
           @Override
           public void mockRetryPolicyDecision(RetryPolicy policy, RetryDecision decision) {
             Mockito.when(
-                    policy.onErrorResponse(eq(SIMPLE_STATEMENT), any(ServerError.class), eq(0)))
+                    policy.onErrorResponse(
+                        any(SimpleStatement.class), any(ServerError.class), eq(0)))
                 .thenReturn(decision);
           }
         },
@@ -317,9 +369,19 @@ public class CqlRequestHandlerRetryTest extends CqlRequestHandlerTestBase {
           public void mockRetryPolicyDecision(RetryPolicy policy, RetryDecision decision) {
             Mockito.when(
                     policy.onRequestAborted(
-                        eq(SIMPLE_STATEMENT), any(HeartbeatException.class), eq(0)))
+                        any(SimpleStatement.class), any(HeartbeatException.class), eq(0)))
                 .thenReturn(decision);
           }
         });
+  }
+
+  @DataProvider
+  public static Object[][] failureAndIdempotent() {
+    return TestDataProviders.combine(failure(), idempotentConfig());
+  }
+
+  @DataProvider
+  public static Object[][] failureAndNotIdempotent() {
+    return TestDataProviders.combine(failure(), nonIdempotentConfig());
   }
 }

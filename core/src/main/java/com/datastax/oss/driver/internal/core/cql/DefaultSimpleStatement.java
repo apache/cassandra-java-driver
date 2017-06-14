@@ -15,26 +15,70 @@
  */
 package com.datastax.oss.driver.internal.core.cql;
 
+import com.datastax.oss.driver.api.core.config.DriverConfigProfile;
 import com.datastax.oss.driver.api.core.cql.SimpleStatement;
 import java.nio.ByteBuffer;
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 
 public class DefaultSimpleStatement implements SimpleStatement {
 
   private final String query;
-  private final List<Object> values;
-  private final String configProfile;
+  private final List<Object> positionalValues;
+  private final Map<String, Object> namedValues;
+  private final String configProfileName;
+  private final DriverConfigProfile configProfile;
+  private final Map<String, ByteBuffer> customPayload;
+  private final Boolean idempotent;
+  private final boolean tracing;
   private final ByteBuffer pagingState;
 
-  public DefaultSimpleStatement(String query, List<Object> values, String configProfile) {
-    this(query, values, configProfile, null);
+  public DefaultSimpleStatement(String query, List<Object> positionalValues) {
+    this(
+        query,
+        positionalValues,
+        Collections.emptyMap(),
+        null,
+        null,
+        Collections.emptyMap(),
+        null,
+        false,
+        null);
   }
 
-  private DefaultSimpleStatement(
-      String query, List<Object> values, String configProfile, ByteBuffer pagingState) {
+  public DefaultSimpleStatement(String query, Map<String, Object> namedValues) {
+    this(
+        query,
+        Collections.emptyList(),
+        namedValues,
+        null,
+        null,
+        Collections.emptyMap(),
+        null,
+        false,
+        null);
+  }
+
+  /** @see SimpleStatement#builder(String) */
+  public DefaultSimpleStatement(
+      String query,
+      List<Object> positionalValues,
+      Map<String, Object> namedValues,
+      String configProfileName,
+      DriverConfigProfile configProfile,
+      Map<String, ByteBuffer> customPayload,
+      Boolean idempotent,
+      boolean tracing,
+      ByteBuffer pagingState) {
     this.query = query;
-    this.values = values;
+    this.positionalValues = positionalValues;
+    this.namedValues = namedValues;
+    this.configProfileName = configProfileName;
     this.configProfile = configProfile;
+    this.customPayload = customPayload;
+    this.idempotent = idempotent;
+    this.tracing = tracing;
     this.pagingState = pagingState;
   }
 
@@ -44,13 +88,44 @@ public class DefaultSimpleStatement implements SimpleStatement {
   }
 
   @Override
-  public List<Object> getValues() {
-    return values;
+  public List<Object> getPositionalValues() {
+    return positionalValues;
   }
 
   @Override
-  public String getConfigProfile() {
+  public Map<String, Object> getNamedValues() {
+    return namedValues;
+  }
+
+  @Override
+  public String getConfigProfileName() {
+    return configProfileName;
+  }
+
+  @Override
+  public DriverConfigProfile getConfigProfile() {
     return configProfile;
+  }
+
+  @Override
+  public String getKeyspace() {
+    // Not implemented yet, waiting for CASSANDRA-10145 to land in a release
+    return null;
+  }
+
+  @Override
+  public Map<String, ByteBuffer> getCustomPayload() {
+    return customPayload;
+  }
+
+  @Override
+  public Boolean isIdempotent() {
+    return idempotent;
+  }
+
+  @Override
+  public boolean isTracing() {
+    return tracing;
   }
 
   @Override
@@ -60,6 +135,15 @@ public class DefaultSimpleStatement implements SimpleStatement {
 
   @Override
   public DefaultSimpleStatement copy(ByteBuffer newPagingState) {
-    return new DefaultSimpleStatement(query, values, configProfile, newPagingState);
+    return new DefaultSimpleStatement(
+        query,
+        positionalValues,
+        namedValues,
+        configProfileName,
+        configProfile,
+        customPayload,
+        idempotent,
+        tracing,
+        newPagingState);
   }
 }
