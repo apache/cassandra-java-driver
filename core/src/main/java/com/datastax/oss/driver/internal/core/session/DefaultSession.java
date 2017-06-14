@@ -59,9 +59,9 @@ import org.slf4j.LoggerFactory;
  * <p>It executes requests by:
  *
  * <ul>
- * <li>picking the appropriate processor to convert the request into a protocol message.
- * <li>getting a query plan from the load balancing policy
- * <li>trying to send the message on each pool, in the order of the query plan
+ *   <li>picking the appropriate processor to convert the request into a protocol message.
+ *   <li>getting a query plan from the load balancing policy
+ *   <li>trying to send the message on each pool, in the order of the query plan
  * </ul>
  */
 public class DefaultSession implements CqlSession {
