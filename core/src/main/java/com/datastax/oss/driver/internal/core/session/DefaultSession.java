@@ -59,9 +59,9 @@ import org.slf4j.LoggerFactory;
  * <p>It executes requests by:
  *
  * <ul>
- *   <li>picking the appropriate processor to convert the request into a protocol message.
- *   <li>getting a query plan from the load balancing policy
- *   <li>trying to send the message on each pool, in the order of the query plan
+ * <li>picking the appropriate processor to convert the request into a protocol message.
+ * <li>getting a query plan from the load balancing policy
+ * <li>trying to send the message on each pool, in the order of the query plan
  * </ul>
  */
 public class DefaultSession implements CqlSession {
@@ -150,6 +150,10 @@ public class DefaultSession implements CqlSession {
 
   private <SyncResultT, AsyncResultT> RequestHandler<SyncResultT, AsyncResultT> newHandler(
       Request<SyncResultT, AsyncResultT> request) {
+    if (request.getKeyspace() != null) {
+      // TODO CASSANDRA-10145
+      throw new UnsupportedOperationException("Per-request keyspaces are not supported yet");
+    }
     return processorRegistry.processorFor(request).newHandler(request, this, context);
   }
 
