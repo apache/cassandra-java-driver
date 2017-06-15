@@ -21,6 +21,24 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * A one-off CQL statement consisting of a query string with optional placeholders, and a set of
+ * values for these placeholders.
+ *
+ * <p>To create instances, client applications can use the {@code newInstance} factory methods on
+ * this interface for common cases, or {@link #builder(String)} for more control over the
+ * parameters. They can then be passed to {@link CqlSession#execute(Statement)}.
+ *
+ * <p>Simple statements should be reserved for queries that will only be executed a few times by an
+ * application. For more frequent queries, {@link PreparedStatement} provides many advantages: it is
+ * more efficient because the server parses the query only once and caches the result; it allows the
+ * server to return metadata about the bind variables, which allows the driver to validate the
+ * values earlier, and apply certain optimizations like token-aware routing.
+ *
+ * <p>The default simple statement implementation returned by the driver is <b>immutable</b> and
+ * <b>thread-safe</b>. If an application is going to reuse the same statement more than once, it is
+ * recommended to cache it (for example in a final field).
+ */
 public interface SimpleStatement extends Statement {
 
   /**
