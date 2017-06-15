@@ -77,6 +77,7 @@ abstract class CqlRequestHandlerTestBase {
                     "message",
                     0,
                     RawType.PRIMITIVES.get(ProtocolConstants.DataType.VARCHAR))),
+            1,
             null,
             new int[] {});
     Queue<List<ByteBuffer>> data = new LinkedList<>();
