@@ -50,7 +50,7 @@ public interface TopologyMonitor extends AsyncAutoCloseable {
   CompletionStage<Void> init();
 
   /**
-   * Invoked when the drive needs to refresh the information about an existing node. This is called
+   * Invoked when the driver needs to refresh the information about an existing node. This is called
    * when the node was back and comes back up.
    *
    * <p>This will be invoked directly from a driver's internal thread; if the refresh involves

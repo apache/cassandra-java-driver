@@ -18,7 +18,6 @@ package com.datastax.oss.driver.internal.core;
 import com.datastax.oss.driver.api.core.AsyncAutoCloseable;
 import com.datastax.oss.driver.api.core.Cluster;
 import com.datastax.oss.driver.api.core.CqlIdentifier;
-import com.datastax.oss.driver.api.core.DriverException;
 import com.datastax.oss.driver.api.core.context.DriverContext;
 import com.datastax.oss.driver.api.core.cql.CqlSession;
 import com.datastax.oss.driver.api.core.metadata.Metadata;
@@ -135,31 +134,17 @@ public class DefaultCluster implements Cluster {
       MetadataManager metadataManager = context.metadataManager();
       metadataManager
           .addContactPoints(initialContactPoints)
-          // Then initialize the topology monitor
           .thenCompose(v -> context.topologyMonitor().init())
-          // If that succeeds, Cluster init is considered successful
+          .thenCompose(v -> metadataManager.refreshNodes())
           .thenAccept(
               v -> {
-                initFuture.complete(DefaultCluster.this);
-
-                // Launch a full refresh asynchronously
-                metadataManager
-                    .refreshNodes()
-                    .whenComplete(
-                        (result, error) -> {
-                          if (error != null) {
-                            LOG.debug("Error while refreshing node list", error);
-                          } else {
-                            try {
-                              context.loadBalancingPolicyWrapper().init();
-                            } catch (Throwable t) {
-                              LOG.warn(
-                                  "Unexpected error while initializing load balancing policy", t);
-                            }
-                          }
-                        });
-
-                // TODO schedule full schema refresh
+                try {
+                  context.loadBalancingPolicyWrapper().init();
+                  initFuture.complete(DefaultCluster.this);
+                  // TODO schedule full schema refresh asynchronously (does not block init)
+                } catch (Throwable throwable) {
+                  initFuture.completeExceptionally(throwable);
+                }
               })
           .exceptionally(
               error -> {
