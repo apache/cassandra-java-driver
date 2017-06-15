@@ -58,7 +58,7 @@ public interface AsyncAutoCloseable extends AutoCloseable {
    * should not be called on a driver thread.
    */
   @Override
-  default void close() throws Exception {
+  default void close() {
     BlockingOperation.checkNotDriverThread();
     CompletableFutures.getUninterruptibly(closeAsync().toCompletableFuture());
   }
