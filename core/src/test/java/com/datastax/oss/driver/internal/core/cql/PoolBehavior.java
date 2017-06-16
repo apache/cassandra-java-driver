@@ -41,12 +41,14 @@ import static org.mockito.Mockito.never;
 public class PoolBehavior {
 
   final Node node;
+  private final EventExecutor executor;
   final DriverChannel channel;
   private final Promise<Void> writePromise;
   private final CompletableFuture<ResponseCallback> callbackFuture = new CompletableFuture<>();
 
   public PoolBehavior(Node node, boolean createChannel, EventExecutor executor) {
     this.node = node;
+    this.executor = executor;
     if (!createChannel) {
       this.channel = null;
       this.writePromise = null;
@@ -90,5 +92,21 @@ public class PoolBehavior {
 
   public void setResponseFailure(Throwable cause) {
     callbackFuture.thenAccept(callback -> callback.onFailure(cause));
+  }
+
+  /** Mocks a follow-up request on the same channel. */
+  public void mockFollowupRequest(Class<? extends Message> expectedMessage, Frame responseFrame) {
+    Promise<Void> writePromise2 = executor.newPromise();
+    CompletableFuture<ResponseCallback> callbackFuture2 = new CompletableFuture<>();
+    Mockito.when(
+            channel.write(
+                any(expectedMessage), anyBoolean(), anyMap(), any(ResponseCallback.class)))
+        .thenAnswer(
+            invocation -> {
+              callbackFuture2.complete(invocation.getArgument(3));
+              return writePromise2;
+            });
+    writePromise2.setSuccess(null);
+    callbackFuture2.thenAccept(callback -> callback.onResponse(responseFrame));
   }
 }

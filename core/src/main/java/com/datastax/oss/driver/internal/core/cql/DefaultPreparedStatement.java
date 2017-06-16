@@ -30,14 +30,15 @@ public class DefaultPreparedStatement implements PreparedStatement {
   private final String query;
   private final ColumnDefinitions variableDefinitions;
   private final ColumnDefinitions resultSetDefinitions;
+  private final CodecRegistry codecRegistry;
+  private final ProtocolVersion protocolVersion;
+  private final Map<String, ByteBuffer> initialCustomPayload;
   // The options to propagate to the bound statements:
   private final String configProfileName;
   private final DriverConfigProfile configProfile;
   private final String keyspace;
   private final Map<String, ByteBuffer> customPayload;
   private final Boolean idempotent;
-  private final CodecRegistry codecRegistry;
-  private final ProtocolVersion protocolVersion;
 
   public DefaultPreparedStatement(
       ByteBuffer id,
@@ -50,7 +51,8 @@ public class DefaultPreparedStatement implements PreparedStatement {
       Map<String, ByteBuffer> customPayload,
       Boolean idempotent,
       CodecRegistry codecRegistry,
-      ProtocolVersion protocolVersion) {
+      ProtocolVersion protocolVersion,
+      Map<String, ByteBuffer> initialCustomPayload) {
     this.id = id;
     this.query = query;
     this.variableDefinitions = variableDefinitions;
@@ -62,6 +64,7 @@ public class DefaultPreparedStatement implements PreparedStatement {
     this.idempotent = idempotent;
     this.codecRegistry = codecRegistry;
     this.protocolVersion = protocolVersion;
+    this.initialCustomPayload = initialCustomPayload;
   }
 
   @Override
@@ -96,5 +99,10 @@ public class DefaultPreparedStatement implements PreparedStatement {
         idempotent,
         codecRegistry,
         protocolVersion);
+  }
+
+  @Override
+  public Map<String, ByteBuffer> initialCustomPayload() {
+    return initialCustomPayload;
   }
 }

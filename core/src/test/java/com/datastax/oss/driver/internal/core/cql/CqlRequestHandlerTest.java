@@ -19,11 +19,18 @@ import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.DriverTimeoutException;
 import com.datastax.oss.driver.api.core.config.CoreDriverOption;
 import com.datastax.oss.driver.api.core.cql.AsyncResultSet;
+import com.datastax.oss.driver.api.core.cql.BoundStatement;
 import com.datastax.oss.driver.api.core.cql.ExecutionInfo;
+import com.datastax.oss.driver.api.core.cql.PreparedStatement;
 import com.datastax.oss.driver.api.core.cql.Row;
 import com.datastax.oss.driver.internal.core.util.concurrent.ScheduledTaskCapturingEventLoop;
+import com.datastax.oss.protocol.internal.request.Prepare;
+import com.datastax.oss.protocol.internal.response.error.Unprepared;
+import com.datastax.oss.protocol.internal.response.result.Prepared;
 import com.datastax.oss.protocol.internal.response.result.SetKeyspace;
+import java.nio.ByteBuffer;
 import java.time.Duration;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.TimeUnit;
@@ -112,6 +119,42 @@ public class CqlRequestHandlerTest extends CqlRequestHandlerTestBase {
               resultSet ->
                   Mockito.verify(harness.getSession())
                       .setKeyspace(CqlIdentifier.fromInternal("newKeyspace")));
+    }
+  }
+
+  @Test
+  public void should_reprepare_on_the_fly_if_not_prepared() {
+    ByteBuffer mockId = ByteBuffer.wrap(new byte[0]);
+    PreparedStatement preparedStatement = Mockito.mock(PreparedStatement.class);
+    Mockito.when(preparedStatement.getId()).thenReturn(mockId);
+    BoundStatement boundStatement = Mockito.mock(BoundStatement.class);
+    Mockito.when(boundStatement.getPreparedStatement()).thenReturn(preparedStatement);
+    Mockito.when(boundStatement.getValues()).thenReturn(Collections.emptyList());
+
+    RequestHandlerTestHarness.Builder harnessBuilder = RequestHandlerTestHarness.builder();
+    // For the first attempt that gets the UNPREPARED response
+    PoolBehavior node1Behavior = harnessBuilder.customBehavior(node1);
+    // For the second attempt that succeeds
+    harnessBuilder.withResponse(node1, defaultFrameOf(singleRow()));
+
+    try (RequestHandlerTestHarness harness = harnessBuilder.build()) {
+
+      CompletionStage<AsyncResultSet> resultSetFuture =
+          new CqlRequestHandler(boundStatement, harness.getSession(), harness.getContext())
+              .asyncResult();
+
+      node1Behavior.setWriteSuccess();
+
+      // Before we proceed, mock the PREPARE exchange that will occur as soon as we complete the
+      // first response.
+      node1Behavior.mockFollowupRequest(
+          Prepare.class, defaultFrameOf(new Prepared(new byte[] {}, null, null)));
+
+      node1Behavior.setResponseSuccess(
+          defaultFrameOf(new Unprepared("mock message", new byte[] {})));
+
+      // Should now re-prepare, re-execute and succeed.
+      assertThat(resultSetFuture).isSuccess();
     }
   }
 }

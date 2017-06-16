@@ -16,6 +16,7 @@
 package com.datastax.oss.driver.api.core.cql;
 
 import java.nio.ByteBuffer;
+import java.util.Map;
 
 /**
  * A query with bind variables that has been pre-parsed by the database.
@@ -51,4 +52,11 @@ public interface PreparedStatement {
   ColumnDefinitions getResultSetDefinitions();
 
   BoundStatement bind();
+
+  /**
+   * The custom payload that was used for the initial prepare request.
+   *
+   * <p>This is mostly for internal use, if the driver needs to re-prepare the statement later.
+   */
+  Map<String, ByteBuffer> initialCustomPayload();
 }

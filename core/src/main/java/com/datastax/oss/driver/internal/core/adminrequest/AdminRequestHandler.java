@@ -24,7 +24,6 @@ import com.datastax.oss.driver.internal.core.util.concurrent.UncaughtExceptions;
 import com.datastax.oss.protocol.internal.Frame;
 import com.datastax.oss.protocol.internal.Message;
 import com.datastax.oss.protocol.internal.ProtocolConstants;
-import com.datastax.oss.protocol.internal.request.Prepare;
 import com.datastax.oss.protocol.internal.request.Query;
 import com.datastax.oss.protocol.internal.request.query.QueryOptions;
 import com.datastax.oss.protocol.internal.response.result.Prepared;
@@ -88,8 +87,12 @@ public class AdminRequestHandler implements ResponseCallback {
   }
 
   public CompletionStage<AdminResult> start() {
+    return start(Frame.NO_PAYLOAD);
+  }
+
+  public CompletionStage<AdminResult> start(Map<String, ByteBuffer> customPayload) {
     LOG.debug("Executing {}", this);
-    channel.write(message, false, Frame.NO_PAYLOAD, this).addListener(this::onWriteComplete);
+    channel.write(message, false, customPayload, this).addListener(this::onWriteComplete);
     return result;
   }
 

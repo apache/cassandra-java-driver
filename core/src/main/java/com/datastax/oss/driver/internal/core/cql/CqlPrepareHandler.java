@@ -98,7 +98,7 @@ public class CqlPrepareHandler
     this.message = new Prepare(request.getQuery());
     this.scheduler = context.nettyOptions().ioEventLoopGroup().next();
 
-    timeout = configProfile.getDuration(CoreDriverOption.REQUEST_TIMEOUT);
+    this.timeout = configProfile.getDuration(CoreDriverOption.REQUEST_TIMEOUT);
     this.timeoutFuture = scheduleTimeout(timeout);
     this.retryPolicy = context.retryPolicy();
     sendRequest(null, 0);

@@ -75,11 +75,13 @@ public class RoundRobinLoadBalancingPolicy implements LoadBalancingPolicy {
 
   @Override
   public void onUp(Node node) {
+    LOG.debug("Adding {}", node);
     liveNodes.add(node);
   }
 
   @Override
   public void onDown(Node node) {
+    LOG.debug("Removing {}", node);
     liveNodes.remove(node);
   }
 

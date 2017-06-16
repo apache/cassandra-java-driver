@@ -20,7 +20,9 @@ import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.DriverTimeoutException;
 import com.datastax.oss.driver.api.core.config.CoreDriverOption;
 import com.datastax.oss.driver.api.core.cql.AsyncResultSet;
+import com.datastax.oss.driver.api.core.cql.BoundStatement;
 import com.datastax.oss.driver.api.core.cql.ExecutionInfo;
+import com.datastax.oss.driver.api.core.cql.PreparedStatement;
 import com.datastax.oss.driver.api.core.cql.ResultSet;
 import com.datastax.oss.driver.api.core.cql.Statement;
 import com.datastax.oss.driver.api.core.metadata.Node;
@@ -34,6 +36,7 @@ import com.datastax.oss.driver.api.core.servererrors.ReadTimeoutException;
 import com.datastax.oss.driver.api.core.servererrors.UnavailableException;
 import com.datastax.oss.driver.api.core.servererrors.WriteTimeoutException;
 import com.datastax.oss.driver.api.core.specex.SpeculativeExecutionPolicy;
+import com.datastax.oss.driver.internal.core.adminrequest.AdminRequestHandler;
 import com.datastax.oss.driver.internal.core.channel.DriverChannel;
 import com.datastax.oss.driver.internal.core.channel.ResponseCallback;
 import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
@@ -44,6 +47,7 @@ import com.datastax.oss.driver.internal.core.util.concurrent.CompletableFutures;
 import com.datastax.oss.protocol.internal.Frame;
 import com.datastax.oss.protocol.internal.Message;
 import com.datastax.oss.protocol.internal.ProtocolConstants;
+import com.datastax.oss.protocol.internal.request.Prepare;
 import com.datastax.oss.protocol.internal.response.Error;
 import com.datastax.oss.protocol.internal.response.Result;
 import com.datastax.oss.protocol.internal.response.result.Rows;
@@ -81,6 +85,7 @@ public class CqlRequestHandler
   // All executions share the same query plan, they stop either when the request completes or the
   // query plan is empty.
   private final AtomicInteger executions;
+  private final Duration timeout;
   private final ScheduledFuture<?> timeoutFuture;
   private final List<ScheduledFuture<?>> pendingExecutions;
   private final RetryPolicy retryPolicy;
@@ -107,7 +112,7 @@ public class CqlRequestHandler
     this.message = Conversions.toMessage(statement, configProfile, context);
     this.scheduler = context.nettyOptions().ioEventLoopGroup().next();
 
-    Duration timeout = configProfile.getDuration(CoreDriverOption.REQUEST_TIMEOUT);
+    this.timeout = configProfile.getDuration(CoreDriverOption.REQUEST_TIMEOUT);
     this.timeoutFuture = scheduleTimeout(timeout);
 
     this.retryPolicy = context.retryPolicy();
@@ -198,7 +203,7 @@ public class CqlRequestHandler
       }
     } else {
       NodeResponseCallback nodeResponseCallback =
-          new NodeResponseCallback(node, execution, retryCount);
+          new NodeResponseCallback(node, channel, execution, retryCount);
       channel
           .write(message, request.isTracing(), request.getCustomPayload(), nodeResponseCallback)
           .addListener(nodeResponseCallback);
@@ -279,6 +284,7 @@ public class CqlRequestHandler
       implements ResponseCallback, GenericFutureListener<Future<java.lang.Void>> {
 
     private final Node node;
+    private final DriverChannel channel;
     // The identifier of the current execution (0 for the initial execution, 1 for the first
     // speculative execution, etc.)
     private final int execution;
@@ -286,8 +292,9 @@ public class CqlRequestHandler
     // the first attempt of each execution).
     private final int retryCount;
 
-    private NodeResponseCallback(Node node, int execution, int retryCount) {
+    private NodeResponseCallback(Node node, DriverChannel channel, int execution, int retryCount) {
       this.node = node;
+      this.channel = channel;
       this.execution = execution;
       this.retryCount = retryCount;
     }
@@ -325,8 +332,36 @@ public class CqlRequestHandler
 
     private void processErrorResponse(Error errorMessage) {
       if (errorMessage.code == ProtocolConstants.ErrorCode.UNPREPARED) {
-        // TODO reprepare on the fly
-        throw new UnsupportedOperationException("TODO handle prepare-and-retry");
+        if (!(request instanceof BoundStatement)) {
+          // TODO can we get UNPREPARED for a BATCH message?
+          setFinalError(
+              new IllegalStateException(
+                  "Unexpected UNPREPARED response, "
+                      + "this should only happen for a bound statement"));
+        } else {
+          LOG.debug("Statement is not prepared on {}, repreparing", node);
+          PreparedStatement preparedStatement =
+              ((BoundStatement) CqlRequestHandler.this.request).getPreparedStatement();
+          Prepare reprepareMessage = new Prepare(preparedStatement.getQuery());
+          AdminRequestHandler reprepareHandler =
+              new AdminRequestHandler(
+                  channel, reprepareMessage, timeout, "Reprepare " + reprepareMessage.toString());
+          reprepareHandler
+              .start(preparedStatement.initialCustomPayload())
+              .handle(
+                  (result, error) -> {
+                    if (error != null) {
+                      recordError(node, error);
+                      // Try next host
+                      sendRequest(null, execution, retryCount);
+                    } else {
+                      // Reprepare succeeded, retry on same node
+                      sendRequest(node, execution, retryCount);
+                    }
+                    return null;
+                  });
+          return;
+        }
       }
       Throwable error = Conversions.toThrowable(node, errorMessage);
       if (error instanceof BootstrappingException) {

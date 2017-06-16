@@ -26,6 +26,7 @@ import com.datastax.oss.driver.api.core.cql.ColumnDefinition;
 import com.datastax.oss.driver.api.core.cql.ColumnDefinitions;
 import com.datastax.oss.driver.api.core.cql.ExecutionInfo;
 import com.datastax.oss.driver.api.core.cql.PrepareRequest;
+import com.datastax.oss.driver.api.core.cql.PreparedStatement;
 import com.datastax.oss.driver.api.core.cql.SimpleStatement;
 import com.datastax.oss.driver.api.core.cql.Statement;
 import com.datastax.oss.driver.api.core.metadata.Node;
@@ -52,6 +53,7 @@ import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
 import com.datastax.oss.protocol.internal.Message;
 import com.datastax.oss.protocol.internal.ProtocolConstants;
 import com.datastax.oss.protocol.internal.request.Execute;
+import com.datastax.oss.protocol.internal.request.Prepare;
 import com.datastax.oss.protocol.internal.request.Query;
 import com.datastax.oss.protocol.internal.request.query.QueryOptions;
 import com.datastax.oss.protocol.internal.response.Error;
@@ -188,10 +190,11 @@ class Conversions {
         request.getConfigProfileNameForBoundStatements(),
         request.getConfigProfileForBoundStatements(),
         request.getKeyspace(),
-        request.getCustomPayloadForBoundStatements(),
+        ImmutableMap.copyOf(request.getCustomPayloadForBoundStatements()),
         request.areBoundStatementsIdempotent(),
         context.codecRegistry(),
-        context.protocolVersion());
+        context.protocolVersion(),
+        ImmutableMap.copyOf(request.getCustomPayload()));
   }
 
   private static DefaultColumnDefinitions toColumnDefinitions(
