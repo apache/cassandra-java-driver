@@ -25,13 +25,17 @@ public class RequestProcessorRegistry {
 
   private static final Logger LOG = LoggerFactory.getLogger(RequestProcessorRegistry.class);
 
-  public static final RequestProcessorRegistry DEFAULT =
-      new RequestProcessorRegistry(new CqlRequestProcessor(), new CqlPrepareProcessor());
+  public static RequestProcessorRegistry defaultCqlProcessors(String logPrefix) {
+    return new RequestProcessorRegistry(
+        logPrefix, new CqlRequestProcessor(), new CqlPrepareProcessor());
+  }
 
+  private final String logPrefix;
   // Effectively immutable: the contents are never modified after construction
   private final RequestProcessor<?, ?>[] processors;
 
-  public RequestProcessorRegistry(RequestProcessor<?, ?>... processors) {
+  public RequestProcessorRegistry(String logPrefix, RequestProcessor<?, ?>... processors) {
+    this.logPrefix = logPrefix;
     this.processors = processors;
   }
 
@@ -40,14 +44,14 @@ public class RequestProcessorRegistry {
 
     for (RequestProcessor<?, ?> processor : processors) {
       if (processor.canProcess(request)) {
-        LOG.trace("Using {} to process {}", processor, request);
+        LOG.trace("[{}] Using {} to process {}", logPrefix, processor, request);
         // The cast is safe provided that the processor implements canProcess correctly
         @SuppressWarnings("unchecked")
         RequestProcessor<SyncResultT, AsyncResultT> result =
             (RequestProcessor<SyncResultT, AsyncResultT>) processor;
         return result;
       } else {
-        LOG.trace("{} cannot process {}, trying next", processor, request);
+        LOG.trace("[{}] {} cannot process {}, trying next", logPrefix, processor, request);
       }
     }
     throw new IllegalArgumentException("No request processor found for " + request);

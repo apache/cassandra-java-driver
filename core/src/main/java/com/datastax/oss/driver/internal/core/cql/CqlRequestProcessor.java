@@ -37,7 +37,8 @@ public class CqlRequestProcessor
   public RequestHandler<ResultSet, CompletionStage<AsyncResultSet>> newHandler(
       Request<ResultSet, CompletionStage<AsyncResultSet>> request,
       DefaultSession session,
-      InternalDriverContext context) {
-    return new CqlRequestHandler((Statement) request, session, context);
+      InternalDriverContext context,
+      String sessionLogPrefix) {
+    return new CqlRequestHandler((Statement) request, session, context, sessionLogPrefix);
   }
 }

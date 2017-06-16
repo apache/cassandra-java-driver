@@ -63,7 +63,7 @@ public class CqlRequestHandlerRetryTest extends CqlRequestHandlerTestBase {
             .build()) {
 
       CompletionStage<AsyncResultSet> resultSetFuture =
-          new CqlRequestHandler(statement, harness.getSession(), harness.getContext())
+          new CqlRequestHandler(statement, harness.getSession(), harness.getContext(), "test")
               .asyncResult();
 
       assertThat(resultSetFuture)
@@ -102,7 +102,7 @@ public class CqlRequestHandlerRetryTest extends CqlRequestHandlerTestBase {
             .build()) {
 
       CompletionStage<AsyncResultSet> resultSetFuture =
-          new CqlRequestHandler(statement, harness.getSession(), harness.getContext())
+          new CqlRequestHandler(statement, harness.getSession(), harness.getContext(), "test")
               .asyncResult();
 
       assertThat(resultSetFuture)
@@ -129,7 +129,7 @@ public class CqlRequestHandlerRetryTest extends CqlRequestHandlerTestBase {
           harness.getContext().retryPolicy(), RetryDecision.RETRY_NEXT);
 
       CompletionStage<AsyncResultSet> resultSetFuture =
-          new CqlRequestHandler(statement, harness.getSession(), harness.getContext())
+          new CqlRequestHandler(statement, harness.getSession(), harness.getContext(), "test")
               .asyncResult();
 
       assertThat(resultSetFuture)
@@ -160,7 +160,7 @@ public class CqlRequestHandlerRetryTest extends CqlRequestHandlerTestBase {
           harness.getContext().retryPolicy(), RetryDecision.RETRY_SAME);
 
       CompletionStage<AsyncResultSet> resultSetFuture =
-          new CqlRequestHandler(statement, harness.getSession(), harness.getContext())
+          new CqlRequestHandler(statement, harness.getSession(), harness.getContext(), "test")
               .asyncResult();
 
       assertThat(resultSetFuture)
@@ -190,7 +190,7 @@ public class CqlRequestHandlerRetryTest extends CqlRequestHandlerTestBase {
           harness.getContext().retryPolicy(), RetryDecision.IGNORE);
 
       CompletionStage<AsyncResultSet> resultSetFuture =
-          new CqlRequestHandler(statement, harness.getSession(), harness.getContext())
+          new CqlRequestHandler(statement, harness.getSession(), harness.getContext(), "test")
               .asyncResult();
 
       assertThat(resultSetFuture)
@@ -219,7 +219,7 @@ public class CqlRequestHandlerRetryTest extends CqlRequestHandlerTestBase {
           harness.getContext().retryPolicy(), RetryDecision.RETHROW);
 
       CompletionStage<AsyncResultSet> resultSetFuture =
-          new CqlRequestHandler(statement, harness.getSession(), harness.getContext())
+          new CqlRequestHandler(statement, harness.getSession(), harness.getContext(), "test")
               .asyncResult();
 
       assertThat(resultSetFuture)
@@ -238,7 +238,7 @@ public class CqlRequestHandlerRetryTest extends CqlRequestHandlerTestBase {
 
     try (RequestHandlerTestHarness harness = harnessBuilder.build()) {
       CompletionStage<AsyncResultSet> resultSetFuture =
-          new CqlRequestHandler(statement, harness.getSession(), harness.getContext())
+          new CqlRequestHandler(statement, harness.getSession(), harness.getContext(), "test")
               .asyncResult();
 
       assertThat(resultSetFuture)

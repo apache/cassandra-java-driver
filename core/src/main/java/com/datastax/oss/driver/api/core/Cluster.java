@@ -15,6 +15,7 @@
  */
 package com.datastax.oss.driver.api.core;
 
+import com.datastax.oss.driver.api.core.config.CoreDriverOption;
 import com.datastax.oss.driver.api.core.context.DriverContext;
 import com.datastax.oss.driver.api.core.cql.CqlSession;
 import com.datastax.oss.driver.api.core.metadata.Metadata;
@@ -29,6 +30,13 @@ public interface Cluster extends AsyncAutoCloseable {
   static ClusterBuilder builder() {
     return new ClusterBuilder();
   }
+
+  /**
+   * The unique name identifying this cluster.
+   *
+   * @see CoreDriverOption#CLUSTER_NAME
+   */
+  String getName();
 
   /**
    * Returns a snapshot of the Cassandra cluster's topology and schema metadata.

@@ -26,7 +26,7 @@ public interface CodecRegistry {
    * An immutable instance, that only handles built-in driver types (that is, primitive types, and
    * collections, tuples, and user defined types thereof).
    */
-  CodecRegistry DEFAULT = new DefaultCodecRegistry();
+  CodecRegistry DEFAULT = new DefaultCodecRegistry("default");
 
   /**
    * Returns a codec to handle the conversion between the given types.

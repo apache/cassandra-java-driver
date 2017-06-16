@@ -56,7 +56,12 @@ public class ReconnectionTest {
     reconnectionTask = new MockReconnectionTask();
     reconnection =
         new Reconnection(
-            eventExecutor, reconnectionPolicy, reconnectionTask, onStartCallback, onStopCallback);
+            "test",
+            eventExecutor,
+            reconnectionPolicy,
+            reconnectionTask,
+            onStartCallback,
+            onStopCallback);
   }
 
   @Test

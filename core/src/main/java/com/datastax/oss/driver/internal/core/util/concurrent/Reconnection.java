@@ -38,6 +38,7 @@ import org.slf4j.LoggerFactory;
 public class Reconnection {
   private static final Logger LOG = LoggerFactory.getLogger(Reconnection.class);
 
+  private final String logPrefix;
   private final EventExecutor executor;
   private final ReconnectionPolicy reconnectionPolicy;
   private final Callable<CompletionStage<Boolean>> reconnectionTask;
@@ -53,11 +54,13 @@ public class Reconnection {
    *     not.
    */
   public Reconnection(
+      String logPrefix,
       EventExecutor executor,
       ReconnectionPolicy reconnectionPolicy,
       Callable<CompletionStage<Boolean>> reconnectionTask,
       Runnable onStart,
       Runnable onStop) {
+    this.logPrefix = logPrefix;
     this.executor = executor;
     this.reconnectionPolicy = reconnectionPolicy;
     this.reconnectionTask = reconnectionTask;
@@ -66,10 +69,11 @@ public class Reconnection {
   }
 
   public Reconnection(
+      String logPrefix,
       EventExecutor executor,
       ReconnectionPolicy reconnectionPolicy,
       Callable<CompletionStage<Boolean>> reconnectionTask) {
-    this(executor, reconnectionPolicy, reconnectionTask, () -> {}, () -> {});
+    this(logPrefix, executor, reconnectionPolicy, reconnectionTask, () -> {}, () -> {});
   }
 
   public boolean isRunning() {
@@ -96,7 +100,7 @@ public class Reconnection {
   public void reconnectNow(boolean forceIfStopped) {
     assert executor.inEventLoop();
     if (isRunning || forceIfStopped) {
-      LOG.debug("{} forcing next attempt now", this);
+      LOG.debug("[{}] Forcing next attempt now", logPrefix);
       isRunning = true;
       if (nextAttempt != null) {
         nextAttempt.cancel(true);
@@ -104,7 +108,7 @@ public class Reconnection {
       try {
         onNextAttemptStarted(reconnectionTask.call());
       } catch (Exception e) {
-        LOG.warn("Uncaught error while starting reconnection attempt", e);
+        LOG.warn("[{}] Uncaught error while starting reconnection attempt", logPrefix, e);
         scheduleNextAttempt();
       }
     }
@@ -114,7 +118,7 @@ public class Reconnection {
     assert executor.inEventLoop();
     if (isRunning) {
       isRunning = false;
-      LOG.debug("{} stopping reconnection", this);
+      LOG.debug("[{}] Stopping reconnection", logPrefix);
       if (nextAttempt != null) {
         nextAttempt.cancel(true);
       }
@@ -130,14 +134,15 @@ public class Reconnection {
       reconnectionSchedule = reconnectionPolicy.newSchedule();
     }
     Duration nextInterval = reconnectionSchedule.nextDelay();
-    LOG.debug("{} scheduling next reconnection in {}", this, nextInterval);
+    LOG.debug("[{}] Scheduling next reconnection in {}", logPrefix, nextInterval);
     nextAttempt = executor.schedule(reconnectionTask, nextInterval.toNanos(), TimeUnit.NANOSECONDS);
     nextAttempt.addListener(
         (Future<CompletionStage<Boolean>> f) -> {
           if (f.isSuccess()) {
             onNextAttemptStarted(f.getNow());
           } else if (!f.isCancelled()) {
-            LOG.warn("Uncaught error while starting reconnection attempt", f.cause());
+            LOG.warn(
+                "[{}] Uncaught error while starting reconnection attempt", logPrefix, f.cause());
             scheduleNextAttempt();
           }
         });
@@ -155,11 +160,11 @@ public class Reconnection {
   private void onNextAttemptCompleted(Boolean success, Throwable error) {
     assert executor.inEventLoop();
     if (success) {
-      LOG.debug("{} reconnection successful", this);
+      LOG.debug("[{}] Reconnection successful", logPrefix);
       stop();
     } else {
       if (error != null && !(error instanceof CancellationException)) {
-        LOG.warn("Uncaught error while starting reconnection attempt", error);
+        LOG.warn("[{}] Uncaught error while starting reconnection attempt", logPrefix, error);
       }
       if (isRunning) { // can be false if stop() was called
         scheduleNextAttempt();

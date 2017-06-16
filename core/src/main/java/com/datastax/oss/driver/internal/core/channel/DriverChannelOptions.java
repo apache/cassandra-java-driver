@@ -31,6 +31,7 @@ public class DriverChannelOptions {
   }
 
   public final CqlIdentifier keyspace;
+
   /** Whether {@link DriverChannel#availableIds()} should be maintained */
   public final boolean reportAvailableIds;
 
@@ -43,15 +44,19 @@ public class DriverChannelOptions {
 
   public final EventCallback eventCallback;
 
+  public final String ownerLogPrefix;
+
   private DriverChannelOptions(
       CqlIdentifier keyspace,
       boolean reportAvailableIds,
       List<String> eventTypes,
-      EventCallback eventCallback) {
+      EventCallback eventCallback,
+      String ownerLogPrefix) {
     this.keyspace = keyspace;
     this.reportAvailableIds = reportAvailableIds;
     this.eventTypes = eventTypes;
     this.eventCallback = eventCallback;
+    this.ownerLogPrefix = ownerLogPrefix;
   }
 
   public static class Builder {
@@ -59,6 +64,7 @@ public class DriverChannelOptions {
     private boolean reportAvailableIds = false;
     private List<String> eventTypes = Collections.emptyList();
     private EventCallback eventCallback = null;
+    private String ownerLogPrefix = null;
 
     public Builder withKeyspace(CqlIdentifier keyspace) {
       this.keyspace = keyspace;
@@ -78,8 +84,14 @@ public class DriverChannelOptions {
       return this;
     }
 
+    public Builder withOwnerLogPrefix(String ownerLogPrefix) {
+      this.ownerLogPrefix = ownerLogPrefix;
+      return this;
+    }
+
     public DriverChannelOptions build() {
-      return new DriverChannelOptions(keyspace, reportAvailableIds, eventTypes, eventCallback);
+      return new DriverChannelOptions(
+          keyspace, reportAvailableIds, eventTypes, eventCallback, ownerLogPrefix);
     }
   }
 }

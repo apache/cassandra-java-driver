@@ -36,9 +36,11 @@ abstract class MetadataRefresh {
   final DefaultMetadata oldMetadata;
   DefaultMetadata newMetadata;
   final List<Object> events;
+  protected final String logPrefix;
 
-  protected MetadataRefresh(DefaultMetadata current) {
+  protected MetadataRefresh(DefaultMetadata current, String logPrefix) {
     this.oldMetadata = current;
+    this.logPrefix = logPrefix;
     this.events = new ArrayList<>();
   }
 

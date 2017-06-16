@@ -20,6 +20,7 @@ import com.datastax.oss.driver.api.core.addresstranslation.AddressTranslator;
 import com.datastax.oss.driver.api.core.auth.AuthProvider;
 import com.datastax.oss.driver.api.core.config.CoreDriverOption;
 import com.datastax.oss.driver.api.core.config.DriverConfig;
+import com.datastax.oss.driver.api.core.config.DriverConfigProfile;
 import com.datastax.oss.driver.api.core.connection.ReconnectionPolicy;
 import com.datastax.oss.driver.api.core.loadbalancing.LoadBalancingPolicy;
 import com.datastax.oss.driver.api.core.retry.RetryPolicy;
@@ -41,15 +42,16 @@ import com.datastax.oss.driver.internal.core.protocol.ByteBufPrimitiveCodec;
 import com.datastax.oss.driver.internal.core.session.RequestProcessorRegistry;
 import com.datastax.oss.driver.internal.core.ssl.JdkSslHandlerFactory;
 import com.datastax.oss.driver.internal.core.ssl.SslHandlerFactory;
+import com.datastax.oss.driver.internal.core.type.codec.registry.DefaultCodecRegistry;
 import com.datastax.oss.driver.internal.core.util.Reflection;
 import com.datastax.oss.driver.internal.core.util.concurrent.CycleDetector;
 import com.datastax.oss.driver.internal.core.util.concurrent.LazyReference;
-import com.datastax.oss.driver.internal.core.type.codec.registry.DefaultCodecRegistry;
 import com.datastax.oss.protocol.internal.Compressor;
 import com.datastax.oss.protocol.internal.FrameCodec;
 import io.netty.buffer.ByteBuf;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Default implementation of the driver context.
@@ -69,6 +71,8 @@ import java.util.Optional;
  * buildXxx methods, and initialize the cluster with this new implementation.
  */
 public class DefaultDriverContext implements InternalDriverContext {
+
+  private static final AtomicInteger CLUSTER_NAME_COUNTER = new AtomicInteger();
 
   private final CycleDetector cycleDetector =
       new CycleDetector("Detected cycle in context initialization");
@@ -119,10 +123,17 @@ public class DefaultDriverContext implements InternalDriverContext {
   private final DriverConfig config;
   private final ChannelPoolFactory channelPoolFactory = new ChannelPoolFactory();
   private final CodecRegistry codecRegistry;
+  private final String clusterName;
 
   public DefaultDriverContext(DriverConfig config, List<TypeCodec<?>> typeCodecs) {
     this.config = config;
-    this.codecRegistry = buildCodecRegistry(typeCodecs);
+    DriverConfigProfile defaultProfile = config.defaultProfile();
+    if (defaultProfile.isDefined(CoreDriverOption.CLUSTER_NAME)) {
+      this.clusterName = defaultProfile.getString(CoreDriverOption.CLUSTER_NAME);
+    } else {
+      this.clusterName = "c" + CLUSTER_NAME_COUNTER.getAndIncrement();
+    }
+    this.codecRegistry = buildCodecRegistry(this.clusterName, typeCodecs);
   }
 
   protected LoadBalancingPolicy buildLoadBalancingPolicy() {
@@ -189,7 +200,7 @@ public class DefaultDriverContext implements InternalDriverContext {
   }
 
   protected EventBus buildEventBus() {
-    return new EventBus();
+    return new EventBus(clusterName());
   }
 
   protected Compressor<ByteBuf> buildCompressor() {
@@ -242,9 +253,14 @@ public class DefaultDriverContext implements InternalDriverContext {
     return new ControlConnection(this);
   }
 
-  protected CodecRegistry buildCodecRegistry(List<TypeCodec<?>> codecs) {
+  protected CodecRegistry buildCodecRegistry(String logPrefix, List<TypeCodec<?>> codecs) {
     TypeCodec<?>[] array = new TypeCodec<?>[codecs.size()];
-    return new DefaultCodecRegistry(codecs.toArray(array));
+    return new DefaultCodecRegistry(logPrefix, codecs.toArray(array));
+  }
+
+  @Override
+  public String clusterName() {
+    return clusterName;
   }
 
   @Override
@@ -354,7 +370,7 @@ public class DefaultDriverContext implements InternalDriverContext {
 
   @Override
   public RequestProcessorRegistry requestProcessorRegistry() {
-    return RequestProcessorRegistry.DEFAULT;
+    return RequestProcessorRegistry.defaultCqlProcessors(clusterName());
   }
 
   @Override

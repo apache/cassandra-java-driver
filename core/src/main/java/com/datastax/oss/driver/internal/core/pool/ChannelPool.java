@@ -69,8 +69,12 @@ public class ChannelPool implements AsyncAutoCloseable {
    * channels (i.e. {@link #next()} return {@code null}) and is reconnecting.
    */
   public static CompletionStage<ChannelPool> init(
-      Node node, CqlIdentifier keyspaceName, NodeDistance distance, InternalDriverContext context) {
-    ChannelPool pool = new ChannelPool(node, keyspaceName, distance, context);
+      Node node,
+      CqlIdentifier keyspaceName,
+      NodeDistance distance,
+      InternalDriverContext context,
+      String sessionLogPrefix) {
+    ChannelPool pool = new ChannelPool(node, keyspaceName, distance, context, sessionLogPrefix);
     return pool.connect();
   }
 
@@ -80,14 +84,22 @@ public class ChannelPool implements AsyncAutoCloseable {
   private final Node node;
   private final CqlIdentifier initialKeyspaceName;
   private final EventExecutor adminExecutor;
+  private final String sessionLogPrefix;
+  private final String logPrefix;
   private final SingleThreaded singleThreaded;
   private volatile boolean invalidKeyspace;
 
   private ChannelPool(
-      Node node, CqlIdentifier keyspaceName, NodeDistance distance, InternalDriverContext context) {
+      Node node,
+      CqlIdentifier keyspaceName,
+      NodeDistance distance,
+      InternalDriverContext context,
+      String sessionLogPrefix) {
     this.node = node;
     this.initialKeyspaceName = keyspaceName;
     this.adminExecutor = context.nettyOptions().adminEventExecutorGroup().next();
+    this.sessionLogPrefix = sessionLogPrefix;
+    this.logPrefix = sessionLogPrefix + "|" + node.getConnectAddress();
     this.singleThreaded = new SingleThreaded(keyspaceName, distance, context);
   }
 
@@ -191,6 +203,7 @@ public class ChannelPool implements AsyncAutoCloseable {
       this.eventBus = context.eventBus();
       this.reconnection =
           new Reconnection(
+              logPrefix,
               adminExecutor,
               context.reconnectionPolicy(),
               this::addMissingChannels,
@@ -222,11 +235,12 @@ public class ChannelPool implements AsyncAutoCloseable {
       assert pendingChannels.isEmpty();
 
       int missing = wantedCount - channels.size();
-      LOG.debug("{} trying to create {} missing channels", ChannelPool.this, missing);
+      LOG.debug("[{}] Trying to create {} missing channels", logPrefix, missing);
       DriverChannelOptions options =
           DriverChannelOptions.builder()
               .withKeyspace(keyspaceName)
               .reportAvailableIds(wantedCount > 1)
+              .withOwnerLogPrefix(sessionLogPrefix)
               .build();
       for (int i = 0; i < missing; i++) {
         CompletionStage<DriverChannel> channelFuture =
@@ -246,7 +260,7 @@ public class ChannelPool implements AsyncAutoCloseable {
         assert future.isDone();
         if (future.isCompletedExceptionally()) {
           Throwable error = CompletableFutures.getFailed(future);
-          LOG.debug(ChannelPool.this + " error while opening new channel", error);
+          LOG.debug("[{}] Error while opening new channel", logPrefix, error);
           // TODO we don't log at a higher level because it's not a fatal error, but this should probably be recorded somewhere (metric?)
 
           // TODO auth exception => WARN and keep reconnecting
@@ -262,12 +276,12 @@ public class ChannelPool implements AsyncAutoCloseable {
           DriverChannel channel = CompletableFutures.getCompleted(future);
           if (isClosing) {
             LOG.debug(
-                "{} new channel added ({}) but the pool was closed, closing it",
-                ChannelPool.this,
+                "[{}] New channel added ({}) but the pool was closed, closing it",
+                logPrefix,
                 channel);
             channel.forceClose();
           } else {
-            LOG.debug("{} new channel added {}", ChannelPool.this, channel);
+            LOG.debug("[{}] New channel added {}", logPrefix, channel);
             channels.add(channel);
             eventBus.fire(ChannelEvent.channelOpened(node));
             channel
@@ -286,7 +300,7 @@ public class ChannelPool implements AsyncAutoCloseable {
       pendingChannels.clear();
 
       if (clusterNameMismatch != null) {
-        LOG.warn(clusterNameMismatch.getMessage());
+        LOG.warn("[{}] {}", logPrefix, clusterNameMismatch.getMessage());
         eventBus.fire(TopologyEvent.forceDown(node.getConnectAddress()));
         // Don't bother continuing, the pool will get shut down soon anyway
         return true;
@@ -296,8 +310,8 @@ public class ChannelPool implements AsyncAutoCloseable {
 
       int currentCount = channels.size();
       LOG.debug(
-          "{} reconnection attempt complete, {}/{} channels",
-          ChannelPool.this,
+          "[{}] Reconnection attempt complete, {}/{} channels",
+          logPrefix,
           currentCount,
           wantedCount);
       // Stop reconnecting if we have the wanted count
@@ -306,11 +320,13 @@ public class ChannelPool implements AsyncAutoCloseable {
 
     private void onChannelClosed(DriverChannel channel) {
       assert adminExecutor.inEventLoop();
-      LOG.debug("{} lost channel {}", ChannelPool.this, channel);
-      channels.remove(channel);
-      eventBus.fire(ChannelEvent.channelClosed(node));
-      if (!isClosing && !reconnection.isRunning()) {
-        reconnection.start();
+      if (!isClosing) {
+        LOG.debug("[{}] Lost channel {}", logPrefix, channel);
+        channels.remove(channel);
+        eventBus.fire(ChannelEvent.channelClosed(node));
+        if (!reconnection.isRunning()) {
+          reconnection.start();
+        }
       }
     }
 
@@ -318,14 +334,13 @@ public class ChannelPool implements AsyncAutoCloseable {
       assert adminExecutor.inEventLoop();
       int newChannelCount = computeSize(newDistance);
       if (newChannelCount > wantedCount) {
-        LOG.debug("{} growing ({} => {} channels)", ChannelPool.this, wantedCount, newChannelCount);
+        LOG.debug("[{}] Growing ({} => {} channels)", logPrefix, wantedCount, newChannelCount);
         wantedCount = newChannelCount;
         if (!reconnection.isRunning()) {
           reconnection.start();
         }
       } else if (newChannelCount < wantedCount) {
-        LOG.debug(
-            "{} shrinking ({} => {} channels)", ChannelPool.this, wantedCount, newChannelCount);
+        LOG.debug("[{}] Shrinking ({} => {} channels)", logPrefix, wantedCount, newChannelCount);
         wantedCount = newChannelCount;
         if (!reconnection.isRunning()) {
           shrinkIfTooManyChannels();
@@ -337,7 +352,7 @@ public class ChannelPool implements AsyncAutoCloseable {
       assert adminExecutor.inEventLoop();
       int extraCount = channels.size() - wantedCount;
       if (extraCount > 0) {
-        LOG.debug("{} closing {} extra channels", ChannelPool.this, extraCount);
+        LOG.debug("[{}] Closing {} extra channels", logPrefix, extraCount);
         Set<DriverChannel> toRemove = Sets.newHashSetWithExpectedSize(extraCount);
         for (DriverChannel channel : channels) {
           toRemove.add(channel);
@@ -396,8 +411,7 @@ public class ChannelPool implements AsyncAutoCloseable {
             return channel.close();
           },
           () -> closeFuture.complete(null),
-          (channel, error) ->
-              LOG.warn(ChannelPool.this + " error closing channel " + channel, error));
+          (channel, error) -> LOG.warn("[{}] Error closing channel {}", logPrefix, channel, error));
     }
 
     private <V> void forAllChannels(

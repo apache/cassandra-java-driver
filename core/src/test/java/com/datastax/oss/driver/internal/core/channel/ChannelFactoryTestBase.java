@@ -234,7 +234,8 @@ abstract class ChannelFactoryTestBase {
                   new StreamIdGenerator(maxRequestsPerConnection),
                   setKeyspaceTimeoutMillis,
                   availableIdsHolder,
-                  null);
+                  null,
+                  "test");
           ProtocolInitHandler initHandler =
               new ProtocolInitHandler(context, protocolVersion, clusterName, options);
           channel.pipeline().addLast("inflight", inFlightHandler).addLast("init", initHandler);

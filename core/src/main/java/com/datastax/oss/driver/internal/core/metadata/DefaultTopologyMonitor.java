@@ -52,6 +52,7 @@ public class DefaultTopologyMonitor implements TopologyMonitor {
   // Assume topology queries never need paging
   private static final int INFINITE_PAGE_SIZE = -1;
 
+  private final String logPrefix;
   private final ControlConnection controlConnection;
   private final AddressTranslator addressTranslator;
   private final Duration timeout;
@@ -60,6 +61,7 @@ public class DefaultTopologyMonitor implements TopologyMonitor {
   @VisibleForTesting volatile int port = -1;
 
   public DefaultTopologyMonitor(InternalDriverContext context) {
+    this.logPrefix = context.clusterName();
     this.controlConnection = context.controlConnection();
     this.addressTranslator = context.addressTranslator();
     DriverConfigProfile config = context.config().defaultProfile();
@@ -80,13 +82,13 @@ public class DefaultTopologyMonitor implements TopologyMonitor {
     if (closeFuture.isDone()) {
       return CompletableFutures.failedFuture(new IllegalStateException("closed"));
     }
-    LOG.debug("Refreshing info for {}", node);
+    LOG.debug("[{}] Refreshing info for {}", logPrefix, node);
     DriverChannel channel = controlConnection.channel();
     if (node.getConnectAddress().equals(channel.address())) {
       // refreshNode is called for nodes that just came up. If the control node just came up, it
       // means the control connection just reconnected, which means we did a full node refresh. So
       // we don't need to process this call.
-      LOG.debug("Ignoring refresh of control node");
+      LOG.debug("[{}] Ignoring refresh of control node", logPrefix);
       return CompletableFuture.completedFuture(Optional.empty());
     } else if (node.getBroadcastAddress().isPresent()) {
       return query(
@@ -105,7 +107,7 @@ public class DefaultTopologyMonitor implements TopologyMonitor {
     if (closeFuture.isDone()) {
       return CompletableFutures.failedFuture(new IllegalStateException("closed"));
     }
-    LOG.debug("Fetching info for new node {}", connectAddress);
+    LOG.debug("[{}] Fetching info for new node {}", logPrefix, connectAddress);
     DriverChannel channel = controlConnection.channel();
     return query(channel, "SELECT * FROM system.peers")
         .thenApply(result -> this.findInPeers(result, connectAddress));
@@ -116,7 +118,7 @@ public class DefaultTopologyMonitor implements TopologyMonitor {
     if (closeFuture.isDone()) {
       return CompletableFutures.failedFuture(new IllegalStateException("closed"));
     }
-    LOG.debug("Refreshing node list");
+    LOG.debug("[{}] Refreshing node list", logPrefix);
     DriverChannel channel = controlConnection.channel();
     savePort(channel);
 
@@ -154,7 +156,8 @@ public class DefaultTopologyMonitor implements TopologyMonitor {
   @VisibleForTesting
   protected CompletionStage<AdminResult> query(
       DriverChannel channel, String queryString, Map<String, Object> parameters) {
-    return AdminRequestHandler.query(channel, queryString, parameters, timeout, INFINITE_PAGE_SIZE)
+    return AdminRequestHandler.query(
+            channel, queryString, parameters, timeout, INFINITE_PAGE_SIZE, logPrefix)
         .start();
   }
 
@@ -208,7 +211,7 @@ public class DefaultTopologyMonitor implements TopologyMonitor {
         return Optional.of(buildNodeInfo(row, connectAddress));
       }
     }
-    LOG.debug("Could not find any peer row matching {}", connectAddress);
+    LOG.debug("[{}] Could not find any peer row matching {}", logPrefix, connectAddress);
     return Optional.empty();
   }
 

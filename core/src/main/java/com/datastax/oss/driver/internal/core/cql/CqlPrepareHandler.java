@@ -64,6 +64,7 @@ public class CqlPrepareHandler
 
   private static final Logger LOG = LoggerFactory.getLogger(CqlPrepareHandler.class);
 
+  private final String logPrefix;
   private final CompletableFuture<PreparedStatement> result;
   private final Message message;
   private final EventExecutor scheduler;
@@ -80,8 +81,11 @@ public class CqlPrepareHandler
       PrepareRequest request,
       CqlPrepareProcessor processor,
       DefaultSession session,
-      InternalDriverContext context) {
+      InternalDriverContext context,
+      String sessionLogPrefix) {
     super(request, session, context);
+    this.logPrefix = sessionLogPrefix + "|" + this.hashCode();
+    LOG.debug("[{}] Creating new handler for prepare request {}", logPrefix, request);
     this.processor = processor;
     this.result = new CompletableFuture<>();
     this.result.exceptionally(
@@ -91,7 +95,7 @@ public class CqlPrepareHandler
               cancelTimeout();
             }
           } catch (Throwable t2) {
-            LOG.warn("Uncaught exception", t2);
+            LOG.warn("[{}] Uncaught exception", logPrefix, t2);
           }
           return null;
         });
@@ -137,9 +141,9 @@ public class CqlPrepareHandler
       return;
     }
     DriverChannel channel = null;
-    if (node == null || (channel = getChannel(node)) == null) {
+    if (node == null || (channel = getChannel(node, logPrefix)) == null) {
       while (!result.isDone() && (node = queryPlan.poll()) != null) {
-        channel = getChannel(node);
+        channel = getChannel(node, logPrefix);
         if (channel != null) {
           break;
         }
@@ -203,20 +207,23 @@ public class CqlPrepareHandler
   // Try to reprepare on another node, after the initial query has succeeded. Errors are not
   // blocking, the preparation will be retried later on that node. Simply warn and move on.
   private CompletionStage<Void> prepareOnOtherNode(Node node) {
-    LOG.debug("Repreparing on {}", node);
-    DriverChannel channel = getChannel(node);
+    LOG.debug("[{}] Repreparing on {}", logPrefix, node);
+    DriverChannel channel = getChannel(node, logPrefix);
     if (channel == null) {
-      LOG.warn("Could not get a channel to reprepare on {}", node);
+      LOG.debug("[{}] Could not get a channel to reprepare on {}, skipping", logPrefix, node);
       return CompletableFuture.completedFuture(null);
     } else {
       AdminRequestHandler handler =
-          new AdminRequestHandler(channel, message, timeout, message.toString());
+          new AdminRequestHandler(channel, message, timeout, logPrefix, message.toString());
       return handler
           .start()
           .handle(
               (result, error) -> {
-                if (error != null) {
-                  LOG.warn("Error while repreparing on {}", node);
+                if (error == null) {
+                  LOG.debug("[{}] Successfully reprepared on {}", logPrefix, node);
+                } else {
+                  LOG.warn(
+                      "[{}] Error while repreparing on {}: {}", logPrefix, node, error.toString());
                 }
                 return null;
               });
@@ -245,8 +252,15 @@ public class CqlPrepareHandler
     @Override
     public void operationComplete(Future<java.lang.Void> future) throws Exception {
       if (!future.isSuccess()) {
+        LOG.debug(
+            "[{}] Failed to send request on {}, trying next node (cause: {})",
+            logPrefix,
+            node,
+            future.cause().toString());
         recordError(node, future.cause());
         sendRequest(null, retryCount); // try next host
+      } else {
+        LOG.debug("[{}] Request sent to {}", logPrefix, node);
       }
     }
 
@@ -258,8 +272,10 @@ public class CqlPrepareHandler
       try {
         Message responseMessage = responseFrame.message;
         if (responseMessage instanceof Prepared) {
+          LOG.debug("[{}] Got result, completing", logPrefix);
           setFinalResult((Prepared) responseMessage);
         } else if (responseMessage instanceof Error) {
+          LOG.debug("[{}] Got error response, processing", logPrefix);
           processErrorResponse((Error) responseMessage);
         } else {
           setFinalError(new IllegalStateException("Unexpected response " + responseMessage));
@@ -285,13 +301,13 @@ public class CqlPrepareHandler
       }
       Throwable error = Conversions.toThrowable(node, errorMessage);
       if (error instanceof BootstrappingException) {
-        // Do not call the retry policy, always try the next node
+        LOG.debug("[{}] {} is bootstrapping, trying next node", logPrefix, node);
         recordError(node, error);
         sendRequest(null, retryCount);
       } else if (error instanceof QueryValidationException
           || error instanceof FunctionFailureException
           || error instanceof ProtocolError) {
-        // Do not call the retry policy, always rethrow
+        LOG.debug("[{}] Unrecoverable error, rethrowing", logPrefix);
         setFinalError(error);
       } else {
         // Because prepare requests are known to always be idempotent, we call the retry policy
@@ -302,6 +318,7 @@ public class CqlPrepareHandler
     }
 
     private void processRetryDecision(RetryDecision decision, Throwable error) {
+      LOG.debug("[{}] Processing retry decision {}", logPrefix, decision);
       switch (decision) {
         case RETRY_SAME:
           recordError(node, error);
@@ -328,8 +345,14 @@ public class CqlPrepareHandler
       if (result.isDone()) {
         return;
       }
+      LOG.debug("[{}] Request failure, processing: {}", logPrefix, error.toString());
       RetryDecision decision = retryPolicy.onRequestAborted(request, error, retryCount);
       processRetryDecision(decision, error);
+    }
+
+    @Override
+    public String toString() {
+      return logPrefix;
     }
   }
 }

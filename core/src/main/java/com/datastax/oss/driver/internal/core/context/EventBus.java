@@ -36,8 +36,13 @@ import org.slf4j.LoggerFactory;
 public class EventBus {
   private static final Logger LOG = LoggerFactory.getLogger(EventBus.class);
 
+  private final String logPrefix;
   private final SetMultimap<Class<?>, Consumer<?>> listeners =
       Multimaps.synchronizedSetMultimap(HashMultimap.create());
+
+  public EventBus(String logPrefix) {
+    this.logPrefix = logPrefix;
+  }
 
   /**
    * Registers a listener for an event type.
@@ -45,7 +50,7 @@ public class EventBus {
    * @return a key that is needed to unregister later.
    */
   public <T> Object register(Class<T> eventClass, Consumer<T> listener) {
-    LOG.debug("Registering {} for {}", listener, eventClass);
+    LOG.debug("[{}] Registering {} for {}", logPrefix, listener, eventClass);
     listeners.put(eventClass, listener);
     // The reason for the key mechanism is that this will often be used with method references,
     // and you get a different object every time you reference a method, so register(Foo::bar)
@@ -59,7 +64,7 @@ public class EventBus {
    * @param key the key that was returned by {@link #register(Class, Consumer)}
    */
   public <T> boolean unregister(Object key, Class<T> eventClass) {
-    LOG.debug("Unregistering {} for {}", key, eventClass);
+    LOG.debug("[{}] Unregistering {} for {}", logPrefix, key, eventClass);
     return listeners.remove(eventClass, key);
   }
 
@@ -79,7 +84,7 @@ public class EventBus {
     for (Consumer<?> l : listeners.get(eventClass)) {
       @SuppressWarnings("unchecked")
       Consumer<Object> listener = (Consumer<Object>) l;
-      LOG.trace("Notifying {} of {}", listener, event);
+      LOG.trace("[{}] Notifying {} of {}", logPrefix, listener, event);
       listener.accept(event);
     }
   }

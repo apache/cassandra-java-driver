@@ -80,7 +80,7 @@ public class ProtocolInitHandlerTest extends ChannelHandlerTestBase {
         .addLast(
             "inflight",
             new InFlightHandler(
-                CoreProtocolVersion.V4, new StreamIdGenerator(100), 100, null, null));
+                CoreProtocolVersion.V4, new StreamIdGenerator(100), 100, null, null, "test"));
   }
 
   @Test
@@ -119,7 +119,8 @@ public class ProtocolInitHandlerTest extends ChannelHandlerTestBase {
         .pipeline()
         .addLast(
             "init",
-            new ProtocolInitHandler(internalDriverContext, CoreProtocolVersion.V4, null, null));
+            new ProtocolInitHandler(
+                internalDriverContext, CoreProtocolVersion.V4, null, DriverChannelOptions.DEFAULT));
 
     ChannelFuture connectFuture = channel.connect(new InetSocketAddress("localhost", 9042));
 

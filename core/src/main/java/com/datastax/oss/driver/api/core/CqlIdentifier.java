@@ -137,6 +137,11 @@ public class CqlIdentifier implements Serializable {
     return internal.hashCode();
   }
 
+  @Override
+  public String toString() {
+    return internal;
+  }
+
   private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
     in.defaultReadObject();
     Preconditions.checkNotNull(internal, "internal must not be null");

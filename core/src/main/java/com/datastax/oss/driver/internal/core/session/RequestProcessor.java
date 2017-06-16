@@ -43,5 +43,6 @@ public interface RequestProcessor<SyncResultT, AsyncResultT> {
   RequestHandler<SyncResultT, AsyncResultT> newHandler(
       Request<SyncResultT, AsyncResultT> request,
       DefaultSession session,
-      InternalDriverContext context);
+      InternalDriverContext context,
+      String sessionLogPrefix);
 }

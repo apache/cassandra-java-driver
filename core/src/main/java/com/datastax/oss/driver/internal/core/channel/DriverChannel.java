@@ -161,6 +161,11 @@ public class DriverChannel {
     return channel.closeFuture();
   }
 
+  @Override
+  public String toString() {
+    return channel.toString();
+  }
+
   // This is essentially a stripped-down Frame. We can't materialize the frame before writing,
   // because we need the stream id, which is assigned from within the event loop.
   static class RequestMessage {

@@ -192,7 +192,8 @@ public class ChannelFactory {
                 new StreamIdGenerator(maxRequestsPerConnection),
                 setKeyspaceTimeoutMillis,
                 availableIdsHolder,
-                options.eventCallback);
+                options.eventCallback,
+                options.ownerLogPrefix);
         ProtocolInitHandler initHandler =
             new ProtocolInitHandler(context, protocolVersion, clusterName, options);
 

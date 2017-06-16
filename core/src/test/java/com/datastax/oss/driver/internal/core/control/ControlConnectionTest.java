@@ -293,7 +293,6 @@ public class ControlConnectionTest extends ControlConnectionTestBase {
     // Then
     assertThat(closeFuture).isSuccess();
     Mockito.verify(channel1).forceClose();
-    Mockito.verify(eventBus).fire(ChannelEvent.channelClosed(NODE1));
 
     factoryHelper.verifyNoMoreCalls();
   }

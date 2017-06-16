@@ -38,16 +38,17 @@ public class RoundRobinLoadBalancingPolicy implements LoadBalancingPolicy {
 
   private static final IntUnaryOperator INCREMENT = i -> (i == Integer.MAX_VALUE) ? 0 : i + 1;
 
+  private final String logPrefix;
   private final AtomicInteger startIndex = new AtomicInteger();
   private final CopyOnWriteArraySet<Node> liveNodes = new CopyOnWriteArraySet<>();
 
   public RoundRobinLoadBalancingPolicy(@SuppressWarnings("unused") DriverContext context) {
-    // nothing to do
+    this.logPrefix = context.clusterName();
   }
 
   @Override
   public void init(Set<Node> nodes, DistanceReporter distanceReporter) {
-    LOG.debug("Initializing with {}", nodes);
+    LOG.debug("[{}] Initializing with {}", logPrefix, nodes);
     for (Node node : nodes) {
       distanceReporter.setDistance(node, NodeDistance.LOCAL);
       if (node.getState() == NodeState.UNKNOWN || node.getState() == NodeState.UP) {
@@ -75,13 +76,13 @@ public class RoundRobinLoadBalancingPolicy implements LoadBalancingPolicy {
 
   @Override
   public void onUp(Node node) {
-    LOG.debug("Adding {}", node);
+    LOG.debug("[{}] Adding {}", logPrefix, node);
     liveNodes.add(node);
   }
 
   @Override
   public void onDown(Node node) {
-    LOG.debug("Removing {}", node);
+    LOG.debug("[{}] Removing {}", logPrefix, node);
     liveNodes.remove(node);
   }
 

@@ -15,6 +15,7 @@
  */
 package com.datastax.oss.driver.api.core.context;
 
+import com.datastax.oss.driver.api.core.Cluster;
 import com.datastax.oss.driver.api.core.addresstranslation.AddressTranslator;
 import com.datastax.oss.driver.api.core.auth.AuthProvider;
 import com.datastax.oss.driver.api.core.config.DriverConfig;
@@ -28,6 +29,12 @@ import java.util.Optional;
 
 /** Holds common components that are shared throughout a driver instance. */
 public interface DriverContext extends AttachmentPoint {
+
+  /**
+   * This is the same as {@link Cluster#getName()}, it's exposed here for components that only have
+   * a reference to the context.
+   */
+  String clusterName();
 
   DriverConfig config();
 

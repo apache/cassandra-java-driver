@@ -74,7 +74,7 @@ public class CqlPrepareHandlerTest {
 
       CompletionStage<PreparedStatement> prepareFuture =
           new CqlPrepareHandler(
-                  PREPARE_REQUEST, processor, harness.getSession(), harness.getContext())
+                  PREPARE_REQUEST, processor, harness.getSession(), harness.getContext(), "test")
               .asyncResult();
 
       node1Behavior.verifyWrite();
@@ -113,7 +113,7 @@ public class CqlPrepareHandlerTest {
 
       CompletionStage<PreparedStatement> prepareFuture =
           new CqlPrepareHandler(
-                  PREPARE_REQUEST, processor, harness.getSession(), harness.getContext())
+                  PREPARE_REQUEST, processor, harness.getSession(), harness.getContext(), "test")
               .asyncResult();
 
       node1Behavior.verifyWrite();
@@ -143,7 +143,7 @@ public class CqlPrepareHandlerTest {
 
       CompletionStage<PreparedStatement> prepareFuture =
           new CqlPrepareHandler(
-                  PREPARE_REQUEST, processor, harness.getSession(), harness.getContext())
+                  PREPARE_REQUEST, processor, harness.getSession(), harness.getContext(), "test")
               .asyncResult();
 
       assertThat(prepareFuture).isNotDone();
@@ -183,7 +183,7 @@ public class CqlPrepareHandlerTest {
 
       CompletionStage<PreparedStatement> prepareFuture =
           new CqlPrepareHandler(
-                  PREPARE_REQUEST, processor, harness.getSession(), harness.getContext())
+                  PREPARE_REQUEST, processor, harness.getSession(), harness.getContext(), "test")
               .asyncResult();
 
       // Success on node2, reprepare on node3
@@ -218,7 +218,7 @@ public class CqlPrepareHandlerTest {
 
       CompletionStage<PreparedStatement> prepareFuture =
           new CqlPrepareHandler(
-                  PREPARE_REQUEST, processor, harness.getSession(), harness.getContext())
+                  PREPARE_REQUEST, processor, harness.getSession(), harness.getContext(), "test")
               .asyncResult();
 
       // Success on node2, reprepare on node3
@@ -254,7 +254,7 @@ public class CqlPrepareHandlerTest {
 
       CompletionStage<PreparedStatement> prepareFuture =
           new CqlPrepareHandler(
-                  PREPARE_REQUEST, processor, harness.getSession(), harness.getContext())
+                  PREPARE_REQUEST, processor, harness.getSession(), harness.getContext(), "test")
               .asyncResult();
 
       // Success on node2, reprepare on node3

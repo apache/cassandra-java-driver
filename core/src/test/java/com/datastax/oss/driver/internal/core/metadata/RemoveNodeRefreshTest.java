@@ -34,7 +34,7 @@ public class RemoveNodeRefreshTest {
     // Given
     DefaultMetadata oldMetadata =
         new DefaultMetadata(ImmutableMap.of(ADDRESS1, node1, ADDRESS2, node2));
-    RemoveNodeRefresh refresh = new RemoveNodeRefresh(oldMetadata, ADDRESS2);
+    RemoveNodeRefresh refresh = new RemoveNodeRefresh(oldMetadata, ADDRESS2, "test");
 
     // When
     refresh.compute();
@@ -48,7 +48,7 @@ public class RemoveNodeRefreshTest {
   public void should_not_remove_nonexistent_node() {
     // Given
     DefaultMetadata oldMetadata = new DefaultMetadata(ImmutableMap.of(ADDRESS1, node1));
-    RemoveNodeRefresh refresh = new RemoveNodeRefresh(oldMetadata, ADDRESS2);
+    RemoveNodeRefresh refresh = new RemoveNodeRefresh(oldMetadata, ADDRESS2, "test");
 
     // When
     refresh.compute();

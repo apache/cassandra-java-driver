@@ -357,6 +357,7 @@ public class InFlightHandlerTest extends ChannelHandlerTestBase {
                 streamIds,
                 SET_KEYSPACE_TIMEOUT_MILLIS,
                 null,
-                eventCallback));
+                eventCallback,
+                "test"));
   }
 }

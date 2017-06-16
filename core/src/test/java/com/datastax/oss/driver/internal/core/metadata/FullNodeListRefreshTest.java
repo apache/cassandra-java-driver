@@ -41,7 +41,7 @@ public class FullNodeListRefreshTest {
         ImmutableList.of(
             DefaultNodeInfo.builder().withConnectAddress(ADDRESS2).build(),
             DefaultNodeInfo.builder().withConnectAddress(ADDRESS3).build());
-    FullNodeListRefresh refresh = new FullNodeListRefresh(oldMetadata, newInfos);
+    FullNodeListRefresh refresh = new FullNodeListRefresh(oldMetadata, newInfos, "test");
 
     // When
     refresh.compute();
@@ -69,7 +69,7 @@ public class FullNodeListRefreshTest {
                 .withDatacenter("dc1")
                 .withRack("rack2")
                 .build());
-    FullNodeListRefresh refresh = new FullNodeListRefresh(oldMetadata, newInfos);
+    FullNodeListRefresh refresh = new FullNodeListRefresh(oldMetadata, newInfos, "test");
 
     // When
     refresh.compute();

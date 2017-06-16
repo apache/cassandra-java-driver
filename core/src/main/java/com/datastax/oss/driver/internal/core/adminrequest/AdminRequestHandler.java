@@ -52,7 +52,8 @@ public class AdminRequestHandler implements ResponseCallback {
       String query,
       Map<String, Object> parameters,
       Duration timeout,
-      int pageSize) {
+      int pageSize,
+      String logPrefix) {
     Query message =
         new Query(
             query,
@@ -61,17 +62,18 @@ public class AdminRequestHandler implements ResponseCallback {
     if (!parameters.isEmpty()) {
       debugString += " with parameters " + parameters;
     }
-    return new AdminRequestHandler(channel, message, timeout, debugString);
+    return new AdminRequestHandler(channel, message, timeout, logPrefix, debugString);
   }
 
   public static AdminRequestHandler query(
-      DriverChannel channel, String query, Duration timeout, int pageSize) {
-    return query(channel, query, Collections.emptyMap(), timeout, pageSize);
+      DriverChannel channel, String query, Duration timeout, int pageSize, String logPrefix) {
+    return query(channel, query, Collections.emptyMap(), timeout, pageSize, logPrefix);
   }
 
   private final DriverChannel channel;
   private final Message message;
   private final Duration timeout;
+  private final String logPrefix;
   private final String debugString;
   private final CompletableFuture<AdminResult> result = new CompletableFuture<>();
 
@@ -79,10 +81,15 @@ public class AdminRequestHandler implements ResponseCallback {
   private ScheduledFuture<?> timeoutFuture;
 
   public AdminRequestHandler(
-      DriverChannel channel, Message message, Duration timeout, String debugString) {
+      DriverChannel channel,
+      Message message,
+      Duration timeout,
+      String logPrefix,
+      String debugString) {
     this.channel = channel;
     this.message = message;
     this.timeout = timeout;
+    this.logPrefix = logPrefix;
     this.debugString = debugString;
   }
 
@@ -91,7 +98,7 @@ public class AdminRequestHandler implements ResponseCallback {
   }
 
   public CompletionStage<AdminResult> start(Map<String, ByteBuffer> customPayload) {
-    LOG.debug("Executing {}", this);
+    LOG.debug("[{}] Executing {}", logPrefix, this);
     channel.write(message, false, customPayload, this).addListener(this::onWriteComplete);
     return result;
   }
@@ -150,7 +157,7 @@ public class AdminRequestHandler implements ResponseCallback {
     QueryOptions newOptions =
         buildQueryOptions(currentOptions.pageSize, currentOptions.namedValues, pagingState);
     return new AdminRequestHandler(
-        channel, new Query(current.query, newOptions), timeout, debugString);
+        channel, new Query(current.query, newOptions), timeout, logPrefix, debugString);
   }
 
   private static QueryOptions buildQueryOptions(

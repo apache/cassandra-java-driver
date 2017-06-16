@@ -68,18 +68,18 @@ public abstract class RequestHandlerBase<SyncResultT, AsyncResultT>
             : request.isIdempotent();
   }
 
-  protected DriverChannel getChannel(Node node) {
+  protected DriverChannel getChannel(Node node, String logPrefix) {
     ChannelPool pool = session.getPools().get(node);
     if (pool == null) {
-      LOG.trace("No pool to {}, skipping", node);
+      LOG.debug("[{}] No pool to {}, skipping", logPrefix, node);
       return null;
     } else {
       DriverChannel channel = pool.next();
       if (channel == null) {
-        LOG.trace("Pool returned no channel for {}, skipping", node);
+        LOG.trace("[{}] Pool returned no channel for {}, skipping", logPrefix, node);
         return null;
       } else if (channel.closeFuture().isDone()) {
-        LOG.trace("Pool returned closed connection to {}, skipping", node);
+        LOG.trace("[{}] Pool returned closed connection to {}, skipping", logPrefix, node);
         return null;
       } else {
         return channel;

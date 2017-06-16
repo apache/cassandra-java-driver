@@ -39,7 +39,7 @@ public class AddNodeRefreshTest {
             .withDatacenter("dc1")
             .withRack("rack2")
             .build();
-    AddNodeRefresh refresh = new AddNodeRefresh(oldMetadata, newNodeInfo);
+    AddNodeRefresh refresh = new AddNodeRefresh(oldMetadata, newNodeInfo, "test");
 
     // When
     refresh.compute();
@@ -63,7 +63,7 @@ public class AddNodeRefreshTest {
             .withDatacenter("dc1")
             .withRack("rack2")
             .build();
-    AddNodeRefresh refresh = new AddNodeRefresh(oldMetadata, newNodeInfo);
+    AddNodeRefresh refresh = new AddNodeRefresh(oldMetadata, newNodeInfo, "test");
 
     // When
     refresh.compute();

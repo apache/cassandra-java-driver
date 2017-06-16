@@ -33,8 +33,8 @@ class FullNodeListRefresh extends NodesRefresh {
 
   @VisibleForTesting final Iterable<NodeInfo> nodeInfos;
 
-  FullNodeListRefresh(DefaultMetadata current, Iterable<NodeInfo> nodeInfos) {
-    super(current);
+  FullNodeListRefresh(DefaultMetadata current, Iterable<NodeInfo> nodeInfos, String logPrefix) {
+    super(current, logPrefix);
     this.nodeInfos = nodeInfos;
   }
 
@@ -48,17 +48,17 @@ class FullNodeListRefresh extends NodesRefresh {
     for (NodeInfo nodeInfo : nodeInfos) {
       InetSocketAddress address = nodeInfo.getConnectAddress();
       if (address == null) {
-        LOG.warn("Got node info with no connect address, ignoring");
+        LOG.warn("[{}] Got node info with no connect address, ignoring", logPrefix);
         continue;
       }
       seen.add(address);
       DefaultNode node = (DefaultNode) oldNodes.get(address);
       if (node == null) {
         node = new DefaultNode(address);
-        LOG.debug("Adding new node {}", node);
+        LOG.debug("[{}] Adding new node {}", logPrefix, node);
         added.put(address, node);
       }
-      copyInfos(nodeInfo, node);
+      copyInfos(nodeInfo, node, logPrefix);
     }
 
     Set<InetSocketAddress> removed = Sets.difference(oldNodes.keySet(), seen);

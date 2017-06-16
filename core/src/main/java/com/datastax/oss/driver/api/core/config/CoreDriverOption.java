@@ -22,8 +22,8 @@ package com.datastax.oss.driver.api.core.config;
  */
 public enum CoreDriverOption implements DriverOption {
   CONTACT_POINTS("contact-points", false),
-
   PROTOCOL_VERSION("protocol.version", false),
+  CLUSTER_NAME("cluster-name", false),
 
   CONNECTION_INIT_QUERY_TIMEOUT("connection.init-query-timeout", true),
   CONNECTION_SET_KEYSPACE_TIMEOUT("connection.set-keyspace-timeout", true),

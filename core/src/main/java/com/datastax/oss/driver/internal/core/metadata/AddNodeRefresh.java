@@ -25,8 +25,8 @@ public class AddNodeRefresh extends NodesRefresh {
 
   @VisibleForTesting final NodeInfo newNodeInfo;
 
-  AddNodeRefresh(DefaultMetadata oldMetadata, NodeInfo newNodeInfo) {
-    super(oldMetadata);
+  AddNodeRefresh(DefaultMetadata oldMetadata, NodeInfo newNodeInfo, String logPrefix) {
+    super(oldMetadata, logPrefix);
     this.newNodeInfo = newNodeInfo;
   }
 
@@ -37,7 +37,7 @@ public class AddNodeRefresh extends NodesRefresh {
       return oldNodes;
     } else {
       DefaultNode newNode = new DefaultNode(newNodeInfo.getConnectAddress());
-      copyInfos(newNodeInfo, newNode);
+      copyInfos(newNodeInfo, newNode, logPrefix);
       events.add(NodeStateEvent.added(newNode));
       return ImmutableMap.<InetSocketAddress, Node>builder()
           .putAll(oldNodes)

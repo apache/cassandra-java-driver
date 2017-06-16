@@ -61,9 +61,11 @@ public abstract class CachingCodecRegistry implements CodecRegistry {
   // - same for user codecs (we assume the cardinality will always be low, so a sequential array
   //   traversal is cheap).
 
+  protected final String logPrefix;
   private final TypeCodec<?>[] userCodecs;
 
-  protected CachingCodecRegistry(TypeCodec<?>... userCodecs) {
+  protected CachingCodecRegistry(String logPrefix, TypeCodec<?>... userCodecs) {
+    this.logPrefix = logPrefix;
     this.userCodecs = userCodecs;
   }
 
@@ -78,15 +80,15 @@ public abstract class CachingCodecRegistry implements CodecRegistry {
 
   @Override
   public <T> TypeCodec<T> codecFor(DataType cqlType, GenericType<T> javaType) {
-    LOG.trace("Looking up codec for {} <-> {}", cqlType, javaType);
+    LOG.trace("[{}] Looking up codec for {} <-> {}", logPrefix, cqlType, javaType);
     TypeCodec<?> primitiveCodec = PRIMITIVE_CODECS_BY_CODE.get(cqlType.getProtocolCode());
     if (primitiveCodec != null && primitiveCodec.canEncode(javaType)) {
-      LOG.trace("Found matching primitive codec {}", primitiveCodec);
+      LOG.trace("[{}] Found matching primitive codec {}", logPrefix, primitiveCodec);
       return safeCast(primitiveCodec);
     }
     for (TypeCodec<?> userCodec : userCodecs) {
       if (userCodec.canDecode(cqlType) && userCodec.canEncode(javaType)) {
-        LOG.trace("Found matching user codec {}", userCodec);
+        LOG.trace("[{}] Found matching user codec {}", logPrefix, userCodec);
         return safeCast(userCodec);
       }
     }
@@ -95,15 +97,15 @@ public abstract class CachingCodecRegistry implements CodecRegistry {
 
   @Override
   public <T> TypeCodec<T> codecFor(DataType cqlType, Class<T> javaType) {
-    LOG.trace("Looking up codec for {} <-> {}", cqlType, javaType);
+    LOG.trace("[{}] Looking up codec for {} <-> {}", logPrefix, cqlType, javaType);
     TypeCodec<?> primitiveCodec = PRIMITIVE_CODECS_BY_CODE.get(cqlType.getProtocolCode());
     if (primitiveCodec != null && primitiveCodec.getJavaType().__getToken().getType() == javaType) {
-      LOG.trace("Found matching primitive codec {}", primitiveCodec);
+      LOG.trace("[{}] Found matching primitive codec {}", logPrefix, primitiveCodec);
       return safeCast(primitiveCodec);
     }
     for (TypeCodec<?> userCodec : userCodecs) {
       if (userCodec.canDecode(cqlType) && userCodec.canEncode(javaType)) {
-        LOG.trace("Found matching user codec {}", userCodec);
+        LOG.trace("[{}] Found matching user codec {}", logPrefix, userCodec);
         return safeCast(userCodec);
       }
     }
@@ -112,15 +114,15 @@ public abstract class CachingCodecRegistry implements CodecRegistry {
 
   @Override
   public <T> TypeCodec<T> codecFor(DataType cqlType) {
-    LOG.trace("Looking up codec for CQL type {}", cqlType);
+    LOG.trace("[{}] Looking up codec for CQL type {}", logPrefix, cqlType);
     TypeCodec<?> primitiveCodec = PRIMITIVE_CODECS_BY_CODE.get(cqlType.getProtocolCode());
     if (primitiveCodec != null) {
-      LOG.trace("Found matching primitive codec {}", primitiveCodec);
+      LOG.trace("[{}] Found matching primitive codec {}", logPrefix, primitiveCodec);
       return safeCast(primitiveCodec);
     }
     for (TypeCodec<?> userCodec : userCodecs) {
       if (userCodec.canDecode(cqlType)) {
-        LOG.trace("Found matching user codec {}", userCodec);
+        LOG.trace("[{}] Found matching user codec {}", logPrefix, userCodec);
         return safeCast(userCodec);
       }
     }
@@ -130,17 +132,17 @@ public abstract class CachingCodecRegistry implements CodecRegistry {
   @Override
   public <T> TypeCodec<T> codecFor(T value) {
     Preconditions.checkNotNull(value);
-    LOG.trace("Looking up codec for object {}", value);
+    LOG.trace("[{}] Looking up codec for object {}", logPrefix, value);
 
     for (TypeCodec<?> primitiveCodec : PRIMITIVE_CODECS) {
       if (primitiveCodec.canEncode(value)) {
-        LOG.trace("Found matching primitive codec {}", primitiveCodec);
+        LOG.trace("[{}] Found matching primitive codec {}", logPrefix, primitiveCodec);
         return safeCast(primitiveCodec);
       }
     }
     for (TypeCodec<?> userCodec : userCodecs) {
       if (userCodec.canEncode(value)) {
-        LOG.trace("Found matching user codec {}", userCodec);
+        LOG.trace("[{}] Found matching user codec {}", logPrefix, userCodec);
         return safeCast(userCodec);
       }
     }
@@ -152,22 +154,22 @@ public abstract class CachingCodecRegistry implements CodecRegistry {
     }
 
     GenericType<?> javaType = inspectType(value);
-    LOG.trace("Continuing based on inferred type {}", javaType);
+    LOG.trace("[{}] Continuing based on inferred type {}", logPrefix, javaType);
     return safeCast(getCachedCodec(null, javaType));
   }
 
   // Not exposed publicly, this is only used for the recursion from createCodec(GenericType)
   private TypeCodec<?> codecFor(GenericType<?> javaType) {
-    LOG.trace("Looking up codec for Java type {}", javaType);
+    LOG.trace("[{}] Looking up codec for Java type {}", logPrefix, javaType);
     for (TypeCodec<?> primitiveCodec : PRIMITIVE_CODECS) {
       if (primitiveCodec.canEncode(javaType)) {
-        LOG.trace("Found matching primitive codec {}", primitiveCodec);
+        LOG.trace("[{}] Found matching primitive codec {}", logPrefix, primitiveCodec);
         return safeCast(primitiveCodec);
       }
     }
     for (TypeCodec<?> userCodec : userCodecs) {
       if (userCodec.canEncode(javaType)) {
-        LOG.trace("Found matching user codec {}", userCodec);
+        LOG.trace("[{}] Found matching user codec {}", logPrefix, userCodec);
         return safeCast(userCodec);
       }
     }
@@ -210,7 +212,7 @@ public abstract class CachingCodecRegistry implements CodecRegistry {
 
   // Try to create a codec when we haven't found it in the cache
   protected TypeCodec<?> createCodec(DataType cqlType, GenericType<?> javaType) {
-    LOG.trace("Cache miss, creating codec");
+    LOG.trace("[{}] Cache miss, creating codec", logPrefix);
     // Either type can be null, but not both.
     if (javaType == null) {
       assert cqlType != null;

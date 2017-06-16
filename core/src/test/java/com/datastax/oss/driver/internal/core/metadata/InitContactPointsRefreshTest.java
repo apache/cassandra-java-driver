@@ -30,7 +30,8 @@ public class InitContactPointsRefreshTest {
   public void should_create_nodes() {
     // Given
     InitContactPointsRefresh refresh =
-        new InitContactPointsRefresh(DefaultMetadata.EMPTY, ImmutableSet.of(ADDRESS1, ADDRESS2));
+        new InitContactPointsRefresh(
+            DefaultMetadata.EMPTY, ImmutableSet.of(ADDRESS1, ADDRESS2), "test");
 
     // When
     refresh.compute();

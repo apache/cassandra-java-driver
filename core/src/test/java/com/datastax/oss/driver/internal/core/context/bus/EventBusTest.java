@@ -31,7 +31,7 @@ public class EventBusTest {
 
   @BeforeMethod
   public void setup() {
-    bus = new EventBus();
+    bus = new EventBus("test");
     results = new HashMap<>();
   }
 

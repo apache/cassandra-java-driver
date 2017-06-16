@@ -54,17 +54,25 @@ public class DefaultCluster implements Cluster {
   private final EventExecutor adminExecutor;
   private final SingleThreaded singleThreaded;
   private final MetadataManager metadataManager;
+  private final String logPrefix;
 
   private DefaultCluster(InternalDriverContext context, Set<InetSocketAddress> contactPoints) {
+    LOG.debug("Creating new cluster {}", context.clusterName());
     this.context = context;
     this.adminExecutor = context.nettyOptions().adminEventExecutorGroup().next();
     this.singleThreaded = new SingleThreaded(context, contactPoints);
     this.metadataManager = context.metadataManager();
+    this.logPrefix = context.clusterName();
   }
 
   private CompletableFuture<Cluster> init() {
     RunOrSchedule.on(adminExecutor, singleThreaded::init);
     return singleThreaded.initFuture;
+  }
+
+  @Override
+  public String getName() {
+    return context.clusterName();
   }
 
   @Override
@@ -114,6 +122,7 @@ public class DefaultCluster implements Cluster {
     // Note: closed sessions are not removed from the list. If this creates a memory issue, there
     // is something really wrong in the client program
     private List<Session> sessions;
+    private int sessionCounter;
 
     private SingleThreaded(InternalDriverContext context, Set<InetSocketAddress> contactPoints) {
       this.context = context;
@@ -128,6 +137,7 @@ public class DefaultCluster implements Cluster {
         return;
       }
       initWasCalled = true;
+      LOG.debug("[{}] Starting initialization", logPrefix);
 
       // If any contact points were provided, store them in the metadata right away (the
       // control connection will need them if it has to initialize)
@@ -140,6 +150,7 @@ public class DefaultCluster implements Cluster {
               v -> {
                 try {
                   context.loadBalancingPolicyWrapper().init();
+                  LOG.debug("[{}] Initialization complete, ready", logPrefix);
                   initFuture.complete(DefaultCluster.this);
                   // TODO schedule full schema refresh asynchronously (does not block init)
                 } catch (Throwable throwable) {
@@ -158,7 +169,10 @@ public class DefaultCluster implements Cluster {
       if (closeWasCalled) {
         connectFuture.completeExceptionally(new IllegalStateException("Cluster was closed"));
       } else {
-        DefaultSession.init(context, keyspace)
+        String sessionLogPrefix = logPrefix + "|s" + sessionCounter++;
+        LOG.debug(
+            "[{}] Opening new session {} to keyspace {}", logPrefix, sessionLogPrefix, keyspace);
+        DefaultSession.init(context, keyspace, sessionLogPrefix)
             .whenCompleteAsync(
                 (session, error) -> {
                   if (error != null) {
@@ -185,10 +199,9 @@ public class DefaultCluster implements Cluster {
       }
       closeWasCalled = true;
 
-      LOG.debug("Closing {}", this);
+      LOG.debug("[{}] Starting shutdown", logPrefix);
       List<CompletionStage<Void>> childrenCloseStages = new ArrayList<>();
       for (AsyncAutoCloseable closeable : internalComponentsToClose()) {
-        LOG.debug("Closing {}", closeable);
         childrenCloseStages.add(closeable.closeAsync());
       }
       CompletableFutures.whenAllDone(
@@ -201,20 +214,20 @@ public class DefaultCluster implements Cluster {
         return;
       }
       forceCloseWasCalled = true;
-
-      LOG.debug("Force-closing {} (was {}closed before)", this, (closeWasCalled ? "" : "not "));
+      LOG.debug(
+          "[{}] Starting forced shutdown (was {}closed before)",
+          logPrefix,
+          (closeWasCalled ? "" : "not "));
 
       if (closeWasCalled) {
         // onChildrenClosed has already been called
         for (AsyncAutoCloseable closeable : internalComponentsToClose()) {
-          LOG.debug("Force-closing {}", closeable);
           closeable.forceCloseAsync();
         }
       } else {
         closeWasCalled = true;
         List<CompletionStage<Void>> childrenCloseStages = new ArrayList<>();
         for (AsyncAutoCloseable closeable : internalComponentsToClose()) {
-          LOG.debug("Force-closing {}", closeable);
           childrenCloseStages.add(closeable.forceCloseAsync());
         }
         CompletableFutures.whenAllDone(
@@ -235,6 +248,7 @@ public class DefaultCluster implements Cluster {
                 if (!f.isSuccess()) {
                   closeFuture.completeExceptionally(f.cause());
                 } else {
+                  LOG.debug("[{}] Shutdown complete", logPrefix);
                   closeFuture.complete(null);
                 }
               });
@@ -244,7 +258,8 @@ public class DefaultCluster implements Cluster {
       CompletableFuture<Void> future = stage.toCompletableFuture();
       assert future.isDone();
       if (future.isCompletedExceptionally()) {
-        LOG.warn("Unexpected error while closing", CompletableFutures.getFailed(future));
+        LOG.warn(
+            "[{}] Unexpected error while closing", logPrefix, CompletableFutures.getFailed(future));
       }
     }
 

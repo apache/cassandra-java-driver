@@ -62,6 +62,7 @@ public class ControlConnection implements EventCallback, AsyncAutoCloseable {
   private static final Logger LOG = LoggerFactory.getLogger(ControlConnection.class);
 
   private final InternalDriverContext context;
+  private final String logPrefix;
   private final EventExecutor adminExecutor;
   private final SingleThreaded singleThreaded;
 
@@ -71,6 +72,7 @@ public class ControlConnection implements EventCallback, AsyncAutoCloseable {
 
   public ControlConnection(InternalDriverContext context) {
     this.context = context;
+    this.logPrefix = context.clusterName();
     this.adminExecutor = context.nettyOptions().adminEventExecutorGroup().next();
     this.singleThreaded = new SingleThreaded(context);
   }
@@ -124,9 +126,9 @@ public class ControlConnection implements EventCallback, AsyncAutoCloseable {
   @Override
   public void onEvent(Message eventMessage) {
     if (!(eventMessage instanceof Event)) {
-      LOG.warn("Unsupported event class: {}", eventMessage.getClass().getName());
+      LOG.warn("[{}] Unsupported event class: {}", logPrefix, eventMessage.getClass().getName());
     } else {
-      LOG.debug("Processing incoming event {}", eventMessage);
+      LOG.debug("[{}] Processing incoming event {}", logPrefix, eventMessage);
       Event event = (Event) eventMessage;
       switch (event.type) {
         case ProtocolConstants.EventType.TOPOLOGY_CHANGE:
@@ -139,7 +141,7 @@ public class ControlConnection implements EventCallback, AsyncAutoCloseable {
           processSchemaChange(event);
           break;
         default:
-          LOG.warn("Unsupported event type: {}", event.type);
+          LOG.warn("[{}] Unsupported event type: {}", logPrefix, event.type);
       }
     }
   }
@@ -155,7 +157,7 @@ public class ControlConnection implements EventCallback, AsyncAutoCloseable {
         context.eventBus().fire(TopologyEvent.suggestRemoved(address));
         break;
       default:
-        LOG.warn("Unsupported topology change type: {}", tce.changeType);
+        LOG.warn("[{}] Unsupported topology change type: {}", logPrefix, tce.changeType);
     }
   }
 
@@ -170,7 +172,7 @@ public class ControlConnection implements EventCallback, AsyncAutoCloseable {
         context.eventBus().fire(TopologyEvent.suggestDown(address));
         break;
       default:
-        LOG.warn("Unsupported status change type: {}", sce.changeType);
+        LOG.warn("[{}] Unsupported status change type: {}", logPrefix, sce.changeType);
     }
   }
 
@@ -197,7 +199,7 @@ public class ControlConnection implements EventCallback, AsyncAutoCloseable {
     private SingleThreaded(InternalDriverContext context) {
       this.context = context;
       this.reconnection =
-          new Reconnection(adminExecutor, context.reconnectionPolicy(), this::reconnect);
+          new Reconnection(logPrefix, adminExecutor, context.reconnectionPolicy(), this::reconnect);
     }
 
     private void init(boolean listenToClusterEvents) {
@@ -207,9 +209,12 @@ public class ControlConnection implements EventCallback, AsyncAutoCloseable {
       }
       initWasCalled = true;
       ImmutableList<String> eventTypes = buildEventTypes(listenToClusterEvents);
-      LOG.debug("Initializing with event types {}", eventTypes);
+      LOG.debug("[{}] Initializing with event types {}", logPrefix, eventTypes);
       channelOptions =
-          DriverChannelOptions.builder().withEvents(eventTypes, ControlConnection.this).build();
+          DriverChannelOptions.builder()
+              .withEvents(eventTypes, ControlConnection.this)
+              .withOwnerLogPrefix(logPrefix + "|control")
+              .build();
 
       Queue<Node> nodes = context.loadBalancingPolicyWrapper().newQueryPlan();
 
@@ -241,7 +246,7 @@ public class ControlConnection implements EventCallback, AsyncAutoCloseable {
       if (node == null) {
         onFailure.accept(AllNodesFailedException.fromErrors(errors));
       } else {
-        LOG.debug("Trying to establish a connection to {}", node);
+        LOG.debug("[{}] Trying to establish a connection to {}", logPrefix, node);
         context
             .channelFactory()
             .connect(node.getConnectAddress(), channelOptions)
@@ -252,7 +257,11 @@ public class ControlConnection implements EventCallback, AsyncAutoCloseable {
                       if (closeWasCalled) {
                         onSuccess.run(); // abort, we don't really care about the result
                       } else {
-                        LOG.debug("Error connecting to " + node + ", trying next node", error);
+                        LOG.debug(
+                            "[{}] Error connecting to {}, trying next node",
+                            logPrefix,
+                            node,
+                            error);
                         Map<Node, Throwable> newErrors =
                             (errors == null) ? new LinkedHashMap<>() : errors;
                         newErrors.put(node, error);
@@ -260,12 +269,13 @@ public class ControlConnection implements EventCallback, AsyncAutoCloseable {
                       }
                     } else if (closeWasCalled) {
                       LOG.debug(
-                          "New channel opened ({}) but the control connection was closed, closing it",
+                          "[{}] New channel opened ({}) but the control connection was closed, closing it",
+                          logPrefix,
                           channel);
                       channel.forceClose();
                       onSuccess.run();
                     } else {
-                      LOG.debug("Connection established to {}", node);
+                      LOG.debug("[{}] Connection established to {}", logPrefix, node);
                       // Make sure previous channel gets closed (it may still be open if reconnection was forced)
                       DriverChannel previousChannel = ControlConnection.this.channel;
                       if (previousChannel != null) {
@@ -283,7 +293,10 @@ public class ControlConnection implements EventCallback, AsyncAutoCloseable {
                       onSuccess.run();
                     }
                   } catch (Exception e) {
-                    LOG.warn("Unexpected exception while processing channel init result", e);
+                    LOG.warn(
+                        "[{}] Unexpected exception while processing channel init result",
+                        logPrefix,
+                        e);
                   }
                 },
                 adminExecutor);
@@ -298,13 +311,16 @@ public class ControlConnection implements EventCallback, AsyncAutoCloseable {
           .whenComplete(
               (result, error) -> {
                 if (error != null) {
-                  LOG.debug("Error while refreshing node list", error);
+                  LOG.debug("[{}] Error while refreshing node list", logPrefix, error);
                 } else {
                   try {
                     // This does nothing if the LBP is initialized already
                     context.loadBalancingPolicyWrapper().init();
                   } catch (Throwable t) {
-                    LOG.warn("Unexpected error while initializing load balancing policy", t);
+                    LOG.warn(
+                        "[{}] Unexpected error while initializing load balancing policy",
+                        logPrefix,
+                        t);
                   }
                 }
               });
@@ -314,10 +330,12 @@ public class ControlConnection implements EventCallback, AsyncAutoCloseable {
 
     private void onChannelClosed(DriverChannel channel, Node node) {
       assert adminExecutor.inEventLoop();
-      LOG.debug("Lost channel {}", channel);
-      context.eventBus().fire(ChannelEvent.channelClosed(node));
-      if (!closeWasCalled && !reconnection.isRunning()) {
-        reconnection.start();
+      if (!closeWasCalled) {
+        LOG.debug("[{}] Lost channel {}", logPrefix, channel);
+        context.eventBus().fire(ChannelEvent.channelClosed(node));
+        if (!reconnection.isRunning()) {
+          reconnection.start();
+        }
       }
     }
 
@@ -334,8 +352,10 @@ public class ControlConnection implements EventCallback, AsyncAutoCloseable {
         return;
       }
       closeWasCalled = true;
+      LOG.debug("[{}] Starting shutdown", logPrefix);
       reconnection.stop();
       if (channel == null) {
+        LOG.debug("[{}] Shutdown complete", logPrefix);
         closeFuture.complete(null);
       } else {
         channel
@@ -343,6 +363,7 @@ public class ControlConnection implements EventCallback, AsyncAutoCloseable {
             .addListener(
                 f -> {
                   if (f.isSuccess()) {
+                    LOG.debug("[{}] Shutdown complete", logPrefix);
                     closeFuture.complete(null);
                   } else {
                     closeFuture.completeExceptionally(f.cause());

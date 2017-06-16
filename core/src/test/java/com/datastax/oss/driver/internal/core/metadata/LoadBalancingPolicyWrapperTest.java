@@ -82,7 +82,7 @@ public class LoadBalancingPolicyWrapperTest {
     policysQueryPlan = Lists.newLinkedList(ImmutableList.of(node3, node2, node1));
     Mockito.when(loadBalancingPolicy.newQueryPlan()).thenReturn(policysQueryPlan);
 
-    eventBus = Mockito.spy(new EventBus());
+    eventBus = Mockito.spy(new EventBus("test"));
     Mockito.when(context.eventBus()).thenReturn(eventBus);
 
     wrapper = new LoadBalancingPolicyWrapper(context, loadBalancingPolicy);

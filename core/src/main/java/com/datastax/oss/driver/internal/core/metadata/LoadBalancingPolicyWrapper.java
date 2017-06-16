@@ -48,6 +48,7 @@ public class LoadBalancingPolicyWrapper implements LoadBalancingPolicy.DistanceR
 
   private final InternalDriverContext context;
   private final LoadBalancingPolicy policy;
+  private final String logPrefix;
   private final ReplayingEventFilter<NodeStateEvent> eventFilter =
       new ReplayingEventFilter<>(this::processNodeStateEvent);
   private AtomicBoolean isInit = new AtomicBoolean();
@@ -55,11 +56,13 @@ public class LoadBalancingPolicyWrapper implements LoadBalancingPolicy.DistanceR
   public LoadBalancingPolicyWrapper(InternalDriverContext context, LoadBalancingPolicy policy) {
     this.context = context;
     this.policy = policy;
+    this.logPrefix = context.clusterName();
     context.eventBus().register(NodeStateEvent.class, this::onNodeStateEvent);
   }
 
   public void init() {
     if (isInit.compareAndSet(false, true)) {
+      LOG.debug("[{}] Initializing policy", logPrefix);
       // State events can happen concurrently with init, so we must record them and replay once the
       // policy is initialized.
       eventFilter.start();
@@ -84,7 +87,7 @@ public class LoadBalancingPolicyWrapper implements LoadBalancingPolicy.DistanceR
 
   @Override
   public void setDistance(Node node, NodeDistance distance) {
-    LOG.debug("LBP changed distance of {} to {}", node, distance);
+    LOG.debug("[{}] LBP changed distance of {} to {}", logPrefix, node, distance);
     DefaultNode defaultNode = (DefaultNode) node;
     defaultNode.distance = distance;
     context.eventBus().fire(new DistanceEvent(distance, defaultNode));
@@ -107,7 +110,7 @@ public class LoadBalancingPolicyWrapper implements LoadBalancingPolicy.DistanceR
     } else if (event.newState == null) {
       policy.onDown(event.node);
     } else {
-      LOG.warn("Unsupported event: " + event);
+      LOG.warn("[{}] Unsupported event: {}", logPrefix, event);
     }
   }
 

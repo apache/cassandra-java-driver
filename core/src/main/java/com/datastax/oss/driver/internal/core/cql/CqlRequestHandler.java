@@ -78,6 +78,7 @@ public class CqlRequestHandler
 
   private static final Logger LOG = LoggerFactory.getLogger(CqlRequestHandler.class);
 
+  private final String logPrefix;
   private final CompletableFuture<AsyncResultSet> result;
   private final Message message;
   private final EventExecutor scheduler;
@@ -95,8 +96,14 @@ public class CqlRequestHandler
   // We don't use a map because nodes can appear multiple times.
   private volatile List<Map.Entry<Node, Throwable>> errors;
 
-  CqlRequestHandler(Statement statement, DefaultSession session, InternalDriverContext context) {
+  CqlRequestHandler(
+      Statement statement,
+      DefaultSession session,
+      InternalDriverContext context,
+      String sessionLogPrefix) {
     super(statement, session, context);
+    this.logPrefix = sessionLogPrefix + "|" + this.hashCode();
+    LOG.debug("[{}] Creating new handler for request {}", logPrefix, statement);
     this.result = new CompletableFuture<>();
     this.result.exceptionally(
         t -> {
@@ -105,7 +112,7 @@ public class CqlRequestHandler
               cancelScheduledTasks();
             }
           } catch (Throwable t2) {
-            LOG.warn("Uncaught exception", t2);
+            LOG.warn("[{}] Uncaught exception", logPrefix, t2);
           }
           return null;
         });
@@ -123,16 +130,19 @@ public class CqlRequestHandler
       // Start the initial execution
       long nextExecution = context.speculativeExecutionPolicy().nextExecution(keyspace, request, 1);
       if (nextExecution > 0) {
-        LOG.trace("Scheduling first speculative execution in {} ms", nextExecution);
+        LOG.debug("[{}] Scheduling first speculative execution in {} ms", logPrefix, nextExecution);
         this.pendingExecutions = new CopyOnWriteArrayList<>();
         this.pendingExecutions.add(
             scheduler.schedule(this::startExecution, nextExecution, TimeUnit.MILLISECONDS));
       } else {
-        LOG.trace("Speculative execution policy returned {}, no next execution", nextExecution);
+        LOG.debug(
+            "[{}] Speculative execution policy returned {}, no next execution",
+            logPrefix,
+            nextExecution);
         this.pendingExecutions = null; // we'll never need this so avoid allocation
       }
     } else {
-      LOG.trace("Request is not idempotent, no speculative executions");
+      LOG.debug("[{}] Request is not idempotent, no speculative executions", logPrefix);
       this.pendingExecutions = null;
     }
     sendRequest(null, 0, 0);
@@ -164,14 +174,21 @@ public class CqlRequestHandler
   private void startExecution() {
     if (!result.isDone()) {
       int execution = executions.incrementAndGet();
-      LOG.trace("Starting speculative execution {}", execution);
+      LOG.trace("[{}] Starting speculative execution {}", logPrefix, execution);
       long nextDelay = speculativeExecutionPolicy.nextExecution(keyspace, request, execution + 1);
       if (nextDelay > 0) {
-        LOG.trace("Scheduling {}th speculative execution in {} ms", execution + 1, nextDelay);
+        LOG.trace(
+            "[{}] Scheduling {}th speculative execution in {} ms",
+            logPrefix,
+            execution + 1,
+            nextDelay);
         this.pendingExecutions.add(
             scheduler.schedule(this::startExecution, nextDelay, TimeUnit.MILLISECONDS));
       } else {
-        LOG.trace("Speculative execution policy returned {}, no next execution", nextDelay);
+        LOG.trace(
+            "[{}] Speculative execution policy returned {}, no next execution",
+            logPrefix,
+            nextDelay);
       }
       sendRequest(null, execution, 0);
     }
@@ -187,9 +204,9 @@ public class CqlRequestHandler
       return;
     }
     DriverChannel channel = null;
-    if (node == null || (channel = getChannel(node)) == null) {
+    if (node == null || (channel = getChannel(node, logPrefix)) == null) {
       while (!result.isDone() && (node = queryPlan.poll()) != null) {
-        channel = getChannel(node);
+        channel = getChannel(node, logPrefix);
         if (channel != null) {
           break;
         }
@@ -203,7 +220,7 @@ public class CqlRequestHandler
       }
     } else {
       NodeResponseCallback nodeResponseCallback =
-          new NodeResponseCallback(node, channel, execution, retryCount);
+          new NodeResponseCallback(node, channel, execution, retryCount, logPrefix);
       channel
           .write(message, request.isTracing(), request.getCustomPayload(), nodeResponseCallback)
           .addListener(nodeResponseCallback);
@@ -291,20 +308,30 @@ public class CqlRequestHandler
     // How many times we've invoked the retry policy and it has returned a "retry" decision (0 for
     // the first attempt of each execution).
     private final int retryCount;
+    private final String logPrefix;
 
-    private NodeResponseCallback(Node node, DriverChannel channel, int execution, int retryCount) {
+    private NodeResponseCallback(
+        Node node, DriverChannel channel, int execution, int retryCount, String logPrefix) {
       this.node = node;
       this.channel = channel;
       this.execution = execution;
       this.retryCount = retryCount;
+      this.logPrefix = logPrefix + "|" + execution;
     }
 
     // this gets invoked once the write completes.
     @Override
     public void operationComplete(Future<java.lang.Void> future) throws Exception {
       if (!future.isSuccess()) {
+        LOG.debug(
+            "[{}] Failed to send request on {}, trying next node (cause: {})",
+            logPrefix,
+            channel,
+            future.cause());
         recordError(node, future.cause());
-        sendRequest(null, execution, retryCount); // try next host
+        sendRequest(null, execution, retryCount); // try next node
+      } else {
+        LOG.debug("[{}] Request sent on {}", logPrefix, channel);
       }
     }
 
@@ -319,8 +346,10 @@ public class CqlRequestHandler
           // TODO schema agreement, and chain setFinalResult to the result
           setFinalError(new UnsupportedOperationException("TODO handle schema agreement"));
         } else if (responseMessage instanceof Result) {
+          LOG.debug("[{}] Got result, completing", logPrefix);
           setFinalResult((Result) responseMessage, responseFrame, this);
         } else if (responseMessage instanceof Error) {
+          LOG.debug("[{}] Got error response, processing", logPrefix);
           processErrorResponse((Error) responseMessage);
         } else {
           setFinalError(new IllegalStateException("Unexpected response " + responseMessage));
@@ -339,23 +368,27 @@ public class CqlRequestHandler
                   "Unexpected UNPREPARED response, "
                       + "this should only happen for a bound statement"));
         } else {
-          LOG.debug("Statement is not prepared on {}, repreparing", node);
+          LOG.debug("[{}] Statement is not prepared on {}, repreparing", logPrefix, node);
           PreparedStatement preparedStatement =
               ((BoundStatement) CqlRequestHandler.this.request).getPreparedStatement();
           Prepare reprepareMessage = new Prepare(preparedStatement.getQuery());
           AdminRequestHandler reprepareHandler =
               new AdminRequestHandler(
-                  channel, reprepareMessage, timeout, "Reprepare " + reprepareMessage.toString());
+                  channel,
+                  reprepareMessage,
+                  timeout,
+                  logPrefix,
+                  "Reprepare " + reprepareMessage.toString());
           reprepareHandler
               .start(preparedStatement.initialCustomPayload())
               .handle(
                   (result, error) -> {
                     if (error != null) {
                       recordError(node, error);
-                      // Try next host
+                      LOG.debug("[{}] Reprepare failed, trying next node", logPrefix);
                       sendRequest(null, execution, retryCount);
                     } else {
-                      // Reprepare succeeded, retry on same node
+                      LOG.debug("[{}] Reprepare sucessful, retrying", logPrefix);
                       sendRequest(node, execution, retryCount);
                     }
                     return null;
@@ -365,13 +398,13 @@ public class CqlRequestHandler
       }
       Throwable error = Conversions.toThrowable(node, errorMessage);
       if (error instanceof BootstrappingException) {
-        // Do not call the retry policy, always try the next node
+        LOG.debug("[{}] {} is bootstrapping, trying next node", logPrefix, node);
         recordError(node, error);
         sendRequest(null, execution, retryCount);
       } else if (error instanceof QueryValidationException
           || error instanceof FunctionFailureException
           || error instanceof ProtocolError) {
-        // Do not call the retry policy, always rethrow
+        LOG.debug("[{}] Unrecoverable error, rethrowing", logPrefix);
         setFinalError(error);
       } else {
         RetryDecision decision;
@@ -421,6 +454,7 @@ public class CqlRequestHandler
     }
 
     private void processRetryDecision(RetryDecision decision, Throwable error) {
+      LOG.debug("[{}] Processing retry decision {}", logPrefix, decision);
       switch (decision) {
         case RETRY_SAME:
           recordError(node, error);
@@ -444,11 +478,17 @@ public class CqlRequestHandler
       if (result.isDone()) {
         return;
       }
+      LOG.debug("[{}] Request failure, processing: {}", logPrefix, error.toString());
       RetryDecision decision =
           isIdempotent
               ? retryPolicy.onRequestAborted(request, error, retryCount)
               : RetryDecision.RETHROW;
       processRetryDecision(decision, error);
+    }
+
+    @Override
+    public String toString() {
+      return logPrefix;
     }
   }
 }

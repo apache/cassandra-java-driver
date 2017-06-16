@@ -115,7 +115,7 @@ public class ChannelPoolTest {
             .build();
 
     CompletionStage<ChannelPool> poolFuture =
-        ChannelPool.init(NODE, null, NodeDistance.LOCAL, context);
+        ChannelPool.init(NODE, null, NodeDistance.LOCAL, context, "test");
 
     factoryHelper.waitForCalls(ADDRESS, 3);
     waitForPendingAdminTasks();
@@ -139,7 +139,7 @@ public class ChannelPoolTest {
             .build();
 
     CompletionStage<ChannelPool> poolFuture =
-        ChannelPool.init(NODE, null, NodeDistance.LOCAL, context);
+        ChannelPool.init(NODE, null, NodeDistance.LOCAL, context, "test");
 
     factoryHelper.waitForCalls(ADDRESS, 3);
     waitForPendingAdminTasks();
@@ -162,7 +162,7 @@ public class ChannelPoolTest {
             .build();
 
     CompletionStage<ChannelPool> poolFuture =
-        ChannelPool.init(NODE, null, NodeDistance.LOCAL, context);
+        ChannelPool.init(NODE, null, NodeDistance.LOCAL, context, "test");
 
     factoryHelper.waitForCalls(ADDRESS, 3);
     waitForPendingAdminTasks();
@@ -182,7 +182,7 @@ public class ChannelPoolTest {
             .failure(ADDRESS, error)
             .build();
 
-    ChannelPool.init(NODE, null, NodeDistance.LOCAL, context);
+    ChannelPool.init(NODE, null, NodeDistance.LOCAL, context, "test");
 
     factoryHelper.waitForCalls(ADDRESS, 3);
     waitForPendingAdminTasks();
@@ -214,7 +214,7 @@ public class ChannelPoolTest {
     InOrder inOrder = Mockito.inOrder(eventBus);
 
     CompletionStage<ChannelPool> poolFuture =
-        ChannelPool.init(NODE, null, NodeDistance.LOCAL, context);
+        ChannelPool.init(NODE, null, NodeDistance.LOCAL, context, "test");
 
     factoryHelper.waitForCalls(ADDRESS, 2);
     waitForPendingAdminTasks();
@@ -260,7 +260,7 @@ public class ChannelPoolTest {
     InOrder inOrder = Mockito.inOrder(eventBus);
 
     CompletionStage<ChannelPool> poolFuture =
-        ChannelPool.init(NODE, null, NodeDistance.LOCAL, context);
+        ChannelPool.init(NODE, null, NodeDistance.LOCAL, context, "test");
 
     factoryHelper.waitForCalls(ADDRESS, 2);
     waitForPendingAdminTasks();
@@ -309,7 +309,7 @@ public class ChannelPoolTest {
     InOrder inOrder = Mockito.inOrder(eventBus);
 
     CompletionStage<ChannelPool> poolFuture =
-        ChannelPool.init(NODE, null, NodeDistance.REMOTE, context);
+        ChannelPool.init(NODE, null, NodeDistance.REMOTE, context, "test");
 
     factoryHelper.waitForCalls(ADDRESS, 4);
     waitForPendingAdminTasks();
@@ -356,7 +356,7 @@ public class ChannelPoolTest {
     InOrder inOrder = Mockito.inOrder(eventBus);
 
     CompletionStage<ChannelPool> poolFuture =
-        ChannelPool.init(NODE, null, NodeDistance.REMOTE, context);
+        ChannelPool.init(NODE, null, NodeDistance.REMOTE, context, "test");
 
     factoryHelper.waitForCalls(ADDRESS, 4);
     waitForPendingAdminTasks();
@@ -413,7 +413,7 @@ public class ChannelPoolTest {
     InOrder inOrder = Mockito.inOrder(eventBus);
 
     CompletionStage<ChannelPool> poolFuture =
-        ChannelPool.init(NODE, null, NodeDistance.LOCAL, context);
+        ChannelPool.init(NODE, null, NodeDistance.LOCAL, context, "test");
 
     factoryHelper.waitForCalls(ADDRESS, 2);
     waitForPendingAdminTasks();
@@ -468,7 +468,7 @@ public class ChannelPoolTest {
     InOrder inOrder = Mockito.inOrder(eventBus);
 
     CompletionStage<ChannelPool> poolFuture =
-        ChannelPool.init(NODE, null, NodeDistance.LOCAL, context);
+        ChannelPool.init(NODE, null, NodeDistance.LOCAL, context, "test");
 
     factoryHelper.waitForCalls(ADDRESS, 2);
     waitForPendingAdminTasks();
@@ -526,7 +526,7 @@ public class ChannelPoolTest {
             .build();
 
     CompletionStage<ChannelPool> poolFuture =
-        ChannelPool.init(NODE, null, NodeDistance.LOCAL, context);
+        ChannelPool.init(NODE, null, NodeDistance.LOCAL, context, "test");
 
     factoryHelper.waitForCalls(ADDRESS, 2);
     waitForPendingAdminTasks();
@@ -568,7 +568,7 @@ public class ChannelPoolTest {
             .build();
 
     CompletionStage<ChannelPool> poolFuture =
-        ChannelPool.init(NODE, null, NodeDistance.LOCAL, context);
+        ChannelPool.init(NODE, null, NodeDistance.LOCAL, context, "test");
 
     factoryHelper.waitForCalls(ADDRESS, 2);
     waitForPendingAdminTasks();
@@ -621,7 +621,7 @@ public class ChannelPoolTest {
     InOrder inOrder = Mockito.inOrder(eventBus);
 
     CompletionStage<ChannelPool> poolFuture =
-        ChannelPool.init(NODE, null, NodeDistance.LOCAL, context);
+        ChannelPool.init(NODE, null, NodeDistance.LOCAL, context, "test");
 
     factoryHelper.waitForCalls(ADDRESS, 3);
     waitForPendingAdminTasks();
@@ -684,7 +684,7 @@ public class ChannelPoolTest {
     InOrder inOrder = Mockito.inOrder(eventBus);
 
     CompletionStage<ChannelPool> poolFuture =
-        ChannelPool.init(NODE, null, NodeDistance.LOCAL, context);
+        ChannelPool.init(NODE, null, NodeDistance.LOCAL, context, "test");
 
     factoryHelper.waitForCalls(ADDRESS, 3);
     waitForPendingAdminTasks();

@@ -44,21 +44,26 @@ public class InFlightHandler extends ChannelDuplexHandler {
 
   private final ProtocolVersion protocolVersion;
   private final StreamIdGenerator streamIds;
+  private final String ownerLogPrefix;
   private final Map<Integer, ResponseCallback> inFlight;
   private final long setKeyspaceTimeoutMillis;
   private final AvailableIdsHolder availableIdsHolder;
   private final EventCallback eventCallback;
   private boolean closingGracefully;
   private SetKeyspaceRequest setKeyspaceRequest;
+  private String logPrefix;
 
   InFlightHandler(
       ProtocolVersion protocolVersion,
       StreamIdGenerator streamIds,
       long setKeyspaceTimeoutMillis,
       AvailableIdsHolder availableIdsHolder,
-      EventCallback eventCallback) {
+      EventCallback eventCallback,
+      String ownerLogPrefix) {
     this.protocolVersion = protocolVersion;
     this.streamIds = streamIds;
+    this.ownerLogPrefix = ownerLogPrefix;
+    this.logPrefix = ownerLogPrefix + "|connecting...";
     reportAvailableIds();
     this.inFlight = Maps.newHashMapWithExpectedSize(streamIds.getMaxAvailableIds());
     this.setKeyspaceTimeoutMillis = setKeyspaceTimeoutMillis;
@@ -67,15 +72,28 @@ public class InFlightHandler extends ChannelDuplexHandler {
   }
 
   @Override
+  public void channelActive(ChannelHandlerContext ctx) throws Exception {
+    super.channelActive(ctx);
+    String channelId = ctx.channel().toString();
+    this.logPrefix = ownerLogPrefix + "|" + channelId.substring(1, channelId.length() - 1);
+  }
+
+  @Override
   public void write(ChannelHandlerContext ctx, Object in, ChannelPromise promise) throws Exception {
     if (in == DriverChannel.GRACEFUL_CLOSE_MESSAGE) {
       if (inFlight.isEmpty()) {
+        LOG.debug(
+            "[{}] Received graceful close request and no pending queries, closing now", logPrefix);
         ctx.channel().close();
       } else {
+        LOG.debug(
+            "[{}] Received graceful close request, waiting for pending queries to complete",
+            logPrefix);
         closingGracefully = true;
       }
       return;
     } else if (in == DriverChannel.FORCEFUL_CLOSE_MESSAGE) {
+      LOG.debug("[{}] Received forceful close request, aborting pending queries", logPrefix);
       abortAllInFlight(new ClosedConnectionException("Channel was force-closed"));
       ctx.channel().close();
       return;
@@ -105,6 +123,7 @@ public class InFlightHandler extends ChannelDuplexHandler {
     reportAvailableIds();
 
     RequestMessage message = (RequestMessage) in;
+    LOG.debug("[{}] Writing {} on stream id {}", logPrefix, message.responseCallback, streamId);
     Frame frame =
         Frame.forRequest(
             protocolVersion.getCode(),
@@ -133,17 +152,22 @@ public class InFlightHandler extends ChannelDuplexHandler {
     if (streamId < 0) {
       Message event = responseFrame.message;
       if (eventCallback == null) {
-        LOG.debug("Received event {} but no callback was registered", event);
+        LOG.debug("[{}] Received event {} but no callback was registered", logPrefix, event);
       } else {
-        LOG.debug("Received event {}, notifying callback", event);
+        LOG.debug("[{}] Received event {}, notifying callback", logPrefix, event);
         try {
           eventCallback.onEvent(event);
         } catch (Throwable t) {
-          LOG.warn("Unexpected error while invoking event handler", t);
+          LOG.warn("[{}] Unexpected error while invoking event handler", logPrefix, t);
         }
       }
     } else {
       ResponseCallback responseCallback = inFlight.get(streamId);
+      LOG.debug(
+          "[{}] Got response on stream id {}, completing {}",
+          logPrefix,
+          streamId,
+          responseCallback);
       if (responseCallback != null) {
         if (!responseCallback.holdStreamId()) {
           release(streamId, ctx);
@@ -151,7 +175,7 @@ public class InFlightHandler extends ChannelDuplexHandler {
         try {
           responseCallback.onResponse(responseFrame);
         } catch (Throwable t) {
-          LOG.warn("Unexpected error while invoking response handler", t);
+          LOG.warn("[{}] Unexpected error while invoking response handler", logPrefix, t);
         }
       }
     }
@@ -162,16 +186,20 @@ public class InFlightHandler extends ChannelDuplexHandler {
   public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
     if (cause instanceof FrameDecodingException) {
       int streamId = ((FrameDecodingException) cause).streamId;
+      LOG.debug("[{}] Error while decoding response on stream id {}", logPrefix, streamId);
       if (streamId >= 0) {
         // We know which request matches the failing response, fail that one only
         ResponseCallback responseCallback = release(streamId, ctx);
         try {
           responseCallback.onFailure(cause.getCause());
         } catch (Throwable t) {
-          LOG.warn("Unexpected error while invoking failure handler", t);
+          LOG.warn("[{}] Unexpected error while invoking failure handler", logPrefix, t);
         }
       } else {
-        LOG.warn("Unexpected error while decoding incoming event frame", cause.getCause());
+        LOG.warn(
+            "[{}] Unexpected error while decoding incoming event frame",
+            logPrefix,
+            cause.getCause());
       }
     } else {
       // Otherwise fail all pending requests
@@ -183,7 +211,9 @@ public class InFlightHandler extends ChannelDuplexHandler {
   @Override
   public void userEventTriggered(ChannelHandlerContext ctx, Object event) throws Exception {
     if (event instanceof ReleaseEvent) {
-      release(((ReleaseEvent) event).streamId, ctx);
+      int streamId = ((ReleaseEvent) event).streamId;
+      LOG.debug("[{}] Releasing stream id {}", logPrefix, streamId);
+      release(streamId, ctx);
     } else if (event instanceof SetKeyspaceEvent) {
       SetKeyspaceEvent setKeyspaceEvent = (SetKeyspaceEvent) event;
       if (this.setKeyspaceRequest != null) {
@@ -191,6 +221,8 @@ public class InFlightHandler extends ChannelDuplexHandler {
             new IllegalStateException(
                 "Can't call setKeyspace while a keyspace switch is already in progress"));
       } else {
+        LOG.debug(
+            "[{}] Switching to keyspace {}", logPrefix, setKeyspaceEvent.keyspaceName.asInternal());
         this.setKeyspaceRequest = new SetKeyspaceRequest(ctx, setKeyspaceEvent);
         this.setKeyspaceRequest.send();
       }
@@ -200,12 +232,14 @@ public class InFlightHandler extends ChannelDuplexHandler {
   }
 
   private ResponseCallback release(int streamId, ChannelHandlerContext ctx) {
+    LOG.debug("[{}] Releasing stream id {}", logPrefix, streamId);
     ResponseCallback responseCallback = inFlight.remove(streamId);
     streamIds.release(streamId);
     reportAvailableIds();
     // If we're in the middle of an orderly close and this was the last request, actually close
     // the channel now
     if (closingGracefully && inFlight.isEmpty()) {
+      LOG.debug("[{}] Done handling the last pending query, closing channel", logPrefix);
       ctx.channel().close();
     }
     return responseCallback;
@@ -249,7 +283,7 @@ public class InFlightHandler extends ChannelDuplexHandler {
 
     @Override
     String describe() {
-      return "set keyspace " + keyspaceName;
+      return "[" + logPrefix + "] set keyspace " + keyspaceName;
     }
 
     @Override
@@ -279,7 +313,7 @@ public class InFlightHandler extends ChannelDuplexHandler {
         // keyspace switch fails, this could be due to a schema disagreement or a more serious
         // error. Rescheduling the switch is impractical, we can't do much better than closing the
         // channel and letting it reconnect.
-        LOG.warn("Unexpected error while switching keyspace", setKeyspaceException);
+        LOG.warn("[{}] Unexpected error while switching keyspace", logPrefix, setKeyspaceException);
         abortAllInFlight(setKeyspaceException, this);
         ctx.channel().close();
       }

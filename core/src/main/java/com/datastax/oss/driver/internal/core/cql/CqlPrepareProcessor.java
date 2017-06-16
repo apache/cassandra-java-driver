@@ -46,8 +46,10 @@ public class CqlPrepareProcessor
   public RequestHandler<PreparedStatement, CompletionStage<PreparedStatement>> newHandler(
       Request<PreparedStatement, CompletionStage<PreparedStatement>> request,
       DefaultSession session,
-      InternalDriverContext context) {
-    return new CqlPrepareHandler((PrepareRequest) request, this, session, context);
+      InternalDriverContext context,
+      String sessionLogPrefix) {
+    return new CqlPrepareHandler(
+        (PrepareRequest) request, this, session, context, sessionLogPrefix);
   }
 
   DefaultPreparedStatement cache(DefaultPreparedStatement preparedStatement) {

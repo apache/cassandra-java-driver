@@ -48,13 +48,14 @@ public class DefaultCodecRegistry extends CachingCodecRegistry {
    * eviction is that useful anyway.
    */
   public DefaultCodecRegistry(
+      String logPrefix,
       int initialCacheCapacity,
       BiFunction<CacheKey, TypeCodec<?>, Integer> cacheWeigher,
       int maximumCacheWeight,
       BiConsumer<CacheKey, TypeCodec<?>> cacheRemovalListener,
       TypeCodec<?>... userCodecs) {
 
-    super(userCodecs);
+    super(logPrefix, userCodecs);
     CacheBuilder<Object, Object> cacheBuilder = CacheBuilder.newBuilder();
     if (initialCacheCapacity > 0) {
       cacheBuilder.initialCapacity(initialCacheCapacity);
@@ -79,13 +80,13 @@ public class DefaultCodecRegistry extends CachingCodecRegistry {
             });
   }
 
-  public DefaultCodecRegistry(TypeCodec<?>... userCodecs) {
-    this(0, null, 0, null, userCodecs);
+  public DefaultCodecRegistry(String logPrefix, TypeCodec<?>... userCodecs) {
+    this(logPrefix, 0, null, 0, null, userCodecs);
   }
 
   @Override
   protected TypeCodec<?> getCachedCodec(DataType cqlType, GenericType<?> javaType) {
-    LOG.trace("Checking cache");
+    LOG.trace("[{}] Checking cache", logPrefix);
     return cache.getUnchecked(new CacheKey(cqlType, javaType));
   }
 

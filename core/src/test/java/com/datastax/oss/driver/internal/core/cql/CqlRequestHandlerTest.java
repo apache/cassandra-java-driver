@@ -50,7 +50,10 @@ public class CqlRequestHandlerTest extends CqlRequestHandlerTestBase {
 
       CompletionStage<AsyncResultSet> resultSetFuture =
           new CqlRequestHandler(
-                  UNDEFINED_IDEMPOTENCE_STATEMENT, harness.getSession(), harness.getContext())
+                  UNDEFINED_IDEMPOTENCE_STATEMENT,
+                  harness.getSession(),
+                  harness.getContext(),
+                  "test")
               .asyncResult();
 
       assertThat(resultSetFuture)
@@ -82,7 +85,10 @@ public class CqlRequestHandlerTest extends CqlRequestHandlerTestBase {
 
       CompletionStage<AsyncResultSet> resultSetFuture =
           new CqlRequestHandler(
-                  UNDEFINED_IDEMPOTENCE_STATEMENT, harness.getSession(), harness.getContext())
+                  UNDEFINED_IDEMPOTENCE_STATEMENT,
+                  harness.getSession(),
+                  harness.getContext(),
+                  "test")
               .asyncResult();
 
       // First scheduled task is the timeout, run it before node1 has responded
@@ -111,7 +117,10 @@ public class CqlRequestHandlerTest extends CqlRequestHandlerTestBase {
 
       CompletionStage<AsyncResultSet> resultSetFuture =
           new CqlRequestHandler(
-                  UNDEFINED_IDEMPOTENCE_STATEMENT, harness.getSession(), harness.getContext())
+                  UNDEFINED_IDEMPOTENCE_STATEMENT,
+                  harness.getSession(),
+                  harness.getContext(),
+                  "test")
               .asyncResult();
 
       assertThat(resultSetFuture)
@@ -140,7 +149,7 @@ public class CqlRequestHandlerTest extends CqlRequestHandlerTestBase {
     try (RequestHandlerTestHarness harness = harnessBuilder.build()) {
 
       CompletionStage<AsyncResultSet> resultSetFuture =
-          new CqlRequestHandler(boundStatement, harness.getSession(), harness.getContext())
+          new CqlRequestHandler(boundStatement, harness.getSession(), harness.getContext(), "test")
               .asyncResult();
 
       node1Behavior.setWriteSuccess();

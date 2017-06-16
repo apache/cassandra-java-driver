@@ -24,7 +24,11 @@ import java.util.concurrent.CompletionStage;
 /** Just a level of indirection to make testing easier. */
 public class ChannelPoolFactory {
   public CompletionStage<ChannelPool> init(
-      Node node, CqlIdentifier keyspaceName, NodeDistance distance, InternalDriverContext context) {
-    return ChannelPool.init(node, keyspaceName, distance, context);
+      Node node,
+      CqlIdentifier keyspaceName,
+      NodeDistance distance,
+      InternalDriverContext context,
+      String sessionLogPrefix) {
+    return ChannelPool.init(node, keyspaceName, distance, context, sessionLogPrefix);
   }
 }

@@ -46,10 +46,12 @@ public class NodeStateManager implements AsyncAutoCloseable {
 
   private final EventExecutor adminExecutor;
   private final SingleThreaded singleThreaded;
+  private final String logPrefix;
 
   public NodeStateManager(InternalDriverContext context) {
     this.adminExecutor = context.nettyOptions().adminEventExecutorGroup().next();
     this.singleThreaded = new SingleThreaded(context);
+    this.logPrefix = context.clusterName();
   }
 
   @Override
@@ -103,7 +105,7 @@ public class NodeStateManager implements AsyncAutoCloseable {
       if (closeWasCalled) {
         return;
       }
-      LOG.debug("Processing {}", event);
+      LOG.debug("[{}] Processing {}", logPrefix, event);
       DefaultNode node = (DefaultNode) event.node;
       assert node != null;
       switch (event.type) {
@@ -133,33 +135,43 @@ public class NodeStateManager implements AsyncAutoCloseable {
       if (closeWasCalled) {
         return;
       }
-      LOG.debug("Processing {}", event);
+      LOG.debug("[{}] Processing {}", logPrefix, event);
       DefaultNode node = (DefaultNode) metadataManager.getMetadata().getNodes().get(event.address);
       switch (event.type) {
         case SUGGEST_UP:
           if (node == null) {
-            LOG.debug("Received UP event for unknown node {}, adding it", event.address);
+            LOG.debug(
+                "[{}] Received UP event for unknown node {}, adding it", logPrefix, event.address);
             metadataManager.addNode(event.address);
           } else if (node.state == NodeState.FORCED_DOWN) {
-            LOG.debug("Not setting {} UP because it is FORCED_DOWN", node);
+            LOG.debug("[{}] Not setting {} UP because it is FORCED_DOWN", logPrefix, node);
           } else {
             setState(node, NodeState.UP, "an UP topology event was received");
           }
           break;
         case SUGGEST_DOWN:
           if (node == null) {
-            LOG.debug("Received DOWN event for unknown node {}, ignoring it", event.address);
+            LOG.debug(
+                "[{}] Received DOWN event for unknown node {}, ignoring it",
+                logPrefix,
+                event.address);
           } else if (node.openConnections > 0) {
-            LOG.debug("Not setting {} DOWN because it still has active connections", node);
+            LOG.debug(
+                "[{}] Not setting {} DOWN because it still has active connections",
+                logPrefix,
+                node);
           } else if (node.state == NodeState.FORCED_DOWN) {
-            LOG.debug("Not setting {} DOWN because it is FORCED_DOWN", node);
+            LOG.debug("[{}] Not setting {} DOWN because it is FORCED_DOWN", logPrefix, node);
           } else {
             setState(node, NodeState.DOWN, "a DOWN topology event was received");
           }
           break;
         case FORCE_UP:
           if (node == null) {
-            LOG.debug("Received FORCE_UP event for unknown node {}, adding it", event.address);
+            LOG.debug(
+                "[{}] Received FORCE_UP event for unknown node {}, adding it",
+                logPrefix,
+                event.address);
             metadataManager.addNode(event.address);
           } else {
             setState(node, NodeState.UP, "a FORCE_UP topology event was received");
@@ -167,7 +179,10 @@ public class NodeStateManager implements AsyncAutoCloseable {
           break;
         case FORCE_DOWN:
           if (node == null) {
-            LOG.debug("Received FORCE_DOWN event for unknown node {}, ignoring it", event.address);
+            LOG.debug(
+                "[{}] Received FORCE_DOWN event for unknown node {}, ignoring it",
+                logPrefix,
+                event.address);
           } else {
             setState(node, NodeState.FORCED_DOWN, "a FORCE_DOWN topology event was received");
           }
@@ -175,7 +190,9 @@ public class NodeStateManager implements AsyncAutoCloseable {
         case SUGGEST_ADDED:
           if (node != null) {
             LOG.debug(
-                "Received ADDED event for {} but it is already in our metadata, ignoring", node);
+                "[{}] Received ADDED event for {} but it is already in our metadata, ignoring",
+                logPrefix,
+                node);
           } else {
             metadataManager.addNode(event.address);
           }
@@ -183,7 +200,8 @@ public class NodeStateManager implements AsyncAutoCloseable {
         case SUGGEST_REMOVED:
           if (node == null) {
             LOG.debug(
-                "Received REMOVED event for {} but it is not in our metadata, ignoring",
+                "[{}] Received REMOVED event for {} but it is not in our metadata, ignoring",
+                logPrefix,
                 event.address);
           } else {
             metadataManager.removeNode(event.address);
@@ -216,7 +234,7 @@ public class NodeStateManager implements AsyncAutoCloseable {
         }
         result = last.values();
       }
-      LOG.debug("Coalesced topology events: {} => {}", events, result);
+      LOG.debug("[{}] Coalesced topology events: {} => {}", logPrefix, events, result);
       return result;
     }
 
@@ -241,7 +259,13 @@ public class NodeStateManager implements AsyncAutoCloseable {
     private void setState(DefaultNode node, NodeState newState, String reason) {
       NodeState oldState = node.state;
       if (oldState != newState) {
-        LOG.debug("Transitioning {} {}=>{} (because {})", node, oldState, newState, reason);
+        LOG.debug(
+            "[{}] Transitioning {} {}=>{} (because {})",
+            logPrefix,
+            node,
+            oldState,
+            newState,
+            reason);
         node.state = newState;
         if (newState != NodeState.UP) {
           // Fire the event immediately
@@ -254,11 +278,12 @@ public class NodeStateManager implements AsyncAutoCloseable {
                   (success, error) -> {
                     try {
                       if (error != null) {
-                        LOG.debug("Error while refreshing info for " + node, error);
+                        LOG.debug(
+                            "[{}] Error while refreshing info for {}", logPrefix, node, error);
                       }
                       eventBus.fire(NodeStateEvent.changed(oldState, newState, node));
                     } catch (Throwable t) {
-                      LOG.warn("Unexpected exception", t);
+                      LOG.warn("[{}] Unexpected exception", logPrefix, t);
                     }
                   });
         }

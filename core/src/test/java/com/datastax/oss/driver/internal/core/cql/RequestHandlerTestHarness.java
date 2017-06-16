@@ -98,7 +98,7 @@ public class RequestHandlerTestHarness implements AutoCloseable {
     Mockito.when(context.retryPolicy()).thenReturn(retryPolicy);
     Mockito.when(context.speculativeExecutionPolicy()).thenReturn(speculativeExecutionPolicy);
 
-    Mockito.when(context.codecRegistry()).thenReturn(new DefaultCodecRegistry());
+    Mockito.when(context.codecRegistry()).thenReturn(new DefaultCodecRegistry("test"));
 
     Map<Node, ChannelPool> pools = builder.buildMockPools();
     Mockito.when(session.getPools()).thenReturn(pools);

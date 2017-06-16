@@ -69,13 +69,14 @@ public class DefaultSession implements CqlSession {
   private static final Logger LOG = LoggerFactory.getLogger(DefaultSession.class);
 
   public static CompletionStage<CqlSession> init(
-      InternalDriverContext context, CqlIdentifier keyspace) {
-    return new DefaultSession(context, keyspace).init();
+      InternalDriverContext context, CqlIdentifier keyspace, String logPrefix) {
+    return new DefaultSession(context, keyspace, logPrefix).init();
   }
 
   private final InternalDriverContext context;
   private final DriverConfig config;
   private final EventExecutor adminExecutor;
+  private final String logPrefix;
   private final SingleThreaded singleThreaded;
   private final RequestProcessorRegistry processorRegistry;
 
@@ -89,13 +90,14 @@ public class DefaultSession implements CqlSession {
           // the map will only be updated from adminExecutor
           1);
 
-  private DefaultSession(InternalDriverContext context, CqlIdentifier keyspace) {
+  private DefaultSession(InternalDriverContext context, CqlIdentifier keyspace, String logPrefix) {
     this.adminExecutor = context.nettyOptions().adminEventExecutorGroup().next();
     this.context = context;
     this.config = context.config();
     this.singleThreaded = new SingleThreaded(context);
     this.processorRegistry = context.requestProcessorRegistry();
     this.keyspace = keyspace;
+    this.logPrefix = logPrefix;
   }
 
   private CompletionStage<CqlSession> init() {
@@ -120,9 +122,10 @@ public class DefaultSession implements CqlSession {
     if (!Objects.equals(oldKeyspace, newKeyspace)) {
       if (config.defaultProfile().getBoolean(CoreDriverOption.REQUEST_WARN_IF_SET_KEYSPACE)) {
         LOG.warn(
-            "Detected a keyspace change at runtime ({} => {}). "
+            "[{}] Detected a keyspace change at runtime ({} => {}). "
                 + "This is an anti-pattern that should be avoided in production "
                 + "(see '{}' in the configuration).",
+            logPrefix,
             (oldKeyspace == null) ? "<none>" : oldKeyspace.asInternal(),
             newKeyspace.asInternal(),
             CoreDriverOption.REQUEST_WARN_IF_SET_KEYSPACE.getPath());
@@ -154,7 +157,7 @@ public class DefaultSession implements CqlSession {
       // TODO CASSANDRA-10145
       throw new UnsupportedOperationException("Per-request keyspaces are not supported yet");
     }
-    return processorRegistry.processorFor(request).newHandler(request, this, context);
+    return processorRegistry.processorFor(request).newHandler(request, this, context, logPrefix);
   }
 
   @Override
@@ -216,7 +219,7 @@ public class DefaultSession implements CqlSession {
       }
       initWasCalled = true;
 
-      LOG.debug("Initializing {}", DefaultSession.this);
+      LOG.debug("[{}] Starting initialization", logPrefix);
 
       // Make sure we don't miss any event while the pools are initializing
       distanceEventFilter.start();
@@ -227,11 +230,12 @@ public class DefaultSession implements CqlSession {
       for (Node node : nodes) {
         NodeDistance distance = node.getDistance();
         if (distance == NodeDistance.IGNORED) {
-          LOG.debug("Skipping {} because it is IGNORED", node);
+          LOG.debug("[{}] Skipping {} because it is IGNORED", logPrefix, node);
         } else if (node.getState() == NodeState.FORCED_DOWN) {
-          LOG.debug("Skipping {} because it is FORCED_DOWN", node);
+          LOG.debug("[{}] Skipping {} because it is FORCED_DOWN", logPrefix, node);
         } else {
-          poolStages.add(channelPoolFactory.init(node, keyspace, distance, context));
+          LOG.debug("[{}] Creating a pool for {}", logPrefix, node);
+          poolStages.add(channelPoolFactory.init(node, keyspace, distance, context, logPrefix));
         }
       }
       CompletableFutures.whenAllDone(poolStages, () -> this.onPoolsInit(poolStages), adminExecutor);
@@ -239,14 +243,16 @@ public class DefaultSession implements CqlSession {
 
     private void onPoolsInit(List<CompletionStage<ChannelPool>> poolStages) {
       assert adminExecutor.inEventLoop();
-      LOG.debug("{}: all pools have finished initializing", DefaultSession.this);
+      LOG.debug("[{}] All pools have finished initializing", logPrefix);
       // We will only propagate an invalid keyspace error if all pools get it
       boolean allInvalidKeyspaces = poolStages.size() > 0;
       for (CompletionStage<ChannelPool> poolStage : poolStages) {
         // Note: pool init always succeeds
         ChannelPool pool = CompletableFutures.getCompleted(poolStage.toCompletableFuture());
         boolean invalidKeyspace = pool.isInvalidKeyspace();
-        LOG.debug("Pool to {} -- invalid keyspace = {}", pool.getNode(), invalidKeyspace);
+        if (invalidKeyspace) {
+          LOG.debug("[{}] Pool to {} reports an invalid keyspace", logPrefix, pool.getNode());
+        }
         allInvalidKeyspaces &= invalidKeyspace;
         pools.put(pool.getNode(), pool);
       }
@@ -255,6 +261,7 @@ public class DefaultSession implements CqlSession {
             new InvalidKeyspaceException("Invalid keyspace " + keyspace.asPrettyCql()));
         forceClose();
       } else {
+        LOG.debug("[{}] Initialization complete, ready", logPrefix);
         initFuture.complete(DefaultSession.this);
         distanceEventFilter.markReady();
         stateEventFilter.markReady();
@@ -281,31 +288,33 @@ public class DefaultSession implements CqlSession {
       } else if (newDistance == NodeDistance.IGNORED && pools.containsKey(node)) {
         ChannelPool pool = pools.remove(node);
         if (pool != null) {
-          LOG.debug("{} became IGNORED, destroying pool", node);
+          LOG.debug("[{}] {} became IGNORED, destroying pool", logPrefix, node);
           pool.closeAsync()
               .exceptionally(
                   error -> {
-                    LOG.warn("Error closing pool", error);
+                    LOG.warn("[{}] Error closing pool", logPrefix, error);
                     return null;
                   });
         }
       } else {
         NodeState state = node.getState();
         if (state == NodeState.FORCED_DOWN) {
-          LOG.warn("{} became {} but it is FORCED_DOWN, ignoring", node, newDistance);
+          LOG.warn(
+              "[{}] {} became {} but it is FORCED_DOWN, ignoring", logPrefix, node, newDistance);
           return;
         }
         ChannelPool pool = pools.get(node);
         if (pool == null) {
-          LOG.debug("{} became {} and no pool found, initializing it", node, newDistance);
+          LOG.debug(
+              "[{}] {} became {} and no pool found, initializing it", logPrefix, node, newDistance);
           CompletionStage<ChannelPool> poolFuture =
-              channelPoolFactory.init(node, keyspace, newDistance, context);
+              channelPoolFactory.init(node, keyspace, newDistance, context, logPrefix);
           pending.put(node, poolFuture);
           poolFuture
               .thenAcceptAsync(this::onPoolAdded, adminExecutor)
               .exceptionally(UncaughtExceptions::log);
         } else {
-          LOG.debug("{} became {}, resizing it", node, newDistance);
+          LOG.debug("[{}] {} became {}, resizing it", logPrefix, node, newDistance);
           pool.resize(newDistance);
         }
       }
@@ -321,26 +330,26 @@ public class DefaultSession implements CqlSession {
       } else if (newState == NodeState.FORCED_DOWN) {
         ChannelPool pool = pools.remove(node);
         if (pool != null) {
-          LOG.debug("{} became FORCED_DOWN, destroying pool", node);
+          LOG.debug("[{}] {} became FORCED_DOWN, destroying pool", logPrefix, node);
           pool.closeAsync()
               .exceptionally(
                   error -> {
-                    LOG.warn("Error closing pool", error);
+                    LOG.warn("[{}] Error closing pool", logPrefix, error);
                     return null;
                   });
         }
       } else if (newState == NodeState.UP) {
         ChannelPool pool = pools.get(node);
         if (pool == null) {
-          LOG.debug("{} came back UP and no pool found, initializing it");
+          LOG.debug("[{}] {} came back UP and no pool found, initializing it", logPrefix, node);
           CompletionStage<ChannelPool> poolFuture =
-              channelPoolFactory.init(node, keyspace, node.getDistance(), context);
+              channelPoolFactory.init(node, keyspace, node.getDistance(), context, logPrefix);
           pending.put(node, poolFuture);
           poolFuture
               .thenAcceptAsync(this::onPoolAdded, adminExecutor)
               .exceptionally(UncaughtExceptions::log);
         } else {
-          LOG.debug("{} came back UP, triggering pool reconnection", node);
+          LOG.debug("[{}] {} came back UP, triggering pool reconnection", logPrefix, node);
           pool.reconnectNow();
         }
       }
@@ -350,10 +359,11 @@ public class DefaultSession implements CqlSession {
       assert adminExecutor.inEventLoop();
       Node node = pool.getNode();
       if (closeWasCalled) {
-        LOG.debug("Session was closed while a pool to {} was initializing, closing it", node);
+        LOG.debug(
+            "[{}] Session closed while a pool to {} was initializing, closing it", logPrefix, node);
         pool.forceCloseAsync();
       } else {
-        LOG.debug("New pool to {} initialized", node);
+        LOG.debug("[{}] New pool to {} initialized", logPrefix, node);
         // If the session's keyspace changed while the pool was initializing, switch it now. Don't
         // try too hard to wait until we expose the pool to clients, switching keyspaces is
         // inherently unsafe anyway.
@@ -365,11 +375,16 @@ public class DefaultSession implements CqlSession {
         DistanceEvent distanceEvent = pendingDistanceEvents.remove(node);
         NodeStateEvent stateEvent = pendingStateEvents.remove(node);
         if (stateEvent != null && stateEvent.newState == NodeState.FORCED_DOWN) {
-          LOG.debug("Received {} while the pool was initializing, processing it now", stateEvent);
+          LOG.debug(
+              "[{}] Received {} while the pool was initializing, processing it now",
+              logPrefix,
+              stateEvent);
           processStateEvent(stateEvent);
         } else if (distanceEvent != null) {
           LOG.debug(
-              "Received {} while the pool was initializing, processing it now", distanceEvent);
+              "[{}] Received {} while the pool was initializing, processing it now",
+              logPrefix,
+              distanceEvent);
           processDistanceEvent(distanceEvent);
         }
       }
@@ -380,6 +395,7 @@ public class DefaultSession implements CqlSession {
       if (closeWasCalled) {
         return;
       }
+      LOG.debug("[{}] Switching to keyspace {}", logPrefix, newKeyspace);
       for (ChannelPool pool : pools.values()) {
         pool.setKeyspace(newKeyspace);
       }
@@ -391,6 +407,7 @@ public class DefaultSession implements CqlSession {
         return;
       }
       closeWasCalled = true;
+      LOG.debug("[{}] Starting shutdown", logPrefix);
 
       // Stop listening for events
       context.eventBus().unregister(distanceListenerKey, DistanceEvent.class);
@@ -410,6 +427,10 @@ public class DefaultSession implements CqlSession {
         return;
       }
       forceCloseWasCalled = true;
+      LOG.debug(
+          "[{}] Starting forced shutdown (was {}closed before)",
+          logPrefix,
+          (closeWasCalled ? "" : "not "));
 
       if (closeWasCalled) {
         for (ChannelPool pool : pools.values()) {
@@ -443,6 +464,7 @@ public class DefaultSession implements CqlSession {
       if (firstError != null) {
         closeFuture.completeExceptionally(firstError);
       } else {
+        LOG.debug("[{}] Shutdown complete", logPrefix);
         closeFuture.complete(null);
       }
     }

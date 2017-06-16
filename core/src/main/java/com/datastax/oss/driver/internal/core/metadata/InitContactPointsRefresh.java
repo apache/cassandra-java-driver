@@ -29,15 +29,16 @@ class InitContactPointsRefresh extends MetadataRefresh {
 
   @VisibleForTesting final Set<InetSocketAddress> contactPoints;
 
-  InitContactPointsRefresh(DefaultMetadata current, Set<InetSocketAddress> contactPoints) {
-    super(current);
+  InitContactPointsRefresh(
+      DefaultMetadata current, Set<InetSocketAddress> contactPoints, String logPrefix) {
+    super(current, logPrefix);
     this.contactPoints = contactPoints;
   }
 
   @Override
   void compute() {
     assert oldMetadata == DefaultMetadata.EMPTY;
-    LOG.debug("Initializing node metadata with contact points {}", contactPoints);
+    LOG.debug("[{}] Initializing node metadata with contact points {}", logPrefix, contactPoints);
 
     ImmutableMap.Builder<InetSocketAddress, Node> newNodes = ImmutableMap.builder();
     for (InetSocketAddress address : contactPoints) {

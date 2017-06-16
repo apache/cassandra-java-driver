@@ -41,7 +41,8 @@ public class CqlRequestHandlerSpeculativeExecutionTest extends CqlRequestHandler
       SpeculativeExecutionPolicy speculativeExecutionPolicy =
           harness.getContext().speculativeExecutionPolicy();
 
-      new CqlRequestHandler(statement, harness.getSession(), harness.getContext()).asyncResult();
+      new CqlRequestHandler(statement, harness.getSession(), harness.getContext(), "test")
+          .asyncResult();
 
       node1Behavior.verifyWrite();
 
@@ -72,7 +73,8 @@ public class CqlRequestHandlerSpeculativeExecutionTest extends CqlRequestHandler
           .thenReturn(secondExecutionDelay);
       Mockito.when(speculativeExecutionPolicy.nextExecution(null, statement, 3)).thenReturn(0L);
 
-      new CqlRequestHandler(statement, harness.getSession(), harness.getContext()).asyncResult();
+      new CqlRequestHandler(statement, harness.getSession(), harness.getContext(), "test")
+          .asyncResult();
 
       node1Behavior.verifyWrite();
 
@@ -115,7 +117,7 @@ public class CqlRequestHandlerSpeculativeExecutionTest extends CqlRequestHandler
           .thenReturn(firstExecutionDelay);
 
       CompletionStage<AsyncResultSet> resultSetFuture =
-          new CqlRequestHandler(statement, harness.getSession(), harness.getContext())
+          new CqlRequestHandler(statement, harness.getSession(), harness.getContext(), "test")
               .asyncResult();
       node1Behavior.verifyWrite();
 
@@ -159,7 +161,7 @@ public class CqlRequestHandlerSpeculativeExecutionTest extends CqlRequestHandler
           .thenReturn(firstExecutionDelay);
 
       CompletionStage<AsyncResultSet> resultSetFuture =
-          new CqlRequestHandler(statement, harness.getSession(), harness.getContext())
+          new CqlRequestHandler(statement, harness.getSession(), harness.getContext(), "test")
               .asyncResult();
       node1Behavior.verifyWrite();
       // do not simulate a response from node1. The request will stay hanging for the rest of this test
@@ -199,7 +201,7 @@ public class CqlRequestHandlerSpeculativeExecutionTest extends CqlRequestHandler
           .thenReturn(firstExecutionDelay);
 
       CompletionStage<AsyncResultSet> resultSetFuture =
-          new CqlRequestHandler(statement, harness.getSession(), harness.getContext())
+          new CqlRequestHandler(statement, harness.getSession(), harness.getContext(), "test")
               .asyncResult();
       node1Behavior.verifyWrite();
 

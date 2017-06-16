@@ -28,8 +28,8 @@ abstract class NodesRefresh extends MetadataRefresh {
 
   private static final Logger LOG = LoggerFactory.getLogger(NodesRefresh.class);
 
-  protected NodesRefresh(DefaultMetadata current) {
-    super(current);
+  protected NodesRefresh(DefaultMetadata current, String logPrefix) {
+    super(current, logPrefix);
   }
 
   /** @return null if the nodes haven't changed */
@@ -42,7 +42,7 @@ abstract class NodesRefresh extends MetadataRefresh {
     // TODO recompute token map (even if node list hasn't changed, b/c tokens might have changed)
   }
 
-  protected static void copyInfos(NodeInfo nodeInfo, DefaultNode node) {
+  protected static void copyInfos(NodeInfo nodeInfo, DefaultNode node, String logPrefix) {
     node.broadcastAddress = nodeInfo.getBroadcastAddress();
     node.listenAddress = nodeInfo.getListenAddress();
     node.datacenter = nodeInfo.getDatacenter();
@@ -51,7 +51,7 @@ abstract class NodesRefresh extends MetadataRefresh {
     try {
       node.cassandraVersion = CassandraVersion.parse(versionString);
     } catch (IllegalArgumentException e) {
-      LOG.warn("Error converting Cassandra version '{}'", versionString);
+      LOG.warn("[{}] Error converting Cassandra version '{}'", logPrefix, versionString);
     }
     node.extras =
         (nodeInfo.getExtras() == null)

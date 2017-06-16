@@ -85,7 +85,7 @@ public class MockChannelPoolFactoryHelper {
         ArgumentCaptor.forClass(InternalDriverContext.class);
     inOrder
         .verify(channelPoolFactory, timeout(100).atLeast(expected))
-        .init(eq(node), eq(keyspace), eq(distance), contextCaptor.capture());
+        .init(eq(node), eq(keyspace), eq(distance), contextCaptor.capture(), eq("test"));
     int actual = contextCaptor.getAllValues().size();
 
     int extras = actual - expected;
@@ -161,7 +161,8 @@ public class MockChannelPoolFactoryHelper {
                           eq(params.node),
                           eq(params.keyspace),
                           eq(params.distance),
-                          any(InternalDriverContext.class)))
+                          any(InternalDriverContext.class),
+                          eq("test")))
                   .thenReturn(first);
           for (CompletionStage<ChannelPool> result : results) {
             ongoingStubbing.thenReturn(result);

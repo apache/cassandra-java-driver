@@ -75,7 +75,7 @@ public class NodeStateManagerTest {
     Mockito.when(config.defaultProfile()).thenReturn(defaultConfigProfile);
     Mockito.when(context.config()).thenReturn(config);
 
-    this.eventBus = Mockito.spy(new EventBus());
+    this.eventBus = Mockito.spy(new EventBus("test"));
     Mockito.when(context.eventBus()).thenReturn(eventBus);
 
     adminEventLoopGroup = new DefaultEventLoopGroup(1, new BlockingOperation.SafeThreadFactory());

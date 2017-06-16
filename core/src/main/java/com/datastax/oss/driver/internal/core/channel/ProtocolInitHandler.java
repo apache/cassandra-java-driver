@@ -63,6 +63,7 @@ class ProtocolInitHandler extends ConnectInitHandler {
   private final DriverChannelOptions options;
   // might be null if this is the first channel to this cluster
   private final String expectedClusterName;
+  private String logPrefix;
 
   ProtocolInitHandler(
       InternalDriverContext internalDriverContext,
@@ -79,10 +80,19 @@ class ProtocolInitHandler extends ConnectInitHandler {
     this.initialProtocolVersion = protocolVersion;
     this.expectedClusterName = expectedClusterName;
     this.options = options;
+    this.logPrefix = options.ownerLogPrefix + "|connecting...";
+  }
+
+  @Override
+  public void channelActive(ChannelHandlerContext ctx) throws Exception {
+    super.channelActive(ctx);
+    String channelId = ctx.channel().toString();
+    this.logPrefix = options.ownerLogPrefix + "|" + channelId.substring(1, channelId.length() - 1);
   }
 
   @Override
   protected void onRealConnect(ChannelHandlerContext ctx) {
+    LOG.debug("[{}] Starting channel initialization", logPrefix);
     new InitRequest(ctx).send();
   }
 
@@ -108,7 +118,7 @@ class ProtocolInitHandler extends ConnectInitHandler {
 
     @Override
     String describe() {
-      return "init query " + step;
+      return "[" + logPrefix + "] init query " + step;
     }
 
     @Override
@@ -132,8 +142,8 @@ class ProtocolInitHandler extends ConnectInitHandler {
     @Override
     void onResponse(Message response) {
       LOG.trace(
-          "[{} {}] received response opcode={}",
-          channel,
+          "[{}] step {} received response opcode={}",
+          logPrefix,
           step,
           ProtocolUtils.opcodeString(response.opcode));
       try {
@@ -277,6 +287,11 @@ class ProtocolInitHandler extends ConnectInitHandler {
                       String.format(
                           "Host %s requires authentication (%s), but no authenticator configured",
                           address, authenticator)));
+    }
+
+    @Override
+    public String toString() {
+      return "init query " + step;
     }
   }
 

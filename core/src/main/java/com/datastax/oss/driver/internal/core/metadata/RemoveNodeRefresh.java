@@ -29,8 +29,8 @@ public class RemoveNodeRefresh extends NodesRefresh {
 
   @VisibleForTesting final InetSocketAddress toRemove;
 
-  RemoveNodeRefresh(DefaultMetadata current, InetSocketAddress toRemove) {
-    super(current);
+  RemoveNodeRefresh(DefaultMetadata current, InetSocketAddress toRemove, String logPrefix) {
+    super(current, logPrefix);
     this.toRemove = toRemove;
   }
 
@@ -43,7 +43,7 @@ public class RemoveNodeRefresh extends NodesRefresh {
       // hurt to fail gracefully just in case
       return null;
     } else {
-      LOG.debug("Removing node {}", node);
+      LOG.debug("[{}] Removing node {}", logPrefix, node);
       events.add(NodeStateEvent.removed((DefaultNode) node));
       ImmutableMap.Builder<InetSocketAddress, Node> newNodesBuilder = ImmutableMap.builder();
       for (Map.Entry<InetSocketAddress, Node> entry : oldNodes.entrySet()) {

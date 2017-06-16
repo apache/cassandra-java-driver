@@ -36,12 +36,14 @@ public class MetadataManager implements AsyncAutoCloseable {
   private static final Logger LOG = LoggerFactory.getLogger(MetadataManager.class);
 
   private final InternalDriverContext context;
+  private final String logPrefix;
   private final EventExecutor adminExecutor;
   private final SingleThreaded singleThreaded;
   private volatile DefaultMetadata metadata; // must be updated on adminExecutor only
 
   public MetadataManager(InternalDriverContext context) {
     this.context = context;
+    this.logPrefix = context.clusterName();
     this.adminExecutor = context.nettyOptions().adminEventExecutorGroup().next();
     this.singleThreaded = new SingleThreaded();
     this.metadata = DefaultMetadata.EMPTY;
@@ -55,7 +57,7 @@ public class MetadataManager implements AsyncAutoCloseable {
     if (contactPoints == null || contactPoints.isEmpty()) {
       return CompletableFuture.completedFuture(null);
     } else {
-      LOG.debug("Adding initial contact points {}", contactPoints);
+      LOG.debug("[{}] Adding initial contact points {}", logPrefix, contactPoints);
       CompletableFuture<Void> initNodesFuture = new CompletableFuture<>();
       RunOrSchedule.on(
           adminExecutor, () -> singleThreaded.initNodes(contactPoints, initNodesFuture));
@@ -78,10 +80,11 @@ public class MetadataManager implements AsyncAutoCloseable {
         .thenApply(
             maybeInfo -> {
               if (maybeInfo.isPresent()) {
-                NodesRefresh.copyInfos(maybeInfo.get(), (DefaultNode) node);
+                NodesRefresh.copyInfos(maybeInfo.get(), (DefaultNode) node, logPrefix);
               } else {
                 LOG.debug(
-                    "Topology monitor did not return any info for the refresh of {}, skipping",
+                    "[{}] Topology monitor did not return any info for the refresh of {}, skipping",
+                    logPrefix,
                     node);
               }
               return null;
@@ -96,9 +99,10 @@ public class MetadataManager implements AsyncAutoCloseable {
             (info, error) -> {
               if (error != null) {
                 LOG.debug(
-                    "Error refreshing node info for "
-                        + address
-                        + ", this will be retried on the next full refresh",
+                    "[{}] Error refreshing node info for {}, "
+                        + "this will be retried on the next full refresh",
+                    logPrefix,
+                    address,
                     error);
               } else {
                 singleThreaded.addNode(address, info);
@@ -140,12 +144,12 @@ public class MetadataManager implements AsyncAutoCloseable {
 
     private void initNodes(
         Set<InetSocketAddress> addresses, CompletableFuture<Void> initNodesFuture) {
-      refresh(new InitContactPointsRefresh(metadata, addresses));
+      refresh(new InitContactPointsRefresh(metadata, addresses, logPrefix));
       initNodesFuture.complete(null);
     }
 
     private Void refreshNodes(Iterable<NodeInfo> nodeInfos) {
-      return refresh(new FullNodeListRefresh(metadata, nodeInfos));
+      return refresh(new FullNodeListRefresh(metadata, nodeInfos, logPrefix));
     }
 
     private void addNode(InetSocketAddress address, Optional<NodeInfo> maybeInfo) {
@@ -155,26 +159,28 @@ public class MetadataManager implements AsyncAutoCloseable {
           if (!address.equals(info.getConnectAddress())) {
             // This would be a bug in the TopologyMonitor, protect against it
             LOG.warn(
-                "Received a request to add a node for {}, "
+                "[{}] Received a request to add a node for {}, "
                     + "but the provided info uses the connect address {}, ignoring it",
+                logPrefix,
                 address,
                 info.getConnectAddress());
           } else {
-            refresh(new AddNodeRefresh(metadata, info));
+            refresh(new AddNodeRefresh(metadata, info, logPrefix));
           }
         } else {
           LOG.debug(
-              "Ignoring node addition for {} because the "
+              "[{}] Ignoring node addition for {} because the "
                   + "topology monitor didn't return any information",
+              logPrefix,
               address);
         }
       } catch (Throwable t) {
-        LOG.warn("Unexpected exception while handling added node", t);
+        LOG.warn("[" + logPrefix + "] Unexpected exception while handling added node", logPrefix);
       }
     }
 
     private void removeNode(InetSocketAddress address) {
-      refresh(new RemoveNodeRefresh(metadata, address));
+      refresh(new RemoveNodeRefresh(metadata, address, logPrefix));
     }
 
     private void close() {
@@ -182,6 +188,7 @@ public class MetadataManager implements AsyncAutoCloseable {
         return;
       }
       closeWasCalled = true;
+      LOG.debug("[{}] Closing", logPrefix);
       closeFuture.complete(null);
     }
   }
