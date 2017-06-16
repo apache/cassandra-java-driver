@@ -18,10 +18,10 @@ package com.datastax.oss.driver.internal.core.metadata;
 import com.datastax.oss.driver.api.core.AsyncAutoCloseable;
 import com.datastax.oss.driver.api.core.Cluster;
 import com.datastax.oss.driver.api.core.addresstranslation.AddressTranslator;
+import com.datastax.oss.driver.api.core.loadbalancing.LoadBalancingPolicy;
 import com.datastax.oss.driver.api.core.metadata.Node;
 import com.datastax.oss.driver.internal.core.context.EventBus;
 import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
-import com.datastax.oss.driver.internal.core.control.ControlConnection;
 import java.net.InetSocketAddress;
 import java.util.Optional;
 import java.util.concurrent.CompletionStage;
@@ -40,13 +40,7 @@ import java.util.concurrent.CompletionStage;
  */
 public interface TopologyMonitor extends AsyncAutoCloseable {
 
-  /**
-   * Triggers the initialization of the monitor.
-   *
-   * <p>This will be invoked at startup, and is how the driver determines when it is "successfully
-   * connected" to the Cassandra cluster. In particular, the initialization of the {@link Cluster}
-   * instance depends on the result of this method.
-   */
+  /** Triggers the initialization of the monitor. */
   CompletionStage<Void> init();
 
   /**
@@ -83,10 +77,9 @@ public interface TopologyMonitor extends AsyncAutoCloseable {
    * <p>This will be invoked directly from a driver's internal thread; if the refresh involves
    * blocking I/O or heavy computations, it should be scheduled on a separate thread.
    *
-   * <p>The driver calls this at initialization; if that initial call fails, the load balancing
-   * policy is not initialized, and the driver is unable to execute queries. You should schedule
-   * retries to ensure that the call eventually succeeds (see how the default implementation does it
-   * in {@link ControlConnection.SingleThreaded#onSuccessfulReconnect()}).
+   * <p>The driver calls this at initialization, and uses the result to initialize the {@link
+   * LoadBalancingPolicy}; successful initialization of the {@link Cluster} object depends on that
+   * initial call succeeding.
    *
    * @return a future that completes with the information. We assume that the full node list will
    *     always be returned in a single message (no paging).
