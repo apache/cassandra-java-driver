@@ -32,15 +32,20 @@ public class DefaultNettyOptions implements NettyOptions {
   private final EventLoopGroup ioEventLoopGroup;
   private final EventLoopGroup adminEventLoopGroup;
 
-  public DefaultNettyOptions() {
-    // TODO inject the cluster name in thread names
+  public DefaultNettyOptions(String clusterName) {
     ThreadFactory safeFactory = new BlockingOperation.SafeThreadFactory();
     ThreadFactory ioThreadFactory =
-        new ThreadFactoryBuilder().setThreadFactory(safeFactory).setNameFormat("io-%d").build();
+        new ThreadFactoryBuilder()
+            .setThreadFactory(safeFactory)
+            .setNameFormat(clusterName + "-io-%d")
+            .build();
     this.ioEventLoopGroup = new NioEventLoopGroup(0, ioThreadFactory);
 
     ThreadFactory adminThreadFactory =
-        new ThreadFactoryBuilder().setThreadFactory(safeFactory).setNameFormat("admin-%d").build();
+        new ThreadFactoryBuilder()
+            .setThreadFactory(safeFactory)
+            .setNameFormat(clusterName + "-admin-%d")
+            .build();
     int adminThreadCount = Math.min(2, Runtime.getRuntime().availableProcessors());
     this.adminEventLoopGroup = new DefaultEventLoopGroup(adminThreadCount, adminThreadFactory);
   }
