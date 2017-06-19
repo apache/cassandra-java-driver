@@ -24,8 +24,11 @@ import io.netty.channel.DefaultEventLoopGroup;
 import io.netty.channel.EventLoopGroup;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.nio.NioSocketChannel;
+import io.netty.util.concurrent.DefaultPromise;
 import io.netty.util.concurrent.EventExecutorGroup;
 import io.netty.util.concurrent.Future;
+import io.netty.util.concurrent.GlobalEventExecutor;
+import io.netty.util.concurrent.PromiseCombiner;
 import java.util.concurrent.ThreadFactory;
 
 public class DefaultNettyOptions implements NettyOptions {
@@ -82,6 +85,11 @@ public class DefaultNettyOptions implements NettyOptions {
 
   @Override
   public Future<?> onClose() {
-    return ioEventLoopGroup.shutdownGracefully();
+    PromiseCombiner combiner = new PromiseCombiner();
+    combiner.add(adminEventLoopGroup.shutdownGracefully());
+    combiner.add(ioEventLoopGroup.shutdownGracefully());
+    DefaultPromise<Void> closeFuture = new DefaultPromise<>(GlobalEventExecutor.INSTANCE);
+    combiner.finish(closeFuture);
+    return closeFuture;
   }
 }
