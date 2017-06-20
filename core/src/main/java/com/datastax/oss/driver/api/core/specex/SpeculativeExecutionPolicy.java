@@ -23,7 +23,7 @@ import com.datastax.oss.driver.api.core.session.Request;
  * The policy that decides if the driver will send speculative queries to the next nodes when the
  * current node takes too long to respond.
  */
-public interface SpeculativeExecutionPolicy {
+public interface SpeculativeExecutionPolicy extends AutoCloseable {
 
   /**
    * @param keyspace the CQL keyspace currently associated to the session. This is set either
@@ -39,10 +39,7 @@ public interface SpeculativeExecutionPolicy {
    */
   long nextExecution(CqlIdentifier keyspace, Request request, int runningExecutions);
 
-  /**
-   * Gets invoked at cluster shutdown.
-   *
-   * <p>This gives the policy the opportunity to clean up any resource it might have acquired.
-   */
+  /** Called when the cluster that this policy is associated with closes. */
+  @Override
   void close();
 }

@@ -20,7 +20,6 @@ import com.datastax.oss.driver.api.core.config.DriverConfigProfile;
 import com.datastax.oss.driver.api.core.context.DriverContext;
 import com.google.common.base.Preconditions;
 import java.time.Duration;
-import java.util.concurrent.TimeUnit;
 
 /**
  * A reconnection policy that waits exponentially longer between each reconnection attempt (but
@@ -92,6 +91,11 @@ public class ExponentialReconnectionPolicy implements ReconnectionPolicy {
   @Override
   public ReconnectionSchedule newSchedule() {
     return new ExponentialSchedule();
+  }
+
+  @Override
+  public void close() {
+    // nothing to do
   }
 
   private class ExponentialSchedule implements ReconnectionSchedule {

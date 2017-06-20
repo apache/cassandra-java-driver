@@ -21,7 +21,7 @@ import java.util.Queue;
 import java.util.Set;
 
 /** Decides which Cassandra nodes to contact for each query. */
-public interface LoadBalancingPolicy {
+public interface LoadBalancingPolicy extends AutoCloseable {
 
   /**
    * Initializes this policy with the nodes discovered during driver initialization.
@@ -69,10 +69,8 @@ public interface LoadBalancingPolicy {
   /** Called when a node is removed from the cluster. */
   void onRemove(Node node);
 
-  /**
-   * Invoked at cluster shutdown. This gives the policy the opportunity to perform some cleanup, for
-   * instance stop threads that it might have started.
-   */
+  /** Called when the cluster that this policy is associated with closes. */
+  @Override
   void close();
 
   /** An object that the policy uses to signal decisions it makes about node distances. */

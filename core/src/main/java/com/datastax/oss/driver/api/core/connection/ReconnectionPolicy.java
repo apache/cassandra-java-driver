@@ -26,10 +26,14 @@ import java.time.Duration;
  * connections, the schedule will be reset (that is, the next failure will create a fresh schedule
  * instance).
  */
-public interface ReconnectionPolicy {
+public interface ReconnectionPolicy extends AutoCloseable {
 
   /** Creates a new schedule. */
   ReconnectionSchedule newSchedule();
+
+  /** Called when the cluster that this policy is associated with closes. */
+  @Override
+  void close();
 
   /**
    * The reconnection schedule from the time a connection is lost, to the time all connections to
@@ -39,6 +43,4 @@ public interface ReconnectionPolicy {
     /** How long to wait before the next reconnection attempt. */
     Duration nextDelay();
   }
-
-  // TODO lifecycle methods (cluster shutdown, etc.)
 }

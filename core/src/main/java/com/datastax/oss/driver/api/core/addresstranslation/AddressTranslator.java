@@ -34,7 +34,7 @@ import java.net.InetSocketAddress;
  * <p>The contact point addresses provided at driver initialization are considered translated
  * already; in other words, they will be used as-is, without being processed by this component.
  */
-public interface AddressTranslator {
+public interface AddressTranslator extends AutoCloseable {
 
   /**
    * Translates an address reported by a Cassandra node into the address that the driver will use to
@@ -42,6 +42,7 @@ public interface AddressTranslator {
    */
   InetSocketAddress translate(InetSocketAddress address);
 
-  /** Called when the associated driver instance shuts down. */
+  /** Called when the cluster that this translator is associated with closes. */
+  @Override
   void close();
 }

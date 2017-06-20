@@ -26,7 +26,7 @@ import com.datastax.oss.driver.api.core.session.Request;
  * {@link LoadBalancingPolicy}, and tries each node in sequence. This policy is invoked if the
  * request to that node fails.
  */
-public interface RetryPolicy {
+public interface RetryPolicy extends AutoCloseable {
 
   RetryDecision onReadTimeout(
       Request request,
@@ -51,5 +51,7 @@ public interface RetryPolicy {
 
   RetryDecision onErrorResponse(Request request, Throwable error, int retryCount);
 
+  /** Called when the cluster that this policy is associated with closes. */
+  @Override
   void close();
 }

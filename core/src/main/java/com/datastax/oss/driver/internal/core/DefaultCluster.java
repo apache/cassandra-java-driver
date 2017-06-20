@@ -201,6 +201,7 @@ public class DefaultCluster implements Cluster {
 
       LOG.debug("[{}] Starting shutdown", logPrefix);
       List<CompletionStage<Void>> childrenCloseStages = new ArrayList<>();
+      closePolicies();
       for (AsyncAutoCloseable closeable : internalComponentsToClose()) {
         childrenCloseStages.add(closeable.closeAsync());
       }
@@ -226,6 +227,7 @@ public class DefaultCluster implements Cluster {
         }
       } else {
         closeWasCalled = true;
+        closePolicies();
         List<CompletionStage<Void>> childrenCloseStages = new ArrayList<>();
         for (AsyncAutoCloseable closeable : internalComponentsToClose()) {
           childrenCloseStages.add(closeable.forceCloseAsync());
@@ -260,6 +262,22 @@ public class DefaultCluster implements Cluster {
       if (future.isCompletedExceptionally()) {
         LOG.warn(
             "[{}] Unexpected error while closing", logPrefix, CompletableFutures.getFailed(future));
+      }
+    }
+
+    private void closePolicies() {
+      for (AutoCloseable closeable :
+          ImmutableList.of(
+              context.reconnectionPolicy(),
+              context.retryPolicy(),
+              context.loadBalancingPolicyWrapper(),
+              context.speculativeExecutionPolicy(),
+              context.addressTranslator())) {
+        try {
+          closeable.close();
+        } catch (Throwable t) {
+          LOG.warn("[{}] Error while closing {}", logPrefix, closeable, t);
+        }
       }
     }
 
