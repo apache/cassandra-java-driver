@@ -19,8 +19,11 @@ import com.datastax.oss.protocol.internal.FrameCodec;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.LengthFieldBasedFrameDecoder;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class FrameDecoder extends LengthFieldBasedFrameDecoder {
+  private static final Logger LOG = LoggerFactory.getLogger(FrameDecoder.class);
 
   // Where the length of the frame is located in the payload
   private static final int LENGTH_FIELD_OFFSET = 5;
@@ -51,8 +54,8 @@ public class FrameDecoder extends LengthFieldBasedFrameDecoder {
       } catch (Exception e1) {
         // Should never happen, super.decode does not return a non-null buffer until the length
         // field has been read, and the stream id comes before
+        LOG.warn("Unexpected error while reading stream id", e1);
         streamId = -1;
-        // TODO log e1?
       }
       throw new FrameDecodingException(streamId, e);
     }
