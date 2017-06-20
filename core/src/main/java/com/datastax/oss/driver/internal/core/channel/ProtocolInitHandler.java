@@ -15,6 +15,7 @@
  */
 package com.datastax.oss.driver.internal.core.channel;
 
+import com.datastax.oss.driver.api.core.CoreProtocolVersion;
 import com.datastax.oss.driver.api.core.InvalidKeyspaceException;
 import com.datastax.oss.driver.api.core.ProtocolVersion;
 import com.datastax.oss.driver.api.core.UnsupportedProtocolVersionException;
@@ -23,6 +24,7 @@ import com.datastax.oss.driver.api.core.auth.Authenticator;
 import com.datastax.oss.driver.api.core.config.CoreDriverOption;
 import com.datastax.oss.driver.api.core.config.DriverConfigProfile;
 import com.datastax.oss.driver.api.core.connection.ConnectionInitException;
+import com.datastax.oss.driver.api.core.type.codec.TypeCodecs;
 import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
 import com.datastax.oss.driver.internal.core.util.ProtocolUtils;
 import com.datastax.oss.driver.internal.core.util.concurrent.UncaughtExceptions;
@@ -39,8 +41,6 @@ import com.datastax.oss.protocol.internal.response.Error;
 import com.datastax.oss.protocol.internal.response.Ready;
 import com.datastax.oss.protocol.internal.response.result.Rows;
 import com.datastax.oss.protocol.internal.response.result.SetKeyspace;
-import com.datastax.oss.protocol.internal.util.Bytes;
-import com.google.common.base.Charsets;
 import io.netty.channel.ChannelHandlerContext;
 import java.net.SocketAddress;
 import java.nio.ByteBuffer;
@@ -295,15 +295,7 @@ class ProtocolInitHandler extends ConnectInitHandler {
     }
   }
 
-  // TODO we'll probably need a lightweight ResultSet implementation for internal uses, but this is good for now
   private String getString(List<ByteBuffer> row, int i) {
-    ByteBuffer bytes = row.get(i);
-    if (bytes == null) {
-      return null;
-    } else if (bytes.remaining() == 0) {
-      return "";
-    } else {
-      return new String(Bytes.getArray(bytes), Charsets.UTF_8);
-    }
+    return TypeCodecs.TEXT.decode(row.get(i), CoreProtocolVersion.DEFAULT);
   }
 }
