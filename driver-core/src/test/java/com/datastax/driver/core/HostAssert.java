@@ -58,7 +58,7 @@ public class HostAssert extends AbstractAssert<HostAssert, Host> {
     }
 
     public HostAssert isAtDistance(HostDistance expected) {
-        LoadBalancingPolicy loadBalancingPolicy = cluster.manager.loadBalancingPolicy();
+        LoadBalancingPolicy loadBalancingPolicy = cluster.getManager().loadBalancingPolicy();
         assertThat(loadBalancingPolicy.distance(actual)).isEqualTo(expected);
         return this;
     }

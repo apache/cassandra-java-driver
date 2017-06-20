@@ -211,7 +211,7 @@ public class ScassandraCluster {
         for (int i = 1; i <= nodes(dc).size(); i++) {
             int id = ipSuffix(dc, i);
             Host host = TestUtils.findHost(cluster, id);
-            if (cluster.manager.controlConnection.connectedHost() == host) {
+            if (cluster.getManager().controlConnection.connectedHost() == host) {
                 logger.debug("Node {} identified as control host.  Stopping last.", id);
                 controlHost = id;
                 continue;

@@ -25,6 +25,7 @@ import com.google.common.base.Strings;
 import com.google.common.base.Throwables;
 import com.google.common.collect.*;
 import com.google.common.util.concurrent.*;
+import io.netty.util.concurrent.EventExecutor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -79,6 +80,9 @@ public class Cluster implements Closeable {
 
     private static final int NOTIF_LOCK_TIMEOUT_SECONDS = SystemProperties.getInt("com.datastax.driver.NOTIF_LOCK_TIMEOUT_SECONDS", 60);
 
+    private static final boolean CHECK_IO_DEADLOCKS = SystemProperties.getBoolean(
+        "com.datastax.driver.CHECK_IO_DEADLOCKS", true);
+
     final Manager manager;
 
     /**
@@ -112,6 +116,17 @@ public class Cluster implements Closeable {
                 checkNotEmpty(initializer.getContactPoints()),
                 initializer.getConfiguration(),
                 initializer.getInitialListeners());
+    }
+
+    /**
+     * Constructor used solely by {@link DelegatingCluster}.
+     * <p/>
+     * This constructor ensures that this cluster's manager is not instantiated,
+     * since DelegatingCluster properly forwards all public method calls to its
+     * delegate's manager instead.
+     */
+    Cluster() {
+        this.manager = null;
     }
 
     private static List<InetSocketAddress> checkNotEmpty(List<InetSocketAddress> contactPoints) {
@@ -156,7 +171,7 @@ public class Cluster implements Closeable {
      *                                  Cluster.
      */
     public Cluster init() {
-        this.manager.init();
+        this.getManager().init();
         return this;
     }
 
@@ -219,8 +234,8 @@ public class Cluster implements Closeable {
      * @return a new, non-initialized session on this cluster.
      */
     public Session newSession() {
-        checkNotClosed(manager);
-        return manager.newSession();
+        checkNotClosed(getManager());
+        return getManager().newSession();
     }
 
     /**
@@ -326,9 +341,9 @@ public class Cluster implements Closeable {
      *                                  Cluster.
      */
     public ListenableFuture<Session> connectAsync(final String keyspace) {
-        checkNotClosed(manager);
+        checkNotClosed(getManager());
         init();
-        final Session session = manager.newSession();
+        final Session session = getManager().newSession();
         ListenableFuture<Session> sessionInitialized = session.initAsync();
         if (keyspace == null) {
             return sessionInitialized;
@@ -373,7 +388,7 @@ public class Cluster implements Closeable {
      * @return the name for this cluster instance.
      */
     public String getClusterName() {
-        return manager.clusterName;
+        return getManager().clusterName;
     }
 
     /**
@@ -396,8 +411,8 @@ public class Cluster implements Closeable {
      *                                  Cluster.
      */
     public Metadata getMetadata() {
-        manager.init();
-        return manager.metadata;
+        getManager().init();
+        return getManager().metadata;
     }
 
     /**
@@ -406,7 +421,7 @@ public class Cluster implements Closeable {
      * @return the cluster configuration.
      */
     public Configuration getConfiguration() {
-        return manager.configuration;
+        return getManager().configuration;
     }
 
     /**
@@ -416,8 +431,8 @@ public class Cluster implements Closeable {
      * metrics collection has been disabled (that is if {@link Configuration#getMetricsOptions} returns {@code null}).
      */
     public Metrics getMetrics() {
-        checkNotClosed(manager);
-        return manager.metrics;
+        checkNotClosed(getManager());
+        return getManager().metrics;
     }
 
     /**
@@ -439,8 +454,8 @@ public class Cluster implements Closeable {
      * @return this {@code Cluster} object;
      */
     public Cluster register(Host.StateListener listener) {
-        checkNotClosed(manager);
-        boolean added = manager.listeners.add(listener);
+        checkNotClosed(getManager());
+        boolean added = getManager().listeners.add(listener);
         if (added)
             listener.onRegister(this);
         return this;
@@ -456,8 +471,8 @@ public class Cluster implements Closeable {
      * @return this {@code Cluster} object;
      */
     public Cluster unregister(Host.StateListener listener) {
-        checkNotClosed(manager);
-        boolean removed = manager.listeners.remove(listener);
+        checkNotClosed(getManager());
+        boolean removed = getManager().listeners.remove(listener);
         if (removed)
             listener.onUnregister(this);
         return this;
@@ -485,8 +500,8 @@ public class Cluster implements Closeable {
      * @return this {@code Cluster} object;
      */
     public Cluster register(LatencyTracker tracker) {
-        checkNotClosed(manager);
-        boolean added = manager.latencyTrackers.add(tracker);
+        checkNotClosed(getManager());
+        boolean added = getManager().latencyTrackers.add(tracker);
         if (added)
             tracker.onRegister(this);
         return this;
@@ -503,8 +518,8 @@ public class Cluster implements Closeable {
      * @return this {@code Cluster} object;
      */
     public Cluster unregister(LatencyTracker tracker) {
-        checkNotClosed(manager);
-        boolean removed = manager.latencyTrackers.remove(tracker);
+        checkNotClosed(getManager());
+        boolean removed = getManager().latencyTrackers.remove(tracker);
         if (removed)
             tracker.onUnregister(this);
         return this;
@@ -519,8 +534,8 @@ public class Cluster implements Closeable {
      * @return this {@code Cluster} object;
      */
     public Cluster register(SchemaChangeListener listener) {
-        checkNotClosed(manager);
-        boolean added = manager.schemaChangeListeners.add(listener);
+        checkNotClosed(getManager());
+        boolean added = getManager().schemaChangeListeners.add(listener);
         if (added)
             listener.onRegister(this);
         return this;
@@ -537,8 +552,8 @@ public class Cluster implements Closeable {
      * @return this {@code Cluster} object;
      */
     public Cluster unregister(SchemaChangeListener listener) {
-        checkNotClosed(manager);
-        boolean removed = manager.schemaChangeListeners.remove(listener);
+        checkNotClosed(getManager());
+        boolean removed = getManager().schemaChangeListeners.remove(listener);
         if (removed)
             listener.onUnregister(this);
         return this;
@@ -563,7 +578,7 @@ public class Cluster implements Closeable {
      * @return a future on the completion of the shutdown process.
      */
     public CloseFuture closeAsync() {
-        return manager.close();
+        return getManager().close();
     }
 
     /**
@@ -596,12 +611,16 @@ public class Cluster implements Closeable {
      * otherwise.
      */
     public boolean isClosed() {
-        return manager.closeFuture.get() != null;
+        return getManager().closeFuture.get() != null;
     }
 
     private static void checkNotClosed(Manager manager) {
         if (manager.isClosed())
             throw new IllegalStateException("Can't use this cluster instance because it was previously closed");
+    }
+
+    Manager getManager() {
+        return manager;
     }
 
     /**
@@ -1663,7 +1682,7 @@ public class Cluster implements Closeable {
             return closeFuture.get() != null;
         }
 
-        private CloseFuture close() {
+        CloseFuture close() {
 
             CloseFuture future = closeFuture.get();
             if (future != null)
@@ -2441,17 +2460,17 @@ public class Cluster implements Closeable {
                             break;
                         case DROPPED:
                             if (scc.targetType == KEYSPACE) {
-                                final KeyspaceMetadata removedKeyspace = manager.metadata.removeKeyspace(scc.targetKeyspace);
+                                final KeyspaceMetadata removedKeyspace = getManager().metadata.removeKeyspace(scc.targetKeyspace);
                                 if (removedKeyspace != null) {
                                     executor.submit(new Runnable() {
                                         @Override
                                         public void run() {
-                                            manager.metadata.triggerOnKeyspaceRemoved(removedKeyspace);
+                                            getManager().metadata.triggerOnKeyspaceRemoved(removedKeyspace);
                                         }
                                     });
                                 }
                             } else {
-                                KeyspaceMetadata keyspace = manager.metadata.keyspaces.get(scc.targetKeyspace);
+                                KeyspaceMetadata keyspace = getManager().metadata.keyspaces.get(scc.targetKeyspace);
                                 if (keyspace == null) {
                                     logger.warn("Received a DROPPED notification for {} {}.{}, but this keyspace is unknown in our metadata",
                                             scc.targetType, scc.targetKeyspace, scc.targetName);
@@ -2466,7 +2485,7 @@ public class Cluster implements Closeable {
                                                 executor.submit(new Runnable() {
                                                     @Override
                                                     public void run() {
-                                                        manager.metadata.triggerOnTableRemoved(removedTable);
+                                                        getManager().metadata.triggerOnTableRemoved(removedTable);
                                                     }
                                                 });
                                             } else {
@@ -2475,7 +2494,7 @@ public class Cluster implements Closeable {
                                                     executor.submit(new Runnable() {
                                                         @Override
                                                         public void run() {
-                                                            manager.metadata.triggerOnMaterializedViewRemoved(removedView);
+                                                            getManager().metadata.triggerOnMaterializedViewRemoved(removedView);
                                                         }
                                                     });
                                                 }
@@ -2487,7 +2506,7 @@ public class Cluster implements Closeable {
                                                 executor.submit(new Runnable() {
                                                     @Override
                                                     public void run() {
-                                                        manager.metadata.triggerOnUserTypeRemoved(removedType);
+                                                        getManager().metadata.triggerOnUserTypeRemoved(removedType);
                                                     }
                                                 });
                                             }
@@ -2498,7 +2517,7 @@ public class Cluster implements Closeable {
                                                 executor.submit(new Runnable() {
                                                     @Override
                                                     public void run() {
-                                                        manager.metadata.triggerOnFunctionRemoved(removedFunction);
+                                                        getManager().metadata.triggerOnFunctionRemoved(removedFunction);
                                                     }
                                                 });
                                             }
@@ -2509,7 +2528,7 @@ public class Cluster implements Closeable {
                                                 executor.submit(new Runnable() {
                                                     @Override
                                                     public void run() {
-                                                        manager.metadata.triggerOnAggregateRemoved(removedAggregate);
+                                                        getManager().metadata.triggerOnAggregateRemoved(removedAggregate);
                                                     }
                                                 });
                                             }
@@ -2546,6 +2565,21 @@ public class Cluster implements Closeable {
 
             for (SessionManager s : sessions)
                 s.updateCreatedPools(host);
+        }
+
+        void checkNotInEventLoopGroup() {
+            if (!CHECK_IO_DEADLOCKS || connectionFactory == null)
+                return;
+            for (EventExecutor executor : connectionFactory.eventLoopGroup) {
+                if (executor.inEventLoop()) {
+                    throw new IllegalStateException(
+                        "Detected a synchronous call on an I/O thread, this can cause deadlocks or unpredictable " +
+                            "behavior. This generally happens when a Future callback calls a synchronous Session " +
+                            "method (execute() or prepare()), or iterates a result set past the fetch size " +
+                            "(causing an internal synchronous fetch of the next page of results). " +
+                            "Avoid this in your callbacks, or schedule them on a different executor.");
+                }
+            }
         }
 
         private class ClusterCloseFuture extends CloseFuture.Forwarding {

@@ -19,7 +19,6 @@ import com.google.common.base.Function;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.Uninterruptibles;
-import io.netty.util.concurrent.EventExecutor;
 
 import java.nio.ByteBuffer;
 import java.util.Map;
@@ -31,9 +30,6 @@ import java.util.concurrent.ExecutionException;
  * This is primarly intended to make mocking easier.
  */
 public abstract class AbstractSession implements Session {
-
-    private static final boolean CHECK_IO_DEADLOCKS = SystemProperties.getBoolean(
-            "com.datastax.driver.CHECK_IO_DEADLOCKS", true);
 
     /**
      * {@inheritDoc}
@@ -198,18 +194,6 @@ public abstract class AbstractSession implements Session {
      * @throws IllegalStateException if the current thread is one of the Netty I/O thread used by the driver.
      */
     public void checkNotInEventLoop() {
-        Connection.Factory connectionFactory = getCluster().manager.connectionFactory;
-        if (!CHECK_IO_DEADLOCKS || connectionFactory == null)
-            return;
-        for (EventExecutor executor : connectionFactory.eventLoopGroup) {
-            if (executor.inEventLoop()) {
-                throw new IllegalStateException(
-                        "Detected a synchronous call on an I/O thread, this can cause deadlocks or unpredictable " +
-                                "behavior. This generally happens when a Future callback calls a synchronous Session " +
-                                "method (execute() or prepare()), or iterates a result set past the fetch size " +
-                                "(causing an internal synchronous fetch of the next page of results). " +
-                                "Avoid this in your callbacks, or schedule them on a different executor.");
-            }
-        }
+        getCluster().getManager().checkNotInEventLoopGroup();
     }
 }

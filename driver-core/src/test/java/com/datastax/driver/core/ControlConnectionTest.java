@@ -137,14 +137,14 @@ public class ControlConnectionTest extends CCMTestsSupport {
         cluster.init();
 
         // Ensure the control connection host is that of the first node.
-        InetAddress controlHost = cluster.manager.controlConnection.connectedHost().getAddress();
+        InetAddress controlHost = cluster.getManager().controlConnection.connectedHost().getAddress();
         assertThat(controlHost).isEqualTo(firstHost.getAddress());
 
         // Decommission the node.
         ccm().decommission(1);
 
         // Ensure that the new control connection is not null and it's host is not equal to the decommissioned node.
-        Host newHost = cluster.manager.controlConnection.connectedHost();
+        Host newHost = cluster.getManager().controlConnection.connectedHost();
         assertThat(newHost).isNotNull();
         assertThat(newHost.getAddress()).isNotEqualTo(controlHost);
     }
@@ -185,7 +185,7 @@ public class ControlConnectionTest extends CCMTestsSupport {
 
                 try {
                     cluster.init();
-                    occurrencesByHost.add(cluster.manager.controlConnection.connectedHost().getAddress());
+                    occurrencesByHost.add(cluster.getManager().controlConnection.connectedHost().getAddress());
                 } finally {
                     cluster.close();
                 }
@@ -389,7 +389,7 @@ public class ControlConnectionTest extends CCMTestsSupport {
                             .build())
                     .build());
 
-            assertThat(cluster.manager.controlConnection.refreshNodeInfo(host2)).isTrue();
+            assertThat(cluster.getManager().controlConnection.refreshNodeInfo(host2)).isTrue();
 
             host2 = cluster.getMetadata().getHost(node2RpcAddress);
 

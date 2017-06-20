@@ -516,7 +516,7 @@ public abstract class TestUtils {
         // keep alive kicks in, but that's a fairly long time. So we cheat and trigger a force
         // the detection by forcing a request.
         if (waitForDown)
-            Futures.getUnchecked(cluster.manager.submitSchemaRefresh(null, null, null, null));
+            Futures.getUnchecked(cluster.getManager().submitSchemaRefresh(null, null, null, null));
         if (waitForDown) {
             check()
                     .every(1, SECONDS)
@@ -647,7 +647,7 @@ public abstract class TestUtils {
     }
 
     public static Host findOrWaitForControlConnection(final Cluster cluster, long duration, TimeUnit unit) {
-        ControlConnection controlConnection = cluster.manager.controlConnection;
+        ControlConnection controlConnection = cluster.getManager().controlConnection;
         long durationNs = TimeUnit.NANOSECONDS.convert(duration, unit);
         long start = System.nanoTime();
         while (System.nanoTime() - start < durationNs) {
@@ -763,7 +763,7 @@ public abstract class TestUtils {
      * @return a {@link Cluster} instance that connects only to the control host of the given cluster.
      */
     public static Cluster buildControlCluster(Cluster cluster, CCMAccess ccm) {
-        Host controlHost = cluster.manager.controlConnection.connectedHost();
+        Host controlHost = cluster.getManager().controlConnection.connectedHost();
         List<InetSocketAddress> singleAddress = Collections.singletonList(controlHost.getSocketAddress());
         return Cluster.builder()
                 .addContactPoints(controlHost.getSocketAddress().getAddress())

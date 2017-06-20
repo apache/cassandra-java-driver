@@ -48,8 +48,8 @@ public class NodeListRefreshDebouncerTest extends CCMTestsSupport {
         cluster2.init();
 
         // Create a spy of the Cluster's control connection and replace it with the spy.
-        controlConnection = spy(cluster2.manager.controlConnection);
-        cluster2.manager.controlConnection = controlConnection;
+        controlConnection = spy(cluster2.getManager().controlConnection);
+        cluster2.getManager().controlConnection = controlConnection;
         reset(controlConnection);
     }
 
@@ -64,7 +64,7 @@ public class NodeListRefreshDebouncerTest extends CCMTestsSupport {
     @Test(groups = "short")
     public void should_refresh_when_max_pending_requests_reached() {
         for (int i = 0; i < 5; i++) {
-            cluster2.manager.submitNodeListRefresh();
+            cluster2.getManager().submitNodeListRefresh();
         }
 
         // add delay to account for executor submit.

@@ -35,7 +35,7 @@ public class SingleTokenIntegrationTest extends CCMTestsSupport {
      */
     @Test(groups = "short")
     public void should_return_single_non_empty_range_when_cluster_has_one_single_token() {
-        cluster().manager.controlConnection.refreshNodeListAndTokenMap();
+        cluster().getManager().controlConnection.refreshNodeListAndTokenMap();
         Metadata metadata = cluster().getMetadata();
         Set<TokenRange> tokenRanges = metadata.getTokenRanges();
         assertThat(tokenRanges).hasSize(1);

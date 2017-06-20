@@ -69,7 +69,7 @@ class DefaultResultSetFuture extends AbstractFuture<ResultSet> implements Result
                             break;
                         case SCHEMA_CHANGE:
                             ResultSet rs = ArrayBackedResultSet.fromMessage(rm, session, protocolVersion, info, statement);
-                            final Cluster.Manager cluster = session.cluster.manager;
+                            final Cluster.Manager cluster = session.cluster.getManager();
                             if (!cluster.configuration.getQueryOptions().isMetadataEnabled()) {
                                 cluster.waitForSchemaAgreementAndSignal(connection, this, rs);
                             } else {
@@ -96,7 +96,7 @@ class DefaultResultSetFuture extends AbstractFuture<ResultSet> implements Result
                                                 });
                                             }
                                         } else {
-                                            KeyspaceMetadata keyspace = session.cluster.manager.metadata.keyspaces.get(scc.targetKeyspace);
+                                            KeyspaceMetadata keyspace = session.cluster.getManager().metadata.keyspaces.get(scc.targetKeyspace);
                                             if (keyspace == null) {
                                                 logger.warn("Received a DROPPED notification for {} {}.{}, but this keyspace is unknown in our metadata",
                                                         scc.targetType, scc.targetKeyspace, scc.targetName);
@@ -162,7 +162,7 @@ class DefaultResultSetFuture extends AbstractFuture<ResultSet> implements Result
                                                 }
                                             }
                                         }
-                                        session.cluster.manager.waitForSchemaAgreementAndSignal(connection, this, rs);
+                                        session.cluster.getManager().waitForSchemaAgreementAndSignal(connection, this, rs);
                                         break;
                                     default:
                                         logger.info("Ignoring unknown schema change result");

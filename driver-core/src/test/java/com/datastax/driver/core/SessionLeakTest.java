@@ -25,8 +25,8 @@ import static com.datastax.driver.core.Assertions.assertThat;
 import static com.datastax.driver.core.CreateCCM.TestMode.PER_METHOD;
 import static com.datastax.driver.core.TestUtils.nonDebouncingQueryOptions;
 import static com.google.common.collect.Lists.newArrayList;
-import static java.util.concurrent.TimeUnit.MINUTES;
 import static org.assertj.core.api.Assertions.fail;
+import static java.util.concurrent.TimeUnit.MINUTES;
 
 @CreateCCM(PER_METHOD)
 @CCMConfig(dirtiesContext = true, createCluster = false)
@@ -48,7 +48,7 @@ public class SessionLeakTest extends CCMTestsSupport {
 
         cluster.init();
 
-        assertThat(cluster.manager.sessions.size()).isEqualTo(0);
+        assertThat(cluster.getManager().sessions.size()).isEqualTo(0);
         // Should be 1 control connection after initialization.
         assertOpenConnections(1, cluster);
 
@@ -56,12 +56,12 @@ public class SessionLeakTest extends CCMTestsSupport {
         int corePoolSize = TestUtils.numberOfLocalCoreConnections(cluster);
         Session session = cluster.connect();
 
-        assertThat(cluster.manager.sessions.size()).isEqualTo(1);
+        assertThat(cluster.getManager().sessions.size()).isEqualTo(1);
         assertOpenConnections(1 + corePoolSize, cluster);
 
         // ensure sessions.size() returns to 0 with only 1 active connection (the control connection)
         session.close();
-        assertThat(cluster.manager.sessions.size()).isEqualTo(0);
+        assertThat(cluster.getManager().sessions.size()).isEqualTo(0);
         assertOpenConnections(1, cluster);
 
         // ensure bootstrapping a node does not create additional connections
@@ -70,19 +70,19 @@ public class SessionLeakTest extends CCMTestsSupport {
         ccm().waitForUp(2);
         assertThat(cluster).host(2).comesUpWithin(2, MINUTES);
 
-        assertThat(cluster.manager.sessions.size()).isEqualTo(0);
+        assertThat(cluster.getManager().sessions.size()).isEqualTo(0);
         assertOpenConnections(1, cluster);
 
         // ensure a new session gets registered and core connections are established
         // there should be corePoolSize more connections to accommodate for the new host.
         Session thisSession = cluster.connect();
-        assertThat(cluster.manager.sessions.size()).isEqualTo(1);
+        assertThat(cluster.getManager().sessions.size()).isEqualTo(1);
         assertOpenConnections(1 + (corePoolSize * 2), cluster);
 
         // ensure bootstrapping a node does not create additional connections that won't get cleaned up
         thisSession.close();
 
-        assertThat(cluster.manager.sessions.size()).isEqualTo(0);
+        assertThat(cluster.getManager().sessions.size()).isEqualTo(0);
         assertOpenConnections(1, cluster);
         cluster.close();
         // Ensure no channels remain open.
@@ -102,7 +102,7 @@ public class SessionLeakTest extends CCMTestsSupport {
                 .withNettyOptions(channelMonitor.nettyOptions())
                 .build());
         cluster.init();
-        assertThat(cluster.manager.sessions.size()).isEqualTo(0);
+        assertThat(cluster.getManager().sessions.size()).isEqualTo(0);
         try {
             // Should be 1 control connection after initialization.
             assertOpenConnections(1, cluster);
@@ -111,7 +111,7 @@ public class SessionLeakTest extends CCMTestsSupport {
         } catch (InvalidQueryException e) {
             // ok
         }
-        assertThat(cluster.manager.sessions.size()).isEqualTo(0);
+        assertThat(cluster.getManager().sessions.size()).isEqualTo(0);
         cluster.close();
         // Ensure no channels remain open.
         channelMonitor.stop();

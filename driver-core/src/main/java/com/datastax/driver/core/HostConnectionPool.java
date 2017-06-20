@@ -97,7 +97,7 @@ class HostConnectionPool implements Connection.Owner {
 
         this.minAllowedStreams = options().getMaxRequestsPerConnection(hostDistance) * 3 / 4;
 
-        this.timeoutsExecutor = manager.getCluster().manager.connectionFactory.eventLoopGroup.next();
+        this.timeoutsExecutor = manager.getCluster().getManager().connectionFactory.eventLoopGroup.next();
     }
 
     /**
@@ -106,7 +106,7 @@ class HostConnectionPool implements Connection.Owner {
      *                         pool.
      */
     ListenableFuture<Void> initAsync(Connection reusedConnection) {
-        Executor initExecutor = manager.cluster.manager.configuration.getPoolingOptions().getInitializationExecutor();
+        Executor initExecutor = manager.cluster.getManager().configuration.getPoolingOptions().getInitializationExecutor();
 
         // Create initial core connections
         final int coreSize = options().getCoreConnectionsPerHost(hostDistance);

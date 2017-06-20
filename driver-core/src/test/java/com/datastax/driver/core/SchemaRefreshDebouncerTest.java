@@ -61,8 +61,8 @@ public class SchemaRefreshDebouncerTest extends CCMTestsSupport {
         session2 = cluster2.connect();
 
         // Create a spy of the Cluster's control connection and replace it with the spy.
-        controlConnection = spy(cluster2.manager.controlConnection);
-        cluster2.manager.controlConnection = controlConnection;
+        controlConnection = spy(cluster2.getManager().controlConnection);
+        cluster2.getManager().controlConnection = controlConnection;
 
         // Create a mock of SchemaChangeListener to use for signalling events.
         listener = mock(SchemaChangeListener.class);

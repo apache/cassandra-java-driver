@@ -84,8 +84,8 @@ public class SchemaChangesTest extends CCMTestsSupport {
 
         schemaDisabledSession = schemaDisabledCluster.connect();
 
-        schemaDisabledControlConnection = spy(schemaDisabledCluster.manager.controlConnection);
-        schemaDisabledCluster.manager.controlConnection = schemaDisabledControlConnection;
+        schemaDisabledControlConnection = spy(schemaDisabledCluster.getManager().controlConnection);
+        schemaDisabledCluster.getManager().controlConnection = schemaDisabledControlConnection;
 
         session1 = cluster1.connect();
         cluster2.init();

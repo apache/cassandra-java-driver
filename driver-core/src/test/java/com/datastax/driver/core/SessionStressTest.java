@@ -102,20 +102,20 @@ public class SessionStressTest extends CCMTestsSupport {
             stressCluster.init();
 
             // The cluster has been initialized, we should have 1 connection.
-            assertEquals(stressCluster.manager.sessions.size(), 0);
+            assertEquals(stressCluster.getManager().sessions.size(), 0);
             assertEquals((int) stressCluster.getMetrics().getOpenConnections().getValue(), 1);
 
             // The first session initializes the cluster and its control connection
             // This is a local cluster so we also have 2 connections per session
             Session session = stressCluster.connect();
-            assertEquals(stressCluster.manager.sessions.size(), 1);
+            assertEquals(stressCluster.getManager().sessions.size(), 1);
             int coreConnections = TestUtils.numberOfLocalCoreConnections(stressCluster);
             assertEquals((int) stressCluster.getMetrics().getOpenConnections().getValue(), 1 + coreConnections);
             assertEquals(channelMonitor.openChannels(getContactPointsWithPorts()).size(), 1 + coreConnections);
 
             // Closing the session keeps the control connection opened
             session.close();
-            assertEquals(stressCluster.manager.sessions.size(), 0);
+            assertEquals(stressCluster.getManager().sessions.size(), 0);
             assertEquals((int) stressCluster.getMetrics().getOpenConnections().getValue(), 1);
             assertEquals(channelMonitor.openChannels(getContactPointsWithPorts()).size(), 1);
 
@@ -131,7 +131,7 @@ public class SessionStressTest extends CCMTestsSupport {
 
                 // We should see the exact number of opened sessions
                 // Since we have 2 connections per session, we should see 2 * sessions + control connection
-                assertEquals(stressCluster.manager.sessions.size(), nbOfSessions);
+                assertEquals(stressCluster.getManager().sessions.size(), nbOfSessions);
                 assertEquals((int) stressCluster.getMetrics().getOpenConnections().getValue(),
                         coreConnections * nbOfSessions + 1);
                 assertEquals(channelMonitor.openChannels(getContactPointsWithPorts()).size(), coreConnections * nbOfSessions + 1);
@@ -141,7 +141,7 @@ public class SessionStressTest extends CCMTestsSupport {
                 waitFor(closeSessionsConcurrently(halfOfTheSessions));
 
                 // Check that we have the right number of sessions and connections
-                assertEquals(stressCluster.manager.sessions.size(), halfOfTheSessions);
+                assertEquals(stressCluster.getManager().sessions.size(), halfOfTheSessions);
                 assertEquals((int) stressCluster.getMetrics().getOpenConnections().getValue(),
                         coreConnections * (nbOfSessions / 2) + 1);
                 assertEquals(channelMonitor.openChannels(getContactPointsWithPorts()).size(),
@@ -159,7 +159,7 @@ public class SessionStressTest extends CCMTestsSupport {
                 waitFor(closeSessionsFutures);
 
                 // Check that we have the same number of sessions and connections
-                assertEquals(stressCluster.manager.sessions.size(), halfOfTheSessions);
+                assertEquals(stressCluster.getManager().sessions.size(), halfOfTheSessions);
                 assertEquals((int) stressCluster.getMetrics().getOpenConnections().getValue(),
                         coreConnections * (nbOfSessions / 2) + 1);
                 assertEquals(channelMonitor.openChannels(getContactPointsWithPorts()).size(),
@@ -170,7 +170,7 @@ public class SessionStressTest extends CCMTestsSupport {
                 waitFor(closeSessionsConcurrently(halfOfTheSessions));
 
                 // Check that we have a clean state
-                assertEquals(stressCluster.manager.sessions.size(), 0);
+                assertEquals(stressCluster.getManager().sessions.size(), 0);
                 assertEquals((int) stressCluster.getMetrics().getOpenConnections().getValue(), 1);
                 assertEquals(channelMonitor.openChannels(getContactPointsWithPorts()).size(), 1);
 
@@ -217,7 +217,7 @@ public class SessionStressTest extends CCMTestsSupport {
     private List<ListenableFuture<Void>> closeSessionsConcurrently(int iterations, CountDownLatch countDownLatch) {
         // Get a reference to every session we want to close
         Stack<Session> sessionsToClose = new Stack<Session>();
-        Iterator<? extends Session> iterator = stressCluster.manager.sessions.iterator();
+        Iterator<? extends Session> iterator = stressCluster.getManager().sessions.iterator();
         for (int i = 0; i < iterations; i++) {
             sessionsToClose.push(iterator.next());
         }
