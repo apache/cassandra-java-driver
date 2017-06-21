@@ -23,21 +23,29 @@ import com.datastax.oss.driver.api.core.cql.BoundStatement;
 import com.datastax.oss.driver.api.core.cql.ExecutionInfo;
 import com.datastax.oss.driver.api.core.cql.PreparedStatement;
 import com.datastax.oss.driver.api.core.cql.Row;
+import com.datastax.oss.driver.internal.core.channel.ResponseCallback;
+import com.datastax.oss.driver.internal.core.session.RepreparePayload;
 import com.datastax.oss.driver.internal.core.util.concurrent.ScheduledTaskCapturingEventLoop;
 import com.datastax.oss.protocol.internal.request.Prepare;
 import com.datastax.oss.protocol.internal.response.error.Unprepared;
 import com.datastax.oss.protocol.internal.response.result.Prepared;
 import com.datastax.oss.protocol.internal.response.result.SetKeyspace;
+import com.datastax.oss.protocol.internal.util.Bytes;
 import java.nio.ByteBuffer;
 import java.time.Duration;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.concurrent.CompletionStage;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.TimeUnit;
 import org.mockito.Mockito;
 import org.testng.annotations.Test;
 
 import static com.datastax.oss.driver.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyBoolean;
+import static org.mockito.ArgumentMatchers.anyMap;
 
 public class CqlRequestHandlerTest extends CqlRequestHandlerTestBase {
 
@@ -132,8 +140,9 @@ public class CqlRequestHandlerTest extends CqlRequestHandlerTestBase {
   }
 
   @Test
-  public void should_reprepare_on_the_fly_if_not_prepared() {
-    ByteBuffer mockId = ByteBuffer.wrap(new byte[0]);
+  public void should_reprepare_on_the_fly_if_not_prepared() throws InterruptedException {
+    ByteBuffer mockId = Bytes.fromHexString("0xffff");
+
     PreparedStatement preparedStatement = Mockito.mock(PreparedStatement.class);
     Mockito.when(preparedStatement.getId()).thenReturn(mockId);
     BoundStatement boundStatement = Mockito.mock(BoundStatement.class);
@@ -148,19 +157,24 @@ public class CqlRequestHandlerTest extends CqlRequestHandlerTestBase {
 
     try (RequestHandlerTestHarness harness = harnessBuilder.build()) {
 
+      // The handler will look for the info to reprepare in the session's cache, put it there
+      ConcurrentMap<ByteBuffer, RepreparePayload> repreparePayloads = new ConcurrentHashMap<>();
+      repreparePayloads.put(
+          mockId, new RepreparePayload("mock query", null, Collections.emptyMap()));
+      Mockito.when(harness.getSession().getRepreparePayloads()).thenReturn(repreparePayloads);
+
       CompletionStage<AsyncResultSet> resultSetFuture =
           new CqlRequestHandler(boundStatement, harness.getSession(), harness.getContext(), "test")
               .asyncResult();
 
-      node1Behavior.setWriteSuccess();
-
       // Before we proceed, mock the PREPARE exchange that will occur as soon as we complete the
       // first response.
       node1Behavior.mockFollowupRequest(
-          Prepare.class, defaultFrameOf(new Prepared(new byte[] {}, null, null)));
+          Prepare.class, defaultFrameOf(new Prepared(mockId.array(), null, null)));
 
+      node1Behavior.setWriteSuccess();
       node1Behavior.setResponseSuccess(
-          defaultFrameOf(new Unprepared("mock message", new byte[] {})));
+          defaultFrameOf(new Unprepared("mock message", mockId.array())));
 
       // Should now re-prepare, re-execute and succeed.
       assertThat(resultSetFuture).isSuccess();

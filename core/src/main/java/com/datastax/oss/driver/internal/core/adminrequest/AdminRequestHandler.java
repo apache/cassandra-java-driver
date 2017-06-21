@@ -98,13 +98,14 @@ public class AdminRequestHandler implements ResponseCallback {
   }
 
   public CompletionStage<AdminResult> start(Map<String, ByteBuffer> customPayload) {
-    LOG.debug("[{}] Executing {}", logPrefix, this);
+    LOG.debug("[{}] Executing {} on {}", logPrefix, this);
     channel.write(message, false, customPayload, this).addListener(this::onWriteComplete);
     return result;
   }
 
   private void onWriteComplete(Future<? super Void> future) {
     if (future.isSuccess()) {
+      LOG.debug("[{}] Successfully wrote {}, waiting for response", logPrefix, this);
       timeoutFuture =
           channel.eventLoop().schedule(this::fireTimeout, timeout.toNanos(), TimeUnit.NANOSECONDS);
       timeoutFuture.addListener(UncaughtExceptions::log);
@@ -132,6 +133,7 @@ public class AdminRequestHandler implements ResponseCallback {
       timeoutFuture.cancel(true);
     }
     Message message = responseFrame.message;
+    LOG.debug("[{}] Got response {}", logPrefix, responseFrame.message);
     if (message instanceof Rows) {
       Rows rows = (Rows) message;
       ByteBuffer pagingState = rows.metadata.pagingState;

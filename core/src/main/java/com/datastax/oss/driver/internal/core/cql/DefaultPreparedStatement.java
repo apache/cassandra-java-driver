@@ -21,23 +21,22 @@ import com.datastax.oss.driver.api.core.cql.BoundStatement;
 import com.datastax.oss.driver.api.core.cql.ColumnDefinitions;
 import com.datastax.oss.driver.api.core.cql.PreparedStatement;
 import com.datastax.oss.driver.api.core.type.codec.registry.CodecRegistry;
+import com.datastax.oss.driver.internal.core.session.RepreparePayload;
 import java.nio.ByteBuffer;
 import java.util.Map;
 
 public class DefaultPreparedStatement implements PreparedStatement {
 
   private final ByteBuffer id;
-  private final String query;
+  private final RepreparePayload repreparePayload;
   private final ColumnDefinitions variableDefinitions;
   private final ColumnDefinitions resultSetDefinitions;
   private final CodecRegistry codecRegistry;
   private final ProtocolVersion protocolVersion;
-  private final Map<String, ByteBuffer> initialCustomPayload;
   // The options to propagate to the bound statements:
   private final String configProfileName;
   private final DriverConfigProfile configProfile;
-  private final String keyspace;
-  private final Map<String, ByteBuffer> customPayload;
+  private final Map<String, ByteBuffer> customPayloadForBoundStatements;
   private final Boolean idempotent;
 
   public DefaultPreparedStatement(
@@ -48,23 +47,23 @@ public class DefaultPreparedStatement implements PreparedStatement {
       String configProfileName,
       DriverConfigProfile configProfile,
       String keyspace,
-      Map<String, ByteBuffer> customPayload,
+      Map<String, ByteBuffer> customPayloadForBoundStatements,
       Boolean idempotent,
       CodecRegistry codecRegistry,
       ProtocolVersion protocolVersion,
-      Map<String, ByteBuffer> initialCustomPayload) {
+      Map<String, ByteBuffer> customPayloadForPrepare) {
     this.id = id;
-    this.query = query;
+    // It's important that we keep a reference to this object, so that it only gets evicted from
+    // the map in DefaultSession if no client reference the PreparedStatement anymore.
+    this.repreparePayload = new RepreparePayload(query, keyspace, customPayloadForPrepare);
     this.variableDefinitions = variableDefinitions;
     this.resultSetDefinitions = resultSetDefinitions;
     this.configProfileName = configProfileName;
     this.configProfile = configProfile;
-    this.keyspace = keyspace;
-    this.customPayload = customPayload;
+    this.customPayloadForBoundStatements = customPayloadForBoundStatements;
     this.idempotent = idempotent;
     this.codecRegistry = codecRegistry;
     this.protocolVersion = protocolVersion;
-    this.initialCustomPayload = initialCustomPayload;
   }
 
   @Override
@@ -74,7 +73,7 @@ public class DefaultPreparedStatement implements PreparedStatement {
 
   @Override
   public String getQuery() {
-    return query;
+    return repreparePayload.query;
   }
 
   @Override
@@ -94,15 +93,14 @@ public class DefaultPreparedStatement implements PreparedStatement {
         variableDefinitions,
         configProfileName,
         configProfile,
-        keyspace,
-        customPayload,
+        repreparePayload.keyspace,
+        customPayloadForBoundStatements,
         idempotent,
         codecRegistry,
         protocolVersion);
   }
 
-  @Override
-  public Map<String, ByteBuffer> initialCustomPayload() {
-    return initialCustomPayload;
+  public RepreparePayload getRepreparePayload() {
+    return this.repreparePayload;
   }
 }

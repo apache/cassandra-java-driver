@@ -28,8 +28,8 @@ import com.datastax.oss.driver.internal.core.context.NettyOptions;
 import com.datastax.oss.driver.internal.core.metadata.LoadBalancingPolicyWrapper;
 import com.datastax.oss.driver.internal.core.pool.ChannelPool;
 import com.datastax.oss.driver.internal.core.session.DefaultSession;
-import com.datastax.oss.driver.internal.core.util.concurrent.ScheduledTaskCapturingEventLoop;
 import com.datastax.oss.driver.internal.core.type.codec.registry.DefaultCodecRegistry;
+import com.datastax.oss.driver.internal.core.util.concurrent.ScheduledTaskCapturingEventLoop;
 import com.datastax.oss.protocol.internal.Frame;
 import io.netty.channel.EventLoopGroup;
 import java.time.Duration;
@@ -45,8 +45,6 @@ import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
 import org.mockito.stubbing.OngoingStubbing;
 
-import static org.mockito.ArgumentMatchers.any;
-
 /**
  * Provides the environment to test a request handler, where a query plan can be defined, and the
  * behavior of each successive node simulated.
@@ -57,7 +55,7 @@ public class RequestHandlerTestHarness implements AutoCloseable {
     return new Builder();
   }
 
-  private final ScheduledTaskCapturingEventLoop schedulingEventGroup;
+  private final ScheduledTaskCapturingEventLoop schedulingEventLoop;
 
   @Mock private InternalDriverContext context;
   @Mock private DefaultSession session;
@@ -72,8 +70,8 @@ public class RequestHandlerTestHarness implements AutoCloseable {
   private RequestHandlerTestHarness(Builder builder) {
     MockitoAnnotations.initMocks(this);
 
-    this.schedulingEventGroup = builder.schedulingEventLoop;
-    Mockito.when(eventLoopGroup.next()).thenReturn(schedulingEventGroup);
+    this.schedulingEventLoop = new ScheduledTaskCapturingEventLoop(eventLoopGroup);
+    Mockito.when(eventLoopGroup.next()).thenReturn(schedulingEventLoop);
     Mockito.when(nettyOptions.ioEventLoopGroup()).thenReturn(eventLoopGroup);
     Mockito.when(context.nettyOptions()).thenReturn(nettyOptions);
 
@@ -102,6 +100,7 @@ public class RequestHandlerTestHarness implements AutoCloseable {
 
     Map<Node, ChannelPool> pools = builder.buildMockPools();
     Mockito.when(session.getPools()).thenReturn(pools);
+    Mockito.when(session.getRepreparePayloads()).thenReturn(new ConcurrentHashMap<>());
   }
 
   public DefaultSession getSession() {
@@ -117,29 +116,24 @@ public class RequestHandlerTestHarness implements AutoCloseable {
    * run it manually.
    */
   public ScheduledTaskCapturingEventLoop.CapturedTask<?> nextScheduledTask() {
-    return schedulingEventGroup.nextTask();
+    return schedulingEventLoop.nextTask();
   }
 
   @Override
   public void close() {
-    schedulingEventGroup.shutdownGracefully().getNow();
+    schedulingEventLoop.shutdownGracefully().getNow();
   }
 
   public static class Builder {
-    private final ScheduledTaskCapturingEventLoop schedulingEventLoop;
     private final List<PoolBehavior> poolBehaviors = new ArrayList<>();
     private boolean defaultIdempotence;
-
-    public Builder() {
-      this.schedulingEventLoop = new ScheduledTaskCapturingEventLoop(null);
-    }
 
     /**
      * Sets the given node as the next one in the query plan; an empty pool will be simulated when
      * it gets used.
      */
     public Builder withEmptyPool(Node node) {
-      poolBehaviors.add(new PoolBehavior(node, false, schedulingEventLoop));
+      poolBehaviors.add(new PoolBehavior(node, false));
       return this;
     }
 
@@ -148,7 +142,7 @@ public class RequestHandlerTestHarness implements AutoCloseable {
      * simulated when it gets used.
      */
     public Builder withWriteFailure(Node node, Throwable cause) {
-      PoolBehavior behavior = new PoolBehavior(node, true, schedulingEventLoop);
+      PoolBehavior behavior = new PoolBehavior(node, true);
       behavior.setWriteFailure(cause);
       poolBehaviors.add(behavior);
       return this;
@@ -159,7 +153,7 @@ public class RequestHandlerTestHarness implements AutoCloseable {
      * but a response failure will be simulated immediately after.
      */
     public Builder withResponseFailure(Node node, Throwable cause) {
-      PoolBehavior behavior = new PoolBehavior(node, true, schedulingEventLoop);
+      PoolBehavior behavior = new PoolBehavior(node, true);
       behavior.setWriteSuccess();
       behavior.setResponseFailure(cause);
       poolBehaviors.add(behavior);
@@ -171,7 +165,7 @@ public class RequestHandlerTestHarness implements AutoCloseable {
      * and the given response will be simulated immediately after.
      */
     public Builder withResponse(Node node, Frame response) {
-      PoolBehavior behavior = new PoolBehavior(node, true, schedulingEventLoop);
+      PoolBehavior behavior = new PoolBehavior(node, true);
       behavior.setWriteSuccess();
       behavior.setResponseSuccess(response);
       poolBehaviors.add(behavior);
@@ -188,7 +182,7 @@ public class RequestHandlerTestHarness implements AutoCloseable {
      * calling the methods on the returned object to complete the write and the query.
      */
     public PoolBehavior customBehavior(Node node) {
-      PoolBehavior behavior = new PoolBehavior(node, true, schedulingEventLoop);
+      PoolBehavior behavior = new PoolBehavior(node, true);
       poolBehaviors.add(behavior);
       return behavior;
     }

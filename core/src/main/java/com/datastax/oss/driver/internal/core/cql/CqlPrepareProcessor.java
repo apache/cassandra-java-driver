@@ -15,6 +15,7 @@
  */
 package com.datastax.oss.driver.internal.core.cql;
 
+import com.datastax.oss.driver.api.core.Cluster;
 import com.datastax.oss.driver.api.core.cql.PrepareRequest;
 import com.datastax.oss.driver.api.core.cql.PreparedStatement;
 import com.datastax.oss.driver.api.core.session.Request;
@@ -29,6 +30,12 @@ import java.util.concurrent.ConcurrentMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/**
+ * Handles the preparation of CQL queries.
+ *
+ * <p>This class is stateful, you can't reuse the same instance across multiple {@link Cluster}
+ * instances.
+ */
 public class CqlPrepareProcessor
     implements RequestProcessor<PreparedStatement, CompletionStage<PreparedStatement>> {
 

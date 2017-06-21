@@ -35,7 +35,9 @@ import com.datastax.oss.driver.internal.core.util.concurrent.CompletableFutures;
 import com.datastax.oss.driver.internal.core.util.concurrent.ReplayingEventFilter;
 import com.datastax.oss.driver.internal.core.util.concurrent.RunOrSchedule;
 import com.datastax.oss.driver.internal.core.util.concurrent.UncaughtExceptions;
+import com.google.common.collect.MapMaker;
 import io.netty.util.concurrent.EventExecutor;
+import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -89,6 +91,15 @@ public class DefaultSession implements CqlSession {
           0.75f,
           // the map will only be updated from adminExecutor
           1);
+
+  // The raw data to reprepare requests on the fly, if we hit a node that doesn't have them in
+  // its cache.
+  // This is raw protocol-level data, as opposed to the actual instances returned to the client
+  // (e.g. DefaultPreparedStatement) which are handled at the protocol level (e.g.
+  // CqlPrepareProcessor). We keep the two separate to avoid introducing a dependency from the
+  // session to a particular processor implementation.
+  private ConcurrentMap<ByteBuffer, RepreparePayload> repreparePayloads =
+      new MapMaker().weakValues().makeMap();
 
   private DefaultSession(InternalDriverContext context, CqlIdentifier keyspace, String logPrefix) {
     this.adminExecutor = context.nettyOptions().adminEventExecutorGroup().next();
@@ -158,6 +169,10 @@ public class DefaultSession implements CqlSession {
       throw new UnsupportedOperationException("Per-request keyspaces are not supported yet");
     }
     return processorRegistry.processorFor(request).newHandler(request, this, context, logPrefix);
+  }
+
+  public ConcurrentMap<ByteBuffer, RepreparePayload> getRepreparePayloads() {
+    return repreparePayloads;
   }
 
   @Override

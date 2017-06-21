@@ -184,6 +184,9 @@ public class CqlPrepareHandler
       // prepare() twice, and therefore it's already been prepared on other nodes.
       result.complete(cachedStatement);
     } else {
+      session
+          .getRepreparePayloads()
+          .put(cachedStatement.getId(), cachedStatement.getRepreparePayload());
       prepareOnOtherNodes()
           .thenRun(() -> result.complete(cachedStatement))
           .exceptionally(

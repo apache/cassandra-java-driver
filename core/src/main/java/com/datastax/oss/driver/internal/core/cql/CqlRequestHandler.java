@@ -20,9 +20,7 @@ import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.DriverTimeoutException;
 import com.datastax.oss.driver.api.core.config.CoreDriverOption;
 import com.datastax.oss.driver.api.core.cql.AsyncResultSet;
-import com.datastax.oss.driver.api.core.cql.BoundStatement;
 import com.datastax.oss.driver.api.core.cql.ExecutionInfo;
-import com.datastax.oss.driver.api.core.cql.PreparedStatement;
 import com.datastax.oss.driver.api.core.cql.ResultSet;
 import com.datastax.oss.driver.api.core.cql.Statement;
 import com.datastax.oss.driver.api.core.metadata.Node;
@@ -41,6 +39,7 @@ import com.datastax.oss.driver.internal.core.channel.DriverChannel;
 import com.datastax.oss.driver.internal.core.channel.ResponseCallback;
 import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
 import com.datastax.oss.driver.internal.core.session.DefaultSession;
+import com.datastax.oss.driver.internal.core.session.RepreparePayload;
 import com.datastax.oss.driver.internal.core.session.RequestHandlerBase;
 import com.datastax.oss.driver.internal.core.util.concurrent.BlockingOperation;
 import com.datastax.oss.driver.internal.core.util.concurrent.CompletableFutures;
@@ -50,10 +49,12 @@ import com.datastax.oss.protocol.internal.ProtocolConstants;
 import com.datastax.oss.protocol.internal.request.Prepare;
 import com.datastax.oss.protocol.internal.response.Error;
 import com.datastax.oss.protocol.internal.response.Result;
+import com.datastax.oss.protocol.internal.response.error.Unprepared;
 import com.datastax.oss.protocol.internal.response.result.Rows;
 import com.datastax.oss.protocol.internal.response.result.SchemaChange;
 import com.datastax.oss.protocol.internal.response.result.SetKeyspace;
 import com.datastax.oss.protocol.internal.response.result.Void;
+import com.datastax.oss.protocol.internal.util.Bytes;
 import io.netty.util.concurrent.EventExecutor;
 import io.netty.util.concurrent.Future;
 import io.netty.util.concurrent.GenericFutureListener;
@@ -361,40 +362,38 @@ public class CqlRequestHandler
 
     private void processErrorResponse(Error errorMessage) {
       if (errorMessage.code == ProtocolConstants.ErrorCode.UNPREPARED) {
-        if (!(request instanceof BoundStatement)) {
-          // TODO can we get UNPREPARED for a BATCH message?
-          setFinalError(
-              new IllegalStateException(
-                  "Unexpected UNPREPARED response, "
-                      + "this should only happen for a bound statement"));
-        } else {
-          LOG.debug("[{}] Statement is not prepared on {}, repreparing", logPrefix, node);
-          PreparedStatement preparedStatement =
-              ((BoundStatement) CqlRequestHandler.this.request).getPreparedStatement();
-          Prepare reprepareMessage = new Prepare(preparedStatement.getQuery());
-          AdminRequestHandler reprepareHandler =
-              new AdminRequestHandler(
-                  channel,
-                  reprepareMessage,
-                  timeout,
-                  logPrefix,
-                  "Reprepare " + reprepareMessage.toString());
-          reprepareHandler
-              .start(preparedStatement.initialCustomPayload())
-              .handle(
-                  (result, error) -> {
-                    if (error != null) {
-                      recordError(node, error);
-                      LOG.debug("[{}] Reprepare failed, trying next node", logPrefix);
-                      sendRequest(null, execution, retryCount);
-                    } else {
-                      LOG.debug("[{}] Reprepare sucessful, retrying", logPrefix);
-                      sendRequest(node, execution, retryCount);
-                    }
-                    return null;
-                  });
-          return;
+        LOG.debug("[{}] Statement is not prepared on {}, repreparing", logPrefix, node);
+        ByteBuffer id = ByteBuffer.wrap(((Unprepared) errorMessage).id);
+        RepreparePayload repreparePayload = session.getRepreparePayloads().get(id);
+        if (repreparePayload == null) {
+          throw new IllegalStateException(
+              String.format(
+                  "Tried to execute unprepared query %s but we don't have the data to reprepare it",
+                  Bytes.toHexString(id)));
         }
+        Prepare reprepareMessage = new Prepare(repreparePayload.query);
+        AdminRequestHandler reprepareHandler =
+            new AdminRequestHandler(
+                channel,
+                reprepareMessage,
+                timeout,
+                logPrefix,
+                "Reprepare " + reprepareMessage.toString());
+        reprepareHandler
+            .start(repreparePayload.customPayload)
+            .handle(
+                (result, error) -> {
+                  if (error != null) {
+                    recordError(node, error);
+                    LOG.debug("[{}] Reprepare failed, trying next node", logPrefix);
+                    sendRequest(null, execution, retryCount);
+                  } else {
+                    LOG.debug("[{}] Reprepare sucessful, retrying", logPrefix);
+                    sendRequest(node, execution, retryCount);
+                  }
+                  return null;
+                });
+        return;
       }
       Throwable error = Conversions.toThrowable(node, errorMessage);
       if (error instanceof BootstrappingException) {

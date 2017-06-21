@@ -21,7 +21,7 @@ import com.datastax.oss.driver.internal.core.channel.ResponseCallback;
 import com.datastax.oss.protocol.internal.Frame;
 import com.datastax.oss.protocol.internal.Message;
 import io.netty.channel.ChannelFuture;
-import io.netty.util.concurrent.EventExecutor;
+import io.netty.util.concurrent.GlobalEventExecutor;
 import io.netty.util.concurrent.Promise;
 import java.util.concurrent.CompletableFuture;
 import org.mockito.Mockito;
@@ -41,20 +41,18 @@ import static org.mockito.Mockito.never;
 public class PoolBehavior {
 
   final Node node;
-  private final EventExecutor executor;
   final DriverChannel channel;
   private final Promise<Void> writePromise;
   private final CompletableFuture<ResponseCallback> callbackFuture = new CompletableFuture<>();
 
-  public PoolBehavior(Node node, boolean createChannel, EventExecutor executor) {
+  public PoolBehavior(Node node, boolean createChannel) {
     this.node = node;
-    this.executor = executor;
     if (!createChannel) {
       this.channel = null;
       this.writePromise = null;
     } else {
       this.channel = Mockito.mock(DriverChannel.class);
-      this.writePromise = executor.newPromise();
+      this.writePromise = GlobalEventExecutor.INSTANCE.newPromise();
       Mockito.when(
               channel.write(
                   any(Message.class), anyBoolean(), anyMap(), any(ResponseCallback.class)))
@@ -96,7 +94,7 @@ public class PoolBehavior {
 
   /** Mocks a follow-up request on the same channel. */
   public void mockFollowupRequest(Class<? extends Message> expectedMessage, Frame responseFrame) {
-    Promise<Void> writePromise2 = executor.newPromise();
+    Promise<Void> writePromise2 = GlobalEventExecutor.INSTANCE.newPromise();
     CompletableFuture<ResponseCallback> callbackFuture2 = new CompletableFuture<>();
     Mockito.when(
             channel.write(
