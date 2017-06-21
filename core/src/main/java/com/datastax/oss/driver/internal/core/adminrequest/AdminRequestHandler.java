@@ -98,7 +98,7 @@ public class AdminRequestHandler implements ResponseCallback {
   }
 
   public CompletionStage<AdminResult> start(Map<String, ByteBuffer> customPayload) {
-    LOG.debug("[{}] Executing {} on {}", logPrefix, this);
+    LOG.debug("[{}] Executing {}", logPrefix, this);
     channel.write(message, false, customPayload, this).addListener(this::onWriteComplete);
     return result;
   }
