@@ -28,7 +28,9 @@ import com.datastax.oss.driver.internal.core.util.concurrent.BlockingOperation;
 import com.datastax.oss.driver.internal.core.util.concurrent.CompletableFutures;
 import com.typesafe.config.ConfigFactory;
 import java.net.InetSocketAddress;
+import java.util.Collection;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.CompletionStage;
@@ -37,7 +39,7 @@ import java.util.function.Supplier;
 /** Helper class to build an instance of the default {@link Cluster} implementation. */
 public class ClusterBuilder {
   private DriverConfig config;
-  private Set<InetSocketAddress> programmaticContactPoints = Collections.emptySet();
+  private Set<InetSocketAddress> programmaticContactPoints = new HashSet<>();
   private List<TypeCodec<?>> typeCodecs = Collections.emptyList();
 
   /**
@@ -79,7 +81,7 @@ public class ClusterBuilder {
   }
 
   /**
-   * Sets the contact points to use for the initial connection to the cluster.
+   * Adds contact points to use for the initial connection to the cluster.
    *
    * <p>These are addresses of Cassandra nodes that the driver uses to discover the cluster
    * topology. Only one contact point is required (the driver will retrieve the address of the other
@@ -94,8 +96,18 @@ public class ClusterBuilder {
    * If you need that, call {@link java.net.InetAddress#getAllByName(String)} before calling this
    * method.
    */
-  public ClusterBuilder withContactPoints(Set<InetSocketAddress> contactPoints) {
-    this.programmaticContactPoints = contactPoints;
+  public ClusterBuilder addContactPoints(Collection<InetSocketAddress> contactPoints) {
+    this.programmaticContactPoints.addAll(contactPoints);
+    return this;
+  }
+
+  /**
+   * Adds a contact point to use for the initial connection to the cluster.
+   *
+   * @see #addContactPoints(Collection)
+   */
+  public ClusterBuilder addContactPoint(InetSocketAddress contactPoint) {
+    this.programmaticContactPoints.add(contactPoint);
     return this;
   }
 
