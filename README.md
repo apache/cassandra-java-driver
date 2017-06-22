@@ -10,7 +10,7 @@ A modern, feature-rich and highly tunable Java client library for [Apache Cassan
 Language v3.
 
 [DataStax Docs]: http://docs.datastax.com/en/developer/java-driver/
-[Apache Cassandra]: http://cassandra.apache.org/
+[Apache Cassandra™]: http://cassandra.apache.org/
 [DataStax Enterprise]: http://www.datastax.com/products/datastax-enterprise
 
 ## Getting the driver
