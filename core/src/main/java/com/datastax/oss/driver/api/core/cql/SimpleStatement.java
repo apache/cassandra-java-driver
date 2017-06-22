@@ -39,7 +39,7 @@ import java.util.Map;
  * <b>thread-safe</b>. If an application is going to reuse the same statement more than once, it is
  * recommended to cache it (for example in a final field).
  */
-public interface SimpleStatement extends Statement {
+public interface SimpleStatement extends BatchableStatement {
 
   /**
    * The CQL query to execute.

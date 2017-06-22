@@ -21,12 +21,14 @@ import com.datastax.oss.driver.api.core.auth.AuthenticationException;
 import com.datastax.oss.driver.api.core.config.CoreDriverOption;
 import com.datastax.oss.driver.api.core.config.DriverConfigProfile;
 import com.datastax.oss.driver.api.core.cql.AsyncResultSet;
+import com.datastax.oss.driver.api.core.cql.BatchStatement;
+import com.datastax.oss.driver.api.core.cql.BatchType;
+import com.datastax.oss.driver.api.core.cql.BatchableStatement;
 import com.datastax.oss.driver.api.core.cql.BoundStatement;
 import com.datastax.oss.driver.api.core.cql.ColumnDefinition;
 import com.datastax.oss.driver.api.core.cql.ColumnDefinitions;
 import com.datastax.oss.driver.api.core.cql.ExecutionInfo;
 import com.datastax.oss.driver.api.core.cql.PrepareRequest;
-import com.datastax.oss.driver.api.core.cql.PreparedStatement;
 import com.datastax.oss.driver.api.core.cql.SimpleStatement;
 import com.datastax.oss.driver.api.core.cql.Statement;
 import com.datastax.oss.driver.api.core.metadata.Node;
@@ -52,8 +54,8 @@ import com.datastax.oss.driver.api.core.type.codec.registry.CodecRegistry;
 import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
 import com.datastax.oss.protocol.internal.Message;
 import com.datastax.oss.protocol.internal.ProtocolConstants;
+import com.datastax.oss.protocol.internal.request.Batch;
 import com.datastax.oss.protocol.internal.request.Execute;
-import com.datastax.oss.protocol.internal.request.Prepare;
 import com.datastax.oss.protocol.internal.request.Query;
 import com.datastax.oss.protocol.internal.request.query.QueryOptions;
 import com.datastax.oss.protocol.internal.response.Error;
@@ -92,6 +94,8 @@ class Conversions {
     int serialConsistency =
         config.getConsistencyLevel(CoreDriverOption.REQUEST_SERIAL_CONSISTENCY).getProtocolCode();
     long timestamp = Long.MIN_VALUE; // TODO timestamp generator
+    CodecRegistry codecRegistry = context.codecRegistry();
+    ProtocolVersion protocolVersion = context.protocolVersion();
     if (statement instanceof SimpleStatement) {
       SimpleStatement simpleStatement = (SimpleStatement) statement;
 
@@ -100,8 +104,6 @@ class Conversions {
         throw new IllegalArgumentException(
             "Can't have both positional and named values in a statement.");
       }
-      CodecRegistry codecRegistry = context.codecRegistry();
-      ProtocolVersion protocolVersion = context.protocolVersion();
       QueryOptions queryOptions =
           new QueryOptions(
               consistency,
@@ -127,9 +129,44 @@ class Conversions {
               timestamp);
       ByteBuffer id = boundStatement.getPreparedStatement().getId();
       return new Execute(Bytes.getArray(id), queryOptions);
+    } else if (statement instanceof BatchStatement) {
+      BatchStatement batchStatement = (BatchStatement) statement;
+      List<Object> queriesOrIds = new ArrayList<>(batchStatement.size());
+      List<List<ByteBuffer>> values = new ArrayList<>(batchStatement.size());
+      for (BatchableStatement child : batchStatement) {
+        if (child instanceof SimpleStatement) {
+          SimpleStatement simpleStatement = (SimpleStatement) child;
+          if (simpleStatement.getNamedValues().size() > 0) {
+            // We already check that in DefaultBatchStatement.add, but we could receive a custom
+            // implementation
+            throw new IllegalArgumentException(
+                String.format(
+                    "Batch statements cannot contain simple statements with named values "
+                        + "(offending statement: %s)",
+                    simpleStatement.getQuery()));
+          }
+          queriesOrIds.add(simpleStatement.getQuery());
+          values.add(encode(simpleStatement.getPositionalValues(), codecRegistry, protocolVersion));
+        } else if (child instanceof BoundStatement) {
+          BoundStatement boundStatement = (BoundStatement) child;
+          queriesOrIds.add(Bytes.getArray(boundStatement.getPreparedStatement().getId()));
+          values.add(boundStatement.getValues());
+        } else {
+          throw new IllegalArgumentException(
+              "Unsupported child statement: " + child.getClass().getName());
+        }
+      }
+      return new Batch(
+          toProtocol(batchStatement.getBatchType()),
+          queriesOrIds,
+          values,
+          consistency,
+          serialConsistency,
+          timestamp);
+    } else {
+      throw new IllegalArgumentException(
+          "Unsupported statement type: " + statement.getClass().getName());
     }
-    // TODO handle other types of statements
-    throw new UnsupportedOperationException("TODO handle other types of statements");
   }
 
   private static List<ByteBuffer> encode(
@@ -283,6 +320,19 @@ class Conversions {
         return new AlreadyExistsException(node, alreadyExists.keyspace, alreadyExists.table);
       default:
         return new ProtocolError(node, "Unknown error code: " + errorMessage.code);
+    }
+  }
+
+  private static byte toProtocol(BatchType batchType) {
+    switch (batchType) {
+      case LOGGED:
+        return ProtocolConstants.BatchType.LOGGED;
+      case UNLOGGED:
+        return ProtocolConstants.BatchType.UNLOGGED;
+      case COUNTER:
+        return ProtocolConstants.BatchType.COUNTER;
+      default:
+        throw new IllegalArgumentException("Unsupported batch type: " + batchType);
     }
   }
 }

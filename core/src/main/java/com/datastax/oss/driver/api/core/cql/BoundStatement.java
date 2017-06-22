@@ -20,7 +20,6 @@ import com.datastax.oss.driver.api.core.data.GettableById;
 import com.datastax.oss.driver.api.core.data.GettableByName;
 import com.datastax.oss.driver.api.core.data.SettableById;
 import com.datastax.oss.driver.api.core.data.SettableByName;
-import com.datastax.oss.driver.internal.core.cql.DefaultBoundStatement;
 import java.nio.ByteBuffer;
 import java.util.List;
 import java.util.Map;
@@ -40,7 +39,7 @@ import java.util.Map;
  * </ul>
  */
 public interface BoundStatement
-    extends Statement,
+    extends BatchableStatement,
         GettableById,
         GettableByName,
         SettableById<BoundStatement>,
