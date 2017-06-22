@@ -8,5 +8,6 @@
 
 .java-version
 
+/docs
 target/
 dependency-reduced-pom.xml

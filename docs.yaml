@@ -1,0 +1,41 @@
+title:    Java Driver for Apache Cassandra
+summary:  High performance Java client for Apache Cassandra
+homepage: http://docs.datastax.com/en/developer/java-driver
+theme: datastax
+sections:
+  - title:     Manual
+    prefix:    /manual
+    sources:
+      - type:  markdown
+        files: 'manual/**/*.md'
+  - title:     Changelog
+    prefix:    /changelog
+    sources:
+      - type:  markdown
+        files: 'changelog/**/*.md'
+  - title:     Upgrading
+    prefix:    /upgrade_guide
+    sources:
+      - type:  markdown
+        files: 'upgrade_guide/**/*.md'
+  - title:     FAQ
+    prefix:    /faq
+    sources:
+      - type:  markdown
+        files: 'faq/**/*.md'
+links:
+  - title: Code
+    href:  https://github.com/datastax/java-driver/
+  - title: Docs
+    href:  http://docs.datastax.com/en/developer/java-driver
+  - title: Issues
+    href:  https://datastax-oss.atlassian.net/browse/JAVA/
+  - title: Mailing List
+    href:  https://groups.google.com/a/lists.datastax.com/forum/#!forum/java-driver-user
+  - title: Releases
+    href:  https://github.com/datastax/java-driver/releases
+api_docs:
+  4.0: http://docs.datastax.com/en/drivers/java/4.0
+versions:
+  - name: '4.0'
+    ref: '4.x'
