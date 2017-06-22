@@ -18,6 +18,7 @@ package com.datastax.oss.driver.api.core.cql;
 import com.datastax.oss.driver.api.core.config.DriverConfigProfile;
 import com.datastax.oss.driver.api.core.retry.RetryPolicy;
 import com.datastax.oss.driver.api.core.session.Request;
+import com.datastax.oss.driver.api.core.session.Session;
 import java.nio.ByteBuffer;
 import java.util.Map;
 import java.util.concurrent.CompletionStage;
@@ -26,8 +27,8 @@ import java.util.concurrent.CompletionStage;
  * A request to prepare a CQL query.
  *
  * <p>Driver clients should rarely have to deal directly with this type, it's used internally by
- * {@link CqlSession}'s prepare methods. However a {@link RetryPolicy} implementation might use it
- * if it needs a custom behavior for prepare requests.
+ * {@link Session}'s prepare methods. However a {@link RetryPolicy} implementation might use it if
+ * it needs a custom behavior for prepare requests.
  */
 public interface PrepareRequest
     extends Request<PreparedStatement, CompletionStage<PreparedStatement>> {

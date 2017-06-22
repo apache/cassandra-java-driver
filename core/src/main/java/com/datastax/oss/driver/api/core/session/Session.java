@@ -18,14 +18,21 @@ package com.datastax.oss.driver.api.core.session;
 import com.datastax.oss.driver.api.core.AsyncAutoCloseable;
 import com.datastax.oss.driver.api.core.Cluster;
 import com.datastax.oss.driver.api.core.CqlIdentifier;
-import com.datastax.oss.driver.api.core.cql.CqlSession;
+import com.datastax.oss.driver.api.core.cql.AsyncResultSet;
+import com.datastax.oss.driver.api.core.cql.PrepareRequest;
+import com.datastax.oss.driver.api.core.cql.PreparedStatement;
+import com.datastax.oss.driver.api.core.cql.ResultSet;
+import com.datastax.oss.driver.api.core.cql.SimpleStatement;
+import com.datastax.oss.driver.api.core.cql.Statement;
+import com.datastax.oss.driver.internal.core.cql.DefaultPrepareRequest;
+import java.util.concurrent.CompletionStage;
 
 /**
  * A nexus to send requests to a Cassandra cluster.
  *
  * <p>This is a high-level abstraction that can handle any kind of request (provided that you have
- * registered a custom request processor with the driver). For regular CQL queries, see {@link
- * CqlSession}.
+ * registered a custom request processor with the driver). However, for user-friendliness, we also
+ * expose overrides for the standard CQL requests that are supported out of the box.
  */
 public interface Session extends AsyncAutoCloseable {
 
@@ -63,4 +70,85 @@ public interface Session extends AsyncAutoCloseable {
    *     implementation-specific).
    */
   <SyncResultT, AsyncResultT> AsyncResultT executeAsync(Request<SyncResultT, AsyncResultT> request);
+
+  /**
+   * Executes a CQL statement synchronously.
+   *
+   * <p>This is a convenience method that does the exact same thing as {@link #execute(Request)},
+   * but exposes a more user-friendly signature reminiscent of the 3.x API.
+   */
+  default ResultSet execute(Statement statement) {
+    return execute((Request<ResultSet, CompletionStage<AsyncResultSet>>) statement);
+  }
+
+  /**
+   * Executes a CQL statement synchronously.
+   *
+   * <p>This is a convenience method that builds a {@link SimpleStatement#newInstance(String)
+   * SimpleStatement} and passes it to {@link #execute(Request)}.
+   */
+  default ResultSet execute(String query) {
+    return execute(SimpleStatement.newInstance(query));
+  }
+
+  /**
+   * Executes a CQL statement asynchronously.
+   *
+   * <p>This is a convenience method that does the exact same thing as {@link
+   * #executeAsync(Statement)}, but exposes a more user-friendly signature reminiscent of the 3.x
+   * API.
+   */
+  default CompletionStage<AsyncResultSet> executeAsync(Statement statement) {
+    return executeAsync((Request<ResultSet, CompletionStage<AsyncResultSet>>) statement);
+  }
+
+  /**
+   * Executes a CQL statement asynchronously.
+   *
+   * <p>This is a convenience method that builds a {@link SimpleStatement#newInstance(String)
+   * SimpleStatement} and passes it to {@link #executeAsync(Statement)}.
+   */
+  default CompletionStage<AsyncResultSet> executeAsync(String query) {
+    return executeAsync(SimpleStatement.newInstance(query));
+  }
+
+  /**
+   * Prepares a CQL statement synchronously.
+   *
+   * <p>This is a convenience method that builds a {@link PrepareRequest} and passes it to {@link
+   * #execute(Request)}.
+   */
+  default PreparedStatement prepare(SimpleStatement query) {
+    return execute(new DefaultPrepareRequest(query));
+  }
+
+  /**
+   * Prepares a CQL statement synchronously.
+   *
+   * <p>This is a convenience method that builds a {@link PrepareRequest} and passes it to {@link
+   * #execute(Request)}.
+   */
+  default PreparedStatement prepare(String query) {
+    return execute(new DefaultPrepareRequest(query));
+  }
+
+  /**
+   * Prepares a CQL statement asynchronously.
+   *
+   * <p>This is a convenience method that builds a {@link PrepareRequest} and passes it to {@link
+   * #executeAsync(Request)}.
+   */
+  default CompletionStage<PreparedStatement> prepareAsync(String query) {
+    return executeAsync(new DefaultPrepareRequest(query));
+  }
+
+  /**
+   * Prepares a CQL statement asynchronously.
+   *
+   * <p>This is a convenience method that builds a {@link PrepareRequest} and passes it to {@link
+   * #executeAsync(Request)}.
+   */
+  default CompletionStage<PreparedStatement> prepareAsync(SimpleStatement query) {
+    return executeAsync(new DefaultPrepareRequest(query));
+  }
 }

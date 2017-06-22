@@ -15,6 +15,7 @@
  */
 package com.datastax.oss.driver.api.core.cql;
 
+import com.datastax.oss.driver.api.core.session.Session;
 import java.util.concurrent.CompletionStage;
 
 /**
@@ -26,8 +27,8 @@ import java.util.concurrent.CompletionStage;
  * <p>Note that this object can only be iterated once: rows are "consumed" as they are read,
  * subsequent calls to {@code iterator()} will return an empty iterator.
  *
- * @see CqlSession#executeAsync(Statement)
- * @see CqlSession#executeAsync(String)
+ * @see Session#executeAsync(Statement)
+ * @see Session#executeAsync(String)
  */
 public interface AsyncResultSet extends Iterable<Row> {
 

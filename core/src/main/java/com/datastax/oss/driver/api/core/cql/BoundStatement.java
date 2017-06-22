@@ -20,6 +20,7 @@ import com.datastax.oss.driver.api.core.data.GettableById;
 import com.datastax.oss.driver.api.core.data.GettableByName;
 import com.datastax.oss.driver.api.core.data.SettableById;
 import com.datastax.oss.driver.api.core.data.SettableByName;
+import com.datastax.oss.driver.api.core.session.Session;
 import java.nio.ByteBuffer;
 import java.util.List;
 import java.util.Map;
@@ -31,7 +32,7 @@ import java.util.Map;
  *
  * <ul>
  *   <li>not thread-safe: all methods (setting values, etc.) must be called from the thread that
- *       created the instance. Besides, if you use {@link CqlSession#executeAsync(Statement)}
+ *       created the instance. Besides, if you use {@link Session#executeAsync(Statement)}
  *       asynchronous execution}, do not reuse the same instance for multiple calls, as you run the
  *       risk of modifying the statement while the driver internals are still processing it.
  *   <li>mutable: all setters that return a {@code BoundStatement} modify and return the same

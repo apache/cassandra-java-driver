@@ -16,6 +16,7 @@
 package com.datastax.oss.driver.api.core.cql;
 
 import com.datastax.oss.driver.api.core.config.DriverConfigProfile;
+import com.datastax.oss.driver.api.core.session.Session;
 import com.datastax.oss.driver.internal.core.cql.DefaultBatchStatement;
 import java.nio.ByteBuffer;
 import java.util.Map;
@@ -27,7 +28,7 @@ import java.util.Map;
  * <p>The default implementation returned by the driver is <b>mutable</b> and <b>NOT
  * thread-safe</b>: methods that return {@code BatchStatement} mutate the statement and return the
  * same instance (except {@link #copy(ByteBuffer)}); all methods should be called from the thread
- * that created the statement; if you use {@link CqlSession#executeAsync(Statement)} asynchronous
+ * that created the statement; if you use {@link Session#executeAsync(Statement)} asynchronous
  * execution}, do not reuse the same instance for successive calls, as you run the risk of modifying
  * the statement before the driver is done processing it.
  */

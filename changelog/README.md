@@ -4,6 +4,7 @@
 
 ### 4.0.0-alpha1 (in progress)
 
+- [improvement] JAVA-1531: Merge CqlSession and Session
 - [new feature] JAVA-1513: Handle batch statements
 - [improvement] JAVA-1496: Improve log messages
 - [new feature] JAVA-1501: Reprepare on the fly when we get an UNPREPARED response

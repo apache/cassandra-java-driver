@@ -15,14 +15,15 @@
  */
 package com.datastax.oss.driver.api.core.cql;
 
+import com.datastax.oss.driver.api.core.session.Session;
 import java.nio.ByteBuffer;
 
 /**
  * A query with bind variables that has been pre-parsed by the database.
  *
- * <p>Client applications create instances with {@link CqlSession#prepare(SimpleStatement)}. Then
- * they use {@link #bind()} to obtain a {@link BoundStatement}, an executable instance that
- * associates a set of values with the bind variables.
+ * <p>Client applications create instances with {@link Session#prepare(SimpleStatement)}. Then they
+ * use {@link #bind()} to obtain a {@link BoundStatement}, an executable instance that associates a
+ * set of values with the bind variables.
  *
  * <p>The default prepared statement implementation returned by the driver is <b>thread-safe</b>.
  * Client applications can -- and are expected to -- prepare each query once and store the result in

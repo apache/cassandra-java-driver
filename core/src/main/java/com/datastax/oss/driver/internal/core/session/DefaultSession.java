@@ -19,12 +19,12 @@ import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.InvalidKeyspaceException;
 import com.datastax.oss.driver.api.core.config.CoreDriverOption;
 import com.datastax.oss.driver.api.core.config.DriverConfig;
-import com.datastax.oss.driver.api.core.cql.CqlSession;
 import com.datastax.oss.driver.api.core.loadbalancing.LoadBalancingPolicy;
 import com.datastax.oss.driver.api.core.loadbalancing.NodeDistance;
 import com.datastax.oss.driver.api.core.metadata.Node;
 import com.datastax.oss.driver.api.core.metadata.NodeState;
 import com.datastax.oss.driver.api.core.session.Request;
+import com.datastax.oss.driver.api.core.session.Session;
 import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
 import com.datastax.oss.driver.internal.core.metadata.DefaultNode;
 import com.datastax.oss.driver.internal.core.metadata.DistanceEvent;
@@ -66,11 +66,11 @@ import org.slf4j.LoggerFactory;
  *   <li>trying to send the message on each pool, in the order of the query plan
  * </ul>
  */
-public class DefaultSession implements CqlSession {
+public class DefaultSession implements Session {
 
   private static final Logger LOG = LoggerFactory.getLogger(DefaultSession.class);
 
-  public static CompletionStage<CqlSession> init(
+  public static CompletionStage<Session> init(
       InternalDriverContext context, CqlIdentifier keyspace, String logPrefix) {
     return new DefaultSession(context, keyspace, logPrefix).init();
   }
@@ -111,7 +111,7 @@ public class DefaultSession implements CqlSession {
     this.logPrefix = logPrefix;
   }
 
-  private CompletionStage<CqlSession> init() {
+  private CompletionStage<Session> init() {
     RunOrSchedule.on(adminExecutor, singleThreaded::init);
     return singleThreaded.initFuture;
   }
@@ -196,7 +196,7 @@ public class DefaultSession implements CqlSession {
 
     private final InternalDriverContext context;
     private final ChannelPoolFactory channelPoolFactory;
-    private final CompletableFuture<CqlSession> initFuture = new CompletableFuture<>();
+    private final CompletableFuture<Session> initFuture = new CompletableFuture<>();
     private boolean initWasCalled;
     private final CompletableFuture<Void> closeFuture = new CompletableFuture<>();
     private boolean closeWasCalled;

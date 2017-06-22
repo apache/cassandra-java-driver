@@ -19,7 +19,6 @@ import com.datastax.oss.driver.api.core.AsyncAutoCloseable;
 import com.datastax.oss.driver.api.core.Cluster;
 import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.context.DriverContext;
-import com.datastax.oss.driver.api.core.cql.CqlSession;
 import com.datastax.oss.driver.api.core.metadata.Metadata;
 import com.datastax.oss.driver.api.core.session.Session;
 import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
@@ -86,8 +85,8 @@ public class DefaultCluster implements Cluster {
   }
 
   @Override
-  public CompletionStage<CqlSession> connectAsync(CqlIdentifier keyspace) {
-    CompletableFuture<CqlSession> connectFuture = new CompletableFuture<>();
+  public CompletionStage<Session> connectAsync(CqlIdentifier keyspace) {
+    CompletableFuture<Session> connectFuture = new CompletableFuture<>();
     RunOrSchedule.on(adminExecutor, () -> singleThreaded.connect(keyspace, connectFuture));
     return connectFuture;
   }
@@ -164,7 +163,7 @@ public class DefaultCluster implements Cluster {
               });
     }
 
-    private void connect(CqlIdentifier keyspace, CompletableFuture<CqlSession> connectFuture) {
+    private void connect(CqlIdentifier keyspace, CompletableFuture<Session> connectFuture) {
       assert adminExecutor.inEventLoop();
       if (closeWasCalled) {
         connectFuture.completeExceptionally(new IllegalStateException("Cluster was closed"));
