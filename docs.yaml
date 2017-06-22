@@ -1,5 +1,5 @@
-title:    Java Driver for Apache Cassandra
-summary:  High performance Java client for Apache Cassandra
+title:    Java Driver for Apache Cassandra™
+summary:  High performance Java client for Apache Cassandra™
 homepage: http://docs.datastax.com/en/developer/java-driver
 theme: datastax
 sections:
