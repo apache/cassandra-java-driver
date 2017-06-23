@@ -93,6 +93,9 @@ public class CCMTestsSupport {
         }
 
         @Override
+        public InetSocketAddress jmxAddressOfNode(int n) { return delegate.jmxAddressOfNode(n); }
+
+        @Override
         public File getCcmDir() {
             return delegate.getCcmDir();
         }

@@ -101,6 +101,16 @@ public interface CCMAccess extends Closeable {
      */
     InetSocketAddress addressOfNode(int n);
 
+    /**
+     * Returns the address that the @{code nth} host in the CCM cluster is listening on JMX on (counting from 1,
+     * i.e, {@code jmxAddressOfNode(1)} returns the jmx address of the first node.
+     * <p/>
+     * In multi-DC setups, nodes are numbered in ascending order of their datacenter number.
+     * E.g. with 2 DCs and 3 nodes in each DC, the first node in DC 2 is number 4.
+     *
+     * @return the address of the JMX listener of the {@code nth} host in the cluster
+     */
+    InetSocketAddress jmxAddressOfNode(int n);
 
     // Methods altering the whole cluster
 

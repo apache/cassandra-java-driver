@@ -104,6 +104,9 @@ public class CCMCache {
         }
 
         @Override
+        public InetSocketAddress jmxAddressOfNode(int n) { return ccm.jmxAddressOfNode(n); }
+
+        @Override
         public void start() {
             ccm.start();
         }
