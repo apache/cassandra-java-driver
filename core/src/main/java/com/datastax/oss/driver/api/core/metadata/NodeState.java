@@ -20,8 +20,9 @@ public enum NodeState {
   /**
    * The driver has never tried to connect to the node, nor received any topology events about it.
    *
-   * <p>This happens if your load balancing policy ignores some of the nodes. Since the driver does
-   * not connect to them, the only way it can assess their states is from topology events.
+   * <p>This happens when nodes are first added to the cluster, and will persist if your load
+   * balancing policy decides to ignore them. Since the driver does not connect to them, the only
+   * way it can assess their states is from topology events.
    */
   UNKNOWN,
   /**

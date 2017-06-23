@@ -134,7 +134,9 @@ public class NodeStateManagerTest {
 
       // Then
       assertThat(node1.state).isEqualTo(NodeState.UP);
-      Mockito.verify(metadataManager, times(++i)).refreshNode(node1);
+      if (oldState != NodeState.UNKNOWN) {
+        Mockito.verify(metadataManager, times(++i)).refreshNode(node1);
+      }
       Mockito.verify(eventBus).fire(NodeStateEvent.changed(oldState, NodeState.UP, node1));
     }
   }
@@ -300,7 +302,9 @@ public class NodeStateManagerTest {
       // Then
       assertThat(node1.state).isEqualTo(NodeState.UP);
       Mockito.verify(eventBus).fire(NodeStateEvent.changed(oldState, NodeState.UP, node1));
-      Mockito.verify(metadataManager, times(++i)).refreshNode(node1);
+      if (oldState != NodeState.UNKNOWN) {
+        Mockito.verify(metadataManager, times(++i)).refreshNode(node1);
+      }
     }
   }
 

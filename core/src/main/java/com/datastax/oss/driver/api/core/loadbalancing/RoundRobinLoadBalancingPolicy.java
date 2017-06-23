@@ -41,6 +41,7 @@ public class RoundRobinLoadBalancingPolicy implements LoadBalancingPolicy {
   private final String logPrefix;
   private final AtomicInteger startIndex = new AtomicInteger();
   private final CopyOnWriteArraySet<Node> liveNodes = new CopyOnWriteArraySet<>();
+  private volatile DistanceReporter distanceReporter;
 
   public RoundRobinLoadBalancingPolicy(@SuppressWarnings("unused") DriverContext context) {
     this.logPrefix = context.clusterName();
@@ -49,6 +50,7 @@ public class RoundRobinLoadBalancingPolicy implements LoadBalancingPolicy {
   @Override
   public void init(Set<Node> nodes, DistanceReporter distanceReporter) {
     LOG.debug("[{}] Initializing with {}", logPrefix, nodes);
+    this.distanceReporter = distanceReporter;
     for (Node node : nodes) {
       distanceReporter.setDistance(node, NodeDistance.LOCAL);
       if (node.getState() == NodeState.UNKNOWN || node.getState() == NodeState.UP) {
@@ -71,24 +73,28 @@ public class RoundRobinLoadBalancingPolicy implements LoadBalancingPolicy {
 
   @Override
   public void onAdd(Node node) {
-    onUp(node);
+    LOG.debug("[{}] {} was added, setting distance to LOCAL", logPrefix, node);
+    // Setting to a non-ignored distance triggers the session to open a pool, which will in turn set
+    // the node UP when the first channel gets opened.
+    distanceReporter.setDistance(node, NodeDistance.LOCAL);
   }
 
   @Override
   public void onUp(Node node) {
-    LOG.debug("[{}] Adding {}", logPrefix, node);
+    LOG.debug("[{}] {} came back UP, adding to live set", logPrefix, node);
     liveNodes.add(node);
   }
 
   @Override
   public void onDown(Node node) {
-    LOG.debug("[{}] Removing {}", logPrefix, node);
+    LOG.debug("[{}] {} went DOWN, removing from live set", logPrefix, node);
     liveNodes.remove(node);
   }
 
   @Override
   public void onRemove(Node node) {
-    onDown(node);
+    LOG.debug("[{}] {} was removed, removing from live set", logPrefix, node);
+    liveNodes.remove(node);
   }
 
   @Override

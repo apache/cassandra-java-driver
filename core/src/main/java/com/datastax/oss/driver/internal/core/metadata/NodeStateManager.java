@@ -267,11 +267,13 @@ public class NodeStateManager implements AsyncAutoCloseable {
             newState,
             reason);
         node.state = newState;
-        if (newState != NodeState.UP) {
-          // Fire the event immediately
+        // Fire the state change event, either immediately, or after a refresh if the node just came
+        // back up.
+        // If oldState == UNKNOWN, the node was just added, we already refreshed while processing
+        // the addition.
+        if (oldState == NodeState.UNKNOWN || newState != NodeState.UP) {
           eventBus.fire(NodeStateEvent.changed(oldState, newState, node));
         } else {
-          // Refresh the node first (but still fire event if that fails)
           metadataManager
               .refreshNode(node)
               .whenComplete(
@@ -281,6 +283,7 @@ public class NodeStateManager implements AsyncAutoCloseable {
                         LOG.debug(
                             "[{}] Error while refreshing info for {}", logPrefix, node, error);
                       }
+                      // Fire the event whether the refresh succeeded or not
                       eventBus.fire(NodeStateEvent.changed(oldState, newState, node));
                     } catch (Throwable t) {
                       LOG.warn("[{}] Unexpected exception", logPrefix, t);

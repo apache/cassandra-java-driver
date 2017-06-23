@@ -382,7 +382,7 @@ public class DefaultSession implements Session {
         // If the session's keyspace changed while the pool was initializing, switch it now. Don't
         // try too hard to wait until we expose the pool to clients, switching keyspaces is
         // inherently unsafe anyway.
-        if (!keyspace.equals(pool.getInitialKeyspaceName())) {
+        if (!Objects.equals(keyspace, pool.getInitialKeyspaceName())) {
           pool.setKeyspace(keyspace);
         }
         pending.remove(node);
