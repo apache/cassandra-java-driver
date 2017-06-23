@@ -48,7 +48,7 @@ public class SchemaAgreementTest extends CCMTestsSupport {
         assertThat(rs.getExecutionInfo().isSchemaInAgreement()).isTrue();
     }
 
-    @Test(groups = "short")
+    @Test(groups = "short", priority = 1)
     public void should_unset_flag_on_failed_agreement() {
         // Setting to 0 results in no query being set, so agreement fails
         ProtocolOptions protocolOptions = cluster().getConfiguration().getProtocolOptions();
