@@ -15,14 +15,16 @@
  */
 package com.datastax.oss.driver.api.core.metadata;
 
+import com.datastax.oss.driver.api.core.loadbalancing.LoadBalancingPolicy;
+
 /** The state of a node, as viewed from the driver. */
 public enum NodeState {
   /**
    * The driver has never tried to connect to the node, nor received any topology events about it.
    *
-   * <p>This happens when nodes are first added to the cluster, and will persist if your load
-   * balancing policy decides to ignore them. Since the driver does not connect to them, the only
-   * way it can assess their states is from topology events.
+   * <p>This happens when nodes are first added to the cluster, and will persist if your {@link
+   * LoadBalancingPolicy} decides to ignore them. Since the driver does not connect to them, the
+   * only way it can assess their states is from topology events.
    */
   UNKNOWN,
   /**
@@ -31,8 +33,8 @@ public enum NodeState {
    * <ul>
    *   <li>the driver has at least one active connection to the node.
    *   <li>the driver is not actively trying to connect to the node (because it's ignored by the
-   *       load balancing policy), but it has received a topology event indicating that the node is
-   *       up.
+   *       {@link LoadBalancingPolicy}), but it has received a topology event indicating that the
+   *       node is up.
    * </ul>
    */
   UP,
@@ -42,14 +44,14 @@ public enum NodeState {
    * <ul>
    *   <li>the driver has lost all connections to the node (and is currently trying to reconnect).
    *   <li>the driver is not actively trying to connect to the node (because it's ignored by the
-   *       load balancing policy), but it has received a topology event indicating that the node is
-   *       down.
+   *       {@link LoadBalancingPolicy}), but it has received a topology event indicating that the
+   *       node is down.
    * </ul>
    */
   DOWN,
   /**
    * The node was forced down externally, the driver will never try to reconnect to it, whatever the
-   * load balancing policy says.
+   * {@link LoadBalancingPolicy} says.
    *
    * <p>This is used for edge error cases, for example when the driver detects that it's trying to
    * connect to a node that does not belong to the Cassandra cluster (e.g. a wrong address was
