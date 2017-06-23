@@ -20,10 +20,10 @@ import com.datastax.oss.driver.api.core.cql.ColumnDefinitions;
 import com.datastax.oss.driver.api.core.cql.ExecutionInfo;
 import com.datastax.oss.driver.api.core.cql.ResultSet;
 import com.datastax.oss.driver.api.core.cql.Row;
+import com.datastax.oss.driver.api.core.type.DataTypes;
 import com.datastax.oss.driver.internal.core.util.CountingIterator;
 import com.datastax.oss.driver.internal.core.util.concurrent.BlockingOperation;
 import com.datastax.oss.driver.internal.core.util.concurrent.CompletableFutures;
-import com.google.common.collect.AbstractIterator;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.LinkedList;
@@ -75,6 +75,11 @@ public class MultiPageResultSet implements ResultSet {
     return iterator;
   }
 
+  @Override
+  public boolean wasApplied() {
+    return iterator.wasApplied();
+  }
+
   private class RowIterator extends CountingIterator<Row> {
     // The pages fetched so far. The first is the one we're currently iterating.
     private LinkedList<AsyncResultSet> pages = new LinkedList<>();
@@ -118,6 +123,17 @@ public class MultiPageResultSet implements ResultSet {
           pages.offer(nextPage);
           remaining += nextPage.remaining();
         }
+      }
+    }
+
+    private boolean wasApplied() {
+      if (!columnDefinitions.contains("[applied]")
+          || !columnDefinitions.get("[applied]").getType().equals(DataTypes.BOOLEAN)) {
+        return true;
+      } else if (pages.isEmpty()) {
+        throw new IllegalStateException("This method must be called before consuming all the rows");
+      } else {
+        return pages.getFirst().wasApplied();
       }
     }
   }

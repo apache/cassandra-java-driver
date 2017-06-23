@@ -67,4 +67,9 @@ public class SinglePageResultSet implements ResultSet {
   public Iterator<Row> iterator() {
     return onlyPage.iterator();
   }
+
+  @Override
+  public boolean wasApplied() {
+    return onlyPage.wasApplied();
+  }
 }

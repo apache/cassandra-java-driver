@@ -106,4 +106,11 @@ public abstract class CountingIterator<T> implements Iterator<T> {
     remaining -= 1;
     return result;
   }
+
+  public final T peek() {
+    if (!hasNext()) {
+      throw new NoSuchElementException();
+    }
+    return next;
+  }
 }

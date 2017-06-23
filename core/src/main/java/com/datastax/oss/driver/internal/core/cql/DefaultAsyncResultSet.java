@@ -21,6 +21,7 @@ import com.datastax.oss.driver.api.core.cql.ExecutionInfo;
 import com.datastax.oss.driver.api.core.cql.Row;
 import com.datastax.oss.driver.api.core.cql.Statement;
 import com.datastax.oss.driver.api.core.session.Session;
+import com.datastax.oss.driver.api.core.type.DataTypes;
 import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
 import com.datastax.oss.driver.internal.core.util.CountingIterator;
 import java.nio.ByteBuffer;
@@ -98,6 +99,23 @@ public class DefaultAsyncResultSet implements AsyncResultSet {
     return session.executeAsync(nextStatement);
   }
 
+  @Override
+  public boolean wasApplied() {
+    if (!definitions.contains("[applied]")
+        || !definitions.get("[applied]").getType().equals(DataTypes.BOOLEAN)) {
+      return true;
+    } else if (iterator().hasNext()) {
+      // Note that [applied] has the same value for all rows, so as long as we have a row we don't
+      // care which one it is.
+      return iterator.peek().getBoolean("[applied]");
+    } else {
+      // If the server provided [applied], it means there was at least one row. So if we get here it
+      // means the client consumed all the rows before, we can't handle that case because we have
+      // nowhere left to read the boolean from.
+      throw new IllegalStateException("This method must be called before consuming all the rows");
+    }
+  }
+
   static AsyncResultSet empty(final ExecutionInfo executionInfo) {
     return new AsyncResultSet() {
       @Override
@@ -129,6 +147,11 @@ public class DefaultAsyncResultSet implements AsyncResultSet {
       @Override
       public Iterator<Row> iterator() {
         return Collections.<Row>emptyList().iterator();
+      }
+
+      @Override
+      public boolean wasApplied() {
+        return true;
       }
     };
   }

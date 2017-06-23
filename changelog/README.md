@@ -4,6 +4,7 @@
 
 ### 4.0.0-alpha1 (in progress)
 
+- [new feature] JAVA-1530: Add ResultSet.wasApplied
 - [improvement] JAVA-1531: Merge CqlSession and Session
 - [new feature] JAVA-1513: Handle batch statements
 - [improvement] JAVA-1496: Improve log messages
