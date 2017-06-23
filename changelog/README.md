@@ -4,6 +4,7 @@
 
 - [bug] JAVA-1666: Fix keyspace export when a UDT has case-sensitive field names.
 - [improvement] JAVA-1196: Include hash of result set metadata in prepared statement id.
+- [improvement] JAVA-1670: Support user-provided JMX ports for CCMBridge.
 
 
 ### 3.3.1
