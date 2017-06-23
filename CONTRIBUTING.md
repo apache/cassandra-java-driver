@@ -71,6 +71,61 @@ in the documented item's signature.
 Builder withLimit(int limit) {
 ```
 
+### Logs
+
+We use SLF4J; loggers are declared like this:
+
+```java
+private static final Logger LOG = LoggerFactory.getLogger(TheEnclosingClass.class);
+```
+
+Logs are intended for two personae:
+
+* Ops who manage the application in production.
+* Developers (maybe you) who debug a particular issue.
+
+The first 3 log levels are for ops:
+
+* `ERROR`: something that renders the driver -- or a part of it -- completely unusable. An action is
+  required to fix it: bouncing the client, applying a patch, etc.
+* `WARN`: something that the driver can recover from automatically, but indicates a configuration or
+  programming error that should be addressed. For example: the driver connected successfully, but 
+  one of the contact points in the configuration was malformed; the same prepared statement is being
+  prepared multiple time by the application code.
+* `INFO`: something that is part of the normal operation of the driver, but might be useful to know
+  for an operator. For example: the driver has initialized successfully and is ready to process
+  queries; an optional dependency was detected in the classpath and activated an enhanced feature.
+
+Do not log errors that are rethrown to the client (such as the error that you're going to complete a
+request with). This is annoying for ops because they see a lot of stack traces that require no
+actual action on their part, because they're already handled by application code.
+
+The last 2 levels are for developers:
+
+* `DEBUG`: anything that would be useful to understand what the driver is doing from a "black box"
+  perspective, i.e. if all you have are the logs.
+* `TRACE`: same thing, but for events that happen very often, produce a lot of output, or should be
+  irrelevant most of the time (this is a bit more subjective and left to your interpretation).
+
+Logs statements start with a prefix that identifies its origin, for example:
+
+* for components that are unique to the cluster instance, just the cluster name: `[c0]`.
+* for sessions, the cluster name + a generated unique identifier: `[c0|s0]`.
+* for channel pools, the session identifier + the address of the node: `[c0|s0|/127.0.0.2:9042]`.
+* for channels, the identifier of the owner (session or control connection) + the Netty identifier,
+  which indicates the local and remote ports:
+  `[c0|s0|id: 0xf9ef0b15, L:/127.0.0.1:51482 - R:/127.0.0.1:9042]`.
+* for request handlers, the session identifier, a unique identifier, and the index of the 
+  speculative execution: `[c0|s0|1077199500|0]`.
+
+Tests run with the configuration defined in `src/test/resources/logback-test.xml`. The default level
+for driver classes is `WARN`, but you can override it with a system property: `-DdriverLevel=DEBUG`.
+A nice setup is to use `DEBUG` when you run from your IDE, and keep the default for the command
+line.
+
+When you add or review new code, take a moment to run the tests in `DEBUG` mode and check if the
+output looks good.
+
 ## Coding style -- test code
 
 Static imports are permitted in a couple of places:
