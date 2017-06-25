@@ -71,6 +71,7 @@ public class CqlPrepareHandler
   private final Duration timeout;
   private final ScheduledFuture<?> timeoutFuture;
   private final RetryPolicy retryPolicy;
+  private final Boolean prepareOnAllNodes;
   private final CqlPrepareProcessor processor;
 
   // The errors on the nodes that were already tried (lazily initialized on the first error).
@@ -105,6 +106,7 @@ public class CqlPrepareHandler
     this.timeout = configProfile.getDuration(CoreDriverOption.REQUEST_TIMEOUT);
     this.timeoutFuture = scheduleTimeout(timeout);
     this.retryPolicy = context.retryPolicy();
+    this.prepareOnAllNodes = configProfile.getBoolean(CoreDriverOption.PREPARE_ON_ALL_NODES);
     sendRequest(null, 0);
   }
 
@@ -187,13 +189,23 @@ public class CqlPrepareHandler
       session
           .getRepreparePayloads()
           .put(cachedStatement.getId(), cachedStatement.getRepreparePayload());
-      prepareOnOtherNodes()
-          .thenRun(() -> result.complete(cachedStatement))
-          .exceptionally(
-              error -> {
-                result.completeExceptionally(error);
-                return null;
-              });
+      if (prepareOnAllNodes) {
+        prepareOnOtherNodes()
+            .thenRun(
+                () -> {
+                  LOG.debug(
+                      "[{}] Done repreparing on other nodes, completing the request", logPrefix);
+                  result.complete(cachedStatement);
+                })
+            .exceptionally(
+                error -> {
+                  result.completeExceptionally(error);
+                  return null;
+                });
+      } else {
+        LOG.debug("[{}] Prepare on all nodes is disabled, completing the request", logPrefix);
+        result.complete(cachedStatement);
+      }
     }
   }
 

@@ -52,6 +52,8 @@ public enum CoreDriverOption implements DriverOption {
   RECONNECTION_CONFIG_BASE_DELAY("connection.reconnection.config.base-delay", true),
   RECONNECTION_CONFIG_MAX_DELAY("connection.reconnection.config.max-delay", true),
 
+  PREPARE_ON_ALL_NODES("prepared-statements.prepare-on-all-nodes", true),
+
   POOLING_LOCAL_CONNECTIONS("pooling.local.connections", true),
   POOLING_REMOTE_CONNECTIONS("pooling.remote.connections", true),
 

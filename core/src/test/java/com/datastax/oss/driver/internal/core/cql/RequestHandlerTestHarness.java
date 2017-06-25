@@ -86,6 +86,8 @@ public class RequestHandlerTestHarness implements AutoCloseable {
         .thenReturn(ConsistencyLevel.SERIAL);
     Mockito.when(defaultConfigProfile.getBoolean(CoreDriverOption.REQUEST_DEFAULT_IDEMPOTENCE))
         .thenReturn(builder.defaultIdempotence);
+    Mockito.when(defaultConfigProfile.getBoolean(CoreDriverOption.PREPARE_ON_ALL_NODES))
+        .thenReturn(true);
 
     Mockito.when(config.defaultProfile()).thenReturn(defaultConfigProfile);
     Mockito.when(context.config()).thenReturn(config);

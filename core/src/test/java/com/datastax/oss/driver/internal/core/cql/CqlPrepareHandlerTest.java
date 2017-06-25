@@ -16,6 +16,8 @@
 package com.datastax.oss.driver.internal.core.cql;
 
 import com.datastax.oss.driver.api.core.CoreProtocolVersion;
+import com.datastax.oss.driver.api.core.config.CoreDriverOption;
+import com.datastax.oss.driver.api.core.config.DriverConfigProfile;
 import com.datastax.oss.driver.api.core.cql.ColumnDefinitions;
 import com.datastax.oss.driver.api.core.cql.PreparedStatement;
 import com.datastax.oss.driver.api.core.metadata.Node;
@@ -94,6 +96,36 @@ public class CqlPrepareHandlerTest {
       node3Behavior.setResponseSuccess(defaultFrameOf(simplePrepared()));
 
       assertThat(prepareFuture).isSuccess(CqlPrepareHandlerTest::assertMatchesSimplePrepared);
+    }
+  }
+
+  @Test
+  public void should_not_reprepare_on_other_nodes_if_disabled_in_config() {
+    RequestHandlerTestHarness.Builder harnessBuilder = RequestHandlerTestHarness.builder();
+    PoolBehavior node1Behavior = harnessBuilder.customBehavior(node1);
+    PoolBehavior node2Behavior = harnessBuilder.customBehavior(node2);
+    PoolBehavior node3Behavior = harnessBuilder.customBehavior(node3);
+
+    try (RequestHandlerTestHarness harness = harnessBuilder.build()) {
+
+      DriverConfigProfile config = harness.getContext().config().defaultProfile();
+      Mockito.when(config.getBoolean(CoreDriverOption.PREPARE_ON_ALL_NODES)).thenReturn(false);
+
+      CompletionStage<PreparedStatement> prepareFuture =
+          new CqlPrepareHandler(
+                  PREPARE_REQUEST, processor, harness.getSession(), harness.getContext(), "test")
+              .asyncResult();
+
+      node1Behavior.verifyWrite();
+      node1Behavior.setWriteSuccess();
+      node1Behavior.setResponseSuccess(defaultFrameOf(simplePrepared()));
+
+      // The future should complete immediately:
+      assertThat(prepareFuture).isSuccess();
+
+      // And the other nodes should not be contacted:
+      node2Behavior.verifyNoWrite();
+      node3Behavior.verifyNoWrite();
     }
   }
 
