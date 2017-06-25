@@ -27,7 +27,7 @@ import java.util.Map;
  * CQL statements) keeps a reference to this.
  */
 public class RepreparePayload {
-
+  public final ByteBuffer id;
   public final String query;
 
   /** The keyspace that is set independently from the query string (see CASSANDRA-10145) */
@@ -35,7 +35,9 @@ public class RepreparePayload {
 
   public final Map<String, ByteBuffer> customPayload;
 
-  public RepreparePayload(String query, String keyspace, Map<String, ByteBuffer> customPayload) {
+  public RepreparePayload(
+      ByteBuffer id, String query, String keyspace, Map<String, ByteBuffer> customPayload) {
+    this.id = id;
     this.query = query;
     this.keyspace = keyspace;
     this.customPayload = customPayload;

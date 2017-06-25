@@ -55,7 +55,7 @@ public class DefaultPreparedStatement implements PreparedStatement {
     this.id = id;
     // It's important that we keep a reference to this object, so that it only gets evicted from
     // the map in DefaultSession if no client reference the PreparedStatement anymore.
-    this.repreparePayload = new RepreparePayload(query, keyspace, customPayloadForPrepare);
+    this.repreparePayload = new RepreparePayload(id, query, keyspace, customPayloadForPrepare);
     this.variableDefinitions = variableDefinitions;
     this.resultSetDefinitions = resultSetDefinitions;
     this.configProfileName = configProfileName;

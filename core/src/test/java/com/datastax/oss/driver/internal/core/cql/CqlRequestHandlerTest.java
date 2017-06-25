@@ -23,7 +23,6 @@ import com.datastax.oss.driver.api.core.cql.BoundStatement;
 import com.datastax.oss.driver.api.core.cql.ExecutionInfo;
 import com.datastax.oss.driver.api.core.cql.PreparedStatement;
 import com.datastax.oss.driver.api.core.cql.Row;
-import com.datastax.oss.driver.internal.core.channel.ResponseCallback;
 import com.datastax.oss.driver.internal.core.session.RepreparePayload;
 import com.datastax.oss.driver.internal.core.util.concurrent.ScheduledTaskCapturingEventLoop;
 import com.datastax.oss.protocol.internal.request.Prepare;
@@ -43,9 +42,6 @@ import org.mockito.Mockito;
 import org.testng.annotations.Test;
 
 import static com.datastax.oss.driver.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyBoolean;
-import static org.mockito.ArgumentMatchers.anyMap;
 
 public class CqlRequestHandlerTest extends CqlRequestHandlerTestBase {
 
@@ -160,7 +156,7 @@ public class CqlRequestHandlerTest extends CqlRequestHandlerTestBase {
       // The handler will look for the info to reprepare in the session's cache, put it there
       ConcurrentMap<ByteBuffer, RepreparePayload> repreparePayloads = new ConcurrentHashMap<>();
       repreparePayloads.put(
-          mockId, new RepreparePayload("mock query", null, Collections.emptyMap()));
+          mockId, new RepreparePayload(mockId, "mock query", null, Collections.emptyMap()));
       Mockito.when(harness.getSession().getRepreparePayloads()).thenReturn(repreparePayloads);
 
       CompletionStage<AsyncResultSet> resultSetFuture =

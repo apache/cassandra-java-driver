@@ -52,6 +52,7 @@ import org.testng.annotations.Test;
 
 import static com.datastax.oss.driver.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.timeout;
 
 public class DefaultSessionTest {
@@ -99,6 +100,8 @@ public class DefaultSessionTest {
 
     Mockito.when(defaultConfigProfile.getBoolean(CoreDriverOption.REQUEST_WARN_IF_SET_KEYSPACE))
         .thenReturn(true);
+    Mockito.when(defaultConfigProfile.getBoolean(CoreDriverOption.REPREPARE_ENABLED))
+        .thenReturn(false);
     Mockito.when(config.defaultProfile()).thenReturn(defaultConfigProfile);
     Mockito.when(context.config()).thenReturn(config);
   }
@@ -762,6 +765,9 @@ public class DefaultSessionTest {
   private ChannelPool mockPool(Node node) {
     ChannelPool pool = Mockito.mock(ChannelPool.class);
     Mockito.when(pool.getNode()).thenReturn(node);
+    Mockito.when(pool.getInitialKeyspaceName()).thenReturn(KEYSPACE);
+    Mockito.when(pool.setKeyspace(any(CqlIdentifier.class)))
+        .thenReturn(CompletableFuture.completedFuture(null));
     CompletableFuture<Void> closeFuture = new CompletableFuture<>();
     Mockito.when(pool.closeFuture()).thenReturn(closeFuture);
     Mockito.when(pool.closeAsync())

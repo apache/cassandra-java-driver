@@ -53,6 +53,10 @@ public enum CoreDriverOption implements DriverOption {
   RECONNECTION_CONFIG_MAX_DELAY("connection.reconnection.config.max-delay", true),
 
   PREPARE_ON_ALL_NODES("prepared-statements.prepare-on-all-nodes", true),
+  REPREPARE_ENABLED("prepared-statements.reprepare-on-up.enabled", true),
+  REPREPARE_MAX_STATEMENTS("prepared-statements.reprepare-on-up.max-statements", false),
+  REPREPARE_MAX_PARALLELISM("prepared-statements.reprepare-on-up.max-parallelism", false),
+  REPREPARE_TIMEOUT("prepared-statements.reprepare-on-up.timeout", false),
 
   POOLING_LOCAL_CONNECTIONS("pooling.local.connections", true),
   POOLING_REMOTE_CONNECTIONS("pooling.remote.connections", true),

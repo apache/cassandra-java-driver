@@ -326,7 +326,7 @@ public class DefaultSession implements Session {
               channelPoolFactory.init(node, keyspace, newDistance, context, logPrefix);
           pending.put(node, poolFuture);
           poolFuture
-              .thenAcceptAsync(this::onPoolAdded, adminExecutor)
+              .thenAcceptAsync(this::onPoolInitialized, adminExecutor)
               .exceptionally(UncaughtExceptions::log);
         } else {
           LOG.debug("[{}] {} became {}, resizing it", logPrefix, node, newDistance);
@@ -361,7 +361,7 @@ public class DefaultSession implements Session {
               channelPoolFactory.init(node, keyspace, node.getDistance(), context, logPrefix);
           pending.put(node, poolFuture);
           poolFuture
-              .thenAcceptAsync(this::onPoolAdded, adminExecutor)
+              .thenAcceptAsync(this::onPoolInitialized, adminExecutor)
               .exceptionally(UncaughtExceptions::log);
         } else {
           LOG.debug("[{}] {} came back UP, triggering pool reconnection", logPrefix, node);
@@ -370,7 +370,7 @@ public class DefaultSession implements Session {
       }
     }
 
-    private void onPoolAdded(ChannelPool pool) {
+    private void onPoolInitialized(ChannelPool pool) {
       assert adminExecutor.inEventLoop();
       Node node = pool.getNode();
       if (closeWasCalled) {
@@ -379,29 +379,59 @@ public class DefaultSession implements Session {
         pool.forceCloseAsync();
       } else {
         LOG.debug("[{}] New pool to {} initialized", logPrefix, node);
-        // If the session's keyspace changed while the pool was initializing, switch it now. Don't
-        // try too hard to wait until we expose the pool to clients, switching keyspaces is
-        // inherently unsafe anyway.
-        if (!Objects.equals(keyspace, pool.getInitialKeyspaceName())) {
-          pool.setKeyspace(keyspace);
+        if (Objects.equals(keyspace, pool.getInitialKeyspaceName())) {
+          reprepareStatements(pool);
+        } else {
+          // The keyspace changed while the pool was being initialized, switch it now.
+          pool.setKeyspace(keyspace)
+              .handleAsync(
+                  (result, error) -> {
+                    if (error != null) {
+                      LOG.warn("Error while switching keyspace to " + keyspace, error);
+                    }
+                    reprepareStatements(pool);
+                    return null;
+                  },
+                  adminExecutor);
         }
-        pending.remove(node);
-        pools.put(node, pool);
-        DistanceEvent distanceEvent = pendingDistanceEvents.remove(node);
-        NodeStateEvent stateEvent = pendingStateEvents.remove(node);
-        if (stateEvent != null && stateEvent.newState == NodeState.FORCED_DOWN) {
-          LOG.debug(
-              "[{}] Received {} while the pool was initializing, processing it now",
-              logPrefix,
-              stateEvent);
-          processStateEvent(stateEvent);
-        } else if (distanceEvent != null) {
-          LOG.debug(
-              "[{}] Received {} while the pool was initializing, processing it now",
-              logPrefix,
-              distanceEvent);
-          processDistanceEvent(distanceEvent);
-        }
+      }
+    }
+
+    private void reprepareStatements(ChannelPool pool) {
+      assert adminExecutor.inEventLoop();
+      if (config.defaultProfile().getBoolean(CoreDriverOption.REPREPARE_ENABLED)) {
+        new ReprepareOnUp(
+                logPrefix + "|" + pool.getNode().getConnectAddress(),
+                pool,
+                repreparePayloads,
+                config,
+                () -> RunOrSchedule.on(adminExecutor, () -> onPoolReady(pool)))
+            .start();
+      } else {
+        LOG.debug("[{}] Reprepare on up is disabled, skipping", logPrefix);
+        onPoolReady(pool);
+      }
+    }
+
+    private void onPoolReady(ChannelPool pool) {
+      assert adminExecutor.inEventLoop();
+      Node node = pool.getNode();
+      pending.remove(node);
+      pools.put(node, pool);
+      DistanceEvent distanceEvent = pendingDistanceEvents.remove(node);
+      NodeStateEvent stateEvent = pendingStateEvents.remove(node);
+      if (stateEvent != null && stateEvent.newState == NodeState.FORCED_DOWN) {
+        LOG.debug(
+            "[{}] Received {} while the pool was initializing, processing it now",
+            logPrefix,
+            stateEvent);
+        processStateEvent(stateEvent);
+      } else if (distanceEvent != null) {
+        LOG.debug(
+            "[{}] Received {} while the pool was initializing, processing it now",
+            logPrefix,
+            distanceEvent);
+        processDistanceEvent(distanceEvent);
       }
     }
 
