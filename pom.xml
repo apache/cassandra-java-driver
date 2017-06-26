@@ -21,7 +21,7 @@
 
     <groupId>com.datastax.cassandra</groupId>
     <artifactId>cassandra-driver-parent</artifactId>
-    <version>3.3.0-SNAPSHOT</version>
+    <version>3.3.0</version>
     <packaging>pom</packaging>
     <name>DataStax Java Driver for Apache Cassandra</name>
     <description>
@@ -843,7 +843,7 @@ limitations under the License.
                                         </goals>
                                     </pluginExecutionFilter>
                                     <action>
-                                        <ignore/>
+                                        <ignore />
                                     </action>
                                 </pluginExecution>
                             </pluginExecutions>
@@ -927,7 +927,7 @@ limitations under the License.
                             <!-- This requires includes to be explicitly specified by implementing classes.
                                  This is needed to prevent creating a JVM fork for each test, even those that don't
                                  have the isolated group. -->
-                            <includes/>
+                            <includes />
                         </configuration>
                     </plugin>
                 </plugins>
@@ -1069,7 +1069,7 @@ limitations under the License.
         <connection>scm:git:git@github.com:datastax/java-driver.git</connection>
         <developerConnection>scm:git:git@github.com:datastax/java-driver.git</developerConnection>
         <url>https://github.com/datastax/java-driver</url>
-        <tag>HEAD</tag>
+        <tag>3.3.0</tag>
     </scm>
 
     <developers>
