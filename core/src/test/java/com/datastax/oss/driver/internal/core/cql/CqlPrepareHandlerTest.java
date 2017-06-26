@@ -324,7 +324,6 @@ public class CqlPrepareHandlerTest {
                     "key",
                     0,
                     RawType.PRIMITIVES.get(ProtocolConstants.DataType.VARCHAR))),
-            1,
             null,
             new int[] {0});
     RowsMetadata resultMetadata =
@@ -336,7 +335,6 @@ public class CqlPrepareHandlerTest {
                     "message",
                     0,
                     RawType.PRIMITIVES.get(ProtocolConstants.DataType.VARCHAR))),
-            1,
             null,
             new int[] {});
     return new Prepared(Bytes.fromHexString("0xffff").array(), variablesMetadata, resultMetadata);
