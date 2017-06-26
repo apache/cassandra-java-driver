@@ -54,6 +54,7 @@ public enum CoreDriverOption implements DriverOption {
 
   PREPARE_ON_ALL_NODES("prepared-statements.prepare-on-all-nodes", true),
   REPREPARE_ENABLED("prepared-statements.reprepare-on-up.enabled", true),
+  REPREPARE_CHECK_SYSTEM_TABLE("prepared-statements.reprepare-on-up.check-system-table", false),
   REPREPARE_MAX_STATEMENTS("prepared-statements.reprepare-on-up.max-statements", false),
   REPREPARE_MAX_PARALLELISM("prepared-statements.reprepare-on-up.max-parallelism", false),
   REPREPARE_TIMEOUT("prepared-statements.reprepare-on-up.timeout", false),

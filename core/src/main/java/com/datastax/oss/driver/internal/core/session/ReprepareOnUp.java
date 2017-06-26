@@ -60,6 +60,7 @@ class ReprepareOnUp {
   private final DriverChannel channel;
   private final Map<ByteBuffer, RepreparePayload> repreparePayloads;
   private final Runnable whenPrepared;
+  private final boolean checkSystemTable;
   private final int maxStatements;
   private final int maxParallelism;
   private final Duration timeout;
@@ -82,6 +83,8 @@ class ReprepareOnUp {
     this.repreparePayloads = repreparePayloads;
     this.whenPrepared = whenPrepared;
 
+    this.checkSystemTable =
+        config.defaultProfile().getBoolean(CoreDriverOption.REPREPARE_CHECK_SYSTEM_TABLE);
     this.timeout = config.defaultProfile().getDuration(CoreDriverOption.REPREPARE_TIMEOUT);
     this.maxStatements = config.defaultProfile().getInt(CoreDriverOption.REPREPARE_MAX_STATEMENTS);
     this.maxParallelism =
@@ -89,8 +92,6 @@ class ReprepareOnUp {
   }
 
   void start() {
-    LOG.debug("[{}] Repreparing statements on newly added/up node", logPrefix);
-
     if (repreparePayloads.isEmpty()) {
       LOG.debug("[{}] No statements to reprepare, done", logPrefix);
       whenPrepared.run();
@@ -99,8 +100,24 @@ class ReprepareOnUp {
       LOG.debug("[{}] No channel available to reprepare, done", logPrefix);
       whenPrepared.run();
     } else {
-      queryAsync(QUERY_SERVER_IDS, Collections.emptyMap(), "QUERY system.prepared_statements")
-          .whenComplete(this::gatherServerIds);
+      if (LOG.isDebugEnabled()) { // check because ConcurrentMap.size is not a constant operation
+        LOG.debug(
+            "[{}] {} statements to reprepare on newly added/up node",
+            logPrefix,
+            repreparePayloads.size());
+      }
+      if (checkSystemTable) {
+        LOG.debug("[{}] Checking which statements the server knows about", logPrefix);
+        queryAsync(QUERY_SERVER_IDS, Collections.emptyMap(), "QUERY system.prepared_statements")
+            .whenComplete(this::gatherServerIds);
+      } else {
+        LOG.debug(
+            "[{}] {} is disabled, repreparing directly",
+            logPrefix,
+            CoreDriverOption.REPREPARE_CHECK_SYSTEM_TABLE.getPath());
+        serverKnownIds = Collections.emptySet();
+        gatherPayloadsToReprepare();
+      }
     }
   }
 

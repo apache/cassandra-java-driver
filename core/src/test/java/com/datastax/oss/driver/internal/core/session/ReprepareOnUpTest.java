@@ -69,6 +69,8 @@ public class ReprepareOnUpTest {
     Mockito.when(eventLoop.inEventLoop()).thenReturn(true);
 
     Mockito.when(config.defaultProfile()).thenReturn(defaultConfigProfile);
+    Mockito.when(defaultConfigProfile.getBoolean(CoreDriverOption.REPREPARE_CHECK_SYSTEM_TABLE))
+        .thenReturn(true);
     Mockito.when(defaultConfigProfile.getDuration(CoreDriverOption.REPREPARE_TIMEOUT))
         .thenReturn(Duration.ofMillis(500));
     Mockito.when(defaultConfigProfile.getInt(CoreDriverOption.REPREPARE_MAX_STATEMENTS))
@@ -83,9 +85,8 @@ public class ReprepareOnUpTest {
   @Test
   public void should_complete_immediately_if_no_prepared_statements() {
     // Given
-    Map<ByteBuffer, RepreparePayload> repreparePayloads = Collections.emptyMap();
     MockReprepareOnUp reprepareOnUp =
-        new MockReprepareOnUp("test", pool, repreparePayloads, config, whenPrepared);
+        new MockReprepareOnUp("test", pool, getMockPayloads(/*none*/ ), config, whenPrepared);
 
     // When
     reprepareOnUp.start();
@@ -99,7 +100,7 @@ public class ReprepareOnUpTest {
     // Given
     Mockito.when(pool.next()).thenReturn(null);
     MockReprepareOnUp reprepareOnUp =
-        new MockReprepareOnUp("test", pool, getMockPayloads(), config, whenPrepared);
+        new MockReprepareOnUp("test", pool, getMockPayloads('a'), config, whenPrepared);
 
     // When
     reprepareOnUp.start();
@@ -111,7 +112,8 @@ public class ReprepareOnUpTest {
   @Test
   public void should_reprepare_all_if_system_table_query_fails() {
     MockReprepareOnUp reprepareOnUp =
-        new MockReprepareOnUp("test", pool, getMockPayloads(), config, whenPrepared);
+        new MockReprepareOnUp(
+            "test", pool, getMockPayloads('a', 'b', 'c', 'd', 'e', 'f'), config, whenPrepared);
 
     reprepareOnUp.start();
 
@@ -134,7 +136,8 @@ public class ReprepareOnUpTest {
   @Test
   public void should_reprepare_all_if_system_table_empty() {
     MockReprepareOnUp reprepareOnUp =
-        new MockReprepareOnUp("test", pool, getMockPayloads(), config, whenPrepared);
+        new MockReprepareOnUp(
+            "test", pool, getMockPayloads('a', 'b', 'c', 'd', 'e', 'f'), config, whenPrepared);
 
     reprepareOnUp.start();
 
@@ -157,9 +160,32 @@ public class ReprepareOnUpTest {
   }
 
   @Test
+  public void should_reprepare_all_if_system_query_disabled() {
+    Mockito.when(defaultConfigProfile.getBoolean(CoreDriverOption.REPREPARE_CHECK_SYSTEM_TABLE))
+        .thenReturn(false);
+
+    MockReprepareOnUp reprepareOnUp =
+        new MockReprepareOnUp(
+            "test", pool, getMockPayloads('a', 'b', 'c', 'd', 'e', 'f'), config, whenPrepared);
+
+    reprepareOnUp.start();
+
+    MockAdminQuery adminQuery;
+    for (char c = 'a'; c <= 'f'; c++) {
+      adminQuery = reprepareOnUp.queries.poll();
+      assertThat(adminQuery.request).isInstanceOf(Prepare.class);
+      assertThat(((Prepare) adminQuery.request).cqlQuery).isEqualTo("mock query " + c);
+      adminQuery.resultFuture.complete(null);
+    }
+
+    assertThat(done).isSuccess(v -> assertThat(reprepareOnUp.queries).isEmpty());
+  }
+
+  @Test
   public void should_not_reprepare_already_known_statements() {
     MockReprepareOnUp reprepareOnUp =
-        new MockReprepareOnUp("test", pool, getMockPayloads(), config, whenPrepared);
+        new MockReprepareOnUp(
+            "test", pool, getMockPayloads('a', 'b', 'c', 'd', 'e', 'f'), config, whenPrepared);
 
     reprepareOnUp.start();
 
@@ -187,7 +213,8 @@ public class ReprepareOnUpTest {
         .thenReturn(3);
 
     MockReprepareOnUp reprepareOnUp =
-        new MockReprepareOnUp("test", pool, getMockPayloads(), config, whenPrepared);
+        new MockReprepareOnUp(
+            "test", pool, getMockPayloads('a', 'b', 'c', 'd', 'e', 'f'), config, whenPrepared);
 
     reprepareOnUp.start();
 
@@ -215,7 +242,8 @@ public class ReprepareOnUpTest {
         .thenReturn(3);
 
     MockReprepareOnUp reprepareOnUp =
-        new MockReprepareOnUp("test", pool, getMockPayloads(), config, whenPrepared);
+        new MockReprepareOnUp(
+            "test", pool, getMockPayloads('a', 'b', 'c', 'd', 'e', 'f'), config, whenPrepared);
 
     reprepareOnUp.start();
 
@@ -250,11 +278,12 @@ public class ReprepareOnUpTest {
     assertThat(done).isSuccess(v -> assertThat(reprepareOnUp.queries).isEmpty());
   }
 
-  private Map<ByteBuffer, RepreparePayload> getMockPayloads() {
+  private Map<ByteBuffer, RepreparePayload> getMockPayloads(char... values) {
     ImmutableMap.Builder<ByteBuffer, RepreparePayload> builder = ImmutableMap.builder();
-    for (char c = 'a'; c <= 'f'; c++) {
-      ByteBuffer id = Bytes.fromHexString("0x0" + c);
-      builder.put(id, new RepreparePayload(id, "mock query " + c, null, Collections.emptyMap()));
+    for (char value : values) {
+      ByteBuffer id = Bytes.fromHexString("0x0" + value);
+      builder.put(
+          id, new RepreparePayload(id, "mock query " + value, null, Collections.emptyMap()));
     }
     return builder.build();
   }
