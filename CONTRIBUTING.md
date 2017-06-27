@@ -126,6 +126,45 @@ line.
 When you add or review new code, take a moment to run the tests in `DEBUG` mode and check if the
 output looks good.
 
+### No stream API
+
+Please don't use `java.util.stream` in the driver codebase. Streams were designed for *data 
+processing*, not to make your collection traversals "functional".
+
+Here's an example from the driver codebase (`ChannelSet`):
+
+```java
+DriverChannel[] snapshot = this.channels;
+DriverChannel best = null;
+int bestScore = 0;
+for (DriverChannel channel : snapshot) {
+  int score = channel.availableIds();
+  if (score > bestScore) {
+    bestScore = score;
+    best = channel;
+  }
+}
+return best;
+```
+
+And here's a terrible way to rewrite it using streams:
+
+```java
+// Don't do this:
+DriverChannel best =
+    Stream.of(snapshot)
+        .reduce((a, b) -> a.availableIds() > b.availableIds() ? a : b)
+        .get();
+```
+
+The stream version is not easier to read, and will probably be slower (creating intermediary objects
+vs. an array iteration, compounded by the fact that this particular array typically has a low
+cardinality).
+
+The driver never does the kind of processing that the stream API is intended for; the only large
+collections we manipulate are result sets, and these get passed on to the client directly.
+
+
 ## Coding style -- test code
 
 Static imports are permitted in a couple of places:
