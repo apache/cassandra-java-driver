@@ -23,7 +23,7 @@ val address4 = new InetSocketAddress("127.0.0.4", 9042)
 val address5 = new InetSocketAddress("127.0.0.5", 9042)
 val address6 = new InetSocketAddress("127.0.0.6", 9042)
 
-val builder = Cluster.builder().withContactPoints(Set(address1))
+val builder = Cluster.builder().addContactPoint(address1)
 
 println("********************************************")
 println("*   To start a driver instance, run:       *")
