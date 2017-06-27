@@ -20,6 +20,7 @@ import com.datastax.oss.driver.api.core.addresstranslation.AddressTranslator;
 import com.datastax.oss.driver.api.core.auth.AuthProvider;
 import com.datastax.oss.driver.api.core.config.CoreDriverOption;
 import com.datastax.oss.driver.api.core.config.DriverConfig;
+import com.datastax.oss.driver.api.core.config.DriverConfigLoader;
 import com.datastax.oss.driver.api.core.config.DriverConfigProfile;
 import com.datastax.oss.driver.api.core.connection.ReconnectionPolicy;
 import com.datastax.oss.driver.api.core.loadbalancing.LoadBalancingPolicy;
@@ -121,12 +122,14 @@ public class DefaultDriverContext implements InternalDriverContext {
       new LazyReference<>("controlConnection", this::buildControlConnection, cycleDetector);
 
   private final DriverConfig config;
+  private final DriverConfigLoader configLoader;
   private final ChannelPoolFactory channelPoolFactory = new ChannelPoolFactory();
   private final CodecRegistry codecRegistry;
   private final String clusterName;
 
-  public DefaultDriverContext(DriverConfig config, List<TypeCodec<?>> typeCodecs) {
-    this.config = config;
+  public DefaultDriverContext(DriverConfigLoader configLoader, List<TypeCodec<?>> typeCodecs) {
+    this.config = configLoader.getInitialConfig();
+    this.configLoader = configLoader;
     DriverConfigProfile defaultProfile = config.defaultProfile();
     if (defaultProfile.isDefined(CoreDriverOption.CLUSTER_NAME)) {
       this.clusterName = defaultProfile.getString(CoreDriverOption.CLUSTER_NAME);
@@ -266,6 +269,11 @@ public class DefaultDriverContext implements InternalDriverContext {
   @Override
   public DriverConfig config() {
     return config;
+  }
+
+  @Override
+  public DriverConfigLoader configLoader() {
+    return configLoader;
   }
 
   @Override

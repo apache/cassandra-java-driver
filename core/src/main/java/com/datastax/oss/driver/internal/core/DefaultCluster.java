@@ -149,6 +149,7 @@ public class DefaultCluster implements Cluster {
               v -> {
                 try {
                   context.loadBalancingPolicyWrapper().init();
+                  context.configLoader().onDriverInit(context);
                   LOG.debug("[{}] Initialization complete, ready", logPrefix);
                   initFuture.complete(DefaultCluster.this);
                   // TODO schedule full schema refresh asynchronously (does not block init)
@@ -271,7 +272,8 @@ public class DefaultCluster implements Cluster {
               context.retryPolicy(),
               context.loadBalancingPolicyWrapper(),
               context.speculativeExecutionPolicy(),
-              context.addressTranslator())) {
+              context.addressTranslator(),
+              context.configLoader())) {
         try {
           closeable.close();
         } catch (Throwable t) {

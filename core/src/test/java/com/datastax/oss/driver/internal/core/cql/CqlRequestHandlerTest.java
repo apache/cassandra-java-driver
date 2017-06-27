@@ -103,7 +103,7 @@ public class CqlRequestHandlerTest extends CqlRequestHandlerTestBase {
               .config()
               .defaultProfile()
               .getDuration(CoreDriverOption.REQUEST_TIMEOUT);
-      assertThat(scheduledTask.getDelay(TimeUnit.NANOSECONDS))
+      assertThat(scheduledTask.getInitialDelay(TimeUnit.NANOSECONDS))
           .isEqualTo(configuredTimeout.toNanos());
       scheduledTask.run();
 

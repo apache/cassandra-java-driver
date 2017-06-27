@@ -15,6 +15,7 @@
  */
 package com.datastax.oss.driver.internal.core.context;
 
+import com.datastax.oss.driver.api.core.config.DriverConfigLoader;
 import com.datastax.oss.driver.api.core.context.DriverContext;
 import com.datastax.oss.driver.internal.core.ProtocolVersionRegistry;
 import com.datastax.oss.driver.internal.core.channel.ChannelFactory;
@@ -61,4 +62,6 @@ public interface InternalDriverContext extends DriverContext {
   ControlConnection controlConnection();
 
   RequestProcessorRegistry requestProcessorRegistry();
+
+  DriverConfigLoader configLoader();
 }

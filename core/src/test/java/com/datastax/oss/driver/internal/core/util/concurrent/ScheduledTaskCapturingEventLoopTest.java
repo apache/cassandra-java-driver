@@ -17,7 +17,6 @@ package com.datastax.oss.driver.internal.core.util.concurrent;
 
 import com.datastax.oss.driver.internal.core.util.concurrent.ScheduledTaskCapturingEventLoop.CapturedTask;
 import io.netty.util.concurrent.ScheduledFuture;
-import java.util.concurrent.CancellationException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import org.testng.annotations.Test;
@@ -38,7 +37,7 @@ public class ScheduledTaskCapturingEventLoopTest {
     assertThat(ran.get()).isFalse();
 
     CapturedTask<?> task = eventLoop.nextTask();
-    assertThat(task.getDelay(TimeUnit.NANOSECONDS)).isEqualTo(1);
+    assertThat(task.getInitialDelay(TimeUnit.NANOSECONDS)).isEqualTo(1);
 
     task.run();
 

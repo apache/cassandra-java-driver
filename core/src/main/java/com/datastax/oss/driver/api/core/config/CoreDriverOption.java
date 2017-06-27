@@ -24,6 +24,7 @@ public enum CoreDriverOption implements DriverOption {
   CONTACT_POINTS("contact-points", false),
   PROTOCOL_VERSION("protocol.version", false),
   CLUSTER_NAME("cluster-name", false),
+  CONFIG_RELOAD_INTERVAL("config-reload-interval", true),
 
   CONNECTION_INIT_QUERY_TIMEOUT("connection.init-query-timeout", true),
   CONNECTION_SET_KEYSPACE_TIMEOUT("connection.set-keyspace-timeout", true),

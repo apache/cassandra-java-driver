@@ -82,13 +82,14 @@ public class CqlRequestHandlerSpeculativeExecutionTest extends CqlRequestHandler
 
       ScheduledTaskCapturingEventLoop.CapturedTask<?> firstExecutionTask =
           harness.nextScheduledTask();
-      assertThat(firstExecutionTask.getDelay(TimeUnit.MILLISECONDS)).isEqualTo(firstExecutionDelay);
+      assertThat(firstExecutionTask.getInitialDelay(TimeUnit.MILLISECONDS))
+          .isEqualTo(firstExecutionDelay);
       firstExecutionTask.run();
       node2Behavior.verifyWrite();
 
       ScheduledTaskCapturingEventLoop.CapturedTask<?> secondExecutionTask =
           harness.nextScheduledTask();
-      assertThat(secondExecutionTask.getDelay(TimeUnit.MILLISECONDS))
+      assertThat(secondExecutionTask.getInitialDelay(TimeUnit.MILLISECONDS))
           .isEqualTo(secondExecutionDelay);
       secondExecutionTask.run();
       node3Behavior.verifyWrite();
@@ -126,7 +127,8 @@ public class CqlRequestHandlerSpeculativeExecutionTest extends CqlRequestHandler
       // Check that the first execution was scheduled but don't run it yet
       ScheduledTaskCapturingEventLoop.CapturedTask<?> firstExecutionTask =
           harness.nextScheduledTask();
-      assertThat(firstExecutionTask.getDelay(TimeUnit.MILLISECONDS)).isEqualTo(firstExecutionDelay);
+      assertThat(firstExecutionTask.getInitialDelay(TimeUnit.MILLISECONDS))
+          .isEqualTo(firstExecutionDelay);
 
       // Complete the request from the initial execution
       node1Behavior.setWriteSuccess();
@@ -170,7 +172,8 @@ public class CqlRequestHandlerSpeculativeExecutionTest extends CqlRequestHandler
 
       ScheduledTaskCapturingEventLoop.CapturedTask<?> firstExecutionTask =
           harness.nextScheduledTask();
-      assertThat(firstExecutionTask.getDelay(TimeUnit.MILLISECONDS)).isEqualTo(firstExecutionDelay);
+      assertThat(firstExecutionTask.getInitialDelay(TimeUnit.MILLISECONDS))
+          .isEqualTo(firstExecutionDelay);
       firstExecutionTask.run();
       node2Behavior.verifyWrite();
       node2Behavior.setWriteSuccess();
@@ -209,7 +212,8 @@ public class CqlRequestHandlerSpeculativeExecutionTest extends CqlRequestHandler
 
       ScheduledTaskCapturingEventLoop.CapturedTask<?> firstExecutionTask =
           harness.nextScheduledTask();
-      assertThat(firstExecutionTask.getDelay(TimeUnit.MILLISECONDS)).isEqualTo(firstExecutionDelay);
+      assertThat(firstExecutionTask.getInitialDelay(TimeUnit.MILLISECONDS))
+          .isEqualTo(firstExecutionDelay);
       firstExecutionTask.run();
       node2Behavior.verifyWrite();
       node2Behavior.setWriteSuccess();

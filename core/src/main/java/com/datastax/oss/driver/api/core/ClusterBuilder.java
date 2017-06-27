@@ -17,16 +17,16 @@ package com.datastax.oss.driver.api.core;
 
 import com.datastax.oss.driver.api.core.config.CoreDriverOption;
 import com.datastax.oss.driver.api.core.config.DriverConfig;
+import com.datastax.oss.driver.api.core.config.DriverConfigLoader;
 import com.datastax.oss.driver.api.core.config.DriverConfigProfile;
 import com.datastax.oss.driver.api.core.type.codec.TypeCodec;
 import com.datastax.oss.driver.internal.core.ContactPoints;
 import com.datastax.oss.driver.internal.core.DefaultCluster;
-import com.datastax.oss.driver.internal.core.config.typesafe.TypeSafeDriverConfig;
+import com.datastax.oss.driver.internal.core.config.typesafe.PeriodicTypeSafeDriverConfigLoader;
 import com.datastax.oss.driver.internal.core.context.DefaultDriverContext;
 import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
 import com.datastax.oss.driver.internal.core.util.concurrent.BlockingOperation;
 import com.datastax.oss.driver.internal.core.util.concurrent.CompletableFutures;
-import com.typesafe.config.ConfigFactory;
 import java.net.InetSocketAddress;
 import java.util.Collection;
 import java.util.Collections;
@@ -38,15 +38,15 @@ import java.util.function.Supplier;
 
 /** Helper class to build an instance of the default {@link Cluster} implementation. */
 public class ClusterBuilder {
-  private DriverConfig config;
+  private DriverConfigLoader configLoader;
   private Set<InetSocketAddress> programmaticContactPoints = new HashSet<>();
   private List<TypeCodec<?>> typeCodecs = Collections.emptyList();
 
   /**
-   * Sets the configuration to use.
+   * Sets the configuration loader to use.
    *
-   * <p>If you don't call this method, the builder will try to build an instance of the default
-   * implementation, based on the Typesafe config library. More precisely:
+   * <p>If you don't call this method, the builder will use the default implementation, based on the
+   * Typesafe config library. More precisely:
    *
    * <ul>
    *   <li>configuration properties are loaded and merged from the following (first-listed are
@@ -70,14 +70,13 @@ public class ClusterBuilder {
    * @see <a href="https://github.com/typesafehub/config#standard-behavior">Typesafe config's
    *     standard loading behavior</a>
    */
-  public ClusterBuilder withConfig(DriverConfig config) {
-    this.config = config;
+  public ClusterBuilder withConfigLoader(DriverConfigLoader configLoader) {
+    this.configLoader = configLoader;
     return this;
   }
 
-  private static DriverConfig defaultConfig() {
-    return new TypeSafeDriverConfig(
-        ConfigFactory.load().getConfig("datastax-java-driver"), CoreDriverOption.values());
+  private static DriverConfigLoader defaultConfigLoader() {
+    return new PeriodicTypeSafeDriverConfigLoader();
   }
 
   /**
@@ -123,9 +122,10 @@ public class ClusterBuilder {
    * @return a completion stage that completes with the cluster when it is fully initialized.
    */
   public CompletionStage<Cluster> buildAsync() {
-    DriverConfig config = buildIfNull(this.config, ClusterBuilder::defaultConfig);
+    DriverConfigLoader configLoader =
+        buildIfNull(this.configLoader, ClusterBuilder::defaultConfigLoader);
 
-    DriverConfigProfile defaultConfig = config.defaultProfile();
+    DriverConfigProfile defaultConfig = configLoader.getInitialConfig().defaultProfile();
     List<String> configContactPoints =
         defaultConfig.isDefined(CoreDriverOption.CONTACT_POINTS)
             ? defaultConfig.getStringList(CoreDriverOption.CONTACT_POINTS)
@@ -134,7 +134,7 @@ public class ClusterBuilder {
     Set<InetSocketAddress> contactPoints =
         ContactPoints.merge(programmaticContactPoints, configContactPoints);
 
-    InternalDriverContext context = new DefaultDriverContext(config, typeCodecs);
+    InternalDriverContext context = new DefaultDriverContext(configLoader, typeCodecs);
     return DefaultCluster.init(context, contactPoints);
   }
 

@@ -15,28 +15,35 @@
  */
 package com.datastax.oss.driver.internal.core.util.concurrent;
 
+import com.google.common.util.concurrent.Uninterruptibles;
 import io.netty.channel.DefaultEventLoop;
 import io.netty.channel.EventLoopGroup;
 import io.netty.util.concurrent.ScheduledFuture;
-import java.util.Queue;
+import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.Callable;
-import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.FutureTask;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import org.mockito.Mockito;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.fail;
 import static org.mockito.ArgumentMatchers.anyBoolean;
 
 /**
  * Extend Netty's default event loop to capture scheduled tasks instead of running them. The tasks
  * can be checked later, and run manually.
  *
+ * <p>Tasks submitted with {@link #execute(Runnable)} or {@link #submit(Callable)} are still
+ * executed normally.
+ *
  * <p>This is used to make unit tests independent of time.
  */
 public class ScheduledTaskCapturingEventLoop extends DefaultEventLoop {
 
-  private final Queue<CapturedTask> capturedTasks = new ConcurrentLinkedQueue<>();
+  private final BlockingQueue<CapturedTask> capturedTasks = new ArrayBlockingQueue<>(100);
 
   public ScheduledTaskCapturingEventLoop(EventLoopGroup parent) {
     super(parent);
@@ -61,21 +68,70 @@ public class ScheduledTaskCapturingEventLoop extends DefaultEventLoop {
         unit);
   }
 
-  public CapturedTask<?> nextTask() {
-    return capturedTasks.poll();
+  @Override
+  public ScheduledFuture<?> scheduleAtFixedRate(
+      Runnable command, long initialDelay, long period, TimeUnit unit) {
+    CapturedTask<?> task =
+        new CapturedTask<>(
+            () -> {
+              command.run();
+              return null;
+            },
+            initialDelay,
+            period,
+            unit);
+    boolean added = capturedTasks.offer(task);
+    assertThat(added).isTrue();
+    return task.scheduledFuture;
   }
 
-  public static class CapturedTask<V> {
+  @Override
+  public ScheduledFuture<?> scheduleWithFixedDelay(
+      Runnable command, long initialDelay, long delay, TimeUnit unit) {
+    throw new UnsupportedOperationException("Not supported yet");
+  }
+
+  public CapturedTask<?> nextTask() {
+    try {
+      return capturedTasks.poll(100, TimeUnit.MILLISECONDS);
+    } catch (InterruptedException e) {
+      fail("Unexpected interruption", e);
+      throw new AssertionError();
+    }
+  }
+
+  /**
+   * Wait for any pending non-scheduled task (submitted with {@code submit}, {@code execute}, etc.)
+   * to complete.
+   */
+  public void waitForNonScheduledTasks() {
+    ScheduledFuture<Object> f = super.schedule(() -> null, 5, TimeUnit.NANOSECONDS);
+    try {
+      Uninterruptibles.getUninterruptibly(f, 100, TimeUnit.MILLISECONDS);
+    } catch (ExecutionException e) {
+      fail("unexpected error", e.getCause());
+    } catch (TimeoutException e) {
+      fail("timed out while waiting for admin tasks to complete", e);
+    }
+  }
+
+  public class CapturedTask<V> {
     private final FutureTask<V> futureTask;
-    private final long delay;
+    private final long initialDelay;
+    private final long period;
     private final TimeUnit unit;
 
     @SuppressWarnings("unchecked")
     private final ScheduledFuture<V> scheduledFuture = Mockito.mock(ScheduledFuture.class);
 
-    CapturedTask(Callable<V> task, long delay, TimeUnit unit) {
+    CapturedTask(Callable<V> task, long initialDelay, TimeUnit unit) {
+      this(task, initialDelay, -1, unit);
+    }
+
+    CapturedTask(Callable<V> task, long initialDelay, long period, TimeUnit unit) {
       this.futureTask = new FutureTask<>(task);
-      this.delay = delay;
+      this.initialDelay = initialDelay;
+      this.period = period;
       this.unit = unit;
 
       // If the code under test cancels the scheduled future, cancel our task
@@ -90,15 +146,21 @@ public class ScheduledTaskCapturingEventLoop extends DefaultEventLoop {
     }
 
     public void run() {
-      futureTask.run();
+      submit(futureTask);
+      waitForNonScheduledTasks();
     }
 
     public boolean isCancelled() {
       return futureTask.isCancelled();
     }
 
-    public long getDelay(TimeUnit targetUnit) {
-      return targetUnit.convert(delay, unit);
+    public long getInitialDelay(TimeUnit targetUnit) {
+      return targetUnit.convert(initialDelay, unit);
+    }
+
+    /** By convention, non-recurring tasks have a negative period */
+    public long getPeriod(TimeUnit targetUnit) {
+      return targetUnit.convert(period, unit);
     }
   }
 }

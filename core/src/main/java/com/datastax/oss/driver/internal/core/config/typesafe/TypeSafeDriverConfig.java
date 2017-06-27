@@ -40,8 +40,11 @@ public class TypeSafeDriverConfig implements DriverConfig {
   private final Collection<DriverOption> options;
   private final TypesafeDriverConfigProfile.Base defaultProfile;
   private final Map<String, TypesafeDriverConfigProfile.Base> profiles;
+  // Only used to detect if reload saw any change
+  private volatile Config lastLoadedConfig;
 
   public TypeSafeDriverConfig(Config config, DriverOption[]... optionArrays) {
+    this.lastLoadedConfig = config;
     this.options = merge(optionArrays);
 
     Map<String, Config> profileConfigs = extractProfiles(config);
@@ -63,24 +66,36 @@ public class TypeSafeDriverConfig implements DriverConfig {
     }
   }
 
-  public void reload(Config config) {
-    Map<String, Config> profileConfigs = extractProfiles(config);
-    this.defaultProfile.refresh(profileConfigs.get(DEFAULT_PROFILE_KEY));
-    if (profileConfigs.size() > 1) {
-      for (Map.Entry<String, Config> entry : profileConfigs.entrySet()) {
-        String profileName = entry.getKey();
-        if (!profileName.equals(DEFAULT_PROFILE_KEY)) {
-          TypesafeDriverConfigProfile.Base profile = this.profiles.get(profileName);
-          if (profile == null) {
-            LOG.warn(
-                String.format(
-                    "Unknown profile '%s' while reloading configuration. "
-                        + "Adding profiles at runtime is not supported.",
-                    profileName));
-          } else {
-            profile.refresh(entry.getValue());
+  /** @return whether the configuration changed */
+  public boolean reload(Config config) {
+    if (config.equals(lastLoadedConfig)) {
+      return false;
+    } else {
+      lastLoadedConfig = config;
+      try {
+        Map<String, Config> profileConfigs = extractProfiles(config);
+        this.defaultProfile.refresh(profileConfigs.get(DEFAULT_PROFILE_KEY));
+        if (profileConfigs.size() > 1) {
+          for (Map.Entry<String, Config> entry : profileConfigs.entrySet()) {
+            String profileName = entry.getKey();
+            if (!profileName.equals(DEFAULT_PROFILE_KEY)) {
+              TypesafeDriverConfigProfile.Base profile = this.profiles.get(profileName);
+              if (profile == null) {
+                LOG.warn(
+                    String.format(
+                        "Unknown profile '%s' while reloading configuration. "
+                            + "Adding profiles at runtime is not supported.",
+                        profileName));
+              } else {
+                profile.refresh(entry.getValue());
+              }
+            }
           }
         }
+        return true;
+      } catch (Throwable t) {
+        LOG.warn("Error reloading configuration, keeping previous one", t);
+        return false;
       }
     }
   }
