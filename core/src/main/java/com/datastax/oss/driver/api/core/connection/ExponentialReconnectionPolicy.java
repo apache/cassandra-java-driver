@@ -17,6 +17,7 @@ package com.datastax.oss.driver.api.core.connection;
 
 import com.datastax.oss.driver.api.core.config.CoreDriverOption;
 import com.datastax.oss.driver.api.core.config.DriverConfigProfile;
+import com.datastax.oss.driver.api.core.config.DriverOption;
 import com.datastax.oss.driver.api.core.context.DriverContext;
 import com.google.common.base.Preconditions;
 import java.time.Duration;
@@ -32,27 +33,28 @@ public class ExponentialReconnectionPolicy implements ReconnectionPolicy {
   private final long maxAttempts;
 
   /** Builds a new instance. */
-  public ExponentialReconnectionPolicy(DriverContext context) {
+  public ExponentialReconnectionPolicy(DriverContext context, DriverOption configRoot) {
     DriverConfigProfile config = context.config().defaultProfile();
-    this.baseDelayMs =
-        config.getDuration(CoreDriverOption.RECONNECTION_CONFIG_BASE_DELAY).toMillis();
-    this.maxDelayMs = config.getDuration(CoreDriverOption.RECONNECTION_CONFIG_MAX_DELAY).toMillis();
+    DriverOption baseDelayOption =
+        configRoot.concat(CoreDriverOption.RELATIVE_EXPONENTIAL_RECONNECTION_BASE_DELAY);
+    DriverOption maxDelayOption =
+        configRoot.concat(CoreDriverOption.RELATIVE_EXPONENTIAL_RECONNECTION_MAX_DELAY);
+
+    this.baseDelayMs = config.getDuration(baseDelayOption).toMillis();
+    this.maxDelayMs = config.getDuration(maxDelayOption).toMillis();
 
     Preconditions.checkArgument(
         baseDelayMs > 0,
         "%s must be strictly positive (got %s)",
-        CoreDriverOption.RECONNECTION_CONFIG_BASE_DELAY.getPath(),
+        baseDelayOption.getPath(),
         baseDelayMs);
     Preconditions.checkArgument(
-        maxDelayMs >= 0,
-        "%s must be positive (got %s)",
-        CoreDriverOption.RECONNECTION_CONFIG_MAX_DELAY.getPath(),
-        maxDelayMs);
+        maxDelayMs >= 0, "%s must be positive (got %s)", maxDelayOption.getPath(), maxDelayMs);
     Preconditions.checkArgument(
         maxDelayMs >= baseDelayMs,
         "%s must be bigger than %s (got %s, %s)",
-        CoreDriverOption.RECONNECTION_CONFIG_MAX_DELAY.getPath(),
-        CoreDriverOption.RECONNECTION_CONFIG_BASE_DELAY.getPath(),
+        maxDelayOption.getPath(),
+        baseDelayOption.getPath(),
         maxDelayMs,
         baseDelayMs);
 

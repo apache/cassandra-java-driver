@@ -15,6 +15,7 @@
  */
 package com.datastax.oss.driver.api.core.loadbalancing;
 
+import com.datastax.oss.driver.api.core.config.DriverOption;
 import com.datastax.oss.driver.api.core.context.DriverContext;
 import com.datastax.oss.driver.api.core.metadata.Node;
 import com.datastax.oss.driver.api.core.metadata.NodeState;
@@ -43,7 +44,9 @@ public class RoundRobinLoadBalancingPolicy implements LoadBalancingPolicy {
   private final CopyOnWriteArraySet<Node> liveNodes = new CopyOnWriteArraySet<>();
   private volatile DistanceReporter distanceReporter;
 
-  public RoundRobinLoadBalancingPolicy(@SuppressWarnings("unused") DriverContext context) {
+  public RoundRobinLoadBalancingPolicy(
+      @SuppressWarnings("unused") DriverContext context,
+      @SuppressWarnings("unused") DriverOption configRoot) {
     this.logPrefix = context.clusterName();
   }
 

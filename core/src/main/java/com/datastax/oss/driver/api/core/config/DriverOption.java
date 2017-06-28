@@ -20,4 +20,29 @@ public interface DriverOption {
   String getPath();
 
   boolean required();
+
+  /**
+   * Concatenates two options to build a longer path.
+   *
+   * <p>This is intended for options that can appear at different levels, for example arguments of
+   * policies that can be nested.
+   */
+  default DriverOption concat(DriverOption child) {
+    DriverOption parent = this;
+    // Not particularly efficient, but this will mainly be used for policies, which initialize at
+    // startup, so it should be good enough.
+    return new DriverOption() {
+      @Override
+      public String getPath() {
+        return parent.getPath() + "." + child.getPath();
+      }
+
+      @Override
+      public boolean required() {
+        // This property is only for initial validation of the configuration, and we can't validate
+        // nested fields because they are by definition not known in advance.
+        return false;
+      }
+    };
+  }
 }

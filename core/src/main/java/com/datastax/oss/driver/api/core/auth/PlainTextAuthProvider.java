@@ -17,6 +17,7 @@ package com.datastax.oss.driver.api.core.auth;
 
 import com.datastax.oss.driver.api.core.config.CoreDriverOption;
 import com.datastax.oss.driver.api.core.config.DriverConfigProfile;
+import com.datastax.oss.driver.api.core.config.DriverOption;
 import com.datastax.oss.driver.api.core.context.DriverContext;
 import com.google.common.base.Charsets;
 import java.net.SocketAddress;
@@ -26,17 +27,15 @@ import java.nio.ByteBuffer;
  * A simple authentication provider that supports SASL authentication using the PLAIN mechanism for
  * version 3 (or above) of the CQL native protocol.
  *
- * <p>To activate this provider, an {@code authentication} section must be included in the driver
+ * <p>To activate this provider, an {@code auth-provider} section must be included in the driver
  * configuration, for example:
  *
  * <pre>
  * datastax-java-driver {
- *   authentication {
- *     provider-class = com.datastax.driver.api.core.auth.PlainTextAuthProvider
- *     config {
- *       username = cassandra
- *       password = cassandra
- *     }
+ *   auth-provider {
+ *     class = com.datastax.driver.api.core.auth.PlainTextAuthProvider
+ *     username = cassandra
+ *     password = cassandra
  *   }
  * }
  * </pre>
@@ -46,16 +45,20 @@ import java.nio.ByteBuffer;
 public class PlainTextAuthProvider implements AuthProvider {
 
   private final DriverConfigProfile config;
+  private final DriverOption configRoot;
 
   /** Builds a new instance. */
-  public PlainTextAuthProvider(DriverContext context) {
+  public PlainTextAuthProvider(DriverContext context, DriverOption configRoot) {
     this.config = context.config().defaultProfile();
+    this.configRoot = configRoot;
   }
 
   @Override
   public Authenticator newAuthenticator(SocketAddress host, String serverAuthenticator) {
-    String username = config.getString(CoreDriverOption.AUTHENTICATION_CONFIG_USERNAME);
-    String password = config.getString(CoreDriverOption.AUTHENTICATION_CONFIG_PASSWORD);
+    String username =
+        config.getString(configRoot.concat(CoreDriverOption.RELATIVE_PLAIN_TEXT_AUTH_USERNAME));
+    String password =
+        config.getString(configRoot.concat(CoreDriverOption.RELATIVE_PLAIN_TEXT_AUTH_PASSWORD));
     return new PlainTextAuthenticator(username, password);
   }
 

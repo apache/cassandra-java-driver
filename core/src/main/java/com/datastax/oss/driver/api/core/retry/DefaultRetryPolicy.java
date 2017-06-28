@@ -16,6 +16,7 @@
 package com.datastax.oss.driver.api.core.retry;
 
 import com.datastax.oss.driver.api.core.ConsistencyLevel;
+import com.datastax.oss.driver.api.core.config.DriverOption;
 import com.datastax.oss.driver.api.core.context.DriverContext;
 import com.datastax.oss.driver.api.core.session.Request;
 
@@ -26,7 +27,9 @@ import com.datastax.oss.driver.api.core.session.Request;
  */
 public class DefaultRetryPolicy implements RetryPolicy {
 
-  public DefaultRetryPolicy(@SuppressWarnings("unused") DriverContext context) {
+  public DefaultRetryPolicy(
+      @SuppressWarnings("unused") DriverContext context,
+      @SuppressWarnings("unused") DriverOption configRoot) {
     // nothing to do
   }
 

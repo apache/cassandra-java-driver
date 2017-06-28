@@ -104,7 +104,9 @@ abstract class ChannelFactoryTestBase {
 
     Mockito.when(context.config()).thenReturn(driverConfig);
     Mockito.when(driverConfig.defaultProfile()).thenReturn(defaultConfigProfile);
-    Mockito.when(defaultConfigProfile.isDefined(CoreDriverOption.AUTHENTICATION_PROVIDER_CLASS))
+    Mockito.when(
+            defaultConfigProfile.isDefined(
+                CoreDriverOption.AUTH_PROVIDER_ROOT.concat(CoreDriverOption.RELATIVE_POLICY_CLASS)))
         .thenReturn(false);
     Mockito.when(defaultConfigProfile.getDuration(CoreDriverOption.CONNECTION_INIT_QUERY_TIMEOUT))
         .thenReturn(Duration.ofMillis(100));

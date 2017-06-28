@@ -22,6 +22,7 @@ import com.datastax.oss.driver.api.core.config.CoreDriverOption;
 import com.datastax.oss.driver.api.core.config.DriverConfig;
 import com.datastax.oss.driver.api.core.config.DriverConfigLoader;
 import com.datastax.oss.driver.api.core.config.DriverConfigProfile;
+import com.datastax.oss.driver.api.core.config.DriverOption;
 import com.datastax.oss.driver.api.core.connection.ReconnectionPolicy;
 import com.datastax.oss.driver.api.core.loadbalancing.LoadBalancingPolicy;
 import com.datastax.oss.driver.api.core.retry.RetryPolicy;
@@ -140,66 +141,65 @@ public class DefaultDriverContext implements InternalDriverContext {
   }
 
   protected LoadBalancingPolicy buildLoadBalancingPolicy() {
-    CoreDriverOption classOption = CoreDriverOption.LOAD_BALANCING_POLICY_CLASS;
-    return Reflection.buildFromConfig(this, classOption, LoadBalancingPolicy.class)
+    DriverOption rootOption = CoreDriverOption.LOAD_BALANCING_POLICY_ROOT;
+    return Reflection.buildFromConfig(this, rootOption, LoadBalancingPolicy.class)
         .orElseThrow(
             () ->
                 new IllegalArgumentException(
                     String.format(
                         "Missing load balancing policy, check your configuration (%s)",
-                        classOption)));
+                        rootOption)));
   }
 
   protected ReconnectionPolicy buildReconnectionPolicy() {
-    CoreDriverOption classOption = CoreDriverOption.RECONNECTION_POLICY_CLASS;
-    return Reflection.buildFromConfig(this, classOption, ReconnectionPolicy.class)
+    CoreDriverOption rootOption = CoreDriverOption.RECONNECTION_POLICY_ROOT;
+    return Reflection.buildFromConfig(this, rootOption, ReconnectionPolicy.class)
         .orElseThrow(
             () ->
                 new IllegalArgumentException(
                     String.format(
-                        "Missing reconnection policy, check your configuration (%s)",
-                        classOption)));
+                        "Missing reconnection policy, check your configuration (%s)", rootOption)));
   }
 
   protected RetryPolicy buildRetryPolicy() {
-    CoreDriverOption classOption = CoreDriverOption.RETRY_POLICY_CLASS;
-    return Reflection.buildFromConfig(this, classOption, RetryPolicy.class)
+    CoreDriverOption rootOption = CoreDriverOption.RETRY_POLICY_ROOT;
+    return Reflection.buildFromConfig(this, rootOption, RetryPolicy.class)
         .orElseThrow(
             () ->
                 new IllegalArgumentException(
                     String.format(
-                        "Missing retry policy, check your configuration (%s)", classOption)));
+                        "Missing retry policy, check your configuration (%s)", rootOption)));
   }
 
   protected SpeculativeExecutionPolicy buildSpeculativeExecutionPolicy() {
-    CoreDriverOption classOption = CoreDriverOption.SPECULATIVE_EXECUTION_POLICY_CLASS;
-    return Reflection.buildFromConfig(this, classOption, SpeculativeExecutionPolicy.class)
+    CoreDriverOption rootOption = CoreDriverOption.SPECULATIVE_EXECUTION_POLICY_ROOT;
+    return Reflection.buildFromConfig(this, rootOption, SpeculativeExecutionPolicy.class)
         .orElseThrow(
             () ->
                 new IllegalArgumentException(
                     String.format(
                         "Missing speculative execution policy, check your configuration (%s)",
-                        classOption)));
+                        rootOption)));
   }
 
   protected AddressTranslator buildAddressTranslator() {
-    CoreDriverOption classOption = CoreDriverOption.ADDRESS_TRANSLATOR_CLASS;
-    return Reflection.buildFromConfig(this, classOption, AddressTranslator.class)
+    CoreDriverOption rootOption = CoreDriverOption.ADDRESS_TRANSLATOR_ROOT;
+    return Reflection.buildFromConfig(this, rootOption, AddressTranslator.class)
         .orElseThrow(
             () ->
                 new IllegalArgumentException(
                     String.format(
-                        "Missing address translator, check your configuration (%s)", classOption)));
+                        "Missing address translator, check your configuration (%s)", rootOption)));
   }
 
   protected Optional<AuthProvider> buildAuthProvider() {
     return Reflection.buildFromConfig(
-        this, CoreDriverOption.AUTHENTICATION_PROVIDER_CLASS, AuthProvider.class);
+        this, CoreDriverOption.AUTH_PROVIDER_ROOT, AuthProvider.class);
   }
 
   protected Optional<SslEngineFactory> buildSslEngineFactory() {
     return Reflection.buildFromConfig(
-        this, CoreDriverOption.SSL_FACTORY_CLASS, SslEngineFactory.class);
+        this, CoreDriverOption.SSL_ENGINE_FACTORY_ROOT, SslEngineFactory.class);
   }
 
   protected EventBus buildEventBus() {

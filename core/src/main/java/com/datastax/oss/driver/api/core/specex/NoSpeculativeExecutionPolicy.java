@@ -16,13 +16,16 @@
 package com.datastax.oss.driver.api.core.specex;
 
 import com.datastax.oss.driver.api.core.CqlIdentifier;
+import com.datastax.oss.driver.api.core.config.DriverOption;
 import com.datastax.oss.driver.api.core.context.DriverContext;
 import com.datastax.oss.driver.api.core.session.Request;
 
 /** A policy that never triggers speculative executions. */
 public class NoSpeculativeExecutionPolicy implements SpeculativeExecutionPolicy {
 
-  public NoSpeculativeExecutionPolicy(@SuppressWarnings("unused") DriverContext context) {
+  public NoSpeculativeExecutionPolicy(
+      @SuppressWarnings("unused") DriverContext context,
+      @SuppressWarnings("unused") DriverOption configRoot) {
     // nothing to do
   }
 

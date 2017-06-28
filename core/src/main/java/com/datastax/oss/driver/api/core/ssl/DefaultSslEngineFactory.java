@@ -17,6 +17,7 @@ package com.datastax.oss.driver.api.core.ssl;
 
 import com.datastax.oss.driver.api.core.config.CoreDriverOption;
 import com.datastax.oss.driver.api.core.config.DriverConfigProfile;
+import com.datastax.oss.driver.api.core.config.DriverOption;
 import com.datastax.oss.driver.api.core.context.DriverContext;
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
@@ -28,16 +29,14 @@ import javax.net.ssl.SSLEngine;
 /**
  * Default SSL implementation.
  *
- * <p>To activate this class, an {@code ssl} section must be included in the driver configuration,
- * for example:
+ * <p>To activate this class, an {@code ssl-engine-factory} section must be included in the driver
+ * configuration, for example:
  *
  * <pre>
  * datastax-java-driver {
- *   ssl {
- *     factory-class = com.datastax.driver.api.core.ssl.DefaultSslEngineFactory
- *     config {
- *       cipher-suites = [ "TLS_RSA_WITH_AES_128_CBC_SHA", "TLS_RSA_WITH_AES_256_CBC_SHA" ]
- *     }
+ *   ssl-engine-factory {
+ *     class = com.datastax.driver.api.core.ssl.DefaultSslEngineFactory
+ *     cipher-suites = [ "TLS_RSA_WITH_AES_128_CBC_SHA", "TLS_RSA_WITH_AES_256_CBC_SHA" ]
  *   }
  * }
  * </pre>
@@ -50,15 +49,17 @@ public class DefaultSslEngineFactory implements SslEngineFactory {
   private final String[] cipherSuites;
 
   /** Builds a new instance from the driver configuration. */
-  public DefaultSslEngineFactory(DriverContext driverContext) {
+  public DefaultSslEngineFactory(DriverContext driverContext, DriverOption configRoot) {
     try {
       this.sslContext = SSLContext.getDefault();
     } catch (NoSuchAlgorithmException e) {
       throw new IllegalStateException("Cannot initialize SSL Context", e);
     }
     DriverConfigProfile config = driverContext.config().defaultProfile();
-    if (config.isDefined(CoreDriverOption.SSL_CONFIG_CIPHER_SUITES)) {
-      List<String> list = config.getStringList(CoreDriverOption.SSL_CONFIG_CIPHER_SUITES);
+    DriverOption cipherSuiteOption =
+        configRoot.concat(CoreDriverOption.RELATIVE_DEFAULT_SSL_CIPHER_SUITES);
+    if (config.isDefined(cipherSuiteOption)) {
+      List<String> list = config.getStringList(cipherSuiteOption);
       String tmp[] = new String[list.size()];
       this.cipherSuites = list.toArray(tmp);
     } else {

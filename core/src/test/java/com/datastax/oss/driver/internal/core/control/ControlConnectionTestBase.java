@@ -17,6 +17,7 @@ package com.datastax.oss.driver.internal.core.control;
 
 import com.datastax.oss.driver.api.core.addresstranslation.AddressTranslator;
 import com.datastax.oss.driver.api.core.addresstranslation.PassThroughAddressTranslator;
+import com.datastax.oss.driver.api.core.config.CoreDriverOption;
 import com.datastax.oss.driver.api.core.connection.ReconnectionPolicy;
 import com.datastax.oss.driver.api.core.metadata.Node;
 import com.datastax.oss.driver.internal.core.channel.ChannelFactory;
@@ -113,7 +114,9 @@ abstract class ControlConnectionTestBase {
         .thenReturn(CompletableFuture.completedFuture(null));
     Mockito.when(context.metadataManager()).thenReturn(metadataManager);
 
-    addressTranslator = Mockito.spy(new PassThroughAddressTranslator(context));
+    addressTranslator =
+        Mockito.spy(
+            new PassThroughAddressTranslator(context, CoreDriverOption.ADDRESS_TRANSLATOR_ROOT));
     Mockito.when(context.addressTranslator()).thenReturn(addressTranslator);
 
     controlConnection = new ControlConnection(context);

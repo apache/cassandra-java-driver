@@ -43,15 +43,18 @@ public enum CoreDriverOption implements DriverOption {
   CONTROL_CONNECTION_TIMEOUT("connection.control-connection.timeout", true),
   CONTROL_CONNECTION_PAGE_SIZE("connection.control-connection.page-size", true),
 
-  RETRY_POLICY_CLASS("retry.policy-class", true),
+  // "Sub-option" for all the policies, etc.
+  RELATIVE_POLICY_CLASS("class", false),
 
-  LOAD_BALANCING_POLICY_CLASS("load-balancing.policy-class", true),
+  RETRY_POLICY_ROOT("retry-policy", true),
 
-  SPECULATIVE_EXECUTION_POLICY_CLASS("speculative-execution.policy-class", true),
+  LOAD_BALANCING_POLICY_ROOT("load-balancing-policy", true),
 
-  RECONNECTION_POLICY_CLASS("connection.reconnection.policy-class", true),
-  RECONNECTION_CONFIG_BASE_DELAY("connection.reconnection.config.base-delay", true),
-  RECONNECTION_CONFIG_MAX_DELAY("connection.reconnection.config.max-delay", true),
+  SPECULATIVE_EXECUTION_POLICY_ROOT("speculative-execution-policy", true),
+
+  RECONNECTION_POLICY_ROOT("connection.reconnection-policy", true),
+  RELATIVE_EXPONENTIAL_RECONNECTION_BASE_DELAY("connection.reconnection.config.base-delay", false),
+  RELATIVE_EXPONENTIAL_RECONNECTION_MAX_DELAY("connection.reconnection.config.max-delay", false),
 
   PREPARE_ON_ALL_NODES("prepared-statements.prepare-on-all-nodes", true),
   REPREPARE_ENABLED("prepared-statements.reprepare-on-up.enabled", true),
@@ -63,14 +66,14 @@ public enum CoreDriverOption implements DriverOption {
   POOLING_LOCAL_CONNECTIONS("pooling.local.connections", true),
   POOLING_REMOTE_CONNECTIONS("pooling.remote.connections", true),
 
-  ADDRESS_TRANSLATOR_CLASS("address-translation.translator-class", true),
+  ADDRESS_TRANSLATOR_ROOT("address-translator", true),
 
-  AUTHENTICATION_PROVIDER_CLASS("authentication.provider-class", false),
-  AUTHENTICATION_CONFIG_USERNAME("authentication.config.username", false),
-  AUTHENTICATION_CONFIG_PASSWORD("authentication.config.password", false),
+  AUTH_PROVIDER_ROOT("auth-provider", false),
+  RELATIVE_PLAIN_TEXT_AUTH_USERNAME("username", false),
+  RELATIVE_PLAIN_TEXT_AUTH_PASSWORD("password", false),
 
-  SSL_FACTORY_CLASS("ssl.factory-class", false),
-  SSL_CONFIG_CIPHER_SUITES("ssl.config.cipher-suites", false),
+  SSL_ENGINE_FACTORY_ROOT("ssl-engine-factory", false),
+  RELATIVE_DEFAULT_SSL_CIPHER_SUITES("ssl.config.cipher-suites", false),
 
   METADATA_TOPOLOGY_WINDOW("metadata.topology-event-debouncer.window", true),
   METADATA_TOPOLOGY_MAX_EVENTS("metadata.topology-event-debouncer.max-events", true),

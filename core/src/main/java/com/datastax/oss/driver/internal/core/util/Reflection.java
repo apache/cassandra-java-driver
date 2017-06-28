@@ -15,6 +15,7 @@
  */
 package com.datastax.oss.driver.internal.core.util;
 
+import com.datastax.oss.driver.api.core.config.CoreDriverOption;
 import com.datastax.oss.driver.api.core.config.DriverConfigProfile;
 import com.datastax.oss.driver.api.core.config.DriverOption;
 import com.datastax.oss.driver.api.core.context.DriverContext;
@@ -46,24 +47,36 @@ public class Reflection {
   }
 
   /**
-   * Tries to create an instance of a class, given its name defined in the driver configuration.
+   * Tries to create an instance of a class, given a set of options defined in the driver
+   * configuration.
    *
-   * <p>By convention, a class instantiated through this method must have a constructor that takes a
-   * {@link DriverContext} as its single argument.
+   * <p>For example:
+   *
+   * <pre>
+   * my-policy {
+   *   class = my.package.MyPolicyImpl
+   *   arg1 = some custom option
+   * }
+   * </pre>
+   *
+   * The {@code class} option is mandatory and will be used to construct the instance via
+   * reflection. It must have a constructor that takes two arguments: the {@link DriverContext}, and
+   * a {@link DriverOption} that represents the configuration root ({@code my-policy} in the example
+   * above).
    *
    * @param context the driver context.
-   * @param classNameOption the configuration option that contains the fully-qualified name of the
-   *     class to instantiate. It will be looked up in the default profile of the configuration
-   *     stored in the context.
+   * @param rootOption the root of the set of options that configures the class. It will be looked
+   *     up in the default profile of the configuration stored in the context.
    * @param expectedSuperType a super-type that the class is expected to implement/extend.
-   * @return the new instance, or empty if {@code classNameOption} is not defined in the
-   *     configuration.
+   * @return the new instance, or empty if {@code rootOption} or the class sub-option is not defined
+   *     in the configuration.
    */
   public static <T> Optional<T> buildFromConfig(
-      DriverContext context, DriverOption classNameOption, Class<T> expectedSuperType) {
+      DriverContext context, DriverOption rootOption, Class<T> expectedSuperType) {
 
     DriverConfigProfile config = context.config().defaultProfile();
 
+    DriverOption classNameOption = rootOption.concat(CoreDriverOption.RELATIVE_POLICY_CLASS);
     if (!config.isDefined(classNameOption)) {
       return Optional.empty();
     }
@@ -80,7 +93,7 @@ public class Reflection {
 
     Constructor<?> constructor;
     try {
-      constructor = clazz.getConstructor(DriverContext.class);
+      constructor = clazz.getConstructor(DriverContext.class, DriverOption.class);
     } catch (NoSuchMethodException e) {
       throw new IllegalArgumentException(
           String.format(
@@ -89,7 +102,7 @@ public class Reflection {
               className, configPath, DriverConfigProfile.class.getSimpleName()));
     }
     try {
-      Object instance = constructor.newInstance(context);
+      Object instance = constructor.newInstance(context, rootOption);
       return Optional.of(expectedSuperType.cast(instance));
     } catch (Exception e) {
       throw new IllegalArgumentException(
