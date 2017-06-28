@@ -27,6 +27,7 @@ import com.datastax.oss.driver.internal.core.channel.ChannelFactory;
 import com.datastax.oss.driver.internal.core.channel.ClusterNameMismatchException;
 import com.datastax.oss.driver.internal.core.channel.DriverChannel;
 import com.datastax.oss.driver.internal.core.channel.DriverChannelOptions;
+import com.datastax.oss.driver.internal.core.config.ConfigChangeEvent;
 import com.datastax.oss.driver.internal.core.context.EventBus;
 import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
 import com.datastax.oss.driver.internal.core.metadata.TopologyEvent;
@@ -184,7 +185,9 @@ public class ChannelPool implements AsyncAutoCloseable {
     // The channels that are currently connecting
     private final List<CompletionStage<DriverChannel>> pendingChannels = new ArrayList<>();
     private final Reconnection reconnection;
+    private final Object configListenerKey;
 
+    private NodeDistance distance;
     private int wantedCount;
     private CompletableFuture<ChannelPool> connectFuture = new CompletableFuture<>();
     private boolean isConnecting;
@@ -198,7 +201,8 @@ public class ChannelPool implements AsyncAutoCloseable {
         CqlIdentifier keyspaceName, NodeDistance distance, InternalDriverContext context) {
       this.keyspaceName = keyspaceName;
       this.config = context.config();
-      this.wantedCount = computeSize(distance);
+      this.distance = distance;
+      this.wantedCount = getConfiguredSize(distance);
       this.channelFactory = context.channelFactory();
       this.eventBus = context.eventBus();
       this.reconnection =
@@ -209,6 +213,9 @@ public class ChannelPool implements AsyncAutoCloseable {
               this::addMissingChannels,
               () -> eventBus.fire(ChannelEvent.reconnectionStarted(node)),
               () -> eventBus.fire(ChannelEvent.reconnectionStopped(node)));
+      this.configListenerKey =
+          eventBus.register(
+              ConfigChangeEvent.class, RunOrSchedule.on(adminExecutor, this::onConfigChanged));
     }
 
     private void connect() {
@@ -332,7 +339,8 @@ public class ChannelPool implements AsyncAutoCloseable {
 
     private void resize(NodeDistance newDistance) {
       assert adminExecutor.inEventLoop();
-      int newChannelCount = computeSize(newDistance);
+      distance = newDistance;
+      int newChannelCount = getConfiguredSize(newDistance);
       if (newChannelCount > wantedCount) {
         LOG.debug("[{}] Growing ({} => {} channels)", logPrefix, wantedCount, newChannelCount);
         wantedCount = newChannelCount;
@@ -366,6 +374,13 @@ public class ChannelPool implements AsyncAutoCloseable {
           eventBus.fire(ChannelEvent.channelClosed(node));
         }
       }
+    }
+
+    private void onConfigChanged(@SuppressWarnings("unused") ConfigChangeEvent event) {
+      assert adminExecutor.inEventLoop();
+      // resize re-reads the pool size from the configuration and does nothing if it hasn't changed,
+      // which is exactly what we want.
+      resize(distance);
     }
 
     private CompletionStage<Void> setKeyspace(CqlIdentifier newKeyspaceName) {
@@ -404,6 +419,7 @@ public class ChannelPool implements AsyncAutoCloseable {
       isClosing = true;
 
       reconnection.stop();
+      eventBus.unregister(configListenerKey, ConfigChangeEvent.class);
 
       forAllChannels(
           channel -> {
@@ -449,7 +465,7 @@ public class ChannelPool implements AsyncAutoCloseable {
       }
     }
 
-    private int computeSize(NodeDistance distance) {
+    private int getConfiguredSize(NodeDistance distance) {
       return config
           .defaultProfile()
           .getInt(

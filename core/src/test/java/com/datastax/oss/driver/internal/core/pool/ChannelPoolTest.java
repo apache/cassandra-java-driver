@@ -29,6 +29,7 @@ import com.datastax.oss.driver.internal.core.channel.ChannelFactory;
 import com.datastax.oss.driver.internal.core.channel.ClusterNameMismatchException;
 import com.datastax.oss.driver.internal.core.channel.DriverChannel;
 import com.datastax.oss.driver.internal.core.channel.MockChannelFactoryHelper;
+import com.datastax.oss.driver.internal.core.config.ConfigChangeEvent;
 import com.datastax.oss.driver.internal.core.context.EventBus;
 import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
 import com.datastax.oss.driver.internal.core.context.NettyOptions;
@@ -71,8 +72,8 @@ public class ChannelPoolTest {
   @Mock private ReconnectionPolicy reconnectionPolicy;
   @Mock private ReconnectionSchedule reconnectionSchedule;
   @Mock private NettyOptions nettyOptions;
-  @Mock private EventBus eventBus;
   @Mock private ChannelFactory channelFactory;
+  private EventBus eventBus;
   private DefaultEventLoopGroup adminEventLoopGroup;
 
   @BeforeMethod
@@ -85,6 +86,7 @@ public class ChannelPoolTest {
     Mockito.when(nettyOptions.adminEventExecutorGroup()).thenReturn(adminEventLoopGroup);
     Mockito.when(context.config()).thenReturn(config);
     Mockito.when(config.defaultProfile()).thenReturn(defaultProfile);
+    this.eventBus = Mockito.spy(new EventBus("test"));
     Mockito.when(context.eventBus()).thenReturn(eventBus);
     Mockito.when(context.channelFactory()).thenReturn(channelFactory);
 
@@ -509,6 +511,167 @@ public class ChannelPoolTest {
     inOrder.verify(eventBus).fire(ChannelEvent.reconnectionStopped(NODE));
 
     assertThat(pool.channels).containsOnly(channel1, channel2, channel3, channel4);
+
+    factoryHelper.verifyNoMoreCalls();
+  }
+
+  @Test
+  public void should_resize_outside_of_reconnection_if_config_changes() throws Exception {
+    Mockito.when(reconnectionSchedule.nextDelay()).thenReturn(Duration.ofNanos(1));
+
+    Mockito.when(defaultProfile.getInt(CoreDriverOption.POOLING_LOCAL_CONNECTIONS)).thenReturn(2);
+
+    DriverChannel channel1 = newMockDriverChannel(1);
+    DriverChannel channel2 = newMockDriverChannel(2);
+    DriverChannel channel3 = newMockDriverChannel(3);
+    DriverChannel channel4 = newMockDriverChannel(4);
+    MockChannelFactoryHelper factoryHelper =
+        MockChannelFactoryHelper.builder(channelFactory)
+            // init
+            .success(ADDRESS, channel1)
+            .success(ADDRESS, channel2)
+            // growth attempt
+            .success(ADDRESS, channel3)
+            .success(ADDRESS, channel4)
+            .build();
+    InOrder inOrder = Mockito.inOrder(eventBus);
+
+    CompletionStage<ChannelPool> poolFuture =
+        ChannelPool.init(NODE, null, NodeDistance.LOCAL, context, "test");
+
+    factoryHelper.waitForCalls(ADDRESS, 2);
+    waitForPendingAdminTasks();
+    inOrder.verify(eventBus, times(2)).fire(ChannelEvent.channelOpened(NODE));
+
+    assertThat(poolFuture).isSuccess();
+    ChannelPool pool = poolFuture.toCompletableFuture().get();
+    assertThat(pool.channels).containsOnly(channel1, channel2);
+
+    // Simulate a configuration change
+    Mockito.when(defaultProfile.getInt(CoreDriverOption.POOLING_LOCAL_CONNECTIONS)).thenReturn(4);
+    eventBus.fire(ConfigChangeEvent.INSTANCE);
+    waitForPendingAdminTasks();
+
+    // It should have triggered a reconnection
+    Mockito.verify(reconnectionSchedule).nextDelay();
+    inOrder.verify(eventBus).fire(ChannelEvent.reconnectionStarted(NODE));
+
+    factoryHelper.waitForCalls(ADDRESS, 2);
+    waitForPendingAdminTasks();
+    inOrder.verify(eventBus, times(2)).fire(ChannelEvent.channelOpened(NODE));
+    inOrder.verify(eventBus).fire(ChannelEvent.reconnectionStopped(NODE));
+
+    assertThat(pool.channels).containsOnly(channel1, channel2, channel3, channel4);
+
+    factoryHelper.verifyNoMoreCalls();
+  }
+
+  @Test
+  public void should_resize_during_reconnection_if_config_changes() throws Exception {
+    Mockito.when(reconnectionSchedule.nextDelay()).thenReturn(Duration.ofNanos(1));
+
+    Mockito.when(defaultProfile.getInt(CoreDriverOption.POOLING_LOCAL_CONNECTIONS)).thenReturn(2);
+
+    DriverChannel channel1 = newMockDriverChannel(1);
+    DriverChannel channel2 = newMockDriverChannel(2);
+    CompletableFuture<DriverChannel> channel2Future = new CompletableFuture<>();
+    DriverChannel channel3 = newMockDriverChannel(3);
+    CompletableFuture<DriverChannel> channel3Future = new CompletableFuture<>();
+    DriverChannel channel4 = newMockDriverChannel(4);
+    CompletableFuture<DriverChannel> channel4Future = new CompletableFuture<>();
+    MockChannelFactoryHelper factoryHelper =
+        MockChannelFactoryHelper.builder(channelFactory)
+            // init
+            .success(ADDRESS, channel1)
+            .failure(ADDRESS, "mock channel init failure")
+            // first reconnection attempt
+            .pending(ADDRESS, channel2Future)
+            // extra reconnection attempt after we realize the pool must grow
+            .pending(ADDRESS, channel3Future)
+            .pending(ADDRESS, channel4Future)
+            .build();
+    InOrder inOrder = Mockito.inOrder(eventBus);
+
+    CompletionStage<ChannelPool> poolFuture =
+        ChannelPool.init(NODE, null, NodeDistance.LOCAL, context, "test");
+
+    factoryHelper.waitForCalls(ADDRESS, 2);
+    waitForPendingAdminTasks();
+    inOrder.verify(eventBus).fire(ChannelEvent.channelOpened(NODE));
+
+    assertThat(poolFuture).isSuccess();
+    ChannelPool pool = poolFuture.toCompletableFuture().get();
+    assertThat(pool.channels).containsOnly(channel1);
+
+    // A reconnection should have been scheduled to add the missing channel, don't complete yet
+    Mockito.verify(reconnectionSchedule).nextDelay();
+    inOrder.verify(eventBus).fire(ChannelEvent.reconnectionStarted(NODE));
+
+    // Simulate a configuration change
+    Mockito.when(defaultProfile.getInt(CoreDriverOption.POOLING_LOCAL_CONNECTIONS)).thenReturn(4);
+    eventBus.fire(ConfigChangeEvent.INSTANCE);
+    waitForPendingAdminTasks();
+
+    // Complete the channel for the first reconnection, bringing the count to 2
+    channel2Future.complete(channel2);
+    factoryHelper.waitForCall(ADDRESS);
+    waitForPendingAdminTasks();
+    inOrder.verify(eventBus).fire(ChannelEvent.channelOpened(NODE));
+
+    assertThat(pool.channels).containsOnly(channel1, channel2);
+
+    // A second attempt should have been scheduled since we're now still under the target size
+    Mockito.verify(reconnectionSchedule, times(2)).nextDelay();
+    // Same reconnection is still running, no additional events
+    inOrder.verify(eventBus, never()).fire(ChannelEvent.reconnectionStopped(NODE));
+    inOrder.verify(eventBus, never()).fire(ChannelEvent.reconnectionStarted(NODE));
+
+    // Two more channels get opened, bringing us to the target count
+    factoryHelper.waitForCalls(ADDRESS, 2);
+    channel3Future.complete(channel3);
+    channel4Future.complete(channel4);
+    waitForPendingAdminTasks();
+    inOrder.verify(eventBus, times(2)).fire(ChannelEvent.channelOpened(NODE));
+    inOrder.verify(eventBus).fire(ChannelEvent.reconnectionStopped(NODE));
+
+    assertThat(pool.channels).containsOnly(channel1, channel2, channel3, channel4);
+
+    factoryHelper.verifyNoMoreCalls();
+  }
+
+  @Test
+  public void should_ignore_config_change_if_not_relevant() throws Exception {
+    Mockito.when(reconnectionSchedule.nextDelay()).thenReturn(Duration.ofNanos(1));
+
+    Mockito.when(defaultProfile.getInt(CoreDriverOption.POOLING_LOCAL_CONNECTIONS)).thenReturn(2);
+
+    DriverChannel channel1 = newMockDriverChannel(1);
+    DriverChannel channel2 = newMockDriverChannel(2);
+    MockChannelFactoryHelper factoryHelper =
+        MockChannelFactoryHelper.builder(channelFactory)
+            .success(ADDRESS, channel1)
+            .success(ADDRESS, channel2)
+            .build();
+    InOrder inOrder = Mockito.inOrder(eventBus);
+
+    CompletionStage<ChannelPool> poolFuture =
+        ChannelPool.init(NODE, null, NodeDistance.LOCAL, context, "test");
+
+    factoryHelper.waitForCalls(ADDRESS, 2);
+    waitForPendingAdminTasks();
+    inOrder.verify(eventBus, times(2)).fire(ChannelEvent.channelOpened(NODE));
+
+    assertThat(poolFuture).isSuccess();
+    ChannelPool pool = poolFuture.toCompletableFuture().get();
+    assertThat(pool.channels).containsOnly(channel1, channel2);
+
+    // Config changes, but not for our distance
+    Mockito.when(defaultProfile.getInt(CoreDriverOption.POOLING_REMOTE_CONNECTIONS)).thenReturn(1);
+    eventBus.fire(ConfigChangeEvent.INSTANCE);
+    waitForPendingAdminTasks();
+
+    // It should not have triggered a reconnection
+    Mockito.verify(reconnectionSchedule, never()).nextDelay();
 
     factoryHelper.verifyNoMoreCalls();
   }
