@@ -16,7 +16,6 @@
 package com.datastax.oss.driver.api.core;
 
 import com.datastax.oss.driver.api.core.config.CoreDriverOption;
-import com.datastax.oss.driver.api.core.config.DriverConfig;
 import com.datastax.oss.driver.api.core.config.DriverConfigLoader;
 import com.datastax.oss.driver.api.core.config.DriverConfigProfile;
 import com.datastax.oss.driver.api.core.type.codec.TypeCodec;
@@ -28,6 +27,7 @@ import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
 import com.datastax.oss.driver.internal.core.util.concurrent.BlockingOperation;
 import com.datastax.oss.driver.internal.core.util.concurrent.CompletableFutures;
 import java.net.InetSocketAddress;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
@@ -40,7 +40,7 @@ import java.util.function.Supplier;
 public class ClusterBuilder {
   private DriverConfigLoader configLoader;
   private Set<InetSocketAddress> programmaticContactPoints = new HashSet<>();
-  private List<TypeCodec<?>> typeCodecs = Collections.emptyList();
+  private List<TypeCodec<?>> typeCodecs = new ArrayList<>();
 
   /**
    * Sets the configuration loader to use.
@@ -111,8 +111,8 @@ public class ClusterBuilder {
   }
 
   /** Registers additional codecs for custom type mappings. */
-  public ClusterBuilder withTypeCodecs(List<TypeCodec<?>> typeCodecs) {
-    this.typeCodecs = typeCodecs;
+  public ClusterBuilder addTypeCodecs(TypeCodec<?>... typeCodecs) {
+    Collections.addAll(this.typeCodecs, typeCodecs);
     return this;
   }
 
