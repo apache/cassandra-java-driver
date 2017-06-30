@@ -28,13 +28,13 @@ import com.datastax.oss.protocol.internal.Frame;
 import com.datastax.oss.protocol.internal.Message;
 import com.datastax.oss.protocol.internal.request.Query;
 import com.datastax.oss.protocol.internal.response.result.SetKeyspace;
-import com.google.common.collect.Maps;
+import com.google.common.collect.BiMap;
+import com.google.common.collect.HashBiMap;
 import io.netty.channel.ChannelDuplexHandler;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelPromise;
 import io.netty.util.concurrent.Promise;
-import java.util.Map;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -44,28 +44,35 @@ public class InFlightHandler extends ChannelDuplexHandler {
 
   private final ProtocolVersion protocolVersion;
   private final StreamIdGenerator streamIds;
+  final ChannelPromise closeStartedFuture;
   private final String ownerLogPrefix;
-  private final Map<Integer, ResponseCallback> inFlight;
+  private final BiMap<Integer, ResponseCallback> inFlight;
   private final long setKeyspaceTimeoutMillis;
   private final AvailableIdsHolder availableIdsHolder;
   private final EventCallback eventCallback;
+  private final int maxOrphanStreamIds;
   private boolean closingGracefully;
   private SetKeyspaceRequest setKeyspaceRequest;
   private String logPrefix;
+  private int orphanStreamIds;
 
   InFlightHandler(
       ProtocolVersion protocolVersion,
       StreamIdGenerator streamIds,
+      int maxOrphanStreamIds,
       long setKeyspaceTimeoutMillis,
       AvailableIdsHolder availableIdsHolder,
+      ChannelPromise closeStartedFuture,
       EventCallback eventCallback,
       String ownerLogPrefix) {
     this.protocolVersion = protocolVersion;
     this.streamIds = streamIds;
+    this.maxOrphanStreamIds = maxOrphanStreamIds;
+    this.closeStartedFuture = closeStartedFuture;
     this.ownerLogPrefix = ownerLogPrefix;
     this.logPrefix = ownerLogPrefix + "|connecting...";
     reportAvailableIds();
-    this.inFlight = Maps.newHashMapWithExpectedSize(streamIds.getMaxAvailableIds());
+    this.inFlight = HashBiMap.create(streamIds.getMaxAvailableIds());
     this.setKeyspaceTimeoutMillis = setKeyspaceTimeoutMillis;
     this.availableIdsHolder = availableIdsHolder;
     this.eventCallback = eventCallback;
@@ -81,29 +88,27 @@ public class InFlightHandler extends ChannelDuplexHandler {
   @Override
   public void write(ChannelHandlerContext ctx, Object in, ChannelPromise promise) throws Exception {
     if (in == DriverChannel.GRACEFUL_CLOSE_MESSAGE) {
-      if (inFlight.isEmpty()) {
-        LOG.debug(
-            "[{}] Received graceful close request and no pending queries, closing now", logPrefix);
-        ctx.channel().close();
-      } else {
-        LOG.debug(
-            "[{}] Received graceful close request, waiting for pending queries to complete",
-            logPrefix);
-        closingGracefully = true;
-      }
-      return;
+      LOG.debug("[{}] Received graceful close request", logPrefix);
+      startGracefulShutdown(ctx);
     } else if (in == DriverChannel.FORCEFUL_CLOSE_MESSAGE) {
       LOG.debug("[{}] Received forceful close request, aborting pending queries", logPrefix);
       abortAllInFlight(new ClosedConnectionException("Channel was force-closed"));
       ctx.channel().close();
-      return;
     } else if (in instanceof HeartbeatException) {
       abortAllInFlight(
           new ClosedConnectionException("Heartbeat query failed", ((HeartbeatException) in)));
       ctx.close();
+    } else if (in instanceof RequestMessage) {
+      write(ctx, (RequestMessage) in, promise);
+    } else if (in instanceof ResponseCallback) {
+      cancel(ctx, (ResponseCallback) in, promise);
+    } else {
+      promise.setFailure(
+          new IllegalArgumentException("Unsupported message type " + in.getClass().getName()));
     }
+  }
 
-    assert in instanceof RequestMessage;
+  private void write(ChannelHandlerContext ctx, RequestMessage message, ChannelPromise promise) {
     if (closingGracefully) {
       promise.setFailure(new IllegalStateException("Channel is closing"));
       return;
@@ -122,7 +127,6 @@ public class InFlightHandler extends ChannelDuplexHandler {
 
     reportAvailableIds();
 
-    RequestMessage message = (RequestMessage) in;
     LOG.debug("[{}] Writing {} on stream id {}", logPrefix, message.responseCallback, streamId);
     Frame frame =
         Frame.forRequest(
@@ -141,6 +145,48 @@ public class InFlightHandler extends ChannelDuplexHandler {
               message.responseCallback.onStreamIdAssigned(streamId);
             }
           });
+    }
+  }
+
+  private void cancel(
+      ChannelHandlerContext ctx, ResponseCallback responseCallback, ChannelPromise promise) {
+    Integer streamId = inFlight.inverse().remove(responseCallback);
+    if (streamId == null) {
+      LOG.debug(
+          "[{}] Received cancellation request for unknown callback {}, skipping",
+          logPrefix,
+          responseCallback);
+    } else {
+      LOG.debug(
+          "[{}] Cancelled callback {} for stream id {}", logPrefix, responseCallback, streamId);
+      if (closingGracefully && inFlight.isEmpty()) {
+        LOG.debug("[{}] Last pending query was cancelled, closing channel", logPrefix);
+        ctx.channel().close();
+      } else {
+        // We can't release the stream id, because a response might still come back from the server.
+        // Keep track of how many of those ids are held, because we want to replace the channel if
+        // it becomes too high.
+        orphanStreamIds += 1;
+        if (orphanStreamIds > maxOrphanStreamIds) {
+          LOG.debug(
+              "[{}] Orphan stream ids exceeded the configured threshold ({}), closing gracefully",
+              logPrefix,
+              maxOrphanStreamIds);
+          startGracefulShutdown(ctx);
+        }
+      }
+    }
+    promise.setSuccess();
+  }
+
+  private void startGracefulShutdown(ChannelHandlerContext ctx) {
+    if (inFlight.isEmpty()) {
+      LOG.debug("[{}] No pending queries, completing graceful shutdown now", logPrefix);
+      ctx.channel().close();
+    } else {
+      LOG.debug("[{}] There are pending queries, delaying graceful shutdown", logPrefix);
+      closingGracefully = true;
+      closeStartedFuture.setSuccess();
     }
   }
 
@@ -163,12 +209,16 @@ public class InFlightHandler extends ChannelDuplexHandler {
       }
     } else {
       ResponseCallback responseCallback = inFlight.get(streamId);
-      LOG.debug(
-          "[{}] Got response on stream id {}, completing {}",
-          logPrefix,
-          streamId,
-          responseCallback);
-      if (responseCallback != null) {
+      if (responseCallback == null) {
+        LOG.debug("[{}] Got response on orphan stream id {}, releasing", logPrefix, streamId);
+        release(streamId, ctx);
+        orphanStreamIds -= 1;
+      } else {
+        LOG.debug(
+            "[{}] Got response on stream id {}, completing {}",
+            logPrefix,
+            streamId,
+            responseCallback);
         if (!responseCallback.holdStreamId()) {
           release(streamId, ctx);
         }

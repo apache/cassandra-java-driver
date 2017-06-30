@@ -90,6 +90,7 @@ public class CqlRequestHandler
   private final Duration timeout;
   private final ScheduledFuture<?> timeoutFuture;
   private final List<ScheduledFuture<?>> pendingExecutions;
+  private final List<NodeResponseCallback> inFlightCallbacks;
   private final RetryPolicy retryPolicy;
   private final SpeculativeExecutionPolicy speculativeExecutionPolicy;
 
@@ -146,6 +147,7 @@ public class CqlRequestHandler
       LOG.debug("[{}] Request is not idempotent, no speculative executions", logPrefix);
       this.pendingExecutions = null;
     }
+    this.inFlightCallbacks = new CopyOnWriteArrayList<>();
     sendRequest(null, 0, 0);
   }
 
@@ -252,6 +254,9 @@ public class CqlRequestHandler
         future.cancel(false);
       }
     }
+    for (NodeResponseCallback callback : inFlightCallbacks) {
+      callback.cancel();
+    }
   }
 
   private void setFinalResult(
@@ -333,11 +338,19 @@ public class CqlRequestHandler
         sendRequest(null, execution, retryCount); // try next node
       } else {
         LOG.debug("[{}] Request sent on {}", logPrefix, channel);
+        if (result.isDone()) {
+          // If the handler completed since the last time we checked, cancel directly because we
+          // don't know if cancelScheduledTasks() has run yet
+          cancel();
+        } else {
+          inFlightCallbacks.add(this);
+        }
       }
     }
 
     @Override
     public void onResponse(Frame responseFrame) {
+      inFlightCallbacks.remove(this);
       if (result.isDone()) {
         return;
       }
@@ -474,6 +487,7 @@ public class CqlRequestHandler
 
     @Override
     public void onFailure(Throwable error) {
+      inFlightCallbacks.remove(this);
       if (result.isDone()) {
         return;
       }
@@ -483,6 +497,16 @@ public class CqlRequestHandler
               ? retryPolicy.onRequestAborted(request, error, retryCount)
               : RetryDecision.RETHROW;
       processRetryDecision(decision, error);
+    }
+
+    public void cancel() {
+      try {
+        if (!channel.closeFuture().isDone()) {
+          this.channel.cancel(this);
+        }
+      } catch (Throwable t) {
+        LOG.warn("[{}] Error cancelling", logPrefix, t);
+      }
     }
 
     @Override

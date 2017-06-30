@@ -86,6 +86,10 @@ abstract class ChannelHandlerRequest implements ResponseCallback {
 
   private void onTimeout() {
     fail(new DriverTimeoutException(describe() + ": timed out after " + timeoutMillis + " ms"));
+    if (!channel.closeFuture().isDone()) {
+      // Cancel the response callback
+      channel.writeAndFlush(this);
+    }
   }
 
   void failOnUnexpected(Message response) {

@@ -117,6 +117,9 @@ public class AdminRequestHandler implements ResponseCallback {
   private void fireTimeout() {
     result.completeExceptionally(
         new DriverTimeoutException(String.format("%s timed out after %s", debugString, timeout)));
+    if (!channel.closeFuture().isDone()) {
+      channel.cancel(this);
+    }
   }
 
   @Override

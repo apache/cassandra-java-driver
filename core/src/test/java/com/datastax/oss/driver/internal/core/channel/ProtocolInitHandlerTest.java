@@ -80,7 +80,14 @@ public class ProtocolInitHandlerTest extends ChannelHandlerTestBase {
         .addLast(
             "inflight",
             new InFlightHandler(
-                CoreProtocolVersion.V4, new StreamIdGenerator(100), 100, null, null, "test"));
+                CoreProtocolVersion.V4,
+                new StreamIdGenerator(100),
+                Integer.MAX_VALUE,
+                100,
+                null,
+                channel.newPromise(),
+                null,
+                "test"));
   }
 
   @Test

@@ -166,6 +166,7 @@ public class CqlRequestHandlerSpeculativeExecutionTest extends CqlRequestHandler
           new CqlRequestHandler(statement, harness.getSession(), harness.getContext(), "test")
               .asyncResult();
       node1Behavior.verifyWrite();
+      node1Behavior.setWriteSuccess();
       // do not simulate a response from node1. The request will stay hanging for the rest of this test
 
       harness.nextScheduledTask(); // Discard the timeout task
@@ -184,6 +185,9 @@ public class CqlRequestHandlerSpeculativeExecutionTest extends CqlRequestHandler
 
       // The second execution should move to node3 and complete the request
       assertThat(resultSetFuture).isSuccess();
+
+      // The request to node1 was still in flight, it should have been cancelled
+      node1Behavior.verifyCancellation();
     }
   }
 

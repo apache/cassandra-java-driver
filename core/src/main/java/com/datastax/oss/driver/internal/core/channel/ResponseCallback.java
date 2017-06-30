@@ -21,6 +21,10 @@ import com.datastax.oss.protocol.internal.Frame;
  * The outcome of a request sent to a Cassandra node.
  *
  * <p>This comes into play after the request has been successfully written to the channel.
+ *
+ * <p>Due to internal implementation constraints, different instances of this type must not be equal
+ * to each other (they are stored in a {@code BiMap} in {@link InFlightHandler}); reference equality
+ * should be appropriate in all cases.
  */
 public interface ResponseCallback {
 

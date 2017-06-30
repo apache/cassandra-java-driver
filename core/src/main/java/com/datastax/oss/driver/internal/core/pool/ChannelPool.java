@@ -39,14 +39,14 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.Sets;
 import io.netty.util.concurrent.EventExecutor;
 import io.netty.util.concurrent.Future;
+import io.netty.util.concurrent.GenericFutureListener;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.function.BiConsumer;
-import java.util.function.Function;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -184,6 +184,7 @@ public class ChannelPool implements AsyncAutoCloseable {
     private final EventBus eventBus;
     // The channels that are currently connecting
     private final List<CompletionStage<DriverChannel>> pendingChannels = new ArrayList<>();
+    private final Set<DriverChannel> closingChannels = new HashSet<>();
     private final Reconnection reconnection;
     private final Object configListenerKey;
 
@@ -292,6 +293,13 @@ public class ChannelPool implements AsyncAutoCloseable {
             channels.add(channel);
             eventBus.fire(ChannelEvent.channelOpened(node));
             channel
+                .closeStartedFuture()
+                .addListener(
+                    f ->
+                        adminExecutor
+                            .submit(() -> onChannelCloseStarted(channel))
+                            .addListener(UncaughtExceptions::log));
+            channel
                 .closeFuture()
                 .addListener(
                     f ->
@@ -325,14 +333,33 @@ public class ChannelPool implements AsyncAutoCloseable {
       return currentCount >= wantedCount;
     }
 
-    private void onChannelClosed(DriverChannel channel) {
+    private void onChannelCloseStarted(DriverChannel channel) {
       assert adminExecutor.inEventLoop();
       if (!isClosing) {
-        LOG.debug("[{}] Lost channel {}", logPrefix, channel);
+        LOG.debug("[{}] Channel {} started graceful shutdown", logPrefix, channel);
         channels.remove(channel);
+        closingChannels.add(channel);
         eventBus.fire(ChannelEvent.channelClosed(node));
         if (!reconnection.isRunning()) {
           reconnection.start();
+        }
+      }
+    }
+
+    private void onChannelClosed(DriverChannel channel) {
+      assert adminExecutor.inEventLoop();
+      if (!isClosing) {
+        // Either it was closed abruptly and was still in the live set, or it was an orderly
+        // shutdown and it had moved to the closing set.
+        if (channels.remove(channel)) {
+          LOG.debug("[{}] Lost channel {}", logPrefix, channel);
+          eventBus.fire(ChannelEvent.channelClosed(node));
+          if (!reconnection.isRunning()) {
+            reconnection.start();
+          }
+        } else {
+          LOG.debug("[{}] Channel {} completed graceful shutdown", logPrefix, channel);
+          closingChannels.remove(channel);
         }
       }
     }
@@ -392,9 +419,26 @@ public class ChannelPool implements AsyncAutoCloseable {
       }
       keyspaceName = newKeyspaceName;
       setKeyspaceFuture = new CompletableFuture<>();
-      // Note that we don't handle errors; if the keyspace switch fails, the channel closes
-      forAllChannels(
-          ch -> ch.setKeyspace(newKeyspaceName), () -> setKeyspaceFuture.complete(null), null);
+
+      // Switch the keyspace on all live channels.
+      // We can read the size before iterating because mutations are confined to this thread:
+      int toSwitch = channels.size();
+      if (toSwitch == 0) {
+        setKeyspaceFuture.complete(null);
+      } else {
+        AtomicInteger remaining = new AtomicInteger(toSwitch);
+        for (DriverChannel channel : channels) {
+          channel
+              .setKeyspace(newKeyspaceName)
+              .addListener(
+                  f -> {
+                    // Don't handle errors: if a channel fails to switch the keyspace, it closes
+                    if (remaining.decrementAndGet() == 0) {
+                      setKeyspaceFuture.complete(null);
+                    }
+                  });
+        }
+      }
 
       // pending channels were scheduled with the old keyspace name, ensure they eventually switch
       for (CompletionStage<DriverChannel> channelFuture : pendingChannels) {
@@ -421,36 +465,28 @@ public class ChannelPool implements AsyncAutoCloseable {
       reconnection.stop();
       eventBus.unregister(configListenerKey, ConfigChangeEvent.class);
 
-      forAllChannels(
-          channel -> {
-            eventBus.fire(ChannelEvent.channelClosed(node));
-            return channel.close();
-          },
-          () -> closeFuture.complete(null),
-          (channel, error) -> LOG.warn("[{}] Error closing channel {}", logPrefix, channel, error));
-    }
-
-    private <V> void forAllChannels(
-        Function<DriverChannel, Future<V>> task,
-        Runnable whenAllDone,
-        BiConsumer<DriverChannel, Throwable> onError) {
-      assert adminExecutor.inEventLoop();
-      // we can read the size before iterating because it's only mutated from this thread
-      int todo = channels.size();
-      if (todo == 0) {
-        whenAllDone.run();
+      // Close all channels, the pool future completes when all the channels futures have completed
+      int toClose = closingChannels.size() + channels.size();
+      if (toClose == 0) {
+        closeFuture.complete(null);
       } else {
-        AtomicInteger done = new AtomicInteger();
+        AtomicInteger remaining = new AtomicInteger(toClose);
+        GenericFutureListener<Future<? super Void>> channelCloseListener =
+            f -> {
+              if (!f.isSuccess()) {
+                LOG.warn("[{}] Error closing channel", logPrefix, f.cause());
+              }
+              if (remaining.decrementAndGet() == 0) {
+                closeFuture.complete(null);
+              }
+            };
         for (DriverChannel channel : channels) {
-          task.apply(channel)
-              .addListener(
-                  f -> {
-                    if (!f.isSuccess() && onError != null) {
-                      onError.accept(channel, f.cause());
-                    } else if (done.incrementAndGet() == todo) {
-                      whenAllDone.run();
-                    }
-                  });
+          eventBus.fire(ChannelEvent.channelClosed(node));
+          channel.close().addListener(channelCloseListener);
+        }
+        for (DriverChannel channel : closingChannels) {
+          // don't fire the close event, onChannelCloseStarted() already did it
+          channel.closeFuture().addListener(channelCloseListener);
         }
       }
     }
@@ -461,6 +497,9 @@ public class ChannelPool implements AsyncAutoCloseable {
         close();
       }
       for (DriverChannel channel : channels) {
+        channel.forceClose();
+      }
+      for (DriverChannel channel : closingChannels) {
         channel.forceClose();
       }
     }

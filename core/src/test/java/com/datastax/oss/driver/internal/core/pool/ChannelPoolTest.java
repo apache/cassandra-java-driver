@@ -242,7 +242,7 @@ public class ChannelPoolTest {
   }
 
   @Test
-  public void should_reconnect_when_channel_dies() throws Exception {
+  public void should_reconnect_when_channel_closes() throws Exception {
     Mockito.when(reconnectionSchedule.nextDelay()).thenReturn(Duration.ofNanos(1));
 
     Mockito.when(defaultProfile.getInt(CoreDriverOption.POOLING_LOCAL_CONNECTIONS)).thenReturn(2);
@@ -275,6 +275,56 @@ public class ChannelPoolTest {
     // Simulate fatal error on channel2
     ((ChannelPromise) channel2.closeFuture())
         .setFailure(new Exception("mock channel init failure"));
+    waitForPendingAdminTasks();
+    inOrder.verify(eventBus).fire(ChannelEvent.channelClosed(NODE));
+
+    Mockito.verify(reconnectionSchedule).nextDelay();
+    inOrder.verify(eventBus).fire(ChannelEvent.reconnectionStarted(NODE));
+    factoryHelper.waitForCall(ADDRESS);
+
+    channel3Future.complete(channel3);
+    waitForPendingAdminTasks();
+    inOrder.verify(eventBus).fire(ChannelEvent.channelOpened(NODE));
+    Mockito.verify(eventBus).fire(ChannelEvent.reconnectionStopped(NODE));
+
+    assertThat(pool.channels).containsOnly(channel1, channel3);
+
+    factoryHelper.verifyNoMoreCalls();
+  }
+
+  @Test
+  public void should_reconnect_when_channel_starts_graceful_shutdown() throws Exception {
+    Mockito.when(reconnectionSchedule.nextDelay()).thenReturn(Duration.ofNanos(1));
+
+    Mockito.when(defaultProfile.getInt(CoreDriverOption.POOLING_LOCAL_CONNECTIONS)).thenReturn(2);
+
+    DriverChannel channel1 = newMockDriverChannel(1);
+    DriverChannel channel2 = newMockDriverChannel(2);
+    DriverChannel channel3 = newMockDriverChannel(3);
+    CompletableFuture<DriverChannel> channel3Future = new CompletableFuture<>();
+    MockChannelFactoryHelper factoryHelper =
+        MockChannelFactoryHelper.builder(channelFactory)
+            // init
+            .success(ADDRESS, channel1)
+            .success(ADDRESS, channel2)
+            // reconnection
+            .pending(ADDRESS, channel3Future)
+            .build();
+    InOrder inOrder = Mockito.inOrder(eventBus);
+
+    CompletionStage<ChannelPool> poolFuture =
+        ChannelPool.init(NODE, null, NodeDistance.LOCAL, context, "test");
+
+    factoryHelper.waitForCalls(ADDRESS, 2);
+    waitForPendingAdminTasks();
+
+    assertThat(poolFuture).isSuccess();
+    ChannelPool pool = poolFuture.toCompletableFuture().get();
+    assertThat(pool.channels).containsOnly(channel1, channel2);
+    inOrder.verify(eventBus, times(2)).fire(ChannelEvent.channelOpened(NODE));
+
+    // Simulate graceful shutdown on channel2
+    ((ChannelPromise) channel2.closeStartedFuture()).setSuccess();
     waitForPendingAdminTasks();
     inOrder.verify(eventBus).fire(ChannelEvent.channelClosed(NODE));
 
@@ -770,16 +820,17 @@ public class ChannelPoolTest {
 
     DriverChannel channel1 = newMockDriverChannel(1);
     DriverChannel channel2 = newMockDriverChannel(2);
-    DriverChannel channel3 = newMockDriverChannel(2);
-    CompletableFuture<DriverChannel> channel3Future = new CompletableFuture<>();
+    DriverChannel channel3 = newMockDriverChannel(3);
+    DriverChannel channel4 = newMockDriverChannel(4);
+    CompletableFuture<DriverChannel> channel4Future = new CompletableFuture<>();
     MockChannelFactoryHelper factoryHelper =
         MockChannelFactoryHelper.builder(channelFactory)
             // init
             .success(ADDRESS, channel1)
             .success(ADDRESS, channel2)
-            .failure(ADDRESS, "mock channel init failure")
+            .success(ADDRESS, channel3)
             // reconnection
-            .pending(ADDRESS, channel3Future)
+            .pending(ADDRESS, channel4Future)
             .build();
     InOrder inOrder = Mockito.inOrder(eventBus);
 
@@ -788,12 +839,17 @@ public class ChannelPoolTest {
 
     factoryHelper.waitForCalls(ADDRESS, 3);
     waitForPendingAdminTasks();
-    inOrder.verify(eventBus, times(2)).fire(ChannelEvent.channelOpened(NODE));
+    inOrder.verify(eventBus, times(3)).fire(ChannelEvent.channelOpened(NODE));
 
     assertThat(poolFuture).isSuccess();
     ChannelPool pool = poolFuture.toCompletableFuture().get();
 
-    // Reconnection should have kicked in and started to open a channel, do not complete it yet
+    // Simulate graceful shutdown on channel3
+    ((ChannelPromise) channel3.closeStartedFuture()).setSuccess();
+    waitForPendingAdminTasks();
+    inOrder.verify(eventBus, times(1)).fire(ChannelEvent.channelClosed(NODE));
+
+    // Reconnection should have kicked in and started to open channel4, do not complete it yet
     Mockito.verify(reconnectionSchedule).nextDelay();
     factoryHelper.waitForCalls(ADDRESS, 1);
 
@@ -804,21 +860,23 @@ public class ChannelPoolTest {
     Mockito.verify(channel1).close();
     Mockito.verify(channel2).close();
     inOrder.verify(eventBus, times(2)).fire(ChannelEvent.channelClosed(NODE));
+    // The closing channel was not closed again
+    Mockito.verify(channel3, never()).close();
 
     // Complete the reconnecting channel
-    channel3Future.complete(channel3);
+    channel4Future.complete(channel4);
     waitForPendingAdminTasks();
 
     // It should be force-closed once we find out the pool was closed
-    Mockito.verify(channel3).forceClose();
+    Mockito.verify(channel4).forceClose();
     // No events because the channel was never really associated to the pool
     inOrder.verify(eventBus, never()).fire(ChannelEvent.channelOpened(NODE));
     inOrder.verify(eventBus, never()).fire(ChannelEvent.channelClosed(NODE));
 
-    // Note that we don't wait for reconnected channels to close, so the pool only depends on
-    // channel 1 and 2
+    // We don't wait for reconnected channels to close, so the pool only depends on channel 1 to 3
     ((ChannelPromise) channel1.closeFuture()).setSuccess();
     ((ChannelPromise) channel2.closeFuture()).setSuccess();
+    ((ChannelPromise) channel3.closeFuture()).setSuccess();
 
     assertThat(closeFuture).isSuccess();
 
@@ -833,16 +891,17 @@ public class ChannelPoolTest {
 
     DriverChannel channel1 = newMockDriverChannel(1);
     DriverChannel channel2 = newMockDriverChannel(2);
-    DriverChannel channel3 = newMockDriverChannel(2);
-    CompletableFuture<DriverChannel> channel3Future = new CompletableFuture<>();
+    DriverChannel channel3 = newMockDriverChannel(3);
+    DriverChannel channel4 = newMockDriverChannel(4);
+    CompletableFuture<DriverChannel> channel4Future = new CompletableFuture<>();
     MockChannelFactoryHelper factoryHelper =
         MockChannelFactoryHelper.builder(channelFactory)
             // init
             .success(ADDRESS, channel1)
             .success(ADDRESS, channel2)
-            .failure(ADDRESS, "mock channel init failure")
+            .success(ADDRESS, channel3)
             // reconnection
-            .pending(ADDRESS, channel3Future)
+            .pending(ADDRESS, channel4Future)
             .build();
     InOrder inOrder = Mockito.inOrder(eventBus);
 
@@ -854,7 +913,12 @@ public class ChannelPoolTest {
 
     assertThat(poolFuture).isSuccess();
     ChannelPool pool = poolFuture.toCompletableFuture().get();
-    inOrder.verify(eventBus, times(2)).fire(ChannelEvent.channelOpened(NODE));
+    inOrder.verify(eventBus, times(3)).fire(ChannelEvent.channelOpened(NODE));
+
+    // Simulate graceful shutdown on channel3
+    ((ChannelPromise) channel3.closeStartedFuture()).setSuccess();
+    waitForPendingAdminTasks();
+    inOrder.verify(eventBus, times(1)).fire(ChannelEvent.channelClosed(NODE));
 
     // Reconnection should have kicked in and started to open a channel, do not complete it yet
     Mockito.verify(reconnectionSchedule).nextDelay();
@@ -863,25 +927,27 @@ public class ChannelPoolTest {
     CompletionStage<Void> closeFuture = pool.forceCloseAsync();
     waitForPendingAdminTasks();
 
-    // The two original channels were force-closed
-    Mockito.verify(channel1).close();
-    Mockito.verify(channel2).close();
+    // The three original channels were force-closed
+    Mockito.verify(channel1).forceClose();
+    Mockito.verify(channel2).forceClose();
+    Mockito.verify(channel3).forceClose();
+    // Only two events because the one for channel3 was sent earlier
     inOrder.verify(eventBus, times(2)).fire(ChannelEvent.channelClosed(NODE));
 
     // Complete the reconnecting channel
-    channel3Future.complete(channel3);
+    channel4Future.complete(channel4);
     waitForPendingAdminTasks();
 
     // It should be force-closed once we find out the pool was closed
-    Mockito.verify(channel3).forceClose();
+    Mockito.verify(channel4).forceClose();
     // No events because the channel was never really associated to the pool
     inOrder.verify(eventBus, never()).fire(ChannelEvent.channelOpened(NODE));
     inOrder.verify(eventBus, never()).fire(ChannelEvent.channelClosed(NODE));
 
-    // Note that we don't wait for reconnected channels to close, so the pool only depends on
-    // channel 1 and 2
+    // We don't wait for reconnected channels to close, so the pool only depends on channel 1-3
     ((ChannelPromise) channel1.closeFuture()).setSuccess();
     ((ChannelPromise) channel2.closeFuture()).setSuccess();
+    ((ChannelPromise) channel3.closeFuture()).setSuccess();
 
     assertThat(closeFuture).isSuccess();
 
@@ -892,9 +958,11 @@ public class ChannelPoolTest {
     DriverChannel channel = Mockito.mock(DriverChannel.class);
     EventLoop adminExecutor = adminEventLoopGroup.next();
     DefaultChannelPromise closeFuture = new DefaultChannelPromise(null, adminExecutor);
+    DefaultChannelPromise closeStartedFuture = new DefaultChannelPromise(null, adminExecutor);
     Mockito.when(channel.close()).thenReturn(closeFuture);
     Mockito.when(channel.forceClose()).thenReturn(closeFuture);
     Mockito.when(channel.closeFuture()).thenReturn(closeFuture);
+    Mockito.when(channel.closeStartedFuture()).thenReturn(closeStartedFuture);
     Mockito.when(channel.setKeyspace(any(CqlIdentifier.class)))
         .thenReturn(adminExecutor.newSucceededFuture(null));
     Mockito.when(channel.toString()).thenReturn("channel" + id);

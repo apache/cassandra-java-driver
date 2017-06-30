@@ -31,6 +31,7 @@ import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.ChannelOption;
 import io.netty.channel.ChannelPipeline;
+import io.netty.channel.ChannelPromise;
 import java.net.SocketAddress;
 import java.util.List;
 import java.util.Optional;
@@ -185,13 +186,19 @@ public class ChannelFactory {
             (int) defaultConfigProfile.getBytes(CoreDriverOption.CONNECTION_MAX_FRAME_LENGTH);
         int maxRequestsPerConnection =
             defaultConfigProfile.getInt(CoreDriverOption.CONNECTION_MAX_REQUESTS);
+        int maxOrphanRequests =
+            defaultConfigProfile.getInt(CoreDriverOption.CONNECTION_MAX_ORPHAN_REQUESTS);
+
+        ChannelPromise closeStartedFuture = channel.newPromise();
 
         InFlightHandler inFlightHandler =
             new InFlightHandler(
                 protocolVersion,
                 new StreamIdGenerator(maxRequestsPerConnection),
+                maxOrphanRequests,
                 setKeyspaceTimeoutMillis,
                 availableIdsHolder,
+                closeStartedFuture,
                 options.eventCallback,
                 options.ownerLogPrefix);
         ProtocolInitHandler initHandler =

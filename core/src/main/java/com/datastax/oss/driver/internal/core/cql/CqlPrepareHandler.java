@@ -73,6 +73,7 @@ public class CqlPrepareHandler
   private final RetryPolicy retryPolicy;
   private final Boolean prepareOnAllNodes;
   private final CqlPrepareProcessor processor;
+  private volatile InitialPrepareCallback initialCallback;
 
   // The errors on the nodes that were already tried (lazily initialized on the first error).
   // We don't use a map because nodes can appear multiple times.
@@ -124,7 +125,12 @@ public class CqlPrepareHandler
   private ScheduledFuture<?> scheduleTimeout(Duration timeout) {
     if (timeout.toNanos() > 0) {
       return scheduler.schedule(
-          () -> setFinalError(new DriverTimeoutException("Query timed out after " + timeout)),
+          () -> {
+            setFinalError(new DriverTimeoutException("Query timed out after " + timeout));
+            if (initialCallback != null) {
+              initialCallback.cancel();
+            }
+          },
           timeout.toNanos(),
           TimeUnit.NANOSECONDS);
     } else {
@@ -154,7 +160,8 @@ public class CqlPrepareHandler
     if (channel == null) {
       setFinalError(AllNodesFailedException.fromErrors(this.errors));
     } else {
-      InitialPrepareCallback initialPrepareCallback = new InitialPrepareCallback(node, retryCount);
+      InitialPrepareCallback initialPrepareCallback =
+          new InitialPrepareCallback(node, channel, retryCount);
       channel
           .write(message, false, Frame.NO_PAYLOAD, initialPrepareCallback)
           .addListener(initialPrepareCallback);
@@ -254,12 +261,14 @@ public class CqlPrepareHandler
   private class InitialPrepareCallback
       implements ResponseCallback, GenericFutureListener<Future<java.lang.Void>> {
     private final Node node;
+    private final DriverChannel channel;
     // How many times we've invoked the retry policy and it has returned a "retry" decision (0 for
     // the first attempt of each execution).
     private final int retryCount;
 
-    private InitialPrepareCallback(Node node, int retryCount) {
+    private InitialPrepareCallback(Node node, DriverChannel channel, int retryCount) {
       this.node = node;
+      this.channel = channel;
       this.retryCount = retryCount;
     }
 
@@ -275,7 +284,13 @@ public class CqlPrepareHandler
         recordError(node, future.cause());
         sendRequest(null, retryCount); // try next host
       } else {
-        LOG.debug("[{}] Request sent to {}", logPrefix, node);
+        if (result.isDone()) {
+          // Might happen if the timeout just fired
+          cancel();
+        } else {
+          LOG.debug("[{}] Request sent to {}", logPrefix, node);
+          initialCallback = this;
+        }
       }
     }
 
@@ -363,6 +378,16 @@ public class CqlPrepareHandler
       LOG.debug("[{}] Request failure, processing: {}", logPrefix, error.toString());
       RetryDecision decision = retryPolicy.onRequestAborted(request, error, retryCount);
       processRetryDecision(decision, error);
+    }
+
+    public void cancel() {
+      try {
+        if (!channel.closeFuture().isDone()) {
+          this.channel.cancel(this);
+        }
+      } catch (Throwable t) {
+        LOG.warn("[{}] Error cancelling", logPrefix, t);
+      }
     }
 
     @Override

@@ -45,6 +45,7 @@ import static org.mockito.Mockito.never;
 public class InFlightHandlerTest extends ChannelHandlerTestBase {
   private static final Query QUERY = new Query("select * from foo");
   private static final int SET_KEYSPACE_TIMEOUT_MILLIS = 100;
+  private static final int MAX_ORPHAN_IDS = 10;
 
   @Mock private StreamIdGenerator streamIds;
 
@@ -118,8 +119,10 @@ public class InFlightHandlerTest extends ChannelHandlerTestBase {
     addToPipeline();
     Mockito.when(streamIds.acquire()).thenReturn(42);
     MockResponseCallback responseCallback = new MockResponseCallback();
-    channel.writeAndFlush(
-        new DriverChannel.RequestMessage(QUERY, false, Frame.NO_PAYLOAD, responseCallback));
+    channel
+        .writeAndFlush(
+            new DriverChannel.RequestMessage(QUERY, false, Frame.NO_PAYLOAD, responseCallback))
+        .awaitUninterruptibly();
 
     // When
     RuntimeException mockCause = new RuntimeException("test");
@@ -131,13 +134,15 @@ public class InFlightHandlerTest extends ChannelHandlerTestBase {
   }
 
   @Test
-  public void should_delay_graceful_close_until_all_pending_complete() {
+  public void should_delay_graceful_close_and_complete_when_last_pending_completes() {
     // Given
     addToPipeline();
     Mockito.when(streamIds.acquire()).thenReturn(42);
     MockResponseCallback responseCallback = new MockResponseCallback();
-    channel.writeAndFlush(
-        new DriverChannel.RequestMessage(QUERY, false, Frame.NO_PAYLOAD, responseCallback));
+    channel
+        .writeAndFlush(
+            new DriverChannel.RequestMessage(QUERY, false, Frame.NO_PAYLOAD, responseCallback))
+        .awaitUninterruptibly();
 
     // When
     channel.write(DriverChannel.GRACEFUL_CLOSE_MESSAGE);
@@ -150,6 +155,32 @@ public class InFlightHandlerTest extends ChannelHandlerTestBase {
     // completing pending request
     Frame requestFrame = readOutboundFrame();
     writeInboundFrame(requestFrame, Void.INSTANCE);
+
+    // Then
+    assertThat(channel.closeFuture()).isSuccess();
+  }
+
+  @Test
+  public void should_delay_graceful_close_and_complete_when_last_pending_cancelled() {
+    // Given
+    addToPipeline();
+    Mockito.when(streamIds.acquire()).thenReturn(42);
+    MockResponseCallback responseCallback = new MockResponseCallback();
+    channel
+        .writeAndFlush(
+            new DriverChannel.RequestMessage(QUERY, false, Frame.NO_PAYLOAD, responseCallback))
+        .awaitUninterruptibly();
+
+    // When
+    channel.write(DriverChannel.GRACEFUL_CLOSE_MESSAGE);
+
+    // Then
+    // not closed yet because there is one pending request
+    assertThat(channel.closeFuture()).isNotDone();
+
+    // When
+    // cancelling pending request
+    channel.write(responseCallback);
 
     // Then
     assertThat(channel.closeFuture()).isSuccess();
@@ -173,8 +204,10 @@ public class InFlightHandlerTest extends ChannelHandlerTestBase {
     addToPipeline();
     Mockito.when(streamIds.acquire()).thenReturn(42);
     MockResponseCallback responseCallback = new MockResponseCallback();
-    channel.writeAndFlush(
-        new DriverChannel.RequestMessage(QUERY, false, Frame.NO_PAYLOAD, responseCallback));
+    channel
+        .writeAndFlush(
+            new DriverChannel.RequestMessage(QUERY, false, Frame.NO_PAYLOAD, responseCallback))
+        .awaitUninterruptibly();
 
     // When
     channel.write(DriverChannel.GRACEFUL_CLOSE_MESSAGE);
@@ -195,16 +228,106 @@ public class InFlightHandlerTest extends ChannelHandlerTestBase {
   }
 
   @Test
+  public void should_close_gracefully_if_orphan_ids_above_max_and_pending_requests() {
+    // Given
+    addToPipeline();
+    // Generate n orphan ids by writing and cancelling the requests:
+    for (int i = 0; i < MAX_ORPHAN_IDS; i++) {
+      Mockito.when(streamIds.acquire()).thenReturn(i);
+      MockResponseCallback responseCallback = new MockResponseCallback();
+      channel
+          .writeAndFlush(
+              new DriverChannel.RequestMessage(QUERY, false, Frame.NO_PAYLOAD, responseCallback))
+          .awaitUninterruptibly();
+      channel.writeAndFlush(responseCallback).awaitUninterruptibly();
+    }
+    // Generate another request that is pending and not cancelled:
+    Mockito.when(streamIds.acquire()).thenReturn(MAX_ORPHAN_IDS);
+    MockResponseCallback pendingResponseCallback = new MockResponseCallback();
+    channel
+        .writeAndFlush(
+            new DriverChannel.RequestMessage(
+                QUERY, false, Frame.NO_PAYLOAD, pendingResponseCallback))
+        .awaitUninterruptibly();
+
+    // When
+    // Generate the n+1th orphan id that makes us go above the threshold
+    Mockito.when(streamIds.acquire()).thenReturn(MAX_ORPHAN_IDS + 1);
+    MockResponseCallback responseCallback = new MockResponseCallback();
+    channel
+        .writeAndFlush(
+            new DriverChannel.RequestMessage(QUERY, false, Frame.NO_PAYLOAD, responseCallback))
+        .awaitUninterruptibly();
+    channel.writeAndFlush(responseCallback).awaitUninterruptibly();
+
+    // Then
+    // Channel should be closing gracefully. There's no way to observe that from the outside, so
+    // write another request and check that it's rejected:
+    assertThat(channel.closeFuture()).isNotDone();
+    ChannelFuture otherWriteFuture =
+        channel.writeAndFlush(
+            new DriverChannel.RequestMessage(QUERY, false, Frame.NO_PAYLOAD, responseCallback));
+    assertThat(otherWriteFuture)
+        .isFailed(
+            e ->
+                assertThat(e)
+                    .isInstanceOf(IllegalStateException.class)
+                    .hasMessage("Channel is closing"));
+
+    // When
+    // Cancel the last pending request
+    channel.writeAndFlush(pendingResponseCallback).awaitUninterruptibly();
+
+    // Then
+    // The graceful shutdown completes
+    assertThat(channel.closeFuture()).isSuccess();
+  }
+
+  @Test
+  public void should_close_immediately_if_orphan_ids_above_max_and_no_pending_requests() {
+    // Given
+    addToPipeline();
+    // Generate n orphan ids by writing and cancelling the requests:
+    for (int i = 0; i < MAX_ORPHAN_IDS; i++) {
+      Mockito.when(streamIds.acquire()).thenReturn(i);
+      MockResponseCallback responseCallback = new MockResponseCallback();
+      channel
+          .writeAndFlush(
+              new DriverChannel.RequestMessage(QUERY, false, Frame.NO_PAYLOAD, responseCallback))
+          .awaitUninterruptibly();
+      channel.writeAndFlush(responseCallback).awaitUninterruptibly();
+    }
+
+    // When
+    // Generate the n+1th orphan id that makes us go above the threshold
+    Mockito.when(streamIds.acquire()).thenReturn(MAX_ORPHAN_IDS);
+    MockResponseCallback responseCallback = new MockResponseCallback();
+    channel
+        .writeAndFlush(
+            new DriverChannel.RequestMessage(QUERY, false, Frame.NO_PAYLOAD, responseCallback))
+        .awaitUninterruptibly();
+    channel.writeAndFlush(responseCallback).awaitUninterruptibly();
+
+    // Then
+    // Channel should close immediately since no active pending requests.
+    assertThat(channel.closeFuture()).isSuccess();
+  }
+
+  @Test
   public void should_fail_all_pending_when_force_closed() throws Throwable {
     // Given
     addToPipeline();
     Mockito.when(streamIds.acquire()).thenReturn(42, 43);
     MockResponseCallback responseCallback1 = new MockResponseCallback();
     MockResponseCallback responseCallback2 = new MockResponseCallback();
-    channel.writeAndFlush(
-        new DriverChannel.RequestMessage(QUERY, false, Frame.NO_PAYLOAD, responseCallback1));
-    channel.writeAndFlush(
-        new DriverChannel.RequestMessage(QUERY, false, Frame.NO_PAYLOAD, responseCallback2));
+    channel
+        .writeAndFlush(
+            new DriverChannel.RequestMessage(QUERY, false, Frame.NO_PAYLOAD, responseCallback1))
+        .awaitUninterruptibly();
+    channel
+        .writeAndFlush(
+            new DriverChannel.RequestMessage(QUERY, false, Frame.NO_PAYLOAD, responseCallback2))
+        .awaitUninterruptibly();
 
     // When
     channel.write(DriverChannel.FORCEFUL_CLOSE_MESSAGE);
@@ -225,10 +348,14 @@ public class InFlightHandlerTest extends ChannelHandlerTestBase {
     Mockito.when(streamIds.acquire()).thenReturn(42, 43);
     MockResponseCallback responseCallback1 = new MockResponseCallback();
     MockResponseCallback responseCallback2 = new MockResponseCallback();
-    channel.writeAndFlush(
-        new DriverChannel.RequestMessage(QUERY, false, Frame.NO_PAYLOAD, responseCallback1));
-    channel.writeAndFlush(
-        new DriverChannel.RequestMessage(QUERY, false, Frame.NO_PAYLOAD, responseCallback2));
+    channel
+        .writeAndFlush(
+            new DriverChannel.RequestMessage(QUERY, false, Frame.NO_PAYLOAD, responseCallback1))
+        .awaitUninterruptibly();
+    channel
+        .writeAndFlush(
+            new DriverChannel.RequestMessage(QUERY, false, Frame.NO_PAYLOAD, responseCallback2))
+        .awaitUninterruptibly();
 
     // When
     RuntimeException mockException = new RuntimeException("test");
@@ -251,9 +378,10 @@ public class InFlightHandlerTest extends ChannelHandlerTestBase {
     MockResponseCallback responseCallback = new MockResponseCallback(true);
 
     // When
-    channel.writeAndFlush(
-        new DriverChannel.RequestMessage(QUERY, false, Frame.NO_PAYLOAD, responseCallback));
-    channel.runPendingTasks();
+    channel
+        .writeAndFlush(
+            new DriverChannel.RequestMessage(QUERY, false, Frame.NO_PAYLOAD, responseCallback))
+        .awaitUninterruptibly();
 
     // Then
     // notify callback of stream id
@@ -355,8 +483,10 @@ public class InFlightHandlerTest extends ChannelHandlerTestBase {
             new InFlightHandler(
                 CoreProtocolVersion.V3,
                 streamIds,
+                MAX_ORPHAN_IDS,
                 SET_KEYSPACE_TIMEOUT_MILLIS,
                 null,
+                channel.newPromise(),
                 eventCallback,
                 "test"));
   }

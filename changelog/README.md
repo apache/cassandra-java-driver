@@ -4,6 +4,8 @@
 
 ### 4.0.0-alpha1 (in progress)
 
+- [new feature] JAVA-1519: Close channel if number of orphan stream ids exceeds a configurable 
+  threshold
 - [new feature] JAVA-1529: Make configuration reloadable
 - [new feature] JAVA-1502: Reprepare statements on newly added/up nodes
 - [new feature] JAVA-1530: Add ResultSet.wasApplied

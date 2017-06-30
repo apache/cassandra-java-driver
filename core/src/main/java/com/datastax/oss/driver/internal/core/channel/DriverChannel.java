@@ -43,6 +43,7 @@ public class DriverChannel {
   static final Object FORCEFUL_CLOSE_MESSAGE = new String("FORCEFUL_CLOSE_MESSAGE");
 
   private final Channel channel;
+  private final ChannelFuture closeStartedFuture;
   private final WriteCoalescer writeCoalescer;
   private final AvailableIdsHolder availableIdsHolder;
   private final ProtocolVersion protocolVersion;
@@ -55,6 +56,7 @@ public class DriverChannel {
       AvailableIdsHolder availableIdsHolder,
       ProtocolVersion protocolVersion) {
     this.channel = channel;
+    this.closeStartedFuture = channel.pipeline().get(InFlightHandler.class).closeStartedFuture;
     this.writeCoalescer = writeCoalescer;
     this.availableIdsHolder = availableIdsHolder;
     this.protocolVersion = protocolVersion;
@@ -74,6 +76,22 @@ public class DriverChannel {
     }
     RequestMessage message = new RequestMessage(request, tracing, customPayload, responseCallback);
     return writeCoalescer.writeAndFlush(channel, message);
+  }
+
+  /**
+   * Cancels a callback, indicating that the client that wrote it is no longer interested in the
+   * answer.
+   *
+   * <p>Note that this does not cancel the request server-side (but might in the future if Cassandra
+   * supports it).
+   */
+  public void cancel(ResponseCallback responseCallback) {
+    if (closing.get()) {
+      throw new IllegalStateException("Driver channel is closing");
+    }
+    // To avoid creating an extra message, we adopt the convention that writing the callback
+    // directly means cancellation
+    writeCoalescer.writeAndFlush(channel, responseCallback);
   }
 
   /**
@@ -156,7 +174,24 @@ public class DriverChannel {
     return channel.closeFuture();
   }
 
-  /** Does not close the channel, but returns a future that will complete when it does. */
+  /**
+   * Returns a future that will complete when a graceful close has started, but not yet completed.
+   *
+   * <p>In other words, the channel has stopped accepting new requests, but is still waiting for
+   * pending requests to finish. Once the last response has been received, the channel will really
+   * close and {@link #closeFuture()} will be completed.
+   *
+   * <p>If there were no pending requests when the graceful shutdown was initiated, or if {@link
+   * #forceClose()} is called first, this future will never complete.
+   */
+  public ChannelFuture closeStartedFuture() {
+    return this.closeStartedFuture;
+  }
+
+  /**
+   * Does not close the channel, but returns a future that will complete when it is completely
+   * closed.
+   */
   public ChannelFuture closeFuture() {
     return channel.closeFuture();
   }

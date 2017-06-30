@@ -107,4 +107,8 @@ public class PoolBehavior {
     writePromise2.setSuccess(null);
     callbackFuture2.thenAccept(callback -> callback.onResponse(responseFrame));
   }
+
+  public void verifyCancellation() {
+    Mockito.verify(channel).cancel(any(ResponseCallback.class));
+  }
 }

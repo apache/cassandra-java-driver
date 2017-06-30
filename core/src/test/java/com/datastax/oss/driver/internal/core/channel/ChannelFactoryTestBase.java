@@ -234,8 +234,10 @@ abstract class ChannelFactoryTestBase {
               new InFlightHandler(
                   protocolVersion,
                   new StreamIdGenerator(maxRequestsPerConnection),
+                  Integer.MAX_VALUE,
                   setKeyspaceTimeoutMillis,
                   availableIdsHolder,
+                  channel.newPromise(),
                   null,
                   "test");
           ProtocolInitHandler initHandler =
