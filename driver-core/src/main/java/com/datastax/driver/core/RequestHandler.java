@@ -119,29 +119,39 @@ class RequestHandler {
     }
 
     private void scheduleExecution(long delayMillis) {
-        if (isDone.get() || delayMillis <= 0)
+        if (isDone.get() || delayMillis < 0)
             return;
         if (logger.isTraceEnabled())
             logger.trace("[{}] Schedule next speculative execution in {} ms", id, delayMillis);
-        scheduledExecutions.add(scheduler.newTimeout(newExecutionTask, delayMillis, TimeUnit.MILLISECONDS));
+        if(delayMillis == 0) {
+            // kick off request immediately
+            scheduleExecutionImmediately();
+        } else {
+            scheduledExecutions.add(scheduler.newTimeout(newExecutionTask, delayMillis, TimeUnit.MILLISECONDS));
+        }
     }
 
     private final TimerTask newExecutionTask = new TimerTask() {
         @Override
         public void run(final Timeout timeout) throws Exception {
             scheduledExecutions.remove(timeout);
-            if (!isDone.get())
+            if (!isDone.get()) {
                 // We're on the timer thread so reschedule to another executor
                 manager.executor().execute(new Runnable() {
                     @Override
                     public void run() {
-                        if (metricsEnabled())
-                            metrics().getErrorMetrics().getSpeculativeExecutions().inc();
-                        startNewExecution();
+                        scheduleExecutionImmediately();
                     }
                 });
+            }
         }
     };
+
+    private void scheduleExecutionImmediately() {
+        if (metricsEnabled())
+            metrics().getErrorMetrics().getSpeculativeExecutions().inc();
+        startNewExecution();
+    }
 
     private void cancelPendingExecutions(SpeculativeExecution ignore) {
         for (SpeculativeExecution execution : runningExecutions)

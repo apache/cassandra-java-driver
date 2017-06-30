@@ -7,6 +7,7 @@
 - [improvement] JAVA-1587: Deterministic ordering of columns used in Mapper#saveQuery
 - [improvement] JAVA-1500: Add a metric to report number of in-flight requests.
 - [bug] JAVA-1438: QueryBuilder check for empty orderings.
+- [improvement] JAVA-1490: Allow zero delay for speculative executions.
 
 
 ### 3.3.0

@@ -168,6 +168,55 @@ public class SpeculativeExecutionTest {
     }
 
     @Test(groups = "short")
+    public void should_start_speculative_execution_on_multiple_hosts_with_zero_delay() {
+        Cluster cluster = Cluster.builder()
+                .addContactPoints(scassandras.address(2).getAddress())
+                .withPort(scassandras.getBinaryPort())
+                .withLoadBalancingPolicy(loadBalancingPolicy)
+                .withSpeculativeExecutionPolicy(new ConstantSpeculativeExecutionPolicy(0, 2))
+                .withQueryOptions(new QueryOptions().setDefaultIdempotence(true))
+                .withRetryPolicy(new CustomRetryPolicy())
+                .withNettyOptions(nonQuietClusterCloseOptions)
+                .build();
+        Session session = cluster.connect();
+        host1 = TestUtils.findHost(cluster, 1);
+        host2 = TestUtils.findHost(cluster, 2);
+        host3 = TestUtils.findHost(cluster, 3);
+        errors = cluster.getMetrics().getErrorMetrics();
+
+        scassandras.node(1).primingClient().prime(PrimingRequest.queryBuilder()
+                .withQuery("mock query")
+                .withThen(then().withRows(row("result", "result1")).withFixedDelay(1000L))
+                .build()
+        );
+
+        scassandras.node(2).primingClient().prime(PrimingRequest.queryBuilder()
+                .withQuery("mock query")
+                .withThen(then().withRows(row("result", "result2")).withFixedDelay(1000L))
+                .build()
+        );
+
+        scassandras.node(3).primingClient().prime(PrimingRequest.queryBuilder()
+                .withQuery("mock query")
+                .withThen(then().withRows(row("result", "result3")))
+                .build()
+        );
+        long execStartCount = errors.getSpeculativeExecutions().getCount();
+
+        ResultSet rs = session.execute("mock query");
+        Row row = rs.one();
+
+        assertThat(row.getString("result")).isEqualTo("result3");
+        assertThat(errors.getSpeculativeExecutions().getCount()).isEqualTo(execStartCount + 2);
+        ExecutionInfo executionInfo = rs.getExecutionInfo();
+        // triedHosts does not contain host1 because the request to it had not completed yet
+        assertThat(executionInfo.getTriedHosts()).containsOnly(host3);
+        assertThat(executionInfo.getQueriedHost()).isEqualTo(host3);
+        assertThat(executionInfo.getSpeculativeExecutions()).isEqualTo(2);
+        assertThat(executionInfo.getSuccessfulExecutionIndex()).isEqualTo(2);
+    }
+
+    @Test(groups = "short")
     public void should_wait_until_all_executions_have_finished() {
         // Rely on read timeouts to trigger errors that cause an execution to move to the next node
         cluster.getConfiguration().getSocketOptions().setReadTimeoutMillis(1000);
