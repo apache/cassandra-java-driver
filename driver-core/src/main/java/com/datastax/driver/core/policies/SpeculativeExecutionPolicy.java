@@ -64,8 +64,8 @@ public interface SpeculativeExecutionPolicy {
          * Returns the time before the next speculative query.
          *
          * @param lastQueried the host that was just queried.
-         * @return the time (in milliseconds) before a speculative query is sent to the next host. If zero or negative,
-         * no speculative query will be sent.
+         * @return the time (in milliseconds) before a speculative query is sent to the next host. If negative,
+         * no speculative query will be sent. If zero it will immediately send the execution.
          */
         long nextExecution(Host lastQueried);
     }

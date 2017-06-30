@@ -32,13 +32,15 @@ public class ConstantSpeculativeExecutionPolicy implements SpeculativeExecutionP
     /**
      * Builds a new instance.
      *
-     * @param constantDelayMillis      the delay between each speculative execution. Must be strictly positive.
+     * @param constantDelayMillis      the delay between each speculative execution. Must be >= 0. A zero delay means
+     *                                 it should immediately send `maxSpeculativeExecutions` requests along with the
+     *                                 original request.
      * @param maxSpeculativeExecutions the number of speculative executions. Must be strictly positive.
      * @throws IllegalArgumentException if one of the arguments does not respect the preconditions above.
      */
     public ConstantSpeculativeExecutionPolicy(final long constantDelayMillis, final int maxSpeculativeExecutions) {
-        Preconditions.checkArgument(constantDelayMillis > 0,
-                "delay must be strictly positive (was %d)", constantDelayMillis);
+        Preconditions.checkArgument(constantDelayMillis >= 0,
+                "delay must be >= 0 (was %d)", constantDelayMillis);
         Preconditions.checkArgument(maxSpeculativeExecutions > 0,
                 "number of speculative executions must be strictly positive (was %d)", maxSpeculativeExecutions);
         this.constantDelayMillis = constantDelayMillis;
