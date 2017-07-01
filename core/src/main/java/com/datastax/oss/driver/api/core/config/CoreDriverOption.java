@@ -54,8 +54,8 @@ public enum CoreDriverOption implements DriverOption {
   SPECULATIVE_EXECUTION_POLICY_ROOT("speculative-execution-policy", true),
 
   RECONNECTION_POLICY_ROOT("connection.reconnection-policy", true),
-  RELATIVE_EXPONENTIAL_RECONNECTION_BASE_DELAY("connection.reconnection.config.base-delay", false),
-  RELATIVE_EXPONENTIAL_RECONNECTION_MAX_DELAY("connection.reconnection.config.max-delay", false),
+  RELATIVE_EXPONENTIAL_RECONNECTION_BASE_DELAY("base-delay", false),
+  RELATIVE_EXPONENTIAL_RECONNECTION_MAX_DELAY("max-delay", false),
 
   PREPARE_ON_ALL_NODES("prepared-statements.prepare-on-all-nodes", true),
   REPREPARE_ENABLED("prepared-statements.reprepare-on-up.enabled", true),
@@ -74,7 +74,7 @@ public enum CoreDriverOption implements DriverOption {
   RELATIVE_PLAIN_TEXT_AUTH_PASSWORD("password", false),
 
   SSL_ENGINE_FACTORY_ROOT("ssl-engine-factory", false),
-  RELATIVE_DEFAULT_SSL_CIPHER_SUITES("ssl.config.cipher-suites", false),
+  RELATIVE_DEFAULT_SSL_CIPHER_SUITES("cipher-suites", false),
 
   METADATA_TOPOLOGY_WINDOW("metadata.topology-event-debouncer.window", true),
   METADATA_TOPOLOGY_MAX_EVENTS("metadata.topology-event-debouncer.max-events", true),
