@@ -4,6 +4,7 @@
 
 ### 4.0.0-alpha1 (in progress)
 
+- [improvement] JAVA-1539: Configure for deployment to Maven central
 - [new feature] JAVA-1519: Close channel if number of orphan stream ids exceeds a configurable 
   threshold
 - [new feature] JAVA-1529: Make configuration reloadable
