@@ -98,8 +98,11 @@ public class Reflection {
       throw new IllegalArgumentException(
           String.format(
               "Expected class %s (specified by %s) "
-                  + "to have an accessible constructor with a single %s argument",
-              className, configPath, DriverConfigProfile.class.getSimpleName()));
+                  + "to have an accessible constructor with arguments (%s, %s)",
+              className,
+              configPath,
+              DriverConfigProfile.class.getSimpleName(),
+              DriverOption.class.getSimpleName()));
     }
     try {
       Object instance = constructor.newInstance(context, rootOption);
