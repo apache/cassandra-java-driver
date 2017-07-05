@@ -78,6 +78,11 @@ public enum CoreDriverOption implements DriverOption {
 
   METADATA_TOPOLOGY_WINDOW("metadata.topology-event-debouncer.window", true),
   METADATA_TOPOLOGY_MAX_EVENTS("metadata.topology-event-debouncer.max-events", true),
+
+  TIMESTAMP_GENERATOR_ROOT("timestamp-generator", true),
+  RELATIVE_TIMESTAMP_GENERATOR_FORCE_JAVA_CLOCK("force-java-clock", false),
+  RELATIVE_TIMESTAMP_GENERATOR_DRIFT_WARNING_THRESHOLD("drift-warning.threshold", false),
+  RELATIVE_TIMESTAMP_GENERATOR_DRIFT_WARNING_INTERVAL("drift-warning.interval", false),
   ;
 
   private final String path;

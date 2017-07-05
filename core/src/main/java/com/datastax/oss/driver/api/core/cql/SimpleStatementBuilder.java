@@ -16,6 +16,7 @@
 package com.datastax.oss.driver.api.core.cql;
 
 import com.datastax.oss.driver.api.core.config.DriverConfigProfile;
+import com.datastax.oss.driver.api.core.time.TimestampGenerator;
 import com.datastax.oss.driver.internal.core.cql.DefaultSimpleStatement;
 import com.google.common.collect.ImmutableMap;
 import java.nio.ByteBuffer;
@@ -33,6 +34,7 @@ public class SimpleStatementBuilder {
   private ImmutableMap.Builder<String, ByteBuffer> customPayload;
   private Boolean idempotent;
   private boolean tracing;
+  private long timestamp = Long.MIN_VALUE;
   private ByteBuffer pagingState;
 
   public SimpleStatementBuilder(String query) {
@@ -155,6 +157,19 @@ public class SimpleStatementBuilder {
   }
 
   /**
+   * Sets the timestamp to use for this statement.
+   *
+   * <p>If this method is not called, the {@link TimestampGenerator} will assign it when the
+   * statement gets executed.
+   *
+   * @see Statement#getTimestamp()
+   */
+  public SimpleStatementBuilder withTimestamp(long timestamp) {
+    this.timestamp = timestamp;
+    return this;
+  }
+
+  /**
    * Sets the paging state to use for this statement.
    *
    * <p>Note that it is also possible to set the paging state on an existing statement with {@link
@@ -177,6 +192,7 @@ public class SimpleStatementBuilder {
         (customPayload == null) ? Collections.emptyMap() : customPayload.build(),
         idempotent,
         tracing,
+        timestamp,
         pagingState);
   }
 }

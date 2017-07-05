@@ -22,6 +22,7 @@ import com.datastax.oss.driver.api.core.config.DriverConfigProfile;
 import com.datastax.oss.driver.api.core.metadata.Node;
 import com.datastax.oss.driver.api.core.retry.RetryPolicy;
 import com.datastax.oss.driver.api.core.specex.SpeculativeExecutionPolicy;
+import com.datastax.oss.driver.api.core.time.TimestampGenerator;
 import com.datastax.oss.driver.internal.core.channel.DriverChannel;
 import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
 import com.datastax.oss.driver.internal.core.context.NettyOptions;
@@ -66,6 +67,7 @@ public class RequestHandlerTestHarness implements AutoCloseable {
   @Mock private LoadBalancingPolicyWrapper loadBalancingPolicyWrapper;
   @Mock private RetryPolicy retryPolicy;
   @Mock private SpeculativeExecutionPolicy speculativeExecutionPolicy;
+  @Mock private TimestampGenerator timestampGenerator;
 
   private RequestHandlerTestHarness(Builder builder) {
     MockitoAnnotations.initMocks(this);
@@ -99,6 +101,9 @@ public class RequestHandlerTestHarness implements AutoCloseable {
     Mockito.when(context.speculativeExecutionPolicy()).thenReturn(speculativeExecutionPolicy);
 
     Mockito.when(context.codecRegistry()).thenReturn(new DefaultCodecRegistry("test"));
+
+    Mockito.when(timestampGenerator.next()).thenReturn(Long.MIN_VALUE);
+    Mockito.when(context.timestampGenerator()).thenReturn(timestampGenerator);
 
     Map<Node, ChannelPool> pools = builder.buildMockPools();
     Mockito.when(session.getPools()).thenReturn(pools);

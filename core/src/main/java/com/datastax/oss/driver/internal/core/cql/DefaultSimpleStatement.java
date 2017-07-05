@@ -32,6 +32,7 @@ public class DefaultSimpleStatement implements SimpleStatement {
   private final Map<String, ByteBuffer> customPayload;
   private final Boolean idempotent;
   private final boolean tracing;
+  private final long timestamp;
   private final ByteBuffer pagingState;
 
   public DefaultSimpleStatement(String query, List<Object> positionalValues) {
@@ -44,6 +45,7 @@ public class DefaultSimpleStatement implements SimpleStatement {
         Collections.emptyMap(),
         null,
         false,
+        Long.MIN_VALUE,
         null);
   }
 
@@ -57,6 +59,7 @@ public class DefaultSimpleStatement implements SimpleStatement {
         Collections.emptyMap(),
         null,
         false,
+        Long.MIN_VALUE,
         null);
   }
 
@@ -70,6 +73,7 @@ public class DefaultSimpleStatement implements SimpleStatement {
       Map<String, ByteBuffer> customPayload,
       Boolean idempotent,
       boolean tracing,
+      long timestamp,
       ByteBuffer pagingState) {
     this.query = query;
     this.positionalValues = positionalValues;
@@ -79,6 +83,7 @@ public class DefaultSimpleStatement implements SimpleStatement {
     this.customPayload = customPayload;
     this.idempotent = idempotent;
     this.tracing = tracing;
+    this.timestamp = timestamp;
     this.pagingState = pagingState;
   }
 
@@ -129,6 +134,11 @@ public class DefaultSimpleStatement implements SimpleStatement {
   }
 
   @Override
+  public long getTimestamp() {
+    return timestamp;
+  }
+
+  @Override
   public ByteBuffer getPagingState() {
     return pagingState;
   }
@@ -144,6 +154,7 @@ public class DefaultSimpleStatement implements SimpleStatement {
         customPayload,
         idempotent,
         tracing,
+        timestamp,
         newPagingState);
   }
 }

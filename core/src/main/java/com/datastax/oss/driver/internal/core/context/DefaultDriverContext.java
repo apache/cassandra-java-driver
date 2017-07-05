@@ -28,6 +28,7 @@ import com.datastax.oss.driver.api.core.loadbalancing.LoadBalancingPolicy;
 import com.datastax.oss.driver.api.core.retry.RetryPolicy;
 import com.datastax.oss.driver.api.core.specex.SpeculativeExecutionPolicy;
 import com.datastax.oss.driver.api.core.ssl.SslEngineFactory;
+import com.datastax.oss.driver.api.core.time.TimestampGenerator;
 import com.datastax.oss.driver.api.core.type.codec.TypeCodec;
 import com.datastax.oss.driver.api.core.type.codec.registry.CodecRegistry;
 import com.datastax.oss.driver.internal.core.ProtocolVersionRegistry;
@@ -121,6 +122,8 @@ public class DefaultDriverContext implements InternalDriverContext {
           "loadBalancingPolicyWrapper", this::buildLoadBalancingPolicyWrapper, cycleDetector);
   private final LazyReference<ControlConnection> controlConnectionRef =
       new LazyReference<>("controlConnection", this::buildControlConnection, cycleDetector);
+  private final LazyReference<TimestampGenerator> timestampGeneratorRef =
+      new LazyReference<>("timestampGenerator", this::buildTimestampGenerator, cycleDetector);
 
   private final DriverConfig config;
   private final DriverConfigLoader configLoader;
@@ -261,6 +264,16 @@ public class DefaultDriverContext implements InternalDriverContext {
     return new DefaultCodecRegistry(logPrefix, codecs.toArray(array));
   }
 
+  protected TimestampGenerator buildTimestampGenerator() {
+    CoreDriverOption rootOption = CoreDriverOption.TIMESTAMP_GENERATOR_ROOT;
+    return Reflection.buildFromConfig(this, rootOption, TimestampGenerator.class)
+        .orElseThrow(
+            () ->
+                new IllegalArgumentException(
+                    String.format(
+                        "Missing timestamp generator, check your configuration (%s)", rootOption)));
+  }
+
   @Override
   public String clusterName() {
     return clusterName;
@@ -379,6 +392,11 @@ public class DefaultDriverContext implements InternalDriverContext {
   @Override
   public RequestProcessorRegistry requestProcessorRegistry() {
     return RequestProcessorRegistry.defaultCqlProcessors(clusterName());
+  }
+
+  @Override
+  public TimestampGenerator timestampGenerator() {
+    return timestampGeneratorRef.get();
   }
 
   @Override

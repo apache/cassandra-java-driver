@@ -4,6 +4,7 @@
 
 ### 4.0.0-alpha1 (in progress)
 
+- [new feature] JAVA-1497: Port timestamp generators from 3.x
 - [improvement] JAVA-1539: Configure for deployment to Maven central
 - [new feature] JAVA-1519: Close channel if number of orphan stream ids exceeds a configurable 
   threshold

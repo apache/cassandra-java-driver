@@ -41,6 +41,7 @@ public class DefaultBoundStatement implements BoundStatement {
   private final CodecRegistry codecRegistry;
   private final ProtocolVersion protocolVersion;
   private boolean tracing;
+  private long timestamp = Long.MIN_VALUE;
   private ByteBuffer pagingState;
 
   public DefaultBoundStatement(
@@ -176,6 +177,17 @@ public class DefaultBoundStatement implements BoundStatement {
   @Override
   public BoundStatement setTracing() {
     this.tracing = true;
+    return this;
+  }
+
+  @Override
+  public long getTimestamp() {
+    return timestamp;
+  }
+
+  @Override
+  public BoundStatement setTimestamp(long timestamp) {
+    this.timestamp = timestamp;
     return this;
   }
 

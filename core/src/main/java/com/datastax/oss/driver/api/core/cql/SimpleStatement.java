@@ -100,6 +100,7 @@ public interface SimpleStatement extends BatchableStatement {
         Collections.emptyMap(),
         null,
         false,
+        Long.MIN_VALUE,
         null);
   }
 
@@ -117,6 +118,7 @@ public interface SimpleStatement extends BatchableStatement {
         Collections.emptyMap(),
         null,
         false,
+        Long.MIN_VALUE,
         null);
   }
 
@@ -134,6 +136,7 @@ public interface SimpleStatement extends BatchableStatement {
         Collections.emptyMap(),
         null,
         false,
+        Long.MIN_VALUE,
         null);
   }
 

@@ -21,6 +21,7 @@ import com.datastax.oss.driver.api.core.data.GettableByName;
 import com.datastax.oss.driver.api.core.data.SettableById;
 import com.datastax.oss.driver.api.core.data.SettableByName;
 import com.datastax.oss.driver.api.core.session.Session;
+import com.datastax.oss.driver.api.core.time.TimestampGenerator;
 import java.nio.ByteBuffer;
 import java.util.List;
 import java.util.Map;
@@ -75,4 +76,10 @@ public interface BoundStatement
 
   /** Request tracing information for this statement. */
   BoundStatement setTracing();
+
+  /**
+   * Sets the timestamp for this statement. If left unset, the {@link TimestampGenerator} will
+   * assign it when the statement gets executed.
+   */
+  BoundStatement setTimestamp(long timestamp);
 }

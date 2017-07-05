@@ -25,6 +25,7 @@ import com.datastax.oss.driver.api.core.loadbalancing.LoadBalancingPolicy;
 import com.datastax.oss.driver.api.core.retry.RetryPolicy;
 import com.datastax.oss.driver.api.core.specex.SpeculativeExecutionPolicy;
 import com.datastax.oss.driver.api.core.ssl.SslEngineFactory;
+import com.datastax.oss.driver.api.core.time.TimestampGenerator;
 import java.util.Optional;
 
 /** Holds common components that are shared throughout a driver instance. */
@@ -53,4 +54,6 @@ public interface DriverContext extends AttachmentPoint {
 
   /** The SSL engine factory, if SSL was configured. */
   Optional<SslEngineFactory> sslEngineFactory();
+
+  TimestampGenerator timestampGenerator();
 }

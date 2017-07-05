@@ -93,7 +93,10 @@ class Conversions {
     int pageSize = config.getInt(CoreDriverOption.REQUEST_PAGE_SIZE);
     int serialConsistency =
         config.getConsistencyLevel(CoreDriverOption.REQUEST_SERIAL_CONSISTENCY).getProtocolCode();
-    long timestamp = Long.MIN_VALUE; // TODO timestamp generator
+    long timestamp = statement.getTimestamp();
+    if (timestamp == Long.MIN_VALUE) {
+      timestamp = context.timestampGenerator().next();
+    }
     CodecRegistry codecRegistry = context.codecRegistry();
     ProtocolVersion protocolVersion = context.protocolVersion();
     if (statement instanceof SimpleStatement) {

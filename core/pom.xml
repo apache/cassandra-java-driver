@@ -53,6 +53,17 @@
       <groupId>com.typesafe</groupId>
       <artifactId>config</artifactId>
     </dependency>
+    <!--
+      JNR dependencies are used for native system calls that improve the driver's accuracy, for
+      example using a microsecond-precision clock for query timestamps, and including the PID in
+      UUID generation.
+      These dependencies are recommended but not mandatory, the driver will fall back to pure-Java
+      implementations if they are not available at runtime.
+    -->
+    <dependency>
+      <groupId>com.github.jnr</groupId>
+      <artifactId>jnr-ffi</artifactId>
+    </dependency>
     <dependency>
       <groupId>org.slf4j</groupId>
       <artifactId>slf4j-api</artifactId>

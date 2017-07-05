@@ -16,6 +16,7 @@
 package com.datastax.oss.driver.api.core.cql;
 
 import com.datastax.oss.driver.api.core.session.Request;
+import com.datastax.oss.driver.api.core.time.TimestampGenerator;
 import java.nio.ByteBuffer;
 import java.util.concurrent.CompletionStage;
 
@@ -23,6 +24,14 @@ import java.util.concurrent.CompletionStage;
 public interface Statement extends Request<ResultSet, CompletionStage<AsyncResultSet>> {
   // Implementation note: "CqlRequest" would be a better name, but we keep "Statement" to match
   // previous driver versions.
+
+  /**
+   * The query timestamp to send with the statement.
+   *
+   * <p>If this is equal to {@link Long#MIN_VALUE}, the {@link TimestampGenerator} configured for
+   * this driver instance will be used to generate a timestamp.
+   */
+  long getTimestamp();
 
   ByteBuffer getPagingState();
 

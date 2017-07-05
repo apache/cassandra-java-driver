@@ -37,11 +37,21 @@ public class DefaultBatchStatement implements BatchStatement {
   private Map<String, ByteBuffer> customPayload;
   private Boolean idempotent;
   private boolean tracing;
+  private long timestamp;
   private ByteBuffer pagingState;
 
   public DefaultBatchStatement(BatchType batchType) {
     this(
-        batchType, new ArrayList<>(), null, null, null, Collections.emptyMap(), false, false, null);
+        batchType,
+        new ArrayList<>(),
+        null,
+        null,
+        null,
+        Collections.emptyMap(),
+        false,
+        false,
+        Long.MIN_VALUE,
+        null);
   }
 
   private DefaultBatchStatement(
@@ -53,6 +63,7 @@ public class DefaultBatchStatement implements BatchStatement {
       Map<String, ByteBuffer> customPayload,
       Boolean idempotent,
       boolean tracing,
+      long timestamp,
       ByteBuffer pagingState) {
     this.batchType = batchType;
     this.statements = statements;
@@ -62,6 +73,7 @@ public class DefaultBatchStatement implements BatchStatement {
     this.customPayload = customPayload;
     this.idempotent = idempotent;
     this.tracing = tracing;
+    this.timestamp = timestamp;
     this.pagingState = pagingState;
   }
 
@@ -120,6 +132,7 @@ public class DefaultBatchStatement implements BatchStatement {
         customPayload,
         idempotent,
         tracing,
+        timestamp,
         newPagingState);
   }
 
@@ -186,6 +199,17 @@ public class DefaultBatchStatement implements BatchStatement {
   @Override
   public BatchStatement setTracing() {
     this.tracing = true;
+    return this;
+  }
+
+  @Override
+  public long getTimestamp() {
+    return timestamp;
+  }
+
+  @Override
+  public BatchStatement setTimestamp(long timestamp) {
+    this.timestamp = timestamp;
     return this;
   }
 }

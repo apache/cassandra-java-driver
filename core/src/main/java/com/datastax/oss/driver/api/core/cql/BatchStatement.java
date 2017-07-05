@@ -17,6 +17,7 @@ package com.datastax.oss.driver.api.core.cql;
 
 import com.datastax.oss.driver.api.core.config.DriverConfigProfile;
 import com.datastax.oss.driver.api.core.session.Session;
+import com.datastax.oss.driver.api.core.time.TimestampGenerator;
 import com.datastax.oss.driver.internal.core.cql.DefaultBatchStatement;
 import java.nio.ByteBuffer;
 import java.util.Map;
@@ -93,4 +94,10 @@ public interface BatchStatement extends Statement, Iterable<BatchableStatement> 
 
   /** Request tracing information for this statement. */
   BatchStatement setTracing();
+
+  /**
+   * Sets the timestamp for this statement. If left unset, the {@link TimestampGenerator} will
+   * assign it when the statement gets executed.
+   */
+  BatchStatement setTimestamp(long timestamp);
 }
