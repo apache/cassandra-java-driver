@@ -16,6 +16,9 @@ import com.datastax.oss.driver.internal.core.context.InternalDriverContext
 import java.net.InetSocketAddress
 import scala.collection.JavaConversions._
 
+// Heartbeat logs every 30 seconds are annoying in the console, raise the interval
+System.setProperty("datastax-java-driver.connection.heartbeat.interval", "1 hour")
+
 val address1 = new InetSocketAddress("127.0.0.1", 9042)
 val address2 = new InetSocketAddress("127.0.0.2", 9042)
 val address3 = new InetSocketAddress("127.0.0.3", 9042)
