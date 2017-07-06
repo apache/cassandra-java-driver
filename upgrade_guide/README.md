@@ -59,6 +59,19 @@ retrieve the next page asynchronously.
 
 [3.x async paging]: http://docs.datastax.com/en/developer/java-driver/3.2/manual/async/#async-paging
 
+#### Simplified request timeout
+
+The driver-side request timeout -- defined by the `request.timeout` configuration option -- now
+spans the <em>entire</em> request, including all retries, speculative executions, etc. In other
+words, it's the maximum amount of time that the driver will spend processing the request. If it
+fires, all pending tasks are cancelled, and a `DriverTimeoutException` is returned to the client.
+(Note that the "cancellation" is only driver-side, currently the protocol does not provide a way to
+tell the server to stop processing a request; if a message was "on the wire" when the timeout fired,
+then the driver will simply ignore the response when it eventually comes back.)
+ 
+This is in contrast to 3.x, where the timeout defined in the configuration was per retry, and a 
+global timeout required specific user code.
+
 #### Dedicated type for CQL identifiers
 
 Instead of raw strings, the names of schema objects (keyspaces, tables, columns, etc.) are now 
