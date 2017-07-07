@@ -65,6 +65,8 @@ public class FrameDecoderTest extends ChannelHandlerTestBase {
     channel.pipeline().addLast(decoder);
 
     // When
+    // The decoder releases the buffer, so make sure we retain it for the other tests
+    VALID_PAYLOAD.retain();
     channel.writeInbound(VALID_PAYLOAD.duplicate());
     Frame frame = readInboundFrame();
 
@@ -83,6 +85,7 @@ public class FrameDecoderTest extends ChannelHandlerTestBase {
     channel.pipeline().addLast(decoder);
 
     // When
+    VALID_PAYLOAD.retain();
     try {
       channel.writeInbound(VALID_PAYLOAD.duplicate());
       fail("expected an exception");
@@ -101,6 +104,7 @@ public class FrameDecoderTest extends ChannelHandlerTestBase {
     channel.pipeline().addLast(decoder);
 
     // When
+    INVALID_PAYLOAD.retain();
     try {
       channel.writeInbound(INVALID_PAYLOAD.duplicate());
       fail("expected an exception");

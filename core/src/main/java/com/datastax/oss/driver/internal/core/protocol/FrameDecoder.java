@@ -60,4 +60,9 @@ public class FrameDecoder extends LengthFieldBasedFrameDecoder {
       throw new FrameDecodingException(streamId, e);
     }
   }
+
+  @Override
+  protected ByteBuf extractFrame(ChannelHandlerContext ctx, ByteBuf buffer, int index, int length) {
+    return buffer.slice(index, length);
+  }
 }
