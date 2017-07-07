@@ -33,11 +33,6 @@
 
   <dependencies>
     <dependency>
-      <groupId>${project.groupId}</groupId>
-      <artifactId>java-driver-types</artifactId>
-      <version>${project.version}</version>
-    </dependency>
-    <dependency>
       <groupId>com.datastax.oss</groupId>
       <artifactId>native-protocol</artifactId>
     </dependency>
