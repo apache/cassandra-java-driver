@@ -217,7 +217,7 @@ public class CqlRequestHandler
     }
     if (channel == null) {
       // We've reached the end of the query plan without finding any node to write to
-      if (!result.isDone() && executions.decrementAndGet() == 0) {
+      if (!result.isDone() && executions.decrementAndGet() == -1) {
         // We're the last execution so fail the result
         setFinalError(AllNodesFailedException.fromErrors(this.errors));
       }

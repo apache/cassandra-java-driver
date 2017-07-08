@@ -15,12 +15,16 @@
  */
 package com.datastax.oss.driver.internal.core.cql;
 
+import com.datastax.oss.driver.api.core.AllNodesFailedException;
 import com.datastax.oss.driver.api.core.cql.AsyncResultSet;
 import com.datastax.oss.driver.api.core.cql.SimpleStatement;
+import com.datastax.oss.driver.api.core.metadata.Node;
+import com.datastax.oss.driver.api.core.servererrors.BootstrappingException;
 import com.datastax.oss.driver.api.core.specex.SpeculativeExecutionPolicy;
 import com.datastax.oss.driver.internal.core.util.concurrent.ScheduledTaskCapturingEventLoop;
 import com.datastax.oss.protocol.internal.ProtocolConstants;
 import com.datastax.oss.protocol.internal.response.Error;
+import java.util.Map;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.TimeUnit;
 import org.mockito.Mockito;
@@ -143,6 +147,111 @@ public class CqlRequestHandlerSpeculativeExecutionTest extends CqlRequestHandler
       // start of the task.
       firstExecutionTask.run();
       node2Behavior.verifyNoWrite();
+    }
+  }
+
+  @Test(dataProvider = "idempotentConfig")
+  public void should_fail_if_no_more_nodes_and_initial_execution_is_last(
+      boolean defaultIdempotence, SimpleStatement statement) {
+    RequestHandlerTestHarness.Builder harnessBuilder =
+        RequestHandlerTestHarness.builder().withDefaultIdempotence(defaultIdempotence);
+    PoolBehavior node1Behavior = harnessBuilder.customBehavior(node1);
+    harnessBuilder.withResponse(
+        node2,
+        defaultFrameOf(new Error(ProtocolConstants.ErrorCode.IS_BOOTSTRAPPING, "mock message")));
+
+    try (RequestHandlerTestHarness harness = harnessBuilder.build()) {
+      SpeculativeExecutionPolicy speculativeExecutionPolicy =
+          harness.getContext().speculativeExecutionPolicy();
+      long firstExecutionDelay = 100L;
+      Mockito.when(speculativeExecutionPolicy.nextExecution(null, statement, 1))
+          .thenReturn(firstExecutionDelay);
+
+      CompletionStage<AsyncResultSet> resultSetFuture =
+          new CqlRequestHandler(statement, harness.getSession(), harness.getContext(), "test")
+              .asyncResult();
+      node1Behavior.verifyWrite();
+      node1Behavior.setWriteSuccess();
+      // do not simulate a response from node1 yet
+
+      harness.nextScheduledTask(); // Discard the timeout task
+
+      // Run the next scheduled task to start the speculative execution. node2 will reply with a
+      // BOOTSTRAPPING error, causing a RETRY_NEXT; but the query plan is now empty so the
+      // speculative execution stops.
+      ScheduledTaskCapturingEventLoop.CapturedTask<?> firstExecutionTask =
+          harness.nextScheduledTask();
+      assertThat(firstExecutionTask.getInitialDelay(TimeUnit.MILLISECONDS))
+          .isEqualTo(firstExecutionDelay);
+      firstExecutionTask.run();
+
+      // node1 now replies with the same response, that triggers a RETRY_NEXT
+      node1Behavior.setResponseSuccess(
+          defaultFrameOf(new Error(ProtocolConstants.ErrorCode.IS_BOOTSTRAPPING, "mock message")));
+
+      // But again the query plan is empty so that should fail the request
+      assertThat(resultSetFuture)
+          .isFailed(
+              error -> {
+                assertThat(error).isInstanceOf(AllNodesFailedException.class);
+                Map<Node, Throwable> nodeErrors = ((AllNodesFailedException) error).getErrors();
+                assertThat(nodeErrors).containsOnlyKeys(node1, node2);
+                assertThat(nodeErrors.get(node1)).isInstanceOf(BootstrappingException.class);
+                assertThat(nodeErrors.get(node2)).isInstanceOf(BootstrappingException.class);
+              });
+    }
+  }
+
+  @Test(dataProvider = "idempotentConfig")
+  public void should_fail_if_no_more_nodes_and_speculative_execution_is_last(
+      boolean defaultIdempotence, SimpleStatement statement) {
+    RequestHandlerTestHarness.Builder harnessBuilder =
+        RequestHandlerTestHarness.builder().withDefaultIdempotence(defaultIdempotence);
+    PoolBehavior node1Behavior = harnessBuilder.customBehavior(node1);
+    PoolBehavior node2Behavior = harnessBuilder.customBehavior(node2);
+
+    try (RequestHandlerTestHarness harness = harnessBuilder.build()) {
+      SpeculativeExecutionPolicy speculativeExecutionPolicy =
+          harness.getContext().speculativeExecutionPolicy();
+      long firstExecutionDelay = 100L;
+      Mockito.when(speculativeExecutionPolicy.nextExecution(null, statement, 1))
+          .thenReturn(firstExecutionDelay);
+
+      CompletionStage<AsyncResultSet> resultSetFuture =
+          new CqlRequestHandler(statement, harness.getSession(), harness.getContext(), "test")
+              .asyncResult();
+      node1Behavior.verifyWrite();
+      node1Behavior.setWriteSuccess();
+      // do not simulate a response from node1 yet
+
+      harness.nextScheduledTask(); // Discard the timeout task
+
+      // Run the next scheduled task to start the speculative execution.
+      ScheduledTaskCapturingEventLoop.CapturedTask<?> firstExecutionTask =
+          harness.nextScheduledTask();
+      assertThat(firstExecutionTask.getInitialDelay(TimeUnit.MILLISECONDS))
+          .isEqualTo(firstExecutionDelay);
+      firstExecutionTask.run();
+
+      // node1 now replies with a BOOTSTRAPPING error that triggers a RETRY_NEXT
+      // but the query plan is empty so the initial execution stops
+      node1Behavior.setResponseSuccess(
+          defaultFrameOf(new Error(ProtocolConstants.ErrorCode.IS_BOOTSTRAPPING, "mock message")));
+
+      // Same thing with node2, so the speculative execution should reach the end of the query plan
+      // and fail the request
+      node2Behavior.setResponseSuccess(
+          defaultFrameOf(new Error(ProtocolConstants.ErrorCode.IS_BOOTSTRAPPING, "mock message")));
+
+      assertThat(resultSetFuture)
+          .isFailed(
+              error -> {
+                assertThat(error).isInstanceOf(AllNodesFailedException.class);
+                Map<Node, Throwable> nodeErrors = ((AllNodesFailedException) error).getErrors();
+                assertThat(nodeErrors).containsOnlyKeys(node1, node2);
+                assertThat(nodeErrors.get(node1)).isInstanceOf(BootstrappingException.class);
+                assertThat(nodeErrors.get(node2)).isInstanceOf(BootstrappingException.class);
+              });
     }
   }
 

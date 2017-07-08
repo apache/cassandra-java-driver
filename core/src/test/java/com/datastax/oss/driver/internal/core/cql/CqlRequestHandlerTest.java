@@ -17,6 +17,7 @@ package com.datastax.oss.driver.internal.core.cql;
 
 import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.DriverTimeoutException;
+import com.datastax.oss.driver.api.core.NoNodeAvailableException;
 import com.datastax.oss.driver.api.core.config.CoreDriverOption;
 import com.datastax.oss.driver.api.core.cql.AsyncResultSet;
 import com.datastax.oss.driver.api.core.cql.BoundStatement;
@@ -76,6 +77,26 @@ public class CqlRequestHandlerTest extends CqlRequestHandlerTestBase {
                 assertThat(executionInfo.getSuccessfulExecutionIndex()).isEqualTo(0);
                 assertThat(executionInfo.getWarnings()).isEmpty();
               });
+    }
+  }
+
+  @Test
+  public void should_fail_if_no_node_available() {
+    try (RequestHandlerTestHarness harness =
+        RequestHandlerTestHarness.builder()
+            // Mock no responses => this will produce an empty query plan
+            .build()) {
+
+      CompletionStage<AsyncResultSet> resultSetFuture =
+          new CqlRequestHandler(
+                  UNDEFINED_IDEMPOTENCE_STATEMENT,
+                  harness.getSession(),
+                  harness.getContext(),
+                  "test")
+              .asyncResult();
+
+      assertThat(resultSetFuture)
+          .isFailed(error -> assertThat(error).isInstanceOf(NoNodeAvailableException.class));
     }
   }
 
