@@ -167,6 +167,9 @@ public class DefaultTopologyMonitor implements TopologyMonitor {
 
   private NodeInfo buildNodeInfo(AdminResult.Row row) {
     InetAddress broadcastRpcAddress = row.getInetAddress("rpc_address");
+    if (broadcastRpcAddress == null) {
+      throw new IllegalArgumentException("Missing rpc_address in system row, can't refresh node");
+    }
     InetSocketAddress connectAddress =
         addressTranslator.translate(new InetSocketAddress(broadcastRpcAddress, port));
     return buildNodeInfo(row, connectAddress);
