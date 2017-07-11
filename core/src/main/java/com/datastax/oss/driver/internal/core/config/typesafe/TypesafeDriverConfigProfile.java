@@ -26,6 +26,9 @@ import java.time.Duration;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
+import java.util.function.Function;
 
 public abstract class TypesafeDriverConfigProfile implements DriverConfigProfile {
 
@@ -38,6 +41,8 @@ public abstract class TypesafeDriverConfigProfile implements DriverConfigProfile
   /** The actual options that will be used to answer {@code getXxx} calls. */
   protected abstract Config getEffectiveOptions();
 
+  protected final ConcurrentMap<String, Object> cache = new ConcurrentHashMap<>();
+
   @Override
   public boolean isDefined(DriverOption option) {
     return getEffectiveOptions().hasPath(option.getPath());
@@ -45,7 +50,7 @@ public abstract class TypesafeDriverConfigProfile implements DriverConfigProfile
 
   @Override
   public boolean getBoolean(DriverOption option) {
-    return getEffectiveOptions().getBoolean(option.getPath());
+    return getCached(option.getPath(), getEffectiveOptions()::getBoolean);
   }
 
   @Override
@@ -55,7 +60,7 @@ public abstract class TypesafeDriverConfigProfile implements DriverConfigProfile
 
   @Override
   public int getInt(DriverOption option) {
-    return getEffectiveOptions().getInt(option.getPath());
+    return getCached(option.getPath(), getEffectiveOptions()::getInt);
   }
 
   @Override
@@ -65,7 +70,7 @@ public abstract class TypesafeDriverConfigProfile implements DriverConfigProfile
 
   @Override
   public Duration getDuration(DriverOption option) {
-    return getEffectiveOptions().getDuration(option.getPath());
+    return getCached(option.getPath(), getEffectiveOptions()::getDuration);
   }
 
   @Override
@@ -75,7 +80,7 @@ public abstract class TypesafeDriverConfigProfile implements DriverConfigProfile
 
   @Override
   public String getString(DriverOption option) {
-    return getEffectiveOptions().getString(option.getPath());
+    return getCached(option.getPath(), getEffectiveOptions()::getString);
   }
 
   @Override
@@ -85,7 +90,7 @@ public abstract class TypesafeDriverConfigProfile implements DriverConfigProfile
 
   @Override
   public List<String> getStringList(DriverOption option) {
-    return getEffectiveOptions().getStringList(option.getPath());
+    return getCached(option.getPath(), getEffectiveOptions()::getStringList);
   }
 
   @Override
@@ -95,7 +100,7 @@ public abstract class TypesafeDriverConfigProfile implements DriverConfigProfile
 
   @Override
   public long getBytes(DriverOption option) {
-    return getEffectiveOptions().getBytes(option.getPath());
+    return getCached(option.getPath(), getEffectiveOptions()::getBytes);
   }
 
   @Override
@@ -105,13 +110,25 @@ public abstract class TypesafeDriverConfigProfile implements DriverConfigProfile
 
   @Override
   public ConsistencyLevel getConsistencyLevel(DriverOption option) {
-    String name = getString(option);
-    return ConsistencyLevel.valueOf(name);
+    return getCached(
+        option.getPath(),
+        path -> {
+          String name = getEffectiveOptions().getString(path);
+          return ConsistencyLevel.valueOf(name);
+        });
   }
 
   @Override
   public DriverConfigProfile withConsistencyLevel(DriverOption option, ConsistencyLevel value) {
     return with(option, value.toString());
+  }
+
+  private <T> T getCached(String path, Function<String, T> compute) {
+    // compute's signature guarantees we get a T, and this is the only place where we mutate the
+    // entry
+    @SuppressWarnings("unchecked")
+    T t = (T) cache.computeIfAbsent(path, compute);
+    return t;
   }
 
   private DriverConfigProfile with(DriverOption option, Object value) {
@@ -151,6 +168,7 @@ public abstract class TypesafeDriverConfigProfile implements DriverConfigProfile
 
     void refresh(Config newOptions) {
       this.options = newOptions;
+      this.cache.clear();
       if (derivedProfiles != null) {
         for (Derived derivedProfile : derivedProfiles) {
           derivedProfile.refresh();
@@ -195,6 +213,7 @@ public abstract class TypesafeDriverConfigProfile implements DriverConfigProfile
 
     void refresh() {
       this.effectiveOptions = addedOptions.withFallback(baseProfile.getEffectiveOptions());
+      this.cache.clear();
     }
 
     @Override

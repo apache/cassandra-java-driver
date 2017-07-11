@@ -4,6 +4,7 @@
 
 ### 4.0.0-alpha1 (in progress)
 
+- [improvement] JAVA-1498: Add a cache above Typesafe config
 - [bug] JAVA-1547: Abort pending requests when connection dropped
 - [new feature] JAVA-1497: Port timestamp generators from 3.x
 - [improvement] JAVA-1539: Configure for deployment to Maven central
