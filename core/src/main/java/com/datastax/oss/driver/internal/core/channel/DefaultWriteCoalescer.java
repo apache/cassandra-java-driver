@@ -15,6 +15,10 @@
  */
 package com.datastax.oss.driver.internal.core.channel;
 
+import com.datastax.oss.driver.api.core.config.CoreDriverOption;
+import com.datastax.oss.driver.api.core.config.DriverConfigProfile;
+import com.datastax.oss.driver.api.core.config.DriverOption;
+import com.datastax.oss.driver.api.core.context.DriverContext;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelPromise;
@@ -25,6 +29,7 @@ import java.util.Queue;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
@@ -44,10 +49,20 @@ import java.util.concurrent.atomic.AtomicBoolean;
  */
 public class DefaultWriteCoalescer implements WriteCoalescer {
   private final int maxRunsWithNoWork;
+  private final long rescheduleIntervalNanos;
   private final ConcurrentMap<EventLoop, Flusher> flushers = new ConcurrentHashMap<>();
 
-  public DefaultWriteCoalescer(int maxRunsWithNoWork) {
-    this.maxRunsWithNoWork = maxRunsWithNoWork;
+  public DefaultWriteCoalescer(
+      @SuppressWarnings("unused") DriverContext context,
+      @SuppressWarnings("unused") DriverOption configRoot) {
+
+    DriverConfigProfile config = context.config().getDefaultProfile();
+    this.maxRunsWithNoWork =
+        config.getInt(configRoot.concat(CoreDriverOption.RELATIVE_COALESCER_MAX_RUNS));
+    this.rescheduleIntervalNanos =
+        config
+            .getDuration(configRoot.concat(CoreDriverOption.RELATIVE_COALESCER_INTERVAL))
+            .toNanos();
   }
 
   @Override
@@ -81,8 +96,8 @@ public class DefaultWriteCoalescer implements WriteCoalescer {
     private void enqueue(Write write) {
       boolean added = writes.offer(write);
       assert added; // always true (see MpscLinkedAtomicQueue implementation)
-      if (!running.get() && running.compareAndSet(false, true)) {
-        eventLoop.submit(this::runOnEventLoop);
+      if (running.compareAndSet(false, true)) {
+        eventLoop.execute(this::runOnEventLoop);
       }
     }
 
@@ -119,7 +134,7 @@ public class DefaultWriteCoalescer implements WriteCoalescer {
         }
       }
       if (!eventLoop.isShuttingDown()) {
-        eventLoop.submit(this::runOnEventLoop);
+        eventLoop.schedule(this::runOnEventLoop, rescheduleIntervalNanos, TimeUnit.NANOSECONDS);
       }
     }
   }

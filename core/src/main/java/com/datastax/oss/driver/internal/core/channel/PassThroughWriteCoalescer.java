@@ -15,22 +15,22 @@
  */
 package com.datastax.oss.driver.internal.core.channel;
 
+import com.datastax.oss.driver.api.core.config.DriverOption;
+import com.datastax.oss.driver.api.core.context.DriverContext;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelFuture;
-import io.netty.channel.ChannelOutboundInvoker;
 
-/**
- * Optimizes the write operations on Netty channels.
- *
- * <p>Flush operations are generally speaking expensive as these may trigger a syscall on the
- * transport level. Thus it is in most cases (where write latency can be traded with throughput) a
- * good idea to try to minimize flush operations as much as possible. This component allows writes
- * to be accumulated and flushed together for better performance.
- */
-public interface WriteCoalescer {
-  /**
-   * Writes and flushes the message to the channel, possibly at a later time, but <b>the order of
-   * messages must be preserved</b>.
-   */
-  ChannelFuture writeAndFlush(Channel channel, Object message);
+/** No-op implementation of the write coalescer: each write is flushed immediately. */
+public class PassThroughWriteCoalescer implements WriteCoalescer {
+
+  public PassThroughWriteCoalescer(
+      @SuppressWarnings("unused") DriverContext context,
+      @SuppressWarnings("unused") DriverOption configRoot) {
+    // nothing to do
+  }
+
+  @Override
+  public ChannelFuture writeAndFlush(Channel channel, Object message) {
+    return channel.writeAndFlush(message);
+  }
 }

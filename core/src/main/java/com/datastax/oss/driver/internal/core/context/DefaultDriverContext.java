@@ -33,7 +33,6 @@ import com.datastax.oss.driver.api.core.type.codec.TypeCodec;
 import com.datastax.oss.driver.api.core.type.codec.registry.CodecRegistry;
 import com.datastax.oss.driver.internal.core.ProtocolVersionRegistry;
 import com.datastax.oss.driver.internal.core.channel.ChannelFactory;
-import com.datastax.oss.driver.internal.core.channel.DefaultWriteCoalescer;
 import com.datastax.oss.driver.internal.core.channel.WriteCoalescer;
 import com.datastax.oss.driver.internal.core.control.ControlConnection;
 import com.datastax.oss.driver.internal.core.metadata.DefaultTopologyMonitor;
@@ -236,7 +235,13 @@ public class DefaultDriverContext implements InternalDriverContext {
   }
 
   protected WriteCoalescer buildWriteCoalescer() {
-    return new DefaultWriteCoalescer(5);
+    CoreDriverOption rootOption = CoreDriverOption.COALESCER_ROOT;
+    return Reflection.buildFromConfig(this, rootOption, WriteCoalescer.class)
+        .orElseThrow(
+            () ->
+                new IllegalArgumentException(
+                    String.format(
+                        "Missing write coalescer, check your configuration (%s)", rootOption)));
   }
 
   protected ChannelFactory buildChannelFactory() {

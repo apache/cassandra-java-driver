@@ -44,6 +44,10 @@ public enum CoreDriverOption implements DriverOption {
   CONTROL_CONNECTION_TIMEOUT("connection.control-connection.timeout", true),
   CONTROL_CONNECTION_PAGE_SIZE("connection.control-connection.page-size", true),
 
+  COALESCER_ROOT("connection.coalescer", true),
+  RELATIVE_COALESCER_MAX_RUNS("max-runs-with-no-work", false),
+  RELATIVE_COALESCER_INTERVAL("reschedule-interval", false),
+
   // "Sub-option" for all the policies, etc.
   RELATIVE_POLICY_CLASS("class", false),
 

@@ -129,7 +129,7 @@ public abstract class ChannelFactoryTestBase {
                 new ByteBufPrimitiveCodec(ByteBufAllocator.DEFAULT), Compressor.none()));
     Mockito.when(context.sslHandlerFactory()).thenReturn(Optional.empty());
     Mockito.when(context.eventBus()).thenReturn(eventBus);
-    Mockito.when(context.writeCoalescer()).thenReturn(new DefaultWriteCoalescer(5));
+    Mockito.when(context.writeCoalescer()).thenReturn(new PassThroughWriteCoalescer(null, null));
 
     // Start local server
     ServerBootstrap serverBootstrap =
