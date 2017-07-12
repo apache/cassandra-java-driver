@@ -101,7 +101,7 @@ public class Reflection {
                   + "to have an accessible constructor with arguments (%s, %s)",
               className,
               configPath,
-              DriverConfigProfile.class.getSimpleName(),
+              DriverContext.class.getSimpleName(),
               DriverOption.class.getSimpleName()));
     }
     try {
