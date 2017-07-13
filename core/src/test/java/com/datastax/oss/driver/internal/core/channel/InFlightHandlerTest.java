@@ -371,6 +371,33 @@ public class InFlightHandlerTest extends ChannelHandlerTestBase {
   }
 
   @Test
+  public void should_fail_all_pending_if_connection_lost() {
+    // Given
+    addToPipeline();
+    Mockito.when(streamIds.acquire()).thenReturn(42, 43);
+    MockResponseCallback responseCallback1 = new MockResponseCallback();
+    MockResponseCallback responseCallback2 = new MockResponseCallback();
+    channel
+        .writeAndFlush(
+            new DriverChannel.RequestMessage(QUERY, false, Frame.NO_PAYLOAD, responseCallback1))
+        .awaitUninterruptibly();
+    channel
+        .writeAndFlush(
+            new DriverChannel.RequestMessage(QUERY, false, Frame.NO_PAYLOAD, responseCallback2))
+        .awaitUninterruptibly();
+
+    // When
+    channel.pipeline().fireChannelInactive();
+
+    // Then
+    for (MockResponseCallback callback : ImmutableList.of(responseCallback1, responseCallback2)) {
+      assertThat(callback.getFailure())
+          .isInstanceOf(ClosedConnectionException.class)
+          .hasMessageContaining("Lost connection to remote peer");
+    }
+  }
+
+  @Test
   public void should_hold_stream_id_if_required() {
     // Given
     addToPipeline();

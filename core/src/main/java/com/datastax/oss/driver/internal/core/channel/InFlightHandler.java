@@ -281,6 +281,15 @@ public class InFlightHandler extends ChannelDuplexHandler {
     }
   }
 
+  @Override
+  public void channelInactive(ChannelHandlerContext ctx) throws Exception {
+    // If the channel was closed normally (normal or forced shutdown), inFlight is already empty by
+    // the time we get here. So if it's not, it means the channel closed unexpectedly (e.g. the
+    // connection was dropped).
+    abortAllInFlight(new ClosedConnectionException("Lost connection to remote peer"));
+    super.channelInactive(ctx);
+  }
+
   private ResponseCallback release(int streamId, ChannelHandlerContext ctx) {
     LOG.debug("[{}] Releasing stream id {}", logPrefix, streamId);
     ResponseCallback responseCallback = inFlight.remove(streamId);
