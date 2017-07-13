@@ -24,7 +24,7 @@ import com.datastax.oss.driver.internal.core.type.DefaultTupleType;
 import com.datastax.oss.protocol.internal.util.Bytes;
 import com.google.common.collect.ImmutableList;
 import java.util.List;
-import org.testng.annotations.Test;
+import org.junit.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 

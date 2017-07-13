@@ -26,8 +26,8 @@ import java.util.Arrays;
 import java.util.Iterator;
 import java.util.Queue;
 import java.util.concurrent.CompletableFuture;
+import org.junit.Test;
 import org.mockito.Mockito;
-import org.testng.annotations.Test;
 
 import static com.datastax.oss.driver.Assertions.assertThat;
 

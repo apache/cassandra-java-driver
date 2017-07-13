@@ -17,7 +17,7 @@ package com.datastax.oss.driver.internal.core.type.codec;
 
 import com.datastax.oss.driver.api.core.type.codec.TypeCodecs;
 import java.util.UUID;
-import org.testng.annotations.Test;
+import org.junit.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -38,7 +38,7 @@ public class TimeUuidCodecTest extends CodecTestBase<UUID> {
     assertThat(encode(TIME_BASED)).isEqualTo("0x58046580293811e7b0631332a5f033c2");
   }
 
-  @Test(expectedExceptions = IllegalArgumentException.class)
+  @Test(expected = IllegalArgumentException.class)
   public void should_not_encode_non_time_uuid() {
     assertThat(codec.canEncode(NOT_TIME_BASED)).isFalse();
     encode(NOT_TIME_BASED);
@@ -49,7 +49,7 @@ public class TimeUuidCodecTest extends CodecTestBase<UUID> {
     assertThat(format(TIME_BASED)).isEqualTo("58046580-2938-11e7-b063-1332a5f033c2");
   }
 
-  @Test(expectedExceptions = IllegalArgumentException.class)
+  @Test(expected = IllegalArgumentException.class)
   public void should_not_format_non_time_uuid() {
     format(NOT_TIME_BASED);
   }

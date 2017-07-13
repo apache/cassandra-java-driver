@@ -22,10 +22,10 @@ import com.datastax.oss.protocol.internal.request.Query;
 import com.datastax.oss.protocol.internal.response.result.Void;
 import io.netty.util.concurrent.Future;
 import java.util.concurrent.CompletionStage;
+import org.junit.Before;
+import org.junit.Test;
 import org.mockito.Mock;
 import org.mockito.Mockito;
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.Test;
 
 import static com.datastax.oss.driver.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
@@ -35,7 +35,7 @@ public class ChannelFactoryAvailableIdsTest extends ChannelFactoryTestBase {
 
   @Mock private ResponseCallback responseCallback;
 
-  @BeforeMethod
+  @Before
   public void setup() throws InterruptedException {
     super.setup();
     Mockito.when(defaultConfigProfile.isDefined(CoreDriverOption.PROTOCOL_VERSION))

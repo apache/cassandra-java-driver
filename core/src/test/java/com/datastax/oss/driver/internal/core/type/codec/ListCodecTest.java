@@ -24,11 +24,11 @@ import com.datastax.oss.protocol.internal.util.Bytes;
 import com.google.common.collect.ImmutableList;
 import java.util.ArrayList;
 import java.util.List;
+import org.junit.Before;
+import org.junit.Test;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -36,7 +36,7 @@ public class ListCodecTest extends CodecTestBase<List<Integer>> {
 
   @Mock private TypeCodec<Integer> elementCodec;
 
-  @BeforeMethod
+  @Before
   public void setup() {
     MockitoAnnotations.initMocks(this);
 
@@ -136,7 +136,7 @@ public class ListCodecTest extends CodecTestBase<List<Integer>> {
     assertThat(parse("[a,b,c]")).containsExactly(1, 2, 3);
   }
 
-  @Test(expectedExceptions = IllegalArgumentException.class)
+  @Test(expected = IllegalArgumentException.class)
   public void should_fail_to_parse_malformed_list() {
     parse("not a list");
   }

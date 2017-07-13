@@ -30,6 +30,7 @@ import com.datastax.oss.protocol.internal.Frame;
 import com.datastax.oss.protocol.internal.FrameCodec;
 import com.datastax.oss.protocol.internal.Message;
 import com.datastax.oss.protocol.internal.response.Ready;
+import com.tngtech.java.junit.dataprovider.DataProviderRunner;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.buffer.ByteBufAllocator;
 import io.netty.channel.Channel;
@@ -48,12 +49,13 @@ import java.util.Optional;
 import java.util.concurrent.Exchanger;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
 import org.mockito.stubbing.Answer;
-import org.testng.annotations.AfterMethod;
-import org.testng.annotations.BeforeMethod;
 
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static org.assertj.core.api.Assertions.fail;
@@ -71,7 +73,8 @@ import static org.assertj.core.api.Assertions.fail;
  * writeInboundFrame (for instance the position of the connection in creation order) to specify
  * which instance to use.
  */
-abstract class ChannelFactoryTestBase {
+@RunWith(DataProviderRunner.class)
+public abstract class ChannelFactoryTestBase {
   static final LocalAddress SERVER_ADDRESS =
       new LocalAddress(ChannelFactoryTestBase.class.getSimpleName() + "-server");
 
@@ -95,7 +98,7 @@ abstract class ChannelFactoryTestBase {
   // The channel to send responses to the last open connection
   private volatile LocalChannel serverResponseChannel;
 
-  @BeforeMethod
+  @Before
   public void setup() throws InterruptedException {
     MockitoAnnotations.initMocks(this);
 
@@ -248,7 +251,7 @@ abstract class ChannelFactoryTestBase {
     }
   }
 
-  @AfterMethod
+  @After
   public void tearDown() throws InterruptedException {
     serverAcceptChannel.close();
 

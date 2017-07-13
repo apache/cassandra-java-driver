@@ -26,9 +26,9 @@ import com.datastax.oss.protocol.internal.response.event.StatusChangeEvent;
 import com.datastax.oss.protocol.internal.response.event.TopologyChangeEvent;
 import com.google.common.collect.ImmutableList;
 import java.util.concurrent.CompletableFuture;
+import org.junit.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mockito;
-import org.testng.annotations.Test;
 
 import static com.datastax.oss.driver.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.eq;

@@ -37,12 +37,12 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
-import org.testng.annotations.AfterMethod;
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.Test;
 
 import static com.datastax.oss.driver.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
@@ -63,7 +63,7 @@ public class NodeStateManagerTest {
   private EventBus eventBus;
   private DefaultEventLoopGroup adminEventLoopGroup;
 
-  @BeforeMethod
+  @Before
   public void setup() {
     MockitoAnnotations.initMocks(this);
 
@@ -96,7 +96,7 @@ public class NodeStateManagerTest {
     Mockito.when(context.metadataManager()).thenReturn(metadataManager);
   }
 
-  @AfterMethod
+  @After
   public void teardown() {
     adminEventLoopGroup.shutdownGracefully(100, 200, TimeUnit.MILLISECONDS);
   }

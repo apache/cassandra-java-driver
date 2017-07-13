@@ -36,11 +36,11 @@ import java.time.Duration;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import org.junit.After;
+import org.junit.Before;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
-import org.testng.annotations.AfterMethod;
-import org.testng.annotations.BeforeMethod;
 
 import static org.assertj.core.api.Assertions.fail;
 import static org.mockito.ArgumentMatchers.any;
@@ -60,7 +60,7 @@ abstract class ChannelPoolTestBase {
   EventBus eventBus;
   private DefaultEventLoopGroup adminEventLoopGroup;
 
-  @BeforeMethod
+  @Before
   public void setup() {
     MockitoAnnotations.initMocks(this);
 
@@ -81,7 +81,7 @@ abstract class ChannelPoolTestBase {
     Mockito.when(reconnectionSchedule.nextDelay()).thenReturn(Duration.ofDays(1));
   }
 
-  @AfterMethod
+  @After
   public void teardown() {
     adminEventLoopGroup.shutdownGracefully(100, 200, TimeUnit.MILLISECONDS);
   }

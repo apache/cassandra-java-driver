@@ -15,30 +15,25 @@
  */
 package com.datastax.oss.driver;
 
-import org.testng.IHookCallBack;
-import org.testng.IHookable;
-import org.testng.ITestResult;
+import org.junit.runner.Description;
+import org.junit.runner.notification.RunListener;
+
+import static org.assertj.core.api.Assertions.fail;
 
 /**
- * Intercepts the execution of each test, in order to perform additional tests.
+ * Common parent of all driver tests, to store common configuration and perform sanity checks.
  *
- * @see "src/test/resources/META-INF/services/org.testng.ITestNGListener"
+ * @see "maven-surefire-plugin configuration in pom.xml"
  */
-public class TestInterceptor implements IHookable {
+public class DriverRunListener extends RunListener {
 
   @Override
-  public void run(IHookCallBack callback, ITestResult result) {
-
-    // If a test interrupts the main thread silently, this can make later tests fail. Instead, we
+  public void testFinished(Description description) throws Exception {
+    // If a test interrupted the main thread silently, this can make later tests fail. Instead, we
     // fail the test and clear the interrupt status.
-    boolean wasInterrupted = Thread.currentThread().isInterrupted();
-
-    callback.runTestMethod(result);
-
     // Note: Thread.interrupted() also clears the flag, which is what we want.
-    if (!wasInterrupted && Thread.interrupted()) {
-      result.setStatus(ITestResult.FAILURE);
-      result.setThrowable(new IllegalStateException("The test interrupted the main thread"));
+    if (Thread.interrupted()) {
+      fail(description.getMethodName() + " interrupted the main thread");
     }
   }
 }

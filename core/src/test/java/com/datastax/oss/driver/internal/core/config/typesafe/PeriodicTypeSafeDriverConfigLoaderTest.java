@@ -30,11 +30,11 @@ import io.netty.channel.EventLoopGroup;
 import java.time.Duration;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
+import org.junit.Before;
+import org.junit.Test;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.Test;
 
 import static com.datastax.oss.driver.Assertions.assertThat;
 import static org.mockito.Mockito.never;
@@ -50,7 +50,7 @@ public class PeriodicTypeSafeDriverConfigLoaderTest {
   private EventBus eventBus;
   private AtomicReference<String> configSource;
 
-  @BeforeMethod
+  @Before
   public void setup() {
     MockitoAnnotations.initMocks(this);
 

@@ -15,7 +15,7 @@
  */
 package com.datastax.oss.driver.api.core;
 
-import org.testng.annotations.Test;
+import org.junit.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -39,12 +39,12 @@ public class CqlIdentifierTest {
     assertThat(CqlIdentifier.fromCql("\"create\"").asInternal()).isEqualTo("create");
   }
 
-  @Test(expectedExceptions = IllegalArgumentException.class)
+  @Test(expected = IllegalArgumentException.class)
   public void should_fail_to_build_from_valid_cql_if_special_characters() {
     CqlIdentifier.fromCql("foo bar");
   }
 
-  @Test(expectedExceptions = IllegalArgumentException.class)
+  @Test(expected = IllegalArgumentException.class)
   public void should_fail_to_build_from_valid_cql_if_reserved_keyword() {
     CqlIdentifier.fromCql("Create");
   }

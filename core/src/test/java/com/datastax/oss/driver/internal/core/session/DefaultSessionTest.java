@@ -44,11 +44,11 @@ import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import org.junit.Before;
+import org.junit.Test;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.Test;
 
 import static com.datastax.oss.driver.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
@@ -73,7 +73,7 @@ public class DefaultSessionTest {
   private DefaultEventLoopGroup adminEventLoopGroup;
   private EventBus eventBus;
 
-  @BeforeMethod
+  @Before
   public void setup() {
     MockitoAnnotations.initMocks(this);
 

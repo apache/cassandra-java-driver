@@ -18,7 +18,7 @@ package com.datastax.oss.driver.internal.core.metadata;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import java.net.InetSocketAddress;
-import org.testng.annotations.Test;
+import org.junit.Test;
 
 import static com.datastax.oss.driver.Assertions.assertThat;
 

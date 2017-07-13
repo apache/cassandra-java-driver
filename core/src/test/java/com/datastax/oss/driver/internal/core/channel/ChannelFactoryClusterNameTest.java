@@ -20,8 +20,8 @@ import com.datastax.oss.driver.api.core.config.CoreDriverOption;
 import com.datastax.oss.driver.internal.core.TestResponses;
 import com.datastax.oss.protocol.internal.response.Ready;
 import java.util.concurrent.CompletionStage;
+import org.junit.Test;
 import org.mockito.Mockito;
-import org.testng.annotations.Test;
 
 import static com.datastax.oss.driver.Assertions.assertThat;
 

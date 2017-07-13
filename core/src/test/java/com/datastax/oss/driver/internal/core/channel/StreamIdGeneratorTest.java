@@ -15,7 +15,7 @@
  */
 package com.datastax.oss.driver.internal.core.channel;
 
-import org.testng.annotations.Test;
+import org.junit.Test;
 
 import static com.datastax.oss.driver.Assertions.assertThat;
 

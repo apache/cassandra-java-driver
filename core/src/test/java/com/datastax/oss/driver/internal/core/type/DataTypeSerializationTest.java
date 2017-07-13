@@ -21,7 +21,7 @@ import com.datastax.oss.driver.api.core.type.DataTypes;
 import com.datastax.oss.driver.api.core.type.TupleType;
 import com.datastax.oss.driver.api.core.type.UserDefinedType;
 import com.datastax.oss.driver.internal.SerializationHelper;
-import org.testng.annotations.Test;
+import org.junit.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 

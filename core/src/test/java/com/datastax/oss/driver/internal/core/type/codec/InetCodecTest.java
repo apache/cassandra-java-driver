@@ -19,7 +19,7 @@ import com.datastax.oss.driver.api.core.type.codec.TypeCodecs;
 import com.google.common.base.Strings;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
-import org.testng.annotations.Test;
+import org.junit.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
@@ -58,17 +58,17 @@ public class InetCodecTest extends CodecTestBase<InetAddress> {
     assertThat(decode(null)).isNull();
   }
 
-  @Test(expectedExceptions = IllegalArgumentException.class)
+  @Test(expected = IllegalArgumentException.class)
   public void should_fail_to_decode_if_not_enough_bytes() {
     decode("0x0000");
   }
 
-  @Test(expectedExceptions = IllegalArgumentException.class)
+  @Test(expected = IllegalArgumentException.class)
   public void should_fail_to_decode_if_incorrect_byte_count() {
     decode("0x" + Strings.repeat("00", 7));
   }
 
-  @Test(expectedExceptions = IllegalArgumentException.class)
+  @Test(expected = IllegalArgumentException.class)
   public void should_fail_to_decode_if_too_many_bytes() {
     decode("0x" + Strings.repeat("00", 17));
   }
@@ -90,7 +90,7 @@ public class InetCodecTest extends CodecTestBase<InetAddress> {
     assertThat(parse(null)).isNull();
   }
 
-  @Test(expectedExceptions = IllegalArgumentException.class)
+  @Test(expected = IllegalArgumentException.class)
   public void should_fail_to_parse_invalid_input() {
     parse("not an address");
   }

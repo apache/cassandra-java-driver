@@ -25,7 +25,7 @@ import com.datastax.oss.driver.internal.SerializationHelper;
 import com.datastax.oss.driver.internal.core.type.UserDefinedTypeBuilder;
 import com.datastax.oss.protocol.internal.util.Bytes;
 import java.util.List;
-import org.testng.annotations.Test;
+import org.junit.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 

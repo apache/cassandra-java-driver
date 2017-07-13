@@ -27,8 +27,8 @@ import com.datastax.oss.driver.internal.core.type.codec.CqlIntToStringCodec;
 import com.datastax.oss.protocol.internal.util.Bytes;
 import com.google.common.collect.ImmutableList;
 import java.nio.ByteBuffer;
+import org.junit.Test;
 import org.mockito.Mockito;
-import org.testng.annotations.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;

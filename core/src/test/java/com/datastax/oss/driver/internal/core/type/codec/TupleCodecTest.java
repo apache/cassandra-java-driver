@@ -27,11 +27,11 @@ import com.datastax.oss.driver.api.core.type.codec.registry.CodecRegistry;
 import com.datastax.oss.driver.internal.core.type.DefaultTupleType;
 import com.datastax.oss.protocol.internal.util.Bytes;
 import com.google.common.collect.ImmutableList;
+import org.junit.Before;
+import org.junit.Test;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -45,7 +45,7 @@ public class TupleCodecTest extends CodecTestBase<TupleValue> {
 
   private TupleType tupleType;
 
-  @BeforeMethod
+  @Before
   public void setup() {
     MockitoAnnotations.initMocks(this);
 
@@ -158,7 +158,7 @@ public class TupleCodecTest extends CodecTestBase<TupleValue> {
     Mockito.verify(textCodec).parse("'a'");
   }
 
-  @Test(expectedExceptions = IllegalArgumentException.class)
+  @Test(expected = IllegalArgumentException.class)
   public void should_fail_to_parse_invalid_input() {
     parse("not a tuple");
   }

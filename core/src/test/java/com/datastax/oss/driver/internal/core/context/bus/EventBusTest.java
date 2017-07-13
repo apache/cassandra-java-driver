@@ -18,8 +18,8 @@ package com.datastax.oss.driver.internal.core.context.bus;
 import com.datastax.oss.driver.internal.core.context.EventBus;
 import java.util.HashMap;
 import java.util.Map;
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.Test;
+import org.junit.Before;
+import org.junit.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -29,7 +29,7 @@ public class EventBusTest {
   private Map<String, ParentEvent> results;
   private ChildEvent event = new ChildEvent();
 
-  @BeforeMethod
+  @Before
   public void setup() {
     bus = new EventBus("test");
     results = new HashMap<>();

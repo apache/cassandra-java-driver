@@ -18,8 +18,8 @@ package com.datastax.oss.driver.internal.core.channel;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelHandlerContext;
 import java.net.InetSocketAddress;
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.Test;
+import org.junit.Before;
+import org.junit.Test;
 
 import static com.datastax.oss.driver.Assertions.assertThat;
 
@@ -27,7 +27,7 @@ public class ConnectInitHandlerTest extends ChannelHandlerTestBase {
 
   private TestHandler handler;
 
-  @BeforeMethod
+  @Before
   @Override
   public void setup() {
     super.setup();

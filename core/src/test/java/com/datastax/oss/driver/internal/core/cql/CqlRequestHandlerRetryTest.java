@@ -37,11 +37,12 @@ import com.datastax.oss.protocol.internal.response.Error;
 import com.datastax.oss.protocol.internal.response.error.ReadTimeout;
 import com.datastax.oss.protocol.internal.response.error.Unavailable;
 import com.datastax.oss.protocol.internal.response.error.WriteTimeout;
+import com.tngtech.java.junit.dataprovider.DataProvider;
+import com.tngtech.java.junit.dataprovider.UseDataProvider;
 import java.util.Iterator;
 import java.util.concurrent.CompletionStage;
+import org.junit.Test;
 import org.mockito.Mockito;
-import org.testng.annotations.DataProvider;
-import org.testng.annotations.Test;
 
 import static com.datastax.oss.driver.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
@@ -49,7 +50,8 @@ import static org.mockito.ArgumentMatchers.eq;
 
 public class CqlRequestHandlerRetryTest extends CqlRequestHandlerTestBase {
 
-  @Test(dataProvider = "allIdempotenceConfigs")
+  @Test
+  @UseDataProvider("allIdempotenceConfigs")
   public void should_always_try_next_node_if_bootstrapping(
       boolean defaultIdempotence, SimpleStatement statement) {
     try (RequestHandlerTestHarness harness =
@@ -90,7 +92,8 @@ public class CqlRequestHandlerRetryTest extends CqlRequestHandlerTestBase {
     }
   }
 
-  @Test(dataProvider = "allIdempotenceConfigs")
+  @Test
+  @UseDataProvider("allIdempotenceConfigs")
   public void should_always_rethrow_query_validation_error(
       boolean defaultIdempotence, SimpleStatement statement) {
     try (RequestHandlerTestHarness harness =
@@ -116,7 +119,8 @@ public class CqlRequestHandlerRetryTest extends CqlRequestHandlerTestBase {
     }
   }
 
-  @Test(dataProvider = "failureAndIdempotent")
+  @Test
+  @UseDataProvider("failureAndIdempotent")
   public void should_try_next_node_if_idempotent_and_retry_policy_decides_so(
       FailureScenario failureScenario, boolean defaultIdempotence, SimpleStatement statement) {
     RequestHandlerTestHarness.Builder harnessBuilder =
@@ -147,7 +151,8 @@ public class CqlRequestHandlerRetryTest extends CqlRequestHandlerTestBase {
     }
   }
 
-  @Test(dataProvider = "failureAndIdempotent")
+  @Test
+  @UseDataProvider("failureAndIdempotent")
   public void should_try_same_node_if_idempotent_and_retry_policy_decides_so(
       FailureScenario failureScenario, boolean defaultIdempotence, SimpleStatement statement) {
     RequestHandlerTestHarness.Builder harnessBuilder =
@@ -178,7 +183,8 @@ public class CqlRequestHandlerRetryTest extends CqlRequestHandlerTestBase {
     }
   }
 
-  @Test(dataProvider = "failureAndIdempotent")
+  @Test
+  @UseDataProvider("failureAndIdempotent")
   public void should_ignore_error_if_idempotent_and_retry_policy_decides_so(
       FailureScenario failureScenario, boolean defaultIdempotence, SimpleStatement statement) {
     RequestHandlerTestHarness.Builder harnessBuilder =
@@ -206,7 +212,8 @@ public class CqlRequestHandlerRetryTest extends CqlRequestHandlerTestBase {
     }
   }
 
-  @Test(dataProvider = "failureAndIdempotent")
+  @Test
+  @UseDataProvider("failureAndIdempotent")
   public void should_rethrow_error_if_idempotent_and_retry_policy_decides_so(
       FailureScenario failureScenario, boolean defaultIdempotence, SimpleStatement statement) {
     RequestHandlerTestHarness.Builder harnessBuilder =
@@ -228,7 +235,8 @@ public class CqlRequestHandlerRetryTest extends CqlRequestHandlerTestBase {
     }
   }
 
-  @Test(dataProvider = "failureAndNotIdempotent")
+  @Test
+  @UseDataProvider("failureAndNotIdempotent")
   public void should_rethrow_error_if_not_idempotent(
       FailureScenario failureScenario, boolean defaultIdempotence, SimpleStatement statement) {
     RequestHandlerTestHarness.Builder harnessBuilder =

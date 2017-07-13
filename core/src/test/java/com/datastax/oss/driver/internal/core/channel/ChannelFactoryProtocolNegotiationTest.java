@@ -23,11 +23,12 @@ import com.datastax.oss.protocol.internal.Frame;
 import com.datastax.oss.protocol.internal.ProtocolConstants;
 import com.datastax.oss.protocol.internal.response.Error;
 import com.datastax.oss.protocol.internal.response.Ready;
+import com.tngtech.java.junit.dataprovider.DataProvider;
+import com.tngtech.java.junit.dataprovider.UseDataProvider;
 import java.util.Optional;
 import java.util.concurrent.CompletionStage;
+import org.junit.Test;
 import org.mockito.Mockito;
-import org.testng.annotations.DataProvider;
-import org.testng.annotations.Test;
 
 import static com.datastax.oss.driver.Assertions.assertThat;
 
@@ -55,7 +56,8 @@ public class ChannelFactoryProtocolNegotiationTest extends ChannelFactoryTestBas
     assertThat(factory.protocolVersion).isEqualTo(CoreProtocolVersion.V4);
   }
 
-  @Test(dataProvider = "unsupportedProtocolCodes")
+  @Test
+  @UseDataProvider("unsupportedProtocolCodes")
   public void should_fail_if_version_specified_and_not_supported_by_server(int errorCode) {
     // Given
     Mockito.when(defaultConfigProfile.isDefined(CoreDriverOption.PROTOCOL_VERSION))
@@ -112,7 +114,8 @@ public class ChannelFactoryProtocolNegotiationTest extends ChannelFactoryTestBas
     assertThat(factory.protocolVersion).isEqualTo(CoreProtocolVersion.V4);
   }
 
-  @Test(dataProvider = "unsupportedProtocolCodes")
+  @Test
+  @UseDataProvider("unsupportedProtocolCodes")
   public void should_negotiate_if_version_not_specified_and_server_supports_legacy(int errorCode) {
     // Given
     Mockito.when(defaultConfigProfile.isDefined(CoreDriverOption.PROTOCOL_VERSION))
@@ -145,7 +148,8 @@ public class ChannelFactoryProtocolNegotiationTest extends ChannelFactoryTestBas
     assertThat(factory.protocolVersion).isEqualTo(CoreProtocolVersion.V3);
   }
 
-  @Test(dataProvider = "unsupportedProtocolCodes")
+  @Test
+  @UseDataProvider("unsupportedProtocolCodes")
   public void should_fail_if_negotiation_finds_no_matching_version(int errorCode) {
     // Given
     Mockito.when(defaultConfigProfile.isDefined(CoreDriverOption.PROTOCOL_VERSION))
@@ -192,7 +196,7 @@ public class ChannelFactoryProtocolNegotiationTest extends ChannelFactoryTestBas
    * Depending on the Cassandra version, an "unsupported protocol" response can use different error
    * codes, so we test all of them.
    */
-  @DataProvider(name = "unsupportedProtocolCodes")
+  @DataProvider
   public static Object[][] unsupportedProtocolCodes() {
     return new Object[][] {
       new Object[] {ProtocolConstants.ErrorCode.PROTOCOL_ERROR},

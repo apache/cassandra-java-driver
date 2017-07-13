@@ -16,7 +16,7 @@
 package com.datastax.oss.driver.internal.core.type.codec;
 
 import com.datastax.oss.driver.api.core.type.codec.TypeCodecs;
-import org.testng.annotations.Test;
+import org.junit.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -55,7 +55,7 @@ public class StringCodecTest extends CodecTestBase<String> {
     assertThat(parse(null)).isNull();
   }
 
-  @Test(expectedExceptions = IllegalArgumentException.class)
+  @Test(expected = IllegalArgumentException.class)
   public void should_fail_to_parse_invalid_input() {
     parse("not a string");
   }

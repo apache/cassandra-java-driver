@@ -17,7 +17,7 @@ package com.datastax.oss.driver.internal.core.type.codec;
 
 import com.datastax.oss.driver.api.core.type.codec.TypeCodecs;
 import java.util.UUID;
-import org.testng.annotations.Test;
+import org.junit.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -43,12 +43,12 @@ public class UuidCodecTest extends CodecTestBase<UUID> {
     assertThat(decode(null)).isNull();
   }
 
-  @Test(expectedExceptions = IllegalArgumentException.class)
+  @Test(expected = IllegalArgumentException.class)
   public void should_fail_to_decode_if_not_enough_bytes() {
     decode("0x0000");
   }
 
-  @Test(expectedExceptions = IllegalArgumentException.class)
+  @Test(expected = IllegalArgumentException.class)
   public void should_fail_to_decode_if_too_many_bytes() {
     decode("0x00000000000000020000000000000001" + "0000");
   }
@@ -68,7 +68,7 @@ public class UuidCodecTest extends CodecTestBase<UUID> {
     assertThat(parse(null)).isNull();
   }
 
-  @Test(expectedExceptions = IllegalArgumentException.class)
+  @Test(expected = IllegalArgumentException.class)
   public void should_fail_to_parse_invalid_input() {
     parse("not a uuid");
   }

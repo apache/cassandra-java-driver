@@ -32,12 +32,12 @@ import io.netty.channel.ChannelPromise;
 import java.net.InetSocketAddress;
 import java.util.Collections;
 import java.util.concurrent.TimeUnit;
+import org.junit.Before;
+import org.junit.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.Test;
 
 import static com.datastax.oss.driver.Assertions.assertThat;
 import static org.mockito.Mockito.never;
@@ -49,7 +49,7 @@ public class InFlightHandlerTest extends ChannelHandlerTestBase {
 
   @Mock private StreamIdGenerator streamIds;
 
-  @BeforeMethod
+  @Before
   @Override
   public void setup() {
     super.setup();

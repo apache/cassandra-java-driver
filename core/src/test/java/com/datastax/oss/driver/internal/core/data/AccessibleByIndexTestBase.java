@@ -31,11 +31,11 @@ import com.datastax.oss.protocol.internal.util.Bytes;
 import com.google.common.collect.ImmutableList;
 import java.nio.ByteBuffer;
 import java.util.List;
+import org.junit.Before;
+import org.junit.Test;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
@@ -51,7 +51,7 @@ public abstract class AccessibleByIndexTestBase<T extends GettableByIndex & Sett
   protected TypeCodec<Double> doubleCodec;
   protected TypeCodec<String> textCodec;
 
-  @BeforeMethod
+  @Before
   public void setup() {
     MockitoAnnotations.initMocks(this);
 

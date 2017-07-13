@@ -19,7 +19,7 @@ import com.datastax.oss.driver.api.core.ProtocolVersion;
 import com.datastax.oss.driver.api.core.type.codec.TypeCodecs;
 import com.datastax.oss.protocol.internal.util.Bytes;
 import java.nio.ByteBuffer;
-import org.testng.annotations.Test;
+import org.junit.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -78,7 +78,7 @@ public class BlobCodecTest extends CodecTestBase<ByteBuffer> {
     assertThat(parse(null)).isNull();
   }
 
-  @Test(expectedExceptions = IllegalArgumentException.class)
+  @Test(expected = IllegalArgumentException.class)
   public void should_fail_to_parse_invalid_input() {
     parse("not a blob");
   }

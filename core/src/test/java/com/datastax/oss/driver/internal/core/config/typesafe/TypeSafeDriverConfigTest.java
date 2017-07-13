@@ -19,11 +19,15 @@ import com.datastax.oss.driver.api.core.config.CoreDriverOption;
 import com.datastax.oss.driver.api.core.config.DriverConfigProfile;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
-import org.testng.annotations.Test;
+import org.junit.Rule;
+import org.junit.Test;
+import org.junit.rules.ExpectedException;
 
 import static com.datastax.oss.driver.Assertions.assertThat;
 
 public class TypeSafeDriverConfigTest {
+
+  @Rule public ExpectedException expectedException = ExpectedException.none();
 
   @Test
   public void should_load_minimal_config_with_required_options_and_no_profiles() {
@@ -38,11 +42,10 @@ public class TypeSafeDriverConfigTest {
     assertThat(config).hasIntOption(MockOptions.OPTIONAL_INT, 43);
   }
 
-  @Test(
-    expectedExceptions = IllegalArgumentException.class,
-    expectedExceptionsMessageRegExp = "Missing option required_int. Check your configuration file."
-  )
+  @Test
   public void should_fail_if_required_option_is_missing() {
+    expectedException.expect(IllegalArgumentException.class);
+    expectedException.expectMessage("Missing option required_int. Check your configuration file.");
     parse("");
   }
 

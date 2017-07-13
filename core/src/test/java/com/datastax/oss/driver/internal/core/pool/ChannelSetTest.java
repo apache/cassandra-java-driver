@@ -16,11 +16,11 @@
 package com.datastax.oss.driver.internal.core.pool;
 
 import com.datastax.oss.driver.internal.core.channel.DriverChannel;
+import org.junit.Before;
+import org.junit.Test;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.Test;
 
 import static com.datastax.oss.driver.Assertions.assertThat;
 import static org.mockito.Mockito.never;
@@ -29,7 +29,7 @@ public class ChannelSetTest {
   @Mock private DriverChannel channel1, channel2, channel3;
   private ChannelSet set;
 
-  @BeforeMethod
+  @Before
   public void setup() {
     MockitoAnnotations.initMocks(this);
     set = new ChannelSet();

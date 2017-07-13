@@ -26,6 +26,9 @@ import com.datastax.oss.driver.api.core.config.DriverOption;
 import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
 import com.datastax.oss.driver.internal.core.time.Clock;
 import java.time.Duration;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.Mock;
@@ -33,12 +36,8 @@ import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
 import org.mockito.stubbing.OngoingStubbing;
 import org.slf4j.LoggerFactory;
-import org.testng.annotations.AfterMethod;
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.timeout;
 
 abstract class MonotonicTimestampGeneratorTestBase {
 
@@ -59,7 +58,7 @@ abstract class MonotonicTimestampGeneratorTestBase {
 
   private Logger logger;
 
-  @BeforeMethod
+  @Before
   public void setup() {
     MockitoAnnotations.initMocks(this);
 
@@ -78,7 +77,7 @@ abstract class MonotonicTimestampGeneratorTestBase {
     logger.addAppender(appender);
   }
 
-  @AfterMethod
+  @After
   public void teardown() {
     logger.detachAppender(appender);
   }

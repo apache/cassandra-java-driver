@@ -46,11 +46,11 @@ import java.time.Duration;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
+import org.junit.Before;
+import org.junit.Test;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.Test;
 
 import static com.datastax.oss.driver.Assertions.assertThat;
 
@@ -63,7 +63,7 @@ public class ProtocolInitHandlerTest extends ChannelHandlerTestBase {
   @Mock private DriverConfigProfile defaultConfigProfile;
   private ProtocolVersionRegistry protocolVersionRegistry = new ProtocolVersionRegistry();
 
-  @BeforeMethod
+  @Before
   @Override
   public void setup() {
     super.setup();

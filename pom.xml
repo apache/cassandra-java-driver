@@ -80,9 +80,14 @@
         <version>2.1.6</version>
       </dependency>
       <dependency>
-        <groupId>org.testng</groupId>
-        <artifactId>testng</artifactId>
-        <version>6.11</version>
+        <groupId>junit</groupId>
+        <artifactId>junit</artifactId>
+        <version>4.12</version>
+      </dependency>
+      <dependency>
+        <groupId>com.tngtech.java</groupId>
+        <artifactId>junit-dataprovider</artifactId>
+        <version>1.10.0</version>
       </dependency>
       <dependency>
         <groupId>org.assertj</groupId>

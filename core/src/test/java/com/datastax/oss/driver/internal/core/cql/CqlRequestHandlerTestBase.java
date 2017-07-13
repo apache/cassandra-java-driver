@@ -28,17 +28,20 @@ import com.datastax.oss.protocol.internal.response.result.Rows;
 import com.datastax.oss.protocol.internal.response.result.RowsMetadata;
 import com.datastax.oss.protocol.internal.util.Bytes;
 import com.google.common.collect.ImmutableList;
+import com.tngtech.java.junit.dataprovider.DataProvider;
+import com.tngtech.java.junit.dataprovider.DataProviderRunner;
 import java.nio.ByteBuffer;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Queue;
+import org.junit.Before;
+import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.DataProvider;
 
-abstract class CqlRequestHandlerTestBase {
+@RunWith(DataProviderRunner.class)
+public abstract class CqlRequestHandlerTestBase {
 
   protected static final SimpleStatement UNDEFINED_IDEMPOTENCE_STATEMENT =
       SimpleStatement.newInstance("mock query");
@@ -51,7 +54,7 @@ abstract class CqlRequestHandlerTestBase {
   @Mock protected Node node2;
   @Mock protected Node node3;
 
-  @BeforeMethod
+  @Before
   public void setup() {
     MockitoAnnotations.initMocks(this);
   }

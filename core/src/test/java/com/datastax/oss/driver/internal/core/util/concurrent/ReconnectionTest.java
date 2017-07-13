@@ -23,11 +23,11 @@ import java.time.Duration;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
+import org.junit.Before;
+import org.junit.Test;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.times;
@@ -43,7 +43,7 @@ public class ReconnectionTest {
   private MockReconnectionTask reconnectionTask;
   private Reconnection reconnection;
 
-  @BeforeMethod
+  @Before
   public void setup() {
     MockitoAnnotations.initMocks(this);
 
@@ -83,7 +83,7 @@ public class ReconnectionTest {
     Mockito.verify(onStartCallback).run();
   }
 
-  @Test(expectedExceptions = IllegalStateException.class)
+  @Test(expected = IllegalStateException.class)
   public void should_fail_if_started_twice() {
     Mockito.when(reconnectionSchedule.nextDelay()).thenReturn(Duration.ofSeconds(1));
     reconnection.start();

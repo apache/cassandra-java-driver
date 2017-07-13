@@ -21,11 +21,11 @@ import com.datastax.oss.driver.api.core.loadbalancing.LoadBalancingPolicy.Distan
 import com.datastax.oss.driver.api.core.metadata.Node;
 import com.datastax.oss.driver.api.core.metadata.NodeState;
 import com.google.common.collect.ImmutableSet;
+import org.junit.Before;
+import org.junit.Test;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -36,7 +36,7 @@ public class RoundRobinLoadBalancingPolicyTest {
 
   private RoundRobinLoadBalancingPolicy policy;
 
-  @BeforeMethod
+  @Before
   public void setup() {
     MockitoAnnotations.initMocks(this);
 

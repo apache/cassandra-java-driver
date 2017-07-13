@@ -24,11 +24,11 @@ import com.datastax.oss.protocol.internal.util.Bytes;
 import com.google.common.collect.ImmutableMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import org.junit.Before;
+import org.junit.Test;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -37,7 +37,7 @@ public class MapCodecTest extends CodecTestBase<Map<String, Integer>> {
   @Mock private TypeCodec<String> keyCodec;
   @Mock private TypeCodec<Integer> valueCodec;
 
-  @BeforeMethod
+  @Before
   public void setup() {
     MockitoAnnotations.initMocks(this);
 
@@ -182,7 +182,7 @@ public class MapCodecTest extends CodecTestBase<Map<String, Integer>> {
         .containsEntry("c", 3);
   }
 
-  @Test(expectedExceptions = IllegalArgumentException.class)
+  @Test(expected = IllegalArgumentException.class)
   public void should_fail_to_parse_malformed_map() {
     parse("not a map");
   }

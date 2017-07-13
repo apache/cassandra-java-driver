@@ -24,17 +24,19 @@ import com.datastax.oss.driver.api.core.specex.SpeculativeExecutionPolicy;
 import com.datastax.oss.driver.internal.core.util.concurrent.ScheduledTaskCapturingEventLoop;
 import com.datastax.oss.protocol.internal.ProtocolConstants;
 import com.datastax.oss.protocol.internal.response.Error;
+import com.tngtech.java.junit.dataprovider.UseDataProvider;
 import java.util.Map;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.TimeUnit;
+import org.junit.Test;
 import org.mockito.Mockito;
-import org.testng.annotations.Test;
 
 import static com.datastax.oss.driver.Assertions.assertThat;
 
 public class CqlRequestHandlerSpeculativeExecutionTest extends CqlRequestHandlerTestBase {
 
-  @Test(dataProvider = "nonIdempotentConfig")
+  @Test
+  @UseDataProvider("nonIdempotentConfig")
   public void should_not_schedule_speculative_executions_if_not_idempotent(
       boolean defaultIdempotence, SimpleStatement statement) {
     RequestHandlerTestHarness.Builder harnessBuilder =
@@ -57,7 +59,8 @@ public class CqlRequestHandlerSpeculativeExecutionTest extends CqlRequestHandler
     }
   }
 
-  @Test(dataProvider = "idempotentConfig")
+  @Test
+  @UseDataProvider("idempotentConfig")
   public void should_schedule_speculative_executions(
       boolean defaultIdempotence, SimpleStatement statement) {
     RequestHandlerTestHarness.Builder harnessBuilder =
@@ -106,7 +109,8 @@ public class CqlRequestHandlerSpeculativeExecutionTest extends CqlRequestHandler
     }
   }
 
-  @Test(dataProvider = "idempotentConfig")
+  @Test
+  @UseDataProvider("idempotentConfig")
   public void should_not_start_execution_if_result_complete(
       boolean defaultIdempotence, SimpleStatement statement) {
     RequestHandlerTestHarness.Builder harnessBuilder =
@@ -150,7 +154,8 @@ public class CqlRequestHandlerSpeculativeExecutionTest extends CqlRequestHandler
     }
   }
 
-  @Test(dataProvider = "idempotentConfig")
+  @Test
+  @UseDataProvider("idempotentConfig")
   public void should_fail_if_no_more_nodes_and_initial_execution_is_last(
       boolean defaultIdempotence, SimpleStatement statement) {
     RequestHandlerTestHarness.Builder harnessBuilder =
@@ -202,7 +207,8 @@ public class CqlRequestHandlerSpeculativeExecutionTest extends CqlRequestHandler
     }
   }
 
-  @Test(dataProvider = "idempotentConfig")
+  @Test
+  @UseDataProvider("idempotentConfig")
   public void should_fail_if_no_more_nodes_and_speculative_execution_is_last(
       boolean defaultIdempotence, SimpleStatement statement) {
     RequestHandlerTestHarness.Builder harnessBuilder =
@@ -255,7 +261,8 @@ public class CqlRequestHandlerSpeculativeExecutionTest extends CqlRequestHandler
     }
   }
 
-  @Test(dataProvider = "idempotentConfig")
+  @Test
+  @UseDataProvider("idempotentConfig")
   public void should_retry_in_speculative_executions(
       boolean defaultIdempotence, SimpleStatement statement) {
     RequestHandlerTestHarness.Builder harnessBuilder =
@@ -300,7 +307,8 @@ public class CqlRequestHandlerSpeculativeExecutionTest extends CqlRequestHandler
     }
   }
 
-  @Test(dataProvider = "idempotentConfig")
+  @Test
+  @UseDataProvider("idempotentConfig")
   public void should_stop_retrying_other_executions_if_result_complete(
       boolean defaultIdempotence, SimpleStatement statement) {
     RequestHandlerTestHarness.Builder harnessBuilder =

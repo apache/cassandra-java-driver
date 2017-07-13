@@ -17,8 +17,8 @@ package com.datastax.oss.driver.internal.core.util.concurrent;
 
 import java.util.ArrayList;
 import java.util.List;
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.Test;
+import org.junit.Before;
+import org.junit.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -26,7 +26,7 @@ public class ReplayingEventFilterTest {
   private ReplayingEventFilter<Integer> filter;
   private List<Integer> filteredEvents;
 
-  @BeforeMethod
+  @Before
   public void setup() {
     filteredEvents = new ArrayList<>();
     filter = new ReplayingEventFilter<>(filteredEvents::add);

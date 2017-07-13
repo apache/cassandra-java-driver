@@ -16,7 +16,7 @@
 package com.datastax.oss.driver.internal.core.type.codec;
 
 import com.datastax.oss.driver.api.core.type.codec.TypeCodecs;
-import org.testng.annotations.Test;
+import org.junit.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -41,12 +41,12 @@ public class IntCodecTest extends CodecTestBase<Integer> {
     assertThat(decode(null)).isNull();
   }
 
-  @Test(expectedExceptions = IllegalArgumentException.class)
+  @Test(expected = IllegalArgumentException.class)
   public void should_fail_to_decode_if_not_enough_bytes() {
     decode("0x0000");
   }
 
-  @Test(expectedExceptions = IllegalArgumentException.class)
+  @Test(expected = IllegalArgumentException.class)
   public void should_fail_to_decode_if_too_many_bytes() {
     decode("0x0000000000000000");
   }
@@ -66,7 +66,7 @@ public class IntCodecTest extends CodecTestBase<Integer> {
     assertThat(parse(null)).isNull();
   }
 
-  @Test(expectedExceptions = IllegalArgumentException.class)
+  @Test(expected = IllegalArgumentException.class)
   public void should_fail_to_parse_invalid_input() {
     parse("not an int");
   }

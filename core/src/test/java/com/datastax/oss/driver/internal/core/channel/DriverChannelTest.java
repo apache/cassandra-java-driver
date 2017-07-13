@@ -28,10 +28,10 @@ import java.util.AbstractMap;
 import java.util.LinkedList;
 import java.util.Map;
 import java.util.Queue;
+import org.junit.Before;
+import org.junit.Test;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.Test;
 
 import static com.datastax.oss.driver.Assertions.assertThat;
 
@@ -43,7 +43,7 @@ public class DriverChannelTest extends ChannelHandlerTestBase {
 
   @Mock private StreamIdGenerator streamIds;
 
-  @BeforeMethod
+  @Before
   @Override
   public void setup() {
     super.setup();

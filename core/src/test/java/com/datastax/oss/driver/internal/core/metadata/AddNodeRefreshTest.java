@@ -19,7 +19,7 @@ import com.datastax.oss.driver.api.core.metadata.Node;
 import com.google.common.collect.ImmutableMap;
 import java.net.InetSocketAddress;
 import java.util.Map;
-import org.testng.annotations.Test;
+import org.junit.Test;
 
 import static com.datastax.oss.driver.Assertions.assertThat;
 

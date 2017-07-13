@@ -17,7 +17,9 @@ package com.datastax.oss.driver.internal.core;
 
 import com.datastax.oss.driver.api.core.ProtocolVersion;
 import java.util.Optional;
-import org.testng.annotations.Test;
+import org.junit.Rule;
+import org.junit.Test;
+import org.junit.rules.ExpectedException;
 
 import static com.datastax.oss.driver.Assertions.assertThat;
 
@@ -30,11 +32,12 @@ public class ProtocolVersionRegistryTest {
   private static ProtocolVersion V10 = new MockProtocolVersion(10, false);
   private static ProtocolVersion V11 = new MockProtocolVersion(11, false);
 
-  @Test(
-    expectedExceptions = IllegalArgumentException.class,
-    expectedExceptionsMessageRegExp = "Duplicate version code: 5 in V5 and V5_BETA"
-  )
+  @Rule public ExpectedException expectedException = ExpectedException.none();
+
+  @Test
   public void should_fail_if_duplicate_version_code() {
+    expectedException.expect(IllegalArgumentException.class);
+    expectedException.expectMessage("Duplicate version code: 5 in V5 and V5_BETA");
     new ProtocolVersionRegistry(new ProtocolVersion[] {V5, V5_BETA});
   }
 

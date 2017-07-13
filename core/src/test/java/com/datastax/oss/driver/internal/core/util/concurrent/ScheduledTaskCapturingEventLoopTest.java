@@ -19,10 +19,9 @@ import com.datastax.oss.driver.internal.core.util.concurrent.ScheduledTaskCaptur
 import io.netty.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
-import org.testng.annotations.Test;
+import org.junit.Test;
 
 import static com.datastax.oss.driver.Assertions.assertThat;
-import static com.datastax.oss.driver.Assertions.fail;
 
 public class ScheduledTaskCapturingEventLoopTest {
 

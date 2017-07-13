@@ -34,11 +34,11 @@ import java.util.List;
 import java.util.Queue;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
+import org.junit.Before;
+import org.junit.Test;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.Test;
 
 import static com.datastax.oss.driver.Assertions.assertThat;
 
@@ -50,7 +50,7 @@ public class DefaultAsyncResultSetTest {
   @Mock private Session session;
   @Mock private InternalDriverContext context;
 
-  @BeforeMethod
+  @Before
   public void setup() {
     MockitoAnnotations.initMocks(this);
 
@@ -59,7 +59,7 @@ public class DefaultAsyncResultSetTest {
     Mockito.when(context.protocolVersion()).thenReturn(CoreProtocolVersion.DEFAULT);
   }
 
-  @Test(expectedExceptions = IllegalStateException.class)
+  @Test(expected = IllegalStateException.class)
   public void should_fail_to_fetch_next_page_if_last() {
     // Given
     Mockito.when(executionInfo.getPagingState()).thenReturn(null);
@@ -170,7 +170,7 @@ public class DefaultAsyncResultSetTest {
     assertThat(resultSet.wasApplied()).isTrue();
   }
 
-  @Test(expectedExceptions = IllegalStateException.class)
+  @Test(expected = IllegalStateException.class)
   public void should_fail_to_report_if_applied_if_column_present_but_empty() {
     // Given
     Mockito.when(columnDefinitions.contains("[applied]")).thenReturn(true);

@@ -17,7 +17,7 @@ package com.datastax.oss.driver.internal.core.data;
 
 import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.google.common.collect.ImmutableList;
-import org.testng.annotations.Test;
+import org.junit.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 

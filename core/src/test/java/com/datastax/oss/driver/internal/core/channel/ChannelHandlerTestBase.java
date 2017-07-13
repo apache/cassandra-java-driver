@@ -19,7 +19,7 @@ import com.datastax.oss.protocol.internal.Frame;
 import com.datastax.oss.protocol.internal.Message;
 import io.netty.channel.embedded.EmbeddedChannel;
 import java.util.Collections;
-import org.testng.annotations.BeforeMethod;
+import org.junit.Before;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -33,7 +33,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 public class ChannelHandlerTestBase {
   protected EmbeddedChannel channel;
 
-  @BeforeMethod
+  @Before
   public void setup() {
     channel = new EmbeddedChannel();
   }

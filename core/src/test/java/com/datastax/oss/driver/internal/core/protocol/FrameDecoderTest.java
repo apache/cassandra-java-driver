@@ -24,8 +24,8 @@ import com.datastax.oss.protocol.internal.response.AuthSuccess;
 import io.netty.buffer.ByteBuf;
 import io.netty.handler.codec.LengthFieldBasedFrameDecoder;
 import io.netty.handler.codec.TooLongFrameException;
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.Test;
+import org.junit.Before;
+import org.junit.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
@@ -50,7 +50,7 @@ public class FrameDecoderTest extends ChannelHandlerTestBase {
 
   private FrameCodec<ByteBuf> frameCodec;
 
-  @BeforeMethod
+  @Before
   @Override
   public void setup() {
     super.setup();

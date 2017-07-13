@@ -43,12 +43,12 @@ import java.util.concurrent.Exchanger;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import org.junit.After;
+import org.junit.Before;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
 import org.mockito.internal.util.MockUtil;
-import org.testng.annotations.AfterMethod;
-import org.testng.annotations.BeforeMethod;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
@@ -74,7 +74,7 @@ abstract class ControlConnectionTestBase {
 
   protected ControlConnection controlConnection;
 
-  @BeforeMethod
+  @Before
   public void setup() {
     MockitoAnnotations.initMocks(this);
 
@@ -122,7 +122,7 @@ abstract class ControlConnectionTestBase {
     controlConnection = new ControlConnection(context);
   }
 
-  @AfterMethod
+  @After
   public void teardown() {
     adminEventLoopGroup.shutdownGracefully(100, 200, TimeUnit.MILLISECONDS);
   }
