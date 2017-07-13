@@ -90,7 +90,8 @@ public class LoadBalancingPolicyWrapper
     switch (stateRef.get()) {
       case BEFORE_INIT:
       case DURING_INIT:
-        // Retrieve nodes from the metadata (at this stage it's the contact points).
+        // Retrieve nodes from the metadata (at this stage it's the contact points). The only time
+        // when this can happen is during control connection initialization.
         List<Node> nodes = new ArrayList<>();
         nodes.addAll(context.metadataManager().getMetadata().getNodes().values());
         Collections.shuffle(nodes);
