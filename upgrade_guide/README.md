@@ -20,6 +20,18 @@ IDE to find out the new locations.
 
 [API conventions]: ../manual/api_conventions
 
+#### New configuration API
+
+The configuration has been completely revamped. Instead of ad-hoc configuration classes, the default
+configuration mechanism is now file-based, using the [TypeSafe Config] library. This is a better
+choice for most deployments, since it allows configuration changes without recompiling the client
+application. This is fully customizable, including loading from different sources, or completely
+overriding the default implementation.
+
+For more details, refer to the [manual](../manual/configuration).
+
+[TypeSafe Config]: https://github.com/typesafehub/config
+
 #### Expose interfaces, not classes
 
 Most types in the public API are now interfaces (as opposed to 3.x: `Cluster`, statement classes, 
