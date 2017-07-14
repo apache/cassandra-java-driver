@@ -125,7 +125,7 @@ public class ClusterBuilder {
     DriverConfigLoader configLoader =
         buildIfNull(this.configLoader, ClusterBuilder::defaultConfigLoader);
 
-    DriverConfigProfile defaultConfig = configLoader.getInitialConfig().defaultProfile();
+    DriverConfigProfile defaultConfig = configLoader.getInitialConfig().getDefaultProfile();
     List<String> configContactPoints =
         defaultConfig.isDefined(CoreDriverOption.CONTACT_POINTS)
             ? defaultConfig.getStringList(CoreDriverOption.CONTACT_POINTS)

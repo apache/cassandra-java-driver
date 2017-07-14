@@ -102,7 +102,7 @@ public class DefaultSessionTest {
         .thenReturn(true);
     Mockito.when(defaultConfigProfile.getBoolean(CoreDriverOption.REPREPARE_ENABLED))
         .thenReturn(false);
-    Mockito.when(config.defaultProfile()).thenReturn(defaultConfigProfile);
+    Mockito.when(config.getDefaultProfile()).thenReturn(defaultConfigProfile);
     Mockito.when(context.config()).thenReturn(config);
   }
 

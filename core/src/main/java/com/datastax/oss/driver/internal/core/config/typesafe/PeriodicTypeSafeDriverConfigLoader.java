@@ -102,9 +102,9 @@ public class PeriodicTypeSafeDriverConfigLoader implements DriverConfigLoader {
       this.logPrefix = context.clusterName();
       this.adminExecutor = context.nettyOptions().adminEventExecutorGroup().next();
       this.eventBus = context.eventBus();
-      this.config = context.config().defaultProfile();
+      this.config = context.config().getDefaultProfile();
       this.reloadInterval =
-          context.config().defaultProfile().getDuration(CoreDriverOption.CONFIG_RELOAD_INTERVAL);
+          context.config().getDefaultProfile().getDuration(CoreDriverOption.CONFIG_RELOAD_INTERVAL);
 
       forceLoadListenerKey =
           this.eventBus.register(

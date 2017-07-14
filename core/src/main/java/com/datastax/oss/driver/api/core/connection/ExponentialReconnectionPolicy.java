@@ -34,7 +34,7 @@ public class ExponentialReconnectionPolicy implements ReconnectionPolicy {
 
   /** Builds a new instance. */
   public ExponentialReconnectionPolicy(DriverContext context, DriverOption configRoot) {
-    DriverConfigProfile config = context.config().defaultProfile();
+    DriverConfigProfile config = context.config().getDefaultProfile();
     DriverOption baseDelayOption =
         configRoot.concat(CoreDriverOption.RELATIVE_EXPONENTIAL_RECONNECTION_BASE_DELAY);
     DriverOption maxDelayOption =

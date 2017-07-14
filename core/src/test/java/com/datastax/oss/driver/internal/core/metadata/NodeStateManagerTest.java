@@ -72,7 +72,7 @@ public class NodeStateManagerTest {
         .thenReturn(Duration.ofSeconds(0));
     Mockito.when(defaultConfigProfile.getInt(CoreDriverOption.METADATA_TOPOLOGY_MAX_EVENTS))
         .thenReturn(1);
-    Mockito.when(config.defaultProfile()).thenReturn(defaultConfigProfile);
+    Mockito.when(config.getDefaultProfile()).thenReturn(defaultConfigProfile);
     Mockito.when(context.config()).thenReturn(config);
 
     this.eventBus = Mockito.spy(new EventBus("test"));

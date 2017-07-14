@@ -76,7 +76,7 @@ public class TypeSafeDriverConfigTest {
   @Test
   public void should_create_derived_profile_with_new_option() {
     TypeSafeDriverConfig config = parse("required_int = 42");
-    DriverConfigProfile base = config.defaultProfile();
+    DriverConfigProfile base = config.getDefaultProfile();
     DriverConfigProfile derived = base.withInt(MockOptions.OPTIONAL_INT, 43);
 
     assertThat(base.isDefined(MockOptions.OPTIONAL_INT)).isFalse();
@@ -87,7 +87,7 @@ public class TypeSafeDriverConfigTest {
   @Test
   public void should_create_derived_profile_overriding_option() {
     TypeSafeDriverConfig config = parse("required_int = 42");
-    DriverConfigProfile base = config.defaultProfile();
+    DriverConfigProfile base = config.getDefaultProfile();
     DriverConfigProfile derived = base.withInt(MockOptions.REQUIRED_INT, 43);
 
     assertThat(base.getInt(MockOptions.REQUIRED_INT)).isEqualTo(42);
@@ -113,9 +113,9 @@ public class TypeSafeDriverConfigTest {
         parse("required_int = 42\n profiles { profile1 { required_int = 43 } }");
 
     DriverConfigProfile derivedFromDefault =
-        config.defaultProfile().withInt(MockOptions.OPTIONAL_INT, 50);
+        config.getDefaultProfile().withInt(MockOptions.OPTIONAL_INT, 50);
     DriverConfigProfile derivedFromProfile1 =
-        config.getProfile("profile1").withInt(MockOptions.OPTIONAL_INT, 51);
+        config.getNamedProfile("profile1").withInt(MockOptions.OPTIONAL_INT, 51);
 
     config.reload(
         ConfigFactory.parseString(

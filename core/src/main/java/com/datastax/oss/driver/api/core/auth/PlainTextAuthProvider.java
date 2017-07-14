@@ -49,7 +49,7 @@ public class PlainTextAuthProvider implements AuthProvider {
 
   /** Builds a new instance. */
   public PlainTextAuthProvider(DriverContext context, DriverOption configRoot) {
-    this.config = context.config().defaultProfile();
+    this.config = context.config().getDefaultProfile();
     this.configRoot = configRoot;
   }
 

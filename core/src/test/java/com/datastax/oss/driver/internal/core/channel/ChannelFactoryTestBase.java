@@ -106,7 +106,7 @@ public abstract class ChannelFactoryTestBase {
     clientGroup = new DefaultEventLoopGroup(1);
 
     Mockito.when(context.config()).thenReturn(driverConfig);
-    Mockito.when(driverConfig.defaultProfile()).thenReturn(defaultConfigProfile);
+    Mockito.when(driverConfig.getDefaultProfile()).thenReturn(defaultConfigProfile);
     Mockito.when(
             defaultConfigProfile.isDefined(
                 CoreDriverOption.AUTH_PROVIDER_ROOT.concat(CoreDriverOption.RELATIVE_POLICY_CLASS)))
@@ -224,7 +224,7 @@ public abstract class ChannelFactoryTestBase {
       return new ChannelInitializer<Channel>() {
         @Override
         protected void initChannel(Channel channel) throws Exception {
-          DriverConfigProfile defaultConfigProfile = context.config().defaultProfile();
+          DriverConfigProfile defaultConfigProfile = context.config().getDefaultProfile();
 
           long setKeyspaceTimeoutMillis =
               defaultConfigProfile

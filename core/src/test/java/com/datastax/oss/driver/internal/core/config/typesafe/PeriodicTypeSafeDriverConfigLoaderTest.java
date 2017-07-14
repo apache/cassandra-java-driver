@@ -68,7 +68,7 @@ public class PeriodicTypeSafeDriverConfigLoaderTest {
     // In real life, it's the object managed by the loader, but in this test it's simpler to mock
     // it.
     Mockito.when(context.config()).thenReturn(config);
-    Mockito.when(config.defaultProfile()).thenReturn(defaultConfigProfile);
+    Mockito.when(config.getDefaultProfile()).thenReturn(defaultConfigProfile);
     Mockito.when(defaultConfigProfile.getDuration(CoreDriverOption.CONFIG_RELOAD_INTERVAL))
         .thenReturn(Duration.ofSeconds(12));
 

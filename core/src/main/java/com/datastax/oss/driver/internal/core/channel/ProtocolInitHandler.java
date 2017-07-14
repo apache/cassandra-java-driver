@@ -73,7 +73,7 @@ class ProtocolInitHandler extends ConnectInitHandler {
 
     this.internalDriverContext = internalDriverContext;
 
-    DriverConfigProfile defaultConfig = internalDriverContext.config().defaultProfile();
+    DriverConfigProfile defaultConfig = internalDriverContext.config().getDefaultProfile();
 
     this.timeoutMillis =
         defaultConfig.getDuration(CoreDriverOption.CONNECTION_INIT_QUERY_TIMEOUT).toMillis();

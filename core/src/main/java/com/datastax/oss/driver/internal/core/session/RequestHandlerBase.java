@@ -59,8 +59,8 @@ public abstract class RequestHandlerBase<SyncResultT, AsyncResultT>
       String profileName = request.getConfigProfileName();
       this.configProfile =
           (profileName == null || profileName.isEmpty())
-              ? config.defaultProfile()
-              : config.getProfile(profileName);
+              ? config.getDefaultProfile()
+              : config.getNamedProfile(profileName);
     }
     this.isIdempotent =
         (request.isIdempotent() == null)

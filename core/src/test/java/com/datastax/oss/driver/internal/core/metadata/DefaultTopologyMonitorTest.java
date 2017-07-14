@@ -71,7 +71,7 @@ public class DefaultTopologyMonitorTest {
 
     Mockito.when(defaultConfig.getDuration(CoreDriverOption.CONTROL_CONNECTION_TIMEOUT))
         .thenReturn(Duration.ofSeconds(1));
-    Mockito.when(config.defaultProfile()).thenReturn(defaultConfig);
+    Mockito.when(config.getDefaultProfile()).thenReturn(defaultConfig);
     Mockito.when(context.config()).thenReturn(config);
 
     addressTranslator =

@@ -506,7 +506,7 @@ public class ChannelPool implements AsyncAutoCloseable {
 
     private int getConfiguredSize(NodeDistance distance) {
       return config
-          .defaultProfile()
+          .getDefaultProfile()
           .getInt(
               (distance == NodeDistance.LOCAL)
                   ? CoreDriverOption.POOLING_LOCAL_CONNECTIONS

@@ -91,7 +91,7 @@ public class RequestHandlerTestHarness implements AutoCloseable {
     Mockito.when(defaultConfigProfile.getBoolean(CoreDriverOption.PREPARE_ON_ALL_NODES))
         .thenReturn(true);
 
-    Mockito.when(config.defaultProfile()).thenReturn(defaultConfigProfile);
+    Mockito.when(config.getDefaultProfile()).thenReturn(defaultConfigProfile);
     Mockito.when(context.config()).thenReturn(config);
 
     Mockito.when(loadBalancingPolicyWrapper.newQueryPlan()).thenReturn(builder.buildQueryPlan());

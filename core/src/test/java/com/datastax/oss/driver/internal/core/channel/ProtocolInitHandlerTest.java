@@ -69,7 +69,7 @@ public class ProtocolInitHandlerTest extends ChannelHandlerTestBase {
     super.setup();
     MockitoAnnotations.initMocks(this);
     Mockito.when(internalDriverContext.config()).thenReturn(driverConfig);
-    Mockito.when(driverConfig.defaultProfile()).thenReturn(defaultConfigProfile);
+    Mockito.when(driverConfig.getDefaultProfile()).thenReturn(defaultConfigProfile);
     Mockito.when(defaultConfigProfile.getDuration(CoreDriverOption.CONNECTION_INIT_QUERY_TIMEOUT))
         .thenReturn(Duration.ofMillis(QUERY_TIMEOUT_MILLIS));
     Mockito.when(internalDriverContext.protocolVersionRegistry())

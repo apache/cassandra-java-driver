@@ -131,7 +131,7 @@ public class DefaultSession implements Session {
   public void setKeyspace(CqlIdentifier newKeyspace) {
     CqlIdentifier oldKeyspace = this.keyspace;
     if (!Objects.equals(oldKeyspace, newKeyspace)) {
-      if (config.defaultProfile().getBoolean(CoreDriverOption.REQUEST_WARN_IF_SET_KEYSPACE)) {
+      if (config.getDefaultProfile().getBoolean(CoreDriverOption.REQUEST_WARN_IF_SET_KEYSPACE)) {
         LOG.warn(
             "[{}] Detected a keyspace change at runtime ({} => {}). "
                 + "This is an anti-pattern that should be avoided in production "
@@ -399,7 +399,7 @@ public class DefaultSession implements Session {
 
     private void reprepareStatements(ChannelPool pool) {
       assert adminExecutor.inEventLoop();
-      if (config.defaultProfile().getBoolean(CoreDriverOption.REPREPARE_ENABLED)) {
+      if (config.getDefaultProfile().getBoolean(CoreDriverOption.REPREPARE_ENABLED)) {
         new ReprepareOnUp(
                 logPrefix + "|" + pool.getNode().getConnectAddress(),
                 pool,

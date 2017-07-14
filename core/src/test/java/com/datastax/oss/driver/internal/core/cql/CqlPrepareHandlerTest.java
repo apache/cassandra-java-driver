@@ -108,7 +108,7 @@ public class CqlPrepareHandlerTest {
 
     try (RequestHandlerTestHarness harness = harnessBuilder.build()) {
 
-      DriverConfigProfile config = harness.getContext().config().defaultProfile();
+      DriverConfigProfile config = harness.getContext().config().getDefaultProfile();
       Mockito.when(config.getBoolean(CoreDriverOption.PREPARE_ON_ALL_NODES)).thenReturn(false);
 
       CompletionStage<PreparedStatement> prepareFuture =

@@ -134,7 +134,7 @@ public class DefaultDriverContext implements InternalDriverContext {
   public DefaultDriverContext(DriverConfigLoader configLoader, List<TypeCodec<?>> typeCodecs) {
     this.config = configLoader.getInitialConfig();
     this.configLoader = configLoader;
-    DriverConfigProfile defaultProfile = config.defaultProfile();
+    DriverConfigProfile defaultProfile = config.getDefaultProfile();
     if (defaultProfile.isDefined(CoreDriverOption.CLUSTER_NAME)) {
       this.clusterName = defaultProfile.getString(CoreDriverOption.CLUSTER_NAME);
     } else {

@@ -68,7 +68,7 @@ public class ReprepareOnUpTest {
     Mockito.when(channel.eventLoop()).thenReturn(eventLoop);
     Mockito.when(eventLoop.inEventLoop()).thenReturn(true);
 
-    Mockito.when(config.defaultProfile()).thenReturn(defaultConfigProfile);
+    Mockito.when(config.getDefaultProfile()).thenReturn(defaultConfigProfile);
     Mockito.when(defaultConfigProfile.getBoolean(CoreDriverOption.REPREPARE_CHECK_SYSTEM_TABLE))
         .thenReturn(true);
     Mockito.when(defaultConfigProfile.getDuration(CoreDriverOption.REPREPARE_TIMEOUT))

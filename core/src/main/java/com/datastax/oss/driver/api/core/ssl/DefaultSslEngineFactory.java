@@ -55,7 +55,7 @@ public class DefaultSslEngineFactory implements SslEngineFactory {
     } catch (NoSuchAlgorithmException e) {
       throw new IllegalStateException("Cannot initialize SSL Context", e);
     }
-    DriverConfigProfile config = driverContext.config().defaultProfile();
+    DriverConfigProfile config = driverContext.config().getDefaultProfile();
     DriverOption cipherSuiteOption =
         configRoot.concat(CoreDriverOption.RELATIVE_DEFAULT_SSL_CIPHER_SUITES);
     if (config.isDefined(cipherSuiteOption)) {

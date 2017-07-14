@@ -69,7 +69,7 @@ abstract class ChannelPoolTestBase {
     Mockito.when(context.nettyOptions()).thenReturn(nettyOptions);
     Mockito.when(nettyOptions.adminEventExecutorGroup()).thenReturn(adminEventLoopGroup);
     Mockito.when(context.config()).thenReturn(config);
-    Mockito.when(config.defaultProfile()).thenReturn(defaultProfile);
+    Mockito.when(config.getDefaultProfile()).thenReturn(defaultProfile);
     this.eventBus = Mockito.spy(new EventBus("test"));
     Mockito.when(context.eventBus()).thenReturn(eventBus);
     Mockito.when(context.channelFactory()).thenReturn(channelFactory);

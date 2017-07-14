@@ -74,7 +74,7 @@ public class Reflection {
   public static <T> Optional<T> buildFromConfig(
       DriverContext context, DriverOption rootOption, Class<T> expectedSuperType) {
 
-    DriverConfigProfile config = context.config().defaultProfile();
+    DriverConfigProfile config = context.config().getDefaultProfile();
 
     DriverOption classNameOption = rootOption.concat(CoreDriverOption.RELATIVE_POLICY_CLASS);
     if (!config.isDefined(classNameOption)) {

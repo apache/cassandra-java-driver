@@ -27,12 +27,12 @@ public class DriverConfigAssert extends AbstractAssert<DriverConfigAssert, Drive
   }
 
   public DriverConfigAssert hasIntOption(DriverOption option, int expected) {
-    assertThat(actual.defaultProfile().getInt(option)).isEqualTo(expected);
+    assertThat(actual.getDefaultProfile().getInt(option)).isEqualTo(expected);
     return this;
   }
 
   public DriverConfigAssert hasIntOption(String profileName, DriverOption option, int expected) {
-    assertThat(actual.getProfile(profileName).getInt(option)).isEqualTo(expected);
+    assertThat(actual.getNamedProfile(profileName).getInt(option)).isEqualTo(expected);
     return this;
   }
 }

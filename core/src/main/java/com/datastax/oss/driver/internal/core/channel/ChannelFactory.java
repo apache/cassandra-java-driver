@@ -56,7 +56,7 @@ public class ChannelFactory {
   public ChannelFactory(InternalDriverContext context) {
     this.context = context;
 
-    DriverConfigProfile defaultConfig = context.config().defaultProfile();
+    DriverConfigProfile defaultConfig = context.config().getDefaultProfile();
     if (defaultConfig.isDefined(CoreDriverOption.PROTOCOL_VERSION)) {
       String versionName = defaultConfig.getString(CoreDriverOption.PROTOCOL_VERSION);
       this.protocolVersion = context.protocolVersionRegistry().fromName(versionName);
@@ -176,7 +176,7 @@ public class ChannelFactory {
     return new ChannelInitializer<Channel>() {
       @Override
       protected void initChannel(Channel channel) throws Exception {
-        DriverConfigProfile defaultConfigProfile = context.config().defaultProfile();
+        DriverConfigProfile defaultConfigProfile = context.config().getDefaultProfile();
 
         long setKeyspaceTimeoutMillis =
             defaultConfigProfile

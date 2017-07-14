@@ -84,11 +84,12 @@ class ReprepareOnUp {
     this.whenPrepared = whenPrepared;
 
     this.checkSystemTable =
-        config.defaultProfile().getBoolean(CoreDriverOption.REPREPARE_CHECK_SYSTEM_TABLE);
-    this.timeout = config.defaultProfile().getDuration(CoreDriverOption.REPREPARE_TIMEOUT);
-    this.maxStatements = config.defaultProfile().getInt(CoreDriverOption.REPREPARE_MAX_STATEMENTS);
+        config.getDefaultProfile().getBoolean(CoreDriverOption.REPREPARE_CHECK_SYSTEM_TABLE);
+    this.timeout = config.getDefaultProfile().getDuration(CoreDriverOption.REPREPARE_TIMEOUT);
+    this.maxStatements =
+        config.getDefaultProfile().getInt(CoreDriverOption.REPREPARE_MAX_STATEMENTS);
     this.maxParallelism =
-        config.defaultProfile().getInt(CoreDriverOption.REPREPARE_MAX_PARALLELISM);
+        config.getDefaultProfile().getInt(CoreDriverOption.REPREPARE_MAX_PARALLELISM);
   }
 
   void start() {

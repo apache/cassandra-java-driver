@@ -64,7 +64,7 @@ public class DefaultTopologyMonitor implements TopologyMonitor {
     this.logPrefix = context.clusterName();
     this.controlConnection = context.controlConnection();
     this.addressTranslator = context.addressTranslator();
-    DriverConfigProfile config = context.config().defaultProfile();
+    DriverConfigProfile config = context.config().getDefaultProfile();
     this.timeout = config.getDuration(CoreDriverOption.CONTROL_CONNECTION_TIMEOUT);
     this.closeFuture = new CompletableFuture<>();
   }

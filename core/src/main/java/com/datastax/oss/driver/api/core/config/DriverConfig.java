@@ -15,6 +15,8 @@
  */
 package com.datastax.oss.driver.api.core.config;
 
+import java.util.Map;
+
 /**
  * The configuration of the driver.
  *
@@ -24,7 +26,17 @@ package com.datastax.oss.driver.api.core.config;
  * "analytics" profile vs. a "transactional" profile).
  */
 public interface DriverConfig {
-  DriverConfigProfile defaultProfile();
+  DriverConfigProfile getDefaultProfile();
 
-  DriverConfigProfile getProfile(String profileName);
+  /** @throws IllegalArgumentException if there is no profile with this name. */
+  DriverConfigProfile getNamedProfile(String profileName);
+
+  /**
+   * Returns an <b>immutable</b> view of all the named profiles.
+   *
+   * <p>Implementations typically return a defensive copy of their internal state; therefore this
+   * should not be used in performance-sensitive parts of the code, see {@link
+   * #getNamedProfile(String)} instead.
+   */
+  Map<String, DriverConfigProfile> getNamedProfiles();
 }

@@ -81,7 +81,7 @@ public class NodeStateManager implements AsyncAutoCloseable {
     private SingleThreaded(InternalDriverContext context) {
       this.metadataManager = context.metadataManager();
 
-      DriverConfigProfile config = context.config().defaultProfile();
+      DriverConfigProfile config = context.config().getDefaultProfile();
       this.topologyEventDebouncer =
           new Debouncer<>(
               adminExecutor,

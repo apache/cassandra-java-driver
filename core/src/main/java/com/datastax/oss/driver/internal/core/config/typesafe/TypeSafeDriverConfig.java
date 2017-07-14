@@ -145,17 +145,22 @@ public class TypeSafeDriverConfig implements DriverConfig {
   }
 
   @Override
-  public DriverConfigProfile defaultProfile() {
+  public DriverConfigProfile getDefaultProfile() {
     return defaultProfile;
   }
 
   @Override
-  public DriverConfigProfile getProfile(String profileName) {
+  public DriverConfigProfile getNamedProfile(String profileName) {
     Preconditions.checkArgument(
         profiles.containsKey(profileName),
         "Unknown profile '%s'. Check your configuration.",
         profileName);
     return profiles.get(profileName);
+  }
+
+  @Override
+  public Map<String, DriverConfigProfile> getNamedProfiles() {
+    return ImmutableMap.copyOf(profiles);
   }
 
   private static void validateRequired(Config config, Collection<DriverOption> options) {
