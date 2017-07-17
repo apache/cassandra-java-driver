@@ -358,7 +358,7 @@ public class CqlRequestHandler
         Message responseMessage = responseFrame.message;
         if (responseMessage instanceof SchemaChange) {
           // TODO schema agreement, and chain setFinalResult to the result
-          setFinalError(new UnsupportedOperationException("TODO handle schema agreement"));
+          setFinalResult((Result) responseMessage, responseFrame, this);
         } else if (responseMessage instanceof Result) {
           LOG.debug("[{}] Got result, completing", logPrefix);
           setFinalResult((Result) responseMessage, responseFrame, this);
