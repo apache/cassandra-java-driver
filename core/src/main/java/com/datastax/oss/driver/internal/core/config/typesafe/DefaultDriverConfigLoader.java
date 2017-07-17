@@ -37,11 +37,10 @@ import java.util.function.Supplier;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-/** A loader that reloads the configuration at a configurable interval. */
-public class PeriodicTypeSafeDriverConfigLoader implements DriverConfigLoader {
+/** The default loader; it is based on TypeSafe Config and reloads at a configurable interval. */
+public class DefaultDriverConfigLoader implements DriverConfigLoader {
 
-  private static final Logger LOG =
-      LoggerFactory.getLogger(PeriodicTypeSafeDriverConfigLoader.class);
+  private static final Logger LOG = LoggerFactory.getLogger(DefaultDriverConfigLoader.class);
 
   public static final Supplier<Config> DEFAULT_CONFIG_SUPPLIER =
       () -> {
@@ -58,7 +57,7 @@ public class PeriodicTypeSafeDriverConfigLoader implements DriverConfigLoader {
    * Builds a new instance with the default TypeSafe config loading rules (documented in {@link
    * ClusterBuilder#withConfigLoader(DriverConfigLoader)}) and the core driver options.
    */
-  public PeriodicTypeSafeDriverConfigLoader() {
+  public DefaultDriverConfigLoader() {
     this(DEFAULT_CONFIG_SUPPLIER, CoreDriverOption.values());
   }
 
@@ -66,8 +65,7 @@ public class PeriodicTypeSafeDriverConfigLoader implements DriverConfigLoader {
    * Builds an instance with custom arguments, if you want to load the configuration from somewhere
    * else or have custom options.
    */
-  public PeriodicTypeSafeDriverConfigLoader(
-      Supplier<Config> configSupplier, DriverOption[]... options) {
+  public DefaultDriverConfigLoader(Supplier<Config> configSupplier, DriverOption[]... options) {
     this.configSupplier = configSupplier;
     this.driverConfig = new TypeSafeDriverConfig(configSupplier.get(), options);
   }

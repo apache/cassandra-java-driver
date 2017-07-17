@@ -39,7 +39,7 @@ import org.mockito.MockitoAnnotations;
 import static com.datastax.oss.driver.Assertions.assertThat;
 import static org.mockito.Mockito.never;
 
-public class PeriodicTypeSafeDriverConfigLoaderTest {
+public class DefaultDriverConfigLoaderTest {
 
   @Mock private InternalDriverContext context;
   @Mock private NettyOptions nettyOptions;
@@ -77,8 +77,8 @@ public class PeriodicTypeSafeDriverConfigLoaderTest {
 
   @Test
   public void should_build_initial_config() {
-    PeriodicTypeSafeDriverConfigLoader loader =
-        new PeriodicTypeSafeDriverConfigLoader(
+    DefaultDriverConfigLoader loader =
+        new DefaultDriverConfigLoader(
             () -> ConfigFactory.parseString(configSource.get()), MockOptions.values());
     DriverConfig initialConfig = loader.getInitialConfig();
     assertThat(initialConfig).hasIntOption(MockOptions.REQUIRED_INT, 42);
@@ -86,8 +86,8 @@ public class PeriodicTypeSafeDriverConfigLoaderTest {
 
   @Test
   public void should_schedule_reloading_task() {
-    PeriodicTypeSafeDriverConfigLoader loader =
-        new PeriodicTypeSafeDriverConfigLoader(
+    DefaultDriverConfigLoader loader =
+        new DefaultDriverConfigLoader(
             () -> ConfigFactory.parseString(configSource.get()), MockOptions.values());
 
     loader.onDriverInit(context);
@@ -100,8 +100,8 @@ public class PeriodicTypeSafeDriverConfigLoaderTest {
 
   @Test
   public void should_reload_if_config_has_changed() {
-    PeriodicTypeSafeDriverConfigLoader loader =
-        new PeriodicTypeSafeDriverConfigLoader(
+    DefaultDriverConfigLoader loader =
+        new DefaultDriverConfigLoader(
             () -> ConfigFactory.parseString(configSource.get()), MockOptions.values());
     DriverConfig initialConfig = loader.getInitialConfig();
     assertThat(initialConfig).hasIntOption(MockOptions.REQUIRED_INT, 42);
@@ -121,8 +121,8 @@ public class PeriodicTypeSafeDriverConfigLoaderTest {
 
   @Test
   public void should_reload_if_forced() {
-    PeriodicTypeSafeDriverConfigLoader loader =
-        new PeriodicTypeSafeDriverConfigLoader(
+    DefaultDriverConfigLoader loader =
+        new DefaultDriverConfigLoader(
             () -> ConfigFactory.parseString(configSource.get()), MockOptions.values());
     DriverConfig initialConfig = loader.getInitialConfig();
     assertThat(initialConfig).hasIntOption(MockOptions.REQUIRED_INT, 42);
@@ -141,8 +141,8 @@ public class PeriodicTypeSafeDriverConfigLoaderTest {
 
   @Test
   public void should_not_notify_if_config_has_not_changed() {
-    PeriodicTypeSafeDriverConfigLoader loader =
-        new PeriodicTypeSafeDriverConfigLoader(
+    DefaultDriverConfigLoader loader =
+        new DefaultDriverConfigLoader(
             () -> ConfigFactory.parseString(configSource.get()), MockOptions.values());
     DriverConfig initialConfig = loader.getInitialConfig();
     assertThat(initialConfig).hasIntOption(MockOptions.REQUIRED_INT, 42);

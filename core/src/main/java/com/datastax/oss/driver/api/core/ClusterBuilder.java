@@ -21,7 +21,7 @@ import com.datastax.oss.driver.api.core.config.DriverConfigProfile;
 import com.datastax.oss.driver.api.core.type.codec.TypeCodec;
 import com.datastax.oss.driver.internal.core.ContactPoints;
 import com.datastax.oss.driver.internal.core.DefaultCluster;
-import com.datastax.oss.driver.internal.core.config.typesafe.PeriodicTypeSafeDriverConfigLoader;
+import com.datastax.oss.driver.internal.core.config.typesafe.DefaultDriverConfigLoader;
 import com.datastax.oss.driver.internal.core.context.DefaultDriverContext;
 import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
 import com.datastax.oss.driver.internal.core.util.concurrent.BlockingOperation;
@@ -76,7 +76,7 @@ public class ClusterBuilder {
   }
 
   private static DriverConfigLoader defaultConfigLoader() {
-    return new PeriodicTypeSafeDriverConfigLoader();
+    return new DefaultDriverConfigLoader();
   }
 
   /**
