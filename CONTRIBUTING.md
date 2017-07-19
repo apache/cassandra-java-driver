@@ -164,6 +164,19 @@ cardinality).
 The driver never does the kind of processing that the stream API is intended for; the only large
 collections we manipulate are result sets, and these get passed on to the client directly.
 
+### Never assume a specific format for `toString()`
+
+Only use `toString()` for debug logs or exception messages, and always assume that its format is
+unspecified and can change at any time.
+  
+If you need a specific string representation for a class, make it a dedicated method with a
+documented format, for example `toCqlLiteral`. Otherwise it's too easy to lose track of the intended
+usage and break things: for example, someone modifies your `toString()` method to make their logs
+prettier, but unintentionally breaks the script export feature that expected it to produce CQL
+literals.
+ 
+`toString()` can delegate to `toCqlLiteral()` if that is appropriate for logs. 
+
 
 ## Coding style -- test code
 
