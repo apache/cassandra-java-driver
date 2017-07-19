@@ -4,6 +4,7 @@
 
 ### 4.0.0-alpha1 (in progress)
 
+- [bug] JAVA-1554: Include VIEW and CDC in WriteType
 - [improvement] JAVA-1498: Add a cache above Typesafe config
 - [bug] JAVA-1547: Abort pending requests when connection dropped
 - [new feature] JAVA-1497: Port timestamp generators from 3.x

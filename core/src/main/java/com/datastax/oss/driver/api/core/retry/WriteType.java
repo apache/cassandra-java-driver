@@ -50,5 +50,15 @@ public enum WriteType {
    * have been applied.
    */
   CAS,
+  /**
+   * Indicates that the timeout was related to acquiring locks needed for updating materialized
+   * views affected by write operation.
+   */
+  VIEW,
+  /**
+   * Indicates that the timeout was related to acquiring space for change data capture logs for cdc
+   * tracked tables.
+   */
+  CDC,
   ;
 }
