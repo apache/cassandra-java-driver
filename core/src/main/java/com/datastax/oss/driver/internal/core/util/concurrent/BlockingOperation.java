@@ -28,7 +28,6 @@ import java.util.concurrent.ThreadFactory;
  * callbacks.
  */
 public class BlockingOperation {
-  private static ThreadLocal<Boolean> isDriverThread = ThreadLocal.withInitial(() -> false);
 
   /**
    * This method is invoked from each synchronous driver method, and checks that we are not on a
@@ -40,7 +39,7 @@ public class BlockingOperation {
    * @throws IllegalStateException if a driver thread is executing this.
    */
   public static void checkNotDriverThread() {
-    if (isDriverThread.get()) {
+    if (Thread.currentThread() instanceof InternalThread) {
       throw new IllegalStateException(
           "Detected a synchronous API call on a driver thread, "
               + "failing because this can cause deadlocks.");
@@ -54,13 +53,13 @@ public class BlockingOperation {
   public static class SafeThreadFactory implements ThreadFactory {
     @Override
     public Thread newThread(Runnable r) {
-      return new Thread(r) {
-        @Override
-        public void run() {
-          isDriverThread.set(true);
-          super.run();
-        }
-      };
+      return new InternalThread(r);
+    }
+  }
+
+  private static class InternalThread extends Thread {
+    private InternalThread(Runnable runnable) {
+      super(runnable);
     }
   }
 }
