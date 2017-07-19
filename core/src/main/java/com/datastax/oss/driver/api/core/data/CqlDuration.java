@@ -26,7 +26,9 @@ import static com.google.common.base.Preconditions.checkArgument;
  * A duration, as defined in CQL.
  *
  * <p>It stores months, days, and seconds separately due to the fact that the number of days in a
- * month varies, and a day can have 23 or 25 hours if a daylight saving is involved.
+ * month varies, and a day can have 23 or 25 hours if a daylight saving is involved. As such, this
+ * type differs from {@link java.time.Duration} (which only represents an amount between two points
+ * in time, regardless of the calendar).
  */
 public final class CqlDuration {
 
