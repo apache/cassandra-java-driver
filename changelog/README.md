@@ -1,5 +1,9 @@
 ## Changelog
 
+### 3.4.0 (In progress)
+
+- [bug] JAVA-1555: Include VIEW and CDC in WriteType.
+
 ### 3.3.0
 
 - [bug] JAVA-1469: Update LoggingRetryPolicy to deal with SLF4J-353.
