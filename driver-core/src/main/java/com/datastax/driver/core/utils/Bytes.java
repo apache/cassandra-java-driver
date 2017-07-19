@@ -48,36 +48,18 @@ public final class Bytes {
     }
 
     /*
-     * We use reflexion to get access to a String protected constructor 
+     * We use reflexion to get access to a String protected constructor
      * (if available) so we can build avoid copy when creating hex strings.
      * That's stolen from Cassandra's code.
      */
-    private static final Constructor<String> stringConstructor;
+    private static final StringConstructor stringConstructor = createStringConstructor();
 
-    static {
-        Constructor<String> c;
-        try {
-            c = String.class.getDeclaredConstructor(int.class, int.class, char[].class);
-            c.setAccessible(true);
-        } catch (Exception e) {
-            c = null;
-        }
-        stringConstructor = c;
-    }
 
     private static String wrapCharArray(char[] c) {
         if (c == null)
             return null;
 
-        String s = null;
-        if (stringConstructor != null) {
-            try {
-                s = stringConstructor.newInstance(0, c.length, c);
-            } catch (Exception e) {
-                // Swallowing as we'll just use a copying constructor
-            }
-        }
-        return s == null ? new String(c) : s;
+        return stringConstructor.construct(c);
     }
 
     /**
@@ -224,5 +206,97 @@ public final class Bytes {
             bytes[i] = (byte) ((halfByte1 << 4) | halfByte2);
         }
         return bytes;
+    }
+
+    static StringConstructor createStringConstructor() {
+      StringConstructor c = Jdk7ZeroCopyStringConstructor.createOrNull();
+      if (c == null) {
+        c = Jdk8ZeroCopyStringConstructor.createOrNull();
+      }
+      if (c == null) {
+        c = new CopyStringConstructor(null);
+      }
+      return c;
+    }
+
+    abstract static class StringConstructor {
+
+        protected final Constructor<String> constructor;
+
+        private StringConstructor(Constructor<String> constructor) {
+            this.constructor = constructor;
+        }
+
+        public abstract String construct(char[] value);
+    }
+
+    static class Jdk7ZeroCopyStringConstructor extends StringConstructor {
+
+        public Jdk7ZeroCopyStringConstructor(Constructor<String> constructor) {
+            super(constructor);
+        }
+
+        @Override
+        public String construct(char[] value) {
+          try {
+              final String str = constructor.newInstance(0, value.length, value);
+              return str;
+          } catch (Exception ex) {
+            // Swallowing as we'll just use a copying constructor
+            return new String(value);
+          }
+        }
+
+        public static Jdk7ZeroCopyStringConstructor createOrNull() {
+            try {
+                Constructor<String> c = String.class.getDeclaredConstructor(int.class, int.class, char[].class);
+                c.setAccessible(true);
+                return new Jdk7ZeroCopyStringConstructor(c);
+            } catch (Exception ignore) {
+                // nop
+            }
+            return null;
+        }
+    }
+
+    static class Jdk8ZeroCopyStringConstructor extends StringConstructor {
+
+        public Jdk8ZeroCopyStringConstructor(Constructor<String> constructor) {
+            super(constructor);
+        }
+
+        @Override
+        public String construct(char[] value) {
+          try {
+              final String str = constructor.newInstance(value, true);
+              return str;
+          } catch (Exception ex) {
+            // Swallowing as we'll just use a copying constructor
+            return new String(value);
+          }
+        }
+
+        public static Jdk8ZeroCopyStringConstructor createOrNull() {
+          try {
+            Constructor<String> c = String.class.getDeclaredConstructor(char[].class, boolean.class);
+            c.setAccessible(true);
+            return new Jdk8ZeroCopyStringConstructor(c);
+          } catch (Exception ignore) {
+            // nop
+          }
+          return null;
+        }
+    }
+
+    static class CopyStringConstructor extends StringConstructor {
+
+      public CopyStringConstructor(Constructor<String> constructor) {
+        super(constructor);
+      }
+
+      @Override
+      public String construct(char[] value) {
+        return new String(value);
+      }
     }
 }
