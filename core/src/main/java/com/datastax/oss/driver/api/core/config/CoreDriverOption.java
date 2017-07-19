@@ -83,6 +83,15 @@ public enum CoreDriverOption implements DriverOption {
   RELATIVE_TIMESTAMP_GENERATOR_FORCE_JAVA_CLOCK("force-java-clock", false),
   RELATIVE_TIMESTAMP_GENERATOR_DRIFT_WARNING_THRESHOLD("drift-warning.threshold", false),
   RELATIVE_TIMESTAMP_GENERATOR_DRIFT_WARNING_INTERVAL("drift-warning.interval", false),
+
+  NETTY_IO_SIZE("netty.io-group.size", false),
+  NETTY_IO_SHUTDOWN_QUIET_PERIOD("netty.io-group.shutdown.quiet-period", false),
+  NETTY_IO_SHUTDOWN_TIMEOUT("netty.io-group.shutdown.timeout", false),
+  NETTY_IO_SHUTDOWN_UNIT("netty.io-group.shutdown.unit", false),
+  NETTY_ADMIN_SIZE("netty.admin-group.size", false),
+  NETTY_ADMIN_SHUTDOWN_QUIET_PERIOD("netty.admin-group.shutdown.quiet-period", false),
+  NETTY_ADMIN_SHUTDOWN_TIMEOUT("netty.admin-group.shutdown.timeout", false),
+  NETTY_ADMIN_SHUTDOWN_UNIT("netty.admin-group.shutdown.unit", false),
   ;
 
   private final String path;

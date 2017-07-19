@@ -224,7 +224,7 @@ public class DefaultDriverContext implements InternalDriverContext {
   }
 
   protected NettyOptions buildNettyOptions() {
-    return new DefaultNettyOptions(clusterName);
+    return new DefaultNettyOptions(this);
   }
 
   protected Optional<SslHandlerFactory> buildSslHandlerFactory() {

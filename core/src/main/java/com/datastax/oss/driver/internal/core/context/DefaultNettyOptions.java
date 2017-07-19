@@ -15,6 +15,8 @@
  */
 package com.datastax.oss.driver.internal.core.context;
 
+import com.datastax.oss.driver.api.core.config.CoreDriverOption;
+import com.datastax.oss.driver.api.core.config.DriverConfigProfile;
 import com.datastax.oss.driver.internal.core.util.concurrent.BlockingOperation;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import io.netty.bootstrap.Bootstrap;
@@ -30,27 +32,46 @@ import io.netty.util.concurrent.Future;
 import io.netty.util.concurrent.GlobalEventExecutor;
 import io.netty.util.concurrent.PromiseCombiner;
 import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.TimeUnit;
 
 public class DefaultNettyOptions implements NettyOptions {
   private final EventLoopGroup ioEventLoopGroup;
   private final EventLoopGroup adminEventLoopGroup;
+  private final int ioShutdownQuietPeriod;
+  private final int ioShutdownTimeout;
+  private final TimeUnit ioShutdownUnit;
+  private final int adminShutdownQuietPeriod;
+  private final int adminShutdownTimeout;
+  private final TimeUnit adminShutdownUnit;
 
-  public DefaultNettyOptions(String clusterName) {
+  public DefaultNettyOptions(InternalDriverContext context) {
+    DriverConfigProfile config = context.config().getDefaultProfile();
+    int ioGroupSize = config.getInt(CoreDriverOption.NETTY_IO_SIZE);
+    this.ioShutdownQuietPeriod = config.getInt(CoreDriverOption.NETTY_IO_SHUTDOWN_QUIET_PERIOD);
+    this.ioShutdownTimeout = config.getInt(CoreDriverOption.NETTY_IO_SHUTDOWN_TIMEOUT);
+    this.ioShutdownUnit =
+        TimeUnit.valueOf(config.getString(CoreDriverOption.NETTY_IO_SHUTDOWN_UNIT));
+    int adminGroupSize = config.getInt(CoreDriverOption.NETTY_ADMIN_SIZE);
+    this.adminShutdownQuietPeriod =
+        config.getInt(CoreDriverOption.NETTY_ADMIN_SHUTDOWN_QUIET_PERIOD);
+    this.adminShutdownTimeout = config.getInt(CoreDriverOption.NETTY_ADMIN_SHUTDOWN_TIMEOUT);
+    this.adminShutdownUnit =
+        TimeUnit.valueOf(config.getString(CoreDriverOption.NETTY_ADMIN_SHUTDOWN_UNIT));
+
     ThreadFactory safeFactory = new BlockingOperation.SafeThreadFactory();
     ThreadFactory ioThreadFactory =
         new ThreadFactoryBuilder()
             .setThreadFactory(safeFactory)
-            .setNameFormat(clusterName + "-io-%d")
+            .setNameFormat(context.clusterName() + "-io-%d")
             .build();
-    this.ioEventLoopGroup = new NioEventLoopGroup(0, ioThreadFactory);
+    this.ioEventLoopGroup = new NioEventLoopGroup(ioGroupSize, ioThreadFactory);
 
     ThreadFactory adminThreadFactory =
         new ThreadFactoryBuilder()
             .setThreadFactory(safeFactory)
-            .setNameFormat(clusterName + "-admin-%d")
+            .setNameFormat(context.clusterName() + "-admin-%d")
             .build();
-    int adminThreadCount = Math.min(2, Runtime.getRuntime().availableProcessors());
-    this.adminEventLoopGroup = new DefaultEventLoopGroup(adminThreadCount, adminThreadFactory);
+    this.adminEventLoopGroup = new DefaultEventLoopGroup(adminGroupSize, adminThreadFactory);
   }
 
   @Override
@@ -86,8 +107,12 @@ public class DefaultNettyOptions implements NettyOptions {
   @Override
   public Future<?> onClose() {
     PromiseCombiner combiner = new PromiseCombiner();
-    combiner.add(adminEventLoopGroup.shutdownGracefully());
-    combiner.add(ioEventLoopGroup.shutdownGracefully());
+    combiner.add(
+        adminEventLoopGroup.shutdownGracefully(
+            adminShutdownQuietPeriod, adminShutdownTimeout, adminShutdownUnit));
+    combiner.add(
+        ioEventLoopGroup.shutdownGracefully(
+            ioShutdownQuietPeriod, ioShutdownTimeout, ioShutdownUnit));
     DefaultPromise<Void> closeFuture = new DefaultPromise<>(GlobalEventExecutor.INSTANCE);
     combiner.finish(closeFuture);
     return closeFuture;
