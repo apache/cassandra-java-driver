@@ -39,7 +39,9 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.util.concurrent.UncheckedExecutionException;
 import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.net.Inet4Address;
 import java.net.InetAddress;
+import java.net.UnknownHostException;
 import java.nio.ByteBuffer;
 import java.time.Instant;
 import java.time.LocalDate;
@@ -171,7 +173,7 @@ public class CachingCodecRegistryTest {
   }
 
   @Test
-  public void should_create_list_codec() {
+  public void should_create_list_codec_for_cql_and_java_types() {
     ListType cqlType = DataTypes.listOf(DataTypes.listOf(DataTypes.INT));
     GenericType<List<List<Integer>>> javaType = new GenericType<List<List<Integer>>>() {};
     List<List<Integer>> value = ImmutableList.of(ImmutableList.of(1));
@@ -189,28 +191,46 @@ public class CachingCodecRegistryTest {
     inOrder
         .verify(onCacheLookup)
         .accept(DataTypes.listOf(DataTypes.INT), GenericType.listOf(GenericType.INTEGER));
+  }
 
-    codec = registry.codecFor(cqlType);
+  @Test
+  public void should_create_list_codec_for_cql_type() {
+    ListType cqlType = DataTypes.listOf(DataTypes.listOf(DataTypes.INT));
+    GenericType<List<List<Integer>>> javaType = new GenericType<List<List<Integer>>>() {};
+    List<List<Integer>> value = ImmutableList.of(ImmutableList.of(1));
+
+    TestCachingCodecRegistry registry = new TestCachingCodecRegistry(onCacheLookup);
+    InOrder inOrder = Mockito.inOrder(onCacheLookup);
+
+    TypeCodec<List<List<Integer>>> codec = registry.codecFor(cqlType);
     assertThat(codec).isNotNull();
     assertThat(codec.canDecode(cqlType)).isTrue();
     assertThat(codec.canEncode(javaType)).isTrue();
     assertThat(codec.canEncode(value)).isTrue();
     inOrder.verify(onCacheLookup).accept(cqlType, null);
     inOrder.verify(onCacheLookup).accept(DataTypes.listOf(DataTypes.INT), null);
+  }
 
-    codec = registry.codecFor(value);
+  @Test
+  public void should_create_list_codec_for_java_value() throws UnknownHostException {
+    ListType cqlType = DataTypes.listOf(DataTypes.listOf(DataTypes.INT));
+    GenericType<List<List<Integer>>> javaType = new GenericType<List<List<Integer>>>() {};
+    List<List<Integer>> value = ImmutableList.of(ImmutableList.of(1));
+
+    TestCachingCodecRegistry registry = new TestCachingCodecRegistry(onCacheLookup);
+    InOrder inOrder = Mockito.inOrder(onCacheLookup);
+
+    TypeCodec<List<List<Integer>>> codec = registry.codecFor(value);
     assertThat(codec).isNotNull();
     assertThat(codec.canDecode(cqlType)).isTrue();
     assertThat(codec.canEncode(javaType)).isTrue();
     assertThat(codec.canEncode(value)).isTrue();
     inOrder.verify(onCacheLookup).accept(null, javaType);
     inOrder.verify(onCacheLookup).accept(null, GenericType.listOf(GenericType.INTEGER));
-
-    inOrder.verifyNoMoreInteractions();
   }
 
   @Test
-  public void should_create_set_codec() {
+  public void should_create_set_codec_for_cql_and_java_types() {
     SetType cqlType = DataTypes.setOf(DataTypes.setOf(DataTypes.INT));
     GenericType<Set<Set<Integer>>> javaType = new GenericType<Set<Set<Integer>>>() {};
     Set<Set<Integer>> value = ImmutableSet.of(ImmutableSet.of(1));
@@ -228,28 +248,46 @@ public class CachingCodecRegistryTest {
     inOrder
         .verify(onCacheLookup)
         .accept(DataTypes.setOf(DataTypes.INT), GenericType.setOf(GenericType.INTEGER));
+  }
 
-    codec = registry.codecFor(cqlType);
+  @Test
+  public void should_create_set_codec_for_cql_type() {
+    SetType cqlType = DataTypes.setOf(DataTypes.setOf(DataTypes.INT));
+    GenericType<Set<Set<Integer>>> javaType = new GenericType<Set<Set<Integer>>>() {};
+    Set<Set<Integer>> value = ImmutableSet.of(ImmutableSet.of(1));
+
+    TestCachingCodecRegistry registry = new TestCachingCodecRegistry(onCacheLookup);
+    InOrder inOrder = Mockito.inOrder(onCacheLookup);
+
+    TypeCodec<Set<Set<Integer>>> codec = registry.codecFor(cqlType);
     assertThat(codec).isNotNull();
     assertThat(codec.canDecode(cqlType)).isTrue();
     assertThat(codec.canEncode(javaType)).isTrue();
     assertThat(codec.canEncode(value)).isTrue();
     inOrder.verify(onCacheLookup).accept(cqlType, null);
     inOrder.verify(onCacheLookup).accept(DataTypes.setOf(DataTypes.INT), null);
+  }
 
-    codec = registry.codecFor(value);
+  @Test
+  public void should_create_set_codec_for_java_value() {
+    SetType cqlType = DataTypes.setOf(DataTypes.setOf(DataTypes.INT));
+    GenericType<Set<Set<Integer>>> javaType = new GenericType<Set<Set<Integer>>>() {};
+    Set<Set<Integer>> value = ImmutableSet.of(ImmutableSet.of(1));
+
+    TestCachingCodecRegistry registry = new TestCachingCodecRegistry(onCacheLookup);
+    InOrder inOrder = Mockito.inOrder(onCacheLookup);
+
+    TypeCodec<Set<Set<Integer>>> codec = registry.codecFor(value);
     assertThat(codec).isNotNull();
     assertThat(codec.canDecode(cqlType)).isTrue();
     assertThat(codec.canEncode(javaType)).isTrue();
     assertThat(codec.canEncode(value)).isTrue();
     inOrder.verify(onCacheLookup).accept(null, javaType);
     inOrder.verify(onCacheLookup).accept(null, GenericType.setOf(GenericType.INTEGER));
-
-    inOrder.verifyNoMoreInteractions();
   }
 
   @Test
-  public void should_create_map_codec() {
+  public void should_create_map_codec_for_cql_and_java_types() {
     MapType cqlType = DataTypes.mapOf(DataTypes.INT, DataTypes.mapOf(DataTypes.INT, DataTypes.INT));
     GenericType<Map<Integer, Map<Integer, Integer>>> javaType =
         new GenericType<Map<Integer, Map<Integer, Integer>>>() {};
@@ -270,16 +308,38 @@ public class CachingCodecRegistryTest {
         .accept(
             DataTypes.mapOf(DataTypes.INT, DataTypes.INT),
             GenericType.mapOf(GenericType.INTEGER, GenericType.INTEGER));
+  }
 
-    codec = registry.codecFor(cqlType);
+  @Test
+  public void should_create_map_codec_for_cql_type() {
+    MapType cqlType = DataTypes.mapOf(DataTypes.INT, DataTypes.mapOf(DataTypes.INT, DataTypes.INT));
+    GenericType<Map<Integer, Map<Integer, Integer>>> javaType =
+        new GenericType<Map<Integer, Map<Integer, Integer>>>() {};
+    Map<Integer, Map<Integer, Integer>> value = ImmutableMap.of(1, ImmutableMap.of(1, 1));
+
+    TestCachingCodecRegistry registry = new TestCachingCodecRegistry(onCacheLookup);
+    InOrder inOrder = Mockito.inOrder(onCacheLookup);
+
+    TypeCodec<Map<Integer, Map<Integer, Integer>>> codec = registry.codecFor(cqlType);
     assertThat(codec).isNotNull();
     assertThat(codec.canDecode(cqlType)).isTrue();
     assertThat(codec.canEncode(javaType)).isTrue();
     assertThat(codec.canEncode(value)).isTrue();
     inOrder.verify(onCacheLookup).accept(cqlType, null);
     inOrder.verify(onCacheLookup).accept(DataTypes.mapOf(DataTypes.INT, DataTypes.INT), null);
+  }
 
-    codec = registry.codecFor(value);
+  @Test
+  public void should_create_map_codec_for_java_value() {
+    MapType cqlType = DataTypes.mapOf(DataTypes.INT, DataTypes.mapOf(DataTypes.INT, DataTypes.INT));
+    GenericType<Map<Integer, Map<Integer, Integer>>> javaType =
+        new GenericType<Map<Integer, Map<Integer, Integer>>>() {};
+    Map<Integer, Map<Integer, Integer>> value = ImmutableMap.of(1, ImmutableMap.of(1, 1));
+
+    TestCachingCodecRegistry registry = new TestCachingCodecRegistry(onCacheLookup);
+    InOrder inOrder = Mockito.inOrder(onCacheLookup);
+
+    TypeCodec<Map<Integer, Map<Integer, Integer>>> codec = registry.codecFor(value);
     assertThat(codec).isNotNull();
     assertThat(codec.canDecode(cqlType)).isTrue();
     assertThat(codec.canEncode(javaType)).isTrue();
@@ -288,12 +348,10 @@ public class CachingCodecRegistryTest {
     inOrder
         .verify(onCacheLookup)
         .accept(null, GenericType.mapOf(GenericType.INTEGER, GenericType.INTEGER));
-
-    inOrder.verifyNoMoreInteractions();
   }
 
   @Test
-  public void should_create_tuple_codec() {
+  public void should_create_tuple_codec_for_cql_and_java_types() {
     TupleType cqlType = DataTypes.tupleOf(DataTypes.INT, DataTypes.listOf(DataTypes.TEXT));
     TupleValue value = cqlType.newValue();
 
@@ -309,15 +367,34 @@ public class CachingCodecRegistryTest {
     inOrder.verify(onCacheLookup).accept(cqlType, GenericType.TUPLE_VALUE);
     // field codecs are only looked up when fields are accessed, so no cache hit for list<int> now
 
-    codec = registry.codecFor(cqlType);
+  }
+
+  @Test
+  public void should_create_tuple_codec_for_cql_type() {
+    TupleType cqlType = DataTypes.tupleOf(DataTypes.INT, DataTypes.listOf(DataTypes.TEXT));
+    TupleValue value = cqlType.newValue();
+
+    TestCachingCodecRegistry registry = new TestCachingCodecRegistry(onCacheLookup);
+    InOrder inOrder = Mockito.inOrder(onCacheLookup);
+
+    TypeCodec<TupleValue> codec = registry.codecFor(cqlType);
     assertThat(codec).isNotNull();
     assertThat(codec.canDecode(cqlType)).isTrue();
     assertThat(codec.canEncode(GenericType.TUPLE_VALUE)).isTrue();
     assertThat(codec.canEncode(TupleValue.class)).isTrue();
     assertThat(codec.canEncode(value)).isTrue();
     inOrder.verify(onCacheLookup).accept(cqlType, null);
+  }
 
-    codec = registry.codecFor(value);
+  @Test
+  public void should_create_tuple_codec_for_java_value() {
+    TupleType cqlType = DataTypes.tupleOf(DataTypes.INT, DataTypes.listOf(DataTypes.TEXT));
+    TupleValue value = cqlType.newValue();
+
+    TestCachingCodecRegistry registry = new TestCachingCodecRegistry(onCacheLookup);
+    InOrder inOrder = Mockito.inOrder(onCacheLookup);
+
+    TypeCodec<TupleValue> codec = registry.codecFor(value);
     assertThat(codec).isNotNull();
     assertThat(codec.canDecode(cqlType)).isTrue();
     assertThat(codec.canEncode(GenericType.TUPLE_VALUE)).isTrue();
@@ -329,7 +406,7 @@ public class CachingCodecRegistryTest {
   }
 
   @Test
-  public void should_create_udt_codec() {
+  public void should_create_udt_codec_for_cql_and_java_types() {
     UserDefinedType cqlType =
         new UserDefinedTypeBuilder(
                 CqlIdentifier.fromInternal("ks"), CqlIdentifier.fromInternal("type"))
@@ -350,15 +427,44 @@ public class CachingCodecRegistryTest {
     inOrder.verify(onCacheLookup).accept(cqlType, GenericType.UDT_VALUE);
     // field codecs are only looked up when fields are accessed, so no cache hit for list<int> now
 
-    codec = registry.codecFor(cqlType);
+  }
+
+  @Test
+  public void should_create_udt_codec_for_cql_type() {
+    UserDefinedType cqlType =
+        new UserDefinedTypeBuilder(
+                CqlIdentifier.fromInternal("ks"), CqlIdentifier.fromInternal("type"))
+            .withField(CqlIdentifier.fromInternal("field1"), DataTypes.INT)
+            .withField(CqlIdentifier.fromInternal("field2"), DataTypes.listOf(DataTypes.TEXT))
+            .build();
+    UdtValue value = cqlType.newValue();
+
+    TestCachingCodecRegistry registry = new TestCachingCodecRegistry(onCacheLookup);
+    InOrder inOrder = Mockito.inOrder(onCacheLookup);
+
+    TypeCodec<UdtValue> codec = registry.codecFor(cqlType);
     assertThat(codec).isNotNull();
     assertThat(codec.canDecode(cqlType)).isTrue();
     assertThat(codec.canEncode(GenericType.UDT_VALUE)).isTrue();
     assertThat(codec.canEncode(UdtValue.class)).isTrue();
     assertThat(codec.canEncode(value)).isTrue();
     inOrder.verify(onCacheLookup).accept(cqlType, null);
+  }
 
-    codec = registry.codecFor(value);
+  @Test
+  public void should_create_udt_codec_for_java_value() {
+    UserDefinedType cqlType =
+        new UserDefinedTypeBuilder(
+                CqlIdentifier.fromInternal("ks"), CqlIdentifier.fromInternal("type"))
+            .withField(CqlIdentifier.fromInternal("field1"), DataTypes.INT)
+            .withField(CqlIdentifier.fromInternal("field2"), DataTypes.listOf(DataTypes.TEXT))
+            .build();
+    UdtValue value = cqlType.newValue();
+
+    TestCachingCodecRegistry registry = new TestCachingCodecRegistry(onCacheLookup);
+    InOrder inOrder = Mockito.inOrder(onCacheLookup);
+
+    TypeCodec<UdtValue> codec = registry.codecFor(value);
     assertThat(codec).isNotNull();
     assertThat(codec.canDecode(cqlType)).isTrue();
     assertThat(codec.canEncode(GenericType.UDT_VALUE)).isTrue();
