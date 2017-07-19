@@ -237,13 +237,13 @@ class Conversions {
         ImmutableMap.copyOf(request.getCustomPayload()));
   }
 
-  private static DefaultColumnDefinitions toColumnDefinitions(
+  private static ColumnDefinitions toColumnDefinitions(
       RowsMetadata metadata, InternalDriverContext context) {
     ImmutableList.Builder<ColumnDefinition> definitions = ImmutableList.builder();
     for (ColumnSpec columnSpec : metadata.columnSpecs) {
       definitions.add(new DefaultColumnDefinition(columnSpec, context));
     }
-    return new DefaultColumnDefinitions(definitions.build());
+    return DefaultColumnDefinitions.valueOf(definitions.build());
   }
 
   static Throwable toThrowable(Node node, Error errorMessage) {

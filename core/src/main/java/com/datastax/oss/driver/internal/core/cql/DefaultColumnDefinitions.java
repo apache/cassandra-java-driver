@@ -24,16 +24,21 @@ import java.io.InvalidObjectException;
 import java.io.ObjectInputStream;
 import java.io.Serializable;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 
 public class DefaultColumnDefinitions implements ColumnDefinitions {
 
+  static ColumnDefinitions valueOf(List<ColumnDefinition> definitions) {
+    return definitions.isEmpty()
+        ? EmptyColumnDefinitions.INSTANCE
+        : new DefaultColumnDefinitions(definitions);
+  }
+
   private final List<ColumnDefinition> definitions;
   private final IdentifierIndex index;
 
-  public DefaultColumnDefinitions(List<ColumnDefinition> definitions) {
+  private DefaultColumnDefinitions(List<ColumnDefinition> definitions) {
     assert definitions != null && definitions.size() > 0;
     this.definitions = definitions;
     this.index = buildIndex(definitions);
@@ -120,50 +125,4 @@ public class DefaultColumnDefinitions implements ColumnDefinitions {
       return new DefaultColumnDefinitions(this.definitions);
     }
   }
-
-  static final ColumnDefinitions EMPTY =
-      new ColumnDefinitions() {
-        @Override
-        public int size() {
-          return 0;
-        }
-
-        @Override
-        public ColumnDefinition get(int i) {
-          throw new ArrayIndexOutOfBoundsException();
-        }
-
-        @Override
-        public boolean contains(String name) {
-          return false;
-        }
-
-        @Override
-        public boolean contains(CqlIdentifier id) {
-          return false;
-        }
-
-        @Override
-        public int firstIndexOf(String name) {
-          return -1;
-        }
-
-        @Override
-        public int firstIndexOf(CqlIdentifier id) {
-          return -1;
-        }
-
-        @Override
-        public boolean isDetached() {
-          return false;
-        }
-
-        @Override
-        public void attach(AttachmentPoint attachmentPoint) {}
-
-        @Override
-        public Iterator<ColumnDefinition> iterator() {
-          return Collections.<ColumnDefinition>emptyList().iterator();
-        }
-      };
 }

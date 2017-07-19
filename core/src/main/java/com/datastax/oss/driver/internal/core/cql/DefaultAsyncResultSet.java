@@ -120,7 +120,7 @@ public class DefaultAsyncResultSet implements AsyncResultSet {
     return new AsyncResultSet() {
       @Override
       public ColumnDefinitions getColumnDefinitions() {
-        return DefaultColumnDefinitions.EMPTY;
+        return EmptyColumnDefinitions.INSTANCE;
       }
 
       @Override
