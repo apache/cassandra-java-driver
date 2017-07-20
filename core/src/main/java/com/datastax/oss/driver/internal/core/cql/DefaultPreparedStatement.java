@@ -18,10 +18,13 @@ package com.datastax.oss.driver.internal.core.cql;
 import com.datastax.oss.driver.api.core.ProtocolVersion;
 import com.datastax.oss.driver.api.core.config.DriverConfigProfile;
 import com.datastax.oss.driver.api.core.cql.BoundStatement;
+import com.datastax.oss.driver.api.core.cql.BoundStatementBuilder;
 import com.datastax.oss.driver.api.core.cql.ColumnDefinitions;
 import com.datastax.oss.driver.api.core.cql.PreparedStatement;
+import com.datastax.oss.driver.api.core.type.codec.TypeCodec;
 import com.datastax.oss.driver.api.core.type.codec.registry.CodecRegistry;
 import com.datastax.oss.driver.internal.core.session.RepreparePayload;
+import com.datastax.oss.protocol.internal.ProtocolConstants;
 import java.nio.ByteBuffer;
 import java.util.Map;
 
@@ -87,17 +90,41 @@ public class DefaultPreparedStatement implements PreparedStatement {
   }
 
   @Override
-  public BoundStatement bind() {
+  public BoundStatement bind(Object... values) {
+    if (values.length > variableDefinitions.size()) {
+      throw new IllegalArgumentException(
+          String.format(
+              "Too many variables (expected %d, got %d)",
+              variableDefinitions.size(), values.length));
+    }
+    ByteBuffer[] encodedValues = new ByteBuffer[variableDefinitions.size()];
+    int i;
+    for (i = 0; i < values.length; i++) {
+      TypeCodec<Object> codec = codecRegistry.codecFor(variableDefinitions.get(i).getType());
+      encodedValues[i] = codec.encode(values[i], protocolVersion);
+    }
+    for (; i < encodedValues.length; i++) {
+      encodedValues[i] = ProtocolConstants.UNSET_VALUE;
+    }
     return new DefaultBoundStatement(
         this,
         variableDefinitions,
+        encodedValues,
         configProfileName,
         configProfile,
         repreparePayload.keyspace,
         customPayloadForBoundStatements,
         idempotent,
+        false,
+        Long.MIN_VALUE,
+        null,
         codecRegistry,
         protocolVersion);
+  }
+
+  @Override
+  public BoundStatementBuilder boundStatementBuilder() {
+    return new BoundStatementBuilder(this, variableDefinitions, codecRegistry, protocolVersion);
   }
 
   public RepreparePayload getRepreparePayload() {

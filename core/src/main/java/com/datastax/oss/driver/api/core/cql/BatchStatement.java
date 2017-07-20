@@ -15,89 +15,112 @@
  */
 package com.datastax.oss.driver.api.core.cql;
 
-import com.datastax.oss.driver.api.core.config.DriverConfigProfile;
-import com.datastax.oss.driver.api.core.session.Session;
-import com.datastax.oss.driver.api.core.time.TimestampGenerator;
 import com.datastax.oss.driver.internal.core.cql.DefaultBatchStatement;
-import java.nio.ByteBuffer;
-import java.util.Map;
+import com.google.common.collect.ImmutableList;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 
 /**
  * A statement that groups a number of other statements, so that they can be executed as a batch
  * (i.e. sent together as a single protocol frame).
  *
- * <p>The default implementation returned by the driver is <b>mutable</b> and <b>NOT
- * thread-safe</b>: methods that return {@code BatchStatement} mutate the statement and return the
- * same instance (except {@link #copy(ByteBuffer)}); all methods should be called from the thread
- * that created the statement; if you use {@link Session#executeAsync(Statement)} asynchronous
- * execution}, do not reuse the same instance for successive calls, as you run the risk of modifying
- * the statement before the driver is done processing it.
+ * <p>The default implementation returned by the driver is <b>immutable</b> and <b>thread-safe</b>.
+ * All mutating methods return a new instance. See also the static factory methods and builders in
+ * this interface.
  */
-public interface BatchStatement extends Statement, Iterable<BatchableStatement> {
+public interface BatchStatement extends Statement<BatchStatement>, Iterable<BatchableStatement<?>> {
 
   /** Creates an instance of the default implementation for the given batch type. */
   static BatchStatement newInstance(BatchType batchType) {
-    return new DefaultBatchStatement(batchType);
+    return new DefaultBatchStatement(
+        batchType,
+        new ArrayList<>(),
+        null,
+        null,
+        null,
+        Collections.emptyMap(),
+        false,
+        false,
+        Long.MIN_VALUE,
+        null);
+  }
+
+  /**
+   * Creates an instance of the default implementation for the given batch type, containing the
+   * given statements.
+   */
+  static BatchStatement newInstance(BatchType batchType, BatchableStatement<?>... statements) {
+    return new DefaultBatchStatement(
+        batchType,
+        ImmutableList.copyOf(statements),
+        null,
+        null,
+        null,
+        Collections.emptyMap(),
+        false,
+        false,
+        Long.MIN_VALUE,
+        null);
+  }
+
+  /** Returns a builder to create an instance of the default implementation. */
+  static BatchStatementBuilder builder(BatchType batchType) {
+    return new BatchStatementBuilder(batchType);
+  }
+
+  /**
+   * Returns a builder to create an instance of the default implementation, copying the fields of
+   * the given statement.
+   */
+  static BatchStatementBuilder builder(BatchStatement template) {
+    return new BatchStatementBuilder(template);
   }
 
   BatchType getBatchType();
+
+  /**
+   * Sets the batch type.
+   *
+   * <p>The driver's built-in implementation is immutable, and returns a new instance from this
+   * method. However custom implementations may choose to be mutable and return the same instance.
+   */
+  BatchStatement setBatchType(BatchType newBatchType);
 
   /**
    * Adds a new statement to the batch.
    *
    * <p>Note that, due to protocol limitations, simple statements with named values are currently
    * not supported.
+   *
+   * <p>The driver's built-in implementation is immutable, and returns a new instance from this
+   * method. However custom implementations may choose to be mutable and return the same instance.
    */
-  BatchStatement add(BatchableStatement statement);
+  BatchStatement add(BatchableStatement<?> statement);
 
-  default BatchStatement addAll(Iterable<? extends BatchableStatement> statements) {
-    BatchStatement result = this;
-    for (BatchableStatement statement : statements) {
-      result = result.add(statement);
-    }
-    return result;
-  }
+  /**
+   * Adds new statements to the batch.
+   *
+   * <p>Note that, due to protocol limitations, simple statements with named values are currently
+   * not supported.
+   *
+   * <p>The driver's built-in implementation is immutable, and returns a new instance from this
+   * method. However custom implementations may choose to be mutable and return the same instance.
+   */
+  BatchStatement addAll(Iterable<? extends BatchableStatement<?>> statements);
 
-  default BatchStatement addAll(BatchableStatement... statements) {
-    BatchStatement result = this;
-    for (BatchableStatement statement : statements) {
-      result = result.add(statement);
-    }
-    return result;
+  /** @see #addAll(Iterable) */
+  default BatchStatement addAll(BatchableStatement<?>... statements) {
+    return addAll(Arrays.asList(statements));
   }
 
   int size();
 
-  /** Clears the batch, removing all the statements added so far. */
+  /**
+   * Clears the batch, removing all the statements added so far.
+   *
+   * <p>The driver's built-in implementation is immutable, and returns a new instance from this
+   * method. However custom implementations may choose to be mutable and return the same instance.
+   */
   BatchStatement clear();
-
-  /**
-   * Sets the name of the configuration profile to use.
-   *
-   * <p>Note that this will be ignored if {@link #getConfigProfile()} return a non-null value.
-   */
-  BatchStatement setConfigProfileName(String configProfileName);
-
-  /** Sets the configuration profile to use. */
-  DefaultBatchStatement setConfigProfile(DriverConfigProfile configProfile);
-
-  /** Sets the custom payload to send alongside the request. */
-  DefaultBatchStatement setCustomPayload(Map<String, ByteBuffer> customPayload);
-
-  /**
-   * Indicates whether the statement is idempotent.
-   *
-   * @param idempotent true or false, or {@code null} to use the default defined in the
-   *     configuration.
-   */
-  DefaultBatchStatement setIdempotent(Boolean idempotent);
-
-  /** Request tracing information for this statement. */
-  BatchStatement setTracing();
-
-  /**
-   * Sets the timestamp for this statement. If left unset, the {@link TimestampGenerator} will
-   * assign it when the statement gets executed.
-   */
-  BatchStatement setTimestamp(long timestamp);
 }

@@ -36,55 +36,14 @@ import java.util.Map;
  * server to return metadata about the bind variables, which allows the driver to validate the
  * values earlier, and apply certain optimizations like token-aware routing.
  *
- * <p>The default simple statement implementation returned by the driver is <b>immutable</b> and
- * <b>thread-safe</b>. If an application is going to reuse the same statement more than once, it is
- * recommended to cache it (for example in a final field).
+ * <p>The default implementation returned by the driver is <b>immutable</b> and <b>thread-safe</b>.
+ * All mutating methods return a new instance. See also the static factory methods and builders in
+ * this interface.
+ *
+ * <p>If an application reuses the same statement more than once, it is recommended to cache it (for
+ * example in a final field).
  */
-public interface SimpleStatement extends BatchableStatement {
-
-  /**
-   * The CQL query to execute.
-   *
-   * <p>It may contain anonymous placeholders identified by a question mark, as in:
-   *
-   * <pre>
-   *   SELECT username FROM user WHERE id = ?
-   * </pre>
-   *
-   * Or named placeholders prefixed by a column, as in:
-   *
-   * <pre>
-   *   SELECT username FROM user WHERE id = :i
-   * </pre>
-   *
-   * @see #getPositionalValues()
-   * @see #getNamedValues()
-   */
-  String getQuery();
-
-  /**
-   * A list of positional values to bind to anonymous placeholders.
-   *
-   * <p>You can use either positional or named values, but not both. Therefore if this method
-   * returns a non-empty list, then {@link #getNamedValues()} must return an empty map, otherwise a
-   * runtime error will be thrown.
-   *
-   * @see #getQuery()
-   */
-  List<Object> getPositionalValues();
-
-  /**
-   * A list of named values to bind to named placeholders.
-   *
-   * <p>Names must be stripped of the leading column.
-   *
-   * <p>You can use either positional or named values, but not both. Therefore if this method
-   * returns a non-empty map, then {@link #getPositionalValues()} must return an empty list,
-   * otherwise a runtime error will be thrown.
-   *
-   * @see #getQuery()
-   */
-  Map<String, Object> getNamedValues();
+public interface SimpleStatement extends BatchableStatement<SimpleStatement> {
 
   /**
    * Shortcut to create an instance of the default implementation with only a CQL query (see {@link
@@ -144,4 +103,71 @@ public interface SimpleStatement extends BatchableStatement {
   static SimpleStatementBuilder builder(String query) {
     return new SimpleStatementBuilder(query);
   }
+
+  /**
+   * Returns a builder to create an instance of the default implementation, copying the fields of
+   * the given statement.
+   */
+  static SimpleStatementBuilder builder(SimpleStatement template) {
+    return new SimpleStatementBuilder(template);
+  }
+
+  String getQuery();
+
+  /**
+   * Sets the CQL query to execute.
+   *
+   * <p>It may contain anonymous placeholders identified by a question mark, as in:
+   *
+   * <pre>
+   *   SELECT username FROM user WHERE id = ?
+   * </pre>
+   *
+   * Or named placeholders prefixed by a column, as in:
+   *
+   * <pre>
+   *   SELECT username FROM user WHERE id = :i
+   * </pre>
+   *
+   * <p>The driver's built-in implementation is immutable, and returns a new instance from this
+   * method. However custom implementations may choose to be mutable and return the same instance.
+   *
+   * @see #setPositionalValues(List)
+   * @see #setNamedValues(Map)
+   */
+  SimpleStatement setQuery(String newQuery);
+
+  List<Object> getPositionalValues();
+
+  /**
+   * Sets the positional values to bind to anonymous placeholders.
+   *
+   * <p>You can use either positional or named values, but not both. Therefore if this method
+   * returns a non-empty list, then {@link #getNamedValues()} must return an empty map, otherwise a
+   * runtime error will be thrown.
+   *
+   * <p>The driver's built-in implementation is immutable, and returns a new instance from this
+   * method. However custom implementations may choose to be mutable and return the same instance.
+   *
+   * @see #setQuery(String)
+   */
+  SimpleStatement setPositionalValues(List<Object> newPositionalValues);
+
+  Map<String, Object> getNamedValues();
+
+  /**
+   * Sets the named values to bind to named placeholders.
+   *
+   * <p>Names must be stripped of the leading column.
+   *
+   * <p>You can use either positional or named values, but not both. Therefore if this method
+   * returns a non-empty map, then {@link #getPositionalValues()} must return an empty list,
+   * otherwise a runtime error will be thrown.
+   *
+   * <p>The driver's built-in implementation is immutable, and returns a new instance from this
+   * method. However custom implementations may choose to be mutable and return the same instance.
+   *
+   * @see #setQuery(String)
+   */
+  SimpleStatement setNamedValues(Map<String, Object> newNamedValues);
 }

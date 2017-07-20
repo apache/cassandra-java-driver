@@ -17,8 +17,9 @@ package com.datastax.oss.driver.internal.core.cql;
 
 import com.datastax.oss.driver.api.core.config.DriverConfigProfile;
 import com.datastax.oss.driver.api.core.cql.SimpleStatement;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 import java.nio.ByteBuffer;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -35,34 +36,6 @@ public class DefaultSimpleStatement implements SimpleStatement {
   private final long timestamp;
   private final ByteBuffer pagingState;
 
-  public DefaultSimpleStatement(String query, List<Object> positionalValues) {
-    this(
-        query,
-        positionalValues,
-        Collections.emptyMap(),
-        null,
-        null,
-        Collections.emptyMap(),
-        null,
-        false,
-        Long.MIN_VALUE,
-        null);
-  }
-
-  public DefaultSimpleStatement(String query, Map<String, Object> namedValues) {
-    this(
-        query,
-        Collections.emptyList(),
-        namedValues,
-        null,
-        null,
-        Collections.emptyMap(),
-        null,
-        false,
-        Long.MIN_VALUE,
-        null);
-  }
-
   /** @see SimpleStatement#builder(String) */
   public DefaultSimpleStatement(
       String query,
@@ -75,9 +48,12 @@ public class DefaultSimpleStatement implements SimpleStatement {
       boolean tracing,
       long timestamp,
       ByteBuffer pagingState) {
+    if (!positionalValues.isEmpty() && !namedValues.isEmpty()) {
+      throw new IllegalArgumentException("Can't have both positional and named values");
+    }
     this.query = query;
-    this.positionalValues = positionalValues;
-    this.namedValues = namedValues;
+    this.positionalValues = ImmutableList.copyOf(positionalValues);
+    this.namedValues = ImmutableMap.copyOf(namedValues);
     this.configProfileName = configProfileName;
     this.configProfile = configProfile;
     this.customPayload = customPayload;
@@ -93,8 +69,38 @@ public class DefaultSimpleStatement implements SimpleStatement {
   }
 
   @Override
+  public SimpleStatement setQuery(String newQuery) {
+    return new DefaultSimpleStatement(
+        newQuery,
+        positionalValues,
+        namedValues,
+        configProfileName,
+        configProfile,
+        customPayload,
+        idempotent,
+        tracing,
+        timestamp,
+        pagingState);
+  }
+
+  @Override
   public List<Object> getPositionalValues() {
     return positionalValues;
+  }
+
+  @Override
+  public SimpleStatement setPositionalValues(List<Object> newPositionalValues) {
+    return new DefaultSimpleStatement(
+        query,
+        newPositionalValues,
+        namedValues,
+        configProfileName,
+        configProfile,
+        customPayload,
+        idempotent,
+        tracing,
+        timestamp,
+        pagingState);
   }
 
   @Override
@@ -103,13 +109,58 @@ public class DefaultSimpleStatement implements SimpleStatement {
   }
 
   @Override
+  public SimpleStatement setNamedValues(Map<String, Object> newNamedValues) {
+    return new DefaultSimpleStatement(
+        query,
+        positionalValues,
+        newNamedValues,
+        configProfileName,
+        configProfile,
+        customPayload,
+        idempotent,
+        tracing,
+        timestamp,
+        pagingState);
+  }
+
+  @Override
   public String getConfigProfileName() {
     return configProfileName;
   }
 
   @Override
+  public SimpleStatement setConfigProfileName(String newConfigProfileName) {
+    return new DefaultSimpleStatement(
+        query,
+        positionalValues,
+        namedValues,
+        newConfigProfileName,
+        configProfile,
+        customPayload,
+        idempotent,
+        tracing,
+        timestamp,
+        pagingState);
+  }
+
+  @Override
   public DriverConfigProfile getConfigProfile() {
     return configProfile;
+  }
+
+  @Override
+  public SimpleStatement setConfigProfile(DriverConfigProfile newProfile) {
+    return new DefaultSimpleStatement(
+        query,
+        positionalValues,
+        namedValues,
+        null,
+        newProfile,
+        customPayload,
+        idempotent,
+        tracing,
+        timestamp,
+        pagingState);
   }
 
   @Override
@@ -124,8 +175,38 @@ public class DefaultSimpleStatement implements SimpleStatement {
   }
 
   @Override
+  public SimpleStatement setCustomPayload(Map<String, ByteBuffer> newCustomPayload) {
+    return new DefaultSimpleStatement(
+        query,
+        positionalValues,
+        namedValues,
+        configProfileName,
+        configProfile,
+        newCustomPayload,
+        idempotent,
+        tracing,
+        timestamp,
+        pagingState);
+  }
+
+  @Override
   public Boolean isIdempotent() {
     return idempotent;
+  }
+
+  @Override
+  public SimpleStatement setIdempotent(Boolean newIdempotence) {
+    return new DefaultSimpleStatement(
+        query,
+        positionalValues,
+        namedValues,
+        configProfileName,
+        configProfile,
+        customPayload,
+        newIdempotence,
+        tracing,
+        timestamp,
+        pagingState);
   }
 
   @Override
@@ -134,8 +215,38 @@ public class DefaultSimpleStatement implements SimpleStatement {
   }
 
   @Override
+  public SimpleStatement setTracing(boolean newTracing) {
+    return new DefaultSimpleStatement(
+        query,
+        positionalValues,
+        namedValues,
+        configProfileName,
+        configProfile,
+        customPayload,
+        idempotent,
+        newTracing,
+        timestamp,
+        pagingState);
+  }
+
+  @Override
   public long getTimestamp() {
     return timestamp;
+  }
+
+  @Override
+  public SimpleStatement setTimestamp(long newTimestamp) {
+    return new DefaultSimpleStatement(
+        query,
+        positionalValues,
+        namedValues,
+        configProfileName,
+        configProfile,
+        customPayload,
+        idempotent,
+        tracing,
+        newTimestamp,
+        pagingState);
   }
 
   @Override
@@ -144,7 +255,7 @@ public class DefaultSimpleStatement implements SimpleStatement {
   }
 
   @Override
-  public DefaultSimpleStatement copy(ByteBuffer newPagingState) {
+  public SimpleStatement setPagingState(ByteBuffer newPagingState) {
     return new DefaultSimpleStatement(
         query,
         positionalValues,

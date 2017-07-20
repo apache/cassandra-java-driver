@@ -20,51 +20,55 @@ import com.datastax.oss.driver.api.core.ProtocolVersion;
 import com.datastax.oss.driver.api.core.config.DriverConfigProfile;
 import com.datastax.oss.driver.api.core.cql.BoundStatement;
 import com.datastax.oss.driver.api.core.cql.ColumnDefinitions;
-import com.datastax.oss.driver.api.core.cql.Statement;
+import com.datastax.oss.driver.api.core.cql.PreparedStatement;
 import com.datastax.oss.driver.api.core.type.DataType;
 import com.datastax.oss.driver.api.core.type.codec.registry.CodecRegistry;
 import java.nio.ByteBuffer;
-import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
 public class DefaultBoundStatement implements BoundStatement {
 
-  private final DefaultPreparedStatement preparedStatement;
+  private final PreparedStatement preparedStatement;
   private final ColumnDefinitions variableDefinitions;
-  private final List<ByteBuffer> values;
-  private String configProfileName;
-  private DriverConfigProfile configProfile;
+  private final ByteBuffer[] values;
+  private final String configProfileName;
+  private final DriverConfigProfile configProfile;
   private final String keyspace;
-  private Map<String, ByteBuffer> customPayload;
-  private Boolean idempotent;
+  private final Map<String, ByteBuffer> customPayload;
+  private final Boolean idempotent;
+  private final boolean tracing;
+  private final long timestamp;
+  private final ByteBuffer pagingState;
   private final CodecRegistry codecRegistry;
   private final ProtocolVersion protocolVersion;
-  private boolean tracing;
-  private long timestamp = Long.MIN_VALUE;
-  private ByteBuffer pagingState;
 
   public DefaultBoundStatement(
-      DefaultPreparedStatement preparedStatement,
+      PreparedStatement preparedStatement,
       ColumnDefinitions variableDefinitions,
+      ByteBuffer[] values,
       String configProfileName,
       DriverConfigProfile configProfile,
       String keyspace,
       Map<String, ByteBuffer> customPayload,
       Boolean idempotent,
+      boolean tracing,
+      long timestamp,
+      ByteBuffer pagingState,
       CodecRegistry codecRegistry,
       ProtocolVersion protocolVersion) {
     this.preparedStatement = preparedStatement;
     this.variableDefinitions = variableDefinitions;
-    this.values = new ArrayList<>(variableDefinitions.size());
-    for (int i = 0; i < variableDefinitions.size(); i++) {
-      this.values.add(null);
-    }
+    this.values = values;
     this.configProfileName = configProfileName;
     this.configProfile = configProfile;
     this.keyspace = keyspace;
     this.customPayload = customPayload;
     this.idempotent = idempotent;
+    this.tracing = tracing;
+    this.timestamp = timestamp;
+    this.pagingState = pagingState;
     this.codecRegistry = codecRegistry;
     this.protocolVersion = protocolVersion;
   }
@@ -101,23 +105,37 @@ public class DefaultBoundStatement implements BoundStatement {
 
   @Override
   public ByteBuffer getBytesUnsafe(int i) {
-    return values.get(i);
+    return values[i];
   }
 
   @Override
   public BoundStatement setBytesUnsafe(int i, ByteBuffer v) {
-    values.set(i, v);
-    return this;
+    ByteBuffer[] newValues = Arrays.copyOf(values, values.length);
+    newValues[i] = v;
+    return new DefaultBoundStatement(
+        preparedStatement,
+        variableDefinitions,
+        newValues,
+        configProfileName,
+        configProfile,
+        keyspace,
+        customPayload,
+        idempotent,
+        tracing,
+        timestamp,
+        pagingState,
+        codecRegistry,
+        protocolVersion);
   }
 
   @Override
-  public DefaultPreparedStatement getPreparedStatement() {
+  public PreparedStatement getPreparedStatement() {
     return preparedStatement;
   }
 
   @Override
   public List<ByteBuffer> getValues() {
-    return values;
+    return Arrays.asList(values);
   }
 
   @Override
@@ -126,9 +144,21 @@ public class DefaultBoundStatement implements BoundStatement {
   }
 
   @Override
-  public BoundStatement setConfigProfileName(String configProfileName) {
-    this.configProfileName = configProfileName;
-    return this;
+  public BoundStatement setConfigProfileName(String newConfigProfileName) {
+    return new DefaultBoundStatement(
+        preparedStatement,
+        variableDefinitions,
+        values,
+        newConfigProfileName,
+        configProfile,
+        keyspace,
+        customPayload,
+        idempotent,
+        tracing,
+        timestamp,
+        pagingState,
+        codecRegistry,
+        protocolVersion);
   }
 
   @Override
@@ -137,9 +167,21 @@ public class DefaultBoundStatement implements BoundStatement {
   }
 
   @Override
-  public BoundStatement setConfigProfile(DriverConfigProfile configProfile) {
-    this.configProfile = configProfile;
-    return this;
+  public BoundStatement setConfigProfile(DriverConfigProfile newConfigProfile) {
+    return new DefaultBoundStatement(
+        preparedStatement,
+        variableDefinitions,
+        values,
+        configProfileName,
+        newConfigProfile,
+        keyspace,
+        customPayload,
+        idempotent,
+        tracing,
+        timestamp,
+        pagingState,
+        codecRegistry,
+        protocolVersion);
   }
 
   @Override
@@ -153,9 +195,21 @@ public class DefaultBoundStatement implements BoundStatement {
   }
 
   @Override
-  public BoundStatement setCustomPayload(Map<String, ByteBuffer> customPayload) {
-    this.customPayload = customPayload;
-    return this;
+  public BoundStatement setCustomPayload(Map<String, ByteBuffer> newCustomPayload) {
+    return new DefaultBoundStatement(
+        preparedStatement,
+        variableDefinitions,
+        values,
+        configProfileName,
+        configProfile,
+        keyspace,
+        newCustomPayload,
+        idempotent,
+        tracing,
+        timestamp,
+        pagingState,
+        codecRegistry,
+        protocolVersion);
   }
 
   @Override
@@ -164,9 +218,21 @@ public class DefaultBoundStatement implements BoundStatement {
   }
 
   @Override
-  public BoundStatement setIdempotent(Boolean idempotent) {
-    this.idempotent = idempotent;
-    return this;
+  public BoundStatement setIdempotent(Boolean newIdempotence) {
+    return new DefaultBoundStatement(
+        preparedStatement,
+        variableDefinitions,
+        values,
+        configProfileName,
+        configProfile,
+        keyspace,
+        customPayload,
+        newIdempotence,
+        tracing,
+        timestamp,
+        pagingState,
+        codecRegistry,
+        protocolVersion);
   }
 
   @Override
@@ -175,9 +241,21 @@ public class DefaultBoundStatement implements BoundStatement {
   }
 
   @Override
-  public BoundStatement setTracing() {
-    this.tracing = true;
-    return this;
+  public BoundStatement setTracing(boolean newTracing) {
+    return new DefaultBoundStatement(
+        preparedStatement,
+        variableDefinitions,
+        values,
+        configProfileName,
+        configProfile,
+        keyspace,
+        customPayload,
+        idempotent,
+        newTracing,
+        timestamp,
+        pagingState,
+        codecRegistry,
+        protocolVersion);
   }
 
   @Override
@@ -186,9 +264,21 @@ public class DefaultBoundStatement implements BoundStatement {
   }
 
   @Override
-  public BoundStatement setTimestamp(long timestamp) {
-    this.timestamp = timestamp;
-    return this;
+  public BoundStatement setTimestamp(long newTimestamp) {
+    return new DefaultBoundStatement(
+        preparedStatement,
+        variableDefinitions,
+        values,
+        configProfileName,
+        configProfile,
+        keyspace,
+        customPayload,
+        idempotent,
+        tracing,
+        newTimestamp,
+        pagingState,
+        codecRegistry,
+        protocolVersion);
   }
 
   @Override
@@ -197,8 +287,20 @@ public class DefaultBoundStatement implements BoundStatement {
   }
 
   @Override
-  public Statement copy(ByteBuffer newPagingState) {
-    this.pagingState = newPagingState;
-    return this;
+  public BoundStatement setPagingState(ByteBuffer newPagingState) {
+    return new DefaultBoundStatement(
+        preparedStatement,
+        variableDefinitions,
+        values,
+        configProfileName,
+        configProfile,
+        keyspace,
+        customPayload,
+        idempotent,
+        tracing,
+        timestamp,
+        newPagingState,
+        codecRegistry,
+        protocolVersion);
   }
 }

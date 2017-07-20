@@ -15,5 +15,9 @@
  */
 package com.datastax.oss.driver.api.core.cql;
 
-/** A statement that can be added to a CQL batch. */
-public interface BatchableStatement extends Statement {}
+/**
+ * A statement that can be added to a CQL batch.
+ *
+ * @param <T> the "self type" used for covariant returns in subtypes.
+ */
+public interface BatchableStatement<T extends BatchableStatement<T>> extends Statement<T> {}

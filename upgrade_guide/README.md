@@ -41,6 +41,29 @@ client code (e.g. to wrap them and write delegates).
 Thanks to Java 8, factory methods can now be part of these interfaces directly, e.g.
 `Cluster.builder()`, `SimpleStatement.newInstance`.
 
+#### Immutable statement types
+
+Simple, bound and batch statements implementations are now all immutable. This makes them
+automatically thread-safe: you don't need to worry anymore about sharing them or reusing them
+between asynchronous executions.
+
+One word of warning -- all mutating methods return a new instance, so make sure you don't
+accidentally ignore their result:
+
+```java
+BoundStatement boundSelect = preparedSelect.bind();
+
+// This doesn't work: setInt doesn't modify boundSelect in place:
+boundSelect.setInt("k", key);
+session.execute(boundSelect);
+
+// Instead, do this:
+boundSelect = boundSelect.setInt("k", key);
+```
+
+Note that, as indicated in the previous section, the public API exposes these types as interfaces:
+if for some reason you prefer a mutable implementation, it's possible to write your own.
+
 #### Generic session API
 
 `Session` is now a high-level abstraction capable of executing arbitrary requests. Out of the box,

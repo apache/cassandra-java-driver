@@ -19,10 +19,9 @@ import com.datastax.oss.driver.api.core.config.DriverConfigProfile;
 import com.datastax.oss.driver.api.core.cql.BatchStatement;
 import com.datastax.oss.driver.api.core.cql.BatchType;
 import com.datastax.oss.driver.api.core.cql.BatchableStatement;
-import com.datastax.oss.driver.api.core.cql.SimpleStatement;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Iterables;
 import java.nio.ByteBuffer;
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -30,33 +29,19 @@ import java.util.Map;
 public class DefaultBatchStatement implements BatchStatement {
 
   private final BatchType batchType;
-  private final List<BatchableStatement> statements;
-  private String configProfileName;
-  private DriverConfigProfile configProfile;
+  private final List<BatchableStatement<?>> statements;
+  private final String configProfileName;
+  private final DriverConfigProfile configProfile;
   private final String keyspace;
-  private Map<String, ByteBuffer> customPayload;
-  private Boolean idempotent;
-  private boolean tracing;
-  private long timestamp;
-  private ByteBuffer pagingState;
+  private final Map<String, ByteBuffer> customPayload;
+  private final Boolean idempotent;
+  private final boolean tracing;
+  private final long timestamp;
+  private final ByteBuffer pagingState;
 
-  public DefaultBatchStatement(BatchType batchType) {
-    this(
-        batchType,
-        new ArrayList<>(),
-        null,
-        null,
-        null,
-        Collections.emptyMap(),
-        false,
-        false,
-        Long.MIN_VALUE,
-        null);
-  }
-
-  private DefaultBatchStatement(
+  public DefaultBatchStatement(
       BatchType batchType,
-      List<BatchableStatement> statements,
+      List<BatchableStatement<?>> statements,
       String configProfileName,
       DriverConfigProfile configProfile,
       String keyspace,
@@ -66,7 +51,7 @@ public class DefaultBatchStatement implements BatchStatement {
       long timestamp,
       ByteBuffer pagingState) {
     this.batchType = batchType;
-    this.statements = statements;
+    this.statements = ImmutableList.copyOf(statements);
     this.configProfileName = configProfileName;
     this.configProfile = configProfile;
     this.keyspace = keyspace;
@@ -83,20 +68,60 @@ public class DefaultBatchStatement implements BatchStatement {
   }
 
   @Override
-  public BatchStatement add(BatchableStatement statement) {
+  public BatchStatement setBatchType(BatchType newBatchType) {
+    return new DefaultBatchStatement(
+        newBatchType,
+        statements,
+        configProfileName,
+        configProfile,
+        keyspace,
+        customPayload,
+        idempotent,
+        tracing,
+        timestamp,
+        pagingState);
+  }
+
+  @Override
+  public BatchStatement add(BatchableStatement<?> statement) {
     if (statements.size() >= 0xFFFF) {
       throw new IllegalStateException(
           "Batch statement cannot contain more than " + 0xFFFF + " statements.");
-    } else if (statement instanceof SimpleStatement
-        && ((SimpleStatement) statement).getNamedValues().size() > 0) {
-      throw new IllegalArgumentException(
-          String.format(
-              "Batch statements cannot contain simple statements with named values "
-                  + "(offending statement: %s)",
-              ((SimpleStatement) statement).getQuery()));
     } else {
-      statements.add(statement);
-      return this;
+      return new DefaultBatchStatement(
+          batchType,
+          ImmutableList.<BatchableStatement<?>>builder().addAll(statements).add(statement).build(),
+          configProfileName,
+          configProfile,
+          keyspace,
+          customPayload,
+          idempotent,
+          tracing,
+          timestamp,
+          pagingState);
+    }
+  }
+
+  @Override
+  public BatchStatement addAll(Iterable<? extends BatchableStatement<?>> newStatements) {
+    if (statements.size() + Iterables.size(newStatements) > 0xFFFF) {
+      throw new IllegalStateException(
+          "Batch statement cannot contain more than " + 0xFFFF + " statements.");
+    } else {
+      return new DefaultBatchStatement(
+          batchType,
+          ImmutableList.<BatchableStatement<?>>builder()
+              .addAll(statements)
+              .addAll(newStatements)
+              .build(),
+          configProfileName,
+          configProfile,
+          keyspace,
+          customPayload,
+          idempotent,
+          tracing,
+          timestamp,
+          pagingState);
     }
   }
 
@@ -107,12 +132,21 @@ public class DefaultBatchStatement implements BatchStatement {
 
   @Override
   public BatchStatement clear() {
-    statements.clear();
-    return this;
+    return new DefaultBatchStatement(
+        batchType,
+        ImmutableList.of(),
+        configProfileName,
+        configProfile,
+        keyspace,
+        customPayload,
+        idempotent,
+        tracing,
+        timestamp,
+        pagingState);
   }
 
   @Override
-  public Iterator<BatchableStatement> iterator() {
+  public Iterator<BatchableStatement<?>> iterator() {
     return statements.iterator();
   }
 
@@ -122,10 +156,10 @@ public class DefaultBatchStatement implements BatchStatement {
   }
 
   @Override
-  public BatchStatement copy(ByteBuffer newPagingState) {
+  public BatchStatement setPagingState(ByteBuffer newPagingState) {
     return new DefaultBatchStatement(
         batchType,
-        new ArrayList<>(statements),
+        statements,
         configProfileName,
         configProfile,
         keyspace,
@@ -142,9 +176,18 @@ public class DefaultBatchStatement implements BatchStatement {
   }
 
   @Override
-  public BatchStatement setConfigProfileName(String configProfileName) {
-    this.configProfileName = configProfileName;
-    return this;
+  public BatchStatement setConfigProfileName(String newConfigProfileName) {
+    return new DefaultBatchStatement(
+        batchType,
+        statements,
+        newConfigProfileName,
+        configProfile,
+        keyspace,
+        customPayload,
+        idempotent,
+        tracing,
+        timestamp,
+        pagingState);
   }
 
   @Override
@@ -153,9 +196,18 @@ public class DefaultBatchStatement implements BatchStatement {
   }
 
   @Override
-  public DefaultBatchStatement setConfigProfile(DriverConfigProfile configProfile) {
-    this.configProfile = configProfile;
-    return this;
+  public DefaultBatchStatement setConfigProfile(DriverConfigProfile newProfile) {
+    return new DefaultBatchStatement(
+        batchType,
+        statements,
+        configProfileName,
+        newProfile,
+        keyspace,
+        customPayload,
+        idempotent,
+        tracing,
+        timestamp,
+        pagingState);
   }
 
   @Override
@@ -163,6 +215,7 @@ public class DefaultBatchStatement implements BatchStatement {
     return keyspace;
   }
 
+  @Override
   public DefaultBatchStatement setKeyspace(@SuppressWarnings("unused") String keyspace) {
     throw new UnsupportedOperationException(
         "Per-statement keyspaces are not supported currently, "
@@ -175,9 +228,18 @@ public class DefaultBatchStatement implements BatchStatement {
   }
 
   @Override
-  public DefaultBatchStatement setCustomPayload(Map<String, ByteBuffer> customPayload) {
-    this.customPayload = customPayload;
-    return this;
+  public DefaultBatchStatement setCustomPayload(Map<String, ByteBuffer> newCustomPayload) {
+    return new DefaultBatchStatement(
+        batchType,
+        statements,
+        configProfileName,
+        configProfile,
+        keyspace,
+        newCustomPayload,
+        idempotent,
+        tracing,
+        timestamp,
+        pagingState);
   }
 
   @Override
@@ -186,9 +248,18 @@ public class DefaultBatchStatement implements BatchStatement {
   }
 
   @Override
-  public DefaultBatchStatement setIdempotent(Boolean idempotent) {
-    this.idempotent = idempotent;
-    return this;
+  public DefaultBatchStatement setIdempotent(Boolean newIdempotence) {
+    return new DefaultBatchStatement(
+        batchType,
+        statements,
+        configProfileName,
+        configProfile,
+        keyspace,
+        customPayload,
+        newIdempotence,
+        tracing,
+        timestamp,
+        pagingState);
   }
 
   @Override
@@ -197,9 +268,18 @@ public class DefaultBatchStatement implements BatchStatement {
   }
 
   @Override
-  public BatchStatement setTracing() {
-    this.tracing = true;
-    return this;
+  public BatchStatement setTracing(boolean newTracing) {
+    return new DefaultBatchStatement(
+        batchType,
+        statements,
+        configProfileName,
+        configProfile,
+        keyspace,
+        customPayload,
+        idempotent,
+        newTracing,
+        timestamp,
+        pagingState);
   }
 
   @Override
@@ -208,8 +288,17 @@ public class DefaultBatchStatement implements BatchStatement {
   }
 
   @Override
-  public BatchStatement setTimestamp(long timestamp) {
-    this.timestamp = timestamp;
-    return this;
+  public BatchStatement setTimestamp(long newTimestamp) {
+    return new DefaultBatchStatement(
+        batchType,
+        statements,
+        configProfileName,
+        configProfile,
+        keyspace,
+        customPayload,
+        idempotent,
+        tracing,
+        newTimestamp,
+        pagingState);
   }
 }

@@ -77,7 +77,7 @@ public interface Session extends AsyncAutoCloseable {
    * <p>This is a convenience method that does the exact same thing as {@link #execute(Request)},
    * but exposes a more user-friendly signature reminiscent of the 3.x API.
    */
-  default ResultSet execute(Statement statement) {
+  default ResultSet execute(Statement<?> statement) {
     return execute((Request<ResultSet, CompletionStage<AsyncResultSet>>) statement);
   }
 
@@ -98,7 +98,7 @@ public interface Session extends AsyncAutoCloseable {
    * #executeAsync(Statement)}, but exposes a more user-friendly signature reminiscent of the 3.x
    * API.
    */
-  default CompletionStage<AsyncResultSet> executeAsync(Statement statement) {
+  default CompletionStage<AsyncResultSet> executeAsync(Statement<?> statement) {
     return executeAsync((Request<ResultSet, CompletionStage<AsyncResultSet>>) statement);
   }
 

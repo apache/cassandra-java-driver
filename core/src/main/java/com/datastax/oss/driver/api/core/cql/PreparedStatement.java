@@ -22,8 +22,7 @@ import java.nio.ByteBuffer;
  * A query with bind variables that has been pre-parsed by the database.
  *
  * <p>Client applications create instances with {@link Session#prepare(SimpleStatement)}. Then they
- * use {@link #bind()} to obtain a {@link BoundStatement}, an executable instance that associates a
- * set of values with the bind variables.
+ * use {@link #bind(Object...)} to obtain an executable {@link BoundStatement}.
  *
  * <p>The default prepared statement implementation returned by the driver is <b>thread-safe</b>.
  * Client applications can -- and are expected to -- prepare each query once and store the result in
@@ -51,5 +50,25 @@ public interface PreparedStatement {
    */
   ColumnDefinitions getResultSetDefinitions();
 
-  BoundStatement bind();
+  /**
+   * Builds an executable statement that associates a set of values with the bind variables.
+   *
+   * <p>You can provide less values than the actual number of variables (or even none at all), in
+   * which case the remaining variables will be left unset. However, this method will throw an
+   * {@link IllegalArgumentException} if there are more values than variables.
+   *
+   * <p>Note that the built-in bound statement implementation is immutable. If you need to set
+   * multiple execution parameters on the bound statement (such as {@link
+   * BoundStatement#setConfigProfileName(String)}, {@link
+   * BoundStatement#setPagingState(ByteBuffer)}, etc.), consider using {@link
+   * #boundStatementBuilder()} instead to avoid unnecessary allocations.
+   */
+  BoundStatement bind(Object... values);
+
+  /**
+   * Returns a builder to construct an executable statement.
+   *
+   * @see #bind(Object...)
+   */
+  BoundStatementBuilder boundStatementBuilder();
 }

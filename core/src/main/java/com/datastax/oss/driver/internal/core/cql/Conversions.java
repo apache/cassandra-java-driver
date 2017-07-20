@@ -140,8 +140,6 @@ class Conversions {
         if (child instanceof SimpleStatement) {
           SimpleStatement simpleStatement = (SimpleStatement) child;
           if (simpleStatement.getNamedValues().size() > 0) {
-            // We already check that in DefaultBatchStatement.add, but we could receive a custom
-            // implementation
             throw new IllegalArgumentException(
                 String.format(
                     "Batch statements cannot contain simple statements with named values "

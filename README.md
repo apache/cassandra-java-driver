@@ -31,6 +31,7 @@ are multiple modules, all prefixed with `java-driver-`. Refer to the [manual] fo
     [@DataStaxEng] has more news, including other drivers, Cassandra, and DSE.
 * [Changelog]
 * [Upgrade guide]
+* [FAQ]
 
 [API docs]: http://www.datastax.com/drivers/java/4.0
 [JIRA]: https://datastax-oss.atlassian.net/browse/JAVA
@@ -39,6 +40,7 @@ are multiple modules, all prefixed with `java-driver-`. Refer to the [manual] fo
 [@DataStaxEng]: https://twitter.com/datastaxeng
 [Changelog]: changelog/
 [Upgrade guide]: upgrade_guide/
+[FAQ]: faq/
 
 ## License
 
