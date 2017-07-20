@@ -17,6 +17,7 @@ package com.datastax.oss.driver.internal.core.type.codec;
 
 import com.datastax.oss.driver.api.core.type.codec.TypeCodecs;
 import java.time.LocalTime;
+import java.time.temporal.ChronoUnit;
 import org.junit.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -53,7 +54,9 @@ public class TimeCodecTest extends CodecTestBase<LocalTime> {
   public void should_format() {
     // No need to test various values because the codec delegates directly to the JDK's formatter,
     // which we assume does its job correctly.
-    assertThat(format(LocalTime.MIDNIGHT)).isEqualTo("'00:00:00.000'");
+    assertThat(format(LocalTime.MIDNIGHT)).isEqualTo("'00:00:00.000000000'");
+    assertThat(format(LocalTime.NOON.plus(13799999994L, ChronoUnit.NANOS)))
+        .isEqualTo("'12:00:13.799999994'");
     assertThat(format(null)).isEqualTo("NULL");
   }
 

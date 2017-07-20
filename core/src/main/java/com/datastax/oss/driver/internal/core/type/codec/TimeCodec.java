@@ -28,7 +28,8 @@ import java.time.format.DateTimeFormatter;
 
 public class TimeCodec implements TypeCodec<LocalTime> {
 
-  private static final DateTimeFormatter FORMATTER = DateTimeFormatter.ofPattern("HH:mm:ss.SSS");
+  private static final DateTimeFormatter FORMATTER =
+      DateTimeFormatter.ofPattern("HH:mm:ss.SSSSSSSSS");
 
   @Override
   public GenericType<LocalTime> getJavaType() {
