@@ -40,7 +40,7 @@ public class TimeUuidCodecTest extends CodecTestBase<UUID> {
 
   @Test(expected = IllegalArgumentException.class)
   public void should_not_encode_non_time_uuid() {
-    assertThat(codec.canEncode(NOT_TIME_BASED)).isFalse();
+    assertThat(codec.accepts(NOT_TIME_BASED)).isFalse();
     encode(NOT_TIME_BASED);
   }
 

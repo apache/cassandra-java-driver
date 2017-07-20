@@ -49,11 +49,11 @@ public class ListCodec<T> implements TypeCodec<List<T>> {
   }
 
   @Override
-  public boolean canEncode(Object value) {
+  public boolean accepts(Object value) {
     if (List.class.isAssignableFrom(value.getClass())) {
       // runtime type ok, now check element type
       List<?> list = (List<?>) value;
-      return list.isEmpty() || elementCodec.canEncode(list.get(0));
+      return list.isEmpty() || elementCodec.accepts(list.get(0));
     } else {
       return false;
     }

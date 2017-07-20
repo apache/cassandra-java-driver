@@ -183,9 +183,9 @@ public class CachingCodecRegistryTest {
 
     TypeCodec<List<List<Integer>>> codec = registry.codecFor(cqlType, javaType);
     assertThat(codec).isNotNull();
-    assertThat(codec.canDecode(cqlType)).isTrue();
-    assertThat(codec.canEncode(javaType)).isTrue();
-    assertThat(codec.canEncode(value)).isTrue();
+    assertThat(codec.accepts(cqlType)).isTrue();
+    assertThat(codec.accepts(javaType)).isTrue();
+    assertThat(codec.accepts(value)).isTrue();
     // Cache lookup for the codec, and recursively for its subcodec
     inOrder.verify(onCacheLookup).accept(cqlType, javaType);
     inOrder
@@ -204,9 +204,9 @@ public class CachingCodecRegistryTest {
 
     TypeCodec<List<List<Integer>>> codec = registry.codecFor(cqlType);
     assertThat(codec).isNotNull();
-    assertThat(codec.canDecode(cqlType)).isTrue();
-    assertThat(codec.canEncode(javaType)).isTrue();
-    assertThat(codec.canEncode(value)).isTrue();
+    assertThat(codec.accepts(cqlType)).isTrue();
+    assertThat(codec.accepts(javaType)).isTrue();
+    assertThat(codec.accepts(value)).isTrue();
     inOrder.verify(onCacheLookup).accept(cqlType, null);
     inOrder.verify(onCacheLookup).accept(DataTypes.listOf(DataTypes.INT), null);
   }
@@ -222,9 +222,9 @@ public class CachingCodecRegistryTest {
 
     TypeCodec<List<List<Integer>>> codec = registry.codecFor(value);
     assertThat(codec).isNotNull();
-    assertThat(codec.canDecode(cqlType)).isTrue();
-    assertThat(codec.canEncode(javaType)).isTrue();
-    assertThat(codec.canEncode(value)).isTrue();
+    assertThat(codec.accepts(cqlType)).isTrue();
+    assertThat(codec.accepts(javaType)).isTrue();
+    assertThat(codec.accepts(value)).isTrue();
     inOrder.verify(onCacheLookup).accept(null, javaType);
     inOrder.verify(onCacheLookup).accept(null, GenericType.listOf(GenericType.INTEGER));
   }
@@ -245,9 +245,9 @@ public class CachingCodecRegistryTest {
 
     TypeCodec<List<InetAddress>> codec = registry.codecFor(value);
     assertThat(codec).isNotNull();
-    assertThat(codec.canDecode(cqlType)).isTrue();
-    assertThat(codec.canEncode(javaType)).isTrue();
-    assertThat(codec.canEncode(value)).isTrue();
+    assertThat(codec.accepts(cqlType)).isTrue();
+    assertThat(codec.accepts(javaType)).isTrue();
+    assertThat(codec.accepts(value)).isTrue();
 
     inOrder.verify(onCacheLookup).accept(null, GenericType.listOf(Inet4Address.class));
   }
@@ -263,9 +263,9 @@ public class CachingCodecRegistryTest {
 
     TypeCodec<Set<Set<Integer>>> codec = registry.codecFor(cqlType, javaType);
     assertThat(codec).isNotNull();
-    assertThat(codec.canDecode(cqlType)).isTrue();
-    assertThat(codec.canEncode(javaType)).isTrue();
-    assertThat(codec.canEncode(value)).isTrue();
+    assertThat(codec.accepts(cqlType)).isTrue();
+    assertThat(codec.accepts(javaType)).isTrue();
+    assertThat(codec.accepts(value)).isTrue();
     // Cache lookup for the codec, and recursively for its subcodec
     inOrder.verify(onCacheLookup).accept(cqlType, javaType);
     inOrder
@@ -284,9 +284,9 @@ public class CachingCodecRegistryTest {
 
     TypeCodec<Set<Set<Integer>>> codec = registry.codecFor(cqlType);
     assertThat(codec).isNotNull();
-    assertThat(codec.canDecode(cqlType)).isTrue();
-    assertThat(codec.canEncode(javaType)).isTrue();
-    assertThat(codec.canEncode(value)).isTrue();
+    assertThat(codec.accepts(cqlType)).isTrue();
+    assertThat(codec.accepts(javaType)).isTrue();
+    assertThat(codec.accepts(value)).isTrue();
     inOrder.verify(onCacheLookup).accept(cqlType, null);
     inOrder.verify(onCacheLookup).accept(DataTypes.setOf(DataTypes.INT), null);
   }
@@ -302,9 +302,9 @@ public class CachingCodecRegistryTest {
 
     TypeCodec<Set<Set<Integer>>> codec = registry.codecFor(value);
     assertThat(codec).isNotNull();
-    assertThat(codec.canDecode(cqlType)).isTrue();
-    assertThat(codec.canEncode(javaType)).isTrue();
-    assertThat(codec.canEncode(value)).isTrue();
+    assertThat(codec.accepts(cqlType)).isTrue();
+    assertThat(codec.accepts(javaType)).isTrue();
+    assertThat(codec.accepts(value)).isTrue();
     inOrder.verify(onCacheLookup).accept(null, javaType);
     inOrder.verify(onCacheLookup).accept(null, GenericType.setOf(GenericType.INTEGER));
   }
@@ -325,9 +325,9 @@ public class CachingCodecRegistryTest {
 
     TypeCodec<Set<InetAddress>> codec = registry.codecFor(value);
     assertThat(codec).isNotNull();
-    assertThat(codec.canDecode(cqlType)).isTrue();
-    assertThat(codec.canEncode(javaType)).isTrue();
-    assertThat(codec.canEncode(value)).isTrue();
+    assertThat(codec.accepts(cqlType)).isTrue();
+    assertThat(codec.accepts(javaType)).isTrue();
+    assertThat(codec.accepts(value)).isTrue();
 
     inOrder.verify(onCacheLookup).accept(null, GenericType.setOf(Inet4Address.class));
   }
@@ -344,9 +344,9 @@ public class CachingCodecRegistryTest {
 
     TypeCodec<Map<Integer, Map<Integer, Integer>>> codec = registry.codecFor(cqlType, javaType);
     assertThat(codec).isNotNull();
-    assertThat(codec.canDecode(cqlType)).isTrue();
-    assertThat(codec.canEncode(javaType)).isTrue();
-    assertThat(codec.canEncode(value)).isTrue();
+    assertThat(codec.accepts(cqlType)).isTrue();
+    assertThat(codec.accepts(javaType)).isTrue();
+    assertThat(codec.accepts(value)).isTrue();
     // Cache lookup for the codec, and recursively for its subcodec
     inOrder.verify(onCacheLookup).accept(cqlType, javaType);
     inOrder
@@ -368,9 +368,9 @@ public class CachingCodecRegistryTest {
 
     TypeCodec<Map<Integer, Map<Integer, Integer>>> codec = registry.codecFor(cqlType);
     assertThat(codec).isNotNull();
-    assertThat(codec.canDecode(cqlType)).isTrue();
-    assertThat(codec.canEncode(javaType)).isTrue();
-    assertThat(codec.canEncode(value)).isTrue();
+    assertThat(codec.accepts(cqlType)).isTrue();
+    assertThat(codec.accepts(javaType)).isTrue();
+    assertThat(codec.accepts(value)).isTrue();
     inOrder.verify(onCacheLookup).accept(cqlType, null);
     inOrder.verify(onCacheLookup).accept(DataTypes.mapOf(DataTypes.INT, DataTypes.INT), null);
   }
@@ -387,9 +387,9 @@ public class CachingCodecRegistryTest {
 
     TypeCodec<Map<Integer, Map<Integer, Integer>>> codec = registry.codecFor(value);
     assertThat(codec).isNotNull();
-    assertThat(codec.canDecode(cqlType)).isTrue();
-    assertThat(codec.canEncode(javaType)).isTrue();
-    assertThat(codec.canEncode(value)).isTrue();
+    assertThat(codec.accepts(cqlType)).isTrue();
+    assertThat(codec.accepts(javaType)).isTrue();
+    assertThat(codec.accepts(value)).isTrue();
     inOrder.verify(onCacheLookup).accept(null, javaType);
     inOrder
         .verify(onCacheLookup)
@@ -413,9 +413,9 @@ public class CachingCodecRegistryTest {
 
     TypeCodec<Map<InetAddress, InetAddress>> codec = registry.codecFor(value);
     assertThat(codec).isNotNull();
-    assertThat(codec.canDecode(cqlType)).isTrue();
-    assertThat(codec.canEncode(javaType)).isTrue();
-    assertThat(codec.canEncode(value)).isTrue();
+    assertThat(codec.accepts(cqlType)).isTrue();
+    assertThat(codec.accepts(javaType)).isTrue();
+    assertThat(codec.accepts(value)).isTrue();
 
     inOrder
         .verify(onCacheLookup)
@@ -432,10 +432,10 @@ public class CachingCodecRegistryTest {
 
     TypeCodec<TupleValue> codec = registry.codecFor(cqlType, GenericType.TUPLE_VALUE);
     assertThat(codec).isNotNull();
-    assertThat(codec.canDecode(cqlType)).isTrue();
-    assertThat(codec.canEncode(GenericType.TUPLE_VALUE)).isTrue();
-    assertThat(codec.canEncode(TupleValue.class)).isTrue();
-    assertThat(codec.canEncode(value)).isTrue();
+    assertThat(codec.accepts(cqlType)).isTrue();
+    assertThat(codec.accepts(GenericType.TUPLE_VALUE)).isTrue();
+    assertThat(codec.accepts(TupleValue.class)).isTrue();
+    assertThat(codec.accepts(value)).isTrue();
     inOrder.verify(onCacheLookup).accept(cqlType, GenericType.TUPLE_VALUE);
     // field codecs are only looked up when fields are accessed, so no cache hit for list<int> now
 
@@ -451,10 +451,10 @@ public class CachingCodecRegistryTest {
 
     TypeCodec<TupleValue> codec = registry.codecFor(cqlType);
     assertThat(codec).isNotNull();
-    assertThat(codec.canDecode(cqlType)).isTrue();
-    assertThat(codec.canEncode(GenericType.TUPLE_VALUE)).isTrue();
-    assertThat(codec.canEncode(TupleValue.class)).isTrue();
-    assertThat(codec.canEncode(value)).isTrue();
+    assertThat(codec.accepts(cqlType)).isTrue();
+    assertThat(codec.accepts(GenericType.TUPLE_VALUE)).isTrue();
+    assertThat(codec.accepts(TupleValue.class)).isTrue();
+    assertThat(codec.accepts(value)).isTrue();
     inOrder.verify(onCacheLookup).accept(cqlType, null);
   }
 
@@ -468,10 +468,10 @@ public class CachingCodecRegistryTest {
 
     TypeCodec<TupleValue> codec = registry.codecFor(value);
     assertThat(codec).isNotNull();
-    assertThat(codec.canDecode(cqlType)).isTrue();
-    assertThat(codec.canEncode(GenericType.TUPLE_VALUE)).isTrue();
-    assertThat(codec.canEncode(TupleValue.class)).isTrue();
-    assertThat(codec.canEncode(value)).isTrue();
+    assertThat(codec.accepts(cqlType)).isTrue();
+    assertThat(codec.accepts(GenericType.TUPLE_VALUE)).isTrue();
+    assertThat(codec.accepts(TupleValue.class)).isTrue();
+    assertThat(codec.accepts(value)).isTrue();
     inOrder.verify(onCacheLookup).accept(cqlType, GenericType.TUPLE_VALUE);
 
     inOrder.verifyNoMoreInteractions();
@@ -492,10 +492,10 @@ public class CachingCodecRegistryTest {
 
     TypeCodec<UdtValue> codec = registry.codecFor(cqlType, GenericType.UDT_VALUE);
     assertThat(codec).isNotNull();
-    assertThat(codec.canDecode(cqlType)).isTrue();
-    assertThat(codec.canEncode(GenericType.UDT_VALUE)).isTrue();
-    assertThat(codec.canEncode(UdtValue.class)).isTrue();
-    assertThat(codec.canEncode(value)).isTrue();
+    assertThat(codec.accepts(cqlType)).isTrue();
+    assertThat(codec.accepts(GenericType.UDT_VALUE)).isTrue();
+    assertThat(codec.accepts(UdtValue.class)).isTrue();
+    assertThat(codec.accepts(value)).isTrue();
     inOrder.verify(onCacheLookup).accept(cqlType, GenericType.UDT_VALUE);
     // field codecs are only looked up when fields are accessed, so no cache hit for list<int> now
 
@@ -516,10 +516,10 @@ public class CachingCodecRegistryTest {
 
     TypeCodec<UdtValue> codec = registry.codecFor(cqlType);
     assertThat(codec).isNotNull();
-    assertThat(codec.canDecode(cqlType)).isTrue();
-    assertThat(codec.canEncode(GenericType.UDT_VALUE)).isTrue();
-    assertThat(codec.canEncode(UdtValue.class)).isTrue();
-    assertThat(codec.canEncode(value)).isTrue();
+    assertThat(codec.accepts(cqlType)).isTrue();
+    assertThat(codec.accepts(GenericType.UDT_VALUE)).isTrue();
+    assertThat(codec.accepts(UdtValue.class)).isTrue();
+    assertThat(codec.accepts(value)).isTrue();
     inOrder.verify(onCacheLookup).accept(cqlType, null);
   }
 
@@ -538,10 +538,10 @@ public class CachingCodecRegistryTest {
 
     TypeCodec<UdtValue> codec = registry.codecFor(value);
     assertThat(codec).isNotNull();
-    assertThat(codec.canDecode(cqlType)).isTrue();
-    assertThat(codec.canEncode(GenericType.UDT_VALUE)).isTrue();
-    assertThat(codec.canEncode(UdtValue.class)).isTrue();
-    assertThat(codec.canEncode(value)).isTrue();
+    assertThat(codec.accepts(cqlType)).isTrue();
+    assertThat(codec.accepts(GenericType.UDT_VALUE)).isTrue();
+    assertThat(codec.accepts(UdtValue.class)).isTrue();
+    assertThat(codec.accepts(value)).isTrue();
     inOrder.verify(onCacheLookup).accept(cqlType, GenericType.UDT_VALUE);
 
     inOrder.verifyNoMoreInteractions();

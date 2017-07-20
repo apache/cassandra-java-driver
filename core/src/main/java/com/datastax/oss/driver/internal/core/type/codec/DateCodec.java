@@ -44,12 +44,12 @@ public class DateCodec implements TypeCodec<LocalDate> {
   }
 
   @Override
-  public boolean canEncode(Object value) {
+  public boolean accepts(Object value) {
     return value instanceof LocalDate;
   }
 
   @Override
-  public boolean canEncode(Class<?> javaClass) {
+  public boolean accepts(Class<?> javaClass) {
     return javaClass == LocalDate.class;
   }
 

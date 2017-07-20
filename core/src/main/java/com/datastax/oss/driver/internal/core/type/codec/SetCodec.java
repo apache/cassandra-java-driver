@@ -50,11 +50,11 @@ public class SetCodec<T> implements TypeCodec<Set<T>> {
   }
 
   @Override
-  public boolean canEncode(Object value) {
+  public boolean accepts(Object value) {
     if (Set.class.isAssignableFrom(value.getClass())) {
       // runtime type ok, now check element type
       Set<?> set = (Set<?>) value;
-      return set.isEmpty() || elementCodec.canEncode(set.iterator().next());
+      return set.isEmpty() || elementCodec.accepts(set.iterator().next());
     } else {
       return false;
     }

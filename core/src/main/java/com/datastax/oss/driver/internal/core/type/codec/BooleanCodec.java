@@ -38,12 +38,12 @@ public class BooleanCodec implements PrimitiveBooleanCodec {
   }
 
   @Override
-  public boolean canEncode(Object value) {
+  public boolean accepts(Object value) {
     return value instanceof Boolean;
   }
 
   @Override
-  public boolean canEncode(Class<?> javaClass) {
+  public boolean accepts(Class<?> javaClass) {
     return javaClass == Boolean.class;
   }
 

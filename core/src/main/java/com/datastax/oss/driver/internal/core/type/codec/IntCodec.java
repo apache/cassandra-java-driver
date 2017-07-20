@@ -35,12 +35,12 @@ public class IntCodec implements PrimitiveIntCodec {
   }
 
   @Override
-  public boolean canEncode(Object value) {
+  public boolean accepts(Object value) {
     return value instanceof Integer;
   }
 
   @Override
-  public boolean canEncode(Class<?> javaClass) {
+  public boolean accepts(Class<?> javaClass) {
     return javaClass == Integer.class;
   }
 

@@ -28,12 +28,12 @@ public class TimeUuidCodec extends UuidCodec {
   }
 
   @Override
-  public boolean canEncode(Object value) {
+  public boolean accepts(Object value) {
     return value instanceof UUID && ((UUID) value).version() == 1;
   }
 
   @Override
-  public boolean canEncode(Class<?> javaClass) {
+  public boolean accepts(Class<?> javaClass) {
     return javaClass == UUID.class;
   }
 

@@ -44,12 +44,12 @@ public class TupleCodec implements TypeCodec<TupleValue> {
   }
 
   @Override
-  public boolean canEncode(Object value) {
+  public boolean accepts(Object value) {
     return (value instanceof TupleValue) && ((TupleValue) value).getType().equals(cqlType);
   }
 
   @Override
-  public boolean canEncode(Class<?> javaClass) {
+  public boolean accepts(Class<?> javaClass) {
     return TupleValue.class.isAssignableFrom(javaClass);
   }
 

@@ -35,12 +35,12 @@ public class UuidCodec implements TypeCodec<UUID> {
   }
 
   @Override
-  public boolean canEncode(Object value) {
+  public boolean accepts(Object value) {
     return value instanceof UUID;
   }
 
   @Override
-  public boolean canEncode(Class<?> javaClass) {
+  public boolean accepts(Class<?> javaClass) {
     return javaClass == UUID.class;
   }
 

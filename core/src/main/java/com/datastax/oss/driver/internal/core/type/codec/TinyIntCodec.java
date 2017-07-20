@@ -34,12 +34,12 @@ public class TinyIntCodec implements PrimitiveByteCodec {
   }
 
   @Override
-  public boolean canEncode(Object value) {
+  public boolean accepts(Object value) {
     return value instanceof Byte;
   }
 
   @Override
-  public boolean canEncode(Class<?> javaClass) {
+  public boolean accepts(Class<?> javaClass) {
     return javaClass == Byte.class;
   }
 

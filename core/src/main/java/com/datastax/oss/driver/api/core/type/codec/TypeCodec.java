@@ -30,7 +30,7 @@ public interface TypeCodec<T> {
   DataType getCqlType();
 
   /**
-   * Whether this codec is capable of encoding the given Java type.
+   * Whether this codec is capable of processing the given Java type.
    *
    * <p>The default implementation is <em>invariant</em> with respect to the passed argument
    * (through the usage of {@link GenericType#equals(Object)}) and <em>it's strongly recommended not
@@ -39,32 +39,32 @@ public interface TypeCodec<T> {
    *
    * <p>If the argument represents a Java primitive type, its wrapper type is considered instead.
    */
-  default boolean canEncode(GenericType<?> javaType) {
+  default boolean accepts(GenericType<?> javaType) {
     Preconditions.checkNotNull(javaType);
     return getJavaType().__getToken().equals(javaType.__getToken().wrap());
   }
 
   /**
-   * Whether this codec is capable of encoding the given Java type.
+   * Whether this codec is capable of processing the given Java type.
    *
    * <p>The default implementation wraps the class in a generic type and calls {@link
-   * #canEncode(GenericType)}, therefore it is invariant as well.
+   * #accepts(GenericType)}, therefore it is invariant as well.
    *
    * <p>Implementors are encouraged to override this method if there is a more efficient way. In
    * particular, if the codec targets a non-generic class, the check can be done with {@code
    * Class#isAssignableFrom}. Or even better, with {@code ==} if that class also happens to be
    * final.
    */
-  default boolean canEncode(Class<?> javaClass) {
+  default boolean accepts(Class<?> javaClass) {
     Preconditions.checkNotNull(javaClass);
-    return canEncode(GenericType.of(javaClass));
+    return accepts(GenericType.of(javaClass));
   }
 
   /**
    * Whether this codec is capable of encoding the given Java object.
    *
    * <p>The object's Java type is inferred from its runtime (raw) type, contrary to {@link
-   * #canEncode(GenericType)} which is capable of handling generic types.
+   * #accepts(GenericType)} which is capable of handling generic types.
    *
    * <p>The default implementation is <em>covariant</em> with respect to the passed argument and
    * <em>it's strongly recommended not to modify this behavior</em>. This means that, by default, a
@@ -81,13 +81,13 @@ public interface TypeCodec<T> {
    * <p>Finally, if the codec targets a non-generic Java class, it might be possible to implement
    * this method with a simple {@code instanceof} check.
    */
-  default boolean canEncode(Object value) {
+  default boolean accepts(Object value) {
     Preconditions.checkNotNull(value);
     return getJavaType().__getToken().isSupertypeOf(TypeToken.of(value.getClass()));
   }
 
-  /** Whether this codec is capable of decoding the given CQL type. */
-  default boolean canDecode(DataType cqlType) {
+  /** Whether this codec is capable of processing the given CQL type. */
+  default boolean accepts(DataType cqlType) {
     Preconditions.checkNotNull(cqlType);
     return this.getCqlType().equals(cqlType);
   }

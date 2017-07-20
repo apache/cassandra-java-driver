@@ -45,12 +45,12 @@ public class UdtCodec implements TypeCodec<UdtValue> {
   }
 
   @Override
-  public boolean canEncode(Object value) {
+  public boolean accepts(Object value) {
     return value instanceof UdtValue && ((UdtValue) value).getType().equals(cqlType);
   }
 
   @Override
-  public boolean canEncode(Class<?> javaClass) {
+  public boolean accepts(Class<?> javaClass) {
     return UdtValue.class.isAssignableFrom(javaClass);
   }
 

@@ -36,12 +36,12 @@ public class DecimalCodec implements TypeCodec<BigDecimal> {
   }
 
   @Override
-  public boolean canEncode(Object value) {
+  public boolean accepts(Object value) {
     return value instanceof BigDecimal;
   }
 
   @Override
-  public boolean canEncode(Class<?> javaClass) {
+  public boolean accepts(Class<?> javaClass) {
     return BigDecimal.class.isAssignableFrom(javaClass);
   }
 

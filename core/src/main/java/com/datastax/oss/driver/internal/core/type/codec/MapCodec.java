@@ -49,7 +49,7 @@ public class MapCodec<K, V> implements TypeCodec<Map<K, V>> {
   }
 
   @Override
-  public boolean canEncode(Object value) {
+  public boolean accepts(Object value) {
     if (value instanceof Map) {
       // runtime type ok, now check key and value types
       Map<?, ?> map = (Map<?, ?>) value;
@@ -57,7 +57,7 @@ public class MapCodec<K, V> implements TypeCodec<Map<K, V>> {
         return true;
       }
       Map.Entry<?, ?> entry = map.entrySet().iterator().next();
-      return keyCodec.canEncode(entry.getKey()) && valueCodec.canEncode(entry.getValue());
+      return keyCodec.accepts(entry.getKey()) && valueCodec.accepts(entry.getValue());
     }
     return false;
   }

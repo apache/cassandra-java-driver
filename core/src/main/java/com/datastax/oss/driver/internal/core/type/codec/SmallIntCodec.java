@@ -34,12 +34,12 @@ public class SmallIntCodec implements PrimitiveShortCodec {
   }
 
   @Override
-  public boolean canEncode(Object value) {
+  public boolean accepts(Object value) {
     return value instanceof Short;
   }
 
   @Override
-  public boolean canEncode(Class<?> javaClass) {
+  public boolean accepts(Class<?> javaClass) {
     return javaClass == Short.class;
   }
 

@@ -82,12 +82,12 @@ public abstract class CachingCodecRegistry implements CodecRegistry {
   public <T> TypeCodec<T> codecFor(DataType cqlType, GenericType<T> javaType) {
     LOG.trace("[{}] Looking up codec for {} <-> {}", logPrefix, cqlType, javaType);
     TypeCodec<?> primitiveCodec = PRIMITIVE_CODECS_BY_CODE.get(cqlType.getProtocolCode());
-    if (primitiveCodec != null && primitiveCodec.canEncode(javaType)) {
+    if (primitiveCodec != null && primitiveCodec.accepts(javaType)) {
       LOG.trace("[{}] Found matching primitive codec {}", logPrefix, primitiveCodec);
       return safeCast(primitiveCodec);
     }
     for (TypeCodec<?> userCodec : userCodecs) {
-      if (userCodec.canDecode(cqlType) && userCodec.canEncode(javaType)) {
+      if (userCodec.accepts(cqlType) && userCodec.accepts(javaType)) {
         LOG.trace("[{}] Found matching user codec {}", logPrefix, userCodec);
         return safeCast(userCodec);
       }
@@ -104,7 +104,7 @@ public abstract class CachingCodecRegistry implements CodecRegistry {
       return safeCast(primitiveCodec);
     }
     for (TypeCodec<?> userCodec : userCodecs) {
-      if (userCodec.canDecode(cqlType) && userCodec.canEncode(javaType)) {
+      if (userCodec.accepts(cqlType) && userCodec.accepts(javaType)) {
         LOG.trace("[{}] Found matching user codec {}", logPrefix, userCodec);
         return safeCast(userCodec);
       }
@@ -121,7 +121,7 @@ public abstract class CachingCodecRegistry implements CodecRegistry {
       return safeCast(primitiveCodec);
     }
     for (TypeCodec<?> userCodec : userCodecs) {
-      if (userCodec.canDecode(cqlType)) {
+      if (userCodec.accepts(cqlType)) {
         LOG.trace("[{}] Found matching user codec {}", logPrefix, userCodec);
         return safeCast(userCodec);
       }
@@ -135,13 +135,13 @@ public abstract class CachingCodecRegistry implements CodecRegistry {
     LOG.trace("[{}] Looking up codec for object {}", logPrefix, value);
 
     for (TypeCodec<?> primitiveCodec : PRIMITIVE_CODECS) {
-      if (primitiveCodec.canEncode(value)) {
+      if (primitiveCodec.accepts(value)) {
         LOG.trace("[{}] Found matching primitive codec {}", logPrefix, primitiveCodec);
         return safeCast(primitiveCodec);
       }
     }
     for (TypeCodec<?> userCodec : userCodecs) {
-      if (userCodec.canEncode(value)) {
+      if (userCodec.accepts(value)) {
         LOG.trace("[{}] Found matching user codec {}", logPrefix, userCodec);
         return safeCast(userCodec);
       }

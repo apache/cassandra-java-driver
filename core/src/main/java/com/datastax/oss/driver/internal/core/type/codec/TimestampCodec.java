@@ -72,12 +72,12 @@ public class TimestampCodec implements TypeCodec<Instant> {
   }
 
   @Override
-  public boolean canEncode(Object value) {
+  public boolean accepts(Object value) {
     return value instanceof Instant;
   }
 
   @Override
-  public boolean canEncode(Class<?> javaClass) {
+  public boolean accepts(Class<?> javaClass) {
     return javaClass == Instant.class;
   }
 
