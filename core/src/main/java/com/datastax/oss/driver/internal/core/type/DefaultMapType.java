@@ -83,7 +83,7 @@ public class DefaultMapType implements MapType {
 
   @Override
   public int hashCode() {
-    return Objects.hash(keyType, valueType);
+    return Objects.hash(DefaultMapType.class, keyType, valueType);
   }
 
   @Override

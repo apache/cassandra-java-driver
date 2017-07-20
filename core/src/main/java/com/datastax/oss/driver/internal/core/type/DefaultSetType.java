@@ -21,6 +21,7 @@ import com.datastax.oss.driver.api.core.type.SetType;
 import com.google.common.base.Preconditions;
 import java.io.IOException;
 import java.io.ObjectInputStream;
+import java.util.Objects;
 
 public class DefaultSetType implements SetType {
 
@@ -72,7 +73,7 @@ public class DefaultSetType implements SetType {
 
   @Override
   public int hashCode() {
-    return this.elementType.hashCode();
+    return Objects.hash(DefaultSetType.class, this.elementType);
   }
 
   @Override
