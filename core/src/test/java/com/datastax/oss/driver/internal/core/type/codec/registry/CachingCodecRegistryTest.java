@@ -230,6 +230,29 @@ public class CachingCodecRegistryTest {
   }
 
   @Test
+  public void should_create_list_codec_for_java_value_when_first_element_is_a_subtype()
+      throws UnknownHostException {
+    ListType cqlType = DataTypes.listOf(DataTypes.INET);
+    GenericType<List<InetAddress>> javaType = new GenericType<List<InetAddress>>() {};
+    InetAddress address = InetAddress.getByAddress(new byte[] {127, 0, 0, 1});
+    // Because the actual implementation is a subclass, there is no exact match with the codec's
+    // declared type
+    assertThat(address).isInstanceOf(Inet4Address.class);
+    List<InetAddress> value = ImmutableList.of(address);
+
+    TestCachingCodecRegistry registry = new TestCachingCodecRegistry(onCacheLookup);
+    InOrder inOrder = Mockito.inOrder(onCacheLookup);
+
+    TypeCodec<List<InetAddress>> codec = registry.codecFor(value);
+    assertThat(codec).isNotNull();
+    assertThat(codec.canDecode(cqlType)).isTrue();
+    assertThat(codec.canEncode(javaType)).isTrue();
+    assertThat(codec.canEncode(value)).isTrue();
+
+    inOrder.verify(onCacheLookup).accept(null, GenericType.listOf(Inet4Address.class));
+  }
+
+  @Test
   public void should_create_set_codec_for_cql_and_java_types() {
     SetType cqlType = DataTypes.setOf(DataTypes.setOf(DataTypes.INT));
     GenericType<Set<Set<Integer>>> javaType = new GenericType<Set<Set<Integer>>>() {};
@@ -284,6 +307,29 @@ public class CachingCodecRegistryTest {
     assertThat(codec.canEncode(value)).isTrue();
     inOrder.verify(onCacheLookup).accept(null, javaType);
     inOrder.verify(onCacheLookup).accept(null, GenericType.setOf(GenericType.INTEGER));
+  }
+
+  @Test
+  public void should_create_set_codec_for_java_value_when_first_element_is_a_subtype()
+      throws UnknownHostException {
+    SetType cqlType = DataTypes.setOf(DataTypes.INET);
+    GenericType<Set<InetAddress>> javaType = new GenericType<Set<InetAddress>>() {};
+    InetAddress address = InetAddress.getByAddress(new byte[] {127, 0, 0, 1});
+    // Because the actual implementation is a subclass, there is no exact match with the codec's
+    // declared type
+    assertThat(address).isInstanceOf(Inet4Address.class);
+    Set<InetAddress> value = ImmutableSet.of(address);
+
+    TestCachingCodecRegistry registry = new TestCachingCodecRegistry(onCacheLookup);
+    InOrder inOrder = Mockito.inOrder(onCacheLookup);
+
+    TypeCodec<Set<InetAddress>> codec = registry.codecFor(value);
+    assertThat(codec).isNotNull();
+    assertThat(codec.canDecode(cqlType)).isTrue();
+    assertThat(codec.canEncode(javaType)).isTrue();
+    assertThat(codec.canEncode(value)).isTrue();
+
+    inOrder.verify(onCacheLookup).accept(null, GenericType.setOf(Inet4Address.class));
   }
 
   @Test
@@ -348,6 +394,32 @@ public class CachingCodecRegistryTest {
     inOrder
         .verify(onCacheLookup)
         .accept(null, GenericType.mapOf(GenericType.INTEGER, GenericType.INTEGER));
+  }
+
+  @Test
+  public void should_create_map_codec_for_java_value_when_first_element_is_a_subtype()
+      throws UnknownHostException {
+    MapType cqlType = DataTypes.mapOf(DataTypes.INET, DataTypes.INET);
+    GenericType<Map<InetAddress, InetAddress>> javaType =
+        new GenericType<Map<InetAddress, InetAddress>>() {};
+    InetAddress address = InetAddress.getByAddress(new byte[] {127, 0, 0, 1});
+    // Because the actual implementation is a subclass, there is no exact match with the codec's
+    // declared type
+    assertThat(address).isInstanceOf(Inet4Address.class);
+    Map<InetAddress, InetAddress> value = ImmutableMap.of(address, address);
+
+    TestCachingCodecRegistry registry = new TestCachingCodecRegistry(onCacheLookup);
+    InOrder inOrder = Mockito.inOrder(onCacheLookup);
+
+    TypeCodec<Map<InetAddress, InetAddress>> codec = registry.codecFor(value);
+    assertThat(codec).isNotNull();
+    assertThat(codec.canDecode(cqlType)).isTrue();
+    assertThat(codec.canEncode(javaType)).isTrue();
+    assertThat(codec.canEncode(value)).isTrue();
+
+    inOrder
+        .verify(onCacheLookup)
+        .accept(null, GenericType.mapOf(Inet4Address.class, Inet4Address.class));
   }
 
   @Test

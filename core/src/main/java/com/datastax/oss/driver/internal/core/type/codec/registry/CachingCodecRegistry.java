@@ -158,17 +158,17 @@ public abstract class CachingCodecRegistry implements CodecRegistry {
     return safeCast(getCachedCodec(null, javaType));
   }
 
-  // Not exposed publicly, this is only used for the recursion from createCodec(GenericType)
-  private TypeCodec<?> codecFor(GenericType<?> javaType) {
+  // Not exposed publicly, this is only used for the recursion from createCovariantCodec(GenericType)
+  private TypeCodec<?> covariantCodecFor(GenericType<?> javaType) {
     LOG.trace("[{}] Looking up codec for Java type {}", logPrefix, javaType);
     for (TypeCodec<?> primitiveCodec : PRIMITIVE_CODECS) {
-      if (primitiveCodec.canEncode(javaType)) {
+      if (primitiveCodec.getJavaType().__getToken().isSupertypeOf(javaType.__getToken())) {
         LOG.trace("[{}] Found matching primitive codec {}", logPrefix, primitiveCodec);
         return safeCast(primitiveCodec);
       }
     }
     for (TypeCodec<?> userCodec : userCodecs) {
-      if (userCodec.canEncode(javaType)) {
+      if (userCodec.getJavaType().__getToken().isSupertypeOf(javaType.__getToken())) {
         LOG.trace("[{}] Found matching user codec {}", logPrefix, userCodec);
         return safeCast(userCodec);
       }
@@ -218,7 +218,7 @@ public abstract class CachingCodecRegistry implements CodecRegistry {
       assert cqlType != null;
       return createCodec(cqlType);
     } else if (cqlType == null) {
-      return createCodec(javaType);
+      return createCovariantCodec(javaType);
     }
     TypeToken<?> token = javaType.__getToken();
     if (cqlType instanceof ListType && List.class.isAssignableFrom(token.getRawType())) {
@@ -273,28 +273,29 @@ public abstract class CachingCodecRegistry implements CodecRegistry {
   }
 
   // Try to create a codec when we haven't found it in the cache.
-  // Variant where the CQL type is unknown.
-  private TypeCodec<?> createCodec(GenericType<?> javaType) {
+  // Variant where the CQL type is unknown. Note that this is only used for lookups by Java value,
+  // and therefore covariance is allowed.
+  private TypeCodec<?> createCovariantCodec(GenericType<?> javaType) {
     TypeToken<?> token = javaType.__getToken();
     if (List.class.isAssignableFrom(token.getRawType())
         && token.getType() instanceof ParameterizedType) {
       Type[] typeArguments = ((ParameterizedType) token.getType()).getActualTypeArguments();
       GenericType<?> elementType = GenericType.of(typeArguments[0]);
-      TypeCodec<?> elementCodec = codecFor(elementType);
+      TypeCodec<?> elementCodec = covariantCodecFor(elementType);
       return TypeCodecs.listOf(elementCodec);
     } else if (Set.class.isAssignableFrom(token.getRawType())
         && token.getType() instanceof ParameterizedType) {
       Type[] typeArguments = ((ParameterizedType) token.getType()).getActualTypeArguments();
       GenericType<?> elementType = GenericType.of(typeArguments[0]);
-      TypeCodec<?> elementCodec = codecFor(elementType);
+      TypeCodec<?> elementCodec = covariantCodecFor(elementType);
       return TypeCodecs.setOf(elementCodec);
     } else if (Map.class.isAssignableFrom(token.getRawType())
         && token.getType() instanceof ParameterizedType) {
       Type[] typeArguments = ((ParameterizedType) token.getType()).getActualTypeArguments();
       GenericType<?> keyType = GenericType.of(typeArguments[0]);
       GenericType<?> valueType = GenericType.of(typeArguments[1]);
-      TypeCodec<?> keyCodec = codecFor(keyType);
-      TypeCodec<?> valueCodec = codecFor(valueType);
+      TypeCodec<?> keyCodec = covariantCodecFor(keyType);
+      TypeCodec<?> valueCodec = covariantCodecFor(valueType);
       return TypeCodecs.mapOf(keyCodec, valueCodec);
     }
     throw new CodecNotFoundException(null, javaType);
