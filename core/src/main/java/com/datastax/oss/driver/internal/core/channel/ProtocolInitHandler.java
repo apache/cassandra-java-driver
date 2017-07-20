@@ -63,13 +63,16 @@ class ProtocolInitHandler extends ConnectInitHandler {
   private final DriverChannelOptions options;
   // might be null if this is the first channel to this cluster
   private final String expectedClusterName;
+  private final HeartbeatHandler heartbeatHandler;
   private String logPrefix;
+  private ChannelHandlerContext ctx;
 
   ProtocolInitHandler(
       InternalDriverContext internalDriverContext,
       ProtocolVersion protocolVersion,
       String expectedClusterName,
-      DriverChannelOptions options) {
+      DriverChannelOptions options,
+      HeartbeatHandler heartbeatHandler) {
 
     this.internalDriverContext = internalDriverContext;
 
@@ -80,6 +83,7 @@ class ProtocolInitHandler extends ConnectInitHandler {
     this.initialProtocolVersion = protocolVersion;
     this.expectedClusterName = expectedClusterName;
     this.options = options;
+    this.heartbeatHandler = heartbeatHandler;
     this.logPrefix = options.ownerLogPrefix + "|connecting...";
   }
 
@@ -93,7 +97,18 @@ class ProtocolInitHandler extends ConnectInitHandler {
   @Override
   protected void onRealConnect(ChannelHandlerContext ctx) {
     LOG.debug("[{}] Starting channel initialization", logPrefix);
+    this.ctx = ctx;
     new InitRequest(ctx).send();
+  }
+
+  @Override
+  protected boolean setConnectSuccess() {
+    boolean result = super.setConnectSuccess();
+    if (result) {
+      // add heartbeat to pipeline now that protocol is initialized.
+      ctx.pipeline().addBefore("inflight", "heartbeat", heartbeatHandler);
+    }
+    return result;
   }
 
   private enum Step {

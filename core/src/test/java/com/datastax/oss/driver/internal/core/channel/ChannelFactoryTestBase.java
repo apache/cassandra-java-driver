@@ -117,6 +117,8 @@ public abstract class ChannelFactoryTestBase {
         .thenReturn(Duration.ofMillis(100));
     Mockito.when(defaultConfigProfile.getInt(CoreDriverOption.CONNECTION_MAX_REQUESTS))
         .thenReturn(1);
+    Mockito.when(defaultConfigProfile.getDuration(CoreDriverOption.CONNECTION_HEARTBEAT_INTERVAL))
+        .thenReturn(Duration.ofMillis(30000));
 
     Mockito.when(context.protocolVersionRegistry()).thenReturn(protocolVersionRegistry);
     Mockito.when(context.nettyOptions()).thenReturn(nettyOptions);
@@ -243,8 +245,11 @@ public abstract class ChannelFactoryTestBase {
                   channel.newPromise(),
                   null,
                   "test");
+
+          HeartbeatHandler heartbeatHandler = new HeartbeatHandler(defaultConfigProfile);
           ProtocolInitHandler initHandler =
-              new ProtocolInitHandler(context, protocolVersion, clusterName, options);
+              new ProtocolInitHandler(
+                  context, protocolVersion, clusterName, options, heartbeatHandler);
           channel.pipeline().addLast("inflight", inFlightHandler).addLast("init", initHandler);
         }
       };

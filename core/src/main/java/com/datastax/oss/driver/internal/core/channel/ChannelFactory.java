@@ -31,7 +31,6 @@ import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.ChannelOption;
 import io.netty.channel.ChannelPipeline;
-import io.netty.channel.ChannelPromise;
 import java.net.SocketAddress;
 import java.util.List;
 import java.util.Optional;
@@ -189,8 +188,6 @@ public class ChannelFactory {
         int maxOrphanRequests =
             defaultConfigProfile.getInt(CoreDriverOption.CONNECTION_MAX_ORPHAN_REQUESTS);
 
-        ChannelPromise closeStartedFuture = channel.newPromise();
-
         InFlightHandler inFlightHandler =
             new InFlightHandler(
                 protocolVersion,
@@ -198,11 +195,13 @@ public class ChannelFactory {
                 maxOrphanRequests,
                 setKeyspaceTimeoutMillis,
                 availableIdsHolder,
-                closeStartedFuture,
+                channel.newPromise(),
                 options.eventCallback,
                 options.ownerLogPrefix);
+        HeartbeatHandler heartbeatHandler = new HeartbeatHandler(defaultConfigProfile);
         ProtocolInitHandler initHandler =
-            new ProtocolInitHandler(context, protocolVersion, clusterName, options);
+            new ProtocolInitHandler(
+                context, protocolVersion, clusterName, options, heartbeatHandler);
 
         ChannelPipeline pipeline = channel.pipeline();
         context
@@ -212,8 +211,8 @@ public class ChannelFactory {
         pipeline
             .addLast("encoder", new FrameEncoder(context.frameCodec()))
             .addLast("decoder", new FrameDecoder(context.frameCodec(), maxFrameLength))
+            // Note: HeartbeatHandler is inserted here once init completes
             .addLast("inflight", inFlightHandler)
-            .addLast("heartbeat", new HeartbeatHandler(defaultConfigProfile))
             .addLast("init", initHandler);
 
         context.nettyOptions().afterChannelInitialized(channel);

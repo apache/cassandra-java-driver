@@ -86,9 +86,6 @@ public class DriverChannel {
    * supports it).
    */
   public void cancel(ResponseCallback responseCallback) {
-    if (closing.get()) {
-      throw new IllegalStateException("Driver channel is closing");
-    }
     // To avoid creating an extra message, we adopt the convention that writing the callback
     // directly means cancellation
     writeCoalescer.writeAndFlush(channel, responseCallback);

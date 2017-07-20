@@ -105,10 +105,17 @@ class HeartbeatHandler extends IdleStateHandler {
         // all queries (including the heartbeat query itself)
         return;
       }
-      LOG.debug(ctx.channel().toString() + " Heartbeat query failed: " + message, cause);
-      // Notify InFlightHandler (fireExceptionCaught wouldn't work because the error has to go downstream)
-      ctx.write(new HeartbeatException(ctx.channel().remoteAddress(), message, cause));
+
       HeartbeatHandler.this.request = null;
+      if (message != null) {
+        LOG.debug("{} Heartbeat query failed: {}", ctx.channel(), message, cause);
+      } else {
+        LOG.debug("{} Heartbeat query failed", ctx.channel(), cause);
+      }
+
+      // Notify InFlightHandler.
+      ctx.fireExceptionCaught(
+          new HeartbeatException(ctx.channel().remoteAddress(), message, cause));
     }
   }
 }

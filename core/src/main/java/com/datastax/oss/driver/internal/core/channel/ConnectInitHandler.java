@@ -63,10 +63,12 @@ public abstract class ConnectInitHandler extends ChannelDuplexHandler {
 
   protected abstract void onRealConnect(ChannelHandlerContext ctx);
 
-  protected void setConnectSuccess() {
-    if (initPromise.trySuccess()) {
+  protected boolean setConnectSuccess() {
+    boolean result = initPromise.trySuccess();
+    if (result) {
       ctx.pipeline().remove(this);
     }
+    return result;
   }
 
   protected void setConnectFailure(Throwable cause) {

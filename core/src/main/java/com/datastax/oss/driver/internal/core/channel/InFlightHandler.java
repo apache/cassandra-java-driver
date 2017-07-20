@@ -16,6 +16,7 @@
 package com.datastax.oss.driver.internal.core.channel;
 
 import com.datastax.oss.driver.api.core.CqlIdentifier;
+import com.datastax.oss.driver.api.core.DriverException;
 import com.datastax.oss.driver.api.core.ProtocolVersion;
 import com.datastax.oss.driver.api.core.connection.BusyConnectionException;
 import com.datastax.oss.driver.api.core.connection.ClosedConnectionException;
@@ -32,6 +33,7 @@ import com.google.common.collect.BiMap;
 import com.google.common.collect.HashBiMap;
 import io.netty.channel.ChannelDuplexHandler;
 import io.netty.channel.ChannelFuture;
+import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelPromise;
 import io.netty.util.concurrent.Promise;
@@ -184,6 +186,11 @@ public class InFlightHandler extends ChannelDuplexHandler {
       LOG.debug("[{}] No pending queries, completing graceful shutdown now", logPrefix);
       ctx.channel().close();
     } else {
+      // remove heartbeat handler from pipeline if present.
+      ChannelHandler heartbeatHandler = ctx.pipeline().get("heartbeat");
+      if (heartbeatHandler != null) {
+        ctx.pipeline().remove(heartbeatHandler);
+      }
       LOG.debug("[{}] There are pending queries, delaying graceful shutdown", logPrefix);
       closingGracefully = true;
       closeStartedFuture.setSuccess();
@@ -253,7 +260,10 @@ public class InFlightHandler extends ChannelDuplexHandler {
       }
     } else {
       // Otherwise fail all pending requests
-      abortAllInFlight(new ClosedConnectionException("Unexpected error on channel", cause));
+      abortAllInFlight(
+          (cause instanceof HeartbeatException)
+              ? (HeartbeatException) cause
+              : new ClosedConnectionException("Unexpected error on channel", cause));
       ctx.close();
     }
   }
@@ -304,7 +314,7 @@ public class InFlightHandler extends ChannelDuplexHandler {
     return responseCallback;
   }
 
-  private void abortAllInFlight(ClosedConnectionException cause) {
+  private void abortAllInFlight(DriverException cause) {
     abortAllInFlight(cause, null);
   }
 
@@ -312,7 +322,7 @@ public class InFlightHandler extends ChannelDuplexHandler {
    * @param ignore the ResponseCallback that called this method, if applicable (avoids a recursive
    *     loop)
    */
-  private void abortAllInFlight(ClosedConnectionException cause, ResponseCallback ignore) {
+  private void abortAllInFlight(DriverException cause, ResponseCallback ignore) {
     for (ResponseCallback responseCallback : inFlight.values()) {
       if (responseCallback != ignore) {
         responseCallback.onFailure(cause);

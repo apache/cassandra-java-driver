@@ -4,6 +4,7 @@
 
 ### 4.0.0-alpha1 (in progress)
 
+- [bug] JAVA-1562: Fix various issues around heart beats
 - [improvement] JAVA-1546: Make all statement implementations immutable
 - [bug] JAVA-1554: Include VIEW and CDC in WriteType
 - [improvement] JAVA-1498: Add a cache above Typesafe config
