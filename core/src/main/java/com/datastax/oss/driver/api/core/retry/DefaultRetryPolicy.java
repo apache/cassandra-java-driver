@@ -17,7 +17,12 @@ package com.datastax.oss.driver.api.core.retry;
 
 import com.datastax.oss.driver.api.core.ConsistencyLevel;
 import com.datastax.oss.driver.api.core.config.DriverOption;
+import com.datastax.oss.driver.api.core.connection.ClosedConnectionException;
+import com.datastax.oss.driver.api.core.connection.HeartbeatException;
 import com.datastax.oss.driver.api.core.context.DriverContext;
+import com.datastax.oss.driver.api.core.servererrors.CoordinatorException;
+import com.datastax.oss.driver.api.core.servererrors.ReadFailureException;
+import com.datastax.oss.driver.api.core.servererrors.WriteFailureException;
 import com.datastax.oss.driver.api.core.session.Request;
 
 /**
@@ -106,21 +111,28 @@ public class DefaultRetryPolicy implements RetryPolicy {
   /**
    * {@inheritDoc}
    *
-   * <p>This implementation always retries on the next node.
+   * <p>This implementation retries on the next node if the connection was closed, and rethrows
+   * (assuming a driver bug) in all other cases.
    */
   @Override
   public RetryDecision onRequestAborted(Request request, Throwable error, int retryCount) {
-    return RetryDecision.RETRY_NEXT;
+    return (error instanceof ClosedConnectionException || error instanceof HeartbeatException)
+        ? RetryDecision.RETRY_NEXT
+        : RetryDecision.RETHROW;
   }
 
   /**
    * {@inheritDoc}
    *
-   * <p>This implementation always retries on the next node.
+   * <p>This implementation rethrows read and write failures, and retries other errors on the next
+   * node.
    */
   @Override
-  public RetryDecision onErrorResponse(Request request, Throwable error, int retryCount) {
-    return RetryDecision.RETRY_NEXT;
+  public RetryDecision onErrorResponse(
+      Request request, CoordinatorException error, int retryCount) {
+    return (error instanceof ReadFailureException || error instanceof WriteFailureException)
+        ? RetryDecision.RETHROW
+        : RetryDecision.RETRY_NEXT;
   }
 
   @Override

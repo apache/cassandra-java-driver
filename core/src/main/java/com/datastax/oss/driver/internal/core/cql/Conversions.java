@@ -17,7 +17,6 @@ package com.datastax.oss.driver.internal.core.cql;
 
 import com.datastax.oss.driver.api.core.ConsistencyLevel;
 import com.datastax.oss.driver.api.core.ProtocolVersion;
-import com.datastax.oss.driver.api.core.auth.AuthenticationException;
 import com.datastax.oss.driver.api.core.config.CoreDriverOption;
 import com.datastax.oss.driver.api.core.config.DriverConfigProfile;
 import com.datastax.oss.driver.api.core.cql.AsyncResultSet;
@@ -35,6 +34,7 @@ import com.datastax.oss.driver.api.core.metadata.Node;
 import com.datastax.oss.driver.api.core.retry.WriteType;
 import com.datastax.oss.driver.api.core.servererrors.AlreadyExistsException;
 import com.datastax.oss.driver.api.core.servererrors.BootstrappingException;
+import com.datastax.oss.driver.api.core.servererrors.CoordinatorException;
 import com.datastax.oss.driver.api.core.servererrors.FunctionFailureException;
 import com.datastax.oss.driver.api.core.servererrors.InvalidConfigurationInQueryException;
 import com.datastax.oss.driver.api.core.servererrors.InvalidQueryException;
@@ -244,7 +244,7 @@ class Conversions {
     return DefaultColumnDefinitions.valueOf(definitions.build());
   }
 
-  static Throwable toThrowable(Node node, Error errorMessage) {
+  static CoordinatorException toThrowable(Node node, Error errorMessage) {
     switch (errorMessage.code) {
       case ProtocolConstants.ErrorCode.UNPREPARED:
         throw new AssertionError(
@@ -254,9 +254,10 @@ class Conversions {
       case ProtocolConstants.ErrorCode.PROTOCOL_ERROR:
         return new ProtocolError(node, errorMessage.message);
       case ProtocolConstants.ErrorCode.AUTH_ERROR:
-        // This method is used for query execution, authentication errors are unlikely to happen at
-        // this stage (more during connection init), but there's no harm in handling them anyway
-        return new AuthenticationException(node.getConnectAddress(), errorMessage.message);
+        // This method is used for query execution, authentication errors should only happen during
+        // connection init
+        return new ProtocolError(
+            node, "Unexpected authentication error (" + errorMessage.message + ")");
       case ProtocolConstants.ErrorCode.UNAVAILABLE:
         Unavailable unavailable = (Unavailable) errorMessage;
         return new UnavailableException(
