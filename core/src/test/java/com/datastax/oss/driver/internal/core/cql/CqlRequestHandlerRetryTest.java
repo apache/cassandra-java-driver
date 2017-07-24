@@ -237,14 +237,27 @@ public class CqlRequestHandlerRetryTest extends CqlRequestHandlerTestBase {
 
   @Test
   @UseDataProvider("failureAndNotIdempotent")
-  public void should_rethrow_error_if_not_idempotent(
+  public void should_rethrow_error_if_not_idempotent_and_error_unsafe_or_policy_rethrows(
       FailureScenario failureScenario, boolean defaultIdempotence, SimpleStatement statement) {
+
+    // For two of the possible exceptions, the retry policy is called even if the statement is not
+    // idempotent
+    boolean shouldCallRetryPolicy =
+        (failureScenario.expectedExceptionClass.equals(UnavailableException.class)
+            || failureScenario.expectedExceptionClass.equals(ReadTimeoutException.class));
+
     RequestHandlerTestHarness.Builder harnessBuilder =
         RequestHandlerTestHarness.builder().withDefaultIdempotence(defaultIdempotence);
     failureScenario.mockRequestError(harnessBuilder, node1);
     harnessBuilder.withResponse(node2, defaultFrameOf(singleRow()));
 
     try (RequestHandlerTestHarness harness = harnessBuilder.build()) {
+
+      if (shouldCallRetryPolicy) {
+        failureScenario.mockRetryPolicyDecision(
+            harness.getContext().retryPolicy(), RetryDecision.RETHROW);
+      }
+
       CompletionStage<AsyncResultSet> resultSetFuture =
           new CqlRequestHandler(statement, harness.getSession(), harness.getContext(), "test")
               .asyncResult();
@@ -254,7 +267,9 @@ public class CqlRequestHandlerRetryTest extends CqlRequestHandlerTestBase {
               error -> {
                 assertThat(error).isInstanceOf(failureScenario.expectedExceptionClass);
                 // When non idempotent, the policy is bypassed completely:
-                Mockito.verifyNoMoreInteractions(harness.getContext().retryPolicy());
+                if (!shouldCallRetryPolicy) {
+                  Mockito.verifyNoMoreInteractions(harness.getContext().retryPolicy());
+                }
               });
     }
   }

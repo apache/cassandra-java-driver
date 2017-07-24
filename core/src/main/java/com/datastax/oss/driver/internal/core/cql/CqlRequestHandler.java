@@ -423,15 +423,13 @@ public class CqlRequestHandler
         if (error instanceof ReadTimeoutException) {
           ReadTimeoutException readTimeout = (ReadTimeoutException) error;
           decision =
-              isIdempotent
-                  ? retryPolicy.onReadTimeout(
-                      request,
-                      readTimeout.getConsistencyLevel(),
-                      readTimeout.getBlockFor(),
-                      readTimeout.getReceived(),
-                      readTimeout.wasDataPresent(),
-                      retryCount)
-                  : RetryDecision.RETHROW;
+              retryPolicy.onReadTimeout(
+                  request,
+                  readTimeout.getConsistencyLevel(),
+                  readTimeout.getBlockFor(),
+                  readTimeout.getReceived(),
+                  readTimeout.wasDataPresent(),
+                  retryCount);
         } else if (error instanceof WriteTimeoutException) {
           WriteTimeoutException writeTimeout = (WriteTimeoutException) error;
           decision =
@@ -447,14 +445,12 @@ public class CqlRequestHandler
         } else if (error instanceof UnavailableException) {
           UnavailableException unavailable = (UnavailableException) error;
           decision =
-              isIdempotent
-                  ? retryPolicy.onUnavailable(
-                      request,
-                      unavailable.getConsistencyLevel(),
-                      unavailable.getRequired(),
-                      unavailable.getAlive(),
-                      retryCount)
-                  : RetryDecision.RETHROW;
+              retryPolicy.onUnavailable(
+                  request,
+                  unavailable.getConsistencyLevel(),
+                  unavailable.getRequired(),
+                  unavailable.getAlive(),
+                  retryCount);
         } else {
           decision =
               isIdempotent
