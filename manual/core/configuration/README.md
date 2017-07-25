@@ -452,4 +452,4 @@ config.getDefaultProfile().getInt(MyCustomOption.AWESOMENESS_FACTOR);
 [config standard behavior]: https://github.com/typesafehub/config#standard-behavior
 [reference.conf]: https://github.com/datastax/java-driver/blob/4.x/core/src/main/resources/reference.conf
 [HOCON]: https://github.com/typesafehub/config/blob/master/HOCON.md
-[API conventions]: ../api_conventions/
+[API conventions]: ../../api_conventions

@@ -28,7 +28,7 @@ choice for most deployments, since it allows configuration changes without recom
 application. This is fully customizable, including loading from different sources, or completely
 overriding the default implementation.
 
-For more details, refer to the [manual](../manual/configuration).
+For more details, refer to the [manual](../manual/core/configuration).
 
 [TypeSafe Config]: https://github.com/typesafehub/config
 
