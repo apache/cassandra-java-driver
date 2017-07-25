@@ -20,6 +20,13 @@ import com.google.common.collect.ImmutableMap;
 import java.nio.ByteBuffer;
 import java.util.Map;
 
+/**
+ * Handle options common to all statement builders.
+ *
+ * @see SimpleStatement#builder(String)
+ * @see BatchStatement#builder(BatchType)
+ * @see PreparedStatement#boundStatementBuilder()
+ */
 public abstract class StatementBuilder<T extends StatementBuilder<T, S>, S extends Statement<S>> {
 
   @SuppressWarnings("unchecked")
