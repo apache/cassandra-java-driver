@@ -69,7 +69,7 @@ of that library:
 
 The driver ships with a [reference.conf] that defines sensible defaults for all the options. That
 file is heavily documented, so refer to it for details about each option. It is included in the core
-driver JAR, so it is in your application's classpath. If you to customize something, add an
+driver JAR, so it is in your application's classpath. If you need to customize something, add an
 `application.conf` in your source tree and also place it in the classpath; since it inherits from
 `reference.conf`, you only need to redeclare what you override:
 
