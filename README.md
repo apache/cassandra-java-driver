@@ -115,6 +115,7 @@ Other features are available only when using Apache Cassandra 2.0 or higher (e.g
 Trying to use these with a cluster running Cassandra 1.2 will result in 
 an [UnsupportedFeatureException](https://github.com/datastax/java-driver/blob/3.x/driver-core/src/main/java/com/datastax/driver/core/exceptions/UnsupportedFeatureException.java) being thrown.
 
+__Note__: DataStax products do not support big-endian systems.
 
 ## Upgrading from previous versions
 
