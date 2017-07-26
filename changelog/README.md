@@ -4,6 +4,7 @@
 
 ### 4.0.0-alpha1 (in progress)
 
+- [improvement] JAVA-1577: Set default consistency level to LOCAL_ONE
 - [bug] JAVA-1548: Retry idempotent statements on READ_TIMEOUT and UNAVAILABLE
 - [bug] JAVA-1562: Fix various issues around heart beats
 - [improvement] JAVA-1546: Make all statement implementations immutable
