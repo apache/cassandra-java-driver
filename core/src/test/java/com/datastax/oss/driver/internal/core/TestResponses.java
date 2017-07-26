@@ -17,6 +17,7 @@ package com.datastax.oss.driver.internal.core;
 
 import com.datastax.oss.protocol.internal.ProtocolConstants;
 import com.datastax.oss.protocol.internal.response.result.ColumnSpec;
+import com.datastax.oss.protocol.internal.response.result.DefaultRows;
 import com.datastax.oss.protocol.internal.response.result.RawType;
 import com.datastax.oss.protocol.internal.response.result.Rows;
 import com.datastax.oss.protocol.internal.response.result.RowsMetadata;
@@ -40,6 +41,6 @@ public class TestResponses {
     RowsMetadata metadata = new RowsMetadata(ImmutableList.of(colSpec), null, null);
     Queue<List<ByteBuffer>> data = Lists.newLinkedList();
     data.add(Lists.newArrayList(ByteBuffer.wrap(actualClusterName.getBytes(Charsets.UTF_8))));
-    return new Rows(metadata, data);
+    return new DefaultRows(metadata, data);
   }
 }

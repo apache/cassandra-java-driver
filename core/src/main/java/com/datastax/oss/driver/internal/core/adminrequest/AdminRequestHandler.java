@@ -139,7 +139,7 @@ public class AdminRequestHandler implements ResponseCallback {
     LOG.debug("[{}] Got response {}", logPrefix, responseFrame.message);
     if (message instanceof Rows) {
       Rows rows = (Rows) message;
-      ByteBuffer pagingState = rows.metadata.pagingState;
+      ByteBuffer pagingState = rows.getMetadata().pagingState;
       AdminRequestHandler nextHandler = (pagingState == null) ? null : this.copy(pagingState);
       result.complete(new AdminResult(rows, nextHandler, channel.protocolVersion()));
     } else if (message instanceof Prepared) {

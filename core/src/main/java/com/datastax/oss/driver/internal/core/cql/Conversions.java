@@ -206,9 +206,9 @@ class Conversions {
       ColumnDefinitions columnDefinitions =
           (statement instanceof BoundStatement)
               ? ((BoundStatement) statement).getPreparedStatement().getResultSetDefinitions()
-              : toColumnDefinitions(rows.metadata, context);
+              : toColumnDefinitions(rows.getMetadata(), context);
       return new DefaultAsyncResultSet(
-          columnDefinitions, executionInfo, rows.data, session, context);
+          columnDefinitions, executionInfo, rows.getData(), session, context);
     } else if (result instanceof Prepared) {
       // This should never happen
       throw new IllegalArgumentException("Unexpected PREPARED response to a CQL query");

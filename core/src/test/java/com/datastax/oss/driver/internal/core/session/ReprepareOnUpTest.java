@@ -27,6 +27,7 @@ import com.datastax.oss.protocol.internal.ProtocolConstants;
 import com.datastax.oss.protocol.internal.request.Prepare;
 import com.datastax.oss.protocol.internal.request.Query;
 import com.datastax.oss.protocol.internal.response.result.ColumnSpec;
+import com.datastax.oss.protocol.internal.response.result.DefaultRows;
 import com.datastax.oss.protocol.internal.response.result.RawType;
 import com.datastax.oss.protocol.internal.response.result.Rows;
 import com.datastax.oss.protocol.internal.response.result.RowsMetadata;
@@ -334,6 +335,6 @@ public class ReprepareOnUpTest {
     for (char value : values) {
       data.add(ImmutableList.of(Bytes.fromHexString("0x0" + value)));
     }
-    return new Rows(rowsMetadata, data);
+    return new DefaultRows(rowsMetadata, data);
   }
 }

@@ -23,6 +23,7 @@ import com.datastax.oss.protocol.internal.Frame;
 import com.datastax.oss.protocol.internal.Message;
 import com.datastax.oss.protocol.internal.ProtocolConstants;
 import com.datastax.oss.protocol.internal.response.result.ColumnSpec;
+import com.datastax.oss.protocol.internal.response.result.DefaultRows;
 import com.datastax.oss.protocol.internal.response.result.RawType;
 import com.datastax.oss.protocol.internal.response.result.Rows;
 import com.datastax.oss.protocol.internal.response.result.RowsMetadata;
@@ -84,7 +85,7 @@ public abstract class CqlRequestHandlerTestBase {
             new int[] {});
     Queue<List<ByteBuffer>> data = new LinkedList<>();
     data.add(ImmutableList.of(Bytes.fromHexString("0x68656C6C6F2C20776F726C64")));
-    return new Rows(metadata, data);
+    return new DefaultRows(metadata, data);
   }
 
   /**

@@ -228,7 +228,7 @@ class ProtocolInitHandler extends ConnectInitHandler {
                   String.format("server replied '%s'", ((Error) response).message)));
         } else if (step == Step.GET_CLUSTER_NAME && response instanceof Rows) {
           Rows rows = (Rows) response;
-          List<ByteBuffer> row = rows.data.poll();
+          List<ByteBuffer> row = rows.getData().poll();
           String actualClusterName = getString(row, 0);
           if (expectedClusterName != null && !expectedClusterName.equals(actualClusterName)) {
             fail(

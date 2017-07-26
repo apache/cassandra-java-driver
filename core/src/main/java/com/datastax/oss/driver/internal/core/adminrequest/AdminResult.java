@@ -42,10 +42,10 @@ public class AdminResult implements Iterable<AdminResult.Row> {
   private final ProtocolVersion protocolVersion;
 
   public AdminResult(Rows rows, AdminRequestHandler nextHandler, ProtocolVersion protocolVersion) {
-    this.data = rows.data;
+    this.data = rows.getData();
 
     ImmutableMap.Builder<String, ColumnSpec> columnSpecsBuilder = ImmutableMap.builder();
-    for (ColumnSpec spec : rows.metadata.columnSpecs) {
+    for (ColumnSpec spec : rows.getMetadata().columnSpecs) {
       columnSpecsBuilder.put(spec.name, spec);
     }
     // Admin queries are simple selects only, so there are no duplicate names (if that ever

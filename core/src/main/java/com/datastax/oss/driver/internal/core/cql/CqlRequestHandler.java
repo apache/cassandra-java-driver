@@ -282,7 +282,7 @@ public class CqlRequestHandler
   private ExecutionInfo buildExecutionInfo(
       NodeResponseCallback callback, Result resultMessage, Frame responseFrame) {
     ByteBuffer pagingState =
-        (resultMessage instanceof Rows) ? ((Rows) resultMessage).metadata.pagingState : null;
+        (resultMessage instanceof Rows) ? ((Rows) resultMessage).getMetadata().pagingState : null;
     return new DefaultExecutionInfo(
         (Statement) request,
         callback.node,
