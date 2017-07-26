@@ -182,7 +182,7 @@ public class ChannelFactory {
                 .getDuration(CoreDriverOption.CONNECTION_SET_KEYSPACE_TIMEOUT)
                 .toMillis();
         int maxFrameLength =
-            (int) defaultConfigProfile.getBytes(CoreDriverOption.CONNECTION_MAX_FRAME_LENGTH);
+            (int) defaultConfigProfile.getBytes(CoreDriverOption.PROTOCOL_MAX_FRAME_LENGTH);
         int maxRequestsPerConnection =
             defaultConfigProfile.getInt(CoreDriverOption.CONNECTION_MAX_REQUESTS);
         int maxOrphanRequests =

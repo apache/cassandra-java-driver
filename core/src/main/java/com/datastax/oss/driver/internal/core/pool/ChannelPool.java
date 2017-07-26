@@ -509,8 +509,8 @@ public class ChannelPool implements AsyncAutoCloseable {
           .getDefaultProfile()
           .getInt(
               (distance == NodeDistance.LOCAL)
-                  ? CoreDriverOption.POOLING_LOCAL_CONNECTIONS
-                  : CoreDriverOption.POOLING_REMOTE_CONNECTIONS);
+                  ? CoreDriverOption.CONNECTION_POOL_LOCAL_SIZE
+                  : CoreDriverOption.CONNECTION_POOL_REMOTE_SIZE);
     }
   }
 }

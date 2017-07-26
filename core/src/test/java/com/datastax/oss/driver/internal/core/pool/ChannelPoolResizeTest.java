@@ -36,8 +36,8 @@ public class ChannelPoolResizeTest extends ChannelPoolTestBase {
 
   @Test
   public void should_shrink_outside_of_reconnection() throws Exception {
-    Mockito.when(defaultProfile.getInt(CoreDriverOption.POOLING_REMOTE_CONNECTIONS)).thenReturn(4);
-    Mockito.when(defaultProfile.getInt(CoreDriverOption.POOLING_LOCAL_CONNECTIONS)).thenReturn(2);
+    Mockito.when(defaultProfile.getInt(CoreDriverOption.CONNECTION_POOL_REMOTE_SIZE)).thenReturn(4);
+    Mockito.when(defaultProfile.getInt(CoreDriverOption.CONNECTION_POOL_LOCAL_SIZE)).thenReturn(2);
 
     DriverChannel channel1 = newMockDriverChannel(1);
     DriverChannel channel2 = newMockDriverChannel(2);
@@ -77,8 +77,8 @@ public class ChannelPoolResizeTest extends ChannelPoolTestBase {
   public void should_shrink_during_reconnection() throws Exception {
     Mockito.when(reconnectionSchedule.nextDelay()).thenReturn(Duration.ofNanos(1));
 
-    Mockito.when(defaultProfile.getInt(CoreDriverOption.POOLING_REMOTE_CONNECTIONS)).thenReturn(4);
-    Mockito.when(defaultProfile.getInt(CoreDriverOption.POOLING_LOCAL_CONNECTIONS)).thenReturn(2);
+    Mockito.when(defaultProfile.getInt(CoreDriverOption.CONNECTION_POOL_REMOTE_SIZE)).thenReturn(4);
+    Mockito.when(defaultProfile.getInt(CoreDriverOption.CONNECTION_POOL_LOCAL_SIZE)).thenReturn(2);
 
     DriverChannel channel1 = newMockDriverChannel(1);
     DriverChannel channel2 = newMockDriverChannel(2);
@@ -138,8 +138,8 @@ public class ChannelPoolResizeTest extends ChannelPoolTestBase {
   public void should_grow_outside_of_reconnection() throws Exception {
     Mockito.when(reconnectionSchedule.nextDelay()).thenReturn(Duration.ofNanos(1));
 
-    Mockito.when(defaultProfile.getInt(CoreDriverOption.POOLING_LOCAL_CONNECTIONS)).thenReturn(2);
-    Mockito.when(defaultProfile.getInt(CoreDriverOption.POOLING_REMOTE_CONNECTIONS)).thenReturn(4);
+    Mockito.when(defaultProfile.getInt(CoreDriverOption.CONNECTION_POOL_LOCAL_SIZE)).thenReturn(2);
+    Mockito.when(defaultProfile.getInt(CoreDriverOption.CONNECTION_POOL_REMOTE_SIZE)).thenReturn(4);
 
     DriverChannel channel1 = newMockDriverChannel(1);
     DriverChannel channel2 = newMockDriverChannel(2);
@@ -188,8 +188,8 @@ public class ChannelPoolResizeTest extends ChannelPoolTestBase {
   public void should_grow_during_reconnection() throws Exception {
     Mockito.when(reconnectionSchedule.nextDelay()).thenReturn(Duration.ofNanos(1));
 
-    Mockito.when(defaultProfile.getInt(CoreDriverOption.POOLING_LOCAL_CONNECTIONS)).thenReturn(2);
-    Mockito.when(defaultProfile.getInt(CoreDriverOption.POOLING_REMOTE_CONNECTIONS)).thenReturn(4);
+    Mockito.when(defaultProfile.getInt(CoreDriverOption.CONNECTION_POOL_LOCAL_SIZE)).thenReturn(2);
+    Mockito.when(defaultProfile.getInt(CoreDriverOption.CONNECTION_POOL_REMOTE_SIZE)).thenReturn(4);
 
     DriverChannel channel1 = newMockDriverChannel(1);
     DriverChannel channel2 = newMockDriverChannel(2);
@@ -261,7 +261,7 @@ public class ChannelPoolResizeTest extends ChannelPoolTestBase {
   public void should_resize_outside_of_reconnection_if_config_changes() throws Exception {
     Mockito.when(reconnectionSchedule.nextDelay()).thenReturn(Duration.ofNanos(1));
 
-    Mockito.when(defaultProfile.getInt(CoreDriverOption.POOLING_LOCAL_CONNECTIONS)).thenReturn(2);
+    Mockito.when(defaultProfile.getInt(CoreDriverOption.CONNECTION_POOL_LOCAL_SIZE)).thenReturn(2);
 
     DriverChannel channel1 = newMockDriverChannel(1);
     DriverChannel channel2 = newMockDriverChannel(2);
@@ -290,7 +290,7 @@ public class ChannelPoolResizeTest extends ChannelPoolTestBase {
     assertThat(pool.channels).containsOnly(channel1, channel2);
 
     // Simulate a configuration change
-    Mockito.when(defaultProfile.getInt(CoreDriverOption.POOLING_LOCAL_CONNECTIONS)).thenReturn(4);
+    Mockito.when(defaultProfile.getInt(CoreDriverOption.CONNECTION_POOL_LOCAL_SIZE)).thenReturn(4);
     eventBus.fire(ConfigChangeEvent.INSTANCE);
     waitForPendingAdminTasks();
 
@@ -312,7 +312,7 @@ public class ChannelPoolResizeTest extends ChannelPoolTestBase {
   public void should_resize_during_reconnection_if_config_changes() throws Exception {
     Mockito.when(reconnectionSchedule.nextDelay()).thenReturn(Duration.ofNanos(1));
 
-    Mockito.when(defaultProfile.getInt(CoreDriverOption.POOLING_LOCAL_CONNECTIONS)).thenReturn(2);
+    Mockito.when(defaultProfile.getInt(CoreDriverOption.CONNECTION_POOL_LOCAL_SIZE)).thenReturn(2);
 
     DriverChannel channel1 = newMockDriverChannel(1);
     DriverChannel channel2 = newMockDriverChannel(2);
@@ -350,7 +350,7 @@ public class ChannelPoolResizeTest extends ChannelPoolTestBase {
     inOrder.verify(eventBus).fire(ChannelEvent.reconnectionStarted(NODE));
 
     // Simulate a configuration change
-    Mockito.when(defaultProfile.getInt(CoreDriverOption.POOLING_LOCAL_CONNECTIONS)).thenReturn(4);
+    Mockito.when(defaultProfile.getInt(CoreDriverOption.CONNECTION_POOL_LOCAL_SIZE)).thenReturn(4);
     eventBus.fire(ConfigChangeEvent.INSTANCE);
     waitForPendingAdminTasks();
 
@@ -385,7 +385,7 @@ public class ChannelPoolResizeTest extends ChannelPoolTestBase {
   public void should_ignore_config_change_if_not_relevant() throws Exception {
     Mockito.when(reconnectionSchedule.nextDelay()).thenReturn(Duration.ofNanos(1));
 
-    Mockito.when(defaultProfile.getInt(CoreDriverOption.POOLING_LOCAL_CONNECTIONS)).thenReturn(2);
+    Mockito.when(defaultProfile.getInt(CoreDriverOption.CONNECTION_POOL_LOCAL_SIZE)).thenReturn(2);
 
     DriverChannel channel1 = newMockDriverChannel(1);
     DriverChannel channel2 = newMockDriverChannel(2);
@@ -408,7 +408,7 @@ public class ChannelPoolResizeTest extends ChannelPoolTestBase {
     assertThat(pool.channels).containsOnly(channel1, channel2);
 
     // Config changes, but not for our distance
-    Mockito.when(defaultProfile.getInt(CoreDriverOption.POOLING_REMOTE_CONNECTIONS)).thenReturn(1);
+    Mockito.when(defaultProfile.getInt(CoreDriverOption.CONNECTION_POOL_REMOTE_SIZE)).thenReturn(1);
     eventBus.fire(ConfigChangeEvent.INSTANCE);
     waitForPendingAdminTasks();
 

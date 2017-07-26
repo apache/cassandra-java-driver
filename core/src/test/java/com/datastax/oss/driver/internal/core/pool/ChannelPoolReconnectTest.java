@@ -37,7 +37,7 @@ public class ChannelPoolReconnectTest extends ChannelPoolTestBase {
   public void should_reconnect_when_channel_closes() throws Exception {
     Mockito.when(reconnectionSchedule.nextDelay()).thenReturn(Duration.ofNanos(1));
 
-    Mockito.when(defaultProfile.getInt(CoreDriverOption.POOLING_LOCAL_CONNECTIONS)).thenReturn(2);
+    Mockito.when(defaultProfile.getInt(CoreDriverOption.CONNECTION_POOL_LOCAL_SIZE)).thenReturn(2);
 
     DriverChannel channel1 = newMockDriverChannel(1);
     DriverChannel channel2 = newMockDriverChannel(2);
@@ -88,7 +88,7 @@ public class ChannelPoolReconnectTest extends ChannelPoolTestBase {
   public void should_reconnect_when_channel_starts_graceful_shutdown() throws Exception {
     Mockito.when(reconnectionSchedule.nextDelay()).thenReturn(Duration.ofNanos(1));
 
-    Mockito.when(defaultProfile.getInt(CoreDriverOption.POOLING_LOCAL_CONNECTIONS)).thenReturn(2);
+    Mockito.when(defaultProfile.getInt(CoreDriverOption.CONNECTION_POOL_LOCAL_SIZE)).thenReturn(2);
 
     DriverChannel channel1 = newMockDriverChannel(1);
     DriverChannel channel2 = newMockDriverChannel(2);

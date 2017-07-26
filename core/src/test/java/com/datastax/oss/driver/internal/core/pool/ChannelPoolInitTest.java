@@ -38,7 +38,7 @@ public class ChannelPoolInitTest extends ChannelPoolTestBase {
 
   @Test
   public void should_initialize_when_all_channels_succeed() throws Exception {
-    Mockito.when(defaultProfile.getInt(CoreDriverOption.POOLING_LOCAL_CONNECTIONS)).thenReturn(3);
+    Mockito.when(defaultProfile.getInt(CoreDriverOption.CONNECTION_POOL_LOCAL_SIZE)).thenReturn(3);
 
     DriverChannel channel1 = newMockDriverChannel(1);
     DriverChannel channel2 = newMockDriverChannel(2);
@@ -65,7 +65,7 @@ public class ChannelPoolInitTest extends ChannelPoolTestBase {
 
   @Test
   public void should_initialize_when_all_channels_fail() throws Exception {
-    Mockito.when(defaultProfile.getInt(CoreDriverOption.POOLING_LOCAL_CONNECTIONS)).thenReturn(3);
+    Mockito.when(defaultProfile.getInt(CoreDriverOption.CONNECTION_POOL_LOCAL_SIZE)).thenReturn(3);
 
     MockChannelFactoryHelper factoryHelper =
         MockChannelFactoryHelper.builder(channelFactory)
@@ -88,7 +88,7 @@ public class ChannelPoolInitTest extends ChannelPoolTestBase {
 
   @Test
   public void should_indicate_when_keyspace_failed_on_all_channels() {
-    Mockito.when(defaultProfile.getInt(CoreDriverOption.POOLING_LOCAL_CONNECTIONS)).thenReturn(3);
+    Mockito.when(defaultProfile.getInt(CoreDriverOption.CONNECTION_POOL_LOCAL_SIZE)).thenReturn(3);
 
     MockChannelFactoryHelper factoryHelper =
         MockChannelFactoryHelper.builder(channelFactory)
@@ -107,7 +107,7 @@ public class ChannelPoolInitTest extends ChannelPoolTestBase {
 
   @Test
   public void should_fire_force_down_event_when_cluster_name_does_not_match() throws Exception {
-    Mockito.when(defaultProfile.getInt(CoreDriverOption.POOLING_LOCAL_CONNECTIONS)).thenReturn(3);
+    Mockito.when(defaultProfile.getInt(CoreDriverOption.CONNECTION_POOL_LOCAL_SIZE)).thenReturn(3);
 
     ClusterNameMismatchException error =
         new ClusterNameMismatchException(ADDRESS, "actual", "expected");
@@ -134,7 +134,7 @@ public class ChannelPoolInitTest extends ChannelPoolTestBase {
     // Short delay so we don't have to wait in the test
     Mockito.when(reconnectionSchedule.nextDelay()).thenReturn(Duration.ofNanos(1));
 
-    Mockito.when(defaultProfile.getInt(CoreDriverOption.POOLING_LOCAL_CONNECTIONS)).thenReturn(2);
+    Mockito.when(defaultProfile.getInt(CoreDriverOption.CONNECTION_POOL_LOCAL_SIZE)).thenReturn(2);
 
     DriverChannel channel1 = newMockDriverChannel(1);
     DriverChannel channel2 = newMockDriverChannel(2);

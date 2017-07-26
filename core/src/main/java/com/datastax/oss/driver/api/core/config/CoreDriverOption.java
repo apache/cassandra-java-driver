@@ -22,17 +22,21 @@ package com.datastax.oss.driver.api.core.config;
  */
 public enum CoreDriverOption implements DriverOption {
   CONTACT_POINTS("contact-points", false),
+
   PROTOCOL_VERSION("protocol.version", false),
+  PROTOCOL_MAX_FRAME_LENGTH("protocol.max-frame-length", true),
+
   CLUSTER_NAME("cluster-name", false),
   CONFIG_RELOAD_INTERVAL("config-reload-interval", false),
 
   CONNECTION_INIT_QUERY_TIMEOUT("connection.init-query-timeout", true),
   CONNECTION_SET_KEYSPACE_TIMEOUT("connection.set-keyspace-timeout", true),
-  CONNECTION_MAX_FRAME_LENGTH("connection.max-frame-length", true),
   CONNECTION_MAX_REQUESTS("connection.max-requests-per-connection", true),
   CONNECTION_HEARTBEAT_INTERVAL("connection.heartbeat.interval", true),
   CONNECTION_HEARTBEAT_TIMEOUT("connection.heartbeat.timeout", true),
   CONNECTION_MAX_ORPHAN_REQUESTS("connection.max-orphan-requests", true),
+  CONNECTION_POOL_LOCAL_SIZE("connection.pool.local.size", true),
+  CONNECTION_POOL_REMOTE_SIZE("connection.pool.remote.size", true),
 
   REQUEST_TIMEOUT("request.timeout", true),
   REQUEST_CONSISTENCY("request.consistency", true),
@@ -40,6 +44,8 @@ public enum CoreDriverOption implements DriverOption {
   REQUEST_SERIAL_CONSISTENCY("request.serial-consistency", true),
   REQUEST_WARN_IF_SET_KEYSPACE("request.warn-if-set-keyspace", true),
   REQUEST_DEFAULT_IDEMPOTENCE("request.default-idempotence", true),
+  RETRY_POLICY_ROOT("request.retry-policy", true),
+  SPECULATIVE_EXECUTION_POLICY_ROOT("request.speculative-execution-policy", true),
 
   CONTROL_CONNECTION_TIMEOUT("connection.control-connection.timeout", true),
   CONTROL_CONNECTION_PAGE_SIZE("connection.control-connection.page-size", true),
@@ -51,11 +57,7 @@ public enum CoreDriverOption implements DriverOption {
   // "Sub-option" for all the policies, etc.
   RELATIVE_POLICY_CLASS("class", false),
 
-  RETRY_POLICY_ROOT("retry-policy", true),
-
   LOAD_BALANCING_POLICY_ROOT("load-balancing-policy", true),
-
-  SPECULATIVE_EXECUTION_POLICY_ROOT("speculative-execution-policy", true),
 
   RECONNECTION_POLICY_ROOT("connection.reconnection-policy", true),
   RELATIVE_EXPONENTIAL_RECONNECTION_BASE_DELAY("base-delay", false),
@@ -68,12 +70,9 @@ public enum CoreDriverOption implements DriverOption {
   REPREPARE_MAX_PARALLELISM("prepared-statements.reprepare-on-up.max-parallelism", false),
   REPREPARE_TIMEOUT("prepared-statements.reprepare-on-up.timeout", false),
 
-  POOLING_LOCAL_CONNECTIONS("pooling.local.connections", true),
-  POOLING_REMOTE_CONNECTIONS("pooling.remote.connections", true),
-
   ADDRESS_TRANSLATOR_ROOT("address-translator", true),
 
-  AUTH_PROVIDER_ROOT("auth-provider", false),
+  AUTH_PROVIDER_ROOT("protocol.auth-provider", false),
   RELATIVE_PLAIN_TEXT_AUTH_USERNAME("username", false),
   RELATIVE_PLAIN_TEXT_AUTH_PASSWORD("password", false),
 
@@ -83,7 +82,7 @@ public enum CoreDriverOption implements DriverOption {
   METADATA_TOPOLOGY_WINDOW("metadata.topology-event-debouncer.window", true),
   METADATA_TOPOLOGY_MAX_EVENTS("metadata.topology-event-debouncer.max-events", true),
 
-  TIMESTAMP_GENERATOR_ROOT("timestamp-generator", true),
+  TIMESTAMP_GENERATOR_ROOT("request.timestamp-generator", true),
   RELATIVE_TIMESTAMP_GENERATOR_FORCE_JAVA_CLOCK("force-java-clock", false),
   RELATIVE_TIMESTAMP_GENERATOR_DRIFT_WARNING_THRESHOLD("drift-warning.threshold", false),
   RELATIVE_TIMESTAMP_GENERATOR_DRIFT_WARNING_INTERVAL("drift-warning.interval", false),
