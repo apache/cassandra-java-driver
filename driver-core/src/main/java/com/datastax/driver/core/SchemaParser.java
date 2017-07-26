@@ -663,6 +663,24 @@ abstract class SchemaParser {
             return whereClause;
         }
 
+        // Used by maybeSortUdts to sort at each dependency group alphabetically.
+        private static final Comparator<Row> sortByTypeName = new Comparator<Row>() {
+            @Override
+            public int compare(Row o1, Row o2) {
+                String type1 = o1.getString(UserType.TYPE_NAME);
+                String type2 = o2.getString(UserType.TYPE_NAME);
+
+                if (type1 == null && type2 == null) {
+                    return 0;
+                } else if (type2 == null) {
+                    return 1;
+                } else if (type1 == null) {
+                    return -1;
+                } else {
+                    return type1.compareTo(type2);
+                }
+            }
+        };
 
         @Override
         protected List<Row> maybeSortUdts(List<Row> udtRows, Cluster cluster, String keyspace) {
@@ -671,7 +689,7 @@ abstract class SchemaParser {
 
             // For C* 3+, user-defined type resolution must be done in proper order
             // to guarantee that nested UDTs get resolved
-            DirectedGraph<Row> graph = new DirectedGraph<Row>(udtRows);
+            DirectedGraph<Row> graph = new DirectedGraph<Row>(sortByTypeName, udtRows);
             for (Row from : udtRows) {
                 for (Row to : udtRows) {
                     if (from != to && dependsOn(to, from, cluster, keyspace))

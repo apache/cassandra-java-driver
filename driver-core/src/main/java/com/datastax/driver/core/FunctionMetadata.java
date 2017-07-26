@@ -174,11 +174,9 @@ public class FunctionMetadata {
                 first = false;
             else
                 sb.append(',');
-            TableMetadata.newLine(sb, formatted);
             String name = entry.getKey();
             DataType type = entry.getValue();
             sb
-                    .append(TableMetadata.spaces(4, formatted))
                     .append(Metadata.quoteIfNecessary(name))
                     .append(' ')
                     .append(type.asFunctionParameterString());
@@ -190,7 +188,7 @@ public class FunctionMetadata {
 
         TableMetadata.spaceOrNewLine(sb, formatted)
                 .append("RETURNS ")
-                .append(returnType);
+                .append(returnType.asFunctionParameterString());
 
         TableMetadata.spaceOrNewLine(sb, formatted)
                 .append("LANGUAGE ")

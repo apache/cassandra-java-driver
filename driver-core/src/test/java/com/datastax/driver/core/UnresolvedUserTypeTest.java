@@ -16,17 +16,56 @@
 package com.datastax.driver.core;
 
 import com.datastax.driver.core.utils.CassandraVersion;
-import org.testng.annotations.Test;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
+import org.testng.annotations.Test;
 
 import static com.datastax.driver.core.Assertions.assertThat;
-import static com.datastax.driver.core.DataType.*;
+import static com.datastax.driver.core.DataType.cint;
+import static com.datastax.driver.core.DataType.list;
+import static com.datastax.driver.core.DataType.map;
+import static com.datastax.driver.core.DataType.set;
 
 @CassandraVersion("3.0")
 public class UnresolvedUserTypeTest extends CCMTestsSupport {
+
+    private static final String KEYSPACE = "unresolved_user_type_test";
+
+    private static final String EXPECTED_SCHEMA = String.format("CREATE KEYSPACE %s WITH REPLICATION = { 'class' : 'org.apache.cassandra.locator.SimpleStrategy', 'replication_factor': '1' } AND DURABLE_WRITES = true;\n" +
+                    "\n" +
+                    "CREATE TYPE %s.g (\n" +
+                    "    f1 int\n" +
+                    ");\n" +
+                    "\n" +
+                    "CREATE TYPE %s.h (\n" +
+                    "    f1 int\n" +
+                    ");\n" +
+                    "\n" +
+                    "CREATE TYPE %s.\"E\" (\n" +
+                    "    f1 frozen<list<frozen<%s.g>>>\n" +
+                    ");\n" +
+                    "\n" +
+                    "CREATE TYPE %s.\"F\" (\n" +
+                    "    f1 frozen<%s.h>\n" +
+                    ");\n" +
+                    "\n" +
+                    "CREATE TYPE %s.\"D\" (\n" +
+                    "    f1 frozen<tuple<\"F\", g, h>>\n" +
+                    ");\n" +
+                    "\n" +
+                    "CREATE TYPE %s.\"B\" (\n" +
+                    "    f1 frozen<set<frozen<%s.\"D\">>>\n" +
+                    ");\n" +
+                    "\n" +
+                    "CREATE TYPE %s.\"C\" (\n" +
+                    "    f1 frozen<map<frozen<%s.\"E\">, frozen<%s.\"D\">>>\n" +
+                    ");\n" +
+                    "\n" +
+                    "CREATE TYPE %s.\"A\" (\n" +
+                    "    f1 frozen<%s.\"C\">\n" +
+                    ");\n", KEYSPACE, KEYSPACE, KEYSPACE, KEYSPACE, KEYSPACE, KEYSPACE, KEYSPACE, KEYSPACE, KEYSPACE,
+            KEYSPACE, KEYSPACE, KEYSPACE, KEYSPACE, KEYSPACE, KEYSPACE);
 
     @Override
     public void onTestContextInitialized() {
@@ -45,16 +84,17 @@ public class UnresolvedUserTypeTest extends CCMTestsSupport {
                  |
                  A
 
-             Topological sort order should be : GH,FE,D,CB,A
+             Topological sort order should be : gh,FE,D,CB,A
              */
-                String.format("CREATE TYPE %s.h (f1 int)", keyspace),
-                String.format("CREATE TYPE %s.g (f1 int)", keyspace),
-                String.format("CREATE TYPE %s.\"F\" (f1 frozen<h>)", keyspace),
-                String.format("CREATE TYPE %s.\"E\" (f1 frozen<list<g>>)", keyspace),
-                String.format("CREATE TYPE %s.\"D\" (f1 frozen<tuple<\"F\",g,h>>)", keyspace),
-                String.format("CREATE TYPE %s.\"C\" (f1 frozen<map<\"E\",\"D\">>)", keyspace),
-                String.format("CREATE TYPE %s.\"B\" (f1 frozen<set<\"D\">>)", keyspace),
-                String.format("CREATE TYPE %s.\"A\" (f1 frozen<\"C\">)", keyspace)
+                "CREATE KEYSPACE unresolved_user_type_test WITH replication = {'class': 'SimpleStrategy', 'replication_factor': '1'}",
+                String.format("CREATE TYPE %s.h (f1 int)", KEYSPACE),
+                String.format("CREATE TYPE %s.g (f1 int)", KEYSPACE),
+                String.format("CREATE TYPE %s.\"F\" (f1 frozen<h>)", KEYSPACE),
+                String.format("CREATE TYPE %s.\"E\" (f1 frozen<list<g>>)", KEYSPACE),
+                String.format("CREATE TYPE %s.\"D\" (f1 frozen<tuple<\"F\",g,h>>)", KEYSPACE),
+                String.format("CREATE TYPE %s.\"C\" (f1 frozen<map<\"E\",\"D\">>)", KEYSPACE),
+                String.format("CREATE TYPE %s.\"B\" (f1 frozen<set<\"D\">>)", KEYSPACE),
+                String.format("CREATE TYPE %s.\"A\" (f1 frozen<\"C\">)", KEYSPACE)
         );
     }
 
@@ -75,7 +115,7 @@ public class UnresolvedUserTypeTest extends CCMTestsSupport {
     }
 
     private void checkUserTypes(Metadata metadata) {
-        KeyspaceMetadata keyspaceMetadata = metadata.getKeyspace(keyspace);
+        KeyspaceMetadata keyspaceMetadata = metadata.getKeyspace(KEYSPACE);
 
         UserType a = keyspaceMetadata.getUserType("\"A\"");
         UserType b = keyspaceMetadata.getUserType("\"B\"");
@@ -106,12 +146,7 @@ public class UnresolvedUserTypeTest extends CCMTestsSupport {
 
         String script = keyspaceMetadata.exportAsString();
 
-        assertThat(script.indexOf(a.exportAsString())).isGreaterThan(script.indexOf(b.exportAsString())).isGreaterThan(script.indexOf(c.exportAsString()));
-        assertThat(script.indexOf(b.exportAsString())).isGreaterThan(script.indexOf(d.exportAsString()));
-        assertThat(script.indexOf(c.exportAsString())).isGreaterThan(script.indexOf(d.exportAsString()));
-        assertThat(script.indexOf(d.exportAsString())).isGreaterThan(script.indexOf(e.exportAsString())).isGreaterThan(script.indexOf(f.exportAsString()));
-        assertThat(script.indexOf(e.exportAsString())).isGreaterThan(script.indexOf(g.exportAsString())).isGreaterThan(script.indexOf(h.exportAsString()));
-        assertThat(script.indexOf(f.exportAsString())).isGreaterThan(script.indexOf(g.exportAsString())).isGreaterThan(script.indexOf(h.exportAsString()));
-
+        // validate against a strict expectation that the schema is exactly as defined.
+        assertThat(script).isEqualTo(EXPECTED_SCHEMA);
     }
 }

@@ -162,34 +162,32 @@ public class MaterializedViewMetadata extends AbstractTableMetadata {
         StringBuilder sb = new StringBuilder();
         sb.append("CREATE MATERIALIZED VIEW ")
                 .append(keyspaceName).append('.').append(viewName)
-                .append(" AS ");
-        newLine(sb, formatted);
+                .append(" AS");
 
         // SELECT
-        sb.append("SELECT ");
+        spaceOrNewLine(sb, formatted).append("SELECT ");
         if (includeAllColumns) {
-            sb.append(" * ");
+            sb.append("*");
         } else {
             Iterator<ColumnMetadata> it = columns.values().iterator();
             while (it.hasNext()) {
                 ColumnMetadata column = it.next();
-                sb.append(spaces(4, formatted)).append(Metadata.quoteIfNecessary(column.getName()));
-                if (it.hasNext()) sb.append(",");
-                sb.append(" ");
-                newLine(sb, formatted);
+                sb.append(Metadata.quoteIfNecessary(column.getName()));
+                if (it.hasNext()) sb.append(", ");
             }
         }
 
         // FROM
-        newLine(sb.append("FROM ").append(keyspaceName).append('.').append(baseTableName).append(" "), formatted);
+        spaceOrNewLine(sb, formatted).append("FROM ").append(keyspaceName).append('.').append(baseTableName);
 
         // WHERE
         // the CQL grammar allows missing WHERE clauses, although C* currently disallows it
-        if (whereClause != null && !whereClause.isEmpty())
-            newLine(sb.append("WHERE ").append(whereClause).append(' '), formatted);
+        if (whereClause != null && !whereClause.isEmpty()) {
+            spaceOrNewLine(sb, formatted).append("WHERE ").append(whereClause);
+        }
 
         // PK
-        sb.append("PRIMARY KEY (");
+        spaceOrNewLine(sb, formatted).append("PRIMARY KEY (");
         if (partitionKey.size() == 1) {
             sb.append(Metadata.quoteIfNecessary(partitionKey.get(0).getName()));
         } else {
@@ -208,6 +206,8 @@ public class MaterializedViewMetadata extends AbstractTableMetadata {
             sb.append(", ").append(Metadata.quoteIfNecessary(cm.getName()));
         sb.append(')');
 
+        // append 3 extra spaces if formatted to align WITH.
+        spaceOrNewLine(sb, formatted);
         appendOptions(sb, formatted);
         return sb.toString();
 

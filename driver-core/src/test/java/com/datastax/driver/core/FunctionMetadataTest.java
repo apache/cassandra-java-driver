@@ -50,13 +50,11 @@ public class FunctionMetadataTest extends CCMTestsSupport {
         assertThat(function.toString())
                 .isEqualTo(cql);
         assertThat(function.exportAsString())
-                .isEqualTo(String.format("CREATE FUNCTION %s.plus(\n"
-                        + "    s int,\n"
-                        + "    v int)\n"
-                        + "RETURNS NULL ON NULL INPUT\n"
-                        + "RETURNS int\n"
-                        + "LANGUAGE java\n"
-                        + "AS 'return s+v;';", this.keyspace));
+                .isEqualTo(String.format("CREATE FUNCTION %s.plus(s int,v int)\n"
+                        + "    RETURNS NULL ON NULL INPUT\n"
+                        + "    RETURNS int\n"
+                        + "    LANGUAGE java\n"
+                        + "    AS 'return s+v;';", this.keyspace));
     }
 
     @Test(groups = "short")
@@ -81,10 +79,10 @@ public class FunctionMetadataTest extends CCMTestsSupport {
                 .isEqualTo(cql);
         assertThat(function.exportAsString())
                 .isEqualTo(String.format("CREATE FUNCTION %s.pi()\n"
-                        + "CALLED ON NULL INPUT\n"
-                        + "RETURNS double\n"
-                        + "LANGUAGE java\n"
-                        + "AS 'return Math.PI;';", this.keyspace));
+                        + "    CALLED ON NULL INPUT\n"
+                        + "    RETURNS double\n"
+                        + "    LANGUAGE java\n"
+                        + "    AS 'return Math.PI;';", this.keyspace));
     }
 
     @Test(groups = "short")
@@ -154,12 +152,11 @@ public class FunctionMetadataTest extends CCMTestsSupport {
         assertThat(function.toString())
                 .isEqualTo(cql);
         assertThat(function.exportAsString())
-                .isEqualTo(String.format("CREATE FUNCTION %s.complex(\n"
-                        + "    x tuple<tuple<int>, map<int, int>>)\n"
-                        + "RETURNS NULL ON NULL INPUT\n"
-                        + "RETURNS int\n"
-                        + "LANGUAGE java\n"
-                        + "AS 'return 42;';", this.keyspace));
+                .isEqualTo(String.format("CREATE FUNCTION %s.complex(x tuple<tuple<int>, map<int, int>>)\n"
+                        + "    RETURNS NULL ON NULL INPUT\n"
+                        + "    RETURNS int\n"
+                        + "    LANGUAGE java\n"
+                        + "    AS 'return 42;';", this.keyspace));
     }
 
     @Override

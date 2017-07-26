@@ -42,7 +42,7 @@ cassandra:
   - '2.1'
   - '2.2'
   - '3.0'
-  - '3.10'
+  - '3.11'
 build:
   - script: |
       . /usr/local/bin/jdk_switcher.sh

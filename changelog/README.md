@@ -3,6 +3,8 @@
 ### 3.4.0 (In progress)
 
 - [bug] JAVA-1555: Include VIEW and CDC in WriteType.
+- [bug] JAVA-1599: exportAsString improvements (sort, format, clustering order)
+
 
 ### 3.3.0
 
