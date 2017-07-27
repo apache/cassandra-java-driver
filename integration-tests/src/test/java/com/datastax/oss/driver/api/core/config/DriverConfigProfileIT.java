@@ -181,7 +181,14 @@ public class DriverConfigProfileIT {
             "profiles.slow.request.timeout = 30s",
             "profiles.smallpages.request.page-size = 10")) {
 
-      ccmCluster.createKeyspace(profileCluster);
+      SimpleStatement createKeyspace =
+          SimpleStatement.builder(
+                  String.format(
+                      "CREATE KEYSPACE %s WITH REPLICATION = { 'class' : 'SimpleStrategy', 'replication_factor' : 1 };",
+                      ccmCluster.keyspace()))
+              .withConfigProfileName("slow")
+              .build();
+      profileCluster.connect().execute(createKeyspace);
 
       Session session = profileCluster.connect(CqlIdentifier.fromCql(ccmCluster.keyspace()));
 
