@@ -177,7 +177,10 @@ public class DriverConfigProfileIT {
   public void should_use_profile_page_size() {
     try (Cluster profileCluster =
         ccmCluster.defaultCluster(
-            "request.page-size = 100", "profiles.smallpages.request.page-size = 10")) {
+            "request.page-size = 100",
+            "profiles.slow.request.timeout = 30s",
+            "profiles.smallpages.request.page-size = 10")) {
+
       ccmCluster.createKeyspace(profileCluster);
 
       Session session = profileCluster.connect(CqlIdentifier.fromCql(ccmCluster.keyspace()));
@@ -186,11 +189,11 @@ public class DriverConfigProfileIT {
       session.execute(
           SimpleStatement.builder(
                   "CREATE TABLE IF NOT EXISTS test (k int, v int, PRIMARY KEY (k,v))")
-              .withConfigProfile(ccmCluster.slowProfile())
+              .withConfigProfileName("slow")
               .build());
       PreparedStatement prepared = session.prepare("INSERT INTO test (k, v) values (0, ?)");
       BatchStatementBuilder bs =
-          BatchStatement.builder(BatchType.UNLOGGED).withConfigProfile(ccmCluster.slowProfile());
+          BatchStatement.builder(BatchType.UNLOGGED).withConfigProfileName("slow");
       for (int i = 0; i < 500; i++) {
         bs.addStatement(prepared.bind(i));
       }
