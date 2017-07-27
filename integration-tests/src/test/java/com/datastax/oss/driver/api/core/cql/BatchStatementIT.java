@@ -16,11 +16,11 @@
 package com.datastax.oss.driver.api.core.cql;
 
 import com.datastax.oss.driver.api.core.servererrors.InvalidQueryException;
+import com.datastax.oss.driver.api.testinfra.CassandraRequirement;
 import com.datastax.oss.driver.api.testinfra.ccm.CcmRule;
 import com.datastax.oss.driver.api.testinfra.cluster.ClusterRule;
 import java.util.Iterator;
-import org.junit.BeforeClass;
-import org.junit.ClassRule;
+import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TestName;
@@ -29,16 +29,16 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 public class BatchStatementIT {
 
-  @ClassRule public static CcmRule ccm = CcmRule.getInstance();
+  @Rule public CcmRule ccm = CcmRule.getInstance();
 
-  @ClassRule public static ClusterRule cluster = new ClusterRule(ccm);
+  @Rule public ClusterRule cluster = new ClusterRule(ccm);
 
   @Rule public TestName name = new TestName();
 
   private static final int batchCount = 100;
 
-  @BeforeClass
-  public static void createTable() {
+  @Before
+  public void createTable() {
     String[] schemaStatements =
         new String[] {
           "CREATE TABLE test (k0 text, k1 int, v int, PRIMARY KEY (k0, k1))",
@@ -94,6 +94,61 @@ public class BatchStatementIT {
     cluster.session().execute(batchStatement);
 
     verifyBatchInsert();
+  }
+
+  @Test
+  @CassandraRequirement(min = "2.2")
+  public void should_execute_batch_of_bound_statements_with_unset_values() {
+    // Build a batch of batchCount statements with bound statements, each with their own positional variables.
+    BatchStatementBuilder builder = BatchStatement.builder(BatchType.UNLOGGED);
+    SimpleStatement insert =
+        SimpleStatement.builder(
+                String.format(
+                    "INSERT INTO test (k0, k1, v) values ('%s', ? , ?)", name.getMethodName()))
+            .build();
+    PreparedStatement preparedStatement = cluster.session().prepare(insert);
+
+    for (int i = 0; i < batchCount; i++) {
+      builder.addStatement(preparedStatement.bind(i, i + 1));
+    }
+
+    BatchStatement batchStatement = builder.build();
+    cluster.session().execute(batchStatement);
+
+    verifyBatchInsert();
+
+    BatchStatementBuilder builder2 = BatchStatement.builder(BatchType.UNLOGGED);
+    for (int i = 0; i < batchCount; i++) {
+      BoundStatement boundStatement = preparedStatement.bind(i, i + 2);
+      // unset v every 20 statements.
+      if (i % 20 == 0) {
+        boundStatement.unset(1);
+      }
+      builder.addStatement(boundStatement);
+    }
+
+    cluster.session().execute(builder2.build());
+
+    Statement select =
+        SimpleStatement.builder("SELECT * from test where k0 = ?")
+            .addPositionalValue(name.getMethodName())
+            .build();
+
+    ResultSet result = cluster.session().execute(select);
+
+    assertThat(result.getAvailableWithoutFetching()).isEqualTo(100);
+
+    Iterator<Row> rows = result.iterator();
+    for (int i = 0; i < batchCount; i++) {
+      Row row = rows.next();
+      assertThat(row.getString("k0")).isEqualTo(name.getMethodName());
+      assertThat(row.getInt("k1")).isEqualTo(i);
+      // value should be from first insert (i + 1) if at row divisble by 20, otherwise second.
+      int expectedValue = i % 20 == 0 ? i + 1 : i + 2;
+      if (i % 20 == 0) {
+        assertThat(row.getInt("v")).isEqualTo(expectedValue);
+      }
+    }
   }
 
   @Test

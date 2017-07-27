@@ -118,8 +118,12 @@ public class ClusterRule extends CassandraResourceRule {
     }
   }
 
-  private void createKeyspace() {
-    try (Session session = newSession()) {
+  public void createKeyspace() {
+    createKeyspace(defaultCluster);
+  }
+
+  public void createKeyspace(Cluster defaultCluster) {
+    try (Session session = defaultCluster.connect()) {
       SimpleStatement createKeyspace =
           SimpleStatement.builder(
                   String.format(
