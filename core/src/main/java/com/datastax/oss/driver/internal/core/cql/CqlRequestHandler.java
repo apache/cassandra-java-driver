@@ -132,7 +132,7 @@ public class CqlRequestHandler
     if (isIdempotent) {
       // Start the initial execution
       long nextExecution = context.speculativeExecutionPolicy().nextExecution(keyspace, request, 1);
-      if (nextExecution > 0) {
+      if (nextExecution >= 0) {
         LOG.debug("[{}] Scheduling first speculative execution in {} ms", logPrefix, nextExecution);
         this.pendingExecutions = new CopyOnWriteArrayList<>();
         this.pendingExecutions.add(
@@ -180,7 +180,7 @@ public class CqlRequestHandler
       int execution = executions.incrementAndGet();
       LOG.trace("[{}] Starting speculative execution {}", logPrefix, execution);
       long nextDelay = speculativeExecutionPolicy.nextExecution(keyspace, request, execution + 1);
-      if (nextDelay > 0) {
+      if (nextDelay >= 0) {
         LOG.trace(
             "[{}] Scheduling {}th speculative execution in {} ms",
             logPrefix,

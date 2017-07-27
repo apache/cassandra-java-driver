@@ -32,7 +32,7 @@ public class NoSpeculativeExecutionPolicy implements SpeculativeExecutionPolicy 
   @Override
   public long nextExecution(CqlIdentifier keyspace, Request request, int runningExecutions) {
     // never start speculative executions
-    return 0;
+    return -1;
   }
 
   @Override

@@ -16,11 +16,13 @@
 package com.datastax.oss.driver.internal.core.cql;
 
 import com.datastax.oss.driver.api.core.ConsistencyLevel;
+import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.config.CoreDriverOption;
 import com.datastax.oss.driver.api.core.config.DriverConfig;
 import com.datastax.oss.driver.api.core.config.DriverConfigProfile;
 import com.datastax.oss.driver.api.core.metadata.Node;
 import com.datastax.oss.driver.api.core.retry.RetryPolicy;
+import com.datastax.oss.driver.api.core.session.Request;
 import com.datastax.oss.driver.api.core.specex.SpeculativeExecutionPolicy;
 import com.datastax.oss.driver.api.core.time.TimestampGenerator;
 import com.datastax.oss.driver.internal.core.channel.DriverChannel;
@@ -45,6 +47,9 @@ import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
 import org.mockito.stubbing.OngoingStubbing;
+
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
 
 /**
  * Provides the environment to test a request handler, where a query plan can be defined, and the
@@ -98,6 +103,12 @@ public class RequestHandlerTestHarness implements AutoCloseable {
     Mockito.when(context.loadBalancingPolicyWrapper()).thenReturn(loadBalancingPolicyWrapper);
 
     Mockito.when(context.retryPolicy()).thenReturn(retryPolicy);
+
+    // Disable speculative executions by default
+    Mockito.when(
+            speculativeExecutionPolicy.nextExecution(
+                any(CqlIdentifier.class), any(Request.class), anyInt()))
+        .thenReturn(-1L);
     Mockito.when(context.speculativeExecutionPolicy()).thenReturn(speculativeExecutionPolicy);
 
     Mockito.when(context.codecRegistry()).thenReturn(new DefaultCodecRegistry("test"));

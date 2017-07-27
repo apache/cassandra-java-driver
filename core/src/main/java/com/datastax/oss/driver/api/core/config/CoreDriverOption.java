@@ -46,6 +46,8 @@ public enum CoreDriverOption implements DriverOption {
   REQUEST_DEFAULT_IDEMPOTENCE("request.default-idempotence", true),
   RETRY_POLICY_ROOT("request.retry-policy", true),
   SPECULATIVE_EXECUTION_POLICY_ROOT("request.speculative-execution-policy", true),
+  RELATIVE_SPECULATIVE_EXECUTION_MAX("max-executions", false),
+  RELATIVE_SPECULATIVE_EXECUTION_DELAY("delay", false),
 
   CONTROL_CONNECTION_TIMEOUT("connection.control-connection.timeout", true),
   CONTROL_CONNECTION_PAGE_SIZE("connection.control-connection.page-size", true),

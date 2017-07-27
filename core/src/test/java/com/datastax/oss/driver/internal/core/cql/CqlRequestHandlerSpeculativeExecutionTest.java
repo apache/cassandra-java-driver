@@ -78,7 +78,7 @@ public class CqlRequestHandlerSpeculativeExecutionTest extends CqlRequestHandler
           .thenReturn(firstExecutionDelay);
       Mockito.when(speculativeExecutionPolicy.nextExecution(null, statement, 2))
           .thenReturn(secondExecutionDelay);
-      Mockito.when(speculativeExecutionPolicy.nextExecution(null, statement, 3)).thenReturn(0L);
+      Mockito.when(speculativeExecutionPolicy.nextExecution(null, statement, 3)).thenReturn(-1L);
 
       new CqlRequestHandler(statement, harness.getSession(), harness.getContext(), "test")
           .asyncResult();

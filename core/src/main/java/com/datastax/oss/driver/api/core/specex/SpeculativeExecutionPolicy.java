@@ -34,8 +34,8 @@ public interface SpeculativeExecutionPolicy extends AutoCloseable {
    *     initial, non-speculative request). For example, if this is 2 it means the initial attempt
    *     was sent, then the driver scheduled a first speculative execution, and it is now asking for
    *     the delay until the second speculative execution.
-   * @return the time (in milliseconds) until a speculative request is sent to the next node, or
-   *     zero or a negative value to stop sending requests.
+   * @return the time (in milliseconds) until a speculative request is sent to the next node, or 0
+   *     to send it immediately, or a negative value to stop sending requests.
    */
   long nextExecution(CqlIdentifier keyspace, Request request, int runningExecutions);
 
