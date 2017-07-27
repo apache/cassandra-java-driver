@@ -174,7 +174,7 @@ public class LoadBalancingPolicyWrapperTest {
   }
 
   @Test
-  public void should_accumulate_events_during_init_and_replay() {
+  public void should_accumulate_events_during_init_and_replay() throws InterruptedException {
     // Given
     // Hack to obtain concurrency: the main thread blocks in init, while another thread fires an
     // event on the bus
@@ -206,7 +206,13 @@ public class LoadBalancingPolicyWrapperTest {
     wrapper.init();
 
     // Then
-    assertThat(thread.isAlive()).isFalse();
+    // wait for init launch to signal that runnable is complete.
+    initLatch.await(100, TimeUnit.MILLISECONDS);
     Mockito.verify(loadBalancingPolicy).onDown(node1);
+    if (thread.isAlive()) {
+      // thread still completing - sleep for 100ms to allow thread to complete.
+      Thread.sleep(100);
+    }
+    assertThat(thread.isAlive()).isFalse();
   }
 }

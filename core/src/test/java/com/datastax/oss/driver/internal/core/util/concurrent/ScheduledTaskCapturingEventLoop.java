@@ -107,7 +107,7 @@ public class ScheduledTaskCapturingEventLoop extends DefaultEventLoop {
   public void waitForNonScheduledTasks() {
     ScheduledFuture<Object> f = super.schedule(() -> null, 5, TimeUnit.NANOSECONDS);
     try {
-      Uninterruptibles.getUninterruptibly(f, 100, TimeUnit.MILLISECONDS);
+      Uninterruptibles.getUninterruptibly(f, 1, TimeUnit.SECONDS);
     } catch (ExecutionException e) {
       fail("unexpected error", e.getCause());
     } catch (TimeoutException e) {

@@ -1,0 +1,18 @@
+java:
+  - oraclejdk8
+os:
+  - ubuntu/trusty64/m3.large
+cassandra:
+  - '2.1'
+  - '2.2'
+  - '3.0'
+  - '3.11'
+build:
+  - type: maven
+    version: 3.2.5
+    goals: verify -Plong
+    properties: |
+      ccm.cassandraVersion=$CCM_CASSANDRA_VERSION
+  - xunit:
+    - "**/target/surefire-reports/TEST-*.xml"
+    - "**/target/failsafe-reports/TEST-*.xml"
