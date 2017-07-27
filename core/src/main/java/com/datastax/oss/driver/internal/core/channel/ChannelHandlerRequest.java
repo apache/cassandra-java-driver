@@ -80,7 +80,10 @@ abstract class ChannelHandlerRequest implements ResponseCallback {
 
   @Override
   public final void onFailure(Throwable error) {
-    timeoutFuture.cancel(true);
+    // timeoutFuture may not have been assigned if write failed.
+    if (timeoutFuture != null) {
+      timeoutFuture.cancel(true);
+    }
     fail(describe() + ": unexpected failure", error);
   }
 
