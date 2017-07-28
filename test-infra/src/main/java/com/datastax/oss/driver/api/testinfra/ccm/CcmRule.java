@@ -28,8 +28,19 @@ public class CcmRule extends BaseCcmRule {
 
   private static final CcmRule INSTANCE = new CcmRule();
 
+  private volatile boolean started = false;
+
   private CcmRule() {
     super(CcmBridge.builder().build());
+  }
+
+  @Override
+  protected synchronized void before() {
+    if (!started) {
+      // synchronize before so blocks on other before() call waiting to finish.
+      super.before();
+      started = true;
+    }
   }
 
   @Override
