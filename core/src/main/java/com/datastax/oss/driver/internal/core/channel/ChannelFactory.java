@@ -209,7 +209,7 @@ public class ChannelFactory {
             .map(f -> f.newSslHandler(channel, address))
             .map(h -> pipeline.addLast("ssl", h));
         pipeline
-            .addLast("encoder", new FrameEncoder(context.frameCodec()))
+            .addLast("encoder", new FrameEncoder(context.frameCodec(), maxFrameLength))
             .addLast("decoder", new FrameDecoder(context.frameCodec(), maxFrameLength))
             // Note: HeartbeatHandler is inserted here once init completes
             .addLast("inflight", inFlightHandler)

@@ -140,14 +140,16 @@ public class InFlightHandler extends ChannelDuplexHandler {
 
     inFlight.put(streamId, message.responseCallback);
     ChannelFuture writeFuture = ctx.write(frame, promise);
-    if (message.responseCallback.holdStreamId()) {
-      writeFuture.addListener(
-          future -> {
-            if (future.isSuccess()) {
+    writeFuture.addListener(
+        future -> {
+          if (future.isSuccess()) {
+            if (message.responseCallback.holdStreamId()) {
               message.responseCallback.onStreamIdAssigned(streamId);
             }
-          });
-    }
+          } else {
+            release(streamId, ctx);
+          }
+        });
   }
 
   private void cancel(
@@ -240,15 +242,15 @@ public class InFlightHandler extends ChannelDuplexHandler {
 
   /** Called if an exception was thrown while processing an inbound event (i.e. a response). */
   @Override
-  public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
-    if (cause instanceof FrameDecodingException) {
-      int streamId = ((FrameDecodingException) cause).streamId;
+  public void exceptionCaught(ChannelHandlerContext ctx, Throwable exception) throws Exception {
+    if (exception instanceof FrameDecodingException) {
+      int streamId = ((FrameDecodingException) exception).streamId;
       LOG.debug("[{}] Error while decoding response on stream id {}", logPrefix, streamId);
       if (streamId >= 0) {
         // We know which request matches the failing response, fail that one only
         ResponseCallback responseCallback = release(streamId, ctx);
         try {
-          responseCallback.onFailure(cause.getCause());
+          responseCallback.onFailure(exception.getCause());
         } catch (Throwable t) {
           LOG.warn("[{}] Unexpected error while invoking failure handler", logPrefix, t);
         }
@@ -256,14 +258,14 @@ public class InFlightHandler extends ChannelDuplexHandler {
         LOG.warn(
             "[{}] Unexpected error while decoding incoming event frame",
             logPrefix,
-            cause.getCause());
+            exception.getCause());
       }
     } else {
       // Otherwise fail all pending requests
       abortAllInFlight(
-          (cause instanceof HeartbeatException)
-              ? (HeartbeatException) cause
-              : new ClosedConnectionException("Unexpected error on channel", cause));
+          (exception instanceof HeartbeatException)
+              ? (HeartbeatException) exception
+              : new ClosedConnectionException("Unexpected error on channel", exception));
       ctx.close();
     }
   }

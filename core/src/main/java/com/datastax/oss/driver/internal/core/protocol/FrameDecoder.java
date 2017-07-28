@@ -15,10 +15,12 @@
  */
 package com.datastax.oss.driver.internal.core.protocol;
 
+import com.datastax.oss.driver.api.core.connection.FrameTooLongException;
 import com.datastax.oss.protocol.internal.FrameCodec;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.LengthFieldBasedFrameDecoder;
+import io.netty.handler.codec.TooLongFrameException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -56,6 +58,10 @@ public class FrameDecoder extends LengthFieldBasedFrameDecoder {
         // field has been read, and the stream id comes before
         LOG.warn("Unexpected error while reading stream id", e1);
         streamId = -1;
+      }
+      if (e instanceof TooLongFrameException) {
+        // Translate the Netty error to our own type
+        e = new FrameTooLongException(ctx.channel().remoteAddress(), e.getMessage());
       }
       throw new FrameDecodingException(streamId, e);
     }

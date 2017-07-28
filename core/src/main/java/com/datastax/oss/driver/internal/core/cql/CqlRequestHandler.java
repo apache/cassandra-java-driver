@@ -19,6 +19,7 @@ import com.datastax.oss.driver.api.core.AllNodesFailedException;
 import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.DriverTimeoutException;
 import com.datastax.oss.driver.api.core.config.CoreDriverOption;
+import com.datastax.oss.driver.api.core.connection.FrameTooLongException;
 import com.datastax.oss.driver.api.core.cql.AsyncResultSet;
 import com.datastax.oss.driver.api.core.cql.ExecutionInfo;
 import com.datastax.oss.driver.api.core.cql.ResultSet;
@@ -56,6 +57,7 @@ import com.datastax.oss.protocol.internal.response.result.SchemaChange;
 import com.datastax.oss.protocol.internal.response.result.SetKeyspace;
 import com.datastax.oss.protocol.internal.response.result.Void;
 import com.datastax.oss.protocol.internal.util.Bytes;
+import io.netty.handler.codec.EncoderException;
 import io.netty.util.concurrent.EventExecutor;
 import io.netty.util.concurrent.Future;
 import io.netty.util.concurrent.GenericFutureListener;
@@ -345,13 +347,19 @@ public class CqlRequestHandler
     @Override
     public void operationComplete(Future<java.lang.Void> future) throws Exception {
       if (!future.isSuccess()) {
-        LOG.debug(
-            "[{}] Failed to send request on {}, trying next node (cause: {})",
-            logPrefix,
-            channel,
-            future.cause());
-        recordError(node, future.cause());
-        sendRequest(null, execution, retryCount); // try next node
+        Throwable error = future.cause();
+        if (error instanceof EncoderException
+            && error.getCause() instanceof FrameTooLongException) {
+          setFinalError(error.getCause());
+        } else {
+          LOG.debug(
+              "[{}] Failed to send request on {}, trying next node (cause: {})",
+              logPrefix,
+              channel,
+              error);
+          recordError(node, error);
+          sendRequest(null, execution, retryCount); // try next node
+        }
       } else {
         LOG.debug("[{}] Request sent on {}", logPrefix, channel);
         if (result.isDone()) {
@@ -504,10 +512,12 @@ public class CqlRequestHandler
         return;
       }
       LOG.debug("[{}] Request failure, processing: {}", logPrefix, error.toString());
-      RetryDecision decision =
-          isIdempotent
-              ? retryPolicy.onRequestAborted(request, error, retryCount)
-              : RetryDecision.RETHROW;
+      RetryDecision decision;
+      if (!isIdempotent || error instanceof FrameTooLongException) {
+        decision = RetryDecision.RETHROW;
+      } else {
+        decision = retryPolicy.onRequestAborted(request, error, retryCount);
+      }
       processRetryDecision(decision, error);
     }
 

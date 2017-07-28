@@ -15,6 +15,7 @@
  */
 package com.datastax.oss.driver.internal.core.protocol;
 
+import com.datastax.oss.driver.api.core.connection.FrameTooLongException;
 import com.datastax.oss.driver.internal.core.channel.ChannelHandlerTestBase;
 import com.datastax.oss.driver.internal.core.util.ByteBufs;
 import com.datastax.oss.protocol.internal.Compressor;
@@ -23,7 +24,6 @@ import com.datastax.oss.protocol.internal.FrameCodec;
 import com.datastax.oss.protocol.internal.response.AuthSuccess;
 import io.netty.buffer.ByteBuf;
 import io.netty.handler.codec.LengthFieldBasedFrameDecoder;
-import io.netty.handler.codec.TooLongFrameException;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -92,7 +92,7 @@ public class FrameDecoderTest extends ChannelHandlerTestBase {
     } catch (FrameDecodingException e) {
       // Then
       assertThat(e.streamId).isEqualTo(42);
-      assertThat(e.getCause()).isInstanceOf(TooLongFrameException.class);
+      assertThat(e.getCause()).isInstanceOf(FrameTooLongException.class);
     }
   }
 
