@@ -84,13 +84,22 @@ public class CqlRequestHandler
   private final CompletableFuture<AsyncResultSet> result;
   private final Message message;
   private final EventExecutor scheduler;
-  // How many speculative executions are currently running (not counting the initial execution).
-  // All executions share the same query plan, they stop either when the request completes or the
-  // query plan is empty.
-  private final AtomicInteger executions;
+  /**
+   * How many speculative executions are currently running (including the initial execution). We
+   * track this in order to know when to fail the request if all executions have reached the end of
+   * the query plan.
+   */
+  private final AtomicInteger activeExecutionsCount;
+  /**
+   * How many speculative executions have started (excluding the initial execution), whether they
+   * have completed or not. We track this in order to fill {@link
+   * ExecutionInfo#getSpeculativeExecutionCount()}.
+   */
+  private final AtomicInteger startedSpeculativeExecutionsCount;
+
   private final Duration timeout;
   private final ScheduledFuture<?> timeoutFuture;
-  private final List<ScheduledFuture<?>> pendingExecutions;
+  private final List<ScheduledFuture<?>> scheduledExecutions;
   private final List<NodeResponseCallback> inFlightCallbacks;
   private final RetryPolicy retryPolicy;
   private final SpeculativeExecutionPolicy speculativeExecutionPolicy;
@@ -127,28 +136,30 @@ public class CqlRequestHandler
 
     this.retryPolicy = context.retryPolicy();
     this.speculativeExecutionPolicy = context.speculativeExecutionPolicy();
-    this.executions = new AtomicInteger(0);
+    this.activeExecutionsCount = new AtomicInteger(1);
+    this.startedSpeculativeExecutionsCount = new AtomicInteger(0);
 
     if (isIdempotent) {
-      // Start the initial execution
-      long nextExecution = context.speculativeExecutionPolicy().nextExecution(keyspace, request, 1);
-      if (nextExecution >= 0) {
-        LOG.debug("[{}] Scheduling first speculative execution in {} ms", logPrefix, nextExecution);
-        this.pendingExecutions = new CopyOnWriteArrayList<>();
-        this.pendingExecutions.add(
-            scheduler.schedule(this::startExecution, nextExecution, TimeUnit.MILLISECONDS));
+      // Schedule the first speculative execution if applicable
+      long nextDelay = context.speculativeExecutionPolicy().nextExecution(keyspace, request, 1);
+      if (nextDelay >= 0) {
+        LOG.debug("[{}] Scheduling speculative execution 1 in {} ms", logPrefix, nextDelay);
+        this.scheduledExecutions = new CopyOnWriteArrayList<>();
+        this.scheduledExecutions.add(
+            scheduler.schedule(() -> startExecution(1), nextDelay, TimeUnit.MILLISECONDS));
       } else {
         LOG.debug(
             "[{}] Speculative execution policy returned {}, no next execution",
             logPrefix,
-            nextExecution);
-        this.pendingExecutions = null; // we'll never need this so avoid allocation
+            nextDelay);
+        this.scheduledExecutions = null; // we'll never need this so avoid allocation
       }
     } else {
       LOG.debug("[{}] Request is not idempotent, no speculative executions", logPrefix);
-      this.pendingExecutions = null;
+      this.scheduledExecutions = null;
     }
     this.inFlightCallbacks = new CopyOnWriteArrayList<>();
+    // Start the initial execution
     sendRequest(null, 0, 0);
   }
 
@@ -175,26 +186,29 @@ public class CqlRequestHandler
     }
   }
 
-  private void startExecution() {
+  private void startExecution(int currentExecutionIndex) {
     if (!result.isDone()) {
-      int execution = executions.incrementAndGet();
-      LOG.trace("[{}] Starting speculative execution {}", logPrefix, execution);
-      long nextDelay = speculativeExecutionPolicy.nextExecution(keyspace, request, execution + 1);
+      LOG.trace("[{}] Starting speculative execution {}", logPrefix, currentExecutionIndex);
+      activeExecutionsCount.incrementAndGet();
+      startedSpeculativeExecutionsCount.incrementAndGet();
+      long nextDelay =
+          speculativeExecutionPolicy.nextExecution(keyspace, request, currentExecutionIndex + 1);
       if (nextDelay >= 0) {
         LOG.trace(
-            "[{}] Scheduling {}th speculative execution in {} ms",
+            "[{}] Scheduling speculative execution {} in {} ms",
             logPrefix,
-            execution + 1,
+            currentExecutionIndex + 1,
             nextDelay);
-        this.pendingExecutions.add(
-            scheduler.schedule(this::startExecution, nextDelay, TimeUnit.MILLISECONDS));
+        scheduledExecutions.add(
+            scheduler.schedule(
+                () -> startExecution(currentExecutionIndex + 1), nextDelay, TimeUnit.MILLISECONDS));
       } else {
         LOG.trace(
             "[{}] Speculative execution policy returned {}, no next execution",
             logPrefix,
             nextDelay);
       }
-      sendRequest(null, execution, 0);
+      sendRequest(null, currentExecutionIndex, 0);
     }
   }
 
@@ -202,8 +216,9 @@ public class CqlRequestHandler
    * Sends the request to the next available node.
    *
    * @param node if not null, it will be attempted first before the rest of the query plan.
+   * @param currentExecutionIndex 0 for the initial execution, 1 for the first speculative one, etc.
    */
-  private void sendRequest(Node node, int execution, int retryCount) {
+  private void sendRequest(Node node, int currentExecutionIndex, int retryCount) {
     if (result.isDone()) {
       return;
     }
@@ -218,13 +233,13 @@ public class CqlRequestHandler
     }
     if (channel == null) {
       // We've reached the end of the query plan without finding any node to write to
-      if (!result.isDone() && executions.decrementAndGet() == -1) {
+      if (!result.isDone() && activeExecutionsCount.decrementAndGet() == 0) {
         // We're the last execution so fail the result
         setFinalError(AllNodesFailedException.fromErrors(this.errors));
       }
     } else {
       NodeResponseCallback nodeResponseCallback =
-          new NodeResponseCallback(node, channel, execution, retryCount, logPrefix);
+          new NodeResponseCallback(node, channel, currentExecutionIndex, retryCount, logPrefix);
       channel
           .write(message, request.isTracing(), request.getCustomPayload(), nodeResponseCallback)
           .addListener(nodeResponseCallback);
@@ -249,7 +264,7 @@ public class CqlRequestHandler
     if (this.timeoutFuture != null) {
       this.timeoutFuture.cancel(false);
     }
-    List<ScheduledFuture<?>> pendingExecutionsSnapshot = this.pendingExecutions;
+    List<ScheduledFuture<?>> pendingExecutionsSnapshot = this.scheduledExecutions;
     if (pendingExecutionsSnapshot != null) {
       for (ScheduledFuture<?> future : pendingExecutionsSnapshot) {
         future.cancel(false);
@@ -286,8 +301,8 @@ public class CqlRequestHandler
     return new DefaultExecutionInfo(
         (Statement) request,
         callback.node,
+        startedSpeculativeExecutionsCount.get(),
         callback.execution,
-        executions.get(),
         errors,
         pagingState,
         responseFrame);

@@ -16,6 +16,7 @@
 package com.datastax.oss.driver.internal.core.cql;
 
 import com.datastax.oss.driver.api.core.AllNodesFailedException;
+import com.datastax.oss.driver.api.core.NoNodeAvailableException;
 import com.datastax.oss.driver.api.core.cql.AsyncResultSet;
 import com.datastax.oss.driver.api.core.cql.SimpleStatement;
 import com.datastax.oss.driver.api.core.metadata.Node;
@@ -151,6 +152,40 @@ public class CqlRequestHandlerSpeculativeExecutionTest extends CqlRequestHandler
       // start of the task.
       firstExecutionTask.run();
       node2Behavior.verifyNoWrite();
+    }
+  }
+
+  @Test
+  @UseDataProvider("idempotentConfig")
+  public void should_fail_if_no_nodes(boolean defaultIdempotence, SimpleStatement statement) {
+    RequestHandlerTestHarness.Builder harnessBuilder =
+        RequestHandlerTestHarness.builder().withDefaultIdempotence(defaultIdempotence);
+    // No configured behaviors => will yield an empty query plan
+
+    try (RequestHandlerTestHarness harness = harnessBuilder.build()) {
+      SpeculativeExecutionPolicy speculativeExecutionPolicy =
+          harness.getContext().speculativeExecutionPolicy();
+      long firstExecutionDelay = 100L;
+      Mockito.when(speculativeExecutionPolicy.nextExecution(null, statement, 1))
+          .thenReturn(firstExecutionDelay);
+
+      CompletionStage<AsyncResultSet> resultSetFuture =
+          new CqlRequestHandler(statement, harness.getSession(), harness.getContext(), "test")
+              .asyncResult();
+
+      harness.nextScheduledTask(); // Discard the timeout task
+
+      // We schedule a first speculative execution before even detecting that the query plan is
+      // empty
+      ScheduledTaskCapturingEventLoop.CapturedTask<?> task = harness.nextScheduledTask();
+      assertThat(task).isNotNull();
+      assertThat(task.getInitialDelay(TimeUnit.MILLISECONDS)).isEqualTo(100);
+
+      assertThat(resultSetFuture)
+          .isFailed(
+              error -> {
+                assertThat(error).isInstanceOf(NoNodeAvailableException.class);
+              });
     }
   }
 
