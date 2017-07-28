@@ -218,9 +218,9 @@ public class SpeculativeExecutionIT {
     // All executions start at the same time, but one of them is faster
     for (int i = 0; i < 2; i++) {
       primeNode(
-          i, when(QUERY_STRING).then(noRows()).delay(SPECULATIVE_DELAY / 2, TimeUnit.MILLISECONDS));
+          i, when(QUERY_STRING).then(noRows()).delay(2 * SPECULATIVE_DELAY, TimeUnit.MILLISECONDS));
     }
-    primeNode(2, when(QUERY_STRING).then(noRows()));
+    primeNode(2, when(QUERY_STRING).then(noRows()).delay(SPECULATIVE_DELAY, TimeUnit.MILLISECONDS));
 
     try (Cluster cluster = buildCluster(3, 0)) {
       Session session = cluster.connect();
