@@ -17,191 +17,130 @@ package com.datastax.oss.driver.api.testinfra.cluster;
 
 import com.datastax.oss.driver.api.core.Cluster;
 import com.datastax.oss.driver.api.core.CqlIdentifier;
-import com.datastax.oss.driver.api.core.ProtocolVersion;
-import com.datastax.oss.driver.api.core.config.CoreDriverOption;
 import com.datastax.oss.driver.api.core.config.DriverConfigProfile;
-import com.datastax.oss.driver.api.core.cql.SimpleStatement;
 import com.datastax.oss.driver.api.core.session.Session;
 import com.datastax.oss.driver.api.testinfra.CassandraResourceRule;
 import com.datastax.oss.driver.api.testinfra.simulacron.SimulacronRule;
-import com.datastax.oss.driver.internal.core.DefaultCluster;
-import com.datastax.oss.driver.internal.testinfra.cluster.TestConfigLoader;
-import java.net.InetSocketAddress;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Set;
-import java.util.concurrent.atomic.AtomicInteger;
+import org.junit.rules.ExternalResource;
 
 /**
- * A rule for creating and managing lifecycle of {@link Cluster} instances. A default cluster is
- * created on set up which the user can use to create new {@link Session}s with using {@link
- * #newSession()}. New {@link Cluster} instances can be created using the cluster methods provided
- * any {@link Cluster} created in this way will be closed when the rule is cleaned up.
+ * Creates and manages a {@link Cluster} instance for a test.
+ *
+ * <p>Use it in conjunction with a {@link CassandraResourceRule} that creates the server resource to
+ * connect to:
+ *
+ * <pre>{@code
+ * public static @ClassRule CcmRule server = CcmRule.getInstance();
+ *
+ * // Or: public static @ClassRule SimulacronRule server =
+ * //    new SimulacronRule(ClusterSpec.builder().withNodes(3));
+ *
+ * public static @ClassRule ClusterRule cluster = new ClusterRule(server);
+ *
+ * public void @Test should_do_something() {
+ *   cluster.session().execute("some query");
+ * }
+ * }</pre>
+ *
+ * Optionally, it can also create a dedicated keyspace (useful to isolate tests that share a common
+ * server), and initialize a session.
+ *
+ * <p>If you would rather create a new keyspace manually in each test, see the utility methods in
+ * {@link ClusterUtils}.
  */
-public class ClusterRule extends CassandraResourceRule {
+public class ClusterRule extends ExternalResource {
 
-  // the ccm rule to depend on
+  // the CCM or Simulacron rule to depend on
   private final CassandraResourceRule cassandraResource;
+  private final CqlIdentifier keyspace;
+  private final boolean createDefaultSession;
+  private final String[] defaultClusterOptions;
 
   // the default cluster that is auto created for this rule.
-  private Cluster defaultCluster;
+  private Cluster cluster;
 
   // the default session that is auto created for this rule and is tied to the given keyspace.
   private Session defaultSession;
 
-  // clusters created by this rule.
-  private final Collection<Cluster> clusters = new ArrayList<>();
-
-  private final String[] defaultClusterOptions;
-
-  private static final AtomicInteger keyspaceId = new AtomicInteger();
-
-  private final String keyspace = "ks_" + keyspaceId.getAndIncrement();
-
   private DriverConfigProfile slowProfile;
 
-  private boolean createDefaultCluster;
-  private boolean createDefaultSession;
-
   /**
-   * Creates a ClusterRule wrapping the provided resource.
+   * Returns a builder to construct an instance with a fluent API.
    *
    * @param cassandraResource resource to create clusters for.
-   * @param options The config options to pass to the default created cluster.
    */
+  public static ClusterRuleBuilder builder(CassandraResourceRule cassandraResource) {
+    return new ClusterRuleBuilder(cassandraResource);
+  }
+
+  /** @see #builder(CassandraResourceRule) */
   public ClusterRule(CassandraResourceRule cassandraResource, String... options) {
     this(cassandraResource, true, true, options);
   }
 
-  /**
-   * Creates a ClusterRule wrapping the provided resource.
-   *
-   * @param cassandraResource resource to create clusters for.
-   * @param createDefaultCluster whether or not to create a default cluster on initialization.
-   * @param createDefaultSession whether or not to create a default session on initialization.
-   * @param options The config options to pass to the default created cluster.
-   */
+  /** @see #builder(CassandraResourceRule) */
   public ClusterRule(
       CassandraResourceRule cassandraResource,
-      boolean createDefaultCluster,
+      boolean createKeyspace,
       boolean createDefaultSession,
       String... options) {
     this.cassandraResource = cassandraResource;
-    this.defaultClusterOptions = options;
-    this.createDefaultCluster = createDefaultCluster;
+    this.keyspace =
+        (cassandraResource instanceof SimulacronRule || !createKeyspace)
+            ? null
+            : ClusterUtils.uniqueKeyspaceId();
     this.createDefaultSession = createDefaultSession;
+    this.defaultClusterOptions = options;
   }
 
   @Override
   protected void before() {
     // ensure resource is initialized before initializing the defaultCluster.
     cassandraResource.setUp();
-    if (createDefaultCluster) {
-      defaultCluster = defaultCluster(defaultClusterOptions);
-      clusters.add(defaultCluster);
+    cluster = ClusterUtils.newCluster(cassandraResource, defaultClusterOptions);
 
-      slowProfile =
-          defaultCluster
-              .getContext()
-              .config()
-              .getDefaultProfile()
-              .withString(CoreDriverOption.REQUEST_TIMEOUT, "30s");
-      // TODO: Make this more pleasant
-      if (createDefaultSession) {
-        if (!(cassandraResource instanceof SimulacronRule)) {
-          createKeyspace();
-          defaultSession = defaultCluster.connect(CqlIdentifier.fromCql(keyspace));
-        } else {
-          defaultSession = defaultCluster.connect();
-        }
-      }
+    slowProfile = ClusterUtils.slowProfile(cluster);
+
+    if (keyspace != null) {
+      ClusterUtils.createKeyspace(cluster, keyspace, slowProfile);
     }
-  }
-
-  private void createKeyspace() {
-    try (Session session = defaultCluster.connect()) {
-      SimpleStatement createKeyspace =
-          SimpleStatement.builder(
-                  String.format(
-                      "CREATE KEYSPACE %s WITH REPLICATION = { 'class' : 'SimpleStrategy', 'replication_factor' : 1 };",
-                      keyspace))
-              .withConfigProfile(slowProfile)
-              .build();
-      session.execute(createKeyspace);
-    }
-  }
-
-  private void dropKeyspace() {
     if (createDefaultSession) {
-      defaultSession.execute(
-          SimpleStatement.builder(String.format("DROP KEYSPACE IF EXISTS %s", keyspace))
-              .withConfigProfile(slowProfile)
-              .build());
+      defaultSession = cluster.connect(keyspace);
     }
   }
 
   @Override
   protected void after() {
-    if (createDefaultCluster) {
-      if (!(cassandraResource instanceof SimulacronRule)) {
-        dropKeyspace();
-      }
+    if (keyspace != null) {
+      ClusterUtils.dropKeyspace(cluster, keyspace, slowProfile);
     }
-    clusters.forEach(
-        c -> {
-          if (!c.closeFuture().toCompletableFuture().isDone()) {
-            c.close();
-          }
-        });
+    cluster.close();
   }
 
-  /** @return the default cluster created with this rule. */
+  /** @return the cluster created with this rule. */
   public Cluster cluster() {
-    return defaultCluster;
+    return cluster;
   }
 
-  /** @return the default session created with this rule. */
+  /**
+   * @return the default session created with this rule, or {@code null} if no default session was
+   *     created.
+   */
   public Session session() {
     return defaultSession;
   }
 
-  /** @return keyspace associated with this rule. */
-  public String keyspace() {
+  /**
+   * @return the identifier of the keyspace associated with this rule, or {@code null} if no
+   *     keyspace was created (this is always the case if the server resource is a {@link
+   *     SimulacronRule}).
+   */
+  public CqlIdentifier keyspace() {
     return keyspace;
   }
 
   /** @return a config profile where the request timeout is 30 seconds. * */
   public DriverConfigProfile slowProfile() {
     return slowProfile;
-  }
-
-  /**
-   * @return A {@link DefaultCluster} instance using the nodes in 0th DC as contact points and
-   *     defaults for all other configuration. Registers the returned cluster with the rule so it is
-   *     closed on completion.
-   */
-  public Cluster defaultCluster(String... options) {
-    Cluster cluster =
-        Cluster.builder()
-            .addContactPoints(getContactPoints())
-            .withConfigLoader(new TestConfigLoader(options))
-            .build();
-    clusters.add(cluster);
-    return cluster;
-  }
-
-  @Override
-  public ProtocolVersion getHighestProtocolVersion() {
-    return cassandraResource.getHighestProtocolVersion();
-  }
-
-  @Override
-  public Set<InetSocketAddress> getContactPoints() {
-    return cassandraResource.getContactPoints();
-  }
-
-  /** @return a new session from the default cluster associated with this rule. */
-  public Session newSession() {
-    return defaultCluster.connect();
   }
 }

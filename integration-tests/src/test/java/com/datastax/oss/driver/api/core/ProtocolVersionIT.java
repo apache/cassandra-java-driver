@@ -18,7 +18,7 @@ package com.datastax.oss.driver.api.core;
 import com.datastax.oss.driver.api.core.session.Session;
 import com.datastax.oss.driver.api.testinfra.CassandraRequirement;
 import com.datastax.oss.driver.api.testinfra.ccm.CcmRule;
-import com.datastax.oss.driver.api.testinfra.cluster.ClusterRule;
+import com.datastax.oss.driver.api.testinfra.cluster.ClusterUtils;
 import org.junit.Rule;
 import org.junit.Test;
 
@@ -28,8 +28,6 @@ public class ProtocolVersionIT {
 
   @Rule public CcmRule ccm = CcmRule.getInstance();
 
-  @Rule public ClusterRule cluster = new ClusterRule(ccm, false, false);
-
   @CassandraRequirement(
     min = "2.1",
     max = "2.2",
@@ -37,7 +35,7 @@ public class ProtocolVersionIT {
   )
   @Test
   public void should_downgrade_to_v3() {
-    try (Cluster v3cluster = cluster.defaultCluster()) {
+    try (Cluster v3cluster = ClusterUtils.newCluster(ccm)) {
       assertThat(v3cluster.getContext().protocolVersion().getCode()).isEqualTo(3);
 
       Session session = v3cluster.connect();
@@ -52,7 +50,7 @@ public class ProtocolVersionIT {
   )
   @Test
   public void should_fail_if_provided_version_isnt_supported() {
-    try (Cluster v4cluster = cluster.defaultCluster("protocol.version = V4")) {
+    try (Cluster v4cluster = ClusterUtils.newCluster(ccm, "protocol.version = V4")) {
       assertThat(v4cluster.getContext().protocolVersion().getCode()).isEqualTo(3);
 
       Session session = v4cluster.connect();
@@ -69,7 +67,7 @@ public class ProtocolVersionIT {
   @CassandraRequirement(min = "2.2", description = "required to meet default protocol version")
   @Test
   public void should_not_downgrade() {
-    try (Cluster v4cluster = cluster.defaultCluster()) {
+    try (Cluster v4cluster = ClusterUtils.newCluster(ccm)) {
       assertThat(v4cluster.getContext().protocolVersion().getCode()).isEqualTo(4);
 
       Session session = v4cluster.connect();
@@ -80,7 +78,7 @@ public class ProtocolVersionIT {
   @CassandraRequirement(min = "2.2", description = "required to use an older protocol version")
   @Test
   public void should_use_explicitly_provided_protocol_version() {
-    try (Cluster v3cluster = cluster.defaultCluster("protocol.version = V3")) {
+    try (Cluster v3cluster = ClusterUtils.newCluster(ccm, "protocol.version = V3")) {
       assertThat(v3cluster.getContext().protocolVersion().getCode()).isEqualTo(3);
 
       Session session = v3cluster.connect();

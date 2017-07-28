@@ -15,12 +15,14 @@
  */
 package com.datastax.oss.driver.api.core.heartbeat;
 
+import com.datastax.oss.driver.api.core.Cluster;
 import com.datastax.oss.driver.api.core.metadata.Node;
 import com.datastax.oss.driver.api.core.metadata.NodeState;
 import com.datastax.oss.driver.api.core.session.Session;
-import com.datastax.oss.driver.categories.LongTests;
 import com.datastax.oss.driver.api.testinfra.cluster.ClusterRule;
+import com.datastax.oss.driver.api.testinfra.cluster.ClusterUtils;
 import com.datastax.oss.driver.api.testinfra.simulacron.SimulacronRule;
+import com.datastax.oss.driver.categories.LongTests;
 import com.datastax.oss.simulacron.common.cluster.ClusterSpec;
 import com.datastax.oss.simulacron.common.cluster.QueryLog;
 import com.datastax.oss.simulacron.common.request.Options;
@@ -59,14 +61,14 @@ public class HeartbeatIT {
 
   @Rule
   public ClusterRule cluster =
-      new ClusterRule(
-          simulacron,
-          true,
-          false,
-          "connection.heartbeat.interval = 1 second",
-          "connection.heartbeat.timeout = 500 milliseconds",
-          "connection.init-query-timeout = 2 seconds",
-          "connection.reconnection-policy.max-delay = 1 second");
+      ClusterRule.builder(simulacron)
+          .withDefaultSession(false)
+          .withOptions(
+              "connection.heartbeat.interval = 1 second",
+              "connection.heartbeat.timeout = 500 milliseconds",
+              "connection.init-query-timeout = 2 seconds",
+              "connection.reconnection-policy.max-delay = 1 second")
+          .build();
 
   private static final String queryStr = "select * from foo";
 
@@ -112,7 +114,7 @@ public class HeartbeatIT {
   public void node_should_go_down_gracefully_when_connection_closed_during_heartbeat()
       throws InterruptedException {
     // Create session to initialize pools.
-    cluster.newSession();
+    cluster.cluster().connect();
 
     // Node should be up.
     Node node = cluster.cluster().getMetadata().getNodes().get(nonControlNode.inetSocketAddress());
@@ -144,7 +146,7 @@ public class HeartbeatIT {
     Node node = cluster.cluster().getMetadata().getNodes().get(nonControlNode.inetSocketAddress());
 
     // Create session to initialize pools.
-    cluster.newSession();
+    cluster.cluster().connect();
 
     // wait for node to go down as result of startup failing.
     waitForDown(node);
@@ -185,7 +187,7 @@ public class HeartbeatIT {
     checkThat(() -> controlNodeHeartbeats.get() > 0).becomesTrue();
 
     // Create session to initialize pools.
-    Session session = cluster.newSession();
+    Session session = cluster.cluster().connect();
 
     // Ensure we get a heartbeat after a second.
     AtomicInteger heartbeats = new AtomicInteger();
@@ -227,7 +229,7 @@ public class HeartbeatIT {
     AtomicInteger heartbeats = registerHeartbeatListener();
 
     // Send requests over 2.5 seconds.
-    Session session = cluster.newSession();
+    Session session = cluster.cluster().connect();
     for (int i = 0; i < 25; i++) {
       session.executeAsync(noResponseQueryStr);
       session.executeAsync(noResponseQueryStr);
@@ -240,7 +242,7 @@ public class HeartbeatIT {
 
   @Test
   public void should_close_connection_when_heartbeat_times_out() {
-    cluster.newSession();
+    cluster.cluster().connect();
 
     Node node = cluster.cluster().getMetadata().getNodes().get(nonControlNode.inetSocketAddress());
 
@@ -279,8 +281,9 @@ public class HeartbeatIT {
   @Category(LongTests.class)
   public void should_not_send_heartbeat_when_disabled() throws InterruptedException {
     // Disable heartbeats entirely, wait longer than the default timeout and make sure we didn't receive any
-    try (Session session =
-        cluster.defaultCluster("connection.heartbeat.interval = 0 second").connect()) {
+    try (Cluster cluster =
+        ClusterUtils.newCluster(simulacron, "connection.heartbeat.interval = 0 second")) {
+      cluster.connect();
       AtomicInteger heartbeats = registerHeartbeatListener();
       SECONDS.sleep(35);
 

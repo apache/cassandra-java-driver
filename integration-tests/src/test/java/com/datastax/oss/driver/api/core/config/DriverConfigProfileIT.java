@@ -28,7 +28,7 @@ import com.datastax.oss.driver.api.core.cql.SimpleStatement;
 import com.datastax.oss.driver.api.core.servererrors.ServerError;
 import com.datastax.oss.driver.api.core.session.Session;
 import com.datastax.oss.driver.api.testinfra.ccm.CcmRule;
-import com.datastax.oss.driver.api.testinfra.cluster.ClusterRule;
+import com.datastax.oss.driver.api.testinfra.cluster.ClusterUtils;
 import com.datastax.oss.driver.api.testinfra.simulacron.SimulacronRule;
 import com.datastax.oss.simulacron.common.cluster.ClusterSpec;
 import com.datastax.oss.simulacron.common.cluster.QueryLog;
@@ -50,17 +50,13 @@ public class DriverConfigProfileIT {
 
   @Rule public CcmRule ccm = CcmRule.getInstance();
 
-  @Rule public ClusterRule cluster = new ClusterRule(simulacron, false, false);
-
-  @Rule public ClusterRule ccmCluster = new ClusterRule(ccm, false, false);
-
   @Rule public ExpectedException thrown = ExpectedException.none();
 
   // TODO: Test with reprepare on all nodes profile configuration
 
   @Test
   public void should_fail_if_config_profile_specified_doesnt_exist() {
-    try (Cluster profileCluster = cluster.defaultCluster()) {
+    try (Cluster profileCluster = ClusterUtils.newCluster(simulacron)) {
       Session session = profileCluster.connect();
 
       SimpleStatement statement =
@@ -76,7 +72,8 @@ public class DriverConfigProfileIT {
 
   @Test
   public void should_use_profile_request_timeout() {
-    try (Cluster profileCluster = cluster.defaultCluster("profiles.olap.request.timeout = 10s")) {
+    try (Cluster profileCluster =
+        ClusterUtils.newCluster(simulacron, "profiles.olap.request.timeout = 10s")) {
       String query = "mockquery";
       // configure query with delay of 2 seconds.
       simulacron.cluster().prime(when(query).then(noRows()).delay(1, TimeUnit.SECONDS));
@@ -98,7 +95,7 @@ public class DriverConfigProfileIT {
   @Test
   public void should_use_profile_default_idempotence() {
     try (Cluster profileCluster =
-        cluster.defaultCluster("profiles.idem.request.default-idempotence = true")) {
+        ClusterUtils.newCluster(simulacron, "profiles.idem.request.default-idempotence = true")) {
       String query = "mockquery";
       // configure query with server error which should invoke onRequestError in retry policy.
       simulacron.cluster().prime(when(query).then(serverError("fail")));
@@ -122,7 +119,8 @@ public class DriverConfigProfileIT {
   @Test
   public void should_use_profile_consistency() {
     try (Cluster profileCluster =
-        cluster.defaultCluster(
+        ClusterUtils.newCluster(
+            simulacron,
             "profiles.cl.request.consistency = LOCAL_QUORUM",
             "profiles.cl.request.serial-consistency = LOCAL_SERIAL")) {
       String query = "mockquery";
@@ -176,31 +174,24 @@ public class DriverConfigProfileIT {
   @Test
   public void should_use_profile_page_size() {
     try (Cluster profileCluster =
-        ccmCluster.defaultCluster(
-            "request.page-size = 100",
-            "profiles.slow.request.timeout = 30s",
-            "profiles.smallpages.request.page-size = 10")) {
+        ClusterUtils.newCluster(
+            ccm, "request.page-size = 100", "profiles.smallpages.request.page-size = 10")) {
 
-      SimpleStatement createKeyspace =
-          SimpleStatement.builder(
-                  String.format(
-                      "CREATE KEYSPACE %s WITH REPLICATION = { 'class' : 'SimpleStrategy', 'replication_factor' : 1 };",
-                      ccmCluster.keyspace()))
-              .withConfigProfileName("slow")
-              .build();
-      profileCluster.connect().execute(createKeyspace);
+      CqlIdentifier keyspace = ClusterUtils.uniqueKeyspaceId();
+      DriverConfigProfile slowProfile = ClusterUtils.slowProfile(profileCluster);
+      ClusterUtils.createKeyspace(profileCluster, keyspace, slowProfile);
 
-      Session session = profileCluster.connect(CqlIdentifier.fromCql(ccmCluster.keyspace()));
+      Session session = profileCluster.connect(keyspace);
 
       // load 500 rows (value beyond page size).
       session.execute(
           SimpleStatement.builder(
                   "CREATE TABLE IF NOT EXISTS test (k int, v int, PRIMARY KEY (k,v))")
-              .withConfigProfileName("slow")
+              .withConfigProfile(slowProfile)
               .build());
       PreparedStatement prepared = session.prepare("INSERT INTO test (k, v) values (0, ?)");
       BatchStatementBuilder bs =
-          BatchStatement.builder(BatchType.UNLOGGED).withConfigProfileName("slow");
+          BatchStatement.builder(BatchType.UNLOGGED).withConfigProfile(slowProfile);
       for (int i = 0; i < 500; i++) {
         bs.addStatement(prepared.bind(i));
       }
@@ -222,6 +213,8 @@ public class DriverConfigProfileIT {
       // next fetch should also be 10 pages.
       result.fetchNextPage();
       assertThat(result.getAvailableWithoutFetching()).isEqualTo(20);
+
+      ClusterUtils.dropKeyspace(profileCluster, keyspace, slowProfile);
     }
   }
 }

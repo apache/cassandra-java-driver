@@ -20,8 +20,8 @@ import com.datastax.oss.driver.api.core.Cluster;
 import com.datastax.oss.driver.api.core.cql.ResultSet;
 import com.datastax.oss.driver.api.core.cql.SimpleStatement;
 import com.datastax.oss.driver.api.core.session.Session;
+import com.datastax.oss.driver.api.testinfra.cluster.ClusterUtils;
 import com.datastax.oss.driver.api.testinfra.simulacron.SimulacronRule;
-import com.datastax.oss.driver.internal.testinfra.cluster.TestConfigLoader;
 import com.datastax.oss.simulacron.common.cluster.ClusterSpec;
 import com.datastax.oss.simulacron.common.stubbing.PrimeDsl;
 import java.util.concurrent.TimeUnit;
@@ -237,21 +237,16 @@ public class SpeculativeExecutionIT {
 
   // Build a new Cluster instance for each test, because we need different configurations
   private Cluster buildCluster(int maxSpeculativeExecutions, long speculativeDelayMs) {
-    return Cluster.builder()
-        .addContactPoints(simulacron.getContactPoints())
-        .withConfigLoader(
-            new TestConfigLoader(
-                String.format("request.timeout = %d milliseconds", SPECULATIVE_DELAY * 10),
-                "request.default-idempotence = true",
-                "load-balancing-policy.class = com.datastax.oss.driver.api.testinfra.loadbalancing.SortingLoadBalancingPolicy",
-                "request.speculative-execution-policy.class = com.datastax.oss.driver.api.core.specex.ConstantSpeculativeExecutionPolicy",
-                String.format(
-                    "request.speculative-execution-policy.max-executions = %d",
-                    maxSpeculativeExecutions),
-                String.format(
-                    "request.speculative-execution-policy.delay = %d milliseconds",
-                    speculativeDelayMs)))
-        .build();
+    return ClusterUtils.newCluster(
+        simulacron,
+        String.format("request.timeout = %d milliseconds", SPECULATIVE_DELAY * 10),
+        "request.default-idempotence = true",
+        "load-balancing-policy.class = com.datastax.oss.driver.api.testinfra.loadbalancing.SortingLoadBalancingPolicy",
+        "request.speculative-execution-policy.class = com.datastax.oss.driver.api.core.specex.ConstantSpeculativeExecutionPolicy",
+        String.format(
+            "request.speculative-execution-policy.max-executions = %d", maxSpeculativeExecutions),
+        String.format(
+            "request.speculative-execution-policy.delay = %d milliseconds", speculativeDelayMs));
   }
 
   private void primeNode(int id, PrimeDsl.PrimeBuilder primeBuilder) {

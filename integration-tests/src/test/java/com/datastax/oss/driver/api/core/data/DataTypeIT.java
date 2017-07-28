@@ -230,7 +230,7 @@ public class DataTypeIT {
 
               UserDefinedType udt =
                   new DefaultUserDefinedType(
-                      CqlIdentifier.fromCql(cluster.keyspace()),
+                      cluster.keyspace(),
                       CqlIdentifier.fromCql(userTypeFor(types)),
                       typeNames,
                       types);
@@ -748,9 +748,9 @@ public class DataTypeIT {
     }
 
     // Decode directly using the codec
-    assertThat(codec.decode(row.getBytesUnsafe(columnName), cluster.getHighestProtocolVersion()))
+    assertThat(codec.decode(row.getBytesUnsafe(columnName), ccm.getHighestProtocolVersion()))
         .isEqualTo(value);
-    assertThat(codec.decode(row.getBytesUnsafe(0), cluster.getHighestProtocolVersion()))
+    assertThat(codec.decode(row.getBytesUnsafe(0), ccm.getHighestProtocolVersion()))
         .isEqualTo(value);
   }
 

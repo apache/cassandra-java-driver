@@ -19,7 +19,7 @@ import com.datastax.oss.driver.api.core.Cluster;
 import com.datastax.oss.driver.api.core.session.Session;
 import com.datastax.oss.driver.api.testinfra.ccm.CcmBridge;
 import com.datastax.oss.driver.api.testinfra.ccm.CustomCcmRule;
-import com.datastax.oss.driver.api.testinfra.cluster.ClusterRule;
+import com.datastax.oss.driver.api.testinfra.cluster.ClusterUtils;
 import com.datastax.oss.driver.categories.IsolatedTests;
 import org.junit.ClassRule;
 import org.junit.Test;
@@ -29,8 +29,6 @@ import org.junit.experimental.categories.Category;
 public class DefaultSslEngineFactoryWithClientAuthIT {
 
   @ClassRule public static CustomCcmRule ccm = CustomCcmRule.builder().withSslAuth().build();
-
-  @ClassRule public static ClusterRule cluster = new ClusterRule(ccm, false, false);
 
   @Test
   public void should_connect_with_ssl_using_client_auth() {
@@ -43,7 +41,8 @@ public class DefaultSslEngineFactoryWithClientAuthIT {
     System.setProperty(
         "javax.net.ssl.trustStorePassword", CcmBridge.DEFAULT_CLIENT_TRUSTSTORE_PASSWORD);
     try (Cluster sslCluster =
-        cluster.defaultCluster(
+        ClusterUtils.newCluster(
+            ccm,
             "ssl-engine-factory.class = com.datastax.oss.driver.api.core.ssl.DefaultSslEngineFactory")) {
       Session session = sslCluster.connect();
       session.execute("select * from system.local");

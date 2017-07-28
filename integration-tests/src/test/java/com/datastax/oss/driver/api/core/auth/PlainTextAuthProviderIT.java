@@ -19,7 +19,7 @@ import com.datastax.oss.driver.api.core.AllNodesFailedException;
 import com.datastax.oss.driver.api.core.Cluster;
 import com.datastax.oss.driver.api.core.session.Session;
 import com.datastax.oss.driver.api.testinfra.ccm.CustomCcmRule;
-import com.datastax.oss.driver.api.testinfra.cluster.ClusterRule;
+import com.datastax.oss.driver.api.testinfra.cluster.ClusterUtils;
 import com.datastax.oss.driver.categories.LongTests;
 import org.junit.ClassRule;
 import org.junit.Test;
@@ -35,12 +35,11 @@ public class PlainTextAuthProviderIT {
           .withJvmArgs("-Dcassandra.superuser_setup_delay_ms=0")
           .build();
 
-  @ClassRule public static ClusterRule cluster = new ClusterRule(ccm, false, false);
-
   @Test
   public void should_connect_with_credentials() {
     try (Cluster authCluster =
-        cluster.defaultCluster(
+        ClusterUtils.newCluster(
+            ccm,
             "protocol.auth-provider.class = com.datastax.oss.driver.api.core.auth.PlainTextAuthProvider",
             "protocol.auth-provider.username = cassandra",
             "protocol.auth-provider.password = cassandra")) {
@@ -52,7 +51,8 @@ public class PlainTextAuthProviderIT {
   @Test(expected = AllNodesFailedException.class)
   public void should_not_connect_with_invalid_credentials() {
     try (Cluster authCluster =
-        cluster.defaultCluster(
+        ClusterUtils.newCluster(
+            ccm,
             "protocol.auth-provider.class = com.datastax.oss.driver.api.core.auth.PlainTextAuthProvider",
             "protocol.auth-provider.username = baduser",
             "protocol.auth-provider.password = badpass")) {
@@ -63,7 +63,7 @@ public class PlainTextAuthProviderIT {
 
   @Test(expected = AllNodesFailedException.class)
   public void should_not_connect_without_credentials() {
-    try (Cluster plainCluster = cluster.defaultCluster()) {
+    try (Cluster plainCluster = ClusterUtils.newCluster(ccm)) {
       Session session = plainCluster.connect();
       session.execute("select * from system.local");
     }
