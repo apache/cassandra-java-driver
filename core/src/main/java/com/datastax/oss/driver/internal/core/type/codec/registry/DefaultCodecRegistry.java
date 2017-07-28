@@ -15,13 +15,17 @@
  */
 package com.datastax.oss.driver.internal.core.type.codec.registry;
 
+import com.datastax.oss.driver.api.core.DriverExecutionException;
 import com.datastax.oss.driver.api.core.type.DataType;
 import com.datastax.oss.driver.api.core.type.codec.TypeCodec;
 import com.datastax.oss.driver.api.core.type.reflect.GenericType;
+import com.google.common.base.Throwables;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
 import com.google.common.cache.RemovalListener;
+import com.google.common.util.concurrent.ExecutionError;
+import com.google.common.util.concurrent.UncheckedExecutionException;
 import java.util.Objects;
 import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
@@ -87,7 +91,19 @@ public class DefaultCodecRegistry extends CachingCodecRegistry {
   @Override
   protected TypeCodec<?> getCachedCodec(DataType cqlType, GenericType<?> javaType) {
     LOG.trace("[{}] Checking cache", logPrefix);
-    return cache.getUnchecked(new CacheKey(cqlType, javaType));
+    try {
+      return cache.getUnchecked(new CacheKey(cqlType, javaType));
+    } catch (UncheckedExecutionException | ExecutionError e) {
+      // unwrap exception cause and throw it directly.
+      Throwable cause = e.getCause();
+      if (cause != null) {
+        Throwables.throwIfUnchecked(cause);
+        throw new DriverExecutionException(cause);
+      } else {
+        // Should never happen, throw just in case
+        throw new RuntimeException(e.getMessage());
+      }
+    }
   }
 
   public static final class CacheKey {

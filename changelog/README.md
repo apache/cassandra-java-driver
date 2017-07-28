@@ -4,6 +4,7 @@
 
 ### 4.0.0-alpha1 (in progress)
 
+- [improvement] JAVA-1586: Throw underlying exception when codec not found in cache
 - [bug] JAVA-1583: Handle write failure in ChannelHandlerRequest
 - [improvement] JAVA-1541: Reorganize configuration
 - [improvement] JAVA-1577: Set default consistency level to LOCAL_ONE

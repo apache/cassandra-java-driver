@@ -27,6 +27,7 @@ import com.datastax.oss.driver.api.core.type.MapType;
 import com.datastax.oss.driver.api.core.type.SetType;
 import com.datastax.oss.driver.api.core.type.TupleType;
 import com.datastax.oss.driver.api.core.type.UserDefinedType;
+import com.datastax.oss.driver.api.core.type.codec.CodecNotFoundException;
 import com.datastax.oss.driver.api.core.type.codec.TypeCodec;
 import com.datastax.oss.driver.api.core.type.codec.TypeCodecs;
 import com.datastax.oss.driver.api.core.type.codec.registry.CodecRegistry;
@@ -36,7 +37,6 @@ import com.datastax.oss.driver.internal.core.type.codec.CqlIntToStringCodec;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
-import com.google.common.util.concurrent.UncheckedExecutionException;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.net.Inet4Address;
@@ -552,19 +552,19 @@ public class CachingCodecRegistryTest {
     try {
       CodecRegistry.DEFAULT.codecFor(StringBuilder.class);
       fail("Should not have found a codec for ANY <-> StringBuilder");
-    } catch (UncheckedExecutionException e) {
+    } catch (CodecNotFoundException e) {
       // expected
     }
     try {
       CodecRegistry.DEFAULT.codecFor(DataTypes.TEXT, StringBuilder.class);
       fail("Should not have found a codec for varchar <-> StringBuilder");
-    } catch (UncheckedExecutionException e) {
+    } catch (CodecNotFoundException e) {
       // expected
     }
     try {
       CodecRegistry.DEFAULT.codecFor(new StringBuilder());
       fail("Should not have found a codec for ANY <-> StringBuilder");
-    } catch (UncheckedExecutionException e) {
+    } catch (CodecNotFoundException e) {
       // expected
     }
   }
