@@ -17,6 +17,7 @@ package com.datastax.oss.driver.api.core.data;
 
 import com.datastax.oss.driver.api.core.CassandraVersion;
 import com.datastax.oss.driver.api.core.CqlIdentifier;
+import com.datastax.oss.driver.api.core.ProtocolVersion;
 import com.datastax.oss.driver.api.core.cql.BoundStatement;
 import com.datastax.oss.driver.api.core.cql.BoundStatementBuilder;
 import com.datastax.oss.driver.api.core.cql.PreparedStatement;
@@ -748,10 +749,9 @@ public class DataTypeIT {
     }
 
     // Decode directly using the codec
-    assertThat(codec.decode(row.getBytesUnsafe(columnName), ccm.getHighestProtocolVersion()))
-        .isEqualTo(value);
-    assertThat(codec.decode(row.getBytesUnsafe(0), ccm.getHighestProtocolVersion()))
-        .isEqualTo(value);
+    ProtocolVersion protocolVersion = cluster.cluster().getContext().protocolVersion();
+    assertThat(codec.decode(row.getBytesUnsafe(columnName), protocolVersion)).isEqualTo(value);
+    assertThat(codec.decode(row.getBytesUnsafe(0), protocolVersion)).isEqualTo(value);
   }
 
   private static String typeFor(DataType dataType) {
