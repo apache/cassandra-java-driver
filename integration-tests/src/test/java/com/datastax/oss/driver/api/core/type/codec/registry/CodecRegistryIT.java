@@ -143,7 +143,7 @@ public class CodecRegistryIT {
             .addTypeCodecs(new FloatCIntCodec())
             .addContactPoints(ccm.getContactPoints())
             .build()) {
-      Session session = codecCluster.connect(CqlIdentifier.fromCql(cluster.keyspace()));
+      Session session = codecCluster.connect(cluster.keyspace());
 
       PreparedStatement prepared = session.prepare("INSERT INTO test (k, v) values (?, ?)");
 
