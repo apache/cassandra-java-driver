@@ -4,6 +4,7 @@
 
 ### 4.0.0-alpha1 (in progress)
 
+- [bug] JAVA-1583: Handle write failure in ChannelHandlerRequest
 - [improvement] JAVA-1541: Reorganize configuration
 - [improvement] JAVA-1577: Set default consistency level to LOCAL_ONE
 - [bug] JAVA-1548: Retry idempotent statements on READ_TIMEOUT and UNAVAILABLE
