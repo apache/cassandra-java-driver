@@ -16,6 +16,8 @@
 package com.datastax.oss.driver.api.core.connection;
 
 import com.datastax.oss.driver.api.core.DriverException;
+import com.datastax.oss.driver.api.core.retry.RetryPolicy;
+import com.datastax.oss.driver.api.core.session.Request;
 import java.net.SocketAddress;
 
 /**
@@ -23,8 +25,8 @@ import java.net.SocketAddress;
  *
  * <p>Heartbeat queries are sent automatically on idle connections, to ensure that they are still
  * alive. If a heartbeat query fails, the connection is closed, and all pending queries are aborted.
- * Depending on the retry policy, the heartbeat exception can either be rethrown directly to the
- * client, or the driver tries the next host in the query plan.
+ * The exception will be passed to {@link RetryPolicy#onRequestAborted(Request, Throwable, int)},
+ * which decides what to do next (the default policy retries the query on the next node).
  */
 public class HeartbeatException extends DriverException {
 
