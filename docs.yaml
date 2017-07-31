@@ -35,17 +35,16 @@ links:
   - title: Code
     href:  https://github.com/datastax/java-driver/
   - title: Docs
-    href:  http://datastax.github.io/java-driver/
+    href:  http://docs.datastax.com/en/developer/java-driver/
   - title: Issues
     href:  https://datastax-oss.atlassian.net/browse/JAVA/
   - title: Mailing List
     href:  https://groups.google.com/a/lists.datastax.com/forum/#!forum/java-driver-user
-  - title: IRC Channel
-    href:  irc://irc.freenode.net/datastax-drivers
   - title: Releases
-    href:  https://github.com/datastax/java-driver/releases
+    href:  http://downloads.datastax.com/java-driver/
 api_docs:
   3.3: http://docs.datastax.com/en/drivers/java/3.3
+  4.0-alpha: http://docs.datastax.com/en/drivers/java/4.0
   3.2: http://docs.datastax.com/en/drivers/java/3.2
   3.1: http://docs.datastax.com/en/drivers/java/3.1
   3.0: http://docs.datastax.com/en/drivers/java/3.0
@@ -54,6 +53,8 @@ api_docs:
 versions:
   - name: '3.3'
     ref: '3.3.0'
+  - name: '4.0-alpha'
+    ref: '4.0.0-alpha1'
   - name: '3.2'
     ref: '3.2_docfixes'
   - name: '3.1'
