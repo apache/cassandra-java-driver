@@ -1,6 +1,6 @@
 ## Upgrade guide
 
-### 3.x to 4.0.0
+### 4.0.0-alpha1
 
 Java driver 4 is **not binary compatible** with previous versions. However, most of the concepts
 remain unchanged, and the new API will look very familiar to 2.x and 3.x users.
