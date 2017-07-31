@@ -25,6 +25,7 @@ import com.datastax.oss.simulacron.server.BoundNode;
 import com.datastax.oss.simulacron.server.Server;
 import java.net.InetSocketAddress;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 
 public class SimulacronRule extends CassandraResourceRule {
@@ -34,6 +35,8 @@ public class SimulacronRule extends CassandraResourceRule {
 
   private final ClusterSpec clusterSpec;
   private BoundCluster boundCluster;
+
+  private final AtomicBoolean started = new AtomicBoolean();
 
   public SimulacronRule(ClusterSpec clusterSpec) {
     this.clusterSpec = clusterSpec;
@@ -58,7 +61,10 @@ public class SimulacronRule extends CassandraResourceRule {
 
   @Override
   protected void before() {
-    boundCluster = server.register(clusterSpec);
+    // prevent duplicate initialization of rule
+    if (started.compareAndSet(false, true)) {
+      boundCluster = server.register(clusterSpec);
+    }
   }
 
   @Override
