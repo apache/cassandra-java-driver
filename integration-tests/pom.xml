@@ -52,8 +52,15 @@
 
   <build>
     <plugins>
+      <!-- Don't install or deploy since it's just tests -->
       <plugin>
-        <!-- don't deploy this code to maven central since it's just tests -->
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-install-plugin</artifactId>
+        <configuration>
+          <skip>true</skip>
+        </configuration>
+      </plugin>
+      <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-deploy-plugin</artifactId>
         <configuration>
