@@ -65,7 +65,7 @@ public class SinglePageResultSet implements ResultSet {
 
   @Override
   public Iterator<Row> iterator() {
-    return onlyPage.iterator();
+    return onlyPage.currentPage().iterator();
   }
 
   @Override

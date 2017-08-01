@@ -21,16 +21,10 @@ import java.util.concurrent.CompletionStage;
 /**
  * The result of an asynchronous CQL query.
  *
- * <p>If the query is paged, the rows returned by {@link #iterator()} represent <b>only the current
- * page</b>. To keep iterating beyond that, use {@link #fetchNextPage()}.
- *
- * <p>Note that this object can only be iterated once: rows are "consumed" as they are read,
- * subsequent calls to {@code iterator()} will return an empty iterator.
- *
  * @see Session#executeAsync(Statement)
  * @see Session#executeAsync(String)
  */
-public interface AsyncResultSet extends Iterable<Row> {
+public interface AsyncResultSet {
 
   ColumnDefinitions getColumnDefinitions();
 
@@ -38,6 +32,15 @@ public interface AsyncResultSet extends Iterable<Row> {
 
   /** How many rows are left before the current page is exhausted. */
   int remaining();
+
+  /**
+   * The rows in the current page. To keep iterating beyond that, use {@link #hasMorePages()} and
+   * {@link #fetchNextPage()}.
+   *
+   * <p>Note that this method always returns the same object, and that that object can only be
+   * iterated once: rows are "consumed" as they are read.
+   */
+  Iterable<Row> currentPage();
 
   /**
    * Whether there are more pages of results. If so, call {@link #fetchNextPage()} to fetch the next

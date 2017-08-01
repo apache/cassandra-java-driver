@@ -219,7 +219,7 @@ public class ResultSetsTest {
             return (index == null) ? endOfData() : mockRow(index);
           }
         };
-    Mockito.when(page.iterator()).thenReturn(iterator);
+    Mockito.when(page.currentPage()).thenReturn(() -> iterator);
     Mockito.when(page.remaining()).thenAnswer(invocation -> iterator.remaining());
 
     return page;

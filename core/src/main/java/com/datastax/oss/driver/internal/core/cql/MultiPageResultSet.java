@@ -88,7 +88,7 @@ public class MultiPageResultSet implements ResultSet {
     private RowIterator(AsyncResultSet firstPage) {
       super(firstPage.remaining());
       this.pages.add(firstPage);
-      this.currentRows = firstPage.iterator();
+      this.currentRows = firstPage.currentPage().iterator();
     }
 
     @Override
@@ -103,7 +103,7 @@ public class MultiPageResultSet implements ResultSet {
         // We've just finished iterating the current page, remove it
         pages.removeFirst();
         if (!pages.isEmpty()) {
-          currentRows = pages.getFirst().iterator();
+          currentRows = pages.getFirst().currentPage().iterator();
         }
       }
     }

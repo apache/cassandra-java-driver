@@ -82,7 +82,7 @@ public class AsyncResultSetIT {
     assertThat(rs.remaining()).isEqualTo(PAGE_SIZE);
     assertThat(rs.hasMorePages()).isTrue();
 
-    Iterator<Row> rowIt = rs.iterator();
+    Iterator<Row> rowIt = rs.currentPage().iterator();
     for (int i = 0; i < PAGE_SIZE; i++) {
       Row row = rowIt.next();
       assertThat(row.getString("k0")).isEqualTo(PARTITION_KEY1);
@@ -160,7 +160,7 @@ public class AsyncResultSetIT {
       int pages = result.remaining() == 0 ? pagesSoFar : pagesSoFar + 1;
 
       // iterate over page and ensure data is in order.
-      for (Row row : result) {
+      for (Row row : result.currentPage()) {
         int v = row.getInt("v");
         if (v != consumedRows) {
           CompletableFuture<PageStatistics> next = new CompletableFuture<>();

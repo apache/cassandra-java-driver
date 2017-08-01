@@ -71,7 +71,7 @@ public class CqlRequestHandlerRetryTest extends CqlRequestHandlerTestBase {
       assertThat(resultSetFuture)
           .isSuccess(
               resultSet -> {
-                Iterator<Row> rows = resultSet.iterator();
+                Iterator<Row> rows = resultSet.currentPage().iterator();
                 assertThat(rows.hasNext()).isTrue();
                 assertThat(rows.next().getString("message")).isEqualTo("hello, world");
 
@@ -139,7 +139,7 @@ public class CqlRequestHandlerRetryTest extends CqlRequestHandlerTestBase {
       assertThat(resultSetFuture)
           .isSuccess(
               resultSet -> {
-                Iterator<Row> rows = resultSet.iterator();
+                Iterator<Row> rows = resultSet.currentPage().iterator();
                 assertThat(rows.hasNext()).isTrue();
                 assertThat(rows.next().getString("message")).isEqualTo("hello, world");
 
@@ -171,7 +171,7 @@ public class CqlRequestHandlerRetryTest extends CqlRequestHandlerTestBase {
       assertThat(resultSetFuture)
           .isSuccess(
               resultSet -> {
-                Iterator<Row> rows = resultSet.iterator();
+                Iterator<Row> rows = resultSet.currentPage().iterator();
                 assertThat(rows.hasNext()).isTrue();
                 assertThat(rows.next().getString("message")).isEqualTo("hello, world");
 
@@ -202,7 +202,7 @@ public class CqlRequestHandlerRetryTest extends CqlRequestHandlerTestBase {
       assertThat(resultSetFuture)
           .isSuccess(
               resultSet -> {
-                Iterator<Row> rows = resultSet.iterator();
+                Iterator<Row> rows = resultSet.currentPage().iterator();
                 assertThat(rows.hasNext()).isFalse();
 
                 ExecutionInfo executionInfo = resultSet.getExecutionInfo();

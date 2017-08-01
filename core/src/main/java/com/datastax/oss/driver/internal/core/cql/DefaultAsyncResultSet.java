@@ -26,7 +26,6 @@ import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
 import com.datastax.oss.driver.internal.core.util.CountingIterator;
 import java.nio.ByteBuffer;
 import java.util.Collections;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Queue;
 import java.util.concurrent.CompletionStage;
@@ -41,6 +40,7 @@ public class DefaultAsyncResultSet implements AsyncResultSet {
   private final ExecutionInfo executionInfo;
   private final Session session;
   private final CountingIterator<Row> iterator;
+  private final Iterable<Row> currentPage;
 
   public DefaultAsyncResultSet(
       ColumnDefinitions definitions,
@@ -59,6 +59,7 @@ public class DefaultAsyncResultSet implements AsyncResultSet {
             return (rowData == null) ? endOfData() : new DefaultRow(definitions, rowData, context);
           }
         };
+    this.currentPage = () -> iterator;
   }
 
   @Override
@@ -72,8 +73,8 @@ public class DefaultAsyncResultSet implements AsyncResultSet {
   }
 
   @Override
-  public Iterator<Row> iterator() {
-    return iterator;
+  public Iterable<Row> currentPage() {
+    return currentPage;
   }
 
   @Override
@@ -104,7 +105,7 @@ public class DefaultAsyncResultSet implements AsyncResultSet {
     if (!definitions.contains("[applied]")
         || !definitions.get("[applied]").getType().equals(DataTypes.BOOLEAN)) {
       return true;
-    } else if (iterator().hasNext()) {
+    } else if (iterator.hasNext()) {
       // Note that [applied] has the same value for all rows, so as long as we have a row we don't
       // care which one it is.
       return iterator.peek().getBoolean("[applied]");
@@ -129,6 +130,11 @@ public class DefaultAsyncResultSet implements AsyncResultSet {
       }
 
       @Override
+      public Iterable<Row> currentPage() {
+        return Collections.emptyList();
+      }
+
+      @Override
       public int remaining() {
         return 0;
       }
@@ -142,11 +148,6 @@ public class DefaultAsyncResultSet implements AsyncResultSet {
       public CompletionStage<AsyncResultSet> fetchNextPage() throws IllegalStateException {
         throw new IllegalStateException(
             "No next page. Use #hasMorePages before calling this method to avoid this error.");
-      }
-
-      @Override
-      public Iterator<Row> iterator() {
-        return Collections.<Row>emptyList().iterator();
       }
 
       @Override
