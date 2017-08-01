@@ -220,18 +220,8 @@ public class Mapper<T> {
         }
     }
 
-    private static class AliasedMappedPropertyComparator implements Comparator<AliasedMappedProperty>
-    {
-        @Override
-        public int compare(AliasedMappedProperty o1, AliasedMappedProperty o2) {
-            String col1Name = o1.mappedProperty.getMappedName();
-            String col2Name = o2.mappedProperty.getMappedName();
-            return col1Name.compareTo(col2Name);
-        }
-    }
-
     private ListenableFuture<BoundStatement> saveQueryAsync(T entity, final EnumMap<Option.Type, Option> options) {
-        final Map<AliasedMappedProperty, Object> columnToValue = new TreeMap<AliasedMappedProperty, Object>(new AliasedMappedPropertyComparator());
+        final Map<AliasedMappedProperty, Object> columnToValue = new TreeMap<AliasedMappedProperty, Object>();
         final boolean useUnsetForNullValue = !shouldSaveNullFields(options) && manager.protocolVersionAsInt >= 4;
         final boolean includeColumnsWithNullValue = shouldSaveNullFields(options) || useUnsetForNullValue;
 
