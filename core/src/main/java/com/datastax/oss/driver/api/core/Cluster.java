@@ -22,6 +22,7 @@ import com.datastax.oss.driver.api.core.metadata.Node;
 import com.datastax.oss.driver.api.core.session.Session;
 import com.datastax.oss.driver.internal.core.util.concurrent.BlockingOperation;
 import com.datastax.oss.driver.internal.core.util.concurrent.CompletableFutures;
+import java.util.ResourceBundle;
 import java.util.concurrent.CompletionStage;
 
 /** An instance of the driver, that connects to a Cassandra cluster. */
@@ -29,6 +30,17 @@ public interface Cluster extends AsyncAutoCloseable {
   /** Returns a builder to create a new instance of the default implementation. */
   static ClusterBuilder builder() {
     return new ClusterBuilder();
+  }
+
+  /**
+   * The current version of the driver.
+   *
+   * <p>This is intended for products that wrap or extend the driver, as a way to check
+   * compatibility if end-users override the driver version in their application.
+   */
+  static String getDriverVersion() {
+    // Note: getBundle caches its result
+    return ResourceBundle.getBundle("com.datastax.oss.driver.Driver").getString("driver.version");
   }
 
   /**

@@ -4,6 +4,7 @@
 
 ### 4.0.0-alpha2 (in progress)
 
+- [improvement] JAVA-1591: Add programmatic way to get driver version
 
 ### 4.0.0-alpha1
 
