@@ -2,7 +2,10 @@
 
 <!-- Note: contrary to 3.x, insert new entries *first* in their section -->
 
-### 4.0.0-alpha1 (in progress)
+### 4.0.0-alpha2 (in progress)
+
+
+### 4.0.0-alpha1
 
 - [improvement] JAVA-1586: Throw underlying exception when codec not found in cache
 - [bug] JAVA-1583: Handle write failure in ChannelHandlerRequest
