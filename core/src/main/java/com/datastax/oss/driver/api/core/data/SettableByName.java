@@ -49,7 +49,7 @@ public interface SettableByName<T extends SettableByName<T>>
    *     to modify elsewhere in your application, make sure to {@link ByteBuffer#duplicate()
    *     duplicate} it beforehand. If you change the buffer's index or its contents in any way,
    *     further usage of this data will have unpredictable results.
-   * @throws IndexOutOfBoundsException if the index is invalid.
+   * @throws IndexOutOfBoundsException if the name is invalid.
    */
   default T setBytesUnsafe(String name, ByteBuffer v) {
     return setBytesUnsafe(firstIndexOf(name), v);
@@ -66,7 +66,7 @@ public interface SettableByName<T extends SettableByName<T>>
    * <p>This method deals with case sensitivity in the way explained in the documentation of {@link
    * AccessibleByName}.
    *
-   * @throws IndexOutOfBoundsException if the index is invalid.
+   * @throws IndexOutOfBoundsException if the name is invalid.
    */
   default T setToNull(String name) {
     return setToNull(firstIndexOf(name));
@@ -86,7 +86,7 @@ public interface SettableByName<T extends SettableByName<T>>
    * <p>This method deals with case sensitivity in the way explained in the documentation of {@link
    * AccessibleByName}.
    *
-   * @throws IndexOutOfBoundsException if the index is invalid.
+   * @throws IndexOutOfBoundsException if the name is invalid.
    */
   default <V> T set(String name, V v, TypeCodec<V> codec) {
     return set(firstIndexOf(name), v, codec);
@@ -103,7 +103,7 @@ public interface SettableByName<T extends SettableByName<T>>
    * <p>This method deals with case sensitivity in the way explained in the documentation of {@link
    * AccessibleByName}.
    *
-   * @throws IndexOutOfBoundsException if the index is invalid.
+   * @throws IndexOutOfBoundsException if the name is invalid.
    * @throws CodecNotFoundException if no codec can perform the conversion.
    */
   default <V> T set(String name, V v, GenericType<V> targetType) {
@@ -121,7 +121,7 @@ public interface SettableByName<T extends SettableByName<T>>
    * <p>This method deals with case sensitivity in the way explained in the documentation of {@link
    * AccessibleByName}.
    *
-   * @throws IndexOutOfBoundsException if the index is invalid.
+   * @throws IndexOutOfBoundsException if the name is invalid.
    * @throws CodecNotFoundException if no codec can perform the conversion.
    */
   default <V> T set(String name, V v, Class<V> targetClass) {
@@ -139,7 +139,7 @@ public interface SettableByName<T extends SettableByName<T>>
    * <p>This method deals with case sensitivity in the way explained in the documentation of {@link
    * AccessibleByName}.
    *
-   * @throws IndexOutOfBoundsException if the index is invalid.
+   * @throws IndexOutOfBoundsException if the name is invalid.
    */
   default T setBoolean(String name, boolean v) {
     return setBoolean(firstIndexOf(name), v);
@@ -156,7 +156,7 @@ public interface SettableByName<T extends SettableByName<T>>
    * <p>This method deals with case sensitivity in the way explained in the documentation of {@link
    * AccessibleByName}.
    *
-   * @throws IndexOutOfBoundsException if the index is invalid.
+   * @throws IndexOutOfBoundsException if the name is invalid.
    */
   default T setByte(String name, byte v) {
     return setByte(firstIndexOf(name), v);
@@ -173,7 +173,7 @@ public interface SettableByName<T extends SettableByName<T>>
    * <p>This method deals with case sensitivity in the way explained in the documentation of {@link
    * AccessibleByName}.
    *
-   * @throws IndexOutOfBoundsException if the index is invalid.
+   * @throws IndexOutOfBoundsException if the name is invalid.
    */
   default T setDouble(String name, double v) {
     return setDouble(firstIndexOf(name), v);
@@ -190,7 +190,7 @@ public interface SettableByName<T extends SettableByName<T>>
    * <p>This method deals with case sensitivity in the way explained in the documentation of {@link
    * AccessibleByName}.
    *
-   * @throws IndexOutOfBoundsException if the index is invalid.
+   * @throws IndexOutOfBoundsException if the name is invalid.
    */
   default T setFloat(String name, float v) {
     return setFloat(firstIndexOf(name), v);
@@ -207,7 +207,7 @@ public interface SettableByName<T extends SettableByName<T>>
    * <p>This method deals with case sensitivity in the way explained in the documentation of {@link
    * AccessibleByName}.
    *
-   * @throws IndexOutOfBoundsException if the index is invalid.
+   * @throws IndexOutOfBoundsException if the name is invalid.
    */
   default T setInt(String name, int v) {
     return setInt(firstIndexOf(name), v);
@@ -224,7 +224,7 @@ public interface SettableByName<T extends SettableByName<T>>
    * <p>This method deals with case sensitivity in the way explained in the documentation of {@link
    * AccessibleByName}.
    *
-   * @throws IndexOutOfBoundsException if the index is invalid.
+   * @throws IndexOutOfBoundsException if the name is invalid.
    */
   default T setLong(String name, long v) {
     return setLong(firstIndexOf(name), v);
@@ -241,7 +241,7 @@ public interface SettableByName<T extends SettableByName<T>>
    * <p>This method deals with case sensitivity in the way explained in the documentation of {@link
    * AccessibleByName}.
    *
-   * @throws IndexOutOfBoundsException if the index is invalid.
+   * @throws IndexOutOfBoundsException if the name is invalid.
    */
   default T setShort(String name, short v) {
     return setShort(firstIndexOf(name), v);
@@ -255,7 +255,7 @@ public interface SettableByName<T extends SettableByName<T>>
    * <p>This method deals with case sensitivity in the way explained in the documentation of {@link
    * AccessibleByName}.
    *
-   * @throws IndexOutOfBoundsException if the index is invalid.
+   * @throws IndexOutOfBoundsException if the name is invalid.
    */
   default T setInstant(String name, Instant v) {
     return setInstant(firstIndexOf(name), v);
@@ -269,7 +269,7 @@ public interface SettableByName<T extends SettableByName<T>>
    * <p>This method deals with case sensitivity in the way explained in the documentation of {@link
    * AccessibleByName}.
    *
-   * @throws IndexOutOfBoundsException if the index is invalid.
+   * @throws IndexOutOfBoundsException if the name is invalid.
    */
   default T setLocalDate(String name, LocalDate v) {
     return setLocalDate(firstIndexOf(name), v);
@@ -283,7 +283,7 @@ public interface SettableByName<T extends SettableByName<T>>
    * <p>This method deals with case sensitivity in the way explained in the documentation of {@link
    * AccessibleByName}.
    *
-   * @throws IndexOutOfBoundsException if the index is invalid.
+   * @throws IndexOutOfBoundsException if the name is invalid.
    */
   default T setLocalTime(String name, LocalTime v) {
     return setLocalTime(firstIndexOf(name), v);
@@ -297,7 +297,7 @@ public interface SettableByName<T extends SettableByName<T>>
    * <p>This method deals with case sensitivity in the way explained in the documentation of {@link
    * AccessibleByName}.
    *
-   * @throws IndexOutOfBoundsException if the index is invalid.
+   * @throws IndexOutOfBoundsException if the name is invalid.
    */
   default T setByteBuffer(String name, ByteBuffer v) {
     return setByteBuffer(firstIndexOf(name), v);
@@ -311,7 +311,7 @@ public interface SettableByName<T extends SettableByName<T>>
    * <p>This method deals with case sensitivity in the way explained in the documentation of {@link
    * AccessibleByName}.
    *
-   * @throws IndexOutOfBoundsException if the index is invalid.
+   * @throws IndexOutOfBoundsException if the name is invalid.
    */
   default T setString(String name, String v) {
     return setString(firstIndexOf(name), v);
@@ -325,7 +325,7 @@ public interface SettableByName<T extends SettableByName<T>>
    * <p>This method deals with case sensitivity in the way explained in the documentation of {@link
    * AccessibleByName}.
    *
-   * @throws IndexOutOfBoundsException if the index is invalid.
+   * @throws IndexOutOfBoundsException if the name is invalid.
    */
   default T setBigInteger(String name, BigInteger v) {
     return setBigInteger(firstIndexOf(name), v);
@@ -339,7 +339,7 @@ public interface SettableByName<T extends SettableByName<T>>
    * <p>This method deals with case sensitivity in the way explained in the documentation of {@link
    * AccessibleByName}.
    *
-   * @throws IndexOutOfBoundsException if the index is invalid.
+   * @throws IndexOutOfBoundsException if the name is invalid.
    */
   default T setBigDecimal(String name, BigDecimal v) {
     return setBigDecimal(firstIndexOf(name), v);
@@ -353,7 +353,7 @@ public interface SettableByName<T extends SettableByName<T>>
    * <p>This method deals with case sensitivity in the way explained in the documentation of {@link
    * AccessibleByName}.
    *
-   * @throws IndexOutOfBoundsException if the index is invalid.
+   * @throws IndexOutOfBoundsException if the name is invalid.
    */
   default T setUuid(String name, UUID v) {
     return setUuid(firstIndexOf(name), v);
@@ -367,7 +367,7 @@ public interface SettableByName<T extends SettableByName<T>>
    * <p>This method deals with case sensitivity in the way explained in the documentation of {@link
    * AccessibleByName}.
    *
-   * @throws IndexOutOfBoundsException if the index is invalid.
+   * @throws IndexOutOfBoundsException if the name is invalid.
    */
   default T setInetAddress(String name, InetAddress v) {
     return setInetAddress(firstIndexOf(name), v);
@@ -381,7 +381,7 @@ public interface SettableByName<T extends SettableByName<T>>
    * <p>This method deals with case sensitivity in the way explained in the documentation of {@link
    * AccessibleByName}.
    *
-   * @throws IndexOutOfBoundsException if the index is invalid.
+   * @throws IndexOutOfBoundsException if the name is invalid.
    */
   default T setCqlDuration(String name, CqlDuration v) {
     return setCqlDuration(firstIndexOf(name), v);
@@ -398,7 +398,7 @@ public interface SettableByName<T extends SettableByName<T>>
    * <p>This method deals with case sensitivity in the way explained in the documentation of {@link
    * AccessibleByName}.
    *
-   * @throws IndexOutOfBoundsException if the index is invalid.
+   * @throws IndexOutOfBoundsException if the name is invalid.
    */
   default <V> T setList(String name, List<V> v, Class<V> elementsClass) {
     return setList(firstIndexOf(name), v, elementsClass);
@@ -415,7 +415,7 @@ public interface SettableByName<T extends SettableByName<T>>
    * <p>This method deals with case sensitivity in the way explained in the documentation of {@link
    * AccessibleByName}.
    *
-   * @throws IndexOutOfBoundsException if the index is invalid.
+   * @throws IndexOutOfBoundsException if the name is invalid.
    */
   default <V> T setSet(String name, Set<V> v, Class<V> elementsClass) {
     return setSet(firstIndexOf(name), v, elementsClass);
@@ -432,7 +432,7 @@ public interface SettableByName<T extends SettableByName<T>>
    * <p>This method deals with case sensitivity in the way explained in the documentation of {@link
    * AccessibleByName}.
    *
-   * @throws IndexOutOfBoundsException if the index is invalid.
+   * @throws IndexOutOfBoundsException if the name is invalid.
    */
   default <K, V> T setMap(String name, Map<K, V> v, Class<K> keyClass, Class<V> valueClass) {
     return setMap(firstIndexOf(name), v, keyClass, valueClass);
@@ -447,7 +447,7 @@ public interface SettableByName<T extends SettableByName<T>>
    * <p>This method deals with case sensitivity in the way explained in the documentation of {@link
    * AccessibleByName}.
    *
-   * @throws IndexOutOfBoundsException if the index is invalid.
+   * @throws IndexOutOfBoundsException if the name is invalid.
    */
   default T setUdtValue(String name, UdtValue v) {
     return setUdtValue(firstIndexOf(name), v);
@@ -461,7 +461,7 @@ public interface SettableByName<T extends SettableByName<T>>
    * <p>This method deals with case sensitivity in the way explained in the documentation of {@link
    * AccessibleByName}.
    *
-   * @throws IndexOutOfBoundsException if the index is invalid.
+   * @throws IndexOutOfBoundsException if the name is invalid.
    */
   default T setTupleValue(String name, TupleValue v) {
     return setTupleValue(firstIndexOf(name), v);

@@ -50,7 +50,7 @@ public interface SettableById<T extends SettableById<T>>
    *     to modify elsewhere in your application, make sure to {@link ByteBuffer#duplicate()
    *     duplicate} it beforehand. If you change the buffer's index or its contents in any way,
    *     further usage of this data will have unpredictable results.
-   * @throws IndexOutOfBoundsException if the index is invalid.
+   * @throws IndexOutOfBoundsException if the id is invalid.
    */
   default T setBytesUnsafe(CqlIdentifier id, ByteBuffer v) {
     return setBytesUnsafe(firstIndexOf(id), v);
@@ -67,7 +67,7 @@ public interface SettableById<T extends SettableById<T>>
    * <p>If you want to avoid the overhead of building a {@code CqlIdentifier}, use the variant of
    * this method that takes a string argument.
    *
-   * @throws IndexOutOfBoundsException if the index is invalid.
+   * @throws IndexOutOfBoundsException if the id is invalid.
    */
   default T setToNull(CqlIdentifier id) {
     return setToNull(firstIndexOf(id));
@@ -87,7 +87,7 @@ public interface SettableById<T extends SettableById<T>>
    * <p>If you want to avoid the overhead of building a {@code CqlIdentifier}, use the variant of
    * this method that takes a string argument.
    *
-   * @throws IndexOutOfBoundsException if the index is invalid.
+   * @throws IndexOutOfBoundsException if the id is invalid.
    */
   default <V> T set(CqlIdentifier id, V v, TypeCodec<V> codec) {
     return set(firstIndexOf(id), v, codec);
@@ -104,7 +104,7 @@ public interface SettableById<T extends SettableById<T>>
    * <p>If you want to avoid the overhead of building a {@code CqlIdentifier}, use the variant of
    * this method that takes a string argument.
    *
-   * @throws IndexOutOfBoundsException if the index is invalid.
+   * @throws IndexOutOfBoundsException if the id is invalid.
    * @throws CodecNotFoundException if no codec can perform the conversion.
    */
   default <V> T set(CqlIdentifier id, V v, GenericType<V> targetType) {
@@ -121,7 +121,7 @@ public interface SettableById<T extends SettableById<T>>
    * <p>If you want to avoid the overhead of building a {@code CqlIdentifier}, use the variant of
    * this method that takes a string argument.
    *
-   * @throws IndexOutOfBoundsException if the index is invalid.
+   * @throws IndexOutOfBoundsException if the id is invalid.
    * @throws CodecNotFoundException if no codec can perform the conversion.
    */
   default <V> T set(CqlIdentifier id, V v, Class<V> targetClass) {
@@ -139,7 +139,7 @@ public interface SettableById<T extends SettableById<T>>
    * <p>If you want to avoid the overhead of building a {@code CqlIdentifier}, use the variant of
    * this method that takes a string argument.
    *
-   * @throws IndexOutOfBoundsException if the index is invalid.
+   * @throws IndexOutOfBoundsException if the id is invalid.
    */
   default T setBoolean(CqlIdentifier id, boolean v) {
     return setBoolean(firstIndexOf(id), v);
@@ -156,7 +156,7 @@ public interface SettableById<T extends SettableById<T>>
    * <p>If you want to avoid the overhead of building a {@code CqlIdentifier}, use the variant of
    * this method that takes a string argument.
    *
-   * @throws IndexOutOfBoundsException if the index is invalid.
+   * @throws IndexOutOfBoundsException if the id is invalid.
    */
   default T setByte(CqlIdentifier id, byte v) {
     return setByte(firstIndexOf(id), v);
@@ -173,7 +173,7 @@ public interface SettableById<T extends SettableById<T>>
    * <p>If you want to avoid the overhead of building a {@code CqlIdentifier}, use the variant of
    * this method that takes a string argument.
    *
-   * @throws IndexOutOfBoundsException if the index is invalid.
+   * @throws IndexOutOfBoundsException if the id is invalid.
    */
   default T setDouble(CqlIdentifier id, double v) {
     return setDouble(firstIndexOf(id), v);
@@ -190,7 +190,7 @@ public interface SettableById<T extends SettableById<T>>
    * <p>If you want to avoid the overhead of building a {@code CqlIdentifier}, use the variant of
    * this method that takes a string argument.
    *
-   * @throws IndexOutOfBoundsException if the index is invalid.
+   * @throws IndexOutOfBoundsException if the id is invalid.
    */
   default T setFloat(CqlIdentifier id, float v) {
     return setFloat(firstIndexOf(id), v);
@@ -207,7 +207,7 @@ public interface SettableById<T extends SettableById<T>>
    * <p>If you want to avoid the overhead of building a {@code CqlIdentifier}, use the variant of
    * this method that takes a string argument.
    *
-   * @throws IndexOutOfBoundsException if the index is invalid.
+   * @throws IndexOutOfBoundsException if the id is invalid.
    */
   default T setInt(CqlIdentifier id, int v) {
     return setInt(firstIndexOf(id), v);
@@ -224,7 +224,7 @@ public interface SettableById<T extends SettableById<T>>
    * <p>If you want to avoid the overhead of building a {@code CqlIdentifier}, use the variant of
    * this method that takes a string argument.
    *
-   * @throws IndexOutOfBoundsException if the index is invalid.
+   * @throws IndexOutOfBoundsException if the id is invalid.
    */
   default T setLong(CqlIdentifier id, long v) {
     return setLong(firstIndexOf(id), v);
@@ -241,7 +241,7 @@ public interface SettableById<T extends SettableById<T>>
    * <p>If you want to avoid the overhead of building a {@code CqlIdentifier}, use the variant of
    * this method that takes a string argument.
    *
-   * @throws IndexOutOfBoundsException if the index is invalid.
+   * @throws IndexOutOfBoundsException if the id is invalid.
    */
   default T setShort(CqlIdentifier id, short v) {
     return setShort(firstIndexOf(id), v);
@@ -255,7 +255,7 @@ public interface SettableById<T extends SettableById<T>>
    * <p>If you want to avoid the overhead of building a {@code CqlIdentifier}, use the variant of
    * this method that takes a string argument.
    *
-   * @throws IndexOutOfBoundsException if the index is invalid.
+   * @throws IndexOutOfBoundsException if the id is invalid.
    */
   default T setInstant(CqlIdentifier id, Instant v) {
     return setInstant(firstIndexOf(id), v);
@@ -269,7 +269,7 @@ public interface SettableById<T extends SettableById<T>>
    * <p>If you want to avoid the overhead of building a {@code CqlIdentifier}, use the variant of
    * this method that takes a string argument.
    *
-   * @throws IndexOutOfBoundsException if the index is invalid.
+   * @throws IndexOutOfBoundsException if the id is invalid.
    */
   default T setLocalDate(CqlIdentifier id, LocalDate v) {
     return setLocalDate(firstIndexOf(id), v);
@@ -283,7 +283,7 @@ public interface SettableById<T extends SettableById<T>>
    * <p>If you want to avoid the overhead of building a {@code CqlIdentifier}, use the variant of
    * this method that takes a string argument.
    *
-   * @throws IndexOutOfBoundsException if the index is invalid.
+   * @throws IndexOutOfBoundsException if the id is invalid.
    */
   default T setLocalTime(CqlIdentifier id, LocalTime v) {
     return setLocalTime(firstIndexOf(id), v);
@@ -297,7 +297,7 @@ public interface SettableById<T extends SettableById<T>>
    * <p>If you want to avoid the overhead of building a {@code CqlIdentifier}, use the variant of
    * this method that takes a string argument.
    *
-   * @throws IndexOutOfBoundsException if the index is invalid.
+   * @throws IndexOutOfBoundsException if the id is invalid.
    */
   default T setByteBuffer(CqlIdentifier id, ByteBuffer v) {
     return setByteBuffer(firstIndexOf(id), v);
@@ -311,7 +311,7 @@ public interface SettableById<T extends SettableById<T>>
    * <p>If you want to avoid the overhead of building a {@code CqlIdentifier}, use the variant of
    * this method that takes a string argument.
    *
-   * @throws IndexOutOfBoundsException if the index is invalid.
+   * @throws IndexOutOfBoundsException if the id is invalid.
    */
   default T setString(CqlIdentifier id, String v) {
     return setString(firstIndexOf(id), v);
@@ -325,7 +325,7 @@ public interface SettableById<T extends SettableById<T>>
    * <p>If you want to avoid the overhead of building a {@code CqlIdentifier}, use the variant of
    * this method that takes a string argument.
    *
-   * @throws IndexOutOfBoundsException if the index is invalid.
+   * @throws IndexOutOfBoundsException if the id is invalid.
    */
   default T setBigInteger(CqlIdentifier id, BigInteger v) {
     return setBigInteger(firstIndexOf(id), v);
@@ -339,7 +339,7 @@ public interface SettableById<T extends SettableById<T>>
    * <p>If you want to avoid the overhead of building a {@code CqlIdentifier}, use the variant of
    * this method that takes a string argument.
    *
-   * @throws IndexOutOfBoundsException if the index is invalid.
+   * @throws IndexOutOfBoundsException if the id is invalid.
    */
   default T setBigDecimal(CqlIdentifier id, BigDecimal v) {
     return setBigDecimal(firstIndexOf(id), v);
@@ -353,7 +353,7 @@ public interface SettableById<T extends SettableById<T>>
    * <p>If you want to avoid the overhead of building a {@code CqlIdentifier}, use the variant of
    * this method that takes a string argument.
    *
-   * @throws IndexOutOfBoundsException if the index is invalid.
+   * @throws IndexOutOfBoundsException if the id is invalid.
    */
   default T setUuid(CqlIdentifier id, UUID v) {
     return setUuid(firstIndexOf(id), v);
@@ -367,7 +367,7 @@ public interface SettableById<T extends SettableById<T>>
    * <p>If you want to avoid the overhead of building a {@code CqlIdentifier}, use the variant of
    * this method that takes a string argument.
    *
-   * @throws IndexOutOfBoundsException if the index is invalid.
+   * @throws IndexOutOfBoundsException if the id is invalid.
    */
   default T setInetAddress(CqlIdentifier id, InetAddress v) {
     return setInetAddress(firstIndexOf(id), v);
@@ -381,7 +381,7 @@ public interface SettableById<T extends SettableById<T>>
    * <p>If you want to avoid the overhead of building a {@code CqlIdentifier}, use the variant of
    * this method that takes a string argument.
    *
-   * @throws IndexOutOfBoundsException if the index is invalid.
+   * @throws IndexOutOfBoundsException if the id is invalid.
    */
   default T setCqlDuration(CqlIdentifier id, CqlDuration v) {
     return setCqlDuration(firstIndexOf(id), v);
@@ -398,7 +398,7 @@ public interface SettableById<T extends SettableById<T>>
    * <p>If you want to avoid the overhead of building a {@code CqlIdentifier}, use the variant of
    * this method that takes a string argument.
    *
-   * @throws IndexOutOfBoundsException if the index is invalid.
+   * @throws IndexOutOfBoundsException if the id is invalid.
    */
   default <V> T setList(CqlIdentifier id, List<V> v, Class<V> elementsClass) {
     return setList(firstIndexOf(id), v, elementsClass);
@@ -415,7 +415,7 @@ public interface SettableById<T extends SettableById<T>>
    * <p>If you want to avoid the overhead of building a {@code CqlIdentifier}, use the variant of
    * this method that takes a string argument.
    *
-   * @throws IndexOutOfBoundsException if the index is invalid.
+   * @throws IndexOutOfBoundsException if the id is invalid.
    */
   default <V> T setSet(CqlIdentifier id, Set<V> v, Class<V> elementsClass) {
     return setSet(firstIndexOf(id), v, elementsClass);
@@ -432,7 +432,7 @@ public interface SettableById<T extends SettableById<T>>
    * <p>If you want to avoid the overhead of building a {@code CqlIdentifier}, use the variant of
    * this method that takes a string argument.
    *
-   * @throws IndexOutOfBoundsException if the index is invalid.
+   * @throws IndexOutOfBoundsException if the id is invalid.
    */
   default <K, V> T setMap(CqlIdentifier id, Map<K, V> v, Class<K> keyClass, Class<V> valueClass) {
     return setMap(firstIndexOf(id), v, keyClass, valueClass);
@@ -446,7 +446,7 @@ public interface SettableById<T extends SettableById<T>>
    * <p>If you want to avoid the overhead of building a {@code CqlIdentifier}, use the variant of
    * this method that takes a string argument.
    *
-   * @throws IndexOutOfBoundsException if the index is invalid.
+   * @throws IndexOutOfBoundsException if the id is invalid.
    */
   default T setUdtValue(CqlIdentifier id, UdtValue v) {
     return setUdtValue(firstIndexOf(id), v);
@@ -460,7 +460,7 @@ public interface SettableById<T extends SettableById<T>>
    * <p>If you want to avoid the overhead of building a {@code CqlIdentifier}, use the variant of
    * this method that takes a string argument.
    *
-   * @throws IndexOutOfBoundsException if the index is invalid.
+   * @throws IndexOutOfBoundsException if the id is invalid.
    */
   default T setTupleValue(CqlIdentifier id, TupleValue v) {
     return setTupleValue(firstIndexOf(id), v);

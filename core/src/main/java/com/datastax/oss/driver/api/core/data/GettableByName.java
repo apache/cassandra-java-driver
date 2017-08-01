@@ -50,7 +50,7 @@ public interface GettableByName extends GettableByIndex, AccessibleByName {
    *     make sure to {@link ByteBuffer#duplicate() duplicate} it beforehand, or only use relative
    *     methods. If you change the buffer's index or its contents in any way, any other getter
    *     invocation for this value will have unpredictable results.
-   * @throws IndexOutOfBoundsException if the index is invalid.
+   * @throws IndexOutOfBoundsException if the name is invalid.
    */
   default ByteBuffer getBytesUnsafe(String name) {
     return getBytesUnsafe(firstIndexOf(name));
@@ -65,7 +65,7 @@ public interface GettableByName extends GettableByIndex, AccessibleByName {
    * <p>This method deals with case sensitivity in the way explained in the documentation of {@link
    * AccessibleByName}.
    *
-   * @throws IndexOutOfBoundsException if the index is invalid.
+   * @throws IndexOutOfBoundsException if the name is invalid.
    */
   default boolean isNull(String name) {
     return isNull(firstIndexOf(name));
@@ -88,7 +88,7 @@ public interface GettableByName extends GettableByIndex, AccessibleByName {
    * <p>This method deals with case sensitivity in the way explained in the documentation of {@link
    * AccessibleByName}.
    *
-   * @throws IndexOutOfBoundsException if the index is invalid.
+   * @throws IndexOutOfBoundsException if the name is invalid.
    */
   default <T> T get(String name, TypeCodec<T> codec) {
     return get(firstIndexOf(name), codec);
@@ -109,7 +109,7 @@ public interface GettableByName extends GettableByIndex, AccessibleByName {
    * <p>This method deals with case sensitivity in the way explained in the documentation of {@link
    * AccessibleByName}.
    *
-   * @throws IndexOutOfBoundsException if the index is invalid.
+   * @throws IndexOutOfBoundsException if the name is invalid.
    * @throws CodecNotFoundException if no codec can perform the conversion.
    */
   default <T> T get(String name, GenericType<T> targetType) {
@@ -130,7 +130,7 @@ public interface GettableByName extends GettableByIndex, AccessibleByName {
    * <p>This method deals with case sensitivity in the way explained in the documentation of {@link
    * AccessibleByName}.
    *
-   * @throws IndexOutOfBoundsException if the index is invalid.
+   * @throws IndexOutOfBoundsException if the name is invalid.
    * @throws CodecNotFoundException if no codec can perform the conversion.
    */
   default <T> T get(String name, Class<T> targetClass) {
@@ -160,7 +160,7 @@ public interface GettableByName extends GettableByIndex, AccessibleByName {
    * <p>This method deals with case sensitivity in the way explained in the documentation of {@link
    * AccessibleByName}.
    *
-   * @throws IndexOutOfBoundsException if the index is invalid.
+   * @throws IndexOutOfBoundsException if the name is invalid.
    * @throws CodecNotFoundException if no codec can perform the conversion.
    */
   default Object getObject(String name) {
@@ -182,7 +182,7 @@ public interface GettableByName extends GettableByIndex, AccessibleByName {
    * <p>This method deals with case sensitivity in the way explained in the documentation of {@link
    * AccessibleByName}.
    *
-   * @throws IndexOutOfBoundsException if the index is invalid.
+   * @throws IndexOutOfBoundsException if the name is invalid.
    */
   default boolean getBoolean(String name) {
     return getBoolean(firstIndexOf(name));
@@ -203,7 +203,7 @@ public interface GettableByName extends GettableByIndex, AccessibleByName {
    * <p>This method deals with case sensitivity in the way explained in the documentation of {@link
    * AccessibleByName}.
    *
-   * @throws IndexOutOfBoundsException if the index is invalid.
+   * @throws IndexOutOfBoundsException if the name is invalid.
    */
   default byte getByte(String name) {
     return getByte(firstIndexOf(name));
@@ -224,7 +224,7 @@ public interface GettableByName extends GettableByIndex, AccessibleByName {
    * <p>This method deals with case sensitivity in the way explained in the documentation of {@link
    * AccessibleByName}.
    *
-   * @throws IndexOutOfBoundsException if the index is invalid.
+   * @throws IndexOutOfBoundsException if the name is invalid.
    */
   default double getDouble(String name) {
     return getDouble(firstIndexOf(name));
@@ -245,7 +245,7 @@ public interface GettableByName extends GettableByIndex, AccessibleByName {
    * <p>This method deals with case sensitivity in the way explained in the documentation of {@link
    * AccessibleByName}.
    *
-   * @throws IndexOutOfBoundsException if the index is invalid.
+   * @throws IndexOutOfBoundsException if the name is invalid.
    */
   default float getFloat(String name) {
     return getFloat(firstIndexOf(name));
@@ -266,7 +266,7 @@ public interface GettableByName extends GettableByIndex, AccessibleByName {
    * <p>This method deals with case sensitivity in the way explained in the documentation of {@link
    * AccessibleByName}.
    *
-   * @throws IndexOutOfBoundsException if the index is invalid.
+   * @throws IndexOutOfBoundsException if the name is invalid.
    */
   default int getInt(String name) {
     return getInt(firstIndexOf(name));
@@ -287,7 +287,7 @@ public interface GettableByName extends GettableByIndex, AccessibleByName {
    * <p>This method deals with case sensitivity in the way explained in the documentation of {@link
    * AccessibleByName}.
    *
-   * @throws IndexOutOfBoundsException if the index is invalid.
+   * @throws IndexOutOfBoundsException if the name is invalid.
    */
   default long getLong(String name) {
     return getLong(firstIndexOf(name));
@@ -308,7 +308,7 @@ public interface GettableByName extends GettableByIndex, AccessibleByName {
    * <p>This method deals with case sensitivity in the way explained in the documentation of {@link
    * AccessibleByName}.
    *
-   * @throws IndexOutOfBoundsException if the index is invalid.
+   * @throws IndexOutOfBoundsException if the name is invalid.
    */
   default short getShort(String name) {
     return getShort(firstIndexOf(name));
@@ -325,7 +325,7 @@ public interface GettableByName extends GettableByIndex, AccessibleByName {
    * <p>This method deals with case sensitivity in the way explained in the documentation of {@link
    * AccessibleByName}.
    *
-   * @throws IndexOutOfBoundsException if the index is invalid.
+   * @throws IndexOutOfBoundsException if the name is invalid.
    */
   default Instant getInstant(String name) {
     return getInstant(firstIndexOf(name));
@@ -342,7 +342,7 @@ public interface GettableByName extends GettableByIndex, AccessibleByName {
    * <p>This method deals with case sensitivity in the way explained in the documentation of {@link
    * AccessibleByName}.
    *
-   * @throws IndexOutOfBoundsException if the index is invalid.
+   * @throws IndexOutOfBoundsException if the name is invalid.
    */
   default LocalDate getLocalDate(String name) {
     return getLocalDate(firstIndexOf(name));
@@ -359,7 +359,7 @@ public interface GettableByName extends GettableByIndex, AccessibleByName {
    * <p>This method deals with case sensitivity in the way explained in the documentation of {@link
    * AccessibleByName}.
    *
-   * @throws IndexOutOfBoundsException if the index is invalid.
+   * @throws IndexOutOfBoundsException if the name is invalid.
    */
   default LocalTime getLocalTime(String name) {
     return getLocalTime(firstIndexOf(name));
@@ -376,7 +376,7 @@ public interface GettableByName extends GettableByIndex, AccessibleByName {
    * <p>This method deals with case sensitivity in the way explained in the documentation of {@link
    * AccessibleByName}.
    *
-   * @throws IndexOutOfBoundsException if the index is invalid.
+   * @throws IndexOutOfBoundsException if the name is invalid.
    */
   default ByteBuffer getByteBuffer(String name) {
     return getByteBuffer(firstIndexOf(name));
@@ -393,7 +393,7 @@ public interface GettableByName extends GettableByIndex, AccessibleByName {
    * <p>This method deals with case sensitivity in the way explained in the documentation of {@link
    * AccessibleByName}.
    *
-   * @throws IndexOutOfBoundsException if the index is invalid.
+   * @throws IndexOutOfBoundsException if the name is invalid.
    */
   default String getString(String name) {
     return getString(firstIndexOf(name));
@@ -410,7 +410,7 @@ public interface GettableByName extends GettableByIndex, AccessibleByName {
    * <p>This method deals with case sensitivity in the way explained in the documentation of {@link
    * AccessibleByName}.
    *
-   * @throws IndexOutOfBoundsException if the index is invalid.
+   * @throws IndexOutOfBoundsException if the name is invalid.
    */
   default BigInteger getBigInteger(String name) {
     return getBigInteger(firstIndexOf(name));
@@ -427,7 +427,7 @@ public interface GettableByName extends GettableByIndex, AccessibleByName {
    * <p>This method deals with case sensitivity in the way explained in the documentation of {@link
    * AccessibleByName}.
    *
-   * @throws IndexOutOfBoundsException if the index is invalid.
+   * @throws IndexOutOfBoundsException if the name is invalid.
    */
   default BigDecimal getBigDecimal(String name) {
     return getBigDecimal(firstIndexOf(name));
@@ -444,7 +444,7 @@ public interface GettableByName extends GettableByIndex, AccessibleByName {
    * <p>This method deals with case sensitivity in the way explained in the documentation of {@link
    * AccessibleByName}.
    *
-   * @throws IndexOutOfBoundsException if the index is invalid.
+   * @throws IndexOutOfBoundsException if the name is invalid.
    */
   default UUID getUuid(String name) {
     return getUuid(firstIndexOf(name));
@@ -461,7 +461,7 @@ public interface GettableByName extends GettableByIndex, AccessibleByName {
    * <p>This method deals with case sensitivity in the way explained in the documentation of {@link
    * AccessibleByName}.
    *
-   * @throws IndexOutOfBoundsException if the index is invalid.
+   * @throws IndexOutOfBoundsException if the name is invalid.
    */
   default InetAddress getInetAddress(String name) {
     return getInetAddress(firstIndexOf(name));
@@ -478,7 +478,7 @@ public interface GettableByName extends GettableByIndex, AccessibleByName {
    * <p>This method deals with case sensitivity in the way explained in the documentation of {@link
    * AccessibleByName}.
    *
-   * @throws IndexOutOfBoundsException if the index is invalid.
+   * @throws IndexOutOfBoundsException if the name is invalid.
    */
   default CqlDuration getCqlDuration(String name) {
     return getCqlDuration(firstIndexOf(name));
@@ -498,7 +498,7 @@ public interface GettableByName extends GettableByIndex, AccessibleByName {
    * <p>This method deals with case sensitivity in the way explained in the documentation of {@link
    * AccessibleByName}.
    *
-   * @throws IndexOutOfBoundsException if the index is invalid.
+   * @throws IndexOutOfBoundsException if the name is invalid.
    */
   default <T> List<T> getList(String name, Class<T> elementsClass) {
     return getList(firstIndexOf(name), elementsClass);
@@ -518,7 +518,7 @@ public interface GettableByName extends GettableByIndex, AccessibleByName {
    * <p>This method deals with case sensitivity in the way explained in the documentation of {@link
    * AccessibleByName}.
    *
-   * @throws IndexOutOfBoundsException if the index is invalid.
+   * @throws IndexOutOfBoundsException if the name is invalid.
    */
   default <T> Set<T> getSet(String name, Class<T> elementsClass) {
     return getSet(firstIndexOf(name), elementsClass);
@@ -538,7 +538,7 @@ public interface GettableByName extends GettableByIndex, AccessibleByName {
    * <p>This method deals with case sensitivity in the way explained in the documentation of {@link
    * AccessibleByName}.
    *
-   * @throws IndexOutOfBoundsException if the index is invalid.
+   * @throws IndexOutOfBoundsException if the name is invalid.
    */
   default <K, V> Map<K, V> getMap(String name, Class<K> keyClass, Class<V> valueClass) {
     return getMap(firstIndexOf(name), keyClass, valueClass);
@@ -555,7 +555,7 @@ public interface GettableByName extends GettableByIndex, AccessibleByName {
    * <p>This method deals with case sensitivity in the way explained in the documentation of {@link
    * AccessibleByName}.
    *
-   * @throws IndexOutOfBoundsException if the index is invalid.
+   * @throws IndexOutOfBoundsException if the name is invalid.
    */
   default UdtValue getUdtValue(String name) {
     return getUdtValue(firstIndexOf(name));
@@ -572,7 +572,7 @@ public interface GettableByName extends GettableByIndex, AccessibleByName {
    * <p>This method deals with case sensitivity in the way explained in the documentation of {@link
    * AccessibleByName}.
    *
-   * @throws IndexOutOfBoundsException if the index is invalid.
+   * @throws IndexOutOfBoundsException if the name is invalid.
    */
   default TupleValue getTupleValue(String name) {
     return getTupleValue(firstIndexOf(name));
