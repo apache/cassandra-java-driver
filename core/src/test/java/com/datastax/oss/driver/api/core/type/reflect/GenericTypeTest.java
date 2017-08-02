@@ -18,6 +18,7 @@ package com.datastax.oss.driver.api.core.type.reflect;
 import com.google.common.reflect.TypeToken;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import org.junit.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -48,5 +49,22 @@ public class GenericTypeTest {
     GenericType<Map<String, List<Integer>>> mapType =
         GenericType.mapOf(GenericType.of(String.class), GenericType.listOf(Integer.class));
     assertThat(mapType.__getToken()).isEqualTo(new TypeToken<Map<String, List<Integer>>>() {});
+  }
+
+  @Test
+  public void should_substitute_type_parameters() {
+    assertThat(optionalOf(GenericType.listOf(String.class)).__getToken())
+        .isEqualTo(new TypeToken<Optional<List<String>>>() {});
+    assertThat(mapOf(String.class, Integer.class).__getToken())
+        .isEqualTo(new TypeToken<Map<String, Integer>>() {});
+  }
+
+  private <T> GenericType<Optional<T>> optionalOf(GenericType<T> elementType) {
+    return new GenericType<Optional<T>>() {}.where(new GenericTypeParameter<T>() {}, elementType);
+  }
+
+  private <K, V> GenericType<Map<K, V>> mapOf(Class<K> keyClass, Class<V> valueClass) {
+    return new GenericType<Map<K, V>>() {}.where(new GenericTypeParameter<K>() {}, keyClass)
+        .where(new GenericTypeParameter<V>() {}, valueClass);
   }
 }
