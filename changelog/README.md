@@ -4,6 +4,7 @@
 
 ### 4.0.0-alpha2 (in progress)
 
+- [improvement] JAVA-1590: Properly skip deployment of integration-tests module
 - [improvement] JAVA-1576: Expose AsyncResultSet's iterator through a currentPage() method
 - [improvement] JAVA-1591: Add programmatic way to get driver version
 
