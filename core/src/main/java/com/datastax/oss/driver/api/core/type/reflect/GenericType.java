@@ -16,10 +16,14 @@
 package com.datastax.oss.driver.api.core.type.reflect;
 
 import com.datastax.oss.driver.api.core.data.CqlDuration;
+import com.datastax.oss.driver.api.core.data.GettableByIndex;
 import com.datastax.oss.driver.api.core.data.TupleValue;
 import com.datastax.oss.driver.api.core.data.UdtValue;
+import com.datastax.oss.driver.api.core.type.codec.TypeCodec;
 import com.google.common.reflect.TypeParameter;
+import com.google.common.reflect.TypeResolver;
 import com.google.common.reflect.TypeToken;
+import java.lang.reflect.Type;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.net.InetAddress;
@@ -35,17 +39,41 @@ import java.util.UUID;
 /**
  * Runtime representation of a generic Java type.
  *
- * <p>This is used by type codecs to indicate which Java types they accept, and by generic getters
- * and setters in the driver's query API.
+ * <p>This is used by type codecs to indicate which Java types they accept ({@link
+ * TypeCodec#accepts(GenericType)}), and by generic getters and setters (such as {@link
+ * GettableByIndex#get(int, GenericType)} in the driver's query API.
  *
- * <p>To get an instance, use one of the constants or static factory methods, or create an anonymous
- * class:
+ * <p>There are various ways to build instances of this class:
+ *
+ * <p>By using one of the static factory methods:
+ *
+ * <pre>{@code
+ * GenericType<List<String>> stringListType = GenericType.listOf(String.class);
+ * }</pre>
+ *
+ * By using an anonymous class:
  *
  * <pre>{@code
  * GenericType<Foo<Bar>> fooBarType = new GenericType<Foo<Bar>>(){};
  * }</pre>
  *
- * You are encouraged to store and reuse these objects.
+ * In a generic method, by using {@link #where(GenericTypeParameter, GenericType)} to substitute
+ * free type variables with runtime types:
+ *
+ * <pre>{@code
+ * <T> GenericType<Optional<T>> optionalOf(GenericType<T> elementType) {
+ *   return new GenericType<Optional<T>>() {}
+ *     .where(new GenericTypeParameter<T>() {}, elementType);
+ * }
+ * ...
+ * GenericType<Optional<List<String>>> optionalStringListType = optionalOf(GenericType.listOf(String.class));
+ * }</pre>
+ *
+ * <p>You are encouraged to store and reuse these instances.
+ *
+ * <p>Note that this class is a thin wrapper around Guava's {@code TypeToken}. The only reason why
+ * {@code TypeToken} is not used directly is because Guava is not exposed in the driver's public API
+ * (it's used internally, but shaded).
  */
 public class GenericType<T> {
 
@@ -116,8 +144,6 @@ public class GenericType<T> {
     return new GenericType<>(token);
   }
 
-  // This wraps -- and delegates most of the work to -- a Guava type token. The reason we don't
-  // expose that type directly is because we shade Guava.
   private final TypeToken<T> token;
 
   private GenericType(TypeToken<T> token) {
@@ -126,6 +152,28 @@ public class GenericType<T> {
 
   protected GenericType() {
     this.token = new TypeToken<T>(getClass()) {};
+  }
+
+  /**
+   * Substitutes a free type variable with an actual type. See {@link GenericType this class's
+   * javadoc} for an example.
+   */
+  public final <X> GenericType<T> where(
+      GenericTypeParameter<X> freeVariable, GenericType<X> actualType) {
+    TypeResolver resolver =
+        new TypeResolver().where(freeVariable.getTypeVariable(), actualType.__getToken().getType());
+    Type resolvedType = resolver.resolveType(this.token.getType());
+    @SuppressWarnings("unchecked")
+    TypeToken<T> resolvedToken = (TypeToken<T>) TypeToken.of(resolvedType);
+    return new GenericType<>(resolvedToken);
+  }
+
+  /**
+   * Substitutes a free type variable with an actual type. See {@link GenericType this class's
+   * javadoc} for an example.
+   */
+  public final <X> GenericType<T> where(GenericTypeParameter<X> freeVariable, Class<X> actualType) {
+    return where(freeVariable, GenericType.of(actualType));
   }
 
   /**
