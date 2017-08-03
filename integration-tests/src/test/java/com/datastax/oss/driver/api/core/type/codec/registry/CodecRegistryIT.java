@@ -16,7 +16,6 @@
 package com.datastax.oss.driver.api.core.type.codec.registry;
 
 import com.datastax.oss.driver.api.core.Cluster;
-import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.ProtocolVersion;
 import com.datastax.oss.driver.api.core.cql.BoundStatement;
 import com.datastax.oss.driver.api.core.cql.PreparedStatement;
@@ -28,11 +27,19 @@ import com.datastax.oss.driver.api.core.type.DataType;
 import com.datastax.oss.driver.api.core.type.DataTypes;
 import com.datastax.oss.driver.api.core.type.codec.CodecNotFoundException;
 import com.datastax.oss.driver.api.core.type.codec.TypeCodec;
+import com.datastax.oss.driver.api.core.type.codec.TypeCodecs;
 import com.datastax.oss.driver.api.core.type.reflect.GenericType;
+import com.datastax.oss.driver.api.core.type.reflect.GenericTypeParameter;
 import com.datastax.oss.driver.api.testinfra.ccm.CcmRule;
 import com.datastax.oss.driver.api.testinfra.cluster.ClusterRule;
 import com.datastax.oss.driver.internal.core.type.codec.IntCodec;
 import java.nio.ByteBuffer;
+import java.util.Collection;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.Optional;
+import java.util.function.Predicate;
+import org.assertj.core.util.Maps;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Rule;
@@ -59,6 +66,14 @@ public class CodecRegistryIT {
         .session()
         .execute(
             SimpleStatement.builder("CREATE TABLE IF NOT EXISTS test (k text primary key, v int)")
+                .withConfigProfile(cluster.slowProfile())
+                .build());
+    // table with map value
+    cluster
+        .session()
+        .execute(
+            SimpleStatement.builder(
+                    "CREATE TABLE IF NOT EXISTS test2 (k0 text, k1 int, v map<int,text>, primary key (k0, k1))")
                 .withConfigProfile(cluster.slowProfile())
                 .build());
   }
@@ -121,7 +136,7 @@ public class CodecRegistryIT {
         cluster
             .session()
             .execute(
-                SimpleStatement.builder("SELECT v from TEST where k = ?")
+                SimpleStatement.builder("SELECT v from test where k = ?")
                     .addPositionalValue(name.getMethodName())
                     .build());
 
@@ -158,7 +173,7 @@ public class CodecRegistryIT {
 
       ResultSet result =
           session.execute(
-              SimpleStatement.builder("SELECT v from TEST where k = ?")
+              SimpleStatement.builder("SELECT v from test where k = ?")
                   .addPositionalValue(name.getMethodName())
                   .build());
 
@@ -168,6 +183,173 @@ public class CodecRegistryIT {
       Row row = result.iterator().next();
       assertThat(row.getFloat("v")).isEqualTo(3.0f);
       assertThat(row.getFloat(0)).isEqualTo(3.0f);
+    }
+  }
+
+  // TODO: consider moving this into source as it could be generally useful.
+  private abstract static class MappingCodec<O, I> implements TypeCodec<O> {
+
+    private final GenericType<O> javaType;
+    private final TypeCodec<I> innerCodec;
+
+    MappingCodec(TypeCodec<I> innerCodec, GenericType<O> javaType) {
+      this.innerCodec = innerCodec;
+      this.javaType = javaType;
+    }
+
+    @Override
+    public GenericType<O> getJavaType() {
+      return javaType;
+    }
+
+    @Override
+    public DataType getCqlType() {
+      return innerCodec.getCqlType();
+    }
+
+    @Override
+    public ByteBuffer encode(O value, ProtocolVersion protocolVersion) {
+      return innerCodec.encode(encode(value), protocolVersion);
+    }
+
+    @Override
+    public O decode(ByteBuffer bytes, ProtocolVersion protocolVersion) {
+      return decode(innerCodec.decode(bytes, protocolVersion));
+    }
+
+    @Override
+    public String format(O value) {
+      return value == null ? null : innerCodec.format(encode(value));
+    }
+
+    @Override
+    public O parse(String value) {
+      return value == null || value.isEmpty() || value.equalsIgnoreCase("NULL")
+          ? null
+          : decode(innerCodec.parse(value));
+    }
+
+    protected abstract O decode(I value);
+
+    protected abstract I encode(O value);
+  }
+
+  private static class OptionalCodec<T> extends MappingCodec<Optional<T>, T> {
+
+    // in cassandra, empty collections are considered null and vise versa.
+    Predicate<T> isAbsent =
+        (i) ->
+            i == null
+                || (i instanceof Collection && ((Collection) i).isEmpty())
+                || (i instanceof Map) && ((Map) i).isEmpty();
+
+    OptionalCodec(TypeCodec<T> innerCodec) {
+      super(
+          innerCodec,
+          new GenericType<Optional<T>>() {}.where(
+              new GenericTypeParameter<T>() {}, innerCodec.getJavaType()));
+    }
+
+    @Override
+    protected Optional<T> decode(T value) {
+      return isAbsent.test(value) ? Optional.empty() : Optional.of(value);
+    }
+
+    @Override
+    protected T encode(Optional<T> value) {
+      return value.isPresent() ? value.get() : null;
+    }
+  }
+
+  @Test
+  public void should_be_able_to_register_and_use_custom_codec_with_generic_type() {
+    // create a cluster with registered codecs using OptionalCodec
+    OptionalCodec<Map<Integer, String>> optionalMapCodec =
+        new OptionalCodec<>(TypeCodecs.mapOf(TypeCodecs.INT, TypeCodecs.TEXT));
+    TypeCodec<Map<Integer, Optional<String>>> mapWithOptionalValueCodec =
+        TypeCodecs.mapOf(TypeCodecs.INT, new OptionalCodec<>(TypeCodecs.TEXT));
+
+    try (Cluster codecCluster =
+        Cluster.builder()
+            .addTypeCodecs(optionalMapCodec, mapWithOptionalValueCodec)
+            .addContactPoints(ccm.getContactPoints())
+            .build()) {
+      Session session = codecCluster.connect(cluster.keyspace());
+
+      PreparedStatement prepared =
+          session.prepare("INSERT INTO test2 (k0, k1, v) values (?, ?, ?)");
+
+      // optional map should work.
+      Map<Integer, String> v0 = Maps.newHashMap(0, "value");
+      Optional<Map<Integer, String>> v0Opt = Optional.of(v0);
+      BoundStatement insert =
+          prepared
+              .boundStatementBuilder()
+              .setString(0, name.getMethodName())
+              .setInt(1, 0)
+              .set(
+                  2,
+                  v0Opt,
+                  optionalMapCodec
+                      .getJavaType()) // use java type so has to be looked up in registry.
+              .build();
+      session.execute(insert);
+
+      // optional absent map should work.
+      Optional<Map<Integer, String>> absentMap = Optional.empty();
+      insert =
+          prepared
+              .boundStatementBuilder()
+              .setString(0, name.getMethodName())
+              .setInt(1, 1)
+              .set(2, absentMap, optionalMapCodec.getJavaType())
+              .build();
+      session.execute(insert);
+
+      // map with optional value should work - note that you can't have null values in collections,
+      // so this is not technically practical but want to validate that custom codec resolution works
+      // when it's composed in a collection codec.
+      Map<Integer, Optional<String>> v2Map = Maps.newHashMap(1, Optional.of("hello"));
+      insert =
+          prepared
+              .boundStatementBuilder()
+              .setString(0, name.getMethodName())
+              .setInt(1, 2)
+              .set(2, v2Map, mapWithOptionalValueCodec.getJavaType())
+              .build();
+      session.execute(insert);
+
+      ResultSet result =
+          session.execute(
+              SimpleStatement.builder("SELECT v from test2 where k0 = ?")
+                  .addPositionalValues(name.getMethodName())
+                  .build());
+
+      assertThat(result.getAvailableWithoutFetching()).isEqualTo(3);
+
+      Iterator<Row> rows = result.iterator();
+      // row (at key 0) should have v0
+      Row row = rows.next();
+      // should be able to retrieve value back as an optional map.
+      assertThat(row.get(0, optionalMapCodec.getJavaType())).isEqualTo(v0Opt);
+      // should be able to retrieve value back as map.
+      assertThat(row.getMap(0, Integer.class, String.class)).isEqualTo(v0);
+
+      // next row (at key 1) should be absent (null value).
+      row = rows.next();
+      // value should be null.
+      assertThat(row.isNull(0));
+      // getting with codec should return Optional.empty()
+      assertThat(row.get(0, optionalMapCodec.getJavaType())).isEqualTo(absentMap);
+      // getting with map should return an empty map.
+      assertThat(row.getMap(0, Integer.class, String.class)).isEmpty();
+
+      // next row (at key 2) should have v2
+      row = rows.next();
+      // getting with codec should return with the correct type.
+      assertThat(row.get(0, mapWithOptionalValueCodec.getJavaType())).isEqualTo(v2Map);
+      // getting with map should return a map without optional value.
+      assertThat(row.getMap(0, Integer.class, String.class)).isEqualTo(Maps.newHashMap(1, "hello"));
     }
   }
 }
