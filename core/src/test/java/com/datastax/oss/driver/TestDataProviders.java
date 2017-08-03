@@ -15,6 +15,7 @@
  */
 package com.datastax.oss.driver;
 
+import com.tngtech.java.junit.dataprovider.DataProvider;
 import java.util.Arrays;
 
 public class TestDataProviders {
@@ -76,5 +77,10 @@ public class TestDataProviders {
       }
     }
     return result;
+  }
+
+  @DataProvider
+  public static Object[][] booleans() {
+    return fromList(true, false);
   }
 }

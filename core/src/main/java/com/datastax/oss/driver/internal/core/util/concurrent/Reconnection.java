@@ -16,7 +16,6 @@
 package com.datastax.oss.driver.internal.core.util.concurrent;
 
 import com.datastax.oss.driver.api.core.connection.ReconnectionPolicy;
-import com.google.common.base.Preconditions;
 import io.netty.util.concurrent.EventExecutor;
 import io.netty.util.concurrent.Future;
 import io.netty.util.concurrent.ScheduledFuture;
@@ -38,6 +37,14 @@ import org.slf4j.LoggerFactory;
 public class Reconnection {
   private static final Logger LOG = LoggerFactory.getLogger(Reconnection.class);
 
+  private enum State {
+    STOPPED,
+    SCHEDULED, // next attempt scheduled but not started yet
+    ATTEMPT_IN_PROGRESS, // current attempt started and not completed yet
+    STOP_AFTER_CURRENT, // stopped, but we're letting an in-progress attempt finish
+    ;
+  }
+
   private final String logPrefix;
   private final EventExecutor executor;
   private final ReconnectionPolicy reconnectionPolicy;
@@ -45,7 +52,7 @@ public class Reconnection {
   private final Runnable onStart;
   private final Runnable onStop;
 
-  private boolean isRunning;
+  private State state = State.STOPPED;
   private ReconnectionPolicy.ReconnectionSchedule reconnectionSchedule;
   private ScheduledFuture<CompletionStage<Boolean>> nextAttempt;
 
@@ -76,32 +83,57 @@ public class Reconnection {
     this(logPrefix, executor, reconnectionPolicy, reconnectionTask, () -> {}, () -> {});
   }
 
+  /**
+   * Note that if {@link #stop()} was called but we're still waiting for the last pending attempt to
+   * complete, this still returns {@code true}.
+   */
   public boolean isRunning() {
     assert executor.inEventLoop();
-    return isRunning;
+    return state != State.STOPPED;
   }
 
-  /** @throws IllegalStateException if the reconnection is already running */
+  /** This is a no-op if the reconnection is already running. */
   public void start() {
     assert executor.inEventLoop();
-    Preconditions.checkState(!isRunning, "Already running");
-    reconnectionSchedule = reconnectionPolicy.newSchedule();
-    isRunning = true;
-    onStart.run();
-    scheduleNextAttempt();
+    switch (state) {
+      case SCHEDULED:
+      case ATTEMPT_IN_PROGRESS:
+        // nothing to do
+        break;
+      case STOP_AFTER_CURRENT:
+        // cancel the scheduled stop
+        state = State.ATTEMPT_IN_PROGRESS;
+        break;
+      case STOPPED:
+        reconnectionSchedule = reconnectionPolicy.newSchedule();
+        onStart.run();
+        scheduleNextAttempt();
+        break;
+    }
   }
 
   /**
    * Forces a reconnection now, without waiting for the next scheduled attempt.
    *
-   * @param forceIfStopped if true and the reconnection is not running, it will get started. If
-   *     false and the reconnection is not running, no attempt is scheduled.
+   * @param forceIfStopped if true and the reconnection is not running, it will get started (meaning
+   *     subsequent reconnections will be scheduled if this attempt fails). If false and the
+   *     reconnection is not running, no attempt is scheduled.
    */
   public void reconnectNow(boolean forceIfStopped) {
     assert executor.inEventLoop();
-    if (isRunning || forceIfStopped) {
+    if (state == State.ATTEMPT_IN_PROGRESS || state == State.STOP_AFTER_CURRENT) {
+      LOG.debug(
+          "[{}] reconnectNow and current attempt was still running, letting it complete",
+          logPrefix);
+      if (state == State.STOP_AFTER_CURRENT) {
+        // Make sure that we will schedule other attempts if this one fails.
+        state = State.ATTEMPT_IN_PROGRESS;
+      }
+    } else if (state == State.STOPPED && !forceIfStopped) {
+      LOG.debug("[{}] reconnectNow(false) while stopped, nothing to do", logPrefix);
+    } else {
+      assert state == State.SCHEDULED || (state == State.STOPPED && forceIfStopped);
       LOG.debug("[{}] Forcing next attempt now", logPrefix);
-      isRunning = true;
       if (nextAttempt != null) {
         nextAttempt.cancel(true);
       }
@@ -116,20 +148,33 @@ public class Reconnection {
 
   public void stop() {
     assert executor.inEventLoop();
-    if (isRunning) {
-      isRunning = false;
-      LOG.debug("[{}] Stopping reconnection", logPrefix);
-      if (nextAttempt != null) {
-        nextAttempt.cancel(true);
-      }
-      onStop.run();
-      nextAttempt = null;
-      reconnectionSchedule = null;
+    switch (state) {
+      case STOPPED:
+      case STOP_AFTER_CURRENT:
+        break;
+      case ATTEMPT_IN_PROGRESS:
+        state = State.STOP_AFTER_CURRENT;
+        break;
+      case SCHEDULED:
+        reallyStop();
+        break;
     }
+  }
+
+  private void reallyStop() {
+    LOG.debug("[{}] Stopping reconnection", logPrefix);
+    state = State.STOPPED;
+    if (nextAttempt != null) {
+      nextAttempt.cancel(true);
+      nextAttempt = null;
+    }
+    onStop.run();
+    reconnectionSchedule = null;
   }
 
   private void scheduleNextAttempt() {
     assert executor.inEventLoop();
+    state = State.SCHEDULED;
     if (reconnectionSchedule == null) { // happens if reconnectNow() while we were stopped
       reconnectionSchedule = reconnectionPolicy.newSchedule();
     }
@@ -152,6 +197,7 @@ public class Reconnection {
   // the CompletableFuture to find out if that succeeded or not.
   private void onNextAttemptStarted(CompletionStage<Boolean> futureOutcome) {
     assert executor.inEventLoop();
+    state = State.ATTEMPT_IN_PROGRESS;
     futureOutcome
         .whenCompleteAsync(this::onNextAttemptCompleted, executor)
         .exceptionally(UncaughtExceptions::log);
@@ -161,12 +207,15 @@ public class Reconnection {
     assert executor.inEventLoop();
     if (success) {
       LOG.debug("[{}] Reconnection successful", logPrefix);
-      stop();
+      reallyStop();
     } else {
       if (error != null && !(error instanceof CancellationException)) {
         LOG.warn("[{}] Uncaught error while starting reconnection attempt", logPrefix, error);
       }
-      if (isRunning) { // can be false if stop() was called
+      if (state == State.STOP_AFTER_CURRENT) {
+        reallyStop();
+      } else {
+        assert state == State.ATTEMPT_IN_PROGRESS;
         scheduleNextAttempt();
       }
     }
