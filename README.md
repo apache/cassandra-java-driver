@@ -11,8 +11,9 @@ docs](http://datastax.github.io/java-driver/) or via the release tags,
 3.3.0](https://github.com/datastax/java-driver/tree/3.3.0).*
 
 A modern, [feature-rich](manual/) and highly tunable Java client
-library for Apache Cassandra (1.2+) and DataStax Enterprise (3.1+) using
-exclusively Cassandra's binary protocol and Cassandra Query Language v3.
+library for Apache Cassandra (2.1+) and using exclusively Cassandra's binary protocol 
+and Cassandra Query Language v3. _For usage with DataStax Enterprise, see 
+the [DataStax Enterprise Java driver](http://docs.datastax.com/en/developer/java-driver-dse/latest)._
 
 **Features:**
 
@@ -46,7 +47,7 @@ The driver contains the following modules:
 
 - JIRA (bug tracking): https://datastax-oss.atlassian.net/browse/JAVA
 - MAILING LIST: https://groups.google.com/a/lists.datastax.com/forum/#!forum/java-driver-user
-- IRC: #datastax-drivers on [irc.freenode.net](http://freenode.net)
+- DATASTAX ACADEMY SLACK: #datastax-drivers on https://academy.datastax.com/slack 
 - TWITTER: [@dsJavaDriver](https://twitter.com/dsJavaDriver) tweets Java
   driver releases and important announcements (low frequency).
   [@DataStaxEng](https://twitter.com/datastaxeng) has more news including
@@ -103,7 +104,7 @@ is available for download.
 ## Compatibility
 
 The Java client driver 3.3.0 ([branch 3.x](https://github.com/datastax/java-driver/tree/3.x)) is compatible with Apache
-Cassandra 1.2, 2.0, 2.1, 2.2 and 3.0 (see [this page](http://datastax.github.io/java-driver/manual/native_protocol) for
+Cassandra 2.1, 2.2 and 3.0+ (see [this page](http://datastax.github.io/java-driver/manual/native_protocol) for
 the most up-to-date compatibility information).
 
 UDT and tuple support is available only when using Apache Cassandra 2.1 or higher (see [CQL improvements in Cassandra 2.1](http://www.datastax.com/dev/blog/cql-in-2-1)).
@@ -130,7 +131,7 @@ If you are having issues connecting to the cluster (seeing `NoHostAvailableConne
 
 
 ## License
-Copyright 2012-2015, DataStax
+Copyright 2012-2017, DataStax
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
