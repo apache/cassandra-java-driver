@@ -4,6 +4,8 @@
 
 ### 4.0.0-alpha2 (in progress)
 
+- [bug] JAVA-1568: Handle Reconnection#reconnectNow/stop while the current attempt is still in 
+  progress
 - [improvement] JAVA-1585: Add GenericType#where
 - [improvement] JAVA-1590: Properly skip deployment of integration-tests module
 - [improvement] JAVA-1576: Expose AsyncResultSet's iterator through a currentPage() method

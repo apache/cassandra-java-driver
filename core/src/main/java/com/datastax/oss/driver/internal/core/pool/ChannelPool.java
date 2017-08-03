@@ -340,9 +340,7 @@ public class ChannelPool implements AsyncAutoCloseable {
         channels.remove(channel);
         closingChannels.add(channel);
         eventBus.fire(ChannelEvent.channelClosed(node));
-        if (!reconnection.isRunning()) {
-          reconnection.start();
-        }
+        reconnection.start();
       }
     }
 
@@ -354,9 +352,7 @@ public class ChannelPool implements AsyncAutoCloseable {
         if (channels.remove(channel)) {
           LOG.debug("[{}] Lost channel {}", logPrefix, channel);
           eventBus.fire(ChannelEvent.channelClosed(node));
-          if (!reconnection.isRunning()) {
-            reconnection.start();
-          }
+          reconnection.start();
         } else {
           LOG.debug("[{}] Channel {} completed graceful shutdown", logPrefix, channel);
           closingChannels.remove(channel);
@@ -371,9 +367,7 @@ public class ChannelPool implements AsyncAutoCloseable {
       if (newChannelCount > wantedCount) {
         LOG.debug("[{}] Growing ({} => {} channels)", logPrefix, wantedCount, newChannelCount);
         wantedCount = newChannelCount;
-        if (!reconnection.isRunning()) {
-          reconnection.start();
-        }
+        reconnection.start();
       } else if (newChannelCount < wantedCount) {
         LOG.debug("[{}] Shrinking ({} => {} channels)", logPrefix, wantedCount, newChannelCount);
         wantedCount = newChannelCount;
@@ -452,6 +446,8 @@ public class ChannelPool implements AsyncAutoCloseable {
 
     private void reconnectNow() {
       assert adminExecutor.inEventLoop();
+      // Don't force because if the reconnection is stopped, it means either we have enough channels
+      // or the pool is shutting down.
       reconnection.reconnectNow(false);
     }
 
@@ -462,7 +458,10 @@ public class ChannelPool implements AsyncAutoCloseable {
       }
       isClosing = true;
 
+      // If an attempt was in progress right now, it might open new channels but they will be
+      // handled in onAllConnected
       reconnection.stop();
+
       eventBus.unregister(configListenerKey, ConfigChangeEvent.class);
 
       // Close all channels, the pool future completes when all the channels futures have completed

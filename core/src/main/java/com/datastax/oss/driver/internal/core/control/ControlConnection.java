@@ -333,9 +333,7 @@ public class ControlConnection implements EventCallback, AsyncAutoCloseable {
       if (!closeWasCalled) {
         LOG.debug("[{}] Lost channel {}", logPrefix, channel);
         context.eventBus().fire(ChannelEvent.channelClosed(node));
-        if (!reconnection.isRunning()) {
-          reconnection.start();
-        }
+        reconnection.start();
       }
     }
 
