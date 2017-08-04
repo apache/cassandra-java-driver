@@ -10,7 +10,8 @@ docs](http://docs.datastax.com/en/developer/java-driver/latest/index.html) or vi
 [e.g.
 3.3.0](https://github.com/datastax/java-driver/tree/3.3.0).*
 
-**Feeback requested:** help us focus our efforts, provide your input on the [Platform and Runtime Survey](http://goo.gl/forms/qwUE6qnL7U) (we kept it short).
+_**Feeback requested!** Help us focus our efforts, provide your input on 
+the [Platform and Runtime Survey](http://goo.gl/forms/qwUE6qnL7U) (we kept it short)._
 
 A modern, [feature-rich](manual/) and highly tunable Java client
 library for Apache Cassandra (2.1+) and using exclusively Cassandra's binary protocol 
