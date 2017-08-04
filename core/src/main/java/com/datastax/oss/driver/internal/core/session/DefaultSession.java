@@ -44,6 +44,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.WeakHashMap;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ConcurrentHashMap;
@@ -210,8 +211,8 @@ public class DefaultSession implements Session {
     // The pools that we have opened but have not finished initializing yet
     private final Map<Node, CompletionStage<ChannelPool>> pending = new HashMap<>();
     // If we receive events while a pool is initializing, the last one is stored here
-    private final Map<Node, DistanceEvent> pendingDistanceEvents = new HashMap<>();
-    private final Map<Node, NodeStateEvent> pendingStateEvents = new HashMap<>();
+    private final Map<Node, DistanceEvent> pendingDistanceEvents = new WeakHashMap<>();
+    private final Map<Node, NodeStateEvent> pendingStateEvents = new WeakHashMap<>();
 
     private SingleThreaded(InternalDriverContext context) {
       this.context = context;

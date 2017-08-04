@@ -65,7 +65,7 @@ abstract class ControlConnectionTestBase {
   @Mock protected ReconnectionPolicy.ReconnectionSchedule reconnectionSchedule;
   @Mock protected NettyOptions nettyOptions;
   protected DefaultEventLoopGroup adminEventLoopGroup;
-  @Mock protected EventBus eventBus;
+  protected EventBus eventBus;
   @Mock protected ChannelFactory channelFactory;
   protected Exchanger<CompletableFuture<DriverChannel>> channelFactoryFuture;
   @Mock protected LoadBalancingPolicyWrapper loadBalancingPolicyWrapper;
@@ -82,6 +82,7 @@ abstract class ControlConnectionTestBase {
 
     Mockito.when(context.nettyOptions()).thenReturn(nettyOptions);
     Mockito.when(nettyOptions.adminEventExecutorGroup()).thenReturn(adminEventLoopGroup);
+    eventBus = Mockito.spy(new EventBus("test"));
     Mockito.when(context.eventBus()).thenReturn(eventBus);
     Mockito.when(context.channelFactory()).thenReturn(channelFactory);
 
@@ -101,14 +102,7 @@ abstract class ControlConnectionTestBase {
     Mockito.when(reconnectionSchedule.nextDelay()).thenReturn(Duration.ofDays(1));
 
     Mockito.when(context.loadBalancingPolicyWrapper()).thenReturn(loadBalancingPolicyWrapper);
-    Mockito.when(loadBalancingPolicyWrapper.newQueryPlan())
-        .thenAnswer(
-            i -> {
-              ConcurrentLinkedQueue<Node> queryPlan = new ConcurrentLinkedQueue<>();
-              queryPlan.offer(NODE1);
-              queryPlan.offer(NODE2);
-              return queryPlan;
-            });
+    mockQueryPlan(NODE1, NODE2);
 
     Mockito.when(metadataManager.refreshNodes())
         .thenReturn(CompletableFuture.completedFuture(null));
@@ -120,6 +114,18 @@ abstract class ControlConnectionTestBase {
     Mockito.when(context.addressTranslator()).thenReturn(addressTranslator);
 
     controlConnection = new ControlConnection(context);
+  }
+
+  protected void mockQueryPlan(Node... nodes) {
+    Mockito.when(loadBalancingPolicyWrapper.newQueryPlan())
+        .thenAnswer(
+            i -> {
+              ConcurrentLinkedQueue<Node> queryPlan = new ConcurrentLinkedQueue<>();
+              for (Node node : nodes) {
+                queryPlan.offer(node);
+              }
+              return queryPlan;
+            });
   }
 
   @After
@@ -147,11 +153,6 @@ abstract class ControlConnectionTestBase {
     Mockito.when(channel.toString()).thenReturn("channel" + id);
     Mockito.when(channel.address()).thenReturn(new InetSocketAddress("127.0.0." + id, 9042));
     return channel;
-  }
-
-  protected static void failChannel(DriverChannel channel, String message) {
-    assertThat(MockUtil.isMock(channel)).isTrue();
-    ((DefaultChannelPromise) channel.closeFuture()).setFailure(new Exception(message));
   }
 
   // Wait for all the tasks on the admin executor to complete.
