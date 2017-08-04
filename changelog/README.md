@@ -3,6 +3,8 @@
 ### 3.4.0 (In progress)
 
 - [bug] JAVA-1555: Include VIEW and CDC in WriteType.
+- [improvement] JAVA-1587: Deterministic ordering of columns used in Mapper#saveQuery
+
 
 ### 3.3.0
 
