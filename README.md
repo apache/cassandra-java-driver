@@ -12,8 +12,8 @@ docs](http://datastax.github.io/java-driver/) or via the release tags,
 
 A modern, [feature-rich](manual/) and highly tunable Java client
 library for Apache Cassandra (2.1+) and using exclusively Cassandra's binary protocol 
-and Cassandra Query Language v3. _For usage with DataStax Enterprise, see 
-the [DataStax Enterprise Java driver](http://docs.datastax.com/en/developer/java-driver-dse/latest)._
+and Cassandra Query Language v3. _Use the [DataStax Enterprise Java driver][dse-driver]
+for better compatibility and support for DataStax Enterprise._
 
 **Features:**
 
@@ -63,7 +63,8 @@ The driver contains the following modules:
 ## Getting the driver
 
 The last release of the driver is available on Maven Central. You can install
-it in your application using the following Maven dependency:
+it in your application using the following Maven dependency (_if
+using DataStax Enterprise, install the [DataStax Enterprise Java driver][dse-driver] instead_):
 
 ```xml
 <dependency>
@@ -116,12 +117,18 @@ Other features are available only when using Apache Cassandra 2.0 or higher (e.g
 Trying to use these with a cluster running Cassandra 1.2 will result in 
 an [UnsupportedFeatureException](https://github.com/datastax/java-driver/blob/3.x/driver-core/src/main/java/com/datastax/driver/core/exceptions/UnsupportedFeatureException.java) being thrown.
 
+If using _DataStax Enterprise_, the [DataStax Enterprise Java driver][dse-driver] provides 
+more features and better compatibility.
+
 __Note__: DataStax products do not support big-endian systems.
 
 ## Upgrading from previous versions
 
 If you are upgrading from a previous version of the driver, be sure to have a look at
 the [upgrade guide](/upgrade_guide/).
+
+If you are upgrading to _DataStax Enterprise_, use the [DataStax Enterprise Java driver][dse-driver] for more
+features and better compatibility.
 
 
 ### Troubleshooting
@@ -144,3 +151,5 @@ distributed under the License is distributed on an "AS IS" BASIS,
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
+
+[dse-driver]:(http://docs.datastax.com/en/developer/java-driver-dse/latest)
