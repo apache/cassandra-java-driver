@@ -55,6 +55,7 @@ The driver contains the following modules:
 - DOCS: the [manual](http://docs.datastax.com/en/developer/java-driver/3.3/manual/) has quick
   start material and technical details about the driver and its features.
 - API: http://www.datastax.com/drivers/java/3.3
+- GITHUB REPOSITORY: https://github.com/datastax/java-driver
 - [changelog](changelog/)
 - [binary tarball](http://downloads.datastax.com/java-driver/cassandra-java-driver-3.3.0.tar.gz)
 
