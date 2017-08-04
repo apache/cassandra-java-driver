@@ -4,11 +4,13 @@
 
 *If you're reading this on github.com, please note that this is the readme
 for the development version and that some features described here might
-not yet have been released. You can find the documentation for latest
-version through [Java driver
-docs](http://datastax.github.io/java-driver/) or via the release tags,
+not yet have been released. You can find the documentation for the latest
+version through the [Java driver
+docs](http://docs.datastax.com/en/developer/java-driver/latest/index.html) or via the release tags,
 [e.g.
 3.3.0](https://github.com/datastax/java-driver/tree/3.3.0).*
+
+**Feeback requested:** help us focus our efforts, provide your input on the [Platform and Runtime Survey](http://goo.gl/forms/qwUE6qnL7U) (we kept it short).
 
 A modern, [feature-rich](manual/) and highly tunable Java client
 library for Apache Cassandra (2.1+) and using exclusively Cassandra's binary protocol 
@@ -57,9 +59,7 @@ The driver contains the following modules:
 - API: http://www.datastax.com/drivers/java/3.3
 - GITHUB REPOSITORY: https://github.com/datastax/java-driver
 - [changelog](changelog/)
-- [binary tarball](http://downloads.datastax.com/java-driver/cassandra-java-driver-3.3.0.tar.gz)
-
-**Feeback requested:** help us focus our efforts, provide your input on the [Platform and Runtime Survey](http://goo.gl/forms/qwUE6qnL7U) (we kept it short).  
+- [binary tarball](http://downloads.datastax.com/java-driver/cassandra-java-driver-3.3.0.tar.gz)  
 
 ## Getting the driver
 
