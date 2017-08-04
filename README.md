@@ -122,7 +122,8 @@ an [UnsupportedFeatureException](https://github.com/datastax/java-driver/blob/3.
 If using _DataStax Enterprise_, the [DataStax Enterprise Java driver][dse-driver] provides 
 more features and better compatibility.
 
-__Note__: DataStax products do not support big-endian systems.
+__Disclaimer__: Some _DataStax/DataStax Enterprise_ products might partially work on 
+big-endian systems, but _DataStax_ does not officially support these systems.
 
 ## Upgrading from previous versions
 
