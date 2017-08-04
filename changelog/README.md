@@ -4,6 +4,7 @@
 
 ### 4.0.0-alpha2 (in progress)
 
+- [bug] JAVA-1593: Reconnect control connection if current node is removed, forced down or ignored
 - [bug] JAVA-1595: Don't use system.local.rpc_address when refreshing node list
 - [bug] JAVA-1568: Handle Reconnection#reconnectNow/stop while the current attempt is still in 
   progress

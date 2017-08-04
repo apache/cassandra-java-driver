@@ -17,12 +17,16 @@ package com.datastax.oss.driver.internal.core.control;
 
 import com.datastax.oss.driver.api.core.AllNodesFailedException;
 import com.datastax.oss.driver.api.core.AsyncAutoCloseable;
+import com.datastax.oss.driver.api.core.loadbalancing.NodeDistance;
 import com.datastax.oss.driver.api.core.metadata.Node;
+import com.datastax.oss.driver.api.core.metadata.NodeState;
 import com.datastax.oss.driver.internal.core.channel.ChannelEvent;
 import com.datastax.oss.driver.internal.core.channel.DriverChannel;
 import com.datastax.oss.driver.internal.core.channel.DriverChannelOptions;
 import com.datastax.oss.driver.internal.core.channel.EventCallback;
 import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
+import com.datastax.oss.driver.internal.core.metadata.DistanceEvent;
+import com.datastax.oss.driver.internal.core.metadata.NodeStateEvent;
 import com.datastax.oss.driver.internal.core.metadata.SchemaElementKind;
 import com.datastax.oss.driver.internal.core.metadata.TopologyEvent;
 import com.datastax.oss.driver.internal.core.metadata.TopologyMonitor;
@@ -41,6 +45,7 @@ import java.net.InetSocketAddress;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Queue;
+import java.util.WeakHashMap;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.function.Consumer;
@@ -66,7 +71,7 @@ public class ControlConnection implements EventCallback, AsyncAutoCloseable {
   private final EventExecutor adminExecutor;
   private final SingleThreaded singleThreaded;
 
-  // The single channel used by this connection. This field is accessed currently, but only
+  // The single channel used by this connection. This field is accessed concurrently, but only
   // mutated on adminExecutor (by SingleThreaded methods)
   private volatile DriverChannel channel;
 
@@ -195,11 +200,21 @@ public class ControlConnection implements EventCallback, AsyncAutoCloseable {
     private boolean closeWasCalled;
     private final Reconnection reconnection;
     private DriverChannelOptions channelOptions;
+    // The last events received for each node
+    private final Map<Node, DistanceEvent> lastDistanceEvents = new WeakHashMap<>();
+    private final Map<Node, NodeStateEvent> lastStateEvents = new WeakHashMap<>();
 
     private SingleThreaded(InternalDriverContext context) {
       this.context = context;
       this.reconnection =
           new Reconnection(logPrefix, adminExecutor, context.reconnectionPolicy(), this::reconnect);
+
+      context
+          .eventBus()
+          .register(DistanceEvent.class, RunOrSchedule.on(adminExecutor, this::onDistanceEvent));
+      context
+          .eventBus()
+          .register(NodeStateEvent.class, RunOrSchedule.on(adminExecutor, this::onStateEvent));
     }
 
     private void init(boolean listenToClusterEvents) {
@@ -253,6 +268,8 @@ public class ControlConnection implements EventCallback, AsyncAutoCloseable {
             .whenCompleteAsync(
                 (channel, error) -> {
                   try {
+                    DistanceEvent lastDistanceEvent = lastDistanceEvents.get(node);
+                    NodeStateEvent lastStateEvent = lastStateEvents.get(node);
                     if (error != null) {
                       if (closeWasCalled) {
                         onSuccess.run(); // abort, we don't really care about the result
@@ -274,6 +291,25 @@ public class ControlConnection implements EventCallback, AsyncAutoCloseable {
                           channel);
                       channel.forceClose();
                       onSuccess.run();
+                    } else if (lastDistanceEvent != null
+                        && lastDistanceEvent.distance == NodeDistance.IGNORED) {
+                      LOG.debug(
+                          "[{}] New channel opened ({}) but node became ignored, "
+                              + "closing and trying next node",
+                          logPrefix,
+                          channel);
+                      channel.forceClose();
+                      connect(nodes, errors, onSuccess, onFailure);
+                    } else if (lastStateEvent != null
+                        && (lastStateEvent.newState == null /*(removed)*/
+                            || lastStateEvent.newState == NodeState.FORCED_DOWN)) {
+                      LOG.debug(
+                          "[{}] New channel opened ({}) but node was removed or forced down, "
+                              + "closing and trying next node",
+                          logPrefix,
+                          channel);
+                      channel.forceClose();
+                      connect(nodes, errors, onSuccess, onFailure);
                     } else {
                       LOG.debug("[{}] Connection established to {}", logPrefix, node);
                       // Make sure previous channel gets closed (it may still be open if reconnection was forced)
@@ -341,6 +377,36 @@ public class ControlConnection implements EventCallback, AsyncAutoCloseable {
       assert adminExecutor.inEventLoop();
       if (initWasCalled && !closeWasCalled) {
         reconnection.reconnectNow(true);
+      }
+    }
+
+    private void onDistanceEvent(DistanceEvent event) {
+      assert adminExecutor.inEventLoop();
+      this.lastDistanceEvents.put(event.node, event);
+      if (event.distance == NodeDistance.IGNORED
+          && channel != null
+          && !channel.closeFuture().isDone()
+          && event.node.getConnectAddress().equals(channel.address())) {
+        LOG.debug(
+            "[{}] Control node {} became IGNORED, reconnecting to a different node",
+            logPrefix,
+            event.node);
+        reconnectNow();
+      }
+    }
+
+    private void onStateEvent(NodeStateEvent event) {
+      assert adminExecutor.inEventLoop();
+      this.lastStateEvents.put(event.node, event);
+      if ((event.newState == null /*(removed)*/ || event.newState == NodeState.FORCED_DOWN)
+          && channel != null
+          && !channel.closeFuture().isDone()
+          && event.node.getConnectAddress().equals(channel.address())) {
+        LOG.debug(
+            "[{}] Control node {} was removed or forced down, reconnecting to a different node",
+            logPrefix,
+            event.node);
+        reconnectNow();
       }
     }
 
