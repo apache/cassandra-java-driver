@@ -455,6 +455,36 @@ public class DefaultSessionTest {
   }
 
   @Test
+  public void should_not_recreate_pool_if_node_is_forced_back_up_but_ignored() {
+    Mockito.when(node2.getState()).thenReturn(NodeState.FORCED_DOWN);
+    Mockito.when(node2.getDistance()).thenReturn(NodeDistance.IGNORED);
+
+    ChannelPool pool1 = mockPool(node1);
+    ChannelPool pool2 = mockPool(node2);
+    ChannelPool pool3 = mockPool(node3);
+    MockChannelPoolFactoryHelper factoryHelper =
+        MockChannelPoolFactoryHelper.builder(channelPoolFactory)
+            // init
+            .success(node1, KEYSPACE, NodeDistance.LOCAL, pool1)
+            .success(node3, KEYSPACE, NodeDistance.LOCAL, pool3)
+            .build();
+
+    CompletionStage<Session> initFuture = DefaultSession.init(context, KEYSPACE, "test");
+
+    factoryHelper.waitForCall(node1, KEYSPACE, NodeDistance.LOCAL);
+    factoryHelper.waitForCall(node3, KEYSPACE, NodeDistance.LOCAL);
+    waitForPendingAdminTasks();
+    assertThat(initFuture).isSuccess();
+    Session session = CompletableFutures.getCompleted(initFuture.toCompletableFuture());
+    assertThat(((DefaultSession) session).getPools()).containsValues(pool1, pool3);
+
+    eventBus.fire(NodeStateEvent.changed(NodeState.FORCED_DOWN, NodeState.UP, node2));
+    waitForPendingAdminTasks();
+    factoryHelper.verifyNoMoreCalls();
+    assertThat(((DefaultSession) session).getPools()).containsValues(pool1, pool3);
+  }
+
+  @Test
   public void should_adjust_distance_if_changed_while_recreating() {
     Mockito.when(node2.getDistance()).thenReturn(NodeDistance.IGNORED);
 

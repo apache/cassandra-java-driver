@@ -24,10 +24,12 @@ import com.datastax.oss.driver.internal.core.pool.ChannelPoolFactory;
 import com.datastax.oss.driver.internal.core.util.concurrent.CompletableFutures;
 import com.google.common.collect.ListMultimap;
 import com.google.common.collect.MultimapBuilder;
+import com.google.common.collect.Sets;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import org.mockito.ArgumentCaptor;
@@ -91,6 +93,22 @@ public class MockChannelPoolFactoryHelper {
     int extras = actual - expected;
     if (extras > 0) {
       previous.compute(params, (k, v) -> (v == null) ? extras : v + extras);
+    }
+  }
+
+  public void verifyNoMoreCalls() {
+    inOrder
+        .verify(channelPoolFactory, timeout(100).times(0))
+        .init(
+            any(Node.class),
+            any(CqlIdentifier.class),
+            any(NodeDistance.class),
+            any(InternalDriverContext.class),
+            any(String.class));
+
+    Set<Integer> counts = Sets.newHashSet(previous.values());
+    if (!counts.isEmpty()) {
+      assertThat(counts).containsExactly(0);
     }
   }
 

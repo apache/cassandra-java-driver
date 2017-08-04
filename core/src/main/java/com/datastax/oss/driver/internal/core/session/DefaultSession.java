@@ -354,7 +354,7 @@ public class DefaultSession implements Session {
                     return null;
                   });
         }
-      } else if (newState == NodeState.UP) {
+      } else if (newState == NodeState.UP && node.getDistance() != NodeDistance.IGNORED) {
         ChannelPool pool = pools.get(node);
         if (pool == null) {
           LOG.debug("[{}] {} came back UP and no pool found, initializing it", logPrefix, node);
