@@ -47,6 +47,10 @@ public class EventBus {
   /**
    * Registers a listener for an event type.
    *
+   * <p>If the listener has a shorter lifecycle than the {@code Cluster} instance, it is recommended
+   * to save the key returned by this method, and use it later to unregister and therefore avoid a
+   * leak.
+   *
    * @return a key that is needed to unregister later.
    */
   public <T> Object register(Class<T> eventClass, Consumer<T> listener) {
