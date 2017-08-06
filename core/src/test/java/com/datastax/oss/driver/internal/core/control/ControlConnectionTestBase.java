@@ -48,7 +48,6 @@ import org.junit.Before;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
-import org.mockito.internal.util.MockUtil;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
@@ -151,7 +150,7 @@ abstract class ControlConnectionTestBase {
             });
     Mockito.when(channel.closeFuture()).thenReturn(closeFuture);
     Mockito.when(channel.toString()).thenReturn("channel" + id);
-    Mockito.when(channel.address()).thenReturn(new InetSocketAddress("127.0.0." + id, 9042));
+    Mockito.when(channel.remoteAddress()).thenReturn(new InetSocketAddress("127.0.0." + id, 9042));
     return channel;
   }
 
