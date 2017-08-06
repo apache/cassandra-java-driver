@@ -483,6 +483,21 @@ public class NodeStateManagerTest {
   }
 
   @Test
+  public void should_mark_node_down_if_no_connections_and_reconnection_already_started() {
+    new NodeStateManager(context);
+
+    node1.state = NodeState.UP;
+    node1.openConnections = 1;
+
+    eventBus.fire(ChannelEvent.reconnectionStarted(node1));
+    eventBus.fire(ChannelEvent.channelClosed(node1));
+    waitForPendingAdminTasks();
+
+    assertThat(node1.state).isEqualTo(NodeState.DOWN);
+    Mockito.verify(eventBus).fire(NodeStateEvent.changed(NodeState.UP, NodeState.DOWN, node1));
+  }
+
+  @Test
   public void should_keep_node_up_if_reconnection_starts_with_some_connections() {
     new NodeStateManager(context);
 
