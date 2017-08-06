@@ -142,8 +142,12 @@ public class DriverChannel {
     return protocolVersion;
   }
 
-  public SocketAddress address() {
+  public SocketAddress remoteAddress() {
     return channel.remoteAddress();
+  }
+
+  public SocketAddress localAddress() {
+    return channel.localAddress();
   }
 
   /**

@@ -386,7 +386,7 @@ public class ControlConnection implements EventCallback, AsyncAutoCloseable {
       if (event.distance == NodeDistance.IGNORED
           && channel != null
           && !channel.closeFuture().isDone()
-          && event.node.getConnectAddress().equals(channel.address())) {
+          && event.node.getConnectAddress().equals(channel.remoteAddress())) {
         LOG.debug(
             "[{}] Control node {} became IGNORED, reconnecting to a different node",
             logPrefix,
@@ -401,7 +401,7 @@ public class ControlConnection implements EventCallback, AsyncAutoCloseable {
       if ((event.newState == null /*(removed)*/ || event.newState == NodeState.FORCED_DOWN)
           && channel != null
           && !channel.closeFuture().isDone()
-          && event.node.getConnectAddress().equals(channel.address())) {
+          && event.node.getConnectAddress().equals(channel.remoteAddress())) {
         LOG.debug(
             "[{}] Control node {} was removed or forced down, reconnecting to a different node",
             logPrefix,
