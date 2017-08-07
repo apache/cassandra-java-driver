@@ -29,6 +29,7 @@ import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
 import com.datastax.oss.driver.internal.core.metadata.DefaultNode;
 import com.datastax.oss.driver.internal.core.metadata.DistanceEvent;
 import com.datastax.oss.driver.internal.core.metadata.NodeStateEvent;
+import com.datastax.oss.driver.internal.core.metadata.TopologyEvent;
 import com.datastax.oss.driver.internal.core.pool.ChannelPool;
 import com.datastax.oss.driver.internal.core.pool.ChannelPoolFactory;
 import com.datastax.oss.driver.internal.core.util.concurrent.CompletableFutures;
@@ -208,6 +209,7 @@ public class DefaultSession implements Session {
     private final Object stateListenerKey;
     private final ReplayingEventFilter<NodeStateEvent> stateEventFilter =
         new ReplayingEventFilter<>(this::processStateEvent);
+    private final Object topologyListenerKey;
     // The pools that we have opened but have not finished initializing yet
     private final Map<Node, CompletionStage<ChannelPool>> pending = new HashMap<>();
     // If we receive events while a pool is initializing, the last one is stored here
@@ -226,6 +228,11 @@ public class DefaultSession implements Session {
           context
               .eventBus()
               .register(NodeStateEvent.class, RunOrSchedule.on(adminExecutor, this::onStateEvent));
+      this.topologyListenerKey =
+          context
+              .eventBus()
+              .register(
+                  TopologyEvent.class, RunOrSchedule.on(adminExecutor, this::onTopologyEvent));
     }
 
     private void init() {
@@ -338,15 +345,16 @@ public class DefaultSession implements Session {
 
     private void processStateEvent(NodeStateEvent event) {
       assert adminExecutor.inEventLoop();
-      // no need to check closeWasCalled, because we stop listening for events one closed
+      // no need to check closeWasCalled, because we stop listening for events once closed
       DefaultNode node = event.node;
+      NodeState oldState = event.oldState;
       NodeState newState = event.newState;
       if (pending.containsKey(node)) {
         pendingStateEvents.put(node, event);
       } else if (newState == NodeState.FORCED_DOWN) {
         ChannelPool pool = pools.remove(node);
         if (pool != null) {
-          LOG.debug("[{}] {} became FORCED_DOWN, destroying pool", logPrefix, node);
+          LOG.debug("[{}] {} was FORCED_DOWN, destroying pool", logPrefix, node);
           pool.closeAsync()
               .exceptionally(
                   error -> {
@@ -354,20 +362,37 @@ public class DefaultSession implements Session {
                     return null;
                   });
         }
-      } else if (newState == NodeState.UP && node.getDistance() != NodeDistance.IGNORED) {
-        ChannelPool pool = pools.get(node);
-        if (pool == null) {
-          LOG.debug("[{}] {} came back UP and no pool found, initializing it", logPrefix, node);
-          CompletionStage<ChannelPool> poolFuture =
-              channelPoolFactory.init(node, keyspace, node.getDistance(), context, logPrefix);
-          pending.put(node, poolFuture);
-          poolFuture
-              .thenAcceptAsync(this::onPoolInitialized, adminExecutor)
-              .exceptionally(UncaughtExceptions::log);
-        } else {
-          LOG.debug("[{}] {} came back UP, triggering pool reconnection", logPrefix, node);
-          pool.reconnectNow();
+      } else if (oldState == NodeState.FORCED_DOWN
+          && newState == NodeState.UP
+          && node.getDistance() != NodeDistance.IGNORED) {
+        LOG.debug("[{}] {} was forced back UP, initializing pool", logPrefix, node);
+        createOrReconnectPool(node);
+      }
+    }
+
+    private void onTopologyEvent(TopologyEvent event) {
+      assert adminExecutor.inEventLoop();
+      if (event.type == TopologyEvent.Type.SUGGEST_UP) {
+        Node node = context.metadataManager().getMetadata().getNodes().get(event.address);
+        if (node.getDistance() != NodeDistance.IGNORED) {
+          LOG.debug(
+              "[{}] Received a SUGGEST_UP event for {}, reconnecting pool now", logPrefix, node);
+          createOrReconnectPool(node);
         }
+      }
+    }
+
+    private void createOrReconnectPool(Node node) {
+      ChannelPool pool = pools.get(node);
+      if (pool == null) {
+        CompletionStage<ChannelPool> poolFuture =
+            channelPoolFactory.init(node, keyspace, node.getDistance(), context, logPrefix);
+        pending.put(node, poolFuture);
+        poolFuture
+            .thenAcceptAsync(this::onPoolInitialized, adminExecutor)
+            .exceptionally(UncaughtExceptions::log);
+      } else {
+        pool.reconnectNow();
       }
     }
 
@@ -458,6 +483,7 @@ public class DefaultSession implements Session {
       // Stop listening for events
       context.eventBus().unregister(distanceListenerKey, DistanceEvent.class);
       context.eventBus().unregister(stateListenerKey, NodeStateEvent.class);
+      context.eventBus().unregister(topologyListenerKey, TopologyEvent.class);
 
       List<CompletionStage<Void>> closePoolStages = new ArrayList<>(pools.size());
       for (ChannelPool pool : pools.values()) {

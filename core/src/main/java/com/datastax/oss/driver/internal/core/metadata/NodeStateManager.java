@@ -18,6 +18,7 @@ package com.datastax.oss.driver.internal.core.metadata;
 import com.datastax.oss.driver.api.core.AsyncAutoCloseable;
 import com.datastax.oss.driver.api.core.config.CoreDriverOption;
 import com.datastax.oss.driver.api.core.config.DriverConfigProfile;
+import com.datastax.oss.driver.api.core.loadbalancing.NodeDistance;
 import com.datastax.oss.driver.api.core.metadata.NodeState;
 import com.datastax.oss.driver.internal.core.channel.ChannelEvent;
 import com.datastax.oss.driver.internal.core.context.EventBus;
@@ -148,8 +149,8 @@ public class NodeStateManager implements AsyncAutoCloseable {
             metadataManager.addNode(event.address);
           } else if (node.state == NodeState.FORCED_DOWN) {
             LOG.debug("[{}] Not setting {} UP because it is FORCED_DOWN", logPrefix, node);
-          } else {
-            setState(node, NodeState.UP, "an UP topology event was received");
+          } else if (node.distance == NodeDistance.IGNORED) {
+            setState(node, NodeState.UP, "it is IGNORED and an UP topology event was received");
           }
           break;
         case SUGGEST_DOWN:
@@ -165,8 +166,8 @@ public class NodeStateManager implements AsyncAutoCloseable {
                 node);
           } else if (node.state == NodeState.FORCED_DOWN) {
             LOG.debug("[{}] Not setting {} DOWN because it is FORCED_DOWN", logPrefix, node);
-          } else {
-            setState(node, NodeState.DOWN, "a DOWN topology event was received");
+          } else if (node.distance == NodeDistance.IGNORED) {
+            setState(node, NodeState.DOWN, "it is IGNORED and a DOWN topology event was received");
           }
           break;
         case FORCE_UP:

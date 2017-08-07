@@ -82,6 +82,7 @@ public class EventBus {
    * processing asynchronously if needed.
    */
   public void fire(Object event) {
+    LOG.trace("[{}] Firing an instance of {}: {}", logPrefix, event.getClass(), event);
     // if the exact match thing gets too cumbersome, we can reconsider, but I'd like to avoid
     // scanning all the keys with instanceof checks.
     Class<?> eventClass = event.getClass();
