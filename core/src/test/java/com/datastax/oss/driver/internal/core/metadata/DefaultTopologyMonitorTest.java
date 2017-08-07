@@ -54,6 +54,7 @@ import static org.mockito.Mockito.never;
 public class DefaultTopologyMonitorTest {
 
   private static final InetSocketAddress ADDRESS1 = new InetSocketAddress("127.0.0.1", 9042);
+  private static final InetSocketAddress ADDRESS2 = new InetSocketAddress("127.0.0.2", 9042);
 
   @Mock private InternalDriverContext context;
   @Mock private DriverConfig config;
@@ -62,6 +63,7 @@ public class DefaultTopologyMonitorTest {
   @Mock private DriverChannel channel;
   private AddressTranslator addressTranslator;
   private DefaultNode node1;
+  private DefaultNode node2;
 
   private TestTopologyMonitor topologyMonitor;
 
@@ -79,10 +81,12 @@ public class DefaultTopologyMonitorTest {
             new PassThroughAddressTranslator(context, CoreDriverOption.ADDRESS_TRANSLATOR_ROOT));
     Mockito.when(context.addressTranslator()).thenReturn(addressTranslator);
 
+    Mockito.when(channel.address()).thenReturn(ADDRESS1);
     Mockito.when(controlConnection.channel()).thenReturn(channel);
     Mockito.when(context.controlConnection()).thenReturn(controlConnection);
 
     node1 = new DefaultNode(ADDRESS1);
+    node2 = new DefaultNode(ADDRESS2);
 
     topologyMonitor = new TestTopologyMonitor(context);
   }
@@ -98,9 +102,6 @@ public class DefaultTopologyMonitorTest {
 
   @Test
   public void should_not_refresh_control_node() {
-    // Given
-    Mockito.when(channel.address()).thenReturn(ADDRESS1);
-
     // When
     CompletionStage<Optional<NodeInfo>> futureInfo = topologyMonitor.refreshNode(node1);
 
@@ -111,16 +112,16 @@ public class DefaultTopologyMonitorTest {
   @Test
   public void should_refresh_node_from_peers_if_broadcast_address_is_present() {
     // Given
-    InetAddress broadcastAddress = ADDRESS1.getAddress();
-    node1.broadcastAddress = Optional.of(broadcastAddress);
+    InetAddress broadcastAddress = ADDRESS2.getAddress();
+    node2.broadcastAddress = Optional.of(broadcastAddress);
     topologyMonitor.stubQueries(
         new StubbedQuery(
             "SELECT * FROM system.peers WHERE peer = :address",
             ImmutableMap.of("address", broadcastAddress),
-            mockResult(mockPeersRow(1))));
+            mockResult(mockPeersRow(2))));
 
     // When
-    CompletionStage<Optional<NodeInfo>> futureInfo = topologyMonitor.refreshNode(node1);
+    CompletionStage<Optional<NodeInfo>> futureInfo = topologyMonitor.refreshNode(node2);
 
     // Then
     assertThat(futureInfo)
@@ -128,22 +129,21 @@ public class DefaultTopologyMonitorTest {
             maybeInfo -> {
               assertThat(maybeInfo.isPresent()).isTrue();
               NodeInfo info = maybeInfo.get();
-              assertThat(info.getDatacenter()).isEqualTo("dc1");
+              assertThat(info.getDatacenter()).isEqualTo("dc2");
             });
   }
 
   @Test
   public void should_refresh_node_from_peers_if_broadcast_address_is_not_present() {
     // Given
-    node1.broadcastAddress = Optional.empty();
+    node2.broadcastAddress = Optional.empty();
     AdminResult.Row peer3 = mockPeersRow(3);
     AdminResult.Row peer2 = mockPeersRow(2);
-    AdminResult.Row peer1 = mockPeersRow(1);
     topologyMonitor.stubQueries(
-        new StubbedQuery("SELECT * FROM system.peers", mockResult(peer3, peer2, peer1)));
+        new StubbedQuery("SELECT * FROM system.peers", mockResult(peer3, peer2)));
 
     // When
-    CompletionStage<Optional<NodeInfo>> futureInfo = topologyMonitor.refreshNode(node1);
+    CompletionStage<Optional<NodeInfo>> futureInfo = topologyMonitor.refreshNode(node2);
 
     // Then
     assertThat(futureInfo)
@@ -151,7 +151,7 @@ public class DefaultTopologyMonitorTest {
             maybeInfo -> {
               assertThat(maybeInfo.isPresent()).isTrue();
               NodeInfo info = maybeInfo.get();
-              assertThat(info.getDatacenter()).isEqualTo("dc1");
+              assertThat(info.getDatacenter()).isEqualTo("dc2");
             });
     // The rpc_address in each row should have been tried, only the last row should have been
     // converted
@@ -161,11 +161,7 @@ public class DefaultTopologyMonitorTest {
 
     Mockito.verify(peer2).getInetAddress("rpc_address");
     Mockito.verify(addressTranslator).translate(new InetSocketAddress("127.0.0.2", 9042));
-    Mockito.verify(peer2, never()).getString(anyString());
-
-    Mockito.verify(peer1).getInetAddress("rpc_address");
-    Mockito.verify(addressTranslator).translate(new InetSocketAddress("127.0.0.1", 9042));
-    Mockito.verify(peer1).getString("data_center");
+    Mockito.verify(peer2).getString("data_center");
   }
 
   @Test
@@ -220,9 +216,17 @@ public class DefaultTopologyMonitorTest {
         .isSuccess(
             infos -> {
               Iterator<NodeInfo> iterator = infos.iterator();
-              assertThat(iterator.next().getDatacenter()).isEqualTo("dc1");
-              assertThat(iterator.next().getDatacenter()).isEqualTo("dc3");
-              assertThat(iterator.next().getDatacenter()).isEqualTo("dc2");
+              NodeInfo info1 = iterator.next();
+              assertThat(info1.getConnectAddress()).isEqualTo(ADDRESS1);
+              assertThat(info1.getDatacenter()).isEqualTo("dc1");
+              NodeInfo info3 = iterator.next();
+              assertThat(info3.getConnectAddress())
+                  .isEqualTo(new InetSocketAddress("127.0.0.3", 9042));
+              assertThat(info3.getDatacenter()).isEqualTo("dc3");
+              NodeInfo info2 = iterator.next();
+              assertThat(info2.getConnectAddress())
+                  .isEqualTo(new InetSocketAddress("127.0.0.2", 9042));
+              assertThat(info2.getDatacenter()).isEqualTo("dc2");
             });
   }
 
@@ -290,8 +294,11 @@ public class DefaultTopologyMonitorTest {
           .thenReturn(InetAddress.getByName("127.0.0." + i));
       Mockito.when(row.getString("rack")).thenReturn("rack" + i);
       Mockito.when(row.getString("release_version")).thenReturn("release_version" + i);
-      Mockito.when(row.getInetAddress("rpc_address"))
-          .thenReturn(InetAddress.getByName("127.0.0." + i));
+
+      // The driver should not use this column for the local row, because it can contain the
+      // non-broadcast RPC address. Simulate the bug to ensure it's handled correctly.
+      Mockito.when(row.getInetAddress("rpc_address")).thenReturn(InetAddress.getByName("0.0.0.0"));
+
       Mockito.when(row.getSetOfString("tokens")).thenReturn(ImmutableSet.of("token" + i));
       return row;
     } catch (UnknownHostException e) {

@@ -120,6 +120,11 @@ public class DefaultTopologyMonitor implements TopologyMonitor {
     }
     LOG.debug("[{}] Refreshing node list", logPrefix);
     DriverChannel channel = controlConnection.channel();
+
+    // This cast always succeeds in production. The only way it could fail is in a test that uses a
+    // local channel, and we don't have such tests at the moment.
+    InetSocketAddress controlAddress = (InetSocketAddress) channel.address();
+
     savePort(channel);
 
     CompletionStage<AdminResult> localQuery = query(channel, "SELECT * FROM system.local");
@@ -129,7 +134,10 @@ public class DefaultTopologyMonitor implements TopologyMonitor {
         peersQuery,
         (controlNodeResult, peersResult) -> {
           List<NodeInfo> nodeInfos = new ArrayList<>();
-          nodeInfos.add(buildNodeInfo(controlNodeResult.iterator().next()));
+          // Don't rely on system.local.rpc_address for the control row, because it mistakenly
+          // reports the normal RPC address instead of the broadcast one (CASSANDRA-11181). We
+          // already know the address since we've just used it to query.
+          nodeInfos.add(buildNodeInfo(controlNodeResult.iterator().next(), controlAddress));
           for (AdminResult.Row row : peersResult) {
             nodeInfos.add(buildNodeInfo(row));
           }
