@@ -16,6 +16,8 @@
 package com.datastax.oss.driver.api.core.metadata;
 
 import com.datastax.oss.driver.api.core.loadbalancing.LoadBalancingPolicy;
+import com.datastax.oss.driver.internal.core.metadata.TopologyEvent;
+import java.net.InetSocketAddress;
 
 /** The state of a node, as viewed from the driver. */
 public enum NodeState {
@@ -55,7 +57,10 @@ public enum NodeState {
    *
    * <p>This is used for edge error cases, for example when the driver detects that it's trying to
    * connect to a node that does not belong to the Cassandra cluster (e.g. a wrong address was
-   * provided in the contact points).
+   * provided in the contact points). It can also be {@link
+   * TopologyEvent#forceDown(InetSocketAddress) triggered explicitly} by components (for example a
+   * custom load balancing policy) that want to limit the number of nodes that the driver connects
+   * to.
    */
   FORCED_DOWN,
 }
