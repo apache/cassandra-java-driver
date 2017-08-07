@@ -43,6 +43,8 @@ public class ConditionChecker {
 
     private final BooleanSupplier predicate;
 
+    private String description;
+
     ConditionCheckerBuilder(BooleanSupplier predicate) {
       this.predicate = predicate;
     }
@@ -71,14 +73,17 @@ public class ConditionChecker {
       return this;
     }
 
-    @SuppressWarnings("unchecked")
-    public void becomesTrue() {
-      new ConditionChecker(predicate, period, periodUnit).await(timeout, timeoutUnit);
+    public ConditionCheckerBuilder as(String description) {
+      this.description = description;
+      return this;
     }
 
-    @SuppressWarnings("unchecked")
+    public void becomesTrue() {
+      new ConditionChecker(predicate, period, periodUnit, description).await(timeout, timeoutUnit);
+    }
+
     public void becomesFalse() {
-      new ConditionChecker(() -> !predicate.getAsBoolean(), period, periodUnit)
+      new ConditionChecker(() -> !predicate.getAsBoolean(), period, periodUnit, description)
           .await(timeout, timeoutUnit);
     }
   }
@@ -88,13 +93,15 @@ public class ConditionChecker {
   }
 
   private final BooleanSupplier predicate;
+  private final String description;
   private final Lock lock;
   private final Condition condition;
   private final Timer timer;
 
-  @SuppressWarnings("unchecked")
-  public ConditionChecker(BooleanSupplier predicate, long period, TimeUnit periodUnit) {
+  public ConditionChecker(
+      BooleanSupplier predicate, long period, TimeUnit periodUnit, String description) {
     this.predicate = predicate;
+    this.description = (description != null) ? description : this.toString();
     lock = new ReentrantLock();
     condition = lock.newCondition();
     timer = new Timer("condition-checker", true);
@@ -119,8 +126,8 @@ public class ConditionChecker {
         if (nanos <= 0L)
           fail(
               String.format(
-                  "Timeout after %s %s while waiting for condition",
-                  timeout, unit.toString().toLowerCase()));
+                  "Timeout after %s %s while waiting for '%s'",
+                  timeout, unit.toString().toLowerCase(), description));
         try {
           nanos = condition.awaitNanos(nanos);
         } catch (InterruptedException e) {
