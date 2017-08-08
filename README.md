@@ -1,4 +1,4 @@
-# Datastax Java Driver for Apache Cassandra
+# Datastax Java Driver for Apache Cassandra®
 
 [![Build Status](https://travis-ci.org/datastax/java-driver.svg?branch=3.x)](https://travis-ci.org/datastax/java-driver)
 
