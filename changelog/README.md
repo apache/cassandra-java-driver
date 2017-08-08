@@ -4,6 +4,7 @@
 
 ### 4.0.0-alpha2 (in progress)
 
+- [improvement] JAVA-1542: Enable JaCoCo code coverage
 - [improvement] JAVA-1295: Auto-detect best protocol version in mixed cluster
 - [bug] JAVA-1565: Mark node down when it loses its last connection and was already reconnecting
 - [bug] JAVA-1594: Don't create pool if node comes back up but is ignored
