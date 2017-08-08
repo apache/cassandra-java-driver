@@ -41,11 +41,15 @@ public class ConditionChecker {
 
     private TimeUnit periodUnit = TimeUnit.MILLISECONDS;
 
-    private final BooleanSupplier predicate;
+    private final Object predicate;
 
     private String description;
 
     ConditionCheckerBuilder(BooleanSupplier predicate) {
+      this.predicate = predicate;
+    }
+
+    public ConditionCheckerBuilder(Runnable predicate) {
       this.predicate = predicate;
     }
 
@@ -79,11 +83,12 @@ public class ConditionChecker {
     }
 
     public void becomesTrue() {
-      new ConditionChecker(predicate, period, periodUnit, description).await(timeout, timeoutUnit);
+      new ConditionChecker(predicate, true, period, periodUnit, description)
+          .await(timeout, timeoutUnit);
     }
 
     public void becomesFalse() {
-      new ConditionChecker(() -> !predicate.getAsBoolean(), period, periodUnit, description)
+      new ConditionChecker(predicate, false, period, periodUnit, description)
           .await(timeout, timeoutUnit);
     }
   }
@@ -92,15 +97,25 @@ public class ConditionChecker {
     return new ConditionCheckerBuilder(predicate);
   }
 
-  private final BooleanSupplier predicate;
+  public static ConditionCheckerBuilder checkThat(Runnable predicate) {
+    return new ConditionCheckerBuilder(predicate);
+  }
+
+  private final Object predicate;
+  private final boolean expectedOutcome;
   private final String description;
   private final Lock lock;
   private final Condition condition;
   private final Timer timer;
 
   public ConditionChecker(
-      BooleanSupplier predicate, long period, TimeUnit periodUnit, String description) {
+      Object predicate,
+      boolean expectedOutcome,
+      long period,
+      TimeUnit periodUnit,
+      String description) {
     this.predicate = predicate;
+    this.expectedOutcome = expectedOutcome;
     this.description = (description != null) ? description : this.toString();
     lock = new ReentrantLock();
     condition = lock.newCondition();
@@ -152,6 +167,18 @@ public class ConditionChecker {
   }
 
   private boolean evalCondition() {
-    return predicate.getAsBoolean();
+    if (predicate instanceof BooleanSupplier) {
+      return ((BooleanSupplier) predicate).getAsBoolean() == expectedOutcome;
+    } else if (predicate instanceof Runnable) {
+      boolean succeeded = true;
+      try {
+        ((Runnable) predicate).run();
+      } catch (Throwable t) {
+        succeeded = false;
+      }
+      return succeeded == expectedOutcome;
+    } else {
+      throw new AssertionError("Unsupported predicate type " + predicate.getClass());
+    }
   }
 }
