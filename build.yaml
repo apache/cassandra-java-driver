@@ -32,7 +32,7 @@ java:
   - oraclejdk7
   - oraclejdk8
 os:
-  - ubuntu/trusty64
+  - ubuntu/trusty64/m3.large
 cassandra:
   - '1.2'
   - '2.0'
