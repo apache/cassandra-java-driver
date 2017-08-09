@@ -11,6 +11,7 @@ schedules:
           cassandra: ['1.2', '2.0', '2.1', '2.2', '3.0']
     env_vars: |
       TEST_GROUP="short"
+    disable_commit_status: true
   nightly:
     # Run full suite nightly on change for all primary branches if they have changes.
     schedule: nightly
@@ -19,6 +20,7 @@ schedules:
       include: ["/\\d+(\\.[\\dx]+)+/"]
     env_vars: |
       TEST_GROUP="long"
+    disable_commit_status: true
   adhoc:
     # Adhoc job for non-primary braches that doesn't have a schedule but may be used to run all configs.
     schedule: adhoc
@@ -27,6 +29,7 @@ schedules:
       exclude: ["/\\d+(\\.[\\dx]+)+/"]
     env_vars: |
       TEST_GROUP="long"
+    disable_commit_status: true
 java:
   - openjdk6
   - oraclejdk7
@@ -79,4 +82,3 @@ build:
   - xunit:
     - "**/target/surefire-reports/TEST-*.xml"
     - "**/target/failsafe-reports/TEST-*.xml" 
-disable_commit_status: true
