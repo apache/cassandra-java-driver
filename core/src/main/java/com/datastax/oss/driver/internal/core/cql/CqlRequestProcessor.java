@@ -29,7 +29,7 @@ public class CqlRequestProcessor
     implements RequestProcessor<ResultSet, CompletionStage<AsyncResultSet>> {
 
   @Override
-  public <T extends Request<?, ?>> boolean canProcess(T request) {
+  public boolean canProcess(Request<?, ?> request) {
     return request instanceof Statement;
   }
 

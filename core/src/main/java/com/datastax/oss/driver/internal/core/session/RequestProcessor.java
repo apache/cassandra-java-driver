@@ -37,7 +37,7 @@ public interface RequestProcessor<SyncResultT, AsyncResultT> {
    * <p>Processors will be tried in the order they were registered. The first processor for which
    * this method returns true will be used.
    */
-  <T extends Request<?, ?>> boolean canProcess(T request);
+  boolean canProcess(Request<?, ?> request);
 
   /** Builds a new handler to process a given request. */
   RequestHandler<SyncResultT, AsyncResultT> newHandler(

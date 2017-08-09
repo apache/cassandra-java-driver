@@ -45,7 +45,7 @@ public class CqlPrepareProcessor
       new MapMaker().weakValues().makeMap();
 
   @Override
-  public <T extends Request<?, ?>> boolean canProcess(T request) {
+  public boolean canProcess(Request<?, ?> request) {
     return request instanceof PrepareRequest;
   }
 
