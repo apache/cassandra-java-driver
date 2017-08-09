@@ -79,3 +79,4 @@ build:
   - xunit:
     - "**/target/surefire-reports/TEST-*.xml"
     - "**/target/failsafe-reports/TEST-*.xml" 
+disable_commit_status: true
