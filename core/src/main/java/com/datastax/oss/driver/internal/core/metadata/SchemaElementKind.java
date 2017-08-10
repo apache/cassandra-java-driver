@@ -21,6 +21,9 @@ import java.util.Map;
 
 /** The different kinds of objects in a schema. */
 public enum SchemaElementKind {
+  WHOLE_SCHEMA(
+      // Dummy placeholder, this kind never comes from the server, only internally
+      "WHOLE_SCHEMA"),
   KEYSPACE(ProtocolConstants.SchemaChangeTarget.KEYSPACE),
   TABLE(ProtocolConstants.SchemaChangeTarget.TABLE),
   TYPE(ProtocolConstants.SchemaChangeTarget.TYPE),

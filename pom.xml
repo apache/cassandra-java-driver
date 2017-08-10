@@ -105,7 +105,7 @@
       <dependency>
         <groupId>com.datastax.oss.simulacron</groupId>
         <artifactId>simulacron-native-server</artifactId>
-        <version>0.5.0</version>
+        <version>0.5.2</version>
       </dependency>
       <dependency>
         <groupId>org.apache.commons</groupId>

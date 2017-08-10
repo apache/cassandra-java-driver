@@ -30,7 +30,7 @@ import java.util.stream.Collectors;
 
 public class SimulacronRule extends CassandraResourceRule {
   // TODO perhaps share server some other way
-  private static final Server server =
+  public static final Server server =
       Server.builder().withAddressResolver(new AddressResolver.Inet4Resolver(9043)).build();
 
   private final ClusterSpec clusterSpec;

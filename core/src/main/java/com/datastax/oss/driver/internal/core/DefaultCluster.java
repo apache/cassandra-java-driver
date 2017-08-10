@@ -18,12 +18,16 @@ package com.datastax.oss.driver.internal.core;
 import com.datastax.oss.driver.api.core.AsyncAutoCloseable;
 import com.datastax.oss.driver.api.core.Cluster;
 import com.datastax.oss.driver.api.core.CqlIdentifier;
+import com.datastax.oss.driver.api.core.ProtocolVersion;
+import com.datastax.oss.driver.api.core.config.CoreDriverOption;
 import com.datastax.oss.driver.api.core.context.DriverContext;
 import com.datastax.oss.driver.api.core.metadata.Metadata;
 import com.datastax.oss.driver.api.core.session.Session;
 import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
+import com.datastax.oss.driver.internal.core.control.ControlConnection;
 import com.datastax.oss.driver.internal.core.metadata.MetadataManager;
 import com.datastax.oss.driver.internal.core.metadata.NodeStateManager;
+import com.datastax.oss.driver.internal.core.metadata.SchemaElementKind;
 import com.datastax.oss.driver.internal.core.session.DefaultSession;
 import com.datastax.oss.driver.internal.core.util.concurrent.CompletableFutures;
 import com.datastax.oss.driver.internal.core.util.concurrent.RunOrSchedule;
@@ -145,23 +149,61 @@ public class DefaultCluster implements Cluster {
           .addContactPoints(initialContactPoints)
           .thenCompose(v -> context.topologyMonitor().init())
           .thenCompose(v -> metadataManager.refreshNodes())
-          .thenAccept(
-              v -> {
-                try {
-                  context.loadBalancingPolicyWrapper().init();
-                  context.configLoader().onDriverInit(context);
-                  LOG.debug("[{}] Initialization complete, ready", logPrefix);
-                  initFuture.complete(DefaultCluster.this);
-                  // TODO schedule full schema refresh asynchronously (does not block init)
-                } catch (Throwable throwable) {
-                  initFuture.completeExceptionally(throwable);
-                }
-              })
+          .thenAccept(this::afterInitialNodeListRefresh)
           .exceptionally(
               error -> {
                 initFuture.completeExceptionally(error);
                 return null;
               });
+    }
+
+    private void afterInitialNodeListRefresh(@SuppressWarnings("unused") Void ignored) {
+      try {
+        boolean protocolWasForced =
+            context.config().getDefaultProfile().isDefined(CoreDriverOption.PROTOCOL_VERSION);
+        boolean needSchemaRefresh = true;
+        if (!protocolWasForced) {
+          ProtocolVersion currentVersion = context.protocolVersion();
+          ProtocolVersion bestVersion =
+              context
+                  .protocolVersionRegistry()
+                  .highestCommon(metadataManager.getMetadata().getNodes().values());
+          if (!currentVersion.equals(bestVersion)) {
+            LOG.info(
+                "[{}] Negotiated protocol version {} for the initial contact point, "
+                    + "but other nodes only support {}, downgrading",
+                logPrefix,
+                currentVersion,
+                bestVersion);
+            context.channelFactory().setProtocolVersion(bestVersion);
+            ControlConnection controlConnection = context.controlConnection();
+            // Might not have initialized yet if there is a custom TopologyMonitor
+            if (controlConnection.isInit()) {
+              controlConnection.reconnectNow();
+              // Reconnection already triggers a full schema refresh
+              needSchemaRefresh = false;
+            }
+          }
+        }
+        if (needSchemaRefresh) {
+          metadataManager.refreshSchema(SchemaElementKind.WHOLE_SCHEMA, null, null, null);
+        }
+        metadataManager.firstSchemaRefreshFuture().thenAccept(this::afterInitialSchemaRefresh);
+
+      } catch (Throwable throwable) {
+        initFuture.completeExceptionally(throwable);
+      }
+    }
+
+    private void afterInitialSchemaRefresh(@SuppressWarnings("unused") Void ignored) {
+      try {
+        context.loadBalancingPolicyWrapper().init();
+        context.configLoader().onDriverInit(context);
+        LOG.debug("[{}] Initialization complete, ready", logPrefix);
+        initFuture.complete(DefaultCluster.this);
+      } catch (Throwable throwable) {
+        initFuture.completeExceptionally(throwable);
+      }
     }
 
     private void connect(CqlIdentifier keyspace, CompletableFuture<Session> connectFuture) {
