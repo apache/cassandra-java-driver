@@ -396,7 +396,7 @@ public class MapperTest extends CCMTestsSupport {
         executeFunctionAndTestForException(u, mapper, new Function<Void, Thread>() {
             @Override
             public Thread apply(Void v) {
-                mapper.get(u);
+                mapper.get(u.getUserId());
                 return Thread.currentThread();
             }
         });
