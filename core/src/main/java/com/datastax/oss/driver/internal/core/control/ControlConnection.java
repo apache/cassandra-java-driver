@@ -56,9 +56,13 @@ import org.slf4j.LoggerFactory;
  * Maintains a dedicated connection to a Cassandra node for administrative queries: schema
  * refreshes, and cluster topology queries and events.
  *
+ * <p>
+ *
  * <p>If the control node goes down, a reconnection is triggered. The control node is chosen
  * randomly among the contact points at startup, or according to the load balancing policy for later
  * reconnections.
+ *
+ * <p>
  *
  * <p>If a custom {@link TopologyMonitor} is used, the control connection is used only for schema
  * refreshes; if schema metadata is also disabled, the control connection never initializes.
@@ -90,6 +94,10 @@ public class ControlConnection implements EventCallback, AsyncAutoCloseable {
   public CompletionStage<Void> init(boolean listenToClusterEvents) {
     RunOrSchedule.on(adminExecutor, () -> singleThreaded.init(listenToClusterEvents));
     return singleThreaded.initFuture;
+  }
+
+  public boolean isInit() {
+    return singleThreaded.initFuture.isDone();
   }
 
   /**
@@ -352,16 +360,12 @@ public class ControlConnection implements EventCallback, AsyncAutoCloseable {
                   try {
                     // This does nothing if the LBP is initialized already
                     context.loadBalancingPolicyWrapper().init();
+                    context.metadataManager().refreshSchema(null, null, null, null);
                   } catch (Throwable t) {
-                    LOG.warn(
-                        "[{}] Unexpected error while initializing load balancing policy",
-                        logPrefix,
-                        t);
+                    LOG.warn("[{}] Unexpected error on control connection reconnect", logPrefix, t);
                   }
                 }
               });
-
-      // TODO refresh schema metadata
     }
 
     private void onChannelClosed(DriverChannel channel, Node node) {

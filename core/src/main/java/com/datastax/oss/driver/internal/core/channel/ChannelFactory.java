@@ -62,11 +62,23 @@ public class ChannelFactory {
     } // else it will be negotiated with the first opened connection
   }
 
-  public ProtocolVersion protocolVersion() {
+  public ProtocolVersion getProtocolVersion() {
     ProtocolVersion result = this.protocolVersion;
     Preconditions.checkState(
         result != null, "Protocol version not known yet, this should only be called after init");
     return result;
+  }
+
+  /**
+   * WARNING: this is only used at the very beginning of the init process (when we just refreshed
+   * the list of nodes for the first time, and found out that one of them requires a lower version
+   * than was negotiated with the first contact point); it's safe at this time because we are in a
+   * controlled state (only the control connection is open, it's not executing queries and we're
+   * going to reconnect immediately after). Calling this method at any other time will likely wreak
+   * havoc.
+   */
+  public void setProtocolVersion(ProtocolVersion newVersion) {
+    this.protocolVersion = newVersion;
   }
 
   public CompletionStage<DriverChannel> connect(

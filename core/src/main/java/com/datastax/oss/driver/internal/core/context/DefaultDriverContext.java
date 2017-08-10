@@ -412,6 +412,6 @@ public class DefaultDriverContext implements InternalDriverContext {
 
   @Override
   public ProtocolVersion protocolVersion() {
-    return channelFactory().protocolVersion();
+    return channelFactory().getProtocolVersion();
   }
 }

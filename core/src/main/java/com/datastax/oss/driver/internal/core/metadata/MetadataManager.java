@@ -117,7 +117,16 @@ public class MetadataManager implements AsyncAutoCloseable {
 
   public void refreshSchema(
       SchemaElementKind kind, String keyspace, String object, List<String> arguments) {
-    // TODO refresh schema metadata
+    // TODO refresh schema metadata, only complete the future once it's done
+    singleThreaded.firstSchemaRefreshFuture.complete(null);
+  }
+
+  /**
+   * Returns a future that completes after the first schema refresh attempt, whether that attempt
+   * succeeded or not (we wait for that refresh at init, but if it fails it's not fatal).
+   */
+  public CompletionStage<Void> firstSchemaRefreshFuture() {
+    return singleThreaded.firstSchemaRefreshFuture;
   }
 
   // TODO user-controlled refresh?
@@ -141,6 +150,7 @@ public class MetadataManager implements AsyncAutoCloseable {
   private class SingleThreaded {
     private final CompletableFuture<Void> closeFuture = new CompletableFuture<>();
     private boolean closeWasCalled;
+    private final CompletableFuture<Void> firstSchemaRefreshFuture = new CompletableFuture<>();
 
     private void initNodes(
         Set<InetSocketAddress> addresses, CompletableFuture<Void> initNodesFuture) {

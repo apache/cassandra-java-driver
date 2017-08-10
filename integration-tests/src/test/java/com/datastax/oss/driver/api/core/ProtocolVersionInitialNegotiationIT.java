@@ -24,7 +24,8 @@ import org.junit.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-public class ProtocolVersionIT {
+/** Covers protocol negotiation for the initial connection to the first contact point. */
+public class ProtocolVersionInitialNegotiationIT {
 
   @Rule public CcmRule ccm = CcmRule.getInstance();
 
@@ -66,7 +67,7 @@ public class ProtocolVersionIT {
 
   @CassandraRequirement(min = "2.2", description = "required to meet default protocol version")
   @Test
-  public void should_not_downgrade() {
+  public void should_not_downgrade_if_server_supports_latest_version() {
     try (Cluster v4cluster = ClusterUtils.newCluster(ccm)) {
       assertThat(v4cluster.getContext().protocolVersion().getCode()).isEqualTo(4);
 
