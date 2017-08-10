@@ -23,7 +23,11 @@ import org.junit.rules.ExpectedException;
 
 import static com.datastax.oss.driver.Assertions.assertThat;
 
-public class ProtocolVersionRegistryTest {
+/**
+ * Covers the method that are agnostic to the actual {@link ProtocolVersion} implementation (using a
+ * mock implementation).
+ */
+public class CassandraProtocolVersionRegistryTest {
 
   private static ProtocolVersion V3 = new MockProtocolVersion(3, false);
   private static ProtocolVersion V4 = new MockProtocolVersion(4, false);
@@ -38,26 +42,29 @@ public class ProtocolVersionRegistryTest {
   public void should_fail_if_duplicate_version_code() {
     expectedException.expect(IllegalArgumentException.class);
     expectedException.expectMessage("Duplicate version code: 5 in V5 and V5_BETA");
-    new ProtocolVersionRegistry(new ProtocolVersion[] {V5, V5_BETA});
+    new CassandraProtocolVersionRegistry("test", new ProtocolVersion[] {V5, V5_BETA});
   }
 
   @Test
   public void should_find_version_by_name() {
-    ProtocolVersionRegistry versions = new ProtocolVersionRegistry(new ProtocolVersion[] {V3, V4});
+    ProtocolVersionRegistry versions =
+        new CassandraProtocolVersionRegistry("test", new ProtocolVersion[] {V3, V4});
     assertThat(versions.fromName("V3")).isEqualTo(V3);
     assertThat(versions.fromName("V4")).isEqualTo(V4);
   }
 
   @Test
   public void should_downgrade_if_lower_version_available() {
-    ProtocolVersionRegistry versions = new ProtocolVersionRegistry(new ProtocolVersion[] {V3, V4});
+    ProtocolVersionRegistry versions =
+        new CassandraProtocolVersionRegistry("test", new ProtocolVersion[] {V3, V4});
     Optional<ProtocolVersion> downgraded = versions.downgrade(V4);
     downgraded.map(version -> assertThat(version).isEqualTo(V3)).orElseThrow(AssertionError::new);
   }
 
   @Test
   public void should_not_downgrade_if_no_lower_version() {
-    ProtocolVersionRegistry versions = new ProtocolVersionRegistry(new ProtocolVersion[] {V3, V4});
+    ProtocolVersionRegistry versions =
+        new CassandraProtocolVersionRegistry("test", new ProtocolVersion[] {V3, V4});
     Optional<ProtocolVersion> downgraded = versions.downgrade(V3);
     assertThat(downgraded.isPresent()).isFalse();
   }
@@ -65,8 +72,8 @@ public class ProtocolVersionRegistryTest {
   @Test
   public void should_downgrade_across_version_range() {
     ProtocolVersionRegistry versions =
-        new ProtocolVersionRegistry(
-            new ProtocolVersion[] {V3, V4}, new ProtocolVersion[] {V10, V11});
+        new CassandraProtocolVersionRegistry(
+            "test", new ProtocolVersion[] {V3, V4}, new ProtocolVersion[] {V10, V11});
     Optional<ProtocolVersion> downgraded = versions.downgrade(V10);
     downgraded.map(version -> assertThat(version).isEqualTo(V4)).orElseThrow(AssertionError::new);
   }
@@ -74,8 +81,8 @@ public class ProtocolVersionRegistryTest {
   @Test
   public void should_downgrade_skipping_beta_version() {
     ProtocolVersionRegistry versions =
-        new ProtocolVersionRegistry(
-            new ProtocolVersion[] {V4, V5_BETA}, new ProtocolVersion[] {V10, V11});
+        new CassandraProtocolVersionRegistry(
+            "test", new ProtocolVersion[] {V4, V5_BETA}, new ProtocolVersion[] {V10, V11});
     Optional<ProtocolVersion> downgraded = versions.downgrade(V10);
     downgraded.map(version -> assertThat(version).isEqualTo(V4)).orElseThrow(AssertionError::new);
   }

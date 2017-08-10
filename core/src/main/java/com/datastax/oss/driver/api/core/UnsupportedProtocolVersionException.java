@@ -52,7 +52,7 @@ public class UnsupportedProtocolVersionException extends DriverException {
         address, message, ImmutableList.copyOf(attemptedVersions));
   }
 
-  private UnsupportedProtocolVersionException(
+  public UnsupportedProtocolVersionException(
       SocketAddress address, String message, List<ProtocolVersion> attemptedVersions) {
     super(message, null, true);
     this.address = address;

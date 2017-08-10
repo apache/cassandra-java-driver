@@ -31,6 +31,7 @@ import com.datastax.oss.driver.api.core.ssl.SslEngineFactory;
 import com.datastax.oss.driver.api.core.time.TimestampGenerator;
 import com.datastax.oss.driver.api.core.type.codec.TypeCodec;
 import com.datastax.oss.driver.api.core.type.codec.registry.CodecRegistry;
+import com.datastax.oss.driver.internal.core.CassandraProtocolVersionRegistry;
 import com.datastax.oss.driver.internal.core.ProtocolVersionRegistry;
 import com.datastax.oss.driver.internal.core.channel.ChannelFactory;
 import com.datastax.oss.driver.internal.core.channel.WriteCoalescer;
@@ -219,7 +220,7 @@ public class DefaultDriverContext implements InternalDriverContext {
   }
 
   protected ProtocolVersionRegistry buildProtocolVersionRegistry() {
-    return new ProtocolVersionRegistry();
+    return new CassandraProtocolVersionRegistry(clusterName());
   }
 
   protected NettyOptions buildNettyOptions() {

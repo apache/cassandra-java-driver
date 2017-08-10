@@ -23,6 +23,7 @@ import com.datastax.oss.driver.api.core.auth.AuthenticationException;
 import com.datastax.oss.driver.api.core.config.CoreDriverOption;
 import com.datastax.oss.driver.api.core.config.DriverConfig;
 import com.datastax.oss.driver.api.core.config.DriverConfigProfile;
+import com.datastax.oss.driver.internal.core.CassandraProtocolVersionRegistry;
 import com.datastax.oss.driver.internal.core.ProtocolVersionRegistry;
 import com.datastax.oss.driver.internal.core.TestResponses;
 import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
@@ -61,7 +62,8 @@ public class ProtocolInitHandlerTest extends ChannelHandlerTestBase {
   @Mock private InternalDriverContext internalDriverContext;
   @Mock private DriverConfig driverConfig;
   @Mock private DriverConfigProfile defaultConfigProfile;
-  private ProtocolVersionRegistry protocolVersionRegistry = new ProtocolVersionRegistry();
+  private ProtocolVersionRegistry protocolVersionRegistry =
+      new CassandraProtocolVersionRegistry("test");
   private HeartbeatHandler heartbeatHandler;
 
   @Before
