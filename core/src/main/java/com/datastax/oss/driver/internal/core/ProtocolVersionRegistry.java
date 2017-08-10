@@ -15,85 +15,55 @@
  */
 package com.datastax.oss.driver.internal.core;
 
-import com.datastax.oss.driver.api.core.CoreProtocolVersion;
 import com.datastax.oss.driver.api.core.ProtocolVersion;
-import com.google.common.base.Preconditions;
-import java.util.Map;
-import java.util.NavigableMap;
+import com.datastax.oss.driver.api.core.UnsupportedProtocolVersionException;
+import com.datastax.oss.driver.api.core.config.CoreDriverOption;
+import com.datastax.oss.driver.api.core.metadata.Node;
+import com.datastax.oss.driver.internal.core.metadata.TopologyMonitor;
+import java.util.Collection;
 import java.util.Optional;
-import java.util.TreeMap;
 
-/** Manages all the native protocol versions supported by the driver. */
-public class ProtocolVersionRegistry {
-  private final NavigableMap<Integer, ProtocolVersion> versionsByCode;
+/** Defines which native protocol versions are supported by a driver instance. */
+public interface ProtocolVersionRegistry {
 
-  public ProtocolVersionRegistry(ProtocolVersion[]... versionRanges) {
-    this.versionsByCode = byCode(versionRanges);
-  }
+  /**
+   * Look up a version by its {@link ProtocolVersion#getCode()} code}.
+   *
+   * @throws IllegalArgumentException if there is no known version with this code.
+   */
+  ProtocolVersion fromCode(int code);
 
-  /** Default implementation, initialized with the core OSS versions. */
-  public ProtocolVersionRegistry() {
-    this(CoreProtocolVersion.values());
-  }
+  /**
+   * Look up a version by its {@link ProtocolVersion#name() name}. This is used when a version was
+   * forced in the configuration.
+   *
+   * @throws IllegalArgumentException if there is no known version with this name.
+   * @see CoreDriverOption#PROTOCOL_VERSION
+   */
+  ProtocolVersion fromName(String name);
 
-  public ProtocolVersion fromCode(int code) {
-    ProtocolVersion protocolVersion = versionsByCode.get(code);
-    if (protocolVersion == null) {
-      throw new IllegalArgumentException("Unknown protocol version code: " + code);
-    }
-    return protocolVersion;
-  }
-
-  public ProtocolVersion fromName(String name) {
-    for (ProtocolVersion version : versionsByCode.values()) {
-      if (version.name().equals(name)) {
-        return version;
-      }
-    }
-    throw new IllegalArgumentException("Unknown protocol version name: " + name);
-  }
-
-  public ProtocolVersion highestNonBeta() {
-    ProtocolVersion highest = versionsByCode.lastEntry().getValue();
-    if (!highest.isBeta()) {
-      return highest;
-    } else {
-      return downgrade(highest)
-          .orElseThrow(() -> new AssertionError("There should be at least one non-beta version"));
-    }
-  }
+  /**
+   * The highest, non-beta version supported by the driver. This is used as the starting point for
+   * the negotiation process for the initial connection (if the version wasn't forced).
+   */
+  ProtocolVersion highestNonBeta();
 
   /**
    * Downgrade to a lower version if the current version is not supported by the server. This is
-   * used during the protocol negotiation process.
+   * used during the negotiation process for the initial connection (if the version wasn't forced).
    *
-   * @return an empty optional if there is no version to downgrade to.
+   * @return empty if there is no version to downgrade to.
    */
-  public Optional<ProtocolVersion> downgrade(ProtocolVersion version) {
-    Map.Entry<Integer, ProtocolVersion> previousEntry =
-        versionsByCode.lowerEntry(version.getCode());
-    if (previousEntry == null) {
-      return Optional.empty();
-    } else {
-      ProtocolVersion previousVersion = previousEntry.getValue();
-      // Beta versions are skipped during negotiation
-      return (previousVersion.isBeta()) ? downgrade(previousVersion) : Optional.of(previousVersion);
-    }
-  }
+  Optional<ProtocolVersion> downgrade(ProtocolVersion version);
 
-  private NavigableMap<Integer, ProtocolVersion> byCode(ProtocolVersion[][] versionRanges) {
-    NavigableMap<Integer, ProtocolVersion> map = new TreeMap<>();
-    for (ProtocolVersion[] versionRange : versionRanges) {
-      for (ProtocolVersion version : versionRange) {
-        ProtocolVersion previous = map.put(version.getCode(), version);
-        Preconditions.checkArgument(
-            previous == null,
-            "Duplicate version code: %s in %s and %s",
-            version.getCode(),
-            previous,
-            version);
-      }
-    }
-    return map;
-  }
+  /**
+   * Computes the highest common version supported by the given nodes. This is called after the
+   * initial {@link TopologyMonitor#refreshNodeList()} node refresh} (provided that the version was
+   * not forced), to ensure that we proceed with a version that will work with all the nodes.
+   *
+   * @throws UnsupportedProtocolVersionException if no such version exists (the nodes support
+   *     non-intersecting ranges), or if there was an error during the computation. This will cause
+   *     the driver initialization to fail.
+   */
+  ProtocolVersion highestCommon(Collection<Node> nodes);
 }
