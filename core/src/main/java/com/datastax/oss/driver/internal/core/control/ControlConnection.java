@@ -56,13 +56,9 @@ import org.slf4j.LoggerFactory;
  * Maintains a dedicated connection to a Cassandra node for administrative queries: schema
  * refreshes, and cluster topology queries and events.
  *
- * <p>
- *
  * <p>If the control node goes down, a reconnection is triggered. The control node is chosen
  * randomly among the contact points at startup, or according to the load balancing policy for later
  * reconnections.
- *
- * <p>
  *
  * <p>If a custom {@link TopologyMonitor} is used, the control connection is used only for schema
  * refreshes; if schema metadata is also disabled, the control connection never initializes.

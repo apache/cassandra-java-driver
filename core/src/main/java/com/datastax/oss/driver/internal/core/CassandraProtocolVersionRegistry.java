@@ -37,8 +37,6 @@ import org.slf4j.LoggerFactory;
  * Built-in implementation of the protocol version registry, that supports the protocol versions of
  * Apache Cassandra.
  *
- * <p>
- *
  * <p>This can be overridden with a custom implementation by subclassing {@link
  * DefaultDriverContext}.
  *
