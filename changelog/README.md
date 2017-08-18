@@ -8,6 +8,7 @@
 - [improvement] JAVA-1500: Add a metric to report number of in-flight requests.
 - [bug] JAVA-1438: QueryBuilder check for empty orderings.
 - [improvement] JAVA-1490: Allow zero delay for speculative executions.
+- [documentation] JAVA-1607: Add FAQ entry for netty-transport-native-epoll.
 
 
 ### 3.3.0
