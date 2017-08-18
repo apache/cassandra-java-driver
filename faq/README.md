@@ -236,6 +236,28 @@ before submitting the next batch.
 See the [Acquisition queue] section of the Pooling section in the manual for explanation of how the driver enqueues
 requests when connections are over-utilized.
 
+### What is Netty's native epoll transport and how do I enable or disable it?
+
+Netty provides [native transport libraries](http://netty.io/wiki/native-transports.html) which generally generate less 
+garbage and improve performance when compared to the default NIO-based transport.
+By default if the driver detects the  `netty-transport-native-epoll` library in its classpath it will attempt to use
+[`EpollEventLoopGroup`](https://netty.io/4.0/api/io/netty/channel/epoll/EpollEventLoopGroup.html) for its underlying
+event loop.
+
+In the usual case this works fine in linux environments.  On the other hand, many users have run into compatibility
+issues when the version of `netty-transport-native-epoll` is not compatible with a version of Netty in an application's
+classpath.  One such case is where an application depends on a version of `netty-all` that is different than the
+version of `netty-handler` that the driver depends on.  In such a case, a user may encounter an exception such as the
+one described in [JAVA-1535](https://datastax-oss.atlassian.net/browse/JAVA-1535).
+
+While the epoll transport may in general improve performance, we expect the improvement to be marginal for a lot of use
+cases.  Therefore, if you don't want `netty-transport-native-epoll` to be used by the driver even if the library is
+present in an application's classpath, the most direct way to disable this is to provide the system property value
+`-Dcom.datastax.driver.FORCE_NIO=true` to your application to force the use of the default Netty NIO-based event loop.
+If properly used, the following log message will be logged at INFO on startup:
+
+> Found Netty's native epoll transport in the classpath, but NIO was forced through the FORCE_NIO system property.
+
 [Blobs.java]: https://github.com/datastax/java-driver/tree/3.3.0/driver-examples/src/main/java/com/datastax/driver/examples/datatypes/Blobs.java
 [CASSANDRA-7304]: https://issues.apache.org/jira/browse/CASSANDRA-7304
 [Parameters and Binding]: ../manual/statements/prepared/#parameters-and-binding
