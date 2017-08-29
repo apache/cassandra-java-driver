@@ -37,7 +37,6 @@ class NettyUtil {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(NettyUtil.class);
 
-    private static final boolean SHADED;
 
     private static final boolean USE_EPOLL;
 
@@ -47,21 +46,12 @@ class NettyUtil {
 
     private static final Class[] EVENT_GROUP_ARGUMENTS = {int.class, ThreadFactory.class};
 
+    private static final String SHADING_DETECTION_STRING = "io.netty.shadingdetection.ShadingDetection";
+
+    private static final boolean SHADED = !SHADING_DETECTION_STRING.equals(String.format("%s.%s.shadingdetection.ShadingDetection", "io", "netty"));
+
     static {
-        boolean shaded;
-        try {
-            // prevent this string from being shaded
-            Class.forName(String.format("%s.%s.channel.Channel", "io", "netty"));
-            shaded = false;
-        } catch (ClassNotFoundException e) {
-            try {
-                Class.forName("com.datastax.shaded.netty.channel.Channel");
-                shaded = true;
-            } catch (ClassNotFoundException e1) {
-                throw new AssertionError("Cannot locate Netty classes in the classpath:" + e1);
-            }
-        }
-        SHADED = shaded;
+
         boolean useEpoll = false;
         if (!SHADED) {
             try {

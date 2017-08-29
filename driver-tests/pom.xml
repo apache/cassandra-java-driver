@@ -33,6 +33,7 @@
     <modules>
         <module>stress</module>
         <module>osgi</module>
+        <module>shading</module>
     </modules>
 
     <build>
