@@ -100,6 +100,13 @@
                 <groupId>com.datastax.cassandra</groupId>
                 <artifactId>cassandra-driver-core</artifactId>
                 <version>${project.parent.version}</version>
+                <classifier>shaded</classifier>
+            </dependency>
+
+            <dependency>
+                <groupId>com.datastax.cassandra</groupId>
+                <artifactId>cassandra-driver-core</artifactId>
+                <version>${project.parent.version}</version>
                 <type>test-jar</type>
             </dependency>
 
