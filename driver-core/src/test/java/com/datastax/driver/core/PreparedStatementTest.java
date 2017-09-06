@@ -57,6 +57,8 @@ public class PreparedStatementTest extends CCMTestsSupport {
     private static final String SIMPLE_TABLE = "test";
     private static final String SIMPLE_TABLE2 = "test2";
 
+    private static final String keyspace2 = TestUtils.generateIdentifier("ks_");
+
     private ProtocolVersion protocolVersion;
     private Collection<DataType> primitiveTypes;
 
@@ -70,6 +72,11 @@ public class PreparedStatementTest extends CCMTestsSupport {
         protocolVersion = ccm().getProtocolVersion();
         primitiveTypes = TestUtils.allPrimitiveTypes(protocolVersion);
         execute(createTestFixtures());
+        execute(
+                String.format(TestUtils.CREATE_KEYSPACE_SIMPLE_FORMAT, keyspace2, 1),
+                String.format("CREATE TABLE %s.users(id int, id2 int, name text, primary key (id, id2))", keyspace2),
+                String.format("INSERT INTO %s.users(id, id2, name) VALUES (2, 3, 'test2')", keyspace2)
+        );
     }
 
     @AfterMethod(groups = "short")
@@ -745,5 +752,31 @@ public class PreparedStatementTest extends CCMTestsSupport {
         bound = prepared.bind(1);
 
         assertThat(bound.isIdempotent()).isTrue();
+    }
+
+    @CassandraVersion("4.0.0")
+    @Test(groups = "short")
+    public void should_use_keyspace_if_set_on_origin_statement() {
+        Cluster cluster = createClusterBuilderNoDebouncing()
+                .addContactPointsWithPorts(getContactPointsWithPorts())
+                .allowBetaProtocolVersion()
+                .build();
+        try {
+            Session session = cluster.connect();
+            SimpleStatement statement = new SimpleStatement("SELECT name FROM users WHERE id = 2 and id2 = 3")
+                    .setKeyspace(keyspace2);
+
+            // Keyspace should be propagated to prepared statement.
+            PreparedStatement prepared = session.prepare(statement);
+            assertThat(prepared.getKeyspace()).isEqualTo(keyspace2);
+
+            BoundStatement bound = prepared.bind();
+            Row row = session.execute(bound).one();
+
+            assertThat(row).isNotNull();
+            assertThat(row.getString("name")).isEqualTo("test2");
+        } finally {
+            cluster.close();
+        }
     }
 }

@@ -208,8 +208,8 @@ public class QueryBuilderTest {
         String query;
         Statement insert;
 
-        query = "INSERT INTO foo (a,b,\"C\",d) VALUES (123,'127.0.0.1','foo''bar',{'x':3,'y':2}) USING TIMESTAMP 42 AND TTL 24;";
-        insert = insertInto("foo")
+        query = "INSERT INTO baz.foo (a,b,\"C\",d) VALUES (123,'127.0.0.1','foo''bar',{'x':3,'y':2}) USING TIMESTAMP 42 AND TTL 24;";
+        insert = insertInto("baz", "foo")
                 .value("a", 123)
                 .value("b", InetAddress.getByName("127.0.0.1"))
                 .value(quote("C"), "foo'bar")
@@ -219,6 +219,7 @@ public class QueryBuilderTest {
                 }})
                 .using(timestamp(42)).and(ttl(24));
         assertEquals(insert.toString(), query);
+        assertThat(insert.getKeyspace()).isEqualTo("baz"); // keyspace set since provided.
 
         query = "INSERT INTO foo (a,b) VALUES (2,null);";
         insert = insertInto("foo")
@@ -233,6 +234,7 @@ public class QueryBuilderTest {
             add(4);
         }}, 3.4}).using(ttl(24)).and(timestamp(42));
         assertEquals(insert.toString(), query);
+        assertThat(insert.getKeyspace()).isEqualTo(null); // no keyspace set since not provided.
 
         query = "INSERT INTO foo.bar (a,b) VALUES ({2,3,4},3.4) USING TTL ? AND TIMESTAMP ?;";
         insert = insertInto("foo", "bar")
@@ -295,10 +297,12 @@ public class QueryBuilderTest {
         query = "UPDATE foo.bar USING TIMESTAMP 42 SET a=12,b=[3,2,1],c=c+3 WHERE k=2;";
         update = update("foo", "bar").using(timestamp(42)).with(set("a", 12)).and(set("b", Arrays.asList(3, 2, 1))).and(incr("c", 3)).where(eq("k", 2));
         assertEquals(update.toString(), query);
+        assertThat(update.getKeyspace()).isEqualTo("foo"); // keyspace set since provided.
 
         query = "UPDATE foo SET b=null WHERE k=2;";
         update = update("foo").where().and(eq("k", 2)).with(set("b", null));
         assertEquals(update.toString(), query);
+        assertThat(update.getKeyspace()).isEqualTo(null); // no keyspace set since not provided.
 
         query = "UPDATE foo SET a[2]='foo',b=[3,2,1]+b,c=c-{'a'} WHERE k=2 AND l='foo' AND m<4 AND n>=1;";
         update = update("foo").with(setIdx("a", 2, "foo")).and(prependAll("b", Arrays.asList(3, 2, 1))).and(remove("c", "a")).where(eq("k", 2)).and(eq("l", "foo")).and(lt("m", 4)).and(gte("n", 1));
@@ -372,13 +376,15 @@ public class QueryBuilderTest {
         String query;
         Statement delete;
 
-        query = "DELETE a,b,c FROM foo USING TIMESTAMP 0 WHERE k=1;";
-        delete = delete("a", "b", "c").from("foo").using(timestamp(0)).where(eq("k", 1));
+        query = "DELETE a,b,c FROM baz.foo USING TIMESTAMP 0 WHERE k=1;";
+        delete = delete("a", "b", "c").from("baz", "foo").using(timestamp(0)).where(eq("k", 1));
         assertEquals(delete.toString(), query);
+        assertThat(delete.getKeyspace()).isEqualTo("baz"); // keyspace set since provided.
 
         query = "DELETE a[3],b['foo'],c FROM foo WHERE k=1;";
         delete = delete().listElt("a", 3).mapElt("b", "foo").column("c").from("foo").where(eq("k", 1));
         assertEquals(delete.toString(), query);
+        assertThat(delete.getKeyspace()).isEqualTo(null); // no keyspace set since not provided.
 
         query = "DELETE a[?],b[?],c FROM foo WHERE k=1;";
         delete = delete().listElt("a", bindMarker()).mapElt("b", bindMarker()).column("c").from("foo").where(eq("k", 1));
@@ -434,15 +440,15 @@ public class QueryBuilderTest {
     @SuppressWarnings("serial")
     public void batchTest() throws Exception {
         String query;
-        Statement batch;
+        RegularStatement batch;
 
         query = "BEGIN BATCH USING TIMESTAMP 42 ";
-        query += "INSERT INTO foo (a,b) VALUES ({2,3,4},3.4);";
+        query += "INSERT INTO baz.foo (a,b) VALUES ({2,3,4},3.4);";
         query += "UPDATE foo SET a[2]='foo',b=[3,2,1]+b,c=c-{'a'} WHERE k=2;";
         query += "DELETE a[3],b['foo'],c FROM foo WHERE k=1;";
         query += "APPLY BATCH;";
         batch = batch()
-                .add(insertInto("foo").values(new String[]{"a", "b"}, new Object[]{new TreeSet<Integer>() {{
+                .add(insertInto("baz", "foo").values(new String[]{"a", "b"}, new Object[]{new TreeSet<Integer>() {{
                     add(2);
                     add(3);
                     add(4);
@@ -451,6 +457,10 @@ public class QueryBuilderTest {
                 .add(delete().listElt("a", 3).mapElt("b", "foo").column("c").from("foo").where(eq("k", 1)))
                 .using(timestamp(42));
         assertEquals(batch.toString(), query);
+        assertThat(batch.getKeyspace()).isEqualTo("baz"); // batch returns first statements keyspace if present.
+        batch.setKeyspace("bar"); // can still explicitly set keyspace
+        assertThat(batch.getKeyspace()).isEqualTo("bar");
+        assertThat(batch.toString()).isEqualTo(query); // but does not alter query string.
 
         // Test passing batch(statement)
         query = "BEGIN BATCH ";

@@ -169,6 +169,9 @@ public class Batch extends BuiltStatement {
      */
     @Override
     public String getKeyspace() {
+        if (keyspace != null)
+            return keyspace;
+
         return statements.isEmpty() ? null : statements.get(0).getKeyspace();
     }
 

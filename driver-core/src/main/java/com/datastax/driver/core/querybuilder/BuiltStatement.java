@@ -383,6 +383,11 @@ public abstract class BuiltStatement extends RegularStatement {
             return statement.getKeyspace();
         }
 
+        public ForwardingStatement<T> setKeyspace(String keyspace) {
+            statement.setKeyspace(keyspace);
+            return this;
+        }
+
         @Override
         boolean isCounterOp() {
             return statement.isCounterOp();

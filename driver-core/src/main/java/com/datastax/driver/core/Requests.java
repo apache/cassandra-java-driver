@@ -256,9 +256,13 @@ class Requests {
 
         static void serialize(EnumSet<QueryFlag> flags, ByteBuf dest, ProtocolVersion version) {
             int i = 0;
-            for (QueryFlag flag : flags)
-                i |= 1 << flag.ordinal();
-            if (version.compareTo(ProtocolVersion.V5) >= 0) {
+            boolean isV5 = version.compareTo(ProtocolVersion.V5) >= 0;
+            for (QueryFlag flag : flags) {
+                // don't include flag if would make value width greater than int and protocol < 5
+                if (flag.ordinal() < QueryFlag.KEYSPACE.ordinal() || isV5)
+                    i |= 1 << flag.ordinal();
+            }
+            if (isV5) {
                 dest.writeInt(i);
             } else {
                 dest.writeByte((byte) i);
@@ -602,9 +606,13 @@ class Requests {
                 CBUtil.writeLongString(msg.query, dest);
 
                 if (version.compareTo(ProtocolVersion.V5) >= 0) {
-                    QueryFlag.serialize(msg.flags, dest, version);
-                    if (msg.flags.contains(QueryFlag.KEYSPACE))
+                    // if keyspace is present write 0x1 for prepare flags.
+                    if (msg.keyspace != null) {
+                        dest.writeInt(0x01);
                         CBUtil.writeString(msg.keyspace, dest);
+                    } else {
+                        dest.writeInt(0x00);
+                    }
                 }
             }
 
