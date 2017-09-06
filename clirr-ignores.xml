@@ -159,4 +159,19 @@
         <justification>Relaxed parameters from List to Iterable for in, lt, lte, eq, gt, and gte</justification>
     </difference>
 
+    <difference>
+        <differenceType>7004</differenceType>
+        <className>com/datastax/driver/core/AbstractSession</className>
+        <method>com.google.common.util.concurrent.ListenableFuture prepareAsync(java.lang.String, java.util.Map)</method>
+        <to>com.google.common.util.concurrent.ListenableFuture prepareAsync(java.lang.String, java.lang.String, java.util.Map)</to>
+        <justification>Protected method, only used internally</justification>
+    </difference>
+
+    <difference>
+        <differenceType>7012</differenceType>
+        <className>com/datastax/driver/core/PreparedStatement</className>
+        <method>java.lang.String getKeyspace()</method>
+        <justification>Only expect to be extend internally</justification>
+    </difference>
+
 </differences>

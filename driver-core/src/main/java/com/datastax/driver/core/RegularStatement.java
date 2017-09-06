@@ -19,7 +19,6 @@ import com.datastax.driver.core.exceptions.InvalidTypeException;
 import com.datastax.driver.core.exceptions.UnsupportedProtocolVersionException;
 import com.datastax.driver.core.querybuilder.BuiltStatement;
 import com.datastax.driver.core.schemabuilder.SchemaStatement;
-
 import java.nio.ByteBuffer;
 import java.util.Map;
 
@@ -201,7 +200,9 @@ public abstract class RegularStatement extends Statement {
      * @see Statement#getKeyspace
      */
     @Override
-    public abstract String getKeyspace();
+    public String getKeyspace() {
+        return null;
+    }
 
     /**
      * Sets the keyspace this query operates on.
@@ -224,7 +225,9 @@ public abstract class RegularStatement extends Statement {
      * @return this {@code SimpleStatement} object.
      * @see Statement#getKeyspace
      */
-    public abstract RegularStatement setKeyspace(String keyspace);
+    public RegularStatement setKeyspace(String keyspace) {
+        throw new UnsupportedOperationException("No concrete implementation of setKeyspace defined for " + this.getClass().getName());
+    }
 
     /**
      * Returns this statement as a CQL query string.
