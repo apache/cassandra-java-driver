@@ -17,7 +17,6 @@ package com.datastax.driver.core;
 
 import com.datastax.driver.core.policies.RetryPolicy;
 import com.google.common.collect.ImmutableMap;
-
 import java.nio.ByteBuffer;
 import java.util.List;
 import java.util.Map;
@@ -29,6 +28,7 @@ public class DefaultPreparedStatement implements PreparedStatement {
     final PreparedId preparedId;
 
     final String query;
+    final String keyspace;
     final String queryKeyspace;
     final Map<String, ByteBuffer> incomingPayload;
     final Cluster cluster;
@@ -42,15 +42,16 @@ public class DefaultPreparedStatement implements PreparedStatement {
     volatile ImmutableMap<String, ByteBuffer> outgoingPayload;
     volatile Boolean idempotent;
 
-    private DefaultPreparedStatement(PreparedId id, String query, String queryKeyspace, Map<String, ByteBuffer> incomingPayload, Cluster cluster) {
+    private DefaultPreparedStatement(PreparedId id, String query, String keyspace, String queryKeyspace, Map<String, ByteBuffer> incomingPayload, Cluster cluster) {
         this.preparedId = id;
         this.query = query;
+        this.keyspace = keyspace;
         this.queryKeyspace = queryKeyspace;
         this.incomingPayload = incomingPayload;
         this.cluster = cluster;
     }
 
-    static DefaultPreparedStatement fromMessage(Responses.Result.Prepared msg, Cluster cluster, String query, String queryKeyspace) {
+    static DefaultPreparedStatement fromMessage(Responses.Result.Prepared msg, Cluster cluster, String query, String keyspace, String queryKeyspace) {
         assert msg.metadata.columns != null;
 
         ColumnDefinitions defs = msg.metadata.columns;
@@ -67,7 +68,7 @@ public class DefaultPreparedStatement implements PreparedStatement {
         }
 
         PreparedId preparedId = new PreparedId(boundValuesMetadata, resultSetMetadata, pkIndices, protocolVersion);
-        return new DefaultPreparedStatement(preparedId, query, queryKeyspace, msg.getCustomPayload(), cluster);
+        return new DefaultPreparedStatement(preparedId, query, keyspace, queryKeyspace, msg.getCustomPayload(), cluster);
     }
 
     private static int[] computePkIndices(Metadata clusterMetadata, ColumnDefinitions boundColumns) {
@@ -251,5 +252,10 @@ public class DefaultPreparedStatement implements PreparedStatement {
     @Override
     public Boolean isIdempotent() {
         return this.idempotent;
+    }
+
+    @Override
+    public String getKeyspace() {
+        return keyspace;
     }
 }

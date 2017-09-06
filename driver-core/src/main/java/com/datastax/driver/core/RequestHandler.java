@@ -663,7 +663,7 @@ class RequestHandler {
                                                 + "Seeing this message a few times is fine, but seeing it a lot may be source of performance problems",
                                         toPrepare.getQueryString(), connection.address);
 
-                                write(connection, prepareAndRetry(toPrepare.getQueryString()));
+                                write(connection, prepareAndRetry(toPrepare));
                                 // we're done for now, the prepareAndRetry callback will handle the rest
                                 return;
                             default:
@@ -694,7 +694,7 @@ class RequestHandler {
             }
         }
 
-        private Connection.ResponseCallback prepareAndRetry(final String toPrepare) {
+        private Connection.ResponseCallback prepareAndRetry(final PreparedStatement toPrepare) {
             // do not bother inspecting retry policy at this step, no other decision
             // makes sense than retry on the same host if the query was prepared,
             // or on another host, if an error/timeout occurred.
@@ -704,7 +704,7 @@ class RequestHandler {
 
                 @Override
                 public Message.Request request() {
-                    Requests.Prepare request = new Requests.Prepare(toPrepare);
+                    Requests.Prepare request = new Requests.Prepare(toPrepare.getQueryString(), toPrepare.getKeyspace());
                     // propagate the original custom payload in the prepare request
                     request.setCustomPayload(statement.getOutgoingPayload());
                     return request;

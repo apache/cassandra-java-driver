@@ -63,6 +63,7 @@ public class BatchStatement extends Statement {
 
     final Type batchType;
     private final List<Statement> statements = new ArrayList<Statement>();
+    private String keyspace;
 
     /**
      * Creates a new {@code LOGGED} batch statement.
@@ -231,8 +232,30 @@ public class BatchStatement extends Statement {
         return null;
     }
 
+    /**
+     * Sets the keyspace the queries in this batch statement operate on.  If not provided, keyspace is derived
+     * from the first statement in the batch that has a keyspace set.  Keyspace is used for the following:
+     * <ol>
+     * <li>To indicate to cassandra what keyspace the statement is applicable to (protocol V5+ only).  This is useful
+     * when the query does not provide an explicit keyspace and you want to override the session's keyspace.</li>
+     * <li>By {@link com.datastax.driver.core.policies.TokenAwarePolicy}</li> to help identify which
+     * replicas are applicable to send this statement to.</li>
+     * </ol>
+     *
+     * @param keyspace the name of the keyspace that queries in this batch operate on.
+     * @return this {@code BatchStatement} object.
+     * @see Statement#getKeyspace
+     */
+    public BatchStatement setKeyspace(String keyspace) {
+        this.keyspace = keyspace;
+        return this;
+    }
+
     @Override
     public String getKeyspace() {
+        if (keyspace != null)
+            return keyspace;
+
         for (Statement statement : statements) {
             String keyspace = statement.getKeyspace();
             if (keyspace != null)

@@ -366,4 +366,14 @@ public interface PreparedStatement {
      */
     public Boolean isIdempotent();
 
+    /**
+     * Returns the keyspace this query operates on.
+     * <p/>
+     * Unless the keyspace has been explicitly set through {@link RegularStatement#setKeyspace} for the originating
+     * statement this method will return {@code null} to avoid having to parse the query string.
+     *
+     * @return the keyspace, if set, {@code null} otherwise.
+     * @see Statement#getKeyspace
+     */
+    String getKeyspace();
 }

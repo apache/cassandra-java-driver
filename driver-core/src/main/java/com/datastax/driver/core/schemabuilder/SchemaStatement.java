@@ -34,6 +34,8 @@ public abstract class SchemaStatement extends RegularStatement {
 
     private volatile String cache;
 
+    private String keyspace;
+
     abstract String buildInternal();
 
     @Override
@@ -68,9 +70,13 @@ public abstract class SchemaStatement extends RegularStatement {
 
     @Override
     public String getKeyspace() {
-        // This is exposed for token-aware routing. Since there is no token awareness for DDL statements, we don't need to
-        // return anything here (even if a keyspace has been explicitly set in the statement).
-        return null;
+        return keyspace;
+    }
+
+    @Override
+    public SchemaStatement setKeyspace(String keyspace) {
+        this.keyspace = keyspace;
+        return this;
     }
 
     /**

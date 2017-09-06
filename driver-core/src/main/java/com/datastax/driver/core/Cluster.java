@@ -2277,12 +2277,12 @@ public class Cluster implements Closeable {
                 // used for preparing it. However, since we are likely that all prepared query belong to only a handful
                 // of different keyspace (possibly only one), and to avoid setting the current keyspace more than needed,
                 // we first sort the query per keyspace.
-                SetMultimap<String, String> perKeyspace = HashMultimap.create();
+                SetMultimap<String, PreparedStatement> perKeyspace = HashMultimap.create();
                 for (PreparedStatement ps : preparedQueries.values()) {
                     // It's possible for a query to not have a current keyspace. But since null doesn't work well as
                     // map keys, we use the empty string instead (that is not a valid keyspace name).
                     String keyspace = ps.getQueryKeyspace() == null ? "" : ps.getQueryKeyspace();
-                    perKeyspace.put(keyspace, ps.getQueryString());
+                    perKeyspace.put(keyspace, ps);
                 }
 
                 for (String keyspace : perKeyspace.keySet()) {
@@ -2291,8 +2291,8 @@ public class Cluster implements Closeable {
                         connection.setKeyspace(keyspace);
 
                     List<Connection.Future> futures = new ArrayList<Connection.Future>(preparedQueries.size());
-                    for (String query : perKeyspace.get(keyspace)) {
-                        futures.add(connection.write(new Requests.Prepare(query)));
+                    for (PreparedStatement prepared : perKeyspace.get(keyspace)) {
+                        futures.add(connection.write(new Requests.Prepare(prepared.getQueryString(), prepared.getKeyspace())));
                     }
                     for (Connection.Future future : futures) {
                         try {

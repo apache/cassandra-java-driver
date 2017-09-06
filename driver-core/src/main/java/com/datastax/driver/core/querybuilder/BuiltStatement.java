@@ -77,7 +77,7 @@ public abstract class BuiltStatement extends RegularStatement {
 
     private final List<ColumnMetadata> partitionKey;
     private final List<Object> routingKeyValues;
-    final String keyspace;
+    String keyspace;
 
     private boolean dirty;
     private String cache;
@@ -342,6 +342,12 @@ public abstract class BuiltStatement extends RegularStatement {
     public RegularStatement setForceNoValues(boolean forceNoValues) {
         this.forceNoValues = forceNoValues;
         this.dirty = true;
+        return this;
+    }
+
+    @Override
+    public BuiltStatement setKeyspace(String keyspace) {
+        this.keyspace = keyspace;
         return this;
     }
 

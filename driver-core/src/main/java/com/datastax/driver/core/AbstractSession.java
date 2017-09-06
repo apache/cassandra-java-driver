@@ -123,7 +123,7 @@ public abstract class AbstractSession implements Session {
      */
     @Override
     public ListenableFuture<PreparedStatement> prepareAsync(String query) {
-        return prepareAsync(query, null);
+        return prepareAsync(query, null, null);
     }
 
     /**
@@ -136,7 +136,7 @@ public abstract class AbstractSession implements Session {
             throw new IllegalArgumentException("A statement to prepare should not have values");
 
         final CodecRegistry codecRegistry = getCluster().getConfiguration().getCodecRegistry();
-        ListenableFuture<PreparedStatement> prepared = prepareAsync(statement.getQueryString(codecRegistry), statement.getOutgoingPayload());
+        ListenableFuture<PreparedStatement> prepared = prepareAsync(statement.getQueryString(codecRegistry), statement.getKeyspace(), statement.getOutgoingPayload());
         return Futures.transform(prepared, new Function<PreparedStatement, PreparedStatement>() {
             @Override
             public PreparedStatement apply(PreparedStatement prepared) {
@@ -164,10 +164,11 @@ public abstract class AbstractSession implements Session {
      * sending along the provided custom payload, if any.
      *
      * @param query         the CQL query string to prepare
+     * @param keyspace      the keyspace to prepare this query with
      * @param customPayload the custom payload to send along the query, or {@code null} if no payload is to be sent
      * @return a future on the prepared statement corresponding to {@code query}.
      */
-    protected abstract ListenableFuture<PreparedStatement> prepareAsync(String query, Map<String, ByteBuffer> customPayload);
+    protected abstract ListenableFuture<PreparedStatement> prepareAsync(String query, String keyspace, Map<String, ByteBuffer> customPayload);
 
     /**
      * {@inheritDoc}

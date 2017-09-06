@@ -261,37 +261,12 @@ public class SimpleStatement extends RegularStatement {
         return this;
     }
 
-    /**
-     * Returns the keyspace this query operates on.
-     * <p/>
-     * Unless the keyspace has been explicitly set through {@link #setKeyspace},
-     * this method will return {@code null} to avoid having to parse the query
-     * string.
-     *
-     * @return the keyspace set through {@link #setKeyspace} if such keyspace was
-     * set, {@code null} otherwise.
-     * @see Statement#getKeyspace
-     */
     @Override
     public String getKeyspace() {
         return keyspace;
     }
 
-    /**
-     * Sets the keyspace this query operates on.
-     * <p/>
-     * This method allows you to manually provide a keyspace for this query. It
-     * is thus optional since the value returned by this method is only an hint
-     * for token aware load balancing policy but is never mandatory.
-     * <p/>
-     * Do note that if the query does not use a fully qualified keyspace, then
-     * you do not need to set the keyspace through that method as the
-     * currently logged in keyspace will be used.
-     *
-     * @param keyspace the name of the keyspace this query operates on.
-     * @return this {@code SimpleStatement} object.
-     * @see Statement#getKeyspace
-     */
+    @Override
     public SimpleStatement setKeyspace(String keyspace) {
         this.keyspace = keyspace;
         return this;

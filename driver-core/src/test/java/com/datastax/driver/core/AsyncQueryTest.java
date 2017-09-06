@@ -292,8 +292,8 @@ public class AsyncQueryTest extends CCMTestsSupport {
         }
 
         @Override
-        protected ListenableFuture<PreparedStatement> prepareAsync(String query, Map<String, ByteBuffer> customPayload) {
-            return ((SessionManager) session).prepareAsync(query, customPayload);
+        protected ListenableFuture<PreparedStatement> prepareAsync(String query, String keyspace, Map<String, ByteBuffer> customPayload) {
+            return ((SessionManager) session).prepareAsync(query, keyspace, customPayload);
         }
     }
 }
