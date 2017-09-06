@@ -620,13 +620,12 @@ class Requests {
             public int encodedSize(Prepare msg, ProtocolVersion version) {
                 int size = CBUtil.sizeOfLongString(msg.query);
 
-                if (version.compareTo(ProtocolVersion.V5) >= 0 && msg.flags.contains(QueryFlag.KEYSPACE))
+                if (version.compareTo(ProtocolVersion.V5) >= 0 && msg.keyspace != null)
                     size += CBUtil.sizeOfString(msg.keyspace);
                 return size;
             }
         };
 
-        private final EnumSet<QueryFlag> flags = EnumSet.noneOf(QueryFlag.class);
         private final String query;
         private final String keyspace;
 
@@ -634,9 +633,6 @@ class Requests {
             super(Message.Request.Type.PREPARE);
             this.query = query;
             this.keyspace = keyspace;
-
-            if (keyspace != null)
-                flags.add(QueryFlag.KEYSPACE);
         }
 
         @Override
