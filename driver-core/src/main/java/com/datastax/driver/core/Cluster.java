@@ -2277,22 +2277,24 @@ public class Cluster implements Closeable {
                 // used for preparing it. However, since we are likely that all prepared query belong to only a handful
                 // of different keyspace (possibly only one), and to avoid setting the current keyspace more than needed,
                 // we first sort the query per keyspace.
-                SetMultimap<String, PreparedStatement> perKeyspace = HashMultimap.create();
+                SetMultimap<String, String> perKeyspace = HashMultimap.create();
                 for (PreparedStatement ps : preparedQueries.values()) {
                     // It's possible for a query to not have a current keyspace. But since null doesn't work well as
                     // map keys, we use the empty string instead (that is not a valid keyspace name).
                     String keyspace = ps.getQueryKeyspace() == null ? "" : ps.getQueryKeyspace();
-                    perKeyspace.put(keyspace, ps);
+                    perKeyspace.put(keyspace, ps.getQueryString());
                 }
 
                 for (String keyspace : perKeyspace.keySet()) {
                     // Empty string mean no particular keyspace to set
-                    if (!keyspace.isEmpty())
+                    // Optimization: Only change keyspace for older protocol versions as newer protocols allow
+                    // specifying keyspace on prepared statement.
+                    if (protocolVersion().compareTo(ProtocolVersion.V5) >= 0 && !keyspace.isEmpty())
                         connection.setKeyspace(keyspace);
 
                     List<Connection.Future> futures = new ArrayList<Connection.Future>(preparedQueries.size());
-                    for (PreparedStatement prepared : perKeyspace.get(keyspace)) {
-                        futures.add(connection.write(new Requests.Prepare(prepared.getQueryString(), prepared.getKeyspace())));
+                    for (String query : perKeyspace.get(keyspace)) {
+                        futures.add(connection.write(new Requests.Prepare(query, keyspace)));
                     }
                     for (Connection.Future future : futures) {
                         try {

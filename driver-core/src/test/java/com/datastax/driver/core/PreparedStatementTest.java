@@ -768,7 +768,7 @@ public class PreparedStatementTest extends CCMTestsSupport {
 
             // Keyspace should be propagated to prepared statement.
             PreparedStatement prepared = session.prepare(statement);
-            assertThat(prepared.getKeyspace()).isEqualTo(keyspace2);
+            assertThat(prepared.getQueryKeyspace()).isEqualTo(keyspace2);
 
             BoundStatement bound = prepared.bind();
             Row row = session.execute(bound).one();

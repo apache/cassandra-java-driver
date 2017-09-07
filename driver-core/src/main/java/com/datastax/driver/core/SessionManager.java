@@ -212,7 +212,12 @@ class SessionManager extends AbstractSession {
                         switch (rm.kind) {
                             case PREPARED:
                                 Responses.Result.Prepared pmsg = (Responses.Result.Prepared) rm;
-                                PreparedStatement stmt = DefaultPreparedStatement.fromMessage(pmsg, cluster, query, keyspace, poolsState.keyspace);
+                                String keyspaceToUse = poolsState.keyspace;
+                                if (keyspace != null) {
+                                    // TODO: possibly check protocol version here and if not supported throw an exception.
+                                    keyspaceToUse = keyspace;
+                                }
+                                PreparedStatement stmt = DefaultPreparedStatement.fromMessage(pmsg, cluster, query, keyspaceToUse);
                                 stmt = cluster.manager.addPrepared(stmt);
                                 if (cluster.getConfiguration().getQueryOptions().isPrepareOnAllHosts()) {
                                     // All Sessions are connected to the same nodes so it's enough to prepare only the nodes of this session.
@@ -640,7 +645,7 @@ class SessionManager extends AbstractSession {
 
     private ListenableFuture<PreparedStatement> prepare(final PreparedStatement statement, InetSocketAddress toExclude) {
         final String query = statement.getQueryString();
-        final String keyspace = statement.getKeyspace();
+        final String keyspace = statement.getQueryKeyspace();
         List<ListenableFuture<Response>> futures = Lists.newArrayListWithExpectedSize(pools.size());
         for (final Map.Entry<Host, HostConnectionPool> entry : pools.entrySet()) {
             if (entry.getKey().getSocketAddress().equals(toExclude))

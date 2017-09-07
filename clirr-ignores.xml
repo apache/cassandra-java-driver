@@ -167,11 +167,4 @@
         <justification>Protected method, only used internally</justification>
     </difference>
 
-    <difference>
-        <differenceType>7012</differenceType>
-        <className>com/datastax/driver/core/PreparedStatement</className>
-        <method>java.lang.String getKeyspace()</method>
-        <justification>Only expect to be extend internally</justification>
-    </difference>
-
 </differences>
