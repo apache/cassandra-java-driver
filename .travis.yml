@@ -4,6 +4,7 @@ jdk:
 - oraclejdk7
 - oraclejdk8
 sudo: false
+dist: precise
 before_install: 
     # Require JDK8 for compiling
     - jdk_switcher use oraclejdk8
