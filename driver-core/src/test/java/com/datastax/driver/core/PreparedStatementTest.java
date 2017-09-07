@@ -757,12 +757,51 @@ public class PreparedStatementTest extends CCMTestsSupport {
     @CassandraVersion("4.0.0")
     @Test(groups = "short")
     public void should_use_keyspace_if_set_on_origin_statement() {
+        queryWithKeyspaceOnStatement(keyspace);
+    }
+
+    @CassandraVersion("4.0.0")
+    @Test(groups = "short")
+    public void should_use_keyspace_if_set_on_origin_statement_no_ks_on_session() {
+        queryWithKeyspaceOnStatement(null);
+    }
+
+    @CassandraVersion("4.0.0")
+    @Test(groups = "short")
+    public void should_use_keyspace_if_set_on_origin_statement_same_ks_on_session() {
+        queryWithKeyspaceOnStatement(keyspace2);
+    }
+
+    @Test(groups = "short", expectedExceptions = {InvalidQueryException.class})
+    public void should_not_use_keyspace_if_set_and_protocol_does_not_support() {
+        Cluster cluster = cluster();
+        if (cluster().getConfiguration().getProtocolOptions().getProtocolVersion().compareTo(ProtocolVersion.V5) >= 0) {
+            // Downgrade to V4
+            cluster = createClusterBuilderNoDebouncing().addContactPointsWithPorts(getContactPointsWithPorts())
+                    .withNettyOptions(TestUtils.nonQuietClusterCloseOptions)
+                    .withProtocolVersion(ProtocolVersion.V4).build();
+        }
+        queryWithKeyspaceOnStatement(cluster, keyspace);
+    }
+
+    private void queryWithKeyspaceOnStatement(String sessionKeyspace) {
+        // TODO, reuse cluster when Protocol V5 is no longer beta.
         Cluster cluster = createClusterBuilderNoDebouncing()
+                .withNettyOptions(TestUtils.nonQuietClusterCloseOptions)
                 .addContactPointsWithPorts(getContactPointsWithPorts())
                 .allowBetaProtocolVersion()
                 .build();
+        queryWithKeyspaceOnStatement(cluster, sessionKeyspace);
+    }
+
+    private void queryWithKeyspaceOnStatement(Cluster cluster, String sessionKeyspace) {
+        Session session;
+        if (sessionKeyspace != null) {
+            session = cluster.connect(sessionKeyspace);
+        } else {
+            session = cluster.connect();
+        }
         try {
-            Session session = cluster.connect();
             SimpleStatement statement = new SimpleStatement("SELECT name FROM users WHERE id = 2 and id2 = 3")
                     .setKeyspace(keyspace2);
 
@@ -776,7 +815,10 @@ public class PreparedStatementTest extends CCMTestsSupport {
             assertThat(row).isNotNull();
             assertThat(row.getString("name")).isEqualTo("test2");
         } finally {
-            cluster.close();
+            session.close();
+            if (cluster != cluster()) {
+                cluster.close();
+            }
         }
     }
 }

@@ -43,69 +43,22 @@ public class SimpleStatementIntegrationTest extends CCMTestsSupport {
     @Test(groups = "short")
     @CassandraVersion("4.0.0")
     public void should_use_keyspace_if_set() {
-        Cluster cluster = createClusterBuilderNoDebouncing()
-                .addContactPointsWithPorts(getContactPointsWithPorts())
-                .allowBetaProtocolVersion()
-                .build();
-        try {
-            Session session = cluster.connect(keyspace);
-            SimpleStatement statement = new SimpleStatement("SELECT name FROM users2 WHERE id = 2 and id2 = 3")
-                    .setKeyspace(keyspace2);
-
-            Row row = session.execute(statement).one();
-
-            assertThat(row).isNotNull();
-            assertThat(row.getString("name")).isEqualTo("test2");
-        } finally {
-            cluster.close();
-        }
+        queryWithKeyspaceOnStatement(keyspace);
     }
 
     @Test(groups = "short")
     @CassandraVersion("4.0.0")
     public void should_use_keyspace_if_set_no_ks_on_session() {
-        Cluster cluster = createClusterBuilderNoDebouncing()
-                .withNettyOptions(TestUtils.nonQuietClusterCloseOptions)
-                .addContactPointsWithPorts(getContactPointsWithPorts())
-                .allowBetaProtocolVersion()
-                .build();
-        try {
-            Session session = cluster.connect();
-            SimpleStatement statement = new SimpleStatement("SELECT name FROM users2 WHERE id = 2 and id2 = 3")
-                    .setKeyspace(keyspace2);
-
-            Row row = session.execute(statement).one();
-
-            assertThat(row).isNotNull();
-            assertThat(row.getString("name")).isEqualTo("test2");
-        } finally {
-            cluster.close();
-        }
+        queryWithKeyspaceOnStatement(null);
     }
 
     @Test(groups = "short")
     @CassandraVersion("4.0.0")
     public void should_use_keyspace_if_set_same_ks_on_session() {
-        Cluster cluster = createClusterBuilderNoDebouncing()
-                .withNettyOptions(TestUtils.nonQuietClusterCloseOptions)
-                .addContactPointsWithPorts(getContactPointsWithPorts())
-                .allowBetaProtocolVersion()
-                .build();
-        try {
-            Session session = cluster.connect(keyspace2);
-            SimpleStatement statement = new SimpleStatement("SELECT name FROM users2 WHERE id = 2 and id2 = 3")
-                    .setKeyspace(keyspace2);
-
-            Row row = session.execute(statement).one();
-
-            assertThat(row).isNotNull();
-            assertThat(row.getString("name")).isEqualTo("test2");
-        } finally {
-            cluster.close();
-        }
+        queryWithKeyspaceOnStatement(keyspace2);
     }
 
-    @Test(groups = "short")
+    @Test(groups = "short", expectedExceptions = {InvalidQueryException.class})
     public void should_not_use_keyspace_if_set_and_protocol_does_not_support() {
         Cluster cluster = cluster();
         if (cluster().getConfiguration().getProtocolOptions().getProtocolVersion().compareTo(ProtocolVersion.V5) >= 0) {
@@ -114,15 +67,36 @@ public class SimpleStatementIntegrationTest extends CCMTestsSupport {
                     .withNettyOptions(TestUtils.nonQuietClusterCloseOptions)
                     .withProtocolVersion(ProtocolVersion.V4).build();
         }
+        queryWithKeyspaceOnStatement(cluster, keyspace);
+    }
+
+    private void queryWithKeyspaceOnStatement(String sessionKeyspace) {
+        // TODO, reuse cluster when Protocol V5 is no longer beta.
+        Cluster cluster = createClusterBuilderNoDebouncing()
+                .withNettyOptions(TestUtils.nonQuietClusterCloseOptions)
+                .addContactPointsWithPorts(getContactPointsWithPorts())
+                .allowBetaProtocolVersion()
+                .build();
+        queryWithKeyspaceOnStatement(cluster, sessionKeyspace);
+    }
+
+    private void queryWithKeyspaceOnStatement(Cluster cluster, String sessionKeyspace) {
+        Session session;
+        if (sessionKeyspace != null) {
+            session = cluster.connect(sessionKeyspace);
+        } else {
+            session = cluster.connect();
+        }
         try {
-            Session session = cluster.connect(keyspace);
             SimpleStatement statement = new SimpleStatement("SELECT name FROM users2 WHERE id = 2 and id2 = 3")
                     .setKeyspace(keyspace2);
 
-            session.execute(statement);
-        } catch (InvalidQueryException iqe) {
-            // expected, table does not exist for default keyspace.
+            Row row = session.execute(statement).one();
+
+            assertThat(row).isNotNull();
+            assertThat(row.getString("name")).isEqualTo("test2");
         } finally {
+            session.close();
             if (cluster != cluster()) {
                 cluster.close();
             }

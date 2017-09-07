@@ -41,6 +41,17 @@ public class CreateTest {
     }
 
     @Test(groups = "unit")
+    public void should_create_simple_table_with_set_keyspace() throws Exception {
+        //When
+        SchemaStatement statement = createTable("test")
+                .addPartitionKey("id", DataType.bigint())
+                .addColumn("name", DataType.text()).setKeyspace("ks");
+
+        //Then
+        assertThat(statement.getKeyspace()).isEqualTo("ks");
+    }
+
+    @Test(groups = "unit")
     public void should_create_table_with_udt_partition_key() throws Exception {
         //When
         SchemaStatement statement = createTable("test")
