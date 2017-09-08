@@ -25,6 +25,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertTrue;
 
+@CassandraVersion("2.0.0")
 public class BatchStatementTest extends CCMTestsSupport {
 
     private static final String keyspace2 = TestUtils.generateIdentifier("ks_");
