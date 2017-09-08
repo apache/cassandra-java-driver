@@ -10,6 +10,7 @@
 - [improvement] JAVA-1677: Warn if auth is configured on the client but not the server.
 - [new feature] JAVA-1651: Add NO_COMPACT startup option.
 - [improvement] JAVA-1683: Add metrics to track writes to nodes.
+- [new feature] JAVA-1603: Send keyspace option per-query
 
 Merged from 3.3.x:
 
