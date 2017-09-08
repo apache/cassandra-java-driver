@@ -649,7 +649,11 @@ class RequestHandler {
 
                                 String currentKeyspace = connection.keyspace();
                                 String prepareKeyspace = toPrepare.getQueryKeyspace();
-                                if (prepareKeyspace != null && (currentKeyspace == null || !currentKeyspace.equals(prepareKeyspace))) {
+                                // Allow preparing with a different keyspace than configured connection keyspace if
+                                // protocol version > 5 since it can be done at prepare level.
+                                if (err.serverProtocolVersion.compareTo(ProtocolVersion.V5) < 0
+                                        && prepareKeyspace != null
+                                        && (currentKeyspace == null || !currentKeyspace.equals(prepareKeyspace))) {
                                     // This shouldn't happen in normal use, because a user shouldn't try to execute
                                     // a prepared statement with the wrong keyspace set.
                                     // Fail fast (we can't change the keyspace to reprepare, because we're using a pooled connection
@@ -659,9 +663,9 @@ class RequestHandler {
                                             toPrepare.getQueryKeyspace(), connection.keyspace(), toPrepare.getQueryString()));
                                 }
 
-                                logger.info("Query {} is not prepared on {}, preparing before retrying executing. "
+                                logger.info("Query '{}' on keyspace '{}' is not prepared on {}, preparing before retrying executing. "
                                                 + "Seeing this message a few times is fine, but seeing it a lot may be source of performance problems",
-                                        toPrepare.getQueryString(), connection.address);
+                                        toPrepare.getQueryString(), toPrepare.getQueryKeyspace(), connection.address);
 
                                 write(connection, prepareAndRetry(toPrepare));
                                 // we're done for now, the prepareAndRetry callback will handle the rest
