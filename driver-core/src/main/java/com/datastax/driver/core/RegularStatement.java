@@ -19,6 +19,7 @@ import com.datastax.driver.core.exceptions.InvalidTypeException;
 import com.datastax.driver.core.exceptions.UnsupportedProtocolVersionException;
 import com.datastax.driver.core.querybuilder.BuiltStatement;
 import com.datastax.driver.core.schemabuilder.SchemaStatement;
+
 import java.nio.ByteBuffer;
 import java.util.Map;
 
@@ -208,18 +209,15 @@ public abstract class RegularStatement extends Statement {
      * Sets the keyspace this query operates on.
      * <p/>
      * This method allows you to manually provide a keyspace for this query.  It is used for the following:
-     * <p>
      * <ol>
      * <li>To indicate to cassandra what keyspace the statement is applicable to (protocol V5+ only).  This is useful
      * when the query does not provide an explicit keyspace and you want to override the session's keyspace.</li>
      * <li>By {@link com.datastax.driver.core.policies.TokenAwarePolicy}</li> to help identify which
      * replicas are applicable to send this statement to.</li>
      * </ol>
-     * <p/>
-     * <p>
      * Do note that if the query does not use a fully qualified keyspace, then
-     * you do not need to set the keyspace through that method as the
-     * currently logged in keyspace will be used.
+     * you do not need to set the keyspace through this method as the
+     * currently logged in keyspace will be used if it is set.
      *
      * @param keyspace the name of the keyspace this query operates on.
      * @return this {@code SimpleStatement} object.

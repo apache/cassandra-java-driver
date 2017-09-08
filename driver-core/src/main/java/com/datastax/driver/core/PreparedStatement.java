@@ -365,4 +365,5 @@ public interface PreparedStatement {
      * {@link QueryOptions#getDefaultIdempotence()}.
      */
     public Boolean isIdempotent();
+
 }
