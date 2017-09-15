@@ -611,6 +611,10 @@ public class QueryBuilderTest {
         select = select("a", "b").from("foo").where(in("a", "b", "c'); --comment"));
         assertEquals(select.toString(), query);
 
+        query = "SELECT a,b FROM foo WHERE a IN ('a','b','c');";
+        select = select("a", "b").from("foo").where(in("a", Sets.newLinkedHashSet(Arrays.asList("a", "b", "c"))));
+        assertEquals(select.toString(), query);
+
         // User Injection?
         query = "SELECT * FROM bar; --(b) FROM foo;";
         select = select().fcall("* FROM bar; --", column("b")).from("foo");
@@ -817,7 +821,7 @@ public class QueryBuilderTest {
 
     @Test(groups = "unit", expectedExceptions = IllegalArgumentException.class, expectedExceptionsMessageRegExp = "Too many values for IN clause, the maximum allowed is 65535")
     public void should_fail_if_compound_in_clause_has_too_many_values() {
-        List<Object> values = Collections.<Object>nCopies(65536, "a");
+        List<Object> values = Collections.<Object>nCopies(65536, bindMarker());
         select().all().from("foo").where(eq("k", 4)).and(in(ImmutableList.of("name"), values));
     }
 

@@ -313,10 +313,7 @@ public final class QueryBuilder {
      * @return the corresponding where clause.
      * @throws IllegalArgumentException if {@code names.size() != values.size()}.
      */
-    public static Clause eq(List<String> names, List<?> values) {
-        if (names.size() != values.size())
-            throw new IllegalArgumentException(String.format("The number of names (%d) and values (%d) don't match", names.size(), values.size()));
-
+    public static Clause eq(Iterable<String> names, Iterable<?> values) {
         return new Clause.CompoundClause(names, "=", values);
     }
 
@@ -351,7 +348,7 @@ public final class QueryBuilder {
      * @param values the values
      * @return the corresponding where clause.
      */
-    public static Clause in(String name, List<?> values) {
+    public static Clause in(String name, Iterable<?> values) {
         return new Clause.InClause(name, values);
     }
 
@@ -361,7 +358,7 @@ public final class QueryBuilder {
      * For instance, {@code in(Arrays.asList("a", "b"), Arrays.asList(Arrays.asList(1, "foo"), Arrays.asList(2, "bar")))}
      * will generate the CQL {@code WHERE} clause {@code (a, b) IN ((1, 'foo'), (2, 'bar'))}.
      * <p/>
-     * Each element in {@code values} must be either a {@link List list} containing exactly as many values
+     * Each element in {@code values} must be either an {@link Iterable iterable} containing exactly as many values
      * as there are columns to match in {@code names},
      * or a {@link #bindMarker() bind marker} – in which case, that marker is to be considered as
      * a placeholder for one whole tuple of values to match.
@@ -374,7 +371,7 @@ public final class QueryBuilder {
      * @throws IllegalArgumentException if the size of any tuple in {@code values} is not equal to {@code names.size()},
      *                                  or if {@code values} contains elements that are neither {@link List lists} nor {@link #bindMarker() bind markers}.
      */
-    public static Clause in(List<String> names, List<?> values) {
+    public static Clause in(Iterable<String> names, Iterable<?> values) {
         return new Clause.CompoundInClause(names, values);
     }
 
@@ -427,10 +424,7 @@ public final class QueryBuilder {
      * @return the corresponding where clause.
      * @throws IllegalArgumentException if {@code names.size() != values.size()}.
      */
-    public static Clause lt(List<String> names, List<?> values) {
-        if (names.size() != values.size())
-            throw new IllegalArgumentException(String.format("The number of names (%d) and values (%d) don't match", names.size(), values.size()));
-
+    public static Clause lt(Iterable<String> names, Iterable<?> values) {
         return new Clause.CompoundClause(names, "<", values);
     }
 
@@ -459,10 +453,7 @@ public final class QueryBuilder {
      * @return the corresponding where clause.
      * @throws IllegalArgumentException if {@code names.size() != values.size()}.
      */
-    public static Clause lte(List<String> names, List<?> values) {
-        if (names.size() != values.size())
-            throw new IllegalArgumentException(String.format("The number of names (%d) and values (%d) don't match", names.size(), values.size()));
-
+    public static Clause lte(Iterable<String> names, Iterable<?> values) {
         return new Clause.CompoundClause(names, "<=", values);
     }
 
@@ -491,10 +482,7 @@ public final class QueryBuilder {
      * @return the corresponding where clause.
      * @throws IllegalArgumentException if {@code names.size() != values.size()}.
      */
-    public static Clause gt(List<String> names, List<?> values) {
-        if (names.size() != values.size())
-            throw new IllegalArgumentException(String.format("The number of names (%d) and values (%d) don't match", names.size(), values.size()));
-
+    public static Clause gt(Iterable<String> names, Iterable<?> values) {
         return new Clause.CompoundClause(names, ">", values);
     }
 
@@ -523,10 +511,7 @@ public final class QueryBuilder {
      * @return the corresponding where clause.
      * @throws IllegalArgumentException if {@code names.size() != values.size()}.
      */
-    public static Clause gte(List<String> names, List<?> values) {
-        if (names.size() != values.size())
-            throw new IllegalArgumentException(String.format("The number of names (%d) and values (%d) don't match", names.size(), values.size()));
-
+    public static Clause gte(Iterable<String> names, Iterable<?> values) {
         return new Clause.CompoundClause(names, ">=", values);
     }
 
