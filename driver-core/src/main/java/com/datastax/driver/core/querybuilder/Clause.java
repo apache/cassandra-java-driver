@@ -16,7 +16,7 @@
 package com.datastax.driver.core.querybuilder;
 
 import com.datastax.driver.core.CodecRegistry;
-
+import com.google.common.collect.Lists;
 import java.util.List;
 
 public abstract class Clause extends Utils.Appendeable {
@@ -70,13 +70,14 @@ public abstract class Clause extends Utils.Appendeable {
 
         private final List<?> values;
 
-        InClause(String name, List<?> values) {
+        InClause(String name, Iterable<?> values) {
             super(name);
-            this.values = values;
-
             if (values == null)
                 throw new IllegalArgumentException("Missing values for IN clause");
-            if (values.size() > 65535)
+
+            this.values = Lists.newArrayList(values);
+
+            if (this.values.size() > 65535)
                 throw new IllegalArgumentException("Too many values for IN clause, the maximum allowed is 65535");
         }
 
@@ -91,7 +92,7 @@ public abstract class Clause extends Utils.Appendeable {
             //    ... IN ? ...
             // which binds the variable to the full list the IN is on.
             if (values.size() == 1 && values.get(0) instanceof BindMarker) {
-                Utils.appendName(name, sb).append(" IN ").append(values.get(0));
+                Utils.appendName(name, sb).append(" IN ").append(values.iterator().next());
                 return;
             }
 
@@ -178,11 +179,12 @@ public abstract class Clause extends Utils.Appendeable {
         private final List<String> names;
         private final List<?> values;
 
-        CompoundClause(List<String> names, String op, List<?> values) {
-            assert names.size() == values.size();
+        CompoundClause(Iterable<String> names, String op, Iterable<?> values) {
             this.op = op;
-            this.names = names;
-            this.values = values;
+            this.names = Lists.newArrayList(names);
+            this.values = Lists.newArrayList(values);
+            if (this.names.size() != this.values.size())
+                throw new IllegalArgumentException(String.format("The number of names (%d) and values (%d) don't match", this.names.size(), this.values.size()));
         }
 
         @Override
@@ -227,25 +229,32 @@ public abstract class Clause extends Utils.Appendeable {
 
     static class CompoundInClause extends Clause {
         private final List<String> names;
-        private final List<?> valueLists;
+        private final List<Object> valueLists;
 
-        public CompoundInClause(List<String> names, List<?> valueLists) {
+        public CompoundInClause(Iterable<String> names, Iterable<?> valueLists) {
             if (valueLists == null)
                 throw new IllegalArgumentException("Missing values for IN clause");
-            if (valueLists.size() > 65535)
-                throw new IllegalArgumentException("Too many values for IN clause, the maximum allowed is 65535");
+            if (names == null)
+                throw new IllegalArgumentException("Missing names for IN clause");
+
+            this.names = Lists.newArrayList(names);
+            this.valueLists = Lists.newArrayList();
+
             for (Object value : valueLists) {
-                if (value instanceof List) {
-                    List<?> tuple = (List<?>) value;
-                    if (tuple.size() != names.size()) {
-                        throw new IllegalArgumentException(String.format("The number of names (%d) and values (%d) don't match", names.size(), tuple.size()));
+                if (value instanceof Iterable) {
+                    List<?> tuple = Lists.newArrayList((Iterable<?>) value);
+                    if (tuple.size() != this.names.size()) {
+                        throw new IllegalArgumentException(String.format("The number of names (%d) and values (%d) don't match", this.names.size(), tuple.size()));
                     }
+                    this.valueLists.add(tuple);
                 } else if (!(value instanceof BindMarker)) {
                     throw new IllegalArgumentException(String.format("Wrong element type for values list, expected List or BindMarker, got %s", value.getClass().getName()));
+                } else {
+                    this.valueLists.add(value);
                 }
             }
-            this.names = names;
-            this.valueLists = valueLists;
+            if (this.valueLists.size() > 65535)
+                throw new IllegalArgumentException("Too many values for IN clause, the maximum allowed is 65535");
         }
 
         @Override

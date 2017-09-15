@@ -3,6 +3,14 @@
 The purpose of this guide is to detail changes made by successive
 versions of the Java driver.
 
+### 3.4.0
+
+`QueryBuilder` methods `in`, `lt`, `lte`, `eq`, `gt`, and `gte` now accept
+`Iterable` as input rather than just `List`. This should have no impact unless
+you were accessing these methods using reflection in which case you need to
+account for these new parameter types.
+
+
 ### 3.2.0
 
 The `SSLOptions` interface is now deprecated in favor of
