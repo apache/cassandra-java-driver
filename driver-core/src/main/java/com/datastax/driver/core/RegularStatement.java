@@ -192,39 +192,16 @@ public abstract class RegularStatement extends Statement {
     /**
      * Returns the keyspace this query operates on.
      * <p/>
-     * Unless the keyspace has been explicitly set through {@link #setKeyspace},
+     * Unless the keyspace has been explicitly set through a means such as {@link SimpleStatement#setKeyspace},
      * this method will return {@code null} to avoid having to parse the query
      * string.
      *
-     * @return the keyspace set through {@link #setKeyspace} if such keyspace was
-     * set, {@code null} otherwise.
+     * @return the keyspace if set, {@code null} otherwise.
      * @see Statement#getKeyspace
      */
     @Override
     public String getKeyspace() {
         return null;
-    }
-
-    /**
-     * Sets the keyspace this query operates on.
-     * <p/>
-     * This method allows you to manually provide a keyspace for this query.  It is used for the following:
-     * <ol>
-     * <li>To indicate to cassandra what keyspace the statement is applicable to (protocol V5+ only).  This is useful
-     * when the query does not provide an explicit keyspace and you want to override the session's keyspace.</li>
-     * <li>By {@link com.datastax.driver.core.policies.TokenAwarePolicy}</li> to help identify which
-     * replicas are applicable to send this statement to.</li>
-     * </ol>
-     * Do note that if the query does not use a fully qualified keyspace, then
-     * you do not need to set the keyspace through this method as the
-     * currently logged in keyspace will be used if it is set.
-     *
-     * @param keyspace the name of the keyspace this query operates on.
-     * @return this {@code SimpleStatement} object.
-     * @see Statement#getKeyspace
-     */
-    public RegularStatement setKeyspace(String keyspace) {
-        throw new UnsupportedOperationException("No concrete implementation of setKeyspace defined for " + this.getClass().getName());
     }
 
     /**

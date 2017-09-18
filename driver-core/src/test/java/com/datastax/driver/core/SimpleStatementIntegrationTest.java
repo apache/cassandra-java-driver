@@ -58,7 +58,7 @@ public class SimpleStatementIntegrationTest extends CCMTestsSupport {
         queryWithKeyspaceOnStatement(keyspace2);
     }
 
-    @Test(groups = "short", expectedExceptions = {InvalidQueryException.class})
+    @Test(groups = "short", expectedExceptions = UnsupportedFeatureException.class)
     public void should_not_use_keyspace_if_set_and_protocol_does_not_support() {
         Cluster cluster = cluster();
         if (cluster().getConfiguration().getProtocolOptions().getProtocolVersion().compareTo(ProtocolVersion.V5) >= 0) {
@@ -71,7 +71,8 @@ public class SimpleStatementIntegrationTest extends CCMTestsSupport {
     }
 
     private void queryWithKeyspaceOnStatement(String sessionKeyspace) {
-        // TODO, reuse cluster when Protocol V5 is no longer beta.
+        // Fail test when V5 is no longer beta as this will no longer be necessary.
+        assertThat(ProtocolVersion.NEWEST_BETA).isEqualTo(ProtocolVersion.V5);
         Cluster cluster = createClusterBuilderNoDebouncing()
                 .withNettyOptions(TestUtils.nonQuietClusterCloseOptions)
                 .addContactPointsWithPorts(getContactPointsWithPorts())

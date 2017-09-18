@@ -659,8 +659,11 @@ class RequestHandler {
                                     // Fail fast (we can't change the keyspace to reprepare, because we're using a pooled connection
                                     // that's shared with other requests).
                                     connection.release();
-                                    throw new IllegalStateException(String.format("Statement was prepared on keyspace %s, can't execute it on %s (%s)",
-                                            toPrepare.getQueryKeyspace(), connection.keyspace(), toPrepare.getQueryString()));
+                                    throw new IllegalStateException(String.format("Statement '%s' was prepared on" +
+                                                    " keyspace '%s' which is not the same as the session keyspace" +
+                                                    " '%s'.  This is not supported with protocol version %s",
+                                            toPrepare.getQueryString(), toPrepare.getQueryKeyspace(),
+                                            connection.keyspace(), err.serverProtocolVersion));
                                 }
 
                                 logger.info("Query '{}' on keyspace '{}' is not prepared on {}, preparing before retrying executing. "

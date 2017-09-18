@@ -32,8 +32,17 @@ public class UnsupportedFeatureException extends DriverException {
         this.currentVersion = currentVersion;
     }
 
+    private UnsupportedFeatureException(ProtocolVersion currentVersion, String msg, UnsupportedFeatureException cause) {
+        super("Unsupported feature with the native protocol " + currentVersion + " (which is currently in use): " + msg, cause);
+        this.currentVersion = currentVersion;
+    }
+
     public ProtocolVersion getCurrentVersion() {
         return currentVersion;
     }
 
+    @Override
+    public UnsupportedFeatureException copy() {
+        return new UnsupportedFeatureException(currentVersion, getMessage(), this);
+    }
 }

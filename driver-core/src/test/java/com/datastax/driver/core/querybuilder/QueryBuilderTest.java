@@ -440,7 +440,7 @@ public class QueryBuilderTest {
     @SuppressWarnings("serial")
     public void batchTest() throws Exception {
         String query;
-        RegularStatement batch;
+        BuiltStatement batch;
 
         query = "BEGIN BATCH USING TIMESTAMP 42 ";
         query += "INSERT INTO baz.foo (a,b) VALUES ({2,3,4},3.4);";

@@ -43,35 +43,14 @@ public class PreparedStatementMultiNodeTest extends CCMTestsSupport {
 
     @Test(groups = "long")
     @CassandraVersion("4.0.0")
-    public void should_be_able_to_execute_statement_on_restarted_node_reprepare_on_up_set_keyspace() {
-        // validate that if a node is restarted we should be able to execute a bound statement against it
-        // as the statement is reprepared when the node comes back up.
-        // uses the Protocol V5 per-query keyspace strategy.
+    public void should_execute_statement_with_per_query_keyspace_on_restarted_node() {
         executeAfterNodeBroughtBackUp(true, true);
-    }
-
-    @Test(groups = "long")
-    @CassandraVersion("4.0.0")
-    public void should_be_able_to_execute_statement_on_restarted_node_set_keyspace() {
-        // validate that if a node is restarted we should be able to execute a bound statement against it
-        // as the statement is reprepared when we receive an 'unprepared' response.
-        // uses the Protocol V5 per-query keyspace strategy.
         executeAfterNodeBroughtBackUp(false, true);
     }
 
     @Test(groups = "long")
-    public void should_be_able_to_execute_statement_on_restarted_node_reprepare_on_up_use_keyspace() {
-        // validate that if a node is restarted we should be able to execute a bound statement against it
-        // as the statement is reprepared when the node comes back up.
-        // uses the "USE keyspace" strategy which is an anti-pattern.
+    public void should_execute_statement_with_session_keyspace_on_restarted_node() {
         executeAfterNodeBroughtBackUp(true, false);
-    }
-
-    @Test(groups = "long")
-    public void should_be_able_to_execute_statement_on_restarted_node_use_keyspace() {
-        // validate that if a node is restarted we should be able to execute a bound statement against it
-        // as the statement is reprepared when we receive an 'unprepared' response.
-        // uses the Protocol V5 per-query keyspace strategy.
         executeAfterNodeBroughtBackUp(false, false);
     }
 
@@ -84,7 +63,8 @@ public class PreparedStatementMultiNodeTest extends CCMTestsSupport {
                 .withQueryOptions(queryOptions)
                 .withLoadBalancingPolicy(new SortingLoadBalancingPolicy());
 
-        // TODO, remove this when V5 is no longer beta.
+        // Fail test when V5 is no longer beta as this will no longer be necessary.
+        assertThat(ProtocolVersion.NEWEST_BETA).isEqualTo(ProtocolVersion.V5);
         if (setKeyspace) {
             builder = builder.allowBetaProtocolVersion();
         }
@@ -110,63 +90,57 @@ public class PreparedStatementMultiNodeTest extends CCMTestsSupport {
             Host host1 = TestUtils.findHost(cluster, 1);
             Host host2 = TestUtils.findHost(cluster, 2);
 
-            // Execute queries 10 times, should always hit host1 due to sorting policy.
-            for (int i = 0; i < 10; i++) {
-                if (!setKeyspace) {
-                    session.execute("USE " + keyspace2);
-                }
-                ResultSet result = session.execute(prep2.bind());
-                assertThat(result.getExecutionInfo().getQueriedHost()).isEqualTo(host1);
-                assertThat(result.one().getString("name")).isEqualTo("test2");
-                if (!setKeyspace) {
-                    session.execute("USE " + keyspace3);
-                }
-                result = session.execute(prep3.bind());
-                assertThat(result.getExecutionInfo().getQueriedHost()).isEqualTo(host1);
-                assertThat(result.one().getString("name")).isEqualTo("test3");
+            // Execute query, should always hit host1 due to sorting policy.
+            if (!setKeyspace) {
+                session.execute("USE " + keyspace2);
             }
+            ResultSet result = session.execute(prep2.bind());
+            assertThat(result.getExecutionInfo().getQueriedHost()).isEqualTo(host1);
+            assertThat(result.one().getString("name")).isEqualTo("test2");
+            if (!setKeyspace) {
+                session.execute("USE " + keyspace3);
+            }
+            result = session.execute(prep3.bind());
+            assertThat(result.getExecutionInfo().getQueriedHost()).isEqualTo(host1);
+            assertThat(result.one().getString("name")).isEqualTo("test3");
 
             // bring node 1 down
             ccm().stop(1);
             TestUtils.waitForDown(TestUtils.ipOfNode(1), cluster);
 
-            // Execute queries 10 times, should always hit host2 due to node1 being down, should also prepare on host2
+            // Execute query, should hit host2 due to node1 being down, should also prepare on host2
             // under covers since wasn't previously prepared.
-            for (int i = 0; i < 10; i++) {
-                if (!setKeyspace) {
-                    session.execute("USE " + keyspace2);
-                }
-                ResultSet result = session.execute(prep2.bind());
-                assertThat(result.getExecutionInfo().getQueriedHost()).isEqualTo(host2);
-                assertThat(result.one().getString("name")).isEqualTo("test2");
-                if (!setKeyspace) {
-                    session.execute("USE " + keyspace3);
-                }
-                result = session.execute(prep3.bind());
-                assertThat(result.getExecutionInfo().getQueriedHost()).isEqualTo(host2);
-                assertThat(result.one().getString("name")).isEqualTo("test3");
+            if (!setKeyspace) {
+                session.execute("USE " + keyspace2);
             }
+            result = session.execute(prep2.bind());
+            assertThat(result.getExecutionInfo().getQueriedHost()).isEqualTo(host2);
+            assertThat(result.one().getString("name")).isEqualTo("test2");
+            if (!setKeyspace) {
+                session.execute("USE " + keyspace3);
+            }
+            result = session.execute(prep3.bind());
+            assertThat(result.getExecutionInfo().getQueriedHost()).isEqualTo(host2);
+            assertThat(result.one().getString("name")).isEqualTo("test3");
 
             ccm().start(1);
             TestUtils.waitForUp(TestUtils.ipOfNode(1), cluster);
 
-            // Execute queries 10 times, should always hit host1 due to sorting policy and node1 being up
+            // Execute query, should hit host1 due to sorting policy and node1 being up.
             // should have been reprepared either on up or when encountering query was not prepared (although
             // newer versions of C* may auto prepare on up).
-            for (int i = 0; i < 10; i++) {
-                if (!setKeyspace) {
-                    session.execute("USE " + keyspace2);
-                }
-                ResultSet result = session.execute(prep2.bind());
-                assertThat(result.getExecutionInfo().getQueriedHost()).isEqualTo(host1);
-                assertThat(result.one().getString("name")).isEqualTo("test2");
-                if (!setKeyspace) {
-                    session.execute("USE " + keyspace3);
-                }
-                result = session.execute(prep3.bind());
-                assertThat(result.getExecutionInfo().getQueriedHost()).isEqualTo(host1);
-                assertThat(result.one().getString("name")).isEqualTo("test3");
+            if (!setKeyspace) {
+                session.execute("USE " + keyspace2);
             }
+            result = session.execute(prep2.bind());
+            assertThat(result.getExecutionInfo().getQueriedHost()).isEqualTo(host1);
+            assertThat(result.one().getString("name")).isEqualTo("test2");
+            if (!setKeyspace) {
+                session.execute("USE " + keyspace3);
+            }
+            result = session.execute(prep3.bind());
+            assertThat(result.getExecutionInfo().getQueriedHost()).isEqualTo(host1);
+            assertThat(result.one().getString("name")).isEqualTo("test3");
         } finally {
             cluster.close();
         }
@@ -199,12 +173,10 @@ public class PreparedStatementMultiNodeTest extends CCMTestsSupport {
 
             Host host1 = TestUtils.findHost(cluster, 1);
 
-            // Execute queries 10 times, should always hit host1 due to sorting policy.
-            for (int i = 0; i < 10; i++) {
-                ResultSet result = session.execute(prep.bind());
-                assertThat(result.getExecutionInfo().getQueriedHost()).isEqualTo(host1);
-                assertThat(result.one().getString("name")).isEqualTo("test2");
-            }
+            // Execute query, should hit host1 due to sorting policy.
+            ResultSet result = session.execute(prep.bind());
+            assertThat(result.getExecutionInfo().getQueriedHost()).isEqualTo(host1);
+            assertThat(result.one().getString("name")).isEqualTo("test2");
 
             // use keyspace3 to make it the active keyspace
             session.execute("USE " + keyspace3);
