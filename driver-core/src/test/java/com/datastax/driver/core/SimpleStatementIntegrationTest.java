@@ -58,7 +58,7 @@ public class SimpleStatementIntegrationTest extends CCMTestsSupport {
         queryWithKeyspaceOnStatement(keyspace2);
     }
 
-    @Test(groups = "short", expectedExceptions = UnsupportedFeatureException.class)
+    @Test(groups = "short", expectedExceptions = InvalidQueryException.class)
     public void should_not_use_keyspace_if_set_and_protocol_does_not_support() {
         Cluster cluster = cluster();
         if (cluster().getConfiguration().getProtocolOptions().getProtocolVersion().compareTo(ProtocolVersion.V5) >= 0) {

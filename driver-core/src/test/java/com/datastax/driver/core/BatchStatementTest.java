@@ -15,6 +15,7 @@
  */
 package com.datastax.driver.core;
 
+import com.datastax.driver.core.exceptions.InvalidQueryException;
 import com.datastax.driver.core.exceptions.UnsupportedFeatureException;
 import com.datastax.driver.core.utils.CassandraVersion;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -118,7 +119,7 @@ public class BatchStatementTest extends CCMTestsSupport {
         insertWithKeyspaceOnStatement(keyspace2);
     }
 
-    @Test(groups = "short", expectedExceptions = UnsupportedFeatureException.class)
+    @Test(groups = "short", expectedExceptions = InvalidQueryException.class)
     public void should_not_use_keyspace_if_set_and_protocol_does_not_support() {
         Cluster cluster = cluster();
         if (cluster().getConfiguration().getProtocolOptions().getProtocolVersion().compareTo(ProtocolVersion.V5) >= 0) {

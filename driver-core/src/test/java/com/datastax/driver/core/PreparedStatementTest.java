@@ -75,7 +75,9 @@ public class PreparedStatementTest extends CCMTestsSupport {
         execute(
                 String.format(TestUtils.CREATE_KEYSPACE_SIMPLE_FORMAT, keyspace2, 1),
                 String.format("CREATE TABLE %s.users(id int, id2 int, name text, primary key (id, id2))", keyspace2),
-                String.format("INSERT INTO %s.users(id, id2, name) VALUES (2, 3, 'test2')", keyspace2)
+                String.format("INSERT INTO %s.users(id, id2, name) VALUES (2, 3, 'test2')", keyspace2),
+                String.format("CREATE TABLE %s.users(id int, id2 int, name text, primary key (id, id2))", keyspace),
+                String.format("INSERT INTO %s.users(id, id2, name) VALUES (2, 3, 'test1')", keyspace)
         );
     }
 
@@ -781,6 +783,9 @@ public class PreparedStatementTest extends CCMTestsSupport {
                     .withNettyOptions(TestUtils.nonQuietClusterCloseOptions)
                     .withProtocolVersion(ProtocolVersion.V4).build();
         }
+        // Expect UnsupportedFeatureException as we'll check on the prepare response if the session keyspace is
+        // different than the input keyspace.  In this case while the prepare works, it was done on another
+        // keyspace so the metadata may be incorrect.
         queryWithKeyspaceOnStatement(cluster, keyspace);
     }
 
