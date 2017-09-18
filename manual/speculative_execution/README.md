@@ -87,7 +87,7 @@ Cluster cluster = Cluster.builder()
     .withSpeculativeExecutionPolicy(
         new ConstantSpeculativeExecutionPolicy(
             500, // delay before a new execution is launched
-            2    // maximum number of executions
+            3    // maximum number of executions
         ))
     .build();
 ```
