@@ -16,6 +16,10 @@
 package com.datastax.oss.driver.api.core.cql;
 
 import com.datastax.oss.driver.api.core.session.Session;
+import com.google.common.collect.Iterables;
+import com.google.common.collect.Lists;
+import java.util.Collections;
+import java.util.Iterator;
 import java.util.List;
 
 /**
@@ -63,6 +67,38 @@ public interface ResultSet extends Iterable<Row> {
    * background queries to fetch additional pages transparently as the result set is being iterated.
    */
   List<ExecutionInfo> getExecutionInfos();
+
+  /**
+   * Returns the next row, or {@code null} if the result set is exhausted.
+   *
+   * <p>This is convenient for queries that are known to return exactly one row, for example count
+   * queries.
+   */
+  default Row one() {
+    Iterator<Row> iterator = iterator();
+    return iterator.hasNext() ? iterator.next() : null;
+  }
+
+  /**
+   * Returns all the remaining rows as a list; <b>not recommended for queries that return a large
+   * number of rows</b>.
+   *
+   * <p>Contrary to {@link #iterator()} or successive calls to {@link #one()}, this method forces
+   * fetching the <b>full contents</b> of the result set at once; in particular, this means that a
+   * large number of background queries might have to be run, and that all the data will be held in
+   * memory locally. Therefore it is crucial to only call this method for queries that are known to
+   * return a reasonable number of results.
+   */
+  default List<Row> all() {
+    if (!iterator().hasNext()) {
+      return Collections.emptyList();
+    }
+    // We can't know the actual size in advance since more pages could be fetched, but we can at
+    // least allocate for what we already have.
+    List<Row> result = Lists.newArrayListWithExpectedSize(getAvailableWithoutFetching());
+    Iterables.addAll(result, this);
+    return result;
+  }
 
   /**
    * Whether all pages have been fetched from the database.

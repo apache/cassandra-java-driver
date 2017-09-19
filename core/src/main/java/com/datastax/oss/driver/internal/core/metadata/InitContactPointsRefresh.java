@@ -19,7 +19,6 @@ import com.datastax.oss.driver.api.core.metadata.Node;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableMap;
 import java.net.InetSocketAddress;
-import java.util.Collections;
 import java.util.Set;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -36,7 +35,7 @@ class InitContactPointsRefresh extends MetadataRefresh {
   }
 
   @Override
-  public Result compute(DefaultMetadata oldMetadata) {
+  public Result compute(DefaultMetadata oldMetadata, boolean tokenMapEnabled) {
     assert oldMetadata == DefaultMetadata.EMPTY;
     LOG.debug("[{}] Initializing node metadata with contact points {}", logPrefix, contactPoints);
 
@@ -44,7 +43,7 @@ class InitContactPointsRefresh extends MetadataRefresh {
     for (InetSocketAddress address : contactPoints) {
       newNodes.put(address, new DefaultNode(address));
     }
-    return new Result(new DefaultMetadata(newNodes.build()));
+    return new Result(new DefaultMetadata(newNodes.build(), logPrefix));
     // No token map refresh, because we don't have enough information yet
   }
 }

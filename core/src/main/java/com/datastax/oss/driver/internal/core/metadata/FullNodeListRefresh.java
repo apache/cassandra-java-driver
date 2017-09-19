@@ -16,6 +16,10 @@
 package com.datastax.oss.driver.internal.core.metadata;
 
 import com.datastax.oss.driver.api.core.metadata.Node;
+import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
+import com.datastax.oss.driver.internal.core.metadata.token.DefaultTokenMap;
+import com.datastax.oss.driver.internal.core.metadata.token.TokenFactory;
+import com.datastax.oss.driver.internal.core.metadata.token.TokenFactoryRegistry;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
@@ -33,18 +37,24 @@ class FullNodeListRefresh extends NodesRefresh {
   private static final Logger LOG = LoggerFactory.getLogger(FullNodeListRefresh.class);
 
   @VisibleForTesting final Iterable<NodeInfo> nodeInfos;
+  private final TokenFactoryRegistry tokenFactoryRegistry;
 
-  FullNodeListRefresh(Iterable<NodeInfo> nodeInfos, String logPrefix) {
-    super(logPrefix);
+  FullNodeListRefresh(Iterable<NodeInfo> nodeInfos, InternalDriverContext context) {
+    super(context.clusterName());
     this.nodeInfos = nodeInfos;
+    this.tokenFactoryRegistry = context.tokenFactoryRegistry();
   }
 
   @Override
-  public Result compute(DefaultMetadata oldMetadata) {
+  public Result compute(DefaultMetadata oldMetadata, boolean tokenMapEnabled) {
     Map<InetSocketAddress, Node> oldNodes = oldMetadata.getNodes();
 
     Map<InetSocketAddress, Node> added = new HashMap<>();
     Set<InetSocketAddress> seen = new HashSet<>();
+
+    TokenFactory tokenFactory =
+        oldMetadata.getTokenMap().map(m -> ((DefaultTokenMap) m).getTokenFactory()).orElse(null);
+    boolean tokensChanged = false;
 
     for (NodeInfo nodeInfo : nodeInfos) {
       InetSocketAddress address = nodeInfo.getConnectAddress();
@@ -59,13 +69,24 @@ class FullNodeListRefresh extends NodesRefresh {
         LOG.debug("[{}] Adding new node {}", logPrefix, node);
         added.put(address, node);
       }
-      copyInfos(nodeInfo, node, logPrefix);
+      if (tokenFactory == null && nodeInfo.getPartitioner() != null) {
+        tokenFactory = tokenFactoryRegistry.tokenFactoryFor(nodeInfo.getPartitioner());
+      }
+      tokensChanged |= copyInfos(nodeInfo, node, tokenFactory, logPrefix);
     }
 
     Set<InetSocketAddress> removed = Sets.difference(oldNodes.keySet(), seen);
 
     if (added.isEmpty() && removed.isEmpty()) {
-      return new Result(oldMetadata);
+      // Edge case: if all the nodes of the cluster were listed as contact points, and this is the
+      // first refresh, we get here so we need to set the token factory and trigger a token map
+      // rebuild:
+      if (!oldMetadata.getTokenMap().isPresent() && tokenFactory != null) {
+        return new Result(
+            oldMetadata.withNodes(oldMetadata.getNodes(), tokenMapEnabled, true, tokenFactory));
+      } else {
+        return new Result(oldMetadata);
+      }
     } else {
       ImmutableMap.Builder<InetSocketAddress, Node> newNodesBuilder = ImmutableMap.builder();
       ImmutableList.Builder<Object> eventsBuilder = ImmutableList.builder();
@@ -85,7 +106,10 @@ class FullNodeListRefresh extends NodesRefresh {
         eventsBuilder.add(NodeStateEvent.removed((DefaultNode) node));
       }
 
-      return new Result(oldMetadata.withNodes(newNodesBuilder.build()), eventsBuilder.build());
+      return new Result(
+          oldMetadata.withNodes(
+              newNodesBuilder.build(), tokenMapEnabled, tokensChanged, tokenFactory),
+          eventsBuilder.build());
     }
   }
 }

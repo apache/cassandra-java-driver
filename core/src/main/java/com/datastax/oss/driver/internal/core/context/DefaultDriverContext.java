@@ -44,6 +44,8 @@ import com.datastax.oss.driver.internal.core.metadata.schema.parsing.DefaultSche
 import com.datastax.oss.driver.internal.core.metadata.schema.parsing.SchemaParserFactory;
 import com.datastax.oss.driver.internal.core.metadata.schema.queries.DefaultSchemaQueriesFactory;
 import com.datastax.oss.driver.internal.core.metadata.schema.queries.SchemaQueriesFactory;
+import com.datastax.oss.driver.internal.core.metadata.token.DefaultTokenFactoryRegistry;
+import com.datastax.oss.driver.internal.core.metadata.token.TokenFactoryRegistry;
 import com.datastax.oss.driver.internal.core.pool.ChannelPoolFactory;
 import com.datastax.oss.driver.internal.core.protocol.ByteBufPrimitiveCodec;
 import com.datastax.oss.driver.internal.core.session.RequestProcessorRegistry;
@@ -132,6 +134,8 @@ public class DefaultDriverContext implements InternalDriverContext {
       new LazyReference<>("schemaQueriesFactory", this::buildSchemaQueriesFactory, cycleDetector);
   private final LazyReference<SchemaParserFactory> schemaParserFactoryRef =
       new LazyReference<>("schemaParserFactory", this::buildSchemaParserFactory, cycleDetector);
+  private final LazyReference<TokenFactoryRegistry> tokenFactoryRegistryRef =
+      new LazyReference<>("tokenFactoryRegistry", this::buildTokenFactoryRegistry, cycleDetector);
 
   private final DriverConfig config;
   private final DriverConfigLoader configLoader;
@@ -298,6 +302,10 @@ public class DefaultDriverContext implements InternalDriverContext {
     return new DefaultSchemaParserFactory(this);
   }
 
+  protected TokenFactoryRegistry buildTokenFactoryRegistry() {
+    return new DefaultTokenFactoryRegistry(this);
+  }
+
   @Override
   public String clusterName() {
     return clusterName;
@@ -431,6 +439,11 @@ public class DefaultDriverContext implements InternalDriverContext {
   @Override
   public SchemaParserFactory schemaParserFactory() {
     return schemaParserFactoryRef.get();
+  }
+
+  @Override
+  public TokenFactoryRegistry tokenFactoryRegistry() {
+    return tokenFactoryRegistryRef.get();
   }
 
   @Override

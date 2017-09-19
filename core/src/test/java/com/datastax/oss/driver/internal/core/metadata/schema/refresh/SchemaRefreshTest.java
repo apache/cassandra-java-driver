@@ -45,7 +45,7 @@ public class SchemaRefreshTest {
   private static final DefaultKeyspaceMetadata OLD_KS1 = newKeyspace("ks1", true, OLD_T1, OLD_T2);
 
   private DefaultMetadata oldMetadata =
-      DefaultMetadata.EMPTY.withKeyspaces(ImmutableMap.of(OLD_KS1.getName(), OLD_KS1));
+      DefaultMetadata.EMPTY.withSchema(ImmutableMap.of(OLD_KS1.getName(), OLD_KS1), false);
 
   private static DefaultKeyspaceMetadata newKeyspace(
       String name, boolean durableWrites, UserDefinedType... userTypes) {
@@ -67,7 +67,7 @@ public class SchemaRefreshTest {
   @Test
   public void should_detect_dropped_keyspace() {
     SchemaRefresh refresh = new SchemaRefresh(Collections.emptyMap(), "test");
-    MetadataRefresh.Result result = refresh.compute(oldMetadata);
+    MetadataRefresh.Result result = refresh.compute(oldMetadata, false);
     assertThat(result.newMetadata.getKeyspaces()).isEmpty();
     assertThat(result.events).containsExactly(KeyspaceChangeEvent.dropped(OLD_KS1));
   }
@@ -77,7 +77,7 @@ public class SchemaRefreshTest {
     DefaultKeyspaceMetadata ks2 = newKeyspace("ks2", true);
     SchemaRefresh refresh =
         new SchemaRefresh(ImmutableMap.of(OLD_KS1.getName(), OLD_KS1, ks2.getName(), ks2), "test");
-    MetadataRefresh.Result result = refresh.compute(oldMetadata);
+    MetadataRefresh.Result result = refresh.compute(oldMetadata, false);
     assertThat(result.newMetadata.getKeyspaces()).hasSize(2);
     assertThat(result.events).containsExactly(KeyspaceChangeEvent.created(ks2));
   }
@@ -87,7 +87,7 @@ public class SchemaRefreshTest {
     // Change only one top-level option (durable writes)
     DefaultKeyspaceMetadata newKs1 = newKeyspace("ks1", false, OLD_T1, OLD_T2);
     SchemaRefresh refresh = new SchemaRefresh(ImmutableMap.of(OLD_KS1.getName(), newKs1), "test");
-    MetadataRefresh.Result result = refresh.compute(oldMetadata);
+    MetadataRefresh.Result result = refresh.compute(oldMetadata, false);
     assertThat(result.newMetadata.getKeyspaces()).hasSize(1);
     assertThat(result.events).containsExactly(KeyspaceChangeEvent.updated(OLD_KS1, newKs1));
   }
@@ -108,7 +108,7 @@ public class SchemaRefreshTest {
     DefaultKeyspaceMetadata newKs1 = newKeyspace("ks1", true, newT2, t3);
 
     SchemaRefresh refresh = new SchemaRefresh(ImmutableMap.of(OLD_KS1.getName(), newKs1), "test");
-    MetadataRefresh.Result result = refresh.compute(oldMetadata);
+    MetadataRefresh.Result result = refresh.compute(oldMetadata, false);
     assertThat(result.newMetadata.getKeyspaces().get(OLD_KS1.getName())).isEqualTo(newKs1);
     assertThat(result.events)
         .containsExactly(
@@ -134,7 +134,7 @@ public class SchemaRefreshTest {
     DefaultKeyspaceMetadata newKs1 = newKeyspace("ks1", false, newT2, t3);
 
     SchemaRefresh refresh = new SchemaRefresh(ImmutableMap.of(OLD_KS1.getName(), newKs1), "test");
-    MetadataRefresh.Result result = refresh.compute(oldMetadata);
+    MetadataRefresh.Result result = refresh.compute(oldMetadata, false);
     assertThat(result.newMetadata.getKeyspaces().get(OLD_KS1.getName())).isEqualTo(newKs1);
     assertThat(result.events)
         .containsExactly(

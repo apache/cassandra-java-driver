@@ -17,9 +17,11 @@ package com.datastax.oss.driver.api.core.metadata;
 
 import com.datastax.oss.driver.api.core.Cluster;
 import com.datastax.oss.driver.api.core.CqlIdentifier;
+import com.datastax.oss.driver.api.core.config.CoreDriverOption;
 import com.datastax.oss.driver.api.core.metadata.schema.KeyspaceMetadata;
 import java.net.InetSocketAddress;
 import java.util.Map;
+import java.util.Optional;
 
 /**
  * The metadata of the Cassandra cluster that this driver instance is connected to.
@@ -38,9 +40,29 @@ public interface Metadata {
    */
   Map<InetSocketAddress, Node> getNodes();
 
+  /**
+   * The keyspaces defined in this cluster.
+   *
+   * <p>Note that schema metadata can be disabled or restricted to a subset of keyspaces, therefore
+   * this map might be empty or incomplete.
+   *
+   * @see CoreDriverOption#METADATA_SCHEMA_ENABLED
+   * @see Cluster#setSchemaMetadataEnabled(Boolean)
+   * @see CoreDriverOption#METADATA_SCHEMA_REFRESHED_KEYSPACES
+   */
   Map<CqlIdentifier, KeyspaceMetadata> getKeyspaces();
 
   default KeyspaceMetadata getKeyspace(CqlIdentifier keyspaceId) {
     return getKeyspaces().get(keyspaceId);
   }
+
+  /**
+   * The token map for this cluster.
+   *
+   * <p>Note that this property might be absent if token metadata was disabled, or if there was a
+   * runtime error while computing the map (this would generate a warning log).
+   *
+   * @see CoreDriverOption#METADATA_TOKEN_MAP_ENABLED
+   */
+  Optional<TokenMap> getTokenMap();
 }

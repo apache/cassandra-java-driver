@@ -4,6 +4,7 @@
 
 ### 4.0.0-alpha2 (in progress)
 
+- [new feature] JAVA-1525: Handle token metadata
 - [new feature] JAVA-1638: Check schema agreement
 - [new feature] JAVA-1494: Implement Snappy and LZ4 compression
 - [new feature] JAVA-1514: Port Uuids utility class

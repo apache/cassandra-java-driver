@@ -15,7 +15,9 @@
  */
 package com.datastax.oss.driver.api.core.data;
 
+import com.datastax.oss.driver.api.core.metadata.token.Token;
 import com.datastax.oss.driver.api.core.type.DataType;
+import com.datastax.oss.driver.api.core.type.DataTypes;
 import com.datastax.oss.driver.api.core.type.codec.CodecNotFoundException;
 import com.datastax.oss.driver.api.core.type.codec.PrimitiveBooleanCodec;
 import com.datastax.oss.driver.api.core.type.codec.PrimitiveByteCodec;
@@ -26,6 +28,9 @@ import com.datastax.oss.driver.api.core.type.codec.PrimitiveLongCodec;
 import com.datastax.oss.driver.api.core.type.codec.PrimitiveShortCodec;
 import com.datastax.oss.driver.api.core.type.codec.TypeCodec;
 import com.datastax.oss.driver.api.core.type.reflect.GenericType;
+import com.datastax.oss.driver.internal.core.metadata.token.ByteOrderedToken;
+import com.datastax.oss.driver.internal.core.metadata.token.Murmur3Token;
+import com.datastax.oss.driver.internal.core.metadata.token.RandomToken;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.net.InetAddress;
@@ -382,6 +387,36 @@ public interface GettableByIndex extends AccessibleByIndex {
    */
   default CqlDuration getCqlDuration(int i) {
     return get(i, CqlDuration.class);
+  }
+
+  /**
+   * Returns the {@code i}th value as a token.
+   *
+   * <p>Note that, for simplicity, this method relies on the CQL type of the column to pick the
+   * correct token implementation. Therefore it must only be called on columns of the type that
+   * matches the partitioner in use for this cluster: {@code bigint} for {@code Murmur3Partitioner},
+   * {@code blob} for {@code ByteOrderedPartitioner}, and {@code varint} for {@code
+   * RandomPartitioner}. Calling it for the wrong type will produce corrupt tokens that are unusable
+   * with this driver instance.
+   *
+   * @throws IndexOutOfBoundsException if the index is invalid.
+   * @throws IllegalArgumentException if the column type can not be converted to a known token type.
+   */
+  default Token getToken(int i) {
+    DataType type = getType(i);
+    // Simply enumerate all known implementations. This goes against the concept of TokenFactory,
+    // but injecting the factory here is too much of a hassle.
+    // The only issue is if someone uses a custom partitioner, but this is highly unlikely, and even
+    // then they can get the value manually as a workaround.
+    if (type.equals(DataTypes.BIGINT)) {
+      return isNull(i) ? null : new Murmur3Token(getLong(i));
+    } else if (type.equals(DataTypes.BLOB)) {
+      return isNull(i) ? null : new ByteOrderedToken(getByteBuffer(i));
+    } else if (type.equals(DataTypes.VARINT)) {
+      return isNull(i) ? null : new RandomToken(getBigInteger(i));
+    } else {
+      throw new IllegalArgumentException("Can't convert CQL type " + type + " into a token");
+    }
   }
 
   /**

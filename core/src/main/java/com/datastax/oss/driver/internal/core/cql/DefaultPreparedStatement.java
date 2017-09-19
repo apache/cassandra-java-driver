@@ -21,8 +21,13 @@ import com.datastax.oss.driver.api.core.cql.BoundStatement;
 import com.datastax.oss.driver.api.core.cql.BoundStatementBuilder;
 import com.datastax.oss.driver.api.core.cql.ColumnDefinitions;
 import com.datastax.oss.driver.api.core.cql.PreparedStatement;
+import com.datastax.oss.driver.api.core.metadata.token.Token;
 import com.datastax.oss.driver.api.core.type.codec.TypeCodec;
+import com.datastax.oss.driver.api.core.type.codec.TypeCodecs;
 import com.datastax.oss.driver.api.core.type.codec.registry.CodecRegistry;
+import com.datastax.oss.driver.internal.core.metadata.token.ByteOrderedToken;
+import com.datastax.oss.driver.internal.core.metadata.token.Murmur3Token;
+import com.datastax.oss.driver.internal.core.metadata.token.RandomToken;
 import com.datastax.oss.driver.internal.core.session.RepreparePayload;
 import com.datastax.oss.protocol.internal.ProtocolConstants;
 import java.nio.ByteBuffer;
@@ -100,8 +105,26 @@ public class DefaultPreparedStatement implements PreparedStatement {
     ByteBuffer[] encodedValues = new ByteBuffer[variableDefinitions.size()];
     int i;
     for (i = 0; i < values.length; i++) {
-      TypeCodec<Object> codec = codecRegistry.codecFor(variableDefinitions.get(i).getType());
-      encodedValues[i] = codec.encode(values[i], protocolVersion);
+      Object value = values[i];
+      ByteBuffer encodedValue;
+      if (value instanceof Token) {
+        if (value instanceof Murmur3Token) {
+          encodedValue =
+              TypeCodecs.BIGINT.encode(((Murmur3Token) value).getValue(), protocolVersion);
+        } else if (value instanceof ByteOrderedToken) {
+          encodedValue =
+              TypeCodecs.BLOB.encode(((ByteOrderedToken) value).getValue(), protocolVersion);
+        } else if (value instanceof RandomToken) {
+          encodedValue =
+              TypeCodecs.VARINT.encode(((RandomToken) value).getValue(), protocolVersion);
+        } else {
+          throw new IllegalArgumentException("Unsupported token type " + value.getClass());
+        }
+      } else {
+        TypeCodec<Object> codec = codecRegistry.codecFor(variableDefinitions.get(i).getType());
+        encodedValue = codec.encode(value, protocolVersion);
+      }
+      encodedValues[i] = encodedValue;
     }
     for (; i < encodedValues.length; i++) {
       encodedValues[i] = ProtocolConstants.UNSET_VALUE;

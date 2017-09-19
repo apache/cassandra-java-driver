@@ -32,7 +32,7 @@ public class AddNodeRefreshTest {
   @Test
   public void should_add_new_node() {
     // Given
-    DefaultMetadata oldMetadata = new DefaultMetadata(ImmutableMap.of(ADDRESS1, node1));
+    DefaultMetadata oldMetadata = new DefaultMetadata(ImmutableMap.of(ADDRESS1, node1), "test");
     DefaultNodeInfo newNodeInfo =
         DefaultNodeInfo.builder()
             .withConnectAddress(ADDRESS2)
@@ -42,7 +42,7 @@ public class AddNodeRefreshTest {
     AddNodeRefresh refresh = new AddNodeRefresh(newNodeInfo, "test");
 
     // When
-    MetadataRefresh.Result result = refresh.compute(oldMetadata);
+    MetadataRefresh.Result result = refresh.compute(oldMetadata, false);
 
     // Then
     Map<InetSocketAddress, Node> newNodes = result.newMetadata.getNodes();
@@ -56,7 +56,7 @@ public class AddNodeRefreshTest {
   @Test
   public void should_not_add_existing_node() {
     // Given
-    DefaultMetadata oldMetadata = new DefaultMetadata(ImmutableMap.of(ADDRESS1, node1));
+    DefaultMetadata oldMetadata = new DefaultMetadata(ImmutableMap.of(ADDRESS1, node1), "test");
     DefaultNodeInfo newNodeInfo =
         DefaultNodeInfo.builder()
             .withConnectAddress(ADDRESS1)
@@ -66,7 +66,7 @@ public class AddNodeRefreshTest {
     AddNodeRefresh refresh = new AddNodeRefresh(newNodeInfo, "test");
 
     // When
-    MetadataRefresh.Result result = refresh.compute(oldMetadata);
+    MetadataRefresh.Result result = refresh.compute(oldMetadata, false);
 
     // Then
     assertThat(result.newMetadata.getNodes()).containsOnlyKeys(ADDRESS1);
