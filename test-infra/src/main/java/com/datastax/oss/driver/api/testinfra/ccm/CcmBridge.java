@@ -62,6 +62,7 @@ public class CcmBridge implements AutoCloseable {
   private final String ipPrefix;
 
   private final Map<String, Object> initialConfiguration;
+  private final List<String> createOptions;
 
   private final String jvmArgs;
 
@@ -99,15 +100,17 @@ public class CcmBridge implements AutoCloseable {
   private CcmBridge(
       Path directory,
       CassandraVersion cassandraVersion,
-      int nodes[],
+      int[] nodes,
       String ipPrefix,
       Map<String, Object> initialConfiguration,
+      List<String> createOptions,
       Collection<String> jvmArgs) {
     this.directory = directory;
     this.cassandraVersion = cassandraVersion;
     this.nodes = nodes;
     this.ipPrefix = ipPrefix;
     this.initialConfiguration = initialConfiguration;
+    this.createOptions = createOptions;
 
     StringBuilder allJvmArgs = new StringBuilder("");
     String quote = isWindows() ? "\"" : "";
@@ -136,7 +139,8 @@ public class CcmBridge implements AutoCloseable {
           "-i",
           ipPrefix,
           "-n",
-          Arrays.stream(nodes).mapToObj(n -> "" + n).collect(Collectors.joining(":")));
+          Arrays.stream(nodes).mapToObj(n -> "" + n).collect(Collectors.joining(":")),
+          createOptions.stream().collect(Collectors.joining(" ")));
 
       for (Map.Entry<String, Object> conf : initialConfiguration.entrySet()) {
         execute("updateconf", String.format("%s:%s", conf.getKey(), conf.getValue()));
@@ -258,6 +262,7 @@ public class CcmBridge implements AutoCloseable {
     private final List<String> jvmArgs = new ArrayList<>();
     private String ipPrefix = "127.0.0.";
     private CassandraVersion cassandraVersion = CcmBridge.DEFAULT_CASSANDRA_VERSION;
+    private final List<String> createOptions = new ArrayList<>();
 
     private final Path directory;
 
@@ -297,6 +302,12 @@ public class CcmBridge implements AutoCloseable {
       return this;
     }
 
+    /** Adds an option to the {@code ccm create} command. */
+    public Builder withCreateOption(String option) {
+      this.createOptions.add(option);
+      return this;
+    }
+
     /** Enables SSL encryption. */
     public Builder withSsl() {
       cassandraConfiguration.put("client_encryption_options.enabled", "true");
@@ -323,7 +334,13 @@ public class CcmBridge implements AutoCloseable {
         cassandraConfiguration.put("enable_user_defined_functions", "true");
       }
       return new CcmBridge(
-          directory, cassandraVersion, nodes, ipPrefix, cassandraConfiguration, jvmArgs);
+          directory,
+          cassandraVersion,
+          nodes,
+          ipPrefix,
+          cassandraConfiguration,
+          createOptions,
+          jvmArgs);
     }
   }
 }

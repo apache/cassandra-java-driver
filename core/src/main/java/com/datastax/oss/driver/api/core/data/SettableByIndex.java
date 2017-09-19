@@ -15,6 +15,7 @@
  */
 package com.datastax.oss.driver.api.core.data;
 
+import com.datastax.oss.driver.api.core.metadata.token.Token;
 import com.datastax.oss.driver.api.core.type.DataType;
 import com.datastax.oss.driver.api.core.type.codec.CodecNotFoundException;
 import com.datastax.oss.driver.api.core.type.codec.PrimitiveBooleanCodec;
@@ -26,6 +27,9 @@ import com.datastax.oss.driver.api.core.type.codec.PrimitiveLongCodec;
 import com.datastax.oss.driver.api.core.type.codec.PrimitiveShortCodec;
 import com.datastax.oss.driver.api.core.type.codec.TypeCodec;
 import com.datastax.oss.driver.api.core.type.reflect.GenericType;
+import com.datastax.oss.driver.internal.core.metadata.token.ByteOrderedToken;
+import com.datastax.oss.driver.internal.core.metadata.token.Murmur3Token;
+import com.datastax.oss.driver.internal.core.metadata.token.RandomToken;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.net.InetAddress;
@@ -350,6 +354,31 @@ public interface SettableByIndex<T extends SettableByIndex<T>> extends Accessibl
    */
   default T setCqlDuration(int i, CqlDuration v) {
     return set(i, v, CqlDuration.class);
+  }
+
+  /**
+   * Sets the {@code i}th value to the provided token.
+   *
+   * <p>This works with the CQL type matching the partitioner in use for this cluster: {@code
+   * bigint} for {@code Murmur3Partitioner}, {@code blob} for {@code ByteOrderedPartitioner}, and
+   * {@code varint} for {@code RandomPartitioner}.
+   *
+   * @throws IndexOutOfBoundsException if the index is invalid.
+   */
+  default T setToken(int i, Token v) {
+    // Simply enumerate all known implementations. This goes against the concept of TokenFactory,
+    // but injecting the factory here is too much of a hassle.
+    // The only issue is if someone uses a custom partitioner, but this is highly unlikely, and even
+    // then they can set the value manually as a workaround.
+    if (v instanceof Murmur3Token) {
+      return setLong(i, ((Murmur3Token) v).getValue());
+    } else if (v instanceof ByteOrderedToken) {
+      return setByteBuffer(i, ((ByteOrderedToken) v).getValue());
+    } else if (v instanceof RandomToken) {
+      return setBigInteger(i, ((RandomToken) v).getValue());
+    } else {
+      throw new IllegalArgumentException("Unsupported token type " + v.getClass());
+    }
   }
 
   /**

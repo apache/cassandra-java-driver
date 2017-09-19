@@ -40,7 +40,7 @@ public abstract class MetadataRefresh {
     this.logPrefix = logPrefix;
   }
 
-  public abstract Result compute(DefaultMetadata oldMetadata);
+  public abstract Result compute(DefaultMetadata oldMetadata, boolean tokenMapEnabled);
 
   public static class Result {
     public final DefaultMetadata newMetadata;

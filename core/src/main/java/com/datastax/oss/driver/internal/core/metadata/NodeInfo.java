@@ -18,6 +18,7 @@ package com.datastax.oss.driver.internal.core.metadata;
 import com.datastax.oss.driver.api.core.addresstranslation.AddressTranslator;
 import com.datastax.oss.driver.api.core.loadbalancing.LoadBalancingPolicy;
 import com.datastax.oss.driver.api.core.loadbalancing.NodeDistance;
+import com.datastax.oss.driver.api.core.metadata.Metadata;
 import com.datastax.oss.driver.api.core.metadata.Node;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
@@ -84,6 +85,17 @@ public interface NodeInfo {
    * the lowest version for the current protocol version, which might lead to inaccuracies.
    */
   String getCassandraVersion();
+
+  /**
+   * The fully-qualifier name of the partitioner class that distributes data across the nodes, as it
+   * appears in {@code system.local.partitioner}.
+   *
+   * <p>This is used to compute the driver-side token metadata (in particular, token-aware routing
+   * relies on this information). It is only really needed for the first node of the initial node
+   * list refresh (but it doesn't hurt to always include it if possible). If it is absent, {@link
+   * Metadata#getTokenMap()} will remain empty.
+   */
+  String getPartitioner();
 
   /**
    * The tokens that this node owns on the ring.

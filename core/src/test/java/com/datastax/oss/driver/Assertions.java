@@ -18,9 +18,11 @@ package com.datastax.oss.driver;
 import com.datastax.oss.driver.api.core.CassandraVersion;
 import com.datastax.oss.driver.api.core.CassandraVersionAssert;
 import com.datastax.oss.driver.api.core.config.DriverConfig;
+import com.datastax.oss.driver.api.core.metadata.token.TokenRange;
 import com.datastax.oss.driver.internal.core.CompletionStageAssert;
 import com.datastax.oss.driver.internal.core.DriverConfigAssert;
 import com.datastax.oss.driver.internal.core.NettyFutureAssert;
+import com.datastax.oss.driver.internal.core.metadata.token.TokenRangeAssert;
 import io.netty.buffer.ByteBuf;
 import io.netty.util.concurrent.Future;
 import java.util.concurrent.CompletionStage;
@@ -44,5 +46,9 @@ public class Assertions extends org.assertj.core.api.Assertions {
 
   public static CassandraVersionAssert assertThat(CassandraVersion actual) {
     return new CassandraVersionAssert(actual);
+  }
+
+  public static TokenRangeAssert assertThat(TokenRange actual) {
+    return new TokenRangeAssert(actual);
   }
 }

@@ -15,13 +15,18 @@
  */
 package com.datastax.oss.driver.internal.core.metadata;
 
+import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import java.net.InetSocketAddress;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.mockito.Mock;
+import org.mockito.junit.MockitoJUnitRunner;
 
 import static com.datastax.oss.driver.Assertions.assertThat;
 
+@RunWith(MockitoJUnitRunner.class)
 public class FullNodeListRefreshTest {
 
   private static final InetSocketAddress ADDRESS1 = new InetSocketAddress("127.0.0.1", 9042);
@@ -32,19 +37,21 @@ public class FullNodeListRefreshTest {
   private static final DefaultNode node2 = new DefaultNode(ADDRESS2);
   private static final DefaultNode node3 = new DefaultNode(ADDRESS3);
 
+  @Mock private InternalDriverContext context;
+
   @Test
   public void should_add_and_remove_nodes() {
     // Given
     DefaultMetadata oldMetadata =
-        new DefaultMetadata(ImmutableMap.of(ADDRESS1, node1, ADDRESS2, node2));
+        new DefaultMetadata(ImmutableMap.of(ADDRESS1, node1, ADDRESS2, node2), "test");
     Iterable<NodeInfo> newInfos =
         ImmutableList.of(
             DefaultNodeInfo.builder().withConnectAddress(ADDRESS2).build(),
             DefaultNodeInfo.builder().withConnectAddress(ADDRESS3).build());
-    FullNodeListRefresh refresh = new FullNodeListRefresh(newInfos, "test");
+    FullNodeListRefresh refresh = new FullNodeListRefresh(newInfos, context);
 
     // When
-    MetadataRefresh.Result result = refresh.compute(oldMetadata);
+    MetadataRefresh.Result result = refresh.compute(oldMetadata, false);
 
     // Then
     assertThat(result.newMetadata.getNodes()).containsOnlyKeys(ADDRESS2, ADDRESS3);
@@ -56,7 +63,7 @@ public class FullNodeListRefreshTest {
   public void should_update_existing_nodes() {
     // Given
     DefaultMetadata oldMetadata =
-        new DefaultMetadata(ImmutableMap.of(ADDRESS1, node1, ADDRESS2, node2));
+        new DefaultMetadata(ImmutableMap.of(ADDRESS1, node1, ADDRESS2, node2), "test");
     Iterable<NodeInfo> newInfos =
         ImmutableList.of(
             DefaultNodeInfo.builder()
@@ -69,10 +76,10 @@ public class FullNodeListRefreshTest {
                 .withDatacenter("dc1")
                 .withRack("rack2")
                 .build());
-    FullNodeListRefresh refresh = new FullNodeListRefresh(newInfos, "test");
+    FullNodeListRefresh refresh = new FullNodeListRefresh(newInfos, context);
 
     // When
-    MetadataRefresh.Result result = refresh.compute(oldMetadata);
+    MetadataRefresh.Result result = refresh.compute(oldMetadata, false);
 
     // Then
     assertThat(result.newMetadata.getNodes()).containsOnlyKeys(ADDRESS1, ADDRESS2);

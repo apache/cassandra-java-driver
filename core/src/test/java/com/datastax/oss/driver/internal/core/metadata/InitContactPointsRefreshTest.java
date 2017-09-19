@@ -33,7 +33,7 @@ public class InitContactPointsRefreshTest {
         new InitContactPointsRefresh(ImmutableSet.of(ADDRESS1, ADDRESS2), "test");
 
     // When
-    MetadataRefresh.Result result = refresh.compute(DefaultMetadata.EMPTY);
+    MetadataRefresh.Result result = refresh.compute(DefaultMetadata.EMPTY, false);
 
     // Then
     assertThat(result.newMetadata.getNodes()).containsOnlyKeys(ADDRESS1, ADDRESS2);

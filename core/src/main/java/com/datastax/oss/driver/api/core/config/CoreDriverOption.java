@@ -95,6 +95,7 @@ public enum CoreDriverOption implements DriverOption {
   METADATA_SCHEMA_REFRESHED_KEYSPACES("metadata.schema.refreshed-keyspaces", false),
   METADATA_SCHEMA_WINDOW("metadata.schema.debouncer.window", true),
   METADATA_SCHEMA_MAX_EVENTS("metadata.schema.debouncer.max-events", true),
+  METADATA_TOKEN_MAP_ENABLED("metadata.token-map.enabled", true),
 
   TIMESTAMP_GENERATOR_ROOT("request.timestamp-generator", true),
   RELATIVE_TIMESTAMP_GENERATOR_FORCE_JAVA_CLOCK("force-java-clock", false),

@@ -58,8 +58,6 @@ public interface Node {
 
   CassandraVersion getCassandraVersion();
 
-  // TODO tokens? (might be better to have a method on TokenMap)
-
   /**
    * An additional map of free-form properties.
    *

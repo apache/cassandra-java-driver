@@ -34,6 +34,7 @@ public class DefaultNodeInfo implements NodeInfo {
   private final String datacenter;
   private final String rack;
   private final String cassandraVersion;
+  private final String partitioner;
   private final Set<String> tokens;
   private final Map<String, Object> extras;
 
@@ -44,6 +45,7 @@ public class DefaultNodeInfo implements NodeInfo {
     this.datacenter = builder.datacenter;
     this.rack = builder.rack;
     this.cassandraVersion = builder.cassandraVersion;
+    this.partitioner = builder.partitioner;
     this.tokens = (builder.tokens == null) ? Collections.emptySet() : builder.tokens;
     this.extras = (builder.extras == null) ? Collections.emptyMap() : builder.extras;
   }
@@ -79,6 +81,11 @@ public class DefaultNodeInfo implements NodeInfo {
   }
 
   @Override
+  public String getPartitioner() {
+    return partitioner;
+  }
+
+  @Override
   public Set<String> getTokens() {
     return tokens;
   }
@@ -95,6 +102,7 @@ public class DefaultNodeInfo implements NodeInfo {
     private String datacenter;
     private String rack;
     private String cassandraVersion;
+    private String partitioner;
     private Set<String> tokens;
     private Map<String, Object> extras;
 
@@ -129,6 +137,11 @@ public class DefaultNodeInfo implements NodeInfo {
 
     public Builder withCassandraVersion(String cassandraVersion) {
       this.cassandraVersion = cassandraVersion;
+      return this;
+    }
+
+    public Builder withPartitioner(String partitioner) {
+      this.partitioner = partitioner;
       return this;
     }
 

@@ -43,7 +43,7 @@ public class SchemaRefresh extends MetadataRefresh {
   }
 
   @Override
-  public Result compute(DefaultMetadata oldMetadata) {
+  public Result compute(DefaultMetadata oldMetadata, boolean tokenMapEnabled) {
     ImmutableList.Builder<Object> events = ImmutableList.builder();
 
     Map<CqlIdentifier, KeyspaceMetadata> oldKeyspaces = oldMetadata.getKeyspaces();
@@ -55,7 +55,7 @@ public class SchemaRefresh extends MetadataRefresh {
       computeEvents(oldKeyspaces.get(key), entry.getValue(), events);
     }
 
-    return new Result(oldMetadata.withKeyspaces(this.newKeyspaces), events.build());
+    return new Result(oldMetadata.withSchema(this.newKeyspaces, tokenMapEnabled), events.build());
   }
 
   private static boolean shallowEquals(KeyspaceMetadata keyspace1, KeyspaceMetadata keyspace2) {

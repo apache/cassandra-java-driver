@@ -302,11 +302,6 @@ public abstract class CqlRequestHandlerBase {
           Conversions.toResultSet(resultMessage, executionInfo, session, context);
       if (result.complete(resultSet)) {
         cancelScheduledTasks();
-        if (resultMessage instanceof SetKeyspace) {
-          CqlIdentifier newKeyspace =
-              CqlIdentifier.fromInternal(((SetKeyspace) resultMessage).keyspace);
-          session.setKeyspace(newKeyspace);
-        }
       }
     } catch (Throwable error) {
       setFinalError(error);
@@ -412,6 +407,11 @@ public abstract class CqlRequestHandlerBase {
               .whenComplete(
                   ((schemaInAgreement, error) ->
                       setFinalResult(schemaChange, responseFrame, schemaInAgreement, this)));
+        } else if (responseMessage instanceof SetKeyspace) {
+          SetKeyspace setKeyspace = (SetKeyspace) responseMessage;
+          session
+              .setKeyspace(CqlIdentifier.fromInternal(setKeyspace.keyspace))
+              .whenComplete((v, error) -> setFinalResult(setKeyspace, responseFrame, true, this));
         } else if (responseMessage instanceof Result) {
           LOG.debug("[{}] Got result, completing", logPrefix);
           setFinalResult((Result) responseMessage, responseFrame, true, this);

@@ -15,6 +15,7 @@
  */
 package com.datastax.oss.driver.api.core.data;
 
+import com.datastax.oss.driver.api.core.metadata.token.Token;
 import com.datastax.oss.driver.api.core.type.DataType;
 import com.datastax.oss.driver.api.core.type.codec.CodecNotFoundException;
 import com.datastax.oss.driver.api.core.type.codec.TypeCodec;
@@ -385,6 +386,22 @@ public interface SettableByName<T extends SettableByName<T>>
    */
   default T setCqlDuration(String name, CqlDuration v) {
     return setCqlDuration(firstIndexOf(name), v);
+  }
+
+  /**
+   * Sets the value for the first occurrence of {@code name} to the provided token.
+   *
+   * <p>This works with the CQL type matching the partitioner in use for this cluster: {@code
+   * bigint} for {@code Murmur3Partitioner}, {@code blob} for {@code ByteOrderedPartitioner}, and
+   * {@code varint} for {@code RandomPartitioner}.
+   *
+   * <p>This method deals with case sensitivity in the way explained in the documentation of {@link
+   * AccessibleByName}.
+   *
+   * @throws IndexOutOfBoundsException if the index is invalid.
+   */
+  default T setToken(String name, Token v) {
+    return setToken(firstIndexOf(name), v);
   }
 
   /**

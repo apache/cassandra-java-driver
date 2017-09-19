@@ -36,7 +36,7 @@ public class RemoveNodeRefresh extends NodesRefresh {
   }
 
   @Override
-  public Result compute(DefaultMetadata oldMetadata) {
+  public Result compute(DefaultMetadata oldMetadata, boolean tokenMapEnabled) {
     Map<InetSocketAddress, Node> oldNodes = oldMetadata.getNodes();
     Node node = oldNodes.get(toRemove);
     if (node == null) {
@@ -52,7 +52,7 @@ public class RemoveNodeRefresh extends NodesRefresh {
         }
       }
       return new Result(
-          oldMetadata.withNodes(newNodesBuilder.build()),
+          oldMetadata.withNodes(newNodesBuilder.build(), tokenMapEnabled, false, null),
           ImmutableList.of(NodeStateEvent.removed((DefaultNode) node)));
     }
   }

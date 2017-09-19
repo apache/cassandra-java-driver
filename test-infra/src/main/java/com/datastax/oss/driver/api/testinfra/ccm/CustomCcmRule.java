@@ -84,6 +84,11 @@ public class CustomCcmRule extends BaseCcmRule {
       return this;
     }
 
+    public Builder withCreateOption(String option) {
+      bridgeBuilder.withCreateOption(option);
+      return this;
+    }
+
     public Builder withSsl() {
       bridgeBuilder.withSsl();
       return this;

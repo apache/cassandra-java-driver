@@ -15,6 +15,7 @@
  */
 package com.datastax.oss.driver.api.core.data;
 
+import com.datastax.oss.driver.api.core.metadata.token.Token;
 import com.datastax.oss.driver.api.core.type.codec.CodecNotFoundException;
 import com.datastax.oss.driver.api.core.type.codec.TypeCodec;
 import com.datastax.oss.driver.api.core.type.reflect.GenericType;
@@ -482,6 +483,29 @@ public interface GettableByName extends GettableByIndex, AccessibleByName {
    */
   default CqlDuration getCqlDuration(String name) {
     return getCqlDuration(firstIndexOf(name));
+  }
+
+  /**
+   * Returns the value for the first occurrence of {@code name} as a token.
+   *
+   * <p>Note that, for simplicity, this method relies on the CQL type of the column to pick the
+   * correct token implementation. Therefore it must only be called on columns of the type that
+   * matches the partitioner in use for this cluster: {@code bigint} for {@code Murmur3Partitioner},
+   * {@code blob} for {@code ByteOrderedPartitioner}, and {@code varint} for {@code
+   * RandomPartitioner}. Calling it for the wrong type will produce corrupt tokens that are unusable
+   * with this driver instance.
+   *
+   * <p>If an identifier appears multiple times, this can only be used to access the first value.
+   * For the other ones, use positional getters.
+   *
+   * <p>This method deals with case sensitivity in the way explained in the documentation of {@link
+   * AccessibleByName}.
+   *
+   * @throws IndexOutOfBoundsException if the index is invalid.
+   * @throws IllegalArgumentException if the column type can not be converted to a known token type.
+   */
+  default Token getToken(String name) {
+    return getToken(firstIndexOf(name));
   }
 
   /**

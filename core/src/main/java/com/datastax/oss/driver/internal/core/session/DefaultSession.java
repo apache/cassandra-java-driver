@@ -38,6 +38,7 @@ import com.datastax.oss.driver.internal.core.util.concurrent.CompletableFutures;
 import com.datastax.oss.driver.internal.core.util.concurrent.ReplayingEventFilter;
 import com.datastax.oss.driver.internal.core.util.concurrent.RunOrSchedule;
 import com.datastax.oss.driver.internal.core.util.concurrent.UncaughtExceptions;
+import com.google.common.collect.Lists;
 import com.google.common.collect.MapMaker;
 import io.netty.util.concurrent.EventExecutor;
 import java.nio.ByteBuffer;
@@ -58,11 +59,17 @@ import org.slf4j.LoggerFactory;
 /**
  * The session implementation.
  *
+ * <p>
+ *
  * <p>It maintains a {@link ChannelPool} to each node that the {@link LoadBalancingPolicy} set to a
  * non-ignored distance. It listens for distance events and node state events, in order to adjust
  * the pools accordingly.
  *
+ * <p>
+ *
  * <p>It executes requests by:
+ *
+ * <p>
  *
  * <ul>
  *   <li>picking the appropriate processor to convert the request into a protocol message.
@@ -128,26 +135,31 @@ public class DefaultSession implements CqlSession {
   /**
    * <b>INTERNAL USE ONLY</b> -- switches the session to a new keyspace.
    *
+   * <p>
+   *
    * <p>This is called by the driver when a {@code USE} query is successfully executed through the
    * session. Calling it from anywhere else is highly discouraged, as an invalid keyspace would
    * wreak havoc (close all connections and make the session unusable).
    */
-  public void setKeyspace(CqlIdentifier newKeyspace) {
+  public CompletionStage<Void> setKeyspace(CqlIdentifier newKeyspace) {
     CqlIdentifier oldKeyspace = this.keyspace;
-    if (!Objects.equals(oldKeyspace, newKeyspace)) {
-      if (config.getDefaultProfile().getBoolean(CoreDriverOption.REQUEST_WARN_IF_SET_KEYSPACE)) {
-        LOG.warn(
-            "[{}] Detected a keyspace change at runtime ({} => {}). "
-                + "This is an anti-pattern that should be avoided in production "
-                + "(see '{}' in the configuration).",
-            logPrefix,
-            (oldKeyspace == null) ? "<none>" : oldKeyspace.asInternal(),
-            newKeyspace.asInternal(),
-            CoreDriverOption.REQUEST_WARN_IF_SET_KEYSPACE.getPath());
-      }
-      this.keyspace = newKeyspace;
-      RunOrSchedule.on(adminExecutor, () -> singleThreaded.setKeyspace(newKeyspace));
+    if (Objects.equals(oldKeyspace, newKeyspace)) {
+      return CompletableFuture.completedFuture(null);
     }
+    if (config.getDefaultProfile().getBoolean(CoreDriverOption.REQUEST_WARN_IF_SET_KEYSPACE)) {
+      LOG.warn(
+          "[{}] Detected a keyspace change at runtime ({} => {}). "
+              + "This is an anti-pattern that should be avoided in production "
+              + "(see '{}' in the configuration).",
+          logPrefix,
+          (oldKeyspace == null) ? "<none>" : oldKeyspace.asInternal(),
+          newKeyspace.asInternal(),
+          CoreDriverOption.REQUEST_WARN_IF_SET_KEYSPACE.getPath());
+    }
+    this.keyspace = newKeyspace;
+    CompletableFuture<Void> result = new CompletableFuture<>();
+    RunOrSchedule.on(adminExecutor, () -> singleThreaded.setKeyspace(newKeyspace, result));
+    return result;
   }
 
   public Map<Node, ChannelPool> getPools() {
@@ -474,15 +486,18 @@ public class DefaultSession implements CqlSession {
       }
     }
 
-    private void setKeyspace(CqlIdentifier newKeyspace) {
+    private void setKeyspace(CqlIdentifier newKeyspace, CompletableFuture<Void> doneFuture) {
       assert adminExecutor.inEventLoop();
       if (closeWasCalled) {
+        doneFuture.complete(null);
         return;
       }
       LOG.debug("[{}] Switching to keyspace {}", logPrefix, newKeyspace);
+      List<CompletionStage<Void>> poolReadyFutures = Lists.newArrayListWithCapacity(pools.size());
       for (ChannelPool pool : pools.values()) {
-        pool.setKeyspace(newKeyspace);
+        poolReadyFutures.add(pool.setKeyspace(newKeyspace));
       }
+      CompletableFutures.completeFrom(CompletableFutures.allDone(poolReadyFutures), doneFuture);
     }
 
     private void close() {

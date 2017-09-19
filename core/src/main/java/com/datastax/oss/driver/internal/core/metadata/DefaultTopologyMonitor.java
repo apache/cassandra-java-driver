@@ -209,6 +209,7 @@ public class DefaultTopologyMonitor implements TopologyMonitor {
     builder.withRack(row.getString("rack"));
     builder.withCassandraVersion(row.getString("release_version"));
     builder.withTokens(row.getSetOfString("tokens"));
+    builder.withPartitioner(row.getString("partitioner"));
 
     return builder.build();
   }
