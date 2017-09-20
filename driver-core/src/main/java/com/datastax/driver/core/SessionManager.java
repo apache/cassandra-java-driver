@@ -167,14 +167,6 @@ class SessionManager extends AbstractSession {
         return toPreparedStatement(query, keyspace, future);
     }
 
-    private void checkCanSetKeyspace(String keyspace) {
-        if (keyspace != null && !keyspace.equals(poolsState.keyspace) && cluster.manager.protocolVersion().compareTo(ProtocolVersion.V5) < 0) {
-            throw new UnsupportedFeatureException(cluster.manager.protocolVersion(), String.format(
-                    "Statement uses keyspace '%s' which is not the same as the" +
-                            " session keyspace '%s'.", keyspace, poolsState.keyspace));
-        }
-    }
-
     @Override
     public CloseFuture closeAsync() {
         CloseFuture future = closeFuture.get();
