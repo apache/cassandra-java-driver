@@ -16,6 +16,7 @@
 package com.datastax.driver.core;
 
 import com.datastax.driver.core.utils.MoreObjects;
+import com.google.common.collect.ImmutableSortedSet;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -384,12 +385,30 @@ public class TableMetadata extends AbstractTableMetadata {
 
         sb.append(super.exportAsString());
 
-        for (IndexMetadata index : indexes.values()) {
-            sb.append('\n').append(index.asCQLQuery());
+        if (!indexes.isEmpty()) {
+            sb.append('\n');
+
+            Iterator<IndexMetadata> indexIt = indexes.values().iterator();
+            while (indexIt.hasNext()) {
+                IndexMetadata index = indexIt.next();
+                sb.append('\n').append(index.asCQLQuery());
+                if (indexIt.hasNext()) {
+                    sb.append('\n');
+                }
+            }
         }
 
-        for (MaterializedViewMetadata view : views.values()) {
-            sb.append('\n').append(view.asCQLQuery());
+        if (!views.isEmpty()) {
+            sb.append('\n');
+
+            Iterator<AbstractTableMetadata> viewsIt = ImmutableSortedSet.orderedBy(AbstractTableMetadata.byNameComparator).addAll(views.values()).build().iterator();
+            while (viewsIt.hasNext()) {
+                AbstractTableMetadata view = viewsIt.next();
+                sb.append('\n').append(view.exportAsString());
+                if (viewsIt.hasNext()) {
+                    sb.append('\n');
+                }
+            }
         }
 
         return sb.toString();
@@ -399,12 +418,16 @@ public class TableMetadata extends AbstractTableMetadata {
     protected String asCQLQuery(boolean formatted) {
         StringBuilder sb = new StringBuilder();
         sb.append("CREATE TABLE ").append(Metadata.quoteIfNecessary(keyspace.getName())).append('.').append(Metadata.quoteIfNecessary(name)).append(" (");
-        newLine(sb, formatted);
-        for (ColumnMetadata cm : columns.values())
-            newLine(sb.append(spaces(4, formatted)).append(cm).append(',').append(spaces(1, !formatted)), formatted);
+        if (formatted) {
+            spaceOrNewLine(sb, true);
+        }
+        for (ColumnMetadata cm : columns.values()) {
+            sb.append(cm).append(',');
+            spaceOrNewLine(sb, formatted);
+        }
 
         // PK
-        sb.append(spaces(4, formatted)).append("PRIMARY KEY (");
+        sb.append("PRIMARY KEY (");
         if (partitionKey.size() == 1) {
             sb.append(Metadata.quoteIfNecessary(partitionKey.get(0).getName()));
         } else {
@@ -425,7 +448,7 @@ public class TableMetadata extends AbstractTableMetadata {
         newLine(sb, formatted);
         // end PK
 
-        sb.append(")");
+        sb.append(") ");
         appendOptions(sb, formatted);
         return sb.toString();
     }

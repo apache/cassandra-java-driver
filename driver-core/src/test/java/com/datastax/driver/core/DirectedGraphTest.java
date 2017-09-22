@@ -16,22 +16,31 @@
 package com.datastax.driver.core;
 
 import com.datastax.driver.core.exceptions.DriverInternalError;
-import org.testng.annotations.Test;
-
+import java.util.Comparator;
 import java.util.List;
+import org.testng.annotations.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 public class DirectedGraphTest {
+
+    private Comparator<String> alphaComparator = new Comparator<String>() {
+
+        @Override
+        public int compare(String o1, String o2) {
+            return o1.compareTo(o2);
+        }
+    };
+
     @Test(groups = "unit")
     public void should_sort_empty_graph() {
-        DirectedGraph<String> g = new DirectedGraph<String>();
+        DirectedGraph<String> g = new DirectedGraph<String>(alphaComparator);
         assertThat(g.topologicalSort()).isEmpty();
     }
 
     @Test(groups = "unit")
     public void should_sort_graph_with_one_node() {
-        DirectedGraph<String> g = new DirectedGraph<String>("A");
+        DirectedGraph<String> g = new DirectedGraph<String>(alphaComparator, "A");
         assertThat(g.topologicalSort())
                 .containsExactly("A");
     }
@@ -47,7 +56,7 @@ public class DirectedGraphTest {
         //        B  C
         //        |
         //        A
-        DirectedGraph<String> g = new DirectedGraph<String>("A", "B", "C", "D", "E", "F", "G", "H");
+        DirectedGraph<String> g = new DirectedGraph<String>(alphaComparator, "A", "B", "C", "D", "E", "F", "G", "H");
         g.addEdge("H", "F");
         g.addEdge("G", "E");
         g.addEdge("H", "D");
@@ -58,24 +67,54 @@ public class DirectedGraphTest {
         g.addEdge("D", "B");
         g.addEdge("B", "A");
 
-        // Topological sort order should be : GH,FE,D,CB,A
-        // There's no guarantee on the order within the same level, so we use sublists:
+        // Topological sort order should be : GH,E,F,D,BC,A
         List<String> sorted = g.topologicalSort();
-        assertThat(sorted.subList(0, 2))
-                .contains("G", "H");
-        assertThat(sorted.subList(2, 4))
-                .contains("F", "E");
-        assertThat(sorted.subList(4, 5))
-                .contains("D");
-        assertThat(sorted.subList(5, 7))
-                .contains("C", "B");
-        assertThat(sorted.subList(7, 8))
-                .contains("A");
+        assertThat(sorted).containsExactly("G", "H", "E", "F", "D", "B", "C", "A");
+    }
+
+    @Test(groups = "unit")
+    public void should_sort_complex_custom_comparator() {
+        // Version of should_sort_complex_graph using a custom comparator based on ordering largest values first.
+        // This is counter to how hashmaps should usually behave, so this should help ensure that the comparator is
+        // being used.
+        Comparator<Integer> highFirst = new Comparator<Integer>() {
+            @Override
+            public int compare(Integer o1, Integer o2) {
+                return o2 - o1;
+            }
+        };
+
+        // sort graph and use a alphaComparator that favors larger values ordered first.
+        //         7   6
+        //        / \ /\
+        //       5   | 10
+        //        \ /  /
+        //         9  /
+        //        / \/
+        //        1  2
+        //        |
+        //        0
+        DirectedGraph<Integer> g = new DirectedGraph<Integer>(highFirst, 0, 1, 2, 9, 10, 5, 6, 7);
+        g.addEdge(7, 5);
+        g.addEdge(6, 10);
+        g.addEdge(7, 9);
+        g.addEdge(5, 9);
+        g.addEdge(6, 9);
+        g.addEdge(9, 2);
+        g.addEdge(10, 2);
+        g.addEdge(9, 1);
+        g.addEdge(1, 0);
+
+        // Topological sort order should be : [7,6],[5],[10],[9],[2,1],[0]
+        // 5 comes before 10 even though they appear at the same depth.  This happens because 5's (7) dependency
+        // is evaluated before 10's (6), so it is placed first.
+        List<Integer> sorted = g.topologicalSort();
+        assertThat(sorted).containsExactly(7, 6, 5, 10, 9, 2, 1, 0);
     }
 
     @Test(groups = "unit", expectedExceptions = DriverInternalError.class)
     public void should_fail_to_sort_if_graph_has_a_cycle() {
-        DirectedGraph<String> g = new DirectedGraph<String>("A", "B", "C");
+        DirectedGraph<String> g = new DirectedGraph<String>(alphaComparator, "A", "B", "C");
         g.addEdge("A", "B");
         g.addEdge("B", "C");
         g.addEdge("C", "B");
@@ -85,7 +124,7 @@ public class DirectedGraphTest {
 
     @Test(groups = "unit", expectedExceptions = DriverInternalError.class)
     public void should_fail_to_sort_if_graph_is_a_cycle() {
-        DirectedGraph<String> g = new DirectedGraph<String>("A", "B", "C");
+        DirectedGraph<String> g = new DirectedGraph<String>(alphaComparator, "A", "B", "C");
         g.addEdge("A", "B");
         g.addEdge("B", "C");
         g.addEdge("C", "A");

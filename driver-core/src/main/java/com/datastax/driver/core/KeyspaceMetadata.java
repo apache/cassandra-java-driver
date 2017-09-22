@@ -16,6 +16,7 @@
 package com.datastax.driver.core;
 
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.collect.ImmutableSortedSet;
 import com.google.common.collect.Lists;
 
 import java.util.*;
@@ -243,6 +244,29 @@ public class KeyspaceMetadata {
         return aggregates.remove(fullName);
     }
 
+    // comparators for ordering types in cqlsh output.
+
+    private static final Comparator<UserType> typeByName = new Comparator<UserType>() {
+        @Override
+        public int compare(UserType o1, UserType o2) {
+            return o1.getTypeName().compareTo(o2.getTypeName());
+        }
+    };
+
+    private static final Comparator<FunctionMetadata> functionByName = new Comparator<FunctionMetadata>() {
+        @Override
+        public int compare(FunctionMetadata o1, FunctionMetadata o2) {
+            return o1.getSimpleName().compareTo(o2.getSimpleName());
+        }
+    };
+
+    private static final Comparator<AggregateMetadata> aggregateByName = new Comparator<AggregateMetadata>() {
+        @Override
+        public int compare(AggregateMetadata o1, AggregateMetadata o2) {
+            return o1.getSimpleName().compareTo(o2.getSimpleName());
+        }
+    };
+
     /**
      * Returns a {@code String} containing CQL queries representing this
      * keyspace and the user types and tables it contains.
@@ -262,19 +286,59 @@ public class KeyspaceMetadata {
 
         sb.append(asCQLQuery()).append('\n');
 
-        for (UserType udt : userTypes.values())
+        // include types, tables, views, functions and aggregates, each ordered by name, with one small exception
+        // being that user types are ordered topologically and then by name within same level.
+        for (UserType udt : getSortedUserTypes())
             sb.append('\n').append(udt.exportAsString()).append('\n');
 
-        for (TableMetadata tm : tables.values())
+        for (AbstractTableMetadata tm : ImmutableSortedSet.orderedBy(AbstractTableMetadata.byNameComparator).addAll(tables.values()).build())
             sb.append('\n').append(tm.exportAsString()).append('\n');
 
-        for (FunctionMetadata fm : functions.values())
+        for (FunctionMetadata fm : ImmutableSortedSet.orderedBy(functionByName).addAll(functions.values()).build())
             sb.append('\n').append(fm.exportAsString()).append('\n');
 
-        for (AggregateMetadata am : aggregates.values())
+        for (AggregateMetadata am : ImmutableSortedSet.orderedBy(aggregateByName).addAll(aggregates.values()).build())
             sb.append('\n').append(am.exportAsString()).append('\n');
 
         return sb.toString();
+    }
+
+    private List<UserType> getSortedUserTypes() {
+        // rebuilds dependency tree of user types so they may be sorted within each dependency level.
+        List<UserType> unsortedTypes = new ArrayList<UserType>(userTypes.values());
+        DirectedGraph<UserType> graph = new DirectedGraph<UserType>(typeByName, unsortedTypes);
+        for (UserType from : unsortedTypes) {
+            for (UserType to : unsortedTypes) {
+                if (from != to && dependsOn(to, from))
+                    graph.addEdge(from, to);
+            }
+        }
+        return graph.topologicalSort();
+    }
+
+    private boolean dependsOn(UserType udt1, UserType udt2) {
+        for (String fieldName : udt1.getFieldNames()) {
+            DataType fieldType = udt1.getFieldType(fieldName);
+            if (references(fieldType, udt2))
+                return true;
+        }
+        return false;
+    }
+
+    private boolean references(DataType dataType, DataType udtType) {
+        if (dataType.equals(udtType))
+            return true;
+        for (DataType arg : dataType.getTypeArguments()) {
+            if (references(arg, udtType))
+                return true;
+        }
+        if (dataType instanceof TupleType) {
+            for (DataType arg : ((TupleType) dataType).getComponentTypes()) {
+                if (references(arg, udtType))
+                    return true;
+            }
+        }
+        return false;
     }
 
     /**

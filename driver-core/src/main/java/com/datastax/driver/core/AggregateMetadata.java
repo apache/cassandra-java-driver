@@ -202,8 +202,9 @@ public class AggregateMetadata {
 
         TableMetadata.spaceOrNewLine(sb, formatted)
                 .append("SFUNC ")
-                .append(Metadata.quoteIfNecessary(stateFuncSimpleName))
-                .append(" STYPE ")
+                .append(Metadata.quoteIfNecessary(stateFuncSimpleName));
+        TableMetadata.spaceOrNewLine(sb, formatted)
+                .append("STYPE ")
                 .append(stateType.asFunctionParameterString());
 
         if (finalFuncSimpleName != null)

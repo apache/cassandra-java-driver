@@ -33,8 +33,10 @@ class DirectedGraph<V> {
     final Map<V, Integer> vertices;
     final Multimap<V, V> adjacencyList;
     boolean wasSorted;
+    final Comparator<V> comparator;
 
-    DirectedGraph(List<V> vertices) {
+    DirectedGraph(Comparator<V> comparator, List<V> vertices) {
+        this.comparator = comparator;
         this.vertices = Maps.newHashMapWithExpectedSize(vertices.size());
         this.adjacencyList = HashMultimap.create();
 
@@ -43,8 +45,8 @@ class DirectedGraph<V> {
         }
     }
 
-    DirectedGraph(V... vertices) {
-        this(Arrays.asList(vertices));
+    DirectedGraph(Comparator<V> comparator, V... vertices) {
+        this(comparator, Arrays.asList(vertices));
     }
 
     /**
@@ -65,16 +67,21 @@ class DirectedGraph<V> {
 
         Queue<V> queue = new LinkedList<V>();
 
-        for (Map.Entry<V, Integer> entry : vertices.entrySet()) {
-            if (entry.getValue() == 0)
-                queue.add(entry.getKey());
+        // Sort vertices so order of evaluation is always the same (instead of depending on undefined map order behavior)
+        List<V> orderedVertices = new ArrayList<V>(vertices.keySet());
+        Collections.sort(orderedVertices, comparator);
+        for (V v : orderedVertices) {
+            if (vertices.get(v) == 0)
+                queue.add(v);
         }
 
         List<V> result = Lists.newArrayList();
         while (!queue.isEmpty()) {
             V vertex = queue.remove();
             result.add(vertex);
-            for (V successor : adjacencyList.get(vertex)) {
+            List<V> adjacentVertices = new ArrayList<V>(adjacencyList.get(vertex));
+            Collections.sort(adjacentVertices, comparator);
+            for (V successor : adjacentVertices) {
                 if (decrementAndGetCount(successor) == 0)
                     queue.add(successor);
             }
