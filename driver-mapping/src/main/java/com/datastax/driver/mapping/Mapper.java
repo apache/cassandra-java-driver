@@ -221,7 +221,7 @@ public class Mapper<T> {
     }
 
     private ListenableFuture<BoundStatement> saveQueryAsync(T entity, final EnumMap<Option.Type, Option> options) {
-        final Map<AliasedMappedProperty, Object> columnToValue = new HashMap<AliasedMappedProperty, Object>();
+        final Map<AliasedMappedProperty, Object> columnToValue = new TreeMap<AliasedMappedProperty, Object>();
         final boolean useUnsetForNullValue = !shouldSaveNullFields(options) && manager.protocolVersionAsInt >= 4;
         final boolean includeColumnsWithNullValue = shouldSaveNullFields(options) || useUnsetForNullValue;
 
