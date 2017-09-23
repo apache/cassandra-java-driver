@@ -79,6 +79,16 @@ public class Metrics {
             return value;
         }
     });
+    private final Gauge<Integer> inFlightRequests = registry.register("inflight-requests", new Gauge<Integer>() {
+        @Override
+        public Integer getValue() {
+            int value = 0;
+            for (SessionManager session : manager.sessions)
+                for (HostConnectionPool pool : session.pools.values())
+                    value += pool.totalInFlight.get();
+            return value;
+        }
+    });
 
     private final Gauge<Integer> executorQueueDepth;
     private final Gauge<Integer> blockingExecutorQueueDepth;
@@ -216,6 +226,15 @@ public class Metrics {
      */
     public Gauge<Integer> getTrashedConnections() {
         return trashedConnections;
+    }
+
+    /**
+     * Returns the total number of in flight requests to Cassandra hosts.
+     *
+     * @return The total number of in flight requests to Cassandra hosts.
+     */
+    public Gauge<Integer> getInFlightRequests() {
+        return inFlightRequests;
     }
 
     /**
