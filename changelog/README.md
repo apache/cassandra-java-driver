@@ -5,6 +5,7 @@
 - [bug] JAVA-1555: Include VIEW and CDC in WriteType.
 - [bug] JAVA-1599: exportAsString improvements (sort, format, clustering order)
 - [improvement] JAVA-1587: Deterministic ordering of columns used in Mapper#saveQuery
+- [improvement] JAVA-1500: Add a metric to report number of in-flight requests.
 
 
 ### 3.3.0
