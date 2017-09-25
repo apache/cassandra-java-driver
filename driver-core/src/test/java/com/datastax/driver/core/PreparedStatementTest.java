@@ -776,13 +776,14 @@ public class PreparedStatementTest extends CCMTestsSupport {
 
     @Test(groups = "short", expectedExceptions = UnsupportedFeatureException.class)
     public void should_not_use_keyspace_if_set_and_protocol_does_not_support() {
-        Cluster cluster = cluster();
-        if (cluster().getConfiguration().getProtocolOptions().getProtocolVersion().compareTo(ProtocolVersion.V5) >= 0) {
-            // Downgrade to V4
-            cluster = createClusterBuilderNoDebouncing().addContactPointsWithPorts(getContactPointsWithPorts())
-                    .withNettyOptions(TestUtils.nonQuietClusterCloseOptions)
-                    .withProtocolVersion(ProtocolVersion.V4).build();
+        ProtocolVersion protocolVersion = cluster().getConfiguration().getProtocolOptions().getProtocolVersion();
+        while (protocolVersion.supportsKeyspaceOnQuery()) {
+            // Downgrade until we hit a protocol version that doesn't support keyspace on query.
+            protocolVersion = protocolVersion.getLowerSupported();
         }
+        Cluster cluster = createClusterBuilderNoDebouncing().addContactPointsWithPorts(getContactPointsWithPorts())
+                .withNettyOptions(TestUtils.nonQuietClusterCloseOptions)
+                .withProtocolVersion(protocolVersion).build();
         // Expect UnsupportedFeatureException as we'll check on the prepare response if the session keyspace is
         // different than the input keyspace.  In this case while the prepare works, it was done on another
         // keyspace so the metadata may be incorrect.
