@@ -6,6 +6,7 @@
 - [bug] JAVA-1599: exportAsString improvements (sort, format, clustering order)
 - [improvement] JAVA-1587: Deterministic ordering of columns used in Mapper#saveQuery
 - [improvement] JAVA-1500: Add a metric to report number of in-flight requests.
+- [bug] JAVA-1438: QueryBuilder check for empty orderings.
 
 
 ### 3.3.0
