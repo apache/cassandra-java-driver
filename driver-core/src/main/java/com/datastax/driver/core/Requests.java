@@ -15,6 +15,7 @@
  */
 package com.datastax.driver.core;
 
+import com.datastax.driver.core.ProtocolVersion.ProtocolFeature;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
 import io.netty.buffer.ByteBuf;
@@ -378,7 +379,7 @@ class Requests {
                         CBUtil.writeConsistencyLevel(serialConsistency, dest);
                     if (version.compareTo(ProtocolVersion.V3) >= 0 && flags.contains(QueryFlag.DEFAULT_TIMESTAMP))
                         dest.writeLong(defaultTimestamp);
-                    if (version.supportsKeyspaceOnQuery() && flags.contains(QueryFlag.KEYSPACE))
+                    if (version.supports(ProtocolFeature.KEYSPACE_ON_QUERY) && flags.contains(QueryFlag.KEYSPACE))
                         CBUtil.writeString(keyspace, dest);
                     break;
                 default:
@@ -416,7 +417,7 @@ class Requests {
                         size += CBUtil.sizeOfConsistencyLevel(serialConsistency);
                     if (version == ProtocolVersion.V3 && flags.contains(QueryFlag.DEFAULT_TIMESTAMP))
                         size += 8;
-                    if (version.supportsKeyspaceOnQuery() && flags.contains(QueryFlag.KEYSPACE))
+                    if (version.supports(ProtocolFeature.KEYSPACE_ON_QUERY) && flags.contains(QueryFlag.KEYSPACE))
                         size += CBUtil.sizeOfString(keyspace);
                     return size;
                 default:
@@ -560,7 +561,7 @@ class Requests {
                         CBUtil.writeConsistencyLevel(serialConsistency, dest);
                     if (flags.contains(QueryFlag.DEFAULT_TIMESTAMP))
                         dest.writeLong(defaultTimestamp);
-                    if (version.supportsKeyspaceOnQuery() && flags.contains(QueryFlag.KEYSPACE))
+                    if (version.supports(ProtocolFeature.KEYSPACE_ON_QUERY) && flags.contains(QueryFlag.KEYSPACE))
                         CBUtil.writeString(keyspace, dest);
                     break;
                 default:
@@ -582,7 +583,7 @@ class Requests {
                         size += CBUtil.sizeOfConsistencyLevel(serialConsistency);
                     if (flags.contains(QueryFlag.DEFAULT_TIMESTAMP))
                         size += 8;
-                    if (version.supportsKeyspaceOnQuery() && flags.contains(QueryFlag.KEYSPACE))
+                    if (version.supports(ProtocolFeature.KEYSPACE_ON_QUERY) && flags.contains(QueryFlag.KEYSPACE))
                         size += CBUtil.sizeOfString(keyspace);
                     return size;
                 default:
@@ -605,7 +606,7 @@ class Requests {
             public void encode(Prepare msg, ByteBuf dest, ProtocolVersion version) {
                 CBUtil.writeLongString(msg.query, dest);
 
-                if (version.supportsKeyspaceOnQuery()) {
+                if (version.supports(ProtocolFeature.KEYSPACE_ON_QUERY)) {
                     // if keyspace is present write 0x1 for prepare flags.
                     if (msg.keyspace != null) {
                         dest.writeInt(0x01);
@@ -620,7 +621,7 @@ class Requests {
             public int encodedSize(Prepare msg, ProtocolVersion version) {
                 int size = CBUtil.sizeOfLongString(msg.query);
 
-                if (version.supportsKeyspaceOnQuery() && msg.keyspace != null)
+                if (version.supports(ProtocolFeature.KEYSPACE_ON_QUERY) && msg.keyspace != null)
                     size += CBUtil.sizeOfString(msg.keyspace);
                 return size;
             }

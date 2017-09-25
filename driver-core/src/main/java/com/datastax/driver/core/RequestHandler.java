@@ -17,6 +17,7 @@ package com.datastax.driver.core;
 
 import com.codahale.metrics.Timer;
 import com.datastax.driver.core.exceptions.*;
+import com.datastax.driver.core.ProtocolVersion.ProtocolFeature;
 import com.datastax.driver.core.policies.RetryPolicy;
 import com.datastax.driver.core.policies.RetryPolicy.RetryDecision.Type;
 import com.datastax.driver.core.policies.SpeculativeExecutionPolicy.SpeculativeExecutionPlan;
@@ -651,7 +652,7 @@ class RequestHandler {
                                 String prepareKeyspace = toPrepare.getQueryKeyspace();
                                 // Only allow preparing with a different keyspace than configured connection keyspace if
                                 // protocol supports it.
-                                if (!err.serverProtocolVersion.supportsKeyspaceOnQuery()
+                                if (!err.serverProtocolVersion.supports(ProtocolFeature.KEYSPACE_ON_QUERY)
                                         && prepareKeyspace != null
                                         && (currentKeyspace == null || !currentKeyspace.equals(prepareKeyspace))) {
                                     // This shouldn't happen in normal use, because a user shouldn't try to execute

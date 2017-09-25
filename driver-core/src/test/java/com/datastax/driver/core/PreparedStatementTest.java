@@ -30,6 +30,7 @@ import static org.testng.Assert.assertFalse;
 import static org.testng.Assert.assertTrue;
 import static org.testng.Assert.fail;
 
+import com.datastax.driver.core.ProtocolVersion.ProtocolFeature;
 import com.datastax.driver.core.exceptions.InvalidQueryException;
 import com.datastax.driver.core.exceptions.UnsupportedFeatureException;
 import com.datastax.driver.core.policies.FallthroughRetryPolicy;
@@ -777,7 +778,7 @@ public class PreparedStatementTest extends CCMTestsSupport {
     @Test(groups = "short", expectedExceptions = UnsupportedFeatureException.class)
     public void should_not_use_keyspace_if_set_and_protocol_does_not_support() {
         ProtocolVersion protocolVersion = cluster().getConfiguration().getProtocolOptions().getProtocolVersion();
-        while (protocolVersion.supportsKeyspaceOnQuery()) {
+        while (protocolVersion.supports(ProtocolFeature.KEYSPACE_ON_QUERY)) {
             // Downgrade until we hit a protocol version that doesn't support keyspace on query.
             protocolVersion = protocolVersion.getLowerSupported();
         }

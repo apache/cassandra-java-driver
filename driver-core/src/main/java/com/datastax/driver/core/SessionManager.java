@@ -16,6 +16,7 @@
 package com.datastax.driver.core;
 
 import com.datastax.driver.core.Message.Response;
+import com.datastax.driver.core.ProtocolVersion.ProtocolFeature;
 import com.datastax.driver.core.exceptions.DriverInternalError;
 import com.datastax.driver.core.exceptions.InvalidQueryException;
 import com.datastax.driver.core.exceptions.UnsupportedFeatureException;
@@ -214,7 +215,7 @@ class SessionManager extends AbstractSession {
                                 Responses.Result.Prepared pmsg = (Responses.Result.Prepared) rm;
                                 String keyspaceToUse = poolsState.keyspace;
                                 if (keyspace != null && !Metadata.handleId(keyspace).equals(keyspaceToUse)) {
-                                    if (!cluster.manager.protocolVersion().supportsKeyspaceOnQuery()) {
+                                    if (!cluster.manager.protocolVersion().supports(ProtocolFeature.KEYSPACE_ON_QUERY)) {
                                         throw new UnsupportedFeatureException(cluster.manager.protocolVersion(), String.format(
                                                 "Statement uses keyspace '%s' which is not the same as the" +
                                                         " session keyspace '%s'.", Metadata.handleId(keyspace), poolsState.keyspace));

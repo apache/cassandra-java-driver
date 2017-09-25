@@ -82,12 +82,17 @@ public enum ProtocolVersion {
     }
 
     /**
-     * Determines whether or not this version supports setting keyspace on a per-query basis.
+     * Determines whether or not this version supports the given feature.
      *
+     * @param feature the feature to test against this version.
      * @return true if supported, false otherwise.
      */
-    public boolean supportsKeyspaceOnQuery() {
-        return this == V5;
+    public boolean supports(ProtocolFeature feature) {
+        switch (feature) {
+            case KEYSPACE_ON_QUERY:
+                return this == V5;
+        }
+        return false;
     }
 
     private static final Map<Integer, ProtocolVersion> INT_TO_VERSION;
@@ -112,5 +117,16 @@ public enum ProtocolVersion {
         if (version == null)
             throw new IllegalArgumentException("No protocol version matching integer version " + i);
         return version;
+    }
+
+    /**
+     * A listing of features that may or not apply to a given {@link ProtocolVersion}.  Used by
+     * {@link ProtocolVersion#supports} to communicate whether features are supported by a given version.
+     */
+    public enum ProtocolFeature {
+        /**
+         * Whether or not a version supports setting keyspace on a per-query basis.
+         */
+        KEYSPACE_ON_QUERY
     }
 }

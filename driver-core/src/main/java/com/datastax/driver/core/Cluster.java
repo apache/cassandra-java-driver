@@ -17,6 +17,7 @@ package com.datastax.driver.core;
 
 import com.datastax.driver.core.exceptions.*;
 import com.datastax.driver.core.policies.*;
+import com.datastax.driver.core.ProtocolVersion.ProtocolFeature;
 import com.datastax.driver.core.utils.MoreFutures;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Functions;
@@ -2289,7 +2290,7 @@ public class Cluster implements Closeable {
                     // Empty string mean no particular keyspace to set
                     // Optimization: Only change keyspace for older protocol versions as newer protocols allow
                     // specifying keyspace on prepared statement.
-                    if (!protocolVersion().supportsKeyspaceOnQuery() && !keyspace.isEmpty())
+                    if (!protocolVersion().supports(ProtocolFeature.KEYSPACE_ON_QUERY) && !keyspace.isEmpty())
                         connection.setKeyspace(keyspace);
 
                     List<Connection.Future> futures = new ArrayList<Connection.Future>(preparedQueries.size());
