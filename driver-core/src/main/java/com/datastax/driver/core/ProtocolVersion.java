@@ -81,6 +81,15 @@ public enum ProtocolVersion {
         return lowerSupported;
     }
 
+    /**
+     * Determines whether or not this version supports setting keyspace on a per-query basis.
+     *
+     * @return true if supported, false otherwise.
+     */
+    public boolean supportsKeyspaceOnQuery() {
+        return this == V5;
+    }
+
     private static final Map<Integer, ProtocolVersion> INT_TO_VERSION;
 
     static {

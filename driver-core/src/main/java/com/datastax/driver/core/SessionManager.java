@@ -214,7 +214,7 @@ class SessionManager extends AbstractSession {
                                 Responses.Result.Prepared pmsg = (Responses.Result.Prepared) rm;
                                 String keyspaceToUse = poolsState.keyspace;
                                 if (keyspace != null && !Metadata.handleId(keyspace).equals(keyspaceToUse)) {
-                                    if (cluster.manager.protocolVersion().compareTo(ProtocolVersion.V5) < 0) {
+                                    if (!cluster.manager.protocolVersion().supportsKeyspaceOnQuery()) {
                                         throw new UnsupportedFeatureException(cluster.manager.protocolVersion(), String.format(
                                                 "Statement uses keyspace '%s' which is not the same as the" +
                                                         " session keyspace '%s'.", Metadata.handleId(keyspace), poolsState.keyspace));

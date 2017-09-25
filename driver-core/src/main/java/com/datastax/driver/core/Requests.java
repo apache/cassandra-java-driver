@@ -378,7 +378,7 @@ class Requests {
                         CBUtil.writeConsistencyLevel(serialConsistency, dest);
                     if (version.compareTo(ProtocolVersion.V3) >= 0 && flags.contains(QueryFlag.DEFAULT_TIMESTAMP))
                         dest.writeLong(defaultTimestamp);
-                    if (version.compareTo(ProtocolVersion.V5) >= 0 && flags.contains(QueryFlag.KEYSPACE))
+                    if (version.supportsKeyspaceOnQuery() && flags.contains(QueryFlag.KEYSPACE))
                         CBUtil.writeString(keyspace, dest);
                     break;
                 default:
@@ -416,7 +416,7 @@ class Requests {
                         size += CBUtil.sizeOfConsistencyLevel(serialConsistency);
                     if (version == ProtocolVersion.V3 && flags.contains(QueryFlag.DEFAULT_TIMESTAMP))
                         size += 8;
-                    if (version.compareTo(ProtocolVersion.V5) >= 0 && flags.contains(QueryFlag.KEYSPACE))
+                    if (version.supportsKeyspaceOnQuery() && flags.contains(QueryFlag.KEYSPACE))
                         size += CBUtil.sizeOfString(keyspace);
                     return size;
                 default:
@@ -560,7 +560,7 @@ class Requests {
                         CBUtil.writeConsistencyLevel(serialConsistency, dest);
                     if (flags.contains(QueryFlag.DEFAULT_TIMESTAMP))
                         dest.writeLong(defaultTimestamp);
-                    if (version.compareTo(ProtocolVersion.V5) >= 0 && flags.contains(QueryFlag.KEYSPACE))
+                    if (version.supportsKeyspaceOnQuery() && flags.contains(QueryFlag.KEYSPACE))
                         CBUtil.writeString(keyspace, dest);
                     break;
                 default:
@@ -582,7 +582,7 @@ class Requests {
                         size += CBUtil.sizeOfConsistencyLevel(serialConsistency);
                     if (flags.contains(QueryFlag.DEFAULT_TIMESTAMP))
                         size += 8;
-                    if (version.compareTo(ProtocolVersion.V5) >= 0 && flags.contains(QueryFlag.KEYSPACE))
+                    if (version.supportsKeyspaceOnQuery() && flags.contains(QueryFlag.KEYSPACE))
                         size += CBUtil.sizeOfString(keyspace);
                     return size;
                 default:
@@ -605,7 +605,7 @@ class Requests {
             public void encode(Prepare msg, ByteBuf dest, ProtocolVersion version) {
                 CBUtil.writeLongString(msg.query, dest);
 
-                if (version.compareTo(ProtocolVersion.V5) >= 0) {
+                if (version.supportsKeyspaceOnQuery()) {
                     // if keyspace is present write 0x1 for prepare flags.
                     if (msg.keyspace != null) {
                         dest.writeInt(0x01);
