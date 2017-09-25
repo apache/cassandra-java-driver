@@ -154,6 +154,9 @@ public class Select extends BuiltStatement {
         if (this.orderings != null)
             throw new IllegalStateException("An ORDER BY clause has already been provided");
 
+        if (orderings.length == 0)
+            throw new IllegalArgumentException("Invalid ORDER BY argument, the orderings must not be empty.");
+
         this.orderings = Arrays.asList(orderings);
         for (Ordering ordering : orderings)
             checkForBindMarkers(ordering);

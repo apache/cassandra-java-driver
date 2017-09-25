@@ -158,15 +158,18 @@ public class QueryBuilderTest {
         select = select().from("foo").where(like("e", "a%"));
         assertEquals(select.toString(), query);
 
-        query = "SELECT * FROM foo;";
-        select = select().from("foo").orderBy(new Ordering[0]);
-        assertEquals(select.toString(), query);
-
         try {
             select().countAll().from("foo").orderBy(asc("a"), desc("b")).orderBy(asc("a"), desc("b"));
             fail("Expected an IllegalStateException");
         } catch (IllegalStateException e) {
             assertEquals(e.getMessage(), "An ORDER BY clause has already been provided");
+        }
+
+        try {
+            select().from("foo").orderBy();
+            fail("Expected an IllegalArgumentException");
+        } catch (IllegalArgumentException e) {
+            assertEquals(e.getMessage(), "Invalid ORDER BY argument, the orderings must not be empty.");
         }
 
         try {
