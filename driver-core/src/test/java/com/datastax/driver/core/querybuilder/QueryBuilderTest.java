@@ -166,6 +166,13 @@ public class QueryBuilderTest {
         }
 
         try {
+            select().from("foo").orderBy();
+            fail("Expected an IllegalArgumentException");
+        } catch (IllegalArgumentException e) {
+            assertEquals(e.getMessage(), "Invalid ORDER BY argument, the orderings must not be empty.");
+        }
+
+        try {
             select().column("a").all().from("foo");
             fail("Expected an IllegalStateException");
         } catch (IllegalStateException e) {
