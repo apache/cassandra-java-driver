@@ -1505,7 +1505,7 @@ public class Cluster implements Closeable {
                 // We don't want to signal -- call onAdd() -- because nothing is ready
                 // yet (loadbalancing policy, control connection, ...). All we want is
                 // create the Host object so we can initialize the control connection.
-                metadata.add(address);
+                metadata.addIfAbsent(metadata.newHost(address));
             }
 
             Collection<Host> allHosts = metadata.allHosts();
@@ -2714,27 +2714,25 @@ public class Cluster implements Closeable {
                         case UP:
                             Host upHost = metadata.getHost(address);
                             if (upHost == null) {
-                                upHost = metadata.add(address);
-                                // If upHost is still null, it means we didn't know about it the line before but
-                                // got beaten at adding it to the metadata by another thread. In that case, it's
-                                // fine to let the other thread win and ignore the notification here
-                                if (upHost == null)
+                                upHost = metadata.newHost(address);
+                                Host previous = metadata.addIfAbsent(upHost);
+                                if (previous != null) {
+                                    // We got beat by another thread at adding the host. Let it win and ignore the
+                                    // notification here.
                                     continue;
+                                }
                                 futures.add(schedule(hostAdded(upHost)));
                             } else {
                                 futures.add(schedule(hostUp(upHost)));
                             }
                             break;
                         case ADDED:
-                            Host newHost = metadata.add(address);
-                            if (newHost != null) {
+                            Host newHost = metadata.newHost(address);
+                            Host previous = metadata.addIfAbsent(newHost);
+                            if (previous == null) {
                                 futures.add(schedule(hostAdded(newHost)));
-                            } else {
-                                // If host already existed, retrieve it and check its state, if it's not up schedule a
-                                // hostUp event.
-                                Host existingHost = metadata.getHost(address);
-                                if (!existingHost.isUp())
-                                    futures.add(schedule(hostUp(existingHost)));
+                            } else if (!previous.isUp()) {
+                                futures.add(schedule(hostUp(previous)));
                             }
                             break;
                         case DOWN:

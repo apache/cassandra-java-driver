@@ -90,13 +90,11 @@ public class Metadata {
         return new Host(address, cluster.convictionPolicyFactory, cluster);
     }
 
+    /**
+     * @return the previous host associated with this socket address, or {@code null} if there was no such host.
+     */
     Host addIfAbsent(Host host) {
-        Host previous = hosts.putIfAbsent(host.getSocketAddress(), host);
-        return previous == null ? host : null;
-    }
-
-    Host add(InetSocketAddress address) {
-        return addIfAbsent(newHost(address));
+        return hosts.putIfAbsent(host.getSocketAddress(), host);
     }
 
     boolean remove(Host host) {

@@ -626,12 +626,12 @@ class ControlConnection implements Connection.Owner {
                 // We don't know that node, create the Host object but wait until we've set the known
                 // info before signaling the addition.
                 Host newHost = cluster.metadata.newHost(foundHosts.get(i));
-                Host existing = cluster.metadata.addIfAbsent(newHost);
-                if (existing == null) {
+                Host previous = cluster.metadata.addIfAbsent(newHost);
+                if (previous == null) {
                     host = newHost;
                     isNew = true;
                 } else {
-                    host = existing;
+                    host = previous;
                     isNew = false;
                 }
             }

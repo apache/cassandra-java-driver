@@ -9,6 +9,7 @@
 - [bug] JAVA-1438: QueryBuilder check for empty orderings.
 - [improvement] JAVA-1490: Allow zero delay for speculative executions.
 - [documentation] JAVA-1607: Add FAQ entry for netty-transport-native-epoll.
+- [bug] JAVA-1630: Fix Metadata.addIfAbsent.
 
 
 ### 3.3.0
