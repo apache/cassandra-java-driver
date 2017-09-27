@@ -632,7 +632,7 @@ class Requests {
         Prepare(String query, String keyspace) {
             super(Message.Request.Type.PREPARE);
             this.query = query;
-            this.keyspace = keyspace;
+            this.keyspace = keyspace != null ? Metadata.handleId(keyspace) : null;
         }
 
         @Override
