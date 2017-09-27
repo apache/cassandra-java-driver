@@ -97,7 +97,7 @@ public class SchemaChangesCCTest extends CCMTestsSupport {
         assertThat(cluster).host(1).goesDownWithin(20, TimeUnit.SECONDS);
 
         // Ensure control connection is down.
-        assertThat(cluster.manager.controlConnection.isOpen()).isFalse();
+        assertThat(cluster.getManager().controlConnection.isOpen()).isFalse();
 
         // Perform some schema changes that we'll validate when the control connection comes back.
         session2.execute("drop keyspace ks2");
@@ -116,11 +116,11 @@ public class SchemaChangesCCTest extends CCMTestsSupport {
         // Poll on the control connection and wait for it to be reestablished.
         long maxControlConnectionWait = 60000;
         long startTime = System.currentTimeMillis();
-        while (!cluster.manager.controlConnection.isOpen() && System.currentTimeMillis() - startTime < maxControlConnectionWait) {
+        while (!cluster.getManager().controlConnection.isOpen() && System.currentTimeMillis() - startTime < maxControlConnectionWait) {
             Uninterruptibles.sleepUninterruptibly(1, TimeUnit.SECONDS);
         }
 
-        assertThat(cluster.manager.controlConnection.isOpen())
+        assertThat(cluster.getManager().controlConnection.isOpen())
                 .as("Control connection was not opened after %dms.", maxControlConnectionWait)
                 .isTrue();
 

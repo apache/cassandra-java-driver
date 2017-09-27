@@ -29,6 +29,7 @@
 - [improvement] JAVA-1488: Upgrade Netty to 4.0.47.Final.
 - [improvement] JAVA-1460: Add speculative execution number to ExecutionInfo
 - [improvement] JAVA-1431: Improve error handling during pool initialization.
+- [bug] JAVA-1511: Cluster should not expose its internal fields.
 
 
 ### 3.2.0

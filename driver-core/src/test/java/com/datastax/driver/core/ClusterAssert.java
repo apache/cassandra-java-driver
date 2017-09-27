@@ -33,18 +33,18 @@ public class ClusterAssert extends AbstractAssert<ClusterAssert, Cluster> {
 
     public ClusterAssert usesControlHost(int node) {
         String expectedAddress = TestUtils.ipOfNode(node);
-        Host controlHost = actual.manager.controlConnection.connectedHost();
+        Host controlHost = actual.getManager().controlConnection.connectedHost();
         assertThat(controlHost.getAddress().getHostAddress()).isEqualTo(expectedAddress);
         return this;
     }
 
     public ClusterAssert hasClosedControlConnection() {
-        assertThat(actual.manager.controlConnection.isOpen()).isFalse();
+        assertThat(actual.getManager().controlConnection.isOpen()).isFalse();
         return this;
     }
 
     public ClusterAssert hasOpenControlConnection() {
-        assertThat(actual.manager.controlConnection.isOpen()).isTrue();
+        assertThat(actual.getManager().controlConnection.isOpen()).isTrue();
         return this;
     }
 

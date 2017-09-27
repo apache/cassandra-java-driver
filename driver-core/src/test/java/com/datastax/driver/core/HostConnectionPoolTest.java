@@ -15,9 +15,9 @@
  */
 package com.datastax.driver.core;
 
-import com.codahale.metrics.Gauge;
 import com.datastax.driver.core.exceptions.*;
 import com.datastax.driver.core.policies.ConstantReconnectionPolicy;
+import com.codahale.metrics.Gauge;
 import com.google.common.base.Function;
 import com.google.common.base.Predicate;
 import com.google.common.base.Throwables;
@@ -40,14 +40,14 @@ import static com.datastax.driver.core.Assertions.assertThat;
 import static com.datastax.driver.core.ConditionChecker.check;
 import static com.datastax.driver.core.PoolingOptions.NEW_CONNECTION_THRESHOLD_LOCAL_KEY;
 import static com.google.common.collect.Lists.newArrayList;
-import static java.util.concurrent.TimeUnit.MILLISECONDS;
-import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.mockito.Mockito.*;
 import static org.scassandra.http.client.ClosedConnectionReport.CloseType.CLOSE;
 import static org.scassandra.http.client.PrimingRequest.queryBuilder;
 import static org.scassandra.http.client.PrimingRequest.then;
 import static org.scassandra.http.client.Result.server_error;
 import static org.testng.Assert.fail;
+import static java.util.concurrent.TimeUnit.MILLISECONDS;
+import static java.util.concurrent.TimeUnit.SECONDS;
 
 public class HostConnectionPoolTest extends ScassandraTestBase.PerClassCluster {
 
@@ -420,8 +420,8 @@ public class HostConnectionPoolTest extends ScassandraTestBase.PerClassCluster {
         List<MockRequest> allRequests = newArrayList();
         try {
             HostConnectionPool pool = createPool(cluster, 1, 2);
-            Connection.Factory factory = spy(cluster.manager.connectionFactory);
-            cluster.manager.connectionFactory = factory;
+            Connection.Factory factory = spy(cluster.getManager().connectionFactory);
+            cluster.getManager().connectionFactory = factory;
 
             assertThat(pool.connections.size()).isEqualTo(1);
             Connection coreConnection = pool.connections.get(0);
@@ -470,8 +470,8 @@ public class HostConnectionPoolTest extends ScassandraTestBase.PerClassCluster {
         List<MockRequest> allRequests = newArrayList();
         try {
             HostConnectionPool pool = createPool(cluster, 1, 2);
-            Connection.Factory factory = spy(cluster.manager.connectionFactory);
-            cluster.manager.connectionFactory = factory;
+            Connection.Factory factory = spy(cluster.getManager().connectionFactory);
+            cluster.getManager().connectionFactory = factory;
             Connection core = pool.connections.get(0);
 
             // Fill core connection + 1
@@ -503,8 +503,8 @@ public class HostConnectionPoolTest extends ScassandraTestBase.PerClassCluster {
         List<MockRequest> allRequests = newArrayList();
         try {
             HostConnectionPool pool = createPool(cluster, 1, 2);
-            Connection.Factory factory = spy(cluster.manager.connectionFactory);
-            cluster.manager.connectionFactory = factory;
+            Connection.Factory factory = spy(cluster.getManager().connectionFactory);
+            cluster.getManager().connectionFactory = factory;
             Connection connection1 = pool.connections.get(0);
 
             List<MockRequest> requests = MockRequest.sendMany(NEW_CONNECTION_THRESHOLD, pool);
@@ -567,8 +567,8 @@ public class HostConnectionPoolTest extends ScassandraTestBase.PerClassCluster {
         List<MockRequest> allRequests = newArrayList();
         try {
             HostConnectionPool pool = createPool(cluster, 1, 2);
-            Connection.Factory factory = spy(cluster.manager.connectionFactory);
-            cluster.manager.connectionFactory = factory;
+            Connection.Factory factory = spy(cluster.getManager().connectionFactory);
+            cluster.getManager().connectionFactory = factory;
             Connection connection1 = pool.connections.get(0);
 
             List<MockRequest> requests = MockRequest.sendMany(NEW_CONNECTION_THRESHOLD, pool);
@@ -640,8 +640,8 @@ public class HostConnectionPoolTest extends ScassandraTestBase.PerClassCluster {
 
         try {
             HostConnectionPool pool = createPool(cluster, 1, 2);
-            Connection.Factory factory = spy(cluster.manager.connectionFactory);
-            cluster.manager.connectionFactory = factory;
+            Connection.Factory factory = spy(cluster.getManager().connectionFactory);
+            cluster.getManager().connectionFactory = factory;
             Connection connection1 = pool.connections.get(0);
 
             // Fill core connection enough to trigger creation of another one
@@ -694,8 +694,8 @@ public class HostConnectionPoolTest extends ScassandraTestBase.PerClassCluster {
         List<MockRequest> allRequests = newArrayList();
         try {
             HostConnectionPool pool = createPool(cluster, 1, 2);
-            Connection.Factory factory = spy(cluster.manager.connectionFactory);
-            cluster.manager.connectionFactory = factory;
+            Connection.Factory factory = spy(cluster.getManager().connectionFactory);
+            cluster.getManager().connectionFactory = factory;
             Connection core = pool.connections.get(0);
 
             List<MockRequest> requests = MockRequest.sendMany(NEW_CONNECTION_THRESHOLD, pool);
@@ -781,8 +781,8 @@ public class HostConnectionPoolTest extends ScassandraTestBase.PerClassCluster {
         try {
             cluster.init();
 
-            Connection.Factory factory = spy(cluster.manager.connectionFactory);
-            cluster.manager.connectionFactory = factory;
+            Connection.Factory factory = spy(cluster.getManager().connectionFactory);
+            cluster.getManager().connectionFactory = factory;
 
             HostConnectionPool pool = createPool(cluster, 8, 8);
             // copy list to track these connections.
@@ -856,11 +856,11 @@ public class HostConnectionPoolTest extends ScassandraTestBase.PerClassCluster {
         try {
             cluster.init();
 
-            Connection.Factory factory = spy(cluster.manager.connectionFactory);
-            cluster.manager.connectionFactory = factory;
+            Connection.Factory factory = spy(cluster.getManager().connectionFactory);
+            cluster.getManager().connectionFactory = factory;
 
-            TestExecutorService blockingExecutor = new TestExecutorService(cluster.manager.blockingExecutor);
-            cluster.manager.blockingExecutor = blockingExecutor;
+            TestExecutorService blockingExecutor = new TestExecutorService(cluster.getManager().blockingExecutor);
+            cluster.getManager().blockingExecutor = blockingExecutor;
 
             HostConnectionPool pool = createPool(cluster, 3, 3);
             Connection core0 = pool.connections.get(0);
@@ -953,8 +953,8 @@ public class HostConnectionPoolTest extends ScassandraTestBase.PerClassCluster {
         try {
             cluster.init();
 
-            Connection.Factory factory = spy(cluster.manager.connectionFactory);
-            cluster.manager.connectionFactory = factory;
+            Connection.Factory factory = spy(cluster.getManager().connectionFactory);
+            cluster.getManager().connectionFactory = factory;
 
             HostConnectionPool pool = createPool(cluster, 1, 2);
             Connection core0 = pool.connections.get(0);
@@ -1059,8 +1059,8 @@ public class HostConnectionPoolTest extends ScassandraTestBase.PerClassCluster {
         try {
             cluster.init();
 
-            Connection.Factory factory = spy(cluster.manager.connectionFactory);
-            cluster.manager.connectionFactory = factory;
+            Connection.Factory factory = spy(cluster.getManager().connectionFactory);
+            cluster.getManager().connectionFactory = factory;
 
             // Allow the first 4 connections to establish, but disable after that.
             currentClient.disableListener(4);
@@ -1120,8 +1120,8 @@ public class HostConnectionPoolTest extends ScassandraTestBase.PerClassCluster {
             cluster.init();
             assertThat(cluster).hasOpenControlConnection();
 
-            Connection.Factory factory = spy(cluster.manager.connectionFactory);
-            cluster.manager.connectionFactory = factory;
+            Connection.Factory factory = spy(cluster.getManager().connectionFactory);
+            cluster.getManager().connectionFactory = factory;
 
             // Disable listener so all connections on pool fail.
             currentClient.disableListener();
@@ -1169,8 +1169,8 @@ public class HostConnectionPoolTest extends ScassandraTestBase.PerClassCluster {
             cluster.init();
             assertThat(cluster).hasOpenControlConnection();
 
-            Connection.Factory factory = spy(cluster.manager.connectionFactory);
-            cluster.manager.connectionFactory = factory;
+            Connection.Factory factory = spy(cluster.getManager().connectionFactory);
+            cluster.getManager().connectionFactory = factory;
 
             // Disable listener so all connections on pool fail.
             currentClient.disableListener();
@@ -1224,8 +1224,8 @@ public class HostConnectionPoolTest extends ScassandraTestBase.PerClassCluster {
             cluster.init();
             assertThat(cluster).hasOpenControlConnection();
 
-            Connection.Factory factory = spy(cluster.manager.connectionFactory);
-            cluster.manager.connectionFactory = factory;
+            Connection.Factory factory = spy(cluster.getManager().connectionFactory);
+            cluster.getManager().connectionFactory = factory;
 
             HostConnectionPool pool = createPool(cluster, 0, 2);
 

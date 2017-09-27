@@ -72,7 +72,7 @@ public class QueryOptionsTest {
         // Prepare the statement
         String query = "select sansa_stark from the_known_world";
         PreparedStatement statement = session.prepare(query);
-        assertThat(cluster.manager.preparedQueries).containsValue(statement);
+        assertThat(cluster.getManager().preparedQueries).containsValue(statement);
 
         // Ensure prepared properly based on expectation.
         List<PreparedStatementPreparation> preparationOne = scassandra.node(1).activityClient().retrievePreparedStatementPreparations();

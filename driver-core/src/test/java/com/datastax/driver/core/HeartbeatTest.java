@@ -27,10 +27,10 @@ import java.util.concurrent.TimeUnit;
 import java.util.regex.Pattern;
 
 import static com.datastax.driver.core.Assertions.assertThat;
-import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.assertj.core.api.Assertions.fail;
 import static org.scassandra.http.client.PrimingRequest.queryBuilder;
 import static org.scassandra.http.client.PrimingRequest.then;
+import static java.util.concurrent.TimeUnit.SECONDS;
 
 public class HeartbeatTest extends ScassandraTestBase {
 
@@ -277,6 +277,6 @@ public class HeartbeatTest extends ScassandraTestBase {
 
     // Simulates activity on the control connection via the internal API
     private void triggerRequestOnControlConnection(Cluster cluster) {
-        cluster.manager.controlConnection.refreshNodeInfo(TestUtils.findHost(cluster, 1));
+        cluster.getManager().controlConnection.refreshNodeInfo(TestUtils.findHost(cluster, 1));
     }
 }

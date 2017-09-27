@@ -536,7 +536,7 @@ public class TableMetadataTest extends CCMTestsSupport {
         // Manually change column value in system_schema.tables and force a schema refresh on that table.
         ImmutableMap<String, ByteBuffer> extensions = ImmutableMap.of("Hello", ByteBuffer.wrap("World".getBytes("UTF-8")));
         session().execute("update system_schema.tables set extensions=? where keyspace_name=? and table_name=?", extensions, keyspace, "table_with_extensions");
-        cluster().manager.controlConnection.refreshSchema(SchemaElement.TABLE, keyspace, "table_with_extensions", null);
+        cluster().getManager().controlConnection.refreshSchema(SchemaElement.TABLE, keyspace, "table_with_extensions", null);
 
         // when retrieving the table's metadata.
         TableMetadata table = cluster().getMetadata().getKeyspace(keyspace).getTable("table_with_extensions");

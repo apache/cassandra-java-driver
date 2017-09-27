@@ -26,8 +26,8 @@ import java.net.InetSocketAddress;
 import static com.datastax.driver.core.Assertions.assertThat;
 import static com.datastax.driver.core.HostDistance.LOCAL;
 import static com.datastax.driver.core.TestUtils.nonDebouncingQueryOptions;
-import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.scassandra.http.client.ClosedConnectionReport.CloseType.CLOSE;
+import static java.util.concurrent.TimeUnit.SECONDS;
 
 public class HostConnectionPoolMultiTest {
 
@@ -101,7 +101,7 @@ public class HostConnectionPoolMultiTest {
         assertThat(cluster).usesControlHost(1);
 
         // Identify the socket associated with the control connection.
-        Connection controlConnection = cluster.manager.controlConnection.connectionRef.get();
+        Connection controlConnection = cluster.getManager().controlConnection.connectionRef.get();
         InetSocketAddress controlSocket = (InetSocketAddress) controlConnection.channel.localAddress();
 
         // Close the control connection.
@@ -114,6 +114,6 @@ public class HostConnectionPoolMultiTest {
         // Ensure the control connection was replaced and host 1 remains up.
         assertThat(cluster).hasOpenControlConnection()
                 .host(1).isUp();
-        assertThat(cluster.manager.controlConnection.connectionRef.get()).isNotEqualTo(controlConnection);
+        assertThat(cluster.getManager().controlConnection.connectionRef.get()).isNotEqualTo(controlConnection);
     }
 }

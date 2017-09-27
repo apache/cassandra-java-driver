@@ -90,7 +90,7 @@ public class AsyncQueryTest extends CCMTestsSupport {
             Session session2 = cluster2.newSession();
 
             // Neither cluster2 nor session2 are initialized at this point
-            assertThat(cluster2.manager.metadata).isNull();
+            assertThat(cluster2.getManager().metadata).isNull();
 
             ResultSetFuture future = session2.executeAsync("select release_version from system.local");
             Row row = Uninterruptibles.getUninterruptibly(future).one();

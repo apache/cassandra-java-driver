@@ -290,7 +290,7 @@ public abstract class TokenIntegrationTest extends CCMTestsSupport {
             // Check against the info in the system tables, which is a bit weak since it's exactly how the metadata is
             // constructed in the first place, but there's not much else we can do.
             // Note that this relies on all queries going to node 1, which is why we use a WhiteList LBP in setup().
-            boolean isControlHost = host.getSocketAddress().equals(cluster().manager.controlConnection.connectionRef.get().address);
+            boolean isControlHost = host.getSocketAddress().equals(cluster().getManager().controlConnection.connectionRef.get().address);
             Row row;
             if (isControlHost) {
                 row = session().execute("select tokens from system.local").one();

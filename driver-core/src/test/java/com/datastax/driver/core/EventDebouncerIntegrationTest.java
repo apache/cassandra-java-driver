@@ -80,10 +80,10 @@ public class EventDebouncerIntegrationTest extends CCMTestsSupport {
     @Test(groups = "short")
     public void should_change_debouncer_settings_dynamically() throws InterruptedException {
         // Create a spy of the Cluster's control connection and replace it with the spy.
-        ControlConnection controlConnection = spy(cluster().manager.controlConnection);
-        cluster().manager.controlConnection = controlConnection;
+        ControlConnection controlConnection = spy(cluster().getManager().controlConnection);
+        cluster().getManager().controlConnection = controlConnection;
         for (int i = 0; i < 10; i++) {
-            cluster().manager.submitNodeListRefresh();
+            cluster().getManager().submitNodeListRefresh();
             Thread.sleep(100);
         }
         // all requests should be coalesced into a single one
@@ -93,7 +93,7 @@ public class EventDebouncerIntegrationTest extends CCMTestsSupport {
         cluster().getConfiguration().getQueryOptions()
                 .setRefreshNodeListIntervalMillis(0);
         for (int i = 0; i < 10; i++) {
-            cluster().manager.submitNodeListRefresh();
+            cluster().getManager().submitNodeListRefresh();
             Thread.sleep(100);
         }
         // each request should have been handled separately

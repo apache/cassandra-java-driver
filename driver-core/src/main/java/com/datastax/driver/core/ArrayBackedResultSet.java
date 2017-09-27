@@ -74,7 +74,7 @@ abstract class ArrayBackedResultSet implements ResultSet {
                 }
 
                 Token.Factory tokenFactory = (session == null) ? null
-                        : session.getCluster().manager.metadata.tokenFactory();
+                        : session.getCluster().getManager().metadata.tokenFactory();
 
                 info = update(info, r, session, r.metadata.pagingState, protocolVersion, columnDefs.codecRegistry, statement);
 

@@ -128,7 +128,7 @@ class SessionManager extends AbstractSession {
     @Override
     public ResultSetFuture executeAsync(final Statement statement) {
         if (isInit) {
-            DefaultResultSetFuture future = new DefaultResultSetFuture(this, cluster.manager.protocolVersion(), makeRequestMessage(statement, null));
+            DefaultResultSetFuture future = new DefaultResultSetFuture(this, cluster.getManager().protocolVersion(), makeRequestMessage(statement, null));
             new RequestHandler(this, future, statement).sendRequest();
             return future;
         } else {
@@ -139,7 +139,7 @@ class SessionManager extends AbstractSession {
             this.initAsync().addListener(new Runnable() {
                 @Override
                 public void run() {
-                    DefaultResultSetFuture actualFuture = new DefaultResultSetFuture(SessionManager.this, cluster.manager.protocolVersion(), makeRequestMessage(statement, null));
+                    DefaultResultSetFuture actualFuture = new DefaultResultSetFuture(SessionManager.this, cluster.getManager().protocolVersion(), makeRequestMessage(statement, null));
                     execute(actualFuture, statement);
                     chainedFuture.setSource(actualFuture);
                 }
@@ -164,7 +164,7 @@ class SessionManager extends AbstractSession {
             return future;
 
         isClosing = true;
-        cluster.manager.removeSession(this);
+        cluster.getManager().removeSession(this);
 
         List<CloseFuture> futures = new ArrayList<CloseFuture>(pools.size());
         for (HostConnectionPool pool : pools.values())
@@ -203,7 +203,7 @@ class SessionManager extends AbstractSession {
                             case PREPARED:
                                 Responses.Result.Prepared pmsg = (Responses.Result.Prepared) rm;
                                 PreparedStatement stmt = DefaultPreparedStatement.fromMessage(pmsg, cluster, query, poolsState.keyspace);
-                                stmt = cluster.manager.addPrepared(stmt);
+                                stmt = cluster.getManager().addPrepared(stmt);
                                 if (cluster.getConfiguration().getQueryOptions().isPrepareOnAllHosts()) {
                                     // All Sessions are connected to the same nodes so it's enough to prepare only the nodes of this session.
                                     // If that changes, we'll have to make sure this propagate to other sessions too.
@@ -227,36 +227,36 @@ class SessionManager extends AbstractSession {
     }
 
     Connection.Factory connectionFactory() {
-        return cluster.manager.connectionFactory;
+        return cluster.getManager().connectionFactory;
     }
 
     Configuration configuration() {
-        return cluster.manager.configuration;
+        return cluster.getManager().configuration;
     }
 
     LoadBalancingPolicy loadBalancingPolicy() {
-        return cluster.manager.loadBalancingPolicy();
+        return cluster.getManager().loadBalancingPolicy();
     }
 
     SpeculativeExecutionPolicy speculativeExecutionPolicy() {
-        return cluster.manager.speculativeExecutionPolicy();
+        return cluster.getManager().speculativeExecutionPolicy();
     }
 
     ReconnectionPolicy reconnectionPolicy() {
-        return cluster.manager.reconnectionPolicy();
+        return cluster.getManager().reconnectionPolicy();
     }
 
     ListeningExecutorService executor() {
-        return cluster.manager.executor;
+        return cluster.getManager().executor;
     }
 
     ListeningExecutorService blockingExecutor() {
-        return cluster.manager.blockingExecutor;
+        return cluster.getManager().blockingExecutor;
     }
 
     // Returns whether there was problem creating the pool
     ListenableFuture<Boolean> forceRenewPool(final Host host, Connection reusedConnection) {
-        final HostDistance distance = cluster.manager.loadBalancingPolicy().distance(host);
+        final HostDistance distance = cluster.getManager().loadBalancingPolicy().distance(host);
         if (distance == HostDistance.IGNORED)
             return Futures.immediateFuture(true);
 
@@ -342,7 +342,7 @@ class SessionManager extends AbstractSession {
 
     // Returns whether there was problem creating the pool
     ListenableFuture<Boolean> maybeAddPool(final Host host, Connection reusedConnection) {
-        final HostDistance distance = cluster.manager.loadBalancingPolicy().distance(host);
+        final HostDistance distance = cluster.getManager().loadBalancingPolicy().distance(host);
         if (distance == HostDistance.IGNORED)
             return Futures.immediateFuture(true);
 
@@ -368,12 +368,12 @@ class SessionManager extends AbstractSession {
                     @Override
                     public void onFailure(Throwable t) {
                         if (t instanceof UnsupportedProtocolVersionException) {
-                            cluster.manager.logUnsupportedVersionProtocol(host, ((UnsupportedProtocolVersionException) t).getUnsupportedVersion());
-                            cluster.manager.triggerOnDown(host, false);
+                            cluster.getManager().logUnsupportedVersionProtocol(host, ((UnsupportedProtocolVersionException) t).getUnsupportedVersion());
+                            cluster.getManager().triggerOnDown(host, false);
                         } else if (t instanceof ClusterNameMismatchException) {
                             ClusterNameMismatchException e = (ClusterNameMismatchException) t;
-                            cluster.manager.logClusterNameMismatch(host, e.expectedClusterName, e.actualClusterName);
-                            cluster.manager.triggerOnDown(host, false);
+                            cluster.getManager().logClusterNameMismatch(host, e.expectedClusterName, e.actualClusterName);
+                            cluster.getManager().triggerOnDown(host, false);
                         } else {
                             logger.warn("Error creating pool to " + host, t);
                             // do not mark the host down, as there could be other connections to it
@@ -495,8 +495,8 @@ class SessionManager extends AbstractSession {
         // init() locks, so avoid if we know we don't need it.
         if (!isInit)
             init();
-        ProtocolVersion protocolVersion = cluster.manager.protocolVersion();
-        CodecRegistry codecRegistry = cluster.manager.configuration.getCodecRegistry();
+        ProtocolVersion protocolVersion = cluster.getManager().protocolVersion();
+        CodecRegistry codecRegistry = cluster.getManager().configuration.getCodecRegistry();
 
         ConsistencyLevel consistency = statement.getConsistencyLevel();
         if (consistency == null)
@@ -574,7 +574,7 @@ class SessionManager extends AbstractSession {
             request = new Requests.Query(qString, options, statement.isTracing());
         } else if (statement instanceof BoundStatement) {
             BoundStatement bs = (BoundStatement) statement;
-            if (!cluster.manager.preparedQueries.containsKey(bs.statement.getPreparedId().id)) {
+            if (!cluster.getManager().preparedQueries.containsKey(bs.statement.getPreparedId().id)) {
                 throw new InvalidQueryException(String.format("Tried to execute unknown prepared query : %s. "
                         + "You may have used a PreparedStatement that was created with another Cluster instance.", bs.statement.getPreparedId().id));
             }
