@@ -652,7 +652,7 @@ class RequestHandler {
                                 String prepareKeyspace = toPrepare.getQueryKeyspace();
                                 // Only allow preparing with a different keyspace than configured connection keyspace if
                                 // protocol supports it.
-                                if (!err.serverProtocolVersion.supports(ProtocolFeature.KEYSPACE_ON_QUERY)
+                                if (!ProtocolFeature.KEYSPACE_ON_QUERY.isSupportedBy(err.serverProtocolVersion)
                                         && prepareKeyspace != null
                                         && (currentKeyspace == null || !currentKeyspace.equals(prepareKeyspace))) {
                                     // This shouldn't happen in normal use, because a user shouldn't try to execute

@@ -2290,7 +2290,7 @@ public class Cluster implements Closeable {
                     // Empty string mean no particular keyspace to set
                     // Optimization: Only change keyspace for older protocol versions as newer protocols allow
                     // specifying keyspace on prepared statement.
-                    if (!protocolVersion().supports(ProtocolFeature.KEYSPACE_ON_QUERY) && !keyspace.isEmpty())
+                    if (!ProtocolFeature.KEYSPACE_ON_QUERY.isSupportedBy(protocolVersion()) && !keyspace.isEmpty())
                         connection.setKeyspace(keyspace);
 
                     List<Connection.Future> futures = new ArrayList<Connection.Future>(preparedQueries.size());

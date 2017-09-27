@@ -81,20 +81,6 @@ public enum ProtocolVersion {
         return lowerSupported;
     }
 
-    /**
-     * Determines whether or not this version supports the given feature.
-     *
-     * @param feature the feature to test against this version.
-     * @return true if supported, false otherwise.
-     */
-    public boolean supports(ProtocolFeature feature) {
-        switch (feature) {
-            case KEYSPACE_ON_QUERY:
-                return this == V5;
-        }
-        return false;
-    }
-
     private static final Map<Integer, ProtocolVersion> INT_TO_VERSION;
 
     static {
@@ -120,13 +106,29 @@ public enum ProtocolVersion {
     }
 
     /**
-     * A listing of features that may or not apply to a given {@link ProtocolVersion}.  Used by
-     * {@link ProtocolVersion#supports} to communicate whether features are supported by a given version.
+     * A listing of features that may or not apply to a given {@link ProtocolVersion}.
      */
-    public enum ProtocolFeature {
+    enum ProtocolFeature {
+
         /**
-         * Whether or not a version supports setting keyspace on a per-query basis.
+         * The capability of setting keyspace on a per-query basis.
          */
-        KEYSPACE_ON_QUERY
+        KEYSPACE_ON_QUERY;
+
+        /**
+         * Determines whether or not the input version supports ths feature.
+         *
+         * @param version the version to test against.
+         * @return true if supported, false otherwise.
+         */
+        boolean isSupportedBy(ProtocolVersion version) {
+            switch (this) {
+                case KEYSPACE_ON_QUERY:
+                    return version == V5;
+                default:
+                    return false;
+            }
+        }
+
     }
 }

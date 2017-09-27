@@ -778,7 +778,7 @@ public class PreparedStatementTest extends CCMTestsSupport {
     @Test(groups = "short", expectedExceptions = UnsupportedFeatureException.class)
     public void should_not_use_keyspace_if_set_and_protocol_does_not_support() {
         ProtocolVersion protocolVersion = cluster().getConfiguration().getProtocolOptions().getProtocolVersion();
-        while (protocolVersion.supports(ProtocolFeature.KEYSPACE_ON_QUERY)) {
+        while (ProtocolFeature.KEYSPACE_ON_QUERY.isSupportedBy(protocolVersion)) {
             // Downgrade until we hit a protocol version that doesn't support keyspace on query.
             protocolVersion = protocolVersion.getLowerSupported();
         }
