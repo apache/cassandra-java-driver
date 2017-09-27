@@ -28,7 +28,7 @@ import static org.testng.Assert.assertTrue;
 @CassandraVersion("2.0.0")
 public class BatchStatementTest extends CCMTestsSupport {
 
-    private static final String keyspace2 = TestUtils.generateIdentifier("ks_");
+    private static final String keyspace2 = Metadata.quote(TestUtils.generateIdentifier("KS_"));
 
     @Override
     public void onTestContextInitialized() {

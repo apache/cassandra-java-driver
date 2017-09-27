@@ -27,7 +27,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 public class SimpleStatementIntegrationTest extends CCMTestsSupport {
 
-    private static final String keyspace2 = TestUtils.generateIdentifier("ks_");
+    private static final String keyspace2 = Metadata.quote(TestUtils.generateIdentifier("KS_"));
 
     @Override
     public void onTestContextInitialized() {

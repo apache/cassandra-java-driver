@@ -27,7 +27,7 @@ import static org.testng.Assert.fail;
 public class PreparedStatementMultiNodeTest extends CCMTestsSupport {
 
     private static final String keyspace2 = TestUtils.generateIdentifier("ks_");
-    private static final String keyspace3 = TestUtils.generateIdentifier("ks_");
+    private static final String keyspace3 = Metadata.quote(TestUtils.generateIdentifier("KS_"));
 
     @Override
     public void onTestContextInitialized() {
