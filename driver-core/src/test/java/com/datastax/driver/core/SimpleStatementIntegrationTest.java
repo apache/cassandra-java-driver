@@ -15,7 +15,6 @@
  */
 package com.datastax.driver.core;
 
-import com.datastax.driver.core.ProtocolVersion.ProtocolFeature;
 import com.datastax.driver.core.exceptions.InvalidQueryException;
 import com.datastax.driver.core.exceptions.UnsupportedFeatureException;
 import com.datastax.driver.core.utils.CassandraVersion;

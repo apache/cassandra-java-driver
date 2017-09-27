@@ -15,7 +15,6 @@
  */
 package com.datastax.driver.core;
 
-import com.datastax.driver.core.ProtocolVersion.ProtocolFeature;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
 import io.netty.buffer.ByteBuf;

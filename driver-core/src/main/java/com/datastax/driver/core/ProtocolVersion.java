@@ -105,30 +105,4 @@ public enum ProtocolVersion {
         return version;
     }
 
-    /**
-     * A listing of features that may or not apply to a given {@link ProtocolVersion}.
-     */
-    enum ProtocolFeature {
-
-        /**
-         * The capability of setting keyspace on a per-query basis.
-         */
-        KEYSPACE_ON_QUERY;
-
-        /**
-         * Determines whether or not the input version supports ths feature.
-         *
-         * @param version the version to test against.
-         * @return true if supported, false otherwise.
-         */
-        boolean isSupportedBy(ProtocolVersion version) {
-            switch (this) {
-                case KEYSPACE_ON_QUERY:
-                    return version == V5;
-                default:
-                    return false;
-            }
-        }
-
-    }
 }

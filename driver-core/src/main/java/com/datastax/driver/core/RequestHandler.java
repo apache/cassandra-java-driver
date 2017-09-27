@@ -17,7 +17,6 @@ package com.datastax.driver.core;
 
 import com.codahale.metrics.Timer;
 import com.datastax.driver.core.exceptions.*;
-import com.datastax.driver.core.ProtocolVersion.ProtocolFeature;
 import com.datastax.driver.core.policies.RetryPolicy;
 import com.datastax.driver.core.policies.RetryPolicy.RetryDecision.Type;
 import com.datastax.driver.core.policies.SpeculativeExecutionPolicy.SpeculativeExecutionPlan;

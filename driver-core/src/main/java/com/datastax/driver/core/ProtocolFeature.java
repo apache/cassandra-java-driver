@@ -21,6 +21,11 @@ package com.datastax.driver.core;
 enum ProtocolFeature {
 
     /**
+     * The capability of setting keyspace on a per-query basis.
+     */
+    KEYSPACE_ON_QUERY,
+
+    /**
      * The capability of updating a prepared statement if the result's metadata changes at runtime (for example, if the
      * query is a {@code SELECT *} and the table is altered).
      */
@@ -36,6 +41,8 @@ enum ProtocolFeature {
      */
     boolean isSupportedBy(ProtocolVersion version) {
         switch (this) {
+            case KEYSPACE_ON_QUERY:
+                return version == ProtocolVersion.V5;
             case PREPARED_METADATA_CHANGES:
                 return version == ProtocolVersion.V5;
             default:

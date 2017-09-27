@@ -16,7 +16,6 @@
 package com.datastax.driver.core;
 
 import com.datastax.driver.core.Message.Response;
-import com.datastax.driver.core.ProtocolVersion.ProtocolFeature;
 import com.datastax.driver.core.exceptions.DriverInternalError;
 import com.datastax.driver.core.exceptions.InvalidQueryException;
 import com.datastax.driver.core.exceptions.UnsupportedFeatureException;

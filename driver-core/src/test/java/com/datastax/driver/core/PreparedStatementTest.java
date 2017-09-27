@@ -30,7 +30,6 @@ import static org.testng.Assert.assertFalse;
 import static org.testng.Assert.assertTrue;
 import static org.testng.Assert.fail;
 
-import com.datastax.driver.core.ProtocolVersion.ProtocolFeature;
 import com.datastax.driver.core.exceptions.InvalidQueryException;
 import com.datastax.driver.core.exceptions.UnsupportedFeatureException;
 import com.datastax.driver.core.policies.FallthroughRetryPolicy;

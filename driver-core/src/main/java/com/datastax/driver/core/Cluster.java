@@ -17,7 +17,6 @@ package com.datastax.driver.core;
 
 import com.datastax.driver.core.exceptions.*;
 import com.datastax.driver.core.policies.*;
-import com.datastax.driver.core.ProtocolVersion.ProtocolFeature;
 import com.datastax.driver.core.utils.MoreFutures;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Functions;
