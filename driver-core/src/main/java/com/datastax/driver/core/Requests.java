@@ -320,7 +320,7 @@ class Requests {
             this.pagingState = pagingState;
             this.serialConsistency = serialConsistency;
             this.defaultTimestamp = defaultTimestamp;
-            this.keyspace = keyspace;
+            this.keyspace = keyspace != null ? Metadata.handleId(keyspace) : null;
 
             // Populate flags
             if (!positionalValues.isEmpty())
@@ -532,7 +532,7 @@ class Requests {
             this.consistency = consistency;
             this.serialConsistency = serialConsistency;
             this.defaultTimestamp = defaultTimestamp;
-            this.keyspace = keyspace;
+            this.keyspace = keyspace != null ? Metadata.handleId(keyspace) : null;
 
             if (serialConsistency != ConsistencyLevel.SERIAL)
                 flags.add(QueryFlag.SERIAL_CONSISTENCY);
