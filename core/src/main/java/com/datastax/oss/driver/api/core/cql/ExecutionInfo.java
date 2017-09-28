@@ -26,7 +26,7 @@ import java.util.Map;
 public interface ExecutionInfo {
 
   /** The statement that was executed. */
-  Statement getStatement();
+  Statement<?> getStatement();
 
   /** The node that was used as a coordinator to successfully complete the query. */
   Node getCoordinator();

@@ -39,6 +39,6 @@ public class CqlRequestProcessor
       DefaultSession session,
       InternalDriverContext context,
       String sessionLogPrefix) {
-    return new CqlRequestHandler((Statement) request, session, context, sessionLogPrefix);
+    return new CqlRequestHandler((Statement<?>) request, session, context, sessionLogPrefix);
   }
 }

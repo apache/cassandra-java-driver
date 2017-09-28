@@ -129,7 +129,7 @@ public class BatchStatementIT {
 
     cluster.session().execute(builder2.build());
 
-    Statement select =
+    Statement<?> select =
         SimpleStatement.builder("SELECT * from test where k0 = ?")
             .addPositionalValue(name.getMethodName())
             .build();
@@ -313,7 +313,7 @@ public class BatchStatementIT {
 
   private void verifyBatchInsert() {
     // validate data inserted by the batch.
-    Statement select =
+    Statement<?> select =
         SimpleStatement.builder("SELECT * from test where k0 = ?")
             .addPositionalValue(name.getMethodName())
             .build();

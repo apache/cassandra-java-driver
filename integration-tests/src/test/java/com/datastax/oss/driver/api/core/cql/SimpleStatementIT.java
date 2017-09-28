@@ -68,7 +68,7 @@ public class SimpleStatementIT {
 
   @Test
   public void should_use_paging_state_when_copied() {
-    Statement st =
+    Statement<?> st =
         SimpleStatement.builder(String.format("SELECT v FROM test WHERE k='%s'", KEY)).build();
     ResultSet result = cluster.session().execute(st);
 
@@ -84,7 +84,7 @@ public class SimpleStatementIT {
 
   @Test
   public void should_use_paging_state_when_provided_to_new_statement() {
-    Statement st =
+    Statement<?> st =
         SimpleStatement.builder(String.format("SELECT v FROM test WHERE k='%s'", KEY)).build();
     ResultSet result = cluster.session().execute(st);
 
@@ -104,7 +104,7 @@ public class SimpleStatementIT {
   @Test
   @Ignore
   public void should_fail_if_using_paging_state_from_different_query() {
-    Statement st =
+    Statement<?> st =
         SimpleStatement.builder("SELECT v FROM test WHERE k=:k").addNamedValue("k", KEY).build();
     ResultSet result = cluster.session().execute(st);
 

@@ -46,7 +46,7 @@ public class DefaultAsyncResultSetTest {
 
   @Mock private ColumnDefinitions columnDefinitions;
   @Mock private ExecutionInfo executionInfo;
-  @Mock private Statement statement;
+  @Mock private Statement<?> statement;
   @Mock private Session session;
   @Mock private InternalDriverContext context;
 
@@ -54,7 +54,7 @@ public class DefaultAsyncResultSetTest {
   public void setup() {
     MockitoAnnotations.initMocks(this);
 
-    Mockito.when(executionInfo.getStatement()).thenReturn(statement);
+    Mockito.when(executionInfo.getStatement()).thenReturn((Statement) statement);
     Mockito.when(context.codecRegistry()).thenReturn(CodecRegistry.DEFAULT);
     Mockito.when(context.protocolVersion()).thenReturn(CoreProtocolVersion.DEFAULT);
   }
@@ -80,8 +80,8 @@ public class DefaultAsyncResultSetTest {
     ByteBuffer mockPagingState = ByteBuffer.allocate(0);
     Mockito.when(executionInfo.getPagingState()).thenReturn(mockPagingState);
 
-    Statement mockNextStatement = Mockito.mock(Statement.class);
-    Mockito.when(statement.copy(mockPagingState)).thenReturn(mockNextStatement);
+    Statement<?> mockNextStatement = Mockito.mock(Statement.class);
+    Mockito.when(((Statement) statement).copy(mockPagingState)).thenReturn(mockNextStatement);
 
     CompletableFuture<AsyncResultSet> mockResultFuture = new CompletableFuture<>();
     Mockito.when(session.executeAsync(Mockito.any(Statement.class))).thenReturn(mockResultFuture);

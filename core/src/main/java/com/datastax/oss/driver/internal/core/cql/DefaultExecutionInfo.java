@@ -27,7 +27,7 @@ import java.util.UUID;
 
 public class DefaultExecutionInfo implements ExecutionInfo {
 
-  private final Statement statement;
+  private final Statement<?> statement;
   private final Node coordinator;
   private final int speculativeExecutionCount;
   private final int successfulExecutionIndex;
@@ -38,7 +38,7 @@ public class DefaultExecutionInfo implements ExecutionInfo {
   private final Map<String, ByteBuffer> customPayload;
 
   public DefaultExecutionInfo(
-      Statement statement,
+      Statement<?> statement,
       Node coordinator,
       int speculativeExecutionCount,
       int successfulExecutionIndex,
@@ -59,7 +59,7 @@ public class DefaultExecutionInfo implements ExecutionInfo {
   }
 
   @Override
-  public Statement getStatement() {
+  public Statement<?> getStatement() {
     return statement;
   }
 

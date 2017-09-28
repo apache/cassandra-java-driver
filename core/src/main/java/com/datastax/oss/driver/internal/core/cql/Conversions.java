@@ -87,7 +87,7 @@ import java.util.Map;
 class Conversions {
 
   static Message toMessage(
-      Statement statement, DriverConfigProfile config, InternalDriverContext context) {
+      Statement<?> statement, DriverConfigProfile config, InternalDriverContext context) {
     int consistency =
         config.getConsistencyLevel(CoreDriverOption.REQUEST_CONSISTENCY).getProtocolCode();
     int pageSize = config.getInt(CoreDriverOption.REQUEST_PAGE_SIZE);
@@ -202,7 +202,7 @@ class Conversions {
       Result result, ExecutionInfo executionInfo, Session session, InternalDriverContext context) {
     if (result instanceof Rows) {
       Rows rows = (Rows) result;
-      Statement statement = executionInfo.getStatement();
+      Statement<?> statement = executionInfo.getStatement();
       ColumnDefinitions columnDefinitions =
           (statement instanceof BoundStatement)
               ? ((BoundStatement) statement).getPreparedStatement().getResultSetDefinitions()

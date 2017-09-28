@@ -606,7 +606,7 @@ public class DataTypeIT {
   }
 
   private <K> void readValue(
-      Statement select, DataType dataType, K value, K expectedPrimitiveValue) {
+      Statement<?> select, DataType dataType, K value, K expectedPrimitiveValue) {
     TypeCodec<Object> codec = cluster.cluster().getContext().codecRegistry().codecFor(dataType);
     ResultSet result = cluster.session().execute(select);
 

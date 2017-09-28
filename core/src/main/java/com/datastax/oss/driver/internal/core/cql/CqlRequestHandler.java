@@ -111,7 +111,7 @@ public class CqlRequestHandler
   private volatile List<Map.Entry<Node, Throwable>> errors;
 
   CqlRequestHandler(
-      Statement statement,
+      Statement<?> statement,
       DefaultSession session,
       InternalDriverContext context,
       String sessionLogPrefix) {
@@ -301,7 +301,7 @@ public class CqlRequestHandler
     ByteBuffer pagingState =
         (resultMessage instanceof Rows) ? ((Rows) resultMessage).getMetadata().pagingState : null;
     return new DefaultExecutionInfo(
-        (Statement) request,
+        (Statement<?>) request,
         callback.node,
         startedSpeculativeExecutionsCount.get(),
         callback.execution,
