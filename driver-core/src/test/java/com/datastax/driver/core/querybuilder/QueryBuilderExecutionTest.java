@@ -38,6 +38,9 @@ public class QueryBuilderExecutionTest extends CCMTestsSupport {
     private static final String TABLE1 = TestUtils.generateIdentifier("test1");
     private static final String TABLE2 = TestUtils.generateIdentifier("test2");
 
+    private static final String keyspace2Internal = TestUtils.generateIdentifier("KS_");
+    private static final String keyspace2 = Metadata.quoteIfNecessary(keyspace2Internal);
+
     @Override
     public void onTestContextInitialized() {
         execute(
@@ -57,6 +60,13 @@ public class QueryBuilderExecutionTest extends CCMTestsSupport {
                 session().execute(String.format("INSERT INTO test_ppl (a, b, c) VALUES (%d, %d, %d)", i, j, j));
             }
         }
+
+        // For keyspace-specific tests.
+        execute(
+                String.format(TestUtils.CREATE_KEYSPACE_SIMPLE_FORMAT, keyspace2, 1),
+                String.format("CREATE TABLE %s.users(id int, id2 int, name text, primary key (id, id2))", keyspace2),
+                String.format("INSERT INTO %s.users(id, id2, name) VALUES (2, 3, 'test2')", keyspace2)
+        );
     }
 
     @Test(groups = "short")
@@ -625,4 +635,12 @@ public class QueryBuilderExecutionTest extends CCMTestsSupport {
                 row(1, 1, 12));
     }
 
+    @Test(groups = "short")
+    public void should_use_internal_representation_for_query_keyspace() {
+        Statement statement = select("name").from(keyspace2, "users");
+        // should use internal representation to be consistent with other Statement getKeyspace implementations.
+        assertThat(statement.getKeyspace()).isEqualTo(keyspace2Internal);
+
+        assertThat(session().execute(statement).one().getString("name")).isEqualTo("test2");
+    }
 }

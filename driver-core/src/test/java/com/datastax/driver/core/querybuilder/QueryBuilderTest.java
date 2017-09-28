@@ -1312,4 +1312,9 @@ public class QueryBuilderTest {
                 .isEqualTo("SELECT * FROM foo WHERE x=42 ALLOW FILTERING;");
     }
 
+    @Test(groups = "unit")
+    public void should_use_internal_representation_for_query_keyspace() {
+        Statement statement = select().from("\"myKs\"", "tbl");
+        assertThat(statement.getKeyspace()).isEqualTo("myKs"); // internal representation should be used.
+    }
 }

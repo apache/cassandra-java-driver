@@ -17,12 +17,15 @@ package com.datastax.driver.core;
 
 import com.datastax.driver.core.exceptions.InvalidTypeException;
 import com.google.common.reflect.TypeToken;
-
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.net.InetAddress;
 import java.nio.ByteBuffer;
-import java.util.*;
+import java.util.Date;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.UUID;
 
 /**
  * A prepared statement with values bound to the bind variables.
@@ -293,6 +296,9 @@ public class BoundStatement extends Statement implements SettableData<BoundState
      */
     @Override
     public String getKeyspace() {
+        if (statement.getQueryKeyspace() != null)
+            return statement.getQueryKeyspace();
+
         ColumnDefinitions defs = statement.getPreparedId().boundValuesMetadata.variables;
         return defs.size() == 0
                 ? null
@@ -1320,7 +1326,6 @@ public class BoundStatement extends Statement implements SettableData<BoundState
     public Object getObject(String name) {
         return wrapper.getObject(name);
     }
-
 
     /**
      * {@inheritDoc}

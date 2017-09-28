@@ -195,6 +195,12 @@ public abstract class RegularStatement extends Statement {
      * Unless the keyspace has been explicitly set through a means such as {@link SimpleStatement#setKeyspace},
      * this method will return {@code null} to avoid having to parse the query
      * string.
+     * <p>
+     * <b>Note:</b> This returns the internal representation of the keyspace.
+     * In the typical case, the internal representation is equivalent to
+     * the CQL representation. However, if you are using a keyspace that
+     * requires the use of quotes in CQL (a quoted identifier), i.e.: "MyKS",
+     * this method will return the unquoted representation instead, i.e. MyKS.
      *
      * @return the keyspace if set, {@code null} otherwise.
      * @see Statement#getKeyspace

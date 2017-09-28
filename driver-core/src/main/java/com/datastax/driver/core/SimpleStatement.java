@@ -279,6 +279,12 @@ public class SimpleStatement extends RegularStatement {
      * Do note that if the query does not use a fully qualified keyspace, then
      * you do not need to set the keyspace through this method as the
      * currently logged in keyspace will be used if it is set.
+     * <p>
+     * <b>Note:</b> This expects the internal representation of the keyspace.
+     * In the typical case, the internal representation is equivalent to
+     * the CQL representation. However, if you are using a keyspace that
+     * requires the use of quotes in CQL (a quoted identifier), i.e.: "MyKS",
+     * this method will return the unquoted representation instead, i.e. MyKS.
      *
      * @param keyspace the name of the keyspace this query operates on.
      * @return this {@code SimpleStatement} object.

@@ -241,6 +241,12 @@ public class BatchStatement extends Statement {
      * <li>By {@link com.datastax.driver.core.policies.TokenAwarePolicy}</li> to help identify which
      * replicas are applicable to send this statement to.</li>
      * </ol>
+     * <p>
+     * <b>Note:</b> This expects the internal representation of the keyspace.
+     * In the typical case, the internal representation is equivalent to
+     * the CQL representation. However, if you are using a keyspace that
+     * requires the use of quotes in CQL (a quoted identifier), i.e.: "MyKS",
+     * this method will return the unquoted representation instead, i.e. MyKS.
      *
      * @param keyspace the name of the keyspace that queries in this batch operate on.
      * @return this {@code BatchStatement} object.

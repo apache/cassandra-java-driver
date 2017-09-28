@@ -213,6 +213,12 @@ public abstract class Statement {
      * strategy in use which is a per-keyspace property) and having this method
      * return {@code null} (or even a bogus keyspace name) will never cause the
      * query to fail.
+     * <p>
+     * <b>Note:</b> This returns the internal representation of the keyspace.
+     * In the typical case, the internal representation is equivalent to
+     * the CQL representation. However, if you are using a keyspace that
+     * requires the use of quotes in CQL (a quoted identifier), i.e.: "MyKS",
+     * this method will return the unquoted representation instead, i.e. MyKS.
      *
      * @return the keyspace this query operate on if relevant or {@code null}.
      */

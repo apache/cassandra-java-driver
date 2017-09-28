@@ -213,11 +213,11 @@ class SessionManager extends AbstractSession {
                             case PREPARED:
                                 Responses.Result.Prepared pmsg = (Responses.Result.Prepared) rm;
                                 String keyspaceToUse = poolsState.keyspace;
-                                if (keyspace != null && !Metadata.handleId(keyspace).equals(keyspaceToUse)) {
+                                if (keyspace != null && !keyspace.equals(keyspaceToUse)) {
                                     if (!ProtocolFeature.KEYSPACE_ON_QUERY.isSupportedBy(cluster.manager.protocolVersion())) {
                                         throw new UnsupportedFeatureException(cluster.manager.protocolVersion(), String.format(
                                                 "Statement uses keyspace '%s' which is not the same as the" +
-                                                        " session keyspace '%s'.", Metadata.handleId(keyspace), poolsState.keyspace));
+                                                        " session keyspace '%s'.", keyspace, poolsState.keyspace));
                                     }
                                     keyspaceToUse = keyspace;
                                 }

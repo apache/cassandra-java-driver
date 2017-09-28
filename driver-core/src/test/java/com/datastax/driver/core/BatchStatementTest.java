@@ -28,7 +28,8 @@ import static org.testng.Assert.assertTrue;
 @CassandraVersion("2.0.0")
 public class BatchStatementTest extends CCMTestsSupport {
 
-    private static final String keyspace2 = Metadata.quote(TestUtils.generateIdentifier("KS_"));
+    private static final String keyspace2Internal = TestUtils.generateIdentifier("KS_");
+    private static final String keyspace2 = Metadata.quoteIfNecessary(keyspace2Internal);
 
     @Override
     public void onTestContextInitialized() {
@@ -148,10 +149,10 @@ public class BatchStatementTest extends CCMTestsSupport {
 
             BatchStatement batch = new BatchStatement();
             batch.add(new SimpleStatement("INSERT INTO users (id, id2, name) values (?, 1, 'hello')", id));
-            batch.add(new SimpleStatement("INSERT INTO users (id, id2, name) values (?, 2, 'sweet')", id).setKeyspace(keyspace2));
+            batch.add(new SimpleStatement("INSERT INTO users (id, id2, name) values (?, 2, 'sweet')", id).setKeyspace(keyspace2Internal));
             batch.add(new SimpleStatement("INSERT INTO users (id, id2, name) values (?, 3, 'world')", id));
             // keyspace should be inherited from first statement that has one.
-            assertThat(batch.getKeyspace()).isEqualTo(keyspace2);
+            assertThat(batch.getKeyspace()).isEqualTo(keyspace2Internal);
 
             session.execute(batch);
 
@@ -188,8 +189,8 @@ public class BatchStatementTest extends CCMTestsSupport {
             batch.add(new SimpleStatement("INSERT INTO users (id, id2, name) values (?, 1, 'hello')", id));
             batch.add(new SimpleStatement("INSERT INTO users (id, id2, name) values (?, 2, 'sweet')", id));
             batch.add(new SimpleStatement("INSERT INTO users (id, id2, name) values (?, 3, 'world')", id));
-            batch.setKeyspace(keyspace2);
-            assertThat(batch.getKeyspace()).isEqualTo(keyspace2);
+            batch.setKeyspace(keyspace2Internal);
+            assertThat(batch.getKeyspace()).isEqualTo(keyspace2Internal);
 
             session.execute(batch);
 
@@ -203,7 +204,7 @@ public class BatchStatementTest extends CCMTestsSupport {
     }
 
     private void validateData(Session session, int id) {
-        ResultSet result = session.execute(new SimpleStatement("select * from users where id = ?", id).setKeyspace(keyspace2));
+        ResultSet result = session.execute(new SimpleStatement("select * from users where id = ?", id).setKeyspace(keyspace2Internal));
 
         assertThat(result.getAvailableWithoutFetching()).isEqualTo(3);
         Row row1 = result.one();

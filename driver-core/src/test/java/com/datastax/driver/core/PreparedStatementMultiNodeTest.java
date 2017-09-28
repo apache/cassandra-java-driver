@@ -27,7 +27,8 @@ import static org.testng.Assert.fail;
 public class PreparedStatementMultiNodeTest extends CCMTestsSupport {
 
     private static final String keyspace2 = TestUtils.generateIdentifier("ks_");
-    private static final String keyspace3 = Metadata.quote(TestUtils.generateIdentifier("KS_"));
+    private static final String keyspace3Internal = TestUtils.generateIdentifier("KS_");
+    private static final String keyspace3 = Metadata.quoteIfNecessary(keyspace3Internal);
 
     @Override
     public void onTestContextInitialized() {
@@ -78,7 +79,7 @@ public class PreparedStatementMultiNodeTest extends CCMTestsSupport {
 
             if (setKeyspace) {
                 prep2 = session.prepare(new SimpleStatement("SELECT * from users").setKeyspace(keyspace2));
-                prep3 = session.prepare(new SimpleStatement("SELECT * from users").setKeyspace(keyspace3));
+                prep3 = session.prepare(new SimpleStatement("SELECT * from users").setKeyspace(keyspace3Internal));
             } else {
                 // Execute use keyspace before preparing.  This is an anti-pattern but works nonetheless.
                 session.execute("USE " + keyspace2);

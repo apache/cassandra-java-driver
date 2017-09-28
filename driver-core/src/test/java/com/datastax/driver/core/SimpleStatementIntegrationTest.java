@@ -27,7 +27,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 public class SimpleStatementIntegrationTest extends CCMTestsSupport {
 
-    private static final String keyspace2 = Metadata.quote(TestUtils.generateIdentifier("KS_"));
+    private static final String keyspace2Internal = TestUtils.generateIdentifier("KS_");
+    private static final String keyspace2 = Metadata.quoteIfNecessary(keyspace2Internal);
 
     @Override
     public void onTestContextInitialized() {
@@ -91,7 +92,7 @@ public class SimpleStatementIntegrationTest extends CCMTestsSupport {
         }
         try {
             SimpleStatement statement = new SimpleStatement("SELECT name FROM users2 WHERE id = 2 and id2 = 3")
-                    .setKeyspace(keyspace2);
+                    .setKeyspace(keyspace2Internal);
 
             Row row = session.execute(statement).one();
 

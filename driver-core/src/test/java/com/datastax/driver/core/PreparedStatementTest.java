@@ -57,7 +57,8 @@ public class PreparedStatementTest extends CCMTestsSupport {
     private static final String SIMPLE_TABLE = "test";
     private static final String SIMPLE_TABLE2 = "test2";
 
-    private static final String keyspace2 = TestUtils.generateIdentifier("ks_");
+    private static final String keyspace2Internal = TestUtils.generateIdentifier("KS_");
+    private static final String keyspace2 = Metadata.quoteIfNecessary(keyspace2Internal);
 
     private ProtocolVersion protocolVersion;
     private Collection<DataType> primitiveTypes;
@@ -756,6 +757,48 @@ public class PreparedStatementTest extends CCMTestsSupport {
         assertThat(bound.isIdempotent()).isTrue();
     }
 
+    @Test(groups = "short")
+    public void should_have_no_keyspace_if_no_metadata_and_keyspace_not_set() {
+        Session session = cluster().connect();
+        try {
+            PreparedStatement prepared = session.prepare("select * from " + keyspace2 + ".users");
+            assertThat(prepared.getQueryKeyspace()).isNull(); // no keyspace is set.
+            BoundStatement bs = prepared.bind();
+            assertThat(bs.getKeyspace()).isNull(); // no session, keyspace not set, no metadata so should be null.
+            assertThat(session.execute(bs).one().getString("name")).isEqualTo("test2");
+        } finally {
+            session.close();
+        }
+    }
+
+    @Test(groups = "short")
+    public void should_get_keyspace_from_session_if_not_set() {
+        Session session = cluster().connect(keyspace2);
+        try {
+            PreparedStatement prepared = session.prepare("select * from users");
+            assertThat(prepared.getQueryKeyspace()).isEqualTo(keyspace2Internal); // no keyspace is set.
+            BoundStatement bs = prepared.bind();
+            assertThat(bs.getKeyspace()).isEqualTo(keyspace2Internal); // keyspace should be set from prepared statement which was set from session.
+            assertThat(session.execute(bs).one().getString("name")).isEqualTo("test2");
+        } finally {
+            session.close();
+        }
+    }
+
+    @Test(groups = "short")
+    public void should_get_keyspace_from_metadata_if_not_set() {
+        Session session = cluster().connect();
+        try {
+            PreparedStatement prepared = session.prepare("select * from " + keyspace2 + ".users where id = ?");
+            assertThat(prepared.getQueryKeyspace()).isNull(); // no keyspace is set.
+            BoundStatement bs = prepared.bind(2);
+            assertThat(bs.getKeyspace()).isEqualTo(keyspace2Internal); // keyspace should be set from prepared metadata, we expect it to be the internal representation.
+            assertThat(session.execute(bs).one().getString("name")).isEqualTo("test2");
+        } finally {
+            session.close();
+        }
+    }
+
     @CassandraVersion("4.0.0")
     @Test(groups = "short")
     public void should_use_keyspace_if_set_on_origin_statement() {
@@ -810,11 +853,11 @@ public class PreparedStatementTest extends CCMTestsSupport {
         }
         try {
             SimpleStatement statement = new SimpleStatement("SELECT name FROM users WHERE id = 2 and id2 = 3")
-                    .setKeyspace(keyspace2);
+                    .setKeyspace(keyspace2Internal);
 
             // Keyspace should be propagated to prepared statement.
             PreparedStatement prepared = session.prepare(statement);
-            assertThat(prepared.getQueryKeyspace()).isEqualTo(keyspace2);
+            assertThat(prepared.getQueryKeyspace()).isEqualTo(keyspace2Internal);
 
             BoundStatement bound = prepared.bind();
             Row row = session.execute(bound).one();
