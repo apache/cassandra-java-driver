@@ -27,11 +27,8 @@ import java.util.Map;
  * <p>This is a high-level abstraction, agnostic to the actual language (e.g. CQL). A request is
  * anything that can be converted to a protocol message, provided that you register a request
  * processor with the driver to do that conversion.
- *
- * @param <SyncResultT> the type of response when this request is executed synchronously.
- * @param <AsyncResultT> the type of response when this request is executed asynchronously.
  */
-public interface Request<SyncResultT, AsyncResultT> {
+public interface Request {
 
   /**
    * The name of the driver configuration profile that will be used for execution.

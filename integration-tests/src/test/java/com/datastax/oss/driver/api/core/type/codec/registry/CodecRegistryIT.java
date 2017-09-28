@@ -22,7 +22,7 @@ import com.datastax.oss.driver.api.core.cql.PreparedStatement;
 import com.datastax.oss.driver.api.core.cql.ResultSet;
 import com.datastax.oss.driver.api.core.cql.Row;
 import com.datastax.oss.driver.api.core.cql.SimpleStatement;
-import com.datastax.oss.driver.api.core.session.Session;
+import com.datastax.oss.driver.api.core.session.CqlSession;
 import com.datastax.oss.driver.api.core.type.DataType;
 import com.datastax.oss.driver.api.core.type.DataTypes;
 import com.datastax.oss.driver.api.core.type.codec.CodecNotFoundException;
@@ -153,12 +153,12 @@ public class CodecRegistryIT {
   @Test
   public void should_be_able_to_register_and_use_custom_codec() {
     // create a cluster with a registered codec from Float <-> cql int.
-    try (Cluster codecCluster =
+    try (Cluster<CqlSession> codecCluster =
         Cluster.builder()
             .addTypeCodecs(new FloatCIntCodec())
             .addContactPoints(ccm.getContactPoints())
             .build()) {
-      Session session = codecCluster.connect(cluster.keyspace());
+      CqlSession session = codecCluster.connect(cluster.keyspace());
 
       PreparedStatement prepared = session.prepare("INSERT INTO test (k, v) values (?, ?)");
 
@@ -269,12 +269,12 @@ public class CodecRegistryIT {
     TypeCodec<Map<Integer, Optional<String>>> mapWithOptionalValueCodec =
         TypeCodecs.mapOf(TypeCodecs.INT, new OptionalCodec<>(TypeCodecs.TEXT));
 
-    try (Cluster codecCluster =
+    try (Cluster<CqlSession> codecCluster =
         Cluster.builder()
             .addTypeCodecs(optionalMapCodec, mapWithOptionalValueCodec)
             .addContactPoints(ccm.getContactPoints())
             .build()) {
-      Session session = codecCluster.connect(cluster.keyspace());
+      CqlSession session = codecCluster.connect(cluster.keyspace());
 
       PreparedStatement prepared =
           session.prepare("INSERT INTO test2 (k0, k1, v) values (?, ?, ?)");

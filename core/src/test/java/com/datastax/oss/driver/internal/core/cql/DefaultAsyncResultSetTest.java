@@ -21,7 +21,7 @@ import com.datastax.oss.driver.api.core.cql.ColumnDefinition;
 import com.datastax.oss.driver.api.core.cql.ColumnDefinitions;
 import com.datastax.oss.driver.api.core.cql.ExecutionInfo;
 import com.datastax.oss.driver.api.core.cql.Statement;
-import com.datastax.oss.driver.api.core.session.Session;
+import com.datastax.oss.driver.api.core.session.CqlSession;
 import com.datastax.oss.driver.api.core.type.DataTypes;
 import com.datastax.oss.driver.api.core.type.codec.TypeCodecs;
 import com.datastax.oss.driver.api.core.type.codec.registry.CodecRegistry;
@@ -47,7 +47,7 @@ public class DefaultAsyncResultSetTest {
   @Mock private ColumnDefinitions columnDefinitions;
   @Mock private ExecutionInfo executionInfo;
   @Mock private Statement<?> statement;
-  @Mock private Session session;
+  @Mock private CqlSession session;
   @Mock private InternalDriverContext context;
 
   @Before

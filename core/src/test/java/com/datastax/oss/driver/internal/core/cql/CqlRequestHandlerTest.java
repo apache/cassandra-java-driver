@@ -54,12 +54,12 @@ public class CqlRequestHandlerTest extends CqlRequestHandlerTestBase {
             .build()) {
 
       CompletionStage<AsyncResultSet> resultSetFuture =
-          new CqlRequestHandler(
+          new CqlRequestAsyncHandler(
                   UNDEFINED_IDEMPOTENCE_STATEMENT,
                   harness.getSession(),
                   harness.getContext(),
                   "test")
-              .asyncResult();
+              .handle();
 
       assertThat(resultSetFuture)
           .isSuccess(
@@ -88,12 +88,12 @@ public class CqlRequestHandlerTest extends CqlRequestHandlerTestBase {
             .build()) {
 
       CompletionStage<AsyncResultSet> resultSetFuture =
-          new CqlRequestHandler(
+          new CqlRequestAsyncHandler(
                   UNDEFINED_IDEMPOTENCE_STATEMENT,
                   harness.getSession(),
                   harness.getContext(),
                   "test")
-              .asyncResult();
+              .handle();
 
       assertThat(resultSetFuture)
           .isFailed(error -> assertThat(error).isInstanceOf(NoNodeAvailableException.class));
@@ -109,12 +109,12 @@ public class CqlRequestHandlerTest extends CqlRequestHandlerTestBase {
     try (RequestHandlerTestHarness harness = harnessBuilder.build()) {
 
       CompletionStage<AsyncResultSet> resultSetFuture =
-          new CqlRequestHandler(
+          new CqlRequestAsyncHandler(
                   UNDEFINED_IDEMPOTENCE_STATEMENT,
                   harness.getSession(),
                   harness.getContext(),
                   "test")
-              .asyncResult();
+              .handle();
 
       // First scheduled task is the timeout, run it before node1 has responded
       ScheduledTaskCapturingEventLoop.CapturedTask<?> scheduledTask = harness.nextScheduledTask();
@@ -141,12 +141,12 @@ public class CqlRequestHandlerTest extends CqlRequestHandlerTestBase {
             .build()) {
 
       CompletionStage<AsyncResultSet> resultSetFuture =
-          new CqlRequestHandler(
+          new CqlRequestAsyncHandler(
                   UNDEFINED_IDEMPOTENCE_STATEMENT,
                   harness.getSession(),
                   harness.getContext(),
                   "test")
-              .asyncResult();
+              .handle();
 
       assertThat(resultSetFuture)
           .isSuccess(
@@ -181,8 +181,9 @@ public class CqlRequestHandlerTest extends CqlRequestHandlerTestBase {
       Mockito.when(harness.getSession().getRepreparePayloads()).thenReturn(repreparePayloads);
 
       CompletionStage<AsyncResultSet> resultSetFuture =
-          new CqlRequestHandler(boundStatement, harness.getSession(), harness.getContext(), "test")
-              .asyncResult();
+          new CqlRequestAsyncHandler(
+                  boundStatement, harness.getSession(), harness.getContext(), "test")
+              .handle();
 
       // Before we proceed, mock the PREPARE exchange that will occur as soon as we complete the
       // first response.

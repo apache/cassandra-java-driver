@@ -19,17 +19,24 @@ import com.datastax.oss.driver.api.core.config.CoreDriverOption;
 import com.datastax.oss.driver.api.core.context.DriverContext;
 import com.datastax.oss.driver.api.core.metadata.Metadata;
 import com.datastax.oss.driver.api.core.metadata.Node;
+import com.datastax.oss.driver.api.core.session.CqlSession;
 import com.datastax.oss.driver.api.core.session.Session;
 import com.datastax.oss.driver.internal.core.util.concurrent.BlockingOperation;
 import com.datastax.oss.driver.internal.core.util.concurrent.CompletableFutures;
 import java.util.ResourceBundle;
 import java.util.concurrent.CompletionStage;
 
-/** An instance of the driver, that connects to a Cassandra cluster. */
-public interface Cluster extends AsyncAutoCloseable {
+/**
+ * An instance of the driver, that connects to a Cassandra cluster.
+ *
+ * @param <SessionT> the type of session returned by this cluster. By default, this is {@link
+ *     CqlSession}.
+ */
+public interface Cluster<SessionT extends Session> extends AsyncAutoCloseable {
+
   /** Returns a builder to create a new instance of the default implementation. */
-  static ClusterBuilder builder() {
-    return new ClusterBuilder();
+  static DefaultClusterBuilder builder() {
+    return new DefaultClusterBuilder();
   }
 
   /**
@@ -72,14 +79,14 @@ public interface Cluster extends AsyncAutoCloseable {
   DriverContext getContext();
 
   /** Creates a new session to execute requests against a given keyspace. */
-  CompletionStage<Session> connectAsync(CqlIdentifier keyspace);
+  CompletionStage<SessionT> connectAsync(CqlIdentifier keyspace);
 
   /**
    * Creates a new session not tied to any keyspace.
    *
    * <p>This is equivalent to {@code this.connectAsync(null)}.
    */
-  default CompletionStage<Session> connectAsync() {
+  default CompletionStage<SessionT> connectAsync() {
     return connectAsync(null);
   }
 
@@ -88,7 +95,7 @@ public interface Cluster extends AsyncAutoCloseable {
    *
    * <p>This must not be called on a driver thread.
    */
-  default Session connect(CqlIdentifier keyspace) {
+  default SessionT connect(CqlIdentifier keyspace) {
     BlockingOperation.checkNotDriverThread();
     return CompletableFutures.getUninterruptibly(connectAsync(keyspace));
   }
@@ -98,7 +105,7 @@ public interface Cluster extends AsyncAutoCloseable {
    *
    * <p>This must not be called on a driver thread.
    */
-  default Session connect() {
+  default SessionT connect() {
     return connect(null);
   }
 }

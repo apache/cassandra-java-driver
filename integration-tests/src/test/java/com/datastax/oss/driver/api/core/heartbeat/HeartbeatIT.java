@@ -18,7 +18,7 @@ package com.datastax.oss.driver.api.core.heartbeat;
 import com.datastax.oss.driver.api.core.Cluster;
 import com.datastax.oss.driver.api.core.metadata.Node;
 import com.datastax.oss.driver.api.core.metadata.NodeState;
-import com.datastax.oss.driver.api.core.session.Session;
+import com.datastax.oss.driver.api.core.session.CqlSession;
 import com.datastax.oss.driver.api.testinfra.cluster.ClusterRule;
 import com.datastax.oss.driver.api.testinfra.cluster.ClusterUtils;
 import com.datastax.oss.driver.api.testinfra.simulacron.SimulacronRule;
@@ -187,7 +187,7 @@ public class HeartbeatIT {
     checkThat(() -> controlNodeHeartbeats.get() > 0).becomesTrue();
 
     // Create session to initialize pools.
-    Session session = cluster.cluster().connect();
+    CqlSession session = cluster.cluster().connect();
 
     // Ensure we get a heartbeat after a second.
     AtomicInteger heartbeats = new AtomicInteger();
@@ -229,7 +229,7 @@ public class HeartbeatIT {
     AtomicInteger heartbeats = registerHeartbeatListener();
 
     // Send requests over 2.5 seconds.
-    Session session = cluster.cluster().connect();
+    CqlSession session = cluster.cluster().connect();
     for (int i = 0; i < 25; i++) {
       session.executeAsync(noResponseQueryStr);
       session.executeAsync(noResponseQueryStr);
@@ -281,7 +281,7 @@ public class HeartbeatIT {
   @Category(LongTests.class)
   public void should_not_send_heartbeat_when_disabled() throws InterruptedException {
     // Disable heartbeats entirely, wait longer than the default timeout and make sure we didn't receive any
-    try (Cluster cluster =
+    try (Cluster<CqlSession> cluster =
         ClusterUtils.newCluster(simulacron, "connection.heartbeat.interval = 0 second")) {
       cluster.connect();
       AtomicInteger heartbeats = registerHeartbeatListener();

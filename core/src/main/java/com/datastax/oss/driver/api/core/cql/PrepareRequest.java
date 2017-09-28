@@ -19,6 +19,7 @@ import com.datastax.oss.driver.api.core.config.DriverConfigProfile;
 import com.datastax.oss.driver.api.core.retry.RetryPolicy;
 import com.datastax.oss.driver.api.core.session.Request;
 import com.datastax.oss.driver.api.core.session.Session;
+import com.datastax.oss.driver.api.core.type.reflect.GenericType;
 import java.nio.ByteBuffer;
 import java.util.Map;
 import java.util.concurrent.CompletionStage;
@@ -30,8 +31,26 @@ import java.util.concurrent.CompletionStage;
  * {@link Session}'s prepare methods. However a {@link RetryPolicy} implementation might use it if
  * it needs a custom behavior for prepare requests.
  */
-public interface PrepareRequest
-    extends Request<PreparedStatement, CompletionStage<PreparedStatement>> {
+public interface PrepareRequest extends Request {
+
+  /**
+   * The type returned when a CQL statement is prepared synchronously.
+   *
+   * <p>Most users won't use this explicitly. It is needed for the generic execute method ({@link
+   * Session#execute(Request, GenericType)}), but CQL statements will generally be prepared with one
+   * of the driver's built-in helper methods (such as {@link Session#prepare(SimpleStatement)}).
+   */
+  GenericType<PreparedStatement> SYNC = GenericType.of(PreparedStatement.class);
+
+  /**
+   * The type returned when a CQL statement is prepared asynchronously.
+   *
+   * <p>Most users won't use this explicitly. It is needed for the generic execute method ({@link
+   * Session#execute(Request, GenericType)}), but CQL statements will generally be prepared with one
+   * of the driver's built-in helper methods (such as {@link Session#prepareAsync(SimpleStatement)}.
+   */
+  GenericType<CompletionStage<PreparedStatement>> ASYNC =
+      new GenericType<CompletionStage<PreparedStatement>>() {};
 
   /** The CQL query to prepare. */
   String getQuery();

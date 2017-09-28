@@ -19,10 +19,11 @@ import com.datastax.oss.driver.api.core.AllNodesFailedException;
 import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.DriverTimeoutException;
 import com.datastax.oss.driver.api.core.config.CoreDriverOption;
+import com.datastax.oss.driver.api.core.config.DriverConfig;
+import com.datastax.oss.driver.api.core.config.DriverConfigProfile;
 import com.datastax.oss.driver.api.core.connection.FrameTooLongException;
 import com.datastax.oss.driver.api.core.cql.AsyncResultSet;
 import com.datastax.oss.driver.api.core.cql.ExecutionInfo;
-import com.datastax.oss.driver.api.core.cql.ResultSet;
 import com.datastax.oss.driver.api.core.cql.Statement;
 import com.datastax.oss.driver.api.core.metadata.Node;
 import com.datastax.oss.driver.api.core.retry.RetryDecision;
@@ -42,9 +43,6 @@ import com.datastax.oss.driver.internal.core.channel.ResponseCallback;
 import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
 import com.datastax.oss.driver.internal.core.session.DefaultSession;
 import com.datastax.oss.driver.internal.core.session.RepreparePayload;
-import com.datastax.oss.driver.internal.core.session.RequestHandlerBase;
-import com.datastax.oss.driver.internal.core.util.concurrent.BlockingOperation;
-import com.datastax.oss.driver.internal.core.util.concurrent.CompletableFutures;
 import com.datastax.oss.protocol.internal.Frame;
 import com.datastax.oss.protocol.internal.Message;
 import com.datastax.oss.protocol.internal.ProtocolConstants;
@@ -67,23 +65,27 @@ import java.time.Duration;
 import java.util.AbstractMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Queue;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.CompletionStage;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-/** Handles execution of a {@link Statement}. */
-public class CqlRequestHandler
-    extends RequestHandlerBase<ResultSet, CompletionStage<AsyncResultSet>> {
+public abstract class CqlRequestHandlerBase {
 
-  private static final Logger LOG = LoggerFactory.getLogger(CqlRequestHandler.class);
+  private static final Logger LOG = LoggerFactory.getLogger(CqlRequestHandlerBase.class);
 
   private final String logPrefix;
-  private final CompletableFuture<AsyncResultSet> result;
+  private final Statement<?> statement;
+  private final DefaultSession session;
+  private final CqlIdentifier keyspace;
+  private final InternalDriverContext context;
+  private final Queue<Node> queryPlan;
+  private final boolean isIdempotent;
+  protected final CompletableFuture<AsyncResultSet> result;
   private final Message message;
   private final EventExecutor scheduler;
   /**
@@ -110,14 +112,36 @@ public class CqlRequestHandler
   // We don't use a map because nodes can appear multiple times.
   private volatile List<Map.Entry<Node, Throwable>> errors;
 
-  CqlRequestHandler(
+  protected CqlRequestHandlerBase(
       Statement<?> statement,
       DefaultSession session,
       InternalDriverContext context,
       String sessionLogPrefix) {
-    super(statement, session, context);
+
     this.logPrefix = sessionLogPrefix + "|" + this.hashCode();
     LOG.debug("[{}] Creating new handler for request {}", logPrefix, statement);
+
+    this.statement = statement;
+    this.session = session;
+    this.keyspace = session.getKeyspace();
+    this.context = context;
+    this.queryPlan = context.loadBalancingPolicyWrapper().newQueryPlan();
+
+    DriverConfigProfile configProfile;
+    if (statement.getConfigProfile() != null) {
+      configProfile = statement.getConfigProfile();
+    } else {
+      DriverConfig config = context.config();
+      String profileName = statement.getConfigProfileName();
+      configProfile =
+          (profileName == null || profileName.isEmpty())
+              ? config.getDefaultProfile()
+              : config.getNamedProfile(profileName);
+    }
+    this.isIdempotent =
+        (statement.isIdempotent() == null)
+            ? configProfile.getBoolean(CoreDriverOption.REQUEST_DEFAULT_IDEMPOTENCE)
+            : statement.isIdempotent();
     this.result = new CompletableFuture<>();
     this.result.exceptionally(
         t -> {
@@ -143,7 +167,8 @@ public class CqlRequestHandler
 
     if (isIdempotent) {
       // Schedule the first speculative execution if applicable
-      long nextDelay = context.speculativeExecutionPolicy().nextExecution(keyspace, request, 1);
+      long nextDelay =
+          context.speculativeExecutionPolicy().nextExecution(keyspace, this.statement, 1);
       if (nextDelay >= 0) {
         LOG.debug("[{}] Scheduling speculative execution 1 in {} ms", logPrefix, nextDelay);
         this.scheduledExecutions = new CopyOnWriteArrayList<>();
@@ -165,18 +190,6 @@ public class CqlRequestHandler
     sendRequest(null, 0, 0);
   }
 
-  @Override
-  public CompletionStage<AsyncResultSet> asyncResult() {
-    return result;
-  }
-
-  @Override
-  public ResultSet syncResult() {
-    BlockingOperation.checkNotDriverThread();
-    AsyncResultSet firstPage = CompletableFutures.getUninterruptibly(asyncResult());
-    return ResultSets.newInstance(firstPage);
-  }
-
   private ScheduledFuture<?> scheduleTimeout(Duration timeout) {
     if (timeout.toNanos() > 0) {
       return scheduler.schedule(
@@ -194,7 +207,7 @@ public class CqlRequestHandler
       activeExecutionsCount.incrementAndGet();
       startedSpeculativeExecutionsCount.incrementAndGet();
       long nextDelay =
-          speculativeExecutionPolicy.nextExecution(keyspace, request, currentExecutionIndex + 1);
+          speculativeExecutionPolicy.nextExecution(keyspace, statement, currentExecutionIndex + 1);
       if (nextDelay >= 0) {
         LOG.trace(
             "[{}] Scheduling speculative execution {} in {} ms",
@@ -225,9 +238,9 @@ public class CqlRequestHandler
       return;
     }
     DriverChannel channel = null;
-    if (node == null || (channel = getChannel(node, logPrefix)) == null) {
+    if (node == null || (channel = session.getChannel(node, logPrefix)) == null) {
       while (!result.isDone() && (node = queryPlan.poll()) != null) {
-        channel = getChannel(node, logPrefix);
+        channel = session.getChannel(node, logPrefix);
         if (channel != null) {
           break;
         }
@@ -243,7 +256,7 @@ public class CqlRequestHandler
       NodeResponseCallback nodeResponseCallback =
           new NodeResponseCallback(node, channel, currentExecutionIndex, retryCount, logPrefix);
       channel
-          .write(message, request.isTracing(), request.getCustomPayload(), nodeResponseCallback)
+          .write(message, statement.isTracing(), statement.getCustomPayload(), nodeResponseCallback)
           .addListener(nodeResponseCallback);
     }
   }
@@ -252,7 +265,7 @@ public class CqlRequestHandler
     // Use a local variable to do only a single single volatile read in the nominal case
     List<Map.Entry<Node, Throwable>> errorsSnapshot = this.errors;
     if (errorsSnapshot == null) {
-      synchronized (CqlRequestHandler.this) {
+      synchronized (CqlRequestHandlerBase.this) {
         errorsSnapshot = this.errors;
         if (errorsSnapshot == null) {
           this.errors = errorsSnapshot = new CopyOnWriteArrayList<>();
@@ -301,7 +314,7 @@ public class CqlRequestHandler
     ByteBuffer pagingState =
         (resultMessage instanceof Rows) ? ((Rows) resultMessage).getMetadata().pagingState : null;
     return new DefaultExecutionInfo(
-        (Statement<?>) request,
+        statement,
         callback.node,
         startedSpeculativeExecutionsCount.get(),
         callback.execution,
@@ -448,7 +461,7 @@ public class CqlRequestHandler
           ReadTimeoutException readTimeout = (ReadTimeoutException) error;
           decision =
               retryPolicy.onReadTimeout(
-                  request,
+                  statement,
                   readTimeout.getConsistencyLevel(),
                   readTimeout.getBlockFor(),
                   readTimeout.getReceived(),
@@ -459,7 +472,7 @@ public class CqlRequestHandler
           decision =
               isIdempotent
                   ? retryPolicy.onWriteTimeout(
-                      request,
+                      statement,
                       writeTimeout.getConsistencyLevel(),
                       writeTimeout.getWriteType(),
                       writeTimeout.getBlockFor(),
@@ -470,7 +483,7 @@ public class CqlRequestHandler
           UnavailableException unavailable = (UnavailableException) error;
           decision =
               retryPolicy.onUnavailable(
-                  request,
+                  statement,
                   unavailable.getConsistencyLevel(),
                   unavailable.getRequired(),
                   unavailable.getAlive(),
@@ -478,7 +491,7 @@ public class CqlRequestHandler
         } else {
           decision =
               isIdempotent
-                  ? retryPolicy.onErrorResponse(request, error, retryCount)
+                  ? retryPolicy.onErrorResponse(statement, error, retryCount)
                   : RetryDecision.RETHROW;
         }
         processRetryDecision(decision, error);
@@ -516,7 +529,7 @@ public class CqlRequestHandler
       if (!isIdempotent || error instanceof FrameTooLongException) {
         decision = RetryDecision.RETHROW;
       } else {
-        decision = retryPolicy.onRequestAborted(request, error, retryCount);
+        decision = retryPolicy.onRequestAborted(statement, error, retryCount);
       }
       processRetryDecision(decision, error);
     }

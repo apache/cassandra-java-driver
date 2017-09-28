@@ -18,6 +18,8 @@ package com.datastax.oss.driver.api.core;
 import com.datastax.oss.driver.api.core.config.CoreDriverOption;
 import com.datastax.oss.driver.api.core.config.DriverConfigLoader;
 import com.datastax.oss.driver.api.core.config.DriverConfigProfile;
+import com.datastax.oss.driver.api.core.context.DriverContext;
+import com.datastax.oss.driver.api.core.session.CqlSession;
 import com.datastax.oss.driver.api.core.type.codec.TypeCodec;
 import com.datastax.oss.driver.internal.core.ContactPoints;
 import com.datastax.oss.driver.internal.core.DefaultCluster;
@@ -36,11 +38,20 @@ import java.util.Set;
 import java.util.concurrent.CompletionStage;
 import java.util.function.Supplier;
 
-/** Helper class to build an instance of the default {@link Cluster} implementation. */
-public class ClusterBuilder {
-  private DriverConfigLoader configLoader;
-  private Set<InetSocketAddress> programmaticContactPoints = new HashSet<>();
-  private List<TypeCodec<?>> typeCodecs = new ArrayList<>();
+/**
+ * Base implementation to build cluster instances.
+ *
+ * <p>You only need to deal with this directly if you use custom driver extensions. For the default
+ * cluster implementation, see {@link Cluster#builder()}.
+ */
+public abstract class ClusterBuilder<SelfT extends ClusterBuilder, ClusterT> {
+
+  @SuppressWarnings("unchecked")
+  protected final SelfT self = (SelfT) this;
+
+  protected DriverConfigLoader configLoader;
+  protected Set<InetSocketAddress> programmaticContactPoints = new HashSet<>();
+  protected List<TypeCodec<?>> typeCodecs = new ArrayList<>();
 
   /**
    * Sets the configuration loader to use.
@@ -70,12 +81,12 @@ public class ClusterBuilder {
    * @see <a href="https://github.com/typesafehub/config#standard-behavior">Typesafe config's
    *     standard loading behavior</a>
    */
-  public ClusterBuilder withConfigLoader(DriverConfigLoader configLoader) {
+  public SelfT withConfigLoader(DriverConfigLoader configLoader) {
     this.configLoader = configLoader;
-    return this;
+    return self;
   }
 
-  private static DriverConfigLoader defaultConfigLoader() {
+  protected DriverConfigLoader defaultConfigLoader() {
     return new DefaultDriverConfigLoader();
   }
 
@@ -95,9 +106,9 @@ public class ClusterBuilder {
    * If you need that, call {@link java.net.InetAddress#getAllByName(String)} before calling this
    * method.
    */
-  public ClusterBuilder addContactPoints(Collection<InetSocketAddress> contactPoints) {
+  public SelfT addContactPoints(Collection<InetSocketAddress> contactPoints) {
     this.programmaticContactPoints.addAll(contactPoints);
-    return this;
+    return self;
   }
 
   /**
@@ -105,15 +116,15 @@ public class ClusterBuilder {
    *
    * @see #addContactPoints(Collection)
    */
-  public ClusterBuilder addContactPoint(InetSocketAddress contactPoint) {
+  public SelfT addContactPoint(InetSocketAddress contactPoint) {
     this.programmaticContactPoints.add(contactPoint);
-    return this;
+    return self;
   }
 
   /** Registers additional codecs for custom type mappings. */
-  public ClusterBuilder addTypeCodecs(TypeCodec<?>... typeCodecs) {
+  public SelfT addTypeCodecs(TypeCodec<?>... typeCodecs) {
     Collections.addAll(this.typeCodecs, typeCodecs);
-    return this;
+    return self;
   }
 
   /**
@@ -121,9 +132,24 @@ public class ClusterBuilder {
    *
    * @return a completion stage that completes with the cluster when it is fully initialized.
    */
-  public CompletionStage<Cluster> buildAsync() {
-    DriverConfigLoader configLoader =
-        buildIfNull(this.configLoader, ClusterBuilder::defaultConfigLoader);
+  public CompletionStage<ClusterT> buildAsync() {
+    return buildDefaultClusterAsync().thenApply(this::wrap);
+  }
+
+  /**
+   * Convenience method to call {@link #buildAsync()} and block on the result.
+   *
+   * <p>This must not be called on a driver thread.
+   */
+  public ClusterT build() {
+    BlockingOperation.checkNotDriverThread();
+    return CompletableFutures.getUninterruptibly(buildAsync());
+  }
+
+  protected abstract ClusterT wrap(Cluster<CqlSession> defaultCluster);
+
+  protected final CompletionStage<Cluster<CqlSession>> buildDefaultClusterAsync() {
+    DriverConfigLoader configLoader = buildIfNull(this.configLoader, this::defaultConfigLoader);
 
     DriverConfigProfile defaultConfig = configLoader.getInitialConfig().getDefaultProfile();
     List<String> configContactPoints =
@@ -134,14 +160,17 @@ public class ClusterBuilder {
     Set<InetSocketAddress> contactPoints =
         ContactPoints.merge(programmaticContactPoints, configContactPoints);
 
-    InternalDriverContext context = new DefaultDriverContext(configLoader, typeCodecs);
-    return DefaultCluster.init(context, contactPoints);
+    return DefaultCluster.init(
+        (InternalDriverContext) buildContext(configLoader, typeCodecs), contactPoints);
   }
 
-  /** Convenience method to call {@link #buildAsync()} and block on the result. */
-  public Cluster build() {
-    BlockingOperation.checkNotDriverThread();
-    return CompletableFutures.getUninterruptibly(buildAsync());
+  /**
+   * This <b>must</b> return an instance of {@code InternalDriverContext} (it's not expressed
+   * directly in the signature to avoid leaking that type through the protected API).
+   */
+  protected DriverContext buildContext(
+      DriverConfigLoader configLoader, List<TypeCodec<?>> typeCodecs) {
+    return new DefaultDriverContext(configLoader, typeCodecs);
   }
 
   private static <T> T buildIfNull(T value, Supplier<T> builder) {

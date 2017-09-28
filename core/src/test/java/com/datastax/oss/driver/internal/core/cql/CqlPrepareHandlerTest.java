@@ -33,8 +33,11 @@ import com.datastax.oss.protocol.internal.response.result.RawType;
 import com.datastax.oss.protocol.internal.response.result.RowsMetadata;
 import com.datastax.oss.protocol.internal.util.Bytes;
 import com.google.common.collect.ImmutableList;
+import java.nio.ByteBuffer;
 import java.util.Collections;
 import java.util.concurrent.CompletionStage;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
@@ -54,15 +57,15 @@ public class CqlPrepareHandlerTest {
   @Mock private Node node2;
   @Mock private Node node3;
 
-  @Mock private CqlPrepareProcessor processor;
+  private ConcurrentMap<ByteBuffer, DefaultPreparedStatement> preparedStatementsCache =
+      new ConcurrentHashMap<>();
 
   @Before
   public void setup() {
     MockitoAnnotations.initMocks(this);
 
     // By default, simulate that the prepared statement is not already in the driver's cache
-    Mockito.when(processor.cache(any(DefaultPreparedStatement.class)))
-        .thenAnswer(invocation -> invocation.getArgument(0));
+    preparedStatementsCache.clear();
   }
 
   @Test
@@ -75,9 +78,13 @@ public class CqlPrepareHandlerTest {
     try (RequestHandlerTestHarness harness = harnessBuilder.build()) {
 
       CompletionStage<PreparedStatement> prepareFuture =
-          new CqlPrepareHandler(
-                  PREPARE_REQUEST, processor, harness.getSession(), harness.getContext(), "test")
-              .asyncResult();
+          new CqlPrepareAsyncHandler(
+                  PREPARE_REQUEST,
+                  preparedStatementsCache,
+                  harness.getSession(),
+                  harness.getContext(),
+                  "test")
+              .handle();
 
       node1Behavior.verifyWrite();
       node1Behavior.setWriteSuccess();
@@ -112,9 +119,13 @@ public class CqlPrepareHandlerTest {
       Mockito.when(config.getBoolean(CoreDriverOption.PREPARE_ON_ALL_NODES)).thenReturn(false);
 
       CompletionStage<PreparedStatement> prepareFuture =
-          new CqlPrepareHandler(
-                  PREPARE_REQUEST, processor, harness.getSession(), harness.getContext(), "test")
-              .asyncResult();
+          new CqlPrepareAsyncHandler(
+                  PREPARE_REQUEST,
+                  preparedStatementsCache,
+                  harness.getSession(),
+                  harness.getContext(),
+                  "test")
+              .handle();
 
       node1Behavior.verifyWrite();
       node1Behavior.setWriteSuccess();
@@ -133,8 +144,7 @@ public class CqlPrepareHandlerTest {
   public void should_not_reprepare_on_other_nodes_if_already_cached() {
     // Simulate an existing entry in the driver's cache:
     DefaultPreparedStatement mockExistingStatement = Mockito.mock(DefaultPreparedStatement.class);
-    Mockito.when(processor.cache(any(DefaultPreparedStatement.class)))
-        .thenAnswer(invocation -> mockExistingStatement);
+    preparedStatementsCache.put(Bytes.fromHexString("0xffff"), mockExistingStatement);
 
     RequestHandlerTestHarness.Builder harnessBuilder = RequestHandlerTestHarness.builder();
     PoolBehavior node1Behavior = harnessBuilder.customBehavior(node1);
@@ -144,9 +154,13 @@ public class CqlPrepareHandlerTest {
     try (RequestHandlerTestHarness harness = harnessBuilder.build()) {
 
       CompletionStage<PreparedStatement> prepareFuture =
-          new CqlPrepareHandler(
-                  PREPARE_REQUEST, processor, harness.getSession(), harness.getContext(), "test")
-              .asyncResult();
+          new CqlPrepareAsyncHandler(
+                  PREPARE_REQUEST,
+                  preparedStatementsCache,
+                  harness.getSession(),
+                  harness.getContext(),
+                  "test")
+              .handle();
 
       node1Behavior.verifyWrite();
       node1Behavior.setWriteSuccess();
@@ -174,9 +188,13 @@ public class CqlPrepareHandlerTest {
     try (RequestHandlerTestHarness harness = harnessBuilder.build()) {
 
       CompletionStage<PreparedStatement> prepareFuture =
-          new CqlPrepareHandler(
-                  PREPARE_REQUEST, processor, harness.getSession(), harness.getContext(), "test")
-              .asyncResult();
+          new CqlPrepareAsyncHandler(
+                  PREPARE_REQUEST,
+                  preparedStatementsCache,
+                  harness.getSession(),
+                  harness.getContext(),
+                  "test")
+              .handle();
 
       assertThat(prepareFuture).isNotDone();
 
@@ -214,9 +232,13 @@ public class CqlPrepareHandlerTest {
           .thenReturn(RetryDecision.RETRY_NEXT);
 
       CompletionStage<PreparedStatement> prepareFuture =
-          new CqlPrepareHandler(
-                  PREPARE_REQUEST, processor, harness.getSession(), harness.getContext(), "test")
-              .asyncResult();
+          new CqlPrepareAsyncHandler(
+                  PREPARE_REQUEST,
+                  preparedStatementsCache,
+                  harness.getSession(),
+                  harness.getContext(),
+                  "test")
+              .handle();
 
       // Success on node2, reprepare on node3
       assertThat(prepareFuture).isNotDone();
@@ -249,9 +271,13 @@ public class CqlPrepareHandlerTest {
           .thenReturn(RetryDecision.RETHROW);
 
       CompletionStage<PreparedStatement> prepareFuture =
-          new CqlPrepareHandler(
-                  PREPARE_REQUEST, processor, harness.getSession(), harness.getContext(), "test")
-              .asyncResult();
+          new CqlPrepareAsyncHandler(
+                  PREPARE_REQUEST,
+                  preparedStatementsCache,
+                  harness.getSession(),
+                  harness.getContext(),
+                  "test")
+              .handle();
 
       // Success on node2, reprepare on node3
       assertThat(prepareFuture)
@@ -285,9 +311,13 @@ public class CqlPrepareHandlerTest {
           .thenReturn(RetryDecision.IGNORE);
 
       CompletionStage<PreparedStatement> prepareFuture =
-          new CqlPrepareHandler(
-                  PREPARE_REQUEST, processor, harness.getSession(), harness.getContext(), "test")
-              .asyncResult();
+          new CqlPrepareAsyncHandler(
+                  PREPARE_REQUEST,
+                  preparedStatementsCache,
+                  harness.getSession(),
+                  harness.getContext(),
+                  "test")
+              .handle();
 
       // Success on node2, reprepare on node3
       assertThat(prepareFuture)

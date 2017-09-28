@@ -48,8 +48,8 @@ public class CqlRequestHandlerSpeculativeExecutionTest extends CqlRequestHandler
       SpeculativeExecutionPolicy speculativeExecutionPolicy =
           harness.getContext().speculativeExecutionPolicy();
 
-      new CqlRequestHandler(statement, harness.getSession(), harness.getContext(), "test")
-          .asyncResult();
+      new CqlRequestAsyncHandler(statement, harness.getSession(), harness.getContext(), "test")
+          .handle();
 
       node1Behavior.verifyWrite();
 
@@ -81,8 +81,8 @@ public class CqlRequestHandlerSpeculativeExecutionTest extends CqlRequestHandler
           .thenReturn(secondExecutionDelay);
       Mockito.when(speculativeExecutionPolicy.nextExecution(null, statement, 3)).thenReturn(-1L);
 
-      new CqlRequestHandler(statement, harness.getSession(), harness.getContext(), "test")
-          .asyncResult();
+      new CqlRequestAsyncHandler(statement, harness.getSession(), harness.getContext(), "test")
+          .handle();
 
       node1Behavior.verifyWrite();
 
@@ -127,8 +127,8 @@ public class CqlRequestHandlerSpeculativeExecutionTest extends CqlRequestHandler
           .thenReturn(firstExecutionDelay);
 
       CompletionStage<AsyncResultSet> resultSetFuture =
-          new CqlRequestHandler(statement, harness.getSession(), harness.getContext(), "test")
-              .asyncResult();
+          new CqlRequestAsyncHandler(statement, harness.getSession(), harness.getContext(), "test")
+              .handle();
       node1Behavior.verifyWrite();
 
       harness.nextScheduledTask(); // Discard the timeout task
@@ -170,8 +170,8 @@ public class CqlRequestHandlerSpeculativeExecutionTest extends CqlRequestHandler
           .thenReturn(firstExecutionDelay);
 
       CompletionStage<AsyncResultSet> resultSetFuture =
-          new CqlRequestHandler(statement, harness.getSession(), harness.getContext(), "test")
-              .asyncResult();
+          new CqlRequestAsyncHandler(statement, harness.getSession(), harness.getContext(), "test")
+              .handle();
 
       harness.nextScheduledTask(); // Discard the timeout task
 
@@ -208,8 +208,8 @@ public class CqlRequestHandlerSpeculativeExecutionTest extends CqlRequestHandler
           .thenReturn(firstExecutionDelay);
 
       CompletionStage<AsyncResultSet> resultSetFuture =
-          new CqlRequestHandler(statement, harness.getSession(), harness.getContext(), "test")
-              .asyncResult();
+          new CqlRequestAsyncHandler(statement, harness.getSession(), harness.getContext(), "test")
+              .handle();
       node1Behavior.verifyWrite();
       node1Behavior.setWriteSuccess();
       // do not simulate a response from node1 yet
@@ -259,8 +259,8 @@ public class CqlRequestHandlerSpeculativeExecutionTest extends CqlRequestHandler
           .thenReturn(firstExecutionDelay);
 
       CompletionStage<AsyncResultSet> resultSetFuture =
-          new CqlRequestHandler(statement, harness.getSession(), harness.getContext(), "test")
-              .asyncResult();
+          new CqlRequestAsyncHandler(statement, harness.getSession(), harness.getContext(), "test")
+              .handle();
       node1Behavior.verifyWrite();
       node1Behavior.setWriteSuccess();
       // do not simulate a response from node1 yet
@@ -314,8 +314,8 @@ public class CqlRequestHandlerSpeculativeExecutionTest extends CqlRequestHandler
           .thenReturn(firstExecutionDelay);
 
       CompletionStage<AsyncResultSet> resultSetFuture =
-          new CqlRequestHandler(statement, harness.getSession(), harness.getContext(), "test")
-              .asyncResult();
+          new CqlRequestAsyncHandler(statement, harness.getSession(), harness.getContext(), "test")
+              .handle();
       node1Behavior.verifyWrite();
       node1Behavior.setWriteSuccess();
       // do not simulate a response from node1. The request will stay hanging for the rest of this test
@@ -360,8 +360,8 @@ public class CqlRequestHandlerSpeculativeExecutionTest extends CqlRequestHandler
           .thenReturn(firstExecutionDelay);
 
       CompletionStage<AsyncResultSet> resultSetFuture =
-          new CqlRequestHandler(statement, harness.getSession(), harness.getContext(), "test")
-              .asyncResult();
+          new CqlRequestAsyncHandler(statement, harness.getSession(), harness.getContext(), "test")
+              .handle();
       node1Behavior.verifyWrite();
 
       harness.nextScheduledTask(); // Discard the timeout task

@@ -23,8 +23,10 @@ import com.datastax.oss.driver.api.core.loadbalancing.LoadBalancingPolicy;
 import com.datastax.oss.driver.api.core.loadbalancing.NodeDistance;
 import com.datastax.oss.driver.api.core.metadata.Node;
 import com.datastax.oss.driver.api.core.metadata.NodeState;
+import com.datastax.oss.driver.api.core.session.CqlSession;
 import com.datastax.oss.driver.api.core.session.Request;
-import com.datastax.oss.driver.api.core.session.Session;
+import com.datastax.oss.driver.api.core.type.reflect.GenericType;
+import com.datastax.oss.driver.internal.core.channel.DriverChannel;
 import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
 import com.datastax.oss.driver.internal.core.metadata.DefaultNode;
 import com.datastax.oss.driver.internal.core.metadata.DistanceEvent;
@@ -68,11 +70,11 @@ import org.slf4j.LoggerFactory;
  *   <li>trying to send the message on each pool, in the order of the query plan
  * </ul>
  */
-public class DefaultSession implements Session {
+public class DefaultSession implements CqlSession {
 
   private static final Logger LOG = LoggerFactory.getLogger(DefaultSession.class);
 
-  public static CompletionStage<Session> init(
+  public static CompletionStage<CqlSession> init(
       InternalDriverContext context, CqlIdentifier keyspace, String logPrefix) {
     return new DefaultSession(context, keyspace, logPrefix).init();
   }
@@ -98,7 +100,7 @@ public class DefaultSession implements Session {
   // its cache.
   // This is raw protocol-level data, as opposed to the actual instances returned to the client
   // (e.g. DefaultPreparedStatement) which are handled at the protocol level (e.g.
-  // CqlPrepareProcessor). We keep the two separate to avoid introducing a dependency from the
+  // CqlPrepareAsyncProcessor). We keep the two separate to avoid introducing a dependency from the
   // session to a particular processor implementation.
   private ConcurrentMap<ByteBuffer, RepreparePayload> repreparePayloads =
       new MapMaker().weakValues().makeMap();
@@ -113,7 +115,7 @@ public class DefaultSession implements Session {
     this.logPrefix = logPrefix;
   }
 
-  private CompletionStage<Session> init() {
+  private CompletionStage<CqlSession> init() {
     RunOrSchedule.on(adminExecutor, singleThreaded::init);
     return singleThreaded.initFuture;
   }
@@ -153,24 +155,35 @@ public class DefaultSession implements Session {
   }
 
   @Override
-  public <SyncResultT, AsyncResultT> SyncResultT execute(
-      Request<SyncResultT, AsyncResultT> request) {
-    return newHandler(request).syncResult();
-  }
-
-  @Override
-  public <SyncResultT, AsyncResultT> AsyncResultT executeAsync(
-      Request<SyncResultT, AsyncResultT> request) {
-    return newHandler(request).asyncResult();
-  }
-
-  private <SyncResultT, AsyncResultT> RequestHandler<SyncResultT, AsyncResultT> newHandler(
-      Request<SyncResultT, AsyncResultT> request) {
+  public <RequestT extends Request, ResultT> ResultT execute(
+      RequestT request, GenericType<ResultT> resultType) {
     if (request.getKeyspace() != null) {
       // TODO CASSANDRA-10145
       throw new UnsupportedOperationException("Per-request keyspaces are not supported yet");
     }
-    return processorRegistry.processorFor(request).newHandler(request, this, context, logPrefix);
+    return processorRegistry
+        .processorFor(request, resultType)
+        .newHandler(request, this, context, logPrefix)
+        .handle();
+  }
+
+  public DriverChannel getChannel(Node node, String logPrefix) {
+    ChannelPool pool = pools.get(node);
+    if (pool == null) {
+      LOG.debug("[{}] No pool to {}, skipping", logPrefix, node);
+      return null;
+    } else {
+      DriverChannel channel = pool.next();
+      if (channel == null) {
+        LOG.trace("[{}] Pool returned no channel for {}, skipping", logPrefix, node);
+        return null;
+      } else if (channel.closeFuture().isDone()) {
+        LOG.trace("[{}] Pool returned closed connection to {}, skipping", logPrefix, node);
+        return null;
+      } else {
+        return channel;
+      }
+    }
   }
 
   public ConcurrentMap<ByteBuffer, RepreparePayload> getRepreparePayloads() {
@@ -198,7 +211,7 @@ public class DefaultSession implements Session {
 
     private final InternalDriverContext context;
     private final ChannelPoolFactory channelPoolFactory;
-    private final CompletableFuture<Session> initFuture = new CompletableFuture<>();
+    private final CompletableFuture<CqlSession> initFuture = new CompletableFuture<>();
     private boolean initWasCalled;
     private final CompletableFuture<Void> closeFuture = new CompletableFuture<>();
     private boolean closeWasCalled;

@@ -16,8 +16,15 @@
 package com.datastax.oss.driver.internal.core.session;
 
 import com.datastax.oss.driver.api.core.session.Request;
-import com.datastax.oss.driver.internal.core.cql.CqlPrepareProcessor;
-import com.datastax.oss.driver.internal.core.cql.CqlRequestProcessor;
+import com.datastax.oss.driver.api.core.type.reflect.GenericType;
+import com.datastax.oss.driver.internal.core.cql.CqlPrepareAsyncProcessor;
+import com.datastax.oss.driver.internal.core.cql.CqlPrepareSyncProcessor;
+import com.datastax.oss.driver.internal.core.cql.CqlRequestAsyncProcessor;
+import com.datastax.oss.driver.internal.core.cql.CqlRequestSyncProcessor;
+import com.datastax.oss.driver.internal.core.cql.DefaultPreparedStatement;
+import com.google.common.collect.MapMaker;
+import java.nio.ByteBuffer;
+import java.util.concurrent.ConcurrentMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -26,8 +33,15 @@ public class RequestProcessorRegistry {
   private static final Logger LOG = LoggerFactory.getLogger(RequestProcessorRegistry.class);
 
   public static RequestProcessorRegistry defaultCqlProcessors(String logPrefix) {
+    ConcurrentMap<ByteBuffer, DefaultPreparedStatement> preparedStatementsCache =
+        new MapMaker().weakValues().makeMap();
+
     return new RequestProcessorRegistry(
-        logPrefix, new CqlRequestProcessor(), new CqlPrepareProcessor());
+        logPrefix,
+        new CqlRequestSyncProcessor(),
+        new CqlRequestAsyncProcessor(),
+        new CqlPrepareSyncProcessor(preparedStatementsCache),
+        new CqlPrepareAsyncProcessor(preparedStatementsCache));
   }
 
   private final String logPrefix;
@@ -39,16 +53,16 @@ public class RequestProcessorRegistry {
     this.processors = processors;
   }
 
-  public <SyncResultT, AsyncResultT> RequestProcessor<SyncResultT, AsyncResultT> processorFor(
-      Request<SyncResultT, AsyncResultT> request) {
+  public <RequestT extends Request, ResultT> RequestProcessor<RequestT, ResultT> processorFor(
+      RequestT request, GenericType<ResultT> resultType) {
 
     for (RequestProcessor<?, ?> processor : processors) {
-      if (processor.canProcess(request)) {
+      if (processor.canProcess(request, resultType)) {
         LOG.trace("[{}] Using {} to process {}", logPrefix, processor, request);
         // The cast is safe provided that the processor implements canProcess correctly
         @SuppressWarnings("unchecked")
-        RequestProcessor<SyncResultT, AsyncResultT> result =
-            (RequestProcessor<SyncResultT, AsyncResultT>) processor;
+        RequestProcessor<RequestT, ResultT> result =
+            (RequestProcessor<RequestT, ResultT>) processor;
         return result;
       } else {
         LOG.trace("[{}] {} cannot process {}, trying next", logPrefix, processor, request);

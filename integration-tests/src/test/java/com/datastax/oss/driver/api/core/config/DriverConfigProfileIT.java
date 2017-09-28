@@ -26,7 +26,7 @@ import com.datastax.oss.driver.api.core.cql.PreparedStatement;
 import com.datastax.oss.driver.api.core.cql.ResultSet;
 import com.datastax.oss.driver.api.core.cql.SimpleStatement;
 import com.datastax.oss.driver.api.core.servererrors.ServerError;
-import com.datastax.oss.driver.api.core.session.Session;
+import com.datastax.oss.driver.api.core.session.CqlSession;
 import com.datastax.oss.driver.api.testinfra.ccm.CcmRule;
 import com.datastax.oss.driver.api.testinfra.cluster.ClusterUtils;
 import com.datastax.oss.driver.api.testinfra.simulacron.SimulacronRule;
@@ -56,8 +56,8 @@ public class DriverConfigProfileIT {
 
   @Test
   public void should_fail_if_config_profile_specified_doesnt_exist() {
-    try (Cluster profileCluster = ClusterUtils.newCluster(simulacron)) {
-      Session session = profileCluster.connect();
+    try (Cluster<CqlSession> profileCluster = ClusterUtils.newCluster(simulacron)) {
+      CqlSession session = profileCluster.connect();
 
       SimpleStatement statement =
           SimpleStatement.builder("select * from system.local")
@@ -72,12 +72,12 @@ public class DriverConfigProfileIT {
 
   @Test
   public void should_use_profile_request_timeout() {
-    try (Cluster profileCluster =
+    try (Cluster<CqlSession> profileCluster =
         ClusterUtils.newCluster(simulacron, "profiles.olap.request.timeout = 10s")) {
       String query = "mockquery";
       // configure query with delay of 2 seconds.
       simulacron.cluster().prime(when(query).then(noRows()).delay(1, TimeUnit.SECONDS));
-      Session session = profileCluster.connect();
+      CqlSession session = profileCluster.connect();
 
       // Execute query without profile, should timeout with default (0.5s).
       try {
@@ -94,13 +94,13 @@ public class DriverConfigProfileIT {
 
   @Test
   public void should_use_profile_default_idempotence() {
-    try (Cluster profileCluster =
+    try (Cluster<CqlSession> profileCluster =
         ClusterUtils.newCluster(simulacron, "profiles.idem.request.default-idempotence = true")) {
       String query = "mockquery";
       // configure query with server error which should invoke onRequestError in retry policy.
       simulacron.cluster().prime(when(query).then(serverError("fail")));
 
-      Session session = profileCluster.connect();
+      CqlSession session = profileCluster.connect();
 
       // Execute query without profile, should fail because couldn't be retried.
       try {
@@ -118,14 +118,14 @@ public class DriverConfigProfileIT {
 
   @Test
   public void should_use_profile_consistency() {
-    try (Cluster profileCluster =
+    try (Cluster<CqlSession> profileCluster =
         ClusterUtils.newCluster(
             simulacron,
             "profiles.cl.request.consistency = LOCAL_QUORUM",
             "profiles.cl.request.serial-consistency = LOCAL_SERIAL")) {
       String query = "mockquery";
 
-      Session session = profileCluster.connect();
+      CqlSession session = profileCluster.connect();
 
       // Execute query without profile, should use default CLs (LOCAL_ONE, SERIAL).
       session.execute(query);
@@ -173,7 +173,7 @@ public class DriverConfigProfileIT {
 
   @Test
   public void should_use_profile_page_size() {
-    try (Cluster profileCluster =
+    try (Cluster<CqlSession> profileCluster =
         ClusterUtils.newCluster(
             ccm, "request.page-size = 100", "profiles.smallpages.request.page-size = 10")) {
 
@@ -181,7 +181,7 @@ public class DriverConfigProfileIT {
       DriverConfigProfile slowProfile = ClusterUtils.slowProfile(profileCluster);
       ClusterUtils.createKeyspace(profileCluster, keyspace, slowProfile);
 
-      Session session = profileCluster.connect(keyspace);
+      CqlSession session = profileCluster.connect(keyspace);
 
       // load 500 rows (value beyond page size).
       session.execute(

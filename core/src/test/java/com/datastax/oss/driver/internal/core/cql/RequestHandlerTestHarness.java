@@ -50,6 +50,7 @@ import org.mockito.stubbing.OngoingStubbing;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.anyString;
 
 /**
  * Provides the environment to test a request handler, where a query plan can be defined, and the
@@ -117,7 +118,12 @@ public class RequestHandlerTestHarness implements AutoCloseable {
     Mockito.when(context.timestampGenerator()).thenReturn(timestampGenerator);
 
     Map<Node, ChannelPool> pools = builder.buildMockPools();
-    Mockito.when(session.getPools()).thenReturn(pools);
+    Mockito.when(session.getChannel(any(Node.class), anyString()))
+        .thenAnswer(
+            invocation -> {
+              Node node = invocation.getArgument(0);
+              return pools.get(node).next();
+            });
     Mockito.when(session.getRepreparePayloads()).thenReturn(new ConcurrentHashMap<>());
   }
 
