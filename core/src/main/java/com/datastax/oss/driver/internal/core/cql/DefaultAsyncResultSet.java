@@ -20,7 +20,7 @@ import com.datastax.oss.driver.api.core.cql.ColumnDefinitions;
 import com.datastax.oss.driver.api.core.cql.ExecutionInfo;
 import com.datastax.oss.driver.api.core.cql.Row;
 import com.datastax.oss.driver.api.core.cql.Statement;
-import com.datastax.oss.driver.api.core.session.Session;
+import com.datastax.oss.driver.api.core.session.CqlSession;
 import com.datastax.oss.driver.api.core.type.DataTypes;
 import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
 import com.datastax.oss.driver.internal.core.util.CountingIterator;
@@ -38,7 +38,7 @@ public class DefaultAsyncResultSet implements AsyncResultSet {
 
   private final ColumnDefinitions definitions;
   private final ExecutionInfo executionInfo;
-  private final Session session;
+  private final CqlSession session;
   private final CountingIterator<Row> iterator;
   private final Iterable<Row> currentPage;
 
@@ -46,7 +46,7 @@ public class DefaultAsyncResultSet implements AsyncResultSet {
       ColumnDefinitions definitions,
       ExecutionInfo executionInfo,
       Queue<List<ByteBuffer>> data,
-      Session session,
+      CqlSession session,
       InternalDriverContext context) {
     this.definitions = definitions;
     this.executionInfo = executionInfo;

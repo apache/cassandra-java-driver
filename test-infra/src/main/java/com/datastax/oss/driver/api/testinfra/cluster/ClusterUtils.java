@@ -20,7 +20,7 @@ import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.config.CoreDriverOption;
 import com.datastax.oss.driver.api.core.config.DriverConfigProfile;
 import com.datastax.oss.driver.api.core.cql.SimpleStatement;
-import com.datastax.oss.driver.api.core.session.Session;
+import com.datastax.oss.driver.api.core.session.CqlSession;
 import com.datastax.oss.driver.api.testinfra.CassandraResourceRule;
 import com.datastax.oss.driver.internal.testinfra.cluster.TestConfigLoader;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -59,7 +59,8 @@ public class ClusterUtils {
    * in the 0th DC of the provided Cassandra resource as contact points, and the default
    * configuration augmented with the provided options.
    */
-  public static Cluster newCluster(CassandraResourceRule cassandraResource, String... options) {
+  public static Cluster<CqlSession> newCluster(
+      CassandraResourceRule cassandraResource, String... options) {
     return Cluster.builder()
         .addContactPoints(cassandraResource.getContactPoints())
         .withConfigLoader(new TestConfigLoader(options))
@@ -77,8 +78,8 @@ public class ClusterUtils {
 
   /** Creates a keyspace through the given cluster instance, with the given profile. */
   public static void createKeyspace(
-      Cluster cluster, CqlIdentifier keyspace, DriverConfigProfile profile) {
-    try (Session session = cluster.connect()) {
+      Cluster<CqlSession> cluster, CqlIdentifier keyspace, DriverConfigProfile profile) {
+    try (CqlSession session = cluster.connect()) {
       SimpleStatement createKeyspace =
           SimpleStatement.builder(
                   String.format(
@@ -98,14 +99,14 @@ public class ClusterUtils {
    * overhead. Instead, consider building the profile manually with {@link #slowProfile(Cluster)},
    * and storing it in a local variable so it can be reused.
    */
-  public static void createKeyspace(Cluster cluster, CqlIdentifier keyspace) {
+  public static void createKeyspace(Cluster<CqlSession> cluster, CqlIdentifier keyspace) {
     createKeyspace(cluster, keyspace, slowProfile(cluster));
   }
 
   /** Drops a keyspace through the given cluster instance, with the given profile. */
   public static void dropKeyspace(
-      Cluster cluster, CqlIdentifier keyspace, DriverConfigProfile profile) {
-    try (Session session = cluster.connect()) {
+      Cluster<CqlSession> cluster, CqlIdentifier keyspace, DriverConfigProfile profile) {
+    try (CqlSession session = cluster.connect()) {
       session.execute(
           SimpleStatement.builder(String.format("DROP KEYSPACE IF EXISTS %s", keyspace.asCql()))
               .withConfigProfile(profile)
@@ -121,7 +122,7 @@ public class ClusterUtils {
    * overhead. Instead, consider building the profile manually with {@link #slowProfile(Cluster)},
    * and storing it in a local variable so it can be reused.
    */
-  public static void dropKeyspace(Cluster cluster, CqlIdentifier keyspace) {
+  public static void dropKeyspace(Cluster<CqlSession> cluster, CqlIdentifier keyspace) {
     dropKeyspace(cluster, keyspace, slowProfile(cluster));
   }
 
@@ -129,7 +130,7 @@ public class ClusterUtils {
    * Builds a profile derived from the given cluster's default profile, with a higher request
    * timeout (30 seconds) that is appropriate for DML operations.
    */
-  public static DriverConfigProfile slowProfile(Cluster cluster) {
+  public static DriverConfigProfile slowProfile(Cluster<CqlSession> cluster) {
     return cluster
         .getContext()
         .config()

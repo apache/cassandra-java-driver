@@ -23,6 +23,7 @@ import com.datastax.oss.driver.api.core.loadbalancing.NodeDistance;
 import com.datastax.oss.driver.api.core.metadata.Metadata;
 import com.datastax.oss.driver.api.core.metadata.Node;
 import com.datastax.oss.driver.api.core.metadata.NodeState;
+import com.datastax.oss.driver.api.core.session.CqlSession;
 import com.datastax.oss.driver.api.core.session.Session;
 import com.datastax.oss.driver.internal.core.context.EventBus;
 import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
@@ -123,7 +124,7 @@ public class DefaultSessionTest {
             .pending(node3, KEYSPACE, NodeDistance.REMOTE, pool3Future)
             .build();
 
-    CompletionStage<Session> initFuture = DefaultSession.init(context, KEYSPACE, "test");
+    CompletionStage<CqlSession> initFuture = DefaultSession.init(context, KEYSPACE, "test");
 
     factoryHelper.waitForCall(node1, KEYSPACE, NodeDistance.LOCAL);
     factoryHelper.waitForCall(node2, KEYSPACE, NodeDistance.LOCAL);
@@ -157,7 +158,7 @@ public class DefaultSessionTest {
             .success(node3, KEYSPACE, NodeDistance.LOCAL, pool3)
             .build();
 
-    CompletionStage<Session> initFuture = DefaultSession.init(context, KEYSPACE, "test");
+    CompletionStage<CqlSession> initFuture = DefaultSession.init(context, KEYSPACE, "test");
 
     factoryHelper.waitForCall(node1, KEYSPACE, NodeDistance.LOCAL);
     factoryHelper.waitForCall(node3, KEYSPACE, NodeDistance.LOCAL);
@@ -181,7 +182,7 @@ public class DefaultSessionTest {
             .success(node3, KEYSPACE, NodeDistance.LOCAL, pool3)
             .build();
 
-    CompletionStage<Session> initFuture = DefaultSession.init(context, KEYSPACE, "test");
+    CompletionStage<CqlSession> initFuture = DefaultSession.init(context, KEYSPACE, "test");
 
     factoryHelper.waitForCall(node1, KEYSPACE, NodeDistance.LOCAL);
     factoryHelper.waitForCall(node3, KEYSPACE, NodeDistance.LOCAL);
@@ -207,7 +208,7 @@ public class DefaultSessionTest {
             .pending(node3, KEYSPACE, NodeDistance.LOCAL, pool3Future)
             .build();
 
-    CompletionStage<Session> initFuture = DefaultSession.init(context, KEYSPACE, "test");
+    CompletionStage<CqlSession> initFuture = DefaultSession.init(context, KEYSPACE, "test");
 
     factoryHelper.waitForCall(node1, KEYSPACE, NodeDistance.LOCAL);
     factoryHelper.waitForCall(node2, KEYSPACE, NodeDistance.LOCAL);
@@ -248,7 +249,7 @@ public class DefaultSessionTest {
             .pending(node3, KEYSPACE, NodeDistance.LOCAL, pool3Future)
             .build();
 
-    CompletionStage<Session> initFuture = DefaultSession.init(context, KEYSPACE, "test");
+    CompletionStage<CqlSession> initFuture = DefaultSession.init(context, KEYSPACE, "test");
 
     factoryHelper.waitForCall(node1, KEYSPACE, NodeDistance.LOCAL);
     factoryHelper.waitForCall(node2, KEYSPACE, NodeDistance.LOCAL);
@@ -288,7 +289,7 @@ public class DefaultSessionTest {
             .pending(node3, KEYSPACE, NodeDistance.LOCAL, pool3Future)
             .build();
 
-    CompletionStage<Session> initFuture = DefaultSession.init(context, KEYSPACE, "test");
+    CompletionStage<CqlSession> initFuture = DefaultSession.init(context, KEYSPACE, "test");
 
     factoryHelper.waitForCall(node1, KEYSPACE, NodeDistance.LOCAL);
     factoryHelper.waitForCall(node2, KEYSPACE, NodeDistance.LOCAL);
@@ -325,7 +326,7 @@ public class DefaultSessionTest {
             .success(node3, KEYSPACE, NodeDistance.LOCAL, pool3)
             .build();
 
-    CompletionStage<Session> initFuture = DefaultSession.init(context, KEYSPACE, "test");
+    CompletionStage<CqlSession> initFuture = DefaultSession.init(context, KEYSPACE, "test");
 
     factoryHelper.waitForCall(node1, KEYSPACE, NodeDistance.LOCAL);
     factoryHelper.waitForCall(node2, KEYSPACE, NodeDistance.LOCAL);
@@ -349,7 +350,7 @@ public class DefaultSessionTest {
             .success(node3, KEYSPACE, NodeDistance.LOCAL, pool3)
             .build();
 
-    CompletionStage<Session> initFuture = DefaultSession.init(context, KEYSPACE, "test");
+    CompletionStage<CqlSession> initFuture = DefaultSession.init(context, KEYSPACE, "test");
 
     factoryHelper.waitForCall(node1, KEYSPACE, NodeDistance.LOCAL);
     factoryHelper.waitForCall(node2, KEYSPACE, NodeDistance.LOCAL);
@@ -380,7 +381,7 @@ public class DefaultSessionTest {
             .success(node2, KEYSPACE, NodeDistance.LOCAL, pool2)
             .build();
 
-    CompletionStage<Session> initFuture = DefaultSession.init(context, KEYSPACE, "test");
+    CompletionStage<CqlSession> initFuture = DefaultSession.init(context, KEYSPACE, "test");
 
     factoryHelper.waitForCall(node1, KEYSPACE, NodeDistance.LOCAL);
     factoryHelper.waitForCall(node3, KEYSPACE, NodeDistance.LOCAL);
@@ -408,7 +409,7 @@ public class DefaultSessionTest {
             .success(node3, KEYSPACE, NodeDistance.LOCAL, pool3)
             .build();
 
-    CompletionStage<Session> initFuture = DefaultSession.init(context, KEYSPACE, "test");
+    CompletionStage<CqlSession> initFuture = DefaultSession.init(context, KEYSPACE, "test");
 
     factoryHelper.waitForCall(node1, KEYSPACE, NodeDistance.LOCAL);
     factoryHelper.waitForCall(node2, KEYSPACE, NodeDistance.LOCAL);
@@ -439,7 +440,7 @@ public class DefaultSessionTest {
             .success(node2, KEYSPACE, NodeDistance.LOCAL, pool2)
             .build();
 
-    CompletionStage<Session> initFuture = DefaultSession.init(context, KEYSPACE, "test");
+    CompletionStage<CqlSession> initFuture = DefaultSession.init(context, KEYSPACE, "test");
 
     factoryHelper.waitForCall(node1, KEYSPACE, NodeDistance.LOCAL);
     factoryHelper.waitForCall(node3, KEYSPACE, NodeDistance.LOCAL);
@@ -469,7 +470,7 @@ public class DefaultSessionTest {
             .success(node3, KEYSPACE, NodeDistance.LOCAL, pool3)
             .build();
 
-    CompletionStage<Session> initFuture = DefaultSession.init(context, KEYSPACE, "test");
+    CompletionStage<CqlSession> initFuture = DefaultSession.init(context, KEYSPACE, "test");
 
     factoryHelper.waitForCall(node1, KEYSPACE, NodeDistance.LOCAL);
     factoryHelper.waitForCall(node3, KEYSPACE, NodeDistance.LOCAL);
@@ -501,7 +502,7 @@ public class DefaultSessionTest {
             .pending(node2, KEYSPACE, NodeDistance.LOCAL, pool2Future)
             .build();
 
-    CompletionStage<Session> initFuture = DefaultSession.init(context, KEYSPACE, "test");
+    CompletionStage<CqlSession> initFuture = DefaultSession.init(context, KEYSPACE, "test");
 
     factoryHelper.waitForCall(node1, KEYSPACE, NodeDistance.LOCAL);
     factoryHelper.waitForCall(node3, KEYSPACE, NodeDistance.LOCAL);
@@ -544,7 +545,7 @@ public class DefaultSessionTest {
             .pending(node2, KEYSPACE, NodeDistance.LOCAL, pool2Future)
             .build();
 
-    CompletionStage<Session> initFuture = DefaultSession.init(context, KEYSPACE, "test");
+    CompletionStage<CqlSession> initFuture = DefaultSession.init(context, KEYSPACE, "test");
 
     factoryHelper.waitForCall(node1, KEYSPACE, NodeDistance.LOCAL);
     factoryHelper.waitForCall(node3, KEYSPACE, NodeDistance.LOCAL);
@@ -587,7 +588,7 @@ public class DefaultSessionTest {
             .pending(node2, KEYSPACE, NodeDistance.LOCAL, pool2Future)
             .build();
 
-    CompletionStage<Session> initFuture = DefaultSession.init(context, KEYSPACE, "test");
+    CompletionStage<CqlSession> initFuture = DefaultSession.init(context, KEYSPACE, "test");
 
     factoryHelper.waitForCall(node1, KEYSPACE, NodeDistance.LOCAL);
     factoryHelper.waitForCall(node3, KEYSPACE, NodeDistance.LOCAL);
@@ -625,7 +626,7 @@ public class DefaultSessionTest {
             .success(node3, KEYSPACE, NodeDistance.LOCAL, pool3)
             .build();
 
-    CompletionStage<Session> initFuture = DefaultSession.init(context, KEYSPACE, "test");
+    CompletionStage<CqlSession> initFuture = DefaultSession.init(context, KEYSPACE, "test");
 
     factoryHelper.waitForCall(node1, KEYSPACE, NodeDistance.LOCAL);
     factoryHelper.waitForCall(node2, KEYSPACE, NodeDistance.LOCAL);
@@ -655,7 +656,7 @@ public class DefaultSessionTest {
             .success(node3, KEYSPACE, NodeDistance.LOCAL, pool3)
             .build();
 
-    CompletionStage<Session> initFuture = DefaultSession.init(context, KEYSPACE, "test");
+    CompletionStage<CqlSession> initFuture = DefaultSession.init(context, KEYSPACE, "test");
 
     factoryHelper.waitForCall(node1, KEYSPACE, NodeDistance.LOCAL);
     factoryHelper.waitForCall(node2, KEYSPACE, NodeDistance.LOCAL);
@@ -690,7 +691,7 @@ public class DefaultSessionTest {
             .pending(node2, KEYSPACE, NodeDistance.LOCAL, pool2Future)
             .build();
 
-    CompletionStage<Session> initFuture = DefaultSession.init(context, KEYSPACE, "test");
+    CompletionStage<CqlSession> initFuture = DefaultSession.init(context, KEYSPACE, "test");
 
     factoryHelper.waitForCall(node1, KEYSPACE, NodeDistance.LOCAL);
     factoryHelper.waitForCall(node3, KEYSPACE, NodeDistance.LOCAL);
@@ -728,7 +729,7 @@ public class DefaultSessionTest {
             .success(node3, KEYSPACE, NodeDistance.LOCAL, pool3)
             .build();
 
-    CompletionStage<Session> initFuture = DefaultSession.init(context, KEYSPACE, "test");
+    CompletionStage<CqlSession> initFuture = DefaultSession.init(context, KEYSPACE, "test");
 
     factoryHelper.waitForCall(node1, KEYSPACE, NodeDistance.LOCAL);
     factoryHelper.waitForCall(node2, KEYSPACE, NodeDistance.LOCAL);
@@ -763,7 +764,7 @@ public class DefaultSessionTest {
             .pending(node2, KEYSPACE, NodeDistance.LOCAL, pool2Future)
             .build();
 
-    CompletionStage<Session> initFuture = DefaultSession.init(context, KEYSPACE, "test");
+    CompletionStage<CqlSession> initFuture = DefaultSession.init(context, KEYSPACE, "test");
 
     factoryHelper.waitForCall(node1, KEYSPACE, NodeDistance.LOCAL);
     factoryHelper.waitForCall(node3, KEYSPACE, NodeDistance.LOCAL);

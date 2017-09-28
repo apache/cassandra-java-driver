@@ -20,7 +20,7 @@ import com.datastax.oss.driver.api.core.config.DriverConfig;
 import com.datastax.oss.driver.internal.core.adminrequest.AdminRequestHandler;
 import com.datastax.oss.driver.internal.core.adminrequest.AdminResult;
 import com.datastax.oss.driver.internal.core.channel.DriverChannel;
-import com.datastax.oss.driver.internal.core.cql.CqlRequestHandler;
+import com.datastax.oss.driver.internal.core.cql.CqlRequestHandlerBase;
 import com.datastax.oss.driver.internal.core.pool.ChannelPool;
 import com.datastax.oss.protocol.internal.Message;
 import com.datastax.oss.protocol.internal.request.Prepare;
@@ -45,7 +45,7 @@ import org.slf4j.LoggerFactory;
  *
  * <p>See the comments in {@code reference.conf} for more explanations about this process. If any
  * prepare request fail, we ignore the error because it will be retried on the fly (see {@link
- * CqlRequestHandler}).
+ * CqlRequestHandlerBase}).
  *
  * <p>Logically this code belongs to {@link DefaultSession}, but it was extracted for modularity and
  * testability.

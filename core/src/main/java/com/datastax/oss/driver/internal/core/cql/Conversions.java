@@ -49,7 +49,7 @@ import com.datastax.oss.driver.api.core.servererrors.UnauthorizedException;
 import com.datastax.oss.driver.api.core.servererrors.UnavailableException;
 import com.datastax.oss.driver.api.core.servererrors.WriteFailureException;
 import com.datastax.oss.driver.api.core.servererrors.WriteTimeoutException;
-import com.datastax.oss.driver.api.core.session.Session;
+import com.datastax.oss.driver.api.core.session.CqlSession;
 import com.datastax.oss.driver.api.core.type.codec.registry.CodecRegistry;
 import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
 import com.datastax.oss.protocol.internal.Message;
@@ -199,7 +199,10 @@ class Conversions {
   }
 
   static AsyncResultSet toResultSet(
-      Result result, ExecutionInfo executionInfo, Session session, InternalDriverContext context) {
+      Result result,
+      ExecutionInfo executionInfo,
+      CqlSession session,
+      InternalDriverContext context) {
     if (result instanceof Rows) {
       Rows rows = (Rows) result;
       Statement<?> statement = executionInfo.getStatement();

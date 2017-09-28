@@ -35,7 +35,7 @@ public class ConstantSpeculativeExecutionPolicyTest {
   @Mock private DriverContext context;
   @Mock private DriverConfig config;
   @Mock private DriverConfigProfile defaultProfile;
-  @Mock private Request<?, ?> request;
+  @Mock private Request request;
 
   @Before
   public void setup() {

@@ -22,6 +22,7 @@ import com.datastax.oss.driver.api.core.ProtocolVersion;
 import com.datastax.oss.driver.api.core.config.CoreDriverOption;
 import com.datastax.oss.driver.api.core.context.DriverContext;
 import com.datastax.oss.driver.api.core.metadata.Metadata;
+import com.datastax.oss.driver.api.core.session.CqlSession;
 import com.datastax.oss.driver.api.core.session.Session;
 import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
 import com.datastax.oss.driver.internal.core.control.ControlConnection;
@@ -43,11 +44,11 @@ import java.util.concurrent.CompletionStage;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class DefaultCluster implements Cluster {
+public class DefaultCluster implements Cluster<CqlSession> {
 
   private static final Logger LOG = LoggerFactory.getLogger(DefaultCluster.class);
 
-  public static CompletableFuture<Cluster> init(
+  public static CompletableFuture<Cluster<CqlSession>> init(
       InternalDriverContext context, Set<InetSocketAddress> contactPoints) {
     DefaultCluster cluster = new DefaultCluster(context, contactPoints);
     return cluster.init();
@@ -68,7 +69,7 @@ public class DefaultCluster implements Cluster {
     this.logPrefix = context.clusterName();
   }
 
-  private CompletableFuture<Cluster> init() {
+  private CompletableFuture<Cluster<CqlSession>> init() {
     RunOrSchedule.on(adminExecutor, singleThreaded::init);
     return singleThreaded.initFuture;
   }
@@ -89,8 +90,8 @@ public class DefaultCluster implements Cluster {
   }
 
   @Override
-  public CompletionStage<Session> connectAsync(CqlIdentifier keyspace) {
-    CompletableFuture<Session> connectFuture = new CompletableFuture<>();
+  public CompletionStage<CqlSession> connectAsync(CqlIdentifier keyspace) {
+    CompletableFuture<CqlSession> connectFuture = new CompletableFuture<>();
     RunOrSchedule.on(adminExecutor, () -> singleThreaded.connect(keyspace, connectFuture));
     return connectFuture;
   }
@@ -117,7 +118,7 @@ public class DefaultCluster implements Cluster {
     private final InternalDriverContext context;
     private final Set<InetSocketAddress> initialContactPoints;
     private final NodeStateManager nodeStateManager;
-    private final CompletableFuture<Cluster> initFuture = new CompletableFuture<>();
+    private final CompletableFuture<Cluster<CqlSession>> initFuture = new CompletableFuture<>();
     private boolean initWasCalled;
     private final CompletableFuture<Void> closeFuture = new CompletableFuture<>();
     private boolean closeWasCalled;
@@ -206,7 +207,7 @@ public class DefaultCluster implements Cluster {
       }
     }
 
-    private void connect(CqlIdentifier keyspace, CompletableFuture<Session> connectFuture) {
+    private void connect(CqlIdentifier keyspace, CompletableFuture<CqlSession> connectFuture) {
       assert adminExecutor.inEventLoop();
       if (closeWasCalled) {
         connectFuture.completeExceptionally(new IllegalStateException("Cluster was closed"));

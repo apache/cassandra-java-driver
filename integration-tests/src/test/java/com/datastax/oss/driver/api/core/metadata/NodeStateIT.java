@@ -17,6 +17,7 @@ package com.datastax.oss.driver.api.core.metadata;
 
 import com.datastax.oss.driver.api.core.Cluster;
 import com.datastax.oss.driver.api.core.loadbalancing.NodeDistance;
+import com.datastax.oss.driver.api.core.session.CqlSession;
 import com.datastax.oss.driver.api.testinfra.cluster.ClusterRule;
 import com.datastax.oss.driver.api.testinfra.cluster.ClusterUtils;
 import com.datastax.oss.driver.api.testinfra.simulacron.SimulacronRule;
@@ -241,7 +242,7 @@ public class NodeStateIT {
   public void should_force_immediate_reconnection_when_up_topology_event()
       throws InterruptedException {
     // This test requires a longer reconnection interval, so create a separate driver instance
-    try (Cluster localCluster =
+    try (Cluster<CqlSession> localCluster =
         ClusterUtils.newCluster(
             simulacron,
             "connection.reconnection-policy.base-delay = 1 hour",

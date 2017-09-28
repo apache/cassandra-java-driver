@@ -18,7 +18,7 @@ package com.datastax.oss.driver.api.testinfra.cluster;
 import com.datastax.oss.driver.api.core.Cluster;
 import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.config.DriverConfigProfile;
-import com.datastax.oss.driver.api.core.session.Session;
+import com.datastax.oss.driver.api.core.session.CqlSession;
 import com.datastax.oss.driver.api.testinfra.CassandraResourceRule;
 import com.datastax.oss.driver.api.testinfra.simulacron.SimulacronRule;
 import org.junit.rules.ExternalResource;
@@ -57,10 +57,10 @@ public class ClusterRule extends ExternalResource {
   private final String[] defaultClusterOptions;
 
   // the default cluster that is auto created for this rule.
-  private Cluster cluster;
+  private Cluster<CqlSession> cluster;
 
   // the default session that is auto created for this rule and is tied to the given keyspace.
-  private Session defaultSession;
+  private CqlSession defaultSession;
 
   private DriverConfigProfile slowProfile;
 
@@ -118,7 +118,7 @@ public class ClusterRule extends ExternalResource {
   }
 
   /** @return the cluster created with this rule. */
-  public Cluster cluster() {
+  public Cluster<CqlSession> cluster() {
     return cluster;
   }
 
@@ -126,7 +126,7 @@ public class ClusterRule extends ExternalResource {
    * @return the default session created with this rule, or {@code null} if no default session was
    *     created.
    */
-  public Session session() {
+  public CqlSession session() {
     return defaultSession;
   }
 

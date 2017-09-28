@@ -18,137 +18,41 @@ package com.datastax.oss.driver.api.core.session;
 import com.datastax.oss.driver.api.core.AsyncAutoCloseable;
 import com.datastax.oss.driver.api.core.Cluster;
 import com.datastax.oss.driver.api.core.CqlIdentifier;
-import com.datastax.oss.driver.api.core.cql.AsyncResultSet;
-import com.datastax.oss.driver.api.core.cql.PrepareRequest;
-import com.datastax.oss.driver.api.core.cql.PreparedStatement;
-import com.datastax.oss.driver.api.core.cql.ResultSet;
-import com.datastax.oss.driver.api.core.cql.SimpleStatement;
-import com.datastax.oss.driver.api.core.cql.Statement;
-import com.datastax.oss.driver.internal.core.cql.DefaultPrepareRequest;
-import java.util.concurrent.CompletionStage;
+import com.datastax.oss.driver.api.core.type.reflect.GenericType;
 
 /**
  * A nexus to send requests to a Cassandra cluster.
  *
- * <p>This is a high-level abstraction that can handle any kind of request (provided that you have
- * registered a custom request processor with the driver). However, for user-friendliness, we also
- * expose overrides for the standard CQL requests that are supported out of the box.
+ * <p>This is a high-level abstraction capable of handling arbitrary request and result types. For
+ * CQL statements, {@link CqlSession} provides convenience methods with more familiar signatures.
+ *
+ * <p>The driver's request execution logic is pluggable (see {@code RequestProcessor} in the
+ * internal API). This is intended for future extensions, for example a reactive API for CQL
+ * statements, or graph requests in the Datastax Enterprise driver. Hence the generic {@link
+ * #execute(Request, GenericType)} method in this interface, that makes no assumptions about the
+ * request or result type.
  */
 public interface Session extends AsyncAutoCloseable {
 
   /**
    * The keyspace that this session is currently connected to.
    *
-   * <p>There are two ways that this can be set:
-   *
-   * <ul>
-   *   <li>during initialization, if the session was created with {@link
-   *       Cluster#connect(CqlIdentifier)} or {@link Cluster#connectAsync(CqlIdentifier)};
-   *   <li>at runtime, if the client issues a request that changes the keyspace (such as a CQL
-   *       {@code USE} query). Note that this second method is inherently unsafe, since other
-   *       requests expecting the old keyspace might be executing concurrently. Therefore it is
-   *       highly discouraged, aside from trivial cases (such as a cqlsh-style program where
-   *       requests are never concurrent).
-   * </ul>
+   * <p>There are two ways that this can be set: during initialization, if the session was created
+   * with {@link Cluster#connect(CqlIdentifier)} or {@link Cluster#connectAsync(CqlIdentifier)}; at
+   * runtime, if the client issues a request that changes the keyspace (such as a CQL {@code USE}
+   * query). Note that this second method is inherently unsafe, since other requests expecting the
+   * old keyspace might be executing concurrently. Therefore it is highly discouraged, aside from
+   * trivial cases (such as a cqlsh-style program where requests are never concurrent).
    */
   CqlIdentifier getKeyspace();
 
   /**
-   * Executes a request, and blocks until the result is available.
+   * Executes an arbitrary request.
    *
-   * @return a synchronous result, that provides immediate access to the data as soon as the method
-   *     returns.
+   * @param resultType the type of the result, which determines the internal request processor
+   *     (built-in or custom) that will be used to handle the request.
+   * @see Session
    */
-  <SyncResultT, AsyncResultT> SyncResultT execute(Request<SyncResultT, AsyncResultT> request);
-
-  /**
-   * Executes a request, returning as soon as it has been scheduled, but generally before the result
-   * is available.
-   *
-   * @return an asynchronous result, that represents the future completion of the request. The
-   *     client either wait, or schedule a callback to be executed on completion (this is
-   *     implementation-specific).
-   */
-  <SyncResultT, AsyncResultT> AsyncResultT executeAsync(Request<SyncResultT, AsyncResultT> request);
-
-  /**
-   * Executes a CQL statement synchronously.
-   *
-   * <p>This is a convenience method that does the exact same thing as {@link #execute(Request)},
-   * but exposes a more user-friendly signature reminiscent of the 3.x API.
-   */
-  default ResultSet execute(Statement<?> statement) {
-    return execute((Request<ResultSet, CompletionStage<AsyncResultSet>>) statement);
-  }
-
-  /**
-   * Executes a CQL statement synchronously.
-   *
-   * <p>This is a convenience method that builds a {@link SimpleStatement#newInstance(String)
-   * SimpleStatement} and passes it to {@link #execute(Request)}.
-   */
-  default ResultSet execute(String query) {
-    return execute(SimpleStatement.newInstance(query));
-  }
-
-  /**
-   * Executes a CQL statement asynchronously.
-   *
-   * <p>This is a convenience method that does the exact same thing as {@link
-   * #executeAsync(Statement)}, but exposes a more user-friendly signature reminiscent of the 3.x
-   * API.
-   */
-  default CompletionStage<AsyncResultSet> executeAsync(Statement<?> statement) {
-    return executeAsync((Request<ResultSet, CompletionStage<AsyncResultSet>>) statement);
-  }
-
-  /**
-   * Executes a CQL statement asynchronously.
-   *
-   * <p>This is a convenience method that builds a {@link SimpleStatement#newInstance(String)
-   * SimpleStatement} and passes it to {@link #executeAsync(Statement)}.
-   */
-  default CompletionStage<AsyncResultSet> executeAsync(String query) {
-    return executeAsync(SimpleStatement.newInstance(query));
-  }
-
-  /**
-   * Prepares a CQL statement synchronously.
-   *
-   * <p>This is a convenience method that builds a {@link PrepareRequest} and passes it to {@link
-   * #execute(Request)}.
-   */
-  default PreparedStatement prepare(SimpleStatement query) {
-    return execute(new DefaultPrepareRequest(query));
-  }
-
-  /**
-   * Prepares a CQL statement synchronously.
-   *
-   * <p>This is a convenience method that builds a {@link PrepareRequest} and passes it to {@link
-   * #execute(Request)}.
-   */
-  default PreparedStatement prepare(String query) {
-    return execute(new DefaultPrepareRequest(query));
-  }
-
-  /**
-   * Prepares a CQL statement asynchronously.
-   *
-   * <p>This is a convenience method that builds a {@link PrepareRequest} and passes it to {@link
-   * #executeAsync(Request)}.
-   */
-  default CompletionStage<PreparedStatement> prepareAsync(String query) {
-    return executeAsync(new DefaultPrepareRequest(query));
-  }
-
-  /**
-   * Prepares a CQL statement asynchronously.
-   *
-   * <p>This is a convenience method that builds a {@link PrepareRequest} and passes it to {@link
-   * #executeAsync(Request)}.
-   */
-  default CompletionStage<PreparedStatement> prepareAsync(SimpleStatement query) {
-    return executeAsync(new DefaultPrepareRequest(query));
-  }
+  <RequestT extends Request, ResultT> ResultT execute(
+      RequestT request, GenericType<ResultT> resultType);
 }

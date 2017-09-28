@@ -13,11 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.datastax.oss.driver.internal.core.session;
+package com.datastax.oss.driver.api.core;
 
-import com.datastax.oss.driver.api.core.session.Request;
+import com.datastax.oss.driver.api.core.session.CqlSession;
 
-/** Manages the execution of a given request. */
-public interface RequestHandler<RequestT extends Request, ResultT> {
-  ResultT handle();
+/** Helper class to build an instance of the default {@link Cluster} implementation. */
+public class DefaultClusterBuilder
+    extends ClusterBuilder<DefaultClusterBuilder, Cluster<CqlSession>> {
+
+  @Override
+  protected Cluster<CqlSession> wrap(Cluster<CqlSession> defaultCluster) {
+    return defaultCluster;
+  }
 }

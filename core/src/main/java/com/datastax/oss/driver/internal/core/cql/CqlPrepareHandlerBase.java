@@ -18,6 +18,8 @@ package com.datastax.oss.driver.internal.core.cql;
 import com.datastax.oss.driver.api.core.AllNodesFailedException;
 import com.datastax.oss.driver.api.core.DriverTimeoutException;
 import com.datastax.oss.driver.api.core.config.CoreDriverOption;
+import com.datastax.oss.driver.api.core.config.DriverConfig;
+import com.datastax.oss.driver.api.core.config.DriverConfigProfile;
 import com.datastax.oss.driver.api.core.cql.PrepareRequest;
 import com.datastax.oss.driver.api.core.cql.PreparedStatement;
 import com.datastax.oss.driver.api.core.metadata.Node;
@@ -33,8 +35,6 @@ import com.datastax.oss.driver.internal.core.channel.DriverChannel;
 import com.datastax.oss.driver.internal.core.channel.ResponseCallback;
 import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
 import com.datastax.oss.driver.internal.core.session.DefaultSession;
-import com.datastax.oss.driver.internal.core.session.RequestHandlerBase;
-import com.datastax.oss.driver.internal.core.util.concurrent.BlockingOperation;
 import com.datastax.oss.driver.internal.core.util.concurrent.CompletableFutures;
 import com.datastax.oss.protocol.internal.Frame;
 import com.datastax.oss.protocol.internal.Message;
@@ -46,50 +46,74 @@ import io.netty.util.concurrent.EventExecutor;
 import io.netty.util.concurrent.Future;
 import io.netty.util.concurrent.GenericFutureListener;
 import io.netty.util.concurrent.ScheduledFuture;
+import java.nio.ByteBuffer;
 import java.time.Duration;
 import java.util.AbstractMap;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Queue;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
+import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.TimeUnit;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /** Handles the lifecycle of the preparation of a CQL statement. */
-public class CqlPrepareHandler
-    extends RequestHandlerBase<PreparedStatement, CompletionStage<PreparedStatement>> {
+public abstract class CqlPrepareHandlerBase {
 
-  private static final Logger LOG = LoggerFactory.getLogger(CqlPrepareHandler.class);
+  private static final Logger LOG = LoggerFactory.getLogger(CqlPrepareHandlerBase.class);
 
   private final String logPrefix;
-  private final CompletableFuture<PreparedStatement> result;
+  private final PrepareRequest request;
+  private final ConcurrentMap<ByteBuffer, DefaultPreparedStatement> preparedStatementsCache;
+  private final DefaultSession session;
+  private final InternalDriverContext context;
+  private final Queue<Node> queryPlan;
+  protected final CompletableFuture<PreparedStatement> result;
   private final Message message;
   private final EventExecutor scheduler;
   private final Duration timeout;
   private final ScheduledFuture<?> timeoutFuture;
   private final RetryPolicy retryPolicy;
   private final Boolean prepareOnAllNodes;
-  private final CqlPrepareProcessor processor;
   private volatile InitialPrepareCallback initialCallback;
 
   // The errors on the nodes that were already tried (lazily initialized on the first error).
   // We don't use a map because nodes can appear multiple times.
   private volatile List<Map.Entry<Node, Throwable>> errors;
 
-  CqlPrepareHandler(
+  protected CqlPrepareHandlerBase(
       PrepareRequest request,
-      CqlPrepareProcessor processor,
+      ConcurrentMap<ByteBuffer, DefaultPreparedStatement> preparedStatementsCache,
       DefaultSession session,
       InternalDriverContext context,
       String sessionLogPrefix) {
-    super(request, session, context);
+
     this.logPrefix = sessionLogPrefix + "|" + this.hashCode();
     LOG.debug("[{}] Creating new handler for prepare request {}", logPrefix, request);
-    this.processor = processor;
+
+    this.request = request;
+    this.preparedStatementsCache = preparedStatementsCache;
+    this.session = session;
+    this.context = context;
+    this.queryPlan = context.loadBalancingPolicyWrapper().newQueryPlan();
+
+    DriverConfigProfile configProfile;
+    if (request.getConfigProfile() != null) {
+      configProfile = request.getConfigProfile();
+    } else {
+      DriverConfig config = context.config();
+      String profileName = request.getConfigProfileName();
+      configProfile =
+          (profileName == null || profileName.isEmpty())
+              ? config.getDefaultProfile()
+              : config.getNamedProfile(profileName);
+    }
+
     this.result = new CompletableFuture<>();
     this.result.exceptionally(
         t -> {
@@ -110,17 +134,6 @@ public class CqlPrepareHandler
     this.retryPolicy = context.retryPolicy();
     this.prepareOnAllNodes = configProfile.getBoolean(CoreDriverOption.PREPARE_ON_ALL_NODES);
     sendRequest(null, 0);
-  }
-
-  @Override
-  public CompletionStage<PreparedStatement> asyncResult() {
-    return result;
-  }
-
-  @Override
-  public PreparedStatement syncResult() {
-    BlockingOperation.checkNotDriverThread();
-    return CompletableFutures.getUninterruptibly(asyncResult());
   }
 
   private ScheduledFuture<?> scheduleTimeout(Duration timeout) {
@@ -150,9 +163,9 @@ public class CqlPrepareHandler
       return;
     }
     DriverChannel channel = null;
-    if (node == null || (channel = getChannel(node, logPrefix)) == null) {
+    if (node == null || (channel = session.getChannel(node, logPrefix)) == null) {
       while (!result.isDone() && (node = queryPlan.poll()) != null) {
-        channel = getChannel(node, logPrefix);
+        channel = session.getChannel(node, logPrefix);
         if (channel != null) {
           break;
         }
@@ -173,7 +186,7 @@ public class CqlPrepareHandler
     // Use a local variable to do only a single single volatile read in the nominal case
     List<Map.Entry<Node, Throwable>> errorsSnapshot = this.errors;
     if (errorsSnapshot == null) {
-      synchronized (CqlPrepareHandler.this) {
+      synchronized (CqlPrepareHandlerBase.this) {
         errorsSnapshot = this.errors;
         if (errorsSnapshot == null) {
           this.errors = errorsSnapshot = new CopyOnWriteArrayList<>();
@@ -187,7 +200,7 @@ public class CqlPrepareHandler
     DefaultPreparedStatement newStatement =
         Conversions.toPreparedStatement(prepared, (PrepareRequest) request, context);
 
-    DefaultPreparedStatement cachedStatement = processor.cache(newStatement);
+    DefaultPreparedStatement cachedStatement = cache(newStatement);
 
     if (cachedStatement != newStatement) {
       // The statement already existed in the cache, assume it's because the client called
@@ -217,6 +230,25 @@ public class CqlPrepareHandler
     }
   }
 
+  private DefaultPreparedStatement cache(DefaultPreparedStatement preparedStatement) {
+    DefaultPreparedStatement previous =
+        preparedStatementsCache.putIfAbsent(preparedStatement.getId(), preparedStatement);
+    if (previous != null) {
+      LOG.warn(
+          "Re-preparing already prepared query. "
+              + "This is generally an anti-pattern and will likely affect performance. "
+              + "Consider preparing the statement only once. Query='{}'",
+          preparedStatement.getQuery());
+
+      // The one object in the cache will get GCed once it's not referenced by the client anymore
+      // since we use a weak reference. So we need to make sure that the instance we do return to
+      // the user is the one that is in the cache.
+      return previous;
+    } else {
+      return preparedStatement;
+    }
+  }
+
   private CompletionStage<Void> prepareOnOtherNodes() {
     List<CompletionStage<Void>> otherNodesFutures = new ArrayList<>();
     // Only process the rest of the query plan. Any node before that is either the coordinator, or
@@ -231,7 +263,7 @@ public class CqlPrepareHandler
   // blocking, the preparation will be retried later on that node. Simply warn and move on.
   private CompletionStage<Void> prepareOnOtherNode(Node node) {
     LOG.debug("[{}] Repreparing on {}", logPrefix, node);
-    DriverChannel channel = getChannel(node, logPrefix);
+    DriverChannel channel = session.getChannel(node, logPrefix);
     if (channel == null) {
       LOG.debug("[{}] Could not get a channel to reprepare on {}, skipping", logPrefix, node);
       return CompletableFuture.completedFuture(null);

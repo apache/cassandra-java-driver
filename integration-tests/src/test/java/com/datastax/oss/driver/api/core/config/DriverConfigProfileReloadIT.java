@@ -18,7 +18,7 @@ package com.datastax.oss.driver.api.core.config;
 import com.datastax.oss.driver.api.core.Cluster;
 import com.datastax.oss.driver.api.core.DriverTimeoutException;
 import com.datastax.oss.driver.api.core.cql.SimpleStatement;
-import com.datastax.oss.driver.api.core.session.Session;
+import com.datastax.oss.driver.api.core.session.CqlSession;
 import com.datastax.oss.driver.api.testinfra.simulacron.SimulacronRule;
 import com.datastax.oss.driver.categories.LongTests;
 import com.datastax.oss.driver.internal.core.config.ConfigChangeEvent;
@@ -29,7 +29,6 @@ import com.datastax.oss.simulacron.common.cluster.ClusterSpec;
 import com.typesafe.config.ConfigFactory;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import org.junit.Rule;
 import org.junit.Test;
@@ -60,14 +59,14 @@ public class DriverConfigProfileReloadIT {
                 ConfigFactory.parseString("config-reload-interval = 2s\n" + configSource.get())
                     .withFallback(DEFAULT_CONFIG_SUPPLIER.get()),
             CoreDriverOption.values());
-    try (Cluster configCluster =
+    try (Cluster<CqlSession> configCluster =
         Cluster.builder()
             .withConfigLoader(loader)
             .addContactPoints(simulacron.getContactPoints())
             .build()) {
       simulacron.cluster().prime(when(query).then(noRows()).delay(2, TimeUnit.SECONDS));
 
-      Session session = configCluster.connect();
+      CqlSession session = configCluster.connect();
 
       // Expect timeout since default timeout is .5 s
       try {
@@ -97,14 +96,14 @@ public class DriverConfigProfileReloadIT {
                 ConfigFactory.parseString("config-reload-interval = 0\n" + configSource.get())
                     .withFallback(DEFAULT_CONFIG_SUPPLIER.get()),
             CoreDriverOption.values());
-    try (Cluster configCluster =
+    try (Cluster<CqlSession> configCluster =
         Cluster.builder()
             .withConfigLoader(loader)
             .addContactPoints(simulacron.getContactPoints())
             .build()) {
       simulacron.cluster().prime(when(query).then(noRows()).delay(2, TimeUnit.SECONDS));
 
-      Session session = configCluster.connect();
+      CqlSession session = configCluster.connect();
 
       // Expect timeout since default timeout is .5 s
       try {
@@ -137,14 +136,14 @@ public class DriverConfigProfileReloadIT {
                 ConfigFactory.parseString("config-reload-interval = 2s\n" + configSource.get())
                     .withFallback(DEFAULT_CONFIG_SUPPLIER.get()),
             CoreDriverOption.values());
-    try (Cluster configCluster =
+    try (Cluster<CqlSession> configCluster =
         Cluster.builder()
             .withConfigLoader(loader)
             .addContactPoints(simulacron.getContactPoints())
             .build()) {
       simulacron.cluster().prime(when(query).then(noRows()).delay(1, TimeUnit.SECONDS));
 
-      Session session = configCluster.connect();
+      CqlSession session = configCluster.connect();
 
       // Expect failure because profile doesn't exist.
       try {
@@ -178,14 +177,14 @@ public class DriverConfigProfileReloadIT {
                             + configSource.get())
                     .withFallback(DEFAULT_CONFIG_SUPPLIER.get()),
             CoreDriverOption.values());
-    try (Cluster configCluster =
+    try (Cluster<CqlSession> configCluster =
         Cluster.builder()
             .withConfigLoader(loader)
             .addContactPoints(simulacron.getContactPoints())
             .build()) {
       simulacron.cluster().prime(when(query).then(noRows()).delay(1, TimeUnit.SECONDS));
 
-      Session session = configCluster.connect();
+      CqlSession session = configCluster.connect();
 
       // Expect failure because profile doesn't exist.
       try {
@@ -204,7 +203,7 @@ public class DriverConfigProfileReloadIT {
     }
   }
 
-  private void waitForConfigChange(Cluster cluster, long timeout, TimeUnit unit) {
+  private void waitForConfigChange(Cluster<CqlSession> cluster, long timeout, TimeUnit unit) {
     CountDownLatch latch = new CountDownLatch(1);
     ((InternalDriverContext) cluster.getContext())
         .eventBus()

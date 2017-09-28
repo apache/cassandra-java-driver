@@ -16,29 +16,26 @@
 package com.datastax.oss.driver.internal.core.cql;
 
 import com.datastax.oss.driver.api.core.cql.AsyncResultSet;
-import com.datastax.oss.driver.api.core.cql.ResultSet;
 import com.datastax.oss.driver.api.core.cql.Statement;
-import com.datastax.oss.driver.api.core.session.Request;
 import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
 import com.datastax.oss.driver.internal.core.session.DefaultSession;
 import com.datastax.oss.driver.internal.core.session.RequestHandler;
-import com.datastax.oss.driver.internal.core.session.RequestProcessor;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 
-public class CqlRequestProcessor
-    implements RequestProcessor<ResultSet, CompletionStage<AsyncResultSet>> {
+public class CqlRequestAsyncHandler extends CqlRequestHandlerBase
+    implements RequestHandler<Statement<?>, CompletionStage<AsyncResultSet>> {
 
-  @Override
-  public boolean canProcess(Request<?, ?> request) {
-    return request instanceof Statement;
-  }
-
-  @Override
-  public RequestHandler<ResultSet, CompletionStage<AsyncResultSet>> newHandler(
-      Request<ResultSet, CompletionStage<AsyncResultSet>> request,
+  CqlRequestAsyncHandler(
+      Statement<?> statement,
       DefaultSession session,
       InternalDriverContext context,
       String sessionLogPrefix) {
-    return new CqlRequestHandler((Statement<?>) request, session, context, sessionLogPrefix);
+    super(statement, session, context, sessionLogPrefix);
+  }
+
+  @Override
+  public CompletionStage<AsyncResultSet> handle() {
+    return result;
   }
 }

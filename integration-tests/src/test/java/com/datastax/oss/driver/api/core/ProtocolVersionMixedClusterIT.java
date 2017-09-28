@@ -15,6 +15,7 @@
  */
 package com.datastax.oss.driver.api.core;
 
+import com.datastax.oss.driver.api.core.session.CqlSession;
 import com.datastax.oss.driver.api.testinfra.simulacron.SimulacronRule;
 import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
 import com.datastax.oss.driver.internal.testinfra.cluster.TestConfigLoader;
@@ -46,7 +47,7 @@ public class ProtocolVersionMixedClusterIT {
   public void should_downgrade_if_peer_does_not_support_negotiated_version() {
     try (BoundCluster simulacron = mixedVersions("3.0.0", "2.2.0", "2.1.0");
         BoundNode contactPoint = simulacron.node(0);
-        Cluster cluster =
+        Cluster<CqlSession> cluster =
             Cluster.builder()
                 .addContactPoint(contactPoint.inetSocketAddress())
                 .withConfigLoader(new TestConfigLoader())
@@ -86,7 +87,7 @@ public class ProtocolVersionMixedClusterIT {
   public void should_keep_current_if_supported_by_all_peers() {
     try (BoundCluster simulacron = mixedVersions("3.0.0", "2.2.0", "3.11");
         BoundNode contactPoint = simulacron.node(0);
-        Cluster cluster =
+        Cluster<CqlSession> cluster =
             Cluster.builder()
                 .addContactPoint(contactPoint.inetSocketAddress())
                 .withConfigLoader(new TestConfigLoader())
@@ -112,7 +113,7 @@ public class ProtocolVersionMixedClusterIT {
 
     try (BoundCluster simulacron = mixedVersions("3.0.0", "2.0.9", "3.11");
         BoundNode contactPoint = simulacron.node(0);
-        Cluster ignored =
+        Cluster<CqlSession> ignored =
             Cluster.builder()
                 .addContactPoint(contactPoint.inetSocketAddress())
                 .withConfigLoader(new TestConfigLoader())
@@ -125,7 +126,7 @@ public class ProtocolVersionMixedClusterIT {
   public void should_not_downgrade_and_force_down_old_nodes_if_version_forced() {
     try (BoundCluster simulacron = mixedVersions("3.0.0", "2.2.0", "2.0.0");
         BoundNode contactPoint = simulacron.node(0);
-        Cluster cluster =
+        Cluster<CqlSession> cluster =
             Cluster.builder()
                 .addContactPoint(contactPoint.inetSocketAddress())
                 .withConfigLoader(new TestConfigLoader("protocol.version = V4"))

@@ -17,7 +17,9 @@ package com.datastax.oss.driver.api.core.cql;
 
 import com.datastax.oss.driver.api.core.config.DriverConfigProfile;
 import com.datastax.oss.driver.api.core.session.Request;
+import com.datastax.oss.driver.api.core.session.Session;
 import com.datastax.oss.driver.api.core.time.TimestampGenerator;
+import com.datastax.oss.driver.api.core.type.reflect.GenericType;
 import java.nio.ByteBuffer;
 import java.util.Map;
 import java.util.concurrent.CompletionStage;
@@ -27,10 +29,28 @@ import java.util.concurrent.CompletionStage;
  *
  * @param <T> the "self type" used for covariant returns in subtypes.
  */
-public interface Statement<T extends Statement<T>>
-    extends Request<ResultSet, CompletionStage<AsyncResultSet>> {
+public interface Statement<T extends Statement<T>> extends Request {
   // Implementation note: "CqlRequest" would be a better name, but we keep "Statement" to match
   // previous driver versions.
+
+  /**
+   * The type returned when a CQL statement is executed synchronously.
+   *
+   * <p>Most users won't use this explicitly. It is needed for the generic execute method ({@link
+   * Session#execute(Request, GenericType)}), but CQL statements will generally be run with one of
+   * the driver's built-in helper methods (such as {@link Session#execute(Statement)}).
+   */
+  GenericType<ResultSet> SYNC = GenericType.of(ResultSet.class);
+
+  /**
+   * The type returned when a CQL statement is executed asynchronously.
+   *
+   * <p>Most users won't use this explicitly. It is needed for the generic execute method ({@link
+   * Session#execute(Request, GenericType)}), but CQL statements will generally be run with one of
+   * the driver's built-in helper methods (such as {@link Session#executeAsync(Statement)}).
+   */
+  GenericType<CompletionStage<AsyncResultSet>> ASYNC =
+      new GenericType<CompletionStage<AsyncResultSet>>() {};
 
   /**
    * Sets the name of the driver configuration profile that will be used for execution.

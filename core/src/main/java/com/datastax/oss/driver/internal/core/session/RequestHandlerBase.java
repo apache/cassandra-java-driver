@@ -29,12 +29,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /** Factors code that should be common to most request handler implementations. */
-public abstract class RequestHandlerBase<SyncResultT, AsyncResultT>
-    implements RequestHandler<SyncResultT, AsyncResultT> {
+public abstract class RequestHandlerBase<RequestT extends Request, ResultT>
+    implements RequestHandler<RequestT, ResultT> {
 
   private static final Logger LOG = LoggerFactory.getLogger(RequestHandlerBase.class);
 
-  protected final Request<SyncResultT, AsyncResultT> request;
   protected final boolean isIdempotent;
   protected final DefaultSession session;
   protected final CqlIdentifier keyspace;
@@ -43,10 +42,7 @@ public abstract class RequestHandlerBase<SyncResultT, AsyncResultT>
   protected final DriverConfigProfile configProfile;
 
   protected RequestHandlerBase(
-      Request<SyncResultT, AsyncResultT> request,
-      DefaultSession session,
-      InternalDriverContext context) {
-    this.request = request;
+      RequestT request, DefaultSession session, InternalDriverContext context) {
     this.session = session;
     this.keyspace = session.getKeyspace();
     this.context = context;
@@ -66,24 +62,5 @@ public abstract class RequestHandlerBase<SyncResultT, AsyncResultT>
         (request.isIdempotent() == null)
             ? configProfile.getBoolean(CoreDriverOption.REQUEST_DEFAULT_IDEMPOTENCE)
             : request.isIdempotent();
-  }
-
-  protected DriverChannel getChannel(Node node, String logPrefix) {
-    ChannelPool pool = session.getPools().get(node);
-    if (pool == null) {
-      LOG.debug("[{}] No pool to {}, skipping", logPrefix, node);
-      return null;
-    } else {
-      DriverChannel channel = pool.next();
-      if (channel == null) {
-        LOG.trace("[{}] Pool returned no channel for {}, skipping", logPrefix, node);
-        return null;
-      } else if (channel.closeFuture().isDone()) {
-        LOG.trace("[{}] Pool returned closed connection to {}, skipping", logPrefix, node);
-        return null;
-      } else {
-        return channel;
-      }
-    }
   }
 }
