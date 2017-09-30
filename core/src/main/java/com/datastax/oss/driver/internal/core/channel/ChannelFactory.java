@@ -126,7 +126,8 @@ public class ChannelFactory {
             .group(nettyOptions.ioEventLoopGroup())
             .channel(nettyOptions.channelClass())
             .option(ChannelOption.ALLOCATOR, nettyOptions.allocator())
-            .handler(initializer(address, currentVersion, options, availableIdsHolder));
+            .handler(
+                initializer(address, currentVersion, options, availableIdsHolder, resultFuture));
 
     nettyOptions.afterBootstrapInitialized(bootstrap);
 
@@ -172,6 +173,8 @@ public class ChannelFactory {
                     UnsupportedProtocolVersionException.forNegotiation(address, attemptedVersions));
               }
             } else {
+              // Note: might be completed already if the failure happened in initializer(), this is
+              // fine
               resultFuture.completeExceptionally(error);
             }
           }
@@ -183,51 +186,59 @@ public class ChannelFactory {
       SocketAddress address,
       final ProtocolVersion protocolVersion,
       final DriverChannelOptions options,
-      AvailableIdsHolder availableIdsHolder) {
+      AvailableIdsHolder availableIdsHolder,
+      CompletableFuture<DriverChannel> resultFuture) {
     return new ChannelInitializer<Channel>() {
       @Override
       protected void initChannel(Channel channel) throws Exception {
-        DriverConfigProfile defaultConfigProfile = context.config().getDefaultProfile();
+        try {
+          DriverConfigProfile defaultConfigProfile = context.config().getDefaultProfile();
 
-        long setKeyspaceTimeoutMillis =
-            defaultConfigProfile
-                .getDuration(CoreDriverOption.CONNECTION_SET_KEYSPACE_TIMEOUT)
-                .toMillis();
-        int maxFrameLength =
-            (int) defaultConfigProfile.getBytes(CoreDriverOption.PROTOCOL_MAX_FRAME_LENGTH);
-        int maxRequestsPerConnection =
-            defaultConfigProfile.getInt(CoreDriverOption.CONNECTION_MAX_REQUESTS);
-        int maxOrphanRequests =
-            defaultConfigProfile.getInt(CoreDriverOption.CONNECTION_MAX_ORPHAN_REQUESTS);
+          long setKeyspaceTimeoutMillis =
+              defaultConfigProfile
+                  .getDuration(CoreDriverOption.CONNECTION_SET_KEYSPACE_TIMEOUT)
+                  .toMillis();
+          int maxFrameLength =
+              (int) defaultConfigProfile.getBytes(CoreDriverOption.PROTOCOL_MAX_FRAME_LENGTH);
+          int maxRequestsPerConnection =
+              defaultConfigProfile.getInt(CoreDriverOption.CONNECTION_MAX_REQUESTS);
+          int maxOrphanRequests =
+              defaultConfigProfile.getInt(CoreDriverOption.CONNECTION_MAX_ORPHAN_REQUESTS);
 
-        InFlightHandler inFlightHandler =
-            new InFlightHandler(
-                protocolVersion,
-                new StreamIdGenerator(maxRequestsPerConnection),
-                maxOrphanRequests,
-                setKeyspaceTimeoutMillis,
-                availableIdsHolder,
-                channel.newPromise(),
-                options.eventCallback,
-                options.ownerLogPrefix);
-        HeartbeatHandler heartbeatHandler = new HeartbeatHandler(defaultConfigProfile);
-        ProtocolInitHandler initHandler =
-            new ProtocolInitHandler(
-                context, protocolVersion, clusterName, options, heartbeatHandler);
+          InFlightHandler inFlightHandler =
+              new InFlightHandler(
+                  protocolVersion,
+                  new StreamIdGenerator(maxRequestsPerConnection),
+                  maxOrphanRequests,
+                  setKeyspaceTimeoutMillis,
+                  availableIdsHolder,
+                  channel.newPromise(),
+                  options.eventCallback,
+                  options.ownerLogPrefix);
+          HeartbeatHandler heartbeatHandler = new HeartbeatHandler(defaultConfigProfile);
+          ProtocolInitHandler initHandler =
+              new ProtocolInitHandler(
+                  context, protocolVersion, clusterName, options, heartbeatHandler);
 
-        ChannelPipeline pipeline = channel.pipeline();
-        context
-            .sslHandlerFactory()
-            .map(f -> f.newSslHandler(channel, address))
-            .map(h -> pipeline.addLast("ssl", h));
-        pipeline
-            .addLast("encoder", new FrameEncoder(context.frameCodec(), maxFrameLength))
-            .addLast("decoder", new FrameDecoder(context.frameCodec(), maxFrameLength))
-            // Note: HeartbeatHandler is inserted here once init completes
-            .addLast("inflight", inFlightHandler)
-            .addLast("init", initHandler);
+          ChannelPipeline pipeline = channel.pipeline();
+          context
+              .sslHandlerFactory()
+              .map(f -> f.newSslHandler(channel, address))
+              .map(h -> pipeline.addLast("ssl", h));
+          pipeline
+              .addLast("encoder", new FrameEncoder(context.frameCodec(), maxFrameLength))
+              .addLast("decoder", new FrameDecoder(context.frameCodec(), maxFrameLength))
+              // Note: HeartbeatHandler is inserted here once init completes
+              .addLast("inflight", inFlightHandler)
+              .addLast("init", initHandler);
 
-        context.nettyOptions().afterChannelInitialized(channel);
+          context.nettyOptions().afterChannelInitialized(channel);
+        } catch (Throwable t) {
+          // If the init handler throws an exception, Netty swallows it and closes the channel. We
+          // want to propagate it instead, so fail the outer future (the result of connect()).
+          resultFuture.completeExceptionally(t);
+          throw t;
+        }
       }
     };
   }

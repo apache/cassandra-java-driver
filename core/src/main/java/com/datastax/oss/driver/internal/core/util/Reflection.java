@@ -21,6 +21,7 @@ import com.datastax.oss.driver.api.core.config.DriverOption;
 import com.datastax.oss.driver.api.core.context.DriverContext;
 import com.google.common.base.Preconditions;
 import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationTargetException;
 import java.util.Optional;
 
 public class Reflection {
@@ -108,9 +109,13 @@ public class Reflection {
       Object instance = constructor.newInstance(context, rootOption);
       return Optional.of(expectedSuperType.cast(instance));
     } catch (Exception e) {
+      // ITE just wraps an exception thrown by the constructor, get rid of it:
+      Throwable cause = (e instanceof InvocationTargetException) ? e.getCause() : e;
       throw new IllegalArgumentException(
-          String.format("Error instantiating class %s (specified by %s)", className, configPath),
-          e);
+          String.format(
+              "Error instantiating class %s (specified by %s): %s",
+              className, configPath, cause.getMessage()),
+          cause);
     }
   }
 }
