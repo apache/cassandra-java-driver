@@ -46,6 +46,7 @@ import java.net.SocketAddress;
 import java.time.Duration;
 import java.util.Collections;
 import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Exchanger;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -222,35 +223,40 @@ public abstract class ChannelFactoryTestBase {
         SocketAddress address,
         ProtocolVersion protocolVersion,
         DriverChannelOptions options,
-        AvailableIdsHolder availableIdsHolder) {
+        AvailableIdsHolder availableIdsHolder,
+        CompletableFuture<DriverChannel> resultFuture) {
       return new ChannelInitializer<Channel>() {
         @Override
         protected void initChannel(Channel channel) throws Exception {
-          DriverConfigProfile defaultConfigProfile = context.config().getDefaultProfile();
+          try {
+            DriverConfigProfile defaultConfigProfile = context.config().getDefaultProfile();
 
-          long setKeyspaceTimeoutMillis =
-              defaultConfigProfile
-                  .getDuration(CoreDriverOption.CONNECTION_SET_KEYSPACE_TIMEOUT)
-                  .toMillis();
-          int maxRequestsPerConnection =
-              defaultConfigProfile.getInt(CoreDriverOption.CONNECTION_MAX_REQUESTS);
+            long setKeyspaceTimeoutMillis =
+                defaultConfigProfile
+                    .getDuration(CoreDriverOption.CONNECTION_SET_KEYSPACE_TIMEOUT)
+                    .toMillis();
+            int maxRequestsPerConnection =
+                defaultConfigProfile.getInt(CoreDriverOption.CONNECTION_MAX_REQUESTS);
 
-          InFlightHandler inFlightHandler =
-              new InFlightHandler(
-                  protocolVersion,
-                  new StreamIdGenerator(maxRequestsPerConnection),
-                  Integer.MAX_VALUE,
-                  setKeyspaceTimeoutMillis,
-                  availableIdsHolder,
-                  channel.newPromise(),
-                  null,
-                  "test");
+            InFlightHandler inFlightHandler =
+                new InFlightHandler(
+                    protocolVersion,
+                    new StreamIdGenerator(maxRequestsPerConnection),
+                    Integer.MAX_VALUE,
+                    setKeyspaceTimeoutMillis,
+                    availableIdsHolder,
+                    channel.newPromise(),
+                    null,
+                    "test");
 
-          HeartbeatHandler heartbeatHandler = new HeartbeatHandler(defaultConfigProfile);
-          ProtocolInitHandler initHandler =
-              new ProtocolInitHandler(
-                  context, protocolVersion, clusterName, options, heartbeatHandler);
-          channel.pipeline().addLast("inflight", inFlightHandler).addLast("init", initHandler);
+            HeartbeatHandler heartbeatHandler = new HeartbeatHandler(defaultConfigProfile);
+            ProtocolInitHandler initHandler =
+                new ProtocolInitHandler(
+                    context, protocolVersion, clusterName, options, heartbeatHandler);
+            channel.pipeline().addLast("inflight", inFlightHandler).addLast("init", initHandler);
+          } catch (Throwable t) {
+            resultFuture.completeExceptionally(t);
+          }
         }
       };
     }
