@@ -63,6 +63,16 @@
       <artifactId>guava</artifactId>
       <scope>test</scope>
     </dependency>
+    <dependency>
+      <groupId>org.xerial.snappy</groupId>
+      <artifactId>snappy-java</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>net.jpountz.lz4</groupId>
+      <artifactId>lz4</artifactId>
+      <scope>test</scope>
+    </dependency>
   </dependencies>
 
   <build>

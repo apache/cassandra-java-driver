@@ -25,6 +25,7 @@ public enum CoreDriverOption implements DriverOption {
 
   PROTOCOL_VERSION("protocol.version", false),
   PROTOCOL_MAX_FRAME_LENGTH("protocol.max-frame-length", true),
+  PROTOCOL_COMPRESSOR("protocol.compressor", false),
 
   CLUSTER_NAME("cluster-name", false),
   CONFIG_RELOAD_INTERVAL("config-reload-interval", false),
