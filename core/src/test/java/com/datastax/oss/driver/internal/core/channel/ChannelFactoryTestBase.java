@@ -32,6 +32,7 @@ import com.datastax.oss.protocol.internal.Message;
 import com.datastax.oss.protocol.internal.response.Ready;
 import com.tngtech.java.junit.dataprovider.DataProviderRunner;
 import io.netty.bootstrap.ServerBootstrap;
+import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufAllocator;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelFuture;
@@ -88,6 +89,7 @@ public abstract class ChannelFactoryTestBase {
   @Mock NettyOptions nettyOptions;
   @Mock ProtocolVersionRegistry protocolVersionRegistry;
   @Mock EventBus eventBus;
+  @Mock Compressor<ByteBuf> compressor;
 
   // The server's I/O thread will store the last received request here, and block until the test
   // thread retrieves it. This assumes readOutboundFrame() is called for each actual request, else
@@ -133,6 +135,7 @@ public abstract class ChannelFactoryTestBase {
     Mockito.when(context.sslHandlerFactory()).thenReturn(Optional.empty());
     Mockito.when(context.eventBus()).thenReturn(eventBus);
     Mockito.when(context.writeCoalescer()).thenReturn(new PassThroughWriteCoalescer(null, null));
+    Mockito.when(context.compressor()).thenReturn(compressor);
 
     // Start local server
     ServerBootstrap serverBootstrap =

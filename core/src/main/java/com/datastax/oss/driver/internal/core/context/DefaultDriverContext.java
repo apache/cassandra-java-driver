@@ -217,9 +217,11 @@ public class DefaultDriverContext implements InternalDriverContext {
     return new EventBus(clusterName());
   }
 
+  @SuppressWarnings("unchecked")
   protected Compressor<ByteBuf> buildCompressor() {
-    // TODO build alternate implementation if specified in conf
-    return Compressor.none();
+    return (Compressor<ByteBuf>)
+        Reflection.buildFromConfig(this, CoreDriverOption.PROTOCOL_COMPRESSOR, Compressor.class)
+            .orElse(Compressor.none());
   }
 
   protected FrameCodec<ByteBuf> buildFrameCodec() {

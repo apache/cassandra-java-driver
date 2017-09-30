@@ -140,7 +140,7 @@ class ProtocolInitHandler extends ConnectInitHandler {
     Message getRequest() {
       switch (step) {
         case STARTUP:
-          return new Startup();
+          return new Startup(internalDriverContext.compressor().algorithm());
         case GET_CLUSTER_NAME:
           return CLUSTER_NAME_QUERY;
         case SET_KEYSPACE:
