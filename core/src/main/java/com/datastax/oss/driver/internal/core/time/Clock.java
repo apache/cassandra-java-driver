@@ -31,7 +31,7 @@ public interface Clock {
     if (forceJavaClock) {
       LOG.info("Using Java system clock because this was explicitly required in the configuration");
       return new JavaClock();
-    } else if (!Native.CURRENT_TIME_MICROS_AVAILABLE) {
+    } else if (!Native.isCurrentTimeMicrosAvailable()) {
       LOG.info(
           "Could not access native clock (see debug logs for details), "
               + "falling back to Java system clock");
