@@ -4,6 +4,7 @@
 
 ### 4.0.0-alpha2 (in progress)
 
+- [new feature] JAVA-1514: Port Uuids utility class
 - [new feature] JAVA-1520: Add node state listeners
 - [new feature] JAVA-1493: Handle schema metadata
 - [improvement] JAVA-1605: Refactor request execution model

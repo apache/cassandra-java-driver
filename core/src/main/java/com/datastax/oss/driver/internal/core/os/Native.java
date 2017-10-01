@@ -21,6 +21,8 @@ import jnr.ffi.Runtime;
 import jnr.ffi.Struct;
 import jnr.ffi.annotations.Out;
 import jnr.ffi.annotations.Transient;
+import jnr.posix.POSIXFactory;
+import jnr.posix.util.DefaultPOSIXHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -54,6 +56,23 @@ public class Native {
       throw new IllegalStateException("Call to libc.gettimeofday() failed with result " + res);
     }
     return tv.tv_sec.get() * 1000000 + tv.tv_usec.get();
+  }
+
+  public static boolean isGetProcessIdAvailable() {
+    try {
+      return PosixLoader.GET_PID_AVAILABLE;
+    } catch (NoClassDefFoundError e) {
+      return false;
+    }
+  }
+
+  public static int getProcessId() {
+    if (!isGetProcessIdAvailable()) {
+      throw new IllegalStateException(
+          "Native call not available. "
+              + "Check isGetProcessIdAvailable() before calling this method.");
+    }
+    return PosixLoader.POSIX.getpid();
   }
 
   /**
@@ -102,6 +121,33 @@ public class Native {
         }
       }
       GET_TIME_OF_DAY_AVAILABLE = getTimeOfDayAvailable;
+    }
+  }
+
+  /** @see LibCLoader */
+  private static class PosixLoader {
+    private static final jnr.posix.POSIX POSIX;
+    private static final boolean GET_PID_AVAILABLE;
+
+    static {
+      jnr.posix.POSIX posix;
+      try {
+        posix = POSIXFactory.getPOSIX(new DefaultPOSIXHandler(), true);
+      } catch (Throwable t) {
+        posix = null;
+        LOG.debug("Error loading POSIX", t);
+      }
+      POSIX = posix;
+      boolean getPidAvailable = false;
+      if (POSIX != null) {
+        try {
+          POSIX.getpid();
+          getPidAvailable = true;
+        } catch (Throwable t) {
+          LOG.debug("Error accessing posix.getpid()", t);
+        }
+      }
+      GET_PID_AVAILABLE = getPidAvailable;
     }
   }
 }
