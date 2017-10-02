@@ -25,7 +25,7 @@ public enum CoreDriverOption implements DriverOption {
 
   PROTOCOL_VERSION("protocol.version", false),
   PROTOCOL_MAX_FRAME_LENGTH("protocol.max-frame-length", true),
-  PROTOCOL_COMPRESSOR("protocol.compressor", false),
+  PROTOCOL_COMPRESSOR_CLASS("protocol.compressor.class", false),
 
   CLUSTER_NAME("cluster-name", false),
   CONFIG_RELOAD_INTERVAL("config-reload-interval", false),
@@ -45,10 +45,10 @@ public enum CoreDriverOption implements DriverOption {
   REQUEST_SERIAL_CONSISTENCY("request.serial-consistency", true),
   REQUEST_WARN_IF_SET_KEYSPACE("request.warn-if-set-keyspace", true),
   REQUEST_DEFAULT_IDEMPOTENCE("request.default-idempotence", true),
-  RETRY_POLICY_ROOT("request.retry-policy", true),
-  SPECULATIVE_EXECUTION_POLICY_ROOT("request.speculative-execution-policy", true),
-  RELATIVE_SPECULATIVE_EXECUTION_MAX("max-executions", false),
-  RELATIVE_SPECULATIVE_EXECUTION_DELAY("delay", false),
+  RETRY_POLICY_CLASS("request.retry-policy.class", true),
+  SPECULATIVE_EXECUTION_POLICY_CLASS("request.speculative-execution-policy.class", true),
+  SPECULATIVE_EXECUTION_MAX("request.speculative-execution-policy.max-executions", false),
+  SPECULATIVE_EXECUTION_DELAY("request.speculative-execution-policy.delay", false),
   REQUEST_TRACE_ATTEMPTS("request.trace.attempts", true),
   REQUEST_TRACE_INTERVAL("request.trace.interval", true),
   REQUEST_TRACE_CONSISTENCY("request.trace.consistency", true),
@@ -61,18 +61,15 @@ public enum CoreDriverOption implements DriverOption {
   CONTROL_CONNECTION_AGREEMENT_WARN(
       "connection.control-connection.schema-agreement.warn-on-failure", true),
 
-  COALESCER_ROOT("connection.coalescer", true),
-  RELATIVE_COALESCER_MAX_RUNS("max-runs-with-no-work", false),
-  RELATIVE_COALESCER_INTERVAL("reschedule-interval", false),
+  COALESCER_CLASS("connection.coalescer.class", true),
+  COALESCER_MAX_RUNS("connection.coalescer.max-runs-with-no-work", false),
+  COALESCER_INTERVAL("connection.coalescer.reschedule-interval", false),
 
-  // "Sub-option" for all the policies, etc.
-  RELATIVE_POLICY_CLASS("class", false),
+  LOAD_BALANCING_POLICY_CLASS("load-balancing-policy.class", true),
 
-  LOAD_BALANCING_POLICY_ROOT("load-balancing-policy", true),
-
-  RECONNECTION_POLICY_ROOT("connection.reconnection-policy", true),
-  RELATIVE_EXPONENTIAL_RECONNECTION_BASE_DELAY("base-delay", false),
-  RELATIVE_EXPONENTIAL_RECONNECTION_MAX_DELAY("max-delay", false),
+  RECONNECTION_POLICY_CLASS("connection.reconnection-policy.class", true),
+  RECONNECTION_BASE_DELAY("connection.reconnection-policy.base-delay", false),
+  RECONNECTION_MAX_DELAY("connection.reconnection-policy.max-delay", false),
 
   PREPARE_ON_ALL_NODES("prepared-statements.prepare-on-all-nodes", true),
   REPREPARE_ENABLED("prepared-statements.reprepare-on-up.enabled", true),
@@ -81,14 +78,14 @@ public enum CoreDriverOption implements DriverOption {
   REPREPARE_MAX_PARALLELISM("prepared-statements.reprepare-on-up.max-parallelism", false),
   REPREPARE_TIMEOUT("prepared-statements.reprepare-on-up.timeout", false),
 
-  ADDRESS_TRANSLATOR_ROOT("address-translator", true),
+  ADDRESS_TRANSLATOR_CLASS("address-translator.class", true),
 
-  AUTH_PROVIDER_ROOT("protocol.auth-provider", false),
-  RELATIVE_PLAIN_TEXT_AUTH_USERNAME("username", false),
-  RELATIVE_PLAIN_TEXT_AUTH_PASSWORD("password", false),
+  AUTH_PROVIDER_CLASS("protocol.auth-provider.class", false),
+  AUTH_PROVIDER_USER_NAME("protocol.auth-provider.username", false),
+  AUTH_PROVIDER_PASSWORD("protocol.auth-provider.password", false),
 
-  SSL_ENGINE_FACTORY_ROOT("ssl-engine-factory", false),
-  RELATIVE_DEFAULT_SSL_CIPHER_SUITES("cipher-suites", false),
+  SSL_ENGINE_FACTORY_CLASS("ssl-engine-factory.class", false),
+  SSL_CIPHER_SUITES("ssl-engine-factory.cipher-suites", false),
 
   METADATA_TOPOLOGY_WINDOW("metadata.topology-event-debouncer.window", true),
   METADATA_TOPOLOGY_MAX_EVENTS("metadata.topology-event-debouncer.max-events", true),
@@ -100,10 +97,12 @@ public enum CoreDriverOption implements DriverOption {
   METADATA_SCHEMA_MAX_EVENTS("metadata.schema.debouncer.max-events", true),
   METADATA_TOKEN_MAP_ENABLED("metadata.token-map.enabled", true),
 
-  TIMESTAMP_GENERATOR_ROOT("request.timestamp-generator", true),
-  RELATIVE_TIMESTAMP_GENERATOR_FORCE_JAVA_CLOCK("force-java-clock", false),
-  RELATIVE_TIMESTAMP_GENERATOR_DRIFT_WARNING_THRESHOLD("drift-warning.threshold", false),
-  RELATIVE_TIMESTAMP_GENERATOR_DRIFT_WARNING_INTERVAL("drift-warning.interval", false),
+  TIMESTAMP_GENERATOR_CLASS("request.timestamp-generator.class", true),
+  TIMESTAMP_GENERATOR_FORCE_JAVA_CLOCK("request.timestamp-generator.force-java-clock", false),
+  TIMESTAMP_GENERATOR_DRIFT_WARNING_THRESHOLD(
+      "request.timestamp-generator.drift-warning.threshold", false),
+  TIMESTAMP_GENERATOR_DRIFT_WARNING_INTERVAL(
+      "request.timestamp-generator.drift-warning.interval", false),
 
   NETTY_IO_SIZE("netty.io-group.size", false),
   NETTY_IO_SHUTDOWN_QUIET_PERIOD("netty.io-group.shutdown.quiet-period", false),

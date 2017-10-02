@@ -17,7 +17,6 @@ package com.datastax.oss.driver.internal.core.channel;
 
 import com.datastax.oss.driver.api.core.config.CoreDriverOption;
 import com.datastax.oss.driver.api.core.config.DriverConfigProfile;
-import com.datastax.oss.driver.api.core.config.DriverOption;
 import com.datastax.oss.driver.api.core.context.DriverContext;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelFuture;
@@ -52,17 +51,11 @@ public class DefaultWriteCoalescer implements WriteCoalescer {
   private final long rescheduleIntervalNanos;
   private final ConcurrentMap<EventLoop, Flusher> flushers = new ConcurrentHashMap<>();
 
-  public DefaultWriteCoalescer(
-      @SuppressWarnings("unused") DriverContext context,
-      @SuppressWarnings("unused") DriverOption configRoot) {
-
+  public DefaultWriteCoalescer(DriverContext context) {
     DriverConfigProfile config = context.config().getDefaultProfile();
-    this.maxRunsWithNoWork =
-        config.getInt(configRoot.concat(CoreDriverOption.RELATIVE_COALESCER_MAX_RUNS));
+    this.maxRunsWithNoWork = config.getInt(CoreDriverOption.COALESCER_MAX_RUNS);
     this.rescheduleIntervalNanos =
-        config
-            .getDuration(configRoot.concat(CoreDriverOption.RELATIVE_COALESCER_INTERVAL))
-            .toNanos();
+        config.getDuration(CoreDriverOption.COALESCER_INTERVAL).toNanos();
   }
 
   @Override

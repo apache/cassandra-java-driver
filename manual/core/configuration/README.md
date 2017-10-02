@@ -340,14 +340,11 @@ When the driver encounters such a declaration, it will load the class and look f
 with the following signature:
 
 ```java
-ExponentialReconnectionPolicy(DriverContext context, DriverOption configRoot)
+ExponentialReconnectionPolicy(DriverContext context)
 ```
 
-* `context` argument allows the policy to access other driver components (for example the
-  configuration);
-* `configRoot` represents the root of the configuration element (`reconnection-policy` in the 
-  example above), and can be used to build the path of the other options, in particular for nestable
-  policies that can appear at arbitrary paths in the configuration tree.
+Where `context` is the object returned by `Cluster.getContext()`, which allows the policy to access
+other driver components (for example the configuration).
  
 If you write custom policy implementations, you should follow that same pattern; it provides an
 elegant way to switch policies without having to recompile the application (if your policy needs

@@ -15,7 +15,6 @@
  */
 package com.datastax.oss.driver.internal.core.protocol;
 
-import com.datastax.oss.driver.api.core.config.DriverOption;
 import com.datastax.oss.driver.api.core.context.DriverContext;
 import io.netty.buffer.ByteBuf;
 import java.nio.ByteBuffer;
@@ -32,7 +31,7 @@ public class Lz4Compressor extends ByteBufCompressor {
   private final LZ4Compressor compressor;
   private final LZ4FastDecompressor decompressor;
 
-  public Lz4Compressor(DriverContext context, @SuppressWarnings("unused") DriverOption configRoot) {
+  public Lz4Compressor(DriverContext context) {
     try {
       LZ4Factory lz4Factory = LZ4Factory.fastestInstance();
       LOG.info("[{}] Using {}", context.clusterName(), lz4Factory.toString());

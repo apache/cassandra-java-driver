@@ -15,7 +15,6 @@
  */
 package com.datastax.oss.driver.api.core.time;
 
-import com.datastax.oss.driver.api.core.config.DriverOption;
 import com.datastax.oss.driver.api.core.context.DriverContext;
 import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
 import com.datastax.oss.driver.internal.core.time.Clock;
@@ -30,13 +29,13 @@ public class AtomicTimestampGenerator extends MonotonicTimestampGenerator {
 
   private AtomicLong lastRef = new AtomicLong(0);
 
-  public AtomicTimestampGenerator(DriverContext context, DriverOption configRoot) {
-    super(context, configRoot);
+  public AtomicTimestampGenerator(DriverContext context) {
+    super(context);
   }
 
   @VisibleForTesting
-  AtomicTimestampGenerator(Clock clock, InternalDriverContext context, DriverOption configRoot) {
-    super(clock, context, configRoot);
+  AtomicTimestampGenerator(Clock clock, InternalDriverContext context) {
+    super(clock, context);
   }
 
   @Override

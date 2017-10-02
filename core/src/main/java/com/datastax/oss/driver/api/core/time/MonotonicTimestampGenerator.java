@@ -17,7 +17,6 @@ package com.datastax.oss.driver.api.core.time;
 
 import com.datastax.oss.driver.api.core.config.CoreDriverOption;
 import com.datastax.oss.driver.api.core.config.DriverConfigProfile;
-import com.datastax.oss.driver.api.core.config.DriverOption;
 import com.datastax.oss.driver.api.core.context.DriverContext;
 import com.datastax.oss.driver.internal.core.time.Clock;
 import com.google.common.annotations.VisibleForTesting;
@@ -38,29 +37,30 @@ abstract class MonotonicTimestampGenerator implements TimestampGenerator {
   private final long warningIntervalMillis;
   private final AtomicLong lastDriftWarning = new AtomicLong(Long.MIN_VALUE);
 
-  protected MonotonicTimestampGenerator(DriverContext context, DriverOption configRoot) {
-    this(buildClock(context, configRoot), context, configRoot);
+  protected MonotonicTimestampGenerator(DriverContext context) {
+    this(buildClock(context), context);
   }
 
   @VisibleForTesting
-  protected MonotonicTimestampGenerator(
-      Clock clock, DriverContext context, DriverOption configRoot) {
+  protected MonotonicTimestampGenerator(Clock clock, DriverContext context) {
     this.clock = clock;
 
-    DriverOption warningThresholdOption =
-        configRoot.concat(CoreDriverOption.RELATIVE_TIMESTAMP_GENERATOR_DRIFT_WARNING_THRESHOLD);
     DriverConfigProfile config = context.config().getDefaultProfile();
     this.warningThresholdMicros =
-        (config.isDefined(warningThresholdOption))
-            ? config.getDuration(warningThresholdOption).toNanos() / 1000
+        (config.isDefined(CoreDriverOption.TIMESTAMP_GENERATOR_DRIFT_WARNING_THRESHOLD))
+            ? config
+                    .getDuration(CoreDriverOption.TIMESTAMP_GENERATOR_DRIFT_WARNING_THRESHOLD)
+                    .toNanos()
+                / 1000
             : 0;
 
     if (this.warningThresholdMicros == 0) {
       this.warningIntervalMillis = 0;
     } else {
-      DriverOption warningIntervalOption =
-          configRoot.concat(CoreDriverOption.RELATIVE_TIMESTAMP_GENERATOR_DRIFT_WARNING_INTERVAL);
-      this.warningIntervalMillis = config.getDuration(warningIntervalOption).toMillis();
+      this.warningIntervalMillis =
+          config
+              .getDuration(CoreDriverOption.TIMESTAMP_GENERATOR_DRIFT_WARNING_INTERVAL)
+              .toMillis();
     }
   }
 
@@ -97,12 +97,11 @@ abstract class MonotonicTimestampGenerator implements TimestampGenerator {
     }
   }
 
-  private static Clock buildClock(DriverContext context, DriverOption configRoot) {
-    DriverOption forceJavaClockOption =
-        configRoot.concat(CoreDriverOption.RELATIVE_TIMESTAMP_GENERATOR_FORCE_JAVA_CLOCK);
+  private static Clock buildClock(DriverContext context) {
     DriverConfigProfile config = context.config().getDefaultProfile();
     boolean forceJavaClock =
-        config.isDefined(forceJavaClockOption) && config.getBoolean(forceJavaClockOption);
+        config.isDefined(CoreDriverOption.TIMESTAMP_GENERATOR_FORCE_JAVA_CLOCK)
+            && config.getBoolean(CoreDriverOption.TIMESTAMP_GENERATOR_FORCE_JAVA_CLOCK);
     return Clock.getInstance(forceJavaClock);
   }
 }

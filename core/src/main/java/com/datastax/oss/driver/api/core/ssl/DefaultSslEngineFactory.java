@@ -17,7 +17,6 @@ package com.datastax.oss.driver.api.core.ssl;
 
 import com.datastax.oss.driver.api.core.config.CoreDriverOption;
 import com.datastax.oss.driver.api.core.config.DriverConfigProfile;
-import com.datastax.oss.driver.api.core.config.DriverOption;
 import com.datastax.oss.driver.api.core.context.DriverContext;
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
@@ -49,17 +48,15 @@ public class DefaultSslEngineFactory implements SslEngineFactory {
   private final String[] cipherSuites;
 
   /** Builds a new instance from the driver configuration. */
-  public DefaultSslEngineFactory(DriverContext driverContext, DriverOption configRoot) {
+  public DefaultSslEngineFactory(DriverContext driverContext) {
     try {
       this.sslContext = SSLContext.getDefault();
     } catch (NoSuchAlgorithmException e) {
       throw new IllegalStateException("Cannot initialize SSL Context", e);
     }
     DriverConfigProfile config = driverContext.config().getDefaultProfile();
-    DriverOption cipherSuiteOption =
-        configRoot.concat(CoreDriverOption.RELATIVE_DEFAULT_SSL_CIPHER_SUITES);
-    if (config.isDefined(cipherSuiteOption)) {
-      List<String> list = config.getStringList(cipherSuiteOption);
+    if (config.isDefined(CoreDriverOption.SSL_CIPHER_SUITES)) {
+      List<String> list = config.getStringList(CoreDriverOption.SSL_CIPHER_SUITES);
       String tmp[] = new String[list.size()];
       this.cipherSuites = list.toArray(tmp);
     } else {

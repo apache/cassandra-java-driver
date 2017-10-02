@@ -15,7 +15,6 @@
  */
 package com.datastax.oss.driver.api.core.loadbalancing;
 
-import com.datastax.oss.driver.api.core.config.CoreDriverOption;
 import com.datastax.oss.driver.api.core.context.DriverContext;
 import com.datastax.oss.driver.api.core.loadbalancing.LoadBalancingPolicy.DistanceReporter;
 import com.datastax.oss.driver.api.core.metadata.Node;
@@ -44,8 +43,7 @@ public class RoundRobinLoadBalancingPolicyTest {
     Mockito.when(node2.getState()).thenReturn(NodeState.UP);
     Mockito.when(node3.getState()).thenReturn(NodeState.UP);
 
-    policy =
-        new RoundRobinLoadBalancingPolicy(context, CoreDriverOption.LOAD_BALANCING_POLICY_ROOT);
+    policy = new RoundRobinLoadBalancingPolicy(context);
   }
 
   @Test

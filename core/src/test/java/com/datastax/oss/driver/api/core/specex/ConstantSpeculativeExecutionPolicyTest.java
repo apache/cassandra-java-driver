@@ -44,38 +44,28 @@ public class ConstantSpeculativeExecutionPolicyTest {
   }
 
   private void mockOptions(int maxExecutions, long constantDelayMillis) {
-    Mockito.when(
-            defaultProfile.getInt(
-                CoreDriverOption.SPECULATIVE_EXECUTION_POLICY_ROOT.concat(
-                    CoreDriverOption.RELATIVE_SPECULATIVE_EXECUTION_MAX)))
+    Mockito.when(defaultProfile.getInt(CoreDriverOption.SPECULATIVE_EXECUTION_MAX))
         .thenReturn(maxExecutions);
-    Mockito.when(
-            defaultProfile.getDuration(
-                CoreDriverOption.SPECULATIVE_EXECUTION_POLICY_ROOT.concat(
-                    CoreDriverOption.RELATIVE_SPECULATIVE_EXECUTION_DELAY)))
+    Mockito.when(defaultProfile.getDuration(CoreDriverOption.SPECULATIVE_EXECUTION_DELAY))
         .thenReturn(Duration.ofMillis(constantDelayMillis));
   }
 
   @Test(expected = IllegalArgumentException.class)
   public void should_fail_if_delay_negative() {
     mockOptions(1, -10);
-    new ConstantSpeculativeExecutionPolicy(
-        context, CoreDriverOption.SPECULATIVE_EXECUTION_POLICY_ROOT);
+    new ConstantSpeculativeExecutionPolicy(context);
   }
 
   @Test(expected = IllegalArgumentException.class)
   public void should_fail_if_max_less_than_one() {
     mockOptions(0, 10);
-    new ConstantSpeculativeExecutionPolicy(
-        context, CoreDriverOption.SPECULATIVE_EXECUTION_POLICY_ROOT);
+    new ConstantSpeculativeExecutionPolicy(context);
   }
 
   @Test
   public void should_return_delay_until_max() {
     mockOptions(3, 10);
-    SpeculativeExecutionPolicy policy =
-        new ConstantSpeculativeExecutionPolicy(
-            context, CoreDriverOption.SPECULATIVE_EXECUTION_POLICY_ROOT);
+    SpeculativeExecutionPolicy policy = new ConstantSpeculativeExecutionPolicy(context);
 
     // Initial execution starts, schedule first speculative execution
     assertThat(policy.nextExecution(null, request, 1)).isEqualTo(10);

@@ -15,7 +15,6 @@
  */
 package com.datastax.oss.driver.api.core.time;
 
-import com.datastax.oss.driver.api.core.config.DriverOption;
 import com.datastax.oss.driver.api.core.context.DriverContext;
 import com.datastax.oss.driver.internal.core.time.Clock;
 import com.google.common.annotations.VisibleForTesting;
@@ -32,13 +31,13 @@ public class ThreadLocalTimestampGenerator extends MonotonicTimestampGenerator {
 
   private final ThreadLocal<Long> lastRef = ThreadLocal.withInitial(() -> 0L);
 
-  public ThreadLocalTimestampGenerator(DriverContext context, DriverOption configRoot) {
-    super(context, configRoot);
+  public ThreadLocalTimestampGenerator(DriverContext context) {
+    super(context);
   }
 
   @VisibleForTesting
-  ThreadLocalTimestampGenerator(Clock clock, DriverContext context, DriverOption configRoot) {
-    super(clock, context, configRoot);
+  ThreadLocalTimestampGenerator(Clock clock, DriverContext context) {
+    super(clock, context);
   }
 
   @Override

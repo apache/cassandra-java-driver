@@ -34,7 +34,7 @@ import static com.datastax.oss.driver.api.core.retry.WriteType.SIMPLE;
 public class DefaultRetryPolicyTest extends RetryPolicyTestBase {
 
   public DefaultRetryPolicyTest() {
-    super(new DefaultRetryPolicy(null, null));
+    super(new DefaultRetryPolicy(null));
   }
 
   @Test

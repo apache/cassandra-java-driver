@@ -15,7 +15,6 @@
  */
 package com.datastax.oss.driver.internal.core.util;
 
-import com.datastax.oss.driver.api.core.config.CoreDriverOption;
 import com.datastax.oss.driver.api.core.config.DriverConfigProfile;
 import com.datastax.oss.driver.api.core.config.DriverOption;
 import com.datastax.oss.driver.api.core.context.DriverContext;
@@ -66,18 +65,17 @@ public class Reflection {
    * above).
    *
    * @param context the driver context.
-   * @param rootOption the root of the set of options that configures the class. It will be looked
-   *     up in the default profile of the configuration stored in the context.
+   * @param classNameOption the option that indicates the class. It will be looked up in the default
+   *     profile of the configuration stored in the context.
    * @param expectedSuperType a super-type that the class is expected to implement/extend.
    * @return the new instance, or empty if {@code rootOption} or the class sub-option is not defined
    *     in the configuration.
    */
   public static <T> Optional<T> buildFromConfig(
-      DriverContext context, DriverOption rootOption, Class<T> expectedSuperType) {
+      DriverContext context, DriverOption classNameOption, Class<T> expectedSuperType) {
 
     DriverConfigProfile config = context.config().getDefaultProfile();
 
-    DriverOption classNameOption = rootOption.concat(CoreDriverOption.RELATIVE_POLICY_CLASS);
     if (!config.isDefined(classNameOption)) {
       return Optional.empty();
     }
@@ -94,19 +92,16 @@ public class Reflection {
 
     Constructor<?> constructor;
     try {
-      constructor = clazz.getConstructor(DriverContext.class, DriverOption.class);
+      constructor = clazz.getConstructor(DriverContext.class);
     } catch (NoSuchMethodException e) {
       throw new IllegalArgumentException(
           String.format(
               "Expected class %s (specified by %s) "
-                  + "to have an accessible constructor with arguments (%s, %s)",
-              className,
-              configPath,
-              DriverContext.class.getSimpleName(),
-              DriverOption.class.getSimpleName()));
+                  + "to have an accessible constructor with argument (%s)",
+              className, configPath, DriverContext.class.getSimpleName()));
     }
     try {
-      Object instance = constructor.newInstance(context, rootOption);
+      Object instance = constructor.newInstance(context);
       return Optional.of(expectedSuperType.cast(instance));
     } catch (Exception e) {
       // ITE just wraps an exception thrown by the constructor, get rid of it:
