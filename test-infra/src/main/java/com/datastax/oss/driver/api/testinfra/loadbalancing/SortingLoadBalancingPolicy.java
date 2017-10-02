@@ -29,7 +29,7 @@ import java.util.TreeSet;
 public class SortingLoadBalancingPolicy implements LoadBalancingPolicy {
 
   @SuppressWarnings("unused")
-  public SortingLoadBalancingPolicy(DriverContext context, DriverOption option) {
+  public SortingLoadBalancingPolicy(DriverContext context) {
     // constructor needed for loading via config.
   }
 

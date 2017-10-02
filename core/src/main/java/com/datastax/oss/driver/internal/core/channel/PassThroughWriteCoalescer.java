@@ -15,7 +15,6 @@
  */
 package com.datastax.oss.driver.internal.core.channel;
 
-import com.datastax.oss.driver.api.core.config.DriverOption;
 import com.datastax.oss.driver.api.core.context.DriverContext;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelFuture;
@@ -23,9 +22,7 @@ import io.netty.channel.ChannelFuture;
 /** No-op implementation of the write coalescer: each write is flushed immediately. */
 public class PassThroughWriteCoalescer implements WriteCoalescer {
 
-  public PassThroughWriteCoalescer(
-      @SuppressWarnings("unused") DriverContext context,
-      @SuppressWarnings("unused") DriverOption configRoot) {
+  public PassThroughWriteCoalescer(@SuppressWarnings("unused") DriverContext context) {
     // nothing to do
   }
 

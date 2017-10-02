@@ -15,7 +15,6 @@
  */
 package com.datastax.oss.driver.internal.core.protocol;
 
-import com.datastax.oss.driver.api.core.config.DriverOption;
 import com.datastax.oss.driver.api.core.context.DriverContext;
 import io.netty.buffer.ByteBuf;
 import java.io.IOException;
@@ -24,9 +23,7 @@ import org.xerial.snappy.Snappy;
 
 public class SnappyCompressor extends ByteBufCompressor {
 
-  public SnappyCompressor(
-      @SuppressWarnings("unused") DriverContext context,
-      @SuppressWarnings("unused") DriverOption configRoot) {
+  public SnappyCompressor(@SuppressWarnings("unused") DriverContext context) {
     try {
       Snappy.getNativeLibraryVersion();
     } catch (NoClassDefFoundError e) {

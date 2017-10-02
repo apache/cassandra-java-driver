@@ -15,16 +15,13 @@
  */
 package com.datastax.oss.driver.api.core.addresstranslation;
 
-import com.datastax.oss.driver.api.core.config.DriverOption;
 import com.datastax.oss.driver.api.core.context.DriverContext;
 import java.net.InetSocketAddress;
 
 /** An address translator that always returns the same address unchanged. */
 public class PassThroughAddressTranslator implements AddressTranslator {
 
-  public PassThroughAddressTranslator(
-      @SuppressWarnings("unused") DriverContext context,
-      @SuppressWarnings("unused") DriverOption configRoot) {
+  public PassThroughAddressTranslator(@SuppressWarnings("unused") DriverContext context) {
     // nothing to do
   }
 

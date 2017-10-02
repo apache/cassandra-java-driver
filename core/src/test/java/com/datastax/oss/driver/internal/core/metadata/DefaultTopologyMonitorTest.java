@@ -77,9 +77,7 @@ public class DefaultTopologyMonitorTest {
     Mockito.when(config.getDefaultProfile()).thenReturn(defaultConfig);
     Mockito.when(context.config()).thenReturn(config);
 
-    addressTranslator =
-        Mockito.spy(
-            new PassThroughAddressTranslator(context, CoreDriverOption.ADDRESS_TRANSLATOR_ROOT));
+    addressTranslator = Mockito.spy(new PassThroughAddressTranslator(context));
     Mockito.when(context.addressTranslator()).thenReturn(addressTranslator);
 
     Mockito.when(channel.remoteAddress()).thenReturn(ADDRESS1);

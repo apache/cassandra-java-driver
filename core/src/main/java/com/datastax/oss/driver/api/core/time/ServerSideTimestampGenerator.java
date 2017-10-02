@@ -15,7 +15,6 @@
  */
 package com.datastax.oss.driver.api.core.time;
 
-import com.datastax.oss.driver.api.core.config.DriverOption;
 import com.datastax.oss.driver.api.core.context.DriverContext;
 
 /**
@@ -24,9 +23,7 @@ import com.datastax.oss.driver.api.core.context.DriverContext;
  */
 public class ServerSideTimestampGenerator implements TimestampGenerator {
 
-  public ServerSideTimestampGenerator(
-      @SuppressWarnings("unused") DriverContext context,
-      @SuppressWarnings("unused") DriverOption configRoot) {
+  public ServerSideTimestampGenerator(@SuppressWarnings("unused") DriverContext context) {
     // nothing to do
   }
 

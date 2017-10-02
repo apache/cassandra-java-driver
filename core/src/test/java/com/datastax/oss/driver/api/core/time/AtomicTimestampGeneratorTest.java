@@ -15,7 +15,6 @@
  */
 package com.datastax.oss.driver.api.core.time;
 
-import com.datastax.oss.driver.api.core.config.CoreDriverOption;
 import com.datastax.oss.driver.internal.core.time.Clock;
 import java.util.SortedSet;
 import java.util.concurrent.ConcurrentSkipListSet;
@@ -32,7 +31,7 @@ import static com.datastax.oss.driver.Assertions.fail;
 public class AtomicTimestampGeneratorTest extends MonotonicTimestampGeneratorTestBase {
   @Override
   protected MonotonicTimestampGenerator newInstance(Clock clock) {
-    return new AtomicTimestampGenerator(clock, context, CoreDriverOption.TIMESTAMP_GENERATOR_ROOT);
+    return new AtomicTimestampGenerator(clock, context);
   }
 
   @Test

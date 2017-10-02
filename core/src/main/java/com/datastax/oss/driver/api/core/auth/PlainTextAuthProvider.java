@@ -17,7 +17,6 @@ package com.datastax.oss.driver.api.core.auth;
 
 import com.datastax.oss.driver.api.core.config.CoreDriverOption;
 import com.datastax.oss.driver.api.core.config.DriverConfigProfile;
-import com.datastax.oss.driver.api.core.config.DriverOption;
 import com.datastax.oss.driver.api.core.context.DriverContext;
 import com.google.common.base.Charsets;
 import java.net.SocketAddress;
@@ -45,20 +44,16 @@ import java.nio.ByteBuffer;
 public class PlainTextAuthProvider implements AuthProvider {
 
   private final DriverConfigProfile config;
-  private final DriverOption configRoot;
 
   /** Builds a new instance. */
-  public PlainTextAuthProvider(DriverContext context, DriverOption configRoot) {
+  public PlainTextAuthProvider(DriverContext context) {
     this.config = context.config().getDefaultProfile();
-    this.configRoot = configRoot;
   }
 
   @Override
   public Authenticator newAuthenticator(SocketAddress host, String serverAuthenticator) {
-    String username =
-        config.getString(configRoot.concat(CoreDriverOption.RELATIVE_PLAIN_TEXT_AUTH_USERNAME));
-    String password =
-        config.getString(configRoot.concat(CoreDriverOption.RELATIVE_PLAIN_TEXT_AUTH_PASSWORD));
+    String username = config.getString(CoreDriverOption.AUTH_PROVIDER_USER_NAME);
+    String password = config.getString(CoreDriverOption.AUTH_PROVIDER_PASSWORD);
     return new PlainTextAuthenticator(username, password);
   }
 

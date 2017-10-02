@@ -16,7 +16,6 @@
 package com.datastax.oss.driver.api.core.retry;
 
 import com.datastax.oss.driver.api.core.ConsistencyLevel;
-import com.datastax.oss.driver.api.core.config.DriverOption;
 import com.datastax.oss.driver.api.core.connection.ClosedConnectionException;
 import com.datastax.oss.driver.api.core.connection.HeartbeatException;
 import com.datastax.oss.driver.api.core.context.DriverContext;
@@ -32,9 +31,7 @@ import com.datastax.oss.driver.api.core.session.Request;
  */
 public class DefaultRetryPolicy implements RetryPolicy {
 
-  public DefaultRetryPolicy(
-      @SuppressWarnings("unused") DriverContext context,
-      @SuppressWarnings("unused") DriverOption configRoot) {
+  public DefaultRetryPolicy(@SuppressWarnings("unused") DriverContext context) {
     // nothing to do
   }
 

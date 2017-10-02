@@ -156,65 +156,69 @@ public class DefaultDriverContext implements InternalDriverContext {
   }
 
   protected LoadBalancingPolicy buildLoadBalancingPolicy() {
-    DriverOption rootOption = CoreDriverOption.LOAD_BALANCING_POLICY_ROOT;
-    return Reflection.buildFromConfig(this, rootOption, LoadBalancingPolicy.class)
+    return Reflection.buildFromConfig(
+            this, CoreDriverOption.LOAD_BALANCING_POLICY_CLASS, LoadBalancingPolicy.class)
         .orElseThrow(
             () ->
                 new IllegalArgumentException(
                     String.format(
                         "Missing load balancing policy, check your configuration (%s)",
-                        rootOption)));
+                        (DriverOption) CoreDriverOption.LOAD_BALANCING_POLICY_CLASS)));
   }
 
   protected ReconnectionPolicy buildReconnectionPolicy() {
-    CoreDriverOption rootOption = CoreDriverOption.RECONNECTION_POLICY_ROOT;
-    return Reflection.buildFromConfig(this, rootOption, ReconnectionPolicy.class)
+    return Reflection.buildFromConfig(
+            this, CoreDriverOption.RECONNECTION_POLICY_CLASS, ReconnectionPolicy.class)
         .orElseThrow(
             () ->
                 new IllegalArgumentException(
                     String.format(
-                        "Missing reconnection policy, check your configuration (%s)", rootOption)));
+                        "Missing reconnection policy, check your configuration (%s)",
+                        CoreDriverOption.RECONNECTION_POLICY_CLASS)));
   }
 
   protected RetryPolicy buildRetryPolicy() {
-    CoreDriverOption rootOption = CoreDriverOption.RETRY_POLICY_ROOT;
-    return Reflection.buildFromConfig(this, rootOption, RetryPolicy.class)
+    return Reflection.buildFromConfig(this, CoreDriverOption.RETRY_POLICY_CLASS, RetryPolicy.class)
         .orElseThrow(
             () ->
                 new IllegalArgumentException(
                     String.format(
-                        "Missing retry policy, check your configuration (%s)", rootOption)));
+                        "Missing retry policy, check your configuration (%s)",
+                        CoreDriverOption.RETRY_POLICY_CLASS)));
   }
 
   protected SpeculativeExecutionPolicy buildSpeculativeExecutionPolicy() {
-    CoreDriverOption rootOption = CoreDriverOption.SPECULATIVE_EXECUTION_POLICY_ROOT;
-    return Reflection.buildFromConfig(this, rootOption, SpeculativeExecutionPolicy.class)
+    return Reflection.buildFromConfig(
+            this,
+            CoreDriverOption.SPECULATIVE_EXECUTION_POLICY_CLASS,
+            SpeculativeExecutionPolicy.class)
         .orElseThrow(
             () ->
                 new IllegalArgumentException(
                     String.format(
                         "Missing speculative execution policy, check your configuration (%s)",
-                        rootOption)));
+                        CoreDriverOption.SPECULATIVE_EXECUTION_POLICY_CLASS)));
   }
 
   protected AddressTranslator buildAddressTranslator() {
-    CoreDriverOption rootOption = CoreDriverOption.ADDRESS_TRANSLATOR_ROOT;
-    return Reflection.buildFromConfig(this, rootOption, AddressTranslator.class)
+    return Reflection.buildFromConfig(
+            this, CoreDriverOption.ADDRESS_TRANSLATOR_CLASS, AddressTranslator.class)
         .orElseThrow(
             () ->
                 new IllegalArgumentException(
                     String.format(
-                        "Missing address translator, check your configuration (%s)", rootOption)));
+                        "Missing address translator, check your configuration (%s)",
+                        CoreDriverOption.ADDRESS_TRANSLATOR_CLASS)));
   }
 
   protected Optional<AuthProvider> buildAuthProvider() {
     return Reflection.buildFromConfig(
-        this, CoreDriverOption.AUTH_PROVIDER_ROOT, AuthProvider.class);
+        this, CoreDriverOption.AUTH_PROVIDER_CLASS, AuthProvider.class);
   }
 
   protected Optional<SslEngineFactory> buildSslEngineFactory() {
     return Reflection.buildFromConfig(
-        this, CoreDriverOption.SSL_ENGINE_FACTORY_ROOT, SslEngineFactory.class);
+        this, CoreDriverOption.SSL_ENGINE_FACTORY_CLASS, SslEngineFactory.class);
   }
 
   protected EventBus buildEventBus() {
@@ -224,7 +228,8 @@ public class DefaultDriverContext implements InternalDriverContext {
   @SuppressWarnings("unchecked")
   protected Compressor<ByteBuf> buildCompressor() {
     return (Compressor<ByteBuf>)
-        Reflection.buildFromConfig(this, CoreDriverOption.PROTOCOL_COMPRESSOR, Compressor.class)
+        Reflection.buildFromConfig(
+                this, CoreDriverOption.PROTOCOL_COMPRESSOR_CLASS, Compressor.class)
             .orElse(Compressor.none());
   }
 
@@ -250,13 +255,13 @@ public class DefaultDriverContext implements InternalDriverContext {
   }
 
   protected WriteCoalescer buildWriteCoalescer() {
-    CoreDriverOption rootOption = CoreDriverOption.COALESCER_ROOT;
-    return Reflection.buildFromConfig(this, rootOption, WriteCoalescer.class)
+    return Reflection.buildFromConfig(this, CoreDriverOption.COALESCER_CLASS, WriteCoalescer.class)
         .orElseThrow(
             () ->
                 new IllegalArgumentException(
                     String.format(
-                        "Missing write coalescer, check your configuration (%s)", rootOption)));
+                        "Missing write coalescer, check your configuration (%s)",
+                        CoreDriverOption.COALESCER_CLASS)));
   }
 
   protected ChannelFactory buildChannelFactory() {
@@ -285,13 +290,14 @@ public class DefaultDriverContext implements InternalDriverContext {
   }
 
   protected TimestampGenerator buildTimestampGenerator() {
-    CoreDriverOption rootOption = CoreDriverOption.TIMESTAMP_GENERATOR_ROOT;
-    return Reflection.buildFromConfig(this, rootOption, TimestampGenerator.class)
+    return Reflection.buildFromConfig(
+            this, CoreDriverOption.TIMESTAMP_GENERATOR_CLASS, TimestampGenerator.class)
         .orElseThrow(
             () ->
                 new IllegalArgumentException(
                     String.format(
-                        "Missing timestamp generator, check your configuration (%s)", rootOption)));
+                        "Missing timestamp generator, check your configuration (%s)",
+                        CoreDriverOption.TIMESTAMP_GENERATOR_CLASS)));
   }
 
   protected SchemaQueriesFactory buildSchemaQueriesFactory() {

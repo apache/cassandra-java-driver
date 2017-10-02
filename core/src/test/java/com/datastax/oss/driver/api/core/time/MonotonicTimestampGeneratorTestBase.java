@@ -22,7 +22,6 @@ import ch.qos.logback.core.Appender;
 import com.datastax.oss.driver.api.core.config.CoreDriverOption;
 import com.datastax.oss.driver.api.core.config.DriverConfig;
 import com.datastax.oss.driver.api.core.config.DriverConfigProfile;
-import com.datastax.oss.driver.api.core.config.DriverOption;
 import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
 import com.datastax.oss.driver.internal.core.time.Clock;
 import java.time.Duration;
@@ -40,13 +39,6 @@ import org.slf4j.LoggerFactory;
 import static org.assertj.core.api.Assertions.assertThat;
 
 abstract class MonotonicTimestampGeneratorTestBase {
-
-  protected static final DriverOption WARNING_THRESHOLD_OPTION =
-      CoreDriverOption.TIMESTAMP_GENERATOR_ROOT.concat(
-          CoreDriverOption.RELATIVE_TIMESTAMP_GENERATOR_DRIFT_WARNING_THRESHOLD);
-  protected static final DriverOption WARNING_INTERVAL_OPTION =
-      CoreDriverOption.TIMESTAMP_GENERATOR_ROOT.concat(
-          CoreDriverOption.RELATIVE_TIMESTAMP_GENERATOR_DRIFT_WARNING_INTERVAL);
 
   @Mock protected Clock clock;
   @Mock protected InternalDriverContext context;
@@ -66,11 +58,18 @@ abstract class MonotonicTimestampGeneratorTestBase {
     Mockito.when(context.config()).thenReturn(config);
 
     // Disable warnings by default
-    Mockito.when(defaultConfigProfile.isDefined(WARNING_THRESHOLD_OPTION)).thenReturn(true);
-    Mockito.when(defaultConfigProfile.getDuration(WARNING_THRESHOLD_OPTION))
+    Mockito.when(
+            defaultConfigProfile.isDefined(
+                CoreDriverOption.TIMESTAMP_GENERATOR_DRIFT_WARNING_THRESHOLD))
+        .thenReturn(true);
+    Mockito.when(
+            defaultConfigProfile.getDuration(
+                CoreDriverOption.TIMESTAMP_GENERATOR_DRIFT_WARNING_THRESHOLD))
         .thenReturn(Duration.ofNanos(0));
     // Actual value doesn't really matter since we only test the first warning
-    Mockito.when(defaultConfigProfile.getDuration(WARNING_INTERVAL_OPTION))
+    Mockito.when(
+            defaultConfigProfile.getDuration(
+                CoreDriverOption.TIMESTAMP_GENERATOR_DRIFT_WARNING_INTERVAL))
         .thenReturn(Duration.ofSeconds(10));
 
     logger = (Logger) LoggerFactory.getLogger(MonotonicTimestampGenerator.class);
@@ -112,7 +111,9 @@ abstract class MonotonicTimestampGeneratorTestBase {
 
   @Test
   public void should_warn_if_timestamps_drift() {
-    Mockito.when(defaultConfigProfile.getDuration(WARNING_THRESHOLD_OPTION))
+    Mockito.when(
+            defaultConfigProfile.getDuration(
+                CoreDriverOption.TIMESTAMP_GENERATOR_DRIFT_WARNING_THRESHOLD))
         .thenReturn(Duration.ofNanos(2 * 1000));
     Mockito.when(clock.currentTimeMicros()).thenReturn(1L, 1L, 1L, 1L, 1L);
 

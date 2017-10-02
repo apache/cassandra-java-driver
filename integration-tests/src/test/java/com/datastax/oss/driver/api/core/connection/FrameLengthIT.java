@@ -102,8 +102,8 @@ public class FrameLengthIT {
    * {@link AllNodesFailedException}).
    */
   public static class AlwaysRetryAbortedPolicy extends DefaultRetryPolicy {
-    public AlwaysRetryAbortedPolicy(DriverContext context, DriverOption configRoot) {
-      super(context, configRoot);
+    public AlwaysRetryAbortedPolicy(DriverContext context) {
+      super(context);
     }
 
     @Override

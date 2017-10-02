@@ -15,7 +15,6 @@
  */
 package com.datastax.oss.driver.api.core.time;
 
-import com.datastax.oss.driver.api.core.config.CoreDriverOption;
 import com.datastax.oss.driver.internal.core.time.Clock;
 import com.datastax.oss.driver.internal.core.util.concurrent.CompletableFutures;
 import java.util.List;
@@ -35,8 +34,7 @@ import static com.datastax.oss.driver.Assertions.fail;
 public class ThreadLocalTimestampGeneratorTest extends MonotonicTimestampGeneratorTestBase {
   @Override
   protected MonotonicTimestampGenerator newInstance(Clock clock) {
-    return new ThreadLocalTimestampGenerator(
-        clock, context, CoreDriverOption.TIMESTAMP_GENERATOR_ROOT);
+    return new ThreadLocalTimestampGenerator(clock, context);
   }
 
   @Test

@@ -112,9 +112,7 @@ public abstract class ChannelFactoryTestBase {
 
     Mockito.when(context.config()).thenReturn(driverConfig);
     Mockito.when(driverConfig.getDefaultProfile()).thenReturn(defaultConfigProfile);
-    Mockito.when(
-            defaultConfigProfile.isDefined(
-                CoreDriverOption.AUTH_PROVIDER_ROOT.concat(CoreDriverOption.RELATIVE_POLICY_CLASS)))
+    Mockito.when(defaultConfigProfile.isDefined(CoreDriverOption.AUTH_PROVIDER_CLASS))
         .thenReturn(false);
     Mockito.when(defaultConfigProfile.getDuration(CoreDriverOption.CONNECTION_INIT_QUERY_TIMEOUT))
         .thenReturn(Duration.ofMillis(TIMEOUT_MILLIS));
@@ -136,7 +134,7 @@ public abstract class ChannelFactoryTestBase {
                 new ByteBufPrimitiveCodec(ByteBufAllocator.DEFAULT), Compressor.none()));
     Mockito.when(context.sslHandlerFactory()).thenReturn(Optional.empty());
     Mockito.when(context.eventBus()).thenReturn(eventBus);
-    Mockito.when(context.writeCoalescer()).thenReturn(new PassThroughWriteCoalescer(null, null));
+    Mockito.when(context.writeCoalescer()).thenReturn(new PassThroughWriteCoalescer(null));
     Mockito.when(context.compressor()).thenReturn(compressor);
 
     // Start local server
