@@ -55,6 +55,14 @@ public class NodeStateManager implements AsyncAutoCloseable {
     this.logPrefix = context.clusterName();
   }
 
+  /**
+   * Indicates when the driver initialization is complete (that is, we have performed the first node
+   * list refresh and are about to initialize the load balancing policy).
+   */
+  public void markInitialized() {
+    RunOrSchedule.on(adminExecutor, singleThreaded::markInitialized);
+  }
+
   @Override
   public CompletionStage<Void> closeFuture() {
     return singleThreaded.closeFuture;
@@ -77,6 +85,7 @@ public class NodeStateManager implements AsyncAutoCloseable {
     private final EventBus eventBus;
     private final Debouncer<TopologyEvent, Collection<TopologyEvent>> topologyEventDebouncer;
     private final CompletableFuture<Void> closeFuture = new CompletableFuture<>();
+    private boolean isInitialized = false;
     private boolean closeWasCalled;
 
     private SingleThreaded(InternalDriverContext context) {
@@ -98,7 +107,11 @@ public class NodeStateManager implements AsyncAutoCloseable {
           TopologyEvent.class, RunOrSchedule.on(adminExecutor, this::onTopologyEvent));
       // Note: this component exists for the whole life of the driver instance, so don't worry about
       // unregistering the listeners.
+    }
 
+    private void markInitialized() {
+      assert adminExecutor.inEventLoop();
+      isInitialized = true;
     }
 
     private void onChannelEvent(ChannelEvent event) {
@@ -130,6 +143,14 @@ public class NodeStateManager implements AsyncAutoCloseable {
           break;
         case RECONNECTION_STOPPED:
           node.reconnections -= 1;
+          break;
+        case CONTROL_CONNECTION_FAILED:
+          // Special case for init, where this means that a contact point is down. In other
+          // situations that information is not really useful, we rely on
+          // openConnections/reconnections instead.
+          if (!isInitialized) {
+            setState(node, NodeState.DOWN, "it was tried as a contact point but failed");
+          }
           break;
       }
     }

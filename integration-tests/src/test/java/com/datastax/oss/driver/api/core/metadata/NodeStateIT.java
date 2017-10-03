@@ -26,33 +26,46 @@ import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
 import com.datastax.oss.driver.internal.core.metadata.DefaultNode;
 import com.datastax.oss.driver.internal.core.metadata.NodeStateEvent;
 import com.datastax.oss.driver.internal.core.metadata.TopologyEvent;
+import com.datastax.oss.driver.internal.testinfra.cluster.TestConfigLoader;
 import com.datastax.oss.simulacron.common.cluster.ClusterSpec;
 import com.datastax.oss.simulacron.common.cluster.NodeConnectionReport;
 import com.datastax.oss.simulacron.common.stubbing.CloseType;
 import com.datastax.oss.simulacron.server.BoundNode;
 import com.datastax.oss.simulacron.server.RejectScope;
+import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
+import java.net.UnknownHostException;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.TimeUnit;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
+import org.mockito.InOrder;
+import org.mockito.Mockito;
 
 import static com.datastax.oss.driver.assertions.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.fail;
+import static com.datastax.oss.driver.assertions.Assertions.fail;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.timeout;
 
 public class NodeStateIT {
 
   public @Rule SimulacronRule simulacron = new SimulacronRule(ClusterSpec.builder().withNodes(2));
+
+  private NodeStateListener nodeStateListener = Mockito.mock(NodeStateListener.class);
+  private InOrder inOrder;
 
   public @Rule ClusterRule cluster =
       ClusterRule.builder(simulacron)
           .withOptions(
               "connection.pool.local.size = 2",
               "connection.reconnection-policy.max-delay = 1 second")
+          .withNodeStateListeners(nodeStateListener)
           .build();
 
   private InternalDriverContext driverContext;
@@ -65,6 +78,8 @@ public class NodeStateIT {
 
   @Before
   public void setup() {
+    inOrder = Mockito.inOrder(nodeStateListener);
+
     driverContext = (InternalDriverContext) cluster.cluster().getContext();
     driverContext.eventBus().register(NodeStateEvent.class, stateEvents::add);
 
@@ -95,6 +110,16 @@ public class NodeStateIT {
         (DefaultNode) nodesMetadata.get(simulacronControlNode.inetSocketAddress());
     metadataRegularNode =
         (DefaultNode) nodesMetadata.get(simulacronRegularNode.inetSocketAddress());
+
+    // ClusterRule uses all nodes as contact points, so we only get onUp notifications for them (no
+    // onAdd)
+    inOrder.verify(nodeStateListener, timeout(100)).onUp(metadataControlNode);
+    inOrder.verify(nodeStateListener, timeout(100)).onUp(metadataRegularNode);
+  }
+
+  @After
+  public void teardown() {
+    Mockito.reset(nodeStateListener);
   }
 
   @Test
@@ -120,6 +145,7 @@ public class NodeStateIT {
         .as("Reconnection started")
         .before(10, TimeUnit.SECONDS)
         .becomesTrue();
+    inOrder.verify(nodeStateListener, never()).onDown(metadataRegularNode);
   }
 
   @Test
@@ -133,6 +159,7 @@ public class NodeStateIT {
         .becomesTrue();
 
     expect(NodeStateEvent.changed(NodeState.UP, NodeState.DOWN, metadataRegularNode));
+    inOrder.verify(nodeStateListener, timeout(100)).onDown(metadataRegularNode);
   }
 
   @Test
@@ -152,6 +179,7 @@ public class NodeStateIT {
         .as("Control node lost its non-control connections")
         .before(10, TimeUnit.SECONDS)
         .becomesTrue();
+    inOrder.verify(nodeStateListener, never()).onDown(metadataRegularNode);
 
     simulacron.cluster().closeConnection(controlAddress, CloseType.DISCONNECT);
     ConditionChecker.checkThat(
@@ -159,6 +187,7 @@ public class NodeStateIT {
         .as("Control node going down")
         .before(10, TimeUnit.SECONDS)
         .becomesTrue();
+    inOrder.verify(nodeStateListener, timeout(100)).onDown(metadataControlNode);
 
     expect(NodeStateEvent.changed(NodeState.UP, NodeState.DOWN, metadataControlNode));
   }
@@ -172,6 +201,7 @@ public class NodeStateIT {
         .as("Node going down")
         .before(10, TimeUnit.SECONDS)
         .becomesTrue();
+    inOrder.verify(nodeStateListener, timeout(100)).onDown(metadataRegularNode);
 
     simulacronRegularNode.acceptConnections();
 
@@ -180,6 +210,7 @@ public class NodeStateIT {
         .as("Connections re-established")
         .before(10, TimeUnit.SECONDS)
         .becomesTrue();
+    inOrder.verify(nodeStateListener, timeout(100)).onUp(metadataRegularNode);
 
     expect(
         NodeStateEvent.changed(NodeState.UP, NodeState.DOWN, metadataRegularNode),
@@ -215,6 +246,7 @@ public class NodeStateIT {
         .as("SUGGEST_DOWN event applied")
         .before(10, TimeUnit.SECONDS)
         .becomesTrue();
+    inOrder.verify(nodeStateListener, timeout(100)).onDown(metadataRegularNode);
 
     driverContext.eventBus().fire(TopologyEvent.suggestUp(metadataRegularNode.getConnectAddress()));
     ConditionChecker.checkThat(
@@ -227,6 +259,7 @@ public class NodeStateIT {
         .as("SUGGEST_UP event applied")
         .before(10, TimeUnit.SECONDS)
         .becomesTrue();
+    inOrder.verify(nodeStateListener, timeout(100)).onUp(metadataRegularNode);
   }
 
   @Test
@@ -249,6 +282,9 @@ public class NodeStateIT {
             "connection.reconnection-policy.max-delay = 1 hour")) {
       localCluster.connect();
 
+      NodeStateListener localNodeStateListener = Mockito.mock(NodeStateListener.class);
+      localCluster.register(localNodeStateListener);
+
       BoundNode localSimulacronNode = simulacron.cluster().getNodes().iterator().next();
       assertThat(localSimulacronNode).isNotNull();
 
@@ -263,6 +299,7 @@ public class NodeStateIT {
           .as("Node going down")
           .before(10, TimeUnit.SECONDS)
           .becomesTrue();
+      Mockito.verify(localNodeStateListener, timeout(100)).onDown(localMetadataNode);
 
       expect(NodeStateEvent.changed(NodeState.UP, NodeState.DOWN, localMetadataNode));
 
@@ -275,6 +312,7 @@ public class NodeStateIT {
           .as("Node coming back up")
           .before(10, TimeUnit.SECONDS)
           .becomesTrue();
+      Mockito.verify(localNodeStateListener, timeout(100)).onUp(localMetadataNode);
 
       expect(NodeStateEvent.changed(NodeState.DOWN, NodeState.UP, localMetadataNode));
     }
@@ -292,6 +330,7 @@ public class NodeStateIT {
         .as("Node forced down")
         .before(10, TimeUnit.SECONDS)
         .becomesTrue();
+    inOrder.verify(nodeStateListener, timeout(100)).onDown(metadataRegularNode);
 
     // Should ignore up/down topology events while forced down
     driverContext.eventBus().fire(TopologyEvent.suggestUp(metadataRegularNode.getConnectAddress()));
@@ -311,6 +350,7 @@ public class NodeStateIT {
         .as("Node forced back up")
         .before(10, TimeUnit.SECONDS)
         .becomesTrue();
+    inOrder.verify(nodeStateListener, timeout(100)).onUp(metadataRegularNode);
   }
 
   @Test
@@ -328,6 +368,7 @@ public class NodeStateIT {
         .as("Node forced down")
         .before(10, TimeUnit.SECONDS)
         .becomesTrue();
+    inOrder.verify(nodeStateListener, timeout(100)).onDown(metadataRegularNode);
 
     // Should ignore up/down topology events while forced down
     driverContext.eventBus().fire(TopologyEvent.suggestUp(metadataRegularNode.getConnectAddress()));
@@ -353,8 +394,135 @@ public class NodeStateIT {
         .as("Node forced back up")
         .before(10, TimeUnit.SECONDS)
         .becomesTrue();
+    inOrder.verify(nodeStateListener, timeout(100)).onUp(metadataRegularNode);
 
     driverContext.loadBalancingPolicyWrapper().setDistance(metadataRegularNode, NodeDistance.LOCAL);
+  }
+
+  @Test
+  public void should_signal_non_contact_points_as_added() {
+    // Since we need to observe the behavior of non-contact points, build a dedicated cluster with
+    // just one contact point.
+    Iterator<InetSocketAddress> contactPoints = simulacron.getContactPoints().iterator();
+    InetSocketAddress address1 = contactPoints.next();
+    InetSocketAddress address2 = contactPoints.next();
+    NodeStateListener localNodeStateListener = Mockito.mock(NodeStateListener.class);
+    try (Cluster localCluster =
+        Cluster.builder()
+            .addContactPoint(address1)
+            .addNodeStateListeners(localNodeStateListener)
+            .withConfigLoader(
+                new TestConfigLoader(
+                    "connection.reconnection-policy.base-delay = 1 hour",
+                    "connection.reconnection-policy.max-delay = 1 hour"))
+            .build()) {
+
+      Map<InetSocketAddress, Node> nodes = localCluster.getMetadata().getNodes();
+      Node localMetadataNode1 = nodes.get(address1);
+      Node localMetadataNode2 = nodes.get(address2);
+
+      // Successful contact point goes to up directly
+      Mockito.verify(localNodeStateListener, timeout(100)).onUp(localMetadataNode1);
+      // Non-contact point only added since we don't have a connection or events for it yet
+      Mockito.verify(localNodeStateListener, timeout(100)).onAdd(localMetadataNode2);
+
+      localCluster.connect();
+
+      // Non-contact point now has a connection opened => up
+      Mockito.verify(localNodeStateListener, timeout(100)).onUp(localMetadataNode2);
+    }
+  }
+
+  @Test
+  public void should_remove_invalid_contact_point() {
+    // Initialize the driver with 1 wrong address and 1 valid address
+    InetSocketAddress wrongContactPoint = unusedAddress();
+
+    Iterator<InetSocketAddress> contactPoints = simulacron.getContactPoints().iterator();
+    InetSocketAddress address1 = contactPoints.next();
+    InetSocketAddress address2 = contactPoints.next();
+    NodeStateListener localNodeStateListener = Mockito.mock(NodeStateListener.class);
+
+    try (Cluster<CqlSession> localCluster =
+        Cluster.builder()
+            .addContactPoint(address1)
+            .addContactPoint(wrongContactPoint)
+            .addNodeStateListeners(localNodeStateListener)
+            .withConfigLoader(
+                new TestConfigLoader(
+                    "connection.reconnection-policy.base-delay = 1 hour",
+                    "connection.reconnection-policy.max-delay = 1 hour"))
+            .build()) {
+
+      Map<InetSocketAddress, Node> nodes = localCluster.getMetadata().getNodes();
+      assertThat(nodes).doesNotContainKey(wrongContactPoint);
+      Node localMetadataNode1 = nodes.get(address1);
+      Node localMetadataNode2 = nodes.get(address2);
+
+      // The order of the calls is not deterministic because contact points are shuffled, but it
+      // does not matter here since Mockito.verify does not enforce order.
+      Mockito.verify(localNodeStateListener, timeout(100))
+          .onRemove(new DefaultNode(wrongContactPoint));
+      Mockito.verify(localNodeStateListener, timeout(100)).onUp(localMetadataNode1);
+      Mockito.verify(localNodeStateListener, timeout(100)).onAdd(localMetadataNode2);
+
+      // Note: there might be an additional onDown for wrongContactPoint if it was hit first at
+      // init. This is hard to test since the node was removed later, so we simply don't call
+      // verifyNoMoreInteractions.
+    }
+  }
+
+  @Test
+  public void should_mark_unreachable_contact_point_down() {
+    // This time we connect with two valid contact points, but is unresponsive, it should be marked
+    // down
+    Iterator<BoundNode> simulacronNodes = simulacron.cluster().getNodes().iterator();
+    BoundNode localSimulacronNode1 = simulacronNodes.next();
+    BoundNode localSimulacronNode2 = simulacronNodes.next();
+
+    InetSocketAddress address1 = localSimulacronNode1.inetSocketAddress();
+    InetSocketAddress address2 = localSimulacronNode2.inetSocketAddress();
+
+    NodeStateListener localNodeStateListener = Mockito.mock(NodeStateListener.class);
+
+    localSimulacronNode2.stop();
+    try {
+      // Since contact points are shuffled, we have a 50% chance that our bad contact point will be
+      // hit first. So we retry the scenario a few times if needed.
+      for (int i = 0; i < 10; i++) {
+        try (Cluster localCluster =
+            Cluster.builder()
+                .addContactPoint(address1)
+                .addContactPoint(address2)
+                .addNodeStateListeners(localNodeStateListener)
+                .withConfigLoader(
+                    new TestConfigLoader(
+                        "connection.reconnection-policy.base-delay = 1 hour",
+                        "connection.reconnection-policy.max-delay = 1 hour"))
+                .build()) {
+
+          Map<InetSocketAddress, Node> nodes = localCluster.getMetadata().getNodes();
+          Node localMetadataNode1 = nodes.get(address1);
+          Node localMetadataNode2 = nodes.get(address2);
+          if (localMetadataNode2.getState() == NodeState.DOWN) {
+            // Stopped node was tried first and marked down, that's our target scenario
+            Mockito.verify(localNodeStateListener, timeout(100)).onDown(localMetadataNode2);
+            Mockito.verify(localNodeStateListener, timeout(100)).onUp(localMetadataNode1);
+            Mockito.verifyNoMoreInteractions(localNodeStateListener);
+            return;
+          } else {
+            // Stopped node was not tried
+            assertThat(localMetadataNode2).isUnknown();
+            Mockito.verify(localNodeStateListener, timeout(100)).onUp(localMetadataNode1);
+            Mockito.verifyNoMoreInteractions(localNodeStateListener);
+          }
+        }
+        Mockito.reset(localNodeStateListener);
+      }
+      fail("Couldn't get the driver to try stopped node first (tried 5 times)");
+    } finally {
+      localSimulacronNode2.acceptConnections();
+    }
   }
 
   private void expect(NodeStateEvent... expectedEvents) {
@@ -366,5 +534,23 @@ public class NodeStateIT {
         fail("Interrupted while waiting for event");
       }
     }
+  }
+
+  // Generates a socket address that is not the connect address of one of the nodes in the cluster
+  private InetSocketAddress unusedAddress() {
+    try {
+      byte[] bytes = new byte[] {127, 0, 1, 2};
+      for (int i = 0; i < 100; i++) {
+        bytes[3] += 1;
+        InetSocketAddress address = new InetSocketAddress(InetAddress.getByAddress(bytes), 9043);
+        if (!simulacron.getContactPoints().contains(address)) {
+          return address;
+        }
+      }
+    } catch (UnknownHostException e) {
+      fail("unexpected error", e);
+    }
+    fail("Could not find unused address");
+    return null; // never reached
   }
 }

@@ -24,7 +24,8 @@ public class ChannelEvent {
     OPENED,
     CLOSED,
     RECONNECTION_STARTED,
-    RECONNECTION_STOPPED
+    RECONNECTION_STOPPED,
+    CONTROL_CONNECTION_FAILED
   }
 
   public static ChannelEvent channelOpened(Node node) {
@@ -41,6 +42,11 @@ public class ChannelEvent {
 
   public static ChannelEvent reconnectionStopped(Node node) {
     return new ChannelEvent(Type.RECONNECTION_STOPPED, node);
+  }
+
+  /** The control connection tried to use this node, but failed to open a channel. */
+  public static ChannelEvent controlConnectionFailed(Node node) {
+    return new ChannelEvent(Type.CONTROL_CONNECTION_FAILED, node);
   }
 
   public final Type type;

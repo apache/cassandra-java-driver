@@ -49,6 +49,7 @@ public class DescribeIT {
           ccmRule,
           false,
           true,
+          new NodeStateListener[0],
           "request.timeout = 30 seconds",
           "metadata.schema.debouncer.window = 0 seconds"); // disable debouncer to speed up test.
 

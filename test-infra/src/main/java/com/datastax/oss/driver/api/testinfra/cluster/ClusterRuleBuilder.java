@@ -15,6 +15,7 @@
  */
 package com.datastax.oss.driver.api.testinfra.cluster;
 
+import com.datastax.oss.driver.api.core.metadata.NodeStateListener;
 import com.datastax.oss.driver.api.testinfra.CassandraResourceRule;
 import com.datastax.oss.driver.api.testinfra.ccm.CcmRule;
 import com.datastax.oss.driver.api.testinfra.simulacron.SimulacronRule;
@@ -25,6 +26,7 @@ public class ClusterRuleBuilder {
   private boolean createDefaultSession = true;
   private boolean createKeyspace = true;
   private String[] options = new String[] {};
+  private NodeStateListener[] nodeStateListeners = new NodeStateListener[] {};
 
   public ClusterRuleBuilder(CassandraResourceRule cassandraResource) {
     this.cassandraResource = cassandraResource;
@@ -69,7 +71,13 @@ public class ClusterRuleBuilder {
     return this;
   }
 
+  public ClusterRuleBuilder withNodeStateListeners(NodeStateListener... listeners) {
+    this.nodeStateListeners = listeners;
+    return this;
+  }
+
   public ClusterRule build() {
-    return new ClusterRule(cassandraResource, createKeyspace, createDefaultSession, options);
+    return new ClusterRule(
+        cassandraResource, createKeyspace, createDefaultSession, nodeStateListeners, options);
   }
 }

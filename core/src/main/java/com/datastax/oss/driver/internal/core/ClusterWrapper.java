@@ -19,6 +19,7 @@ import com.datastax.oss.driver.api.core.Cluster;
 import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.context.DriverContext;
 import com.datastax.oss.driver.api.core.metadata.Metadata;
+import com.datastax.oss.driver.api.core.metadata.NodeStateListener;
 import com.datastax.oss.driver.api.core.metadata.schema.SchemaChangeListener;
 import com.datastax.oss.driver.api.core.session.Session;
 import java.util.concurrent.CompletionStage;
@@ -77,6 +78,16 @@ public abstract class ClusterWrapper<SourceSessionT extends Session, TargetSessi
 
   @Override
   public Cluster unregister(SchemaChangeListener listener) {
+    return delegate.unregister(listener);
+  }
+
+  @Override
+  public Cluster register(NodeStateListener listener) {
+    return delegate.register(listener);
+  }
+
+  @Override
+  public Cluster unregister(NodeStateListener listener) {
     return delegate.unregister(listener);
   }
 
