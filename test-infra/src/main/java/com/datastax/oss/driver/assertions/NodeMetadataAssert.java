@@ -38,6 +38,11 @@ public class NodeMetadataAssert extends AbstractAssert<NodeMetadataAssert, Node>
     return this;
   }
 
+  public NodeMetadataAssert isUnknown() {
+    assertThat(actual.getState()).isSameAs(NodeState.UNKNOWN);
+    return this;
+  }
+
   public NodeMetadataAssert isForcedDown() {
     assertThat(actual.getState()).isSameAs(NodeState.FORCED_DOWN);
     return this;

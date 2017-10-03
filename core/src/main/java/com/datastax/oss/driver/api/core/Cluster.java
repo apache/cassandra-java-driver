@@ -19,6 +19,7 @@ import com.datastax.oss.driver.api.core.config.CoreDriverOption;
 import com.datastax.oss.driver.api.core.context.DriverContext;
 import com.datastax.oss.driver.api.core.metadata.Metadata;
 import com.datastax.oss.driver.api.core.metadata.Node;
+import com.datastax.oss.driver.api.core.metadata.NodeStateListener;
 import com.datastax.oss.driver.api.core.metadata.schema.SchemaChangeListener;
 import com.datastax.oss.driver.api.core.session.CqlSession;
 import com.datastax.oss.driver.api.core.session.Session;
@@ -163,4 +164,18 @@ public interface Cluster<SessionT extends Session> extends AsyncAutoCloseable {
    * <p>This is a no-op if the listener was not registered.
    */
   Cluster unregister(SchemaChangeListener listener);
+
+  /**
+   * Registers the provided node state listener.
+   *
+   * <p>This is a no-op if the listener was registered already.
+   */
+  Cluster register(NodeStateListener listener);
+
+  /**
+   * Unregisters the provided node state listener.
+   *
+   * <p>This is a no-op if the listener was not registered.
+   */
+  Cluster unregister(NodeStateListener listener);
 }

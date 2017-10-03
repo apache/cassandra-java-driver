@@ -18,6 +18,7 @@ package com.datastax.oss.driver.api.testinfra.cluster;
 import com.datastax.oss.driver.api.core.Cluster;
 import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.config.DriverConfigProfile;
+import com.datastax.oss.driver.api.core.metadata.NodeStateListener;
 import com.datastax.oss.driver.api.core.session.CqlSession;
 import com.datastax.oss.driver.api.testinfra.CassandraResourceRule;
 import com.datastax.oss.driver.api.testinfra.simulacron.SimulacronRule;
@@ -52,6 +53,7 @@ public class ClusterRule extends ExternalResource {
 
   // the CCM or Simulacron rule to depend on
   private final CassandraResourceRule cassandraResource;
+  private final NodeStateListener[] nodeStateListeners;
   private final CqlIdentifier keyspace;
   private final boolean createDefaultSession;
   private final String[] defaultClusterOptions;
@@ -75,7 +77,7 @@ public class ClusterRule extends ExternalResource {
 
   /** @see #builder(CassandraResourceRule) */
   public ClusterRule(CassandraResourceRule cassandraResource, String... options) {
-    this(cassandraResource, true, true, options);
+    this(cassandraResource, true, true, new NodeStateListener[0], options);
   }
 
   /** @see #builder(CassandraResourceRule) */
@@ -83,8 +85,10 @@ public class ClusterRule extends ExternalResource {
       CassandraResourceRule cassandraResource,
       boolean createKeyspace,
       boolean createDefaultSession,
+      NodeStateListener[] nodeStateListeners,
       String... options) {
     this.cassandraResource = cassandraResource;
+    this.nodeStateListeners = nodeStateListeners;
     this.keyspace =
         (cassandraResource instanceof SimulacronRule || !createKeyspace)
             ? null
@@ -97,7 +101,7 @@ public class ClusterRule extends ExternalResource {
   protected void before() {
     // ensure resource is initialized before initializing the defaultCluster.
     cassandraResource.setUp();
-    cluster = ClusterUtils.newCluster(cassandraResource, defaultClusterOptions);
+    cluster = ClusterUtils.newCluster(cassandraResource, nodeStateListeners, defaultClusterOptions);
 
     slowProfile = ClusterUtils.slowProfile(cluster);
 

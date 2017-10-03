@@ -20,6 +20,7 @@ import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.config.CoreDriverOption;
 import com.datastax.oss.driver.api.core.config.DriverConfigProfile;
 import com.datastax.oss.driver.api.core.cql.SimpleStatement;
+import com.datastax.oss.driver.api.core.metadata.NodeStateListener;
 import com.datastax.oss.driver.api.core.session.CqlSession;
 import com.datastax.oss.driver.api.testinfra.CassandraResourceRule;
 import com.datastax.oss.driver.internal.testinfra.cluster.TestConfigLoader;
@@ -44,9 +45,9 @@ import java.util.concurrent.atomic.AtomicInteger;
  * }
  * }</pre>
  *
- * The instances returned by {@link #newCluster(CassandraResourceRule, String...)} are not managed
- * automatically, you need to close them yourself (this is done with a try-with-resources block in
- * the example above).
+ * The instances returned by {@link #newCluster(CassandraResourceRule, NodeStateListener[],
+ * String...)} are not managed automatically, you need to close them yourself (this is done with a
+ * try-with-resources block in the example above).
  *
  * <p>If you can share the same {@code Cluster} instance between all test methods, {@link
  * ClusterRule} provides a simpler alternative.
@@ -61,8 +62,16 @@ public class ClusterUtils {
    */
   public static Cluster<CqlSession> newCluster(
       CassandraResourceRule cassandraResource, String... options) {
+    return newCluster(cassandraResource, new NodeStateListener[0], options);
+  }
+
+  public static Cluster newCluster(
+      CassandraResourceRule cassandraResource,
+      NodeStateListener[] nodeStateListeners,
+      String... options) {
     return Cluster.builder()
         .addContactPoints(cassandraResource.getContactPoints())
+        .addNodeStateListeners(nodeStateListeners)
         .withConfigLoader(new TestConfigLoader(options))
         .build();
   }

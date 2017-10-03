@@ -107,6 +107,7 @@ public class ControlConnectionTest extends ControlConnectionTestBase {
     // Then
     assertThat(initFuture)
         .isSuccess(v -> assertThat(controlConnection.channel()).isEqualTo(channel2));
+    Mockito.verify(eventBus).fire(ChannelEvent.controlConnectionFailed(NODE1));
     Mockito.verify(eventBus).fire(ChannelEvent.channelOpened(NODE2));
     // each attempt tries all nodes, so there is no reconnection
     Mockito.verify(reconnectionPolicy, never()).newSchedule();
@@ -131,7 +132,8 @@ public class ControlConnectionTest extends ControlConnectionTestBase {
 
     // Then
     assertThat(initFuture).isFailed();
-    Mockito.verify(eventBus, never()).fire(any(ChannelEvent.class));
+    Mockito.verify(eventBus).fire(ChannelEvent.controlConnectionFailed(NODE1));
+    Mockito.verify(eventBus).fire(ChannelEvent.controlConnectionFailed(NODE2));
     // no reconnections at init
     Mockito.verify(reconnectionPolicy, never()).newSchedule();
 
