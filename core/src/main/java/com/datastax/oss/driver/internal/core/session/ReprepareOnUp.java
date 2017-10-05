@@ -21,7 +21,9 @@ import com.datastax.oss.driver.internal.core.adminrequest.AdminRequestHandler;
 import com.datastax.oss.driver.internal.core.adminrequest.AdminResult;
 import com.datastax.oss.driver.internal.core.adminrequest.AdminRow;
 import com.datastax.oss.driver.internal.core.channel.DriverChannel;
+import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
 import com.datastax.oss.driver.internal.core.cql.CqlRequestHandlerBase;
+import com.datastax.oss.driver.internal.core.metadata.TopologyMonitor;
 import com.datastax.oss.driver.internal.core.pool.ChannelPool;
 import com.datastax.oss.driver.internal.core.util.concurrent.RunOrSchedule;
 import com.datastax.oss.protocol.internal.Message;
@@ -61,6 +63,7 @@ class ReprepareOnUp {
   private final String logPrefix;
   private final DriverChannel channel;
   private final Map<ByteBuffer, RepreparePayload> repreparePayloads;
+  private final TopologyMonitor topologyMonitor;
   private final Runnable whenPrepared;
   private final boolean checkSystemTable;
   private final int maxStatements;
@@ -77,14 +80,16 @@ class ReprepareOnUp {
       String logPrefix,
       ChannelPool pool,
       Map<ByteBuffer, RepreparePayload> repreparePayloads,
-      DriverConfig config,
+      InternalDriverContext context,
       Runnable whenPrepared) {
 
     this.logPrefix = logPrefix;
     this.channel = pool.next();
     this.repreparePayloads = repreparePayloads;
+    this.topologyMonitor = context.topologyMonitor();
     this.whenPrepared = whenPrepared;
 
+    DriverConfig config = context.config();
     this.checkSystemTable =
         config.getDefaultProfile().getBoolean(CoreDriverOption.REPREPARE_CHECK_SYSTEM_TABLE);
     this.timeout = config.getDefaultProfile().getDuration(CoreDriverOption.REPREPARE_TIMEOUT);
@@ -103,28 +108,45 @@ class ReprepareOnUp {
       LOG.debug("[{}] No channel available to reprepare, done", logPrefix);
       whenPrepared.run();
     } else {
-      if (LOG.isDebugEnabled()) { // check because ConcurrentMap.size is not a constant operation
-        LOG.debug(
-            "[{}] {} statements to reprepare on newly added/up node",
-            logPrefix,
-            repreparePayloads.size());
-      }
-      if (checkSystemTable) {
-        LOG.debug("[{}] Checking which statements the server knows about", logPrefix);
-        queryAsync(QUERY_SERVER_IDS, Collections.emptyMap(), "QUERY system.prepared_statements")
-            .whenComplete(this::gatherServerIds);
-      } else {
-        LOG.debug(
-            "[{}] {} is disabled, repreparing directly",
-            logPrefix,
-            CoreDriverOption.REPREPARE_CHECK_SYSTEM_TABLE.getPath());
-        RunOrSchedule.on(
-            channel.eventLoop(),
-            () -> {
-              serverKnownIds = Collections.emptySet();
-              gatherPayloadsToReprepare();
-            });
-      }
+      topologyMonitor
+          .checkSchemaAgreement()
+          .whenComplete(
+              (agreed, error) -> {
+                if (error != null) {
+                  LOG.debug(
+                      "[{}] Error while checking schema agreement, proceeding anyway",
+                      logPrefix,
+                      error);
+                } else if (!agreed) {
+                  LOG.debug("[{}] Did not reach schema agreement, proceeding anyway", logPrefix);
+                }
+                // Check log level because ConcurrentMap.size is not a constant operation
+                if (LOG.isDebugEnabled()) {
+                  LOG.debug(
+                      "[{}] {} statements to reprepare on newly added/up node",
+                      logPrefix,
+                      repreparePayloads.size());
+                }
+                if (checkSystemTable) {
+                  LOG.debug("[{}] Checking which statements the server knows about", logPrefix);
+                  queryAsync(
+                          QUERY_SERVER_IDS,
+                          Collections.emptyMap(),
+                          "QUERY system.prepared_statements")
+                      .whenComplete(this::gatherServerIds);
+                } else {
+                  LOG.debug(
+                      "[{}] {} is disabled, repreparing directly",
+                      logPrefix,
+                      CoreDriverOption.REPREPARE_CHECK_SYSTEM_TABLE.getPath());
+                  RunOrSchedule.on(
+                      channel.eventLoop(),
+                      () -> {
+                        serverKnownIds = Collections.emptySet();
+                        gatherPayloadsToReprepare();
+                      });
+                }
+              });
     }
   }
 

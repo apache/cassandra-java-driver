@@ -21,7 +21,10 @@ import com.datastax.oss.driver.api.core.config.DriverConfig;
 import com.datastax.oss.driver.api.core.config.DriverConfigProfile;
 import com.datastax.oss.driver.internal.core.adminrequest.AdminResult;
 import com.datastax.oss.driver.internal.core.channel.DriverChannel;
+import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
+import com.datastax.oss.driver.internal.core.metadata.TopologyMonitor;
 import com.datastax.oss.driver.internal.core.pool.ChannelPool;
+import com.datastax.oss.driver.internal.core.util.concurrent.CompletableFutures;
 import com.datastax.oss.protocol.internal.Message;
 import com.datastax.oss.protocol.internal.ProtocolConstants;
 import com.datastax.oss.protocol.internal.request.Prepare;
@@ -56,8 +59,10 @@ public class ReprepareOnUpTest {
   @Mock private ChannelPool pool;
   @Mock private DriverChannel channel;
   @Mock private EventLoop eventLoop;
+  @Mock private InternalDriverContext context;
   @Mock private DriverConfig config;
   @Mock private DriverConfigProfile defaultConfigProfile;
+  @Mock private TopologyMonitor topologyMonitor;
   private Runnable whenPrepared;
   private CompletionStage<Void> done;
 
@@ -78,6 +83,11 @@ public class ReprepareOnUpTest {
         .thenReturn(0);
     Mockito.when(defaultConfigProfile.getInt(CoreDriverOption.REPREPARE_MAX_PARALLELISM))
         .thenReturn(100);
+    Mockito.when(context.config()).thenReturn(config);
+
+    Mockito.when(topologyMonitor.checkSchemaAgreement())
+        .thenReturn(CompletableFuture.completedFuture(true));
+    Mockito.when(context.topologyMonitor()).thenReturn(topologyMonitor);
 
     done = new CompletableFuture<>();
     whenPrepared = () -> ((CompletableFuture<Void>) done).complete(null);
@@ -87,7 +97,7 @@ public class ReprepareOnUpTest {
   public void should_complete_immediately_if_no_prepared_statements() {
     // Given
     MockReprepareOnUp reprepareOnUp =
-        new MockReprepareOnUp("test", pool, getMockPayloads(/*none*/ ), config, whenPrepared);
+        new MockReprepareOnUp("test", pool, getMockPayloads(/*none*/ ), context, whenPrepared);
 
     // When
     reprepareOnUp.start();
@@ -101,7 +111,7 @@ public class ReprepareOnUpTest {
     // Given
     Mockito.when(pool.next()).thenReturn(null);
     MockReprepareOnUp reprepareOnUp =
-        new MockReprepareOnUp("test", pool, getMockPayloads('a'), config, whenPrepared);
+        new MockReprepareOnUp("test", pool, getMockPayloads('a'), context, whenPrepared);
 
     // When
     reprepareOnUp.start();
@@ -114,7 +124,7 @@ public class ReprepareOnUpTest {
   public void should_reprepare_all_if_system_table_query_fails() {
     MockReprepareOnUp reprepareOnUp =
         new MockReprepareOnUp(
-            "test", pool, getMockPayloads('a', 'b', 'c', 'd', 'e', 'f'), config, whenPrepared);
+            "test", pool, getMockPayloads('a', 'b', 'c', 'd', 'e', 'f'), context, whenPrepared);
 
     reprepareOnUp.start();
 
@@ -138,7 +148,7 @@ public class ReprepareOnUpTest {
   public void should_reprepare_all_if_system_table_empty() {
     MockReprepareOnUp reprepareOnUp =
         new MockReprepareOnUp(
-            "test", pool, getMockPayloads('a', 'b', 'c', 'd', 'e', 'f'), config, whenPrepared);
+            "test", pool, getMockPayloads('a', 'b', 'c', 'd', 'e', 'f'), context, whenPrepared);
 
     reprepareOnUp.start();
 
@@ -167,7 +177,7 @@ public class ReprepareOnUpTest {
 
     MockReprepareOnUp reprepareOnUp =
         new MockReprepareOnUp(
-            "test", pool, getMockPayloads('a', 'b', 'c', 'd', 'e', 'f'), config, whenPrepared);
+            "test", pool, getMockPayloads('a', 'b', 'c', 'd', 'e', 'f'), context, whenPrepared);
 
     reprepareOnUp.start();
 
@@ -186,7 +196,7 @@ public class ReprepareOnUpTest {
   public void should_not_reprepare_already_known_statements() {
     MockReprepareOnUp reprepareOnUp =
         new MockReprepareOnUp(
-            "test", pool, getMockPayloads('a', 'b', 'c', 'd', 'e', 'f'), config, whenPrepared);
+            "test", pool, getMockPayloads('a', 'b', 'c', 'd', 'e', 'f'), context, whenPrepared);
 
     reprepareOnUp.start();
 
@@ -209,13 +219,27 @@ public class ReprepareOnUpTest {
   }
 
   @Test
+  public void should_proceed_if_schema_agreement_not_reached() {
+    Mockito.when(topologyMonitor.checkSchemaAgreement())
+        .thenReturn(CompletableFuture.completedFuture(false));
+    should_not_reprepare_already_known_statements();
+  }
+
+  @Test
+  public void should_proceed_if_schema_agreement_fails() {
+    Mockito.when(topologyMonitor.checkSchemaAgreement())
+        .thenReturn(CompletableFutures.failedFuture(new RuntimeException("test")));
+    should_not_reprepare_already_known_statements();
+  }
+
+  @Test
   public void should_limit_number_of_statements_to_reprepare() {
     Mockito.when(defaultConfigProfile.getInt(CoreDriverOption.REPREPARE_MAX_STATEMENTS))
         .thenReturn(3);
 
     MockReprepareOnUp reprepareOnUp =
         new MockReprepareOnUp(
-            "test", pool, getMockPayloads('a', 'b', 'c', 'd', 'e', 'f'), config, whenPrepared);
+            "test", pool, getMockPayloads('a', 'b', 'c', 'd', 'e', 'f'), context, whenPrepared);
 
     reprepareOnUp.start();
 
@@ -244,7 +268,7 @@ public class ReprepareOnUpTest {
 
     MockReprepareOnUp reprepareOnUp =
         new MockReprepareOnUp(
-            "test", pool, getMockPayloads('a', 'b', 'c', 'd', 'e', 'f'), config, whenPrepared);
+            "test", pool, getMockPayloads('a', 'b', 'c', 'd', 'e', 'f'), context, whenPrepared);
 
     reprepareOnUp.start();
 
@@ -298,9 +322,9 @@ public class ReprepareOnUpTest {
         String logPrefix,
         ChannelPool pool,
         Map<ByteBuffer, RepreparePayload> repreparePayloads,
-        DriverConfig config,
+        InternalDriverContext context,
         Runnable whenPrepared) {
-      super(logPrefix, pool, repreparePayloads, config, whenPrepared);
+      super(logPrefix, pool, repreparePayloads, context, whenPrepared);
     }
 
     @Override

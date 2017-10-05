@@ -36,6 +36,7 @@ public class DefaultExecutionInfo implements ExecutionInfo {
   private final UUID tracingId;
   private final List<String> warnings;
   private final Map<String, ByteBuffer> customPayload;
+  private final boolean schemaInAgreement;
 
   public DefaultExecutionInfo(
       Statement<?> statement,
@@ -44,7 +45,8 @@ public class DefaultExecutionInfo implements ExecutionInfo {
       int successfulExecutionIndex,
       List<Map.Entry<Node, Throwable>> errors,
       ByteBuffer pagingState,
-      Frame frame) {
+      Frame frame,
+      boolean schemaInAgreement) {
     this.statement = statement;
     this.coordinator = coordinator;
     this.speculativeExecutionCount = speculativeExecutionCount;
@@ -56,6 +58,7 @@ public class DefaultExecutionInfo implements ExecutionInfo {
     // Note: the collections returned by the protocol layer are already unmodifiable
     this.warnings = (frame == null) ? Collections.emptyList() : frame.warnings;
     this.customPayload = (frame == null) ? Collections.emptyMap() : frame.customPayload;
+    this.schemaInAgreement = schemaInAgreement;
   }
 
   @Override
@@ -98,5 +101,10 @@ public class DefaultExecutionInfo implements ExecutionInfo {
   @Override
   public Map<String, ByteBuffer> getIncomingPayload() {
     return customPayload;
+  }
+
+  @Override
+  public boolean isSchemaInAgreement() {
+    return schemaInAgreement;
   }
 }

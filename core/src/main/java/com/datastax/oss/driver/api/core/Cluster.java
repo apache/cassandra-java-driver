@@ -19,6 +19,7 @@ import com.datastax.oss.driver.api.core.config.CoreDriverOption;
 import com.datastax.oss.driver.api.core.context.DriverContext;
 import com.datastax.oss.driver.api.core.metadata.Metadata;
 import com.datastax.oss.driver.api.core.metadata.Node;
+import com.datastax.oss.driver.api.core.metadata.NodeState;
 import com.datastax.oss.driver.api.core.metadata.NodeStateListener;
 import com.datastax.oss.driver.api.core.metadata.schema.SchemaChangeListener;
 import com.datastax.oss.driver.api.core.session.CqlSession;
@@ -115,6 +116,42 @@ public interface Cluster<SessionT extends Session> extends AsyncAutoCloseable {
   default Metadata refreshSchema() {
     BlockingOperation.checkNotDriverThread();
     return CompletableFutures.getUninterruptibly(refreshSchemaAsync());
+  }
+
+  /**
+   * Checks if all nodes in the cluster agree on a common schema version.
+   *
+   * <p>Due to the distributed nature of Cassandra, schema changes made on one node might not be
+   * immediately visible to others. Under certain circumstances, the driver waits until all nodes
+   * agree on a common schema version (namely: before a schema refresh, before repreparing all
+   * queries on a newly up node, and before completing a successful schema-altering query). To do
+   * so, it queries system tables to find out the schema version of all nodes that are currently
+   * {@link NodeState#UP UP}. If all the versions match, the check succeeds, otherwise it is retried
+   * periodically, until a given timeout (specified in the configuration).
+   *
+   * <p>A schema agreement failure is not fatal, but it might produce unexpected results (for
+   * example, getting an "unconfigured table" error for a table that you created right before, just
+   * because the two queries went to different coordinators).
+   *
+   * <p>Note that schema agreement never succeeds in a mixed-version cluster (it would be
+   * challenging because the way the schema version is computed varies across server versions); the
+   * assumption is that schema updates are unlikely to happen during a rolling upgrade anyway.
+   *
+   * @return a future that completes with {@code true} if the nodes agree, or {@code false} if the
+   *     timeout fired.
+   * @see CoreDriverOption#CONTROL_CONNECTION_AGREEMENT_INTERVAL
+   * @see CoreDriverOption#CONTROL_CONNECTION_AGREEMENT_TIMEOUT
+   */
+  CompletionStage<Boolean> checkSchemaAgreementAsync();
+
+  /**
+   * Convenience method to call {@link #checkSchemaAgreementAsync()} and block for the result.
+   *
+   * <p>This must not be called on a driver thread.
+   */
+  default boolean checkSchemaAgreement() {
+    BlockingOperation.checkNotDriverThread();
+    return CompletableFutures.getUninterruptibly(checkSchemaAgreementAsync());
   }
 
   /** Returns a context that provides access to all the policies used by this driver instance. */

@@ -54,6 +54,7 @@ public class DefaultTopologyMonitor implements TopologyMonitor {
   private static final int INFINITE_PAGE_SIZE = -1;
 
   private final String logPrefix;
+  private final InternalDriverContext context;
   private final ControlConnection controlConnection;
   private final AddressTranslator addressTranslator;
   private final Duration timeout;
@@ -63,6 +64,7 @@ public class DefaultTopologyMonitor implements TopologyMonitor {
 
   public DefaultTopologyMonitor(InternalDriverContext context) {
     this.logPrefix = context.clusterName();
+    this.context = context;
     this.controlConnection = context.controlConnection();
     this.addressTranslator = context.addressTranslator();
     DriverConfigProfile config = context.config().getDefaultProfile();
@@ -144,6 +146,15 @@ public class DefaultTopologyMonitor implements TopologyMonitor {
           }
           return nodeInfos;
         });
+  }
+
+  @Override
+  public CompletionStage<Boolean> checkSchemaAgreement() {
+    if (closeFuture.isDone()) {
+      return CompletableFuture.completedFuture(true);
+    }
+    DriverChannel channel = controlConnection.channel();
+    return new SchemaAgreementChecker(channel, context, port, logPrefix).run();
   }
 
   @Override
