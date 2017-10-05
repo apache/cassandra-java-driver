@@ -23,6 +23,7 @@ import com.datastax.oss.driver.internal.core.adminrequest.AdminRow;
 import com.datastax.oss.driver.internal.core.channel.DriverChannel;
 import com.datastax.oss.driver.internal.core.cql.CqlRequestHandlerBase;
 import com.datastax.oss.driver.internal.core.pool.ChannelPool;
+import com.datastax.oss.driver.internal.core.util.concurrent.RunOrSchedule;
 import com.datastax.oss.protocol.internal.Message;
 import com.datastax.oss.protocol.internal.request.Prepare;
 import com.datastax.oss.protocol.internal.request.Query;
@@ -117,8 +118,12 @@ class ReprepareOnUp {
             "[{}] {} is disabled, repreparing directly",
             logPrefix,
             CoreDriverOption.REPREPARE_CHECK_SYSTEM_TABLE.getPath());
-        serverKnownIds = Collections.emptySet();
-        gatherPayloadsToReprepare();
+        RunOrSchedule.on(
+            channel.eventLoop(),
+            () -> {
+              serverKnownIds = Collections.emptySet();
+              gatherPayloadsToReprepare();
+            });
       }
     }
   }
