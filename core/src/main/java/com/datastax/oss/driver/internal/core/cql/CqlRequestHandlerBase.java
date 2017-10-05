@@ -291,9 +291,13 @@ public abstract class CqlRequestHandlerBase {
   }
 
   private void setFinalResult(
-      Result resultMessage, Frame responseFrame, NodeResponseCallback callback) {
+      Result resultMessage,
+      Frame responseFrame,
+      boolean schemaInAgreement,
+      NodeResponseCallback callback) {
     try {
-      ExecutionInfo executionInfo = buildExecutionInfo(callback, resultMessage, responseFrame);
+      ExecutionInfo executionInfo =
+          buildExecutionInfo(callback, resultMessage, responseFrame, schemaInAgreement);
       AsyncResultSet resultSet =
           Conversions.toResultSet(resultMessage, executionInfo, session, context);
       if (result.complete(resultSet)) {
@@ -310,7 +314,10 @@ public abstract class CqlRequestHandlerBase {
   }
 
   private ExecutionInfo buildExecutionInfo(
-      NodeResponseCallback callback, Result resultMessage, Frame responseFrame) {
+      NodeResponseCallback callback,
+      Result resultMessage,
+      Frame responseFrame,
+      boolean schemaInAgreement) {
     ByteBuffer pagingState =
         (resultMessage instanceof Rows) ? ((Rows) resultMessage).getMetadata().pagingState : null;
     return new DefaultExecutionInfo(
@@ -320,7 +327,8 @@ public abstract class CqlRequestHandlerBase {
         callback.execution,
         errors,
         pagingState,
-        responseFrame);
+        responseFrame,
+        schemaInAgreement);
   }
 
   private void setFinalError(Throwable error) {
@@ -394,16 +402,19 @@ public abstract class CqlRequestHandlerBase {
       try {
         Message responseMessage = responseFrame.message;
         if (responseMessage instanceof SchemaChange) {
-          // TODO schema agreement, and chain setFinalResult to the result
           SchemaChange schemaChange = (SchemaChange) responseMessage;
           context
-              .metadataManager()
-              .refreshSchema(schemaChange.keyspace, false, false)
+              .topologyMonitor()
+              .checkSchemaAgreement()
+              .thenCombine(
+                  context.metadataManager().refreshSchema(schemaChange.keyspace, false, false),
+                  (schemaInAgreement, metadata) -> schemaInAgreement)
               .whenComplete(
-                  ((metadata, error) -> setFinalResult(schemaChange, responseFrame, this)));
+                  ((schemaInAgreement, error) ->
+                      setFinalResult(schemaChange, responseFrame, schemaInAgreement, this)));
         } else if (responseMessage instanceof Result) {
           LOG.debug("[{}] Got result, completing", logPrefix);
-          setFinalResult((Result) responseMessage, responseFrame, this);
+          setFinalResult((Result) responseMessage, responseFrame, true, this);
         } else if (responseMessage instanceof Error) {
           LOG.debug("[{}] Got error response, processing", logPrefix);
           processErrorResponse((Error) responseMessage);
@@ -518,7 +529,7 @@ public abstract class CqlRequestHandlerBase {
           setFinalError(error);
           break;
         case IGNORE:
-          setFinalResult(Void.INSTANCE, null, this);
+          setFinalResult(Void.INSTANCE, null, true, this);
           break;
       }
     }

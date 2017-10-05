@@ -62,6 +62,11 @@ public abstract class ClusterWrapper<SourceSessionT extends Session, TargetSessi
   }
 
   @Override
+  public CompletionStage<Boolean> checkSchemaAgreementAsync() {
+    return delegate.checkSchemaAgreementAsync();
+  }
+
+  @Override
   public DriverContext getContext() {
     return delegate.getContext();
   }

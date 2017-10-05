@@ -108,6 +108,11 @@ public class DefaultCluster implements Cluster<CqlSession> {
   }
 
   @Override
+  public CompletionStage<Boolean> checkSchemaAgreementAsync() {
+    return context.topologyMonitor().checkSchemaAgreement();
+  }
+
+  @Override
   public DriverContext getContext() {
     return context;
   }

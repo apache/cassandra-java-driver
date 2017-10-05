@@ -25,19 +25,23 @@ public class NanoTime {
 
   /** Formats a duration in the best unit (truncating the fractional part). */
   public static String formatTimeSince(long startTimeNs) {
-    long delta = System.nanoTime() - startTimeNs;
-    if (delta >= ONE_HOUR) {
-      return (delta / ONE_HOUR) + " h";
-    } else if (delta >= ONE_MINUTE) {
-      return (delta / ONE_MINUTE) + " mn";
-    } else if (delta >= ONE_SECOND) {
-      return (delta / ONE_SECOND) + " s";
-    } else if (delta >= ONE_MILLISECOND) {
-      return (delta / ONE_MILLISECOND) + " ms";
-    } else if (delta >= ONE_MICROSECOND) {
-      return (delta / ONE_MICROSECOND) + " us";
+    return format(System.nanoTime() - startTimeNs);
+  }
+
+  /** Formats a duration in the best unit (truncating the fractional part). */
+  public static String format(long elapsedNs) {
+    if (elapsedNs >= ONE_HOUR) {
+      return (elapsedNs / ONE_HOUR) + " h";
+    } else if (elapsedNs >= ONE_MINUTE) {
+      return (elapsedNs / ONE_MINUTE) + " mn";
+    } else if (elapsedNs >= ONE_SECOND) {
+      return (elapsedNs / ONE_SECOND) + " s";
+    } else if (elapsedNs >= ONE_MILLISECOND) {
+      return (elapsedNs / ONE_MILLISECOND) + " ms";
+    } else if (elapsedNs >= ONE_MICROSECOND) {
+      return (elapsedNs / ONE_MICROSECOND) + " us";
     } else {
-      return delta + " ns";
+      return elapsedNs + " ns";
     }
   }
 }

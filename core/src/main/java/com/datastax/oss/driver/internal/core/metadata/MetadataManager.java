@@ -350,8 +350,9 @@ public class MetadataManager implements AsyncAutoCloseable {
         currentSchemaRefresh = future;
         LOG.debug("[{}] Starting schema refresh", logPrefix);
         maybeInitControlConnection()
+            .thenCompose(v -> context.topologyMonitor().checkSchemaAgreement())
             // 1. Query system tables
-            .thenCompose(v -> schemaQueriesFactory.newInstance(future).execute())
+            .thenCompose(b -> schemaQueriesFactory.newInstance(future).execute())
             // 2. Parse the rows into metadata objects, put them in a MetadataRefresh
             // 3. Apply the MetadataRefresh
             .thenApplyAsync(this::parseAndApplySchemaRows, adminExecutor)

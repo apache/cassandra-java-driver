@@ -85,4 +85,12 @@ public interface TopologyMonitor extends AsyncAutoCloseable {
    *     always be returned in a single message (no paging).
    */
   CompletionStage<Iterable<NodeInfo>> refreshNodeList();
+
+  /**
+   * Checks whether the nodes in the cluster agree on a common schema version.
+   *
+   * <p>This should typically be implemented with a few retries and a timeout, as the schema can
+   * take a while to replicate across nodes.
+   */
+  CompletionStage<Boolean> checkSchemaAgreement();
 }
