@@ -107,7 +107,7 @@ public class BoundStatementBuilder extends StatementBuilder<BoundStatementBuilde
         configProfileName,
         configProfile,
         keyspace,
-        (customPayloadBuilder == null) ? Collections.emptyMap() : customPayloadBuilder.build(),
+        buildCustomPayload(),
         idempotent,
         tracing,
         timestamp,

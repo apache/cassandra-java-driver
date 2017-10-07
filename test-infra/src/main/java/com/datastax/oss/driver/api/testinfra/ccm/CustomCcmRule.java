@@ -16,7 +16,6 @@
 package com.datastax.oss.driver.api.testinfra.ccm;
 
 import com.datastax.oss.driver.api.core.CassandraVersion;
-import com.datastax.oss.driver.internal.testinfra.ccm.BaseCcmRule;
 import java.util.concurrent.atomic.AtomicReference;
 
 /**

@@ -181,6 +181,8 @@ public class GenericType<T> {
    *
    * <p>It leaks a shaded type. This should be part of the internal API, but due to internal
    * implementation details it has to be exposed here.
+   *
+   * @leaks-private-api
    */
   public TypeToken<T> __getToken() {
     return token;

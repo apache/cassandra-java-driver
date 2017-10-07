@@ -4,6 +4,7 @@
 
 ### 4.0.0-alpha3 (in progress)
 
+- [improvement] JAVA-1566: Enforce API rules automatically
 - [bug] JAVA-1584: Validate that no bound values are unset in protocol v3
 
 ### 4.0.0-alpha2

@@ -81,7 +81,7 @@ public class BatchStatementBuilder extends StatementBuilder<BatchStatementBuilde
         configProfileName,
         configProfile,
         null,
-        (customPayloadBuilder == null) ? Collections.emptyMap() : customPayloadBuilder.build(),
+        buildCustomPayload(),
         idempotent,
         tracing,
         timestamp,

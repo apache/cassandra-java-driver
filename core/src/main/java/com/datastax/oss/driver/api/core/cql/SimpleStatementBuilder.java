@@ -121,7 +121,7 @@ public class SimpleStatementBuilder
         (namedValuesBuilder == null) ? Collections.emptyMap() : namedValuesBuilder.build(),
         configProfileName,
         configProfile,
-        (customPayloadBuilder == null) ? Collections.emptyMap() : customPayloadBuilder.build(),
+        buildCustomPayload(),
         idempotent,
         tracing,
         timestamp,

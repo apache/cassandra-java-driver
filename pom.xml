@@ -15,7 +15,9 @@
     limitations under the License.
 
 -->
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
   <modelVersion>4.0.0</modelVersion>
 
   <groupId>com.datastax.oss</groupId>
@@ -176,7 +178,7 @@
         </plugin>
         <plugin>
           <artifactId>maven-javadoc-plugin</artifactId>
-          <version>2.10.4</version>
+          <version>3.0.0-M1</version>
         </plugin>
         <plugin>
           <groupId>org.sonatype.plugins</groupId>
@@ -330,15 +332,38 @@ limitations under the License.]]>
       </plugin>
       <plugin>
         <artifactId>maven-javadoc-plugin</artifactId>
-        <configuration>
-          <additionalparam>-Xdoclint:none</additionalparam>
-        </configuration>
         <executions>
           <execution>
             <id>attach-javadocs</id>
             <goals>
               <goal>jar</goal>
             </goals>
+            <configuration>
+              <additionalparam>-Xdoclint:none</additionalparam>
+            </configuration>
+          </execution>
+          <execution>
+            <id>check-api-leaks</id>
+            <goals>
+              <goal>javadoc</goal>
+            </goals>
+            <phase>process-classes</phase>
+            <configuration>
+              <doclet>com.datastax.oss.doclet.ApiPlumber</doclet>
+              <docletArtifact>
+                <groupId>com.datastax.oss</groupId>
+                <artifactId>api-plumber-doclet</artifactId>
+                <version>1.0.0</version>
+              </docletArtifact>
+              <excludePackageNames>com.datastax.oss.driver.internal.*</excludePackageNames>
+              <additionalJOptions>
+                <additionalparam>-preventleak</additionalparam>
+                <additionalparam>com.datastax.oss.driver.internal</additionalparam>
+                <additionalparam>-preventleak</additionalparam>
+                <additionalparam>com.google.common</additionalparam>
+              </additionalJOptions>
+              <useStandardDocletOptions>false</useStandardDocletOptions>
+            </configuration>
           </execution>
         </executions>
       </plugin>

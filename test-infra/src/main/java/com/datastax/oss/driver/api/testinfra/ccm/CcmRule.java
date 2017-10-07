@@ -15,8 +15,6 @@
  */
 package com.datastax.oss.driver.api.testinfra.ccm;
 
-import com.datastax.oss.driver.internal.testinfra.ccm.BaseCcmRule;
-
 /**
  * A rule that creates a globally shared single node Ccm cluster that is only shut down after the
  * JVM exists.

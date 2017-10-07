@@ -18,6 +18,7 @@ package com.datastax.oss.driver.api.core.cql;
 import com.datastax.oss.driver.api.core.config.DriverConfigProfile;
 import com.google.common.collect.ImmutableMap;
 import java.nio.ByteBuffer;
+import java.util.Collections;
 import java.util.Map;
 
 /**
@@ -35,7 +36,7 @@ public abstract class StatementBuilder<T extends StatementBuilder<T, S>, S exten
   protected String configProfileName;
   protected DriverConfigProfile configProfile;
   protected String keyspace;
-  protected ImmutableMap.Builder<String, ByteBuffer> customPayloadBuilder;
+  private ImmutableMap.Builder<String, ByteBuffer> customPayloadBuilder;
   protected Boolean idempotent;
   protected boolean tracing;
   protected long timestamp = Long.MIN_VALUE;
@@ -106,6 +107,10 @@ public abstract class StatementBuilder<T extends StatementBuilder<T, S>, S exten
   public T withPagingState(ByteBuffer pagingState) {
     this.pagingState = pagingState;
     return self;
+  }
+
+  protected Map<String, ByteBuffer> buildCustomPayload() {
+    return (customPayloadBuilder == null) ? Collections.emptyMap() : customPayloadBuilder.build();
   }
 
   public abstract S build();
