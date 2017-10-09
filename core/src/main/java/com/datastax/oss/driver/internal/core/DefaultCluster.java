@@ -229,8 +229,7 @@ public class DefaultCluster implements Cluster {
                     connectFuture.complete(session);
                   }
                 },
-                adminExecutor)
-            .exceptionally(UncaughtExceptions::log);
+                adminExecutor);
       }
     }
 
