@@ -50,7 +50,7 @@ public class ProtocolVersionMixedClusterIT {
         Cluster<CqlSession> cluster =
             Cluster.builder()
                 .addContactPoint(contactPoint.inetSocketAddress())
-                .withConfigLoader(new TestConfigLoader())
+                .withConfigLoader(new TestConfigLoader("metadata.schema.enabled = false"))
                 .build()) {
 
       InternalDriverContext context = (InternalDriverContext) cluster.getContext();
@@ -90,7 +90,7 @@ public class ProtocolVersionMixedClusterIT {
         Cluster<CqlSession> cluster =
             Cluster.builder()
                 .addContactPoint(contactPoint.inetSocketAddress())
-                .withConfigLoader(new TestConfigLoader())
+                .withConfigLoader(new TestConfigLoader("metadata.schema.enabled = false"))
                 .build()) {
 
       InternalDriverContext context = (InternalDriverContext) cluster.getContext();
@@ -129,7 +129,9 @@ public class ProtocolVersionMixedClusterIT {
         Cluster<CqlSession> cluster =
             Cluster.builder()
                 .addContactPoint(contactPoint.inetSocketAddress())
-                .withConfigLoader(new TestConfigLoader("protocol.version = V4"))
+                .withConfigLoader(
+                    new TestConfigLoader(
+                        "protocol.version = V4", "metadata.schema.enabled = false"))
                 .build()) {
       assertThat(cluster.getContext().protocolVersion()).isEqualTo(CoreProtocolVersion.V4);
 

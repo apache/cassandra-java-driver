@@ -27,11 +27,13 @@ import com.datastax.oss.driver.api.testinfra.cluster.ClusterRule;
 import com.datastax.oss.driver.api.testinfra.cluster.ClusterUtils;
 import com.datastax.oss.driver.api.testinfra.utils.ConditionChecker;
 import com.google.common.collect.ImmutableList;
+import java.util.Arrays;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 import org.junit.Before;
-import org.junit.ClassRule;
+import org.junit.Rule;
 import org.junit.Test;
 import org.mockito.Mockito;
 
@@ -39,12 +41,13 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 public class SchemaChangesIT {
 
-  @ClassRule public static CcmRule ccmRule = CcmRule.getInstance();
+  @Rule public CcmRule ccmRule = CcmRule.getInstance();
 
   // A client that we only use to set up the tests
-  @ClassRule
-  public static ClusterRule adminClusterRule =
-      new ClusterRule(ccmRule, "request.timeout = 30 seconds");
+  @Rule
+  public ClusterRule adminClusterRule =
+      new ClusterRule(
+          ccmRule, "request.timeout = 30 seconds", "metadata.schema.debouncer.window = 0 seconds");
 
   @Before
   public void setup() {
@@ -73,7 +76,8 @@ public class SchemaChangesIT {
               .containsEntry("class", "org.apache.cassandra.locator.SimpleStrategy")
               .containsEntry("replication_factor", "1");
         },
-        (listener, keyspace) -> Mockito.verify(listener).onKeyspaceCreated(keyspace));
+        (listener, keyspace) -> Mockito.verify(listener).onKeyspaceCreated(keyspace),
+        newKeyspaceId);
   }
 
   @Test
@@ -87,7 +91,8 @@ public class SchemaChangesIT {
                 newKeyspaceId.asCql(true))),
         String.format("DROP KEYSPACE %s", newKeyspaceId.asCql(true)),
         metadata -> metadata.getKeyspace(newKeyspaceId),
-        (listener, oldKeyspace) -> Mockito.verify(listener).onKeyspaceDropped(oldKeyspace));
+        (listener, oldKeyspace) -> Mockito.verify(listener).onKeyspaceDropped(oldKeyspace),
+        newKeyspaceId);
   }
 
   @Test
@@ -107,7 +112,8 @@ public class SchemaChangesIT {
         metadata -> metadata.getKeyspace(newKeyspaceId),
         newKeyspace -> assertThat(newKeyspace.isDurableWrites()).isFalse(),
         (listener, oldKeyspace, newKeyspace) ->
-            Mockito.verify(listener).onKeyspaceUpdated(newKeyspace, oldKeyspace));
+            Mockito.verify(listener).onKeyspaceUpdated(newKeyspace, oldKeyspace),
+        newKeyspaceId);
   }
 
   @Test
@@ -250,6 +256,7 @@ public class SchemaChangesIT {
   }
 
   @Test
+  @CassandraRequirement(min = "3.0")
   public void should_handle_view_update() {
     should_handle_update(
         ImmutableList.of(
@@ -386,12 +393,26 @@ public class SchemaChangesIT {
             Mockito.verify(listener).onAggregateUpdated(newAggregate, oldAggregate));
   }
 
+  private String keyspaceFilterOption(CqlIdentifier... keyspaces) {
+    // create option to filter keyspace refreshes based on input keyspaces, if none are provided, assume the
+    // one associated wiht the cluster rule.
+    if (keyspaces.length == 0) {
+      keyspaces = new CqlIdentifier[] {adminClusterRule.keyspace()};
+    }
+
+    String keyspaceStr =
+        Arrays.stream(keyspaces).map(i -> i.asCql(false)).collect(Collectors.joining(","));
+
+    return String.format("metadata.schema.refreshed-keyspaces = [%s]", keyspaceStr);
+  }
+
   private <T> void should_handle_creation(
       String beforeStatement,
       String createStatement,
       Function<Metadata, T> extract,
       Consumer<T> verifyMetadata,
-      BiConsumer<SchemaChangeListener, T> verifyListener) {
+      BiConsumer<SchemaChangeListener, T> verifyListener,
+      CqlIdentifier... keyspaces) {
 
     if (beforeStatement != null) {
       adminClusterRule.session().execute(beforeStatement);
@@ -400,8 +421,10 @@ public class SchemaChangesIT {
     // cluster1 executes the DDL query and gets a SCHEMA_CHANGE response.
     // cluster2 gets a SCHEMA_CHANGE push event on its control connection.
     try (Cluster<CqlSession> cluster1 =
-            ClusterUtils.newCluster(ccmRule, "request.timeout = 30 seconds");
-        Cluster<CqlSession> cluster2 = ClusterUtils.newCluster(ccmRule)) {
+            ClusterUtils.newCluster(
+                ccmRule, "request.timeout = 30 seconds", keyspaceFilterOption(keyspaces));
+        Cluster<CqlSession> cluster2 =
+            ClusterUtils.newCluster(ccmRule, keyspaceFilterOption(keyspaces))) {
 
       SchemaChangeListener listener1 = Mockito.mock(SchemaChangeListener.class);
       cluster1.register(listener1);
@@ -430,15 +453,18 @@ public class SchemaChangesIT {
       Iterable<String> beforeStatements,
       String dropStatement,
       Function<Metadata, T> extract,
-      BiConsumer<SchemaChangeListener, T> verifyListener) {
+      BiConsumer<SchemaChangeListener, T> verifyListener,
+      CqlIdentifier... keyspaces) {
 
     for (String statement : beforeStatements) {
       adminClusterRule.session().execute(statement);
     }
 
     try (Cluster<CqlSession> cluster1 =
-            ClusterUtils.newCluster(ccmRule, "request.timeout = 30 seconds");
-        Cluster<CqlSession> cluster2 = ClusterUtils.newCluster(ccmRule)) {
+            ClusterUtils.newCluster(
+                ccmRule, "request.timeout = 30 seconds", keyspaceFilterOption(keyspaces));
+        Cluster<CqlSession> cluster2 =
+            ClusterUtils.newCluster(ccmRule, keyspaceFilterOption(keyspaces))) {
 
       T oldElement = extract.apply(cluster1.getMetadata());
       assertThat(oldElement).isNotNull();
@@ -467,15 +493,18 @@ public class SchemaChangesIT {
       String updateStatement,
       Function<Metadata, T> extract,
       Consumer<T> verifyNewMetadata,
-      TriConsumer<SchemaChangeListener, T, T> verifyListener) {
+      TriConsumer<SchemaChangeListener, T, T> verifyListener,
+      CqlIdentifier... keyspaces) {
 
     for (String statement : beforeStatements) {
       adminClusterRule.session().execute(statement);
     }
 
     try (Cluster<CqlSession> cluster1 =
-            ClusterUtils.newCluster(ccmRule, "request.timeout = 30 seconds");
-        Cluster<CqlSession> cluster2 = ClusterUtils.newCluster(ccmRule)) {
+            ClusterUtils.newCluster(
+                ccmRule, "request.timeout = 30 seconds", keyspaceFilterOption(keyspaces));
+        Cluster<CqlSession> cluster2 =
+            ClusterUtils.newCluster(ccmRule, keyspaceFilterOption(keyspaces))) {
 
       T oldElement = extract.apply(cluster1.getMetadata());
       assertThat(oldElement).isNotNull();
@@ -508,15 +537,18 @@ public class SchemaChangesIT {
       String recreateStatement,
       Function<Metadata, T> extract,
       Consumer<T> verifyNewMetadata,
-      TriConsumer<SchemaChangeListener, T, T> verifyListener) {
+      TriConsumer<SchemaChangeListener, T, T> verifyListener,
+      CqlIdentifier... keyspaces) {
 
     for (String statement : beforeStatements) {
       adminClusterRule.session().execute(statement);
     }
 
     try (Cluster<CqlSession> cluster1 =
-            ClusterUtils.newCluster(ccmRule, "request.timeout = 30 seconds");
-        Cluster<CqlSession> cluster2 = ClusterUtils.newCluster(ccmRule)) {
+            ClusterUtils.newCluster(
+                ccmRule, "request.timeout = 30 seconds", keyspaceFilterOption(keyspaces));
+        Cluster<CqlSession> cluster2 =
+            ClusterUtils.newCluster(ccmRule, keyspaceFilterOption(keyspaces))) {
 
       T oldElement = extract.apply(cluster1.getMetadata());
       assertThat(oldElement).isNotNull();
