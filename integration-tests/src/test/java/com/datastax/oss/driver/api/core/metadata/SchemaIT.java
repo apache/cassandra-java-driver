@@ -25,16 +25,16 @@ import com.datastax.oss.driver.api.testinfra.cluster.ClusterRule;
 import com.datastax.oss.driver.api.testinfra.cluster.ClusterUtils;
 import com.datastax.oss.driver.api.testinfra.utils.ConditionChecker;
 import java.util.Map;
-import org.junit.ClassRule;
+import org.junit.Rule;
 import org.junit.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 public class SchemaIT {
 
-  @ClassRule public static CcmRule ccmRule = CcmRule.getInstance();
+  @Rule public CcmRule ccmRule = CcmRule.getInstance();
 
-  @ClassRule public static ClusterRule clusterRule = new ClusterRule(ccmRule);
+  @Rule public ClusterRule clusterRule = new ClusterRule(ccmRule);
 
   @Test
   public void should_expose_system_and_test_keyspace() {
