@@ -501,6 +501,8 @@ public class NodeStateIT {
                         "connection.reconnection-policy.max-delay = 1 hour"))
                 .build()) {
 
+          Mockito.verify(localNodeStateListener).onRegister(localCluster);
+
           Map<InetSocketAddress, Node> nodes = localCluster.getMetadata().getNodes();
           Node localMetadataNode1 = nodes.get(address1);
           Node localMetadataNode2 = nodes.get(address2);
@@ -523,6 +525,32 @@ public class NodeStateIT {
     } finally {
       localSimulacronNode2.acceptConnections();
     }
+  }
+
+  @Test
+  public void should_call_onRegister_and_onUnregister_implicitly() {
+    NodeStateListener localNodeStateListener = Mockito.mock(NodeStateListener.class);
+    Cluster localClusterRef;
+    // onRegister should be called implicitly when added as a listener on builder.
+    try (Cluster localCluster =
+        Cluster.builder()
+            .addContactPoints(simulacron.getContactPoints())
+            .addNodeStateListeners(localNodeStateListener)
+            .build()) {
+      Mockito.verify(localNodeStateListener).onRegister(localCluster);
+      localClusterRef = localCluster;
+    }
+    // onUnregister should be called implicitly when cluster is closed.
+    Mockito.verify(localNodeStateListener).onUnregister(localClusterRef);
+  }
+
+  @Test
+  public void should_call_onRegister_and_onUnregister_when_used() {
+    NodeStateListener localNodeStateListener = Mockito.mock(NodeStateListener.class);
+    cluster.cluster().register(localNodeStateListener);
+    Mockito.verify(localNodeStateListener, timeout(1000)).onRegister(cluster.cluster());
+    cluster.cluster().unregister(localNodeStateListener);
+    Mockito.verify(localNodeStateListener, timeout(1000)).onUnregister(cluster.cluster());
   }
 
   private void expect(NodeStateEvent... expectedEvents) {
