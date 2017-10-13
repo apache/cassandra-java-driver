@@ -330,7 +330,8 @@ public class ReprepareOnUpTest {
             "prepared_id",
             0,
             RawType.PRIMITIVES.get(ProtocolConstants.DataType.BLOB));
-    RowsMetadata rowsMetadata = new RowsMetadata(ImmutableList.of(preparedIdSpec), null, null);
+    RowsMetadata rowsMetadata =
+        new RowsMetadata(ImmutableList.of(preparedIdSpec), null, null, null);
     Queue<List<ByteBuffer>> data = new LinkedList<>();
     for (char value : values) {
       data.add(ImmutableList.of(Bytes.fromHexString("0x0" + value)));

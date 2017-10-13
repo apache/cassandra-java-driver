@@ -25,7 +25,6 @@ import com.datastax.oss.protocol.internal.ProtocolConstants;
 import com.datastax.oss.protocol.internal.response.result.ColumnSpec;
 import com.datastax.oss.protocol.internal.response.result.DefaultRows;
 import com.datastax.oss.protocol.internal.response.result.RawType;
-import com.datastax.oss.protocol.internal.response.result.Rows;
 import com.datastax.oss.protocol.internal.response.result.RowsMetadata;
 import com.datastax.oss.protocol.internal.util.Bytes;
 import com.google.common.collect.ImmutableList;
@@ -82,7 +81,8 @@ public abstract class CqlRequestHandlerTestBase {
                     0,
                     RawType.PRIMITIVES.get(ProtocolConstants.DataType.VARCHAR))),
             null,
-            new int[] {});
+            new int[] {},
+            null);
     Queue<List<ByteBuffer>> data = new LinkedList<>();
     data.add(ImmutableList.of(Bytes.fromHexString("0x68656C6C6F2C20776F726C64")));
     return new DefaultRows(metadata, data);

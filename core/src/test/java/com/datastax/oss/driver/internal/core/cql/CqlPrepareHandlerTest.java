@@ -355,7 +355,8 @@ public class CqlPrepareHandlerTest {
                     0,
                     RawType.PRIMITIVES.get(ProtocolConstants.DataType.VARCHAR))),
             null,
-            new int[] {0});
+            new int[] {0},
+            null);
     RowsMetadata resultMetadata =
         new RowsMetadata(
             ImmutableList.of(
@@ -366,8 +367,10 @@ public class CqlPrepareHandlerTest {
                     0,
                     RawType.PRIMITIVES.get(ProtocolConstants.DataType.VARCHAR))),
             null,
-            new int[] {});
-    return new Prepared(Bytes.fromHexString("0xffff").array(), variablesMetadata, resultMetadata);
+            new int[] {},
+            null);
+    return new Prepared(
+        Bytes.fromHexString("0xffff").array(), null, variablesMetadata, resultMetadata);
   }
 
   private static void assertMatchesSimplePrepared(PreparedStatement statement) {
