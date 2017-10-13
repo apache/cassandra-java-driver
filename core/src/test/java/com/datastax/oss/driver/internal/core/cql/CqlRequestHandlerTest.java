@@ -188,7 +188,7 @@ public class CqlRequestHandlerTest extends CqlRequestHandlerTestBase {
       // Before we proceed, mock the PREPARE exchange that will occur as soon as we complete the
       // first response.
       node1Behavior.mockFollowupRequest(
-          Prepare.class, defaultFrameOf(new Prepared(mockId.array(), null, null)));
+          Prepare.class, defaultFrameOf(new Prepared(mockId.array(), null, null, null)));
 
       node1Behavior.setWriteSuccess();
       node1Behavior.setResponseSuccess(

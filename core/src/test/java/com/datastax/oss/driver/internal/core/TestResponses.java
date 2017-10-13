@@ -38,7 +38,7 @@ public class TestResponses {
             "cluster_name",
             0,
             RawType.PRIMITIVES.get(ProtocolConstants.DataType.VARCHAR));
-    RowsMetadata metadata = new RowsMetadata(ImmutableList.of(colSpec), null, null);
+    RowsMetadata metadata = new RowsMetadata(ImmutableList.of(colSpec), null, null, null);
     Queue<List<ByteBuffer>> data = Lists.newLinkedList();
     data.add(Lists.newArrayList(ByteBuffer.wrap(actualClusterName.getBytes(Charsets.UTF_8))));
     return new DefaultRows(metadata, data);

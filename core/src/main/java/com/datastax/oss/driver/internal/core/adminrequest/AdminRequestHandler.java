@@ -175,7 +175,8 @@ public class AdminRequestHandler implements ResponseCallback {
         pageSize,
         pagingState,
         ProtocolConstants.ConsistencyLevel.SERIAL,
-        Long.MIN_VALUE);
+        Long.MIN_VALUE,
+        null);
   }
 
   private static Map<String, ByteBuffer> serialize(

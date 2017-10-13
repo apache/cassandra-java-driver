@@ -116,7 +116,8 @@ class Conversions {
               pageSize,
               statement.getPagingState(),
               serialConsistency,
-              timestamp);
+              timestamp,
+              null);
       return new Query(simpleStatement.getQuery(), queryOptions);
     } else if (statement instanceof BoundStatement) {
       BoundStatement boundStatement = (BoundStatement) statement;
@@ -129,7 +130,8 @@ class Conversions {
               pageSize,
               statement.getPagingState(),
               serialConsistency,
-              timestamp);
+              timestamp,
+              null);
       ByteBuffer id = boundStatement.getPreparedStatement().getId();
       return new Execute(Bytes.getArray(id), queryOptions);
     } else if (statement instanceof BatchStatement) {
@@ -163,7 +165,8 @@ class Conversions {
           values,
           consistency,
           serialConsistency,
-          timestamp);
+          timestamp,
+          null);
     } else {
       throw new IllegalArgumentException(
           "Unsupported statement type: " + statement.getClass().getName());
