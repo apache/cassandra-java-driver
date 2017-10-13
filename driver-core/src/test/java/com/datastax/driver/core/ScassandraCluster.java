@@ -334,6 +334,7 @@ public class ScassandraCluster {
                     addPeerInfo(row, dc, n + 1, "rack", getPeerInfo(dc, n + 1, "rack", "rack1"));
                     addPeerInfo(row, dc, n + 1, "release_version", getPeerInfo(dc, n + 1, "release_version", cassandraVersion));
                     addPeerInfo(row, dc, n + 1, "tokens", ImmutableSet.of(tokens.get(n)));
+                    addPeerInfo(row, dc, n + 1, "host_id", UUIDs.random());
                     addPeerInfo(row, dc, n + 1, "schema_version", schemaVersion);
                     addPeerInfo(row, dc, n + 1, "graph", false);
 
@@ -461,6 +462,7 @@ public class ScassandraCluster {
             column("release_version", TEXT),
             column("tokens", set(TEXT)),
             column("graph", BOOLEAN),
+            column("host_id", UUID),
             column("schema_version", UUID)
     };
 

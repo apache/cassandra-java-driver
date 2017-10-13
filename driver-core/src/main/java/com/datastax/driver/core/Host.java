@@ -24,6 +24,7 @@ import org.slf4j.LoggerFactory;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.util.Set;
+import java.util.UUID;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -51,6 +52,10 @@ public class Host {
     // This is usually the same as broadcast_address unless
     // specified otherwise in cassandra.yaml file.
     private volatile InetAddress listenAddress;
+
+    private volatile UUID hostId;
+
+    private volatile UUID schemaVersion;
 
     enum State {ADDED, DOWN, UP}
 
@@ -135,6 +140,14 @@ public class Host {
 
     void setDseGraphEnabled(boolean dseGraphEnabled) {
         this.dseGraphEnabled = dseGraphEnabled;
+    }
+
+    void setHostId(UUID hostId) {
+        this.hostId = hostId;
+    }
+
+    void setSchemaVersion(UUID schemaVersion) {
+        this.schemaVersion = schemaVersion;
     }
 
     boolean supports(ProtocolVersion version) {
@@ -301,6 +314,31 @@ public class Host {
     @Deprecated
     public boolean isDseGraphEnabled() {
         return dseGraphEnabled;
+    }
+
+    /**
+     * Return the host id value for the host.
+     * <p/>
+     * The host id is the main identifier used by Cassandra on the server for internal
+     * communication (gossip). It is referenced as the column {@code host_id} in the
+     * {@code system.local} or {@code system.peers} table.
+     *
+     * @return the node's host id value.
+     */
+    public UUID getHostId() {
+        return hostId;
+    }
+
+    /**
+     * Return the current schema version for the host.
+     * <p/>
+     * Schema versions in Cassandra are used to insure all the nodes agree on the current
+     * Cassandra schema when it is modified. For more information see {@link ExecutionInfo#isSchemaInAgreement()}
+     *
+     * @return the node's current schema version value.
+     */
+    public UUID getSchemaVersion() {
+        return schemaVersion;
     }
 
     /**
