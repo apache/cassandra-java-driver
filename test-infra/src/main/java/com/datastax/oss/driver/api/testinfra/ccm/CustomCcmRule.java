@@ -52,6 +52,10 @@ public class CustomCcmRule extends BaseCcmRule {
     current.compareAndSet(this, null);
   }
 
+  public CcmBridge getCcmBridge() {
+    return ccmBridge;
+  }
+
   public static Builder builder() {
     return new Builder();
   }

@@ -27,7 +27,7 @@ import org.junit.runners.model.Statement;
 
 public abstract class BaseCcmRule extends CassandraResourceRule {
 
-  private final CcmBridge ccmBridge;
+  protected final CcmBridge ccmBridge;
 
   private final CassandraVersion cassandraVersion;
 

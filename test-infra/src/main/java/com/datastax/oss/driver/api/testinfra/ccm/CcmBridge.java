@@ -160,6 +160,22 @@ public class CcmBridge implements AutoCloseable {
     execute("remove");
   }
 
+  public void pause(int n) {
+    execute("node" + n, "pause");
+  }
+
+  public void resume(int n) {
+    execute("node" + n, "resume");
+  }
+
+  public void start(int n) {
+    execute("node" + n, "start");
+  }
+
+  public void stop(int n) {
+    execute("node" + n, "stop");
+  }
+
   synchronized void execute(String... args) {
     String command =
         "ccm " + String.join(" ", args) + " --config-dir=" + directory.toFile().getAbsolutePath();
