@@ -18,7 +18,6 @@ package com.datastax.oss.driver.internal.core.util;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
 import java.util.Map;
-import java.util.function.Function;
 
 public class ImmutableMaps {
 

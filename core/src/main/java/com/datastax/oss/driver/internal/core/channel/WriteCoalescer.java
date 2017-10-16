@@ -17,7 +17,6 @@ package com.datastax.oss.driver.internal.core.channel;
 
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelFuture;
-import io.netty.channel.ChannelOutboundInvoker;
 
 /**
  * Optimizes the write operations on Netty channels.

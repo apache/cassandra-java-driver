@@ -21,7 +21,6 @@ import com.google.common.base.Preconditions;
 import com.google.common.collect.SetMultimap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 interface ReplicationStrategy {
   static ReplicationStrategy newInstance(Map<String, String> replicationConfig, String logPrefix) {

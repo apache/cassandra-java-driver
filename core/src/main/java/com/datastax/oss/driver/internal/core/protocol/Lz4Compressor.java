@@ -17,7 +17,6 @@ package com.datastax.oss.driver.internal.core.protocol;
 
 import com.datastax.oss.driver.api.core.config.DriverOption;
 import com.datastax.oss.driver.api.core.context.DriverContext;
-import com.datastax.oss.protocol.internal.Compressor;
 import io.netty.buffer.ByteBuf;
 import java.nio.ByteBuffer;
 import net.jpountz.lz4.LZ4Compressor;

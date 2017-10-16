@@ -35,7 +35,6 @@ import org.junit.runner.RunWith;
 import org.mockito.Mockito;
 
 import static com.datastax.oss.driver.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.never;
 
 @RunWith(DataProviderRunner.class)
