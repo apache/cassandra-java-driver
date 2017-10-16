@@ -81,8 +81,8 @@ public class SchemaChangeListenerBase implements SchemaChangeListener {
   public void onViewUpdated(ViewMetadata current, ViewMetadata previous) {}
 
   @Override
-  public void onRegister(Cluster cluster) {}
+  public void onRegister(Cluster<?> cluster) {}
 
   @Override
-  public void onUnregister(Cluster cluster) {}
+  public void onUnregister(Cluster<?> cluster) {}
 }

@@ -193,26 +193,26 @@ public interface Cluster<SessionT extends Session> extends AsyncAutoCloseable {
    *
    * <p>This is a no-op if the listener was registered already.
    */
-  Cluster register(SchemaChangeListener listener);
+  Cluster<SessionT> register(SchemaChangeListener listener);
 
   /**
    * Unregisters the provided schema change listener.
    *
    * <p>This is a no-op if the listener was not registered.
    */
-  Cluster unregister(SchemaChangeListener listener);
+  Cluster<SessionT> unregister(SchemaChangeListener listener);
 
   /**
    * Registers the provided node state listener.
    *
    * <p>This is a no-op if the listener was registered already.
    */
-  Cluster register(NodeStateListener listener);
+  Cluster<SessionT> register(NodeStateListener listener);
 
   /**
    * Unregisters the provided node state listener.
    *
    * <p>This is a no-op if the listener was not registered.
    */
-  Cluster unregister(NodeStateListener listener);
+  Cluster<SessionT> unregister(NodeStateListener listener);
 }

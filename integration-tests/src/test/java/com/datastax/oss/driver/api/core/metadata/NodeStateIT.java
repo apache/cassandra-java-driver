@@ -407,7 +407,7 @@ public class NodeStateIT {
     InetSocketAddress address1 = contactPoints.next();
     InetSocketAddress address2 = contactPoints.next();
     NodeStateListener localNodeStateListener = Mockito.mock(NodeStateListener.class);
-    try (Cluster localCluster =
+    try (Cluster<CqlSession> localCluster =
         Cluster.builder()
             .addContactPoint(address1)
             .addNodeStateListeners(localNodeStateListener)
@@ -490,7 +490,7 @@ public class NodeStateIT {
       // Since contact points are shuffled, we have a 50% chance that our bad contact point will be
       // hit first. So we retry the scenario a few times if needed.
       for (int i = 0; i < 10; i++) {
-        try (Cluster localCluster =
+        try (Cluster<CqlSession> localCluster =
             Cluster.builder()
                 .addContactPoint(address1)
                 .addContactPoint(address2)
@@ -530,9 +530,9 @@ public class NodeStateIT {
   @Test
   public void should_call_onRegister_and_onUnregister_implicitly() {
     NodeStateListener localNodeStateListener = Mockito.mock(NodeStateListener.class);
-    Cluster localClusterRef;
+    Cluster<CqlSession> localClusterRef;
     // onRegister should be called implicitly when added as a listener on builder.
-    try (Cluster localCluster =
+    try (Cluster<CqlSession> localCluster =
         Cluster.builder()
             .addContactPoints(simulacron.getContactPoints())
             .addNodeStateListeners(localNodeStateListener)

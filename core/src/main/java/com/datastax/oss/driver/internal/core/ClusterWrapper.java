@@ -77,23 +77,27 @@ public abstract class ClusterWrapper<SourceSessionT extends Session, TargetSessi
   }
 
   @Override
-  public Cluster register(SchemaChangeListener listener) {
-    return delegate.register(listener);
+  public Cluster<TargetSessionT> register(SchemaChangeListener listener) {
+    delegate.register(listener);
+    return this;
   }
 
   @Override
-  public Cluster unregister(SchemaChangeListener listener) {
-    return delegate.unregister(listener);
+  public Cluster<TargetSessionT> unregister(SchemaChangeListener listener) {
+    delegate.unregister(listener);
+    return this;
   }
 
   @Override
-  public Cluster register(NodeStateListener listener) {
-    return delegate.register(listener);
+  public Cluster<TargetSessionT> register(NodeStateListener listener) {
+    delegate.register(listener);
+    return this;
   }
 
   @Override
-  public Cluster unregister(NodeStateListener listener) {
-    return delegate.unregister(listener);
+  public Cluster<TargetSessionT> unregister(NodeStateListener listener) {
+    delegate.unregister(listener);
+    return this;
   }
 
   @Override

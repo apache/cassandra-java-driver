@@ -195,7 +195,7 @@ public class DescribeIT {
 
     // Also validate that when you create a Cluster with schema already created that the exported string
     // is the same.
-    try (Cluster newCluster = ClusterUtils.newCluster(ccmRule)) {
+    try (Cluster<CqlSession> newCluster = ClusterUtils.newCluster(ccmRule)) {
       ks = newCluster.getMetadata().getKeyspace(keyspace);
       assertThat(ks.describeWithChildren(true).trim()).isEqualTo(expectedCql);
     }

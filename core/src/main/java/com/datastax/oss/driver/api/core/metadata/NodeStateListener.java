@@ -63,11 +63,11 @@ public interface NodeStateListener {
   void onRemove(Node node);
 
   /** Invoked when the listener is registered with a cluster. */
-  void onRegister(Cluster cluster);
+  void onRegister(Cluster<?> cluster);
 
   /**
    * Invoked when the listener is unregistered from a cluster, or at cluster shutdown, whichever
    * comes first.
    */
-  void onUnregister(Cluster cluster);
+  void onUnregister(Cluster<?> cluster);
 }

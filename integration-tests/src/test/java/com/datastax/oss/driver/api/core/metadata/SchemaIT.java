@@ -20,6 +20,7 @@ import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.config.DriverConfigProfile;
 import com.datastax.oss.driver.api.core.cql.SimpleStatement;
 import com.datastax.oss.driver.api.core.metadata.schema.KeyspaceMetadata;
+import com.datastax.oss.driver.api.core.session.CqlSession;
 import com.datastax.oss.driver.api.testinfra.ccm.CcmRule;
 import com.datastax.oss.driver.api.testinfra.cluster.ClusterRule;
 import com.datastax.oss.driver.api.testinfra.cluster.ClusterUtils;
@@ -53,7 +54,7 @@ public class SchemaIT {
 
   @Test
   public void should_filter_by_keyspaces() {
-    try (Cluster cluster =
+    try (Cluster<CqlSession> cluster =
         ClusterUtils.newCluster(
             ccmRule,
             String.format(
@@ -71,7 +72,8 @@ public class SchemaIT {
 
   @Test
   public void should_not_load_schema_if_disabled_in_config() {
-    try (Cluster cluster = ClusterUtils.newCluster(ccmRule, "metadata.schema.enabled = false")) {
+    try (Cluster<CqlSession> cluster =
+        ClusterUtils.newCluster(ccmRule, "metadata.schema.enabled = false")) {
 
       assertThat(cluster.isSchemaMetadataEnabled()).isFalse();
       assertThat(cluster.getMetadata().getKeyspaces()).isEmpty();
@@ -80,7 +82,8 @@ public class SchemaIT {
 
   @Test
   public void should_enable_schema_programmatically_when_disabled_in_config() {
-    try (Cluster cluster = ClusterUtils.newCluster(ccmRule, "metadata.schema.enabled = false")) {
+    try (Cluster<CqlSession> cluster =
+        ClusterUtils.newCluster(ccmRule, "metadata.schema.enabled = false")) {
 
       assertThat(cluster.isSchemaMetadataEnabled()).isFalse();
       assertThat(cluster.getMetadata().getKeyspaces()).isEmpty();
@@ -104,7 +107,7 @@ public class SchemaIT {
 
   @Test
   public void should_disable_schema_programmatically_when_enabled_in_config() {
-    Cluster cluster = clusterRule.cluster();
+    Cluster<CqlSession> cluster = clusterRule.cluster();
     cluster.setSchemaMetadataEnabled(false);
     assertThat(cluster.isSchemaMetadataEnabled()).isFalse();
 
@@ -131,7 +134,8 @@ public class SchemaIT {
 
   @Test
   public void should_refresh_schema_manually() {
-    try (Cluster cluster = ClusterUtils.newCluster(ccmRule, "metadata.schema.enabled = false")) {
+    try (Cluster<CqlSession> cluster =
+        ClusterUtils.newCluster(ccmRule, "metadata.schema.enabled = false")) {
 
       assertThat(cluster.isSchemaMetadataEnabled()).isFalse();
       assertThat(cluster.getMetadata().getKeyspaces()).isEmpty();

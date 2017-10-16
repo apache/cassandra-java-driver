@@ -65,7 +65,7 @@ public class ClusterUtils {
     return newCluster(cassandraResource, new NodeStateListener[0], options);
   }
 
-  public static Cluster newCluster(
+  public static Cluster<CqlSession> newCluster(
       CassandraResourceRule cassandraResource,
       NodeStateListener[] nodeStateListeners,
       String... options) {

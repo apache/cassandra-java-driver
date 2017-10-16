@@ -125,25 +125,25 @@ public class DefaultCluster implements Cluster<CqlSession> {
   }
 
   @Override
-  public Cluster register(SchemaChangeListener listener) {
+  public Cluster<CqlSession> register(SchemaChangeListener listener) {
     RunOrSchedule.on(adminExecutor, () -> singleThreaded.register(listener));
     return this;
   }
 
   @Override
-  public Cluster unregister(SchemaChangeListener listener) {
+  public Cluster<CqlSession> unregister(SchemaChangeListener listener) {
     RunOrSchedule.on(adminExecutor, () -> singleThreaded.unregister(listener));
     return this;
   }
 
   @Override
-  public Cluster register(NodeStateListener listener) {
+  public Cluster<CqlSession> register(NodeStateListener listener) {
     RunOrSchedule.on(adminExecutor, () -> singleThreaded.register(listener));
     return this;
   }
 
   @Override
-  public Cluster unregister(NodeStateListener listener) {
+  public Cluster<CqlSession> unregister(NodeStateListener listener) {
     RunOrSchedule.on(adminExecutor, () -> singleThreaded.unregister(listener));
     return this;
   }

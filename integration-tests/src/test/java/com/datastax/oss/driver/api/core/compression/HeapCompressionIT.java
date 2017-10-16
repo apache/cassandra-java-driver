@@ -19,6 +19,7 @@ import com.datastax.oss.driver.api.core.Cluster;
 import com.datastax.oss.driver.api.core.cql.ResultSet;
 import com.datastax.oss.driver.api.core.cql.Row;
 import com.datastax.oss.driver.api.core.cql.SimpleStatement;
+import com.datastax.oss.driver.api.core.session.CqlSession;
 import com.datastax.oss.driver.api.core.session.Session;
 import com.datastax.oss.driver.api.testinfra.ccm.CcmRule;
 import com.datastax.oss.driver.api.testinfra.cluster.ClusterRule;
@@ -81,8 +82,8 @@ public class HeapCompressionIT {
 
   private void createAndCheckCluster(String compressorOption) {
 
-    try (Cluster cluster = ClusterUtils.newCluster(ccmRule, compressorOption)) {
-      Session session = cluster.connect(schemaClusterRule.keyspace());
+    try (Cluster<CqlSession> cluster = ClusterUtils.newCluster(ccmRule, compressorOption)) {
+      CqlSession session = cluster.connect(schemaClusterRule.keyspace());
 
       // Run a couple of simple test queries
       ResultSet rs =

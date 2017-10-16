@@ -66,12 +66,13 @@ public interface SchemaChangeListener {
   void onViewDropped(ViewMetadata view);
 
   void onViewUpdated(ViewMetadata current, ViewMetadata previous);
+
   /** Invoked when the listener is registered with a cluster. */
-  void onRegister(Cluster cluster);
+  void onRegister(Cluster<?> cluster);
 
   /**
    * Invoked when the listener is unregistered from a cluster, or at cluster shutdown, whichever
    * comes first.
    */
-  void onUnregister(Cluster cluster);
+  void onUnregister(Cluster<?> cluster);
 }
