@@ -19,10 +19,10 @@ Here's a short program that connects to Cassandra and executes a query:
 try (Cluster cluster =
     Cluster.builder().addContactPoint(new InetSocketAddress("127.0.0.1", 9042)).build()) { // (1)
 
-  Session session = cluster.connect();                                                  // (2)
+  Session session = cluster.connect();                                                     // (2)
 
   ResultSet rs = session.execute("select release_version from system.local");              // (3)
-  Row row = rs.iterator().next();
+  Row row = rs.one();
   System.out.println(row.getString("release_version"));                                    // (4)
 }
 ```

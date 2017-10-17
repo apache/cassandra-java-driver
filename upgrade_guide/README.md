@@ -117,3 +117,13 @@ For example, this type is used in schema metadata or when creating a session con
 keyspace. When manipulating "data containers" such as rows, UDTs and tuples, columns can also be
 referenced by a `CqlIdentifier`; however, we've also kept a raw string variant for convenience, with
 the same rules as in 3.x (see `GettableById` and `GettableByName` for details).
+
+#### Atomic metadata updates
+
+`Cluster.getMetadata()` is now immutable and updated atomically. The node list, schema metadata and
+token map exposed by a given `Metadata` instance are guaranteed to be in sync.
+
+On the other hand, this means you have to call `getMetadata()` again each time you need a fresh
+copy; do not cache the result.
+
+See the [manual](../manual/core/metadata/) for all the details.
