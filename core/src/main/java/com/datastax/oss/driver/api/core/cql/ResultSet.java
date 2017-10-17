@@ -15,7 +15,6 @@
  */
 package com.datastax.oss.driver.api.core.cql;
 
-import com.datastax.oss.driver.api.core.session.Session;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import java.util.Collections;
@@ -36,8 +35,8 @@ import java.util.List;
  * <p>Implementations of this type are <b>not</b> thread-safe. They can only be iterated by the
  * thread that invoked {@code session.execute}.
  *
- * @see Session#execute(Statement)
- * @see Session#execute(String)
+ * @see CqlSession#execute(Statement)
+ * @see CqlSession#execute(String)
  */
 public interface ResultSet extends Iterable<Row> {
 

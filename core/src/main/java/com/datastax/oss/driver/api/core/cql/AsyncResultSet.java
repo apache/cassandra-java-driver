@@ -15,14 +15,13 @@
  */
 package com.datastax.oss.driver.api.core.cql;
 
-import com.datastax.oss.driver.api.core.session.Session;
 import java.util.concurrent.CompletionStage;
 
 /**
  * The result of an asynchronous CQL query.
  *
- * @see Session#executeAsync(Statement)
- * @see Session#executeAsync(String)
+ * @see CqlSession#executeAsync(Statement)
+ * @see CqlSession#executeAsync(String)
  */
 public interface AsyncResultSet {
 
