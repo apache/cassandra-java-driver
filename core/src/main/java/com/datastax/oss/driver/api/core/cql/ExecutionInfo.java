@@ -19,10 +19,15 @@ import com.datastax.oss.driver.api.core.Cluster;
 import com.datastax.oss.driver.api.core.CoreProtocolVersion;
 import com.datastax.oss.driver.api.core.config.CoreDriverOption;
 import com.datastax.oss.driver.api.core.metadata.Node;
+import com.datastax.oss.driver.api.core.session.Request;
 import com.datastax.oss.driver.api.core.specex.SpeculativeExecutionPolicy;
+import com.datastax.oss.driver.internal.core.util.concurrent.BlockingOperation;
+import com.datastax.oss.driver.internal.core.util.concurrent.CompletableFutures;
 import java.nio.ByteBuffer;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
+import java.util.concurrent.CompletionStage;
 
 /** Information about the execution of a query. */
 public interface ExecutionInfo {
@@ -112,4 +117,34 @@ public interface ExecutionInfo {
    * @see CoreDriverOption#CONTROL_CONNECTION_AGREEMENT_TIMEOUT
    */
   boolean isSchemaInAgreement();
+
+  /**
+   * The tracing identifier if tracing was {@link Request#isTracing() enabled} for this query,
+   * otherwise {@code null}.
+   */
+  UUID getTracingId();
+
+  /**
+   * Fetches the query trace asynchronously, if tracing was enabled for this query.
+   *
+   * <p>Note that each call to this method triggers a new fetch, even if the previous call was
+   * successful (this allows fetching the trace again if the list of {@link QueryTrace#getEvents()
+   * events} was incomplete).
+   *
+   * <p>This method will return a failed future if tracing was disabled for the query (that is, if
+   * {@link #getTracingId()} is null).
+   */
+  CompletionStage<QueryTrace> getQueryTraceAsync();
+
+  /**
+   * Convenience method to call {@link #getQueryTraceAsync()} and block for the result.
+   *
+   * <p>This must not be called on a driver thread.
+   *
+   * @throws IllegalStateException if {@link #getTracingId()} is null.
+   */
+  default QueryTrace getQueryTrace() {
+    BlockingOperation.checkNotDriverThread();
+    return CompletableFutures.getUninterruptibly(getQueryTraceAsync());
+  }
 }

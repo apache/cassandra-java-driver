@@ -49,6 +49,9 @@ public enum CoreDriverOption implements DriverOption {
   SPECULATIVE_EXECUTION_POLICY_ROOT("request.speculative-execution-policy", true),
   RELATIVE_SPECULATIVE_EXECUTION_MAX("max-executions", false),
   RELATIVE_SPECULATIVE_EXECUTION_DELAY("delay", false),
+  REQUEST_TRACE_ATTEMPTS("request.trace.attempts", true),
+  REQUEST_TRACE_INTERVAL("request.trace.interval", true),
+  REQUEST_TRACE_CONSISTENCY("request.trace.consistency", true),
 
   CONTROL_CONNECTION_TIMEOUT("connection.control-connection.timeout", true),
   CONTROL_CONNECTION_AGREEMENT_INTERVAL(

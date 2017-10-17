@@ -15,15 +15,21 @@
  */
 package com.datastax.oss.driver.internal.core.cql;
 
+import com.datastax.oss.driver.api.core.config.DriverConfigProfile;
 import com.datastax.oss.driver.api.core.cql.ExecutionInfo;
+import com.datastax.oss.driver.api.core.cql.QueryTrace;
 import com.datastax.oss.driver.api.core.cql.Statement;
 import com.datastax.oss.driver.api.core.metadata.Node;
+import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
+import com.datastax.oss.driver.internal.core.session.DefaultSession;
+import com.datastax.oss.driver.internal.core.util.concurrent.CompletableFutures;
 import com.datastax.oss.protocol.internal.Frame;
 import java.nio.ByteBuffer;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.CompletionStage;
 
 public class DefaultExecutionInfo implements ExecutionInfo {
 
@@ -37,6 +43,9 @@ public class DefaultExecutionInfo implements ExecutionInfo {
   private final List<String> warnings;
   private final Map<String, ByteBuffer> customPayload;
   private final boolean schemaInAgreement;
+  private final DefaultSession session;
+  private final InternalDriverContext context;
+  private final DriverConfigProfile configProfile;
 
   public DefaultExecutionInfo(
       Statement<?> statement,
@@ -46,7 +55,10 @@ public class DefaultExecutionInfo implements ExecutionInfo {
       List<Map.Entry<Node, Throwable>> errors,
       ByteBuffer pagingState,
       Frame frame,
-      boolean schemaInAgreement) {
+      boolean schemaInAgreement,
+      DefaultSession session,
+      InternalDriverContext context,
+      DriverConfigProfile configProfile) {
     this.statement = statement;
     this.coordinator = coordinator;
     this.speculativeExecutionCount = speculativeExecutionCount;
@@ -59,6 +71,9 @@ public class DefaultExecutionInfo implements ExecutionInfo {
     this.warnings = (frame == null) ? Collections.emptyList() : frame.warnings;
     this.customPayload = (frame == null) ? Collections.emptyMap() : frame.customPayload;
     this.schemaInAgreement = schemaInAgreement;
+    this.session = session;
+    this.context = context;
+    this.configProfile = configProfile;
   }
 
   @Override
@@ -106,5 +121,20 @@ public class DefaultExecutionInfo implements ExecutionInfo {
   @Override
   public boolean isSchemaInAgreement() {
     return schemaInAgreement;
+  }
+
+  @Override
+  public UUID getTracingId() {
+    return tracingId;
+  }
+
+  @Override
+  public CompletionStage<QueryTrace> getQueryTraceAsync() {
+    if (tracingId == null) {
+      return CompletableFutures.failedFuture(
+          new IllegalStateException("Tracing was disabled for this request"));
+    } else {
+      return new QueryTraceFetcher(tracingId, session, context, configProfile).fetch();
+    }
   }
 }

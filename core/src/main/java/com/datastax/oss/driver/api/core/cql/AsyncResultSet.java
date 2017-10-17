@@ -15,6 +15,7 @@
  */
 package com.datastax.oss.driver.api.core.cql;
 
+import java.util.Iterator;
 import java.util.concurrent.CompletionStage;
 
 /**
@@ -40,6 +41,17 @@ public interface AsyncResultSet {
    * iterated once: rows are "consumed" as they are read.
    */
   Iterable<Row> currentPage();
+
+  /**
+   * Returns the next row, or {@code null} if the result set is exhausted.
+   *
+   * <p>This is convenient for queries that are known to return exactly one row, for example count
+   * queries.
+   */
+  default Row one() {
+    Iterator<Row> iterator = currentPage().iterator();
+    return iterator.hasNext() ? iterator.next() : null;
+  }
 
   /**
    * Whether there are more pages of results. If so, call {@link #fetchNextPage()} to fetch the next

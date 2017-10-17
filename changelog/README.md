@@ -4,6 +4,7 @@
 
 ### 4.0.0-alpha3 (in progress)
 
+- [new feature] JAVA-1524: Add query trace API
 - [improvement] JAVA-1646: Provide a more readable error when connecting to Cassandra 2.0 or lower
 - [improvement] JAVA-1662: Raise default request timeout
 - [improvement] JAVA-1566: Enforce API rules automatically
