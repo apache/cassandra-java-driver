@@ -59,17 +59,11 @@ import org.slf4j.LoggerFactory;
 /**
  * The session implementation.
  *
- * <p>
- *
  * <p>It maintains a {@link ChannelPool} to each node that the {@link LoadBalancingPolicy} set to a
  * non-ignored distance. It listens for distance events and node state events, in order to adjust
  * the pools accordingly.
  *
- * <p>
- *
  * <p>It executes requests by:
- *
- * <p>
  *
  * <ul>
  *   <li>picking the appropriate processor to convert the request into a protocol message.
@@ -134,8 +128,6 @@ public class DefaultSession implements CqlSession {
 
   /**
    * <b>INTERNAL USE ONLY</b> -- switches the session to a new keyspace.
-   *
-   * <p>
    *
    * <p>This is called by the driver when a {@code USE} query is successfully executed through the
    * session. Calling it from anywhere else is highly discouraged, as an invalid keyspace would
