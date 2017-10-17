@@ -84,6 +84,7 @@ public abstract class CqlRequestHandlerBase {
   private final CqlIdentifier keyspace;
   private final InternalDriverContext context;
   private final Queue<Node> queryPlan;
+  private final DriverConfigProfile configProfile;
   private final boolean isIdempotent;
   protected final CompletableFuture<AsyncResultSet> result;
   private final Message message;
@@ -127,13 +128,12 @@ public abstract class CqlRequestHandlerBase {
     this.context = context;
     this.queryPlan = context.loadBalancingPolicyWrapper().newQueryPlan();
 
-    DriverConfigProfile configProfile;
     if (statement.getConfigProfile() != null) {
-      configProfile = statement.getConfigProfile();
+      this.configProfile = statement.getConfigProfile();
     } else {
       DriverConfig config = context.config();
       String profileName = statement.getConfigProfileName();
-      configProfile =
+      this.configProfile =
           (profileName == null || profileName.isEmpty())
               ? config.getDefaultProfile()
               : config.getNamedProfile(profileName);
@@ -323,7 +323,10 @@ public abstract class CqlRequestHandlerBase {
         errors,
         pagingState,
         responseFrame,
-        schemaInAgreement);
+        schemaInAgreement,
+        session,
+        context,
+        configProfile);
   }
 
   private void setFinalError(Throwable error) {
