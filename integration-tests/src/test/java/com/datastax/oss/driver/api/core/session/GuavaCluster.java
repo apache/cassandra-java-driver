@@ -17,6 +17,7 @@
 package com.datastax.oss.driver.api.core.session;
 
 import com.datastax.oss.driver.api.core.Cluster;
+import com.datastax.oss.driver.api.core.cql.CqlSession;
 import com.datastax.oss.driver.internal.core.ClusterWrapper;
 
 public class GuavaCluster extends ClusterWrapper<CqlSession, GuavaSession> {

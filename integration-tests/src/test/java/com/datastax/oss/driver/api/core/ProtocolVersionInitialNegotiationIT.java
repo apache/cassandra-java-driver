@@ -15,7 +15,7 @@
  */
 package com.datastax.oss.driver.api.core;
 
-import com.datastax.oss.driver.api.core.session.CqlSession;
+import com.datastax.oss.driver.api.core.cql.CqlSession;
 import com.datastax.oss.driver.api.testinfra.CassandraRequirement;
 import com.datastax.oss.driver.api.testinfra.ccm.CcmRule;
 import com.datastax.oss.driver.api.testinfra.cluster.ClusterUtils;

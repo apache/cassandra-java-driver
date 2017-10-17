@@ -18,7 +18,7 @@ package com.datastax.oss.driver.api.core.config;
 import com.datastax.oss.driver.api.core.Cluster;
 import com.datastax.oss.driver.api.core.DriverTimeoutException;
 import com.datastax.oss.driver.api.core.cql.SimpleStatement;
-import com.datastax.oss.driver.api.core.session.CqlSession;
+import com.datastax.oss.driver.api.core.cql.CqlSession;
 import com.datastax.oss.driver.api.testinfra.simulacron.SimulacronRule;
 import com.datastax.oss.driver.categories.LongTests;
 import com.datastax.oss.driver.internal.core.config.ConfigChangeEvent;

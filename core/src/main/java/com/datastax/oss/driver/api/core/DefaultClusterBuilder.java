@@ -15,7 +15,7 @@
  */
 package com.datastax.oss.driver.api.core;
 
-import com.datastax.oss.driver.api.core.session.CqlSession;
+import com.datastax.oss.driver.api.core.cql.CqlSession;
 
 /** Helper class to build an instance of the default {@link Cluster} implementation. */
 public class DefaultClusterBuilder

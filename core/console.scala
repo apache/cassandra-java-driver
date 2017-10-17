@@ -11,10 +11,11 @@
  * Use Ctrl+C instead.
  */
 import com.datastax.oss.driver.api.core._
-import com.datastax.oss.driver.api.core.session.CqlSession
 import com.datastax.oss.driver.internal.core.metadata.TopologyEvent
 import com.datastax.oss.driver.internal.core.context.InternalDriverContext
 import java.net.InetSocketAddress
+
+import com.datastax.oss.driver.api.core.cql.CqlSession
 
 // Heartbeat logs every 30 seconds are annoying in the console, raise the interval
 System.setProperty("datastax-java-driver.connection.heartbeat.interval", "1 hour")
