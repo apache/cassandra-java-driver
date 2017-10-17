@@ -48,6 +48,11 @@ public class DefaultRow implements Row {
   }
 
   @Override
+  public ColumnDefinitions getColumnDefinitions() {
+    return definitions;
+  }
+
+  @Override
   public int size() {
     return definitions.size();
   }

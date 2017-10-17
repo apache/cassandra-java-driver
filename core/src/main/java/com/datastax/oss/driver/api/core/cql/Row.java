@@ -23,4 +23,7 @@ import java.io.Serializable;
 
 /** A row from a CQL table. */
 public interface Row
-    extends GettableByIndex, GettableByName, GettableById, Detachable, Serializable {}
+    extends GettableByIndex, GettableByName, GettableById, Detachable, Serializable {
+
+  ColumnDefinitions getColumnDefinitions();
+}
