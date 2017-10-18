@@ -1,6 +1,6 @@
 ## Upgrade guide
 
-### 4.0.0-alpha1
+### 4.0.0
 
 Java driver 4 is **not binary compatible** with previous versions. However, most of the concepts
 remain unchanged, and the new API will look very familiar to 2.x and 3.x users.
@@ -127,3 +127,9 @@ On the other hand, this means you have to call `getMetadata()` again each time y
 copy; do not cache the result.
 
 See the [manual](../manual/core/metadata/) for all the details.
+
+#### Improved protocol version negotiation
+
+You no longer need to force the protocol version in a mixed cluster: upon connecting to the first
+node, the driver will read the release version of all the nodes in the cluster and infer the best
+protocol version that works with all of them.
