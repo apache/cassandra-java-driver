@@ -34,7 +34,7 @@ public class CompletionStageAssert<V>
 
   public CompletionStageAssert<V> isSuccess(Consumer<V> valueAssertions) {
     try {
-      V value = actual.toCompletableFuture().get(100, TimeUnit.MILLISECONDS);
+      V value = actual.toCompletableFuture().get(2, TimeUnit.SECONDS);
       valueAssertions.accept(value);
     } catch (TimeoutException e) {
       fail("Future did not complete within the timeout");
@@ -50,7 +50,7 @@ public class CompletionStageAssert<V>
 
   public CompletionStageAssert<V> isFailed(Consumer<Throwable> failureAssertions) {
     try {
-      actual.toCompletableFuture().get(100, TimeUnit.MILLISECONDS);
+      actual.toCompletableFuture().get(2, TimeUnit.SECONDS);
       fail("Expected completion stage to fail");
     } catch (TimeoutException e) {
       fail("Future did not complete within the timeout");
