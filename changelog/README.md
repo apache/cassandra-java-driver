@@ -2,7 +2,7 @@
 
 <!-- Note: contrary to 3.x, insert new entries *first* in their section -->
 
-### 4.0.0-alpha2 (in progress)
+### 4.0.0-alpha2
 
 - [new feature] JAVA-1525: Handle token metadata
 - [new feature] JAVA-1638: Check schema agreement

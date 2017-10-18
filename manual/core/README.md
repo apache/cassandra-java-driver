@@ -7,7 +7,7 @@ following coordinates:
 <dependency>
   <groupId>com.datastax.oss</groupId>
   <artifactId>java-driver-core</artifactId>
-  <version>4.0.0-alpha1</version>
+  <version>4.0.0-alpha2</version>
 </dependency>
 ```
 
