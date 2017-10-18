@@ -19,12 +19,15 @@ import com.datastax.oss.driver.api.core.cql.CqlSession;
 import com.datastax.oss.driver.api.testinfra.CassandraRequirement;
 import com.datastax.oss.driver.api.testinfra.ccm.CcmRule;
 import com.datastax.oss.driver.api.testinfra.cluster.ClusterUtils;
+import com.datastax.oss.driver.categories.ParallelizableTests;
 import org.junit.Rule;
 import org.junit.Test;
+import org.junit.experimental.categories.Category;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 /** Covers protocol negotiation for the initial connection to the first contact point. */
+@Category(ParallelizableTests.class)
 public class ProtocolVersionInitialNegotiationIT {
 
   @Rule public CcmRule ccm = CcmRule.getInstance();

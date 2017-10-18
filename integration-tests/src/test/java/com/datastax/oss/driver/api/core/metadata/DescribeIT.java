@@ -18,11 +18,12 @@ package com.datastax.oss.driver.api.core.metadata;
 import com.datastax.oss.driver.api.core.CassandraVersion;
 import com.datastax.oss.driver.api.core.Cluster;
 import com.datastax.oss.driver.api.core.CqlIdentifier;
-import com.datastax.oss.driver.api.core.metadata.schema.KeyspaceMetadata;
 import com.datastax.oss.driver.api.core.cql.CqlSession;
+import com.datastax.oss.driver.api.core.metadata.schema.KeyspaceMetadata;
 import com.datastax.oss.driver.api.testinfra.ccm.CcmRule;
 import com.datastax.oss.driver.api.testinfra.cluster.ClusterRule;
 import com.datastax.oss.driver.api.testinfra.cluster.ClusterUtils;
+import com.datastax.oss.driver.categories.ParallelizableTests;
 import com.google.common.io.ByteStreams;
 import com.google.common.io.Closer;
 import java.io.ByteArrayOutputStream;
@@ -31,12 +32,14 @@ import java.io.InputStream;
 import java.io.PrintStream;
 import org.junit.ClassRule;
 import org.junit.Test;
+import org.junit.experimental.categories.Category;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
 
+@Category(ParallelizableTests.class)
 public class DescribeIT {
 
   private static final Logger logger = LoggerFactory.getLogger(DescribeIT.class);

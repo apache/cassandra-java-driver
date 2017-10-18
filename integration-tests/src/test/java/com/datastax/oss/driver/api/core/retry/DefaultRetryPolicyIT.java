@@ -27,6 +27,7 @@ import com.datastax.oss.driver.api.core.servererrors.UnavailableException;
 import com.datastax.oss.driver.api.core.servererrors.WriteTimeoutException;
 import com.datastax.oss.driver.api.testinfra.cluster.ClusterRule;
 import com.datastax.oss.driver.api.testinfra.simulacron.SimulacronRule;
+import com.datastax.oss.driver.categories.ParallelizableTests;
 import com.datastax.oss.simulacron.common.cluster.ClusterSpec;
 import com.datastax.oss.simulacron.common.stubbing.CloseType;
 import com.datastax.oss.simulacron.common.stubbing.DisconnectAction;
@@ -39,6 +40,7 @@ import org.junit.Before;
 import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
+import org.junit.experimental.categories.Category;
 import org.junit.runner.RunWith;
 
 import static com.datastax.oss.simulacron.common.codec.ConsistencyLevel.LOCAL_QUORUM;
@@ -52,6 +54,7 @@ import static com.datastax.oss.simulacron.common.stubbing.PrimeDsl.writeTimeout;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
 
+@Category(ParallelizableTests.class)
 @RunWith(DataProviderRunner.class)
 public class DefaultRetryPolicyIT {
 

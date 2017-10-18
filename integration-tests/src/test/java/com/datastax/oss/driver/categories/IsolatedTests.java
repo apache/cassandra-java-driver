@@ -15,5 +15,9 @@
  */
 package com.datastax.oss.driver.categories;
 
-/** Defines a classification of tests that should be run in their own jvm fork. */
-public class IsolatedTests {}
+/**
+ * Defines a classification of tests that should be run in their own jvm fork.
+ *
+ * <p>This is generally because they need to set system properties.
+ */
+public interface IsolatedTests {}

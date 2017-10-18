@@ -17,6 +17,7 @@ package com.datastax.oss.driver.api.core;
 
 import com.datastax.oss.driver.api.core.cql.CqlSession;
 import com.datastax.oss.driver.api.testinfra.simulacron.SimulacronRule;
+import com.datastax.oss.driver.categories.ParallelizableTests;
 import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
 import com.datastax.oss.driver.internal.testinfra.cluster.TestConfigLoader;
 import com.datastax.oss.protocol.internal.request.Query;
@@ -30,6 +31,7 @@ import java.net.InetSocketAddress;
 import java.util.stream.Stream;
 import org.junit.Rule;
 import org.junit.Test;
+import org.junit.experimental.categories.Category;
 import org.junit.rules.ExpectedException;
 
 import static com.datastax.oss.driver.assertions.Assertions.assertThat;
@@ -40,6 +42,7 @@ import static org.assertj.core.api.Assertions.fail;
  * first node list refresh, we find out that some nodes only support a lower version, reconnect the
  * control connection immediately.
  */
+@Category(ParallelizableTests.class)
 public class ProtocolVersionMixedClusterIT {
   @Rule public ExpectedException thrown = ExpectedException.none();
 

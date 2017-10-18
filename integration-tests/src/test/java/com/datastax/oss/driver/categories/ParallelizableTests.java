@@ -15,5 +15,11 @@
  */
 package com.datastax.oss.driver.categories;
 
-/** Defines a classification of tests that are slow. */
-public interface LongTests {}
+import com.datastax.oss.driver.api.testinfra.ccm.CcmRule;
+import com.datastax.oss.driver.api.testinfra.ccm.CustomCcmRule;
+
+/**
+ * Defines a classification of tests that can be run in parallel, namely: tests that use {@link
+ * CcmRule} (not {@link CustomCcmRule}), and tests that use Simulacron.
+ */
+public interface ParallelizableTests {}

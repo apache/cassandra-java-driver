@@ -15,7 +15,9 @@
     limitations under the License.
 
 -->
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
   <modelVersion>4.0.0</modelVersion>
 
   <groupId>com.datastax.oss</groupId>
@@ -41,8 +43,6 @@
     <format.validateOnly>true</format.validateOnly>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-    <!-- skip integration tests by default -->
-    <skipITs>true</skipITs>
   </properties>
 
   <dependencyManagement>
@@ -375,6 +375,10 @@ limitations under the License.]]>
           </plugin>
         </plugins>
       </build>
+      <properties>
+        <!-- Our integration tests are too long to run during a release, we run them in CI -->
+        <skipITs>true</skipITs>
+      </properties>
     </profile>
   </profiles>
   <distributionManagement>

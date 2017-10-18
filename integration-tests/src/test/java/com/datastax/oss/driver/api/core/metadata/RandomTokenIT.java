@@ -19,13 +19,10 @@ import com.datastax.oss.driver.api.core.Cluster;
 import com.datastax.oss.driver.api.core.cql.CqlSession;
 import com.datastax.oss.driver.api.testinfra.ccm.CustomCcmRule;
 import com.datastax.oss.driver.api.testinfra.cluster.ClusterRule;
-import com.datastax.oss.driver.categories.LongTests;
 import com.datastax.oss.driver.internal.core.metadata.token.RandomToken;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
-import org.junit.experimental.categories.Category;
 
-@Category(LongTests.class)
 public class RandomTokenIT extends TokenITBase {
 
   @ClassRule

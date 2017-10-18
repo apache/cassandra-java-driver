@@ -21,6 +21,7 @@ import com.datastax.oss.driver.api.core.cql.PreparedStatement;
 import com.datastax.oss.driver.api.core.cql.SimpleStatement;
 import com.datastax.oss.driver.api.testinfra.ccm.CcmRule;
 import com.datastax.oss.driver.api.testinfra.cluster.ClusterRule;
+import com.datastax.oss.driver.categories.ParallelizableTests;
 import com.datastax.oss.driver.internal.core.context.DefaultDriverContext;
 import com.datastax.oss.driver.internal.testinfra.cluster.TestConfigLoader;
 import com.google.common.collect.Iterables;
@@ -30,6 +31,7 @@ import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
+import org.junit.experimental.categories.Category;
 import org.junit.rules.ExpectedException;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -51,6 +53,7 @@ import static org.assertj.core.api.Assertions.assertThat;
  * <p>{@link KeyRequestProcessor} is also registered for handling {@link KeyRequest}s which
  * simplifies a certain query down to 1 parameter.
  */
+@Category(ParallelizableTests.class)
 public class RequestProcessorIT {
 
   @ClassRule public static CcmRule ccm = CcmRule.getInstance();

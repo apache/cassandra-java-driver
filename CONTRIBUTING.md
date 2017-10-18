@@ -205,6 +205,41 @@ factor some common code in a parent abstract class named with "XxxTestBase", and
 different families of tests into separate child classes. For example, `CqlRequestHandlerTestBase`,
 `CqlRequestHandlerRetryTest`, `CqlRequestHandlerSpeculativeExecutionTest`...
 
+Unit tests live in their respective production code's module. They should be fast and not start any
+external process. They usually target one specific component and mock the rest of the driver
+context.
+
+Integration tests live in the aptly-named `integration-tests` module. They exercise the whole driver
+stack against an external process -- either simulated with
+[Simulacron](https://github.com/datastax/simulacron), or a live Cassandra cluster run with
+[CCM](https://github.com/pcmanus/ccm) (the `ccm` executable must be in the path). They are
+classified into categories that determine how they will be run during the build:
+
+* `@Category(ParallelizableTests.class)`: for tests that use Simulacron or `CcmRule`. They will be
+  run in parallel. 
+* No annotation: for tests that use `CustomCcmRule`. They will be run one after the other. 
+* `@Category(IsolatedTests.class)`: for tests that require specific environment tweaks, typically
+  system properties that need to be set before initialization. They will be run one after the other,
+  each in their its JVM fork.
+
+
+## Running the tests
+
+#### Unit tests
+
+    mvn clean test
+    
+This currently takes about 30 seconds. The goal is to keep it within a couple of minutes (it runs
+for each commit if you enable the pre-commit hook -- see below).
+
+#### Integration tests
+
+    mvn clean verify
+
+This currently takes about 9 minutes. We don't have a hard limit, but ideally it should stay within
+30 minutes to 1 hour.
+
+
 ## License headers
 
 The build will fail if some license headers are missing. To update all files from the command line,
