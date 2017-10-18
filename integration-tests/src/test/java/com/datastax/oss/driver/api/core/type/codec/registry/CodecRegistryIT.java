@@ -32,6 +32,7 @@ import com.datastax.oss.driver.api.core.type.reflect.GenericType;
 import com.datastax.oss.driver.api.core.type.reflect.GenericTypeParameter;
 import com.datastax.oss.driver.api.testinfra.ccm.CcmRule;
 import com.datastax.oss.driver.api.testinfra.cluster.ClusterRule;
+import com.datastax.oss.driver.categories.ParallelizableTests;
 import com.datastax.oss.driver.internal.core.type.codec.IntCodec;
 import java.nio.ByteBuffer;
 import java.util.Collection;
@@ -44,11 +45,13 @@ import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
+import org.junit.experimental.categories.Category;
 import org.junit.rules.ExpectedException;
 import org.junit.rules.TestName;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@Category(ParallelizableTests.class)
 public class CodecRegistryIT {
 
   @ClassRule public static CcmRule ccm = CcmRule.getInstance();

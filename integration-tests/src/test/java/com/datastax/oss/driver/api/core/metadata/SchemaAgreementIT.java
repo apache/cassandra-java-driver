@@ -16,23 +16,20 @@
 package com.datastax.oss.driver.api.core.metadata;
 
 import com.datastax.oss.driver.api.core.Cluster;
-import com.datastax.oss.driver.api.core.cql.ResultSet;
 import com.datastax.oss.driver.api.core.cql.CqlSession;
+import com.datastax.oss.driver.api.core.cql.ResultSet;
 import com.datastax.oss.driver.api.testinfra.ccm.CustomCcmRule;
 import com.datastax.oss.driver.api.testinfra.cluster.ClusterRule;
 import com.datastax.oss.driver.api.testinfra.cluster.ClusterUtils;
-import com.datastax.oss.driver.categories.LongTests;
 import java.util.concurrent.atomic.AtomicInteger;
 import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
-import org.junit.experimental.categories.Category;
 import org.junit.rules.RuleChain;
 import org.junit.rules.TestName;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@Category(LongTests.class)
 public class SchemaAgreementIT {
 
   private static CustomCcmRule ccm = CustomCcmRule.builder().withNodes(3).build();

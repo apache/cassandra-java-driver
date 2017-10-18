@@ -16,12 +16,13 @@
 package com.datastax.oss.driver.api.core.metadata;
 
 import com.datastax.oss.driver.api.core.Cluster;
-import com.datastax.oss.driver.api.core.loadbalancing.NodeDistance;
 import com.datastax.oss.driver.api.core.cql.CqlSession;
+import com.datastax.oss.driver.api.core.loadbalancing.NodeDistance;
 import com.datastax.oss.driver.api.testinfra.cluster.ClusterRule;
 import com.datastax.oss.driver.api.testinfra.cluster.ClusterUtils;
 import com.datastax.oss.driver.api.testinfra.simulacron.SimulacronRule;
 import com.datastax.oss.driver.api.testinfra.utils.ConditionChecker;
+import com.datastax.oss.driver.categories.ParallelizableTests;
 import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
 import com.datastax.oss.driver.internal.core.metadata.DefaultNode;
 import com.datastax.oss.driver.internal.core.metadata.NodeStateEvent;
@@ -45,6 +46,7 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
+import org.junit.experimental.categories.Category;
 import org.mockito.InOrder;
 import org.mockito.Mockito;
 
@@ -53,6 +55,7 @@ import static com.datastax.oss.driver.assertions.Assertions.fail;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.timeout;
 
+@Category(ParallelizableTests.class)
 public class NodeStateIT {
 
   public @Rule SimulacronRule simulacron = new SimulacronRule(ClusterSpec.builder().withNodes(2));

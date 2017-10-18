@@ -22,14 +22,17 @@ import com.datastax.oss.driver.api.testinfra.CassandraRequirement;
 import com.datastax.oss.driver.api.testinfra.ccm.CcmRule;
 import com.datastax.oss.driver.api.testinfra.cluster.ClusterRule;
 import com.datastax.oss.driver.api.testinfra.cluster.ClusterUtils;
+import com.datastax.oss.driver.categories.ParallelizableTests;
 import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
+import org.junit.experimental.categories.Category;
 import org.junit.rules.TestName;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@Category(ParallelizableTests.class)
 public class BoundStatementIT {
 
   @Rule public CcmRule ccm = CcmRule.getInstance();

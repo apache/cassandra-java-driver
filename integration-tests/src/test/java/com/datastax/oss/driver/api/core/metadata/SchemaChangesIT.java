@@ -26,6 +26,7 @@ import com.datastax.oss.driver.api.testinfra.ccm.CcmRule;
 import com.datastax.oss.driver.api.testinfra.cluster.ClusterRule;
 import com.datastax.oss.driver.api.testinfra.cluster.ClusterUtils;
 import com.datastax.oss.driver.api.testinfra.utils.ConditionChecker;
+import com.datastax.oss.driver.categories.ParallelizableTests;
 import com.google.common.collect.ImmutableList;
 import java.util.Arrays;
 import java.util.function.BiConsumer;
@@ -35,10 +36,12 @@ import java.util.stream.Collectors;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
+import org.junit.experimental.categories.Category;
 import org.mockito.Mockito;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@Category(ParallelizableTests.class)
 public class SchemaChangesIT {
 
   @Rule public CcmRule ccmRule = CcmRule.getInstance();

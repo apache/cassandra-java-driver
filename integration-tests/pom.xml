@@ -99,82 +99,52 @@
         <artifactId>maven-failsafe-plugin</artifactId>
         <executions>
           <execution>
-            <id>short-tests</id>
+            <id>parallelizable-tests</id>
             <goals>
               <goal>integration-test</goal>
               <goal>verify</goal>
             </goals>
             <configuration>
-              <!-- skip long & isolated tests by default -->
-              <excludedGroups>
-                com.datastax.oss.driver.categories.LongTests,com.datastax.oss.driver.categories.IsolatedTests
-              </excludedGroups>
-              <reportNameSuffix>short</reportNameSuffix>
+              <groups>com.datastax.oss.driver.categories.ParallelizableTests</groups>
               <parallel>classes</parallel>
               <threadCountClasses>8</threadCountClasses>
               <!-- set so test can exit with rc 0 (ci will mark test failures accordingly) -->
               <testFailureIgnore>true</testFailureIgnore>
+              <reportNameSuffix>parallelized</reportNameSuffix>
+            </configuration>
+          </execution>
+          <execution>
+            <id>serial-tests</id>
+            <goals>
+              <goal>integration-test</goal>
+              <goal>verify</goal>
+            </goals>
+            <configuration>
+              <excludedGroups>
+                com.datastax.oss.driver.categories.ParallelizableTests,
+                com.datastax.oss.driver.categories.IsolatedTests
+              </excludedGroups>
+              <testFailureIgnore>true</testFailureIgnore>
+              <reportNameSuffix>serial</reportNameSuffix>
+            </configuration>
+          </execution>
+          <execution>
+            <id>isolated-tests</id>
+            <goals>
+              <goal>integration-test</goal>
+              <goal>verify</goal>
+            </goals>
+            <configuration>
+              <groups>com.datastax.oss.driver.categories.IsolatedTests</groups>
+              <!-- run each test in its own jvm fork -->
+              <forkCount>1</forkCount>
+              <reuseForks>false</reuseForks>
+              <testFailureIgnore>true</testFailureIgnore>
+              <reportNameSuffix>isolated</reportNameSuffix>
             </configuration>
           </execution>
         </executions>
       </plugin>
     </plugins>
   </build>
-
-  <profiles>
-    <profile>
-      <id>short</id>
-      <properties>
-        <!-- imply that integration tests are not skipped if using short -->
-        <skipITs>false</skipITs>
-      </properties>
-    </profile>
-    <profile>
-      <id>long</id>
-      <properties>
-        <!-- imply that integration tests are not skipped if using long -->
-        <skipITs>false</skipITs>
-      </properties>
-      <build>
-        <plugins>
-          <plugin>
-            <groupId>org.apache.maven.plugins</groupId>
-            <artifactId>maven-failsafe-plugin</artifactId>
-            <executions>
-              <!-- add a special execution that only runs long tests -->
-              <execution>
-                <id>long-tests</id>
-                <goals>
-                  <goal>integration-test</goal>
-                  <goal>verify</goal>
-                </goals>
-                <configuration>
-                  <groups>com.datastax.oss.driver.categories.LongTests</groups>
-                  <reportNameSuffix>long</reportNameSuffix>
-                  <testFailureIgnore>true</testFailureIgnore>
-                </configuration>
-              </execution>
-              <!-- add a special execution that only runs isolated tests each in their own fork -->
-              <execution>
-                <id>isolated-tests</id>
-                <goals>
-                  <goal>integration-test</goal>
-                  <goal>verify</goal>
-                </goals>
-                <configuration>
-                  <groups>com.datastax.oss.driver.categories.IsolatedTests</groups>
-                  <reportNameSuffix>isolated</reportNameSuffix>
-                  <!-- run each test in it's own jvm fork -->
-                  <forkCount>1</forkCount>
-                  <reuseForks>false</reuseForks>
-                  <testFailureIgnore>true</testFailureIgnore>
-                </configuration>
-              </execution>
-            </executions>
-          </plugin>
-        </plugins>
-      </build>
-    </profile>
-  </profiles>
-
 </project>

@@ -10,7 +10,7 @@ cassandra:
 build:
   - type: maven
     version: 3.2.5
-    goals: verify -Plong
+    goals: verify
     properties: |
       ccm.cassandraVersion=$CCM_CASSANDRA_VERSION
   - xunit:

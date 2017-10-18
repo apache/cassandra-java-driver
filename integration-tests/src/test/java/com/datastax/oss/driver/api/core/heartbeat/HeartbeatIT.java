@@ -15,14 +15,12 @@
  */
 package com.datastax.oss.driver.api.core.heartbeat;
 
-import com.datastax.oss.driver.api.core.Cluster;
+import com.datastax.oss.driver.api.core.cql.CqlSession;
 import com.datastax.oss.driver.api.core.metadata.Node;
 import com.datastax.oss.driver.api.core.metadata.NodeState;
-import com.datastax.oss.driver.api.core.cql.CqlSession;
 import com.datastax.oss.driver.api.testinfra.cluster.ClusterRule;
-import com.datastax.oss.driver.api.testinfra.cluster.ClusterUtils;
 import com.datastax.oss.driver.api.testinfra.simulacron.SimulacronRule;
-import com.datastax.oss.driver.categories.LongTests;
+import com.datastax.oss.driver.categories.ParallelizableTests;
 import com.datastax.oss.simulacron.common.cluster.ClusterSpec;
 import com.datastax.oss.simulacron.common.cluster.QueryLog;
 import com.datastax.oss.simulacron.common.request.Options;
@@ -50,10 +48,10 @@ import static com.datastax.oss.simulacron.common.stubbing.PrimeDsl.closeConnecti
 import static com.datastax.oss.simulacron.common.stubbing.PrimeDsl.noResult;
 import static com.datastax.oss.simulacron.common.stubbing.PrimeDsl.when;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
-import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.fail;
 
+@Category(ParallelizableTests.class)
 public class HeartbeatIT {
 
   @ClassRule
@@ -275,20 +273,6 @@ public class HeartbeatIT {
 
     checkThat(() -> heartbeats.get() >= 2).becomesTrue();
     assertThat(node.getState()).isEqualTo(NodeState.UP);
-  }
-
-  @Test
-  @Category(LongTests.class)
-  public void should_not_send_heartbeat_when_disabled() throws InterruptedException {
-    // Disable heartbeats entirely, wait longer than the default timeout and make sure we didn't receive any
-    try (Cluster<CqlSession> cluster =
-        ClusterUtils.newCluster(simulacron, "connection.heartbeat.interval = 0 second")) {
-      cluster.connect();
-      AtomicInteger heartbeats = registerHeartbeatListener();
-      SECONDS.sleep(35);
-
-      assertThat(heartbeats.get()).isZero();
-    }
   }
 
   /**
