@@ -20,7 +20,7 @@
 
   <groupId>com.datastax.oss</groupId>
   <artifactId>java-driver-parent</artifactId>
-  <version>4.0.0-alpha2</version>
+  <version>4.0.0-alpha3-SNAPSHOT</version>
   <packaging>pom</packaging>
 
   <name>DataStax Java driver for Apache Cassandra®</name>
@@ -399,7 +399,7 @@ limitations under the License.]]>
     <connection>scm:git:git@github.com:datastax/java-driver.git</connection>
     <developerConnection>scm:git:git@github.com:datastax/java-driver.git</developerConnection>
     <url>https://github.com/datastax/java-driver</url>
-    <tag>4.0.0-alpha2</tag>
+    <tag>HEAD</tag>
   </scm>
   <developers>
     <developer>
