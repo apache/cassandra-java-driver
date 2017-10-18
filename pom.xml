@@ -352,6 +352,8 @@ limitations under the License.]]>
           <useReleaseProfile>false</useReleaseProfile>
           <releaseProfiles>release</releaseProfiles>
           <goals>deploy</goals>
+          <!-- Skip integration tests for the release:prepare step -->
+          <arguments>-DskipITs</arguments>
         </configuration>
       </plugin>
     </plugins>
