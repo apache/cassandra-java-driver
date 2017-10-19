@@ -7,8 +7,8 @@ version and that some features described here might not yet have been released. 
 documentation for latest version through [DataStax Docs] or via the release tags, e.g. 
 [4.0.0-alpha2](https://github.com/datastax/java-driver/tree/4.0.0-alpha2).*
 
-A modern, feature-rich and highly tunable Java client library for [Apache Cassandra®] (2.1+) and 
-[DataStax Enterprise] (4.7+), using exclusively Cassandra's binary protocol and Cassandra Query
+A modern, feature-rich and highly tunable Java client library for [Apache Cassandra®] \(2.1+) and 
+[DataStax Enterprise] \(4.7+), using exclusively Cassandra's binary protocol and Cassandra Query
 Language v3.
 
 [DataStax Docs]: http://docs.datastax.com/en/developer/java-driver/

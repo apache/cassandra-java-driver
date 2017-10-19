@@ -177,8 +177,8 @@ if (rs.getExecutionInfo().isSchemaInAgreement()) {
 }
 ```
 
-You can also perform an on-demand check at any time with [Cluster#checkSchemaAgreementAsync] (or its
-synchronous counterpart):
+You can also perform an on-demand check at any time with [Cluster#checkSchemaAgreementAsync] \(or
+its synchronous counterpart):
 
 ```java
 if (cluster.checkSchemaAgreement()) {

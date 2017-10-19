@@ -41,5 +41,5 @@ statement = statement.setConfigProfileName("oltp").setIdempotent(true);
 
 [Statement]:        http://docs.datastax.com/en/drivers/java/4.0/com/datastax/oss/driver/api/core/cql/Statement.html
 [StatementBuilder]: http://docs.datastax.com/en/drivers/java/4.0/com/datastax/oss/driver/api/core/cql/StatementBuilder.html
-[execute]:          http://docs.datastax.com/en/drivers/java/4.0/com/datastax/oss/driver/api/core/cql/Session.html#execute-com.datastax.oss.driver.api.core.cql.Statement-
-[executeAsync]:     http://docs.datastax.com/en/drivers/java/4.0/com/datastax/oss/driver/api/core/cql/Session.html#executeAsync-com.datastax.oss.driver.api.core.cql.Statement-
+[execute]:          http://docs.datastax.com/en/drivers/java/4.0/com/datastax/oss/driver/api/core/session/Session.html#execute-com.datastax.oss.driver.api.core.cql.Statement-
+[executeAsync]:     http://docs.datastax.com/en/drivers/java/4.0/com/datastax/oss/driver/api/core/session/Session.html#executeAsync-com.datastax.oss.driver.api.core.cql.Statement-

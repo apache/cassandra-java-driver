@@ -103,8 +103,9 @@ Be very careful though: switching the keyspace at runtime is inherently thread-u
 session is shared by multiple threads (and is usually is), it could easily cause unexpected query
 failures.
 
-Finally, [CASSANDRA-10145] (coming in Cassandra 4) will allow specifying the keyspace on a per query
-basis instead of relying on session state, which should greatly simplify multiple keyspace handling. 
+Finally, [CASSANDRA-10145] \(coming in Cassandra 4) will allow specifying the keyspace on a per
+query basis instead of relying on session state, which should greatly simplify multiple keyspace
+handling. 
 
 ### Running queries
 

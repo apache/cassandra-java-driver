@@ -110,7 +110,7 @@ all the configuration in one place will make it easier to manage and review.
 
 As shown so far, all options live under a `datastax-java-driver` prefix. This can be changed, for
 example if you need multiple driver instances in the same VM with different configurations. See the
-[Advanced topics](changing-the-config-prefix) section.
+[Advanced topics](#changing-the-config-prefix) section.
 
 
 ### The configuration API
