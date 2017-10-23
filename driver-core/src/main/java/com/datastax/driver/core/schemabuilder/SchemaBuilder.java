@@ -257,6 +257,17 @@ public final class SchemaBuilder {
     }
 
     /**
+     * Create options for the time window compaction strategy, to use in a CREATE or ALTER TABLE statement.
+     * <p/>
+     * This strategy was introduced in Cassandra 3.0.8 and 3.9.
+     *
+     * @return the options.
+     */
+    public static TableOptions.CompactionOptions.TimeWindowCompactionStrategyOptions timeWindowCompactionStrategy() {
+        return new TableOptions.CompactionOptions.TimeWindowCompactionStrategyOptions();
+    }
+
+    /**
      * Create options for the {@code NONE} compression strategy, to use in a CREATE or ALTER TABLE statement.
      *
      * @return the options.

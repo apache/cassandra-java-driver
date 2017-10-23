@@ -18,7 +18,9 @@ package com.datastax.driver.core.schemabuilder;
 import org.testng.annotations.Test;
 
 import static com.datastax.driver.core.schemabuilder.SchemaBuilder.*;
-import static com.datastax.driver.core.schemabuilder.TableOptions.CompactionOptions.DateTieredCompactionStrategyOptions.TimeStampResolution;
+import static com.datastax.driver.core.schemabuilder.TableOptions.CompactionOptions.DateTieredCompactionStrategyOptions;
+import static com.datastax.driver.core.schemabuilder.TableOptions.CompactionOptions.TimeWindowCompactionStrategyOptions;
+import static com.datastax.driver.core.schemabuilder.TableOptions.CompactionOptions.TimeWindowCompactionStrategyOptions.CompactionWindowUnit;
 import static org.assertj.core.api.Assertions.assertThat;
 
 public class CompactionOptionsTest {
@@ -82,7 +84,7 @@ public class CompactionOptionsTest {
                 .maxSSTableAgeDays(400)
                 .minThreshold(2)
                 .maxThreshold(4)
-                .timestampResolution(TimeStampResolution.MICROSECONDS)
+                .timestampResolution(DateTieredCompactionStrategyOptions.TimeStampResolution.MICROSECONDS)
                 .tombstoneCompactionIntervalInDay(3)
                 .tombstoneThreshold(0.7)
                 .uncheckedTombstoneCompaction(true)
@@ -99,6 +101,42 @@ public class CompactionOptionsTest {
                 "'min_threshold' : 2, " +
                 "'max_threshold' : 4, " +
                 "'timestamp_resolution' : 'MICROSECONDS'}");
+    }
+
+    @Test(groups = "unit")
+    public void should_create_time_window_compaction_option() throws Exception {
+        //When
+        String built = timeWindowCompactionStrategy()
+                .bucketLow(0.5)
+                .bucketHigh(1.2)
+                .compactionWindowUnit(CompactionWindowUnit.HOURS)
+                .compactionWindowSize(5)
+                .enabled(true)
+                .minThreshold(2)
+                .maxThreshold(4)
+                .minSSTableSizeInBytes(5000000L)
+                .timestampResolution(TimeWindowCompactionStrategyOptions.TimeStampResolution.MICROSECONDS)
+                .tombstoneCompactionIntervalInDay(3)
+                .tombstoneThreshold(0.7)
+                .uncheckedTombstoneCompaction(true)
+                .unsafeAggressiveSSTableExpiration(true)
+                .build();
+
+        //Then
+        assertThat(built).isEqualTo("{'class' : 'TimeWindowCompactionStrategy', " +
+                "'enabled' : true, " +
+                "'tombstone_compaction_interval' : 3, " +
+                "'tombstone_threshold' : 0.7, " +
+                "'unchecked_tombstone_compaction' : true, " +
+                "'bucket_high' : 1.2, " +
+                "'bucket_low' : 0.5, " +
+                "'compaction_window_unit' : 'HOURS', " +
+                "'compaction_window_size' : 5, " +
+                "'min_threshold' : 2, " +
+                "'max_threshold' : 4, " +
+                "'min_sstable_size' : 5000000, " +
+                "'timestamp_resolution' : 'MICROSECONDS', " +
+                "'unsafe_aggressive_sstable_expiration' : 'true'}");
     }
 
     @Test(groups = "unit")
