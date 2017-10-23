@@ -94,7 +94,6 @@ public class ProtocolInitHandlerTest extends ChannelHandlerTestBase {
                 new StreamIdGenerator(100),
                 Integer.MAX_VALUE,
                 100,
-                null,
                 channel.newPromise(),
                 null,
                 "test"));

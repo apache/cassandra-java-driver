@@ -17,13 +17,19 @@ package com.datastax.oss.driver.internal.core.channel;
 
 import java.util.BitSet;
 
-/** Manages the set of stream ids used to distinguish multiplexed requests on a channel. */
+/**
+ * Manages the set of identifiers used to distinguish multiplexed requests on a channel.
+ *
+ * <p>This class is not thread safe: calls to {@link #acquire()} and {@link #release(int)} must be
+ * properly synchronized (in practice this is done by only calling them from the I/O thread).
+ * However, {@link #getAvailableIds()} has volatile semantics.
+ */
 class StreamIdGenerator {
 
   private final int maxAvailableIds;
   // unset = available, set = borrowed (note that this is the opposite of the 3.x implementation)
   private final BitSet ids;
-  private int availableIds;
+  private volatile int availableIds;
 
   StreamIdGenerator(int maxAvailableIds) {
     this.maxAvailableIds = maxAvailableIds;

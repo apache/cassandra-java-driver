@@ -49,15 +49,15 @@ public class ChannelSetTest {
     // Then
     assertThat(set.size()).isEqualTo(1);
     assertThat(set.next()).isEqualTo(channel1);
-    Mockito.verify(channel1, never()).availableIds();
+    Mockito.verify(channel1, never()).getAvailableIds();
   }
 
   @Test
   public void should_return_most_available_when_multiple() {
     // Given
-    Mockito.when(channel1.availableIds()).thenReturn(2);
-    Mockito.when(channel2.availableIds()).thenReturn(12);
-    Mockito.when(channel3.availableIds()).thenReturn(8);
+    Mockito.when(channel1.getAvailableIds()).thenReturn(2);
+    Mockito.when(channel2.getAvailableIds()).thenReturn(12);
+    Mockito.when(channel3.getAvailableIds()).thenReturn(8);
 
     // When
     set.add(channel1);
@@ -67,12 +67,12 @@ public class ChannelSetTest {
     // Then
     assertThat(set.size()).isEqualTo(3);
     assertThat(set.next()).isEqualTo(channel2);
-    Mockito.verify(channel1).availableIds();
-    Mockito.verify(channel2).availableIds();
-    Mockito.verify(channel3).availableIds();
+    Mockito.verify(channel1).getAvailableIds();
+    Mockito.verify(channel2).getAvailableIds();
+    Mockito.verify(channel3).getAvailableIds();
 
     // When
-    Mockito.when(channel1.availableIds()).thenReturn(15);
+    Mockito.when(channel1.getAvailableIds()).thenReturn(15);
 
     // Then
     assertThat(set.next()).isEqualTo(channel1);
@@ -81,9 +81,9 @@ public class ChannelSetTest {
   @Test
   public void should_remove_channels() {
     // Given
-    Mockito.when(channel1.availableIds()).thenReturn(2);
-    Mockito.when(channel2.availableIds()).thenReturn(12);
-    Mockito.when(channel3.availableIds()).thenReturn(8);
+    Mockito.when(channel1.getAvailableIds()).thenReturn(2);
+    Mockito.when(channel2.getAvailableIds()).thenReturn(12);
+    Mockito.when(channel3.getAvailableIds()).thenReturn(8);
 
     set.add(channel1);
     set.add(channel2);

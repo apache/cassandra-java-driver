@@ -226,7 +226,6 @@ public abstract class ChannelFactoryTestBase {
         SocketAddress address,
         ProtocolVersion protocolVersion,
         DriverChannelOptions options,
-        AvailableIdsHolder availableIdsHolder,
         CompletableFuture<DriverChannel> resultFuture) {
       return new ChannelInitializer<Channel>() {
         @Override
@@ -247,7 +246,6 @@ public abstract class ChannelFactoryTestBase {
                     new StreamIdGenerator(maxRequestsPerConnection),
                     Integer.MAX_VALUE,
                     setKeyspaceTimeoutMillis,
-                    availableIdsHolder,
                     channel.newPromise(),
                     null,
                     "test");

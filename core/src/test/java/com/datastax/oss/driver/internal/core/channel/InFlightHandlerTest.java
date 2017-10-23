@@ -512,7 +512,6 @@ public class InFlightHandlerTest extends ChannelHandlerTestBase {
                 streamIds,
                 MAX_ORPHAN_IDS,
                 SET_KEYSPACE_TIMEOUT_MILLIS,
-                null,
                 channel.newPromise(),
                 eventCallback,
                 "test"));

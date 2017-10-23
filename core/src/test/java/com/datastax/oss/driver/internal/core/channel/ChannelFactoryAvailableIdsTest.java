@@ -49,21 +49,20 @@ public class ChannelFactoryAvailableIdsTest extends ChannelFactoryTestBase {
   }
 
   @Test
-  public void should_report_available_ids_if_requested() {
+  public void should_report_available_ids() {
     // Given
     ChannelFactory factory = newChannelFactory();
 
     // When
     CompletionStage<DriverChannel> channelFuture =
-        factory.connect(
-            SERVER_ADDRESS, DriverChannelOptions.builder().reportAvailableIds(true).build());
+        factory.connect(SERVER_ADDRESS, DriverChannelOptions.builder().build());
     completeSimpleChannelInit();
 
     // Then
     assertThat(channelFuture)
         .isSuccess(
             channel -> {
-              assertThat(channel.availableIds()).isEqualTo(128);
+              assertThat(channel.getAvailableIds()).isEqualTo(128);
 
               // Write a request, should decrease the count
               Future<java.lang.Void> writeFuture =
@@ -71,43 +70,12 @@ public class ChannelFactoryAvailableIdsTest extends ChannelFactoryTestBase {
               assertThat(writeFuture)
                   .isSuccess(
                       v -> {
-                        assertThat(channel.availableIds()).isEqualTo(127);
+                        assertThat(channel.getAvailableIds()).isEqualTo(127);
 
                         // Complete the request, should increase again
                         writeInboundFrame(readOutboundFrame(), Void.INSTANCE);
                         Mockito.verify(responseCallback, timeout(500)).onResponse(any(Frame.class));
-                        assertThat(channel.availableIds()).isEqualTo(128);
-                      });
-            });
-  }
-
-  @Test
-  public void should_not_report_available_ids_if_not_requested() {
-    // Given
-    ChannelFactory factory = newChannelFactory();
-
-    // When
-    CompletionStage<DriverChannel> channelFuture =
-        factory.connect(SERVER_ADDRESS, DriverChannelOptions.DEFAULT);
-    completeSimpleChannelInit();
-
-    // Then
-    assertThat(channelFuture)
-        .isSuccess(
-            channel -> {
-              assertThat(channel.availableIds()).isEqualTo(-1);
-
-              // Write a request, complete it, count should never be updated
-              Future<java.lang.Void> writeFuture =
-                  channel.write(new Query("test"), false, Frame.NO_PAYLOAD, responseCallback);
-              assertThat(writeFuture)
-                  .isSuccess(
-                      v -> {
-                        assertThat(channel.availableIds()).isEqualTo(-1);
-
-                        writeInboundFrame(readOutboundFrame(), Void.INSTANCE);
-                        Mockito.verify(responseCallback, timeout(500)).onResponse(any(Frame.class));
-                        assertThat(channel.availableIds()).isEqualTo(-1);
+                        assertThat(channel.getAvailableIds()).isEqualTo(128);
                       });
             });
   }
