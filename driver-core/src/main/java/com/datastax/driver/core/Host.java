@@ -332,7 +332,7 @@ public class Host {
     /**
      * Return the current schema version for the host.
      * <p/>
-     * Schema versions in Cassandra are used to insure all the nodes agree on the current
+     * Schema versions in Cassandra are used to ensure all the nodes agree on the current
      * Cassandra schema when it is modified. For more information see {@link ExecutionInfo#isSchemaInAgreement()}
      *
      * @return the node's current schema version value.
