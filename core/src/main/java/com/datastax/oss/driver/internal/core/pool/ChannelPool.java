@@ -248,7 +248,6 @@ public class ChannelPool implements AsyncAutoCloseable {
       DriverChannelOptions options =
           DriverChannelOptions.builder()
               .withKeyspace(keyspaceName)
-              .reportAvailableIds(wantedCount > 1)
               .withOwnerLogPrefix(sessionLogPrefix)
               .build();
       for (int i = 0; i < missing; i++) {

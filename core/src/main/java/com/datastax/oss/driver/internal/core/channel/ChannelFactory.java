@@ -85,9 +85,6 @@ public class ChannelFactory {
       final SocketAddress address, DriverChannelOptions options) {
     CompletableFuture<DriverChannel> resultFuture = new CompletableFuture<>();
 
-    AvailableIdsHolder availableIdsHolder =
-        options.reportAvailableIds ? new AvailableIdsHolder() : null;
-
     ProtocolVersion currentVersion;
     boolean isNegotiating;
     List<ProtocolVersion> attemptedVersions = new CopyOnWriteArrayList<>();
@@ -99,21 +96,13 @@ public class ChannelFactory {
       isNegotiating = true;
     }
 
-    connect(
-        address,
-        options,
-        availableIdsHolder,
-        currentVersion,
-        isNegotiating,
-        attemptedVersions,
-        resultFuture);
+    connect(address, options, currentVersion, isNegotiating, attemptedVersions, resultFuture);
     return resultFuture;
   }
 
   private void connect(
       SocketAddress address,
       DriverChannelOptions options,
-      AvailableIdsHolder availableIdsHolder,
       final ProtocolVersion currentVersion,
       boolean isNegotiating,
       List<ProtocolVersion> attemptedVersions,
@@ -126,8 +115,7 @@ public class ChannelFactory {
             .group(nettyOptions.ioEventLoopGroup())
             .channel(nettyOptions.channelClass())
             .option(ChannelOption.ALLOCATOR, nettyOptions.allocator())
-            .handler(
-                initializer(address, currentVersion, options, availableIdsHolder, resultFuture));
+            .handler(initializer(address, currentVersion, options, resultFuture));
 
     nettyOptions.afterBootstrapInitialized(bootstrap);
 
@@ -138,8 +126,7 @@ public class ChannelFactory {
           if (connectFuture.isSuccess()) {
             Channel channel = connectFuture.channel();
             DriverChannel driverChannel =
-                new DriverChannel(
-                    channel, context.writeCoalescer(), availableIdsHolder, currentVersion);
+                new DriverChannel(channel, context.writeCoalescer(), currentVersion);
             // If this is the first successful connection, remember the protocol version and
             // cluster name for future connections.
             if (isNegotiating) {
@@ -160,14 +147,7 @@ public class ChannelFactory {
                     "Failed to connect with protocol {}, retrying with {}",
                     currentVersion,
                     downgraded.get());
-                connect(
-                    address,
-                    options,
-                    availableIdsHolder,
-                    downgraded.get(),
-                    true,
-                    attemptedVersions,
-                    resultFuture);
+                connect(address, options, downgraded.get(), true, attemptedVersions, resultFuture);
               } else {
                 resultFuture.completeExceptionally(
                     UnsupportedProtocolVersionException.forNegotiation(address, attemptedVersions));
@@ -186,7 +166,6 @@ public class ChannelFactory {
       SocketAddress address,
       final ProtocolVersion protocolVersion,
       final DriverChannelOptions options,
-      AvailableIdsHolder availableIdsHolder,
       CompletableFuture<DriverChannel> resultFuture) {
     return new ChannelInitializer<Channel>() {
       @Override
@@ -211,7 +190,6 @@ public class ChannelFactory {
                   new StreamIdGenerator(maxRequestsPerConnection),
                   maxOrphanRequests,
                   setKeyspaceTimeoutMillis,
-                  availableIdsHolder,
                   channel.newPromise(),
                   options.eventCallback,
                   options.ownerLogPrefix);

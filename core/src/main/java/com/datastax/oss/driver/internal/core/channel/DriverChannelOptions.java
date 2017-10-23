@@ -32,9 +32,6 @@ public class DriverChannelOptions {
 
   public final CqlIdentifier keyspace;
 
-  /** Whether {@link DriverChannel#availableIds()} should be maintained */
-  public final boolean reportAvailableIds;
-
   /**
    * What kind of protocol events to listen for.
    *
@@ -48,12 +45,10 @@ public class DriverChannelOptions {
 
   private DriverChannelOptions(
       CqlIdentifier keyspace,
-      boolean reportAvailableIds,
       List<String> eventTypes,
       EventCallback eventCallback,
       String ownerLogPrefix) {
     this.keyspace = keyspace;
-    this.reportAvailableIds = reportAvailableIds;
     this.eventTypes = eventTypes;
     this.eventCallback = eventCallback;
     this.ownerLogPrefix = ownerLogPrefix;
@@ -61,18 +56,12 @@ public class DriverChannelOptions {
 
   public static class Builder {
     private CqlIdentifier keyspace = null;
-    private boolean reportAvailableIds = false;
     private List<String> eventTypes = Collections.emptyList();
     private EventCallback eventCallback = null;
     private String ownerLogPrefix = null;
 
     public Builder withKeyspace(CqlIdentifier keyspace) {
       this.keyspace = keyspace;
-      return this;
-    }
-
-    public Builder reportAvailableIds(boolean reportAvailableIds) {
-      this.reportAvailableIds = reportAvailableIds;
       return this;
     }
 
@@ -90,8 +79,7 @@ public class DriverChannelOptions {
     }
 
     public DriverChannelOptions build() {
-      return new DriverChannelOptions(
-          keyspace, reportAvailableIds, eventTypes, eventCallback, ownerLogPrefix);
+      return new DriverChannelOptions(keyspace, eventTypes, eventCallback, ownerLogPrefix);
     }
   }
 }

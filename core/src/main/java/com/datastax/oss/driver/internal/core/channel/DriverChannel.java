@@ -43,22 +43,16 @@ public class DriverChannel {
   static final Object FORCEFUL_CLOSE_MESSAGE = new String("FORCEFUL_CLOSE_MESSAGE");
 
   private final Channel channel;
-  private final ChannelFuture closeStartedFuture;
+  private final InFlightHandler inFlightHandler;
   private final WriteCoalescer writeCoalescer;
-  private final AvailableIdsHolder availableIdsHolder;
   private final ProtocolVersion protocolVersion;
   private final AtomicBoolean closing = new AtomicBoolean();
   private final AtomicBoolean forceClosing = new AtomicBoolean();
 
-  DriverChannel(
-      Channel channel,
-      WriteCoalescer writeCoalescer,
-      AvailableIdsHolder availableIdsHolder,
-      ProtocolVersion protocolVersion) {
+  DriverChannel(Channel channel, WriteCoalescer writeCoalescer, ProtocolVersion protocolVersion) {
     this.channel = channel;
-    this.closeStartedFuture = channel.pipeline().get(InFlightHandler.class).closeStartedFuture;
+    this.inFlightHandler = channel.pipeline().get(InFlightHandler.class);
     this.writeCoalescer = writeCoalescer;
-    this.availableIdsHolder = availableIdsHolder;
     this.protocolVersion = protocolVersion;
   }
 
@@ -127,11 +121,11 @@ public class DriverChannel {
 
   /**
    * @return the number of available stream ids on the channel. This is used to weigh channels in
-   *     the pool. Note that for performance reasons this is only maintained if the channel is part
-   *     of a pool that has a size bigger than 1, otherwise it will always return -1.
+   *     pools that have a size bigger than 1, in the load balancing policy, and for monitoring
+   *     purposes.
    */
-  public int availableIds() {
-    return (availableIdsHolder == null) ? -1 : availableIdsHolder.value;
+  public int getAvailableIds() {
+    return inFlightHandler.getAvailableIds();
   }
 
   public EventLoop eventLoop() {
@@ -186,7 +180,7 @@ public class DriverChannel {
    * #forceClose()} is called first, this future will never complete.
    */
   public ChannelFuture closeStartedFuture() {
-    return this.closeStartedFuture;
+    return this.inFlightHandler.closeStartedFuture;
   }
 
   /**

@@ -56,12 +56,11 @@ public class DriverChannelTest extends ChannelHandlerTestBase {
                 streamIds,
                 Integer.MAX_VALUE,
                 SET_KEYSPACE_TIMEOUT_MILLIS,
-                null,
                 channel.newPromise(),
                 null,
                 "test"));
     writeCoalescer = new MockWriteCoalescer();
-    driverChannel = new DriverChannel(channel, writeCoalescer, null, CoreProtocolVersion.V3);
+    driverChannel = new DriverChannel(channel, writeCoalescer, CoreProtocolVersion.V3);
   }
 
   /**

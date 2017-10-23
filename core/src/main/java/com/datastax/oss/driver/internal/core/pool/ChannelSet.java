@@ -85,7 +85,7 @@ class ChannelSet implements Iterable<DriverChannel> {
         DriverChannel best = null;
         int bestScore = 0;
         for (DriverChannel channel : snapshot) {
-          int score = channel.availableIds();
+          int score = channel.getAvailableIds();
           if (score > bestScore) {
             bestScore = score;
             best = channel;
