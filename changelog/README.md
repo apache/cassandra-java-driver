@@ -11,6 +11,7 @@
 - [documentation] JAVA-1607: Add FAQ entry for netty-transport-native-epoll.
 - [bug] JAVA-1630: Fix Metadata.addIfAbsent.
 - [improvement] JAVA-1619: Update QueryBuilder methods to support Iterable input.
+- [improvement] JAVA-1527: Expose host_id and schema_version on Host metadata.
 
 
 ### 3.3.0
