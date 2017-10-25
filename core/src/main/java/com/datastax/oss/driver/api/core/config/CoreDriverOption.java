@@ -66,6 +66,8 @@ public enum CoreDriverOption implements DriverOption {
   COALESCER_INTERVAL("connection.coalescer.reschedule-interval", false),
 
   LOAD_BALANCING_POLICY_CLASS("load-balancing-policy.class", true),
+  LOAD_BALANCING_LOCAL_DATACENTER("load-balancing-policy.local-datacenter", false),
+  LOAD_BALANCING_FILTER_CLASS("load-balancing-policy.filter.class", false),
 
   RECONNECTION_POLICY_CLASS("connection.reconnection-policy.class", true),
   RECONNECTION_BASE_DELAY("connection.reconnection-policy.base-delay", false),

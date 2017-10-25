@@ -15,6 +15,7 @@
  */
 package com.datastax.oss.driver.internal.core.session;
 
+import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.internal.core.cql.DefaultPreparedStatement;
 import java.nio.ByteBuffer;
 import java.util.Map;
@@ -31,12 +32,12 @@ public class RepreparePayload {
   public final String query;
 
   /** The keyspace that is set independently from the query string (see CASSANDRA-10145) */
-  public final String keyspace;
+  public final CqlIdentifier keyspace;
 
   public final Map<String, ByteBuffer> customPayload;
 
   public RepreparePayload(
-      ByteBuffer id, String query, String keyspace, Map<String, ByteBuffer> customPayload) {
+      ByteBuffer id, String query, CqlIdentifier keyspace, Map<String, ByteBuffer> customPayload) {
     this.id = id;
     this.query = query;
     this.keyspace = keyspace;

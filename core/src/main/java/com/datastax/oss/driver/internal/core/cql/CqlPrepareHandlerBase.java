@@ -101,7 +101,7 @@ public abstract class CqlPrepareHandlerBase {
     this.preparedStatementsCache = preparedStatementsCache;
     this.session = session;
     this.context = context;
-    this.queryPlan = context.loadBalancingPolicyWrapper().newQueryPlan();
+    this.queryPlan = context.loadBalancingPolicyWrapper().newQueryPlan(request, session);
 
     DriverConfigProfile configProfile;
     if (request.getConfigProfile() != null) {

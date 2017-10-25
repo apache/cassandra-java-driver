@@ -15,6 +15,7 @@
  */
 package com.datastax.oss.driver.internal.core.cql;
 
+import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.ProtocolVersion;
 import com.datastax.oss.driver.api.core.config.DriverConfigProfile;
 import com.datastax.oss.driver.api.core.cql.BoundStatement;
@@ -31,6 +32,7 @@ import com.datastax.oss.driver.internal.core.metadata.token.RandomToken;
 import com.datastax.oss.driver.internal.core.session.RepreparePayload;
 import com.datastax.oss.protocol.internal.ProtocolConstants;
 import java.nio.ByteBuffer;
+import java.util.List;
 import java.util.Map;
 
 public class DefaultPreparedStatement implements PreparedStatement {
@@ -38,6 +40,7 @@ public class DefaultPreparedStatement implements PreparedStatement {
   private final ByteBuffer id;
   private final RepreparePayload repreparePayload;
   private final ColumnDefinitions variableDefinitions;
+  private final List<Integer> primaryKeyIndices;
   private final ColumnDefinitions resultSetDefinitions;
   private final CodecRegistry codecRegistry;
   private final ProtocolVersion protocolVersion;
@@ -51,16 +54,18 @@ public class DefaultPreparedStatement implements PreparedStatement {
       ByteBuffer id,
       String query,
       ColumnDefinitions variableDefinitions,
+      List<Integer> primaryKeyIndices,
       ColumnDefinitions resultSetDefinitions,
       String configProfileName,
       DriverConfigProfile configProfile,
-      String keyspace,
+      CqlIdentifier keyspace,
       Map<String, ByteBuffer> customPayloadForBoundStatements,
       Boolean idempotent,
       CodecRegistry codecRegistry,
       ProtocolVersion protocolVersion,
       Map<String, ByteBuffer> customPayloadForPrepare) {
     this.id = id;
+    this.primaryKeyIndices = primaryKeyIndices;
     // It's important that we keep a reference to this object, so that it only gets evicted from
     // the map in DefaultSession if no client reference the PreparedStatement anymore.
     this.repreparePayload = new RepreparePayload(id, query, keyspace, customPayloadForPrepare);
@@ -87,6 +92,11 @@ public class DefaultPreparedStatement implements PreparedStatement {
   @Override
   public ColumnDefinitions getVariableDefinitions() {
     return variableDefinitions;
+  }
+
+  @Override
+  public List<Integer> getPrimaryKeyIndices() {
+    return primaryKeyIndices;
   }
 
   @Override
@@ -136,6 +146,9 @@ public class DefaultPreparedStatement implements PreparedStatement {
         configProfileName,
         configProfile,
         repreparePayload.keyspace,
+        null,
+        null,
+        null,
         customPayloadForBoundStatements,
         idempotent,
         false,

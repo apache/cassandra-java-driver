@@ -15,7 +15,9 @@
  */
 package com.datastax.oss.driver.api.core.cql;
 
+import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.config.DriverConfigProfile;
+import com.datastax.oss.driver.api.core.metadata.token.Token;
 import com.google.common.collect.ImmutableMap;
 import java.nio.ByteBuffer;
 import java.util.Collections;
@@ -35,7 +37,10 @@ public abstract class StatementBuilder<T extends StatementBuilder<T, S>, S exten
 
   protected String configProfileName;
   protected DriverConfigProfile configProfile;
-  protected String keyspace;
+  protected CqlIdentifier keyspace;
+  protected CqlIdentifier routingKeyspace;
+  protected ByteBuffer routingKey;
+  protected Token routingToken;
   private ImmutableMap.Builder<String, ByteBuffer> customPayloadBuilder;
   protected Boolean idempotent;
   protected boolean tracing;
@@ -67,6 +72,24 @@ public abstract class StatementBuilder<T extends StatementBuilder<T, S>, S exten
   public T withConfigProfile(DriverConfigProfile configProfile) {
     this.configProfile = configProfile;
     this.configProfileName = null;
+    return self;
+  }
+
+  /** @see Statement#setRoutingKeyspace(CqlIdentifier) */
+  public T withRoutingKeyspace(CqlIdentifier routingKeyspace) {
+    this.routingKeyspace = routingKeyspace;
+    return self;
+  }
+
+  /** @see Statement#setRoutingKey(ByteBuffer) */
+  public T withRoutingKey(ByteBuffer routingKey) {
+    this.routingKey = routingKey;
+    return self;
+  }
+
+  /** @see Statement#setRoutingToken(Token) */
+  public T withRoutingToken(Token routingToken) {
+    this.routingToken = routingToken;
     return self;
   }
 

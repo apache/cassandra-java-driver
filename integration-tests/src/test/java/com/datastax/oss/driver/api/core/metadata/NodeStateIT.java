@@ -16,6 +16,7 @@
 package com.datastax.oss.driver.api.core.metadata;
 
 import com.datastax.oss.driver.api.core.Cluster;
+import com.datastax.oss.driver.api.core.context.DriverContext;
 import com.datastax.oss.driver.api.core.cql.CqlSession;
 import com.datastax.oss.driver.api.core.loadbalancing.NodeDistance;
 import com.datastax.oss.driver.api.testinfra.cluster.ClusterRule;
@@ -33,15 +34,18 @@ import com.datastax.oss.simulacron.common.cluster.NodeConnectionReport;
 import com.datastax.oss.simulacron.common.stubbing.CloseType;
 import com.datastax.oss.simulacron.server.BoundNode;
 import com.datastax.oss.simulacron.server.RejectScope;
+import com.google.common.collect.Sets;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.net.SocketAddress;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Predicate;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
@@ -67,7 +71,10 @@ public class NodeStateIT {
       ClusterRule.builder(simulacron)
           .withOptions(
               "connection.pool.local.size = 2",
-              "connection.reconnection-policy.max-delay = 1 second")
+              "connection.reconnection-policy.max-delay = 1 second",
+              String.format(
+                  "load-balancing-policy.filter.class = \"%s$CustomNodeFilter\"",
+                  NodeStateIT.class.getName()))
           .withNodeStateListeners(nodeStateListener)
           .build();
 
@@ -222,9 +229,11 @@ public class NodeStateIT {
 
   @Test
   public void should_apply_up_and_down_topology_events_when_ignored() {
+    CustomNodeFilter.IGNORED_NODES.add(metadataRegularNode);
     driverContext
         .loadBalancingPolicyWrapper()
         .setDistance(metadataRegularNode, NodeDistance.IGNORED);
+
     ConditionChecker.checkThat(
             () ->
                 assertThat(metadataRegularNode)
@@ -260,9 +269,12 @@ public class NodeStateIT {
                     .hasOpenConnections(0)
                     .isNotReconnecting())
         .as("SUGGEST_UP event applied")
-        .before(10, TimeUnit.SECONDS)
+        .before(10, TimeUnit.MINUTES)
         .becomesTrue();
     inOrder.verify(nodeStateListener, timeout(500)).onUp(metadataRegularNode);
+
+    CustomNodeFilter.IGNORED_NODES.clear();
+    driverContext.loadBalancingPolicyWrapper().setDistance(metadataRegularNode, NodeDistance.LOCAL);
   }
 
   @Test
@@ -358,9 +370,11 @@ public class NodeStateIT {
 
   @Test
   public void should_force_down_when_ignored() throws InterruptedException {
+    CustomNodeFilter.IGNORED_NODES.add(metadataRegularNode);
     driverContext
         .loadBalancingPolicyWrapper()
         .setDistance(metadataRegularNode, NodeDistance.IGNORED);
+
     driverContext.eventBus().fire(TopologyEvent.forceDown(metadataRegularNode.getConnectAddress()));
     ConditionChecker.checkThat(
             () ->
@@ -399,6 +413,7 @@ public class NodeStateIT {
         .becomesTrue();
     inOrder.verify(nodeStateListener, timeout(500)).onUp(metadataRegularNode);
 
+    CustomNodeFilter.IGNORED_NODES.clear();
     driverContext.loadBalancingPolicyWrapper().setDistance(metadataRegularNode, NodeDistance.LOCAL);
   }
 
@@ -593,6 +608,18 @@ public class NodeStateIT {
           throw new AssertionError(e);
         }
       }
+    }
+  }
+
+  // Hack to allow tests to dynamically configure which nodes should be ignored
+  public static class CustomNodeFilter implements Predicate<Node> {
+    public static Set<Node> IGNORED_NODES = Sets.newConcurrentHashSet();
+
+    public CustomNodeFilter(@SuppressWarnings("unused") DriverContext context) {}
+
+    @Override
+    public boolean test(Node node) {
+      return !IGNORED_NODES.contains(node);
     }
   }
 }

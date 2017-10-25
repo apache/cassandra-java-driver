@@ -16,6 +16,7 @@
 package com.datastax.oss.driver.internal.core;
 
 import com.google.common.base.Splitter;
+import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
@@ -44,7 +45,7 @@ public class ContactPoints {
         }
       }
     }
-    return result;
+    return ImmutableSet.copyOf(result);
   }
 
   private static Set<InetSocketAddress> extract(String spec) {

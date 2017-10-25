@@ -20,12 +20,16 @@ import com.datastax.oss.driver.api.core.loadbalancing.NodeDistance;
 import com.datastax.oss.driver.api.core.metadata.Metadata;
 import com.datastax.oss.driver.api.core.metadata.Node;
 import com.datastax.oss.driver.api.core.metadata.NodeState;
+import com.datastax.oss.driver.api.core.session.Request;
+import com.datastax.oss.driver.api.core.session.Session;
 import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
 import com.datastax.oss.driver.internal.core.util.concurrent.ReplayingEventFilter;
-import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.ImmutableMap;
+import java.net.InetSocketAddress;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.atomic.AtomicReference;
@@ -75,8 +79,9 @@ public class LoadBalancingPolicyWrapper
       // State events can happen concurrently with init, so we must record them and replay once the
       // policy is initialized.
       eventFilter.start();
-      Metadata metadata = context.metadataManager().getMetadata();
-      policy.init(excludeDownHosts(metadata), this);
+      MetadataManager metadataManager = context.metadataManager();
+      Metadata metadata = metadataManager.getMetadata();
+      policy.init(excludeDownHosts(metadata), this, metadataManager.getContactPoints());
       if (stateRef.compareAndSet(State.DURING_INIT, State.RUNNING)) {
         eventFilter.markReady();
       } else { // closed during init
@@ -86,7 +91,8 @@ public class LoadBalancingPolicyWrapper
     }
   }
 
-  public Queue<Node> newQueryPlan() {
+  /** @see LoadBalancingPolicy#newQueryPlan(Request, Session) */
+  public Queue<Node> newQueryPlan(Request request, Session session) {
     switch (stateRef.get()) {
       case BEFORE_INIT:
       case DURING_INIT:
@@ -97,10 +103,14 @@ public class LoadBalancingPolicyWrapper
         Collections.shuffle(nodes);
         return new ConcurrentLinkedQueue<>(nodes);
       case RUNNING:
-        return policy.newQueryPlan();
+        return policy.newQueryPlan(request, session);
       default:
         return new ConcurrentLinkedQueue<>();
     }
+  }
+
+  public Queue<Node> newQueryPlan() {
+    return newQueryPlan(null, null);
   }
 
   @Override
@@ -140,11 +150,11 @@ public class LoadBalancingPolicyWrapper
     }
   }
 
-  private static ImmutableSet<Node> excludeDownHosts(Metadata metadata) {
-    ImmutableSet.Builder<Node> nodes = ImmutableSet.builder();
+  private static Map<InetSocketAddress, Node> excludeDownHosts(Metadata metadata) {
+    ImmutableMap.Builder<InetSocketAddress, Node> nodes = ImmutableMap.builder();
     for (Node node : metadata.getNodes().values()) {
       if (node.getState() == NodeState.UP || node.getState() == NodeState.UNKNOWN) {
-        nodes.add(node);
+        nodes.put(node.getConnectAddress(), node);
       }
     }
     return nodes.build();

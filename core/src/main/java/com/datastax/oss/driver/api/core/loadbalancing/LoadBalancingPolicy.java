@@ -15,8 +15,14 @@
  */
 package com.datastax.oss.driver.api.core.loadbalancing;
 
+import com.datastax.oss.driver.api.core.ClusterBuilder;
 import com.datastax.oss.driver.api.core.metadata.Node;
 import com.datastax.oss.driver.api.core.metadata.NodeState;
+import com.datastax.oss.driver.api.core.session.Request;
+import com.datastax.oss.driver.api.core.session.Session;
+import java.net.InetSocketAddress;
+import java.util.Collection;
+import java.util.Map;
 import java.util.Queue;
 import java.util.Set;
 
@@ -33,18 +39,32 @@ public interface LoadBalancingPolicy extends AutoCloseable {
    *     method is invoked, their state is guaranteed to be either {@link NodeState#UP} or {@link
    *     NodeState#UNKNOWN}. Node states may be updated concurrently while this method executes, but
    *     if so you will receive a notification
+   * @param distanceReporter an object that will be used by the policy to signal distance changes.
+   * @param contactPoints the set of contact points that the driver was initialized with (see {@link
+   *     ClusterBuilder#addContactPoints(Collection)}). This is provided for reference, in case the
+   *     policy needs to handle those nodes in a particular way. Each address in this set should
+   *     normally have a corresponding entry in {@code nodes}, except for contact points that were
+   *     down or invalid. If no contact points were provided, the driver defaults to 127.0.0.1:9042,
+   *     but the set will be empty.
    */
-  void init(Set<Node> nodes, DistanceReporter distanceReporter);
+  void init(
+      Map<InetSocketAddress, Node> nodes,
+      DistanceReporter distanceReporter,
+      Set<InetSocketAddress> contactPoints);
 
   /**
    * Returns the coordinators to use for a new query.
    *
    * <p>Each new query will call this method, and try the returned nodes sequentially.
    *
+   * @param request the request that is being routed. Note that this can be null for some internal
+   *     uses.
+   * @param session the session that is executing the request. Note that this can be null for some
+   *     internal uses.
    * @return the list of coordinators to try. <b>This must be a concurrent queue</b>; {@link
    *     java.util.concurrent.ConcurrentLinkedQueue} is a good choice.
    */
-  Queue<Node> newQueryPlan(/*TODO keyspace, statement*/ );
+  Queue<Node> newQueryPlan(Request request, Session session);
 
   /**
    * Called when a node is added to the cluster.

@@ -127,7 +127,7 @@ public abstract class CqlRequestHandlerBase {
     this.session = session;
     this.keyspace = session.getKeyspace();
     this.context = context;
-    this.queryPlan = context.loadBalancingPolicyWrapper().newQueryPlan();
+    this.queryPlan = context.loadBalancingPolicyWrapper().newQueryPlan(statement, session);
 
     if (statement.getConfigProfile() != null) {
       this.configProfile = statement.getConfigProfile();

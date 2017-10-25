@@ -279,6 +279,7 @@ class Conversions {
         ByteBuffer.wrap(response.preparedQueryId).asReadOnlyBuffer(),
         request.getQuery(),
         toColumnDefinitions(response.variablesMetadata, context),
+        asList(response.variablesMetadata.pkIndices),
         toColumnDefinitions(response.resultMetadata, context),
         request.getConfigProfileNameForBoundStatements(),
         request.getConfigProfileForBoundStatements(),
@@ -297,6 +298,18 @@ class Conversions {
       definitions.add(new DefaultColumnDefinition(columnSpec, context));
     }
     return DefaultColumnDefinitions.valueOf(definitions.build());
+  }
+
+  private static List<Integer> asList(int[] pkIndices) {
+    if (pkIndices == null || pkIndices.length == 0) {
+      return Collections.emptyList();
+    } else {
+      ImmutableList.Builder<Integer> builder = ImmutableList.builder();
+      for (int pkIndex : pkIndices) {
+        builder.add(pkIndex);
+      }
+      return builder.build();
+    }
   }
 
   static CoordinatorException toThrowable(Node node, Error errorMessage) {

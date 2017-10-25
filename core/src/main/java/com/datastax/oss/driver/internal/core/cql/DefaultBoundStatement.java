@@ -21,8 +21,10 @@ import com.datastax.oss.driver.api.core.config.DriverConfigProfile;
 import com.datastax.oss.driver.api.core.cql.BoundStatement;
 import com.datastax.oss.driver.api.core.cql.ColumnDefinitions;
 import com.datastax.oss.driver.api.core.cql.PreparedStatement;
+import com.datastax.oss.driver.api.core.metadata.token.Token;
 import com.datastax.oss.driver.api.core.type.DataType;
 import com.datastax.oss.driver.api.core.type.codec.registry.CodecRegistry;
+import com.datastax.oss.driver.internal.core.util.RoutingKey;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
 import java.util.List;
@@ -35,7 +37,10 @@ public class DefaultBoundStatement implements BoundStatement {
   private final ByteBuffer[] values;
   private final String configProfileName;
   private final DriverConfigProfile configProfile;
-  private final String keyspace;
+  private final CqlIdentifier keyspace;
+  private final CqlIdentifier routingKeyspace;
+  private final ByteBuffer routingKey;
+  private final Token routingToken;
   private final Map<String, ByteBuffer> customPayload;
   private final Boolean idempotent;
   private final boolean tracing;
@@ -50,7 +55,10 @@ public class DefaultBoundStatement implements BoundStatement {
       ByteBuffer[] values,
       String configProfileName,
       DriverConfigProfile configProfile,
-      String keyspace,
+      CqlIdentifier keyspace,
+      CqlIdentifier routingKeyspace,
+      ByteBuffer routingKey,
+      Token routingToken,
       Map<String, ByteBuffer> customPayload,
       Boolean idempotent,
       boolean tracing,
@@ -64,6 +72,9 @@ public class DefaultBoundStatement implements BoundStatement {
     this.configProfileName = configProfileName;
     this.configProfile = configProfile;
     this.keyspace = keyspace;
+    this.routingKeyspace = routingKeyspace;
+    this.routingKey = routingKey;
+    this.routingToken = routingToken;
     this.customPayload = customPayload;
     this.idempotent = idempotent;
     this.tracing = tracing;
@@ -119,6 +130,9 @@ public class DefaultBoundStatement implements BoundStatement {
         configProfileName,
         configProfile,
         keyspace,
+        routingKeyspace,
+        routingKey,
+        routingToken,
         customPayload,
         idempotent,
         tracing,
@@ -152,6 +166,9 @@ public class DefaultBoundStatement implements BoundStatement {
         newConfigProfileName,
         configProfile,
         keyspace,
+        routingKeyspace,
+        routingKey,
+        routingToken,
         customPayload,
         idempotent,
         tracing,
@@ -175,6 +192,9 @@ public class DefaultBoundStatement implements BoundStatement {
         configProfileName,
         newConfigProfile,
         keyspace,
+        routingKeyspace,
+        routingKey,
+        routingToken,
         customPayload,
         idempotent,
         tracing,
@@ -185,8 +205,113 @@ public class DefaultBoundStatement implements BoundStatement {
   }
 
   @Override
-  public String getKeyspace() {
+  public CqlIdentifier getKeyspace() {
     return keyspace;
+  }
+
+  @Override
+  public CqlIdentifier getRoutingKeyspace() {
+    // If it was set explicitly, use that value, else try to infer it from the prepared statement's
+    // metadata
+    if (routingKeyspace != null) {
+      return routingKeyspace;
+    } else {
+      ColumnDefinitions definitions = preparedStatement.getResultSetDefinitions();
+      return (definitions.size() == 0) ? null : definitions.get(0).getKeyspace();
+    }
+  }
+
+  @Override
+  public BoundStatement setRoutingKeyspace(CqlIdentifier newRoutingKeyspace) {
+    return new DefaultBoundStatement(
+        preparedStatement,
+        variableDefinitions,
+        values,
+        configProfileName,
+        configProfile,
+        keyspace,
+        newRoutingKeyspace,
+        routingKey,
+        routingToken,
+        customPayload,
+        idempotent,
+        tracing,
+        timestamp,
+        pagingState,
+        codecRegistry,
+        protocolVersion);
+  }
+
+  @Override
+  public ByteBuffer getRoutingKey() {
+    if (routingKey != null) {
+      return routingKey;
+    } else {
+      List<Integer> indices = preparedStatement.getPrimaryKeyIndices();
+      if (indices.isEmpty()) {
+        return null;
+      } else if (indices.size() == 1) {
+        return getBytesUnsafe(indices.get(0));
+      } else {
+        ByteBuffer[] components = new ByteBuffer[indices.size()];
+        for (Integer index : indices) {
+          ByteBuffer value;
+          if (!isSet(index) || (value = getBytesUnsafe(index)) == null) {
+            return null;
+          } else {
+            components[index] = value;
+          }
+        }
+        return RoutingKey.compose(components);
+      }
+    }
+  }
+
+  @Override
+  public BoundStatement setRoutingKey(ByteBuffer newRoutingKey) {
+    return new DefaultBoundStatement(
+        preparedStatement,
+        variableDefinitions,
+        values,
+        configProfileName,
+        configProfile,
+        keyspace,
+        routingKeyspace,
+        newRoutingKey,
+        routingToken,
+        customPayload,
+        idempotent,
+        tracing,
+        timestamp,
+        pagingState,
+        codecRegistry,
+        protocolVersion);
+  }
+
+  @Override
+  public Token getRoutingToken() {
+    return routingToken;
+  }
+
+  @Override
+  public BoundStatement setRoutingToken(Token newRoutingToken) {
+    return new DefaultBoundStatement(
+        preparedStatement,
+        variableDefinitions,
+        values,
+        configProfileName,
+        configProfile,
+        keyspace,
+        routingKeyspace,
+        routingKey,
+        newRoutingToken,
+        customPayload,
+        idempotent,
+        tracing,
+        timestamp,
+        pagingState,
+        codecRegistry,
+        protocolVersion);
   }
 
   @Override
@@ -203,6 +328,9 @@ public class DefaultBoundStatement implements BoundStatement {
         configProfileName,
         configProfile,
         keyspace,
+        routingKeyspace,
+        routingKey,
+        routingToken,
         newCustomPayload,
         idempotent,
         tracing,
@@ -226,6 +354,9 @@ public class DefaultBoundStatement implements BoundStatement {
         configProfileName,
         configProfile,
         keyspace,
+        routingKeyspace,
+        routingKey,
+        routingToken,
         customPayload,
         newIdempotence,
         tracing,
@@ -249,6 +380,9 @@ public class DefaultBoundStatement implements BoundStatement {
         configProfileName,
         configProfile,
         keyspace,
+        routingKeyspace,
+        routingKey,
+        routingToken,
         customPayload,
         idempotent,
         newTracing,
@@ -272,6 +406,9 @@ public class DefaultBoundStatement implements BoundStatement {
         configProfileName,
         configProfile,
         keyspace,
+        routingKeyspace,
+        routingKey,
+        routingToken,
         customPayload,
         idempotent,
         tracing,
@@ -295,6 +432,9 @@ public class DefaultBoundStatement implements BoundStatement {
         configProfileName,
         configProfile,
         keyspace,
+        routingKeyspace,
+        routingKey,
+        routingToken,
         customPayload,
         idempotent,
         tracing,

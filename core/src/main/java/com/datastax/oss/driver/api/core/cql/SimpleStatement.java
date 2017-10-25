@@ -15,7 +15,6 @@
  */
 package com.datastax.oss.driver.api.core.cql;
 
-import com.datastax.oss.driver.api.core.session.Session;
 import com.datastax.oss.driver.internal.core.cql.DefaultSimpleStatement;
 import java.util.Arrays;
 import java.util.Collections;
@@ -28,7 +27,7 @@ import java.util.Map;
  *
  * <p>To create instances, client applications can use the {@code newInstance} factory methods on
  * this interface for common cases, or {@link #builder(String)} for more control over the
- * parameters. They can then be passed to {@link Session#execute(Statement)}.
+ * parameters. They can then be passed to {@link CqlSession#execute(Statement)}.
  *
  * <p>Simple statements should be reserved for queries that will only be executed a few times by an
  * application. For more frequent queries, {@link PreparedStatement} provides many advantages: it is
@@ -56,6 +55,10 @@ public interface SimpleStatement extends BatchableStatement<SimpleStatement> {
         Collections.emptyMap(),
         null,
         null,
+        null,
+        null,
+        null,
+        null,
         Collections.emptyMap(),
         null,
         false,
@@ -74,6 +77,10 @@ public interface SimpleStatement extends BatchableStatement<SimpleStatement> {
         Collections.emptyMap(),
         null,
         null,
+        null,
+        null,
+        null,
+        null,
         Collections.emptyMap(),
         null,
         false,
@@ -90,6 +97,10 @@ public interface SimpleStatement extends BatchableStatement<SimpleStatement> {
         cqlQuery,
         Collections.emptyList(),
         namedValues,
+        null,
+        null,
+        null,
+        null,
         null,
         null,
         Collections.emptyMap(),

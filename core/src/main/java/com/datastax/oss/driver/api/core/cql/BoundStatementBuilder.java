@@ -22,7 +22,6 @@ import com.datastax.oss.driver.api.core.type.codec.registry.CodecRegistry;
 import com.datastax.oss.driver.internal.core.cql.DefaultBoundStatement;
 import com.datastax.oss.protocol.internal.ProtocolConstants;
 import java.nio.ByteBuffer;
-import java.util.Collections;
 
 public class BoundStatementBuilder extends StatementBuilder<BoundStatementBuilder, BoundStatement>
     implements Bindable<BoundStatementBuilder> {
@@ -107,6 +106,9 @@ public class BoundStatementBuilder extends StatementBuilder<BoundStatementBuilde
         configProfileName,
         configProfile,
         keyspace,
+        routingKeyspace,
+        routingKey,
+        routingToken,
         buildCustomPayload(),
         idempotent,
         tracing,

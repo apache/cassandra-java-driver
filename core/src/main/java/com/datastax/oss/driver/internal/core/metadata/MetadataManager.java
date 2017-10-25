@@ -64,6 +64,7 @@ public class MetadataManager implements AsyncAutoCloseable {
   private volatile List<String> refreshedKeyspaces;
   private volatile Boolean schemaEnabledProgrammatically;
   private volatile boolean tokenMapEnabled;
+  private volatile Set<InetSocketAddress> providedContactPoints;
 
   public MetadataManager(InternalDriverContext context) {
     this.context = context;
@@ -108,6 +109,7 @@ public class MetadataManager implements AsyncAutoCloseable {
   }
 
   public CompletionStage<Void> addContactPoints(Set<InetSocketAddress> providedContactPoints) {
+    this.providedContactPoints = providedContactPoints;
     Set<InetSocketAddress> contactPoints;
     if (providedContactPoints == null || providedContactPoints.isEmpty()) {
       LOG.info(
@@ -120,6 +122,10 @@ public class MetadataManager implements AsyncAutoCloseable {
     CompletableFuture<Void> initNodesFuture = new CompletableFuture<>();
     RunOrSchedule.on(adminExecutor, () -> singleThreaded.initNodes(contactPoints, initNodesFuture));
     return initNodesFuture;
+  }
+
+  public Set<InetSocketAddress> getContactPoints() {
+    return providedContactPoints;
   }
 
   public CompletionStage<Void> refreshNodes() {

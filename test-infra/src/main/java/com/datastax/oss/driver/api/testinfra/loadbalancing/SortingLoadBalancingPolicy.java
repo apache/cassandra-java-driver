@@ -20,8 +20,12 @@ import com.datastax.oss.driver.api.core.context.DriverContext;
 import com.datastax.oss.driver.api.core.loadbalancing.LoadBalancingPolicy;
 import com.datastax.oss.driver.api.core.loadbalancing.NodeDistance;
 import com.datastax.oss.driver.api.core.metadata.Node;
+import com.datastax.oss.driver.api.core.session.Request;
+import com.datastax.oss.driver.api.core.session.Session;
 import java.net.InetAddress;
+import java.net.InetSocketAddress;
 import java.util.LinkedList;
+import java.util.Map;
 import java.util.Queue;
 import java.util.Set;
 import java.util.TreeSet;
@@ -61,13 +65,16 @@ public class SortingLoadBalancingPolicy implements LoadBalancingPolicy {
   public SortingLoadBalancingPolicy() {}
 
   @Override
-  public void init(Set<Node> nodes, DistanceReporter distanceReporter) {
-    this.nodes.addAll(nodes);
+  public void init(
+      Map<InetSocketAddress, Node> nodes,
+      DistanceReporter distanceReporter,
+      Set<InetSocketAddress> contactPoints) {
+    this.nodes.addAll(nodes.values());
     this.nodes.forEach(n -> distanceReporter.setDistance(n, NodeDistance.LOCAL));
   }
 
   @Override
-  public Queue<Node> newQueryPlan() {
+  public Queue<Node> newQueryPlan(Request request, Session session) {
     return new LinkedList<>(nodes);
   }
 

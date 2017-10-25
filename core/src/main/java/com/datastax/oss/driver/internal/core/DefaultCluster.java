@@ -37,7 +37,6 @@ import com.datastax.oss.driver.internal.core.util.Loggers;
 import com.datastax.oss.driver.internal.core.util.concurrent.CompletableFutures;
 import com.datastax.oss.driver.internal.core.util.concurrent.RunOrSchedule;
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableSet;
 import io.netty.util.concurrent.EventExecutor;
 import java.net.InetSocketAddress;
 import java.util.ArrayList;
@@ -208,12 +207,14 @@ public class DefaultCluster implements Cluster<CqlSession> {
       initWasCalled = true;
       LOG.debug("[{}] Starting initialization", logPrefix);
 
+      // TODO fail if LBP=default, initialContactPoints not empty and local DC missing
+
       nodeStateListeners.forEach(l -> l.onRegister(DefaultCluster.this));
 
-      // If any contact points were provided, store them in the metadata right away (the
-      // control connection will need them if it has to initialize)
       MetadataManager metadataManager = context.metadataManager();
       metadataManager
+          // Store contact points in the metadata right away, the control connection will need them
+          // if it has to initialize (if the set is empty, 127.0.0.1 is used as a default).
           .addContactPoints(initialContactPoints)
           .thenCompose(v -> context.topologyMonitor().init())
           .thenCompose(v -> metadataManager.refreshNodes())

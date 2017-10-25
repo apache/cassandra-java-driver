@@ -107,7 +107,17 @@ public class CcmBridge implements AutoCloseable {
       Collection<String> jvmArgs) {
     this.directory = directory;
     this.cassandraVersion = cassandraVersion;
-    this.nodes = nodes;
+    if (nodes.length == 1) {
+      // Hack to ensure that the default DC is always called 'dc1': pass a list ('-nX:0') even if
+      // there is only one DC (with '-nX', CCM configures `SimpleSnitch`, which hard-codes the name
+      // to 'datacenter1')
+      int[] tmp = new int[2];
+      tmp[0] = nodes[0];
+      tmp[1] = 0;
+      this.nodes = tmp;
+    } else {
+      this.nodes = nodes;
+    }
     this.ipPrefix = ipPrefix;
     this.initialConfiguration = initialConfiguration;
     this.createOptions = createOptions;
