@@ -243,7 +243,6 @@ Finally, pass the config loader when building the driver:
 ```java
 Cluster cluster1 =
     Cluster.builder()
-        .addContactPoint(new InetSocketAddress("127.0.0.1", 9042))
         .withConfigLoader(cluster1ConfigLoader)
         .build();
 ```
@@ -268,11 +267,7 @@ DriverConfigLoader loader =
         },
         CoreDriverOption.values());
 
-Cluster cluster =
-    Cluster.builder()
-        .addContactPoint(new InetSocketAddress("127.0.0.1", 9042))
-        .withConfigLoader(loader)
-        .build();
+Cluster cluster = Cluster.builder().withConfigLoader(loader).build();
 ```
 
 #### Bypassing TypeSafe Config
@@ -411,7 +406,6 @@ Pass the options to the config loader:
 
 ```java
 Cluster cluster = Cluster.builder()
-    .addContactPoint(new InetSocketAddress("127.0.0.1", 9042))
     .withConfigLoader(new DefaultDriverConfigLoader(
         DefaultDriverConfigLoader.DEFAULT_CONFIG_SUPPLIER,
         CoreDriverOption.values(), // don't forget to keep the core options

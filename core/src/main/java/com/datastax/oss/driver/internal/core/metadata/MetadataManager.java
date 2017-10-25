@@ -33,6 +33,7 @@ import com.datastax.oss.driver.internal.core.util.concurrent.CompletableFutures;
 import com.datastax.oss.driver.internal.core.util.concurrent.Debouncer;
 import com.datastax.oss.driver.internal.core.util.concurrent.RunOrSchedule;
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.collect.ImmutableSet;
 import io.netty.util.concurrent.EventExecutor;
 import java.net.InetSocketAddress;
 import java.util.Collections;
@@ -47,6 +48,9 @@ import org.slf4j.LoggerFactory;
 /** Holds the immutable instance of the {@link Metadata}, and handles requests to update it. */
 public class MetadataManager implements AsyncAutoCloseable {
   private static final Logger LOG = LoggerFactory.getLogger(MetadataManager.class);
+
+  public static final InetSocketAddress DEFAULT_CONTACT_POINT =
+      new InetSocketAddress("127.0.0.1", 9042);
 
   private final InternalDriverContext context;
   private final String logPrefix;
@@ -103,16 +107,19 @@ public class MetadataManager implements AsyncAutoCloseable {
     return this.metadata;
   }
 
-  public CompletionStage<Void> addContactPoints(Set<InetSocketAddress> contactPoints) {
-    if (contactPoints == null || contactPoints.isEmpty()) {
-      return CompletableFuture.completedFuture(null);
+  public CompletionStage<Void> addContactPoints(Set<InetSocketAddress> providedContactPoints) {
+    Set<InetSocketAddress> contactPoints;
+    if (providedContactPoints == null || providedContactPoints.isEmpty()) {
+      LOG.info(
+          "[{}] No contact points provided, defaulting to {}", logPrefix, DEFAULT_CONTACT_POINT);
+      contactPoints = ImmutableSet.of(DEFAULT_CONTACT_POINT);
     } else {
-      LOG.debug("[{}] Adding initial contact points {}", logPrefix, contactPoints);
-      CompletableFuture<Void> initNodesFuture = new CompletableFuture<>();
-      RunOrSchedule.on(
-          adminExecutor, () -> singleThreaded.initNodes(contactPoints, initNodesFuture));
-      return initNodesFuture;
+      contactPoints = providedContactPoints;
     }
+    LOG.debug("[{}] Adding initial contact points {}", logPrefix, contactPoints);
+    CompletableFuture<Void> initNodesFuture = new CompletableFuture<>();
+    RunOrSchedule.on(adminExecutor, () -> singleThreaded.initNodes(contactPoints, initNodesFuture));
+    return initNodesFuture;
   }
 
   public CompletionStage<Void> refreshNodes() {
