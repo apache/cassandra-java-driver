@@ -102,7 +102,7 @@ public abstract class ClusterBuilder<SelfT extends ClusterBuilder, ClusterT> {
    * correctly.
    *
    * <p>Contact points can also be provided statically in the configuration. If both are specified,
-   * they will be merged.
+   * they will be merged. If both are absent, the driver will default to 127.0.0.1:9042.
    *
    * <p>Contrary to the configuration, DNS names with multiple A-records will not be handled here.
    * If you need that, call {@link java.net.InetAddress#getAllByName(String)} before calling this

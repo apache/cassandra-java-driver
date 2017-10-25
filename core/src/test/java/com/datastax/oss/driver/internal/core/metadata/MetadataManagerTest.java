@@ -31,6 +31,7 @@ import io.netty.channel.DefaultEventLoopGroup;
 import io.netty.util.concurrent.Future;
 import java.net.InetSocketAddress;
 import java.time.Duration;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
@@ -109,6 +110,21 @@ public class MetadataManagerTest {
     InitContactPointsRefresh refresh =
         ((InitContactPointsRefresh) metadataManager.refreshes.get(0));
     assertThat(refresh.contactPoints).containsExactlyInAnyOrder(ADDRESS1);
+  }
+
+  @Test
+  public void should_use_default_if_no_contact_points_provided() {
+    // When
+    CompletionStage<Void> addContactPointsFuture =
+        metadataManager.addContactPoints(Collections.emptySet());
+    waitForPendingAdminTasks();
+
+    // Then
+    assertThat(addContactPointsFuture).isSuccess();
+    assertThat(metadataManager.refreshes).hasSize(1);
+    InitContactPointsRefresh refresh =
+        ((InitContactPointsRefresh) metadataManager.refreshes.get(0));
+    assertThat(refresh.contactPoints).containsExactly(MetadataManager.DEFAULT_CONTACT_POINT);
   }
 
   @Test
