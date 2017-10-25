@@ -15,9 +15,11 @@
  */
 package com.datastax.oss.driver.internal.core.cql;
 
+import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.config.DriverConfigProfile;
 import com.datastax.oss.driver.api.core.cql.PrepareRequest;
 import com.datastax.oss.driver.api.core.cql.SimpleStatement;
+import com.datastax.oss.driver.api.core.metadata.token.Token;
 import java.nio.ByteBuffer;
 import java.util.Map;
 
@@ -56,8 +58,23 @@ public class DefaultPrepareRequest implements PrepareRequest {
   }
 
   @Override
-  public String getKeyspace() {
-    // Not implemented yet, waiting for CASSANDRA-10145 to land in a release
+  public CqlIdentifier getKeyspace() {
+    return statement.getKeyspace();
+  }
+
+  @Override
+  public CqlIdentifier getRoutingKeyspace() {
+    // Prepare requests do not operate on a particular partition, token-aware routing doesn't apply.
+    return null;
+  }
+
+  @Override
+  public ByteBuffer getRoutingKey() {
+    return null;
+  }
+
+  @Override
+  public Token getRoutingToken() {
     return null;
   }
 

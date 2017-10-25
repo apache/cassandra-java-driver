@@ -38,7 +38,7 @@ public interface PrepareRequest extends Request {
    *
    * <p>Most users won't use this explicitly. It is needed for the generic execute method ({@link
    * Session#execute(Request, GenericType)}), but CQL statements will generally be prepared with one
-   * of the driver's built-in helper methods (such as {@link Session#prepare(SimpleStatement)}).
+   * of the driver's built-in helper methods (such as {@link CqlSession#prepare(SimpleStatement)}).
    */
   GenericType<PreparedStatement> SYNC = GenericType.of(PreparedStatement.class);
 
@@ -47,7 +47,8 @@ public interface PrepareRequest extends Request {
    *
    * <p>Most users won't use this explicitly. It is needed for the generic execute method ({@link
    * Session#execute(Request, GenericType)}), but CQL statements will generally be prepared with one
-   * of the driver's built-in helper methods (such as {@link Session#prepareAsync(SimpleStatement)}.
+   * of the driver's built-in helper methods (such as {@link
+   * CqlSession#prepareAsync(SimpleStatement)}.
    */
   GenericType<CompletionStage<PreparedStatement>> ASYNC =
       new GenericType<CompletionStage<PreparedStatement>>() {};

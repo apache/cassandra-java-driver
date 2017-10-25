@@ -15,7 +15,9 @@
  */
 package com.datastax.oss.driver.api.core.session;
 
+import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.config.DriverConfigProfile;
+import com.datastax.oss.driver.api.core.metadata.token.Token;
 import java.nio.ByteBuffer;
 import java.util.Map;
 
@@ -43,7 +45,22 @@ public class KeyRequest implements Request {
   }
 
   @Override
-  public String getKeyspace() {
+  public CqlIdentifier getKeyspace() {
+    return null;
+  }
+
+  @Override
+  public CqlIdentifier getRoutingKeyspace() {
+    return null;
+  }
+
+  @Override
+  public ByteBuffer getRoutingKey() {
+    return null;
+  }
+
+  @Override
+  public Token getRoutingToken() {
     return null;
   }
 

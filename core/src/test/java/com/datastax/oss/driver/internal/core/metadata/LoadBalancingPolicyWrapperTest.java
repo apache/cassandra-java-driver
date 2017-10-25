@@ -29,7 +29,6 @@ import com.google.common.collect.Lists;
 import java.net.InetSocketAddress;
 import java.util.Map;
 import java.util.Queue;
-import java.util.Set;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import org.junit.Before;
@@ -42,7 +41,8 @@ import org.mockito.stubbing.Answer;
 
 import static com.datastax.oss.driver.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anySet;
+import static org.mockito.ArgumentMatchers.anyMap;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
 
 public class LoadBalancingPolicyWrapperTest {
@@ -77,10 +77,11 @@ public class LoadBalancingPolicyWrapperTest {
             .build();
     Mockito.when(metadata.getNodes()).thenReturn(contactPointsMap);
     Mockito.when(metadataManager.getMetadata()).thenReturn(metadata);
+    Mockito.when(metadataManager.getContactPoints()).thenReturn(contactPointsMap.keySet());
     Mockito.when(context.metadataManager()).thenReturn(metadataManager);
 
     policysQueryPlan = Lists.newLinkedList(ImmutableList.of(node3, node2, node1));
-    Mockito.when(loadBalancingPolicy.newQueryPlan()).thenReturn(policysQueryPlan);
+    Mockito.when(loadBalancingPolicy.newQueryPlan(null, null)).thenReturn(policysQueryPlan);
 
     eventBus = Mockito.spy(new EventBus("test"));
     Mockito.when(context.eventBus()).thenReturn(eventBus);
@@ -94,7 +95,7 @@ public class LoadBalancingPolicyWrapperTest {
     Queue<Node> queryPlan = wrapper.newQueryPlan();
 
     // Then
-    Mockito.verify(loadBalancingPolicy, never()).newQueryPlan();
+    Mockito.verify(loadBalancingPolicy, never()).newQueryPlan(null, null);
     assertThat(queryPlan).containsOnlyElementsOf(contactPointsMap.values());
   }
 
@@ -102,13 +103,14 @@ public class LoadBalancingPolicyWrapperTest {
   public void should_fetch_query_plan_from_policy_after_init() {
     // Given
     wrapper.init();
-    Mockito.verify(loadBalancingPolicy).init(anySet(), any(DistanceReporter.class));
+    Mockito.verify(loadBalancingPolicy)
+        .init(anyMap(), any(DistanceReporter.class), eq(contactPointsMap.keySet()));
 
     // When
     Queue<Node> queryPlan = wrapper.newQueryPlan();
 
     // Then
-    Mockito.verify(loadBalancingPolicy).newQueryPlan();
+    Mockito.verify(loadBalancingPolicy).newQueryPlan(null, null);
     assertThat(queryPlan).isEqualTo(policysQueryPlan);
   }
 
@@ -131,10 +133,11 @@ public class LoadBalancingPolicyWrapperTest {
 
     // Then
     @SuppressWarnings("unchecked")
-    ArgumentCaptor<Set<Node>> captor = ArgumentCaptor.forClass(Set.class);
-    Mockito.verify(loadBalancingPolicy).init(captor.capture(), any(DistanceReporter.class));
-    Set<Node> initNodes = captor.getValue();
-    assertThat(initNodes).containsOnly(node1, node2);
+    ArgumentCaptor<Map<InetSocketAddress, Node>> captor = ArgumentCaptor.forClass(Map.class);
+    Mockito.verify(loadBalancingPolicy)
+        .init(captor.capture(), any(DistanceReporter.class), eq(contactPointsMap.keySet()));
+    Map<InetSocketAddress, Node> initNodes = captor.getValue();
+    assertThat(initNodes.values()).containsOnly(node1, node2);
   }
 
   @Test
@@ -142,7 +145,8 @@ public class LoadBalancingPolicyWrapperTest {
     // Given
     wrapper.init();
     ArgumentCaptor<DistanceReporter> captor = ArgumentCaptor.forClass(DistanceReporter.class);
-    Mockito.verify(loadBalancingPolicy).init(anySet(), captor.capture());
+    Mockito.verify(loadBalancingPolicy)
+        .init(anyMap(), captor.capture(), eq(contactPointsMap.keySet()));
     DistanceReporter distanceReporter = captor.getValue();
 
     // When
@@ -188,7 +192,7 @@ public class LoadBalancingPolicyWrapperTest {
         };
     Mockito.doAnswer(mockInit)
         .when(loadBalancingPolicy)
-        .init(anySet(), any(DistanceReporter.class));
+        .init(anyMap(), any(DistanceReporter.class), eq(contactPointsMap.keySet()));
 
     // When
     Runnable runnable =

@@ -141,6 +141,10 @@ public class ChannelPool implements AsyncAutoCloseable {
     return channels.next();
   }
 
+  public int getAvailableIds() {
+    return channels.getAvailableIds();
+  }
+
   public void resize(NodeDistance newDistance) {
     RunOrSchedule.on(adminExecutor, () -> singleThreaded.resize(newDistance));
   }

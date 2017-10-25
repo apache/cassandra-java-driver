@@ -15,10 +15,12 @@
  */
 package com.datastax.oss.driver.internal.core.cql;
 
+import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.config.DriverConfigProfile;
 import com.datastax.oss.driver.api.core.cql.BatchStatement;
 import com.datastax.oss.driver.api.core.cql.BatchType;
 import com.datastax.oss.driver.api.core.cql.BatchableStatement;
+import com.datastax.oss.driver.api.core.metadata.token.Token;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
 import java.nio.ByteBuffer;
@@ -32,7 +34,10 @@ public class DefaultBatchStatement implements BatchStatement {
   private final List<BatchableStatement<?>> statements;
   private final String configProfileName;
   private final DriverConfigProfile configProfile;
-  private final String keyspace;
+  private final CqlIdentifier keyspace;
+  private final CqlIdentifier routingKeyspace;
+  private final ByteBuffer routingKey;
+  private final Token routingToken;
   private final Map<String, ByteBuffer> customPayload;
   private final Boolean idempotent;
   private final boolean tracing;
@@ -44,7 +49,10 @@ public class DefaultBatchStatement implements BatchStatement {
       List<BatchableStatement<?>> statements,
       String configProfileName,
       DriverConfigProfile configProfile,
-      String keyspace,
+      CqlIdentifier keyspace,
+      CqlIdentifier routingKeyspace,
+      ByteBuffer routingKey,
+      Token routingToken,
       Map<String, ByteBuffer> customPayload,
       Boolean idempotent,
       boolean tracing,
@@ -55,6 +63,9 @@ public class DefaultBatchStatement implements BatchStatement {
     this.configProfileName = configProfileName;
     this.configProfile = configProfile;
     this.keyspace = keyspace;
+    this.routingKeyspace = routingKeyspace;
+    this.routingKey = routingKey;
+    this.routingToken = routingToken;
     this.customPayload = customPayload;
     this.idempotent = idempotent;
     this.tracing = tracing;
@@ -75,6 +86,9 @@ public class DefaultBatchStatement implements BatchStatement {
         configProfileName,
         configProfile,
         keyspace,
+        routingKeyspace,
+        routingKey,
+        routingToken,
         customPayload,
         idempotent,
         tracing,
@@ -94,6 +108,9 @@ public class DefaultBatchStatement implements BatchStatement {
           configProfileName,
           configProfile,
           keyspace,
+          routingKeyspace,
+          routingKey,
+          routingToken,
           customPayload,
           idempotent,
           tracing,
@@ -117,6 +134,9 @@ public class DefaultBatchStatement implements BatchStatement {
           configProfileName,
           configProfile,
           keyspace,
+          routingKeyspace,
+          routingKey,
+          routingToken,
           customPayload,
           idempotent,
           tracing,
@@ -138,6 +158,9 @@ public class DefaultBatchStatement implements BatchStatement {
         configProfileName,
         configProfile,
         keyspace,
+        routingKeyspace,
+        routingKey,
+        routingToken,
         customPayload,
         idempotent,
         tracing,
@@ -163,6 +186,9 @@ public class DefaultBatchStatement implements BatchStatement {
         configProfileName,
         configProfile,
         keyspace,
+        routingKeyspace,
+        routingKey,
+        routingToken,
         customPayload,
         idempotent,
         tracing,
@@ -183,6 +209,9 @@ public class DefaultBatchStatement implements BatchStatement {
         newConfigProfileName,
         configProfile,
         keyspace,
+        routingKeyspace,
+        routingKey,
+        routingToken,
         customPayload,
         idempotent,
         tracing,
@@ -203,6 +232,9 @@ public class DefaultBatchStatement implements BatchStatement {
         configProfileName,
         newProfile,
         keyspace,
+        routingKeyspace,
+        routingKey,
+        routingToken,
         customPayload,
         idempotent,
         tracing,
@@ -211,15 +243,77 @@ public class DefaultBatchStatement implements BatchStatement {
   }
 
   @Override
-  public String getKeyspace() {
+  public CqlIdentifier getKeyspace() {
     return keyspace;
   }
 
   @Override
-  public DefaultBatchStatement setKeyspace(@SuppressWarnings("unused") String keyspace) {
-    throw new UnsupportedOperationException(
-        "Per-statement keyspaces are not supported currently, "
-            + "this feature will be available in Cassandra 4");
+  public CqlIdentifier getRoutingKeyspace() {
+    return routingKeyspace;
+  }
+
+  @Override
+  public BatchStatement setRoutingKeyspace(CqlIdentifier newRoutingKeyspace) {
+    return new DefaultBatchStatement(
+        batchType,
+        statements,
+        configProfileName,
+        configProfile,
+        keyspace,
+        newRoutingKeyspace,
+        routingKey,
+        routingToken,
+        customPayload,
+        idempotent,
+        tracing,
+        timestamp,
+        pagingState);
+  }
+
+  @Override
+  public ByteBuffer getRoutingKey() {
+    return routingKey;
+  }
+
+  @Override
+  public BatchStatement setRoutingKey(ByteBuffer newRoutingKey) {
+    return new DefaultBatchStatement(
+        batchType,
+        statements,
+        configProfileName,
+        configProfile,
+        keyspace,
+        routingKeyspace,
+        newRoutingKey,
+        routingToken,
+        customPayload,
+        idempotent,
+        tracing,
+        timestamp,
+        pagingState);
+  }
+
+  @Override
+  public Token getRoutingToken() {
+    return routingToken;
+  }
+
+  @Override
+  public BatchStatement setRoutingToken(Token newRoutingToken) {
+    return new DefaultBatchStatement(
+        batchType,
+        statements,
+        configProfileName,
+        configProfile,
+        keyspace,
+        routingKeyspace,
+        routingKey,
+        newRoutingToken,
+        customPayload,
+        idempotent,
+        tracing,
+        timestamp,
+        pagingState);
   }
 
   @Override
@@ -235,6 +329,9 @@ public class DefaultBatchStatement implements BatchStatement {
         configProfileName,
         configProfile,
         keyspace,
+        routingKeyspace,
+        routingKey,
+        routingToken,
         newCustomPayload,
         idempotent,
         tracing,
@@ -255,6 +352,9 @@ public class DefaultBatchStatement implements BatchStatement {
         configProfileName,
         configProfile,
         keyspace,
+        routingKeyspace,
+        routingKey,
+        routingToken,
         customPayload,
         newIdempotence,
         tracing,
@@ -275,6 +375,9 @@ public class DefaultBatchStatement implements BatchStatement {
         configProfileName,
         configProfile,
         keyspace,
+        routingKeyspace,
+        routingKey,
+        routingToken,
         customPayload,
         idempotent,
         newTracing,
@@ -295,6 +398,9 @@ public class DefaultBatchStatement implements BatchStatement {
         configProfileName,
         configProfile,
         keyspace,
+        routingKeyspace,
+        routingKey,
+        routingToken,
         customPayload,
         idempotent,
         tracing,

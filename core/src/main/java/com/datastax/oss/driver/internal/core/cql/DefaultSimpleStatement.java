@@ -15,8 +15,10 @@
  */
 package com.datastax.oss.driver.internal.core.cql;
 
+import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.config.DriverConfigProfile;
 import com.datastax.oss.driver.api.core.cql.SimpleStatement;
+import com.datastax.oss.driver.api.core.metadata.token.Token;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import java.nio.ByteBuffer;
@@ -30,6 +32,11 @@ public class DefaultSimpleStatement implements SimpleStatement {
   private final Map<String, Object> namedValues;
   private final String configProfileName;
   private final DriverConfigProfile configProfile;
+  private final CqlIdentifier keyspace;
+  private final CqlIdentifier routingKeyspace;
+  private final ByteBuffer routingKey;
+  private final Token routingToken;
+
   private final Map<String, ByteBuffer> customPayload;
   private final Boolean idempotent;
   private final boolean tracing;
@@ -43,6 +50,10 @@ public class DefaultSimpleStatement implements SimpleStatement {
       Map<String, Object> namedValues,
       String configProfileName,
       DriverConfigProfile configProfile,
+      CqlIdentifier keyspace,
+      CqlIdentifier routingKeyspace,
+      ByteBuffer routingKey,
+      Token routingToken,
       Map<String, ByteBuffer> customPayload,
       Boolean idempotent,
       boolean tracing,
@@ -56,6 +67,10 @@ public class DefaultSimpleStatement implements SimpleStatement {
     this.namedValues = ImmutableMap.copyOf(namedValues);
     this.configProfileName = configProfileName;
     this.configProfile = configProfile;
+    this.keyspace = keyspace;
+    this.routingKeyspace = routingKeyspace;
+    this.routingKey = routingKey;
+    this.routingToken = routingToken;
     this.customPayload = customPayload;
     this.idempotent = idempotent;
     this.tracing = tracing;
@@ -76,6 +91,10 @@ public class DefaultSimpleStatement implements SimpleStatement {
         namedValues,
         configProfileName,
         configProfile,
+        keyspace,
+        routingKeyspace,
+        routingKey,
+        routingToken,
         customPayload,
         idempotent,
         tracing,
@@ -96,6 +115,10 @@ public class DefaultSimpleStatement implements SimpleStatement {
         namedValues,
         configProfileName,
         configProfile,
+        keyspace,
+        routingKeyspace,
+        routingKey,
+        routingToken,
         customPayload,
         idempotent,
         tracing,
@@ -116,6 +139,10 @@ public class DefaultSimpleStatement implements SimpleStatement {
         newNamedValues,
         configProfileName,
         configProfile,
+        keyspace,
+        routingKeyspace,
+        routingKey,
+        routingToken,
         customPayload,
         idempotent,
         tracing,
@@ -136,6 +163,10 @@ public class DefaultSimpleStatement implements SimpleStatement {
         namedValues,
         newConfigProfileName,
         configProfile,
+        keyspace,
+        routingKeyspace,
+        routingKey,
+        routingToken,
         customPayload,
         idempotent,
         tracing,
@@ -156,6 +187,10 @@ public class DefaultSimpleStatement implements SimpleStatement {
         namedValues,
         null,
         newProfile,
+        keyspace,
+        routingKeyspace,
+        routingKey,
+        routingToken,
         customPayload,
         idempotent,
         tracing,
@@ -164,9 +199,80 @@ public class DefaultSimpleStatement implements SimpleStatement {
   }
 
   @Override
-  public String getKeyspace() {
-    // Not implemented yet, waiting for CASSANDRA-10145 to land in a release
-    return null;
+  public CqlIdentifier getKeyspace() {
+    return keyspace;
+  }
+
+  @Override
+  public CqlIdentifier getRoutingKeyspace() {
+    return routingKeyspace;
+  }
+
+  @Override
+  public SimpleStatement setRoutingKeyspace(CqlIdentifier newRoutingKeyspace) {
+    return new DefaultSimpleStatement(
+        query,
+        positionalValues,
+        namedValues,
+        configProfileName,
+        configProfile,
+        keyspace,
+        newRoutingKeyspace,
+        routingKey,
+        routingToken,
+        customPayload,
+        idempotent,
+        tracing,
+        timestamp,
+        pagingState);
+  }
+
+  @Override
+  public ByteBuffer getRoutingKey() {
+    return routingKey;
+  }
+
+  @Override
+  public SimpleStatement setRoutingKey(ByteBuffer newRoutingKey) {
+    return new DefaultSimpleStatement(
+        query,
+        positionalValues,
+        namedValues,
+        configProfileName,
+        configProfile,
+        keyspace,
+        routingKeyspace,
+        newRoutingKey,
+        routingToken,
+        customPayload,
+        idempotent,
+        tracing,
+        timestamp,
+        pagingState);
+  }
+
+  @Override
+  public Token getRoutingToken() {
+    return routingToken;
+  }
+
+  @Override
+  public SimpleStatement setRoutingToken(Token newRoutingToken) {
+    return new DefaultSimpleStatement(
+        query,
+        positionalValues,
+        namedValues,
+        configProfileName,
+        configProfile,
+        keyspace,
+        routingKeyspace,
+        routingKey,
+        newRoutingToken,
+        customPayload,
+        idempotent,
+        tracing,
+        timestamp,
+        pagingState);
   }
 
   @Override
@@ -182,6 +288,10 @@ public class DefaultSimpleStatement implements SimpleStatement {
         namedValues,
         configProfileName,
         configProfile,
+        keyspace,
+        routingKeyspace,
+        routingKey,
+        routingToken,
         newCustomPayload,
         idempotent,
         tracing,
@@ -202,6 +312,10 @@ public class DefaultSimpleStatement implements SimpleStatement {
         namedValues,
         configProfileName,
         configProfile,
+        keyspace,
+        routingKeyspace,
+        routingKey,
+        routingToken,
         customPayload,
         newIdempotence,
         tracing,
@@ -222,6 +336,10 @@ public class DefaultSimpleStatement implements SimpleStatement {
         namedValues,
         configProfileName,
         configProfile,
+        keyspace,
+        routingKeyspace,
+        routingKey,
+        routingToken,
         customPayload,
         idempotent,
         newTracing,
@@ -242,6 +360,10 @@ public class DefaultSimpleStatement implements SimpleStatement {
         namedValues,
         configProfileName,
         configProfile,
+        keyspace,
+        routingKeyspace,
+        routingKey,
+        routingToken,
         customPayload,
         idempotent,
         tracing,
@@ -262,6 +384,10 @@ public class DefaultSimpleStatement implements SimpleStatement {
         namedValues,
         configProfileName,
         configProfile,
+        keyspace,
+        routingKeyspace,
+        routingKey,
+        routingToken,
         customPayload,
         idempotent,
         tracing,

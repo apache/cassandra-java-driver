@@ -15,9 +15,12 @@
  */
 package com.datastax.oss.driver.api.core.session;
 
+import com.datastax.oss.driver.api.core.CoreProtocolVersion;
+import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.config.CoreDriverOption;
 import com.datastax.oss.driver.api.core.config.DriverConfig;
 import com.datastax.oss.driver.api.core.config.DriverConfigProfile;
+import com.datastax.oss.driver.api.core.metadata.token.Token;
 import java.nio.ByteBuffer;
 import java.util.Map;
 
@@ -51,14 +54,62 @@ public interface Request {
   DriverConfigProfile getConfigProfile();
 
   /**
-   * <b>NOT YET SUPPORTED</b> -- the CQL keyspace to associate with the query.
+   * <b>NOT IMPLEMENTED YET</b> (method added for binary compatibility, implementation coming soon)
+   * -- The CQL keyspace to execute this request in.
    *
-   * <p>This will be available when <a
-   * href="https://issues.apache.org/jira/browse/CASSANDRA-10145">CASSANDRA-10145</a> is merged in a
-   * stable server release. In the meantime, the method is present to avoid breaking the API later,
-   * but returning any value other than {@code null} will cause a runtime exception.
+   * <p>This overrides {@link Session#getKeyspace()} for this particular request, providing a way to
+   * specify the keyspace without forcing it globally on the session, or hard-coding it in the query
+   * string.
+   *
+   * <p>This feature is only available with {@link CoreProtocolVersion#V5 native protocol v5} or
+   * higher. Specifying a per-request keyspace with lower protocol versions will cause a runtime
+   * error.
+   *
+   * @see <a href="https://issues.apache.org/jira/browse/CASSANDRA-10145">CASSANDRA-10145</a>
    */
-  String getKeyspace();
+  CqlIdentifier getKeyspace();
+
+  /**
+   * The keyspace to use for token-aware routing, if no {@link #getKeyspace() per-request keyspace
+   * is defined}.
+   *
+   * <p>See {@link #getRoutingKey()} for a detailed explanation of token-aware routing.
+   *
+   * <p>Note that this is the only way to define a routing keyspace for protocol v4 or lower.
+   */
+  CqlIdentifier getRoutingKeyspace();
+
+  /**
+   * The (encoded) partition key to use for token-aware routing.
+   *
+   * <p>When the driver picks a coordinator to execute a request, it prioritizes the replicas of the
+   * partition that this query operates on, in order to avoid an extra network jump on the server
+   * side. To find these replicas, it needs a keyspace (which is where the replication settings are
+   * defined) and a key, that are computed the following way:
+   *
+   * <ul>
+   *   <li>if a per-request keyspace is specified with {@link #getKeyspace()}, it is used as the
+   *       keyspace;
+   *   <li>otherwise, if {@link #getRoutingKeyspace()} is specified, it is used as the keyspace;
+   *   <li>otherwise, if {@link Session#getKeyspace()} is not null, it is used as the keyspace;
+   *   <li>if a routing token is defined with {@link #getRoutingToken()}, it is used as the key;
+   *   <li>otherwise, the result of this method is used as the key.
+   * </ul>
+   *
+   * If either keyspace or key is null at the end of this process, then token-aware routing is
+   * disabled.
+   */
+  ByteBuffer getRoutingKey();
+
+  /**
+   * The token to use for token-aware routing.
+   *
+   * <p>This is the same information as {@link #getRoutingKey()}, but already hashed in a token. It
+   * is probably more useful for analytics tools that "shard" a query on a set of token ranges.
+   *
+   * <p>See {@link #getRoutingKey()} for a detailed explanation of token-aware routing.
+   */
+  Token getRoutingToken();
 
   /**
    * Returns the custom payload to send alongside the request.

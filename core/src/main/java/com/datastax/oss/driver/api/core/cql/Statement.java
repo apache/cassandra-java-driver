@@ -15,7 +15,9 @@
  */
 package com.datastax.oss.driver.api.core.cql;
 
+import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.config.DriverConfigProfile;
+import com.datastax.oss.driver.api.core.metadata.token.Token;
 import com.datastax.oss.driver.api.core.session.Request;
 import com.datastax.oss.driver.api.core.session.Session;
 import com.datastax.oss.driver.api.core.time.TimestampGenerator;
@@ -79,9 +81,30 @@ public interface Statement<T extends Statement<T>> extends Request {
    * stable server release. In the meantime, this method always throws {@link
    * UnsupportedOperationException}.
    */
-  default T setKeyspace(String newKeyspace) {
+  default T setKeyspace(CqlIdentifier newKeyspace) {
     throw new UnsupportedOperationException("Per-query keyspaces are not yet supported");
   }
+
+  /**
+   * Sets the keyspace to use for token-aware routing.
+   *
+   * <p>See {@link Request#getRoutingKey()} for a description of the token-aware routing algorithm.
+   */
+  T setRoutingKeyspace(CqlIdentifier newRoutingKeyspace);
+
+  /**
+   * Sets the key to use for token-aware routing.
+   *
+   * <p>See {@link Request#getRoutingKey()} for a description of the token-aware routing algorithm.
+   */
+  T setRoutingKey(ByteBuffer newRoutingKey);
+
+  /**
+   * Sets the token to use for token-aware routing.
+   *
+   * <p>See {@link Request#getRoutingKey()} for a description of the token-aware routing algorithm.
+   */
+  T setRoutingToken(Token newRoutingToken);
 
   /**
    * Sets the custom payload to use for execution.

@@ -24,6 +24,7 @@ import com.datastax.oss.driver.api.core.config.DriverConfigProfile;
 import com.datastax.oss.driver.api.core.metadata.Node;
 import com.datastax.oss.driver.api.core.retry.RetryPolicy;
 import com.datastax.oss.driver.api.core.session.Request;
+import com.datastax.oss.driver.api.core.session.Session;
 import com.datastax.oss.driver.api.core.specex.SpeculativeExecutionPolicy;
 import com.datastax.oss.driver.api.core.time.TimestampGenerator;
 import com.datastax.oss.driver.internal.core.ProtocolFeature;
@@ -105,7 +106,8 @@ public class RequestHandlerTestHarness implements AutoCloseable {
     Mockito.when(config.getDefaultProfile()).thenReturn(defaultConfigProfile);
     Mockito.when(context.config()).thenReturn(config);
 
-    Mockito.when(loadBalancingPolicyWrapper.newQueryPlan()).thenReturn(builder.buildQueryPlan());
+    Mockito.when(loadBalancingPolicyWrapper.newQueryPlan(any(Request.class), any(Session.class)))
+        .thenReturn(builder.buildQueryPlan());
     Mockito.when(context.loadBalancingPolicyWrapper()).thenReturn(loadBalancingPolicyWrapper);
 
     Mockito.when(context.retryPolicy()).thenReturn(retryPolicy);
