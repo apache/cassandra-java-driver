@@ -13,6 +13,7 @@
 - [bug] JAVA-1630: Fix Metadata.addIfAbsent.
 - [improvement] JAVA-1619: Update QueryBuilder methods to support Iterable input.
 - [improvement] JAVA-1527: Expose host_id and schema_version on Host metadata.
+- [new feature] JAVA-1377: Add support for TWCS in SchemaBuilder.
 
 
 ### 3.3.0
