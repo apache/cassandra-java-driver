@@ -363,10 +363,11 @@ public class ControlConnection implements EventCallback, AsyncAutoCloseable {
                   LOG.debug("[{}] Error while refreshing node list", logPrefix, error);
                 } else {
                   try {
-                    // This does nothing if the LBP is initialized already
+                    // A failed node list refresh at startup is not fatal, so this might be the
+                    // first successful refresh; make sure the LBP gets initialized (this is a no-op
+                    // if it was initialized already).
                     context.loadBalancingPolicyWrapper().init();
                     context.metadataManager().refreshSchema(null, false, true);
-                    // TODO avoid refreshing the token map twice
                   } catch (Throwable t) {
                     Loggers.warnWithException(
                         LOG, "[{}] Unexpected error on control connection reconnect", logPrefix, t);
