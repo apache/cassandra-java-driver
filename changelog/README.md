@@ -14,6 +14,8 @@
 - [improvement] JAVA-1619: Update QueryBuilder methods to support Iterable input.
 - [improvement] JAVA-1527: Expose host_id and schema_version on Host metadata.
 - [new feature] JAVA-1377: Add support for TWCS in SchemaBuilder.
+- [improvement] JAVA-1631: Publish a sources jar for driver-core-tests.
+- [improvement] JAVA-1632: Add a withIpPrefix(String) method to CCMBridge.Builder.
 
 
 ### 3.3.0
