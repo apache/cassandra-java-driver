@@ -506,8 +506,9 @@ public abstract class TableOptions<T extends TableOptions> extends SchemaStateme
      * <p/>
      * To create instances, use
      * {@link SchemaBuilder#sizedTieredStategy()},
-     * {@link SchemaBuilder#leveledStrategy()} or
-     * {@link SchemaBuilder#dateTieredStrategy()}
+     * {@link SchemaBuilder#leveledStrategy()},
+     * {@link SchemaBuilder#dateTieredStrategy()} or
+     * {@link SchemaBuilder#timeWindowCompactionStrategy()}
      */
     public static abstract class CompactionOptions<T extends CompactionOptions> {
 
@@ -940,10 +941,205 @@ public abstract class TableOptions<T extends TableOptions> extends SchemaStateme
         }
 
         /**
-         * Compaction strategies. Possible values: SIZED_TIERED, LEVELED & DATE_TIERED
+         * Compaction options specific to the time window strategy.
+         */
+        public static class TimeWindowCompactionStrategyOptions extends CompactionOptions<TimeWindowCompactionStrategyOptions> {
+
+            public enum CompactionWindowUnit {MINUTES, HOURS, DAYS}
+
+            public enum TimeStampResolution {MICROSECONDS, MILLISECONDS}
+
+            private Optional<Double> bucketHigh = Optional.absent();
+
+            private Optional<Double> bucketLow = Optional.absent();
+
+            private Optional<CompactionWindowUnit> compactionWindowUnit = Optional.absent();
+
+            private Optional<Integer> compactionWindowSize = Optional.absent();
+
+            private Optional<Integer> minThreshold = Optional.absent();
+
+            private Optional<Integer> maxThreshold = Optional.absent();
+
+            private Optional<Long> minSSTableSizeInBytes = Optional.absent();
+
+            private Optional<TimeStampResolution> timestampResolution = Optional.absent();
+
+            private Optional<Boolean> unsafeAggressiveSSTableExpiration = Optional.absent();
+
+            TimeWindowCompactionStrategyOptions() {
+                super(Strategy.TIME_WINDOW);
+            }
+
+            /**
+             * Size-tiered compaction strategy (STCS) is used in the newest window, this method sets the bucketHigh value used in STCS.
+             * <p/>
+             * If no call is made to this method, the default value set by Cassandra is 1.5.
+             *
+             * @param bucketHigh the new value.
+             * @return this object (for call chaining).
+             */
+            public TimeWindowCompactionStrategyOptions bucketHigh(Double bucketHigh) {
+                this.bucketHigh = Optional.fromNullable(bucketHigh);
+                return this;
+            }
+
+            /**
+             * Size-tiered compaction strategy (STCS) is used in the newest window, this method sets the bucketLow value used in STCS.
+             * <p/>
+             * If no call is made to this method, the default value set by Cassandra is 0.5.
+             *
+             * @param bucketLow the new value.
+             * @return this object (for call chaining).
+             */
+            public TimeWindowCompactionStrategyOptions bucketLow(Double bucketLow) {
+                this.bucketLow = Optional.fromNullable(bucketLow);
+                return this;
+            }
+
+            /**
+             * Sets the time unit used to define the window size
+             * <p/>
+             * If no call is made to this method, the default value set by Cassandra is {@code DAYS}.
+             *
+             * @param compactionWindowUnit {@link CompactionWindowUnit#MINUTES}, {@link CompactionWindowUnit#HOURS} or {@link CompactionWindowUnit#DAYS}.
+             * @return this object (for call chaining).
+             */
+            public TimeWindowCompactionStrategyOptions compactionWindowUnit(CompactionWindowUnit compactionWindowUnit) {
+                this.compactionWindowUnit = Optional.fromNullable(compactionWindowUnit);
+                return this;
+            }
+
+            /**
+             * Sets the number of units that make up a window.
+             * <p/>
+             * If no call is made to this method, the default value set by Cassandra is 1.
+             *
+             * @param compactionWindowSize the size of the first window.
+             * @return this object (for call chaining).
+             */
+            public TimeWindowCompactionStrategyOptions compactionWindowSize(Integer compactionWindowSize) {
+                this.compactionWindowSize = Optional.fromNullable(compactionWindowSize);
+                return this;
+            }
+
+             /**
+             * Sets the minimum number of SSTables to trigger a minor compaction
+             * <p/>
+             * If no call is made to this method, the default value set by Cassandra is 4.
+             *
+             * @param minThreshold the new value.
+             * @return this object (for call chaining).
+             */
+            public TimeWindowCompactionStrategyOptions minThreshold(Integer minThreshold) {
+                this.minThreshold = Optional.fromNullable(minThreshold);
+                return this;
+            }
+
+            /**
+             * Sets the maximum number of SSTables to allow in a minor compaction.
+             * <p/>
+             * If no call is made to this method, the default value set by Cassandra is 32.
+             *
+             * @param maxThreshold the new value.
+             * @return this object (for call chaining).
+             */
+            public TimeWindowCompactionStrategyOptions maxThreshold(Integer maxThreshold) {
+                this.maxThreshold = Optional.fromNullable(maxThreshold);
+                return this;
+            }
+
+            /**
+             * Size-tiered compaction strategy (STCS) is used in the newest window, this method sets the minSSTableSize value used in STCS.
+             * <p/>
+             * If no call is made to this method, the default value set by Cassandra is 52428800 (50 MB).
+             *
+             * @param minSSTableSize the new value.
+             * @return this object (for call chaining).
+             */
+            public TimeWindowCompactionStrategyOptions minSSTableSizeInBytes(Long minSSTableSize) {
+                this.minSSTableSizeInBytes = Optional.fromNullable(minSSTableSize);
+                return this;
+            }
+
+            /**
+             * Sets the timestamp resolution, depending on the timestamp unit of the data you insert.
+             * <p/>
+             * If no call is made to this method, the default value set by Cassandra is {@code MICROSECONDS}.
+             *
+             * @param timestampResolution {@link TimeStampResolution#MICROSECONDS} or {@link TimeStampResolution#MILLISECONDS}.
+             * @return this object (for call chaining).
+             */
+            public TimeWindowCompactionStrategyOptions timestampResolution(TimeStampResolution timestampResolution) {
+                this.timestampResolution = Optional.fromNullable(timestampResolution);
+                return this;
+            }
+
+            /**
+             * Allow expired sstables to be dropped without checking if its data is shadowing other sstables.
+             * This is a potentially risky option that can lead to data loss or deleted data re-appearing.
+             * <p/>
+             * If no call is made to this method, the default value set by Cassandra is false.
+             *
+             * @param unsafeAggressiveSSTableExpiration whether to enable unsafe aggressive sstable expiration option.
+             * @return this object (for call chaining).
+             */
+            public TimeWindowCompactionStrategyOptions unsafeAggressiveSSTableExpiration(Boolean unsafeAggressiveSSTableExpiration) {
+                this.unsafeAggressiveSSTableExpiration = Optional.fromNullable(unsafeAggressiveSSTableExpiration);
+                return this;
+            }
+
+            @Override
+            public String build() {
+                final List<String> generalOptions = super.buildCommonOptions();
+
+                List<String> options = new ArrayList<String>(generalOptions);
+
+                if (bucketHigh.isPresent()) {
+                    options.add("'bucket_high' : " + bucketHigh.get());
+                }
+
+                if (bucketLow.isPresent()) {
+                    options.add("'bucket_low' : " + bucketLow.get());
+                }
+
+                if (compactionWindowUnit.isPresent()) {
+                    options.add("'compaction_window_unit' : '" + compactionWindowUnit.get() + "'");
+                }
+
+                if (compactionWindowSize.isPresent()) {
+                    options.add("'compaction_window_size' : " + compactionWindowSize.get());
+                }
+
+                if (minThreshold.isPresent()) {
+                    options.add("'min_threshold' : " + minThreshold.get());
+                }
+
+                if (maxThreshold.isPresent()) {
+                    options.add("'max_threshold' : " + maxThreshold.get());
+                }
+
+                if (minSSTableSizeInBytes.isPresent()) {
+                    options.add("'min_sstable_size' : " + minSSTableSizeInBytes.get());
+                }
+
+                if (timestampResolution.isPresent()) {
+                    options.add("'timestamp_resolution' : '" + timestampResolution.get() + "'");
+                }
+
+                if (unsafeAggressiveSSTableExpiration.isPresent()) {
+                    options.add("'unsafe_aggressive_sstable_expiration' : '" + unsafeAggressiveSSTableExpiration.get() + "'");
+                }
+
+                return "{" + Joiner.on(", ").join(options) + "}";
+            }
+        }
+
+        /**
+         * Compaction strategies. Possible values: SIZED_TIERED, LEVELED, DATE_TIERED AND TIME_WINDOW
          */
         public static enum Strategy {
-            SIZED_TIERED("'SizeTieredCompactionStrategy'"), LEVELED("'LeveledCompactionStrategy'"), DATE_TIERED("'DateTieredCompactionStrategy'");
+            SIZED_TIERED("'SizeTieredCompactionStrategy'"), LEVELED("'LeveledCompactionStrategy'"), DATE_TIERED("'DateTieredCompactionStrategy'"), TIME_WINDOW("'TimeWindowCompactionStrategy'");
 
             private String strategyClass;
 

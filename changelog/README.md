@@ -2,6 +2,7 @@
 
 ### 3.4.0 (In progress)
 
+- [improvement] JAVA-1377: Add support for TWCS in SchemaBuilder.
 - [bug] JAVA-1555: Include VIEW and CDC in WriteType.
 - [bug] JAVA-1599: exportAsString improvements (sort, format, clustering order)
 - [improvement] JAVA-1587: Deterministic ordering of columns used in Mapper#saveQuery
@@ -12,6 +13,7 @@
 - [bug] JAVA-1630: Fix Metadata.addIfAbsent.
 - [improvement] JAVA-1619: Update QueryBuilder methods to support Iterable input.
 - [improvement] JAVA-1527: Expose host_id and schema_version on Host metadata.
+- [new feature] JAVA-1377: Add support for TWCS in SchemaBuilder.
 
 
 ### 3.3.0
