@@ -15,11 +15,13 @@
  */
 package com.datastax.driver.core;
 
+import com.datastax.driver.core.utils.UUIDs;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.testng.annotations.Test;
 
 import java.net.InetAddress;
+import java.util.UUID;
 
 import static com.datastax.driver.core.Assertions.assertThat;
 import static com.datastax.driver.core.TestUtils.nonQuietClusterCloseOptions;
@@ -312,6 +314,41 @@ public class HostMetadataIntegrationTest {
             assertThat(cluster).host(2).hasListenAddress(listenAddress);
             // - Host 3 should have no listen address as it wasn't provided.
             assertThat(cluster).host(3).hasNoListenAddress();
+        } finally {
+            cluster.close();
+            scassandraCluster.stop();
+        }
+    }
+
+    @Test(groups = "short")
+    public void should_parse_host_id_and_schema_version() {
+        UUID hostId1 = UUIDs.random();
+        UUID hostId2 = UUIDs.random();
+        UUID schemaVersion = UUIDs.random();
+
+        ScassandraCluster scassandraCluster = ScassandraCluster.builder()
+                .withIpPrefix(TestUtils.IP_PREFIX)
+                .withNodes(2)
+                .forcePeerInfo(1, 1, "host_id", hostId1)
+                .forcePeerInfo(1, 1, "schema_version", schemaVersion)
+                .forcePeerInfo(1, 2, "host_id", hostId2)
+                .forcePeerInfo(1, 2, "schema_version", schemaVersion)
+                .build();
+
+        Cluster cluster = Cluster.builder()
+                .addContactPoints(scassandraCluster.address(1).getAddress())
+                .withPort(scassandraCluster.getBinaryPort())
+                .build();
+
+        try {
+            scassandraCluster.init();
+            cluster.init();
+
+            assertThat(cluster).host(1).hasHostId(hostId1);
+            assertThat(cluster).host(1).hasSchemaVersion(schemaVersion);
+            assertThat(cluster).host(2).hasHostId(hostId2);
+            assertThat(cluster).host(2).hasSchemaVersion(schemaVersion);
+
         } finally {
             cluster.close();
             scassandraCluster.stop();

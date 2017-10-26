@@ -21,6 +21,7 @@ import com.datastax.driver.core.policies.LoadBalancingPolicy;
 import org.assertj.core.api.AbstractAssert;
 
 import java.net.InetAddress;
+import java.util.UUID;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -195,6 +196,16 @@ public class HostAssert extends AbstractAssert<HostAssert, Host> {
 
     public HostAssert hasNoBroadcastAddress() {
         assertThat(actual.getBroadcastAddress()).isNull();
+        return this;
+    }
+
+    public HostAssert hasHostId(UUID hostId) {
+        assertThat(actual.getHostId()).isEqualTo(hostId);
+        return this;
+    }
+
+    public HostAssert hasSchemaVersion(UUID schemaVersion) {
+        assertThat(actual.getSchemaVersion()).isEqualTo(schemaVersion);
         return this;
     }
 }

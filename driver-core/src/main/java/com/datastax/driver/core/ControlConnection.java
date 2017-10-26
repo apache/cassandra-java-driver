@@ -516,6 +516,8 @@ class ControlConnection implements Connection.Owner {
             String dseVersion = row.getString("dse_version");
             host.setDseVersion(dseVersion);
         }
+        host.setHostId(row.getUUID("host_id"));
+        host.setSchemaVersion(row.getUUID("schema_version"));
     }
 
     private static void updateLocationInfo(Host host, String datacenter, String rack, boolean isInitialConnection, Cluster.Manager cluster) {
@@ -588,6 +590,8 @@ class ControlConnection implements Connection.Owner {
         List<String> dseVersions = new ArrayList<String>();
         List<Boolean> dseGraphEnabled = new ArrayList<Boolean>();
         List<String> dseWorkloads = new ArrayList<String>();
+        List<UUID> hostIds = new ArrayList<UUID>();
+        List<UUID> schemaVersions = new ArrayList<UUID>();
 
         for (Row row : peersFuture.get()) {
             if (!isValidPeer(row, logInvalidPeers))
@@ -617,6 +621,8 @@ class ControlConnection implements Connection.Owner {
             dseGraphEnabled.add(isDseGraph);
             String dseVersion = row.getColumnDefinitions().contains("dse_version") ? row.getString("dse_version") : null;
             dseVersions.add(dseVersion);
+            hostIds.add(row.getUUID("host_id"));
+            schemaVersions.add(row.getUUID("schema_version"));
         }
 
         for (int i = 0; i < foundHosts.size(); i++) {
@@ -650,6 +656,12 @@ class ControlConnection implements Connection.Owner {
                 host.setDseWorkload(dseWorkloads.get(i));
             if (dseGraphEnabled.get(i) != null)
                 host.setDseGraphEnabled(dseGraphEnabled.get(i));
+            if (hostIds.get(i) != null) {
+                host.setHostId(hostIds.get(i));
+            }
+            if (schemaVersions.get(i) != null) {
+                host.setSchemaVersion(schemaVersions.get(i));
+            }
 
             if (metadataEnabled && factory != null && allTokens.get(i) != null)
                 tokenMap.put(host, allTokens.get(i));
