@@ -15,6 +15,7 @@
 - [new feature] JAVA-1377: Add support for TWCS in SchemaBuilder.
 - [improvement] JAVA-1631: Publish a sources jar for driver-core-tests.
 - [improvement] JAVA-1632: Add a withIpPrefix(String) method to CCMBridge.Builder.
+- [bug] JAVA-1639: VersionNumber does not fullfill equals/hashcode contract.
 
 
 ### 3.3.0

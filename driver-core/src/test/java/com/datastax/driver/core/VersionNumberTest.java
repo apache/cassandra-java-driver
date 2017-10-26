@@ -98,6 +98,15 @@ public class VersionNumberTest {
         assertOrder("2.0.0+build01", "2.0.0+build02", 0);
     }
 
+    @Test(groups = "unit")
+    public void should_treat_same_prerelease_equal() {
+        VersionNumber version1 = VersionNumber.parse("3.0.15-SNAPSHOT");
+        VersionNumber version2 = VersionNumber.parse("3.0.15-SNAPSHOT");
+
+        assertThat(version1).isEqualTo(version2);
+        assertThat(version1.hashCode()).isEqualTo(version2.hashCode());
+    }
+
     private void assertOrder(String version1, String version2, int expected) {
         assertThat(VersionNumber.parse(version1).compareTo(VersionNumber.parse(version2))).isEqualTo(expected);
     }
