@@ -46,7 +46,8 @@ public class UnsupportedProtocolVersionException extends DriverException {
       SocketAddress address, List<ProtocolVersion> attemptedVersions) {
     String message =
         String.format(
-            "[%s] Protocol negotiation failed: could not find a common version (attempted: %s)",
+            "[%s] Protocol negotiation failed: could not find a common version (attempted: %s). "
+                + "Note that the driver does not support Cassandra 2.0 or lower.",
             address, attemptedVersions);
     return new UnsupportedProtocolVersionException(
         address, message, ImmutableList.copyOf(attemptedVersions));
