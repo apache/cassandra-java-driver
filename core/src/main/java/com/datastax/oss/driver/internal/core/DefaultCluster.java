@@ -218,6 +218,7 @@ public class DefaultCluster implements Cluster<CqlSession> {
           .thenAccept(this::afterInitialNodeListRefresh)
           .exceptionally(
               error -> {
+                close();
                 initFuture.completeExceptionally(error);
                 return null;
               });
