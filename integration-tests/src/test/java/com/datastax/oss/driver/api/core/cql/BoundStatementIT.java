@@ -17,14 +17,12 @@ package com.datastax.oss.driver.api.core.cql;
 
 import com.datastax.oss.driver.api.core.Cluster;
 import com.datastax.oss.driver.api.core.CqlIdentifier;
-import com.datastax.oss.driver.api.core.config.DriverConfigProfile;
 import com.datastax.oss.driver.api.testinfra.CassandraRequirement;
 import com.datastax.oss.driver.api.testinfra.ccm.CcmRule;
 import com.datastax.oss.driver.api.testinfra.cluster.ClusterRule;
 import com.datastax.oss.driver.api.testinfra.cluster.ClusterUtils;
 import com.datastax.oss.driver.categories.ParallelizableTests;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
@@ -55,27 +53,16 @@ public class BoundStatementIT {
   }
 
   @Test(expected = IllegalStateException.class)
-  @Ignore
-  public void should_not_allow_unset_value_on_bound_statement_when_protocol_less_than_v4() {
-    // TODO reenable this if JAVA-1584 is fixed.
+  public void should_not_allow_unset_value_when_protocol_less_than_v4() {
     try (Cluster<CqlSession> v3Cluster = ClusterUtils.newCluster(ccm, "protocol.version = V3")) {
-      CqlIdentifier keyspace = ClusterUtils.uniqueKeyspaceId();
-      DriverConfigProfile slowProfile = ClusterUtils.slowProfile(v3Cluster);
-      ClusterUtils.createKeyspace(v3Cluster, keyspace, slowProfile);
+      CqlIdentifier keyspace = cluster.keyspace();
       CqlSession session = v3Cluster.connect(keyspace);
-      PreparedStatement prepared =
-          session.prepare("INSERT INTO test2 (k, v0, v1) values (?, ?, ?)");
+      PreparedStatement prepared = session.prepare("INSERT INTO test2 (k, v0) values (?, ?)");
 
       BoundStatement boundStatement =
-          prepared
-              .boundStatementBuilder()
-              .setString(0, name.getMethodName())
-              .unset(1)
-              .setString(2, name.getMethodName())
-              .build();
+          prepared.boundStatementBuilder().setString(0, name.getMethodName()).unset(1).build();
 
       session.execute(boundStatement);
-      ClusterUtils.dropKeyspace(v3Cluster, keyspace, slowProfile);
     }
   }
 

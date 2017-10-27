@@ -26,6 +26,7 @@ import com.datastax.oss.driver.api.core.cql.BatchableStatement;
 import com.datastax.oss.driver.api.core.cql.BoundStatement;
 import com.datastax.oss.driver.api.core.cql.ColumnDefinition;
 import com.datastax.oss.driver.api.core.cql.ColumnDefinitions;
+import com.datastax.oss.driver.api.core.cql.CqlSession;
 import com.datastax.oss.driver.api.core.cql.ExecutionInfo;
 import com.datastax.oss.driver.api.core.cql.PrepareRequest;
 import com.datastax.oss.driver.api.core.cql.SimpleStatement;
@@ -50,9 +51,10 @@ import com.datastax.oss.driver.api.core.servererrors.UnauthorizedException;
 import com.datastax.oss.driver.api.core.servererrors.UnavailableException;
 import com.datastax.oss.driver.api.core.servererrors.WriteFailureException;
 import com.datastax.oss.driver.api.core.servererrors.WriteTimeoutException;
-import com.datastax.oss.driver.api.core.cql.CqlSession;
 import com.datastax.oss.driver.api.core.type.codec.TypeCodecs;
 import com.datastax.oss.driver.api.core.type.codec.registry.CodecRegistry;
+import com.datastax.oss.driver.internal.core.ProtocolFeature;
+import com.datastax.oss.driver.internal.core.ProtocolVersionRegistry;
 import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
 import com.datastax.oss.driver.internal.core.metadata.token.ByteOrderedToken;
 import com.datastax.oss.driver.internal.core.metadata.token.Murmur3Token;
@@ -104,6 +106,7 @@ class Conversions {
     }
     CodecRegistry codecRegistry = context.codecRegistry();
     ProtocolVersion protocolVersion = context.protocolVersion();
+    ProtocolVersionRegistry registry = context.protocolVersionRegistry();
     if (statement instanceof SimpleStatement) {
       SimpleStatement simpleStatement = (SimpleStatement) statement;
 
@@ -126,6 +129,9 @@ class Conversions {
       return new Query(simpleStatement.getQuery(), queryOptions);
     } else if (statement instanceof BoundStatement) {
       BoundStatement boundStatement = (BoundStatement) statement;
+      if (!registry.supports(protocolVersion, ProtocolFeature.UNSET_BOUND_VALUES)) {
+        ensureAllSet(boundStatement);
+      }
       QueryOptions queryOptions =
           new QueryOptions(
               consistency,
@@ -141,6 +147,9 @@ class Conversions {
       return new Execute(Bytes.getArray(id), queryOptions);
     } else if (statement instanceof BatchStatement) {
       BatchStatement batchStatement = (BatchStatement) statement;
+      if (!registry.supports(protocolVersion, ProtocolFeature.UNSET_BOUND_VALUES)) {
+        ensureAllSet(batchStatement);
+      }
       List<Object> queriesOrIds = new ArrayList<>(batchStatement.size());
       List<List<ByteBuffer>> values = new ArrayList<>(batchStatement.size());
       for (BatchableStatement child : batchStatement) {
@@ -218,6 +227,26 @@ class Conversions {
       }
     } else {
       return codecRegistry.codecFor(value).encode(value, protocolVersion);
+    }
+  }
+
+  private static void ensureAllSet(BoundStatement boundStatement) {
+    for (int i = 0; i < boundStatement.size(); i++) {
+      if (!boundStatement.isSet(i)) {
+        throw new IllegalStateException(
+            "Unset value at index "
+                + i
+                + ". "
+                + "If you want this value to be null, please set it to null explicitly.");
+      }
+    }
+  }
+
+  private static void ensureAllSet(BatchStatement batchStatement) {
+    for (BatchableStatement<?> batchableStatement : batchStatement) {
+      if (batchableStatement instanceof BoundStatement) {
+        ensureAllSet(((BoundStatement) batchableStatement));
+      }
     }
   }
 

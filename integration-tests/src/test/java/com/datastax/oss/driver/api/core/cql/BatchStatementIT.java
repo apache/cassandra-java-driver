@@ -15,10 +15,13 @@
  */
 package com.datastax.oss.driver.api.core.cql;
 
+import com.datastax.oss.driver.api.core.Cluster;
+import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.servererrors.InvalidQueryException;
 import com.datastax.oss.driver.api.testinfra.CassandraRequirement;
 import com.datastax.oss.driver.api.testinfra.ccm.CcmRule;
 import com.datastax.oss.driver.api.testinfra.cluster.ClusterRule;
+import com.datastax.oss.driver.api.testinfra.cluster.ClusterUtils;
 import com.datastax.oss.driver.categories.ParallelizableTests;
 import java.util.Iterator;
 import org.junit.Before;
@@ -312,6 +315,30 @@ public class BatchStatementIT {
 
     BatchStatement batchStatement = builder.build();
     cluster.session().execute(batchStatement);
+  }
+
+  @Test(expected = IllegalStateException.class)
+  public void should_not_allow_unset_value_when_protocol_less_than_v4() {
+    //    CREATE TABLE test (k0 text, k1 int, v int, PRIMARY KEY (k0, k1))
+    try (Cluster<CqlSession> v3Cluster = ClusterUtils.newCluster(ccm, "protocol.version = V3")) {
+      CqlIdentifier keyspace = cluster.keyspace();
+      CqlSession session = v3Cluster.connect(keyspace);
+      PreparedStatement prepared = session.prepare("INSERT INTO test (k0, k1, v) values (?, ?, ?)");
+
+      BatchStatementBuilder builder = BatchStatement.builder(BatchType.LOGGED);
+      builder.addStatements(
+          // All set => OK
+          prepared.bind(name.getMethodName(), 1, 1),
+          // One variable unset => should fail
+          prepared
+              .boundStatementBuilder()
+              .setString(0, name.getMethodName())
+              .setInt(1, 2)
+              .unset(2)
+              .build());
+
+      session.execute(builder.build());
+    }
   }
 
   private void verifyBatchInsert() {
