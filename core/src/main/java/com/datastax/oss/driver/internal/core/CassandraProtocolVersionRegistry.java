@@ -165,6 +165,16 @@ public class CassandraProtocolVersionRegistry implements ProtocolVersionRegistry
     }
   }
 
+  @Override
+  public boolean supports(ProtocolVersion version, ProtocolFeature feature) {
+    switch (feature) {
+      case UNSET_BOUND_VALUES:
+        return version.getCode() >= 4;
+      default:
+        throw new IllegalArgumentException("Unhandled protocol feature: " + feature);
+    }
+  }
+
   private NavigableMap<Integer, ProtocolVersion> byCode(ProtocolVersion[][] versionRanges) {
     NavigableMap<Integer, ProtocolVersion> map = new TreeMap<>();
     for (ProtocolVersion[] versionRange : versionRanges) {

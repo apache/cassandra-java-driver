@@ -66,4 +66,7 @@ public interface ProtocolVersionRegistry {
    *     the driver initialization to fail.
    */
   ProtocolVersion highestCommon(Collection<Node> nodes);
+
+  /** Whether a given version supports a given feature. */
+  boolean supports(ProtocolVersion version, ProtocolFeature feature);
 }

@@ -4,6 +4,8 @@
 
 ### 4.0.0-alpha3 (in progress)
 
+- [bug] JAVA-1584: Validate that no bound values are unset in protocol v3
+
 ### 4.0.0-alpha2
 
 - [new feature] JAVA-1525: Handle token metadata

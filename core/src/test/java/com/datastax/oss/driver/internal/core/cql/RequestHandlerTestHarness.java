@@ -17,6 +17,7 @@ package com.datastax.oss.driver.internal.core.cql;
 
 import com.datastax.oss.driver.api.core.ConsistencyLevel;
 import com.datastax.oss.driver.api.core.CqlIdentifier;
+import com.datastax.oss.driver.api.core.ProtocolVersion;
 import com.datastax.oss.driver.api.core.config.CoreDriverOption;
 import com.datastax.oss.driver.api.core.config.DriverConfig;
 import com.datastax.oss.driver.api.core.config.DriverConfigProfile;
@@ -25,6 +26,8 @@ import com.datastax.oss.driver.api.core.retry.RetryPolicy;
 import com.datastax.oss.driver.api.core.session.Request;
 import com.datastax.oss.driver.api.core.specex.SpeculativeExecutionPolicy;
 import com.datastax.oss.driver.api.core.time.TimestampGenerator;
+import com.datastax.oss.driver.internal.core.ProtocolFeature;
+import com.datastax.oss.driver.internal.core.ProtocolVersionRegistry;
 import com.datastax.oss.driver.internal.core.channel.DriverChannel;
 import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
 import com.datastax.oss.driver.internal.core.context.NettyOptions;
@@ -75,6 +78,7 @@ public class RequestHandlerTestHarness implements AutoCloseable {
   @Mock private RetryPolicy retryPolicy;
   @Mock private SpeculativeExecutionPolicy speculativeExecutionPolicy;
   @Mock private TimestampGenerator timestampGenerator;
+  @Mock private ProtocolVersionRegistry protocolVersionRegistry;
 
   private RequestHandlerTestHarness(Builder builder) {
     MockitoAnnotations.initMocks(this);
@@ -129,6 +133,12 @@ public class RequestHandlerTestHarness implements AutoCloseable {
 
     Mockito.when(session.setKeyspace(any(CqlIdentifier.class)))
         .thenReturn(CompletableFuture.completedFuture(null));
+
+    Mockito.when(context.protocolVersionRegistry()).thenReturn(protocolVersionRegistry);
+    Mockito.when(
+            protocolVersionRegistry.supports(
+                any(ProtocolVersion.class), any(ProtocolFeature.class)))
+        .thenReturn(true);
   }
 
   public DefaultSession getSession() {
