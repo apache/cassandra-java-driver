@@ -233,7 +233,7 @@ public class VersionNumber implements Comparable<VersionNumber> {
 
     @Override
     public int hashCode() {
-        return MoreObjects.hashCode(major, minor, patch, dsePatch, preReleases, build);
+        return MoreObjects.hashCode(major, minor, patch, dsePatch, Arrays.hashCode(preReleases), build);
     }
 
     @Override
