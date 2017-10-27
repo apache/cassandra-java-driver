@@ -366,6 +366,38 @@ public class DefaultSessionTest {
   }
 
   @Test
+  public void should_do_nothing_if_node_becomes_ignored_but_was_already_ignored() {
+    ChannelPool pool1 = mockPool(node1);
+    ChannelPool pool2 = mockPool(node2);
+    ChannelPool pool3 = mockPool(node3);
+    MockChannelPoolFactoryHelper factoryHelper =
+        MockChannelPoolFactoryHelper.builder(channelPoolFactory)
+            .success(node1, KEYSPACE, NodeDistance.LOCAL, pool1)
+            .success(node2, KEYSPACE, NodeDistance.LOCAL, pool2)
+            .success(node3, KEYSPACE, NodeDistance.LOCAL, pool3)
+            .build();
+
+    CompletionStage<CqlSession> initFuture = DefaultSession.init(context, KEYSPACE, "test");
+
+    factoryHelper.waitForCall(node1, KEYSPACE, NodeDistance.LOCAL);
+    factoryHelper.waitForCall(node2, KEYSPACE, NodeDistance.LOCAL);
+    factoryHelper.waitForCall(node3, KEYSPACE, NodeDistance.LOCAL);
+    waitForPendingAdminTasks();
+    assertThat(initFuture).isSuccess();
+
+    eventBus.fire(new DistanceEvent(NodeDistance.IGNORED, node2));
+    Mockito.verify(pool2, timeout(100)).closeAsync();
+
+    Session session = CompletableFutures.getCompleted(initFuture.toCompletableFuture());
+    assertThat(((DefaultSession) session).getPools()).containsValues(pool1, pool3);
+
+    // Fire the same event again, nothing should happen
+    eventBus.fire(new DistanceEvent(NodeDistance.IGNORED, node2));
+    waitForPendingAdminTasks();
+    factoryHelper.verifyNoMoreCalls();
+  }
+
+  @Test
   public void should_recreate_pool_if_node_becomes_not_ignored() {
     Mockito.when(node2.getDistance()).thenReturn(NodeDistance.IGNORED);
 
