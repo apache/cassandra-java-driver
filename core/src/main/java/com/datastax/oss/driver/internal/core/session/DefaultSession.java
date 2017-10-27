@@ -326,7 +326,7 @@ public class DefaultSession implements CqlSession {
       NodeDistance newDistance = event.distance;
       if (pending.containsKey(node)) {
         pendingDistanceEvents.put(node, event);
-      } else if (newDistance == NodeDistance.IGNORED && pools.containsKey(node)) {
+      } else if (newDistance == NodeDistance.IGNORED) {
         ChannelPool pool = pools.remove(node);
         if (pool != null) {
           LOG.debug("[{}] {} became IGNORED, destroying pool", logPrefix, node);
