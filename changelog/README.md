@@ -6,6 +6,7 @@
 - [improvement] JAVA-1196: Include hash of result set metadata in prepared statement id.
 - [improvement] JAVA-1670: Support user-provided JMX ports for CCMBridge.
 - [improvement] JAVA-1661: Avoid String.toLowerCase if possible in Metadata.
+- [improvement] JAVA-1659: Expose low-level flusher tuning options.
 
 
 ### 3.3.1
