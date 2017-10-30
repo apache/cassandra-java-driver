@@ -23,6 +23,7 @@ import com.datastax.oss.driver.api.core.metadata.NodeState;
 import com.datastax.oss.driver.internal.core.channel.ChannelEvent;
 import com.datastax.oss.driver.internal.core.context.EventBus;
 import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
+import com.datastax.oss.driver.internal.core.util.Loggers;
 import com.datastax.oss.driver.internal.core.util.concurrent.Debouncer;
 import com.datastax.oss.driver.internal.core.util.concurrent.RunOrSchedule;
 import com.google.common.collect.Maps;
@@ -311,7 +312,7 @@ public class NodeStateManager implements AsyncAutoCloseable {
                       // Fire the event whether the refresh succeeded or not
                       eventBus.fire(NodeStateEvent.changed(oldState, newState, node));
                     } catch (Throwable t) {
-                      LOG.warn("[{}] Unexpected exception", logPrefix, t);
+                      Loggers.warnWithException(LOG, "[{}] Unexpected exception", logPrefix, t);
                     }
                   });
         }

@@ -16,6 +16,7 @@
 package com.datastax.oss.driver.internal.core.protocol;
 
 import com.datastax.oss.driver.api.core.connection.FrameTooLongException;
+import com.datastax.oss.driver.internal.core.util.Loggers;
 import com.datastax.oss.protocol.internal.Frame;
 import com.datastax.oss.protocol.internal.FrameCodec;
 import com.datastax.oss.protocol.internal.ProtocolConstants;
@@ -89,7 +90,7 @@ public class FrameDecoder extends LengthFieldBasedFrameDecoder {
       } catch (Exception e1) {
         // Should never happen, super.decode does not return a non-null buffer until the length
         // field has been read, and the stream id comes before
-        LOG.warn("Unexpected error while reading stream id", e1);
+        Loggers.warnWithException(LOG, "Unexpected error while reading stream id", e1);
         streamId = -1;
       }
       if (e instanceof TooLongFrameException) {

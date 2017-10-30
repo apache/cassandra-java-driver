@@ -16,6 +16,7 @@
 package com.datastax.oss.driver.api.core.uuid;
 
 import com.datastax.oss.driver.internal.core.os.Native;
+import com.datastax.oss.driver.internal.core.util.Loggers;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Charsets;
 import java.lang.management.ManagementFactory;
@@ -159,7 +160,7 @@ public final class Uuids {
         pid = Native.getProcessId();
         LOG.info("PID obtained through native call to getpid(): {}", pid);
       } catch (Exception e) {
-        LOG.warn("Native call to getpid() failed", e);
+        Loggers.warnWithException(LOG, "Native call to getpid() failed", e);
       }
     }
     if (pid == null) {
@@ -168,7 +169,7 @@ public final class Uuids {
         pid = Integer.parseInt(pidJmx);
         LOG.info("PID obtained through JMX: {}", pid);
       } catch (Exception e) {
-        LOG.warn("Failed to obtain PID from JMX", e);
+        Loggers.warnWithException(LOG, "Failed to obtain PID from JMX", e);
       }
     }
     if (pid == null) {

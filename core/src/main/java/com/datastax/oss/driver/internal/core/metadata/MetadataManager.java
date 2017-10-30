@@ -27,6 +27,7 @@ import com.datastax.oss.driver.internal.core.metadata.schema.parsing.SchemaParse
 import com.datastax.oss.driver.internal.core.metadata.schema.queries.SchemaQueriesFactory;
 import com.datastax.oss.driver.internal.core.metadata.schema.queries.SchemaRows;
 import com.datastax.oss.driver.internal.core.metadata.schema.refresh.SchemaRefresh;
+import com.datastax.oss.driver.internal.core.util.Loggers;
 import com.datastax.oss.driver.internal.core.util.NanoTime;
 import com.datastax.oss.driver.internal.core.util.concurrent.CompletableFutures;
 import com.datastax.oss.driver.internal.core.util.concurrent.Debouncer;
@@ -370,7 +371,8 @@ public class MetadataManager implements AsyncAutoCloseable {
             .whenComplete(
                 (v, error) -> {
                   if (error != null) {
-                    LOG.warn(
+                    Loggers.warnWithException(
+                        LOG,
                         "[{}] Unexpected error while refreshing schema, skipping",
                         logPrefix,
                         error);

@@ -19,11 +19,11 @@ import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.InvalidKeyspaceException;
 import com.datastax.oss.driver.api.core.config.CoreDriverOption;
 import com.datastax.oss.driver.api.core.config.DriverConfig;
+import com.datastax.oss.driver.api.core.cql.CqlSession;
 import com.datastax.oss.driver.api.core.loadbalancing.LoadBalancingPolicy;
 import com.datastax.oss.driver.api.core.loadbalancing.NodeDistance;
 import com.datastax.oss.driver.api.core.metadata.Node;
 import com.datastax.oss.driver.api.core.metadata.NodeState;
-import com.datastax.oss.driver.api.core.cql.CqlSession;
 import com.datastax.oss.driver.api.core.session.Request;
 import com.datastax.oss.driver.api.core.type.reflect.GenericType;
 import com.datastax.oss.driver.internal.core.channel.DriverChannel;
@@ -34,6 +34,7 @@ import com.datastax.oss.driver.internal.core.metadata.NodeStateEvent;
 import com.datastax.oss.driver.internal.core.metadata.TopologyEvent;
 import com.datastax.oss.driver.internal.core.pool.ChannelPool;
 import com.datastax.oss.driver.internal.core.pool.ChannelPoolFactory;
+import com.datastax.oss.driver.internal.core.util.Loggers;
 import com.datastax.oss.driver.internal.core.util.concurrent.CompletableFutures;
 import com.datastax.oss.driver.internal.core.util.concurrent.ReplayingEventFilter;
 import com.datastax.oss.driver.internal.core.util.concurrent.RunOrSchedule;
@@ -332,7 +333,7 @@ public class DefaultSession implements CqlSession {
           pool.closeAsync()
               .exceptionally(
                   error -> {
-                    LOG.warn("[{}] Error closing pool", logPrefix, error);
+                    Loggers.warnWithException(LOG, "[{}] Error closing pool", logPrefix, error);
                     return null;
                   });
         }
@@ -375,7 +376,7 @@ public class DefaultSession implements CqlSession {
           pool.closeAsync()
               .exceptionally(
                   error -> {
-                    LOG.warn("[{}] Error closing pool", logPrefix, error);
+                    Loggers.warnWithException(LOG, "[{}] Error closing pool", logPrefix, error);
                     return null;
                   });
         }
@@ -430,7 +431,8 @@ public class DefaultSession implements CqlSession {
               .handleAsync(
                   (result, error) -> {
                     if (error != null) {
-                      LOG.warn("Error while switching keyspace to " + keyspace, error);
+                      Loggers.warnWithException(
+                          LOG, "Error while switching keyspace to " + keyspace, error);
                     }
                     reprepareStatements(pool);
                     return null;

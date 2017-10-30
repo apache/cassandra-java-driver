@@ -29,6 +29,7 @@ import com.datastax.oss.driver.internal.core.metadata.DistanceEvent;
 import com.datastax.oss.driver.internal.core.metadata.NodeStateEvent;
 import com.datastax.oss.driver.internal.core.metadata.TopologyEvent;
 import com.datastax.oss.driver.internal.core.metadata.TopologyMonitor;
+import com.datastax.oss.driver.internal.core.util.Loggers;
 import com.datastax.oss.driver.internal.core.util.concurrent.Reconnection;
 import com.datastax.oss.driver.internal.core.util.concurrent.RunOrSchedule;
 import com.datastax.oss.driver.internal.core.util.concurrent.UncaughtExceptions;
@@ -340,7 +341,8 @@ public class ControlConnection implements EventCallback, AsyncAutoCloseable {
                       onSuccess.run();
                     }
                   } catch (Exception e) {
-                    LOG.warn(
+                    Loggers.warnWithException(
+                        LOG,
                         "[{}] Unexpected exception while processing channel init result",
                         logPrefix,
                         e);
@@ -366,7 +368,8 @@ public class ControlConnection implements EventCallback, AsyncAutoCloseable {
                     context.metadataManager().refreshSchema(null, false, true);
                     // TODO avoid refreshing the token map twice
                   } catch (Throwable t) {
-                    LOG.warn("[{}] Unexpected error on control connection reconnect", logPrefix, t);
+                    Loggers.warnWithException(
+                        LOG, "[{}] Unexpected error on control connection reconnect", logPrefix, t);
                   }
                 }
               });

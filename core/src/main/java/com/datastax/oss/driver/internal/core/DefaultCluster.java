@@ -21,11 +21,11 @@ import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.ProtocolVersion;
 import com.datastax.oss.driver.api.core.config.CoreDriverOption;
 import com.datastax.oss.driver.api.core.context.DriverContext;
+import com.datastax.oss.driver.api.core.cql.CqlSession;
 import com.datastax.oss.driver.api.core.metadata.Metadata;
 import com.datastax.oss.driver.api.core.metadata.NodeState;
 import com.datastax.oss.driver.api.core.metadata.NodeStateListener;
 import com.datastax.oss.driver.api.core.metadata.schema.SchemaChangeListener;
-import com.datastax.oss.driver.api.core.cql.CqlSession;
 import com.datastax.oss.driver.api.core.session.Session;
 import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
 import com.datastax.oss.driver.internal.core.control.ControlConnection;
@@ -33,6 +33,7 @@ import com.datastax.oss.driver.internal.core.metadata.MetadataManager;
 import com.datastax.oss.driver.internal.core.metadata.NodeStateEvent;
 import com.datastax.oss.driver.internal.core.metadata.NodeStateManager;
 import com.datastax.oss.driver.internal.core.session.DefaultSession;
+import com.datastax.oss.driver.internal.core.util.Loggers;
 import com.datastax.oss.driver.internal.core.util.concurrent.CompletableFutures;
 import com.datastax.oss.driver.internal.core.util.concurrent.RunOrSchedule;
 import com.google.common.collect.ImmutableList;
@@ -432,8 +433,11 @@ public class DefaultCluster implements Cluster<CqlSession> {
       CompletableFuture<Void> future = stage.toCompletableFuture();
       assert future.isDone();
       if (future.isCompletedExceptionally()) {
-        LOG.warn(
-            "[{}] Unexpected error while closing", logPrefix, CompletableFutures.getFailed(future));
+        Loggers.warnWithException(
+            LOG,
+            "[{}] Unexpected error while closing",
+            logPrefix,
+            CompletableFutures.getFailed(future));
       }
     }
 
@@ -449,7 +453,7 @@ public class DefaultCluster implements Cluster<CqlSession> {
         try {
           closeable.close();
         } catch (Throwable t) {
-          LOG.warn("[{}] Error while closing {}", logPrefix, closeable, t);
+          Loggers.warnWithException(LOG, "[{}] Error while closing {}", logPrefix, closeable, t);
         }
       }
     }

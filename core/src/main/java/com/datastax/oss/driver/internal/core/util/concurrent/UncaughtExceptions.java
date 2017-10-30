@@ -15,6 +15,7 @@
  */
 package com.datastax.oss.driver.internal.core.util.concurrent;
 
+import com.datastax.oss.driver.internal.core.util.Loggers;
 import io.netty.util.concurrent.Future;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -45,12 +46,12 @@ public class UncaughtExceptions {
 
   public static <T> void log(Future<T> future) {
     if (!future.isSuccess() && !future.isCancelled()) {
-      LOG.warn("Uncaught exception in scheduled task", future.cause());
+      Loggers.warnWithException(LOG, "Uncaught exception in scheduled task", future.cause());
     }
   }
 
   public static <T> T log(Throwable t) {
-    LOG.warn("Uncaught exception in scheduled task", t);
+    Loggers.warnWithException(LOG, "Uncaught exception in scheduled task", t);
     return null;
   }
 }
