@@ -20,6 +20,7 @@ import com.datastax.oss.driver.api.core.config.DriverConfigProfile;
 import com.datastax.oss.driver.api.core.cql.BatchStatement;
 import com.datastax.oss.driver.api.core.cql.BatchType;
 import com.datastax.oss.driver.api.core.cql.BatchableStatement;
+import com.datastax.oss.driver.api.core.cql.SimpleStatement;
 import com.datastax.oss.driver.api.core.metadata.token.Token;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
@@ -86,6 +87,24 @@ public class DefaultBatchStatement implements BatchStatement {
         configProfileName,
         configProfile,
         keyspace,
+        routingKeyspace,
+        routingKey,
+        routingToken,
+        customPayload,
+        idempotent,
+        tracing,
+        timestamp,
+        pagingState);
+  }
+
+  @Override
+  public BatchStatement setKeyspace(CqlIdentifier newKeyspace) {
+    return new DefaultBatchStatement(
+        batchType,
+        statements,
+        configProfileName,
+        configProfile,
+        newKeyspace,
         routingKeyspace,
         routingKey,
         routingToken,
@@ -244,7 +263,16 @@ public class DefaultBatchStatement implements BatchStatement {
 
   @Override
   public CqlIdentifier getKeyspace() {
-    return keyspace;
+    if (keyspace != null) {
+      return keyspace;
+    } else {
+      for (BatchableStatement<?> statement : statements) {
+        if (statement instanceof SimpleStatement && statement.getKeyspace() != null) {
+          return statement.getKeyspace();
+        }
+      }
+    }
+    return null;
   }
 
   @Override

@@ -215,7 +215,8 @@ class ReprepareOnUp {
     } else {
       RepreparePayload payload = toReprepare.poll();
       queryAsync(
-              new Prepare(payload.query),
+              new Prepare(
+                  payload.query, (payload.keyspace == null ? null : payload.keyspace.asInternal())),
               payload.customPayload,
               String.format("Reprepare '%s'", payload.query))
           .handle(

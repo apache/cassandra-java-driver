@@ -15,6 +15,9 @@
  */
 package com.datastax.oss.driver.api.core.cql;
 
+import com.datastax.oss.driver.api.core.CoreProtocolVersion;
+import com.datastax.oss.driver.api.core.CqlIdentifier;
+import com.datastax.oss.driver.api.core.session.Request;
 import com.datastax.oss.driver.internal.core.cql.DefaultSimpleStatement;
 import java.util.Arrays;
 import java.util.Collections;
@@ -147,6 +150,17 @@ public interface SimpleStatement extends BatchableStatement<SimpleStatement> {
    * @see #setNamedValues(Map)
    */
   SimpleStatement setQuery(String newQuery);
+
+  /**
+   * Sets the CQL keyspace to associate with the query.
+   *
+   * <p>This feature is only available with {@link CoreProtocolVersion#V5 native protocol v5} or
+   * higher. Specifying a per-request keyspace with lower protocol versions will cause a runtime
+   * error.
+   *
+   * @see Request#getKeyspace()
+   */
+  SimpleStatement setKeyspace(CqlIdentifier newKeyspace);
 
   List<Object> getPositionalValues();
 

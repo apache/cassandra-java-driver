@@ -15,6 +15,7 @@
  */
 package com.datastax.oss.driver.api.core.cql;
 
+import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.internal.core.cql.DefaultBatchStatement;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
@@ -24,6 +25,7 @@ import java.util.Collections;
 public class BatchStatementBuilder extends StatementBuilder<BatchStatementBuilder, BatchStatement> {
 
   private BatchType batchType;
+  private CqlIdentifier keyspace;
   private ImmutableList.Builder<BatchableStatement<?>> statementsBuilder;
   private int statementsCount;
 
@@ -37,6 +39,12 @@ public class BatchStatementBuilder extends StatementBuilder<BatchStatementBuilde
     this.batchType = template.getBatchType();
     this.statementsBuilder = ImmutableList.<BatchableStatement<?>>builder().addAll(template);
     this.statementsCount = template.size();
+  }
+
+  /** @see BatchStatement#getKeyspace() */
+  public BatchStatementBuilder withKeyspace(CqlIdentifier keyspace) {
+    this.keyspace = keyspace;
+    return this;
   }
 
   /** @see BatchStatement#add(BatchableStatement) */
@@ -80,7 +88,7 @@ public class BatchStatementBuilder extends StatementBuilder<BatchStatementBuilde
         statementsBuilder.build(),
         configProfileName,
         configProfile,
-        null,
+        keyspace,
         routingKeyspace,
         routingKey,
         routingToken,

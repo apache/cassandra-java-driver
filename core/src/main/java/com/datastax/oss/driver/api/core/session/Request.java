@@ -54,12 +54,11 @@ public interface Request {
   DriverConfigProfile getConfigProfile();
 
   /**
-   * <b>NOT IMPLEMENTED YET</b> (method added for binary compatibility, implementation coming soon)
-   * -- The CQL keyspace to execute this request in.
+   * The CQL keyspace to execute this request in.
    *
    * <p>This overrides {@link Session#getKeyspace()} for this particular request, providing a way to
-   * specify the keyspace without forcing it globally on the session, or hard-coding it in the query
-   * string.
+   * specify the keyspace without forcing it globally on the session, nor hard-coding it in the
+   * query string.
    *
    * <p>This feature is only available with {@link CoreProtocolVersion#V5 native protocol v5} or
    * higher. Specifying a per-request keyspace with lower protocol versions will cause a runtime

@@ -15,6 +15,7 @@
  */
 package com.datastax.oss.driver.api.core.cql;
 
+import com.datastax.oss.driver.api.core.CoreProtocolVersion;
 import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.config.DriverConfigProfile;
 import com.datastax.oss.driver.api.core.metadata.token.Token;
@@ -40,7 +41,7 @@ public interface Statement<T extends Statement<T>> extends Request {
    *
    * <p>Most users won't use this explicitly. It is needed for the generic execute method ({@link
    * Session#execute(Request, GenericType)}), but CQL statements will generally be run with one of
-   * the driver's built-in helper methods (such as {@link Session#execute(Statement)}).
+   * the driver's built-in helper methods (such as {@link CqlSession#execute(Statement)}).
    */
   GenericType<ResultSet> SYNC = GenericType.of(ResultSet.class);
 
@@ -49,7 +50,7 @@ public interface Statement<T extends Statement<T>> extends Request {
    *
    * <p>Most users won't use this explicitly. It is needed for the generic execute method ({@link
    * Session#execute(Request, GenericType)}), but CQL statements will generally be run with one of
-   * the driver's built-in helper methods (such as {@link Session#executeAsync(Statement)}).
+   * the driver's built-in helper methods (such as {@link CqlSession#executeAsync(Statement)}).
    */
   GenericType<CompletionStage<AsyncResultSet>> ASYNC =
       new GenericType<CompletionStage<AsyncResultSet>>() {};
@@ -72,18 +73,6 @@ public interface Statement<T extends Statement<T>> extends Request {
    * method. However custom implementations may choose to be mutable and return the same instance.
    */
   T setConfigProfile(DriverConfigProfile newProfile);
-
-  /**
-   * <b>NOT YET SUPPORTED</b> -- sets the CQL keyspace to associate with the query.
-   *
-   * <p>This will be available when <a
-   * href="https://issues.apache.org/jira/browse/CASSANDRA-10145">CASSANDRA-10145</a> is merged in a
-   * stable server release. In the meantime, this method always throws {@link
-   * UnsupportedOperationException}.
-   */
-  default T setKeyspace(CqlIdentifier newKeyspace) {
-    throw new UnsupportedOperationException("Per-query keyspaces are not yet supported");
-  }
 
   /**
    * Sets the keyspace to use for token-aware routing.

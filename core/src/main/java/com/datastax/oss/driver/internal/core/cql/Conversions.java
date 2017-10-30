@@ -16,6 +16,7 @@
 package com.datastax.oss.driver.internal.core.cql;
 
 import com.datastax.oss.driver.api.core.ConsistencyLevel;
+import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.ProtocolVersion;
 import com.datastax.oss.driver.api.core.config.CoreDriverOption;
 import com.datastax.oss.driver.api.core.config.DriverConfigProfile;
@@ -107,13 +108,18 @@ class Conversions {
     CodecRegistry codecRegistry = context.codecRegistry();
     ProtocolVersion protocolVersion = context.protocolVersion();
     ProtocolVersionRegistry registry = context.protocolVersionRegistry();
+    CqlIdentifier keyspace = statement.getKeyspace();
     if (statement instanceof SimpleStatement) {
       SimpleStatement simpleStatement = (SimpleStatement) statement;
-
       if (!simpleStatement.getPositionalValues().isEmpty()
           && !simpleStatement.getNamedValues().isEmpty()) {
         throw new IllegalArgumentException(
             "Can't have both positional and named values in a statement.");
+      }
+      if (keyspace != null
+          && !registry.supports(protocolVersion, ProtocolFeature.PER_REQUEST_KEYSPACE)) {
+        throw new IllegalArgumentException(
+            "Can't use per-request keyspace with protocol " + protocolVersion);
       }
       QueryOptions queryOptions =
           new QueryOptions(
@@ -125,7 +131,7 @@ class Conversions {
               statement.getPagingState(),
               serialConsistency,
               timestamp,
-              null);
+              (keyspace == null) ? null : keyspace.asInternal());
       return new Query(simpleStatement.getQuery(), queryOptions);
     } else if (statement instanceof BoundStatement) {
       BoundStatement boundStatement = (BoundStatement) statement;
@@ -149,6 +155,11 @@ class Conversions {
       BatchStatement batchStatement = (BatchStatement) statement;
       if (!registry.supports(protocolVersion, ProtocolFeature.UNSET_BOUND_VALUES)) {
         ensureAllSet(batchStatement);
+      }
+      if (keyspace != null
+          && !registry.supports(protocolVersion, ProtocolFeature.PER_REQUEST_KEYSPACE)) {
+        throw new IllegalArgumentException(
+            "Can't use per-request keyspace with protocol " + protocolVersion);
       }
       List<Object> queriesOrIds = new ArrayList<>(batchStatement.size());
       List<List<ByteBuffer>> values = new ArrayList<>(batchStatement.size());
@@ -180,7 +191,7 @@ class Conversions {
           consistency,
           serialConsistency,
           timestamp,
-          null);
+          (keyspace == null) ? null : keyspace.asInternal());
     } else {
       throw new IllegalArgumentException(
           "Unsupported statement type: " + statement.getClass().getName());

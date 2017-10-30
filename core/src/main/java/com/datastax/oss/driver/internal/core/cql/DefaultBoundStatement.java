@@ -37,7 +37,6 @@ public class DefaultBoundStatement implements BoundStatement {
   private final ByteBuffer[] values;
   private final String configProfileName;
   private final DriverConfigProfile configProfile;
-  private final CqlIdentifier keyspace;
   private final CqlIdentifier routingKeyspace;
   private final ByteBuffer routingKey;
   private final Token routingToken;
@@ -55,7 +54,6 @@ public class DefaultBoundStatement implements BoundStatement {
       ByteBuffer[] values,
       String configProfileName,
       DriverConfigProfile configProfile,
-      CqlIdentifier keyspace,
       CqlIdentifier routingKeyspace,
       ByteBuffer routingKey,
       Token routingToken,
@@ -71,7 +69,6 @@ public class DefaultBoundStatement implements BoundStatement {
     this.values = values;
     this.configProfileName = configProfileName;
     this.configProfile = configProfile;
-    this.keyspace = keyspace;
     this.routingKeyspace = routingKeyspace;
     this.routingKey = routingKey;
     this.routingToken = routingToken;
@@ -129,7 +126,6 @@ public class DefaultBoundStatement implements BoundStatement {
         newValues,
         configProfileName,
         configProfile,
-        keyspace,
         routingKeyspace,
         routingKey,
         routingToken,
@@ -165,7 +161,6 @@ public class DefaultBoundStatement implements BoundStatement {
         values,
         newConfigProfileName,
         configProfile,
-        keyspace,
         routingKeyspace,
         routingKey,
         routingToken,
@@ -191,7 +186,6 @@ public class DefaultBoundStatement implements BoundStatement {
         values,
         configProfileName,
         newConfigProfile,
-        keyspace,
         routingKeyspace,
         routingKey,
         routingToken,
@@ -202,11 +196,6 @@ public class DefaultBoundStatement implements BoundStatement {
         pagingState,
         codecRegistry,
         protocolVersion);
-  }
-
-  @Override
-  public CqlIdentifier getKeyspace() {
-    return keyspace;
   }
 
   @Override
@@ -229,7 +218,6 @@ public class DefaultBoundStatement implements BoundStatement {
         values,
         configProfileName,
         configProfile,
-        keyspace,
         newRoutingKeyspace,
         routingKey,
         routingToken,
@@ -275,7 +263,6 @@ public class DefaultBoundStatement implements BoundStatement {
         values,
         configProfileName,
         configProfile,
-        keyspace,
         routingKeyspace,
         newRoutingKey,
         routingToken,
@@ -301,7 +288,6 @@ public class DefaultBoundStatement implements BoundStatement {
         values,
         configProfileName,
         configProfile,
-        keyspace,
         routingKeyspace,
         routingKey,
         newRoutingToken,
@@ -327,7 +313,6 @@ public class DefaultBoundStatement implements BoundStatement {
         values,
         configProfileName,
         configProfile,
-        keyspace,
         routingKeyspace,
         routingKey,
         routingToken,
@@ -353,7 +338,6 @@ public class DefaultBoundStatement implements BoundStatement {
         values,
         configProfileName,
         configProfile,
-        keyspace,
         routingKeyspace,
         routingKey,
         routingToken,
@@ -379,7 +363,6 @@ public class DefaultBoundStatement implements BoundStatement {
         values,
         configProfileName,
         configProfile,
-        keyspace,
         routingKeyspace,
         routingKey,
         routingToken,
@@ -405,7 +388,6 @@ public class DefaultBoundStatement implements BoundStatement {
         values,
         configProfileName,
         configProfile,
-        keyspace,
         routingKeyspace,
         routingKey,
         routingToken,
@@ -431,7 +413,6 @@ public class DefaultBoundStatement implements BoundStatement {
         values,
         configProfileName,
         configProfile,
-        keyspace,
         routingKeyspace,
         routingKey,
         routingToken,

@@ -204,6 +204,25 @@ public class DefaultSimpleStatement implements SimpleStatement {
   }
 
   @Override
+  public SimpleStatement setKeyspace(CqlIdentifier newKeyspace) {
+    return new DefaultSimpleStatement(
+        query,
+        positionalValues,
+        namedValues,
+        configProfileName,
+        configProfile,
+        newKeyspace,
+        routingKeyspace,
+        routingKey,
+        routingToken,
+        customPayload,
+        idempotent,
+        tracing,
+        timestamp,
+        pagingState);
+  }
+
+  @Override
   public CqlIdentifier getRoutingKeyspace() {
     return routingKeyspace;
   }

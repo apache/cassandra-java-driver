@@ -24,5 +24,12 @@ public enum ProtocolFeature {
    * @see <a href="https://issues.apache.org/jira/browse/CASSANDRA-7304">CASSANDRA-7304</a>
    */
   UNSET_BOUND_VALUES,
+
+  /**
+   * The ability to override the keyspace on a per-request basis.
+   *
+   * @see <a href="https://issues.apache.org/jira/browse/CASSANDRA-10145">CASSANDRA-10145</a>
+   */
+  PER_REQUEST_KEYSPACE,
   ;
 }
