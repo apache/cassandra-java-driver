@@ -32,6 +32,7 @@ import com.datastax.oss.driver.internal.core.metadata.schema.DefaultColumnMetada
 import com.datastax.oss.driver.internal.core.metadata.schema.DefaultIndexMetadata;
 import com.datastax.oss.driver.internal.core.metadata.schema.DefaultTableMetadata;
 import com.datastax.oss.driver.internal.core.metadata.schema.queries.SchemaRows;
+import com.datastax.oss.driver.internal.core.util.Loggers;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableMultimap;
@@ -192,7 +193,8 @@ class TableParser extends RelationParser {
       options = parseOptions(tableRow);
     } catch (Exception e) {
       // Options change the most often, so be especially lenient if anything goes wrong.
-      LOG.warn(
+      Loggers.warnWithException(
+          LOG,
           "[{}] Error while parsing options for {}.{}, getOptions() will be empty",
           logPrefix,
           keyspaceId,

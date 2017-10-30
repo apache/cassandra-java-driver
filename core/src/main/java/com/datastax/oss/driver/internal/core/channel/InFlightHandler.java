@@ -25,6 +25,7 @@ import com.datastax.oss.driver.internal.core.channel.DriverChannel.ReleaseEvent;
 import com.datastax.oss.driver.internal.core.channel.DriverChannel.RequestMessage;
 import com.datastax.oss.driver.internal.core.channel.DriverChannel.SetKeyspaceEvent;
 import com.datastax.oss.driver.internal.core.protocol.FrameDecodingException;
+import com.datastax.oss.driver.internal.core.util.Loggers;
 import com.datastax.oss.protocol.internal.Frame;
 import com.datastax.oss.protocol.internal.Message;
 import com.datastax.oss.protocol.internal.request.Query;
@@ -213,7 +214,8 @@ public class InFlightHandler extends ChannelDuplexHandler {
         try {
           eventCallback.onEvent(event);
         } catch (Throwable t) {
-          LOG.warn("[{}] Unexpected error while invoking event handler", logPrefix, t);
+          Loggers.warnWithException(
+              LOG, "[{}] Unexpected error while invoking event handler", logPrefix, t);
         }
       }
     } else {
@@ -234,7 +236,8 @@ public class InFlightHandler extends ChannelDuplexHandler {
         try {
           responseCallback.onResponse(responseFrame);
         } catch (Throwable t) {
-          LOG.warn("[{}] Unexpected error while invoking response handler", logPrefix, t);
+          Loggers.warnWithException(
+              LOG, "[{}] Unexpected error while invoking response handler", logPrefix, t);
         }
       }
     }
@@ -252,10 +255,12 @@ public class InFlightHandler extends ChannelDuplexHandler {
         try {
           responseCallback.onFailure(exception.getCause());
         } catch (Throwable t) {
-          LOG.warn("[{}] Unexpected error while invoking failure handler", logPrefix, t);
+          Loggers.warnWithException(
+              LOG, "[{}] Unexpected error while invoking failure handler", logPrefix, t);
         }
       } else {
-        LOG.warn(
+        Loggers.warnWithException(
+            LOG,
             "[{}] Unexpected error while decoding incoming event frame",
             logPrefix,
             exception.getCause());
@@ -384,7 +389,8 @@ public class InFlightHandler extends ChannelDuplexHandler {
         // keyspace switch fails, this could be due to a schema disagreement or a more serious
         // error. Rescheduling the switch is impractical, we can't do much better than closing the
         // channel and letting it reconnect.
-        LOG.warn("[{}] Unexpected error while switching keyspace", logPrefix, setKeyspaceException);
+        Loggers.warnWithException(
+            LOG, "[{}] Unexpected error while switching keyspace", logPrefix, setKeyspaceException);
         abortAllInFlight(setKeyspaceException, this);
         ctx.channel().close();
       }

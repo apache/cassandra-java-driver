@@ -16,6 +16,7 @@
 package com.datastax.oss.driver.internal.core.util.concurrent;
 
 import com.datastax.oss.driver.api.core.connection.ReconnectionPolicy;
+import com.datastax.oss.driver.internal.core.util.Loggers;
 import io.netty.util.concurrent.EventExecutor;
 import io.netty.util.concurrent.Future;
 import io.netty.util.concurrent.ScheduledFuture;
@@ -140,7 +141,8 @@ public class Reconnection {
       try {
         onNextAttemptStarted(reconnectionTask.call());
       } catch (Exception e) {
-        LOG.warn("[{}] Uncaught error while starting reconnection attempt", logPrefix, e);
+        Loggers.warnWithException(
+            LOG, "[{}] Uncaught error while starting reconnection attempt", logPrefix, e);
         scheduleNextAttempt();
       }
     }
@@ -186,8 +188,11 @@ public class Reconnection {
           if (f.isSuccess()) {
             onNextAttemptStarted(f.getNow());
           } else if (!f.isCancelled()) {
-            LOG.warn(
-                "[{}] Uncaught error while starting reconnection attempt", logPrefix, f.cause());
+            Loggers.warnWithException(
+                LOG,
+                "[{}] Uncaught error while starting reconnection attempt",
+                logPrefix,
+                f.cause());
             scheduleNextAttempt();
           }
         });
@@ -210,7 +215,8 @@ public class Reconnection {
       reallyStop();
     } else {
       if (error != null && !(error instanceof CancellationException)) {
-        LOG.warn("[{}] Uncaught error while starting reconnection attempt", logPrefix, error);
+        Loggers.warnWithException(
+            LOG, "[{}] Uncaught error while starting reconnection attempt", logPrefix, error);
       }
       if (state == State.STOP_AFTER_CURRENT) {
         reallyStop();

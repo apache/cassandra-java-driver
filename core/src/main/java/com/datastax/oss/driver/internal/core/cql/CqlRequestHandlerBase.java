@@ -43,6 +43,7 @@ import com.datastax.oss.driver.internal.core.channel.ResponseCallback;
 import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
 import com.datastax.oss.driver.internal.core.session.DefaultSession;
 import com.datastax.oss.driver.internal.core.session.RepreparePayload;
+import com.datastax.oss.driver.internal.core.util.Loggers;
 import com.datastax.oss.protocol.internal.Frame;
 import com.datastax.oss.protocol.internal.Message;
 import com.datastax.oss.protocol.internal.ProtocolConstants;
@@ -150,7 +151,7 @@ public abstract class CqlRequestHandlerBase {
               cancelScheduledTasks();
             }
           } catch (Throwable t2) {
-            LOG.warn("[{}] Uncaught exception", logPrefix, t2);
+            Loggers.warnWithException(LOG, "[{}] Uncaught exception", logPrefix, t2);
           }
           return null;
         });
@@ -559,7 +560,7 @@ public abstract class CqlRequestHandlerBase {
           this.channel.cancel(this);
         }
       } catch (Throwable t) {
-        LOG.warn("[{}] Error cancelling", logPrefix, t);
+        Loggers.warnWithException(LOG, "[{}] Error cancelling", logPrefix, t);
       }
     }
 

@@ -26,6 +26,7 @@ import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
 import com.datastax.oss.driver.internal.core.metadata.schema.DefaultColumnMetadata;
 import com.datastax.oss.driver.internal.core.metadata.schema.DefaultViewMetadata;
 import com.datastax.oss.driver.internal.core.metadata.schema.queries.SchemaRows;
+import com.datastax.oss.driver.internal.core.util.Loggers;
 import com.google.common.base.MoreObjects;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
@@ -124,7 +125,8 @@ class ViewParser extends RelationParser {
       options = parseOptions(viewRow);
     } catch (Exception e) {
       // Options change the most often, so be especially lenient if anything goes wrong.
-      LOG.warn(
+      Loggers.warnWithException(
+          LOG,
           "[{}] Error while parsing options for {}.{}, getOptions() will be empty",
           logPrefix,
           keyspaceId,

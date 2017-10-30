@@ -22,6 +22,7 @@ import com.datastax.oss.driver.api.core.metadata.TokenMap;
 import com.datastax.oss.driver.api.core.metadata.schema.KeyspaceMetadata;
 import com.datastax.oss.driver.internal.core.metadata.token.DefaultTokenMap;
 import com.datastax.oss.driver.internal.core.metadata.token.TokenFactory;
+import com.datastax.oss.driver.internal.core.util.Loggers;
 import com.datastax.oss.driver.internal.core.util.NanoTime;
 import com.google.common.collect.ImmutableMap;
 import java.net.InetSocketAddress;
@@ -148,7 +149,8 @@ public class DefaultMetadata implements Metadata {
         return Optional.of(oldTokenMap.refresh(newNodes.values(), newKeyspaces.values()));
       }
     } catch (Throwable t) {
-      LOG.warn(
+      Loggers.warnWithException(
+          LOG,
           "[{}] Unexpected error while refreshing token map, keeping previous version",
           logPrefix,
           t);

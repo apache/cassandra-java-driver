@@ -31,6 +31,7 @@ import com.datastax.oss.driver.internal.core.config.ConfigChangeEvent;
 import com.datastax.oss.driver.internal.core.context.EventBus;
 import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
 import com.datastax.oss.driver.internal.core.metadata.TopologyEvent;
+import com.datastax.oss.driver.internal.core.util.Loggers;
 import com.datastax.oss.driver.internal.core.util.concurrent.CompletableFutures;
 import com.datastax.oss.driver.internal.core.util.concurrent.Reconnection;
 import com.datastax.oss.driver.internal.core.util.concurrent.RunOrSchedule;
@@ -473,7 +474,7 @@ public class ChannelPool implements AsyncAutoCloseable {
         GenericFutureListener<Future<? super Void>> channelCloseListener =
             f -> {
               if (!f.isSuccess()) {
-                LOG.warn("[{}] Error closing channel", logPrefix, f.cause());
+                Loggers.warnWithException(LOG, "[{}] Error closing channel", logPrefix, f.cause());
               }
               if (remaining.decrementAndGet() == 0) {
                 closeFuture.complete(null);
