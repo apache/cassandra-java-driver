@@ -50,8 +50,9 @@ public class CcmBridge implements AutoCloseable {
   private static final Logger logger = LoggerFactory.getLogger(CcmBridge.class);
 
   private final CassandraVersion cassandraVersion;
+  private final String cassandraDirectory;
 
-  private final int nodes[];
+  private final int[] nodes;
 
   private final Path directory;
 
@@ -68,6 +69,9 @@ public class CcmBridge implements AutoCloseable {
 
   public static final CassandraVersion DEFAULT_CASSANDRA_VERSION =
       CassandraVersion.parse(System.getProperty("ccm.cassandraVersion", "3.11.0"));
+
+  public static final String DEFAULT_CASSANDRA_DIRECTORY =
+      System.getProperty("ccm.cassandraDirectory");
 
   public static final String DEFAULT_CLIENT_TRUSTSTORE_PASSWORD = "cassandra1sfun";
   public static final String DEFAULT_CLIENT_TRUSTSTORE_PATH = "/client.truststore";
@@ -100,6 +104,7 @@ public class CcmBridge implements AutoCloseable {
   private CcmBridge(
       Path directory,
       CassandraVersion cassandraVersion,
+      String cassandraDirectory,
       int[] nodes,
       String ipPrefix,
       Map<String, Object> initialConfiguration,
@@ -107,6 +112,7 @@ public class CcmBridge implements AutoCloseable {
       Collection<String> jvmArgs) {
     this.directory = directory;
     this.cassandraVersion = cassandraVersion;
+    this.cassandraDirectory = cassandraDirectory;
     if (nodes.length == 1) {
       // Hack to ensure that the default DC is always called 'dc1': pass a list ('-nX:0') even if
       // there is only one DC (with '-nX', CCM configures `SimpleSnitch`, which hard-codes the name
@@ -141,11 +147,14 @@ public class CcmBridge implements AutoCloseable {
 
   public void create() {
     if (created.compareAndSet(false, true)) {
+      if (cassandraDirectory != null) {
+        createOptions.add("--install-dir=" + new File(cassandraDirectory).getAbsolutePath());
+      } else {
+        createOptions.add("-v " + cassandraVersion.toString());
+      }
       execute(
           "create",
           "ccm_1",
-          "-v",
-          cassandraVersion.toString(),
           "-i",
           ipPrefix,
           "-n",
@@ -272,6 +281,7 @@ public class CcmBridge implements AutoCloseable {
     private final List<String> jvmArgs = new ArrayList<>();
     private String ipPrefix = "127.0.0.";
     private CassandraVersion cassandraVersion = CcmBridge.DEFAULT_CASSANDRA_VERSION;
+    private String cassandraDirectory = CcmBridge.DEFAULT_CASSANDRA_DIRECTORY;
     private final List<String> createOptions = new ArrayList<>();
 
     private final Path directory;
@@ -299,6 +309,11 @@ public class CcmBridge implements AutoCloseable {
 
     public Builder withCassandraVersion(CassandraVersion cassandraVersion) {
       this.cassandraVersion = cassandraVersion;
+      return this;
+    }
+
+    public Builder withCassandraDirectory(String cassandraDirectory) {
+      this.cassandraDirectory = cassandraDirectory;
       return this;
     }
 
@@ -346,6 +361,7 @@ public class CcmBridge implements AutoCloseable {
       return new CcmBridge(
           directory,
           cassandraVersion,
+          cassandraDirectory,
           nodes,
           ipPrefix,
           cassandraConfiguration,
