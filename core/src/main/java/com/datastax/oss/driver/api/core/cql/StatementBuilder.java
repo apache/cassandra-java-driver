@@ -37,7 +37,6 @@ public abstract class StatementBuilder<T extends StatementBuilder<T, S>, S exten
 
   protected String configProfileName;
   protected DriverConfigProfile configProfile;
-  protected CqlIdentifier keyspace;
   protected CqlIdentifier routingKeyspace;
   protected ByteBuffer routingKey;
   protected Token routingToken;

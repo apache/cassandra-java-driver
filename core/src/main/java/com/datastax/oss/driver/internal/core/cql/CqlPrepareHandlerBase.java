@@ -16,7 +16,9 @@
 package com.datastax.oss.driver.internal.core.cql;
 
 import com.datastax.oss.driver.api.core.AllNodesFailedException;
+import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.DriverTimeoutException;
+import com.datastax.oss.driver.api.core.ProtocolVersion;
 import com.datastax.oss.driver.api.core.config.CoreDriverOption;
 import com.datastax.oss.driver.api.core.config.DriverConfig;
 import com.datastax.oss.driver.api.core.config.DriverConfigProfile;
@@ -30,6 +32,8 @@ import com.datastax.oss.driver.api.core.servererrors.CoordinatorException;
 import com.datastax.oss.driver.api.core.servererrors.FunctionFailureException;
 import com.datastax.oss.driver.api.core.servererrors.ProtocolError;
 import com.datastax.oss.driver.api.core.servererrors.QueryValidationException;
+import com.datastax.oss.driver.internal.core.ProtocolFeature;
+import com.datastax.oss.driver.internal.core.ProtocolVersionRegistry;
 import com.datastax.oss.driver.internal.core.adminrequest.AdminRequestHandler;
 import com.datastax.oss.driver.internal.core.channel.DriverChannel;
 import com.datastax.oss.driver.internal.core.channel.ResponseCallback;
@@ -127,7 +131,16 @@ public abstract class CqlPrepareHandlerBase {
           }
           return null;
         });
-    this.message = new Prepare(request.getQuery());
+    ProtocolVersion protocolVersion = context.protocolVersion();
+    ProtocolVersionRegistry registry = context.protocolVersionRegistry();
+    CqlIdentifier keyspace = request.getKeyspace();
+    if (keyspace != null
+        && !registry.supports(protocolVersion, ProtocolFeature.PER_REQUEST_KEYSPACE)) {
+      throw new IllegalArgumentException(
+          "Can't use per-request keyspace with protocol " + protocolVersion);
+    }
+    this.message =
+        new Prepare(request.getQuery(), (keyspace == null) ? null : keyspace.asInternal());
     this.scheduler = context.nettyOptions().ioEventLoopGroup().next();
 
     this.timeout = configProfile.getDuration(CoreDriverOption.REQUEST_TIMEOUT);

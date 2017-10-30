@@ -15,6 +15,7 @@
  */
 package com.datastax.oss.driver.api.core.cql;
 
+import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.internal.core.cql.DefaultSimpleStatement;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
@@ -27,6 +28,7 @@ public class SimpleStatementBuilder
     extends StatementBuilder<SimpleStatementBuilder, SimpleStatement> {
 
   private String query;
+  private CqlIdentifier keyspace;
   private ImmutableList.Builder<Object> positionalValuesBuilder;
   private ImmutableMap.Builder<String, Object> namedValuesBuilder;
 
@@ -51,8 +53,15 @@ public class SimpleStatementBuilder
     }
   }
 
+  /** @see SimpleStatement#getQuery() */
   public SimpleStatementBuilder withQuery(String query) {
     this.query = query;
+    return this;
+  }
+
+  /** @see SimpleStatement#getKeyspace() */
+  public SimpleStatementBuilder withKeyspace(CqlIdentifier keyspace) {
+    this.keyspace = keyspace;
     return this;
   }
 

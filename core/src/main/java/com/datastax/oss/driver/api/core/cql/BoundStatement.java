@@ -15,6 +15,7 @@
  */
 package com.datastax.oss.driver.api.core.cql;
 
+import com.datastax.oss.driver.api.core.CqlIdentifier;
 import java.nio.ByteBuffer;
 import java.util.List;
 
@@ -32,4 +33,13 @@ public interface BoundStatement
 
   /** The values to bind, in their serialized form. */
   List<ByteBuffer> getValues();
+
+  /**
+   * Always returns null (bound statements can't have a per-request keyspace, they always inherit
+   * the one of the statement that was initially prepared).
+   */
+  @Override
+  default CqlIdentifier getKeyspace() {
+    return null;
+  }
 }

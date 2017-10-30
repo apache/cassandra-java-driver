@@ -145,8 +145,9 @@ public class DefaultPreparedStatement implements PreparedStatement {
         encodedValues,
         configProfileName,
         configProfile,
+        // If the prepared statement had a per-request keyspace, we want to use that as the routing
+        // keyspace.
         repreparePayload.keyspace,
-        null,
         null,
         null,
         customPayloadForBoundStatements,
@@ -160,7 +161,8 @@ public class DefaultPreparedStatement implements PreparedStatement {
 
   @Override
   public BoundStatementBuilder boundStatementBuilder() {
-    return new BoundStatementBuilder(this, variableDefinitions, codecRegistry, protocolVersion);
+    return new BoundStatementBuilder(
+        this, variableDefinitions, repreparePayload.keyspace, codecRegistry, protocolVersion);
   }
 
   public RepreparePayload getRepreparePayload() {

@@ -170,6 +170,8 @@ public class CassandraProtocolVersionRegistry implements ProtocolVersionRegistry
     switch (feature) {
       case UNSET_BOUND_VALUES:
         return version.getCode() >= 4;
+      case PER_REQUEST_KEYSPACE:
+        return version.getCode() >= 5;
       default:
         throw new IllegalArgumentException("Unhandled protocol feature: " + feature);
     }

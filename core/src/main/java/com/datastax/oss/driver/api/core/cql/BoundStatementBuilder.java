@@ -35,10 +35,12 @@ public class BoundStatementBuilder extends StatementBuilder<BoundStatementBuilde
   public BoundStatementBuilder(
       PreparedStatement preparedStatement,
       ColumnDefinitions variableDefinitions,
+      CqlIdentifier routingKeyspace,
       CodecRegistry codecRegistry,
       ProtocolVersion protocolVersion) {
     this.preparedStatement = preparedStatement;
     this.variableDefinitions = variableDefinitions;
+    this.routingKeyspace = routingKeyspace;
     this.values = new ByteBuffer[variableDefinitions.size()];
     for (int i = 0; i < values.length; i++) {
       values[i] = ProtocolConstants.UNSET_VALUE;
@@ -51,6 +53,7 @@ public class BoundStatementBuilder extends StatementBuilder<BoundStatementBuilde
     super(template);
     this.preparedStatement = template.getPreparedStatement();
     this.variableDefinitions = template.getPreparedStatement().getVariableDefinitions();
+    this.routingKeyspace = template.getRoutingKeyspace();
     this.values = template.getValues().toArray(new ByteBuffer[this.variableDefinitions.size()]);
     this.codecRegistry = template.codecRegistry();
     this.protocolVersion = template.protocolVersion();
@@ -105,7 +108,6 @@ public class BoundStatementBuilder extends StatementBuilder<BoundStatementBuilde
         values,
         configProfileName,
         configProfile,
-        keyspace,
         routingKeyspace,
         routingKey,
         routingToken,

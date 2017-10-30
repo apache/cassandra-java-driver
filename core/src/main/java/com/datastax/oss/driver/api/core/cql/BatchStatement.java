@@ -15,6 +15,9 @@
  */
 package com.datastax.oss.driver.api.core.cql;
 
+import com.datastax.oss.driver.api.core.CoreProtocolVersion;
+import com.datastax.oss.driver.api.core.CqlIdentifier;
+import com.datastax.oss.driver.api.core.session.Request;
 import com.datastax.oss.driver.internal.core.cql.DefaultBatchStatement;
 import com.google.common.collect.ImmutableList;
 import java.util.ArrayList;
@@ -92,6 +95,21 @@ public interface BatchStatement extends Statement<BatchStatement>, Iterable<Batc
    * method. However custom implementations may choose to be mutable and return the same instance.
    */
   BatchStatement setBatchType(BatchType newBatchType);
+
+  /**
+   * Sets the CQL keyspace to associate with this batch.
+   *
+   * <p>If the keyspace is not set explicitly with this method, it will be inferred from the first
+   * simple statement in the batch that has a keyspace set (or will be null if no such statement
+   * exists).
+   *
+   * <p>This feature is only available with {@link CoreProtocolVersion#V5 native protocol v5} or
+   * higher. Specifying a per-request keyspace with lower protocol versions will cause a runtime
+   * error.
+   *
+   * @see Request#getKeyspace()
+   */
+  BatchStatement setKeyspace(CqlIdentifier newKeyspace);
 
   /**
    * Adds a new statement to the batch.

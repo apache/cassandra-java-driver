@@ -162,10 +162,6 @@ public class DefaultSession implements CqlSession {
   @Override
   public <RequestT extends Request, ResultT> ResultT execute(
       RequestT request, GenericType<ResultT> resultType) {
-    if (request.getKeyspace() != null) {
-      // TODO CASSANDRA-10145
-      throw new UnsupportedOperationException("Per-request keyspaces are not supported yet");
-    }
     return processorRegistry
         .processorFor(request, resultType)
         .newHandler(request, this, context, logPrefix)
