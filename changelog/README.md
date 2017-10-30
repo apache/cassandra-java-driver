@@ -7,6 +7,7 @@
 - [improvement] JAVA-1670: Support user-provided JMX ports for CCMBridge.
 - [improvement] JAVA-1661: Avoid String.toLowerCase if possible in Metadata.
 - [improvement] JAVA-1659: Expose low-level flusher tuning options.
+- [improvement] JAVA-1660: Support netty-transport-native-epoll in OSGi container.
 
 
 ### 3.3.1
