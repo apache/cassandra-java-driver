@@ -21,6 +21,8 @@ import com.datastax.oss.driver.api.core.NoNodeAvailableException;
 import com.datastax.oss.driver.api.core.config.CoreDriverOption;
 import com.datastax.oss.driver.api.core.cql.AsyncResultSet;
 import com.datastax.oss.driver.api.core.cql.BoundStatement;
+import com.datastax.oss.driver.api.core.cql.ColumnDefinition;
+import com.datastax.oss.driver.api.core.cql.ColumnDefinitions;
 import com.datastax.oss.driver.api.core.cql.ExecutionInfo;
 import com.datastax.oss.driver.api.core.cql.PreparedStatement;
 import com.datastax.oss.driver.api.core.cql.Row;
@@ -162,6 +164,9 @@ public class CqlRequestHandlerTest extends CqlRequestHandlerTestBase {
 
     PreparedStatement preparedStatement = Mockito.mock(PreparedStatement.class);
     Mockito.when(preparedStatement.getId()).thenReturn(mockId);
+    ColumnDefinitions columnDefinitions = Mockito.mock(ColumnDefinitions.class);
+    Mockito.when(columnDefinitions.size()).thenReturn(0);
+    Mockito.when(preparedStatement.getResultSetDefinitions()).thenReturn(columnDefinitions);
     BoundStatement boundStatement = Mockito.mock(BoundStatement.class);
     Mockito.when(boundStatement.getPreparedStatement()).thenReturn(preparedStatement);
     Mockito.when(boundStatement.getValues()).thenReturn(Collections.emptyList());

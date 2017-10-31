@@ -38,6 +38,7 @@ import com.datastax.oss.driver.api.core.servererrors.UnavailableException;
 import com.datastax.oss.driver.api.core.servererrors.WriteTimeoutException;
 import com.datastax.oss.driver.api.core.specex.SpeculativeExecutionPolicy;
 import com.datastax.oss.driver.internal.core.adminrequest.AdminRequestHandler;
+import com.datastax.oss.driver.internal.core.adminrequest.UnexpectedResponseException;
 import com.datastax.oss.driver.internal.core.channel.DriverChannel;
 import com.datastax.oss.driver.internal.core.channel.ResponseCallback;
 import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
@@ -452,9 +453,25 @@ public abstract class CqlRequestHandlerBase {
         reprepareHandler
             .start(repreparePayload.customPayload)
             .handle(
-                (result, error) -> {
-                  if (error != null) {
-                    recordError(node, error);
+                (result, exception) -> {
+                  if (exception != null) {
+                    // If the error is not recoverable, surface it to the client instead of retrying
+                    if (exception instanceof UnexpectedResponseException) {
+                      Message prepareErrorMessage =
+                          ((UnexpectedResponseException) exception).message;
+                      if (prepareErrorMessage instanceof Error) {
+                        CoordinatorException prepareError =
+                            Conversions.toThrowable(node, (Error) prepareErrorMessage);
+                        if (prepareError instanceof QueryValidationException
+                            || prepareError instanceof FunctionFailureException
+                            || prepareError instanceof ProtocolError) {
+                          LOG.debug("[{}] Unrecoverable error on reprepare, rethrowing", logPrefix);
+                          setFinalError(prepareError);
+                          return null;
+                        }
+                      }
+                    }
+                    recordError(node, exception);
                     LOG.debug("[{}] Reprepare failed, trying next node", logPrefix);
                     sendRequest(null, execution, retryCount);
                   } else {

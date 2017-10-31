@@ -147,11 +147,7 @@ public class AdminRequestHandler implements ResponseCallback {
       // success, not the actual result, so this is good enough:
       result.complete(null);
     } else {
-      result.completeExceptionally(
-          // The actual exception type does not really matters, this is only logged, never
-          // returned to the client
-          new IllegalArgumentException(
-              String.format("%s got unexpected response %s", debugString, message)));
+      result.completeExceptionally(new UnexpectedResponseException(debugString, message));
     }
   }
 

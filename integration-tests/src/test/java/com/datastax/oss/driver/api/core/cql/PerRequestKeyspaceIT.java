@@ -170,4 +170,24 @@ public class PerRequestKeyspaceIT {
             .one();
     assertThat(row.getInt(0)).isEqualTo(1);
   }
+
+  @Test
+  @CassandraRequirement(min = "4.0")
+  public void should_prepare_statement_with_keyspace() {
+    CqlSession session = clusterRule.session();
+    PreparedStatement prepared =
+        session.prepare(
+            SimpleStatement.newInstance("INSERT INTO foo (k, cc, v) VALUES (?, ?, ?)")
+                .setKeyspace(clusterRule.keyspace()));
+    session.execute(prepared.bind(nameRule.getMethodName(), 1, 1));
+
+    Row row =
+        session
+            .execute(
+                SimpleStatement.newInstance(
+                        "SELECT v FROM foo WHERE k = ? AND cc = 1", nameRule.getMethodName())
+                    .setKeyspace(clusterRule.keyspace()))
+            .one();
+    assertThat(row.getInt(0)).isEqualTo(1);
+  }
 }
