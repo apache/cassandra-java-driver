@@ -18,7 +18,11 @@ package com.datastax.oss.driver.internal.core;
 /** Features of the native protocol that are only supported in specific versions. */
 public enum ProtocolFeature {
 
-  /** The ability to leave variables unset in prepared statements. */
+  /**
+   * The ability to leave variables unset in prepared statements.
+   *
+   * @see <a href="https://issues.apache.org/jira/browse/CASSANDRA-7304">CASSANDRA-7304</a>
+   */
   UNSET_BOUND_VALUES,
   ;
 }
