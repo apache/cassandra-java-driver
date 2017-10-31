@@ -41,7 +41,7 @@ public class DefaultPreparedStatement implements PreparedStatement {
   private final RepreparePayload repreparePayload;
   private final ColumnDefinitions variableDefinitions;
   private final List<Integer> primaryKeyIndices;
-  private final ColumnDefinitions resultSetDefinitions;
+  private volatile ResultMetadata resultMetadata;
   private final CodecRegistry codecRegistry;
   private final ProtocolVersion protocolVersion;
   // The options to propagate to the bound statements:
@@ -55,6 +55,7 @@ public class DefaultPreparedStatement implements PreparedStatement {
       String query,
       ColumnDefinitions variableDefinitions,
       List<Integer> primaryKeyIndices,
+      ByteBuffer resultMetadataId,
       ColumnDefinitions resultSetDefinitions,
       String configProfileName,
       DriverConfigProfile configProfile,
@@ -70,7 +71,7 @@ public class DefaultPreparedStatement implements PreparedStatement {
     // the map in DefaultSession if no client reference the PreparedStatement anymore.
     this.repreparePayload = new RepreparePayload(id, query, keyspace, customPayloadForPrepare);
     this.variableDefinitions = variableDefinitions;
-    this.resultSetDefinitions = resultSetDefinitions;
+    this.resultMetadata = new ResultMetadata(resultMetadataId, resultSetDefinitions);
     this.configProfileName = configProfileName;
     this.configProfile = configProfile;
     this.customPayloadForBoundStatements = customPayloadForBoundStatements;
@@ -100,8 +101,19 @@ public class DefaultPreparedStatement implements PreparedStatement {
   }
 
   @Override
+  public ByteBuffer getResultMetadataId() {
+    return resultMetadata.resultMetadataId;
+  }
+
+  @Override
   public ColumnDefinitions getResultSetDefinitions() {
-    return resultSetDefinitions;
+    return resultMetadata.resultSetDefinitions;
+  }
+
+  @Override
+  public void setResultMetadata(
+      ByteBuffer newResultMetadataId, ColumnDefinitions newResultSetDefinitions) {
+    this.resultMetadata = new ResultMetadata(newResultMetadataId, newResultSetDefinitions);
   }
 
   @Override
@@ -167,5 +179,15 @@ public class DefaultPreparedStatement implements PreparedStatement {
 
   public RepreparePayload getRepreparePayload() {
     return this.repreparePayload;
+  }
+
+  private static class ResultMetadata {
+    private ByteBuffer resultMetadataId;
+    private ColumnDefinitions resultSetDefinitions;
+
+    private ResultMetadata(ByteBuffer resultMetadataId, ColumnDefinitions resultSetDefinitions) {
+      this.resultMetadataId = resultMetadataId;
+      this.resultSetDefinitions = resultSetDefinitions;
+    }
   }
 }

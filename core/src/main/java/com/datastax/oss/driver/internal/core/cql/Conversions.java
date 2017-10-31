@@ -30,6 +30,7 @@ import com.datastax.oss.driver.api.core.cql.ColumnDefinitions;
 import com.datastax.oss.driver.api.core.cql.CqlSession;
 import com.datastax.oss.driver.api.core.cql.ExecutionInfo;
 import com.datastax.oss.driver.api.core.cql.PrepareRequest;
+import com.datastax.oss.driver.api.core.cql.PreparedStatement;
 import com.datastax.oss.driver.api.core.cql.SimpleStatement;
 import com.datastax.oss.driver.api.core.cql.Statement;
 import com.datastax.oss.driver.api.core.metadata.Node;
@@ -138,19 +139,26 @@ class Conversions {
       if (!registry.supports(protocolVersion, ProtocolFeature.UNSET_BOUND_VALUES)) {
         ensureAllSet(boundStatement);
       }
+      boolean skipMetadata =
+          boundStatement.getPreparedStatement().getResultSetDefinitions().size() > 0;
       QueryOptions queryOptions =
           new QueryOptions(
               consistency,
               boundStatement.getValues(),
               Collections.emptyMap(),
-              true,
+              skipMetadata,
               pageSize,
               statement.getPagingState(),
               serialConsistency,
               timestamp,
               null);
-      ByteBuffer id = boundStatement.getPreparedStatement().getId();
-      return new Execute(Bytes.getArray(id), queryOptions);
+      PreparedStatement preparedStatement = boundStatement.getPreparedStatement();
+      ByteBuffer id = preparedStatement.getId();
+      ByteBuffer resultMetadataId = preparedStatement.getResultMetadataId();
+      return new Execute(
+          Bytes.getArray(id),
+          (resultMetadataId == null) ? null : Bytes.getArray(resultMetadataId),
+          queryOptions);
     } else if (statement instanceof BatchStatement) {
       BatchStatement batchStatement = (BatchStatement) statement;
       if (!registry.supports(protocolVersion, ProtocolFeature.UNSET_BOUND_VALUES)) {
@@ -269,10 +277,7 @@ class Conversions {
     if (result instanceof Rows) {
       Rows rows = (Rows) result;
       Statement<?> statement = executionInfo.getStatement();
-      ColumnDefinitions columnDefinitions =
-          (statement instanceof BoundStatement)
-              ? ((BoundStatement) statement).getPreparedStatement().getResultSetDefinitions()
-              : toColumnDefinitions(rows.getMetadata(), context);
+      ColumnDefinitions columnDefinitions = getResultDefinitions(rows, statement, context);
       return new DefaultAsyncResultSet(
           columnDefinitions, executionInfo, rows.getData(), session, context);
     } else if (result instanceof Prepared) {
@@ -284,6 +289,29 @@ class Conversions {
     }
   }
 
+  private static ColumnDefinitions getResultDefinitions(
+      Rows rows, Statement<?> statement, InternalDriverContext context) {
+    RowsMetadata rowsMetadata = rows.getMetadata();
+    if (rowsMetadata.columnSpecs.isEmpty()) {
+      // If the response has no metadata, it means the request had SKIP_METADATA set, the driver
+      // only ever does that for bound statements.
+      BoundStatement boundStatement = (BoundStatement) statement;
+      return boundStatement.getPreparedStatement().getResultSetDefinitions();
+    } else {
+      // The response has metadata, always use it above anything else we might have locally.
+      ColumnDefinitions definitions = toColumnDefinitions(rowsMetadata, context);
+      // In addition, if the server signaled a schema change (see CASSANDRA-10786), update the
+      // prepared statement's copy of the metadata
+      if (rowsMetadata.newResultMetadataId != null) {
+        BoundStatement boundStatement = (BoundStatement) statement;
+        PreparedStatement preparedStatement = boundStatement.getPreparedStatement();
+        preparedStatement.setResultMetadata(
+            ByteBuffer.wrap(rowsMetadata.newResultMetadataId).asReadOnlyBuffer(), definitions);
+      }
+      return definitions;
+    }
+  }
+
   static DefaultPreparedStatement toPreparedStatement(
       Prepared response, PrepareRequest request, InternalDriverContext context) {
     return new DefaultPreparedStatement(
@@ -291,6 +319,9 @@ class Conversions {
         request.getQuery(),
         toColumnDefinitions(response.variablesMetadata, context),
         asList(response.variablesMetadata.pkIndices),
+        (response.resultMetadataId == null)
+            ? null
+            : ByteBuffer.wrap(response.resultMetadataId).asReadOnlyBuffer(),
         toColumnDefinitions(response.resultMetadata, context),
         request.getConfigProfileNameForBoundStatements(),
         request.getConfigProfileForBoundStatements(),

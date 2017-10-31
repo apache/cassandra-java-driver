@@ -4,6 +4,7 @@
 
 ### 4.0.0-alpha3 (in progress)
 
+- [new feature] JAVA-1647: Handle metadata_changed flag in protocol v5
 - [new feature] JAVA-1633: Handle per-request keyspace in protocol v5
 - [improvement] JAVA-1678: Warn if auth is configured on the client but not the server
 - [improvement] JAVA-1673: Remove schema agreement check when repreparing on up

@@ -15,6 +15,7 @@
  */
 package com.datastax.oss.driver.api.core.cql;
 
+import com.datastax.oss.driver.api.core.CoreProtocolVersion;
 import java.nio.ByteBuffer;
 import java.util.List;
 
@@ -69,10 +70,38 @@ public interface PreparedStatement {
   List<Integer> getPrimaryKeyIndices();
 
   /**
+   * A unique identifier for result metadata (essentially a hash of {@link
+   * #getResultSetDefinitions()}).
+   *
+   * <p>This information is mostly for internal use: with protocol {@link CoreProtocolVersion#V5} or
+   * higher, the driver sends it with every execution of the prepared statement, to validate that
+   * its result metadata is still up-to-date.
+   *
+   * <p>Note: this method returns null for protocol {@link CoreProtocolVersion#V4} or lower;
+   * otherwise, the returned buffer is read-only.
+   *
+   * @see <a href="https://issues.apache.org/jira/browse/CASSANDRA-10786">CASSANDRA-10786</a>
+   */
+  ByteBuffer getResultMetadataId();
+
+  /**
    * A description of the result set that will be returned when this prepared statement is bound and
    * executed.
+   *
+   * <p>This information is only present for {@code SELECT} queries, otherwise it is always empty.
+   * Note that this is slightly incorrect for conditional updates (e.g. {@code INSERT ... IF NOT
+   * EXISTS}), which do return columns; for those cases, use {@link
+   * ResultSet#getColumnDefinitions()} on the result, not this method.
    */
   ColumnDefinitions getResultSetDefinitions();
+
+  /**
+   * Updates {@link #getResultMetadataId()} and {@link #getResultSetDefinitions()} atomically.
+   *
+   * <p>This is for internal use by the driver. Calling this manually with incorrect information can
+   * cause existing queries to fail.
+   */
+  void setResultMetadata(ByteBuffer newResultMetadataId, ColumnDefinitions newResultSetDefinitions);
 
   /**
    * Builds an executable statement that associates a set of values with the bind variables.

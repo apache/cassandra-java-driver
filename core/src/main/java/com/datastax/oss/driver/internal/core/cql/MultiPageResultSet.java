@@ -34,14 +34,13 @@ public class MultiPageResultSet implements ResultSet {
   // Reminder: by contract this is not thread-safe, so we don't need any synchronization.
 
   private final RowIterator iterator;
-  private final ColumnDefinitions columnDefinitions;
   private final List<ExecutionInfo> executionInfos = new ArrayList<>();
+  private ColumnDefinitions columnDefinitions;
 
   public MultiPageResultSet(AsyncResultSet firstPage) {
     assert firstPage.hasMorePages();
     this.iterator = new RowIterator(firstPage);
     this.executionInfos.add(firstPage.getExecutionInfo());
-    // This is the same for all pages
     this.columnDefinitions = firstPage.getColumnDefinitions();
   }
 
@@ -103,7 +102,11 @@ public class MultiPageResultSet implements ResultSet {
         // We've just finished iterating the current page, remove it
         pages.removeFirst();
         if (!pages.isEmpty()) {
-          currentRows = pages.getFirst().currentPage().iterator();
+          AsyncResultSet nextPage = pages.getFirst();
+          // The definitions can change from page to page if this result set was built from a bound
+          // 'SELECT *', and the schema was altered.
+          columnDefinitions = nextPage.getColumnDefinitions();
+          currentRows = nextPage.currentPage().iterator();
         }
       }
     }
