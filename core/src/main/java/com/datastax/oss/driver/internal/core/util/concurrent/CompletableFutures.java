@@ -111,7 +111,6 @@ public class CompletableFutures {
           if (cause instanceof DriverException) {
             throw ((DriverException) cause).copy();
           }
-          Throwables.throwIfUnchecked(cause);
           throw new DriverExecutionException(cause);
         }
       }
