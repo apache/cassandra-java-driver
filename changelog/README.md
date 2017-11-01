@@ -1,6 +1,6 @@
 ## Changelog
 
-### 3.4.0 (In progress)
+### 3.3.1 (In progress)
 
 - [bug] JAVA-1555: Include VIEW and CDC in WriteType.
 - [bug] JAVA-1599: exportAsString improvements (sort, format, clustering order)
@@ -16,6 +16,7 @@
 - [improvement] JAVA-1631: Publish a sources jar for driver-core-tests.
 - [improvement] JAVA-1632: Add a withIpPrefix(String) method to CCMBridge.Builder.
 - [bug] JAVA-1639: VersionNumber does not fullfill equals/hashcode contract.
+- [bug] JAVA-1613: Fix broken shaded Netty detection in NettyUtil.
 
 
 ### 3.3.0
@@ -36,7 +37,6 @@
 - [improvement] JAVA-1488: Upgrade Netty to 4.0.47.Final.
 - [improvement] JAVA-1460: Add speculative execution number to ExecutionInfo
 - [improvement] JAVA-1431: Improve error handling during pool initialization.
-- [bug] JAVA-1613: Fix broken shaded Netty detection in NettyUtil.
 
 
 ### 3.2.0
