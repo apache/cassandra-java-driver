@@ -463,7 +463,7 @@ consider using prepared statements all the time.
 [TupleType]: http://docs.datastax.com/en/drivers/java/3.2/com/datastax/driver/core/TupleType.html
 [TupleValue]: http://docs.datastax.com/en/drivers/java/3.2/com/datastax/driver/core/TupleValue.html
 [CustomType]: http://docs.datastax.com/en/drivers/java/3.2/com/datastax/driver/core/DataType.CustomType.html
-[TypeToken]: http://google.github.io/guava/releases/21.0/api/docs/com/google/common/reflect/TypeToken.html
+[TypeToken]: https://google.github.io/guava/releases/19.0/api/docs/com/google/common/reflect/TypeToken.html
 [SimpleStatement]: http://docs.datastax.com/en/drivers/java/3.2/com/datastax/driver/core/SimpleStatement.html
 [BuiltStatement]: http://docs.datastax.com/en/drivers/java/3.2/com/datastax/driver/core/querybuilder/BuiltStatement.html
 [setList]: http://docs.datastax.com/en/drivers/java/3.2/com/datastax/driver/core/SettableByIndexData.html#setList-int-java.util.List-
