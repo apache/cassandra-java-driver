@@ -117,6 +117,17 @@ public class BoundStatementIT {
     verifyUnset(boundStatement);
   }
 
+  @Test
+  public void should_have_empty_result_definitions_for_update_query() {
+    PreparedStatement prepared =
+        cluster.session().prepare("INSERT INTO test2 (k, v0) values (?, ?)");
+
+    assertThat(prepared.getResultSetDefinitions()).hasSize(0);
+
+    ResultSet rs = cluster.session().execute(prepared.bind(name.getMethodName(), VALUE));
+    assertThat(rs.getColumnDefinitions()).hasSize(0);
+  }
+
   private void verifyUnset(BoundStatement boundStatement) {
     cluster.session().execute(boundStatement.unset(1));
 
