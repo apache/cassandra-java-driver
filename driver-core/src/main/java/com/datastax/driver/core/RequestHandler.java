@@ -268,13 +268,18 @@ class RequestHandler {
                 while (!isDone.get() && (host = queryPlan.next()) != null && !queryStateRef.get().isCancelled()) {
                     if (logger.isTraceEnabled())
                         logger.trace("[{}] Querying node {}", id, host);
-                    if (metricsEnabled()) {
+                    if (query(host)) {
+                        if (metricsEnabled()) {
+                            metrics().getRegistry()
+                                    .counter(MetricsUtil.hostMetricName("LoadBalancingPolicy.hits.", host))
+                                    .inc();
+                        }
+                        return;
+                    } else if (metricsEnabled()) {
                         metrics().getRegistry()
-                                .counter(MetricsUtil.hostMetricName("LoadBalancingPolicy.hits.", host))
+                                .counter(MetricsUtil.hostMetricName("LoadBalancingPolicy.write-errors.", host))
                                 .inc();
                     }
-                    if (query(host))
-                        return;
                 }
                 reportNoMoreHosts(this);
             } catch (Exception e) {
