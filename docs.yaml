@@ -1,0 +1,67 @@
+title:    Java Driver for Apache Cassandra
+summary:  High performance Java client for Apache Cassandra
+homepage: http://datastax.github.io/java-driver/
+theme: datastax
+sections:
+  - title:     Manual
+    prefix:    /manual
+    sources:
+      - type:  markdown
+        files: 'manual/**/*.md'
+  # The 'manual' section was called 'features' in older releases. Leave both
+  # definitions and Documentor will pick up whichever exists and ignore the
+  # other.
+  - title:     Features
+    prefix:    /features
+    sources:
+      - type:  markdown
+        files: 'features/**/*.md'
+  - title:     Changelog
+    prefix:    /changelog
+    sources:
+      - type:  markdown
+        files: 'changelog/**/*.md'
+  - title:     Upgrading
+    prefix:    /upgrade_guide
+    sources:
+      - type:  markdown
+        files: 'upgrade_guide/**/*.md'
+  - title:     FAQ
+    prefix:    /faq
+    sources:
+      - type:  markdown
+        files: 'faq/**/*.md'
+links:
+  - title: Code
+    href:  https://github.com/datastax/java-driver/
+  - title: Docs
+    href:  http://docs.datastax.com/en/developer/java-driver/
+  - title: Issues
+    href:  https://datastax-oss.atlassian.net/browse/JAVA/
+  - title: Mailing List
+    href:  https://groups.google.com/a/lists.datastax.com/forum/#!forum/java-driver-user
+  - title: Releases
+    href:  http://downloads.datastax.com/java-driver/
+api_docs:
+  3.3: http://docs.datastax.com/en/drivers/java/3.3
+  4.0-alpha: http://docs.datastax.com/en/drivers/java/4.0
+  3.2: http://docs.datastax.com/en/drivers/java/3.2
+  3.1: http://docs.datastax.com/en/drivers/java/3.1
+  3.0: http://docs.datastax.com/en/drivers/java/3.0
+  2.1: http://docs.datastax.com/en/drivers/java/2.1
+  2.0: http://docs.datastax.com/en/drivers/java/2.0
+versions:
+  - name: '3.3'
+    ref: '3.3.1'
+  - name: '4.0-alpha'
+    ref: '9f0edeb'
+  - name: '3.2'
+    ref: '3.2_docfixes'
+  - name: '3.1'
+    ref: '3.1_docfixes'
+  - name: '3.0'
+    ref: '3.0_docfixes'
+  - name: '2.1'
+    ref: '2.1.10.3'
+  - name: '2.0'
+    ref: '2.0.12.3'
