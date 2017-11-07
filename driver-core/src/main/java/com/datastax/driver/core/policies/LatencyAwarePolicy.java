@@ -469,6 +469,12 @@ public class LatencyAwarePolicy implements ChainableLoadBalancingPolicy {
                     }
                 }
                 hostTracker.add(newLatencyNanos);
+            } else {
+                if (metrics != null) {
+                    metrics.getRegistry()
+                            .counter(MetricsUtil.hostMetricName("LatencyAwarePolicy.ignored-latencies.", host))
+                            .inc();
+                }
             }
         }
 
