@@ -241,8 +241,8 @@ The log message contains a pretty-printed version of the payload itself, and its
 [CASSANDRA-8553]: https://issues.apache.org/jira/browse/CASSANDRA-8553
 [v4spec]: https://github.com/apache/cassandra/blob/trunk/doc/native_protocol_v4.spec
 [qh]: https://issues.apache.org/jira/browse/CASSANDRA-6659
-[nhae]: http://docs.datastax.com/en/drivers/java/3.2/com/datastax/driver/core/exceptions/NoHostAvailableException.html
+[nhae]: http://docs.datastax.com/en/drivers/java/3.3/com/datastax/driver/core/exceptions/NoHostAvailableException.html
 [chm]: https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/ConcurrentHashMap.html
 [immutablemap]: http://docs.guava-libraries.googlecode.com/git/javadoc/com/google/common/collect/ImmutableMap.html
-[ufe]:http://docs.datastax.com/en/drivers/java/3.2/com/datastax/driver/core/exceptions/UnsupportedFeatureException.html
+[ufe]:http://docs.datastax.com/en/drivers/java/3.3/com/datastax/driver/core/exceptions/UnsupportedFeatureException.html
 

@@ -35,7 +35,7 @@ row.getBool(0);       // this is equivalent row.getBool("applied")
 
 Note that, unlike manual inspection, `wasApplied` does not consume the first row.
 
-[wasApplied]: http://docs.datastax.com/en/drivers/java/3.2/com/datastax/driver/core/ResultSet.html#wasApplied--
+[wasApplied]: http://docs.datastax.com/en/drivers/java/3.3/com/datastax/driver/core/ResultSet.html#wasApplied--
 
 
 ### What is a parameterized statement and how can I use it?
@@ -258,7 +258,7 @@ If properly used, the following log message will be logged at INFO on startup:
 
 > Found Netty's native epoll transport in the classpath, but NIO was forced through the FORCE_NIO system property.
 
-[Blobs.java]: https://github.com/datastax/java-driver/tree/3.3.0/driver-examples/src/main/java/com/datastax/driver/examples/datatypes/Blobs.java
+[Blobs.java]: https://github.com/datastax/java-driver/tree/3.3.1/driver-examples/src/main/java/com/datastax/driver/examples/datatypes/Blobs.java
 [CASSANDRA-7304]: https://issues.apache.org/jira/browse/CASSANDRA-7304
 [Parameters and Binding]: ../manual/statements/prepared/#parameters-and-binding
 [Mapper options]: ../manual/object_mapper/using/#mapper-options

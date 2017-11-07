@@ -63,7 +63,7 @@ All host(s) tried for query failed
   [/127.0.0.1:9042] Host /127.0.0.1:9042 does not support protocol version V3 but V2))
 ```
 
-[gpv]: http://docs.datastax.com/en/drivers/java/3.2/com/datastax/driver/core/ProtocolOptions.html#getProtocolVersion--
+[gpv]: http://docs.datastax.com/en/drivers/java/3.3/com/datastax/driver/core/ProtocolOptions.html#getProtocolVersion--
 
 #### Protocol version with mixed clusters
 
@@ -94,19 +94,19 @@ To avoid this issue, you can use one the following workarounds:
 #### v1 to v2
 
 * bound variables in simple statements
-  ([Session#execute(String, Object...)](http://docs.datastax.com/en/drivers/java/3.2/com/datastax/driver/core/Session.html#execute-java.lang.String-java.lang.Object...-))
-* [batch statements](http://docs.datastax.com/en/drivers/java/3.2/com/datastax/driver/core/BatchStatement.html)
+  ([Session#execute(String, Object...)](http://docs.datastax.com/en/drivers/java/3.3/com/datastax/driver/core/Session.html#execute-java.lang.String-java.lang.Object...-))
+* [batch statements](http://docs.datastax.com/en/drivers/java/3.3/com/datastax/driver/core/BatchStatement.html)
 * [query paging](../paging/)
 
 #### v2 to v3
 
 * the number of stream ids per connection goes from 128 to 32768 (see
   [Connection pooling](../pooling/))
-* [serial consistency on batch statements](http://docs.datastax.com/en/drivers/java/3.2/com/datastax/driver/core/BatchStatement.html#setSerialConsistencyLevel-com.datastax.driver.core.ConsistencyLevel-)
+* [serial consistency on batch statements](http://docs.datastax.com/en/drivers/java/3.3/com/datastax/driver/core/BatchStatement.html#setSerialConsistencyLevel-com.datastax.driver.core.ConsistencyLevel-)
 * [client-side timestamps](../query_timestamps/)
 
 #### v3 to v4
 
-* [query warnings](http://docs.datastax.com/en/drivers/java/3.2/com/datastax/driver/core/ExecutionInfo.html#getWarnings--)
+* [query warnings](http://docs.datastax.com/en/drivers/java/3.3/com/datastax/driver/core/ExecutionInfo.html#getWarnings--)
 * allowed unset values in bound statements
 * [Custom payloads](../custom_payloads/)

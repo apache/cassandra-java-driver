@@ -140,10 +140,10 @@ following:
 Steps 2 and 3 only apply if native protocol v3 or above is in use.
 
 
-[TimestampGenerator]:                     http://docs.datastax.com/en/drivers/java/3.2/com/datastax/driver/core/TimestampGenerator.html
-[AtomicMonotonicTimestampGenerator]:      http://docs.datastax.com/en/drivers/java/3.2/com/datastax/driver/core/AtomicMonotonicTimestampGenerator.html
-[ThreadLocalMonotonicTimestampGenerator]: http://docs.datastax.com/en/drivers/java/3.2/com/datastax/driver/core/ThreadLocalMonotonicTimestampGenerator.html
-[ServerSideTimestampGenerator]:           http://docs.datastax.com/en/drivers/java/3.2/com/datastax/driver/core/ServerSideTimestampGenerator.html
+[TimestampGenerator]:                     http://docs.datastax.com/en/drivers/java/3.3/com/datastax/driver/core/TimestampGenerator.html
+[AtomicMonotonicTimestampGenerator]:      http://docs.datastax.com/en/drivers/java/3.3/com/datastax/driver/core/AtomicMonotonicTimestampGenerator.html
+[ThreadLocalMonotonicTimestampGenerator]: http://docs.datastax.com/en/drivers/java/3.3/com/datastax/driver/core/ThreadLocalMonotonicTimestampGenerator.html
+[ServerSideTimestampGenerator]:           http://docs.datastax.com/en/drivers/java/3.3/com/datastax/driver/core/ServerSideTimestampGenerator.html
 
 [gettimeofday]: http://man7.org/linux/man-pages/man2/settimeofday.2.html
 [JNR]: https://github.com/jnr/jnr-ffi

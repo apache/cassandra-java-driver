@@ -295,11 +295,11 @@ For any host, the distance returned by the policy is always the same as its chil
 Query plans are based on the child policy's, except that hosts that are currently excluded for being too slow are moved
 to the end of the plan.
 
-[withExclusionThreshold]: http://docs.datastax.com/en/drivers/java/3.2/com/datastax/driver/core/policies/LatencyAwarePolicy.Builder.html#withExclusionThreshold-double-
-[withMininumMeasurements]: http://docs.datastax.com/en/drivers/java/3.2/com/datastax/driver/core/policies/LatencyAwarePolicy.Builder.html#withMininumMeasurements-int-
-[withRetryPeriod]: http://docs.datastax.com/en/drivers/java/3.2/com/datastax/driver/core/policies/LatencyAwarePolicy.Builder.html#withRetryPeriod-long-java.util.concurrent.TimeUnit-
-[withScale]: http://docs.datastax.com/en/drivers/java/3.2/com/datastax/driver/core/policies/LatencyAwarePolicy.Builder.html#withScale-long-java.util.concurrent.TimeUnit-
-[withUpdateRate]: http://docs.datastax.com/en/drivers/java/3.2/com/datastax/driver/core/policies/LatencyAwarePolicy.Builder.html#withUpdateRate-long-java.util.concurrent.TimeUnit-
+[withExclusionThreshold]: http://docs.datastax.com/en/drivers/java/3.3/com/datastax/driver/core/policies/LatencyAwarePolicy.Builder.html#withExclusionThreshold-double-
+[withMininumMeasurements]: http://docs.datastax.com/en/drivers/java/3.3/com/datastax/driver/core/policies/LatencyAwarePolicy.Builder.html#withMininumMeasurements-int-
+[withRetryPeriod]: http://docs.datastax.com/en/drivers/java/3.3/com/datastax/driver/core/policies/LatencyAwarePolicy.Builder.html#withRetryPeriod-long-java.util.concurrent.TimeUnit-
+[withScale]: http://docs.datastax.com/en/drivers/java/3.3/com/datastax/driver/core/policies/LatencyAwarePolicy.Builder.html#withScale-long-java.util.concurrent.TimeUnit-
+[withUpdateRate]: http://docs.datastax.com/en/drivers/java/3.3/com/datastax/driver/core/policies/LatencyAwarePolicy.Builder.html#withUpdateRate-long-java.util.concurrent.TimeUnit-
 
 ### Filtering policies
 
@@ -317,15 +317,15 @@ studying the existing implementations first: `RoundRobinPolicy` is a good place 
 complex ones like `DCAwareRoundRobinPolicy`.
 
 
-[LoadBalancingPolicy]: http://docs.datastax.com/en/drivers/java/3.2/com/datastax/driver/core/policies/LoadBalancingPolicy.html
-[RoundRobinPolicy]: http://docs.datastax.com/en/drivers/java/3.2/com/datastax/driver/core/policies/RoundRobinPolicy.html
-[DCAwareRoundRobinPolicy]: http://docs.datastax.com/en/drivers/java/3.2/com/datastax/driver/core/policies/DCAwareRoundRobinPolicy.html
-[TokenAwarePolicy]: http://docs.datastax.com/en/drivers/java/3.2/com/datastax/driver/core/policies/TokenAwarePolicy.html
-[LatencyAwarePolicy]: http://docs.datastax.com/en/drivers/java/3.2/com/datastax/driver/core/policies/LatencyAwarePolicy.html
-[HostFilterPolicy]: http://docs.datastax.com/en/drivers/java/3.2/com/datastax/driver/core/policies/HostFilterPolicy.html
-[WhiteListPolicy]: http://docs.datastax.com/en/drivers/java/3.2/com/datastax/driver/core/policies/WhiteListPolicy.html
-[HostDistance]: http://docs.datastax.com/en/drivers/java/3.2/com/datastax/driver/core/HostDistance.html
-[refreshConnectedHosts]: http://docs.datastax.com/en/drivers/java/3.2/com/datastax/driver/core/PoolingOptions.html#refreshConnectedHosts--
-[setMetadataEnabled]: http://docs.datastax.com/en/drivers/java/3.2/com/datastax/driver/core/QueryOptions.html#setMetadataEnabled-boolean-
-[Statement#getKeyspace]: http://docs.datastax.com/en/drivers/java/3.2/com/datastax/driver/core/Statement.html#getKeyspace--
-[Statement#getRoutingKey]: http://docs.datastax.com/en/drivers/java/3.2/com/datastax/driver/core/Statement.html#getRoutingKey--
+[LoadBalancingPolicy]: http://docs.datastax.com/en/drivers/java/3.3/com/datastax/driver/core/policies/LoadBalancingPolicy.html
+[RoundRobinPolicy]: http://docs.datastax.com/en/drivers/java/3.3/com/datastax/driver/core/policies/RoundRobinPolicy.html
+[DCAwareRoundRobinPolicy]: http://docs.datastax.com/en/drivers/java/3.3/com/datastax/driver/core/policies/DCAwareRoundRobinPolicy.html
+[TokenAwarePolicy]: http://docs.datastax.com/en/drivers/java/3.3/com/datastax/driver/core/policies/TokenAwarePolicy.html
+[LatencyAwarePolicy]: http://docs.datastax.com/en/drivers/java/3.3/com/datastax/driver/core/policies/LatencyAwarePolicy.html
+[HostFilterPolicy]: http://docs.datastax.com/en/drivers/java/3.3/com/datastax/driver/core/policies/HostFilterPolicy.html
+[WhiteListPolicy]: http://docs.datastax.com/en/drivers/java/3.3/com/datastax/driver/core/policies/WhiteListPolicy.html
+[HostDistance]: http://docs.datastax.com/en/drivers/java/3.3/com/datastax/driver/core/HostDistance.html
+[refreshConnectedHosts]: http://docs.datastax.com/en/drivers/java/3.3/com/datastax/driver/core/PoolingOptions.html#refreshConnectedHosts--
+[setMetadataEnabled]: http://docs.datastax.com/en/drivers/java/3.3/com/datastax/driver/core/QueryOptions.html#setMetadataEnabled-boolean-
+[Statement#getKeyspace]: http://docs.datastax.com/en/drivers/java/3.3/com/datastax/driver/core/Statement.html#getKeyspace--
+[Statement#getRoutingKey]: http://docs.datastax.com/en/drivers/java/3.3/com/datastax/driver/core/Statement.html#getRoutingKey--

@@ -102,8 +102,8 @@ private/public switch automatically based on location).
 
 
 
-[AddressTranslator]:               http://docs.datastax.com/en/drivers/java/3.2/com/datastax/driver/core/policies/AddressTranslator.html
-[EC2MultiRegionAddressTranslator]: http://docs.datastax.com/en/drivers/java/3.2/com/datastax/driver/core/policies/EC2MultiRegionAddressTranslator.html
+[AddressTranslator]:               http://docs.datastax.com/en/drivers/java/3.3/com/datastax/driver/core/policies/AddressTranslator.html
+[EC2MultiRegionAddressTranslator]: http://docs.datastax.com/en/drivers/java/3.3/com/datastax/driver/core/policies/EC2MultiRegionAddressTranslator.html
 
 [cassandra.yaml]:        https://docs.datastax.com/en/cassandra/3.x/cassandra/configuration/configCassandra_yaml.html
 [rpc_address]:           https://docs.datastax.com/en/cassandra/3.x/cassandra/configuration/configCassandra_yaml.html?scroll=configCassandra_yaml__rpc_address

@@ -12,7 +12,7 @@ package name:
 <dependency>
   <groupId>com.datastax.cassandra</groupId>
   <artifactId>cassandra-driver-core</artifactId>
-  <version>3.3.0</version>
+  <version>3.3.1</version>
   <classifier>shaded</classifier>
   <!-- Because the shaded JAR uses the original POM, you still need
        to exclude this dependency explicitly: -->
@@ -32,7 +32,7 @@ non-shaded JAR:
 <dependency>
   <groupId>com.datastax.cassandra</groupId>
   <artifactId>cassandra-driver-core</artifactId>
-  <version>3.3.0</version>
+  <version>3.3.1</version>
   <classifier>shaded</classifier>
   <exclusions>
     <exclusion>
@@ -44,7 +44,7 @@ non-shaded JAR:
 <dependency>
   <groupId>com.datastax.cassandra</groupId>
   <artifactId>cassandra-driver-mapping</artifactId>
-  <version>3.3.0</version>
+  <version>3.3.1</version>
   <exclusions>
     <exclusion>
       <groupId>com.datastax.cassandra</groupId>
@@ -74,5 +74,5 @@ detects that shaded Netty classes are being used:
     Detected shaded Netty classes in the classpath; native epoll transport will not work properly, defaulting to NIO.
 
 
-[NettyOptions]:http://docs.datastax.com/en/drivers/java/3.2/com/datastax/driver/core/NettyOptions.html
+[NettyOptions]:http://docs.datastax.com/en/drivers/java/3.3/com/datastax/driver/core/NettyOptions.html
 [Netty native transports]:http://netty.io/wiki/native-transports.html

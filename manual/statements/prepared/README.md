@@ -257,11 +257,11 @@ in your statement, i.e.: `SELECT a, b, c FROM tbl`.
 This will be addressed in a future release of both Cassandra and the driver.  Follow
 [CASSANDRA-10786] and [JAVA-1196] for more information.
 
-[PreparedStatement]:    http://docs.datastax.com/en/drivers/java/3.2/com/datastax/driver/core/PreparedStatement.html
-[BoundStatement]:       http://docs.datastax.com/en/drivers/java/3.2/com/datastax/driver/core/BoundStatement.html
-[setPrepareOnAllHosts]: http://docs.datastax.com/en/drivers/java/3.2/com/datastax/driver/core/QueryOptions.html#setPrepareOnAllHosts-boolean-
-[setReprepareOnUp]:     http://docs.datastax.com/en/drivers/java/3.2/com/datastax/driver/core/QueryOptions.html#setReprepareOnUp-boolean-
-[execute]:              http://docs.datastax.com/en/drivers/java/3.2/com/datastax/driver/core/Session.html#execute-com.datastax.driver.core.Statement-
-[executeAsync]:         http://docs.datastax.com/en/drivers/java/3.2/com/datastax/driver/core/Session.html#executeAsync-com.datastax.driver.core.Statement-
+[PreparedStatement]:    http://docs.datastax.com/en/drivers/java/3.3/com/datastax/driver/core/PreparedStatement.html
+[BoundStatement]:       http://docs.datastax.com/en/drivers/java/3.3/com/datastax/driver/core/BoundStatement.html
+[setPrepareOnAllHosts]: http://docs.datastax.com/en/drivers/java/3.3/com/datastax/driver/core/QueryOptions.html#setPrepareOnAllHosts-boolean-
+[setReprepareOnUp]:     http://docs.datastax.com/en/drivers/java/3.3/com/datastax/driver/core/QueryOptions.html#setReprepareOnUp-boolean-
+[execute]:              http://docs.datastax.com/en/drivers/java/3.3/com/datastax/driver/core/Session.html#execute-com.datastax.driver.core.Statement-
+[executeAsync]:         http://docs.datastax.com/en/drivers/java/3.3/com/datastax/driver/core/Session.html#executeAsync-com.datastax.driver.core.Statement-
 [CASSANDRA-10786]:      https://issues.apache.org/jira/browse/CASSANDRA-10786
 [JAVA-1196]:            https://datastax-oss.atlassian.net/browse/JAVA-1196

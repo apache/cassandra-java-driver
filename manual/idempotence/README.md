@@ -125,8 +125,8 @@ broke linearizability by doing a transparent retry at step 6.
 If linearizability is important for you, you should ensure that lightweight transactions are appropriately flagged as
 not idempotent.
 
-[isIdempotent]:          http://docs.datastax.com/en/drivers/java/3.2/com/datastax/driver/core/Statement.html#isIdempotent--
-[setDefaultIdempotence]: http://docs.datastax.com/en/drivers/java/3.2/com/datastax/driver/core/QueryOptions.html#setDefaultIdempotence-boolean-
-[QueryBuilder]:          http://docs.datastax.com/en/drivers/java/3.2/com/datastax/driver/core/querybuilder/QueryBuilder.html
+[isIdempotent]:          http://docs.datastax.com/en/drivers/java/3.3/com/datastax/driver/core/Statement.html#isIdempotent--
+[setDefaultIdempotence]: http://docs.datastax.com/en/drivers/java/3.3/com/datastax/driver/core/QueryOptions.html#setDefaultIdempotence-boolean-
+[QueryBuilder]:          http://docs.datastax.com/en/drivers/java/3.3/com/datastax/driver/core/querybuilder/QueryBuilder.html
 
 [linearizability]: https://en.wikipedia.org/wiki/Linearizability#Definition_of_linearizability
