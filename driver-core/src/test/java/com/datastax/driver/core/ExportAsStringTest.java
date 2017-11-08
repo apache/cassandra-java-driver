@@ -79,7 +79,7 @@ public class ExportAsStringTest extends CCMTestsSupport {
 
             // Usertype 'ctype' which depends on both ztype and xtype, therefore ztype and xtype should show up earlier.
             session.execute(SchemaBuilder.createType("ctype")
-                    .addColumn("z", ks.getUserType("ztype").copy(true))
+                    .addColumn("\"Z\"", ks.getUserType("ztype").copy(true))
                     .addColumn("x", ks.getUserType("xtype").copy(true)));
 
             // Usertype 'btype' which has no dependencies, should show up before 'xtype' and 'ztype' since it's

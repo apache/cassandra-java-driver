@@ -1,5 +1,10 @@
 ## Changelog
 
+### 3.3.2 (in progress)
+
+- [bug] JAVA-1666: Fix keyspace export when a UDT has case-sensitive field names.
+
+
 ### 3.3.1
 
 - [bug] JAVA-1555: Include VIEW and CDC in WriteType.
