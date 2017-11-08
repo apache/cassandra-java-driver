@@ -14,7 +14,7 @@ CREATE TYPE complex_ks.ztype (
 );
 
 CREATE TYPE complex_ks.ctype (
-    z frozen<complex_ks.ztype>,
+    "Z" frozen<complex_ks.ztype>,
     x frozen<complex_ks.xtype>
 );
 
