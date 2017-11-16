@@ -255,7 +255,8 @@ public abstract class PercentileTracker implements LatencyTracker {
             OverloadedException.class,
             BootstrappingException.class,
             UnpreparedException.class,
-            QueryValidationException.class // query validation also happens at early stages in the coordinator
+            QueryValidationException.class, // query validation also happens at early stages in the coordinator
+            CancelledSpeculativeExecutionException.class
     );
 
     /**
