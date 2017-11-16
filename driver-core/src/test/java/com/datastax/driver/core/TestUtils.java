@@ -582,28 +582,6 @@ public abstract class TestUtils {
     }
 
     /**
-     * Returns the IP of the {@code nth} host in the cluster (counting from 1, i.e.,
-     * {@code ipOfNode(1)} returns the IP of the first node.
-     * <p/>
-     * In multi-DC setups, nodes are numbered in ascending order of their datacenter number.
-     * E.g. with 2 DCs and 3 nodes in each DC, the first node in DC 2 is number 4.
-     *
-     * @return the IP of the {@code nth} host in the cluster.
-     */
-    public static String ipOfNode(int n, boolean useSingleInterface) {
-        if (useSingleInterface)
-        {
-            return IP_PREFIX + 1;
-        }
-        return IP_PREFIX + n;
-    }
-
-    public static int nativePortOfNode(int n)
-    {
-        return 9042 + 2 + (2 * n);
-    }
-
-    /**
      * Returns the address of the {@code nth} host in the cluster (counting from 1, i.e.,
      * {@code ipOfNode(1)} returns the address of the first node.
      * <p/>
