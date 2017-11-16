@@ -11,6 +11,7 @@
 - [new feature] JAVA-1651: Add NO_COMPACT startup option.
 - [improvement] JAVA-1683: Add metrics to track writes to nodes.
 - [new feature] JAVA-1229: Allow specifying the keyspace for individual queries.
+- [improvement] JAVA-1682: Provide a way to record latencies for cancelled speculative executions.
 
 Merged from 3.3.x:
 

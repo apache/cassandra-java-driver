@@ -274,6 +274,7 @@ class RequestHandler {
         private volatile ConsistencyLevel retryConsistencyLevel;
         private final AtomicReference<QueryState> queryStateRef;
         private final AtomicBoolean nextExecutionScheduled = new AtomicBoolean();
+        private final long startTime = System.nanoTime();
 
         // This represents the number of times a retry has been triggered by the RetryPolicy (this is different from
         // queryStateRef.get().retryCount, because some retries don't involve the policy, for example after an
@@ -511,10 +512,18 @@ class RequestHandler {
                     // If it's still null, this will be handled by re-checking queryStateRef at the end of write().
                     if (connectionHandler != null && connectionHandler.cancelHandler())
                         connectionHandler.connection.release();
+                    Host queriedHost = current;
+                    if (queriedHost != null && statement != Statement.DEFAULT) {
+                        manager.cluster.manager.reportQuery(queriedHost, statement, CancelledSpeculativeExecutionException.INSTANCE, System.nanoTime() - startTime);
+                    }
                     return;
                 } else if (!previous.inProgress && queryStateRef.compareAndSet(previous, QueryState.CANCELLED_WHILE_COMPLETE)) {
                     if (logger.isTraceEnabled())
                         logger.trace("[{}] Cancelled while complete", id);
+                    Host queriedHost = current;
+                    if (queriedHost != null && statement != Statement.DEFAULT) {
+                        manager.cluster.manager.reportQuery(queriedHost, statement, CancelledSpeculativeExecutionException.INSTANCE, System.nanoTime() - startTime);
+                    }
                     return;
                 }
             }
