@@ -1,6 +1,6 @@
 ## Changelog
 
-### 3.3.2 (in progress)
+### 3.3.2
 
 - [bug] JAVA-1666: Fix keyspace export when a UDT has case-sensitive field names.
 - [improvement] JAVA-1196: Include hash of result set metadata in prepared statement id.
