@@ -49,6 +49,8 @@ import static org.mockito.Mockito.timeout;
  */
 public class MockChannelFactoryHelper {
 
+  private static final int CONNECT_TIMEOUT_MILLIS = 500;
+
   public static Builder builder(ChannelFactory channelFactory) {
     return new Builder(channelFactory);
   }
@@ -87,7 +89,7 @@ public class MockChannelFactoryHelper {
     ArgumentCaptor<DriverChannelOptions> optionsCaptor =
         ArgumentCaptor.forClass(DriverChannelOptions.class);
     inOrder
-        .verify(channelFactory, timeout(100).atLeast(expected))
+        .verify(channelFactory, timeout(CONNECT_TIMEOUT_MILLIS).atLeast(expected))
         .connect(eq(address), optionsCaptor.capture());
     int actual = optionsCaptor.getAllValues().size();
 
@@ -99,7 +101,7 @@ public class MockChannelFactoryHelper {
 
   public void verifyNoMoreCalls() {
     inOrder
-        .verify(channelFactory, timeout(100).times(0))
+        .verify(channelFactory, timeout(CONNECT_TIMEOUT_MILLIS).times(0))
         .connect(any(SocketAddress.class), any(DriverChannelOptions.class));
 
     Set<Integer> counts = Sets.newHashSet(previous.values());
