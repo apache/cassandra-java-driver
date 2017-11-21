@@ -85,10 +85,6 @@ public class ReprepareOnUpTest {
         .thenReturn(100);
     Mockito.when(context.config()).thenReturn(config);
 
-    Mockito.when(topologyMonitor.checkSchemaAgreement())
-        .thenReturn(CompletableFuture.completedFuture(true));
-    Mockito.when(context.topologyMonitor()).thenReturn(topologyMonitor);
-
     done = new CompletableFuture<>();
     whenPrepared = () -> ((CompletableFuture<Void>) done).complete(null);
   }
