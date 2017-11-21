@@ -4,6 +4,7 @@
 
 ### 4.0.0-alpha3 (in progress)
 
+- [improvement] JAVA-1673: Remove schema agreement check when repreparing on up
 - [new feature] JAVA-1526: Provide a single load balancing policy implementation
 - [improvement] JAVA-1680: Improve error message on batch log write timeout
 - [improvement] JAVA-1675: Remove dates from copyright headers

@@ -108,45 +108,29 @@ class ReprepareOnUp {
       LOG.debug("[{}] No channel available to reprepare, done", logPrefix);
       whenPrepared.run();
     } else {
-      topologyMonitor
-          .checkSchemaAgreement()
-          .whenComplete(
-              (agreed, error) -> {
-                if (error != null) {
-                  LOG.debug(
-                      "[{}] Error while checking schema agreement, proceeding anyway",
-                      logPrefix,
-                      error);
-                } else if (!agreed) {
-                  LOG.debug("[{}] Did not reach schema agreement, proceeding anyway", logPrefix);
-                }
-                // Check log level because ConcurrentMap.size is not a constant operation
-                if (LOG.isDebugEnabled()) {
-                  LOG.debug(
-                      "[{}] {} statements to reprepare on newly added/up node",
-                      logPrefix,
-                      repreparePayloads.size());
-                }
-                if (checkSystemTable) {
-                  LOG.debug("[{}] Checking which statements the server knows about", logPrefix);
-                  queryAsync(
-                          QUERY_SERVER_IDS,
-                          Collections.emptyMap(),
-                          "QUERY system.prepared_statements")
-                      .whenComplete(this::gatherServerIds);
-                } else {
-                  LOG.debug(
-                      "[{}] {} is disabled, repreparing directly",
-                      logPrefix,
-                      CoreDriverOption.REPREPARE_CHECK_SYSTEM_TABLE.getPath());
-                  RunOrSchedule.on(
-                      channel.eventLoop(),
-                      () -> {
-                        serverKnownIds = Collections.emptySet();
-                        gatherPayloadsToReprepare();
-                      });
-                }
-              });
+      // Check log level because ConcurrentMap.size is not a constant operation
+      if (LOG.isDebugEnabled()) {
+        LOG.debug(
+            "[{}] {} statements to reprepare on newly added/up node",
+            logPrefix,
+            repreparePayloads.size());
+      }
+      if (checkSystemTable) {
+        LOG.debug("[{}] Checking which statements the server knows about", logPrefix);
+        queryAsync(QUERY_SERVER_IDS, Collections.emptyMap(), "QUERY system.prepared_statements")
+            .whenComplete(this::gatherServerIds);
+      } else {
+        LOG.debug(
+            "[{}] {} is disabled, repreparing directly",
+            logPrefix,
+            CoreDriverOption.REPREPARE_CHECK_SYSTEM_TABLE.getPath());
+        RunOrSchedule.on(
+            channel.eventLoop(),
+            () -> {
+              serverKnownIds = Collections.emptySet();
+              gatherPayloadsToReprepare();
+            });
+      }
     }
   }
 

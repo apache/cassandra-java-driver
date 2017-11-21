@@ -151,8 +151,6 @@ To avoid this issue, the driver waits until all nodes agree on a common schema v
 Schema agreement is checked:
  
 * before a schema refresh;
-* before [repreparing all queries](../../statements/prepared#how-the-driver-prepares) on a newly up
-  node;
 * before completing a successful schema-altering query (like in our example above).
 
 It is done by querying system tables to find out the schema version of all nodes that are currently
