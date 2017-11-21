@@ -44,8 +44,9 @@ public class WriteTimeoutException extends QueryConsistencyException {
     this(
         coordinator,
         String.format(
-            "Cassandra timeout during write query at consistency %s (%d replica were required but only %d acknowledged the write)",
-            consistencyLevel, blockFor, received),
+            "Cassandra timeout during %s write query at consistency %s "
+                + "(%d replica were required but only %d acknowledged the write)",
+            writeType, consistencyLevel, blockFor, received),
         consistencyLevel,
         received,
         blockFor,
