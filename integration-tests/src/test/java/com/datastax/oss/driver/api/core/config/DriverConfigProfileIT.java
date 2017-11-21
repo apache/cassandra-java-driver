@@ -78,11 +78,11 @@ public class DriverConfigProfileIT {
     try (Cluster<CqlSession> profileCluster =
         ClusterUtils.newCluster(simulacron, "profiles.olap.request.timeout = 10s")) {
       String query = "mockquery";
-      // configure query with delay of 2 seconds.
-      simulacron.cluster().prime(when(query).then(noRows()).delay(1, TimeUnit.SECONDS));
+      // configure query with delay of 4 seconds.
+      simulacron.cluster().prime(when(query).then(noRows()).delay(4, TimeUnit.SECONDS));
       CqlSession session = profileCluster.connect();
 
-      // Execute query without profile, should timeout with default (0.5s).
+      // Execute query without profile, should timeout with default (2s).
       try {
         session.execute(query);
         fail("Should have timed out");
