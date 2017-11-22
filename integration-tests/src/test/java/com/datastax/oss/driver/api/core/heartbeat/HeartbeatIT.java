@@ -36,7 +36,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import org.junit.Before;
-import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
@@ -54,8 +53,7 @@ import static org.junit.Assert.fail;
 @Category(ParallelizableTests.class)
 public class HeartbeatIT {
 
-  @ClassRule
-  public static SimulacronRule simulacron = new SimulacronRule(ClusterSpec.builder().withNodes(2));
+  @Rule public SimulacronRule simulacron = new SimulacronRule(ClusterSpec.builder().withNodes(2));
 
   @Rule
   public ClusterRule cluster =
@@ -132,6 +130,8 @@ public class HeartbeatIT {
 
     // Should have been a heartbeat received since that's what caused the disconnect.
     assertThat(getHeartbeatsForNode(nonControlNode).size()).isGreaterThan(heartbeatCount);
+
+    nonControlNode.acceptConnections();
   }
 
   private static final Predicate<QueryLog> optionsRequest = (l) -> l.getQuery().equals("OPTIONS");
