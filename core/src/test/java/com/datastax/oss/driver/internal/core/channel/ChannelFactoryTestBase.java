@@ -80,6 +80,8 @@ public abstract class ChannelFactoryTestBase {
   static final LocalAddress SERVER_ADDRESS =
       new LocalAddress(ChannelFactoryTestBase.class.getSimpleName() + "-server");
 
+  private static final int TIMEOUT_MILLIS = 500;
+
   DefaultEventLoopGroup serverGroup;
   DefaultEventLoopGroup clientGroup;
 
@@ -115,9 +117,9 @@ public abstract class ChannelFactoryTestBase {
                 CoreDriverOption.AUTH_PROVIDER_ROOT.concat(CoreDriverOption.RELATIVE_POLICY_CLASS)))
         .thenReturn(false);
     Mockito.when(defaultConfigProfile.getDuration(CoreDriverOption.CONNECTION_INIT_QUERY_TIMEOUT))
-        .thenReturn(Duration.ofMillis(100));
+        .thenReturn(Duration.ofMillis(TIMEOUT_MILLIS));
     Mockito.when(defaultConfigProfile.getDuration(CoreDriverOption.CONNECTION_SET_KEYSPACE_TIMEOUT))
-        .thenReturn(Duration.ofMillis(100));
+        .thenReturn(Duration.ofMillis(TIMEOUT_MILLIS));
     Mockito.when(defaultConfigProfile.getInt(CoreDriverOption.CONNECTION_MAX_REQUESTS))
         .thenReturn(1);
     Mockito.when(defaultConfigProfile.getDuration(CoreDriverOption.CONNECTION_HEARTBEAT_INTERVAL))
@@ -172,7 +174,7 @@ public abstract class ChannelFactoryTestBase {
 
   protected Frame readOutboundFrame() {
     try {
-      return requestFrameExchanger.exchange(null, 100, MILLISECONDS);
+      return requestFrameExchanger.exchange(null, TIMEOUT_MILLIS, MILLISECONDS);
     } catch (InterruptedException e) {
       fail("unexpected interruption while waiting for outbound frame", e);
     } catch (TimeoutException e) {
@@ -269,7 +271,11 @@ public abstract class ChannelFactoryTestBase {
   public void tearDown() throws InterruptedException {
     serverAcceptChannel.close();
 
-    serverGroup.shutdownGracefully(100, 200, TimeUnit.MILLISECONDS).sync();
-    clientGroup.shutdownGracefully(100, 200, TimeUnit.MILLISECONDS).sync();
+    serverGroup
+        .shutdownGracefully(TIMEOUT_MILLIS, TIMEOUT_MILLIS * 2, TimeUnit.MILLISECONDS)
+        .sync();
+    clientGroup
+        .shutdownGracefully(TIMEOUT_MILLIS, TIMEOUT_MILLIS * 2, TimeUnit.MILLISECONDS)
+        .sync();
   }
 }
