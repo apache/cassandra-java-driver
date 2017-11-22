@@ -29,6 +29,12 @@
 
   <name>DataStax Java driver for Apache Cassandra® - integration tests</name>
 
+  <properties>
+    <skipParallelizableITs>false</skipParallelizableITs>
+    <skipSerialITs>false</skipSerialITs>
+    <skipIsolatedITs>false</skipIsolatedITs>
+  </properties>
+
   <dependencies>
     <dependency>
       <groupId>com.datastax.oss</groupId>
@@ -109,6 +115,7 @@
               <!-- set so test can exit with rc 0 (ci will mark test failures accordingly) -->
               <testFailureIgnore>true</testFailureIgnore>
               <reportNameSuffix>parallelized</reportNameSuffix>
+              <skipITs>${skipParallelizableITs}</skipITs>
             </configuration>
           </execution>
           <execution>
@@ -124,6 +131,7 @@
               </excludedGroups>
               <testFailureIgnore>true</testFailureIgnore>
               <reportNameSuffix>serial</reportNameSuffix>
+              <skipITs>${skipSerialITs}</skipITs>
             </configuration>
           </execution>
           <execution>
@@ -139,6 +147,7 @@
               <reuseForks>false</reuseForks>
               <testFailureIgnore>true</testFailureIgnore>
               <reportNameSuffix>isolated</reportNameSuffix>
+              <skipITs>${skipIsolatedITs}</skipITs>
             </configuration>
           </execution>
         </executions>
