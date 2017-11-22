@@ -75,7 +75,7 @@ public class ChannelFactoryAvailableIdsTest extends ChannelFactoryTestBase {
 
                         // Complete the request, should increase again
                         writeInboundFrame(readOutboundFrame(), Void.INSTANCE);
-                        Mockito.verify(responseCallback, timeout(100)).onResponse(any(Frame.class));
+                        Mockito.verify(responseCallback, timeout(500)).onResponse(any(Frame.class));
                         assertThat(channel.availableIds()).isEqualTo(128);
                       });
             });
@@ -106,7 +106,7 @@ public class ChannelFactoryAvailableIdsTest extends ChannelFactoryTestBase {
                         assertThat(channel.availableIds()).isEqualTo(-1);
 
                         writeInboundFrame(readOutboundFrame(), Void.INSTANCE);
-                        Mockito.verify(responseCallback, timeout(100)).onResponse(any(Frame.class));
+                        Mockito.verify(responseCallback, timeout(500)).onResponse(any(Frame.class));
                         assertThat(channel.availableIds()).isEqualTo(-1);
                       });
             });

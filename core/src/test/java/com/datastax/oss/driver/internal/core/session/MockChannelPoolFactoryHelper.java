@@ -86,7 +86,7 @@ public class MockChannelPoolFactoryHelper {
     ArgumentCaptor<InternalDriverContext> contextCaptor =
         ArgumentCaptor.forClass(InternalDriverContext.class);
     inOrder
-        .verify(channelPoolFactory, timeout(100).atLeast(expected))
+        .verify(channelPoolFactory, timeout(500).atLeast(expected))
         .init(eq(node), eq(keyspace), eq(distance), contextCaptor.capture(), eq("test"));
     int actual = contextCaptor.getAllValues().size();
 
@@ -98,7 +98,7 @@ public class MockChannelPoolFactoryHelper {
 
   public void verifyNoMoreCalls() {
     inOrder
-        .verify(channelPoolFactory, timeout(100).times(0))
+        .verify(channelPoolFactory, timeout(500).times(0))
         .init(
             any(Node.class),
             any(CqlIdentifier.class),

@@ -183,7 +183,7 @@ public class LoadBalancingPolicyWrapperTest {
     Answer mockInit =
         i -> {
           eventLatch.countDown();
-          initLatch.await(100, TimeUnit.MILLISECONDS);
+          initLatch.await(500, TimeUnit.MILLISECONDS);
           return null;
         };
     Mockito.doAnswer(mockInit)
@@ -194,7 +194,7 @@ public class LoadBalancingPolicyWrapperTest {
     Runnable runnable =
         () -> {
           try {
-            eventLatch.await(100, TimeUnit.MILLISECONDS);
+            eventLatch.await(500, TimeUnit.MILLISECONDS);
           } catch (InterruptedException e) {
             throw new RuntimeException(e);
           }
@@ -207,11 +207,11 @@ public class LoadBalancingPolicyWrapperTest {
 
     // Then
     // wait for init launch to signal that runnable is complete.
-    initLatch.await(100, TimeUnit.MILLISECONDS);
+    initLatch.await(500, TimeUnit.MILLISECONDS);
     Mockito.verify(loadBalancingPolicy).onDown(node1);
     if (thread.isAlive()) {
-      // thread still completing - sleep for 100ms to allow thread to complete.
-      Thread.sleep(100);
+      // thread still completing - sleep to allow thread to complete.
+      Thread.sleep(500);
     }
     assertThat(thread.isAlive()).isFalse();
   }

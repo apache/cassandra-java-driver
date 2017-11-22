@@ -116,8 +116,8 @@ public class NodeStateIT {
 
     // ClusterRule uses all nodes as contact points, so we only get onUp notifications for them (no
     // onAdd)
-    inOrder.verify(nodeStateListener, timeout(100)).onUp(metadataControlNode);
-    inOrder.verify(nodeStateListener, timeout(100)).onUp(metadataRegularNode);
+    inOrder.verify(nodeStateListener, timeout(500)).onUp(metadataControlNode);
+    inOrder.verify(nodeStateListener, timeout(500)).onUp(metadataRegularNode);
   }
 
   @After
@@ -162,7 +162,7 @@ public class NodeStateIT {
         .becomesTrue();
 
     expect(NodeStateEvent.changed(NodeState.UP, NodeState.DOWN, metadataRegularNode));
-    inOrder.verify(nodeStateListener, timeout(100)).onDown(metadataRegularNode);
+    inOrder.verify(nodeStateListener, timeout(500)).onDown(metadataRegularNode);
   }
 
   @Test
@@ -190,7 +190,7 @@ public class NodeStateIT {
         .as("Control node going down")
         .before(10, TimeUnit.SECONDS)
         .becomesTrue();
-    inOrder.verify(nodeStateListener, timeout(100)).onDown(metadataControlNode);
+    inOrder.verify(nodeStateListener, timeout(500)).onDown(metadataControlNode);
 
     expect(NodeStateEvent.changed(NodeState.UP, NodeState.DOWN, metadataControlNode));
   }
@@ -204,7 +204,7 @@ public class NodeStateIT {
         .as("Node going down")
         .before(10, TimeUnit.SECONDS)
         .becomesTrue();
-    inOrder.verify(nodeStateListener, timeout(100)).onDown(metadataRegularNode);
+    inOrder.verify(nodeStateListener, timeout(500)).onDown(metadataRegularNode);
 
     simulacronRegularNode.acceptConnections();
 
@@ -213,7 +213,7 @@ public class NodeStateIT {
         .as("Connections re-established")
         .before(10, TimeUnit.SECONDS)
         .becomesTrue();
-    inOrder.verify(nodeStateListener, timeout(100)).onUp(metadataRegularNode);
+    inOrder.verify(nodeStateListener, timeout(500)).onUp(metadataRegularNode);
 
     expect(
         NodeStateEvent.changed(NodeState.UP, NodeState.DOWN, metadataRegularNode),
@@ -249,7 +249,7 @@ public class NodeStateIT {
         .as("SUGGEST_DOWN event applied")
         .before(10, TimeUnit.SECONDS)
         .becomesTrue();
-    inOrder.verify(nodeStateListener, timeout(100)).onDown(metadataRegularNode);
+    inOrder.verify(nodeStateListener, timeout(500)).onDown(metadataRegularNode);
 
     driverContext.eventBus().fire(TopologyEvent.suggestUp(metadataRegularNode.getConnectAddress()));
     ConditionChecker.checkThat(
@@ -262,7 +262,7 @@ public class NodeStateIT {
         .as("SUGGEST_UP event applied")
         .before(10, TimeUnit.SECONDS)
         .becomesTrue();
-    inOrder.verify(nodeStateListener, timeout(100)).onUp(metadataRegularNode);
+    inOrder.verify(nodeStateListener, timeout(500)).onUp(metadataRegularNode);
   }
 
   @Test
@@ -270,7 +270,7 @@ public class NodeStateIT {
     driverContext
         .eventBus()
         .fire(TopologyEvent.suggestDown(metadataRegularNode.getConnectAddress()));
-    TimeUnit.MILLISECONDS.sleep(200);
+    TimeUnit.MILLISECONDS.sleep(500);
     assertThat(metadataRegularNode).isUp().hasOpenConnections(2).isNotReconnecting();
   }
 
@@ -302,7 +302,7 @@ public class NodeStateIT {
           .as("Node going down")
           .before(10, TimeUnit.SECONDS)
           .becomesTrue();
-      Mockito.verify(localNodeStateListener, timeout(100)).onDown(localMetadataNode);
+      Mockito.verify(localNodeStateListener, timeout(500)).onDown(localMetadataNode);
 
       expect(NodeStateEvent.changed(NodeState.UP, NodeState.DOWN, localMetadataNode));
 
@@ -315,7 +315,7 @@ public class NodeStateIT {
           .as("Node coming back up")
           .before(10, TimeUnit.SECONDS)
           .becomesTrue();
-      Mockito.verify(localNodeStateListener, timeout(100)).onUp(localMetadataNode);
+      Mockito.verify(localNodeStateListener, timeout(500)).onUp(localMetadataNode);
 
       expect(NodeStateEvent.changed(NodeState.DOWN, NodeState.UP, localMetadataNode));
     }
@@ -333,17 +333,17 @@ public class NodeStateIT {
         .as("Node forced down")
         .before(10, TimeUnit.SECONDS)
         .becomesTrue();
-    inOrder.verify(nodeStateListener, timeout(100)).onDown(metadataRegularNode);
+    inOrder.verify(nodeStateListener, timeout(500)).onDown(metadataRegularNode);
 
     // Should ignore up/down topology events while forced down
     driverContext.eventBus().fire(TopologyEvent.suggestUp(metadataRegularNode.getConnectAddress()));
-    TimeUnit.MILLISECONDS.sleep(200);
+    TimeUnit.MILLISECONDS.sleep(500);
     assertThat(metadataRegularNode).isForcedDown();
 
     driverContext
         .eventBus()
         .fire(TopologyEvent.suggestDown(metadataRegularNode.getConnectAddress()));
-    TimeUnit.MILLISECONDS.sleep(200);
+    TimeUnit.MILLISECONDS.sleep(500);
     assertThat(metadataRegularNode).isForcedDown();
 
     // Should only come back up on a FORCE_UP event
@@ -353,7 +353,7 @@ public class NodeStateIT {
         .as("Node forced back up")
         .before(10, TimeUnit.SECONDS)
         .becomesTrue();
-    inOrder.verify(nodeStateListener, timeout(100)).onUp(metadataRegularNode);
+    inOrder.verify(nodeStateListener, timeout(500)).onUp(metadataRegularNode);
   }
 
   @Test
@@ -371,17 +371,17 @@ public class NodeStateIT {
         .as("Node forced down")
         .before(10, TimeUnit.SECONDS)
         .becomesTrue();
-    inOrder.verify(nodeStateListener, timeout(100)).onDown(metadataRegularNode);
+    inOrder.verify(nodeStateListener, timeout(500)).onDown(metadataRegularNode);
 
     // Should ignore up/down topology events while forced down
     driverContext.eventBus().fire(TopologyEvent.suggestUp(metadataRegularNode.getConnectAddress()));
-    TimeUnit.MILLISECONDS.sleep(200);
+    TimeUnit.MILLISECONDS.sleep(500);
     assertThat(metadataRegularNode).isForcedDown();
 
     driverContext
         .eventBus()
         .fire(TopologyEvent.suggestDown(metadataRegularNode.getConnectAddress()));
-    TimeUnit.MILLISECONDS.sleep(200);
+    TimeUnit.MILLISECONDS.sleep(500);
     assertThat(metadataRegularNode).isForcedDown();
 
     // Should only come back up on a FORCE_UP event, will not reopen connections since it is still
@@ -397,7 +397,7 @@ public class NodeStateIT {
         .as("Node forced back up")
         .before(10, TimeUnit.SECONDS)
         .becomesTrue();
-    inOrder.verify(nodeStateListener, timeout(100)).onUp(metadataRegularNode);
+    inOrder.verify(nodeStateListener, timeout(500)).onUp(metadataRegularNode);
 
     driverContext.loadBalancingPolicyWrapper().setDistance(metadataRegularNode, NodeDistance.LOCAL);
   }
@@ -425,14 +425,14 @@ public class NodeStateIT {
       Node localMetadataNode2 = nodes.get(address2);
 
       // Successful contact point goes to up directly
-      Mockito.verify(localNodeStateListener, timeout(100)).onUp(localMetadataNode1);
+      Mockito.verify(localNodeStateListener, timeout(500)).onUp(localMetadataNode1);
       // Non-contact point only added since we don't have a connection or events for it yet
-      Mockito.verify(localNodeStateListener, timeout(100)).onAdd(localMetadataNode2);
+      Mockito.verify(localNodeStateListener, timeout(500)).onAdd(localMetadataNode2);
 
       localCluster.connect();
 
       // Non-contact point now has a connection opened => up
-      Mockito.verify(localNodeStateListener, timeout(100)).onUp(localMetadataNode2);
+      Mockito.verify(localNodeStateListener, timeout(500)).onUp(localMetadataNode2);
     }
   }
 
@@ -464,10 +464,10 @@ public class NodeStateIT {
 
       // The order of the calls is not deterministic because contact points are shuffled, but it
       // does not matter here since Mockito.verify does not enforce order.
-      Mockito.verify(localNodeStateListener, timeout(100))
+      Mockito.verify(localNodeStateListener, timeout(500))
           .onRemove(new DefaultNode(wrongContactPoint));
-      Mockito.verify(localNodeStateListener, timeout(100)).onUp(localMetadataNode1);
-      Mockito.verify(localNodeStateListener, timeout(100)).onAdd(localMetadataNode2);
+      Mockito.verify(localNodeStateListener, timeout(500)).onUp(localMetadataNode1);
+      Mockito.verify(localNodeStateListener, timeout(500)).onAdd(localMetadataNode2);
 
       // Note: there might be an additional onDown for wrongContactPoint if it was hit first at
       // init. This is hard to test since the node was removed later, so we simply don't call
@@ -511,14 +511,14 @@ public class NodeStateIT {
           Node localMetadataNode2 = nodes.get(address2);
           if (localMetadataNode2.getState() == NodeState.DOWN) {
             // Stopped node was tried first and marked down, that's our target scenario
-            Mockito.verify(localNodeStateListener, timeout(100)).onDown(localMetadataNode2);
-            Mockito.verify(localNodeStateListener, timeout(100)).onUp(localMetadataNode1);
+            Mockito.verify(localNodeStateListener, timeout(500)).onDown(localMetadataNode2);
+            Mockito.verify(localNodeStateListener, timeout(500)).onUp(localMetadataNode1);
             Mockito.verifyNoMoreInteractions(localNodeStateListener);
             return;
           } else {
             // Stopped node was not tried
             assertThat(localMetadataNode2).isUnknown();
-            Mockito.verify(localNodeStateListener, timeout(100)).onUp(localMetadataNode1);
+            Mockito.verify(localNodeStateListener, timeout(500)).onUp(localMetadataNode1);
             Mockito.verifyNoMoreInteractions(localNodeStateListener);
           }
         }

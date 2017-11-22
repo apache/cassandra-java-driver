@@ -146,7 +146,7 @@ public class MetadataManagerTest {
     // Then
     // the info should have been copied to the node
     assertThat(refreshNodeFuture).isSuccess();
-    Mockito.verify(info, timeout(100)).getDatacenter();
+    Mockito.verify(info, timeout(500)).getDatacenter();
     assertThat(node.getDatacenter()).isEqualTo("dc1");
   }
 
