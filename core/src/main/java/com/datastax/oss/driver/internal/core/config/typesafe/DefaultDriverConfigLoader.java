@@ -82,7 +82,10 @@ public class DefaultDriverConfigLoader implements DriverConfigLoader {
 
   @Override
   public void close() {
-    RunOrSchedule.on(singleThreaded.adminExecutor, singleThreaded::close);
+    SingleThreaded singleThreaded = this.singleThreaded;
+    if (singleThreaded != null) {
+      RunOrSchedule.on(singleThreaded.adminExecutor, singleThreaded::close);
+    }
   }
 
   private class SingleThreaded {
