@@ -335,7 +335,7 @@ public class DefaultSessionTest {
     assertThat(initFuture).isSuccess();
 
     eventBus.fire(new DistanceEvent(NodeDistance.REMOTE, node2));
-    Mockito.verify(pool2, timeout(100)).resize(NodeDistance.REMOTE);
+    Mockito.verify(pool2, timeout(500)).resize(NodeDistance.REMOTE);
   }
 
   @Test
@@ -359,7 +359,7 @@ public class DefaultSessionTest {
     assertThat(initFuture).isSuccess();
 
     eventBus.fire(new DistanceEvent(NodeDistance.IGNORED, node2));
-    Mockito.verify(pool2, timeout(100)).closeAsync();
+    Mockito.verify(pool2, timeout(500)).closeAsync();
 
     Session session = CompletableFutures.getCompleted(initFuture.toCompletableFuture());
     assertThat(((DefaultSession) session).getPools()).containsValues(pool1, pool3);
@@ -418,7 +418,7 @@ public class DefaultSessionTest {
     assertThat(initFuture).isSuccess();
 
     eventBus.fire(NodeStateEvent.changed(NodeState.UP, NodeState.FORCED_DOWN, node2));
-    Mockito.verify(pool2, timeout(100)).closeAsync();
+    Mockito.verify(pool2, timeout(500)).closeAsync();
 
     Session session = CompletableFutures.getCompleted(initFuture.toCompletableFuture());
     assertThat(((DefaultSession) session).getPools()).containsValues(pool1, pool3);
