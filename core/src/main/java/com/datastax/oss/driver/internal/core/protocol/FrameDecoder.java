@@ -37,6 +37,7 @@ public class FrameDecoder extends LengthFieldBasedFrameDecoder {
   private static final int LENGTH_FIELD_LENGTH = 4;
 
   private final FrameCodec<ByteBuf> frameCodec;
+  private boolean isFirstResponse;
 
   public FrameDecoder(FrameCodec<ByteBuf> frameCodec, int maxFrameLengthInBytes) {
     super(maxFrameLengthInBytes, LENGTH_FIELD_OFFSET, LENGTH_FIELD_LENGTH, 0, 0, true);
@@ -45,34 +46,37 @@ public class FrameDecoder extends LengthFieldBasedFrameDecoder {
 
   @Override
   protected Object decode(ChannelHandlerContext ctx, ByteBuf in) throws Exception {
-    // Must read at least the protocol v1/v2 header (see below)
-    if (in.readableBytes() < 8) {
-      return null;
-    }
     int startIndex = in.readerIndex();
+    if (isFirstResponse) {
+      isFirstResponse = false;
 
-    // Special case for obsolete protocol versions (< v3): the length field is at a different
-    // position, so we can't delegate to super.decode() which would read the wrong length.
-    int protocolVersion = (int) in.getByte(startIndex) & 0b0111_1111;
-    if (protocolVersion < 3) {
-      int streamId = in.getByte(startIndex + 2);
-      int length = in.getInt(startIndex + 4);
-      // We don't need a full-blown decoder, just to signal the protocol error. So discard the
-      // incoming data and spoof a server-side protocol error.
-      if (in.readableBytes() < 8 + length) {
-        return null; // keep reading until we can discard the whole message at once
-      } else {
-        in.readerIndex(startIndex + 8 + length);
+      // Must read at least the protocol v1/v2 header (see below)
+      if (in.readableBytes() < 8) {
+        return null;
       }
-      return Frame.forResponse(
-          protocolVersion,
-          streamId,
-          null,
-          Frame.NO_PAYLOAD,
-          Collections.emptyList(),
-          new Error(
-              ProtocolConstants.ErrorCode.PROTOCOL_ERROR,
-              "Invalid or unsupported protocol version"));
+      // Special case for obsolete protocol versions (< v3): the length field is at a different
+      // position, so we can't delegate to super.decode() which would read the wrong length.
+      int protocolVersion = (int) in.getByte(startIndex) & 0b0111_1111;
+      if (protocolVersion < 3) {
+        int streamId = in.getByte(startIndex + 2);
+        int length = in.getInt(startIndex + 4);
+        // We don't need a full-blown decoder, just to signal the protocol error. So discard the
+        // incoming data and spoof a server-side protocol error.
+        if (in.readableBytes() < 8 + length) {
+          return null; // keep reading until we can discard the whole message at once
+        } else {
+          in.readerIndex(startIndex + 8 + length);
+        }
+        return Frame.forResponse(
+            protocolVersion,
+            streamId,
+            null,
+            Frame.NO_PAYLOAD,
+            Collections.emptyList(),
+            new Error(
+                ProtocolConstants.ErrorCode.PROTOCOL_ERROR,
+                "Invalid or unsupported protocol version"));
+      }
     }
 
     try {
