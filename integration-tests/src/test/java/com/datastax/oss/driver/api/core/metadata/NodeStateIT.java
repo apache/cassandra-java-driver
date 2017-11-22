@@ -33,10 +33,10 @@ import com.datastax.oss.simulacron.common.cluster.NodeConnectionReport;
 import com.datastax.oss.simulacron.common.stubbing.CloseType;
 import com.datastax.oss.simulacron.server.BoundNode;
 import com.datastax.oss.simulacron.server.RejectScope;
-import java.net.InetAddress;
+import java.io.IOException;
 import java.net.InetSocketAddress;
+import java.net.ServerSocket;
 import java.net.SocketAddress;
-import java.net.UnknownHostException;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.concurrent.BlockingQueue;
@@ -438,14 +438,14 @@ public class NodeStateIT {
 
   @Test
   public void should_remove_invalid_contact_point() {
-    // Initialize the driver with 1 wrong address and 1 valid address
-    InetSocketAddress wrongContactPoint = unusedAddress();
 
     Iterator<InetSocketAddress> contactPoints = simulacron.getContactPoints().iterator();
     InetSocketAddress address1 = contactPoints.next();
     InetSocketAddress address2 = contactPoints.next();
     NodeStateListener localNodeStateListener = Mockito.mock(NodeStateListener.class);
 
+    // Initialize the driver with 1 wrong address and 1 valid address
+    InetSocketAddress wrongContactPoint = withUnusedPort(address1);
     try (Cluster<CqlSession> localCluster =
         Cluster.builder()
             .addContactPoint(address1)
@@ -568,20 +568,31 @@ public class NodeStateIT {
   }
 
   // Generates a socket address that is not the connect address of one of the nodes in the cluster
-  private InetSocketAddress unusedAddress() {
+  private InetSocketAddress withUnusedPort(InetSocketAddress address) {
+    return new InetSocketAddress(address.getAddress(), findAvailablePort());
+  }
+
+  /**
+   * Finds an available port in the ephemeral range. This is loosely inspired by Apache MINA's
+   * AvailablePortFinder.
+   */
+  private static synchronized int findAvailablePort() throws RuntimeException {
+    ServerSocket ss = null;
     try {
-      byte[] bytes = new byte[] {127, 0, 1, 2};
-      for (int i = 0; i < 100; i++) {
-        bytes[3] += 1;
-        InetSocketAddress address = new InetSocketAddress(InetAddress.getByAddress(bytes), 9043);
-        if (!simulacron.getContactPoints().contains(address)) {
-          return address;
+      // let the system pick an ephemeral port
+      ss = new ServerSocket(0);
+      ss.setReuseAddress(true);
+      return ss.getLocalPort();
+    } catch (IOException e) {
+      throw new AssertionError(e);
+    } finally {
+      if (ss != null) {
+        try {
+          ss.close();
+        } catch (IOException e) {
+          throw new AssertionError(e);
         }
       }
-    } catch (UnknownHostException e) {
-      fail("unexpected error", e);
     }
-    fail("Could not find unused address");
-    return null; // never reached
   }
 }
