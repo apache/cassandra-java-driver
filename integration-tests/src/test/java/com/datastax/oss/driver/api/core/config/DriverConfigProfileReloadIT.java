@@ -61,11 +61,11 @@ public class DriverConfigProfileReloadIT {
             .withConfigLoader(loader)
             .addContactPoints(simulacron.getContactPoints())
             .build()) {
-      simulacron.cluster().prime(when(query).then(noRows()).delay(2, TimeUnit.SECONDS));
+      simulacron.cluster().prime(when(query).then(noRows()).delay(4, TimeUnit.SECONDS));
 
       CqlSession session = configCluster.connect();
 
-      // Expect timeout since default timeout is .5 s
+      // Expect timeout since default timeout is 2s
       try {
         session.execute(query);
         fail("DriverTimeoutException expected");
