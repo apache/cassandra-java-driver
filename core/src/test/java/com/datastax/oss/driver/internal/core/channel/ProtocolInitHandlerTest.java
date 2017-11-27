@@ -15,6 +15,10 @@
  */
 package com.datastax.oss.driver.internal.core.channel;
 
+import ch.qos.logback.classic.Level;
+import ch.qos.logback.classic.Logger;
+import ch.qos.logback.classic.spi.ILoggingEvent;
+import ch.qos.logback.core.Appender;
 import com.datastax.oss.driver.api.core.CoreProtocolVersion;
 import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.InvalidKeyspaceException;
@@ -49,13 +53,19 @@ import java.time.Duration;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
+import org.assertj.core.api.filter.Filters;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import org.mockito.ArgumentCaptor;
+import org.mockito.Captor;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
+import org.slf4j.LoggerFactory;
 
 import static com.datastax.oss.driver.Assertions.assertThat;
+import static org.mockito.Mockito.atLeast;
 
 public class ProtocolInitHandlerTest extends ChannelHandlerTestBase {
 
@@ -65,9 +75,13 @@ public class ProtocolInitHandlerTest extends ChannelHandlerTestBase {
   @Mock private DriverConfig driverConfig;
   @Mock private DriverConfigProfile defaultConfigProfile;
   @Mock private Compressor<ByteBuf> compressor;
+  @Mock private Appender<ILoggingEvent> appender;
+  @Captor private ArgumentCaptor<ILoggingEvent> loggingEventCaptor;
+
   private ProtocolVersionRegistry protocolVersionRegistry =
       new CassandraProtocolVersionRegistry("test");
   private HeartbeatHandler heartbeatHandler;
+  private Logger logger;
 
   @Before
   @Override
@@ -80,6 +94,9 @@ public class ProtocolInitHandlerTest extends ChannelHandlerTestBase {
         .thenReturn(Duration.ofMillis(QUERY_TIMEOUT_MILLIS));
     Mockito.when(defaultConfigProfile.getDuration(CoreDriverOption.CONNECTION_HEARTBEAT_INTERVAL))
         .thenReturn(Duration.ofMillis(30000));
+    Mockito.when(
+            defaultConfigProfile.getBoolean(CoreDriverOption.AUTH_PROVIDER_WARN_IF_NO_SERVER_AUTH))
+        .thenReturn(true);
     Mockito.when(internalDriverContext.protocolVersionRegistry())
         .thenReturn(protocolVersionRegistry);
     Mockito.when(internalDriverContext.compressor()).thenReturn(compressor);
@@ -99,6 +116,14 @@ public class ProtocolInitHandlerTest extends ChannelHandlerTestBase {
                 "test"));
 
     heartbeatHandler = new HeartbeatHandler(defaultConfigProfile);
+
+    logger = (Logger) LoggerFactory.getLogger(ProtocolInitHandler.class);
+    logger.addAppender(appender);
+  }
+
+  @After
+  public void teardown() {
+    logger.detachAppender(appender);
   }
 
   @Test
@@ -287,6 +312,43 @@ public class ProtocolInitHandlerTest extends ChannelHandlerTestBase {
     requestFrame = readOutboundFrame();
     writeInboundFrame(requestFrame, TestResponses.clusterNameResponse("someClusterName"));
 
+    assertThat(connectFuture).isSuccess();
+  }
+
+  @Test
+  public void should_warn_if_auth_configured_but_server_does_not_send_challenge() {
+    channel
+        .pipeline()
+        .addLast(
+            "init",
+            new ProtocolInitHandler(
+                internalDriverContext,
+                CoreProtocolVersion.V4,
+                null,
+                DriverChannelOptions.DEFAULT,
+                heartbeatHandler));
+
+    AuthProvider authProvider = Mockito.mock(AuthProvider.class);
+    Mockito.when(internalDriverContext.authProvider()).thenReturn(Optional.of(authProvider));
+
+    ChannelFuture connectFuture = channel.connect(new InetSocketAddress("localhost", 9042));
+
+    Frame requestFrame = readOutboundFrame();
+    assertThat(requestFrame.message).isInstanceOf(Startup.class);
+
+    // Simulate a READY response, a warning should be logged
+    writeInboundFrame(buildInboundFrame(requestFrame, new Ready()));
+    Mockito.verify(appender, atLeast(1)).doAppend(loggingEventCaptor.capture());
+    Iterable<ILoggingEvent> warnLogs =
+        Filters.filter(loggingEventCaptor.getAllValues()).with("level", Level.WARN).get();
+    assertThat(warnLogs).hasSize(1);
+    assertThat(warnLogs.iterator().next().getFormattedMessage())
+        .contains("did not send an authentication challenge");
+
+    // Apart from the warning, init should proceed normally
+    requestFrame = readOutboundFrame();
+    assertThat(requestFrame.message).isInstanceOf(Query.class);
+    writeInboundFrame(requestFrame, TestResponses.clusterNameResponse("someClusterName"));
     assertThat(connectFuture).isSuccess();
   }
 
