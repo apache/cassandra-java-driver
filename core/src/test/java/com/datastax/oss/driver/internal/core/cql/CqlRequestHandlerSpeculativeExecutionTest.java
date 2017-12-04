@@ -16,6 +16,8 @@
 package com.datastax.oss.driver.internal.core.cql;
 
 import static com.datastax.oss.driver.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 
 import com.datastax.oss.driver.api.core.AllNodesFailedException;
 import com.datastax.oss.driver.api.core.NoNodeAvailableException;
@@ -75,16 +77,24 @@ public class CqlRequestHandlerSpeculativeExecutionTest extends CqlRequestHandler
           harness.getContext().speculativeExecutionPolicy();
       long firstExecutionDelay = 100L;
       long secondExecutionDelay = 200L;
-      Mockito.when(speculativeExecutionPolicy.nextExecution(null, statement, 1))
+      Mockito.when(
+              speculativeExecutionPolicy.nextExecution(
+                  any(Node.class), eq(null), eq(statement), eq(1)))
           .thenReturn(firstExecutionDelay);
-      Mockito.when(speculativeExecutionPolicy.nextExecution(null, statement, 2))
+      Mockito.when(
+              speculativeExecutionPolicy.nextExecution(
+                  any(Node.class), eq(null), eq(statement), eq(2)))
           .thenReturn(secondExecutionDelay);
-      Mockito.when(speculativeExecutionPolicy.nextExecution(null, statement, 3)).thenReturn(-1L);
+      Mockito.when(
+              speculativeExecutionPolicy.nextExecution(
+                  any(Node.class), eq(null), eq(statement), eq(3)))
+          .thenReturn(-1L);
 
       new CqlRequestAsyncHandler(statement, harness.getSession(), harness.getContext(), "test")
           .handle();
 
       node1Behavior.verifyWrite();
+      node1Behavior.setWriteSuccess();
 
       harness.nextScheduledTask(); // Discard the timeout task
 
@@ -94,6 +104,7 @@ public class CqlRequestHandlerSpeculativeExecutionTest extends CqlRequestHandler
           .isEqualTo(firstExecutionDelay);
       firstExecutionTask.run();
       node2Behavior.verifyWrite();
+      node2Behavior.setWriteSuccess();
 
       ScheduledTaskCapturingEventLoop.CapturedTask<?> secondExecutionTask =
           harness.nextScheduledTask();
@@ -101,6 +112,7 @@ public class CqlRequestHandlerSpeculativeExecutionTest extends CqlRequestHandler
           .isEqualTo(secondExecutionDelay);
       secondExecutionTask.run();
       node3Behavior.verifyWrite();
+      node3Behavior.setWriteSuccess();
 
       // No more scheduled tasks since the policy returns 0 on the third call.
       assertThat(harness.nextScheduledTask()).isNull();
@@ -123,13 +135,16 @@ public class CqlRequestHandlerSpeculativeExecutionTest extends CqlRequestHandler
       SpeculativeExecutionPolicy speculativeExecutionPolicy =
           harness.getContext().speculativeExecutionPolicy();
       long firstExecutionDelay = 100L;
-      Mockito.when(speculativeExecutionPolicy.nextExecution(null, statement, 1))
+      Mockito.when(
+              speculativeExecutionPolicy.nextExecution(
+                  any(Node.class), eq(null), eq(statement), eq(1)))
           .thenReturn(firstExecutionDelay);
 
       CompletionStage<AsyncResultSet> resultSetFuture =
           new CqlRequestAsyncHandler(statement, harness.getSession(), harness.getContext(), "test")
               .handle();
       node1Behavior.verifyWrite();
+      node1Behavior.setWriteSuccess();
 
       harness.nextScheduledTask(); // Discard the timeout task
 
@@ -140,7 +155,6 @@ public class CqlRequestHandlerSpeculativeExecutionTest extends CqlRequestHandler
           .isEqualTo(firstExecutionDelay);
 
       // Complete the request from the initial execution
-      node1Behavior.setWriteSuccess();
       node1Behavior.setResponseSuccess(defaultFrameOf(singleRow()));
       assertThat(resultSetFuture).isSuccess();
 
@@ -166,7 +180,9 @@ public class CqlRequestHandlerSpeculativeExecutionTest extends CqlRequestHandler
       SpeculativeExecutionPolicy speculativeExecutionPolicy =
           harness.getContext().speculativeExecutionPolicy();
       long firstExecutionDelay = 100L;
-      Mockito.when(speculativeExecutionPolicy.nextExecution(null, statement, 1))
+      Mockito.when(
+              speculativeExecutionPolicy.nextExecution(
+                  any(Node.class), eq(null), eq(statement), eq(1)))
           .thenReturn(firstExecutionDelay);
 
       CompletionStage<AsyncResultSet> resultSetFuture =
@@ -175,17 +191,8 @@ public class CqlRequestHandlerSpeculativeExecutionTest extends CqlRequestHandler
 
       harness.nextScheduledTask(); // Discard the timeout task
 
-      // We schedule a first speculative execution before even detecting that the query plan is
-      // empty
-      ScheduledTaskCapturingEventLoop.CapturedTask<?> task = harness.nextScheduledTask();
-      assertThat(task).isNotNull();
-      assertThat(task.getInitialDelay(TimeUnit.MILLISECONDS)).isEqualTo(100);
-
       assertThat(resultSetFuture)
-          .isFailed(
-              error -> {
-                assertThat(error).isInstanceOf(NoNodeAvailableException.class);
-              });
+          .isFailed(error -> assertThat(error).isInstanceOf(NoNodeAvailableException.class));
     }
   }
 
@@ -204,7 +211,9 @@ public class CqlRequestHandlerSpeculativeExecutionTest extends CqlRequestHandler
       SpeculativeExecutionPolicy speculativeExecutionPolicy =
           harness.getContext().speculativeExecutionPolicy();
       long firstExecutionDelay = 100L;
-      Mockito.when(speculativeExecutionPolicy.nextExecution(null, statement, 1))
+      Mockito.when(
+              speculativeExecutionPolicy.nextExecution(
+                  any(Node.class), eq(null), eq(statement), eq(1)))
           .thenReturn(firstExecutionDelay);
 
       CompletionStage<AsyncResultSet> resultSetFuture =
@@ -255,7 +264,9 @@ public class CqlRequestHandlerSpeculativeExecutionTest extends CqlRequestHandler
       SpeculativeExecutionPolicy speculativeExecutionPolicy =
           harness.getContext().speculativeExecutionPolicy();
       long firstExecutionDelay = 100L;
-      Mockito.when(speculativeExecutionPolicy.nextExecution(null, statement, 1))
+      Mockito.when(
+              speculativeExecutionPolicy.nextExecution(
+                  any(Node.class), eq(null), eq(statement), eq(1)))
           .thenReturn(firstExecutionDelay);
 
       CompletionStage<AsyncResultSet> resultSetFuture =
@@ -310,7 +321,9 @@ public class CqlRequestHandlerSpeculativeExecutionTest extends CqlRequestHandler
       SpeculativeExecutionPolicy speculativeExecutionPolicy =
           harness.getContext().speculativeExecutionPolicy();
       long firstExecutionDelay = 100L;
-      Mockito.when(speculativeExecutionPolicy.nextExecution(null, statement, 1))
+      Mockito.when(
+              speculativeExecutionPolicy.nextExecution(
+                  any(Node.class), eq(null), eq(statement), eq(1)))
           .thenReturn(firstExecutionDelay);
 
       CompletionStage<AsyncResultSet> resultSetFuture =
@@ -357,13 +370,16 @@ public class CqlRequestHandlerSpeculativeExecutionTest extends CqlRequestHandler
       SpeculativeExecutionPolicy speculativeExecutionPolicy =
           harness.getContext().speculativeExecutionPolicy();
       long firstExecutionDelay = 100L;
-      Mockito.when(speculativeExecutionPolicy.nextExecution(null, statement, 1))
+      Mockito.when(
+              speculativeExecutionPolicy.nextExecution(
+                  any(Node.class), eq(null), eq(statement), eq(1)))
           .thenReturn(firstExecutionDelay);
 
       CompletionStage<AsyncResultSet> resultSetFuture =
           new CqlRequestAsyncHandler(statement, harness.getSession(), harness.getContext(), "test")
               .handle();
       node1Behavior.verifyWrite();
+      node1Behavior.setWriteSuccess();
 
       harness.nextScheduledTask(); // Discard the timeout task
 
@@ -376,7 +392,6 @@ public class CqlRequestHandlerSpeculativeExecutionTest extends CqlRequestHandler
       node2Behavior.setWriteSuccess();
 
       // Complete the request from the initial execution
-      node1Behavior.setWriteSuccess();
       node1Behavior.setResponseSuccess(defaultFrameOf(singleRow()));
       assertThat(resultSetFuture).isSuccess();
 

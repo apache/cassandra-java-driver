@@ -19,6 +19,7 @@ import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.config.CoreDriverOption;
 import com.datastax.oss.driver.api.core.config.DriverConfigProfile;
 import com.datastax.oss.driver.api.core.context.DriverContext;
+import com.datastax.oss.driver.api.core.metadata.Node;
 import com.datastax.oss.driver.api.core.session.Request;
 
 /**
@@ -47,7 +48,11 @@ public class ConstantSpeculativeExecutionPolicy implements SpeculativeExecutionP
   }
 
   @Override
-  public long nextExecution(CqlIdentifier keyspace, Request request, int runningExecutions) {
+  public long nextExecution(
+      @SuppressWarnings("unused") Node node,
+      @SuppressWarnings("unused") CqlIdentifier keyspace,
+      @SuppressWarnings("unused") Request request,
+      int runningExecutions) {
     assert runningExecutions >= 1;
     return (runningExecutions < maxExecutions) ? constantDelayMillis : -1;
   }
