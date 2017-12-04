@@ -17,6 +17,7 @@ package com.datastax.oss.driver.api.core.specex;
 
 import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.context.DriverContext;
+import com.datastax.oss.driver.api.core.metadata.Node;
 import com.datastax.oss.driver.api.core.session.Request;
 
 /** A policy that never triggers speculative executions. */
@@ -27,7 +28,9 @@ public class NoSpeculativeExecutionPolicy implements SpeculativeExecutionPolicy 
   }
 
   @Override
-  public long nextExecution(CqlIdentifier keyspace, Request request, int runningExecutions) {
+  @SuppressWarnings("unused")
+  public long nextExecution(
+      Node node, CqlIdentifier keyspace, Request request, int runningExecutions) {
     // never start speculative executions
     return -1;
   }

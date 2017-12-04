@@ -68,10 +68,10 @@ public class ConstantSpeculativeExecutionPolicyTest {
     SpeculativeExecutionPolicy policy = new ConstantSpeculativeExecutionPolicy(context);
 
     // Initial execution starts, schedule first speculative execution
-    assertThat(policy.nextExecution(null, request, 1)).isEqualTo(10);
+    assertThat(policy.nextExecution(null, null, request, 1)).isEqualTo(10);
     // First speculative execution starts, schedule second one
-    assertThat(policy.nextExecution(null, request, 2)).isEqualTo(10);
+    assertThat(policy.nextExecution(null, null, request, 2)).isEqualTo(10);
     // Second speculative execution starts, we're at 3 => stop
-    assertThat(policy.nextExecution(null, request, 3)).isNegative();
+    assertThat(policy.nextExecution(null, null, request, 3)).isNegative();
   }
 }

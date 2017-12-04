@@ -166,30 +166,10 @@ public abstract class CqlRequestHandlerBase {
     this.speculativeExecutionPolicy = context.speculativeExecutionPolicy();
     this.activeExecutionsCount = new AtomicInteger(1);
     this.startedSpeculativeExecutionsCount = new AtomicInteger(0);
-
-    if (isIdempotent) {
-      // Schedule the first speculative execution if applicable
-      long nextDelay =
-          context.speculativeExecutionPolicy().nextExecution(keyspace, this.statement, 1);
-      if (nextDelay >= 0) {
-        LOG.debug("[{}] Scheduling speculative execution 1 in {} ms", logPrefix, nextDelay);
-        this.scheduledExecutions = new CopyOnWriteArrayList<>();
-        this.scheduledExecutions.add(
-            scheduler.schedule(() -> startExecution(1), nextDelay, TimeUnit.MILLISECONDS));
-      } else {
-        LOG.debug(
-            "[{}] Speculative execution policy returned {}, no next execution",
-            logPrefix,
-            nextDelay);
-        this.scheduledExecutions = null; // we'll never need this so avoid allocation
-      }
-    } else {
-      LOG.debug("[{}] Request is not idempotent, no speculative executions", logPrefix);
-      this.scheduledExecutions = null;
-    }
+    this.scheduledExecutions = isIdempotent ? new CopyOnWriteArrayList<>() : null;
     this.inFlightCallbacks = new CopyOnWriteArrayList<>();
     // Start the initial execution
-    sendRequest(null, 0, 0);
+    sendRequest(null, 0, 0, true);
   }
 
   private ScheduledFuture<?> scheduleTimeout(Duration timeout) {
@@ -203,39 +183,18 @@ public abstract class CqlRequestHandlerBase {
     }
   }
 
-  private void startExecution(int currentExecutionIndex) {
-    if (!result.isDone()) {
-      LOG.trace("[{}] Starting speculative execution {}", logPrefix, currentExecutionIndex);
-      activeExecutionsCount.incrementAndGet();
-      startedSpeculativeExecutionsCount.incrementAndGet();
-      long nextDelay =
-          speculativeExecutionPolicy.nextExecution(keyspace, statement, currentExecutionIndex + 1);
-      if (nextDelay >= 0) {
-        LOG.trace(
-            "[{}] Scheduling speculative execution {} in {} ms",
-            logPrefix,
-            currentExecutionIndex + 1,
-            nextDelay);
-        scheduledExecutions.add(
-            scheduler.schedule(
-                () -> startExecution(currentExecutionIndex + 1), nextDelay, TimeUnit.MILLISECONDS));
-      } else {
-        LOG.trace(
-            "[{}] Speculative execution policy returned {}, no next execution",
-            logPrefix,
-            nextDelay);
-      }
-      sendRequest(null, currentExecutionIndex, 0);
-    }
-  }
-
   /**
    * Sends the request to the next available node.
    *
    * @param node if not null, it will be attempted first before the rest of the query plan.
    * @param currentExecutionIndex 0 for the initial execution, 1 for the first speculative one, etc.
+   * @param retryCount the number of times that the retry policy was invoked for this execution
+   *     already (note that some internal retries don't go through the policy, and therefore don't
+   *     increment this counter)
+   * @param scheduleNextExecution whether to schedule the next speculative execution
    */
-  private void sendRequest(Node node, int currentExecutionIndex, int retryCount) {
+  private void sendRequest(
+      Node node, int currentExecutionIndex, int retryCount, boolean scheduleNextExecution) {
     if (result.isDone()) {
       return;
     }
@@ -256,7 +215,8 @@ public abstract class CqlRequestHandlerBase {
       }
     } else {
       NodeResponseCallback nodeResponseCallback =
-          new NodeResponseCallback(node, channel, currentExecutionIndex, retryCount, logPrefix);
+          new NodeResponseCallback(
+              node, channel, currentExecutionIndex, retryCount, scheduleNextExecution, logPrefix);
       channel
           .write(message, statement.isTracing(), statement.getCustomPayload(), nodeResponseCallback)
           .addListener(nodeResponseCallback);
@@ -353,14 +313,21 @@ public abstract class CqlRequestHandlerBase {
     // How many times we've invoked the retry policy and it has returned a "retry" decision (0 for
     // the first attempt of each execution).
     private final int retryCount;
+    private final boolean scheduleNextExecution;
     private final String logPrefix;
 
     private NodeResponseCallback(
-        Node node, DriverChannel channel, int execution, int retryCount, String logPrefix) {
+        Node node,
+        DriverChannel channel,
+        int execution,
+        int retryCount,
+        boolean scheduleNextExecution,
+        String logPrefix) {
       this.node = node;
       this.channel = channel;
       this.execution = execution;
       this.retryCount = retryCount;
+      this.scheduleNextExecution = scheduleNextExecution;
       this.logPrefix = logPrefix + "|" + execution;
     }
 
@@ -379,7 +346,7 @@ public abstract class CqlRequestHandlerBase {
               channel,
               error);
           recordError(node, error);
-          sendRequest(null, execution, retryCount); // try next node
+          sendRequest(null, execution, retryCount, scheduleNextExecution); // try next node
         }
       } else {
         LOG.debug("[{}] Request sent on {}", logPrefix, channel);
@@ -389,6 +356,42 @@ public abstract class CqlRequestHandlerBase {
           cancel();
         } else {
           inFlightCallbacks.add(this);
+          if (scheduleNextExecution && isIdempotent) {
+            int nextExecution = execution + 1;
+            // Note that `node` is the first node of the execution, it might not be the "slow" one
+            // if there were retries, but in practice retries are rare.
+            long nextDelay =
+                context
+                    .speculativeExecutionPolicy()
+                    .nextExecution(node, keyspace, statement, nextExecution);
+            if (nextDelay >= 0) {
+              LOG.debug(
+                  "[{}] Scheduling speculative execution {} in {} ms",
+                  logPrefix,
+                  nextExecution,
+                  nextDelay);
+              scheduledExecutions.add(
+                  scheduler.schedule(
+                      () -> {
+                        if (!result.isDone()) {
+                          LOG.trace(
+                              "[{}] Starting speculative execution {}",
+                              CqlRequestHandlerBase.this.logPrefix,
+                              nextExecution);
+                          activeExecutionsCount.incrementAndGet();
+                          startedSpeculativeExecutionsCount.incrementAndGet();
+                          sendRequest(null, nextExecution, 0, true);
+                        }
+                      },
+                      nextDelay,
+                      TimeUnit.MILLISECONDS));
+            } else {
+              LOG.debug(
+                  "[{}] Speculative execution policy returned {}, no next execution",
+                  logPrefix,
+                  nextDelay);
+            }
+          }
         }
       }
     }
@@ -473,10 +476,10 @@ public abstract class CqlRequestHandlerBase {
                     }
                     recordError(node, exception);
                     LOG.debug("[{}] Reprepare failed, trying next node", logPrefix);
-                    sendRequest(null, execution, retryCount);
+                    sendRequest(null, execution, retryCount, false);
                   } else {
                     LOG.debug("[{}] Reprepare sucessful, retrying", logPrefix);
-                    sendRequest(node, execution, retryCount);
+                    sendRequest(node, execution, retryCount, false);
                   }
                   return null;
                 });
@@ -486,7 +489,7 @@ public abstract class CqlRequestHandlerBase {
       if (error instanceof BootstrappingException) {
         LOG.debug("[{}] {} is bootstrapping, trying next node", logPrefix, node);
         recordError(node, error);
-        sendRequest(null, execution, retryCount);
+        sendRequest(null, execution, retryCount, false);
       } else if (error instanceof QueryValidationException
           || error instanceof FunctionFailureException
           || error instanceof ProtocolError) {
@@ -540,11 +543,11 @@ public abstract class CqlRequestHandlerBase {
       switch (decision) {
         case RETRY_SAME:
           recordError(node, error);
-          sendRequest(node, execution, retryCount + 1);
+          sendRequest(node, execution, retryCount + 1, false);
           break;
         case RETRY_NEXT:
           recordError(node, error);
-          sendRequest(null, execution, retryCount + 1);
+          sendRequest(null, execution, retryCount + 1, false);
           break;
         case RETHROW:
           setFinalError(error);

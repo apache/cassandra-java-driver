@@ -116,7 +116,7 @@ public class RequestHandlerTestHarness implements AutoCloseable {
     // Disable speculative executions by default
     Mockito.when(
             speculativeExecutionPolicy.nextExecution(
-                any(CqlIdentifier.class), any(Request.class), anyInt()))
+                any(Node.class), any(CqlIdentifier.class), any(Request.class), anyInt()))
         .thenReturn(-1L);
     Mockito.when(context.speculativeExecutionPolicy()).thenReturn(speculativeExecutionPolicy);
 
