@@ -8,6 +8,7 @@
 - [improvement] JAVA-1679: Improve error message on batch log write timeout.
 - [improvement] JAVA-1672: Remove schema agreement check when repreparing on up.
 - [improvement] JAVA-1677: Warn if auth is configured on the client but not the server.
+- [new feature] JAVA-1651: Add NO_COMPACT startup option.
 
 Merged from 3.3.x:
 
