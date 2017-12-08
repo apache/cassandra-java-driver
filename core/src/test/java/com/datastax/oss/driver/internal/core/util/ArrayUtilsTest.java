@@ -61,6 +61,27 @@ public class ArrayUtilsTest {
   }
 
   @Test
+  public void should_bubble_down() {
+    String[] array = {"a", "b", "c", "d", "e"};
+    ArrayUtils.bubbleDown(array, 1, 3);
+    assertThat(array).containsExactly("a", "c", "d", "b", "e");
+  }
+
+  @Test
+  public void should_bubble_down_to_same_index() {
+    String[] array = {"a", "b", "c", "d", "e"};
+    ArrayUtils.bubbleDown(array, 3, 3);
+    assertThat(array).containsExactly("a", "b", "c", "d", "e");
+  }
+
+  @Test
+  public void should_not_bubble_down_when_target_index_lower() {
+    String[] array = {"a", "b", "c", "d", "e"};
+    ArrayUtils.bubbleDown(array, 4, 2);
+    assertThat(array).containsExactly("a", "b", "c", "d", "e");
+  }
+
+  @Test
   public void should_shuffle_head() {
     // Testing for randomness is hard, so we call the method a large number of times, and check that
     // we get all permutations with a decent distribution.
@@ -86,5 +107,38 @@ public class ArrayUtilsTest {
   @Test(expected = ArrayIndexOutOfBoundsException.class)
   public void should_fail_to_shuffle_head_when_count_is_too_high() {
     ArrayUtils.shuffleHead(new String[] {"a", "b", "c"}, 5);
+  }
+
+  @Test
+  public void should_rotate() {
+    String[] array = {"a", "b", "c", "d", "e"};
+
+    ArrayUtils.rotate(array, 1, 3, 1);
+    assertThat(array).containsExactly("a", "c", "d", "b", "e");
+
+    ArrayUtils.rotate(array, 0, 4, 2);
+    assertThat(array).containsExactly("d", "b", "a", "c", "e");
+
+    ArrayUtils.rotate(array, 2, 3, 10);
+    assertThat(array).containsExactly("d", "b", "c", "e", "a");
+  }
+
+  @Test
+  public void should_not_rotate_when_amount_multiple_of_range_size() {
+    String[] array = {"a", "b", "c", "d", "e"};
+
+    ArrayUtils.rotate(array, 1, 3, 9);
+    assertThat(array).containsExactly("a", "b", "c", "d", "e");
+  }
+
+  @Test
+  public void should_not_rotate_when_range_is_singleton_or_empty() {
+    String[] array = {"a", "b", "c", "d", "e"};
+
+    ArrayUtils.rotate(array, 1, 1, 3);
+    assertThat(array).containsExactly("a", "b", "c", "d", "e");
+
+    ArrayUtils.rotate(array, 1, 0, 3);
+    assertThat(array).containsExactly("a", "b", "c", "d", "e");
   }
 }

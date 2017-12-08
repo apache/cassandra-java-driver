@@ -28,8 +28,6 @@ import com.datastax.oss.driver.api.core.session.Request;
 import com.datastax.oss.driver.api.core.session.Session;
 import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
 import com.datastax.oss.driver.internal.core.metadata.MetadataManager;
-import com.datastax.oss.driver.internal.core.pool.ChannelPool;
-import com.datastax.oss.driver.internal.core.session.DefaultSession;
 import com.datastax.oss.driver.internal.core.util.ArrayUtils;
 import com.datastax.oss.driver.internal.core.util.Reflection;
 import com.google.common.annotations.VisibleForTesting;
@@ -58,7 +56,7 @@ public class DefaultLoadBalancingPolicy implements LoadBalancingPolicy {
   private final String logPrefix;
   private final MetadataManager metadataManager;
   private final Predicate<Node> filter;
-  private final AtomicInteger startIndex = new AtomicInteger();
+  private final AtomicInteger roundRobinAmount = new AtomicInteger();
   @VisibleForTesting final CopyOnWriteArraySet<Node> localDcLiveNodes = new CopyOnWriteArraySet<>();
 
   private volatile DistanceReporter distanceReporter;
@@ -167,28 +165,20 @@ public class DefaultLoadBalancingPolicy implements LoadBalancingPolicy {
       if (replicaCount > 1) {
         shuffleHead(currentNodes, replicaCount);
       }
-
-      // Power of 2 choices: order the first two nodes by increasing load
-      if (replicaCount > 2
-          && getAvailableIds((Node) currentNodes[1], session)
-              > getAvailableIds((Node) currentNodes[0], session)) {
-        ArrayUtils.swap(currentNodes, 0, 1);
-      }
     }
 
     LOG.trace("[{}] Prioritizing {} local replicas", logPrefix, replicaCount);
 
-    ConcurrentLinkedQueue<Node> queryPlan = new ConcurrentLinkedQueue<>();
-    // Copy the replicas as-is (we've already shuffled/ordered them)
-    for (int i = 0; i < replicaCount; i++) {
-      queryPlan.offer((Node) currentNodes[i]);
-    }
     // Round-robin the remaining nodes
-    int remaining = currentNodes.length - replicaCount;
-    int myStartIndex = startIndex.getAndUpdate(INCREMENT);
-    for (int i = 0; i < remaining; i++) {
-      Node node = (Node) currentNodes[replicaCount + (myStartIndex + i) % remaining];
-      queryPlan.offer(node);
+    ArrayUtils.rotate(
+        currentNodes,
+        replicaCount,
+        currentNodes.length - replicaCount,
+        roundRobinAmount.getAndUpdate(INCREMENT));
+
+    ConcurrentLinkedQueue<Node> queryPlan = new ConcurrentLinkedQueue<>();
+    for (Object currentNode : currentNodes) {
+      queryPlan.offer((Node) currentNode);
     }
     return queryPlan;
   }
@@ -232,12 +222,6 @@ public class DefaultLoadBalancingPolicy implements LoadBalancingPolicy {
   @VisibleForTesting
   protected void shuffleHead(Object[] currentNodes, int replicaCount) {
     ArrayUtils.shuffleHead(currentNodes, replicaCount);
-  }
-
-  private int getAvailableIds(Node node, Session session) {
-    // The cast will always succeed because there's no way to replace the internal session impl
-    ChannelPool pool = ((DefaultSession) session).getPools().get(node);
-    return (pool == null) ? 0 : pool.getAvailableIds();
   }
 
   @Override

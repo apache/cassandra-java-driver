@@ -57,7 +57,6 @@ public class DefaultLoadBalancingPolicyQueryPlanTest extends DefaultLoadBalancin
   @Mock private Metadata metadata;
   @Mock private TokenMap tokenMap;
 
-  private Map<Node, ChannelPool> pools;
   private DefaultLoadBalancingPolicy policy;
 
   @Before
@@ -67,9 +66,6 @@ public class DefaultLoadBalancingPolicyQueryPlanTest extends DefaultLoadBalancin
     Mockito.when(context.metadataManager()).thenReturn(metadataManager);
     Mockito.when(metadataManager.getMetadata()).thenReturn(metadata);
     Mockito.when(metadata.getTokenMap()).thenReturn(Optional.of(tokenMap));
-
-    pools = new HashMap<>();
-    Mockito.when(session.getPools()).thenReturn(pools);
 
     // Use a subclass to disable shuffling, we just spy to make sure that the shuffling method was
     // called (makes tests easier)
@@ -172,7 +168,7 @@ public class DefaultLoadBalancingPolicyQueryPlanTest extends DefaultLoadBalancin
   }
 
   @Test
-  public void should_prioritize_and_shuffle_two_replicas() {
+  public void should_prioritize_and_shuffle_replicas() {
     Mockito.when(request.getRoutingKeyspace()).thenReturn(KEYSPACE);
     Mockito.when(request.getRoutingKey()).thenReturn(ROUTING_KEY);
     Mockito.when(tokenMap.getReplicas(KEYSPACE, ROUTING_KEY))
@@ -188,40 +184,6 @@ public class DefaultLoadBalancingPolicyQueryPlanTest extends DefaultLoadBalancin
     Mockito.verify(policy, times(3)).shuffleHead(any(), eq(2));
     // No power of two choices with only two replicas
     Mockito.verify(session, never()).getPools();
-  }
-
-  @Test
-  public void should_use_power_of_two_choices_for_three_or_more_replicas() {
-    Mockito.when(request.getRoutingKeyspace()).thenReturn(KEYSPACE);
-    Mockito.when(request.getRoutingKey()).thenReturn(ROUTING_KEY);
-    Mockito.when(tokenMap.getReplicas(KEYSPACE, ROUTING_KEY))
-        .thenReturn(ImmutableSet.of(node3, node4, node5));
-
-    // node3 and node4 will always be the first two replicas (since shuffling is disabled), they
-    // should get ordered by increasing available ids
-    mockPoolWithAvailableIds(node3, 200);
-    mockPoolWithAvailableIds(node4, 100);
-
-    assertThat(policy.newQueryPlan(request, session))
-        .containsExactly(node3, node4, node5, node1, node2);
-    assertThat(policy.newQueryPlan(request, session))
-        .containsExactly(node3, node4, node5, node2, node1);
-    Mockito.verify(policy, times(2)).shuffleHead(any(), eq(3));
-
-    mockPoolWithAvailableIds(node3, 100);
-    mockPoolWithAvailableIds(node4, 200);
-
-    assertThat(policy.newQueryPlan(request, session))
-        .containsExactly(node4, node3, node5, node1, node2);
-    assertThat(policy.newQueryPlan(request, session))
-        .containsExactly(node4, node3, node5, node2, node1);
-    Mockito.verify(policy, times(4)).shuffleHead(any(), eq(3));
-  }
-
-  private void mockPoolWithAvailableIds(Node node, int availableIds) {
-    ChannelPool pool = Mockito.mock(ChannelPool.class);
-    Mockito.when(pool.getAvailableIds()).thenReturn(availableIds);
-    pools.put(node, pool);
   }
 
   static class NonShufflingPolicy extends DefaultLoadBalancingPolicy {

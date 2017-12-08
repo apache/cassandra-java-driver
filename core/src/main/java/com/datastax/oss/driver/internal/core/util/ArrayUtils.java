@@ -38,6 +38,16 @@ public class ArrayUtils {
   }
 
   /**
+   * Moves an element towards the end of the array, shifting all the intermediary elements to the
+   * left (no-op if targetIndex <= sourceIndex).
+   */
+  public static <T> void bubbleDown(T[] elements, int sourceIndex, int targetIndex) {
+    for (int i = sourceIndex; i < targetIndex; i++) {
+      swap(elements, i, i + 1);
+    }
+  }
+
+  /**
    * Shuffles the first n elements of the array in-place.
    *
    * @see <a
@@ -50,6 +60,18 @@ public class ArrayUtils {
       for (int i = n - 1; i > 0; i--) {
         int j = random.nextInt(i + 1);
         swap(elements, i, j);
+      }
+    }
+  }
+
+  /** Rotates the elements in the specified range by the specified amount (round-robin). */
+  public static <T> void rotate(T[] elements, int startIndex, int length, int amount) {
+    if (length >= 2) {
+      amount = amount % length;
+      // Repeatedly shift by 1. This is not the most time-efficient but the array will typically be
+      // small so we don't care, and this avoids allocating a temporary buffer.
+      for (int i = 0; i < amount; i++) {
+        bubbleDown(elements, startIndex, startIndex + length - 1);
       }
     }
   }
