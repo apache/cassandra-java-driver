@@ -232,8 +232,8 @@ class Connection {
         return new AsyncFunction<Void, Void>() {
             @Override
             public ListenableFuture<Void> apply(Void input) throws Exception {
-                ProtocolOptions.Compression compression = factory.configuration.getProtocolOptions().getCompression();
-                Future startupResponseFuture = write(new Requests.Startup(compression));
+                ProtocolOptions protocolOptions = factory.configuration.getProtocolOptions();
+                Future startupResponseFuture = write(new Requests.Startup(protocolOptions.getCompression(), protocolOptions.isNoCompact()));
                 return GuavaCompatibility.INSTANCE.transformAsync(startupResponseFuture,
                         onStartupResponse(protocolVersion, initExecutor), initExecutor);
             }

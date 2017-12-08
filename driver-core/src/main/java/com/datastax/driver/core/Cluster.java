@@ -687,6 +687,7 @@ public class Cluster implements Closeable {
         private boolean metricsEnabled = true;
         private boolean jmxEnabled = true;
         private boolean allowBetaProtocolVersion = false;
+        private boolean noCompact = false;
 
         private Collection<Host.StateListener> listeners;
 
@@ -1296,6 +1297,24 @@ public class Cluster implements Closeable {
         }
 
         /**
+         * Enables the <code>NO_COMPACT</code> startup option.
+         * <p>
+         * When this option is supplied, <code>SELECT</code>, <code>UPDATE</code>, <code>DELETE</code> and
+         * <code>BATCH</code> statements on <code>COMPACT STORAGE</code> tables function in "compatibility" mode which
+         * allows seeing these tables as if they were "regular" CQL tables.
+         * <p>
+         * This option only effects interactions with tables using <code>COMPACT STORAGE<code> and is only supported by
+         * C* 4.0+ and DSE 6.0+.
+         *
+         * @return this builder.
+         * @see <a href="https://issues.apache.org/jira/browse/CASSANDRA-10857">CASSANDRA-10857</a>
+         */
+        public Builder withNoCompact() {
+            this.noCompact = true;
+            return this;
+        }
+
+        /**
          * The configuration that will be used for the new cluster.
          * <p/>
          * You <b>should not</b> modify this object directly because changes made
@@ -1306,7 +1325,7 @@ public class Cluster implements Closeable {
          */
         @Override
         public Configuration getConfiguration() {
-            ProtocolOptions protocolOptions = new ProtocolOptions(port, protocolVersion, maxSchemaAgreementWaitSeconds, sslOptions, authProvider)
+            ProtocolOptions protocolOptions = new ProtocolOptions(port, protocolVersion, maxSchemaAgreementWaitSeconds, sslOptions, authProvider, noCompact)
                     .setCompression(compression);
 
             MetricsOptions metricsOptions = new MetricsOptions(metricsEnabled, jmxEnabled);
