@@ -83,16 +83,7 @@ abstract class ArrayBackedResultSet implements ResultSet {
                     if (newMetadataId != null) {
                         BoundStatement bs = ((BoundStatement) actualStatement);
                         PreparedId preparedId = bs.preparedStatement().getPreparedId();
-                        // Extra test for CASSANDRA-13992: conditional updates yield a different result set depending on
-                        // whether the update was applied or not, so the prepared statement must never have result
-                        // metadata, and we should always execute with skip_metadata = false.
-                        // However the server sends a new_metadata_id in the response, so make sure we ignore it if the
-                        // prepared statement did not have metadata in the first place.
-                        // TODO remove the "if" (i.e. always assign resultSetMetadata) if CASSANDRA-13992 gets fixed before 4.0.0 GA
-                        if (preparedId.resultSetMetadata.variables != null) {
-                            preparedId.resultSetMetadata =
-                                    new PreparedId.PreparedMetadata(newMetadataId, columnDefs);
-                        }
+                        preparedId.resultSetMetadata = new PreparedId.PreparedMetadata(newMetadataId, columnDefs);
                     }
                 }
                 assert columnDefs != null;

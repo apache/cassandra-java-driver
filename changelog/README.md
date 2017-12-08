@@ -2,6 +2,8 @@
 
 ### 3.4.0 (In progress)
 
+- [improvement] JAVA-1671: Remove unnecessary test on prepared statement metadata.
+
 Merged from 3.3.x:
 
 - [bug] JAVA-1555: Include VIEW and CDC in WriteType.
