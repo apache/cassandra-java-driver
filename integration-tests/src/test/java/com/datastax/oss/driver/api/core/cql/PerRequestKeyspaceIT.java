@@ -59,12 +59,14 @@ public class PerRequestKeyspaceIT {
   }
 
   @Test
+  @CassandraRequirement(min = "2.2")
   public void should_reject_simple_statement_with_keyspace_in_protocol_v4() {
     should_reject_statement_with_keyspace_in_protocol_v4(
         SimpleStatement.newInstance("SELECT * FROM foo").setKeyspace(clusterRule.keyspace()));
   }
 
   @Test
+  @CassandraRequirement(min = "2.2")
   public void should_reject_batch_statement_with_explicit_keyspace_in_protocol_v4() {
     SimpleStatement statementWithoutKeyspace =
         SimpleStatement.newInstance(
@@ -77,6 +79,7 @@ public class PerRequestKeyspaceIT {
   }
 
   @Test
+  @CassandraRequirement(min = "2.2")
   public void should_reject_batch_statement_with_inferred_keyspace_in_protocol_v4() {
     SimpleStatement statementWithKeyspace =
         SimpleStatement.newInstance(
