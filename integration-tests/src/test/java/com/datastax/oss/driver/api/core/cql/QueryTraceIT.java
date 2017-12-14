@@ -15,9 +15,12 @@
  */
 package com.datastax.oss.driver.api.core.cql;
 
+import com.datastax.oss.driver.api.core.DriverExecutionException;
 import com.datastax.oss.driver.api.testinfra.ccm.CcmRule;
 import com.datastax.oss.driver.api.testinfra.cluster.ClusterRule;
 import com.datastax.oss.driver.categories.ParallelizableTests;
+import org.hamcrest.Description;
+import org.hamcrest.TypeSafeMatcher;
 import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
@@ -43,8 +46,24 @@ public class QueryTraceIT {
 
     assertThat(executionInfo.getTracingId()).isNull();
 
-    thrown.expect(IllegalStateException.class);
-    thrown.expectMessage("Tracing was disabled for this request");
+    // Should get a DriverExecutionException with an underlying IllegalStateException indicating
+    // Tracing was disabled.
+    thrown.expect(DriverExecutionException.class);
+    String expectedMessage = "Tracing was disabled for this request";
+    thrown.expectCause(
+        new TypeSafeMatcher<Throwable>() {
+          @Override
+          public void describeTo(Description description) {
+            description.appendText(
+                "Expected IllegalStateException with message of '" + expectedMessage + "'");
+          }
+
+          @Override
+          protected boolean matchesSafely(Throwable item) {
+            return item instanceof IllegalStateException
+                && item.getMessage().equals(expectedMessage);
+          }
+        });
     executionInfo.getQueryTrace();
   }
 
