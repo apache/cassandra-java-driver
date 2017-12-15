@@ -13,11 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.datastax.oss.driver.api.core.session;
+package com.datastax.oss.driver.example.guava.internal;
 
 import com.datastax.oss.driver.api.core.cql.ResultSet;
 import com.datastax.oss.driver.api.core.cql.SimpleStatement;
 import com.datastax.oss.driver.api.core.cql.Statement;
+import com.datastax.oss.driver.api.core.session.Request;
+import com.datastax.oss.driver.api.core.session.RequestProcessorIT;
 import com.datastax.oss.driver.api.core.type.reflect.GenericType;
 import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
 import com.datastax.oss.driver.internal.core.cql.CqlRequestSyncProcessor;
@@ -32,7 +34,7 @@ import com.datastax.oss.driver.internal.core.session.RequestProcessor;
  */
 public class KeyRequestProcessor implements RequestProcessor<KeyRequest, Integer> {
 
-  static final GenericType<Integer> INT_TYPE = GenericType.of(Integer.class);
+  public static final GenericType<Integer> INT_TYPE = GenericType.of(Integer.class);
 
   private final CqlRequestSyncProcessor subProcessor;
 

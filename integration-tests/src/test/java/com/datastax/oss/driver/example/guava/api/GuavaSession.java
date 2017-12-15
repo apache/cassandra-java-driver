@@ -13,42 +13,38 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.datastax.oss.driver.api.core.session;
+package com.datastax.oss.driver.example.guava.api;
 
 import com.datastax.oss.driver.api.core.cql.AsyncResultSet;
 import com.datastax.oss.driver.api.core.cql.PreparedStatement;
 import com.datastax.oss.driver.api.core.cql.SimpleStatement;
 import com.datastax.oss.driver.api.core.cql.Statement;
+import com.datastax.oss.driver.api.core.session.Session;
 import com.datastax.oss.driver.api.core.type.reflect.GenericType;
 import com.datastax.oss.driver.internal.core.cql.DefaultPrepareRequest;
-import com.datastax.oss.driver.internal.core.session.SessionWrapper;
 import com.google.common.util.concurrent.ListenableFuture;
 
-public class GuavaSession extends SessionWrapper {
+public interface GuavaSession extends Session {
 
-  static final GenericType<ListenableFuture<AsyncResultSet>> ASYNC =
+  GenericType<ListenableFuture<AsyncResultSet>> ASYNC =
       new GenericType<ListenableFuture<AsyncResultSet>>() {};
 
-  static final GenericType<ListenableFuture<PreparedStatement>> ASYNC_PREPARED =
+  GenericType<ListenableFuture<PreparedStatement>> ASYNC_PREPARED =
       new GenericType<ListenableFuture<PreparedStatement>>() {};
 
-  GuavaSession(Session delegate) {
-    super(delegate);
-  }
-
-  ListenableFuture<AsyncResultSet> executeAsync(Statement<?> statement) {
+  default ListenableFuture<AsyncResultSet> executeAsync(Statement<?> statement) {
     return this.execute(statement, ASYNC);
   }
 
-  ListenableFuture<AsyncResultSet> executeAsync(String statement) {
+  default ListenableFuture<AsyncResultSet> executeAsync(String statement) {
     return this.executeAsync(SimpleStatement.newInstance(statement));
   }
 
-  ListenableFuture<PreparedStatement> prepareAsync(SimpleStatement statement) {
+  default ListenableFuture<PreparedStatement> prepareAsync(SimpleStatement statement) {
     return this.execute(new DefaultPrepareRequest(statement), ASYNC_PREPARED);
   }
 
-  ListenableFuture<PreparedStatement> prepareAsync(String statement) {
+  default ListenableFuture<PreparedStatement> prepareAsync(String statement) {
     return this.prepareAsync(SimpleStatement.newInstance(statement));
   }
 }

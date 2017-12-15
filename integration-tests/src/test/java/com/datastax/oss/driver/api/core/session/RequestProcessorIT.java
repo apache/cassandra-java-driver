@@ -15,6 +15,7 @@
  */
 package com.datastax.oss.driver.api.core.session;
 
+import com.datastax.oss.driver.api.core.Cluster;
 import com.datastax.oss.driver.api.core.cql.AsyncResultSet;
 import com.datastax.oss.driver.api.core.cql.CqlSession;
 import com.datastax.oss.driver.api.core.cql.PreparedStatement;
@@ -22,6 +23,12 @@ import com.datastax.oss.driver.api.core.cql.SimpleStatement;
 import com.datastax.oss.driver.api.testinfra.ccm.CcmRule;
 import com.datastax.oss.driver.api.testinfra.cluster.ClusterRule;
 import com.datastax.oss.driver.categories.ParallelizableTests;
+import com.datastax.oss.driver.example.guava.api.GuavaClusterUtils;
+import com.datastax.oss.driver.example.guava.api.GuavaSession;
+import com.datastax.oss.driver.example.guava.internal.DefaultGuavaCluster;
+import com.datastax.oss.driver.example.guava.internal.GuavaDriverContext;
+import com.datastax.oss.driver.example.guava.internal.KeyRequest;
+import com.datastax.oss.driver.example.guava.internal.KeyRequestProcessor;
 import com.datastax.oss.driver.internal.core.context.DefaultDriverContext;
 import com.datastax.oss.driver.internal.testinfra.cluster.TestConfigLoader;
 import com.google.common.collect.Iterables;
@@ -41,11 +48,12 @@ import static org.assertj.core.api.Assertions.assertThat;
  * com.datastax.oss.driver.internal.core.session.RequestProcessor} implementations to add-in
  * additional request handling and response types.
  *
- * <p>Uses {@link GuavaCluster} which is a specialized cluster implementation that uses {@link
- * GuavaDriverContext} which overrides {@link DefaultDriverContext#requestProcessorRegistry()} to
- * provide its own {@link com.datastax.oss.driver.internal.core.session.RequestProcessor}
- * implementations for returning {@link ListenableFuture}s rather than {@link
- * java.util.concurrent.CompletionStage}s in async method responses.
+ * <p>Uses {@link DefaultGuavaCluster} which is a specialized cluster implementation that uses
+ * {@link GuavaDriverContext} which overrides {@link
+ * DefaultDriverContext#requestProcessorRegistry()} to provide its own {@link
+ * com.datastax.oss.driver.internal.core.session.RequestProcessor} implementations for returning
+ * {@link ListenableFuture}s rather than {@link java.util.concurrent.CompletionStage}s in async
+ * method responses.
  *
  * <p>{@link GuavaSession} provides execute method implementation shortcuts that mimics {@link
  * CqlSession}'s async methods.
@@ -62,7 +70,7 @@ public class RequestProcessorIT {
 
   @Rule public ExpectedException thrown = ExpectedException.none();
 
-  static final String KEY = "test";
+  public static final String KEY = "test";
 
   @BeforeClass
   public static void setupSchema() {
@@ -84,8 +92,8 @@ public class RequestProcessorIT {
     }
   }
 
-  private GuavaCluster newCluster(String... options) {
-    return GuavaCluster.builder()
+  private Cluster<GuavaSession> newCluster(String... options) {
+    return GuavaClusterUtils.builder()
         .addContactPoints(ccm.getContactPoints())
         .withConfigLoader(new TestConfigLoader(options))
         .build();
@@ -93,7 +101,7 @@ public class RequestProcessorIT {
 
   @Test
   public void should_use_custom_request_processor_for_prepareAsync() throws Exception {
-    try (GuavaCluster gCluster = newCluster()) {
+    try (Cluster<GuavaSession> gCluster = newCluster()) {
       GuavaSession session = gCluster.connect(cluster.keyspace());
       ListenableFuture<PreparedStatement> preparedFuture =
           session.prepareAsync("select * from test");
@@ -113,7 +121,7 @@ public class RequestProcessorIT {
   @Test
   public void should_use_custom_request_processor_for_handling_special_request_type()
       throws Exception {
-    try (GuavaCluster gCluster = newCluster()) {
+    try (Cluster<GuavaSession> gCluster = newCluster()) {
       GuavaSession session = gCluster.connect(cluster.keyspace());
 
       // RequestProcessor executes "select v from test where k = <KEY>" and returns v as Integer.
@@ -128,7 +136,7 @@ public class RequestProcessorIT {
 
   @Test
   public void should_use_custom_request_processor_for_executeAsync() throws Exception {
-    try (GuavaCluster gCluster = newCluster()) {
+    try (Cluster<GuavaSession> gCluster = newCluster()) {
       GuavaSession session = gCluster.connect(cluster.keyspace());
 
       ListenableFuture<AsyncResultSet> future = session.executeAsync("select * from test");

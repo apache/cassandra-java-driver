@@ -13,12 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.datastax.oss.driver.api.core.session;
+package com.datastax.oss.driver.example.guava.internal;
 
 import com.datastax.oss.driver.api.core.config.DriverConfigLoader;
 import com.datastax.oss.driver.api.core.cql.PrepareRequest;
 import com.datastax.oss.driver.api.core.cql.Statement;
 import com.datastax.oss.driver.api.core.type.codec.TypeCodec;
+import com.datastax.oss.driver.example.guava.api.GuavaSession;
 import com.datastax.oss.driver.internal.core.context.DefaultDriverContext;
 import com.datastax.oss.driver.internal.core.cql.CqlPrepareAsyncProcessor;
 import com.datastax.oss.driver.internal.core.cql.CqlPrepareSyncProcessor;
@@ -37,7 +38,7 @@ import java.util.concurrent.ConcurrentMap;
  */
 public class GuavaDriverContext extends DefaultDriverContext {
 
-  GuavaDriverContext(DriverConfigLoader configLoader, List<TypeCodec<?>> typeCodecs) {
+  public GuavaDriverContext(DriverConfigLoader configLoader, List<TypeCodec<?>> typeCodecs) {
     super(configLoader, typeCodecs);
   }
 

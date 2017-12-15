@@ -13,17 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.datastax.oss.driver.api.core.session;
+package com.datastax.oss.driver.example.guava.api;
 
 import com.datastax.oss.driver.api.core.Cluster;
 import com.datastax.oss.driver.api.core.ClusterBuilder;
 import com.datastax.oss.driver.api.core.config.DriverConfigLoader;
 import com.datastax.oss.driver.api.core.context.DriverContext;
 import com.datastax.oss.driver.api.core.cql.CqlSession;
+import com.datastax.oss.driver.example.guava.internal.DefaultGuavaCluster;
+import com.datastax.oss.driver.example.guava.internal.GuavaDriverContext;
 import com.datastax.oss.driver.api.core.type.codec.TypeCodec;
 import java.util.List;
 
-public class GuavaClusterBuilder extends ClusterBuilder<GuavaClusterBuilder, GuavaCluster> {
+public class GuavaClusterBuilder
+    extends ClusterBuilder<GuavaClusterBuilder, Cluster<GuavaSession>> {
 
   @Override
   protected DriverContext buildContext(
@@ -32,7 +35,7 @@ public class GuavaClusterBuilder extends ClusterBuilder<GuavaClusterBuilder, Gua
   }
 
   @Override
-  protected GuavaCluster wrap(Cluster<CqlSession> defaultCluster) {
-    return new GuavaCluster(defaultCluster);
+  protected Cluster<GuavaSession> wrap(Cluster<CqlSession> defaultCluster) {
+    return new DefaultGuavaCluster(defaultCluster);
   }
 }

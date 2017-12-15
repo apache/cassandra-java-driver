@@ -28,24 +28,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.datastax.oss.driver.api.core.session;
+package com.datastax.oss.driver.example.guava.internal;
 
 import com.datastax.oss.driver.api.core.Cluster;
 import com.datastax.oss.driver.api.core.cql.CqlSession;
+import com.datastax.oss.driver.example.guava.api.GuavaClusterBuilder;
+import com.datastax.oss.driver.example.guava.api.GuavaSession;
 import com.datastax.oss.driver.internal.core.ClusterWrapper;
 
-public class GuavaCluster extends ClusterWrapper<CqlSession, GuavaSession> {
+public class DefaultGuavaCluster extends ClusterWrapper<CqlSession, GuavaSession> {
 
-  GuavaCluster(Cluster<CqlSession> delegate) {
+  public DefaultGuavaCluster(Cluster<CqlSession> delegate) {
     super(delegate);
   }
 
   @Override
   protected GuavaSession wrap(CqlSession session) {
-    return new GuavaSession(session);
-  }
-
-  public static GuavaClusterBuilder builder() {
-    return new GuavaClusterBuilder();
+    return new DefaultGuavaSession(session);
   }
 }
