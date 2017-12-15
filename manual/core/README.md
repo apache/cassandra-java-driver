@@ -41,8 +41,14 @@ from it. In this simple example, we can use a try-with-resources block because `
 `java.lang.AutoCloseable`; in a real application, you'll probably call one of the close methods 
 (`close`, `closeAsync`, `forceCloseAsync`) explicitly.
 
-Note: this example uses the synchronous API. Most methods have asynchronous equivalents (look for
-`*Async` variants that return a `CompletionStage`).
+This example uses the synchronous API. Most methods have asynchronous equivalents (look for `*Async`
+variants that return a `CompletionStage`).
+
+Note to framework implementors: if you design an API that lets users provide their own cluster
+instance, use a bounded type parameter, like `Cluster<? extends CqlSession>` (or even
+`Cluster<? extends Session>` if you don't use any CQL-specific method). This allows custom cluster
+implementations to be used as a drop-in replacement (see `RequestProcessorIT` in the integration
+tests for an example of what such a custom implementation looks like).
 
 
 ### Setting up the driver
