@@ -3,6 +3,7 @@
 ### 3.4.0 (In progress)
 
 - [improvement] JAVA-1671: Remove unnecessary test on prepared statement metadata.
+- [bug] JAVA-1694: Upgrade to jackson-databind 2.7.9.2 to address CVE-2015-15095.
 
 Merged from 3.3.x:
 

@@ -58,7 +58,7 @@
         <hdr.version>2.1.9</hdr.version>
         <jackson.version>2.8.8</jackson.version>
         <!-- jackson-databind 2.7.x is the last to support java 6 -->
-        <jackson-databind.version>2.7.9.1</jackson-databind.version>
+        <jackson-databind.version>2.7.9.2</jackson-databind.version>
         <joda.version>2.9.1</joda.version>
         <jsr353-api.version>1.0</jsr353-api.version>
         <jsr353-ri.version>1.0.4</jsr353-ri.version>
