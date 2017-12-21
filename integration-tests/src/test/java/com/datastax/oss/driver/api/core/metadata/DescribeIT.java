@@ -47,8 +47,8 @@ public class DescribeIT {
   @ClassRule public static CcmRule ccmRule = CcmRule.getInstance();
 
   @ClassRule
-  public static ClusterRule clusterRule =
-      new ClusterRule(
+  public static ClusterRule<CqlSession> clusterRule =
+      new ClusterRule<>(
           ccmRule,
           false,
           true,
@@ -89,25 +89,28 @@ public class DescribeIT {
 
     KeyspaceMetadata originalKsMeta = clusterRule.cluster().getMetadata().getKeyspace(keyspace);
 
-    // Usertype 'ztype' with two columns.  Given name to ensure that even though it has an alphabetically
-    // later name, it shows up before other user types ('ctype') that depend on it.
+    // Usertype 'ztype' with two columns.  Given name to ensure that even though it has an
+    // alphabetically later name, it shows up before other user types ('ctype') that depend on it.
     session.execute("CREATE TYPE ztype(c text, a int)");
 
-    // Usertype 'xtype' with two columns.  At same level as 'ztype' since both are depended on by ctype, should
-    // show up before 'ztype' because it's alphabetically before, even though it was created after.
+    // Usertype 'xtype' with two columns.  At same level as 'ztype' since both are depended on by
+    // ctype, should show up before 'ztype' because it's alphabetically before, even though it was
+    // created after.
     session.execute("CREATE TYPE xtype(d text)");
 
-    // Usertype 'ctype' which depends on both ztype and xtype, therefore ztype and xtype should show up earlier.
+    // Usertype 'ctype' which depends on both ztype and xtype, therefore ztype and xtype should show
+    // up earlier.
     session.execute(
         String.format(
             "CREATE TYPE ctype(z frozen<%s.ztype>, x frozen<%s.xtype>)",
             keyspaceAsCql, keyspaceAsCql));
 
-    // Usertype 'btype' which has no dependencies, should show up before 'xtype' and 'ztype' since it's
-    // alphabetically before.
+    // Usertype 'btype' which has no dependencies, should show up before 'xtype' and 'ztype' since
+    // it's alphabetically before.
     session.execute("CREATE TYPE btype(a text)");
 
-    // Usertype 'atype' which depends on 'ctype', so should show up after 'ctype', 'xtype' and 'ztype'.
+    // Usertype 'atype' which depends on 'ctype', so should show up after 'ctype', 'xtype' and
+    // 'ztype'.
     session.execute(String.format("CREATE TYPE atype(c frozen<%s.ctype>)", keyspaceAsCql));
 
     // A simple table with a udt column and LCS compaction strategy.
@@ -129,8 +132,8 @@ public class DescribeIT {
 
       // materialized views require 3.0+
       if (ccmRule.getCassandraVersion().compareTo(CassandraVersion.V3_0_0) >= 0) {
-        // A materialized view for cyclist_mv, reverse clustering.  created first to ensure creation order does not
-        // matter, alphabetical does.
+        // A materialized view for cyclist_mv, reverse clustering.  created first to ensure creation
+        // order does not matter, alphabetical does.
         session.execute(
             "CREATE MATERIALIZED VIEW cyclist_by_r_age "
                 + "AS SELECT age, birthday, name, country "
@@ -196,8 +199,8 @@ public class DescribeIT {
     KeyspaceMetadata ks = clusterRule.cluster().getMetadata().getKeyspace(keyspace);
     assertThat(ks.describeWithChildren(true).trim()).isEqualTo(expectedCql);
 
-    // Also validate that when you create a Cluster with schema already created that the exported string
-    // is the same.
+    // Also validate that when you create a Cluster with schema already created that the exported
+    // string is the same.
     try (Cluster<CqlSession> newCluster = ClusterUtils.newCluster(ccmRule)) {
       ks = newCluster.getMetadata().getKeyspace(keyspace);
       assertThat(ks.describeWithChildren(true).trim()).isEqualTo(expectedCql);

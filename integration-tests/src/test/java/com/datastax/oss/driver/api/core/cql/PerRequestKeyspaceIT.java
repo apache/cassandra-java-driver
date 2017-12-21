@@ -35,7 +35,7 @@ import static org.assertj.core.api.Assertions.assertThat;
  * test against a local build, run with
  *
  * <pre>
- *   -Dccm.cassandraVersion=4.0.0 -Dccm.cassandraDirectory=/path/to/cassandra -Ddatastax-java-driver.protocol.version=V5
+ *   -Dccm.version=4.0.0 -Dccm.directory=/path/to/cassandra -Ddatastax-java-driver.protocol.version=V5
  * </pre>
  */
 @Category(ParallelizableTests.class)

@@ -18,8 +18,8 @@ package com.datastax.oss.driver.api.testinfra.cluster;
 import com.datastax.oss.driver.api.core.Cluster;
 import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.config.DriverConfigProfile;
-import com.datastax.oss.driver.api.core.metadata.NodeStateListener;
 import com.datastax.oss.driver.api.core.cql.CqlSession;
+import com.datastax.oss.driver.api.core.metadata.NodeStateListener;
 import com.datastax.oss.driver.api.testinfra.CassandraResourceRule;
 import com.datastax.oss.driver.api.testinfra.simulacron.SimulacronRule;
 import org.junit.rules.ExternalResource;
@@ -49,7 +49,7 @@ import org.junit.rules.ExternalResource;
  * <p>If you would rather create a new keyspace manually in each test, see the utility methods in
  * {@link ClusterUtils}.
  */
-public class ClusterRule extends ExternalResource {
+public class ClusterRule<T extends CqlSession> extends ExternalResource {
 
   // the CCM or Simulacron rule to depend on
   private final CassandraResourceRule cassandraResource;
@@ -59,10 +59,10 @@ public class ClusterRule extends ExternalResource {
   private final String[] defaultClusterOptions;
 
   // the default cluster that is auto created for this rule.
-  private Cluster<CqlSession> cluster;
+  private Cluster<T> cluster;
 
   // the default session that is auto created for this rule and is tied to the given keyspace.
-  private CqlSession defaultSession;
+  private T defaultSession;
 
   private DriverConfigProfile slowProfile;
 
@@ -71,8 +71,9 @@ public class ClusterRule extends ExternalResource {
    *
    * @param cassandraResource resource to create clusters for.
    */
-  public static ClusterRuleBuilder builder(CassandraResourceRule cassandraResource) {
-    return new ClusterRuleBuilder(cassandraResource);
+  public static <T extends CqlSession> ClusterRuleBuilder<ClusterRuleBuilder, T> builder(
+      CassandraResourceRule cassandraResource) {
+    return new ClusterRuleBuilder<>(cassandraResource);
   }
 
   /** @see #builder(CassandraResourceRule) */
@@ -122,7 +123,7 @@ public class ClusterRule extends ExternalResource {
   }
 
   /** @return the cluster created with this rule. */
-  public Cluster<CqlSession> cluster() {
+  public Cluster<T> cluster() {
     return cluster;
   }
 
@@ -130,7 +131,7 @@ public class ClusterRule extends ExternalResource {
    * @return the default session created with this rule, or {@code null} if no default session was
    *     created.
    */
-  public CqlSession session() {
+  public T session() {
     return defaultSession;
   }
 

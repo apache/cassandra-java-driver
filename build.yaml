@@ -12,7 +12,7 @@ build:
     version: 3.2.5
     goals: verify
     properties: |
-      ccm.cassandraVersion=$CCM_CASSANDRA_VERSION
+      ccm.version=$CCM_CASSANDRA_VERSION
   - xunit:
     - "**/target/surefire-reports/TEST-*.xml"
     - "**/target/failsafe-reports/TEST-*.xml"

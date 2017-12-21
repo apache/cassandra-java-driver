@@ -15,18 +15,22 @@
  */
 package com.datastax.oss.driver.api.testinfra.cluster;
 
+import com.datastax.oss.driver.api.core.cql.CqlSession;
 import com.datastax.oss.driver.api.core.metadata.NodeStateListener;
 import com.datastax.oss.driver.api.testinfra.CassandraResourceRule;
 import com.datastax.oss.driver.api.testinfra.ccm.CcmRule;
 import com.datastax.oss.driver.api.testinfra.simulacron.SimulacronRule;
 
-public class ClusterRuleBuilder {
+public class ClusterRuleBuilder<SelfT extends ClusterRuleBuilder, SessionT extends CqlSession> {
 
   private final CassandraResourceRule cassandraResource;
   private boolean createDefaultSession = true;
   private boolean createKeyspace = true;
   private String[] options = new String[] {};
   private NodeStateListener[] nodeStateListeners = new NodeStateListener[] {};
+
+  @SuppressWarnings("unchecked")
+  protected final SelfT self = (SelfT) this;
 
   public ClusterRuleBuilder(CassandraResourceRule cassandraResource) {
     this.cassandraResource = cassandraResource;
@@ -46,9 +50,9 @@ public class ClusterRuleBuilder {
    * {@link SimulacronRule}, this option is ignored, no keyspace gets created, and {@link
    * ClusterRule#keyspace()} returns {@code null}.
    */
-  public ClusterRuleBuilder withKeyspace(boolean createKeyspace) {
+  public SelfT withKeyspace(boolean createKeyspace) {
     this.createKeyspace = createKeyspace;
-    return this;
+    return self;
   }
 
   /**
@@ -60,24 +64,24 @@ public class ClusterRuleBuilder {
    *
    * <p>If this method is not called, the default value is {@code true}.
    */
-  public ClusterRuleBuilder withDefaultSession(boolean createDefaultSession) {
+  public SelfT withDefaultSession(boolean createDefaultSession) {
     this.createDefaultSession = createDefaultSession;
-    return this;
+    return self;
   }
 
   /** A set of options to override in the cluster configuration. */
-  public ClusterRuleBuilder withOptions(String... options) {
+  public SelfT withOptions(String... options) {
     this.options = options;
-    return this;
+    return self;
   }
 
-  public ClusterRuleBuilder withNodeStateListeners(NodeStateListener... listeners) {
+  public SelfT withNodeStateListeners(NodeStateListener... listeners) {
     this.nodeStateListeners = listeners;
-    return this;
+    return self;
   }
 
-  public ClusterRule build() {
-    return new ClusterRule(
+  public ClusterRule<SessionT> build() {
+    return new ClusterRule<>(
         cassandraResource, createKeyspace, createDefaultSession, nodeStateListeners, options);
   }
 }

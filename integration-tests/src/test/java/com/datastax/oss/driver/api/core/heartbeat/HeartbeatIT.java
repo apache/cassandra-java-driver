@@ -55,8 +55,9 @@ public class HeartbeatIT {
 
   @Rule public SimulacronRule simulacron = new SimulacronRule(ClusterSpec.builder().withNodes(2));
 
+  @SuppressWarnings("unchecked")
   @Rule
-  public ClusterRule cluster =
+  public ClusterRule<CqlSession> cluster =
       ClusterRule.builder(simulacron)
           .withDefaultSession(false)
           .withOptions(

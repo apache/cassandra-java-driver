@@ -16,14 +16,19 @@
 package com.datastax.oss.driver.api.testinfra.cluster;
 
 import com.datastax.oss.driver.api.core.Cluster;
+import com.datastax.oss.driver.api.core.ClusterBuilder;
 import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.config.CoreDriverOption;
 import com.datastax.oss.driver.api.core.config.DriverConfigProfile;
+import com.datastax.oss.driver.api.core.cql.CqlSession;
 import com.datastax.oss.driver.api.core.cql.SimpleStatement;
 import com.datastax.oss.driver.api.core.metadata.NodeStateListener;
-import com.datastax.oss.driver.api.core.cql.CqlSession;
 import com.datastax.oss.driver.api.testinfra.CassandraResourceRule;
 import com.datastax.oss.driver.internal.testinfra.cluster.TestConfigLoader;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.lang.reflect.Method;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
@@ -53,27 +58,61 @@ import java.util.concurrent.atomic.AtomicInteger;
  * ClusterRule} provides a simpler alternative.
  */
 public class ClusterUtils {
+  private static final Logger LOG = LoggerFactory.getLogger(ClusterUtils.class);
   private static final AtomicInteger keyspaceId = new AtomicInteger();
+
+  private static final String CLUSTER_BUILDER_CLASS =
+      System.getProperty(
+          "cluster.builder",
+          "com.datastax.oss.driver.api.testinfra.cluster.DefaultClusterBuilderInstantiator");
+
+  @SuppressWarnings("unchecked")
+  public static <T extends CqlSession> ClusterBuilder<?, ? extends Cluster<T>> baseBuilder() {
+    try {
+      Class<?> clazz = Class.forName(CLUSTER_BUILDER_CLASS);
+      Method m = clazz.getMethod("builder");
+      return (ClusterBuilder<?, ? extends Cluster<T>>) m.invoke(null);
+    } catch (Exception e) {
+      LOG.warn(
+          "Could not construct ClusterBuilder from {}, using default implementation.",
+          CLUSTER_BUILDER_CLASS,
+          e);
+      return (ClusterBuilder<?, ? extends Cluster<T>>) Cluster.builder();
+    }
+  }
+
+  public static String getConfigPath() {
+    try {
+      Class<?> clazz = Class.forName(CLUSTER_BUILDER_CLASS);
+      Method m = clazz.getMethod("configPath");
+      return (String) m.invoke(null);
+    } catch (Exception e) {
+      LOG.warn("Could not get config path from {}, using default.", CLUSTER_BUILDER_CLASS, e);
+      return "datastax-java-driver";
+    }
+  }
 
   /**
    * Creates a new instance of the driver's default {@code Cluster} implementation, using the nodes
    * in the 0th DC of the provided Cassandra resource as contact points, and the default
    * configuration augmented with the provided options.
    */
-  public static Cluster<CqlSession> newCluster(
+  public static <T extends CqlSession> Cluster<T> newCluster(
       CassandraResourceRule cassandraResource, String... options) {
     return newCluster(cassandraResource, new NodeStateListener[0], options);
   }
 
-  public static Cluster<CqlSession> newCluster(
+  @SuppressWarnings("unchecked")
+  public static <T extends CqlSession> Cluster<T> newCluster(
       CassandraResourceRule cassandraResource,
       NodeStateListener[] nodeStateListeners,
       String... options) {
-    return Cluster.builder()
-        .addContactPoints(cassandraResource.getContactPoints())
-        .addNodeStateListeners(nodeStateListeners)
-        .withConfigLoader(new TestConfigLoader(options))
-        .build();
+    return (Cluster<T>)
+        baseBuilder()
+            .addContactPoints(cassandraResource.getContactPoints())
+            .addNodeStateListeners(nodeStateListeners)
+            .withConfigLoader(new TestConfigLoader(options))
+            .build();
   }
 
   /**
@@ -87,7 +126,7 @@ public class ClusterUtils {
 
   /** Creates a keyspace through the given cluster instance, with the given profile. */
   public static void createKeyspace(
-      Cluster<CqlSession> cluster, CqlIdentifier keyspace, DriverConfigProfile profile) {
+      Cluster<? extends CqlSession> cluster, CqlIdentifier keyspace, DriverConfigProfile profile) {
     try (CqlSession session = cluster.connect()) {
       SimpleStatement createKeyspace =
           SimpleStatement.builder(
@@ -108,13 +147,13 @@ public class ClusterUtils {
    * overhead. Instead, consider building the profile manually with {@link #slowProfile(Cluster)},
    * and storing it in a local variable so it can be reused.
    */
-  public static void createKeyspace(Cluster<CqlSession> cluster, CqlIdentifier keyspace) {
+  public static void createKeyspace(Cluster<? extends CqlSession> cluster, CqlIdentifier keyspace) {
     createKeyspace(cluster, keyspace, slowProfile(cluster));
   }
 
   /** Drops a keyspace through the given cluster instance, with the given profile. */
   public static void dropKeyspace(
-      Cluster<CqlSession> cluster, CqlIdentifier keyspace, DriverConfigProfile profile) {
+      Cluster<? extends CqlSession> cluster, CqlIdentifier keyspace, DriverConfigProfile profile) {
     try (CqlSession session = cluster.connect()) {
       session.execute(
           SimpleStatement.builder(
@@ -132,7 +171,7 @@ public class ClusterUtils {
    * overhead. Instead, consider building the profile manually with {@link #slowProfile(Cluster)},
    * and storing it in a local variable so it can be reused.
    */
-  public static void dropKeyspace(Cluster<CqlSession> cluster, CqlIdentifier keyspace) {
+  public static void dropKeyspace(Cluster<? extends CqlSession> cluster, CqlIdentifier keyspace) {
     dropKeyspace(cluster, keyspace, slowProfile(cluster));
   }
 
@@ -140,7 +179,7 @@ public class ClusterUtils {
    * Builds a profile derived from the given cluster's default profile, with a higher request
    * timeout (30 seconds) that is appropriate for DML operations.
    */
-  public static DriverConfigProfile slowProfile(Cluster<CqlSession> cluster) {
+  public static DriverConfigProfile slowProfile(Cluster<? extends CqlSession> cluster) {
     return cluster
         .getContext()
         .config()
