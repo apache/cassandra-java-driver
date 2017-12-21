@@ -15,7 +15,6 @@
  */
 package com.datastax.oss.driver.api.testinfra.ccm;
 
-import com.datastax.oss.driver.api.core.CassandraVersion;
 import java.util.concurrent.atomic.AtomicReference;
 
 /**
@@ -73,13 +72,18 @@ public class CustomCcmRule extends BaseCcmRule {
       return this;
     }
 
-    public Builder withJvmArgs(String... jvmArgs) {
-      bridgeBuilder.withJvmArgs(jvmArgs);
+    public Builder withDseConfiguration(String key, Object value) {
+      bridgeBuilder.withDseConfiguration(key, value);
       return this;
     }
 
-    public Builder withCassandraVersion(CassandraVersion cassandraVersion) {
-      bridgeBuilder.withCassandraVersion(cassandraVersion);
+    public Builder withDseWorkloads(String... workloads) {
+      bridgeBuilder.withDseWorkloads(workloads);
+      return this;
+    }
+
+    public Builder withJvmArgs(String... jvmArgs) {
+      bridgeBuilder.withJvmArgs(jvmArgs);
       return this;
     }
 

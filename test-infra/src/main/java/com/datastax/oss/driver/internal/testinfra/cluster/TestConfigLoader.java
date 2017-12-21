@@ -16,6 +16,7 @@
 package com.datastax.oss.driver.internal.testinfra.cluster;
 
 import com.datastax.oss.driver.api.core.config.CoreDriverOption;
+import com.datastax.oss.driver.api.testinfra.cluster.ClusterUtils;
 import com.datastax.oss.driver.internal.core.config.typesafe.DefaultDriverConfigLoader;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
@@ -35,7 +36,11 @@ public class TestConfigLoader extends DefaultDriverConfigLoader {
             customConfig,
             "netty.io-group.shutdown.quiet-period = 0",
             "netty.admin-group.shutdown.quiet-period = 0");
-    return ConfigFactory.parseString(additionalCustomConfig)
-        .withFallback(DEFAULT_CONFIG_SUPPLIER.get());
+    return ConfigFactory.parseString(additionalCustomConfig).withFallback(getConfig());
+  }
+
+  public static Config getConfig() {
+    ConfigFactory.invalidateCaches();
+    return ConfigFactory.load().getConfig(ClusterUtils.getConfigPath());
   }
 }

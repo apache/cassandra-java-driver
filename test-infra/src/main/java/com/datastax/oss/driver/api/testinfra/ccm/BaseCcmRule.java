@@ -20,20 +20,19 @@ import com.datastax.oss.driver.api.core.CoreProtocolVersion;
 import com.datastax.oss.driver.api.core.ProtocolVersion;
 import com.datastax.oss.driver.api.testinfra.CassandraRequirement;
 import com.datastax.oss.driver.api.testinfra.CassandraResourceRule;
-import com.datastax.oss.driver.api.testinfra.ccm.CcmBridge;
+import com.datastax.oss.driver.api.testinfra.DseRequirement;
 import org.junit.AssumptionViolatedException;
 import org.junit.runner.Description;
 import org.junit.runners.model.Statement;
+
+import java.util.Optional;
 
 public abstract class BaseCcmRule extends CassandraResourceRule {
 
   protected final CcmBridge ccmBridge;
 
-  private final CassandraVersion cassandraVersion;
-
-  public BaseCcmRule(CcmBridge ccmBridge) {
+  BaseCcmRule(CcmBridge ccmBridge) {
     this.ccmBridge = ccmBridge;
-    this.cassandraVersion = ccmBridge.getCassandraVersion();
     Runtime.getRuntime()
         .addShutdownHook(
             new Thread(
@@ -57,8 +56,28 @@ public abstract class BaseCcmRule extends CassandraResourceRule {
     ccmBridge.remove();
   }
 
+  private Statement buildErrorStatement(
+      CassandraVersion requirement, String description, boolean lessThan, boolean dse) {
+    return new Statement() {
+
+      @Override
+      public void evaluate() {
+        throw new AssumptionViolatedException(
+            String.format(
+                "Test requires %s %s %s but %s is configured.  Description: %s",
+                lessThan ? "less than" : "at least",
+                dse ? "DSE" : "C*",
+                requirement,
+                dse ? ccmBridge.getDseVersion().orElse(null) : ccmBridge.getCassandraVersion(),
+                description));
+      }
+    };
+  }
+
   @Override
   public Statement apply(Statement base, Description description) {
+    // If test is annotated with CassandraRequirement or DseRequirement, ensure configured CCM
+    // cluster meets those requirements.
     CassandraRequirement cassandraRequirement =
         description.getAnnotation(CassandraRequirement.class);
 
@@ -66,21 +85,8 @@ public abstract class BaseCcmRule extends CassandraResourceRule {
       // if the configured cassandra cassandraRequirement exceeds the one being used skip this test.
       if (!cassandraRequirement.min().isEmpty()) {
         CassandraVersion minVersion = CassandraVersion.parse(cassandraRequirement.min());
-        if (minVersion.compareTo(cassandraVersion) > 0) {
-          // Create a statement which simply indicates that the configured cassandra cassandraRequirement is too old for this test.
-          return new Statement() {
-
-            @Override
-            public void evaluate() throws Throwable {
-              throw new AssumptionViolatedException(
-                  "Test requires C* "
-                      + minVersion
-                      + " but "
-                      + cassandraVersion
-                      + " is configured.  Description: "
-                      + cassandraRequirement.description());
-            }
-          };
+        if (minVersion.compareTo(ccmBridge.getCassandraVersion()) > 0) {
+          return buildErrorStatement(minVersion, cassandraRequirement.description(), false, false);
         }
       }
 
@@ -88,20 +94,38 @@ public abstract class BaseCcmRule extends CassandraResourceRule {
         // if the test version exceeds the maximum configured one, fail out.
         CassandraVersion maxVersion = CassandraVersion.parse(cassandraRequirement.max());
 
-        if (maxVersion.compareTo(cassandraVersion) <= 0) {
-          return new Statement() {
+        if (maxVersion.compareTo(ccmBridge.getCassandraVersion()) <= 0) {
+          return buildErrorStatement(maxVersion, cassandraRequirement.description(), true, false);
+        }
+      }
+    }
 
-            @Override
-            public void evaluate() throws Throwable {
-              throw new AssumptionViolatedException(
-                  "Test requires C* less than "
-                      + maxVersion
-                      + " but "
-                      + cassandraVersion
-                      + " is configured.  Description: "
-                      + cassandraRequirement.description());
-            }
-          };
+    DseRequirement dseRequirement = description.getAnnotation(DseRequirement.class);
+    if (dseRequirement != null) {
+      Optional<CassandraVersion> dseVersionOption = ccmBridge.getDseVersion();
+      if (!dseVersionOption.isPresent()) {
+        return new Statement() {
+
+          @Override
+          public void evaluate() {
+            throw new AssumptionViolatedException("Test Requires DSE but C* is configured.");
+          }
+        };
+      } else {
+        CassandraVersion dseVersion = dseVersionOption.get();
+        if (!dseRequirement.min().isEmpty()) {
+          CassandraVersion minVersion = CassandraVersion.parse(dseRequirement.min());
+          if (minVersion.compareTo(dseVersion) > 0) {
+            return buildErrorStatement(dseVersion, dseRequirement.description(), false, true);
+          }
+        }
+
+        if (!dseRequirement.max().isEmpty()) {
+          CassandraVersion maxVersion = CassandraVersion.parse(dseRequirement.max());
+
+          if (maxVersion.compareTo(ccmBridge.getCassandraVersion()) <= 0) {
+            return buildErrorStatement(dseVersion, dseRequirement.description(), true, true);
+          }
         }
       }
     }
@@ -109,12 +133,16 @@ public abstract class BaseCcmRule extends CassandraResourceRule {
   }
 
   public CassandraVersion getCassandraVersion() {
-    return cassandraVersion;
+    return ccmBridge.getCassandraVersion();
+  }
+
+  public Optional<CassandraVersion> getDseVersion() {
+    return ccmBridge.getDseVersion();
   }
 
   @Override
   public ProtocolVersion getHighestProtocolVersion() {
-    if (cassandraVersion.compareTo(CassandraVersion.V2_2_0) >= 0) {
+    if (ccmBridge.getCassandraVersion().compareTo(CassandraVersion.V2_2_0) >= 0) {
       return CoreProtocolVersion.V4;
     } else {
       return CoreProtocolVersion.V3;
