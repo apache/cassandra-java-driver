@@ -2249,12 +2249,6 @@ public class Cluster implements Closeable {
                         ? connectionFactory.open(host)
                         : reusedConnection;
 
-                try {
-                    ControlConnection.waitForSchemaAgreement(connection, this);
-                } catch (ExecutionException e) {
-                    // As below, just move on
-                }
-
                 // Furthermore, along with each prepared query we keep the current keyspace at the time of preparation
                 // as we need to make it is the same when we re-prepare on new/restarted nodes. Most query will use the
                 // same keyspace so keeping it each time is slightly wasteful, but this doesn't really matter and is

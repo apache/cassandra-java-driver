@@ -6,6 +6,7 @@
 - [bug] JAVA-1694: Upgrade to jackson-databind 2.7.9.2 to address CVE-2015-15095.
 - [documentation] JAVA-1685: Clarify recommendation on preparing SELECT *.
 - [improvement] JAVA-1679: Improve error message on batch log write timeout.
+- [improvement] JAVA-1672: Remove schema agreement check when repreparing on up.
 
 Merged from 3.3.x:
 
