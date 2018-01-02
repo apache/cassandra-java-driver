@@ -4,6 +4,7 @@
 
 - [improvement] JAVA-1671: Remove unnecessary test on prepared statement metadata.
 - [bug] JAVA-1694: Upgrade to jackson-databind 2.7.9.2 to address CVE-2015-15095.
+- [documentation] JAVA-1685: Clarify recommendation on preparing SELECT *.
 
 Merged from 3.3.x:
 
