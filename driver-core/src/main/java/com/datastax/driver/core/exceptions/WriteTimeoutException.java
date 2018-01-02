@@ -40,7 +40,9 @@ public class WriteTimeoutException extends QueryConsistencyException {
     public WriteTimeoutException(InetSocketAddress address, ConsistencyLevel consistency, WriteType writeType, int received, int required) {
         super(
                 address,
-                String.format("Cassandra timeout during write query at consistency %s (%d replica were required but only %d acknowledged the write)", consistency, required, received),
+                String.format("Cassandra timeout during %s write query at consistency %s " +
+                                "(%d replica were required but only %d acknowledged the write)",
+                        writeType, consistency, required, received),
                 consistency,
                 received,
                 required);
