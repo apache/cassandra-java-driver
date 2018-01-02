@@ -50,6 +50,8 @@ import java.util.concurrent.atomic.AtomicReference;
 class RequestHandler {
     private static final Logger logger = LoggerFactory.getLogger(RequestHandler.class);
 
+    private static final boolean HOST_METRICS_ENABLED = Boolean.getBoolean("com.datastax.driver.HOST_METRICS_ENABLED");
+
     final String id;
 
     private final SessionManager manager;
@@ -234,6 +236,10 @@ class RequestHandler {
         return manager.configuration().getMetricsOptions().isEnabled();
     }
 
+    private boolean hostMetricsEnabled() {
+        return HOST_METRICS_ENABLED && metricsEnabled();
+    }
+
     private Metrics metrics() {
         return manager.cluster.manager.metrics;
     }
@@ -290,8 +296,18 @@ class RequestHandler {
             try {
                 Host host;
                 while (!isDone.get() && (host = queryPlan.next()) != null && !queryStateRef.get().isCancelled()) {
-                    if (query(host))
+                    if (query(host)) {
+                        if (hostMetricsEnabled()) {
+                            metrics().getRegistry()
+                                    .counter(MetricsUtil.hostMetricName("writes.", host))
+                                    .inc();
+                        }
                         return;
+                    } else if (hostMetricsEnabled()) {
+                        metrics().getRegistry()
+                                .counter(MetricsUtil.hostMetricName("write-errors.", host))
+                                .inc();
+                    }
                 }
                 if (current != null) {
                     if (triedHosts == null)
