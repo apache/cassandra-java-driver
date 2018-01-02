@@ -246,6 +246,12 @@ class Connection {
             public ListenableFuture<Void> apply(Message.Response response) throws Exception {
                 switch (response.type) {
                     case READY:
+                        if (factory.authProvider != AuthProvider.NONE) {
+                            logger.warn("{} did not send an authentication challenge; " +
+                                            "This is suspicious because the driver expects authentication " +
+                                            "(configured auth provider = {})",
+                                    address, factory.authProvider.getClass().getName());
+                        }
                         return checkClusterName(protocolVersion, initExecutor);
                     case ERROR:
                         Responses.Error error = (Responses.Error) response;
