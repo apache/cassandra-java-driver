@@ -317,10 +317,10 @@ public class KeyspaceMetadata {
     }
 
     private boolean dependsOn(UserType udt1, UserType udt2) {
-        for (String fieldName : udt1.getFieldNames()) {
-            DataType fieldType = udt1.getFieldType(fieldName);
-            if (references(fieldType, udt2))
+        for (UserType.Field field : udt1) {
+            if (references(field.getType(), udt2)) {
                 return true;
+            }
         }
         return false;
     }

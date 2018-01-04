@@ -87,8 +87,12 @@ public class Assertions extends org.assertj.core.api.Assertions {
     public static VersionNumberAssert assertThat(VersionNumber actual) {
         return new VersionNumberAssert(actual);
     }
+
     public static ResultSetAssert assertThat(ResultSet rows) {
         return new ResultSetAssert(rows);
     }
 
+    public static ColumnDefinitionsAssert assertThat(ColumnDefinitions variables) {
+        return new ColumnDefinitionsAssert(variables);
+    }
 }

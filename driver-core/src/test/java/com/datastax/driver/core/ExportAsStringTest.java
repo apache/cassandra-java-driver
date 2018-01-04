@@ -20,14 +20,15 @@ import com.datastax.driver.core.utils.CassandraVersion;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.io.ByteStreams;
 import com.google.common.io.Closer;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.testng.annotations.Test;
+
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.PrintStream;
 import java.util.Map;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.testng.annotations.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
@@ -51,7 +52,7 @@ public class ExportAsStringTest extends CCMTestsSupport {
      * is failed.
      */
     @Test(groups = "short")
-    public void create_schema_and_ensure_exported_cql_is_as_expected() {
+    public void should_create_schema_and_ensure_exported_cql_is_as_expected() {
         String keyspace = "complex_ks";
         Map<String, Object> replicationOptions = ImmutableMap.<String, Object>of("class", "SimpleStrategy", "replication_factor", 1);
 
@@ -79,7 +80,7 @@ public class ExportAsStringTest extends CCMTestsSupport {
 
             // Usertype 'ctype' which depends on both ztype and xtype, therefore ztype and xtype should show up earlier.
             session.execute(SchemaBuilder.createType("ctype")
-                    .addColumn("z", ks.getUserType("ztype").copy(true))
+                    .addColumn("\"Z\"", ks.getUserType("ztype").copy(true))
                     .addColumn("x", ks.getUserType("xtype").copy(true)));
 
             // Usertype 'btype' which has no dependencies, should show up before 'xtype' and 'ztype' since it's
@@ -204,6 +205,9 @@ public class ExportAsStringTest extends CCMTestsSupport {
         Closer closer = Closer.create();
         try {
             InputStream is = ExportAsStringTest.class.getResourceAsStream(resourceName);
+            assertThat(is)
+                    .as("No reference script for this version (was looking for src/test/resources" + resourceName + ")")
+                    .isNotNull();
             closer.register(is);
             ByteArrayOutputStream baos = new ByteArrayOutputStream();
             PrintStream ps = new PrintStream(baos);

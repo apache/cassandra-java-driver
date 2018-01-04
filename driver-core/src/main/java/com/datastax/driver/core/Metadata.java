@@ -18,6 +18,7 @@ package com.datastax.driver.core;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Maps;
+import io.netty.util.collection.IntObjectHashMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -45,7 +46,7 @@ public class Metadata {
     final ReentrantLock lock = new ReentrantLock();
 
     // See https://github.com/apache/cassandra/blob/trunk/doc/cql3/CQL.textile#appendixA
-    private static final Set<String> RESERVED_KEYWORDS = ImmutableSet.of(
+    private static final IntObjectHashMap<List<char[]>> RESERVED_KEYWORDS = indexByCaseInsensitiveHash(
             "add", "allow", "alter", "and", "any", "apply", "asc", "authorize", "batch", "begin", "by",
             "columnfamily", "create", "delete", "desc", "drop", "each_quorum", "from", "grant", "in",
             "index", "inet", "infinity", "insert", "into", "keyspace", "keyspaces", "limit", "local_one",
@@ -125,25 +126,32 @@ public class Metadata {
         if (id == null)
             return null;
 
-        if (isAlphanumeric(id))
+        boolean isAlphanumericLowCase = true;
+        boolean isAlphanumeric = true;
+        for (int i = 0; i < id.length(); i++) {
+            char c = id.charAt(i);
+            if (c >= 65 && c <= 90) { // A-Z
+                isAlphanumericLowCase = false;
+            } else if (!(
+                    (c >= 48 && c <= 57) // 0-9
+                            || (c == 95) // _ (underscore)
+                            || (c >= 97 && c <= 122) // a-z
+            )) {
+                isAlphanumeric = false;
+                isAlphanumericLowCase = false;
+                break;
+            }
+        }
+
+        if (isAlphanumericLowCase) {
+            return id;
+        }
+        if (isAlphanumeric) {
             return id.toLowerCase();
+        }
 
         // Check if it's enclosed in quotes. If it is, remove them and unescape internal double quotes
         return ParseUtils.unDoubleQuote(id);
-    }
-
-    private static boolean isAlphanumeric(String s) {
-        for (int i = 0; i < s.length(); i++) {
-            char c = s.charAt(i);
-            if (!(
-                    (c >= 48 && c <= 57) // 0-9
-                            || (c >= 65 && c <= 90) // A-Z
-                            || (c == 95) // _ (underscore)
-                            || (c >= 97 && c <= 122) // a-z
-            ))
-                return false;
-        }
-        return true;
     }
 
     /**
@@ -273,8 +281,73 @@ public class Metadata {
      * @return {@code true} if the given identifier is a known reserved
      * CQL keyword, {@code false} otherwise.
      */
+
     public static boolean isReservedCqlKeyword(String id) {
-        return id != null && RESERVED_KEYWORDS.contains(id.toLowerCase());
+        if (id == null) {
+            return false;
+        }
+        int hash = caseInsensitiveHash(id);
+        List<char[]> keywords = RESERVED_KEYWORDS.get(hash);
+        if (keywords == null) {
+            return false;
+        } else {
+            for (char[] keyword : keywords) {
+                if (equalsIgnoreCaseAscii(id, keyword)) {
+                    return true;
+                }
+            }
+            return false;
+        }
+    }
+
+    private static int caseInsensitiveHash(String str) {
+        int hashCode = 17;
+        for (int i = 0; i < str.length(); i++) {
+            char c = toLowerCaseAscii(str.charAt(i));
+            hashCode = 31 * hashCode + c;
+        }
+        return hashCode;
+    }
+
+    // keyword is expected as a second argument always in low case
+    private static boolean equalsIgnoreCaseAscii(String str1, char[] str2LowCase) {
+        if (str1.length() != str2LowCase.length) return false;
+
+        for (int i = 0; i < str1.length(); i++) {
+            char c1 = str1.charAt(i);
+            char c2Low = str2LowCase[i];
+            if (c1 == c2Low) {
+                continue;
+            }
+            char low1 = toLowerCaseAscii(c1);
+            if (low1 == c2Low) {
+                continue;
+            }
+            return false;
+        }
+        return true;
+    }
+
+    private static char toLowerCaseAscii(char c) {
+        if (c >= 65 && c <= 90) { // A-Z
+            c ^= 0x20; // convert to low case
+        }
+        return c;
+    }
+
+    private static IntObjectHashMap<List<char[]>> indexByCaseInsensitiveHash(String... words) {
+        IntObjectHashMap<List<char[]>> result = new IntObjectHashMap<List<char[]>>();
+        for (String word : words) {
+            char[] wordAsCharArray = word.toLowerCase().toCharArray();
+            int hash = caseInsensitiveHash(word);
+            List<char[]> list = result.get(hash);
+            if (list == null) {
+                list = new ArrayList<char[]>();
+                result.put(hash, list);
+            }
+            list.add(wordAsCharArray);
+        }
+        return result;
     }
 
     /**

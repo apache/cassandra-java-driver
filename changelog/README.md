@@ -2,6 +2,8 @@
 
 ### 3.4.0 (In progress)
 
+Merged from 3.3.x:
+
 - [bug] JAVA-1555: Include VIEW and CDC in WriteType.
 - [bug] JAVA-1599: exportAsString improvements (sort, format, clustering order)
 - [improvement] JAVA-1587: Deterministic ordering of columns used in Mapper#saveQuery
@@ -16,6 +18,42 @@
 - [improvement] JAVA-1631: Publish a sources jar for driver-core-tests.
 - [improvement] JAVA-1632: Add a withIpPrefix(String) method to CCMBridge.Builder.
 - [bug] JAVA-1639: VersionNumber does not fullfill equals/hashcode contract.
+- [bug] JAVA-1613: Fix broken shaded Netty detection in NettyUtil.
+- [bug] JAVA-1666: Fix keyspace export when a UDT has case-sensitive field names.
+- [improvement] JAVA-1196: Include hash of result set metadata in prepared statement id.
+- [improvement] JAVA-1670: Support user-provided JMX ports for CCMBridge.
+- [improvement] JAVA-1661: Avoid String.toLowerCase if possible in Metadata.
+- [improvement] JAVA-1659: Expose low-level flusher tuning options.
+- [improvement] JAVA-1660: Support netty-transport-native-epoll in OSGi container.
+
+
+### 3.3.2
+
+- [bug] JAVA-1666: Fix keyspace export when a UDT has case-sensitive field names.
+- [improvement] JAVA-1196: Include hash of result set metadata in prepared statement id.
+- [improvement] JAVA-1670: Support user-provided JMX ports for CCMBridge.
+- [improvement] JAVA-1661: Avoid String.toLowerCase if possible in Metadata.
+- [improvement] JAVA-1659: Expose low-level flusher tuning options.
+- [improvement] JAVA-1660: Support netty-transport-native-epoll in OSGi container.
+
+
+### 3.3.1
+
+- [bug] JAVA-1555: Include VIEW and CDC in WriteType.
+- [bug] JAVA-1599: exportAsString improvements (sort, format, clustering order)
+- [improvement] JAVA-1587: Deterministic ordering of columns used in Mapper#saveQuery
+- [improvement] JAVA-1500: Add a metric to report number of in-flight requests.
+- [bug] JAVA-1438: QueryBuilder check for empty orderings.
+- [improvement] JAVA-1490: Allow zero delay for speculative executions.
+- [documentation] JAVA-1607: Add FAQ entry for netty-transport-native-epoll.
+- [bug] JAVA-1630: Fix Metadata.addIfAbsent.
+- [improvement] JAVA-1619: Update QueryBuilder methods to support Iterable input.
+- [improvement] JAVA-1527: Expose host_id and schema_version on Host metadata.
+- [new feature] JAVA-1377: Add support for TWCS in SchemaBuilder.
+- [improvement] JAVA-1631: Publish a sources jar for driver-core-tests.
+- [improvement] JAVA-1632: Add a withIpPrefix(String) method to CCMBridge.Builder.
+- [bug] JAVA-1639: VersionNumber does not fullfill equals/hashcode contract.
+- [bug] JAVA-1613: Fix broken shaded Netty detection in NettyUtil.
 
 
 ### 3.3.0
@@ -36,7 +74,6 @@
 - [improvement] JAVA-1488: Upgrade Netty to 4.0.47.Final.
 - [improvement] JAVA-1460: Add speculative execution number to ExecutionInfo
 - [improvement] JAVA-1431: Improve error handling during pool initialization.
-- [bug] JAVA-1613: Fix broken shaded Netty detection in NettyUtil.
 
 
 ### 3.2.0

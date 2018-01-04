@@ -286,8 +286,12 @@ public class CCMBridge implements CCMAccess {
 
     private final int[] nodes;
 
-    private CCMBridge(String clusterName, VersionNumber cassandraVersion, VersionNumber dseVersion, String ipPrefix,
-                      int storagePort, int thriftPort, int binaryPort, String jvmArgs, int[] nodes) {
+    private final int[] jmxPorts;
+
+
+    protected CCMBridge(String clusterName, VersionNumber cassandraVersion, VersionNumber dseVersion, String ipPrefix,
+                        int storagePort, int thriftPort, int binaryPort, int[] jmxPorts, String jvmArgs, int[] nodes) {
+
         this.clusterName = clusterName;
         this.cassandraVersion = cassandraVersion;
         this.dseVersion = dseVersion;
@@ -299,6 +303,7 @@ public class CCMBridge implements CCMAccess {
         this.jvmArgs = jvmArgs;
         this.nodes = nodes;
         this.ccmDir = Files.createTempDir();
+        this.jmxPorts = jmxPorts;
     }
 
     public static Builder builder() {
@@ -317,6 +322,11 @@ public class CCMBridge implements CCMAccess {
     @Override
     public InetSocketAddress addressOfNode(int n) {
         return new InetSocketAddress(ipOfNode(n), binaryPort);
+    }
+
+    @Override
+    public InetSocketAddress jmxAddressOfNode(int n) {
+        return new InetSocketAddress("localhost", jmxPorts[n - 1]);
     }
 
     @Override
@@ -789,6 +799,7 @@ public class CCMBridge implements CCMAccess {
 
         private String ipPrefix = TestUtils.IP_PREFIX;
         int[] nodes = {1};
+        private int[] jmxPorts = {};
         private boolean start = true;
         private boolean dse = false;
         private VersionNumber version = null;
@@ -921,6 +932,11 @@ public class CCMBridge implements CCMAccess {
             return this;
         }
 
+        public Builder withJmxPorts(int... ports) {
+            this.jmxPorts = ports;
+            return this;
+        }
+
         /**
          * Sets the DSE workload for a given node.
          *
@@ -959,13 +975,29 @@ public class CCMBridge implements CCMAccess {
             int storagePort = Integer.parseInt(cassandraConfiguration.get("storage_port").toString());
             int thriftPort = Integer.parseInt(cassandraConfiguration.get("rpc_port").toString());
             int binaryPort = Integer.parseInt(cassandraConfiguration.get("native_transport_port").toString());
+
+            // Copy any supplied jmx ports over, and find available ports for the rest
+            int numNodes = 0;
+            for (int i : nodes) {
+                numNodes += i;
+            }
+
+            int[] generatedJmxPorts = new int[numNodes];
+            for (int i = 0; i < numNodes; i++) {
+                if (i >= jmxPorts.length) {
+                    generatedJmxPorts[i] = TestUtils.findAvailablePort();
+                } else {
+                    generatedJmxPorts[i] = jmxPorts[i];
+                }
+            }
+
             if (!isThriftSupported(cassandraVersion)) {
                 // remove thrift configuration
                 cassandraConfiguration.remove("start_rpc");
                 cassandraConfiguration.remove("rpc_port");
                 cassandraConfiguration.remove("thrift_prepared_statements_cache_size_mb");
             }
-            final CCMBridge ccm = new CCMBridge(clusterName, cassandraVersion, dseVersion, ipPrefix, storagePort, thriftPort, binaryPort, joinJvmArgs(), nodes);
+            final CCMBridge ccm = new CCMBridge(clusterName, cassandraVersion, dseVersion, ipPrefix, storagePort, thriftPort, binaryPort, generatedJmxPorts, joinJvmArgs(), nodes);
 
             Runtime.getRuntime().addShutdownHook(new Thread() {
                 @Override
@@ -1068,7 +1100,7 @@ public class CCMBridge implements CCMAccess {
                 for (int dc = 1; dc <= nodes.length; dc++) {
                     int nodesInDc = nodes[dc - 1];
                     for (int i = 0; i < nodesInDc; i++) {
-                        int jmxPort = TestUtils.findAvailablePort();
+                        int jmxPort = ccm.jmxAddressOfNode(n).getPort();
                         int debugPort = TestUtils.findAvailablePort();
                         logger.trace("Node {} in cluster {} using JMX port {} and debug port {}", n, ccm.getClusterName(), jmxPort, debugPort);
                         File nodeConf = new File(ccm.getNodeDir(n), "node.conf");

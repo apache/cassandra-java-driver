@@ -125,6 +125,7 @@ public class MetadataTest extends CCMTestsSupport {
     public void handleId_should_lowercase_unquoted_alphanumeric_identifiers() {
         assertThat(Metadata.handleId("FooBar1")).isEqualTo("foobar1");
         assertThat(Metadata.handleId("Foo_Bar_1")).isEqualTo("foo_bar_1");
+        assertThat(Metadata.handleId("foo_bar_1")).isEqualTo("foo_bar_1");
     }
 
     @Test(groups = "unit")
@@ -161,4 +162,21 @@ public class MetadataTest extends CCMTestsSupport {
         assertThat(Metadata.quoteIfNecessary("columnfamily")).isEqualTo("\"columnfamily\"");
     }
 
+    @Test(groups = "unit")
+    public void should_detect_reserved_keywords_in_upper_case() {
+        assertThat(Metadata.isReservedCqlKeyword("COLUMNFAMILY")).isTrue();
+        assertThat(Metadata.isReservedCqlKeyword("TEST_COLUMNFAMILY")).isFalse();
+    }
+
+    @Test(groups = "unit")
+    public void should_detect_reserved_keywords_in_lower_case() {
+        assertThat(Metadata.isReservedCqlKeyword("columnfamily")).isTrue();
+        assertThat(Metadata.isReservedCqlKeyword("test_columnfamily")).isFalse();
+    }
+
+    @Test(groups = "unit")
+    public void should_detect_reserved_keywords_in_mixed_case() {
+        assertThat(Metadata.isReservedCqlKeyword("ColumnFamily")).isTrue();
+        assertThat(Metadata.isReservedCqlKeyword("Test_ColumnFamily")).isFalse();
+    }
 }

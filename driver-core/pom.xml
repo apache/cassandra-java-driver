@@ -228,7 +228,7 @@
                             <manifestLocation>${project.build.outputDirectory}/META-INF</manifestLocation>
                             <instructions>
                                 <!-- JNR does not provide OSGi bundles, so exclude it; the driver can live without it -->
-                                <Import-Package><![CDATA[com.google.common.*;version="[16.0.1,22)",!jnr.*,*]]></Import-Package>
+                                <Import-Package><![CDATA[com.google.common.*;version="[16.0.1,22)",!jnr.*,io.netty.channel.epoll,*]]></Import-Package>
                             </instructions>
                         </configuration>
                     </execution>

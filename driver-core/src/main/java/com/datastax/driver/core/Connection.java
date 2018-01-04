@@ -66,6 +66,8 @@ class Connection {
     private static final byte[] EMPTY_BYTE_ARRAY = new byte[0];
 
     private static final boolean DISABLE_COALESCING = SystemProperties.getBoolean("com.datastax.driver.DISABLE_COALESCING", false);
+    private static final int FLUSHER_SCHEDULE_PERIOD_NS = SystemProperties.getInt("com.datastax.driver.FLUSHER_SCHEDULE_PERIOD_NS", 10000);
+    private static final int FLUSHER_RUN_WITHOUT_WORK_TIMES = SystemProperties.getInt("com.datastax.driver.FLUSHER_RUN_WITHOUT_WORK_TIMES", 5);
 
     enum State {OPEN, TRASHED, RESURRECTING, GONE}
 
@@ -953,7 +955,7 @@ class Connection {
                 runsWithNoWork = 0;
             } else {
                 // either reschedule or cancel
-                if (++runsWithNoWork > 5) {
+                if (++runsWithNoWork > FLUSHER_RUN_WITHOUT_WORK_TIMES) {
                     running.set(false);
                     if (queued.isEmpty() || !running.compareAndSet(false, true))
                         return;
@@ -962,7 +964,11 @@ class Connection {
 
             EventLoop eventLoop = eventLoopRef.get();
             if (eventLoop != null && !eventLoop.isShuttingDown()) {
-                eventLoop.schedule(this, 10000, TimeUnit.NANOSECONDS);
+                if (FLUSHER_SCHEDULE_PERIOD_NS > 0) {
+                    eventLoop.schedule(this, FLUSHER_SCHEDULE_PERIOD_NS, TimeUnit.NANOSECONDS);
+                } else {
+                    eventLoop.execute(this);
+                }
             }
         }
     }
