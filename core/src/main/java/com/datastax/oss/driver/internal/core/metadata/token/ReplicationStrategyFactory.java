@@ -13,16 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.datastax.oss.driver.internal.core.metadata;
+package com.datastax.oss.driver.internal.core.metadata.token;
 
-import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
+import java.util.Map;
 
-class TokensChangedRefresh implements MetadataRefresh {
-
-  @Override
-  public Result compute(
-      DefaultMetadata oldMetadata, boolean tokenMapEnabled, InternalDriverContext context) {
-    return new Result(
-        oldMetadata.withNodes(oldMetadata.getNodes(), tokenMapEnabled, true, null, context));
-  }
+public interface ReplicationStrategyFactory {
+  ReplicationStrategy newInstance(Map<String, String> replicationConfig);
 }

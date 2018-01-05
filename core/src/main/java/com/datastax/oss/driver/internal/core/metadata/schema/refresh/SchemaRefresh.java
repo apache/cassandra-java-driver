@@ -17,6 +17,7 @@ package com.datastax.oss.driver.internal.core.metadata.schema.refresh;
 
 import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.metadata.schema.KeyspaceMetadata;
+import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
 import com.datastax.oss.driver.internal.core.metadata.DefaultMetadata;
 import com.datastax.oss.driver.internal.core.metadata.MetadataRefresh;
 import com.datastax.oss.driver.internal.core.metadata.schema.events.AggregateChangeEvent;
@@ -33,17 +34,17 @@ import java.util.Objects;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 
-public class SchemaRefresh extends MetadataRefresh {
+public class SchemaRefresh implements MetadataRefresh {
 
   @VisibleForTesting public final Map<CqlIdentifier, KeyspaceMetadata> newKeyspaces;
 
-  public SchemaRefresh(Map<CqlIdentifier, KeyspaceMetadata> newKeyspaces, String logPrefix) {
-    super(logPrefix);
+  public SchemaRefresh(Map<CqlIdentifier, KeyspaceMetadata> newKeyspaces) {
     this.newKeyspaces = newKeyspaces;
   }
 
   @Override
-  public Result compute(DefaultMetadata oldMetadata, boolean tokenMapEnabled) {
+  public Result compute(
+      DefaultMetadata oldMetadata, boolean tokenMapEnabled, InternalDriverContext context) {
     ImmutableList.Builder<Object> events = ImmutableList.builder();
 
     Map<CqlIdentifier, KeyspaceMetadata> oldKeyspaces = oldMetadata.getKeyspaces();
@@ -55,7 +56,8 @@ public class SchemaRefresh extends MetadataRefresh {
       computeEvents(oldKeyspaces.get(key), entry.getValue(), events);
     }
 
-    return new Result(oldMetadata.withSchema(this.newKeyspaces, tokenMapEnabled), events.build());
+    return new Result(
+        oldMetadata.withSchema(this.newKeyspaces, tokenMapEnabled, context), events.build());
   }
 
   private static boolean shallowEquals(KeyspaceMetadata keyspace1, KeyspaceMetadata keyspace2) {

@@ -37,16 +37,18 @@ class FullNodeListRefresh extends NodesRefresh {
   private static final Logger LOG = LoggerFactory.getLogger(FullNodeListRefresh.class);
 
   @VisibleForTesting final Iterable<NodeInfo> nodeInfos;
-  private final TokenFactoryRegistry tokenFactoryRegistry;
 
-  FullNodeListRefresh(Iterable<NodeInfo> nodeInfos, InternalDriverContext context) {
-    super(context.clusterName());
+  FullNodeListRefresh(Iterable<NodeInfo> nodeInfos) {
     this.nodeInfos = nodeInfos;
-    this.tokenFactoryRegistry = context.tokenFactoryRegistry();
   }
 
   @Override
-  public Result compute(DefaultMetadata oldMetadata, boolean tokenMapEnabled) {
+  public Result compute(
+      DefaultMetadata oldMetadata, boolean tokenMapEnabled, InternalDriverContext context) {
+
+    String logPrefix = context.clusterName();
+    TokenFactoryRegistry tokenFactoryRegistry = context.tokenFactoryRegistry();
+
     Map<InetSocketAddress, Node> oldNodes = oldMetadata.getNodes();
 
     Map<InetSocketAddress, Node> added = new HashMap<>();
@@ -83,7 +85,8 @@ class FullNodeListRefresh extends NodesRefresh {
       // rebuild:
       if (!oldMetadata.getTokenMap().isPresent() && tokenFactory != null) {
         return new Result(
-            oldMetadata.withNodes(oldMetadata.getNodes(), tokenMapEnabled, true, tokenFactory));
+            oldMetadata.withNodes(
+                oldMetadata.getNodes(), tokenMapEnabled, true, tokenFactory, context));
       } else {
         return new Result(oldMetadata);
       }
@@ -108,7 +111,7 @@ class FullNodeListRefresh extends NodesRefresh {
 
       return new Result(
           oldMetadata.withNodes(
-              newNodesBuilder.build(), tokenMapEnabled, tokensChanged, tokenFactory),
+              newNodesBuilder.build(), tokenMapEnabled, tokensChanged, tokenFactory, context),
           eventsBuilder.build());
     }
   }

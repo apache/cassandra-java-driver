@@ -15,12 +15,17 @@
  */
 package com.datastax.oss.driver.internal.core.metadata;
 
+import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
 import com.google.common.collect.ImmutableMap;
 import java.net.InetSocketAddress;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.mockito.Mock;
+import org.mockito.junit.MockitoJUnitRunner;
 
 import static com.datastax.oss.driver.Assertions.assertThat;
 
+@RunWith(MockitoJUnitRunner.class)
 public class RemoveNodeRefreshTest {
 
   private static final InetSocketAddress ADDRESS1 = new InetSocketAddress("127.0.0.1", 9042);
@@ -29,15 +34,17 @@ public class RemoveNodeRefreshTest {
   private static final DefaultNode node1 = new DefaultNode(ADDRESS1);
   private static final DefaultNode node2 = new DefaultNode(ADDRESS2);
 
+  @Mock private InternalDriverContext context;
+
   @Test
   public void should_remove_existing_node() {
     // Given
     DefaultMetadata oldMetadata =
-        new DefaultMetadata(ImmutableMap.of(ADDRESS1, node1, ADDRESS2, node2), "test");
-    RemoveNodeRefresh refresh = new RemoveNodeRefresh(ADDRESS2, "test");
+        new DefaultMetadata(ImmutableMap.of(ADDRESS1, node1, ADDRESS2, node2));
+    RemoveNodeRefresh refresh = new RemoveNodeRefresh(ADDRESS2);
 
     // When
-    MetadataRefresh.Result result = refresh.compute(oldMetadata, false);
+    MetadataRefresh.Result result = refresh.compute(oldMetadata, false, context);
 
     // Then
     assertThat(result.newMetadata.getNodes()).containsOnlyKeys(ADDRESS1);
@@ -47,11 +54,11 @@ public class RemoveNodeRefreshTest {
   @Test
   public void should_not_remove_nonexistent_node() {
     // Given
-    DefaultMetadata oldMetadata = new DefaultMetadata(ImmutableMap.of(ADDRESS1, node1), "test");
-    RemoveNodeRefresh refresh = new RemoveNodeRefresh(ADDRESS2, "test");
+    DefaultMetadata oldMetadata = new DefaultMetadata(ImmutableMap.of(ADDRESS1, node1));
+    RemoveNodeRefresh refresh = new RemoveNodeRefresh(ADDRESS2);
 
     // When
-    MetadataRefresh.Result result = refresh.compute(oldMetadata, false);
+    MetadataRefresh.Result result = refresh.compute(oldMetadata, false, context);
 
     // Then
     assertThat(result.newMetadata.getNodes()).containsOnlyKeys(ADDRESS1);

@@ -16,33 +16,40 @@
 package com.datastax.oss.driver.internal.core.metadata;
 
 import com.datastax.oss.driver.api.core.metadata.Node;
+import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
 import com.google.common.collect.ImmutableMap;
 import java.net.InetSocketAddress;
 import java.util.Map;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.mockito.Mock;
+import org.mockito.junit.MockitoJUnitRunner;
 
 import static com.datastax.oss.driver.Assertions.assertThat;
 
+@RunWith(MockitoJUnitRunner.class)
 public class AddNodeRefreshTest {
   private static final InetSocketAddress ADDRESS1 = new InetSocketAddress("127.0.0.1", 9042);
   private static final InetSocketAddress ADDRESS2 = new InetSocketAddress("127.0.0.2", 9042);
 
   private static final DefaultNode node1 = new DefaultNode(ADDRESS1);
 
+  @Mock private InternalDriverContext context;
+
   @Test
   public void should_add_new_node() {
     // Given
-    DefaultMetadata oldMetadata = new DefaultMetadata(ImmutableMap.of(ADDRESS1, node1), "test");
+    DefaultMetadata oldMetadata = new DefaultMetadata(ImmutableMap.of(ADDRESS1, node1));
     DefaultNodeInfo newNodeInfo =
         DefaultNodeInfo.builder()
             .withConnectAddress(ADDRESS2)
             .withDatacenter("dc1")
             .withRack("rack2")
             .build();
-    AddNodeRefresh refresh = new AddNodeRefresh(newNodeInfo, "test");
+    AddNodeRefresh refresh = new AddNodeRefresh(newNodeInfo);
 
     // When
-    MetadataRefresh.Result result = refresh.compute(oldMetadata, false);
+    MetadataRefresh.Result result = refresh.compute(oldMetadata, false, context);
 
     // Then
     Map<InetSocketAddress, Node> newNodes = result.newMetadata.getNodes();
@@ -56,17 +63,17 @@ public class AddNodeRefreshTest {
   @Test
   public void should_not_add_existing_node() {
     // Given
-    DefaultMetadata oldMetadata = new DefaultMetadata(ImmutableMap.of(ADDRESS1, node1), "test");
+    DefaultMetadata oldMetadata = new DefaultMetadata(ImmutableMap.of(ADDRESS1, node1));
     DefaultNodeInfo newNodeInfo =
         DefaultNodeInfo.builder()
             .withConnectAddress(ADDRESS1)
             .withDatacenter("dc1")
             .withRack("rack2")
             .build();
-    AddNodeRefresh refresh = new AddNodeRefresh(newNodeInfo, "test");
+    AddNodeRefresh refresh = new AddNodeRefresh(newNodeInfo);
 
     // When
-    MetadataRefresh.Result result = refresh.compute(oldMetadata, false);
+    MetadataRefresh.Result result = refresh.compute(oldMetadata, false, context);
 
     // Then
     assertThat(result.newMetadata.getNodes()).containsOnlyKeys(ADDRESS1);

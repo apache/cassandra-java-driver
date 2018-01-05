@@ -74,7 +74,7 @@ public class SchemaParser {
       KeyspaceMetadata keyspace = parseKeyspace(row);
       keyspacesBuilder.put(keyspace.getName(), keyspace);
     }
-    SchemaRefresh refresh = new SchemaRefresh(keyspacesBuilder.build(), logPrefix);
+    SchemaRefresh refresh = new SchemaRefresh(keyspacesBuilder.build());
     LOG.debug("[{}] Schema parsing took {}", logPrefix, NanoTime.formatTimeSince(startTimeNs));
     return refresh;
   }

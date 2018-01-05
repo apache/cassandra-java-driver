@@ -22,6 +22,7 @@ import com.datastax.oss.driver.api.core.metadata.schema.KeyspaceMetadata;
 import com.datastax.oss.driver.api.core.metadata.token.Token;
 import com.datastax.oss.driver.api.core.metadata.token.TokenRange;
 import com.datastax.oss.driver.api.core.type.codec.TypeCodecs;
+import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
 import com.datastax.oss.driver.internal.core.metadata.DefaultNode;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
@@ -30,11 +31,16 @@ import java.nio.ByteBuffer;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.mockito.Mock;
 import org.mockito.Mockito;
+import org.mockito.junit.MockitoJUnitRunner;
 
 import static com.datastax.oss.driver.Assertions.assertThat;
 
+@RunWith(MockitoJUnitRunner.class)
 public class DefaultTokenMapTest {
 
   private static final String DC1 = "DC1";
@@ -70,6 +76,14 @@ public class DefaultTokenMapTest {
   private static final ImmutableMap<String, String> REPLICATE_ON_DC1 =
       ImmutableMap.of("class", "org.apache.cassandra.locator.NetworkTopologyStrategy", DC1, "1");
 
+  @Mock private InternalDriverContext context;
+  private ReplicationStrategyFactory replicationStrategyFactory;
+
+  @Before
+  public void setup() {
+    replicationStrategyFactory = new DefaultReplicationStrategyFactory(context);
+  }
+
   @Test
   public void should_build_token_map() {
     // Given
@@ -83,7 +97,8 @@ public class DefaultTokenMapTest {
             mockKeyspace(KS1, REPLICATE_ON_BOTH_DCS), mockKeyspace(KS2, REPLICATE_ON_DC1));
 
     // When
-    DefaultTokenMap tokenMap = DefaultTokenMap.build(nodes, keyspaces, TOKEN_FACTORY, "test");
+    DefaultTokenMap tokenMap =
+        DefaultTokenMap.build(nodes, keyspaces, TOKEN_FACTORY, replicationStrategyFactory, "test");
 
     // Then
     assertThat(tokenMap.getTokenRanges()).containsExactly(RANGE12, RANGE23, RANGE34, RANGE41);
@@ -131,7 +146,8 @@ public class DefaultTokenMapTest {
             mockKeyspace(KS1, REPLICATE_ON_BOTH_DCS), mockKeyspace(KS2, REPLICATE_ON_DC1));
 
     // When
-    DefaultTokenMap tokenMap = DefaultTokenMap.build(nodes, keyspaces, TOKEN_FACTORY, "test");
+    DefaultTokenMap tokenMap =
+        DefaultTokenMap.build(nodes, keyspaces, TOKEN_FACTORY, replicationStrategyFactory, "test");
 
     // Then
     assertThat(tokenMap.getTokenRanges()).containsExactly(FULL_RING);
@@ -162,7 +178,9 @@ public class DefaultTokenMapTest {
     List<KeyspaceMetadata> oldKeyspaces =
         ImmutableList.of(
             mockKeyspace(KS1, REPLICATE_ON_BOTH_DCS), mockKeyspace(KS2, REPLICATE_ON_DC1));
-    DefaultTokenMap oldTokenMap = DefaultTokenMap.build(nodes, oldKeyspaces, TOKEN_FACTORY, "test");
+    DefaultTokenMap oldTokenMap =
+        DefaultTokenMap.build(
+            nodes, oldKeyspaces, TOKEN_FACTORY, replicationStrategyFactory, "test");
 
     // When
     // The schema gets refreshed, but no keyspaces are created or dropped, and the replication
@@ -171,7 +189,8 @@ public class DefaultTokenMapTest {
     List<KeyspaceMetadata> newKeyspaces =
         ImmutableList.of(
             mockKeyspace(KS1, REPLICATE_ON_BOTH_DCS), mockKeyspace(KS2, REPLICATE_ON_DC1));
-    DefaultTokenMap newTokenMap = oldTokenMap.refresh(nodes, newKeyspaces);
+    DefaultTokenMap newTokenMap =
+        oldTokenMap.refresh(nodes, newKeyspaces, replicationStrategyFactory);
 
     // Then
     // Nothing was recomputed
@@ -191,14 +210,17 @@ public class DefaultTokenMapTest {
     List<Node> nodes = ImmutableList.of(node1, node2, node3, node4);
     List<KeyspaceMetadata> oldKeyspaces =
         ImmutableList.of(mockKeyspace(KS1, REPLICATE_ON_BOTH_DCS));
-    DefaultTokenMap oldTokenMap = DefaultTokenMap.build(nodes, oldKeyspaces, TOKEN_FACTORY, "test");
+    DefaultTokenMap oldTokenMap =
+        DefaultTokenMap.build(
+            nodes, oldKeyspaces, TOKEN_FACTORY, replicationStrategyFactory, "test");
     assertThat(oldTokenMap.keyspaceMaps).containsOnlyKeys(REPLICATE_ON_BOTH_DCS);
 
     // When
     List<KeyspaceMetadata> newKeyspaces =
         ImmutableList.of(
             mockKeyspace(KS1, REPLICATE_ON_BOTH_DCS), mockKeyspace(KS2, REPLICATE_ON_BOTH_DCS));
-    DefaultTokenMap newTokenMap = oldTokenMap.refresh(nodes, newKeyspaces);
+    DefaultTokenMap newTokenMap =
+        oldTokenMap.refresh(nodes, newKeyspaces, replicationStrategyFactory);
 
     // Then
     assertThat(newTokenMap.tokenRanges).isSameAs(oldTokenMap.tokenRanges);
@@ -220,14 +242,17 @@ public class DefaultTokenMapTest {
     List<Node> nodes = ImmutableList.of(node1, node2, node3, node4);
     List<KeyspaceMetadata> oldKeyspaces =
         ImmutableList.of(mockKeyspace(KS1, REPLICATE_ON_BOTH_DCS));
-    DefaultTokenMap oldTokenMap = DefaultTokenMap.build(nodes, oldKeyspaces, TOKEN_FACTORY, "test");
+    DefaultTokenMap oldTokenMap =
+        DefaultTokenMap.build(
+            nodes, oldKeyspaces, TOKEN_FACTORY, replicationStrategyFactory, "test");
     assertThat(oldTokenMap.keyspaceMaps).containsOnlyKeys(REPLICATE_ON_BOTH_DCS);
 
     // When
     List<KeyspaceMetadata> newKeyspaces =
         ImmutableList.of(
             mockKeyspace(KS1, REPLICATE_ON_BOTH_DCS), mockKeyspace(KS2, REPLICATE_ON_DC1));
-    DefaultTokenMap newTokenMap = oldTokenMap.refresh(nodes, newKeyspaces);
+    DefaultTokenMap newTokenMap =
+        oldTokenMap.refresh(nodes, newKeyspaces, replicationStrategyFactory);
 
     // Then
     assertThat(newTokenMap.tokenRanges).isSameAs(oldTokenMap.tokenRanges);
@@ -250,13 +275,16 @@ public class DefaultTokenMapTest {
     List<KeyspaceMetadata> oldKeyspaces =
         ImmutableList.of(
             mockKeyspace(KS1, REPLICATE_ON_BOTH_DCS), mockKeyspace(KS2, REPLICATE_ON_BOTH_DCS));
-    DefaultTokenMap oldTokenMap = DefaultTokenMap.build(nodes, oldKeyspaces, TOKEN_FACTORY, "test");
+    DefaultTokenMap oldTokenMap =
+        DefaultTokenMap.build(
+            nodes, oldKeyspaces, TOKEN_FACTORY, replicationStrategyFactory, "test");
     assertThat(oldTokenMap.keyspaceMaps).containsOnlyKeys(REPLICATE_ON_BOTH_DCS);
 
     // When
     List<KeyspaceMetadata> newKeyspaces =
         ImmutableList.of(mockKeyspace(KS1, REPLICATE_ON_BOTH_DCS));
-    DefaultTokenMap newTokenMap = oldTokenMap.refresh(nodes, newKeyspaces);
+    DefaultTokenMap newTokenMap =
+        oldTokenMap.refresh(nodes, newKeyspaces, replicationStrategyFactory);
 
     // Then
     assertThat(newTokenMap.tokenRanges).isSameAs(oldTokenMap.tokenRanges);
@@ -276,13 +304,16 @@ public class DefaultTokenMapTest {
     List<KeyspaceMetadata> oldKeyspaces =
         ImmutableList.of(
             mockKeyspace(KS1, REPLICATE_ON_BOTH_DCS), mockKeyspace(KS2, REPLICATE_ON_DC1));
-    DefaultTokenMap oldTokenMap = DefaultTokenMap.build(nodes, oldKeyspaces, TOKEN_FACTORY, "test");
+    DefaultTokenMap oldTokenMap =
+        DefaultTokenMap.build(
+            nodes, oldKeyspaces, TOKEN_FACTORY, replicationStrategyFactory, "test");
     assertThat(oldTokenMap.keyspaceMaps).containsOnlyKeys(REPLICATE_ON_BOTH_DCS, REPLICATE_ON_DC1);
 
     // When
     List<KeyspaceMetadata> newKeyspaces =
         ImmutableList.of(mockKeyspace(KS1, REPLICATE_ON_BOTH_DCS));
-    DefaultTokenMap newTokenMap = oldTokenMap.refresh(nodes, newKeyspaces);
+    DefaultTokenMap newTokenMap =
+        oldTokenMap.refresh(nodes, newKeyspaces, replicationStrategyFactory);
 
     // Then
     assertThat(newTokenMap.tokenRanges).isSameAs(oldTokenMap.tokenRanges);
@@ -302,14 +333,17 @@ public class DefaultTokenMapTest {
     List<KeyspaceMetadata> oldKeyspaces =
         ImmutableList.of(
             mockKeyspace(KS1, REPLICATE_ON_BOTH_DCS), mockKeyspace(KS2, REPLICATE_ON_DC1));
-    DefaultTokenMap oldTokenMap = DefaultTokenMap.build(nodes, oldKeyspaces, TOKEN_FACTORY, "test");
+    DefaultTokenMap oldTokenMap =
+        DefaultTokenMap.build(
+            nodes, oldKeyspaces, TOKEN_FACTORY, replicationStrategyFactory, "test");
     assertThat(oldTokenMap.keyspaceMaps).containsOnlyKeys(REPLICATE_ON_BOTH_DCS, REPLICATE_ON_DC1);
 
     // When
     List<KeyspaceMetadata> newKeyspaces =
         ImmutableList.of(
             mockKeyspace(KS1, REPLICATE_ON_BOTH_DCS), mockKeyspace(KS2, REPLICATE_ON_BOTH_DCS));
-    DefaultTokenMap newTokenMap = oldTokenMap.refresh(nodes, newKeyspaces);
+    DefaultTokenMap newTokenMap =
+        oldTokenMap.refresh(nodes, newKeyspaces, replicationStrategyFactory);
 
     // Then
     assertThat(newTokenMap.tokenRanges).isSameAs(oldTokenMap.tokenRanges);

@@ -15,25 +15,32 @@
  */
 package com.datastax.oss.driver.internal.core.metadata;
 
+import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
 import com.google.common.collect.ImmutableSet;
 import java.net.InetSocketAddress;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.mockito.Mock;
+import org.mockito.junit.MockitoJUnitRunner;
 
 import static com.datastax.oss.driver.Assertions.assertThat;
 
+@RunWith(MockitoJUnitRunner.class)
 public class InitContactPointsRefreshTest {
 
   private static final InetSocketAddress ADDRESS1 = new InetSocketAddress("127.0.0.1", 9042);
   private static final InetSocketAddress ADDRESS2 = new InetSocketAddress("127.0.0.2", 9042);
 
+  @Mock private InternalDriverContext context;
+
   @Test
   public void should_create_nodes() {
     // Given
     InitContactPointsRefresh refresh =
-        new InitContactPointsRefresh(ImmutableSet.of(ADDRESS1, ADDRESS2), "test");
+        new InitContactPointsRefresh(ImmutableSet.of(ADDRESS1, ADDRESS2));
 
     // When
-    MetadataRefresh.Result result = refresh.compute(DefaultMetadata.EMPTY, false);
+    MetadataRefresh.Result result = refresh.compute(DefaultMetadata.EMPTY, false, context);
 
     // Then
     assertThat(result.newMetadata.getNodes()).containsOnlyKeys(ADDRESS1, ADDRESS2);

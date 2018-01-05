@@ -44,7 +44,9 @@ import com.datastax.oss.driver.internal.core.metadata.schema.parsing.DefaultSche
 import com.datastax.oss.driver.internal.core.metadata.schema.parsing.SchemaParserFactory;
 import com.datastax.oss.driver.internal.core.metadata.schema.queries.DefaultSchemaQueriesFactory;
 import com.datastax.oss.driver.internal.core.metadata.schema.queries.SchemaQueriesFactory;
+import com.datastax.oss.driver.internal.core.metadata.token.DefaultReplicationStrategyFactory;
 import com.datastax.oss.driver.internal.core.metadata.token.DefaultTokenFactoryRegistry;
+import com.datastax.oss.driver.internal.core.metadata.token.ReplicationStrategyFactory;
 import com.datastax.oss.driver.internal.core.metadata.token.TokenFactoryRegistry;
 import com.datastax.oss.driver.internal.core.pool.ChannelPoolFactory;
 import com.datastax.oss.driver.internal.core.protocol.ByteBufPrimitiveCodec;
@@ -136,6 +138,9 @@ public class DefaultDriverContext implements InternalDriverContext {
       new LazyReference<>("schemaParserFactory", this::buildSchemaParserFactory, cycleDetector);
   private final LazyReference<TokenFactoryRegistry> tokenFactoryRegistryRef =
       new LazyReference<>("tokenFactoryRegistry", this::buildTokenFactoryRegistry, cycleDetector);
+  private final LazyReference<ReplicationStrategyFactory> replicationStrategyFactoryRef =
+      new LazyReference<>(
+          "replicationStrategyFactory", this::buildReplicationStrategyFactory, cycleDetector);
 
   private final DriverConfig config;
   private final DriverConfigLoader configLoader;
@@ -312,6 +317,10 @@ public class DefaultDriverContext implements InternalDriverContext {
     return new DefaultTokenFactoryRegistry(this);
   }
 
+  protected ReplicationStrategyFactory buildReplicationStrategyFactory() {
+    return new DefaultReplicationStrategyFactory(this);
+  }
+
   @Override
   public String clusterName() {
     return clusterName;
@@ -450,6 +459,11 @@ public class DefaultDriverContext implements InternalDriverContext {
   @Override
   public TokenFactoryRegistry tokenFactoryRegistry() {
     return tokenFactoryRegistryRef.get();
+  }
+
+  @Override
+  public ReplicationStrategyFactory replicationStrategyFactory() {
+    return replicationStrategyFactoryRef.get();
   }
 
   @Override

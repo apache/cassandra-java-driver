@@ -18,6 +18,7 @@ package com.datastax.oss.driver.internal.core.metadata.schema.refresh;
 import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.type.DataTypes;
 import com.datastax.oss.driver.api.core.type.UserDefinedType;
+import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
 import com.datastax.oss.driver.internal.core.metadata.DefaultMetadata;
 import com.datastax.oss.driver.internal.core.metadata.MetadataRefresh;
 import com.datastax.oss.driver.internal.core.metadata.schema.DefaultKeyspaceMetadata;
@@ -26,10 +27,15 @@ import com.datastax.oss.driver.internal.core.metadata.schema.events.TypeChangeEv
 import com.datastax.oss.driver.internal.core.type.UserDefinedTypeBuilder;
 import com.google.common.collect.ImmutableMap;
 import java.util.Collections;
+import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.mockito.Mock;
+import org.mockito.junit.MockitoJUnitRunner;
 
 import static com.datastax.oss.driver.Assertions.assertThat;
 
+@RunWith(MockitoJUnitRunner.class)
 public class SchemaRefreshTest {
 
   private static final UserDefinedType OLD_T1 =
@@ -44,30 +50,20 @@ public class SchemaRefreshTest {
           .build();
   private static final DefaultKeyspaceMetadata OLD_KS1 = newKeyspace("ks1", true, OLD_T1, OLD_T2);
 
-  private DefaultMetadata oldMetadata =
-      DefaultMetadata.EMPTY.withSchema(ImmutableMap.of(OLD_KS1.getName(), OLD_KS1), false);
+  @Mock private InternalDriverContext context;
+  private DefaultMetadata oldMetadata;
 
-  private static DefaultKeyspaceMetadata newKeyspace(
-      String name, boolean durableWrites, UserDefinedType... userTypes) {
-    ImmutableMap.Builder<CqlIdentifier, UserDefinedType> typesMapBuilder = ImmutableMap.builder();
-    for (UserDefinedType type : userTypes) {
-      typesMapBuilder.put(type.getName(), type);
-    }
-    return new DefaultKeyspaceMetadata(
-        CqlIdentifier.fromInternal(name),
-        durableWrites,
-        Collections.emptyMap(),
-        typesMapBuilder.build(),
-        Collections.emptyMap(),
-        Collections.emptyMap(),
-        Collections.emptyMap(),
-        Collections.emptyMap());
+  @Before
+  public void setup() {
+    oldMetadata =
+        DefaultMetadata.EMPTY.withSchema(
+            ImmutableMap.of(OLD_KS1.getName(), OLD_KS1), false, context);
   }
 
   @Test
   public void should_detect_dropped_keyspace() {
-    SchemaRefresh refresh = new SchemaRefresh(Collections.emptyMap(), "test");
-    MetadataRefresh.Result result = refresh.compute(oldMetadata, false);
+    SchemaRefresh refresh = new SchemaRefresh(Collections.emptyMap());
+    MetadataRefresh.Result result = refresh.compute(oldMetadata, false, context);
     assertThat(result.newMetadata.getKeyspaces()).isEmpty();
     assertThat(result.events).containsExactly(KeyspaceChangeEvent.dropped(OLD_KS1));
   }
@@ -76,8 +72,8 @@ public class SchemaRefreshTest {
   public void should_detect_created_keyspace() {
     DefaultKeyspaceMetadata ks2 = newKeyspace("ks2", true);
     SchemaRefresh refresh =
-        new SchemaRefresh(ImmutableMap.of(OLD_KS1.getName(), OLD_KS1, ks2.getName(), ks2), "test");
-    MetadataRefresh.Result result = refresh.compute(oldMetadata, false);
+        new SchemaRefresh(ImmutableMap.of(OLD_KS1.getName(), OLD_KS1, ks2.getName(), ks2));
+    MetadataRefresh.Result result = refresh.compute(oldMetadata, false, context);
     assertThat(result.newMetadata.getKeyspaces()).hasSize(2);
     assertThat(result.events).containsExactly(KeyspaceChangeEvent.created(ks2));
   }
@@ -86,8 +82,8 @@ public class SchemaRefreshTest {
   public void should_detect_top_level_update_in_keyspace() {
     // Change only one top-level option (durable writes)
     DefaultKeyspaceMetadata newKs1 = newKeyspace("ks1", false, OLD_T1, OLD_T2);
-    SchemaRefresh refresh = new SchemaRefresh(ImmutableMap.of(OLD_KS1.getName(), newKs1), "test");
-    MetadataRefresh.Result result = refresh.compute(oldMetadata, false);
+    SchemaRefresh refresh = new SchemaRefresh(ImmutableMap.of(OLD_KS1.getName(), newKs1));
+    MetadataRefresh.Result result = refresh.compute(oldMetadata, false, context);
     assertThat(result.newMetadata.getKeyspaces()).hasSize(1);
     assertThat(result.events).containsExactly(KeyspaceChangeEvent.updated(OLD_KS1, newKs1));
   }
@@ -107,8 +103,8 @@ public class SchemaRefreshTest {
             .build();
     DefaultKeyspaceMetadata newKs1 = newKeyspace("ks1", true, newT2, t3);
 
-    SchemaRefresh refresh = new SchemaRefresh(ImmutableMap.of(OLD_KS1.getName(), newKs1), "test");
-    MetadataRefresh.Result result = refresh.compute(oldMetadata, false);
+    SchemaRefresh refresh = new SchemaRefresh(ImmutableMap.of(OLD_KS1.getName(), newKs1));
+    MetadataRefresh.Result result = refresh.compute(oldMetadata, false, context);
     assertThat(result.newMetadata.getKeyspaces().get(OLD_KS1.getName())).isEqualTo(newKs1);
     assertThat(result.events)
         .containsExactly(
@@ -133,8 +129,8 @@ public class SchemaRefreshTest {
     // Also disable durable writes
     DefaultKeyspaceMetadata newKs1 = newKeyspace("ks1", false, newT2, t3);
 
-    SchemaRefresh refresh = new SchemaRefresh(ImmutableMap.of(OLD_KS1.getName(), newKs1), "test");
-    MetadataRefresh.Result result = refresh.compute(oldMetadata, false);
+    SchemaRefresh refresh = new SchemaRefresh(ImmutableMap.of(OLD_KS1.getName(), newKs1));
+    MetadataRefresh.Result result = refresh.compute(oldMetadata, false, context);
     assertThat(result.newMetadata.getKeyspaces().get(OLD_KS1.getName())).isEqualTo(newKs1);
     assertThat(result.events)
         .containsExactly(
@@ -142,5 +138,22 @@ public class SchemaRefreshTest {
             TypeChangeEvent.dropped(OLD_T1),
             TypeChangeEvent.updated(OLD_T2, newT2),
             TypeChangeEvent.created(t3));
+  }
+
+  private static DefaultKeyspaceMetadata newKeyspace(
+      String name, boolean durableWrites, UserDefinedType... userTypes) {
+    ImmutableMap.Builder<CqlIdentifier, UserDefinedType> typesMapBuilder = ImmutableMap.builder();
+    for (UserDefinedType type : userTypes) {
+      typesMapBuilder.put(type.getName(), type);
+    }
+    return new DefaultKeyspaceMetadata(
+        CqlIdentifier.fromInternal(name),
+        durableWrites,
+        Collections.emptyMap(),
+        typesMapBuilder.build(),
+        Collections.emptyMap(),
+        Collections.emptyMap(),
+        Collections.emptyMap(),
+        Collections.emptyMap());
   }
 }

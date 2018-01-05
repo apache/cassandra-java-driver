@@ -16,6 +16,7 @@
 package com.datastax.oss.driver.internal.core.metadata;
 
 import com.datastax.oss.driver.api.core.metadata.Node;
+import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
@@ -30,13 +31,16 @@ public class RemoveNodeRefresh extends NodesRefresh {
 
   @VisibleForTesting final InetSocketAddress toRemove;
 
-  RemoveNodeRefresh(InetSocketAddress toRemove, String logPrefix) {
-    super(logPrefix);
+  RemoveNodeRefresh(InetSocketAddress toRemove) {
     this.toRemove = toRemove;
   }
 
   @Override
-  public Result compute(DefaultMetadata oldMetadata, boolean tokenMapEnabled) {
+  public Result compute(
+      DefaultMetadata oldMetadata, boolean tokenMapEnabled, InternalDriverContext context) {
+
+    String logPrefix = context.clusterName();
+
     Map<InetSocketAddress, Node> oldNodes = oldMetadata.getNodes();
     Node node = oldNodes.get(toRemove);
     if (node == null) {
@@ -52,7 +56,7 @@ public class RemoveNodeRefresh extends NodesRefresh {
         }
       }
       return new Result(
-          oldMetadata.withNodes(newNodesBuilder.build(), tokenMapEnabled, false, null),
+          oldMetadata.withNodes(newNodesBuilder.build(), tokenMapEnabled, false, null, context),
           ImmutableList.of(NodeStateEvent.removed((DefaultNode) node)));
     }
   }
