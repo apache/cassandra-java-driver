@@ -20,7 +20,9 @@ import com.datastax.oss.driver.api.core.metadata.Metadata;
 import com.datastax.oss.driver.api.core.metadata.Node;
 import com.datastax.oss.driver.api.core.metadata.TokenMap;
 import com.datastax.oss.driver.api.core.metadata.schema.KeyspaceMetadata;
+import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
 import com.datastax.oss.driver.internal.core.metadata.token.DefaultTokenMap;
+import com.datastax.oss.driver.internal.core.metadata.token.ReplicationStrategyFactory;
 import com.datastax.oss.driver.internal.core.metadata.token.TokenFactory;
 import com.datastax.oss.driver.internal.core.util.Loggers;
 import com.datastax.oss.driver.internal.core.util.NanoTime;
@@ -39,26 +41,23 @@ import org.slf4j.LoggerFactory;
  */
 public class DefaultMetadata implements Metadata {
   private static final Logger LOG = LoggerFactory.getLogger(DefaultMetadata.class);
-  public static DefaultMetadata EMPTY = new DefaultMetadata(Collections.emptyMap(), null);
+  public static DefaultMetadata EMPTY = new DefaultMetadata(Collections.emptyMap());
 
   private final Map<InetSocketAddress, Node> nodes;
   private final Map<CqlIdentifier, KeyspaceMetadata> keyspaces;
   private final Optional<TokenMap> tokenMap;
-  private final String logPrefix;
 
-  public DefaultMetadata(Map<InetSocketAddress, Node> nodes, String logPrefix) {
-    this(ImmutableMap.copyOf(nodes), Collections.emptyMap(), Optional.empty(), logPrefix);
+  public DefaultMetadata(Map<InetSocketAddress, Node> nodes) {
+    this(ImmutableMap.copyOf(nodes), Collections.emptyMap(), Optional.empty());
   }
 
   private DefaultMetadata(
       Map<InetSocketAddress, Node> nodes,
       Map<CqlIdentifier, KeyspaceMetadata> keyspaces,
-      Optional<TokenMap> tokenMap,
-      String logPrefix) {
+      Optional<TokenMap> tokenMap) {
     this.nodes = nodes;
     this.keyspaces = keyspaces;
     this.tokenMap = tokenMap;
-    this.logPrefix = logPrefix;
   }
 
   @Override
@@ -87,7 +86,8 @@ public class DefaultMetadata implements Metadata {
       Map<InetSocketAddress, Node> newNodes,
       boolean tokenMapEnabled,
       boolean tokensChanged,
-      TokenFactory tokenFactory) {
+      TokenFactory tokenFactory,
+      InternalDriverContext context) {
 
     // Force a rebuild if at least one node has different tokens, or there are new or removed nodes.
     boolean forceFullRebuild = tokensChanged || !newNodes.equals(nodes);
@@ -95,17 +95,18 @@ public class DefaultMetadata implements Metadata {
     return new DefaultMetadata(
         ImmutableMap.copyOf(newNodes),
         this.keyspaces,
-        rebuildTokenMap(newNodes, keyspaces, tokenMapEnabled, forceFullRebuild, tokenFactory),
-        logPrefix);
+        rebuildTokenMap(
+            newNodes, keyspaces, tokenMapEnabled, forceFullRebuild, tokenFactory, context));
   }
 
   public DefaultMetadata withSchema(
-      Map<CqlIdentifier, KeyspaceMetadata> newKeyspaces, boolean tokenMapEnabled) {
+      Map<CqlIdentifier, KeyspaceMetadata> newKeyspaces,
+      boolean tokenMapEnabled,
+      InternalDriverContext context) {
     return new DefaultMetadata(
         this.nodes,
         ImmutableMap.copyOf(newKeyspaces),
-        rebuildTokenMap(nodes, newKeyspaces, tokenMapEnabled, false, null),
-        logPrefix);
+        rebuildTokenMap(nodes, newKeyspaces, tokenMapEnabled, false, null, context));
   }
 
   private Optional<TokenMap> rebuildTokenMap(
@@ -113,7 +114,11 @@ public class DefaultMetadata implements Metadata {
       Map<CqlIdentifier, KeyspaceMetadata> newKeyspaces,
       boolean tokenMapEnabled,
       boolean forceFullRebuild,
-      TokenFactory tokenFactory) {
+      TokenFactory tokenFactory,
+      InternalDriverContext context) {
+
+    String logPrefix = context.clusterName();
+    ReplicationStrategyFactory replicationStrategyFactory = context.replicationStrategyFactory();
 
     if (!tokenMapEnabled) {
       LOG.debug("[{}] Token map is disabled, skipping", logPrefix);
@@ -133,7 +138,11 @@ public class DefaultMetadata implements Metadata {
           LOG.debug("[{}] Building initial token map", logPrefix);
           return Optional.of(
               DefaultTokenMap.build(
-                  newNodes.values(), newKeyspaces.values(), tokenFactory, logPrefix));
+                  newNodes.values(),
+                  newKeyspaces.values(),
+                  tokenFactory,
+                  replicationStrategyFactory,
+                  logPrefix));
         }
       } else if (forceFullRebuild) {
         LOG.debug(
@@ -143,10 +152,13 @@ public class DefaultMetadata implements Metadata {
                 newNodes.values(),
                 newKeyspaces.values(),
                 oldTokenMap.getTokenFactory(),
+                replicationStrategyFactory,
                 logPrefix));
       } else {
         LOG.debug("[{}] Refreshing token map (only schema has changed)", logPrefix);
-        return Optional.of(oldTokenMap.refresh(newNodes.values(), newKeyspaces.values()));
+        return Optional.of(
+            oldTokenMap.refresh(
+                newNodes.values(), newKeyspaces.values(), replicationStrategyFactory));
       }
     } catch (Throwable t) {
       Loggers.warnWithException(

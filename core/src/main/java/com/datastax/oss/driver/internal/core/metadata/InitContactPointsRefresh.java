@@ -16,6 +16,7 @@
 package com.datastax.oss.driver.internal.core.metadata;
 
 import com.datastax.oss.driver.api.core.metadata.Node;
+import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableMap;
 import java.net.InetSocketAddress;
@@ -24,26 +25,27 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /** Creates minimal node info about the contact points, before the first connection. */
-class InitContactPointsRefresh extends MetadataRefresh {
+class InitContactPointsRefresh implements MetadataRefresh {
   private static final Logger LOG = LoggerFactory.getLogger(InitContactPointsRefresh.class);
 
   @VisibleForTesting final Set<InetSocketAddress> contactPoints;
 
-  InitContactPointsRefresh(Set<InetSocketAddress> contactPoints, String logPrefix) {
-    super(logPrefix);
+  InitContactPointsRefresh(Set<InetSocketAddress> contactPoints) {
     this.contactPoints = contactPoints;
   }
 
   @Override
-  public Result compute(DefaultMetadata oldMetadata, boolean tokenMapEnabled) {
+  public Result compute(
+      DefaultMetadata oldMetadata, boolean tokenMapEnabled, InternalDriverContext context) {
     assert oldMetadata == DefaultMetadata.EMPTY;
+    String logPrefix = context.clusterName();
     LOG.debug("[{}] Initializing node metadata with contact points {}", logPrefix, contactPoints);
 
     ImmutableMap.Builder<InetSocketAddress, Node> newNodes = ImmutableMap.builder();
     for (InetSocketAddress address : contactPoints) {
       newNodes.put(address, new DefaultNode(address));
     }
-    return new Result(new DefaultMetadata(newNodes.build(), logPrefix));
+    return new Result(new DefaultMetadata(newNodes.build()));
     // No token map refresh, because we don't have enough information yet
   }
 }

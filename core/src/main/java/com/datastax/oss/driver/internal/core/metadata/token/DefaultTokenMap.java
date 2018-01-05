@@ -48,6 +48,7 @@ public class DefaultTokenMap implements TokenMap {
       Collection<Node> nodes,
       Collection<KeyspaceMetadata> keyspaces,
       TokenFactory tokenFactory,
+      ReplicationStrategyFactory replicationStrategyFactory,
       String logPrefix) {
 
     TokenToPrimaryAndRing tmp = buildTokenToPrimaryAndRing(nodes, tokenFactory);
@@ -79,7 +80,13 @@ public class DefaultTokenMap implements TokenMap {
       keyspaceMapsBuilder.put(
           config,
           KeyspaceTokenMap.build(
-              config, tokenToPrimary, ring, tokenRanges, tokenFactory, logPrefix));
+              config,
+              tokenToPrimary,
+              ring,
+              tokenRanges,
+              tokenFactory,
+              replicationStrategyFactory,
+              logPrefix));
     }
     return new DefaultTokenMap(
         tokenFactory,
@@ -97,7 +104,7 @@ public class DefaultTokenMap implements TokenMap {
   @VisibleForTesting final Map<Map<String, String>, KeyspaceTokenMap> keyspaceMaps;
   private final String logPrefix;
 
-  public DefaultTokenMap(
+  private DefaultTokenMap(
       TokenFactory tokenFactory,
       Set<TokenRange> tokenRanges,
       SetMultimap<Node, TokenRange> tokenRangesByPrimary,
@@ -170,7 +177,10 @@ public class DefaultTokenMap implements TokenMap {
   }
 
   /** Called when only the schema has changed. */
-  public DefaultTokenMap refresh(Collection<Node> nodes, Collection<KeyspaceMetadata> keyspaces) {
+  public DefaultTokenMap refresh(
+      Collection<Node> nodes,
+      Collection<KeyspaceMetadata> keyspaces,
+      ReplicationStrategyFactory replicationStrategyFactory) {
 
     Map<CqlIdentifier, Map<String, String>> newReplicationConfigs =
         buildReplicationConfigs(keyspaces, logPrefix);
@@ -200,7 +210,13 @@ public class DefaultTokenMap implements TokenMap {
         newKeyspaceMapsBuilder.put(
             config,
             KeyspaceTokenMap.build(
-                config, tokenToPrimary, ring, tokenRanges, tokenFactory, logPrefix));
+                config,
+                tokenToPrimary,
+                ring,
+                tokenRanges,
+                tokenFactory,
+                replicationStrategyFactory,
+                logPrefix));
       }
     }
     return new DefaultTokenMap(

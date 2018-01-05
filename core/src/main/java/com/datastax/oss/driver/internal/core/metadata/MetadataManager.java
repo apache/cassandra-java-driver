@@ -145,7 +145,7 @@ public class MetadataManager implements AsyncAutoCloseable {
                 boolean tokensChanged =
                     NodesRefresh.copyInfos(maybeInfo.get(), (DefaultNode) node, null, logPrefix);
                 if (tokensChanged) {
-                  apply(new TokensChangedRefresh(logPrefix));
+                  apply(new TokensChangedRefresh());
                 }
               } else {
                 LOG.debug(
@@ -269,13 +269,13 @@ public class MetadataManager implements AsyncAutoCloseable {
 
     private void initNodes(
         Set<InetSocketAddress> addresses, CompletableFuture<Void> initNodesFuture) {
-      apply(new InitContactPointsRefresh(addresses, logPrefix));
+      apply(new InitContactPointsRefresh(addresses));
       initNodesFuture.complete(null);
     }
 
     private Void refreshNodes(Iterable<NodeInfo> nodeInfos) {
       didFirstNodeListRefresh = true;
-      return apply(new FullNodeListRefresh(nodeInfos, context));
+      return apply(new FullNodeListRefresh(nodeInfos));
     }
 
     private void addNode(InetSocketAddress address, Optional<NodeInfo> maybeInfo) {
@@ -291,7 +291,7 @@ public class MetadataManager implements AsyncAutoCloseable {
                 address,
                 info.getConnectAddress());
           } else {
-            apply(new AddNodeRefresh(info, logPrefix));
+            apply(new AddNodeRefresh(info));
           }
         } else {
           LOG.debug(
@@ -306,7 +306,7 @@ public class MetadataManager implements AsyncAutoCloseable {
     }
 
     private void removeNode(InetSocketAddress address) {
-      apply(new RemoveNodeRefresh(address, logPrefix));
+      apply(new RemoveNodeRefresh(address));
     }
 
     private void refreshSchema(
@@ -446,7 +446,7 @@ public class MetadataManager implements AsyncAutoCloseable {
   @VisibleForTesting
   Void apply(MetadataRefresh refresh) {
     assert adminExecutor.inEventLoop();
-    MetadataRefresh.Result result = refresh.compute(metadata, tokenMapEnabled);
+    MetadataRefresh.Result result = refresh.compute(metadata, tokenMapEnabled, context);
     metadata = result.newMetadata;
     boolean isFirstSchemaRefresh =
         refresh instanceof SchemaRefresh && !singleThreaded.firstSchemaRefreshFuture.isDone();

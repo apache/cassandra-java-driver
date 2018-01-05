@@ -43,15 +43,15 @@ public class FullNodeListRefreshTest {
   public void should_add_and_remove_nodes() {
     // Given
     DefaultMetadata oldMetadata =
-        new DefaultMetadata(ImmutableMap.of(ADDRESS1, node1, ADDRESS2, node2), "test");
+        new DefaultMetadata(ImmutableMap.of(ADDRESS1, node1, ADDRESS2, node2));
     Iterable<NodeInfo> newInfos =
         ImmutableList.of(
             DefaultNodeInfo.builder().withConnectAddress(ADDRESS2).build(),
             DefaultNodeInfo.builder().withConnectAddress(ADDRESS3).build());
-    FullNodeListRefresh refresh = new FullNodeListRefresh(newInfos, context);
+    FullNodeListRefresh refresh = new FullNodeListRefresh(newInfos);
 
     // When
-    MetadataRefresh.Result result = refresh.compute(oldMetadata, false);
+    MetadataRefresh.Result result = refresh.compute(oldMetadata, false, context);
 
     // Then
     assertThat(result.newMetadata.getNodes()).containsOnlyKeys(ADDRESS2, ADDRESS3);
@@ -63,7 +63,7 @@ public class FullNodeListRefreshTest {
   public void should_update_existing_nodes() {
     // Given
     DefaultMetadata oldMetadata =
-        new DefaultMetadata(ImmutableMap.of(ADDRESS1, node1, ADDRESS2, node2), "test");
+        new DefaultMetadata(ImmutableMap.of(ADDRESS1, node1, ADDRESS2, node2));
     Iterable<NodeInfo> newInfos =
         ImmutableList.of(
             DefaultNodeInfo.builder()
@@ -76,10 +76,10 @@ public class FullNodeListRefreshTest {
                 .withDatacenter("dc1")
                 .withRack("rack2")
                 .build());
-    FullNodeListRefresh refresh = new FullNodeListRefresh(newInfos, context);
+    FullNodeListRefresh refresh = new FullNodeListRefresh(newInfos);
 
     // When
-    MetadataRefresh.Result result = refresh.compute(oldMetadata, false);
+    MetadataRefresh.Result result = refresh.compute(oldMetadata, false, context);
 
     // Then
     assertThat(result.newMetadata.getNodes()).containsOnlyKeys(ADDRESS1, ADDRESS2);

@@ -16,6 +16,7 @@
 package com.datastax.oss.driver.internal.core.metadata;
 
 import com.datastax.oss.driver.api.core.metadata.Node;
+import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
@@ -26,26 +27,26 @@ public class AddNodeRefresh extends NodesRefresh {
 
   @VisibleForTesting final NodeInfo newNodeInfo;
 
-  AddNodeRefresh(NodeInfo newNodeInfo, String logPrefix) {
-    super(logPrefix);
+  AddNodeRefresh(NodeInfo newNodeInfo) {
     this.newNodeInfo = newNodeInfo;
   }
 
   @Override
-  public Result compute(DefaultMetadata oldMetadata, boolean tokenMapEnabled) {
+  public Result compute(
+      DefaultMetadata oldMetadata, boolean tokenMapEnabled, InternalDriverContext context) {
     Map<InetSocketAddress, Node> oldNodes = oldMetadata.getNodes();
     if (oldNodes.containsKey(newNodeInfo.getConnectAddress())) {
       return new Result(oldMetadata);
     } else {
       DefaultNode newNode = new DefaultNode(newNodeInfo.getConnectAddress());
-      copyInfos(newNodeInfo, newNode, null, logPrefix);
+      copyInfos(newNodeInfo, newNode, null, context.clusterName());
       Map<InetSocketAddress, Node> newNodes =
           ImmutableMap.<InetSocketAddress, Node>builder()
               .putAll(oldNodes)
               .put(newNode.getConnectAddress(), newNode)
               .build();
       return new Result(
-          oldMetadata.withNodes(newNodes, tokenMapEnabled, false, null),
+          oldMetadata.withNodes(newNodes, tokenMapEnabled, false, null, context),
           ImmutableList.of(NodeStateEvent.added(newNode)));
     }
   }

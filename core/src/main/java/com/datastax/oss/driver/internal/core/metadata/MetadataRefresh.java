@@ -16,6 +16,7 @@
 package com.datastax.oss.driver.internal.core.metadata;
 
 import com.datastax.oss.driver.api.core.Cluster;
+import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
 import java.util.Collections;
 import java.util.List;
 
@@ -32,17 +33,12 @@ import java.util.List;
  *
  * @see Cluster#getMetadata()
  */
-public abstract class MetadataRefresh {
+public interface MetadataRefresh {
 
-  protected final String logPrefix;
+  Result compute(
+      DefaultMetadata oldMetadata, boolean tokenMapEnabled, InternalDriverContext context);
 
-  protected MetadataRefresh(String logPrefix) {
-    this.logPrefix = logPrefix;
-  }
-
-  public abstract Result compute(DefaultMetadata oldMetadata, boolean tokenMapEnabled);
-
-  public static class Result {
+  class Result {
     public final DefaultMetadata newMetadata;
     public final List<Object> events;
 

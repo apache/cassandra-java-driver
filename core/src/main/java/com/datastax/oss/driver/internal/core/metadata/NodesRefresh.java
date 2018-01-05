@@ -22,13 +22,9 @@ import java.util.Collections;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-abstract class NodesRefresh extends MetadataRefresh {
+abstract class NodesRefresh implements MetadataRefresh {
 
   private static final Logger LOG = LoggerFactory.getLogger(NodesRefresh.class);
-
-  protected NodesRefresh(String logPrefix) {
-    super(logPrefix);
-  }
 
   /**
    * @return whether the node's token have changed as a result of this operation (unfortunately we

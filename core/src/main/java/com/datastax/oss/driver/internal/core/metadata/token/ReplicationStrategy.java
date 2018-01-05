@@ -23,22 +23,6 @@ import java.util.List;
 import java.util.Map;
 
 interface ReplicationStrategy {
-  static ReplicationStrategy newInstance(Map<String, String> replicationConfig, String logPrefix) {
-    String strategyClass = replicationConfig.get("class");
-    Preconditions.checkNotNull(
-        strategyClass, "Missing replication strategy class in " + replicationConfig);
-    switch (strategyClass) {
-      case "org.apache.cassandra.locator.LocalStrategy":
-        return new LocalReplicationStrategy();
-      case "org.apache.cassandra.locator.SimpleStrategy":
-        return new SimpleReplicationStrategy(replicationConfig);
-      case "org.apache.cassandra.locator.NetworkTopologyStrategy":
-        return new NetworkTopologyReplicationStrategy(replicationConfig, logPrefix);
-      default:
-        throw new IllegalArgumentException("Unsupported replication strategy: " + strategyClass);
-    }
-  }
-
   SetMultimap<Token, Node> computeReplicasByToken(
       Map<Token, Node> tokenToPrimary, List<Token> ring);
 }

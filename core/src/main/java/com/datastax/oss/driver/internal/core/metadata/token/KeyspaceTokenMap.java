@@ -43,11 +43,12 @@ class KeyspaceTokenMap {
       List<Token> ring,
       Set<TokenRange> tokenRanges,
       TokenFactory tokenFactory,
+      ReplicationStrategyFactory replicationStrategyFactory,
       String logPrefix) {
 
     long start = System.nanoTime();
     try {
-      ReplicationStrategy strategy = ReplicationStrategy.newInstance(replicationConfig, logPrefix);
+      ReplicationStrategy strategy = replicationStrategyFactory.newInstance(replicationConfig);
 
       SetMultimap<Token, Node> replicasByToken =
           strategy.computeReplicasByToken(tokenToPrimary, ring);

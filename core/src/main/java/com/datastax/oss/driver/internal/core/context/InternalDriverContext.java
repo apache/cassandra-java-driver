@@ -26,6 +26,7 @@ import com.datastax.oss.driver.internal.core.metadata.MetadataManager;
 import com.datastax.oss.driver.internal.core.metadata.TopologyMonitor;
 import com.datastax.oss.driver.internal.core.metadata.schema.parsing.SchemaParserFactory;
 import com.datastax.oss.driver.internal.core.metadata.schema.queries.SchemaQueriesFactory;
+import com.datastax.oss.driver.internal.core.metadata.token.ReplicationStrategyFactory;
 import com.datastax.oss.driver.internal.core.metadata.token.TokenFactoryRegistry;
 import com.datastax.oss.driver.internal.core.pool.ChannelPoolFactory;
 import com.datastax.oss.driver.internal.core.session.RequestProcessorRegistry;
@@ -73,4 +74,6 @@ public interface InternalDriverContext extends DriverContext {
   SchemaParserFactory schemaParserFactory();
 
   TokenFactoryRegistry tokenFactoryRegistry();
+
+  ReplicationStrategyFactory replicationStrategyFactory();
 }
