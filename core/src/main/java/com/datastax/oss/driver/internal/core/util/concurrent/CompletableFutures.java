@@ -18,13 +18,14 @@ package com.datastax.oss.driver.internal.core.util.concurrent;
 import com.datastax.oss.driver.api.core.DriverException;
 import com.datastax.oss.driver.api.core.DriverExecutionException;
 import com.google.common.base.Preconditions;
-import com.google.common.base.Throwables;
+
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executor;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Supplier;
 
 public class CompletableFutures {
 
@@ -118,6 +119,24 @@ public class CompletableFutures {
       if (interrupted) {
         Thread.currentThread().interrupt();
       }
+    }
+  }
+
+  /**
+   * Executes a function on the calling thread and returns result in a {@link CompletableFuture}.
+   *
+   * <p>Similar to {@link CompletableFuture#completedFuture} except takes a {@link Supplier} and if
+   * the supplier throws an unchecked exception, the returning future fails with that exception.
+   *
+   * @param supplier Function to execute
+   * @param <T> Type of result
+   * @return result of function wrapped in future
+   */
+  public static <T> CompletableFuture<T> completedFuture(Supplier<T> supplier) {
+    try {
+      return CompletableFuture.completedFuture(supplier.get());
+    } catch (Throwable t) {
+      return failedFuture(t);
     }
   }
 }

@@ -15,8 +15,9 @@
  */
 package com.datastax.oss.driver.api.core.auth;
 
+import com.datastax.oss.driver.internal.core.util.concurrent.CompletableFutures;
+
 import java.nio.ByteBuffer;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 
 /**
@@ -54,17 +55,20 @@ public interface SyncAuthenticator extends Authenticator {
 
   @Override
   default CompletionStage<ByteBuffer> initialResponse() {
-    return CompletableFuture.completedFuture(initialResponseSync());
+    return CompletableFutures.completedFuture(this::initialResponseSync);
   }
 
   @Override
   default CompletionStage<ByteBuffer> evaluateChallenge(ByteBuffer challenge) {
-    return CompletableFuture.completedFuture(evaluateChallengeSync(challenge));
+    return CompletableFutures.completedFuture(() -> evaluateChallengeSync(challenge));
   }
 
   @Override
   default CompletionStage<Void> onAuthenticationSuccess(ByteBuffer token) {
-    onAuthenticationSuccessSync(token);
-    return CompletableFuture.completedFuture(null);
+    return CompletableFutures.completedFuture(
+        () -> {
+          onAuthenticationSuccess(token);
+          return null;
+        });
   }
 }
