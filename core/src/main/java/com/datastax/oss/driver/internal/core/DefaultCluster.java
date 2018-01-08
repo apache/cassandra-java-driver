@@ -207,8 +207,6 @@ public class DefaultCluster implements Cluster<CqlSession> {
       initWasCalled = true;
       LOG.debug("[{}] Starting initialization", logPrefix);
 
-      // TODO fail if LBP=default, initialContactPoints not empty and local DC missing
-
       nodeStateListeners.forEach(l -> l.onRegister(DefaultCluster.this));
 
       MetadataManager metadataManager = context.metadataManager();
