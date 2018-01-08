@@ -22,7 +22,7 @@ import com.google.common.collect.SetMultimap;
 import java.util.List;
 import java.util.Map;
 
-interface ReplicationStrategy {
+public interface ReplicationStrategy {
   SetMultimap<Token, Node> computeReplicasByToken(
       Map<Token, Node> tokenToPrimary, List<Token> ring);
 }
