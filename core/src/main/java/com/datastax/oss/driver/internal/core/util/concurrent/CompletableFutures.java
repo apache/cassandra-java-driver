@@ -132,7 +132,7 @@ public class CompletableFutures {
    * @param <T> Type of result
    * @return result of function wrapped in future
    */
-  public static <T> CompletableFuture<T> completedFuture(Supplier<T> supplier) {
+  public static <T> CompletableFuture<T> wrap(Supplier<T> supplier) {
     try {
       return CompletableFuture.completedFuture(supplier.get());
     } catch (Throwable t) {

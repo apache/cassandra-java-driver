@@ -55,17 +55,17 @@ public interface SyncAuthenticator extends Authenticator {
 
   @Override
   default CompletionStage<ByteBuffer> initialResponse() {
-    return CompletableFutures.completedFuture(this::initialResponseSync);
+    return CompletableFutures.wrap(this::initialResponseSync);
   }
 
   @Override
   default CompletionStage<ByteBuffer> evaluateChallenge(ByteBuffer challenge) {
-    return CompletableFutures.completedFuture(() -> evaluateChallengeSync(challenge));
+    return CompletableFutures.wrap(() -> evaluateChallengeSync(challenge));
   }
 
   @Override
   default CompletionStage<Void> onAuthenticationSuccess(ByteBuffer token) {
-    return CompletableFutures.completedFuture(
+    return CompletableFutures.wrap(
         () -> {
           onAuthenticationSuccess(token);
           return null;
