@@ -28,12 +28,6 @@ import java.lang.reflect.Type;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
-/**
- * Static methods that facilitates parsing:
- * - {@link #parseEntity(Class, MappingManager)}: entity classes into {@link EntityMapper} instances
- * - {@link #parseUDT(Class, MappingManager)}: UDT classes into {@link MappedUDTCodec} instances.
- * - {@link #parseAccessor(Class, MappingManager)}: Accessor interfaces into {@link AccessorMapper} instances.
- */
 class AnnotationParser {
 
     private static final Comparator<AliasedMappedProperty> POSITION_COMPARATOR = new Comparator<AliasedMappedProperty>() {
@@ -46,37 +40,43 @@ class AnnotationParser {
     private AnnotationParser() {
     }
 
-    static <T> EntityMapper<T> parseEntity(final Class<T> entityClass, MappingManager mappingManager) {
+    static <T> EntityMapper<T> parseEntity(final Class<T> entityClass, String keyspaceOverride, MappingManager mappingManager) {
         Table table = AnnotationChecks.getTypeAnnotation(Table.class, entityClass);
 
-        String ksName = table.caseSensitiveKeyspace() ? Metadata.quote(table.keyspace()) : table.keyspace().toLowerCase();
+        String keyspaceName;
+        String loggedKeyspace = mappingManager.getSession().getLoggedKeyspace();
+        if (!Strings.isNullOrEmpty(keyspaceOverride)) {
+            keyspaceName = keyspaceOverride;
+        } else if (!Strings.isNullOrEmpty(table.keyspace())) {
+            keyspaceName = (table.caseSensitiveKeyspace()) ? Metadata.quote(table.keyspace()) : table.keyspace();
+        } else if (!Strings.isNullOrEmpty(loggedKeyspace)) {
+            keyspaceName = Metadata.quote(loggedKeyspace);
+        } else {
+            throw new IllegalArgumentException(String.format(
+                    "Error creating mapper for %s, you must provide a keyspace name " +
+                            "(either as an argument to the MappingManager.mapper() call, " +
+                            "or via the @Table annotation, or by having a default keyspace on your Session)",
+                    entityClass
+            ));
+        }
+
         String tableName = table.caseSensitiveTable() ? Metadata.quote(table.name()) : table.name().toLowerCase();
 
         ConsistencyLevel writeConsistency = table.writeConsistency().isEmpty() ? null : ConsistencyLevel.valueOf(table.writeConsistency().toUpperCase());
         ConsistencyLevel readConsistency = table.readConsistency().isEmpty() ? null : ConsistencyLevel.valueOf(table.readConsistency().toUpperCase());
 
-        if (Strings.isNullOrEmpty(table.keyspace())) {
-            String loggedKeyspace = mappingManager.getSession().getLoggedKeyspace();
-            if (Strings.isNullOrEmpty(loggedKeyspace))
-                throw new IllegalArgumentException(String.format(
-                        "Error creating mapper for %s, the @Table annotation declares no default keyspace, and the session is not currently logged to any keyspace",
-                        entityClass
-                ));
-            ksName = Metadata.quote(loggedKeyspace);
-        }
-
-        KeyspaceMetadata keyspaceMetadata = mappingManager.getSession().getCluster().getMetadata().getKeyspace(ksName);
+        KeyspaceMetadata keyspaceMetadata = mappingManager.getSession().getCluster().getMetadata().getKeyspace(keyspaceName);
         if (keyspaceMetadata == null)
-            throw new IllegalArgumentException(String.format("Keyspace %s does not exist", ksName));
+            throw new IllegalArgumentException(String.format("Keyspace %s does not exist", keyspaceName));
 
         AbstractTableMetadata tableMetadata = keyspaceMetadata.getTable(tableName);
         if (tableMetadata == null) {
             tableMetadata = keyspaceMetadata.getMaterializedView(tableName);
             if (tableMetadata == null)
-                throw new IllegalArgumentException(String.format("Table or materialized view %s does not exist in keyspace %s", tableName, ksName));
+                throw new IllegalArgumentException(String.format("Table or materialized view %s does not exist in keyspace %s", tableName, keyspaceName));
         }
 
-        EntityMapper<T> mapper = new EntityMapper<T>(entityClass, ksName, tableName, writeConsistency, readConsistency);
+        EntityMapper<T> mapper = new EntityMapper<T>(entityClass, keyspaceName, tableName, writeConsistency, readConsistency);
 
         List<AliasedMappedProperty> pks = new ArrayList<AliasedMappedProperty>();
         List<AliasedMappedProperty> ccs = new ArrayList<AliasedMappedProperty>();
@@ -99,7 +99,7 @@ class AnnotationParser {
 
             if (!mappedProperty.isComputed() && tableMetadata.getColumn(mappedProperty.getMappedName()) == null)
                 throw new IllegalArgumentException(String.format("Column %s does not exist in table %s.%s",
-                        mappedProperty.getMappedName(), ksName, tableName));
+                        mappedProperty.getMappedName(), keyspaceName, tableName));
 
             if (mappedProperty.isPartitionKey())
                 pks.add(aliasedMappedProperty);
@@ -110,7 +110,7 @@ class AnnotationParser {
 
             // if the property is of a UDT type, parse it now
             for (Class<?> udt : TypeMappings.findUDTs(mappedProperty.getPropertyType().getType()))
-                mappingManager.getUDTCodec(udt);
+                mappingManager.getUDTCodec(udt, keyspaceName);
         }
 
         Collections.sort(pks, POSITION_COMPARATOR);
@@ -123,29 +123,35 @@ class AnnotationParser {
         return mapper;
     }
 
-    static <T> MappedUDTCodec<T> parseUDT(Class<T> udtClass, MappingManager mappingManager) {
+    static <T> MappedUDTCodec<T> parseUDT(Class<T> udtClass, String keyspaceOverride, MappingManager mappingManager) {
         UDT udt = AnnotationChecks.getTypeAnnotation(UDT.class, udtClass);
 
-        String ksName = udt.caseSensitiveKeyspace() ? Metadata.quote(udt.keyspace()) : udt.keyspace().toLowerCase();
-        String udtName = udt.caseSensitiveType() ? Metadata.quote(udt.name()) : udt.name().toLowerCase();
-
-        if (Strings.isNullOrEmpty(udt.keyspace())) {
-            String loggedKeyspace = mappingManager.getSession().getLoggedKeyspace();
-            if (Strings.isNullOrEmpty(loggedKeyspace))
-                throw new IllegalArgumentException(String.format(
-                        "Error creating UDT codec for %s, the @UDT annotation declares no default keyspace, and the session is not currently logged to any keyspace",
-                        udtClass
-                ));
-            ksName = Metadata.quote(loggedKeyspace);
+        String keyspaceName;
+        String loggedKeyspace = mappingManager.getSession().getLoggedKeyspace();
+        if (!Strings.isNullOrEmpty(keyspaceOverride)) {
+            keyspaceName = keyspaceOverride;
+        } else if (!Strings.isNullOrEmpty(udt.keyspace())) {
+            keyspaceName = (udt.caseSensitiveKeyspace()) ? Metadata.quote(udt.keyspace()) : udt.keyspace();
+        } else if (!Strings.isNullOrEmpty(loggedKeyspace)) {
+            keyspaceName = Metadata.quote(loggedKeyspace);
+        } else {
+            throw new IllegalArgumentException(String.format(
+                    "Error creating mapper for %s, you must provide a keyspace name " +
+                            "(either as an argument to the MappingManager.mapper() call, " +
+                            "or via the @Table annotation, or by having a default keyspace on your Session)",
+                    udtClass
+            ));
         }
 
-        KeyspaceMetadata keyspaceMetadata = mappingManager.getSession().getCluster().getMetadata().getKeyspace(ksName);
+        String udtName = udt.caseSensitiveType() ? Metadata.quote(udt.name()) : udt.name().toLowerCase();
+
+        KeyspaceMetadata keyspaceMetadata = mappingManager.getSession().getCluster().getMetadata().getKeyspace(keyspaceName);
         if (keyspaceMetadata == null)
-            throw new IllegalArgumentException(String.format("Keyspace %s does not exist", ksName));
+            throw new IllegalArgumentException(String.format("Keyspace %s does not exist", keyspaceName));
 
         UserType userType = keyspaceMetadata.getUserType(udtName);
         if (userType == null)
-            throw new IllegalArgumentException(String.format("User type %s does not exist in keyspace %s", udtName, ksName));
+            throw new IllegalArgumentException(String.format("User type %s does not exist in keyspace %s", udtName, keyspaceName));
 
         Map<String, AliasedMappedProperty> propertyMappers = new HashMap<String, AliasedMappedProperty>();
 
@@ -158,10 +164,10 @@ class AnnotationParser {
 
             if (!userType.contains(mappedProperty.getMappedName()))
                 throw new IllegalArgumentException(String.format("Field %s does not exist in type %s.%s",
-                        mappedProperty.getMappedName(), ksName, userType.getTypeName()));
+                        mappedProperty.getMappedName(), keyspaceName, userType.getTypeName()));
 
             for (Class<?> fieldUdt : TypeMappings.findUDTs(mappedProperty.getPropertyType().getType()))
-                mappingManager.getUDTCodec(fieldUdt);
+                mappingManager.getUDTCodec(fieldUdt, keyspaceName);
 
             propertyMappers.put(mappedProperty.getMappedName(), aliasedMappedProperty);
         }
@@ -237,12 +243,12 @@ class AnnotationParser {
         if (paramType instanceof Class) {
             Class<?> paramClass = (Class<?>) paramType;
             if (TypeMappings.isMappedUDT(paramClass))
-                mappingManager.getUDTCodec(paramClass);
+                mappingManager.getUDTCodec(paramClass, null);
 
             return new ParamMapper(paramName, idx, TypeToken.of(paramType), codecClass);
         } else if (paramType instanceof ParameterizedType) {
             for (Class<?> udt : TypeMappings.findUDTs(paramType))
-                mappingManager.getUDTCodec(udt);
+                mappingManager.getUDTCodec(udt, null);
 
             return new ParamMapper(paramName, idx, TypeToken.of(paramType), codecClass);
         } else {

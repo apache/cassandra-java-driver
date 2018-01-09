@@ -16,6 +16,7 @@
 package com.datastax.driver.mapping;
 
 import com.datastax.driver.core.*;
+import com.datastax.driver.core.utils.MoreObjects;
 import com.datastax.driver.mapping.annotations.Accessor;
 import com.datastax.driver.mapping.annotations.Table;
 import com.datastax.driver.mapping.annotations.UDT;
@@ -24,6 +25,7 @@ import org.slf4j.LoggerFactory;
 
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -38,8 +40,8 @@ public class MappingManager {
     private final MappingConfiguration configuration;
     final int protocolVersionAsInt;
 
-    private final ConcurrentHashMap<Class<?>, Mapper<?>> mappers = new ConcurrentHashMap<Class<?>, Mapper<?>>();
-    private final ConcurrentHashMap<Class<?>, MappedUDTCodec<?>> udtCodecs = new ConcurrentHashMap<Class<?>, MappedUDTCodec<?>>();
+    private final ConcurrentHashMap<CacheKey, Mapper<?>> mappers = new ConcurrentHashMap<CacheKey, Mapper<?>>();
+    private final ConcurrentHashMap<CacheKey, MappedUDTCodec<?>> udtCodecs = new ConcurrentHashMap<CacheKey, MappedUDTCodec<?>>();
     private final ConcurrentHashMap<Class<?>, Object> accessors = new ConcurrentHashMap<Class<?>, Object>();
 
 
@@ -164,23 +166,24 @@ public class MappingManager {
             @Override
             public void onUserTypeChanged(UserType current, UserType previous) {
                 synchronized (udtCodecs) {
-                    Set<MappedUDTCodec<?>> deletedCodecs = new HashSet<MappedUDTCodec<?>>();
-                    Iterator<MappedUDTCodec<?>> it = udtCodecs.values().iterator();
+                    Set<CacheKey> deletedCodecs = new HashSet<CacheKey>();
+                    Iterator<Map.Entry<CacheKey, MappedUDTCodec<?>>> it = udtCodecs.entrySet().iterator();
                     while (it.hasNext()) {
-                        MappedUDTCodec<?> codec = it.next();
+                        Map.Entry<CacheKey, MappedUDTCodec<?>> entry = it.next();
+                        MappedUDTCodec<?> codec = entry.getValue();
                         if (previous.equals(codec.getCqlType())) {
                             LOGGER.warn("User type {} has been altered; existing mappers for @UDT annotated {} might not work properly anymore",
                                     previous, codec.getUdtClass());
-                            deletedCodecs.add(codec);
+                            deletedCodecs.add(entry.getKey());
                             it.remove();
                         }
                     }
-                    for (MappedUDTCodec<?> deletedCodec : deletedCodecs) {
+                    for (CacheKey key : deletedCodecs) {
                         // try to register an updated version of the previous codec
                         try {
-                            getUDTCodec(deletedCodec.getUdtClass());
+                            getUDTCodec(key.klass, key.keyspace);
                         } catch (Exception e) {
-                            LOGGER.error("Could not update mapping for @UDT annotated " + deletedCodec.getUdtClass(), e);
+                            LOGGER.error("Could not update mapping for @UDT annotated " + key.klass, e);
                         }
                     }
                 }
@@ -217,19 +220,33 @@ public class MappingManager {
      * Creates a {@code Mapper} for the provided class (that must be annotated by a
      * {@link Table} annotation).
      * <p/>
-     * The {@code MappingManager} only ever keeps one Mapper for each class, and so calling this
+     * The {@code MappingManager} only ever keeps one Mapper for each class and keyspace, and so calling this
      * method multiple times on the same class will always return the same object.
      * <p/>
      * If the type of any field in the class is an {@link UDT}-annotated classes, a codec for that
      * class will automatically be created and registered with the underlying {@code Cluster}.
      * This works recursively with UDTs nested in other UDTs or in collections.
      *
-     * @param <T>   the type of the class to map.
-     * @param klass the (annotated) class for which to return the mapper.
-     * @return the {@code Mapper} object for class {@code klass}.
+     * @param <T>      the type of the class to map.
+     * @param klass    the (annotated) class for which to return the mapper.
+     * @param keyspace the target keyspace for the mapping (must be quoted if case-sensitive). If this is {@code null},
+     *                 the mapper will try to use the keyspace defined by the annotation, or the default keyspace on the
+     *                 session, or fail if neither is declared.
+     */
+    public <T> Mapper<T> mapper(Class<T> klass, String keyspace) {
+        return getMapper(klass, keyspace);
+    }
+
+    /**
+     * Creates a {@code Mapper} for the provided class, using the default keyspace (either the one declared in the
+     * {@link Table} annotation, or the logged keyspace on the session).
+     * <p/>
+     * This is equivalent to {@code this.mapper(klass, null)}.
+     *
+     * @see #mapper(Class, String)
      */
     public <T> Mapper<T> mapper(Class<T> klass) {
-        return getMapper(klass);
+        return mapper(klass, null);
     }
 
     /**
@@ -243,12 +260,26 @@ public class MappingManager {
      * for a class that references this UDT class (creating a mapper will automatically
      * process all UDTs that it uses).
      *
-     * @param <T>   the type of the class to map.
-     * @param klass the (annotated) class for which to return the codec.
-     * @return the codec that maps the provided class to the corresponding user-defined type.
+     * @param <T>      the type of the class to map.
+     * @param klass    the (annotated) class for which to return the codec.
+     * @param keyspace the target keyspace for the mapping (must be quoted if case-sensitive). If this is {@code null},
+     *                 the mapper will try to use the keyspace defined by the annotation, or the default keyspace on the
+     *                 session, or fail if neither is declared.
+     */
+    public <T> TypeCodec<T> udtCodec(Class<T> klass, String keyspace) {
+        return getUDTCodec(klass, keyspace);
+    }
+
+    /**
+     * Creates a {@code TypeCodec} for the provided class, using the default keyspace (either the one declared in the
+     * {@link Table} annotation, or the logged keyspace on the session).
+     * <p/>
+     * This is equivalent to {@code this.udtCodec(klass, null)}.
+     *
+     * @see #udtCodec(Class, String)
      */
     public <T> TypeCodec<T> udtCodec(Class<T> klass) {
-        return getUDTCodec(klass);
+        return udtCodec(klass, null);
     }
 
     /**
@@ -267,12 +298,13 @@ public class MappingManager {
     }
 
     @SuppressWarnings("unchecked")
-    private <T> Mapper<T> getMapper(Class<T> klass) {
-        Mapper<T> mapper = (Mapper<T>) mappers.get(klass);
+    private <T> Mapper<T> getMapper(Class<T> klass, String keyspace) {
+        CacheKey cacheKey = new CacheKey(klass, keyspace);
+        Mapper<T> mapper = (Mapper<T>) mappers.get(cacheKey);
         if (mapper == null) {
-            EntityMapper<T> entityMapper = AnnotationParser.parseEntity(klass, this);
+            EntityMapper<T> entityMapper = AnnotationParser.parseEntity(klass, keyspace, this);
             mapper = new Mapper<T>(this, klass, entityMapper);
-            Mapper<T> old = (Mapper<T>) mappers.putIfAbsent(klass, mapper);
+            Mapper<T> old = (Mapper<T>) mappers.putIfAbsent(cacheKey, mapper);
             if (old != null) {
                 mapper = old;
             }
@@ -281,12 +313,13 @@ public class MappingManager {
     }
 
     @SuppressWarnings("unchecked")
-    <T> TypeCodec<T> getUDTCodec(Class<T> mappedClass) {
-        MappedUDTCodec<T> codec = (MappedUDTCodec<T>) udtCodecs.get(mappedClass);
+    <T> TypeCodec<T> getUDTCodec(Class<T> mappedClass, String keyspace) {
+        CacheKey cacheKey = new CacheKey(mappedClass, keyspace);
+        MappedUDTCodec<T> codec = (MappedUDTCodec<T>) udtCodecs.get(cacheKey);
         if (codec == null) {
-            codec = AnnotationParser.parseUDT(mappedClass, this);
+            codec = AnnotationParser.parseUDT(mappedClass, keyspace, this);
             session.getCluster().getConfiguration().getCodecRegistry().register(codec);
-            MappedUDTCodec<T> old = (MappedUDTCodec<T>) udtCodecs.putIfAbsent(mappedClass, codec);
+            MappedUDTCodec<T> old = (MappedUDTCodec<T>) udtCodecs.putIfAbsent(cacheKey, codec);
             if (old != null) {
                 codec = old;
             }
@@ -307,5 +340,32 @@ public class MappingManager {
             }
         }
         return accessor;
+    }
+
+    private static class CacheKey {
+        final Class<?> klass;
+        final String keyspace;
+
+        CacheKey(Class<?> klass, String keyspace) {
+            this.klass = klass;
+            this.keyspace = keyspace;
+        }
+
+        @Override
+        public boolean equals(Object other) {
+            if (other == this) {
+                return true;
+            } else if (other instanceof CacheKey) {
+                CacheKey that = (CacheKey) other;
+                return this.klass.equals(that.klass) && MoreObjects.equal(this.keyspace, that.keyspace);
+            } else {
+                return false;
+            }
+        }
+
+        @Override
+        public int hashCode() {
+            return MoreObjects.hashCode(klass, keyspace);
+        }
     }
 }

@@ -626,7 +626,7 @@ public class MapperUDTTest extends CCMTestsSupport {
     @Test(groups = "short", expectedExceptions = IllegalArgumentException.class)
     public void should_fail_to_create_codec_if_class_has_field_not_in_udt() {
         MappingManager manager = new MappingManager(session());
-        manager.getUDTCodec(AddressUnknownField.class);
+        manager.getUDTCodec(AddressUnknownField.class, keyspace);
     }
 
     @UDT(name = "nonexistent")
@@ -652,7 +652,7 @@ public class MapperUDTTest extends CCMTestsSupport {
     @Test(groups = "short", expectedExceptions = IllegalArgumentException.class)
     public void should_fail_to_create_codec_if_udt_does_not_exist() {
         MappingManager manager = new MappingManager(session());
-        manager.getUDTCodec(NonExistentUDT.class);
+        manager.getUDTCodec(NonExistentUDT.class, keyspace);
     }
 
     @Table(name = "users")
