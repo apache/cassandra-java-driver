@@ -17,7 +17,7 @@ package com.datastax.oss.driver.api.core.loadbalancing;
 
 import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.ProtocolVersion;
-import com.datastax.oss.driver.api.core.cql.CqlSession;
+import com.datastax.oss.driver.api.core.CqlSession;
 import com.datastax.oss.driver.api.core.cql.ResultSet;
 import com.datastax.oss.driver.api.core.cql.SimpleStatement;
 import com.datastax.oss.driver.api.core.cql.Statement;
@@ -26,7 +26,7 @@ import com.datastax.oss.driver.api.core.metadata.NodeState;
 import com.datastax.oss.driver.api.core.metadata.TokenMap;
 import com.datastax.oss.driver.api.core.type.codec.TypeCodecs;
 import com.datastax.oss.driver.api.testinfra.ccm.CustomCcmRule;
-import com.datastax.oss.driver.api.testinfra.cluster.ClusterRule;
+import com.datastax.oss.driver.api.testinfra.cluster.SessionRule;
 import com.datastax.oss.driver.api.testinfra.utils.ConditionChecker;
 import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
 import com.datastax.oss.driver.internal.core.metadata.TopologyEvent;
@@ -52,16 +52,15 @@ public class DefaultLoadBalancingPolicyIT {
   @ClassRule public static CustomCcmRule ccmRule = CustomCcmRule.builder().withNodes(4, 1).build();
 
   @ClassRule
-  public static ClusterRule clusterRule =
-      ClusterRule.builder(ccmRule)
+  public static SessionRule<CqlSession> sessionRule =
+      SessionRule.builder(ccmRule)
           .withKeyspace(false)
-          .withDefaultSession(true)
           .withOptions("request.timeout = 30 seconds")
           .build();
 
   @BeforeClass
   public static void setup() {
-    CqlSession session = clusterRule.session();
+    CqlSession session = sessionRule.session();
     session.execute(
         "CREATE KEYSPACE test "
             + "WITH replication = {'class': 'NetworkTopologyStrategy', 'dc1': 2, 'dc2': 1}");
@@ -70,7 +69,7 @@ public class DefaultLoadBalancingPolicyIT {
 
   @Test
   public void should_ignore_remote_dcs() {
-    for (Node node : clusterRule.cluster().getMetadata().getNodes().values()) {
+    for (Node node : sessionRule.session().getMetadata().getNodes().values()) {
       if (LOCAL_DC.equals(node.getDatacenter())) {
         assertThat(node.getDistance()).isEqualTo(NodeDistance.LOCAL);
         assertThat(node.getState()).isEqualTo(NodeState.UP);
@@ -88,7 +87,7 @@ public class DefaultLoadBalancingPolicyIT {
   @Test
   public void should_use_round_robin_on_local_dc_when_not_enough_routing_information() {
     ByteBuffer routingKey = TypeCodecs.INT.encodePrimitive(1, ProtocolVersion.DEFAULT);
-    TokenMap tokenMap = clusterRule.cluster().getMetadata().getTokenMap().get();
+    TokenMap tokenMap = sessionRule.session().getMetadata().getTokenMap().get();
     // TODO add statements with setKeyspace when that is supported
     List<Statement> statements =
         ImmutableList.of(
@@ -107,7 +106,7 @@ public class DefaultLoadBalancingPolicyIT {
     for (Statement statement : statements) {
       List<Node> coordinators = new ArrayList<>();
       for (int i = 0; i < 12; i++) {
-        ResultSet rs = clusterRule.session().execute(statement);
+        ResultSet rs = sessionRule.session().execute(statement);
         Node coordinator = rs.getExecutionInfo().getCoordinator();
         assertThat(coordinator.getDatacenter()).isEqualTo(LOCAL_DC);
         coordinators.add(coordinator);
@@ -124,7 +123,7 @@ public class DefaultLoadBalancingPolicyIT {
   public void should_prioritize_replicas_when_routing_information_present() {
     CqlIdentifier keyspace = CqlIdentifier.fromCql("test");
     ByteBuffer routingKey = TypeCodecs.INT.encodePrimitive(1, ProtocolVersion.DEFAULT);
-    TokenMap tokenMap = clusterRule.cluster().getMetadata().getTokenMap().get();
+    TokenMap tokenMap = sessionRule.session().getMetadata().getTokenMap().get();
     Set<Node> localReplicas = new HashSet<>();
     for (Node replica : tokenMap.getReplicas(keyspace, routingKey)) {
       if (replica.getDatacenter().equals(LOCAL_DC)) {
@@ -148,7 +147,7 @@ public class DefaultLoadBalancingPolicyIT {
       // reasonable distribution:
       Map<Node, Integer> hits = new HashMap<>();
       for (int i = 0; i < 2000; i++) {
-        ResultSet rs = clusterRule.session().execute(statement);
+        ResultSet rs = sessionRule.session().execute(statement);
         Node coordinator = rs.getExecutionInfo().getCoordinator();
         assertThat(localReplicas).contains(coordinator);
         assertThat(coordinator.getDatacenter()).isEqualTo(LOCAL_DC);
@@ -165,9 +164,9 @@ public class DefaultLoadBalancingPolicyIT {
   public void should_hit_non_replicas_when_routing_information_present_but_all_replicas_down() {
     CqlIdentifier keyspace = CqlIdentifier.fromCql("test");
     ByteBuffer routingKey = TypeCodecs.INT.encodePrimitive(1, ProtocolVersion.DEFAULT);
-    TokenMap tokenMap = clusterRule.cluster().getMetadata().getTokenMap().get();
+    TokenMap tokenMap = sessionRule.session().getMetadata().getTokenMap().get();
 
-    InternalDriverContext context = (InternalDriverContext) clusterRule.cluster().getContext();
+    InternalDriverContext context = (InternalDriverContext) sessionRule.session().getContext();
 
     Set<Node> localReplicas = new HashSet<>();
     for (Node replica : tokenMap.getReplicas(keyspace, routingKey)) {
@@ -193,7 +192,7 @@ public class DefaultLoadBalancingPolicyIT {
     for (Statement statement : statements) {
       List<Node> coordinators = new ArrayList<>();
       for (int i = 0; i < 6; i++) {
-        ResultSet rs = clusterRule.session().execute(statement);
+        ResultSet rs = sessionRule.session().execute(statement);
         Node coordinator = rs.getExecutionInfo().getCoordinator();
         coordinators.add(coordinator);
         assertThat(coordinator.getDatacenter()).isEqualTo(LOCAL_DC);

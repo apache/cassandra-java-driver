@@ -16,11 +16,10 @@
 package com.datastax.oss.driver.api.core.specex;
 
 import com.datastax.oss.driver.api.core.AllNodesFailedException;
-import com.datastax.oss.driver.api.core.Cluster;
-import com.datastax.oss.driver.api.core.cql.CqlSession;
+import com.datastax.oss.driver.api.core.CqlSession;
 import com.datastax.oss.driver.api.core.cql.ResultSet;
 import com.datastax.oss.driver.api.core.cql.SimpleStatement;
-import com.datastax.oss.driver.api.testinfra.cluster.ClusterUtils;
+import com.datastax.oss.driver.api.testinfra.cluster.SessionUtils;
 import com.datastax.oss.driver.api.testinfra.simulacron.SimulacronRule;
 import com.datastax.oss.driver.categories.ParallelizableTests;
 import com.datastax.oss.simulacron.common.cluster.ClusterSpec;
@@ -60,8 +59,7 @@ public class SpeculativeExecutionIT {
     primeNode(
         0, when(QUERY_STRING).then(noRows()).delay(3 * SPECULATIVE_DELAY, TimeUnit.MILLISECONDS));
 
-    try (Cluster<CqlSession> cluster = buildCluster(2, SPECULATIVE_DELAY)) {
-      CqlSession session = cluster.connect();
+    try (CqlSession session = buildSession(2, SPECULATIVE_DELAY)) {
       ResultSet resultSet = session.execute(QUERY.setIdempotent(false));
 
       assertThat(resultSet.getExecutionInfo().getSuccessfulExecutionIndex()).isEqualTo(0);
@@ -79,8 +77,7 @@ public class SpeculativeExecutionIT {
         0, when(QUERY_STRING).then(noRows()).delay(3 * SPECULATIVE_DELAY, TimeUnit.MILLISECONDS));
     primeNode(1, when(QUERY_STRING).then(noRows()));
 
-    try (Cluster<CqlSession> cluster = buildCluster(2, SPECULATIVE_DELAY)) {
-      CqlSession session = cluster.connect();
+    try (CqlSession session = buildSession(2, SPECULATIVE_DELAY)) {
       ResultSet resultSet = session.execute(QUERY);
 
       assertThat(resultSet.getExecutionInfo().getSuccessfulExecutionIndex()).isEqualTo(1);
@@ -99,8 +96,7 @@ public class SpeculativeExecutionIT {
     primeNode(
         1, when(QUERY_STRING).then(noRows()).delay(3 * SPECULATIVE_DELAY, TimeUnit.MILLISECONDS));
 
-    try (Cluster<CqlSession> cluster = buildCluster(2, SPECULATIVE_DELAY)) {
-      CqlSession session = cluster.connect();
+    try (CqlSession session = buildSession(2, SPECULATIVE_DELAY)) {
       ResultSet resultSet = session.execute(QUERY);
 
       assertThat(resultSet.getExecutionInfo().getSuccessfulExecutionIndex()).isEqualTo(0);
@@ -120,8 +116,7 @@ public class SpeculativeExecutionIT {
         1, when(QUERY_STRING).then(noRows()).delay(3 * SPECULATIVE_DELAY, TimeUnit.MILLISECONDS));
     primeNode(2, when(QUERY_STRING).then(noRows()));
 
-    try (Cluster<CqlSession> cluster = buildCluster(3, SPECULATIVE_DELAY)) {
-      CqlSession session = cluster.connect();
+    try (CqlSession session = buildSession(3, SPECULATIVE_DELAY)) {
       ResultSet resultSet = session.execute(QUERY);
 
       assertThat(resultSet.getExecutionInfo().getSuccessfulExecutionIndex()).isEqualTo(2);
@@ -139,8 +134,7 @@ public class SpeculativeExecutionIT {
     primeNode(0, when(QUERY_STRING).then(isBootstrapping()));
     primeNode(1, when(QUERY_STRING).then(noRows()));
 
-    try (Cluster<CqlSession> cluster = buildCluster(3, SPECULATIVE_DELAY)) {
-      CqlSession session = cluster.connect();
+    try (CqlSession session = buildSession(3, SPECULATIVE_DELAY)) {
       ResultSet resultSet = session.execute(QUERY);
 
       assertThat(resultSet.getExecutionInfo().getSuccessfulExecutionIndex()).isEqualTo(0);
@@ -160,8 +154,7 @@ public class SpeculativeExecutionIT {
     primeNode(1, when(QUERY_STRING).then(isBootstrapping()));
     primeNode(2, when(QUERY_STRING).then(noRows()));
 
-    try (Cluster<CqlSession> cluster = buildCluster(3, SPECULATIVE_DELAY)) {
-      CqlSession session = cluster.connect();
+    try (CqlSession session = buildSession(3, SPECULATIVE_DELAY)) {
       ResultSet resultSet = session.execute(QUERY);
 
       assertThat(resultSet.getExecutionInfo().getSuccessfulExecutionIndex()).isEqualTo(1);
@@ -182,8 +175,7 @@ public class SpeculativeExecutionIT {
     primeNode(1, when(QUERY_STRING).then(isBootstrapping()));
     primeNode(2, when(QUERY_STRING).then(isBootstrapping()));
 
-    try (Cluster<CqlSession> cluster = buildCluster(2, SPECULATIVE_DELAY)) {
-      CqlSession session = cluster.connect();
+    try (CqlSession session = buildSession(2, SPECULATIVE_DELAY)) {
       ResultSet resultSet = session.execute(QUERY);
 
       assertThat(resultSet.getExecutionInfo().getSuccessfulExecutionIndex()).isEqualTo(0);
@@ -206,8 +198,7 @@ public class SpeculativeExecutionIT {
               .then(isBootstrapping())
               .delay((3 - i) * SPECULATIVE_DELAY, TimeUnit.MILLISECONDS));
     }
-    try (Cluster<CqlSession> cluster = buildCluster(3, SPECULATIVE_DELAY)) {
-      CqlSession session = cluster.connect();
+    try (CqlSession session = buildSession(3, SPECULATIVE_DELAY)) {
       session.execute(QUERY);
     } finally {
       assertQueryCount(0, 1);
@@ -225,8 +216,7 @@ public class SpeculativeExecutionIT {
     }
     primeNode(2, when(QUERY_STRING).then(noRows()).delay(SPECULATIVE_DELAY, TimeUnit.MILLISECONDS));
 
-    try (Cluster<CqlSession> cluster = buildCluster(3, 0)) {
-      CqlSession session = cluster.connect();
+    try (CqlSession session = buildSession(3, 0)) {
       ResultSet resultSet = session.execute(QUERY);
 
       assertThat(resultSet.getExecutionInfo().getSuccessfulExecutionIndex()).isEqualTo(2);
@@ -239,8 +229,8 @@ public class SpeculativeExecutionIT {
   }
 
   // Build a new Cluster instance for each test, because we need different configurations
-  private Cluster<CqlSession> buildCluster(int maxSpeculativeExecutions, long speculativeDelayMs) {
-    return ClusterUtils.newCluster(
+  private CqlSession buildSession(int maxSpeculativeExecutions, long speculativeDelayMs) {
+    return SessionUtils.newSession(
         simulacron,
         String.format("request.timeout = %d milliseconds", SPECULATIVE_DELAY * 10),
         "request.default-idempotence = true",

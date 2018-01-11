@@ -54,7 +54,7 @@ public class DefaultDriverConfigLoaderTest {
   public void setup() {
     MockitoAnnotations.initMocks(this);
 
-    Mockito.when(context.clusterName()).thenReturn("test");
+    Mockito.when(context.sessionName()).thenReturn("test");
     Mockito.when(context.nettyOptions()).thenReturn(nettyOptions);
     Mockito.when(nettyOptions.adminEventExecutorGroup()).thenReturn(adminEventExecutorGroup);
 

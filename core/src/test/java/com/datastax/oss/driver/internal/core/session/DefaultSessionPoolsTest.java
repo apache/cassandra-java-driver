@@ -16,30 +16,42 @@
 package com.datastax.oss.driver.internal.core.session;
 
 import com.datastax.oss.driver.api.core.CqlIdentifier;
+import com.datastax.oss.driver.api.core.addresstranslation.AddressTranslator;
 import com.datastax.oss.driver.api.core.config.CoreDriverOption;
 import com.datastax.oss.driver.api.core.config.DriverConfig;
+import com.datastax.oss.driver.api.core.config.DriverConfigLoader;
 import com.datastax.oss.driver.api.core.config.DriverConfigProfile;
+import com.datastax.oss.driver.api.core.connection.ReconnectionPolicy;
+import com.datastax.oss.driver.api.core.CqlSession;
 import com.datastax.oss.driver.api.core.loadbalancing.NodeDistance;
 import com.datastax.oss.driver.api.core.metadata.Metadata;
 import com.datastax.oss.driver.api.core.metadata.Node;
 import com.datastax.oss.driver.api.core.metadata.NodeState;
-import com.datastax.oss.driver.api.core.cql.CqlSession;
+import com.datastax.oss.driver.api.core.retry.RetryPolicy;
 import com.datastax.oss.driver.api.core.session.Session;
+import com.datastax.oss.driver.api.core.specex.SpeculativeExecutionPolicy;
 import com.datastax.oss.driver.internal.core.context.EventBus;
 import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
 import com.datastax.oss.driver.internal.core.context.NettyOptions;
+import com.datastax.oss.driver.internal.core.control.ControlConnection;
 import com.datastax.oss.driver.internal.core.metadata.DefaultNode;
 import com.datastax.oss.driver.internal.core.metadata.DistanceEvent;
+import com.datastax.oss.driver.internal.core.metadata.LoadBalancingPolicyWrapper;
 import com.datastax.oss.driver.internal.core.metadata.MetadataManager;
 import com.datastax.oss.driver.internal.core.metadata.NodeStateEvent;
+import com.datastax.oss.driver.internal.core.metadata.TopologyMonitor;
 import com.datastax.oss.driver.internal.core.pool.ChannelPool;
 import com.datastax.oss.driver.internal.core.pool.ChannelPoolFactory;
 import com.datastax.oss.driver.internal.core.util.concurrent.CompletableFutures;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.util.concurrent.Uninterruptibles;
 import io.netty.channel.DefaultEventLoopGroup;
+import io.netty.util.concurrent.DefaultPromise;
 import io.netty.util.concurrent.Future;
+import io.netty.util.concurrent.GlobalEventExecutor;
 import java.net.InetSocketAddress;
+import java.time.Duration;
+import java.util.Collections;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ExecutionException;
@@ -54,9 +66,10 @@ import org.mockito.MockitoAnnotations;
 import static com.datastax.oss.driver.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anySet;
 import static org.mockito.Mockito.timeout;
 
-public class DefaultSessionTest {
+public class DefaultSessionPoolsTest {
 
   private static final CqlIdentifier KEYSPACE = CqlIdentifier.fromInternal("ks");
 
@@ -64,9 +77,17 @@ public class DefaultSessionTest {
   @Mock private NettyOptions nettyOptions;
   @Mock private ChannelPoolFactory channelPoolFactory;
   @Mock private MetadataManager metadataManager;
+  @Mock private TopologyMonitor topologyMonitor;
+  @Mock private LoadBalancingPolicyWrapper loadBalancingPolicyWrapper;
+  @Mock private DriverConfigLoader configLoader;
   @Mock private Metadata metadata;
   @Mock private DriverConfig config;
   @Mock private DriverConfigProfile defaultConfigProfile;
+  @Mock private ReconnectionPolicy reconnectionPolicy;
+  @Mock private RetryPolicy retryPolicy;
+  @Mock private SpeculativeExecutionPolicy speculativeExecutionPolicy;
+  @Mock private AddressTranslator addressTranslator;
+  @Mock private ControlConnection controlConnection;
 
   private DefaultNode node1;
   private DefaultNode node2;
@@ -79,8 +100,41 @@ public class DefaultSessionTest {
     MockitoAnnotations.initMocks(this);
 
     adminEventLoopGroup = new DefaultEventLoopGroup(1);
-    Mockito.when(context.nettyOptions()).thenReturn(nettyOptions);
     Mockito.when(nettyOptions.adminEventExecutorGroup()).thenReturn(adminEventLoopGroup);
+    Mockito.when(context.nettyOptions()).thenReturn(nettyOptions);
+
+    // Config:
+    Mockito.when(defaultConfigProfile.getBoolean(CoreDriverOption.REQUEST_WARN_IF_SET_KEYSPACE))
+        .thenReturn(true);
+    Mockito.when(defaultConfigProfile.getBoolean(CoreDriverOption.REPREPARE_ENABLED))
+        .thenReturn(false);
+    Mockito.when(defaultConfigProfile.isDefined(CoreDriverOption.PROTOCOL_VERSION))
+        .thenReturn(true);
+    Mockito.when(defaultConfigProfile.getDuration(CoreDriverOption.METADATA_TOPOLOGY_WINDOW))
+        .thenReturn(Duration.ZERO);
+    Mockito.when(defaultConfigProfile.getInt(CoreDriverOption.METADATA_TOPOLOGY_MAX_EVENTS))
+        .thenReturn(1);
+    Mockito.when(config.getDefaultProfile()).thenReturn(defaultConfigProfile);
+    Mockito.when(context.config()).thenReturn(config);
+
+    // Init sequence:
+    Mockito.when(metadataManager.addContactPoints(anySet()))
+        .thenReturn(CompletableFuture.completedFuture(null));
+    Mockito.when(metadataManager.refreshNodes())
+        .thenReturn(CompletableFuture.completedFuture(null));
+    Mockito.when(metadataManager.firstSchemaRefreshFuture())
+        .thenReturn(CompletableFuture.completedFuture(null));
+    Mockito.when(context.metadataManager()).thenReturn(metadataManager);
+
+    Mockito.when(topologyMonitor.init()).thenReturn(CompletableFuture.completedFuture(null));
+    Mockito.when(context.topologyMonitor()).thenReturn(topologyMonitor);
+
+    Mockito.when(context.loadBalancingPolicyWrapper()).thenReturn(loadBalancingPolicyWrapper);
+
+    Mockito.when(context.configLoader()).thenReturn(configLoader);
+
+    // Runtime behavior:
+    Mockito.when(context.sessionName()).thenReturn("test");
 
     Mockito.when(context.channelPoolFactory()).thenReturn(channelPoolFactory);
 
@@ -97,14 +151,33 @@ public class DefaultSessionTest {
             node3.getConnectAddress(), node3);
     Mockito.when(metadata.getNodes()).thenReturn(nodes);
     Mockito.when(metadataManager.getMetadata()).thenReturn(metadata);
-    Mockito.when(context.metadataManager()).thenReturn(metadataManager);
 
-    Mockito.when(defaultConfigProfile.getBoolean(CoreDriverOption.REQUEST_WARN_IF_SET_KEYSPACE))
-        .thenReturn(true);
-    Mockito.when(defaultConfigProfile.getBoolean(CoreDriverOption.REPREPARE_ENABLED))
-        .thenReturn(false);
-    Mockito.when(config.getDefaultProfile()).thenReturn(defaultConfigProfile);
-    Mockito.when(context.config()).thenReturn(config);
+    PoolManager poolManager = new PoolManager(context);
+    Mockito.when(context.poolManager()).thenReturn(poolManager);
+
+    // Shutdown sequence:
+    Mockito.when(context.reconnectionPolicy()).thenReturn(reconnectionPolicy);
+    Mockito.when(context.retryPolicy()).thenReturn(retryPolicy);
+    Mockito.when(context.speculativeExecutionPolicy()).thenReturn(speculativeExecutionPolicy);
+    Mockito.when(context.addressTranslator()).thenReturn(addressTranslator);
+
+    Mockito.when(metadataManager.closeAsync()).thenReturn(CompletableFuture.completedFuture(null));
+    Mockito.when(metadataManager.forceCloseAsync())
+        .thenReturn(CompletableFuture.completedFuture(null));
+
+    Mockito.when(topologyMonitor.closeAsync()).thenReturn(CompletableFuture.completedFuture(null));
+    Mockito.when(topologyMonitor.forceCloseAsync())
+        .thenReturn(CompletableFuture.completedFuture(null));
+
+    Mockito.when(context.controlConnection()).thenReturn(controlConnection);
+    Mockito.when(controlConnection.closeAsync())
+        .thenReturn(CompletableFuture.completedFuture(null));
+    Mockito.when(controlConnection.forceCloseAsync())
+        .thenReturn(CompletableFuture.completedFuture(null));
+
+    DefaultPromise<Void> nettyCloseFuture = new DefaultPromise<>(GlobalEventExecutor.INSTANCE);
+    nettyCloseFuture.setSuccess(null);
+    Mockito.when(nettyOptions.onClose()).thenAnswer(invocation -> nettyCloseFuture);
   }
 
   @Test
@@ -124,7 +197,7 @@ public class DefaultSessionTest {
             .pending(node3, KEYSPACE, NodeDistance.REMOTE, pool3Future)
             .build();
 
-    CompletionStage<CqlSession> initFuture = DefaultSession.init(context, KEYSPACE, "test");
+    CompletionStage<CqlSession> initFuture = newSession();
 
     factoryHelper.waitForCall(node1, KEYSPACE, NodeDistance.LOCAL);
     factoryHelper.waitForCall(node2, KEYSPACE, NodeDistance.LOCAL);
@@ -158,7 +231,7 @@ public class DefaultSessionTest {
             .success(node3, KEYSPACE, NodeDistance.LOCAL, pool3)
             .build();
 
-    CompletionStage<CqlSession> initFuture = DefaultSession.init(context, KEYSPACE, "test");
+    CompletionStage<CqlSession> initFuture = newSession();
 
     factoryHelper.waitForCall(node1, KEYSPACE, NodeDistance.LOCAL);
     factoryHelper.waitForCall(node3, KEYSPACE, NodeDistance.LOCAL);
@@ -182,7 +255,7 @@ public class DefaultSessionTest {
             .success(node3, KEYSPACE, NodeDistance.LOCAL, pool3)
             .build();
 
-    CompletionStage<CqlSession> initFuture = DefaultSession.init(context, KEYSPACE, "test");
+    CompletionStage<CqlSession> initFuture = newSession();
 
     factoryHelper.waitForCall(node1, KEYSPACE, NodeDistance.LOCAL);
     factoryHelper.waitForCall(node3, KEYSPACE, NodeDistance.LOCAL);
@@ -208,7 +281,7 @@ public class DefaultSessionTest {
             .pending(node3, KEYSPACE, NodeDistance.LOCAL, pool3Future)
             .build();
 
-    CompletionStage<CqlSession> initFuture = DefaultSession.init(context, KEYSPACE, "test");
+    CompletionStage<CqlSession> initFuture = newSession();
 
     factoryHelper.waitForCall(node1, KEYSPACE, NodeDistance.LOCAL);
     factoryHelper.waitForCall(node2, KEYSPACE, NodeDistance.LOCAL);
@@ -249,7 +322,7 @@ public class DefaultSessionTest {
             .pending(node3, KEYSPACE, NodeDistance.LOCAL, pool3Future)
             .build();
 
-    CompletionStage<CqlSession> initFuture = DefaultSession.init(context, KEYSPACE, "test");
+    CompletionStage<CqlSession> initFuture = newSession();
 
     factoryHelper.waitForCall(node1, KEYSPACE, NodeDistance.LOCAL);
     factoryHelper.waitForCall(node2, KEYSPACE, NodeDistance.LOCAL);
@@ -289,7 +362,7 @@ public class DefaultSessionTest {
             .pending(node3, KEYSPACE, NodeDistance.LOCAL, pool3Future)
             .build();
 
-    CompletionStage<CqlSession> initFuture = DefaultSession.init(context, KEYSPACE, "test");
+    CompletionStage<CqlSession> initFuture = newSession();
 
     factoryHelper.waitForCall(node1, KEYSPACE, NodeDistance.LOCAL);
     factoryHelper.waitForCall(node2, KEYSPACE, NodeDistance.LOCAL);
@@ -326,7 +399,7 @@ public class DefaultSessionTest {
             .success(node3, KEYSPACE, NodeDistance.LOCAL, pool3)
             .build();
 
-    CompletionStage<CqlSession> initFuture = DefaultSession.init(context, KEYSPACE, "test");
+    CompletionStage<CqlSession> initFuture = newSession();
 
     factoryHelper.waitForCall(node1, KEYSPACE, NodeDistance.LOCAL);
     factoryHelper.waitForCall(node2, KEYSPACE, NodeDistance.LOCAL);
@@ -350,7 +423,7 @@ public class DefaultSessionTest {
             .success(node3, KEYSPACE, NodeDistance.LOCAL, pool3)
             .build();
 
-    CompletionStage<CqlSession> initFuture = DefaultSession.init(context, KEYSPACE, "test");
+    CompletionStage<CqlSession> initFuture = newSession();
 
     factoryHelper.waitForCall(node1, KEYSPACE, NodeDistance.LOCAL);
     factoryHelper.waitForCall(node2, KEYSPACE, NodeDistance.LOCAL);
@@ -377,7 +450,7 @@ public class DefaultSessionTest {
             .success(node3, KEYSPACE, NodeDistance.LOCAL, pool3)
             .build();
 
-    CompletionStage<CqlSession> initFuture = DefaultSession.init(context, KEYSPACE, "test");
+    CompletionStage<CqlSession> initFuture = newSession();
 
     factoryHelper.waitForCall(node1, KEYSPACE, NodeDistance.LOCAL);
     factoryHelper.waitForCall(node2, KEYSPACE, NodeDistance.LOCAL);
@@ -413,7 +486,7 @@ public class DefaultSessionTest {
             .success(node2, KEYSPACE, NodeDistance.LOCAL, pool2)
             .build();
 
-    CompletionStage<CqlSession> initFuture = DefaultSession.init(context, KEYSPACE, "test");
+    CompletionStage<CqlSession> initFuture = newSession();
 
     factoryHelper.waitForCall(node1, KEYSPACE, NodeDistance.LOCAL);
     factoryHelper.waitForCall(node3, KEYSPACE, NodeDistance.LOCAL);
@@ -441,7 +514,7 @@ public class DefaultSessionTest {
             .success(node3, KEYSPACE, NodeDistance.LOCAL, pool3)
             .build();
 
-    CompletionStage<CqlSession> initFuture = DefaultSession.init(context, KEYSPACE, "test");
+    CompletionStage<CqlSession> initFuture = newSession();
 
     factoryHelper.waitForCall(node1, KEYSPACE, NodeDistance.LOCAL);
     factoryHelper.waitForCall(node2, KEYSPACE, NodeDistance.LOCAL);
@@ -472,7 +545,7 @@ public class DefaultSessionTest {
             .success(node2, KEYSPACE, NodeDistance.LOCAL, pool2)
             .build();
 
-    CompletionStage<CqlSession> initFuture = DefaultSession.init(context, KEYSPACE, "test");
+    CompletionStage<CqlSession> initFuture = newSession();
 
     factoryHelper.waitForCall(node1, KEYSPACE, NodeDistance.LOCAL);
     factoryHelper.waitForCall(node3, KEYSPACE, NodeDistance.LOCAL);
@@ -502,7 +575,7 @@ public class DefaultSessionTest {
             .success(node3, KEYSPACE, NodeDistance.LOCAL, pool3)
             .build();
 
-    CompletionStage<CqlSession> initFuture = DefaultSession.init(context, KEYSPACE, "test");
+    CompletionStage<CqlSession> initFuture = newSession();
 
     factoryHelper.waitForCall(node1, KEYSPACE, NodeDistance.LOCAL);
     factoryHelper.waitForCall(node3, KEYSPACE, NodeDistance.LOCAL);
@@ -534,7 +607,7 @@ public class DefaultSessionTest {
             .pending(node2, KEYSPACE, NodeDistance.LOCAL, pool2Future)
             .build();
 
-    CompletionStage<CqlSession> initFuture = DefaultSession.init(context, KEYSPACE, "test");
+    CompletionStage<CqlSession> initFuture = newSession();
 
     factoryHelper.waitForCall(node1, KEYSPACE, NodeDistance.LOCAL);
     factoryHelper.waitForCall(node3, KEYSPACE, NodeDistance.LOCAL);
@@ -577,7 +650,7 @@ public class DefaultSessionTest {
             .pending(node2, KEYSPACE, NodeDistance.LOCAL, pool2Future)
             .build();
 
-    CompletionStage<CqlSession> initFuture = DefaultSession.init(context, KEYSPACE, "test");
+    CompletionStage<CqlSession> initFuture = newSession();
 
     factoryHelper.waitForCall(node1, KEYSPACE, NodeDistance.LOCAL);
     factoryHelper.waitForCall(node3, KEYSPACE, NodeDistance.LOCAL);
@@ -620,7 +693,7 @@ public class DefaultSessionTest {
             .pending(node2, KEYSPACE, NodeDistance.LOCAL, pool2Future)
             .build();
 
-    CompletionStage<CqlSession> initFuture = DefaultSession.init(context, KEYSPACE, "test");
+    CompletionStage<CqlSession> initFuture = newSession();
 
     factoryHelper.waitForCall(node1, KEYSPACE, NodeDistance.LOCAL);
     factoryHelper.waitForCall(node3, KEYSPACE, NodeDistance.LOCAL);
@@ -658,7 +731,7 @@ public class DefaultSessionTest {
             .success(node3, KEYSPACE, NodeDistance.LOCAL, pool3)
             .build();
 
-    CompletionStage<CqlSession> initFuture = DefaultSession.init(context, KEYSPACE, "test");
+    CompletionStage<CqlSession> initFuture = newSession();
 
     factoryHelper.waitForCall(node1, KEYSPACE, NodeDistance.LOCAL);
     factoryHelper.waitForCall(node2, KEYSPACE, NodeDistance.LOCAL);
@@ -688,7 +761,7 @@ public class DefaultSessionTest {
             .success(node3, KEYSPACE, NodeDistance.LOCAL, pool3)
             .build();
 
-    CompletionStage<CqlSession> initFuture = DefaultSession.init(context, KEYSPACE, "test");
+    CompletionStage<CqlSession> initFuture = newSession();
 
     factoryHelper.waitForCall(node1, KEYSPACE, NodeDistance.LOCAL);
     factoryHelper.waitForCall(node2, KEYSPACE, NodeDistance.LOCAL);
@@ -723,7 +796,7 @@ public class DefaultSessionTest {
             .pending(node2, KEYSPACE, NodeDistance.LOCAL, pool2Future)
             .build();
 
-    CompletionStage<CqlSession> initFuture = DefaultSession.init(context, KEYSPACE, "test");
+    CompletionStage<CqlSession> initFuture = newSession();
 
     factoryHelper.waitForCall(node1, KEYSPACE, NodeDistance.LOCAL);
     factoryHelper.waitForCall(node3, KEYSPACE, NodeDistance.LOCAL);
@@ -761,7 +834,7 @@ public class DefaultSessionTest {
             .success(node3, KEYSPACE, NodeDistance.LOCAL, pool3)
             .build();
 
-    CompletionStage<CqlSession> initFuture = DefaultSession.init(context, KEYSPACE, "test");
+    CompletionStage<CqlSession> initFuture = newSession();
 
     factoryHelper.waitForCall(node1, KEYSPACE, NodeDistance.LOCAL);
     factoryHelper.waitForCall(node2, KEYSPACE, NodeDistance.LOCAL);
@@ -796,7 +869,7 @@ public class DefaultSessionTest {
             .pending(node2, KEYSPACE, NodeDistance.LOCAL, pool2Future)
             .build();
 
-    CompletionStage<CqlSession> initFuture = DefaultSession.init(context, KEYSPACE, "test");
+    CompletionStage<CqlSession> initFuture = newSession();
 
     factoryHelper.waitForCall(node1, KEYSPACE, NodeDistance.LOCAL);
     factoryHelper.waitForCall(node3, KEYSPACE, NodeDistance.LOCAL);
@@ -846,6 +919,10 @@ public class DefaultSessionTest {
               return closeFuture;
             });
     return pool;
+  }
+
+  private CompletionStage<CqlSession> newSession() {
+    return DefaultSession.init(context, Collections.emptySet(), KEYSPACE, Collections.emptySet());
   }
 
   private static DefaultNode mockLocalNode(int i) {

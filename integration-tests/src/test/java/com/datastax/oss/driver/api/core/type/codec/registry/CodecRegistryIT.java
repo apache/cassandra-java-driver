@@ -15,14 +15,13 @@
  */
 package com.datastax.oss.driver.api.core.type.codec.registry;
 
-import com.datastax.oss.driver.api.core.Cluster;
 import com.datastax.oss.driver.api.core.ProtocolVersion;
 import com.datastax.oss.driver.api.core.cql.BoundStatement;
+import com.datastax.oss.driver.api.core.CqlSession;
 import com.datastax.oss.driver.api.core.cql.PreparedStatement;
 import com.datastax.oss.driver.api.core.cql.ResultSet;
 import com.datastax.oss.driver.api.core.cql.Row;
 import com.datastax.oss.driver.api.core.cql.SimpleStatement;
-import com.datastax.oss.driver.api.core.cql.CqlSession;
 import com.datastax.oss.driver.api.core.type.DataType;
 import com.datastax.oss.driver.api.core.type.DataTypes;
 import com.datastax.oss.driver.api.core.type.codec.CodecNotFoundException;
@@ -31,7 +30,7 @@ import com.datastax.oss.driver.api.core.type.codec.TypeCodecs;
 import com.datastax.oss.driver.api.core.type.reflect.GenericType;
 import com.datastax.oss.driver.api.core.type.reflect.GenericTypeParameter;
 import com.datastax.oss.driver.api.testinfra.ccm.CcmRule;
-import com.datastax.oss.driver.api.testinfra.cluster.ClusterRule;
+import com.datastax.oss.driver.api.testinfra.cluster.SessionRule;
 import com.datastax.oss.driver.categories.ParallelizableTests;
 import com.datastax.oss.driver.internal.core.type.codec.IntCodec;
 import java.nio.ByteBuffer;
@@ -56,7 +55,7 @@ public class CodecRegistryIT {
 
   @ClassRule public static CcmRule ccm = CcmRule.getInstance();
 
-  @ClassRule public static ClusterRule cluster = new ClusterRule(ccm);
+  @ClassRule public static SessionRule<CqlSession> sessionRule = new SessionRule<>(ccm);
 
   @Rule public TestName name = new TestName();
 
@@ -65,19 +64,19 @@ public class CodecRegistryIT {
   @BeforeClass
   public static void createSchema() {
     // table with simple primary key, single cell.
-    cluster
+    sessionRule
         .session()
         .execute(
             SimpleStatement.builder("CREATE TABLE IF NOT EXISTS test (k text primary key, v int)")
-                .withConfigProfile(cluster.slowProfile())
+                .withConfigProfile(sessionRule.slowProfile())
                 .build());
     // table with map value
-    cluster
+    sessionRule
         .session()
         .execute(
             SimpleStatement.builder(
                     "CREATE TABLE IF NOT EXISTS test2 (k0 text, k1 int, v map<int,text>, primary key (k0, k1))")
-                .withConfigProfile(cluster.slowProfile())
+                .withConfigProfile(sessionRule.slowProfile())
                 .build());
   }
 
@@ -119,7 +118,8 @@ public class CodecRegistryIT {
 
   @Test
   public void should_throw_exception_if_no_codec_registered_for_type_set() {
-    PreparedStatement prepared = cluster.session().prepare("INSERT INTO test (k, v) values (?, ?)");
+    PreparedStatement prepared =
+        sessionRule.session().prepare("INSERT INTO test (k, v) values (?, ?)");
 
     thrown.expect(CodecNotFoundException.class);
 
@@ -129,14 +129,15 @@ public class CodecRegistryIT {
 
   @Test
   public void should_throw_exception_if_no_codec_registered_for_type_get() {
-    PreparedStatement prepared = cluster.session().prepare("INSERT INTO test (k, v) values (?, ?)");
+    PreparedStatement prepared =
+        sessionRule.session().prepare("INSERT INTO test (k, v) values (?, ?)");
 
     BoundStatement insert =
         prepared.boundStatementBuilder().setString(0, name.getMethodName()).setInt(1, 2).build();
-    cluster.session().execute(insert);
+    sessionRule.session().execute(insert);
 
     ResultSet result =
-        cluster
+        sessionRule
             .session()
             .execute(
                 SimpleStatement.builder("SELECT v from test where k = ?")
@@ -156,13 +157,12 @@ public class CodecRegistryIT {
   @Test
   public void should_be_able_to_register_and_use_custom_codec() {
     // create a cluster with a registered codec from Float <-> cql int.
-    try (Cluster<CqlSession> codecCluster =
-        Cluster.builder()
+    try (CqlSession session =
+        CqlSession.builder()
             .addTypeCodecs(new FloatCIntCodec())
             .addContactPoints(ccm.getContactPoints())
+            .withKeyspace(sessionRule.keyspace())
             .build()) {
-      CqlSession session = codecCluster.connect(cluster.keyspace());
-
       PreparedStatement prepared = session.prepare("INSERT INTO test (k, v) values (?, ?)");
 
       // float value for int column should work.
@@ -272,13 +272,12 @@ public class CodecRegistryIT {
     TypeCodec<Map<Integer, Optional<String>>> mapWithOptionalValueCodec =
         TypeCodecs.mapOf(TypeCodecs.INT, new OptionalCodec<>(TypeCodecs.TEXT));
 
-    try (Cluster<CqlSession> codecCluster =
-        Cluster.builder()
+    try (CqlSession session =
+        CqlSession.builder()
             .addTypeCodecs(optionalMapCodec, mapWithOptionalValueCodec)
             .addContactPoints(ccm.getContactPoints())
+            .withKeyspace(sessionRule.keyspace())
             .build()) {
-      CqlSession session = codecCluster.connect(cluster.keyspace());
-
       PreparedStatement prepared =
           session.prepare("INSERT INTO test2 (k0, k1, v) values (?, ?, ?)");
 

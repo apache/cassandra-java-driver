@@ -93,7 +93,7 @@ class DataTypeClassNameParser implements DataTypeParser {
       LOG.warn(
           "[{}] Got o.a.c.db.marshal.FrozenType for something else than a collection, "
               + "this driver version might be too old for your version of Cassandra",
-          context.clusterName());
+          context.sessionName());
 
     if (next.startsWith("org.apache.cassandra.db.marshal.UserType")) {
       ++parser.idx; // skipping '('

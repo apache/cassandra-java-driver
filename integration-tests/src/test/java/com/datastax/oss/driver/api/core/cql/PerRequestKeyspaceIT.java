@@ -15,11 +15,11 @@
  */
 package com.datastax.oss.driver.api.core.cql;
 
-import com.datastax.oss.driver.api.core.Cluster;
+import com.datastax.oss.driver.api.core.CqlSession;
 import com.datastax.oss.driver.api.testinfra.CassandraRequirement;
 import com.datastax.oss.driver.api.testinfra.ccm.CcmRule;
-import com.datastax.oss.driver.api.testinfra.cluster.ClusterRule;
-import com.datastax.oss.driver.api.testinfra.cluster.ClusterUtils;
+import com.datastax.oss.driver.api.testinfra.cluster.SessionRule;
+import com.datastax.oss.driver.api.testinfra.cluster.SessionUtils;
 import com.datastax.oss.driver.categories.ParallelizableTests;
 import org.junit.Before;
 import org.junit.Rule;
@@ -43,26 +43,27 @@ public class PerRequestKeyspaceIT {
 
   @Rule public CcmRule ccmRule = CcmRule.getInstance();
 
-  @Rule public ClusterRule clusterRule = ClusterRule.builder(ccmRule).withKeyspace(true).build();
+  @Rule public SessionRule<CqlSession> sessionRule = new SessionRule<>(ccmRule);
 
   @Rule public ExpectedException thrown = ExpectedException.none();
   @Rule public TestName nameRule = new TestName();
 
   @Before
   public void setupSchema() {
-    CqlSession session = clusterRule.session();
-    session.execute(
-        SimpleStatement.builder(
-                "CREATE TABLE IF NOT EXISTS foo (k text, cc int, v int, PRIMARY KEY(k, cc))")
-            .withConfigProfile(clusterRule.slowProfile())
-            .build());
+    sessionRule
+        .session()
+        .execute(
+            SimpleStatement.builder(
+                    "CREATE TABLE IF NOT EXISTS foo (k text, cc int, v int, PRIMARY KEY(k, cc))")
+                .withConfigProfile(sessionRule.slowProfile())
+                .build());
   }
 
   @Test
   @CassandraRequirement(min = "2.2")
   public void should_reject_simple_statement_with_keyspace_in_protocol_v4() {
     should_reject_statement_with_keyspace_in_protocol_v4(
-        SimpleStatement.newInstance("SELECT * FROM foo").setKeyspace(clusterRule.keyspace()));
+        SimpleStatement.newInstance("SELECT * FROM foo").setKeyspace(sessionRule.keyspace()));
   }
 
   @Test
@@ -73,7 +74,7 @@ public class PerRequestKeyspaceIT {
             "INSERT INTO foo (k, cc, v) VALUES (?, ?, ?)", nameRule.getMethodName(), 1, 1);
     should_reject_statement_with_keyspace_in_protocol_v4(
         BatchStatement.builder(BatchType.LOGGED)
-            .withKeyspace(clusterRule.keyspace())
+            .withKeyspace(sessionRule.keyspace())
             .addStatement(statementWithoutKeyspace)
             .build());
   }
@@ -84,33 +85,33 @@ public class PerRequestKeyspaceIT {
     SimpleStatement statementWithKeyspace =
         SimpleStatement.newInstance(
                 "INSERT INTO foo (k, cc, v) VALUES (?, ?, ?)", nameRule.getMethodName(), 1, 1)
-            .setKeyspace(clusterRule.keyspace());
+            .setKeyspace(sessionRule.keyspace());
     should_reject_statement_with_keyspace_in_protocol_v4(
         BatchStatement.builder(BatchType.LOGGED).addStatement(statementWithKeyspace).build());
   }
 
   private void should_reject_statement_with_keyspace_in_protocol_v4(Statement statement) {
-    try (Cluster<CqlSession> cluster = ClusterUtils.newCluster(ccmRule, "protocol.version = V4")) {
+    try (CqlSession session = SessionUtils.newSession(ccmRule, "protocol.version = V4")) {
       thrown.expect(IllegalArgumentException.class);
       thrown.expectMessage("Can't use per-request keyspace with protocol V4");
-      cluster.connect().execute(statement);
+      session.execute(statement);
     }
   }
 
   @Test
   @CassandraRequirement(min = "4.0")
   public void should_execute_simple_statement_with_keyspace() {
-    CqlSession session = clusterRule.session();
+    CqlSession session = sessionRule.session();
     session.execute(
         SimpleStatement.newInstance(
                 "INSERT INTO foo (k, cc, v) VALUES (?, ?, ?)", nameRule.getMethodName(), 1, 1)
-            .setKeyspace(clusterRule.keyspace()));
+            .setKeyspace(sessionRule.keyspace()));
     Row row =
         session
             .execute(
                 SimpleStatement.newInstance(
                         "SELECT v FROM foo WHERE k = ? AND cc = 1", nameRule.getMethodName())
-                    .setKeyspace(clusterRule.keyspace()))
+                    .setKeyspace(sessionRule.keyspace()))
             .one();
     assertThat(row.getInt(0)).isEqualTo(1);
   }
@@ -118,10 +119,10 @@ public class PerRequestKeyspaceIT {
   @Test
   @CassandraRequirement(min = "4.0")
   public void should_execute_batch_with_explicit_keyspace() {
-    CqlSession session = clusterRule.session();
+    CqlSession session = sessionRule.session();
     session.execute(
         BatchStatement.builder(BatchType.LOGGED)
-            .withKeyspace(clusterRule.keyspace())
+            .withKeyspace(sessionRule.keyspace())
             .addStatements(
                 SimpleStatement.newInstance(
                     "INSERT INTO foo (k, cc, v) VALUES (?, ?, ?)", nameRule.getMethodName(), 1, 1),
@@ -134,7 +135,7 @@ public class PerRequestKeyspaceIT {
             .execute(
                 SimpleStatement.newInstance(
                         "SELECT v FROM foo WHERE k = ? AND cc = 1", nameRule.getMethodName())
-                    .setKeyspace(clusterRule.keyspace()))
+                    .setKeyspace(sessionRule.keyspace()))
             .one();
     assertThat(row.getInt(0)).isEqualTo(1);
   }
@@ -142,23 +143,23 @@ public class PerRequestKeyspaceIT {
   @Test
   @CassandraRequirement(min = "4.0")
   public void should_execute_batch_with_inferred_keyspace() {
-    CqlSession session = clusterRule.session();
+    CqlSession session = sessionRule.session();
     session.execute(
         BatchStatement.builder(BatchType.LOGGED)
-            .withKeyspace(clusterRule.keyspace())
+            .withKeyspace(sessionRule.keyspace())
             .addStatements(
                 SimpleStatement.newInstance(
                         "INSERT INTO foo (k, cc, v) VALUES (?, ?, ?)",
                         nameRule.getMethodName(),
                         1,
                         1)
-                    .setKeyspace(clusterRule.keyspace()),
+                    .setKeyspace(sessionRule.keyspace()),
                 SimpleStatement.newInstance(
                         "INSERT INTO foo (k, cc, v) VALUES (?, ?, ?)",
                         nameRule.getMethodName(),
                         2,
                         2)
-                    .setKeyspace(clusterRule.keyspace()))
+                    .setKeyspace(sessionRule.keyspace()))
             .build());
 
     Row row =
@@ -166,7 +167,7 @@ public class PerRequestKeyspaceIT {
             .execute(
                 SimpleStatement.newInstance(
                         "SELECT v FROM foo WHERE k = ? AND cc = 1", nameRule.getMethodName())
-                    .setKeyspace(clusterRule.keyspace()))
+                    .setKeyspace(sessionRule.keyspace()))
             .one();
     assertThat(row.getInt(0)).isEqualTo(1);
   }
@@ -174,11 +175,11 @@ public class PerRequestKeyspaceIT {
   @Test
   @CassandraRequirement(min = "4.0")
   public void should_prepare_statement_with_keyspace() {
-    CqlSession session = clusterRule.session();
+    CqlSession session = sessionRule.session();
     PreparedStatement prepared =
         session.prepare(
             SimpleStatement.newInstance("INSERT INTO foo (k, cc, v) VALUES (?, ?, ?)")
-                .setKeyspace(clusterRule.keyspace()));
+                .setKeyspace(sessionRule.keyspace()));
     session.execute(prepared.bind(nameRule.getMethodName(), 1, 1));
 
     Row row =
@@ -186,7 +187,7 @@ public class PerRequestKeyspaceIT {
             .execute(
                 SimpleStatement.newInstance(
                         "SELECT v FROM foo WHERE k = ? AND cc = 1", nameRule.getMethodName())
-                    .setKeyspace(clusterRule.keyspace()))
+                    .setKeyspace(sessionRule.keyspace()))
             .one();
     assertThat(row.getInt(0)).isEqualTo(1);
   }

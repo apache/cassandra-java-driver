@@ -15,12 +15,12 @@
  */
 package com.datastax.oss.driver.api.testinfra.cluster;
 
-import com.datastax.oss.driver.api.core.Cluster;
-import com.datastax.oss.driver.api.core.ClusterBuilder;
+import com.datastax.oss.driver.api.core.CqlSession;
+import com.datastax.oss.driver.api.core.session.SessionBuilder;
 
-public class DefaultClusterBuilderInstantiator {
-  public static ClusterBuilder builder() {
-    return Cluster.builder();
+public class DefaultSessionBuilderInstantiator {
+  public static SessionBuilder<?, ?> builder() {
+    return CqlSession.builder();
   }
 
   public static String configPath() {

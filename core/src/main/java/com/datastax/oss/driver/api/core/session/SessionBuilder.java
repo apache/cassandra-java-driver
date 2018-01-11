@@ -13,20 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.datastax.oss.driver.api.core;
+package com.datastax.oss.driver.api.core.session;
 
+import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.config.CoreDriverOption;
 import com.datastax.oss.driver.api.core.config.DriverConfigLoader;
 import com.datastax.oss.driver.api.core.config.DriverConfigProfile;
 import com.datastax.oss.driver.api.core.context.DriverContext;
+import com.datastax.oss.driver.api.core.CqlSession;
 import com.datastax.oss.driver.api.core.metadata.NodeStateListener;
-import com.datastax.oss.driver.api.core.cql.CqlSession;
 import com.datastax.oss.driver.api.core.type.codec.TypeCodec;
 import com.datastax.oss.driver.internal.core.ContactPoints;
-import com.datastax.oss.driver.internal.core.DefaultCluster;
 import com.datastax.oss.driver.internal.core.config.typesafe.DefaultDriverConfigLoader;
 import com.datastax.oss.driver.internal.core.context.DefaultDriverContext;
 import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
+import com.datastax.oss.driver.internal.core.session.DefaultSession;
 import com.datastax.oss.driver.internal.core.util.concurrent.BlockingOperation;
 import com.datastax.oss.driver.internal.core.util.concurrent.CompletableFutures;
 import java.net.InetSocketAddress;
@@ -40,12 +41,12 @@ import java.util.concurrent.CompletionStage;
 import java.util.function.Supplier;
 
 /**
- * Base implementation to build cluster instances.
+ * Base implementation to build session instances.
  *
  * <p>You only need to deal with this directly if you use custom driver extensions. For the default
- * cluster implementation, see {@link Cluster#builder()}.
+ * session implementation, see {@link CqlSession#builder()}.
  */
-public abstract class ClusterBuilder<SelfT extends ClusterBuilder, ClusterT> {
+public abstract class SessionBuilder<SelfT extends SessionBuilder, SessionT> {
 
   @SuppressWarnings("unchecked")
   protected final SelfT self = (SelfT) this;
@@ -54,6 +55,7 @@ public abstract class ClusterBuilder<SelfT extends ClusterBuilder, ClusterT> {
   protected Set<InetSocketAddress> programmaticContactPoints = new HashSet<>();
   protected List<TypeCodec<?>> typeCodecs = new ArrayList<>();
   protected final Set<NodeStateListener> nodeStateListeners = new HashSet<>();
+  protected CqlIdentifier keyspace;
 
   /**
    * Sets the configuration loader to use.
@@ -135,12 +137,23 @@ public abstract class ClusterBuilder<SelfT extends ClusterBuilder, ClusterT> {
   }
 
   /**
-   * Creates the cluster with the options set by this builder.
+   * Sets the keyspace to connect the session to.
    *
-   * @return a completion stage that completes with the cluster when it is fully initialized.
+   * <p>Note that this can also be provided by the configuration; if both are defined, this method
+   * takes precedence.
    */
-  public CompletionStage<ClusterT> buildAsync() {
-    return buildDefaultClusterAsync().thenApply(this::wrap);
+  public SelfT withKeyspace(CqlIdentifier keyspace) {
+    this.keyspace = keyspace;
+    return self;
+  }
+
+  /**
+   * Creates the session with the options set by this builder.
+   *
+   * @return a completion stage that completes with the session when it is fully initialized.
+   */
+  public CompletionStage<SessionT> buildAsync() {
+    return buildDefaultSessionAsync().thenApply(this::wrap);
   }
 
   /**
@@ -148,14 +161,14 @@ public abstract class ClusterBuilder<SelfT extends ClusterBuilder, ClusterT> {
    *
    * <p>This must not be called on a driver thread.
    */
-  public ClusterT build() {
+  public SessionT build() {
     BlockingOperation.checkNotDriverThread();
     return CompletableFutures.getUninterruptibly(buildAsync());
   }
 
-  protected abstract ClusterT wrap(Cluster<CqlSession> defaultCluster);
+  protected abstract SessionT wrap(CqlSession defaultSession);
 
-  protected final CompletionStage<Cluster<CqlSession>> buildDefaultClusterAsync() {
+  protected final CompletionStage<CqlSession> buildDefaultSessionAsync() {
     DriverConfigLoader configLoader = buildIfNull(this.configLoader, this::defaultConfigLoader);
 
     DriverConfigProfile defaultConfig = configLoader.getInitialConfig().getDefaultProfile();
@@ -167,9 +180,14 @@ public abstract class ClusterBuilder<SelfT extends ClusterBuilder, ClusterT> {
     Set<InetSocketAddress> contactPoints =
         ContactPoints.merge(programmaticContactPoints, configContactPoints);
 
-    return DefaultCluster.init(
+    if (keyspace == null && defaultConfig.isDefined(CoreDriverOption.SESSION_KEYSPACE)) {
+      keyspace = CqlIdentifier.fromCql(defaultConfig.getString(CoreDriverOption.SESSION_KEYSPACE));
+    }
+
+    return DefaultSession.init(
         (InternalDriverContext) buildContext(configLoader, typeCodecs),
         contactPoints,
+        keyspace,
         nodeStateListeners);
   }
 

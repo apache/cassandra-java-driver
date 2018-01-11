@@ -17,6 +17,7 @@ package com.datastax.oss.driver.api.core.cql;
 
 import com.datastax.oss.driver.api.core.CoreProtocolVersion;
 import com.datastax.oss.driver.api.core.CqlIdentifier;
+import com.datastax.oss.driver.api.core.CqlSession;
 import com.datastax.oss.driver.api.core.session.Request;
 import com.datastax.oss.driver.internal.core.cql.DefaultSimpleStatement;
 import java.util.Arrays;

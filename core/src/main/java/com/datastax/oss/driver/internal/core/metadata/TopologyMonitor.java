@@ -16,10 +16,10 @@
 package com.datastax.oss.driver.internal.core.metadata;
 
 import com.datastax.oss.driver.api.core.AsyncAutoCloseable;
-import com.datastax.oss.driver.api.core.Cluster;
 import com.datastax.oss.driver.api.core.addresstranslation.AddressTranslator;
 import com.datastax.oss.driver.api.core.loadbalancing.LoadBalancingPolicy;
 import com.datastax.oss.driver.api.core.metadata.Node;
+import com.datastax.oss.driver.api.core.session.Session;
 import com.datastax.oss.driver.internal.core.context.EventBus;
 import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
 import java.net.InetSocketAddress;
@@ -78,7 +78,7 @@ public interface TopologyMonitor extends AsyncAutoCloseable {
    * blocking I/O or heavy computations, it should be scheduled on a separate thread.
    *
    * <p>The driver calls this at initialization, and uses the result to initialize the {@link
-   * LoadBalancingPolicy}; successful initialization of the {@link Cluster} object depends on that
+   * LoadBalancingPolicy}; successful initialization of the {@link Session} object depends on that
    * initial call succeeding.
    *
    * @return a future that completes with the information. We assume that the full node list will

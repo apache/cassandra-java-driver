@@ -15,13 +15,13 @@
  */
 package com.datastax.oss.driver.api.core.cql;
 
-import com.datastax.oss.driver.api.core.Cluster;
+import com.datastax.oss.driver.api.core.CqlSession;
 import com.datastax.oss.driver.api.core.servererrors.InvalidQueryException;
 import com.datastax.oss.driver.api.core.type.DataTypes;
 import com.datastax.oss.driver.api.testinfra.CassandraRequirement;
 import com.datastax.oss.driver.api.testinfra.ccm.CcmRule;
-import com.datastax.oss.driver.api.testinfra.cluster.ClusterRule;
-import com.datastax.oss.driver.api.testinfra.cluster.ClusterUtils;
+import com.datastax.oss.driver.api.testinfra.cluster.SessionRule;
+import com.datastax.oss.driver.api.testinfra.cluster.SessionUtils;
 import com.datastax.oss.driver.categories.ParallelizableTests;
 import com.datastax.oss.protocol.internal.util.Bytes;
 import com.google.common.collect.ImmutableList;
@@ -49,8 +49,8 @@ public class PreparedStatementInvalidationIT {
   @Rule public CcmRule ccmRule = CcmRule.getInstance();
 
   @Rule
-  public ClusterRule<CqlSession> clusterRule =
-      new ClusterRule<>(ccmRule, "request.page-size = 2", "request.timeout = 30 seconds");
+  public SessionRule<CqlSession> sessionRule =
+      new SessionRule<>(ccmRule, "request.page-size = 2", "request.timeout = 30 seconds");
 
   @Rule public ExpectedException thrown = ExpectedException.none();
 
@@ -63,10 +63,10 @@ public class PreparedStatementInvalidationIT {
             "INSERT INTO prepared_statement_invalidation_test (a, b, c) VALUES (2, 2, 2)",
             "INSERT INTO prepared_statement_invalidation_test (a, b, c) VALUES (3, 3, 3)",
             "INSERT INTO prepared_statement_invalidation_test (a, b, c) VALUES (4, 4, 4)")) {
-      clusterRule
+      sessionRule
           .session()
           .execute(
-              SimpleStatement.builder(query).withConfigProfile(clusterRule.slowProfile()).build());
+              SimpleStatement.builder(query).withConfigProfile(sessionRule.slowProfile()).build());
     }
   }
 
@@ -74,7 +74,7 @@ public class PreparedStatementInvalidationIT {
   @CassandraRequirement(min = "4.0")
   public void should_update_metadata_when_schema_changed_across_executions() {
     // Given
-    CqlSession session = clusterRule.session();
+    CqlSession session = sessionRule.session();
     PreparedStatement ps =
         session.prepare("SELECT * FROM prepared_statement_invalidation_test WHERE a = ?");
     ByteBuffer idBefore = ps.getResultMetadataId();
@@ -82,7 +82,7 @@ public class PreparedStatementInvalidationIT {
     // When
     session.execute(
         SimpleStatement.builder("ALTER TABLE prepared_statement_invalidation_test ADD d int")
-            .withConfigProfile(clusterRule.slowProfile())
+            .withConfigProfile(sessionRule.slowProfile())
             .build());
     BoundStatement bs = ps.bind(1);
     ResultSet rows = session.execute(bs);
@@ -104,7 +104,7 @@ public class PreparedStatementInvalidationIT {
   @CassandraRequirement(min = "4.0")
   public void should_update_metadata_when_schema_changed_across_pages() {
     // Given
-    CqlSession session = clusterRule.session();
+    CqlSession session = sessionRule.session();
     PreparedStatement ps = session.prepare("SELECT * FROM prepared_statement_invalidation_test");
     ByteBuffer idBefore = ps.getResultMetadataId();
     assertThat(ps.getResultSetDefinitions()).hasSize(3);
@@ -127,7 +127,7 @@ public class PreparedStatementInvalidationIT {
     // When
     session.execute(
         SimpleStatement.builder("ALTER TABLE prepared_statement_invalidation_test ADD d int")
-            .withConfigProfile(clusterRule.slowProfile())
+            .withConfigProfile(sessionRule.slowProfile())
             .build());
 
     // Then
@@ -148,8 +148,8 @@ public class PreparedStatementInvalidationIT {
   @CassandraRequirement(min = "4.0")
   public void should_update_metadata_when_schema_changed_across_sessions() {
     // Given
-    CqlSession session1 = clusterRule.session();
-    CqlSession session2 = clusterRule.cluster().connect(clusterRule.keyspace());
+    CqlSession session1 = sessionRule.session();
+    CqlSession session2 = SessionUtils.newSession(ccmRule, sessionRule.keyspace());
 
     PreparedStatement ps1 =
         session1.prepare("SELECT * FROM prepared_statement_invalidation_test WHERE a = ?");
@@ -197,7 +197,7 @@ public class PreparedStatementInvalidationIT {
   @CassandraRequirement(min = "4.0")
   public void should_fail_to_reprepare_if_query_becomes_invalid() {
     // Given
-    CqlSession session = clusterRule.session();
+    CqlSession session = sessionRule.session();
     session.execute("ALTER TABLE prepared_statement_invalidation_test ADD d int");
     PreparedStatement ps =
         session.prepare("SELECT a, b, c, d FROM prepared_statement_invalidation_test WHERE a = ?");
@@ -213,15 +213,19 @@ public class PreparedStatementInvalidationIT {
   @Test
   @CassandraRequirement(min = "4.0")
   public void should_not_store_metadata_for_conditional_updates() {
-    should_not_store_metadata_for_conditional_updates(clusterRule.session());
+    should_not_store_metadata_for_conditional_updates(sessionRule.session());
   }
 
   @Test
   @CassandraRequirement(min = "2.2")
   public void should_not_store_metadata_for_conditional_updates_in_legacy_protocol() {
-    try (Cluster<CqlSession> cluster =
-        ClusterUtils.newCluster(ccmRule, "protocol.version = V4", "request.timeout = 30 seconds")) {
-      should_not_store_metadata_for_conditional_updates(cluster.connect(clusterRule.keyspace()));
+    try (CqlSession session =
+        SessionUtils.newSession(
+            ccmRule,
+            sessionRule.keyspace(),
+            "protocol.version = V4",
+            "request.timeout = 30 seconds")) {
+      should_not_store_metadata_for_conditional_updates(session);
     }
   }
 

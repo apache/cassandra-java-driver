@@ -26,7 +26,7 @@ public class DefaultTokenFactoryRegistry implements TokenFactoryRegistry {
   private final String logPrefix;
 
   public DefaultTokenFactoryRegistry(InternalDriverContext context) {
-    this.logPrefix = context.clusterName();
+    this.logPrefix = context.sessionName();
   }
 
   @Override

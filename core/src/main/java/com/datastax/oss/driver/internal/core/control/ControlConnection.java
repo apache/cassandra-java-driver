@@ -77,7 +77,7 @@ public class ControlConnection implements EventCallback, AsyncAutoCloseable {
 
   public ControlConnection(InternalDriverContext context) {
     this.context = context;
-    this.logPrefix = context.clusterName();
+    this.logPrefix = context.sessionName();
     this.adminExecutor = context.nettyOptions().adminEventExecutorGroup().next();
     this.singleThreaded = new SingleThreaded(context);
   }

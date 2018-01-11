@@ -40,7 +40,7 @@ public abstract class RelationParser {
     this.rows = rows;
     this.dataTypeParser = dataTypeParser;
     this.context = context;
-    this.logPrefix = context.clusterName();
+    this.logPrefix = context.sessionName();
   }
 
   protected Map<CqlIdentifier, Object> parseOptions(AdminRow row) {

@@ -15,13 +15,13 @@
  */
 package com.datastax.oss.driver.internal.core.config.typesafe;
 
-import com.datastax.oss.driver.api.core.ClusterBuilder;
 import com.datastax.oss.driver.api.core.config.CoreDriverOption;
 import com.datastax.oss.driver.api.core.config.DriverConfig;
 import com.datastax.oss.driver.api.core.config.DriverConfigLoader;
 import com.datastax.oss.driver.api.core.config.DriverConfigProfile;
 import com.datastax.oss.driver.api.core.config.DriverOption;
 import com.datastax.oss.driver.api.core.context.DriverContext;
+import com.datastax.oss.driver.api.core.session.SessionBuilder;
 import com.datastax.oss.driver.internal.core.config.ConfigChangeEvent;
 import com.datastax.oss.driver.internal.core.config.ForceReloadConfigEvent;
 import com.datastax.oss.driver.internal.core.context.EventBus;
@@ -55,7 +55,7 @@ public class DefaultDriverConfigLoader implements DriverConfigLoader {
 
   /**
    * Builds a new instance with the default TypeSafe config loading rules (documented in {@link
-   * ClusterBuilder#withConfigLoader(DriverConfigLoader)}) and the core driver options.
+   * SessionBuilder#withConfigLoader(DriverConfigLoader)}) and the core driver options.
    */
   public DefaultDriverConfigLoader() {
     this(DEFAULT_CONFIG_SUPPLIER, CoreDriverOption.values());
@@ -100,7 +100,7 @@ public class DefaultDriverConfigLoader implements DriverConfigLoader {
     private boolean closeWasCalled;
 
     private SingleThreaded(InternalDriverContext context) {
-      this.logPrefix = context.clusterName();
+      this.logPrefix = context.sessionName();
       this.adminExecutor = context.nettyOptions().adminEventExecutorGroup().next();
       this.eventBus = context.eventBus();
       this.config = context.config().getDefaultProfile();

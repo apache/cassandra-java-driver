@@ -15,13 +15,12 @@
  */
 package com.datastax.oss.driver.api.core.cql;
 
-import com.datastax.oss.driver.api.core.Cluster;
-import com.datastax.oss.driver.api.core.CqlIdentifier;
+import com.datastax.oss.driver.api.core.CqlSession;
 import com.datastax.oss.driver.api.core.servererrors.InvalidQueryException;
 import com.datastax.oss.driver.api.testinfra.CassandraRequirement;
 import com.datastax.oss.driver.api.testinfra.ccm.CcmRule;
-import com.datastax.oss.driver.api.testinfra.cluster.ClusterRule;
-import com.datastax.oss.driver.api.testinfra.cluster.ClusterUtils;
+import com.datastax.oss.driver.api.testinfra.cluster.SessionRule;
+import com.datastax.oss.driver.api.testinfra.cluster.SessionUtils;
 import com.datastax.oss.driver.categories.ParallelizableTests;
 import java.util.Iterator;
 import org.junit.Before;
@@ -37,7 +36,7 @@ public class BatchStatementIT {
 
   @Rule public CcmRule ccm = CcmRule.getInstance();
 
-  @Rule public ClusterRule cluster = new ClusterRule(ccm);
+  @Rule public SessionRule<CqlSession> sessionRule = new SessionRule<>(ccm);
 
   @Rule public TestName name = new TestName();
 
@@ -54,10 +53,11 @@ public class BatchStatementIT {
         };
 
     for (String schemaStatement : schemaStatements) {
-      cluster
+      sessionRule
           .session()
           .execute(
-              SimpleStatement.newInstance(schemaStatement).setConfigProfile(cluster.slowProfile()));
+              SimpleStatement.newInstance(schemaStatement)
+                  .setConfigProfile(sessionRule.slowProfile()));
     }
   }
 
@@ -76,7 +76,7 @@ public class BatchStatementIT {
     }
 
     BatchStatement batchStatement = builder.build();
-    cluster.session().execute(batchStatement);
+    sessionRule.session().execute(batchStatement);
 
     verifyBatchInsert();
   }
@@ -90,14 +90,14 @@ public class BatchStatementIT {
                 String.format(
                     "INSERT INTO test (k0, k1, v) values ('%s', ? , ?)", name.getMethodName()))
             .build();
-    PreparedStatement preparedStatement = cluster.session().prepare(insert);
+    PreparedStatement preparedStatement = sessionRule.session().prepare(insert);
 
     for (int i = 0; i < batchCount; i++) {
       builder.addStatement(preparedStatement.bind(i, i + 1));
     }
 
     BatchStatement batchStatement = builder.build();
-    cluster.session().execute(batchStatement);
+    sessionRule.session().execute(batchStatement);
 
     verifyBatchInsert();
   }
@@ -112,14 +112,14 @@ public class BatchStatementIT {
                 String.format(
                     "INSERT INTO test (k0, k1, v) values ('%s', ? , ?)", name.getMethodName()))
             .build();
-    PreparedStatement preparedStatement = cluster.session().prepare(insert);
+    PreparedStatement preparedStatement = sessionRule.session().prepare(insert);
 
     for (int i = 0; i < batchCount; i++) {
       builder.addStatement(preparedStatement.bind(i, i + 1));
     }
 
     BatchStatement batchStatement = builder.build();
-    cluster.session().execute(batchStatement);
+    sessionRule.session().execute(batchStatement);
 
     verifyBatchInsert();
 
@@ -133,14 +133,14 @@ public class BatchStatementIT {
       builder.addStatement(boundStatement);
     }
 
-    cluster.session().execute(builder2.build());
+    sessionRule.session().execute(builder2.build());
 
     Statement<?> select =
         SimpleStatement.builder("SELECT * from test where k0 = ?")
             .addPositionalValue(name.getMethodName())
             .build();
 
-    ResultSet result = cluster.session().execute(select);
+    ResultSet result = sessionRule.session().execute(select);
 
     assertThat(result.getAvailableWithoutFetching()).isEqualTo(100);
 
@@ -162,7 +162,7 @@ public class BatchStatementIT {
     // Build a batch of batchCount statements with bound statements, each with their own named variable values.
     BatchStatementBuilder builder = BatchStatement.builder(BatchType.UNLOGGED);
     PreparedStatement preparedStatement =
-        cluster.session().prepare("INSERT INTO test (k0, k1, v) values (:k0, :k1, :v)");
+        sessionRule.session().prepare("INSERT INTO test (k0, k1, v) values (:k0, :k1, :v)");
 
     for (int i = 0; i < batchCount; i++) {
       builder.addStatement(
@@ -175,7 +175,7 @@ public class BatchStatementIT {
     }
 
     BatchStatement batchStatement = builder.build();
-    cluster.session().execute(batchStatement);
+    sessionRule.session().execute(batchStatement);
 
     verifyBatchInsert();
   }
@@ -189,7 +189,7 @@ public class BatchStatementIT {
                 String.format(
                     "INSERT INTO test (k0, k1, v) values ('%s', ? , ?)", name.getMethodName()))
             .build();
-    PreparedStatement preparedStatement = cluster.session().prepare(insert);
+    PreparedStatement preparedStatement = sessionRule.session().prepare(insert);
 
     for (int i = 0; i < batchCount; i++) {
       if (i % 2 == 1) {
@@ -206,7 +206,7 @@ public class BatchStatementIT {
     }
 
     BatchStatement batchStatement = builder.build();
-    cluster.session().execute(batchStatement);
+    sessionRule.session().execute(batchStatement);
 
     verifyBatchInsert();
   }
@@ -221,20 +221,20 @@ public class BatchStatementIT {
                     "INSERT INTO test (k0, k1, v) values ('%s', ? , ?) IF NOT EXISTS",
                     name.getMethodName()))
             .build();
-    PreparedStatement preparedStatement = cluster.session().prepare(insert);
+    PreparedStatement preparedStatement = sessionRule.session().prepare(insert);
 
     for (int i = 0; i < batchCount; i++) {
       builder.addStatement(preparedStatement.bind(i, i + 1));
     }
 
     BatchStatement batchStatement = builder.build();
-    ResultSet result = cluster.session().execute(batchStatement);
+    ResultSet result = sessionRule.session().execute(batchStatement);
     assertThat(result.wasApplied()).isTrue();
 
     verifyBatchInsert();
 
     // re execute same batch and ensure wasn't applied.
-    result = cluster.session().execute(batchStatement);
+    result = sessionRule.session().execute(batchStatement);
     assertThat(result.wasApplied()).isFalse();
   }
 
@@ -254,11 +254,11 @@ public class BatchStatementIT {
     }
 
     BatchStatement batchStatement = builder.build();
-    cluster.session().execute(batchStatement);
+    sessionRule.session().execute(batchStatement);
 
     for (int i = 1; i <= 3; i++) {
       ResultSet result =
-          cluster
+          sessionRule
               .session()
               .execute(
                   String.format(
@@ -287,7 +287,7 @@ public class BatchStatementIT {
     }
 
     BatchStatement batchStatement = builder.build();
-    cluster.session().execute(batchStatement);
+    sessionRule.session().execute(batchStatement);
   }
 
   @Test(expected = InvalidQueryException.class)
@@ -314,16 +314,16 @@ public class BatchStatementIT {
     builder.addStatement(simpleInsert);
 
     BatchStatement batchStatement = builder.build();
-    cluster.session().execute(batchStatement);
+    sessionRule.session().execute(batchStatement);
   }
 
   @Test(expected = IllegalStateException.class)
   public void should_not_allow_unset_value_when_protocol_less_than_v4() {
     //    CREATE TABLE test (k0 text, k1 int, v int, PRIMARY KEY (k0, k1))
-    try (Cluster<CqlSession> v3Cluster = ClusterUtils.newCluster(ccm, "protocol.version = V3")) {
-      CqlIdentifier keyspace = cluster.keyspace();
-      CqlSession session = v3Cluster.connect(keyspace);
-      PreparedStatement prepared = session.prepare("INSERT INTO test (k0, k1, v) values (?, ?, ?)");
+    try (CqlSession v3Session =
+        SessionUtils.newSession(ccm, sessionRule.keyspace(), "protocol.version = V3")) {
+      PreparedStatement prepared =
+          v3Session.prepare("INSERT INTO test (k0, k1, v) values (?, ?, ?)");
 
       BatchStatementBuilder builder = BatchStatement.builder(BatchType.LOGGED);
       builder.addStatements(
@@ -337,7 +337,7 @@ public class BatchStatementIT {
               .unset(2)
               .build());
 
-      session.execute(builder.build());
+      v3Session.execute(builder.build());
     }
   }
 
@@ -348,7 +348,7 @@ public class BatchStatementIT {
             .addPositionalValue(name.getMethodName())
             .build();
 
-    ResultSet result = cluster.session().execute(select);
+    ResultSet result = sessionRule.session().execute(select);
 
     assertThat(result.getAvailableWithoutFetching()).isEqualTo(100);
 

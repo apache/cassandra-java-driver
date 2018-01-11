@@ -17,10 +17,9 @@ package com.datastax.oss.driver.api.core.auth;
 
 import com.datastax.oss.driver.api.core.AllNodesFailedException;
 import com.datastax.oss.driver.api.core.CassandraVersion;
-import com.datastax.oss.driver.api.core.Cluster;
-import com.datastax.oss.driver.api.core.cql.CqlSession;
+import com.datastax.oss.driver.api.core.CqlSession;
 import com.datastax.oss.driver.api.testinfra.ccm.CustomCcmRule;
-import com.datastax.oss.driver.api.testinfra.cluster.ClusterUtils;
+import com.datastax.oss.driver.api.testinfra.cluster.SessionUtils;
 import com.google.common.util.concurrent.Uninterruptibles;
 import java.util.concurrent.TimeUnit;
 import org.junit.BeforeClass;
@@ -46,34 +45,31 @@ public class PlainTextAuthProviderIT {
 
   @Test
   public void should_connect_with_credentials() {
-    try (Cluster<CqlSession> authCluster =
-        ClusterUtils.newCluster(
+    try (CqlSession session =
+        SessionUtils.newSession(
             ccm,
             "protocol.auth-provider.class = com.datastax.oss.driver.api.core.auth.PlainTextAuthProvider",
             "protocol.auth-provider.username = cassandra",
             "protocol.auth-provider.password = cassandra")) {
-      CqlSession session = authCluster.connect();
       session.execute("select * from system.local");
     }
   }
 
   @Test(expected = AllNodesFailedException.class)
   public void should_not_connect_with_invalid_credentials() {
-    try (Cluster<CqlSession> authCluster =
-        ClusterUtils.newCluster(
+    try (CqlSession session =
+        SessionUtils.newSession(
             ccm,
             "protocol.auth-provider.class = com.datastax.oss.driver.api.core.auth.PlainTextAuthProvider",
             "protocol.auth-provider.username = baduser",
             "protocol.auth-provider.password = badpass")) {
-      CqlSession session = authCluster.connect();
       session.execute("select * from system.local");
     }
   }
 
   @Test(expected = AllNodesFailedException.class)
   public void should_not_connect_without_credentials() {
-    try (Cluster<CqlSession> plainCluster = ClusterUtils.newCluster(ccm)) {
-      CqlSession session = plainCluster.connect();
+    try (CqlSession session = SessionUtils.newSession(ccm)) {
       session.execute("select * from system.local");
     }
   }

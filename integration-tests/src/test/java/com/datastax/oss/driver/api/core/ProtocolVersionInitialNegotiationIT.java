@@ -15,10 +15,9 @@
  */
 package com.datastax.oss.driver.api.core;
 
-import com.datastax.oss.driver.api.core.cql.CqlSession;
 import com.datastax.oss.driver.api.testinfra.CassandraRequirement;
 import com.datastax.oss.driver.api.testinfra.ccm.CcmRule;
-import com.datastax.oss.driver.api.testinfra.cluster.ClusterUtils;
+import com.datastax.oss.driver.api.testinfra.cluster.SessionUtils;
 import com.datastax.oss.driver.categories.ParallelizableTests;
 import org.junit.Rule;
 import org.junit.Test;
@@ -39,10 +38,8 @@ public class ProtocolVersionInitialNegotiationIT {
   )
   @Test
   public void should_downgrade_to_v3() {
-    try (Cluster<CqlSession> v3cluster = ClusterUtils.newCluster(ccm)) {
-      assertThat(v3cluster.getContext().protocolVersion().getCode()).isEqualTo(3);
-
-      CqlSession session = v3cluster.connect();
+    try (CqlSession session = SessionUtils.newSession(ccm)) {
+      assertThat(session.getContext().protocolVersion().getCode()).isEqualTo(3);
       session.execute("select * from system.local");
     }
   }
@@ -54,10 +51,8 @@ public class ProtocolVersionInitialNegotiationIT {
   )
   @Test
   public void should_fail_if_provided_version_isnt_supported() {
-    try (Cluster<CqlSession> v4cluster = ClusterUtils.newCluster(ccm, "protocol.version = V4")) {
-      assertThat(v4cluster.getContext().protocolVersion().getCode()).isEqualTo(3);
-
-      CqlSession session = v4cluster.connect();
+    try (CqlSession session = SessionUtils.newSession(ccm, "protocol.version = V4")) {
+      assertThat(session.getContext().protocolVersion().getCode()).isEqualTo(3);
       session.execute("select * from system.local");
     } catch (AllNodesFailedException anfe) {
       Throwable cause = anfe.getErrors().values().iterator().next();
@@ -71,10 +66,8 @@ public class ProtocolVersionInitialNegotiationIT {
   @CassandraRequirement(min = "2.2", description = "required to meet default protocol version")
   @Test
   public void should_not_downgrade_if_server_supports_latest_version() {
-    try (Cluster<CqlSession> v4cluster = ClusterUtils.newCluster(ccm)) {
-      assertThat(v4cluster.getContext().protocolVersion().getCode()).isEqualTo(4);
-
-      CqlSession session = v4cluster.connect();
+    try (CqlSession session = SessionUtils.newSession(ccm)) {
+      assertThat(session.getContext().protocolVersion().getCode()).isEqualTo(4);
       session.execute("select * from system.local");
     }
   }
@@ -82,10 +75,8 @@ public class ProtocolVersionInitialNegotiationIT {
   @CassandraRequirement(min = "2.2", description = "required to use an older protocol version")
   @Test
   public void should_use_explicitly_provided_protocol_version() {
-    try (Cluster<CqlSession> v3cluster = ClusterUtils.newCluster(ccm, "protocol.version = V3")) {
-      assertThat(v3cluster.getContext().protocolVersion().getCode()).isEqualTo(3);
-
-      CqlSession session = v3cluster.connect();
+    try (CqlSession session = SessionUtils.newSession(ccm, "protocol.version = V3")) {
+      assertThat(session.getContext().protocolVersion().getCode()).isEqualTo(3);
       session.execute("select * from system.local");
     }
   }

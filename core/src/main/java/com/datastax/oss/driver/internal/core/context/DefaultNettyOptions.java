@@ -62,14 +62,14 @@ public class DefaultNettyOptions implements NettyOptions {
     ThreadFactory ioThreadFactory =
         new ThreadFactoryBuilder()
             .setThreadFactory(safeFactory)
-            .setNameFormat(context.clusterName() + "-io-%d")
+            .setNameFormat(context.sessionName() + "-io-%d")
             .build();
     this.ioEventLoopGroup = new NioEventLoopGroup(ioGroupSize, ioThreadFactory);
 
     ThreadFactory adminThreadFactory =
         new ThreadFactoryBuilder()
             .setThreadFactory(safeFactory)
-            .setNameFormat(context.clusterName() + "-admin-%d")
+            .setNameFormat(context.sessionName() + "-admin-%d")
             .build();
     this.adminEventLoopGroup = new DefaultEventLoopGroup(adminGroupSize, adminThreadFactory);
   }

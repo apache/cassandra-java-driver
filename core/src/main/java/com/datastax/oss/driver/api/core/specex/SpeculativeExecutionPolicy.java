@@ -15,9 +15,9 @@
  */
 package com.datastax.oss.driver.api.core.specex;
 
-import com.datastax.oss.driver.api.core.Cluster;
 import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.session.Request;
+import com.datastax.oss.driver.api.core.session.SessionBuilder;
 
 /**
  * The policy that decides if the driver will send speculative queries to the next nodes when the
@@ -27,8 +27,9 @@ public interface SpeculativeExecutionPolicy extends AutoCloseable {
 
   /**
    * @param keyspace the CQL keyspace currently associated to the session. This is set either
-   *     through {@link Cluster#connect(CqlIdentifier)} or by manually executing a {@code USE} CQL
-   *     statement. It can be {@code null} if the session has no keyspace.
+   *     through the configuration, by calling {@link SessionBuilder#withKeyspace(CqlIdentifier)},
+   *     or by manually executing a {@code USE} CQL statement. It can be {@code null} if the session
+   *     has no keyspace.
    * @param request the request to execute.
    * @param runningExecutions the number of executions that are already running (including the
    *     initial, non-speculative request). For example, if this is 2 it means the initial attempt

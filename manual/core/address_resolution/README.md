@@ -3,7 +3,7 @@
 Each node in the Cassandra cluster is uniquely identified by an IP address that the driver will use
 to establish connections.
 
-* for contact points, these are provided as part of configuring the `Cluster` object;
+* for contact points, these are provided as part of configuring the `CqlSession` object;
 * for other nodes, addresses will be discovered dynamically, either by inspecting `system.peers` on
   already connected nodes, or via push notifications received on the control connection when new
   nodes are discovered by gossip.
@@ -85,7 +85,7 @@ Then reference this class from the [configuration](../configuration/):
 datastax-java-driver.address-translator.class = com.mycompany.MyAddressTranslator
 ``` 
 
-Note: the contact points provided while creating the `Cluster` are not translated, only addresses
+Note: the contact points provided while creating the `CqlSession` are not translated, only addresses
 retrieved from or sent by Cassandra nodes are.
 
 <!-- TODO ec2 multi-region translator -->

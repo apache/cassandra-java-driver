@@ -34,7 +34,7 @@ public class Lz4Compressor extends ByteBufCompressor {
   public Lz4Compressor(DriverContext context) {
     try {
       LZ4Factory lz4Factory = LZ4Factory.fastestInstance();
-      LOG.info("[{}] Using {}", context.clusterName(), lz4Factory.toString());
+      LOG.info("[{}] Using {}", context.sessionName(), lz4Factory.toString());
       this.compressor = lz4Factory.fastCompressor();
       this.decompressor = lz4Factory.fastDecompressor();
     } catch (NoClassDefFoundError e) {

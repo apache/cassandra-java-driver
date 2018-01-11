@@ -15,10 +15,9 @@
  */
 package com.datastax.oss.driver.api.core.metadata;
 
-import com.datastax.oss.driver.api.core.Cluster;
-import com.datastax.oss.driver.api.core.cql.CqlSession;
+import com.datastax.oss.driver.api.core.CqlSession;
 import com.datastax.oss.driver.api.testinfra.ccm.CustomCcmRule;
-import com.datastax.oss.driver.api.testinfra.cluster.ClusterRule;
+import com.datastax.oss.driver.api.testinfra.cluster.SessionRule;
 import com.datastax.oss.driver.internal.core.metadata.token.ByteOrderedToken;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
@@ -34,26 +33,20 @@ public class ByteOrderedTokenVnodesIT extends TokenITBase {
           .build();
 
   @ClassRule
-  public static ClusterRule clusterRule =
-      new ClusterRule(
-          ccmRule, false, true, new NodeStateListener[0], "request.timeout = 30 seconds");
+  public static SessionRule<CqlSession> sessionRule =
+      new SessionRule<>(ccmRule, false, new NodeStateListener[0], "request.timeout = 30 seconds");
 
   public ByteOrderedTokenVnodesIT() {
     super(ByteOrderedToken.class, true);
   }
 
   @Override
-  protected Cluster cluster() {
-    return clusterRule.cluster();
-  }
-
-  @Override
   protected CqlSession session() {
-    return clusterRule.session();
+    return sessionRule.session();
   }
 
   @BeforeClass
   public static void createSchema() {
-    TokenITBase.createSchema(clusterRule.session());
+    TokenITBase.createSchema(sessionRule.session());
   }
 }

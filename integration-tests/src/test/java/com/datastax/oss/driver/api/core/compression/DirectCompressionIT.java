@@ -15,14 +15,13 @@
  */
 package com.datastax.oss.driver.api.core.compression;
 
-import com.datastax.oss.driver.api.core.Cluster;
-import com.datastax.oss.driver.api.core.cql.CqlSession;
+import com.datastax.oss.driver.api.core.CqlSession;
 import com.datastax.oss.driver.api.core.cql.ResultSet;
 import com.datastax.oss.driver.api.core.cql.Row;
 import com.datastax.oss.driver.api.core.cql.SimpleStatement;
 import com.datastax.oss.driver.api.testinfra.ccm.CcmRule;
-import com.datastax.oss.driver.api.testinfra.cluster.ClusterRule;
-import com.datastax.oss.driver.api.testinfra.cluster.ClusterUtils;
+import com.datastax.oss.driver.api.testinfra.cluster.SessionRule;
+import com.datastax.oss.driver.api.testinfra.cluster.SessionUtils;
 import com.datastax.oss.driver.categories.ParallelizableTests;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
@@ -38,12 +37,12 @@ public class DirectCompressionIT {
   @ClassRule public static CcmRule ccmRule = CcmRule.getInstance();
 
   @ClassRule
-  public static ClusterRule schemaClusterRule =
-      new ClusterRule(ccmRule, "request.timeout = 30 seconds");
+  public static SessionRule<CqlSession> schemaSessionRule =
+      new SessionRule<>(ccmRule, "request.timeout = 30 seconds");
 
   @BeforeClass
   public static void setup() {
-    schemaClusterRule
+    schemaSessionRule
         .session()
         .execute("CREATE TABLE test (k text PRIMARY KEY, t text, i int, f float)");
   }
@@ -78,9 +77,8 @@ public class DirectCompressionIT {
 
   private void createAndCheckCluster(String compressorOption) {
 
-    try (Cluster<CqlSession> cluster = ClusterUtils.newCluster(ccmRule, compressorOption)) {
-      CqlSession session = cluster.connect(schemaClusterRule.keyspace());
-
+    try (CqlSession session =
+        SessionUtils.newSession(ccmRule, schemaSessionRule.keyspace(), compressorOption)) {
       // Run a couple of simple test queries
       ResultSet rs =
           session.execute(

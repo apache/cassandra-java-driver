@@ -15,15 +15,14 @@
  */
 package com.datastax.oss.driver.api.core.metadata;
 
-import com.datastax.oss.driver.api.core.Cluster;
 import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.config.DriverConfigProfile;
-import com.datastax.oss.driver.api.core.cql.CqlSession;
+import com.datastax.oss.driver.api.core.CqlSession;
 import com.datastax.oss.driver.api.core.cql.SimpleStatement;
 import com.datastax.oss.driver.api.core.metadata.schema.KeyspaceMetadata;
 import com.datastax.oss.driver.api.testinfra.ccm.CcmRule;
-import com.datastax.oss.driver.api.testinfra.cluster.ClusterRule;
-import com.datastax.oss.driver.api.testinfra.cluster.ClusterUtils;
+import com.datastax.oss.driver.api.testinfra.cluster.SessionRule;
+import com.datastax.oss.driver.api.testinfra.cluster.SessionUtils;
 import com.datastax.oss.driver.api.testinfra.utils.ConditionChecker;
 import com.datastax.oss.driver.categories.ParallelizableTests;
 import java.util.Map;
@@ -38,119 +37,116 @@ public class SchemaIT {
 
   @Rule public CcmRule ccmRule = CcmRule.getInstance();
 
-  @Rule public ClusterRule clusterRule = new ClusterRule(ccmRule);
+  @Rule public SessionRule<CqlSession> sessionRule = new SessionRule<>(ccmRule);
 
   @Test
   public void should_expose_system_and_test_keyspace() {
     Map<CqlIdentifier, KeyspaceMetadata> keyspaces =
-        clusterRule.cluster().getMetadata().getKeyspaces();
+        sessionRule.session().getMetadata().getKeyspaces();
     assertThat(keyspaces)
         .containsKeys(
             // Don't test exhaustively because system keyspaces depend on the Cassandra version, and
             // keyspaces from other tests might also be present
             CqlIdentifier.fromInternal("system"),
             CqlIdentifier.fromInternal("system_traces"),
-            clusterRule.keyspace());
+            sessionRule.keyspace());
     assertThat(keyspaces.get(CqlIdentifier.fromInternal("system")).getTables())
         .containsKeys(CqlIdentifier.fromInternal("local"), CqlIdentifier.fromInternal("peers"));
   }
 
   @Test
   public void should_filter_by_keyspaces() {
-    try (Cluster<CqlSession> cluster =
-        ClusterUtils.newCluster(
+    try (CqlSession session =
+        SessionUtils.newSession(
             ccmRule,
             String.format(
                 "metadata.schema.refreshed-keyspaces = [ \"%s\"] ",
-                clusterRule.keyspace().asInternal()))) {
+                sessionRule.keyspace().asInternal()))) {
 
-      assertThat(cluster.getMetadata().getKeyspaces()).containsOnlyKeys(clusterRule.keyspace());
+      assertThat(session.getMetadata().getKeyspaces()).containsOnlyKeys(sessionRule.keyspace());
 
-      CqlIdentifier otherKeyspace = ClusterUtils.uniqueKeyspaceId();
-      ClusterUtils.createKeyspace(cluster, otherKeyspace);
+      CqlIdentifier otherKeyspace = SessionUtils.uniqueKeyspaceId();
+      SessionUtils.createKeyspace(session, otherKeyspace);
 
-      assertThat(cluster.getMetadata().getKeyspaces()).containsOnlyKeys(clusterRule.keyspace());
+      assertThat(session.getMetadata().getKeyspaces()).containsOnlyKeys(sessionRule.keyspace());
     }
   }
 
   @Test
   public void should_not_load_schema_if_disabled_in_config() {
-    try (Cluster<CqlSession> cluster =
-        ClusterUtils.newCluster(ccmRule, "metadata.schema.enabled = false")) {
+    try (CqlSession session = SessionUtils.newSession(ccmRule, "metadata.schema.enabled = false")) {
 
-      assertThat(cluster.isSchemaMetadataEnabled()).isFalse();
-      assertThat(cluster.getMetadata().getKeyspaces()).isEmpty();
+      assertThat(session.isSchemaMetadataEnabled()).isFalse();
+      assertThat(session.getMetadata().getKeyspaces()).isEmpty();
     }
   }
 
   @Test
   public void should_enable_schema_programmatically_when_disabled_in_config() {
-    try (Cluster<CqlSession> cluster =
-        ClusterUtils.newCluster(ccmRule, "metadata.schema.enabled = false")) {
+    try (CqlSession session = SessionUtils.newSession(ccmRule, "metadata.schema.enabled = false")) {
 
-      assertThat(cluster.isSchemaMetadataEnabled()).isFalse();
-      assertThat(cluster.getMetadata().getKeyspaces()).isEmpty();
+      assertThat(session.isSchemaMetadataEnabled()).isFalse();
+      assertThat(session.getMetadata().getKeyspaces()).isEmpty();
 
-      cluster.setSchemaMetadataEnabled(true);
-      assertThat(cluster.isSchemaMetadataEnabled()).isTrue();
+      session.setSchemaMetadataEnabled(true);
+      assertThat(session.isSchemaMetadataEnabled()).isTrue();
 
       ConditionChecker.checkThat(
-              () -> assertThat(cluster.getMetadata().getKeyspaces()).isNotEmpty())
+              () -> assertThat(session.getMetadata().getKeyspaces()).isNotEmpty())
           .becomesTrue();
-      assertThat(cluster.getMetadata().getKeyspaces())
+      assertThat(session.getMetadata().getKeyspaces())
           .containsKeys(
               CqlIdentifier.fromInternal("system"),
               CqlIdentifier.fromInternal("system_traces"),
-              clusterRule.keyspace());
+              sessionRule.keyspace());
 
-      cluster.setSchemaMetadataEnabled(null);
-      assertThat(cluster.isSchemaMetadataEnabled()).isFalse();
+      session.setSchemaMetadataEnabled(null);
+      assertThat(session.isSchemaMetadataEnabled()).isFalse();
     }
   }
 
   @Test
   public void should_disable_schema_programmatically_when_enabled_in_config() {
-    Cluster<CqlSession> cluster = clusterRule.cluster();
-    cluster.setSchemaMetadataEnabled(false);
-    assertThat(cluster.isSchemaMetadataEnabled()).isFalse();
+    CqlSession session = sessionRule.session();
+    session.setSchemaMetadataEnabled(false);
+    assertThat(session.isSchemaMetadataEnabled()).isFalse();
 
     // Create a table, metadata should not be updated
-    DriverConfigProfile slowProfile = ClusterUtils.slowProfile(cluster);
-    clusterRule
+    DriverConfigProfile slowProfile = SessionUtils.slowProfile(session);
+    sessionRule
         .session()
         .execute(
             SimpleStatement.builder("CREATE TABLE foo(k int primary key)")
                 .withConfigProfile(slowProfile)
                 .build());
-    assertThat(cluster.getMetadata().getKeyspace(clusterRule.keyspace()).getTables())
+    assertThat(session.getMetadata().getKeyspace(sessionRule.keyspace()).getTables())
         .doesNotContainKey(CqlIdentifier.fromInternal("foo"));
 
     // Reset to config value (true), should refresh and load the new table
-    cluster.setSchemaMetadataEnabled(null);
-    assertThat(cluster.isSchemaMetadataEnabled()).isTrue();
+    session.setSchemaMetadataEnabled(null);
+    assertThat(session.isSchemaMetadataEnabled()).isTrue();
     ConditionChecker.checkThat(
             () ->
-                assertThat(cluster.getMetadata().getKeyspace(clusterRule.keyspace()).getTables())
+                assertThat(session.getMetadata().getKeyspace(sessionRule.keyspace()).getTables())
                     .containsKey(CqlIdentifier.fromInternal("foo")))
         .becomesTrue();
   }
 
   @Test
   public void should_refresh_schema_manually() {
-    try (Cluster<CqlSession> cluster =
-        ClusterUtils.newCluster(ccmRule, "metadata.schema.enabled = false")) {
+    try (CqlSession session = SessionUtils.newSession(ccmRule, "metadata.schema.enabled = false")) {
 
-      assertThat(cluster.isSchemaMetadataEnabled()).isFalse();
-      assertThat(cluster.getMetadata().getKeyspaces()).isEmpty();
+      assertThat(session.isSchemaMetadataEnabled()).isFalse();
+      assertThat(session.getMetadata().getKeyspaces()).isEmpty();
 
-      Metadata newMetadata = cluster.refreshSchema();
+      Metadata newMetadata = session.refreshSchema();
       assertThat(newMetadata.getKeyspaces())
           .containsKeys(
               CqlIdentifier.fromInternal("system"),
               CqlIdentifier.fromInternal("system_traces"),
-              clusterRule.keyspace());
+              sessionRule.keyspace());
 
-      assertThat(cluster.getMetadata()).isSameAs(newMetadata);
+      assertThat(session.getMetadata()).isSameAs(newMetadata);
     }
   }
 }

@@ -16,10 +16,9 @@
 package com.datastax.oss.driver.api.core.ssl;
 
 import com.datastax.oss.driver.api.core.AllNodesFailedException;
-import com.datastax.oss.driver.api.core.Cluster;
-import com.datastax.oss.driver.api.core.cql.CqlSession;
+import com.datastax.oss.driver.api.core.CqlSession;
 import com.datastax.oss.driver.api.testinfra.ccm.CustomCcmRule;
-import com.datastax.oss.driver.api.testinfra.cluster.ClusterUtils;
+import com.datastax.oss.driver.api.testinfra.cluster.SessionUtils;
 import com.datastax.oss.driver.categories.IsolatedTests;
 import org.junit.ClassRule;
 import org.junit.Test;
@@ -32,8 +31,7 @@ public class DefaultSslEngineFactoryWithTruststoreNotProvidedIT {
 
   @Test(expected = AllNodesFailedException.class)
   public void should_not_connect_if_not_using_ssl() {
-    try (Cluster<CqlSession> plainCluster = ClusterUtils.newCluster(ccm)) {
-      CqlSession session = plainCluster.connect();
+    try (CqlSession session = SessionUtils.newSession(ccm)) {
       session.execute("select * from system.local");
     }
   }

@@ -27,7 +27,8 @@ public enum CoreDriverOption implements DriverOption {
   PROTOCOL_MAX_FRAME_LENGTH("protocol.max-frame-length", true),
   PROTOCOL_COMPRESSOR_CLASS("protocol.compressor.class", false),
 
-  CLUSTER_NAME("cluster-name", false),
+  SESSION_NAME("session-name", false),
+  SESSION_KEYSPACE("session-keyspace", false),
   CONFIG_RELOAD_INTERVAL("config-reload-interval", false),
 
   CONNECTION_INIT_QUERY_TIMEOUT("connection.init-query-timeout", true),

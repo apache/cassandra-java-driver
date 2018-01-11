@@ -69,7 +69,7 @@ public class LoadBalancingPolicyWrapper
   public LoadBalancingPolicyWrapper(InternalDriverContext context, LoadBalancingPolicy policy) {
     this.context = context;
     this.policy = policy;
-    this.logPrefix = context.clusterName();
+    this.logPrefix = context.sessionName();
     context.eventBus().register(NodeStateEvent.class, this::onNodeStateEvent);
   }
 

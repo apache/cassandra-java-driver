@@ -18,6 +18,7 @@ package com.datastax.oss.driver.api.core.retry;
 import com.datastax.oss.driver.api.core.AllNodesFailedException;
 import com.datastax.oss.driver.api.core.ConsistencyLevel;
 import com.datastax.oss.driver.api.core.connection.ClosedConnectionException;
+import com.datastax.oss.driver.api.core.CqlSession;
 import com.datastax.oss.driver.api.core.cql.ResultSet;
 import com.datastax.oss.driver.api.core.cql.SimpleStatement;
 import com.datastax.oss.driver.api.core.metadata.Node;
@@ -25,7 +26,7 @@ import com.datastax.oss.driver.api.core.servererrors.ReadTimeoutException;
 import com.datastax.oss.driver.api.core.servererrors.ServerError;
 import com.datastax.oss.driver.api.core.servererrors.UnavailableException;
 import com.datastax.oss.driver.api.core.servererrors.WriteTimeoutException;
-import com.datastax.oss.driver.api.testinfra.cluster.ClusterRule;
+import com.datastax.oss.driver.api.testinfra.cluster.SessionRule;
 import com.datastax.oss.driver.api.testinfra.simulacron.SimulacronRule;
 import com.datastax.oss.driver.categories.ParallelizableTests;
 import com.datastax.oss.simulacron.common.cluster.ClusterSpec;
@@ -60,8 +61,8 @@ public class DefaultRetryPolicyIT {
 
   public static @ClassRule SimulacronRule simulacron =
       new SimulacronRule(ClusterSpec.builder().withNodes(3));
-  public @Rule ClusterRule cluster =
-      new ClusterRule(
+  public @Rule SessionRule<CqlSession> sessionRule =
+      new SessionRule<>(
           simulacron,
           "request.default-idempotence = true",
           "load-balancing-policy.class = com.datastax.oss.driver.api.testinfra.loadbalancing.SortingLoadBalancingPolicy");
@@ -108,7 +109,7 @@ public class DefaultRetryPolicyIT {
 
     try {
       // when executing a query
-      cluster.session().execute(query);
+      sessionRule.session().execute(query);
       fail("Expected a ReadTimeoutException");
     } catch (ReadTimeoutException rte) {
       // then a read timeout exception is thrown
@@ -130,7 +131,7 @@ public class DefaultRetryPolicyIT {
 
     try {
       // when executing a query
-      cluster.session().execute(query);
+      sessionRule.session().execute(query);
       fail("Expected a ReadTimeoutException");
     } catch (ReadTimeoutException rte) {
       // then a read timeout exception is thrown
@@ -152,7 +153,7 @@ public class DefaultRetryPolicyIT {
 
     try {
       // when executing a query.
-      cluster.session().execute(query);
+      sessionRule.session().execute(query);
       fail("Expected a ReadTimeoutException");
     } catch (ReadTimeoutException rte) {
       // then a read timeout exception is thrown.
@@ -178,7 +179,7 @@ public class DefaultRetryPolicyIT {
                 .then(closeConnection(DisconnectAction.Scope.CONNECTION, CloseType.DISCONNECT)));
 
     // when executing a query.
-    ResultSet result = cluster.session().execute(query);
+    ResultSet result = sessionRule.session().execute(query);
     // then we should get a response, and the execution info on the result set indicates there was an error on
     // the host that received the query.
     assertThat(result.getExecutionInfo().getErrors()).hasSize(1);
@@ -209,7 +210,7 @@ public class DefaultRetryPolicyIT {
 
     try {
       // when executing a query.
-      cluster.session().execute(query);
+      sessionRule.session().execute(query);
       fail("AllNodesFailedException expected");
     } catch (AllNodesFailedException ex) {
       // then an AllNodesFailedException should be raised indicating that all nodes failed the request.
@@ -238,7 +239,9 @@ public class DefaultRetryPolicyIT {
 
     try {
       // when executing a non-idempotent query.
-      cluster.session().execute(SimpleStatement.builder(queryStr).withIdempotence(false).build());
+      sessionRule
+          .session()
+          .execute(SimpleStatement.builder(queryStr).withIdempotence(false).build());
       fail("ClosedConnectionException expected");
     } catch (ClosedConnectionException ex) {
       // then a ClosedConnectionException should be raised, indicating that the connection closed while handling
@@ -262,7 +265,7 @@ public class DefaultRetryPolicyIT {
 
     try {
       // when executing a query.
-      cluster.session().execute(queryStr);
+      sessionRule.session().execute(queryStr);
       fail("WriteTimeoutException expected");
     } catch (WriteTimeoutException wte) {
       // then a write timeout exception is thrown
@@ -300,7 +303,7 @@ public class DefaultRetryPolicyIT {
 
     try {
       // when executing a query.
-      cluster.session().execute(queryStr);
+      sessionRule.session().execute(queryStr);
       fail("WriteTimeoutException expected");
     } catch (WriteTimeoutException wte) {
       // then a write timeout exception is thrown
@@ -323,7 +326,9 @@ public class DefaultRetryPolicyIT {
 
     try {
       // when executing a non-idempotent query.
-      cluster.session().execute(SimpleStatement.builder(queryStr).withIdempotence(false).build());
+      sessionRule
+          .session()
+          .execute(SimpleStatement.builder(queryStr).withIdempotence(false).build());
       fail("WriteTimeoutException expected");
     } catch (WriteTimeoutException wte) {
       // then a write timeout exception is thrown
@@ -343,7 +348,7 @@ public class DefaultRetryPolicyIT {
     simulacron.cluster().node(0).prime(when(queryStr).then(unavailable(LOCAL_QUORUM, 3, 0)));
 
     // when executing a query.
-    ResultSet result = cluster.session().execute(queryStr);
+    ResultSet result = sessionRule.session().execute(queryStr);
     // then we should get a response, and the execution info on the result set indicates there was an error on
     // the host that received the query.
     assertThat(result.getExecutionInfo().getErrors()).hasSize(1);
@@ -369,7 +374,7 @@ public class DefaultRetryPolicyIT {
 
     try {
       // when executing a query.
-      cluster.session().execute(queryStr);
+      sessionRule.session().execute(queryStr);
     } catch (UnavailableException ue) {
       // then we should get an unavailable exception with the host being node 1 (since it was second tried).
       assertThat(ue.getCoordinator().getConnectAddress())
@@ -392,7 +397,7 @@ public class DefaultRetryPolicyIT {
 
     try {
       // when executing a query.
-      cluster.session().execute(queryStr);
+      sessionRule.session().execute(queryStr);
     } catch (AllNodesFailedException e) {
       // then we should get an all nodes failed exception, indicating the query was tried each node.
       assertThat(e.getErrors()).hasSize(3);
@@ -418,7 +423,9 @@ public class DefaultRetryPolicyIT {
 
     try {
       // when executing a query that is not idempotent
-      cluster.session().execute(SimpleStatement.builder(queryStr).withIdempotence(false).build());
+      sessionRule
+          .session()
+          .execute(SimpleStatement.builder(queryStr).withIdempotence(false).build());
     } catch (ServerError e) {
       // then should get a server error from first host.
       assertThat(e.getMessage()).isEqualTo("this is a server error");

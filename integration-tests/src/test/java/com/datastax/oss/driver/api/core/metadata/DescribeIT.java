@@ -16,13 +16,12 @@
 package com.datastax.oss.driver.api.core.metadata;
 
 import com.datastax.oss.driver.api.core.CassandraVersion;
-import com.datastax.oss.driver.api.core.Cluster;
 import com.datastax.oss.driver.api.core.CqlIdentifier;
-import com.datastax.oss.driver.api.core.cql.CqlSession;
+import com.datastax.oss.driver.api.core.CqlSession;
 import com.datastax.oss.driver.api.core.metadata.schema.KeyspaceMetadata;
 import com.datastax.oss.driver.api.testinfra.ccm.CcmRule;
-import com.datastax.oss.driver.api.testinfra.cluster.ClusterRule;
-import com.datastax.oss.driver.api.testinfra.cluster.ClusterUtils;
+import com.datastax.oss.driver.api.testinfra.cluster.SessionRule;
+import com.datastax.oss.driver.api.testinfra.cluster.SessionUtils;
 import com.datastax.oss.driver.categories.ParallelizableTests;
 import com.google.common.io.ByteStreams;
 import com.google.common.io.Closer;
@@ -47,11 +46,10 @@ public class DescribeIT {
   @ClassRule public static CcmRule ccmRule = CcmRule.getInstance();
 
   @ClassRule
-  public static ClusterRule<CqlSession> clusterRule =
-      new ClusterRule<>(
+  public static SessionRule<CqlSession> sessionRule =
+      new SessionRule<>(
           ccmRule,
           false,
-          true,
           new NodeStateListener[0],
           "request.timeout = 30 seconds",
           "metadata.schema.debouncer.window = 0 seconds"); // disable debouncer to speed up test.
@@ -71,23 +69,23 @@ public class DescribeIT {
    */
   @Test
   public void create_schema_and_ensure_exported_cql_is_as_expected() {
-    CqlIdentifier keyspace = ClusterUtils.uniqueKeyspaceId();
+    CqlIdentifier keyspace = SessionUtils.uniqueKeyspaceId();
     String keyspaceAsCql = keyspace.asCql(true);
     String expectedCql = getExpectedCqlString(keyspaceAsCql);
 
+    CqlSession session = sessionRule.session();
+
     // create keyspace
-    clusterRule
-        .session()
-        .execute(
-            String.format(
-                "CREATE KEYSPACE %s "
-                    + "WITH replication = {'class': 'SimpleStrategy', 'replication_factor': 1}",
-                keyspace));
+    session.execute(
+        String.format(
+            "CREATE KEYSPACE %s "
+                + "WITH replication = {'class': 'SimpleStrategy', 'replication_factor': 1}",
+            keyspace));
 
-    // create session from this keyspace.
-    CqlSession session = clusterRule.cluster().connect(keyspace);
+    // connect session to this keyspace.
+    session.execute(String.format("USE %s", keyspace.asCql(false)));
 
-    KeyspaceMetadata originalKsMeta = clusterRule.cluster().getMetadata().getKeyspace(keyspace);
+    KeyspaceMetadata originalKsMeta = session.getMetadata().getKeyspace(keyspace);
 
     // Usertype 'ztype' with two columns.  Given name to ensure that even though it has an
     // alphabetically later name, it shows up before other user types ('ctype') that depend on it.
@@ -196,13 +194,13 @@ public class DescribeIT {
     assertThat(originalKsMeta.getUserDefinedTypes()).isEmpty();
 
     // validate that the exported schema matches what was expected exactly.
-    KeyspaceMetadata ks = clusterRule.cluster().getMetadata().getKeyspace(keyspace);
+    KeyspaceMetadata ks = sessionRule.session().getMetadata().getKeyspace(keyspace);
     assertThat(ks.describeWithChildren(true).trim()).isEqualTo(expectedCql);
 
-    // Also validate that when you create a Cluster with schema already created that the exported
+    // Also validate that when you create a Session with schema already created that the exported
     // string is the same.
-    try (Cluster<CqlSession> newCluster = ClusterUtils.newCluster(ccmRule)) {
-      ks = newCluster.getMetadata().getKeyspace(keyspace);
+    try (CqlSession newSession = SessionUtils.newSession(ccmRule)) {
+      ks = newSession.getMetadata().getKeyspace(keyspace);
       assertThat(ks.describeWithChildren(true).trim()).isEqualTo(expectedCql);
     }
   }

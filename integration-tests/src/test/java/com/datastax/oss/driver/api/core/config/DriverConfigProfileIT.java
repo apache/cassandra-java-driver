@@ -16,19 +16,18 @@
 package com.datastax.oss.driver.api.core.config;
 
 import com.datastax.oss.driver.api.core.AllNodesFailedException;
-import com.datastax.oss.driver.api.core.Cluster;
 import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.DriverTimeoutException;
 import com.datastax.oss.driver.api.core.cql.BatchStatement;
 import com.datastax.oss.driver.api.core.cql.BatchStatementBuilder;
 import com.datastax.oss.driver.api.core.cql.BatchType;
+import com.datastax.oss.driver.api.core.CqlSession;
 import com.datastax.oss.driver.api.core.cql.PreparedStatement;
 import com.datastax.oss.driver.api.core.cql.ResultSet;
 import com.datastax.oss.driver.api.core.cql.SimpleStatement;
 import com.datastax.oss.driver.api.core.servererrors.ServerError;
-import com.datastax.oss.driver.api.core.cql.CqlSession;
 import com.datastax.oss.driver.api.testinfra.ccm.CcmRule;
-import com.datastax.oss.driver.api.testinfra.cluster.ClusterUtils;
+import com.datastax.oss.driver.api.testinfra.cluster.SessionUtils;
 import com.datastax.oss.driver.api.testinfra.simulacron.SimulacronRule;
 import com.datastax.oss.driver.categories.ParallelizableTests;
 import com.datastax.oss.simulacron.common.cluster.ClusterSpec;
@@ -59,9 +58,7 @@ public class DriverConfigProfileIT {
 
   @Test
   public void should_fail_if_config_profile_specified_doesnt_exist() {
-    try (Cluster<CqlSession> profileCluster = ClusterUtils.newCluster(simulacron)) {
-      CqlSession session = profileCluster.connect();
-
+    try (CqlSession session = SessionUtils.newSession(simulacron)) {
       SimpleStatement statement =
           SimpleStatement.builder("select * from system.local")
               .withConfigProfileName("IDONTEXIST")
@@ -75,12 +72,11 @@ public class DriverConfigProfileIT {
 
   @Test
   public void should_use_profile_request_timeout() {
-    try (Cluster<CqlSession> profileCluster =
-        ClusterUtils.newCluster(simulacron, "profiles.olap.request.timeout = 10s")) {
+    try (CqlSession session =
+        SessionUtils.newSession(simulacron, "profiles.olap.request.timeout = 10s")) {
       String query = "mockquery";
       // configure query with delay of 4 seconds.
       simulacron.cluster().prime(when(query).then(noRows()).delay(4, TimeUnit.SECONDS));
-      CqlSession session = profileCluster.connect();
 
       // Execute query without profile, should timeout with default (2s).
       try {
@@ -97,13 +93,11 @@ public class DriverConfigProfileIT {
 
   @Test
   public void should_use_profile_default_idempotence() {
-    try (Cluster<CqlSession> profileCluster =
-        ClusterUtils.newCluster(simulacron, "profiles.idem.request.default-idempotence = true")) {
+    try (CqlSession session =
+        SessionUtils.newSession(simulacron, "profiles.idem.request.default-idempotence = true")) {
       String query = "mockquery";
       // configure query with server error which should invoke onRequestError in retry policy.
       simulacron.cluster().prime(when(query).then(serverError("fail")));
-
-      CqlSession session = profileCluster.connect();
 
       // Execute query without profile, should fail because couldn't be retried.
       try {
@@ -121,14 +115,12 @@ public class DriverConfigProfileIT {
 
   @Test
   public void should_use_profile_consistency() {
-    try (Cluster<CqlSession> profileCluster =
-        ClusterUtils.newCluster(
+    try (CqlSession session =
+        SessionUtils.newSession(
             simulacron,
             "profiles.cl.request.consistency = LOCAL_QUORUM",
             "profiles.cl.request.serial-consistency = LOCAL_SERIAL")) {
       String query = "mockquery";
-
-      CqlSession session = profileCluster.connect();
 
       // Execute query without profile, should use default CLs (LOCAL_ONE, SERIAL).
       session.execute(query);
@@ -176,15 +168,15 @@ public class DriverConfigProfileIT {
 
   @Test
   public void should_use_profile_page_size() {
-    try (Cluster<CqlSession> profileCluster =
-        ClusterUtils.newCluster(
+    try (CqlSession session =
+        SessionUtils.newSession(
             ccm, "request.page-size = 100", "profiles.smallpages.request.page-size = 10")) {
 
-      CqlIdentifier keyspace = ClusterUtils.uniqueKeyspaceId();
-      DriverConfigProfile slowProfile = ClusterUtils.slowProfile(profileCluster);
-      ClusterUtils.createKeyspace(profileCluster, keyspace, slowProfile);
+      CqlIdentifier keyspace = SessionUtils.uniqueKeyspaceId();
+      DriverConfigProfile slowProfile = SessionUtils.slowProfile(session);
+      SessionUtils.createKeyspace(session, keyspace, slowProfile);
 
-      CqlSession session = profileCluster.connect(keyspace);
+      session.execute(String.format("USE %s", keyspace.asCql(false)));
 
       // load 500 rows (value beyond page size).
       session.execute(
@@ -217,7 +209,7 @@ public class DriverConfigProfileIT {
       result.fetchNextPage();
       assertThat(result.getAvailableWithoutFetching()).isEqualTo(20);
 
-      ClusterUtils.dropKeyspace(profileCluster, keyspace, slowProfile);
+      SessionUtils.dropKeyspace(session, keyspace, slowProfile);
     }
   }
 }

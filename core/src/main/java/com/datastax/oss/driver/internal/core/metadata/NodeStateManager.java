@@ -53,7 +53,7 @@ public class NodeStateManager implements AsyncAutoCloseable {
   public NodeStateManager(InternalDriverContext context) {
     this.adminExecutor = context.nettyOptions().adminEventExecutorGroup().next();
     this.singleThreaded = new SingleThreaded(context);
-    this.logPrefix = context.clusterName();
+    this.logPrefix = context.sessionName();
   }
 
   /**

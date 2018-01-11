@@ -69,7 +69,7 @@ public class DefaultLoadBalancingPolicy implements LoadBalancingPolicy {
   @VisibleForTesting
   DefaultLoadBalancingPolicy(
       String localDcFromConfig, Predicate<Node> filterFromConfig, DriverContext context) {
-    this.logPrefix = context.clusterName();
+    this.logPrefix = context.sessionName();
     this.metadataManager = ((InternalDriverContext) context).metadataManager();
     if (localDcFromConfig != null) {
       LOG.debug("[{}] Local DC set from configuration: {}", logPrefix, localDcFromConfig);
