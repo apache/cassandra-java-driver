@@ -15,12 +15,11 @@
  */
 package com.datastax.oss.driver.api.core.metadata;
 
-import com.datastax.oss.driver.api.core.Cluster;
-import com.datastax.oss.driver.api.core.cql.CqlSession;
+import com.datastax.oss.driver.api.core.CqlSession;
 import com.datastax.oss.driver.api.core.cql.ResultSet;
 import com.datastax.oss.driver.api.testinfra.ccm.CustomCcmRule;
-import com.datastax.oss.driver.api.testinfra.cluster.ClusterRule;
-import com.datastax.oss.driver.api.testinfra.cluster.ClusterUtils;
+import com.datastax.oss.driver.api.testinfra.cluster.SessionRule;
+import com.datastax.oss.driver.api.testinfra.cluster.SessionUtils;
 import java.util.concurrent.atomic.AtomicInteger;
 import org.junit.ClassRule;
 import org.junit.Rule;
@@ -33,15 +32,15 @@ import static org.assertj.core.api.Assertions.assertThat;
 public class SchemaAgreementIT {
 
   private static CustomCcmRule ccm = CustomCcmRule.builder().withNodes(3).build();
-  private static ClusterRule clusterRule =
-      ClusterRule.builder(ccm)
+  private static SessionRule<CqlSession> sessionRule =
+      SessionRule.builder(ccm)
           .withOptions(
               "request.timeout = 30s",
               "load-balancing-policy.class = com.datastax.oss.driver.api.testinfra.loadbalancing.SortingLoadBalancingPolicy",
               "connection.control-connection.schema-agreement.timeout = 3s")
           .build();
 
-  @ClassRule public static RuleChain ruleChain = RuleChain.outerRule(ccm).around(clusterRule);
+  @ClassRule public static RuleChain ruleChain = RuleChain.outerRule(ccm).around(sessionRule);
 
   @Rule public TestName name = new TestName();
 
@@ -50,7 +49,7 @@ public class SchemaAgreementIT {
     ResultSet result = createTable();
 
     assertThat(result.getExecutionInfo().isSchemaInAgreement()).isTrue();
-    assertThat(clusterRule.cluster().checkSchemaAgreement()).isTrue();
+    assertThat(sessionRule.session().checkSchemaAgreement()).isTrue();
   }
 
   @Test
@@ -61,7 +60,7 @@ public class SchemaAgreementIT {
       ResultSet result = createTable();
 
       assertThat(result.getExecutionInfo().isSchemaInAgreement()).isFalse();
-      assertThat(clusterRule.cluster().checkSchemaAgreement()).isFalse();
+      assertThat(sessionRule.session().checkSchemaAgreement()).isFalse();
     } finally {
       ccm.getCcmBridge().resume(2);
     }
@@ -75,7 +74,7 @@ public class SchemaAgreementIT {
       ResultSet result = createTable();
 
       assertThat(result.getExecutionInfo().isSchemaInAgreement()).isTrue();
-      assertThat(clusterRule.cluster().checkSchemaAgreement()).isTrue();
+      assertThat(sessionRule.session().checkSchemaAgreement()).isTrue();
     } finally {
       ccm.getCcmBridge().start(2);
     }
@@ -83,22 +82,22 @@ public class SchemaAgreementIT {
 
   @Test
   public void should_fail_if_timeout_is_zero() {
-    try (Cluster<CqlSession> cluster =
-        ClusterUtils.newCluster(
+    try (CqlSession session =
+        SessionUtils.newSession(
             ccm,
+            sessionRule.keyspace(),
             "request.timeout = 30s",
             "connection.control-connection.schema-agreement.timeout = 0s")) {
-      CqlSession session = cluster.connect(clusterRule.keyspace());
       ResultSet result = createTable(session);
 
       // Should not agree because schema metadata is disabled
       assertThat(result.getExecutionInfo().isSchemaInAgreement()).isFalse();
-      assertThat(cluster.checkSchemaAgreement()).isFalse();
+      assertThat(session.checkSchemaAgreement()).isFalse();
     }
   }
 
   private ResultSet createTable() {
-    return createTable(clusterRule.session());
+    return createTable(sessionRule.session());
   }
 
   private final AtomicInteger tableCounter = new AtomicInteger();

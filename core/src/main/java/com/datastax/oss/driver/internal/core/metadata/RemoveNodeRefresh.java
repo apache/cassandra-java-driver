@@ -39,7 +39,7 @@ public class RemoveNodeRefresh extends NodesRefresh {
   public Result compute(
       DefaultMetadata oldMetadata, boolean tokenMapEnabled, InternalDriverContext context) {
 
-    String logPrefix = context.clusterName();
+    String logPrefix = context.sessionName();
 
     Map<InetSocketAddress, Node> oldNodes = oldMetadata.getNodes();
     Node node = oldNodes.get(toRemove);

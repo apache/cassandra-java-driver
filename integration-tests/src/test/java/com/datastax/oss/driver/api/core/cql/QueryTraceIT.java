@@ -15,9 +15,10 @@
  */
 package com.datastax.oss.driver.api.core.cql;
 
+import com.datastax.oss.driver.api.core.CqlSession;
 import com.datastax.oss.driver.api.core.DriverExecutionException;
 import com.datastax.oss.driver.api.testinfra.ccm.CcmRule;
-import com.datastax.oss.driver.api.testinfra.cluster.ClusterRule;
+import com.datastax.oss.driver.api.testinfra.cluster.SessionRule;
 import com.datastax.oss.driver.categories.ParallelizableTests;
 import org.hamcrest.Description;
 import org.hamcrest.TypeSafeMatcher;
@@ -33,13 +34,13 @@ import static org.assertj.core.api.Assertions.assertThat;
 public class QueryTraceIT {
 
   @ClassRule public static CcmRule ccmRule = CcmRule.getInstance();
-  @ClassRule public static ClusterRule clusterRule = new ClusterRule(ccmRule);
+  @ClassRule public static SessionRule<CqlSession> sessionRule = new SessionRule<>(ccmRule);
   @Rule public ExpectedException thrown = ExpectedException.none();
 
   @Test
   public void should_not_have_tracing_id_when_tracing_disabled() {
     ExecutionInfo executionInfo =
-        clusterRule
+        sessionRule
             .session()
             .execute("SELECT release_version FROM system.local")
             .getExecutionInfo();
@@ -70,7 +71,7 @@ public class QueryTraceIT {
   @Test
   public void should_fetch_trace_when_tracing_enabled() {
     ExecutionInfo executionInfo =
-        clusterRule
+        sessionRule
             .session()
             .execute(
                 SimpleStatement.builder("SELECT release_version FROM system.local")

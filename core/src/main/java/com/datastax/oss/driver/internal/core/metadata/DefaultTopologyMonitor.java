@@ -63,7 +63,7 @@ public class DefaultTopologyMonitor implements TopologyMonitor {
   @VisibleForTesting volatile int port = -1;
 
   public DefaultTopologyMonitor(InternalDriverContext context) {
-    this.logPrefix = context.clusterName();
+    this.logPrefix = context.sessionName();
     this.context = context;
     this.controlConnection = context.controlConnection();
     this.addressTranslator = context.addressTranslator();

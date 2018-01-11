@@ -16,6 +16,7 @@
 package com.datastax.oss.driver.api.core.cql;
 
 import com.datastax.oss.driver.api.core.CoreProtocolVersion;
+import com.datastax.oss.driver.api.core.CqlSession;
 import java.nio.ByteBuffer;
 import java.util.List;
 

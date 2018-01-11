@@ -56,7 +56,7 @@ public class SchemaParser {
 
   public SchemaParser(SchemaRows rows, InternalDriverContext context) {
     this.rows = rows;
-    this.logPrefix = context.clusterName();
+    this.logPrefix = context.sessionName();
 
     DataTypeParser dataTypeParser =
         rows.isCassandraV3 ? new DataTypeCqlNameParser() : new DataTypeClassNameParser();

@@ -15,7 +15,6 @@
  */
 package com.datastax.oss.driver.api.core.context;
 
-import com.datastax.oss.driver.api.core.Cluster;
 import com.datastax.oss.driver.api.core.addresstranslation.AddressTranslator;
 import com.datastax.oss.driver.api.core.auth.AuthProvider;
 import com.datastax.oss.driver.api.core.config.DriverConfig;
@@ -23,6 +22,7 @@ import com.datastax.oss.driver.api.core.connection.ReconnectionPolicy;
 import com.datastax.oss.driver.api.core.detach.AttachmentPoint;
 import com.datastax.oss.driver.api.core.loadbalancing.LoadBalancingPolicy;
 import com.datastax.oss.driver.api.core.retry.RetryPolicy;
+import com.datastax.oss.driver.api.core.session.Session;
 import com.datastax.oss.driver.api.core.specex.SpeculativeExecutionPolicy;
 import com.datastax.oss.driver.api.core.ssl.SslEngineFactory;
 import com.datastax.oss.driver.api.core.time.TimestampGenerator;
@@ -32,10 +32,10 @@ import java.util.Optional;
 public interface DriverContext extends AttachmentPoint {
 
   /**
-   * This is the same as {@link Cluster#getName()}, it's exposed here for components that only have
+   * This is the same as {@link Session#getName()}, it's exposed here for components that only have
    * a reference to the context.
    */
-  String clusterName();
+  String sessionName();
 
   DriverConfig config();
 

@@ -13,15 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.datastax.oss.driver.example.guava.internal;
+package com.datastax.oss.driver.example.guava.api;
 
-import com.datastax.oss.driver.api.core.session.Session;
-import com.datastax.oss.driver.example.guava.api.GuavaSession;
-import com.datastax.oss.driver.internal.core.session.SessionWrapper;
-
-public class DefaultGuavaSession extends SessionWrapper implements GuavaSession {
-
-  public DefaultGuavaSession(Session delegate) {
-    super(delegate);
+public class GuavaSessionUtils {
+  public static GuavaSessionBuilder builder() {
+    return new GuavaSessionBuilder();
   }
 }

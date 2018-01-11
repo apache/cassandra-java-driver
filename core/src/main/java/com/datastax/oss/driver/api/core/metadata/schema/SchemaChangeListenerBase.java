@@ -15,7 +15,7 @@
  */
 package com.datastax.oss.driver.api.core.metadata.schema;
 
-import com.datastax.oss.driver.api.core.Cluster;
+import com.datastax.oss.driver.api.core.session.Session;
 import com.datastax.oss.driver.api.core.type.UserDefinedType;
 
 /**
@@ -81,8 +81,8 @@ public class SchemaChangeListenerBase implements SchemaChangeListener {
   public void onViewUpdated(ViewMetadata current, ViewMetadata previous) {}
 
   @Override
-  public void onRegister(Cluster<?> cluster) {}
+  public void onRegister(Session session) {}
 
   @Override
-  public void onUnregister(Cluster<?> cluster) {}
+  public void onUnregister(Session session) {}
 }

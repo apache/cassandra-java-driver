@@ -126,7 +126,7 @@ You don't need the configuration API for everyday usage of the driver, but it ca
 The driver's context exposes a [DriverConfig] instance:
 
 ```java
-DriverConfig config = cluster.getContext().config();
+DriverConfig config = session.getContext().config();
 DriverConfigProfile defaultProfile = config.getDefaultProfile();
 DriverConfigProfile olapProfile = config.getNamedProfile("olap");
 
@@ -155,7 +155,7 @@ To allow this, you start from an existing profile in the configuration and build
 that overrides a subset of options:
 
 ```java
-DriverConfigProfile defaultProfile = cluster.getContext().config().getDefaultProfile();
+DriverConfigProfile defaultProfile = session.getContext().config().getDefaultProfile();
 DriverConfigProfile dynamicProfile =
     defaultProfile.withConsistencyLevel(
         CoreDriverOption.REQUEST_CONSISTENCY, ConsistencyLevel.EACH_QUORUM);
@@ -188,13 +188,13 @@ VM, but with different configurations. What you want instead is separate option 
 
 ```
 # application.conf
-cluster1 {
-  cluster-name = "cluster1"
+session1 {
+  session-name = "session1"
   protocol-version = V4
   // etc.
 }
-cluster2 {
-  cluster-name = "cluster2"
+session2 {
+  session-name = "session2"
   protocol-version = V3
   // etc.
 }
@@ -233,17 +233,17 @@ import com.datastax.oss.driver.api.core.config.CoreDriverOption;
 import com.datastax.oss.driver.api.core.config.DriverConfigLoader;
 import com.datastax.oss.driver.internal.core.config.typesafe.DefaultDriverConfigLoader;
 
-DriverConfigLoader cluster1ConfigLoader =
+DriverConfigLoader session1ConfigLoader =
     new DefaultDriverConfigLoader(
-        () -> loadConfig("cluster1"), CoreDriverOption.values());
+        () -> loadConfig("session1"), CoreDriverOption.values());
 ```
 
 Finally, pass the config loader when building the driver:
 
 ```java
-Cluster cluster1 =
-    Cluster.builder()
-        .withConfigLoader(cluster1ConfigLoader)
+CqlSession session1 =
+    CqlSession.builder()
+        .withConfigLoader(session1ConfigLoader)
         .build();
 ```
 
@@ -267,7 +267,7 @@ DriverConfigLoader loader =
         },
         CoreDriverOption.values());
 
-Cluster cluster = Cluster.builder().withConfigLoader(loader).build();
+CqlSession session = CqlSession.builder().withConfigLoader(loader).build();
 ```
 
 #### Bypassing TypeSafe Config
@@ -275,7 +275,7 @@ Cluster cluster = Cluster.builder().withConfigLoader(loader).build();
 If TypeSafe Config doesn't work for you, it is possible to get rid of it entirely.
 
 You will need to provide your own implementations of [DriverConfig] and [DriverConfigProfile]. Then
-write a [DriverConfigLoader] and pass it to the cluster at initialization, as shown in the previous
+write a [DriverConfigLoader] and pass it to the session at initialization, as shown in the previous
 sections. Study the built-in implementation (package 
 `com.datastax.oss.driver.internal.core.config.typesafe`) for reference.
 
@@ -295,7 +295,7 @@ import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
 
 // DANGER ZONE: this gives you access to the driver internals, which allow very nasty things.
 // Use responsibly.
-InternalDriverContext context = (InternalDriverContext) cluster.getContext();
+InternalDriverContext context = (InternalDriverContext) session.getContext();
 
 EventBus eventBus = context.eventBus();
 eventBus.fire(ForceReloadConfigEvent.INSTANCE);
@@ -338,7 +338,7 @@ with the following signature:
 ExponentialReconnectionPolicy(DriverContext context)
 ```
 
-Where `context` is the object returned by `Cluster.getContext()`, which allows the policy to access
+Where `context` is the object returned by `session.getContext()`, which allows the policy to access
 other driver components (for example the configuration).
  
 If you write custom policy implementations, you should follow that same pattern; it provides an
@@ -364,13 +364,13 @@ public class MyDriverContext extends DefaultDriverContext {
 }
 ```
 
-Then you'll need to pass an instance of this context to `DefaultCluster.init`. You can either do so
-directly, or subclass `ClusterBuilder` and override the `buildAsync` method. 
+Then you'll need to pass an instance of this context to `DefaultSession.init`. You can either do so
+directly, or subclass `SessionBuilder` and override the `buildContext` method. 
 
 #### Custom options
 
 You can add your own options to the configuration. This is useful for custom components, or even as
-a way to associate arbitrary key/value pairs with the cluster instance.
+a way to associate arbitrary key/value pairs with the session instance.
 
 First, write an enum that implements [DriverOption]:
 
@@ -405,7 +405,7 @@ public enum MyCustomOption implements DriverOption {
 Pass the options to the config loader:
 
 ```java
-Cluster cluster = Cluster.builder()
+CqlSession session = CqlSession.builder()
     .withConfigLoader(new DefaultDriverConfigLoader(
         DefaultDriverConfigLoader.DEFAULT_CONFIG_SUPPLIER,
         CoreDriverOption.values(), // don't forget to keep the core options
@@ -428,7 +428,7 @@ datastax-java-driver {
 And access them from the code:
 
 ```java
-DriverConfig config = cluster.getContext().config();
+DriverConfig config = session.getContext().config();
 config.getDefaultProfile().getString(MyCustomOption.ADMIN_EMAIL);
 config.getDefaultProfile().getInt(MyCustomOption.AWESOMENESS_FACTOR);
 ```

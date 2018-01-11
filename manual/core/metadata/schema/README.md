@@ -3,7 +3,7 @@
 [Metadata#getKeyspaces] returns a client-side representation of the database schema:
 
 ```java
-Map<CqlIdentifier, KeyspaceMetadata> keyspaces = cluster.getMetadata().getKeyspaces();
+Map<CqlIdentifier, KeyspaceMetadata> keyspaces = session.getMetadata().getKeyspaces();
 KeyspaceMetadata system = keyspaces.get(CqlIdentifier.fromCql("system"));
 System.out.println("The system keyspace contains the following tables:");
 for (TableMetadata table : system.getTables().values()) {
@@ -16,7 +16,7 @@ Schema metadata is fully immutable (both the map and all the objects it contains
 snapshot of the database at the time of the last metadata refresh, and is consistent with the
 [token map](../token/) of its parent `Metadata` object. Keep in mind that `Metadata` is itself
 immutable; if you need to get the latest schema, be sure to call
-`cluster.getMetadata().getKeyspaces()` again (and not just `getKeyspaces()` on a stale `Metadata`
+`session.getMetadata().getKeyspaces()` again (and not just `getKeyspaces()` on a stale `Metadata`
 reference).
 
 
@@ -33,7 +33,7 @@ SchemaChangeListener listener =
       System.out.println("New table: " + table.getName().asCql(true));
     }
   };
-cluster.register(listener);
+session.register(listener);
 
 session.execute("CREATE TABLE test.foo (k int PRIMARY KEY)");
 ```
@@ -55,20 +55,20 @@ datastax-java-driver.metadata.schema.enabled = false
 If it is disabled at startup, [Metadata#getKeyspaces] will stay empty. If you disable it at runtime,
 it will keep the value of the last refresh.
 
-You can achieve the same thing programmatically with [Cluster#setSchemaMetadataEnabled]: if you call
+You can achieve the same thing programmatically with [Session#setSchemaMetadataEnabled]: if you call
 it with `true` or `false`, it overrides the configuration; if you pass `null`, it reverts to the
 value defined in the configuration. One case where that could come in handy is if you are sending a
 large number of DDL statements from your code:
 
 ```java
 // Disable temporarily, we'll do a single refresh once we're done 
-cluster.setSchemaMetadataEnabled(false);
+session.setSchemaMetadataEnabled(false);
 
 for (int i = 0; i < 100; i++) {
   session.execute(String.format("CREATE TABLE test.foo%d (k int PRIMARY KEY)", i));
 }
 
-cluster.setSchemaMetadataEnabled(null);
+session.setSchemaMetadataEnabled(null);
 ```
 
 Whenever schema metadata was disabled and becomes enabled again (either through the configuration or
@@ -175,11 +175,11 @@ if (rs.getExecutionInfo().isSchemaInAgreement()) {
 }
 ```
 
-You can also perform an on-demand check at any time with [Cluster#checkSchemaAgreementAsync] \(or
+You can also perform an on-demand check at any time with [Session#checkSchemaAgreementAsync] \(or
 its synchronous counterpart):
 
 ```java
-if (cluster.checkSchemaAgreement()) {
+if (session.checkSchemaAgreement()) {
   ...
 }
 ```
@@ -210,8 +210,8 @@ unavailable for the excluded keyspaces.
 [Metadata#getKeyspaces]:             http://docs.datastax.com/en/drivers/java/4.0/com/datastax/oss/driver/api/core/metadata/Metadata.html#getKeyspaces--
 [SchemaChangeListener]:              http://docs.datastax.com/en/drivers/java/4.0/com/datastax/oss/driver/api/core/metadata/schema/SchemaChangeListener.html
 [SchemaChangeListenerBase]:          http://docs.datastax.com/en/drivers/java/4.0/com/datastax/oss/driver/api/core/metadata/schema/SchemaChangeListenerBase.html
-[Cluster#setSchemaMetadataEnabled]:  http://docs.datastax.com/en/drivers/java/4.0/com/datastax/oss/driver/api/core/Cluster.html#setSchemaMetadataEnabled-java.lang.Boolean-
-[Cluster#checkSchemaAgreementAsync]: http://docs.datastax.com/en/drivers/java/4.0/com/datastax/oss/driver/api/core/Cluster.html#checkSchemaAgreementAsync--
+[Session#setSchemaMetadataEnabled]:  http://docs.datastax.com/en/drivers/java/4.0/com/datastax/oss/driver/api/core/session/Session.html#setSchemaMetadataEnabled-java.lang.Boolean-
+[Session#checkSchemaAgreementAsync]: http://docs.datastax.com/en/drivers/java/4.0/com/datastax/oss/driver/api/core/session/Session.html#checkSchemaAgreementAsync--
 [ExecutionInfo#isSchemaInAgreement]: http://docs.datastax.com/en/drivers/java/4.0/com/datastax/oss/driver/api/core/cql/ExecutionInfo.html#isSchemaInAgreement--
 
 [JAVA-750]: https://datastax-oss.atlassian.net/browse/JAVA-750

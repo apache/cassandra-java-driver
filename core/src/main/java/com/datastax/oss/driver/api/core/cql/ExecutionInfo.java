@@ -15,11 +15,11 @@
  */
 package com.datastax.oss.driver.api.core.cql;
 
-import com.datastax.oss.driver.api.core.Cluster;
 import com.datastax.oss.driver.api.core.CoreProtocolVersion;
 import com.datastax.oss.driver.api.core.config.CoreDriverOption;
 import com.datastax.oss.driver.api.core.metadata.Node;
 import com.datastax.oss.driver.api.core.session.Request;
+import com.datastax.oss.driver.api.core.session.Session;
 import com.datastax.oss.driver.api.core.specex.SpeculativeExecutionPolicy;
 import com.datastax.oss.driver.internal.core.util.concurrent.BlockingOperation;
 import com.datastax.oss.driver.internal.core.util.concurrent.CompletableFutures;
@@ -108,7 +108,7 @@ public interface ExecutionInfo {
    * (the retry delay and timeout are set through the configuration).
    *
    * <p>If this method returns {@code false}, clients can call {@link
-   * Cluster#checkSchemaAgreement()} later to perform the check manually.
+   * Session#checkSchemaAgreement()} later to perform the check manually.
    *
    * <p>Schema agreement is only checked for schema-altering queries. For other query types, this
    * method will always return {@code true}.

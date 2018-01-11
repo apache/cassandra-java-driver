@@ -16,6 +16,10 @@
 package com.datastax.oss.driver.internal.core.session;
 
 import com.datastax.oss.driver.api.core.CqlIdentifier;
+import com.datastax.oss.driver.api.core.context.DriverContext;
+import com.datastax.oss.driver.api.core.metadata.Metadata;
+import com.datastax.oss.driver.api.core.metadata.NodeStateListener;
+import com.datastax.oss.driver.api.core.metadata.schema.SchemaChangeListener;
 import com.datastax.oss.driver.api.core.session.Request;
 import com.datastax.oss.driver.api.core.session.Session;
 import com.datastax.oss.driver.api.core.type.reflect.GenericType;
@@ -43,6 +47,41 @@ public class SessionWrapper implements Session {
   }
 
   @Override
+  public String getName() {
+    return delegate.getName();
+  }
+
+  @Override
+  public Metadata getMetadata() {
+    return delegate.getMetadata();
+  }
+
+  @Override
+  public boolean isSchemaMetadataEnabled() {
+    return delegate.isSchemaMetadataEnabled();
+  }
+
+  @Override
+  public CompletionStage<Metadata> setSchemaMetadataEnabled(Boolean newValue) {
+    return delegate.setSchemaMetadataEnabled(newValue);
+  }
+
+  @Override
+  public CompletionStage<Metadata> refreshSchemaAsync() {
+    return delegate.refreshSchemaAsync();
+  }
+
+  @Override
+  public CompletionStage<Boolean> checkSchemaAgreementAsync() {
+    return delegate.checkSchemaAgreementAsync();
+  }
+
+  @Override
+  public DriverContext getContext() {
+    return delegate.getContext();
+  }
+
+  @Override
   public CqlIdentifier getKeyspace() {
     return delegate.getKeyspace();
   }
@@ -51,6 +90,26 @@ public class SessionWrapper implements Session {
   public <RequestT extends Request, ResultT> ResultT execute(
       RequestT request, GenericType<ResultT> resultType) {
     return delegate.execute(request, resultType);
+  }
+
+  @Override
+  public void register(SchemaChangeListener listener) {
+    delegate.register(listener);
+  }
+
+  @Override
+  public void unregister(SchemaChangeListener listener) {
+    delegate.unregister(listener);
+  }
+
+  @Override
+  public void register(NodeStateListener listener) {
+    delegate.register(listener);
+  }
+
+  @Override
+  public void unregister(NodeStateListener listener) {
+    delegate.unregister(listener);
   }
 
   @Override

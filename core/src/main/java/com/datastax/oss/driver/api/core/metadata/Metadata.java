@@ -15,10 +15,10 @@
  */
 package com.datastax.oss.driver.api.core.metadata;
 
-import com.datastax.oss.driver.api.core.Cluster;
 import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.config.CoreDriverOption;
 import com.datastax.oss.driver.api.core.metadata.schema.KeyspaceMetadata;
+import com.datastax.oss.driver.api.core.session.Session;
 import java.net.InetSocketAddress;
 import java.util.Map;
 import java.util.Optional;
@@ -31,7 +31,7 @@ import java.util.Optional;
  * are the only mutable objects in the hierarchy, and some of their fields will be modified
  * dynamically (in particular the node state).
  *
- * @see Cluster#getMetadata()
+ * @see Session#getMetadata()
  */
 public interface Metadata {
   /**
@@ -47,7 +47,7 @@ public interface Metadata {
    * this map might be empty or incomplete.
    *
    * @see CoreDriverOption#METADATA_SCHEMA_ENABLED
-   * @see Cluster#setSchemaMetadataEnabled(Boolean)
+   * @see Session#setSchemaMetadataEnabled(Boolean)
    * @see CoreDriverOption#METADATA_SCHEMA_REFRESHED_KEYSPACES
    */
   Map<CqlIdentifier, KeyspaceMetadata> getKeyspaces();

@@ -15,9 +15,8 @@
  */
 package com.datastax.oss.driver.api.core.config;
 
-import com.datastax.oss.driver.api.core.Cluster;
 import com.datastax.oss.driver.api.core.DriverTimeoutException;
-import com.datastax.oss.driver.api.core.cql.CqlSession;
+import com.datastax.oss.driver.api.core.CqlSession;
 import com.datastax.oss.driver.api.core.cql.SimpleStatement;
 import com.datastax.oss.driver.api.testinfra.simulacron.SimulacronRule;
 import com.datastax.oss.driver.internal.core.config.ConfigChangeEvent;
@@ -56,14 +55,12 @@ public class DriverConfigProfileReloadIT {
                 ConfigFactory.parseString("config-reload-interval = 2s\n" + configSource.get())
                     .withFallback(DEFAULT_CONFIG_SUPPLIER.get()),
             CoreDriverOption.values());
-    try (Cluster<CqlSession> configCluster =
-        Cluster.builder()
+    try (CqlSession session =
+        CqlSession.builder()
             .withConfigLoader(loader)
             .addContactPoints(simulacron.getContactPoints())
             .build()) {
       simulacron.cluster().prime(when(query).then(noRows()).delay(4, TimeUnit.SECONDS));
-
-      CqlSession session = configCluster.connect();
 
       // Expect timeout since default timeout is 2s
       try {
@@ -75,7 +72,7 @@ public class DriverConfigProfileReloadIT {
 
       // Bump up request timeout to 10 seconds and wait for config to reload.
       configSource.set("request.timeout = 10s");
-      waitForConfigChange(configCluster, 3, TimeUnit.SECONDS);
+      waitForConfigChange(session, 3, TimeUnit.SECONDS);
 
       // Execute again, should not timeout.
       session.execute(query);
@@ -93,14 +90,12 @@ public class DriverConfigProfileReloadIT {
                 ConfigFactory.parseString("config-reload-interval = 0\n" + configSource.get())
                     .withFallback(DEFAULT_CONFIG_SUPPLIER.get()),
             CoreDriverOption.values());
-    try (Cluster<CqlSession> configCluster =
-        Cluster.builder()
+    try (CqlSession session =
+        CqlSession.builder()
             .withConfigLoader(loader)
             .addContactPoints(simulacron.getContactPoints())
             .build()) {
       simulacron.cluster().prime(when(query).then(noRows()).delay(4, TimeUnit.SECONDS));
-
-      CqlSession session = configCluster.connect();
 
       // Expect timeout since default timeout is 2s
       try {
@@ -112,10 +107,10 @@ public class DriverConfigProfileReloadIT {
 
       // Bump up request timeout to 10 seconds and trigger a manual reload.
       configSource.set("request.timeout = 10s");
-      ((InternalDriverContext) configCluster.getContext())
+      ((InternalDriverContext) session.getContext())
           .eventBus()
           .fire(ForceReloadConfigEvent.INSTANCE);
-      waitForConfigChange(configCluster, 500, TimeUnit.MILLISECONDS);
+      waitForConfigChange(session, 500, TimeUnit.MILLISECONDS);
 
       // Execute again, should not timeout.
       session.execute(query);
@@ -133,14 +128,12 @@ public class DriverConfigProfileReloadIT {
                 ConfigFactory.parseString("config-reload-interval = 2s\n" + configSource.get())
                     .withFallback(DEFAULT_CONFIG_SUPPLIER.get()),
             CoreDriverOption.values());
-    try (Cluster<CqlSession> configCluster =
-        Cluster.builder()
+    try (CqlSession session =
+        CqlSession.builder()
             .withConfigLoader(loader)
             .addContactPoints(simulacron.getContactPoints())
             .build()) {
       simulacron.cluster().prime(when(query).then(noRows()).delay(4, TimeUnit.SECONDS));
-
-      CqlSession session = configCluster.connect();
 
       // Expect failure because profile doesn't exist.
       try {
@@ -152,7 +145,7 @@ public class DriverConfigProfileReloadIT {
 
       // Bump up request timeout to 10 seconds on profile and wait for config to reload.
       configSource.set("profiles.slow.request.timeout = 2s");
-      waitForConfigChange(configCluster, 3, TimeUnit.SECONDS);
+      waitForConfigChange(session, 3, TimeUnit.SECONDS);
 
       // Execute again, should expect to fail again because doesn't allow to dynamically define profile.
       thrown.expect(IllegalArgumentException.class);
@@ -174,14 +167,12 @@ public class DriverConfigProfileReloadIT {
                             + configSource.get())
                     .withFallback(DEFAULT_CONFIG_SUPPLIER.get()),
             CoreDriverOption.values());
-    try (Cluster<CqlSession> configCluster =
-        Cluster.builder()
+    try (CqlSession session =
+        CqlSession.builder()
             .withConfigLoader(loader)
             .addContactPoints(simulacron.getContactPoints())
             .build()) {
       simulacron.cluster().prime(when(query).then(noRows()).delay(4, TimeUnit.SECONDS));
-
-      CqlSession session = configCluster.connect();
 
       // Expect failure because profile doesn't exist.
       try {
@@ -193,16 +184,16 @@ public class DriverConfigProfileReloadIT {
 
       // Bump up request timeout to 10 seconds on profile and wait for config to reload.
       configSource.set("profiles.slow.request.timeout = 10s");
-      waitForConfigChange(configCluster, 3, TimeUnit.SECONDS);
+      waitForConfigChange(session, 3, TimeUnit.SECONDS);
 
       // Execute again, should succeed because profile timeout was increased.
       session.execute(SimpleStatement.builder(query).withConfigProfileName("slow").build());
     }
   }
 
-  private void waitForConfigChange(Cluster<CqlSession> cluster, long timeout, TimeUnit unit) {
+  private void waitForConfigChange(CqlSession session, long timeout, TimeUnit unit) {
     CountDownLatch latch = new CountDownLatch(1);
-    ((InternalDriverContext) cluster.getContext())
+    ((InternalDriverContext) session.getContext())
         .eventBus()
         .register(ConfigChangeEvent.class, (e) -> latch.countDown());
     try {

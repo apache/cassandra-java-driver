@@ -16,7 +16,7 @@
 package com.datastax.oss.driver.internal.testinfra.cluster;
 
 import com.datastax.oss.driver.api.core.config.CoreDriverOption;
-import com.datastax.oss.driver.api.testinfra.cluster.ClusterUtils;
+import com.datastax.oss.driver.api.testinfra.cluster.SessionUtils;
 import com.datastax.oss.driver.internal.core.config.typesafe.DefaultDriverConfigLoader;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
@@ -41,6 +41,6 @@ public class TestConfigLoader extends DefaultDriverConfigLoader {
 
   public static Config getConfig() {
     ConfigFactory.invalidateCaches();
-    return ConfigFactory.load().getConfig(ClusterUtils.getConfigPath());
+    return ConfigFactory.load().getConfig(SessionUtils.getConfigPath());
   }
 }

@@ -5,7 +5,7 @@ includes down and ignored nodes (see below), so the fact that a node is in this 
 necessarily mean that the driver is connected to it.
 
 ```java
-Map<InetSocketAddress, Node> nodes = cluster.getMetadata().getNodes();
+Map<InetSocketAddress, Node> nodes = session.getMetadata().getNodes();
 System.out.println("Nodes in the cluster:");
 for (Node node : nodes.values()) {
   System.out.printf(
@@ -52,7 +52,7 @@ balancing policy, etc).
 import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
 import com.datastax.oss.driver.internal.core.metadata.TopologyEvent;
 
-InternalDriverContext context = (InternalDriverContext) cluster.getContext();
+InternalDriverContext context = (InternalDriverContext) session.getContext();
 context.eventBus().fire(TopologyEvent.forceDown(node1.getConnectAddress()));
 context.eventBus().fire(TopologyEvent.forceUp(node1.getConnectAddress()));
 ```

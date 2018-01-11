@@ -15,9 +15,9 @@
  */
 package com.datastax.oss.driver.api.core.metadata;
 
-import com.datastax.oss.driver.api.core.Cluster;
 import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.ProtocolVersion;
+import com.datastax.oss.driver.api.core.CqlSession;
 import com.datastax.oss.driver.api.core.cql.PreparedStatement;
 import com.datastax.oss.driver.api.core.cql.ResultSet;
 import com.datastax.oss.driver.api.core.cql.Row;
@@ -25,9 +25,9 @@ import com.datastax.oss.driver.api.core.cql.SimpleStatement;
 import com.datastax.oss.driver.api.core.cql.Statement;
 import com.datastax.oss.driver.api.core.metadata.token.Token;
 import com.datastax.oss.driver.api.core.metadata.token.TokenRange;
-import com.datastax.oss.driver.api.core.cql.CqlSession;
+import com.datastax.oss.driver.api.core.session.Session;
 import com.datastax.oss.driver.api.core.type.codec.TypeCodecs;
-import com.datastax.oss.driver.api.testinfra.cluster.ClusterUtils;
+import com.datastax.oss.driver.api.testinfra.cluster.SessionUtils;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import java.nio.ByteBuffer;
@@ -42,8 +42,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 public abstract class TokenITBase {
 
-  protected static final CqlIdentifier KS1 = ClusterUtils.uniqueKeyspaceId();
-  protected static final CqlIdentifier KS2 = ClusterUtils.uniqueKeyspaceId();
+  protected static final CqlIdentifier KS1 = SessionUtils.uniqueKeyspaceId();
+  protected static final CqlIdentifier KS2 = SessionUtils.uniqueKeyspaceId();
 
   // Must be called in a @BeforeClass method in each subclass (unfortunately we can't do this
   // automatically because it requires the session, which is not available from a static context in
@@ -78,8 +78,6 @@ public abstract class TokenITBase {
     this.tokensPerNode = useVnodes ? 256 : 1;
   }
 
-  protected abstract Cluster cluster();
-
   protected abstract CqlSession session();
 
   /**
@@ -93,12 +91,12 @@ public abstract class TokenITBase {
    */
   @Test
   public void should_be_consistent_with_range_queries() {
-    Metadata metadata = cluster().getMetadata();
+    Metadata metadata = session().getMetadata();
     TokenMap tokenMap = metadata.getTokenMap().get();
 
     // Find the replica for a given partition key of ks1.foo.
     int key = 1;
-    ProtocolVersion protocolVersion = cluster().getContext().protocolVersion();
+    ProtocolVersion protocolVersion = session().getContext().protocolVersion();
     ByteBuffer serializedKey = TypeCodecs.INT.encodePrimitive(key, protocolVersion);
     Set<Node> replicas = tokenMap.getReplicas(KS1, serializedKey);
     assertThat(replicas).hasSize(1);
@@ -229,22 +227,22 @@ public abstract class TokenITBase {
    */
   @Test
   public void should_expose_consistent_ranges() {
-    checkRanges(cluster());
-    checkRanges(cluster(), KS1, 1);
-    checkRanges(cluster(), KS2, 2);
+    checkRanges(session());
+    checkRanges(session(), KS1, 1);
+    checkRanges(session(), KS2, 2);
   }
 
-  private void checkRanges(Cluster cluster) {
-    TokenMap tokenMap = cluster.getMetadata().getTokenMap().get();
+  private void checkRanges(Session session) {
+    TokenMap tokenMap = session.getMetadata().getTokenMap().get();
     checkRanges(tokenMap.getTokenRanges());
   }
 
-  private void checkRanges(Cluster cluster, CqlIdentifier keyspace, int replicationFactor) {
-    TokenMap tokenMap = cluster.getMetadata().getTokenMap().get();
+  private void checkRanges(Session session, CqlIdentifier keyspace, int replicationFactor) {
+    TokenMap tokenMap = session.getMetadata().getTokenMap().get();
     List<TokenRange> allRangesWithDuplicates = Lists.newArrayList();
 
     // Get each host's ranges, the count should match the replication factor
-    for (Node node : cluster.getMetadata().getNodes().values()) {
+    for (Node node : session.getMetadata().getNodes().values()) {
       Set<TokenRange> hostRanges = tokenMap.getTokenRanges(keyspace, node);
       // Special case: When using vnodes the tokens are not evenly assigned to each replica.
       if (!useVnodes) {
@@ -301,7 +299,7 @@ public abstract class TokenITBase {
    */
   @Test
   public void should_have_only_one_wrapped_range() {
-    TokenMap tokenMap = cluster().getMetadata().getTokenMap().get();
+    TokenMap tokenMap = session().getMetadata().getTokenMap().get();
     TokenRange wrappedRange = null;
     for (TokenRange range : tokenMap.getTokenRanges()) {
       if (range.isWrappedAround()) {
@@ -319,7 +317,7 @@ public abstract class TokenITBase {
 
   @Test
   public void should_create_tokens_and_ranges() {
-    TokenMap tokenMap = cluster().getMetadata().getTokenMap().get();
+    TokenMap tokenMap = session().getMetadata().getTokenMap().get();
 
     // Pick a random range
     TokenRange range = tokenMap.getTokenRanges().iterator().next();
@@ -332,12 +330,12 @@ public abstract class TokenITBase {
 
   @Test
   public void should_create_token_from_partition_key() {
-    TokenMap tokenMap = cluster().getMetadata().getTokenMap().get();
+    TokenMap tokenMap = session().getMetadata().getTokenMap().get();
 
     Row row = session().execute("SELECT token(i) FROM foo WHERE i = 1").one();
     Token expected = row.getToken(0);
 
-    ProtocolVersion protocolVersion = cluster().getContext().protocolVersion();
+    ProtocolVersion protocolVersion = session().getContext().protocolVersion();
     assertThat(tokenMap.newToken(TypeCodecs.INT.encodePrimitive(1, protocolVersion)))
         .isEqualTo(expected);
   }

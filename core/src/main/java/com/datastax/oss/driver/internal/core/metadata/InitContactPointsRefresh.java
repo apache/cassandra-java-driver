@@ -38,7 +38,7 @@ class InitContactPointsRefresh implements MetadataRefresh {
   public Result compute(
       DefaultMetadata oldMetadata, boolean tokenMapEnabled, InternalDriverContext context) {
     assert oldMetadata == DefaultMetadata.EMPTY;
-    String logPrefix = context.clusterName();
+    String logPrefix = context.sessionName();
     LOG.debug("[{}] Initializing node metadata with contact points {}", logPrefix, contactPoints);
 
     ImmutableMap.Builder<InetSocketAddress, Node> newNodes = ImmutableMap.builder();

@@ -41,7 +41,7 @@ class FunctionParser {
   FunctionParser(DataTypeParser dataTypeParser, InternalDriverContext context) {
     this.dataTypeParser = dataTypeParser;
     this.context = context;
-    this.logPrefix = context.clusterName();
+    this.logPrefix = context.sessionName();
   }
 
   FunctionMetadata parseFunction(

@@ -50,6 +50,7 @@ import com.datastax.oss.driver.internal.core.metadata.token.ReplicationStrategyF
 import com.datastax.oss.driver.internal.core.metadata.token.TokenFactoryRegistry;
 import com.datastax.oss.driver.internal.core.pool.ChannelPoolFactory;
 import com.datastax.oss.driver.internal.core.protocol.ByteBufPrimitiveCodec;
+import com.datastax.oss.driver.internal.core.session.PoolManager;
 import com.datastax.oss.driver.internal.core.session.RequestProcessorRegistry;
 import com.datastax.oss.driver.internal.core.ssl.JdkSslHandlerFactory;
 import com.datastax.oss.driver.internal.core.ssl.SslHandlerFactory;
@@ -83,7 +84,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  */
 public class DefaultDriverContext implements InternalDriverContext {
 
-  private static final AtomicInteger CLUSTER_NAME_COUNTER = new AtomicInteger();
+  private static final AtomicInteger SESSION_NAME_COUNTER = new AtomicInteger();
 
   private final CycleDetector cycleDetector =
       new CycleDetector("Detected cycle in context initialization");
@@ -141,23 +142,25 @@ public class DefaultDriverContext implements InternalDriverContext {
   private final LazyReference<ReplicationStrategyFactory> replicationStrategyFactoryRef =
       new LazyReference<>(
           "replicationStrategyFactory", this::buildReplicationStrategyFactory, cycleDetector);
+  private final LazyReference<PoolManager> poolManagerRef =
+      new LazyReference<>("poolManager", this::buildPoolManager, cycleDetector);
 
   private final DriverConfig config;
   private final DriverConfigLoader configLoader;
   private final ChannelPoolFactory channelPoolFactory = new ChannelPoolFactory();
   private final CodecRegistry codecRegistry;
-  private final String clusterName;
+  private final String sessionName;
 
   public DefaultDriverContext(DriverConfigLoader configLoader, List<TypeCodec<?>> typeCodecs) {
     this.config = configLoader.getInitialConfig();
     this.configLoader = configLoader;
     DriverConfigProfile defaultProfile = config.getDefaultProfile();
-    if (defaultProfile.isDefined(CoreDriverOption.CLUSTER_NAME)) {
-      this.clusterName = defaultProfile.getString(CoreDriverOption.CLUSTER_NAME);
+    if (defaultProfile.isDefined(CoreDriverOption.SESSION_NAME)) {
+      this.sessionName = defaultProfile.getString(CoreDriverOption.SESSION_NAME);
     } else {
-      this.clusterName = "c" + CLUSTER_NAME_COUNTER.getAndIncrement();
+      this.sessionName = "s" + SESSION_NAME_COUNTER.getAndIncrement();
     }
-    this.codecRegistry = buildCodecRegistry(this.clusterName, typeCodecs);
+    this.codecRegistry = buildCodecRegistry(this.sessionName, typeCodecs);
   }
 
   protected LoadBalancingPolicy buildLoadBalancingPolicy() {
@@ -227,7 +230,7 @@ public class DefaultDriverContext implements InternalDriverContext {
   }
 
   protected EventBus buildEventBus() {
-    return new EventBus(clusterName());
+    return new EventBus(sessionName());
   }
 
   @SuppressWarnings("unchecked")
@@ -244,7 +247,7 @@ public class DefaultDriverContext implements InternalDriverContext {
   }
 
   protected ProtocolVersionRegistry buildProtocolVersionRegistry() {
-    return new CassandraProtocolVersionRegistry(clusterName());
+    return new CassandraProtocolVersionRegistry(sessionName());
   }
 
   protected NettyOptions buildNettyOptions() {
@@ -321,9 +324,13 @@ public class DefaultDriverContext implements InternalDriverContext {
     return new DefaultReplicationStrategyFactory(this);
   }
 
+  protected PoolManager buildPoolManager() {
+    return new PoolManager(this);
+  }
+
   @Override
-  public String clusterName() {
-    return clusterName;
+  public String sessionName() {
+    return sessionName;
   }
 
   @Override
@@ -438,7 +445,7 @@ public class DefaultDriverContext implements InternalDriverContext {
 
   @Override
   public RequestProcessorRegistry requestProcessorRegistry() {
-    return RequestProcessorRegistry.defaultCqlProcessors(clusterName());
+    return RequestProcessorRegistry.defaultCqlProcessors(sessionName());
   }
 
   @Override
@@ -464,6 +471,11 @@ public class DefaultDriverContext implements InternalDriverContext {
   @Override
   public ReplicationStrategyFactory replicationStrategyFactory() {
     return replicationStrategyFactoryRef.get();
+  }
+
+  @Override
+  public PoolManager poolManager() {
+    return poolManagerRef.get();
   }
 
   @Override

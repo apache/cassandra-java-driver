@@ -20,6 +20,7 @@ import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.ProtocolVersion;
 import com.datastax.oss.driver.api.core.cql.BoundStatement;
 import com.datastax.oss.driver.api.core.cql.BoundStatementBuilder;
+import com.datastax.oss.driver.api.core.CqlSession;
 import com.datastax.oss.driver.api.core.cql.PreparedStatement;
 import com.datastax.oss.driver.api.core.cql.ResultSet;
 import com.datastax.oss.driver.api.core.cql.Row;
@@ -35,7 +36,7 @@ import com.datastax.oss.driver.api.core.type.TupleType;
 import com.datastax.oss.driver.api.core.type.UserDefinedType;
 import com.datastax.oss.driver.api.core.type.codec.TypeCodec;
 import com.datastax.oss.driver.api.testinfra.ccm.CcmRule;
-import com.datastax.oss.driver.api.testinfra.cluster.ClusterRule;
+import com.datastax.oss.driver.api.testinfra.cluster.SessionRule;
 import com.datastax.oss.driver.categories.ParallelizableTests;
 import com.datastax.oss.driver.internal.core.type.DefaultListType;
 import com.datastax.oss.driver.internal.core.type.DefaultMapType;
@@ -83,7 +84,7 @@ import static org.junit.Assume.assumeThat;
 public class DataTypeIT {
   @ClassRule public static CcmRule ccm = CcmRule.getInstance();
 
-  @ClassRule public static ClusterRule cluster = new ClusterRule(ccm);
+  @ClassRule public static SessionRule<CqlSession> sessionRule = new SessionRule<>(ccm);
 
   @Rule public TestName name = new TestName();
 
@@ -234,7 +235,7 @@ public class DataTypeIT {
 
               UserDefinedType udt =
                   new DefaultUserDefinedType(
-                      cluster.keyspace(),
+                      sessionRule.keyspace(),
                       CqlIdentifier.fromCql(userTypeFor(types)),
                       false,
                       typeNames,
@@ -270,14 +271,14 @@ public class DataTypeIT {
       }
     }
 
-    cluster
+    sessionRule
         .session()
         .execute(
             SimpleStatement.builder(
                     String.format(
                         "CREATE TABLE IF NOT EXISTS %s (k int primary key, %s)",
                         tableName, String.join(",", columnData)))
-                .withConfigProfile(cluster.slowProfile())
+                .withConfigProfile(sessionRule.slowProfile())
                 .build());
   }
 
@@ -293,7 +294,7 @@ public class DataTypeIT {
   @Test
   public <K> void should_insert_non_primary_key_column_simple_statement_using_format(
       DataType dataType, K value, K expectedPrimitiveValue) {
-    TypeCodec<K> codec = cluster.cluster().getContext().codecRegistry().codecFor(dataType);
+    TypeCodec<K> codec = sessionRule.session().getContext().codecRegistry().codecFor(dataType);
 
     int key = nextKey();
     String columnName = columnNameFor(dataType);
@@ -306,7 +307,7 @@ public class DataTypeIT {
             .addPositionalValue(key)
             .build();
 
-    cluster.session().execute(insert);
+    sessionRule.session().execute(insert);
 
     SimpleStatement select =
         SimpleStatement.builder(String.format("SELECT %s FROM %s where k=?", columnName, tableName))
@@ -332,7 +333,7 @@ public class DataTypeIT {
             .addPositionalValues(key, value)
             .build();
 
-    cluster.session().execute(insert);
+    sessionRule.session().execute(insert);
 
     SimpleStatement select =
         SimpleStatement.builder(String.format("SELECT %s FROM %s where k=?", columnName, tableName))
@@ -359,7 +360,7 @@ public class DataTypeIT {
             .addNamedValue("v", value)
             .build();
 
-    cluster.session().execute(insert);
+    sessionRule.session().execute(insert);
 
     SimpleStatement select =
         SimpleStatement.builder(String.format("SELECT %s FROM %s where k=?", columnName, tableName))
@@ -381,18 +382,18 @@ public class DataTypeIT {
                 String.format("INSERT INTO %s (k, %s) values (?, ?)", tableName, columnName))
             .build();
 
-    PreparedStatement preparedInsert = cluster.session().prepare(insert);
+    PreparedStatement preparedInsert = sessionRule.session().prepare(insert);
     BoundStatementBuilder boundBuilder = preparedInsert.boundStatementBuilder();
     boundBuilder = setValue(0, boundBuilder, DataTypes.INT, key);
     boundBuilder = setValue(1, boundBuilder, dataType, value);
     BoundStatement boundInsert = boundBuilder.build();
-    cluster.session().execute(boundInsert);
+    sessionRule.session().execute(boundInsert);
 
     SimpleStatement select =
         SimpleStatement.builder(String.format("SELECT %s FROM %s where k=?", columnName, tableName))
             .build();
 
-    PreparedStatement preparedSelect = cluster.session().prepare(select);
+    PreparedStatement preparedSelect = sessionRule.session().prepare(select);
     BoundStatement boundSelect = setValue(0, preparedSelect.bind(), DataTypes.INT, key);
 
     readValue(boundSelect, dataType, value, expectedPrimitiveValue);
@@ -410,19 +411,19 @@ public class DataTypeIT {
                 String.format("INSERT INTO %s (k, %s) values (:k, :v)", tableName, columnName))
             .build();
 
-    PreparedStatement preparedInsert = cluster.session().prepare(insert);
+    PreparedStatement preparedInsert = sessionRule.session().prepare(insert);
     BoundStatementBuilder boundBuilder = preparedInsert.boundStatementBuilder();
     boundBuilder = setValue("k", boundBuilder, DataTypes.INT, key);
     boundBuilder = setValue("v", boundBuilder, dataType, value);
     BoundStatement boundInsert = boundBuilder.build();
-    cluster.session().execute(boundInsert);
+    sessionRule.session().execute(boundInsert);
 
     SimpleStatement select =
         SimpleStatement.builder(
                 String.format("SELECT %s FROM %s where k=:k", columnName, tableName))
             .build();
 
-    PreparedStatement preparedSelect = cluster.session().prepare(select);
+    PreparedStatement preparedSelect = sessionRule.session().prepare(select);
     BoundStatement boundSelect = setValue("k", preparedSelect.bind(), DataTypes.INT, key);
     boundSelect.setInt("k", key);
 
@@ -432,8 +433,8 @@ public class DataTypeIT {
   private static <S extends SettableByIndex<S>> S setValue(
       int index, S bs, DataType dataType, Object value) {
     TypeCodec<Object> codec =
-        cluster.cluster() != null
-            ? cluster.cluster().getContext().codecRegistry().codecFor(dataType)
+        sessionRule.session() != null
+            ? sessionRule.session().getContext().codecRegistry().codecFor(dataType)
             : null;
 
     // set to null if value is null instead of getting possible NPE when casting from null to primitive.
@@ -522,8 +523,8 @@ public class DataTypeIT {
   private static <S extends SettableByName<S>> S setValue(
       String name, S bs, DataType dataType, Object value) {
     TypeCodec<Object> codec =
-        cluster.cluster() != null
-            ? cluster.cluster().getContext().codecRegistry().codecFor(dataType)
+        sessionRule.session() != null
+            ? sessionRule.session().getContext().codecRegistry().codecFor(dataType)
             : null;
 
     // set to null if value is null instead of getting possible NPE when casting from null to primitive.
@@ -611,8 +612,8 @@ public class DataTypeIT {
 
   private <K> void readValue(
       Statement<?> select, DataType dataType, K value, K expectedPrimitiveValue) {
-    TypeCodec<Object> codec = cluster.cluster().getContext().codecRegistry().codecFor(dataType);
-    ResultSet result = cluster.session().execute(select);
+    TypeCodec<Object> codec = sessionRule.session().getContext().codecRegistry().codecFor(dataType);
+    ResultSet result = sessionRule.session().execute(select);
 
     String columnName = columnNameFor(dataType);
 
@@ -717,7 +718,7 @@ public class DataTypeIT {
         for (int i = 0; i < exValue.getType().getComponentTypes().size(); i++) {
           DataType compType = exValue.getType().getComponentTypes().get(i);
           TypeCodec<?> typeCodec =
-              cluster.cluster().getContext().codecRegistry().codecFor(compType);
+              sessionRule.session().getContext().codecRegistry().codecFor(compType);
           assertThat(returnedValue.get(i, typeCodec)).isEqualTo(exValue.get(i, typeCodec));
         }
 
@@ -736,7 +737,7 @@ public class DataTypeIT {
           String compName = exUdtValue.getType().getFieldNames().get(i).asCql(false);
 
           TypeCodec<?> typeCodec =
-              cluster.cluster().getContext().codecRegistry().codecFor(compType);
+              sessionRule.session().getContext().codecRegistry().codecFor(compType);
 
           assertThat(returnedUdtValue.get(compName, typeCodec))
               .isEqualTo(exUdtValue.get(compName, typeCodec));
@@ -753,7 +754,7 @@ public class DataTypeIT {
     }
 
     // Decode directly using the codec
-    ProtocolVersion protocolVersion = cluster.cluster().getContext().protocolVersion();
+    ProtocolVersion protocolVersion = sessionRule.session().getContext().protocolVersion();
     assertThat(codec.decode(row.getBytesUnsafe(columnName), protocolVersion)).isEqualTo(value);
     assertThat(codec.decode(row.getBytesUnsafe(0), protocolVersion)).isEqualTo(value);
   }
@@ -792,14 +793,14 @@ public class DataTypeIT {
         fieldParts.add(fieldName + " " + fieldType);
       }
 
-      cluster
+      sessionRule
           .session()
           .execute(
               SimpleStatement.builder(
                       String.format(
                           "CREATE TYPE IF NOT EXISTS %s (%s)",
                           udt.getName().asCql(false), String.join(",", fieldParts)))
-                  .withConfigProfile(cluster.slowProfile())
+                  .withConfigProfile(sessionRule.slowProfile())
                   .build());
 
       typeName = "frozen<" + udt.getName().asCql(false) + ">";

@@ -16,46 +16,37 @@ following coordinates:
 Here's a short program that connects to Cassandra and executes a query:
 
 ```java
-try (Cluster<CqlSession> cluster = Cluster.builder().build()) {                            // (1)
+import com.datastax.oss.driver.api.core.CqlSession;
+import com.datastax.oss.driver.api.core.cql.*;
 
-  CqlSession session = cluster.connect();                                                  // (2)
-
-  ResultSet rs = session.execute("select release_version from system.local");              // (3)
+try (CqlSession session = CqlSession.builder().build()) {                                  // (1)
+  ResultSet rs = session.execute("select release_version from system.local");              // (2)
   Row row = rs.one();
-  System.out.println(row.getString("release_version"));                                    // (4)
+  System.out.println(row.getString("release_version"));                                    // (3)
 }
 ```
 
-1. [Cluster] is the main entry point of the driver. It holds the known state of the actual Cassandra 
-   cluster. It is thread-safe, you should create a single instance (per target Cassandra cluster),
-    and share it throughout your application;
-2. [CqlSession] is what you use to execute queries. Likewise, it is thread-safe and should be 
-   reused;
-3. we use `execute` to send a query to Cassandra. This returns a [ResultSet], which is an iterable 
+1. [CqlSession] is the main entry point of the driver. It holds the known state of the actual
+   Cassandra cluster, and is what you use to execute queries. It is thread-safe, you should create a
+   single instance (per target Cassandra cluster), and share it throughout your application;
+2. we use `execute` to send a query to Cassandra. This returns a [ResultSet], which is an iterable 
    of [Row] objects. On the next line, we extract the first row (which is the only one in this case);
-4. we extract the value of the first (and only) column from the row.
+3. we extract the value of the first (and only) column from the row.
 
-Always close the `Cluster` once you're done with it, in order to free underlying resources (TCP 
-connections, thread pools...). Closing a `Cluster` also closes any `CqlSession` that was created
-from it. In this simple example, we can use a try-with-resources block because `Cluster` implements
-`java.lang.AutoCloseable`; in a real application, you'll probably call one of the close methods 
-(`close`, `closeAsync`, `forceCloseAsync`) explicitly.
+Always close the `CqlSession` once you're done with it, in order to free underlying resources (TCP 
+connections, thread pools...). In this simple example, we can use a try-with-resources block because
+`CqlSession` implements `java.lang.AutoCloseable`; in a real application, you'll probably call one
+of the close methods (`close`, `closeAsync`, `forceCloseAsync`) explicitly.
 
 This example uses the synchronous API. Most methods have asynchronous equivalents (look for `*Async`
 variants that return a `CompletionStage`).
 
-Note to framework implementors: if you design an API that lets users provide their own cluster
-instance, use a bounded type parameter, like `Cluster<? extends CqlSession>` (or even
-`Cluster<? extends Session>` if you don't use any CQL-specific method). This allows custom cluster
-implementations to be used as a drop-in replacement (see `RequestProcessorIT` in the integration
-tests for an example of what such a custom implementation looks like).
-
 
 ### Setting up the driver
 
-#### [Cluster]
+#### [CqlSession]
 
-[Cluster#builder()] provides a fluent API to create an instance programmatically. Most of the
+[CqlSession#builder()] provides a fluent API to create an instance programmatically. Most of the
 customization is done through the driver configuration (refer to the
 [corresponding section](configuration/) of this manual for full details).
 
@@ -63,23 +54,33 @@ We recommend that you take a look at the `reference.conf` file bundled with the 
 of available options, and cross-reference with the sub-sections in this manual for more
 explanations.
 
-#### [CqlSession]
-
 By default, a session isn't tied to any specific keyspace. You'll need to prefix table names in your
 queries:
 
 ```java
-CqlSession session = cluster.connect();
-session.execute("SELECT * FROM myKeyspace.myTable WHERE id = 1");
+session.execute("SELECT * FROM my_keyspace.my_table WHERE id = 1");
 ```
 
-You can also specify a keyspace name at construction time, it will be used as the default when table
-names are not qualified:
+You can also specify a keyspace at construction time, either through the
+[configuration](configuration/):
+
+```
+session-keyspace = my_keyspace
+```
+
+Or with the builder:
 
 ```java
-CqlSession session = cluster.connect(CqlIdentifier.fromCql("myKeyspace"));
-session.execute("SELECT * FROM myTable WHERE id = 1");
-session.execute("SELECT * FROM otherKeyspace.otherTable WHERE id = 1");
+CqlSession session = CqlSession.builder()
+  .withKeyspace(CqlIdentifier.fromCql("my_keyspace"))
+  .build();
+```
+
+That keyspace will be used as the default when table names are not qualified:
+
+```java
+session.execute("SELECT * FROM my_table WHERE id = 1");
+session.execute("SELECT * FROM other_keyspace.other_table WHERE id = 1");
 ```
 
 You might be tempted to open a separate session for each keyspace used in your application; however,
@@ -87,30 +88,36 @@ connection pools are created at the session level, so each new session will cons
 system resources:
 
 ```java
-// Warning: creating two sessions doubles the number of TCP connections opened by the driver
-CqlSession session1 = cluster.connect(CqlIdentifier.fromCql("ks1"));
-CqlSession session2 = cluster.connect(CqlIdentifier.fromCql("ks2"));
+// Anti-pattern: creating two sessions doubles the number of TCP connections opened by the driver
+CqlSession session1 = CqlSession.builder().withKeyspace(CqlIdentifier.fromCql("ks1")).build();
+CqlSession session2 = CqlSession.builder().withKeyspace(CqlIdentifier.fromCql("ks2")).build();
 ```
 
 If you issue a `USE` statement, it will change the default keyspace on that session:
 
 ```java
-CqlSession session = cluster.connect();
+CqlSession session = CqlSession.builder().build();
 // No default keyspace set, need to prefix:
-session.execute("SELECT * FROM myKeyspace.myTable WHERE id = 1");
+session.execute("SELECT * FROM my_keyspace.my_table WHERE id = 1");
 
-session.execute("USE myKeyspace");
+session.execute("USE my_keyspace");
 // Now the keyspace is set, unqualified query works:
-session.execute("SELECT * FROM myTable WHERE id = 1");
+session.execute("SELECT * FROM my_table WHERE id = 1");
 ```
 
 Be very careful though: switching the keyspace at runtime is inherently thread-unsafe, so if the
 session is shared by multiple threads (and is usually is), it could easily cause unexpected query
 failures.
 
-Finally, [CASSANDRA-10145] \(coming in Cassandra 4) will allow specifying the keyspace on a per
-query basis instead of relying on session state, which should greatly simplify multiple keyspace
-handling. 
+Finally, if you're connecting to Cassandra 4 or above, you can specify the keyspace independently
+for each request:
+
+```java
+CqlSession session = CqlSession.builder().build();
+session.execute(
+  SimpleStatement.newInstance("SELECT * FROM my_table WHERE id = 1")
+      .setKeyspace(CqlIdentifier.fromCql("my_keyspace")));
+``` 
 
 ### Running queries
 
@@ -252,13 +259,12 @@ for (ColumnDefinitions.Definition definition : row.getColumnDefinitions()) {
 }
 ```
 
-[Cluster]:           http://docs.datastax.com/en/drivers/java/4.0/com/datastax/oss/driver/api/core/Cluster.html
-[Cluster#builder()]: http://docs.datastax.com/en/drivers/java/4.0/com/datastax/oss/driver/api/core/Cluster.html#builder--
-[CqlSession]:        http://docs.datastax.com/en/drivers/java/4.0/com/datastax/oss/driver/api/core/cql/CqlSession.html
-[ResultSet]:         http://docs.datastax.com/en/drivers/java/4.0/com/datastax/oss/driver/api/core/cql/ResultSet.html
-[Row]:               http://docs.datastax.com/en/drivers/java/4.0/com/datastax/oss/driver/api/core/cql/Row.html
-[CqlIdentifier]:     http://docs.datastax.com/en/drivers/java/4.0/com/datastax/oss/driver/api/core/CqlIdentifier.html
-[AccessibleByName]:  http://docs.datastax.com/en/drivers/java/4.0/com/datastax/oss/driver/api/core/data/AccessibleByName.html
-[GenericType]:       http://docs.datastax.com/en/drivers/java/4.0/com/datastax/oss/driver/api/core/type/reflect/GenericType.html
+[CqlSession]:           http://docs.datastax.com/en/drivers/java/4.0/com/datastax/oss/driver/api/core/cql/CqlSession.html
+[CqlSession#builder()]: http://docs.datastax.com/en/drivers/java/4.0/com/datastax/oss/driver/api/core/cql/CqlSession.html#builder--
+[ResultSet]:            http://docs.datastax.com/en/drivers/java/4.0/com/datastax/oss/driver/api/core/cql/ResultSet.html
+[Row]:                  http://docs.datastax.com/en/drivers/java/4.0/com/datastax/oss/driver/api/core/cql/Row.html
+[CqlIdentifier]:        http://docs.datastax.com/en/drivers/java/4.0/com/datastax/oss/driver/api/core/CqlIdentifier.html
+[AccessibleByName]:     http://docs.datastax.com/en/drivers/java/4.0/com/datastax/oss/driver/api/core/data/AccessibleByName.html
+[GenericType]:          http://docs.datastax.com/en/drivers/java/4.0/com/datastax/oss/driver/api/core/type/reflect/GenericType.html
 
 [CASSANDRA-10145]: https://issues.apache.org/jira/browse/CASSANDRA-10145

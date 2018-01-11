@@ -15,11 +15,11 @@
  */
 package com.datastax.oss.driver.api.core.loadbalancing;
 
-import com.datastax.oss.driver.api.core.ClusterBuilder;
 import com.datastax.oss.driver.api.core.metadata.Node;
 import com.datastax.oss.driver.api.core.metadata.NodeState;
 import com.datastax.oss.driver.api.core.session.Request;
 import com.datastax.oss.driver.api.core.session.Session;
+import com.datastax.oss.driver.api.core.session.SessionBuilder;
 import java.net.InetSocketAddress;
 import java.util.Collection;
 import java.util.Map;
@@ -41,7 +41,7 @@ public interface LoadBalancingPolicy extends AutoCloseable {
    *     if so you will receive a notification
    * @param distanceReporter an object that will be used by the policy to signal distance changes.
    * @param contactPoints the set of contact points that the driver was initialized with (see {@link
-   *     ClusterBuilder#addContactPoints(Collection)}). This is provided for reference, in case the
+   *     SessionBuilder#addContactPoints(Collection)}). This is provided for reference, in case the
    *     policy needs to handle those nodes in a particular way. Each address in this set should
    *     normally have a corresponding entry in {@code nodes}, except for contact points that were
    *     down or invalid. If no contact points were provided, the driver defaults to 127.0.0.1:9042,

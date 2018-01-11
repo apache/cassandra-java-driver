@@ -15,8 +15,9 @@
  */
 package com.datastax.oss.driver.api.core.cql;
 
+import com.datastax.oss.driver.api.core.CqlSession;
 import com.datastax.oss.driver.api.testinfra.ccm.CcmRule;
-import com.datastax.oss.driver.api.testinfra.cluster.ClusterRule;
+import com.datastax.oss.driver.api.testinfra.cluster.SessionRule;
 import com.datastax.oss.driver.categories.ParallelizableTests;
 import java.util.Iterator;
 import java.util.concurrent.CompletableFuture;
@@ -40,21 +41,22 @@ public class AsyncResultSetIT {
   @ClassRule public static CcmRule ccm = CcmRule.getInstance();
 
   @ClassRule
-  public static ClusterRule cluster = new ClusterRule(ccm, "request.page-size = " + PAGE_SIZE);
+  public static SessionRule<CqlSession> sessionRule =
+      new SessionRule<>(ccm, "request.page-size = " + PAGE_SIZE);
 
   @BeforeClass
   public static void setupSchema() {
     // create table and load data across two partitions so we can test paging across tokens.
-    cluster
+    sessionRule
         .session()
         .execute(
             SimpleStatement.builder(
                     "CREATE TABLE IF NOT EXISTS test (k0 text, k1 int, v int, PRIMARY KEY(k0, k1))")
-                .withConfigProfile(cluster.slowProfile())
+                .withConfigProfile(sessionRule.slowProfile())
                 .build());
 
     PreparedStatement prepared =
-        cluster.session().prepare("INSERT INTO test (k0, k1, v) VALUES (?, ?, ?)");
+        sessionRule.session().prepare("INSERT INTO test (k0, k1, v) VALUES (?, ?, ?)");
 
     BatchStatementBuilder batchPart1 = BatchStatement.builder(BatchType.UNLOGGED);
     BatchStatementBuilder batchPart2 = BatchStatement.builder(BatchType.UNLOGGED);
@@ -64,15 +66,15 @@ public class AsyncResultSetIT {
           prepared.bind(PARTITION_KEY2, i + ROWS_PER_PARTITION, i + ROWS_PER_PARTITION));
     }
 
-    cluster.session().execute(batchPart1.withConfigProfile(cluster.slowProfile()).build());
-    cluster.session().execute(batchPart2.withConfigProfile(cluster.slowProfile()).build());
+    sessionRule.session().execute(batchPart1.withConfigProfile(sessionRule.slowProfile()).build());
+    sessionRule.session().execute(batchPart2.withConfigProfile(sessionRule.slowProfile()).build());
   }
 
   @Test
   public void should_only_iterate_over_rows_in_current_page() throws Exception {
     // very basic test that just ensures that iterating over an AsyncResultSet only visits the first page.
     CompletionStage<AsyncResultSet> result =
-        cluster
+        sessionRule
             .session()
             .executeAsync(
                 SimpleStatement.builder("SELECT * FROM test where k0 = ?")
@@ -98,7 +100,7 @@ public class AsyncResultSetIT {
   public void should_iterate_over_all_pages_asynchronously_single_partition() throws Exception {
     // Validates async paging behavior over single partition.
     CompletionStage<PageStatistics> result =
-        cluster
+        sessionRule
             .session()
             .executeAsync(
                 SimpleStatement.builder("SELECT * FROM test where k0 = ?")
@@ -116,7 +118,7 @@ public class AsyncResultSetIT {
   public void should_iterate_over_all_pages_asynchronously_cross_partition() throws Exception {
     // Validates async paging behavior over a range query.
     CompletionStage<PageStatistics> result =
-        cluster
+        sessionRule
             .session()
             .executeAsync("SELECT * FROM test")
             .thenCompose(new AsyncResultSetConsumingFunction());

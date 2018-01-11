@@ -68,7 +68,7 @@ public class MetadataManager implements AsyncAutoCloseable {
 
   public MetadataManager(InternalDriverContext context) {
     this.context = context;
-    this.logPrefix = context.clusterName();
+    this.logPrefix = context.sessionName();
     this.adminExecutor = context.nettyOptions().adminEventExecutorGroup().next();
     this.config = context.config().getDefaultProfile();
     this.singleThreaded = new SingleThreaded(context, config);

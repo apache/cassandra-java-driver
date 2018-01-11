@@ -314,7 +314,8 @@ public class ChannelPool implements AsyncAutoCloseable {
         }
       }
       // If all channels failed, assume the keyspace is wrong
-      invalidKeyspace = (invalidKeyspaceErrors == pendingChannels.size());
+      invalidKeyspace =
+          invalidKeyspaceErrors > 0 && invalidKeyspaceErrors == pendingChannels.size();
 
       pendingChannels.clear();
 

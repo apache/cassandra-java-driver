@@ -15,9 +15,10 @@
  */
 package com.datastax.oss.driver.api.core.cql;
 
+import com.datastax.oss.driver.api.core.CqlSession;
 import com.datastax.oss.driver.api.core.servererrors.InvalidQueryException;
 import com.datastax.oss.driver.api.testinfra.ccm.CcmRule;
-import com.datastax.oss.driver.api.testinfra.cluster.ClusterRule;
+import com.datastax.oss.driver.api.testinfra.cluster.SessionRule;
 import com.datastax.oss.driver.categories.ParallelizableTests;
 import java.util.concurrent.TimeUnit;
 import org.junit.BeforeClass;
@@ -35,7 +36,8 @@ public class SimpleStatementIT {
 
   @ClassRule public static CcmRule ccm = CcmRule.getInstance();
 
-  @ClassRule public static ClusterRule cluster = new ClusterRule(ccm, "request.page-size = 20");
+  @ClassRule
+  public static SessionRule<CqlSession> cluster = new SessionRule<>(ccm, "request.page-size = 20");
 
   @Rule public TestName name = new TestName();
 

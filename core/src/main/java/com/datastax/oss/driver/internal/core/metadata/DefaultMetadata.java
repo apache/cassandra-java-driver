@@ -117,7 +117,7 @@ public class DefaultMetadata implements Metadata {
       TokenFactory tokenFactory,
       InternalDriverContext context) {
 
-    String logPrefix = context.clusterName();
+    String logPrefix = context.sessionName();
     ReplicationStrategyFactory replicationStrategyFactory = context.replicationStrategyFactory();
 
     if (!tokenMapEnabled) {

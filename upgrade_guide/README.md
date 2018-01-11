@@ -34,13 +34,37 @@ For more details, refer to the [manual](../manual/core/configuration).
 
 #### Expose interfaces, not classes
 
-Most types in the public API are now interfaces (as opposed to 3.x: `Cluster`, statement classes, 
+Most types in the public API are now interfaces (as opposed to 3.x: `Session`, statement classes, 
 etc). The actual implementations are part of the internal API. This provides more flexibility in
 client code (e.g. to wrap them and write delegates).
 
 Thanks to Java 8, factory methods can now be part of these interfaces directly, e.g.
-`Cluster.builder()`, `SimpleStatement.newInstance`.
+`CqlSession.builder()`, `SimpleStatement.newInstance`.
 
+#### No more `Cluster`
+
+In previous driver versions, initialization was done in two steps: create a `Cluster`, and then call
+its `connect` method to create a `Session`.
+
+Those two types have now been merged: there is only one `Session` object, that you initialize
+directly.
+
+#### Generic session API
+
+`Session` is now a high-level abstraction capable of executing arbitrary requests. Out of the box,
+the driver exposes a more familiar subtype `CqlSession`, that provides familiar signatures for CQL
+queries (`execute(Statement)`, `prepare(String)`, etc).
+
+However, the request execution logic is completely pluggable, and supports arbitrary request types
+(as long as you write the boilerplate to convert them to protocol messages). In the future, we will
+take advantage of that to provide:
+
+* a reactive API;
+* a high-performance implementation that exposes bare Netty buffers;
+* specialized requests in our DataStax Enterprise driver.
+
+If you're interested, take a look at `RequestProcessor`.
+ 
 #### Immutable statement types
 
 Simple, bound and batch statements implementations are now all immutable. This makes them
@@ -63,22 +87,6 @@ boundSelect = boundSelect.setInt("k", key);
 
 Note that, as indicated in the previous section, the public API exposes these types as interfaces:
 if for some reason you prefer a mutable implementation, it's possible to write your own.
-
-#### Generic session API
-
-`Session` is now a high-level abstraction capable of executing arbitrary requests. Out of the box,
-the driver supports the same CQL queries as 3.x, and exposes familiar signatures
-(`execute(Statement)`, `prepare(String)`, etc).
-
-However, the request execution logic is completely pluggable, and supports arbitrary request types
-as long as you write the boilerplate to convert them to protocol messages. In the future, we will
-take advantage of that to provide:
-
-* a reactive API;
-* a high-performance implementation that exposes bare Netty buffers;
-* specialized requests in our DataStax Enterprise driver.
-
-If you're interested, take a look at `RequestProcessor`.
 
 #### Dual result set APIs
 
@@ -120,7 +128,7 @@ the same rules as in 3.x (see `GettableById` and `GettableByName` for details).
 
 #### Atomic metadata updates
 
-`Cluster.getMetadata()` is now immutable and updated atomically. The node list, schema metadata and
+`Session.getMetadata()` is now immutable and updated atomically. The node list, schema metadata and
 token map exposed by a given `Metadata` instance are guaranteed to be in sync.
 
 On the other hand, this means you have to call `getMetadata()` again each time you need a fresh

@@ -13,16 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.datastax.oss.driver.api.core;
+package com.datastax.oss.driver.api.testinfra.cluster;
 
-import com.datastax.oss.driver.api.core.cql.CqlSession;
+import com.datastax.oss.driver.api.core.CqlSession;
+import com.datastax.oss.driver.api.testinfra.CassandraResourceRule;
 
-/** Helper class to build an instance of the default {@link Cluster} implementation. */
-public class DefaultClusterBuilder
-    extends ClusterBuilder<DefaultClusterBuilder, Cluster<CqlSession>> {
+public class CqlSessionRuleBuilder extends SessionRuleBuilder<CqlSessionRuleBuilder, CqlSession> {
+
+  public CqlSessionRuleBuilder(CassandraResourceRule cassandraResource) {
+    super(cassandraResource);
+  }
 
   @Override
-  protected Cluster<CqlSession> wrap(Cluster<CqlSession> defaultCluster) {
-    return defaultCluster;
+  public SessionRule<CqlSession> build() {
+    return new SessionRule<>(cassandraResource, createKeyspace, nodeStateListeners, options);
   }
 }

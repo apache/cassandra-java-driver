@@ -16,14 +16,14 @@
 package com.datastax.oss.driver.api.core.connection;
 
 import com.datastax.oss.driver.api.core.AllNodesFailedException;
-import com.datastax.oss.driver.api.core.config.DriverOption;
 import com.datastax.oss.driver.api.core.context.DriverContext;
 import com.datastax.oss.driver.api.core.cql.AsyncResultSet;
+import com.datastax.oss.driver.api.core.CqlSession;
 import com.datastax.oss.driver.api.core.cql.SimpleStatement;
 import com.datastax.oss.driver.api.core.retry.DefaultRetryPolicy;
 import com.datastax.oss.driver.api.core.retry.RetryDecision;
 import com.datastax.oss.driver.api.core.session.Request;
-import com.datastax.oss.driver.api.testinfra.cluster.ClusterRule;
+import com.datastax.oss.driver.api.testinfra.cluster.SessionRule;
 import com.datastax.oss.driver.api.testinfra.simulacron.SimulacronRule;
 import com.datastax.oss.driver.categories.ParallelizableTests;
 import com.datastax.oss.simulacron.common.cluster.ClusterSpec;
@@ -48,8 +48,8 @@ public class FrameLengthIT {
       new SimulacronRule(ClusterSpec.builder().withNodes(1));
 
   @ClassRule
-  public static ClusterRule cluster =
-      new ClusterRule(
+  public static SessionRule<CqlSession> sessionRule =
+      new SessionRule<>(
           simulacron,
           "load-balancing-policy.class = com.datastax.oss.driver.api.testinfra.loadbalancing.SortingLoadBalancingPolicy",
           "request.retry-policy.class = \"com.datastax.oss.driver.api.core.connection.FrameLengthIT$AlwaysRetryAbortedPolicy\"",
@@ -76,16 +76,17 @@ public class FrameLengthIT {
 
   @Test(expected = FrameTooLongException.class)
   public void should_fail_if_request_exceeds_max_frame_length() {
-    cluster
+    sessionRule
         .session()
         .execute(SimpleStatement.newInstance("insert into foo (k) values (?)", ONE_HUNDRED_KB));
   }
 
   @Test
   public void should_fail_if_response_exceeds_max_frame_length() {
-    CompletionStage<AsyncResultSet> slowResultFuture = cluster.session().executeAsync(SLOW_QUERY);
+    CompletionStage<AsyncResultSet> slowResultFuture =
+        sessionRule.session().executeAsync(SLOW_QUERY);
     try {
-      cluster.session().execute(LARGE_QUERY);
+      sessionRule.session().execute(LARGE_QUERY);
       fail("Expected a " + FrameTooLongException.class.getSimpleName());
     } catch (FrameTooLongException e) {
       // expected

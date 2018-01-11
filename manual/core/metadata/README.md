@@ -1,6 +1,6 @@
 ## Metadata
 
-The driver exposes metadata about the Cassandra cluster via the [Cluster#getMetadata] method. It
+The driver exposes metadata about the Cassandra cluster via the [Session#getMetadata] method. It
 returns a [Metadata] object, which contains three types of information:
 
 * [node metadata](node/)
@@ -12,7 +12,7 @@ link above for details). Each call to `getMetadata()` will return a **new copy**
 changed since the last call. Do not cache the result across usages:
 
 ```java
-Metadata metadata = cluster.getMetadata();
+Metadata metadata = session.getMetadata();
 
 session.execute("CREATE TABLE test.foo (k int PRIMARY KEY)");
 
@@ -29,7 +29,7 @@ On the other hand, the advantage of immutability is that a `Metadata` instance p
 guaranteed to be in sync with the node and schema metadata:
 
 ```java
-Metadata metadata = cluster.getMetadata();
+Metadata metadata = session.getMetadata();
 // Pick up any node and keyspace:
 Node node = metadata.getNodes().values().iterator().next();
 KeyspaceMetadata keyspace = metadata.getKeyspaces().values().iterator().next();
@@ -42,6 +42,6 @@ Set<TokenRange> tokenRanges = tokenMap.getTokenRanges(keyspace.getName(), node);
 This is a big improvement over previous versions of the driver, where it was possible to observe a
 new keyspace in the schema metadata before the token metadata was updated.
 
-[Cluster#getMetadata]:                          http://docs.datastax.com/en/drivers/java/4.0/com/datastax/oss/driver/api/core/Cluster.html#getMetadata--
+[Session#getMetadata]:                          http://docs.datastax.com/en/drivers/java/4.0/com/datastax/oss/driver/api/core/session/Session.html#getMetadata--
 [Metadata]:                                     http://docs.datastax.com/en/drivers/java/4.0/com/datastax/oss/driver/api/core/metadata/Metadata.html
 [Node]:                                         http://docs.datastax.com/en/drivers/java/4.0/com/datastax/oss/driver/api/core/metadata/Node.html

@@ -15,7 +15,7 @@
  */
 package com.datastax.oss.driver.internal.core.metadata;
 
-import com.datastax.oss.driver.api.core.Cluster;
+import com.datastax.oss.driver.api.core.session.Session;
 import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
 import java.util.Collections;
 import java.util.List;
@@ -31,7 +31,7 @@ import java.util.List;
  * <p>This is only instantiated and called from {@link MetadataManager}'s admin thread, therefore
  * implementations don't need to be thread-safe.
  *
- * @see Cluster#getMetadata()
+ * @see Session#getMetadata()
  */
 public interface MetadataRefresh {
 

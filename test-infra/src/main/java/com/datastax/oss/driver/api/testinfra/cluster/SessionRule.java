@@ -15,17 +15,18 @@
  */
 package com.datastax.oss.driver.api.testinfra.cluster;
 
-import com.datastax.oss.driver.api.core.Cluster;
 import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.config.DriverConfigProfile;
-import com.datastax.oss.driver.api.core.cql.CqlSession;
+import com.datastax.oss.driver.api.core.cql.SimpleStatement;
+import com.datastax.oss.driver.api.core.cql.Statement;
 import com.datastax.oss.driver.api.core.metadata.NodeStateListener;
+import com.datastax.oss.driver.api.core.session.Session;
 import com.datastax.oss.driver.api.testinfra.CassandraResourceRule;
 import com.datastax.oss.driver.api.testinfra.simulacron.SimulacronRule;
 import org.junit.rules.ExternalResource;
 
 /**
- * Creates and manages a {@link Cluster} instance for a test.
+ * Creates and manages a {@link Session} instance for a test.
  *
  * <p>Use it in conjunction with a {@link CassandraResourceRule} that creates the server resource to
  * connect to:
@@ -36,33 +37,29 @@ import org.junit.rules.ExternalResource;
  * // Or: public static @ClassRule SimulacronRule server =
  * //    new SimulacronRule(ClusterSpec.builder().withNodes(3));
  *
- * public static @ClassRule ClusterRule cluster = new ClusterRule(server);
+ * public static @ClassRule SessionRule sessionRule = new SessionRule(server);
  *
  * public void @Test should_do_something() {
- *   cluster.session().execute("some query");
+ *   sessionRule.session().execute("some query");
  * }
  * }</pre>
  *
  * Optionally, it can also create a dedicated keyspace (useful to isolate tests that share a common
- * server), and initialize a session.
+ * server).
  *
  * <p>If you would rather create a new keyspace manually in each test, see the utility methods in
- * {@link ClusterUtils}.
+ * {@link SessionUtils}.
  */
-public class ClusterRule<T extends CqlSession> extends ExternalResource {
+public class SessionRule<SessionT extends Session> extends ExternalResource {
 
   // the CCM or Simulacron rule to depend on
   private final CassandraResourceRule cassandraResource;
   private final NodeStateListener[] nodeStateListeners;
   private final CqlIdentifier keyspace;
-  private final boolean createDefaultSession;
-  private final String[] defaultClusterOptions;
+  private final String[] defaultOptions;
 
-  // the default cluster that is auto created for this rule.
-  private Cluster<T> cluster;
-
-  // the default session that is auto created for this rule and is tied to the given keyspace.
-  private T defaultSession;
+  // the session that is auto created for this rule and is tied to the given keyspace.
+  private SessionT session;
 
   private DriverConfigProfile slowProfile;
 
@@ -71,21 +68,19 @@ public class ClusterRule<T extends CqlSession> extends ExternalResource {
    *
    * @param cassandraResource resource to create clusters for.
    */
-  public static <T extends CqlSession> ClusterRuleBuilder<ClusterRuleBuilder, T> builder(
-      CassandraResourceRule cassandraResource) {
-    return new ClusterRuleBuilder<>(cassandraResource);
+  public static CqlSessionRuleBuilder builder(CassandraResourceRule cassandraResource) {
+    return new CqlSessionRuleBuilder(cassandraResource);
   }
 
   /** @see #builder(CassandraResourceRule) */
-  public ClusterRule(CassandraResourceRule cassandraResource, String... options) {
-    this(cassandraResource, true, true, new NodeStateListener[0], options);
+  public SessionRule(CassandraResourceRule cassandraResource, String... options) {
+    this(cassandraResource, true, new NodeStateListener[0], options);
   }
 
   /** @see #builder(CassandraResourceRule) */
-  public ClusterRule(
+  public SessionRule(
       CassandraResourceRule cassandraResource,
       boolean createKeyspace,
-      boolean createDefaultSession,
       NodeStateListener[] nodeStateListeners,
       String... options) {
     this.cassandraResource = cassandraResource;
@@ -93,46 +88,36 @@ public class ClusterRule<T extends CqlSession> extends ExternalResource {
     this.keyspace =
         (cassandraResource instanceof SimulacronRule || !createKeyspace)
             ? null
-            : ClusterUtils.uniqueKeyspaceId();
-    this.createDefaultSession = createDefaultSession;
-    this.defaultClusterOptions = options;
+            : SessionUtils.uniqueKeyspaceId();
+    this.defaultOptions = options;
   }
 
   @Override
   protected void before() {
-    // ensure resource is initialized before initializing the defaultCluster.
+    // ensure resource is initialized before initializing the session.
     cassandraResource.setUp();
-    cluster = ClusterUtils.newCluster(cassandraResource, nodeStateListeners, defaultClusterOptions);
 
-    slowProfile = ClusterUtils.slowProfile(cluster);
-
+    session = SessionUtils.newSession(cassandraResource, null, nodeStateListeners, defaultOptions);
+    slowProfile = SessionUtils.slowProfile(session);
     if (keyspace != null) {
-      ClusterUtils.createKeyspace(cluster, keyspace, slowProfile);
-    }
-    if (createDefaultSession) {
-      defaultSession = cluster.connect(keyspace);
+      SessionUtils.createKeyspace(session, keyspace, slowProfile);
+      session.execute(
+          SimpleStatement.newInstance(String.format("USE %s", keyspace.asCql(false))),
+          Statement.SYNC);
     }
   }
 
   @Override
   protected void after() {
     if (keyspace != null) {
-      ClusterUtils.dropKeyspace(cluster, keyspace, slowProfile);
+      SessionUtils.dropKeyspace(session, keyspace, slowProfile);
     }
-    cluster.close();
+    session.close();
   }
 
-  /** @return the cluster created with this rule. */
-  public Cluster<T> cluster() {
-    return cluster;
-  }
-
-  /**
-   * @return the default session created with this rule, or {@code null} if no default session was
-   *     created.
-   */
-  public T session() {
-    return defaultSession;
+  /** @return the session created with this rule. */
+  public SessionT session() {
+    return session;
   }
 
   /**

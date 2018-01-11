@@ -15,18 +15,16 @@
  */
 package com.datastax.oss.driver.example.guava.api;
 
-import com.datastax.oss.driver.api.core.Cluster;
-import com.datastax.oss.driver.api.core.ClusterBuilder;
 import com.datastax.oss.driver.api.core.config.DriverConfigLoader;
 import com.datastax.oss.driver.api.core.context.DriverContext;
-import com.datastax.oss.driver.api.core.cql.CqlSession;
-import com.datastax.oss.driver.example.guava.internal.DefaultGuavaCluster;
-import com.datastax.oss.driver.example.guava.internal.GuavaDriverContext;
+import com.datastax.oss.driver.api.core.CqlSession;
+import com.datastax.oss.driver.api.core.session.SessionBuilder;
 import com.datastax.oss.driver.api.core.type.codec.TypeCodec;
+import com.datastax.oss.driver.example.guava.internal.DefaultGuavaSession;
+import com.datastax.oss.driver.example.guava.internal.GuavaDriverContext;
 import java.util.List;
 
-public class GuavaClusterBuilder
-    extends ClusterBuilder<GuavaClusterBuilder, Cluster<GuavaSession>> {
+public class GuavaSessionBuilder extends SessionBuilder<GuavaSessionBuilder, GuavaSession> {
 
   @Override
   protected DriverContext buildContext(
@@ -35,7 +33,7 @@ public class GuavaClusterBuilder
   }
 
   @Override
-  protected Cluster<GuavaSession> wrap(Cluster<CqlSession> defaultCluster) {
-    return new DefaultGuavaCluster(defaultCluster);
+  protected GuavaSession wrap(CqlSession defaultSession) {
+    return new DefaultGuavaSession(defaultSession);
   }
 }

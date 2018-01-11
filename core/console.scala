@@ -15,7 +15,7 @@ import com.datastax.oss.driver.internal.core.metadata.TopologyEvent
 import com.datastax.oss.driver.internal.core.context.InternalDriverContext
 import java.net.InetSocketAddress
 
-import com.datastax.oss.driver.api.core.cql.CqlSession
+import CqlSession
 
 // Heartbeat logs every 30 seconds are annoying in the console, raise the interval
 System.setProperty("datastax-java-driver.connection.heartbeat.interval", "1 hour")
@@ -27,13 +27,13 @@ val address4 = new InetSocketAddress("127.0.0.4", 9042)
 val address5 = new InetSocketAddress("127.0.0.5", 9042)
 val address6 = new InetSocketAddress("127.0.0.6", 9042)
 
-val builder = Cluster.builder().addContactPoint(address1)
+val builder = CqlSession.builder().addContactPoint(address1)
 
 println("********************************************")
 println("*   To start a driver instance, run:       *")
-println("*   implicit val cluster = builder.build   *")
+println("*   implicit val session = builder.build   *")
 println("********************************************")
 
-def fire(event: AnyRef)(implicit cluster: Cluster[CqlSession]): Unit = {
-  cluster.getContext.asInstanceOf[InternalDriverContext].eventBus().fire(event)
+def fire(event: AnyRef)(implicit session: CqlSession): Unit = {
+  session.getContext.asInstanceOf[InternalDriverContext].eventBus().fire(event)
 }

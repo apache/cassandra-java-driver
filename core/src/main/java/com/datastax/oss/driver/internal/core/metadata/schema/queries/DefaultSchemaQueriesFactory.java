@@ -36,7 +36,7 @@ public class DefaultSchemaQueriesFactory implements SchemaQueriesFactory {
   }
 
   public SchemaQueries newInstance(CompletableFuture<Metadata> refreshFuture) {
-    String logPrefix = context.clusterName();
+    String logPrefix = context.sessionName();
 
     DriverChannel channel = context.controlConnection().channel();
     if (channel == null || channel.closeFuture().isDone()) {

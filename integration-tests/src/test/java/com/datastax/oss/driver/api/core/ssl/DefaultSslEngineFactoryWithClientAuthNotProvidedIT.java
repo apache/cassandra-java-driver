@@ -16,11 +16,10 @@
 package com.datastax.oss.driver.api.core.ssl;
 
 import com.datastax.oss.driver.api.core.AllNodesFailedException;
-import com.datastax.oss.driver.api.core.Cluster;
-import com.datastax.oss.driver.api.core.cql.CqlSession;
+import com.datastax.oss.driver.api.core.CqlSession;
 import com.datastax.oss.driver.api.testinfra.ccm.CcmBridge;
 import com.datastax.oss.driver.api.testinfra.ccm.CustomCcmRule;
-import com.datastax.oss.driver.api.testinfra.cluster.ClusterUtils;
+import com.datastax.oss.driver.api.testinfra.cluster.SessionUtils;
 import com.datastax.oss.driver.categories.IsolatedTests;
 import org.junit.ClassRule;
 import org.junit.Test;
@@ -37,11 +36,10 @@ public class DefaultSslEngineFactoryWithClientAuthNotProvidedIT {
         "javax.net.ssl.trustStore", CcmBridge.DEFAULT_CLIENT_TRUSTSTORE_FILE.getAbsolutePath());
     System.setProperty(
         "javax.net.ssl.trustStorePassword", CcmBridge.DEFAULT_CLIENT_TRUSTSTORE_PASSWORD);
-    try (Cluster<CqlSession> sslCluster =
-        ClusterUtils.newCluster(
+    try (CqlSession session =
+        SessionUtils.newSession(
             ccm,
             "ssl-engine-factory.class = com.datastax.oss.driver.api.core.ssl.DefaultSslEngineFactory")) {
-      CqlSession session = sslCluster.connect();
       session.execute("select * from system.local");
     }
   }

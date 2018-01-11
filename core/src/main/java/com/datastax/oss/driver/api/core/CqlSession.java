@@ -13,14 +13,25 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.datastax.oss.driver.api.core.cql;
+package com.datastax.oss.driver.api.core;
 
+import com.datastax.oss.driver.api.core.cql.AsyncResultSet;
+import com.datastax.oss.driver.api.core.cql.PrepareRequest;
+import com.datastax.oss.driver.api.core.cql.PreparedStatement;
+import com.datastax.oss.driver.api.core.cql.ResultSet;
+import com.datastax.oss.driver.api.core.cql.SimpleStatement;
+import com.datastax.oss.driver.api.core.cql.Statement;
 import com.datastax.oss.driver.api.core.session.Session;
 import com.datastax.oss.driver.internal.core.cql.DefaultPrepareRequest;
 import java.util.concurrent.CompletionStage;
 
 /** A specialized session with convenience methods to execute CQL statements. */
 public interface CqlSession extends Session {
+
+  /** Returns a builder to create a new instance. */
+  static CqlSessionBuilder builder() {
+    return new CqlSessionBuilder();
+  }
 
   /**
    * Executes a CQL statement synchronously (the calling thread blocks until the result becomes

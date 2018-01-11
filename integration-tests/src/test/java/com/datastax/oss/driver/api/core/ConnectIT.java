@@ -17,7 +17,8 @@ package com.datastax.oss.driver.api.core;
 
 import com.datastax.oss.driver.api.core.session.Session;
 import com.datastax.oss.driver.api.testinfra.ccm.CcmRule;
-import com.datastax.oss.driver.api.testinfra.cluster.ClusterRule;
+import com.datastax.oss.driver.api.testinfra.cluster.SessionRule;
+import com.datastax.oss.driver.api.testinfra.cluster.SessionUtils;
 import com.datastax.oss.driver.categories.ParallelizableTests;
 import org.junit.ClassRule;
 import org.junit.Test;
@@ -29,20 +30,19 @@ import static org.assertj.core.api.Assertions.assertThat;
 public class ConnectIT {
   @ClassRule public static CcmRule ccm = CcmRule.getInstance();
 
-  @ClassRule
-  public static ClusterRule cluster = ClusterRule.builder(ccm).withDefaultSession(false).build();
+  @ClassRule public static SessionRule<CqlSession> sessionRule = SessionRule.builder(ccm).build();
 
   @Test
   public void should_connect_to_existing_keyspace() {
-    CqlIdentifier keyspace = cluster.keyspace();
-    try (Session session = cluster.cluster().connect(keyspace)) {
+    CqlIdentifier keyspace = sessionRule.keyspace();
+    try (Session session = SessionUtils.newSession(ccm, keyspace)) {
       assertThat(session.getKeyspace()).isEqualTo(keyspace);
     }
   }
 
   @Test
   public void should_connect_with_no_keyspace() {
-    try (Session session = cluster.cluster().connect()) {
+    try (Session session = SessionUtils.newSession(ccm)) {
       assertThat(session.getKeyspace()).isNull();
     }
   }
@@ -50,6 +50,6 @@ public class ConnectIT {
   @Test(expected = InvalidKeyspaceException.class)
   public void should_fail_to_connect_to_non_existent_keyspace() {
     CqlIdentifier keyspace = CqlIdentifier.fromInternal("does not exist");
-    cluster.cluster().connect(keyspace);
+    SessionUtils.newSession(ccm, keyspace);
   }
 }

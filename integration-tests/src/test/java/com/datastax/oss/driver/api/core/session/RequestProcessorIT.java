@@ -15,17 +15,17 @@
  */
 package com.datastax.oss.driver.api.core.session;
 
-import com.datastax.oss.driver.api.core.Cluster;
+import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.cql.AsyncResultSet;
-import com.datastax.oss.driver.api.core.cql.CqlSession;
+import com.datastax.oss.driver.api.core.CqlSession;
 import com.datastax.oss.driver.api.core.cql.PreparedStatement;
 import com.datastax.oss.driver.api.core.cql.SimpleStatement;
 import com.datastax.oss.driver.api.testinfra.ccm.CcmRule;
-import com.datastax.oss.driver.api.testinfra.cluster.ClusterRule;
+import com.datastax.oss.driver.api.testinfra.cluster.SessionRule;
 import com.datastax.oss.driver.categories.ParallelizableTests;
-import com.datastax.oss.driver.example.guava.api.GuavaClusterUtils;
 import com.datastax.oss.driver.example.guava.api.GuavaSession;
-import com.datastax.oss.driver.example.guava.internal.DefaultGuavaCluster;
+import com.datastax.oss.driver.example.guava.api.GuavaSessionUtils;
+import com.datastax.oss.driver.example.guava.internal.DefaultGuavaSession;
 import com.datastax.oss.driver.example.guava.internal.GuavaDriverContext;
 import com.datastax.oss.driver.example.guava.internal.KeyRequest;
 import com.datastax.oss.driver.example.guava.internal.KeyRequestProcessor;
@@ -48,7 +48,7 @@ import static org.assertj.core.api.Assertions.assertThat;
  * com.datastax.oss.driver.internal.core.session.RequestProcessor} implementations to add-in
  * additional request handling and response types.
  *
- * <p>Uses {@link DefaultGuavaCluster} which is a specialized cluster implementation that uses
+ * <p>Uses {@link DefaultGuavaSession} which is a specialized session implementation that uses
  * {@link GuavaDriverContext} which overrides {@link
  * DefaultDriverContext#requestProcessorRegistry()} to provide its own {@link
  * com.datastax.oss.driver.internal.core.session.RequestProcessor} implementations for returning
@@ -66,7 +66,7 @@ public class RequestProcessorIT {
 
   @ClassRule public static CcmRule ccm = CcmRule.getInstance();
 
-  @ClassRule public static ClusterRule cluster = new ClusterRule(ccm);
+  @ClassRule public static SessionRule<CqlSession> sessionRule = new SessionRule<>(ccm);
 
   @Rule public ExpectedException thrown = ExpectedException.none();
 
@@ -75,15 +75,15 @@ public class RequestProcessorIT {
   @BeforeClass
   public static void setupSchema() {
     // table with clustering key where v1 == v0 * 2.
-    cluster
+    sessionRule
         .session()
         .execute(
             SimpleStatement.builder(
                     "CREATE TABLE IF NOT EXISTS test (k text, v0 int, v1 int, PRIMARY KEY(k, v0))")
-                .withConfigProfile(cluster.slowProfile())
+                .withConfigProfile(sessionRule.slowProfile())
                 .build());
     for (int i = 0; i < 100; i++) {
-      cluster
+      sessionRule
           .session()
           .execute(
               SimpleStatement.builder("INSERT INTO test (k, v0, v1) VALUES (?, ?, ?)")
@@ -92,17 +92,17 @@ public class RequestProcessorIT {
     }
   }
 
-  private Cluster<GuavaSession> newCluster(String... options) {
-    return GuavaClusterUtils.builder()
+  private GuavaSession newSession(CqlIdentifier keyspace, String... options) {
+    return GuavaSessionUtils.builder()
         .addContactPoints(ccm.getContactPoints())
+        .withKeyspace(keyspace)
         .withConfigLoader(new TestConfigLoader(options))
         .build();
   }
 
   @Test
   public void should_use_custom_request_processor_for_prepareAsync() throws Exception {
-    try (Cluster<GuavaSession> gCluster = newCluster()) {
-      GuavaSession session = gCluster.connect(cluster.keyspace());
+    try (GuavaSession session = newSession(sessionRule.keyspace())) {
       ListenableFuture<PreparedStatement> preparedFuture =
           session.prepareAsync("select * from test");
 
@@ -121,9 +121,7 @@ public class RequestProcessorIT {
   @Test
   public void should_use_custom_request_processor_for_handling_special_request_type()
       throws Exception {
-    try (Cluster<GuavaSession> gCluster = newCluster()) {
-      GuavaSession session = gCluster.connect(cluster.keyspace());
-
+    try (GuavaSession session = newSession(sessionRule.keyspace())) {
       // RequestProcessor executes "select v from test where k = <KEY>" and returns v as Integer.
       int v1 = session.execute(new KeyRequest(5), KeyRequestProcessor.INT_TYPE);
       assertThat(v1).isEqualTo(10); // v1 = v0 * 2
@@ -136,9 +134,7 @@ public class RequestProcessorIT {
 
   @Test
   public void should_use_custom_request_processor_for_executeAsync() throws Exception {
-    try (Cluster<GuavaSession> gCluster = newCluster()) {
-      GuavaSession session = gCluster.connect(cluster.keyspace());
-
+    try (GuavaSession session = newSession(sessionRule.keyspace())) {
       ListenableFuture<AsyncResultSet> future = session.executeAsync("select * from test");
       AsyncResultSet result = Uninterruptibles.getUninterruptibly(future);
       assertThat(Iterables.size(result.currentPage())).isEqualTo(100);
@@ -151,7 +147,7 @@ public class RequestProcessorIT {
     // Since cluster does not have a processor registered for returning ListenableFuture, an IllegalArgumentException
     // should be thrown.
     thrown.expect(IllegalArgumentException.class);
-    cluster
+    sessionRule
         .session()
         .execute(SimpleStatement.newInstance("select * from test"), GuavaSession.ASYNC);
   }
