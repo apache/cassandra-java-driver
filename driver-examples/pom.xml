@@ -20,9 +20,9 @@
     <modelVersion>4.0.0</modelVersion>
 
     <parent>
-        <artifactId>cassandra-driver-parent</artifactId>
         <groupId>com.datastax.cassandra</groupId>
-        <version>4.0.0-SNAPSHOT</version>
+        <artifactId>cassandra-driver-parent</artifactId>
+        <version>3.4.0-SNAPSHOT</version>
     </parent>
 
     <artifactId>cassandra-driver-examples</artifactId>
@@ -110,7 +110,7 @@
         </dependency>
 
         <!-- Standard annotations -->
-
+        
         <dependency>
             <groupId>javax.inject</groupId>
             <artifactId>javax.inject</artifactId>
@@ -200,7 +200,7 @@
                 </plugins>
             </build>
         </profile>
-
+        
     </profiles>
 
 </project>
