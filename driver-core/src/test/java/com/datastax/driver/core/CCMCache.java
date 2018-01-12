@@ -99,6 +99,11 @@ public class CCMCache {
         }
 
         @Override
+        public int[] getNodeCount() {
+            return ccm.getNodeCount();
+        }
+
+        @Override
         public InetSocketAddress addressOfNode(int n) {
             return ccm.addressOfNode(n);
         }

@@ -12,6 +12,7 @@
 - [documentation] JAVA-1380: Add FAQ entry for errors arising from incompatibilities.
 - [improvement] JAVA-1748: Support IS NOT NULL and != in query builder.
 - [documentation] JAVA-1740: Mention C*2.2/3.0 incompatibilities in paging state manual.
+- [improvement] JAVA-1725: Add a getNodeCount method to CCMAccess for easier automation.
 
 
 ### 3.4.0
