@@ -315,6 +315,11 @@ public class CCMBridge implements CCMAccess {
         return clusterName;
     }
 
+    @Override
+    public int[] getNodeCount() {
+        return Arrays.copyOf(nodes, nodes.length);
+    }
+
     protected String ipOfNode(int n) {
         return ipPrefix + n;
     }

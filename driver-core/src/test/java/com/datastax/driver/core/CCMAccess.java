@@ -91,6 +91,14 @@ public interface CCMAccess extends Closeable {
     void setKeepLogs(boolean keepLogs);
 
     /**
+     * @return the node count for each datacenter, mapped in the corresponding cell of the returned int array. This is
+     * the count that was passed at initialization (that is, the argument to {@link CCMBridge.Builder#withNodes(int...)}
+     * or {@link CCMConfig#numberOfNodes()}). Note that it will <b>NOT</b> be updated dynamically if nodes are added or
+     * removed at runtime.
+     */
+    int[] getNodeCount();
+
+    /**
      * Returns the address of the {@code nth} host in the CCM cluster (counting from 1, i.e.,
      * {@code addressOfNode(1)} returns the address of the first node.
      * <p/>
