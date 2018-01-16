@@ -21,11 +21,11 @@
 
     <parent>
         <groupId>com.datastax.cassandra</groupId>
-        <artifactId>cassandra-driver-parent</artifactId>
+        <artifactId>cassandra-driver-parent-guava21compat</artifactId>
         <version>3.3.3-SNAPSHOT</version>
     </parent>
 
-    <artifactId>cassandra-driver-core</artifactId>
+    <artifactId>cassandra-driver-core-guava21compat</artifactId>
     <name>DataStax Java Driver for Apache Cassandra - Core</name>
     <description>
         A driver for Apache Cassandra 1.2+ that works exclusively with the Cassandra Query Language version 3
