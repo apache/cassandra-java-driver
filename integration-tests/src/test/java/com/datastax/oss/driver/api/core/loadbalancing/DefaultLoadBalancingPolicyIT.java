@@ -49,7 +49,7 @@ public class DefaultLoadBalancingPolicyIT {
 
   private static final String LOCAL_DC = "dc1";
 
-  @ClassRule public static CustomCcmRule ccmRule = CustomCcmRule.builder().withNodes(5, 5).build();
+  @ClassRule public static CustomCcmRule ccmRule = CustomCcmRule.builder().withNodes(4, 1).build();
 
   @ClassRule
   public static ClusterRule clusterRule =
@@ -64,7 +64,7 @@ public class DefaultLoadBalancingPolicyIT {
     CqlSession session = clusterRule.session();
     session.execute(
         "CREATE KEYSPACE test "
-            + "WITH replication = {'class': 'NetworkTopologyStrategy', 'dc1': 3, 'dc2': 3}");
+            + "WITH replication = {'class': 'NetworkTopologyStrategy', 'dc1': 2, 'dc2': 1}");
     session.execute("CREATE TABLE test.foo (k int PRIMARY KEY)");
   }
 
@@ -106,16 +106,16 @@ public class DefaultLoadBalancingPolicyIT {
 
     for (Statement statement : statements) {
       List<Node> coordinators = new ArrayList<>();
-      for (int i = 0; i < 15; i++) {
+      for (int i = 0; i < 12; i++) {
         ResultSet rs = clusterRule.session().execute(statement);
         Node coordinator = rs.getExecutionInfo().getCoordinator();
         assertThat(coordinator.getDatacenter()).isEqualTo(LOCAL_DC);
         coordinators.add(coordinator);
       }
-      for (int i = 0; i < 5; i++) {
+      for (int i = 0; i < 4; i++) {
         assertThat(coordinators.get(i))
-            .isEqualTo(coordinators.get(5 + i))
-            .isEqualTo(coordinators.get(10 + i));
+            .isEqualTo(coordinators.get(4 + i))
+            .isEqualTo(coordinators.get(8 + i));
       }
     }
   }
@@ -131,7 +131,7 @@ public class DefaultLoadBalancingPolicyIT {
         localReplicas.add(replica);
       }
     }
-    assertThat(localReplicas).hasSize(3);
+    assertThat(localReplicas).hasSize(2);
 
     // TODO add statements with setKeyspace when that is supported
     List<Statement> statements =
@@ -147,7 +147,7 @@ public class DefaultLoadBalancingPolicyIT {
       // Since the exact order is randomized, just run a bunch of queries and check that we get a
       // reasonable distribution:
       Map<Node, Integer> hits = new HashMap<>();
-      for (int i = 0; i < 3000; i++) {
+      for (int i = 0; i < 2000; i++) {
         ResultSet rs = clusterRule.session().execute(statement);
         Node coordinator = rs.getExecutionInfo().getCoordinator();
         assertThat(localReplicas).contains(coordinator);
@@ -178,7 +178,7 @@ public class DefaultLoadBalancingPolicyIT {
             .becomesTrue();
       }
     }
-    assertThat(localReplicas).hasSize(3);
+    assertThat(localReplicas).hasSize(2);
 
     // TODO add statements with setKeyspace when that is supported
     List<Statement> statements =

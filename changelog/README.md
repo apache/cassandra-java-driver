@@ -4,6 +4,7 @@
 
 ### 4.0.0-alpha3 (in progress)
 
+- [improvement] JAVA-1713: Use less nodes in DefaultLoadBalancingPolicyIT
 - [improvement] JAVA-1707: Add test infrastructure for running DSE clusters with CCM
 - [bug] JAVA-1715: Propagate unchecked exceptions to CompletableFuture in SyncAuthenticator methods
 - [improvement] JAVA-1714: Make replication strategies pluggable
