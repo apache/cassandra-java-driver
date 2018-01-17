@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2012-2017 DataStax Inc.
+ * Copyright DataStax, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -254,6 +254,17 @@ public final class SchemaBuilder {
      */
     public static TableOptions.CompactionOptions.DateTieredCompactionStrategyOptions dateTieredStrategy() {
         return new TableOptions.CompactionOptions.DateTieredCompactionStrategyOptions();
+    }
+
+    /**
+     * Create options for the time window compaction strategy, to use in a CREATE or ALTER TABLE statement.
+     * <p/>
+     * This strategy was introduced in Cassandra 3.0.8 and 3.9.
+     *
+     * @return the options.
+     */
+    public static TableOptions.CompactionOptions.TimeWindowCompactionStrategyOptions timeWindowCompactionStrategy() {
+        return new TableOptions.CompactionOptions.TimeWindowCompactionStrategyOptions();
     }
 
     /**

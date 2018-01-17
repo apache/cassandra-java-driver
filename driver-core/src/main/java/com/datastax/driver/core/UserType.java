@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2012-2017 DataStax Inc.
+ * Copyright DataStax, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -278,12 +278,17 @@ public class UserType extends DataType implements Iterable<UserType.Field> {
         StringBuilder sb = new StringBuilder();
 
         sb.append("CREATE TYPE ").append(Metadata.quoteIfNecessary(keyspace)).append('.').append(Metadata.quoteIfNecessary(typeName)).append(" (");
-        TableMetadata.newLine(sb, formatted);
+        if (formatted) {
+            TableMetadata.spaceOrNewLine(sb, true);
+        }
         for (int i = 0; i < byIdx.length; i++) {
-            sb.append(TableMetadata.spaces(4, formatted)).append(byIdx[i]);
-            if (i < byIdx.length - 1)
+            sb.append(byIdx[i]);
+            if (i < byIdx.length - 1) {
                 sb.append(',');
-            TableMetadata.newLine(sb, formatted);
+                TableMetadata.spaceOrNewLine(sb, formatted);
+            } else {
+                TableMetadata.newLine(sb, formatted);
+            }
         }
 
         return sb.append(");").toString();

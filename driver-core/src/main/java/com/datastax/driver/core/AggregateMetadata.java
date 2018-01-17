@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2012-2017 DataStax Inc.
+ * Copyright DataStax, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -202,8 +202,9 @@ public class AggregateMetadata {
 
         TableMetadata.spaceOrNewLine(sb, formatted)
                 .append("SFUNC ")
-                .append(Metadata.quoteIfNecessary(stateFuncSimpleName))
-                .append(" STYPE ")
+                .append(Metadata.quoteIfNecessary(stateFuncSimpleName));
+        TableMetadata.spaceOrNewLine(sb, formatted)
+                .append("STYPE ")
                 .append(stateType.asFunctionParameterString());
 
         if (finalFuncSimpleName != null)

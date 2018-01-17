@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2012-2017 DataStax Inc.
+ * Copyright DataStax, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -293,7 +293,10 @@ public class BoundStatement extends Statement implements SettableData<BoundState
      */
     @Override
     public String getKeyspace() {
-        return statement.getPreparedId().metadata.size() == 0 ? null : statement.getPreparedId().metadata.getKeyspace(0);
+        ColumnDefinitions defs = statement.getPreparedId().boundValuesMetadata.variables;
+        return defs.size() == 0
+                ? null
+                : defs.getKeyspace(0);
     }
 
     /**

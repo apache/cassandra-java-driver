@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2012-2017 DataStax Inc.
+ * Copyright DataStax, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -153,6 +153,9 @@ public class Select extends BuiltStatement {
     public Select orderBy(Ordering... orderings) {
         if (this.orderings != null)
             throw new IllegalStateException("An ORDER BY clause has already been provided");
+
+        if (orderings.length == 0)
+            throw new IllegalArgumentException("Invalid ORDER BY argument, the orderings must not be empty.");
 
         this.orderings = Arrays.asList(orderings);
         for (Ordering ordering : orderings)

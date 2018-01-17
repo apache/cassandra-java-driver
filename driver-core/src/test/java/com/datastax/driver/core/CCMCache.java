@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2012-2017 DataStax Inc.
+ * Copyright DataStax, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -102,6 +102,9 @@ public class CCMCache {
         public InetSocketAddress addressOfNode(int n) {
             return ccm.addressOfNode(n);
         }
+
+        @Override
+        public InetSocketAddress jmxAddressOfNode(int n) { return ccm.jmxAddressOfNode(n); }
 
         @Override
         public void start() {

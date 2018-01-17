@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2012-2017 DataStax Inc.
+ * Copyright DataStax, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -174,11 +174,9 @@ public class FunctionMetadata {
                 first = false;
             else
                 sb.append(',');
-            TableMetadata.newLine(sb, formatted);
             String name = entry.getKey();
             DataType type = entry.getValue();
             sb
-                    .append(TableMetadata.spaces(4, formatted))
                     .append(Metadata.quoteIfNecessary(name))
                     .append(' ')
                     .append(type.asFunctionParameterString());
@@ -190,7 +188,7 @@ public class FunctionMetadata {
 
         TableMetadata.spaceOrNewLine(sb, formatted)
                 .append("RETURNS ")
-                .append(returnType);
+                .append(returnType.asFunctionParameterString());
 
         TableMetadata.spaceOrNewLine(sb, formatted)
                 .append("LANGUAGE ")

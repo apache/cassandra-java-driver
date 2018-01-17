@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2012-2017 DataStax Inc.
+ * Copyright DataStax, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -255,7 +255,8 @@ public abstract class PercentileTracker implements LatencyTracker {
             OverloadedException.class,
             BootstrappingException.class,
             UnpreparedException.class,
-            QueryValidationException.class // query validation also happens at early stages in the coordinator
+            QueryValidationException.class, // query validation also happens at early stages in the coordinator
+            CancelledSpeculativeExecutionException.class
     );
 
     /**

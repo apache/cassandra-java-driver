@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2012-2017 DataStax Inc.
+ * Copyright DataStax, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -221,7 +221,7 @@ public class Mapper<T> {
     }
 
     private ListenableFuture<BoundStatement> saveQueryAsync(T entity, final EnumMap<Option.Type, Option> options) {
-        final Map<AliasedMappedProperty, Object> columnToValue = new HashMap<AliasedMappedProperty, Object>();
+        final Map<AliasedMappedProperty, Object> columnToValue = new TreeMap<AliasedMappedProperty, Object>();
         final boolean useUnsetForNullValue = !shouldSaveNullFields(options) && manager.protocolVersionAsInt >= 4;
         final boolean includeColumnsWithNullValue = shouldSaveNullFields(options) || useUnsetForNullValue;
 

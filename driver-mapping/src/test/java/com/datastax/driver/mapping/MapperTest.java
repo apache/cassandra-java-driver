@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2012-2017 DataStax Inc.
+ * Copyright DataStax, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -396,7 +396,7 @@ public class MapperTest extends CCMTestsSupport {
         executeFunctionAndTestForException(u, mapper, new Function<Void, Thread>() {
             @Override
             public Thread apply(Void v) {
-                mapper.get(u);
+                mapper.get(u.getUserId());
                 return Thread.currentThread();
             }
         });

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2012-2017 DataStax Inc.
+ * Copyright DataStax, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,6 +35,7 @@ class Requests {
         private static final String CQL_VERSION = "3.0.0";
 
         static final String COMPRESSION_OPTION = "COMPRESSION";
+        static final String NO_COMPACT_OPTION = "NO_COMPACT";
 
         static final Message.Coder<Startup> coder = new Message.Coder<Startup>() {
             @Override
@@ -50,21 +51,25 @@ class Requests {
 
         private final Map<String, String> options;
         private final ProtocolOptions.Compression compression;
+        private final boolean noCompact;
 
-        Startup(ProtocolOptions.Compression compression) {
+        Startup(ProtocolOptions.Compression compression, boolean noCompact) {
             super(Message.Request.Type.STARTUP);
             this.compression = compression;
+            this.noCompact = noCompact;
 
             ImmutableMap.Builder<String, String> map = new ImmutableMap.Builder<String, String>();
             map.put(CQL_VERSION_OPTION, CQL_VERSION);
             if (compression != ProtocolOptions.Compression.NONE)
                 map.put(COMPRESSION_OPTION, compression.toString());
+            if (noCompact)
+                map.put(NO_COMPACT_OPTION, "true");
             this.options = map.build();
         }
 
         @Override
         protected Request copyInternal() {
-            return new Startup(compression);
+            return new Startup(compression, noCompact);
         }
 
         @Override
@@ -183,38 +188,48 @@ class Requests {
             @Override
             public void encode(Execute msg, ByteBuf dest, ProtocolVersion version) {
                 CBUtil.writeBytes(msg.statementId.bytes, dest);
+                if (ProtocolFeature.PREPARED_METADATA_CHANGES.isSupportedBy(version))
+                    CBUtil.writeBytes(msg.resultMetadataId.bytes, dest);
                 msg.options.encode(dest, version);
             }
 
             @Override
             public int encodedSize(Execute msg, ProtocolVersion version) {
-                return CBUtil.sizeOfBytes(msg.statementId.bytes)
-                        + msg.options.encodedSize(version);
+                int size = CBUtil.sizeOfBytes(msg.statementId.bytes);
+                if (ProtocolFeature.PREPARED_METADATA_CHANGES.isSupportedBy(version))
+                    size += CBUtil.sizeOfBytes(msg.resultMetadataId.bytes);
+                size += msg.options.encodedSize(version);
+                return size;
             }
         };
 
         final MD5Digest statementId;
+        final MD5Digest resultMetadataId;
         final QueryProtocolOptions options;
 
-        Execute(MD5Digest statementId, QueryProtocolOptions options, boolean tracingRequested) {
+        Execute(MD5Digest statementId, MD5Digest resultMetadataId, QueryProtocolOptions options, boolean tracingRequested) {
             super(Message.Request.Type.EXECUTE, tracingRequested);
             this.statementId = statementId;
+            this.resultMetadataId = resultMetadataId;
             this.options = options;
         }
 
         @Override
         protected Request copyInternal() {
-            return new Execute(statementId, options, isTracingRequested());
+            return new Execute(statementId, resultMetadataId, options, isTracingRequested());
         }
 
         @Override
         protected Request copyInternal(ConsistencyLevel newConsistencyLevel) {
-            return new Execute(statementId, options.copy(newConsistencyLevel), isTracingRequested());
+            return new Execute(statementId, resultMetadataId, options.copy(newConsistencyLevel), isTracingRequested());
         }
 
         @Override
         public String toString() {
-            return "EXECUTE " + statementId + " (" + options + ')';
+            if (resultMetadataId != null)
+                return "EXECUTE preparedId: " + statementId + " resultMetadataId: " + resultMetadataId + " (" + options + ')';
+            else
+                return "EXECUTE preparedId: " + statementId + " (" + options + ')';
         }
     }
 

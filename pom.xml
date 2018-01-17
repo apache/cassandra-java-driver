@@ -1,6 +1,6 @@
 <!--
 
-    Copyright (C) 2012-2017 DataStax Inc.
+    Copyright DataStax, Inc.
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -45,7 +45,7 @@
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-        <cassandra.version>3.10</cassandra.version>
+        <cassandra.version>3.11.1</cassandra.version>
         <java.version>1.6</java.version>
         <log4j.version>1.2.17</log4j.version>
         <slf4j.version>1.7.25</slf4j.version>
@@ -58,7 +58,7 @@
         <hdr.version>2.1.9</hdr.version>
         <jackson.version>2.8.8</jackson.version>
         <!-- jackson-databind 2.7.x is the last to support java 6 -->
-        <jackson-databind.version>2.7.9.1</jackson-databind.version>
+        <jackson-databind.version>2.7.9.2</jackson-databind.version>
         <joda.version>2.9.1</joda.version>
         <jsr353-api.version>1.0</jsr353-api.version>
         <jsr353-ri.version>1.0.4</jsr353-ri.version>
@@ -94,6 +94,13 @@
                 <groupId>com.datastax.cassandra</groupId>
                 <artifactId>cassandra-driver-core</artifactId>
                 <version>${project.parent.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>com.datastax.cassandra</groupId>
+                <artifactId>cassandra-driver-core</artifactId>
+                <version>${project.parent.version}</version>
+                <classifier>shaded</classifier>
             </dependency>
 
             <dependency>
@@ -624,7 +631,7 @@
                         </execution>
                     </executions>
                     <configuration>
-                        <comparisonVersion>3.2.0</comparisonVersion>
+                        <comparisonVersion>3.3.0</comparisonVersion>
                         <ignoredDifferencesFile>../clirr-ignores.xml</ignoredDifferencesFile>
                         <excludes>
                             <exclude>com/datastax/shaded/**</exclude>
@@ -652,7 +659,7 @@
                     <configuration>
                         <inlineHeader><![CDATA[
 
-Copyright (C) 2012-2017 DataStax Inc.
+Copyright DataStax, Inc.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.

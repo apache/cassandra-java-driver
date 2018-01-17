@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2012-2017 DataStax Inc.
+ * Copyright DataStax, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -51,8 +51,9 @@ public class AggregateMetadataTest extends CCMTestsSupport {
         assertThat(aggregate.getStateType()).isEqualTo(text());
         assertThat(aggregate.toString()).isEqualTo(cqlAggregate);
         assertThat(aggregate.exportAsString()).isEqualTo(String.format("CREATE AGGREGATE %s.cat_tos(int)\n"
-                + "SFUNC cat STYPE text\n"
-                + "INITCOND '0';", this.keyspace));
+                + "    SFUNC cat\n"
+                + "    STYPE text\n"
+                + "    INITCOND '0';", this.keyspace));
     }
 
     @Test(groups = "short")
@@ -78,8 +79,9 @@ public class AggregateMetadataTest extends CCMTestsSupport {
         assertThat(aggregate.getStateType()).isEqualTo(cint());
         assertThat(aggregate.toString()).isEqualTo(cqlAggregate);
         assertThat(aggregate.exportAsString()).isEqualTo(String.format("CREATE AGGREGATE %s.mycount()\n"
-                + "SFUNC inc STYPE int\n"
-                + "INITCOND 0;", this.keyspace));
+                + "    SFUNC inc\n"
+                + "    STYPE int\n"
+                + "    INITCOND 0;", this.keyspace));
     }
 
     @Test(groups = "short")
@@ -108,9 +110,10 @@ public class AggregateMetadataTest extends CCMTestsSupport {
         assertThat(aggregate.getStateType()).isEqualTo(cint());
         assertThat(aggregate.toString()).isEqualTo(cqlAggregate);
         assertThat(aggregate.exportAsString()).isEqualTo(String.format("CREATE AGGREGATE %s.prettysum(int)\n"
-                + "SFUNC plus STYPE int\n"
-                + "FINALFUNC announce\n"
-                + "INITCOND 0;", this.keyspace));
+                + "    SFUNC plus\n"
+                + "    STYPE int\n"
+                + "    FINALFUNC announce\n"
+                + "    INITCOND 0;", this.keyspace));
     }
 
     @Test(groups = "short")
@@ -136,7 +139,8 @@ public class AggregateMetadataTest extends CCMTestsSupport {
         assertThat(aggregate.getStateType()).isEqualTo(cint());
         assertThat(aggregate.toString()).isEqualTo(cqlAggregate);
         assertThat(aggregate.exportAsString()).isEqualTo(String.format("CREATE AGGREGATE %s.sum(int)\n"
-                + "SFUNC plus2 STYPE int;", this.keyspace));
+                + "    SFUNC plus2\n"
+                + "    STYPE int;", this.keyspace));
     }
 
     @Test(groups = "short")

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2012-2017 DataStax Inc.
+ * Copyright DataStax, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -49,6 +49,8 @@ import java.util.concurrent.atomic.AtomicReference;
  */
 class RequestHandler {
     private static final Logger logger = LoggerFactory.getLogger(RequestHandler.class);
+
+    private static final boolean HOST_METRICS_ENABLED = Boolean.getBoolean("com.datastax.driver.HOST_METRICS_ENABLED");
 
     final String id;
 
@@ -119,29 +121,39 @@ class RequestHandler {
     }
 
     private void scheduleExecution(long delayMillis) {
-        if (isDone.get() || delayMillis <= 0)
+        if (isDone.get() || delayMillis < 0)
             return;
         if (logger.isTraceEnabled())
             logger.trace("[{}] Schedule next speculative execution in {} ms", id, delayMillis);
-        scheduledExecutions.add(scheduler.newTimeout(newExecutionTask, delayMillis, TimeUnit.MILLISECONDS));
+        if(delayMillis == 0) {
+            // kick off request immediately
+            scheduleExecutionImmediately();
+        } else {
+            scheduledExecutions.add(scheduler.newTimeout(newExecutionTask, delayMillis, TimeUnit.MILLISECONDS));
+        }
     }
 
     private final TimerTask newExecutionTask = new TimerTask() {
         @Override
         public void run(final Timeout timeout) throws Exception {
             scheduledExecutions.remove(timeout);
-            if (!isDone.get())
+            if (!isDone.get()) {
                 // We're on the timer thread so reschedule to another executor
                 manager.executor().execute(new Runnable() {
                     @Override
                     public void run() {
-                        if (metricsEnabled())
-                            metrics().getErrorMetrics().getSpeculativeExecutions().inc();
-                        startNewExecution();
+                        scheduleExecutionImmediately();
                     }
                 });
+            }
         }
     };
+
+    private void scheduleExecutionImmediately() {
+        if (metricsEnabled())
+            metrics().getErrorMetrics().getSpeculativeExecutions().inc();
+        startNewExecution();
+    }
 
     private void cancelPendingExecutions(SpeculativeExecution ignore) {
         for (SpeculativeExecution execution : runningExecutions)
@@ -224,6 +236,10 @@ class RequestHandler {
         return manager.configuration().getMetricsOptions().isEnabled();
     }
 
+    private boolean hostMetricsEnabled() {
+        return HOST_METRICS_ENABLED && metricsEnabled();
+    }
+
     private Metrics metrics() {
         return manager.cluster.manager.metrics;
     }
@@ -258,6 +274,7 @@ class RequestHandler {
         private volatile ConsistencyLevel retryConsistencyLevel;
         private final AtomicReference<QueryState> queryStateRef;
         private final AtomicBoolean nextExecutionScheduled = new AtomicBoolean();
+        private final long startTime = System.nanoTime();
 
         // This represents the number of times a retry has been triggered by the RetryPolicy (this is different from
         // queryStateRef.get().retryCount, because some retries don't involve the policy, for example after an
@@ -280,8 +297,18 @@ class RequestHandler {
             try {
                 Host host;
                 while (!isDone.get() && (host = queryPlan.next()) != null && !queryStateRef.get().isCancelled()) {
-                    if (query(host))
+                    if (query(host)) {
+                        if (hostMetricsEnabled()) {
+                            metrics().getRegistry()
+                                    .counter(MetricsUtil.hostMetricName("writes.", host))
+                                    .inc();
+                        }
                         return;
+                    } else if (hostMetricsEnabled()) {
+                        metrics().getRegistry()
+                                .counter(MetricsUtil.hostMetricName("write-errors.", host))
+                                .inc();
+                    }
                 }
                 if (current != null) {
                     if (triedHosts == null)
@@ -485,10 +512,18 @@ class RequestHandler {
                     // If it's still null, this will be handled by re-checking queryStateRef at the end of write().
                     if (connectionHandler != null && connectionHandler.cancelHandler())
                         connectionHandler.connection.release();
+                    Host queriedHost = current;
+                    if (queriedHost != null && statement != Statement.DEFAULT) {
+                        manager.cluster.manager.reportQuery(queriedHost, statement, CancelledSpeculativeExecutionException.INSTANCE, System.nanoTime() - startTime);
+                    }
                     return;
                 } else if (!previous.inProgress && queryStateRef.compareAndSet(previous, QueryState.CANCELLED_WHILE_COMPLETE)) {
                     if (logger.isTraceEnabled())
                         logger.trace("[{}] Cancelled while complete", id);
+                    Host queriedHost = current;
+                    if (queriedHost != null && statement != Statement.DEFAULT) {
+                        manager.cluster.manager.reportQuery(queriedHost, statement, CancelledSpeculativeExecutionException.INSTANCE, System.nanoTime() - startTime);
+                    }
                     return;
                 }
             }

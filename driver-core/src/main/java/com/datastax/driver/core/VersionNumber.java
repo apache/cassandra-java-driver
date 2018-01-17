@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2012-2017 DataStax Inc.
+ * Copyright DataStax, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -233,7 +233,7 @@ public class VersionNumber implements Comparable<VersionNumber> {
 
     @Override
     public int hashCode() {
-        return MoreObjects.hashCode(major, minor, patch, dsePatch, preReleases, build);
+        return MoreObjects.hashCode(major, minor, patch, dsePatch, Arrays.hashCode(preReleases), build);
     }
 
     @Override

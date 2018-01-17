@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2012-2017 DataStax Inc.
+ * Copyright DataStax, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -103,7 +103,7 @@ public class ExceptionsScassandraTest {
             query();
             fail("expected a WriteTimeoutException");
         } catch (WriteTimeoutException e) {
-            assertThat(e.getMessage()).isEqualTo("Cassandra timeout during write query at consistency LOCAL_ONE (1 replica were required but only 0 acknowledged the write)");
+            assertThat(e.getMessage()).isEqualTo("Cassandra timeout during SIMPLE write query at consistency LOCAL_ONE (1 replica were required but only 0 acknowledged the write)");
             assertThat(e.getConsistencyLevel()).isEqualTo(LOCAL_ONE);
             assertThat(e.getReceivedAcknowledgements()).isEqualTo(0);
             assertThat(e.getRequiredAcknowledgements()).isEqualTo(1);

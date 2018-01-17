@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2012-2017 DataStax Inc.
+ * Copyright DataStax, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -48,5 +48,15 @@ public enum WriteType {
      * A conditional write. If a timeout has this {@code WriteType}, the timeout has happened while doing the compare-and-swap for
      * an conditional update. In this case, the update may or may not have been applied.
      */
-    CAS;
+    CAS,
+    /**
+     * Indicates that the timeout was related to acquiring locks needed for updating materialized
+     * views affected by write operation.
+     */
+    VIEW,
+    /**
+     * Indicates that the timeout was related to acquiring space for change data capture logs for cdc
+     * tracked tables.
+     */
+    CDC;
 }

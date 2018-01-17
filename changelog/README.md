@@ -1,5 +1,74 @@
 ## Changelog
 
+### 3.4.0 (In progress)
+
+- [improvement] JAVA-1671: Remove unnecessary test on prepared statement metadata.
+- [bug] JAVA-1694: Upgrade to jackson-databind 2.7.9.2 to address CVE-2015-15095.
+- [documentation] JAVA-1685: Clarify recommendation on preparing SELECT *.
+- [improvement] JAVA-1679: Improve error message on batch log write timeout.
+- [improvement] JAVA-1672: Remove schema agreement check when repreparing on up.
+- [improvement] JAVA-1677: Warn if auth is configured on the client but not the server.
+- [new feature] JAVA-1651: Add NO_COMPACT startup option.
+- [improvement] JAVA-1683: Add metrics to track writes to nodes.
+- [new feature] JAVA-1229: Allow specifying the keyspace for individual queries.
+- [improvement] JAVA-1682: Provide a way to record latencies for cancelled speculative executions.
+- [improvement] JAVA-1717: Add metrics to latency-aware policy.
+- [improvement] JAVA-1675: Remove dates from copyright headers.
+
+Merged from 3.3.x:
+
+- [bug] JAVA-1555: Include VIEW and CDC in WriteType.
+- [bug] JAVA-1599: exportAsString improvements (sort, format, clustering order)
+- [improvement] JAVA-1587: Deterministic ordering of columns used in Mapper#saveQuery
+- [improvement] JAVA-1500: Add a metric to report number of in-flight requests.
+- [bug] JAVA-1438: QueryBuilder check for empty orderings.
+- [improvement] JAVA-1490: Allow zero delay for speculative executions.
+- [documentation] JAVA-1607: Add FAQ entry for netty-transport-native-epoll.
+- [bug] JAVA-1630: Fix Metadata.addIfAbsent.
+- [improvement] JAVA-1619: Update QueryBuilder methods to support Iterable input.
+- [improvement] JAVA-1527: Expose host_id and schema_version on Host metadata.
+- [new feature] JAVA-1377: Add support for TWCS in SchemaBuilder.
+- [improvement] JAVA-1631: Publish a sources jar for driver-core-tests.
+- [improvement] JAVA-1632: Add a withIpPrefix(String) method to CCMBridge.Builder.
+- [bug] JAVA-1639: VersionNumber does not fullfill equals/hashcode contract.
+- [bug] JAVA-1613: Fix broken shaded Netty detection in NettyUtil.
+- [bug] JAVA-1666: Fix keyspace export when a UDT has case-sensitive field names.
+- [improvement] JAVA-1196: Include hash of result set metadata in prepared statement id.
+- [improvement] JAVA-1670: Support user-provided JMX ports for CCMBridge.
+- [improvement] JAVA-1661: Avoid String.toLowerCase if possible in Metadata.
+- [improvement] JAVA-1659: Expose low-level flusher tuning options.
+- [improvement] JAVA-1660: Support netty-transport-native-epoll in OSGi container.
+
+
+### 3.3.2
+
+- [bug] JAVA-1666: Fix keyspace export when a UDT has case-sensitive field names.
+- [improvement] JAVA-1196: Include hash of result set metadata in prepared statement id.
+- [improvement] JAVA-1670: Support user-provided JMX ports for CCMBridge.
+- [improvement] JAVA-1661: Avoid String.toLowerCase if possible in Metadata.
+- [improvement] JAVA-1659: Expose low-level flusher tuning options.
+- [improvement] JAVA-1660: Support netty-transport-native-epoll in OSGi container.
+
+
+### 3.3.1
+
+- [bug] JAVA-1555: Include VIEW and CDC in WriteType.
+- [bug] JAVA-1599: exportAsString improvements (sort, format, clustering order)
+- [improvement] JAVA-1587: Deterministic ordering of columns used in Mapper#saveQuery
+- [improvement] JAVA-1500: Add a metric to report number of in-flight requests.
+- [bug] JAVA-1438: QueryBuilder check for empty orderings.
+- [improvement] JAVA-1490: Allow zero delay for speculative executions.
+- [documentation] JAVA-1607: Add FAQ entry for netty-transport-native-epoll.
+- [bug] JAVA-1630: Fix Metadata.addIfAbsent.
+- [improvement] JAVA-1619: Update QueryBuilder methods to support Iterable input.
+- [improvement] JAVA-1527: Expose host_id and schema_version on Host metadata.
+- [new feature] JAVA-1377: Add support for TWCS in SchemaBuilder.
+- [improvement] JAVA-1631: Publish a sources jar for driver-core-tests.
+- [improvement] JAVA-1632: Add a withIpPrefix(String) method to CCMBridge.Builder.
+- [bug] JAVA-1639: VersionNumber does not fullfill equals/hashcode contract.
+- [bug] JAVA-1613: Fix broken shaded Netty detection in NettyUtil.
+
+
 ### 3.3.0
 
 - [bug] JAVA-1469: Update LoggingRetryPolicy to deal with SLF4J-353.

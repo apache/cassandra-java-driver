@@ -147,4 +147,16 @@
         <justification>False positive, the enclosing class is package-private so this was never exposed</justification>
     </difference>
 
+    <difference>
+        <differenceType>7005</differenceType>
+        <className>com/datastax/driver/core/querybuilder/QueryBuilder</className>
+        <!--
+            A Clirr bug prevents us from excluding the methods individually (errors re-appear as soon as there are more
+            than one method). Excluding every method is too coarse, but it's the only solution.
+        -->
+        <method>*</method>
+        <to>*</to>
+        <justification>Relaxed parameters from List to Iterable for in, lt, lte, eq, gt, and gte</justification>
+    </difference>
+
 </differences>

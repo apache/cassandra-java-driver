@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2012-2017 DataStax Inc.
+ * Copyright DataStax, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -304,7 +304,7 @@ public class ExceptionsTest extends CCMTestsSupport {
     @Test(groups = "unit")
     public void should_create_proper_write_timeout_exception() {
         WriteTimeoutException e = new WriteTimeoutException(address1, LOCAL_QUORUM, WriteType.BATCH, 2, 3);
-        assertThat(e.getMessage()).isEqualTo("Cassandra timeout during write query at consistency LOCAL_QUORUM (3 replica were required but only 2 acknowledged the write)");
+        assertThat(e.getMessage()).isEqualTo("Cassandra timeout during BATCH write query at consistency LOCAL_QUORUM (3 replica were required but only 2 acknowledged the write)");
         assertThat(e.getConsistencyLevel()).isEqualTo(LOCAL_QUORUM);
         assertThat(e.getReceivedAcknowledgements()).isEqualTo(2);
         assertThat(e.getRequiredAcknowledgements()).isEqualTo(3);
@@ -312,7 +312,7 @@ public class ExceptionsTest extends CCMTestsSupport {
         assertThat(e.getAddress()).isEqualTo(address1);
         assertThat(e.getHost()).isEqualTo(address1.getAddress());
         e = e.copy(address2);
-        assertThat(e.getMessage()).isEqualTo("Cassandra timeout during write query at consistency LOCAL_QUORUM (3 replica were required but only 2 acknowledged the write)");
+        assertThat(e.getMessage()).isEqualTo("Cassandra timeout during BATCH write query at consistency LOCAL_QUORUM (3 replica were required but only 2 acknowledged the write)");
         assertThat(e.getConsistencyLevel()).isEqualTo(LOCAL_QUORUM);
         assertThat(e.getReceivedAcknowledgements()).isEqualTo(2);
         assertThat(e.getRequiredAcknowledgements()).isEqualTo(3);

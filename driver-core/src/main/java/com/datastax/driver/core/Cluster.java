@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2012-2017 DataStax Inc.
+ * Copyright DataStax, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -687,6 +687,7 @@ public class Cluster implements Closeable {
         private boolean metricsEnabled = true;
         private boolean jmxEnabled = true;
         private boolean allowBetaProtocolVersion = false;
+        private boolean noCompact = false;
 
         private Collection<Host.StateListener> listeners;
 
@@ -1296,6 +1297,24 @@ public class Cluster implements Closeable {
         }
 
         /**
+         * Enables the <code>NO_COMPACT</code> startup option.
+         * <p>
+         * When this option is supplied, <code>SELECT</code>, <code>UPDATE</code>, <code>DELETE</code> and
+         * <code>BATCH</code> statements on <code>COMPACT STORAGE</code> tables function in "compatibility" mode which
+         * allows seeing these tables as if they were "regular" CQL tables.
+         * <p>
+         * This option only effects interactions with tables using <code>COMPACT STORAGE<code> and is only supported by
+         * C* 4.0+ and DSE 6.0+.
+         *
+         * @return this builder.
+         * @see <a href="https://issues.apache.org/jira/browse/CASSANDRA-10857">CASSANDRA-10857</a>
+         */
+        public Builder withNoCompact() {
+            this.noCompact = true;
+            return this;
+        }
+
+        /**
          * The configuration that will be used for the new cluster.
          * <p/>
          * You <b>should not</b> modify this object directly because changes made
@@ -1306,7 +1325,7 @@ public class Cluster implements Closeable {
          */
         @Override
         public Configuration getConfiguration() {
-            ProtocolOptions protocolOptions = new ProtocolOptions(port, protocolVersion, maxSchemaAgreementWaitSeconds, sslOptions, authProvider)
+            ProtocolOptions protocolOptions = new ProtocolOptions(port, protocolVersion, maxSchemaAgreementWaitSeconds, sslOptions, authProvider, noCompact)
                     .setCompression(compression);
 
             MetricsOptions metricsOptions = new MetricsOptions(metricsEnabled, jmxEnabled);
@@ -1505,7 +1524,7 @@ public class Cluster implements Closeable {
                 // We don't want to signal -- call onAdd() -- because nothing is ready
                 // yet (loadbalancing policy, control connection, ...). All we want is
                 // create the Host object so we can initialize the control connection.
-                metadata.add(address);
+                metadata.addIfAbsent(metadata.newHost(address));
             }
 
             Collection<Host> allHosts = metadata.allHosts();
@@ -2218,13 +2237,15 @@ public class Cluster implements Closeable {
         }
 
         public PreparedStatement addPrepared(PreparedStatement stmt) {
-            PreparedStatement previous = preparedQueries.putIfAbsent(stmt.getPreparedId().id, stmt);
+            PreparedStatement previous = preparedQueries.putIfAbsent(stmt.getPreparedId().boundValuesMetadata.id, stmt);
             if (previous != null) {
                 logger.warn("Re-preparing already prepared query is generally an anti-pattern and will likely affect performance. "
                         + "Consider preparing the statement only once. Query='{}'", stmt.getQueryString());
 
                 // The one object in the cache will get GCed once it's not referenced by the client anymore since we use a weak reference.
                 // So we need to make sure that the instance we do return to the user is the one that is in the cache.
+                // However if the result metadata changed since the last PREPARE call, this also needs to be updated.
+                previous.getPreparedId().resultSetMetadata = stmt.getPreparedId().resultSetMetadata;
                 return previous;
             }
             return stmt;
@@ -2246,12 +2267,6 @@ public class Cluster implements Closeable {
                 connection = (reusedConnection == null)
                         ? connectionFactory.open(host)
                         : reusedConnection;
-
-                try {
-                    ControlConnection.waitForSchemaAgreement(connection, this);
-                } catch (ExecutionException e) {
-                    // As below, just move on
-                }
 
                 // Furthermore, along with each prepared query we keep the current keyspace at the time of preparation
                 // as we need to make it is the same when we re-prepare on new/restarted nodes. Most query will use the
@@ -2714,27 +2729,25 @@ public class Cluster implements Closeable {
                         case UP:
                             Host upHost = metadata.getHost(address);
                             if (upHost == null) {
-                                upHost = metadata.add(address);
-                                // If upHost is still null, it means we didn't know about it the line before but
-                                // got beaten at adding it to the metadata by another thread. In that case, it's
-                                // fine to let the other thread win and ignore the notification here
-                                if (upHost == null)
+                                upHost = metadata.newHost(address);
+                                Host previous = metadata.addIfAbsent(upHost);
+                                if (previous != null) {
+                                    // We got beat by another thread at adding the host. Let it win and ignore the
+                                    // notification here.
                                     continue;
+                                }
                                 futures.add(schedule(hostAdded(upHost)));
                             } else {
                                 futures.add(schedule(hostUp(upHost)));
                             }
                             break;
                         case ADDED:
-                            Host newHost = metadata.add(address);
-                            if (newHost != null) {
+                            Host newHost = metadata.newHost(address);
+                            Host previous = metadata.addIfAbsent(newHost);
+                            if (previous == null) {
                                 futures.add(schedule(hostAdded(newHost)));
-                            } else {
-                                // If host already existed, retrieve it and check its state, if it's not up schedule a
-                                // hostUp event.
-                                Host existingHost = metadata.getHost(address);
-                                if (!existingHost.isUp())
-                                    futures.add(schedule(hostUp(existingHost)));
+                            } else if (!previous.isUp()) {
+                                futures.add(schedule(hostUp(previous)));
                             }
                             break;
                         case DOWN:

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2012-2017 DataStax Inc.
+ * Copyright DataStax, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,17 +17,22 @@ package com.datastax.driver.mapping;
 
 import com.datastax.driver.core.BoundStatement;
 import com.datastax.driver.core.CCMTestsSupport;
-import com.datastax.driver.core.ProtocolVersion;
+import com.datastax.driver.core.Session;
 import com.datastax.driver.core.utils.CassandraVersion;
 import com.datastax.driver.mapping.Mapper.Option;
 import com.datastax.driver.mapping.annotations.PartitionKey;
 import com.datastax.driver.mapping.annotations.Table;
+import com.google.common.collect.Lists;
+import com.google.common.collect.Sets;
+import java.util.List;
+import java.util.Set;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 @SuppressWarnings("unused")
+@CassandraVersion("2.1.0")
 public class MapperSaveNullFieldsTest extends CCMTestsSupport {
 
     Mapper<User> mapper;
@@ -40,6 +45,53 @@ public class MapperSaveNullFieldsTest extends CCMTestsSupport {
     @BeforeMethod(groups = "short")
     public void setup() {
         mapper = new MappingManager(session()).mapper(User.class);
+    }
+
+    /**
+     * ensure that queries generated between different sessions consistently generates the same prepared statement
+     * query for different permutations of null columns being present and saved.
+     *
+     * @jira_ticket JAVA-1587
+     */
+    @Test(groups = "short")
+    public void should_order_save_query_prepared_statement_columns_consistently() {
+        List<List<String>> allSessionStatements = Lists.newArrayList();
+        for (int i = 0; i < 5; i++) {
+            Session session = cluster().connect(keyspace);
+            Mapper<User> userMapper = new MappingManager(session()).mapper(User.class);
+
+            List<String> statements = Lists.newArrayList();
+
+            // generate a variety of permutations of columns being present
+            // both present
+            statements.add(getQuery(userMapper, false, false, Option.saveNullFields(false)));
+            // neither name or phone present
+            statements.add(getQuery(userMapper, true, true, Option.saveNullFields(false)));
+            // name not present
+            statements.add(getQuery(userMapper, true, false, Option.saveNullFields(false)));
+            // phone not present
+            statements.add(getQuery(userMapper, false, true, Option.saveNullFields(false)));
+
+            allSessionStatements.add(statements);
+            session.close();
+        }
+
+        int statementCount = allSessionStatements.iterator().next().size();
+        for (int i = 0; i < statementCount; i++) {
+            Set<String> uniqueStatements = Sets.newTreeSet();
+            for (List<String> statements : allSessionStatements) {
+                uniqueStatements.add(statements.get(i));
+            }
+            assertThat(uniqueStatements).as("Expected only one statement permutation, must not be ordered consistently.").hasSize(1);
+        }
+    }
+
+    private String getQuery(Mapper<User> mapper, boolean nullName, boolean nullPhone, Option... options) {
+        String newName = nullName ? null : "new_name";
+        String newPhone = nullPhone ? null : "new_phone";
+        User newUser = new User("test_login", newName, newPhone);
+
+        return ((BoundStatement) mapper.saveQuery(newUser, options)).preparedStatement().getQueryString();
     }
 
     @CassandraVersion("2.1.0")

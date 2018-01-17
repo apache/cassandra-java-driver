@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2012-2017 DataStax Inc.
+ * Copyright DataStax, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -66,6 +66,8 @@ class Connection {
     private static final byte[] EMPTY_BYTE_ARRAY = new byte[0];
 
     private static final boolean DISABLE_COALESCING = SystemProperties.getBoolean("com.datastax.driver.DISABLE_COALESCING", false);
+    private static final int FLUSHER_SCHEDULE_PERIOD_NS = SystemProperties.getInt("com.datastax.driver.FLUSHER_SCHEDULE_PERIOD_NS", 10000);
+    private static final int FLUSHER_RUN_WITHOUT_WORK_TIMES = SystemProperties.getInt("com.datastax.driver.FLUSHER_RUN_WITHOUT_WORK_TIMES", 5);
 
     enum State {OPEN, TRASHED, RESURRECTING, GONE}
 
@@ -230,8 +232,8 @@ class Connection {
         return new AsyncFunction<Void, Void>() {
             @Override
             public ListenableFuture<Void> apply(Void input) throws Exception {
-                ProtocolOptions.Compression compression = factory.configuration.getProtocolOptions().getCompression();
-                Future startupResponseFuture = write(new Requests.Startup(compression));
+                ProtocolOptions protocolOptions = factory.configuration.getProtocolOptions();
+                Future startupResponseFuture = write(new Requests.Startup(protocolOptions.getCompression(), protocolOptions.isNoCompact()));
                 return GuavaCompatibility.INSTANCE.transformAsync(startupResponseFuture,
                         onStartupResponse(protocolVersion, initExecutor), initExecutor);
             }
@@ -244,6 +246,12 @@ class Connection {
             public ListenableFuture<Void> apply(Message.Response response) throws Exception {
                 switch (response.type) {
                     case READY:
+                        if (factory.authProvider != AuthProvider.NONE) {
+                            logger.warn("{} did not send an authentication challenge; " +
+                                            "This is suspicious because the driver expects authentication " +
+                                            "(configured auth provider = {})",
+                                    address, factory.authProvider.getClass().getName());
+                        }
                         return checkClusterName(protocolVersion, initExecutor);
                     case ERROR:
                         Responses.Error error = (Responses.Error) response;
@@ -953,7 +961,7 @@ class Connection {
                 runsWithNoWork = 0;
             } else {
                 // either reschedule or cancel
-                if (++runsWithNoWork > 5) {
+                if (++runsWithNoWork > FLUSHER_RUN_WITHOUT_WORK_TIMES) {
                     running.set(false);
                     if (queued.isEmpty() || !running.compareAndSet(false, true))
                         return;
@@ -962,7 +970,11 @@ class Connection {
 
             EventLoop eventLoop = eventLoopRef.get();
             if (eventLoop != null && !eventLoop.isShuttingDown()) {
-                eventLoop.schedule(this, 10000, TimeUnit.NANOSECONDS);
+                if (FLUSHER_SCHEDULE_PERIOD_NS > 0) {
+                    eventLoop.schedule(this, FLUSHER_SCHEDULE_PERIOD_NS, TimeUnit.NANOSECONDS);
+                } else {
+                    eventLoop.execute(this);
+                }
             }
         }
     }

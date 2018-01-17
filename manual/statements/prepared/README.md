@@ -249,10 +249,9 @@ is currently no mechanism for Cassandra to invalidate the existing metadata.  Be
 the driver is not able to properly react to these changes and will improperly read rows after
 a schema change is made.
 
-Therefore it is currently recommended to not create prepared statements
-for 'SELECT *' queries if you plan on making schema changes involving
-adding or dropping columns. Alternatively you should list all columns of interest
-in your statement, i.e.: `SELECT a, b, c FROM tbl`.
+Therefore it is currently recommended to list all columns of interest in
+your prepared statements (i.e. `SELECT a, b, c FROM table`), instead of
+relying on `SELECT *`.
 
 This will be addressed in a future release of both Cassandra and the driver.  Follow
 [CASSANDRA-10786] and [JAVA-1196] for more information.

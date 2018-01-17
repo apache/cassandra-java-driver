@@ -311,7 +311,7 @@ often.
 
 [OptionalCodec]: http://docs.datastax.com/en/drivers/java/3.2/com/datastax/driver/extras/codecs/jdk8/OptionalCodec.html
 [Optional]: https://docs.oracle.com/javase/8/docs/api/java/util/Optional.html
-[TypeToken]: http://google.github.io/guava/releases/21.0/api/docs/com/google/common/reflect/TypeToken.html
+[TypeToken]: http://google.github.io/guava/releases/19.0/api/docs/com/google/common/reflect/TypeToken.html
 
 #### Guava
 
@@ -354,7 +354,7 @@ session.execute(pst.bind()
 See the JDK8 Optional section above for explanations about [TypeToken].
 
 [OptionalCodec_guava]: http://docs.datastax.com/en/drivers/java/3.2/com/datastax/driver/extras/codecs/guava/OptionalCodec.html
-[Optional_guava]: http://google.github.io/guava/releases/21.0/api/docs/com/google/common/base/Optional.html
+[Optional_guava]: http://google.github.io/guava/releases/19.0/api/docs/com/google/common/base/Optional.html
 
 
 ### Arrays

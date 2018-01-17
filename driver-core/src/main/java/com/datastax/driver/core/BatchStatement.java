@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2012-2017 DataStax Inc.
+ * Copyright DataStax, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -61,8 +61,6 @@ public class BatchStatement extends Statement {
         COUNTER
     }
 
-    ;
-
     final Type batchType;
     private final List<Statement> statements = new ArrayList<Statement>();
 
@@ -97,7 +95,7 @@ public class BatchStatement extends Statement {
                 // We handle BatchStatement in add() so ...
                 assert statement instanceof BoundStatement;
                 BoundStatement st = (BoundStatement) statement;
-                idAndVals.ids.add(st.statement.getPreparedId().id);
+                idAndVals.ids.add(st.statement.getPreparedId().boundValuesMetadata.id);
                 idAndVals.values.add(Arrays.asList(st.wrapper.values));
             }
         }

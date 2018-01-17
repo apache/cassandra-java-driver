@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2012-2017 DataStax Inc.
+ * Copyright DataStax, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -87,8 +87,12 @@ public class Assertions extends org.assertj.core.api.Assertions {
     public static VersionNumberAssert assertThat(VersionNumber actual) {
         return new VersionNumberAssert(actual);
     }
+
     public static ResultSetAssert assertThat(ResultSet rows) {
         return new ResultSetAssert(rows);
     }
 
+    public static ColumnDefinitionsAssert assertThat(ColumnDefinitions variables) {
+        return new ColumnDefinitionsAssert(variables);
+    }
 }

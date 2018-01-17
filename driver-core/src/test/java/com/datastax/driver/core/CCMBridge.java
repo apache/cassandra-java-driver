@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2012-2017 DataStax Inc.
+ * Copyright DataStax, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,7 +34,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import static com.datastax.driver.core.TestUtils.*;
+import static com.datastax.driver.core.TestUtils.executeNoFail;
 
 public class CCMBridge implements CCMAccess {
 
@@ -270,6 +270,8 @@ public class CCMBridge implements CCMAccess {
 
     private final int binaryPort;
 
+    private final String ipPrefix;
+
     private final File ccmDir;
 
     private final boolean isDSE;
@@ -284,11 +286,16 @@ public class CCMBridge implements CCMAccess {
 
     private final int[] nodes;
 
-    private CCMBridge(String clusterName, VersionNumber cassandraVersion, VersionNumber dseVersion,
-                      int storagePort, int thriftPort, int binaryPort, String jvmArgs, int[] nodes) {
+    private final int[] jmxPorts;
+
+
+    protected CCMBridge(String clusterName, VersionNumber cassandraVersion, VersionNumber dseVersion, String ipPrefix,
+                        int storagePort, int thriftPort, int binaryPort, int[] jmxPorts, String jvmArgs, int[] nodes) {
+
         this.clusterName = clusterName;
         this.cassandraVersion = cassandraVersion;
         this.dseVersion = dseVersion;
+        this.ipPrefix = ipPrefix;
         this.storagePort = storagePort;
         this.thriftPort = thriftPort;
         this.binaryPort = binaryPort;
@@ -296,6 +303,7 @@ public class CCMBridge implements CCMAccess {
         this.jvmArgs = jvmArgs;
         this.nodes = nodes;
         this.ccmDir = Files.createTempDir();
+        this.jmxPorts = jmxPorts;
     }
 
     public static Builder builder() {
@@ -307,9 +315,18 @@ public class CCMBridge implements CCMAccess {
         return clusterName;
     }
 
+    protected String ipOfNode(int n) {
+        return ipPrefix + n;
+    }
+
     @Override
     public InetSocketAddress addressOfNode(int n) {
-        return new InetSocketAddress(TestUtils.ipOfNode(n), binaryPort);
+        return new InetSocketAddress(ipOfNode(n), binaryPort);
+    }
+
+    @Override
+    public InetSocketAddress jmxAddressOfNode(int n) {
+        return new InetSocketAddress("localhost", jmxPorts[n - 1]);
     }
 
     @Override
@@ -426,7 +443,7 @@ public class CCMBridge implements CCMAccess {
             for (int dc = 1; dc <= nodes.length; dc++) {
                 int nodesInDc = nodes[dc - 1];
                 for (int i = 0; i < nodesInDc; i++) {
-                    InetSocketAddress addr = new InetSocketAddress(ipOfNode(n), binaryPort);
+                    InetSocketAddress addr = addressOfNode(n);
                     logger.debug("Waiting for binary protocol to show up for {}", addr);
                     TestUtils.waitUntilPortIsUp(addr);
                     n++;
@@ -487,7 +504,7 @@ public class CCMBridge implements CCMAccess {
 
     @Override
     public void start(int n) {
-        logger.debug(String.format("Starting: node %s (%s%s:%s) in %s", n, TestUtils.IP_PREFIX, n, binaryPort, this));
+        logger.debug(String.format("Starting: node %s (%s%s:%s) in %s", n, ipPrefix, n, binaryPort, this));
         try {
             String cmd = CCM_COMMAND + " node%d start " + jvmArgs + getStartWaitArguments();
             if (isWindows() && this.cassandraVersion.compareTo(VersionNumber.parse("2.2.4")) >= 0) {
@@ -511,31 +528,31 @@ public class CCMBridge implements CCMAccess {
 
     @Override
     public void stop(int n) {
-        logger.debug(String.format("Stopping: node %s (%s%s:%s) in %s", n, TestUtils.IP_PREFIX, n, binaryPort, this));
+        logger.debug(String.format("Stopping: node %s (%s%s:%s) in %s", n, ipPrefix, n, binaryPort, this));
         execute(CCM_COMMAND + " node%d stop", n);
     }
 
     @Override
     public void forceStop(int n) {
-        logger.debug(String.format("Force stopping: node %s (%s%s:%s) in %s", n, TestUtils.IP_PREFIX, n, binaryPort, this));
+        logger.debug(String.format("Force stopping: node %s (%s%s:%s) in %s", n, ipPrefix, n, binaryPort, this));
         execute(CCM_COMMAND + " node%d stop --not-gently", n);
     }
 
     @Override
     public void pause(int n) {
-        logger.debug(String.format("Pausing: node %s (%s%s:%s) in %s", n, TestUtils.IP_PREFIX, n, binaryPort, this));
+        logger.debug(String.format("Pausing: node %s (%s%s:%s) in %s", n, ipPrefix, n, binaryPort, this));
         execute(CCM_COMMAND + " node%d pause", n);
     }
 
     @Override
     public void resume(int n) {
-        logger.debug(String.format("Resuming: node %s (%s%s:%s) in %s", n, TestUtils.IP_PREFIX, n, binaryPort, this));
+        logger.debug(String.format("Resuming: node %s (%s%s:%s) in %s", n, ipPrefix, n, binaryPort, this));
         execute(CCM_COMMAND + " node%d resume", n);
     }
 
     @Override
     public void remove(int n) {
-        logger.debug(String.format("Removing: node %s (%s%s:%s) from %s", n, TestUtils.IP_PREFIX, n, binaryPort, this));
+        logger.debug(String.format("Removing: node %s (%s%s:%s) from %s", n, ipPrefix, n, binaryPort, this));
         execute(CCM_COMMAND + " node%d remove", n);
     }
 
@@ -546,18 +563,18 @@ public class CCMBridge implements CCMAccess {
 
     @Override
     public void add(int dc, int n) {
-        logger.debug(String.format("Adding: node %s (%s%s:%s) to %s", n, TestUtils.IP_PREFIX, n, binaryPort, this));
-        String thriftItf = TestUtils.ipOfNode(n) + ":" + thriftPort;
-        String storageItf = TestUtils.ipOfNode(n) + ":" + storagePort;
-        String binaryItf = TestUtils.ipOfNode(n) + ":" + binaryPort;
-        String remoteLogItf = TestUtils.ipOfNode(n) + ":" + TestUtils.findAvailablePort();
+        logger.debug(String.format("Adding: node %s (%s%s:%s) to %s", n, ipPrefix, n, binaryPort, this));
+        String thriftItf = ipOfNode(n) + ":" + thriftPort;
+        String storageItf = ipOfNode(n) + ":" + storagePort;
+        String binaryItf = ipOfNode(n) + ":" + binaryPort;
+        String remoteLogItf = ipOfNode(n) + ":" + TestUtils.findAvailablePort();
         execute(CCM_COMMAND + " add node%d -d dc%s -i %s%d -t %s -l %s --binary-itf %s -j %d -r %s -s -b" + (isDSE ? " --dse" : ""),
-                n, dc, TestUtils.IP_PREFIX, n, thriftItf, storageItf, binaryItf, TestUtils.findAvailablePort(), remoteLogItf);
+                n, dc, ipPrefix, n, thriftItf, storageItf, binaryItf, TestUtils.findAvailablePort(), remoteLogItf);
     }
 
     @Override
     public void decommission(int n) {
-        logger.debug(String.format("Decommissioning: node %s (%s%s:%s) from %s", n, TestUtils.IP_PREFIX, n, binaryPort, this));
+        logger.debug(String.format("Decommissioning: node %s (%s%s:%s) from %s", n, ipPrefix, n, binaryPort, this));
         // Special case for C* 3.12+, DSE 5.1+, force decommission (see CASSANDRA-12510)
         String cmd = CCM_COMMAND + " node%d decommission";
         if (this.cassandraVersion.compareTo(VersionNumber.parse("3.12")) >= 0) {
@@ -780,7 +797,9 @@ public class CCMBridge implements CCMAccess {
         public static final String RANDOM_PORT = "__RANDOM_PORT__";
         private static final Pattern RANDOM_PORT_PATTERN = Pattern.compile(RANDOM_PORT);
 
+        private String ipPrefix = TestUtils.IP_PREFIX;
         int[] nodes = {1};
+        private int[] jmxPorts = {};
         private boolean start = true;
         private boolean dse = false;
         private VersionNumber version = null;
@@ -795,6 +814,14 @@ public class CCMBridge implements CCMAccess {
             cassandraConfiguration.put("storage_port", RANDOM_PORT);
             cassandraConfiguration.put("rpc_port", RANDOM_PORT);
             cassandraConfiguration.put("native_transport_port", RANDOM_PORT);
+        }
+
+        /**
+         * IP Prefix to use for the address of each node. Its format has to be like {@code "127.1.1."}.
+         */
+        public Builder withIpPrefix(String ipPrefix) {
+            this.ipPrefix = ipPrefix;
+            return this;
         }
 
         /**
@@ -905,6 +932,11 @@ public class CCMBridge implements CCMAccess {
             return this;
         }
 
+        public Builder withJmxPorts(int... ports) {
+            this.jmxPorts = ports;
+            return this;
+        }
+
         /**
          * Sets the DSE workload for a given node.
          *
@@ -943,13 +975,29 @@ public class CCMBridge implements CCMAccess {
             int storagePort = Integer.parseInt(cassandraConfiguration.get("storage_port").toString());
             int thriftPort = Integer.parseInt(cassandraConfiguration.get("rpc_port").toString());
             int binaryPort = Integer.parseInt(cassandraConfiguration.get("native_transport_port").toString());
+
+            // Copy any supplied jmx ports over, and find available ports for the rest
+            int numNodes = 0;
+            for (int i : nodes) {
+                numNodes += i;
+            }
+
+            int[] generatedJmxPorts = new int[numNodes];
+            for (int i = 0; i < numNodes; i++) {
+                if (i >= jmxPorts.length) {
+                    generatedJmxPorts[i] = TestUtils.findAvailablePort();
+                } else {
+                    generatedJmxPorts[i] = jmxPorts[i];
+                }
+            }
+
             if (!isThriftSupported(cassandraVersion)) {
                 // remove thrift configuration
                 cassandraConfiguration.remove("start_rpc");
                 cassandraConfiguration.remove("rpc_port");
                 cassandraConfiguration.remove("thrift_prepared_statements_cache_size_mb");
             }
-            final CCMBridge ccm = new CCMBridge(clusterName, cassandraVersion, dseVersion, storagePort, thriftPort, binaryPort, joinJvmArgs(), nodes);
+            final CCMBridge ccm = new CCMBridge(clusterName, cassandraVersion, dseVersion, ipPrefix, storagePort, thriftPort, binaryPort, generatedJmxPorts, joinJvmArgs(), nodes);
 
             Runtime.getRuntime().addShutdownHook(new Thread() {
                 @Override
@@ -1010,7 +1058,7 @@ public class CCMBridge implements CCMAccess {
                 cassandraVersion, VersionNumber dseVersion) {
             StringBuilder result = new StringBuilder(CCM_COMMAND + " create");
             result.append(" ").append(clusterName);
-            result.append(" -i ").append(TestUtils.IP_PREFIX);
+            result.append(" -i ").append(ipPrefix);
             result.append(" ");
             if (nodes.length > 0) {
                 result.append(" -n ");
@@ -1052,8 +1100,8 @@ public class CCMBridge implements CCMAccess {
                 for (int dc = 1; dc <= nodes.length; dc++) {
                     int nodesInDc = nodes[dc - 1];
                     for (int i = 0; i < nodesInDc; i++) {
-                        int jmxPort = findAvailablePort();
-                        int debugPort = findAvailablePort();
+                        int jmxPort = ccm.jmxAddressOfNode(n).getPort();
+                        int debugPort = TestUtils.findAvailablePort();
                         logger.trace("Node {} in cluster {} using JMX port {} and debug port {}", n, ccm.getClusterName(), jmxPort, debugPort);
                         File nodeConf = new File(ccm.getNodeDir(n), "node.conf");
                         File nodeConf2 = new File(ccm.getNodeDir(n), "node.conf.tmp");
@@ -1068,7 +1116,7 @@ public class CCMBridge implements CCMAccess {
                             if (line.startsWith("jmx_port")) {
                                 line = String.format("jmx_port: '%s'", jmxPort);
                             } else if (line.startsWith("remote_debug_port")) {
-                                line = String.format("remote_debug_port: %s:%s", TestUtils.ipOfNode(n), debugPort);
+                                line = String.format("remote_debug_port: %s:%s", ipPrefix + n, debugPort);
                             }
                             pw.println(line);
                         }
@@ -1128,6 +1176,7 @@ public class CCMBridge implements CCMAccess {
 
             Builder builder = (Builder) o;
 
+            if (ipPrefix != builder.ipPrefix) return false;
             if (dse != builder.dse) return false;
             if (!Arrays.equals(nodes, builder.nodes)) return false;
             if (version != null ? !version.equals(builder.version) : builder.version != null) return false;
@@ -1143,6 +1192,7 @@ public class CCMBridge implements CCMAccess {
             // do not include start as it is not relevant to the settings of the cluster.
             int result = Arrays.hashCode(nodes);
             result = 31 * result + (dse ? 1 : 0);
+            result = 31 * result + ipPrefix.hashCode();
             result = 31 * result + (version != null ? version.hashCode() : 0);
             result = 31 * result + createOptions.hashCode();
             result = 31 * result + jvmArgs.hashCode();

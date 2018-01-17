@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2012-2017 DataStax Inc.
+ * Copyright DataStax, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -91,6 +91,9 @@ public class CCMTestsSupport {
         public InetSocketAddress addressOfNode(int n) {
             return delegate.addressOfNode(n);
         }
+
+        @Override
+        public InetSocketAddress jmxAddressOfNode(int n) { return delegate.jmxAddressOfNode(n); }
 
         @Override
         public File getCcmDir() {
@@ -1013,6 +1016,21 @@ public class CCMTestsSupport {
         cluster = null;
         session = null;
         keyspace = null;
+    }
+
+    protected void resetTestSession() throws Exception {
+        session.close();
+        Cluster.Builder builder = ccmTestConfig.clusterProvider(this);
+        // add contact points only if the provided builder didn't do so
+        if (builder.getContactPoints().isEmpty())
+            builder.addContactPoints(getContactPoints());
+        builder.withPort(ccm.getBinaryPort());
+        cluster = register(builder.build());
+        cluster.init();
+
+        session.close();
+        session = register(cluster.connect());
+        useKeyspace(session, keyspace);
     }
 
     protected void closeCloseables() {

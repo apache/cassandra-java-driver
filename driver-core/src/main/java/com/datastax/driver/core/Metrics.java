@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2012-2017 DataStax Inc.
+ * Copyright DataStax, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -76,6 +76,16 @@ public class Metrics {
             for (SessionManager session : manager.sessions)
                 for (HostConnectionPool pool : session.pools.values())
                     value += pool.trashed();
+            return value;
+        }
+    });
+    private final Gauge<Integer> inFlightRequests = registry.register("inflight-requests", new Gauge<Integer>() {
+        @Override
+        public Integer getValue() {
+            int value = 0;
+            for (SessionManager session : manager.sessions)
+                for (HostConnectionPool pool : session.pools.values())
+                    value += pool.totalInFlight.get();
             return value;
         }
     });
@@ -216,6 +226,15 @@ public class Metrics {
      */
     public Gauge<Integer> getTrashedConnections() {
         return trashedConnections;
+    }
+
+    /**
+     * Returns the total number of in flight requests to Cassandra hosts.
+     *
+     * @return The total number of in flight requests to Cassandra hosts.
+     */
+    public Gauge<Integer> getInFlightRequests() {
+        return inFlightRequests;
     }
 
     /**
