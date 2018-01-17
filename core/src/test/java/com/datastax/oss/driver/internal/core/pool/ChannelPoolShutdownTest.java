@@ -57,11 +57,11 @@ public class ChannelPoolShutdownTest extends ChannelPoolTestBase {
     InOrder inOrder = Mockito.inOrder(eventBus);
 
     CompletionStage<ChannelPool> poolFuture =
-        ChannelPool.init(NODE, null, NodeDistance.LOCAL, context, "test");
+        ChannelPool.init(node, null, NodeDistance.LOCAL, context, "test");
 
     factoryHelper.waitForCalls(ADDRESS, 3);
     waitForPendingAdminTasks();
-    inOrder.verify(eventBus, times(3)).fire(ChannelEvent.channelOpened(NODE));
+    inOrder.verify(eventBus, times(3)).fire(ChannelEvent.channelOpened(node));
 
     assertThat(poolFuture).isSuccess();
     ChannelPool pool = poolFuture.toCompletableFuture().get();
@@ -69,7 +69,7 @@ public class ChannelPoolShutdownTest extends ChannelPoolTestBase {
     // Simulate graceful shutdown on channel3
     ((ChannelPromise) channel3.closeStartedFuture()).setSuccess();
     waitForPendingAdminTasks();
-    inOrder.verify(eventBus, times(1)).fire(ChannelEvent.channelClosed(NODE));
+    inOrder.verify(eventBus, times(1)).fire(ChannelEvent.channelClosed(node));
 
     // Reconnection should have kicked in and started to open channel4, do not complete it yet
     Mockito.verify(reconnectionSchedule).nextDelay();
@@ -81,7 +81,7 @@ public class ChannelPoolShutdownTest extends ChannelPoolTestBase {
     // The two original channels were closed normally
     Mockito.verify(channel1).close();
     Mockito.verify(channel2).close();
-    inOrder.verify(eventBus, times(2)).fire(ChannelEvent.channelClosed(NODE));
+    inOrder.verify(eventBus, times(2)).fire(ChannelEvent.channelClosed(node));
     // The closing channel was not closed again
     Mockito.verify(channel3, never()).close();
 
@@ -92,8 +92,8 @@ public class ChannelPoolShutdownTest extends ChannelPoolTestBase {
     // It should be force-closed once we find out the pool was closed
     Mockito.verify(channel4).forceClose();
     // No events because the channel was never really associated to the pool
-    inOrder.verify(eventBus, never()).fire(ChannelEvent.channelOpened(NODE));
-    inOrder.verify(eventBus, never()).fire(ChannelEvent.channelClosed(NODE));
+    inOrder.verify(eventBus, never()).fire(ChannelEvent.channelOpened(node));
+    inOrder.verify(eventBus, never()).fire(ChannelEvent.channelClosed(node));
 
     // We don't wait for reconnected channels to close, so the pool only depends on channel 1 to 3
     ((ChannelPromise) channel1.closeFuture()).setSuccess();
@@ -128,19 +128,19 @@ public class ChannelPoolShutdownTest extends ChannelPoolTestBase {
     InOrder inOrder = Mockito.inOrder(eventBus);
 
     CompletionStage<ChannelPool> poolFuture =
-        ChannelPool.init(NODE, null, NodeDistance.LOCAL, context, "test");
+        ChannelPool.init(node, null, NodeDistance.LOCAL, context, "test");
 
     factoryHelper.waitForCalls(ADDRESS, 3);
     waitForPendingAdminTasks();
 
     assertThat(poolFuture).isSuccess();
     ChannelPool pool = poolFuture.toCompletableFuture().get();
-    inOrder.verify(eventBus, times(3)).fire(ChannelEvent.channelOpened(NODE));
+    inOrder.verify(eventBus, times(3)).fire(ChannelEvent.channelOpened(node));
 
     // Simulate graceful shutdown on channel3
     ((ChannelPromise) channel3.closeStartedFuture()).setSuccess();
     waitForPendingAdminTasks();
-    inOrder.verify(eventBus, times(1)).fire(ChannelEvent.channelClosed(NODE));
+    inOrder.verify(eventBus, times(1)).fire(ChannelEvent.channelClosed(node));
 
     // Reconnection should have kicked in and started to open a channel, do not complete it yet
     Mockito.verify(reconnectionSchedule).nextDelay();
@@ -154,7 +154,7 @@ public class ChannelPoolShutdownTest extends ChannelPoolTestBase {
     Mockito.verify(channel2).forceClose();
     Mockito.verify(channel3).forceClose();
     // Only two events because the one for channel3 was sent earlier
-    inOrder.verify(eventBus, times(2)).fire(ChannelEvent.channelClosed(NODE));
+    inOrder.verify(eventBus, times(2)).fire(ChannelEvent.channelClosed(node));
 
     // Complete the reconnecting channel
     channel4Future.complete(channel4);
@@ -163,8 +163,8 @@ public class ChannelPoolShutdownTest extends ChannelPoolTestBase {
     // It should be force-closed once we find out the pool was closed
     Mockito.verify(channel4).forceClose();
     // No events because the channel was never really associated to the pool
-    inOrder.verify(eventBus, never()).fire(ChannelEvent.channelOpened(NODE));
-    inOrder.verify(eventBus, never()).fire(ChannelEvent.channelClosed(NODE));
+    inOrder.verify(eventBus, never()).fire(ChannelEvent.channelOpened(node));
+    inOrder.verify(eventBus, never()).fire(ChannelEvent.channelClosed(node));
 
     // We don't wait for reconnected channels to close, so the pool only depends on channel 1-3
     ((ChannelPromise) channel1.closeFuture()).setSuccess();

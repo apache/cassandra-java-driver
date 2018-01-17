@@ -31,6 +31,7 @@ import com.datastax.oss.driver.internal.core.channel.ChannelEvent;
 import com.datastax.oss.driver.internal.core.context.EventBus;
 import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
 import com.datastax.oss.driver.internal.core.context.NettyOptions;
+import com.datastax.oss.driver.internal.core.metrics.MetricUpdaterFactory;
 import com.datastax.oss.driver.internal.core.util.concurrent.BlockingOperation;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
@@ -59,6 +60,7 @@ public class NodeStateManagerTest {
   @Mock private NettyOptions nettyOptions;
   @Mock private MetadataManager metadataManager;
   @Mock private Metadata metadata;
+  @Mock protected MetricUpdaterFactory metricUpdaterFactory;
   private DefaultNode node1, node2;
   private EventBus eventBus;
   private DefaultEventLoopGroup adminEventLoopGroup;
@@ -82,8 +84,9 @@ public class NodeStateManagerTest {
     Mockito.when(nettyOptions.adminEventExecutorGroup()).thenReturn(adminEventLoopGroup);
     Mockito.when(context.nettyOptions()).thenReturn(nettyOptions);
 
-    node1 = new DefaultNode(new InetSocketAddress("127.0.0.1", 9042));
-    node2 = new DefaultNode(new InetSocketAddress("127.0.0.2", 9042));
+    Mockito.when(context.metricUpdaterFactory()).thenReturn(metricUpdaterFactory);
+    node1 = new DefaultNode(new InetSocketAddress("127.0.0.1", 9042), context);
+    node2 = new DefaultNode(new InetSocketAddress("127.0.0.2", 9042), context);
     ImmutableMap<InetSocketAddress, Node> nodes =
         ImmutableMap.<InetSocketAddress, Node>builder()
             .put(node1.getConnectAddress(), node1)

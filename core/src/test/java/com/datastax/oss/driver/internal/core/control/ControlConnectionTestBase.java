@@ -31,6 +31,7 @@ import com.datastax.oss.driver.internal.core.context.NettyOptions;
 import com.datastax.oss.driver.internal.core.metadata.DefaultNode;
 import com.datastax.oss.driver.internal.core.metadata.LoadBalancingPolicyWrapper;
 import com.datastax.oss.driver.internal.core.metadata.MetadataManager;
+import com.datastax.oss.driver.internal.core.metrics.MetricUpdaterFactory;
 import com.google.common.util.concurrent.Uninterruptibles;
 import io.netty.channel.DefaultChannelPromise;
 import io.netty.channel.DefaultEventLoopGroup;
@@ -54,8 +55,6 @@ import org.mockito.MockitoAnnotations;
 abstract class ControlConnectionTestBase {
   protected static final InetSocketAddress ADDRESS1 = new InetSocketAddress("127.0.0.1", 9042);
   protected static final InetSocketAddress ADDRESS2 = new InetSocketAddress("127.0.0.2", 9042);
-  protected static final DefaultNode NODE1 = new DefaultNode(ADDRESS1);
-  protected static final DefaultNode NODE2 = new DefaultNode(ADDRESS2);
 
   @Mock protected InternalDriverContext context;
   @Mock protected ReconnectionPolicy reconnectionPolicy;
@@ -67,7 +66,11 @@ abstract class ControlConnectionTestBase {
   protected Exchanger<CompletableFuture<DriverChannel>> channelFactoryFuture;
   @Mock protected LoadBalancingPolicyWrapper loadBalancingPolicyWrapper;
   @Mock protected MetadataManager metadataManager;
+  @Mock protected MetricUpdaterFactory metricUpdaterFactory;
+
   protected AddressTranslator addressTranslator;
+  protected DefaultNode node1;
+  protected DefaultNode node2;
 
   protected ControlConnection controlConnection;
 
@@ -99,7 +102,11 @@ abstract class ControlConnectionTestBase {
     Mockito.when(reconnectionSchedule.nextDelay()).thenReturn(Duration.ofDays(1));
 
     Mockito.when(context.loadBalancingPolicyWrapper()).thenReturn(loadBalancingPolicyWrapper);
-    mockQueryPlan(NODE1, NODE2);
+
+    Mockito.when(context.metricUpdaterFactory()).thenReturn(metricUpdaterFactory);
+    node1 = new DefaultNode(ADDRESS1, context);
+    node2 = new DefaultNode(ADDRESS2, context);
+    mockQueryPlan(node1, node2);
 
     Mockito.when(metadataManager.refreshNodes())
         .thenReturn(CompletableFuture.completedFuture(null));

@@ -29,6 +29,7 @@ import com.datastax.oss.driver.internal.core.metadata.schema.parsing.SchemaParse
 import com.datastax.oss.driver.internal.core.metadata.schema.queries.SchemaQueriesFactory;
 import com.datastax.oss.driver.internal.core.metadata.token.ReplicationStrategyFactory;
 import com.datastax.oss.driver.internal.core.metadata.token.TokenFactoryRegistry;
+import com.datastax.oss.driver.internal.core.metrics.MetricUpdaterFactory;
 import com.datastax.oss.driver.internal.core.pool.ChannelPoolFactory;
 import com.datastax.oss.driver.internal.core.servererrors.WriteTypeRegistry;
 import com.datastax.oss.driver.internal.core.session.PoolManager;
@@ -85,4 +86,6 @@ public interface InternalDriverContext extends DriverContext {
   ReplicationStrategyFactory replicationStrategyFactory();
 
   PoolManager poolManager();
+
+  MetricUpdaterFactory metricUpdaterFactory();
 }

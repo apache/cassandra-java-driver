@@ -57,7 +57,7 @@ public class ChannelPoolReconnectTest extends ChannelPoolTestBase {
     InOrder inOrder = Mockito.inOrder(eventBus);
 
     CompletionStage<ChannelPool> poolFuture =
-        ChannelPool.init(NODE, null, NodeDistance.LOCAL, context, "test");
+        ChannelPool.init(node, null, NodeDistance.LOCAL, context, "test");
 
     factoryHelper.waitForCalls(ADDRESS, 2);
     waitForPendingAdminTasks();
@@ -65,22 +65,22 @@ public class ChannelPoolReconnectTest extends ChannelPoolTestBase {
     assertThat(poolFuture).isSuccess();
     ChannelPool pool = poolFuture.toCompletableFuture().get();
     assertThat(pool.channels).containsOnly(channel1, channel2);
-    inOrder.verify(eventBus, times(2)).fire(ChannelEvent.channelOpened(NODE));
+    inOrder.verify(eventBus, times(2)).fire(ChannelEvent.channelOpened(node));
 
     // Simulate fatal error on channel2
     ((ChannelPromise) channel2.closeFuture())
         .setFailure(new Exception("mock channel init failure"));
     waitForPendingAdminTasks();
-    inOrder.verify(eventBus).fire(ChannelEvent.channelClosed(NODE));
+    inOrder.verify(eventBus).fire(ChannelEvent.channelClosed(node));
 
     Mockito.verify(reconnectionSchedule).nextDelay();
-    inOrder.verify(eventBus).fire(ChannelEvent.reconnectionStarted(NODE));
+    inOrder.verify(eventBus).fire(ChannelEvent.reconnectionStarted(node));
     factoryHelper.waitForCall(ADDRESS);
 
     channel3Future.complete(channel3);
     waitForPendingAdminTasks();
-    inOrder.verify(eventBus).fire(ChannelEvent.channelOpened(NODE));
-    Mockito.verify(eventBus).fire(ChannelEvent.reconnectionStopped(NODE));
+    inOrder.verify(eventBus).fire(ChannelEvent.channelOpened(node));
+    Mockito.verify(eventBus).fire(ChannelEvent.reconnectionStopped(node));
 
     assertThat(pool.channels).containsOnly(channel1, channel3);
 
@@ -108,7 +108,7 @@ public class ChannelPoolReconnectTest extends ChannelPoolTestBase {
     InOrder inOrder = Mockito.inOrder(eventBus);
 
     CompletionStage<ChannelPool> poolFuture =
-        ChannelPool.init(NODE, null, NodeDistance.LOCAL, context, "test");
+        ChannelPool.init(node, null, NodeDistance.LOCAL, context, "test");
 
     factoryHelper.waitForCalls(ADDRESS, 2);
     waitForPendingAdminTasks();
@@ -116,21 +116,21 @@ public class ChannelPoolReconnectTest extends ChannelPoolTestBase {
     assertThat(poolFuture).isSuccess();
     ChannelPool pool = poolFuture.toCompletableFuture().get();
     assertThat(pool.channels).containsOnly(channel1, channel2);
-    inOrder.verify(eventBus, times(2)).fire(ChannelEvent.channelOpened(NODE));
+    inOrder.verify(eventBus, times(2)).fire(ChannelEvent.channelOpened(node));
 
     // Simulate graceful shutdown on channel2
     ((ChannelPromise) channel2.closeStartedFuture()).setSuccess();
     waitForPendingAdminTasks();
-    inOrder.verify(eventBus).fire(ChannelEvent.channelClosed(NODE));
+    inOrder.verify(eventBus).fire(ChannelEvent.channelClosed(node));
 
     Mockito.verify(reconnectionSchedule).nextDelay();
-    inOrder.verify(eventBus).fire(ChannelEvent.reconnectionStarted(NODE));
+    inOrder.verify(eventBus).fire(ChannelEvent.reconnectionStarted(node));
     factoryHelper.waitForCall(ADDRESS);
 
     channel3Future.complete(channel3);
     waitForPendingAdminTasks();
-    inOrder.verify(eventBus).fire(ChannelEvent.channelOpened(NODE));
-    Mockito.verify(eventBus).fire(ChannelEvent.reconnectionStopped(NODE));
+    inOrder.verify(eventBus).fire(ChannelEvent.channelOpened(node));
+    Mockito.verify(eventBus).fire(ChannelEvent.reconnectionStopped(node));
 
     assertThat(pool.channels).containsOnly(channel1, channel3);
 
@@ -159,19 +159,19 @@ public class ChannelPoolReconnectTest extends ChannelPoolTestBase {
 
     // Initial connection
     CompletionStage<ChannelPool> poolFuture =
-        ChannelPool.init(NODE, null, NodeDistance.LOCAL, context, "test");
+        ChannelPool.init(node, null, NodeDistance.LOCAL, context, "test");
     factoryHelper.waitForCalls(ADDRESS, 1);
     waitForPendingAdminTasks();
     assertThat(poolFuture).isSuccess();
     ChannelPool pool = poolFuture.toCompletableFuture().get();
-    inOrder.verify(eventBus, times(1)).fire(ChannelEvent.channelOpened(NODE));
+    inOrder.verify(eventBus, times(1)).fire(ChannelEvent.channelOpened(node));
 
     // Kill channel1, reconnection begins and starts initializing channel2, but the initialization
     // is still pending (channel2Future not completed)
     ((ChannelPromise) channel1.closeStartedFuture()).setSuccess();
     waitForPendingAdminTasks();
-    inOrder.verify(eventBus).fire(ChannelEvent.channelClosed(NODE));
-    inOrder.verify(eventBus).fire(ChannelEvent.reconnectionStarted(NODE));
+    inOrder.verify(eventBus).fire(ChannelEvent.channelClosed(node));
+    inOrder.verify(eventBus).fire(ChannelEvent.reconnectionStarted(node));
     Mockito.verify(reconnectionSchedule).nextDelay();
     factoryHelper.waitForCalls(ADDRESS, 1);
 
@@ -184,8 +184,8 @@ public class ChannelPoolReconnectTest extends ChannelPoolTestBase {
     // Complete the initialization of channel2, reconnection succeeds
     channel2Future.complete(channel2);
     waitForPendingAdminTasks();
-    inOrder.verify(eventBus).fire(ChannelEvent.channelOpened(NODE));
-    Mockito.verify(eventBus).fire(ChannelEvent.reconnectionStopped(NODE));
+    inOrder.verify(eventBus).fire(ChannelEvent.channelOpened(node));
+    Mockito.verify(eventBus).fire(ChannelEvent.reconnectionStopped(node));
 
     assertThat(pool.channels).containsOnly(channel2);
 

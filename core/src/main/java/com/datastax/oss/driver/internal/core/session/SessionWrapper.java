@@ -15,6 +15,7 @@
  */
 package com.datastax.oss.driver.internal.core.session;
 
+import com.codahale.metrics.MetricRegistry;
 import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.context.DriverContext;
 import com.datastax.oss.driver.api.core.metadata.Metadata;
@@ -88,6 +89,11 @@ public class SessionWrapper implements Session {
   @Override
   public CqlIdentifier getKeyspace() {
     return delegate.getKeyspace();
+  }
+
+  @Override
+  public MetricRegistry getMetricRegistry() {
+    return delegate.getMetricRegistry();
   }
 
   @Override

@@ -129,6 +129,23 @@ public class DriverChannel {
     return inFlightHandler.getAvailableIds();
   }
 
+  /**
+   * @return the number of requests currently executing on this channel (including {@link
+   *     #getOrphanedIds() orphaned ids}).
+   */
+  public int getInFlight() {
+    return inFlightHandler.getInFlight();
+  }
+
+  /**
+   * @return the number of stream ids for requests that have either timed out or been cancelled, but
+   *     for which we can't release the stream id because a request might still come from the
+   *     server.
+   */
+  public int getOrphanedIds() {
+    return inFlightHandler.getOrphanIds();
+  }
+
   public EventLoop eventLoop() {
     return channel.eventLoop();
   }

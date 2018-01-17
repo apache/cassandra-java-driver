@@ -18,11 +18,14 @@ package com.datastax.oss.driver.internal.core.metadata;
 import static com.datastax.oss.driver.Assertions.assertThat;
 
 import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
+import com.datastax.oss.driver.internal.core.metrics.MetricUpdaterFactory;
 import com.google.common.collect.ImmutableMap;
 import java.net.InetSocketAddress;
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
+import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnitRunner;
 
 @RunWith(MockitoJUnitRunner.class)
@@ -31,10 +34,18 @@ public class RemoveNodeRefreshTest {
   private static final InetSocketAddress ADDRESS1 = new InetSocketAddress("127.0.0.1", 9042);
   private static final InetSocketAddress ADDRESS2 = new InetSocketAddress("127.0.0.2", 9042);
 
-  private static final DefaultNode node1 = new DefaultNode(ADDRESS1);
-  private static final DefaultNode node2 = new DefaultNode(ADDRESS2);
-
   @Mock private InternalDriverContext context;
+  @Mock protected MetricUpdaterFactory metricUpdaterFactory;
+
+  private DefaultNode node1;
+  private DefaultNode node2;
+
+  @Before
+  public void setup() {
+    Mockito.when(context.metricUpdaterFactory()).thenReturn(metricUpdaterFactory);
+    node1 = new DefaultNode(ADDRESS1, context);
+    node2 = new DefaultNode(ADDRESS2, context);
+  }
 
   @Test
   public void should_remove_existing_node() {

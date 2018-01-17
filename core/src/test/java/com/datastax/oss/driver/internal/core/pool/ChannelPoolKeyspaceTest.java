@@ -44,7 +44,7 @@ public class ChannelPoolKeyspaceTest extends ChannelPoolTestBase {
             .build();
 
     CompletionStage<ChannelPool> poolFuture =
-        ChannelPool.init(NODE, null, NodeDistance.LOCAL, context, "test");
+        ChannelPool.init(node, null, NodeDistance.LOCAL, context, "test");
 
     factoryHelper.waitForCalls(ADDRESS, 2);
     waitForPendingAdminTasks();
@@ -86,7 +86,7 @@ public class ChannelPoolKeyspaceTest extends ChannelPoolTestBase {
             .build();
 
     CompletionStage<ChannelPool> poolFuture =
-        ChannelPool.init(NODE, null, NodeDistance.LOCAL, context, "test");
+        ChannelPool.init(node, null, NodeDistance.LOCAL, context, "test");
 
     factoryHelper.waitForCalls(ADDRESS, 2);
     waitForPendingAdminTasks();
@@ -96,7 +96,7 @@ public class ChannelPoolKeyspaceTest extends ChannelPoolTestBase {
 
     // Check that reconnection has kicked in, but do not complete it yet
     Mockito.verify(reconnectionSchedule).nextDelay();
-    Mockito.verify(eventBus).fire(ChannelEvent.reconnectionStarted(NODE));
+    Mockito.verify(eventBus).fire(ChannelEvent.reconnectionStarted(node));
     factoryHelper.waitForCalls(ADDRESS, 2);
 
     // Switch keyspace, it succeeds immediately since there is no active channel
@@ -110,7 +110,7 @@ public class ChannelPoolKeyspaceTest extends ChannelPoolTestBase {
     channel2Future.complete(channel2);
     waitForPendingAdminTasks();
 
-    Mockito.verify(eventBus).fire(ChannelEvent.reconnectionStopped(NODE));
+    Mockito.verify(eventBus).fire(ChannelEvent.reconnectionStopped(node));
     Mockito.verify(channel1).setKeyspace(newKeyspace);
     Mockito.verify(channel2).setKeyspace(newKeyspace);
 

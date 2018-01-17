@@ -67,7 +67,7 @@ class FullNodeListRefresh extends NodesRefresh {
       seen.add(address);
       DefaultNode node = (DefaultNode) oldNodes.get(address);
       if (node == null) {
-        node = new DefaultNode(address);
+        node = new DefaultNode(address, context);
         LOG.debug("[{}] Adding new node {}", logPrefix, node);
         added.put(address, node);
       }

@@ -20,13 +20,16 @@ import static com.datastax.oss.driver.Assertions.assertThat;
 import com.datastax.oss.driver.api.core.metadata.Node;
 import com.datastax.oss.driver.api.core.uuid.Uuids;
 import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
+import com.datastax.oss.driver.internal.core.metrics.MetricUpdaterFactory;
 import com.google.common.collect.ImmutableMap;
 import java.net.InetSocketAddress;
 import java.util.Map;
 import java.util.UUID;
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
+import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnitRunner;
 
 @RunWith(MockitoJUnitRunner.class)
@@ -34,9 +37,16 @@ public class AddNodeRefreshTest {
   private static final InetSocketAddress ADDRESS1 = new InetSocketAddress("127.0.0.1", 9042);
   private static final InetSocketAddress ADDRESS2 = new InetSocketAddress("127.0.0.2", 9042);
 
-  private static final DefaultNode node1 = new DefaultNode(ADDRESS1);
-
   @Mock private InternalDriverContext context;
+  @Mock protected MetricUpdaterFactory metricUpdaterFactory;
+
+  private DefaultNode node1;
+
+  @Before
+  public void setup() {
+    Mockito.when(context.metricUpdaterFactory()).thenReturn(metricUpdaterFactory);
+    node1 = new DefaultNode(ADDRESS1, context);
+  }
 
   @Test
   public void should_add_new_node() {
