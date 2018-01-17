@@ -471,8 +471,13 @@ public class LatencyAwarePolicy implements ChainableLoadBalancingPolicy {
 
         public Map<Host, TimestampedAverage> currentLatencies() {
             Map<Host, TimestampedAverage> map = new HashMap<Host, TimestampedAverage>(latencies.size());
-            for (Map.Entry<Host, HostLatencyTracker> entry : latencies.entrySet())
-                map.put(entry.getKey(), entry.getValue().getCurrentAverage());
+            for (Map.Entry<Host, HostLatencyTracker> entry : latencies.entrySet()) {
+                TimestampedAverage average = entry.getValue().getCurrentAverage();
+                // average may be null if no latencies have been recorded yet for a host.
+                if (average != null) {
+                    map.put(entry.getKey(), average);
+                }
+            }
             return map;
         }
 
