@@ -33,7 +33,7 @@
 
         <dependency>
             <groupId>com.datastax.cassandra</groupId>
-            <artifactId>cassandra-driver-core</artifactId>
+            <artifactId>cassandra-driver-core-guava21compat</artifactId>
             <classifier>shaded</classifier>
             <exclusions>
                 <exclusion>

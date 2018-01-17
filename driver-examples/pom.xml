@@ -21,7 +21,7 @@
 
     <parent>
         <groupId>com.datastax.cassandra</groupId>
-        <artifactId>cassandra-driver-parent</artifactId>
+        <artifactId>cassandra-driver-parent-guava21compat</artifactId>
         <version>3.3.3-SNAPSHOT</version>
     </parent>
 
@@ -35,7 +35,7 @@
 
         <dependency>
             <groupId>com.datastax.cassandra</groupId>
-            <artifactId>cassandra-driver-core</artifactId>
+            <artifactId>cassandra-driver-core-guava21compat</artifactId>
         </dependency>
 
         <dependency>
