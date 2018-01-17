@@ -221,7 +221,7 @@ declaration.
 
 [@Computed][computed] can be used on properties that are the result of a
 computation on the Cassandra side, typically a function call. Native
-functions in Cassandra like `writetime()` or [User Defined Functions] are
+functions in Cassandra like `writetime()` or [User-Defined Functions] are
 supported.
 
 ```java
@@ -249,7 +249,7 @@ Support in [accessors](../using/#accessors) is planned for a future
 version (see
 [JAVA-832](https://datastax-oss.atlassian.net/browse/JAVA-832)).
 
-[User Defined Functions]:http://www.planetcassandra.org/blog/user-defined-functions-in-cassandra-3-0/
+[User-Defined Functions]:http://www.planetcassandra.org/blog/user-defined-functions-in-cassandra-3-0/
 [computed]:http://docs.datastax.com/en/drivers/java/3.3/com/datastax/driver/mapping/annotations/Computed.html
 
 #### Transient properties
@@ -263,7 +263,7 @@ it should be placed on either the field declaration or the property getter metho
 
 ### Mapping User Types
 
-[User Defined Types] can also be mapped by using [@UDT][udt]:
+[User-Defined Types] can also be mapped by using [@UDT][udt]:
 
 ```
 CREATE TYPE address (street text, zip_code int);
@@ -321,7 +321,7 @@ public class Company {
 This also works with UDTs inside collections or other UDTs, with any arbitrary
 nesting level.
 
-[User Defined Types]: ../../udts/
+[User-Defined Types]: ../../udts/
 [udt]:http://docs.datastax.com/en/drivers/java/3.3/com/datastax/driver/mapping/annotations/UDT.html
 [field]:http://docs.datastax.com/en/drivers/java/3.3/com/datastax/driver/mapping/annotations/Field.html
 
