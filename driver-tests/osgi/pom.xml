@@ -33,7 +33,7 @@
 
         <dependency>
             <groupId>com.datastax.cassandra</groupId>
-            <artifactId>cassandra-driver-core</artifactId>
+            <artifactId>cassandra-driver-core-guava21compat</artifactId>
             <exclusions>
                 <exclusion>
                     <groupId>com.github.jnr</groupId>
@@ -78,7 +78,7 @@
 
         <dependency>
             <groupId>com.datastax.cassandra</groupId>
-            <artifactId>cassandra-driver-core</artifactId>
+            <artifactId>cassandra-driver-core-guava21compat</artifactId>
             <type>test-jar</type>
             <scope>test</scope>
         </dependency>

@@ -20,7 +20,7 @@
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>com.datastax.cassandra</groupId>
-    <artifactId>cassandra-driver-parent</artifactId>
+    <artifactId>cassandra-driver-parent-guava21compat</artifactId>
     <version>3.3.3-SNAPSHOT</version>
     <packaging>pom</packaging>
     <name>DataStax Java Driver for Apache Cassandra</name>
@@ -46,11 +46,11 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
         <cassandra.version>3.11.1</cassandra.version>
-        <java.version>1.6</java.version>
+        <java.version>1.8</java.version>
         <log4j.version>1.2.17</log4j.version>
         <slf4j.version>1.7.25</slf4j.version>
         <slf4j-log4j12.version>1.7.25</slf4j-log4j12.version>
-        <guava.version>19.0</guava.version>
+        <guava.version>21.0</guava.version>
         <netty.version>4.0.47.Final</netty.version>
         <metrics.version>3.2.2</metrics.version>
         <snappy.version>1.1.2.6</snappy.version>
@@ -92,20 +92,20 @@
 
             <dependency>
                 <groupId>com.datastax.cassandra</groupId>
-                <artifactId>cassandra-driver-core</artifactId>
+                <artifactId>cassandra-driver-core-guava21compat</artifactId>
                 <version>${project.parent.version}</version>
             </dependency>
 
             <dependency>
                 <groupId>com.datastax.cassandra</groupId>
-                <artifactId>cassandra-driver-core</artifactId>
+                <artifactId>cassandra-driver-core-guava21compat</artifactId>
                 <version>${project.parent.version}</version>
                 <classifier>shaded</classifier>
             </dependency>
 
             <dependency>
                 <groupId>com.datastax.cassandra</groupId>
-                <artifactId>cassandra-driver-core</artifactId>
+                <artifactId>cassandra-driver-core-guava21compat</artifactId>
                 <version>${project.parent.version}</version>
                 <type>test-jar</type>
             </dependency>

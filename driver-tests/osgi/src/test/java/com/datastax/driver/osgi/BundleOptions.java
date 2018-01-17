@@ -54,7 +54,7 @@ public class BundleOptions {
 
     public static UrlProvisionOption driverBundle(boolean useShaded) {
         String classifier = useShaded ? "-shaded" : "";
-        return bundle("reference:file:" + PathUtils.getBaseDir() + "/../../driver-core/target/cassandra-driver-core-" + Cluster.getDriverVersion() + classifier + ".jar");
+        return bundle("reference:file:" + PathUtils.getBaseDir() + "/../../driver-core/target/cassandra-driver-core-guava21compat-" + Cluster.getDriverVersion() + classifier + ".jar");
     }
 
     public static UrlProvisionOption mappingBundle() {
