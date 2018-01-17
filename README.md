@@ -135,13 +135,6 @@ the [upgrade guide](/upgrade_guide/).
 If you are upgrading to _DataStax Enterprise_, use the [DataStax Enterprise Java driver][dse-driver] for more
 features and better compatibility.
 
-
-### Troubleshooting
-
-If you are having issues connecting to the cluster (seeing `NoHostAvailableConnection` exceptions) please check the 
-[connection requirements](https://github.com/datastax/java-driver/wiki/Connection-requirements).
-
-
 ## License
 Copyright 2012-2018, DataStax
 
