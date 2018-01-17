@@ -636,7 +636,7 @@ public abstract class QueryLogger implements LatencyTracker {
     }
 
     protected void maybeLogErrorQuery(Host host, Statement statement, Exception exception, long latencyMs) {
-        if (ERROR_LOGGER.isDebugEnabled()) {
+        if (ERROR_LOGGER.isDebugEnabled() && !(exception instanceof CancelledSpeculativeExecutionException)) {
             String message = String.format(ERROR_TEMPLATE, cluster.getClusterName(), host, latencyMs, statementAsString(statement));
             logQuery(statement, exception, ERROR_LOGGER, message);
         }
