@@ -15,6 +15,7 @@
  */
 package com.datastax.oss.driver.internal.core.context;
 
+import com.codahale.metrics.MetricRegistry;
 import com.datastax.oss.driver.api.core.ProtocolVersion;
 import com.datastax.oss.driver.api.core.addresstranslation.AddressTranslator;
 import com.datastax.oss.driver.api.core.auth.AuthProvider;
@@ -50,6 +51,8 @@ import com.datastax.oss.driver.internal.core.metadata.token.DefaultReplicationSt
 import com.datastax.oss.driver.internal.core.metadata.token.DefaultTokenFactoryRegistry;
 import com.datastax.oss.driver.internal.core.metadata.token.ReplicationStrategyFactory;
 import com.datastax.oss.driver.internal.core.metadata.token.TokenFactoryRegistry;
+import com.datastax.oss.driver.internal.core.metrics.DefaultMetricUpdaterFactory;
+import com.datastax.oss.driver.internal.core.metrics.MetricUpdaterFactory;
 import com.datastax.oss.driver.internal.core.pool.ChannelPoolFactory;
 import com.datastax.oss.driver.internal.core.protocol.ByteBufPrimitiveCodec;
 import com.datastax.oss.driver.internal.core.servererrors.DefaultWriteTypeRegistry;
@@ -156,6 +159,10 @@ public class DefaultDriverContext implements InternalDriverContext {
           "replicationStrategyFactory", this::buildReplicationStrategyFactory, cycleDetector);
   private final LazyReference<PoolManager> poolManagerRef =
       new LazyReference<>("poolManager", this::buildPoolManager, cycleDetector);
+  private final LazyReference<MetricRegistry> metricRegistryRef =
+      new LazyReference<>("metricRegistry", this::buildMetricRegistry, cycleDetector);
+  private final LazyReference<MetricUpdaterFactory> metricUpdaterFactoryRef =
+      new LazyReference<>("metricUpdaterFactory", this::buildMetricUpdaterFactory, cycleDetector);
 
   private final DriverConfig config;
   private final DriverConfigLoader configLoader;
@@ -352,6 +359,14 @@ public class DefaultDriverContext implements InternalDriverContext {
     return new PoolManager(this);
   }
 
+  protected MetricRegistry buildMetricRegistry() {
+    return new MetricRegistry();
+  }
+
+  protected MetricUpdaterFactory buildMetricUpdaterFactory() {
+    return new DefaultMetricUpdaterFactory(this);
+  }
+
   @Override
   public String sessionName() {
     return sessionName;
@@ -510,6 +525,16 @@ public class DefaultDriverContext implements InternalDriverContext {
   @Override
   public PoolManager poolManager() {
     return poolManagerRef.get();
+  }
+
+  @Override
+  public MetricRegistry metricRegistry() {
+    return metricRegistryRef.get();
+  }
+
+  @Override
+  public MetricUpdaterFactory metricUpdaterFactory() {
+    return metricUpdaterFactoryRef.get();
   }
 
   @Override

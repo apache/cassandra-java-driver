@@ -18,11 +18,14 @@ package com.datastax.oss.driver.internal.core.metadata;
 import static com.datastax.oss.driver.Assertions.assertThat;
 
 import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
+import com.datastax.oss.driver.internal.core.metrics.MetricUpdaterFactory;
 import com.google.common.collect.ImmutableSet;
 import java.net.InetSocketAddress;
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
+import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnitRunner;
 
 @RunWith(MockitoJUnitRunner.class)
@@ -32,6 +35,12 @@ public class InitContactPointsRefreshTest {
   private static final InetSocketAddress ADDRESS2 = new InetSocketAddress("127.0.0.2", 9042);
 
   @Mock private InternalDriverContext context;
+  @Mock private MetricUpdaterFactory metricUpdaterFactory;
+
+  @Before
+  public void setup() {
+    Mockito.when(context.metricUpdaterFactory()).thenReturn(metricUpdaterFactory);
+  }
 
   @Test
   public void should_create_nodes() {

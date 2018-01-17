@@ -15,6 +15,7 @@
  */
 package com.datastax.oss.driver.internal.core.session;
 
+import com.codahale.metrics.MetricRegistry;
 import com.datastax.oss.driver.api.core.AsyncAutoCloseable;
 import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.CqlSession;
@@ -35,6 +36,7 @@ import com.datastax.oss.driver.internal.core.control.ControlConnection;
 import com.datastax.oss.driver.internal.core.metadata.MetadataManager;
 import com.datastax.oss.driver.internal.core.metadata.NodeStateEvent;
 import com.datastax.oss.driver.internal.core.metadata.NodeStateManager;
+import com.datastax.oss.driver.internal.core.metrics.SessionMetricUpdater;
 import com.datastax.oss.driver.internal.core.pool.ChannelPool;
 import com.datastax.oss.driver.internal.core.util.Loggers;
 import com.datastax.oss.driver.internal.core.util.concurrent.CompletableFutures;
@@ -88,6 +90,7 @@ public class DefaultSession implements CqlSession {
   private final MetadataManager metadataManager;
   private final RequestProcessorRegistry processorRegistry;
   private final PoolManager poolManager;
+  private final SessionMetricUpdater metricUpdater;
 
   private DefaultSession(
       InternalDriverContext context,
@@ -101,6 +104,7 @@ public class DefaultSession implements CqlSession {
     this.processorRegistry = context.requestProcessorRegistry();
     this.poolManager = context.poolManager();
     this.logPrefix = context.sessionName();
+    this.metricUpdater = context.metricUpdaterFactory().newSessionUpdater();
   }
 
   private CompletionStage<CqlSession> init(CqlIdentifier keyspace) {
@@ -148,6 +152,11 @@ public class DefaultSession implements CqlSession {
     return poolManager.getKeyspace();
   }
 
+  @Override
+  public MetricRegistry getMetricRegistry() {
+    return context.metricRegistry();
+  }
+
   /**
    * <b>INTERNAL USE ONLY</b> -- switches the session to a new keyspace.
    *
@@ -193,6 +202,10 @@ public class DefaultSession implements CqlSession {
 
   public ConcurrentMap<ByteBuffer, RepreparePayload> getRepreparePayloads() {
     return poolManager.getRepreparePayloads();
+  }
+
+  public SessionMetricUpdater getMetricUpdater() {
+    return metricUpdater;
   }
 
   @Override

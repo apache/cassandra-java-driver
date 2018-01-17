@@ -15,6 +15,7 @@
  */
 package com.datastax.oss.driver.api.core.session;
 
+import com.codahale.metrics.MetricRegistry;
 import com.datastax.oss.driver.api.core.AsyncAutoCloseable;
 import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.CqlSession;
@@ -177,6 +178,17 @@ public interface Session extends AsyncAutoCloseable {
    * cqlsh-style program where requests are never concurrent).
    */
   CqlIdentifier getKeyspace();
+
+  /**
+   * The registry of driver metrics.
+   *
+   * <p>The driver is instrumented with DropWizard metrics, use this object to register metric
+   * reporters.
+   *
+   * @see <a href="http://metrics.dropwizard.io/4.0.0/manual/core.html#reporters">Reporters
+   *     (DropWizard Metrics manual)</a>
+   */
+  MetricRegistry getMetricRegistry();
 
   /**
    * Executes an arbitrary request.

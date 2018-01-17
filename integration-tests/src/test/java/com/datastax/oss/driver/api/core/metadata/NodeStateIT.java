@@ -57,10 +57,15 @@ import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
+import org.junit.runner.RunWith;
+import org.mockito.ArgumentCaptor;
+import org.mockito.Captor;
 import org.mockito.InOrder;
 import org.mockito.Mockito;
+import org.mockito.junit.MockitoJUnitRunner;
 
 @Category(ParallelizableTests.class)
+@RunWith(MockitoJUnitRunner.class)
 public class NodeStateIT {
 
   public @Rule SimulacronRule simulacron = new SimulacronRule(ClusterSpec.builder().withNodes(2));
@@ -78,6 +83,8 @@ public class NodeStateIT {
                   NodeStateIT.class.getName()))
           .withNodeStateListeners(nodeStateListener)
           .build();
+
+  private @Captor ArgumentCaptor<DefaultNode> nodeCaptor;
 
   private InternalDriverContext driverContext;
   private final BlockingQueue<NodeStateEvent> stateEvents = new LinkedBlockingDeque<>();
@@ -475,8 +482,8 @@ public class NodeStateIT {
 
       // The order of the calls is not deterministic because contact points are shuffled, but it
       // does not matter here since Mockito.verify does not enforce order.
-      Mockito.verify(localNodeStateListener, timeout(500))
-          .onRemove(new DefaultNode(wrongContactPoint));
+      Mockito.verify(localNodeStateListener, timeout(500)).onRemove(nodeCaptor.capture());
+      assertThat(nodeCaptor.getValue().getConnectAddress()).isEqualTo(wrongContactPoint);
       Mockito.verify(localNodeStateListener, timeout(500)).onUp(localMetadataNode1);
       Mockito.verify(localNodeStateListener, timeout(500)).onAdd(localMetadataNode2);
 

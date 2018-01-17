@@ -104,6 +104,24 @@ class ChannelSet implements Iterable<DriverChannel> {
     return availableIds;
   }
 
+  int getInFlight() {
+    int inFlight = 0;
+    DriverChannel[] snapshot = this.channels;
+    for (DriverChannel channel : snapshot) {
+      inFlight += channel.getInFlight();
+    }
+    return inFlight;
+  }
+
+  int getOrphanedIds() {
+    int orphanedIds = 0;
+    DriverChannel[] snapshot = this.channels;
+    for (DriverChannel channel : snapshot) {
+      orphanedIds += channel.getOrphanedIds();
+    }
+    return orphanedIds;
+  }
+
   int size() {
     return this.channels.length;
   }

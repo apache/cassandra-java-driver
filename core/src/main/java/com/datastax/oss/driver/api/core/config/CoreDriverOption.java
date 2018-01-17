@@ -109,6 +109,15 @@ public enum CoreDriverOption implements DriverOption {
   TIMESTAMP_GENERATOR_DRIFT_WARNING_INTERVAL(
       "request.timestamp-generator.drift-warning.interval", false),
 
+  METRICS_SESSION_ENABLED("metrics.session.enabled", false),
+  METRICS_NODE_ENABLED("metrics.node.enabled", false),
+  METRICS_SESSION_CQL_REQUESTS_HIGHEST("metrics.session.cql-requests.highest-latency", false),
+  METRICS_SESSION_CQL_REQUESTS_DIGITS("metrics.session.cql-requests.significant-digits", false),
+  METRICS_SESSION_CQL_REQUESTS_INTERVAL("metrics.session.cql-requests.refresh-interval", false),
+  METRICS_NODE_CQL_MESSAGES_HIGHEST("metrics.node.cql-messages.highest-latency", false),
+  METRICS_NODE_CQL_MESSAGES_DIGITS("metrics.node.cql-messages.significant-digits", false),
+  METRICS_NODE_CQL_MESSAGES_INTERVAL("metrics.node.cql-messages.refresh-interval", false),
+
   NETTY_IO_SIZE("netty.io-group.size", false),
   NETTY_IO_SHUTDOWN_QUIET_PERIOD("netty.io-group.shutdown.quiet-period", false),
   NETTY_IO_SHUTDOWN_TIMEOUT("netty.io-group.shutdown.timeout", false),

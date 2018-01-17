@@ -22,13 +22,13 @@ import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.config.DriverConfig;
 import com.datastax.oss.driver.api.core.config.DriverConfigProfile;
 import com.datastax.oss.driver.api.core.connection.ReconnectionPolicy;
-import com.datastax.oss.driver.api.core.metadata.Node;
 import com.datastax.oss.driver.internal.core.channel.ChannelFactory;
 import com.datastax.oss.driver.internal.core.channel.DriverChannel;
 import com.datastax.oss.driver.internal.core.context.EventBus;
 import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
 import com.datastax.oss.driver.internal.core.context.NettyOptions;
 import com.datastax.oss.driver.internal.core.metadata.DefaultNode;
+import com.datastax.oss.driver.internal.core.metrics.NodeMetricUpdater;
 import com.google.common.util.concurrent.Uninterruptibles;
 import io.netty.channel.DefaultChannelPromise;
 import io.netty.channel.DefaultEventLoopGroup;
@@ -48,16 +48,17 @@ import org.mockito.MockitoAnnotations;
 abstract class ChannelPoolTestBase {
 
   static final InetSocketAddress ADDRESS = new InetSocketAddress("localhost", 9042);
-  static final Node NODE = new DefaultNode(ADDRESS);
 
-  @Mock InternalDriverContext context;
+  @Mock protected InternalDriverContext context;
   @Mock private DriverConfig config;
-  @Mock DriverConfigProfile defaultProfile;
+  @Mock protected DriverConfigProfile defaultProfile;
   @Mock private ReconnectionPolicy reconnectionPolicy;
-  @Mock ReconnectionPolicy.ReconnectionSchedule reconnectionSchedule;
+  @Mock protected ReconnectionPolicy.ReconnectionSchedule reconnectionSchedule;
   @Mock private NettyOptions nettyOptions;
-  @Mock ChannelFactory channelFactory;
-  EventBus eventBus;
+  @Mock protected ChannelFactory channelFactory;
+  @Mock protected DefaultNode node;
+  @Mock protected NodeMetricUpdater nodeMetricUpdater;
+  protected EventBus eventBus;
   private DefaultEventLoopGroup adminEventLoopGroup;
 
   @Before
@@ -79,6 +80,9 @@ abstract class ChannelPoolTestBase {
     // By default, set a large reconnection delay. Tests that care about reconnection will override
     // it.
     Mockito.when(reconnectionSchedule.nextDelay()).thenReturn(Duration.ofDays(1));
+
+    Mockito.when(node.getConnectAddress()).thenReturn(ADDRESS);
+    Mockito.when(node.getMetricUpdater()).thenReturn(nodeMetricUpdater);
   }
 
   @After

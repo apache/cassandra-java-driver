@@ -43,7 +43,7 @@ class InitContactPointsRefresh implements MetadataRefresh {
 
     ImmutableMap.Builder<InetSocketAddress, Node> newNodes = ImmutableMap.builder();
     for (InetSocketAddress address : contactPoints) {
-      newNodes.put(address, new DefaultNode(address));
+      newNodes.put(address, new DefaultNode(address, context));
     }
     return new Result(new DefaultMetadata(newNodes.build()));
     // No token map refresh, because we don't have enough information yet

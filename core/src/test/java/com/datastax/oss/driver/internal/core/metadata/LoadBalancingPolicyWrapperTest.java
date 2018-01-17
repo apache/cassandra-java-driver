@@ -29,6 +29,7 @@ import com.datastax.oss.driver.api.core.metadata.Node;
 import com.datastax.oss.driver.api.core.metadata.NodeState;
 import com.datastax.oss.driver.internal.core.context.EventBus;
 import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
+import com.datastax.oss.driver.internal.core.metrics.MetricUpdaterFactory;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
@@ -59,6 +60,7 @@ public class LoadBalancingPolicyWrapperTest {
   private EventBus eventBus;
   @Mock private MetadataManager metadataManager;
   @Mock private Metadata metadata;
+  @Mock protected MetricUpdaterFactory metricUpdaterFactory;
 
   private LoadBalancingPolicyWrapper wrapper;
 
@@ -66,9 +68,11 @@ public class LoadBalancingPolicyWrapperTest {
   public void setup() {
     MockitoAnnotations.initMocks(this);
 
-    node1 = new DefaultNode(new InetSocketAddress("127.0.0.1", 9042));
-    node2 = new DefaultNode(new InetSocketAddress("127.0.0.2", 9042));
-    node3 = new DefaultNode(new InetSocketAddress("127.0.0.3", 9042));
+    Mockito.when(context.metricUpdaterFactory()).thenReturn(metricUpdaterFactory);
+
+    node1 = new DefaultNode(new InetSocketAddress("127.0.0.1", 9042), context);
+    node2 = new DefaultNode(new InetSocketAddress("127.0.0.2", 9042), context);
+    node3 = new DefaultNode(new InetSocketAddress("127.0.0.3", 9042), context);
 
     contactPointsMap =
         ImmutableMap.<InetSocketAddress, Node>builder()

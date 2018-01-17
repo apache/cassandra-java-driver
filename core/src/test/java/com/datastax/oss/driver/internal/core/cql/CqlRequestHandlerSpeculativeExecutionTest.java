@@ -17,6 +17,7 @@ package com.datastax.oss.driver.internal.core.cql;
 
 import static com.datastax.oss.driver.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.eq;
 
 import com.datastax.oss.driver.api.core.AllNodesFailedException;
@@ -24,6 +25,7 @@ import com.datastax.oss.driver.api.core.NoNodeAvailableException;
 import com.datastax.oss.driver.api.core.cql.AsyncResultSet;
 import com.datastax.oss.driver.api.core.cql.SimpleStatement;
 import com.datastax.oss.driver.api.core.metadata.Node;
+import com.datastax.oss.driver.api.core.metrics.CoreNodeMetric;
 import com.datastax.oss.driver.api.core.servererrors.BootstrappingException;
 import com.datastax.oss.driver.api.core.specex.SpeculativeExecutionPolicy;
 import com.datastax.oss.driver.internal.core.util.concurrent.ScheduledTaskCapturingEventLoop;
@@ -59,6 +61,7 @@ public class CqlRequestHandlerSpeculativeExecutionTest extends CqlRequestHandler
       assertThat(harness.nextScheduledTask()).isNull();
 
       Mockito.verifyNoMoreInteractions(speculativeExecutionPolicy);
+      Mockito.verifyNoMoreInteractions(nodeMetricUpdater1);
     }
   }
 
@@ -102,7 +105,9 @@ public class CqlRequestHandlerSpeculativeExecutionTest extends CqlRequestHandler
           harness.nextScheduledTask();
       assertThat(firstExecutionTask.getInitialDelay(TimeUnit.MILLISECONDS))
           .isEqualTo(firstExecutionDelay);
+      Mockito.verifyNoMoreInteractions(nodeMetricUpdater1);
       firstExecutionTask.run();
+      Mockito.verify(nodeMetricUpdater1).incrementCounter(CoreNodeMetric.SPECULATIVE_EXECUTIONS);
       node2Behavior.verifyWrite();
       node2Behavior.setWriteSuccess();
 
@@ -110,7 +115,9 @@ public class CqlRequestHandlerSpeculativeExecutionTest extends CqlRequestHandler
           harness.nextScheduledTask();
       assertThat(secondExecutionTask.getInitialDelay(TimeUnit.MILLISECONDS))
           .isEqualTo(secondExecutionDelay);
+      Mockito.verifyNoMoreInteractions(nodeMetricUpdater2);
       secondExecutionTask.run();
+      Mockito.verify(nodeMetricUpdater2).incrementCounter(CoreNodeMetric.SPECULATIVE_EXECUTIONS);
       node3Behavior.verifyWrite();
       node3Behavior.setWriteSuccess();
 
@@ -160,6 +167,10 @@ public class CqlRequestHandlerSpeculativeExecutionTest extends CqlRequestHandler
 
       // The speculative execution should have been cancelled
       assertThat(firstExecutionTask.isCancelled()).isTrue();
+
+      Mockito.verify(nodeMetricUpdater1)
+          .updateTimer(eq(CoreNodeMetric.CQL_MESSAGES), anyLong(), eq(TimeUnit.NANOSECONDS));
+      Mockito.verifyNoMoreInteractions(nodeMetricUpdater1);
 
       // Run the task anyway; we're bending reality a bit here since the task is already cancelled
       // and wouldn't run, but this allows us to test the case where the completion races with the

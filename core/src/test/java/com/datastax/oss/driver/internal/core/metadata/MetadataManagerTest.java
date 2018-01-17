@@ -28,6 +28,7 @@ import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
 import com.datastax.oss.driver.internal.core.context.NettyOptions;
 import com.datastax.oss.driver.internal.core.metadata.schema.parsing.SchemaParserFactory;
 import com.datastax.oss.driver.internal.core.metadata.schema.queries.SchemaQueriesFactory;
+import com.datastax.oss.driver.internal.core.metrics.MetricUpdaterFactory;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.util.concurrent.Uninterruptibles;
@@ -64,6 +65,7 @@ public class MetadataManagerTest {
   @Mock private EventBus eventBus;
   @Mock private SchemaQueriesFactory schemaQueriesFactory;
   @Mock private SchemaParserFactory schemaParserFactory;
+  @Mock protected MetricUpdaterFactory metricUpdaterFactory;
 
   private DefaultEventLoopGroup adminEventLoopGroup;
 
@@ -88,6 +90,8 @@ public class MetadataManagerTest {
     Mockito.when(context.eventBus()).thenReturn(eventBus);
     Mockito.when(context.schemaQueriesFactory()).thenReturn(schemaQueriesFactory);
     Mockito.when(context.schemaParserFactory()).thenReturn(schemaParserFactory);
+
+    Mockito.when(context.metricUpdaterFactory()).thenReturn(metricUpdaterFactory);
 
     metadataManager = new TestMetadataManager(context);
   }
@@ -150,7 +154,7 @@ public class MetadataManagerTest {
   @Test
   public void should_refresh_single_node() {
     // Given
-    Node node = new DefaultNode(ADDRESS1);
+    Node node = new DefaultNode(ADDRESS1, context);
     NodeInfo info = Mockito.mock(NodeInfo.class);
     Mockito.when(info.getDatacenter()).thenReturn("dc1");
     Mockito.when(topologyMonitor.refreshNode(node))

@@ -56,7 +56,7 @@ public class InFlightHandler extends ChannelDuplexHandler {
   private boolean closingGracefully;
   private SetKeyspaceRequest setKeyspaceRequest;
   private String logPrefix;
-  private int orphanStreamIds;
+  private volatile int orphanStreamIds; // volatile only for metrics
 
   InFlightHandler(
       ProtocolVersion protocolVersion,
@@ -147,6 +147,7 @@ public class InFlightHandler extends ChannelDuplexHandler {
         });
   }
 
+  @SuppressWarnings("NonAtomicVolatileUpdate")
   private void cancel(
       ChannelHandlerContext ctx, ResponseCallback responseCallback, ChannelPromise promise) {
     Integer streamId = inFlight.inverse().remove(responseCallback);
@@ -165,7 +166,7 @@ public class InFlightHandler extends ChannelDuplexHandler {
         // We can't release the stream id, because a response might still come back from the server.
         // Keep track of how many of those ids are held, because we want to replace the channel if
         // it becomes too high.
-        orphanStreamIds += 1;
+        orphanStreamIds += 1; // safe because the method is confined to the I/O thread
         if (orphanStreamIds > maxOrphanStreamIds) {
           LOG.debug(
               "[{}] Orphan stream ids exceeded the configured threshold ({}), closing gracefully",
@@ -195,6 +196,7 @@ public class InFlightHandler extends ChannelDuplexHandler {
   }
 
   @Override
+  @SuppressWarnings("NonAtomicVolatileUpdate")
   public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
     Frame responseFrame = (Frame) msg;
     int streamId = responseFrame.streamId;
@@ -217,7 +219,7 @@ public class InFlightHandler extends ChannelDuplexHandler {
       if (responseCallback == null) {
         LOG.debug("[{}] Got response on orphan stream id {}, releasing", logPrefix, streamId);
         release(streamId, ctx);
-        orphanStreamIds -= 1;
+        orphanStreamIds -= 1; // safe because the method is confined to the I/O thread
       } else {
         LOG.debug(
             "[{}] Got response on stream id {}, completing {}",
@@ -335,6 +337,14 @@ public class InFlightHandler extends ChannelDuplexHandler {
 
   int getAvailableIds() {
     return streamIds.getAvailableIds();
+  }
+
+  int getInFlight() {
+    return streamIds.getMaxAvailableIds() - streamIds.getAvailableIds();
+  }
+
+  int getOrphanIds() {
+    return orphanStreamIds;
   }
 
   private class SetKeyspaceRequest extends ChannelHandlerRequest {
