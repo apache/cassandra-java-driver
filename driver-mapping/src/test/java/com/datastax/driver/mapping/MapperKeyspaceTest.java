@@ -22,13 +22,12 @@ import com.datastax.driver.core.utils.CassandraVersion;
 import com.datastax.driver.mapping.annotations.PartitionKey;
 import com.datastax.driver.mapping.annotations.Table;
 import com.datastax.driver.mapping.annotations.UDT;
-import org.assertj.core.util.Preconditions;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import static com.datastax.driver.core.Assertions.assertThat;
 
-@CassandraVersion("2.0")
+@CassandraVersion("2.1")
 public class MapperKeyspaceTest extends CCMTestsSupport {
 
     @Override
