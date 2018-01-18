@@ -128,4 +128,4 @@ session.execute(
         1, bytes);
 ```
 
-[SimpleStatement]: http://docs.datastax.com/en/drivers/java/3.2/com/datastax/driver/core/SimpleStatement.html
+[SimpleStatement]: http://docs.datastax.com/en/drivers/java/3.4/com/datastax/driver/core/SimpleStatement.html
