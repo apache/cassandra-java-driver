@@ -271,7 +271,7 @@ public class CassandraVersion implements Comparable<CassandraVersion> {
 
   @Override
   public int hashCode() {
-    return Objects.hash(major, minor, patch, dsePatch, preReleases, build);
+    return Objects.hash(major, minor, patch, dsePatch, Arrays.hashCode(preReleases), build);
   }
 
   @Override

@@ -74,7 +74,7 @@ public class CycleDetector {
       synchronized (this) {
         Thread me = Thread.currentThread();
         LOG.debug("{} is done initializing {}", me, reference.getName());
-        graph.removeEdge(reference.getName(), me);
+        graph.removeEdge(reference.getName(), me.getName());
       }
     }
   }

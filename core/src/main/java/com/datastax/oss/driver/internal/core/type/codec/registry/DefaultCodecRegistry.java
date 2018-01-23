@@ -67,21 +67,25 @@ public class DefaultCodecRegistry extends CachingCodecRegistry {
     if (cacheWeigher != null) {
       cacheBuilder.weigher(cacheWeigher::apply).maximumWeight(maximumCacheWeight);
     }
+    CacheLoader<CacheKey, TypeCodec<?>> cacheLoader =
+        new CacheLoader<CacheKey, TypeCodec<?>>() {
+          @Override
+          public TypeCodec<?> load(CacheKey key) throws Exception {
+            return createCodec(key.cqlType, key.javaType);
+          }
+        };
     if (cacheRemovalListener != null) {
-      //noinspection ResultOfMethodCallIgnored
-      cacheBuilder.removalListener(
-          (RemovalListener<CacheKey, TypeCodec<?>>)
-              notification ->
-                  cacheRemovalListener.accept(notification.getKey(), notification.getValue()));
+      this.cache =
+          cacheBuilder
+              .removalListener(
+                  (RemovalListener<CacheKey, TypeCodec<?>>)
+                      notification ->
+                          cacheRemovalListener.accept(
+                              notification.getKey(), notification.getValue()))
+              .build(cacheLoader);
+    } else {
+      this.cache = cacheBuilder.build(cacheLoader);
     }
-    this.cache =
-        cacheBuilder.build(
-            new CacheLoader<CacheKey, TypeCodec<?>>() {
-              @Override
-              public TypeCodec<?> load(CacheKey key) throws Exception {
-                return createCodec(key.cqlType, key.javaType);
-              }
-            });
   }
 
   public DefaultCodecRegistry(String logPrefix, TypeCodec<?>... userCodecs) {

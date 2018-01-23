@@ -150,7 +150,7 @@ public class TupleCodecTest extends CodecTestBase<TupleValue> {
     TupleValue tuple = parse("(1,NULL,'a')");
 
     assertThat(tuple.getInt(0)).isEqualTo(1);
-    assertThat(tuple.isNull(1));
+    assertThat(tuple.isNull(1)).isTrue();
     assertThat(tuple.getString(2)).isEqualTo("a");
 
     Mockito.verify(intCodec).parse("1");
