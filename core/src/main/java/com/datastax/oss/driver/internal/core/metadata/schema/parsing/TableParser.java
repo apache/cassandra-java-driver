@@ -179,6 +179,8 @@ class TableParser extends RelationParser {
           clusteringColumnsBuilder.put(
               column, raw.reversed ? ClusteringOrder.DESC : ClusteringOrder.ASC);
           break;
+        default:
+          // nothing to do
       }
       allColumnsBuilder.put(column.getName(), column);
 
@@ -237,6 +239,9 @@ class TableParser extends RelationParser {
           break;
         case STATIC:
           column.kind = RawColumn.Kind.REGULAR;
+          break;
+        default:
+          // nothing to do
       }
     }
   }

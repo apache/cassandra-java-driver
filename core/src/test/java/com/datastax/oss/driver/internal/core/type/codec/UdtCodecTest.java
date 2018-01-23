@@ -159,7 +159,7 @@ public class UdtCodecTest extends CodecTestBase<UdtValue> {
     UdtValue udt = parse("{field1:1,field2:NULL,field3:'a'}");
 
     assertThat(udt.getInt(0)).isEqualTo(1);
-    assertThat(udt.isNull(1));
+    assertThat(udt.isNull(1)).isTrue();
     assertThat(udt.getString(2)).isEqualTo("a");
 
     Mockito.verify(intCodec).parse("1");

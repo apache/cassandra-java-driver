@@ -503,6 +503,7 @@ public class DataTypeIT {
           bs = bs.setCqlDuration(index, (CqlDuration) value);
           break;
         }
+        // fall through
       case ProtocolConstants.DataType.LIST:
       case ProtocolConstants.DataType.SET:
       case ProtocolConstants.DataType.MAP:
@@ -593,6 +594,7 @@ public class DataTypeIT {
           bs = bs.setCqlDuration(name, (CqlDuration) value);
           break;
         }
+        // fall through
       case ProtocolConstants.DataType.LIST:
       case ProtocolConstants.DataType.SET:
       case ProtocolConstants.DataType.MAP:
@@ -702,6 +704,7 @@ public class DataTypeIT {
           assertThat(row.getCqlDuration(0)).isEqualTo(expectedValue);
           break;
         }
+        // fall through
       case ProtocolConstants.DataType.LIST:
       case ProtocolConstants.DataType.MAP:
       case ProtocolConstants.DataType.SET:

@@ -116,6 +116,8 @@ class ViewParser extends RelationParser {
           clusteringColumnsBuilder.put(
               column, raw.reversed ? ClusteringOrder.DESC : ClusteringOrder.ASC);
           break;
+        default:
+          // nothing to do
       }
       allColumnsBuilder.put(column.getName(), column);
     }

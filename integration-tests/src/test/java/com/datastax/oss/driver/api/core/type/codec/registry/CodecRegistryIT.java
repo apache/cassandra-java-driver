@@ -340,7 +340,7 @@ public class CodecRegistryIT {
       // next row (at key 1) should be absent (null value).
       row = rows.next();
       // value should be null.
-      assertThat(row.isNull(0));
+      assertThat(row.isNull(0)).isTrue();
       // getting with codec should return Optional.empty()
       assertThat(row.get(0, optionalMapCodec.getJavaType())).isEqualTo(absentMap);
       // getting with map should return an empty map.
