@@ -20,6 +20,7 @@ import com.datastax.oss.driver.api.core.ProtocolVersion;
 import com.datastax.oss.driver.api.core.data.UdtValue;
 import com.datastax.oss.driver.api.core.type.DataType;
 import com.datastax.oss.driver.api.core.type.UserDefinedType;
+import com.datastax.oss.driver.api.core.type.codec.TypeCodec;
 import com.datastax.oss.driver.api.core.type.codec.registry.CodecRegistry;
 import com.datastax.oss.protocol.internal.util.Bytes;
 import com.google.common.base.Preconditions;
@@ -27,9 +28,13 @@ import java.io.InvalidObjectException;
 import java.io.ObjectInputStream;
 import java.io.Serializable;
 import java.nio.ByteBuffer;
+import java.util.Arrays;
+import java.util.Objects;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class DefaultUdtValue implements UdtValue {
-
+  private static final Logger LOG = LoggerFactory.getLogger(DefaultUdtValue.class);
   private static final long serialVersionUID = 1;
 
   private final UserDefinedType type;
@@ -89,6 +94,65 @@ public class DefaultUdtValue implements UdtValue {
   @Override
   public ProtocolVersion protocolVersion() {
     return type.getAttachmentPoint().protocolVersion();
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+
+    if (!(o instanceof UdtValue)) {
+      return false;
+    }
+    UdtValue that = (UdtValue) o;
+
+    if (!this.protocolVersion().equals(that.protocolVersion())) {
+      return false;
+    }
+
+    if (!type.equals(that.getType())) {
+      return false;
+    }
+
+    for (int i = 0; i < values.length; i++) {
+
+      DataType innerThisType = type.getFieldTypes().get(i);
+      DataType innerThatType = that.getType().getFieldTypes().get(i);
+
+      Object thisValue =
+          that.codecRegistry()
+              .codecFor(innerThisType)
+              .decode(this.getBytesUnsafe(i), this.protocolVersion());
+      Object thatValue =
+          this.codecRegistry()
+              .codecFor(innerThatType)
+              .decode(that.getBytesUnsafe(i), that.protocolVersion());
+
+      if (!Objects.equals(thisValue, thatValue)) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  @Override
+  public int hashCode() {
+    int result = type.hashCode();
+    for (int i = 0; i < values.length; i++) {
+      DataType innerThisType = type.getFieldTypes().get(i);
+      Object thisValue =
+          this.codecRegistry()
+              .codecFor(innerThisType)
+              .decode(this.values[i], this.protocolVersion());
+      result = 31 * result + thisValue.hashCode();
+    }
+    return result;
+  }
+
+  @Override
+  public String toString() {
+    return codecRegistry().codecFor(type).format(this);
   }
 
   /**

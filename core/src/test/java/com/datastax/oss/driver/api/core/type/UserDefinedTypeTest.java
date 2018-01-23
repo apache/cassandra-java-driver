@@ -15,11 +15,11 @@
  */
 package com.datastax.oss.driver.api.core.type;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.internal.core.type.UserDefinedTypeBuilder;
 import org.junit.Test;
-
-import static org.assertj.core.api.Assertions.assertThat;
 
 public class UserDefinedTypeTest {
 
@@ -61,5 +61,10 @@ public class UserDefinedTypeTest {
                 + "    frozen_list frozen<list<text>>,\n"
                 + "    list_of_map list<frozen<map<text, int>>>\n"
                 + ");");
+  }
+
+  @Test
+  public void should_evaluate_equality() {
+    assertThat(ACCOUNT_TYPE.newValue()).isEqualTo(ACCOUNT_TYPE.newValue());
   }
 }
