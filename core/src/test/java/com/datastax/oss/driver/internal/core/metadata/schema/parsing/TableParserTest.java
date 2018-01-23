@@ -40,7 +40,7 @@ public class TableParserTest extends SchemaParserTestBase {
           "ks",
           "foo",
           "org.apache.cassandra.db.marshal.CompositeType(org.apache.cassandra.db.marshal.Int32Type,org.apache.cassandra.db.marshal.Int32Type,org.apache.cassandra.db.marshal.UTF8Type)");
-  private static final Iterable<AdminRow> COLUMN_ROWS_2_2 =
+  private static final ImmutableList<AdminRow> COLUMN_ROWS_2_2 =
       ImmutableList.of(
           mockLegacyColumnRow(
               "ks", "foo", "k2", "partition_key", "org.apache.cassandra.db.marshal.UTF8Type", 1),
@@ -67,14 +67,14 @@ public class TableParserTest extends SchemaParserTestBase {
               "{}"));
 
   static final AdminRow TABLE_ROW_3_0 = mockModernTableRow("ks", "foo");
-  static final Iterable<AdminRow> COLUMN_ROWS_3_0 =
+  static final ImmutableList<AdminRow> COLUMN_ROWS_3_0 =
       ImmutableList.of(
           mockModernColumnRow("ks", "foo", "k2", "partition_key", "text", "none", 1),
           mockModernColumnRow("ks", "foo", "k1", "partition_key", "int", "none", 0),
           mockModernColumnRow("ks", "foo", "cc1", "clustering", "int", "asc", 0),
           mockModernColumnRow("ks", "foo", "cc2", "clustering", "int", "desc", 1),
           mockModernColumnRow("ks", "foo", "v", "regular", "int", "none", -1));
-  static final Iterable<AdminRow> INDEX_ROWS_3_0 =
+  static final ImmutableList<AdminRow> INDEX_ROWS_3_0 =
       ImmutableList.of(
           mockIndexRow("ks", "foo", "foo_v_idx", "COMPOSITES", ImmutableMap.of("target", "v")));
 

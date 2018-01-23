@@ -243,7 +243,7 @@ public class MetadataManagerTest {
     assertThat(refresh.toRemove).isEqualTo(ADDRESS1);
   }
 
-  private class TestMetadataManager extends MetadataManager {
+  private static class TestMetadataManager extends MetadataManager {
 
     private List<MetadataRefresh> refreshes = new CopyOnWriteArrayList<>();
 

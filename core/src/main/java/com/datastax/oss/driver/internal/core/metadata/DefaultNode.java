@@ -98,6 +98,7 @@ public class DefaultNode implements Node {
     return state;
   }
 
+  @Override
   public int getOpenConnections() {
     return openConnections;
   }

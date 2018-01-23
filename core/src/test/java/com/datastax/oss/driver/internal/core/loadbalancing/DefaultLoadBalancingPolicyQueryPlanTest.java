@@ -60,6 +60,7 @@ public class DefaultLoadBalancingPolicyQueryPlanTest extends DefaultLoadBalancin
   private DefaultLoadBalancingPolicy policy;
 
   @Before
+  @Override
   public void setup() {
     super.setup();
 

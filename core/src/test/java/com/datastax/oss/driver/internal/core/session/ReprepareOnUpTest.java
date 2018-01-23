@@ -40,8 +40,8 @@ import com.google.common.collect.ImmutableMap;
 import io.netty.channel.EventLoop;
 import java.nio.ByteBuffer;
 import java.time.Duration;
+import java.util.ArrayDeque;
 import java.util.Collections;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Queue;
@@ -312,7 +312,7 @@ public class ReprepareOnUpTest {
   /** Bypasses the channel to make testing easier. */
   private static class MockReprepareOnUp extends ReprepareOnUp {
 
-    private Queue<MockAdminQuery> queries = new LinkedList<>();
+    private Queue<MockAdminQuery> queries = new ArrayDeque<>();
 
     MockReprepareOnUp(
         String logPrefix,
@@ -352,7 +352,7 @@ public class ReprepareOnUpTest {
             RawType.PRIMITIVES.get(ProtocolConstants.DataType.BLOB));
     RowsMetadata rowsMetadata =
         new RowsMetadata(ImmutableList.of(preparedIdSpec), null, null, null);
-    Queue<List<ByteBuffer>> data = new LinkedList<>();
+    Queue<List<ByteBuffer>> data = new ArrayDeque<>();
     for (char value : values) {
       data.add(ImmutableList.of(Bytes.fromHexString("0x0" + value)));
     }

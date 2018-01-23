@@ -20,8 +20,9 @@ import com.google.common.collect.ListMultimap;
 import com.google.common.collect.MultimapBuilder;
 import com.google.common.collect.Sets;
 import java.net.SocketAddress;
+import java.util.ArrayDeque;
+import java.util.Deque;
 import java.util.HashMap;
-import java.util.LinkedList;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
@@ -148,7 +149,7 @@ public class MockChannelFactoryHelper {
 
     private void stub() {
       for (SocketAddress address : invocations.keySet()) {
-        LinkedList<CompletionStage<DriverChannel>> results = new LinkedList<>();
+        Deque<CompletionStage<DriverChannel>> results = new ArrayDeque<>();
         for (Object object : invocations.get(address)) {
           if (object instanceof DriverChannel) {
             results.add(CompletableFuture.completedFuture(((DriverChannel) object)));

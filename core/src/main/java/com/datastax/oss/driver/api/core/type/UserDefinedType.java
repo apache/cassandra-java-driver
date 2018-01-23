@@ -91,6 +91,7 @@ public interface UserDefinedType extends DataType, Describable {
     return describe(pretty);
   }
 
+  @Override
   default int getProtocolCode() {
     return ProtocolConstants.DataType.UDT;
   }

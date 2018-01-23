@@ -47,6 +47,7 @@ public enum CoreProtocolVersion implements ProtocolVersion {
     this.beta = beta;
   }
 
+  @Override
   public int getCode() {
     return code;
   }

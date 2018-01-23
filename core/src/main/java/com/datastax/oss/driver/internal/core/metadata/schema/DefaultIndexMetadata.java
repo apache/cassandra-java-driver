@@ -70,6 +70,7 @@ public class DefaultIndexMetadata implements IndexMetadata {
     return target;
   }
 
+  @Override
   public Map<String, String> getOptions() {
     return options;
   }

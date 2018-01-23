@@ -33,9 +33,9 @@ import com.datastax.oss.protocol.internal.util.Bytes;
 import com.google.common.annotations.VisibleForTesting;
 import java.nio.ByteBuffer;
 import java.time.Duration;
+import java.util.ArrayDeque;
 import java.util.Collections;
 import java.util.HashSet;
-import java.util.LinkedList;
 import java.util.Map;
 import java.util.Queue;
 import java.util.Set;
@@ -161,7 +161,7 @@ class ReprepareOnUp {
 
   private void gatherPayloadsToReprepare() {
     assert channel.eventLoop().inEventLoop();
-    toReprepare = new LinkedList<>();
+    toReprepare = new ArrayDeque<>();
     for (RepreparePayload payload : repreparePayloads.values()) {
       if (serverKnownIds.contains(payload.id)) {
         LOG.trace(

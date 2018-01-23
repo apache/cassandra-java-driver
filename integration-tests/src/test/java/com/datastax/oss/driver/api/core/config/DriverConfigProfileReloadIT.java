@@ -15,8 +15,8 @@
  */
 package com.datastax.oss.driver.api.core.config;
 
-import com.datastax.oss.driver.api.core.DriverTimeoutException;
 import com.datastax.oss.driver.api.core.CqlSession;
+import com.datastax.oss.driver.api.core.DriverTimeoutException;
 import com.datastax.oss.driver.api.core.cql.SimpleStatement;
 import com.datastax.oss.driver.api.testinfra.simulacron.SimulacronRule;
 import com.datastax.oss.driver.internal.core.config.ConfigChangeEvent;
@@ -147,7 +147,8 @@ public class DriverConfigProfileReloadIT {
       configSource.set("profiles.slow.request.timeout = 2s");
       waitForConfigChange(session, 3, TimeUnit.SECONDS);
 
-      // Execute again, should expect to fail again because doesn't allow to dynamically define profile.
+      // Execute again, should expect to fail again because doesn't allow to dynamically define
+      // profile.
       thrown.expect(IllegalArgumentException.class);
       session.execute(SimpleStatement.builder(query).withConfigProfileName("slow").build());
     }
@@ -200,7 +201,7 @@ public class DriverConfigProfileReloadIT {
       boolean success = latch.await(timeout, unit);
       assertThat(success).isTrue();
     } catch (InterruptedException e) {
-      fail("Interrupted while waiting for config change event");
+      throw new AssertionError("Interrupted while waiting for config change event", e);
     }
   }
 }

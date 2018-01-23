@@ -351,7 +351,10 @@ public final class CqlDuration {
     public Builder addYears(long numberOfYears) {
       validateOrder(1);
       validateMonths(numberOfYears, MONTHS_PER_YEAR);
-      months += numberOfYears * MONTHS_PER_YEAR;
+      // Cast to avoid http://errorprone.info/bugpattern/NarrowingCompoundAssignment
+      // We could also change the method to accept an int, but keeping long allows us to keep the
+      // calling code generic.
+      months += (int) numberOfYears * MONTHS_PER_YEAR;
       return this;
     }
 
@@ -364,7 +367,7 @@ public final class CqlDuration {
     public Builder addMonths(long numberOfMonths) {
       validateOrder(2);
       validateMonths(numberOfMonths, 1);
-      months += numberOfMonths;
+      months += (int) numberOfMonths;
       return this;
     }
 
@@ -377,7 +380,7 @@ public final class CqlDuration {
     public Builder addWeeks(long numberOfWeeks) {
       validateOrder(3);
       validateDays(numberOfWeeks, DAYS_PER_WEEK);
-      days += numberOfWeeks * DAYS_PER_WEEK;
+      days += (int) numberOfWeeks * DAYS_PER_WEEK;
       return this;
     }
 
@@ -390,7 +393,7 @@ public final class CqlDuration {
     public Builder addDays(long numberOfDays) {
       validateOrder(4);
       validateDays(numberOfDays, 1);
-      days += numberOfDays;
+      days += (int) numberOfDays;
       return this;
     }
 

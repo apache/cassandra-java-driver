@@ -47,6 +47,7 @@ public interface TupleType extends DataType {
     return builder.toString();
   }
 
+  @Override
   default int getProtocolCode() {
     return ProtocolConstants.DataType.TUPLE;
   }

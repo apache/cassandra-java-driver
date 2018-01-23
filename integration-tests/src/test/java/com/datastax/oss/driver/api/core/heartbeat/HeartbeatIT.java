@@ -232,7 +232,7 @@ public class HeartbeatIT {
             false,
             (l) ->
                 IS_OPTION_REQUEST.test(l)
-                    && regularConnection ^ l.getConnection().equals(controlConnectionAddress));
+                    && (regularConnection ^ l.getConnection().equals(controlConnectionAddress)));
     return count;
   }
 

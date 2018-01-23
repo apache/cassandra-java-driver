@@ -24,9 +24,10 @@ import com.datastax.oss.driver.api.core.type.DataTypes;
 import com.datastax.oss.driver.internal.core.util.CountingIterator;
 import com.datastax.oss.driver.internal.core.util.concurrent.BlockingOperation;
 import com.datastax.oss.driver.internal.core.util.concurrent.CompletableFutures;
+import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.Deque;
 import java.util.Iterator;
-import java.util.LinkedList;
 import java.util.List;
 
 public class MultiPageResultSet implements ResultSet {
@@ -81,7 +82,7 @@ public class MultiPageResultSet implements ResultSet {
 
   private class RowIterator extends CountingIterator<Row> {
     // The pages fetched so far. The first is the one we're currently iterating.
-    private LinkedList<AsyncResultSet> pages = new LinkedList<>();
+    private Deque<AsyncResultSet> pages = new ArrayDeque<>();
     private Iterator<Row> currentRows;
 
     private RowIterator(AsyncResultSet firstPage) {

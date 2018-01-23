@@ -36,6 +36,7 @@ public class ChannelFactoryAvailableIdsTest extends ChannelFactoryTestBase {
   @Mock private ResponseCallback responseCallback;
 
   @Before
+  @Override
   public void setup() throws InterruptedException {
     super.setup();
     Mockito.when(defaultConfigProfile.isDefined(CoreDriverOption.PROTOCOL_VERSION))

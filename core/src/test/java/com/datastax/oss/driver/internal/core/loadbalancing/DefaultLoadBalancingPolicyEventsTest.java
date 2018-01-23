@@ -35,6 +35,7 @@ public class DefaultLoadBalancingPolicyEventsTest extends DefaultLoadBalancingPo
   private DefaultLoadBalancingPolicy policy;
 
   @Before
+  @Override
   public void setup() {
     super.setup();
 

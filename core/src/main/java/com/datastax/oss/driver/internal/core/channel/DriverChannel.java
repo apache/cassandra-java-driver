@@ -17,6 +17,7 @@ package com.datastax.oss.driver.internal.core.channel;
 
 import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.ProtocolVersion;
+import com.datastax.oss.driver.internal.core.util.concurrent.UncaughtExceptions;
 import com.datastax.oss.protocol.internal.Message;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelFuture;
@@ -82,7 +83,7 @@ public class DriverChannel {
   public void cancel(ResponseCallback responseCallback) {
     // To avoid creating an extra message, we adopt the convention that writing the callback
     // directly means cancellation
-    writeCoalescer.writeAndFlush(channel, responseCallback);
+    writeCoalescer.writeAndFlush(channel, responseCallback).addListener(UncaughtExceptions::log);
   }
 
   /**
@@ -149,10 +150,12 @@ public class DriverChannel {
    * be allowed to complete before the underlying channel is closed.
    */
   public Future<Void> close() {
-    if (closing.compareAndSet(false, true)) {
+    if (closing.compareAndSet(false, true) && channel.isOpen()) {
       // go through the coalescer: this guarantees that we won't reject writes that were submitted
       // before, but had not been coalesced yet.
-      writeCoalescer.writeAndFlush(channel, GRACEFUL_CLOSE_MESSAGE);
+      writeCoalescer
+          .writeAndFlush(channel, GRACEFUL_CLOSE_MESSAGE)
+          .addListener(UncaughtExceptions::log);
     }
     return channel.closeFuture();
   }
@@ -163,8 +166,10 @@ public class DriverChannel {
    */
   public Future<Void> forceClose() {
     this.close();
-    if (forceClosing.compareAndSet(false, true)) {
-      writeCoalescer.writeAndFlush(channel, FORCEFUL_CLOSE_MESSAGE);
+    if (forceClosing.compareAndSet(false, true) && channel.isOpen()) {
+      writeCoalescer
+          .writeAndFlush(channel, FORCEFUL_CLOSE_MESSAGE)
+          .addListener(UncaughtExceptions::log);
     }
     return channel.closeFuture();
   }

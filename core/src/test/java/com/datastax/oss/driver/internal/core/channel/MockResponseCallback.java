@@ -16,12 +16,12 @@
 package com.datastax.oss.driver.internal.core.channel;
 
 import com.datastax.oss.protocol.internal.Frame;
-import java.util.LinkedList;
+import java.util.ArrayDeque;
 import java.util.Queue;
 
 class MockResponseCallback implements ResponseCallback {
   private final boolean holdStreamId;
-  private final Queue<Object> responses = new LinkedList<>();
+  private final Queue<Object> responses = new ArrayDeque<>();
 
   volatile int streamId = -1;
 

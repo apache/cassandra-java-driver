@@ -15,7 +15,6 @@
  */
 package com.datastax.oss.driver.api.testinfra.loadbalancing;
 
-import com.datastax.oss.driver.api.core.config.DriverOption;
 import com.datastax.oss.driver.api.core.context.DriverContext;
 import com.datastax.oss.driver.api.core.loadbalancing.LoadBalancingPolicy;
 import com.datastax.oss.driver.api.core.loadbalancing.NodeDistance;
@@ -24,7 +23,7 @@ import com.datastax.oss.driver.api.core.session.Request;
 import com.datastax.oss.driver.api.core.session.Session;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
-import java.util.LinkedList;
+import java.util.ArrayDeque;
 import java.util.Map;
 import java.util.Queue;
 import java.util.Set;
@@ -75,7 +74,7 @@ public class SortingLoadBalancingPolicy implements LoadBalancingPolicy {
 
   @Override
   public Queue<Node> newQueryPlan(Request request, Session session) {
-    return new LinkedList<>(nodes);
+    return new ArrayDeque<>(nodes);
   }
 
   @Override

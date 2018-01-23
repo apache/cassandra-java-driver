@@ -243,8 +243,8 @@ public class CodecRegistryIT {
     Predicate<T> isAbsent =
         (i) ->
             i == null
-                || (i instanceof Collection && ((Collection) i).isEmpty())
-                || (i instanceof Map) && ((Map) i).isEmpty();
+                || ((i instanceof Collection && ((Collection) i).isEmpty()))
+                || ((i instanceof Map) && ((Map) i).isEmpty());
 
     OptionalCodec(TypeCodec<T> innerCodec) {
       super(

@@ -96,9 +96,9 @@ public class VIntCoding {
     return 0xff >> extraBytesToRead;
   }
 
-  private static int encodeExtraBytesToRead(int extraBytesToRead) {
+  private static byte encodeExtraBytesToRead(int extraBytesToRead) {
     // because we have an extra bit in the value mask, we just need to invert it
-    return ~firstByteValueMask(extraBytesToRead);
+    return (byte) ~firstByteValueMask(extraBytesToRead);
   }
 
   private static int numberOfExtraBytesToRead(int firstByte) {
