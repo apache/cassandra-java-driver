@@ -123,10 +123,12 @@ public final class CqlDuration {
     String source = isNegative ? input.substring(1) : input;
 
     if (source.startsWith("P")) {
-      if (source.endsWith("W")) return parseIso8601WeekFormat(isNegative, source);
-
-      if (source.contains("-")) return parseIso8601AlternativeFormat(isNegative, source);
-
+      if (source.endsWith("W")) {
+        return parseIso8601WeekFormat(isNegative, source);
+      }
+      if (source.contains("-")) {
+        return parseIso8601AlternativeFormat(isNegative, source);
+      }
       return parseIso8601Format(isNegative, source);
     }
     return parseStandardFormat(isNegative, source);
@@ -139,29 +141,36 @@ public final class CqlDuration {
           String.format("Unable to convert '%s' to a duration", source));
 
     Builder builder = new Builder(isNegative);
-    if (matcher.group(1) != null) builder.addYears(groupAsLong(matcher, 2));
-
-    if (matcher.group(3) != null) builder.addMonths(groupAsLong(matcher, 4));
-
-    if (matcher.group(5) != null) builder.addDays(groupAsLong(matcher, 6));
-
+    if (matcher.group(1) != null) {
+      builder.addYears(groupAsLong(matcher, 2));
+    }
+    if (matcher.group(3) != null) {
+      builder.addMonths(groupAsLong(matcher, 4));
+    }
+    if (matcher.group(5) != null) {
+      builder.addDays(groupAsLong(matcher, 6));
+    }
     // Checks if the String contains time information
     if (matcher.group(7) != null) {
-      if (matcher.group(8) != null) builder.addHours(groupAsLong(matcher, 9));
-
-      if (matcher.group(10) != null) builder.addMinutes(groupAsLong(matcher, 11));
-
-      if (matcher.group(12) != null) builder.addSeconds(groupAsLong(matcher, 13));
+      if (matcher.group(8) != null) {
+        builder.addHours(groupAsLong(matcher, 9));
+      }
+      if (matcher.group(10) != null) {
+        builder.addMinutes(groupAsLong(matcher, 11));
+      }
+      if (matcher.group(12) != null) {
+        builder.addSeconds(groupAsLong(matcher, 13));
+      }
     }
     return builder.build();
   }
 
   private static CqlDuration parseIso8601AlternativeFormat(boolean isNegative, String source) {
     Matcher matcher = ISO8601_ALTERNATIVE_PATTERN.matcher(source);
-    if (!matcher.matches())
+    if (!matcher.matches()) {
       throw new IllegalArgumentException(
           String.format("Unable to convert '%s' to a duration", source));
-
+    }
     return new Builder(isNegative)
         .addYears(groupAsLong(matcher, 1))
         .addMonths(groupAsLong(matcher, 2))
@@ -174,19 +183,19 @@ public final class CqlDuration {
 
   private static CqlDuration parseIso8601WeekFormat(boolean isNegative, String source) {
     Matcher matcher = ISO8601_WEEK_PATTERN.matcher(source);
-    if (!matcher.matches())
+    if (!matcher.matches()) {
       throw new IllegalArgumentException(
           String.format("Unable to convert '%s' to a duration", source));
-
+    }
     return new Builder(isNegative).addWeeks(groupAsLong(matcher, 1)).build();
   }
 
   private static CqlDuration parseStandardFormat(boolean isNegative, String source) {
     Matcher matcher = STANDARD_PATTERN.matcher(source);
-    if (!matcher.find())
+    if (!matcher.find()) {
       throw new IllegalArgumentException(
           String.format("Unable to convert '%s' to a duration", source));
-
+    }
     Builder builder = new Builder(isNegative);
     boolean done;
 
@@ -197,10 +206,10 @@ public final class CqlDuration {
       done = matcher.end() == source.length();
     } while (matcher.find());
 
-    if (!done)
+    if (!done) {
       throw new IllegalArgumentException(
           String.format("Unable to convert '%s' to a duration", source));
-
+    }
     return builder.build();
   }
 
@@ -244,8 +253,9 @@ public final class CqlDuration {
    * @return the remainder of the division
    */
   private static long append(StringBuilder builder, long dividend, long divisor, String unit) {
-    if (dividend == 0 || dividend < divisor) return dividend;
-
+    if (dividend == 0 || dividend < divisor) {
+      return dividend;
+    }
     builder.append(dividend / divisor).append(unit);
     return dividend % divisor;
   }
@@ -300,8 +310,9 @@ public final class CqlDuration {
   public String toString() {
     StringBuilder builder = new StringBuilder();
 
-    if (months < 0 || days < 0 || nanoseconds < 0) builder.append('-');
-
+    if (months < 0 || days < 0 || nanoseconds < 0) {
+      builder.append('-');
+    }
     long remainder = append(builder, Math.abs(months), MONTHS_PER_YEAR, "y");
     append(builder, remainder, 1, "mo");
 
@@ -512,17 +523,17 @@ public final class CqlDuration {
      * @param unitIndex the unit index (e.g. years=1, months=2, ...)
      */
     private void validateOrder(int unitIndex) {
-      if (unitIndex == currentUnitIndex)
+      if (unitIndex == currentUnitIndex) {
         throw new IllegalArgumentException(
             String.format(
                 "Invalid duration. The %s are specified multiple times", getUnitName(unitIndex)));
-
-      if (unitIndex <= currentUnitIndex)
+      }
+      if (unitIndex <= currentUnitIndex) {
         throw new IllegalArgumentException(
             String.format(
                 "Invalid duration. The %s should be after %s",
                 getUnitName(currentUnitIndex), getUnitName(unitIndex)));
-
+      }
       currentUnitIndex = unitIndex;
     }
 
