@@ -28,6 +28,7 @@ public interface ListType extends DataType {
     return String.format(template, getElementType().asCql(includeFrozen, pretty));
   }
 
+  @Override
   default int getProtocolCode() {
     return ProtocolConstants.DataType.LIST;
   }

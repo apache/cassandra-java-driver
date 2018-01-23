@@ -292,9 +292,9 @@ class TableParser extends RelationParser {
     if (options.containsKey("index_keys_and_values")) {
       return String.format("entries(%s)", columnName);
     }
-    if (columnType instanceof ListType && ((ListType) columnType).isFrozen()
-        || columnType instanceof SetType && ((SetType) columnType).isFrozen()
-        || columnType instanceof MapType && ((MapType) columnType).isFrozen()) {
+    if ((columnType instanceof ListType && ((ListType) columnType).isFrozen())
+        || (columnType instanceof SetType && ((SetType) columnType).isFrozen())
+        || (columnType instanceof MapType && ((MapType) columnType).isFrozen())) {
       return String.format("full(%s)", columnName);
     }
     // Note: the keyword 'values' is not accepted as a valid index target function until 3.0

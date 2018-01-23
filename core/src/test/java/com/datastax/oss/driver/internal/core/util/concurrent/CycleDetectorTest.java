@@ -36,6 +36,7 @@ public class CycleDetectorTest {
     CyclicContext context = new CyclicContext(checker, false);
     try {
       context.a.get();
+      fail("Expected an exception");
     } catch (Exception e) {
       assertThat(e)
           .isInstanceOf(IllegalStateException.class)

@@ -121,7 +121,7 @@ public abstract class ChannelFactoryTestBase {
     Mockito.when(defaultConfigProfile.getInt(CoreDriverOption.CONNECTION_MAX_REQUESTS))
         .thenReturn(1);
     Mockito.when(defaultConfigProfile.getDuration(CoreDriverOption.CONNECTION_HEARTBEAT_INTERVAL))
-        .thenReturn(Duration.ofMillis(30000));
+        .thenReturn(Duration.ofSeconds(30));
 
     Mockito.when(context.protocolVersionRegistry()).thenReturn(protocolVersionRegistry);
     Mockito.when(context.nettyOptions()).thenReturn(nettyOptions);

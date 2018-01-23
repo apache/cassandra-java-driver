@@ -35,6 +35,7 @@ public class DefaultSchemaQueriesFactory implements SchemaQueriesFactory {
     this.context = context;
   }
 
+  @Override
   public SchemaQueries newInstance(CompletableFuture<Metadata> refreshFuture) {
     String logPrefix = context.sessionName();
 

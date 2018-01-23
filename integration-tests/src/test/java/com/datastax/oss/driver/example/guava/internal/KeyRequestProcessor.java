@@ -62,7 +62,7 @@ public class KeyRequestProcessor implements RequestProcessor<KeyRequest, Integer
     return new KeyRequestHandler(subHandler);
   }
 
-  class KeyRequestHandler implements RequestHandler<KeyRequest, Integer> {
+  static class KeyRequestHandler implements RequestHandler<KeyRequest, Integer> {
 
     private final RequestHandler<Statement<?>, ResultSet> subHandler;
 

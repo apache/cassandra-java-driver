@@ -33,6 +33,7 @@ public interface MapType extends DataType {
         getValueType().asCql(includeFrozen, pretty));
   }
 
+  @Override
   default int getProtocolCode() {
     return ProtocolConstants.DataType.MAP;
   }

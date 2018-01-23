@@ -375,6 +375,7 @@ public class DefaultRetryPolicyIT {
     try {
       // when executing a query.
       sessionRule.session().execute(queryStr);
+      fail("Expected an UnavailableException");
     } catch (UnavailableException ue) {
       // then we should get an unavailable exception with the host being node 1 (since it was second tried).
       assertThat(ue.getCoordinator().getConnectAddress())
@@ -398,6 +399,7 @@ public class DefaultRetryPolicyIT {
     try {
       // when executing a query.
       sessionRule.session().execute(queryStr);
+      fail("Expected an AllNodesFailedException");
     } catch (AllNodesFailedException e) {
       // then we should get an all nodes failed exception, indicating the query was tried each node.
       assertThat(e.getErrors()).hasSize(3);
@@ -426,6 +428,7 @@ public class DefaultRetryPolicyIT {
       sessionRule
           .session()
           .execute(SimpleStatement.builder(queryStr).withIdempotence(false).build());
+      fail("Expected a ServerError");
     } catch (ServerError e) {
       // then should get a server error from first host.
       assertThat(e.getMessage()).isEqualTo("this is a server error");

@@ -35,5 +35,6 @@ public interface DriverConfigLoader extends AutoCloseable {
    * Called when the cluster closes. This is a good time to release any external resource, for
    * example cancel a scheduled reloading task.
    */
+  @Override
   void close();
 }

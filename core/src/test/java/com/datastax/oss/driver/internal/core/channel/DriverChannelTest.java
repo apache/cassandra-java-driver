@@ -25,7 +25,7 @@ import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelPromise;
 import io.netty.util.concurrent.Future;
 import java.util.AbstractMap;
-import java.util.LinkedList;
+import java.util.ArrayDeque;
 import java.util.Map;
 import java.util.Queue;
 import org.junit.Before;
@@ -142,7 +142,7 @@ public class DriverChannelTest extends ChannelHandlerTestBase {
   // Simple implementation that holds all the writes, and flushes them when it's explicitly
   // triggered.
   private class MockWriteCoalescer implements WriteCoalescer {
-    private Queue<Map.Entry<Object, ChannelPromise>> messages = new LinkedList<>();
+    private Queue<Map.Entry<Object, ChannelPromise>> messages = new ArrayDeque<>();
 
     @Override
     public ChannelFuture writeAndFlush(Channel channel, Object message) {

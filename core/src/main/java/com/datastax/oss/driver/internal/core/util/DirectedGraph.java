@@ -21,9 +21,9 @@ import com.google.common.collect.LinkedHashMultimap;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Multimap;
+import java.util.ArrayDeque;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Queue;
@@ -67,7 +67,7 @@ public class DirectedGraph<V> {
     Preconditions.checkState(!wasSorted);
     wasSorted = true;
 
-    Queue<V> queue = new LinkedList<V>();
+    Queue<V> queue = new ArrayDeque<>();
 
     for (Map.Entry<V, Integer> entry : vertices.entrySet()) {
       if (entry.getValue() == 0) {

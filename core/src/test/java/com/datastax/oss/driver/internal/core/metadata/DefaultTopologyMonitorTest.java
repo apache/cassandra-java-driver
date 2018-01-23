@@ -32,10 +32,10 @@ import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
 import java.time.Duration;
+import java.util.ArrayDeque;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Iterator;
-import java.util.LinkedList;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Queue;
@@ -245,7 +245,7 @@ public class DefaultTopologyMonitorTest {
   /** Mocks the query execution logic. */
   private static class TestTopologyMonitor extends DefaultTopologyMonitor {
 
-    private final Queue<StubbedQuery> queries = new LinkedList<>();
+    private final Queue<StubbedQuery> queries = new ArrayDeque<>();
 
     private TestTopologyMonitor(InternalDriverContext context) {
       super(context);

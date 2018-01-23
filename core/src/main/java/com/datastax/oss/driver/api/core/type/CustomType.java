@@ -29,6 +29,7 @@ public interface CustomType extends DataType {
     return String.format("'%s'", getClassName());
   }
 
+  @Override
   default int getProtocolCode() {
     return ProtocolConstants.DataType.CUSTOM;
   }

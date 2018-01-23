@@ -24,6 +24,7 @@ import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.fail;
 
 /** Covers protocol negotiation for the initial connection to the first contact point. */
 @Category(ParallelizableTests.class)
@@ -54,6 +55,7 @@ public class ProtocolVersionInitialNegotiationIT {
     try (CqlSession session = SessionUtils.newSession(ccm, "protocol.version = V4")) {
       assertThat(session.getContext().protocolVersion().getCode()).isEqualTo(3);
       session.execute("select * from system.local");
+      fail("Expected an AllNodesFailedException");
     } catch (AllNodesFailedException anfe) {
       Throwable cause = anfe.getErrors().values().iterator().next();
       assertThat(cause).isInstanceOf(UnsupportedProtocolVersionException.class);

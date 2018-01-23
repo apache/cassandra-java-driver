@@ -16,12 +16,12 @@
 package com.datastax.oss.driver.internal.core.cql;
 
 import com.datastax.oss.driver.api.core.CoreProtocolVersion;
+import com.datastax.oss.driver.api.core.CqlSession;
 import com.datastax.oss.driver.api.core.cql.AsyncResultSet;
 import com.datastax.oss.driver.api.core.cql.ColumnDefinition;
 import com.datastax.oss.driver.api.core.cql.ColumnDefinitions;
 import com.datastax.oss.driver.api.core.cql.ExecutionInfo;
 import com.datastax.oss.driver.api.core.cql.Statement;
-import com.datastax.oss.driver.api.core.CqlSession;
 import com.datastax.oss.driver.api.core.type.DataTypes;
 import com.datastax.oss.driver.api.core.type.codec.TypeCodecs;
 import com.datastax.oss.driver.api.core.type.codec.registry.CodecRegistry;
@@ -29,7 +29,7 @@ import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
 import com.datastax.oss.protocol.internal.util.Bytes;
 import com.google.common.collect.Lists;
 import java.nio.ByteBuffer;
-import java.util.LinkedList;
+import java.util.ArrayDeque;
 import java.util.List;
 import java.util.Queue;
 import java.util.concurrent.CompletableFuture;
@@ -67,7 +67,7 @@ public class DefaultAsyncResultSetTest {
     // When
     DefaultAsyncResultSet resultSet =
         new DefaultAsyncResultSet(
-            columnDefinitions, executionInfo, new LinkedList<>(), session, context);
+            columnDefinitions, executionInfo, new ArrayDeque<>(), session, context);
 
     // Then
     assertThat(resultSet.hasMorePages()).isFalse();
@@ -89,7 +89,7 @@ public class DefaultAsyncResultSetTest {
     // When
     DefaultAsyncResultSet resultSet =
         new DefaultAsyncResultSet(
-            columnDefinitions, executionInfo, new LinkedList<>(), session, context);
+            columnDefinitions, executionInfo, new ArrayDeque<>(), session, context);
     assertThat(resultSet.hasMorePages()).isTrue();
     CompletionStage<AsyncResultSet> nextPageFuture = resultSet.fetchNextPage();
 
@@ -107,7 +107,7 @@ public class DefaultAsyncResultSetTest {
     // When
     DefaultAsyncResultSet resultSet =
         new DefaultAsyncResultSet(
-            columnDefinitions, executionInfo, new LinkedList<>(), session, context);
+            columnDefinitions, executionInfo, new ArrayDeque<>(), session, context);
 
     // Then
     assertThat(resultSet.wasApplied()).isTrue();
@@ -117,7 +117,7 @@ public class DefaultAsyncResultSetTest {
   public void should_report_applied_if_column_not_present_and_not_empty() {
     // Given
     Mockito.when(columnDefinitions.contains("[applied]")).thenReturn(false);
-    Queue<List<ByteBuffer>> data = new LinkedList<>();
+    Queue<List<ByteBuffer>> data = new ArrayDeque<>();
     data.add(Lists.newArrayList(Bytes.fromHexString("0xffff")));
 
     // When
@@ -138,7 +138,7 @@ public class DefaultAsyncResultSetTest {
     Mockito.when(columnDefinitions.firstIndexOf("[applied]")).thenReturn(0);
     Mockito.when(columnDefinitions.get(0)).thenReturn(columnDefinition);
 
-    Queue<List<ByteBuffer>> data = new LinkedList<>();
+    Queue<List<ByteBuffer>> data = new ArrayDeque<>();
     data.add(Lists.newArrayList(TypeCodecs.BOOLEAN.encode(false, CoreProtocolVersion.DEFAULT)));
 
     // When
@@ -159,7 +159,7 @@ public class DefaultAsyncResultSetTest {
     Mockito.when(columnDefinitions.firstIndexOf("[applied]")).thenReturn(0);
     Mockito.when(columnDefinitions.get(0)).thenReturn(columnDefinition);
 
-    Queue<List<ByteBuffer>> data = new LinkedList<>();
+    Queue<List<ByteBuffer>> data = new ArrayDeque<>();
     data.add(Lists.newArrayList(TypeCodecs.BOOLEAN.encode(true, CoreProtocolVersion.DEFAULT)));
 
     // When
@@ -181,7 +181,7 @@ public class DefaultAsyncResultSetTest {
     // When
     DefaultAsyncResultSet resultSet =
         new DefaultAsyncResultSet(
-            columnDefinitions, executionInfo, new LinkedList<>(), session, context);
+            columnDefinitions, executionInfo, new ArrayDeque<>(), session, context);
 
     // Then
     resultSet.wasApplied();

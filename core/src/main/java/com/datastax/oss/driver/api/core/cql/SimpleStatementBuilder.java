@@ -121,6 +121,7 @@ public class SimpleStatementBuilder
     return this;
   }
 
+  @Override
   public SimpleStatement build() {
     return new DefaultSimpleStatement(
         query,

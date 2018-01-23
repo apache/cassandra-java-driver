@@ -114,7 +114,7 @@ public abstract class RelationParser {
    * The columns of the system table that are turned into entries in {@link
    * RelationMetadata#getOptions()}.
    */
-  public static final Map<String, TypeCodec<?>> OPTION_CODECS =
+  public static final ImmutableMap<String, TypeCodec<?>> OPTION_CODECS =
       ImmutableMap.<String, TypeCodec<?>>builder()
           .put("bloom_filter_fp_chance", TypeCodecs.DOUBLE)
           // In C* <= 2.2, this is a string, not a map (this is special-cased in parseOptions):

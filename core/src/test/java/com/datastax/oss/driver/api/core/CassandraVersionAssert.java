@@ -59,6 +59,7 @@ public class CassandraVersionAssert
     return this;
   }
 
+  @Override
   public CassandraVersionAssert hasToString(String string) {
     Assertions.assertThat(actual.toString()).isEqualTo(string);
     return this;

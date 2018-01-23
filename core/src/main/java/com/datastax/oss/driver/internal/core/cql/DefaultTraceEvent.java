@@ -56,6 +56,7 @@ public class DefaultTraceEvent implements TraceEvent {
     return source;
   }
 
+  @Override
   public int getSourceElapsedMicros() {
     return sourceElapsedMicros;
   }

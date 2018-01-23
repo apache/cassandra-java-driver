@@ -25,8 +25,9 @@ import com.datastax.oss.driver.internal.core.util.concurrent.CompletableFutures;
 import com.google.common.collect.ListMultimap;
 import com.google.common.collect.MultimapBuilder;
 import com.google.common.collect.Sets;
+import java.util.ArrayDeque;
+import java.util.Deque;
 import java.util.HashMap;
-import java.util.LinkedList;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
@@ -157,7 +158,7 @@ public class MockChannelPoolFactoryHelper {
 
     private void stub() {
       for (Params params : invocations.keySet()) {
-        LinkedList<CompletionStage<ChannelPool>> results = new LinkedList<>();
+        Deque<CompletionStage<ChannelPool>> results = new ArrayDeque<>();
         for (Object object : invocations.get(params)) {
           if (object instanceof ChannelPool) {
             results.add(CompletableFuture.completedFuture(((ChannelPool) object)));

@@ -34,6 +34,7 @@ import static com.datastax.oss.driver.Assertions.assertThat;
 public class Cassandra3SchemaQueriesTest extends SchemaQueriesTest {
 
   @Before
+  @Override
   public void setup() {
     super.setup();
 

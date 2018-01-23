@@ -17,6 +17,7 @@ package com.datastax.oss.driver.internal.core.channel;
 
 import com.datastax.oss.driver.api.core.DriverTimeoutException;
 import com.datastax.oss.driver.internal.core.util.ProtocolUtils;
+import com.datastax.oss.driver.internal.core.util.concurrent.UncaughtExceptions;
 import com.datastax.oss.protocol.internal.Frame;
 import com.datastax.oss.protocol.internal.Message;
 import com.datastax.oss.protocol.internal.response.Error;
@@ -91,7 +92,7 @@ abstract class ChannelHandlerRequest implements ResponseCallback {
     fail(new DriverTimeoutException(describe() + ": timed out after " + timeoutMillis + " ms"));
     if (!channel.closeFuture().isDone()) {
       // Cancel the response callback
-      channel.writeAndFlush(this);
+      channel.writeAndFlush(this).addListener(UncaughtExceptions::log);
     }
   }
 

@@ -17,10 +17,10 @@ package com.datastax.oss.driver.api.core.data;
 
 import com.datastax.oss.driver.api.core.CassandraVersion;
 import com.datastax.oss.driver.api.core.CqlIdentifier;
+import com.datastax.oss.driver.api.core.CqlSession;
 import com.datastax.oss.driver.api.core.ProtocolVersion;
 import com.datastax.oss.driver.api.core.cql.BoundStatement;
 import com.datastax.oss.driver.api.core.cql.BoundStatementBuilder;
-import com.datastax.oss.driver.api.core.CqlSession;
 import com.datastax.oss.driver.api.core.cql.PreparedStatement;
 import com.datastax.oss.driver.api.core.cql.ResultSet;
 import com.datastax.oss.driver.api.core.cql.Row;
@@ -100,11 +100,11 @@ public class DataTypeIT {
 
   @DataProvider
   public static Object[][] primitiveTypeSamples() {
-    InetAddress address = null;
+    InetAddress address;
     try {
       address = InetAddress.getByAddress(new byte[] {127, 0, 0, 1});
     } catch (UnknownHostException uhae) {
-      fail("Could not get address from 127.0.0.1 for some reason");
+      throw new AssertionError("Could not get address from 127.0.0.1", uhae);
     }
 
     Object[][] samples =
@@ -254,7 +254,8 @@ public class DataTypeIT {
   @BeforeClass
   public static void createTable() {
     // Create a table with all types being tested with.
-    // This is a bit more lenient than creating a table for each sample, which would put a lot of burden on C* and
+    // This is a bit more lenient than creating a table for each sample, which would put a lot of
+    // burden on C* and
     // the filesystem.
     int counter = 0;
 
@@ -437,7 +438,8 @@ public class DataTypeIT {
             ? sessionRule.session().getContext().codecRegistry().codecFor(dataType)
             : null;
 
-    // set to null if value is null instead of getting possible NPE when casting from null to primitive.
+    // set to null if value is null instead of getting possible NPE when casting from null to
+    // primitive.
     if (value == null) {
       return bs.setToNull(index);
     }
@@ -528,7 +530,8 @@ public class DataTypeIT {
             ? sessionRule.session().getContext().codecRegistry().codecFor(dataType)
             : null;
 
-    // set to null if value is null instead of getting possible NPE when casting from null to primitive.
+    // set to null if value is null instead of getting possible NPE when casting from null to
+    // primitive.
     if (value == null) {
       return bs.setToNull(name);
     }
@@ -725,9 +728,10 @@ public class DataTypeIT {
           assertThat(returnedValue.get(i, typeCodec)).isEqualTo(exValue.get(i, typeCodec));
         }
 
-        //assertThat(row.getTupleValue(columnName)).isEqualTo(expectedValue);
-        //assertThat(row.getTupleValue(0)).isEqualTo(expectedValue);
-        return; // return instead of break here since we don't want to compare using decode output since it has same problem.
+        // assertThat(row.getTupleValue(columnName)).isEqualTo(expectedValue);
+        // assertThat(row.getTupleValue(0)).isEqualTo(expectedValue);
+        return; // return instead of break here since we don't want to compare using decode output
+        // since it has same problem.
       case ProtocolConstants.DataType.UDT:
         // TODO: Replace this when JAVA-1572 is fixed
         UdtValue returnedUdtValue = row.getUdtValue(columnName);

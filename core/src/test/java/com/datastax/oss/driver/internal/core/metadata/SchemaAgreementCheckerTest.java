@@ -33,8 +33,8 @@ import io.netty.channel.EventLoop;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.time.Duration;
+import java.util.ArrayDeque;
 import java.util.Arrays;
-import java.util.LinkedList;
 import java.util.Map;
 import java.util.Queue;
 import java.util.UUID;
@@ -273,7 +273,7 @@ public class SchemaAgreementCheckerTest {
   /** Extend to mock the query execution logic. */
   private static class TestSchemaAgreementChecker extends SchemaAgreementChecker {
 
-    private final Queue<StubbedQuery> queries = new LinkedList<>();
+    private final Queue<StubbedQuery> queries = new ArrayDeque<>();
 
     TestSchemaAgreementChecker(DriverChannel channel, InternalDriverContext context) {
       super(channel, context, 9042, "test");

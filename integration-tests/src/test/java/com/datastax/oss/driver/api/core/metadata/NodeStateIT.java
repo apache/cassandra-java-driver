@@ -586,22 +586,12 @@ public class NodeStateIT {
    * AvailablePortFinder.
    */
   private static synchronized int findAvailablePort() throws RuntimeException {
-    ServerSocket ss = null;
-    try {
-      // let the system pick an ephemeral port
-      ss = new ServerSocket(0);
+    // let the system pick an ephemeral port
+    try (ServerSocket ss = new ServerSocket(0)) {
       ss.setReuseAddress(true);
       return ss.getLocalPort();
     } catch (IOException e) {
       throw new AssertionError(e);
-    } finally {
-      if (ss != null) {
-        try {
-          ss.close();
-        } catch (IOException e) {
-          throw new AssertionError(e);
-        }
-      }
     }
   }
 

@@ -31,8 +31,8 @@ import com.google.common.collect.ImmutableList;
 import com.tngtech.java.junit.dataprovider.DataProvider;
 import com.tngtech.java.junit.dataprovider.DataProviderRunner;
 import java.nio.ByteBuffer;
+import java.util.ArrayDeque;
 import java.util.Collections;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Queue;
 import org.junit.Before;
@@ -83,7 +83,7 @@ public abstract class CqlRequestHandlerTestBase {
             null,
             new int[] {},
             null);
-    Queue<List<ByteBuffer>> data = new LinkedList<>();
+    Queue<List<ByteBuffer>> data = new ArrayDeque<>();
     data.add(ImmutableList.of(Bytes.fromHexString("0x68656C6C6F2C20776F726C64")));
     return new DefaultRows(metadata, data);
   }

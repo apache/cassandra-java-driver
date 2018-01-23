@@ -58,7 +58,7 @@ public class ExponentialReconnectionPolicy implements ReconnectionPolicy {
 
     // Maximum number of attempts after which we overflow
     int ceil = (baseDelayMs & (baseDelayMs - 1)) == 0 ? 0 : 1;
-    this.maxAttempts = 64 - Long.numberOfLeadingZeros(Long.MAX_VALUE / baseDelayMs) - ceil;
+    this.maxAttempts = 64L - Long.numberOfLeadingZeros(Long.MAX_VALUE / baseDelayMs) - ceil;
   }
 
   /**

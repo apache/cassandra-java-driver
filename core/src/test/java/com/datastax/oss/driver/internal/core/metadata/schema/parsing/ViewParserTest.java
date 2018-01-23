@@ -32,7 +32,7 @@ public class ViewParserTest extends SchemaParserTestBase {
 
   static final AdminRow VIEW_ROW_3_0 =
       mockViewRow("ks", "alltimehigh", "scores", false, "game IS NOT NULL");
-  static final Iterable<AdminRow> COLUMN_ROWS_3_0 =
+  static final ImmutableList<AdminRow> COLUMN_ROWS_3_0 =
       ImmutableList.of(
           mockModernColumnRow("ks", "alltimehigh", "game", "partition_key", "text", "none", 0),
           mockModernColumnRow("ks", "alltimehigh", "score", "clustering", "int", "desc", 0),

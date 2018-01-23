@@ -255,7 +255,7 @@ public class Strings {
 
   private Strings() {}
 
-  private static final Set<String> RESERVED_KEYWORDS =
+  private static final ImmutableSet<String> RESERVED_KEYWORDS =
       ImmutableSet.of(
           // See https://github.com/apache/cassandra/blob/trunk/doc/cql3/CQL.textile#appendixA
           "add",
