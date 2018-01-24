@@ -39,6 +39,7 @@ import java.nio.ByteBuffer;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
+import org.testng.SkipException;
 
 import static com.datastax.driver.core.ConditionChecker.check;
 import static java.util.concurrent.TimeUnit.MINUTES;
@@ -930,6 +931,16 @@ public abstract class TestUtils {
         Level oldLevel = log4jLogger.getLevel();
         log4jLogger.setLevel(newLevel);
         return oldLevel;
+    }
+
+    /**
+     * Throws a {@link SkipException} if the input {@link CCMAccess} does not support compact storage (C* 4.0+)
+     * @param ccm cluster to check against
+     */
+    public static void compactStorageSupportCheck(CCMAccess ccm) {
+        if (ccm.getCassandraVersion().compareTo(VersionNumber.parse("4.0.0")) >= 0) {
+            throw new SkipException("Compact tables are not allowed in Cassandra starting with 4.0 version");
+        }
     }
 
 }

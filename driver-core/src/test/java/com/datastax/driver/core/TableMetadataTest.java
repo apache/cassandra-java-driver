@@ -93,6 +93,7 @@ public class TableMetadataTest extends CCMTestsSupport {
 
     @Test(groups = "short")
     public void should_parse_compact_static_table() {
+        TestUtils.compactStorageSupportCheck(ccm());
         // given
         String cql = String.format("CREATE TABLE %s.compact_static (\n"
                 + "    k text,\n"
@@ -114,6 +115,7 @@ public class TableMetadataTest extends CCMTestsSupport {
 
     @Test(groups = "short")
     public void should_parse_dense_table() {
+        TestUtils.compactStorageSupportCheck(ccm());
         // given
         String cql = String.format("CREATE TABLE %s.dense (\n"
                 + "        k int,\n"
@@ -131,6 +133,7 @@ public class TableMetadataTest extends CCMTestsSupport {
 
     @Test(groups = "short")
     public void should_parse_compact_dynamic_table() {
+        TestUtils.compactStorageSupportCheck(ccm());
         // given
         String cql = String.format("CREATE TABLE %s.compact_dynamic (\n"
                 + "    k text,\n"
@@ -150,6 +153,7 @@ public class TableMetadataTest extends CCMTestsSupport {
 
     @Test(groups = "short")
     public void should_parse_compact_table_with_multiple_clustering_columns() {
+        TestUtils.compactStorageSupportCheck(ccm());
         // given
         String cql = String.format("CREATE TABLE %s.compact_composite (\n"
                 + "    k text,\n"

@@ -16,6 +16,7 @@
 package com.datastax.driver.core;
 
 import com.datastax.driver.core.utils.CassandraVersion;
+import org.testng.SkipException;
 import org.testng.annotations.Test;
 
 import java.nio.ByteBuffer;
@@ -45,20 +46,25 @@ public class CustomTypeTest extends CCMTestsSupport {
 
     @Override
     public void onTestContextInitialized() {
-        execute(
-                "CREATE TABLE test ("
-                        + "    k int,"
-                        + "    c1 'DynamicCompositeType(s => UTF8Type, i => Int32Type)',"
-                        + "    c2 'ReversedType(CompositeType(UTF8Type, Int32Type))'," // reversed translates to CLUSTERING ORDER BY DESC
-                        + "    c3 'Int32Type'," // translates to int
-                        + "    PRIMARY KEY (k, c1, c2)"
-                        + ") WITH COMPACT STORAGE",
-                "CREATE TABLE test_collection("
-                        + "    k int PRIMARY KEY,"
-                        + "    c1 list<'DynamicCompositeType(s => UTF8Type, i => Int32Type)'>,"
-                        + "    c2 map<'DynamicCompositeType(s => UTF8Type, i => Int32Type)', 'DynamicCompositeType(s => UTF8Type, i => Int32Type)'>"
-                        + ")"
-        );
+        try {
+            TestUtils.compactStorageSupportCheck(ccm());
+            execute(
+                    "CREATE TABLE test ("
+                            + "    k int,"
+                            + "    c1 'DynamicCompositeType(s => UTF8Type, i => Int32Type)',"
+                            + "    c2 'ReversedType(CompositeType(UTF8Type, Int32Type))'," // reversed translates to CLUSTERING ORDER BY DESC
+                            + "    c3 'Int32Type'," // translates to int
+                            + "    PRIMARY KEY (k, c1, c2)"
+                            + ") WITH COMPACT STORAGE",
+                    "CREATE TABLE test_collection("
+                            + "    k int PRIMARY KEY,"
+                            + "    c1 list<'DynamicCompositeType(s => UTF8Type, i => Int32Type)'>,"
+                            + "    c2 map<'DynamicCompositeType(s => UTF8Type, i => Int32Type)', 'DynamicCompositeType(s => UTF8Type, i => Int32Type)'>"
+                            + ")"
+            );
+        } catch (SkipException e) {
+           // no op, tests will be skipped.
+        }
     }
 
     /**
@@ -75,6 +81,7 @@ public class CustomTypeTest extends CCMTestsSupport {
      */
     @Test(groups = "short")
     public void should_serialize_and_deserialize_custom_types() {
+        TestUtils.compactStorageSupportCheck(ccm());
 
         TableMetadata table = cluster().getMetadata().getKeyspace(keyspace).getTable("test");
 
@@ -120,6 +127,7 @@ public class CustomTypeTest extends CCMTestsSupport {
      */
     @Test(groups = "short")
     public void should_serialize_and_deserialize_collections_of_custom_types() {
+        TestUtils.compactStorageSupportCheck(ccm());
         TableMetadata table = cluster().getMetadata().getKeyspace(keyspace).getTable("test_collection");
         assertThat(table.getColumn("c1")).hasType(DataType.list(CUSTOM_DYNAMIC_COMPOSITE));
         assertThat(table.getColumn("c2")).hasType(DataType.map(CUSTOM_DYNAMIC_COMPOSITE, CUSTOM_DYNAMIC_COMPOSITE));
@@ -154,6 +162,7 @@ public class CustomTypeTest extends CCMTestsSupport {
     @Test(groups = "short")
     @CassandraVersion("2.1.0")
     public void should_handle_udt_with_custom_type() {
+        TestUtils.compactStorageSupportCheck(ccm());
         // Given: a UDT with custom types, and a table using it.
         session().execute("CREATE TYPE custom_udt (regular int, c1 'DynamicCompositeType(s => UTF8Type, i => Int32Type)', c2 'LongType')");
         session().execute("CREATE TABLE custom_udt_tbl (k int primary key, v frozen<custom_udt>)");
