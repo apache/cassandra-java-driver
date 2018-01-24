@@ -50,6 +50,7 @@ public class UncaughtExceptions {
     }
   }
 
+  @SuppressWarnings("TypeParameterUnusedInFormals") // type parameter is only needed for chaining
   public static <T> T log(Throwable t) {
     Loggers.warnWithException(LOG, "Uncaught exception in scheduled task", t);
     return null;

@@ -37,6 +37,7 @@ class StreamIdGenerator {
     this.availableIds = this.maxAvailableIds;
   }
 
+  @SuppressWarnings("NonAtomicVolatileUpdate") // see explanation in class Javadoc
   int acquire() {
     int id = ids.nextClearBit(0);
     if (id >= maxAvailableIds) {
@@ -47,6 +48,7 @@ class StreamIdGenerator {
     return id;
   }
 
+  @SuppressWarnings("NonAtomicVolatileUpdate")
   void release(int id) {
     if (ids.get(id)) {
       availableIds++;

@@ -41,6 +41,7 @@ import static org.mockito.ArgumentMatchers.anyBoolean;
  *
  * <p>This is used to make unit tests independent of time.
  */
+@SuppressWarnings("FunctionalInterfaceClash") // does not matter for test code
 public class ScheduledTaskCapturingEventLoop extends DefaultEventLoop {
 
   private final BlockingQueue<CapturedTask> capturedTasks = new ArrayBlockingQueue<>(100);

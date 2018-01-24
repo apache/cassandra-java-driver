@@ -36,6 +36,8 @@ public abstract class SerializationHelper {
     }
   }
 
+  // the calling code performs validations on the result, so this doesn't matter
+  @SuppressWarnings("TypeParameterUnusedInFormals")
   public static <T> T deserialize(byte[] bytes) {
     try {
       ObjectInputStream in = new ObjectInputStream(new ByteArrayInputStream(bytes));
