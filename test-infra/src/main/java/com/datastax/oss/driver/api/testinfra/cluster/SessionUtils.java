@@ -96,17 +96,19 @@ public class SessionUtils {
    * in the 0th DC of the provided Cassandra resource as contact points, and the default
    * configuration augmented with the provided options.
    */
+  @SuppressWarnings("TypeParameterUnusedInFormals")
   public static <SessionT extends Session> SessionT newSession(
       CassandraResourceRule cassandraResource, String... options) {
     return newSession(cassandraResource, null, new NodeStateListener[0], options);
   }
 
+  @SuppressWarnings("TypeParameterUnusedInFormals")
   public static <SessionT extends Session> SessionT newSession(
       CassandraResourceRule cassandraResource, CqlIdentifier keyspace, String... options) {
     return newSession(cassandraResource, keyspace, new NodeStateListener[0], options);
   }
 
-  @SuppressWarnings("unchecked")
+  @SuppressWarnings({"unchecked", "TypeParameterUnusedInFormals"})
   public static <SessionT extends Session> SessionT newSession(
       CassandraResourceRule cassandraResource,
       CqlIdentifier keyspace,

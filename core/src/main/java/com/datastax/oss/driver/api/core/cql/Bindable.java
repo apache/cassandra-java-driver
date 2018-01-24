@@ -31,6 +31,7 @@ public interface Bindable<T extends Bindable<T>>
    *
    * @throws IndexOutOfBoundsException if the index is invalid.
    */
+  @SuppressWarnings("ReferenceEquality")
   default boolean isSet(int i) {
     return getBytesUnsafe(i) != ProtocolConstants.UNSET_VALUE;
   }
@@ -43,6 +44,7 @@ public interface Bindable<T extends Bindable<T>>
    *
    * @throws IndexOutOfBoundsException if the id is invalid.
    */
+  @SuppressWarnings("ReferenceEquality")
   default boolean isSet(CqlIdentifier id) {
     return getBytesUnsafe(id) != ProtocolConstants.UNSET_VALUE;
   }
@@ -55,6 +57,7 @@ public interface Bindable<T extends Bindable<T>>
    *
    * @throws IndexOutOfBoundsException if the name is invalid.
    */
+  @SuppressWarnings("ReferenceEquality")
   default boolean isSet(String name) {
     return getBytesUnsafe(name) != ProtocolConstants.UNSET_VALUE;
   }
