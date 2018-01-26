@@ -220,7 +220,22 @@ classified into categories that determine how they will be run during the build:
 * No annotation: for tests that use `CustomCcmRule`. They will be run one after the other. 
 * `@Category(IsolatedTests.class)`: for tests that require specific environment tweaks, typically
   system properties that need to be set before initialization. They will be run one after the other,
-  each in their its JVM fork.
+  each in its own JVM fork.
+
+Simulacron relies on loopback aliases to simulate multiple nodes. On Linux or Windows, you shouldn't
+have anything to do. On MacOS, run this script:
+
+```
+#!/bin/bash
+for sub in {0..4}; do
+    echo "Opening for 127.0.$sub"
+    for i in {0..255}; do sudo ifconfig lo0 alias 127.0.$sub.$i up; done
+done
+```
+
+Note that this is known to cause temporary increased CPU usage in OS X initially while mDNSResponder
+acclimates itself to the presence of added IP addresses. This lasts several minutes. Also, this does
+not survive reboots.
 
 
 ## Running the tests
