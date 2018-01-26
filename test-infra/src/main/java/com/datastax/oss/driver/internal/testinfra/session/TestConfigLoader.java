@@ -13,10 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.datastax.oss.driver.internal.testinfra.cluster;
+package com.datastax.oss.driver.internal.testinfra.session;
 
 import com.datastax.oss.driver.api.core.config.CoreDriverOption;
-import com.datastax.oss.driver.api.testinfra.cluster.SessionUtils;
+import com.datastax.oss.driver.api.testinfra.session.SessionUtils;
 import com.datastax.oss.driver.internal.core.config.typesafe.DefaultDriverConfigLoader;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;

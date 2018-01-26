@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.datastax.oss.driver.api.testinfra.cluster;
+package com.datastax.oss.driver.api.testinfra.session;
 
 import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.config.CoreDriverOption;
@@ -25,7 +25,7 @@ import com.datastax.oss.driver.api.core.metadata.NodeStateListener;
 import com.datastax.oss.driver.api.core.session.Session;
 import com.datastax.oss.driver.api.core.session.SessionBuilder;
 import com.datastax.oss.driver.api.testinfra.CassandraResourceRule;
-import com.datastax.oss.driver.internal.testinfra.cluster.TestConfigLoader;
+import com.datastax.oss.driver.internal.testinfra.session.TestConfigLoader;
 import java.lang.reflect.Method;
 import java.util.concurrent.atomic.AtomicInteger;
 import org.slf4j.Logger;
@@ -63,7 +63,7 @@ public class SessionUtils {
   private static final String SESSION_BUILDER_CLASS =
       System.getProperty(
           "session.builder",
-          "com.datastax.oss.driver.api.testinfra.cluster.DefaultSessionBuilderInstantiator");
+          "com.datastax.oss.driver.api.testinfra.session.DefaultSessionBuilderInstantiator");
 
   @SuppressWarnings("unchecked")
   public static <SessionT extends Session> SessionBuilder<?, SessionT> baseBuilder() {

@@ -18,7 +18,7 @@ package com.datastax.oss.driver.api.core;
 import com.datastax.oss.driver.api.testinfra.simulacron.SimulacronRule;
 import com.datastax.oss.driver.categories.ParallelizableTests;
 import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
-import com.datastax.oss.driver.internal.testinfra.cluster.TestConfigLoader;
+import com.datastax.oss.driver.internal.testinfra.session.TestConfigLoader;
 import com.datastax.oss.protocol.internal.request.Query;
 import com.datastax.oss.simulacron.common.cluster.ClusterSpec;
 import com.datastax.oss.simulacron.common.cluster.DataCenterSpec;

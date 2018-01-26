@@ -17,8 +17,8 @@ package com.datastax.oss.driver.api.core;
 
 import com.datastax.oss.driver.api.core.session.Session;
 import com.datastax.oss.driver.api.testinfra.ccm.CcmRule;
-import com.datastax.oss.driver.api.testinfra.cluster.SessionRule;
-import com.datastax.oss.driver.api.testinfra.cluster.SessionUtils;
+import com.datastax.oss.driver.api.testinfra.session.SessionRule;
+import com.datastax.oss.driver.api.testinfra.session.SessionUtils;
 import com.datastax.oss.driver.categories.ParallelizableTests;
 import org.junit.ClassRule;
 import org.junit.Test;

@@ -13,17 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.datastax.oss.driver.api.testinfra.cluster;
+package com.datastax.oss.driver.api.testinfra.session;
 
 import com.datastax.oss.driver.api.core.CqlSession;
-import com.datastax.oss.driver.api.core.session.SessionBuilder;
+import com.datastax.oss.driver.api.testinfra.CassandraResourceRule;
 
-public class DefaultSessionBuilderInstantiator {
-  public static SessionBuilder<?, ?> builder() {
-    return CqlSession.builder();
+public class CqlSessionRuleBuilder extends SessionRuleBuilder<CqlSessionRuleBuilder, CqlSession> {
+
+  public CqlSessionRuleBuilder(CassandraResourceRule cassandraResource) {
+    super(cassandraResource);
   }
 
-  public static String configPath() {
-    return "datastax-java-driver";
+  @Override
+  public SessionRule<CqlSession> build() {
+    return new SessionRule<>(cassandraResource, createKeyspace, nodeStateListeners, options);
   }
 }
