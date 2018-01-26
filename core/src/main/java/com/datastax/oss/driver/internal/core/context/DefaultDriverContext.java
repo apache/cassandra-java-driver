@@ -131,6 +131,9 @@ public class DefaultDriverContext implements InternalDriverContext {
           "loadBalancingPolicyWrapper", this::buildLoadBalancingPolicyWrapper, cycleDetector);
   private final LazyReference<ControlConnection> controlConnectionRef =
       new LazyReference<>("controlConnection", this::buildControlConnection, cycleDetector);
+  private final LazyReference<RequestProcessorRegistry> requestProcessorRegistryRef =
+      new LazyReference<>(
+          "requestProcessorRegistry", this::buildRequestProcessorRegistry, cycleDetector);
   private final LazyReference<TimestampGenerator> timestampGeneratorRef =
       new LazyReference<>("timestampGenerator", this::buildTimestampGenerator, cycleDetector);
   private final LazyReference<SchemaQueriesFactory> schemaQueriesFactoryRef =
@@ -292,6 +295,10 @@ public class DefaultDriverContext implements InternalDriverContext {
     return new ControlConnection(this);
   }
 
+  protected RequestProcessorRegistry buildRequestProcessorRegistry() {
+    return RequestProcessorRegistry.defaultCqlProcessors(sessionName());
+  }
+
   protected CodecRegistry buildCodecRegistry(String logPrefix, List<TypeCodec<?>> codecs) {
     TypeCodec<?>[] array = new TypeCodec<?>[codecs.size()];
     return new DefaultCodecRegistry(logPrefix, codecs.toArray(array));
@@ -445,7 +452,7 @@ public class DefaultDriverContext implements InternalDriverContext {
 
   @Override
   public RequestProcessorRegistry requestProcessorRegistry() {
-    return RequestProcessorRegistry.defaultCqlProcessors(sessionName());
+    return requestProcessorRegistryRef.get();
   }
 
   @Override
