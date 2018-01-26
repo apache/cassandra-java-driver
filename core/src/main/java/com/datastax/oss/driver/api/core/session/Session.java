@@ -18,9 +18,9 @@ package com.datastax.oss.driver.api.core.session;
 import com.datastax.oss.driver.api.core.AsyncAutoCloseable;
 import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.CqlSession;
+import com.datastax.oss.driver.api.core.CqlSessionBuilder;
 import com.datastax.oss.driver.api.core.config.CoreDriverOption;
 import com.datastax.oss.driver.api.core.context.DriverContext;
-import com.datastax.oss.driver.api.core.CqlSessionBuilder;
 import com.datastax.oss.driver.api.core.metadata.Metadata;
 import com.datastax.oss.driver.api.core.metadata.Node;
 import com.datastax.oss.driver.api.core.metadata.NodeState;
@@ -50,12 +50,13 @@ import java.util.concurrent.CompletionStage;
 public interface Session extends AsyncAutoCloseable {
 
   /**
-   * The current version of the driver.
+   * The current version of the core driver (in other words, the version of the {@code
+   * com.datastax.oss:java-driver-core} artifact).
    *
    * <p>This is intended for products that wrap or extend the driver, as a way to check
    * compatibility if end-users override the driver version in their application.
    */
-  static String getDriverVersion() {
+  static String getCoreDriverVersion() {
     // Note: getBundle caches its result
     return ResourceBundle.getBundle("com.datastax.oss.driver.Driver").getString("driver.version");
   }
