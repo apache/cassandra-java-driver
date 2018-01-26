@@ -55,6 +55,11 @@ public class ArrayUtils {
    *     Fisher-Yates shuffle</a>
    */
   public static <T> void shuffleHead(T[] elements, int n) {
+    if (n > elements.length) {
+      throw new ArrayIndexOutOfBoundsException(
+          String.format(
+              "Can't shuffle the first %d elements, there are only %d", n, elements.length));
+    }
     if (n > 1) {
       ThreadLocalRandom random = ThreadLocalRandom.current();
       for (int i = n - 1; i > 0; i--) {
