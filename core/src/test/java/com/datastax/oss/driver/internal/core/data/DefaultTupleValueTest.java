@@ -19,6 +19,7 @@ import com.datastax.oss.driver.api.core.data.TupleValue;
 import com.datastax.oss.driver.api.core.detach.AttachmentPoint;
 import com.datastax.oss.driver.api.core.type.DataType;
 import com.datastax.oss.driver.api.core.type.DataTypes;
+import com.datastax.oss.driver.api.core.type.TupleType;
 import com.datastax.oss.driver.internal.SerializationHelper;
 import com.datastax.oss.driver.internal.core.type.DefaultTupleType;
 import com.datastax.oss.protocol.internal.util.Bytes;
@@ -50,5 +51,27 @@ public class DefaultTupleValueTest extends AccessibleByIndexTestBase<TupleValue>
     assertThat(out.getType().isDetached()).isTrue();
     assertThat(Bytes.toHexString(out.getBytesUnsafe(0))).isEqualTo("0x00000001");
     assertThat(Bytes.toHexString(out.getBytesUnsafe(1))).isEqualTo("0x61");
+  }
+
+  @Test
+  public void should_equate_instances_with_same_values_but_different_binary_representations() {
+    TupleType tupleType = DataTypes.tupleOf(DataTypes.VARINT);
+
+    TupleValue tuple1 = tupleType.newValue().setBytesUnsafe(0, Bytes.fromHexString("0x01"));
+    TupleValue tuple2 = tupleType.newValue().setBytesUnsafe(0, Bytes.fromHexString("0x0001"));
+
+    assertThat(tuple1).isEqualTo(tuple2);
+    assertThat(tuple1.hashCode()).isEqualTo(tuple2.hashCode());
+  }
+
+  @Test
+  public void should_not_equate_instances_with_same_binary_representation_but_different_types() {
+    TupleType tupleType1 = DataTypes.tupleOf(DataTypes.INT);
+    TupleType tupleType2 = DataTypes.tupleOf(DataTypes.VARINT);
+
+    TupleValue tuple1 = tupleType1.newValue().setBytesUnsafe(0, Bytes.fromHexString("0x00000001"));
+    TupleValue tuple2 = tupleType2.newValue().setBytesUnsafe(0, Bytes.fromHexString("0x00000001"));
+
+    assertThat(tuple1).isNotEqualTo(tuple2);
   }
 }
