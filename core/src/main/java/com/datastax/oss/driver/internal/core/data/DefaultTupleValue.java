@@ -26,11 +26,11 @@ import java.io.InvalidObjectException;
 import java.io.ObjectInputStream;
 import java.io.Serializable;
 import java.nio.ByteBuffer;
+import java.util.Objects;
 
 public class DefaultTupleValue implements TupleValue {
 
   private static final long serialVersionUID = 1;
-
   private final TupleType type;
   private final ByteBuffer[] values;
 
@@ -91,6 +91,59 @@ public class DefaultTupleValue implements TupleValue {
   private void readObject(ObjectInputStream stream) throws InvalidObjectException {
     // Should never be called since we serialized a proxy
     throw new InvalidObjectException("Proxy required");
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+
+    if (!(o instanceof TupleValue)) {
+      return false;
+    }
+    TupleValue that = (TupleValue) o;
+
+    if (!this.protocolVersion().equals(that.protocolVersion())) {
+      return false;
+    }
+
+    for (int i = 0; i < values.length; i++) {
+      DataType innerThisType = type.getComponentTypes().get(i);
+      DataType innerThatType = that.getType().getComponentTypes().get(i);
+      if (!innerThisType.equals(innerThatType)) {
+        return false;
+      }
+      Object thisValue =
+          this.codecRegistry()
+              .codecFor(innerThisType)
+              .decode(this.getBytesUnsafe(i), this.protocolVersion());
+      Object thatValue =
+          that.codecRegistry()
+              .codecFor(innerThatType)
+              .decode(that.getBytesUnsafe(i), that.protocolVersion());
+      if (!Objects.equals(thisValue, thatValue)) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  @Override
+  public int hashCode() {
+
+    int result = type.hashCode();
+
+    for (int i = 0; i < values.length; i++) {
+      DataType innerThisType = type.getComponentTypes().get(i);
+      Object thisValue =
+          this.codecRegistry()
+              .codecFor(innerThisType)
+              .decode(this.values[i], this.protocolVersion());
+      result = 31 * result + thisValue.hashCode();
+    }
+
+    return result;
   }
 
   private static class SerializationProxy implements Serializable {
