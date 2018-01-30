@@ -18,6 +18,8 @@ package com.datastax.oss.driver.internal.core.pool;
 import com.datastax.oss.driver.api.core.AsyncAutoCloseable;
 import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.InvalidKeyspaceException;
+import com.datastax.oss.driver.api.core.UnsupportedProtocolVersionException;
+import com.datastax.oss.driver.api.core.auth.AuthenticationException;
 import com.datastax.oss.driver.api.core.config.CoreDriverOption;
 import com.datastax.oss.driver.api.core.config.DriverConfig;
 import com.datastax.oss.driver.api.core.loadbalancing.NodeDistance;
@@ -265,25 +267,32 @@ public class ChannelPool implements AsyncAutoCloseable {
 
     private boolean onAllConnected(@SuppressWarnings("unused") Void v) {
       assert adminExecutor.inEventLoop();
-      ClusterNameMismatchException clusterNameMismatch = null;
+      Throwable fatalError = null;
       int invalidKeyspaceErrors = 0;
       for (CompletionStage<DriverChannel> pendingChannel : pendingChannels) {
         CompletableFuture<DriverChannel> future = pendingChannel.toCompletableFuture();
         assert future.isDone();
         if (future.isCompletedExceptionally()) {
           Throwable error = CompletableFutures.getFailed(future);
-          LOG.debug("[{}] Error while opening new channel", logPrefix, error);
-          // TODO we don't log at a higher level because it's not a fatal error, but this should
-          // probably be recorded somewhere (metric?)
-
-          // TODO auth exception => WARN and keep reconnecting
-          // TODO protocol error => WARN and force down
-
-          if (error instanceof ClusterNameMismatchException) {
+          if (error instanceof ClusterNameMismatchException
+              || error instanceof UnsupportedProtocolVersionException) {
             // This will likely be thrown by all channels, but finish the loop cleanly
-            clusterNameMismatch = (ClusterNameMismatchException) error;
+            fatalError = error;
+          } else if (error instanceof AuthenticationException) {
+            // Always warn because this is most likely something the operator needs to fix.
+            // Keep going to reconnect if it can be fixed without bouncing the client.
+            Loggers.warnWithException(LOG, "[{}] Authentication error", logPrefix, error);
           } else if (error instanceof InvalidKeyspaceException) {
             invalidKeyspaceErrors += 1;
+          } else {
+            if (config
+                .getDefaultProfile()
+                .getBoolean(CoreDriverOption.CONNECTION_WARN_INIT_ERROR)) {
+              Loggers.warnWithException(
+                  LOG, "[{}]  Error while opening new channel", logPrefix, error);
+            } else {
+              LOG.debug("[{}]  Error while opening new channel", logPrefix, error);
+            }
           }
         } else {
           DriverChannel channel = CompletableFutures.getCompleted(future);
@@ -320,8 +329,12 @@ public class ChannelPool implements AsyncAutoCloseable {
 
       pendingChannels.clear();
 
-      if (clusterNameMismatch != null) {
-        LOG.warn("[{}] {}", logPrefix, clusterNameMismatch.getMessage());
+      if (fatalError != null) {
+        Loggers.warnWithException(
+            LOG,
+            "[{}] Fatal error while initializing pool, forcing the node down",
+            logPrefix,
+            fatalError);
         eventBus.fire(TopologyEvent.forceDown(node.getConnectAddress()));
         // Don't bother continuing, the pool will get shut down soon anyway
         return true;

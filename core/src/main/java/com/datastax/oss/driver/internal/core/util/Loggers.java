@@ -29,7 +29,8 @@ public class Loggers {
     } else {
       Object last = arguments[arguments.length - 1];
       if (last instanceof Throwable) {
-        arguments[arguments.length - 1] = ((Throwable) last).getMessage();
+        Throwable t = (Throwable) last;
+        arguments[arguments.length - 1] = t.getClass().getSimpleName() + ": " + t.getMessage();
         logger.warn(format + " ({})", arguments);
       } else {
         // Should only be called with an exception as last argument, but handle gracefully anyway
