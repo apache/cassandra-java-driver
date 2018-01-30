@@ -37,6 +37,7 @@ public enum CoreDriverOption implements DriverOption {
   CONNECTION_HEARTBEAT_INTERVAL("connection.heartbeat.interval", true),
   CONNECTION_HEARTBEAT_TIMEOUT("connection.heartbeat.timeout", true),
   CONNECTION_MAX_ORPHAN_REQUESTS("connection.max-orphan-requests", true),
+  CONNECTION_WARN_INIT_ERROR("connection.warn-on-init-error", true),
   CONNECTION_POOL_LOCAL_SIZE("connection.pool.local.size", true),
   CONNECTION_POOL_REMOTE_SIZE("connection.pool.remote.size", true),
 
