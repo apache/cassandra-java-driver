@@ -461,7 +461,7 @@ public abstract class CqlRequestHandlerBase {
                           ((UnexpectedResponseException) exception).message;
                       if (prepareErrorMessage instanceof Error) {
                         CoordinatorException prepareError =
-                            Conversions.toThrowable(node, (Error) prepareErrorMessage);
+                            Conversions.toThrowable(node, (Error) prepareErrorMessage, context);
                         if (prepareError instanceof QueryValidationException
                             || prepareError instanceof FunctionFailureException
                             || prepareError instanceof ProtocolError) {
@@ -482,7 +482,7 @@ public abstract class CqlRequestHandlerBase {
                 });
         return;
       }
-      CoordinatorException error = Conversions.toThrowable(node, errorMessage);
+      CoordinatorException error = Conversions.toThrowable(node, errorMessage, context);
       if (error instanceof BootstrappingException) {
         LOG.debug("[{}] {} is bootstrapping, trying next node", logPrefix, node);
         recordError(node, error);
