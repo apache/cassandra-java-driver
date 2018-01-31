@@ -4,6 +4,7 @@
 
 ### 4.0.0-alpha3 (in progress)
 
+- [improvement] JAVA-1738: Convert enums to allow extensibility
 - [bug] JAVA-1727: Override DefaultUdtValue.equals
 - [bug] JAVA-1729: Override DefaultTupleValue.equals
 - [improvement] JAVA-1720: Merge Cluster and Session into a single interface

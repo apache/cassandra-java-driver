@@ -33,7 +33,6 @@ import com.datastax.oss.driver.api.core.cql.SimpleStatement;
 import com.datastax.oss.driver.api.core.cql.Statement;
 import com.datastax.oss.driver.api.core.metadata.Node;
 import com.datastax.oss.driver.api.core.metadata.token.Token;
-import com.datastax.oss.driver.api.core.retry.WriteType;
 import com.datastax.oss.driver.api.core.servererrors.AlreadyExistsException;
 import com.datastax.oss.driver.api.core.servererrors.BootstrappingException;
 import com.datastax.oss.driver.api.core.servererrors.CoordinatorException;
@@ -393,7 +392,7 @@ class Conversions {
             context.consistencyLevelRegistry().fromCode(writeTimeout.consistencyLevel),
             writeTimeout.received,
             writeTimeout.blockFor,
-            WriteType.valueOf(writeTimeout.writeType));
+            context.writeTypeRegistry().fromName(writeTimeout.writeType));
       case ProtocolConstants.ErrorCode.READ_TIMEOUT:
         ReadTimeout readTimeout = (ReadTimeout) errorMessage;
         return new ReadTimeoutException(
@@ -421,7 +420,7 @@ class Conversions {
             context.consistencyLevelRegistry().fromCode(writeFailure.consistencyLevel),
             writeFailure.received,
             writeFailure.blockFor,
-            WriteType.valueOf(writeFailure.writeType),
+            context.writeTypeRegistry().fromName(writeFailure.writeType),
             writeFailure.numFailures,
             writeFailure.reasonMap);
       case ProtocolConstants.ErrorCode.SYNTAX_ERROR:

@@ -13,20 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.datastax.oss.driver.api.core;
+package com.datastax.oss.driver.internal.core.servererrors;
 
-/**
- * The consistency level of a request.
- *
- * <p>The only reason to model this as an interface (as opposed to an enum type) is to accommodate
- * for custom protocol extensions. If you're connecting to a standard Apache Cassandra cluster, all
- * {@code ConsistencyLevel}s are {@link CoreConsistencyLevel} instances.
- */
-public interface ConsistencyLevel {
+import com.datastax.oss.driver.api.core.servererrors.WriteType;
 
-  /** The numerical value that the level is encoded to in protocol frames. */
-  int getProtocolCode();
+public interface WriteTypeRegistry {
+  WriteType fromName(String name);
 
-  /** The textual representation of the level in configuration files. */
-  String name();
+  /** @return all the values known to this driver instance. */
+  Iterable<WriteType> getValues();
 }
