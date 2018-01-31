@@ -15,25 +15,18 @@
  */
 package com.datastax.oss.driver.api.core.cql;
 
-/** The type of a batch. */
-public enum BatchType {
-  /**
-   * A logged batch: Cassandra will first write the batch to its distributed batch log to ensure the
-   * atomicity of the batch (atomicity meaning that if any statement in the batch succeeds, all will
-   * eventually succeed).
-   */
-  LOGGED,
+/**
+ * The type of a batch.
+ *
+ * <p>The only reason to model this as an interface (as opposed to an enum type) is to accommodate
+ * for custom protocol extensions. If you're connecting to a standard Apache Cassandra cluster, all
+ * {@code BatchType}s are {@link CoreBatchType} instances.
+ */
+public interface BatchType {
 
-  /**
-   * A batch that doesn't use Cassandra's distributed batch log. Such batch are not guaranteed to be
-   * atomic.
-   */
-  UNLOGGED,
+  /** The numerical value that the level is encoded to. */
+  byte getProtocolCode();
 
-  /**
-   * A counter batch. Note that such batch is the only type that can contain counter operations and
-   * it can only contain these.
-   */
-  COUNTER,
-  ;
+  // Implementation note: we don't have a "BatchTypeRegistry" because we never decode batch types.
+  // This can be added later if needed (see ConsistencyLevelRegistry for an example).
 }

@@ -73,7 +73,7 @@ public class PerRequestKeyspaceIT {
         SimpleStatement.newInstance(
             "INSERT INTO foo (k, cc, v) VALUES (?, ?, ?)", nameRule.getMethodName(), 1, 1);
     should_reject_statement_with_keyspace_in_protocol_v4(
-        BatchStatement.builder(BatchType.LOGGED)
+        BatchStatement.builder(CoreBatchType.LOGGED)
             .withKeyspace(sessionRule.keyspace())
             .addStatement(statementWithoutKeyspace)
             .build());
@@ -87,7 +87,7 @@ public class PerRequestKeyspaceIT {
                 "INSERT INTO foo (k, cc, v) VALUES (?, ?, ?)", nameRule.getMethodName(), 1, 1)
             .setKeyspace(sessionRule.keyspace());
     should_reject_statement_with_keyspace_in_protocol_v4(
-        BatchStatement.builder(BatchType.LOGGED).addStatement(statementWithKeyspace).build());
+        BatchStatement.builder(CoreBatchType.LOGGED).addStatement(statementWithKeyspace).build());
   }
 
   private void should_reject_statement_with_keyspace_in_protocol_v4(Statement statement) {
@@ -121,7 +121,7 @@ public class PerRequestKeyspaceIT {
   public void should_execute_batch_with_explicit_keyspace() {
     CqlSession session = sessionRule.session();
     session.execute(
-        BatchStatement.builder(BatchType.LOGGED)
+        BatchStatement.builder(CoreBatchType.LOGGED)
             .withKeyspace(sessionRule.keyspace())
             .addStatements(
                 SimpleStatement.newInstance(
@@ -145,7 +145,7 @@ public class PerRequestKeyspaceIT {
   public void should_execute_batch_with_inferred_keyspace() {
     CqlSession session = sessionRule.session();
     session.execute(
-        BatchStatement.builder(BatchType.LOGGED)
+        BatchStatement.builder(CoreBatchType.LOGGED)
             .withKeyspace(sessionRule.keyspace())
             .addStatements(
                 SimpleStatement.newInstance(

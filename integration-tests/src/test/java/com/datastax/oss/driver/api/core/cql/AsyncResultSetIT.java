@@ -58,8 +58,8 @@ public class AsyncResultSetIT {
     PreparedStatement prepared =
         sessionRule.session().prepare("INSERT INTO test (k0, k1, v) VALUES (?, ?, ?)");
 
-    BatchStatementBuilder batchPart1 = BatchStatement.builder(BatchType.UNLOGGED);
-    BatchStatementBuilder batchPart2 = BatchStatement.builder(BatchType.UNLOGGED);
+    BatchStatementBuilder batchPart1 = BatchStatement.builder(CoreBatchType.UNLOGGED);
+    BatchStatementBuilder batchPart2 = BatchStatement.builder(CoreBatchType.UNLOGGED);
     for (int i = 0; i < ROWS_PER_PARTITION; i++) {
       batchPart1.addStatement(prepared.bind(PARTITION_KEY1, i, i));
       batchPart2.addStatement(
