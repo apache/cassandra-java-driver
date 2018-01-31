@@ -98,7 +98,7 @@ public class DefaultTopologyMonitor implements TopologyMonitor {
               channel,
               "SELECT * FROM system.peers WHERE peer = :address",
               ImmutableMap.of("address", node.getBroadcastAddress().get()))
-          .thenApply(this::buildNodeInfoFromFirstRow);
+          .thenApply(this::firstRowAsNodeInfo);
     } else {
       return query(channel, "SELECT * FROM system.peers")
           .thenApply(result -> this.findInPeers(result, node.getConnectAddress()));
@@ -140,9 +140,10 @@ public class DefaultTopologyMonitor implements TopologyMonitor {
           // Don't rely on system.local.rpc_address for the control row, because it mistakenly
           // reports the normal RPC address instead of the broadcast one (CASSANDRA-11181). We
           // already know the address since we've just used it to query.
-          nodeInfos.add(buildNodeInfo(controlNodeResult.iterator().next(), controlAddress));
+          nodeInfos.add(
+              nodeInfoBuilder(controlNodeResult.iterator().next(), controlAddress).build());
           for (AdminRow row : peersResult) {
-            nodeInfos.add(buildNodeInfo(row));
+            nodeInfos.add(asNodeInfo(row));
           }
           return nodeInfos;
         });
@@ -185,17 +186,27 @@ public class DefaultTopologyMonitor implements TopologyMonitor {
     return query(channel, queryString, Collections.emptyMap());
   }
 
-  private NodeInfo buildNodeInfo(AdminRow row) {
+  private NodeInfo asNodeInfo(AdminRow row) {
     InetAddress broadcastRpcAddress = row.getInetAddress("rpc_address");
     if (broadcastRpcAddress == null) {
       throw new IllegalArgumentException("Missing rpc_address in system row, can't refresh node");
     }
     InetSocketAddress connectAddress =
         addressTranslator.translate(new InetSocketAddress(broadcastRpcAddress, port));
-    return buildNodeInfo(row, connectAddress);
+    return nodeInfoBuilder(row, connectAddress).build();
   }
 
-  private NodeInfo buildNodeInfo(AdminRow row, InetSocketAddress connectAddress) {
+  private Optional<NodeInfo> firstRowAsNodeInfo(AdminResult result) {
+    Iterator<AdminRow> iterator = result.iterator();
+    if (iterator.hasNext()) {
+      return Optional.of(asNodeInfo(iterator.next()));
+    } else {
+      return Optional.empty();
+    }
+  }
+
+  protected DefaultNodeInfo.Builder nodeInfoBuilder(
+      AdminRow row, InetSocketAddress connectAddress) {
     DefaultNodeInfo.Builder builder = DefaultNodeInfo.builder().withConnectAddress(connectAddress);
 
     InetAddress broadcastAddress = row.getInetAddress("broadcast_address"); // in system.local
@@ -211,16 +222,7 @@ public class DefaultTopologyMonitor implements TopologyMonitor {
     builder.withTokens(row.getSetOfString("tokens"));
     builder.withPartitioner(row.getString("partitioner"));
 
-    return builder.build();
-  }
-
-  private Optional<NodeInfo> buildNodeInfoFromFirstRow(AdminResult result) {
-    Iterator<AdminRow> iterator = result.iterator();
-    if (iterator.hasNext()) {
-      return Optional.of(buildNodeInfo(iterator.next()));
-    } else {
-      return Optional.empty();
-    }
+    return builder;
   }
 
   private Optional<NodeInfo> findInPeers(AdminResult result, InetSocketAddress connectAddress) {
@@ -232,7 +234,7 @@ public class DefaultTopologyMonitor implements TopologyMonitor {
           && addressTranslator
               .translate(new InetSocketAddress(broadcastRpcAddress, port))
               .equals(connectAddress)) {
-        return Optional.of(buildNodeInfo(row, connectAddress));
+        return Optional.of(nodeInfoBuilder(row, connectAddress).build());
       }
     }
     LOG.debug("[{}] Could not find any peer row matching {}", logPrefix, connectAddress);

@@ -151,10 +151,12 @@ public class DefaultNodeInfo implements NodeInfo {
     }
 
     public Builder withExtra(String key, Object value) {
-      if (this.extras == null) {
-        this.extras = new HashMap<>();
+      if (value != null) {
+        if (this.extras == null) {
+          this.extras = new HashMap<>();
+        }
+        this.extras.put(key, value);
       }
-      this.extras.put(key, value);
       return this;
     }
 
