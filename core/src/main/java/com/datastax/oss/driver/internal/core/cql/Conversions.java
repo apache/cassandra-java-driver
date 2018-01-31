@@ -22,7 +22,6 @@ import com.datastax.oss.driver.api.core.config.CoreDriverOption;
 import com.datastax.oss.driver.api.core.config.DriverConfigProfile;
 import com.datastax.oss.driver.api.core.cql.AsyncResultSet;
 import com.datastax.oss.driver.api.core.cql.BatchStatement;
-import com.datastax.oss.driver.api.core.cql.BatchType;
 import com.datastax.oss.driver.api.core.cql.BatchableStatement;
 import com.datastax.oss.driver.api.core.cql.BoundStatement;
 import com.datastax.oss.driver.api.core.cql.ColumnDefinition;
@@ -198,7 +197,7 @@ class Conversions {
         }
       }
       return new Batch(
-          toProtocol(batchStatement.getBatchType()),
+          batchStatement.getBatchType().getProtocolCode(),
           queriesOrIds,
           values,
           consistency,
@@ -438,19 +437,6 @@ class Conversions {
         return new AlreadyExistsException(node, alreadyExists.keyspace, alreadyExists.table);
       default:
         return new ProtocolError(node, "Unknown error code: " + errorMessage.code);
-    }
-  }
-
-  private static byte toProtocol(BatchType batchType) {
-    switch (batchType) {
-      case LOGGED:
-        return ProtocolConstants.BatchType.LOGGED;
-      case UNLOGGED:
-        return ProtocolConstants.BatchType.UNLOGGED;
-      case COUNTER:
-        return ProtocolConstants.BatchType.COUNTER;
-      default:
-        throw new IllegalArgumentException("Unsupported batch type: " + batchType);
     }
   }
 }

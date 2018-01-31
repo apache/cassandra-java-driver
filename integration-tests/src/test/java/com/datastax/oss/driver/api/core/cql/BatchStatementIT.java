@@ -64,7 +64,7 @@ public class BatchStatementIT {
   @Test
   public void should_execute_batch_of_simple_statements_with_variables() {
     // Build a batch of batchCount simple statements, each with their own positional variables.
-    BatchStatementBuilder builder = BatchStatement.builder(BatchType.UNLOGGED);
+    BatchStatementBuilder builder = BatchStatement.builder(CoreBatchType.UNLOGGED);
     for (int i = 0; i < batchCount; i++) {
       SimpleStatement insert =
           SimpleStatement.builder(
@@ -85,7 +85,7 @@ public class BatchStatementIT {
   public void should_execute_batch_of_bound_statements_with_variables() {
     // Build a batch of batchCount statements with bound statements, each with their own positional
     // variables.
-    BatchStatementBuilder builder = BatchStatement.builder(BatchType.UNLOGGED);
+    BatchStatementBuilder builder = BatchStatement.builder(CoreBatchType.UNLOGGED);
     SimpleStatement insert =
         SimpleStatement.builder(
                 String.format(
@@ -108,7 +108,7 @@ public class BatchStatementIT {
   public void should_execute_batch_of_bound_statements_with_unset_values() {
     // Build a batch of batchCount statements with bound statements, each with their own positional
     // variables.
-    BatchStatementBuilder builder = BatchStatement.builder(BatchType.UNLOGGED);
+    BatchStatementBuilder builder = BatchStatement.builder(CoreBatchType.UNLOGGED);
     SimpleStatement insert =
         SimpleStatement.builder(
                 String.format(
@@ -125,7 +125,7 @@ public class BatchStatementIT {
 
     verifyBatchInsert();
 
-    BatchStatementBuilder builder2 = BatchStatement.builder(BatchType.UNLOGGED);
+    BatchStatementBuilder builder2 = BatchStatement.builder(CoreBatchType.UNLOGGED);
     for (int i = 0; i < batchCount; i++) {
       BoundStatement boundStatement = preparedStatement.bind(i, i + 2);
       // unset v every 20 statements.
@@ -163,7 +163,7 @@ public class BatchStatementIT {
   public void should_execute_batch_of_bound_statements_with_named_variables() {
     // Build a batch of batchCount statements with bound statements, each with their own named
     // variable values.
-    BatchStatementBuilder builder = BatchStatement.builder(BatchType.UNLOGGED);
+    BatchStatementBuilder builder = BatchStatement.builder(CoreBatchType.UNLOGGED);
     PreparedStatement preparedStatement =
         sessionRule.session().prepare("INSERT INTO test (k0, k1, v) values (:k0, :k1, :v)");
 
@@ -186,7 +186,7 @@ public class BatchStatementIT {
   @Test
   public void should_execute_batch_of_bound_and_simple_statements_with_variables() {
     // Build a batch of batchCount statements with simple and bound statements alternating.
-    BatchStatementBuilder builder = BatchStatement.builder(BatchType.UNLOGGED);
+    BatchStatementBuilder builder = BatchStatement.builder(CoreBatchType.UNLOGGED);
     SimpleStatement insert =
         SimpleStatement.builder(
                 String.format(
@@ -217,7 +217,7 @@ public class BatchStatementIT {
   @Test
   public void should_execute_cas_batch() {
     // Build a batch with CAS operations on the same partition.
-    BatchStatementBuilder builder = BatchStatement.builder(BatchType.UNLOGGED);
+    BatchStatementBuilder builder = BatchStatement.builder(CoreBatchType.UNLOGGED);
     SimpleStatement insert =
         SimpleStatement.builder(
                 String.format(
@@ -244,7 +244,7 @@ public class BatchStatementIT {
   @Test
   public void should_execute_counter_batch() {
     // should be able to do counter increments in a counter batch.
-    BatchStatementBuilder builder = BatchStatement.builder(BatchType.COUNTER);
+    BatchStatementBuilder builder = BatchStatement.builder(CoreBatchType.COUNTER);
 
     for (int i = 1; i <= 3; i++) {
       SimpleStatement insert =
@@ -277,7 +277,7 @@ public class BatchStatementIT {
   @Test(expected = InvalidQueryException.class)
   public void should_fail_logged_batch_with_counter_increment() {
     // should not be able to do counter inserts in a unlogged batch.
-    BatchStatementBuilder builder = BatchStatement.builder(BatchType.LOGGED);
+    BatchStatementBuilder builder = BatchStatement.builder(CoreBatchType.LOGGED);
 
     for (int i = 1; i <= 3; i++) {
       SimpleStatement insert =
@@ -296,7 +296,7 @@ public class BatchStatementIT {
   @Test(expected = InvalidQueryException.class)
   public void should_fail_counter_batch_with_non_counter_increment() {
     // should not be able to do a counter batch if it contains a non-counter increment statement.
-    BatchStatementBuilder builder = BatchStatement.builder(BatchType.COUNTER);
+    BatchStatementBuilder builder = BatchStatement.builder(CoreBatchType.COUNTER);
 
     for (int i = 1; i <= 3; i++) {
       SimpleStatement insert =
@@ -328,7 +328,7 @@ public class BatchStatementIT {
       PreparedStatement prepared =
           v3Session.prepare("INSERT INTO test (k0, k1, v) values (?, ?, ?)");
 
-      BatchStatementBuilder builder = BatchStatement.builder(BatchType.LOGGED);
+      BatchStatementBuilder builder = BatchStatement.builder(CoreBatchType.LOGGED);
       builder.addStatements(
           // All set => OK
           prepared.bind(name.getMethodName(), 1, 1),

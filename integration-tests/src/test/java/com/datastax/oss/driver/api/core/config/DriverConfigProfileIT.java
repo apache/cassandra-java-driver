@@ -27,7 +27,7 @@ import com.datastax.oss.driver.api.core.CqlSession;
 import com.datastax.oss.driver.api.core.DriverTimeoutException;
 import com.datastax.oss.driver.api.core.cql.BatchStatement;
 import com.datastax.oss.driver.api.core.cql.BatchStatementBuilder;
-import com.datastax.oss.driver.api.core.cql.BatchType;
+import com.datastax.oss.driver.api.core.cql.CoreBatchType;
 import com.datastax.oss.driver.api.core.cql.PreparedStatement;
 import com.datastax.oss.driver.api.core.cql.ResultSet;
 import com.datastax.oss.driver.api.core.cql.SimpleStatement;
@@ -186,7 +186,7 @@ public class DriverConfigProfileIT {
               .build());
       PreparedStatement prepared = session.prepare("INSERT INTO test (k, v) values (0, ?)");
       BatchStatementBuilder bs =
-          BatchStatement.builder(BatchType.UNLOGGED).withConfigProfile(slowProfile);
+          BatchStatement.builder(CoreBatchType.UNLOGGED).withConfigProfile(slowProfile);
       for (int i = 0; i < 500; i++) {
         bs.addStatement(prepared.bind(i));
       }
