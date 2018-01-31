@@ -13,20 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.datastax.oss.driver.api.core;
+package com.datastax.oss.driver.api.core.servererrors;
 
 /**
- * The consistency level of a request.
+ * The type of a Cassandra write query.
+ *
+ * <p>This information is returned by Cassandra when a write timeout is raised, to indicate what
+ * type of write timed out. It is useful to decide which retry decision to adopt.
  *
  * <p>The only reason to model this as an interface (as opposed to an enum type) is to accommodate
  * for custom protocol extensions. If you're connecting to a standard Apache Cassandra cluster, all
- * {@code ConsistencyLevel}s are {@link CoreConsistencyLevel} instances.
+ * {@code WriteType}s are {@link CoreWriteType} instances.
  */
-public interface ConsistencyLevel {
+public interface WriteType {
 
-  /** The numerical value that the level is encoded to in protocol frames. */
-  int getProtocolCode();
-
-  /** The textual representation of the level in configuration files. */
+  /** The textual representation that the write type is encoded to in protocol frames. */
   String name();
 }

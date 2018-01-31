@@ -30,6 +30,7 @@ import com.datastax.oss.driver.internal.core.metadata.schema.queries.SchemaQueri
 import com.datastax.oss.driver.internal.core.metadata.token.ReplicationStrategyFactory;
 import com.datastax.oss.driver.internal.core.metadata.token.TokenFactoryRegistry;
 import com.datastax.oss.driver.internal.core.pool.ChannelPoolFactory;
+import com.datastax.oss.driver.internal.core.servererrors.WriteTypeRegistry;
 import com.datastax.oss.driver.internal.core.session.PoolManager;
 import com.datastax.oss.driver.internal.core.session.RequestProcessorRegistry;
 import com.datastax.oss.driver.internal.core.ssl.SslHandlerFactory;
@@ -50,6 +51,8 @@ public interface InternalDriverContext extends DriverContext {
   ProtocolVersionRegistry protocolVersionRegistry();
 
   ConsistencyLevelRegistry consistencyLevelRegistry();
+
+  WriteTypeRegistry writeTypeRegistry();
 
   NettyOptions nettyOptions();
 

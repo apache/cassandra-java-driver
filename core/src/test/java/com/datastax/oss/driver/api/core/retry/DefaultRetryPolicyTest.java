@@ -19,8 +19,8 @@ import static com.datastax.oss.driver.api.core.CoreConsistencyLevel.QUORUM;
 import static com.datastax.oss.driver.api.core.retry.RetryDecision.RETHROW;
 import static com.datastax.oss.driver.api.core.retry.RetryDecision.RETRY_NEXT;
 import static com.datastax.oss.driver.api.core.retry.RetryDecision.RETRY_SAME;
-import static com.datastax.oss.driver.api.core.retry.WriteType.BATCH_LOG;
-import static com.datastax.oss.driver.api.core.retry.WriteType.SIMPLE;
+import static com.datastax.oss.driver.api.core.servererrors.CoreWriteType.BATCH_LOG;
+import static com.datastax.oss.driver.api.core.servererrors.CoreWriteType.SIMPLE;
 
 import com.datastax.oss.driver.api.core.connection.ClosedConnectionException;
 import com.datastax.oss.driver.api.core.connection.HeartbeatException;

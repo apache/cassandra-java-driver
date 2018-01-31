@@ -39,6 +39,7 @@ import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
 import com.datastax.oss.driver.internal.core.context.NettyOptions;
 import com.datastax.oss.driver.internal.core.metadata.LoadBalancingPolicyWrapper;
 import com.datastax.oss.driver.internal.core.pool.ChannelPool;
+import com.datastax.oss.driver.internal.core.servererrors.DefaultWriteTypeRegistry;
 import com.datastax.oss.driver.internal.core.session.DefaultSession;
 import com.datastax.oss.driver.internal.core.type.codec.registry.DefaultCodecRegistry;
 import com.datastax.oss.driver.internal.core.util.concurrent.ScheduledTaskCapturingEventLoop;
@@ -144,6 +145,8 @@ public class RequestHandlerTestHarness implements AutoCloseable {
 
     Mockito.when(context.consistencyLevelRegistry())
         .thenReturn(new DefaultConsistencyLevelRegistry());
+
+    Mockito.when(context.writeTypeRegistry()).thenReturn(new DefaultWriteTypeRegistry());
   }
 
   public DefaultSession getSession() {

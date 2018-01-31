@@ -33,6 +33,7 @@ import com.datastax.oss.driver.api.core.connection.ClosedConnectionException;
 import com.datastax.oss.driver.api.core.cql.ResultSet;
 import com.datastax.oss.driver.api.core.cql.SimpleStatement;
 import com.datastax.oss.driver.api.core.metadata.Node;
+import com.datastax.oss.driver.api.core.servererrors.CoreWriteType;
 import com.datastax.oss.driver.api.core.servererrors.ReadTimeoutException;
 import com.datastax.oss.driver.api.core.servererrors.ServerError;
 import com.datastax.oss.driver.api.core.servererrors.UnavailableException;
@@ -277,7 +278,7 @@ public class DefaultRetryPolicyIT {
       assertThat(wte.getConsistencyLevel()).isEqualTo(CoreConsistencyLevel.LOCAL_QUORUM);
       assertThat(wte.getReceived()).isEqualTo(1);
       assertThat(wte.getBlockFor()).isEqualTo(3);
-      assertThat(wte.getWriteType()).isEqualTo(WriteType.BATCH_LOG);
+      assertThat(wte.getWriteType()).isEqualTo(CoreWriteType.BATCH_LOG);
     }
 
     // there should have been a retry, and it should have been executed on the same host.
@@ -341,7 +342,7 @@ public class DefaultRetryPolicyIT {
       assertThat(wte.getConsistencyLevel()).isEqualTo(CoreConsistencyLevel.LOCAL_QUORUM);
       assertThat(wte.getReceived()).isEqualTo(1);
       assertThat(wte.getBlockFor()).isEqualTo(3);
-      assertThat(wte.getWriteType()).isEqualTo(WriteType.BATCH_LOG);
+      assertThat(wte.getWriteType()).isEqualTo(CoreWriteType.BATCH_LOG);
     }
 
     // should not have been retried.

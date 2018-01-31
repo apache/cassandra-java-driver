@@ -52,6 +52,8 @@ import com.datastax.oss.driver.internal.core.metadata.token.ReplicationStrategyF
 import com.datastax.oss.driver.internal.core.metadata.token.TokenFactoryRegistry;
 import com.datastax.oss.driver.internal.core.pool.ChannelPoolFactory;
 import com.datastax.oss.driver.internal.core.protocol.ByteBufPrimitiveCodec;
+import com.datastax.oss.driver.internal.core.servererrors.DefaultWriteTypeRegistry;
+import com.datastax.oss.driver.internal.core.servererrors.WriteTypeRegistry;
 import com.datastax.oss.driver.internal.core.session.PoolManager;
 import com.datastax.oss.driver.internal.core.session.RequestProcessorRegistry;
 import com.datastax.oss.driver.internal.core.ssl.JdkSslHandlerFactory;
@@ -119,6 +121,8 @@ public class DefaultDriverContext implements InternalDriverContext {
   private final LazyReference<ConsistencyLevelRegistry> consistencyLevelRegistryRef =
       new LazyReference<>(
           "consistencyLevelRegistry", this::buildConsistencyLevelRegistry, cycleDetector);
+  private final LazyReference<WriteTypeRegistry> writeTypeRegistryRef =
+      new LazyReference<>("writeTypeRegistry", this::buildWriteTypeRegistry, cycleDetector);
   private final LazyReference<NettyOptions> nettyOptionsRef =
       new LazyReference<>("nettyOptions", this::buildNettyOptions, cycleDetector);
   private final LazyReference<WriteCoalescer> writeCoalescerRef =
@@ -260,6 +264,10 @@ public class DefaultDriverContext implements InternalDriverContext {
 
   protected ConsistencyLevelRegistry buildConsistencyLevelRegistry() {
     return new DefaultConsistencyLevelRegistry();
+  }
+
+  protected WriteTypeRegistry buildWriteTypeRegistry() {
+    return new DefaultWriteTypeRegistry();
   }
 
   protected NettyOptions buildNettyOptions() {
@@ -417,6 +425,11 @@ public class DefaultDriverContext implements InternalDriverContext {
   @Override
   public ConsistencyLevelRegistry consistencyLevelRegistry() {
     return consistencyLevelRegistryRef.get();
+  }
+
+  @Override
+  public WriteTypeRegistry writeTypeRegistry() {
+    return writeTypeRegistryRef.get();
   }
 
   @Override
