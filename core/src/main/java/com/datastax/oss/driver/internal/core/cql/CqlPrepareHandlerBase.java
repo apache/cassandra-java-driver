@@ -376,7 +376,7 @@ public abstract class CqlPrepareHandlerBase {
                 "Unexpected server error for a PREPARE query" + errorMessage));
         return;
       }
-      CoordinatorException error = Conversions.toThrowable(node, errorMessage);
+      CoordinatorException error = Conversions.toThrowable(node, errorMessage, context);
       if (error instanceof BootstrappingException) {
         LOG.debug("[{}] {} is bootstrapping, trying next node", logPrefix, node);
         recordError(node, error);

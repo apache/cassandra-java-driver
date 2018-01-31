@@ -32,6 +32,8 @@ import com.datastax.oss.driver.api.core.time.TimestampGenerator;
 import com.datastax.oss.driver.api.core.type.codec.TypeCodec;
 import com.datastax.oss.driver.api.core.type.codec.registry.CodecRegistry;
 import com.datastax.oss.driver.internal.core.CassandraProtocolVersionRegistry;
+import com.datastax.oss.driver.internal.core.ConsistencyLevelRegistry;
+import com.datastax.oss.driver.internal.core.DefaultConsistencyLevelRegistry;
 import com.datastax.oss.driver.internal.core.ProtocolVersionRegistry;
 import com.datastax.oss.driver.internal.core.channel.ChannelFactory;
 import com.datastax.oss.driver.internal.core.channel.WriteCoalescer;
@@ -114,6 +116,9 @@ public class DefaultDriverContext implements InternalDriverContext {
   private final LazyReference<ProtocolVersionRegistry> protocolVersionRegistryRef =
       new LazyReference<>(
           "protocolVersionRegistry", this::buildProtocolVersionRegistry, cycleDetector);
+  private final LazyReference<ConsistencyLevelRegistry> consistencyLevelRegistryRef =
+      new LazyReference<>(
+          "consistencyLevelRegistry", this::buildConsistencyLevelRegistry, cycleDetector);
   private final LazyReference<NettyOptions> nettyOptionsRef =
       new LazyReference<>("nettyOptions", this::buildNettyOptions, cycleDetector);
   private final LazyReference<WriteCoalescer> writeCoalescerRef =
@@ -251,6 +256,10 @@ public class DefaultDriverContext implements InternalDriverContext {
 
   protected ProtocolVersionRegistry buildProtocolVersionRegistry() {
     return new CassandraProtocolVersionRegistry(sessionName());
+  }
+
+  protected ConsistencyLevelRegistry buildConsistencyLevelRegistry() {
+    return new DefaultConsistencyLevelRegistry();
   }
 
   protected NettyOptions buildNettyOptions() {
@@ -403,6 +412,11 @@ public class DefaultDriverContext implements InternalDriverContext {
   @Override
   public ProtocolVersionRegistry protocolVersionRegistry() {
     return protocolVersionRegistryRef.get();
+  }
+
+  @Override
+  public ConsistencyLevelRegistry consistencyLevelRegistry() {
+    return consistencyLevelRegistryRef.get();
   }
 
   @Override

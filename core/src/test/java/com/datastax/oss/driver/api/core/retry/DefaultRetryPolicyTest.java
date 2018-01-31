@@ -15,7 +15,7 @@
  */
 package com.datastax.oss.driver.api.core.retry;
 
-import static com.datastax.oss.driver.api.core.ConsistencyLevel.QUORUM;
+import static com.datastax.oss.driver.api.core.CoreConsistencyLevel.QUORUM;
 import static com.datastax.oss.driver.api.core.retry.RetryDecision.RETHROW;
 import static com.datastax.oss.driver.api.core.retry.RetryDecision.RETRY_NEXT;
 import static com.datastax.oss.driver.api.core.retry.RetryDecision.RETRY_SAME;

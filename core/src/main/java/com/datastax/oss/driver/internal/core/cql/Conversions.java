@@ -15,7 +15,6 @@
  */
 package com.datastax.oss.driver.internal.core.cql;
 
-import com.datastax.oss.driver.api.core.ConsistencyLevel;
 import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.CqlSession;
 import com.datastax.oss.driver.api.core.ProtocolVersion;
@@ -98,10 +97,16 @@ class Conversions {
   static Message toMessage(
       Statement<?> statement, DriverConfigProfile config, InternalDriverContext context) {
     int consistency =
-        config.getConsistencyLevel(CoreDriverOption.REQUEST_CONSISTENCY).getProtocolCode();
+        context
+            .consistencyLevelRegistry()
+            .fromName(config.getString(CoreDriverOption.REQUEST_CONSISTENCY))
+            .getProtocolCode();
     int pageSize = config.getInt(CoreDriverOption.REQUEST_PAGE_SIZE);
     int serialConsistency =
-        config.getConsistencyLevel(CoreDriverOption.REQUEST_SERIAL_CONSISTENCY).getProtocolCode();
+        context
+            .consistencyLevelRegistry()
+            .fromName(config.getString(CoreDriverOption.REQUEST_SERIAL_CONSISTENCY))
+            .getProtocolCode();
     long timestamp = statement.getTimestamp();
     if (timestamp == Long.MIN_VALUE) {
       timestamp = context.timestampGenerator().next();
@@ -354,7 +359,8 @@ class Conversions {
     }
   }
 
-  static CoordinatorException toThrowable(Node node, Error errorMessage) {
+  static CoordinatorException toThrowable(
+      Node node, Error errorMessage, InternalDriverContext context) {
     switch (errorMessage.code) {
       case ProtocolConstants.ErrorCode.UNPREPARED:
         throw new AssertionError(
@@ -372,7 +378,7 @@ class Conversions {
         Unavailable unavailable = (Unavailable) errorMessage;
         return new UnavailableException(
             node,
-            ConsistencyLevel.fromCode(unavailable.consistencyLevel),
+            context.consistencyLevelRegistry().fromCode(unavailable.consistencyLevel),
             unavailable.required,
             unavailable.alive);
       case ProtocolConstants.ErrorCode.OVERLOADED:
@@ -385,7 +391,7 @@ class Conversions {
         WriteTimeout writeTimeout = (WriteTimeout) errorMessage;
         return new WriteTimeoutException(
             node,
-            ConsistencyLevel.fromCode(writeTimeout.consistencyLevel),
+            context.consistencyLevelRegistry().fromCode(writeTimeout.consistencyLevel),
             writeTimeout.received,
             writeTimeout.blockFor,
             WriteType.valueOf(writeTimeout.writeType));
@@ -393,7 +399,7 @@ class Conversions {
         ReadTimeout readTimeout = (ReadTimeout) errorMessage;
         return new ReadTimeoutException(
             node,
-            ConsistencyLevel.fromCode(readTimeout.consistencyLevel),
+            context.consistencyLevelRegistry().fromCode(readTimeout.consistencyLevel),
             readTimeout.received,
             readTimeout.blockFor,
             readTimeout.dataPresent);
@@ -401,7 +407,7 @@ class Conversions {
         ReadFailure readFailure = (ReadFailure) errorMessage;
         return new ReadFailureException(
             node,
-            ConsistencyLevel.fromCode(readFailure.consistencyLevel),
+            context.consistencyLevelRegistry().fromCode(readFailure.consistencyLevel),
             readFailure.received,
             readFailure.blockFor,
             readFailure.numFailures,
@@ -413,7 +419,7 @@ class Conversions {
         WriteFailure writeFailure = (WriteFailure) errorMessage;
         return new WriteFailureException(
             node,
-            ConsistencyLevel.fromCode(writeFailure.consistencyLevel),
+            context.consistencyLevelRegistry().fromCode(writeFailure.consistencyLevel),
             writeFailure.received,
             writeFailure.blockFor,
             WriteType.valueOf(writeFailure.writeType),

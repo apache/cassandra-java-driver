@@ -54,14 +54,18 @@ class QueryTraceFetcher {
     this.session = session;
 
     ConsistencyLevel regularConsistency =
-        configProfile.getConsistencyLevel(CoreDriverOption.REQUEST_CONSISTENCY);
+        context
+            .consistencyLevelRegistry()
+            .fromName(configProfile.getString(CoreDriverOption.REQUEST_CONSISTENCY));
     ConsistencyLevel traceConsistency =
-        configProfile.getConsistencyLevel(CoreDriverOption.REQUEST_TRACE_CONSISTENCY);
+        context
+            .consistencyLevelRegistry()
+            .fromName(configProfile.getString(CoreDriverOption.REQUEST_TRACE_CONSISTENCY));
     this.configProfile =
-        (traceConsistency == regularConsistency)
+        (traceConsistency.equals(regularConsistency))
             ? configProfile
-            : configProfile.withConsistencyLevel(
-                CoreDriverOption.REQUEST_CONSISTENCY, traceConsistency);
+            : configProfile.withString(
+                CoreDriverOption.REQUEST_CONSISTENCY, traceConsistency.name());
 
     this.maxAttempts = configProfile.getInt(CoreDriverOption.REQUEST_TRACE_ATTEMPTS);
     this.intervalNanos =

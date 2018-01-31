@@ -13,20 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.datastax.oss.driver.api.core;
+package com.datastax.oss.driver.internal.core;
+
+import com.datastax.oss.driver.api.core.ConsistencyLevel;
+import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
 
 /**
- * The consistency level of a request.
+ * Extension point to plug custom consistency levels.
  *
- * <p>The only reason to model this as an interface (as opposed to an enum type) is to accommodate
- * for custom protocol extensions. If you're connecting to a standard Apache Cassandra cluster, all
- * {@code ConsistencyLevel}s are {@link CoreConsistencyLevel} instances.
+ * <p>This is overridable through {@link InternalDriverContext}.
  */
-public interface ConsistencyLevel {
+public interface ConsistencyLevelRegistry {
 
-  /** The numerical value that the level is encoded to. */
-  int getProtocolCode();
+  ConsistencyLevel fromCode(int code);
 
-  /** The textual representation of the level in configuration files. */
-  String name();
+  ConsistencyLevel fromName(String name);
+
+  /** @return all the values known to this driver instance. */
+  Iterable<ConsistencyLevel> getValues();
 }

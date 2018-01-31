@@ -17,6 +17,7 @@ package com.datastax.oss.driver.internal.core.context;
 
 import com.datastax.oss.driver.api.core.config.DriverConfigLoader;
 import com.datastax.oss.driver.api.core.context.DriverContext;
+import com.datastax.oss.driver.internal.core.ConsistencyLevelRegistry;
 import com.datastax.oss.driver.internal.core.ProtocolVersionRegistry;
 import com.datastax.oss.driver.internal.core.channel.ChannelFactory;
 import com.datastax.oss.driver.internal.core.channel.WriteCoalescer;
@@ -47,6 +48,8 @@ public interface InternalDriverContext extends DriverContext {
   FrameCodec<ByteBuf> frameCodec();
 
   ProtocolVersionRegistry protocolVersionRegistry();
+
+  ConsistencyLevelRegistry consistencyLevelRegistry();
 
   NettyOptions nettyOptions();
 

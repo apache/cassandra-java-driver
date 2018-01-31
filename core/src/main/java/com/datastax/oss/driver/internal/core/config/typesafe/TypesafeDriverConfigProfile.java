@@ -15,7 +15,6 @@
  */
 package com.datastax.oss.driver.internal.core.config.typesafe;
 
-import com.datastax.oss.driver.api.core.ConsistencyLevel;
 import com.datastax.oss.driver.api.core.config.DriverConfigProfile;
 import com.datastax.oss.driver.api.core.config.DriverOption;
 import com.google.common.collect.MapMaker;
@@ -106,21 +105,6 @@ public abstract class TypesafeDriverConfigProfile implements DriverConfigProfile
   @Override
   public DriverConfigProfile withBytes(DriverOption option, long value) {
     return with(option, value);
-  }
-
-  @Override
-  public ConsistencyLevel getConsistencyLevel(DriverOption option) {
-    return getCached(
-        option.getPath(),
-        path -> {
-          String name = getEffectiveOptions().getString(path);
-          return ConsistencyLevel.valueOf(name);
-        });
-  }
-
-  @Override
-  public DriverConfigProfile withConsistencyLevel(DriverOption option, ConsistencyLevel value) {
-    return with(option, value.toString());
   }
 
   private <T> T getCached(String path, Function<String, T> compute) {

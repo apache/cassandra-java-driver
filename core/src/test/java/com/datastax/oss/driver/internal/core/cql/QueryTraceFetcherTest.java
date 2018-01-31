@@ -20,7 +20,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.times;
 
-import com.datastax.oss.driver.api.core.ConsistencyLevel;
+import com.datastax.oss.driver.api.core.CoreConsistencyLevel;
 import com.datastax.oss.driver.api.core.CqlSession;
 import com.datastax.oss.driver.api.core.config.CoreDriverOption;
 import com.datastax.oss.driver.api.core.config.DriverConfigProfile;
@@ -31,6 +31,7 @@ import com.datastax.oss.driver.api.core.cql.Row;
 import com.datastax.oss.driver.api.core.cql.SimpleStatement;
 import com.datastax.oss.driver.api.core.cql.TraceEvent;
 import com.datastax.oss.driver.api.core.uuid.Uuids;
+import com.datastax.oss.driver.internal.core.DefaultConsistencyLevelRegistry;
 import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
 import com.datastax.oss.driver.internal.core.context.NettyOptions;
 import com.datastax.oss.driver.internal.core.util.concurrent.CompletableFutures;
@@ -94,12 +95,18 @@ public class QueryTraceFetcherTest {
     // Doesn't really matter since we mock the scheduler
     Mockito.when(config.getDuration(CoreDriverOption.REQUEST_TRACE_INTERVAL))
         .thenReturn(Duration.ZERO);
-    Mockito.when(config.getConsistencyLevel(CoreDriverOption.REQUEST_TRACE_CONSISTENCY))
-        .thenReturn(ConsistencyLevel.ONE);
+    Mockito.when(config.getString(CoreDriverOption.REQUEST_CONSISTENCY))
+        .thenReturn(CoreConsistencyLevel.LOCAL_ONE.name());
+    Mockito.when(config.getString(CoreDriverOption.REQUEST_TRACE_CONSISTENCY))
+        .thenReturn(CoreConsistencyLevel.ONE.name());
 
     Mockito.when(
-            config.withConsistencyLevel(CoreDriverOption.REQUEST_CONSISTENCY, ConsistencyLevel.ONE))
+            config.withString(
+                CoreDriverOption.REQUEST_CONSISTENCY, CoreConsistencyLevel.ONE.name()))
         .thenReturn(traceConfig);
+
+    Mockito.when(context.consistencyLevelRegistry())
+        .thenReturn(new DefaultConsistencyLevelRegistry());
   }
 
   @Test
