@@ -16,6 +16,7 @@
 package com.datastax.driver.core;
 
 import com.datastax.driver.core.exceptions.*;
+import com.datastax.driver.core.utils.InetAddressOptPort;
 import com.datastax.driver.core.utils.MoreObjects;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -48,11 +49,17 @@ class ControlConnection implements Connection.Owner {
         }
     }
 
-    private static final String SELECT_PEERS = "SELECT * FROM system.peers";
+    //Common across all versions
     private static final String SELECT_LOCAL = "SELECT * FROM system.local WHERE key='local'";
-
-    private static final String SELECT_SCHEMA_PEERS = "SELECT peer, rpc_address, schema_version FROM system.peers";
     private static final String SELECT_SCHEMA_LOCAL = "SELECT schema_version FROM system.local WHERE key='local'";
+
+    //Pre 4.0
+    private static final String SELECT_PEERS_V1 = "SELECT * FROM system.peers";
+    private static final String SELECT_SCHEMA_PEERS_V1 = "SELECT peer, rpc_address, schema_version FROM system.peers";
+
+    //4.0+
+    private static final String SELECT_PEERS_V2 = "SELECT * FROM system.peers_v2";
+    private static final String SELECT_SCHEMA_PEERS_V2 = "SELECT peer, native_address, native_port, schema_version FROM system.peers_v2";
 
     @VisibleForTesting
     final AtomicReference<Connection> connectionRef = new AtomicReference<Connection>();
@@ -370,13 +377,47 @@ class ControlConnection implements Connection.Owner {
         // - rpc_address: the address we are looking for (this corresponds to broadcast_rpc_address in the peer's cassandra yaml file;
         //                if this setting if unset, it defaults to the value for rpc_address or rpc_interface)
         // - preferred_ip: used by Ec2MultiRegionSnitch and GossipingPropertyFileSnitch, possibly others; contents unclear
+        // after CASSANDRA-7544 rpc_address became native_address in system.peers but remained rpc_address in system.local
+        // rpc_port was added to system.local and native_port was added to system.peers. rpc and native address refer to the
+        // same thing in a post Thrift world where there is just the native protocol.
 
         InetAddress broadcastAddress = peersRow.getInet("peer");
-        InetAddress rpcAddress = peersRow.getInet("rpc_address");
+        //Grab the port so we can assmemble socket addresses that aren't ambiguous
+        Integer rpcPort = cluster.configuration.getProtocolOptions().getPort();
+        if (peersRow.getColumnDefinitions().contains("rpc_port"))
+        {
+            rpcPort = peersRow.getInt("rpc_port");
+        } else if (peersRow.getColumnDefinitions().contains("native_port"))
+        {
+            rpcPort = peersRow.getInt("native_port");
+        }
+
+        //A fake address port combo that doesn't exist but will match with connectedHost when they are the same node
+        //for that weird DSE check below
+        InetSocketAddress broadcastSocketAddress = null;
+        if (broadcastAddress != null)
+        {
+            broadcastSocketAddress = new InetSocketAddress(broadcastAddress, rpcPort != null ? rpcPort : 0);
+        }
+
+        InetAddress rpcAddress = null;
+        if (peersRow.getColumnDefinitions().contains("rpc_address"))
+        {
+            rpcAddress = peersRow.getInet("rpc_address");
+        } else if (peersRow.getColumnDefinitions().contains("native_address"))
+        {
+            rpcAddress = peersRow.getInet("native_address");
+        }
+
+        InetSocketAddress rpcSocketAddress = null;
+        if (rpcAddress != null)
+        {
+            rpcSocketAddress = new InetSocketAddress(rpcAddress, rpcPort);
+        }
 
         if (broadcastAddress == null) {
             return null;
-        } else if (broadcastAddress.equals(connectedHost.getAddress()) || (rpcAddress != null && rpcAddress.equals(connectedHost.getAddress()))) {
+        } else if (broadcastSocketAddress.equals(connectedHost) || (rpcSocketAddress != null && rpcSocketAddress.equals(connectedHost))) {
             // Some DSE versions were inserting a line for the local node in peers (with mostly null values). This has been fixed, but if we
             // detect that's the case, ignore it as it's not really a big deal.
             logger.debug("System.peers on node {} has a line for itself. This is not normal but is a known problem of some DSE version. Ignoring the entry.", connectedHost);
@@ -387,7 +428,19 @@ class ControlConnection implements Connection.Owner {
             logger.warn("Found host with 0.0.0.0 as rpc_address, using broadcast_address ({}) to contact it instead. If this is incorrect you should avoid the use of 0.0.0.0 server side.", broadcastAddress);
             rpcAddress = broadcastAddress;
         }
-        return cluster.translateAddress(rpcAddress);
+        return cluster.translateAddress(rpcAddress, rpcPort);
+    }
+
+    private String getSelectPeersStatement(Host host)
+    {
+        if (cluster.protocolVersion().toInt() > 4)
+        {
+            return SELECT_PEERS_V2 + " WHERE peer='" + host.getBroadcastAddress().getHostAddress() + "' AND peer_port='" + host.getBroadcastAddressOptPort().getPort() + '\'';
+        }
+        else
+        {
+            return SELECT_PEERS_V1 + " WHERE peer='" + host.getBroadcastAddress().getHostAddress() + '\'';
+        }
     }
 
     private Row fetchNodeInfo(Host host, Connection c) throws ConnectionException, BusyConnectionException, ExecutionException, InterruptedException {
@@ -395,7 +448,7 @@ class ControlConnection implements Connection.Owner {
         if (isConnectedHost || host.getBroadcastAddress() != null) {
             DefaultResultSetFuture future = isConnectedHost
                     ? new DefaultResultSetFuture(null, cluster.protocolVersion(), new Requests.Query(SELECT_LOCAL))
-                    : new DefaultResultSetFuture(null, cluster.protocolVersion(), new Requests.Query(SELECT_PEERS + " WHERE peer='" + host.getBroadcastAddress().getHostAddress() + '\''));
+                    : new DefaultResultSetFuture(null, cluster.protocolVersion(), new Requests.Query(getSelectPeersStatement(host)));
             c.write(future);
             Row row = future.get().one();
             if (row != null) {
@@ -408,7 +461,7 @@ class ControlConnection implements Connection.Owner {
         }
 
         // We have to fetch the whole peers table and find the host we're looking for
-        DefaultResultSetFuture future = new DefaultResultSetFuture(null, cluster.protocolVersion(), new Requests.Query(SELECT_PEERS));
+        DefaultResultSetFuture future = new DefaultResultSetFuture(null, cluster.protocolVersion(), new Requests.Query(cluster.protocolVersion().toInt() > 4 ? SELECT_PEERS_V2 : SELECT_PEERS_V1));
         c.write(future);
         for (Row row : future.get()) {
             InetSocketAddress addr = rpcAddressForPeerHost(row, c.address, cluster);
@@ -488,21 +541,33 @@ class ControlConnection implements Connection.Owner {
         // - rpc_address
         // After CASSANDRA-9603 (2.0.17, 2.1.8, 2.2.0 rc2) local row contains one more column:
         // - listen_address
+        // After CASSANDRA-7544 (4.0) local row contains 3 more columns:
+        // - broadcast_port
+        // - rpc_port
+        // - listen_port
 
         InetAddress broadcastAddress = null;
+        Integer broadcastPort = null;
         if (row.getColumnDefinitions().contains("peer")) { // system.peers
             broadcastAddress = row.getInet("peer");
+            broadcastPort = row.getColumnDefinitions().contains("peer_port") ? row.getInt("peer_port") : null;
         } else if (row.getColumnDefinitions().contains("broadcast_address")) { // system.local
             broadcastAddress = row.getInet("broadcast_address");
+            broadcastPort = row.getColumnDefinitions().contains("broadcast_port") ? row.getInt("broadcast_port") : null;
         }
-        host.setBroadcastAddress(broadcastAddress);
+        InetAddressOptPort broadcastAddressAndPort = broadcastAddress != null ? new InetAddressOptPort(broadcastAddress, broadcastPort) : null;
+        host.setBroadcastAddress(broadcastAddressAndPort);
 
         // in system.local only for C* versions >= 2.0.17, 2.1.8, 2.2.0 rc2,
         // not yet in system.peers as of C* 3.2
         InetAddress listenAddress = row.getColumnDefinitions().contains("listen_address")
                 ? row.getInet("listen_address")
                 : null;
-        host.setListenAddress(listenAddress);
+        Integer listenPort = row.getColumnDefinitions().contains("listen_port")
+                ? row.getInt("listen_port")
+                : null;
+        InetAddressOptPort listenAddressAndPort = listenAddress != null ? new InetAddressOptPort(listenAddress, listenPort) : null;
+        host.setListenAddress(listenAddressAndPort);
 
         if (row.getColumnDefinitions().contains("workload")) {
             String dseWorkload = row.getString("workload");
@@ -542,7 +607,7 @@ class ControlConnection implements Connection.Owner {
         // Make sure we're up to date on nodes and tokens
 
         DefaultResultSetFuture localFuture = new DefaultResultSetFuture(null, cluster.protocolVersion(), new Requests.Query(SELECT_LOCAL));
-        DefaultResultSetFuture peersFuture = new DefaultResultSetFuture(null, cluster.protocolVersion(), new Requests.Query(SELECT_PEERS));
+        DefaultResultSetFuture peersFuture = new DefaultResultSetFuture(null, cluster.protocolVersion(), new Requests.Query(cluster.protocolVersion().toInt() > 4 ? SELECT_PEERS_V2 : SELECT_PEERS_V1));
         connection.write(localFuture);
         connection.write(peersFuture);
 
@@ -585,7 +650,9 @@ class ControlConnection implements Connection.Owner {
         List<String> racks = new ArrayList<String>();
         List<String> cassandraVersions = new ArrayList<String>();
         List<InetAddress> broadcastAddresses = new ArrayList<InetAddress>();
+        List<Integer> broadcastPorts = new ArrayList<Integer>();
         List<InetAddress> listenAddresses = new ArrayList<InetAddress>();
+        List<Integer> listenPorts = new ArrayList<Integer>();
         List<Set<Token>> allTokens = new ArrayList<Set<Token>>();
         List<String> dseVersions = new ArrayList<String>();
         List<Boolean> dseGraphEnabled = new ArrayList<Boolean>();
@@ -605,6 +672,7 @@ class ControlConnection implements Connection.Owner {
             racks.add(row.getString("rack"));
             cassandraVersions.add(row.getString("release_version"));
             broadcastAddresses.add(row.getInet("peer"));
+            broadcastPorts.add(row.getColumnDefinitions().contains("peer_port") ? row.getInt("peer_port") : null);
             if (metadataEnabled && factory != null) {
                 Set<String> tokensStr = row.getSet("tokens", String.class);
                 Set<Token> tokens = null;
@@ -615,6 +683,7 @@ class ControlConnection implements Connection.Owner {
             }
             InetAddress listenAddress = row.getColumnDefinitions().contains("listen_address") ? row.getInet("listen_address") : null;
             listenAddresses.add(listenAddress);
+            listenPorts.add(row.getColumnDefinitions().contains("listen_port") ? row.getInt("listen_port") : null);
             String dseWorkload = row.getColumnDefinitions().contains("workload") ? row.getString("workload") : null;
             dseWorkloads.add(dseWorkload);
             Boolean isDseGraph = row.getColumnDefinitions().contains("graph") ? row.getBool("graph") : null;
@@ -646,9 +715,9 @@ class ControlConnection implements Connection.Owner {
             if (cassandraVersions.get(i) != null)
                 host.setVersion(cassandraVersions.get(i));
             if (broadcastAddresses.get(i) != null)
-                host.setBroadcastAddress(broadcastAddresses.get(i));
+                host.setBroadcastAddress(new InetAddressOptPort(broadcastAddresses.get(i), broadcastPorts.get(i)));
             if (listenAddresses.get(i) != null)
-                host.setListenAddress(listenAddresses.get(i));
+                host.setListenAddress(new InetAddressOptPort(listenAddresses.get(i), listenPorts.get(i)));
 
             if (dseVersions.get(i) != null)
                 host.setDseVersion(dseVersions.get(i));
@@ -689,8 +758,9 @@ class ControlConnection implements Connection.Owner {
     }
 
     private static boolean isValidPeer(Row peerRow, boolean logIfInvalid) {
-        boolean isValid = peerRow.getColumnDefinitions().contains("rpc_address")
-                && !peerRow.isNull("rpc_address");
+        boolean isValid = (peerRow.getColumnDefinitions().contains("rpc_address")
+                && !peerRow.isNull("rpc_address")) | (peerRow.getColumnDefinitions().contains("native_address")
+                && !peerRow.isNull("native_address"));
         if (EXTENDED_PEER_CHECK) {
             isValid &= peerRow.getColumnDefinitions().contains("host_id")
                     && !peerRow.isNull("host_id")
@@ -711,6 +781,7 @@ class ControlConnection implements Connection.Owner {
     private static String formatInvalidPeer(Row peerRow) {
         StringBuilder sb = new StringBuilder("[peer=" + peerRow.getInet("peer"));
         formatMissingOrNullColumn(peerRow, "rpc_address", sb);
+        formatMissingOrNullColumn(peerRow, "native_address", sb);
         if (EXTENDED_PEER_CHECK) {
             formatMissingOrNullColumn(peerRow, "host_id", sb);
             formatMissingOrNullColumn(peerRow, "data_center", sb);
@@ -747,7 +818,7 @@ class ControlConnection implements Connection.Owner {
     }
 
     private static boolean checkSchemaAgreement(Connection connection, Cluster.Manager cluster) throws InterruptedException, ExecutionException {
-        DefaultResultSetFuture peersFuture = new DefaultResultSetFuture(null, cluster.protocolVersion(), new Requests.Query(SELECT_SCHEMA_PEERS));
+        DefaultResultSetFuture peersFuture = new DefaultResultSetFuture(null, cluster.protocolVersion(), new Requests.Query(cluster.protocolVersion().toInt() > 4 ? SELECT_SCHEMA_PEERS_V2 : SELECT_SCHEMA_PEERS_V1));
         DefaultResultSetFuture localFuture = new DefaultResultSetFuture(null, cluster.protocolVersion(), new Requests.Query(SELECT_SCHEMA_LOCAL));
         connection.write(peersFuture);
         connection.write(localFuture);

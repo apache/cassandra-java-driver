@@ -16,8 +16,10 @@
 package com.datastax.driver.core;
 
 import com.datastax.driver.core.policies.AddressTranslator;
+import com.datastax.driver.core.utils.InetAddressOptPort;
 import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.ListenableFuture;
+import javafx.beans.DefaultProperty;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -46,12 +48,12 @@ public class Host {
     // We use that internally because
     // that's the 'peer' in the 'System.peers' table and avoids querying the full peers table in
     // ControlConnection.refreshNodeInfo.
-    private volatile InetAddress broadcastAddress;
+    private volatile InetAddressOptPort broadcastAddress;
 
     // The listen_address as known by Cassandra.
     // This is usually the same as broadcast_address unless
     // specified otherwise in cassandra.yaml file.
-    private volatile InetAddress listenAddress;
+    private volatile InetAddressOptPort listenAddress;
 
     private volatile UUID hostId;
 
@@ -114,11 +116,11 @@ public class Host {
         this.cassandraVersion = versionNumber;
     }
 
-    void setBroadcastAddress(InetAddress broadcastAddress) {
+    void setBroadcastAddress(InetAddressOptPort broadcastAddress) {
         this.broadcastAddress = broadcastAddress;
     }
 
-    void setListenAddress(InetAddress listenAddress) {
+    void setListenAddress(InetAddressOptPort listenAddress) {
         this.listenAddress = listenAddress;
     }
 
@@ -159,10 +161,14 @@ public class Host {
      * Returns the address that the driver will use to connect to the node.
      * <p/>
      * This is a shortcut for {@code getSocketAddress().getAddress()}.
+     * <p/>
+     * Deprecated because an address no longer reliably identifies a Cassandra instance. Multiple instances
+     * can share the same address. Use getListenAddressOptPort instead.
      *
      * @return the address.
      * @see #getSocketAddress()
      */
+    @Deprecated
     public InetAddress getAddress() {
         return address.getAddress();
     }
@@ -199,11 +205,36 @@ public class Host {
      * is fixed on the server side (Cassandra versions >= 2.0.16, 2.1.6, 2.2.0 rc1). For older versions, note that if
      * the driver loses the control connection and reconnects to a different control host, the old control host becomes
      * a peer, and therefore its broadcast address is updated.
+     * <p/>
+     * Deprecated because an address no longer reliably identifies a Cassandra instance. Multiple instances
+     * can share the same address. Use getBroadcastAddressOptPort instead.
      *
      * @return the node broadcast address, if known. Otherwise {@code null}.
      * @see <a href="https://docs.datastax.com/en/cassandra/2.1/cassandra/configuration/configCassandra_yaml_r.html">The cassandra.yaml configuration file</a>
      */
+    @Deprecated
     public InetAddress getBroadcastAddress() {
+        return broadcastAddress != null ? broadcastAddress.address : null;
+    }
+
+    /**
+     * Returns the node broadcast address (that is, the IP by which it should be contacted by other peers in the
+     * cluster) and port, if known.
+     * <p/>
+     * This corresponds to the {@code broadcast_address} cassandra.yaml file setting and
+     * is by default the same as {@link #getListenAddress()}, unless specified
+     * otherwise in cassandra.yaml.
+     * <em>This is NOT the address clients should use to contact this node</em>.
+     * <p/>
+     * This information is always available for peer hosts. For the control host, it's only available if CASSANDRA-9436
+     * is fixed on the server side (Cassandra versions >= 2.0.16, 2.1.6, 2.2.0 rc1). For older versions, note that if
+     * the driver loses the control connection and reconnects to a different control host, the old control host becomes
+     * a peer, and therefore its broadcast address is updated.
+     *
+     * @return the node broadcast address, if known. Otherwise {@code null}.
+     * @see <a href="https://docs.datastax.com/en/cassandra/2.1/cassandra/configuration/configCassandra_yaml_r.html">The cassandra.yaml configuration file</a>
+     */
+    public InetAddressOptPort getBroadcastAddressOptPort() {
         return broadcastAddress;
     }
 
@@ -217,11 +248,33 @@ public class Host {
      * versions >= 2.0.17, 2.1.8, 2.2.0 rc2). It's currently not available for peer hosts. Note that the current driver
      * code already tries to read a {@code listen_address} column in {@code system.peers}; when a future Cassandra
      * version adds it, it will be picked by the driver without any further change needed.
+     * <p/>
+     * Deprecated because an address no longer reliably identifies a Cassandra instance. Multiple instances
+     * can share the same address. Use getListenAddressOptPort instead.
      *
      * @return the node listen address, if known. Otherwise {@code null}.
      * @see <a href="https://docs.datastax.com/en/cassandra/2.1/cassandra/configuration/configCassandra_yaml_r.html">The cassandra.yaml configuration file</a>
      */
+    @Deprecated
     public InetAddress getListenAddress() {
+        return listenAddress != null ? listenAddress.address : null;
+    }
+
+    /**
+     * Returns the node listen address (that is, the IP the node uses to contact other peers in the cluster) and port, if known.
+     * <p/>
+     * This corresponds to the {@code listen_address} cassandra.yaml file setting.
+     * <em>This is NOT the address clients should use to contact this node</em>.
+     * <p/>
+     * This information is available for the control host if CASSANDRA-9603 is fixed on the server side (Cassandra
+     * versions >= 2.0.17, 2.1.8, 2.2.0 rc2). It's currently not available for peer hosts. Note that the current driver
+     * code already tries to read a {@code listen_address} column in {@code system.peers}; when a future Cassandra
+     * version adds it, it will be picked by the driver without any further change needed.
+     *
+     * @return the node listen address, if known. Otherwise {@code null}.
+     * @see <a href="https://docs.datastax.com/en/cassandra/2.1/cassandra/configuration/configCassandra_yaml_r.html">The cassandra.yaml configuration file</a>
+     */
+    public InetAddressOptPort getListenAddressOptPort() {
         return listenAddress;
     }
 

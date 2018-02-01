@@ -449,6 +449,23 @@ public class ScassandraCluster {
             column("schema_version", UUID)
     };
 
+    public static final org.scassandra.http.client.types.ColumnMetadata[] SELECT_PEERS_V2 = {
+            column("peer", INET),
+            column("peer_port", INT),
+            column("native_address", INET),
+            column("native_port", INT),
+            column("preferred_ip", INET),
+            column("preferred_port", INT),
+            column("data_center", TEXT),
+            column("rack", TEXT),
+            column("release_version", TEXT),
+            column("tokens", set(TEXT)),
+            column("listen_address", INET),
+            column("host_id", UUID),
+            column("graph", BOOLEAN),
+            column("schema_version", UUID)
+    };
+
     public static final org.scassandra.http.client.types.ColumnMetadata[] SELECT_LOCAL = {
             column("key", TEXT),
             column("bootstrapped", TEXT),

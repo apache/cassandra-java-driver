@@ -286,11 +286,13 @@ public class CCMBridge implements CCMAccess {
 
     private final int[] nodes;
 
+    private final boolean useSingleInterface;
+
     private final int[] jmxPorts;
 
-
     protected CCMBridge(String clusterName, VersionNumber cassandraVersion, VersionNumber dseVersion, String ipPrefix,
-                        int storagePort, int thriftPort, int binaryPort, int[] jmxPorts, String jvmArgs, int[] nodes) {
+                        int storagePort, int thriftPort, int binaryPort, int[] jmxPorts, String jvmArgs, int[] nodes,
+                        boolean useSingleInterface) {
 
         this.clusterName = clusterName;
         this.cassandraVersion = cassandraVersion;
@@ -304,6 +306,7 @@ public class CCMBridge implements CCMAccess {
         this.nodes = nodes;
         this.ccmDir = Files.createTempDir();
         this.jmxPorts = jmxPorts;
+        this.useSingleInterface = useSingleInterface;
     }
 
     public static Builder builder() {
@@ -315,8 +318,33 @@ public class CCMBridge implements CCMAccess {
         return clusterName;
     }
 
+    /**
+     * Returns the IP of the {@code nth} host in the cluster (counting from 1, i.e.,
+     * {@code ipOfNode(1)} returns the IP of the first node.
+     * <p/>
+     * In multi-DC setups, nodes are numbered in ascending order of their datacenter number.
+     * E.g. with 2 DCs and 3 nodes in each DC, the first node in DC 2 is number 4.
+     *
+     * @return the IP of the {@code nth} host in the cluster.
+     */
     protected String ipOfNode(int n) {
+        if (useSingleInterface)
+        {
+            return ipPrefix + 1;
+        }
         return ipPrefix + n;
+    }
+
+    protected int nativePortOfNode(int n)
+    {
+        if (useSingleInterface)
+        {
+            return 9042 + 2 + (2 * n);
+        }
+        else
+        {
+            return binaryPort;
+        }
     }
 
     @Override
@@ -443,7 +471,7 @@ public class CCMBridge implements CCMAccess {
             for (int dc = 1; dc <= nodes.length; dc++) {
                 int nodesInDc = nodes[dc - 1];
                 for (int i = 0; i < nodesInDc; i++) {
-                    InetSocketAddress addr = addressOfNode(n);
+                    InetSocketAddress addr = new InetSocketAddress(ipOfNode(n), nativePortOfNode(n));
                     logger.debug("Waiting for binary protocol to show up for {}", addr);
                     TestUtils.waitUntilPortIsUp(addr);
                     n++;
@@ -730,8 +758,10 @@ public class CCMBridge implements CCMAccess {
             return ProtocolVersion.V2;
         } else if (version.compareTo(VersionNumber.parse("2.2")) < 0) {
             return ProtocolVersion.V3;
-        } else {
+        } else if (version.compareTo(VersionNumber.parse("4.0")) < 0) {
             return ProtocolVersion.V4;
+        } else {
+            return ProtocolVersion.V5;
         }
     }
 
@@ -802,6 +832,7 @@ public class CCMBridge implements CCMAccess {
         private int[] jmxPorts = {};
         private boolean start = true;
         private boolean dse = false;
+        private boolean useSingleInterface = false;
         private VersionNumber version = null;
         private Set<String> createOptions = new LinkedHashSet<String>();
         private Set<String> jvmArgs = new LinkedHashSet<String>();
@@ -949,6 +980,17 @@ public class CCMBridge implements CCMAccess {
             return this;
         }
 
+        /**
+         * Instruct CCM to use a single interface for all instances
+         * This isn't going to play well with a lot of other config options it's
+         * primarily for testing the client with a single interface.
+         */
+        public Builder useSingleInterface()
+        {
+            useSingleInterface = true;
+            return this;
+        }
+
         public CCMBridge build() {
             // be careful NOT to alter internal state (hashCode/equals) during build!
             String clusterName = TestUtils.generateIdentifier("ccm_");
@@ -997,7 +1039,15 @@ public class CCMBridge implements CCMAccess {
                 cassandraConfiguration.remove("rpc_port");
                 cassandraConfiguration.remove("thrift_prepared_statements_cache_size_mb");
             }
-            final CCMBridge ccm = new CCMBridge(clusterName, cassandraVersion, dseVersion, ipPrefix, storagePort, thriftPort, binaryPort, generatedJmxPorts, joinJvmArgs(), nodes);
+
+            if (useSingleInterface)
+            {
+                cassandraConfiguration.remove("storage_port");
+                cassandraConfiguration.remove("rpc_port");
+                cassandraConfiguration.remove("native_transport_port");
+            }
+
+            final CCMBridge ccm = new CCMBridge(clusterName, cassandraVersion, dseVersion, ipPrefix, storagePort, thriftPort, binaryPort, generatedJmxPorts, joinJvmArgs(), nodes, useSingleInterface);
 
             Runtime.getRuntime().addShutdownHook(new Thread() {
                 @Override
@@ -1068,6 +1118,11 @@ public class CCMBridge implements CCMAccess {
                         result.append(':');
                     result.append(node);
                 }
+            }
+
+            if (useSingleInterface)
+            {
+                result.append(" -S");
             }
 
             Set<String> lCreateOptions = new LinkedHashSet<String>(createOptions);

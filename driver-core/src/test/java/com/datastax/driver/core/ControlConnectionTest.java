@@ -290,7 +290,7 @@ public class ControlConnectionTest extends CCMTestsSupport {
             cluster.init();
 
             InetAddress node2Address = scassandraCluster.address(2).getAddress();
-            String expectedError = String.format("Found invalid row in system.peers: [peer=%s, %s]. " +
+            String expectedError = String.format("Found invalid row in system.peers: [peer=%s, missing native_address, %s]. " +
                     "This is likely a gossip or snitch issue, this host will be ignored.", node2Address, columnData);
             String log = logs.get();
             // then: A peer with a null rack should not show up in host metadata, unless allowed via system property.

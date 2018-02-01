@@ -112,13 +112,13 @@ public class ClusterInitTest {
             logger.info("Cluster and session initialized in {} ms", initTimeMs);
 
             // Expect :
-            // - 2 connections for the live host (1 control connection + 1 pooled connection)
+            // - 3 connections for the live host (1 control connection + 1 pooled connection + version renegotiation)
             // - 1 attempt per failing host (either a control connection attempt or a failed pool creation)
             // - 0 or 1 for the missing host. We can't know for sure because contact points are randomized. If it's tried
             //   before the live host there will be a connection attempt, otherwise it will be removed directly because
             //   it's not in the live host's system.peers.
             verify(socketOptions, atLeast(6)).getKeepAlive();
-            verify(socketOptions, atMost(7)).getKeepAlive();
+            verify(socketOptions, atMost(8)).getKeepAlive();
 
             assertThat(cluster).host(1).isNotNull().isUp();
             // It is likely but not guaranteed that a host is marked down at this point.
@@ -261,6 +261,7 @@ public class ClusterInitTest {
                         .build();
 
         List<Map<String, ?>> rows = Lists.newArrayListWithCapacity(5);
+        List<Map<String, ?>> rows_v2 = Lists.newArrayListWithCapacity(5);
 
         int i = 0;
         for (FakeHost otherHost : otherHosts) {
@@ -276,12 +277,32 @@ public class ClusterInitTest {
                     .put("tokens", ImmutableSet.of(Long.toString(Long.MIN_VALUE + i++)))
                     .put("host_id", UUID.randomUUID())
                     .build());
+            //Not strictly necessary yet, but if scassandra starts claiming to speak the new wire protocol
+            //it will be necessary to have this data available to the driver
+            rows_v2.add(ImmutableMap.<String, Object>builder()
+                    .put("peer", address)
+                    .put("peer_port", 7000)
+                    .put("native_address", address)
+                    .put("native_port", scassandra.getBinaryPort())
+                    .put("preferred_ip", address)
+                    .put("broadcast_port", 7000)
+                    .put("data_center", "datacenter1")
+                    .put("rack", "rack1")
+                    .put("release_version", "2.0.1")
+                    .put("tokens", ImmutableSet.of(Long.toString(Long.MIN_VALUE + i++)))
+                    .put("host_id", UUID.randomUUID())
+                    .build());
         }
 
         primingClient.prime(
                 PrimingRequest.queryBuilder()
                         .withQuery("SELECT * FROM system.peers")
                         .withThen(then().withRows(rows).withColumnTypes(ScassandraCluster.SELECT_PEERS))
+                        .build());
+        primingClient.prime(
+                PrimingRequest.queryBuilder()
+                        .withQuery("SELECT * FROM system.peers_v2")
+                        .withThen(then().withRows(rows_v2).withColumnTypes(ScassandraCluster.SELECT_PEERS_V2))
                         .build());
     }
 }

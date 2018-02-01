@@ -452,13 +452,21 @@ public class MapperUDTTest extends CCMTestsSupport {
             mapper.save(user);
             fail("Expected InvalidQueryException");
         } catch (InvalidQueryException e) {
-            assertThat(e.getMessage()).contains("unconfigured", "users");
+            if (ccm().getCassandraVersion().getMajor() >= 4) {
+                assertThat(e.getMessage().equals("table users does not exist"));
+            } else {
+                assertThat(e.getMessage()).contains("unconfigured", "users");
+            }
         }
         try {
             mapper.get(user.getUserId());
             fail("Expected InvalidQueryException");
         } catch (InvalidQueryException e) {
-            assertThat(e.getMessage()).contains("unconfigured", "users");
+            if (ccm().getCassandraVersion().getMajor() >= 4) {
+                assertThat(e.getMessage().equals("table users does not exist"));
+            } else {
+                assertThat(e.getMessage()).contains("unconfigured", "users");
+            }
         }
         // trying to use a new mapper
         try {

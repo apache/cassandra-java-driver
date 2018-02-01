@@ -24,8 +24,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
 
 /**
- * Tests for the new USE_BETA flag introduced in protocol v5
- * and Cassandra 3.10.
+ * Tests for the USE_BETA flag introduced in protocol v5
+ * and with the current Cassandra version and current beta version v6
  */
 @CassandraVersion("3.10")
 public class ProtocolBetaVersionTest extends CCMTestsSupport {
@@ -62,7 +62,7 @@ public class ProtocolBetaVersionTest extends CCMTestsSupport {
                     .addContactPoints(getContactPoints())
                     .withPort(ccm().getBinaryPort())
                     .allowBetaProtocolVersion()
-                    .withProtocolVersion(V4)
+                    .withProtocolVersion(V5)
                     .build();
             fail("Expected IllegalStateException");
         } catch (IllegalStateException e) {
@@ -71,8 +71,8 @@ public class ProtocolBetaVersionTest extends CCMTestsSupport {
     }
 
     /**
-     * Verifies that the driver CANNOT connect to 3.10 with the following combination of options:
-     * Version V5
+     * Verifies that the driver CANNOT connect to 4.0 with the following combination of options:
+     * Version V6
      * Flag UNSET
      *
      * @jira_ticket JAVA-1248
@@ -92,10 +92,10 @@ public class ProtocolBetaVersionTest extends CCMTestsSupport {
     }
 
     /**
-     * Verifies that the driver can connect to 3.10 with the following combination of options:
+     * Verifies that the driver can connect to 4.0 with the following combination of options:
      * Version UNSET
      * Flag SET
-     * Expected version: V5
+     * Expected version: V6
      *
      * @jira_ticket JAVA-1248
      */
@@ -103,7 +103,7 @@ public class ProtocolBetaVersionTest extends CCMTestsSupport {
     public void should_connect_with_beta_when_no_version_explicitly_required_and_flag_set() throws Exception {
         // Note: when the driver's ProtocolVersion.NEWEST_SUPPORTED will be incremented to V6 or higher
         // a renegotiation will start taking place here and will downgrade the version from V6 to V5,
-        // but the test should remain valid since it's executed against 3.10 exclusively
+        // but the test should remain valid since it's executed against 4.0 exclusively
         Cluster cluster = Cluster.builder()
                 .addContactPoints(getContactPoints())
                 .withPort(ccm().getBinaryPort())
@@ -117,7 +117,7 @@ public class ProtocolBetaVersionTest extends CCMTestsSupport {
      * Verifies that the driver can connect to 3.10 with the following combination of options:
      * Version UNSET
      * Flag UNSET
-     * Expected version: V4
+     * Expected version: V5
      *
      * @jira_ticket JAVA-1248
      */
