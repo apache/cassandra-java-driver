@@ -15,9 +15,10 @@
  */
 package com.datastax.oss.driver.api.core.metadata;
 
-import com.datastax.oss.driver.api.core.context.DriverContext;
 import com.datastax.oss.driver.api.core.CqlSession;
+import com.datastax.oss.driver.api.core.context.DriverContext;
 import com.datastax.oss.driver.api.core.loadbalancing.NodeDistance;
+import com.datastax.oss.driver.api.core.session.Session;
 import com.datastax.oss.driver.api.testinfra.session.SessionRule;
 import com.datastax.oss.driver.api.testinfra.session.SessionUtils;
 import com.datastax.oss.driver.api.testinfra.simulacron.SimulacronRule;
@@ -27,6 +28,7 @@ import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
 import com.datastax.oss.driver.internal.core.metadata.DefaultNode;
 import com.datastax.oss.driver.internal.core.metadata.NodeStateEvent;
 import com.datastax.oss.driver.internal.core.metadata.TopologyEvent;
+import com.datastax.oss.driver.internal.core.session.SessionWrapper;
 import com.datastax.oss.driver.internal.testinfra.session.TestConfigLoader;
 import com.datastax.oss.simulacron.common.cluster.ClusterSpec;
 import com.datastax.oss.simulacron.common.cluster.NodeConnectionReport;
@@ -560,9 +562,17 @@ public class NodeStateIT {
   public void should_call_onRegister_and_onUnregister_when_used() {
     NodeStateListener localNodeStateListener = Mockito.mock(NodeStateListener.class);
     sessionRule.session().register(localNodeStateListener);
-    Mockito.verify(localNodeStateListener, timeout(1000)).onRegister(sessionRule.session());
+    Mockito.verify(localNodeStateListener, timeout(1000)).onRegister(unwrap(sessionRule.session()));
     sessionRule.session().unregister(localNodeStateListener);
-    Mockito.verify(localNodeStateListener, timeout(1000)).onUnregister(sessionRule.session());
+    Mockito.verify(localNodeStateListener, timeout(1000))
+        .onUnregister(unwrap(sessionRule.session()));
+  }
+
+  private Session unwrap(Session session) {
+    while (session instanceof SessionWrapper) {
+      session = ((SessionWrapper) session).getDelegate();
+    }
+    return session;
   }
 
   private void expect(NodeStateEvent... expectedEvents) {

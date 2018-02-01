@@ -46,6 +46,10 @@ public class SessionWrapper implements Session {
     this.delegate = delegate;
   }
 
+  public Session getDelegate() {
+    return delegate;
+  }
+
   @Override
   public String getName() {
     return delegate.getName();
