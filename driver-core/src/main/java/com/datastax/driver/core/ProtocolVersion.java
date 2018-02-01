@@ -30,18 +30,17 @@ public enum ProtocolVersion {
     V2("2.0.0", 2, V1),
     V3("2.1.0", 3, V2),
     V4("2.2.0", 4, V3),
-    V5("3.10.0", 5, V4),
-    V6("4.0.0", 6, V5);
+    V5("3.10.0", 5, V4);
 
     /**
      * The most recent protocol version supported by the driver.
      */
-    public static final ProtocolVersion NEWEST_SUPPORTED = V5;
+    public static final ProtocolVersion NEWEST_SUPPORTED = V4;
 
     /**
      * The most recent beta protocol version supported by the driver.
      */
-    public static final ProtocolVersion NEWEST_BETA = V6;
+    public static final ProtocolVersion NEWEST_BETA = V5;
 
     private final VersionNumber minCassandraVersion;
 

@@ -350,7 +350,6 @@ class Requests {
                 case V3:
                 case V4:
                 case V5:
-                case V6:
                     CBUtil.writeConsistencyLevel(consistency, dest);
                     QueryFlag.serialize(flags, dest, version);
                     if (flags.contains(QueryFlag.VALUES)) {
@@ -386,7 +385,6 @@ class Requests {
                 case V3:
                 case V4:
                 case V5:
-                case V6:
                     int size = 0;
                     size += CBUtil.sizeOfConsistencyLevel(consistency);
                     size += QueryFlag.serializedSize(version);
@@ -538,7 +536,6 @@ class Requests {
                 case V3:
                 case V4:
                 case V5:
-                case V6:
                     CBUtil.writeConsistencyLevel(consistency, dest);
                     QueryFlag.serialize(flags, dest, version);
                     if (flags.contains(QueryFlag.SERIAL_CONSISTENCY))
@@ -558,7 +555,6 @@ class Requests {
                 case V3:
                 case V4:
                 case V5:
-                case V6:
                     int size = 0;
                     size += CBUtil.sizeOfConsistencyLevel(consistency);
                     size += QueryFlag.serializedSize(version);

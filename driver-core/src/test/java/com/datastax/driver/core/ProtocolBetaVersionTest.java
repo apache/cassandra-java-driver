@@ -18,8 +18,8 @@ package com.datastax.driver.core;
 import com.datastax.driver.core.utils.CassandraVersion;
 import org.testng.annotations.Test;
 
+import static com.datastax.driver.core.ProtocolVersion.V4;
 import static com.datastax.driver.core.ProtocolVersion.V5;
-import static com.datastax.driver.core.ProtocolVersion.V6;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
 
@@ -41,12 +41,12 @@ public class ProtocolBetaVersionTest extends CCMTestsSupport {
             Cluster.builder()
                     .addContactPoints(getContactPoints())
                     .withPort(ccm().getBinaryPort())
-                    .withProtocolVersion(V5)
+                    .withProtocolVersion(V4)
                     .allowBetaProtocolVersion()
                     .build();
             fail("Expected IllegalArgumentException");
         } catch (IllegalArgumentException e) {
-            assertThat(e.getMessage()).isEqualTo("Can't use beta flag with initial protocol version of V5");
+            assertThat(e.getMessage()).isEqualTo("Can't use beta flag with initial protocol version of V4");
         }
     }
 
@@ -83,11 +83,11 @@ public class ProtocolBetaVersionTest extends CCMTestsSupport {
             Cluster.builder()
                     .addContactPoints(getContactPoints())
                     .withPort(ccm().getBinaryPort())
-                    .withProtocolVersion(V6)
+                    .withProtocolVersion(V5)
                     .build();
             fail("Expected IllegalArgumentException");
         } catch (IllegalArgumentException e) {
-            assertThat(e.getMessage()).startsWith("Can not use V6 protocol version. Newest supported protocol version is: V5");
+            assertThat(e.getMessage()).startsWith("Can not use V5 protocol version. Newest supported protocol version is: V4");
         }
     }
 
@@ -110,7 +110,7 @@ public class ProtocolBetaVersionTest extends CCMTestsSupport {
                 .allowBetaProtocolVersion()
                 .build();
         cluster.connect();
-        assertThat(cluster.getConfiguration().getProtocolOptions().getProtocolVersion()).isEqualTo(V6);
+        assertThat(cluster.getConfiguration().getProtocolOptions().getProtocolVersion()).isEqualTo(V5);
     }
 
     /**
@@ -123,14 +123,14 @@ public class ProtocolBetaVersionTest extends CCMTestsSupport {
      */
     @Test(groups = "short")
     public void should_connect_after_renegotiation_when_no_version_explicitly_required_and_flag_not_set() throws Exception {
-        // Note: when the driver's ProtocolVersion.NEWEST_SUPPORTED will be incremented to V7 or higher
-        // the renegotiation will start downgrading the version from V7 to V5 instead of V6 to V5,
+        // Note: when the driver's ProtocolVersion.NEWEST_SUPPORTED will be incremented to V6 or higher
+        // the renegotiation will start downgrading the version from V6 to V4 instead of V5 to V4,
         // but the test should remain valid since it's executed against 3.10 exclusively
         Cluster cluster = Cluster.builder()
                 .addContactPoints(getContactPoints())
                 .withPort(ccm().getBinaryPort())
                 .build();
         cluster.connect();
-        assertThat(cluster.getConfiguration().getProtocolOptions().getProtocolVersion()).isEqualTo(V5);
+        assertThat(cluster.getConfiguration().getProtocolOptions().getProtocolVersion()).isEqualTo(V4);
     }
 }
