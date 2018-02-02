@@ -15,6 +15,12 @@
  */
 package com.datastax.oss.driver.api.testinfra.ccm;
 
+import com.datastax.oss.driver.categories.ParallelizableTests;
+import org.junit.AssumptionViolatedException;
+import org.junit.experimental.categories.Category;
+import org.junit.runner.Description;
+import org.junit.runners.model.Statement;
+
 /**
  * A rule that creates a globally shared single node Ccm cluster that is only shut down after the
  * JVM exists.
@@ -44,6 +50,29 @@ public class CcmRule extends BaseCcmRule {
   @Override
   protected void after() {
     // override after so we don't remove when done.
+  }
+
+  @Override
+  public Statement apply(Statement base, Description description) {
+
+    Category categoryAnnotation = description.getAnnotation(Category.class);
+    if (categoryAnnotation == null
+        || categoryAnnotation.value().length != 1
+        || categoryAnnotation.value()[0] != ParallelizableTests.class) {
+      return new Statement() {
+        @Override
+        public void evaluate() {
+          throw new AssumptionViolatedException(
+              String.format(
+                  "Tests using %s must be annotated with `@Category(%s.class)`. Description: %s",
+                  CcmRule.class.getSimpleName(),
+                  ParallelizableTests.class.getSimpleName(),
+                  description));
+        }
+      };
+    }
+
+    return super.apply(base, description);
   }
 
   public static CcmRule getInstance() {
