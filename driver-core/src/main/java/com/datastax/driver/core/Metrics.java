@@ -16,6 +16,7 @@
 package com.datastax.driver.core;
 
 import com.codahale.metrics.*;
+import com.codahale.metrics.jmx.JmxReporter;
 import com.datastax.driver.core.policies.SpeculativeExecutionPolicy;
 
 import java.util.HashSet;
