@@ -15,12 +15,25 @@
  */
 package com.datastax.oss.driver.api.core.type.codec.registry;
 
+import com.datastax.oss.driver.api.core.cql.Row;
+import com.datastax.oss.driver.api.core.data.TupleValue;
 import com.datastax.oss.driver.api.core.type.DataType;
+import com.datastax.oss.driver.api.core.type.DataTypes;
 import com.datastax.oss.driver.api.core.type.codec.CodecNotFoundException;
 import com.datastax.oss.driver.api.core.type.codec.TypeCodec;
 import com.datastax.oss.driver.api.core.type.reflect.GenericType;
 import com.datastax.oss.driver.internal.core.type.codec.registry.DefaultCodecRegistry;
 
+/**
+ * Provides codecs to convert CQL types to their Java equivalent, and vice-versa.
+ *
+ * <p>Implementations <b>MUST</b> provide a default mapping for all CQL types (primitive types, and
+ * all the collections, tuples or user-defined types that can recursively be built from them &mdash;
+ * see {@link DataTypes}).
+ *
+ * <p>They may also provide additional mappings to other Java types (for use with methods such as
+ * {@link Row#get(int, Class)}, {@link TupleValue#set(int, Object, Class)}, etc.)
+ */
 public interface CodecRegistry {
   /**
    * An immutable instance, that only handles built-in driver types (that is, primitive types, and
