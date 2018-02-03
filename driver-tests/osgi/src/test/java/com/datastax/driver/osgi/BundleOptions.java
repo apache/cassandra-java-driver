@@ -145,6 +145,7 @@ public class BundleOptions {
                         mavenBundle("ch.qos.logback", "logback-classic", getVersion("logback.version")),
                         mavenBundle("ch.qos.logback", "logback-core", getVersion("logback.version")),
                         mavenBundle("io.dropwizard.metrics", "metrics-core", getVersion("metrics.version")),
+                        mavenBundle("io.dropwizard.metrics", "metrics-jmx", getVersion("metrics.version")),
                         mavenBundle("org.testng", "testng", getVersion("testng.version")),
                         systemPackages("org.testng", "org.junit", "org.junit.runner", "org.junit.runner.manipulation",
                                 "org.junit.runner.notification", "com.jcabi.manifests")
