@@ -108,6 +108,10 @@ public class DefaultTupleValue implements TupleValue {
       return false;
     }
 
+    if (!type.equals(that.getType())) {
+      return false;
+    }
+
     for (int i = 0; i < values.length; i++) {
       DataType innerThisType = type.getComponentTypes().get(i);
       DataType innerThatType = that.getType().getComponentTypes().get(i);
