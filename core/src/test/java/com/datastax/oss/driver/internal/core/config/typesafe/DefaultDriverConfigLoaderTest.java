@@ -15,6 +15,9 @@
  */
 package com.datastax.oss.driver.internal.core.config.typesafe;
 
+import static com.datastax.oss.driver.Assertions.assertThat;
+import static org.mockito.Mockito.never;
+
 import com.datastax.oss.driver.api.core.config.CoreDriverOption;
 import com.datastax.oss.driver.api.core.config.DriverConfig;
 import com.datastax.oss.driver.api.core.config.DriverConfigProfile;
@@ -35,9 +38,6 @@ import org.junit.Test;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
-
-import static com.datastax.oss.driver.Assertions.assertThat;
-import static org.mockito.Mockito.never;
 
 public class DefaultDriverConfigLoaderTest {
 

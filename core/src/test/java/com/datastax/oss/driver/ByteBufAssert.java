@@ -15,11 +15,11 @@
  */
 package com.datastax.oss.driver;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 import com.datastax.oss.protocol.internal.util.Bytes;
 import io.netty.buffer.ByteBuf;
 import org.assertj.core.api.AbstractAssert;
-
-import static org.assertj.core.api.Assertions.assertThat;
 
 public class ByteBufAssert extends AbstractAssert<ByteBufAssert, ByteBuf> {
   public ByteBufAssert(ByteBuf actual) {

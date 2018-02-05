@@ -15,11 +15,11 @@
  */
 package com.datastax.oss.driver.internal.core.data;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.google.common.collect.ImmutableList;
 import org.junit.Test;
-
-import static org.assertj.core.api.Assertions.assertThat;
 
 public class IdentifierIndexTest {
   private static final CqlIdentifier Foo = CqlIdentifier.fromInternal("Foo");

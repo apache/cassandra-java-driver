@@ -15,6 +15,11 @@
  */
 package com.datastax.oss.driver.api.core.data;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.hamcrest.CoreMatchers.notNullValue;
+import static org.junit.Assert.fail;
+import static org.junit.Assume.assumeThat;
+
 import com.datastax.oss.driver.api.core.CassandraVersion;
 import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.CqlSession;
@@ -73,11 +78,6 @@ import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.junit.rules.TestName;
 import org.junit.runner.RunWith;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.hamcrest.CoreMatchers.notNullValue;
-import static org.junit.Assert.fail;
-import static org.junit.Assume.assumeThat;
 
 @Category(ParallelizableTests.class)
 @RunWith(DataProviderRunner.class)

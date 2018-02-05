@@ -15,8 +15,9 @@
  */
 package com.datastax.oss.driver.api.testinfra.ccm;
 
-import com.datastax.oss.driver.api.core.CassandraVersion;
+import static io.netty.util.internal.PlatformDependent.isWindows;
 
+import com.datastax.oss.driver.api.core.CassandraVersion;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -35,7 +36,6 @@ import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
-
 import org.apache.commons.exec.CommandLine;
 import org.apache.commons.exec.DefaultExecutor;
 import org.apache.commons.exec.ExecuteStreamHandler;
@@ -45,8 +45,6 @@ import org.apache.commons.exec.LogOutputStream;
 import org.apache.commons.exec.PumpStreamHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import static io.netty.util.internal.PlatformDependent.isWindows;
 
 public class CcmBridge implements AutoCloseable {
 

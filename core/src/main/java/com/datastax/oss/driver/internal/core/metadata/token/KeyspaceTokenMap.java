@@ -54,7 +54,8 @@ class KeyspaceTokenMap {
           strategy.computeReplicasByToken(tokenToPrimary, ring);
       SetMultimap<Node, TokenRange> tokenRangesByNode;
       if (ring.size() == 1) {
-        // We forced the single range to ]minToken,minToken], make sure to use that instead of relying
+        // We forced the single range to ]minToken,minToken], make sure to use that instead of
+        // relying
         // on the node's token
         ImmutableSetMultimap.Builder<Node, TokenRange> builder = ImmutableSetMultimap.builder();
         for (Node node : tokenToPrimary.values()) {

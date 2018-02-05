@@ -15,13 +15,13 @@
  */
 package com.datastax.oss.driver.internal.core;
 
+import static com.datastax.oss.driver.Assertions.assertThat;
+
 import com.datastax.oss.driver.api.core.ProtocolVersion;
 import java.util.Optional;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
-
-import static com.datastax.oss.driver.Assertions.assertThat;
 
 /**
  * Covers the method that are agnostic to the actual {@link ProtocolVersion} implementation (using a

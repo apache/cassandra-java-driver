@@ -21,11 +21,10 @@ import com.datastax.oss.driver.api.core.ProtocolVersion;
 import com.datastax.oss.driver.api.testinfra.CassandraRequirement;
 import com.datastax.oss.driver.api.testinfra.CassandraResourceRule;
 import com.datastax.oss.driver.api.testinfra.DseRequirement;
+import java.util.Optional;
 import org.junit.AssumptionViolatedException;
 import org.junit.runner.Description;
 import org.junit.runners.model.Statement;
-
-import java.util.Optional;
 
 public abstract class BaseCcmRule extends CassandraResourceRule {
 

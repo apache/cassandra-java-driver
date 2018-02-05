@@ -15,10 +15,10 @@
  */
 package com.datastax.oss.driver.api.core;
 
+import static com.datastax.oss.driver.Assertions.assertThat;
+
 import org.assertj.core.api.AbstractComparableAssert;
 import org.assertj.core.api.Assertions;
-
-import static com.datastax.oss.driver.Assertions.assertThat;
 
 public class CassandraVersionAssert
     extends AbstractComparableAssert<CassandraVersionAssert, CassandraVersion> {

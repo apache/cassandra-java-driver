@@ -99,7 +99,8 @@ public class ByteOrderedTokenRange extends TokenRangeBase {
   }
 
   // Convert a token's byte array to a number in order to perform computations.
-  // This depends on the number of "significant bytes" that we use to normalize all tokens to the same size.
+  // This depends on the number of "significant bytes" that we use to normalize all tokens to the
+  // same size.
   // For example if the token is 0x01 but significantBytes is 2, the result is 8 (0x0100).
   private BigInteger toBigInteger(ByteBuffer bb, int significantBytes) {
     byte[] bytes = Bytes.getArray(bb);
@@ -114,7 +115,8 @@ public class ByteOrderedTokenRange extends TokenRangeBase {
   }
 
   // Convert a numeric representation back to a byte array.
-  // Again, the number of significant bytes matters: if the input value is 1 but significantBytes is 2, the
+  // Again, the number of significant bytes matters: if the input value is 1 but significantBytes is
+  // 2, the
   // expected result is 0x0001 (a simple conversion would produce 0x01).
   protected ByteBuffer toBytes(BigInteger value, int significantBytes) {
     byte[] rawBytes = value.toByteArray();

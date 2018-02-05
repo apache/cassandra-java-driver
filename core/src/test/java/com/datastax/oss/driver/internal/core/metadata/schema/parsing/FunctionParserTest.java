@@ -15,6 +15,8 @@
  */
 package com.datastax.oss.driver.internal.core.metadata.schema.parsing;
 
+import static com.datastax.oss.driver.Assertions.assertThat;
+
 import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.metadata.schema.FunctionMetadata;
 import com.datastax.oss.driver.api.core.type.DataTypes;
@@ -22,8 +24,6 @@ import com.datastax.oss.driver.internal.core.adminrequest.AdminRow;
 import com.google.common.collect.ImmutableList;
 import java.util.Collections;
 import org.junit.Test;
-
-import static com.datastax.oss.driver.Assertions.assertThat;
 
 public class FunctionParserTest extends SchemaParserTestBase {
 

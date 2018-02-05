@@ -183,7 +183,8 @@ public class ByteBufPrimitiveCodec implements PrimitiveCodec<ByteBuf> {
   }
 
   // Reads *all* readable bytes from a buffer and return them.
-  // If the buffer is backed by an array, this will return the underlying array directly, without copy.
+  // If the buffer is backed by an array, this will return the underlying array directly, without
+  // copy.
   private static byte[] readRawBytes(ByteBuf buffer) {
     if (buffer.hasArray() && buffer.readableBytes() == buffer.array().length) {
       // Move the readerIndex just so we consistently consume the input

@@ -15,13 +15,19 @@
  */
 package com.datastax.oss.driver.api.core.config;
 
+import static com.datastax.oss.simulacron.common.stubbing.PrimeDsl.noRows;
+import static com.datastax.oss.simulacron.common.stubbing.PrimeDsl.serverError;
+import static com.datastax.oss.simulacron.common.stubbing.PrimeDsl.when;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.Assert.fail;
+
 import com.datastax.oss.driver.api.core.AllNodesFailedException;
 import com.datastax.oss.driver.api.core.CqlIdentifier;
+import com.datastax.oss.driver.api.core.CqlSession;
 import com.datastax.oss.driver.api.core.DriverTimeoutException;
 import com.datastax.oss.driver.api.core.cql.BatchStatement;
 import com.datastax.oss.driver.api.core.cql.BatchStatementBuilder;
 import com.datastax.oss.driver.api.core.cql.BatchType;
-import com.datastax.oss.driver.api.core.CqlSession;
 import com.datastax.oss.driver.api.core.cql.PreparedStatement;
 import com.datastax.oss.driver.api.core.cql.ResultSet;
 import com.datastax.oss.driver.api.core.cql.SimpleStatement;
@@ -38,12 +44,6 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.junit.rules.ExpectedException;
-
-import static com.datastax.oss.simulacron.common.stubbing.PrimeDsl.noRows;
-import static com.datastax.oss.simulacron.common.stubbing.PrimeDsl.serverError;
-import static com.datastax.oss.simulacron.common.stubbing.PrimeDsl.when;
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.Assert.fail;
 
 @Category(ParallelizableTests.class)
 public class DriverConfigProfileIT {

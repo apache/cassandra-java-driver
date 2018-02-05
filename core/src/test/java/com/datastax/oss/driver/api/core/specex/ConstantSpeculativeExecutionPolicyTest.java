@@ -15,6 +15,8 @@
  */
 package com.datastax.oss.driver.api.core.specex;
 
+import static com.datastax.oss.driver.Assertions.assertThat;
+
 import com.datastax.oss.driver.api.core.config.CoreDriverOption;
 import com.datastax.oss.driver.api.core.config.DriverConfig;
 import com.datastax.oss.driver.api.core.config.DriverConfigProfile;
@@ -27,8 +29,6 @@ import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnitRunner;
-
-import static com.datastax.oss.driver.Assertions.assertThat;
 
 @RunWith(MockitoJUnitRunner.class)
 public class ConstantSpeculativeExecutionPolicyTest {

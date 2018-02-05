@@ -15,13 +15,13 @@
  */
 package com.datastax.oss.driver.internal.core.metadata.token;
 
+import static com.datastax.oss.driver.Assertions.assertThat;
+import static org.junit.Assert.fail;
+
 import com.datastax.oss.driver.api.core.metadata.token.TokenRange;
 import com.google.common.collect.ImmutableList;
 import java.util.List;
 import org.junit.Test;
-
-import static com.datastax.oss.driver.Assertions.assertThat;
-import static org.junit.Assert.fail;
 
 /**
  * Covers the methods that don't depend on the underlying factory (we use Murmur3 as the

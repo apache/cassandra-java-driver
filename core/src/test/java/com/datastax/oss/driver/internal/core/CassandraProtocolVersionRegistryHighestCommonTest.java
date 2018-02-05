@@ -15,6 +15,8 @@
  */
 package com.datastax.oss.driver.internal.core;
 
+import static com.datastax.oss.driver.Assertions.assertThat;
+
 import com.datastax.oss.driver.api.core.CassandraVersion;
 import com.datastax.oss.driver.api.core.CoreProtocolVersion;
 import com.datastax.oss.driver.api.core.UnsupportedProtocolVersionException;
@@ -24,8 +26,6 @@ import java.util.Collection;
 import java.util.Collections;
 import org.junit.Test;
 import org.mockito.Mockito;
-
-import static com.datastax.oss.driver.Assertions.assertThat;
 
 /**
  * Covers {@link CassandraProtocolVersionRegistry#highestCommon(Collection)} separately, because it

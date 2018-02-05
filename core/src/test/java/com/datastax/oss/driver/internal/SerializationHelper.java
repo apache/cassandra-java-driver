@@ -15,12 +15,12 @@
  */
 package com.datastax.oss.driver.internal;
 
+import static org.assertj.core.api.Assertions.fail;
+
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
-
-import static org.assertj.core.api.Assertions.fail;
 
 public abstract class SerializationHelper {
 

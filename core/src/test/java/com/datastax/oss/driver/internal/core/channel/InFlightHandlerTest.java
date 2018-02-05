@@ -15,6 +15,9 @@
  */
 package com.datastax.oss.driver.internal.core.channel;
 
+import static com.datastax.oss.driver.Assertions.assertThat;
+import static org.mockito.Mockito.never;
+
 import com.datastax.oss.driver.api.core.CoreProtocolVersion;
 import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.connection.BusyConnectionException;
@@ -38,9 +41,6 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
-
-import static com.datastax.oss.driver.Assertions.assertThat;
-import static org.mockito.Mockito.never;
 
 public class InFlightHandlerTest extends ChannelHandlerTestBase {
   private static final Query QUERY = new Query("select * from foo");

@@ -15,13 +15,13 @@
  */
 package com.datastax.oss.driver.api.core.type.reflect;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 import com.google.common.reflect.TypeToken;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import org.junit.Test;
-
-import static org.assertj.core.api.Assertions.assertThat;
 
 public class GenericTypeTest {
 

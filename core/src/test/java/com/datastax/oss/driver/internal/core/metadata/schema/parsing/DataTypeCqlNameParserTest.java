@@ -15,6 +15,8 @@
  */
 package com.datastax.oss.driver.internal.core.metadata.schema.parsing;
 
+import static com.datastax.oss.driver.Assertions.assertThat;
+
 import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.type.DataType;
 import com.datastax.oss.driver.api.core.type.DataTypes;
@@ -29,8 +31,6 @@ import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
 import org.mockito.Mockito;
-
-import static com.datastax.oss.driver.Assertions.assertThat;
 
 public class DataTypeCqlNameParserTest {
 

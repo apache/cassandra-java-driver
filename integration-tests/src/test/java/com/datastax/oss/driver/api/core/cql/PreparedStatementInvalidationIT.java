@@ -15,6 +15,9 @@
  */
 package com.datastax.oss.driver.api.core.cql;
 
+import static junit.framework.TestCase.fail;
+import static org.assertj.core.api.Assertions.assertThat;
+
 import com.datastax.oss.driver.api.core.CqlSession;
 import com.datastax.oss.driver.api.core.servererrors.InvalidQueryException;
 import com.datastax.oss.driver.api.core.type.DataTypes;
@@ -31,9 +34,6 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.junit.rules.ExpectedException;
-
-import static junit.framework.TestCase.fail;
-import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * Note: at the time of writing, some of these tests exercises features of an unreleased Cassandra
@@ -131,7 +131,8 @@ public class PreparedStatementInvalidationIT {
             .build());
 
     // Then
-    // this should trigger a background fetch of the second page, and therefore update the definitions
+    // this should trigger a background fetch of the second page, and therefore update the
+    // definitions
     for (Row row : rows) {
       assertThat(row.isNull("d")).isTrue();
     }
@@ -235,7 +236,8 @@ public class PreparedStatementInvalidationIT {
         session.prepare(
             "INSERT INTO prepared_statement_invalidation_test (a, b, c) VALUES (?, ?, ?) IF NOT EXISTS");
 
-    // Never store metadata in the prepared statement for conditional updates, since the result set can change
+    // Never store metadata in the prepared statement for conditional updates, since the result set
+    // can change
     // depending on the outcome.
     assertThat(ps.getResultSetDefinitions()).hasSize(0);
     ByteBuffer idBefore = ps.getResultMetadataId();

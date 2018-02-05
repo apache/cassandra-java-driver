@@ -15,6 +15,8 @@
  */
 package com.datastax.oss.driver.internal.core.data;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 import com.datastax.oss.driver.api.core.data.TupleValue;
 import com.datastax.oss.driver.api.core.detach.AttachmentPoint;
 import com.datastax.oss.driver.api.core.type.DataType;
@@ -26,8 +28,6 @@ import com.datastax.oss.protocol.internal.util.Bytes;
 import com.google.common.collect.ImmutableList;
 import java.util.List;
 import org.junit.Test;
-
-import static org.assertj.core.api.Assertions.assertThat;
 
 public class DefaultTupleValueTest extends AccessibleByIndexTestBase<TupleValue> {
 

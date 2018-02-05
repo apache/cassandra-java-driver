@@ -15,6 +15,8 @@
  */
 package com.datastax.oss.driver.internal.core.metadata.schema.queries;
 
+import static com.datastax.oss.driver.Assertions.assertThat;
+
 import com.datastax.oss.driver.api.core.config.CoreDriverOption;
 import com.datastax.oss.driver.api.core.config.DriverConfigProfile;
 import com.datastax.oss.driver.api.core.metadata.Metadata;
@@ -26,8 +28,6 @@ import java.util.concurrent.CompletionStage;
 import java.util.concurrent.LinkedBlockingDeque;
 import org.junit.Test;
 import org.mockito.Mockito;
-
-import static com.datastax.oss.driver.Assertions.assertThat;
 
 // Note: we don't repeat the other tests in Cassandra3SchemaQueriesTest because the logic is
 // shared, this class just validates the query strings.

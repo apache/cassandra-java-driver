@@ -324,7 +324,8 @@ public class ControlConnection implements EventCallback, AsyncAutoCloseable {
                       connect(nodes, errors, onSuccess, onFailure);
                     } else {
                       LOG.debug("[{}] Connection established to {}", logPrefix, node);
-                      // Make sure previous channel gets closed (it may still be open if reconnection was forced)
+                      // Make sure previous channel gets closed (it may still be open if
+                      // reconnection was forced)
                       DriverChannel previousChannel = ControlConnection.this.channel;
                       if (previousChannel != null) {
                         previousChannel.forceClose();

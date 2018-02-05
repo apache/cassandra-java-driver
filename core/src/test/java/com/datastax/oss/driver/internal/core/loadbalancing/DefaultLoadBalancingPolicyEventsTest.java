@@ -15,6 +15,11 @@
  */
 package com.datastax.oss.driver.internal.core.loadbalancing;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.never;
+
 import com.datastax.oss.driver.api.core.loadbalancing.NodeDistance;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
@@ -23,11 +28,6 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnitRunner;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.never;
 
 @RunWith(MockitoJUnitRunner.Silent.class)
 public class DefaultLoadBalancingPolicyEventsTest extends DefaultLoadBalancingPolicyTestBase {

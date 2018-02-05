@@ -16,7 +16,6 @@
 package com.datastax.oss.driver.internal.core.util;
 
 import com.google.common.collect.ImmutableSet;
-import java.util.Set;
 
 public class Strings {
 

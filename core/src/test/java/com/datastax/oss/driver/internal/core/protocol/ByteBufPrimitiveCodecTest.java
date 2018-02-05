@@ -15,6 +15,8 @@
  */
 package com.datastax.oss.driver.internal.core.protocol;
 
+import static com.datastax.oss.driver.Assertions.assertThat;
+
 import com.datastax.oss.driver.internal.core.util.ByteBufs;
 import com.datastax.oss.protocol.internal.util.Bytes;
 import io.netty.buffer.ByteBuf;
@@ -25,8 +27,6 @@ import java.nio.ByteBuffer;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
-
-import static com.datastax.oss.driver.Assertions.assertThat;
 
 /**
  * Note: we don't test trivial methods that simply delegate to ByteBuf, nor default implementations

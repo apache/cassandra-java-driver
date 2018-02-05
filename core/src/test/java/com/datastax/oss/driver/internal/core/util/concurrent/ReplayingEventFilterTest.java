@@ -15,12 +15,12 @@
  */
 package com.datastax.oss.driver.internal.core.util.concurrent;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 import java.util.ArrayList;
 import java.util.List;
 import org.junit.Before;
 import org.junit.Test;
-
-import static org.assertj.core.api.Assertions.assertThat;
 
 public class ReplayingEventFilterTest {
   private ReplayingEventFilter<Integer> filter;

@@ -15,13 +15,13 @@
  */
 package com.datastax.oss.driver.internal.core.util;
 
+import static com.datastax.oss.driver.Assertions.assertThat;
+
 import com.google.common.collect.ImmutableList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import org.junit.Test;
-
-import static com.datastax.oss.driver.Assertions.assertThat;
 
 public class ArrayUtilsTest {
 

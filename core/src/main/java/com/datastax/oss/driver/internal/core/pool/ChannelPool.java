@@ -273,7 +273,8 @@ public class ChannelPool implements AsyncAutoCloseable {
         if (future.isCompletedExceptionally()) {
           Throwable error = CompletableFutures.getFailed(future);
           LOG.debug("[{}] Error while opening new channel", logPrefix, error);
-          // TODO we don't log at a higher level because it's not a fatal error, but this should probably be recorded somewhere (metric?)
+          // TODO we don't log at a higher level because it's not a fatal error, but this should
+          // probably be recorded somewhere (metric?)
 
           // TODO auth exception => WARN and keep reconnecting
           // TODO protocol error => WARN and force down

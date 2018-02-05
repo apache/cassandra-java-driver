@@ -15,9 +15,9 @@
  */
 package com.datastax.oss.driver.internal.core.metadata.token;
 
-import org.junit.Test;
-
 import static com.datastax.oss.driver.Assertions.assertThat;
+
+import org.junit.Test;
 
 /** @see TokenRangeTest */
 public class Murmur3TokenRangeTest {

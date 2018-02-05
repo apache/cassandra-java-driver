@@ -15,6 +15,12 @@
  */
 package com.datastax.oss.driver.api.core.config;
 
+import static com.datastax.oss.driver.internal.core.config.typesafe.DefaultDriverConfigLoader.DEFAULT_CONFIG_SUPPLIER;
+import static com.datastax.oss.simulacron.common.stubbing.PrimeDsl.noRows;
+import static com.datastax.oss.simulacron.common.stubbing.PrimeDsl.when;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.Assert.fail;
+
 import com.datastax.oss.driver.api.core.CqlSession;
 import com.datastax.oss.driver.api.core.DriverTimeoutException;
 import com.datastax.oss.driver.api.core.cql.SimpleStatement;
@@ -31,12 +37,6 @@ import java.util.concurrent.atomic.AtomicReference;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
-
-import static com.datastax.oss.driver.internal.core.config.typesafe.DefaultDriverConfigLoader.DEFAULT_CONFIG_SUPPLIER;
-import static com.datastax.oss.simulacron.common.stubbing.PrimeDsl.noRows;
-import static com.datastax.oss.simulacron.common.stubbing.PrimeDsl.when;
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.Assert.fail;
 
 public class DriverConfigProfileReloadIT {
 

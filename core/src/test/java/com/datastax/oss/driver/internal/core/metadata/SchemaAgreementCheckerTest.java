@@ -15,6 +15,11 @@
  */
 package com.datastax.oss.driver.internal.core.metadata;
 
+import static com.datastax.oss.driver.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.Mockito.never;
+
 import com.datastax.oss.driver.api.core.addresstranslation.AddressTranslator;
 import com.datastax.oss.driver.api.core.addresstranslation.PassThroughAddressTranslator;
 import com.datastax.oss.driver.api.core.config.CoreDriverOption;
@@ -47,11 +52,6 @@ import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnitRunner;
-
-import static com.datastax.oss.driver.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyLong;
-import static org.mockito.Mockito.never;
 
 @RunWith(MockitoJUnitRunner.class)
 public class SchemaAgreementCheckerTest {

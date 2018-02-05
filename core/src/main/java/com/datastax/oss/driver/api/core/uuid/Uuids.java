@@ -63,7 +63,6 @@ import org.slf4j.LoggerFactory;
  *         <li>If all of the above fail, a random integer will be generated and used as a surrogate
  *             PID.
  *       </ol>
- *
  * </ol>
  *
  * @see <a href="https://datastax-oss.atlassian.net/browse/JAVA-444">JAVA-444</a>
@@ -353,7 +352,8 @@ public final class Uuids {
     try {
       InetAddress localhost = InetAddress.getLocalHost();
       allIps.add(localhost.toString());
-      // Also return the hostname if available, it won't hurt (this does a dns lookup, it's only done once at startup)
+      // Also return the hostname if available, it won't hurt (this does a dns lookup, it's only
+      // done once at startup)
       allIps.add(localhost.getCanonicalHostName());
       InetAddress[] allMyIps = InetAddress.getAllByName(localhost.getCanonicalHostName());
       if (allMyIps != null) {

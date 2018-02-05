@@ -15,6 +15,10 @@
  */
 package com.datastax.oss.driver.internal.core.data;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+
 import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.ProtocolVersion;
 import com.datastax.oss.driver.api.core.data.GettableById;
@@ -29,10 +33,6 @@ import com.google.common.collect.ImmutableList;
 import java.nio.ByteBuffer;
 import org.junit.Test;
 import org.mockito.Mockito;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
 
 public abstract class AccessibleByIdTestBase<
         T extends GettableById & SettableById<T> & GettableByName & SettableByName<T>>

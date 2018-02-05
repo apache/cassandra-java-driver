@@ -15,6 +15,8 @@
  */
 package com.datastax.oss.driver.api.testinfra.utils;
 
+import static org.assertj.core.api.Fail.fail;
+
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.TimeUnit;
@@ -22,8 +24,6 @@ import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.BooleanSupplier;
-
-import static org.assertj.core.api.Fail.fail;
 
 public class ConditionChecker {
 

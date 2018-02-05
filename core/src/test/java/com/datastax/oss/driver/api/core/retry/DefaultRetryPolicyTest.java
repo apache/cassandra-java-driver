@@ -15,6 +15,13 @@
  */
 package com.datastax.oss.driver.api.core.retry;
 
+import static com.datastax.oss.driver.api.core.ConsistencyLevel.QUORUM;
+import static com.datastax.oss.driver.api.core.retry.RetryDecision.RETHROW;
+import static com.datastax.oss.driver.api.core.retry.RetryDecision.RETRY_NEXT;
+import static com.datastax.oss.driver.api.core.retry.RetryDecision.RETRY_SAME;
+import static com.datastax.oss.driver.api.core.retry.WriteType.BATCH_LOG;
+import static com.datastax.oss.driver.api.core.retry.WriteType.SIMPLE;
+
 import com.datastax.oss.driver.api.core.connection.ClosedConnectionException;
 import com.datastax.oss.driver.api.core.connection.HeartbeatException;
 import com.datastax.oss.driver.api.core.servererrors.OverloadedException;
@@ -23,13 +30,6 @@ import com.datastax.oss.driver.api.core.servererrors.ServerError;
 import com.datastax.oss.driver.api.core.servererrors.TruncateException;
 import com.datastax.oss.driver.api.core.servererrors.WriteFailureException;
 import org.junit.Test;
-
-import static com.datastax.oss.driver.api.core.ConsistencyLevel.QUORUM;
-import static com.datastax.oss.driver.api.core.retry.RetryDecision.RETHROW;
-import static com.datastax.oss.driver.api.core.retry.RetryDecision.RETRY_NEXT;
-import static com.datastax.oss.driver.api.core.retry.RetryDecision.RETRY_SAME;
-import static com.datastax.oss.driver.api.core.retry.WriteType.BATCH_LOG;
-import static com.datastax.oss.driver.api.core.retry.WriteType.SIMPLE;
 
 public class DefaultRetryPolicyTest extends RetryPolicyTestBase {
 

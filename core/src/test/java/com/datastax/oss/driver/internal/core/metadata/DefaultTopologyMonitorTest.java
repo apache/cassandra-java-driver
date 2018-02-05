@@ -15,6 +15,11 @@
  */
 package com.datastax.oss.driver.internal.core.metadata;
 
+import static com.datastax.oss.driver.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.fail;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.never;
+
 import com.datastax.oss.driver.api.core.addresstranslation.AddressTranslator;
 import com.datastax.oss.driver.api.core.addresstranslation.PassThroughAddressTranslator;
 import com.datastax.oss.driver.api.core.config.CoreDriverOption;
@@ -46,11 +51,6 @@ import org.junit.Test;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
-
-import static com.datastax.oss.driver.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.fail;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.never;
 
 public class DefaultTopologyMonitorTest {
 

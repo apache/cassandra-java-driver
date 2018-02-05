@@ -15,6 +15,9 @@
  */
 package com.datastax.oss.driver.api.core;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.fail;
+
 import com.datastax.oss.driver.api.testinfra.CassandraRequirement;
 import com.datastax.oss.driver.api.testinfra.ccm.CcmRule;
 import com.datastax.oss.driver.api.testinfra.session.SessionUtils;
@@ -22,9 +25,6 @@ import com.datastax.oss.driver.categories.ParallelizableTests;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.fail;
 
 /** Covers protocol negotiation for the initial connection to the first contact point. */
 @Category(ParallelizableTests.class)

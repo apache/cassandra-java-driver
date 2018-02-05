@@ -15,13 +15,13 @@
  */
 package com.datastax.oss.driver.internal.core.channel;
 
+import static com.datastax.oss.driver.Assertions.assertThat;
+
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelHandlerContext;
 import java.net.InetSocketAddress;
 import org.junit.Before;
 import org.junit.Test;
-
-import static com.datastax.oss.driver.Assertions.assertThat;
 
 public class ConnectInitHandlerTest extends ChannelHandlerTestBase {
 

@@ -15,6 +15,12 @@
  */
 package com.datastax.oss.driver.internal.core.session;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.fail;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.timeout;
+
 import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.loadbalancing.NodeDistance;
 import com.datastax.oss.driver.api.core.metadata.Node;
@@ -38,12 +44,6 @@ import org.mockito.InOrder;
 import org.mockito.Mockito;
 import org.mockito.internal.util.MockUtil;
 import org.mockito.stubbing.OngoingStubbing;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.fail;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.timeout;
 
 public class MockChannelPoolFactoryHelper {
 

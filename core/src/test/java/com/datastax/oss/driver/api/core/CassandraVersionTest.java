@@ -15,9 +15,9 @@
  */
 package com.datastax.oss.driver.api.core;
 
-import org.junit.Test;
-
 import static com.datastax.oss.driver.Assertions.assertThat;
+
+import org.junit.Test;
 
 public class CassandraVersionTest {
 

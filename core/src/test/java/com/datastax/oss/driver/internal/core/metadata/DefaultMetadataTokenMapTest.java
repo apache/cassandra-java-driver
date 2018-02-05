@@ -15,6 +15,8 @@
  */
 package com.datastax.oss.driver.internal.core.metadata;
 
+import static com.datastax.oss.driver.Assertions.assertThat;
+
 import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.metadata.Node;
 import com.datastax.oss.driver.api.core.metadata.schema.KeyspaceMetadata;
@@ -31,8 +33,6 @@ import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnitRunner;
-
-import static com.datastax.oss.driver.Assertions.assertThat;
 
 @RunWith(MockitoJUnitRunner.class)
 public class DefaultMetadataTokenMapTest {

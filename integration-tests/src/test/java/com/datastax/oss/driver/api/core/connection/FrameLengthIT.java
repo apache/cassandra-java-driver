@@ -15,10 +15,16 @@
  */
 package com.datastax.oss.driver.api.core.connection;
 
+import static com.datastax.oss.simulacron.common.stubbing.PrimeDsl.noRows;
+import static com.datastax.oss.simulacron.common.stubbing.PrimeDsl.rows;
+import static com.datastax.oss.simulacron.common.stubbing.PrimeDsl.when;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.fail;
+
 import com.datastax.oss.driver.api.core.AllNodesFailedException;
+import com.datastax.oss.driver.api.core.CqlSession;
 import com.datastax.oss.driver.api.core.context.DriverContext;
 import com.datastax.oss.driver.api.core.cql.AsyncResultSet;
-import com.datastax.oss.driver.api.core.CqlSession;
 import com.datastax.oss.driver.api.core.cql.SimpleStatement;
 import com.datastax.oss.driver.api.core.retry.DefaultRetryPolicy;
 import com.datastax.oss.driver.api.core.retry.RetryDecision;
@@ -35,12 +41,6 @@ import org.junit.Before;
 import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
-
-import static com.datastax.oss.simulacron.common.stubbing.PrimeDsl.noRows;
-import static com.datastax.oss.simulacron.common.stubbing.PrimeDsl.rows;
-import static com.datastax.oss.simulacron.common.stubbing.PrimeDsl.when;
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.fail;
 
 @Category(ParallelizableTests.class)
 public class FrameLengthIT {

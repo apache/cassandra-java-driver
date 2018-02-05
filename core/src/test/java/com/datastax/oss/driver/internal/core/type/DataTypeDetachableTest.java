@@ -15,6 +15,8 @@
  */
 package com.datastax.oss.driver.internal.core.type;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.detach.AttachmentPoint;
 import com.datastax.oss.driver.api.core.type.DataType;
@@ -31,8 +33,6 @@ import org.junit.Test;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
-import static org.assertj.core.api.Assertions.assertThat;
-
 public class DataTypeDetachableTest {
 
   @Mock private AttachmentPoint attachmentPoint;
@@ -44,7 +44,8 @@ public class DataTypeDetachableTest {
 
   @Test
   public void simple_types_should_never_be_detached() {
-    // Because simple types don't need the codec registry, we consider them as always attached by default
+    // Because simple types don't need the codec registry, we consider them as always attached by
+    // default
     for (DataType simpleType : ImmutableList.of(DataTypes.INT, DataTypes.custom("some.class"))) {
       assertThat(simpleType.isDetached()).isFalse();
       assertThat(SerializationHelper.serializeAndDeserialize(simpleType).isDetached()).isFalse();

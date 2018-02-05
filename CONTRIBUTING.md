@@ -8,18 +8,18 @@ https://github.com/google/google-java-format for IDE plugins. The rules are not 
 The build will fail if the code is not formatted. To format all files from the command line, run:
  
 ```
-mvn fmt:format -Dformat.validateOnly=false
+mvn fmt:format
 ```
 
 Some aspects are not covered by the formatter:
-* imports: please configure your IDE to follow the guide (no wildcard imports, normal imports 
-  in ASCII sort order come first, followed by a blank line, followed by static imports in ASCII
-  sort order).
+
 * braces must be used with `if`, `else`, `for`, `do` and `while` statements, even when the body is
   empty or contains only a single statement.
-* implementation comments: wrap them to respect the column limit of 100 characters.
 * XML files: indent with two spaces and wrap to respect the column limit of 100 characters.
 
+Also, if your IDE sorts import statements automatically, make sure it follows the same order as the
+formatter: all static imports in ASCII sort order, followed by a blank line, followed by all regular
+imports in ASCII sort order.
 
 ## Coding style -- production code
 

@@ -15,13 +15,13 @@
  */
 package com.datastax.oss.driver.internal.core.type.codec;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 import com.datastax.oss.driver.api.core.ProtocolVersion;
 import com.datastax.oss.driver.api.core.type.codec.TypeCodecs;
 import com.datastax.oss.protocol.internal.util.Bytes;
 import java.nio.ByteBuffer;
 import org.junit.Test;
-
-import static org.assertj.core.api.Assertions.assertThat;
 
 public class BlobCodecTest extends CodecTestBase<ByteBuffer> {
   private static final ByteBuffer BUFFER = Bytes.fromHexString("0xcafebabe");

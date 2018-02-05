@@ -15,6 +15,8 @@
  */
 package com.datastax.oss.driver.internal.core.metadata.schema.parsing;
 
+import static com.datastax.oss.driver.Assertions.assertThat;
+
 import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.metadata.schema.ClusteringOrder;
 import com.datastax.oss.driver.api.core.metadata.schema.ColumnMetadata;
@@ -30,8 +32,6 @@ import java.util.Collections;
 import java.util.Iterator;
 import java.util.Map;
 import org.junit.Test;
-
-import static com.datastax.oss.driver.Assertions.assertThat;
 
 public class TableParserTest extends SchemaParserTestBase {
 

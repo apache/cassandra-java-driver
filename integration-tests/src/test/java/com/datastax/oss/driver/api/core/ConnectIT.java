@@ -15,6 +15,8 @@
  */
 package com.datastax.oss.driver.api.core;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 import com.datastax.oss.driver.api.core.session.Session;
 import com.datastax.oss.driver.api.testinfra.ccm.CcmRule;
 import com.datastax.oss.driver.api.testinfra.session.SessionRule;
@@ -23,8 +25,6 @@ import com.datastax.oss.driver.categories.ParallelizableTests;
 import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
-
-import static org.assertj.core.api.Assertions.assertThat;
 
 @Category(ParallelizableTests.class)
 public class ConnectIT {

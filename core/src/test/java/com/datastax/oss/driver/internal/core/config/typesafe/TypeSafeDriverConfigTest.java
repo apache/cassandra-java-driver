@@ -15,6 +15,8 @@
  */
 package com.datastax.oss.driver.internal.core.config.typesafe;
 
+import static com.datastax.oss.driver.Assertions.assertThat;
+
 import com.datastax.oss.driver.api.core.config.CoreDriverOption;
 import com.datastax.oss.driver.api.core.config.DriverConfigProfile;
 import com.typesafe.config.Config;
@@ -22,8 +24,6 @@ import com.typesafe.config.ConfigFactory;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
-
-import static com.datastax.oss.driver.Assertions.assertThat;
 
 public class TypeSafeDriverConfigTest {
 

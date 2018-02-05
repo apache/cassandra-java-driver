@@ -15,6 +15,8 @@
  */
 package com.datastax.oss.driver.api.core.metadata;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 import com.datastax.oss.driver.api.core.CqlSession;
 import com.datastax.oss.driver.api.core.cql.ResultSet;
 import com.datastax.oss.driver.api.testinfra.ccm.CustomCcmRule;
@@ -26,8 +28,6 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.RuleChain;
 import org.junit.rules.TestName;
-
-import static org.assertj.core.api.Assertions.assertThat;
 
 public class SchemaAgreementIT {
 

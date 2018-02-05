@@ -15,12 +15,12 @@
  */
 package com.datastax.oss.driver.internal.core.metadata.token;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 import com.datastax.oss.driver.api.core.metadata.token.Token;
 import com.datastax.oss.driver.api.core.metadata.token.TokenRange;
 import java.util.List;
 import org.assertj.core.api.AbstractAssert;
-
-import static org.assertj.core.api.Assertions.assertThat;
 
 public class TokenRangeAssert extends AbstractAssert<TokenRangeAssert, TokenRange> {
 

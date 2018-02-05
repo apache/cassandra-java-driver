@@ -15,11 +15,11 @@
  */
 package com.datastax.oss.driver.internal.core.type.codec;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 import com.datastax.oss.driver.api.core.type.codec.TypeCodecs;
 import java.math.BigInteger;
 import org.junit.Test;
-
-import static org.assertj.core.api.Assertions.assertThat;
 
 public class VarintCodecTest extends CodecTestBase<BigInteger> {
 

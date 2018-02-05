@@ -15,6 +15,8 @@
  */
 package com.datastax.oss.driver.internal.core.metadata.token;
 
+import static com.datastax.oss.driver.Assertions.assertThat;
+
 import com.datastax.oss.driver.api.core.metadata.Node;
 import com.datastax.oss.driver.api.core.metadata.token.Token;
 import com.google.common.collect.ImmutableList;
@@ -26,8 +28,6 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
-
-import static com.datastax.oss.driver.Assertions.assertThat;
 
 @RunWith(MockitoJUnitRunner.class)
 public class SimpleReplicationStrategyTest {

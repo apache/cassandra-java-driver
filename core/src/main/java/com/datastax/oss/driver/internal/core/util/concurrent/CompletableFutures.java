@@ -18,7 +18,6 @@ package com.datastax.oss.driver.internal.core.util.concurrent;
 import com.datastax.oss.driver.api.core.DriverException;
 import com.datastax.oss.driver.api.core.DriverExecutionException;
 import com.google.common.base.Preconditions;
-
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;

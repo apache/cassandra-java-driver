@@ -15,6 +15,10 @@
  */
 package com.datastax.oss.driver.internal.core.pool;
 
+import static com.datastax.oss.driver.Assertions.assertThat;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
+
 import com.datastax.oss.driver.api.core.InvalidKeyspaceException;
 import com.datastax.oss.driver.api.core.config.CoreDriverOption;
 import com.datastax.oss.driver.api.core.loadbalancing.NodeDistance;
@@ -29,10 +33,6 @@ import java.util.concurrent.CompletionStage;
 import org.junit.Test;
 import org.mockito.InOrder;
 import org.mockito.Mockito;
-
-import static com.datastax.oss.driver.Assertions.assertThat;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.times;
 
 public class ChannelPoolInitTest extends ChannelPoolTestBase {
 

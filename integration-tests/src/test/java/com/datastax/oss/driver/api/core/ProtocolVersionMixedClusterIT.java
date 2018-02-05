@@ -15,6 +15,9 @@
  */
 package com.datastax.oss.driver.api.core;
 
+import static com.datastax.oss.driver.assertions.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.fail;
+
 import com.datastax.oss.driver.api.testinfra.simulacron.SimulacronRule;
 import com.datastax.oss.driver.categories.ParallelizableTests;
 import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
@@ -32,9 +35,6 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.junit.rules.ExpectedException;
-
-import static com.datastax.oss.driver.assertions.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.fail;
 
 /**
  * Covers protocol re-negotiation with a mixed cluster: if, after the initial connection and the

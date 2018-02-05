@@ -15,6 +15,8 @@
  */
 package com.datastax.oss.driver.internal.core.cql;
 
+import static com.datastax.oss.driver.Assertions.assertThat;
+
 import com.datastax.oss.driver.api.core.AllNodesFailedException;
 import com.datastax.oss.driver.api.core.NoNodeAvailableException;
 import com.datastax.oss.driver.api.core.cql.AsyncResultSet;
@@ -31,8 +33,6 @@ import java.util.concurrent.CompletionStage;
 import java.util.concurrent.TimeUnit;
 import org.junit.Test;
 import org.mockito.Mockito;
-
-import static com.datastax.oss.driver.Assertions.assertThat;
 
 public class CqlRequestHandlerSpeculativeExecutionTest extends CqlRequestHandlerTestBase {
 
@@ -318,7 +318,8 @@ public class CqlRequestHandlerSpeculativeExecutionTest extends CqlRequestHandler
               .handle();
       node1Behavior.verifyWrite();
       node1Behavior.setWriteSuccess();
-      // do not simulate a response from node1. The request will stay hanging for the rest of this test
+      // do not simulate a response from node1. The request will stay hanging for the rest of this
+      // test
 
       harness.nextScheduledTask(); // Discard the timeout task
 
@@ -379,7 +380,8 @@ public class CqlRequestHandlerSpeculativeExecutionTest extends CqlRequestHandler
       node1Behavior.setResponseSuccess(defaultFrameOf(singleRow()));
       assertThat(resultSetFuture).isSuccess();
 
-      // node2 replies with a response that would trigger a RETRY_NEXT if the request was still running
+      // node2 replies with a response that would trigger a RETRY_NEXT if the request was still
+      // running
       node2Behavior.setResponseSuccess(
           defaultFrameOf(new Error(ProtocolConstants.ErrorCode.IS_BOOTSTRAPPING, "mock message")));
 

@@ -15,6 +15,8 @@
  */
 package com.datastax.oss.driver.api.core.cql;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 import com.datastax.oss.driver.api.core.CqlSession;
 import com.datastax.oss.driver.api.core.servererrors.InvalidQueryException;
 import com.datastax.oss.driver.api.testinfra.ccm.CcmRule;
@@ -28,8 +30,6 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.junit.rules.TestName;
-
-import static org.assertj.core.api.Assertions.assertThat;
 
 @Category(ParallelizableTests.class)
 public class SimpleStatementIT {
@@ -77,7 +77,8 @@ public class SimpleStatementIT {
         SimpleStatement.builder(String.format("SELECT v FROM test WHERE k='%s'", KEY)).build();
     ResultSet result = cluster.session().execute(st);
 
-    // given a query created from a copy of a previous query with paging state from previous queries response.
+    // given a query created from a copy of a previous query with paging state from previous queries
+    // response.
     st = st.copy(result.getExecutionInfo().getPagingState());
 
     // when executing that query.
@@ -93,7 +94,8 @@ public class SimpleStatementIT {
         SimpleStatement.builder(String.format("SELECT v FROM test WHERE k='%s'", KEY)).build();
     ResultSet result = cluster.session().execute(st);
 
-    // given a query created from a copy of a previous query with paging state from previous queries response.
+    // given a query created from a copy of a previous query with paging state from previous queries
+    // response.
     st =
         SimpleStatement.builder(String.format("SELECT v FROM test where k='%s'", KEY))
             .withPagingState(result.getExecutionInfo().getPagingState())

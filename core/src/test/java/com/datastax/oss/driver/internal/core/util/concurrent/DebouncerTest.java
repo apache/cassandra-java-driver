@@ -15,6 +15,10 @@
  */
 package com.datastax.oss.driver.internal.core.util.concurrent;
 
+import static com.datastax.oss.driver.Assertions.assertThat;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
+
 import com.google.common.base.Joiner;
 import io.netty.util.concurrent.EventExecutor;
 import io.netty.util.concurrent.ScheduledFuture;
@@ -29,10 +33,6 @@ import org.mockito.InOrder;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
-
-import static com.datastax.oss.driver.Assertions.assertThat;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.times;
 
 public class DebouncerTest {
 

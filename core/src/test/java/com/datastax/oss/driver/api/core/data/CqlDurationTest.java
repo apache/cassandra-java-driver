@@ -15,10 +15,10 @@
  */
 package com.datastax.oss.driver.api.core.data;
 
-import org.junit.Test;
-
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
+
+import org.junit.Test;
 
 public class CqlDurationTest {
 

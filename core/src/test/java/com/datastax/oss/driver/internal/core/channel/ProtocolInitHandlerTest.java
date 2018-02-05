@@ -15,6 +15,9 @@
  */
 package com.datastax.oss.driver.internal.core.channel;
 
+import static com.datastax.oss.driver.Assertions.assertThat;
+import static org.mockito.Mockito.atLeast;
+
 import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.Logger;
 import ch.qos.logback.classic.spi.ILoggingEvent;
@@ -63,9 +66,6 @@ import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
 import org.slf4j.LoggerFactory;
-
-import static com.datastax.oss.driver.Assertions.assertThat;
-import static org.mockito.Mockito.atLeast;
 
 public class ProtocolInitHandlerTest extends ChannelHandlerTestBase {
 
@@ -292,7 +292,8 @@ public class ProtocolInitHandlerTest extends ChannelHandlerTestBase {
     assertThat(Bytes.toHexString(authResponse.token)).isEqualTo(MockAuthenticator.INITIAL_RESPONSE);
     assertThat(connectFuture).isNotDone();
 
-    // As long as the server sends an auth challenge, the client should reply with another auth_response
+    // As long as the server sends an auth challenge, the client should reply with another
+    // auth_response
     String mockToken = "0xabcd";
     for (int i = 0; i < 5; i++) {
       writeInboundFrame(requestFrame, new AuthChallenge(Bytes.fromHexString(mockToken)));
@@ -305,7 +306,8 @@ public class ProtocolInitHandlerTest extends ChannelHandlerTestBase {
       assertThat(connectFuture).isNotDone();
     }
 
-    // When the server finally sends back a success message, should proceed to the cluster name check and succeed
+    // When the server finally sends back a success message, should proceed to the cluster name
+    // check and succeed
     writeInboundFrame(requestFrame, new AuthSuccess(Bytes.fromHexString(mockToken)));
     assertThat(authenticator.successToken).isEqualTo(mockToken);
 

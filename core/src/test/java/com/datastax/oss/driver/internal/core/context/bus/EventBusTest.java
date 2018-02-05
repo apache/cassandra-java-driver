@@ -15,13 +15,13 @@
  */
 package com.datastax.oss.driver.internal.core.context.bus;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 import com.datastax.oss.driver.internal.core.context.EventBus;
 import java.util.HashMap;
 import java.util.Map;
 import org.junit.Before;
 import org.junit.Test;
-
-import static org.assertj.core.api.Assertions.assertThat;
 
 public class EventBusTest {
 

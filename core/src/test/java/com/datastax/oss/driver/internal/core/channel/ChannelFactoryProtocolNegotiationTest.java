@@ -15,6 +15,8 @@
  */
 package com.datastax.oss.driver.internal.core.channel;
 
+import static com.datastax.oss.driver.Assertions.assertThat;
+
 import com.datastax.oss.driver.api.core.CoreProtocolVersion;
 import com.datastax.oss.driver.api.core.UnsupportedProtocolVersionException;
 import com.datastax.oss.driver.api.core.config.CoreDriverOption;
@@ -29,8 +31,6 @@ import java.util.Optional;
 import java.util.concurrent.CompletionStage;
 import org.junit.Test;
 import org.mockito.Mockito;
-
-import static com.datastax.oss.driver.Assertions.assertThat;
 
 public class ChannelFactoryProtocolNegotiationTest extends ChannelFactoryTestBase {
 

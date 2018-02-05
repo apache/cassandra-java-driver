@@ -15,13 +15,13 @@
  */
 package com.datastax.oss.driver.internal.core.metadata.token;
 
+import static com.datastax.oss.driver.internal.core.metadata.token.RandomTokenFactory.MAX_VALUE;
+
 import com.datastax.oss.driver.api.core.metadata.token.Token;
 import com.datastax.oss.driver.api.core.metadata.token.TokenRange;
 import com.google.common.collect.Lists;
 import java.math.BigInteger;
 import java.util.List;
-
-import static com.datastax.oss.driver.internal.core.metadata.token.RandomTokenFactory.MAX_VALUE;
 
 public class RandomTokenRange extends TokenRangeBase {
 

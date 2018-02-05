@@ -15,6 +15,10 @@
  */
 package com.datastax.oss.driver.internal.core.cql;
 
+import static com.datastax.oss.driver.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+
 import com.datastax.oss.driver.TestDataProviders;
 import com.datastax.oss.driver.api.core.ConsistencyLevel;
 import com.datastax.oss.driver.api.core.connection.HeartbeatException;
@@ -43,10 +47,6 @@ import java.util.Iterator;
 import java.util.concurrent.CompletionStage;
 import org.junit.Test;
 import org.mockito.Mockito;
-
-import static com.datastax.oss.driver.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
 
 public class CqlRequestHandlerRetryTest extends CqlRequestHandlerTestBase {
 

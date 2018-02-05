@@ -15,10 +15,21 @@
  */
 package com.datastax.oss.driver.api.core.retry;
 
+import static com.datastax.oss.simulacron.common.codec.ConsistencyLevel.LOCAL_QUORUM;
+import static com.datastax.oss.simulacron.common.codec.WriteType.BATCH_LOG;
+import static com.datastax.oss.simulacron.common.stubbing.PrimeDsl.closeConnection;
+import static com.datastax.oss.simulacron.common.stubbing.PrimeDsl.readTimeout;
+import static com.datastax.oss.simulacron.common.stubbing.PrimeDsl.serverError;
+import static com.datastax.oss.simulacron.common.stubbing.PrimeDsl.unavailable;
+import static com.datastax.oss.simulacron.common.stubbing.PrimeDsl.when;
+import static com.datastax.oss.simulacron.common.stubbing.PrimeDsl.writeTimeout;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.fail;
+
 import com.datastax.oss.driver.api.core.AllNodesFailedException;
 import com.datastax.oss.driver.api.core.ConsistencyLevel;
-import com.datastax.oss.driver.api.core.connection.ClosedConnectionException;
 import com.datastax.oss.driver.api.core.CqlSession;
+import com.datastax.oss.driver.api.core.connection.ClosedConnectionException;
 import com.datastax.oss.driver.api.core.cql.ResultSet;
 import com.datastax.oss.driver.api.core.cql.SimpleStatement;
 import com.datastax.oss.driver.api.core.metadata.Node;
@@ -43,17 +54,6 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.junit.runner.RunWith;
-
-import static com.datastax.oss.simulacron.common.codec.ConsistencyLevel.LOCAL_QUORUM;
-import static com.datastax.oss.simulacron.common.codec.WriteType.BATCH_LOG;
-import static com.datastax.oss.simulacron.common.stubbing.PrimeDsl.closeConnection;
-import static com.datastax.oss.simulacron.common.stubbing.PrimeDsl.readTimeout;
-import static com.datastax.oss.simulacron.common.stubbing.PrimeDsl.serverError;
-import static com.datastax.oss.simulacron.common.stubbing.PrimeDsl.unavailable;
-import static com.datastax.oss.simulacron.common.stubbing.PrimeDsl.when;
-import static com.datastax.oss.simulacron.common.stubbing.PrimeDsl.writeTimeout;
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.fail;
 
 @Category(ParallelizableTests.class)
 @RunWith(DataProviderRunner.class)
@@ -125,7 +125,8 @@ public class DefaultRetryPolicyIT {
 
   @Test
   public void should_not_retry_on_read_timeout_when_less_than_blockFor_received() {
-    // given a node that will respond to a query with a read timeout where 2 out of 3 responses are received.
+    // given a node that will respond to a query with a read timeout where 2 out of 3 responses are
+    // received.
     // in this case, digest requests succeeded, but not the data request.
     simulacron.cluster().node(0).prime(when(queryStr).then(readTimeout(LOCAL_QUORUM, 2, 3, false)));
 
@@ -147,7 +148,8 @@ public class DefaultRetryPolicyIT {
 
   @Test
   public void should_retry_on_read_timeout_when_enough_responses_and_data_not_present() {
-    // given a node that will respond to a query with a read timeout where 3 out of 3 responses are received,
+    // given a node that will respond to a query with a read timeout where 3 out of 3 responses are
+    // received,
     // but data is not present.
     simulacron.cluster().node(0).prime(when(queryStr).then(readTimeout(LOCAL_QUORUM, 3, 3, false)));
 
@@ -180,7 +182,8 @@ public class DefaultRetryPolicyIT {
 
     // when executing a query.
     ResultSet result = sessionRule.session().execute(query);
-    // then we should get a response, and the execution info on the result set indicates there was an error on
+    // then we should get a response, and the execution info on the result set indicates there was
+    // an error on
     // the host that received the query.
     assertThat(result.getExecutionInfo().getErrors()).hasSize(1);
     Map.Entry<Node, Throwable> error = result.getExecutionInfo().getErrors().get(0);
@@ -213,7 +216,8 @@ public class DefaultRetryPolicyIT {
       sessionRule.session().execute(query);
       fail("AllNodesFailedException expected");
     } catch (AllNodesFailedException ex) {
-      // then an AllNodesFailedException should be raised indicating that all nodes failed the request.
+      // then an AllNodesFailedException should be raised indicating that all nodes failed the
+      // request.
       assertThat(ex.getErrors()).hasSize(3);
     }
 
@@ -244,7 +248,8 @@ public class DefaultRetryPolicyIT {
           .execute(SimpleStatement.builder(queryStr).withIdempotence(false).build());
       fail("ClosedConnectionException expected");
     } catch (ClosedConnectionException ex) {
-      // then a ClosedConnectionException should be raised, indicating that the connection closed while handling
+      // then a ClosedConnectionException should be raised, indicating that the connection closed
+      // while handling
       // the request on that node.
       // this clearly indicates that the request wasn't retried.
       // Exception should indicate that node 0 was the failing node.
@@ -295,7 +300,8 @@ public class DefaultRetryPolicyIT {
   @Test
   public void should_not_retry_on_write_timeout_if_write_type_non_batch_log(
       com.datastax.oss.simulacron.common.codec.WriteType writeType) {
-    // given a node that will respond to query with a write timeout with write type that is not batch log.
+    // given a node that will respond to query with a write timeout with write type that is not
+    // batch log.
     simulacron
         .cluster()
         .node(0)
@@ -349,7 +355,8 @@ public class DefaultRetryPolicyIT {
 
     // when executing a query.
     ResultSet result = sessionRule.session().execute(queryStr);
-    // then we should get a response, and the execution info on the result set indicates there was an error on
+    // then we should get a response, and the execution info on the result set indicates there was
+    // an error on
     // the host that received the query.
     assertThat(result.getExecutionInfo().getErrors()).hasSize(1);
     Map.Entry<Node, Throwable> error = result.getExecutionInfo().getErrors().get(0);
@@ -377,7 +384,8 @@ public class DefaultRetryPolicyIT {
       sessionRule.session().execute(queryStr);
       fail("Expected an UnavailableException");
     } catch (UnavailableException ue) {
-      // then we should get an unavailable exception with the host being node 1 (since it was second tried).
+      // then we should get an unavailable exception with the host being node 1 (since it was second
+      // tried).
       assertThat(ue.getCoordinator().getConnectAddress())
           .isEqualTo(simulacron.cluster().node(1).inetSocketAddress());
       assertThat(ue.getConsistencyLevel()).isEqualTo(ConsistencyLevel.LOCAL_QUORUM);

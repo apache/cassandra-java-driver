@@ -32,10 +32,10 @@ import com.datastax.oss.driver.api.core.type.codec.registry.CodecRegistry;
  * type).
  *
  * <ul>
- *   <li> When a data container was obtained from a driver instance (for example, reading a row from
+ *   <li>When a data container was obtained from a driver instance (for example, reading a row from
  *       a result set, or reading a value from a UDT column), it is <em>attached</em>: its protocol
  *       version and registry are those of the driver.
- *   <li> When it is created manually by the user (for example, creating an instance from a manually
+ *   <li>When it is created manually by the user (for example, creating an instance from a manually
  *       created {@link TupleType}), it is <em>detached</em>: it uses {@link
  *       ProtocolVersion#DEFAULT} and {@link CodecRegistry#DEFAULT}.
  * </ul>

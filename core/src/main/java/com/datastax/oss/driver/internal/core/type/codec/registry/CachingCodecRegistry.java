@@ -158,7 +158,8 @@ public abstract class CachingCodecRegistry implements CodecRegistry {
     return safeCast(getCachedCodec(null, javaType));
   }
 
-  // Not exposed publicly, this is only used for the recursion from createCovariantCodec(GenericType)
+  // Not exposed publicly, this is only used for the recursion from
+  // createCovariantCodec(GenericType)
   private TypeCodec<?> covariantCodecFor(GenericType<?> javaType) {
     LOG.trace("[{}] Looking up codec for Java type {}", logPrefix, javaType);
     for (TypeCodec<?> primitiveCodec : PRIMITIVE_CODECS) {

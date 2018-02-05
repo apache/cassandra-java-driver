@@ -15,6 +15,8 @@
  */
 package com.datastax.oss.driver.internal.core.type.codec;
 
+import static java.lang.Long.parseLong;
+
 import com.datastax.oss.driver.api.core.ProtocolVersion;
 import com.datastax.oss.driver.api.core.type.DataType;
 import com.datastax.oss.driver.api.core.type.DataTypes;
@@ -26,8 +28,6 @@ import java.nio.ByteBuffer;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
-
-import static java.lang.Long.parseLong;
 
 public class DateCodec implements TypeCodec<LocalDate> {
 

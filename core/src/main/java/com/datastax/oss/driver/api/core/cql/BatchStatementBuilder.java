@@ -20,7 +20,6 @@ import com.datastax.oss.driver.internal.core.cql.DefaultBatchStatement;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
 import java.util.Arrays;
-import java.util.Collections;
 
 public class BatchStatementBuilder extends StatementBuilder<BatchStatementBuilder, BatchStatement> {
 

@@ -15,12 +15,12 @@
  */
 package com.datastax.oss.driver.internal.core.time;
 
-import com.datastax.oss.driver.internal.core.os.Native;
-import java.util.concurrent.atomic.AtomicReference;
-
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static java.util.concurrent.TimeUnit.NANOSECONDS;
 import static java.util.concurrent.TimeUnit.SECONDS;
+
+import com.datastax.oss.driver.internal.core.os.Native;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * Provides the current time with microseconds precision with some reasonable accuracy through the

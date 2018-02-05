@@ -15,6 +15,8 @@
  */
 package com.datastax.oss.driver.internal.core.loadbalancing;
 
+import static org.mockito.ArgumentMatchers.any;
+
 import ch.qos.logback.classic.Logger;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.Appender;
@@ -35,8 +37,6 @@ import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnitRunner;
 import org.slf4j.LoggerFactory;
-
-import static org.mockito.ArgumentMatchers.any;
 
 @RunWith(MockitoJUnitRunner.class)
 public abstract class DefaultLoadBalancingPolicyTestBase {

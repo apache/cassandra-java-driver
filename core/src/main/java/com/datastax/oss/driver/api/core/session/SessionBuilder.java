@@ -16,11 +16,11 @@
 package com.datastax.oss.driver.api.core.session;
 
 import com.datastax.oss.driver.api.core.CqlIdentifier;
+import com.datastax.oss.driver.api.core.CqlSession;
 import com.datastax.oss.driver.api.core.config.CoreDriverOption;
 import com.datastax.oss.driver.api.core.config.DriverConfigLoader;
 import com.datastax.oss.driver.api.core.config.DriverConfigProfile;
 import com.datastax.oss.driver.api.core.context.DriverContext;
-import com.datastax.oss.driver.api.core.CqlSession;
 import com.datastax.oss.driver.api.core.metadata.NodeStateListener;
 import com.datastax.oss.driver.api.core.type.codec.TypeCodec;
 import com.datastax.oss.driver.internal.core.ContactPoints;
@@ -73,7 +73,6 @@ public abstract class SessionBuilder<SelfT extends SessionBuilder, SessionT> {
    *         <li>{@code application.properties} (all resources on classpath with this name)
    *         <li>{@code reference.conf} (all resources on classpath with this name)
    *       </ul>
-   *
    *   <li>the resulting configuration is expected to contain a {@code datastax-java-driver}
    *       section.
    *   <li>that section is validated against the {@link CoreDriverOption core driver options}.

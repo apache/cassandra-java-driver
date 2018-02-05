@@ -15,6 +15,9 @@
  */
 package com.datastax.oss.driver.internal.core.control;
 
+import static com.datastax.oss.driver.Assertions.assertThat;
+import static org.mockito.Mockito.never;
+
 import com.datastax.oss.driver.api.core.loadbalancing.NodeDistance;
 import com.datastax.oss.driver.api.core.metadata.NodeState;
 import com.datastax.oss.driver.internal.core.channel.ChannelEvent;
@@ -33,9 +36,6 @@ import java.util.concurrent.CompletionStage;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mockito;
-
-import static com.datastax.oss.driver.Assertions.assertThat;
-import static org.mockito.Mockito.never;
 
 @RunWith(DataProviderRunner.class)
 public class ControlConnectionTest extends ControlConnectionTestBase {

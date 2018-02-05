@@ -15,15 +15,15 @@
  */
 package com.datastax.oss.driver.internal.core.pool;
 
+import static com.datastax.oss.driver.Assertions.assertThat;
+import static org.mockito.Mockito.never;
+
 import com.datastax.oss.driver.internal.core.channel.DriverChannel;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
-
-import static com.datastax.oss.driver.Assertions.assertThat;
-import static org.mockito.Mockito.never;
 
 public class ChannelSetTest {
   @Mock private DriverChannel channel1, channel2, channel3;

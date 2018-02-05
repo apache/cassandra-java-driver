@@ -15,10 +15,10 @@
  */
 package com.datastax.oss.driver.internal.core.metadata.token;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 import com.datastax.oss.protocol.internal.util.Bytes;
 import org.junit.Test;
-
-import static org.assertj.core.api.Assertions.assertThat;
 
 /** @see TokenRangeTest */
 public class ByteOrderedTokenRangeTest {

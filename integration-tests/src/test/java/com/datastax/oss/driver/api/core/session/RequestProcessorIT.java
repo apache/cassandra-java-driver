@@ -15,9 +15,11 @@
  */
 package com.datastax.oss.driver.api.core.session;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 import com.datastax.oss.driver.api.core.CqlIdentifier;
-import com.datastax.oss.driver.api.core.cql.AsyncResultSet;
 import com.datastax.oss.driver.api.core.CqlSession;
+import com.datastax.oss.driver.api.core.cql.AsyncResultSet;
 import com.datastax.oss.driver.api.core.cql.PreparedStatement;
 import com.datastax.oss.driver.api.core.cql.SimpleStatement;
 import com.datastax.oss.driver.api.testinfra.ccm.CcmRule;
@@ -40,8 +42,6 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.junit.rules.ExpectedException;
-
-import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * A suite of tests for exercising registration of custom {@link
@@ -144,7 +144,8 @@ public class RequestProcessorIT {
   @Test
   public void should_throw_illegal_argument_exception_if_no_matching_processor_found()
       throws Exception {
-    // Since cluster does not have a processor registered for returning ListenableFuture, an IllegalArgumentException
+    // Since cluster does not have a processor registered for returning ListenableFuture, an
+    // IllegalArgumentException
     // should be thrown.
     thrown.expect(IllegalArgumentException.class);
     sessionRule

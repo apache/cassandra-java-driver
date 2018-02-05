@@ -15,13 +15,13 @@
  */
 package com.datastax.oss.driver.internal.core.channel;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 import com.datastax.oss.protocol.internal.Frame;
 import com.datastax.oss.protocol.internal.Message;
 import io.netty.channel.embedded.EmbeddedChannel;
 import java.util.Collections;
 import org.junit.Before;
-
-import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * Infrastructure for channel handler test.

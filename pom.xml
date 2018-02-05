@@ -140,7 +140,7 @@
         <plugin>
           <groupId>com.coveo</groupId>
           <artifactId>fmt-maven-plugin</artifactId>
-          <version>1.5.0</version>
+          <version>2.2.0</version>
         </plugin>
         <plugin>
           <groupId>com.mycila</groupId>
@@ -242,14 +242,12 @@
       <plugin>
         <groupId>com.coveo</groupId>
         <artifactId>fmt-maven-plugin</artifactId>
-        <configuration>
-          <validateOnly>${format.validateOnly}</validateOnly>
-        </configuration>
         <executions>
           <execution>
             <goals>
-              <goal>format</goal>
+              <goal>check</goal>
             </goals>
+            <phase>process-sources</phase>
           </execution>
         </executions>
       </plugin>

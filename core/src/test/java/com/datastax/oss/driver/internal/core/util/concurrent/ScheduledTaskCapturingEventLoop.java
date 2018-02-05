@@ -15,6 +15,10 @@
  */
 package com.datastax.oss.driver.internal.core.util.concurrent;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.fail;
+import static org.mockito.ArgumentMatchers.anyBoolean;
+
 import com.google.common.util.concurrent.Uninterruptibles;
 import io.netty.channel.DefaultEventLoop;
 import io.netty.channel.EventLoopGroup;
@@ -27,10 +31,6 @@ import java.util.concurrent.FutureTask;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import org.mockito.Mockito;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.fail;
-import static org.mockito.ArgumentMatchers.anyBoolean;
 
 /**
  * Extend Netty's default event loop to capture scheduled tasks instead of running them. The tasks

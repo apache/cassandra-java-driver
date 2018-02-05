@@ -272,7 +272,8 @@ class ProtocolInitHandler extends ConnectInitHandler {
           setConnectSuccess();
         } else if (response instanceof Error) {
           Error error = (Error) response;
-          // Testing for a specific string is a tad fragile but Cassandra doesn't give us a more precise error
+          // Testing for a specific string is a tad fragile but Cassandra doesn't give us a more
+          // precise error
           // code.
           // C* 2.1 reports a server error instead of protocol error, see CASSANDRA-9451.
           if (step == Step.STARTUP

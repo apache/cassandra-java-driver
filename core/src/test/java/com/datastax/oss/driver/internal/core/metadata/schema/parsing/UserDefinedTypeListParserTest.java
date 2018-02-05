@@ -15,6 +15,8 @@
  */
 package com.datastax.oss.driver.internal.core.metadata.schema.parsing;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.type.DataTypes;
 import com.datastax.oss.driver.api.core.type.ListType;
@@ -26,8 +28,6 @@ import com.datastax.oss.driver.internal.core.adminrequest.AdminRow;
 import com.google.common.collect.ImmutableList;
 import java.util.Map;
 import org.junit.Test;
-
-import static org.assertj.core.api.Assertions.assertThat;
 
 public class UserDefinedTypeListParserTest extends SchemaParserTestBase {
 

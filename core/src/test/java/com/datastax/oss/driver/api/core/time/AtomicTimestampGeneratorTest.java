@@ -15,6 +15,9 @@
  */
 package com.datastax.oss.driver.api.core.time;
 
+import static com.datastax.oss.driver.Assertions.assertThat;
+import static com.datastax.oss.driver.Assertions.fail;
+
 import com.datastax.oss.driver.internal.core.time.Clock;
 import java.util.SortedSet;
 import java.util.concurrent.ConcurrentSkipListSet;
@@ -24,9 +27,6 @@ import java.util.concurrent.TimeUnit;
 import org.junit.Test;
 import org.mockito.Mockito;
 import org.mockito.stubbing.OngoingStubbing;
-
-import static com.datastax.oss.driver.Assertions.assertThat;
-import static com.datastax.oss.driver.Assertions.fail;
 
 public class AtomicTimestampGeneratorTest extends MonotonicTimestampGeneratorTestBase {
   @Override

@@ -15,6 +15,8 @@
  */
 package com.datastax.oss.driver.api.core.cql;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 import com.datastax.oss.driver.api.core.CqlSession;
 import com.datastax.oss.driver.api.core.DriverExecutionException;
 import com.datastax.oss.driver.api.testinfra.ccm.CcmRule;
@@ -27,8 +29,6 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.junit.rules.ExpectedException;
-
-import static org.assertj.core.api.Assertions.assertThat;
 
 @Category(ParallelizableTests.class)
 public class QueryTraceIT {

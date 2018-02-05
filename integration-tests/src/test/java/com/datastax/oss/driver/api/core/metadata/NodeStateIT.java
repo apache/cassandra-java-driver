@@ -15,6 +15,11 @@
  */
 package com.datastax.oss.driver.api.core.metadata;
 
+import static com.datastax.oss.driver.assertions.Assertions.assertThat;
+import static com.datastax.oss.driver.assertions.Assertions.fail;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.timeout;
+
 import com.datastax.oss.driver.api.core.CqlSession;
 import com.datastax.oss.driver.api.core.context.DriverContext;
 import com.datastax.oss.driver.api.core.loadbalancing.NodeDistance;
@@ -54,11 +59,6 @@ import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.mockito.InOrder;
 import org.mockito.Mockito;
-
-import static com.datastax.oss.driver.assertions.Assertions.assertThat;
-import static com.datastax.oss.driver.assertions.Assertions.fail;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.timeout;
 
 @Category(ParallelizableTests.class)
 public class NodeStateIT {

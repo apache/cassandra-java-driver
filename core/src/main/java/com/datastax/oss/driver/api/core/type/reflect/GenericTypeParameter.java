@@ -15,11 +15,11 @@
  */
 package com.datastax.oss.driver.api.core.type.reflect;
 
+import static com.google.common.base.Preconditions.checkArgument;
+
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.lang.reflect.TypeVariable;
-
-import static com.google.common.base.Preconditions.checkArgument;
 
 /**
  * Captures a free type variable that can be used in {@link GenericType#where(GenericTypeParameter,

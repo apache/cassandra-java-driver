@@ -15,11 +15,11 @@
  */
 package com.datastax.oss.driver.internal.core;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 import com.datastax.oss.driver.api.core.config.DriverConfig;
 import com.datastax.oss.driver.api.core.config.DriverOption;
 import org.assertj.core.api.AbstractAssert;
-
-import static org.assertj.core.api.Assertions.assertThat;
 
 public class DriverConfigAssert extends AbstractAssert<DriverConfigAssert, DriverConfig> {
   public DriverConfigAssert(DriverConfig actual) {

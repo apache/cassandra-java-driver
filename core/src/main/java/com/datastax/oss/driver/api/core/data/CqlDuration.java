@@ -15,12 +15,12 @@
  */
 package com.datastax.oss.driver.api.core.data;
 
+import static com.google.common.base.Preconditions.checkArgument;
+
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Objects;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-
-import static com.google.common.base.Preconditions.checkArgument;
 
 /**
  * A duration, as defined in CQL.
@@ -111,7 +111,6 @@ public final class CqlDuration {
    *         <li>{@code us} or {@code µs}: microseconds
    *         <li>{@code ns}: nanoseconds
    *       </ul>
-   *
    *   <li>ISO 8601 format: P[n]Y[n]M[n]DT[n]H[n]M[n]S or P[n]W
    *   <li>ISO 8601 alternative format: P[YYYY]-[MM]-[DD]T[hh]:[mm]:[ss]
    * </ul>

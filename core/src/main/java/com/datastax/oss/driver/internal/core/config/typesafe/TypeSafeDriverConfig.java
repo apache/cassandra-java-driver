@@ -15,6 +15,8 @@
  */
 package com.datastax.oss.driver.internal.core.config.typesafe;
 
+import static com.typesafe.config.ConfigValueType.OBJECT;
+
 import com.datastax.oss.driver.api.core.config.DriverConfig;
 import com.datastax.oss.driver.api.core.config.DriverConfigProfile;
 import com.datastax.oss.driver.api.core.config.DriverOption;
@@ -30,8 +32,6 @@ import java.util.Collections;
 import java.util.Map;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import static com.typesafe.config.ConfigValueType.OBJECT;
 
 public class TypeSafeDriverConfig implements DriverConfig {
 

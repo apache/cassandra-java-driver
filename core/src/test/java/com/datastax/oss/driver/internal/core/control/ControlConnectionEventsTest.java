@@ -15,6 +15,9 @@
  */
 package com.datastax.oss.driver.internal.core.control;
 
+import static com.datastax.oss.driver.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.eq;
+
 import com.datastax.oss.driver.internal.core.channel.DriverChannel;
 import com.datastax.oss.driver.internal.core.channel.DriverChannelOptions;
 import com.datastax.oss.driver.internal.core.channel.EventCallback;
@@ -28,9 +31,6 @@ import java.util.concurrent.CompletableFuture;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mockito;
-
-import static com.datastax.oss.driver.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.eq;
 
 public class ControlConnectionEventsTest extends ControlConnectionTestBase {
 

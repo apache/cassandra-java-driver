@@ -15,6 +15,9 @@
  */
 package com.datastax.oss.driver.internal.core.util.concurrent;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.times;
+
 import com.datastax.oss.driver.TestDataProviders;
 import com.datastax.oss.driver.api.core.connection.ReconnectionPolicy;
 import com.datastax.oss.driver.api.core.connection.ReconnectionPolicy.ReconnectionSchedule;
@@ -33,9 +36,6 @@ import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.times;
 
 @RunWith(DataProviderRunner.class)
 public class ReconnectionTest {

@@ -71,7 +71,7 @@ public class Murmur3TokenFactory implements TokenFactory {
     long c1 = 0x87c37b91114253d5L;
     long c2 = 0x4cf5ad432745937fL;
 
-    //----------
+    // ----------
     // body
 
     for (int i = 0; i < nblocks; i++) {
@@ -94,7 +94,7 @@ public class Murmur3TokenFactory implements TokenFactory {
       h2 = h2 * 5 + 0x38495ab5;
     }
 
-    //----------
+    // ----------
     // tail
 
     // Advance offset to the unprocessed tail of the data.
@@ -158,7 +158,7 @@ public class Murmur3TokenFactory implements TokenFactory {
         h1 ^= k1;
     }
 
-    //----------
+    // ----------
     // finalization
 
     h1 ^= length;

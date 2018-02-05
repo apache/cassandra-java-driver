@@ -15,9 +15,9 @@
  */
 package com.datastax.oss.driver.internal.core.util;
 
-import org.junit.Test;
-
 import static org.assertj.core.api.Assertions.assertThat;
+
+import org.junit.Test;
 
 public class DirectedGraphTest {
 

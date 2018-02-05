@@ -15,9 +15,11 @@
  */
 package com.datastax.oss.driver.api.core.metadata;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 import com.datastax.oss.driver.api.core.CqlIdentifier;
-import com.datastax.oss.driver.api.core.ProtocolVersion;
 import com.datastax.oss.driver.api.core.CqlSession;
+import com.datastax.oss.driver.api.core.ProtocolVersion;
 import com.datastax.oss.driver.api.core.cql.PreparedStatement;
 import com.datastax.oss.driver.api.core.cql.ResultSet;
 import com.datastax.oss.driver.api.core.cql.Row;
@@ -37,8 +39,6 @@ import java.util.List;
 import java.util.Set;
 import java.util.TreeSet;
 import org.junit.Test;
-
-import static org.assertj.core.api.Assertions.assertThat;
 
 public abstract class TokenITBase {
 

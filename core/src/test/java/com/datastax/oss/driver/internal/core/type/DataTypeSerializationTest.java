@@ -15,6 +15,8 @@
  */
 package com.datastax.oss.driver.internal.core.type;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.type.DataType;
 import com.datastax.oss.driver.api.core.type.DataTypes;
@@ -22,8 +24,6 @@ import com.datastax.oss.driver.api.core.type.TupleType;
 import com.datastax.oss.driver.api.core.type.UserDefinedType;
 import com.datastax.oss.driver.internal.SerializationHelper;
 import org.junit.Test;
-
-import static org.assertj.core.api.Assertions.assertThat;
 
 public class DataTypeSerializationTest {
 
@@ -37,7 +37,8 @@ public class DataTypeSerializationTest {
             .withField(CqlIdentifier.fromInternal("field2"), DataTypes.TEXT)
             .build();
 
-    // Because primitive and custom types never use the codec registry, we consider them always attached
+    // Because primitive and custom types never use the codec registry, we consider them always
+    // attached
     should_serialize_and_deserialize(DataTypes.INT, false);
     should_serialize_and_deserialize(DataTypes.custom("some.class.name"), false);
 

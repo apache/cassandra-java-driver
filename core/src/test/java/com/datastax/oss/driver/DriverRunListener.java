@@ -15,10 +15,10 @@
  */
 package com.datastax.oss.driver;
 
+import static org.assertj.core.api.Assertions.fail;
+
 import org.junit.runner.Description;
 import org.junit.runner.notification.RunListener;
-
-import static org.assertj.core.api.Assertions.fail;
 
 /**
  * Common parent of all driver tests, to store common configuration and perform sanity checks.

@@ -15,6 +15,8 @@
  */
 package com.datastax.oss.driver.api.core.uuid;
 
+import static com.datastax.oss.driver.Assertions.assertThat;
+
 import com.datastax.oss.driver.api.core.CoreProtocolVersion;
 import com.datastax.oss.driver.api.core.type.codec.TypeCodecs;
 import java.nio.ByteBuffer;
@@ -24,8 +26,6 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentSkipListSet;
 import org.junit.Test;
-
-import static com.datastax.oss.driver.Assertions.assertThat;
 
 public class UuidsTest {
 

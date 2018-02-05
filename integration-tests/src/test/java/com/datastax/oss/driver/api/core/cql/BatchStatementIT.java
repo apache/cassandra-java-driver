@@ -15,6 +15,8 @@
  */
 package com.datastax.oss.driver.api.core.cql;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 import com.datastax.oss.driver.api.core.CqlSession;
 import com.datastax.oss.driver.api.core.servererrors.InvalidQueryException;
 import com.datastax.oss.driver.api.testinfra.CassandraRequirement;
@@ -28,8 +30,6 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.junit.rules.TestName;
-
-import static org.assertj.core.api.Assertions.assertThat;
 
 @Category(ParallelizableTests.class)
 public class BatchStatementIT {
@@ -83,7 +83,8 @@ public class BatchStatementIT {
 
   @Test
   public void should_execute_batch_of_bound_statements_with_variables() {
-    // Build a batch of batchCount statements with bound statements, each with their own positional variables.
+    // Build a batch of batchCount statements with bound statements, each with their own positional
+    // variables.
     BatchStatementBuilder builder = BatchStatement.builder(BatchType.UNLOGGED);
     SimpleStatement insert =
         SimpleStatement.builder(
@@ -105,7 +106,8 @@ public class BatchStatementIT {
   @Test
   @CassandraRequirement(min = "2.2")
   public void should_execute_batch_of_bound_statements_with_unset_values() {
-    // Build a batch of batchCount statements with bound statements, each with their own positional variables.
+    // Build a batch of batchCount statements with bound statements, each with their own positional
+    // variables.
     BatchStatementBuilder builder = BatchStatement.builder(BatchType.UNLOGGED);
     SimpleStatement insert =
         SimpleStatement.builder(
@@ -159,7 +161,8 @@ public class BatchStatementIT {
 
   @Test
   public void should_execute_batch_of_bound_statements_with_named_variables() {
-    // Build a batch of batchCount statements with bound statements, each with their own named variable values.
+    // Build a batch of batchCount statements with bound statements, each with their own named
+    // variable values.
     BatchStatementBuilder builder = BatchStatement.builder(BatchType.UNLOGGED);
     PreparedStatement preparedStatement =
         sessionRule.session().prepare("INSERT INTO test (k0, k1, v) values (:k0, :k1, :v)");

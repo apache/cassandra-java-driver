@@ -15,6 +15,8 @@
  */
 package com.datastax.oss.driver.api.core.cql;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 import com.datastax.oss.driver.api.core.CqlSession;
 import com.datastax.oss.driver.api.testinfra.ccm.CcmRule;
 import com.datastax.oss.driver.api.testinfra.session.SessionRule;
@@ -27,8 +29,6 @@ import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
-
-import static org.assertj.core.api.Assertions.assertThat;
 
 @Category(ParallelizableTests.class)
 public class AsyncResultSetIT {
@@ -72,7 +72,8 @@ public class AsyncResultSetIT {
 
   @Test
   public void should_only_iterate_over_rows_in_current_page() throws Exception {
-    // very basic test that just ensures that iterating over an AsyncResultSet only visits the first page.
+    // very basic test that just ensures that iterating over an AsyncResultSet only visits the first
+    // page.
     CompletionStage<AsyncResultSet> result =
         sessionRule
             .session()

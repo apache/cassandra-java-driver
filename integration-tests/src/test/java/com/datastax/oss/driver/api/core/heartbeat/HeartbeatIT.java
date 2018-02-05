@@ -15,6 +15,16 @@
  */
 package com.datastax.oss.driver.api.core.heartbeat;
 
+import static com.datastax.oss.driver.api.testinfra.utils.ConditionChecker.checkThat;
+import static com.datastax.oss.driver.api.testinfra.utils.NodeUtils.waitForDown;
+import static com.datastax.oss.driver.api.testinfra.utils.NodeUtils.waitForUp;
+import static com.datastax.oss.simulacron.common.stubbing.PrimeDsl.closeConnection;
+import static com.datastax.oss.simulacron.common.stubbing.PrimeDsl.noResult;
+import static com.datastax.oss.simulacron.common.stubbing.PrimeDsl.when;
+import static java.util.concurrent.TimeUnit.MILLISECONDS;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.fail;
+
 import com.datastax.oss.driver.api.core.CqlSession;
 import com.datastax.oss.driver.api.core.metadata.Node;
 import com.datastax.oss.driver.api.core.metadata.NodeState;
@@ -40,16 +50,6 @@ import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
-
-import static com.datastax.oss.driver.api.testinfra.utils.ConditionChecker.checkThat;
-import static com.datastax.oss.driver.api.testinfra.utils.NodeUtils.waitForDown;
-import static com.datastax.oss.driver.api.testinfra.utils.NodeUtils.waitForUp;
-import static com.datastax.oss.simulacron.common.stubbing.PrimeDsl.closeConnection;
-import static com.datastax.oss.simulacron.common.stubbing.PrimeDsl.noResult;
-import static com.datastax.oss.simulacron.common.stubbing.PrimeDsl.when;
-import static java.util.concurrent.TimeUnit.MILLISECONDS;
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.fail;
 
 @Category(ParallelizableTests.class)
 public class HeartbeatIT {

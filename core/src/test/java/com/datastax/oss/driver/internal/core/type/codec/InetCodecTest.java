@@ -15,14 +15,14 @@
  */
 package com.datastax.oss.driver.internal.core.type.codec;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.fail;
+
 import com.datastax.oss.driver.api.core.type.codec.TypeCodecs;
 import com.google.common.base.Strings;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import org.junit.Test;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.fail;
 
 public class InetCodecTest extends CodecTestBase<InetAddress> {
 

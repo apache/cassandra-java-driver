@@ -15,6 +15,8 @@
  */
 package com.datastax.oss.driver.internal.core.type.codec;
 
+import static java.lang.Long.parseLong;
+
 import com.datastax.oss.driver.api.core.ProtocolVersion;
 import com.datastax.oss.driver.api.core.type.DataType;
 import com.datastax.oss.driver.api.core.type.DataTypes;
@@ -28,8 +30,6 @@ import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.time.temporal.ChronoField;
-
-import static java.lang.Long.parseLong;
 
 public class TimestampCodec implements TypeCodec<Instant> {
 

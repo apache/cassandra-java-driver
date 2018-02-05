@@ -52,7 +52,6 @@ public class TopologyEvent {
    *             com.datastax.oss.driver.api.core.connection.ReconnectionPolicy.ReconnectionSchedule}
    *             to be reset, and the next reconnection attempt to happen immediately.
    *       </ul>
-   *
    * </ul>
    */
   public static TopologyEvent suggestUp(InetSocketAddress address) {

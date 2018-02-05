@@ -15,6 +15,8 @@
  */
 package com.datastax.oss.driver.internal.core.data;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.data.UdtValue;
 import com.datastax.oss.driver.api.core.detach.AttachmentPoint;
@@ -26,8 +28,6 @@ import com.datastax.oss.driver.internal.core.type.UserDefinedTypeBuilder;
 import com.datastax.oss.protocol.internal.util.Bytes;
 import java.util.List;
 import org.junit.Test;
-
-import static org.assertj.core.api.Assertions.assertThat;
 
 public class DefaultUdtValueTest extends AccessibleByIdTestBase<UdtValue> {
 

@@ -15,12 +15,12 @@
  */
 package com.datastax.oss.driver.assertions;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 import com.datastax.oss.driver.api.core.loadbalancing.NodeDistance;
 import com.datastax.oss.driver.api.core.metadata.Node;
 import com.datastax.oss.driver.api.core.metadata.NodeState;
 import org.assertj.core.api.AbstractAssert;
-
-import static org.assertj.core.api.Assertions.assertThat;
 
 public class NodeMetadataAssert extends AbstractAssert<NodeMetadataAssert, Node> {
 

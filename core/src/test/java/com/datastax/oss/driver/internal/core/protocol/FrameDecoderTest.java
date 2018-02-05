@@ -15,6 +15,9 @@
  */
 package com.datastax.oss.driver.internal.core.protocol;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.fail;
+
 import com.datastax.oss.driver.api.core.connection.FrameTooLongException;
 import com.datastax.oss.driver.internal.core.channel.ChannelHandlerTestBase;
 import com.datastax.oss.driver.internal.core.util.ByteBufs;
@@ -26,9 +29,6 @@ import io.netty.buffer.ByteBuf;
 import io.netty.handler.codec.LengthFieldBasedFrameDecoder;
 import org.junit.Before;
 import org.junit.Test;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.fail;
 
 public class FrameDecoderTest extends ChannelHandlerTestBase {
   // A valid binary payload for a response frame.

@@ -15,6 +15,8 @@
  */
 package com.datastax.oss.driver.api.core.cql;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 import com.datastax.oss.driver.api.core.CqlSession;
 import com.datastax.oss.driver.api.testinfra.CassandraRequirement;
 import com.datastax.oss.driver.api.testinfra.ccm.CcmRule;
@@ -26,8 +28,6 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.junit.rules.TestName;
-
-import static org.assertj.core.api.Assertions.assertThat;
 
 @Category(ParallelizableTests.class)
 public class BoundStatementIT {
@@ -130,7 +130,8 @@ public class BoundStatementIT {
   private void verifyUnset(BoundStatement boundStatement) {
     sessionRule.session().execute(boundStatement.unset(1));
 
-    // Verify that no tombstone was written by reading data back and ensuring initial value is retained.
+    // Verify that no tombstone was written by reading data back and ensuring initial value is
+    // retained.
     ResultSet result =
         sessionRule
             .session()

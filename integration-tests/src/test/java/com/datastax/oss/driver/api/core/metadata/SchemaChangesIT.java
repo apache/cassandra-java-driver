@@ -15,6 +15,8 @@
  */
 package com.datastax.oss.driver.api.core.metadata;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.CqlSession;
 import com.datastax.oss.driver.api.core.metadata.schema.ColumnMetadata;
@@ -37,8 +39,6 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.mockito.Mockito;
-
-import static org.assertj.core.api.Assertions.assertThat;
 
 @Category(ParallelizableTests.class)
 public class SchemaChangesIT {
@@ -396,7 +396,8 @@ public class SchemaChangesIT {
   }
 
   private String keyspaceFilterOption(CqlIdentifier... keyspaces) {
-    // create option to filter keyspace refreshes based on input keyspaces, if none are provided, assume the
+    // create option to filter keyspace refreshes based on input keyspaces, if none are provided,
+    // assume the
     // one associated wiht the cluster rule.
     if (keyspaces.length == 0) {
       keyspaces = new CqlIdentifier[] {adminSessionRule.keyspace()};

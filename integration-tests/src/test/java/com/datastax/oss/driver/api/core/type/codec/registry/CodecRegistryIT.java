@@ -15,9 +15,11 @@
  */
 package com.datastax.oss.driver.api.core.type.codec.registry;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
+import com.datastax.oss.driver.api.core.CqlSession;
 import com.datastax.oss.driver.api.core.ProtocolVersion;
 import com.datastax.oss.driver.api.core.cql.BoundStatement;
-import com.datastax.oss.driver.api.core.CqlSession;
 import com.datastax.oss.driver.api.core.cql.PreparedStatement;
 import com.datastax.oss.driver.api.core.cql.ResultSet;
 import com.datastax.oss.driver.api.core.cql.Row;
@@ -47,8 +49,6 @@ import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.junit.rules.ExpectedException;
 import org.junit.rules.TestName;
-
-import static org.assertj.core.api.Assertions.assertThat;
 
 @Category(ParallelizableTests.class)
 public class CodecRegistryIT {
@@ -182,7 +182,8 @@ public class CodecRegistryIT {
 
       assertThat(result.getAvailableWithoutFetching()).isEqualTo(1);
 
-      // should be able to retrieve value back as float, some precision is lost due to going from int -> float.
+      // should be able to retrieve value back as float, some precision is lost due to going from
+      // int -> float.
       Row row = result.iterator().next();
       assertThat(row.getFloat("v")).isEqualTo(3.0f);
       assertThat(row.getFloat(0)).isEqualTo(3.0f);
@@ -309,7 +310,8 @@ public class CodecRegistryIT {
       session.execute(insert);
 
       // map with optional value should work - note that you can't have null values in collections,
-      // so this is not technically practical but want to validate that custom codec resolution works
+      // so this is not technically practical but want to validate that custom codec resolution
+      // works
       // when it's composed in a collection codec.
       Map<Integer, Optional<String>> v2Map = Maps.newHashMap(1, Optional.of("hello"));
       insert =

@@ -15,10 +15,10 @@
  */
 package com.datastax.oss.driver.internal.core.metadata.token;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 import java.math.BigInteger;
 import org.junit.Test;
-
-import static org.assertj.core.api.Assertions.assertThat;
 
 public class RandomTokenRangeTest {
 

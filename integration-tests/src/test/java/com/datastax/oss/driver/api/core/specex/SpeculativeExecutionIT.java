@@ -15,6 +15,11 @@
  */
 package com.datastax.oss.driver.api.core.specex;
 
+import static com.datastax.oss.simulacron.common.stubbing.PrimeDsl.isBootstrapping;
+import static com.datastax.oss.simulacron.common.stubbing.PrimeDsl.noRows;
+import static com.datastax.oss.simulacron.common.stubbing.PrimeDsl.when;
+import static org.assertj.core.api.Assertions.assertThat;
+
 import com.datastax.oss.driver.api.core.AllNodesFailedException;
 import com.datastax.oss.driver.api.core.CqlSession;
 import com.datastax.oss.driver.api.core.cql.ResultSet;
@@ -29,11 +34,6 @@ import org.junit.Before;
 import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
-
-import static com.datastax.oss.simulacron.common.stubbing.PrimeDsl.isBootstrapping;
-import static com.datastax.oss.simulacron.common.stubbing.PrimeDsl.noRows;
-import static com.datastax.oss.simulacron.common.stubbing.PrimeDsl.when;
-import static org.assertj.core.api.Assertions.assertThat;
 
 @Category(ParallelizableTests.class)
 public class SpeculativeExecutionIT {

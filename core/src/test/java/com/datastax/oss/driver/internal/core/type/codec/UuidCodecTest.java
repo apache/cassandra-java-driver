@@ -15,11 +15,11 @@
  */
 package com.datastax.oss.driver.internal.core.type.codec;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 import com.datastax.oss.driver.api.core.type.codec.TypeCodecs;
 import java.util.UUID;
 import org.junit.Test;
-
-import static org.assertj.core.api.Assertions.assertThat;
 
 public class UuidCodecTest extends CodecTestBase<UUID> {
   private final UUID MOCK_UUID = new UUID(2L, 1L);

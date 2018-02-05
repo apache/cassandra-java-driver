@@ -15,6 +15,8 @@
  */
 package com.datastax.oss.driver.internal.core.pool;
 
+import static com.datastax.oss.driver.Assertions.assertThat;
+
 import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.config.CoreDriverOption;
 import com.datastax.oss.driver.api.core.loadbalancing.NodeDistance;
@@ -26,8 +28,6 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import org.junit.Test;
 import org.mockito.Mockito;
-
-import static com.datastax.oss.driver.Assertions.assertThat;
 
 public class ChannelPoolKeyspaceTest extends ChannelPoolTestBase {
 

@@ -15,9 +15,9 @@
  */
 package com.datastax.oss.driver.internal.core.channel;
 
-import org.junit.Test;
-
 import static com.datastax.oss.driver.Assertions.assertThat;
+
+import org.junit.Test;
 
 public class StreamIdGeneratorTest {
   @Test
