@@ -55,7 +55,7 @@ public class CcmRule extends BaseCcmRule {
   @Override
   public Statement apply(Statement base, Description description) {
 
-    Category categoryAnnotation = description.getAnnotation(Category.class);
+    Category categoryAnnotation = description.getTestClass().getAnnotation(Category.class);
     if (categoryAnnotation == null
         || categoryAnnotation.value().length != 1
         || categoryAnnotation.value()[0] != ParallelizableTests.class) {
