@@ -25,6 +25,7 @@ import java.util.Collections;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.UUID;
 
 /**
  * Implementation note: all the mutable state in this class is read concurrently, but only mutated
@@ -42,6 +43,8 @@ public class DefaultNode implements Node {
   // Keep a copy of the raw tokens, to detect if they have changed when we refresh the node
   volatile Set<String> rawTokens;
   volatile Map<String, Object> extras;
+  volatile UUID hostId;
+  volatile UUID schemaVersion;
 
   // These 3 fields are read concurrently, but only mutated on NodeStateManager's admin thread
   volatile NodeState state;
@@ -86,6 +89,16 @@ public class DefaultNode implements Node {
   @Override
   public CassandraVersion getCassandraVersion() {
     return cassandraVersion;
+  }
+
+  @Override
+  public UUID getHostId() {
+    return hostId;
+  }
+
+  @Override
+  public UUID getSchemaVersion() {
+    return schemaVersion;
   }
 
   @Override

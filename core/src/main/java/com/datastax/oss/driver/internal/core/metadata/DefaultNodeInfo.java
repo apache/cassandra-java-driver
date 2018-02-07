@@ -22,6 +22,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.UUID;
 
 public class DefaultNodeInfo implements NodeInfo {
   public static Builder builder() {
@@ -37,6 +38,8 @@ public class DefaultNodeInfo implements NodeInfo {
   private final String partitioner;
   private final Set<String> tokens;
   private final Map<String, Object> extras;
+  private final UUID hostId;
+  private final UUID schemaVersion;
 
   private DefaultNodeInfo(Builder builder) {
     this.connectAddress = builder.connectAddress;
@@ -47,6 +50,8 @@ public class DefaultNodeInfo implements NodeInfo {
     this.cassandraVersion = builder.cassandraVersion;
     this.partitioner = builder.partitioner;
     this.tokens = (builder.tokens == null) ? Collections.emptySet() : builder.tokens;
+    this.hostId = builder.hostId;
+    this.schemaVersion = builder.schemaVersion;
     this.extras = (builder.extras == null) ? Collections.emptyMap() : builder.extras;
   }
 
@@ -95,6 +100,16 @@ public class DefaultNodeInfo implements NodeInfo {
     return extras;
   }
 
+  @Override
+  public UUID getHostId() {
+    return hostId;
+  }
+
+  @Override
+  public UUID getSchemaVersion() {
+    return schemaVersion;
+  }
+
   public static class Builder {
     private InetSocketAddress connectAddress;
     private Optional<InetAddress> broadcastAddress = Optional.empty();
@@ -105,6 +120,8 @@ public class DefaultNodeInfo implements NodeInfo {
     private String partitioner;
     private Set<String> tokens;
     private Map<String, Object> extras;
+    private UUID hostId;
+    private UUID schemaVersion;
 
     public Builder withConnectAddress(InetSocketAddress address) {
       this.connectAddress = address;
@@ -147,6 +164,16 @@ public class DefaultNodeInfo implements NodeInfo {
 
     public Builder withTokens(Set<String> tokens) {
       this.tokens = tokens;
+      return this;
+    }
+
+    public Builder withHostId(UUID hostId) {
+      this.hostId = hostId;
+      return this;
+    }
+
+    public Builder withSchemaVersion(UUID schemaVersion) {
+      this.schemaVersion = schemaVersion;
       return this;
     }
 

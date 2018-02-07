@@ -36,6 +36,8 @@ abstract class NodesRefresh implements MetadataRefresh {
     node.listenAddress = nodeInfo.getListenAddress();
     node.datacenter = nodeInfo.getDatacenter();
     node.rack = nodeInfo.getRack();
+    node.hostId = nodeInfo.getHostId();
+    node.schemaVersion = nodeInfo.getSchemaVersion();
     String versionString = nodeInfo.getCassandraVersion();
     try {
       node.cassandraVersion = CassandraVersion.parse(versionString);

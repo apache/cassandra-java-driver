@@ -17,10 +17,12 @@ package com.datastax.oss.driver.internal.core.metadata;
 
 import static com.datastax.oss.driver.Assertions.assertThat;
 
+import com.datastax.oss.driver.api.core.uuid.Uuids;
 import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import java.net.InetSocketAddress;
+import java.util.UUID;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
@@ -64,17 +66,26 @@ public class FullNodeListRefreshTest {
     // Given
     DefaultMetadata oldMetadata =
         new DefaultMetadata(ImmutableMap.of(ADDRESS1, node1, ADDRESS2, node2));
+
+    UUID hostId1 = Uuids.random();
+    UUID hostId2 = Uuids.random();
+    UUID schemaVersion1 = Uuids.random();
+    UUID schemaVersion2 = Uuids.random();
     Iterable<NodeInfo> newInfos =
         ImmutableList.of(
             DefaultNodeInfo.builder()
                 .withConnectAddress(ADDRESS1)
                 .withDatacenter("dc1")
                 .withRack("rack1")
+                .withHostId(hostId1)
+                .withSchemaVersion(schemaVersion1)
                 .build(),
             DefaultNodeInfo.builder()
                 .withConnectAddress(ADDRESS2)
                 .withDatacenter("dc1")
                 .withRack("rack2")
+                .withHostId(hostId2)
+                .withSchemaVersion(schemaVersion2)
                 .build());
     FullNodeListRefresh refresh = new FullNodeListRefresh(newInfos);
 
@@ -85,8 +96,12 @@ public class FullNodeListRefreshTest {
     assertThat(result.newMetadata.getNodes()).containsOnlyKeys(ADDRESS1, ADDRESS2);
     assertThat(node1.getDatacenter()).isEqualTo("dc1");
     assertThat(node1.getRack()).isEqualTo("rack1");
+    assertThat(node1.getHostId()).isEqualTo(hostId1);
+    assertThat(node1.getSchemaVersion()).isEqualTo(schemaVersion1);
     assertThat(node2.getDatacenter()).isEqualTo("dc1");
     assertThat(node2.getRack()).isEqualTo("rack2");
+    assertThat(node2.getHostId()).isEqualTo(hostId2);
+    assertThat(node2.getSchemaVersion()).isEqualTo(schemaVersion2);
     assertThat(result.events).isEmpty();
   }
 }
