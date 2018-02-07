@@ -23,6 +23,7 @@ import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.util.Map;
 import java.util.Optional;
+import java.util.UUID;
 
 /**
  * Metadata about a Cassandra node in the cluster.
@@ -98,4 +99,13 @@ public interface Node {
    * driver.
    */
   NodeDistance getDistance();
+
+  /**
+   * The host ID that is assigned to this node by Cassandra. This value can be used to uniquely
+   * identify a node even when the underling IP address changes.
+   */
+  UUID getHostId();
+
+  /** The current version that is associated with the node's schema. */
+  UUID getSchemaVersion();
 }

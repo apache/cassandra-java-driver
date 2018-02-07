@@ -18,10 +18,12 @@ package com.datastax.oss.driver.internal.core.metadata;
 import static com.datastax.oss.driver.Assertions.assertThat;
 
 import com.datastax.oss.driver.api.core.metadata.Node;
+import com.datastax.oss.driver.api.core.uuid.Uuids;
 import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
 import com.google.common.collect.ImmutableMap;
 import java.net.InetSocketAddress;
 import java.util.Map;
+import java.util.UUID;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
@@ -40,11 +42,15 @@ public class AddNodeRefreshTest {
   public void should_add_new_node() {
     // Given
     DefaultMetadata oldMetadata = new DefaultMetadata(ImmutableMap.of(ADDRESS1, node1));
+    UUID hostId = Uuids.random();
+    UUID schemaVersion = Uuids.random();
     DefaultNodeInfo newNodeInfo =
         DefaultNodeInfo.builder()
             .withConnectAddress(ADDRESS2)
             .withDatacenter("dc1")
             .withRack("rack2")
+            .withHostId(hostId)
+            .withSchemaVersion(schemaVersion)
             .build();
     AddNodeRefresh refresh = new AddNodeRefresh(newNodeInfo);
 
@@ -57,6 +63,8 @@ public class AddNodeRefreshTest {
     Node node2 = newNodes.get(ADDRESS2);
     assertThat(node2.getDatacenter()).isEqualTo("dc1");
     assertThat(node2.getRack()).isEqualTo("rack2");
+    assertThat(node2.getHostId()).isEqualTo(hostId);
+    assertThat(node2.getSchemaVersion()).isEqualTo(schemaVersion);
     assertThat(result.events).containsExactly(NodeStateEvent.added((DefaultNode) node2));
   }
 

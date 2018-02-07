@@ -221,7 +221,8 @@ public class DefaultTopologyMonitor implements TopologyMonitor {
     builder.withCassandraVersion(row.getString("release_version"));
     builder.withTokens(row.getSetOfString("tokens"));
     builder.withPartitioner(row.getString("partitioner"));
-
+    builder.withHostId(row.getUuid("host_id"));
+    builder.withSchemaVersion(row.getUuid("schema_version"));
     return builder;
   }
 

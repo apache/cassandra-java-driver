@@ -25,6 +25,7 @@ import java.net.InetSocketAddress;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.UUID;
 
 /**
  * Information about a node, returned by the {@link TopologyMonitor}.
@@ -111,4 +112,13 @@ public interface NodeInfo {
    * will be copied as-is into {@link Node#getExtras()}.
    */
   Map<String, Object> getExtras();
+
+  /**
+   * The host ID that is assigned to this host by cassandra. This value can be used to uniquely
+   * identify a host even when the underling ip address changes.
+   */
+  UUID getHostId();
+
+  /** The current version that is associated with the nodes schema. */
+  UUID getSchemaVersion();
 }
