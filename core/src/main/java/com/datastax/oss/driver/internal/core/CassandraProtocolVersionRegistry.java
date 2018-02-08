@@ -45,6 +45,8 @@ import org.slf4j.LoggerFactory;
 public class CassandraProtocolVersionRegistry implements ProtocolVersionRegistry {
 
   private static final Logger LOG = LoggerFactory.getLogger(CassandraProtocolVersionRegistry.class);
+  private static final ImmutableList<ProtocolVersion> values =
+      ImmutableList.<ProtocolVersion>builder().add(CoreProtocolVersion.values()).build();
 
   private final String logPrefix;
   private final NavigableMap<Integer, ProtocolVersion> versionsByCode;
@@ -175,6 +177,11 @@ public class CassandraProtocolVersionRegistry implements ProtocolVersionRegistry
       default:
         throw new IllegalArgumentException("Unhandled protocol feature: " + feature);
     }
+  }
+
+  @Override
+  public ImmutableList<ProtocolVersion> getValues() {
+    return values;
   }
 
   private NavigableMap<Integer, ProtocolVersion> byCode(ProtocolVersion[][] versionRanges) {

@@ -69,4 +69,7 @@ public interface ProtocolVersionRegistry {
 
   /** Whether a given version supports a given feature. */
   boolean supports(ProtocolVersion version, ProtocolFeature feature);
+
+  /** @return all the values known to this driver instance. */
+  Iterable<ProtocolVersion> getValues();
 }
