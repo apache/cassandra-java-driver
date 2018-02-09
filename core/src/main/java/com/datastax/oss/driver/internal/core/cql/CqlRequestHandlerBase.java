@@ -26,8 +26,8 @@ import com.datastax.oss.driver.api.core.cql.AsyncResultSet;
 import com.datastax.oss.driver.api.core.cql.ExecutionInfo;
 import com.datastax.oss.driver.api.core.cql.Statement;
 import com.datastax.oss.driver.api.core.metadata.Node;
-import com.datastax.oss.driver.api.core.metrics.CoreNodeMetric;
 import com.datastax.oss.driver.api.core.metrics.CoreSessionMetric;
+import com.datastax.oss.driver.api.core.metrics.DefaultNodeMetric;
 import com.datastax.oss.driver.api.core.retry.RetryDecision;
 import com.datastax.oss.driver.api.core.retry.RetryPolicy;
 import com.datastax.oss.driver.api.core.servererrors.BootstrappingException;
@@ -362,7 +362,9 @@ public abstract class CqlRequestHandlerBase {
               channel,
               error);
           recordError(node, error);
-          ((DefaultNode) node).getMetricUpdater().incrementCounter(CoreNodeMetric.UNSENT_REQUESTS);
+          ((DefaultNode) node)
+              .getMetricUpdater()
+              .incrementCounter(DefaultNodeMetric.UNSENT_REQUESTS);
           sendRequest(null, execution, retryCount, scheduleNextExecution); // try next node
         }
       } else {
@@ -399,7 +401,7 @@ public abstract class CqlRequestHandlerBase {
                           startedSpeculativeExecutionsCount.incrementAndGet();
                           ((DefaultNode) node)
                               .getMetricUpdater()
-                              .incrementCounter(CoreNodeMetric.SPECULATIVE_EXECUTIONS);
+                              .incrementCounter(DefaultNodeMetric.SPECULATIVE_EXECUTIONS);
                           sendRequest(null, nextExecution, 0, true);
                         }
                       },
@@ -421,7 +423,7 @@ public abstract class CqlRequestHandlerBase {
       ((DefaultNode) node)
           .getMetricUpdater()
           .updateTimer(
-              CoreNodeMetric.CQL_MESSAGES, System.nanoTime() - start, TimeUnit.NANOSECONDS);
+              DefaultNodeMetric.CQL_MESSAGES, System.nanoTime() - start, TimeUnit.NANOSECONDS);
       inFlightCallbacks.remove(this);
       if (result.isDone()) {
         return;
@@ -519,7 +521,7 @@ public abstract class CqlRequestHandlerBase {
           || error instanceof FunctionFailureException
           || error instanceof ProtocolError) {
         LOG.debug("[{}] Unrecoverable error, rethrowing", logPrefix);
-        metricUpdater.incrementCounter(CoreNodeMetric.OTHER_ERRORS);
+        metricUpdater.incrementCounter(DefaultNodeMetric.OTHER_ERRORS);
         setFinalError(error);
       } else {
         RetryDecision decision;
@@ -536,9 +538,9 @@ public abstract class CqlRequestHandlerBase {
           updateErrorMetrics(
               metricUpdater,
               decision,
-              CoreNodeMetric.READ_TIMEOUTS,
-              CoreNodeMetric.RETRIES_ON_READ_TIMEOUT,
-              CoreNodeMetric.IGNORES_ON_READ_TIMEOUT);
+              DefaultNodeMetric.READ_TIMEOUTS,
+              DefaultNodeMetric.RETRIES_ON_READ_TIMEOUT,
+              DefaultNodeMetric.IGNORES_ON_READ_TIMEOUT);
         } else if (error instanceof WriteTimeoutException) {
           WriteTimeoutException writeTimeout = (WriteTimeoutException) error;
           decision =
@@ -554,9 +556,9 @@ public abstract class CqlRequestHandlerBase {
           updateErrorMetrics(
               metricUpdater,
               decision,
-              CoreNodeMetric.WRITE_TIMEOUTS,
-              CoreNodeMetric.RETRIES_ON_WRITE_TIMEOUT,
-              CoreNodeMetric.IGNORES_ON_WRITE_TIMEOUT);
+              DefaultNodeMetric.WRITE_TIMEOUTS,
+              DefaultNodeMetric.RETRIES_ON_WRITE_TIMEOUT,
+              DefaultNodeMetric.IGNORES_ON_WRITE_TIMEOUT);
         } else if (error instanceof UnavailableException) {
           UnavailableException unavailable = (UnavailableException) error;
           decision =
@@ -569,9 +571,9 @@ public abstract class CqlRequestHandlerBase {
           updateErrorMetrics(
               metricUpdater,
               decision,
-              CoreNodeMetric.UNAVAILABLES,
-              CoreNodeMetric.RETRIES_ON_UNAVAILABLE,
-              CoreNodeMetric.IGNORES_ON_UNAVAILABLE);
+              DefaultNodeMetric.UNAVAILABLES,
+              DefaultNodeMetric.RETRIES_ON_UNAVAILABLE,
+              DefaultNodeMetric.IGNORES_ON_UNAVAILABLE);
         } else {
           decision =
               isIdempotent
@@ -580,9 +582,9 @@ public abstract class CqlRequestHandlerBase {
           updateErrorMetrics(
               metricUpdater,
               decision,
-              CoreNodeMetric.OTHER_ERRORS,
-              CoreNodeMetric.RETRIES_ON_OTHER_ERROR,
-              CoreNodeMetric.IGNORES_ON_OTHER_ERROR);
+              DefaultNodeMetric.OTHER_ERRORS,
+              DefaultNodeMetric.RETRIES_ON_OTHER_ERROR,
+              DefaultNodeMetric.IGNORES_ON_OTHER_ERROR);
         }
         processRetryDecision(decision, error);
       }
@@ -611,18 +613,18 @@ public abstract class CqlRequestHandlerBase {
     private void updateErrorMetrics(
         NodeMetricUpdater metricUpdater,
         RetryDecision decision,
-        CoreNodeMetric error,
-        CoreNodeMetric retriesOnError,
-        CoreNodeMetric ignoresOnError) {
+        DefaultNodeMetric error,
+        DefaultNodeMetric retriesOnError,
+        DefaultNodeMetric ignoresOnError) {
       metricUpdater.incrementCounter(error);
       switch (decision) {
         case RETRY_SAME:
         case RETRY_NEXT:
-          metricUpdater.incrementCounter(CoreNodeMetric.RETRIES);
+          metricUpdater.incrementCounter(DefaultNodeMetric.RETRIES);
           metricUpdater.incrementCounter(retriesOnError);
           break;
         case IGNORE:
-          metricUpdater.incrementCounter(CoreNodeMetric.IGNORES);
+          metricUpdater.incrementCounter(DefaultNodeMetric.IGNORES);
           metricUpdater.incrementCounter(ignoresOnError);
           break;
         case RETHROW:
@@ -647,9 +649,9 @@ public abstract class CqlRequestHandlerBase {
       updateErrorMetrics(
           ((DefaultNode) node).getMetricUpdater(),
           decision,
-          CoreNodeMetric.ABORTED_REQUESTS,
-          CoreNodeMetric.RETRIES_ON_ABORTED,
-          CoreNodeMetric.IGNORES_ON_ABORTED);
+          DefaultNodeMetric.ABORTED_REQUESTS,
+          DefaultNodeMetric.RETRIES_ON_ABORTED,
+          DefaultNodeMetric.IGNORES_ON_ABORTED);
     }
 
     public void cancel() {

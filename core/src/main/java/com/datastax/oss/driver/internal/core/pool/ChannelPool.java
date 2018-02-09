@@ -24,7 +24,7 @@ import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
 import com.datastax.oss.driver.api.core.config.DriverConfig;
 import com.datastax.oss.driver.api.core.loadbalancing.NodeDistance;
 import com.datastax.oss.driver.api.core.metadata.Node;
-import com.datastax.oss.driver.api.core.metrics.CoreNodeMetric;
+import com.datastax.oss.driver.api.core.metrics.DefaultNodeMetric;
 import com.datastax.oss.driver.internal.core.channel.ChannelEvent;
 import com.datastax.oss.driver.internal.core.channel.ChannelFactory;
 import com.datastax.oss.driver.internal.core.channel.ClusterNameMismatchException;
@@ -293,8 +293,8 @@ public class ChannelPool implements AsyncAutoCloseable {
               .getMetricUpdater()
               .incrementCounter(
                   error instanceof AuthenticationException
-                      ? CoreNodeMetric.AUTHENTICATION_ERRORS
-                      : CoreNodeMetric.CONNECTION_INIT_ERRORS);
+                      ? DefaultNodeMetric.AUTHENTICATION_ERRORS
+                      : DefaultNodeMetric.CONNECTION_INIT_ERRORS);
           if (error instanceof ClusterNameMismatchException
               || error instanceof UnsupportedProtocolVersionException) {
             // This will likely be thrown by all channels, but finish the loop cleanly

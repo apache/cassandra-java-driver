@@ -19,7 +19,7 @@ import com.codahale.metrics.Gauge;
 import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
 import com.datastax.oss.driver.api.core.config.DriverConfigProfile;
 import com.datastax.oss.driver.api.core.metadata.Node;
-import com.datastax.oss.driver.api.core.metrics.CoreNodeMetric;
+import com.datastax.oss.driver.api.core.metrics.DefaultNodeMetric;
 import com.datastax.oss.driver.api.core.metrics.NodeMetric;
 import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
 import com.datastax.oss.driver.internal.core.pool.ChannelPool;
@@ -42,43 +42,43 @@ public class DefaultNodeMetricUpdater extends MetricUpdaterBase<NodeMetric>
 
     DriverConfigProfile config = context.config().getDefaultProfile();
 
-    if (enabledMetrics.contains(CoreNodeMetric.OPEN_CONNECTIONS)) {
+    if (enabledMetrics.contains(DefaultNodeMetric.OPEN_CONNECTIONS)) {
       metricRegistry.register(
-          buildFullName(CoreNodeMetric.OPEN_CONNECTIONS),
+          buildFullName(DefaultNodeMetric.OPEN_CONNECTIONS),
           (Gauge<Integer>) node::getOpenConnections);
     }
     initializePoolGauge(
-        CoreNodeMetric.AVAILABLE_STREAMS, node, ChannelPool::getAvailableIds, context);
-    initializePoolGauge(CoreNodeMetric.IN_FLIGHT, node, ChannelPool::getInFlight, context);
+        DefaultNodeMetric.AVAILABLE_STREAMS, node, ChannelPool::getAvailableIds, context);
+    initializePoolGauge(DefaultNodeMetric.IN_FLIGHT, node, ChannelPool::getInFlight, context);
     initializePoolGauge(
-        CoreNodeMetric.ORPHANED_STREAMS, node, ChannelPool::getOrphanedIds, context);
+        DefaultNodeMetric.ORPHANED_STREAMS, node, ChannelPool::getOrphanedIds, context);
     initializeHdrTimer(
-        CoreNodeMetric.CQL_MESSAGES,
+        DefaultNodeMetric.CQL_MESSAGES,
         config,
         DefaultDriverOption.METRICS_NODE_CQL_MESSAGES_HIGHEST,
         DefaultDriverOption.METRICS_NODE_CQL_MESSAGES_DIGITS,
         DefaultDriverOption.METRICS_NODE_CQL_MESSAGES_INTERVAL);
-    initializeDefaultCounter(CoreNodeMetric.UNSENT_REQUESTS);
-    initializeDefaultCounter(CoreNodeMetric.ABORTED_REQUESTS);
-    initializeDefaultCounter(CoreNodeMetric.WRITE_TIMEOUTS);
-    initializeDefaultCounter(CoreNodeMetric.READ_TIMEOUTS);
-    initializeDefaultCounter(CoreNodeMetric.UNAVAILABLES);
-    initializeDefaultCounter(CoreNodeMetric.OTHER_ERRORS);
-    initializeDefaultCounter(CoreNodeMetric.RETRIES);
-    initializeDefaultCounter(CoreNodeMetric.RETRIES_ON_ABORTED);
-    initializeDefaultCounter(CoreNodeMetric.RETRIES_ON_READ_TIMEOUT);
-    initializeDefaultCounter(CoreNodeMetric.RETRIES_ON_WRITE_TIMEOUT);
-    initializeDefaultCounter(CoreNodeMetric.RETRIES_ON_UNAVAILABLE);
-    initializeDefaultCounter(CoreNodeMetric.RETRIES_ON_OTHER_ERROR);
-    initializeDefaultCounter(CoreNodeMetric.IGNORES);
-    initializeDefaultCounter(CoreNodeMetric.IGNORES_ON_ABORTED);
-    initializeDefaultCounter(CoreNodeMetric.IGNORES_ON_READ_TIMEOUT);
-    initializeDefaultCounter(CoreNodeMetric.IGNORES_ON_WRITE_TIMEOUT);
-    initializeDefaultCounter(CoreNodeMetric.IGNORES_ON_UNAVAILABLE);
-    initializeDefaultCounter(CoreNodeMetric.IGNORES_ON_OTHER_ERROR);
-    initializeDefaultCounter(CoreNodeMetric.SPECULATIVE_EXECUTIONS);
-    initializeDefaultCounter(CoreNodeMetric.CONNECTION_INIT_ERRORS);
-    initializeDefaultCounter(CoreNodeMetric.AUTHENTICATION_ERRORS);
+    initializeDefaultCounter(DefaultNodeMetric.UNSENT_REQUESTS);
+    initializeDefaultCounter(DefaultNodeMetric.ABORTED_REQUESTS);
+    initializeDefaultCounter(DefaultNodeMetric.WRITE_TIMEOUTS);
+    initializeDefaultCounter(DefaultNodeMetric.READ_TIMEOUTS);
+    initializeDefaultCounter(DefaultNodeMetric.UNAVAILABLES);
+    initializeDefaultCounter(DefaultNodeMetric.OTHER_ERRORS);
+    initializeDefaultCounter(DefaultNodeMetric.RETRIES);
+    initializeDefaultCounter(DefaultNodeMetric.RETRIES_ON_ABORTED);
+    initializeDefaultCounter(DefaultNodeMetric.RETRIES_ON_READ_TIMEOUT);
+    initializeDefaultCounter(DefaultNodeMetric.RETRIES_ON_WRITE_TIMEOUT);
+    initializeDefaultCounter(DefaultNodeMetric.RETRIES_ON_UNAVAILABLE);
+    initializeDefaultCounter(DefaultNodeMetric.RETRIES_ON_OTHER_ERROR);
+    initializeDefaultCounter(DefaultNodeMetric.IGNORES);
+    initializeDefaultCounter(DefaultNodeMetric.IGNORES_ON_ABORTED);
+    initializeDefaultCounter(DefaultNodeMetric.IGNORES_ON_READ_TIMEOUT);
+    initializeDefaultCounter(DefaultNodeMetric.IGNORES_ON_WRITE_TIMEOUT);
+    initializeDefaultCounter(DefaultNodeMetric.IGNORES_ON_UNAVAILABLE);
+    initializeDefaultCounter(DefaultNodeMetric.IGNORES_ON_OTHER_ERROR);
+    initializeDefaultCounter(DefaultNodeMetric.SPECULATIVE_EXECUTIONS);
+    initializeDefaultCounter(DefaultNodeMetric.CONNECTION_INIT_ERRORS);
+    initializeDefaultCounter(DefaultNodeMetric.AUTHENTICATION_ERRORS);
   }
 
   @Override

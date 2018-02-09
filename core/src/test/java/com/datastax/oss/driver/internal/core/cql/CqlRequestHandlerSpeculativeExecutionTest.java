@@ -25,7 +25,7 @@ import com.datastax.oss.driver.api.core.NoNodeAvailableException;
 import com.datastax.oss.driver.api.core.cql.AsyncResultSet;
 import com.datastax.oss.driver.api.core.cql.SimpleStatement;
 import com.datastax.oss.driver.api.core.metadata.Node;
-import com.datastax.oss.driver.api.core.metrics.CoreNodeMetric;
+import com.datastax.oss.driver.api.core.metrics.DefaultNodeMetric;
 import com.datastax.oss.driver.api.core.servererrors.BootstrappingException;
 import com.datastax.oss.driver.api.core.specex.SpeculativeExecutionPolicy;
 import com.datastax.oss.driver.internal.core.util.concurrent.ScheduledTaskCapturingEventLoop;
@@ -107,7 +107,7 @@ public class CqlRequestHandlerSpeculativeExecutionTest extends CqlRequestHandler
           .isEqualTo(firstExecutionDelay);
       Mockito.verifyNoMoreInteractions(nodeMetricUpdater1);
       firstExecutionTask.run();
-      Mockito.verify(nodeMetricUpdater1).incrementCounter(CoreNodeMetric.SPECULATIVE_EXECUTIONS);
+      Mockito.verify(nodeMetricUpdater1).incrementCounter(DefaultNodeMetric.SPECULATIVE_EXECUTIONS);
       node2Behavior.verifyWrite();
       node2Behavior.setWriteSuccess();
 
@@ -117,7 +117,7 @@ public class CqlRequestHandlerSpeculativeExecutionTest extends CqlRequestHandler
           .isEqualTo(secondExecutionDelay);
       Mockito.verifyNoMoreInteractions(nodeMetricUpdater2);
       secondExecutionTask.run();
-      Mockito.verify(nodeMetricUpdater2).incrementCounter(CoreNodeMetric.SPECULATIVE_EXECUTIONS);
+      Mockito.verify(nodeMetricUpdater2).incrementCounter(DefaultNodeMetric.SPECULATIVE_EXECUTIONS);
       node3Behavior.verifyWrite();
       node3Behavior.setWriteSuccess();
 
@@ -169,7 +169,7 @@ public class CqlRequestHandlerSpeculativeExecutionTest extends CqlRequestHandler
       assertThat(firstExecutionTask.isCancelled()).isTrue();
 
       Mockito.verify(nodeMetricUpdater1)
-          .updateTimer(eq(CoreNodeMetric.CQL_MESSAGES), anyLong(), eq(TimeUnit.NANOSECONDS));
+          .updateTimer(eq(DefaultNodeMetric.CQL_MESSAGES), anyLong(), eq(TimeUnit.NANOSECONDS));
       Mockito.verifyNoMoreInteractions(nodeMetricUpdater1);
 
       // Run the task anyway; we're bending reality a bit here since the task is already cancelled
