@@ -18,7 +18,7 @@ package com.datastax.oss.driver.api.core.cql;
 import com.datastax.oss.protocol.internal.ProtocolConstants;
 
 /** A default batch type supported by the driver out of the box. */
-public enum CoreBatchType implements BatchType {
+public enum DefaultBatchType implements BatchType {
   /**
    * A logged batch: Cassandra will first write the batch to its distributed batch log to ensure the
    * atomicity of the batch (atomicity meaning that if any statement in the batch succeeds, all will
@@ -41,7 +41,7 @@ public enum CoreBatchType implements BatchType {
 
   private final byte code;
 
-  CoreBatchType(byte code) {
+  DefaultBatchType(byte code) {
     this.code = code;
   }
 
