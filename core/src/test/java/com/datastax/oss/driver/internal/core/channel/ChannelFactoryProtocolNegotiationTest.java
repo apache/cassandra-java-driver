@@ -19,7 +19,7 @@ import static com.datastax.oss.driver.Assertions.assertThat;
 
 import com.datastax.oss.driver.api.core.DefaultProtocolVersion;
 import com.datastax.oss.driver.api.core.UnsupportedProtocolVersionException;
-import com.datastax.oss.driver.api.core.config.CoreDriverOption;
+import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
 import com.datastax.oss.driver.internal.core.TestResponses;
 import com.datastax.oss.protocol.internal.Frame;
 import com.datastax.oss.protocol.internal.ProtocolConstants;
@@ -37,9 +37,9 @@ public class ChannelFactoryProtocolNegotiationTest extends ChannelFactoryTestBas
   @Test
   public void should_succeed_if_version_specified_and_supported_by_server() {
     // Given
-    Mockito.when(defaultConfigProfile.isDefined(CoreDriverOption.PROTOCOL_VERSION))
+    Mockito.when(defaultConfigProfile.isDefined(DefaultDriverOption.PROTOCOL_VERSION))
         .thenReturn(true);
-    Mockito.when(defaultConfigProfile.getString(CoreDriverOption.PROTOCOL_VERSION))
+    Mockito.when(defaultConfigProfile.getString(DefaultDriverOption.PROTOCOL_VERSION))
         .thenReturn("V4");
     Mockito.when(protocolVersionRegistry.fromName("V4")).thenReturn(DefaultProtocolVersion.V4);
     ChannelFactory factory = newChannelFactory();
@@ -60,9 +60,9 @@ public class ChannelFactoryProtocolNegotiationTest extends ChannelFactoryTestBas
   @UseDataProvider("unsupportedProtocolCodes")
   public void should_fail_if_version_specified_and_not_supported_by_server(int errorCode) {
     // Given
-    Mockito.when(defaultConfigProfile.isDefined(CoreDriverOption.PROTOCOL_VERSION))
+    Mockito.when(defaultConfigProfile.isDefined(DefaultDriverOption.PROTOCOL_VERSION))
         .thenReturn(true);
-    Mockito.when(defaultConfigProfile.getString(CoreDriverOption.PROTOCOL_VERSION))
+    Mockito.when(defaultConfigProfile.getString(DefaultDriverOption.PROTOCOL_VERSION))
         .thenReturn("V4");
     Mockito.when(protocolVersionRegistry.fromName("V4")).thenReturn(DefaultProtocolVersion.V4);
     ChannelFactory factory = newChannelFactory();
@@ -92,7 +92,7 @@ public class ChannelFactoryProtocolNegotiationTest extends ChannelFactoryTestBas
   @Test
   public void should_succeed_if_version_not_specified_and_server_supports_latest_supported() {
     // Given
-    Mockito.when(defaultConfigProfile.isDefined(CoreDriverOption.PROTOCOL_VERSION))
+    Mockito.when(defaultConfigProfile.isDefined(DefaultDriverOption.PROTOCOL_VERSION))
         .thenReturn(false);
     Mockito.when(protocolVersionRegistry.highestNonBeta()).thenReturn(DefaultProtocolVersion.V4);
     ChannelFactory factory = newChannelFactory();
@@ -118,7 +118,7 @@ public class ChannelFactoryProtocolNegotiationTest extends ChannelFactoryTestBas
   @UseDataProvider("unsupportedProtocolCodes")
   public void should_negotiate_if_version_not_specified_and_server_supports_legacy(int errorCode) {
     // Given
-    Mockito.when(defaultConfigProfile.isDefined(CoreDriverOption.PROTOCOL_VERSION))
+    Mockito.when(defaultConfigProfile.isDefined(DefaultDriverOption.PROTOCOL_VERSION))
         .thenReturn(false);
     Mockito.when(protocolVersionRegistry.highestNonBeta()).thenReturn(DefaultProtocolVersion.V4);
     Mockito.when(protocolVersionRegistry.downgrade(DefaultProtocolVersion.V4))
@@ -152,7 +152,7 @@ public class ChannelFactoryProtocolNegotiationTest extends ChannelFactoryTestBas
   @UseDataProvider("unsupportedProtocolCodes")
   public void should_fail_if_negotiation_finds_no_matching_version(int errorCode) {
     // Given
-    Mockito.when(defaultConfigProfile.isDefined(CoreDriverOption.PROTOCOL_VERSION))
+    Mockito.when(defaultConfigProfile.isDefined(DefaultDriverOption.PROTOCOL_VERSION))
         .thenReturn(false);
     Mockito.when(protocolVersionRegistry.highestNonBeta()).thenReturn(DefaultProtocolVersion.V4);
     Mockito.when(protocolVersionRegistry.downgrade(DefaultProtocolVersion.V4))

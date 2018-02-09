@@ -22,7 +22,7 @@ import static org.mockito.ArgumentMatchers.anyString;
 import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.DefaultConsistencyLevel;
 import com.datastax.oss.driver.api.core.ProtocolVersion;
-import com.datastax.oss.driver.api.core.config.CoreDriverOption;
+import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
 import com.datastax.oss.driver.api.core.config.DriverConfig;
 import com.datastax.oss.driver.api.core.config.DriverConfigProfile;
 import com.datastax.oss.driver.api.core.metadata.Node;
@@ -92,16 +92,17 @@ public class RequestHandlerTestHarness implements AutoCloseable {
     Mockito.when(context.nettyOptions()).thenReturn(nettyOptions);
 
     // TODO make configurable in the test, also handle profiles
-    Mockito.when(defaultConfigProfile.getDuration(CoreDriverOption.REQUEST_TIMEOUT))
+    Mockito.when(defaultConfigProfile.getDuration(DefaultDriverOption.REQUEST_TIMEOUT))
         .thenReturn(Duration.ofMillis(500));
-    Mockito.when(defaultConfigProfile.getString(CoreDriverOption.REQUEST_CONSISTENCY))
+    Mockito.when(defaultConfigProfile.getString(DefaultDriverOption.REQUEST_CONSISTENCY))
         .thenReturn(DefaultConsistencyLevel.LOCAL_ONE.name());
-    Mockito.when(defaultConfigProfile.getInt(CoreDriverOption.REQUEST_PAGE_SIZE)).thenReturn(5000);
-    Mockito.when(defaultConfigProfile.getString(CoreDriverOption.REQUEST_SERIAL_CONSISTENCY))
+    Mockito.when(defaultConfigProfile.getInt(DefaultDriverOption.REQUEST_PAGE_SIZE))
+        .thenReturn(5000);
+    Mockito.when(defaultConfigProfile.getString(DefaultDriverOption.REQUEST_SERIAL_CONSISTENCY))
         .thenReturn(DefaultConsistencyLevel.SERIAL.name());
-    Mockito.when(defaultConfigProfile.getBoolean(CoreDriverOption.REQUEST_DEFAULT_IDEMPOTENCE))
+    Mockito.when(defaultConfigProfile.getBoolean(DefaultDriverOption.REQUEST_DEFAULT_IDEMPOTENCE))
         .thenReturn(builder.defaultIdempotence);
-    Mockito.when(defaultConfigProfile.getBoolean(CoreDriverOption.PREPARE_ON_ALL_NODES))
+    Mockito.when(defaultConfigProfile.getBoolean(DefaultDriverOption.PREPARE_ON_ALL_NODES))
         .thenReturn(true);
 
     Mockito.when(config.getDefaultProfile()).thenReturn(defaultConfigProfile);

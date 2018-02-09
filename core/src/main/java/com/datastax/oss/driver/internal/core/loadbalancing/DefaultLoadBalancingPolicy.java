@@ -16,7 +16,7 @@
 package com.datastax.oss.driver.internal.core.loadbalancing;
 
 import com.datastax.oss.driver.api.core.CqlIdentifier;
-import com.datastax.oss.driver.api.core.config.CoreDriverOption;
+import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
 import com.datastax.oss.driver.api.core.config.DriverConfigProfile;
 import com.datastax.oss.driver.api.core.context.DriverContext;
 import com.datastax.oss.driver.api.core.loadbalancing.LoadBalancingPolicy;
@@ -114,7 +114,7 @@ public class DefaultLoadBalancingPolicy implements LoadBalancingPolicy {
     } else if (localDc == null) {
       throw new IllegalStateException(
           "You provided explicit contact points, the local DC must be specified (see "
-              + CoreDriverOption.LOAD_BALANCING_LOCAL_DATACENTER.getPath()
+              + DefaultDriverOption.LOAD_BALANCING_LOCAL_DATACENTER.getPath()
               + " in the config)");
     } else {
       ImmutableMap.Builder<InetSocketAddress, String> builder = ImmutableMap.builder();
@@ -271,8 +271,8 @@ public class DefaultLoadBalancingPolicy implements LoadBalancingPolicy {
 
   private static String getLocalDcFromConfig(DriverContext context) {
     DriverConfigProfile config = context.config().getDefaultProfile();
-    return (config.isDefined(CoreDriverOption.LOAD_BALANCING_LOCAL_DATACENTER))
-        ? config.getString(CoreDriverOption.LOAD_BALANCING_LOCAL_DATACENTER)
+    return (config.isDefined(DefaultDriverOption.LOAD_BALANCING_LOCAL_DATACENTER))
+        ? config.getString(DefaultDriverOption.LOAD_BALANCING_LOCAL_DATACENTER)
         : null;
   }
 
@@ -280,7 +280,7 @@ public class DefaultLoadBalancingPolicy implements LoadBalancingPolicy {
   private static Predicate<Node> getFilterFromConfig(DriverContext context) {
     return (Predicate<Node>)
         Reflection.buildFromConfig(
-                context, CoreDriverOption.LOAD_BALANCING_FILTER_CLASS, Predicate.class)
+                context, DefaultDriverOption.LOAD_BALANCING_FILTER_CLASS, Predicate.class)
             .orElse(INCLUDE_ALL_NODES);
   }
 }

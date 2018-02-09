@@ -137,12 +137,12 @@ config.getNamedProfiles().forEach((name, profile) -> ...);
 [DriverConfigProfile] has typed option getters:
 
 ```java
-Duration requestTimeout = defaultProfile.getDuration(CoreDriverOption.REQUEST_TIMEOUT);
-int maxRequestsPerConnection = defaultProfile.getInt(CoreDriverOption.CONNECTION_MAX_REQUESTS);
+Duration requestTimeout = defaultProfile.getDuration(DefaultDriverOption.REQUEST_TIMEOUT);
+int maxRequestsPerConnection = defaultProfile.getInt(DefaultDriverOption.CONNECTION_MAX_REQUESTS);
 ```
 
-Note that we use the [CoreDriverOption] enum to access built-in options, but the method takes a more
-generic [DriverOption] interface. This is intended to allow custom options, see the
+Note that we use the [DefaultDriverOption] enum to access built-in options, but the method takes a
+more generic [DriverOption] interface. This is intended to allow custom options, see the
 [Advanced topics](#custom-options) section.
 
 #### Derived profiles
@@ -158,7 +158,7 @@ that overrides a subset of options:
 DriverConfigProfile defaultProfile = session.getContext().config().getDefaultProfile();
 DriverConfigProfile dynamicProfile =
     defaultProfile.withConsistencyLevel(
-        CoreDriverOption.REQUEST_CONSISTENCY, ConsistencyLevel.EACH_QUORUM);
+        DefaultDriverOption.REQUEST_CONSISTENCY, ConsistencyLevel.EACH_QUORUM);
 SimpleStatement s =
     SimpleStatement.builder("SELECT name FROM user WHERE id = 1")
         .withConfigProfile(dynamicProfile)
@@ -229,13 +229,13 @@ implementation to the rest of the driver. Here we use the built-in class, but te
 TypeSafe Config object with the previous method:
 
 ```java
-import com.datastax.oss.driver.api.core.config.CoreDriverOption;
+import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
 import com.datastax.oss.driver.api.core.config.DriverConfigLoader;
 import com.datastax.oss.driver.internal.core.config.typesafe.DefaultDriverConfigLoader;
 
 DriverConfigLoader session1ConfigLoader =
     new DefaultDriverConfigLoader(
-        () -> loadConfig("session1"), CoreDriverOption.values());
+        () -> loadConfig("session1"), DefaultDriverOption.values());
 ```
 
 Finally, pass the config loader when building the driver:
@@ -265,7 +265,7 @@ DriverConfigLoader loader =
           Config application = ConfigFactory.parseString(configSource);
           return application.withFallback(reference);
         },
-        CoreDriverOption.values());
+        DefaultDriverOption.values());
 
 CqlSession session = CqlSession.builder().withConfigLoader(loader).build();
 ```
@@ -408,7 +408,7 @@ Pass the options to the config loader:
 CqlSession session = CqlSession.builder()
     .withConfigLoader(new DefaultDriverConfigLoader(
         DefaultDriverConfigLoader.DEFAULT_CONFIG_SUPPLIER,
-        CoreDriverOption.values(), // don't forget to keep the core options
+        DefaultDriverOption.values(), // don't forget to keep the core options
         MyCustomOption.values()))
     .build();
 ```
@@ -436,7 +436,7 @@ config.getDefaultProfile().getInt(MyCustomOption.AWESOMENESS_FACTOR);
 [DriverConfig]:        http://docs.datastax.com/en/drivers/java/4.0/com/datastax/oss/driver/api/core/config/DriverConfig.html
 [DriverConfigProfile]: http://docs.datastax.com/en/drivers/java/4.0/com/datastax/oss/driver/api/core/config/DriverConfigProfile.html
 [DriverOption]:        http://docs.datastax.com/en/drivers/java/4.0/com/datastax/oss/driver/api/core/config/DriverOption.html
-[CoreDriverOption]:    http://docs.datastax.com/en/drivers/java/4.0/com/datastax/oss/driver/api/core/config/CoreDriverOption.html
+[DefaultDriverOption]: http://docs.datastax.com/en/drivers/java/4.0/com/datastax/oss/driver/api/core/config/DefaultDriverOption.html
 [DriverConfigLoader]:  http://docs.datastax.com/en/drivers/java/4.0/com/datastax/oss/driver/api/core/config/DriverConfigLoader.html
 
 [TypeSafe Config]: https://github.com/typesafehub/config

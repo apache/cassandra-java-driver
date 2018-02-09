@@ -18,7 +18,7 @@ package com.datastax.oss.driver.internal.core.metadata.schema.queries;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import com.datastax.oss.driver.api.core.CqlIdentifier;
-import com.datastax.oss.driver.api.core.config.CoreDriverOption;
+import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
 import com.datastax.oss.driver.api.core.config.DriverConfigProfile;
 import com.datastax.oss.driver.api.core.metadata.Node;
 import com.datastax.oss.driver.internal.core.adminrequest.AdminResult;
@@ -50,9 +50,9 @@ public abstract class SchemaQueriesTest {
   @Before
   public void setup() {
     // Whatever, not actually used because the requests are mocked
-    Mockito.when(config.getDuration(CoreDriverOption.METADATA_SCHEMA_REQUEST_TIMEOUT))
+    Mockito.when(config.getDuration(DefaultDriverOption.METADATA_SCHEMA_REQUEST_TIMEOUT))
         .thenReturn(Duration.ZERO);
-    Mockito.when(config.getInt(CoreDriverOption.METADATA_SCHEMA_REQUEST_PAGE_SIZE))
+    Mockito.when(config.getInt(DefaultDriverOption.METADATA_SCHEMA_REQUEST_PAGE_SIZE))
         .thenReturn(5000);
 
     channel = new EmbeddedChannel();

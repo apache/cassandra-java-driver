@@ -15,7 +15,7 @@
  */
 package com.datastax.oss.driver.internal.core.metadata;
 
-import com.datastax.oss.driver.api.core.config.CoreDriverOption;
+import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
 import com.datastax.oss.driver.api.core.config.DriverConfigProfile;
 import com.datastax.oss.driver.api.core.metadata.Node;
 import com.datastax.oss.driver.api.core.metadata.NodeState;
@@ -74,12 +74,12 @@ class SchemaAgreementChecker {
     this.port = port;
     this.logPrefix = logPrefix;
     DriverConfigProfile config = context.config().getDefaultProfile();
-    this.queryTimeout = config.getDuration(CoreDriverOption.CONTROL_CONNECTION_TIMEOUT);
+    this.queryTimeout = config.getDuration(DefaultDriverOption.CONTROL_CONNECTION_TIMEOUT);
     this.intervalNs =
-        config.getDuration(CoreDriverOption.CONTROL_CONNECTION_AGREEMENT_INTERVAL).toNanos();
+        config.getDuration(DefaultDriverOption.CONTROL_CONNECTION_AGREEMENT_INTERVAL).toNanos();
     this.timeoutNs =
-        config.getDuration(CoreDriverOption.CONTROL_CONNECTION_AGREEMENT_TIMEOUT).toNanos();
-    this.warnOnFailure = config.getBoolean(CoreDriverOption.CONTROL_CONNECTION_AGREEMENT_WARN);
+        config.getDuration(DefaultDriverOption.CONTROL_CONNECTION_AGREEMENT_TIMEOUT).toNanos();
+    this.warnOnFailure = config.getBoolean(DefaultDriverOption.CONTROL_CONNECTION_AGREEMENT_WARN);
     this.start = System.nanoTime();
   }
 

@@ -19,7 +19,7 @@ import com.datastax.oss.driver.api.core.AllNodesFailedException;
 import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.DriverTimeoutException;
 import com.datastax.oss.driver.api.core.ProtocolVersion;
-import com.datastax.oss.driver.api.core.config.CoreDriverOption;
+import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
 import com.datastax.oss.driver.api.core.config.DriverConfig;
 import com.datastax.oss.driver.api.core.config.DriverConfigProfile;
 import com.datastax.oss.driver.api.core.cql.PrepareRequest;
@@ -143,10 +143,10 @@ public abstract class CqlPrepareHandlerBase {
         new Prepare(request.getQuery(), (keyspace == null) ? null : keyspace.asInternal());
     this.scheduler = context.nettyOptions().ioEventLoopGroup().next();
 
-    this.timeout = configProfile.getDuration(CoreDriverOption.REQUEST_TIMEOUT);
+    this.timeout = configProfile.getDuration(DefaultDriverOption.REQUEST_TIMEOUT);
     this.timeoutFuture = scheduleTimeout(timeout);
     this.retryPolicy = context.retryPolicy();
-    this.prepareOnAllNodes = configProfile.getBoolean(CoreDriverOption.PREPARE_ON_ALL_NODES);
+    this.prepareOnAllNodes = configProfile.getBoolean(DefaultDriverOption.PREPARE_ON_ALL_NODES);
     sendRequest(null, 0);
   }
 

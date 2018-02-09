@@ -17,7 +17,7 @@ package com.datastax.oss.driver.api.core.specex;
 
 import static com.datastax.oss.driver.Assertions.assertThat;
 
-import com.datastax.oss.driver.api.core.config.CoreDriverOption;
+import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
 import com.datastax.oss.driver.api.core.config.DriverConfig;
 import com.datastax.oss.driver.api.core.config.DriverConfigProfile;
 import com.datastax.oss.driver.api.core.context.DriverContext;
@@ -44,9 +44,9 @@ public class ConstantSpeculativeExecutionPolicyTest {
   }
 
   private void mockOptions(int maxExecutions, long constantDelayMillis) {
-    Mockito.when(defaultProfile.getInt(CoreDriverOption.SPECULATIVE_EXECUTION_MAX))
+    Mockito.when(defaultProfile.getInt(DefaultDriverOption.SPECULATIVE_EXECUTION_MAX))
         .thenReturn(maxExecutions);
-    Mockito.when(defaultProfile.getDuration(CoreDriverOption.SPECULATIVE_EXECUTION_DELAY))
+    Mockito.when(defaultProfile.getDuration(DefaultDriverOption.SPECULATIVE_EXECUTION_DELAY))
         .thenReturn(Duration.ofMillis(constantDelayMillis));
   }
 

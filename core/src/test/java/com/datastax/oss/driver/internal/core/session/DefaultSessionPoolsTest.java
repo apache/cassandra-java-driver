@@ -24,7 +24,7 @@ import static org.mockito.Mockito.timeout;
 import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.CqlSession;
 import com.datastax.oss.driver.api.core.addresstranslation.AddressTranslator;
-import com.datastax.oss.driver.api.core.config.CoreDriverOption;
+import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
 import com.datastax.oss.driver.api.core.config.DriverConfig;
 import com.datastax.oss.driver.api.core.config.DriverConfigLoader;
 import com.datastax.oss.driver.api.core.config.DriverConfigProfile;
@@ -106,15 +106,15 @@ public class DefaultSessionPoolsTest {
     Mockito.when(context.nettyOptions()).thenReturn(nettyOptions);
 
     // Config:
-    Mockito.when(defaultConfigProfile.getBoolean(CoreDriverOption.REQUEST_WARN_IF_SET_KEYSPACE))
+    Mockito.when(defaultConfigProfile.getBoolean(DefaultDriverOption.REQUEST_WARN_IF_SET_KEYSPACE))
         .thenReturn(true);
-    Mockito.when(defaultConfigProfile.getBoolean(CoreDriverOption.REPREPARE_ENABLED))
+    Mockito.when(defaultConfigProfile.getBoolean(DefaultDriverOption.REPREPARE_ENABLED))
         .thenReturn(false);
-    Mockito.when(defaultConfigProfile.isDefined(CoreDriverOption.PROTOCOL_VERSION))
+    Mockito.when(defaultConfigProfile.isDefined(DefaultDriverOption.PROTOCOL_VERSION))
         .thenReturn(true);
-    Mockito.when(defaultConfigProfile.getDuration(CoreDriverOption.METADATA_TOPOLOGY_WINDOW))
+    Mockito.when(defaultConfigProfile.getDuration(DefaultDriverOption.METADATA_TOPOLOGY_WINDOW))
         .thenReturn(Duration.ZERO);
-    Mockito.when(defaultConfigProfile.getInt(CoreDriverOption.METADATA_TOPOLOGY_MAX_EVENTS))
+    Mockito.when(defaultConfigProfile.getInt(DefaultDriverOption.METADATA_TOPOLOGY_MAX_EVENTS))
         .thenReturn(1);
     Mockito.when(config.getDefaultProfile()).thenReturn(defaultConfigProfile);
     Mockito.when(context.config()).thenReturn(config);

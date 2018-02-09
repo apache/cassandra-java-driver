@@ -18,7 +18,7 @@ package com.datastax.oss.driver.internal.core.session;
 import com.datastax.oss.driver.api.core.AsyncAutoCloseable;
 import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.InvalidKeyspaceException;
-import com.datastax.oss.driver.api.core.config.CoreDriverOption;
+import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
 import com.datastax.oss.driver.api.core.config.DriverConfigProfile;
 import com.datastax.oss.driver.api.core.loadbalancing.NodeDistance;
 import com.datastax.oss.driver.api.core.metadata.Node;
@@ -108,7 +108,7 @@ public class PoolManager implements AsyncAutoCloseable {
     if (Objects.equals(oldKeyspace, newKeyspace)) {
       return CompletableFuture.completedFuture(null);
     }
-    if (config.getBoolean(CoreDriverOption.REQUEST_WARN_IF_SET_KEYSPACE)) {
+    if (config.getBoolean(DefaultDriverOption.REQUEST_WARN_IF_SET_KEYSPACE)) {
       LOG.warn(
           "[{}] Detected a keyspace change at runtime ({} => {}). "
               + "This is an anti-pattern that should be avoided in production "
@@ -116,7 +116,7 @@ public class PoolManager implements AsyncAutoCloseable {
           logPrefix,
           (oldKeyspace == null) ? "<none>" : oldKeyspace.asInternal(),
           newKeyspace.asInternal(),
-          CoreDriverOption.REQUEST_WARN_IF_SET_KEYSPACE.getPath());
+          DefaultDriverOption.REQUEST_WARN_IF_SET_KEYSPACE.getPath());
     }
     this.keyspace = newKeyspace;
     CompletableFuture<Void> result = new CompletableFuture<>();
@@ -383,7 +383,7 @@ public class PoolManager implements AsyncAutoCloseable {
 
     private void reprepareStatements(ChannelPool pool) {
       assert adminExecutor.inEventLoop();
-      if (config.getBoolean(CoreDriverOption.REPREPARE_ENABLED)) {
+      if (config.getBoolean(DefaultDriverOption.REPREPARE_ENABLED)) {
         new ReprepareOnUp(
                 logPrefix + "|" + pool.getNode().getConnectAddress(),
                 pool,

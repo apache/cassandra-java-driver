@@ -17,7 +17,7 @@ package com.datastax.oss.driver.internal.core.config.typesafe;
 
 import static com.datastax.oss.driver.Assertions.assertThat;
 
-import com.datastax.oss.driver.api.core.config.CoreDriverOption;
+import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
 import com.datastax.oss.driver.api.core.config.DriverConfigProfile;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
@@ -70,7 +70,7 @@ public class TypeSafeDriverConfigTest {
   public void should_load_default_driver_config() {
     // No assertions here, but this validates that `reference.conf` is well-formed.
     new TypeSafeDriverConfig(
-        ConfigFactory.load().getConfig("datastax-java-driver"), CoreDriverOption.values());
+        ConfigFactory.load().getConfig("datastax-java-driver"), DefaultDriverOption.values());
   }
 
   @Test

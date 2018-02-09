@@ -21,7 +21,7 @@ import com.datastax.oss.driver.api.core.ProtocolVersion;
 import com.datastax.oss.driver.api.core.UnsupportedProtocolVersionException;
 import com.datastax.oss.driver.api.core.auth.AuthenticationException;
 import com.datastax.oss.driver.api.core.auth.Authenticator;
-import com.datastax.oss.driver.api.core.config.CoreDriverOption;
+import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
 import com.datastax.oss.driver.api.core.config.DriverConfigProfile;
 import com.datastax.oss.driver.api.core.connection.ConnectionInitException;
 import com.datastax.oss.driver.api.core.type.codec.TypeCodecs;
@@ -80,9 +80,9 @@ class ProtocolInitHandler extends ConnectInitHandler {
     DriverConfigProfile defaultConfig = context.config().getDefaultProfile();
 
     this.timeoutMillis =
-        defaultConfig.getDuration(CoreDriverOption.CONNECTION_INIT_QUERY_TIMEOUT).toMillis();
+        defaultConfig.getDuration(DefaultDriverOption.CONNECTION_INIT_QUERY_TIMEOUT).toMillis();
     this.warnIfNoServerAuth =
-        defaultConfig.getBoolean(CoreDriverOption.AUTH_PROVIDER_WARN_IF_NO_SERVER_AUTH);
+        defaultConfig.getBoolean(DefaultDriverOption.AUTH_PROVIDER_WARN_IF_NO_SERVER_AUTH);
     this.initialProtocolVersion = protocolVersion;
     this.expectedClusterName = expectedClusterName;
     this.options = options;

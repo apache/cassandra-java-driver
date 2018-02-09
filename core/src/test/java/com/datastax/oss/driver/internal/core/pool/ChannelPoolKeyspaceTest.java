@@ -18,7 +18,7 @@ package com.datastax.oss.driver.internal.core.pool;
 import static com.datastax.oss.driver.Assertions.assertThat;
 
 import com.datastax.oss.driver.api.core.CqlIdentifier;
-import com.datastax.oss.driver.api.core.config.CoreDriverOption;
+import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
 import com.datastax.oss.driver.api.core.loadbalancing.NodeDistance;
 import com.datastax.oss.driver.internal.core.channel.ChannelEvent;
 import com.datastax.oss.driver.internal.core.channel.DriverChannel;
@@ -33,7 +33,8 @@ public class ChannelPoolKeyspaceTest extends ChannelPoolTestBase {
 
   @Test
   public void should_switch_keyspace_on_existing_channels() throws Exception {
-    Mockito.when(defaultProfile.getInt(CoreDriverOption.CONNECTION_POOL_LOCAL_SIZE)).thenReturn(2);
+    Mockito.when(defaultProfile.getInt(DefaultDriverOption.CONNECTION_POOL_LOCAL_SIZE))
+        .thenReturn(2);
 
     DriverChannel channel1 = newMockDriverChannel(1);
     DriverChannel channel2 = newMockDriverChannel(2);
@@ -69,7 +70,8 @@ public class ChannelPoolKeyspaceTest extends ChannelPoolTestBase {
   public void should_switch_keyspace_on_pending_channels() throws Exception {
     Mockito.when(reconnectionSchedule.nextDelay()).thenReturn(Duration.ofNanos(1));
 
-    Mockito.when(defaultProfile.getInt(CoreDriverOption.CONNECTION_POOL_LOCAL_SIZE)).thenReturn(2);
+    Mockito.when(defaultProfile.getInt(DefaultDriverOption.CONNECTION_POOL_LOCAL_SIZE))
+        .thenReturn(2);
 
     DriverChannel channel1 = newMockDriverChannel(1);
     CompletableFuture<DriverChannel> channel1Future = new CompletableFuture<>();

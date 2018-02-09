@@ -19,7 +19,7 @@ import static com.datastax.oss.driver.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
 import static org.mockito.Mockito.timeout;
 
-import com.datastax.oss.driver.api.core.config.CoreDriverOption;
+import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
 import com.datastax.oss.driver.api.core.config.DriverConfig;
 import com.datastax.oss.driver.api.core.config.DriverConfigProfile;
 import com.datastax.oss.driver.api.core.metadata.Node;
@@ -81,9 +81,10 @@ public class MetadataManagerTest {
 
     Mockito.when(context.topologyMonitor()).thenReturn(topologyMonitor);
 
-    Mockito.when(defaultProfile.getDuration(CoreDriverOption.METADATA_SCHEMA_WINDOW))
+    Mockito.when(defaultProfile.getDuration(DefaultDriverOption.METADATA_SCHEMA_WINDOW))
         .thenReturn(Duration.ZERO);
-    Mockito.when(defaultProfile.getInt(CoreDriverOption.METADATA_SCHEMA_MAX_EVENTS)).thenReturn(1);
+    Mockito.when(defaultProfile.getInt(DefaultDriverOption.METADATA_SCHEMA_MAX_EVENTS))
+        .thenReturn(1);
     Mockito.when(config.getDefaultProfile()).thenReturn(defaultProfile);
     Mockito.when(context.config()).thenReturn(config);
 

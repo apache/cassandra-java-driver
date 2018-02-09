@@ -20,7 +20,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.timeout;
 
 import com.datastax.oss.driver.api.core.DefaultProtocolVersion;
-import com.datastax.oss.driver.api.core.config.CoreDriverOption;
+import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
 import com.datastax.oss.protocol.internal.Frame;
 import com.datastax.oss.protocol.internal.request.Query;
 import com.datastax.oss.protocol.internal.response.result.Void;
@@ -39,13 +39,13 @@ public class ChannelFactoryAvailableIdsTest extends ChannelFactoryTestBase {
   @Override
   public void setup() throws InterruptedException {
     super.setup();
-    Mockito.when(defaultConfigProfile.isDefined(CoreDriverOption.PROTOCOL_VERSION))
+    Mockito.when(defaultConfigProfile.isDefined(DefaultDriverOption.PROTOCOL_VERSION))
         .thenReturn(true);
-    Mockito.when(defaultConfigProfile.getString(CoreDriverOption.PROTOCOL_VERSION))
+    Mockito.when(defaultConfigProfile.getString(DefaultDriverOption.PROTOCOL_VERSION))
         .thenReturn("V4");
     Mockito.when(protocolVersionRegistry.fromName("V4")).thenReturn(DefaultProtocolVersion.V4);
 
-    Mockito.when(defaultConfigProfile.getInt(CoreDriverOption.CONNECTION_MAX_REQUESTS))
+    Mockito.when(defaultConfigProfile.getInt(DefaultDriverOption.CONNECTION_MAX_REQUESTS))
         .thenReturn(128);
   }
 

@@ -15,7 +15,7 @@
  */
 package com.datastax.oss.driver.internal.testinfra.session;
 
-import com.datastax.oss.driver.api.core.config.CoreDriverOption;
+import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
 import com.datastax.oss.driver.api.testinfra.session.SessionUtils;
 import com.datastax.oss.driver.internal.core.config.typesafe.DefaultDriverConfigLoader;
 import com.typesafe.config.Config;
@@ -24,7 +24,7 @@ import com.typesafe.config.ConfigFactory;
 public class TestConfigLoader extends DefaultDriverConfigLoader {
 
   public TestConfigLoader(String... customOptions) {
-    super(() -> buildConfig(customOptions), CoreDriverOption.values());
+    super(() -> buildConfig(customOptions), DefaultDriverOption.values());
   }
 
   private static Config buildConfig(String... customOptions) {

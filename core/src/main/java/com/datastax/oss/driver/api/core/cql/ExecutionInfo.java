@@ -16,7 +16,7 @@
 package com.datastax.oss.driver.api.core.cql;
 
 import com.datastax.oss.driver.api.core.DefaultProtocolVersion;
-import com.datastax.oss.driver.api.core.config.CoreDriverOption;
+import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
 import com.datastax.oss.driver.api.core.metadata.Node;
 import com.datastax.oss.driver.api.core.session.Request;
 import com.datastax.oss.driver.api.core.session.Session;
@@ -113,8 +113,8 @@ public interface ExecutionInfo {
    * <p>Schema agreement is only checked for schema-altering queries. For other query types, this
    * method will always return {@code true}.
    *
-   * @see CoreDriverOption#CONTROL_CONNECTION_AGREEMENT_INTERVAL
-   * @see CoreDriverOption#CONTROL_CONNECTION_AGREEMENT_TIMEOUT
+   * @see DefaultDriverOption#CONTROL_CONNECTION_AGREEMENT_INTERVAL
+   * @see DefaultDriverOption#CONTROL_CONNECTION_AGREEMENT_TIMEOUT
    */
   boolean isSchemaInAgreement();
 

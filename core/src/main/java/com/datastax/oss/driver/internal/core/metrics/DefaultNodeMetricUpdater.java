@@ -16,7 +16,7 @@
 package com.datastax.oss.driver.internal.core.metrics;
 
 import com.codahale.metrics.Gauge;
-import com.datastax.oss.driver.api.core.config.CoreDriverOption;
+import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
 import com.datastax.oss.driver.api.core.config.DriverConfigProfile;
 import com.datastax.oss.driver.api.core.metadata.Node;
 import com.datastax.oss.driver.api.core.metrics.CoreNodeMetric;
@@ -55,9 +55,9 @@ public class DefaultNodeMetricUpdater extends MetricUpdaterBase<NodeMetric>
     initializeHdrTimer(
         CoreNodeMetric.CQL_MESSAGES,
         config,
-        CoreDriverOption.METRICS_NODE_CQL_MESSAGES_HIGHEST,
-        CoreDriverOption.METRICS_NODE_CQL_MESSAGES_DIGITS,
-        CoreDriverOption.METRICS_NODE_CQL_MESSAGES_INTERVAL);
+        DefaultDriverOption.METRICS_NODE_CQL_MESSAGES_HIGHEST,
+        DefaultDriverOption.METRICS_NODE_CQL_MESSAGES_DIGITS,
+        DefaultDriverOption.METRICS_NODE_CQL_MESSAGES_INTERVAL);
     initializeDefaultCounter(CoreNodeMetric.UNSENT_REQUESTS);
     initializeDefaultCounter(CoreNodeMetric.ABORTED_REQUESTS);
     initializeDefaultCounter(CoreNodeMetric.WRITE_TIMEOUTS);

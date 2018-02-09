@@ -16,7 +16,7 @@
 package com.datastax.oss.driver.api.core.specex;
 
 import com.datastax.oss.driver.api.core.CqlIdentifier;
-import com.datastax.oss.driver.api.core.config.CoreDriverOption;
+import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
 import com.datastax.oss.driver.api.core.config.DriverConfigProfile;
 import com.datastax.oss.driver.api.core.context.DriverContext;
 import com.datastax.oss.driver.api.core.metadata.Node;
@@ -36,12 +36,12 @@ public class ConstantSpeculativeExecutionPolicy implements SpeculativeExecutionP
 
   public ConstantSpeculativeExecutionPolicy(DriverContext context) {
     DriverConfigProfile config = context.config().getDefaultProfile();
-    this.maxExecutions = config.getInt(CoreDriverOption.SPECULATIVE_EXECUTION_MAX);
+    this.maxExecutions = config.getInt(DefaultDriverOption.SPECULATIVE_EXECUTION_MAX);
     if (this.maxExecutions < 1) {
       throw new IllegalArgumentException("Max must be at least 1");
     }
     this.constantDelayMillis =
-        config.getDuration(CoreDriverOption.SPECULATIVE_EXECUTION_DELAY).toMillis();
+        config.getDuration(DefaultDriverOption.SPECULATIVE_EXECUTION_DELAY).toMillis();
     if (this.constantDelayMillis < 0) {
       throw new IllegalArgumentException("Delay must be positive or 0");
     }

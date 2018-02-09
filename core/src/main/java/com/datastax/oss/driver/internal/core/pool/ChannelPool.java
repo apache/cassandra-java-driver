@@ -20,7 +20,7 @@ import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.InvalidKeyspaceException;
 import com.datastax.oss.driver.api.core.UnsupportedProtocolVersionException;
 import com.datastax.oss.driver.api.core.auth.AuthenticationException;
-import com.datastax.oss.driver.api.core.config.CoreDriverOption;
+import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
 import com.datastax.oss.driver.api.core.config.DriverConfig;
 import com.datastax.oss.driver.api.core.loadbalancing.NodeDistance;
 import com.datastax.oss.driver.api.core.metadata.Node;
@@ -308,7 +308,7 @@ public class ChannelPool implements AsyncAutoCloseable {
           } else {
             if (config
                 .getDefaultProfile()
-                .getBoolean(CoreDriverOption.CONNECTION_WARN_INIT_ERROR)) {
+                .getBoolean(DefaultDriverOption.CONNECTION_WARN_INIT_ERROR)) {
               Loggers.warnWithException(
                   LOG, "[{}]  Error while opening new channel", logPrefix, error);
             } else {
@@ -548,8 +548,8 @@ public class ChannelPool implements AsyncAutoCloseable {
           .getDefaultProfile()
           .getInt(
               (distance == NodeDistance.LOCAL)
-                  ? CoreDriverOption.CONNECTION_POOL_LOCAL_SIZE
-                  : CoreDriverOption.CONNECTION_POOL_REMOTE_SIZE);
+                  ? DefaultDriverOption.CONNECTION_POOL_LOCAL_SIZE
+                  : DefaultDriverOption.CONNECTION_POOL_REMOTE_SIZE);
     }
   }
 }

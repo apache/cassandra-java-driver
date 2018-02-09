@@ -15,7 +15,7 @@
  */
 package com.datastax.oss.driver.api.core.connection;
 
-import com.datastax.oss.driver.api.core.config.CoreDriverOption;
+import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
 import com.datastax.oss.driver.api.core.config.DriverConfigProfile;
 import com.datastax.oss.driver.api.core.context.DriverContext;
 import com.google.common.base.Preconditions;
@@ -35,24 +35,24 @@ public class ExponentialReconnectionPolicy implements ReconnectionPolicy {
   public ExponentialReconnectionPolicy(DriverContext context) {
     DriverConfigProfile config = context.config().getDefaultProfile();
 
-    this.baseDelayMs = config.getDuration(CoreDriverOption.RECONNECTION_BASE_DELAY).toMillis();
-    this.maxDelayMs = config.getDuration(CoreDriverOption.RECONNECTION_MAX_DELAY).toMillis();
+    this.baseDelayMs = config.getDuration(DefaultDriverOption.RECONNECTION_BASE_DELAY).toMillis();
+    this.maxDelayMs = config.getDuration(DefaultDriverOption.RECONNECTION_MAX_DELAY).toMillis();
 
     Preconditions.checkArgument(
         baseDelayMs > 0,
         "%s must be strictly positive (got %s)",
-        CoreDriverOption.RECONNECTION_BASE_DELAY.getPath(),
+        DefaultDriverOption.RECONNECTION_BASE_DELAY.getPath(),
         baseDelayMs);
     Preconditions.checkArgument(
         maxDelayMs >= 0,
         "%s must be positive (got %s)",
-        CoreDriverOption.RECONNECTION_MAX_DELAY.getPath(),
+        DefaultDriverOption.RECONNECTION_MAX_DELAY.getPath(),
         maxDelayMs);
     Preconditions.checkArgument(
         maxDelayMs >= baseDelayMs,
         "%s must be bigger than %s (got %s, %s)",
-        CoreDriverOption.RECONNECTION_MAX_DELAY.getPath(),
-        CoreDriverOption.RECONNECTION_BASE_DELAY.getPath(),
+        DefaultDriverOption.RECONNECTION_MAX_DELAY.getPath(),
+        DefaultDriverOption.RECONNECTION_BASE_DELAY.getPath(),
         maxDelayMs,
         baseDelayMs);
 

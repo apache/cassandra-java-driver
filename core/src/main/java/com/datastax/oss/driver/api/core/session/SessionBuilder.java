@@ -17,7 +17,7 @@ package com.datastax.oss.driver.api.core.session;
 
 import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.CqlSession;
-import com.datastax.oss.driver.api.core.config.CoreDriverOption;
+import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
 import com.datastax.oss.driver.api.core.config.DriverConfigLoader;
 import com.datastax.oss.driver.api.core.config.DriverConfigProfile;
 import com.datastax.oss.driver.api.core.context.DriverContext;
@@ -75,7 +75,7 @@ public abstract class SessionBuilder<SelfT extends SessionBuilder, SessionT> {
    *       </ul>
    *   <li>the resulting configuration is expected to contain a {@code datastax-java-driver}
    *       section.
-   *   <li>that section is validated against the {@link CoreDriverOption core driver options}.
+   *   <li>that section is validated against the {@link DefaultDriverOption core driver options}.
    * </ul>
    *
    * The core driver JAR includes a {@code reference.conf} file with sensible defaults for all
@@ -172,15 +172,16 @@ public abstract class SessionBuilder<SelfT extends SessionBuilder, SessionT> {
 
     DriverConfigProfile defaultConfig = configLoader.getInitialConfig().getDefaultProfile();
     List<String> configContactPoints =
-        defaultConfig.isDefined(CoreDriverOption.CONTACT_POINTS)
-            ? defaultConfig.getStringList(CoreDriverOption.CONTACT_POINTS)
+        defaultConfig.isDefined(DefaultDriverOption.CONTACT_POINTS)
+            ? defaultConfig.getStringList(DefaultDriverOption.CONTACT_POINTS)
             : Collections.emptyList();
 
     Set<InetSocketAddress> contactPoints =
         ContactPoints.merge(programmaticContactPoints, configContactPoints);
 
-    if (keyspace == null && defaultConfig.isDefined(CoreDriverOption.SESSION_KEYSPACE)) {
-      keyspace = CqlIdentifier.fromCql(defaultConfig.getString(CoreDriverOption.SESSION_KEYSPACE));
+    if (keyspace == null && defaultConfig.isDefined(DefaultDriverOption.SESSION_KEYSPACE)) {
+      keyspace =
+          CqlIdentifier.fromCql(defaultConfig.getString(DefaultDriverOption.SESSION_KEYSPACE));
     }
 
     return DefaultSession.init(

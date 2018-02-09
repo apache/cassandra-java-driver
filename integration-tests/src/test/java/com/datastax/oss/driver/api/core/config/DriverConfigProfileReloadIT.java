@@ -54,7 +54,7 @@ public class DriverConfigProfileReloadIT {
             () ->
                 ConfigFactory.parseString("config-reload-interval = 2s\n" + configSource.get())
                     .withFallback(DEFAULT_CONFIG_SUPPLIER.get()),
-            CoreDriverOption.values());
+            DefaultDriverOption.values());
     try (CqlSession session =
         CqlSession.builder()
             .withConfigLoader(loader)
@@ -89,7 +89,7 @@ public class DriverConfigProfileReloadIT {
             () ->
                 ConfigFactory.parseString("config-reload-interval = 0\n" + configSource.get())
                     .withFallback(DEFAULT_CONFIG_SUPPLIER.get()),
-            CoreDriverOption.values());
+            DefaultDriverOption.values());
     try (CqlSession session =
         CqlSession.builder()
             .withConfigLoader(loader)
@@ -127,7 +127,7 @@ public class DriverConfigProfileReloadIT {
             () ->
                 ConfigFactory.parseString("config-reload-interval = 2s\n" + configSource.get())
                     .withFallback(DEFAULT_CONFIG_SUPPLIER.get()),
-            CoreDriverOption.values());
+            DefaultDriverOption.values());
     try (CqlSession session =
         CqlSession.builder()
             .withConfigLoader(loader)
@@ -167,7 +167,7 @@ public class DriverConfigProfileReloadIT {
                         "profiles.slow.request.consistency = ONE\nconfig-reload-interval = 2s\n"
                             + configSource.get())
                     .withFallback(DEFAULT_CONFIG_SUPPLIER.get()),
-            CoreDriverOption.values());
+            DefaultDriverOption.values());
     try (CqlSession session =
         CqlSession.builder()
             .withConfigLoader(loader)

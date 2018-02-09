@@ -15,7 +15,7 @@
  */
 package com.datastax.oss.driver.internal.core.session;
 
-import com.datastax.oss.driver.api.core.config.CoreDriverOption;
+import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
 import com.datastax.oss.driver.api.core.config.DriverConfig;
 import com.datastax.oss.driver.internal.core.adminrequest.AdminRequestHandler;
 import com.datastax.oss.driver.internal.core.adminrequest.AdminResult;
@@ -91,12 +91,12 @@ class ReprepareOnUp {
 
     DriverConfig config = context.config();
     this.checkSystemTable =
-        config.getDefaultProfile().getBoolean(CoreDriverOption.REPREPARE_CHECK_SYSTEM_TABLE);
-    this.timeout = config.getDefaultProfile().getDuration(CoreDriverOption.REPREPARE_TIMEOUT);
+        config.getDefaultProfile().getBoolean(DefaultDriverOption.REPREPARE_CHECK_SYSTEM_TABLE);
+    this.timeout = config.getDefaultProfile().getDuration(DefaultDriverOption.REPREPARE_TIMEOUT);
     this.maxStatements =
-        config.getDefaultProfile().getInt(CoreDriverOption.REPREPARE_MAX_STATEMENTS);
+        config.getDefaultProfile().getInt(DefaultDriverOption.REPREPARE_MAX_STATEMENTS);
     this.maxParallelism =
-        config.getDefaultProfile().getInt(CoreDriverOption.REPREPARE_MAX_PARALLELISM);
+        config.getDefaultProfile().getInt(DefaultDriverOption.REPREPARE_MAX_PARALLELISM);
   }
 
   void start() {
@@ -123,7 +123,7 @@ class ReprepareOnUp {
         LOG.debug(
             "[{}] {} is disabled, repreparing directly",
             logPrefix,
-            CoreDriverOption.REPREPARE_CHECK_SYSTEM_TABLE.getPath());
+            DefaultDriverOption.REPREPARE_CHECK_SYSTEM_TABLE.getPath());
         RunOrSchedule.on(
             channel.eventLoop(),
             () -> {

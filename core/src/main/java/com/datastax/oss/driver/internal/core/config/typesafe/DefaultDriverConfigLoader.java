@@ -15,7 +15,7 @@
  */
 package com.datastax.oss.driver.internal.core.config.typesafe;
 
-import com.datastax.oss.driver.api.core.config.CoreDriverOption;
+import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
 import com.datastax.oss.driver.api.core.config.DriverConfig;
 import com.datastax.oss.driver.api.core.config.DriverConfigLoader;
 import com.datastax.oss.driver.api.core.config.DriverConfigProfile;
@@ -58,7 +58,7 @@ public class DefaultDriverConfigLoader implements DriverConfigLoader {
    * SessionBuilder#withConfigLoader(DriverConfigLoader)}) and the core driver options.
    */
   public DefaultDriverConfigLoader() {
-    this(DEFAULT_CONFIG_SUPPLIER, CoreDriverOption.values());
+    this(DEFAULT_CONFIG_SUPPLIER, DefaultDriverOption.values());
   }
 
   /**
@@ -105,7 +105,10 @@ public class DefaultDriverConfigLoader implements DriverConfigLoader {
       this.eventBus = context.eventBus();
       this.config = context.config().getDefaultProfile();
       this.reloadInterval =
-          context.config().getDefaultProfile().getDuration(CoreDriverOption.CONFIG_RELOAD_INTERVAL);
+          context
+              .config()
+              .getDefaultProfile()
+              .getDuration(DefaultDriverOption.CONFIG_RELOAD_INTERVAL);
 
       forceLoadListenerKey =
           this.eventBus.register(
@@ -141,7 +144,7 @@ public class DefaultDriverConfigLoader implements DriverConfigLoader {
       if (driverConfig.reload(configSupplier.get())) {
         LOG.info("[{}] Detected a configuration change", logPrefix);
         eventBus.fire(ConfigChangeEvent.INSTANCE);
-        Duration newReloadInterval = config.getDuration(CoreDriverOption.CONFIG_RELOAD_INTERVAL);
+        Duration newReloadInterval = config.getDuration(DefaultDriverOption.CONFIG_RELOAD_INTERVAL);
         if (!newReloadInterval.equals(reloadInterval)) {
           reloadInterval = newReloadInterval;
           scheduleReloadTask();

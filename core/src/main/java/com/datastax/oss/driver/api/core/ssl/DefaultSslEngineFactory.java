@@ -15,7 +15,7 @@
  */
 package com.datastax.oss.driver.api.core.ssl;
 
-import com.datastax.oss.driver.api.core.config.CoreDriverOption;
+import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
 import com.datastax.oss.driver.api.core.config.DriverConfigProfile;
 import com.datastax.oss.driver.api.core.context.DriverContext;
 import java.net.InetSocketAddress;
@@ -55,8 +55,8 @@ public class DefaultSslEngineFactory implements SslEngineFactory {
       throw new IllegalStateException("Cannot initialize SSL Context", e);
     }
     DriverConfigProfile config = driverContext.config().getDefaultProfile();
-    if (config.isDefined(CoreDriverOption.SSL_CIPHER_SUITES)) {
-      List<String> list = config.getStringList(CoreDriverOption.SSL_CIPHER_SUITES);
+    if (config.isDefined(DefaultDriverOption.SSL_CIPHER_SUITES)) {
+      List<String> list = config.getStringList(DefaultDriverOption.SSL_CIPHER_SUITES);
       String tmp[] = new String[list.size()];
       this.cipherSuites = list.toArray(tmp);
     } else {

@@ -16,7 +16,7 @@
 package com.datastax.oss.driver.api.core.metadata;
 
 import com.datastax.oss.driver.api.core.CqlIdentifier;
-import com.datastax.oss.driver.api.core.config.CoreDriverOption;
+import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
 import com.datastax.oss.driver.api.core.metadata.schema.KeyspaceMetadata;
 import com.datastax.oss.driver.api.core.session.Session;
 import java.net.InetSocketAddress;
@@ -46,9 +46,9 @@ public interface Metadata {
    * <p>Note that schema metadata can be disabled or restricted to a subset of keyspaces, therefore
    * this map might be empty or incomplete.
    *
-   * @see CoreDriverOption#METADATA_SCHEMA_ENABLED
+   * @see DefaultDriverOption#METADATA_SCHEMA_ENABLED
    * @see Session#setSchemaMetadataEnabled(Boolean)
-   * @see CoreDriverOption#METADATA_SCHEMA_REFRESHED_KEYSPACES
+   * @see DefaultDriverOption#METADATA_SCHEMA_REFRESHED_KEYSPACES
    */
   Map<CqlIdentifier, KeyspaceMetadata> getKeyspaces();
 
@@ -62,7 +62,7 @@ public interface Metadata {
    * <p>Note that this property might be absent if token metadata was disabled, or if there was a
    * runtime error while computing the map (this would generate a warning log).
    *
-   * @see CoreDriverOption#METADATA_TOKEN_MAP_ENABLED
+   * @see DefaultDriverOption#METADATA_TOKEN_MAP_ENABLED
    */
   Optional<TokenMap> getTokenMap();
 }

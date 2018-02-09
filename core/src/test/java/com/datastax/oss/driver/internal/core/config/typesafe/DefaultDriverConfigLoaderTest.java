@@ -18,7 +18,7 @@ package com.datastax.oss.driver.internal.core.config.typesafe;
 import static com.datastax.oss.driver.Assertions.assertThat;
 import static org.mockito.Mockito.never;
 
-import com.datastax.oss.driver.api.core.config.CoreDriverOption;
+import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
 import com.datastax.oss.driver.api.core.config.DriverConfig;
 import com.datastax.oss.driver.api.core.config.DriverConfigProfile;
 import com.datastax.oss.driver.internal.core.config.ConfigChangeEvent;
@@ -69,7 +69,7 @@ public class DefaultDriverConfigLoaderTest {
     // it.
     Mockito.when(context.config()).thenReturn(config);
     Mockito.when(config.getDefaultProfile()).thenReturn(defaultConfigProfile);
-    Mockito.when(defaultConfigProfile.getDuration(CoreDriverOption.CONFIG_RELOAD_INTERVAL))
+    Mockito.when(defaultConfigProfile.getDuration(DefaultDriverOption.CONFIG_RELOAD_INTERVAL))
         .thenReturn(Duration.ofSeconds(12));
 
     configSource = new AtomicReference<>("required_int = 42");

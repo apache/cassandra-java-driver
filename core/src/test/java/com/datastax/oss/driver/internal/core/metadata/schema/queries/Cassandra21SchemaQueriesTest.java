@@ -17,7 +17,7 @@ package com.datastax.oss.driver.internal.core.metadata.schema.queries;
 
 import static com.datastax.oss.driver.Assertions.assertThat;
 
-import com.datastax.oss.driver.api.core.config.CoreDriverOption;
+import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
 import com.datastax.oss.driver.api.core.config.DriverConfigProfile;
 import com.datastax.oss.driver.api.core.metadata.Metadata;
 import com.datastax.oss.driver.internal.core.adminrequest.AdminResult;
@@ -35,7 +35,7 @@ public class Cassandra21SchemaQueriesTest extends SchemaQueriesTest {
 
   @Test
   public void should_query() {
-    Mockito.when(config.isDefined(CoreDriverOption.METADATA_SCHEMA_REFRESHED_KEYSPACES))
+    Mockito.when(config.isDefined(DefaultDriverOption.METADATA_SCHEMA_REFRESHED_KEYSPACES))
         .thenReturn(false);
 
     SchemaQueriesWithMockedChannel queries =

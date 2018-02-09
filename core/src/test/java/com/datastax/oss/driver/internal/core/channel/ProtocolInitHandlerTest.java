@@ -27,7 +27,7 @@ import com.datastax.oss.driver.api.core.DefaultProtocolVersion;
 import com.datastax.oss.driver.api.core.InvalidKeyspaceException;
 import com.datastax.oss.driver.api.core.auth.AuthProvider;
 import com.datastax.oss.driver.api.core.auth.AuthenticationException;
-import com.datastax.oss.driver.api.core.config.CoreDriverOption;
+import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
 import com.datastax.oss.driver.api.core.config.DriverConfig;
 import com.datastax.oss.driver.api.core.config.DriverConfigProfile;
 import com.datastax.oss.driver.internal.core.CassandraProtocolVersionRegistry;
@@ -90,12 +90,15 @@ public class ProtocolInitHandlerTest extends ChannelHandlerTestBase {
     MockitoAnnotations.initMocks(this);
     Mockito.when(internalDriverContext.config()).thenReturn(driverConfig);
     Mockito.when(driverConfig.getDefaultProfile()).thenReturn(defaultConfigProfile);
-    Mockito.when(defaultConfigProfile.getDuration(CoreDriverOption.CONNECTION_INIT_QUERY_TIMEOUT))
+    Mockito.when(
+            defaultConfigProfile.getDuration(DefaultDriverOption.CONNECTION_INIT_QUERY_TIMEOUT))
         .thenReturn(Duration.ofMillis(QUERY_TIMEOUT_MILLIS));
-    Mockito.when(defaultConfigProfile.getDuration(CoreDriverOption.CONNECTION_HEARTBEAT_INTERVAL))
+    Mockito.when(
+            defaultConfigProfile.getDuration(DefaultDriverOption.CONNECTION_HEARTBEAT_INTERVAL))
         .thenReturn(Duration.ofSeconds(30));
     Mockito.when(
-            defaultConfigProfile.getBoolean(CoreDriverOption.AUTH_PROVIDER_WARN_IF_NO_SERVER_AUTH))
+            defaultConfigProfile.getBoolean(
+                DefaultDriverOption.AUTH_PROVIDER_WARN_IF_NO_SERVER_AUTH))
         .thenReturn(true);
     Mockito.when(internalDriverContext.protocolVersionRegistry())
         .thenReturn(protocolVersionRegistry);
