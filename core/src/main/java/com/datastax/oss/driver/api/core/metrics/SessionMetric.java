@@ -28,7 +28,7 @@ import com.datastax.oss.driver.api.core.session.Session;
  * Timer requestsTimer = session.getMetricRegistry().timer("s0.cql_requests");
  * </pre>
  *
- * <p>All metrics exposed out of the box by the driver are instances of {@link CoreSessionMetric}
+ * <p>All metrics exposed out of the box by the driver are instances of {@link DefaultSessionMetric}
  * (this interface only exists to allow custom metrics in driver extensions).
  *
  * @see NodeMetric

@@ -44,7 +44,7 @@ public class MetricsIT {
       // run before, so do a linear search to find the metric we're interested in.
       Timer requestsTimer = null;
       for (Map.Entry<String, Timer> entry : session.getMetricRegistry().getTimers().entrySet()) {
-        if (entry.getKey().endsWith(CoreSessionMetric.CQL_REQUESTS.getPath())) {
+        if (entry.getKey().endsWith(DefaultSessionMetric.CQL_REQUESTS.getPath())) {
           requestsTimer = entry.getValue();
         }
       }
@@ -66,7 +66,7 @@ public class MetricsIT {
 
       Timer requestsTimer = null;
       for (Map.Entry<String, Timer> entry : session.getMetricRegistry().getTimers().entrySet()) {
-        if (entry.getKey().endsWith(CoreSessionMetric.CQL_REQUESTS.name())) {
+        if (entry.getKey().endsWith(DefaultSessionMetric.CQL_REQUESTS.name())) {
           requestsTimer = entry.getValue();
         }
       }

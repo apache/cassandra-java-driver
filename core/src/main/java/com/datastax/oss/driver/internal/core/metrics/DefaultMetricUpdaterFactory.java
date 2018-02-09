@@ -18,8 +18,8 @@ package com.datastax.oss.driver.internal.core.metrics;
 import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
 import com.datastax.oss.driver.api.core.config.DriverConfigProfile;
 import com.datastax.oss.driver.api.core.metadata.Node;
-import com.datastax.oss.driver.api.core.metrics.CoreSessionMetric;
 import com.datastax.oss.driver.api.core.metrics.DefaultNodeMetric;
+import com.datastax.oss.driver.api.core.metrics.DefaultSessionMetric;
 import com.datastax.oss.driver.api.core.metrics.NodeMetric;
 import com.datastax.oss.driver.api.core.metrics.SessionMetric;
 import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
@@ -60,10 +60,10 @@ public class DefaultMetricUpdaterFactory implements MetricUpdaterFactory {
   }
 
   private Set<SessionMetric> parseSessionMetricPaths(List<String> paths) {
-    EnumSet<CoreSessionMetric> result = EnumSet.noneOf(CoreSessionMetric.class);
+    EnumSet<DefaultSessionMetric> result = EnumSet.noneOf(DefaultSessionMetric.class);
     for (String path : paths) {
       try {
-        result.add(CoreSessionMetric.fromPath(path));
+        result.add(DefaultSessionMetric.fromPath(path));
       } catch (IllegalArgumentException e) {
         LOG.warn("[{}] Unknown session metric {}, skipping", logPrefix, path);
       }
