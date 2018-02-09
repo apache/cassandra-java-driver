@@ -15,7 +15,7 @@
  */
 package com.datastax.oss.driver.internal.core.channel;
 
-import com.datastax.oss.driver.api.core.CoreProtocolVersion;
+import com.datastax.oss.driver.api.core.DefaultProtocolVersion;
 import com.datastax.oss.driver.api.core.InvalidKeyspaceException;
 import com.datastax.oss.driver.api.core.ProtocolVersion;
 import com.datastax.oss.driver.api.core.UnsupportedProtocolVersionException;
@@ -324,6 +324,6 @@ class ProtocolInitHandler extends ConnectInitHandler {
   }
 
   private String getString(List<ByteBuffer> row, int i) {
-    return TypeCodecs.TEXT.decode(row.get(i), CoreProtocolVersion.DEFAULT);
+    return TypeCodecs.TEXT.decode(row.get(i), DefaultProtocolVersion.DEFAULT);
   }
 }

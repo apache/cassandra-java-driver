@@ -15,7 +15,7 @@
  */
 package com.datastax.oss.driver.api.core.cql;
 
-import com.datastax.oss.driver.api.core.CoreProtocolVersion;
+import com.datastax.oss.driver.api.core.DefaultProtocolVersion;
 import com.datastax.oss.driver.api.core.config.CoreDriverOption;
 import com.datastax.oss.driver.api.core.metadata.Node;
 import com.datastax.oss.driver.api.core.session.Request;
@@ -82,7 +82,7 @@ public interface ExecutionInfo {
   /**
    * The server-side warnings for this query, if any (otherwise the list will be empty).
    *
-   * <p>This feature is only available with {@link CoreProtocolVersion#V4} or above; with lower
+   * <p>This feature is only available with {@link DefaultProtocolVersion#V4} or above; with lower
    * versions, this list will always be empty.
    */
   List<String> getWarnings();
@@ -95,7 +95,7 @@ public interface ExecutionInfo {
    * mutable. If multiple clients will read these values, care should be taken not to corrupt the
    * data (in particular, preserve the indices by calling {@link ByteBuffer#duplicate()}).
    *
-   * <p>This feature is only available with {@link CoreProtocolVersion#V4} or above; with lower
+   * <p>This feature is only available with {@link DefaultProtocolVersion#V4} or above; with lower
    * versions, this map will always be empty.
    */
   Map<String, ByteBuffer> getIncomingPayload();

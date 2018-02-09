@@ -15,8 +15,8 @@
  */
 package com.datastax.oss.driver.api.core.session;
 
-import com.datastax.oss.driver.api.core.CoreProtocolVersion;
 import com.datastax.oss.driver.api.core.CqlIdentifier;
+import com.datastax.oss.driver.api.core.DefaultProtocolVersion;
 import com.datastax.oss.driver.api.core.config.CoreDriverOption;
 import com.datastax.oss.driver.api.core.config.DriverConfig;
 import com.datastax.oss.driver.api.core.config.DriverConfigProfile;
@@ -60,7 +60,7 @@ public interface Request {
    * specify the keyspace without forcing it globally on the session, nor hard-coding it in the
    * query string.
    *
-   * <p>This feature is only available with {@link CoreProtocolVersion#V5 native protocol v5} or
+   * <p>This feature is only available with {@link DefaultProtocolVersion#V5 native protocol v5} or
    * higher. Specifying a per-request keyspace with lower protocol versions will cause a runtime
    * error.
    *

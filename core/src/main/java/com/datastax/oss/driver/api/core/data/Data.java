@@ -15,7 +15,7 @@
  */
 package com.datastax.oss.driver.api.core.data;
 
-import com.datastax.oss.driver.api.core.CoreProtocolVersion;
+import com.datastax.oss.driver.api.core.DefaultProtocolVersion;
 import com.datastax.oss.driver.api.core.ProtocolVersion;
 import com.datastax.oss.driver.api.core.detach.Detachable;
 import com.datastax.oss.driver.api.core.type.codec.registry.CodecRegistry;
@@ -38,8 +38,8 @@ public interface Data {
    * Returns the protocol version that is currently used to convert values for this instance.
    *
    * <p>If you obtained this object from the driver, this will be set automatically. If you created
-   * it manually, or just deserialized it, it is set to {@link CoreProtocolVersion#DEFAULT}. You can
-   * reattach this object to an existing driver instance to use its protocol version.
+   * it manually, or just deserialized it, it is set to {@link DefaultProtocolVersion#DEFAULT}. You
+   * can reattach this object to an existing driver instance to use its protocol version.
    *
    * @see Detachable
    */

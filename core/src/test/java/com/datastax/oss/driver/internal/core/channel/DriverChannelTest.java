@@ -17,7 +17,7 @@ package com.datastax.oss.driver.internal.core.channel;
 
 import static com.datastax.oss.driver.Assertions.assertThat;
 
-import com.datastax.oss.driver.api.core.CoreProtocolVersion;
+import com.datastax.oss.driver.api.core.DefaultProtocolVersion;
 import com.datastax.oss.driver.api.core.connection.ClosedConnectionException;
 import com.datastax.oss.protocol.internal.Frame;
 import com.datastax.oss.protocol.internal.request.Query;
@@ -52,7 +52,7 @@ public class DriverChannelTest extends ChannelHandlerTestBase {
         .pipeline()
         .addLast(
             new InFlightHandler(
-                CoreProtocolVersion.V3,
+                DefaultProtocolVersion.V3,
                 streamIds,
                 Integer.MAX_VALUE,
                 SET_KEYSPACE_TIMEOUT_MILLIS,
@@ -60,7 +60,7 @@ public class DriverChannelTest extends ChannelHandlerTestBase {
                 null,
                 "test"));
     writeCoalescer = new MockWriteCoalescer();
-    driverChannel = new DriverChannel(channel, writeCoalescer, CoreProtocolVersion.V3);
+    driverChannel = new DriverChannel(channel, writeCoalescer, DefaultProtocolVersion.V3);
   }
 
   /**

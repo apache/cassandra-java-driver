@@ -15,8 +15,8 @@
  */
 package com.datastax.oss.driver.api.core.cql;
 
-import com.datastax.oss.driver.api.core.CoreProtocolVersion;
 import com.datastax.oss.driver.api.core.CqlSession;
+import com.datastax.oss.driver.api.core.DefaultProtocolVersion;
 import java.nio.ByteBuffer;
 import java.util.List;
 
@@ -74,11 +74,11 @@ public interface PreparedStatement {
    * A unique identifier for result metadata (essentially a hash of {@link
    * #getResultSetDefinitions()}).
    *
-   * <p>This information is mostly for internal use: with protocol {@link CoreProtocolVersion#V5} or
-   * higher, the driver sends it with every execution of the prepared statement, to validate that
+   * <p>This information is mostly for internal use: with protocol {@link DefaultProtocolVersion#V5}
+   * or higher, the driver sends it with every execution of the prepared statement, to validate that
    * its result metadata is still up-to-date.
    *
-   * <p>Note: this method returns null for protocol {@link CoreProtocolVersion#V4} or lower;
+   * <p>Note: this method returns null for protocol {@link DefaultProtocolVersion#V4} or lower;
    * otherwise, the returned buffer is read-only.
    *
    * @see <a href="https://issues.apache.org/jira/browse/CASSANDRA-10786">CASSANDRA-10786</a>

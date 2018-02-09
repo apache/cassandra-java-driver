@@ -18,8 +18,8 @@ package com.datastax.oss.driver.internal.core.channel;
 import static com.datastax.oss.driver.Assertions.assertThat;
 import static org.mockito.Mockito.never;
 
-import com.datastax.oss.driver.api.core.CoreProtocolVersion;
 import com.datastax.oss.driver.api.core.CqlIdentifier;
+import com.datastax.oss.driver.api.core.DefaultProtocolVersion;
 import com.datastax.oss.driver.api.core.connection.BusyConnectionException;
 import com.datastax.oss.driver.api.core.connection.ClosedConnectionException;
 import com.datastax.oss.driver.internal.core.protocol.FrameDecodingException;
@@ -485,7 +485,7 @@ public class InFlightHandlerTest extends ChannelHandlerTestBase {
             ProtocolConstants.StatusChangeType.UP, new InetSocketAddress("127.0.0.1", 9042));
     Frame eventFrame =
         Frame.forResponse(
-            CoreProtocolVersion.V3.getCode(),
+            DefaultProtocolVersion.V3.getCode(),
             -1,
             null,
             Collections.emptyMap(),
@@ -508,7 +508,7 @@ public class InFlightHandlerTest extends ChannelHandlerTestBase {
         .pipeline()
         .addLast(
             new InFlightHandler(
-                CoreProtocolVersion.V3,
+                DefaultProtocolVersion.V3,
                 streamIds,
                 MAX_ORPHAN_IDS,
                 SET_KEYSPACE_TIMEOUT_MILLIS,

@@ -16,7 +16,7 @@
 package com.datastax.oss.driver.internal.core;
 
 import com.datastax.oss.driver.api.core.CassandraVersion;
-import com.datastax.oss.driver.api.core.CoreProtocolVersion;
+import com.datastax.oss.driver.api.core.DefaultProtocolVersion;
 import com.datastax.oss.driver.api.core.ProtocolVersion;
 import com.datastax.oss.driver.api.core.UnsupportedProtocolVersionException;
 import com.datastax.oss.driver.api.core.metadata.Node;
@@ -40,19 +40,19 @@ import org.slf4j.LoggerFactory;
  * <p>This can be overridden with a custom implementation by subclassing {@link
  * DefaultDriverContext}.
  *
- * @see CoreProtocolVersion
+ * @see DefaultProtocolVersion
  */
 public class CassandraProtocolVersionRegistry implements ProtocolVersionRegistry {
 
   private static final Logger LOG = LoggerFactory.getLogger(CassandraProtocolVersionRegistry.class);
   private static final ImmutableList<ProtocolVersion> values =
-      ImmutableList.<ProtocolVersion>builder().add(CoreProtocolVersion.values()).build();
+      ImmutableList.<ProtocolVersion>builder().add(DefaultProtocolVersion.values()).build();
 
   private final String logPrefix;
   private final NavigableMap<Integer, ProtocolVersion> versionsByCode;
 
   public CassandraProtocolVersionRegistry(String logPrefix) {
-    this(logPrefix, CoreProtocolVersion.values());
+    this(logPrefix, DefaultProtocolVersion.values());
   }
 
   protected CassandraProtocolVersionRegistry(String logPrefix, ProtocolVersion[]... versionRanges) {
@@ -109,9 +109,9 @@ public class CassandraProtocolVersionRegistry implements ProtocolVersionRegistry
       throw new IllegalArgumentException("Expected at least one node");
     }
 
-    SortedSet<CoreProtocolVersion> candidates = new TreeSet<>();
+    SortedSet<DefaultProtocolVersion> candidates = new TreeSet<>();
 
-    for (CoreProtocolVersion version : CoreProtocolVersion.values()) {
+    for (DefaultProtocolVersion version : DefaultProtocolVersion.values()) {
       // Beta versions always need to be forced, and we only call this method if the version
       // wasn't forced
       if (!version.isBeta()) {
@@ -139,7 +139,7 @@ public class CassandraProtocolVersionRegistry implements ProtocolVersionRegistry
                 "Node %s reports Cassandra version %s, "
                     + "but the driver only supports 2.1.0 and above",
                 node.getConnectAddress(), cassandraVersion),
-            ImmutableList.of(CoreProtocolVersion.V3, CoreProtocolVersion.V4));
+            ImmutableList.of(DefaultProtocolVersion.V3, DefaultProtocolVersion.V4));
       }
 
       LOG.debug(
@@ -148,7 +148,7 @@ public class CassandraProtocolVersionRegistry implements ProtocolVersionRegistry
           node.getConnectAddress(),
           cassandraVersion);
       if (cassandraVersion.compareTo(CassandraVersion.V2_2_0) < 0
-          && candidates.remove(CoreProtocolVersion.V4)) {
+          && candidates.remove(DefaultProtocolVersion.V4)) {
         LOG.debug("[{}] Excluding protocol V4", logPrefix);
       }
     }
@@ -161,7 +161,7 @@ public class CassandraProtocolVersionRegistry implements ProtocolVersionRegistry
               "Could not determine a common protocol version, "
                   + "enable DEBUG logs for '%s' for more details",
               LOG.getName()),
-          ImmutableList.of(CoreProtocolVersion.V3, CoreProtocolVersion.V4));
+          ImmutableList.of(DefaultProtocolVersion.V3, DefaultProtocolVersion.V4));
     } else {
       return candidates.last();
     }

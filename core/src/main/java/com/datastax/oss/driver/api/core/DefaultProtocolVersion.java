@@ -22,7 +22,7 @@ import com.datastax.oss.protocol.internal.ProtocolConstants;
  *
  * <p>Legacy versions 1 (Cassandra 1.2) and 2 (Cassandra 2.0) are not supported anymore.
  */
-public enum CoreProtocolVersion implements ProtocolVersion {
+public enum DefaultProtocolVersion implements ProtocolVersion {
 
   /** Version 3, supported by Cassandra 2.1 and above. */
   V3(ProtocolConstants.Version.V3, false),
@@ -42,7 +42,7 @@ public enum CoreProtocolVersion implements ProtocolVersion {
   private final int code;
   private final boolean beta;
 
-  CoreProtocolVersion(int code, boolean beta) {
+  DefaultProtocolVersion(int code, boolean beta) {
     this.code = code;
     this.beta = beta;
   }

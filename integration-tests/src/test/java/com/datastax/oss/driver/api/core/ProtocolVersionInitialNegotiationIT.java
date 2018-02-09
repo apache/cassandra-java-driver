@@ -61,7 +61,8 @@ public class ProtocolVersionInitialNegotiationIT {
       assertThat(cause).isInstanceOf(UnsupportedProtocolVersionException.class);
       UnsupportedProtocolVersionException unsupportedException =
           (UnsupportedProtocolVersionException) cause;
-      assertThat(unsupportedException.getAttemptedVersions()).containsOnly(CoreProtocolVersion.V4);
+      assertThat(unsupportedException.getAttemptedVersions())
+          .containsOnly(DefaultProtocolVersion.V4);
     }
   }
 

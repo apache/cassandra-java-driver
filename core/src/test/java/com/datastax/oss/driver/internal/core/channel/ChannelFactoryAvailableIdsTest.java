@@ -19,7 +19,7 @@ import static com.datastax.oss.driver.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.timeout;
 
-import com.datastax.oss.driver.api.core.CoreProtocolVersion;
+import com.datastax.oss.driver.api.core.DefaultProtocolVersion;
 import com.datastax.oss.driver.api.core.config.CoreDriverOption;
 import com.datastax.oss.protocol.internal.Frame;
 import com.datastax.oss.protocol.internal.request.Query;
@@ -43,7 +43,7 @@ public class ChannelFactoryAvailableIdsTest extends ChannelFactoryTestBase {
         .thenReturn(true);
     Mockito.when(defaultConfigProfile.getString(CoreDriverOption.PROTOCOL_VERSION))
         .thenReturn("V4");
-    Mockito.when(protocolVersionRegistry.fromName("V4")).thenReturn(CoreProtocolVersion.V4);
+    Mockito.when(protocolVersionRegistry.fromName("V4")).thenReturn(DefaultProtocolVersion.V4);
 
     Mockito.when(defaultConfigProfile.getInt(CoreDriverOption.CONNECTION_MAX_REQUESTS))
         .thenReturn(128);

@@ -17,8 +17,8 @@ package com.datastax.oss.driver.internal.core.cql;
 
 import static com.datastax.oss.driver.Assertions.assertThat;
 
-import com.datastax.oss.driver.api.core.CoreProtocolVersion;
 import com.datastax.oss.driver.api.core.CqlSession;
+import com.datastax.oss.driver.api.core.DefaultProtocolVersion;
 import com.datastax.oss.driver.api.core.cql.AsyncResultSet;
 import com.datastax.oss.driver.api.core.cql.ColumnDefinition;
 import com.datastax.oss.driver.api.core.cql.ColumnDefinitions;
@@ -56,7 +56,7 @@ public class DefaultAsyncResultSetTest {
 
     Mockito.when(executionInfo.getStatement()).thenReturn((Statement) statement);
     Mockito.when(context.codecRegistry()).thenReturn(CodecRegistry.DEFAULT);
-    Mockito.when(context.protocolVersion()).thenReturn(CoreProtocolVersion.DEFAULT);
+    Mockito.when(context.protocolVersion()).thenReturn(DefaultProtocolVersion.DEFAULT);
   }
 
   @Test(expected = IllegalStateException.class)
@@ -139,7 +139,7 @@ public class DefaultAsyncResultSetTest {
     Mockito.when(columnDefinitions.get(0)).thenReturn(columnDefinition);
 
     Queue<List<ByteBuffer>> data = new ArrayDeque<>();
-    data.add(Lists.newArrayList(TypeCodecs.BOOLEAN.encode(false, CoreProtocolVersion.DEFAULT)));
+    data.add(Lists.newArrayList(TypeCodecs.BOOLEAN.encode(false, DefaultProtocolVersion.DEFAULT)));
 
     // When
     DefaultAsyncResultSet resultSet =
@@ -160,7 +160,7 @@ public class DefaultAsyncResultSetTest {
     Mockito.when(columnDefinitions.get(0)).thenReturn(columnDefinition);
 
     Queue<List<ByteBuffer>> data = new ArrayDeque<>();
-    data.add(Lists.newArrayList(TypeCodecs.BOOLEAN.encode(true, CoreProtocolVersion.DEFAULT)));
+    data.add(Lists.newArrayList(TypeCodecs.BOOLEAN.encode(true, DefaultProtocolVersion.DEFAULT)));
 
     // When
     DefaultAsyncResultSet resultSet =

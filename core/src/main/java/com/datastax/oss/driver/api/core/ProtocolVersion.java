@@ -22,13 +22,13 @@ import com.datastax.oss.driver.api.core.detach.Detachable;
  *
  * <p>The only reason to model this as an interface (as opposed to an enum type) is to accommodate
  * for custom protocol extensions. If you're connecting to a standard Apache Cassandra cluster, all
- * {@code ProtocolVersion}s are {@link CoreProtocolVersion} instances.
+ * {@code ProtocolVersion}s are {@link DefaultProtocolVersion} instances.
  */
 public interface ProtocolVersion {
   /** The default version used for {@link Detachable detached} objects. */
   // Implementation note: we can't use the ProtocolVersionRegistry here, this has to be a
   // compile-time constant.
-  ProtocolVersion DEFAULT = CoreProtocolVersion.V4;
+  ProtocolVersion DEFAULT = DefaultProtocolVersion.V4;
 
   /**
    * A numeric code that uniquely identifies the version (this is the code used in network frames).

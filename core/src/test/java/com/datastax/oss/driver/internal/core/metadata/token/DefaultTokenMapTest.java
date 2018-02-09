@@ -17,8 +17,8 @@ package com.datastax.oss.driver.internal.core.metadata.token;
 
 import static com.datastax.oss.driver.Assertions.assertThat;
 
-import com.datastax.oss.driver.api.core.CoreProtocolVersion;
 import com.datastax.oss.driver.api.core.CqlIdentifier;
+import com.datastax.oss.driver.api.core.DefaultProtocolVersion;
 import com.datastax.oss.driver.api.core.metadata.Node;
 import com.datastax.oss.driver.api.core.metadata.schema.KeyspaceMetadata;
 import com.datastax.oss.driver.api.core.metadata.token.Token;
@@ -65,10 +65,11 @@ public class DefaultTokenMapTest {
       range(TOKEN_FACTORY.minToken(), TOKEN_FACTORY.minToken());
 
   // Some random routing keys that land in the ranges above (they were generated manually)
-  private static ByteBuffer ROUTING_KEY12 = TypeCodecs.BIGINT.encode(2L, CoreProtocolVersion.V3);
-  private static ByteBuffer ROUTING_KEY23 = TypeCodecs.BIGINT.encode(0L, CoreProtocolVersion.V3);
-  private static ByteBuffer ROUTING_KEY34 = TypeCodecs.BIGINT.encode(1L, CoreProtocolVersion.V3);
-  private static ByteBuffer ROUTING_KEY41 = TypeCodecs.BIGINT.encode(99L, CoreProtocolVersion.V3);
+  private static ByteBuffer ROUTING_KEY12 = TypeCodecs.BIGINT.encode(2L, DefaultProtocolVersion.V3);
+  private static ByteBuffer ROUTING_KEY23 = TypeCodecs.BIGINT.encode(0L, DefaultProtocolVersion.V3);
+  private static ByteBuffer ROUTING_KEY34 = TypeCodecs.BIGINT.encode(1L, DefaultProtocolVersion.V3);
+  private static ByteBuffer ROUTING_KEY41 =
+      TypeCodecs.BIGINT.encode(99L, DefaultProtocolVersion.V3);
 
   private static final ImmutableMap<String, String> REPLICATE_ON_BOTH_DCS =
       ImmutableMap.of(

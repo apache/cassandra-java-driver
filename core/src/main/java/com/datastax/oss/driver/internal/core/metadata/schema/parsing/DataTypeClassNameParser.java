@@ -15,8 +15,8 @@
  */
 package com.datastax.oss.driver.internal.core.metadata.schema.parsing;
 
-import com.datastax.oss.driver.api.core.CoreProtocolVersion;
 import com.datastax.oss.driver.api.core.CqlIdentifier;
+import com.datastax.oss.driver.api.core.DefaultProtocolVersion;
 import com.datastax.oss.driver.api.core.type.DataType;
 import com.datastax.oss.driver.api.core.type.DataTypes;
 import com.datastax.oss.driver.api.core.type.UserDefinedType;
@@ -261,7 +261,7 @@ class DataTypeClassNameParser implements DataTypeParser {
         try {
           name =
               TypeCodecs.TEXT.decode(
-                  Bytes.fromHexString("0x" + bbHex), CoreProtocolVersion.DEFAULT);
+                  Bytes.fromHexString("0x" + bbHex), DefaultProtocolVersion.DEFAULT);
         } catch (NumberFormatException e) {
           throwSyntaxError(e.getMessage());
         }

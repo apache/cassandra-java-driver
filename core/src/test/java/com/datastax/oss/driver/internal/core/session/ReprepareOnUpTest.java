@@ -17,7 +17,7 @@ package com.datastax.oss.driver.internal.core.session;
 
 import static com.datastax.oss.driver.Assertions.assertThat;
 
-import com.datastax.oss.driver.api.core.CoreProtocolVersion;
+import com.datastax.oss.driver.api.core.DefaultProtocolVersion;
 import com.datastax.oss.driver.api.core.config.CoreDriverOption;
 import com.datastax.oss.driver.api.core.config.DriverConfig;
 import com.datastax.oss.driver.api.core.config.DriverConfigProfile;
@@ -154,7 +154,7 @@ public class ReprepareOnUpTest {
         .isEqualTo("SELECT prepared_id FROM system.prepared_statements");
     // server knows no ids:
     adminQuery.resultFuture.complete(
-        new AdminResult(preparedIdRows(/*none*/ ), null, CoreProtocolVersion.DEFAULT));
+        new AdminResult(preparedIdRows(/*none*/ ), null, DefaultProtocolVersion.DEFAULT));
 
     for (char c = 'a'; c <= 'f'; c++) {
       adminQuery = reprepareOnUp.queries.poll();
@@ -202,7 +202,7 @@ public class ReprepareOnUpTest {
         .isEqualTo("SELECT prepared_id FROM system.prepared_statements");
     // server knows d, e and f already:
     adminQuery.resultFuture.complete(
-        new AdminResult(preparedIdRows('d', 'e', 'f'), null, CoreProtocolVersion.DEFAULT));
+        new AdminResult(preparedIdRows('d', 'e', 'f'), null, DefaultProtocolVersion.DEFAULT));
 
     for (char c = 'a'; c <= 'c'; c++) {
       adminQuery = reprepareOnUp.queries.poll();
@@ -245,7 +245,7 @@ public class ReprepareOnUpTest {
         .isEqualTo("SELECT prepared_id FROM system.prepared_statements");
     // server knows no ids:
     adminQuery.resultFuture.complete(
-        new AdminResult(preparedIdRows(/*none*/ ), null, CoreProtocolVersion.DEFAULT));
+        new AdminResult(preparedIdRows(/*none*/ ), null, DefaultProtocolVersion.DEFAULT));
 
     for (char c = 'a'; c <= 'c'; c++) {
       adminQuery = reprepareOnUp.queries.poll();
@@ -274,7 +274,7 @@ public class ReprepareOnUpTest {
         .isEqualTo("SELECT prepared_id FROM system.prepared_statements");
     // server knows no ids => will reprepare all 6:
     adminQuery.resultFuture.complete(
-        new AdminResult(preparedIdRows(/*none*/ ), null, CoreProtocolVersion.DEFAULT));
+        new AdminResult(preparedIdRows(/*none*/ ), null, DefaultProtocolVersion.DEFAULT));
 
     // 3 statements have enqueued, we've not completed the queries yet so no more should be sent:
     assertThat(reprepareOnUp.queries.size()).isEqualTo(3);

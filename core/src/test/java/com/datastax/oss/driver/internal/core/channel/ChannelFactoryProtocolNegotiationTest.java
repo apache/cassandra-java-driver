@@ -17,7 +17,7 @@ package com.datastax.oss.driver.internal.core.channel;
 
 import static com.datastax.oss.driver.Assertions.assertThat;
 
-import com.datastax.oss.driver.api.core.CoreProtocolVersion;
+import com.datastax.oss.driver.api.core.DefaultProtocolVersion;
 import com.datastax.oss.driver.api.core.UnsupportedProtocolVersionException;
 import com.datastax.oss.driver.api.core.config.CoreDriverOption;
 import com.datastax.oss.driver.internal.core.TestResponses;
@@ -41,7 +41,7 @@ public class ChannelFactoryProtocolNegotiationTest extends ChannelFactoryTestBas
         .thenReturn(true);
     Mockito.when(defaultConfigProfile.getString(CoreDriverOption.PROTOCOL_VERSION))
         .thenReturn("V4");
-    Mockito.when(protocolVersionRegistry.fromName("V4")).thenReturn(CoreProtocolVersion.V4);
+    Mockito.when(protocolVersionRegistry.fromName("V4")).thenReturn(DefaultProtocolVersion.V4);
     ChannelFactory factory = newChannelFactory();
 
     // When
@@ -53,7 +53,7 @@ public class ChannelFactoryProtocolNegotiationTest extends ChannelFactoryTestBas
     // Then
     assertThat(channelFuture)
         .isSuccess(channel -> assertThat(channel.getClusterName()).isEqualTo("mockClusterName"));
-    assertThat(factory.protocolVersion).isEqualTo(CoreProtocolVersion.V4);
+    assertThat(factory.protocolVersion).isEqualTo(DefaultProtocolVersion.V4);
   }
 
   @Test
@@ -64,7 +64,7 @@ public class ChannelFactoryProtocolNegotiationTest extends ChannelFactoryTestBas
         .thenReturn(true);
     Mockito.when(defaultConfigProfile.getString(CoreDriverOption.PROTOCOL_VERSION))
         .thenReturn("V4");
-    Mockito.when(protocolVersionRegistry.fromName("V4")).thenReturn(CoreProtocolVersion.V4);
+    Mockito.when(protocolVersionRegistry.fromName("V4")).thenReturn(DefaultProtocolVersion.V4);
     ChannelFactory factory = newChannelFactory();
 
     // When
@@ -72,7 +72,7 @@ public class ChannelFactoryProtocolNegotiationTest extends ChannelFactoryTestBas
         factory.connect(SERVER_ADDRESS, DriverChannelOptions.DEFAULT);
 
     Frame requestFrame = readOutboundFrame();
-    assertThat(requestFrame.protocolVersion).isEqualTo(CoreProtocolVersion.V4.getCode());
+    assertThat(requestFrame.protocolVersion).isEqualTo(DefaultProtocolVersion.V4.getCode());
     // Server does not support v4
     writeInboundFrame(
         requestFrame, new Error(errorCode, "Invalid or unsupported protocol version"));
@@ -85,7 +85,7 @@ public class ChannelFactoryProtocolNegotiationTest extends ChannelFactoryTestBas
                   .isInstanceOf(UnsupportedProtocolVersionException.class)
                   .hasMessageContaining("Host does not support protocol version V4");
               assertThat(((UnsupportedProtocolVersionException) e).getAttemptedVersions())
-                  .containsExactly(CoreProtocolVersion.V4);
+                  .containsExactly(DefaultProtocolVersion.V4);
             });
   }
 
@@ -94,7 +94,7 @@ public class ChannelFactoryProtocolNegotiationTest extends ChannelFactoryTestBas
     // Given
     Mockito.when(defaultConfigProfile.isDefined(CoreDriverOption.PROTOCOL_VERSION))
         .thenReturn(false);
-    Mockito.when(protocolVersionRegistry.highestNonBeta()).thenReturn(CoreProtocolVersion.V4);
+    Mockito.when(protocolVersionRegistry.highestNonBeta()).thenReturn(DefaultProtocolVersion.V4);
     ChannelFactory factory = newChannelFactory();
 
     // When
@@ -102,7 +102,7 @@ public class ChannelFactoryProtocolNegotiationTest extends ChannelFactoryTestBas
         factory.connect(SERVER_ADDRESS, DriverChannelOptions.DEFAULT);
 
     Frame requestFrame = readOutboundFrame();
-    assertThat(requestFrame.protocolVersion).isEqualTo(CoreProtocolVersion.V4.getCode());
+    assertThat(requestFrame.protocolVersion).isEqualTo(DefaultProtocolVersion.V4.getCode());
     writeInboundFrame(requestFrame, new Ready());
 
     requestFrame = readOutboundFrame();
@@ -111,7 +111,7 @@ public class ChannelFactoryProtocolNegotiationTest extends ChannelFactoryTestBas
     // Then
     assertThat(channelFuture)
         .isSuccess(channel -> assertThat(channel.getClusterName()).isEqualTo("mockClusterName"));
-    assertThat(factory.protocolVersion).isEqualTo(CoreProtocolVersion.V4);
+    assertThat(factory.protocolVersion).isEqualTo(DefaultProtocolVersion.V4);
   }
 
   @Test
@@ -120,9 +120,9 @@ public class ChannelFactoryProtocolNegotiationTest extends ChannelFactoryTestBas
     // Given
     Mockito.when(defaultConfigProfile.isDefined(CoreDriverOption.PROTOCOL_VERSION))
         .thenReturn(false);
-    Mockito.when(protocolVersionRegistry.highestNonBeta()).thenReturn(CoreProtocolVersion.V4);
-    Mockito.when(protocolVersionRegistry.downgrade(CoreProtocolVersion.V4))
-        .thenReturn(Optional.of(CoreProtocolVersion.V3));
+    Mockito.when(protocolVersionRegistry.highestNonBeta()).thenReturn(DefaultProtocolVersion.V4);
+    Mockito.when(protocolVersionRegistry.downgrade(DefaultProtocolVersion.V4))
+        .thenReturn(Optional.of(DefaultProtocolVersion.V3));
     ChannelFactory factory = newChannelFactory();
 
     // When
@@ -130,7 +130,7 @@ public class ChannelFactoryProtocolNegotiationTest extends ChannelFactoryTestBas
         factory.connect(SERVER_ADDRESS, DriverChannelOptions.DEFAULT);
 
     Frame requestFrame = readOutboundFrame();
-    assertThat(requestFrame.protocolVersion).isEqualTo(CoreProtocolVersion.V4.getCode());
+    assertThat(requestFrame.protocolVersion).isEqualTo(DefaultProtocolVersion.V4.getCode());
     // Server does not support v4
     writeInboundFrame(
         requestFrame, new Error(errorCode, "Invalid or unsupported protocol version"));
@@ -138,14 +138,14 @@ public class ChannelFactoryProtocolNegotiationTest extends ChannelFactoryTestBas
     // Then
     // Factory should initialize a new connection, that retries with the lower version
     requestFrame = readOutboundFrame();
-    assertThat(requestFrame.protocolVersion).isEqualTo(CoreProtocolVersion.V3.getCode());
+    assertThat(requestFrame.protocolVersion).isEqualTo(DefaultProtocolVersion.V3.getCode());
     writeInboundFrame(requestFrame, new Ready());
 
     requestFrame = readOutboundFrame();
     writeInboundFrame(requestFrame, TestResponses.clusterNameResponse("mockClusterName"));
     assertThat(channelFuture)
         .isSuccess(channel -> assertThat(channel.getClusterName()).isEqualTo("mockClusterName"));
-    assertThat(factory.protocolVersion).isEqualTo(CoreProtocolVersion.V3);
+    assertThat(factory.protocolVersion).isEqualTo(DefaultProtocolVersion.V3);
   }
 
   @Test
@@ -154,10 +154,10 @@ public class ChannelFactoryProtocolNegotiationTest extends ChannelFactoryTestBas
     // Given
     Mockito.when(defaultConfigProfile.isDefined(CoreDriverOption.PROTOCOL_VERSION))
         .thenReturn(false);
-    Mockito.when(protocolVersionRegistry.highestNonBeta()).thenReturn(CoreProtocolVersion.V4);
-    Mockito.when(protocolVersionRegistry.downgrade(CoreProtocolVersion.V4))
-        .thenReturn(Optional.of(CoreProtocolVersion.V3));
-    Mockito.when(protocolVersionRegistry.downgrade(CoreProtocolVersion.V3))
+    Mockito.when(protocolVersionRegistry.highestNonBeta()).thenReturn(DefaultProtocolVersion.V4);
+    Mockito.when(protocolVersionRegistry.downgrade(DefaultProtocolVersion.V4))
+        .thenReturn(Optional.of(DefaultProtocolVersion.V3));
+    Mockito.when(protocolVersionRegistry.downgrade(DefaultProtocolVersion.V3))
         .thenReturn(Optional.empty());
     ChannelFactory factory = newChannelFactory();
 
@@ -166,14 +166,14 @@ public class ChannelFactoryProtocolNegotiationTest extends ChannelFactoryTestBas
         factory.connect(SERVER_ADDRESS, DriverChannelOptions.DEFAULT);
 
     Frame requestFrame = readOutboundFrame();
-    assertThat(requestFrame.protocolVersion).isEqualTo(CoreProtocolVersion.V4.getCode());
+    assertThat(requestFrame.protocolVersion).isEqualTo(DefaultProtocolVersion.V4.getCode());
     // Server does not support v4
     writeInboundFrame(
         requestFrame, new Error(errorCode, "Invalid or unsupported protocol version"));
 
     // Client retries with v3
     requestFrame = readOutboundFrame();
-    assertThat(requestFrame.protocolVersion).isEqualTo(CoreProtocolVersion.V3.getCode());
+    assertThat(requestFrame.protocolVersion).isEqualTo(DefaultProtocolVersion.V3.getCode());
     // Server does not support v3
     writeInboundFrame(
         requestFrame, new Error(errorCode, "Invalid or unsupported protocol version"));
@@ -188,7 +188,7 @@ public class ChannelFactoryProtocolNegotiationTest extends ChannelFactoryTestBas
                       "Protocol negotiation failed: could not find a common version "
                           + "(attempted: [V4, V3])");
               assertThat(((UnsupportedProtocolVersionException) e).getAttemptedVersions())
-                  .containsExactly(CoreProtocolVersion.V4, CoreProtocolVersion.V3);
+                  .containsExactly(DefaultProtocolVersion.V4, DefaultProtocolVersion.V3);
             });
   }
 

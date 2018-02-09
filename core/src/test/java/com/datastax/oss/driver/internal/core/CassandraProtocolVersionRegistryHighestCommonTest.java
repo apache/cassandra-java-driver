@@ -18,7 +18,7 @@ package com.datastax.oss.driver.internal.core;
 import static com.datastax.oss.driver.Assertions.assertThat;
 
 import com.datastax.oss.driver.api.core.CassandraVersion;
-import com.datastax.oss.driver.api.core.CoreProtocolVersion;
+import com.datastax.oss.driver.api.core.DefaultProtocolVersion;
 import com.datastax.oss.driver.api.core.UnsupportedProtocolVersionException;
 import com.datastax.oss.driver.api.core.metadata.Node;
 import com.google.common.collect.ImmutableList;
@@ -29,7 +29,7 @@ import org.mockito.Mockito;
 
 /**
  * Covers {@link CassandraProtocolVersionRegistry#highestCommon(Collection)} separately, because it
- * relies explicitly on {@link CoreProtocolVersion} as the version implementation.
+ * relies explicitly on {@link DefaultProtocolVersion} as the version implementation.
  */
 public class CassandraProtocolVersionRegistryHighestCommonTest {
 
@@ -40,7 +40,7 @@ public class CassandraProtocolVersionRegistryHighestCommonTest {
     assertThat(
             registry.highestCommon(
                 ImmutableList.of(mockNode("2.2.1"), mockNode("2.1.0"), mockNode("3.1.9"))))
-        .isEqualTo(CoreProtocolVersion.V3);
+        .isEqualTo(DefaultProtocolVersion.V3);
   }
 
   @Test
@@ -48,7 +48,7 @@ public class CassandraProtocolVersionRegistryHighestCommonTest {
     assertThat(
             registry.highestCommon(
                 ImmutableList.of(mockNode("2.2.0"), mockNode("2.2.1"), mockNode("3.1.9"))))
-        .isEqualTo(CoreProtocolVersion.V4);
+        .isEqualTo(DefaultProtocolVersion.V4);
   }
 
   @Test
@@ -56,11 +56,11 @@ public class CassandraProtocolVersionRegistryHighestCommonTest {
     assertThat(
             registry.highestCommon(
                 ImmutableList.of(mockNode("2.2.1"), mockNode("2.1.0-rc1"), mockNode("3.1.9"))))
-        .isEqualTo(CoreProtocolVersion.V3);
+        .isEqualTo(DefaultProtocolVersion.V3);
     assertThat(
             registry.highestCommon(
                 ImmutableList.of(mockNode("2.2.0-rc2"), mockNode("2.2.1"), mockNode("3.1.9"))))
-        .isEqualTo(CoreProtocolVersion.V4);
+        .isEqualTo(DefaultProtocolVersion.V4);
   }
 
   @Test
@@ -68,13 +68,13 @@ public class CassandraProtocolVersionRegistryHighestCommonTest {
     assertThat(
             registry.highestCommon(
                 ImmutableList.of(mockNode(null), mockNode("2.1.0"), mockNode("3.1.9"))))
-        .isEqualTo(CoreProtocolVersion.V3);
+        .isEqualTo(DefaultProtocolVersion.V3);
 
     // Edge case: if all do, go with the latest version
     assertThat(
             registry.highestCommon(
                 ImmutableList.of(mockNode(null), mockNode(null), mockNode(null))))
-        .isEqualTo(CoreProtocolVersion.V4);
+        .isEqualTo(DefaultProtocolVersion.V4);
   }
 
   @Test
@@ -83,7 +83,7 @@ public class CassandraProtocolVersionRegistryHighestCommonTest {
     assertThat(
             registry.highestCommon(
                 ImmutableList.of(mockNode("3.0.0"), mockNode("12.1.5"), mockNode("98.7.22"))))
-        .isEqualTo(CoreProtocolVersion.V4);
+        .isEqualTo(DefaultProtocolVersion.V4);
   }
 
   @Test(expected = IllegalArgumentException.class)
