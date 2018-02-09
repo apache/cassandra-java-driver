@@ -20,7 +20,7 @@ import com.datastax.oss.driver.api.core.connection.ClosedConnectionException;
 import com.datastax.oss.driver.api.core.connection.HeartbeatException;
 import com.datastax.oss.driver.api.core.context.DriverContext;
 import com.datastax.oss.driver.api.core.servererrors.CoordinatorException;
-import com.datastax.oss.driver.api.core.servererrors.CoreWriteType;
+import com.datastax.oss.driver.api.core.servererrors.DefaultWriteType;
 import com.datastax.oss.driver.api.core.servererrors.ReadFailureException;
 import com.datastax.oss.driver.api.core.servererrors.WriteFailureException;
 import com.datastax.oss.driver.api.core.servererrors.WriteType;
@@ -84,7 +84,7 @@ public class DefaultRetryPolicy implements RetryPolicy {
       int received,
       int retryCount) {
 
-    return (retryCount == 0 && writeType == CoreWriteType.BATCH_LOG)
+    return (retryCount == 0 && writeType == DefaultWriteType.BATCH_LOG)
         ? RetryDecision.RETRY_SAME
         : RetryDecision.RETHROW;
   }

@@ -15,18 +15,18 @@
  */
 package com.datastax.oss.driver.internal.core.servererrors;
 
-import com.datastax.oss.driver.api.core.servererrors.CoreWriteType;
+import com.datastax.oss.driver.api.core.servererrors.DefaultWriteType;
 import com.datastax.oss.driver.api.core.servererrors.WriteType;
 import com.google.common.collect.ImmutableList;
 
 public class DefaultWriteTypeRegistry implements WriteTypeRegistry {
 
   private static final ImmutableList<WriteType> values =
-      ImmutableList.<WriteType>builder().add(CoreWriteType.values()).build();
+      ImmutableList.<WriteType>builder().add(DefaultWriteType.values()).build();
 
   @Override
   public WriteType fromName(String name) {
-    return CoreWriteType.valueOf(name);
+    return DefaultWriteType.valueOf(name);
   }
 
   @Override
