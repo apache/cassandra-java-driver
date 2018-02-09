@@ -19,17 +19,17 @@ import com.google.common.collect.ImmutableMap;
 import java.util.Map;
 
 /** See {@code reference.conf} for a description of each metric. */
-public enum CoreSessionMetric implements SessionMetric {
+public enum DefaultSessionMetric implements SessionMetric {
   CONNECTED_NODES("connected-nodes"),
   CQL_REQUESTS("cql-requests"),
   CQL_CLIENT_TIMEOUTS("cql-client-timeouts"),
   ;
 
-  private static final Map<String, CoreSessionMetric> BY_PATH = sortByPath();
+  private static final Map<String, DefaultSessionMetric> BY_PATH = sortByPath();
 
   private final String path;
 
-  CoreSessionMetric(String path) {
+  DefaultSessionMetric(String path) {
     this.path = path;
   }
 
@@ -38,17 +38,17 @@ public enum CoreSessionMetric implements SessionMetric {
     return path;
   }
 
-  public static CoreSessionMetric fromPath(String path) {
-    CoreSessionMetric metric = BY_PATH.get(path);
+  public static DefaultSessionMetric fromPath(String path) {
+    DefaultSessionMetric metric = BY_PATH.get(path);
     if (metric == null) {
       throw new IllegalArgumentException("Unknown session metric path " + path);
     }
     return metric;
   }
 
-  private static Map<String, CoreSessionMetric> sortByPath() {
-    ImmutableMap.Builder<String, CoreSessionMetric> result = ImmutableMap.builder();
-    for (CoreSessionMetric value : values()) {
+  private static Map<String, DefaultSessionMetric> sortByPath() {
+    ImmutableMap.Builder<String, DefaultSessionMetric> result = ImmutableMap.builder();
+    for (DefaultSessionMetric value : values()) {
       result.put(value.getPath(), value);
     }
     return result.build();

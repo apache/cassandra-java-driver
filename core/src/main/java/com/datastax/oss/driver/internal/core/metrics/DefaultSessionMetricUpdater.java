@@ -18,7 +18,7 @@ package com.datastax.oss.driver.internal.core.metrics;
 import com.codahale.metrics.Gauge;
 import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
 import com.datastax.oss.driver.api.core.metadata.Node;
-import com.datastax.oss.driver.api.core.metrics.CoreSessionMetric;
+import com.datastax.oss.driver.api.core.metrics.DefaultSessionMetric;
 import com.datastax.oss.driver.api.core.metrics.SessionMetric;
 import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
 import java.util.Set;
@@ -33,9 +33,9 @@ public class DefaultSessionMetricUpdater extends MetricUpdaterBase<SessionMetric
     super(enabledMetrics, context.metricRegistry());
     this.metricNamePrefix = context.sessionName() + ".";
 
-    if (enabledMetrics.contains(CoreSessionMetric.CONNECTED_NODES)) {
+    if (enabledMetrics.contains(DefaultSessionMetric.CONNECTED_NODES)) {
       metricRegistry.register(
-          buildFullName(CoreSessionMetric.CONNECTED_NODES),
+          buildFullName(DefaultSessionMetric.CONNECTED_NODES),
           (Gauge<Integer>)
               () -> {
                 int count = 0;
@@ -48,12 +48,12 @@ public class DefaultSessionMetricUpdater extends MetricUpdaterBase<SessionMetric
               });
     }
     initializeHdrTimer(
-        CoreSessionMetric.CQL_REQUESTS,
+        DefaultSessionMetric.CQL_REQUESTS,
         context.config().getDefaultProfile(),
         DefaultDriverOption.METRICS_SESSION_CQL_REQUESTS_HIGHEST,
         DefaultDriverOption.METRICS_SESSION_CQL_REQUESTS_DIGITS,
         DefaultDriverOption.METRICS_SESSION_CQL_REQUESTS_INTERVAL);
-    initializeDefaultCounter(CoreSessionMetric.CQL_CLIENT_TIMEOUTS);
+    initializeDefaultCounter(DefaultSessionMetric.CQL_CLIENT_TIMEOUTS);
   }
 
   @Override

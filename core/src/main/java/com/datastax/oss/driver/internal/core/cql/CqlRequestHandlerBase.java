@@ -26,8 +26,8 @@ import com.datastax.oss.driver.api.core.cql.AsyncResultSet;
 import com.datastax.oss.driver.api.core.cql.ExecutionInfo;
 import com.datastax.oss.driver.api.core.cql.Statement;
 import com.datastax.oss.driver.api.core.metadata.Node;
-import com.datastax.oss.driver.api.core.metrics.CoreSessionMetric;
 import com.datastax.oss.driver.api.core.metrics.DefaultNodeMetric;
+import com.datastax.oss.driver.api.core.metrics.DefaultSessionMetric;
 import com.datastax.oss.driver.api.core.retry.RetryDecision;
 import com.datastax.oss.driver.api.core.retry.RetryPolicy;
 import com.datastax.oss.driver.api.core.servererrors.BootstrappingException;
@@ -273,7 +273,7 @@ public abstract class CqlRequestHandlerBase {
         session
             .getMetricUpdater()
             .updateTimer(
-                CoreSessionMetric.CQL_REQUESTS,
+                DefaultSessionMetric.CQL_REQUESTS,
                 System.nanoTime() - startTimeNanos,
                 TimeUnit.NANOSECONDS);
       }
@@ -307,7 +307,7 @@ public abstract class CqlRequestHandlerBase {
     if (result.completeExceptionally(error)) {
       cancelScheduledTasks();
       if (error instanceof DriverTimeoutException) {
-        session.getMetricUpdater().incrementCounter(CoreSessionMetric.CQL_CLIENT_TIMEOUTS);
+        session.getMetricUpdater().incrementCounter(DefaultSessionMetric.CQL_CLIENT_TIMEOUTS);
       }
     }
   }
