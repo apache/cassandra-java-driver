@@ -33,7 +33,7 @@ import com.datastax.oss.driver.api.core.metrics.DefaultNodeMetric;
 import com.datastax.oss.driver.api.core.retry.RetryDecision;
 import com.datastax.oss.driver.api.core.retry.RetryPolicy;
 import com.datastax.oss.driver.api.core.servererrors.BootstrappingException;
-import com.datastax.oss.driver.api.core.servererrors.CoreWriteType;
+import com.datastax.oss.driver.api.core.servererrors.DefaultWriteType;
 import com.datastax.oss.driver.api.core.servererrors.InvalidQueryException;
 import com.datastax.oss.driver.api.core.servererrors.ReadTimeoutException;
 import com.datastax.oss.driver.api.core.servererrors.ServerError;
@@ -402,7 +402,7 @@ public class CqlRequestHandlerRetryTest extends CqlRequestHandlerTestBase {
                     policy.onWriteTimeout(
                         any(SimpleStatement.class),
                         eq(DefaultConsistencyLevel.LOCAL_ONE),
-                        eq(CoreWriteType.SIMPLE),
+                        eq(DefaultWriteType.SIMPLE),
                         eq(2),
                         eq(1),
                         eq(0)))

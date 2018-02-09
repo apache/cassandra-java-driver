@@ -23,7 +23,7 @@ package com.datastax.oss.driver.api.core.servererrors;
  *
  * <p>The only reason to model this as an interface (as opposed to an enum type) is to accommodate
  * for custom protocol extensions. If you're connecting to a standard Apache Cassandra cluster, all
- * {@code WriteType}s are {@link CoreWriteType} instances.
+ * {@code WriteType}s are {@link DefaultWriteType} instances.
  */
 public interface WriteType {
 

@@ -16,7 +16,7 @@
 package com.datastax.oss.driver.api.core.servererrors;
 
 /** A default write type supported by the driver out of the box. */
-public enum CoreWriteType implements WriteType {
+public enum DefaultWriteType implements WriteType {
 
   /** A write to a single partition key. Such writes are guaranteed to be atomic and isolated. */
   SIMPLE,
