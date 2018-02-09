@@ -20,8 +20,8 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.times;
 
-import com.datastax.oss.driver.api.core.CoreConsistencyLevel;
 import com.datastax.oss.driver.api.core.CqlSession;
+import com.datastax.oss.driver.api.core.DefaultConsistencyLevel;
 import com.datastax.oss.driver.api.core.config.CoreDriverOption;
 import com.datastax.oss.driver.api.core.config.DriverConfigProfile;
 import com.datastax.oss.driver.api.core.cql.AsyncResultSet;
@@ -96,13 +96,13 @@ public class QueryTraceFetcherTest {
     Mockito.when(config.getDuration(CoreDriverOption.REQUEST_TRACE_INTERVAL))
         .thenReturn(Duration.ZERO);
     Mockito.when(config.getString(CoreDriverOption.REQUEST_CONSISTENCY))
-        .thenReturn(CoreConsistencyLevel.LOCAL_ONE.name());
+        .thenReturn(DefaultConsistencyLevel.LOCAL_ONE.name());
     Mockito.when(config.getString(CoreDriverOption.REQUEST_TRACE_CONSISTENCY))
-        .thenReturn(CoreConsistencyLevel.ONE.name());
+        .thenReturn(DefaultConsistencyLevel.ONE.name());
 
     Mockito.when(
             config.withString(
-                CoreDriverOption.REQUEST_CONSISTENCY, CoreConsistencyLevel.ONE.name()))
+                CoreDriverOption.REQUEST_CONSISTENCY, DefaultConsistencyLevel.ONE.name()))
         .thenReturn(traceConfig);
 
     Mockito.when(context.consistencyLevelRegistry())

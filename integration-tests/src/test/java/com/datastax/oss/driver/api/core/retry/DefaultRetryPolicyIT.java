@@ -27,8 +27,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
 
 import com.datastax.oss.driver.api.core.AllNodesFailedException;
-import com.datastax.oss.driver.api.core.CoreConsistencyLevel;
 import com.datastax.oss.driver.api.core.CqlSession;
+import com.datastax.oss.driver.api.core.DefaultConsistencyLevel;
 import com.datastax.oss.driver.api.core.connection.ClosedConnectionException;
 import com.datastax.oss.driver.api.core.cql.ResultSet;
 import com.datastax.oss.driver.api.core.cql.SimpleStatement;
@@ -114,7 +114,7 @@ public class DefaultRetryPolicyIT {
       fail("Expected a ReadTimeoutException");
     } catch (ReadTimeoutException rte) {
       // then a read timeout exception is thrown
-      assertThat(rte.getConsistencyLevel()).isEqualTo(CoreConsistencyLevel.LOCAL_QUORUM);
+      assertThat(rte.getConsistencyLevel()).isEqualTo(DefaultConsistencyLevel.LOCAL_QUORUM);
       assertThat(rte.getReceived()).isEqualTo(1);
       assertThat(rte.getBlockFor()).isEqualTo(3);
       assertThat(rte.wasDataPresent()).isTrue();
@@ -137,7 +137,7 @@ public class DefaultRetryPolicyIT {
       fail("Expected a ReadTimeoutException");
     } catch (ReadTimeoutException rte) {
       // then a read timeout exception is thrown
-      assertThat(rte.getConsistencyLevel()).isEqualTo(CoreConsistencyLevel.LOCAL_QUORUM);
+      assertThat(rte.getConsistencyLevel()).isEqualTo(DefaultConsistencyLevel.LOCAL_QUORUM);
       assertThat(rte.getReceived()).isEqualTo(2);
       assertThat(rte.getBlockFor()).isEqualTo(3);
       assertThat(rte.wasDataPresent()).isFalse();
@@ -160,7 +160,7 @@ public class DefaultRetryPolicyIT {
       fail("Expected a ReadTimeoutException");
     } catch (ReadTimeoutException rte) {
       // then a read timeout exception is thrown.
-      assertThat(rte.getConsistencyLevel()).isEqualTo(CoreConsistencyLevel.LOCAL_QUORUM);
+      assertThat(rte.getConsistencyLevel()).isEqualTo(DefaultConsistencyLevel.LOCAL_QUORUM);
       assertThat(rte.getReceived()).isEqualTo(3);
       assertThat(rte.getBlockFor()).isEqualTo(3);
       assertThat(rte.wasDataPresent()).isFalse();
@@ -275,7 +275,7 @@ public class DefaultRetryPolicyIT {
       fail("WriteTimeoutException expected");
     } catch (WriteTimeoutException wte) {
       // then a write timeout exception is thrown
-      assertThat(wte.getConsistencyLevel()).isEqualTo(CoreConsistencyLevel.LOCAL_QUORUM);
+      assertThat(wte.getConsistencyLevel()).isEqualTo(DefaultConsistencyLevel.LOCAL_QUORUM);
       assertThat(wte.getReceived()).isEqualTo(1);
       assertThat(wte.getBlockFor()).isEqualTo(3);
       assertThat(wte.getWriteType()).isEqualTo(CoreWriteType.BATCH_LOG);
@@ -314,7 +314,7 @@ public class DefaultRetryPolicyIT {
       fail("WriteTimeoutException expected");
     } catch (WriteTimeoutException wte) {
       // then a write timeout exception is thrown
-      assertThat(wte.getConsistencyLevel()).isEqualTo(CoreConsistencyLevel.LOCAL_QUORUM);
+      assertThat(wte.getConsistencyLevel()).isEqualTo(DefaultConsistencyLevel.LOCAL_QUORUM);
       assertThat(wte.getReceived()).isEqualTo(1);
       assertThat(wte.getBlockFor()).isEqualTo(3);
     }
@@ -339,7 +339,7 @@ public class DefaultRetryPolicyIT {
       fail("WriteTimeoutException expected");
     } catch (WriteTimeoutException wte) {
       // then a write timeout exception is thrown
-      assertThat(wte.getConsistencyLevel()).isEqualTo(CoreConsistencyLevel.LOCAL_QUORUM);
+      assertThat(wte.getConsistencyLevel()).isEqualTo(DefaultConsistencyLevel.LOCAL_QUORUM);
       assertThat(wte.getReceived()).isEqualTo(1);
       assertThat(wte.getBlockFor()).isEqualTo(3);
       assertThat(wte.getWriteType()).isEqualTo(CoreWriteType.BATCH_LOG);
@@ -389,7 +389,7 @@ public class DefaultRetryPolicyIT {
       // tried).
       assertThat(ue.getCoordinator().getConnectAddress())
           .isEqualTo(simulacron.cluster().node(1).inetSocketAddress());
-      assertThat(ue.getConsistencyLevel()).isEqualTo(CoreConsistencyLevel.LOCAL_QUORUM);
+      assertThat(ue.getConsistencyLevel()).isEqualTo(DefaultConsistencyLevel.LOCAL_QUORUM);
       assertThat(ue.getRequired()).isEqualTo(3);
       assertThat(ue.getAlive()).isEqualTo(0);
     }

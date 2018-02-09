@@ -20,7 +20,7 @@ package com.datastax.oss.driver.api.core;
  *
  * <p>The only reason to model this as an interface (as opposed to an enum type) is to accommodate
  * for custom protocol extensions. If you're connecting to a standard Apache Cassandra cluster, all
- * {@code ConsistencyLevel}s are {@link CoreConsistencyLevel} instances.
+ * {@code ConsistencyLevel}s are {@link DefaultConsistencyLevel} instances.
  */
 public interface ConsistencyLevel {
 

@@ -19,8 +19,8 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
 
-import com.datastax.oss.driver.api.core.CoreConsistencyLevel;
 import com.datastax.oss.driver.api.core.CqlIdentifier;
+import com.datastax.oss.driver.api.core.DefaultConsistencyLevel;
 import com.datastax.oss.driver.api.core.ProtocolVersion;
 import com.datastax.oss.driver.api.core.config.CoreDriverOption;
 import com.datastax.oss.driver.api.core.config.DriverConfig;
@@ -95,10 +95,10 @@ public class RequestHandlerTestHarness implements AutoCloseable {
     Mockito.when(defaultConfigProfile.getDuration(CoreDriverOption.REQUEST_TIMEOUT))
         .thenReturn(Duration.ofMillis(500));
     Mockito.when(defaultConfigProfile.getString(CoreDriverOption.REQUEST_CONSISTENCY))
-        .thenReturn(CoreConsistencyLevel.LOCAL_ONE.name());
+        .thenReturn(DefaultConsistencyLevel.LOCAL_ONE.name());
     Mockito.when(defaultConfigProfile.getInt(CoreDriverOption.REQUEST_PAGE_SIZE)).thenReturn(5000);
     Mockito.when(defaultConfigProfile.getString(CoreDriverOption.REQUEST_SERIAL_CONSISTENCY))
-        .thenReturn(CoreConsistencyLevel.SERIAL.name());
+        .thenReturn(DefaultConsistencyLevel.SERIAL.name());
     Mockito.when(defaultConfigProfile.getBoolean(CoreDriverOption.REQUEST_DEFAULT_IDEMPOTENCE))
         .thenReturn(builder.defaultIdempotence);
     Mockito.when(defaultConfigProfile.getBoolean(CoreDriverOption.PREPARE_ON_ALL_NODES))
