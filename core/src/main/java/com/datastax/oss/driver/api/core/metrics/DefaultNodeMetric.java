@@ -19,7 +19,7 @@ import com.google.common.collect.ImmutableMap;
 import java.util.Map;
 
 /** See {@code reference.conf} for a description of each metric. */
-public enum CoreNodeMetric implements NodeMetric {
+public enum DefaultNodeMetric implements NodeMetric {
   OPEN_CONNECTIONS("pool.open-connections"),
   AVAILABLE_STREAMS("pool.available-streams"),
   IN_FLIGHT("pool.in-flight"),
@@ -48,11 +48,11 @@ public enum CoreNodeMetric implements NodeMetric {
   AUTHENTICATION_ERRORS("errors.connection.auth"),
   ;
 
-  private static final Map<String, CoreNodeMetric> BY_PATH = sortByPath();
+  private static final Map<String, DefaultNodeMetric> BY_PATH = sortByPath();
 
   private final String path;
 
-  CoreNodeMetric(String path) {
+  DefaultNodeMetric(String path) {
     this.path = path;
   }
 
@@ -61,17 +61,17 @@ public enum CoreNodeMetric implements NodeMetric {
     return path;
   }
 
-  public static CoreNodeMetric fromPath(String path) {
-    CoreNodeMetric metric = BY_PATH.get(path);
+  public static DefaultNodeMetric fromPath(String path) {
+    DefaultNodeMetric metric = BY_PATH.get(path);
     if (metric == null) {
       throw new IllegalArgumentException("Unknown node metric path " + path);
     }
     return metric;
   }
 
-  private static Map<String, CoreNodeMetric> sortByPath() {
-    ImmutableMap.Builder<String, CoreNodeMetric> result = ImmutableMap.builder();
-    for (CoreNodeMetric value : values()) {
+  private static Map<String, DefaultNodeMetric> sortByPath() {
+    ImmutableMap.Builder<String, DefaultNodeMetric> result = ImmutableMap.builder();
+    for (DefaultNodeMetric value : values()) {
       result.put(value.getPath(), value);
     }
     return result.build();

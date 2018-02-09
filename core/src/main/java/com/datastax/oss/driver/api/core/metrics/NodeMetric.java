@@ -36,8 +36,8 @@ import java.net.InetAddress;
  * Meter retriesMeter = session.getMetricRegistry().meter("s0.nodes.0:0:0:0:0:0:0:1_9042.retries.total");
  * </pre>
  *
- * <p>All metrics exposed out of the box by the driver are instances of {@link CoreNodeMetric} (this
- * interface only exists to allow custom metrics in driver extensions).
+ * <p>All metrics exposed out of the box by the driver are instances of {@link DefaultNodeMetric}
+ * (this interface only exists to allow custom metrics in driver extensions).
  *
  * @see SessionMetric
  */

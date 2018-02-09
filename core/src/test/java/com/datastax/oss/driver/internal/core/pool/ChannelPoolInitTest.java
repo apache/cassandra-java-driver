@@ -22,7 +22,7 @@ import static org.mockito.Mockito.times;
 import com.datastax.oss.driver.api.core.InvalidKeyspaceException;
 import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
 import com.datastax.oss.driver.api.core.loadbalancing.NodeDistance;
-import com.datastax.oss.driver.api.core.metrics.CoreNodeMetric;
+import com.datastax.oss.driver.api.core.metrics.DefaultNodeMetric;
 import com.datastax.oss.driver.internal.core.channel.ChannelEvent;
 import com.datastax.oss.driver.internal.core.channel.ClusterNameMismatchException;
 import com.datastax.oss.driver.internal.core.channel.DriverChannel;
@@ -86,7 +86,7 @@ public class ChannelPoolInitTest extends ChannelPoolTestBase {
     assertThat(poolFuture).isSuccess(pool -> assertThat(pool.channels).isEmpty());
     Mockito.verify(eventBus, never()).fire(ChannelEvent.channelOpened(node));
     Mockito.verify(nodeMetricUpdater, times(3))
-        .incrementCounter(CoreNodeMetric.CONNECTION_INIT_ERRORS);
+        .incrementCounter(DefaultNodeMetric.CONNECTION_INIT_ERRORS);
 
     factoryHelper.verifyNoMoreCalls();
   }
@@ -113,7 +113,7 @@ public class ChannelPoolInitTest extends ChannelPoolTestBase {
             pool -> {
               assertThat(pool.isInvalidKeyspace()).isTrue();
               Mockito.verify(nodeMetricUpdater, times(3))
-                  .incrementCounter(CoreNodeMetric.CONNECTION_INIT_ERRORS);
+                  .incrementCounter(DefaultNodeMetric.CONNECTION_INIT_ERRORS);
             });
   }
 
@@ -140,7 +140,7 @@ public class ChannelPoolInitTest extends ChannelPoolTestBase {
     Mockito.verify(eventBus, never()).fire(ChannelEvent.channelOpened(node));
 
     Mockito.verify(nodeMetricUpdater, times(3))
-        .incrementCounter(CoreNodeMetric.CONNECTION_INIT_ERRORS);
+        .incrementCounter(DefaultNodeMetric.CONNECTION_INIT_ERRORS);
     factoryHelper.verifyNoMoreCalls();
   }
 
@@ -188,7 +188,7 @@ public class ChannelPoolInitTest extends ChannelPoolTestBase {
 
     assertThat(pool.channels).containsOnly(channel1, channel2);
 
-    Mockito.verify(nodeMetricUpdater).incrementCounter(CoreNodeMetric.CONNECTION_INIT_ERRORS);
+    Mockito.verify(nodeMetricUpdater).incrementCounter(DefaultNodeMetric.CONNECTION_INIT_ERRORS);
     factoryHelper.verifyNoMoreCalls();
   }
 }

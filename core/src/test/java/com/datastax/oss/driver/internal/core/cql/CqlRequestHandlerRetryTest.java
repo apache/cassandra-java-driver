@@ -29,7 +29,7 @@ import com.datastax.oss.driver.api.core.cql.ExecutionInfo;
 import com.datastax.oss.driver.api.core.cql.Row;
 import com.datastax.oss.driver.api.core.cql.SimpleStatement;
 import com.datastax.oss.driver.api.core.metadata.Node;
-import com.datastax.oss.driver.api.core.metrics.CoreNodeMetric;
+import com.datastax.oss.driver.api.core.metrics.DefaultNodeMetric;
 import com.datastax.oss.driver.api.core.retry.RetryDecision;
 import com.datastax.oss.driver.api.core.retry.RetryPolicy;
 import com.datastax.oss.driver.api.core.servererrors.BootstrappingException;
@@ -120,10 +120,10 @@ public class CqlRequestHandlerRetryTest extends CqlRequestHandlerTestBase {
                     .hasMessage("mock message");
                 Mockito.verifyNoMoreInteractions(harness.getContext().retryPolicy());
 
-                Mockito.verify(nodeMetricUpdater1).incrementCounter(CoreNodeMetric.OTHER_ERRORS);
+                Mockito.verify(nodeMetricUpdater1).incrementCounter(DefaultNodeMetric.OTHER_ERRORS);
                 Mockito.verify(nodeMetricUpdater1)
                     .updateTimer(
-                        eq(CoreNodeMetric.CQL_MESSAGES), anyLong(), eq(TimeUnit.NANOSECONDS));
+                        eq(DefaultNodeMetric.CQL_MESSAGES), anyLong(), eq(TimeUnit.NANOSECONDS));
                 Mockito.verifyNoMoreInteractions(nodeMetricUpdater1);
               });
     }
@@ -159,11 +159,11 @@ public class CqlRequestHandlerRetryTest extends CqlRequestHandlerTestBase {
                 assertThat(executionInfo.getErrors().get(0).getKey()).isEqualTo(node1);
 
                 Mockito.verify(nodeMetricUpdater1).incrementCounter(failureScenario.errorMetric);
-                Mockito.verify(nodeMetricUpdater1).incrementCounter(CoreNodeMetric.RETRIES);
+                Mockito.verify(nodeMetricUpdater1).incrementCounter(DefaultNodeMetric.RETRIES);
                 Mockito.verify(nodeMetricUpdater1).incrementCounter(failureScenario.retryMetric);
                 Mockito.verify(nodeMetricUpdater1, atMost(1))
                     .updateTimer(
-                        eq(CoreNodeMetric.CQL_MESSAGES), anyLong(), eq(TimeUnit.NANOSECONDS));
+                        eq(DefaultNodeMetric.CQL_MESSAGES), anyLong(), eq(TimeUnit.NANOSECONDS));
                 Mockito.verifyNoMoreInteractions(nodeMetricUpdater1);
               });
     }
@@ -199,11 +199,11 @@ public class CqlRequestHandlerRetryTest extends CqlRequestHandlerTestBase {
                 assertThat(executionInfo.getErrors().get(0).getKey()).isEqualTo(node1);
 
                 Mockito.verify(nodeMetricUpdater1).incrementCounter(failureScenario.errorMetric);
-                Mockito.verify(nodeMetricUpdater1).incrementCounter(CoreNodeMetric.RETRIES);
+                Mockito.verify(nodeMetricUpdater1).incrementCounter(DefaultNodeMetric.RETRIES);
                 Mockito.verify(nodeMetricUpdater1).incrementCounter(failureScenario.retryMetric);
                 Mockito.verify(nodeMetricUpdater1, atMost(2))
                     .updateTimer(
-                        eq(CoreNodeMetric.CQL_MESSAGES), anyLong(), eq(TimeUnit.NANOSECONDS));
+                        eq(DefaultNodeMetric.CQL_MESSAGES), anyLong(), eq(TimeUnit.NANOSECONDS));
                 Mockito.verifyNoMoreInteractions(nodeMetricUpdater1);
               });
     }
@@ -236,11 +236,11 @@ public class CqlRequestHandlerRetryTest extends CqlRequestHandlerTestBase {
                 assertThat(executionInfo.getErrors()).hasSize(0);
 
                 Mockito.verify(nodeMetricUpdater1).incrementCounter(failureScenario.errorMetric);
-                Mockito.verify(nodeMetricUpdater1).incrementCounter(CoreNodeMetric.IGNORES);
+                Mockito.verify(nodeMetricUpdater1).incrementCounter(DefaultNodeMetric.IGNORES);
                 Mockito.verify(nodeMetricUpdater1).incrementCounter(failureScenario.ignoreMetric);
                 Mockito.verify(nodeMetricUpdater1, atMost(1))
                     .updateTimer(
-                        eq(CoreNodeMetric.CQL_MESSAGES), anyLong(), eq(TimeUnit.NANOSECONDS));
+                        eq(DefaultNodeMetric.CQL_MESSAGES), anyLong(), eq(TimeUnit.NANOSECONDS));
                 Mockito.verifyNoMoreInteractions(nodeMetricUpdater1);
               });
     }
@@ -271,7 +271,7 @@ public class CqlRequestHandlerRetryTest extends CqlRequestHandlerTestBase {
                 Mockito.verify(nodeMetricUpdater1).incrementCounter(failureScenario.errorMetric);
                 Mockito.verify(nodeMetricUpdater1, atMost(1))
                     .updateTimer(
-                        eq(CoreNodeMetric.CQL_MESSAGES), anyLong(), eq(TimeUnit.NANOSECONDS));
+                        eq(DefaultNodeMetric.CQL_MESSAGES), anyLong(), eq(TimeUnit.NANOSECONDS));
                 Mockito.verifyNoMoreInteractions(nodeMetricUpdater1);
               });
     }
@@ -316,7 +316,7 @@ public class CqlRequestHandlerRetryTest extends CqlRequestHandlerTestBase {
                 Mockito.verify(nodeMetricUpdater1).incrementCounter(failureScenario.errorMetric);
                 Mockito.verify(nodeMetricUpdater1, atMost(1))
                     .updateTimer(
-                        eq(CoreNodeMetric.CQL_MESSAGES), anyLong(), eq(TimeUnit.NANOSECONDS));
+                        eq(DefaultNodeMetric.CQL_MESSAGES), anyLong(), eq(TimeUnit.NANOSECONDS));
                 Mockito.verifyNoMoreInteractions(nodeMetricUpdater1);
               });
     }
@@ -328,15 +328,15 @@ public class CqlRequestHandlerRetryTest extends CqlRequestHandlerTestBase {
    */
   private abstract static class FailureScenario {
     private final Class<? extends Throwable> expectedExceptionClass;
-    final CoreNodeMetric errorMetric;
-    final CoreNodeMetric retryMetric;
-    final CoreNodeMetric ignoreMetric;
+    final DefaultNodeMetric errorMetric;
+    final DefaultNodeMetric retryMetric;
+    final DefaultNodeMetric ignoreMetric;
 
     protected FailureScenario(
         Class<? extends Throwable> expectedExceptionClass,
-        CoreNodeMetric errorMetric,
-        CoreNodeMetric retryMetric,
-        CoreNodeMetric ignoreMetric) {
+        DefaultNodeMetric errorMetric,
+        DefaultNodeMetric retryMetric,
+        DefaultNodeMetric ignoreMetric) {
       this.expectedExceptionClass = expectedExceptionClass;
       this.errorMetric = errorMetric;
       this.retryMetric = retryMetric;
@@ -353,9 +353,9 @@ public class CqlRequestHandlerRetryTest extends CqlRequestHandlerTestBase {
     return TestDataProviders.fromList(
         new FailureScenario(
             ReadTimeoutException.class,
-            CoreNodeMetric.READ_TIMEOUTS,
-            CoreNodeMetric.RETRIES_ON_READ_TIMEOUT,
-            CoreNodeMetric.IGNORES_ON_READ_TIMEOUT) {
+            DefaultNodeMetric.READ_TIMEOUTS,
+            DefaultNodeMetric.RETRIES_ON_READ_TIMEOUT,
+            DefaultNodeMetric.IGNORES_ON_READ_TIMEOUT) {
           @Override
           public void mockRequestError(RequestHandlerTestHarness.Builder builder, Node node) {
             builder.withResponse(
@@ -380,9 +380,9 @@ public class CqlRequestHandlerRetryTest extends CqlRequestHandlerTestBase {
         },
         new FailureScenario(
             WriteTimeoutException.class,
-            CoreNodeMetric.WRITE_TIMEOUTS,
-            CoreNodeMetric.RETRIES_ON_WRITE_TIMEOUT,
-            CoreNodeMetric.IGNORES_ON_WRITE_TIMEOUT) {
+            DefaultNodeMetric.WRITE_TIMEOUTS,
+            DefaultNodeMetric.RETRIES_ON_WRITE_TIMEOUT,
+            DefaultNodeMetric.IGNORES_ON_WRITE_TIMEOUT) {
           @Override
           public void mockRequestError(RequestHandlerTestHarness.Builder builder, Node node) {
             builder.withResponse(
@@ -411,9 +411,9 @@ public class CqlRequestHandlerRetryTest extends CqlRequestHandlerTestBase {
         },
         new FailureScenario(
             UnavailableException.class,
-            CoreNodeMetric.UNAVAILABLES,
-            CoreNodeMetric.RETRIES_ON_UNAVAILABLE,
-            CoreNodeMetric.IGNORES_ON_UNAVAILABLE) {
+            DefaultNodeMetric.UNAVAILABLES,
+            DefaultNodeMetric.RETRIES_ON_UNAVAILABLE,
+            DefaultNodeMetric.IGNORES_ON_UNAVAILABLE) {
           @Override
           public void mockRequestError(RequestHandlerTestHarness.Builder builder, Node node) {
             builder.withResponse(
@@ -437,9 +437,9 @@ public class CqlRequestHandlerRetryTest extends CqlRequestHandlerTestBase {
         },
         new FailureScenario(
             ServerError.class,
-            CoreNodeMetric.OTHER_ERRORS,
-            CoreNodeMetric.RETRIES_ON_OTHER_ERROR,
-            CoreNodeMetric.IGNORES_ON_OTHER_ERROR) {
+            DefaultNodeMetric.OTHER_ERRORS,
+            DefaultNodeMetric.RETRIES_ON_OTHER_ERROR,
+            DefaultNodeMetric.IGNORES_ON_OTHER_ERROR) {
           @Override
           public void mockRequestError(RequestHandlerTestHarness.Builder builder, Node node) {
             builder.withResponse(
@@ -458,9 +458,9 @@ public class CqlRequestHandlerRetryTest extends CqlRequestHandlerTestBase {
         },
         new FailureScenario(
             HeartbeatException.class,
-            CoreNodeMetric.ABORTED_REQUESTS,
-            CoreNodeMetric.RETRIES_ON_ABORTED,
-            CoreNodeMetric.IGNORES_ON_ABORTED) {
+            DefaultNodeMetric.ABORTED_REQUESTS,
+            DefaultNodeMetric.RETRIES_ON_ABORTED,
+            DefaultNodeMetric.IGNORES_ON_ABORTED) {
           @Override
           public void mockRequestError(RequestHandlerTestHarness.Builder builder, Node node) {
             builder.withResponseFailure(node, Mockito.mock(HeartbeatException.class));
