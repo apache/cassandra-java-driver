@@ -19,7 +19,7 @@ import static com.datastax.oss.driver.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 
-import com.datastax.oss.driver.api.core.CoreProtocolVersion;
+import com.datastax.oss.driver.api.core.DefaultProtocolVersion;
 import com.datastax.oss.driver.api.core.config.CoreDriverOption;
 import com.datastax.oss.driver.api.core.config.DriverConfigProfile;
 import com.datastax.oss.driver.api.core.cql.ColumnDefinitions;
@@ -336,7 +336,7 @@ public class CqlPrepareHandlerTest {
 
   private static Frame defaultFrameOf(Message responseMessage) {
     return Frame.forResponse(
-        CoreProtocolVersion.V4.getCode(),
+        DefaultProtocolVersion.V4.getCode(),
         0,
         null,
         Frame.NO_PAYLOAD,

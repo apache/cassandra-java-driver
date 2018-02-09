@@ -22,8 +22,8 @@ import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.Logger;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.Appender;
-import com.datastax.oss.driver.api.core.CoreProtocolVersion;
 import com.datastax.oss.driver.api.core.CqlIdentifier;
+import com.datastax.oss.driver.api.core.DefaultProtocolVersion;
 import com.datastax.oss.driver.api.core.InvalidKeyspaceException;
 import com.datastax.oss.driver.api.core.auth.AuthProvider;
 import com.datastax.oss.driver.api.core.auth.AuthenticationException;
@@ -107,7 +107,7 @@ public class ProtocolInitHandlerTest extends ChannelHandlerTestBase {
         .addLast(
             "inflight",
             new InFlightHandler(
-                CoreProtocolVersion.V4,
+                DefaultProtocolVersion.V4,
                 new StreamIdGenerator(100),
                 Integer.MAX_VALUE,
                 100,
@@ -134,7 +134,7 @@ public class ProtocolInitHandlerTest extends ChannelHandlerTestBase {
             "init",
             new ProtocolInitHandler(
                 internalDriverContext,
-                CoreProtocolVersion.V4,
+                DefaultProtocolVersion.V4,
                 null,
                 DriverChannelOptions.DEFAULT,
                 heartbeatHandler));
@@ -169,7 +169,7 @@ public class ProtocolInitHandlerTest extends ChannelHandlerTestBase {
             "init",
             new ProtocolInitHandler(
                 internalDriverContext,
-                CoreProtocolVersion.V4,
+                DefaultProtocolVersion.V4,
                 null,
                 DriverChannelOptions.DEFAULT,
                 heartbeatHandler));
@@ -193,7 +193,7 @@ public class ProtocolInitHandlerTest extends ChannelHandlerTestBase {
     ProtocolInitHandler protocolInitHandler =
         new ProtocolInitHandler(
             internalDriverContext,
-            CoreProtocolVersion.V4,
+            DefaultProtocolVersion.V4,
             null,
             DriverChannelOptions.DEFAULT,
             heartbeatHandler);
@@ -237,7 +237,7 @@ public class ProtocolInitHandlerTest extends ChannelHandlerTestBase {
             "init",
             new ProtocolInitHandler(
                 internalDriverContext,
-                CoreProtocolVersion.V4,
+                DefaultProtocolVersion.V4,
                 null,
                 DriverChannelOptions.DEFAULT,
                 heartbeatHandler));
@@ -261,7 +261,7 @@ public class ProtocolInitHandlerTest extends ChannelHandlerTestBase {
             "init",
             new ProtocolInitHandler(
                 internalDriverContext,
-                CoreProtocolVersion.V4,
+                DefaultProtocolVersion.V4,
                 null,
                 DriverChannelOptions.DEFAULT,
                 heartbeatHandler));
@@ -325,7 +325,7 @@ public class ProtocolInitHandlerTest extends ChannelHandlerTestBase {
             "init",
             new ProtocolInitHandler(
                 internalDriverContext,
-                CoreProtocolVersion.V4,
+                DefaultProtocolVersion.V4,
                 null,
                 DriverChannelOptions.DEFAULT,
                 heartbeatHandler));
@@ -362,7 +362,7 @@ public class ProtocolInitHandlerTest extends ChannelHandlerTestBase {
             "init",
             new ProtocolInitHandler(
                 internalDriverContext,
-                CoreProtocolVersion.V4,
+                DefaultProtocolVersion.V4,
                 null,
                 DriverChannelOptions.DEFAULT,
                 heartbeatHandler));
@@ -406,7 +406,7 @@ public class ProtocolInitHandlerTest extends ChannelHandlerTestBase {
             "init",
             new ProtocolInitHandler(
                 internalDriverContext,
-                CoreProtocolVersion.V4,
+                DefaultProtocolVersion.V4,
                 "expectedClusterName",
                 DriverChannelOptions.DEFAULT,
                 heartbeatHandler));
@@ -435,7 +435,7 @@ public class ProtocolInitHandlerTest extends ChannelHandlerTestBase {
             "init",
             new ProtocolInitHandler(
                 internalDriverContext,
-                CoreProtocolVersion.V4,
+                DefaultProtocolVersion.V4,
                 "expectedClusterName",
                 DriverChannelOptions.DEFAULT,
                 heartbeatHandler));
@@ -464,7 +464,7 @@ public class ProtocolInitHandlerTest extends ChannelHandlerTestBase {
         .addLast(
             "init",
             new ProtocolInitHandler(
-                internalDriverContext, CoreProtocolVersion.V4, null, options, heartbeatHandler));
+                internalDriverContext, DefaultProtocolVersion.V4, null, options, heartbeatHandler));
 
     ChannelFuture connectFuture = channel.connect(new InetSocketAddress("localhost", 9042));
 
@@ -491,7 +491,7 @@ public class ProtocolInitHandlerTest extends ChannelHandlerTestBase {
             "init",
             new ProtocolInitHandler(
                 internalDriverContext,
-                CoreProtocolVersion.V4,
+                DefaultProtocolVersion.V4,
                 null,
                 driverChannelOptions,
                 heartbeatHandler));
@@ -524,7 +524,7 @@ public class ProtocolInitHandlerTest extends ChannelHandlerTestBase {
             "init",
             new ProtocolInitHandler(
                 internalDriverContext,
-                CoreProtocolVersion.V4,
+                DefaultProtocolVersion.V4,
                 null,
                 driverChannelOptions,
                 heartbeatHandler));
@@ -557,7 +557,7 @@ public class ProtocolInitHandlerTest extends ChannelHandlerTestBase {
             "init",
             new ProtocolInitHandler(
                 internalDriverContext,
-                CoreProtocolVersion.V4,
+                DefaultProtocolVersion.V4,
                 null,
                 driverChannelOptions,
                 heartbeatHandler));

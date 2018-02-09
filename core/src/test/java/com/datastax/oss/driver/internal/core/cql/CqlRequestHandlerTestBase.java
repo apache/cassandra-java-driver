@@ -16,7 +16,7 @@
 package com.datastax.oss.driver.internal.core.cql;
 
 import com.datastax.oss.driver.TestDataProviders;
-import com.datastax.oss.driver.api.core.CoreProtocolVersion;
+import com.datastax.oss.driver.api.core.DefaultProtocolVersion;
 import com.datastax.oss.driver.api.core.cql.SimpleStatement;
 import com.datastax.oss.driver.internal.core.metadata.DefaultNode;
 import com.datastax.oss.driver.internal.core.metrics.NodeMetricUpdater;
@@ -74,7 +74,7 @@ public abstract class CqlRequestHandlerTestBase {
 
   protected static Frame defaultFrameOf(Message responseMessage) {
     return Frame.forResponse(
-        CoreProtocolVersion.V4.getCode(),
+        DefaultProtocolVersion.V4.getCode(),
         0,
         null,
         Frame.NO_PAYLOAD,

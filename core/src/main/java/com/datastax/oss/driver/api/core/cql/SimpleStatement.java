@@ -15,9 +15,9 @@
  */
 package com.datastax.oss.driver.api.core.cql;
 
-import com.datastax.oss.driver.api.core.CoreProtocolVersion;
 import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.CqlSession;
+import com.datastax.oss.driver.api.core.DefaultProtocolVersion;
 import com.datastax.oss.driver.api.core.session.Request;
 import com.datastax.oss.driver.internal.core.cql.DefaultSimpleStatement;
 import java.util.Arrays;
@@ -155,7 +155,7 @@ public interface SimpleStatement extends BatchableStatement<SimpleStatement> {
   /**
    * Sets the CQL keyspace to associate with the query.
    *
-   * <p>This feature is only available with {@link CoreProtocolVersion#V5 native protocol v5} or
+   * <p>This feature is only available with {@link DefaultProtocolVersion#V5 native protocol v5} or
    * higher. Specifying a per-request keyspace with lower protocol versions will cause a runtime
    * error.
    *

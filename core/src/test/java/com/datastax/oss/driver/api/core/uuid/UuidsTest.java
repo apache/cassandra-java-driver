@@ -17,7 +17,7 @@ package com.datastax.oss.driver.api.core.uuid;
 
 import static com.datastax.oss.driver.Assertions.assertThat;
 
-import com.datastax.oss.driver.api.core.CoreProtocolVersion;
+import com.datastax.oss.driver.api.core.DefaultProtocolVersion;
 import com.datastax.oss.driver.api.core.type.codec.TypeCodecs;
 import java.nio.ByteBuffer;
 import java.util.HashSet;
@@ -111,9 +111,9 @@ public class UuidsTest {
 
   // Compares using Cassandra's sorting algorithm (not the same as compareTo).
   private static void assertBetween(UUID uuid, UUID lowerBound, UUID upperBound) {
-    ByteBuffer uuidBytes = TypeCodecs.UUID.encode(uuid, CoreProtocolVersion.V3);
-    ByteBuffer lb = TypeCodecs.UUID.encode(lowerBound, CoreProtocolVersion.V3);
-    ByteBuffer ub = TypeCodecs.UUID.encode(upperBound, CoreProtocolVersion.V3);
+    ByteBuffer uuidBytes = TypeCodecs.UUID.encode(uuid, DefaultProtocolVersion.V3);
+    ByteBuffer lb = TypeCodecs.UUID.encode(lowerBound, DefaultProtocolVersion.V3);
+    ByteBuffer ub = TypeCodecs.UUID.encode(upperBound, DefaultProtocolVersion.V3);
     assertThat(compareTimestampBytes(lb, uuidBytes)).isLessThanOrEqualTo(0);
     assertThat(compareTimestampBytes(ub, uuidBytes)).isGreaterThanOrEqualTo(0);
   }
