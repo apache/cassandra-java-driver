@@ -156,7 +156,7 @@ public class ScheduledTaskCapturingEventLoop extends DefaultEventLoop {
       // futureTask.isCancelled() can create timing issues in CI environments, so give the
       // cancellation a short time to complete instead:
       try {
-        futureTask.get(500, TimeUnit.MILLISECONDS);
+        futureTask.get(3, TimeUnit.SECONDS);
       } catch (CancellationException e) {
         return true;
       } catch (Exception e) {
