@@ -26,6 +26,7 @@ import io.netty.util.concurrent.ScheduledFuture;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.Callable;
+import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.FutureTask;
 import java.util.concurrent.TimeUnit;
@@ -152,7 +153,16 @@ public class ScheduledTaskCapturingEventLoop extends DefaultEventLoop {
     }
 
     public boolean isCancelled() {
-      return futureTask.isCancelled();
+      // futureTask.isCancelled() can create timing issues in CI environments, so give the
+      // cancellation a short time to complete instead:
+      try {
+        futureTask.get(500, TimeUnit.MILLISECONDS);
+      } catch (CancellationException e) {
+        return true;
+      } catch (Exception e) {
+        // ignore
+      }
+      return false;
     }
 
     public long getInitialDelay(TimeUnit targetUnit) {
