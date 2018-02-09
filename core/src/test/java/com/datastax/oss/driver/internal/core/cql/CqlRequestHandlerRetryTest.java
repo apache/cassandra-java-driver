@@ -22,7 +22,7 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.atMost;
 
 import com.datastax.oss.driver.TestDataProviders;
-import com.datastax.oss.driver.api.core.CoreConsistencyLevel;
+import com.datastax.oss.driver.api.core.DefaultConsistencyLevel;
 import com.datastax.oss.driver.api.core.connection.HeartbeatException;
 import com.datastax.oss.driver.api.core.cql.AsyncResultSet;
 import com.datastax.oss.driver.api.core.cql.ExecutionInfo;
@@ -370,7 +370,7 @@ public class CqlRequestHandlerRetryTest extends CqlRequestHandlerTestBase {
             Mockito.when(
                     policy.onReadTimeout(
                         any(SimpleStatement.class),
-                        eq(CoreConsistencyLevel.LOCAL_ONE),
+                        eq(DefaultConsistencyLevel.LOCAL_ONE),
                         eq(2),
                         eq(1),
                         eq(true),
@@ -401,7 +401,7 @@ public class CqlRequestHandlerRetryTest extends CqlRequestHandlerTestBase {
             Mockito.when(
                     policy.onWriteTimeout(
                         any(SimpleStatement.class),
-                        eq(CoreConsistencyLevel.LOCAL_ONE),
+                        eq(DefaultConsistencyLevel.LOCAL_ONE),
                         eq(CoreWriteType.SIMPLE),
                         eq(2),
                         eq(1),
@@ -428,7 +428,7 @@ public class CqlRequestHandlerRetryTest extends CqlRequestHandlerTestBase {
             Mockito.when(
                     policy.onUnavailable(
                         any(SimpleStatement.class),
-                        eq(CoreConsistencyLevel.LOCAL_ONE),
+                        eq(DefaultConsistencyLevel.LOCAL_ONE),
                         eq(2),
                         eq(1),
                         eq(0)))

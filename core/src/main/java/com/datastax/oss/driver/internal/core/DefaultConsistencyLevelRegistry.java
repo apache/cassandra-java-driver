@@ -16,22 +16,22 @@
 package com.datastax.oss.driver.internal.core;
 
 import com.datastax.oss.driver.api.core.ConsistencyLevel;
-import com.datastax.oss.driver.api.core.CoreConsistencyLevel;
+import com.datastax.oss.driver.api.core.DefaultConsistencyLevel;
 import com.google.common.collect.ImmutableList;
 
 public class DefaultConsistencyLevelRegistry implements ConsistencyLevelRegistry {
 
   private static final ImmutableList<ConsistencyLevel> values =
-      ImmutableList.<ConsistencyLevel>builder().add(CoreConsistencyLevel.values()).build();
+      ImmutableList.<ConsistencyLevel>builder().add(DefaultConsistencyLevel.values()).build();
 
   @Override
   public ConsistencyLevel fromCode(int code) {
-    return CoreConsistencyLevel.fromCode(code);
+    return DefaultConsistencyLevel.fromCode(code);
   }
 
   @Override
   public ConsistencyLevel fromName(String name) {
-    return CoreConsistencyLevel.valueOf(name);
+    return DefaultConsistencyLevel.valueOf(name);
   }
 
   @Override

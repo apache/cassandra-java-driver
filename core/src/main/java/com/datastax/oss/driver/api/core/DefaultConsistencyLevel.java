@@ -20,7 +20,7 @@ import com.google.common.collect.ImmutableMap;
 import java.util.Map;
 
 /** A default consistency level supported by the driver out of the box. */
-public enum CoreConsistencyLevel implements ConsistencyLevel {
+public enum DefaultConsistencyLevel implements ConsistencyLevel {
   ANY(ProtocolConstants.ConsistencyLevel.ANY),
   ONE(ProtocolConstants.ConsistencyLevel.ONE),
   TWO(ProtocolConstants.ConsistencyLevel.TWO),
@@ -37,7 +37,7 @@ public enum CoreConsistencyLevel implements ConsistencyLevel {
 
   private final int protocolCode;
 
-  CoreConsistencyLevel(int protocolCode) {
+  DefaultConsistencyLevel(int protocolCode) {
     this.protocolCode = protocolCode;
   }
 
@@ -46,19 +46,19 @@ public enum CoreConsistencyLevel implements ConsistencyLevel {
     return protocolCode;
   }
 
-  public static CoreConsistencyLevel fromCode(int code) {
-    CoreConsistencyLevel level = BY_CODE.get(code);
+  public static DefaultConsistencyLevel fromCode(int code) {
+    DefaultConsistencyLevel level = BY_CODE.get(code);
     if (level == null) {
       throw new IllegalArgumentException("Unknown code: " + code);
     }
     return level;
   }
 
-  private static Map<Integer, CoreConsistencyLevel> BY_CODE = mapByCode(values());
+  private static Map<Integer, DefaultConsistencyLevel> BY_CODE = mapByCode(values());
 
-  private static Map<Integer, CoreConsistencyLevel> mapByCode(CoreConsistencyLevel[] levels) {
-    ImmutableMap.Builder<Integer, CoreConsistencyLevel> builder = ImmutableMap.builder();
-    for (CoreConsistencyLevel level : levels) {
+  private static Map<Integer, DefaultConsistencyLevel> mapByCode(DefaultConsistencyLevel[] levels) {
+    ImmutableMap.Builder<Integer, DefaultConsistencyLevel> builder = ImmutableMap.builder();
+    for (DefaultConsistencyLevel level : levels) {
       builder.put(level.protocolCode, level);
     }
     return builder.build();
