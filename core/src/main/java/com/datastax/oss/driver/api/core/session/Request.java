@@ -17,7 +17,7 @@ package com.datastax.oss.driver.api.core.session;
 
 import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.DefaultProtocolVersion;
-import com.datastax.oss.driver.api.core.config.CoreDriverOption;
+import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
 import com.datastax.oss.driver.api.core.config.DriverConfig;
 import com.datastax.oss.driver.api.core.config.DriverConfigProfile;
 import com.datastax.oss.driver.api.core.metadata.token.Token;
@@ -128,7 +128,7 @@ public interface Request {
    * don't retry if there is the slightest chance that the request reached a coordinator).
    *
    * @return a boolean value, or {@code null} to use the default value defined in the configuration.
-   * @see CoreDriverOption#REQUEST_DEFAULT_IDEMPOTENCE
+   * @see DefaultDriverOption#REQUEST_DEFAULT_IDEMPOTENCE
    */
   Boolean isIdempotent();
 

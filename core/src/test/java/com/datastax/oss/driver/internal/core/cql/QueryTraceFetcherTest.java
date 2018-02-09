@@ -22,7 +22,7 @@ import static org.mockito.Mockito.times;
 
 import com.datastax.oss.driver.api.core.CqlSession;
 import com.datastax.oss.driver.api.core.DefaultConsistencyLevel;
-import com.datastax.oss.driver.api.core.config.CoreDriverOption;
+import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
 import com.datastax.oss.driver.api.core.config.DriverConfigProfile;
 import com.datastax.oss.driver.api.core.cql.AsyncResultSet;
 import com.datastax.oss.driver.api.core.cql.ExecutionInfo;
@@ -91,18 +91,18 @@ public class QueryTraceFetcherTest {
               return null;
             });
 
-    Mockito.when(config.getInt(CoreDriverOption.REQUEST_TRACE_ATTEMPTS)).thenReturn(3);
+    Mockito.when(config.getInt(DefaultDriverOption.REQUEST_TRACE_ATTEMPTS)).thenReturn(3);
     // Doesn't really matter since we mock the scheduler
-    Mockito.when(config.getDuration(CoreDriverOption.REQUEST_TRACE_INTERVAL))
+    Mockito.when(config.getDuration(DefaultDriverOption.REQUEST_TRACE_INTERVAL))
         .thenReturn(Duration.ZERO);
-    Mockito.when(config.getString(CoreDriverOption.REQUEST_CONSISTENCY))
+    Mockito.when(config.getString(DefaultDriverOption.REQUEST_CONSISTENCY))
         .thenReturn(DefaultConsistencyLevel.LOCAL_ONE.name());
-    Mockito.when(config.getString(CoreDriverOption.REQUEST_TRACE_CONSISTENCY))
+    Mockito.when(config.getString(DefaultDriverOption.REQUEST_TRACE_CONSISTENCY))
         .thenReturn(DefaultConsistencyLevel.ONE.name());
 
     Mockito.when(
             config.withString(
-                CoreDriverOption.REQUEST_CONSISTENCY, DefaultConsistencyLevel.ONE.name()))
+                DefaultDriverOption.REQUEST_CONSISTENCY, DefaultConsistencyLevel.ONE.name()))
         .thenReturn(traceConfig);
 
     Mockito.when(context.consistencyLevelRegistry())
@@ -157,7 +157,7 @@ public class QueryTraceFetcherTest {
 
   /**
    * This should not happen with a sane configuration, but we need to handle it in case {@link
-   * CoreDriverOption#REQUEST_PAGE_SIZE} is set ridiculously low.
+   * DefaultDriverOption#REQUEST_PAGE_SIZE} is set ridiculously low.
    */
   @Test
   public void should_succeed_when_events_query_is_paged() {

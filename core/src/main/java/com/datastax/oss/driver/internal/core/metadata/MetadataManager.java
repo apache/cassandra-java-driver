@@ -16,7 +16,7 @@
 package com.datastax.oss.driver.internal.core.metadata;
 
 import com.datastax.oss.driver.api.core.AsyncAutoCloseable;
-import com.datastax.oss.driver.api.core.config.CoreDriverOption;
+import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
 import com.datastax.oss.driver.api.core.config.DriverConfigProfile;
 import com.datastax.oss.driver.api.core.metadata.Metadata;
 import com.datastax.oss.driver.api.core.metadata.Node;
@@ -74,12 +74,12 @@ public class MetadataManager implements AsyncAutoCloseable {
     this.singleThreaded = new SingleThreaded(context, config);
     this.controlConnection = context.controlConnection();
     this.metadata = DefaultMetadata.EMPTY;
-    this.schemaEnabledInConfig = config.getBoolean(CoreDriverOption.METADATA_SCHEMA_ENABLED);
+    this.schemaEnabledInConfig = config.getBoolean(DefaultDriverOption.METADATA_SCHEMA_ENABLED);
     this.refreshedKeyspaces =
-        config.isDefined(CoreDriverOption.METADATA_SCHEMA_REFRESHED_KEYSPACES)
-            ? config.getStringList(CoreDriverOption.METADATA_SCHEMA_REFRESHED_KEYSPACES)
+        config.isDefined(DefaultDriverOption.METADATA_SCHEMA_REFRESHED_KEYSPACES)
+            ? config.getStringList(DefaultDriverOption.METADATA_SCHEMA_REFRESHED_KEYSPACES)
             : Collections.emptyList();
-    this.tokenMapEnabled = config.getBoolean(CoreDriverOption.METADATA_TOKEN_MAP_ENABLED);
+    this.tokenMapEnabled = config.getBoolean(DefaultDriverOption.METADATA_TOKEN_MAP_ENABLED);
 
     context.eventBus().register(ConfigChangeEvent.class, this::onConfigChanged);
   }
@@ -89,12 +89,12 @@ public class MetadataManager implements AsyncAutoCloseable {
     boolean tokenMapEnabledBefore = tokenMapEnabled;
     List<String> keyspacesBefore = this.refreshedKeyspaces;
 
-    this.schemaEnabledInConfig = config.getBoolean(CoreDriverOption.METADATA_SCHEMA_ENABLED);
+    this.schemaEnabledInConfig = config.getBoolean(DefaultDriverOption.METADATA_SCHEMA_ENABLED);
     this.refreshedKeyspaces =
-        config.isDefined(CoreDriverOption.METADATA_SCHEMA_REFRESHED_KEYSPACES)
-            ? config.getStringList(CoreDriverOption.METADATA_SCHEMA_REFRESHED_KEYSPACES)
+        config.isDefined(DefaultDriverOption.METADATA_SCHEMA_REFRESHED_KEYSPACES)
+            ? config.getStringList(DefaultDriverOption.METADATA_SCHEMA_REFRESHED_KEYSPACES)
             : Collections.emptyList();
-    this.tokenMapEnabled = config.getBoolean(CoreDriverOption.METADATA_TOKEN_MAP_ENABLED);
+    this.tokenMapEnabled = config.getBoolean(DefaultDriverOption.METADATA_TOKEN_MAP_ENABLED);
 
     if ((!schemaEnabledBefore
             || !keyspacesBefore.equals(refreshedKeyspaces)
@@ -261,8 +261,8 @@ public class MetadataManager implements AsyncAutoCloseable {
               adminExecutor,
               this::coalesceSchemaRequests,
               this::startSchemaRequest,
-              config.getDuration(CoreDriverOption.METADATA_SCHEMA_WINDOW),
-              config.getInt(CoreDriverOption.METADATA_SCHEMA_MAX_EVENTS));
+              config.getDuration(DefaultDriverOption.METADATA_SCHEMA_WINDOW),
+              config.getInt(DefaultDriverOption.METADATA_SCHEMA_MAX_EVENTS));
       this.schemaQueriesFactory = context.schemaQueriesFactory();
       this.schemaParserFactory = context.schemaParserFactory();
     }

@@ -18,7 +18,7 @@ package com.datastax.oss.driver.internal.core.cql;
 import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.CqlSession;
 import com.datastax.oss.driver.api.core.ProtocolVersion;
-import com.datastax.oss.driver.api.core.config.CoreDriverOption;
+import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
 import com.datastax.oss.driver.api.core.config.DriverConfigProfile;
 import com.datastax.oss.driver.api.core.cql.AsyncResultSet;
 import com.datastax.oss.driver.api.core.cql.BatchStatement;
@@ -97,13 +97,13 @@ class Conversions {
     int consistency =
         context
             .consistencyLevelRegistry()
-            .fromName(config.getString(CoreDriverOption.REQUEST_CONSISTENCY))
+            .fromName(config.getString(DefaultDriverOption.REQUEST_CONSISTENCY))
             .getProtocolCode();
-    int pageSize = config.getInt(CoreDriverOption.REQUEST_PAGE_SIZE);
+    int pageSize = config.getInt(DefaultDriverOption.REQUEST_PAGE_SIZE);
     int serialConsistency =
         context
             .consistencyLevelRegistry()
-            .fromName(config.getString(CoreDriverOption.REQUEST_SERIAL_CONSISTENCY))
+            .fromName(config.getString(DefaultDriverOption.REQUEST_SERIAL_CONSISTENCY))
             .getProtocolCode();
     long timestamp = statement.getTimestamp();
     if (timestamp == Long.MIN_VALUE) {

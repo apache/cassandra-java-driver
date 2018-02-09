@@ -21,7 +21,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 
-import com.datastax.oss.driver.api.core.config.CoreDriverOption;
+import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
 import com.datastax.oss.driver.api.core.config.DriverConfig;
 import com.datastax.oss.driver.api.core.config.DriverConfigProfile;
 import com.datastax.oss.driver.api.core.metadata.Metadata;
@@ -70,9 +70,9 @@ public class NodeStateManagerTest {
     MockitoAnnotations.initMocks(this);
 
     // Disable debouncing by default, tests that need it will override
-    Mockito.when(defaultConfigProfile.getDuration(CoreDriverOption.METADATA_TOPOLOGY_WINDOW))
+    Mockito.when(defaultConfigProfile.getDuration(DefaultDriverOption.METADATA_TOPOLOGY_WINDOW))
         .thenReturn(Duration.ofSeconds(0));
-    Mockito.when(defaultConfigProfile.getInt(CoreDriverOption.METADATA_TOPOLOGY_MAX_EVENTS))
+    Mockito.when(defaultConfigProfile.getInt(DefaultDriverOption.METADATA_TOPOLOGY_MAX_EVENTS))
         .thenReturn(1);
     Mockito.when(config.getDefaultProfile()).thenReturn(defaultConfigProfile);
     Mockito.when(context.config()).thenReturn(config);
@@ -382,9 +382,9 @@ public class NodeStateManagerTest {
   @Test
   public void should_coalesce_topology_events() {
     // Given
-    Mockito.when(defaultConfigProfile.getDuration(CoreDriverOption.METADATA_TOPOLOGY_WINDOW))
+    Mockito.when(defaultConfigProfile.getDuration(DefaultDriverOption.METADATA_TOPOLOGY_WINDOW))
         .thenReturn(Duration.ofDays(1));
-    Mockito.when(defaultConfigProfile.getInt(CoreDriverOption.METADATA_TOPOLOGY_MAX_EVENTS))
+    Mockito.when(defaultConfigProfile.getInt(DefaultDriverOption.METADATA_TOPOLOGY_MAX_EVENTS))
         .thenReturn(5);
     new NodeStateManager(context);
     node1.state = NodeState.FORCED_DOWN;

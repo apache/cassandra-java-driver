@@ -19,7 +19,7 @@ import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static org.assertj.core.api.Assertions.fail;
 
 import com.datastax.oss.driver.api.core.ProtocolVersion;
-import com.datastax.oss.driver.api.core.config.CoreDriverOption;
+import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
 import com.datastax.oss.driver.api.core.config.DriverConfig;
 import com.datastax.oss.driver.api.core.config.DriverConfigProfile;
 import com.datastax.oss.driver.internal.core.ProtocolVersionRegistry;
@@ -112,15 +112,18 @@ public abstract class ChannelFactoryTestBase {
 
     Mockito.when(context.config()).thenReturn(driverConfig);
     Mockito.when(driverConfig.getDefaultProfile()).thenReturn(defaultConfigProfile);
-    Mockito.when(defaultConfigProfile.isDefined(CoreDriverOption.AUTH_PROVIDER_CLASS))
+    Mockito.when(defaultConfigProfile.isDefined(DefaultDriverOption.AUTH_PROVIDER_CLASS))
         .thenReturn(false);
-    Mockito.when(defaultConfigProfile.getDuration(CoreDriverOption.CONNECTION_INIT_QUERY_TIMEOUT))
+    Mockito.when(
+            defaultConfigProfile.getDuration(DefaultDriverOption.CONNECTION_INIT_QUERY_TIMEOUT))
         .thenReturn(Duration.ofMillis(TIMEOUT_MILLIS));
-    Mockito.when(defaultConfigProfile.getDuration(CoreDriverOption.CONNECTION_SET_KEYSPACE_TIMEOUT))
+    Mockito.when(
+            defaultConfigProfile.getDuration(DefaultDriverOption.CONNECTION_SET_KEYSPACE_TIMEOUT))
         .thenReturn(Duration.ofMillis(TIMEOUT_MILLIS));
-    Mockito.when(defaultConfigProfile.getInt(CoreDriverOption.CONNECTION_MAX_REQUESTS))
+    Mockito.when(defaultConfigProfile.getInt(DefaultDriverOption.CONNECTION_MAX_REQUESTS))
         .thenReturn(1);
-    Mockito.when(defaultConfigProfile.getDuration(CoreDriverOption.CONNECTION_HEARTBEAT_INTERVAL))
+    Mockito.when(
+            defaultConfigProfile.getDuration(DefaultDriverOption.CONNECTION_HEARTBEAT_INTERVAL))
         .thenReturn(Duration.ofSeconds(30));
 
     Mockito.when(context.protocolVersionRegistry()).thenReturn(protocolVersionRegistry);
@@ -235,10 +238,10 @@ public abstract class ChannelFactoryTestBase {
 
             long setKeyspaceTimeoutMillis =
                 defaultConfigProfile
-                    .getDuration(CoreDriverOption.CONNECTION_SET_KEYSPACE_TIMEOUT)
+                    .getDuration(DefaultDriverOption.CONNECTION_SET_KEYSPACE_TIMEOUT)
                     .toMillis();
             int maxRequestsPerConnection =
-                defaultConfigProfile.getInt(CoreDriverOption.CONNECTION_MAX_REQUESTS);
+                defaultConfigProfile.getInt(DefaultDriverOption.CONNECTION_MAX_REQUESTS);
 
             InFlightHandler inFlightHandler =
                 new InFlightHandler(

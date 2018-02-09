@@ -21,7 +21,7 @@ import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.Logger;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.Appender;
-import com.datastax.oss.driver.api.core.config.CoreDriverOption;
+import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
 import com.datastax.oss.driver.api.core.config.DriverConfig;
 import com.datastax.oss.driver.api.core.config.DriverConfigProfile;
 import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
@@ -60,16 +60,16 @@ abstract class MonotonicTimestampGeneratorTestBase {
     // Disable warnings by default
     Mockito.when(
             defaultConfigProfile.isDefined(
-                CoreDriverOption.TIMESTAMP_GENERATOR_DRIFT_WARNING_THRESHOLD))
+                DefaultDriverOption.TIMESTAMP_GENERATOR_DRIFT_WARNING_THRESHOLD))
         .thenReturn(true);
     Mockito.when(
             defaultConfigProfile.getDuration(
-                CoreDriverOption.TIMESTAMP_GENERATOR_DRIFT_WARNING_THRESHOLD))
+                DefaultDriverOption.TIMESTAMP_GENERATOR_DRIFT_WARNING_THRESHOLD))
         .thenReturn(Duration.ofNanos(0));
     // Actual value doesn't really matter since we only test the first warning
     Mockito.when(
             defaultConfigProfile.getDuration(
-                CoreDriverOption.TIMESTAMP_GENERATOR_DRIFT_WARNING_INTERVAL))
+                DefaultDriverOption.TIMESTAMP_GENERATOR_DRIFT_WARNING_INTERVAL))
         .thenReturn(Duration.ofSeconds(10));
 
     logger = (Logger) LoggerFactory.getLogger(MonotonicTimestampGenerator.class);
@@ -113,7 +113,7 @@ abstract class MonotonicTimestampGeneratorTestBase {
   public void should_warn_if_timestamps_drift() {
     Mockito.when(
             defaultConfigProfile.getDuration(
-                CoreDriverOption.TIMESTAMP_GENERATOR_DRIFT_WARNING_THRESHOLD))
+                DefaultDriverOption.TIMESTAMP_GENERATOR_DRIFT_WARNING_THRESHOLD))
         .thenReturn(Duration.ofNanos(2 * 1000));
     Mockito.when(clock.currentTimeMicros()).thenReturn(1L, 1L, 1L, 1L, 1L);
 

@@ -15,7 +15,7 @@
  */
 package com.datastax.oss.driver.internal.core.metadata.schema.queries;
 
-import com.datastax.oss.driver.api.core.config.CoreDriverOption;
+import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
 import com.datastax.oss.driver.api.core.config.DriverConfigProfile;
 import com.datastax.oss.driver.api.core.metadata.Metadata;
 import com.datastax.oss.driver.internal.core.adminrequest.AdminRequestHandler;
@@ -76,12 +76,12 @@ public abstract class SchemaQueries {
     this.isCassandraV3 = isCassandraV3;
     this.refreshFuture = refreshFuture;
     this.logPrefix = logPrefix;
-    this.timeout = config.getDuration(CoreDriverOption.METADATA_SCHEMA_REQUEST_TIMEOUT);
-    this.pageSize = config.getInt(CoreDriverOption.METADATA_SCHEMA_REQUEST_PAGE_SIZE);
+    this.timeout = config.getDuration(DefaultDriverOption.METADATA_SCHEMA_REQUEST_TIMEOUT);
+    this.pageSize = config.getInt(DefaultDriverOption.METADATA_SCHEMA_REQUEST_PAGE_SIZE);
 
     List<String> refreshedKeyspaces =
-        config.isDefined(CoreDriverOption.METADATA_SCHEMA_REFRESHED_KEYSPACES)
-            ? config.getStringList(CoreDriverOption.METADATA_SCHEMA_REFRESHED_KEYSPACES)
+        config.isDefined(DefaultDriverOption.METADATA_SCHEMA_REFRESHED_KEYSPACES)
+            ? config.getStringList(DefaultDriverOption.METADATA_SCHEMA_REFRESHED_KEYSPACES)
             : Collections.emptyList();
     this.whereClause = buildWhereClause(refreshedKeyspaces);
   }

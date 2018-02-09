@@ -17,7 +17,7 @@ package com.datastax.oss.driver.internal.core;
 
 import com.datastax.oss.driver.api.core.ProtocolVersion;
 import com.datastax.oss.driver.api.core.UnsupportedProtocolVersionException;
-import com.datastax.oss.driver.api.core.config.CoreDriverOption;
+import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
 import com.datastax.oss.driver.api.core.metadata.Node;
 import com.datastax.oss.driver.internal.core.metadata.TopologyMonitor;
 import java.util.Collection;
@@ -38,7 +38,7 @@ public interface ProtocolVersionRegistry {
    * forced in the configuration.
    *
    * @throws IllegalArgumentException if there is no known version with this name.
-   * @see CoreDriverOption#PROTOCOL_VERSION
+   * @see DefaultDriverOption#PROTOCOL_VERSION
    */
   ProtocolVersion fromName(String name);
 

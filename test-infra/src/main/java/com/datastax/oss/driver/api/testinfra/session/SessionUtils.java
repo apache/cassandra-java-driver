@@ -17,7 +17,7 @@ package com.datastax.oss.driver.api.testinfra.session;
 
 import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.CqlSession;
-import com.datastax.oss.driver.api.core.config.CoreDriverOption;
+import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
 import com.datastax.oss.driver.api.core.config.DriverConfigProfile;
 import com.datastax.oss.driver.api.core.cql.SimpleStatement;
 import com.datastax.oss.driver.api.core.cql.Statement;
@@ -187,6 +187,6 @@ public class SessionUtils {
         .getContext()
         .config()
         .getDefaultProfile()
-        .withString(CoreDriverOption.REQUEST_TIMEOUT, "30s");
+        .withString(DefaultDriverOption.REQUEST_TIMEOUT, "30s");
   }
 }

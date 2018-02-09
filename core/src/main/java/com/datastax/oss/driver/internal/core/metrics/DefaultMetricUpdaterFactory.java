@@ -15,7 +15,7 @@
  */
 package com.datastax.oss.driver.internal.core.metrics;
 
-import com.datastax.oss.driver.api.core.config.CoreDriverOption;
+import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
 import com.datastax.oss.driver.api.core.config.DriverConfigProfile;
 import com.datastax.oss.driver.api.core.metadata.Node;
 import com.datastax.oss.driver.api.core.metrics.CoreNodeMetric;
@@ -44,9 +44,9 @@ public class DefaultMetricUpdaterFactory implements MetricUpdaterFactory {
     this.context = context;
     DriverConfigProfile config = context.config().getDefaultProfile();
     this.enabledSessionMetrics =
-        parseSessionMetricPaths(config.getStringList(CoreDriverOption.METRICS_SESSION_ENABLED));
+        parseSessionMetricPaths(config.getStringList(DefaultDriverOption.METRICS_SESSION_ENABLED));
     this.enabledNodeMetrics =
-        parseNodeMetricPaths(config.getStringList(CoreDriverOption.METRICS_NODE_ENABLED));
+        parseNodeMetricPaths(config.getStringList(DefaultDriverOption.METRICS_NODE_ENABLED));
   }
 
   @Override

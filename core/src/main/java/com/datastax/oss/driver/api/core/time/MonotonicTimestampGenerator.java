@@ -15,7 +15,7 @@
  */
 package com.datastax.oss.driver.api.core.time;
 
-import com.datastax.oss.driver.api.core.config.CoreDriverOption;
+import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
 import com.datastax.oss.driver.api.core.config.DriverConfigProfile;
 import com.datastax.oss.driver.api.core.context.DriverContext;
 import com.datastax.oss.driver.internal.core.time.Clock;
@@ -47,9 +47,9 @@ abstract class MonotonicTimestampGenerator implements TimestampGenerator {
 
     DriverConfigProfile config = context.config().getDefaultProfile();
     this.warningThresholdMicros =
-        (config.isDefined(CoreDriverOption.TIMESTAMP_GENERATOR_DRIFT_WARNING_THRESHOLD))
+        (config.isDefined(DefaultDriverOption.TIMESTAMP_GENERATOR_DRIFT_WARNING_THRESHOLD))
             ? config
-                    .getDuration(CoreDriverOption.TIMESTAMP_GENERATOR_DRIFT_WARNING_THRESHOLD)
+                    .getDuration(DefaultDriverOption.TIMESTAMP_GENERATOR_DRIFT_WARNING_THRESHOLD)
                     .toNanos()
                 / 1000
             : 0;
@@ -59,7 +59,7 @@ abstract class MonotonicTimestampGenerator implements TimestampGenerator {
     } else {
       this.warningIntervalMillis =
           config
-              .getDuration(CoreDriverOption.TIMESTAMP_GENERATOR_DRIFT_WARNING_INTERVAL)
+              .getDuration(DefaultDriverOption.TIMESTAMP_GENERATOR_DRIFT_WARNING_INTERVAL)
               .toMillis();
     }
   }
@@ -100,8 +100,8 @@ abstract class MonotonicTimestampGenerator implements TimestampGenerator {
   private static Clock buildClock(DriverContext context) {
     DriverConfigProfile config = context.config().getDefaultProfile();
     boolean forceJavaClock =
-        config.isDefined(CoreDriverOption.TIMESTAMP_GENERATOR_FORCE_JAVA_CLOCK)
-            && config.getBoolean(CoreDriverOption.TIMESTAMP_GENERATOR_FORCE_JAVA_CLOCK);
+        config.isDefined(DefaultDriverOption.TIMESTAMP_GENERATOR_FORCE_JAVA_CLOCK)
+            && config.getBoolean(DefaultDriverOption.TIMESTAMP_GENERATOR_FORCE_JAVA_CLOCK);
     return Clock.getInstance(forceJavaClock);
   }
 }

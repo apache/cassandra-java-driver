@@ -22,7 +22,7 @@ import static org.mockito.Mockito.never;
 
 import com.datastax.oss.driver.api.core.addresstranslation.AddressTranslator;
 import com.datastax.oss.driver.api.core.addresstranslation.PassThroughAddressTranslator;
-import com.datastax.oss.driver.api.core.config.CoreDriverOption;
+import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
 import com.datastax.oss.driver.api.core.config.DriverConfig;
 import com.datastax.oss.driver.api.core.config.DriverConfigProfile;
 import com.datastax.oss.driver.internal.core.adminrequest.AdminResult;
@@ -75,7 +75,7 @@ public class DefaultTopologyMonitorTest {
   public void setup() {
     MockitoAnnotations.initMocks(this);
 
-    Mockito.when(defaultConfig.getDuration(CoreDriverOption.CONTROL_CONNECTION_TIMEOUT))
+    Mockito.when(defaultConfig.getDuration(DefaultDriverOption.CONTROL_CONNECTION_TIMEOUT))
         .thenReturn(Duration.ofSeconds(1));
     Mockito.when(config.getDefaultProfile()).thenReturn(defaultConfig);
     Mockito.when(context.config()).thenReturn(config);

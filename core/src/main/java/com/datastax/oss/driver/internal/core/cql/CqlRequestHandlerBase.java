@@ -18,7 +18,7 @@ package com.datastax.oss.driver.internal.core.cql;
 import com.datastax.oss.driver.api.core.AllNodesFailedException;
 import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.DriverTimeoutException;
-import com.datastax.oss.driver.api.core.config.CoreDriverOption;
+import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
 import com.datastax.oss.driver.api.core.config.DriverConfig;
 import com.datastax.oss.driver.api.core.config.DriverConfigProfile;
 import com.datastax.oss.driver.api.core.connection.FrameTooLongException;
@@ -148,7 +148,7 @@ public abstract class CqlRequestHandlerBase {
     }
     this.isIdempotent =
         (statement.isIdempotent() == null)
-            ? configProfile.getBoolean(CoreDriverOption.REQUEST_DEFAULT_IDEMPOTENCE)
+            ? configProfile.getBoolean(DefaultDriverOption.REQUEST_DEFAULT_IDEMPOTENCE)
             : statement.isIdempotent();
     this.result = new CompletableFuture<>();
     this.result.exceptionally(
@@ -165,7 +165,7 @@ public abstract class CqlRequestHandlerBase {
     this.message = Conversions.toMessage(statement, configProfile, context);
     this.scheduler = context.nettyOptions().ioEventLoopGroup().next();
 
-    this.timeout = configProfile.getDuration(CoreDriverOption.REQUEST_TIMEOUT);
+    this.timeout = configProfile.getDuration(DefaultDriverOption.REQUEST_TIMEOUT);
     this.timeoutFuture = scheduleTimeout(timeout);
 
     this.retryPolicy = context.retryPolicy();

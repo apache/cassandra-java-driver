@@ -20,7 +20,7 @@ import com.datastax.oss.driver.api.core.AsyncAutoCloseable;
 import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.CqlSession;
 import com.datastax.oss.driver.api.core.ProtocolVersion;
-import com.datastax.oss.driver.api.core.config.CoreDriverOption;
+import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
 import com.datastax.oss.driver.api.core.context.DriverContext;
 import com.datastax.oss.driver.api.core.loadbalancing.LoadBalancingPolicy;
 import com.datastax.oss.driver.api.core.metadata.Metadata;
@@ -302,7 +302,7 @@ public class DefaultSession implements CqlSession {
     private void afterInitialNodeListRefresh(CqlIdentifier keyspace) {
       try {
         boolean protocolWasForced =
-            context.config().getDefaultProfile().isDefined(CoreDriverOption.PROTOCOL_VERSION);
+            context.config().getDefaultProfile().isDefined(DefaultDriverOption.PROTOCOL_VERSION);
         boolean needSchemaRefresh = true;
         if (!protocolWasForced) {
           ProtocolVersion currentVersion = context.protocolVersion();

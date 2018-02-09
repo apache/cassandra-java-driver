@@ -15,7 +15,7 @@
  */
 package com.datastax.oss.driver.internal.core.channel;
 
-import com.datastax.oss.driver.api.core.config.CoreDriverOption;
+import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
 import com.datastax.oss.driver.api.core.config.DriverConfigProfile;
 import com.datastax.oss.driver.api.core.connection.HeartbeatException;
 import com.datastax.oss.protocol.internal.Message;
@@ -40,7 +40,7 @@ class HeartbeatHandler extends IdleStateHandler {
     super(
         (int)
             defaultConfigProfile
-                .getDuration(CoreDriverOption.CONNECTION_HEARTBEAT_INTERVAL)
+                .getDuration(DefaultDriverOption.CONNECTION_HEARTBEAT_INTERVAL)
                 .getSeconds(),
         0,
         0);
@@ -54,17 +54,17 @@ class HeartbeatHandler extends IdleStateHandler {
         LOG.warn(
             "Not sending heartbeat because a previous one is still in progress. "
                 + "Check that {} is not lower than {}.",
-            CoreDriverOption.CONNECTION_HEARTBEAT_INTERVAL.getPath(),
-            CoreDriverOption.CONNECTION_HEARTBEAT_TIMEOUT.getPath());
+            DefaultDriverOption.CONNECTION_HEARTBEAT_INTERVAL.getPath(),
+            DefaultDriverOption.CONNECTION_HEARTBEAT_TIMEOUT.getPath());
       } else {
         LOG.debug(
             "Connection was inactive for {} seconds, sending heartbeat",
             defaultConfigProfile
-                .getDuration(CoreDriverOption.CONNECTION_HEARTBEAT_INTERVAL)
+                .getDuration(DefaultDriverOption.CONNECTION_HEARTBEAT_INTERVAL)
                 .getSeconds());
         long timeoutMillis =
             defaultConfigProfile
-                .getDuration(CoreDriverOption.CONNECTION_HEARTBEAT_TIMEOUT)
+                .getDuration(DefaultDriverOption.CONNECTION_HEARTBEAT_TIMEOUT)
                 .toMillis();
         this.request = new HeartbeatRequest(ctx, timeoutMillis);
         this.request.send();

@@ -20,7 +20,7 @@ import static com.datastax.oss.driver.Assertions.assertThat;
 import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.DriverTimeoutException;
 import com.datastax.oss.driver.api.core.NoNodeAvailableException;
-import com.datastax.oss.driver.api.core.config.CoreDriverOption;
+import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
 import com.datastax.oss.driver.api.core.cql.AsyncResultSet;
 import com.datastax.oss.driver.api.core.cql.BoundStatement;
 import com.datastax.oss.driver.api.core.cql.ColumnDefinitions;
@@ -124,7 +124,7 @@ public class CqlRequestHandlerTest extends CqlRequestHandlerTestBase {
               .getContext()
               .config()
               .getDefaultProfile()
-              .getDuration(CoreDriverOption.REQUEST_TIMEOUT);
+              .getDuration(DefaultDriverOption.REQUEST_TIMEOUT);
       assertThat(scheduledTask.getInitialDelay(TimeUnit.NANOSECONDS))
           .isEqualTo(configuredTimeout.toNanos());
       scheduledTask.run();

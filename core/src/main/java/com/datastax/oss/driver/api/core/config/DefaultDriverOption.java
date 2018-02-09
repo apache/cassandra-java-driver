@@ -20,7 +20,7 @@ package com.datastax.oss.driver.api.core.config;
  *
  * <p>Refer to {@code reference.conf} in the driver codebase for a full description of each option.
  */
-public enum CoreDriverOption implements DriverOption {
+public enum DefaultDriverOption implements DriverOption {
   CONTACT_POINTS("contact-points", false),
 
   PROTOCOL_VERSION("protocol.version", false),
@@ -131,7 +131,7 @@ public enum CoreDriverOption implements DriverOption {
   private final String path;
   private final boolean required;
 
-  CoreDriverOption(String path, boolean required) {
+  DefaultDriverOption(String path, boolean required) {
     this.path = path;
     this.required = required;
   }

@@ -20,7 +20,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 
 import com.datastax.oss.driver.api.core.DefaultProtocolVersion;
-import com.datastax.oss.driver.api.core.config.CoreDriverOption;
+import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
 import com.datastax.oss.driver.api.core.config.DriverConfigProfile;
 import com.datastax.oss.driver.api.core.cql.ColumnDefinitions;
 import com.datastax.oss.driver.api.core.cql.PreparedStatement;
@@ -116,7 +116,7 @@ public class CqlPrepareHandlerTest {
     try (RequestHandlerTestHarness harness = harnessBuilder.build()) {
 
       DriverConfigProfile config = harness.getContext().config().getDefaultProfile();
-      Mockito.when(config.getBoolean(CoreDriverOption.PREPARE_ON_ALL_NODES)).thenReturn(false);
+      Mockito.when(config.getBoolean(DefaultDriverOption.PREPARE_ON_ALL_NODES)).thenReturn(false);
 
       CompletionStage<PreparedStatement> prepareFuture =
           new CqlPrepareAsyncHandler(

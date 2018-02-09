@@ -15,7 +15,7 @@
  */
 package com.datastax.oss.driver.internal.core.context;
 
-import com.datastax.oss.driver.api.core.config.CoreDriverOption;
+import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
 import com.datastax.oss.driver.api.core.config.DriverConfigProfile;
 import com.datastax.oss.driver.internal.core.util.concurrent.BlockingOperation;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
@@ -46,17 +46,17 @@ public class DefaultNettyOptions implements NettyOptions {
 
   public DefaultNettyOptions(InternalDriverContext context) {
     DriverConfigProfile config = context.config().getDefaultProfile();
-    int ioGroupSize = config.getInt(CoreDriverOption.NETTY_IO_SIZE);
-    this.ioShutdownQuietPeriod = config.getInt(CoreDriverOption.NETTY_IO_SHUTDOWN_QUIET_PERIOD);
-    this.ioShutdownTimeout = config.getInt(CoreDriverOption.NETTY_IO_SHUTDOWN_TIMEOUT);
+    int ioGroupSize = config.getInt(DefaultDriverOption.NETTY_IO_SIZE);
+    this.ioShutdownQuietPeriod = config.getInt(DefaultDriverOption.NETTY_IO_SHUTDOWN_QUIET_PERIOD);
+    this.ioShutdownTimeout = config.getInt(DefaultDriverOption.NETTY_IO_SHUTDOWN_TIMEOUT);
     this.ioShutdownUnit =
-        TimeUnit.valueOf(config.getString(CoreDriverOption.NETTY_IO_SHUTDOWN_UNIT));
-    int adminGroupSize = config.getInt(CoreDriverOption.NETTY_ADMIN_SIZE);
+        TimeUnit.valueOf(config.getString(DefaultDriverOption.NETTY_IO_SHUTDOWN_UNIT));
+    int adminGroupSize = config.getInt(DefaultDriverOption.NETTY_ADMIN_SIZE);
     this.adminShutdownQuietPeriod =
-        config.getInt(CoreDriverOption.NETTY_ADMIN_SHUTDOWN_QUIET_PERIOD);
-    this.adminShutdownTimeout = config.getInt(CoreDriverOption.NETTY_ADMIN_SHUTDOWN_TIMEOUT);
+        config.getInt(DefaultDriverOption.NETTY_ADMIN_SHUTDOWN_QUIET_PERIOD);
+    this.adminShutdownTimeout = config.getInt(DefaultDriverOption.NETTY_ADMIN_SHUTDOWN_TIMEOUT);
     this.adminShutdownUnit =
-        TimeUnit.valueOf(config.getString(CoreDriverOption.NETTY_ADMIN_SHUTDOWN_UNIT));
+        TimeUnit.valueOf(config.getString(DefaultDriverOption.NETTY_ADMIN_SHUTDOWN_UNIT));
 
     ThreadFactory safeFactory = new BlockingOperation.SafeThreadFactory();
     ThreadFactory ioThreadFactory =

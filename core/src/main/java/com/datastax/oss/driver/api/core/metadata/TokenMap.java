@@ -17,7 +17,7 @@ package com.datastax.oss.driver.api.core.metadata;
 
 import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.ProtocolVersion;
-import com.datastax.oss.driver.api.core.config.CoreDriverOption;
+import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
 import com.datastax.oss.driver.api.core.metadata.token.Token;
 import com.datastax.oss.driver.api.core.metadata.token.TokenRange;
 import com.datastax.oss.driver.api.core.session.Session;
@@ -33,9 +33,9 @@ import java.util.Set;
  * disabled or restricted to a subset of keyspaces; therefore these methods might return empty
  * results for some or all of the keyspaces.
  *
- * @see CoreDriverOption#METADATA_SCHEMA_ENABLED
+ * @see DefaultDriverOption#METADATA_SCHEMA_ENABLED
  * @see Session#setSchemaMetadataEnabled(Boolean)
- * @see CoreDriverOption#METADATA_SCHEMA_REFRESHED_KEYSPACES
+ * @see DefaultDriverOption#METADATA_SCHEMA_REFRESHED_KEYSPACES
  */
 public interface TokenMap {
 

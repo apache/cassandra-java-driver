@@ -20,7 +20,7 @@ import com.datastax.oss.driver.api.core.AsyncAutoCloseable;
 import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.CqlSession;
 import com.datastax.oss.driver.api.core.CqlSessionBuilder;
-import com.datastax.oss.driver.api.core.config.CoreDriverOption;
+import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
 import com.datastax.oss.driver.api.core.context.DriverContext;
 import com.datastax.oss.driver.api.core.metadata.Metadata;
 import com.datastax.oss.driver.api.core.metadata.Node;
@@ -65,7 +65,7 @@ public interface Session extends AsyncAutoCloseable {
   /**
    * The unique name identifying this client.
    *
-   * @see CoreDriverOption#SESSION_NAME
+   * @see DefaultDriverOption#SESSION_NAME
    */
   String getName();
 
@@ -102,7 +102,7 @@ public interface Session extends AsyncAutoCloseable {
    *
    * @param newValue a boolean value to enable or disable schema metadata programmatically, or
    *     {@code null} to use the driver's configuration.
-   * @see CoreDriverOption#METADATA_SCHEMA_ENABLED
+   * @see DefaultDriverOption#METADATA_SCHEMA_ENABLED
    * @return if this call triggered a refresh, a future that will complete when that refresh is
    *     complete. Otherwise, a completed future with the current metadata.
    */
@@ -148,8 +148,8 @@ public interface Session extends AsyncAutoCloseable {
    *
    * @return a future that completes with {@code true} if the nodes agree, or {@code false} if the
    *     timeout fired.
-   * @see CoreDriverOption#CONTROL_CONNECTION_AGREEMENT_INTERVAL
-   * @see CoreDriverOption#CONTROL_CONNECTION_AGREEMENT_TIMEOUT
+   * @see DefaultDriverOption#CONTROL_CONNECTION_AGREEMENT_INTERVAL
+   * @see DefaultDriverOption#CONTROL_CONNECTION_AGREEMENT_TIMEOUT
    */
   CompletionStage<Boolean> checkSchemaAgreementAsync();
 

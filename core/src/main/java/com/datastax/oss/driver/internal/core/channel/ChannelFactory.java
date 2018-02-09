@@ -17,7 +17,7 @@ package com.datastax.oss.driver.internal.core.channel;
 
 import com.datastax.oss.driver.api.core.ProtocolVersion;
 import com.datastax.oss.driver.api.core.UnsupportedProtocolVersionException;
-import com.datastax.oss.driver.api.core.config.CoreDriverOption;
+import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
 import com.datastax.oss.driver.api.core.config.DriverConfigProfile;
 import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
 import com.datastax.oss.driver.internal.core.context.NettyOptions;
@@ -56,8 +56,8 @@ public class ChannelFactory {
     this.context = context;
 
     DriverConfigProfile defaultConfig = context.config().getDefaultProfile();
-    if (defaultConfig.isDefined(CoreDriverOption.PROTOCOL_VERSION)) {
-      String versionName = defaultConfig.getString(CoreDriverOption.PROTOCOL_VERSION);
+    if (defaultConfig.isDefined(DefaultDriverOption.PROTOCOL_VERSION)) {
+      String versionName = defaultConfig.getString(DefaultDriverOption.PROTOCOL_VERSION);
       this.protocolVersion = context.protocolVersionRegistry().fromName(versionName);
     } // else it will be negotiated with the first opened connection
   }
@@ -175,14 +175,14 @@ public class ChannelFactory {
 
           long setKeyspaceTimeoutMillis =
               defaultConfigProfile
-                  .getDuration(CoreDriverOption.CONNECTION_SET_KEYSPACE_TIMEOUT)
+                  .getDuration(DefaultDriverOption.CONNECTION_SET_KEYSPACE_TIMEOUT)
                   .toMillis();
           int maxFrameLength =
-              (int) defaultConfigProfile.getBytes(CoreDriverOption.PROTOCOL_MAX_FRAME_LENGTH);
+              (int) defaultConfigProfile.getBytes(DefaultDriverOption.PROTOCOL_MAX_FRAME_LENGTH);
           int maxRequestsPerConnection =
-              defaultConfigProfile.getInt(CoreDriverOption.CONNECTION_MAX_REQUESTS);
+              defaultConfigProfile.getInt(DefaultDriverOption.CONNECTION_MAX_REQUESTS);
           int maxOrphanRequests =
-              defaultConfigProfile.getInt(CoreDriverOption.CONNECTION_MAX_ORPHAN_REQUESTS);
+              defaultConfigProfile.getInt(DefaultDriverOption.CONNECTION_MAX_ORPHAN_REQUESTS);
 
           InFlightHandler inFlightHandler =
               new InFlightHandler(

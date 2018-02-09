@@ -17,7 +17,7 @@ package com.datastax.oss.driver.internal.core.metrics;
 
 import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.Timer;
-import com.datastax.oss.driver.api.core.config.CoreDriverOption;
+import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
 import com.datastax.oss.driver.api.core.config.DriverConfigProfile;
 import java.time.Duration;
 import java.util.Set;
@@ -77,9 +77,9 @@ public abstract class MetricUpdaterBase<MetricT> implements MetricUpdater<Metric
   protected void initializeHdrTimer(
       MetricT metric,
       DriverConfigProfile config,
-      CoreDriverOption highestLatencyOption,
-      CoreDriverOption significantDigitsOption,
-      CoreDriverOption intervalOption) {
+      DefaultDriverOption highestLatencyOption,
+      DefaultDriverOption significantDigitsOption,
+      DefaultDriverOption intervalOption) {
     if (enabledMetrics.contains(metric)) {
       String fullName = buildFullName(metric);
 
