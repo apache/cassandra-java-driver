@@ -99,7 +99,7 @@ public interface SettableByName<T extends SettableByName<T>>
    * <p>The {@link #codecRegistry()} will be used to look up a codec to handle the conversion.
    *
    * <p>This variant is for generic Java types. If the target type is not generic, use {@link
-   * #set(int, V, Class)} instead, which may perform slightly better.
+   * #set(int, Object, Class)} instead, which may perform slightly better.
    *
    * <p>This method deals with case sensitivity in the way explained in the documentation of {@link
    * AccessibleByName}.

@@ -33,7 +33,8 @@ import java.util.Map;
 /**
  * Parses data types from schema tables, for Cassandra 3.0 and above.
  *
- * <p>In these versions, data types appear as string literals, like "ascii" or "tuple<int,int>".
+ * <p>In these versions, data types appear as string literals, like "ascii" or
+ * "tuple&lt;int,int&gt;".
  */
 public class DataTypeCqlNameParser implements DataTypeParser {
 

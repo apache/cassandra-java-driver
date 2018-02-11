@@ -91,7 +91,7 @@ public interface SettableByIndex<T extends SettableByIndex<T>> extends Accessibl
    * <p>The {@link #codecRegistry()} will be used to look up a codec to handle the conversion.
    *
    * <p>This variant is for generic Java types. If the target type is not generic, use {@link
-   * #set(int, V, Class)} instead, which may perform slightly better.
+   * #set(int, Object, Class)} instead, which may perform slightly better.
    *
    * @throws IndexOutOfBoundsException if the index is invalid.
    * @throws CodecNotFoundException if no codec can perform the conversion.

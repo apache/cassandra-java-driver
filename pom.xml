@@ -358,15 +358,24 @@ limitations under the License.]]>
       </plugin>
       <plugin>
         <artifactId>maven-javadoc-plugin</artifactId>
+        <configuration>
+          <tags>
+            <!--
+              For custom `leaks-private-api` tag (apparently dash separators are not handled
+              correctly)
+            -->
+            <tag>
+              <name>leaks</name>
+              <placement>X</placement>
+            </tag>
+          </tags>
+        </configuration>
         <executions>
           <execution>
             <id>attach-javadocs</id>
             <goals>
               <goal>jar</goal>
             </goals>
-            <configuration>
-              <additionalparam>-Xdoclint:none</additionalparam>
-            </configuration>
           </execution>
           <execution>
             <id>check-api-leaks</id>

@@ -30,10 +30,10 @@ import java.util.Map;
  * <p>This happens when some of the replicas that were contacted by the coordinator replied with an
  * error.
  *
- * <p>This exception is processed by {@link RetryPolicy#onErrorResponse(Request, Throwable, int)},
- * which will decide if it is rethrown directly to the client or if the request should be retried.
- * If all other tried nodes also fail, this exception will appear in the {@link
- * AllNodesFailedException} thrown to the client.
+ * <p>This exception is processed by {@link RetryPolicy#onErrorResponse(Request,
+ * CoordinatorException, int)}, which will decide if it is rethrown directly to the client or if the
+ * request should be retried. If all other tried nodes also fail, this exception will appear in the
+ * {@link AllNodesFailedException} thrown to the client.
  */
 public class ReadFailureException extends QueryConsistencyException {
 

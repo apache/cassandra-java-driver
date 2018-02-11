@@ -100,7 +100,7 @@ public interface SettableById<T extends SettableById<T>>
    * <p>The {@link #codecRegistry()} will be used to look up a codec to handle the conversion.
    *
    * <p>This variant is for generic Java types. If the target type is not generic, use {@link
-   * #set(int, V, Class)} instead, which may perform slightly better.
+   * #set(int, Object, Class)} instead, which may perform slightly better.
    *
    * <p>If you want to avoid the overhead of building a {@code CqlIdentifier}, use the variant of
    * this method that takes a string argument.

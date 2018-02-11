@@ -44,7 +44,7 @@ public interface IndexMetadata extends Describable {
    * The options of the index.
    *
    * <p>This directly reflects the corresponding column of the system table ( {@code
-   * system.schema_columns.index_options} in Cassandra <= 2.2, or {@code
+   * system.schema_columns.index_options} in Cassandra &lt;= 2.2, or {@code
    * system_schema.indexes.options} in later versions).
    *
    * <p>Note that some of these options might also be exposed as standalone fields in this

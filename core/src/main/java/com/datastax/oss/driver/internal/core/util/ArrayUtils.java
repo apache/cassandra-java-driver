@@ -29,7 +29,7 @@ public class ArrayUtils {
 
   /**
    * Moves an element towards the beginning of the array, shifting all the intermediary elements to
-   * the right (no-op if targetIndex >= sourceIndex).
+   * the right (no-op if {@code targetIndex >= sourceIndex}).
    */
   public static <T> void bubbleUp(T[] elements, int sourceIndex, int targetIndex) {
     for (int i = sourceIndex; i > targetIndex; i--) {
@@ -39,7 +39,7 @@ public class ArrayUtils {
 
   /**
    * Moves an element towards the end of the array, shifting all the intermediary elements to the
-   * left (no-op if targetIndex <= sourceIndex).
+   * left (no-op if {@code targetIndex <= sourceIndex}).
    */
   public static <T> void bubbleDown(T[] elements, int sourceIndex, int targetIndex) {
     for (int i = sourceIndex; i < targetIndex; i++) {

@@ -15,9 +15,11 @@
  */
 package com.datastax.oss.driver.api.core;
 
+import com.datastax.oss.driver.api.core.cql.Statement;
+
 /**
- * Thrown by synchronous wrapper methods (such as {@link Cluster#connect()}, when the underlying
- * future was completed with a <em>checked</em> exception.
+ * Thrown by synchronous wrapper methods (such as {@link CqlSession#execute(Statement)}, when the
+ * underlying future was completed with a <em>checked</em> exception.
  *
  * <p>This exception should be rarely thrown (if ever). Most of the time, the driver uses unchecked
  * exceptions, which will be rethrown directly instead of being wrapped in this class.

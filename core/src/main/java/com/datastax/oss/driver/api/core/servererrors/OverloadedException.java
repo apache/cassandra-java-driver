@@ -24,10 +24,10 @@ import com.datastax.oss.driver.api.core.session.Request;
 /**
  * Thrown when the coordinator reported itself as being overloaded.
  *
- * <p>This exception is processed by {@link RetryPolicy#onErrorResponse(Request, Throwable, int)},
- * which will decide if it is rethrown directly to the client or if the request should be retried.
- * If all other tried nodes also fail, this exception will appear in the {@link
- * AllNodesFailedException} thrown to the client.
+ * <p>This exception is processed by {@link RetryPolicy#onErrorResponse(Request,
+ * CoordinatorException, int)}, which will decide if it is rethrown directly to the client or if the
+ * request should be retried. If all other tried nodes also fail, this exception will appear in the
+ * {@link AllNodesFailedException} thrown to the client.
  */
 public class OverloadedException extends QueryExecutionException {
 

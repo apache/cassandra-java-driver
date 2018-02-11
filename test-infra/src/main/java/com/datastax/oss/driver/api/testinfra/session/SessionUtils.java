@@ -49,9 +49,8 @@ import org.slf4j.LoggerFactory;
  * }
  * }</pre>
  *
- * The instances returned by {@link #newSession(CassandraResourceRule, NodeStateListener[],
- * String...)} are not managed automatically, you need to close them yourself (this is done with a
- * try-with-resources block in the example above).
+ * The instances returned by {@code newSession()} methods are not managed automatically, you need to
+ * close them yourself (this is done with a try-with-resources block in the example above).
  *
  * <p>If you can share the same {@code Session} instance between all test methods, {@link
  * SessionRule} provides a simpler alternative.

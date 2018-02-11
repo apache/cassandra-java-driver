@@ -24,10 +24,10 @@ import com.datastax.oss.driver.api.core.session.Request;
 /**
  * An error during a truncation operation.
  *
- * <p>This exception is processed by {@link RetryPolicy#onErrorResponse(Request, Throwable, int)},
- * which will decide if it is rethrown directly to the client or if the request should be retried.
- * If all other tried nodes also fail, this exception will appear in the {@link
- * AllNodesFailedException} thrown to the client.
+ * <p>This exception is processed by {@link RetryPolicy#onErrorResponse(Request,
+ * CoordinatorException, int)}, which will decide if it is rethrown directly to the client or if the
+ * request should be retried. If all other tried nodes also fail, this exception will appear in the
+ * {@link AllNodesFailedException} thrown to the client.
  */
 public class TruncateException extends QueryExecutionException {
 

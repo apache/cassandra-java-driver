@@ -38,7 +38,7 @@ import java.io.Serializable;
  *
  * Examples:
  *
- * <table>
+ * <table summary="examples">
  *   <tr><th>Create statement</th><th>Case-sensitive?</th><th>CQL id</th><th>Internal id</th></tr>
  *   <tr><td>CREATE TABLE t(foo int PRIMARY KEY)</td><td>No</td><td>foo</td><td>foo</td></tr>
  *   <tr><td>CREATE TABLE t(Foo int PRIMARY KEY)</td><td>No</td><td>foo</td><td>foo</td></tr>

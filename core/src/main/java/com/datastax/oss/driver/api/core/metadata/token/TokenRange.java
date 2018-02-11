@@ -42,7 +42,7 @@ public interface TokenRange extends Comparable<TokenRange> {
    * <p>Splitting an empty range is not permitted. But note that, in edge cases, splitting a range
    * might produce one or more empty ranges.
    *
-   * @throws IllegalArgumentException if the range is empty or if numberOfSplits < 1.
+   * @throws IllegalArgumentException if the range is empty or if {@code numberOfSplits < 1}.
    */
   List<TokenRange> splitEvenly(int numberOfSplits);
 

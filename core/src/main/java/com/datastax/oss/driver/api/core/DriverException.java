@@ -18,8 +18,7 @@ package com.datastax.oss.driver.api.core;
 /**
  * Base class for all exceptions thrown by the driver.
  *
- * <p>Note that, for obvious programming errors (for example, calling {@link Cluster#connect()} on a
- * cluster instance that was previously closed), the driver might throw JDK runtime exceptions, such
+ * <p>Note that, for obvious programming errors, the driver might throw JDK runtime exceptions, such
  * as {@link IllegalArgumentException} or {@link IllegalStateException}. In all other cases, it will
  * be an instance of this class.
  *

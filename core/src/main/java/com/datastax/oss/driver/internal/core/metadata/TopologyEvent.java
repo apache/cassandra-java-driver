@@ -86,7 +86,7 @@ public class TopologyEvent {
    * </ul>
    *
    * In all cases, the driver will never try to reconnect to the node again. If you decide to
-   * reconnect to it later, use {@link #forceUp(InetSocketAddress)}</b>.
+   * reconnect to it later, use {@link #forceUp(InetSocketAddress)}.
    *
    * <p>This is intended for deployments that use a custom {@link TopologyMonitor} (for example if
    * you do some kind of maintenance on a live node). This is also used internally by the driver

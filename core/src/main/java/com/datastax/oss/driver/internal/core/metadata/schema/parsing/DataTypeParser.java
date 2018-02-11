@@ -33,8 +33,8 @@ interface DataTypeParser {
    *     resolve subtypes if the type to parse is complex (such as {@code list<foo>}). The only
    *     situation where we don't have them is when we refresh all the UDTs of a keyspace; in that
    *     case, the filed will be {@code null} and any UDT encountered by this method will always be
-   *     re-created from scratch: for Cassandra < 2.2, this means parsing the whole definition; for
-   *     > 3.0, this means materializing it as a {@link ShallowUserDefinedType} that will be
+   *     re-created from scratch: for Cassandra &lt; 2.2, this means parsing the whole definition;
+   *     for &gt; 3.0, this means materializing it as a {@link ShallowUserDefinedType} that will be
    *     resolved in a second pass.
    */
   DataType parse(
