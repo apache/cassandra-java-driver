@@ -20,6 +20,7 @@ import com.datastax.oss.driver.api.core.ProtocolVersion;
 import com.datastax.oss.driver.internal.core.util.concurrent.UncaughtExceptions;
 import com.datastax.oss.protocol.internal.Message;
 import io.netty.channel.Channel;
+import io.netty.channel.ChannelConfig;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.EventLoop;
 import io.netty.util.AttributeKey;
@@ -160,6 +161,11 @@ public class DriverChannel {
 
   public SocketAddress localAddress() {
     return channel.localAddress();
+  }
+
+  /** @return The {@link ChannelConfig configuration} of this channel. */
+  public ChannelConfig config() {
+    return channel.config();
   }
 
   /**
