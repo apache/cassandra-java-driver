@@ -90,9 +90,9 @@ import java.util.Map;
  *
  * <p>The main goal of this class is to move this code out of the request handlers.
  */
-class Conversions {
+public class Conversions {
 
-  static Message toMessage(
+  public static Message toMessage(
       Statement<?> statement, DriverConfigProfile config, InternalDriverContext context) {
     int consistency =
         context
@@ -174,7 +174,7 @@ class Conversions {
       }
       List<Object> queriesOrIds = new ArrayList<>(batchStatement.size());
       List<List<ByteBuffer>> values = new ArrayList<>(batchStatement.size());
-      for (BatchableStatement child : batchStatement) {
+      for (BatchableStatement<?> child : batchStatement) {
         if (child instanceof SimpleStatement) {
           SimpleStatement simpleStatement = (SimpleStatement) child;
           if (simpleStatement.getNamedValues().size() > 0) {
@@ -209,7 +209,7 @@ class Conversions {
     }
   }
 
-  private static List<ByteBuffer> encode(
+  public static List<ByteBuffer> encode(
       List<Object> values, CodecRegistry codecRegistry, ProtocolVersion protocolVersion) {
     if (values.isEmpty()) {
       return Collections.emptyList();
@@ -222,7 +222,7 @@ class Conversions {
     }
   }
 
-  private static Map<String, ByteBuffer> encode(
+  public static Map<String, ByteBuffer> encode(
       Map<String, Object> values, CodecRegistry codecRegistry, ProtocolVersion protocolVersion) {
     if (values.isEmpty()) {
       return Collections.emptyMap();
@@ -235,7 +235,7 @@ class Conversions {
     }
   }
 
-  private static ByteBuffer encode(
+  public static ByteBuffer encode(
       Object value, CodecRegistry codecRegistry, ProtocolVersion protocolVersion) {
     if (value instanceof Token) {
       if (value instanceof Murmur3Token) {
@@ -252,7 +252,7 @@ class Conversions {
     }
   }
 
-  private static void ensureAllSet(BoundStatement boundStatement) {
+  public static void ensureAllSet(BoundStatement boundStatement) {
     for (int i = 0; i < boundStatement.size(); i++) {
       if (!boundStatement.isSet(i)) {
         throw new IllegalStateException(
@@ -264,7 +264,7 @@ class Conversions {
     }
   }
 
-  private static void ensureAllSet(BatchStatement batchStatement) {
+  public static void ensureAllSet(BatchStatement batchStatement) {
     for (BatchableStatement<?> batchableStatement : batchStatement) {
       if (batchableStatement instanceof BoundStatement) {
         ensureAllSet(((BoundStatement) batchableStatement));
@@ -272,7 +272,7 @@ class Conversions {
     }
   }
 
-  static AsyncResultSet toResultSet(
+  public static AsyncResultSet toResultSet(
       Result result,
       ExecutionInfo executionInfo,
       CqlSession session,
@@ -292,7 +292,7 @@ class Conversions {
     }
   }
 
-  private static ColumnDefinitions getResultDefinitions(
+  public static ColumnDefinitions getResultDefinitions(
       Rows rows, Statement<?> statement, InternalDriverContext context) {
     RowsMetadata rowsMetadata = rows.getMetadata();
     if (rowsMetadata.columnSpecs.isEmpty()) {
@@ -315,7 +315,7 @@ class Conversions {
     }
   }
 
-  static DefaultPreparedStatement toPreparedStatement(
+  public static DefaultPreparedStatement toPreparedStatement(
       Prepared response, PrepareRequest request, InternalDriverContext context) {
     return new DefaultPreparedStatement(
         ByteBuffer.wrap(response.preparedQueryId).asReadOnlyBuffer(),
@@ -336,7 +336,7 @@ class Conversions {
         ImmutableMap.copyOf(request.getCustomPayload()));
   }
 
-  private static ColumnDefinitions toColumnDefinitions(
+  public static ColumnDefinitions toColumnDefinitions(
       RowsMetadata metadata, InternalDriverContext context) {
     ImmutableList.Builder<ColumnDefinition> definitions = ImmutableList.builder();
     for (ColumnSpec columnSpec : metadata.columnSpecs) {
@@ -345,7 +345,7 @@ class Conversions {
     return DefaultColumnDefinitions.valueOf(definitions.build());
   }
 
-  private static List<Integer> asList(int[] pkIndices) {
+  public static List<Integer> asList(int[] pkIndices) {
     if (pkIndices == null || pkIndices.length == 0) {
       return Collections.emptyList();
     } else {
@@ -357,7 +357,7 @@ class Conversions {
     }
   }
 
-  static CoordinatorException toThrowable(
+  public static CoordinatorException toThrowable(
       Node node, Error errorMessage, InternalDriverContext context) {
     switch (errorMessage.code) {
       case ProtocolConstants.ErrorCode.UNPREPARED:
