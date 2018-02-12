@@ -28,6 +28,7 @@ import java.util.Arrays;
 import java.util.Iterator;
 import java.util.Queue;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
 import org.junit.Test;
 import org.mockito.Mockito;
 
@@ -69,8 +70,8 @@ public class ResultSetsTest {
     AsyncResultSet page2 = mockPage(true, 3, 4, 5);
     AsyncResultSet page3 = mockPage(false, 6, 7, 8);
 
-    ((CompletableFuture<AsyncResultSet>) page1.fetchNextPage()).complete(page2);
-    ((CompletableFuture<AsyncResultSet>) page2.fetchNextPage()).complete(page3);
+    complete(page1.fetchNextPage(), page2);
+    complete(page2.fetchNextPage(), page3);
 
     // When
     ResultSet resultSet = ResultSets.newInstance(page1);
@@ -137,8 +138,8 @@ public class ResultSetsTest {
     AsyncResultSet page2 = mockPage(true, 3, 4, 5);
     AsyncResultSet page3 = mockPage(false, 6, 7, 8);
 
-    ((CompletableFuture<AsyncResultSet>) page1.fetchNextPage()).complete(page2);
-    ((CompletableFuture<AsyncResultSet>) page2.fetchNextPage()).complete(page3);
+    complete(page1.fetchNextPage(), page2);
+    complete(page2.fetchNextPage(), page3);
 
     // When
     ResultSet resultSet = ResultSets.newInstance(page1);
@@ -201,8 +202,7 @@ public class ResultSetsTest {
 
     if (nextPage) {
       Mockito.when(page.hasMorePages()).thenReturn(true);
-      CompletableFuture<AsyncResultSet> nextPageFuture = Mockito.spy(new CompletableFuture<>());
-      Mockito.when(page.fetchNextPage()).thenReturn(nextPageFuture);
+      Mockito.when(page.fetchNextPage()).thenReturn(Mockito.spy(new CompletableFuture<>()));
     } else {
       Mockito.when(page.hasMorePages()).thenReturn(false);
       Mockito.when(page.fetchNextPage()).thenThrow(new IllegalStateException());
@@ -229,5 +229,12 @@ public class ResultSetsTest {
     Row row = Mockito.mock(Row.class);
     Mockito.when(row.getInt(0)).thenReturn(index);
     return row;
+  }
+
+  private static void complete(
+      CompletionStage<? extends AsyncResultSet> stage, AsyncResultSet result) {
+    @SuppressWarnings("unchecked")
+    CompletableFuture<AsyncResultSet> future = (CompletableFuture<AsyncResultSet>) stage;
+    future.complete(result);
   }
 }

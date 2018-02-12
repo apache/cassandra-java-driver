@@ -66,7 +66,7 @@ public interface AsyncResultSet {
    * @throws IllegalStateException if there are no more pages. Use {@link #hasMorePages()} to check
    *     if you can call this method.
    */
-  CompletionStage<AsyncResultSet> fetchNextPage() throws IllegalStateException;
+  CompletionStage<? extends AsyncResultSet> fetchNextPage() throws IllegalStateException;
 
   /**
    * If the query that produced this result was a conditional update, indicate whether it was
