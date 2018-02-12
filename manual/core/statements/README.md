@@ -23,6 +23,7 @@ either setters or a builder:
 * tracing flag.
 * query timestamp.
 * paging state.
+* [per-query keyspace](per_query_keyspace/) (Cassandra 4 or above).
 
 When setting these options, keep in mind that statements are immutable, and every method returns a
 different instance:
