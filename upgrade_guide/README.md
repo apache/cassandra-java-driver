@@ -141,3 +141,8 @@ See the [manual](../manual/core/metadata/) for all the details.
 You no longer need to force the protocol version in a mixed cluster: upon connecting to the first
 node, the driver will read the release version of all the nodes in the cluster and infer the best
 protocol version that works with all of them.
+
+#### Improved metrics
+
+[Metrics](../manual/core/metrics/) can now be enabled selectively. In addition, they are exposed per
+node when that is relevant.
