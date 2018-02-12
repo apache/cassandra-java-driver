@@ -238,20 +238,30 @@ You can customize these strategies through the [configuration](../../configurati
 Read the `reference.conf` file provided with the driver for a detailed description of each of those
 options.
 
-### Avoid preparing 'SELECT *' queries
+### Avoid preparing 'SELECT *' queries (Cassandra 3 and below)
 
-Both the driver and Cassandra maintain a mapping of `PreparedStatement` queries to their metadata.
-When a change is made to a table, such as a column being added or dropped, there is currently no
-mechanism for Cassandra to invalidate the existing metadata. Because of this, the driver is not able
-to properly react to these changes and will improperly read rows after a schema change is made.
+With Cassandra 3 and below, the driver does not handle schema changes that would affect the results
+of a prepared statement. Therefore `SELECT *` queries can create issues, for example:
 
-Therefore it is currently recommended to not create prepared statements for 'SELECT *' queries if
-you plan on making schema changes involving adding or dropping columns. Instead, you should list all
-columns of interest in your statement, i.e.: `SELECT a, b, c FROM tbl`.
+* table `foo` contains columns `b` and `c`.
+* the driver prepares `SELECT * FROM foo`. It gets a reply indicating that executing this statement
+  will return columns `b` and `c`, and caches that metadata locally (for performance reasons: this
+  avoids sending it with each response later).
+* someone alters table `foo` to add a new column `a`.
+* the next time the driver executes the prepared statement, it gets a response that now contains
+  columns `a`, `b` and `c`. However, it's still using its stale copy of the metadata, so it decodes
+  `a` thinking it's `b`. In the best case scenario, `a` and `b` have different types and decoding
+  fails; in the worst case, they have compatible types and the client gets corrupt data.
 
-This will be addressed in a future release of both Cassandra and the driver. Follow
-[CASSANDRA-10786] and [JAVA-1196] for more information.
+To avoid this, do not create prepared statements for `SELECT *` queries if you plan on making schema
+changes involving adding or dropping columns. Instead, always list all columns of interest in your
+statement, i.e.: `SELECT b, c FROM foo`.
+
+With Cassandra 4 and native protocol v5, this issue is fixed ([CASSANDRA-10786]): the server detects
+that the driver is operating on stale metadata and sends the new version with the response; the
+driver updates its local cache transparently, and the client can observe the new columns in the
+result set.   
 
 [BoundStatement]:  http://docs.datastax.com/en/drivers/java/4.0/com/datastax/oss/driver/api/core/cql/BoundStatement.html
+
 [CASSANDRA-10786]: https://issues.apache.org/jira/browse/CASSANDRA-10786
-[JAVA-1196]:       https://datastax-oss.atlassian.net/browse/JAVA-1196
