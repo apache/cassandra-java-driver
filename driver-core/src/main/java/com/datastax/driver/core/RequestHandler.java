@@ -233,7 +233,7 @@ class RequestHandler {
     }
 
     private boolean metricsEnabled() {
-        return manager.configuration().getMetricsOptions().isEnabled();
+        return manager.configuration().getMetricsOptions().isEnabled() && statement.isMetricing();
     }
 
     private boolean hostMetricsEnabled() {
