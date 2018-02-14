@@ -1,5 +1,10 @@
 ## Changelog
 
+### 3.5.0 (In progress)
+
+- [bug] JAVA-1751: Include defaultTimestamp length in encodedSize for protocol version >= 3.
+
+
 ### 3.4.0
 
 - [improvement] JAVA-1671: Remove unnecessary test on prepared statement metadata.
