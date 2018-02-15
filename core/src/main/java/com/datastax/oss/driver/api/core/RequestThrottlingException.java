@@ -13,14 +13,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.datastax.oss.driver.internal.core.metrics;
+package com.datastax.oss.driver.api.core;
 
-import com.datastax.oss.driver.api.core.metadata.Node;
+/**
+ * Thrown if the session uses a request throttler, and it didn't allow the current request to
+ * execute.
+ *
+ * <p>This can happen either when the session is overloaded, or at shutdown for requests that had
+ * been enqueued.
+ */
+public class RequestThrottlingException extends DriverException {
 
-public interface MetricUpdaterFactory {
+  public RequestThrottlingException(String message) {
+    super(message, null, true);
+  }
 
-  /** @return the unique instance for this session (this must return the same object every time). */
-  SessionMetricUpdater getSessionUpdater();
-
-  NodeMetricUpdater newNodeUpdater(Node node);
+  @Override
+  public DriverException copy() {
+    return new RequestThrottlingException(getMessage());
+  }
 }

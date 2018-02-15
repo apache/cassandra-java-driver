@@ -36,22 +36,23 @@ public class DefaultMetricUpdaterFactory implements MetricUpdaterFactory {
 
   private final String logPrefix;
   private final InternalDriverContext context;
-  private final Set<SessionMetric> enabledSessionMetrics;
   private final Set<NodeMetric> enabledNodeMetrics;
+  private final SessionMetricUpdater sessionMetricUpdater;
 
   public DefaultMetricUpdaterFactory(InternalDriverContext context) {
     this.logPrefix = context.sessionName();
     this.context = context;
     DriverConfigProfile config = context.config().getDefaultProfile();
-    this.enabledSessionMetrics =
+    Set<SessionMetric> enabledSessionMetrics =
         parseSessionMetricPaths(config.getStringList(DefaultDriverOption.METRICS_SESSION_ENABLED));
+    this.sessionMetricUpdater = new DefaultSessionMetricUpdater(enabledSessionMetrics, context);
     this.enabledNodeMetrics =
         parseNodeMetricPaths(config.getStringList(DefaultDriverOption.METRICS_NODE_ENABLED));
   }
 
   @Override
-  public SessionMetricUpdater newSessionUpdater() {
-    return new DefaultSessionMetricUpdater(enabledSessionMetrics, context);
+  public SessionMetricUpdater getSessionUpdater() {
+    return sessionMetricUpdater;
   }
 
   @Override

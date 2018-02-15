@@ -17,14 +17,15 @@ package com.datastax.oss.driver.internal.core.session;
 
 import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
 import com.datastax.oss.driver.api.core.config.DriverConfig;
-import com.datastax.oss.driver.internal.core.adminrequest.AdminRequestHandler;
 import com.datastax.oss.driver.internal.core.adminrequest.AdminResult;
 import com.datastax.oss.driver.internal.core.adminrequest.AdminRow;
+import com.datastax.oss.driver.internal.core.adminrequest.ThrottledAdminRequestHandler;
 import com.datastax.oss.driver.internal.core.channel.DriverChannel;
 import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
 import com.datastax.oss.driver.internal.core.cql.CqlRequestHandlerBase;
-import com.datastax.oss.driver.internal.core.metadata.TopologyMonitor;
+import com.datastax.oss.driver.internal.core.metrics.SessionMetricUpdater;
 import com.datastax.oss.driver.internal.core.pool.ChannelPool;
+import com.datastax.oss.driver.internal.core.session.throttling.RequestThrottler;
 import com.datastax.oss.driver.internal.core.util.concurrent.RunOrSchedule;
 import com.datastax.oss.protocol.internal.Message;
 import com.datastax.oss.protocol.internal.request.Prepare;
@@ -63,12 +64,13 @@ class ReprepareOnUp {
   private final String logPrefix;
   private final DriverChannel channel;
   private final Map<ByteBuffer, RepreparePayload> repreparePayloads;
-  private final TopologyMonitor topologyMonitor;
   private final Runnable whenPrepared;
   private final boolean checkSystemTable;
   private final int maxStatements;
   private final int maxParallelism;
   private final Duration timeout;
+  private final RequestThrottler throttler;
+  private final SessionMetricUpdater metricUpdater;
 
   // After the constructor, everything happens on the channel's event loop, so these fields do not
   // need any synchronization.
@@ -86,8 +88,8 @@ class ReprepareOnUp {
     this.logPrefix = logPrefix;
     this.channel = pool.next();
     this.repreparePayloads = repreparePayloads;
-    this.topologyMonitor = context.topologyMonitor();
     this.whenPrepared = whenPrepared;
+    this.throttler = context.requestThrottler();
 
     DriverConfig config = context.config();
     this.checkSystemTable =
@@ -97,6 +99,8 @@ class ReprepareOnUp {
         config.getDefaultProfile().getInt(DefaultDriverOption.REPREPARE_MAX_STATEMENTS);
     this.maxParallelism =
         config.getDefaultProfile().getInt(DefaultDriverOption.REPREPARE_MAX_PARALLELISM);
+
+    this.metricUpdater = context.metricUpdaterFactory().getSessionUpdater();
   }
 
   void start() {
@@ -231,8 +235,16 @@ class ReprepareOnUp {
   @VisibleForTesting
   protected CompletionStage<AdminResult> queryAsync(
       Message message, Map<String, ByteBuffer> customPayload, String debugString) {
-    AdminRequestHandler reprepareHandler =
-        new AdminRequestHandler(channel, message, customPayload, timeout, logPrefix, debugString);
+    ThrottledAdminRequestHandler reprepareHandler =
+        new ThrottledAdminRequestHandler(
+            channel,
+            message,
+            customPayload,
+            timeout,
+            throttler,
+            metricUpdater,
+            logPrefix,
+            debugString);
     return reprepareHandler.start();
   }
 }

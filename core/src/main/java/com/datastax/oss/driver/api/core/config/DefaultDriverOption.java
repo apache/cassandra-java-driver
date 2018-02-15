@@ -61,6 +61,11 @@ public enum DefaultDriverOption implements DriverOption {
   REQUEST_TRACE_ATTEMPTS("request.trace.attempts", true),
   REQUEST_TRACE_INTERVAL("request.trace.interval", true),
   REQUEST_TRACE_CONSISTENCY("request.trace.consistency", true),
+  REQUEST_THROTTLER_CLASS("request.throttler.class", true),
+  REQUEST_THROTTLER_MAX_CONCURRENT_REQUESTS("request.throttler.max-concurrent-requests", false),
+  REQUEST_THROTTLER_MAX_REQUESTS_PER_SECOND("request.throttler.max-requests-per-second", false),
+  REQUEST_THROTTLER_MAX_QUEUE_SIZE("request.throttler.max-queue-size", false),
+  REQUEST_THROTTLER_DRAIN_INTERVAL("request.throttler.drain-interval", false),
 
   CONTROL_CONNECTION_TIMEOUT("connection.control-connection.timeout", true),
   CONTROL_CONNECTION_AGREEMENT_INTERVAL(
@@ -121,6 +126,9 @@ public enum DefaultDriverOption implements DriverOption {
   METRICS_SESSION_CQL_REQUESTS_HIGHEST("metrics.session.cql-requests.highest-latency", false),
   METRICS_SESSION_CQL_REQUESTS_DIGITS("metrics.session.cql-requests.significant-digits", false),
   METRICS_SESSION_CQL_REQUESTS_INTERVAL("metrics.session.cql-requests.refresh-interval", false),
+  METRICS_SESSION_THROTTLING_HIGHEST("metrics.session.throttling.delay.highest-latency", false),
+  METRICS_SESSION_THROTTLING_DIGITS("metrics.session.throttling.delay.significant-digits", false),
+  METRICS_SESSION_THROTTLING_INTERVAL("metrics.session.throttling.delay.refresh-interval", false),
   METRICS_NODE_CQL_MESSAGES_HIGHEST("metrics.node.cql-messages.highest-latency", false),
   METRICS_NODE_CQL_MESSAGES_DIGITS("metrics.node.cql-messages.significant-digits", false),
   METRICS_NODE_CQL_MESSAGES_INTERVAL("metrics.node.cql-messages.refresh-interval", false),

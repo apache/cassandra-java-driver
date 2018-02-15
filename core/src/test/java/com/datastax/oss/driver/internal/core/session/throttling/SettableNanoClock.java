@@ -13,14 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.datastax.oss.driver.internal.core.metrics;
+package com.datastax.oss.driver.internal.core.session.throttling;
 
-import com.datastax.oss.driver.api.core.metadata.Node;
+class SettableNanoClock implements NanoClock {
 
-public interface MetricUpdaterFactory {
+  private volatile long nanoTime;
 
-  /** @return the unique instance for this session (this must return the same object every time). */
-  SessionMetricUpdater getSessionUpdater();
+  @Override
+  public long nanoTime() {
+    return nanoTime;
+  }
 
-  NodeMetricUpdater newNodeUpdater(Node node);
+  // This is racy, but in our tests it's never read concurrently
+  @SuppressWarnings("NonAtomicVolatileUpdate")
+  void add(long increment) {
+    nanoTime += increment;
+  }
 }

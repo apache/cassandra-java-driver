@@ -59,6 +59,7 @@ import com.datastax.oss.driver.internal.core.servererrors.DefaultWriteTypeRegist
 import com.datastax.oss.driver.internal.core.servererrors.WriteTypeRegistry;
 import com.datastax.oss.driver.internal.core.session.PoolManager;
 import com.datastax.oss.driver.internal.core.session.RequestProcessorRegistry;
+import com.datastax.oss.driver.internal.core.session.throttling.RequestThrottler;
 import com.datastax.oss.driver.internal.core.ssl.JdkSslHandlerFactory;
 import com.datastax.oss.driver.internal.core.ssl.SslHandlerFactory;
 import com.datastax.oss.driver.internal.core.type.codec.registry.DefaultCodecRegistry;
@@ -163,6 +164,8 @@ public class DefaultDriverContext implements InternalDriverContext {
       new LazyReference<>("metricRegistry", this::buildMetricRegistry, cycleDetector);
   private final LazyReference<MetricUpdaterFactory> metricUpdaterFactoryRef =
       new LazyReference<>("metricUpdaterFactory", this::buildMetricUpdaterFactory, cycleDetector);
+  private final LazyReference<RequestThrottler> requestThrottlerRef =
+      new LazyReference<>("requestThrottler", this::buildRequestThrottler, cycleDetector);
 
   private final DriverConfig config;
   private final DriverConfigLoader configLoader;
@@ -369,6 +372,17 @@ public class DefaultDriverContext implements InternalDriverContext {
     return new DefaultMetricUpdaterFactory(this);
   }
 
+  protected RequestThrottler buildRequestThrottler() {
+    return Reflection.buildFromConfig(
+            this, DefaultDriverOption.REQUEST_THROTTLER_CLASS, RequestThrottler.class)
+        .orElseThrow(
+            () ->
+                new IllegalArgumentException(
+                    String.format(
+                        "Missing request throttler, check your configuration (%s)",
+                        DefaultDriverOption.REQUEST_THROTTLER_CLASS)));
+  }
+
   @Override
   public String sessionName() {
     return sessionName;
@@ -537,6 +551,11 @@ public class DefaultDriverContext implements InternalDriverContext {
   @Override
   public MetricUpdaterFactory metricUpdaterFactory() {
     return metricUpdaterFactoryRef.get();
+  }
+
+  @Override
+  public RequestThrottler requestThrottler() {
+    return requestThrottlerRef.get();
   }
 
   @Override
