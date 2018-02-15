@@ -104,7 +104,7 @@ public class DefaultSession implements CqlSession {
     this.processorRegistry = context.requestProcessorRegistry();
     this.poolManager = context.poolManager();
     this.logPrefix = context.sessionName();
-    this.metricUpdater = context.metricUpdaterFactory().newSessionUpdater();
+    this.metricUpdater = context.metricUpdaterFactory().getSessionUpdater();
   }
 
   private CompletionStage<CqlSession> init(CqlIdentifier keyspace) {

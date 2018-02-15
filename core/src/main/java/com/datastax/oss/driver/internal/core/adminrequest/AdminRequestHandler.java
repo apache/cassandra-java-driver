@@ -77,7 +77,7 @@ public class AdminRequestHandler implements ResponseCallback {
   private final Duration timeout;
   private final String logPrefix;
   private final String debugString;
-  private final CompletableFuture<AdminResult> result = new CompletableFuture<>();
+  protected final CompletableFuture<AdminResult> result = new CompletableFuture<>();
 
   // This is only ever accessed on the channel's event loop, so it doesn't need to be volatile
   private ScheduledFuture<?> timeoutFuture;
@@ -110,12 +110,12 @@ public class AdminRequestHandler implements ResponseCallback {
           channel.eventLoop().schedule(this::fireTimeout, timeout.toNanos(), TimeUnit.NANOSECONDS);
       timeoutFuture.addListener(UncaughtExceptions::log);
     } else {
-      result.completeExceptionally(future.cause());
+      setFinalError(future.cause());
     }
   }
 
   private void fireTimeout() {
-    result.completeExceptionally(
+    setFinalError(
         new DriverTimeoutException(String.format("%s timed out after %s", debugString, timeout)));
     if (!channel.closeFuture().isDone()) {
       channel.cancel(this);
@@ -127,7 +127,7 @@ public class AdminRequestHandler implements ResponseCallback {
     if (timeoutFuture != null) {
       timeoutFuture.cancel(true);
     }
-    result.completeExceptionally(error);
+    setFinalError(error);
   }
 
   @Override
@@ -141,14 +141,22 @@ public class AdminRequestHandler implements ResponseCallback {
       Rows rows = (Rows) message;
       ByteBuffer pagingState = rows.getMetadata().pagingState;
       AdminRequestHandler nextHandler = (pagingState == null) ? null : this.copy(pagingState);
-      result.complete(new AdminResult(rows, nextHandler, channel.protocolVersion()));
+      setFinalResult(new AdminResult(rows, nextHandler, channel.protocolVersion()));
     } else if (message instanceof Prepared) {
       // Internal prepares are only "reprepare on up" types of queries, where we only care about
       // success, not the actual result, so this is good enough:
-      result.complete(null);
+      setFinalResult(null);
     } else {
-      result.completeExceptionally(new UnexpectedResponseException(debugString, message));
+      setFinalError(new UnexpectedResponseException(debugString, message));
     }
+  }
+
+  protected boolean setFinalResult(AdminResult result) {
+    return this.result.complete(result);
+  }
+
+  protected boolean setFinalError(Throwable error) {
+    return result.completeExceptionally(error);
   }
 
   private AdminRequestHandler copy(ByteBuffer pagingState) {

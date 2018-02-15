@@ -21,10 +21,17 @@ import com.datastax.oss.driver.api.core.metadata.Node;
 import com.datastax.oss.driver.api.core.metrics.DefaultSessionMetric;
 import com.datastax.oss.driver.api.core.metrics.SessionMetric;
 import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
+import com.datastax.oss.driver.internal.core.session.throttling.ConcurrencyLimitingRequestThrottler;
+import com.datastax.oss.driver.internal.core.session.throttling.RateLimitingRequestThrottler;
+import com.datastax.oss.driver.internal.core.session.throttling.RequestThrottler;
 import java.util.Set;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class DefaultSessionMetricUpdater extends MetricUpdaterBase<SessionMetric>
     implements SessionMetricUpdater {
+
+  private static final Logger LOG = LoggerFactory.getLogger(DefaultSessionMetricUpdater.class);
 
   private final String metricNamePrefix;
 
@@ -47,6 +54,11 @@ public class DefaultSessionMetricUpdater extends MetricUpdaterBase<SessionMetric
                 return count;
               });
     }
+    if (enabledMetrics.contains(DefaultSessionMetric.THROTTLING_QUEUE_SIZE)) {
+      metricRegistry.register(
+          buildFullName(DefaultSessionMetric.THROTTLING_QUEUE_SIZE),
+          buildQueueGauge(context.requestThrottler(), context.sessionName()));
+    }
     initializeHdrTimer(
         DefaultSessionMetric.CQL_REQUESTS,
         context.config().getDefaultProfile(),
@@ -54,10 +66,32 @@ public class DefaultSessionMetricUpdater extends MetricUpdaterBase<SessionMetric
         DefaultDriverOption.METRICS_SESSION_CQL_REQUESTS_DIGITS,
         DefaultDriverOption.METRICS_SESSION_CQL_REQUESTS_INTERVAL);
     initializeDefaultCounter(DefaultSessionMetric.CQL_CLIENT_TIMEOUTS);
+    initializeHdrTimer(
+        DefaultSessionMetric.THROTTLING_DELAY,
+        context.config().getDefaultProfile(),
+        DefaultDriverOption.METRICS_SESSION_THROTTLING_HIGHEST,
+        DefaultDriverOption.METRICS_SESSION_THROTTLING_DIGITS,
+        DefaultDriverOption.METRICS_SESSION_THROTTLING_INTERVAL);
+    initializeDefaultCounter(DefaultSessionMetric.THROTTLING_ERRORS);
   }
 
   @Override
   protected String buildFullName(SessionMetric metric) {
     return metricNamePrefix + metric.getPath();
+  }
+
+  private Gauge<Integer> buildQueueGauge(RequestThrottler requestThrottler, String logPrefix) {
+    if (requestThrottler instanceof ConcurrencyLimitingRequestThrottler) {
+      return ((ConcurrencyLimitingRequestThrottler) requestThrottler)::getQueueSize;
+    } else if (requestThrottler instanceof RateLimitingRequestThrottler) {
+      return ((RateLimitingRequestThrottler) requestThrottler)::getQueueSize;
+    } else {
+      LOG.warn(
+          "[{}] Metric {} does not support {}, it will always return 0",
+          logPrefix,
+          DefaultSessionMetric.THROTTLING_QUEUE_SIZE.getPath(),
+          requestThrottler.getClass().getName());
+      return () -> 0;
+    }
   }
 }
