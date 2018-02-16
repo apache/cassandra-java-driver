@@ -283,9 +283,11 @@ public abstract class CqlPrepareHandlerBase {
       return CompletableFuture.completedFuture(null);
     } else {
       AdminRequestHandler handler =
-          new AdminRequestHandler(channel, message, timeout, logPrefix, message.toString());
+          new AdminRequestHandler(
+              channel, message, request.getCustomPayload(), timeout, logPrefix, message.toString());
+
       return handler
-          .start(request.getCustomPayload())
+          .start()
           .handle(
               (result, error) -> {
                 if (error == null) {

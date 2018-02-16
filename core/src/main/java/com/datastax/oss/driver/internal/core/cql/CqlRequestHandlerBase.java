@@ -476,11 +476,12 @@ public abstract class CqlRequestHandlerBase {
             new AdminRequestHandler(
                 channel,
                 reprepareMessage,
+                repreparePayload.customPayload,
                 timeout,
                 logPrefix,
                 "Reprepare " + reprepareMessage.toString());
         reprepareHandler
-            .start(repreparePayload.customPayload)
+            .start()
             .handle(
                 (result, exception) -> {
                   if (exception != null) {

@@ -62,7 +62,8 @@ public class AdminRequestHandler implements ResponseCallback {
     if (!parameters.isEmpty()) {
       debugString += " with parameters " + parameters;
     }
-    return new AdminRequestHandler(channel, message, timeout, logPrefix, debugString);
+    return new AdminRequestHandler(
+        channel, message, Frame.NO_PAYLOAD, timeout, logPrefix, debugString);
   }
 
   public static AdminRequestHandler query(
@@ -72,6 +73,7 @@ public class AdminRequestHandler implements ResponseCallback {
 
   private final DriverChannel channel;
   private final Message message;
+  private final Map<String, ByteBuffer> customPayload;
   private final Duration timeout;
   private final String logPrefix;
   private final String debugString;
@@ -83,21 +85,19 @@ public class AdminRequestHandler implements ResponseCallback {
   public AdminRequestHandler(
       DriverChannel channel,
       Message message,
+      Map<String, ByteBuffer> customPayload,
       Duration timeout,
       String logPrefix,
       String debugString) {
     this.channel = channel;
     this.message = message;
+    this.customPayload = customPayload;
     this.timeout = timeout;
     this.logPrefix = logPrefix;
     this.debugString = debugString;
   }
 
   public CompletionStage<AdminResult> start() {
-    return start(Frame.NO_PAYLOAD);
-  }
-
-  public CompletionStage<AdminResult> start(Map<String, ByteBuffer> customPayload) {
     LOG.debug("[{}] Executing {}", logPrefix, this);
     channel.write(message, false, customPayload, this).addListener(this::onWriteComplete);
     return result;
@@ -158,7 +158,12 @@ public class AdminRequestHandler implements ResponseCallback {
     QueryOptions newOptions =
         buildQueryOptions(currentOptions.pageSize, currentOptions.namedValues, pagingState);
     return new AdminRequestHandler(
-        channel, new Query(current.query, newOptions), timeout, logPrefix, debugString);
+        channel,
+        new Query(current.query, newOptions),
+        customPayload,
+        timeout,
+        logPrefix,
+        debugString);
   }
 
   private static QueryOptions buildQueryOptions(
