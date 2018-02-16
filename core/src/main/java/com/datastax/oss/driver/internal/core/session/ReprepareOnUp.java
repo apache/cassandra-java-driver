@@ -232,7 +232,7 @@ class ReprepareOnUp {
   protected CompletionStage<AdminResult> queryAsync(
       Message message, Map<String, ByteBuffer> customPayload, String debugString) {
     AdminRequestHandler reprepareHandler =
-        new AdminRequestHandler(channel, message, timeout, logPrefix, debugString);
-    return reprepareHandler.start(customPayload);
+        new AdminRequestHandler(channel, message, customPayload, timeout, logPrefix, debugString);
+    return reprepareHandler.start();
   }
 }
