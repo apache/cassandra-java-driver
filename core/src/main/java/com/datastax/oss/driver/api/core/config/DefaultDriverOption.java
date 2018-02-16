@@ -41,6 +41,13 @@ public enum DefaultDriverOption implements DriverOption {
   CONNECTION_POOL_LOCAL_SIZE("connection.pool.local.size", true),
   CONNECTION_POOL_REMOTE_SIZE("connection.pool.remote.size", true),
 
+  CONNECTION_SOCKET_TCP_NODELAY("connection.socket.tcpNoDelay", true),
+  CONNECTION_SOCKET_KEEP_ALIVE("connection.socket.keepAlive", false),
+  CONNECTION_SOCKET_REUSE_ADDRESS("connection.socket.reuseAddress", false),
+  CONNECTION_SOCKET_LINGER_INTERVAL("connection.socket.lingerInterval", false),
+  CONNECTION_SOCKET_RECEIVE_BUFFER_SIZE("connection.socket.receiveBufferSize", false),
+  CONNECTION_SOCKET_SEND_BUFFER_SIZE("connection.socket.sendBufferSize", false),
+
   REQUEST_TIMEOUT("request.timeout", true),
   REQUEST_CONSISTENCY("request.consistency", true),
   REQUEST_PAGE_SIZE("request.page-size", true),

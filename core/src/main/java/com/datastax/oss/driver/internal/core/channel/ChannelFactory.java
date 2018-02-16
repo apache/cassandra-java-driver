@@ -31,6 +31,7 @@ import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.ChannelOption;
 import io.netty.channel.ChannelPipeline;
+import io.netty.channel.FixedRecvByteBufAllocator;
 import java.net.SocketAddress;
 import java.util.List;
 import java.util.Optional;
@@ -117,6 +118,36 @@ public class ChannelFactory {
             .option(ChannelOption.ALLOCATOR, nettyOptions.allocator())
             .handler(initializer(address, currentVersion, options, resultFuture));
 
+    DriverConfigProfile config = context.config().getDefaultProfile();
+
+    boolean tcpNoDelay = config.getBoolean(DefaultDriverOption.CONNECTION_SOCKET_TCP_NODELAY);
+    bootstrap = bootstrap.option(ChannelOption.TCP_NODELAY, tcpNoDelay);
+    if (config.isDefined(DefaultDriverOption.CONNECTION_SOCKET_KEEP_ALIVE)) {
+      boolean keepAlive = config.getBoolean(DefaultDriverOption.CONNECTION_SOCKET_KEEP_ALIVE);
+      bootstrap = bootstrap.option(ChannelOption.SO_KEEPALIVE, keepAlive);
+    }
+    if (config.isDefined(DefaultDriverOption.CONNECTION_SOCKET_REUSE_ADDRESS)) {
+      boolean reuseAddress = config.getBoolean(DefaultDriverOption.CONNECTION_SOCKET_REUSE_ADDRESS);
+      bootstrap = bootstrap.option(ChannelOption.SO_REUSEADDR, reuseAddress);
+    }
+    if (config.isDefined(DefaultDriverOption.CONNECTION_SOCKET_LINGER_INTERVAL)) {
+      int lingerInterval = config.getInt(DefaultDriverOption.CONNECTION_SOCKET_LINGER_INTERVAL);
+      bootstrap = bootstrap.option(ChannelOption.SO_LINGER, lingerInterval);
+    }
+    if (config.isDefined(DefaultDriverOption.CONNECTION_SOCKET_RECEIVE_BUFFER_SIZE)) {
+      int receiveBufferSize =
+          config.getInt(DefaultDriverOption.CONNECTION_SOCKET_RECEIVE_BUFFER_SIZE);
+      bootstrap =
+          bootstrap
+              .option(ChannelOption.SO_RCVBUF, receiveBufferSize)
+              .option(
+                  ChannelOption.RCVBUF_ALLOCATOR, new FixedRecvByteBufAllocator(receiveBufferSize));
+    }
+    if (config.isDefined(DefaultDriverOption.CONNECTION_SOCKET_SEND_BUFFER_SIZE)) {
+      int sendBufferSize = config.getInt(DefaultDriverOption.CONNECTION_SOCKET_SEND_BUFFER_SIZE);
+      bootstrap = bootstrap.option(ChannelOption.SO_SNDBUF, sendBufferSize);
+    }
+
     nettyOptions.afterBootstrapInitialized(bootstrap);
 
     ChannelFuture connectFuture = bootstrap.connect(address);
@@ -169,7 +200,7 @@ public class ChannelFactory {
       CompletableFuture<DriverChannel> resultFuture) {
     return new ChannelInitializer<Channel>() {
       @Override
-      protected void initChannel(Channel channel) throws Exception {
+      protected void initChannel(Channel channel) {
         try {
           DriverConfigProfile defaultConfigProfile = context.config().getDefaultProfile();
 
