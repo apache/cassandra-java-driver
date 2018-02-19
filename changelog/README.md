@@ -4,6 +4,8 @@
 
 ### 4.0.0-alpha4 (in progress)
 
+- [bug] JAVA-1756: Propagate custom payload when preparing a statement
+
 ### 4.0.0-alpha3
 
 - [new feature] JAVA-1518: Expose metrics
