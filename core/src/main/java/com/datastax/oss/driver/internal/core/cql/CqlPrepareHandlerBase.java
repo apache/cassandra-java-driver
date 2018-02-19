@@ -191,7 +191,7 @@ public abstract class CqlPrepareHandlerBase {
       InitialPrepareCallback initialPrepareCallback =
           new InitialPrepareCallback(node, channel, retryCount);
       channel
-          .write(message, false, Frame.NO_PAYLOAD, initialPrepareCallback)
+          .write(message, false, request.getCustomPayload(), initialPrepareCallback)
           .addListener(initialPrepareCallback);
     }
   }
@@ -212,7 +212,7 @@ public abstract class CqlPrepareHandlerBase {
 
   private void setFinalResult(Prepared prepared) {
     DefaultPreparedStatement newStatement =
-        Conversions.toPreparedStatement(prepared, (PrepareRequest) request, context);
+        Conversions.toPreparedStatement(prepared, request, context);
 
     DefaultPreparedStatement cachedStatement = cache(newStatement);
 
@@ -285,7 +285,7 @@ public abstract class CqlPrepareHandlerBase {
       AdminRequestHandler handler =
           new AdminRequestHandler(channel, message, timeout, logPrefix, message.toString());
       return handler
-          .start()
+          .start(request.getCustomPayload())
           .handle(
               (result, error) -> {
                 if (error == null) {
@@ -321,7 +321,7 @@ public abstract class CqlPrepareHandlerBase {
 
     // this gets invoked once the write completes.
     @Override
-    public void operationComplete(Future<java.lang.Void> future) throws Exception {
+    public void operationComplete(Future<java.lang.Void> future) {
       if (!future.isSuccess()) {
         LOG.debug(
             "[{}] Failed to send request on {}, trying next node (cause: {})",

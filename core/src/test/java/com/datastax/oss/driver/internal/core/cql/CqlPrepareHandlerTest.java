@@ -17,6 +17,7 @@ package com.datastax.oss.driver.internal.core.cql;
 
 import static com.datastax.oss.driver.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.eq;
 
 import com.datastax.oss.driver.api.core.DefaultProtocolVersion;
@@ -24,12 +25,15 @@ import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
 import com.datastax.oss.driver.api.core.config.DriverConfigProfile;
 import com.datastax.oss.driver.api.core.cql.ColumnDefinitions;
 import com.datastax.oss.driver.api.core.cql.PreparedStatement;
+import com.datastax.oss.driver.api.core.cql.SimpleStatement;
 import com.datastax.oss.driver.api.core.metadata.Node;
 import com.datastax.oss.driver.api.core.retry.RetryDecision;
 import com.datastax.oss.driver.api.core.servererrors.OverloadedException;
+import com.datastax.oss.driver.internal.core.channel.ResponseCallback;
 import com.datastax.oss.protocol.internal.Frame;
 import com.datastax.oss.protocol.internal.Message;
 import com.datastax.oss.protocol.internal.ProtocolConstants;
+import com.datastax.oss.protocol.internal.request.Prepare;
 import com.datastax.oss.protocol.internal.response.Error;
 import com.datastax.oss.protocol.internal.response.result.ColumnSpec;
 import com.datastax.oss.protocol.internal.response.result.Prepared;
@@ -37,8 +41,10 @@ import com.datastax.oss.protocol.internal.response.result.RawType;
 import com.datastax.oss.protocol.internal.response.result.RowsMetadata;
 import com.datastax.oss.protocol.internal.util.Bytes;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 import java.nio.ByteBuffer;
 import java.util.Collections;
+import java.util.Map;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -59,6 +65,8 @@ public class CqlPrepareHandlerTest {
 
   private ConcurrentMap<ByteBuffer, DefaultPreparedStatement> preparedStatementsCache =
       new ConcurrentHashMap<>();
+  private final Map<String, ByteBuffer> payload =
+      ImmutableMap.of("key1", ByteBuffer.wrap(new byte[] {1, 2, 3, 4}));
 
   @Before
   public void setup() {
@@ -331,6 +339,68 @@ public class CqlPrepareHandlerTest {
                 node2Behavior.verifyNoWrite();
                 node3Behavior.verifyNoWrite();
               });
+    }
+  }
+
+  @Test
+  public void should_propagate_custom_payload_on_single_node() {
+    RequestHandlerTestHarness.Builder harnessBuilder = RequestHandlerTestHarness.builder();
+    DefaultPrepareRequest prepareRequest =
+        new DefaultPrepareRequest(
+            SimpleStatement.newInstance("irrelevant").setCustomPayload(payload));
+    PoolBehavior node1Behavior = harnessBuilder.customBehavior(node1);
+    PoolBehavior node2Behavior = harnessBuilder.customBehavior(node2);
+    PoolBehavior node3Behavior = harnessBuilder.customBehavior(node3);
+    node1Behavior.setResponseSuccess(defaultFrameOf(simplePrepared()));
+    try (RequestHandlerTestHarness harness = harnessBuilder.build()) {
+      DriverConfigProfile config = harness.getContext().config().getDefaultProfile();
+      Mockito.when(config.getBoolean(DefaultDriverOption.PREPARE_ON_ALL_NODES)).thenReturn(false);
+      CompletionStage<PreparedStatement> prepareFuture =
+          new CqlPrepareAsyncHandler(
+                  prepareRequest,
+                  preparedStatementsCache,
+                  harness.getSession(),
+                  harness.getContext(),
+                  "test")
+              .handle();
+      Mockito.verify(node1Behavior.channel)
+          .write(any(Prepare.class), anyBoolean(), eq(payload), any(ResponseCallback.class));
+      node2Behavior.verifyNoWrite();
+      node3Behavior.verifyNoWrite();
+      assertThat(prepareFuture).isSuccess(CqlPrepareHandlerTest::assertMatchesSimplePrepared);
+    }
+  }
+
+  @Test
+  public void should_propagate_custom_payload_on_all_nodes() {
+    RequestHandlerTestHarness.Builder harnessBuilder = RequestHandlerTestHarness.builder();
+    DefaultPrepareRequest prepareRequest =
+        new DefaultPrepareRequest(
+            SimpleStatement.newInstance("irrelevant").setCustomPayload(payload));
+    PoolBehavior node1Behavior = harnessBuilder.customBehavior(node1);
+    PoolBehavior node2Behavior = harnessBuilder.customBehavior(node2);
+    PoolBehavior node3Behavior = harnessBuilder.customBehavior(node3);
+    node1Behavior.setResponseSuccess(defaultFrameOf(simplePrepared()));
+    node2Behavior.setResponseSuccess(defaultFrameOf(simplePrepared()));
+    node3Behavior.setResponseSuccess(defaultFrameOf(simplePrepared()));
+    try (RequestHandlerTestHarness harness = harnessBuilder.build()) {
+      DriverConfigProfile config = harness.getContext().config().getDefaultProfile();
+      Mockito.when(config.getBoolean(DefaultDriverOption.PREPARE_ON_ALL_NODES)).thenReturn(true);
+      CompletionStage<PreparedStatement> prepareFuture =
+          new CqlPrepareAsyncHandler(
+                  prepareRequest,
+                  preparedStatementsCache,
+                  harness.getSession(),
+                  harness.getContext(),
+                  "test")
+              .handle();
+      Mockito.verify(node1Behavior.channel)
+          .write(any(Prepare.class), anyBoolean(), eq(payload), any(ResponseCallback.class));
+      Mockito.verify(node2Behavior.channel)
+          .write(any(Prepare.class), anyBoolean(), eq(payload), any(ResponseCallback.class));
+      Mockito.verify(node3Behavior.channel)
+          .write(any(Prepare.class), anyBoolean(), eq(payload), any(ResponseCallback.class));
+      assertThat(prepareFuture).isSuccess(CqlPrepareHandlerTest::assertMatchesSimplePrepared);
     }
   }
 
