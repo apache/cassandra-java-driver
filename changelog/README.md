@@ -2,7 +2,9 @@
 
 <!-- Note: contrary to 3.x, insert new entries *first* in their section -->
 
-### 4.0.0-alpha3 (in progress)
+### 4.0.0-alpha4 (in progress)
+
+### 4.0.0-alpha3
 
 - [new feature] JAVA-1518: Expose metrics
 - [improvement] JAVA-1739: Add host_id and schema_version to node metadata
