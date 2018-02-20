@@ -410,8 +410,8 @@ limitations under the License.]]>
           <useReleaseProfile>false</useReleaseProfile>
           <releaseProfiles>release</releaseProfiles>
           <goals>deploy</goals>
-          <!-- Skip integration tests for the release:prepare step -->
-          <arguments>-DskipITs</arguments>
+          <!-- Our integration tests are too long to run during a release, we run them in CI -->
+          <arguments>-DskipParallelizableITs -DskipSerialITs -DskipIsolatedITs</arguments>
         </configuration>
       </plugin>
     </plugins>
@@ -435,10 +435,6 @@ limitations under the License.]]>
           </plugin>
         </plugins>
       </build>
-      <properties>
-        <!-- Our integration tests are too long to run during a release, we run them in CI -->
-        <skipITs>true</skipITs>
-      </properties>
     </profile>
   </profiles>
   <distributionManagement>
