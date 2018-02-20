@@ -16,6 +16,7 @@
 package com.datastax.oss.driver.internal.core.cql;
 
 import com.datastax.oss.driver.api.core.CqlIdentifier;
+import com.datastax.oss.driver.api.core.CqlSession;
 import com.datastax.oss.driver.api.core.config.DriverConfigProfile;
 import com.datastax.oss.driver.api.core.cql.PrepareRequest;
 import com.datastax.oss.driver.api.core.cql.SimpleStatement;
@@ -24,11 +25,32 @@ import java.nio.ByteBuffer;
 import java.util.Map;
 
 /**
- * For simplicity, this default implementation makes opinionated choices about {@code
- * *ForBoundStatements} methods: these should be appropriate for most cases, but not all use cases
- * are supported (for example, preparing with one profile and having the bound statements use
- * another profile is not possible). For exotic use cases, subclass or write your own
- * implementation.
+ * Default implementation of a prepare request, which is built internally to handle calls such as
+ * {@link CqlSession#prepare(String)} and {@link CqlSession#prepare(SimpleStatement)}.
+ *
+ * <p>When a {@link SimpleStatement} gets prepared, some of its fields are propagated automatically.
+ * For simplicity, this implementation makes the following opinionated choices:
+ *
+ * <ul>
+ *   <li>the prepare request:
+ *       <ul>
+ *         <li>will use the same configuration profile (or configuration profile name) as the {@code
+ *             SimpleStatement};
+ *         <li>will use the same custom payload as the {@code SimpleStatement};
+ *       </ul>
+ *   <li>any bound statement created from the prepared statement:
+ *       <ul>
+ *         <li>will use the same configuration profile (or configuration profile name) as the {@code
+ *             SimpleStatement};
+ *         <li>will use the same custom payload as the {@code SimpleStatement};
+ *         <li>will be idempotent if and only if the {@code SimpleStatement} was idempotent.
+ *       </ul>
+ * </ul>
+ *
+ * <p>This should be appropriate for most use cases; however if you need something more exotic (for
+ * example, preparing with one profile, but executing bound statements with another one), you can
+ * either write your own {@code PrepareRequest} implementation, or set the options manually on every
+ * bound statement.
  */
 public class DefaultPrepareRequest implements PrepareRequest {
 
