@@ -238,7 +238,7 @@ requests when connections are over-utilized.
 
 ### What is Netty's native epoll transport and how do I enable or disable it?
 
-Netty provides [native transport libraries](http://netty.io/wiki/native-transports.html) which generally generate less 
+Netty provides [native transport libraries](http://netty.io/wiki/native-transports.html) which generally generate less
 garbage and improve performance when compared to the default NIO-based transport.
 By default if the driver detects the  `netty-transport-native-epoll` library in its classpath it will attempt to use
 [`EpollEventLoopGroup`](https://netty.io/4.0/api/io/netty/channel/epoll/EpollEventLoopGroup.html) for its underlying
@@ -258,6 +258,37 @@ If properly used, the following log message will be logged at INFO on startup:
 
 > Found Netty's native epoll transport in the classpath, but NIO was forced through the FORCE_NIO system property.
 
+### Why am I encountering `NoSuchMethodFoundException`, `NoClassDefFoundError`, or `VerifyError`s and how do I avoid them?
+
+Incompatibilities between the java driver and other libraries may cause these exceptions to surface in your
+application at runtime.
+
+It could be that an older or newer version of a library that the driver depends on, such as Netty
+or Guava, may be present in your application's classpath.  If using Maven or another dependency
+management tool, the tool should offer a command, such as `mvn dependency:tree` to identify the dependencies
+in your project to help you understand the dependent versions across the various libraries you use in your
+project.  You may also want to evaluate your classpath to see if there are multiple JARs present for a library,
+but with different versions, which could cause compatibility issues.  In addition, consider evaluating
+using the Logback logging framework, which provides the capability to include [packaging data] for classes
+in stack traces.
+
+For Netty in particular, the driver offers an alternative artifact that shades its Netty dependency,
+allowing you to use newer or older versions of Netty in your application without impacting the driver.
+See [Using the shaded JAR] for more details.
+
+Another possibility could be that another library depends on a different version of the driver.
+In this case, observe the stacktrace of the exception to see which library is attempting to use
+the driver.  To identify compatible versions, check that library's dependency on the driver to understand
+what version is compatible.
+
+Finally, some monitoring and agent-based tools such as [DynaTrace] offer solutions that instrument the driver to
+observe and record useful metrics such as request rates, latencies and more.  It is possible that the tool
+is not compatible with the version of the java driver you are using.  In this case, check to
+see if a newer version of that tool is available that works with this version of the driver.  If no such
+version is available, you may want to reach out to the maintainer of that tool to request that they provide
+an update with compatibility to this driver version.
+
+
 [Blobs.java]: https://github.com/datastax/java-driver/tree/3.4.0/driver-examples/src/main/java/com/datastax/driver/examples/datatypes/Blobs.java
 [CASSANDRA-7304]: https://issues.apache.org/jira/browse/CASSANDRA-7304
 [Parameters and Binding]: ../manual/statements/prepared/#parameters-and-binding
@@ -265,3 +296,6 @@ If properly used, the following log message will be logged at INFO on startup:
 [Acquisition queue]: ../manual/pooling/#acquisition-queue
 [Semaphore]: https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/Semaphore.html
 [Futures.allAsList]: https://google.github.io/guava/releases/19.0/api/docs/com/google/common/util/concurrent/Futures.html#allAsList(java.lang.Iterable)
+[DynaTrace]: https://www.dynatrace.com/
+[packaging data]: https://logback.qos.ch/reasonsToSwitch.html#packagingData
+[Using the shaded JAR]: ../manual/shaded_jar

@@ -9,6 +9,7 @@
 - [improvement] JAVA-1765: Update dependencies to latest patch versions.
 - [improvement] JAVA-1752: Deprecate DowngradingConsistencyRetryPolicy.
 - [improvement] JAVA-1735: Log driver version on first use.
+- [documentation] JAVA-1380: Add FAQ entry for errors arising from incompatibilities.
 
 
 ### 3.4.0
