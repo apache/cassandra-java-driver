@@ -73,7 +73,7 @@ myRegistry.registerAll(cluster.getMetrics().getRegistry());
 
 ### Registering a Custom Reporter
 
-Dropwizard Metrics offers a variety of [Reporters] for exporting metrics.  To enable reporting
+Dropwizard Metrics offers a variety of [Reporters] for exporting metrics.  To enable reporting,
 access the `Cluster`'s metrics via the [getMetrics] method.  For example, to enable CSV reporting
 every 30 seconds:
 
@@ -127,9 +127,9 @@ reporting, add `metrics-jmx` as a dependency:
 </dependency>
 ```
 
-Then create your `Cluster` and `JmxReporter`:
+Then create your `Cluster` and `JmxReporter` in the following manner:
 
-```xml
+```java
 Cluster cluster = Cluster.builder()
         .withoutJMXReporting()
         .build();
@@ -148,5 +148,6 @@ reporter.start();
 [MXBeans]: https://docs.oracle.com/javase/tutorial/jmx/mbeans/mxbeans.html
 [withClusterName]: https://docs.datastax.com/en/drivers/java/3.4/com/datastax/driver/core/Cluster.Builder.html#withClusterName-java.lang.String-
 [withoutMetrics]: https://docs.datastax.com/en/drivers/java/3.4/com/datastax/driver/core/Cluster.Builder.html#withoutMetrics--
+[withoutJMXReporting]: https://docs.datastax.com/en/drivers/java/3.4/com/datastax/driver/core/Cluster.Builder.html#withoutJMXReporting--
 [getMetrics]: https://docs.datastax.com/en/drivers/java/3.4/com/datastax/driver/core/Cluster.html#getMetrics--
 [Metrics]: http://docs.datastax.com/en/drivers/java/3.4/com/datastax/driver/core/Metrics.html
