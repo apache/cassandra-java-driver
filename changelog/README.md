@@ -1,5 +1,10 @@
 ## Changelog
 
+### 3.5.0 (In progress)
+
+* [improvement] JAVA-1765: Update dependencies to latest patch versions.
+
+
 ### 3.4.0
 
 - [improvement] JAVA-1671: Remove unnecessary test on prepared statement metadata.
