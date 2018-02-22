@@ -1,5 +1,9 @@
 ## Changelog
 
+### 3.5.0 (In progress)
+
+- [documentation] JAVA-1760: Add metrics documentation.
+
 ### 3.4.0
 
 - [improvement] JAVA-1671: Remove unnecessary test on prepared statement metadata.
