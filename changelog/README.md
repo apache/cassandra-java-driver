@@ -4,11 +4,11 @@
 
 ### 4.0.0-alpha4 (in progress)
 
+- [new feature] JAVA-1537: Add remaining socket options
 - [bug] JAVA-1756: Propagate custom payload when preparing a statement
 
 ### 4.0.0-alpha3
 
-- [new feature] JAVA-1537: Add remaining socket options
 - [new feature] JAVA-1518: Expose metrics
 - [improvement] JAVA-1739: Add host_id and schema_version to node metadata
 - [improvement] JAVA-1738: Convert enums to allow extensibility
