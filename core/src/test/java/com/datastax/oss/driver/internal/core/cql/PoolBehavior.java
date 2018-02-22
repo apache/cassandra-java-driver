@@ -25,7 +25,10 @@ import com.datastax.oss.driver.internal.core.channel.DriverChannel;
 import com.datastax.oss.driver.internal.core.channel.ResponseCallback;
 import com.datastax.oss.protocol.internal.Frame;
 import com.datastax.oss.protocol.internal.Message;
+import io.netty.channel.ChannelConfig;
 import io.netty.channel.ChannelFuture;
+import io.netty.channel.EventLoop;
+import io.netty.channel.socket.DefaultSocketChannelConfig;
 import io.netty.util.concurrent.GlobalEventExecutor;
 import io.netty.util.concurrent.Promise;
 import java.util.concurrent.CompletableFuture;
@@ -52,17 +55,25 @@ public class PoolBehavior {
       this.writePromise = null;
     } else {
       this.channel = Mockito.mock(DriverChannel.class);
+      EventLoop eventLoop = Mockito.mock(EventLoop.class);
+      ChannelConfig config = Mockito.mock(DefaultSocketChannelConfig.class);
       this.writePromise = GlobalEventExecutor.INSTANCE.newPromise();
       Mockito.when(
               channel.write(
                   any(Message.class), anyBoolean(), anyMap(), any(ResponseCallback.class)))
           .thenAnswer(
               invocation -> {
-                callbackFuture.complete(invocation.getArgument(3));
+                ResponseCallback callback = invocation.getArgument(3);
+                if (callback.holdStreamId()) {
+                  callback.onStreamIdAssigned(1);
+                }
+                callbackFuture.complete(callback);
                 return writePromise;
               });
       ChannelFuture closeFuture = Mockito.mock(ChannelFuture.class);
       Mockito.when(channel.closeFuture()).thenReturn(closeFuture);
+      Mockito.when(channel.eventLoop()).thenReturn(eventLoop);
+      Mockito.when(channel.config()).thenReturn(config);
     }
   }
 
@@ -90,6 +101,14 @@ public class PoolBehavior {
 
   public void setResponseFailure(Throwable cause) {
     callbackFuture.thenAccept(callback -> callback.onFailure(cause));
+  }
+
+  public Node getNode() {
+    return node;
+  }
+
+  DriverChannel getChannel() {
+    return channel;
   }
 
   /** Mocks a follow-up request on the same channel. */

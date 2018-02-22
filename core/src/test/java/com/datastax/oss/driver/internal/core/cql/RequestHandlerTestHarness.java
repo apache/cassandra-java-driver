@@ -38,6 +38,7 @@ import com.datastax.oss.driver.internal.core.channel.DriverChannel;
 import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
 import com.datastax.oss.driver.internal.core.context.NettyOptions;
 import com.datastax.oss.driver.internal.core.metadata.LoadBalancingPolicyWrapper;
+import com.datastax.oss.driver.internal.core.metrics.SessionMetricUpdater;
 import com.datastax.oss.driver.internal.core.pool.ChannelPool;
 import com.datastax.oss.driver.internal.core.servererrors.DefaultWriteTypeRegistry;
 import com.datastax.oss.driver.internal.core.session.DefaultSession;
@@ -70,6 +71,7 @@ public class RequestHandlerTestHarness implements AutoCloseable {
   }
 
   private final ScheduledTaskCapturingEventLoop schedulingEventLoop;
+  private final Map<Node, ChannelPool> pools;
 
   @Mock private InternalDriverContext context;
   @Mock private DefaultSession session;
@@ -82,6 +84,7 @@ public class RequestHandlerTestHarness implements AutoCloseable {
   @Mock private SpeculativeExecutionPolicy speculativeExecutionPolicy;
   @Mock private TimestampGenerator timestampGenerator;
   @Mock private ProtocolVersionRegistry protocolVersionRegistry;
+  @Mock private SessionMetricUpdater sessionMetricUpdater;
 
   private RequestHandlerTestHarness(Builder builder) {
     MockitoAnnotations.initMocks(this);
@@ -126,7 +129,7 @@ public class RequestHandlerTestHarness implements AutoCloseable {
     Mockito.when(timestampGenerator.next()).thenReturn(Long.MIN_VALUE);
     Mockito.when(context.timestampGenerator()).thenReturn(timestampGenerator);
 
-    Map<Node, ChannelPool> pools = builder.buildMockPools();
+    pools = builder.buildMockPools();
     Mockito.when(session.getChannel(any(Node.class), anyString()))
         .thenAnswer(
             invocation -> {
@@ -138,11 +141,17 @@ public class RequestHandlerTestHarness implements AutoCloseable {
     Mockito.when(session.setKeyspace(any(CqlIdentifier.class)))
         .thenReturn(CompletableFuture.completedFuture(null));
 
+    Mockito.when(session.getMetricUpdater()).thenReturn(sessionMetricUpdater);
+
     Mockito.when(context.protocolVersionRegistry()).thenReturn(protocolVersionRegistry);
     Mockito.when(
             protocolVersionRegistry.supports(
                 any(ProtocolVersion.class), any(ProtocolFeature.class)))
         .thenReturn(true);
+
+    if (builder.protocolVersion != null) {
+      Mockito.when(context.protocolVersion()).thenReturn(builder.protocolVersion);
+    }
 
     Mockito.when(context.consistencyLevelRegistry())
         .thenReturn(new DefaultConsistencyLevelRegistry());
@@ -156,6 +165,11 @@ public class RequestHandlerTestHarness implements AutoCloseable {
 
   public InternalDriverContext getContext() {
     return context;
+  }
+
+  public DriverChannel getChannel(Node node) {
+    ChannelPool pool = pools.get(node);
+    return pool.next();
   }
 
   /**
@@ -174,6 +188,7 @@ public class RequestHandlerTestHarness implements AutoCloseable {
   public static class Builder {
     private final List<PoolBehavior> poolBehaviors = new ArrayList<>();
     private boolean defaultIdempotence;
+    private ProtocolVersion protocolVersion;
 
     /**
      * Sets the given node as the next one in the query plan; an empty pool will be simulated when
@@ -221,6 +236,11 @@ public class RequestHandlerTestHarness implements AutoCloseable {
 
     public Builder withDefaultIdempotence(boolean defaultIdempotence) {
       this.defaultIdempotence = defaultIdempotence;
+      return this;
+    }
+
+    public Builder withProtocolVersion(ProtocolVersion protocolVersion) {
+      this.protocolVersion = protocolVersion;
       return this;
     }
 
