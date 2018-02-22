@@ -66,8 +66,31 @@ public class CompletionStageAssert<V>
     return isFailed(f -> {});
   }
 
+  public CompletionStageAssert<V> isCancelled() {
+    assertThat(actual.toCompletableFuture().isCancelled())
+        .overridingErrorMessage("Expected completion stage to be cancelled")
+        .isTrue();
+    return this;
+  }
+
+  public CompletionStageAssert<V> isNotCancelled() {
+    assertThat(actual.toCompletableFuture().isCancelled())
+        .overridingErrorMessage("Expected completion stage not to be cancelled")
+        .isTrue();
+    return this;
+  }
+
+  public CompletionStageAssert<V> isDone() {
+    assertThat(actual.toCompletableFuture().isDone())
+        .overridingErrorMessage("Expected completion stage to be done")
+        .isTrue();
+    return this;
+  }
+
   public CompletionStageAssert<V> isNotDone() {
-    assertThat(actual.toCompletableFuture().isDone()).isFalse();
+    assertThat(actual.toCompletableFuture().isDone())
+        .overridingErrorMessage("Expected completion stage not to be done")
+        .isFalse();
     return this;
   }
 }

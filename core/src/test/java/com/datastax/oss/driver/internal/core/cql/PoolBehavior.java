@@ -107,7 +107,7 @@ public class PoolBehavior {
     return node;
   }
 
-  DriverChannel getChannel() {
+  public DriverChannel getChannel() {
     return channel;
   }
 
