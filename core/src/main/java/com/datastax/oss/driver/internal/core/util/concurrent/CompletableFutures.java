@@ -75,7 +75,8 @@ public class CompletableFutures {
   }
 
   /** Get the result now, when we know for sure that the future is complete. */
-  public static <T> T getCompleted(CompletableFuture<T> future) {
+  public static <T> T getCompleted(CompletionStage<T> stage) {
+    CompletableFuture<T> future = stage.toCompletableFuture();
     Preconditions.checkArgument(future.isDone() && !future.isCompletedExceptionally());
     try {
       return future.get();
@@ -86,7 +87,8 @@ public class CompletableFutures {
   }
 
   /** Get the error now, when we know for sure that the future is failed. */
-  public static Throwable getFailed(CompletableFuture<?> future) {
+  public static Throwable getFailed(CompletionStage<?> stage) {
+    CompletableFuture<?> future = stage.toCompletableFuture();
     Preconditions.checkArgument(future.isCompletedExceptionally());
     try {
       future.get();
