@@ -68,7 +68,7 @@ public class TokenAwarePolicy implements ChainableLoadBalancingPolicy {
         TOPOLOGICAL,
 
         /**
-         * Return replicas in a different, random order for each query plan.
+         * Return replicas in a different, random order for each query plan. This is the default strategy.
          * <p/>
          * This strategy fans out writes and thus can alleviate hotspots caused by "fat" partitions,
          * but its randomness makes server-side caching less efficient.
@@ -119,12 +119,12 @@ public class TokenAwarePolicy implements ChainableLoadBalancingPolicy {
     }
 
     /**
-     * Creates a new {@code TokenAware} policy with {@link ReplicaOrdering#TOPOLOGICAL TOPOLOGICAL} replica ordering.
+     * Creates a new {@code TokenAware} policy with {@link ReplicaOrdering#RANDOM RANDOM} replica ordering.
      *
      * @param childPolicy the load balancing policy to wrap with token awareness.
      */
     public TokenAwarePolicy(LoadBalancingPolicy childPolicy) {
-        this(childPolicy, ReplicaOrdering.TOPOLOGICAL);
+        this(childPolicy, ReplicaOrdering.RANDOM);
     }
 
     @Override
