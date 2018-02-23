@@ -212,7 +212,7 @@ public abstract class CqlPrepareHandlerBase {
 
   private void setFinalResult(Prepared prepared) {
     DefaultPreparedStatement newStatement =
-        Conversions.toPreparedStatement(prepared, request, context);
+        Conversions.INSTANCE.toPreparedStatement(prepared, request, context);
 
     DefaultPreparedStatement cachedStatement = cache(newStatement);
 
@@ -376,7 +376,7 @@ public abstract class CqlPrepareHandlerBase {
                 "Unexpected server error for a PREPARE query" + errorMessage));
         return;
       }
-      CoordinatorException error = Conversions.toThrowable(node, errorMessage, context);
+      CoordinatorException error = Conversions.INSTANCE.toThrowable(node, errorMessage, context);
       if (error instanceof BootstrappingException) {
         LOG.debug("[{}] {} is bootstrapping, trying next node", logPrefix, node);
         recordError(node, error);

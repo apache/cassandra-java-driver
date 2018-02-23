@@ -162,7 +162,7 @@ public abstract class CqlRequestHandlerBase {
           }
           return null;
         });
-    this.message = Conversions.toMessage(statement, configProfile, context);
+    this.message = Conversions.INSTANCE.toMessage(statement, configProfile, context);
     this.scheduler = context.nettyOptions().ioEventLoopGroup().next();
 
     this.timeout = configProfile.getDuration(DefaultDriverOption.REQUEST_TIMEOUT);
@@ -267,7 +267,7 @@ public abstract class CqlRequestHandlerBase {
       ExecutionInfo executionInfo =
           buildExecutionInfo(callback, resultMessage, responseFrame, schemaInAgreement);
       AsyncResultSet resultSet =
-          Conversions.toResultSet(resultMessage, executionInfo, session, context);
+          Conversions.INSTANCE.toResultSet(resultMessage, executionInfo, session, context);
       if (result.complete(resultSet)) {
         cancelScheduledTasks();
         session
@@ -349,7 +349,7 @@ public abstract class CqlRequestHandlerBase {
 
     // this gets invoked once the write completes.
     @Override
-    public void operationComplete(Future<java.lang.Void> future) throws Exception {
+    public void operationComplete(Future<java.lang.Void> future) {
       if (!future.isSuccess()) {
         Throwable error = future.cause();
         if (error instanceof EncoderException
@@ -380,9 +380,7 @@ public abstract class CqlRequestHandlerBase {
             // Note that `node` is the first node of the execution, it might not be the "slow" one
             // if there were retries, but in practice retries are rare.
             long nextDelay =
-                context
-                    .speculativeExecutionPolicy()
-                    .nextExecution(node, keyspace, statement, nextExecution);
+                speculativeExecutionPolicy.nextExecution(node, keyspace, statement, nextExecution);
             if (nextDelay >= 0) {
               LOG.debug(
                   "[{}] Scheduling speculative execution {} in {} ms",
@@ -490,7 +488,8 @@ public abstract class CqlRequestHandlerBase {
                           ((UnexpectedResponseException) exception).message;
                       if (prepareErrorMessage instanceof Error) {
                         CoordinatorException prepareError =
-                            Conversions.toThrowable(node, (Error) prepareErrorMessage, context);
+                            Conversions.INSTANCE.toThrowable(
+                                node, (Error) prepareErrorMessage, context);
                         if (prepareError instanceof QueryValidationException
                             || prepareError instanceof FunctionFailureException
                             || prepareError instanceof ProtocolError) {
@@ -511,7 +510,7 @@ public abstract class CqlRequestHandlerBase {
                 });
         return;
       }
-      CoordinatorException error = Conversions.toThrowable(node, errorMessage, context);
+      CoordinatorException error = Conversions.INSTANCE.toThrowable(node, errorMessage, context);
       NodeMetricUpdater metricUpdater = ((DefaultNode) node).getMetricUpdater();
       if (error instanceof BootstrappingException) {
         LOG.debug("[{}] {} is bootstrapping, trying next node", logPrefix, node);
