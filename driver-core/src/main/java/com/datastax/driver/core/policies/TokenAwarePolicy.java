@@ -62,8 +62,8 @@ public class TokenAwarePolicy implements ChainableLoadBalancingPolicy {
          * <p/>
          * This strategy is the only one guaranteed to order replicas in a deterministic and
          * constant way. This increases the effectiveness of server-side row caching (especially
-         * at consistency level ONE), but may create hotspots, since the primary replica is always
-         * tried first.
+         * at consistency level ONE), but is more heavily impacted by hotspots, since the primary
+         * replica is always tried first.
          */
         TOPOLOGICAL,
 
