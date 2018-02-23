@@ -156,8 +156,10 @@ public class TokenAwarePolicy implements ChainableLoadBalancingPolicy {
      * The returned plan will first return local replicas for the query (i.e.
      * replicas whose {@link HostDistance distance} according to the child policy is {@code LOCAL}),
      * if it can determine them (i.e. mainly if the statement's
-     * {@link Statement#getRoutingKey(ProtocolVersion, CodecRegistry)} routing key}
-     * is not {@code null}); following what it will return the rest of the child policy's original query plan.
+     * {@link Statement#getRoutingKey(ProtocolVersion, CodecRegistry) routing key}
+     * is not {@code null}), and ordered according to the {@link ReplicaOrdering ordering strategy}
+     * specified at instantiation; following what it will return the rest of the child policy's
+     * original query plan.
      */
     @Override
     public Iterator<Host> newQueryPlan(final String loggedKeyspace, final Statement statement) {
