@@ -516,8 +516,8 @@
                                 <version>${snappy.version}</version>
                             </additionalDependency>
                             <additionalDependency>
-                                <groupId>net.jpountz.lz4</groupId>
-                                <artifactId>lz4</artifactId>
+                                <groupId>org.lz4</groupId>
+                                <artifactId>lz4-java</artifactId>
                                 <version>${lz4.version}</version>
                             </additionalDependency>
                             <additionalDependency>
