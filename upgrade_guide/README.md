@@ -3,6 +3,35 @@
 The purpose of this guide is to detail changes made by successive
 versions of the Java driver.
 
+### 3.5.0
+
+`DowngradingConsistencyRetryPolicy` is now deprecated, see [JAVA-1752]. 
+It will also be removed in the next major release of the driver (4.0.0), 
+see [JAVA-1376].
+
+The main motivation is the agreement that `DowngradingConsistencyRetryPolicy`'s 
+behavior should be the application's concern, not the driver's. APIs provided by 
+the driver should instead encourage idiomatic use of a distributed system like 
+Apache Cassandra, and a downgrading policy works against this. It suggests that 
+an anti-pattern such as "try to read at ALL, but fall back to QUORUM if that fails" 
+is a good idea in general use cases, when in reality it provides no better consistency
+guarantees than working directly at QUORUM, but with higher latencies. 
+
+Instead, users should choose upfront the consistency level that works best for 
+their use cases. We recognize that there are use cases where downgrading is 
+good – for instance, a dashboard application would present the latest information 
+by reading at QUORUM, but it's acceptable for it to display stale information 
+by reading at ONE sometimes. Users will now have to implement this logic directly
+in their application, or alternatively, implement their own retry policy.
+
+To help users migrate existing applications that rely on 
+`DowngradingConsistencyRetryPolicy`, see this 
+[online example](../driver-examples/src/main/java/com/datastax/driver/examples/retry/DowngradingRetry.java).
+
+[JAVA-1752]:https://datastax-oss.atlassian.net/browse/JAVA-1752
+[JAVA-1376]:https://datastax-oss.atlassian.net/browse/JAVA-1376
+
+
 ### 3.4.0
 
 `QueryBuilder` methods `in`, `lt`, `lte`, `eq`, `gt`, and `gte` now accept

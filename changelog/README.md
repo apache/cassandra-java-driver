@@ -1,5 +1,10 @@
 ## Changelog
 
+### 3.5.0 (in progress)
+
+- [improvement] JAVA-1752: Deprecate DowngradingConsistencyRetryPolicy.
+
+
 ### 3.4.0
 
 - [improvement] JAVA-1671: Remove unnecessary test on prepared statement metadata.

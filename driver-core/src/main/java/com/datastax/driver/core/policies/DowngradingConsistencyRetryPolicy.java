@@ -63,7 +63,7 @@ import com.datastax.driver.core.exceptions.DriverException;
  * on the information the Cassandra coordinator node returns, retrying the
  * operation with the initially requested consistency has a chance to
  * succeed, do it. Otherwise, if based on this information we know <b>the
- * initially requested consistency level cannot be achieve currently</b>, then:
+ * initially requested consistency level cannot be achieved currently</b>, then:
  * <ul>
  * <li>For writes, ignore the exception (thus silently failing the
  * consistency requirement) if we know the write has been persisted on at
@@ -75,7 +75,13 @@ import com.datastax.driver.core.exceptions.DriverException;
  * consistency level cannot be achieved, the next best thing for writes is
  * to make sure the data is persisted, and that reading something is better
  * than reading nothing, even if there is a risk of reading stale data.
+ *
+ * @deprecated as of version 3.5.0, this retry policy has been deprecated, and it will be removed in 4.0.0.
+ * See our <a href="http://datastax.github.io/java-driver/upgrade_guide/">upgrade guide</a> to understand
+ * how to migrate existing applications that rely on this policy.
  */
+@Deprecated
+@SuppressWarnings("DeprecatedIsStillUsed")
 public class DowngradingConsistencyRetryPolicy implements RetryPolicy {
 
     public static final DowngradingConsistencyRetryPolicy INSTANCE = new DowngradingConsistencyRetryPolicy();
@@ -95,18 +101,18 @@ public class DowngradingConsistencyRetryPolicy implements RetryPolicy {
         // a node up in some other datacenter
         if (knownOk == 1 || currentCL == ConsistencyLevel.EACH_QUORUM)
             return RetryDecision.retry(ConsistencyLevel.ONE);
-        
+
         return RetryDecision.rethrow();
     }
 
     /**
      * {@inheritDoc}
      * <p/>
-     * This implementation triggers a maximum of one retry. If less replica
+     * This implementation triggers a maximum of one retry. If less replicas
      * responded than required by the consistency level (but at least one
      * replica did respond), the operation is retried at a lower
-     * consistency level. If enough replica responded but data was not
-     * retrieve, the operation is retried with the initial consistency
+     * consistency level. If enough replicas responded but data was not
+     * retrieved, the operation is retried with the initial consistency
      * level. Otherwise, an exception is thrown.
      */
     @Override
@@ -167,7 +173,7 @@ public class DowngradingConsistencyRetryPolicy implements RetryPolicy {
      * {@inheritDoc}
      * <p/>
      * This implementation triggers a maximum of one retry. If at least one replica
-     * is know to be alive, the operation is retried at a lower consistency
+     * is known to be alive, the operation is retried at a lower consistency
      * level.
      */
     @Override

@@ -65,7 +65,7 @@ public abstract class QueryConsistencyException extends QueryExecutionException 
     }
 
     /**
-     * The number of replica that had acknowledged/responded to the operation
+     * The number of replicas that had acknowledged/responded to the operation
      * before it failed.
      *
      * @return the number of replica that had acknowledged/responded the

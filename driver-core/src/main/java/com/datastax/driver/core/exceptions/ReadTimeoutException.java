@@ -66,8 +66,8 @@ public class ReadTimeoutException extends QueryConsistencyException {
      * <p/>
      * During reads, Cassandra doesn't request data from every replica to
      * minimize internal network traffic. Instead, some replicas are only asked
-     * for a checksum of the data. A read timeout may occurred even if enough
-     * replicas have responded to fulfill the consistency level if only checksum
+     * for a checksum of the data. A read timeout may have occurred even if enough
+     * replicas have responded to fulfill the consistency level, if only checksum
      * responses have been received. This method allows to detect that case.
      *
      * @return whether the data was amongst the received replica responses.
