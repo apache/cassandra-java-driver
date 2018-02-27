@@ -21,6 +21,8 @@ import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
 import com.datastax.oss.driver.api.core.config.DriverConfigProfile;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
+import java.util.HashMap;
+import java.util.Map;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
@@ -92,6 +94,33 @@ public class TypeSafeDriverConfigTest {
 
     assertThat(base.getInt(MockOptions.REQUIRED_INT)).isEqualTo(42);
     assertThat(derived.getInt(MockOptions.REQUIRED_INT)).isEqualTo(43);
+  }
+
+  @Test
+  public void should_fetch_string_map() {
+    TypeSafeDriverConfig config =
+        parse(
+            "required_int = 42 \n auth_provider { auth_thing_one= one \n auth_thing_two = two \n auth_thing_three = three}");
+    DriverConfigProfile base = config.getDefaultProfile();
+    base.getStringMap(MockOptions.OPTIONAL_AUTH);
+    Map<String, String> map = base.getStringMap(MockOptions.OPTIONAL_AUTH);
+    assertThat(map.entrySet().size()).isEqualTo(3);
+    assertThat(map.get("auth_thing_one")).isEqualTo("one");
+    assertThat(map.get("auth_thing_two")).isEqualTo("two");
+    assertThat(map.get("auth_thing_three")).isEqualTo("three");
+  }
+
+  @Test
+  public void should_create_derived_profile_with_string_map() {
+    TypeSafeDriverConfig config = parse("required_int = 42");
+    Map<String, String> authThingMap = new HashMap<>();
+    authThingMap.put("auth_thing_one", "one");
+    authThingMap.put("auth_thing_two", "two");
+    authThingMap.put("auth_thing_three", "three");
+    DriverConfigProfile base = config.getDefaultProfile();
+    DriverConfigProfile mapBase = base.withStringMap(MockOptions.OPTIONAL_AUTH, authThingMap);
+    Map<String, String> fetchedMap = mapBase.getStringMap(MockOptions.OPTIONAL_AUTH);
+    assertThat(fetchedMap).isEqualTo(authThingMap);
   }
 
   @Test

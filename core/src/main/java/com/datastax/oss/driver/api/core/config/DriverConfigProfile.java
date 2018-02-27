@@ -17,6 +17,7 @@ package com.datastax.oss.driver.api.core.config;
 
 import java.time.Duration;
 import java.util.List;
+import java.util.Map;
 
 /**
  * A profile in the driver's configuration.
@@ -51,6 +52,10 @@ public interface DriverConfigProfile {
   List<String> getStringList(DriverOption option);
 
   DriverConfigProfile withStringList(DriverOption option, List<String> value);
+
+  Map<String, String> getStringMap(DriverOption option);
+
+  DriverConfigProfile withStringMap(DriverOption option, Map<String, String> value);
 
   /** Returns a size in bytes. */
   long getBytes(DriverOption option);
