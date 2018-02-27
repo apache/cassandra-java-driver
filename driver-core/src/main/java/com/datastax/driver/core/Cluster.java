@@ -63,15 +63,16 @@ public class Cluster implements Closeable {
 
     private static final Logger logger = LoggerFactory.getLogger(Cluster.class);
 
+    private static final ResourceBundle driverProperties = ResourceBundle.getBundle("com.datastax.driver.core.Driver");
+
     static {
+        logDriverVersion();
         // Force initialization to fail fast if there is an issue detecting the version
         GuavaCompatibility.init();
     }
 
     @VisibleForTesting
     static final int NEW_NODE_DELAY_SECONDS = SystemProperties.getInt("com.datastax.driver.NEW_NODE_DELAY_SECONDS", 1);
-
-    private static final ResourceBundle driverProperties = ResourceBundle.getBundle("com.datastax.driver.core.Driver");
 
     // Some per-JVM number that allows to generate unique cluster names when
     // multiple Cluster instance are created in the same JVM.
@@ -199,6 +200,17 @@ public class Cluster implements Closeable {
      */
     public static String getDriverVersion() {
         return driverProperties.getString("driver.version");
+    }
+
+    /**
+     * Logs the driver version to the console.
+     * <p>
+     * This method logs the version using the logger {@code com.datastax.driver.core}
+     * and level {@code INFO}.
+     */
+    public static void logDriverVersion() {
+        Logger core = LoggerFactory.getLogger("com.datastax.driver.core");
+        core.info("DataStax Java driver {} for Apache Cassandra", getDriverVersion());
     }
 
     /**
