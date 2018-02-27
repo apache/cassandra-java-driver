@@ -8,6 +8,7 @@
 - [documentation] JAVA-1760: Add metrics documentation.
 - [improvement] JAVA-1765: Update dependencies to latest patch versions.
 - [improvement] JAVA-1752: Deprecate DowngradingConsistencyRetryPolicy.
+- [improvement] JAVA-1735: Log driver version on first use.
 
 
 ### 3.4.0
