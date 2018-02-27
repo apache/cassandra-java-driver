@@ -33,6 +33,7 @@ class Requests {
     static class Startup extends Message.Request {
         private static final String CQL_VERSION_OPTION = "CQL_VERSION";
         private static final String CQL_VERSION = "3.0.0";
+        private static final String CLIENT_STRING_OPTION = "CLIENT_STRING_OPTION";
 
         static final String COMPRESSION_OPTION = "COMPRESSION";
         static final String NO_COMPACT_OPTION = "NO_COMPACT";
@@ -52,6 +53,12 @@ class Requests {
         private final Map<String, String> options;
         private final ProtocolOptions.Compression compression;
         private final boolean noCompact;
+        private String clientString = "DataStax-JavaDriver-v3.0";
+
+        Startup(ProtocolOptions.Compression compression, boolean noCompact, String clientString) {
+            this(compression, noCompact);
+            this.clientString = clientString;
+        }
 
         Startup(ProtocolOptions.Compression compression, boolean noCompact) {
             super(Message.Request.Type.STARTUP);
@@ -62,6 +69,11 @@ class Requests {
             map.put(CQL_VERSION_OPTION, CQL_VERSION);
             if (compression != ProtocolOptions.Compression.NONE)
                 map.put(COMPRESSION_OPTION, compression.toString());
+
+            if (!clientString.isEmpty()) {
+                map.put(CLIENT_STRING_OPTION, clientString);
+            }
+
             if (noCompact)
                 map.put(NO_COMPACT_OPTION, "true");
             this.options = map.build();
