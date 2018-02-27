@@ -187,17 +187,17 @@ class Requests {
         static final Message.Coder<Execute> coder = new Message.Coder<Execute>() {
             @Override
             public void encode(Execute msg, ByteBuf dest, ProtocolVersion version) {
-                CBUtil.writeBytes(msg.statementId.bytes, dest);
+                CBUtil.writeShortBytes(msg.statementId.bytes, dest);
                 if (ProtocolFeature.PREPARED_METADATA_CHANGES.isSupportedBy(version))
-                    CBUtil.writeBytes(msg.resultMetadataId.bytes, dest);
+                    CBUtil.writeShortBytes(msg.resultMetadataId.bytes, dest);
                 msg.options.encode(dest, version);
             }
 
             @Override
             public int encodedSize(Execute msg, ProtocolVersion version) {
-                int size = CBUtil.sizeOfBytes(msg.statementId.bytes);
+                int size = CBUtil.sizeOfShortBytes(msg.statementId.bytes);
                 if (ProtocolFeature.PREPARED_METADATA_CHANGES.isSupportedBy(version))
-                    size += CBUtil.sizeOfBytes(msg.resultMetadataId.bytes);
+                    size += CBUtil.sizeOfShortBytes(msg.resultMetadataId.bytes);
                 size += msg.options.encodedSize(version);
                 return size;
             }
@@ -434,7 +434,7 @@ class Requests {
                     if (q instanceof String)
                         CBUtil.writeLongString((String) q, dest);
                     else
-                        CBUtil.writeBytes(((MD5Digest) q).bytes, dest);
+                        CBUtil.writeShortBytes(((MD5Digest) q).bytes, dest);
 
                     CBUtil.writeValueList(msg.values.get(i), dest);
                 }
@@ -449,7 +449,7 @@ class Requests {
                     Object q = msg.queryOrIdList.get(i);
                     size += 1 + (q instanceof String
                             ? CBUtil.sizeOfLongString((String) q)
-                            : CBUtil.sizeOfBytes(((MD5Digest) q).bytes));
+                            : CBUtil.sizeOfShortBytes(((MD5Digest) q).bytes));
 
                     size += CBUtil.sizeOfValueList(msg.values.get(i));
                 }

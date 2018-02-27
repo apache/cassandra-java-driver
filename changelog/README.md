@@ -3,6 +3,7 @@
 ### 3.5.0 (In progress)
 
 - [bug] JAVA-1751: Include defaultTimestamp length in encodedSize for protocol version >= 3.
+- [bug] JAVA-1770: Fix message size when using Custom Payload.
 
 
 ### 3.4.0
