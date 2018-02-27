@@ -258,8 +258,8 @@ public class CustomPayloadTest extends CCMTestsSupport {
             session().execute(statement);
             String logs = appender.waitAndGet(10000);
             assertThat(logs)
-                    .contains("Sending payload: {k1:0x010203, k2:0x040506} (20 bytes total)")
-                    .contains("Received payload: {k1:0x010203, k2:0x040506} (20 bytes total)");
+                    .contains("Sending payload: {k1:0x010203, k2:0x040506} (24 bytes total)")
+                    .contains("Received payload: {k1:0x010203, k2:0x040506} (24 bytes total)");
         } finally {
             logger.setLevel(null);
             logger.removeAppender(appender);
