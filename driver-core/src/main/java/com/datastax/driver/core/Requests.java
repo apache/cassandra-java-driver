@@ -53,7 +53,7 @@ class Requests {
         private final Map<String, String> options;
         private final ProtocolOptions.Compression compression;
         private final boolean noCompact;
-        private String clientString = "datastaxjavadriver-cql3.0.0-v3.0";
+        private String clientString = String.format("datastaxjavadriver-cql%s-v3.0", CQL_VERSION);
 
         Startup(ProtocolOptions.Compression compression, boolean noCompact, String clientString) {
             this(compression, noCompact);
