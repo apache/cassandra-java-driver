@@ -32,18 +32,18 @@ import java.util.*;
  * <li>the iterator returned by the {@code newQueryPlan} method will first
  * return the {@link HostDistance#LOCAL LOCAL} replicas for the query
  * <em>if possible</em> (i.e. if the query's
- * {@link Statement#getRoutingKey(ProtocolVersion, CodecRegistry) routing key}
+ * {@linkplain Statement#getRoutingKey(ProtocolVersion, CodecRegistry) routing key}
  * is not {@code null} and if the
- * {@link Metadata#getReplicas(String, ByteBuffer) set of replicas}
+ * {@linkplain Metadata#getReplicas(String, ByteBuffer) set of replicas}
  * for that partition key is not empty). If no local replica can be either found
  * or successfully contacted, the rest of the query plan will fallback
  * to the child policy's one.</li>
  * </ul>
  * The exact order in which local replicas are returned is dictated by the
- * {@link ReplicaOrdering strategy} provided at instantiation.
+ * {@linkplain ReplicaOrdering strategy} provided at instantiation.
  * <p/>
  * Do note that only replicas for which the child policy's
- * {@link LoadBalancingPolicy#distance(Host) distance}
+ * {@linkplain LoadBalancingPolicy#distance(Host) distance}
  * method returns {@link HostDistance#LOCAL LOCAL} will be considered having
  * priority. For example, if you wrap {@link DCAwareRoundRobinPolicy} with this
  * token aware policy, replicas from remote data centers may only be
@@ -154,10 +154,10 @@ public class TokenAwarePolicy implements ChainableLoadBalancingPolicy {
      * {@inheritDoc}
      * <p/>
      * The returned plan will first return local replicas for the query (i.e.
-     * replicas whose {@link HostDistance distance} according to the child policy is {@code LOCAL}),
+     * replicas whose {@linkplain HostDistance distance} according to the child policy is {@code LOCAL}),
      * if it can determine them (i.e. mainly if the statement's
-     * {@link Statement#getRoutingKey(ProtocolVersion, CodecRegistry) routing key}
-     * is not {@code null}), and ordered according to the {@link ReplicaOrdering ordering strategy}
+     * {@linkplain Statement#getRoutingKey(ProtocolVersion, CodecRegistry) routing key}
+     * is not {@code null}), and ordered according to the {@linkplain ReplicaOrdering ordering strategy}
      * specified at instantiation; following what it will return the rest of the child policy's
      * original query plan.
      */
