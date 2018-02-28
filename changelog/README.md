@@ -7,6 +7,7 @@
 - [bug] JAVA-1770: Fix message size when using Custom Payload.
 - [documentation] JAVA-1760: Add metrics documentation.
 - [improvement] JAVA-1765: Update dependencies to latest patch versions.
+- [improvement] JAVA-1752: Deprecate DowngradingConsistencyRetryPolicy.
 
 
 ### 3.4.0
