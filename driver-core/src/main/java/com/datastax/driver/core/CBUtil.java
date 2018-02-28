@@ -113,22 +113,17 @@ abstract class CBUtil { // TODO rename
         }
     }
 
-    public static void writeBytes(byte[] bytes, ByteBuf cb) {
+    public static void writeShortBytes(byte[] bytes, ByteBuf cb) {
         cb.writeShort(bytes.length);
         cb.writeBytes(bytes);
     }
 
-    public static void writeBytes(ByteBuffer bytes, ByteBuf cb) {
-        cb.writeShort(bytes.remaining());
-        cb.writeBytes(bytes.duplicate());
-    }
-
-    public static int sizeOfBytes(byte[] bytes) {
+    public static int sizeOfShortBytes(byte[] bytes) {
         return 2 + bytes.length;
     }
 
     public static int sizeOfBytes(ByteBuffer bytes) {
-        return 2 + bytes.remaining();
+        return 4 + bytes.remaining();
     }
 
     public static Map<String, ByteBuffer> readBytesMap(ByteBuf cb) {

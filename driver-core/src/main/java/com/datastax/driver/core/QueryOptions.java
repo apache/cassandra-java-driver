@@ -17,6 +17,7 @@ package com.datastax.driver.core;
 
 import com.datastax.driver.core.exceptions.UnsupportedFeatureException;
 import com.datastax.driver.core.utils.MoreFutures;
+import com.datastax.driver.core.utils.MoreObjects;
 import com.google.common.util.concurrent.Futures;
 
 /**
@@ -484,4 +485,38 @@ public class QueryOptions {
         return maxPendingRefreshNodeRequests;
     }
 
+    public boolean equals(Object that) {
+        if (that == null || !(that instanceof QueryOptions)) {
+            return false;
+        }
+
+        QueryOptions other = (QueryOptions) that;
+
+        return (this.consistency.equals(other.consistency) &&
+                this.serialConsistency.equals(other.serialConsistency) &&
+                this.fetchSize == other.fetchSize &&
+                this.defaultIdempotence == other.defaultIdempotence &&
+                this.metadataEnabled == other.metadataEnabled &&
+                this.maxPendingRefreshNodeListRequests == other.maxPendingRefreshNodeListRequests &&
+                this.maxPendingRefreshNodeRequests == other.maxPendingRefreshNodeRequests &&
+                this.maxPendingRefreshSchemaRequests == other.maxPendingRefreshSchemaRequests &&
+                this.refreshNodeListIntervalMillis == other.refreshNodeListIntervalMillis &&
+                this.refreshNodeIntervalMillis == other.refreshNodeIntervalMillis &&
+                this.refreshSchemaIntervalMillis == other.refreshSchemaIntervalMillis &&
+                this.reprepareOnUp == other.reprepareOnUp &&
+                this.prepareOnAllHosts == prepareOnAllHosts
+                );
+    }
+
+    public int hashCode() {
+        return MoreObjects.
+            hashCode(consistency, serialConsistency, fetchSize,
+                     defaultIdempotence, metadataEnabled,
+                     maxPendingRefreshNodeListRequests,
+                     maxPendingRefreshNodeRequests,
+                     maxPendingRefreshSchemaRequests,
+                     refreshNodeListIntervalMillis, refreshNodeIntervalMillis,
+                     refreshSchemaIntervalMillis, reprepareOnUp,
+                     prepareOnAllHosts);
+    }
 }
