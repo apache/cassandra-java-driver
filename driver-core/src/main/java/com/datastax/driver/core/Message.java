@@ -342,6 +342,12 @@ abstract class Message {
             }
 
             coder.encode(request, body, protocolVersion);
+            if (body.capacity() != messageSize) {
+                logger.warn("Detected buffer resizing while encoding {} message ({} => {}), " +
+                                "this is a driver bug " +
+                                "(ultimately it does not affect the query, but leads to a small inefficiency)",
+                        request.type, messageSize, body.capacity());
+            }
             out.add(Frame.create(protocolVersion, request.type.opcode, request.getStreamId(), flags, body));
         }
     }
