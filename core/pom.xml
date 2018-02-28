@@ -129,6 +129,17 @@
     </resources>
     <plugins>
       <plugin>
+        <artifactId>maven-jar-plugin</artifactId>
+        <executions>
+          <execution>
+            <id>test-jar</id>
+            <goals>
+              <goal>test-jar</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+      <plugin>
         <artifactId>maven-shade-plugin</artifactId>
         <executions>
           <execution>
@@ -147,6 +158,7 @@
                   <shadedPattern>com.datastax.oss.driver.shaded.guava</shadedPattern>
                 </relocation>
               </relocations>
+              <shadeTestJar>true</shadeTestJar>
             </configuration>
           </execution>
         </executions>

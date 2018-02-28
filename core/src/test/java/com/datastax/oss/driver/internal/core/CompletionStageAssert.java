@@ -18,6 +18,7 @@ package com.datastax.oss.driver.internal.core;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
 
+import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
@@ -66,8 +67,45 @@ public class CompletionStageAssert<V>
     return isFailed(f -> {});
   }
 
+  public CompletionStageAssert<V> isCancelled() {
+    boolean cancelled = false;
+    try {
+      actual.toCompletableFuture().get(2, TimeUnit.SECONDS);
+    } catch (CancellationException e) {
+      cancelled = true;
+    } catch (Exception ignored) {
+    }
+    if (!cancelled) {
+      fail("Expected completion stage to be cancelled");
+    }
+    return this;
+  }
+
+  public CompletionStageAssert<V> isNotCancelled() {
+    boolean cancelled = false;
+    try {
+      actual.toCompletableFuture().get(2, TimeUnit.SECONDS);
+    } catch (CancellationException e) {
+      cancelled = true;
+    } catch (Exception ignored) {
+    }
+    if (cancelled) {
+      fail("Expected completion stage not to be cancelled");
+    }
+    return this;
+  }
+
+  public CompletionStageAssert<V> isDone() {
+    assertThat(actual.toCompletableFuture().isDone())
+        .overridingErrorMessage("Expected completion stage to be done")
+        .isTrue();
+    return this;
+  }
+
   public CompletionStageAssert<V> isNotDone() {
-    assertThat(actual.toCompletableFuture().isDone()).isFalse();
+    assertThat(actual.toCompletableFuture().isDone())
+        .overridingErrorMessage("Expected completion stage not to be done")
+        .isFalse();
     return this;
   }
 }
