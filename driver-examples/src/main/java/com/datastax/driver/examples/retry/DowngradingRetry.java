@@ -207,7 +207,7 @@ public class DowngradingRetry {
 
             if (e instanceof UnavailableException) {
 
-                // With an UnavailableException, we know that nothing has been persisted.
+                // With an UnavailableException, we know that the write wasn't even attempted.
                 // Downgrade to the number of replicas reported alive and retry.
                 int aliveReplicas = ((UnavailableException) e).getAliveReplicas();
 
@@ -429,7 +429,10 @@ public class DowngradingRetry {
     }
 
     /**
-     * If the driver was unable to contact any node, unwraps the {@link NoHostAvailableException}
+     * If the driver was unable to contact any node, it throws an umbrella {@link NoHostAvailableException}
+     * containing a map of the actual errors, keyed by host.
+     * <p>
+     * This method unwraps this exception, inspects the map of errors,
      * and returns the first exploitable {@link DriverException}.
      *
      * @param e the exception to unwrap.
