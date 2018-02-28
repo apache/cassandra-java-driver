@@ -30,14 +30,14 @@ import com.datastax.driver.core.exceptions.QueryConsistencyException;
 import com.datastax.driver.core.exceptions.ReadTimeoutException;
 import com.datastax.driver.core.exceptions.UnavailableException;
 import com.datastax.driver.core.exceptions.WriteTimeoutException;
+import com.datastax.driver.core.policies.DowngradingConsistencyRetryPolicy;
 import java.text.SimpleDateFormat;
 
 import static com.datastax.driver.core.BatchStatement.Type.UNLOGGED;
 import static com.datastax.driver.core.ConsistencyLevel.QUORUM;
 
 /**
- * This example illustrates how to replace the deprecated
- * {@link com.datastax.driver.core.policies.DowngradingConsistencyRetryPolicy DowngradingConsistencyRetryPolicy}
+ * This example illustrates how to replace the deprecated {@link DowngradingConsistencyRetryPolicy}
  * with equivalent application logic.
  * <p/>
  * Preconditions:
