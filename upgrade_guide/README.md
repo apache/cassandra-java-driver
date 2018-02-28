@@ -25,11 +25,11 @@ by reading at ONE sometimes. Users will now have to implement this logic directl
 in their application, or alternatively, implement their own retry policy.
 
 To help users migrate existing applications that rely on 
-`DowngradingConsistencyRetryPolicy`, see this 
-[online example](../driver-examples/src/main/java/com/datastax/driver/examples/retry/DowngradingRetry.java).
+`DowngradingConsistencyRetryPolicy`, see this [online example].
 
 [JAVA-1752]:https://datastax-oss.atlassian.net/browse/JAVA-1752
 [JAVA-1376]:https://datastax-oss.atlassian.net/browse/JAVA-1376
+[online example]:https://github.com/datastax/java-driver/blob/3.x/driver-examples/src/main/java/com/datastax/driver/examples/retry/DowngradingRetry.java
 
 
 ### 3.4.0
