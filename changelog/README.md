@@ -2,6 +2,7 @@
 
 ### 3.5.0 (in progress)
 
+- [improvement] JAVA-1448: TokenAwarePolicy should respect child policy ordering.
 - [improvement] JAVA-1752: Deprecate DowngradingConsistencyRetryPolicy.
 
 
