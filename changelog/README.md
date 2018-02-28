@@ -2,6 +2,7 @@
 
 ### 3.5.0 (In progress)
 
+- [improvement] JAVA-1448: TokenAwarePolicy should respect child policy ordering.
 - [bug] JAVA-1751: Include defaultTimestamp length in encodedSize for protocol version >= 3.
 - [bug] JAVA-1770: Fix message size when using Custom Payload.
 
