@@ -13,9 +13,9 @@ The main motivation is the agreement that `DowngradingConsistencyRetryPolicy`'s
 behavior should be the application's concern, not the driver's. APIs provided by 
 the driver should instead encourage idiomatic use of a distributed system like 
 Apache Cassandra, and a downgrading policy works against this. It suggests that 
-an anti-pattern such as "try to read at ALL, but fall back to QUORUM if that fails" 
+an anti-pattern such as "try to read at QUORUM, but fall back to ONE if that fails" 
 is a good idea in general use cases, when in reality it provides no better consistency
-guarantees than working directly at QUORUM, but with higher latencies. 
+guarantees than working directly at ONE, but with higher latencies. 
 
 Instead, users should choose upfront the consistency level that works best for 
 their use cases. We recognize that there are use cases where downgrading is 
