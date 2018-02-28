@@ -15,7 +15,7 @@
  */
 package com.datastax.oss.driver.internal.core.metadata;
 
-import com.datastax.oss.driver.api.core.CassandraVersion;
+import com.datastax.oss.driver.api.core.Version;
 import com.datastax.oss.driver.api.core.loadbalancing.NodeDistance;
 import com.datastax.oss.driver.api.core.metadata.Node;
 import com.datastax.oss.driver.api.core.metadata.NodeState;
@@ -42,7 +42,7 @@ public class DefaultNode implements Node {
   volatile Optional<InetAddress> listenAddress;
   volatile String datacenter;
   volatile String rack;
-  volatile CassandraVersion cassandraVersion;
+  volatile Version version;
   // Keep a copy of the raw tokens, to detect if they have changed when we refresh the node
   volatile Set<String> rawTokens;
   volatile Map<String, Object> extras;
@@ -93,8 +93,8 @@ public class DefaultNode implements Node {
   }
 
   @Override
-  public CassandraVersion getCassandraVersion() {
-    return cassandraVersion;
+  public Version getCassandraVersion() {
+    return version;
   }
 
   @Override

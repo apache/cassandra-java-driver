@@ -15,7 +15,7 @@
  */
 package com.datastax.oss.driver.internal.core.metadata;
 
-import com.datastax.oss.driver.api.core.CassandraVersion;
+import com.datastax.oss.driver.api.core.Version;
 import com.datastax.oss.driver.internal.core.metadata.token.TokenFactory;
 import com.google.common.collect.ImmutableMap;
 import java.util.Collections;
@@ -40,7 +40,7 @@ abstract class NodesRefresh implements MetadataRefresh {
     node.schemaVersion = nodeInfo.getSchemaVersion();
     String versionString = nodeInfo.getCassandraVersion();
     try {
-      node.cassandraVersion = CassandraVersion.parse(versionString);
+      node.version = Version.parse(versionString);
     } catch (IllegalArgumentException e) {
       LOG.warn(
           "[{}] Error converting Cassandra version '{}' for {}",

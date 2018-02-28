@@ -20,47 +20,46 @@ import static com.datastax.oss.driver.Assertions.assertThat;
 import org.assertj.core.api.AbstractComparableAssert;
 import org.assertj.core.api.Assertions;
 
-public class CassandraVersionAssert
-    extends AbstractComparableAssert<CassandraVersionAssert, CassandraVersion> {
+public class VersionAssert extends AbstractComparableAssert<VersionAssert, Version> {
 
-  public CassandraVersionAssert(CassandraVersion actual) {
-    super(actual, CassandraVersionAssert.class);
+  public VersionAssert(Version actual) {
+    super(actual, VersionAssert.class);
   }
 
-  public CassandraVersionAssert hasMajorMinorPatch(int major, int minor, int patch) {
+  public VersionAssert hasMajorMinorPatch(int major, int minor, int patch) {
     Assertions.assertThat(actual.getMajor()).isEqualTo(major);
     Assertions.assertThat(actual.getMinor()).isEqualTo(minor);
     Assertions.assertThat(actual.getPatch()).isEqualTo(patch);
     return this;
   }
 
-  public CassandraVersionAssert hasDsePatch(int dsePatch) {
+  public VersionAssert hasDsePatch(int dsePatch) {
     Assertions.assertThat(actual.getDSEPatch()).isEqualTo(dsePatch);
     return this;
   }
 
-  public CassandraVersionAssert hasPreReleaseLabels(String... labels) {
+  public VersionAssert hasPreReleaseLabels(String... labels) {
     Assertions.assertThat(actual.getPreReleaseLabels()).containsExactly(labels);
     return this;
   }
 
-  public CassandraVersionAssert hasNoPreReleaseLabels() {
+  public VersionAssert hasNoPreReleaseLabels() {
     Assertions.assertThat(actual.getPreReleaseLabels()).isNull();
     return this;
   }
 
-  public CassandraVersionAssert hasBuildLabel(String label) {
+  public VersionAssert hasBuildLabel(String label) {
     Assertions.assertThat(actual.getBuildLabel()).isEqualTo(label);
     return this;
   }
 
-  public CassandraVersionAssert hasNextStable(String version) {
-    assertThat(actual.nextStable()).isEqualTo(CassandraVersion.parse(version));
+  public VersionAssert hasNextStable(String version) {
+    assertThat(actual.nextStable()).isEqualTo(Version.parse(version));
     return this;
   }
 
   @Override
-  public CassandraVersionAssert hasToString(String string) {
+  public VersionAssert hasToString(String string) {
     Assertions.assertThat(actual.toString()).isEqualTo(string);
     return this;
   }

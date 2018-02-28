@@ -46,7 +46,7 @@ import java.util.function.Supplier;
  * <p>You only need to deal with this directly if you use custom driver extensions. For the default
  * session implementation, see {@link CqlSession#builder()}.
  */
-public abstract class SessionBuilder<SelfT extends SessionBuilder, SessionT> {
+public abstract class SessionBuilder<SelfT extends SessionBuilder<SelfT, SessionT>, SessionT> {
 
   @SuppressWarnings("unchecked")
   protected final SelfT self = (SelfT) this;
@@ -152,7 +152,7 @@ public abstract class SessionBuilder<SelfT extends SessionBuilder, SessionT> {
    * @return a completion stage that completes with the session when it is fully initialized.
    */
   public CompletionStage<SessionT> buildAsync() {
-    return buildDefaultSessionAsync().thenApply(this::wrap);
+    return buildAndInitDefaultSessionAsync().thenApply(this::wrap);
   }
 
   /**
@@ -167,7 +167,7 @@ public abstract class SessionBuilder<SelfT extends SessionBuilder, SessionT> {
 
   protected abstract SessionT wrap(CqlSession defaultSession);
 
-  protected final CompletionStage<CqlSession> buildDefaultSessionAsync() {
+  protected final CompletionStage<CqlSession> buildAndInitDefaultSessionAsync() {
     DriverConfigLoader configLoader = buildIfNull(this.configLoader, this::defaultConfigLoader);
 
     DriverConfigProfile defaultConfig = configLoader.getInitialConfig().getDefaultProfile();
@@ -184,11 +184,10 @@ public abstract class SessionBuilder<SelfT extends SessionBuilder, SessionT> {
           CqlIdentifier.fromCql(defaultConfig.getString(DefaultDriverOption.SESSION_KEYSPACE));
     }
 
-    return DefaultSession.init(
-        (InternalDriverContext) buildContext(configLoader, typeCodecs),
-        contactPoints,
-        keyspace,
-        nodeStateListeners);
+    InternalDriverContext context = (InternalDriverContext) buildContext(configLoader, typeCodecs);
+    DefaultSession session =
+        (DefaultSession) buildDefaultSession(context, contactPoints, nodeStateListeners);
+    return session.init(keyspace);
   }
 
   /**
@@ -198,6 +197,17 @@ public abstract class SessionBuilder<SelfT extends SessionBuilder, SessionT> {
   protected DriverContext buildContext(
       DriverConfigLoader configLoader, List<TypeCodec<?>> typeCodecs) {
     return new DefaultDriverContext(configLoader, typeCodecs);
+  }
+
+  /**
+   * This <b>must</b> return an instance of {@code DefaultSession} (it's not expressed directly in
+   * the signature to avoid leaking that type through the protected API).
+   */
+  protected Session buildDefaultSession(
+      DriverContext context,
+      Set<InetSocketAddress> contactPoints,
+      Set<NodeStateListener> nodeStateListeners) {
+    return new DefaultSession((InternalDriverContext) context, contactPoints, nodeStateListeners);
   }
 
   private static <T> T buildIfNull(T value, Supplier<T> builder) {

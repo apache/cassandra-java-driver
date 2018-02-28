@@ -19,8 +19,10 @@ import com.codahale.metrics.MetricRegistry;
 import com.datastax.oss.driver.api.core.AsyncAutoCloseable;
 import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.CqlSession;
+import com.datastax.oss.driver.api.core.DriverInfo;
 import com.datastax.oss.driver.api.core.ProtocolVersion;
 import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
+import com.datastax.oss.driver.api.core.config.DriverConfigProfile;
 import com.datastax.oss.driver.api.core.context.DriverContext;
 import com.datastax.oss.driver.api.core.loadbalancing.LoadBalancingPolicy;
 import com.datastax.oss.driver.api.core.metadata.Metadata;
@@ -37,6 +39,7 @@ import com.datastax.oss.driver.internal.core.metadata.MetadataManager;
 import com.datastax.oss.driver.internal.core.metadata.NodeStateEvent;
 import com.datastax.oss.driver.internal.core.metadata.NodeStateManager;
 import com.datastax.oss.driver.internal.core.metrics.SessionMetricUpdater;
+import com.datastax.oss.driver.internal.core.os.Native;
 import com.datastax.oss.driver.internal.core.pool.ChannelPool;
 import com.datastax.oss.driver.internal.core.util.Loggers;
 import com.datastax.oss.driver.internal.core.util.concurrent.CompletableFutures;
@@ -45,6 +48,7 @@ import com.google.common.collect.ImmutableList;
 import io.netty.util.concurrent.EventExecutor;
 import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -53,6 +57,7 @@ import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.TimeUnit;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -74,14 +79,8 @@ import org.slf4j.LoggerFactory;
 public class DefaultSession implements CqlSession {
 
   private static final Logger LOG = LoggerFactory.getLogger(DefaultSession.class);
-
-  public static CompletionStage<CqlSession> init(
-      InternalDriverContext context,
-      Set<InetSocketAddress> contactPoints,
-      CqlIdentifier keyspace,
-      Set<NodeStateListener> nodeStateListeners) {
-    return new DefaultSession(context, contactPoints, nodeStateListeners).init(keyspace);
-  }
+  private static final Logger STARTUP_LOG =
+      LoggerFactory.getLogger("com.datastax.oss.driver.api.core.Startup");
 
   private final InternalDriverContext context;
   private final EventExecutor adminExecutor;
@@ -92,7 +91,7 @@ public class DefaultSession implements CqlSession {
   private final PoolManager poolManager;
   private final SessionMetricUpdater metricUpdater;
 
-  private DefaultSession(
+  public DefaultSession(
       InternalDriverContext context,
       Set<InetSocketAddress> contactPoints,
       Set<NodeStateListener> nodeStateListeners) {
@@ -107,9 +106,48 @@ public class DefaultSession implements CqlSession {
     this.metricUpdater = context.metricUpdaterFactory().newSessionUpdater();
   }
 
-  private CompletionStage<CqlSession> init(CqlIdentifier keyspace) {
+  public CompletionStage<CqlSession> init(CqlIdentifier keyspace) {
+    DriverConfigProfile defaultConfig = context.config().getDefaultProfile();
+    if (defaultConfig.isDefined(DefaultDriverOption.STARTUP_CUSTOM_BANNER)) {
+      printCustomBanner(defaultConfig.getString(DefaultDriverOption.STARTUP_CUSTOM_BANNER));
+    }
+    if (defaultConfig.getBoolean(DefaultDriverOption.STARTUP_PRINT_BASIC_INFO)) {
+      printBasicStartupInfo();
+    }
     RunOrSchedule.on(adminExecutor, () -> singleThreaded.init(keyspace));
     return singleThreaded.initFuture;
+  }
+
+  protected void printCustomBanner(String banner) {
+    STARTUP_LOG.info(banner);
+  }
+
+  protected void printBasicStartupInfo() {
+    try {
+      DriverInfo driverInfo = getDriverInfo();
+      int processId = -1;
+      if (Native.isGetProcessIdAvailable()) {
+        processId = Native.getProcessId();
+      }
+      long start = System.nanoTime();
+      STARTUP_LOG.info("[{}] {} initializing (PID: {})", logPrefix, driverInfo, processId);
+      singleThreaded.initFuture.thenRun(
+          () -> {
+            Duration elapsed =
+                Duration.ofMillis(TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - start));
+            String elapsedStr =
+                elapsed.toString().substring(2).replaceAll("(\\d[HMS])(?!$)", "$1 ").toLowerCase();
+            int size = getPools().size();
+            STARTUP_LOG.info(
+                "[{}] Session successfully initialized in {}, connected to {} node{}",
+                logPrefix,
+                elapsedStr,
+                size,
+                size > 1 ? "s" : "");
+          });
+    } catch (Exception e) {
+      STARTUP_LOG.warn("Cannot display driver info", e);
+    }
   }
 
   @Override

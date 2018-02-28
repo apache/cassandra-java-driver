@@ -31,6 +31,9 @@ public enum DefaultDriverOption implements DriverOption {
   SESSION_KEYSPACE("session-keyspace", false),
   CONFIG_RELOAD_INTERVAL("config-reload-interval", false),
 
+  STARTUP_PRINT_BASIC_INFO("startup.print-basic-info", true),
+  STARTUP_CUSTOM_BANNER("startup.custom-banner", false),
+
   CONNECTION_INIT_QUERY_TIMEOUT("connection.init-query-timeout", true),
   CONNECTION_SET_KEYSPACE_TIMEOUT("connection.set-keyspace-timeout", true),
   CONNECTION_MAX_REQUESTS("connection.max-requests-per-connection", true),

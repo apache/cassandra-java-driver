@@ -23,24 +23,41 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
- * The version of a Cassandra release.
+ * A structured version number.
  *
- * <p>It is in the form X.Y.Z, with optional pre-release labels and build metadata.
+ * <p>Versions are expected to follow the general guidelines of<a
+ * href="https://semver.org/">semantic versioning</a>, but with a few relaxed rules.
+ *
+ * <p>The general form a version number is expected to be {@code X.Y[.Z]}, where X stands for the
+ * version's major number, Y for the minor number, and Z for an (optional) patch number.
+ *
+ * <p>It can also contain a few optional extensions: a 4th "DSE patch" number (specific to DSE
+ * releases); one or many pre-release labels; and one optional build label. See {@link
+ * #parse(String)} for a few examples.
+ *
+ * <p>This class can be used to parse versions of Apache Cassandra®, DataStax Enterprise (DSE), or
+ * the DataStax Java driver.
  *
  * <p>Version numbers compare the usual way, the major number (X) is compared first, then the minor
  * one (Y) and then the patch level one (Z). Lastly, versions with pre-release sorts before the
  * versions that don't have one, and labels are sorted alphabetically if necessary. Build metadata
- * are ignored for sorting versions.
+ * are ignored when sorting versions.
  */
-public class CassandraVersion implements Comparable<CassandraVersion> {
+public class Version implements Comparable<Version> {
 
   private static final String VERSION_REGEXP =
-      "(\\d+)\\.(\\d+)(\\.\\d+)?(\\.\\d+)?([~\\-]\\w[.\\w]*(?:\\-\\w[.\\w]*)*)?(\\+[.\\w]+)?";
+      "(\\d+)\\.(\\d+)(\\.\\d+)?(\\.\\d+)?([~\\-]\\w[.\\w]*(?:-\\w[.\\w]*)*)?(\\+[.\\w]+)?";
+
   private static final Pattern pattern = Pattern.compile(VERSION_REGEXP);
 
-  public static final CassandraVersion V2_1_0 = parse("2.1.0");
-  public static final CassandraVersion V2_2_0 = parse("2.2.0");
-  public static final CassandraVersion V3_0_0 = parse("3.0.0");
+  /** Apache Cassandra's version 2.1.0. */
+  public static final Version CASSANDRA_2_1_0 = parse("2.1.0");
+
+  /** Apache Cassandra's version 2.2.0. */
+  public static final Version CASSANDRA_2_2_0 = parse("2.2.0");
+
+  /** Apache Cassandra's version 3.0.0. */
+  public static final Version CASSANDRA_3_0_0 = parse("3.0.0");
 
   private final int major;
   private final int minor;
@@ -50,7 +67,7 @@ public class CassandraVersion implements Comparable<CassandraVersion> {
   private final String[] preReleases;
   private final String build;
 
-  private CassandraVersion(
+  private Version(
       int major, int minor, int patch, int dsePatch, String[] preReleases, String build) {
     this.major = major;
     this.minor = minor;
@@ -63,16 +80,25 @@ public class CassandraVersion implements Comparable<CassandraVersion> {
   /**
    * Parses a version from a string.
    *
-   * <p>The version string should have primarily the form X.Y.Z to which can be appended one or more
-   * pre-release label after dashes (2.0.1-beta1, 2.1.4-rc1-SNAPSHOT) and an optional build label
-   * (2.1.0-beta1+a20ba.sha). Out of convenience, the "patch" version number, Z, can be omitted, in
-   * which case it is assumed to be 0.
+   * <p>The version string should have primarily the form {@code X.Y.Z}.
+   *
+   * <p>Out of convenience, the "patch" version number, {@code Z}, can be omitted, in which case it
+   * is assumed to be 0.
+   *
+   * <p>After these first 3 elements, the following optional elements can be appended:
+   *
+   * <ol>
+   *   <li>A 4th "DSE patch" number : {@code 5.0.2.7};
+   *   <li>One or more pre-release labels after dashes or tildes: {@code 2.0.1-beta1}, {@code
+   *       2.1.4~rc1-SNAPSHOT};
+   *   <li>One build label starting with the plus sign: {@code 2.1.0-beta1+a20ba.sha}.
+   * </ol>
    *
    * @param version the string to parse.
-   * @return the parsed version number.
+   * @return the parsed version.
    * @throws IllegalArgumentException if the provided string does not represent a valid version.
    */
-  public static CassandraVersion parse(String version) {
+  public static Version parse(String version) {
     if (version == null) {
       return null;
     }
@@ -105,12 +131,12 @@ public class CassandraVersion implements Comparable<CassandraVersion> {
           pr == null || pr.isEmpty()
               ? null
               : pr.substring(1)
-                  .split("\\-"); // drop initial '-' or '~' then split on the remaining ones
+                  .split("-"); // drop initial '-' or '~' then split on the remaining ones
 
       String bl = matcher.group(6);
       String build = bl == null || bl.isEmpty() ? null : bl.substring(1); // drop the initial '+'
 
-      return new CassandraVersion(major, minor, patch, dsePatch, preReleases, build);
+      return new Version(major, minor, patch, dsePatch, preReleases, build);
     } catch (NumberFormatException e) {
       throw new IllegalArgumentException("Invalid version number: " + version);
     }
@@ -119,7 +145,7 @@ public class CassandraVersion implements Comparable<CassandraVersion> {
   /**
    * The major version number.
    *
-   * @return the major version number, i.e. X in X.Y.Z.
+   * @return the major version number, i.e. {@code X} in {@code X.Y.Z}.
    */
   public int getMajor() {
     return major;
@@ -128,7 +154,7 @@ public class CassandraVersion implements Comparable<CassandraVersion> {
   /**
    * The minor version number.
    *
-   * @return the minor version number, i.e. Y in X.Y.Z.
+   * @return the minor version number, i.e. {@code Y} in {@code X.Y.Z}.
    */
   public int getMinor() {
     return minor;
@@ -137,7 +163,7 @@ public class CassandraVersion implements Comparable<CassandraVersion> {
   /**
    * The patch version number.
    *
-   * @return the patch version number, i.e. Z in X.Y.Z.
+   * @return the patch version number, i.e. {@code Z} in {@code X.Y.Z}.
    */
   public int getPatch() {
     return patch;
@@ -146,29 +172,30 @@ public class CassandraVersion implements Comparable<CassandraVersion> {
   /**
    * The DSE patch version number (will only be present for version of Cassandra in DSE).
    *
-   * <p>DataStax Entreprise (DSE) adds a fourth number to the version number to track potential hot
+   * <p>DataStax Enterprise (DSE) adds a fourth number to the version number to track potential hot
    * fixes and/or DSE specific patches that may have been applied to the Cassandra version. In that
    * case, this method returns that fourth number.
    *
-   * @return the DSE patch version number, i.e. D in X.Y.Z.D, or -1 if the version number is not
-   *     from DSE.
+   * @return the DSE patch version number, i.e. {@code D} in {@code X.Y.Z.D}, or -1 if the version
+   *     number is not from DSE.
    */
   public int getDSEPatch() {
     return dsePatch;
   }
 
   /**
-   * The pre-release labels if relevant, i.e. label1 and label2 in X.Y.Z-label1-lable2.
+   * The pre-release labels if relevant, i.e. {@code label1} and {@code label2} in {@code
+   * X.Y.Z-label1-label2}.
    *
-   * @return the pre-release labels. The return list will be {@code null} if the version number
-   *     doesn't have any.
+   * @return the pre-release labels. The returned list will be {@code null} if the version doesn't
+   *     have any.
    */
   public List<String> getPreReleaseLabels() {
     return preReleases == null ? null : Collections.unmodifiableList(Arrays.asList(preReleases));
   }
 
   /**
-   * The build label if there is one.
+   * The build label if there is one, i.e. {@code build123} in {@code X.Y.Z+build123}.
    *
    * @return the build label or {@code null} if the version number doesn't have one.
    */
@@ -181,17 +208,17 @@ public class CassandraVersion implements Comparable<CassandraVersion> {
    * metadata.
    *
    * <p>This is mostly used during our development stage, where we test the driver against
-   * pre-release versions of Cassandra like 2.1.0-rc7-SNAPSHOT, but need to compare to the stable
-   * version 2.1.0 when testing for native protocol compatibility, etc.
+   * pre-release versions of Cassandra like {@code 2.1.0-rc7-SNAPSHOT}, but need to compare to the
+   * stable version {@code 2.1.0} when testing for native protocol compatibility, etc.
    *
    * @return the next stable version.
    */
-  public CassandraVersion nextStable() {
-    return new CassandraVersion(major, minor, patch, dsePatch, null, null);
+  public Version nextStable() {
+    return new Version(major, minor, patch, dsePatch, null, null);
   }
 
   @Override
-  public int compareTo(CassandraVersion other) {
+  public int compareTo(Version other) {
     if (major < other.major) {
       return -1;
     }
@@ -245,17 +272,15 @@ public class CassandraVersion implements Comparable<CassandraVersion> {
       }
     }
 
-    return preReleases.length == other.preReleases.length
-        ? 0
-        : (preReleases.length < other.preReleases.length ? -1 : 1);
+    return Integer.compare(preReleases.length, other.preReleases.length);
   }
 
   @Override
   public boolean equals(Object other) {
     if (other == this) {
       return true;
-    } else if (other instanceof CassandraVersion) {
-      CassandraVersion that = (CassandraVersion) other;
+    } else if (other instanceof Version) {
+      Version that = (Version) other;
       return this.major == that.major
           && this.minor == that.minor
           && this.patch == that.patch

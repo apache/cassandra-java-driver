@@ -16,8 +16,8 @@
 package com.datastax.oss.driver.api.core.auth;
 
 import com.datastax.oss.driver.api.core.AllNodesFailedException;
-import com.datastax.oss.driver.api.core.CassandraVersion;
 import com.datastax.oss.driver.api.core.CqlSession;
+import com.datastax.oss.driver.api.core.Version;
 import com.datastax.oss.driver.api.testinfra.ccm.CustomCcmRule;
 import com.datastax.oss.driver.api.testinfra.session.SessionUtils;
 import com.google.common.util.concurrent.Uninterruptibles;
@@ -37,7 +37,7 @@ public class PlainTextAuthProviderIT {
 
   @BeforeClass
   public static void sleepForAuth() {
-    if (ccm.getCassandraVersion().compareTo(CassandraVersion.V2_2_0) < 0) {
+    if (ccm.getCassandraVersion().compareTo(Version.CASSANDRA_2_2_0) < 0) {
       // Sleep for 1 second to allow C* auth to do its work.  This is only needed for 2.1
       Uninterruptibles.sleepUninterruptibly(1, TimeUnit.SECONDS);
     }

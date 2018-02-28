@@ -20,6 +20,7 @@ import com.datastax.oss.driver.api.core.AsyncAutoCloseable;
 import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.CqlSession;
 import com.datastax.oss.driver.api.core.CqlSessionBuilder;
+import com.datastax.oss.driver.api.core.DriverInfo;
 import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
 import com.datastax.oss.driver.api.core.context.DriverContext;
 import com.datastax.oss.driver.api.core.metadata.Metadata;
@@ -28,9 +29,9 @@ import com.datastax.oss.driver.api.core.metadata.NodeState;
 import com.datastax.oss.driver.api.core.metadata.NodeStateListener;
 import com.datastax.oss.driver.api.core.metadata.schema.SchemaChangeListener;
 import com.datastax.oss.driver.api.core.type.reflect.GenericType;
+import com.datastax.oss.driver.internal.core.DefaultDriverInfo;
 import com.datastax.oss.driver.internal.core.util.concurrent.BlockingOperation;
 import com.datastax.oss.driver.internal.core.util.concurrent.CompletableFutures;
-import java.util.ResourceBundle;
 import java.util.concurrent.CompletionStage;
 
 /**
@@ -51,15 +52,14 @@ import java.util.concurrent.CompletionStage;
 public interface Session extends AsyncAutoCloseable {
 
   /**
-   * The current version of the core driver (in other words, the version of the {@code
-   * com.datastax.oss:java-driver-core} artifact).
+   * Returns information about the driver, such as its current version number.
    *
    * <p>This is intended for products that wrap or extend the driver, as a way to check
    * compatibility if end-users override the driver version in their application.
    */
-  static String getCoreDriverVersion() {
-    // Note: getBundle caches its result
-    return ResourceBundle.getBundle("com.datastax.oss.driver.Driver").getString("driver.version");
+  default DriverInfo getDriverInfo() {
+    return DefaultDriverInfo.buildFromResource(
+        getClass().getResource("/com/datastax/oss/driver/Driver.properties"));
   }
 
   /**

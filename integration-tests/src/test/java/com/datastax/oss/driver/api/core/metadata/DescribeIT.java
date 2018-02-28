@@ -18,9 +18,9 @@ package com.datastax.oss.driver.api.core.metadata;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
 
-import com.datastax.oss.driver.api.core.CassandraVersion;
 import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.CqlSession;
+import com.datastax.oss.driver.api.core.Version;
 import com.datastax.oss.driver.api.core.metadata.schema.KeyspaceMetadata;
 import com.datastax.oss.driver.api.testinfra.ccm.CcmRule;
 import com.datastax.oss.driver.api.testinfra.session.SessionRule;
@@ -119,7 +119,7 @@ public class DescribeIT {
             keyspaceAsCql));
 
     // date type requries 2.2+
-    if (ccmRule.getCassandraVersion().compareTo(CassandraVersion.V2_2_0) >= 0) {
+    if (ccmRule.getCassandraVersion().compareTo(Version.CASSANDRA_2_2_0) >= 0) {
       // A table that will have materialized views (copied from mv docs)
       session.execute(
           "CREATE TABLE cyclist_mv(cid uuid, name text, age int, birthday date, country text, "
@@ -129,7 +129,7 @@ public class DescribeIT {
       session.execute("CREATE INDEX cyclist_by_country ON cyclist_mv(country)");
 
       // materialized views require 3.0+
-      if (ccmRule.getCassandraVersion().compareTo(CassandraVersion.V3_0_0) >= 0) {
+      if (ccmRule.getCassandraVersion().compareTo(Version.CASSANDRA_3_0_0) >= 0) {
         // A materialized view for cyclist_mv, reverse clustering.  created first to ensure creation
         // order does not matter, alphabetical does.
         session.execute(
@@ -168,7 +168,7 @@ public class DescribeIT {
     session.execute("CREATE INDEX rrank ON rank_by_year_and_name(rank)");
 
     // udfs and udas require 2.22+
-    if (ccmRule.getCassandraVersion().compareTo(CassandraVersion.V2_2_0) >= 0) {
+    if (ccmRule.getCassandraVersion().compareTo(Version.CASSANDRA_2_2_0) >= 0) {
       // UDFs
       session.execute(
           "CREATE OR REPLACE FUNCTION avgState ( state tuple<int,bigint>, val int ) CALLED ON NULL INPUT RETURNS tuple<int,bigint> LANGUAGE java AS \n"
@@ -215,7 +215,7 @@ public class DescribeIT {
       InputStream is = DescribeIT.class.getResourceAsStream(resourceName);
       if (is == null) {
         // If no schema file is defined for tested cassandra version, just try 3.11.
-        if (ccmRule.getCassandraVersion().compareTo(CassandraVersion.V3_0_0) >= 0) {
+        if (ccmRule.getCassandraVersion().compareTo(Version.CASSANDRA_3_0_0) >= 0) {
           logger.warn("Could not find schema file for {}, assuming C* 3.11.x", majorMinor);
           is = DescribeIT.class.getResourceAsStream("/describe_it_test_3.11.cql");
           if (is == null) {
