@@ -32,6 +32,7 @@ import static org.scassandra.http.client.Result.*;
 import static org.scassandra.http.client.WriteTypePrime.UNLOGGED_BATCH;
 import static org.testng.Assert.fail;
 
+@SuppressWarnings("deprecation")
 public class DowngradingConsistencyRetryPolicyIntegrationTest extends AbstractRetryPolicyIntegrationTest {
 
     public DowngradingConsistencyRetryPolicyIntegrationTest() {
