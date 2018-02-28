@@ -3,6 +3,20 @@
 The purpose of this guide is to detail changes made by successive
 versions of the Java driver.
 
+### 3.5.0
+
+The `TokenAwarePolicy` now has a new constructor that takes a `ReplicaOrdering` 
+argument. One of the advantages of this feature is the new `NEUTRAL` ordering
+strategy, which honors its child policy's ordering, i.e., replicas
+are returned in the same relative order as in the child policy's query plan.
+As an example, if the child policy returns the plan [A, B, C, D], and the replicas 
+for the query being routed are [D, A, B], then the token aware policy would return 
+the plan [A, B, D, C].
+
+As a consequence, the constructor taking a boolean parameter `shuffleReplicas` 
+is now deprecated and will be removed in the next major release.
+
+
 ### 3.4.0
 
 `QueryBuilder` methods `in`, `lt`, `lte`, `eq`, `gt`, and `gte` now accept
