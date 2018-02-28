@@ -76,7 +76,7 @@ public class BundleOptions {
             public Option[] getOptions() {
                 return options(
                         systemProperty("cassandra.compression").value(ProtocolOptions.Compression.LZ4.name()),
-                        mavenBundle("net.jpountz.lz4", "lz4", getVersion("lz4.version"))
+                        mavenBundle("org.lz4", "lz4-java", getVersion("lz4.version"))
                 );
             }
         };
