@@ -47,31 +47,33 @@ public interface ResponseCallback {
   void onFailure(Throwable error);
 
   /**
-   * Whether to hold the stream id beyond the first response.
+   * Reports the stream id used for the request on the current connection.
    *
-   * <p>By default, this is false, and the channel will release the stream id (and make it available
-   * for other requests) as soon as {@link #onResponse(Frame)} or {@link #onFailure(Throwable)} gets
-   * invoked.
+   * <p>This is called every time the request is written successfully to a connection (and therefore
+   * might multiple times in case of retries). It is guaranteed to be invoked before any response to
+   * the request on that connection is processed.
    *
-   * <p>If this is true, the channel will keep the stream id assigned to this request, and {@code
-   * onResponse} might be invoked multiple times. {@link #onStreamIdAssigned(int)} will be called to
-   * notify the caller of the stream id, and it is the caller's responsibility to determine when the
-   * request is over, and then call {@link DriverChannel#release(int)} to release the stream id.
+   * <p>The default implementation does nothing. This only needs to be overridden for specialized
+   * requests that hold the stream id across multiple responses.
    *
-   * <p>This is intended to allow streaming requests, that would send multiple chunks of data in
-   * response to a single request (this feature does not exist yet in Cassandra but might be
-   * implemented in the future).
+   * @see #isLastResponse(Frame)
    */
-  default boolean holdStreamId() {
-    return false;
+  default void onStreamIdAssigned(int streamId) {
+    // nothing to do
   }
 
   /**
-   * Reports the stream id to the caller if {@link #holdStreamId()} is true.
+   * Whether the given frame is the last response to this request.
    *
-   * <p>By default, this will never get called.
+   * <p>This is invoked for each response received by this callback; if it returns {@code true}, the
+   * driver assumes that the server is no longer using this stream id, and that it can be safely
+   * reused to send another request.
+   *
+   * <p>The default implementation always returns {@code true}: regular CQL requests only have one
+   * response, and we can reuse the stream id as soon as we've received it. This only needs to be
+   * overridden for specialized requests that hold the stream id across multiple responses.
    */
-  default void onStreamIdAssigned(int streamId) {
-    // nothing to do by default
+  default boolean isLastResponse(Frame responseFrame) {
+    return true;
   }
 }

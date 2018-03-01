@@ -26,6 +26,7 @@ import com.datastax.oss.driver.internal.core.protocol.FrameDecodingException;
 import com.datastax.oss.protocol.internal.Frame;
 import com.datastax.oss.protocol.internal.ProtocolConstants;
 import com.datastax.oss.protocol.internal.request.Query;
+import com.datastax.oss.protocol.internal.response.Error;
 import com.datastax.oss.protocol.internal.response.event.StatusChangeEvent;
 import com.datastax.oss.protocol.internal.response.result.SetKeyspace;
 import com.datastax.oss.protocol.internal.response.result.Void;
@@ -131,6 +132,28 @@ public class InFlightHandlerTest extends ChannelHandlerTestBase {
     // Then
     assertThat(responseCallback.getFailure()).isSameAs(mockCause);
     Mockito.verify(streamIds).release(42);
+  }
+
+  @Test
+  public void should_release_stream_id_when_orphaned_callback_receives_response() {
+    // Given
+    addToPipeline();
+    Mockito.when(streamIds.acquire()).thenReturn(42);
+    MockResponseCallback responseCallback = new MockResponseCallback();
+    channel.writeAndFlush(
+        new DriverChannel.RequestMessage(QUERY, false, Frame.NO_PAYLOAD, responseCallback));
+    Frame requestFrame = readOutboundFrame();
+
+    // When
+    channel.writeAndFlush(responseCallback); // means cancellation (see DriverChannel#cancel)
+    Frame responseFrame = buildInboundFrame(requestFrame, Void.INSTANCE);
+    writeInboundFrame(responseFrame);
+
+    // Then
+    Mockito.verify(streamIds).release(42);
+    // The response is not propagated, because we assume a callback that cancelled managed its own
+    // termination
+    assertThat(responseCallback.getLastResponse()).isNull();
   }
 
   @Test
@@ -398,11 +421,12 @@ public class InFlightHandlerTest extends ChannelHandlerTestBase {
   }
 
   @Test
-  public void should_hold_stream_id_if_required() {
+  public void should_hold_stream_id_for_multi_response_callback() {
     // Given
     addToPipeline();
     Mockito.when(streamIds.acquire()).thenReturn(42);
-    MockResponseCallback responseCallback = new MockResponseCallback(true);
+    MockResponseCallback responseCallback =
+        new MockResponseCallback(frame -> frame.message instanceof Error);
 
     // When
     channel
@@ -428,14 +452,65 @@ public class InFlightHandlerTest extends ChannelHandlerTestBase {
     }
 
     // When
-    // the client releases the stream id
-    channel.pipeline().fireUserEventTriggered(new DriverChannel.ReleaseEvent(42));
+    // a terminal response comes in
+    Frame responseFrame = buildInboundFrame(requestFrame, new Error(0, "test"));
+    writeInboundFrame(responseFrame);
 
     // Then
     Mockito.verify(streamIds).release(42);
+    assertThat(responseCallback.getLastResponse()).isSameAs(responseFrame);
+
+    // When
+    // more responses come in
     writeInboundFrame(requestFrame, Void.INSTANCE);
-    // if more responses use this stream id, the handler does not get them anymore
+
+    // Then
+    // the callback does not get them anymore (this could only be responses to a new request that
+    // reused the id)
     assertThat(responseCallback.getLastResponse()).isNull();
+  }
+
+  @Test
+  public void
+      should_release_stream_id_when_orphaned_multi_response_callback_receives_last_response() {
+    // Given
+    addToPipeline();
+    Mockito.when(streamIds.acquire()).thenReturn(42);
+    MockResponseCallback responseCallback =
+        new MockResponseCallback(frame -> frame.message instanceof Error);
+
+    channel
+        .writeAndFlush(
+            new DriverChannel.RequestMessage(QUERY, false, Frame.NO_PAYLOAD, responseCallback))
+        .awaitUninterruptibly();
+
+    Frame requestFrame = readOutboundFrame();
+    for (int i = 0; i < 5; i++) {
+      Frame responseFrame = buildInboundFrame(requestFrame, Void.INSTANCE);
+      writeInboundFrame(responseFrame);
+      assertThat(responseCallback.getLastResponse()).isSameAs(responseFrame);
+      Mockito.verify(streamIds, never()).release(42);
+    }
+
+    // When
+    // cancelled mid-flight
+    channel.writeAndFlush(responseCallback);
+
+    // Then
+    // subsequent non-final responses are not propagated (we assume the callback completed itself
+    // already), but do not release the stream id
+    writeInboundFrame(requestFrame, Void.INSTANCE);
+    assertThat(responseCallback.getLastResponse()).isNull();
+    Mockito.verify(streamIds, never()).release(42);
+
+    // When
+    // the terminal response arrives
+    writeInboundFrame(requestFrame, new Error(0, "test"));
+
+    // Then
+    // still not propagated but the id is released
+    assertThat(responseCallback.getLastResponse()).isNull();
+    Mockito.verify(streamIds).release(42);
   }
 
   @Test

@@ -88,16 +88,6 @@ public class DriverChannel {
   }
 
   /**
-   * Releases a stream id if the client was holding onto it, and has now determined that it can be
-   * safely reused.
-   *
-   * @see ResponseCallback#holdStreamId()
-   */
-  public void release(int streamId) {
-    channel.pipeline().fireUserEventTriggered(new ReleaseEvent(streamId));
-  }
-
-  /**
    * Switches the underlying Cassandra connection to a new keyspace (as if a {@code USE ...}
    * statement was issued).
    *
@@ -241,14 +231,6 @@ public class DriverChannel {
       this.tracing = tracing;
       this.customPayload = customPayload;
       this.responseCallback = responseCallback;
-    }
-  }
-
-  static class ReleaseEvent {
-    final int streamId;
-
-    ReleaseEvent(int streamId) {
-      this.streamId = streamId;
     }
   }
 

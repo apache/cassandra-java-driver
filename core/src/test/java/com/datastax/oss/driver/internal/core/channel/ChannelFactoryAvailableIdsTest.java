@@ -47,6 +47,8 @@ public class ChannelFactoryAvailableIdsTest extends ChannelFactoryTestBase {
 
     Mockito.when(defaultConfigProfile.getInt(DefaultDriverOption.CONNECTION_MAX_REQUESTS))
         .thenReturn(128);
+
+    Mockito.when(responseCallback.isLastResponse(any(Frame.class))).thenReturn(true);
   }
 
   @Test
