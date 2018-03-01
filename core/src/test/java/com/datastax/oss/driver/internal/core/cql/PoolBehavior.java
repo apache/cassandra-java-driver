@@ -64,9 +64,7 @@ public class PoolBehavior {
           .thenAnswer(
               invocation -> {
                 ResponseCallback callback = invocation.getArgument(3);
-                if (callback.holdStreamId()) {
-                  callback.onStreamIdAssigned(1);
-                }
+                callback.onStreamIdAssigned(1);
                 callbackFuture.complete(callback);
                 return writePromise;
               });
