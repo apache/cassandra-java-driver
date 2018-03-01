@@ -21,7 +21,6 @@ import com.datastax.oss.driver.api.core.ProtocolVersion;
 import com.datastax.oss.driver.api.core.connection.BusyConnectionException;
 import com.datastax.oss.driver.api.core.connection.ClosedConnectionException;
 import com.datastax.oss.driver.api.core.connection.HeartbeatException;
-import com.datastax.oss.driver.internal.core.channel.DriverChannel.ReleaseEvent;
 import com.datastax.oss.driver.internal.core.channel.DriverChannel.RequestMessage;
 import com.datastax.oss.driver.internal.core.channel.DriverChannel.SetKeyspaceEvent;
 import com.datastax.oss.driver.internal.core.protocol.FrameDecodingException;
@@ -30,6 +29,7 @@ import com.datastax.oss.protocol.internal.Frame;
 import com.datastax.oss.protocol.internal.Message;
 import com.datastax.oss.protocol.internal.request.Query;
 import com.datastax.oss.protocol.internal.response.result.SetKeyspace;
+import com.google.common.base.MoreObjects;
 import com.google.common.collect.BiMap;
 import com.google.common.collect.HashBiMap;
 import io.netty.channel.ChannelDuplexHandler;
@@ -38,6 +38,8 @@ import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelPromise;
 import io.netty.util.concurrent.Promise;
+import java.util.HashMap;
+import java.util.Map;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -50,13 +52,14 @@ public class InFlightHandler extends ChannelDuplexHandler {
   final ChannelPromise closeStartedFuture;
   private final String ownerLogPrefix;
   private final BiMap<Integer, ResponseCallback> inFlight;
+  private final Map<Integer, ResponseCallback> orphaned;
+  private volatile int orphanedSize; // thread-safe view for metrics
   private final long setKeyspaceTimeoutMillis;
   private final EventCallback eventCallback;
   private final int maxOrphanStreamIds;
   private boolean closingGracefully;
   private SetKeyspaceRequest setKeyspaceRequest;
   private String logPrefix;
-  private volatile int orphanStreamIds; // volatile only for metrics
 
   InFlightHandler(
       ProtocolVersion protocolVersion,
@@ -73,6 +76,7 @@ public class InFlightHandler extends ChannelDuplexHandler {
     this.ownerLogPrefix = ownerLogPrefix;
     this.logPrefix = ownerLogPrefix + "|connecting...";
     this.inFlight = HashBiMap.create(streamIds.getMaxAvailableIds());
+    this.orphaned = new HashMap<>(maxOrphanStreamIds);
     this.setKeyspaceTimeoutMillis = setKeyspaceTimeoutMillis;
     this.eventCallback = eventCallback;
   }
@@ -138,22 +142,19 @@ public class InFlightHandler extends ChannelDuplexHandler {
     writeFuture.addListener(
         future -> {
           if (future.isSuccess()) {
-            if (message.responseCallback.holdStreamId()) {
-              message.responseCallback.onStreamIdAssigned(streamId);
-            }
+            message.responseCallback.onStreamIdAssigned(streamId);
           } else {
             release(streamId, ctx);
           }
         });
   }
 
-  @SuppressWarnings("NonAtomicVolatileUpdate")
   private void cancel(
       ChannelHandlerContext ctx, ResponseCallback responseCallback, ChannelPromise promise) {
     Integer streamId = inFlight.inverse().remove(responseCallback);
     if (streamId == null) {
       LOG.debug(
-          "[{}] Received cancellation request for unknown callback {}, skipping",
+          "[{}] Received cancellation for unknown or already cancelled callback {}, skipping",
           logPrefix,
           responseCallback);
     } else {
@@ -164,15 +165,17 @@ public class InFlightHandler extends ChannelDuplexHandler {
         ctx.channel().close();
       } else {
         // We can't release the stream id, because a response might still come back from the server.
-        // Keep track of how many of those ids are held, because we want to replace the channel if
-        // it becomes too high.
-        orphanStreamIds += 1; // safe because the method is confined to the I/O thread
-        if (orphanStreamIds > maxOrphanStreamIds) {
+        // Keep track of those "orphaned" ids, to release them later if we get a response and the
+        // callback says it's the last one.
+        orphaned.put(streamId, responseCallback);
+        if (orphaned.size() > maxOrphanStreamIds) {
           LOG.debug(
               "[{}] Orphan stream ids exceeded the configured threshold ({}), closing gracefully",
               logPrefix,
               maxOrphanStreamIds);
           startGracefulShutdown(ctx);
+        } else {
+          orphanedSize = orphaned.size();
         }
       }
     }
@@ -215,25 +218,44 @@ public class InFlightHandler extends ChannelDuplexHandler {
         }
       }
     } else {
-      ResponseCallback responseCallback = inFlight.get(streamId);
-      if (responseCallback == null) {
-        LOG.debug("[{}] Got response on orphan stream id {}, releasing", logPrefix, streamId);
-        release(streamId, ctx);
-        orphanStreamIds -= 1; // safe because the method is confined to the I/O thread
-      } else {
-        LOG.debug(
-            "[{}] Got response on stream id {}, completing {}",
-            logPrefix,
-            streamId,
-            responseCallback);
-        if (!responseCallback.holdStreamId()) {
-          release(streamId, ctx);
+      boolean wasInFlight = true;
+      ResponseCallback callback = inFlight.get(streamId);
+      if (callback == null) {
+        wasInFlight = false;
+        callback = orphaned.get(streamId);
+        if (callback == null) {
+          LOG.warn("[{}] Got response on unknown stream id {}, skipping", streamId);
+          return;
         }
-        try {
-          responseCallback.onResponse(responseFrame);
-        } catch (Throwable t) {
+      }
+      try {
+        if (callback.isLastResponse(responseFrame)) {
+          LOG.debug(
+              "[{}] Got last response on {} stream id {}, completing and releasing",
+              wasInFlight ? "in-flight" : "orphaned",
+              streamId);
+          release(streamId, ctx);
+        } else {
+          LOG.debug(
+              "[{}] Got non-last response on {} stream id {}, still holding",
+              wasInFlight ? "in-flight" : "orphaned",
+              streamId);
+        }
+        if (wasInFlight) {
+          callback.onResponse(responseFrame);
+        }
+      } catch (Throwable t) {
+        if (wasInFlight) {
+          callback.onFailure(
+              new IllegalArgumentException("Unexpected error while invoking response handler", t));
+        } else {
+          // Assume the callback is already completed, so it's better to log
           Loggers.warnWithException(
-              LOG, "[{}] Unexpected error while invoking response handler", logPrefix, t);
+              LOG,
+              "[{}] Unexpected error while invoking response handler on stream id {}",
+              logPrefix,
+              t,
+              streamId);
         }
       }
     }
@@ -273,11 +295,7 @@ public class InFlightHandler extends ChannelDuplexHandler {
 
   @Override
   public void userEventTriggered(ChannelHandlerContext ctx, Object event) throws Exception {
-    if (event instanceof ReleaseEvent) {
-      int streamId = ((ReleaseEvent) event).streamId;
-      LOG.debug("[{}] Releasing stream id {}", logPrefix, streamId);
-      release(streamId, ctx);
-    } else if (event instanceof SetKeyspaceEvent) {
+    if (event instanceof SetKeyspaceEvent) {
       SetKeyspaceEvent setKeyspaceEvent = (SetKeyspaceEvent) event;
       if (this.setKeyspaceRequest != null) {
         setKeyspaceEvent.promise.setFailure(
@@ -305,7 +323,9 @@ public class InFlightHandler extends ChannelDuplexHandler {
 
   private ResponseCallback release(int streamId, ChannelHandlerContext ctx) {
     LOG.debug("[{}] Releasing stream id {}", logPrefix, streamId);
-    ResponseCallback responseCallback = inFlight.remove(streamId);
+    ResponseCallback responseCallback =
+        MoreObjects.firstNonNull(inFlight.remove(streamId), orphaned.remove(streamId));
+    orphanedSize = orphaned.size();
     streamIds.release(streamId);
     // If we're in the middle of an orderly close and this was the last request, actually close
     // the channel now
@@ -344,7 +364,7 @@ public class InFlightHandler extends ChannelDuplexHandler {
   }
 
   int getOrphanIds() {
-    return orphanStreamIds;
+    return orphanedSize;
   }
 
   private class SetKeyspaceRequest extends ChannelHandlerRequest {
