@@ -294,6 +294,8 @@ class ProtocolInitHandler extends ConnectInitHandler {
         }
       } catch (AuthenticationException e) {
         fail(e);
+      } catch (Throwable t) {
+        fail("Unexpected exception at step " + step, t);
       }
     }
 
