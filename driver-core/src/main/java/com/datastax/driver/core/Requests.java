@@ -55,7 +55,7 @@ class Requests {
         private final Map<String, String> options;
         private final ProtocolOptions.Compression compression;
         private final boolean noCompact;
-        private final String DRIVER_NAME = "DataStax Java Driver";
+        private static final String DRIVER_NAME = "DataStax Java Driver";
 
         Startup(ProtocolOptions.Compression compression, boolean noCompact) {
             super(Message.Request.Type.STARTUP);
