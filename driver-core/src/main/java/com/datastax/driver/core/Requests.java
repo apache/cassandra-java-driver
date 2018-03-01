@@ -34,8 +34,8 @@ class Requests {
     static class Startup extends Message.Request {
         private static final String CQL_VERSION_OPTION = "CQL_VERSION";
         private static final String CQL_VERSION = "3.0.0";
-        private static final String DRIVER_NAME_OPTION = "DRIVER_NAME_OPTION";
-        private static final String DRIVER_VERSION_OPTION = "DRIVER_VERSION_OPTION";
+        private static final String DRIVER_NAME_OPTION = "DRIVER_NAME";
+        private static final String DRIVER_VERSION_OPTION = "DRIVER_VERSION";
 
         static final String COMPRESSION_OPTION = "COMPRESSION";
         static final String NO_COMPACT_OPTION = "NO_COMPACT";
@@ -55,11 +55,9 @@ class Requests {
         private final Map<String, String> options;
         private final ProtocolOptions.Compression compression;
         private final boolean noCompact;
-        private Optional<String> driverName = Optional.of("DataStaxJavaDriver");
-        private Optional<String> driverVersion = Optional.of(Cluster.getDriverVersion());
+        private final String DRIVER_NAME = "DataStax Java Driver";
 
-        Startup(ProtocolOptions.Compression compression, boolean noCompact, Optional<String> driverName,
-                Optional<String> driverVersion) {
+        Startup(ProtocolOptions.Compression compression, boolean noCompact) {
             super(Message.Request.Type.STARTUP);
 
             this.compression = compression;
@@ -70,19 +68,12 @@ class Requests {
             if (compression != ProtocolOptions.Compression.NONE)
                 map.put(COMPRESSION_OPTION, compression.toString());
 
-            map.put(DRIVER_NAME_OPTION, driverName.or(this.driverName).get());
-            map.put(DRIVER_VERSION_OPTION, driverVersion.or(this.driverVersion).get());
+            map.put(DRIVER_NAME_OPTION, DRIVER_NAME);
+            map.put(DRIVER_VERSION_OPTION, Cluster.getDriverVersion());
 
             if (noCompact)
                 map.put(NO_COMPACT_OPTION, "true");
             this.options = map.build();
-
-            this.driverName = driverName;
-            this.driverVersion = driverVersion;
-        }
-
-        Startup(ProtocolOptions.Compression compression, boolean noCompact) {
-            this(compression, noCompact, Optional.<String>absent(), Optional.<String>absent());
         }
 
         @Override
