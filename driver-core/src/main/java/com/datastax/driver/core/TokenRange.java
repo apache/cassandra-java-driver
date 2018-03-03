@@ -322,7 +322,7 @@ public final class TokenRange implements Comparable<TokenRange> {
 
     @Override
     public String toString() {
-        return String.format("]%s, %s]", start, end);
+        return String.format("[%s, %s]", start, end);
     }
 
     @Override
