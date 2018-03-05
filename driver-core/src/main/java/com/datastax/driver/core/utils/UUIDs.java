@@ -16,7 +16,10 @@
 package com.datastax.driver.core.utils;
 
 import com.google.common.base.Charsets;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+import java.lang.management.ManagementFactory;
 import java.net.InetAddress;
 import java.net.NetworkInterface;
 import java.net.SocketException;
@@ -31,6 +34,13 @@ import java.util.concurrent.atomic.AtomicLong;
  * (version 1).
  */
 public final class UUIDs {
+
+    /**
+     * The System property to use to force the value of the process ID (PID).
+     */
+    public static final String PID_SYSTEM_PROPERTY = "com.datastax.driver.PID";
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(UUIDs.class);
 
     private UUIDs() {
     }
@@ -92,6 +102,7 @@ public final class UUIDs {
             update(digest, props.getProperty("os.arch"));
             update(digest, props.getProperty("os.name"));
             update(digest, props.getProperty("os.version"));
+            update(digest, getProcessPiece());
 
             byte[] hash = digest.digest();
 
@@ -104,6 +115,35 @@ public final class UUIDs {
         } catch (NoSuchAlgorithmException e) {
             throw new RuntimeException(e);
         }
+    }
+
+    private static String getProcessPiece() {
+        Integer pid = null;
+        String pidProperty = System.getProperty(PID_SYSTEM_PROPERTY);
+        if (pidProperty != null) {
+            try {
+                pid = Integer.parseInt(pidProperty);
+                LOGGER.info("PID obtained from System property {}: {}", PID_SYSTEM_PROPERTY, pid);
+            } catch (NumberFormatException e) {
+                LOGGER.warn("Incorrect integer specified for PID in System property {}: {}", PID_SYSTEM_PROPERTY, pidProperty);
+            }
+        }
+        if (pid == null) {
+            try {
+                String pidJmx = ManagementFactory.getRuntimeMXBean().getName().split("@")[0];
+                pid = Integer.parseInt(pidJmx);
+                LOGGER.info("PID obtained through JMX: {}", pid);
+            } catch (Exception e) {
+                LOGGER.warn("Failed to obtain PID from JMX", e);
+            }
+        }
+        if (pid == null) {
+            pid = new java.util.Random().nextInt();
+            LOGGER.warn("Could not determine PID, falling back to a random integer: {}", pid);
+        }
+        ClassLoader loader = UUIDs.class.getClassLoader();
+        int loaderId = loader != null ? System.identityHashCode(loader) : 0;
+        return Integer.toHexString(pid) + Integer.toHexString(loaderId);
     }
 
     private static void update(MessageDigest digest, String value) {
