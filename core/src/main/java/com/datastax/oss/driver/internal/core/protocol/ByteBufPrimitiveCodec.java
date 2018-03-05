@@ -35,7 +35,7 @@ public class ByteBufPrimitiveCodec implements PrimitiveCodec<ByteBuf> {
 
   @Override
   public ByteBuf allocate(int size) {
-    return allocator.ioBuffer();
+    return allocator.ioBuffer(size, size);
   }
 
   @Override

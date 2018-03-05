@@ -4,6 +4,7 @@
 
 ### 4.0.0-alpha4 (in progress)
 
+- [improvement] JAVA-1769: Allocate exact buffer size for outgoing requests
 - [documentation] JAVA-1780: Add manual section about case sensitivity
 - [new feature] JAVA-1536: Add request throttling
 - [improvement] JAVA-1772: Revisit multi-response callbacks
