@@ -3,6 +3,7 @@
 Driver modules:
 
 * [Core](core/)
+* [Query builder](query_builder/)
 
 Common topics:
 

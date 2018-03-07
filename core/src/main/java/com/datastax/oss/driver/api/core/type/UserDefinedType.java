@@ -54,8 +54,13 @@ public interface UserDefinedType extends DataType, Describable {
 
   @Override
   default String asCql(boolean includeFrozen, boolean pretty) {
-    String template = (isFrozen() && includeFrozen) ? "frozen<%s.%s>" : "%s.%s";
-    return String.format(template, getKeyspace().asCql(pretty), getName().asCql(pretty));
+    if (getKeyspace() != null) {
+      String template = (isFrozen() && includeFrozen) ? "frozen<%s.%s>" : "%s.%s";
+      return String.format(template, getKeyspace().asCql(pretty), getName().asCql(pretty));
+    } else {
+      String template = (isFrozen() && includeFrozen) ? "frozen<%s>" : "%s";
+      return String.format(template, getName().asCql(pretty));
+    }
   }
 
   @Override

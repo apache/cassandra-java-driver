@@ -4,6 +4,7 @@
 
 ### 4.0.0-alpha4 (in progress)
 
+- [new feature] JAVA-1515: Add query builder
 - [improvement] JAVA-1773: Make DriverConfigProfile enumerable
 - [improvement] JAVA-1787: Use standalone shaded Guava artifact
 - [improvement] JAVA-1769: Allocate exact buffer size for outgoing requests

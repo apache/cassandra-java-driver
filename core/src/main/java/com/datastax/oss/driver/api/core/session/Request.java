@@ -120,8 +120,8 @@ public interface Request {
   Map<String, ByteBuffer> getCustomPayload();
 
   /**
-   * Whether the request is idempotent; that is, whether applying the request twice yields the same
-   * result.
+   * Whether the request is idempotent; that is, whether applying the request twice leaves the
+   * database in the same state.
    *
    * <p>This is used internally for retries and speculative executions: if a request is not
    * idempotent, the driver will take extra care to ensure that it is not sent twice (for example,
