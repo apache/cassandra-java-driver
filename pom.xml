@@ -37,6 +37,7 @@
     <module>core</module>
     <module>test-infra</module>
     <module>integration-tests</module>
+    <module>query-builder</module>
   </modules>
 
   <properties>

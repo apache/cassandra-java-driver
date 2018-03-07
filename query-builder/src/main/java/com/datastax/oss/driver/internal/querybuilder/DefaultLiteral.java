@@ -1,0 +1,76 @@
+/*
+ * Copyright DataStax, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package com.datastax.oss.driver.internal.querybuilder;
+
+import com.datastax.oss.driver.api.core.CqlIdentifier;
+import com.datastax.oss.driver.api.core.type.codec.TypeCodec;
+import com.datastax.oss.driver.api.querybuilder.Literal;
+import com.datastax.oss.driver.api.querybuilder.select.Selector;
+import com.google.common.base.Preconditions;
+
+public class DefaultLiteral<T> implements Literal {
+
+  private final T value;
+  private final TypeCodec<T> codec;
+  private final CqlIdentifier alias;
+
+  public DefaultLiteral(T value, TypeCodec<T> codec) {
+    this(value, codec, null);
+  }
+
+  public DefaultLiteral(T value, TypeCodec<T> codec, CqlIdentifier alias) {
+    Preconditions.checkArgument(
+        value == null || codec != null, "Must provide a codec if the value is not null");
+    this.value = value;
+    this.codec = codec;
+    this.alias = alias;
+  }
+
+  @Override
+  public void appendTo(StringBuilder builder) {
+    if (value == null) {
+      builder.append("NULL");
+    } else {
+      builder.append(codec.format(value));
+    }
+    if (alias != null) {
+      builder.append(" AS ").append(alias.asCql(true));
+    }
+  }
+
+  @Override
+  public boolean isIdempotent() {
+    return true;
+  }
+
+  @Override
+  public Selector as(CqlIdentifier alias) {
+    return new DefaultLiteral<>(value, codec, alias);
+  }
+
+  public T getValue() {
+    return value;
+  }
+
+  public TypeCodec<T> getCodec() {
+    return codec;
+  }
+
+  @Override
+  public CqlIdentifier getAlias() {
+    return alias;
+  }
+}
