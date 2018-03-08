@@ -33,9 +33,9 @@ import java.util.Map;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class TypeSafeDriverConfig implements DriverConfig {
+public class TypesafeDriverConfig implements DriverConfig {
 
-  private static final Logger LOG = LoggerFactory.getLogger(TypeSafeDriverConfig.class);
+  private static final Logger LOG = LoggerFactory.getLogger(TypesafeDriverConfig.class);
   private static final String DEFAULT_PROFILE_KEY = "__default_internal__";
 
   private final Collection<DriverOption> options;
@@ -44,7 +44,7 @@ public class TypeSafeDriverConfig implements DriverConfig {
   // Only used to detect if reload saw any change
   private volatile Config lastLoadedConfig;
 
-  public TypeSafeDriverConfig(Config config, DriverOption[]... optionArrays) {
+  public TypesafeDriverConfig(Config config, DriverOption[]... optionArrays) {
     this.lastLoadedConfig = config;
     this.options = merge(optionArrays);
 

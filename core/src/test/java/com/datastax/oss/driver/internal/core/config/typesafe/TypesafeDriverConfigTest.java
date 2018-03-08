@@ -27,19 +27,19 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
 
-public class TypeSafeDriverConfigTest {
+public class TypesafeDriverConfigTest {
 
   @Rule public ExpectedException expectedException = ExpectedException.none();
 
   @Test
   public void should_load_minimal_config_with_required_options_and_no_profiles() {
-    TypeSafeDriverConfig config = parse("required_int = 42");
+    TypesafeDriverConfig config = parse("required_int = 42");
     assertThat(config).hasIntOption(MockOptions.REQUIRED_INT, 42);
   }
 
   @Test
   public void should_load_config_with_no_profiles_and_optional_values() {
-    TypeSafeDriverConfig config = parse("required_int = 42\n optional_int = 43");
+    TypesafeDriverConfig config = parse("required_int = 42\n optional_int = 43");
     assertThat(config).hasIntOption(MockOptions.REQUIRED_INT, 42);
     assertThat(config).hasIntOption(MockOptions.OPTIONAL_INT, 43);
   }
@@ -53,7 +53,7 @@ public class TypeSafeDriverConfigTest {
 
   @Test
   public void should_inherit_option_in_profile() {
-    TypeSafeDriverConfig config = parse("required_int = 42\n profiles { profile1 { } }");
+    TypesafeDriverConfig config = parse("required_int = 42\n profiles { profile1 { } }");
     assertThat(config)
         .hasIntOption(MockOptions.REQUIRED_INT, 42)
         .hasIntOption("profile1", MockOptions.REQUIRED_INT, 42);
@@ -61,7 +61,7 @@ public class TypeSafeDriverConfigTest {
 
   @Test
   public void should_override_option_in_profile() {
-    TypeSafeDriverConfig config =
+    TypesafeDriverConfig config =
         parse("required_int = 42\n profiles { profile1 { required_int = 43 } }");
     assertThat(config)
         .hasIntOption(MockOptions.REQUIRED_INT, 42)
@@ -71,13 +71,13 @@ public class TypeSafeDriverConfigTest {
   @Test
   public void should_load_default_driver_config() {
     // No assertions here, but this validates that `reference.conf` is well-formed.
-    new TypeSafeDriverConfig(
+    new TypesafeDriverConfig(
         ConfigFactory.load().getConfig("datastax-java-driver"), DefaultDriverOption.values());
   }
 
   @Test
   public void should_create_derived_profile_with_new_option() {
-    TypeSafeDriverConfig config = parse("required_int = 42");
+    TypesafeDriverConfig config = parse("required_int = 42");
     DriverConfigProfile base = config.getDefaultProfile();
     DriverConfigProfile derived = base.withInt(MockOptions.OPTIONAL_INT, 43);
 
@@ -88,7 +88,7 @@ public class TypeSafeDriverConfigTest {
 
   @Test
   public void should_create_derived_profile_overriding_option() {
-    TypeSafeDriverConfig config = parse("required_int = 42");
+    TypesafeDriverConfig config = parse("required_int = 42");
     DriverConfigProfile base = config.getDefaultProfile();
     DriverConfigProfile derived = base.withInt(MockOptions.REQUIRED_INT, 43);
 
@@ -98,7 +98,7 @@ public class TypeSafeDriverConfigTest {
 
   @Test
   public void should_fetch_string_map() {
-    TypeSafeDriverConfig config =
+    TypesafeDriverConfig config =
         parse(
             "required_int = 42 \n auth_provider { auth_thing_one= one \n auth_thing_two = two \n auth_thing_three = three}");
     DriverConfigProfile base = config.getDefaultProfile();
@@ -112,7 +112,7 @@ public class TypeSafeDriverConfigTest {
 
   @Test
   public void should_create_derived_profile_with_string_map() {
-    TypeSafeDriverConfig config = parse("required_int = 42");
+    TypesafeDriverConfig config = parse("required_int = 42");
     Map<String, String> authThingMap = new HashMap<>();
     authThingMap.put("auth_thing_one", "one");
     authThingMap.put("auth_thing_two", "two");
@@ -125,7 +125,7 @@ public class TypeSafeDriverConfigTest {
 
   @Test
   public void should_reload() {
-    TypeSafeDriverConfig config =
+    TypesafeDriverConfig config =
         parse("required_int = 42\n profiles { profile1 { required_int = 43 } }");
 
     config.reload(
@@ -138,7 +138,7 @@ public class TypeSafeDriverConfigTest {
 
   @Test
   public void should_update_derived_profiles_after_reloading() {
-    TypeSafeDriverConfig config =
+    TypesafeDriverConfig config =
         parse("required_int = 42\n profiles { profile1 { required_int = 43 } }");
 
     DriverConfigProfile derivedFromDefault =
@@ -157,8 +157,8 @@ public class TypeSafeDriverConfigTest {
     assertThat(derivedFromProfile1.getInt(MockOptions.OPTIONAL_INT)).isEqualTo(51);
   }
 
-  private TypeSafeDriverConfig parse(String configString) {
+  private TypesafeDriverConfig parse(String configString) {
     Config config = ConfigFactory.parseString(configString);
-    return new TypeSafeDriverConfig(config, MockOptions.values());
+    return new TypesafeDriverConfig(config, MockOptions.values());
   }
 }
