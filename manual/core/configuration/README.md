@@ -3,7 +3,7 @@
 The driver's configuration is composed of options, organized in a hierarchical manner. Optionally,
 it can define *profiles* that customize a set of options for a particular kind of request.
 
-The default implementation is based on the TypeSafe Config framework. It can be completely
+The default implementation is based on the Typesafe Config framework. It can be completely
 overridden if needed.
 
 For a complete list of built-in options, see [reference.conf] in the driver sources.
@@ -54,9 +54,9 @@ arbitrary number of named profiles. They inherit from the default profile, so yo
 override the options that have a different value.
 
 
-### Default implementation: TypeSafe Config
+### Default implementation: Typesafe Config
 
-Out of the box, the driver uses [TypeSafe Config]. 
+Out of the box, the driver uses [Typesafe Config]. 
 
 It looks at the following locations, according to the [standard behavior][config standard behavior]
 of that library:
@@ -226,7 +226,7 @@ private static Config loadConfig(String prefix) {
 
 Next, create a `DriverConfigLoader`. This is the component that abstracts the configuration
 implementation to the rest of the driver. Here we use the built-in class, but tell it to load the
-TypeSafe Config object with the previous method:
+Typesafe Config object with the previous method:
 
 ```java
 import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
@@ -249,8 +249,8 @@ CqlSession session1 =
 
 #### Loading from a different source
 
-If you don't want to use a config file, you can write custom code to create the TypeSafe `Config`
-object (refer to the [documentation][TypeSafe Config] for more details).
+If you don't want to use a config file, you can write custom code to create the Typesafe `Config`
+object (refer to the [documentation][Typesafe Config] for more details).
 
 Then reuse the examples from the previous section to merge it with the driver's reference file, and
 pass it to the driver. Here's a contrived example that loads the configuration from a string:
@@ -270,9 +270,9 @@ DriverConfigLoader loader =
 CqlSession session = CqlSession.builder().withConfigLoader(loader).build();
 ```
 
-#### Bypassing TypeSafe Config
+#### Bypassing Typesafe Config
 
-If TypeSafe Config doesn't work for you, it is possible to get rid of it entirely.
+If Typesafe Config doesn't work for you, it is possible to get rid of it entirely.
 
 You will need to provide your own implementations of [DriverConfig] and [DriverConfigProfile]. Then
 write a [DriverConfigLoader] and pass it to the session at initialization, as shown in the previous
@@ -439,7 +439,7 @@ config.getDefaultProfile().getInt(MyCustomOption.AWESOMENESS_FACTOR);
 [DefaultDriverOption]: http://docs.datastax.com/en/drivers/java/4.0/com/datastax/oss/driver/api/core/config/DefaultDriverOption.html
 [DriverConfigLoader]:  http://docs.datastax.com/en/drivers/java/4.0/com/datastax/oss/driver/api/core/config/DriverConfigLoader.html
 
-[TypeSafe Config]: https://github.com/typesafehub/config
+[Typesafe Config]: https://github.com/typesafehub/config
 [config standard behavior]: https://github.com/typesafehub/config#standard-behavior
 [reference.conf]: https://github.com/datastax/java-driver/blob/4.x/core/src/main/resources/reference.conf
 [HOCON]: https://github.com/typesafehub/config/blob/master/HOCON.md
