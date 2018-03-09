@@ -19,6 +19,7 @@ import com.datastax.driver.core.*;
 import com.datastax.driver.core.querybuilder.BuiltStatement;
 import com.datastax.driver.core.querybuilder.Delete;
 import com.datastax.driver.core.querybuilder.Insert;
+import com.datastax.driver.core.querybuilder.Update;
 import com.datastax.driver.core.querybuilder.QueryBuilder;
 import com.datastax.driver.core.utils.MoreObjects;
 import com.datastax.driver.mapping.Mapper.Option.SaveNullFields;
@@ -60,6 +61,7 @@ public class Mapper<T> {
     private final ConcurrentMap<MapperQueryKey, ListenableFuture<PreparedStatement>> preparedQueries = new ConcurrentHashMap<MapperQueryKey, ListenableFuture<PreparedStatement>>();
 
     private volatile EnumMap<Option.Type, Option> defaultSaveOptions;
+    private volatile EnumMap<Option.Type, Option> defaultUpdateOptions;
     private volatile EnumMap<Option.Type, Option> defaultGetOptions;
     private volatile EnumMap<Option.Type, Option> defaultDeleteOptions;
 
@@ -97,6 +99,7 @@ public class Mapper<T> {
         };
 
         this.defaultSaveOptions = NO_OPTIONS;
+        this.defaultUpdateOptions = NO_OPTIONS;
         this.defaultGetOptions = NO_OPTIONS;
         this.defaultDeleteOptions = NO_OPTIONS;
     }
@@ -347,6 +350,168 @@ public class Mapper<T> {
             }
         });
         return Futures.transform(rsFuture, TO_NULL);
+    }
+
+    /**
+     * Creates a query that can be used to update the provided entity.
+     * <p/>
+     * This method is useful if you want to setup a number of options (tracing,
+     * consistency level, ...) of the returned statement before executing it manually
+     * or need access to the {@code ResultSet} object after execution (to get the
+     * trace, the execution info, ...), but in other cases, calling {@link #update}
+     * or {@link #updateAsync} is shorter.
+     * <p/>
+     * Note: this method might block if the query is not prepared yet.
+     *
+     * @param entity the entity to update.
+     * @return a query that updates {@code entity} (based on its defined mapping).
+     */
+    public Statement updateQuery(T entity) {
+        checkNotInEventLoop();
+        try {
+            return Uninterruptibles.getUninterruptibly(updateQueryAsync(entity, this.defaultUpdateOptions));
+        } catch (ExecutionException e) {
+            throw DriverThrowables.propagateCause(e);
+        }
+    }
+
+    /**
+     * Creates a query that can be used to update the provided entity.
+     * <p/>
+     * This method is useful if you want to setup a number of options (tracing,
+     * consistency level, ...) of the returned statement before executing it manually
+     * or need access to the {@code ResultSet} object after execution (to get the
+     * trace, the execution info, ...), but in other cases, calling {@link #update}
+     * or {@link #updateAsync} is shorter.
+     * This method allows you to provide a suite of {@link Option} to include in
+     * the UPDATE query. Options currently supported for UPDATE are :
+     * <ul>
+     * <li>Timestamp</li>
+     * <li>Time-to-live (ttl)</li>
+     * <li>Consistency level</li>
+     * <li>Tracing</li>
+     * <li>IfExists</li>
+     * </ul>
+     * Note: this method might block if the query is not prepared yet.
+     *
+     * @param entity the entity to save.
+     * @return a query that saves {@code entity} (based on its defined mapping).
+     */
+    public Statement updateQuery(T entity, Option... options) {
+        checkNotInEventLoop();
+        try {
+            return Uninterruptibles.getUninterruptibly(updateQueryAsync(entity, toMapWithDefaults(options, this.defaultUpdateOptions)));
+        } catch (ExecutionException e) {
+            throw DriverThrowables.propagateCause(e);
+        }
+    }
+
+    private ListenableFuture<BoundStatement> updateQueryAsync(T entity, final EnumMap<Option.Type, Option> options) {
+        final Map<AliasedMappedProperty, Object> columnToValue = new TreeMap<AliasedMappedProperty, Object>();
+        final boolean useUnsetForNullValue = !shouldSaveNullFields(options) && manager.protocolVersionAsInt >= 4;
+        final boolean includeColumnsWithNullValue = shouldSaveNullFields(options) || useUnsetForNullValue;
+
+        for (AliasedMappedProperty col : mapper.allColumns) {
+            Object value = col.mappedProperty.getValue(entity);
+            if (!col.mappedProperty.isComputed() && (includeColumnsWithNullValue || value != null)) {
+                columnToValue.put(col, value);
+            }
+        }
+
+        return Futures.transform(getPreparedQueryAsync(QueryType.UPDATE, columnToValue.keySet(), options), new Function<PreparedStatement, BoundStatement>() {
+            @Override
+            public BoundStatement apply(PreparedStatement input) {
+                final BoundStatement bs = input.bind();
+                for (Map.Entry<AliasedMappedProperty, Object> entry : columnToValue.entrySet()) {
+                    final AliasedMappedProperty entryKey = entry.getKey();
+                    final T entryValue = (T) entry.getValue();
+                    final String name = entryKey.mappedProperty.getMappedName();
+                    final TypeCodec<T> customCodec = (TypeCodec<T>) entryKey.mappedProperty.getCustomCodec();
+                    if (useUnsetForNullValue && entryValue == null) {
+                        bs.unset(name);
+                    } else if (customCodec != null) {
+                        bs.set(name, entryValue, customCodec);
+                    } else {
+                        bs.set(name, entryValue, entryKey.mappedProperty.getPropertyType());
+                    }
+                }
+                if (mapper.writeConsistency != null) {
+                    bs.setConsistencyLevel(mapper.writeConsistency);
+                }
+                for (Option option : options.values()) {
+                    option.validate(QueryType.UPDATE, manager);
+                }
+                return bs;
+            }
+        });
+    }
+
+    /**
+     * Updates an entity mapped by this mapper.
+     * <p/>
+     * This method is basically equivalent to: {@code getManager().getSession().execute(updateQuery(entity))}.
+     * <p/>
+     * Note: this method will block until the entity is fully updated.
+     *
+     * @param entity the entity to save.
+     */
+    public void update(T entity) {
+        checkNotInEventLoop();
+        try {
+            Uninterruptibles.getUninterruptibly(updateAsync(entity));
+        } catch (ExecutionException e) {
+            throw DriverThrowables.propagateCause(e);
+        }
+    }
+
+    /**
+     * Updates an entity mapped by this mapper and using special options for update.
+     * This method allows you to provide a suite of {@link Option} to include in
+     * the UPDATE query. Options currently supported for UPDATE are :
+     * <ul>
+     * <li>Timestamp</li>
+     * <li>Time-to-live (ttl)</li>
+     * <li>Consistency level</li>
+     * <li>Tracing</li>
+     * <li>IfExists</li>
+     * </ul>
+     * Note: this method will block until the entity is fully saved.
+     *
+     * @param entity  the entity to save.
+     * @param options the options object specified defining special options when saving.
+     */
+    public void update(T entity, Option... options) {
+        checkNotInEventLoop();
+        try {
+            Uninterruptibles.getUninterruptibly(updateAsync(entity, options));
+        } catch (ExecutionException e) {
+            throw DriverThrowables.propagateCause(e);
+        }
+    }
+
+    /**
+     * Updates an entity mapped by this mapper asynchronously.
+     * <p/>
+     * This method is basically equivalent to: {@code getManager().getSession().executeAsync(updateQuery(entity))}.
+     *
+     * @param entity the entity to update.
+     * @return a future on the completion of the save operation.
+     */
+    public ListenableFuture<Void> updateAsync(T entity) {
+        return submitVoidQueryAsync(updateQueryAsync(entity, this.defaultUpdateOptions));
+    }
+
+    /**
+     * Updates an entity mapped by this mapper asynchronously using special options for update.
+     * <p/>
+     * This method is basically equivalent to: {@code getManager().getSession().executeAsync(updateQuery(entity, options))}.
+     *
+     * @param entity  the entity to update.
+     * @param options the options object specified defining special options when updating.
+     * @return a future on the completion of the update operation.
+     */
+    public ListenableFuture<Void> updateAsync(T entity, Option... options) {
+        return submitVoidQueryAsync(updateQueryAsync(entity, toMapWithDefaults(options, this.defaultUpdateOptions)));
     }
 
     /**
@@ -823,6 +988,24 @@ public class Mapper<T> {
     }
 
     /**
+     * Set the default update {@link Option} for this object mapper, that will be used
+     * in all update operations unless overridden. Refer to {@link Mapper#update(Object, Option...)})}
+     * to check available save options.
+     *
+     * @param options the options to set. To reset, use {@link Mapper#resetDefaultUpdateOptions}.
+     */
+    public void setDefaultUpdateOptions(Option... options) {
+        this.defaultUpdateOptions = toMap(options);
+    }
+
+    /**
+     * Reset the default save options for this object mapper.
+     */
+    public void resetDefaultUpdateOptions() {
+        this.defaultUpdateOptions = NO_OPTIONS;
+    }
+
+    /**
      * Set the default get {@link Option} for this object mapper, that will be used
      * in all get operations unless overridden. Refer to {@link Mapper#get(Object...)} )} to check available
      * get options.
@@ -902,7 +1085,7 @@ public class Mapper<T> {
      */
     public static abstract class Option {
 
-        enum Type {TTL, TIMESTAMP, CL, TRACING, SAVE_NULL_FIELDS, IF_NOT_EXISTS}
+        enum Type {TTL, TIMESTAMP, CL, TRACING, SAVE_NULL_FIELDS, IF_NOT_EXISTS, IF_EXISTS}
 
         /**
          * Creates a new Option object to add time-to-live to a mapper operation. This is
@@ -983,6 +1166,19 @@ public class Mapper<T> {
             return new IfNotExists(enabled);
         }
 
+        /**
+         * Creates a new Option object to specify whether an IF EXISTS clause should be included in
+         * update and delete queries.
+         * <p/>
+         * If this option is not specified, it defaults to {@code false} (IF EXISTS statements are not used).
+         *
+         * @param enabled whether to include an IF EXISTS clause in queries.
+         * @return the option.
+         */
+        public static Option ifExists(boolean enabled) {
+            return new IfExists(enabled);
+        }
+
         final Type type;
 
         protected Option(Type type) {
@@ -1049,7 +1245,7 @@ public class Mapper<T> {
             @Override
             void validate(QueryType qt, MappingManager manager) {
                 checkArgument(!(manager.protocolVersionAsInt < 2), "TTL option requires native protocol v2 or above");
-                checkArgument(qt == QueryType.SAVE, "TTL option is only allowed in save queries");
+                checkArgument(qt == QueryType.SAVE || qt == QueryType.UPDATE, "TTL option is only allowed in save and update queries");
             }
 
             @Override
@@ -1059,8 +1255,14 @@ public class Mapper<T> {
 
             @Override
             void modifyQueryString(BuiltStatement query) {
-                ((Insert) query).using().and(
-                        QueryBuilder.ttl(QueryBuilder.bindMarker()));
+                if (query instanceof Insert) {
+                    ((Insert) query).using().and(
+                            QueryBuilder.ttl(QueryBuilder.bindMarker()));
+                } else if (query instanceof Update) {
+                    ((Update) query).using(QueryBuilder.ttl(QueryBuilder.bindMarker()));
+                } else {
+                    throw new AssertionError("Unexpected query type: " + query.getClass());
+                }
             }
 
             @Override
@@ -1099,7 +1301,7 @@ public class Mapper<T> {
             @Override
             void validate(QueryType qt, MappingManager manager) {
                 checkArgument(!(manager.protocolVersionAsInt < 2), "Timestamp option requires native protocol v2 or above");
-                checkArgument(qt == QueryType.SAVE || qt == QueryType.DEL, "Timestamp option is only allowed in save and delete queries");
+                checkArgument(qt == QueryType.SAVE || qt == QueryType.DEL || qt == QueryType.UPDATE, "Timestamp option is only allowed in save, update and delete queries");
             }
 
             @Override
@@ -1111,6 +1313,8 @@ public class Mapper<T> {
             void modifyQueryString(BuiltStatement query) {
                 if (query instanceof Insert) {
                     ((Insert) query).using().and(QueryBuilder.timestamp(QueryBuilder.bindMarker()));
+                } else if (query instanceof Update) {
+                    ((Update) query).using(QueryBuilder.timestamp(QueryBuilder.bindMarker()));
                 } else if (query instanceof Delete) {
                     ((Delete) query).using().and(QueryBuilder.timestamp(QueryBuilder.bindMarker()));
                 } else {
@@ -1250,7 +1454,7 @@ public class Mapper<T> {
 
             @Override
             void validate(QueryType qt, MappingManager manager) {
-                checkArgument(qt == QueryType.SAVE, "SaveNullFields option is only allowed in save queries");
+                checkArgument(qt == QueryType.SAVE || qt == QueryType.UPDATE, "SaveNullFields option is only allowed in save and update queries");
             }
 
             @Override
@@ -1331,6 +1535,60 @@ public class Mapper<T> {
             @Override
             public int hashCode() {
                 return (ifNotExists) ? 1231 : 1237;
+            }
+        }
+
+        static class IfExists extends Option {
+            boolean ifExists;
+
+            IfExists(boolean ifExists) {
+                super(Type.IF_EXISTS);
+                this.ifExists = ifExists;
+            }
+
+            @Override
+            void validate(QueryType qt, MappingManager manager) {
+                checkArgument(qt == QueryType.UPDATE || qt == QueryType.DEL, "IfExists option is only allowed in update and delete queries");
+            }
+
+            @Override
+            boolean modifiesQueryString() {
+                return true;
+            }
+
+            @Override
+            void modifyQueryString(BuiltStatement query) {
+                if (ifExists) {
+                    if (query instanceof Update) {
+                        ((Update) query).where().ifExists();
+                    } else if (query instanceof Delete) {
+                        ((Delete) query).where().ifExists();
+                    } else {
+                        throw new AssertionError("Unexpected query type: " + query.getClass());
+                    }
+                }
+            }
+
+            @Override
+            int apply(BoundStatement bs, int currentIndex) {
+                return currentIndex;
+            }
+
+            @Override
+            Object asCacheKey() {
+                // Different values do change the query string ("IF EXIST" clause present or not)
+                return this;
+            }
+
+            @Override
+            public boolean equals(Object other) {
+                return other == this ||
+                        (other instanceof IfExists && this.ifExists == ((IfExists) other).ifExists);
+            }
+
+            @Override
+            public int hashCode() {
+                return (ifExists) ? 1231 : 1237;
             }
         }
     }

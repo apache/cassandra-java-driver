@@ -19,6 +19,7 @@ import com.datastax.driver.core.TableMetadata;
 import com.datastax.driver.core.querybuilder.Delete;
 import com.datastax.driver.core.querybuilder.Insert;
 import com.datastax.driver.core.querybuilder.Select;
+import com.datastax.driver.core.querybuilder.Update;
 
 import java.util.Collection;
 import java.util.Set;
@@ -93,6 +94,29 @@ enum QueryType {
                 option.modifyQueryString(delete);
             }
             return delete.toString();
+        }
+    },
+
+    UPDATE {
+        @Override
+        String makePreparedQueryString(final TableMetadata table, final EntityMapper<?> mapper, final MappingManager manager, final Set<AliasedMappedProperty> columns, final Collection<Mapper.Option> options) {
+            Update update = table == null
+                    ? update(mapper.keyspace, mapper.table)
+                    : update(table);
+            for (AliasedMappedProperty column : columns) {
+                if (!(column.mappedProperty.isPartitionKey() || column.mappedProperty.isClusteringColumn() || column.mappedProperty.isComputed())) {
+                    update.with(set(column.mappedProperty.getMappedName(), bindMarker()));
+                }
+            }
+            Update.Where where = update.where();
+            for (int i = 0; i < mapper.primaryKeySize(); i++) {
+                where.and(eq(mapper.getPrimaryKeyColumn(i).mappedProperty.getMappedName(), bindMarker()));
+            }
+            for (Mapper.Option option : options) {
+                option.validate(QueryType.UPDATE, manager);
+                option.modifyQueryString(update);
+            }
+            return update.toString();
         }
     };
 
