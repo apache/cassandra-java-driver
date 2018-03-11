@@ -296,12 +296,12 @@ public class AddressCodec extends TypeCodec<Address> {
 
     @Override
     public Address parse(String value) throws InvalidTypeException {
-        return value == null || value.isEmpty() || value.equals(NULL) ? null : toAddress(innerCodec.parse(value));
+        return value == null || value.isEmpty() || value.equalsIgnoreCase("NULL") ? null : toAddress(innerCodec.parse(value));
     }
 
     @Override
     public String format(Address value) throws InvalidTypeException {
-        return value == null ? null : innerCodec.format(toUDTValue(value));
+        return value == null ? "NULL" : innerCodec.format(toUDTValue(value));
     }
 
     protected Address toAddress(UDTValue value) {
