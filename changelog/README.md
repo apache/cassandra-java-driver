@@ -10,6 +10,7 @@
 - [improvement] JAVA-1752: Deprecate DowngradingConsistencyRetryPolicy.
 - [improvement] JAVA-1735: Log driver version on first use.
 - [documentation] JAVA-1380: Add FAQ entry for errors arising from incompatibilities.
+- [improvement] JAVA-1748: Support IS NOT NULL and != in query builder.
 
 
 ### 3.4.0

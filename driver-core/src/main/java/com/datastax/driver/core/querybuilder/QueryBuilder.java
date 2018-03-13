@@ -318,6 +318,43 @@ public final class QueryBuilder {
     }
 
     /**
+     * Creates a "not equal" {@code WHERE} clause stating the provided column must be
+     * different from the provided value.
+     *
+     * @param name  the column name
+     * @param value the value
+     * @return the corresponding where clause.
+     */
+    public static Clause ne(String name, Object value) {
+        return new Clause.SimpleClause(name, "!=", value);
+    }
+
+    /**
+     * Creates an "not equal" {@code WHERE} clause for a group of clustering columns.
+     * <p/>
+     * For instance, {@code eq(Arrays.asList("a", "b"), Arrays.asList(2, "test"))}
+     * will generate the CQL {@code WHERE} clause {@code (a, b) != (2, 'test') }.
+     *
+     * @param names  the column names
+     * @param values the values
+     * @return the corresponding where clause.
+     * @throws IllegalArgumentException if {@code names.size() != values.size()}.
+     */
+    public static Clause ne(Iterable<String> names, Iterable<?> values) {
+        return new Clause.CompoundClause(names, "!=", values);
+    }
+
+    /**
+     * Creates an "IS NOT NULL" {@code WHERE} clause for the provided column.
+     *
+     * @param name the column name
+     * @return the corresponding where clause.
+     */
+    public static Clause notNull(String name) {
+        return new Clause.IsNotNullClause(name);
+    }
+
+    /**
      * Creates a "like" {@code WHERE} clause stating that the provided column must be equal to the provided value.
      *
      * @param name  the column name.
