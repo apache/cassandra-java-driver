@@ -158,6 +158,18 @@ public class QueryBuilderTest {
         select = select().from("foo").where(like("e", "a%"));
         assertEquals(select.toString(), query);
 
+        query = "SELECT * FROM foo WHERE k!=1;";
+        select = select().from("foo").where(ne("k", 1));
+        assertEquals(select.toString(), query);
+
+        query = "SELECT * FROM foo WHERE (k1,k2)!=(1,2);";
+        select = select().from("foo").where(ne(ImmutableList.of("k1", "k2"), ImmutableList.of(1, 2)));
+        assertEquals(select.toString(), query);
+
+        query = "SELECT * FROM foo WHERE k IS NOT NULL;";
+        select = select().from("foo").where(notNull("k"));
+        assertEquals(select.toString(), query);
+
         try {
             select().countAll().from("foo").orderBy(asc("a"), desc("b")).orderBy(asc("a"), desc("b"));
             fail("Expected an IllegalStateException");

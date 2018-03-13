@@ -17,6 +17,7 @@ package com.datastax.driver.core.querybuilder;
 
 import com.datastax.driver.core.CodecRegistry;
 import com.google.common.collect.Lists;
+
 import java.util.List;
 
 public abstract class Clause extends Utils.Appendeable {
@@ -63,6 +64,28 @@ public abstract class Clause extends Utils.Appendeable {
         @Override
         boolean containsBindMarker() {
             return Utils.containsBindMarker(value);
+        }
+    }
+
+    static class IsNotNullClause extends AbstractClause {
+
+        IsNotNullClause(String name) {
+            super(name);
+        }
+
+        @Override
+        void appendTo(StringBuilder sb, List<Object> values, CodecRegistry codecRegistry) {
+            Utils.appendName(name, sb).append(" IS NOT NULL");
+        }
+
+        @Override
+        Object firstValue() {
+            return null;
+        }
+
+        @Override
+        boolean containsBindMarker() {
+            return false;
         }
     }
 
