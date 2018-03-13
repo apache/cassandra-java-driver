@@ -4,6 +4,7 @@
 
 ### 4.0.0-alpha4 (in progress)
 
+- [documentation] JAVA-1780: Add manual section about case sensitivity
 - [new feature] JAVA-1536: Add request throttling
 - [improvement] JAVA-1772: Revisit multi-response callbacks
 - [new feature] JAVA-1537: Add remaining socket options
