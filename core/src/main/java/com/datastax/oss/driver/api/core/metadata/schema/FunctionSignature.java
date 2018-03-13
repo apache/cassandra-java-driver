@@ -40,6 +40,22 @@ public class FunctionSignature {
     this(name, ImmutableList.<DataType>builder().add(parameterTypes).build());
   }
 
+  /**
+   * Shortcut for {@link #FunctionSignature(CqlIdentifier, Iterable) new
+   * FunctionSignature(CqlIdentifier.fromCql(name), parameterTypes)}.
+   */
+  public FunctionSignature(String name, Iterable<DataType> parameterTypes) {
+    this(CqlIdentifier.fromCql(name), parameterTypes);
+  }
+
+  /**
+   * Shortcut for {@link #FunctionSignature(CqlIdentifier, DataType...)} new
+   * FunctionSignature(CqlIdentifier.fromCql(name), parameterTypes)}.
+   */
+  public FunctionSignature(String name, DataType... parameterTypes) {
+    this(CqlIdentifier.fromCql(name), parameterTypes);
+  }
+
   public CqlIdentifier getName() {
     return name;
   }

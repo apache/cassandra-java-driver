@@ -112,6 +112,14 @@ public interface BatchStatement extends Statement<BatchStatement>, Iterable<Batc
   BatchStatement setKeyspace(CqlIdentifier newKeyspace);
 
   /**
+   * Shortcut for {@link #setKeyspace(CqlIdentifier)
+   * setKeyspace(CqlIdentifier.fromCql(newKeyspaceName))}.
+   */
+  default BatchStatement setKeyspace(String newKeyspaceName) {
+    return setKeyspace(CqlIdentifier.fromCql(newKeyspaceName));
+  }
+
+  /**
    * Adds a new statement to the batch.
    *
    * <p>Note that, due to protocol limitations, simple statements with named values are currently

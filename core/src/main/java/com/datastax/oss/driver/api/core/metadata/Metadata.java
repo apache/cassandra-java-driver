@@ -57,6 +57,14 @@ public interface Metadata {
   }
 
   /**
+   * Shortcut for {@link #getKeyspace(CqlIdentifier)
+   * getKeyspace(CqlIdentifier.fromCql(keyspaceName))}.
+   */
+  default KeyspaceMetadata getKeyspace(String keyspaceName) {
+    return getKeyspace(CqlIdentifier.fromCql(keyspaceName));
+  }
+
+  /**
    * The token map for this cluster.
    *
    * <p>Note that this property might be absent if token metadata was disabled, or if there was a

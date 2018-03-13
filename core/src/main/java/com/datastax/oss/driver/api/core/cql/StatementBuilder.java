@@ -80,6 +80,14 @@ public abstract class StatementBuilder<T extends StatementBuilder<T, S>, S exten
     return self;
   }
 
+  /**
+   * Shortcut for {@link #withRoutingKeyspace(CqlIdentifier)
+   * withRoutingKeyspace(CqlIdentifier.fromCql(routingKeyspaceName))}.
+   */
+  public T withRoutingKeyspace(String routingKeyspaceName) {
+    return withRoutingKeyspace(CqlIdentifier.fromCql(routingKeyspaceName));
+  }
+
   /** @see Statement#setRoutingKey(ByteBuffer) */
   public T withRoutingKey(ByteBuffer routingKey) {
     this.routingKey = routingKey;

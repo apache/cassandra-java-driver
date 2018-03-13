@@ -163,6 +163,14 @@ public interface SimpleStatement extends BatchableStatement<SimpleStatement> {
    */
   SimpleStatement setKeyspace(CqlIdentifier newKeyspace);
 
+  /**
+   * Shortcut for {@link #setKeyspace(CqlIdentifier)
+   * setKeyspace(CqlIdentifier.fromCql(newKeyspaceName))}.
+   */
+  default SimpleStatement setKeyspace(String newKeyspaceName) {
+    return setKeyspace(CqlIdentifier.fromCql(newKeyspaceName));
+  }
+
   List<Object> getPositionalValues();
 
   /**

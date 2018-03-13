@@ -147,6 +147,14 @@ public abstract class SessionBuilder<SelfT extends SessionBuilder, SessionT> {
   }
 
   /**
+   * Shortcut for {@link #withKeyspace(CqlIdentifier)
+   * withKeyspace(CqlIdentifier.fromCql(keyspaceName))}
+   */
+  public SelfT withKeyspace(String keyspaceName) {
+    return withKeyspace(CqlIdentifier.fromCql(keyspaceName));
+  }
+
+  /**
    * Creates the session with the options set by this builder.
    *
    * @return a completion stage that completes with the session when it is fully initialized.

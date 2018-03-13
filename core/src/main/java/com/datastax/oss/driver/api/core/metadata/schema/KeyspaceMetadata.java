@@ -39,6 +39,11 @@ public interface KeyspaceMetadata extends Describable {
     return getTables().get(tableId);
   }
 
+  /** Shortcut for {@link #getTable(CqlIdentifier) getTable(CqlIdentifier.fromCql(tableName))}. */
+  default TableMetadata getTable(String tableName) {
+    return getTable(CqlIdentifier.fromCql(tableName));
+  }
+
   Map<CqlIdentifier, ViewMetadata> getViews();
 
   /** Gets the views based on a given table. */
@@ -56,10 +61,23 @@ public interface KeyspaceMetadata extends Describable {
     return getViews().get(viewId);
   }
 
+  /** Shortcut for {@link #getView(CqlIdentifier) getView(CqlIdentifier.fromCql(viewName))}. */
+  default ViewMetadata getView(String viewName) {
+    return getView(CqlIdentifier.fromCql(viewName));
+  }
+
   Map<CqlIdentifier, UserDefinedType> getUserDefinedTypes();
 
   default UserDefinedType getUserDefinedType(CqlIdentifier typeId) {
     return getUserDefinedTypes().get(typeId);
+  }
+
+  /**
+   * Shortcut for {@link #getUserDefinedType(CqlIdentifier)
+   * getUserDefinedType(CqlIdentifier.fromCql(typeName))}.
+   */
+  default UserDefinedType getUserDefinedType(String typeName) {
+    return getUserDefinedType(CqlIdentifier.fromCql(typeName));
   }
 
   Map<FunctionSignature, FunctionMetadata> getFunctions();
@@ -73,8 +91,24 @@ public interface KeyspaceMetadata extends Describable {
     return getFunctions().get(new FunctionSignature(functionId, parameterTypes));
   }
 
+  /**
+   * Shortcut for {@link #getFunction(CqlIdentifier, Iterable)
+   * getFunction(CqlIdentifier.fromCql(functionName), parameterTypes)}.
+   */
+  default FunctionMetadata getFunction(String functionName, Iterable<DataType> parameterTypes) {
+    return getFunction(CqlIdentifier.fromCql(functionName), parameterTypes);
+  }
+
   default FunctionMetadata getFunction(CqlIdentifier functionId, DataType... parameterTypes) {
     return getFunctions().get(new FunctionSignature(functionId, parameterTypes));
+  }
+
+  /**
+   * Shortcut for {@link #getFunction(CqlIdentifier, DataType...)
+   * getFunction(CqlIdentifier.fromCql(functionName), parameterTypes)}.
+   */
+  default FunctionMetadata getFunction(String functionName, DataType... parameterTypes) {
+    return getFunction(CqlIdentifier.fromCql(functionName), parameterTypes);
   }
 
   Map<FunctionSignature, AggregateMetadata> getAggregates();
@@ -88,8 +122,24 @@ public interface KeyspaceMetadata extends Describable {
     return getAggregates().get(new FunctionSignature(aggregateId, parameterTypes));
   }
 
+  /**
+   * Shortcut for {@link #getAggregate(CqlIdentifier, Iterable)
+   * getAggregate(CqlIdentifier.fromCql(aggregateName), parameterTypes)}.
+   */
+  default AggregateMetadata getAggregate(String aggregateName, Iterable<DataType> parameterTypes) {
+    return getAggregate(CqlIdentifier.fromCql(aggregateName), parameterTypes);
+  }
+
   default AggregateMetadata getAggregate(CqlIdentifier aggregateId, DataType... parameterTypes) {
     return getAggregates().get(new FunctionSignature(aggregateId, parameterTypes));
+  }
+
+  /**
+   * Shortcut for {@link #getAggregate(CqlIdentifier, DataType...)}
+   * getAggregate(CqlIdentifier.fromCql(aggregateName), parameterTypes)}.
+   */
+  default AggregateMetadata getAggregate(String aggregateName, DataType... parameterTypes) {
+    return getAggregate(CqlIdentifier.fromCql(aggregateName), parameterTypes);
   }
 
   @Override

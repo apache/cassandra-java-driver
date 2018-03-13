@@ -82,6 +82,14 @@ public interface Statement<T extends Statement<T>> extends Request {
   T setRoutingKeyspace(CqlIdentifier newRoutingKeyspace);
 
   /**
+   * Shortcut for {@link #setRoutingKeyspace(CqlIdentifier)
+   * setRoutingKeyspace(CqlIdentifier.fromCql(newRoutingKeyspaceName))}.
+   */
+  default T setRoutingKeyspace(String newRoutingKeyspaceName) {
+    return setRoutingKeyspace(CqlIdentifier.fromCql(newRoutingKeyspaceName));
+  }
+
+  /**
    * Sets the key to use for token-aware routing.
    *
    * <p>See {@link Request#getRoutingKey()} for a description of the token-aware routing algorithm.
