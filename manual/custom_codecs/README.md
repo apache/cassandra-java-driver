@@ -296,7 +296,8 @@ public class AddressCodec extends TypeCodec<Address> {
 
     @Override
     public Address parse(String value) throws InvalidTypeException {
-        return value == null || value.isEmpty() || value.equalsIgnoreCase("NULL") ? null : toAddress(innerCodec.parse(value));
+        return value == null || value.isEmpty() || value.equalsIgnoreCase("NULL") ? 
+            null : toAddress(innerCodec.parse(value));
     }
 
     @Override
