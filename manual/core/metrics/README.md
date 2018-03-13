@@ -67,11 +67,12 @@ dependency of the driver):
 
 Then create a JMX reporter for the registry:
 
-```
+```java
 JmxReporter reporter =
     JmxReporter.forRegistry(session.getMetricRegistry())
         .inDomain("com.datastax.oss.driver")
         .build();
+reporter.start();
 ```
 
 Note: by default, the JMX reporter exposes all metrics in a flat structure (for example,
@@ -113,6 +114,7 @@ JmxReporter reporter =
         .inDomain("com.datastax.oss.driver")
         .createsObjectNamesWith(objectNameFactory)
         .build();
+reporter.start();
 ```
 
 #### Other protocols
