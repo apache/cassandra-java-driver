@@ -43,6 +43,10 @@ public class UserDefinedTypeBuilder {
     this.fieldTypes = ImmutableList.builder();
   }
 
+  public UserDefinedTypeBuilder(String keyspaceName, String typeName) {
+    this(CqlIdentifier.fromCql(keyspaceName), CqlIdentifier.fromCql(typeName));
+  }
+
   /**
    * Adds a new field. The fields in the resulting type will be in the order of the calls to this
    * method.
@@ -51,6 +55,10 @@ public class UserDefinedTypeBuilder {
     fieldNames.add(name);
     fieldTypes.add(type);
     return this;
+  }
+
+  public UserDefinedTypeBuilder withField(String name, DataType type) {
+    return withField(CqlIdentifier.fromCql(name), type);
   }
 
   /** Makes the type frozen (by default, it is not). */
