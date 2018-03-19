@@ -43,6 +43,8 @@ public class Metrics {
     private final Errors errors = new Errors();
 
     private final Timer requests = registry.timer("requests");
+    private final Meter bytesSent = registry.meter("bytes-sent");
+    private final Meter bytesReceived = registry.meter("bytes-received");
 
     private final Gauge<Integer> knownHosts = registry.register("known-hosts", new Gauge<Integer>() {
         @Override
@@ -293,6 +295,30 @@ public class Metrics {
      */
     public Gauge<Integer> getTaskSchedulerQueueSize() {
         return taskSchedulerQueueSize;
+    }
+
+    /**
+     * Returns the number of bytes sent so far.
+     * <p/>
+     * Note that this measures unencrypted traffic, even if SSL is enabled (the probe is inserted before SSL handlers in
+     * the Netty pipeline). In practice, SSL overhead should be negligible after the initial handshake.
+     *
+     * @return the number of bytes sent so far.
+     */
+    public Meter getBytesSent() {
+        return bytesSent;
+    }
+
+    /**
+     * Returns the number of bytes received so far.
+     * <p/>
+     * Note that this measures unencrypted traffic, even if SSL is enabled (the probe is inserted before SSL handlers in
+     * the Netty pipeline). In practice, SSL overhead should be negligible after the initial handshake.
+     *
+     * @return the number of bytes received so far.
+     */
+    public Meter getBytesReceived() {
+        return bytesReceived;
     }
 
     void shutdown() {

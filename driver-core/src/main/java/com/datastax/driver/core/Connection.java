@@ -142,7 +142,11 @@ class Connection {
                     new Initializer(this, protocolVersion, protocolOptions.getCompression().compressor(), protocolOptions.getSSLOptions(),
                             factory.configuration.getPoolingOptions().getHeartbeatIntervalSeconds(),
                             factory.configuration.getNettyOptions(),
-                            factory.configuration.getCodecRegistry()));
+                            factory.configuration.getCodecRegistry(),
+                            factory.configuration.getMetricsOptions().isEnabled() ?
+                                    factory.manager.metrics :
+                                    null
+                    ));
 
             ChannelFuture future = bootstrap.connect(address);
 
@@ -1419,8 +1423,9 @@ class Connection {
         private final NettyOptions nettyOptions;
         private final ChannelHandler idleStateHandler;
         private final CodecRegistry codecRegistry;
+        private final Metrics metrics;
 
-        Initializer(Connection connection, ProtocolVersion protocolVersion, FrameCompressor compressor, SSLOptions sslOptions, int heartBeatIntervalSeconds, NettyOptions nettyOptions, CodecRegistry codecRegistry) {
+        Initializer(Connection connection, ProtocolVersion protocolVersion, FrameCompressor compressor, SSLOptions sslOptions, int heartBeatIntervalSeconds, NettyOptions nettyOptions, CodecRegistry codecRegistry, Metrics metrics) {
             this.connection = connection;
             this.protocolVersion = protocolVersion;
             this.compressor = compressor;
@@ -1428,6 +1433,7 @@ class Connection {
             this.nettyOptions = nettyOptions;
             this.codecRegistry = codecRegistry;
             this.idleStateHandler = new IdleStateHandler(heartBeatIntervalSeconds, 0, 0);
+            this.metrics = metrics;
         }
 
         @Override
@@ -1450,6 +1456,11 @@ class Connection {
             }
 
             // pipeline.addLast("debug", new LoggingHandler(LogLevel.INFO));
+
+            if (metrics != null) {
+                pipeline.addLast("inboundTrafficMeter", new InboundTrafficMeter(metrics.getBytesReceived()));
+                pipeline.addLast("outboundTrafficMeter", new OutboundTrafficMeter(metrics.getBytesSent()));
+            }
 
             pipeline.addLast("frameDecoder", new Frame.Decoder());
             pipeline.addLast("frameEncoder", frameEncoder);
