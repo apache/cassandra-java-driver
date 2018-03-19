@@ -205,4 +205,9 @@ public abstract class StatementWrapper extends Statement {
     public Statement setOutgoingPayload(Map<String, ByteBuffer> payload) {
         return wrapped.setOutgoingPayload(payload);
     }
+
+    @Override
+    public int requestSizeInBytes(ProtocolVersion protocolVersion, CodecRegistry codecRegistry) {
+        return wrapped.requestSizeInBytes(protocolVersion, codecRegistry);
+    }
 }

@@ -13,6 +13,7 @@
 - [improvement] JAVA-1748: Support IS NOT NULL and != in query builder.
 - [documentation] JAVA-1740: Mention C*2.2/3.0 incompatibilities in paging state manual.
 - [improvement] JAVA-1725: Add a getNodeCount method to CCMAccess for easier automation.
+- [new feature] JAVA-708: Add means to measure request sizes.
 
 
 ### 3.4.0
