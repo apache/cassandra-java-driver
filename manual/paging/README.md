@@ -196,6 +196,26 @@ could become a problem in the following scenario:
 If this is not acceptable for you, you might want to consider the unsafe
 API described in the next section.
 
+Note: because of [CASSANDRA-10880], paging states are also incompatible
+between Cassandra 2.2 and 3.0, even if they're both using native protocol v4.
+This will manifest as the following error:
+
+```
+com.datastax.driver.core.exceptions.ProtocolError: An unexpected protocol error occurred on host xxx.
+This is a bug in this library, please report: Invalid value for the paging state
+```
+
+The [Cassandra documentation](https://github.com/apache/cassandra/blob/cassandra-3.0/NEWS.txt#L334-L336)
+recommends staying on protocol v3 during an upgrade between these two versions:
+
+```
+Clients must use the native protocol version 3 when upgrading from 2.2.X as
+the native protocol version 4 is not compatible between 2.2.X and 3.Y. See
+https://www.mail-archive.com/user@cassandra.apache.org/msg45381.html for details.
+```
+
+[CASSANDRA-10880]: https://issues.apache.org/jira/browse/CASSANDRA-10880
+
 #### Unsafe API
 
 As an alternative to the standard API, there are two methods that
