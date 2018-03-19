@@ -15,6 +15,8 @@
  */
 package com.datastax.driver.core;
 
+import com.datastax.driver.core.Frame.Header;
+import com.datastax.driver.core.Requests.QueryFlag;
 import com.datastax.driver.core.exceptions.UnsupportedFeatureException;
 import com.google.common.collect.ImmutableList;
 
@@ -197,6 +199,47 @@ public class BatchStatement extends Statement {
      */
     public int size() {
         return statements.size();
+    }
+
+    @Override
+    public int requestSizeInBytes(ProtocolVersion protocolVersion, CodecRegistry codecRegistry) {
+        int size = Header.lengthFor(protocolVersion) + 3; // type + nb queries
+        try {
+            BatchStatement.IdAndValues idAndVals = getIdAndValues(protocolVersion, codecRegistry);
+            for (int i = 0; i < idAndVals.ids.size(); i++) {
+                Object q = idAndVals.ids.get(i);
+                size += 1 + (q instanceof String
+                        ? CBUtil.sizeOfLongString((String) q)
+                        : CBUtil.sizeOfShortBytes(((MD5Digest) q).bytes));
+                size += CBUtil.sizeOfValueList(idAndVals.values.get(i));
+            }
+            switch (protocolVersion) {
+                case V2:
+                    size += CBUtil.sizeOfConsistencyLevel(getConsistencyLevel());
+                    break;
+                case V3:
+                case V4:
+                case V5:
+                    size += CBUtil.sizeOfConsistencyLevel(getConsistencyLevel());
+                    size += QueryFlag.serializedSize(protocolVersion);
+                    // Serial CL and default timestamp also depend on session-level defaults (QueryOptions).
+                    // We always count them to avoid having to inject QueryOptions here, at worst we overestimate by a
+                    // few bytes.
+                    size += CBUtil.sizeOfConsistencyLevel(getSerialConsistencyLevel());
+                    if (ProtocolFeature.CLIENT_TIMESTAMPS.isSupportedBy(protocolVersion)) {
+                        size += 8; // timestamp
+                    }
+                    if (ProtocolFeature.CUSTOM_PAYLOADS.isSupportedBy(protocolVersion) && getOutgoingPayload() != null) {
+                        size += CBUtil.sizeOfBytesMap(getOutgoingPayload());
+                    }
+                    break;
+                default:
+                    throw protocolVersion.unsupported();
+            }
+        } catch (Exception e) {
+            size = -1;
+        }
+        return size;
     }
 
     /**

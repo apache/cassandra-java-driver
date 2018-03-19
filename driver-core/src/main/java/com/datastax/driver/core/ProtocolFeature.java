@@ -25,6 +25,17 @@ enum ProtocolFeature {
      * query is a {@code SELECT *} and the table is altered).
      */
     PREPARED_METADATA_CHANGES,
+
+    /**
+     * The capability of sending or receiving custom payloads.
+     */
+    CUSTOM_PAYLOADS,
+
+    /**
+     * The capability of assigning client-generated timestamps to write requests.
+     */
+    CLIENT_TIMESTAMPS,
+
     //
     ;
 
@@ -38,6 +49,10 @@ enum ProtocolFeature {
         switch (this) {
             case PREPARED_METADATA_CHANGES:
                 return version == ProtocolVersion.V5;
+            case CUSTOM_PAYLOADS:
+                return version.compareTo(ProtocolVersion.V4) >= 0;
+            case CLIENT_TIMESTAMPS:
+                return version.compareTo(ProtocolVersion.V3) >= 0;
             default:
                 return false;
         }

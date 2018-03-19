@@ -584,6 +584,20 @@ public abstract class Statement {
         return this;
     }
 
+    /**
+     * Returns the number of bytes required to encode this statement.
+     * <p/>
+     * The calculated size may be overestimated by a few bytes, but is never underestimated.
+     * If the size cannot be calculated, this method returns -1.
+     * <p/>
+     * Note that the returned value is not cached, but instead recomputed at every method call.
+     *
+     * @return the number of bytes required to encode this statement.
+     */
+    public int requestSizeInBytes(ProtocolVersion protocolVersion, CodecRegistry codecRegistry) {
+        return -1;
+    }
+
     protected static Boolean isBatchIdempotent(Collection<? extends Statement> statements) {
         boolean hasNullIdempotentStatements = false;
         for (Statement statement : statements) {

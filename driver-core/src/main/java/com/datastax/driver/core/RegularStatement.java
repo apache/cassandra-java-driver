@@ -15,12 +15,15 @@
  */
 package com.datastax.driver.core;
 
+import com.datastax.driver.core.Frame.Header;
+import com.datastax.driver.core.Requests.QueryFlag;
 import com.datastax.driver.core.exceptions.InvalidTypeException;
 import com.datastax.driver.core.exceptions.UnsupportedProtocolVersionException;
 import com.datastax.driver.core.querybuilder.BuiltStatement;
 import com.datastax.driver.core.schemabuilder.SchemaStatement;
 
 import java.nio.ByteBuffer;
+import java.util.Arrays;
 import java.util.Map;
 
 /**
@@ -187,6 +190,52 @@ public abstract class RegularStatement extends Statement {
      */
     public boolean hasValues() {
         return hasValues(CodecRegistry.DEFAULT_INSTANCE);
+    }
+
+    @Override
+    public int requestSizeInBytes(ProtocolVersion protocolVersion, CodecRegistry codecRegistry) {
+        int size = Header.lengthFor(protocolVersion);
+        try {
+            size += CBUtil.sizeOfLongString(getQueryString(codecRegistry));
+            switch (protocolVersion) {
+                case V1:
+                    size += CBUtil.sizeOfConsistencyLevel(getConsistencyLevel());
+                    break;
+                case V2:
+                case V3:
+                case V4:
+                case V5:
+                    size += CBUtil.sizeOfConsistencyLevel(getConsistencyLevel());
+                    size += QueryFlag.serializedSize(protocolVersion);
+                    if (hasValues()) {
+                        if (usesNamedValues()) {
+                            size += CBUtil.sizeOfNamedValueList(getNamedValues(protocolVersion, codecRegistry));
+                        } else {
+                            size += CBUtil.sizeOfValueList(Arrays.asList(getValues(protocolVersion, codecRegistry)));
+                        }
+                    }
+                    // Fetch size, serial CL and default timestamp also depend on session-level defaults (QueryOptions).
+                    // We always count them to avoid having to inject QueryOptions here, at worst we overestimate by a
+                    // few bytes.
+                    size += 4; // fetch size
+                    if (getPagingState() != null) {
+                        size += CBUtil.sizeOfValue(getPagingState());
+                    }
+                    size += CBUtil.sizeOfConsistencyLevel(getSerialConsistencyLevel());
+                    if (ProtocolFeature.CLIENT_TIMESTAMPS.isSupportedBy(protocolVersion)) {
+                        size += 8; // timestamp
+                    }
+                    if (ProtocolFeature.CUSTOM_PAYLOADS.isSupportedBy(protocolVersion) && getOutgoingPayload() != null) {
+                        size += CBUtil.sizeOfBytesMap(getOutgoingPayload());
+                    }
+                    break;
+                default:
+                    throw protocolVersion.unsupported();
+            }
+        } catch (Exception e) {
+            size = -1;
+        }
+        return size;
     }
 
     /**

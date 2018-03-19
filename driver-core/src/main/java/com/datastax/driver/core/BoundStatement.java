@@ -15,6 +15,8 @@
  */
 package com.datastax.driver.core;
 
+import com.datastax.driver.core.Frame.Header;
+import com.datastax.driver.core.Requests.QueryFlag;
 import com.datastax.driver.core.exceptions.InvalidTypeException;
 import com.google.common.reflect.TypeToken;
 
@@ -297,6 +299,54 @@ public class BoundStatement extends Statement implements SettableData<BoundState
         return defs.size() == 0
                 ? null
                 : defs.getKeyspace(0);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public int requestSizeInBytes(ProtocolVersion protocolVersion, CodecRegistry codecRegistry) {
+        int size = Header.lengthFor(protocolVersion);
+        try {
+            size += CBUtil.sizeOfShortBytes(preparedStatement().getPreparedId().boundValuesMetadata.id.bytes);
+            if (ProtocolFeature.PREPARED_METADATA_CHANGES.isSupportedBy(protocolVersion)) {
+                size += CBUtil.sizeOfShortBytes(preparedStatement().getPreparedId().resultSetMetadata.id.bytes);
+            }
+            switch (protocolVersion) {
+                case V1:
+                    size += CBUtil.sizeOfConsistencyLevel(getConsistencyLevel());
+                    break;
+                case V2:
+                case V3:
+                case V4:
+                case V5:
+                    size += CBUtil.sizeOfConsistencyLevel(getConsistencyLevel());
+                    size += QueryFlag.serializedSize(protocolVersion);
+                    if (wrapper.values.length > 0) {
+                        size += CBUtil.sizeOfValueList(Arrays.asList(wrapper.values));
+                    }
+                    // Fetch size, serial CL and default timestamp also depend on session-level defaults (QueryOptions).
+                    // We always count them to avoid having to inject QueryOptions here, at worst we overestimate by a
+                    // few bytes.
+                    size += 4; // fetch size
+                    if (getPagingState() != null) {
+                        size += CBUtil.sizeOfValue(getPagingState());
+                    }
+                    size += CBUtil.sizeOfConsistencyLevel(getSerialConsistencyLevel());
+                    if (ProtocolFeature.CLIENT_TIMESTAMPS.isSupportedBy(protocolVersion)) {
+                        size += 8; // timestamp
+                    }
+                    if (ProtocolFeature.CUSTOM_PAYLOADS.isSupportedBy(protocolVersion) && getOutgoingPayload() != null) {
+                        size += CBUtil.sizeOfBytesMap(getOutgoingPayload());
+                    }
+                    break;
+                default:
+                    throw protocolVersion.unsupported();
+            }
+        } catch (Exception e) {
+            size = -1;
+        }
+        return size;
     }
 
     /**
