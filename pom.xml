@@ -186,7 +186,7 @@
         </plugin>
         <plugin>
           <artifactId>maven-javadoc-plugin</artifactId>
-          <version>3.0.0-M1</version>
+          <version>3.0.0</version>
         </plugin>
         <plugin>
           <artifactId>maven-jar-plugin</artifactId>
@@ -357,6 +357,9 @@ limitations under the License.]]>
       <plugin>
         <artifactId>maven-javadoc-plugin</artifactId>
         <configuration>
+          <verbose>false</verbose>
+          <quiet>true</quiet>
+          <doclint>all,-missing</doclint>
           <tags>
             <!--
               For custom `leaks-private-api` tag (apparently dash separators are not handled

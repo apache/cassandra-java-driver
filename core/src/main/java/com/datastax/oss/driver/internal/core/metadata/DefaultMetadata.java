@@ -76,11 +76,15 @@ public class DefaultMetadata implements Metadata {
   }
 
   /**
-   * @param tokenMapEnabled
+   * Refreshes the current metadata with the given list of nodes.
+   *
+   * @param tokenMapEnabled whether to rebuild the token map or not; if this is {@code false} the
+   *     current token map will be copied into the new metadata without being recomputed.
    * @param tokensChanged whether we observed a change of tokens for at least one node. This will
    *     require a full rebuild of the token map.
    * @param tokenFactory only needed for the initial refresh, afterwards the existing one in the
    *     token map is used.
+   * @return the new metadata.
    */
   public DefaultMetadata withNodes(
       Map<InetSocketAddress, Node> newNodes,
