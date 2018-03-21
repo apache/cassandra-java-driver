@@ -136,6 +136,9 @@ public class CCMTestsSupport {
         }
 
         @Override
+        public int[] getNodeCount() { return delegate.getNodeCount(); }
+
+        @Override
         public String checkForErrors() {
             return delegate.checkForErrors();
         }
