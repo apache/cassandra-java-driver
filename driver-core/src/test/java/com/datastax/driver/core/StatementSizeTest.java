@@ -25,7 +25,6 @@ import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
-
 import java.nio.ByteBuffer;
 
 import static com.datastax.driver.core.Assertions.assertThat;
@@ -42,7 +41,7 @@ public class StatementSizeTest {
     @Mock
     private PreparedStatement preparedStatement;
 
-    @BeforeMethod
+    @BeforeMethod(groups = {"unit"})
     public void setup() {
         MockitoAnnotations.initMocks(this);
 
