@@ -92,124 +92,164 @@ import java.util.Map;
  */
 public class Conversions {
 
-  public static Message toMessage(
+  public static final Conversions INSTANCE = new Conversions();
+
+  public Message toMessage(
       Statement<?> statement, DriverConfigProfile config, InternalDriverContext context) {
-    int consistency =
-        context
-            .consistencyLevelRegistry()
-            .fromName(config.getString(DefaultDriverOption.REQUEST_CONSISTENCY))
-            .getProtocolCode();
-    int pageSize = config.getInt(DefaultDriverOption.REQUEST_PAGE_SIZE);
-    int serialConsistency =
-        context
-            .consistencyLevelRegistry()
-            .fromName(config.getString(DefaultDriverOption.REQUEST_SERIAL_CONSISTENCY))
-            .getProtocolCode();
-    long timestamp = statement.getTimestamp();
-    if (timestamp == Long.MIN_VALUE) {
-      timestamp = context.timestampGenerator().next();
-    }
-    CodecRegistry codecRegistry = context.codecRegistry();
-    ProtocolVersion protocolVersion = context.protocolVersion();
-    ProtocolVersionRegistry registry = context.protocolVersionRegistry();
-    CqlIdentifier keyspace = statement.getKeyspace();
     if (statement instanceof SimpleStatement) {
-      SimpleStatement simpleStatement = (SimpleStatement) statement;
-      if (!simpleStatement.getPositionalValues().isEmpty()
-          && !simpleStatement.getNamedValues().isEmpty()) {
-        throw new IllegalArgumentException(
-            "Can't have both positional and named values in a statement.");
-      }
-      if (keyspace != null
-          && !registry.supports(protocolVersion, ProtocolFeature.PER_REQUEST_KEYSPACE)) {
-        throw new IllegalArgumentException(
-            "Can't use per-request keyspace with protocol " + protocolVersion);
-      }
-      QueryOptions queryOptions =
-          new QueryOptions(
-              consistency,
-              encode(simpleStatement.getPositionalValues(), codecRegistry, protocolVersion),
-              encode(simpleStatement.getNamedValues(), codecRegistry, protocolVersion),
-              false,
-              pageSize,
-              statement.getPagingState(),
-              serialConsistency,
-              timestamp,
-              (keyspace == null) ? null : keyspace.asInternal());
-      return new Query(simpleStatement.getQuery(), queryOptions);
+      return toQuery((SimpleStatement) statement, config, context);
     } else if (statement instanceof BoundStatement) {
-      BoundStatement boundStatement = (BoundStatement) statement;
-      if (!registry.supports(protocolVersion, ProtocolFeature.UNSET_BOUND_VALUES)) {
-        ensureAllSet(boundStatement);
-      }
-      boolean skipMetadata =
-          boundStatement.getPreparedStatement().getResultSetDefinitions().size() > 0;
-      QueryOptions queryOptions =
-          new QueryOptions(
-              consistency,
-              boundStatement.getValues(),
-              Collections.emptyMap(),
-              skipMetadata,
-              pageSize,
-              statement.getPagingState(),
-              serialConsistency,
-              timestamp,
-              null);
-      PreparedStatement preparedStatement = boundStatement.getPreparedStatement();
-      ByteBuffer id = preparedStatement.getId();
-      ByteBuffer resultMetadataId = preparedStatement.getResultMetadataId();
-      return new Execute(
-          Bytes.getArray(id),
-          (resultMetadataId == null) ? null : Bytes.getArray(resultMetadataId),
-          queryOptions);
+      return toExecute((BoundStatement) statement, config, context);
     } else if (statement instanceof BatchStatement) {
-      BatchStatement batchStatement = (BatchStatement) statement;
-      if (!registry.supports(protocolVersion, ProtocolFeature.UNSET_BOUND_VALUES)) {
-        ensureAllSet(batchStatement);
-      }
-      if (keyspace != null
-          && !registry.supports(protocolVersion, ProtocolFeature.PER_REQUEST_KEYSPACE)) {
-        throw new IllegalArgumentException(
-            "Can't use per-request keyspace with protocol " + protocolVersion);
-      }
-      List<Object> queriesOrIds = new ArrayList<>(batchStatement.size());
-      List<List<ByteBuffer>> values = new ArrayList<>(batchStatement.size());
-      for (BatchableStatement<?> child : batchStatement) {
-        if (child instanceof SimpleStatement) {
-          SimpleStatement simpleStatement = (SimpleStatement) child;
-          if (simpleStatement.getNamedValues().size() > 0) {
-            throw new IllegalArgumentException(
-                String.format(
-                    "Batch statements cannot contain simple statements with named values "
-                        + "(offending statement: %s)",
-                    simpleStatement.getQuery()));
-          }
-          queriesOrIds.add(simpleStatement.getQuery());
-          values.add(encode(simpleStatement.getPositionalValues(), codecRegistry, protocolVersion));
-        } else if (child instanceof BoundStatement) {
-          BoundStatement boundStatement = (BoundStatement) child;
-          queriesOrIds.add(Bytes.getArray(boundStatement.getPreparedStatement().getId()));
-          values.add(boundStatement.getValues());
-        } else {
-          throw new IllegalArgumentException(
-              "Unsupported child statement: " + child.getClass().getName());
-        }
-      }
-      return new Batch(
-          batchStatement.getBatchType().getProtocolCode(),
-          queriesOrIds,
-          values,
-          consistency,
-          serialConsistency,
-          timestamp,
-          (keyspace == null) ? null : keyspace.asInternal());
+      return toBatch((BatchStatement) statement, config, context);
     } else {
       throw new IllegalArgumentException(
           "Unsupported statement type: " + statement.getClass().getName());
     }
   }
 
-  public static List<ByteBuffer> encode(
+  public Query toQuery(
+      SimpleStatement statement, DriverConfigProfile config, InternalDriverContext context) {
+    ProtocolVersion protocolVersion = context.protocolVersion();
+    ProtocolVersionRegistry registry = context.protocolVersionRegistry();
+    if (!statement.getPositionalValues().isEmpty() && !statement.getNamedValues().isEmpty()) {
+      throw new IllegalArgumentException(
+          "Can't have both positional and named values in a statement.");
+    }
+    if (statement.getKeyspace() != null
+        && !registry.supports(protocolVersion, ProtocolFeature.PER_REQUEST_KEYSPACE)) {
+      throw new IllegalArgumentException(
+          "Can't use per-request keyspace with protocol " + protocolVersion);
+    }
+    QueryOptions queryOptions = toQueryOptions(statement, config, context);
+    return new Query(statement.getQuery(), queryOptions);
+  }
+
+  public Message toExecute(
+      BoundStatement statement, DriverConfigProfile config, InternalDriverContext context) {
+    ProtocolVersion protocolVersion = context.protocolVersion();
+    ProtocolVersionRegistry registry = context.protocolVersionRegistry();
+    if (!registry.supports(protocolVersion, ProtocolFeature.UNSET_BOUND_VALUES)) {
+      ensureAllSet(statement);
+    }
+    QueryOptions queryOptions = toQueryOptions(statement, config, context);
+    PreparedStatement preparedStatement = statement.getPreparedStatement();
+    ByteBuffer id = preparedStatement.getId();
+    ByteBuffer resultMetadataId = preparedStatement.getResultMetadataId();
+    return new Execute(
+        Bytes.getArray(id),
+        (resultMetadataId == null) ? null : Bytes.getArray(resultMetadataId),
+        queryOptions);
+  }
+
+  public Message toBatch(
+      BatchStatement statement, DriverConfigProfile config, InternalDriverContext context) {
+    CodecRegistry codecRegistry = context.codecRegistry();
+    ProtocolVersion protocolVersion = context.protocolVersion();
+    ProtocolVersionRegistry registry = context.protocolVersionRegistry();
+    CqlIdentifier keyspace = statement.getKeyspace();
+    if (!registry.supports(protocolVersion, ProtocolFeature.UNSET_BOUND_VALUES)) {
+      ensureAllSet(statement);
+    }
+    if (keyspace != null
+        && !registry.supports(protocolVersion, ProtocolFeature.PER_REQUEST_KEYSPACE)) {
+      throw new IllegalArgumentException(
+          "Can't use per-request keyspace with protocol " + protocolVersion);
+    }
+    List<Object> queriesOrIds = new ArrayList<>(statement.size());
+    List<List<ByteBuffer>> values = new ArrayList<>(statement.size());
+    for (BatchableStatement<?> child : statement) {
+      if (child instanceof SimpleStatement) {
+        SimpleStatement simpleStatement = (SimpleStatement) child;
+        if (simpleStatement.getNamedValues().size() > 0) {
+          throw new IllegalArgumentException(
+              String.format(
+                  "Batch statements cannot contain simple statements with named values "
+                      + "(offending statement: %s)",
+                  simpleStatement.getQuery()));
+        }
+        queriesOrIds.add(simpleStatement.getQuery());
+        values.add(encode(simpleStatement.getPositionalValues(), codecRegistry, protocolVersion));
+      } else if (child instanceof BoundStatement) {
+        BoundStatement boundStatement = (BoundStatement) child;
+        queriesOrIds.add(Bytes.getArray(boundStatement.getPreparedStatement().getId()));
+        values.add(boundStatement.getValues());
+      } else {
+        throw new IllegalArgumentException(
+            "Unsupported child statement: " + child.getClass().getName());
+      }
+    }
+    return new Batch(
+        statement.getBatchType().getProtocolCode(),
+        queriesOrIds,
+        values,
+        getConsistencyLevel(config, context),
+        getSerialConsistencyLevel(config, context),
+        getTimestamp(statement, context),
+        (keyspace == null) ? null : keyspace.asInternal());
+  }
+
+  public QueryOptions toQueryOptions(
+      SimpleStatement statement, DriverConfigProfile config, InternalDriverContext context) {
+    CodecRegistry codecRegistry = context.codecRegistry();
+    ProtocolVersion protocolVersion = context.protocolVersion();
+    return new QueryOptions(
+        getConsistencyLevel(config, context),
+        encode(statement.getPositionalValues(), codecRegistry, protocolVersion),
+        encode(statement.getNamedValues(), codecRegistry, protocolVersion),
+        false,
+        getPageSize(config),
+        statement.getPagingState(),
+        getSerialConsistencyLevel(config, context),
+        getTimestamp(statement, context),
+        (statement.getKeyspace() == null) ? null : statement.getKeyspace().asInternal());
+  }
+
+  public QueryOptions toQueryOptions(
+      BoundStatement statement, DriverConfigProfile config, InternalDriverContext context) {
+    return new QueryOptions(
+        getConsistencyLevel(config, context),
+        statement.getValues(),
+        Collections.emptyMap(),
+        isSkipMetadata(statement),
+        getPageSize(config),
+        statement.getPagingState(),
+        getSerialConsistencyLevel(config, context),
+        getTimestamp(statement, context),
+        null);
+  }
+
+  public int getConsistencyLevel(DriverConfigProfile config, InternalDriverContext context) {
+    return context
+        .consistencyLevelRegistry()
+        .fromName(config.getString(DefaultDriverOption.REQUEST_CONSISTENCY))
+        .getProtocolCode();
+  }
+
+  public int getSerialConsistencyLevel(DriverConfigProfile config, InternalDriverContext context) {
+    return context
+        .consistencyLevelRegistry()
+        .fromName(config.getString(DefaultDriverOption.REQUEST_SERIAL_CONSISTENCY))
+        .getProtocolCode();
+  }
+
+  public int getPageSize(DriverConfigProfile config) {
+    return config.getInt(DefaultDriverOption.REQUEST_PAGE_SIZE);
+  }
+
+  public long getTimestamp(Statement<?> statement, InternalDriverContext context) {
+    long timestamp = statement.getTimestamp();
+    if (timestamp == Long.MIN_VALUE) {
+      timestamp = context.timestampGenerator().next();
+    }
+    return timestamp;
+  }
+
+  public boolean isSkipMetadata(BoundStatement statement) {
+    return statement.getPreparedStatement().getResultSetDefinitions().size() > 0;
+  }
+
+  public List<ByteBuffer> encode(
       List<Object> values, CodecRegistry codecRegistry, ProtocolVersion protocolVersion) {
     if (values.isEmpty()) {
       return Collections.emptyList();
@@ -222,7 +262,7 @@ public class Conversions {
     }
   }
 
-  public static Map<String, ByteBuffer> encode(
+  public Map<String, ByteBuffer> encode(
       Map<String, Object> values, CodecRegistry codecRegistry, ProtocolVersion protocolVersion) {
     if (values.isEmpty()) {
       return Collections.emptyMap();
@@ -235,7 +275,7 @@ public class Conversions {
     }
   }
 
-  public static ByteBuffer encode(
+  public ByteBuffer encode(
       Object value, CodecRegistry codecRegistry, ProtocolVersion protocolVersion) {
     if (value instanceof Token) {
       if (value instanceof Murmur3Token) {
@@ -252,7 +292,7 @@ public class Conversions {
     }
   }
 
-  public static void ensureAllSet(BoundStatement boundStatement) {
+  public void ensureAllSet(BoundStatement boundStatement) {
     for (int i = 0; i < boundStatement.size(); i++) {
       if (!boundStatement.isSet(i)) {
         throw new IllegalStateException(
@@ -264,7 +304,7 @@ public class Conversions {
     }
   }
 
-  public static void ensureAllSet(BatchStatement batchStatement) {
+  public void ensureAllSet(BatchStatement batchStatement) {
     for (BatchableStatement<?> batchableStatement : batchStatement) {
       if (batchableStatement instanceof BoundStatement) {
         ensureAllSet(((BoundStatement) batchableStatement));
@@ -272,7 +312,7 @@ public class Conversions {
     }
   }
 
-  public static AsyncResultSet toResultSet(
+  public AsyncResultSet toResultSet(
       Result result,
       ExecutionInfo executionInfo,
       CqlSession session,
@@ -292,7 +332,7 @@ public class Conversions {
     }
   }
 
-  public static ColumnDefinitions getResultDefinitions(
+  public ColumnDefinitions getResultDefinitions(
       Rows rows, Statement<?> statement, InternalDriverContext context) {
     RowsMetadata rowsMetadata = rows.getMetadata();
     if (rowsMetadata.columnSpecs.isEmpty()) {
@@ -315,7 +355,7 @@ public class Conversions {
     }
   }
 
-  public static DefaultPreparedStatement toPreparedStatement(
+  public DefaultPreparedStatement toPreparedStatement(
       Prepared response, PrepareRequest request, InternalDriverContext context) {
     return new DefaultPreparedStatement(
         ByteBuffer.wrap(response.preparedQueryId).asReadOnlyBuffer(),
@@ -336,7 +376,7 @@ public class Conversions {
         ImmutableMap.copyOf(request.getCustomPayload()));
   }
 
-  public static ColumnDefinitions toColumnDefinitions(
+  public ColumnDefinitions toColumnDefinitions(
       RowsMetadata metadata, InternalDriverContext context) {
     ImmutableList.Builder<ColumnDefinition> definitions = ImmutableList.builder();
     for (ColumnSpec columnSpec : metadata.columnSpecs) {
@@ -345,7 +385,7 @@ public class Conversions {
     return DefaultColumnDefinitions.valueOf(definitions.build());
   }
 
-  public static List<Integer> asList(int[] pkIndices) {
+  public List<Integer> asList(int[] pkIndices) {
     if (pkIndices == null || pkIndices.length == 0) {
       return Collections.emptyList();
     } else {
@@ -357,7 +397,7 @@ public class Conversions {
     }
   }
 
-  public static CoordinatorException toThrowable(
+  public CoordinatorException toThrowable(
       Node node, Error errorMessage, InternalDriverContext context) {
     switch (errorMessage.code) {
       case ProtocolConstants.ErrorCode.UNPREPARED:
