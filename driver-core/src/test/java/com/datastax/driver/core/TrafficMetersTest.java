@@ -33,19 +33,22 @@ public class TrafficMetersTest extends CCMTestsSupport {
         long bytesReceivedBefore = bytesReceived.getCount();
         long bytesSentBefore = bytesSent.getCount();
 
-        SimpleStatement statement = new SimpleStatement("SELECT (int)1 AS test FROM system.local");
+        SimpleStatement statement = new SimpleStatement("SELECT host_id FROM system.local");
+        // Set serial CL to something non-default so request size estimate is accurate.
+        statement.setSerialConsistencyLevel(ConsistencyLevel.LOCAL_SERIAL);
         int requestSize = statement.requestSizeInBytes(
                 cluster().getConfiguration().getProtocolOptions().getProtocolVersion(),
                 cluster().getConfiguration().getCodecRegistry());
 
         int responseSize = 9 // header
+                + 4 // kind (ROWS)
                 + 4 // flags
                 + 4 // column count
                 + CBUtil.sizeOfString("system") + CBUtil.sizeOfString("local") // global table specs
-                + CBUtil.sizeOfString("test") // column name
-                + 2 // column type (simple int)
+                + CBUtil.sizeOfString("host_id") // column name
+                + 2 // column type (uuid)
                 + 4 // row count
-                + (4 + 4); // serialized int value + its length
+                + 4 + 16; // uuid length + uuid
 
         for (int i = 0; i < 1000; i++) {
             session().execute(statement);
