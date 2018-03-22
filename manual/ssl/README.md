@@ -118,7 +118,29 @@ Cluster cluster = Cluster.builder()
 
 Note that you can also extend the class and override
 [newSSLEngine(SocketChannel,InetSocketAddress)][newSSLEngine] if you need specific
-configuration on the `SSLEngine` (for example hostname verification).
+configuration on the `SSLEngine`.  For example, to enable hostname verification:
+
+```java
+SSLContext sslContext = ... // create and configure SSL context
+
+RemoteEndpointAwareJdkSSLOptions sslOptions = new RemoteEndpointAwareJdkSSLOptions(sslContext, null) {
+    protected SSLEngine newSSLEngine(SocketChannel channel, InetSocketAddress remoteEndpoint) {
+        SSLEngine engine = super.newSSLEngine(channel, remoteEndpoint);
+        SSLParameters parameters = engine.getSSLParameters();
+        // HTTPS endpoint identification includes hostname verification against certificate's common name.
+        // This API is only available for JDK7+.
+        parameters.setEndpointIdentificationAlgorithm("HTTPS");
+        engine.setSSLParameters(parameters);
+        return engine;
+    }
+};
+
+Cluster cluster = Cluster.builder()
+  .addContactPoint("127.0.0.1")
+  .withSSL(sslOptions)
+  .build();
+```
+
 
 
 #### Netty

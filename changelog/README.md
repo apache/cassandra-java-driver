@@ -14,6 +14,7 @@
 - [documentation] JAVA-1740: Mention C*2.2/3.0 incompatibilities in paging state manual.
 - [improvement] JAVA-1725: Add a getNodeCount method to CCMAccess for easier automation.
 - [new feature] JAVA-708: Add means to measure request sizes.
+- [documentation] JAVA-1788: Add example for enabling host name verification to SSL docs.
 
 
 ### 3.4.0
