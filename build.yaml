@@ -13,6 +13,8 @@ schedules:
       TEST_GROUP="short"
     disable_commit_status: true
     disable_pull_requests: true
+    notify:
+      slack: java-driver-dev-bots
   nightly:
     # Run full suite nightly on change for all primary branches if they have changes.
     schedule: nightly
@@ -23,6 +25,8 @@ schedules:
       TEST_GROUP="long"
     disable_commit_status: true
     disable_pull_requests: true
+    notify:
+      slack: java-driver-dev-bots
   adhoc:
     # Adhoc job for non-primary braches that doesn't have a schedule but may be used to run all configs.
     schedule: adhoc
@@ -33,6 +37,8 @@ schedules:
       TEST_GROUP="long"
     disable_commit_status: true
     disable_pull_requests: true
+    notify:
+      slack: java-driver-dev-bots
 java:
   - openjdk6
   - oraclejdk7
@@ -85,5 +91,3 @@ build:
   - xunit:
     - "**/target/surefire-reports/TEST-*.xml"
     - "**/target/failsafe-reports/TEST-*.xml" 
-notify:
-  slack: java-driver-dev-bots
