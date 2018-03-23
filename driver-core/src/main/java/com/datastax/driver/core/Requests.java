@@ -591,7 +591,12 @@ class Requests {
 
             @Override
             public int encodedSize(Prepare msg, ProtocolVersion version) {
-                return CBUtil.sizeOfLongString(msg.query);
+                int size = CBUtil.sizeOfLongString(msg.query);
+
+                if (version.compareTo(ProtocolVersion.V5) >= 0) {
+                    size += 4; //flags
+                }
+                return size;
             }
         };
 
