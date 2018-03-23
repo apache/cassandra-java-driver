@@ -15,6 +15,7 @@
 - [improvement] JAVA-1725: Add a getNodeCount method to CCMAccess for easier automation.
 - [new feature] JAVA-708: Add means to measure request sizes.
 - [documentation] JAVA-1788: Add example for enabling host name verification to SSL docs.
+- [improvement] JAVA-1791: Revert "JAVA-1677: Warn if auth is configured on the client but not the server."
 
 
 ### 3.4.0
