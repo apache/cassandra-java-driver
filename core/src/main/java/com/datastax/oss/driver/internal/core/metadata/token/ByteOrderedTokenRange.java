@@ -22,7 +22,9 @@ import com.datastax.oss.protocol.internal.util.Bytes;
 import java.math.BigInteger;
 import java.nio.ByteBuffer;
 import java.util.List;
+import net.jcip.annotations.Immutable;
 
+@Immutable
 public class ByteOrderedTokenRange extends TokenRangeBase {
 
   private static final BigInteger TWO = BigInteger.valueOf(2);

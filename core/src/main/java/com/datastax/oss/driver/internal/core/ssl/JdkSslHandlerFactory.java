@@ -20,8 +20,10 @@ import io.netty.channel.Channel;
 import io.netty.handler.ssl.SslHandler;
 import java.net.SocketAddress;
 import javax.net.ssl.SSLEngine;
+import net.jcip.annotations.ThreadSafe;
 
 /** SSL handler factory used when JDK-based SSL was configured through the driver's public API. */
+@ThreadSafe
 public class JdkSslHandlerFactory implements SslHandlerFactory {
   private final SslEngineFactory sslEngineFactory;
 

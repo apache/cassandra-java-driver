@@ -20,11 +20,13 @@ import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
 import com.datastax.oss.driver.internal.core.time.Clock;
 import com.datastax.oss.driver.shaded.guava.common.annotations.VisibleForTesting;
 import java.util.concurrent.atomic.AtomicLong;
+import net.jcip.annotations.ThreadSafe;
 
 /**
  * A timestamp generator that guarantees monotonically increasing timestamps across all client
  * threads, and logs warnings when timestamps drift in the future.
  */
+@ThreadSafe
 public class AtomicTimestampGenerator extends MonotonicTimestampGenerator {
 
   private AtomicLong lastRef = new AtomicLong(0);

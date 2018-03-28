@@ -19,6 +19,7 @@ import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.type.DataType;
 import com.datastax.oss.driver.api.core.type.UserDefinedType;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableList;
+import net.jcip.annotations.NotThreadSafe;
 
 /**
  * Helper class to build {@link UserDefinedType} instances.
@@ -28,6 +29,7 @@ import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableList;
  * you will insert corrupt data in your database. If you decide to use this class anyway, make sure
  * that you define fields in the correct order, and that the database schema never changes.
  */
+@NotThreadSafe
 public class UserDefinedTypeBuilder {
 
   private final CqlIdentifier keyspaceName;

@@ -34,10 +34,12 @@ import io.netty.util.concurrent.ScheduledFuture;
 import java.time.Duration;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
+import net.jcip.annotations.ThreadSafe;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /** The default loader; it is based on Typesafe Config and reloads at a configurable interval. */
+@ThreadSafe
 public class DefaultDriverConfigLoader implements DriverConfigLoader {
 
   private static final Logger LOG = LoggerFactory.getLogger(DefaultDriverConfigLoader.class);

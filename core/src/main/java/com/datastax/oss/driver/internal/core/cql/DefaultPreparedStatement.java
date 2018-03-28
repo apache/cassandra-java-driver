@@ -34,7 +34,9 @@ import com.datastax.oss.protocol.internal.ProtocolConstants;
 import java.nio.ByteBuffer;
 import java.util.List;
 import java.util.Map;
+import net.jcip.annotations.ThreadSafe;
 
+@ThreadSafe
 public class DefaultPreparedStatement implements PreparedStatement {
 
   private final ByteBuffer id;

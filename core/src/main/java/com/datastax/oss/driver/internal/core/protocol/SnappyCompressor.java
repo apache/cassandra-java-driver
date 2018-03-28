@@ -19,8 +19,10 @@ import com.datastax.oss.driver.api.core.context.DriverContext;
 import io.netty.buffer.ByteBuf;
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import net.jcip.annotations.ThreadSafe;
 import org.xerial.snappy.Snappy;
 
+@ThreadSafe
 public class SnappyCompressor extends ByteBufCompressor {
 
   public SnappyCompressor(@SuppressWarnings("unused") DriverContext context) {

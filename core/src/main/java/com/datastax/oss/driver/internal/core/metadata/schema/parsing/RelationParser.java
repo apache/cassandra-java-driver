@@ -26,8 +26,10 @@ import com.datastax.oss.driver.internal.core.metadata.schema.queries.SchemaRows;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableMap;
 import java.nio.ByteBuffer;
 import java.util.Map;
+import net.jcip.annotations.ThreadSafe;
 
 // Shared code for table and view parsing
+@ThreadSafe
 public abstract class RelationParser {
 
   protected final SchemaRows rows;

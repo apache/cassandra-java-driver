@@ -17,7 +17,9 @@ package com.datastax.oss.driver.internal.core.metadata.schema.parsing;
 
 import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
 import com.datastax.oss.driver.internal.core.metadata.schema.queries.SchemaRows;
+import net.jcip.annotations.ThreadSafe;
 
+@ThreadSafe
 public class DefaultSchemaParserFactory implements SchemaParserFactory {
 
   private final InternalDriverContext context;

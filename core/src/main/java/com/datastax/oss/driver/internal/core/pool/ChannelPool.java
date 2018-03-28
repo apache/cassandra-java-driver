@@ -52,6 +52,7 @@ import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.atomic.AtomicInteger;
+import net.jcip.annotations.ThreadSafe;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -63,6 +64,7 @@ import org.slf4j.LoggerFactory;
  * <p>If one or more channels go down, a reconnection process starts in order to replace them; it
  * runs until the channel count is back to its intended target.
  */
+@ThreadSafe
 public class ChannelPool implements AsyncAutoCloseable {
   private static final Logger LOG = LoggerFactory.getLogger(ChannelPool.class);
 

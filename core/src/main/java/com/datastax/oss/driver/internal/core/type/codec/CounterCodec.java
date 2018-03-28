@@ -17,7 +17,9 @@ package com.datastax.oss.driver.internal.core.type.codec;
 
 import com.datastax.oss.driver.api.core.type.DataType;
 import com.datastax.oss.driver.api.core.type.DataTypes;
+import net.jcip.annotations.ThreadSafe;
 
+@ThreadSafe
 public class CounterCodec extends BigIntCodec {
   @Override
   public DataType getCqlType() {

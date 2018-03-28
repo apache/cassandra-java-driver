@@ -27,6 +27,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
+import net.jcip.annotations.Immutable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -34,6 +35,7 @@ import org.slf4j.LoggerFactory;
  * Gathers all the rows returned by the queries for a schema refresh, categorizing them by
  * keyspace/table where relevant.
  */
+@Immutable
 public class SchemaRows {
 
   public final boolean isCassandraV3;

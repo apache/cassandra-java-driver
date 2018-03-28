@@ -27,7 +27,9 @@ import java.io.ObjectInputStream;
 import java.io.Serializable;
 import java.nio.ByteBuffer;
 import java.util.Objects;
+import net.jcip.annotations.Immutable;
 
+@Immutable
 public class DefaultTupleValue implements TupleValue {
 
   private static final long serialVersionUID = 1;

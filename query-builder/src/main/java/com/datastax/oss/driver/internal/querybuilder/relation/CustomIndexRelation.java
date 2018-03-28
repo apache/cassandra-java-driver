@@ -18,7 +18,9 @@ package com.datastax.oss.driver.internal.querybuilder.relation;
 import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.querybuilder.relation.Relation;
 import com.datastax.oss.driver.api.querybuilder.term.Term;
+import net.jcip.annotations.Immutable;
 
+@Immutable
 public class CustomIndexRelation implements Relation {
 
   private final CqlIdentifier indexId;

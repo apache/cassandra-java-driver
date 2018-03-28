@@ -22,7 +22,9 @@ import com.datastax.oss.driver.api.querybuilder.relation.Relation;
 import com.datastax.oss.driver.api.querybuilder.term.Term;
 import com.datastax.oss.driver.internal.querybuilder.lhs.ColumnLeftOperand;
 import com.datastax.oss.driver.shaded.guava.common.base.Preconditions;
+import net.jcip.annotations.Immutable;
 
+@Immutable
 public class DefaultColumnRelationBuilder implements ColumnRelationBuilder<Relation> {
 
   private final CqlIdentifier columnId;
@@ -37,6 +39,7 @@ public class DefaultColumnRelationBuilder implements ColumnRelationBuilder<Relat
     return new DefaultRelation(new ColumnLeftOperand(columnId), operator, rightOperand);
   }
 
+  @Immutable
   public static class Fluent<StatementT extends OngoingWhereClause<StatementT>>
       implements ColumnRelationBuilder<StatementT> {
 

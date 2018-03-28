@@ -29,7 +29,9 @@ import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.util.Set;
 import java.util.function.Function;
+import net.jcip.annotations.ThreadSafe;
 
+@ThreadSafe
 public class DefaultNodeMetricUpdater extends MetricUpdaterBase<NodeMetric>
     implements NodeMetricUpdater {
 

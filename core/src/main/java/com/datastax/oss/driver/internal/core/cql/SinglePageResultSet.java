@@ -23,7 +23,9 @@ import com.datastax.oss.driver.api.core.cql.Row;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableList;
 import java.util.Iterator;
 import java.util.List;
+import net.jcip.annotations.NotThreadSafe;
 
+@NotThreadSafe
 public class SinglePageResultSet implements ResultSet {
   private final AsyncResultSet onlyPage;
 

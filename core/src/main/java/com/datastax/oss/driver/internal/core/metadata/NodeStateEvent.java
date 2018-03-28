@@ -18,7 +18,9 @@ package com.datastax.oss.driver.internal.core.metadata;
 import com.datastax.oss.driver.api.core.metadata.NodeState;
 import com.datastax.oss.driver.shaded.guava.common.base.Preconditions;
 import java.util.Objects;
+import net.jcip.annotations.Immutable;
 
+@Immutable
 public class NodeStateEvent {
   public static NodeStateEvent changed(NodeState oldState, NodeState newState, DefaultNode node) {
     Preconditions.checkNotNull(oldState);

@@ -53,6 +53,7 @@ import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ConcurrentMap;
+import net.jcip.annotations.ThreadSafe;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -71,6 +72,7 @@ import org.slf4j.LoggerFactory;
  *   <li>trying to send the message on each pool, in the order of the query plan
  * </ul>
  */
+@ThreadSafe
 public class DefaultSession implements CqlSession {
 
   private static final Logger LOG = LoggerFactory.getLogger(DefaultSession.class);

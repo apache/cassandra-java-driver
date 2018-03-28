@@ -22,7 +22,9 @@ import com.datastax.oss.driver.api.core.metadata.token.TokenRange;
 import com.datastax.oss.driver.shaded.guava.common.collect.Lists;
 import java.math.BigInteger;
 import java.util.List;
+import net.jcip.annotations.Immutable;
 
+@Immutable
 public class RandomTokenRange extends TokenRangeBase {
 
   private static final BigInteger RING_LENGTH = MAX_VALUE.add(BigInteger.ONE);

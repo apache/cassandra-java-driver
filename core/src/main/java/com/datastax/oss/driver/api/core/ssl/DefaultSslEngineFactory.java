@@ -24,6 +24,7 @@ import java.security.NoSuchAlgorithmException;
 import java.util.List;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLEngine;
+import net.jcip.annotations.ThreadSafe;
 
 /**
  * Default SSL implementation.
@@ -42,6 +43,7 @@ import javax.net.ssl.SSLEngine;
  *
  * See the {@code reference.conf} file included with the driver for more information.
  */
+@ThreadSafe
 public class DefaultSslEngineFactory implements SslEngineFactory {
 
   private final SSLContext sslContext;

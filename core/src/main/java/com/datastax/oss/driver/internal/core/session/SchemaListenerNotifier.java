@@ -26,7 +26,9 @@ import com.datastax.oss.driver.internal.core.metadata.schema.events.ViewChangeEv
 import com.datastax.oss.driver.internal.core.util.concurrent.RunOrSchedule;
 import io.netty.util.concurrent.EventExecutor;
 import java.util.Set;
+import net.jcip.annotations.ThreadSafe;
 
+@ThreadSafe
 class SchemaListenerNotifier {
 
   private final Set<SchemaChangeListener> listeners;

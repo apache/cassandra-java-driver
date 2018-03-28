@@ -30,9 +30,11 @@ import com.typesafe.config.ConfigValue;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Map;
+import net.jcip.annotations.ThreadSafe;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+@ThreadSafe
 public class TypesafeDriverConfig implements DriverConfig {
 
   private static final Logger LOG = LoggerFactory.getLogger(TypesafeDriverConfig.class);

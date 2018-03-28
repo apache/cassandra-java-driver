@@ -17,7 +17,9 @@ package com.datastax.oss.driver.internal.querybuilder.update;
 
 import com.datastax.oss.driver.api.querybuilder.term.Term;
 import com.datastax.oss.driver.internal.querybuilder.lhs.LeftOperand;
+import net.jcip.annotations.Immutable;
 
+@Immutable
 public class AppendAssignment extends DefaultAssignment {
 
   public AppendAssignment(LeftOperand leftOperand, Term rightOperand) {

@@ -21,6 +21,7 @@ import io.netty.channel.ChannelPromise;
 import io.netty.util.concurrent.Future;
 import io.netty.util.concurrent.PromiseCombiner;
 import java.net.SocketAddress;
+import net.jcip.annotations.NotThreadSafe;
 
 /**
  * A handler that delays the promise returned by {@code bootstrap.connect()}, in order to run a
@@ -35,6 +36,7 @@ import java.net.SocketAddress;
  * clients' promise can be completed with {@link #setConnectSuccess()} or {@link
  * #setConnectFailure(Throwable)}.
  */
+@NotThreadSafe
 public abstract class ConnectInitHandler extends ChannelDuplexHandler {
   // the completion of the custom initialization process
   private ChannelPromise initPromise;

@@ -28,11 +28,13 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
+import net.jcip.annotations.ThreadSafe;
 
 /**
  * Implementation note: all the mutable state in this class is read concurrently, but only mutated
  * from {@link MetadataManager}'s admin thread.
  */
+@ThreadSafe
 public class DefaultNode implements Node {
 
   private final InetSocketAddress connectAddress;

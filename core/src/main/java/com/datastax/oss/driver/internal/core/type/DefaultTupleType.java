@@ -26,7 +26,9 @@ import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableList;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.util.List;
+import net.jcip.annotations.Immutable;
 
+@Immutable
 public class DefaultTupleType implements TupleType {
 
   private static final long serialVersionUID = 1;

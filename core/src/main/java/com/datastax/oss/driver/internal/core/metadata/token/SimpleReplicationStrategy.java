@@ -25,7 +25,9 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import net.jcip.annotations.ThreadSafe;
 
+@ThreadSafe
 class SimpleReplicationStrategy implements ReplicationStrategy {
 
   private final int replicationFactor;

@@ -22,7 +22,9 @@ import com.datastax.oss.driver.api.core.type.codec.registry.CodecRegistry;
 import com.datastax.oss.driver.internal.core.cql.DefaultBoundStatement;
 import com.datastax.oss.protocol.internal.ProtocolConstants;
 import java.nio.ByteBuffer;
+import net.jcip.annotations.NotThreadSafe;
 
+@NotThreadSafe
 public class BoundStatementBuilder extends StatementBuilder<BoundStatementBuilder, BoundStatement>
     implements Bindable<BoundStatementBuilder> {
 

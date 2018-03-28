@@ -21,7 +21,9 @@ import com.datastax.oss.driver.api.querybuilder.relation.Relation;
 import com.datastax.oss.driver.api.querybuilder.relation.TokenRelationBuilder;
 import com.datastax.oss.driver.api.querybuilder.term.Term;
 import com.datastax.oss.driver.internal.querybuilder.lhs.TokenLeftOperand;
+import net.jcip.annotations.Immutable;
 
+@Immutable
 public class DefaultTokenRelationBuilder implements TokenRelationBuilder<Relation> {
 
   private final Iterable<CqlIdentifier> identifiers;
@@ -35,6 +37,7 @@ public class DefaultTokenRelationBuilder implements TokenRelationBuilder<Relatio
     return new DefaultRelation(new TokenLeftOperand(identifiers), operator, rightOperand);
   }
 
+  @Immutable
   public static class Fluent<StatementT extends OngoingWhereClause<StatementT>>
       implements TokenRelationBuilder<StatementT> {
 

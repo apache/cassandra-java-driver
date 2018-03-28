@@ -30,6 +30,7 @@ import java.util.Optional;
 import java.util.SortedSet;
 import java.util.TreeMap;
 import java.util.TreeSet;
+import net.jcip.annotations.ThreadSafe;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -42,6 +43,7 @@ import org.slf4j.LoggerFactory;
  *
  * @see DefaultProtocolVersion
  */
+@ThreadSafe
 public class CassandraProtocolVersionRegistry implements ProtocolVersionRegistry {
 
   private static final Logger LOG = LoggerFactory.getLogger(CassandraProtocolVersionRegistry.class);

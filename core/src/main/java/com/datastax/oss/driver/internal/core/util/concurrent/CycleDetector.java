@@ -19,10 +19,12 @@ import com.datastax.oss.driver.shaded.guava.common.annotations.VisibleForTesting
 import com.datastax.oss.driver.shaded.guava.common.graph.Graphs;
 import com.datastax.oss.driver.shaded.guava.common.graph.MutableValueGraph;
 import com.datastax.oss.driver.shaded.guava.common.graph.ValueGraphBuilder;
+import net.jcip.annotations.ThreadSafe;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /** Detects cycles between a set of {@link LazyReference} instances. */
+@ThreadSafe
 public class CycleDetector {
   private static final boolean ENABLED =
       Boolean.getBoolean("com.datastax.oss.driver.DETECT_CYCLES");

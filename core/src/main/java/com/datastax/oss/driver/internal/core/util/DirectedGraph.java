@@ -27,8 +27,10 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Queue;
+import net.jcip.annotations.NotThreadSafe;
 
 /** A basic directed graph implementation to perform topological sorts. */
+@NotThreadSafe
 public class DirectedGraph<V> {
 
   // We need to keep track of the predecessor count. For simplicity, use a map to store it

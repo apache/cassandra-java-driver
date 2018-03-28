@@ -24,7 +24,9 @@ import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import net.jcip.annotations.Immutable;
 
+@Immutable
 public abstract class TokenRangeBase implements TokenRange {
 
   private final Token start;

@@ -21,10 +21,12 @@ import com.datastax.oss.driver.shaded.guava.common.annotations.VisibleForTesting
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableMap;
 import java.net.InetSocketAddress;
 import java.util.Set;
+import net.jcip.annotations.ThreadSafe;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /** Creates minimal node info about the contact points, before the first connection. */
+@ThreadSafe
 class InitContactPointsRefresh implements MetadataRefresh {
   private static final Logger LOG = LoggerFactory.getLogger(InitContactPointsRefresh.class);
 

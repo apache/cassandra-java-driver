@@ -18,7 +18,9 @@ package com.datastax.oss.driver.internal.core.protocol;
 import com.datastax.oss.protocol.internal.Compressor;
 import io.netty.buffer.ByteBuf;
 import java.nio.ByteBuffer;
+import net.jcip.annotations.ThreadSafe;
 
+@ThreadSafe
 public abstract class ByteBufCompressor implements Compressor<ByteBuf> {
 
   @Override

@@ -19,8 +19,10 @@ import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.context.DriverContext;
 import com.datastax.oss.driver.api.core.metadata.Node;
 import com.datastax.oss.driver.api.core.session.Request;
+import net.jcip.annotations.ThreadSafe;
 
 /** A policy that never triggers speculative executions. */
+@ThreadSafe
 public class NoSpeculativeExecutionPolicy implements SpeculativeExecutionPolicy {
 
   public NoSpeculativeExecutionPolicy(@SuppressWarnings("unused") DriverContext context) {

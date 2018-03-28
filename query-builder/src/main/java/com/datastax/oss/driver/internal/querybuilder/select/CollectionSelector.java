@@ -21,7 +21,9 @@ import com.datastax.oss.driver.internal.querybuilder.CqlHelper;
 import com.datastax.oss.driver.shaded.guava.common.base.Preconditions;
 import com.datastax.oss.driver.shaded.guava.common.collect.Iterables;
 import java.util.Objects;
+import net.jcip.annotations.Immutable;
 
+@Immutable
 public abstract class CollectionSelector implements Selector {
 
   private final Iterable<Selector> elementSelectors;

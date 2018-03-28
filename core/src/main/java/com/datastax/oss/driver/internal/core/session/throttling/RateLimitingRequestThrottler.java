@@ -27,10 +27,13 @@ import java.util.ArrayDeque;
 import java.util.Deque;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.ReentrantLock;
+import net.jcip.annotations.GuardedBy;
+import net.jcip.annotations.ThreadSafe;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /** A request throttler that limits the rate of requests per second. */
+@ThreadSafe
 public class RateLimitingRequestThrottler implements RequestThrottler {
 
   private static final Logger LOG = LoggerFactory.getLogger(RateLimitingRequestThrottler.class);
@@ -44,13 +47,16 @@ public class RateLimitingRequestThrottler implements RequestThrottler {
 
   private final ReentrantLock lock = new ReentrantLock();
 
-  // guarded by lock
+  @GuardedBy("lock")
   private long lastUpdateNanos;
-  // guarded by lock
+
+  @GuardedBy("lock")
   private int storedPermits;
-  // guarded by lock
+
+  @GuardedBy("lock")
   private final Deque<Throttled> queue = new ArrayDeque<>();
-  // guarded by lock
+
+  @GuardedBy("lock")
   private boolean closed;
 
   @SuppressWarnings("unused")

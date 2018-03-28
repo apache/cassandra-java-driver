@@ -17,8 +17,10 @@ package com.datastax.oss.driver.internal.core.util.concurrent;
 
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Supplier;
+import net.jcip.annotations.ThreadSafe;
 
 /** Holds a reference to an object that is initialized on first access. */
+@ThreadSafe
 public class LazyReference<T> {
 
   private final String name;

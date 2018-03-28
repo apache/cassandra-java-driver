@@ -20,7 +20,9 @@ import com.datastax.oss.driver.api.core.metadata.Metadata;
 import com.datastax.oss.driver.internal.core.channel.DriverChannel;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
+import net.jcip.annotations.ThreadSafe;
 
+@ThreadSafe
 class Cassandra21SchemaQueries extends SchemaQueries {
   Cassandra21SchemaQueries(
       DriverChannel channel,

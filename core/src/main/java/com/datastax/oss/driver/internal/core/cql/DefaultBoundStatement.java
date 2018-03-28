@@ -29,7 +29,9 @@ import java.nio.ByteBuffer;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import net.jcip.annotations.Immutable;
 
+@Immutable
 public class DefaultBoundStatement implements BoundStatement {
 
   private final PreparedStatement preparedStatement;

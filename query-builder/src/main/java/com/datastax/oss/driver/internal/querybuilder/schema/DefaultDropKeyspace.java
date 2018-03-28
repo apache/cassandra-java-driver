@@ -17,7 +17,9 @@ package com.datastax.oss.driver.internal.querybuilder.schema;
 
 import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.querybuilder.schema.Drop;
+import net.jcip.annotations.Immutable;
 
+@Immutable
 public class DefaultDropKeyspace implements Drop {
 
   private final CqlIdentifier keyspaceName;

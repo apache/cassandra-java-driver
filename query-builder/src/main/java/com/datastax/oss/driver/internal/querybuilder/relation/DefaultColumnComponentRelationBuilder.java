@@ -21,7 +21,9 @@ import com.datastax.oss.driver.api.querybuilder.relation.OngoingWhereClause;
 import com.datastax.oss.driver.api.querybuilder.relation.Relation;
 import com.datastax.oss.driver.api.querybuilder.term.Term;
 import com.datastax.oss.driver.internal.querybuilder.lhs.ColumnComponentLeftOperand;
+import net.jcip.annotations.Immutable;
 
+@Immutable
 public class DefaultColumnComponentRelationBuilder
     implements ColumnComponentRelationBuilder<Relation> {
 
@@ -39,6 +41,7 @@ public class DefaultColumnComponentRelationBuilder
         new ColumnComponentLeftOperand(columnId, index), operator, rightOperand);
   }
 
+  @Immutable
   public static class Fluent<StatementT extends OngoingWhereClause<StatementT>>
       implements ColumnComponentRelationBuilder<StatementT> {
 

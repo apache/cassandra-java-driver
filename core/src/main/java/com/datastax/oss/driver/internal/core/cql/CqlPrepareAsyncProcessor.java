@@ -26,7 +26,9 @@ import com.datastax.oss.driver.internal.core.session.RequestProcessor;
 import java.nio.ByteBuffer;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ConcurrentMap;
+import net.jcip.annotations.ThreadSafe;
 
+@ThreadSafe
 public class CqlPrepareAsyncProcessor
     implements RequestProcessor<PrepareRequest, CompletionStage<PreparedStatement>> {
 

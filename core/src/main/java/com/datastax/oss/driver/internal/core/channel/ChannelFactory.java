@@ -38,10 +38,12 @@ import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.CopyOnWriteArrayList;
+import net.jcip.annotations.ThreadSafe;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /** Builds {@link DriverChannel} objects for an instance of the driver. */
+@ThreadSafe
 public class ChannelFactory {
 
   private static final Logger LOG = LoggerFactory.getLogger(ChannelFactory.class);

@@ -37,9 +37,11 @@ import java.util.Map;
 import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeSet;
+import net.jcip.annotations.Immutable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+@Immutable
 public class DefaultTokenMap implements TokenMap {
 
   private static final Logger LOG = LoggerFactory.getLogger(DefaultTokenMap.class);

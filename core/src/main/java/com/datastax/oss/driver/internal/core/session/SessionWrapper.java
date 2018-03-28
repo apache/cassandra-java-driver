@@ -25,6 +25,7 @@ import com.datastax.oss.driver.api.core.session.Request;
 import com.datastax.oss.driver.api.core.session.Session;
 import com.datastax.oss.driver.api.core.type.reflect.GenericType;
 import java.util.concurrent.CompletionStage;
+import net.jcip.annotations.ThreadSafe;
 
 /**
  * Utility class to wrap a session.
@@ -39,6 +40,7 @@ import java.util.concurrent.CompletionStage;
  * }
  * }</pre>
  */
+@ThreadSafe
 public class SessionWrapper implements Session {
 
   private final Session delegate;

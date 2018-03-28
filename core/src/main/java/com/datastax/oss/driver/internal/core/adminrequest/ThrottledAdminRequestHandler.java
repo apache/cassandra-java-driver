@@ -28,7 +28,9 @@ import java.time.Duration;
 import java.util.Map;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.TimeUnit;
+import net.jcip.annotations.ThreadSafe;
 
+@ThreadSafe
 public class ThrottledAdminRequestHandler extends AdminRequestHandler implements Throttled {
 
   private final long startTimeNanos;

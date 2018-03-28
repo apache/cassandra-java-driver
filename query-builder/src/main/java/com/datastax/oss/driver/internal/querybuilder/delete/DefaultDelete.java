@@ -28,7 +28,9 @@ import com.datastax.oss.driver.internal.querybuilder.CqlHelper;
 import com.datastax.oss.driver.internal.querybuilder.ImmutableCollections;
 import com.datastax.oss.driver.internal.querybuilder.select.ElementSelector;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableList;
+import net.jcip.annotations.Immutable;
 
+@Immutable
 public class DefaultDelete implements DeleteSelection, Delete {
 
   private final CqlIdentifier keyspace;

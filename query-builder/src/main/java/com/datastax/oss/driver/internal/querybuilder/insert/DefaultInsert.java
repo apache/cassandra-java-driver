@@ -29,7 +29,9 @@ import com.datastax.oss.driver.internal.querybuilder.CqlHelper;
 import com.datastax.oss.driver.internal.querybuilder.ImmutableCollections;
 import com.datastax.oss.driver.shaded.guava.common.base.Preconditions;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableMap;
+import net.jcip.annotations.Immutable;
 
+@Immutable
 public class DefaultInsert implements InsertInto, RegularInsert, JsonInsert {
 
   public enum MissingJsonBehavior {

@@ -22,7 +22,9 @@ import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableList;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableMap;
 import java.net.InetSocketAddress;
 import java.util.Map;
+import net.jcip.annotations.ThreadSafe;
 
+@ThreadSafe
 public class AddNodeRefresh extends NodesRefresh {
 
   @VisibleForTesting final NodeInfo newNodeInfo;

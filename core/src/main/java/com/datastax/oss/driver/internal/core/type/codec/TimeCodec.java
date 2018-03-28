@@ -25,7 +25,9 @@ import com.datastax.oss.driver.internal.core.util.Strings;
 import java.nio.ByteBuffer;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
+import net.jcip.annotations.ThreadSafe;
 
+@ThreadSafe
 public class TimeCodec implements TypeCodec<LocalTime> {
 
   private static final DateTimeFormatter FORMATTER =

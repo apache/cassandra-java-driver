@@ -29,6 +29,7 @@ import com.datastax.oss.driver.shaded.guava.common.util.concurrent.UncheckedExec
 import java.util.Objects;
 import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
+import net.jcip.annotations.ThreadSafe;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -37,6 +38,7 @@ import org.slf4j.LoggerFactory;
  *
  * <p>It is a caching registry based on Guava cache (note that the driver shades Guava).
  */
+@ThreadSafe
 public class DefaultCodecRegistry extends CachingCodecRegistry {
 
   private static final Logger LOG = LoggerFactory.getLogger(DefaultCodecRegistry.class);

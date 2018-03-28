@@ -25,7 +25,9 @@ import com.datastax.oss.driver.api.core.metadata.schema.ViewMetadata;
 import com.datastax.oss.driver.api.core.type.UserDefinedType;
 import java.util.Map;
 import java.util.Objects;
+import net.jcip.annotations.Immutable;
 
+@Immutable
 public class DefaultKeyspaceMetadata implements KeyspaceMetadata {
 
   private final CqlIdentifier name;

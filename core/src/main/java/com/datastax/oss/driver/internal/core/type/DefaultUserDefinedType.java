@@ -28,7 +28,9 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.util.List;
 import java.util.Objects;
+import net.jcip.annotations.Immutable;
 
+@Immutable
 public class DefaultUserDefinedType implements UserDefinedType {
 
   private static final long serialVersionUID = 1;

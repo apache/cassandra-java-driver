@@ -25,7 +25,9 @@ import com.datastax.oss.protocol.internal.util.Bytes;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.nio.ByteBuffer;
+import net.jcip.annotations.ThreadSafe;
 
+@ThreadSafe
 public class InetCodec implements TypeCodec<InetAddress> {
   @Override
   public GenericType<InetAddress> getJavaType() {

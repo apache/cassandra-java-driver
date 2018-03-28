@@ -29,9 +29,11 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Queue;
 import java.util.concurrent.CompletionStage;
+import net.jcip.annotations.NotThreadSafe;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+@NotThreadSafe // wraps a mutable queue
 public class DefaultAsyncResultSet implements AsyncResultSet {
 
   private static final Logger LOG = LoggerFactory.getLogger(DefaultAsyncResultSet.class);

@@ -18,7 +18,9 @@ package com.datastax.oss.driver.internal.core.metadata.schema.events;
 import com.datastax.oss.driver.api.core.metadata.schema.KeyspaceMetadata;
 import com.datastax.oss.driver.internal.core.metadata.schema.SchemaChangeType;
 import java.util.Objects;
+import net.jcip.annotations.Immutable;
 
+@Immutable
 public class KeyspaceChangeEvent {
 
   public static KeyspaceChangeEvent dropped(KeyspaceMetadata oldKeyspace) {

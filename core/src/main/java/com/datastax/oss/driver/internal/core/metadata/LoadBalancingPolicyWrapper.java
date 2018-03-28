@@ -33,6 +33,7 @@ import java.util.Map;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.atomic.AtomicReference;
+import net.jcip.annotations.ThreadSafe;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -47,6 +48,7 @@ import org.slf4j.LoggerFactory;
  *   <li>process distance decisions from the policy and propagate them to the outside world.
  * </ul>
  */
+@ThreadSafe
 public class LoadBalancingPolicyWrapper
     implements LoadBalancingPolicy.DistanceReporter, AutoCloseable {
 

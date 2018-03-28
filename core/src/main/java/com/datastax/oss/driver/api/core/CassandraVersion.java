@@ -21,6 +21,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import net.jcip.annotations.Immutable;
 
 /**
  * The version of a Cassandra release.
@@ -32,6 +33,7 @@ import java.util.regex.Pattern;
  * versions that don't have one, and labels are sorted alphabetically if necessary. Build metadata
  * are ignored for sorting versions.
  */
+@Immutable
 public class CassandraVersion implements Comparable<CassandraVersion> {
 
   private static final String VERSION_REGEXP =

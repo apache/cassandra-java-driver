@@ -19,7 +19,9 @@ import com.datastax.oss.driver.api.querybuilder.relation.Relation;
 import com.datastax.oss.driver.api.querybuilder.term.Term;
 import com.datastax.oss.driver.internal.querybuilder.lhs.LeftOperand;
 import com.datastax.oss.driver.shaded.guava.common.base.Preconditions;
+import net.jcip.annotations.Immutable;
 
+@Immutable
 public class DefaultRelation implements Relation {
 
   private final LeftOperand leftOperand;

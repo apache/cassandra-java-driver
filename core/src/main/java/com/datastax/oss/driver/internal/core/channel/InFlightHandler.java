@@ -40,10 +40,12 @@ import io.netty.channel.ChannelPromise;
 import io.netty.util.concurrent.Promise;
 import java.util.HashMap;
 import java.util.Map;
+import net.jcip.annotations.NotThreadSafe;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /** Manages requests that are currently executing on a channel. */
+@NotThreadSafe
 public class InFlightHandler extends ChannelDuplexHandler {
   private static final Logger LOG = LoggerFactory.getLogger(InFlightHandler.class);
 

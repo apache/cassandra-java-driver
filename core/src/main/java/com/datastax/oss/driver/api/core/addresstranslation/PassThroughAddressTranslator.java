@@ -17,8 +17,10 @@ package com.datastax.oss.driver.api.core.addresstranslation;
 
 import com.datastax.oss.driver.api.core.context.DriverContext;
 import java.net.InetSocketAddress;
+import net.jcip.annotations.ThreadSafe;
 
 /** An address translator that always returns the same address unchanged. */
+@ThreadSafe
 public class PassThroughAddressTranslator implements AddressTranslator {
 
   public PassThroughAddressTranslator(@SuppressWarnings("unused") DriverContext context) {

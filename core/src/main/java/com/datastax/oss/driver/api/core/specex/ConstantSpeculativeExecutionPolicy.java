@@ -21,6 +21,7 @@ import com.datastax.oss.driver.api.core.config.DriverConfigProfile;
 import com.datastax.oss.driver.api.core.context.DriverContext;
 import com.datastax.oss.driver.api.core.metadata.Node;
 import com.datastax.oss.driver.api.core.session.Request;
+import net.jcip.annotations.ThreadSafe;
 
 /**
  * A policy that schedules a configurable number of speculative executions, separated by a fixed
@@ -29,6 +30,7 @@ import com.datastax.oss.driver.api.core.session.Request;
  * <p>See the (commented) sample configuration in {@code reference.conf} for detailed explanations
  * about each option.
  */
+@ThreadSafe
 public class ConstantSpeculativeExecutionPolicy implements SpeculativeExecutionPolicy {
 
   private final int maxExecutions;

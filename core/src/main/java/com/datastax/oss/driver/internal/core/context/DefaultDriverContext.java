@@ -72,6 +72,7 @@ import io.netty.buffer.ByteBuf;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
+import net.jcip.annotations.ThreadSafe;
 
 /**
  * Default implementation of the driver context.
@@ -90,6 +91,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  * configuration: the intent is that someone can extend this class, override one (or more) of the
  * buildXxx methods, and initialize the cluster with this new implementation.
  */
+@ThreadSafe
 public class DefaultDriverContext implements InternalDriverContext {
 
   private static final AtomicInteger SESSION_NAME_COUNTER = new AtomicInteger();

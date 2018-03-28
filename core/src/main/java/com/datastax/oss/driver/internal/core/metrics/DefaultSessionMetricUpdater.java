@@ -25,9 +25,11 @@ import com.datastax.oss.driver.internal.core.session.throttling.ConcurrencyLimit
 import com.datastax.oss.driver.internal.core.session.throttling.RateLimitingRequestThrottler;
 import com.datastax.oss.driver.internal.core.session.throttling.RequestThrottler;
 import java.util.Set;
+import net.jcip.annotations.ThreadSafe;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+@ThreadSafe
 public class DefaultSessionMetricUpdater extends MetricUpdaterBase<SessionMetric>
     implements SessionMetricUpdater {
 

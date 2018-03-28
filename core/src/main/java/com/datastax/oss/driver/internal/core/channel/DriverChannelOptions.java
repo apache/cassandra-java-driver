@@ -19,8 +19,10 @@ import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.shaded.guava.common.base.Preconditions;
 import java.util.Collections;
 import java.util.List;
+import net.jcip.annotations.Immutable;
 
 /** Options for the creation of a driver channel. */
+@Immutable
 public class DriverChannelOptions {
 
   /** No keyspace, no events, don't report available stream ids. */

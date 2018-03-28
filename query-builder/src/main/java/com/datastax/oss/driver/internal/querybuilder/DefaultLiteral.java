@@ -20,7 +20,9 @@ import com.datastax.oss.driver.api.core.type.codec.TypeCodec;
 import com.datastax.oss.driver.api.querybuilder.Literal;
 import com.datastax.oss.driver.api.querybuilder.select.Selector;
 import com.datastax.oss.driver.shaded.guava.common.base.Preconditions;
+import net.jcip.annotations.Immutable;
 
+@Immutable
 public class DefaultLiteral<T> implements Literal {
 
   private final T value;

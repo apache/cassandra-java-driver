@@ -24,7 +24,9 @@ import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableMap;
 import java.nio.ByteBuffer;
 import java.util.List;
 import java.util.Map;
+import net.jcip.annotations.Immutable;
 
+@Immutable
 public class DefaultSimpleStatement implements SimpleStatement {
 
   private final String query;

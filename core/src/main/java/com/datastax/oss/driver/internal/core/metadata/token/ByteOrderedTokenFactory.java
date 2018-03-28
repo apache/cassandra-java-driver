@@ -20,7 +20,9 @@ import com.datastax.oss.driver.api.core.metadata.token.TokenRange;
 import com.datastax.oss.driver.shaded.guava.common.base.Preconditions;
 import com.datastax.oss.protocol.internal.util.Bytes;
 import java.nio.ByteBuffer;
+import net.jcip.annotations.ThreadSafe;
 
+@ThreadSafe
 public class ByteOrderedTokenFactory implements TokenFactory {
 
   public static final ByteOrderedToken MIN_TOKEN = new ByteOrderedToken(ByteBuffer.allocate(0));

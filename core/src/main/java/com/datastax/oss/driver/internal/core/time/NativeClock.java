@@ -21,6 +21,7 @@ import static java.util.concurrent.TimeUnit.SECONDS;
 
 import com.datastax.oss.driver.internal.core.os.Native;
 import java.util.concurrent.atomic.AtomicReference;
+import net.jcip.annotations.ThreadSafe;
 
 /**
  * Provides the current time with microseconds precision with some reasonable accuracy through the
@@ -33,6 +34,7 @@ import java.util.concurrent.atomic.AtomicReference;
  * <p>This reduces the cost of the call to {@link NativeClock#currentTimeMicros()} to levels
  * comparable to those of a call to {@link System#nanoTime()}.
  */
+@ThreadSafe
 public class NativeClock implements Clock {
 
   private static final long ONE_SECOND_NS = NANOSECONDS.convert(1, SECONDS);

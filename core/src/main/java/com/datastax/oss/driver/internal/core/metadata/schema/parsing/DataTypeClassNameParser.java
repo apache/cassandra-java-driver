@@ -34,6 +34,7 @@ import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import net.jcip.annotations.ThreadSafe;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -48,6 +49,7 @@ import org.slf4j.LoggerFactory;
  * In particular it's not very efficient, but it doesn't really matter since it's rarely used and
  * never in a critical path.
  */
+@ThreadSafe
 class DataTypeClassNameParser implements DataTypeParser {
 
   private static final Logger LOG = LoggerFactory.getLogger(DataTypeClassNameParser.class);

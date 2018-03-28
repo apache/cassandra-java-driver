@@ -23,7 +23,9 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import net.jcip.annotations.NotThreadSafe;
 
+@NotThreadSafe
 public class SimpleStatementBuilder
     extends StatementBuilder<SimpleStatementBuilder, SimpleStatement> {
 

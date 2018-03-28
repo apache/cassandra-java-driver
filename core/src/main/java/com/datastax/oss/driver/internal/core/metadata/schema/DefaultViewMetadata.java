@@ -25,7 +25,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
+import net.jcip.annotations.Immutable;
 
+@Immutable
 public class DefaultViewMetadata implements ViewMetadata {
 
   private final CqlIdentifier keyspace;

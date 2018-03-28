@@ -31,6 +31,7 @@ import java.net.InetSocketAddress;
 import java.util.Collections;
 import java.util.Map;
 import java.util.Optional;
+import net.jcip.annotations.Immutable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -39,6 +40,7 @@ import org.slf4j.LoggerFactory;
  * operation must return a new instance, that will replace the existing one in {@link
  * MetadataManager}'s volatile field.
  */
+@Immutable
 public class DefaultMetadata implements Metadata {
   private static final Logger LOG = LoggerFactory.getLogger(DefaultMetadata.class);
   public static DefaultMetadata EMPTY = new DefaultMetadata(Collections.emptyMap());

@@ -26,9 +26,11 @@ import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.LengthFieldBasedFrameDecoder;
 import io.netty.handler.codec.TooLongFrameException;
 import java.util.Collections;
+import net.jcip.annotations.NotThreadSafe;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+@NotThreadSafe
 public class FrameDecoder extends LengthFieldBasedFrameDecoder {
   private static final Logger LOG = LoggerFactory.getLogger(FrameDecoder.class);
 

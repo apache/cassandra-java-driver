@@ -29,10 +29,10 @@ import java.util.ArrayList;
 import java.util.Deque;
 import java.util.Iterator;
 import java.util.List;
+import net.jcip.annotations.NotThreadSafe;
 
+@NotThreadSafe
 public class MultiPageResultSet implements ResultSet {
-
-  // Reminder: by contract this is not thread-safe, so we don't need any synchronization.
 
   private final RowIterator iterator;
   private final List<ExecutionInfo> executionInfos = new ArrayList<>();

@@ -25,6 +25,7 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 import java.util.function.Function;
+import net.jcip.annotations.NotThreadSafe;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -39,6 +40,7 @@ import org.slf4j.LoggerFactory;
  * @param <T> the type of event.
  * @param <R> the resulting type after the events of a batch have been coalesced.
  */
+@NotThreadSafe // must be confined to adminExecutor
 public class Debouncer<T, R> {
   private static final Logger LOG = LoggerFactory.getLogger(Debouncer.class);
 

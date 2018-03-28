@@ -22,7 +22,9 @@ import com.datastax.oss.driver.api.querybuilder.relation.Relation;
 import com.datastax.oss.driver.api.querybuilder.term.Term;
 import com.datastax.oss.driver.internal.querybuilder.lhs.TupleLeftOperand;
 import com.datastax.oss.driver.shaded.guava.common.base.Preconditions;
+import net.jcip.annotations.Immutable;
 
+@Immutable
 public class DefaultMultiColumnRelationBuilder implements MultiColumnRelationBuilder<Relation> {
 
   private final Iterable<CqlIdentifier> identifiers;
@@ -39,6 +41,7 @@ public class DefaultMultiColumnRelationBuilder implements MultiColumnRelationBui
     return new DefaultRelation(new TupleLeftOperand(identifiers), operator, rightOperand);
   }
 
+  @Immutable
   public static class Fluent<StatementT extends OngoingWhereClause<StatementT>>
       implements MultiColumnRelationBuilder<StatementT> {
 

@@ -39,6 +39,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
+import net.jcip.annotations.ThreadSafe;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -47,6 +48,7 @@ import org.slf4j.LoggerFactory;
  *
  * <p>Note that event processing is implemented directly in the control connection, not here.
  */
+@ThreadSafe
 public class DefaultTopologyMonitor implements TopologyMonitor {
   private static final Logger LOG = LoggerFactory.getLogger(DefaultTopologyMonitor.class);
 
