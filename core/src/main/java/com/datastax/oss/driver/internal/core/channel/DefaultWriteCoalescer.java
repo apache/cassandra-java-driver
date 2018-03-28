@@ -30,6 +30,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+import net.jcip.annotations.ThreadSafe;
 
 /**
  * Default write coalescing strategy.
@@ -46,6 +47,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * tasks themselves (a single consolidated write task is scheduled on the event loop, instead of
  * multiple individual tasks, so there is less context switching).
  */
+@ThreadSafe
 public class DefaultWriteCoalescer implements WriteCoalescer {
   private final int maxRunsWithNoWork;
   private final long rescheduleIntervalNanos;

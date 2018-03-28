@@ -18,12 +18,14 @@ package com.datastax.oss.driver.internal.core.protocol;
 import com.datastax.oss.driver.api.core.context.DriverContext;
 import io.netty.buffer.ByteBuf;
 import java.nio.ByteBuffer;
+import net.jcip.annotations.ThreadSafe;
 import net.jpountz.lz4.LZ4Compressor;
 import net.jpountz.lz4.LZ4Factory;
 import net.jpountz.lz4.LZ4FastDecompressor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+@ThreadSafe
 public class Lz4Compressor extends ByteBufCompressor {
 
   private static final Logger LOG = LoggerFactory.getLogger(Lz4Compressor.class);

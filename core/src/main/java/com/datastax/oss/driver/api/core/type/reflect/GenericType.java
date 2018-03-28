@@ -35,6 +35,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+import net.jcip.annotations.Immutable;
 
 /**
  * Runtime representation of a generic Java type.
@@ -75,6 +76,7 @@ import java.util.UUID;
  * {@code TypeToken} is not used directly is because Guava is not exposed in the driver's public API
  * (it's used internally, but shaded).
  */
+@Immutable
 public class GenericType<T> {
 
   public static final GenericType<Boolean> BOOLEAN = of(Boolean.class);

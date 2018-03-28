@@ -50,6 +50,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import net.jcip.annotations.ThreadSafe;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -59,6 +60,7 @@ import org.slf4j.LoggerFactory;
  * <p>Logically this belongs to {@link DefaultSession}, but it's extracted here in order to be
  * accessible from the context (notably for metrics).
  */
+@ThreadSafe
 public class PoolManager implements AsyncAutoCloseable {
 
   private static final Logger LOG = LoggerFactory.getLogger(PoolManager.class);

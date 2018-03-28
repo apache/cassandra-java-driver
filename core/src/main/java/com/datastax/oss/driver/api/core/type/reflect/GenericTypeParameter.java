@@ -19,11 +19,13 @@ import com.datastax.oss.driver.shaded.guava.common.base.Preconditions;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.lang.reflect.TypeVariable;
+import net.jcip.annotations.Immutable;
 
 /**
  * Captures a free type variable that can be used in {@link GenericType#where(GenericTypeParameter,
  * GenericType)}.
  */
+@Immutable
 @SuppressWarnings("unused") // for T (unfortunately has to cover the whole class)
 public class GenericTypeParameter<T> {
   private final TypeVariable<?> typeVariable;

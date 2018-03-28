@@ -18,6 +18,7 @@ package com.datastax.oss.driver.internal.core.metadata;
 import com.datastax.oss.driver.api.core.metadata.Node;
 import java.net.InetSocketAddress;
 import java.util.Objects;
+import net.jcip.annotations.Immutable;
 
 /**
  * An event emitted from the {@link TopologyMonitor}, indicating a change in the topology of the
@@ -27,6 +28,7 @@ import java.util.Objects;
  * to ignore if they contradict other information it has about the nodes; see the documentation of
  * each factory method for detailed explanations.
  */
+@Immutable
 public class TopologyEvent {
 
   public enum Type {

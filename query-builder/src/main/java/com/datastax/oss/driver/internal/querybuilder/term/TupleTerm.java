@@ -17,7 +17,9 @@ package com.datastax.oss.driver.internal.querybuilder.term;
 
 import com.datastax.oss.driver.api.querybuilder.term.Term;
 import com.datastax.oss.driver.internal.querybuilder.CqlHelper;
+import net.jcip.annotations.Immutable;
 
+@Immutable
 public class TupleTerm implements Term {
 
   private final Iterable<? extends Term> components;

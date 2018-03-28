@@ -25,12 +25,14 @@ import com.datastax.oss.driver.api.core.servererrors.ReadFailureException;
 import com.datastax.oss.driver.api.core.servererrors.WriteFailureException;
 import com.datastax.oss.driver.api.core.servererrors.WriteType;
 import com.datastax.oss.driver.api.core.session.Request;
+import net.jcip.annotations.ThreadSafe;
 
 /**
  * The default retry policy. This is a very conservative implementation: it triggers a maximum of
  * one retry per request, and only in cases that have a high chance of success (see the method
  * javadocs for detailed explanations of each case).
  */
+@ThreadSafe
 public class DefaultRetryPolicy implements RetryPolicy {
 
   public DefaultRetryPolicy(@SuppressWarnings("unused") DriverContext context) {

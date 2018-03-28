@@ -19,7 +19,9 @@ import com.datastax.oss.driver.api.querybuilder.term.Term;
 import com.datastax.oss.driver.internal.querybuilder.ArithmeticOperator;
 import com.datastax.oss.driver.shaded.guava.common.base.Preconditions;
 import java.util.Objects;
+import net.jcip.annotations.Immutable;
 
+@Immutable
 public class BinaryArithmeticTerm extends ArithmeticTerm {
 
   private final Term left;

@@ -18,7 +18,9 @@ package com.datastax.oss.driver.internal.querybuilder.select;
 import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.querybuilder.select.Selector;
 import java.util.Objects;
+import net.jcip.annotations.Immutable;
 
+@Immutable
 public class CountAllSelector implements Selector {
 
   private final CqlIdentifier alias;

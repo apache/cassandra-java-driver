@@ -16,7 +16,9 @@
 package com.datastax.oss.driver.internal.querybuilder.lhs;
 
 import com.datastax.oss.driver.api.core.CqlIdentifier;
+import net.jcip.annotations.Immutable;
 
+@Immutable
 public class ColumnLeftOperand implements LeftOperand {
 
   private final CqlIdentifier columnId;

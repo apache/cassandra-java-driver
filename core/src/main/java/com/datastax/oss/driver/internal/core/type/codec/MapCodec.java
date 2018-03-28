@@ -23,7 +23,9 @@ import com.datastax.oss.driver.shaded.guava.common.collect.Maps;
 import java.nio.ByteBuffer;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import net.jcip.annotations.ThreadSafe;
 
+@ThreadSafe
 public class MapCodec<K, V> implements TypeCodec<Map<K, V>> {
 
   private final DataType cqlType;

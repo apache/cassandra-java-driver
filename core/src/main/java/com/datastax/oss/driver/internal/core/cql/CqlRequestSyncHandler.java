@@ -23,7 +23,9 @@ import com.datastax.oss.driver.internal.core.session.DefaultSession;
 import com.datastax.oss.driver.internal.core.session.RequestHandler;
 import com.datastax.oss.driver.internal.core.util.concurrent.BlockingOperation;
 import com.datastax.oss.driver.internal.core.util.concurrent.CompletableFutures;
+import net.jcip.annotations.ThreadSafe;
 
+@ThreadSafe
 public class CqlRequestSyncHandler extends CqlRequestHandlerBase
     implements RequestHandler<Statement<?>, ResultSet> {
 

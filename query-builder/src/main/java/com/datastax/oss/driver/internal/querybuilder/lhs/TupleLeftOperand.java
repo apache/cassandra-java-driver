@@ -17,7 +17,9 @@ package com.datastax.oss.driver.internal.querybuilder.lhs;
 
 import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.internal.querybuilder.CqlHelper;
+import net.jcip.annotations.Immutable;
 
+@Immutable
 public class TupleLeftOperand implements LeftOperand {
 
   private final Iterable<CqlIdentifier> identifiers;

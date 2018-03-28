@@ -38,6 +38,7 @@ import java.nio.ByteBuffer;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import net.jcip.annotations.ThreadSafe;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -52,6 +53,7 @@ import org.slf4j.LoggerFactory;
  * <p>This class is abstract in order to be agnostic from the cache implementation. Subclasses must
  * implement {@link #getCachedCodec(DataType, GenericType)}.
  */
+@ThreadSafe
 public abstract class CachingCodecRegistry implements CodecRegistry {
 
   private static final Logger LOG = LoggerFactory.getLogger(CachingCodecRegistry.class);

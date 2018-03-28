@@ -25,9 +25,11 @@ import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.timeout.IdleState;
 import io.netty.handler.timeout.IdleStateEvent;
 import io.netty.handler.timeout.IdleStateHandler;
+import net.jcip.annotations.NotThreadSafe;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+@NotThreadSafe
 class HeartbeatHandler extends IdleStateHandler {
 
   private static final Logger LOG = LoggerFactory.getLogger(HeartbeatHandler.class);

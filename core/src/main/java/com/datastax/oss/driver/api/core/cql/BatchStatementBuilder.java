@@ -20,7 +20,9 @@ import com.datastax.oss.driver.internal.core.cql.DefaultBatchStatement;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableList;
 import com.datastax.oss.driver.shaded.guava.common.collect.Iterables;
 import java.util.Arrays;
+import net.jcip.annotations.NotThreadSafe;
 
+@NotThreadSafe
 public class BatchStatementBuilder extends StatementBuilder<BatchStatementBuilder, BatchStatement> {
 
   private BatchType batchType;

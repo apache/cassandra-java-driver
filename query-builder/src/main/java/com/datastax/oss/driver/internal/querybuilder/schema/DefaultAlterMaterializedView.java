@@ -22,7 +22,9 @@ import com.datastax.oss.driver.internal.querybuilder.CqlHelper;
 import com.datastax.oss.driver.internal.querybuilder.ImmutableCollections;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableMap;
 import java.util.Map;
+import net.jcip.annotations.Immutable;
 
+@Immutable
 public class DefaultAlterMaterializedView
     implements AlterMaterializedViewStart, AlterMaterializedView {
 

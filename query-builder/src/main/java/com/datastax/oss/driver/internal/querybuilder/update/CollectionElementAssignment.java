@@ -19,7 +19,9 @@ import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.querybuilder.term.Term;
 import com.datastax.oss.driver.api.querybuilder.update.Assignment;
 import com.datastax.oss.driver.shaded.guava.common.base.Preconditions;
+import net.jcip.annotations.Immutable;
 
+@Immutable
 public abstract class CollectionElementAssignment implements Assignment {
 
   public enum Operator {

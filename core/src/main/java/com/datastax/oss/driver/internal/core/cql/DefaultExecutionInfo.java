@@ -30,7 +30,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.CompletionStage;
+import net.jcip.annotations.Immutable;
 
+@Immutable
 public class DefaultExecutionInfo implements ExecutionInfo {
 
   private final Statement<?> statement;

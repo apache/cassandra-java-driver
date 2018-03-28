@@ -20,6 +20,7 @@ import com.datastax.oss.driver.shaded.guava.common.base.Objects;
 import com.datastax.oss.driver.shaded.guava.common.base.Preconditions;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import net.jcip.annotations.Immutable;
 
 /**
  * A duration, as defined in CQL.
@@ -29,6 +30,7 @@ import java.util.regex.Pattern;
  * type differs from {@link java.time.Duration} (which only represents an amount between two points
  * in time, regardless of the calendar).
  */
+@Immutable
 public final class CqlDuration {
 
   @VisibleForTesting static final long NANOS_PER_MICRO = 1000L;

@@ -15,6 +15,9 @@
  */
 package com.datastax.oss.driver.internal.core.time;
 
+import net.jcip.annotations.ThreadSafe;
+
+@ThreadSafe
 public class JavaClock implements Clock {
   @Override
   public long currentTimeMicros() {

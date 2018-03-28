@@ -23,6 +23,7 @@ import com.datastax.oss.driver.internal.core.util.Strings;
 import com.datastax.oss.driver.shaded.guava.common.collect.Maps;
 import java.util.List;
 import java.util.Map;
+import net.jcip.annotations.Immutable;
 
 /**
  * Indexes an ordered list of identifiers.
@@ -30,6 +31,7 @@ import java.util.Map;
  * @see GettableByName
  * @see GettableById
  */
+@Immutable
 public class IdentifierIndex {
 
   private final Map<CqlIdentifier, Integer> byId;

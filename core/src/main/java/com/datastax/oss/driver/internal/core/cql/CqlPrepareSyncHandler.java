@@ -24,7 +24,9 @@ import com.datastax.oss.driver.internal.core.util.concurrent.BlockingOperation;
 import com.datastax.oss.driver.internal.core.util.concurrent.CompletableFutures;
 import java.nio.ByteBuffer;
 import java.util.concurrent.ConcurrentMap;
+import net.jcip.annotations.ThreadSafe;
 
+@ThreadSafe
 public class CqlPrepareSyncHandler extends CqlPrepareHandlerBase
     implements RequestHandler<PrepareRequest, PreparedStatement> {
 

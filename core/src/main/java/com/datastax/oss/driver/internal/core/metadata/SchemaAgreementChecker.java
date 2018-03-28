@@ -39,9 +39,11 @@ import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.TimeUnit;
+import net.jcip.annotations.ThreadSafe;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+@ThreadSafe
 class SchemaAgreementChecker {
 
   private static final Logger LOG = LoggerFactory.getLogger(SchemaAgreementChecker.class);

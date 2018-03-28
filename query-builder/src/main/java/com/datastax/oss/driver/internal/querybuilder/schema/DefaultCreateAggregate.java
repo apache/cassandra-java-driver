@@ -24,7 +24,9 @@ import com.datastax.oss.driver.api.querybuilder.term.Term;
 import com.datastax.oss.driver.internal.querybuilder.CqlHelper;
 import com.datastax.oss.driver.internal.querybuilder.ImmutableCollections;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableList;
+import net.jcip.annotations.Immutable;
 
+@Immutable
 public class DefaultCreateAggregate
     implements CreateAggregateStart, CreateAggregateStateFunc, CreateAggregateEnd {
 

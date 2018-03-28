@@ -41,6 +41,7 @@ import java.util.Map;
 import java.util.Queue;
 import java.util.Set;
 import java.util.concurrent.CompletionStage;
+import net.jcip.annotations.ThreadSafe;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -55,6 +56,7 @@ import org.slf4j.LoggerFactory;
  * <p>Logically this code belongs to {@link DefaultSession}, but it was extracted for modularity and
  * testability.
  */
+@ThreadSafe
 class ReprepareOnUp {
 
   private static final Logger LOG = LoggerFactory.getLogger(ReprepareOnUp.class);

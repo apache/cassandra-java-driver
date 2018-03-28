@@ -17,8 +17,10 @@ package com.datastax.oss.driver.internal.core.channel;
 
 import com.datastax.oss.driver.api.core.metadata.Node;
 import java.util.Objects;
+import net.jcip.annotations.Immutable;
 
 /** Events relating to driver channels. */
+@Immutable
 public class ChannelEvent {
   public enum Type {
     OPENED,

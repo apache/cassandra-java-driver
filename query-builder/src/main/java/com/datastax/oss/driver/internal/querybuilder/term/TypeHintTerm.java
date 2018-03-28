@@ -17,7 +17,9 @@ package com.datastax.oss.driver.internal.querybuilder.term;
 
 import com.datastax.oss.driver.api.core.type.DataType;
 import com.datastax.oss.driver.api.querybuilder.term.Term;
+import net.jcip.annotations.Immutable;
 
+@Immutable
 public class TypeHintTerm implements Term {
 
   private final Term term;

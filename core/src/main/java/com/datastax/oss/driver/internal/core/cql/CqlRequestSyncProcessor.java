@@ -23,7 +23,9 @@ import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
 import com.datastax.oss.driver.internal.core.session.DefaultSession;
 import com.datastax.oss.driver.internal.core.session.RequestHandler;
 import com.datastax.oss.driver.internal.core.session.RequestProcessor;
+import net.jcip.annotations.ThreadSafe;
 
+@ThreadSafe
 public class CqlRequestSyncProcessor implements RequestProcessor<Statement<?>, ResultSet> {
 
   @Override

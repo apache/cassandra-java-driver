@@ -28,7 +28,9 @@ import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableList;
 import java.nio.ByteBuffer;
 import java.util.List;
 import java.util.Map;
+import net.jcip.annotations.ThreadSafe;
 
+@ThreadSafe
 class AggregateParser {
   private final DataTypeParser dataTypeParser;
   private final InternalDriverContext context;

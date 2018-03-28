@@ -28,7 +28,9 @@ import java.nio.ByteBuffer;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import net.jcip.annotations.Immutable;
 
+@Immutable
 public class DefaultBatchStatement implements BatchStatement {
 
   private final BatchType batchType;

@@ -21,6 +21,7 @@ import com.datastax.oss.driver.shaded.guava.common.collect.Iterators;
 import java.util.Arrays;
 import java.util.Iterator;
 import java.util.concurrent.locks.ReentrantLock;
+import net.jcip.annotations.ThreadSafe;
 
 /**
  * Concurrent structure used to store the channels of a pool.
@@ -28,6 +29,7 @@ import java.util.concurrent.locks.ReentrantLock;
  * <p>Its write semantics are similar to "copy-on-write" JDK collections, selection operations are
  * expected to vastly outnumber mutations.
  */
+@ThreadSafe
 class ChannelSet implements Iterable<DriverChannel> {
   private volatile DriverChannel[] channels;
   private ReentrantLock lock = new ReentrantLock(); // must be held when mutating the array

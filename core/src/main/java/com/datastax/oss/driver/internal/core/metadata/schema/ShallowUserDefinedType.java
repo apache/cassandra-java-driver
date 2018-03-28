@@ -25,6 +25,7 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.util.List;
+import net.jcip.annotations.Immutable;
 
 /**
  * A temporary UDT implementation that only contains the keyspace and name.
@@ -35,6 +36,7 @@ import java.util.List;
  * as instances of this class, then a topological sort, then a second pass to replace all shallow
  * definitions by the actual instance (which will be a {@link DefaultUserDefinedType}).
  */
+@Immutable
 public class ShallowUserDefinedType implements UserDefinedType {
 
   private final CqlIdentifier keyspace;

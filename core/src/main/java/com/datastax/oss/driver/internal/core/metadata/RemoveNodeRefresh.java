@@ -22,9 +22,11 @@ import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableList;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableMap;
 import java.net.InetSocketAddress;
 import java.util.Map;
+import net.jcip.annotations.ThreadSafe;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+@ThreadSafe
 public class RemoveNodeRefresh extends NodesRefresh {
 
   private static final Logger LOG = LoggerFactory.getLogger(RemoveNodeRefresh.class);

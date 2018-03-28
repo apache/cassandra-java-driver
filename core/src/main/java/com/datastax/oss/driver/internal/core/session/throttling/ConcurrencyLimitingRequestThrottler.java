@@ -23,10 +23,13 @@ import com.datastax.oss.driver.shaded.guava.common.annotations.VisibleForTesting
 import java.util.ArrayDeque;
 import java.util.Deque;
 import java.util.concurrent.locks.ReentrantLock;
+import net.jcip.annotations.GuardedBy;
+import net.jcip.annotations.ThreadSafe;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /** A request throttler that limits the number of concurrent requests. */
+@ThreadSafe
 public class ConcurrencyLimitingRequestThrottler implements RequestThrottler {
 
   private static final Logger LOG =
@@ -38,11 +41,13 @@ public class ConcurrencyLimitingRequestThrottler implements RequestThrottler {
 
   private final ReentrantLock lock = new ReentrantLock();
 
-  // guarded by lock
+  @GuardedBy("lock")
   private int concurrentRequests;
-  // guarded by lock
+
+  @GuardedBy("lock")
   private Deque<Throttled> queue = new ArrayDeque<>();
-  // guarded by lock
+
+  @GuardedBy("lock")
   private boolean closed;
 
   public ConcurrencyLimitingRequestThrottler(DriverContext context) {

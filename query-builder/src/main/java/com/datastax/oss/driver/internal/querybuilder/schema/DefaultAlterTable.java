@@ -30,7 +30,9 @@ import com.datastax.oss.driver.internal.querybuilder.ImmutableCollections;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableMap;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableSet;
 import java.util.Map;
+import net.jcip.annotations.Immutable;
 
+@Immutable
 public class DefaultAlterTable
     implements AlterTableStart,
         AlterTableAddColumnEnd,

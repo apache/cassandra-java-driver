@@ -39,6 +39,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.concurrent.CompletionStage;
 import java.util.function.Supplier;
+import net.jcip.annotations.NotThreadSafe;
 
 /**
  * Base implementation to build session instances.
@@ -46,6 +47,7 @@ import java.util.function.Supplier;
  * <p>You only need to deal with this directly if you use custom driver extensions. For the default
  * session implementation, see {@link CqlSession#builder()}.
  */
+@NotThreadSafe
 public abstract class SessionBuilder<SelfT extends SessionBuilder, SessionT> {
 
   @SuppressWarnings("unchecked")

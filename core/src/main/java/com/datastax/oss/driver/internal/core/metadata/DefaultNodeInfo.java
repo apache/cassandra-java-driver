@@ -23,7 +23,10 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
+import net.jcip.annotations.Immutable;
+import net.jcip.annotations.NotThreadSafe;
 
+@Immutable
 public class DefaultNodeInfo implements NodeInfo {
   public static Builder builder() {
     return new Builder();
@@ -110,6 +113,7 @@ public class DefaultNodeInfo implements NodeInfo {
     return schemaVersion;
   }
 
+  @NotThreadSafe
   public static class Builder {
     private InetSocketAddress connectAddress;
     private Optional<InetAddress> broadcastAddress = Optional.empty();

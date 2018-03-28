@@ -21,7 +21,9 @@ import com.datastax.oss.driver.api.core.type.DataTypes;
 import com.datastax.oss.driver.api.core.type.codec.PrimitiveLongCodec;
 import com.datastax.oss.driver.api.core.type.reflect.GenericType;
 import java.nio.ByteBuffer;
+import net.jcip.annotations.ThreadSafe;
 
+@ThreadSafe
 public class BigIntCodec implements PrimitiveLongCodec {
   @Override
   public GenericType<Long> getJavaType() {

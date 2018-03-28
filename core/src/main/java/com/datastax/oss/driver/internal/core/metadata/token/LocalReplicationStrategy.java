@@ -21,7 +21,9 @@ import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableSetMultimap;
 import com.datastax.oss.driver.shaded.guava.common.collect.SetMultimap;
 import java.util.List;
 import java.util.Map;
+import net.jcip.annotations.ThreadSafe;
 
+@ThreadSafe
 class LocalReplicationStrategy implements ReplicationStrategy {
 
   @Override

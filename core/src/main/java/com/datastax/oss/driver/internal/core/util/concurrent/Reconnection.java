@@ -25,6 +25,7 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.TimeUnit;
+import net.jcip.annotations.NotThreadSafe;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -35,6 +36,7 @@ import org.slf4j.LoggerFactory;
  * <p>All the tasks run on a Netty event executor that is provided at construction time. Clients are
  * also expected to call the public methods on that thread.
  */
+@NotThreadSafe // must be confined to executor
 public class Reconnection {
   private static final Logger LOG = LoggerFactory.getLogger(Reconnection.class);
 

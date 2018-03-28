@@ -20,7 +20,9 @@ import com.datastax.oss.driver.api.querybuilder.condition.ConditionBuilder;
 import com.datastax.oss.driver.api.querybuilder.condition.ConditionalStatement;
 import com.datastax.oss.driver.api.querybuilder.term.Term;
 import com.datastax.oss.driver.internal.querybuilder.lhs.LeftOperand;
+import net.jcip.annotations.Immutable;
 
+@Immutable
 public class DefaultConditionBuilder implements ConditionBuilder<Condition> {
 
   private final LeftOperand leftOperand;
@@ -34,6 +36,7 @@ public class DefaultConditionBuilder implements ConditionBuilder<Condition> {
     return new DefaultCondition(leftOperand, operator, rightOperand);
   }
 
+  @Immutable
   public static class Fluent<StatementT extends ConditionalStatement<StatementT>>
       implements ConditionBuilder<StatementT> {
 

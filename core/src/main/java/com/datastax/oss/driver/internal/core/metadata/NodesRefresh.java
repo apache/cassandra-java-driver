@@ -19,9 +19,11 @@ import com.datastax.oss.driver.api.core.CassandraVersion;
 import com.datastax.oss.driver.internal.core.metadata.token.TokenFactory;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableMap;
 import java.util.Collections;
+import net.jcip.annotations.ThreadSafe;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+@ThreadSafe
 abstract class NodesRefresh implements MetadataRefresh {
 
   private static final Logger LOG = LoggerFactory.getLogger(NodesRefresh.class);

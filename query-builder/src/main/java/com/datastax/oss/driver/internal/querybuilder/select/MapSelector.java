@@ -21,7 +21,9 @@ import com.datastax.oss.driver.api.querybuilder.select.Selector;
 import com.datastax.oss.driver.shaded.guava.common.base.Preconditions;
 import java.util.Map;
 import java.util.Objects;
+import net.jcip.annotations.Immutable;
 
+@Immutable
 public class MapSelector implements Selector {
 
   private final Map<Selector, Selector> elementSelectors;

@@ -18,7 +18,9 @@ package com.datastax.oss.driver.internal.core.cql;
 import com.datastax.oss.driver.api.core.cql.TraceEvent;
 import java.net.InetAddress;
 import java.util.Date;
+import net.jcip.annotations.Immutable;
 
+@Immutable
 public class DefaultTraceEvent implements TraceEvent {
 
   private final String activity;

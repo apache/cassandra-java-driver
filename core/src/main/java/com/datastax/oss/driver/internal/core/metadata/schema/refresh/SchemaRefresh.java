@@ -33,7 +33,9 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.function.BiFunction;
 import java.util.function.Function;
+import net.jcip.annotations.ThreadSafe;
 
+@ThreadSafe
 public class SchemaRefresh implements MetadataRefresh {
 
   @VisibleForTesting public final Map<CqlIdentifier, KeyspaceMetadata> newKeyspaces;

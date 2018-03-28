@@ -18,11 +18,13 @@ package com.datastax.oss.driver.internal.core.util;
 import com.datastax.oss.driver.shaded.guava.common.base.Preconditions;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
+import net.jcip.annotations.NotThreadSafe;
 
 /**
  * An iterator that knows in advance how many elements it will return, and maintains a counter as
  * elements get returned.
  */
+@NotThreadSafe
 public abstract class CountingIterator<T> implements Iterator<T> {
 
   protected int remaining;

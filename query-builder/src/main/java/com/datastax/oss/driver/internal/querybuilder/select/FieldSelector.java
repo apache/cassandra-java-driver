@@ -19,7 +19,9 @@ import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.querybuilder.select.Selector;
 import com.datastax.oss.driver.shaded.guava.common.base.Preconditions;
 import java.util.Objects;
+import net.jcip.annotations.Immutable;
 
+@Immutable
 public class FieldSelector implements Selector {
 
   private final Selector udt;

@@ -25,7 +25,9 @@ import com.datastax.oss.driver.shaded.guava.common.collect.Sets;
 import java.nio.ByteBuffer;
 import java.util.LinkedHashSet;
 import java.util.Set;
+import net.jcip.annotations.ThreadSafe;
 
+@ThreadSafe
 public class SetCodec<T> implements TypeCodec<Set<T>> {
 
   private final DataType cqlType;

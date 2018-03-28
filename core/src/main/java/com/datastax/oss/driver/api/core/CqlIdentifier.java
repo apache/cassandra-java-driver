@@ -20,6 +20,7 @@ import com.datastax.oss.driver.shaded.guava.common.base.Preconditions;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.Serializable;
+import net.jcip.annotations.Immutable;
 
 /**
  * The identifier of CQL element (keyspace, table, column, etc).
@@ -54,6 +55,7 @@ import java.io.Serializable;
  *
  * <p>There is no internal caching; if you reuse the same identifiers often,
  */
+@Immutable
 public class CqlIdentifier implements Serializable {
 
   private static final long serialVersionUID = 1;

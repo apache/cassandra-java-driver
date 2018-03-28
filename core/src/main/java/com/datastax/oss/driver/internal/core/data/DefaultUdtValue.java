@@ -28,9 +28,11 @@ import java.io.ObjectInputStream;
 import java.io.Serializable;
 import java.nio.ByteBuffer;
 import java.util.Objects;
+import net.jcip.annotations.Immutable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+@Immutable
 public class DefaultUdtValue implements UdtValue {
   private static final Logger LOG = LoggerFactory.getLogger(DefaultUdtValue.class);
   private static final long serialVersionUID = 1;

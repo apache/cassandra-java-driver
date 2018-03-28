@@ -23,7 +23,9 @@ import com.datastax.oss.driver.api.core.type.reflect.GenericType;
 import com.datastax.oss.protocol.internal.util.Bytes;
 import java.math.BigInteger;
 import java.nio.ByteBuffer;
+import net.jcip.annotations.ThreadSafe;
 
+@ThreadSafe
 public class VarIntCodec implements TypeCodec<BigInteger> {
   @Override
   public GenericType<BigInteger> getJavaType() {

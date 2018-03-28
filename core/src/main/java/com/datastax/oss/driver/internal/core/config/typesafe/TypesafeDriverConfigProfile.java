@@ -36,7 +36,9 @@ import java.util.SortedSet;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.function.Function;
+import net.jcip.annotations.ThreadSafe;
 
+@ThreadSafe
 public abstract class TypesafeDriverConfigProfile implements DriverConfigProfile {
 
   /** The original profile in the driver's configuration that this profile was derived from. */
@@ -171,6 +173,7 @@ public abstract class TypesafeDriverConfigProfile implements DriverConfigProfile
   }
 
   /** A profile that was loaded directly from the driver's configuration. */
+  @ThreadSafe
   static class Base extends TypesafeDriverConfigProfile {
 
     private volatile Config options;
@@ -228,6 +231,7 @@ public abstract class TypesafeDriverConfigProfile implements DriverConfigProfile
   /**
    * A profile that was copied from another profile programatically using {@code withXxx} methods.
    */
+  @ThreadSafe
   static class Derived extends TypesafeDriverConfigProfile {
 
     private final Base baseProfile;

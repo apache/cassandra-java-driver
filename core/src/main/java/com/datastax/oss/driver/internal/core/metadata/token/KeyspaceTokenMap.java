@@ -26,6 +26,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import net.jcip.annotations.Immutable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -33,6 +34,7 @@ import org.slf4j.LoggerFactory;
  * The token data for a given replication configuration. It's shared by all keyspaces that use that
  * configuration.
  */
+@Immutable
 class KeyspaceTokenMap {
 
   private static final Logger LOG = LoggerFactory.getLogger(KeyspaceTokenMap.class);

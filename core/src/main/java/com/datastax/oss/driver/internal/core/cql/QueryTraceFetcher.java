@@ -34,7 +34,9 @@ import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.TimeUnit;
+import net.jcip.annotations.ThreadSafe;
 
+@ThreadSafe
 class QueryTraceFetcher {
 
   private final UUID tracingId;

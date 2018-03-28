@@ -44,9 +44,11 @@ import java.util.concurrent.CopyOnWriteArraySet;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.IntUnaryOperator;
 import java.util.function.Predicate;
+import net.jcip.annotations.ThreadSafe;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+@ThreadSafe
 public class DefaultLoadBalancingPolicy implements LoadBalancingPolicy {
 
   private static final Logger LOG = LoggerFactory.getLogger(DefaultLoadBalancingPolicy.class);

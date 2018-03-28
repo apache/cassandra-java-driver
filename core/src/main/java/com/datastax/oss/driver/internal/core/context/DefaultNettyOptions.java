@@ -33,7 +33,9 @@ import io.netty.util.concurrent.GlobalEventExecutor;
 import io.netty.util.concurrent.PromiseCombiner;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
+import net.jcip.annotations.Immutable;
 
+@Immutable
 public class DefaultNettyOptions implements NettyOptions {
   private final EventLoopGroup ioEventLoopGroup;
   private final EventLoopGroup adminEventLoopGroup;

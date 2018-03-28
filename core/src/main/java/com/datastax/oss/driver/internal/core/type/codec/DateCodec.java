@@ -28,7 +28,9 @@ import java.nio.ByteBuffer;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
+import net.jcip.annotations.ThreadSafe;
 
+@ThreadSafe
 public class DateCodec implements TypeCodec<LocalDate> {
 
   private static final LocalDate EPOCH = LocalDate.of(1970, 1, 1);

@@ -20,7 +20,9 @@ import com.datastax.oss.driver.api.core.metadata.schema.IndexKind;
 import com.datastax.oss.driver.api.core.metadata.schema.IndexMetadata;
 import java.util.Map;
 import java.util.Objects;
+import net.jcip.annotations.Immutable;
 
+@Immutable
 public class DefaultIndexMetadata implements IndexMetadata {
 
   private final CqlIdentifier keyspace;

@@ -28,7 +28,9 @@ import com.datastax.oss.protocol.internal.util.Bytes;
 import java.io.DataInput;
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import net.jcip.annotations.ThreadSafe;
 
+@ThreadSafe
 public class CqlDurationCodec implements TypeCodec<CqlDuration> {
   @Override
   public GenericType<CqlDuration> getJavaType() {

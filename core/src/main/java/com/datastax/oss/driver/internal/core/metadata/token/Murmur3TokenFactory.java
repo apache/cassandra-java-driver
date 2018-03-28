@@ -19,7 +19,9 @@ import com.datastax.oss.driver.api.core.metadata.token.Token;
 import com.datastax.oss.driver.api.core.metadata.token.TokenRange;
 import com.datastax.oss.driver.shaded.guava.common.base.Preconditions;
 import java.nio.ByteBuffer;
+import net.jcip.annotations.ThreadSafe;
 
+@ThreadSafe
 public class Murmur3TokenFactory implements TokenFactory {
 
   public static final Murmur3Token MIN_TOKEN = new Murmur3Token(Long.MIN_VALUE);

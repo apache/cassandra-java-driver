@@ -36,7 +36,9 @@ import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import net.jcip.annotations.ThreadSafe;
 
+@ThreadSafe
 class UserDefinedTypeParser {
   private final DataTypeParser dataTypeParser;
   private final InternalDriverContext context;

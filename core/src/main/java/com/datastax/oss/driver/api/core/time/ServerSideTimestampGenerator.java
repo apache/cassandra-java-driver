@@ -16,11 +16,13 @@
 package com.datastax.oss.driver.api.core.time;
 
 import com.datastax.oss.driver.api.core.context.DriverContext;
+import net.jcip.annotations.ThreadSafe;
 
 /**
  * A timestamp generator that never sends a timestamp with any query, therefore letting Cassandra
  * assign a server-side timestamp.
  */
+@ThreadSafe
 public class ServerSideTimestampGenerator implements TimestampGenerator {
 
   public ServerSideTimestampGenerator(@SuppressWarnings("unused") DriverContext context) {

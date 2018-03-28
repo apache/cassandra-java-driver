@@ -30,7 +30,9 @@ import com.datastax.oss.driver.shaded.guava.common.base.Preconditions;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableList;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableMap;
 import java.util.Map;
+import net.jcip.annotations.Immutable;
 
+@Immutable
 public class DefaultSelect implements SelectFrom, Select {
 
   private static final ImmutableList<Selector> SELECT_ALL = ImmutableList.of(AllSelector.INSTANCE);

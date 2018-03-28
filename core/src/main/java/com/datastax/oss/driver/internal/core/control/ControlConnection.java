@@ -49,6 +49,7 @@ import java.util.WeakHashMap;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.function.Consumer;
+import net.jcip.annotations.ThreadSafe;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -63,6 +64,7 @@ import org.slf4j.LoggerFactory;
  * <p>If a custom {@link TopologyMonitor} is used, the control connection is used only for schema
  * refreshes; if schema metadata is also disabled, the control connection never initializes.
  */
+@ThreadSafe
 public class ControlConnection implements EventCallback, AsyncAutoCloseable {
   private static final Logger LOG = LoggerFactory.getLogger(ControlConnection.class);
 

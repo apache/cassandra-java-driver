@@ -20,7 +20,9 @@ import com.datastax.oss.driver.api.core.type.DataType;
 import com.datastax.oss.driver.api.core.type.DataTypes;
 import java.nio.ByteBuffer;
 import java.util.UUID;
+import net.jcip.annotations.ThreadSafe;
 
+@ThreadSafe
 public class TimeUuidCodec extends UuidCodec {
   @Override
   public DataType getCqlType() {

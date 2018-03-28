@@ -24,7 +24,9 @@ import com.datastax.oss.driver.shaded.guava.common.base.Preconditions;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
+import net.jcip.annotations.ThreadSafe;
 
+@ThreadSafe
 public class ListCodec<T> implements TypeCodec<List<T>> {
 
   private final DataType cqlType;

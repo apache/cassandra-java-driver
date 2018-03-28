@@ -29,9 +29,11 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import net.jcip.annotations.ThreadSafe;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+@ThreadSafe
 class FullNodeListRefresh extends NodesRefresh {
 
   private static final Logger LOG = LoggerFactory.getLogger(FullNodeListRefresh.class);

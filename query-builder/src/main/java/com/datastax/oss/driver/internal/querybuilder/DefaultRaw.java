@@ -20,7 +20,9 @@ import com.datastax.oss.driver.api.querybuilder.Raw;
 import com.datastax.oss.driver.api.querybuilder.select.Selector;
 import com.datastax.oss.driver.shaded.guava.common.base.Preconditions;
 import java.util.Objects;
+import net.jcip.annotations.Immutable;
 
+@Immutable
 public class DefaultRaw implements Raw {
 
   private final String rawExpression;

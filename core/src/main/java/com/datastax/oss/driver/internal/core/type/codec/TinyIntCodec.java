@@ -21,7 +21,9 @@ import com.datastax.oss.driver.api.core.type.DataTypes;
 import com.datastax.oss.driver.api.core.type.codec.PrimitiveByteCodec;
 import com.datastax.oss.driver.api.core.type.reflect.GenericType;
 import java.nio.ByteBuffer;
+import net.jcip.annotations.ThreadSafe;
 
+@ThreadSafe
 public class TinyIntCodec implements PrimitiveByteCodec {
   @Override
   public GenericType<Byte> getJavaType() {

@@ -80,9 +80,11 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
+import net.jcip.annotations.ThreadSafe;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+@ThreadSafe
 public abstract class CqlRequestHandlerBase implements Throttled {
 
   private static final Logger LOG = LoggerFactory.getLogger(CqlRequestHandlerBase.class);

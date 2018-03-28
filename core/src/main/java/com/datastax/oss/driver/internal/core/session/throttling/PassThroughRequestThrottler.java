@@ -17,11 +17,13 @@ package com.datastax.oss.driver.internal.core.session.throttling;
 
 import com.datastax.oss.driver.api.core.context.DriverContext;
 import java.io.IOException;
+import net.jcip.annotations.ThreadSafe;
 
 /**
  * A request throttler that does not enforce any kind of limitation: requests are always executed
  * immediately.
  */
+@ThreadSafe
 public class PassThroughRequestThrottler implements RequestThrottler {
 
   @SuppressWarnings("unused")

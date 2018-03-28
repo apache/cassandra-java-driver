@@ -27,7 +27,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Queue;
 import java.util.concurrent.CompletionStage;
+import net.jcip.annotations.NotThreadSafe;
 
+@NotThreadSafe // wraps a mutable queue
 public class AdminResult implements Iterable<AdminRow> {
 
   private final Queue<List<ByteBuffer>> data;

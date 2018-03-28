@@ -21,7 +21,9 @@ import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
 import com.datastax.oss.driver.internal.core.session.DefaultSession;
 import com.datastax.oss.driver.internal.core.session.RequestHandler;
 import java.util.concurrent.CompletionStage;
+import net.jcip.annotations.ThreadSafe;
 
+@ThreadSafe
 public class CqlRequestAsyncHandler extends CqlRequestHandlerBase
     implements RequestHandler<Statement<?>, CompletionStage<AsyncResultSet>> {
 

@@ -20,6 +20,7 @@ import com.datastax.oss.driver.api.core.type.DataType;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableList;
 import java.util.List;
 import java.util.Objects;
+import net.jcip.annotations.Immutable;
 
 /**
  * The signature that uniquely identifies a CQL function or aggregate in a keyspace.
@@ -27,6 +28,7 @@ import java.util.Objects;
  * <p>It's composed of a name and a list of parameter types. Overloads (such as {@code sum(int)} and
  * {@code sum(int, int)} are not equal.
  */
+@Immutable
 public class FunctionSignature {
   private final CqlIdentifier name;
   private final List<DataType> parameterTypes;

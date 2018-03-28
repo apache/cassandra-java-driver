@@ -27,8 +27,10 @@ import io.netty.channel.ChannelHandlerContext;
 import io.netty.util.concurrent.Future;
 import io.netty.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
+import net.jcip.annotations.NotThreadSafe;
 
 /** Common infrastructure to send a native protocol request from a channel handler. */
+@NotThreadSafe // must be confined to the channel's event loop
 abstract class ChannelHandlerRequest implements ResponseCallback {
 
   final Channel channel;

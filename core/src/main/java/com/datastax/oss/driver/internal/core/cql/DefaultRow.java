@@ -29,7 +29,9 @@ import java.io.Serializable;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
+import net.jcip.annotations.Immutable;
 
+@Immutable
 public class DefaultRow implements Row {
 
   private final ColumnDefinitions definitions;

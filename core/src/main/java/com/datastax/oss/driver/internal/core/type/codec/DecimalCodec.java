@@ -23,7 +23,9 @@ import com.datastax.oss.driver.api.core.type.reflect.GenericType;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.nio.ByteBuffer;
+import net.jcip.annotations.ThreadSafe;
 
+@ThreadSafe
 public class DecimalCodec implements TypeCodec<BigDecimal> {
   @Override
   public GenericType<BigDecimal> getJavaType() {

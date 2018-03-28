@@ -27,9 +27,11 @@ import java.util.Collections;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Set;
+import net.jcip.annotations.ThreadSafe;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+@ThreadSafe
 public class DefaultMetricUpdaterFactory implements MetricUpdaterFactory {
 
   private static final Logger LOG = LoggerFactory.getLogger(DefaultMetricUpdaterFactory.class);

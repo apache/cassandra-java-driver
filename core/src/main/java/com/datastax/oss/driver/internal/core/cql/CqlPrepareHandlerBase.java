@@ -68,10 +68,12 @@ import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.TimeUnit;
+import net.jcip.annotations.ThreadSafe;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /** Handles the lifecycle of the preparation of a CQL statement. */
+@ThreadSafe
 public abstract class CqlPrepareHandlerBase implements Throttled {
 
   private static final Logger LOG = LoggerFactory.getLogger(CqlPrepareHandlerBase.class);

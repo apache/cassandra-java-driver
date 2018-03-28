@@ -4,6 +4,7 @@
 
 ### 4.0.0-alpha4 (in progress)
 
+- [improvement] JAVA-1776: Use concurrency annotations
 - [improvement] JAVA-1799: Use CqlIdentifier for simple statement named values
 - [new feature] JAVA-1515: Add query builder
 - [improvement] JAVA-1773: Make DriverConfigProfile enumerable

@@ -19,6 +19,7 @@ import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.internal.core.cql.DefaultPreparedStatement;
 import java.nio.ByteBuffer;
 import java.util.Map;
+import net.jcip.annotations.Immutable;
 
 /**
  * The information that's necessary to reprepare an already prepared statement, in case we hit a
@@ -27,6 +28,7 @@ import java.util.Map;
  * <p>Make sure the object that's returned to the client (e.g. {@link DefaultPreparedStatement} for
  * CQL statements) keeps a reference to this.
  */
+@Immutable
 public class RepreparePayload {
   public final ByteBuffer id;
   public final String query;

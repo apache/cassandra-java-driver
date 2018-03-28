@@ -23,7 +23,9 @@ import com.datastax.oss.driver.internal.core.util.Strings;
 import com.datastax.oss.protocol.internal.util.Bytes;
 import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
+import net.jcip.annotations.ThreadSafe;
 
+@ThreadSafe
 public class StringCodec implements TypeCodec<String> {
 
   private final DataType cqlType;

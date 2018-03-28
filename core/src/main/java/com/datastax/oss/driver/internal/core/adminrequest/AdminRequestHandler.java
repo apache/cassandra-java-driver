@@ -40,10 +40,12 @@ import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.TimeUnit;
+import net.jcip.annotations.ThreadSafe;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /** Handles the lifecyle of an admin request (such as a node refresh or schema refresh query). */
+@ThreadSafe
 public class AdminRequestHandler implements ResponseCallback {
   private static final Logger LOG = LoggerFactory.getLogger(AdminRequestHandler.class);
 
