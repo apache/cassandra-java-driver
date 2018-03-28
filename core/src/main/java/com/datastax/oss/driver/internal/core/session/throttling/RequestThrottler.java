@@ -22,7 +22,7 @@ public interface RequestThrottler extends Closeable {
 
   /**
    * Registers a new request to be throttled. The throttler will invoke {@link
-   * Throttled#onThrottleReady()} when the request is allowed to proceed.
+   * Throttled#onThrottleReady(boolean)} when the request is allowed to proceed.
    */
   void register(Throttled request);
 
