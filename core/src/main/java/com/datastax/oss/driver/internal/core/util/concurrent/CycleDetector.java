@@ -50,7 +50,7 @@ public class CycleDetector {
         LOG.debug("{} wants to initialize {}", me, reference.getName());
         graph.putEdgeValue(me.getName(), reference.getName(), "wants to initialize");
         LOG.debug("{}", graph);
-        if (Graphs.hasCycle(graph)) {
+        if (Graphs.hasCycle(graph.asGraph())) {
           throw new IllegalStateException(errorMessage + " " + graph);
         }
       }
