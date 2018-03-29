@@ -22,7 +22,6 @@ import com.datastax.oss.driver.api.core.CqlSession;
 import com.datastax.oss.driver.api.testinfra.ccm.CcmRule;
 import com.datastax.oss.driver.api.testinfra.session.SessionUtils;
 import com.datastax.oss.driver.categories.ParallelizableTests;
-import java.util.Map;
 import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
@@ -40,37 +39,29 @@ public class MetricsIT {
         session.execute("SELECT release_version FROM system.local");
       }
 
-      // Metric names are prefixed with the session id, which depends on the number of other tests
-      // run before, so do a linear search to find the metric we're interested in.
-      Timer requestsTimer = null;
-      for (Map.Entry<String, Timer> entry : session.getMetricRegistry().getTimers().entrySet()) {
-        if (entry.getKey().endsWith(DefaultSessionMetric.CQL_REQUESTS.getPath())) {
-          requestsTimer = entry.getValue();
-        }
-      }
-      assertThat(requestsTimer).isNotNull();
+      assertThat(session.getMetrics())
+          .hasValueSatisfying(
+              metrics -> {
+                Timer requestsTimer = metrics.getSessionMetric(DefaultSessionMetric.CQL_REQUESTS);
+                assertThat(requestsTimer).isNotNull();
 
-      // No need to be very sophisticated, metrics are already covered individually in unit tests.
-      assertThat(requestsTimer.getCount()).isEqualTo(10);
+                // No need to be very sophisticated, metrics are already covered individually in
+                // unit tests.
+                assertThat(requestsTimer.getCount()).isEqualTo(10);
+              });
     }
   }
 
   @Test
   public void should_not_expose_metrics_if_disabled() {
     try (CqlSession session =
-        // cql_requests is disabled:
-        SessionUtils.newSession(ccmRule, "metrics.session.enabled = []")) {
+        SessionUtils.newSession(
+            ccmRule, "metrics.session.enabled = []", "metrics.node.enabled = []")) {
       for (int i = 0; i < 10; i++) {
         session.execute("SELECT release_version FROM system.local");
       }
 
-      Timer requestsTimer = null;
-      for (Map.Entry<String, Timer> entry : session.getMetricRegistry().getTimers().entrySet()) {
-        if (entry.getKey().endsWith(DefaultSessionMetric.CQL_REQUESTS.name())) {
-          requestsTimer = entry.getValue();
-        }
-      }
-      assertThat(requestsTimer).isNull();
+      assertThat(session.getMetrics()).isEmpty();
     }
   }
 }

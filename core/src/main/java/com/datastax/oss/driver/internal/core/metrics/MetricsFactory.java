@@ -13,18 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.datastax.oss.driver.api.core.metrics;
+package com.datastax.oss.driver.internal.core.metrics;
 
-import com.datastax.oss.driver.api.core.session.Session;
+import com.datastax.oss.driver.api.core.metadata.Node;
+import com.datastax.oss.driver.api.core.metrics.Metrics;
+import java.util.Optional;
 
-/**
- * A node-level metric exposed through {@link Session#getMetrics()}.
- *
- * <p>All metrics exposed out of the box by the driver are instances of {@link DefaultNodeMetric}
- * (this interface only exists to allow custom metrics in driver extensions).
- *
- * @see SessionMetric
- */
-public interface NodeMetric {
-  String getPath();
+public interface MetricsFactory {
+
+  Optional<? extends Metrics> getMetrics();
+
+  /** @return the unique instance for this session (this must return the same object every time). */
+  SessionMetricUpdater getSessionUpdater();
+
+  NodeMetricUpdater newNodeUpdater(Node node);
 }

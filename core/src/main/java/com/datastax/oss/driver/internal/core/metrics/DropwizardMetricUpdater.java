@@ -15,6 +15,7 @@
  */
 package com.datastax.oss.driver.internal.core.metrics;
 
+import com.codahale.metrics.Metric;
 import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.Timer;
 import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
@@ -27,16 +28,16 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 @ThreadSafe
-public abstract class MetricUpdaterBase<MetricT> implements MetricUpdater<MetricT> {
+public abstract class DropwizardMetricUpdater<MetricT> implements MetricUpdater<MetricT> {
 
-  private static final Logger LOG = LoggerFactory.getLogger(MetricUpdaterBase.class);
+  private static final Logger LOG = LoggerFactory.getLogger(DropwizardMetricUpdater.class);
 
   protected final Set<MetricT> enabledMetrics;
-  protected final MetricRegistry metricRegistry;
+  protected final MetricRegistry registry;
 
-  protected MetricUpdaterBase(Set<MetricT> enabledMetrics, MetricRegistry metricRegistry) {
+  protected DropwizardMetricUpdater(Set<MetricT> enabledMetrics, MetricRegistry registry) {
     this.enabledMetrics = enabledMetrics;
-    this.metricRegistry = metricRegistry;
+    this.registry = registry;
   }
 
   protected abstract String buildFullName(MetricT metric);
@@ -44,35 +45,40 @@ public abstract class MetricUpdaterBase<MetricT> implements MetricUpdater<Metric
   @Override
   public void incrementCounter(MetricT metric, long amount) {
     if (enabledMetrics.contains(metric)) {
-      metricRegistry.counter(buildFullName(metric)).inc(amount);
+      registry.counter(buildFullName(metric)).inc(amount);
     }
   }
 
   @Override
   public void updateHistogram(MetricT metric, long value) {
     if (enabledMetrics.contains(metric)) {
-      metricRegistry.histogram(buildFullName(metric)).update(value);
+      registry.histogram(buildFullName(metric)).update(value);
     }
   }
 
   @Override
   public void markMeter(MetricT metric, long amount) {
     if (enabledMetrics.contains(metric)) {
-      metricRegistry.meter(buildFullName(metric)).mark(amount);
+      registry.meter(buildFullName(metric)).mark(amount);
     }
   }
 
   @Override
   public void updateTimer(MetricT metric, long duration, TimeUnit unit) {
     if (enabledMetrics.contains(metric)) {
-      metricRegistry.timer(buildFullName(metric)).update(duration, unit);
+      registry.timer(buildFullName(metric)).update(duration, unit);
     }
+  }
+
+  @SuppressWarnings({"unchecked", "TypeParameterUnusedInFormals"})
+  public <T extends Metric> T getMetric(MetricT metric) {
+    return (T) registry.getMetrics().get(buildFullName(metric));
   }
 
   protected void initializeDefaultCounter(MetricT metric) {
     if (enabledMetrics.contains(metric)) {
       // Just initialize eagerly so that the metric appears even when it has no data yet
-      metricRegistry.counter(buildFullName(metric));
+      registry.counter(buildFullName(metric));
     }
   }
 
@@ -102,7 +108,7 @@ public abstract class MetricUpdaterBase<MetricT> implements MetricUpdater<Metric
       Duration refreshInterval = config.getDuration(intervalOption);
 
       // Initialize eagerly to use the custom implementation
-      metricRegistry.timer(
+      registry.timer(
           fullName,
           () ->
               new Timer(

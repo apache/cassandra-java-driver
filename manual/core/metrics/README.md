@@ -47,8 +47,8 @@ refer to `reference.conf` for more details.
 
 ### Export
 
-The Dropwizard `MetricRegistry` is exposed via `session.getMetricRegistry()`. You can retrieve it
-and configure a `Reporter` to send the metrics to a monitoring tool.
+The Dropwizard `MetricRegistry` is exposed via `session.getMetrics()`. You can retrieve it and
+configure a `Reporter` to send the metrics to a monitoring tool.
 
 #### JMX
 
@@ -68,8 +68,12 @@ dependency of the driver):
 Then create a JMX reporter for the registry:
 
 ```java
+MetricRegistry registry = session.getMetrics()
+    .orElseThrow(() -> new IllegalStateException("Metrics are disabled"))
+    .getRegistry();
+
 JmxReporter reporter =
-    JmxReporter.forRegistry(session.getMetricRegistry())
+    JmxReporter.forRegistry(registry)
         .inDomain("com.datastax.oss.driver")
         .build();
 reporter.start();
@@ -110,7 +114,7 @@ ObjectNameFactory objectNameFactory = (type, domain, name) -> {
 };
 
 JmxReporter reporter =
-    JmxReporter.forRegistry(session.getMetricRegistry())
+    JmxReporter.forRegistry(registry)
         .inDomain("com.datastax.oss.driver")
         .createsObjectNamesWith(objectNameFactory)
         .build();

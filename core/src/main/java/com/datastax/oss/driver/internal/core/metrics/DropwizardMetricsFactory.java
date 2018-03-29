@@ -15,51 +15,76 @@
  */
 package com.datastax.oss.driver.internal.core.metrics;
 
+import com.codahale.metrics.MetricRegistry;
 import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
 import com.datastax.oss.driver.api.core.config.DriverConfigProfile;
 import com.datastax.oss.driver.api.core.metadata.Node;
 import com.datastax.oss.driver.api.core.metrics.DefaultNodeMetric;
 import com.datastax.oss.driver.api.core.metrics.DefaultSessionMetric;
+import com.datastax.oss.driver.api.core.metrics.Metrics;
 import com.datastax.oss.driver.api.core.metrics.NodeMetric;
 import com.datastax.oss.driver.api.core.metrics.SessionMetric;
 import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
 import java.util.Collections;
 import java.util.EnumSet;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import net.jcip.annotations.ThreadSafe;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 @ThreadSafe
-public class DefaultMetricUpdaterFactory implements MetricUpdaterFactory {
+public class DropwizardMetricsFactory implements MetricsFactory {
 
-  private static final Logger LOG = LoggerFactory.getLogger(DefaultMetricUpdaterFactory.class);
+  private static final Logger LOG = LoggerFactory.getLogger(DropwizardMetricsFactory.class);
 
   private final String logPrefix;
   private final InternalDriverContext context;
   private final Set<NodeMetric> enabledNodeMetrics;
-  private final SessionMetricUpdater sessionMetricUpdater;
+  private final MetricRegistry registry;
+  private final Optional<Metrics> metrics;
+  private final SessionMetricUpdater sessionUpdater;
 
-  public DefaultMetricUpdaterFactory(InternalDriverContext context) {
+  public DropwizardMetricsFactory(InternalDriverContext context) {
     this.logPrefix = context.sessionName();
     this.context = context;
+
     DriverConfigProfile config = context.config().getDefaultProfile();
     Set<SessionMetric> enabledSessionMetrics =
         parseSessionMetricPaths(config.getStringList(DefaultDriverOption.METRICS_SESSION_ENABLED));
-    this.sessionMetricUpdater = new DefaultSessionMetricUpdater(enabledSessionMetrics, context);
     this.enabledNodeMetrics =
         parseNodeMetricPaths(config.getStringList(DefaultDriverOption.METRICS_NODE_ENABLED));
+
+    if (enabledSessionMetrics.isEmpty() && enabledNodeMetrics.isEmpty()) {
+      LOG.debug("[{}] All metrics are disabled, Session.getMetrics will be empty", logPrefix);
+      this.registry = null;
+      this.sessionUpdater = new NoopSessionMetricUpdater();
+      this.metrics = Optional.empty();
+    } else {
+      this.registry = new MetricRegistry();
+      DropwizardSessionMetricUpdater dropwizardSessionUpdater =
+          new DropwizardSessionMetricUpdater(enabledSessionMetrics, registry, context);
+      this.sessionUpdater = dropwizardSessionUpdater;
+      this.metrics = Optional.of(new DefaultMetrics(registry, dropwizardSessionUpdater));
+    }
+  }
+
+  @Override
+  public Optional<Metrics> getMetrics() {
+    return metrics;
   }
 
   @Override
   public SessionMetricUpdater getSessionUpdater() {
-    return sessionMetricUpdater;
+    return sessionUpdater;
   }
 
   @Override
   public NodeMetricUpdater newNodeUpdater(Node node) {
-    return new DefaultNodeMetricUpdater(node, enabledNodeMetrics, context);
+    return (registry == null)
+        ? new NoopNodeMetricUpdater()
+        : new DropwizardNodeMetricUpdater(node, enabledNodeMetrics, registry, context);
   }
 
   private Set<SessionMetric> parseSessionMetricPaths(List<String> paths) {

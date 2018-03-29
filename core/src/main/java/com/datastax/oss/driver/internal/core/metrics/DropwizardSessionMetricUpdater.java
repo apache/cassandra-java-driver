@@ -16,6 +16,7 @@
 package com.datastax.oss.driver.internal.core.metrics;
 
 import com.codahale.metrics.Gauge;
+import com.codahale.metrics.MetricRegistry;
 import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
 import com.datastax.oss.driver.api.core.metadata.Node;
 import com.datastax.oss.driver.api.core.metrics.DefaultSessionMetric;
@@ -30,20 +31,20 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 @ThreadSafe
-public class DefaultSessionMetricUpdater extends MetricUpdaterBase<SessionMetric>
+public class DropwizardSessionMetricUpdater extends DropwizardMetricUpdater<SessionMetric>
     implements SessionMetricUpdater {
 
-  private static final Logger LOG = LoggerFactory.getLogger(DefaultSessionMetricUpdater.class);
+  private static final Logger LOG = LoggerFactory.getLogger(DropwizardSessionMetricUpdater.class);
 
   private final String metricNamePrefix;
 
-  public DefaultSessionMetricUpdater(
-      Set<SessionMetric> enabledMetrics, InternalDriverContext context) {
-    super(enabledMetrics, context.metricRegistry());
+  public DropwizardSessionMetricUpdater(
+      Set<SessionMetric> enabledMetrics, MetricRegistry registry, InternalDriverContext context) {
+    super(enabledMetrics, registry);
     this.metricNamePrefix = context.sessionName() + ".";
 
     if (enabledMetrics.contains(DefaultSessionMetric.CONNECTED_NODES)) {
-      metricRegistry.register(
+      this.registry.register(
           buildFullName(DefaultSessionMetric.CONNECTED_NODES),
           (Gauge<Integer>)
               () -> {
@@ -57,7 +58,7 @@ public class DefaultSessionMetricUpdater extends MetricUpdaterBase<SessionMetric
               });
     }
     if (enabledMetrics.contains(DefaultSessionMetric.THROTTLING_QUEUE_SIZE)) {
-      metricRegistry.register(
+      this.registry.register(
           buildFullName(DefaultSessionMetric.THROTTLING_QUEUE_SIZE),
           buildQueueGauge(context.requestThrottler(), context.sessionName()));
     }
@@ -78,7 +79,7 @@ public class DefaultSessionMetricUpdater extends MetricUpdaterBase<SessionMetric
   }
 
   @Override
-  protected String buildFullName(SessionMetric metric) {
+  public String buildFullName(SessionMetric metric) {
     return metricNamePrefix + metric.getPath();
   }
 

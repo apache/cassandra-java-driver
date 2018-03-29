@@ -30,7 +30,7 @@ import com.datastax.oss.driver.internal.core.adminrequest.AdminRow;
 import com.datastax.oss.driver.internal.core.channel.DriverChannel;
 import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
 import com.datastax.oss.driver.internal.core.control.ControlConnection;
-import com.datastax.oss.driver.internal.core.metrics.MetricUpdaterFactory;
+import com.datastax.oss.driver.internal.core.metrics.MetricsFactory;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableMap;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableSet;
 import com.datastax.oss.driver.shaded.guava.common.collect.Iterators;
@@ -63,7 +63,7 @@ public class DefaultTopologyMonitorTest {
   @Mock private DriverConfigProfile defaultConfig;
   @Mock private ControlConnection controlConnection;
   @Mock private DriverChannel channel;
-  @Mock protected MetricUpdaterFactory metricUpdaterFactory;
+  @Mock protected MetricsFactory metricsFactory;
 
   private AddressTranslator addressTranslator;
   private DefaultNode node1;
@@ -87,7 +87,7 @@ public class DefaultTopologyMonitorTest {
     Mockito.when(controlConnection.channel()).thenReturn(channel);
     Mockito.when(context.controlConnection()).thenReturn(controlConnection);
 
-    Mockito.when(context.metricUpdaterFactory()).thenReturn(metricUpdaterFactory);
+    Mockito.when(context.metricsFactory()).thenReturn(metricsFactory);
 
     node1 = new DefaultNode(ADDRESS1, context);
     node2 = new DefaultNode(ADDRESS2, context);
