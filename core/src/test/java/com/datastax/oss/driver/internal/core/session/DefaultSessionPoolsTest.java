@@ -46,7 +46,7 @@ import com.datastax.oss.driver.internal.core.metadata.LoadBalancingPolicyWrapper
 import com.datastax.oss.driver.internal.core.metadata.MetadataManager;
 import com.datastax.oss.driver.internal.core.metadata.NodeStateEvent;
 import com.datastax.oss.driver.internal.core.metadata.TopologyMonitor;
-import com.datastax.oss.driver.internal.core.metrics.MetricUpdaterFactory;
+import com.datastax.oss.driver.internal.core.metrics.MetricsFactory;
 import com.datastax.oss.driver.internal.core.pool.ChannelPool;
 import com.datastax.oss.driver.internal.core.pool.ChannelPoolFactory;
 import com.datastax.oss.driver.internal.core.util.concurrent.CompletableFutures;
@@ -89,7 +89,7 @@ public class DefaultSessionPoolsTest {
   @Mock private SpeculativeExecutionPolicy speculativeExecutionPolicy;
   @Mock private AddressTranslator addressTranslator;
   @Mock private ControlConnection controlConnection;
-  @Mock private MetricUpdaterFactory metricUpdaterFactory;
+  @Mock private MetricsFactory metricsFactory;
 
   private DefaultNode node1;
   private DefaultNode node2;
@@ -135,7 +135,7 @@ public class DefaultSessionPoolsTest {
 
     Mockito.when(context.configLoader()).thenReturn(configLoader);
 
-    Mockito.when(context.metricUpdaterFactory()).thenReturn(metricUpdaterFactory);
+    Mockito.when(context.metricsFactory()).thenReturn(metricsFactory);
 
     // Runtime behavior:
     Mockito.when(context.sessionName()).thenReturn("test");

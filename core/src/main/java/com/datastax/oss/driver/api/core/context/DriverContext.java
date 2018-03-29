@@ -15,7 +15,6 @@
  */
 package com.datastax.oss.driver.api.core.context;
 
-import com.codahale.metrics.MetricRegistry;
 import com.datastax.oss.driver.api.core.addresstranslation.AddressTranslator;
 import com.datastax.oss.driver.api.core.auth.AuthProvider;
 import com.datastax.oss.driver.api.core.config.DriverConfig;
@@ -57,6 +56,4 @@ public interface DriverContext extends AttachmentPoint {
   Optional<SslEngineFactory> sslEngineFactory();
 
   TimestampGenerator timestampGenerator();
-
-  MetricRegistry metricRegistry();
 }

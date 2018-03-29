@@ -16,6 +16,7 @@
 package com.datastax.oss.driver.internal.core.metrics;
 
 import com.codahale.metrics.Gauge;
+import com.codahale.metrics.MetricRegistry;
 import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
 import com.datastax.oss.driver.api.core.config.DriverConfigProfile;
 import com.datastax.oss.driver.api.core.metadata.Node;
@@ -32,20 +33,23 @@ import java.util.function.Function;
 import net.jcip.annotations.ThreadSafe;
 
 @ThreadSafe
-public class DefaultNodeMetricUpdater extends MetricUpdaterBase<NodeMetric>
+public class DropwizardNodeMetricUpdater extends DropwizardMetricUpdater<NodeMetric>
     implements NodeMetricUpdater {
 
   private final String metricNamePrefix;
 
-  public DefaultNodeMetricUpdater(
-      Node node, Set<NodeMetric> enabledMetrics, InternalDriverContext context) {
-    super(enabledMetrics, context.metricRegistry());
+  public DropwizardNodeMetricUpdater(
+      Node node,
+      Set<NodeMetric> enabledMetrics,
+      MetricRegistry registry,
+      InternalDriverContext context) {
+    super(enabledMetrics, registry);
     this.metricNamePrefix = buildPrefix(context.sessionName(), node.getConnectAddress());
 
     DriverConfigProfile config = context.config().getDefaultProfile();
 
     if (enabledMetrics.contains(DefaultNodeMetric.OPEN_CONNECTIONS)) {
-      metricRegistry.register(
+      this.registry.register(
           buildFullName(DefaultNodeMetric.OPEN_CONNECTIONS),
           (Gauge<Integer>) node::getOpenConnections);
     }
@@ -84,7 +88,7 @@ public class DefaultNodeMetricUpdater extends MetricUpdaterBase<NodeMetric>
   }
 
   @Override
-  protected String buildFullName(NodeMetric metric) {
+  public String buildFullName(NodeMetric metric) {
     return metricNamePrefix + metric.getPath();
   }
 
@@ -111,7 +115,7 @@ public class DefaultNodeMetricUpdater extends MetricUpdaterBase<NodeMetric>
       Function<ChannelPool, Integer> reading,
       InternalDriverContext context) {
     if (enabledMetrics.contains(metric)) {
-      metricRegistry.register(
+      registry.register(
           buildFullName(metric),
           (Gauge<Integer>)
               () -> {

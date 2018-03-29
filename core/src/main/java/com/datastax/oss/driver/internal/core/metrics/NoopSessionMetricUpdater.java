@@ -15,12 +15,30 @@
  */
 package com.datastax.oss.driver.internal.core.metrics;
 
-import com.datastax.oss.driver.api.core.metadata.Node;
+import com.datastax.oss.driver.api.core.metrics.SessionMetric;
+import java.util.concurrent.TimeUnit;
+import net.jcip.annotations.ThreadSafe;
 
-public interface MetricUpdaterFactory {
+@ThreadSafe
+public class NoopSessionMetricUpdater implements SessionMetricUpdater {
 
-  /** @return the unique instance for this session (this must return the same object every time). */
-  SessionMetricUpdater getSessionUpdater();
+  @Override
+  public void incrementCounter(SessionMetric metric, long amount) {
+    // nothing to do
+  }
 
-  NodeMetricUpdater newNodeUpdater(Node node);
+  @Override
+  public void updateHistogram(SessionMetric metric, long value) {
+    // nothing to do
+  }
+
+  @Override
+  public void markMeter(SessionMetric metric, long amount) {
+    // nothing to do
+  }
+
+  @Override
+  public void updateTimer(SessionMetric metric, long duration, TimeUnit unit) {
+    // nothing to do
+  }
 }

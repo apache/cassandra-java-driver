@@ -15,7 +15,6 @@
  */
 package com.datastax.oss.driver.internal.core.session;
 
-import com.codahale.metrics.MetricRegistry;
 import com.datastax.oss.driver.api.core.AsyncAutoCloseable;
 import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.CqlSession;
@@ -28,6 +27,7 @@ import com.datastax.oss.driver.api.core.metadata.Node;
 import com.datastax.oss.driver.api.core.metadata.NodeState;
 import com.datastax.oss.driver.api.core.metadata.NodeStateListener;
 import com.datastax.oss.driver.api.core.metadata.schema.SchemaChangeListener;
+import com.datastax.oss.driver.api.core.metrics.Metrics;
 import com.datastax.oss.driver.api.core.session.Request;
 import com.datastax.oss.driver.api.core.type.reflect.GenericType;
 import com.datastax.oss.driver.internal.core.channel.DriverChannel;
@@ -49,6 +49,7 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
@@ -106,7 +107,7 @@ public class DefaultSession implements CqlSession {
     this.processorRegistry = context.requestProcessorRegistry();
     this.poolManager = context.poolManager();
     this.logPrefix = context.sessionName();
-    this.metricUpdater = context.metricUpdaterFactory().getSessionUpdater();
+    this.metricUpdater = context.metricsFactory().getSessionUpdater();
   }
 
   private CompletionStage<CqlSession> init(CqlIdentifier keyspace) {
@@ -155,8 +156,8 @@ public class DefaultSession implements CqlSession {
   }
 
   @Override
-  public MetricRegistry getMetricRegistry() {
-    return context.metricRegistry();
+  public Optional<? extends Metrics> getMetrics() {
+    return context.metricsFactory().getMetrics();
   }
 
   /**

@@ -102,7 +102,7 @@ class ReprepareOnUp {
     this.maxParallelism =
         config.getDefaultProfile().getInt(DefaultDriverOption.REPREPARE_MAX_PARALLELISM);
 
-    this.metricUpdater = context.metricUpdaterFactory().getSessionUpdater();
+    this.metricUpdater = context.metricsFactory().getSessionUpdater();
   }
 
   void start() {

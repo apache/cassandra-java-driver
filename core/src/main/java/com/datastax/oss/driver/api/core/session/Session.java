@@ -15,7 +15,6 @@
  */
 package com.datastax.oss.driver.api.core.session;
 
-import com.codahale.metrics.MetricRegistry;
 import com.datastax.oss.driver.api.core.AsyncAutoCloseable;
 import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.CqlSession;
@@ -27,9 +26,11 @@ import com.datastax.oss.driver.api.core.metadata.Node;
 import com.datastax.oss.driver.api.core.metadata.NodeState;
 import com.datastax.oss.driver.api.core.metadata.NodeStateListener;
 import com.datastax.oss.driver.api.core.metadata.schema.SchemaChangeListener;
+import com.datastax.oss.driver.api.core.metrics.Metrics;
 import com.datastax.oss.driver.api.core.type.reflect.GenericType;
 import com.datastax.oss.driver.internal.core.util.concurrent.BlockingOperation;
 import com.datastax.oss.driver.internal.core.util.concurrent.CompletableFutures;
+import java.util.Optional;
 import java.util.ResourceBundle;
 import java.util.concurrent.CompletionStage;
 
@@ -180,15 +181,10 @@ public interface Session extends AsyncAutoCloseable {
   CqlIdentifier getKeyspace();
 
   /**
-   * The registry of driver metrics.
-   *
-   * <p>The driver is instrumented with DropWizard metrics, use this object to register metric
-   * reporters.
-   *
-   * @see <a href="http://metrics.dropwizard.io/4.0.0/manual/core.html#reporters">Reporters
-   *     (DropWizard Metrics manual)</a>
+   * Returns a gateway to the driver's metrics, or {@link Optional#empty()} if all metrics are
+   * disabled.
    */
-  MetricRegistry getMetricRegistry();
+  Optional<? extends Metrics> getMetrics();
 
   /**
    * Executes an arbitrary request.

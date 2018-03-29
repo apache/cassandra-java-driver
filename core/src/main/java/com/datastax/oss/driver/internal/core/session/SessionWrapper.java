@@ -15,15 +15,16 @@
  */
 package com.datastax.oss.driver.internal.core.session;
 
-import com.codahale.metrics.MetricRegistry;
 import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.context.DriverContext;
 import com.datastax.oss.driver.api.core.metadata.Metadata;
 import com.datastax.oss.driver.api.core.metadata.NodeStateListener;
 import com.datastax.oss.driver.api.core.metadata.schema.SchemaChangeListener;
+import com.datastax.oss.driver.api.core.metrics.Metrics;
 import com.datastax.oss.driver.api.core.session.Request;
 import com.datastax.oss.driver.api.core.session.Session;
 import com.datastax.oss.driver.api.core.type.reflect.GenericType;
+import java.util.Optional;
 import java.util.concurrent.CompletionStage;
 import net.jcip.annotations.ThreadSafe;
 
@@ -94,8 +95,8 @@ public class SessionWrapper implements Session {
   }
 
   @Override
-  public MetricRegistry getMetricRegistry() {
-    return delegate.getMetricRegistry();
+  public Optional<? extends Metrics> getMetrics() {
+    return delegate.getMetrics();
   }
 
   @Override

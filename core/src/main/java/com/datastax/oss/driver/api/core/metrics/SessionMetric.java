@@ -18,15 +18,7 @@ package com.datastax.oss.driver.api.core.metrics;
 import com.datastax.oss.driver.api.core.session.Session;
 
 /**
- * A session-level metric exposed through {@link Session#getMetricRegistry()}.
- *
- * <p>Note that the actual key in the registry is composed of the {@link Session#getName() name of
- * the session} followed by the path of the metric, for example:
- *
- * <pre>
- * // Retrieve the `cql_requests` metric for session `s0`:
- * Timer requestsTimer = session.getMetricRegistry().timer("s0.cql_requests");
- * </pre>
+ * A session-level metric exposed through {@link Session#getMetrics()}.
  *
  * <p>All metrics exposed out of the box by the driver are instances of {@link DefaultSessionMetric}
  * (this interface only exists to allow custom metrics in driver extensions).

@@ -25,7 +25,7 @@ import com.datastax.oss.driver.internal.core.adminrequest.AdminResult;
 import com.datastax.oss.driver.internal.core.channel.DriverChannel;
 import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
 import com.datastax.oss.driver.internal.core.metadata.TopologyMonitor;
-import com.datastax.oss.driver.internal.core.metrics.MetricUpdaterFactory;
+import com.datastax.oss.driver.internal.core.metrics.MetricsFactory;
 import com.datastax.oss.driver.internal.core.metrics.SessionMetricUpdater;
 import com.datastax.oss.driver.internal.core.pool.ChannelPool;
 import com.datastax.oss.driver.internal.core.util.concurrent.CompletableFutures;
@@ -65,7 +65,7 @@ public class ReprepareOnUpTest {
   @Mock private DriverConfig config;
   @Mock private DriverConfigProfile defaultConfigProfile;
   @Mock private TopologyMonitor topologyMonitor;
-  @Mock private MetricUpdaterFactory metricUpdaterFactory;
+  @Mock private MetricsFactory metricsFactory;
   @Mock private SessionMetricUpdater metricUpdater;
   private Runnable whenPrepared;
   private CompletionStage<Void> done;
@@ -89,8 +89,8 @@ public class ReprepareOnUpTest {
         .thenReturn(100);
     Mockito.when(context.config()).thenReturn(config);
 
-    Mockito.when(context.metricUpdaterFactory()).thenReturn(metricUpdaterFactory);
-    Mockito.when(metricUpdaterFactory.getSessionUpdater()).thenReturn(metricUpdater);
+    Mockito.when(context.metricsFactory()).thenReturn(metricsFactory);
+    Mockito.when(metricsFactory.getSessionUpdater()).thenReturn(metricUpdater);
 
     done = new CompletableFuture<>();
     whenPrepared = () -> ((CompletableFuture<Void>) done).complete(null);
