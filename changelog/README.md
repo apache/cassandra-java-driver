@@ -4,6 +4,7 @@
 
 ### 4.0.0-alpha4 (in progress)
 
+- [improvement] JAVA-1773: Make DriverConfigProfile enumerable
 - [improvement] JAVA-1787: Use standalone shaded Guava artifact
 - [improvement] JAVA-1769: Allocate exact buffer size for outgoing requests
 - [documentation] JAVA-1780: Add manual section about case sensitivity

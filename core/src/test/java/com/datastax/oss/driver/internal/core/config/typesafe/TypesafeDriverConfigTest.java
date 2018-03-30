@@ -16,6 +16,7 @@
 package com.datastax.oss.driver.internal.core.config.typesafe;
 
 import static com.datastax.oss.driver.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.entry;
 
 import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
 import com.datastax.oss.driver.api.core.config.DriverConfigProfile;
@@ -155,6 +156,29 @@ public class TypesafeDriverConfigTest {
 
     assertThat(derivedFromProfile1.getInt(MockOptions.REQUIRED_INT)).isEqualTo(45);
     assertThat(derivedFromProfile1.getInt(MockOptions.OPTIONAL_INT)).isEqualTo(51);
+  }
+
+  @Test
+  public void should_enumerate_options() {
+    TypesafeDriverConfig config =
+        parse(
+            "required_int = 42 \n"
+                + "auth_provider { auth_thing_one= one \n auth_thing_two = two \n auth_thing_three = three}\n"
+                + "profiles { profile1 { required_int = 45 } }");
+
+    assertThat(config.getDefaultProfile().entrySet())
+        .containsExactly(
+            entry("auth_provider.auth_thing_one", "one"),
+            entry("auth_provider.auth_thing_three", "three"),
+            entry("auth_provider.auth_thing_two", "two"),
+            entry("required_int", 42));
+
+    assertThat(config.getNamedProfile("profile1").entrySet())
+        .containsExactly(
+            entry("auth_provider.auth_thing_one", "one"),
+            entry("auth_provider.auth_thing_three", "three"),
+            entry("auth_provider.auth_thing_two", "two"),
+            entry("required_int", 45));
   }
 
   private TypesafeDriverConfig parse(String configString) {
