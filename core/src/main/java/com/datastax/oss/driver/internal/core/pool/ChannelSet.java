@@ -16,8 +16,8 @@
 package com.datastax.oss.driver.internal.core.pool;
 
 import com.datastax.oss.driver.internal.core.channel.DriverChannel;
-import com.google.common.base.Preconditions;
-import com.google.common.collect.Iterators;
+import com.datastax.oss.driver.shaded.guava.common.base.Preconditions;
+import com.datastax.oss.driver.shaded.guava.common.collect.Iterators;
 import java.util.Arrays;
 import java.util.Iterator;
 import java.util.concurrent.locks.ReentrantLock;

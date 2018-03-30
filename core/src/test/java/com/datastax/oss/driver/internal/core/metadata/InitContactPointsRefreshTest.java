@@ -19,7 +19,7 @@ import static com.datastax.oss.driver.Assertions.assertThat;
 
 import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
 import com.datastax.oss.driver.internal.core.metrics.MetricUpdaterFactory;
-import com.google.common.collect.ImmutableSet;
+import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableSet;
 import java.net.InetSocketAddress;
 import org.junit.Before;
 import org.junit.Test;

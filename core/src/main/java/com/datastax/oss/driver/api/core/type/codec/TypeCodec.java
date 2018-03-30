@@ -18,8 +18,8 @@ package com.datastax.oss.driver.api.core.type.codec;
 import com.datastax.oss.driver.api.core.ProtocolVersion;
 import com.datastax.oss.driver.api.core.type.DataType;
 import com.datastax.oss.driver.api.core.type.reflect.GenericType;
-import com.google.common.base.Preconditions;
-import com.google.common.reflect.TypeToken;
+import com.datastax.oss.driver.shaded.guava.common.base.Preconditions;
+import com.datastax.oss.driver.shaded.guava.common.reflect.TypeToken;
 import java.nio.ByteBuffer;
 
 /** Manages the two-way conversion between a CQL type and a Java type. */

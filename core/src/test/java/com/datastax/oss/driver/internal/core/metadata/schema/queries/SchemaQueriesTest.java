@@ -24,7 +24,7 @@ import com.datastax.oss.driver.api.core.metadata.Node;
 import com.datastax.oss.driver.internal.core.adminrequest.AdminResult;
 import com.datastax.oss.driver.internal.core.adminrequest.AdminRow;
 import com.datastax.oss.driver.internal.core.channel.DriverChannel;
-import com.google.common.collect.Iterators;
+import com.datastax.oss.driver.shaded.guava.common.collect.Iterators;
 import io.netty.channel.embedded.EmbeddedChannel;
 import java.time.Duration;
 import java.util.concurrent.CompletableFuture;

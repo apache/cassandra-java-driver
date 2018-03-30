@@ -17,10 +17,10 @@ package com.datastax.oss.driver.internal.core.adminrequest;
 
 import com.datastax.oss.driver.api.core.ProtocolVersion;
 import com.datastax.oss.driver.internal.core.util.concurrent.CompletableFutures;
+import com.datastax.oss.driver.shaded.guava.common.collect.AbstractIterator;
+import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableMap;
 import com.datastax.oss.protocol.internal.response.result.ColumnSpec;
 import com.datastax.oss.protocol.internal.response.result.Rows;
-import com.google.common.collect.AbstractIterator;
-import com.google.common.collect.ImmutableMap;
 import java.nio.ByteBuffer;
 import java.util.Iterator;
 import java.util.List;

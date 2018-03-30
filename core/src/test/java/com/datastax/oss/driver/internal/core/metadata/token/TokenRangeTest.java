@@ -19,7 +19,7 @@ import static com.datastax.oss.driver.Assertions.assertThat;
 import static org.junit.Assert.fail;
 
 import com.datastax.oss.driver.api.core.metadata.token.TokenRange;
-import com.google.common.collect.ImmutableList;
+import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableList;
 import java.util.List;
 import org.junit.Test;
 

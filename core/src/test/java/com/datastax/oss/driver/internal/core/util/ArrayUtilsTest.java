@@ -17,7 +17,7 @@ package com.datastax.oss.driver.internal.core.util;
 
 import static com.datastax.oss.driver.Assertions.assertThat;
 
-import com.google.common.collect.ImmutableList;
+import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;

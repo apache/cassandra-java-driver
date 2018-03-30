@@ -17,7 +17,7 @@ package com.datastax.oss.driver.api.core.type.reflect;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import com.google.common.reflect.TypeToken;
+import com.datastax.oss.driver.shaded.guava.common.reflect.TypeToken;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;

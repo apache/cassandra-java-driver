@@ -39,8 +39,8 @@
       <artifactId>netty-handler</artifactId>
     </dependency>
     <dependency>
-      <groupId>com.google.guava</groupId>
-      <artifactId>guava</artifactId>
+      <groupId>com.datastax.oss</groupId>
+      <artifactId>java-driver-shaded-guava</artifactId>
     </dependency>
     <dependency>
       <groupId>com.typesafe</groupId>

@@ -17,8 +17,8 @@ package com.datastax.oss.driver.api.core.cql;
 
 import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.internal.core.cql.DefaultBatchStatement;
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.Iterables;
+import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableList;
+import com.datastax.oss.driver.shaded.guava.common.collect.Iterables;
 import java.util.Arrays;
 
 public class BatchStatementBuilder extends StatementBuilder<BatchStatementBuilder, BatchStatement> {

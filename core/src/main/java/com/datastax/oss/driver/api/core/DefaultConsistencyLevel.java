@@ -15,8 +15,8 @@
  */
 package com.datastax.oss.driver.api.core;
 
+import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableMap;
 import com.datastax.oss.protocol.internal.ProtocolConstants;
-import com.google.common.collect.ImmutableMap;
 import java.util.Map;
 
 /** A default consistency level supported by the driver out of the box. */

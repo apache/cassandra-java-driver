@@ -25,13 +25,13 @@ import com.datastax.oss.driver.internal.core.channel.DriverChannel.RequestMessag
 import com.datastax.oss.driver.internal.core.channel.DriverChannel.SetKeyspaceEvent;
 import com.datastax.oss.driver.internal.core.protocol.FrameDecodingException;
 import com.datastax.oss.driver.internal.core.util.Loggers;
+import com.datastax.oss.driver.shaded.guava.common.base.MoreObjects;
+import com.datastax.oss.driver.shaded.guava.common.collect.BiMap;
+import com.datastax.oss.driver.shaded.guava.common.collect.HashBiMap;
 import com.datastax.oss.protocol.internal.Frame;
 import com.datastax.oss.protocol.internal.Message;
 import com.datastax.oss.protocol.internal.request.Query;
 import com.datastax.oss.protocol.internal.response.result.SetKeyspace;
-import com.google.common.base.MoreObjects;
-import com.google.common.collect.BiMap;
-import com.google.common.collect.HashBiMap;
 import io.netty.channel.ChannelDuplexHandler;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelHandler;
