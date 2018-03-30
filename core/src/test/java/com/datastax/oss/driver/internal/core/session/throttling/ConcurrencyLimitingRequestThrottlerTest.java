@@ -22,7 +22,7 @@ import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
 import com.datastax.oss.driver.api.core.config.DriverConfig;
 import com.datastax.oss.driver.api.core.config.DriverConfigProfile;
 import com.datastax.oss.driver.api.core.context.DriverContext;
-import com.google.common.collect.Lists;
+import com.datastax.oss.driver.shaded.guava.common.collect.Lists;
 import java.util.List;
 import java.util.function.Consumer;
 import org.junit.Before;

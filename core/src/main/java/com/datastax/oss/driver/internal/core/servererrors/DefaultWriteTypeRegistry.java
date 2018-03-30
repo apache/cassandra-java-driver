@@ -17,7 +17,7 @@ package com.datastax.oss.driver.internal.core.servererrors;
 
 import com.datastax.oss.driver.api.core.servererrors.DefaultWriteType;
 import com.datastax.oss.driver.api.core.servererrors.WriteType;
-import com.google.common.collect.ImmutableList;
+import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableList;
 
 public class DefaultWriteTypeRegistry implements WriteTypeRegistry {
 

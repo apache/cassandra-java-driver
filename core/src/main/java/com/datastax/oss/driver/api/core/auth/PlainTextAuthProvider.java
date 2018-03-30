@@ -18,7 +18,7 @@ package com.datastax.oss.driver.api.core.auth;
 import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
 import com.datastax.oss.driver.api.core.config.DriverConfigProfile;
 import com.datastax.oss.driver.api.core.context.DriverContext;
-import com.google.common.base.Charsets;
+import com.datastax.oss.driver.shaded.guava.common.base.Charsets;
 import java.net.SocketAddress;
 import java.nio.ByteBuffer;
 

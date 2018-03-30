@@ -19,8 +19,8 @@ import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.type.DataType;
 import com.datastax.oss.driver.api.core.type.UserDefinedType;
 import com.datastax.oss.driver.internal.core.metadata.schema.ScriptBuilder;
-import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Iterables;
+import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableMap;
+import com.datastax.oss.driver.shaded.guava.common.collect.Iterables;
 import java.util.Map;
 
 /** A keyspace in the schema metadata. */

@@ -15,10 +15,9 @@
  */
 package com.datastax.oss.driver.api.core.data;
 
-import static com.google.common.base.Preconditions.checkArgument;
-
-import com.google.common.annotations.VisibleForTesting;
-import com.google.common.base.Objects;
+import com.datastax.oss.driver.shaded.guava.common.annotations.VisibleForTesting;
+import com.datastax.oss.driver.shaded.guava.common.base.Objects;
+import com.datastax.oss.driver.shaded.guava.common.base.Preconditions;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -512,7 +511,7 @@ public final class CqlDuration {
      * @param unitName the unit name
      */
     private void validate(long units, long limit, String unitName) {
-      checkArgument(
+      Preconditions.checkArgument(
           units <= limit,
           "Invalid duration. The total number of %s must be less or equal to %s",
           unitName,

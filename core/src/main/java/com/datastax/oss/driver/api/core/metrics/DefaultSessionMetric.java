@@ -15,7 +15,7 @@
  */
 package com.datastax.oss.driver.api.core.metrics;
 
-import com.google.common.collect.ImmutableMap;
+import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableMap;
 import java.util.Map;
 
 /** See {@code reference.conf} for a description of each metric. */

@@ -17,7 +17,7 @@ package com.datastax.oss.driver.internal.core;
 
 import com.datastax.oss.driver.api.core.ConsistencyLevel;
 import com.datastax.oss.driver.api.core.DefaultConsistencyLevel;
-import com.google.common.collect.ImmutableList;
+import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableList;
 
 public class DefaultConsistencyLevelRegistry implements ConsistencyLevelRegistry {
 

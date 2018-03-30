@@ -15,8 +15,7 @@
  */
 package com.datastax.oss.driver.api.core.type.reflect;
 
-import static com.google.common.base.Preconditions.checkArgument;
-
+import com.datastax.oss.driver.shaded.guava.common.base.Preconditions;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.lang.reflect.TypeVariable;
@@ -31,7 +30,8 @@ public class GenericTypeParameter<T> {
 
   protected GenericTypeParameter() {
     Type superclass = getClass().getGenericSuperclass();
-    checkArgument(superclass instanceof ParameterizedType, "%s isn't parameterized", superclass);
+    Preconditions.checkArgument(
+        superclass instanceof ParameterizedType, "%s isn't parameterized", superclass);
     this.typeVariable =
         (TypeVariable<?>) ((ParameterizedType) superclass).getActualTypeArguments()[0];
   }
