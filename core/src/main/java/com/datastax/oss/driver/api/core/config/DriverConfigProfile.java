@@ -18,6 +18,7 @@ package com.datastax.oss.driver.api.core.config;
 import java.time.Duration;
 import java.util.List;
 import java.util.Map;
+import java.util.SortedSet;
 
 /**
  * A profile in the driver's configuration.
@@ -65,4 +66,16 @@ public interface DriverConfigProfile {
   Duration getDuration(DriverOption option);
 
   DriverConfigProfile withDuration(DriverOption option, Duration value);
+
+  /**
+   * Enumerates all the entries in this profile, including those that were inherited from another
+   * profile.
+   *
+   * <p>The keys are raw strings that match {@link DriverOption#getPath()}.
+   *
+   * <p>The values are implementation-dependent. With the driver's default implementation, the
+   * possible types are {@code String}, {@code Number}, {@code Boolean}, {@code Map<String,Object>},
+   * {@code List<Object>}, or {@code null}.
+   */
+  SortedSet<Map.Entry<String, Object>> entrySet();
 }

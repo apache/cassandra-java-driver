@@ -18,6 +18,7 @@ package com.datastax.oss.driver.internal.core.config.typesafe;
 import com.datastax.oss.driver.api.core.config.DriverConfigProfile;
 import com.datastax.oss.driver.api.core.config.DriverOption;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableMap;
+import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableSortedSet;
 import com.datastax.oss.driver.shaded.guava.common.collect.MapMaker;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
@@ -25,10 +26,13 @@ import com.typesafe.config.ConfigValue;
 import com.typesafe.config.ConfigValueFactory;
 import com.typesafe.config.ConfigValueType;
 import java.time.Duration;
+import java.util.AbstractMap;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.SortedSet;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.function.Function;
@@ -136,6 +140,16 @@ public abstract class TypesafeDriverConfigProfile implements DriverConfigProfile
   @Override
   public DriverConfigProfile withBytes(DriverOption option, long value) {
     return with(option, value);
+  }
+
+  @Override
+  public SortedSet<Map.Entry<String, Object>> entrySet() {
+    ImmutableSortedSet.Builder<Map.Entry<String, Object>> builder =
+        ImmutableSortedSet.orderedBy(Comparator.comparing(Map.Entry::getKey));
+    for (Map.Entry<String, ConfigValue> entry : getEffectiveOptions().entrySet()) {
+      builder.add(new AbstractMap.SimpleEntry<>(entry.getKey(), entry.getValue().unwrapped()));
+    }
+    return builder.build();
   }
 
   private <T> T getCached(String path, Function<String, T> compute) {
