@@ -27,3 +27,22 @@ use a fully asynchronous programming model (chaining callbacks instead of blocki
 
 At any rate, `CompletionStage` has a `toCompletableFuture()` method. In current JDK versions, every
 `CompletionStage` is a `CompletableFuture`, so the conversion has no performance overhead.
+
+### Where is `DowngradingConsistencyRetryPolicy`?
+
+That retry policy was deprecated in driver 3.5.0, and does not exist anymore in 4.0.0. The main
+motivation is that this behavior should be the application's concern, not the driver's.
+
+We recognize that there are use cases where downgrading is good -- for instance, a dashboard
+application would present the latest information by reading at QUORUM, but it's acceptable for it to
+display stale information by reading at ONE sometimes. 
+
+But APIs provided by the driver should instead encourage idiomatic use of a distributed system like
+Apache Cassandra, and a downgrading policy works against this. It suggests that an anti-pattern such
+as "try to read at QUORUM, but fall back to ONE if that fails" is a good idea in general use cases, 
+when in reality it provides no better consistency guarantees than working directly at ONE, but with
+higher latencies. 
+
+We therefore urge users to carefully choose upfront the consistency level that works best for their
+use cases. If there is a legitimate reason to downgrade and retry, that should be handled by the
+application code.
