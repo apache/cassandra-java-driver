@@ -153,7 +153,12 @@ public final class UUIDs {
         if (pid == null && Native.isGetpidAvailable()) {
             try {
                 pid = Native.processId();
-                LOGGER.info("PID obtained through native call to getpid(): {}", pid);
+                if (pid == 0) {
+                    LOGGER.warn("PID returned through native call was 0, JNR versions incompatible?  Falling back to JMX.");
+                    pid = null;
+                } else {
+                    LOGGER.info("PID obtained through native call to getpid(): {}", pid);
+                }
             } catch (Exception e) {
                 LOGGER.warn("Native call to getpid() failed", e);
             }
