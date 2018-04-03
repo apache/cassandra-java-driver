@@ -277,7 +277,17 @@ public class DefaultBatchStatement implements BatchStatement {
 
   @Override
   public CqlIdentifier getRoutingKeyspace() {
-    return routingKeyspace;
+    if (routingKeyspace != null) {
+      return routingKeyspace;
+    } else {
+      for (BatchableStatement<?> statement : statements) {
+        CqlIdentifier ks = statement.getRoutingKeyspace();
+        if (ks != null) {
+          return ks;
+        }
+      }
+    }
+    return null;
   }
 
   @Override
@@ -300,7 +310,17 @@ public class DefaultBatchStatement implements BatchStatement {
 
   @Override
   public ByteBuffer getRoutingKey() {
-    return routingKey;
+    if (routingKey != null) {
+      return routingKey;
+    } else {
+      for (BatchableStatement<?> statement : statements) {
+        ByteBuffer key = statement.getRoutingKey();
+        if (key != null) {
+          return key;
+        }
+      }
+    }
+    return null;
   }
 
   @Override
@@ -323,7 +343,17 @@ public class DefaultBatchStatement implements BatchStatement {
 
   @Override
   public Token getRoutingToken() {
-    return routingToken;
+    if (routingToken != null) {
+      return routingToken;
+    } else {
+      for (BatchableStatement<?> statement : statements) {
+        Token token = statement.getRoutingToken();
+        if (token != null) {
+          return token;
+        }
+      }
+    }
+    return null;
   }
 
   @Override
