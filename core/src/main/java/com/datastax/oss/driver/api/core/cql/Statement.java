@@ -23,6 +23,7 @@ import com.datastax.oss.driver.api.core.session.Request;
 import com.datastax.oss.driver.api.core.session.Session;
 import com.datastax.oss.driver.api.core.time.TimestampGenerator;
 import com.datastax.oss.driver.api.core.type.reflect.GenericType;
+import com.datastax.oss.driver.internal.core.util.RoutingKey;
 import java.nio.ByteBuffer;
 import java.util.Map;
 import java.util.concurrent.CompletionStage;
@@ -95,6 +96,16 @@ public interface Statement<T extends Statement<T>> extends Request {
    * <p>See {@link Request#getRoutingKey()} for a description of the token-aware routing algorithm.
    */
   T setRoutingKey(ByteBuffer newRoutingKey);
+
+  /**
+   * Sets the key to use for token-aware routing, when the partition key has multiple components.
+   *
+   * <p>This method assembles the components into a single byte buffer and passes it to {@link
+   * #setRoutingKey(ByteBuffer)}.
+   */
+  default T setRoutingKey(ByteBuffer... newRoutingKeyComponents) {
+    return setRoutingKey(RoutingKey.compose(newRoutingKeyComponents));
+  }
 
   /**
    * Sets the token to use for token-aware routing.
