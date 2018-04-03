@@ -69,8 +69,8 @@ public interface Request {
   CqlIdentifier getKeyspace();
 
   /**
-   * The keyspace to use for token-aware routing, if no {@link #getKeyspace() per-request keyspace
-   * is defined}.
+   * The keyspace to use for token-aware routing, if no {@link #getKeyspace() per-request keyspace}
+   * is defined.
    *
    * <p>See {@link #getRoutingKey()} for a detailed explanation of token-aware routing.
    *
