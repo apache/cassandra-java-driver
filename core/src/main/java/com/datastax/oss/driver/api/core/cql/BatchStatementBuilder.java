@@ -46,6 +46,14 @@ public class BatchStatementBuilder extends StatementBuilder<BatchStatementBuilde
     return this;
   }
 
+  /**
+   * Shortcut for {@link #withKeyspace(CqlIdentifier)
+   * withKeyspace(CqlIdentifier.fromCql(keyspaceName))}.
+   */
+  public BatchStatementBuilder withKeyspace(String keyspaceName) {
+    return withKeyspace(CqlIdentifier.fromCql(keyspaceName));
+  }
+
   /** @see BatchStatement#add(BatchableStatement) */
   public BatchStatementBuilder addStatement(BatchableStatement<?> statement) {
     if (statementsCount >= 0xFFFF) {

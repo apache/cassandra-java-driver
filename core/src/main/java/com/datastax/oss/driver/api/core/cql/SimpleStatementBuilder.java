@@ -65,6 +65,14 @@ public class SimpleStatementBuilder
     return this;
   }
 
+  /**
+   * Shortcut for {@link #withKeyspace(CqlIdentifier)
+   * withKeyspace(CqlIdentifier.fromCql(keyspaceName))}.
+   */
+  public SimpleStatementBuilder withKeyspace(String keyspaceName) {
+    return withKeyspace(CqlIdentifier.fromCql(keyspaceName));
+  }
+
   /** @see SimpleStatement#setPositionalValues(List) */
   public SimpleStatementBuilder addPositionalValue(Object value) {
     if (namedValuesBuilder != null) {
