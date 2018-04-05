@@ -198,7 +198,7 @@ public abstract class CqlRequestHandlerBase implements Throttled {
   private ScheduledFuture<?> scheduleTimeout(Duration timeout) {
     if (timeout.toNanos() > 0) {
       return scheduler.schedule(
-          () -> setFinalError(new DriverTimeoutException("Query timed out after " + timeout)),
+          () -> setFinalError(new DriverTimeoutException("Query timed out after " + timeout), null),
           timeout.toNanos(),
           TimeUnit.NANOSECONDS);
     } else {
@@ -234,7 +234,7 @@ public abstract class CqlRequestHandlerBase implements Throttled {
       // We've reached the end of the query plan without finding any node to write to
       if (!result.isDone() && activeExecutionsCount.decrementAndGet() == 0) {
         // We're the last execution so fail the result
-        setFinalError(AllNodesFailedException.fromErrors(this.errors));
+        setFinalError(AllNodesFailedException.fromErrors(this.errors), null);
       }
     } else {
       NodeResponseCallback nodeResponseCallback =
@@ -287,15 +287,14 @@ public abstract class CqlRequestHandlerBase implements Throttled {
       if (result.complete(resultSet)) {
         cancelScheduledTasks();
         throttler.signalSuccess(this);
+        long latencyNanos = System.nanoTime() - startTimeNanos;
+        context.requestTracker().onSuccess(statement, latencyNanos, configProfile, callback.node);
         session
             .getMetricUpdater()
-            .updateTimer(
-                DefaultSessionMetric.CQL_REQUESTS,
-                System.nanoTime() - startTimeNanos,
-                TimeUnit.NANOSECONDS);
+            .updateTimer(DefaultSessionMetric.CQL_REQUESTS, latencyNanos, TimeUnit.NANOSECONDS);
       }
     } catch (Throwable error) {
-      setFinalError(error);
+      setFinalError(error, callback.node);
     }
   }
 
@@ -323,12 +322,14 @@ public abstract class CqlRequestHandlerBase implements Throttled {
   @Override
   public void onThrottleFailure(RequestThrottlingException error) {
     session.getMetricUpdater().incrementCounter(DefaultSessionMetric.THROTTLING_ERRORS);
-    setFinalError(error);
+    setFinalError(error, null);
   }
 
-  private void setFinalError(Throwable error) {
+  private void setFinalError(Throwable error, Node node) {
     if (result.completeExceptionally(error)) {
       cancelScheduledTasks();
+      long latencyNanos = System.nanoTime() - startTimeNanos;
+      context.requestTracker().onError(statement, error, latencyNanos, configProfile, node);
       if (error instanceof DriverTimeoutException) {
         throttler.signalTimeout(this);
         session.getMetricUpdater().incrementCounter(DefaultSessionMetric.CQL_CLIENT_TIMEOUTS);
@@ -380,7 +381,7 @@ public abstract class CqlRequestHandlerBase implements Throttled {
         Throwable error = future.cause();
         if (error instanceof EncoderException
             && error.getCause() instanceof FrameTooLongException) {
-          setFinalError(error.getCause());
+          setFinalError(error.getCause(), node);
         } else {
           LOG.debug(
               "[{}] Failed to send request on {}, trying next node (cause: {})",
@@ -479,10 +480,10 @@ public abstract class CqlRequestHandlerBase implements Throttled {
           LOG.debug("[{}] Got error response, processing", logPrefix);
           processErrorResponse((Error) responseMessage);
         } else {
-          setFinalError(new IllegalStateException("Unexpected response " + responseMessage));
+          setFinalError(new IllegalStateException("Unexpected response " + responseMessage), node);
         }
       } catch (Throwable t) {
-        setFinalError(t);
+        setFinalError(t, node);
       }
     }
 
@@ -524,12 +525,12 @@ public abstract class CqlRequestHandlerBase implements Throttled {
                             || prepareError instanceof FunctionFailureException
                             || prepareError instanceof ProtocolError) {
                           LOG.debug("[{}] Unrecoverable error on reprepare, rethrowing", logPrefix);
-                          setFinalError(prepareError);
+                          setFinalError(prepareError, node);
                           return null;
                         }
                       }
                     } else if (exception instanceof RequestThrottlingException) {
-                      setFinalError(exception);
+                      setFinalError(exception, node);
                       return null;
                     }
                     recordError(node, exception);
@@ -554,7 +555,7 @@ public abstract class CqlRequestHandlerBase implements Throttled {
           || error instanceof ProtocolError) {
         LOG.debug("[{}] Unrecoverable error, rethrowing", logPrefix);
         metricUpdater.incrementCounter(DefaultNodeMetric.OTHER_ERRORS);
-        setFinalError(error);
+        setFinalError(error, node);
       } else {
         RetryDecision decision;
         if (error instanceof ReadTimeoutException) {
@@ -634,7 +635,7 @@ public abstract class CqlRequestHandlerBase implements Throttled {
           sendRequest(null, execution, retryCount + 1, false);
           break;
         case RETHROW:
-          setFinalError(error);
+          setFinalError(error, node);
           break;
         case IGNORE:
           setFinalResult(Void.INSTANCE, null, true, this);

@@ -38,6 +38,7 @@ import com.datastax.oss.driver.api.core.metadata.schema.SchemaChangeListener;
 import com.datastax.oss.driver.api.core.retry.RetryPolicy;
 import com.datastax.oss.driver.api.core.session.Session;
 import com.datastax.oss.driver.api.core.specex.SpeculativeExecutionPolicy;
+import com.datastax.oss.driver.api.core.tracker.RequestTracker;
 import com.datastax.oss.driver.internal.core.context.EventBus;
 import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
 import com.datastax.oss.driver.internal.core.context.NettyOptions;
@@ -94,6 +95,7 @@ public class DefaultSessionPoolsTest {
   @Mock private MetricsFactory metricsFactory;
   @Mock private NodeStateListener nodeStateListener;
   @Mock private SchemaChangeListener schemaChangeListener;
+  @Mock private RequestTracker requestTracker;
 
   private DefaultNode node1;
   private DefaultNode node2;
@@ -170,6 +172,7 @@ public class DefaultSessionPoolsTest {
     Mockito.when(context.addressTranslator()).thenReturn(addressTranslator);
     Mockito.when(context.nodeStateListener()).thenReturn(nodeStateListener);
     Mockito.when(context.schemaChangeListener()).thenReturn(schemaChangeListener);
+    Mockito.when(context.requestTracker()).thenReturn(requestTracker);
 
     Mockito.when(metadataManager.closeAsync()).thenReturn(CompletableFuture.completedFuture(null));
     Mockito.when(metadataManager.forceCloseAsync())

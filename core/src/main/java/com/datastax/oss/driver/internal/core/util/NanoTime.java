@@ -31,11 +31,17 @@ public class NanoTime {
   /** Formats a duration in the best unit (truncating the fractional part). */
   public static String format(long elapsedNs) {
     if (elapsedNs >= ONE_HOUR) {
-      return (elapsedNs / ONE_HOUR) + " h";
+      long hours = elapsedNs / ONE_HOUR;
+      long minutes = (elapsedNs % ONE_HOUR) / ONE_MINUTE;
+      return hours + " h " + minutes + " mn";
     } else if (elapsedNs >= ONE_MINUTE) {
-      return (elapsedNs / ONE_MINUTE) + " mn";
+      long minutes = elapsedNs / ONE_MINUTE;
+      long seconds = (elapsedNs % ONE_MINUTE) / ONE_SECOND;
+      return minutes + " mn " + seconds + " s";
     } else if (elapsedNs >= ONE_SECOND) {
-      return (elapsedNs / ONE_SECOND) + " s";
+      long seconds = elapsedNs / ONE_SECOND;
+      long milliseconds = (elapsedNs % ONE_SECOND) / ONE_MILLISECOND;
+      return seconds + "." + milliseconds + " s";
     } else if (elapsedNs >= ONE_MILLISECOND) {
       return (elapsedNs / ONE_MILLISECOND) + " ms";
     } else if (elapsedNs >= ONE_MICROSECOND) {

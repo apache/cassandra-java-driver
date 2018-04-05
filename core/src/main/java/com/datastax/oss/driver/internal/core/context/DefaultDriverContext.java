@@ -31,6 +31,7 @@ import com.datastax.oss.driver.api.core.retry.RetryPolicy;
 import com.datastax.oss.driver.api.core.specex.SpeculativeExecutionPolicy;
 import com.datastax.oss.driver.api.core.ssl.SslEngineFactory;
 import com.datastax.oss.driver.api.core.time.TimestampGenerator;
+import com.datastax.oss.driver.api.core.tracker.RequestTracker;
 import com.datastax.oss.driver.api.core.type.codec.TypeCodec;
 import com.datastax.oss.driver.api.core.type.codec.registry.CodecRegistry;
 import com.datastax.oss.driver.internal.core.CassandraProtocolVersionRegistry;
@@ -169,6 +170,7 @@ public class DefaultDriverContext implements InternalDriverContext {
       new LazyReference<>("requestThrottler", this::buildRequestThrottler, cycleDetector);
   private final LazyReference<NodeStateListener> nodeStateListenerRef;
   private final LazyReference<SchemaChangeListener> schemaChangeListenerRef;
+  private final LazyReference<RequestTracker> requestTrackerRef;
 
   private final DriverConfig config;
   private final DriverConfigLoader configLoader;
@@ -177,12 +179,14 @@ public class DefaultDriverContext implements InternalDriverContext {
   private final String sessionName;
   private final NodeStateListener nodeStateListenerFromBuilder;
   private final SchemaChangeListener schemaChangeListenerFromBuilder;
+  private final RequestTracker requestTrackerFromBuilder;
 
   public DefaultDriverContext(
       DriverConfigLoader configLoader,
       List<TypeCodec<?>> typeCodecs,
       NodeStateListener nodeStateListener,
-      SchemaChangeListener schemaChangeListener) {
+      SchemaChangeListener schemaChangeListener,
+      RequestTracker requestTracker) {
     this.config = configLoader.getInitialConfig();
     this.configLoader = configLoader;
     DriverConfigProfile defaultProfile = config.getDefaultProfile();
@@ -204,6 +208,10 @@ public class DefaultDriverContext implements InternalDriverContext {
             "schemaChangeListener",
             () -> buildSchemaChangeListener(schemaChangeListenerFromBuilder),
             cycleDetector);
+    this.requestTrackerFromBuilder = requestTracker;
+    this.requestTrackerRef =
+        new LazyReference<>(
+            "requestTracker", () -> buildRequestTracker(requestTrackerFromBuilder), cycleDetector);
   }
 
   protected LoadBalancingPolicy buildLoadBalancingPolicy() {
@@ -432,6 +440,19 @@ public class DefaultDriverContext implements InternalDriverContext {
                             DefaultDriverOption.METADATA_SCHEMA_CHANGE_LISTENER_CLASS)));
   }
 
+  protected RequestTracker buildRequestTracker(RequestTracker requestTrackerFromBuilder) {
+    return (requestTrackerFromBuilder != null)
+        ? requestTrackerFromBuilder
+        : Reflection.buildFromConfig(
+                this, DefaultDriverOption.REQUEST_TRACKER_CLASS, RequestTracker.class)
+            .orElseThrow(
+                () ->
+                    new IllegalArgumentException(
+                        String.format(
+                            "Missing request tracker, check your configuration (%s)",
+                            DefaultDriverOption.REQUEST_TRACKER_CLASS)));
+  }
+
   @Override
   public String sessionName() {
     return sessionName;
@@ -610,6 +631,11 @@ public class DefaultDriverContext implements InternalDriverContext {
   @Override
   public SchemaChangeListener schemaChangeListener() {
     return schemaChangeListenerRef.get();
+  }
+
+  @Override
+  public RequestTracker requestTracker() {
+    return requestTrackerRef.get();
   }
 
   @Override
