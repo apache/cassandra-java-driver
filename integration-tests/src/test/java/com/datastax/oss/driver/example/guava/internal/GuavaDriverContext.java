@@ -20,6 +20,7 @@ import com.datastax.oss.driver.api.core.cql.PrepareRequest;
 import com.datastax.oss.driver.api.core.cql.Statement;
 import com.datastax.oss.driver.api.core.metadata.NodeStateListener;
 import com.datastax.oss.driver.api.core.metadata.schema.SchemaChangeListener;
+import com.datastax.oss.driver.api.core.tracker.RequestTracker;
 import com.datastax.oss.driver.api.core.type.codec.TypeCodec;
 import com.datastax.oss.driver.example.guava.api.GuavaSession;
 import com.datastax.oss.driver.internal.core.context.DefaultDriverContext;
@@ -44,8 +45,9 @@ public class GuavaDriverContext extends DefaultDriverContext {
       DriverConfigLoader configLoader,
       List<TypeCodec<?>> typeCodecs,
       NodeStateListener nodeStateListener,
-      SchemaChangeListener schemaChangeListener) {
-    super(configLoader, typeCodecs, nodeStateListener, schemaChangeListener);
+      SchemaChangeListener schemaChangeListener,
+      RequestTracker requestTracker) {
+    super(configLoader, typeCodecs, nodeStateListener, schemaChangeListener, requestTracker);
   }
 
   @Override

@@ -23,6 +23,7 @@ import com.datastax.oss.driver.api.core.config.DriverConfigProfile;
 import com.datastax.oss.driver.api.core.context.DriverContext;
 import com.datastax.oss.driver.api.core.metadata.NodeStateListener;
 import com.datastax.oss.driver.api.core.metadata.schema.SchemaChangeListener;
+import com.datastax.oss.driver.api.core.tracker.RequestTracker;
 import com.datastax.oss.driver.api.core.type.codec.TypeCodec;
 import com.datastax.oss.driver.internal.core.ContactPoints;
 import com.datastax.oss.driver.internal.core.config.typesafe.DefaultDriverConfigLoader;
@@ -59,6 +60,7 @@ public abstract class SessionBuilder<SelfT extends SessionBuilder, SessionT> {
   protected List<TypeCodec<?>> typeCodecs = new ArrayList<>();
   private NodeStateListener nodeStateListener;
   private SchemaChangeListener schemaChangeListener;
+  protected RequestTracker requestTracker;
   protected CqlIdentifier keyspace;
 
   /**
@@ -158,6 +160,17 @@ public abstract class SessionBuilder<SelfT extends SessionBuilder, SessionT> {
   }
 
   /**
+   * Register a request tracker to use with the session.
+   *
+   * <p>If the tracker is specified programmatically with this method, it overrides the
+   * configuration (that is, the {@code request.tracker.class} option will be ignored).
+   */
+  public SelfT withRequestTracker(RequestTracker requestTracker) {
+    this.requestTracker = requestTracker;
+    return self;
+  }
+
+  /**
    * Sets the keyspace to connect the session to.
    *
    * <p>Note that this can also be provided by the configuration; if both are defined, this method
@@ -216,7 +229,8 @@ public abstract class SessionBuilder<SelfT extends SessionBuilder, SessionT> {
 
     return DefaultSession.init(
         (InternalDriverContext)
-            buildContext(configLoader, typeCodecs, nodeStateListener, schemaChangeListener),
+            buildContext(
+                configLoader, typeCodecs, nodeStateListener, schemaChangeListener, requestTracker),
         contactPoints,
         keyspace);
   }
@@ -229,9 +243,10 @@ public abstract class SessionBuilder<SelfT extends SessionBuilder, SessionT> {
       DriverConfigLoader configLoader,
       List<TypeCodec<?>> typeCodecs,
       NodeStateListener nodeStateListener,
-      SchemaChangeListener schemaChangeListener) {
+      SchemaChangeListener schemaChangeListener,
+      RequestTracker requestTracker) {
     return new DefaultDriverContext(
-        configLoader, typeCodecs, nodeStateListener, schemaChangeListener);
+        configLoader, typeCodecs, nodeStateListener, schemaChangeListener, requestTracker);
   }
 
   private static <T> T buildIfNull(T value, Supplier<T> builder) {

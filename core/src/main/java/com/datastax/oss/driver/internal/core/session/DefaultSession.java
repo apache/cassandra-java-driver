@@ -425,7 +425,8 @@ public class DefaultSession implements CqlSession {
               context.addressTranslator(),
               context.configLoader(),
               context.nodeStateListener(),
-              context.schemaChangeListener())) {
+              context.schemaChangeListener(),
+              context.requestTracker())) {
         try {
           closeable.close();
         } catch (Throwable t) {
