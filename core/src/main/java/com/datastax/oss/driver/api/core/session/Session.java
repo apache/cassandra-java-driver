@@ -57,9 +57,9 @@ public interface Session extends AsyncAutoCloseable {
    * <p>This is intended for products that wrap or extend the driver, as a way to check
    * compatibility if end-users override the driver version in their application.
    */
-  default DriverInfo getDriverInfo() {
+  static DriverInfo getOssDriverInfo() {
     return DefaultDriverInfo.buildFromResource(
-        getClass().getResource("/com/datastax/oss/driver/Driver.properties"));
+        Session.class.getResource("/com/datastax/oss/driver/Driver.properties"));
   }
 
   /**

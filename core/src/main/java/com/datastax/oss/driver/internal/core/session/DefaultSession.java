@@ -31,6 +31,7 @@ import com.datastax.oss.driver.api.core.metadata.NodeState;
 import com.datastax.oss.driver.api.core.metadata.NodeStateListener;
 import com.datastax.oss.driver.api.core.metadata.schema.SchemaChangeListener;
 import com.datastax.oss.driver.api.core.session.Request;
+import com.datastax.oss.driver.api.core.session.Session;
 import com.datastax.oss.driver.api.core.type.reflect.GenericType;
 import com.datastax.oss.driver.internal.core.channel.DriverChannel;
 import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
@@ -123,7 +124,7 @@ public class DefaultSession implements CqlSession {
 
   protected void printBasicStartupInfo() {
     try {
-      DriverInfo driverInfo = getDriverInfo();
+      DriverInfo driverInfo = Session.getOssDriverInfo();
       int processId = -1;
       if (Native.isGetProcessIdAvailable()) {
         processId = Native.getProcessId();

@@ -17,7 +17,6 @@ package com.datastax.oss.driver.internal.core.session;
 
 import com.codahale.metrics.MetricRegistry;
 import com.datastax.oss.driver.api.core.CqlIdentifier;
-import com.datastax.oss.driver.api.core.DriverInfo;
 import com.datastax.oss.driver.api.core.context.DriverContext;
 import com.datastax.oss.driver.api.core.metadata.Metadata;
 import com.datastax.oss.driver.api.core.metadata.NodeStateListener;
@@ -50,11 +49,6 @@ public class SessionWrapper implements Session {
 
   public Session getDelegate() {
     return delegate;
-  }
-
-  @Override
-  public DriverInfo getDriverInfo() {
-    return delegate.getDriverInfo();
   }
 
   @Override
