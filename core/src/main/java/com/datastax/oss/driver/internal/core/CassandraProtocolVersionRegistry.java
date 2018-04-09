@@ -15,6 +15,7 @@
  */
 package com.datastax.oss.driver.internal.core;
 
+import com.datastax.oss.driver.api.core.CassandraVersions;
 import com.datastax.oss.driver.api.core.DefaultProtocolVersion;
 import com.datastax.oss.driver.api.core.ProtocolVersion;
 import com.datastax.oss.driver.api.core.UnsupportedProtocolVersionException;
@@ -132,7 +133,7 @@ public class CassandraProtocolVersionRegistry implements ProtocolVersionRegistry
         continue;
       }
       version = version.nextStable();
-      if (version.compareTo(Version.CASSANDRA_2_1_0) < 0) {
+      if (version.compareTo(CassandraVersions.CASSANDRA_2_1_0) < 0) {
         throw new UnsupportedProtocolVersionException(
             node.getConnectAddress(),
             String.format(
@@ -147,7 +148,7 @@ public class CassandraProtocolVersionRegistry implements ProtocolVersionRegistry
           logPrefix,
           node.getConnectAddress(),
           version);
-      if (version.compareTo(Version.CASSANDRA_2_2_0) < 0
+      if (version.compareTo(CassandraVersions.CASSANDRA_2_2_0) < 0
           && candidates.remove(DefaultProtocolVersion.V4)) {
         LOG.debug("[{}] Excluding protocol V4", logPrefix);
       }

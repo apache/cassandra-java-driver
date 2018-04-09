@@ -15,6 +15,7 @@
  */
 package com.datastax.oss.driver.api.testinfra.ccm;
 
+import com.datastax.oss.driver.api.core.CassandraVersions;
 import com.datastax.oss.driver.api.core.DefaultProtocolVersion;
 import com.datastax.oss.driver.api.core.ProtocolVersion;
 import com.datastax.oss.driver.api.core.Version;
@@ -141,7 +142,7 @@ public abstract class BaseCcmRule extends CassandraResourceRule {
 
   @Override
   public ProtocolVersion getHighestProtocolVersion() {
-    if (ccmBridge.getCassandraVersion().compareTo(Version.CASSANDRA_2_2_0) >= 0) {
+    if (ccmBridge.getCassandraVersion().compareTo(CassandraVersions.CASSANDRA_2_2_0) >= 0) {
       return DefaultProtocolVersion.V4;
     } else {
       return DefaultProtocolVersion.V3;

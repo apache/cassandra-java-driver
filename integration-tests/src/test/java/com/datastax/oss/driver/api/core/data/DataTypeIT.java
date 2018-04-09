@@ -20,6 +20,7 @@ import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.junit.Assert.fail;
 import static org.junit.Assume.assumeThat;
 
+import com.datastax.oss.driver.api.core.CassandraVersions;
 import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.CqlSession;
 import com.datastax.oss.driver.api.core.ProtocolVersion;
@@ -153,7 +154,7 @@ public class DataTypeIT {
                   || dataType == DataTypes.SMALLINT
                   || dataType == DataTypes.DATE
                   || dataType == DataTypes.TIME) {
-                return version.compareTo(Version.CASSANDRA_2_2_0) >= 0;
+                return version.compareTo(CassandraVersions.CASSANDRA_2_2_0) >= 0;
               }
               return true;
             })

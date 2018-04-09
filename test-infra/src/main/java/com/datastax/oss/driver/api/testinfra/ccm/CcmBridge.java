@@ -17,6 +17,7 @@ package com.datastax.oss.driver.api.testinfra.ccm;
 
 import static io.netty.util.internal.PlatformDependent.isWindows;
 
+import com.datastax.oss.driver.api.core.CassandraVersions;
 import com.datastax.oss.driver.api.core.Version;
 import java.io.File;
 import java.io.FileOutputStream;
@@ -195,7 +196,7 @@ public class CcmBridge implements AutoCloseable {
       for (Map.Entry<String, Object> conf : cassandraConfiguration.entrySet()) {
         execute("updateconf", String.format("%s:%s", conf.getKey(), conf.getValue()));
       }
-      if (getCassandraVersion().compareTo(Version.CASSANDRA_2_2_0) >= 0) {
+      if (getCassandraVersion().compareTo(CassandraVersions.CASSANDRA_2_2_0) >= 0) {
         execute("updateconf", "enable_user_defined_functions:true");
       }
       if (DSE_ENABLEMENT) {

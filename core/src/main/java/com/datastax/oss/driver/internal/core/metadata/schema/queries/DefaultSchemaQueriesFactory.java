@@ -15,6 +15,7 @@
  */
 package com.datastax.oss.driver.internal.core.metadata.schema.queries;
 
+import com.datastax.oss.driver.api.core.CassandraVersions;
 import com.datastax.oss.driver.api.core.Version;
 import com.datastax.oss.driver.api.core.config.DriverConfigProfile;
 import com.datastax.oss.driver.api.core.metadata.Metadata;
@@ -57,16 +58,16 @@ public class DefaultSchemaQueriesFactory implements SchemaQueriesFactory {
           "[{}] Cassandra version missing for {}, defaulting to {}",
           logPrefix,
           node,
-          Version.CASSANDRA_3_0_0);
-      version = Version.CASSANDRA_3_0_0;
+          CassandraVersions.CASSANDRA_3_0_0);
+      version = CassandraVersions.CASSANDRA_3_0_0;
     } else {
       version = version.nextStable();
     }
     DriverConfigProfile config = context.config().getDefaultProfile();
     LOG.debug("[{}] Sending schema queries to {} with version {}", logPrefix, node, version);
-    if (version.compareTo(Version.CASSANDRA_2_2_0) < 0) {
+    if (version.compareTo(CassandraVersions.CASSANDRA_2_2_0) < 0) {
       return new Cassandra21SchemaQueries(channel, refreshFuture, config, logPrefix);
-    } else if (version.compareTo(Version.CASSANDRA_3_0_0) < 0) {
+    } else if (version.compareTo(CassandraVersions.CASSANDRA_3_0_0) < 0) {
       return new Cassandra22SchemaQueries(channel, refreshFuture, config, logPrefix);
     } else {
       return new Cassandra3SchemaQueries(channel, refreshFuture, config, logPrefix);

@@ -50,15 +50,6 @@ public class Version implements Comparable<Version> {
 
   private static final Pattern pattern = Pattern.compile(VERSION_REGEXP);
 
-  /** Apache Cassandra's version 2.1.0. */
-  public static final Version CASSANDRA_2_1_0 = parse("2.1.0");
-
-  /** Apache Cassandra's version 2.2.0. */
-  public static final Version CASSANDRA_2_2_0 = parse("2.2.0");
-
-  /** Apache Cassandra's version 3.0.0. */
-  public static final Version CASSANDRA_3_0_0 = parse("3.0.0");
-
   private final int major;
   private final int minor;
   private final int patch;
