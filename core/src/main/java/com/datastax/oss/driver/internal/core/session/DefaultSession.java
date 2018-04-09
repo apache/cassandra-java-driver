@@ -42,13 +42,13 @@ import com.datastax.oss.driver.internal.core.metrics.SessionMetricUpdater;
 import com.datastax.oss.driver.internal.core.os.Native;
 import com.datastax.oss.driver.internal.core.pool.ChannelPool;
 import com.datastax.oss.driver.internal.core.util.Loggers;
+import com.datastax.oss.driver.internal.core.util.NanoTime;
 import com.datastax.oss.driver.internal.core.util.concurrent.CompletableFutures;
 import com.datastax.oss.driver.internal.core.util.concurrent.RunOrSchedule;
 import com.google.common.collect.ImmutableList;
 import io.netty.util.concurrent.EventExecutor;
 import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
-import java.time.Duration;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -57,7 +57,6 @@ import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.TimeUnit;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -133,15 +132,11 @@ public class DefaultSession implements CqlSession {
       STARTUP_LOG.info("[{}] {} initializing (PID: {})", logPrefix, driverInfo, processId);
       singleThreaded.initFuture.thenRun(
           () -> {
-            Duration elapsed =
-                Duration.ofMillis(TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - start));
-            String elapsedStr =
-                elapsed.toString().substring(2).replaceAll("(\\d[HMS])(?!$)", "$1 ").toLowerCase();
             int size = getPools().size();
             STARTUP_LOG.info(
                 "[{}] Session successfully initialized in {}, connected to {} node{}",
                 logPrefix,
-                elapsedStr,
+                NanoTime.formatTimeSince(start),
                 size,
                 size > 1 ? "s" : "");
           });
