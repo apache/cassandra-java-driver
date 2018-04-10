@@ -19,10 +19,8 @@ import com.codahale.metrics.MetricRegistry;
 import com.datastax.oss.driver.api.core.AsyncAutoCloseable;
 import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.CqlSession;
-import com.datastax.oss.driver.api.core.DriverInfo;
 import com.datastax.oss.driver.api.core.ProtocolVersion;
 import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
-import com.datastax.oss.driver.api.core.config.DriverConfigProfile;
 import com.datastax.oss.driver.api.core.context.DriverContext;
 import com.datastax.oss.driver.api.core.loadbalancing.LoadBalancingPolicy;
 import com.datastax.oss.driver.api.core.metadata.Metadata;
@@ -31,7 +29,7 @@ import com.datastax.oss.driver.api.core.metadata.NodeState;
 import com.datastax.oss.driver.api.core.metadata.NodeStateListener;
 import com.datastax.oss.driver.api.core.metadata.schema.SchemaChangeListener;
 import com.datastax.oss.driver.api.core.session.Request;
-import com.datastax.oss.driver.api.core.session.Session;
+import com.datastax.oss.driver.api.core.session.SessionLifecycleListener;
 import com.datastax.oss.driver.api.core.type.reflect.GenericType;
 import com.datastax.oss.driver.internal.core.channel.DriverChannel;
 import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
@@ -40,12 +38,11 @@ import com.datastax.oss.driver.internal.core.metadata.MetadataManager;
 import com.datastax.oss.driver.internal.core.metadata.NodeStateEvent;
 import com.datastax.oss.driver.internal.core.metadata.NodeStateManager;
 import com.datastax.oss.driver.internal.core.metrics.SessionMetricUpdater;
-import com.datastax.oss.driver.internal.core.os.Native;
 import com.datastax.oss.driver.internal.core.pool.ChannelPool;
 import com.datastax.oss.driver.internal.core.util.Loggers;
-import com.datastax.oss.driver.internal.core.util.NanoTime;
 import com.datastax.oss.driver.internal.core.util.concurrent.CompletableFutures;
 import com.datastax.oss.driver.internal.core.util.concurrent.RunOrSchedule;
+import com.datastax.oss.driver.internal.core.util.concurrent.UncaughtExceptions;
 import com.google.common.collect.ImmutableList;
 import io.netty.util.concurrent.EventExecutor;
 import java.net.InetSocketAddress;
@@ -79,8 +76,6 @@ import org.slf4j.LoggerFactory;
 public class DefaultSession implements CqlSession {
 
   private static final Logger LOG = LoggerFactory.getLogger(DefaultSession.class);
-  private static final Logger STARTUP_LOG =
-      LoggerFactory.getLogger("com.datastax.oss.driver.api.core.Startup");
 
   private final InternalDriverContext context;
   private final EventExecutor adminExecutor;
@@ -94,11 +89,13 @@ public class DefaultSession implements CqlSession {
   public DefaultSession(
       InternalDriverContext context,
       Set<InetSocketAddress> contactPoints,
-      Set<NodeStateListener> nodeStateListeners) {
+      Set<NodeStateListener> nodeStateListeners,
+      Set<SessionLifecycleListener> sessionLifecycleListeners) {
     LOG.debug("Creating new session {}", context.sessionName());
     this.adminExecutor = context.nettyOptions().adminEventExecutorGroup().next();
     this.context = context;
-    this.singleThreaded = new SingleThreaded(context, contactPoints, nodeStateListeners);
+    this.singleThreaded =
+        new SingleThreaded(context, contactPoints, nodeStateListeners, sessionLifecycleListeners);
     this.metadataManager = context.metadataManager();
     this.processorRegistry = context.requestProcessorRegistry();
     this.poolManager = context.poolManager();
@@ -107,43 +104,8 @@ public class DefaultSession implements CqlSession {
   }
 
   public CompletionStage<CqlSession> init(CqlIdentifier keyspace) {
-    DriverConfigProfile defaultConfig = context.config().getDefaultProfile();
-    if (defaultConfig.isDefined(DefaultDriverOption.STARTUP_CUSTOM_BANNER)) {
-      printCustomBanner(defaultConfig.getString(DefaultDriverOption.STARTUP_CUSTOM_BANNER));
-    }
-    if (defaultConfig.getBoolean(DefaultDriverOption.STARTUP_PRINT_BASIC_INFO)) {
-      printBasicStartupInfo();
-    }
     RunOrSchedule.on(adminExecutor, () -> singleThreaded.init(keyspace));
     return singleThreaded.initFuture;
-  }
-
-  protected void printCustomBanner(String banner) {
-    STARTUP_LOG.info(banner);
-  }
-
-  protected void printBasicStartupInfo() {
-    try {
-      DriverInfo driverInfo = Session.getOssDriverInfo();
-      int processId = -1;
-      if (Native.isGetProcessIdAvailable()) {
-        processId = Native.getProcessId();
-      }
-      long start = System.nanoTime();
-      STARTUP_LOG.info("[{}] {} initializing (PID: {})", logPrefix, driverInfo, processId);
-      singleThreaded.initFuture.thenRun(
-          () -> {
-            int size = getPools().size();
-            STARTUP_LOG.info(
-                "[{}] Session successfully initialized in {}, connected to {} node{}",
-                logPrefix,
-                NanoTime.formatTimeSince(start),
-                size,
-                size > 1 ? "s" : "");
-          });
-    } catch (Exception e) {
-      STARTUP_LOG.warn("Cannot display driver info", e);
-    }
   }
 
   @Override
@@ -263,6 +225,16 @@ public class DefaultSession implements CqlSession {
   }
 
   @Override
+  public void register(SessionLifecycleListener listener) {
+    RunOrSchedule.on(adminExecutor, () -> singleThreaded.register(listener));
+  }
+
+  @Override
+  public void unregister(SessionLifecycleListener listener) {
+    RunOrSchedule.on(adminExecutor, () -> singleThreaded.unregister(listener));
+  }
+
+  @Override
   public CompletionStage<Void> closeFuture() {
     return singleThreaded.closeFuture;
   }
@@ -289,22 +261,48 @@ public class DefaultSession implements CqlSession {
     private final CompletableFuture<Void> closeFuture = new CompletableFuture<>();
     private boolean closeWasCalled;
     private boolean forceCloseWasCalled;
-    private Set<SchemaChangeListener> schemaChangeListeners = new HashSet<>();
-    private Set<NodeStateListener> nodeStateListeners;
+    private final Set<SchemaChangeListener> schemaChangeListeners = new HashSet<>();
+    private final Set<NodeStateListener> nodeStateListeners;
+    private final Set<SessionLifecycleListener> sessionLifecycleListeners;
 
     private SingleThreaded(
         InternalDriverContext context,
         Set<InetSocketAddress> contactPoints,
-        Set<NodeStateListener> nodeStateListeners) {
+        Set<NodeStateListener> nodeStateListeners,
+        Set<SessionLifecycleListener> sessionLifecycleListeners) {
       this.context = context;
       this.nodeStateManager = new NodeStateManager(context);
       this.initialContactPoints = contactPoints;
       this.nodeStateListeners = nodeStateListeners;
+      this.sessionLifecycleListeners = sessionLifecycleListeners;
       new SchemaListenerNotifier(schemaChangeListeners, context.eventBus(), adminExecutor);
       context
           .eventBus()
           .register(
               NodeStateEvent.class, RunOrSchedule.on(adminExecutor, this::onNodeStateChanged));
+      initFuture
+          .whenComplete(
+              (result, error) -> {
+                if (error == null) {
+                  sessionLifecycleListeners.forEach(l -> l.afterInit(DefaultSession.this));
+                } else {
+                  sessionLifecycleListeners.forEach(
+                      l -> l.onInitFailed(DefaultSession.this, error));
+                }
+              })
+          .exceptionally(UncaughtExceptions::log);
+      closeFuture
+          .whenComplete(
+              (result, error) -> {
+                if (error == null) {
+                  sessionLifecycleListeners.forEach(l -> l.afterClose(DefaultSession.this));
+                } else {
+                  sessionLifecycleListeners.forEach(
+                      l -> l.onCloseFailed(DefaultSession.this, error));
+                }
+                sessionLifecycleListeners.clear();
+              })
+          .exceptionally(UncaughtExceptions::log);
     }
 
     private void init(CqlIdentifier keyspace) {
@@ -315,6 +313,7 @@ public class DefaultSession implements CqlSession {
       initWasCalled = true;
       LOG.debug("[{}] Starting initialization", logPrefix);
 
+      sessionLifecycleListeners.forEach(l -> l.beforeInit(DefaultSession.this));
       nodeStateListeners.forEach(l -> l.onRegister(DefaultSession.this));
 
       MetadataManager metadataManager = context.metadataManager();
@@ -436,6 +435,22 @@ public class DefaultSession implements CqlSession {
       }
     }
 
+    private void register(SessionLifecycleListener listener) {
+      assert adminExecutor.inEventLoop();
+      if (closeWasCalled) {
+        return;
+      }
+      sessionLifecycleListeners.add(listener);
+    }
+
+    private void unregister(SessionLifecycleListener listener) {
+      assert adminExecutor.inEventLoop();
+      if (closeWasCalled) {
+        return;
+      }
+      sessionLifecycleListeners.remove(listener);
+    }
+
     private void onNodeStateChanged(NodeStateEvent event) {
       assert adminExecutor.inEventLoop();
       if (event.newState == null) {
@@ -456,6 +471,8 @@ public class DefaultSession implements CqlSession {
       }
       closeWasCalled = true;
       LOG.debug("[{}] Starting shutdown", logPrefix);
+
+      sessionLifecycleListeners.forEach(l -> l.beforeClose(DefaultSession.this));
 
       for (SchemaChangeListener listener : schemaChangeListeners) {
         listener.onUnregister(DefaultSession.this);
@@ -493,6 +510,7 @@ public class DefaultSession implements CqlSession {
           closeable.forceCloseAsync();
         }
       } else {
+        sessionLifecycleListeners.forEach(l -> l.beforeClose(DefaultSession.this));
         for (SchemaChangeListener listener : schemaChangeListeners) {
           listener.onUnregister(DefaultSession.this);
         }

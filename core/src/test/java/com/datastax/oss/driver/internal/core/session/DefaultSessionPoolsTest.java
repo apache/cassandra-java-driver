@@ -927,7 +927,8 @@ public class DefaultSessionPoolsTest {
 
   private CompletionStage<CqlSession> newSession() {
     DefaultSession session =
-        new DefaultSession(context, Collections.emptySet(), Collections.emptySet());
+        new DefaultSession(
+            context, Collections.emptySet(), Collections.emptySet(), Collections.emptySet());
     return session.init(KEYSPACE);
   }
 

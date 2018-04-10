@@ -201,6 +201,20 @@ public interface Session extends AsyncAutoCloseable {
       RequestT request, GenericType<ResultT> resultType);
 
   /**
+   * Registers the provided lifecycle listener.
+   *
+   * <p>This is a no-op if the listener was registered already.
+   */
+  void register(SessionLifecycleListener listener);
+
+  /**
+   * Unregisters the provided lifecycle listener.
+   *
+   * <p>This is a no-op if the listener was not registered.
+   */
+  void unregister(SessionLifecycleListener listener);
+
+  /**
    * Registers the provided schema change listener.
    *
    * <p>This is a no-op if the listener was registered already.

@@ -35,6 +35,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.CompletionStage;
@@ -55,6 +56,7 @@ public abstract class SessionBuilder<SelfT extends SessionBuilder<SelfT, Session
   protected Set<InetSocketAddress> programmaticContactPoints = new HashSet<>();
   protected List<TypeCodec<?>> typeCodecs = new ArrayList<>();
   protected final Set<NodeStateListener> nodeStateListeners = new HashSet<>();
+  protected final Set<SessionLifecycleListener> sessionLifecycleListeners = new LinkedHashSet<>();
   protected CqlIdentifier keyspace;
 
   /**
@@ -130,6 +132,26 @@ public abstract class SessionBuilder<SelfT extends SessionBuilder<SelfT, Session
     return self;
   }
 
+  /**
+   * Registers initial {@linkplain SessionLifecycleListener lifecycle listeners} for the new
+   * session.
+   *
+   * <p>Note that such listeners can also be {@linkplain Session#register(SessionLifecycleListener)
+   * registered} or {@linkplain Session#unregister(SessionLifecycleListener) unregistered} after the
+   * session is created.
+   */
+  public SelfT addSessionLifecycleListeners(SessionLifecycleListener... newListeners) {
+    Collections.addAll(this.sessionLifecycleListeners, newListeners);
+    return self;
+  }
+
+  /**
+   * Registers initial {@linkplain NodeStateListener node state listeners} for the new session.
+   *
+   * <p>Note that such listeners can also be {@linkplain Session#register(NodeStateListener)
+   * registered} or {@linkplain Session#unregister(NodeStateListener) unregistered} after the
+   * session is created.
+   */
   public SelfT addNodeStateListeners(NodeStateListener... newListeners) {
     Collections.addAll(this.nodeStateListeners, newListeners);
     return self;
@@ -186,7 +208,9 @@ public abstract class SessionBuilder<SelfT extends SessionBuilder<SelfT, Session
 
     InternalDriverContext context = (InternalDriverContext) buildContext(configLoader, typeCodecs);
     DefaultSession session =
-        (DefaultSession) buildDefaultSession(context, contactPoints, nodeStateListeners);
+        (DefaultSession)
+            buildDefaultSession(
+                context, contactPoints, nodeStateListeners, sessionLifecycleListeners);
     return session.init(keyspace);
   }
 
@@ -206,8 +230,13 @@ public abstract class SessionBuilder<SelfT extends SessionBuilder<SelfT, Session
   protected Session buildDefaultSession(
       DriverContext context,
       Set<InetSocketAddress> contactPoints,
-      Set<NodeStateListener> nodeStateListeners) {
-    return new DefaultSession((InternalDriverContext) context, contactPoints, nodeStateListeners);
+      Set<NodeStateListener> nodeStateListeners,
+      Set<SessionLifecycleListener> sessionLifecycleListeners) {
+    return new DefaultSession(
+        (InternalDriverContext) context,
+        contactPoints,
+        nodeStateListeners,
+        sessionLifecycleListeners);
   }
 
   private static <T> T buildIfNull(T value, Supplier<T> builder) {

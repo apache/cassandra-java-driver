@@ -70,6 +70,8 @@ import com.datastax.oss.protocol.internal.FrameCodec;
 import io.netty.buffer.ByteBuf;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
@@ -169,6 +171,7 @@ public class DefaultDriverContext implements InternalDriverContext {
   private final ChannelPoolFactory channelPoolFactory = new ChannelPoolFactory();
   private final CodecRegistry codecRegistry;
   private final String sessionName;
+  private final ConcurrentMap<String, Object> attributes = new ConcurrentHashMap<>();
 
   public DefaultDriverContext(DriverConfigLoader configLoader, List<TypeCodec<?>> typeCodecs) {
     this.config = configLoader.getInitialConfig();
@@ -547,5 +550,10 @@ public class DefaultDriverContext implements InternalDriverContext {
   @Override
   public ProtocolVersion protocolVersion() {
     return channelFactory().getProtocolVersion();
+  }
+
+  @Override
+  public ConcurrentMap<String, Object> getAttributes() {
+    return attributes;
   }
 }

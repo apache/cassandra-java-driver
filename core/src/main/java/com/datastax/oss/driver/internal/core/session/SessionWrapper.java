@@ -23,6 +23,7 @@ import com.datastax.oss.driver.api.core.metadata.NodeStateListener;
 import com.datastax.oss.driver.api.core.metadata.schema.SchemaChangeListener;
 import com.datastax.oss.driver.api.core.session.Request;
 import com.datastax.oss.driver.api.core.session.Session;
+import com.datastax.oss.driver.api.core.session.SessionLifecycleListener;
 import com.datastax.oss.driver.api.core.type.reflect.GenericType;
 import java.util.concurrent.CompletionStage;
 
@@ -119,6 +120,16 @@ public class SessionWrapper implements Session {
 
   @Override
   public void unregister(NodeStateListener listener) {
+    delegate.unregister(listener);
+  }
+
+  @Override
+  public void register(SessionLifecycleListener listener) {
+    delegate.register(listener);
+  }
+
+  @Override
+  public void unregister(SessionLifecycleListener listener) {
     delegate.unregister(listener);
   }
 
