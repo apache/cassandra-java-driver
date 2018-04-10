@@ -18,8 +18,6 @@ package com.datastax.oss.driver.internal.core.session;
 import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.context.DriverContext;
 import com.datastax.oss.driver.api.core.metadata.Metadata;
-import com.datastax.oss.driver.api.core.metadata.NodeStateListener;
-import com.datastax.oss.driver.api.core.metadata.schema.SchemaChangeListener;
 import com.datastax.oss.driver.api.core.metrics.Metrics;
 import com.datastax.oss.driver.api.core.session.Request;
 import com.datastax.oss.driver.api.core.session.Session;
@@ -103,26 +101,6 @@ public class SessionWrapper implements Session {
   public <RequestT extends Request, ResultT> ResultT execute(
       RequestT request, GenericType<ResultT> resultType) {
     return delegate.execute(request, resultType);
-  }
-
-  @Override
-  public void register(SchemaChangeListener listener) {
-    delegate.register(listener);
-  }
-
-  @Override
-  public void unregister(SchemaChangeListener listener) {
-    delegate.unregister(listener);
-  }
-
-  @Override
-  public void register(NodeStateListener listener) {
-    delegate.register(listener);
-  }
-
-  @Override
-  public void unregister(NodeStateListener listener) {
-    delegate.unregister(listener);
   }
 
   @Override

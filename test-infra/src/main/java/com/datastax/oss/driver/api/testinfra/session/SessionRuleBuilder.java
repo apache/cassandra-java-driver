@@ -16,6 +16,7 @@
 package com.datastax.oss.driver.api.testinfra.session;
 
 import com.datastax.oss.driver.api.core.metadata.NodeStateListener;
+import com.datastax.oss.driver.api.core.metadata.schema.SchemaChangeListener;
 import com.datastax.oss.driver.api.core.session.Session;
 import com.datastax.oss.driver.api.testinfra.CassandraResourceRule;
 import com.datastax.oss.driver.api.testinfra.ccm.CcmRule;
@@ -27,7 +28,8 @@ public abstract class SessionRuleBuilder<
   protected final CassandraResourceRule cassandraResource;
   protected boolean createKeyspace = true;
   protected String[] options = new String[] {};
-  protected NodeStateListener[] nodeStateListeners = new NodeStateListener[] {};
+  protected NodeStateListener nodeStateListener;
+  protected SchemaChangeListener schemaChangeListener;
 
   @SuppressWarnings("unchecked")
   protected final SelfT self = (SelfT) this;
@@ -61,8 +63,13 @@ public abstract class SessionRuleBuilder<
     return self;
   }
 
-  public SelfT withNodeStateListeners(NodeStateListener... listeners) {
-    this.nodeStateListeners = listeners;
+  public SelfT withNodeStateListener(NodeStateListener listener) {
+    this.nodeStateListener = listener;
+    return self;
+  }
+
+  public SelfT withSchemaChangeListener(SchemaChangeListener listener) {
+    this.schemaChangeListener = listener;
     return self;
   }
 

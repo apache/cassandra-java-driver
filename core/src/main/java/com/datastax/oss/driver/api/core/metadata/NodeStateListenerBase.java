@@ -13,20 +13,36 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.datastax.oss.driver.api.testinfra.session;
+package com.datastax.oss.driver.api.core.metadata;
 
-import com.datastax.oss.driver.api.core.CqlSession;
-import com.datastax.oss.driver.api.testinfra.CassandraResourceRule;
+/**
+ * Convenience class for listener implementations that that don't need to override all methods (all
+ * methods in this class are empty).
+ */
+public class NodeStateListenerBase implements NodeStateListener {
 
-public class CqlSessionRuleBuilder extends SessionRuleBuilder<CqlSessionRuleBuilder, CqlSession> {
-
-  public CqlSessionRuleBuilder(CassandraResourceRule cassandraResource) {
-    super(cassandraResource);
+  @Override
+  public void onAdd(Node node) {
+    // nothing to do
   }
 
   @Override
-  public SessionRule<CqlSession> build() {
-    return new SessionRule<>(
-        cassandraResource, createKeyspace, nodeStateListener, schemaChangeListener, options);
+  public void onUp(Node node) {
+    // nothing to do
+  }
+
+  @Override
+  public void onDown(Node node) {
+    // nothing to do
+  }
+
+  @Override
+  public void onRemove(Node node) {
+    // nothing to do
+  }
+
+  @Override
+  public void close() throws Exception {
+    // nothing to do
   }
 }

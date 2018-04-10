@@ -33,6 +33,8 @@ import com.datastax.oss.driver.api.core.loadbalancing.NodeDistance;
 import com.datastax.oss.driver.api.core.metadata.Metadata;
 import com.datastax.oss.driver.api.core.metadata.Node;
 import com.datastax.oss.driver.api.core.metadata.NodeState;
+import com.datastax.oss.driver.api.core.metadata.NodeStateListener;
+import com.datastax.oss.driver.api.core.metadata.schema.SchemaChangeListener;
 import com.datastax.oss.driver.api.core.retry.RetryPolicy;
 import com.datastax.oss.driver.api.core.session.Session;
 import com.datastax.oss.driver.api.core.specex.SpeculativeExecutionPolicy;
@@ -90,6 +92,8 @@ public class DefaultSessionPoolsTest {
   @Mock private AddressTranslator addressTranslator;
   @Mock private ControlConnection controlConnection;
   @Mock private MetricsFactory metricsFactory;
+  @Mock private NodeStateListener nodeStateListener;
+  @Mock private SchemaChangeListener schemaChangeListener;
 
   private DefaultNode node1;
   private DefaultNode node2;
@@ -164,6 +168,8 @@ public class DefaultSessionPoolsTest {
     Mockito.when(context.retryPolicy()).thenReturn(retryPolicy);
     Mockito.when(context.speculativeExecutionPolicy()).thenReturn(speculativeExecutionPolicy);
     Mockito.when(context.addressTranslator()).thenReturn(addressTranslator);
+    Mockito.when(context.nodeStateListener()).thenReturn(nodeStateListener);
+    Mockito.when(context.schemaChangeListener()).thenReturn(schemaChangeListener);
 
     Mockito.when(metadataManager.closeAsync()).thenReturn(CompletableFuture.completedFuture(null));
     Mockito.when(metadataManager.forceCloseAsync())
@@ -926,7 +932,7 @@ public class DefaultSessionPoolsTest {
   }
 
   private CompletionStage<CqlSession> newSession() {
-    return DefaultSession.init(context, Collections.emptySet(), KEYSPACE, Collections.emptySet());
+    return DefaultSession.init(context, Collections.emptySet(), KEYSPACE);
   }
 
   private static DefaultNode mockLocalNode(int i) {

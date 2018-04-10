@@ -22,6 +22,7 @@ import com.datastax.oss.driver.api.core.config.DriverConfigLoader;
 import com.datastax.oss.driver.api.core.config.DriverConfigProfile;
 import com.datastax.oss.driver.api.core.context.DriverContext;
 import com.datastax.oss.driver.api.core.metadata.NodeStateListener;
+import com.datastax.oss.driver.api.core.metadata.schema.SchemaChangeListener;
 import com.datastax.oss.driver.api.core.type.codec.TypeCodec;
 import com.datastax.oss.driver.internal.core.ContactPoints;
 import com.datastax.oss.driver.internal.core.config.typesafe.DefaultDriverConfigLoader;
@@ -56,7 +57,8 @@ public abstract class SessionBuilder<SelfT extends SessionBuilder, SessionT> {
   protected DriverConfigLoader configLoader;
   protected Set<InetSocketAddress> programmaticContactPoints = new HashSet<>();
   protected List<TypeCodec<?>> typeCodecs = new ArrayList<>();
-  protected final Set<NodeStateListener> nodeStateListeners = new HashSet<>();
+  private NodeStateListener nodeStateListener;
+  private SchemaChangeListener schemaChangeListener;
   protected CqlIdentifier keyspace;
 
   /**
@@ -132,8 +134,26 @@ public abstract class SessionBuilder<SelfT extends SessionBuilder, SessionT> {
     return self;
   }
 
-  public SelfT addNodeStateListeners(NodeStateListener... newListeners) {
-    Collections.addAll(this.nodeStateListeners, newListeners);
+  /**
+   * Registers a node state listener to use with the session.
+   *
+   * <p>If the listener is specified programmatically with this method, it overrides the
+   * configuration (that is, the {@code metadata.node-state-listener.class} option will be ignored.
+   */
+  public SelfT withNodeStateListener(NodeStateListener nodeStateListener) {
+    this.nodeStateListener = nodeStateListener;
+    return self;
+  }
+
+  /**
+   * Registers a schema change listener to use with the session.
+   *
+   * <p>If the listener is specified programmatically with this method, it overrides the
+   * configuration (that is, the {@code metadata.schema-change-listener.class} option will be
+   * ignored.
+   */
+  public SelfT withSchemaChangeListener(SchemaChangeListener schemaChangeListener) {
+    this.schemaChangeListener = schemaChangeListener;
     return self;
   }
 
@@ -195,10 +215,10 @@ public abstract class SessionBuilder<SelfT extends SessionBuilder, SessionT> {
     }
 
     return DefaultSession.init(
-        (InternalDriverContext) buildContext(configLoader, typeCodecs),
+        (InternalDriverContext)
+            buildContext(configLoader, typeCodecs, nodeStateListener, schemaChangeListener),
         contactPoints,
-        keyspace,
-        nodeStateListeners);
+        keyspace);
   }
 
   /**
@@ -206,8 +226,12 @@ public abstract class SessionBuilder<SelfT extends SessionBuilder, SessionT> {
    * directly in the signature to avoid leaking that type through the protected API).
    */
   protected DriverContext buildContext(
-      DriverConfigLoader configLoader, List<TypeCodec<?>> typeCodecs) {
-    return new DefaultDriverContext(configLoader, typeCodecs);
+      DriverConfigLoader configLoader,
+      List<TypeCodec<?>> typeCodecs,
+      NodeStateListener nodeStateListener,
+      SchemaChangeListener schemaChangeListener) {
+    return new DefaultDriverContext(
+        configLoader, typeCodecs, nodeStateListener, schemaChangeListener);
   }
 
   private static <T> T buildIfNull(T value, Supplier<T> builder) {

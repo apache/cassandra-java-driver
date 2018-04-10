@@ -22,6 +22,7 @@ import com.datastax.oss.driver.api.core.config.DriverConfigProfile;
 import com.datastax.oss.driver.api.core.cql.SimpleStatement;
 import com.datastax.oss.driver.api.core.cql.Statement;
 import com.datastax.oss.driver.api.core.metadata.NodeStateListener;
+import com.datastax.oss.driver.api.core.metadata.schema.SchemaChangeListener;
 import com.datastax.oss.driver.api.core.session.Session;
 import com.datastax.oss.driver.api.core.session.SessionBuilder;
 import com.datastax.oss.driver.api.testinfra.CassandraResourceRule;
@@ -98,26 +99,28 @@ public class SessionUtils {
   @SuppressWarnings("TypeParameterUnusedInFormals")
   public static <SessionT extends Session> SessionT newSession(
       CassandraResourceRule cassandraResource, String... options) {
-    return newSession(cassandraResource, null, new NodeStateListener[0], options);
+    return newSession(cassandraResource, null, null, null, options);
   }
 
   @SuppressWarnings("TypeParameterUnusedInFormals")
   public static <SessionT extends Session> SessionT newSession(
       CassandraResourceRule cassandraResource, CqlIdentifier keyspace, String... options) {
-    return newSession(cassandraResource, keyspace, new NodeStateListener[0], options);
+    return newSession(cassandraResource, keyspace, null, null, options);
   }
 
   @SuppressWarnings({"unchecked", "TypeParameterUnusedInFormals"})
   public static <SessionT extends Session> SessionT newSession(
       CassandraResourceRule cassandraResource,
       CqlIdentifier keyspace,
-      NodeStateListener[] nodeStateListeners,
+      NodeStateListener nodeStateListener,
+      SchemaChangeListener schemaChangeListener,
       String... options) {
     return (SessionT)
         baseBuilder()
             .addContactPoints(cassandraResource.getContactPoints())
             .withKeyspace(keyspace)
-            .addNodeStateListeners(nodeStateListeners)
+            .withNodeStateListener(nodeStateListener)
+            .withSchemaChangeListener(schemaChangeListener)
             .withConfigLoader(new TestConfigLoader(options))
             .build();
   }

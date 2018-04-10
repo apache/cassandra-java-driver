@@ -13,20 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.datastax.oss.driver.api.testinfra.session;
+package com.datastax.oss.driver.internal.core.metadata.schema;
 
-import com.datastax.oss.driver.api.core.CqlSession;
-import com.datastax.oss.driver.api.testinfra.CassandraResourceRule;
+import com.datastax.oss.driver.api.core.context.DriverContext;
+import com.datastax.oss.driver.api.core.metadata.schema.SchemaChangeListenerBase;
+import net.jcip.annotations.ThreadSafe;
 
-public class CqlSessionRuleBuilder extends SessionRuleBuilder<CqlSessionRuleBuilder, CqlSession> {
+/** Default schema change listener implementation with empty methods. */
+@ThreadSafe
+public class NoopSchemaChangeListener extends SchemaChangeListenerBase {
 
-  public CqlSessionRuleBuilder(CassandraResourceRule cassandraResource) {
-    super(cassandraResource);
-  }
-
-  @Override
-  public SessionRule<CqlSession> build() {
-    return new SessionRule<>(
-        cassandraResource, createKeyspace, nodeStateListener, schemaChangeListener, options);
+  public NoopSchemaChangeListener(@SuppressWarnings("unused") DriverContext context) {
+    // nothing to do
   }
 }

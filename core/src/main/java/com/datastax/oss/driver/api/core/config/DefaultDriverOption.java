@@ -113,6 +113,8 @@ public enum DefaultDriverOption implements DriverOption {
   METADATA_SCHEMA_WINDOW("metadata.schema.debouncer.window", true),
   METADATA_SCHEMA_MAX_EVENTS("metadata.schema.debouncer.max-events", true),
   METADATA_TOKEN_MAP_ENABLED("metadata.token-map.enabled", true),
+  METADATA_NODE_STATE_LISTENER_CLASS("metadata.node-state-listener.class", false),
+  METADATA_SCHEMA_CHANGE_LISTENER_CLASS("metadata.schema-change-listener.class", false),
 
   TIMESTAMP_GENERATOR_CLASS("request.timestamp-generator.class", true),
   TIMESTAMP_GENERATOR_FORCE_JAVA_CLOCK("request.timestamp-generator.force-java-clock", false),

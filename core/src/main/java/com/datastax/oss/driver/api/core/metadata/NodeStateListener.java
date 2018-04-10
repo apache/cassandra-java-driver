@@ -16,22 +16,23 @@
 package com.datastax.oss.driver.api.core.metadata;
 
 import com.datastax.oss.driver.api.core.loadbalancing.NodeDistance;
-import com.datastax.oss.driver.api.core.session.Session;
 import com.datastax.oss.driver.api.core.session.SessionBuilder;
 
 /**
  * A listener that gets notified when nodes states change.
  *
- * <p>An implementation of this interface can be registered with {@link
- * SessionBuilder#addNodeStateListeners(NodeStateListener...)} or at runtime with {@link
- * Session#register(NodeStateListener)}.
+ * <p>An implementation of this interface can be registered in the configuration, or with {@link
+ * SessionBuilder#withNodeStateListener(NodeStateListener)}.
  *
  * <p>Note that the methods defined by this interface will be executed by internal driver threads,
  * and are therefore expected to have short execution times. If you need to perform long
  * computations or blocking calls in response to schema change events, it is strongly recommended to
  * schedule them asynchronously on a separate thread provided by your application code.
+ *
+ * <p>If you implement this interface but don't need to implement all the methods, extend {@link
+ * NodeStateListenerBase}.
  */
-public interface NodeStateListener {
+public interface NodeStateListener extends AutoCloseable {
 
   /**
    * Invoked when a node is first added to the cluster.
@@ -61,13 +62,4 @@ public interface NodeStateListener {
    * absent from the new list.
    */
   void onRemove(Node node);
-
-  /** Invoked when the listener is registered with a session. */
-  void onRegister(Session session);
-
-  /**
-   * Invoked when the listener is unregistered from a session, or at session shutdown, whichever
-   * comes first.
-   */
-  void onUnregister(Session session);
 }
