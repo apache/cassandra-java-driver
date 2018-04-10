@@ -78,6 +78,6 @@ public class DefaultDriverInfo implements DriverInfo {
 
   @Override
   public String toString() {
-    return String.format("%s (%s:%s:%s)", name, groupId, artifactId, version);
+    return String.format("%s (%s:%s) version %s", name, groupId, artifactId, version);
   }
 }

@@ -82,6 +82,6 @@ public class DefaultDriverInfoTest {
     // when
     String s = info.toString();
     // then
-    assertThat(s).isEqualTo("My Driver Name (com.datastax.foo:java-driver-core:1.2.3)");
+    assertThat(s).isEqualTo("My Driver Name (com.datastax.foo:java-driver-core) version 1.2.3");
   }
 }
