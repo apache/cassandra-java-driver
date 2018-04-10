@@ -29,7 +29,7 @@ public class DefaultSimpleStatement implements SimpleStatement {
 
   private final String query;
   private final List<Object> positionalValues;
-  private final Map<String, Object> namedValues;
+  private final Map<CqlIdentifier, Object> namedValues;
   private final String configProfileName;
   private final DriverConfigProfile configProfile;
   private final CqlIdentifier keyspace;
@@ -47,7 +47,7 @@ public class DefaultSimpleStatement implements SimpleStatement {
   public DefaultSimpleStatement(
       String query,
       List<Object> positionalValues,
-      Map<String, Object> namedValues,
+      Map<CqlIdentifier, Object> namedValues,
       String configProfileName,
       DriverConfigProfile configProfile,
       CqlIdentifier keyspace,
@@ -127,12 +127,12 @@ public class DefaultSimpleStatement implements SimpleStatement {
   }
 
   @Override
-  public Map<String, Object> getNamedValues() {
+  public Map<CqlIdentifier, Object> getNamedValues() {
     return namedValues;
   }
 
   @Override
-  public SimpleStatement setNamedValues(Map<String, Object> newNamedValues) {
+  public SimpleStatement setNamedValuesWithIds(Map<CqlIdentifier, Object> newNamedValues) {
     return new DefaultSimpleStatement(
         query,
         positionalValues,

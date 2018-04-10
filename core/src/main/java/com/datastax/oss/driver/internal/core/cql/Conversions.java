@@ -223,13 +223,16 @@ public class Conversions {
   }
 
   public static Map<String, ByteBuffer> encode(
-      Map<String, Object> values, CodecRegistry codecRegistry, ProtocolVersion protocolVersion) {
+      Map<CqlIdentifier, Object> values,
+      CodecRegistry codecRegistry,
+      ProtocolVersion protocolVersion) {
     if (values.isEmpty()) {
       return Collections.emptyMap();
     } else {
       ImmutableMap.Builder<String, ByteBuffer> encodedValues = ImmutableMap.builder();
-      for (Map.Entry<String, Object> entry : values.entrySet()) {
-        encodedValues.put(entry.getKey(), encode(entry.getValue(), codecRegistry, protocolVersion));
+      for (Map.Entry<CqlIdentifier, Object> entry : values.entrySet()) {
+        encodedValues.put(
+            entry.getKey().asInternal(), encode(entry.getValue(), codecRegistry, protocolVersion));
       }
       return encodedValues.build();
     }
