@@ -17,6 +17,7 @@ package com.datastax.oss.driver.api.core.cql;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.CqlSession;
 import com.datastax.oss.driver.api.core.servererrors.InvalidQueryException;
 import com.datastax.oss.driver.api.testinfra.ccm.CcmRule;
@@ -269,5 +270,15 @@ public class SimpleStatementIT {
         .addPositionalValue(0)
         .addNamedValue(":k", KEY)
         .build();
+  }
+
+  @Test
+  public void should_use_positional_value_with_case_sensitive_id() {
+    SimpleStatement statement =
+        SimpleStatement.builder("SELECT count(*) FROM test2 WHERE k=:\"theKey\"")
+            .addNamedValue(CqlIdentifier.fromCql("\"theKey\""), 0)
+            .build();
+    Row row = cluster.session().execute(statement).one();
+    assertThat(row.getLong(0)).isEqualTo(0);
   }
 }
