@@ -25,8 +25,6 @@ import com.datastax.oss.driver.api.core.loadbalancing.LoadBalancingPolicy;
 import com.datastax.oss.driver.api.core.metadata.Metadata;
 import com.datastax.oss.driver.api.core.metadata.Node;
 import com.datastax.oss.driver.api.core.metadata.NodeState;
-import com.datastax.oss.driver.api.core.metadata.NodeStateListener;
-import com.datastax.oss.driver.api.core.metadata.schema.SchemaChangeListener;
 import com.datastax.oss.driver.api.core.metrics.Metrics;
 import com.datastax.oss.driver.api.core.session.Request;
 import com.datastax.oss.driver.api.core.type.reflect.GenericType;
@@ -46,7 +44,6 @@ import io.netty.util.concurrent.EventExecutor;
 import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -79,11 +76,8 @@ public class DefaultSession implements CqlSession {
   private static final Logger LOG = LoggerFactory.getLogger(DefaultSession.class);
 
   public static CompletionStage<CqlSession> init(
-      InternalDriverContext context,
-      Set<InetSocketAddress> contactPoints,
-      CqlIdentifier keyspace,
-      Set<NodeStateListener> nodeStateListeners) {
-    return new DefaultSession(context, contactPoints, nodeStateListeners).init(keyspace);
+      InternalDriverContext context, Set<InetSocketAddress> contactPoints, CqlIdentifier keyspace) {
+    return new DefaultSession(context, contactPoints).init(keyspace);
   }
 
   private final InternalDriverContext context;
@@ -95,14 +89,11 @@ public class DefaultSession implements CqlSession {
   private final PoolManager poolManager;
   private final SessionMetricUpdater metricUpdater;
 
-  private DefaultSession(
-      InternalDriverContext context,
-      Set<InetSocketAddress> contactPoints,
-      Set<NodeStateListener> nodeStateListeners) {
+  private DefaultSession(InternalDriverContext context, Set<InetSocketAddress> contactPoints) {
     LOG.debug("Creating new session {}", context.sessionName());
     this.adminExecutor = context.nettyOptions().adminEventExecutorGroup().next();
     this.context = context;
-    this.singleThreaded = new SingleThreaded(context, contactPoints, nodeStateListeners);
+    this.singleThreaded = new SingleThreaded(context, contactPoints);
     this.metadataManager = context.metadataManager();
     this.processorRegistry = context.requestProcessorRegistry();
     this.poolManager = context.poolManager();
@@ -212,26 +203,6 @@ public class DefaultSession implements CqlSession {
   }
 
   @Override
-  public void register(SchemaChangeListener listener) {
-    RunOrSchedule.on(adminExecutor, () -> singleThreaded.register(listener));
-  }
-
-  @Override
-  public void unregister(SchemaChangeListener listener) {
-    RunOrSchedule.on(adminExecutor, () -> singleThreaded.unregister(listener));
-  }
-
-  @Override
-  public void register(NodeStateListener listener) {
-    RunOrSchedule.on(adminExecutor, () -> singleThreaded.register(listener));
-  }
-
-  @Override
-  public void unregister(NodeStateListener listener) {
-    RunOrSchedule.on(adminExecutor, () -> singleThreaded.unregister(listener));
-  }
-
-  @Override
   public CompletionStage<Void> closeFuture() {
     return singleThreaded.closeFuture;
   }
@@ -258,18 +229,12 @@ public class DefaultSession implements CqlSession {
     private final CompletableFuture<Void> closeFuture = new CompletableFuture<>();
     private boolean closeWasCalled;
     private boolean forceCloseWasCalled;
-    private Set<SchemaChangeListener> schemaChangeListeners = new HashSet<>();
-    private Set<NodeStateListener> nodeStateListeners;
 
-    private SingleThreaded(
-        InternalDriverContext context,
-        Set<InetSocketAddress> contactPoints,
-        Set<NodeStateListener> nodeStateListeners) {
+    private SingleThreaded(InternalDriverContext context, Set<InetSocketAddress> contactPoints) {
       this.context = context;
       this.nodeStateManager = new NodeStateManager(context);
       this.initialContactPoints = contactPoints;
-      this.nodeStateListeners = nodeStateListeners;
-      new SchemaListenerNotifier(schemaChangeListeners, context.eventBus(), adminExecutor);
+      new SchemaListenerNotifier(context.schemaChangeListener(), context.eventBus(), adminExecutor);
       context
           .eventBus()
           .register(
@@ -283,8 +248,6 @@ public class DefaultSession implements CqlSession {
       }
       initWasCalled = true;
       LOG.debug("[{}] Starting initialization", logPrefix);
-
-      nodeStateListeners.forEach(l -> l.onRegister(DefaultSession.this));
 
       MetadataManager metadataManager = context.metadataManager();
       metadataManager
@@ -363,58 +326,16 @@ public class DefaultSession implements CqlSession {
       }
     }
 
-    private void register(SchemaChangeListener listener) {
-      assert adminExecutor.inEventLoop();
-      if (closeWasCalled) {
-        return;
-      }
-      // We want onRegister to be called before any event. We can add the listener before, because
-      // schema events are processed on this same thread.
-      if (schemaChangeListeners.add(listener)) {
-        listener.onRegister(DefaultSession.this);
-      }
-    }
-
-    private void unregister(SchemaChangeListener listener) {
-      assert adminExecutor.inEventLoop();
-      if (closeWasCalled) {
-        return;
-      }
-      if (schemaChangeListeners.remove(listener)) {
-        listener.onUnregister(DefaultSession.this);
-      }
-    }
-
-    private void register(NodeStateListener listener) {
-      assert adminExecutor.inEventLoop();
-      if (closeWasCalled) {
-        return;
-      }
-      if (nodeStateListeners.add(listener)) {
-        listener.onRegister(DefaultSession.this);
-      }
-    }
-
-    private void unregister(NodeStateListener listener) {
-      assert adminExecutor.inEventLoop();
-      if (closeWasCalled) {
-        return;
-      }
-      if (nodeStateListeners.remove(listener)) {
-        listener.onUnregister(DefaultSession.this);
-      }
-    }
-
     private void onNodeStateChanged(NodeStateEvent event) {
       assert adminExecutor.inEventLoop();
       if (event.newState == null) {
-        nodeStateListeners.forEach(listener -> listener.onRemove(event.node));
+        context.nodeStateListener().onRemove(event.node);
       } else if (event.oldState == null && event.newState == NodeState.UNKNOWN) {
-        nodeStateListeners.forEach(listener -> listener.onAdd(event.node));
+        context.nodeStateListener().onAdd(event.node);
       } else if (event.newState == NodeState.UP) {
-        nodeStateListeners.forEach(listener -> listener.onUp(event.node));
+        context.nodeStateListener().onUp(event.node);
       } else if (event.newState == NodeState.DOWN || event.newState == NodeState.FORCED_DOWN) {
-        nodeStateListeners.forEach(listener -> listener.onDown(event.node));
+        context.nodeStateListener().onDown(event.node);
       }
     }
 
@@ -425,15 +346,6 @@ public class DefaultSession implements CqlSession {
       }
       closeWasCalled = true;
       LOG.debug("[{}] Starting shutdown", logPrefix);
-
-      for (SchemaChangeListener listener : schemaChangeListeners) {
-        listener.onUnregister(DefaultSession.this);
-      }
-      schemaChangeListeners.clear();
-      for (NodeStateListener listener : nodeStateListeners) {
-        listener.onUnregister(DefaultSession.this);
-      }
-      nodeStateListeners.clear();
 
       closePolicies();
 
@@ -462,14 +374,6 @@ public class DefaultSession implements CqlSession {
           closeable.forceCloseAsync();
         }
       } else {
-        for (SchemaChangeListener listener : schemaChangeListeners) {
-          listener.onUnregister(DefaultSession.this);
-        }
-        schemaChangeListeners.clear();
-        for (NodeStateListener listener : nodeStateListeners) {
-          listener.onUnregister(DefaultSession.this);
-        }
-        nodeStateListeners.clear();
         closePolicies();
         List<CompletionStage<Void>> childrenCloseStages = new ArrayList<>();
         for (AsyncAutoCloseable closeable : internalComponentsToClose()) {
@@ -519,7 +423,9 @@ public class DefaultSession implements CqlSession {
               context.loadBalancingPolicyWrapper(),
               context.speculativeExecutionPolicy(),
               context.addressTranslator(),
-              context.configLoader())) {
+              context.configLoader(),
+              context.nodeStateListener(),
+              context.schemaChangeListener())) {
         try {
           closeable.close();
         } catch (Throwable t) {

@@ -18,6 +18,8 @@ package com.datastax.oss.driver.example.guava.api;
 import com.datastax.oss.driver.api.core.CqlSession;
 import com.datastax.oss.driver.api.core.config.DriverConfigLoader;
 import com.datastax.oss.driver.api.core.context.DriverContext;
+import com.datastax.oss.driver.api.core.metadata.NodeStateListener;
+import com.datastax.oss.driver.api.core.metadata.schema.SchemaChangeListener;
 import com.datastax.oss.driver.api.core.session.SessionBuilder;
 import com.datastax.oss.driver.api.core.type.codec.TypeCodec;
 import com.datastax.oss.driver.example.guava.internal.DefaultGuavaSession;
@@ -28,8 +30,12 @@ public class GuavaSessionBuilder extends SessionBuilder<GuavaSessionBuilder, Gua
 
   @Override
   protected DriverContext buildContext(
-      DriverConfigLoader configLoader, List<TypeCodec<?>> typeCodecs) {
-    return new GuavaDriverContext(configLoader, typeCodecs);
+      DriverConfigLoader configLoader,
+      List<TypeCodec<?>> typeCodecs,
+      NodeStateListener nodeStateListener,
+      SchemaChangeListener schemaChangeListener) {
+    return new GuavaDriverContext(
+        configLoader, typeCodecs, nodeStateListener, schemaChangeListener);
   }
 
   @Override

@@ -25,6 +25,8 @@ import com.datastax.oss.driver.api.core.config.DriverConfigProfile;
 import com.datastax.oss.driver.api.core.config.DriverOption;
 import com.datastax.oss.driver.api.core.connection.ReconnectionPolicy;
 import com.datastax.oss.driver.api.core.loadbalancing.LoadBalancingPolicy;
+import com.datastax.oss.driver.api.core.metadata.NodeStateListener;
+import com.datastax.oss.driver.api.core.metadata.schema.SchemaChangeListener;
 import com.datastax.oss.driver.api.core.retry.RetryPolicy;
 import com.datastax.oss.driver.api.core.specex.SpeculativeExecutionPolicy;
 import com.datastax.oss.driver.api.core.ssl.SslEngineFactory;
@@ -165,14 +167,22 @@ public class DefaultDriverContext implements InternalDriverContext {
       new LazyReference<>("metricsFactory", this::buildMetricsFactory, cycleDetector);
   private final LazyReference<RequestThrottler> requestThrottlerRef =
       new LazyReference<>("requestThrottler", this::buildRequestThrottler, cycleDetector);
+  private final LazyReference<NodeStateListener> nodeStateListenerRef;
+  private final LazyReference<SchemaChangeListener> schemaChangeListenerRef;
 
   private final DriverConfig config;
   private final DriverConfigLoader configLoader;
   private final ChannelPoolFactory channelPoolFactory = new ChannelPoolFactory();
   private final CodecRegistry codecRegistry;
   private final String sessionName;
+  private final NodeStateListener nodeStateListenerFromBuilder;
+  private final SchemaChangeListener schemaChangeListenerFromBuilder;
 
-  public DefaultDriverContext(DriverConfigLoader configLoader, List<TypeCodec<?>> typeCodecs) {
+  public DefaultDriverContext(
+      DriverConfigLoader configLoader,
+      List<TypeCodec<?>> typeCodecs,
+      NodeStateListener nodeStateListener,
+      SchemaChangeListener schemaChangeListener) {
     this.config = configLoader.getInitialConfig();
     this.configLoader = configLoader;
     DriverConfigProfile defaultProfile = config.getDefaultProfile();
@@ -182,6 +192,18 @@ public class DefaultDriverContext implements InternalDriverContext {
       this.sessionName = "s" + SESSION_NAME_COUNTER.getAndIncrement();
     }
     this.codecRegistry = buildCodecRegistry(this.sessionName, typeCodecs);
+    this.nodeStateListenerFromBuilder = nodeStateListener;
+    this.nodeStateListenerRef =
+        new LazyReference<>(
+            "nodeStateListener",
+            () -> buildNodeStateListener(nodeStateListenerFromBuilder),
+            cycleDetector);
+    this.schemaChangeListenerFromBuilder = schemaChangeListener;
+    this.schemaChangeListenerRef =
+        new LazyReference<>(
+            "schemaChangeListener",
+            () -> buildSchemaChangeListener(schemaChangeListenerFromBuilder),
+            cycleDetector);
   }
 
   protected LoadBalancingPolicy buildLoadBalancingPolicy() {
@@ -378,6 +400,38 @@ public class DefaultDriverContext implements InternalDriverContext {
                         DefaultDriverOption.REQUEST_THROTTLER_CLASS)));
   }
 
+  protected NodeStateListener buildNodeStateListener(
+      NodeStateListener nodeStateListenerFromBuilder) {
+    return (nodeStateListenerFromBuilder != null)
+        ? nodeStateListenerFromBuilder
+        : Reflection.buildFromConfig(
+                this,
+                DefaultDriverOption.METADATA_NODE_STATE_LISTENER_CLASS,
+                NodeStateListener.class)
+            .orElseThrow(
+                () ->
+                    new IllegalArgumentException(
+                        String.format(
+                            "Missing node state listener, check your configuration (%s)",
+                            DefaultDriverOption.METADATA_NODE_STATE_LISTENER_CLASS)));
+  }
+
+  protected SchemaChangeListener buildSchemaChangeListener(
+      SchemaChangeListener schemaChangeListenerFromBuilder) {
+    return (schemaChangeListenerFromBuilder != null)
+        ? schemaChangeListenerFromBuilder
+        : Reflection.buildFromConfig(
+                this,
+                DefaultDriverOption.METADATA_SCHEMA_CHANGE_LISTENER_CLASS,
+                SchemaChangeListener.class)
+            .orElseThrow(
+                () ->
+                    new IllegalArgumentException(
+                        String.format(
+                            "Missing schema change listener, check your configuration (%s)",
+                            DefaultDriverOption.METADATA_SCHEMA_CHANGE_LISTENER_CLASS)));
+  }
+
   @Override
   public String sessionName() {
     return sessionName;
@@ -546,6 +600,16 @@ public class DefaultDriverContext implements InternalDriverContext {
   @Override
   public RequestThrottler requestThrottler() {
     return requestThrottlerRef.get();
+  }
+
+  @Override
+  public NodeStateListener nodeStateListener() {
+    return nodeStateListenerRef.get();
+  }
+
+  @Override
+  public SchemaChangeListener schemaChangeListener() {
+    return schemaChangeListenerRef.get();
   }
 
   @Override

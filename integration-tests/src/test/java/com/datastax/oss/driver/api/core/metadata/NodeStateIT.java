@@ -23,7 +23,6 @@ import static org.mockito.Mockito.timeout;
 import com.datastax.oss.driver.api.core.CqlSession;
 import com.datastax.oss.driver.api.core.context.DriverContext;
 import com.datastax.oss.driver.api.core.loadbalancing.NodeDistance;
-import com.datastax.oss.driver.api.core.session.Session;
 import com.datastax.oss.driver.api.testinfra.session.SessionRule;
 import com.datastax.oss.driver.api.testinfra.session.SessionUtils;
 import com.datastax.oss.driver.api.testinfra.simulacron.SimulacronRule;
@@ -33,7 +32,6 @@ import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
 import com.datastax.oss.driver.internal.core.metadata.DefaultNode;
 import com.datastax.oss.driver.internal.core.metadata.NodeStateEvent;
 import com.datastax.oss.driver.internal.core.metadata.TopologyEvent;
-import com.datastax.oss.driver.internal.core.session.SessionWrapper;
 import com.datastax.oss.driver.internal.testinfra.session.TestConfigLoader;
 import com.datastax.oss.simulacron.common.cluster.ClusterSpec;
 import com.datastax.oss.simulacron.common.cluster.NodeConnectionReport;
@@ -81,7 +79,7 @@ public class NodeStateIT {
               String.format(
                   "load-balancing-policy.filter.class = \"%s$CustomNodeFilter\"",
                   NodeStateIT.class.getName()))
-          .withNodeStateListeners(nodeStateListener)
+          .withNodeStateListener(nodeStateListener)
           .build();
 
   private @Captor ArgumentCaptor<DefaultNode> nodeCaptor;
@@ -298,13 +296,15 @@ public class NodeStateIT {
   public void should_force_immediate_reconnection_when_up_topology_event()
       throws InterruptedException {
     // This test requires a longer reconnection interval, so create a separate driver instance
+    NodeStateListener localNodeStateListener = Mockito.mock(NodeStateListener.class);
     try (CqlSession session =
         SessionUtils.newSession(
             simulacron,
+            null,
+            localNodeStateListener,
+            null,
             "connection.reconnection-policy.base-delay = 1 hour",
             "connection.reconnection-policy.max-delay = 1 hour")) {
-      NodeStateListener localNodeStateListener = Mockito.mock(NodeStateListener.class);
-      session.register(localNodeStateListener);
 
       BoundNode localSimulacronNode = simulacron.cluster().getNodes().iterator().next();
       assertThat(localSimulacronNode).isNotNull();
@@ -312,6 +312,8 @@ public class NodeStateIT {
       DefaultNode localMetadataNode =
           (DefaultNode)
               session.getMetadata().getNodes().get(localSimulacronNode.inetSocketAddress());
+      // UP fired a first time as part of the init process
+      Mockito.verify(localNodeStateListener).onUp(localMetadataNode);
 
       localSimulacronNode.stop();
 
@@ -333,7 +335,7 @@ public class NodeStateIT {
           .as("Node coming back up")
           .before(10, TimeUnit.SECONDS)
           .becomesTrue();
-      Mockito.verify(localNodeStateListener, timeout(500)).onUp(localMetadataNode);
+      Mockito.verify(localNodeStateListener, timeout(500).times(2)).onUp(localMetadataNode);
 
       expect(NodeStateEvent.changed(NodeState.DOWN, NodeState.UP, localMetadataNode));
     }
@@ -434,7 +436,7 @@ public class NodeStateIT {
     try (CqlSession localSession =
         CqlSession.builder()
             .addContactPoint(address1)
-            .addNodeStateListeners(localNodeStateListener)
+            .withNodeStateListener(localNodeStateListener)
             .withConfigLoader(
                 new TestConfigLoader(
                     "connection.reconnection-policy.base-delay = 1 hour",
@@ -468,7 +470,7 @@ public class NodeStateIT {
         CqlSession.builder()
             .addContactPoint(address1)
             .addContactPoint(wrongContactPoint)
-            .addNodeStateListeners(localNodeStateListener)
+            .withNodeStateListener(localNodeStateListener)
             .withConfigLoader(
                 new TestConfigLoader(
                     "connection.reconnection-policy.base-delay = 1 hour",
@@ -515,14 +517,12 @@ public class NodeStateIT {
             CqlSession.builder()
                 .addContactPoint(address1)
                 .addContactPoint(address2)
-                .addNodeStateListeners(localNodeStateListener)
+                .withNodeStateListener(localNodeStateListener)
                 .withConfigLoader(
                     new TestConfigLoader(
                         "connection.reconnection-policy.base-delay = 1 hour",
                         "connection.reconnection-policy.max-delay = 1 hour"))
                 .build()) {
-
-          Mockito.verify(localNodeStateListener).onRegister(localSession);
 
           Map<InetSocketAddress, Node> nodes = localSession.getMetadata().getNodes();
           Node localMetadataNode1 = nodes.get(address1);
@@ -546,40 +546,6 @@ public class NodeStateIT {
     } finally {
       localSimulacronNode2.acceptConnections();
     }
-  }
-
-  @Test
-  public void should_call_onRegister_and_onUnregister_implicitly() {
-    NodeStateListener localNodeStateListener = Mockito.mock(NodeStateListener.class);
-    CqlSession localSessionRef;
-    // onRegister should be called implicitly when added as a listener on builder.
-    try (CqlSession localSession =
-        CqlSession.builder()
-            .addContactPoints(simulacron.getContactPoints())
-            .addNodeStateListeners(localNodeStateListener)
-            .build()) {
-      Mockito.verify(localNodeStateListener).onRegister(localSession);
-      localSessionRef = localSession;
-    }
-    // onUnregister should be called implicitly when cluster is closed.
-    Mockito.verify(localNodeStateListener).onUnregister(localSessionRef);
-  }
-
-  @Test
-  public void should_call_onRegister_and_onUnregister_when_used() {
-    NodeStateListener localNodeStateListener = Mockito.mock(NodeStateListener.class);
-    sessionRule.session().register(localNodeStateListener);
-    Mockito.verify(localNodeStateListener, timeout(1000)).onRegister(unwrap(sessionRule.session()));
-    sessionRule.session().unregister(localNodeStateListener);
-    Mockito.verify(localNodeStateListener, timeout(1000))
-        .onUnregister(unwrap(sessionRule.session()));
-  }
-
-  private Session unwrap(Session session) {
-    while (session instanceof SessionWrapper) {
-      session = ((SessionWrapper) session).getDelegate();
-    }
-    return session;
   }
 
   private void expect(NodeStateEvent... expectedEvents) {

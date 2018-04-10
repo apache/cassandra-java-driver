@@ -20,6 +20,7 @@ import com.datastax.oss.driver.api.core.config.DriverConfigProfile;
 import com.datastax.oss.driver.api.core.cql.SimpleStatement;
 import com.datastax.oss.driver.api.core.cql.Statement;
 import com.datastax.oss.driver.api.core.metadata.NodeStateListener;
+import com.datastax.oss.driver.api.core.metadata.schema.SchemaChangeListener;
 import com.datastax.oss.driver.api.core.session.Session;
 import com.datastax.oss.driver.api.testinfra.CassandraResourceRule;
 import com.datastax.oss.driver.api.testinfra.simulacron.SimulacronRule;
@@ -54,7 +55,8 @@ public class SessionRule<SessionT extends Session> extends ExternalResource {
 
   // the CCM or Simulacron rule to depend on
   private final CassandraResourceRule cassandraResource;
-  private final NodeStateListener[] nodeStateListeners;
+  private final NodeStateListener nodeStateListener;
+  private final SchemaChangeListener schemaChangeListener;
   private final CqlIdentifier keyspace;
   private final String[] defaultOptions;
 
@@ -74,17 +76,19 @@ public class SessionRule<SessionT extends Session> extends ExternalResource {
 
   /** @see #builder(CassandraResourceRule) */
   public SessionRule(CassandraResourceRule cassandraResource, String... options) {
-    this(cassandraResource, true, new NodeStateListener[0], options);
+    this(cassandraResource, true, null, null, options);
   }
 
   /** @see #builder(CassandraResourceRule) */
   public SessionRule(
       CassandraResourceRule cassandraResource,
       boolean createKeyspace,
-      NodeStateListener[] nodeStateListeners,
+      NodeStateListener nodeStateListener,
+      SchemaChangeListener schemaChangeListener,
       String... options) {
     this.cassandraResource = cassandraResource;
-    this.nodeStateListeners = nodeStateListeners;
+    this.nodeStateListener = nodeStateListener;
+    this.schemaChangeListener = schemaChangeListener;
     this.keyspace =
         (cassandraResource instanceof SimulacronRule || !createKeyspace)
             ? null
@@ -97,7 +101,9 @@ public class SessionRule<SessionT extends Session> extends ExternalResource {
     // ensure resource is initialized before initializing the session.
     cassandraResource.setUp();
 
-    session = SessionUtils.newSession(cassandraResource, null, nodeStateListeners, defaultOptions);
+    session =
+        SessionUtils.newSession(
+            cassandraResource, null, nodeStateListener, schemaChangeListener, defaultOptions);
     slowProfile = SessionUtils.slowProfile(session);
     if (keyspace != null) {
       SessionUtils.createKeyspace(session, keyspace, slowProfile);

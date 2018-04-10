@@ -24,8 +24,6 @@ import com.datastax.oss.driver.api.core.context.DriverContext;
 import com.datastax.oss.driver.api.core.metadata.Metadata;
 import com.datastax.oss.driver.api.core.metadata.Node;
 import com.datastax.oss.driver.api.core.metadata.NodeState;
-import com.datastax.oss.driver.api.core.metadata.NodeStateListener;
-import com.datastax.oss.driver.api.core.metadata.schema.SchemaChangeListener;
 import com.datastax.oss.driver.api.core.metrics.Metrics;
 import com.datastax.oss.driver.api.core.type.reflect.GenericType;
 import com.datastax.oss.driver.internal.core.util.concurrent.BlockingOperation;
@@ -195,32 +193,4 @@ public interface Session extends AsyncAutoCloseable {
    */
   <RequestT extends Request, ResultT> ResultT execute(
       RequestT request, GenericType<ResultT> resultType);
-
-  /**
-   * Registers the provided schema change listener.
-   *
-   * <p>This is a no-op if the listener was registered already.
-   */
-  void register(SchemaChangeListener listener);
-
-  /**
-   * Unregisters the provided schema change listener.
-   *
-   * <p>This is a no-op if the listener was not registered.
-   */
-  void unregister(SchemaChangeListener listener);
-
-  /**
-   * Registers the provided node state listener.
-   *
-   * <p>This is a no-op if the listener was registered already.
-   */
-  void register(NodeStateListener listener);
-
-  /**
-   * Unregisters the provided node state listener.
-   *
-   * <p>This is a no-op if the listener was not registered.
-   */
-  void unregister(NodeStateListener listener);
 }

@@ -13,20 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.datastax.oss.driver.api.testinfra.session;
+package com.datastax.oss.driver.internal.core.metadata;
 
-import com.datastax.oss.driver.api.core.CqlSession;
-import com.datastax.oss.driver.api.testinfra.CassandraResourceRule;
+import com.datastax.oss.driver.api.core.context.DriverContext;
+import com.datastax.oss.driver.api.core.metadata.NodeStateListenerBase;
+import net.jcip.annotations.ThreadSafe;
 
-public class CqlSessionRuleBuilder extends SessionRuleBuilder<CqlSessionRuleBuilder, CqlSession> {
+/** Default node state listener implementation with empty methods. */
+@ThreadSafe
+public class NoopNodeStateListener extends NodeStateListenerBase {
 
-  public CqlSessionRuleBuilder(CassandraResourceRule cassandraResource) {
-    super(cassandraResource);
-  }
-
-  @Override
-  public SessionRule<CqlSession> build() {
-    return new SessionRule<>(
-        cassandraResource, createKeyspace, nodeStateListener, schemaChangeListener, options);
+  public NoopNodeStateListener(@SuppressWarnings("unused") DriverContext context) {
+    // nothing to do
   }
 }

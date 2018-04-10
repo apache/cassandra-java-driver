@@ -421,20 +421,22 @@ public class SchemaChangesIT {
       adminSessionRule.session().execute(beforeStatement);
     }
 
+    SchemaChangeListener listener1 = Mockito.mock(SchemaChangeListener.class);
+    SchemaChangeListener listener2 = Mockito.mock(SchemaChangeListener.class);
+
     // cluster1 executes the DDL query and gets a SCHEMA_CHANGE response.
     // cluster2 gets a SCHEMA_CHANGE push event on its control connection.
     try (CqlSession session1 =
             SessionUtils.newSession(
                 ccmRule,
                 adminSessionRule.keyspace(),
+                null,
+                listener1,
                 "request.timeout = 30 seconds",
                 keyspaceFilterOption(keyspaces));
-        CqlSession session2 = SessionUtils.newSession(ccmRule, keyspaceFilterOption(keyspaces))) {
-
-      SchemaChangeListener listener1 = Mockito.mock(SchemaChangeListener.class);
-      session1.register(listener1);
-      SchemaChangeListener listener2 = Mockito.mock(SchemaChangeListener.class);
-      session2.register(listener2);
+        CqlSession session2 =
+            SessionUtils.newSession(
+                ccmRule, null, null, listener2, keyspaceFilterOption(keyspaces))) {
 
       session1.execute(createStatement);
 
@@ -465,21 +467,22 @@ public class SchemaChangesIT {
       adminSessionRule.session().execute(statement);
     }
 
+    SchemaChangeListener listener1 = Mockito.mock(SchemaChangeListener.class);
+    SchemaChangeListener listener2 = Mockito.mock(SchemaChangeListener.class);
     try (CqlSession session1 =
             SessionUtils.newSession(
                 ccmRule,
                 adminSessionRule.keyspace(),
+                null,
+                listener1,
                 "request.timeout = 30 seconds",
                 keyspaceFilterOption(keyspaces));
-        CqlSession session2 = SessionUtils.newSession(ccmRule, keyspaceFilterOption(keyspaces))) {
+        CqlSession session2 =
+            SessionUtils.newSession(
+                ccmRule, null, null, listener2, keyspaceFilterOption(keyspaces))) {
 
       T oldElement = extract.apply(session1.getMetadata());
       assertThat(oldElement).isNotNull();
-
-      SchemaChangeListener listener1 = Mockito.mock(SchemaChangeListener.class);
-      session1.register(listener1);
-      SchemaChangeListener listener2 = Mockito.mock(SchemaChangeListener.class);
-      session2.register(listener2);
 
       session1.execute(dropStatement);
 
@@ -507,21 +510,22 @@ public class SchemaChangesIT {
       adminSessionRule.session().execute(statement);
     }
 
+    SchemaChangeListener listener1 = Mockito.mock(SchemaChangeListener.class);
+    SchemaChangeListener listener2 = Mockito.mock(SchemaChangeListener.class);
     try (CqlSession session1 =
             SessionUtils.newSession(
                 ccmRule,
                 adminSessionRule.keyspace(),
+                null,
+                listener1,
                 "request.timeout = 30 seconds",
                 keyspaceFilterOption(keyspaces));
-        CqlSession session2 = SessionUtils.newSession(ccmRule, keyspaceFilterOption(keyspaces))) {
+        CqlSession session2 =
+            SessionUtils.newSession(
+                ccmRule, null, null, listener2, keyspaceFilterOption(keyspaces))) {
 
       T oldElement = extract.apply(session1.getMetadata());
       assertThat(oldElement).isNotNull();
-
-      SchemaChangeListener listener1 = Mockito.mock(SchemaChangeListener.class);
-      session1.register(listener1);
-      SchemaChangeListener listener2 = Mockito.mock(SchemaChangeListener.class);
-      session2.register(listener2);
 
       session1.execute(updateStatement);
 
@@ -553,21 +557,22 @@ public class SchemaChangesIT {
       adminSessionRule.session().execute(statement);
     }
 
+    SchemaChangeListener listener1 = Mockito.mock(SchemaChangeListener.class);
+    SchemaChangeListener listener2 = Mockito.mock(SchemaChangeListener.class);
     try (CqlSession session1 =
             SessionUtils.newSession(
                 ccmRule,
                 adminSessionRule.keyspace(),
+                null,
+                listener1,
                 "request.timeout = 30 seconds",
                 keyspaceFilterOption(keyspaces));
-        CqlSession session2 = SessionUtils.newSession(ccmRule, keyspaceFilterOption(keyspaces))) {
+        CqlSession session2 =
+            SessionUtils.newSession(
+                ccmRule, null, null, listener2, keyspaceFilterOption(keyspaces))) {
 
       T oldElement = extract.apply(session1.getMetadata());
       assertThat(oldElement).isNotNull();
-
-      SchemaChangeListener listener1 = Mockito.mock(SchemaChangeListener.class);
-      session1.register(listener1);
-      SchemaChangeListener listener2 = Mockito.mock(SchemaChangeListener.class);
-      session2.register(listener2);
 
       session1.setSchemaMetadataEnabled(false);
       session2.setSchemaMetadataEnabled(false);
