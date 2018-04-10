@@ -27,7 +27,7 @@
   <artifactId>java-driver-test-infra</artifactId>
   <packaging>jar</packaging>
 
-  <name>DataStax Java driver for Apache Cassandra® - test infrastructure tools</name>
+  <name>DataStax Java driver for Apache Cassandra(R) - test infrastructure tools</name>
 
   <dependencies>
     <dependency>

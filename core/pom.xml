@@ -27,7 +27,7 @@
   <artifactId>java-driver-core</artifactId>
   <packaging>jar</packaging>
 
-  <name>DataStax Java driver for Apache Cassandra® - core</name>
+  <name>DataStax Java driver for Apache Cassandra(R) - core</name>
 
   <dependencies>
     <dependency>

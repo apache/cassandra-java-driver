@@ -23,9 +23,9 @@
   <version>4.0.0-alpha4-SNAPSHOT</version>
   <packaging>pom</packaging>
 
-  <name>DataStax Java driver for Apache Cassandra®</name>
+  <name>DataStax Java driver for Apache Cassandra(R)</name>
   <description>
-    A driver for Apache Cassandra® 2.1+ that works exclusively with the Cassandra Query Language
+    A driver for Apache Cassandra(R) 2.1+ that works exclusively with the Cassandra Query Language
     version 3 (CQL3) and Cassandra's native protocol versions 3 and above.
   </description>
   <url>https://github.com/datastax/java-driver</url>
