@@ -41,7 +41,7 @@ public interface TypeCodec<T> {
    */
   default boolean accepts(GenericType<?> javaType) {
     Preconditions.checkNotNull(javaType);
-    return getJavaType().__getToken().equals(javaType.__getToken().wrap());
+    return getJavaType().equals(javaType.wrap());
   }
 
   /**
@@ -83,7 +83,7 @@ public interface TypeCodec<T> {
    */
   default boolean accepts(Object value) {
     Preconditions.checkNotNull(value);
-    return getJavaType().__getToken().isSupertypeOf(TypeToken.of(value.getClass()));
+    return getJavaType().isSupertypeOf(GenericType.of(value.getClass()));
   }
 
   /** Whether this codec is capable of processing the given CQL type. */

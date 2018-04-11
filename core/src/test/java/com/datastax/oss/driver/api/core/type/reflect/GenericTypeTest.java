@@ -59,6 +59,32 @@ public class GenericTypeTest {
         .isEqualTo(new TypeToken<Map<String, Integer>>() {});
   }
 
+  @Test
+  public void should_report_supertype() {
+    assertThat(GenericType.of(Number.class).isSupertypeOf(GenericType.of(Integer.class))).isTrue();
+    assertThat(GenericType.of(Integer.class).isSupertypeOf(GenericType.of(Number.class))).isFalse();
+  }
+
+  @Test
+  public void should_report_subtype() {
+    assertThat(GenericType.of(Number.class).isSubtypeOf(GenericType.of(Integer.class))).isFalse();
+    assertThat(GenericType.of(Integer.class).isSubtypeOf(GenericType.of(Number.class))).isTrue();
+  }
+
+  @Test
+  public void should_wrap_primitive_type() {
+    assertThat(GenericType.of(Integer.TYPE).wrap()).isEqualTo(GenericType.of(Integer.class));
+    GenericType<String> stringType = GenericType.of(String.class);
+    assertThat(stringType.wrap()).isSameAs(stringType);
+  }
+
+  @Test
+  public void should_unwrap_wrapper_type() {
+    assertThat(GenericType.of(Integer.class).unwrap()).isEqualTo(GenericType.of(Integer.TYPE));
+    GenericType<String> stringType = GenericType.of(String.class);
+    assertThat(stringType.unwrap()).isSameAs(stringType);
+  }
+
   private <T> GenericType<Optional<T>> optionalOf(GenericType<T> elementType) {
     return new GenericType<Optional<T>>() {}.where(new GenericTypeParameter<T>() {}, elementType);
   }
