@@ -283,13 +283,17 @@ the changes if the first attempt failed and you fixed the tests.
 ## Commits
 
 Keep your changes **focused**. Each commit should have a single, clear purpose expressed in its 
-message. (Note: these rules can be somewhat relaxed during the initial developement phase, when
-adding a feature sometimes requires other semi-related features).
+message.
 
-Resist the urge to "fix" cosmetic issues (add/remove blank lines, etc.) in existing code. This adds
-cognitive load for reviewers, who have to figure out which changes are relevant to the actual
-issue. If you see legitimate issues, like typos, address them in a separate commit (it's fine to
-group multiple typo fixes in a single commit).
+Resist the urge to "fix" cosmetic issues (add/remove blank lines, move methods, etc.) in existing
+code. This adds cognitive load for reviewers, who have to figure out which changes are relevant to
+the actual issue. If you see legitimate issues, like typos, address them in a separate commit (it's
+fine to group multiple typo fixes in a single commit).
+
+Isolate trivial refactorings into separate commits. For example, a method rename that affects dozens
+of call sites can be reviewed in a few seconds, but if it's part of a larger diff it gets mixed up
+with more complex changes (that might affect the same lines), and reviewers have to check every
+line.
 
 Commit message subjects start with a capital letter, use the imperative form and do **not** end
 with a period:
