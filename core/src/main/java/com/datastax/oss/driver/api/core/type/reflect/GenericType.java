@@ -20,6 +20,7 @@ import com.datastax.oss.driver.api.core.data.GettableByIndex;
 import com.datastax.oss.driver.api.core.data.TupleValue;
 import com.datastax.oss.driver.api.core.data.UdtValue;
 import com.datastax.oss.driver.api.core.type.codec.TypeCodec;
+import com.datastax.oss.driver.shaded.guava.common.primitives.Primitives;
 import com.datastax.oss.driver.shaded.guava.common.reflect.TypeParameter;
 import com.datastax.oss.driver.shaded.guava.common.reflect.TypeResolver;
 import com.datastax.oss.driver.shaded.guava.common.reflect.TypeToken;
@@ -154,6 +155,53 @@ public class GenericType<T> {
 
   protected GenericType() {
     this.token = new TypeToken<T>(getClass()) {};
+  }
+
+  /**
+   * Returns true if this type is a supertype of the given {@code type}. "Supertype" is defined
+   * according to <a
+   * href="http://docs.oracle.com/javase/specs/jls/se8/html/jls-4.html#jls-4.5.1">the rules for type
+   * arguments</a> introduced with Java generics.
+   */
+  public final boolean isSupertypeOf(GenericType<?> type) {
+    return token.isSupertypeOf(type.token);
+  }
+
+  /**
+   * Returns true if this type is a subtype of the given {@code type}. "Subtype" is defined
+   * according to <a
+   * href="http://docs.oracle.com/javase/specs/jls/se8/html/jls-4.html#jls-4.5.1">the rules for type
+   * arguments</a> introduced with Java generics.
+   */
+  public final boolean isSubtypeOf(GenericType<?> type) {
+    return token.isSubtypeOf(type.token);
+  }
+
+  /** Returns true if this type is one of the nine primitive types (including {@code void}). */
+  public final boolean isPrimitive() {
+    return token.isPrimitive();
+  }
+
+  /**
+   * Returns the corresponding wrapper type if this is a primitive type; otherwise returns {@code
+   * this} itself. Idempotent.
+   */
+  public final GenericType<T> wrap() {
+    if (isPrimitive()) {
+      return new GenericType<>(token.wrap());
+    }
+    return this;
+  }
+
+  /**
+   * Returns the corresponding primitive type if this is a wrapper type; otherwise returns {@code
+   * this} itself. Idempotent.
+   */
+  public final GenericType<T> unwrap() {
+    if (Primitives.allWrapperTypes().contains(token.getRawType())) {
+      return new GenericType<>(token.unwrap());
+    }
+    return this;
   }
 
   /**

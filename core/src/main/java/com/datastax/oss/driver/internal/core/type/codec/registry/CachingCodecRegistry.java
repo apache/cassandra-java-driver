@@ -165,13 +165,13 @@ public abstract class CachingCodecRegistry implements CodecRegistry {
   private TypeCodec<?> covariantCodecFor(GenericType<?> javaType) {
     LOG.trace("[{}] Looking up codec for Java type {}", logPrefix, javaType);
     for (TypeCodec<?> primitiveCodec : PRIMITIVE_CODECS) {
-      if (primitiveCodec.getJavaType().__getToken().isSupertypeOf(javaType.__getToken())) {
+      if (primitiveCodec.getJavaType().isSupertypeOf(javaType)) {
         LOG.trace("[{}] Found matching primitive codec {}", logPrefix, primitiveCodec);
         return safeCast(primitiveCodec);
       }
     }
     for (TypeCodec<?> userCodec : userCodecs) {
-      if (userCodec.getJavaType().__getToken().isSupertypeOf(javaType.__getToken())) {
+      if (userCodec.getJavaType().isSupertypeOf(javaType)) {
         LOG.trace("[{}] Found matching user codec {}", logPrefix, userCodec);
         return safeCast(userCodec);
       }
