@@ -21,7 +21,7 @@ import com.datastax.oss.driver.api.querybuilder.BindMarker;
 import com.datastax.oss.driver.api.querybuilder.BuildableQuery;
 import com.datastax.oss.driver.api.querybuilder.QueryBuilderDsl;
 import com.datastax.oss.driver.api.querybuilder.relation.OngoingWhereClause;
-import com.google.common.collect.ImmutableMap;
+import com.datastax.oss.driver.internal.core.CqlIdentifiers;
 import com.google.common.collect.Iterables;
 import java.util.Arrays;
 import java.util.Map;
@@ -110,12 +110,7 @@ public interface Select extends OngoingSelection, OngoingWhereClause<Select>, Bu
    * @throws IllegalArgumentException if two names resolve to the same identifier.
    */
   default Select orderBy(Map<String, ClusteringOrder> orderings) {
-    ImmutableMap.Builder<CqlIdentifier, ClusteringOrder> builder = ImmutableMap.builder();
-    for (Map.Entry<String, ClusteringOrder> entry : orderings.entrySet()) {
-      builder.put(CqlIdentifier.fromCql(entry.getKey()), entry.getValue());
-    }
-    // build() throws if there are duplicate keys
-    return orderByIds(builder.build());
+    return orderByIds(CqlIdentifiers.wrapKeys(orderings));
   }
 
   /**

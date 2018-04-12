@@ -16,10 +16,19 @@
 package com.datastax.oss.driver.internal.core;
 
 import com.datastax.oss.driver.api.core.CqlIdentifier;
+import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableList;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableMap;
 import java.util.Map;
 
 public class CqlIdentifiers {
+
+  public static Iterable<CqlIdentifier> wrap(Iterable<String> in) {
+    ImmutableList.Builder<CqlIdentifier> out = ImmutableList.builder();
+    for (String name : in) {
+      out.add(CqlIdentifier.fromCql(name));
+    }
+    return out.build();
+  }
 
   public static <V> Map<CqlIdentifier, V> wrapKeys(Map<String, V> in) {
     ImmutableMap.Builder<CqlIdentifier, V> out = ImmutableMap.builder();
