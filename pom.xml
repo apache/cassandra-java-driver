@@ -63,7 +63,9 @@
         <joda.version>2.9.9</joda.version>
         <jsr353-api.version>1.0</jsr353-api.version>
         <jsr353-ri.version>1.0.4</jsr353-ri.version>
-        <jnr-ffi.version>2.0.9</jnr-ffi.version>
+        <!-- Note:  When upgrading either jnr-ffi or jnr-posix, ensure that the versions are compatible.
+             JNR has broken compatibility between minor versions in the past. -->
+        <jnr-ffi.version>2.1.7</jnr-ffi.version>
         <jnr-posix.version>3.0.44</jnr-posix.version>
         <groovy.version>2.4.7</groovy.version>
         <jax-rs.version>2.0.1</jax-rs.version>
