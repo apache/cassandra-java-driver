@@ -153,7 +153,7 @@ public class CqlRequestHandlerSpeculativeExecutionTest extends CqlRequestHandler
       node1Behavior.verifyWrite();
       node1Behavior.setWriteSuccess();
 
-      harness.nextScheduledTask(); // Discard the timeout task
+      ScheduledTaskCapturingEventLoop.CapturedTask<?> timeoutFuture = harness.nextScheduledTask();
 
       // Check that the first execution was scheduled but don't run it yet
       ScheduledTaskCapturingEventLoop.CapturedTask<?> firstExecutionTask =
@@ -165,18 +165,22 @@ public class CqlRequestHandlerSpeculativeExecutionTest extends CqlRequestHandler
       node1Behavior.setResponseSuccess(defaultFrameOf(singleRow()));
       assertThat(resultSetFuture).isSuccess();
 
-      // The speculative execution should have been cancelled
-      assertThat(firstExecutionTask.isCancelled()).isTrue();
+      // Pending speculative executions should have been cancelled. However we don't check
+      // firstExecutionTask directly because the request handler's onResponse can sometimes be
+      // invoked before operationComplete (this is very unlikely in practice, but happens in our
+      // Travis CI build). When that happens, the speculative execution is not recorded yet when
+      // cancelScheduledTasks runs.
+      // So check the timeout future instead, since it's cancelled in the same method.
+      assertThat(timeoutFuture.isCancelled()).isTrue();
+
+      // The fact that we missed the speculative execution is not a problem; even if it starts, it
+      // will eventually find out that the result is already complete and cancel itself:
+      firstExecutionTask.run();
+      node2Behavior.verifyNoWrite();
 
       Mockito.verify(nodeMetricUpdater1)
           .updateTimer(eq(DefaultNodeMetric.CQL_MESSAGES), anyLong(), eq(TimeUnit.NANOSECONDS));
       Mockito.verifyNoMoreInteractions(nodeMetricUpdater1);
-
-      // Run the task anyway; we're bending reality a bit here since the task is already cancelled
-      // and wouldn't run, but this allows us to test the case where the completion races with the
-      // start of the task.
-      firstExecutionTask.run();
-      node2Behavior.verifyNoWrite();
     }
   }
 
