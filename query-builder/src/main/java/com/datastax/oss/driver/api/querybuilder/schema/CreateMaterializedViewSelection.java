@@ -16,7 +16,7 @@
 package com.datastax.oss.driver.api.querybuilder.schema;
 
 import com.datastax.oss.driver.api.core.CqlIdentifier;
-import com.google.common.collect.Iterables;
+import com.datastax.oss.driver.internal.core.CqlIdentifiers;
 import java.util.Arrays;
 
 public interface CreateMaterializedViewSelection {
@@ -50,7 +50,7 @@ public interface CreateMaterializedViewSelection {
    * <p>This is the same as calling {@link #column(String)} for each element.
    */
   default CreateMaterializedViewSelectionWithColumns columns(Iterable<String> columnNames) {
-    return columnsIds(Iterables.transform(columnNames, CqlIdentifier::fromInternal));
+    return columnsIds(CqlIdentifiers.wrap(columnNames));
   }
 
   /** Var-arg equivalent of {@link #columns(Iterable)}. */

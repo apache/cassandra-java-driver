@@ -20,12 +20,12 @@ import com.datastax.oss.driver.api.core.cql.Statement;
 import com.datastax.oss.driver.api.querybuilder.BuildableQuery;
 import com.datastax.oss.driver.api.querybuilder.CqlSnippet;
 import com.datastax.oss.driver.api.querybuilder.term.Term;
+import com.datastax.oss.driver.internal.core.CqlIdentifiers;
 import com.datastax.oss.driver.internal.querybuilder.relation.CustomIndexRelation;
 import com.datastax.oss.driver.internal.querybuilder.relation.DefaultColumnComponentRelationBuilder;
 import com.datastax.oss.driver.internal.querybuilder.relation.DefaultColumnRelationBuilder;
 import com.datastax.oss.driver.internal.querybuilder.relation.DefaultMultiColumnRelationBuilder;
 import com.datastax.oss.driver.internal.querybuilder.relation.DefaultTokenRelationBuilder;
-import com.google.common.collect.Iterables;
 import java.util.Arrays;
 
 /**
@@ -99,7 +99,7 @@ public interface Relation extends CqlSnippet {
    * {@link CqlIdentifier#fromCql(String)}.
    */
   static TokenRelationBuilder<Relation> token(Iterable<String> names) {
-    return tokenFromIds(Iterables.transform(names, CqlIdentifier::fromCql));
+    return tokenFromIds(CqlIdentifiers.wrap(names));
   }
 
   /** Var-arg equivalent of {@link #token(Iterable)}. */
@@ -122,7 +122,7 @@ public interface Relation extends CqlSnippet {
    * {@link CqlIdentifier#fromCql(String)}.
    */
   static MultiColumnRelationBuilder<Relation> columns(Iterable<String> names) {
-    return columnIds(Iterables.transform(names, CqlIdentifier::fromCql));
+    return columnIds(CqlIdentifiers.wrap(names));
   }
 
   /** Var-arg equivalent of {@link #columns(Iterable)}. */

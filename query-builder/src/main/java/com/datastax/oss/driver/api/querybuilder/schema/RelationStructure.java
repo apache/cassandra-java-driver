@@ -17,7 +17,7 @@ package com.datastax.oss.driver.api.querybuilder.schema;
 
 import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.metadata.schema.ClusteringOrder;
-import com.google.common.collect.ImmutableMap;
+import com.datastax.oss.driver.internal.core.CqlIdentifiers;
 import java.util.Map;
 
 public interface RelationStructure<SelfT extends RelationStructure<SelfT>>
@@ -40,12 +40,7 @@ public interface RelationStructure<SelfT extends RelationStructure<SelfT>>
    * identifier, for example "foo" and "Foo"; if this happens, a runtime exception will be thrown.
    */
   default SelfT withClusteringOrder(Map<String, ClusteringOrder> orderings) {
-    ImmutableMap.Builder<CqlIdentifier, ClusteringOrder> builder = ImmutableMap.builder();
-    for (Map.Entry<String, ClusteringOrder> entry : orderings.entrySet()) {
-      builder.put(CqlIdentifier.fromCql(entry.getKey()), entry.getValue());
-    }
-    // build() throws if there are duplicate keys
-    return withClusteringOrderByIds(builder.build());
+    return withClusteringOrderByIds(CqlIdentifiers.wrapKeys(orderings));
   }
 
   /**

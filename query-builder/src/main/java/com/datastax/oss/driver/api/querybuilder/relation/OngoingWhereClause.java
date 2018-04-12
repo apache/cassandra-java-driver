@@ -18,13 +18,13 @@ package com.datastax.oss.driver.api.querybuilder.relation;
 import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.querybuilder.QueryBuilderDsl;
 import com.datastax.oss.driver.api.querybuilder.term.Term;
+import com.datastax.oss.driver.internal.core.CqlIdentifiers;
 import com.datastax.oss.driver.internal.querybuilder.DefaultRaw;
 import com.datastax.oss.driver.internal.querybuilder.relation.CustomIndexRelation;
 import com.datastax.oss.driver.internal.querybuilder.relation.DefaultColumnComponentRelationBuilder;
 import com.datastax.oss.driver.internal.querybuilder.relation.DefaultColumnRelationBuilder;
 import com.datastax.oss.driver.internal.querybuilder.relation.DefaultMultiColumnRelationBuilder;
 import com.datastax.oss.driver.internal.querybuilder.relation.DefaultTokenRelationBuilder;
-import com.google.common.collect.Iterables;
 import java.util.Arrays;
 
 /** A statement that is ready to accept relations in its WHERE clause. */
@@ -134,7 +134,7 @@ public interface OngoingWhereClause<SelfT extends OngoingWhereClause<SelfT>> {
    * passing it to {@link #where(Relation)}.
    */
   default TokenRelationBuilder<SelfT> whereToken(Iterable<String> names) {
-    return whereTokenFromIds(Iterables.transform(names, CqlIdentifier::fromCql));
+    return whereTokenFromIds(CqlIdentifiers.wrap(names));
   }
 
   /**
@@ -175,7 +175,7 @@ public interface OngoingWhereClause<SelfT extends OngoingWhereClause<SelfT>> {
    * passing it to {@link #where(Relation)}.
    */
   default MultiColumnRelationBuilder<SelfT> whereColumns(Iterable<String> names) {
-    return whereColumnIds(Iterables.transform(names, CqlIdentifier::fromCql));
+    return whereColumnIds(CqlIdentifiers.wrap(names));
   }
 
   /**
