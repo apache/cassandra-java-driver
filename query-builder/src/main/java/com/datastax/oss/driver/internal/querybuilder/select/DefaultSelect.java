@@ -26,9 +26,9 @@ import com.datastax.oss.driver.api.querybuilder.select.SelectFrom;
 import com.datastax.oss.driver.api.querybuilder.select.Selector;
 import com.datastax.oss.driver.internal.querybuilder.CqlHelper;
 import com.datastax.oss.driver.internal.querybuilder.ImmutableCollections;
-import com.google.common.base.Preconditions;
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableMap;
+import com.datastax.oss.driver.shaded.guava.common.base.Preconditions;
+import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableList;
+import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableMap;
 import java.util.Map;
 
 public class DefaultSelect implements SelectFrom, Select {
@@ -68,8 +68,6 @@ public class DefaultSelect implements SelectFrom, Select {
    * @param selectors if it contains {@link AllSelector#INSTANCE}, that must be the only element.
    *     This isn't re-checked because methods that call this constructor internally already do it,
    *     make sure you do it yourself.
-   * @param groupByClauses
-   * @param orderings
    */
   public DefaultSelect(
       CqlIdentifier keyspace,

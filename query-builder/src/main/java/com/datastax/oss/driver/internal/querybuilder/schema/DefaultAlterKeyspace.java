@@ -19,7 +19,7 @@ import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.querybuilder.schema.AlterKeyspace;
 import com.datastax.oss.driver.api.querybuilder.schema.AlterKeyspaceStart;
 import com.datastax.oss.driver.internal.querybuilder.ImmutableCollections;
-import com.google.common.collect.ImmutableMap;
+import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableMap;
 import java.util.Map;
 
 public class DefaultAlterKeyspace implements AlterKeyspaceStart, AlterKeyspace {

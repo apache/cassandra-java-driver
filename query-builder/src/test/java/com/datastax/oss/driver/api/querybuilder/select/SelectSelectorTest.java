@@ -23,8 +23,8 @@ import static com.datastax.oss.driver.api.querybuilder.QueryBuilderDsl.selectFro
 import com.datastax.oss.driver.api.core.type.DataTypes;
 import com.datastax.oss.driver.api.core.type.codec.CodecNotFoundException;
 import com.datastax.oss.driver.api.querybuilder.CharsetCodec;
-import com.google.common.base.Charsets;
-import com.google.common.collect.ImmutableMap;
+import com.datastax.oss.driver.shaded.guava.common.base.Charsets;
+import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableMap;
 import org.junit.Test;
 
 public class SelectSelectorTest {

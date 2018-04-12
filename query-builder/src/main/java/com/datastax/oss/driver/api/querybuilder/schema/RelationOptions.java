@@ -19,7 +19,7 @@ import static com.datastax.oss.driver.api.querybuilder.SchemaBuilderDsl.RowsPerP
 
 import com.datastax.oss.driver.api.querybuilder.SchemaBuilderDsl;
 import com.datastax.oss.driver.api.querybuilder.schema.compaction.CompactionStrategy;
-import com.google.common.collect.ImmutableMap;
+import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableMap;
 
 public interface RelationOptions<SelfT extends RelationOptions<SelfT>>
     extends OptionProvider<SelfT> {

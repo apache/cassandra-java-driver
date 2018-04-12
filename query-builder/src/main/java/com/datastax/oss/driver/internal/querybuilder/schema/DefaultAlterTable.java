@@ -27,8 +27,8 @@ import com.datastax.oss.driver.api.querybuilder.schema.AlterTableStart;
 import com.datastax.oss.driver.api.querybuilder.schema.AlterTableWithOptionsEnd;
 import com.datastax.oss.driver.internal.querybuilder.CqlHelper;
 import com.datastax.oss.driver.internal.querybuilder.ImmutableCollections;
-import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.ImmutableSet;
+import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableMap;
+import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableSet;
 import java.util.Map;
 
 public class DefaultAlterTable

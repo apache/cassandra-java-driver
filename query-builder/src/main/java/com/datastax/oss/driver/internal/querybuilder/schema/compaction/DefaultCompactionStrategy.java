@@ -16,7 +16,7 @@
 package com.datastax.oss.driver.internal.querybuilder.schema.compaction;
 
 import com.datastax.oss.driver.api.querybuilder.schema.compaction.CompactionStrategy;
-import com.google.common.collect.ImmutableMap;
+import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableMap;
 import java.util.Map;
 
 public abstract class DefaultCompactionStrategy<SelfT extends DefaultCompactionStrategy<SelfT>>

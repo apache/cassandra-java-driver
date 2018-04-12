@@ -15,8 +15,8 @@
  */
 package com.datastax.oss.driver.internal.querybuilder;
 
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableMap;
+import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableList;
+import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableMap;
 import java.util.Map;
 import java.util.function.Function;
 
@@ -44,9 +44,9 @@ public class ImmutableCollections {
    * If the existing map has an entry with the new key, that old entry will be removed, but the new
    * entry will appear last in the iteration order of the resulting map. Example:
    *
-   * <pre>
-   *   append({a=>1, b=>2, c=>3}, a, 4) == {b=>2, c=>3, a=>4}
-   * </pre>
+   * <pre>{@code
+   * append({a=>1, b=>2, c=>3}, a, 4) == {b=>2, c=>3, a=>4}
+   * }</pre>
    */
   public static <K, V> ImmutableMap<K, V> append(ImmutableMap<K, V> map, K newKey, V newValue) {
     ImmutableMap.Builder<K, V> builder = ImmutableMap.builder();
@@ -64,9 +64,9 @@ public class ImmutableCollections {
    * removed, but the new entries will appear at their new position in the iteration order of the
    * resulting map. Example:
    *
-   * <pre>
-   *   concat({a=>1, b=>2, c=>3}, {c=>4, a=>5}) == {b=>2, c=>4, a=>5}
-   * </pre>
+   * <pre>{@code
+   * concat({a=>1, b=>2, c=>3}, {c=>4, a=>5}) == {b=>2, c=>4, a=>5}
+   * }</pre>
    */
   public static <K, V> ImmutableMap<K, V> concat(ImmutableMap<K, V> map1, Map<K, V> map2) {
     ImmutableMap.Builder<K, V> builder = ImmutableMap.builder();

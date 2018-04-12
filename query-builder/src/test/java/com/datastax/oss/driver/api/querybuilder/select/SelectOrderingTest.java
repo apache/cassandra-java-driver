@@ -22,7 +22,7 @@ import static com.datastax.oss.driver.api.querybuilder.QueryBuilderDsl.literal;
 import static com.datastax.oss.driver.api.querybuilder.QueryBuilderDsl.selectFrom;
 
 import com.datastax.oss.driver.api.querybuilder.relation.Relation;
-import com.google.common.collect.ImmutableMap;
+import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableMap;
 import org.junit.Test;
 
 public class SelectOrderingTest {

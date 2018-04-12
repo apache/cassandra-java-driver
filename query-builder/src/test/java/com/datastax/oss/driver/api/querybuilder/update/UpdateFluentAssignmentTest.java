@@ -21,9 +21,9 @@ import static com.datastax.oss.driver.api.querybuilder.QueryBuilderDsl.literal;
 import static com.datastax.oss.driver.api.querybuilder.QueryBuilderDsl.update;
 
 import com.datastax.oss.driver.api.querybuilder.Literal;
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.ImmutableSet;
+import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableList;
+import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableMap;
+import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableSet;
 import org.junit.Test;
 
 public class UpdateFluentAssignmentTest {

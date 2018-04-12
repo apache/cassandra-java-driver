@@ -17,7 +17,7 @@ package com.datastax.oss.driver.internal.querybuilder.schema.compaction;
 
 import com.datastax.oss.driver.api.querybuilder.schema.compaction.SizeTieredCompactionStrategy;
 import com.datastax.oss.driver.internal.querybuilder.ImmutableCollections;
-import com.google.common.collect.ImmutableMap;
+import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableMap;
 
 public class DefaultSizeTieredCompactionStrategy
     extends DefaultCompactionStrategy<DefaultSizeTieredCompactionStrategy>

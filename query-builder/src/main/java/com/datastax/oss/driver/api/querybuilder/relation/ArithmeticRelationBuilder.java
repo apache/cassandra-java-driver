@@ -29,7 +29,7 @@ public interface ArithmeticRelationBuilder<ResultT> {
   }
 
   /**
-   * Builds a '<' relation with the given term.
+   * Builds a '&lt;' relation with the given term.
    *
    * <p>Use one of the static factory method in {@link Term} to create the argument.
    */
@@ -38,7 +38,7 @@ public interface ArithmeticRelationBuilder<ResultT> {
   }
 
   /**
-   * Builds a '<=' relation with the given term.
+   * Builds a '&lt;=' relation with the given term.
    *
    * <p>Use one of the static factory method in {@link Term} to create the argument.
    */
@@ -47,7 +47,7 @@ public interface ArithmeticRelationBuilder<ResultT> {
   }
 
   /**
-   * Builds a '>' relation with the given term.
+   * Builds a '&gt;' relation with the given term.
    *
    * <p>Use one of the static factory method in {@link Term} to create the argument.
    */
@@ -56,7 +56,7 @@ public interface ArithmeticRelationBuilder<ResultT> {
   }
 
   /**
-   * Builds a '>=' relation with the given term.
+   * Builds a '&gt;=' relation with the given term.
    *
    * <p>Use one of the static factory method in {@link Term} to create the argument.
    */
