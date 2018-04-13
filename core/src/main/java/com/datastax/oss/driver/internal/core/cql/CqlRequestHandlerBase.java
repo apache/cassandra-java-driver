@@ -39,7 +39,6 @@ import com.datastax.oss.driver.api.core.servererrors.QueryValidationException;
 import com.datastax.oss.driver.api.core.servererrors.ReadTimeoutException;
 import com.datastax.oss.driver.api.core.servererrors.UnavailableException;
 import com.datastax.oss.driver.api.core.servererrors.WriteTimeoutException;
-import com.datastax.oss.driver.api.core.specex.SpeculativeExecutionPolicy;
 import com.datastax.oss.driver.internal.core.adminrequest.ThrottledAdminRequestHandler;
 import com.datastax.oss.driver.internal.core.adminrequest.UnexpectedResponseException;
 import com.datastax.oss.driver.internal.core.channel.DriverChannel;
@@ -119,7 +118,6 @@ public abstract class CqlRequestHandlerBase implements Throttled {
   private final List<ScheduledFuture<?>> scheduledExecutions;
   private final List<NodeResponseCallback> inFlightCallbacks;
   private final RetryPolicy retryPolicy;
-  private final SpeculativeExecutionPolicy speculativeExecutionPolicy;
   private final RequestThrottler throttler;
 
   // The errors on the nodes that were already tried (lazily initialized on the first error).
@@ -175,7 +173,6 @@ public abstract class CqlRequestHandlerBase implements Throttled {
     this.timeoutFuture = scheduleTimeout(timeout);
 
     this.retryPolicy = context.retryPolicy();
-    this.speculativeExecutionPolicy = context.speculativeExecutionPolicy();
     this.activeExecutionsCount = new AtomicInteger(1);
     this.startedSpeculativeExecutionsCount = new AtomicInteger(0);
     this.scheduledExecutions = isIdempotent ? new CopyOnWriteArrayList<>() : null;
@@ -267,9 +264,8 @@ public abstract class CqlRequestHandlerBase implements Throttled {
     if (this.timeoutFuture != null) {
       this.timeoutFuture.cancel(false);
     }
-    List<ScheduledFuture<?>> pendingExecutionsSnapshot = this.scheduledExecutions;
-    if (pendingExecutionsSnapshot != null) {
-      for (ScheduledFuture<?> future : pendingExecutionsSnapshot) {
+    if (scheduledExecutions != null) {
+      for (ScheduledFuture<?> future : scheduledExecutions) {
         future.cancel(false);
       }
     }
