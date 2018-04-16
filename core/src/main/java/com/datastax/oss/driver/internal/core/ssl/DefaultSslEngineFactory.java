@@ -13,11 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.datastax.oss.driver.api.core.ssl;
+package com.datastax.oss.driver.internal.core.ssl;
 
 import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
 import com.datastax.oss.driver.api.core.config.DriverConfigProfile;
 import com.datastax.oss.driver.api.core.context.DriverContext;
+import com.datastax.oss.driver.api.core.ssl.SslEngineFactory;
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
 import java.security.NoSuchAlgorithmException;

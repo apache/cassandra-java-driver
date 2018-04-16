@@ -6,7 +6,7 @@ It is defined in the [configuration](../configuration/):
                      
 ```
 datastax-java-driver.request.retry-policy {
-  class = com.datastax.oss.driver.api.core.retry.DefaultRetryPolicy
+  class = com.datastax.oss.driver.internal.core.retry.DefaultRetryPolicy
 }
 ```
 

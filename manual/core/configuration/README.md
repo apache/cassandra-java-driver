@@ -325,7 +325,7 @@ configuration:
 
 ```
 reconnection-policy {
-  class = com.datastax.oss.driver.api.core.connection.ExponentialReconnectionPolicy
+  class = com.datastax.oss.driver.internal.core.connection.ExponentialReconnectionPolicy
   base-delay = 1 second
   max-delay = 60 seconds
 }

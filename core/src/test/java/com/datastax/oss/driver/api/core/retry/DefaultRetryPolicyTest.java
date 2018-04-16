@@ -29,6 +29,7 @@ import com.datastax.oss.driver.api.core.servererrors.ReadFailureException;
 import com.datastax.oss.driver.api.core.servererrors.ServerError;
 import com.datastax.oss.driver.api.core.servererrors.TruncateException;
 import com.datastax.oss.driver.api.core.servererrors.WriteFailureException;
+import com.datastax.oss.driver.internal.core.retry.DefaultRetryPolicy;
 import org.junit.Test;
 
 public class DefaultRetryPolicyTest extends RetryPolicyTestBase {

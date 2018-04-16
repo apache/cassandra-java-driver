@@ -25,7 +25,7 @@ The timestamp generator is defined in the [configuration](../configuration/).
 
 ```
 datastax-java-driver.request.timestamp-generator {
-  class = com.datastax.oss.driver.api.core.time.AtomicTimestampGenerator
+  class = com.datastax.oss.driver.internal.core.time.AtomicTimestampGenerator
 }
 ```
 
@@ -35,7 +35,7 @@ monotonicity (i.e. ever-increasing timestamps) across all application threads.
 Note that, in order to achieve monotonicity, the generator might return timestamps that drift out in
 the future. This happens if timestamps are generated at a rate of more than one per microsecond, or
 more likely in the event of a system clock skew. When this happens, the generator logs a warning
-message in the category `com.datastax.oss.driver.api.core.time.MonotonicTimestampGenerator`:
+message in the category `com.datastax.oss.driver.internal.core.time.MonotonicTimestampGenerator`:
 
 ```
 Clock skew detected: current tick (...) was ... microseconds behind the last generated timestamp (...),
@@ -84,7 +84,7 @@ initialization:
 
 ```
 datastax-java-driver.request.timestamp-generator {
-  class = com.datastax.oss.driver.api.core.time.ThreadLocalTimestampGenerator
+  class = com.datastax.oss.driver.internal.core.time.ThreadLocalTimestampGenerator
 }
 ```
 
@@ -103,7 +103,7 @@ section for details.
 
 ```
 datastax-java-driver.request.timestamp-generator {
-  class = com.datastax.oss.driver.api.core.time.ServerSideTimestampGenerator
+  class = com.datastax.oss.driver.internal.core.time.ServerSideTimestampGenerator
 }
 ```
 

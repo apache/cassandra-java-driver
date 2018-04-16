@@ -16,6 +16,8 @@
 package com.datastax.oss.driver.internal.core.session.throttling;
 
 import com.datastax.oss.driver.api.core.context.DriverContext;
+import com.datastax.oss.driver.api.core.session.throttling.RequestThrottler;
+import com.datastax.oss.driver.api.core.session.throttling.Throttled;
 import java.io.IOException;
 import net.jcip.annotations.ThreadSafe;
 

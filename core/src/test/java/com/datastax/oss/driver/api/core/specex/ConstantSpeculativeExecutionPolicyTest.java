@@ -22,6 +22,7 @@ import com.datastax.oss.driver.api.core.config.DriverConfig;
 import com.datastax.oss.driver.api.core.config.DriverConfigProfile;
 import com.datastax.oss.driver.api.core.context.DriverContext;
 import com.datastax.oss.driver.api.core.session.Request;
+import com.datastax.oss.driver.internal.core.specex.ConstantSpeculativeExecutionPolicy;
 import java.time.Duration;
 import org.junit.Before;
 import org.junit.Test;

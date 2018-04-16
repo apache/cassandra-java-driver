@@ -16,6 +16,7 @@
 package com.datastax.oss.driver.internal.core.session.throttling;
 
 import com.datastax.oss.driver.api.core.RequestThrottlingException;
+import com.datastax.oss.driver.api.core.session.throttling.Throttled;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 

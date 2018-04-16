@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.datastax.oss.driver.api.core.time;
+package com.datastax.oss.driver.internal.core.time;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -25,7 +25,6 @@ import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
 import com.datastax.oss.driver.api.core.config.DriverConfig;
 import com.datastax.oss.driver.api.core.config.DriverConfigProfile;
 import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
-import com.datastax.oss.driver.internal.core.time.Clock;
 import java.time.Duration;
 import org.junit.After;
 import org.junit.Before;

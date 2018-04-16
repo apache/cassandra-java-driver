@@ -48,7 +48,7 @@ public class PlainTextAuthProviderIT {
     try (CqlSession session =
         SessionUtils.newSession(
             ccm,
-            "protocol.auth-provider.class = com.datastax.oss.driver.api.core.auth.PlainTextAuthProvider",
+            "protocol.auth-provider.class = com.datastax.oss.driver.internal.core.auth.PlainTextAuthProvider",
             "protocol.auth-provider.username = cassandra",
             "protocol.auth-provider.password = cassandra")) {
       session.execute("select * from system.local");
@@ -60,7 +60,7 @@ public class PlainTextAuthProviderIT {
     try (CqlSession session =
         SessionUtils.newSession(
             ccm,
-            "protocol.auth-provider.class = com.datastax.oss.driver.api.core.auth.PlainTextAuthProvider",
+            "protocol.auth-provider.class = com.datastax.oss.driver.internal.core.auth.PlainTextAuthProvider",
             "protocol.auth-provider.username = baduser",
             "protocol.auth-provider.password = badpass")) {
       session.execute("select * from system.local");

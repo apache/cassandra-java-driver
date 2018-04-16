@@ -13,11 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.datastax.oss.driver.internal.core.session.throttling;
+package com.datastax.oss.driver.api.core.session.throttling;
 
 import com.datastax.oss.driver.api.core.RequestThrottlingException;
 
-/** A request that may be subjected to throttling by a {@link RequestThrottler}. */
+/**
+ * A request that may be subjected to throttling by a {@link
+ * com.datastax.oss.driver.api.core.session.throttling.RequestThrottler}.
+ */
 public interface Throttled {
 
   /**
