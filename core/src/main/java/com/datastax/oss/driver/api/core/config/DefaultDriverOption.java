@@ -86,7 +86,6 @@ public enum DefaultDriverOption implements DriverOption {
   CONTROL_CONNECTION_AGREEMENT_WARN(
       "connection.control-connection.schema-agreement.warn-on-failure", true),
 
-  COALESCER_CLASS("connection.coalescer.class", true),
   COALESCER_MAX_RUNS("connection.coalescer.max-runs-with-no-work", false),
   COALESCER_INTERVAL("connection.coalescer.reschedule-interval", false),
 

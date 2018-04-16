@@ -41,6 +41,7 @@ import com.datastax.oss.driver.internal.core.ConsistencyLevelRegistry;
 import com.datastax.oss.driver.internal.core.DefaultConsistencyLevelRegistry;
 import com.datastax.oss.driver.internal.core.ProtocolVersionRegistry;
 import com.datastax.oss.driver.internal.core.channel.ChannelFactory;
+import com.datastax.oss.driver.internal.core.channel.DefaultWriteCoalescer;
 import com.datastax.oss.driver.internal.core.channel.WriteCoalescer;
 import com.datastax.oss.driver.internal.core.control.ControlConnection;
 import com.datastax.oss.driver.internal.core.metadata.DefaultTopologyMonitor;
@@ -328,14 +329,7 @@ public class DefaultDriverContext implements InternalDriverContext {
   }
 
   protected WriteCoalescer buildWriteCoalescer() {
-    return Reflection.buildFromConfig(
-            this, DefaultDriverOption.COALESCER_CLASS, WriteCoalescer.class)
-        .orElseThrow(
-            () ->
-                new IllegalArgumentException(
-                    String.format(
-                        "Missing write coalescer, check your configuration (%s)",
-                        DefaultDriverOption.COALESCER_CLASS)));
+    return new DefaultWriteCoalescer(this);
   }
 
   protected ChannelFactory buildChannelFactory() {
