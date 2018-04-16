@@ -60,9 +60,7 @@ public class HeapCompressionIT {
    */
   @Test
   public void should_execute_queries_with_snappy_compression() throws Exception {
-    createAndCheckCluster(
-        "protocol.compressor.class = "
-            + "com.datastax.oss.driver.internal.core.protocol.SnappyCompressor");
+    createAndCheckCluster("protocol.compressor.class = SnappyCompressor");
   }
 
   /**
@@ -73,9 +71,7 @@ public class HeapCompressionIT {
    */
   @Test
   public void should_execute_queries_with_lz4_compression() throws Exception {
-    createAndCheckCluster(
-        "protocol.compressor.class = "
-            + "com.datastax.oss.driver.internal.core.protocol.Lz4Compressor");
+    createAndCheckCluster("protocol.compressor.class = Lz4Compressor");
   }
 
   private void createAndCheckCluster(String compressorOption) {

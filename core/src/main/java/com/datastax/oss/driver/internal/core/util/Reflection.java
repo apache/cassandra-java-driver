@@ -22,17 +22,24 @@ import com.datastax.oss.driver.shaded.guava.common.base.Preconditions;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.util.Optional;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class Reflection {
+
+  private static final Logger LOG = LoggerFactory.getLogger(Reflection.class);
+
   /**
    * Loads a class by name.
    *
    * <p>This methods tries first with the current thread's context class loader (the intent is that
    * if the driver is in a low-level loader of an application server -- e.g. bootstrap or system --
-   * it can still fidn classes in the application's class loader). If it is null, it defaults to the
+   * it can still find classes in the application's class loader). If it is null, it defaults to the
    * class loader that loaded the class calling this method.
+   *
+   * @return null if the class does not exist.
    */
-  public static Class<?> loadClass(String className, String source) {
+  public static Class<?> loadClass(String className) {
     try {
       ClassLoader contextClassLoader = Thread.currentThread().getContextClassLoader();
       if (contextClassLoader != null) {
@@ -41,48 +48,67 @@ public class Reflection {
         return Class.forName(className);
       }
     } catch (ClassNotFoundException e) {
-      throw new IllegalArgumentException(
-          String.format("Can't load class %s (specified by %s)", className, source), e);
+      return null;
     }
   }
 
   /**
-   * Tries to create an instance of a class, given a set of options defined in the driver
-   * configuration.
+   * Tries to create an instance of a class, given an option defined in the driver configuration.
    *
    * <p>For example:
    *
    * <pre>
-   * my-policy {
-   *   class = my.package.MyPolicyImpl
-   *   arg1 = some custom option
-   * }
+   * my-policy.class = my.package.MyPolicyImpl
    * </pre>
    *
-   * The {@code class} option is mandatory and will be used to construct the instance via
-   * reflection. It must have a constructor that takes two arguments: the {@link DriverContext}, and
-   * a {@link DriverOption} that represents the configuration root ({@code my-policy} in the example
-   * above).
+   * The class will be instantiated via reflection, it must have a constructor that takes a {@link
+   * DriverContext} argument.
    *
    * @param context the driver context.
    * @param classNameOption the option that indicates the class. It will be looked up in the default
    *     profile of the configuration stored in the context.
    * @param expectedSuperType a super-type that the class is expected to implement/extend.
-   * @return the new instance, or empty if {@code rootOption} or the class sub-option is not defined
-   *     in the configuration.
+   * @param defaultPackages the default packages to prepend to the class name if it's not qualified.
+   *     They will be tried in order, the first one that matches an existing class will be used.
+   * @return the new instance, or empty if {@code classNameOption} is not defined in the
+   *     configuration.
    */
   public static <T> Optional<T> buildFromConfig(
-      DriverContext context, DriverOption classNameOption, Class<T> expectedSuperType) {
+      DriverContext context,
+      DriverOption classNameOption,
+      Class<T> expectedSuperType,
+      String... defaultPackages) {
 
     DriverConfigProfile config = context.config().getDefaultProfile();
+    String configPath = classNameOption.getPath();
+
+    LOG.debug("Creating a {} from config option {}", expectedSuperType.getSimpleName(), configPath);
 
     if (!config.isDefined(classNameOption)) {
+      LOG.debug("Option is not defined, skipping");
       return Optional.empty();
     }
 
     String className = config.getString(classNameOption);
-    String configPath = classNameOption.getPath();
-    Class<?> clazz = loadClass(className, configPath);
+    Class<?> clazz = null;
+    if (className.contains(".")) {
+      LOG.debug("Building from fully-qualified name {}", className);
+      clazz = loadClass(className);
+    } else {
+      LOG.debug("Building from unqualified name {}", className);
+      for (String defaultPackage : defaultPackages) {
+        String qualifiedClassName = defaultPackage + "." + className;
+        LOG.debug("Trying with default package {}", qualifiedClassName);
+        clazz = loadClass(qualifiedClassName);
+        if (clazz != null) {
+          break;
+        }
+      }
+    }
+    if (clazz == null) {
+      throw new IllegalArgumentException(
+          String.format("Can't find class %s (specified by %s)", className, configPath));
+    }
     Preconditions.checkArgument(
         expectedSuperType.isAssignableFrom(clazz),
         "Expected class %s (specified by %s) to be a subtype of %s",

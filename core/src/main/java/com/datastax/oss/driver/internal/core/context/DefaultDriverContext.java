@@ -222,7 +222,10 @@ public class DefaultDriverContext implements InternalDriverContext {
 
   protected LoadBalancingPolicy buildLoadBalancingPolicy() {
     return Reflection.buildFromConfig(
-            this, DefaultDriverOption.LOAD_BALANCING_POLICY_CLASS, LoadBalancingPolicy.class)
+            this,
+            DefaultDriverOption.LOAD_BALANCING_POLICY_CLASS,
+            LoadBalancingPolicy.class,
+            "com.datastax.oss.driver.internal.core.loadbalancing")
         .orElseThrow(
             () ->
                 new IllegalArgumentException(
@@ -233,7 +236,10 @@ public class DefaultDriverContext implements InternalDriverContext {
 
   protected ReconnectionPolicy buildReconnectionPolicy() {
     return Reflection.buildFromConfig(
-            this, DefaultDriverOption.RECONNECTION_POLICY_CLASS, ReconnectionPolicy.class)
+            this,
+            DefaultDriverOption.RECONNECTION_POLICY_CLASS,
+            ReconnectionPolicy.class,
+            "com.datastax.oss.driver.internal.core.connection")
         .orElseThrow(
             () ->
                 new IllegalArgumentException(
@@ -244,7 +250,10 @@ public class DefaultDriverContext implements InternalDriverContext {
 
   protected RetryPolicy buildRetryPolicy() {
     return Reflection.buildFromConfig(
-            this, DefaultDriverOption.RETRY_POLICY_CLASS, RetryPolicy.class)
+            this,
+            DefaultDriverOption.RETRY_POLICY_CLASS,
+            RetryPolicy.class,
+            "com.datastax.oss.driver.internal.core.retry")
         .orElseThrow(
             () ->
                 new IllegalArgumentException(
@@ -257,7 +266,8 @@ public class DefaultDriverContext implements InternalDriverContext {
     return Reflection.buildFromConfig(
             this,
             DefaultDriverOption.SPECULATIVE_EXECUTION_POLICY_CLASS,
-            SpeculativeExecutionPolicy.class)
+            SpeculativeExecutionPolicy.class,
+            "com.datastax.oss.driver.internal.core.specex")
         .orElseThrow(
             () ->
                 new IllegalArgumentException(
@@ -268,7 +278,10 @@ public class DefaultDriverContext implements InternalDriverContext {
 
   protected AddressTranslator buildAddressTranslator() {
     return Reflection.buildFromConfig(
-            this, DefaultDriverOption.ADDRESS_TRANSLATOR_CLASS, AddressTranslator.class)
+            this,
+            DefaultDriverOption.ADDRESS_TRANSLATOR_CLASS,
+            AddressTranslator.class,
+            "com.datastax.oss.driver.internal.core.addresstranslation")
         .orElseThrow(
             () ->
                 new IllegalArgumentException(
@@ -279,12 +292,18 @@ public class DefaultDriverContext implements InternalDriverContext {
 
   protected Optional<AuthProvider> buildAuthProvider() {
     return Reflection.buildFromConfig(
-        this, DefaultDriverOption.AUTH_PROVIDER_CLASS, AuthProvider.class);
+        this,
+        DefaultDriverOption.AUTH_PROVIDER_CLASS,
+        AuthProvider.class,
+        "com.datastax.oss.driver.internal.core.auth");
   }
 
   protected Optional<SslEngineFactory> buildSslEngineFactory() {
     return Reflection.buildFromConfig(
-        this, DefaultDriverOption.SSL_ENGINE_FACTORY_CLASS, SslEngineFactory.class);
+        this,
+        DefaultDriverOption.SSL_ENGINE_FACTORY_CLASS,
+        SslEngineFactory.class,
+        "com.datastax.oss.driver.internal.core.ssl");
   }
 
   protected EventBus buildEventBus() {
@@ -295,7 +314,10 @@ public class DefaultDriverContext implements InternalDriverContext {
   protected Compressor<ByteBuf> buildCompressor() {
     return (Compressor<ByteBuf>)
         Reflection.buildFromConfig(
-                this, DefaultDriverOption.PROTOCOL_COMPRESSOR_CLASS, Compressor.class)
+                this,
+                DefaultDriverOption.PROTOCOL_COMPRESSOR_CLASS,
+                Compressor.class,
+                "com.datastax.oss.driver.internal.core.protocol")
             .orElse(Compressor.none());
   }
 
@@ -363,7 +385,10 @@ public class DefaultDriverContext implements InternalDriverContext {
 
   protected TimestampGenerator buildTimestampGenerator() {
     return Reflection.buildFromConfig(
-            this, DefaultDriverOption.TIMESTAMP_GENERATOR_CLASS, TimestampGenerator.class)
+            this,
+            DefaultDriverOption.TIMESTAMP_GENERATOR_CLASS,
+            TimestampGenerator.class,
+            "com.datastax.oss.driver.internal.core.time")
         .orElseThrow(
             () ->
                 new IllegalArgumentException(
@@ -398,7 +423,10 @@ public class DefaultDriverContext implements InternalDriverContext {
 
   protected RequestThrottler buildRequestThrottler() {
     return Reflection.buildFromConfig(
-            this, DefaultDriverOption.REQUEST_THROTTLER_CLASS, RequestThrottler.class)
+            this,
+            DefaultDriverOption.REQUEST_THROTTLER_CLASS,
+            RequestThrottler.class,
+            "com.datastax.oss.driver.internal.core.session.throttling")
         .orElseThrow(
             () ->
                 new IllegalArgumentException(
@@ -414,7 +442,8 @@ public class DefaultDriverContext implements InternalDriverContext {
         : Reflection.buildFromConfig(
                 this,
                 DefaultDriverOption.METADATA_NODE_STATE_LISTENER_CLASS,
-                NodeStateListener.class)
+                NodeStateListener.class,
+                "com.datastax.oss.driver.internal.core.metadata")
             .orElseThrow(
                 () ->
                     new IllegalArgumentException(
@@ -430,7 +459,8 @@ public class DefaultDriverContext implements InternalDriverContext {
         : Reflection.buildFromConfig(
                 this,
                 DefaultDriverOption.METADATA_SCHEMA_CHANGE_LISTENER_CLASS,
-                SchemaChangeListener.class)
+                SchemaChangeListener.class,
+                "com.datastax.oss.driver.internal.core.metadata.schema")
             .orElseThrow(
                 () ->
                     new IllegalArgumentException(
@@ -443,7 +473,10 @@ public class DefaultDriverContext implements InternalDriverContext {
     return (requestTrackerFromBuilder != null)
         ? requestTrackerFromBuilder
         : Reflection.buildFromConfig(
-                this, DefaultDriverOption.REQUEST_TRACKER_CLASS, RequestTracker.class)
+                this,
+                DefaultDriverOption.REQUEST_TRACKER_CLASS,
+                RequestTracker.class,
+                "com.datastax.oss.driver.internal.core.tracker")
             .orElseThrow(
                 () ->
                     new IllegalArgumentException(
