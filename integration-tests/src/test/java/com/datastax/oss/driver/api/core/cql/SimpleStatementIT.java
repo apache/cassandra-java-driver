@@ -247,7 +247,7 @@ public class SimpleStatementIT {
     // given a statement with a missing named value (:k)
     SimpleStatement insert =
         SimpleStatement.builder("SELECT * from test where k = :k and v = :v")
-            .addNamedValue(":v", 0)
+            .addNamedValue("v", 0)
             .build();
 
     // when executing that statement
@@ -259,7 +259,7 @@ public class SimpleStatementIT {
   @Test(expected = IllegalArgumentException.class)
   public void should_fail_when_mixing_named_and_positional_values() {
     SimpleStatement.builder("SELECT * from test where k = :k and v = :v")
-        .addNamedValue(":k", KEY)
+        .addNamedValue("k", KEY)
         .addPositionalValue(0)
         .build();
   }
@@ -268,7 +268,7 @@ public class SimpleStatementIT {
   public void should_fail_when_mixing_positional_and_named_values() {
     SimpleStatement.builder("SELECT * from test where k = :k and v = :v")
         .addPositionalValue(0)
-        .addNamedValue(":k", KEY)
+        .addNamedValue("k", KEY)
         .build();
   }
 
