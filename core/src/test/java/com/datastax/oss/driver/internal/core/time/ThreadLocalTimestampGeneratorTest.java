@@ -13,14 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.datastax.oss.driver.api.core.time;
+package com.datastax.oss.driver.internal.core.time;
 
 import static com.datastax.oss.driver.Assertions.assertThat;
 import static com.datastax.oss.driver.Assertions.fail;
 
-import com.datastax.oss.driver.internal.core.time.Clock;
-import java.util.SortedSet;
-import java.util.concurrent.ConcurrentSkipListSet;
+import com.datastax.oss.driver.internal.core.util.concurrent.CompletableFutures;
+import java.util.List;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -28,32 +30,36 @@ import org.junit.Test;
 import org.mockito.Mockito;
 import org.mockito.stubbing.OngoingStubbing;
 
-public class AtomicTimestampGeneratorTest extends MonotonicTimestampGeneratorTestBase {
+public class ThreadLocalTimestampGeneratorTest extends MonotonicTimestampGeneratorTestBase {
   @Override
   protected MonotonicTimestampGenerator newInstance(Clock clock) {
-    return new AtomicTimestampGenerator(clock, context);
+    return new ThreadLocalTimestampGenerator(clock, context);
   }
 
   @Test
-  public void should_share_timestamps_across_all_threads() throws Exception {
-    // Prepare to generate 1000 timestamps with the clock frozen at 1
+  public void should_confine_timestamps_to_thread() throws Exception {
+    final int testThreadsCount = 2;
+
+    // Prepare to generate 1000 timestamps for each thread, with the clock frozen at 1
     OngoingStubbing<Long> stub = Mockito.when(clock.currentTimeMicros());
-    for (int i = 0; i < 1000; i++) {
+    for (int i = 0; i < testThreadsCount * 1000; i++) {
       stub = stub.thenReturn(1L);
     }
 
     MonotonicTimestampGenerator generator = newInstance(clock);
 
-    final int testThreadsCount = 2;
-    assertThat(1000 % testThreadsCount).isZero();
-
-    final SortedSet<Long> allTimestamps = new ConcurrentSkipListSet<Long>();
+    List<CompletionStage<Void>> futures = new CopyOnWriteArrayList<>();
     ExecutorService executor = Executors.newFixedThreadPool(testThreadsCount);
     for (int i = 0; i < testThreadsCount; i++) {
       executor.submit(
           () -> {
-            for (int j = 0; j < 1000 / testThreadsCount; j++) {
-              allTimestamps.add(generator.next());
+            try {
+              for (long l = 1; l <= 1000; l++) {
+                assertThat(generator.next()).isEqualTo(l);
+              }
+              futures.add(CompletableFuture.completedFuture(null));
+            } catch (Throwable t) {
+              futures.add(CompletableFutures.failedFuture(t));
             }
           });
     }
@@ -62,8 +68,9 @@ public class AtomicTimestampGeneratorTest extends MonotonicTimestampGeneratorTes
       fail("Expected executor to shut down cleanly");
     }
 
-    assertThat(allTimestamps).hasSize(1000);
-    assertThat(allTimestamps.first()).isEqualTo(1);
-    assertThat(allTimestamps.last()).isEqualTo(1000);
+    assertThat(futures).hasSize(testThreadsCount);
+    for (CompletionStage<Void> future : futures) {
+      assertThat(future).isSuccess();
+    }
   }
 }

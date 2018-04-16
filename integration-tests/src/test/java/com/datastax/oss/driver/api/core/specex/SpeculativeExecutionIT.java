@@ -235,7 +235,7 @@ public class SpeculativeExecutionIT {
         String.format("request.timeout = %d milliseconds", SPECULATIVE_DELAY * 10),
         "request.default-idempotence = true",
         "load-balancing-policy.class = com.datastax.oss.driver.api.testinfra.loadbalancing.SortingLoadBalancingPolicy",
-        "request.speculative-execution-policy.class = com.datastax.oss.driver.api.core.specex.ConstantSpeculativeExecutionPolicy",
+        "request.speculative-execution-policy.class = com.datastax.oss.driver.internal.core.specex.ConstantSpeculativeExecutionPolicy",
         String.format(
             "request.speculative-execution-policy.max-executions = %d", maxSpeculativeExecutions),
         String.format(

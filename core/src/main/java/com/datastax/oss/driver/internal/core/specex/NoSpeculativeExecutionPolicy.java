@@ -13,23 +13,29 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.datastax.oss.driver.api.core.addresstranslation;
+package com.datastax.oss.driver.internal.core.specex;
 
+import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.context.DriverContext;
-import java.net.InetSocketAddress;
+import com.datastax.oss.driver.api.core.metadata.Node;
+import com.datastax.oss.driver.api.core.session.Request;
+import com.datastax.oss.driver.api.core.specex.SpeculativeExecutionPolicy;
 import net.jcip.annotations.ThreadSafe;
 
-/** An address translator that always returns the same address unchanged. */
+/** A policy that never triggers speculative executions. */
 @ThreadSafe
-public class PassThroughAddressTranslator implements AddressTranslator {
+public class NoSpeculativeExecutionPolicy implements SpeculativeExecutionPolicy {
 
-  public PassThroughAddressTranslator(@SuppressWarnings("unused") DriverContext context) {
+  public NoSpeculativeExecutionPolicy(@SuppressWarnings("unused") DriverContext context) {
     // nothing to do
   }
 
   @Override
-  public InetSocketAddress translate(InetSocketAddress address) {
-    return address;
+  @SuppressWarnings("unused")
+  public long nextExecution(
+      Node node, CqlIdentifier keyspace, Request request, int runningExecutions) {
+    // never start speculative executions
+    return -1;
   }
 
   @Override

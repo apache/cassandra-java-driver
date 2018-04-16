@@ -15,6 +15,7 @@
  */
 package com.datastax.oss.driver.api.core.auth;
 
+import com.datastax.oss.driver.internal.core.auth.PlainTextAuthProvider;
 import java.net.SocketAddress;
 
 /**

@@ -70,7 +70,7 @@ The default implementation never schedules an execution:
 
 ```
 datastax-java-driver.request.speculative-execution-policy {
-  class = com.datastax.oss.driver.api.core.specex.NoSpeculativeExecutionPolicy
+  class = com.datastax.oss.driver.internal.core.specex.NoSpeculativeExecutionPolicy
 }
 ```
 
@@ -78,7 +78,7 @@ The "constant" policy schedules executions at a fixed delay:
 
 ```
 datastax-java-driver.request.speculative-execution-policy {
-  class = com.datastax.oss.driver.api.core.specex.ConstantSpeculativeExecutionPolicy
+  class = com.datastax.oss.driver.internal.core.specex.ConstantSpeculativeExecutionPolicy
   
   # The maximum number of executions (including the initial, non-speculative execution).
   # This must be at least one.

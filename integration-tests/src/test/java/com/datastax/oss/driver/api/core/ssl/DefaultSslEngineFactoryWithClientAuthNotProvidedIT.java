@@ -39,7 +39,7 @@ public class DefaultSslEngineFactoryWithClientAuthNotProvidedIT {
     try (CqlSession session =
         SessionUtils.newSession(
             ccm,
-            "ssl-engine-factory.class = com.datastax.oss.driver.api.core.ssl.DefaultSslEngineFactory")) {
+            "ssl-engine-factory.class = com.datastax.oss.driver.internal.core.ssl.DefaultSslEngineFactory")) {
       session.execute("select * from system.local");
     }
   }
