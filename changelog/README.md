@@ -4,6 +4,7 @@
 
 ### 4.0.0-alpha4 (in progress)
 
+- [improvement] JAVA-1775: Assume default packages for built-in policies
 - [improvement] JAVA-1774: Standardize policy locations
 - [improvement] JAVA-1798: Allow passing the default LBP filter as a session builder argument
 - [new feature] JAVA-1523: Add query logger
