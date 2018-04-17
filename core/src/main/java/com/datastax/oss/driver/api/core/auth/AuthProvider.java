@@ -15,6 +15,7 @@
  */
 package com.datastax.oss.driver.api.core.auth;
 
+import com.datastax.oss.driver.api.core.connection.ReconnectionPolicy;
 import com.datastax.oss.driver.internal.core.auth.PlainTextAuthProvider;
 import java.net.SocketAddress;
 
@@ -35,4 +36,22 @@ public interface AuthProvider {
    */
   Authenticator newAuthenticator(SocketAddress host, String serverAuthenticator)
       throws AuthenticationException;
+
+  /**
+   * What to do if the server does not send back an authentication challenge (in other words, lets
+   * the client connect without any form of authentication).
+   *
+   * <p>This is suspicious because having authentication enabled on the client but not on the server
+   * is probably a configuration mistake.
+   *
+   * <p>Provider implementations are free to handle this however they want; typical approaches are:
+   *
+   * <ul>
+   *   <li>ignoring;
+   *   <li>logging a warning;
+   *   <li>throwing an {@link AuthenticationException} to abort the connection (but note that it
+   *       will be retried according to the {@link ReconnectionPolicy}).
+   * </ul>
+   */
+  void onMissingChallenge(SocketAddress host) throws AuthenticationException;
 }

@@ -61,7 +61,6 @@ class ProtocolInitHandler extends ConnectInitHandler {
 
   private final InternalDriverContext context;
   private final long timeoutMillis;
-  private final boolean warnIfNoServerAuth;
   private final ProtocolVersion initialProtocolVersion;
   private final DriverChannelOptions options;
   // might be null if this is the first channel to this cluster
@@ -83,8 +82,6 @@ class ProtocolInitHandler extends ConnectInitHandler {
 
     this.timeoutMillis =
         defaultConfig.getDuration(DefaultDriverOption.CONNECTION_INIT_QUERY_TIMEOUT).toMillis();
-    this.warnIfNoServerAuth =
-        defaultConfig.getBoolean(DefaultDriverOption.AUTH_PROVIDER_WARN_IF_NO_SERVER_AUTH);
     this.initialProtocolVersion = protocolVersion;
     this.expectedClusterName = expectedClusterName;
     this.options = options;
@@ -168,15 +165,9 @@ class ProtocolInitHandler extends ConnectInitHandler {
           ProtocolUtils.opcodeString(response.opcode));
       try {
         if (step == Step.STARTUP && response instanceof Ready) {
-          if (warnIfNoServerAuth && context.authProvider().isPresent()) {
-            LOG.warn(
-                "[{}] {} did not send an authentication challenge; "
-                    + "This is suspicious because the driver expects authentication "
-                    + "(configured auth provider = {})",
-                logPrefix,
-                channel.remoteAddress(),
-                context.authProvider().get().getClass().getName());
-          }
+          context
+              .authProvider()
+              .ifPresent(provider -> provider.onMissingChallenge(channel.remoteAddress()));
           step = Step.GET_CLUSTER_NAME;
           send();
         } else if (step == Step.STARTUP && response instanceof Authenticate) {

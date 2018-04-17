@@ -25,6 +25,8 @@ import com.datastax.oss.driver.shaded.guava.common.base.Charsets;
 import java.net.SocketAddress;
 import java.nio.ByteBuffer;
 import net.jcip.annotations.ThreadSafe;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * A simple authentication provider that supports SASL authentication using the PLAIN mechanism for
@@ -48,10 +50,14 @@ import net.jcip.annotations.ThreadSafe;
 @ThreadSafe
 public class PlainTextAuthProvider implements AuthProvider {
 
+  private static final Logger LOG = LoggerFactory.getLogger(PlainTextAuthProvider.class);
+
+  private final String logPrefix;
   private final DriverConfigProfile config;
 
   /** Builds a new instance. */
   public PlainTextAuthProvider(DriverContext context) {
+    this.logPrefix = context.sessionName();
     this.config = context.config().getDefaultProfile();
   }
 
@@ -60,6 +66,15 @@ public class PlainTextAuthProvider implements AuthProvider {
     String username = config.getString(DefaultDriverOption.AUTH_PROVIDER_USER_NAME);
     String password = config.getString(DefaultDriverOption.AUTH_PROVIDER_PASSWORD);
     return new PlainTextAuthenticator(username, password);
+  }
+
+  @Override
+  public void onMissingChallenge(SocketAddress host) {
+    LOG.warn(
+        "[{}] {} did not send an authentication challenge; "
+            + "This is suspicious because the driver expects authentication",
+        logPrefix,
+        host);
   }
 
   private static class PlainTextAuthenticator implements SyncAuthenticator {
