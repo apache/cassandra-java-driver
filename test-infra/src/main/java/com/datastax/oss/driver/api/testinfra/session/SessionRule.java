@@ -103,7 +103,7 @@ public class SessionRule<SessionT extends Session> extends ExternalResource {
 
     session =
         SessionUtils.newSession(
-            cassandraResource, null, nodeStateListener, schemaChangeListener, defaultOptions);
+            cassandraResource, null, nodeStateListener, schemaChangeListener, null, defaultOptions);
     slowProfile = SessionUtils.slowProfile(session);
     if (keyspace != null) {
       SessionUtils.createKeyspace(session, keyspace, slowProfile);

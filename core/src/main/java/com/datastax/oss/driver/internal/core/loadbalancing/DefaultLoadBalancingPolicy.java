@@ -280,9 +280,12 @@ public class DefaultLoadBalancingPolicy implements LoadBalancingPolicy {
 
   @SuppressWarnings("unchecked")
   private static Predicate<Node> getFilterFromConfig(DriverContext context) {
-    return (Predicate<Node>)
-        Reflection.buildFromConfig(
-                context, DefaultDriverOption.LOAD_BALANCING_FILTER_CLASS, Predicate.class)
-            .orElse(INCLUDE_ALL_NODES);
+    Predicate<Node> filterFromBuilder = ((InternalDriverContext) context).nodeFilter();
+    return (filterFromBuilder != null)
+        ? filterFromBuilder
+        : (Predicate<Node>)
+            Reflection.buildFromConfig(
+                    context, DefaultDriverOption.LOAD_BALANCING_FILTER_CLASS, Predicate.class)
+                .orElse(INCLUDE_ALL_NODES);
   }
 }

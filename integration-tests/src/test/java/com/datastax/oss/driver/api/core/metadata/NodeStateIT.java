@@ -303,6 +303,7 @@ public class NodeStateIT {
             null,
             localNodeStateListener,
             null,
+            null,
             "connection.reconnection-policy.base-delay = 1 hour",
             "connection.reconnection-policy.max-delay = 1 hour")) {
 

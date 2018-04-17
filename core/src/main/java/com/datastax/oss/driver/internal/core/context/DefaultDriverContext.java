@@ -25,6 +25,7 @@ import com.datastax.oss.driver.api.core.config.DriverConfigProfile;
 import com.datastax.oss.driver.api.core.config.DriverOption;
 import com.datastax.oss.driver.api.core.connection.ReconnectionPolicy;
 import com.datastax.oss.driver.api.core.loadbalancing.LoadBalancingPolicy;
+import com.datastax.oss.driver.api.core.metadata.Node;
 import com.datastax.oss.driver.api.core.metadata.NodeStateListener;
 import com.datastax.oss.driver.api.core.metadata.schema.SchemaChangeListener;
 import com.datastax.oss.driver.api.core.retry.RetryPolicy;
@@ -74,6 +75,7 @@ import io.netty.buffer.ByteBuf;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Predicate;
 import net.jcip.annotations.ThreadSafe;
 
 /**
@@ -180,13 +182,15 @@ public class DefaultDriverContext implements InternalDriverContext {
   private final NodeStateListener nodeStateListenerFromBuilder;
   private final SchemaChangeListener schemaChangeListenerFromBuilder;
   private final RequestTracker requestTrackerFromBuilder;
+  private final Predicate<Node> nodeFilterFromBuilder;
 
   public DefaultDriverContext(
       DriverConfigLoader configLoader,
       List<TypeCodec<?>> typeCodecs,
       NodeStateListener nodeStateListener,
       SchemaChangeListener schemaChangeListener,
-      RequestTracker requestTracker) {
+      RequestTracker requestTracker,
+      Predicate<Node> nodeFilter) {
     this.config = configLoader.getInitialConfig();
     this.configLoader = configLoader;
     DriverConfigProfile defaultProfile = config.getDefaultProfile();
@@ -212,6 +216,7 @@ public class DefaultDriverContext implements InternalDriverContext {
     this.requestTrackerRef =
         new LazyReference<>(
             "requestTracker", () -> buildRequestTracker(requestTrackerFromBuilder), cycleDetector);
+    this.nodeFilterFromBuilder = nodeFilter;
   }
 
   protected LoadBalancingPolicy buildLoadBalancingPolicy() {
@@ -636,6 +641,11 @@ public class DefaultDriverContext implements InternalDriverContext {
   @Override
   public RequestTracker requestTracker() {
     return requestTrackerRef.get();
+  }
+
+  @Override
+  public Predicate<Node> nodeFilter() {
+    return nodeFilterFromBuilder;
   }
 
   @Override

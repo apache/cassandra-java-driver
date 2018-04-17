@@ -30,10 +30,12 @@ import com.datastax.oss.driver.api.core.metadata.TokenMap;
 import com.datastax.oss.driver.api.core.type.codec.TypeCodecs;
 import com.datastax.oss.driver.api.testinfra.ccm.CustomCcmRule;
 import com.datastax.oss.driver.api.testinfra.session.SessionRule;
+import com.datastax.oss.driver.api.testinfra.session.SessionUtils;
 import com.datastax.oss.driver.api.testinfra.utils.ConditionChecker;
 import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
 import com.datastax.oss.driver.internal.core.metadata.TopologyEvent;
 import com.google.common.collect.ImmutableList;
+import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -210,6 +212,40 @@ public class DefaultLoadBalancingPolicyIT {
       context.eventBus().fire(TopologyEvent.forceUp(replica.getConnectAddress()));
       ConditionChecker.checkThat(() -> assertThat(replica.getOpenConnections()).isPositive())
           .becomesTrue();
+    }
+  }
+
+  @Test
+  public void should_apply_node_filter() {
+    Set<Node> localNodes = new HashSet<>();
+    for (Node node : sessionRule.session().getMetadata().getNodes().values()) {
+      if (node.getDatacenter().equals(LOCAL_DC)) {
+        localNodes.add(node);
+      }
+    }
+    assertThat(localNodes.size()).isEqualTo(4);
+    // Pick a random node to exclude
+    InetSocketAddress ignoredAddress = localNodes.iterator().next().getConnectAddress();
+
+    // Open a separate session with a filter
+    try (CqlSession session =
+        SessionUtils.newSession(
+            ccmRule,
+            sessionRule.keyspace(),
+            null,
+            null,
+            node -> !node.getConnectAddress().equals(ignoredAddress))) {
+
+      // No routing information => should round-robin on white-listed nodes
+      SimpleStatement statement = SimpleStatement.newInstance("SELECT * FROM test.foo WHERE k = 1");
+      for (int i = 0; i < 12; i++) {
+        ResultSet rs = session.execute(statement);
+        Node coordinator = rs.getExecutionInfo().getCoordinator();
+        assertThat(coordinator.getConnectAddress()).isNotEqualTo(ignoredAddress);
+      }
+
+      Node ignoredNode = session.getMetadata().getNodes().get(ignoredAddress);
+      assertThat(ignoredNode.getOpenConnections()).isEqualTo(0);
     }
   }
 }

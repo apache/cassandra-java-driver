@@ -21,6 +21,7 @@ import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
 import com.datastax.oss.driver.api.core.config.DriverConfigProfile;
 import com.datastax.oss.driver.api.core.cql.SimpleStatement;
 import com.datastax.oss.driver.api.core.cql.Statement;
+import com.datastax.oss.driver.api.core.metadata.Node;
 import com.datastax.oss.driver.api.core.metadata.NodeStateListener;
 import com.datastax.oss.driver.api.core.metadata.schema.SchemaChangeListener;
 import com.datastax.oss.driver.api.core.session.Session;
@@ -29,6 +30,7 @@ import com.datastax.oss.driver.api.testinfra.CassandraResourceRule;
 import com.datastax.oss.driver.internal.testinfra.session.TestConfigLoader;
 import java.lang.reflect.Method;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Predicate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -99,13 +101,13 @@ public class SessionUtils {
   @SuppressWarnings("TypeParameterUnusedInFormals")
   public static <SessionT extends Session> SessionT newSession(
       CassandraResourceRule cassandraResource, String... options) {
-    return newSession(cassandraResource, null, null, null, options);
+    return newSession(cassandraResource, null, null, null, null, options);
   }
 
   @SuppressWarnings("TypeParameterUnusedInFormals")
   public static <SessionT extends Session> SessionT newSession(
       CassandraResourceRule cassandraResource, CqlIdentifier keyspace, String... options) {
-    return newSession(cassandraResource, keyspace, null, null, options);
+    return newSession(cassandraResource, keyspace, null, null, null, options);
   }
 
   @SuppressWarnings({"unchecked", "TypeParameterUnusedInFormals"})
@@ -114,6 +116,7 @@ public class SessionUtils {
       CqlIdentifier keyspace,
       NodeStateListener nodeStateListener,
       SchemaChangeListener schemaChangeListener,
+      Predicate<Node> nodeFilter,
       String... options) {
     return (SessionT)
         baseBuilder()
@@ -121,6 +124,7 @@ public class SessionUtils {
             .withKeyspace(keyspace)
             .withNodeStateListener(nodeStateListener)
             .withSchemaChangeListener(schemaChangeListener)
+            .withNodeFilter(nodeFilter)
             .withConfigLoader(new TestConfigLoader(options))
             .build();
   }

@@ -4,6 +4,7 @@
 
 ### 4.0.0-alpha4 (in progress)
 
+- [improvement] JAVA-1798: Allow passing the default LBP filter as a session builder argument
 - [new feature] JAVA-1523: Add query logger
 - [improvement] JAVA-1801: Revisit NodeStateListener and SchemaChangeListener APIs
 - [improvement] JAVA-1759: Revisit metrics API

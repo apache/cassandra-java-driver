@@ -18,6 +18,7 @@ package com.datastax.oss.driver.example.guava.api;
 import com.datastax.oss.driver.api.core.CqlSession;
 import com.datastax.oss.driver.api.core.config.DriverConfigLoader;
 import com.datastax.oss.driver.api.core.context.DriverContext;
+import com.datastax.oss.driver.api.core.metadata.Node;
 import com.datastax.oss.driver.api.core.metadata.NodeStateListener;
 import com.datastax.oss.driver.api.core.metadata.schema.SchemaChangeListener;
 import com.datastax.oss.driver.api.core.session.SessionBuilder;
@@ -26,6 +27,7 @@ import com.datastax.oss.driver.api.core.type.codec.TypeCodec;
 import com.datastax.oss.driver.example.guava.internal.DefaultGuavaSession;
 import com.datastax.oss.driver.example.guava.internal.GuavaDriverContext;
 import java.util.List;
+import java.util.function.Predicate;
 
 public class GuavaSessionBuilder extends SessionBuilder<GuavaSessionBuilder, GuavaSession> {
 
@@ -35,9 +37,15 @@ public class GuavaSessionBuilder extends SessionBuilder<GuavaSessionBuilder, Gua
       List<TypeCodec<?>> typeCodecs,
       NodeStateListener nodeStateListener,
       SchemaChangeListener schemaChangeListener,
-      RequestTracker requestTracker) {
+      RequestTracker requestTracker,
+      Predicate<Node> nodeFilter) {
     return new GuavaDriverContext(
-        configLoader, typeCodecs, nodeStateListener, schemaChangeListener, requestTracker);
+        configLoader,
+        typeCodecs,
+        nodeStateListener,
+        schemaChangeListener,
+        requestTracker,
+        nodeFilter);
   }
 
   @Override
