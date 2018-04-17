@@ -18,6 +18,7 @@ package com.datastax.oss.driver.example.guava.internal;
 import com.datastax.oss.driver.api.core.config.DriverConfigLoader;
 import com.datastax.oss.driver.api.core.cql.PrepareRequest;
 import com.datastax.oss.driver.api.core.cql.Statement;
+import com.datastax.oss.driver.api.core.metadata.Node;
 import com.datastax.oss.driver.api.core.metadata.NodeStateListener;
 import com.datastax.oss.driver.api.core.metadata.schema.SchemaChangeListener;
 import com.datastax.oss.driver.api.core.tracker.RequestTracker;
@@ -34,6 +35,7 @@ import com.google.common.collect.MapMaker;
 import java.nio.ByteBuffer;
 import java.util.List;
 import java.util.concurrent.ConcurrentMap;
+import java.util.function.Predicate;
 
 /**
  * A Custom {@link DefaultDriverContext} that overrides {@link #requestProcessorRegistry()} to
@@ -46,8 +48,15 @@ public class GuavaDriverContext extends DefaultDriverContext {
       List<TypeCodec<?>> typeCodecs,
       NodeStateListener nodeStateListener,
       SchemaChangeListener schemaChangeListener,
-      RequestTracker requestTracker) {
-    super(configLoader, typeCodecs, nodeStateListener, schemaChangeListener, requestTracker);
+      RequestTracker requestTracker,
+      Predicate<Node> nodeFilter) {
+    super(
+        configLoader,
+        typeCodecs,
+        nodeStateListener,
+        schemaChangeListener,
+        requestTracker,
+        nodeFilter);
   }
 
   @Override

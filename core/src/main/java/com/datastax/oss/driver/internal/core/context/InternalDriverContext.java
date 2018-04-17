@@ -17,8 +17,10 @@ package com.datastax.oss.driver.internal.core.context;
 
 import com.datastax.oss.driver.api.core.config.DriverConfigLoader;
 import com.datastax.oss.driver.api.core.context.DriverContext;
+import com.datastax.oss.driver.api.core.metadata.Node;
 import com.datastax.oss.driver.api.core.metadata.NodeStateListener;
 import com.datastax.oss.driver.api.core.metadata.schema.SchemaChangeListener;
+import com.datastax.oss.driver.api.core.session.SessionBuilder;
 import com.datastax.oss.driver.api.core.tracker.RequestTracker;
 import com.datastax.oss.driver.internal.core.ConsistencyLevelRegistry;
 import com.datastax.oss.driver.internal.core.ProtocolVersionRegistry;
@@ -43,6 +45,7 @@ import com.datastax.oss.protocol.internal.Compressor;
 import com.datastax.oss.protocol.internal.FrameCodec;
 import io.netty.buffer.ByteBuf;
 import java.util.Optional;
+import java.util.function.Predicate;
 
 /** Extends the driver context with additional components that are not exposed by our public API. */
 public interface InternalDriverContext extends DriverContext {
@@ -100,4 +103,10 @@ public interface InternalDriverContext extends DriverContext {
   SchemaChangeListener schemaChangeListener();
 
   RequestTracker requestTracker();
+
+  /**
+   * This is the filter from {@link SessionBuilder#withNodeFilter(Predicate)}. If the filter is
+   * specified through the configuration, this method will return {@code null}.
+   */
+  Predicate<Node> nodeFilter();
 }

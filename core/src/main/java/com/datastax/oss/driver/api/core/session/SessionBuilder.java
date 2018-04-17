@@ -21,6 +21,8 @@ import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
 import com.datastax.oss.driver.api.core.config.DriverConfigLoader;
 import com.datastax.oss.driver.api.core.config.DriverConfigProfile;
 import com.datastax.oss.driver.api.core.context.DriverContext;
+import com.datastax.oss.driver.api.core.loadbalancing.LoadBalancingPolicy;
+import com.datastax.oss.driver.api.core.metadata.Node;
 import com.datastax.oss.driver.api.core.metadata.NodeStateListener;
 import com.datastax.oss.driver.api.core.metadata.schema.SchemaChangeListener;
 import com.datastax.oss.driver.api.core.tracker.RequestTracker;
@@ -40,6 +42,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.CompletionStage;
+import java.util.function.Predicate;
 import java.util.function.Supplier;
 import net.jcip.annotations.NotThreadSafe;
 
@@ -61,6 +64,7 @@ public abstract class SessionBuilder<SelfT extends SessionBuilder, SessionT> {
   private NodeStateListener nodeStateListener;
   private SchemaChangeListener schemaChangeListener;
   protected RequestTracker requestTracker;
+  private Predicate<Node> nodeFilter;
   protected CqlIdentifier keyspace;
 
   /**
@@ -171,6 +175,25 @@ public abstract class SessionBuilder<SelfT extends SessionBuilder, SessionT> {
   }
 
   /**
+   * A custom filter to include/exclude nodes.
+   *
+   * <p>The predicate's {@link Predicate#test(Object) test()} method will be invoked each time the
+   * {@link LoadBalancingPolicy} processes a topology or state change: if it returns false, the node
+   * will be set at distance IGNORED (meaning the driver won't ever connect to it), and never
+   * included in any query plan.
+   *
+   * <p>Note that this behavior is implemented in the default load balancing policy. If you use a
+   * custom policy implementation, you'll need to explicitly invoke the filter.
+   *
+   * <p>If the filter is specified programmatically with this method, it overrides the configuration
+   * (that is, the {@code load-balancing-policy.filter.class} option will be ignored).
+   */
+  public SelfT withNodeFilter(Predicate<Node> nodeFilter) {
+    this.nodeFilter = nodeFilter;
+    return self;
+  }
+
+  /**
    * Sets the keyspace to connect the session to.
    *
    * <p>Note that this can also be provided by the configuration; if both are defined, this method
@@ -230,7 +253,12 @@ public abstract class SessionBuilder<SelfT extends SessionBuilder, SessionT> {
     return DefaultSession.init(
         (InternalDriverContext)
             buildContext(
-                configLoader, typeCodecs, nodeStateListener, schemaChangeListener, requestTracker),
+                configLoader,
+                typeCodecs,
+                nodeStateListener,
+                schemaChangeListener,
+                requestTracker,
+                nodeFilter),
         contactPoints,
         keyspace);
   }
@@ -244,9 +272,15 @@ public abstract class SessionBuilder<SelfT extends SessionBuilder, SessionT> {
       List<TypeCodec<?>> typeCodecs,
       NodeStateListener nodeStateListener,
       SchemaChangeListener schemaChangeListener,
-      RequestTracker requestTracker) {
+      RequestTracker requestTracker,
+      Predicate<Node> nodeFilter) {
     return new DefaultDriverContext(
-        configLoader, typeCodecs, nodeStateListener, schemaChangeListener, requestTracker);
+        configLoader,
+        typeCodecs,
+        nodeStateListener,
+        schemaChangeListener,
+        requestTracker,
+        nodeFilter);
   }
 
   private static <T> T buildIfNull(T value, Supplier<T> builder) {

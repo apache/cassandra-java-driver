@@ -432,11 +432,12 @@ public class SchemaChangesIT {
                 adminSessionRule.keyspace(),
                 null,
                 listener1,
+                null,
                 "request.timeout = 30 seconds",
                 keyspaceFilterOption(keyspaces));
         CqlSession session2 =
             SessionUtils.newSession(
-                ccmRule, null, null, listener2, keyspaceFilterOption(keyspaces))) {
+                ccmRule, null, null, listener2, null, keyspaceFilterOption(keyspaces))) {
 
       session1.execute(createStatement);
 
@@ -475,11 +476,12 @@ public class SchemaChangesIT {
                 adminSessionRule.keyspace(),
                 null,
                 listener1,
+                null,
                 "request.timeout = 30 seconds",
                 keyspaceFilterOption(keyspaces));
         CqlSession session2 =
             SessionUtils.newSession(
-                ccmRule, null, null, listener2, keyspaceFilterOption(keyspaces))) {
+                ccmRule, null, null, listener2, null, keyspaceFilterOption(keyspaces))) {
 
       T oldElement = extract.apply(session1.getMetadata());
       assertThat(oldElement).isNotNull();
@@ -518,11 +520,12 @@ public class SchemaChangesIT {
                 adminSessionRule.keyspace(),
                 null,
                 listener1,
+                null,
                 "request.timeout = 30 seconds",
                 keyspaceFilterOption(keyspaces));
         CqlSession session2 =
             SessionUtils.newSession(
-                ccmRule, null, null, listener2, keyspaceFilterOption(keyspaces))) {
+                ccmRule, null, null, listener2, null, keyspaceFilterOption(keyspaces))) {
 
       T oldElement = extract.apply(session1.getMetadata());
       assertThat(oldElement).isNotNull();
@@ -565,11 +568,12 @@ public class SchemaChangesIT {
                 adminSessionRule.keyspace(),
                 null,
                 listener1,
+                null,
                 "request.timeout = 30 seconds",
                 keyspaceFilterOption(keyspaces));
         CqlSession session2 =
             SessionUtils.newSession(
-                ccmRule, null, null, listener2, keyspaceFilterOption(keyspaces))) {
+                ccmRule, null, null, listener2, null, keyspaceFilterOption(keyspaces))) {
 
       T oldElement = extract.apply(session1.getMetadata());
       assertThat(oldElement).isNotNull();
