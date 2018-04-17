@@ -140,7 +140,7 @@ public abstract class SessionBuilder<SelfT extends SessionBuilder, SessionT> {
    * Registers a node state listener to use with the session.
    *
    * <p>If the listener is specified programmatically with this method, it overrides the
-   * configuration (that is, the {@code metadata.node-state-listener.class} option will be ignored.
+   * configuration (that is, the {@code metadata.node-state-listener.class} option will be ignored).
    */
   public SelfT withNodeStateListener(NodeStateListener nodeStateListener) {
     this.nodeStateListener = nodeStateListener;
@@ -152,7 +152,7 @@ public abstract class SessionBuilder<SelfT extends SessionBuilder, SessionT> {
    *
    * <p>If the listener is specified programmatically with this method, it overrides the
    * configuration (that is, the {@code metadata.schema-change-listener.class} option will be
-   * ignored.
+   * ignored).
    */
   public SelfT withSchemaChangeListener(SchemaChangeListener schemaChangeListener) {
     this.schemaChangeListener = schemaChangeListener;
