@@ -84,14 +84,14 @@ public class EventBus {
    * processing asynchronously if needed.
    */
   public void fire(Object event) {
-    LOG.trace("[{}] Firing an instance of {}: {}", logPrefix, event.getClass(), event);
+    LOG.debug("[{}] Firing an instance of {}: {}", logPrefix, event.getClass(), event);
     // if the exact match thing gets too cumbersome, we can reconsider, but I'd like to avoid
     // scanning all the keys with instanceof checks.
     Class<?> eventClass = event.getClass();
     for (Consumer<?> l : listeners.get(eventClass)) {
       @SuppressWarnings("unchecked")
       Consumer<Object> listener = (Consumer<Object>) l;
-      LOG.trace("[{}] Notifying {} of {}", logPrefix, listener, event);
+      LOG.debug("[{}] Notifying {} of {}", logPrefix, listener, event);
       listener.accept(event);
     }
   }

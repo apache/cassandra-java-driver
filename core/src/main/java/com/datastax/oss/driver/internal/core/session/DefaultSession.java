@@ -178,7 +178,7 @@ public class DefaultSession implements CqlSession {
   public DriverChannel getChannel(Node node, String logPrefix) {
     ChannelPool pool = poolManager.getPools().get(node);
     if (pool == null) {
-      LOG.debug("[{}] No pool to {}, skipping", logPrefix, node);
+      LOG.trace("[{}] No pool to {}, skipping", logPrefix, node);
       return null;
     } else {
       DriverChannel channel = pool.next();
