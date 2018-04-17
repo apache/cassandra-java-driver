@@ -8,4 +8,4 @@ TODO cover:
 - scheduled reconnections vs. gossip events
 -->
 
-[ReconnectionPolicy]: http://docs.datastax.com/en/drivers/java/3.4/com/datastax/driver/core/policies/ReconnectionPolicy.html
+[ReconnectionPolicy]: http://docs.datastax.com/en/drivers/java/3.5/com/datastax/driver/core/policies/ReconnectionPolicy.html
