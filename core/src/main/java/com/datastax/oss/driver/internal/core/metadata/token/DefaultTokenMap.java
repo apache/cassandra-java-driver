@@ -262,7 +262,7 @@ public class DefaultTokenMap implements TokenMap {
       builder.put(keyspace.getName(), keyspace.getReplication());
     }
     ImmutableMap<CqlIdentifier, Map<String, String>> result = builder.build();
-    LOG.trace("[{}] Computing keyspace-level data for {}", logPrefix, result);
+    LOG.debug("[{}] Computing keyspace-level data for {}", logPrefix, result);
     return result;
   }
 

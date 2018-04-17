@@ -69,7 +69,7 @@ class KeyspaceTokenMap {
       }
       return new KeyspaceTokenMap(ring, tokenRangesByNode, replicasByToken, tokenFactory);
     } finally {
-      LOG.trace(
+      LOG.debug(
           "[{}] Computing keyspace-level data for {} took {}",
           logPrefix,
           replicationConfig,

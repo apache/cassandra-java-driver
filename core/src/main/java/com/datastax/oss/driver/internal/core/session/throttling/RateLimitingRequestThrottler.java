@@ -182,7 +182,7 @@ public class RateLimitingRequestThrottler implements RequestThrottler {
     lock.lock();
     try {
       closed = true;
-      LOG.trace("[{}] Rejecting {} queued requests after shutdown", logPrefix, queue.size());
+      LOG.debug("[{}] Rejecting {} queued requests after shutdown", logPrefix, queue.size());
       for (Throttled request : queue) {
         fail(request, "The session is shutting down");
       }

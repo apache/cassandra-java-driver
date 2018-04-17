@@ -97,7 +97,7 @@ public class DefaultAsyncResultSet implements AsyncResultSet {
           "No next page. Use #hasMorePages before calling this method to avoid this error.");
     }
     Statement<?> statement = executionInfo.getStatement();
-    LOG.debug("Fetching next page for {}", statement);
+    LOG.trace("Fetching next page for {}", statement);
     Statement<?> nextStatement = statement.copy(nextState);
     return session.executeAsync(nextStatement);
   }

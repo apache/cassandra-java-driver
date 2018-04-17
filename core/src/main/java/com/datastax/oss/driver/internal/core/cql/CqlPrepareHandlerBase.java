@@ -108,7 +108,7 @@ public abstract class CqlPrepareHandlerBase implements Throttled {
 
     this.startTimeNanos = System.nanoTime();
     this.logPrefix = sessionLogPrefix + "|" + this.hashCode();
-    LOG.debug("[{}] Creating new handler for prepare request {}", logPrefix, request);
+    LOG.trace("[{}] Creating new handler for prepare request {}", logPrefix, request);
 
     this.request = request;
     this.preparedStatementsCache = preparedStatementsCache;
@@ -256,7 +256,7 @@ public abstract class CqlPrepareHandlerBase implements Throttled {
         prepareOnOtherNodes()
             .thenRun(
                 () -> {
-                  LOG.debug(
+                  LOG.trace(
                       "[{}] Done repreparing on other nodes, completing the request", logPrefix);
                   result.complete(cachedStatement);
                 })
@@ -266,7 +266,7 @@ public abstract class CqlPrepareHandlerBase implements Throttled {
                   return null;
                 });
       } else {
-        LOG.debug("[{}] Prepare on all nodes is disabled, completing the request", logPrefix);
+        LOG.trace("[{}] Prepare on all nodes is disabled, completing the request", logPrefix);
         result.complete(cachedStatement);
       }
     }
@@ -304,10 +304,10 @@ public abstract class CqlPrepareHandlerBase implements Throttled {
   // Try to reprepare on another node, after the initial query has succeeded. Errors are not
   // blocking, the preparation will be retried later on that node. Simply warn and move on.
   private CompletionStage<Void> prepareOnOtherNode(Node node) {
-    LOG.debug("[{}] Repreparing on {}", logPrefix, node);
+    LOG.trace("[{}] Repreparing on {}", logPrefix, node);
     DriverChannel channel = session.getChannel(node, logPrefix);
     if (channel == null) {
-      LOG.debug("[{}] Could not get a channel to reprepare on {}, skipping", logPrefix, node);
+      LOG.trace("[{}] Could not get a channel to reprepare on {}, skipping", logPrefix, node);
       return CompletableFuture.completedFuture(null);
     } else {
       ThrottledAdminRequestHandler handler =
@@ -325,10 +325,10 @@ public abstract class CqlPrepareHandlerBase implements Throttled {
           .handle(
               (result, error) -> {
                 if (error == null) {
-                  LOG.debug("[{}] Successfully reprepared on {}", logPrefix, node);
+                  LOG.trace("[{}] Successfully reprepared on {}", logPrefix, node);
                 } else {
-                  LOG.warn(
-                      "[{}] Error while repreparing on {}: {}", logPrefix, node, error.toString());
+                  Loggers.warnWithException(
+                      LOG, "[{}] Error while repreparing on {}", node, logPrefix, error);
                 }
                 return null;
               });
@@ -370,7 +370,7 @@ public abstract class CqlPrepareHandlerBase implements Throttled {
     @Override
     public void operationComplete(Future<java.lang.Void> future) {
       if (!future.isSuccess()) {
-        LOG.debug(
+        LOG.trace(
             "[{}] Failed to send request on {}, trying next node (cause: {})",
             logPrefix,
             node,
@@ -382,7 +382,7 @@ public abstract class CqlPrepareHandlerBase implements Throttled {
           // Might happen if the timeout just fired
           cancel();
         } else {
-          LOG.debug("[{}] Request sent to {}", logPrefix, node);
+          LOG.trace("[{}] Request sent to {}", logPrefix, node);
           initialCallback = this;
         }
       }
@@ -396,10 +396,10 @@ public abstract class CqlPrepareHandlerBase implements Throttled {
       try {
         Message responseMessage = responseFrame.message;
         if (responseMessage instanceof Prepared) {
-          LOG.debug("[{}] Got result, completing", logPrefix);
+          LOG.trace("[{}] Got result, completing", logPrefix);
           setFinalResult((Prepared) responseMessage);
         } else if (responseMessage instanceof Error) {
-          LOG.debug("[{}] Got error response, processing", logPrefix);
+          LOG.trace("[{}] Got error response, processing", logPrefix);
           processErrorResponse((Error) responseMessage);
         } else {
           setFinalError(new IllegalStateException("Unexpected response " + responseMessage));
@@ -425,13 +425,13 @@ public abstract class CqlPrepareHandlerBase implements Throttled {
       }
       CoordinatorException error = Conversions.toThrowable(node, errorMessage, context);
       if (error instanceof BootstrappingException) {
-        LOG.debug("[{}] {} is bootstrapping, trying next node", logPrefix, node);
+        LOG.trace("[{}] {} is bootstrapping, trying next node", logPrefix, node);
         recordError(node, error);
         sendRequest(null, retryCount);
       } else if (error instanceof QueryValidationException
           || error instanceof FunctionFailureException
           || error instanceof ProtocolError) {
-        LOG.debug("[{}] Unrecoverable error, rethrowing", logPrefix);
+        LOG.trace("[{}] Unrecoverable error, rethrowing", logPrefix);
         setFinalError(error);
       } else {
         // Because prepare requests are known to always be idempotent, we call the retry policy
@@ -442,7 +442,7 @@ public abstract class CqlPrepareHandlerBase implements Throttled {
     }
 
     private void processRetryDecision(RetryDecision decision, Throwable error) {
-      LOG.debug("[{}] Processing retry decision {}", logPrefix, decision);
+      LOG.trace("[{}] Processing retry decision {}", logPrefix, decision);
       switch (decision) {
         case RETRY_SAME:
           recordError(node, error);
@@ -469,7 +469,7 @@ public abstract class CqlPrepareHandlerBase implements Throttled {
       if (result.isDone()) {
         return;
       }
-      LOG.debug("[{}] Request failure, processing: {}", logPrefix, error.toString());
+      LOG.trace("[{}] Request failure, processing: {}", logPrefix, error.toString());
       RetryDecision decision = retryPolicy.onRequestAborted(request, error, retryCount);
       processRetryDecision(decision, error);
     }

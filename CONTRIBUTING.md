@@ -100,12 +100,18 @@ Do not log errors that are rethrown to the client (such as the error that you're
 request with). This is annoying for ops because they see a lot of stack traces that require no
 actual action on their part, because they're already handled by application code.
 
-The last 2 levels are for developers:
+Similarly, do not log stack traces for non-critical errors. If you still want the option to get the
+trace for debugging, see the `Loggers.warnWithException` utility. 
 
-* `DEBUG`: anything that would be useful to understand what the driver is doing from a "black box"
-  perspective, i.e. if all you have are the logs.
-* `TRACE`: same thing, but for events that happen very often, produce a lot of output, or should be
-  irrelevant most of the time (this is a bit more subjective and left to your interpretation).
+The last 2 levels are for developers, to help follow what the driver is doing from a "black box"
+perspective (think about debugging an issue remotely, and all you have are the logs).
+
+* `TRACE`: anything that happens **for every user request**. Not only request handling, but all
+  related components (e.g. timestamp generators, policies, etc).
+* `DEBUG`: everything else. For example, node state changes, control connection activity, etc. 
+
+Note that `DEBUG` and `TRACE` can coexist within the same component, for example the LBP
+initializing is a one-time event, but returning a query plan is a per-request event.
 
 Logs statements start with a prefix that identifies its origin, for example:
 

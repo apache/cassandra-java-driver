@@ -158,7 +158,7 @@ class ProtocolInitHandler extends ConnectInitHandler {
 
     @Override
     void onResponse(Message response) {
-      LOG.trace(
+      LOG.debug(
           "[{}] step {} received response opcode={}",
           logPrefix,
           step,

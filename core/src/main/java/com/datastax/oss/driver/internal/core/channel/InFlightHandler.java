@@ -130,7 +130,7 @@ public class InFlightHandler extends ChannelDuplexHandler {
       return;
     }
 
-    LOG.debug("[{}] Writing {} on stream id {}", logPrefix, message.responseCallback, streamId);
+    LOG.trace("[{}] Writing {} on stream id {}", logPrefix, message.responseCallback, streamId);
     Frame frame =
         Frame.forRequest(
             protocolVersion.getCode(),
@@ -155,12 +155,12 @@ public class InFlightHandler extends ChannelDuplexHandler {
       ChannelHandlerContext ctx, ResponseCallback responseCallback, ChannelPromise promise) {
     Integer streamId = inFlight.inverse().remove(responseCallback);
     if (streamId == null) {
-      LOG.debug(
+      LOG.trace(
           "[{}] Received cancellation for unknown or already cancelled callback {}, skipping",
           logPrefix,
           responseCallback);
     } else {
-      LOG.debug(
+      LOG.trace(
           "[{}] Cancelled callback {} for stream id {}", logPrefix, responseCallback, streamId);
       if (closingGracefully && inFlight.isEmpty()) {
         LOG.debug("[{}] Last pending query was cancelled, closing channel", logPrefix);
@@ -226,7 +226,7 @@ public class InFlightHandler extends ChannelDuplexHandler {
         wasInFlight = false;
         callback = orphaned.get(streamId);
         if (callback == null) {
-          LOG.warn("[{}] Got response on unknown stream id {}, skipping", streamId);
+          LOG.trace("[{}] Got response on unknown stream id {}, skipping", streamId);
           return;
         }
       }
@@ -239,7 +239,7 @@ public class InFlightHandler extends ChannelDuplexHandler {
               streamId);
           release(streamId, ctx);
         } else {
-          LOG.debug(
+          LOG.trace(
               "[{}] Got non-last response on {} stream id {}, still holding",
               logPrefix,
               wasInFlight ? "in-flight" : "orphaned",
@@ -326,7 +326,7 @@ public class InFlightHandler extends ChannelDuplexHandler {
   }
 
   private ResponseCallback release(int streamId, ChannelHandlerContext ctx) {
-    LOG.debug("[{}] Releasing stream id {}", logPrefix, streamId);
+    LOG.trace("[{}] Releasing stream id {}", logPrefix, streamId);
     ResponseCallback responseCallback =
         MoreObjects.firstNonNull(inFlight.remove(streamId), orphaned.remove(streamId));
     orphanedSize = orphaned.size();
