@@ -31,7 +31,7 @@ import net.jcip.annotations.Immutable;
 @Immutable
 public class DefaultColumnDefinitions implements ColumnDefinitions {
 
-  static ColumnDefinitions valueOf(List<ColumnDefinition> definitions) {
+  public static ColumnDefinitions valueOf(List<ColumnDefinition> definitions) {
     return definitions.isEmpty()
         ? EmptyColumnDefinitions.INSTANCE
         : new DefaultColumnDefinitions(definitions);
