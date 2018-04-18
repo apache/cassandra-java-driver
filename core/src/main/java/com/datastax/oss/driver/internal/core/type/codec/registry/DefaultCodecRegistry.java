@@ -74,7 +74,7 @@ public class DefaultCodecRegistry extends CachingCodecRegistry {
         new CacheLoader<CacheKey, TypeCodec<?>>() {
           @Override
           public TypeCodec<?> load(CacheKey key) throws Exception {
-            return createCodec(key.cqlType, key.javaType);
+            return createCodec(key.cqlType, key.javaType, key.isJavaCovariant);
           }
         };
     if (cacheRemovalListener != null) {
@@ -101,10 +101,11 @@ public class DefaultCodecRegistry extends CachingCodecRegistry {
   }
 
   @Override
-  protected TypeCodec<?> getCachedCodec(DataType cqlType, GenericType<?> javaType) {
+  protected TypeCodec<?> getCachedCodec(
+      DataType cqlType, GenericType<?> javaType, boolean isJavaCovariant) {
     LOG.trace("[{}] Checking cache", logPrefix);
     try {
-      return cache.getUnchecked(new CacheKey(cqlType, javaType));
+      return cache.getUnchecked(new CacheKey(cqlType, javaType, isJavaCovariant));
     } catch (UncheckedExecutionException | ExecutionError e) {
       // unwrap exception cause and throw it directly.
       Throwable cause = e.getCause();
@@ -122,10 +123,12 @@ public class DefaultCodecRegistry extends CachingCodecRegistry {
 
     public final DataType cqlType;
     public final GenericType<?> javaType;
+    public final boolean isJavaCovariant;
 
-    public CacheKey(DataType cqlType, GenericType<?> javaType) {
+    public CacheKey(DataType cqlType, GenericType<?> javaType, boolean isJavaCovariant) {
       this.javaType = javaType;
       this.cqlType = cqlType;
+      this.isJavaCovariant = isJavaCovariant;
     }
 
     @Override
@@ -135,7 +138,8 @@ public class DefaultCodecRegistry extends CachingCodecRegistry {
       } else if (other instanceof CacheKey) {
         CacheKey that = (CacheKey) other;
         return Objects.equals(this.cqlType, that.cqlType)
-            && Objects.equals(this.javaType, that.javaType);
+            && Objects.equals(this.javaType, that.javaType)
+            && this.isJavaCovariant == that.isJavaCovariant;
       } else {
         return false;
       }
@@ -143,7 +147,7 @@ public class DefaultCodecRegistry extends CachingCodecRegistry {
 
     @Override
     public int hashCode() {
-      return Objects.hash(cqlType, javaType);
+      return Objects.hash(cqlType, javaType, isJavaCovariant);
     }
   }
 }
