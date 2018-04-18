@@ -64,11 +64,16 @@ public abstract class CachingCodecRegistry implements CodecRegistry {
   //   traversal is cheap).
 
   protected final String logPrefix;
+  private final TypeCodec<?>[] primitiveCodecs;
   private final TypeCodec<?>[] userCodecs;
+  private final IntMap<TypeCodec> primitiveCodecsByCode;
 
-  protected CachingCodecRegistry(String logPrefix, TypeCodec<?>... userCodecs) {
+  protected CachingCodecRegistry(
+      String logPrefix, TypeCodec<?>[] primitiveCodecs, TypeCodec<?>[] userCodecs) {
     this.logPrefix = logPrefix;
+    this.primitiveCodecs = primitiveCodecs;
     this.userCodecs = userCodecs;
+    this.primitiveCodecsByCode = sortByProtocolCode(primitiveCodecs);
   }
 
   /**
@@ -83,7 +88,7 @@ public abstract class CachingCodecRegistry implements CodecRegistry {
   @Override
   public <T> TypeCodec<T> codecFor(DataType cqlType, GenericType<T> javaType) {
     LOG.trace("[{}] Looking up codec for {} <-> {}", logPrefix, cqlType, javaType);
-    TypeCodec<?> primitiveCodec = PRIMITIVE_CODECS_BY_CODE.get(cqlType.getProtocolCode());
+    TypeCodec<?> primitiveCodec = primitiveCodecsByCode.get(cqlType.getProtocolCode());
     if (primitiveCodec != null && primitiveCodec.accepts(javaType)) {
       LOG.trace("[{}] Found matching primitive codec {}", logPrefix, primitiveCodec);
       return uncheckedCast(primitiveCodec);
@@ -100,7 +105,7 @@ public abstract class CachingCodecRegistry implements CodecRegistry {
   @Override
   public <T> TypeCodec<T> codecFor(DataType cqlType, Class<T> javaType) {
     LOG.trace("[{}] Looking up codec for {} <-> {}", logPrefix, cqlType, javaType);
-    TypeCodec<?> primitiveCodec = PRIMITIVE_CODECS_BY_CODE.get(cqlType.getProtocolCode());
+    TypeCodec<?> primitiveCodec = primitiveCodecsByCode.get(cqlType.getProtocolCode());
     if (primitiveCodec != null && primitiveCodec.getJavaType().__getToken().getType() == javaType) {
       LOG.trace("[{}] Found matching primitive codec {}", logPrefix, primitiveCodec);
       return uncheckedCast(primitiveCodec);
@@ -117,7 +122,7 @@ public abstract class CachingCodecRegistry implements CodecRegistry {
   @Override
   public <T> TypeCodec<T> codecFor(DataType cqlType) {
     LOG.trace("[{}] Looking up codec for CQL type {}", logPrefix, cqlType);
-    TypeCodec<?> primitiveCodec = PRIMITIVE_CODECS_BY_CODE.get(cqlType.getProtocolCode());
+    TypeCodec<?> primitiveCodec = primitiveCodecsByCode.get(cqlType.getProtocolCode());
     if (primitiveCodec != null) {
       LOG.trace("[{}] Found matching primitive codec {}", logPrefix, primitiveCodec);
       return uncheckedCast(primitiveCodec);
@@ -136,7 +141,7 @@ public abstract class CachingCodecRegistry implements CodecRegistry {
     Preconditions.checkNotNull(value);
     LOG.trace("[{}] Looking up codec for object {}", logPrefix, value);
 
-    for (TypeCodec<?> primitiveCodec : PRIMITIVE_CODECS) {
+    for (TypeCodec<?> primitiveCodec : primitiveCodecs) {
       if (primitiveCodec.accepts(value)) {
         LOG.trace("[{}] Found matching primitive codec {}", logPrefix, primitiveCodec);
         return uncheckedCast(primitiveCodec);
@@ -164,7 +169,7 @@ public abstract class CachingCodecRegistry implements CodecRegistry {
   // createCovariantCodec(GenericType)
   private TypeCodec<?> covariantCodecFor(GenericType<?> javaType) {
     LOG.trace("[{}] Looking up codec for Java type {}", logPrefix, javaType);
-    for (TypeCodec<?> primitiveCodec : PRIMITIVE_CODECS) {
+    for (TypeCodec<?> primitiveCodec : primitiveCodecs) {
       if (primitiveCodec.getJavaType().isSupertypeOf(javaType)) {
         LOG.trace("[{}] Found matching primitive codec {}", logPrefix, primitiveCodec);
         return uncheckedCast(primitiveCodec);
@@ -330,36 +335,6 @@ public abstract class CachingCodecRegistry implements CodecRegistry {
     }
     throw new CodecNotFoundException(cqlType, null);
   }
-
-  // roughly sorted by popularity
-  private static final TypeCodec<?>[] PRIMITIVE_CODECS =
-      new TypeCodec<?>[] {
-        // Must be declared before AsciiCodec so it gets chosen when CQL type not available
-        TypeCodecs.TEXT,
-        // Must be declared before TimeUUIDCodec so it gets chosen when CQL type not available
-        TypeCodecs.UUID,
-        TypeCodecs.TIMEUUID,
-        TypeCodecs.TIMESTAMP,
-        TypeCodecs.INT,
-        TypeCodecs.BIGINT,
-        TypeCodecs.BLOB,
-        TypeCodecs.DOUBLE,
-        TypeCodecs.FLOAT,
-        TypeCodecs.DECIMAL,
-        TypeCodecs.VARINT,
-        TypeCodecs.INET,
-        TypeCodecs.BOOLEAN,
-        TypeCodecs.SMALLINT,
-        TypeCodecs.TINYINT,
-        TypeCodecs.DATE,
-        TypeCodecs.TIME,
-        TypeCodecs.DURATION,
-        TypeCodecs.COUNTER,
-        TypeCodecs.ASCII
-      };
-
-  private static final IntMap<TypeCodec> PRIMITIVE_CODECS_BY_CODE =
-      sortByProtocolCode(PRIMITIVE_CODECS);
 
   private static IntMap<TypeCodec> sortByProtocolCode(TypeCodec<?>[] codecs) {
     IntMap.Builder<TypeCodec> builder = IntMap.builder();

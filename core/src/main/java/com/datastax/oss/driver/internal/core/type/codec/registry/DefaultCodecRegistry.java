@@ -59,9 +59,10 @@ public class DefaultCodecRegistry extends CachingCodecRegistry {
       BiFunction<CacheKey, TypeCodec<?>, Integer> cacheWeigher,
       int maximumCacheWeight,
       BiConsumer<CacheKey, TypeCodec<?>> cacheRemovalListener,
-      TypeCodec<?>... userCodecs) {
+      TypeCodec<?>[] primitiveCodecs,
+      TypeCodec<?>[] userCodecs) {
 
-    super(logPrefix, userCodecs);
+    super(logPrefix, primitiveCodecs, userCodecs);
     CacheBuilder<Object, Object> cacheBuilder = CacheBuilder.newBuilder();
     if (initialCacheCapacity > 0) {
       cacheBuilder.initialCapacity(initialCacheCapacity);
@@ -91,7 +92,12 @@ public class DefaultCodecRegistry extends CachingCodecRegistry {
   }
 
   public DefaultCodecRegistry(String logPrefix, TypeCodec<?>... userCodecs) {
-    this(logPrefix, 0, null, 0, null, userCodecs);
+    this(logPrefix, CodecRegistryConstants.PRIMITIVE_CODECS, userCodecs);
+  }
+
+  public DefaultCodecRegistry(
+      String logPrefix, TypeCodec<?>[] primitiveCodecs, TypeCodec<?>... userCodecs) {
+    this(logPrefix, 0, null, 0, null, primitiveCodecs, userCodecs);
   }
 
   @Override
