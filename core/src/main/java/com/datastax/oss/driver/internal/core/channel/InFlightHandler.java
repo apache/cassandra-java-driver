@@ -234,12 +234,14 @@ public class InFlightHandler extends ChannelDuplexHandler {
         if (callback.isLastResponse(responseFrame)) {
           LOG.debug(
               "[{}] Got last response on {} stream id {}, completing and releasing",
+              logPrefix,
               wasInFlight ? "in-flight" : "orphaned",
               streamId);
           release(streamId, ctx);
         } else {
           LOG.debug(
               "[{}] Got non-last response on {} stream id {}, still holding",
+              logPrefix,
               wasInFlight ? "in-flight" : "orphaned",
               streamId);
         }
