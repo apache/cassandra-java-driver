@@ -71,6 +71,26 @@ public interface CodecRegistry {
   <T> TypeCodec<T> codecFor(DataType cqlType);
 
   /**
+   * Returns a codec to convert the given Java type to the CQL type deemed most appropriate to
+   * represent it.
+   *
+   * <p>The definition of "most appropriate" is unspecified, and left to the appreciation of the
+   * registry implementor.
+   */
+  <T> TypeCodec<T> codecFor(GenericType<T> javaType);
+
+  /**
+   * Returns a codec to convert the given Java type to the CQL type deemed most appropriate to
+   * represent it.
+   *
+   * <p>The definition of "most appropriate" is unspecified, and left to the appreciation of the
+   * registry implementor.
+   */
+  default <T> TypeCodec<T> codecFor(Class<T> javaType) {
+    return codecFor(GenericType.of(javaType));
+  }
+
+  /**
    * Returns a codec to convert the given Java object to the CQL type deemed most appropriate to
    * represent it.
    *

@@ -51,7 +51,7 @@ import org.slf4j.LoggerFactory;
  * not be modified after construction.
  *
  * <p>This class is abstract in order to be agnostic from the cache implementation. Subclasses must
- * implement {@link #getCachedCodec(DataType, GenericType)}.
+ * implement {@link #getCachedCodec(DataType, GenericType, boolean)}.
  */
 @ThreadSafe
 public abstract class CachingCodecRegistry implements CodecRegistry {
@@ -80,10 +80,11 @@ public abstract class CachingCodecRegistry implements CodecRegistry {
    * Gets a complex codec from the cache.
    *
    * <p>If the codec does not exist in the cache, this method must generate it with {@link
-   * #createCodec(DataType, GenericType)} (and most likely put it in the cache too for future
-   * calls).
+   * #createCodec(DataType, GenericType, boolean)} (and most likely put it in the cache too for
+   * future calls).
    */
-  protected abstract TypeCodec<?> getCachedCodec(DataType cqlType, GenericType<?> javaType);
+  protected abstract TypeCodec<?> getCachedCodec(
+      DataType cqlType, GenericType<?> javaType, boolean isJavaCovariant);
 
   @Override
   public <T> TypeCodec<T> codecFor(DataType cqlType, GenericType<T> javaType) {
@@ -99,7 +100,7 @@ public abstract class CachingCodecRegistry implements CodecRegistry {
         return uncheckedCast(userCodec);
       }
     }
-    return uncheckedCast(getCachedCodec(cqlType, javaType));
+    return uncheckedCast(getCachedCodec(cqlType, javaType, false));
   }
 
   @Override
@@ -116,7 +117,7 @@ public abstract class CachingCodecRegistry implements CodecRegistry {
         return uncheckedCast(userCodec);
       }
     }
-    return uncheckedCast(getCachedCodec(cqlType, GenericType.of(javaType)));
+    return uncheckedCast(getCachedCodec(cqlType, GenericType.of(javaType), false));
   }
 
   @Override
@@ -133,7 +134,7 @@ public abstract class CachingCodecRegistry implements CodecRegistry {
         return uncheckedCast(userCodec);
       }
     }
-    return uncheckedCast(getCachedCodec(cqlType, null));
+    return uncheckedCast(getCachedCodec(cqlType, null, false));
   }
 
   @Override
@@ -162,7 +163,25 @@ public abstract class CachingCodecRegistry implements CodecRegistry {
 
     GenericType<?> javaType = inspectType(value);
     LOG.trace("[{}] Continuing based on inferred type {}", logPrefix, javaType);
-    return uncheckedCast(getCachedCodec(null, javaType));
+    return uncheckedCast(getCachedCodec(null, javaType, true));
+  }
+
+  @Override
+  public <T> TypeCodec<T> codecFor(GenericType<T> javaType) {
+    LOG.trace("[{}] Looking up codec for Java type {}", logPrefix, javaType);
+    for (TypeCodec<?> primitiveCodec : primitiveCodecs) {
+      if (primitiveCodec.accepts(javaType)) {
+        LOG.trace("[{}] Found matching primitive codec {}", logPrefix, primitiveCodec);
+        return uncheckedCast(primitiveCodec);
+      }
+    }
+    for (TypeCodec<?> userCodec : userCodecs) {
+      if (userCodec.accepts(javaType)) {
+        LOG.trace("[{}] Found matching user codec {}", logPrefix, userCodec);
+        return uncheckedCast(userCodec);
+      }
+    }
+    return uncheckedCast(getCachedCodec(null, javaType, false));
   }
 
   // Not exposed publicly, this is only used for the recursion from
@@ -181,7 +200,7 @@ public abstract class CachingCodecRegistry implements CodecRegistry {
         return uncheckedCast(userCodec);
       }
     }
-    return uncheckedCast(getCachedCodec(null, javaType));
+    return uncheckedCast(getCachedCodec(null, javaType, true));
   }
 
   protected GenericType<?> inspectType(Object value) {
@@ -219,14 +238,15 @@ public abstract class CachingCodecRegistry implements CodecRegistry {
   }
 
   // Try to create a codec when we haven't found it in the cache
-  protected TypeCodec<?> createCodec(DataType cqlType, GenericType<?> javaType) {
+  protected TypeCodec<?> createCodec(
+      DataType cqlType, GenericType<?> javaType, boolean isJavaCovariant) {
     LOG.trace("[{}] Cache miss, creating codec", logPrefix);
     // Either type can be null, but not both.
     if (javaType == null) {
       assert cqlType != null;
       return createCodec(cqlType);
     } else if (cqlType == null) {
-      return createCovariantCodec(javaType);
+      return isJavaCovariant ? createCovariantCodec(javaType) : createCodec(javaType);
     }
     TypeToken<?> token = javaType.__getToken();
     if (cqlType instanceof ListType && List.class.isAssignableFrom(token.getRawType())) {
@@ -278,6 +298,34 @@ public abstract class CachingCodecRegistry implements CodecRegistry {
       return TypeCodecs.custom(cqlType);
     }
     throw new CodecNotFoundException(cqlType, javaType);
+  }
+
+  // Try to create a codec when we haven't found it in the cache.
+  // Variant where the CQL type is unknown.
+  protected TypeCodec<?> createCodec(GenericType<?> javaType) {
+    TypeToken<?> token = javaType.__getToken();
+    if (List.class.isAssignableFrom(token.getRawType())
+        && token.getType() instanceof ParameterizedType) {
+      Type[] typeArguments = ((ParameterizedType) token.getType()).getActualTypeArguments();
+      GenericType<?> elementType = GenericType.of(typeArguments[0]);
+      TypeCodec<?> elementCodec = codecFor(elementType);
+      return TypeCodecs.listOf(elementCodec);
+    } else if (Set.class.isAssignableFrom(token.getRawType())
+        && token.getType() instanceof ParameterizedType) {
+      Type[] typeArguments = ((ParameterizedType) token.getType()).getActualTypeArguments();
+      GenericType<?> elementType = GenericType.of(typeArguments[0]);
+      TypeCodec<?> elementCodec = codecFor(elementType);
+      return TypeCodecs.setOf(elementCodec);
+    } else if (Map.class.isAssignableFrom(token.getRawType())
+        && token.getType() instanceof ParameterizedType) {
+      Type[] typeArguments = ((ParameterizedType) token.getType()).getActualTypeArguments();
+      GenericType<?> keyType = GenericType.of(typeArguments[0]);
+      GenericType<?> valueType = GenericType.of(typeArguments[1]);
+      TypeCodec<?> keyCodec = codecFor(keyType);
+      TypeCodec<?> valueCodec = codecFor(valueType);
+      return TypeCodecs.mapOf(keyCodec, valueCodec);
+    }
+    throw new CodecNotFoundException(null, javaType);
   }
 
   // Try to create a codec when we haven't found it in the cache.
