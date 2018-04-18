@@ -51,15 +51,14 @@ import java.util.concurrent.CompletionStage;
 public interface Session extends AsyncAutoCloseable {
 
   /**
-   * Returns information about the driver, such as its current version number.
+   * Exposes information about the driver, such as its current version number.
    *
    * <p>This is intended for products that wrap or extend the driver, as a way to check
    * compatibility if end-users override the driver version in their application.
    */
-  static DriverInfo getOssDriverInfo() {
-    return DefaultDriverInfo.buildFromResource(
-        Session.class.getResource("/com/datastax/oss/driver/Driver.properties"));
-  }
+  DriverInfo OSS_DRIVER_INFO =
+      DefaultDriverInfo.buildFromResourceAndPrint(
+          Session.class.getResource("/com/datastax/oss/driver/Driver.properties"));
 
   /**
    * The unique name identifying this client.

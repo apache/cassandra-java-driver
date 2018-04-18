@@ -23,8 +23,18 @@ import java.io.UncheckedIOException;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.util.Properties;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class DefaultDriverInfo implements DriverInfo {
+
+  private static final Logger LOG = LoggerFactory.getLogger(DefaultDriverInfo.class);
+
+  public static DriverInfo buildFromResourceAndPrint(URL resource) {
+    DriverInfo info = buildFromResource(resource);
+    LOG.info("{}", info);
+    return info;
+  }
 
   public static DefaultDriverInfo buildFromResource(URL resource) {
     // The resource is assumed to be a properties file, but
