@@ -576,7 +576,7 @@ public class CachingCodecRegistryTest {
 
     public TestCachingCodecRegistry(
         BiConsumer<DataType, GenericType<?>> onCacheLookup, TypeCodec<?>... userCodecs) {
-      super("test", userCodecs);
+      super("test", CodecRegistryConstants.PRIMITIVE_CODECS, userCodecs);
       this.onCacheLookup = onCacheLookup;
     }
 
