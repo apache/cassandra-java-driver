@@ -86,15 +86,15 @@ public abstract class CachingCodecRegistry implements CodecRegistry {
     TypeCodec<?> primitiveCodec = PRIMITIVE_CODECS_BY_CODE.get(cqlType.getProtocolCode());
     if (primitiveCodec != null && primitiveCodec.accepts(javaType)) {
       LOG.trace("[{}] Found matching primitive codec {}", logPrefix, primitiveCodec);
-      return safeCast(primitiveCodec);
+      return uncheckedCast(primitiveCodec);
     }
     for (TypeCodec<?> userCodec : userCodecs) {
       if (userCodec.accepts(cqlType) && userCodec.accepts(javaType)) {
         LOG.trace("[{}] Found matching user codec {}", logPrefix, userCodec);
-        return safeCast(userCodec);
+        return uncheckedCast(userCodec);
       }
     }
-    return safeCast(getCachedCodec(cqlType, javaType));
+    return uncheckedCast(getCachedCodec(cqlType, javaType));
   }
 
   @Override
@@ -103,15 +103,15 @@ public abstract class CachingCodecRegistry implements CodecRegistry {
     TypeCodec<?> primitiveCodec = PRIMITIVE_CODECS_BY_CODE.get(cqlType.getProtocolCode());
     if (primitiveCodec != null && primitiveCodec.getJavaType().__getToken().getType() == javaType) {
       LOG.trace("[{}] Found matching primitive codec {}", logPrefix, primitiveCodec);
-      return safeCast(primitiveCodec);
+      return uncheckedCast(primitiveCodec);
     }
     for (TypeCodec<?> userCodec : userCodecs) {
       if (userCodec.accepts(cqlType) && userCodec.accepts(javaType)) {
         LOG.trace("[{}] Found matching user codec {}", logPrefix, userCodec);
-        return safeCast(userCodec);
+        return uncheckedCast(userCodec);
       }
     }
-    return safeCast(getCachedCodec(cqlType, GenericType.of(javaType)));
+    return uncheckedCast(getCachedCodec(cqlType, GenericType.of(javaType)));
   }
 
   @Override
@@ -120,15 +120,15 @@ public abstract class CachingCodecRegistry implements CodecRegistry {
     TypeCodec<?> primitiveCodec = PRIMITIVE_CODECS_BY_CODE.get(cqlType.getProtocolCode());
     if (primitiveCodec != null) {
       LOG.trace("[{}] Found matching primitive codec {}", logPrefix, primitiveCodec);
-      return safeCast(primitiveCodec);
+      return uncheckedCast(primitiveCodec);
     }
     for (TypeCodec<?> userCodec : userCodecs) {
       if (userCodec.accepts(cqlType)) {
         LOG.trace("[{}] Found matching user codec {}", logPrefix, userCodec);
-        return safeCast(userCodec);
+        return uncheckedCast(userCodec);
       }
     }
-    return safeCast(getCachedCodec(cqlType, null));
+    return uncheckedCast(getCachedCodec(cqlType, null));
   }
 
   @Override
@@ -139,25 +139,25 @@ public abstract class CachingCodecRegistry implements CodecRegistry {
     for (TypeCodec<?> primitiveCodec : PRIMITIVE_CODECS) {
       if (primitiveCodec.accepts(value)) {
         LOG.trace("[{}] Found matching primitive codec {}", logPrefix, primitiveCodec);
-        return safeCast(primitiveCodec);
+        return uncheckedCast(primitiveCodec);
       }
     }
     for (TypeCodec<?> userCodec : userCodecs) {
       if (userCodec.accepts(value)) {
         LOG.trace("[{}] Found matching user codec {}", logPrefix, userCodec);
-        return safeCast(userCodec);
+        return uncheckedCast(userCodec);
       }
     }
 
     if (value instanceof TupleValue) {
-      return safeCast(codecFor(((TupleValue) value).getType(), TupleValue.class));
+      return uncheckedCast(codecFor(((TupleValue) value).getType(), TupleValue.class));
     } else if (value instanceof UdtValue) {
-      return safeCast(codecFor(((UdtValue) value).getType(), UdtValue.class));
+      return uncheckedCast(codecFor(((UdtValue) value).getType(), UdtValue.class));
     }
 
     GenericType<?> javaType = inspectType(value);
     LOG.trace("[{}] Continuing based on inferred type {}", logPrefix, javaType);
-    return safeCast(getCachedCodec(null, javaType));
+    return uncheckedCast(getCachedCodec(null, javaType));
   }
 
   // Not exposed publicly, this is only used for the recursion from
@@ -167,16 +167,16 @@ public abstract class CachingCodecRegistry implements CodecRegistry {
     for (TypeCodec<?> primitiveCodec : PRIMITIVE_CODECS) {
       if (primitiveCodec.getJavaType().isSupertypeOf(javaType)) {
         LOG.trace("[{}] Found matching primitive codec {}", logPrefix, primitiveCodec);
-        return safeCast(primitiveCodec);
+        return uncheckedCast(primitiveCodec);
       }
     }
     for (TypeCodec<?> userCodec : userCodecs) {
       if (userCodec.getJavaType().isSupertypeOf(javaType)) {
         LOG.trace("[{}] Found matching user codec {}", logPrefix, userCodec);
-        return safeCast(userCodec);
+        return uncheckedCast(userCodec);
       }
     }
-    return safeCast(getCachedCodec(null, javaType));
+    return uncheckedCast(getCachedCodec(null, javaType));
   }
 
   private GenericType<?> inspectType(Object value) {
@@ -230,7 +230,7 @@ public abstract class CachingCodecRegistry implements CodecRegistry {
       if (token.getType() instanceof ParameterizedType) {
         Type[] typeArguments = ((ParameterizedType) token.getType()).getActualTypeArguments();
         GenericType<?> elementJavaType = GenericType.of(typeArguments[0]);
-        elementCodec = safeCast(codecFor(elementCqlType, elementJavaType));
+        elementCodec = uncheckedCast(codecFor(elementCqlType, elementJavaType));
       } else {
         elementCodec = codecFor(elementCqlType);
       }
@@ -241,7 +241,7 @@ public abstract class CachingCodecRegistry implements CodecRegistry {
       if (token.getType() instanceof ParameterizedType) {
         Type[] typeArguments = ((ParameterizedType) token.getType()).getActualTypeArguments();
         GenericType<?> elementJavaType = GenericType.of(typeArguments[0]);
-        elementCodec = safeCast(codecFor(elementCqlType, elementJavaType));
+        elementCodec = uncheckedCast(codecFor(elementCqlType, elementJavaType));
       } else {
         elementCodec = codecFor(elementCqlType);
       }
@@ -255,8 +255,8 @@ public abstract class CachingCodecRegistry implements CodecRegistry {
         Type[] typeArguments = ((ParameterizedType) token.getType()).getActualTypeArguments();
         GenericType<?> keyJavaType = GenericType.of(typeArguments[0]);
         GenericType<?> valueJavaType = GenericType.of(typeArguments[1]);
-        keyCodec = safeCast(codecFor(keyCqlType, keyJavaType));
-        valueCodec = safeCast(codecFor(valueCqlType, valueJavaType));
+        keyCodec = uncheckedCast(codecFor(keyCqlType, keyJavaType));
+        valueCodec = uncheckedCast(codecFor(valueCqlType, valueJavaType));
       } else {
         keyCodec = codecFor(keyCqlType);
         valueCodec = codecFor(valueCqlType);
@@ -370,7 +370,7 @@ public abstract class CachingCodecRegistry implements CodecRegistry {
   }
 
   // We call this after validating the types, so we know the cast will never fail.
-  private static <T, U> TypeCodec<T> safeCast(TypeCodec<U> codec) {
+  private static <T, U> TypeCodec<T> uncheckedCast(TypeCodec<U> codec) {
     @SuppressWarnings("unchecked")
     TypeCodec<T> result = (TypeCodec<T>) codec;
     return result;
