@@ -21,6 +21,8 @@ import java.io.OutputStream;
 import java.time.Duration;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
+import net.jcip.annotations.GuardedBy;
+import net.jcip.annotations.ThreadSafe;
 import org.HdrHistogram.Histogram;
 import org.HdrHistogram.Recorder;
 import org.slf4j.Logger;
@@ -39,6 +41,7 @@ import org.slf4j.LoggerFactory;
  *
  * @see <a href="http://hdrhistogram.github.io/HdrHistogram/">HdrHistogram</a>
  */
+@ThreadSafe
 public class HdrReservoir implements Reservoir {
 
   private static final Logger LOG = LoggerFactory.getLogger(HdrReservoir.class);
@@ -51,9 +54,15 @@ public class HdrReservoir implements Reservoir {
   // which is lock-free. `getSnapshot()` calls are comparatively rare, so locking is not a
   // bottleneck.
   private final ReadWriteLock cacheLock = new ReentrantReadWriteLock();
-  private Histogram cachedHistogram; // Guarded by cacheLock
-  private long cachedHistogramTimestampNanos; // Guarded by cacheLock
-  private Snapshot cachedSnapshot; // Guarded by cacheLock
+
+  @GuardedBy("cacheLock")
+  private Histogram cachedHistogram;
+
+  @GuardedBy("cacheLock")
+  private long cachedHistogramTimestampNanos;
+
+  @GuardedBy("cacheLock")
+  private Snapshot cachedSnapshot;
 
   public HdrReservoir(
       Duration highestTrackableLatency,

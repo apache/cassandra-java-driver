@@ -16,9 +16,11 @@
 package com.datastax.oss.driver.internal.core.metadata.token;
 
 import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
-import com.google.common.base.Preconditions;
+import com.datastax.oss.driver.shaded.guava.common.base.Preconditions;
 import java.util.Map;
+import net.jcip.annotations.ThreadSafe;
 
+@ThreadSafe
 public class DefaultReplicationStrategyFactory implements ReplicationStrategyFactory {
 
   private final String logPrefix;

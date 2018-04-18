@@ -19,13 +19,14 @@ import com.datastax.oss.driver.api.core.metadata.Node;
 import com.datastax.oss.driver.api.core.metadata.token.Token;
 import com.datastax.oss.driver.api.core.metadata.token.TokenRange;
 import com.datastax.oss.driver.internal.core.util.NanoTime;
-import com.google.common.collect.ImmutableSetMultimap;
-import com.google.common.collect.SetMultimap;
+import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableSetMultimap;
+import com.datastax.oss.driver.shaded.guava.common.collect.SetMultimap;
 import java.nio.ByteBuffer;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import net.jcip.annotations.Immutable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -33,6 +34,7 @@ import org.slf4j.LoggerFactory;
  * The token data for a given replication configuration. It's shared by all keyspaces that use that
  * configuration.
  */
+@Immutable
 class KeyspaceTokenMap {
 
   private static final Logger LOG = LoggerFactory.getLogger(KeyspaceTokenMap.class);

@@ -16,8 +16,8 @@
 package com.datastax.oss.driver.api.core.cql;
 
 import com.datastax.oss.driver.api.core.CqlSession;
-import com.google.common.collect.Iterables;
-import com.google.common.collect.Lists;
+import com.datastax.oss.driver.shaded.guava.common.collect.Iterables;
+import com.datastax.oss.driver.shaded.guava.common.collect.Lists;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;

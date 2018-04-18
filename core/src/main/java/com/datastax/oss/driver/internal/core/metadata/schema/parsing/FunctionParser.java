@@ -23,13 +23,15 @@ import com.datastax.oss.driver.api.core.type.UserDefinedType;
 import com.datastax.oss.driver.internal.core.adminrequest.AdminRow;
 import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
 import com.datastax.oss.driver.internal.core.metadata.schema.DefaultFunctionMetadata;
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.Lists;
+import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableList;
+import com.datastax.oss.driver.shaded.guava.common.collect.Lists;
 import java.util.List;
 import java.util.Map;
+import net.jcip.annotations.ThreadSafe;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+@ThreadSafe
 class FunctionParser {
 
   private static final Logger LOG = LoggerFactory.getLogger(FunctionParser.class);

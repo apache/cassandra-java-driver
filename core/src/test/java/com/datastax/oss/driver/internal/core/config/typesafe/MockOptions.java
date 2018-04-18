@@ -19,7 +19,8 @@ import com.datastax.oss.driver.api.core.config.DriverOption;
 
 enum MockOptions implements DriverOption {
   REQUIRED_INT("required_int", true),
-  OPTIONAL_INT("optional_int", false);
+  OPTIONAL_INT("optional_int", false),
+  OPTIONAL_AUTH("auth_provider", false);
 
   private final String path;
   private final boolean required;

@@ -50,7 +50,8 @@ public class DescribeIT {
       new SessionRule<>(
           ccmRule,
           false,
-          new NodeStateListener[0],
+          null,
+          null,
           "request.timeout = 30 seconds",
           "metadata.schema.debouncer.window = 0 seconds"); // disable debouncer to speed up test.
 

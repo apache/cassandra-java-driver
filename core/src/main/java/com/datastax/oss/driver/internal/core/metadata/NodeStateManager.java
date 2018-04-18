@@ -26,7 +26,7 @@ import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
 import com.datastax.oss.driver.internal.core.util.Loggers;
 import com.datastax.oss.driver.internal.core.util.concurrent.Debouncer;
 import com.datastax.oss.driver.internal.core.util.concurrent.RunOrSchedule;
-import com.google.common.collect.Maps;
+import com.datastax.oss.driver.shaded.guava.common.collect.Maps;
 import io.netty.util.concurrent.EventExecutor;
 import java.net.InetSocketAddress;
 import java.util.Collection;
@@ -34,6 +34,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
+import net.jcip.annotations.ThreadSafe;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -43,6 +44,7 @@ import org.slf4j.LoggerFactory;
  *
  * <p>See {@link NodeState} and {@link TopologyEvent} for a description of the state change rules.
  */
+@ThreadSafe
 public class NodeStateManager implements AsyncAutoCloseable {
   private static final Logger LOG = LoggerFactory.getLogger(NodeStateManager.class);
 

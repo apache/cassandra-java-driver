@@ -17,12 +17,14 @@ package com.datastax.oss.driver.internal.core.metadata.schema;
 
 import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.metadata.schema.Describable;
-import com.google.common.base.Strings;
+import com.datastax.oss.driver.shaded.guava.common.base.Strings;
 import java.util.function.Consumer;
+import net.jcip.annotations.NotThreadSafe;
 
 /**
  * A simple builder that is used internally for the queries of {@link Describable} schema elements.
  */
+@NotThreadSafe
 public class ScriptBuilder {
   private static final int INDENT_SIZE = 4;
 

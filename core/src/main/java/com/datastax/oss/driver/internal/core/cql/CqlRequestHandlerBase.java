@@ -18,6 +18,7 @@ package com.datastax.oss.driver.internal.core.cql;
 import com.datastax.oss.driver.api.core.AllNodesFailedException;
 import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.DriverTimeoutException;
+import com.datastax.oss.driver.api.core.RequestThrottlingException;
 import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
 import com.datastax.oss.driver.api.core.config.DriverConfig;
 import com.datastax.oss.driver.api.core.config.DriverConfigProfile;
@@ -38,8 +39,7 @@ import com.datastax.oss.driver.api.core.servererrors.QueryValidationException;
 import com.datastax.oss.driver.api.core.servererrors.ReadTimeoutException;
 import com.datastax.oss.driver.api.core.servererrors.UnavailableException;
 import com.datastax.oss.driver.api.core.servererrors.WriteTimeoutException;
-import com.datastax.oss.driver.api.core.specex.SpeculativeExecutionPolicy;
-import com.datastax.oss.driver.internal.core.adminrequest.AdminRequestHandler;
+import com.datastax.oss.driver.internal.core.adminrequest.ThrottledAdminRequestHandler;
 import com.datastax.oss.driver.internal.core.adminrequest.UnexpectedResponseException;
 import com.datastax.oss.driver.internal.core.channel.DriverChannel;
 import com.datastax.oss.driver.internal.core.channel.ResponseCallback;
@@ -48,6 +48,8 @@ import com.datastax.oss.driver.internal.core.metadata.DefaultNode;
 import com.datastax.oss.driver.internal.core.metrics.NodeMetricUpdater;
 import com.datastax.oss.driver.internal.core.session.DefaultSession;
 import com.datastax.oss.driver.internal.core.session.RepreparePayload;
+import com.datastax.oss.driver.internal.core.session.throttling.RequestThrottler;
+import com.datastax.oss.driver.internal.core.session.throttling.Throttled;
 import com.datastax.oss.driver.internal.core.util.Loggers;
 import com.datastax.oss.protocol.internal.Frame;
 import com.datastax.oss.protocol.internal.Message;
@@ -77,10 +79,12 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
+import net.jcip.annotations.ThreadSafe;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public abstract class CqlRequestHandlerBase {
+@ThreadSafe
+public abstract class CqlRequestHandlerBase implements Throttled {
 
   private static final Logger LOG = LoggerFactory.getLogger(CqlRequestHandlerBase.class);
 
@@ -114,7 +118,7 @@ public abstract class CqlRequestHandlerBase {
   private final List<ScheduledFuture<?>> scheduledExecutions;
   private final List<NodeResponseCallback> inFlightCallbacks;
   private final RetryPolicy retryPolicy;
-  private final SpeculativeExecutionPolicy speculativeExecutionPolicy;
+  private final RequestThrottler throttler;
 
   // The errors on the nodes that were already tried (lazily initialized on the first error).
   // We don't use a map because nodes can appear multiple times.
@@ -169,12 +173,25 @@ public abstract class CqlRequestHandlerBase {
     this.timeoutFuture = scheduleTimeout(timeout);
 
     this.retryPolicy = context.retryPolicy();
-    this.speculativeExecutionPolicy = context.speculativeExecutionPolicy();
     this.activeExecutionsCount = new AtomicInteger(1);
     this.startedSpeculativeExecutionsCount = new AtomicInteger(0);
     this.scheduledExecutions = isIdempotent ? new CopyOnWriteArrayList<>() : null;
     this.inFlightCallbacks = new CopyOnWriteArrayList<>();
-    // Start the initial execution
+
+    this.throttler = context.requestThrottler();
+    this.throttler.register(this);
+  }
+
+  @Override
+  public void onThrottleReady(boolean wasDelayed) {
+    if (wasDelayed) {
+      session
+          .getMetricUpdater()
+          .updateTimer(
+              DefaultSessionMetric.THROTTLING_DELAY,
+              System.nanoTime() - startTimeNanos,
+              TimeUnit.NANOSECONDS);
+    }
     sendRequest(null, 0, 0, true);
   }
 
@@ -247,9 +264,8 @@ public abstract class CqlRequestHandlerBase {
     if (this.timeoutFuture != null) {
       this.timeoutFuture.cancel(false);
     }
-    List<ScheduledFuture<?>> pendingExecutionsSnapshot = this.scheduledExecutions;
-    if (pendingExecutionsSnapshot != null) {
-      for (ScheduledFuture<?> future : pendingExecutionsSnapshot) {
+    if (scheduledExecutions != null) {
+      for (ScheduledFuture<?> future : scheduledExecutions) {
         future.cancel(false);
       }
     }
@@ -270,6 +286,7 @@ public abstract class CqlRequestHandlerBase {
           Conversions.toResultSet(resultMessage, executionInfo, session, context);
       if (result.complete(resultSet)) {
         cancelScheduledTasks();
+        throttler.signalSuccess(this);
         session
             .getMetricUpdater()
             .updateTimer(
@@ -303,11 +320,20 @@ public abstract class CqlRequestHandlerBase {
         configProfile);
   }
 
+  @Override
+  public void onThrottleFailure(RequestThrottlingException error) {
+    session.getMetricUpdater().incrementCounter(DefaultSessionMetric.THROTTLING_ERRORS);
+    setFinalError(error);
+  }
+
   private void setFinalError(Throwable error) {
     if (result.completeExceptionally(error)) {
       cancelScheduledTasks();
       if (error instanceof DriverTimeoutException) {
+        throttler.signalTimeout(this);
         session.getMetricUpdater().incrementCounter(DefaultSessionMetric.CQL_CLIENT_TIMEOUTS);
+      } else if (!(error instanceof RequestThrottlingException)) {
+        throttler.signalError(this, error);
       }
     }
   }
@@ -472,15 +498,18 @@ public abstract class CqlRequestHandlerBase {
                   Bytes.toHexString(id)));
         }
         Prepare reprepareMessage = new Prepare(repreparePayload.query);
-        AdminRequestHandler reprepareHandler =
-            new AdminRequestHandler(
+        ThrottledAdminRequestHandler reprepareHandler =
+            new ThrottledAdminRequestHandler(
                 channel,
                 reprepareMessage,
+                repreparePayload.customPayload,
                 timeout,
+                throttler,
+                session.getMetricUpdater(),
                 logPrefix,
                 "Reprepare " + reprepareMessage.toString());
         reprepareHandler
-            .start(repreparePayload.customPayload)
+            .start()
             .handle(
                 (result, exception) -> {
                   if (exception != null) {
@@ -499,6 +528,9 @@ public abstract class CqlRequestHandlerBase {
                           return null;
                         }
                       }
+                    } else if (exception instanceof RequestThrottlingException) {
+                      setFinalError(exception);
+                      return null;
                     }
                     recordError(node, exception);
                     LOG.debug("[{}] Reprepare failed, trying next node", logPrefix);

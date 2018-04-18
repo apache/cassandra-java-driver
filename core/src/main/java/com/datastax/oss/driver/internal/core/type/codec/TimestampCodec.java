@@ -30,7 +30,9 @@ import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.time.temporal.ChronoField;
+import net.jcip.annotations.ThreadSafe;
 
+@ThreadSafe
 public class TimestampCodec implements TypeCodec<Instant> {
 
   /** A {@link DateTimeFormatter} that parses (most) of the ISO formats accepted in CQL. */

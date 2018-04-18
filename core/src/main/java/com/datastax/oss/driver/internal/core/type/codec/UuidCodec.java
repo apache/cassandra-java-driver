@@ -22,7 +22,9 @@ import com.datastax.oss.driver.api.core.type.codec.TypeCodec;
 import com.datastax.oss.driver.api.core.type.reflect.GenericType;
 import java.nio.ByteBuffer;
 import java.util.UUID;
+import net.jcip.annotations.ThreadSafe;
 
+@ThreadSafe
 public class UuidCodec implements TypeCodec<UUID> {
   @Override
   public GenericType<UUID> getJavaType() {

@@ -18,9 +18,10 @@ package com.datastax.oss.driver.api.core.auth;
 import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
 import com.datastax.oss.driver.api.core.config.DriverConfigProfile;
 import com.datastax.oss.driver.api.core.context.DriverContext;
-import com.google.common.base.Charsets;
+import com.datastax.oss.driver.shaded.guava.common.base.Charsets;
 import java.net.SocketAddress;
 import java.nio.ByteBuffer;
+import net.jcip.annotations.ThreadSafe;
 
 /**
  * A simple authentication provider that supports SASL authentication using the PLAIN mechanism for
@@ -41,6 +42,7 @@ import java.nio.ByteBuffer;
  *
  * See the {@code reference.conf} file included with the driver for more information.
  */
+@ThreadSafe
 public class PlainTextAuthProvider implements AuthProvider {
 
   private final DriverConfigProfile config;

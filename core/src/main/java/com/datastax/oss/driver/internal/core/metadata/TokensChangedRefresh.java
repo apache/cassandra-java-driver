@@ -16,7 +16,9 @@
 package com.datastax.oss.driver.internal.core.metadata;
 
 import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
+import net.jcip.annotations.ThreadSafe;
 
+@ThreadSafe
 class TokensChangedRefresh implements MetadataRefresh {
 
   @Override

@@ -20,6 +20,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import net.jcip.annotations.NotThreadSafe;
 
 /**
  * A very simple json parser. The only reason we need to read json in the driver is because for
@@ -34,6 +35,7 @@ import java.util.Map;
  * <p>So instead of pulling a new dependency, we roll out our own very dumb parser. We should
  * obviously not expose this publicly.
  */
+@NotThreadSafe
 class SimpleJsonParser {
 
   private final String input;

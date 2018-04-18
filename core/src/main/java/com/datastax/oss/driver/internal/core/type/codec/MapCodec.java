@@ -19,11 +19,13 @@ import com.datastax.oss.driver.api.core.ProtocolVersion;
 import com.datastax.oss.driver.api.core.type.DataType;
 import com.datastax.oss.driver.api.core.type.codec.TypeCodec;
 import com.datastax.oss.driver.api.core.type.reflect.GenericType;
-import com.google.common.collect.Maps;
+import com.datastax.oss.driver.shaded.guava.common.collect.Maps;
 import java.nio.ByteBuffer;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import net.jcip.annotations.ThreadSafe;
 
+@ThreadSafe
 public class MapCodec<K, V> implements TypeCodec<Map<K, V>> {
 
   private final DataType cqlType;

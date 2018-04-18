@@ -17,10 +17,12 @@ package com.datastax.oss.driver.internal.core.type;
 
 import com.datastax.oss.driver.api.core.detach.AttachmentPoint;
 import com.datastax.oss.driver.api.core.type.CustomType;
-import com.google.common.base.Preconditions;
+import com.datastax.oss.driver.shaded.guava.common.base.Preconditions;
 import java.io.IOException;
 import java.io.ObjectInputStream;
+import net.jcip.annotations.Immutable;
 
+@Immutable
 public class DefaultCustomType implements CustomType {
 
   private static final long serialVersionUID = 1;

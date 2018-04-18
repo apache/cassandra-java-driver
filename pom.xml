@@ -15,7 +15,9 @@
     limitations under the License.
 
 -->
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
   <modelVersion>4.0.0</modelVersion>
 
   <groupId>com.datastax.oss</groupId>
@@ -35,6 +37,7 @@
     <module>core</module>
     <module>test-infra</module>
     <module>integration-tests</module>
+    <module>query-builder</module>
   </modules>
 
   <properties>
@@ -56,9 +59,15 @@
         <version>4.1.9.Final</version>
       </dependency>
       <dependency>
+        <groupId>com.datastax.oss</groupId>
+        <artifactId>java-driver-shaded-guava</artifactId>
+        <version>24.1-jre</version>
+      </dependency>
+      <dependency>
+        <!-- Only for integration tests, use the shaded JAR for production code -->
         <groupId>com.google.guava</groupId>
         <artifactId>guava</artifactId>
-        <version>21.0</version>
+        <version>24.1-jre</version>
       </dependency>
       <dependency>
         <groupId>com.typesafe</groupId>
@@ -104,6 +113,11 @@
         <groupId>org.hdrhistogram</groupId>
         <artifactId>HdrHistogram</artifactId>
         <version>2.1.10</version>
+      </dependency>
+      <dependency>
+        <groupId>net.jcip</groupId>
+        <artifactId>jcip-annotations</artifactId>
+        <version>1.0</version>
       </dependency>
       <dependency>
         <groupId>junit</groupId>
@@ -186,7 +200,7 @@
         </plugin>
         <plugin>
           <artifactId>maven-javadoc-plugin</artifactId>
-          <version>3.0.0-M1</version>
+          <version>3.0.0</version>
         </plugin>
         <plugin>
           <artifactId>maven-jar-plugin</artifactId>
@@ -230,6 +244,8 @@
           <target>1.8</target>
           <compilerArgs combine.children="override">
             <compilerArg>-Xep:FutureReturnValueIgnored:OFF</compilerArg>
+            <!-- Too limited, does not detect locks acquired by a calling method: -->
+            <compilerArg>-Xep:GuardedBy:OFF</compilerArg>
           </compilerArgs>
           <showWarnings>true</showWarnings>
           <failOnWarning>true</failOnWarning>
@@ -357,6 +373,9 @@ limitations under the License.]]>
       <plugin>
         <artifactId>maven-javadoc-plugin</artifactId>
         <configuration>
+          <verbose>false</verbose>
+          <quiet>true</quiet>
+          <doclint>all,-missing</doclint>
           <tags>
             <!--
               For custom `leaks-private-api` tag (apparently dash separators are not handled

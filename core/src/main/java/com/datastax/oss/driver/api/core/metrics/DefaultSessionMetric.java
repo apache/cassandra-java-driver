@@ -15,7 +15,7 @@
  */
 package com.datastax.oss.driver.api.core.metrics;
 
-import com.google.common.collect.ImmutableMap;
+import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableMap;
 import java.util.Map;
 
 /** See {@code reference.conf} for a description of each metric. */
@@ -23,6 +23,9 @@ public enum DefaultSessionMetric implements SessionMetric {
   CONNECTED_NODES("connected-nodes"),
   CQL_REQUESTS("cql-requests"),
   CQL_CLIENT_TIMEOUTS("cql-client-timeouts"),
+  THROTTLING_DELAY("throttling.delay"),
+  THROTTLING_QUEUE_SIZE("throttling.queue-size"),
+  THROTTLING_ERRORS("throttling.errors"),
   ;
 
   private static final Map<String, DefaultSessionMetric> BY_PATH = sortByPath();

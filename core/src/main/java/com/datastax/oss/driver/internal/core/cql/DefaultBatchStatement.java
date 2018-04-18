@@ -22,13 +22,15 @@ import com.datastax.oss.driver.api.core.cql.BatchType;
 import com.datastax.oss.driver.api.core.cql.BatchableStatement;
 import com.datastax.oss.driver.api.core.cql.SimpleStatement;
 import com.datastax.oss.driver.api.core.metadata.token.Token;
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.Iterables;
+import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableList;
+import com.datastax.oss.driver.shaded.guava.common.collect.Iterables;
 import java.nio.ByteBuffer;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import net.jcip.annotations.Immutable;
 
+@Immutable
 public class DefaultBatchStatement implements BatchStatement {
 
   private final BatchType batchType;
@@ -277,7 +279,17 @@ public class DefaultBatchStatement implements BatchStatement {
 
   @Override
   public CqlIdentifier getRoutingKeyspace() {
-    return routingKeyspace;
+    if (routingKeyspace != null) {
+      return routingKeyspace;
+    } else {
+      for (BatchableStatement<?> statement : statements) {
+        CqlIdentifier ks = statement.getRoutingKeyspace();
+        if (ks != null) {
+          return ks;
+        }
+      }
+    }
+    return null;
   }
 
   @Override
@@ -300,7 +312,17 @@ public class DefaultBatchStatement implements BatchStatement {
 
   @Override
   public ByteBuffer getRoutingKey() {
-    return routingKey;
+    if (routingKey != null) {
+      return routingKey;
+    } else {
+      for (BatchableStatement<?> statement : statements) {
+        ByteBuffer key = statement.getRoutingKey();
+        if (key != null) {
+          return key;
+        }
+      }
+    }
+    return null;
   }
 
   @Override
@@ -323,7 +345,17 @@ public class DefaultBatchStatement implements BatchStatement {
 
   @Override
   public Token getRoutingToken() {
-    return routingToken;
+    if (routingToken != null) {
+      return routingToken;
+    } else {
+      for (BatchableStatement<?> statement : statements) {
+        Token token = statement.getRoutingToken();
+        if (token != null) {
+          return token;
+        }
+      }
+    }
+    return null;
   }
 
   @Override

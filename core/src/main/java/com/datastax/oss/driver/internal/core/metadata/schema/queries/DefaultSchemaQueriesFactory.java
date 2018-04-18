@@ -23,9 +23,11 @@ import com.datastax.oss.driver.api.core.metadata.Node;
 import com.datastax.oss.driver.internal.core.channel.DriverChannel;
 import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
 import java.util.concurrent.CompletableFuture;
+import net.jcip.annotations.ThreadSafe;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+@ThreadSafe
 public class DefaultSchemaQueriesFactory implements SchemaQueriesFactory {
 
   private static final Logger LOG = LoggerFactory.getLogger(DefaultSchemaQueriesFactory.class);

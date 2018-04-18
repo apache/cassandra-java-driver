@@ -23,6 +23,7 @@ import com.datastax.oss.driver.api.core.cql.SimpleStatement;
 import com.datastax.oss.driver.api.core.metadata.token.Token;
 import java.nio.ByteBuffer;
 import java.util.Map;
+import net.jcip.annotations.Immutable;
 
 /**
  * Default implementation of a prepare request, which is built internally to handle calls such as
@@ -52,6 +53,7 @@ import java.util.Map;
  * either write your own {@code PrepareRequest} implementation, or set the options manually on every
  * bound statement.
  */
+@Immutable
 public class DefaultPrepareRequest implements PrepareRequest {
 
   private final SimpleStatement statement;

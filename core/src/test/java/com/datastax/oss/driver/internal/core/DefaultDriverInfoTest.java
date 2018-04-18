@@ -63,6 +63,8 @@ public class DefaultDriverInfoTest {
     assertThat(version).isEqualTo(Version.parse("1.2.3"));
   }
 
+  // Note: when ran from IntelliJ this test may fail because IntelliJ by default does not filter
+  // resources when building
   @Test
   public void should_build_from_resource() {
     // given

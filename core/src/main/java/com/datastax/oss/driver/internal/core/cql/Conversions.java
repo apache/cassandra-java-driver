@@ -58,6 +58,8 @@ import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
 import com.datastax.oss.driver.internal.core.metadata.token.ByteOrderedToken;
 import com.datastax.oss.driver.internal.core.metadata.token.Murmur3Token;
 import com.datastax.oss.driver.internal.core.metadata.token.RandomToken;
+import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableList;
+import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableMap;
 import com.datastax.oss.protocol.internal.Message;
 import com.datastax.oss.protocol.internal.ProtocolConstants;
 import com.datastax.oss.protocol.internal.request.Batch;
@@ -77,8 +79,6 @@ import com.datastax.oss.protocol.internal.response.result.Prepared;
 import com.datastax.oss.protocol.internal.response.result.Rows;
 import com.datastax.oss.protocol.internal.response.result.RowsMetadata;
 import com.datastax.oss.protocol.internal.util.Bytes;
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableMap;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -223,13 +223,16 @@ public class Conversions {
   }
 
   public static Map<String, ByteBuffer> encode(
-      Map<String, Object> values, CodecRegistry codecRegistry, ProtocolVersion protocolVersion) {
+      Map<CqlIdentifier, Object> values,
+      CodecRegistry codecRegistry,
+      ProtocolVersion protocolVersion) {
     if (values.isEmpty()) {
       return Collections.emptyMap();
     } else {
       ImmutableMap.Builder<String, ByteBuffer> encodedValues = ImmutableMap.builder();
-      for (Map.Entry<String, Object> entry : values.entrySet()) {
-        encodedValues.put(entry.getKey(), encode(entry.getValue(), codecRegistry, protocolVersion));
+      for (Map.Entry<CqlIdentifier, Object> entry : values.entrySet()) {
+        encodedValues.put(
+            entry.getKey().asInternal(), encode(entry.getValue(), codecRegistry, protocolVersion));
       }
       return encodedValues.build();
     }

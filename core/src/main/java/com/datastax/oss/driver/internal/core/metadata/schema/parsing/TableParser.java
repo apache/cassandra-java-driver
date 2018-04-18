@@ -33,9 +33,9 @@ import com.datastax.oss.driver.internal.core.metadata.schema.DefaultIndexMetadat
 import com.datastax.oss.driver.internal.core.metadata.schema.DefaultTableMetadata;
 import com.datastax.oss.driver.internal.core.metadata.schema.queries.SchemaRows;
 import com.datastax.oss.driver.internal.core.util.Loggers;
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.ImmutableMultimap;
+import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableList;
+import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableMap;
+import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableMultimap;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -43,9 +43,11 @@ import java.util.ListIterator;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+import net.jcip.annotations.ThreadSafe;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+@ThreadSafe
 class TableParser extends RelationParser {
 
   private static final Logger LOG = LoggerFactory.getLogger(TableParser.class);

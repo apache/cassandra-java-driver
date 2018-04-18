@@ -1,0 +1,7 @@
+keyspace
+table
+index
+materialized_view
+type
+function
+aggregate

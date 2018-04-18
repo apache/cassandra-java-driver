@@ -18,16 +18,18 @@ package com.datastax.oss.driver.internal.core.adminrequest;
 import com.datastax.oss.driver.api.core.ProtocolVersion;
 import com.datastax.oss.driver.api.core.type.codec.TypeCodec;
 import com.datastax.oss.driver.api.core.type.codec.TypeCodecs;
+import com.datastax.oss.driver.shaded.guava.common.annotations.VisibleForTesting;
 import com.datastax.oss.protocol.internal.ProtocolConstants;
 import com.datastax.oss.protocol.internal.response.result.ColumnSpec;
-import com.google.common.annotations.VisibleForTesting;
 import java.net.InetAddress;
 import java.nio.ByteBuffer;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+import net.jcip.annotations.Immutable;
 
+@Immutable
 public class AdminRow {
 
   @VisibleForTesting

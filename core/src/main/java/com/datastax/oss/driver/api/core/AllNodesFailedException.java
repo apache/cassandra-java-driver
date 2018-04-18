@@ -16,9 +16,9 @@
 package com.datastax.oss.driver.api.core;
 
 import com.datastax.oss.driver.api.core.metadata.Node;
-import com.google.common.base.Joiner;
-import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Iterables;
+import com.datastax.oss.driver.shaded.guava.common.base.Joiner;
+import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableMap;
+import com.datastax.oss.driver.shaded.guava.common.collect.Iterables;
 import java.util.List;
 import java.util.Map;
 

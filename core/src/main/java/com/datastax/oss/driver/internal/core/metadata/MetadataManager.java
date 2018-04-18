@@ -32,8 +32,8 @@ import com.datastax.oss.driver.internal.core.util.NanoTime;
 import com.datastax.oss.driver.internal.core.util.concurrent.CompletableFutures;
 import com.datastax.oss.driver.internal.core.util.concurrent.Debouncer;
 import com.datastax.oss.driver.internal.core.util.concurrent.RunOrSchedule;
-import com.google.common.annotations.VisibleForTesting;
-import com.google.common.collect.ImmutableSet;
+import com.datastax.oss.driver.shaded.guava.common.annotations.VisibleForTesting;
+import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableSet;
 import io.netty.util.concurrent.EventExecutor;
 import java.net.InetSocketAddress;
 import java.util.Collections;
@@ -42,10 +42,12 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
+import net.jcip.annotations.ThreadSafe;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /** Holds the immutable instance of the {@link Metadata}, and handles requests to update it. */
+@ThreadSafe
 public class MetadataManager implements AsyncAutoCloseable {
   private static final Logger LOG = LoggerFactory.getLogger(MetadataManager.class);
 

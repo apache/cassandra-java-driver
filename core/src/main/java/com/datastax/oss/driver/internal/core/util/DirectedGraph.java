@@ -15,20 +15,22 @@
  */
 package com.datastax.oss.driver.internal.core.util;
 
-import com.google.common.annotations.VisibleForTesting;
-import com.google.common.base.Preconditions;
-import com.google.common.collect.LinkedHashMultimap;
-import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
-import com.google.common.collect.Multimap;
+import com.datastax.oss.driver.shaded.guava.common.annotations.VisibleForTesting;
+import com.datastax.oss.driver.shaded.guava.common.base.Preconditions;
+import com.datastax.oss.driver.shaded.guava.common.collect.LinkedHashMultimap;
+import com.datastax.oss.driver.shaded.guava.common.collect.Lists;
+import com.datastax.oss.driver.shaded.guava.common.collect.Maps;
+import com.datastax.oss.driver.shaded.guava.common.collect.Multimap;
 import java.util.ArrayDeque;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Queue;
+import net.jcip.annotations.NotThreadSafe;
 
 /** A basic directed graph implementation to perform topological sorts. */
+@NotThreadSafe
 public class DirectedGraph<V> {
 
   // We need to keep track of the predecessor count. For simplicity, use a map to store it

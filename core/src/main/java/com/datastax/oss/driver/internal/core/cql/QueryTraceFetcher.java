@@ -24,8 +24,8 @@ import com.datastax.oss.driver.api.core.cql.Row;
 import com.datastax.oss.driver.api.core.cql.SimpleStatement;
 import com.datastax.oss.driver.api.core.cql.TraceEvent;
 import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.Iterables;
+import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableList;
+import com.datastax.oss.driver.shaded.guava.common.collect.Iterables;
 import io.netty.util.concurrent.EventExecutor;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
@@ -34,7 +34,9 @@ import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.TimeUnit;
+import net.jcip.annotations.ThreadSafe;
 
+@ThreadSafe
 class QueryTraceFetcher {
 
   private final UUID tracingId;

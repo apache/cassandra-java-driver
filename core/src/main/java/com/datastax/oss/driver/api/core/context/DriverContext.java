@@ -15,7 +15,6 @@
  */
 package com.datastax.oss.driver.api.core.context;
 
-import com.codahale.metrics.MetricRegistry;
 import com.datastax.oss.driver.api.core.addresstranslation.AddressTranslator;
 import com.datastax.oss.driver.api.core.auth.AuthProvider;
 import com.datastax.oss.driver.api.core.config.DriverConfig;
@@ -28,7 +27,6 @@ import com.datastax.oss.driver.api.core.specex.SpeculativeExecutionPolicy;
 import com.datastax.oss.driver.api.core.ssl.SslEngineFactory;
 import com.datastax.oss.driver.api.core.time.TimestampGenerator;
 import java.util.Optional;
-import java.util.concurrent.ConcurrentMap;
 
 /** Holds common components that are shared throughout a driver instance. */
 public interface DriverContext extends AttachmentPoint {
@@ -58,16 +56,4 @@ public interface DriverContext extends AttachmentPoint {
   Optional<SslEngineFactory> sslEngineFactory();
 
   TimestampGenerator timestampGenerator();
-
-  MetricRegistry metricRegistry();
-
-  /**
-   * Returns the attributes of this context.
-   *
-   * <p>By default, the returned map is empty, but applications may chose to store arbitrary values
-   * in this map for later retrieval.
-   *
-   * @return the attributes of this context.
-   */
-  ConcurrentMap<String, Object> getAttributes();
 }

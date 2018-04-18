@@ -19,17 +19,19 @@ import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.config.DriverConfigProfile;
 import com.datastax.oss.driver.api.core.cql.SimpleStatement;
 import com.datastax.oss.driver.api.core.metadata.token.Token;
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableMap;
+import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableList;
+import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableMap;
 import java.nio.ByteBuffer;
 import java.util.List;
 import java.util.Map;
+import net.jcip.annotations.Immutable;
 
+@Immutable
 public class DefaultSimpleStatement implements SimpleStatement {
 
   private final String query;
   private final List<Object> positionalValues;
-  private final Map<String, Object> namedValues;
+  private final Map<CqlIdentifier, Object> namedValues;
   private final String configProfileName;
   private final DriverConfigProfile configProfile;
   private final CqlIdentifier keyspace;
@@ -47,7 +49,7 @@ public class DefaultSimpleStatement implements SimpleStatement {
   public DefaultSimpleStatement(
       String query,
       List<Object> positionalValues,
-      Map<String, Object> namedValues,
+      Map<CqlIdentifier, Object> namedValues,
       String configProfileName,
       DriverConfigProfile configProfile,
       CqlIdentifier keyspace,
@@ -127,12 +129,12 @@ public class DefaultSimpleStatement implements SimpleStatement {
   }
 
   @Override
-  public Map<String, Object> getNamedValues() {
+  public Map<CqlIdentifier, Object> getNamedValues() {
     return namedValues;
   }
 
   @Override
-  public SimpleStatement setNamedValues(Map<String, Object> newNamedValues) {
+  public SimpleStatement setNamedValuesWithIds(Map<CqlIdentifier, Object> newNamedValues) {
     return new DefaultSimpleStatement(
         query,
         positionalValues,

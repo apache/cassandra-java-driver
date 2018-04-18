@@ -19,16 +19,17 @@ import com.datastax.oss.driver.api.core.DriverExecutionException;
 import com.datastax.oss.driver.api.core.type.DataType;
 import com.datastax.oss.driver.api.core.type.codec.TypeCodec;
 import com.datastax.oss.driver.api.core.type.reflect.GenericType;
-import com.google.common.base.Throwables;
-import com.google.common.cache.CacheBuilder;
-import com.google.common.cache.CacheLoader;
-import com.google.common.cache.LoadingCache;
-import com.google.common.cache.RemovalListener;
-import com.google.common.util.concurrent.ExecutionError;
-import com.google.common.util.concurrent.UncheckedExecutionException;
+import com.datastax.oss.driver.shaded.guava.common.base.Throwables;
+import com.datastax.oss.driver.shaded.guava.common.cache.CacheBuilder;
+import com.datastax.oss.driver.shaded.guava.common.cache.CacheLoader;
+import com.datastax.oss.driver.shaded.guava.common.cache.LoadingCache;
+import com.datastax.oss.driver.shaded.guava.common.cache.RemovalListener;
+import com.datastax.oss.driver.shaded.guava.common.util.concurrent.ExecutionError;
+import com.datastax.oss.driver.shaded.guava.common.util.concurrent.UncheckedExecutionException;
 import java.util.Objects;
 import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
+import net.jcip.annotations.ThreadSafe;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -37,6 +38,7 @@ import org.slf4j.LoggerFactory;
  *
  * <p>It is a caching registry based on Guava cache (note that the driver shades Guava).
  */
+@ThreadSafe
 public class DefaultCodecRegistry extends CachingCodecRegistry {
 
   private static final Logger LOG = LoggerFactory.getLogger(DefaultCodecRegistry.class);

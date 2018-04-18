@@ -20,8 +20,10 @@ import com.datastax.oss.driver.api.core.loadbalancing.NodeDistance;
 import com.datastax.oss.driver.api.core.metadata.Node;
 import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
 import java.util.concurrent.CompletionStage;
+import net.jcip.annotations.ThreadSafe;
 
 /** Just a level of indirection to make testing easier. */
+@ThreadSafe
 public class ChannelPoolFactory {
   public CompletionStage<ChannelPool> init(
       Node node,

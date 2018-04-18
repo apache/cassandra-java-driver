@@ -15,10 +15,11 @@
  */
 package com.datastax.oss.driver.internal.core.context;
 
-import com.google.common.collect.HashMultimap;
-import com.google.common.collect.Multimaps;
-import com.google.common.collect.SetMultimap;
+import com.datastax.oss.driver.shaded.guava.common.collect.HashMultimap;
+import com.datastax.oss.driver.shaded.guava.common.collect.Multimaps;
+import com.datastax.oss.driver.shaded.guava.common.collect.SetMultimap;
 import java.util.function.Consumer;
+import net.jcip.annotations.ThreadSafe;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -33,6 +34,7 @@ import org.slf4j.LoggerFactory;
  * <p>We don't use Guava's implementation because Guava is shaded in the driver, and the event bus
  * needs to be accessible from low-level 3rd party customizations.
  */
+@ThreadSafe
 public class EventBus {
   private static final Logger LOG = LoggerFactory.getLogger(EventBus.class);
 

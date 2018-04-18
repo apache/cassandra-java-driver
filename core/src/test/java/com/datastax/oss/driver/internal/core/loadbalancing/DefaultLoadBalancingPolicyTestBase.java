@@ -23,7 +23,7 @@ import ch.qos.logback.core.Appender;
 import com.datastax.oss.driver.api.core.loadbalancing.LoadBalancingPolicy;
 import com.datastax.oss.driver.api.core.metadata.Node;
 import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
-import com.google.common.collect.ImmutableList;
+import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableList;
 import java.net.InetSocketAddress;
 import java.util.function.Predicate;
 import org.junit.After;

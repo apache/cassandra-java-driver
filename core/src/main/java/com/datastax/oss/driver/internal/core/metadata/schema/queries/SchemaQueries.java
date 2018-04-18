@@ -24,7 +24,7 @@ import com.datastax.oss.driver.internal.core.adminrequest.AdminRow;
 import com.datastax.oss.driver.internal.core.channel.DriverChannel;
 import com.datastax.oss.driver.internal.core.util.NanoTime;
 import com.datastax.oss.driver.internal.core.util.concurrent.RunOrSchedule;
-import com.google.common.annotations.VisibleForTesting;
+import com.datastax.oss.driver.shaded.guava.common.annotations.VisibleForTesting;
 import io.netty.util.concurrent.EventExecutor;
 import java.time.Duration;
 import java.util.Collections;
@@ -33,6 +33,7 @@ import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.function.Function;
+import net.jcip.annotations.ThreadSafe;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -43,6 +44,7 @@ import org.slf4j.LoggerFactory;
  * asynchronous, and possibly paged. This class abstracts all the details and exposes a common
  * result type.
  */
+@ThreadSafe
 public abstract class SchemaQueries {
 
   private static final Logger LOG = LoggerFactory.getLogger(SchemaQueries.class);

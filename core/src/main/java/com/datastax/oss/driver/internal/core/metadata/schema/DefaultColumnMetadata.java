@@ -19,7 +19,9 @@ import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.metadata.schema.ColumnMetadata;
 import com.datastax.oss.driver.api.core.type.DataType;
 import java.util.Objects;
+import net.jcip.annotations.Immutable;
 
+@Immutable
 public class DefaultColumnMetadata implements ColumnMetadata {
   private final CqlIdentifier keyspace;
   private final CqlIdentifier parent;

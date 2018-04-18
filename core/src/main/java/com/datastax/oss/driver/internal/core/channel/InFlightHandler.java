@@ -25,13 +25,13 @@ import com.datastax.oss.driver.internal.core.channel.DriverChannel.RequestMessag
 import com.datastax.oss.driver.internal.core.channel.DriverChannel.SetKeyspaceEvent;
 import com.datastax.oss.driver.internal.core.protocol.FrameDecodingException;
 import com.datastax.oss.driver.internal.core.util.Loggers;
+import com.datastax.oss.driver.shaded.guava.common.base.MoreObjects;
+import com.datastax.oss.driver.shaded.guava.common.collect.BiMap;
+import com.datastax.oss.driver.shaded.guava.common.collect.HashBiMap;
 import com.datastax.oss.protocol.internal.Frame;
 import com.datastax.oss.protocol.internal.Message;
 import com.datastax.oss.protocol.internal.request.Query;
 import com.datastax.oss.protocol.internal.response.result.SetKeyspace;
-import com.google.common.base.MoreObjects;
-import com.google.common.collect.BiMap;
-import com.google.common.collect.HashBiMap;
 import io.netty.channel.ChannelDuplexHandler;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelHandler;
@@ -40,10 +40,12 @@ import io.netty.channel.ChannelPromise;
 import io.netty.util.concurrent.Promise;
 import java.util.HashMap;
 import java.util.Map;
+import net.jcip.annotations.NotThreadSafe;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /** Manages requests that are currently executing on a channel. */
+@NotThreadSafe
 public class InFlightHandler extends ChannelDuplexHandler {
   private static final Logger LOG = LoggerFactory.getLogger(InFlightHandler.class);
 
@@ -232,12 +234,14 @@ public class InFlightHandler extends ChannelDuplexHandler {
         if (callback.isLastResponse(responseFrame)) {
           LOG.debug(
               "[{}] Got last response on {} stream id {}, completing and releasing",
+              logPrefix,
               wasInFlight ? "in-flight" : "orphaned",
               streamId);
           release(streamId, ctx);
         } else {
           LOG.debug(
               "[{}] Got non-last response on {} stream id {}, still holding",
+              logPrefix,
               wasInFlight ? "in-flight" : "orphaned",
               streamId);
         }

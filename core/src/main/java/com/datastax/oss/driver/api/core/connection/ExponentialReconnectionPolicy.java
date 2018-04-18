@@ -18,13 +18,15 @@ package com.datastax.oss.driver.api.core.connection;
 import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
 import com.datastax.oss.driver.api.core.config.DriverConfigProfile;
 import com.datastax.oss.driver.api.core.context.DriverContext;
-import com.google.common.base.Preconditions;
+import com.datastax.oss.driver.shaded.guava.common.base.Preconditions;
 import java.time.Duration;
+import net.jcip.annotations.ThreadSafe;
 
 /**
  * A reconnection policy that waits exponentially longer between each reconnection attempt (but
  * keeps a constant delay once a maximum delay is reached).
  */
+@ThreadSafe
 public class ExponentialReconnectionPolicy implements ReconnectionPolicy {
 
   private final long baseDelayMs;

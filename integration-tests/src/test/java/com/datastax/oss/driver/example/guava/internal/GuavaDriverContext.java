@@ -18,6 +18,8 @@ package com.datastax.oss.driver.example.guava.internal;
 import com.datastax.oss.driver.api.core.config.DriverConfigLoader;
 import com.datastax.oss.driver.api.core.cql.PrepareRequest;
 import com.datastax.oss.driver.api.core.cql.Statement;
+import com.datastax.oss.driver.api.core.metadata.NodeStateListener;
+import com.datastax.oss.driver.api.core.metadata.schema.SchemaChangeListener;
 import com.datastax.oss.driver.api.core.type.codec.TypeCodec;
 import com.datastax.oss.driver.example.guava.api.GuavaSession;
 import com.datastax.oss.driver.internal.core.context.DefaultDriverContext;
@@ -38,8 +40,12 @@ import java.util.concurrent.ConcurrentMap;
  */
 public class GuavaDriverContext extends DefaultDriverContext {
 
-  public GuavaDriverContext(DriverConfigLoader configLoader, List<TypeCodec<?>> typeCodecs) {
-    super(configLoader, typeCodecs);
+  public GuavaDriverContext(
+      DriverConfigLoader configLoader,
+      List<TypeCodec<?>> typeCodecs,
+      NodeStateListener nodeStateListener,
+      SchemaChangeListener schemaChangeListener) {
+    super(configLoader, typeCodecs, nodeStateListener, schemaChangeListener);
   }
 
   @Override

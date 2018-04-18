@@ -15,7 +15,6 @@
  */
 package com.datastax.oss.driver.api.core.session;
 
-import com.codahale.metrics.MetricRegistry;
 import com.datastax.oss.driver.api.core.AsyncAutoCloseable;
 import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.CqlSession;
@@ -26,12 +25,12 @@ import com.datastax.oss.driver.api.core.context.DriverContext;
 import com.datastax.oss.driver.api.core.metadata.Metadata;
 import com.datastax.oss.driver.api.core.metadata.Node;
 import com.datastax.oss.driver.api.core.metadata.NodeState;
-import com.datastax.oss.driver.api.core.metadata.NodeStateListener;
-import com.datastax.oss.driver.api.core.metadata.schema.SchemaChangeListener;
+import com.datastax.oss.driver.api.core.metrics.Metrics;
 import com.datastax.oss.driver.api.core.type.reflect.GenericType;
 import com.datastax.oss.driver.internal.core.DefaultDriverInfo;
 import com.datastax.oss.driver.internal.core.util.concurrent.BlockingOperation;
 import com.datastax.oss.driver.internal.core.util.concurrent.CompletableFutures;
+import java.util.Optional;
 import java.util.concurrent.CompletionStage;
 
 /**
@@ -180,15 +179,10 @@ public interface Session extends AsyncAutoCloseable {
   CqlIdentifier getKeyspace();
 
   /**
-   * The registry of driver metrics.
-   *
-   * <p>The driver is instrumented with DropWizard metrics, use this object to register metric
-   * reporters.
-   *
-   * @see <a href="http://metrics.dropwizard.io/4.0.0/manual/core.html#reporters">Reporters
-   *     (DropWizard Metrics manual)</a>
+   * Returns a gateway to the driver's metrics, or {@link Optional#empty()} if all metrics are
+   * disabled.
    */
-  MetricRegistry getMetricRegistry();
+  Optional<? extends Metrics> getMetrics();
 
   /**
    * Executes an arbitrary request.
@@ -199,46 +193,4 @@ public interface Session extends AsyncAutoCloseable {
    */
   <RequestT extends Request, ResultT> ResultT execute(
       RequestT request, GenericType<ResultT> resultType);
-
-  /**
-   * Registers the provided lifecycle listener.
-   *
-   * <p>This is a no-op if the listener was registered already.
-   */
-  void register(SessionLifecycleListener listener);
-
-  /**
-   * Unregisters the provided lifecycle listener.
-   *
-   * <p>This is a no-op if the listener was not registered.
-   */
-  void unregister(SessionLifecycleListener listener);
-
-  /**
-   * Registers the provided schema change listener.
-   *
-   * <p>This is a no-op if the listener was registered already.
-   */
-  void register(SchemaChangeListener listener);
-
-  /**
-   * Unregisters the provided schema change listener.
-   *
-   * <p>This is a no-op if the listener was not registered.
-   */
-  void unregister(SchemaChangeListener listener);
-
-  /**
-   * Registers the provided node state listener.
-   *
-   * <p>This is a no-op if the listener was registered already.
-   */
-  void register(NodeStateListener listener);
-
-  /**
-   * Unregisters the provided node state listener.
-   *
-   * <p>This is a no-op if the listener was not registered.
-   */
-  void unregister(NodeStateListener listener);
 }

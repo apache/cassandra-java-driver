@@ -20,11 +20,13 @@ import com.datastax.oss.driver.api.core.type.DataType;
 import com.datastax.oss.driver.api.core.type.ListType;
 import com.datastax.oss.driver.api.core.type.codec.TypeCodec;
 import com.datastax.oss.driver.api.core.type.reflect.GenericType;
-import com.google.common.base.Preconditions;
+import com.datastax.oss.driver.shaded.guava.common.base.Preconditions;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
+import net.jcip.annotations.ThreadSafe;
 
+@ThreadSafe
 public class ListCodec<T> implements TypeCodec<List<T>> {
 
   private final DataType cqlType;

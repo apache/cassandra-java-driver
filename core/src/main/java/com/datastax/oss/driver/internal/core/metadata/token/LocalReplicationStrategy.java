@@ -17,11 +17,13 @@ package com.datastax.oss.driver.internal.core.metadata.token;
 
 import com.datastax.oss.driver.api.core.metadata.Node;
 import com.datastax.oss.driver.api.core.metadata.token.Token;
-import com.google.common.collect.ImmutableSetMultimap;
-import com.google.common.collect.SetMultimap;
+import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableSetMultimap;
+import com.datastax.oss.driver.shaded.guava.common.collect.SetMultimap;
 import java.util.List;
 import java.util.Map;
+import net.jcip.annotations.ThreadSafe;
 
+@ThreadSafe
 class LocalReplicationStrategy implements ReplicationStrategy {
 
   @Override

@@ -18,6 +18,7 @@ package com.datastax.oss.driver.internal.core.metadata;
 import com.datastax.oss.driver.api.core.loadbalancing.NodeDistance;
 import com.datastax.oss.driver.api.core.metadata.Node;
 import java.util.Objects;
+import net.jcip.annotations.Immutable;
 
 /**
  * Indicates that the load balancing policy has assigned a new distance to a host.
@@ -25,6 +26,7 @@ import java.util.Objects;
  * <p>This is informational only: firing this event manually does <b>not</b> change the distance.
  * For that, see {@link LoadBalancingPolicyWrapper#setDistance(Node, NodeDistance)}.
  */
+@Immutable
 public class DistanceEvent {
   public final NodeDistance distance;
   public final DefaultNode node;

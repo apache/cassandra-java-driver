@@ -15,12 +15,12 @@
  */
 package com.datastax.oss.driver.api.core.data;
 
-import static com.google.common.base.Preconditions.checkArgument;
-
-import com.google.common.annotations.VisibleForTesting;
-import com.google.common.base.Objects;
+import com.datastax.oss.driver.shaded.guava.common.annotations.VisibleForTesting;
+import com.datastax.oss.driver.shaded.guava.common.base.Objects;
+import com.datastax.oss.driver.shaded.guava.common.base.Preconditions;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import net.jcip.annotations.Immutable;
 
 /**
  * A duration, as defined in CQL.
@@ -30,6 +30,7 @@ import java.util.regex.Pattern;
  * type differs from {@link java.time.Duration} (which only represents an amount between two points
  * in time, regardless of the calendar).
  */
+@Immutable
 public final class CqlDuration {
 
   @VisibleForTesting static final long NANOS_PER_MICRO = 1000L;
@@ -512,7 +513,7 @@ public final class CqlDuration {
      * @param unitName the unit name
      */
     private void validate(long units, long limit, String unitName) {
-      checkArgument(
+      Preconditions.checkArgument(
           units <= limit,
           "Invalid duration. The total number of %s must be less or equal to %s",
           unitName,

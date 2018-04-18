@@ -26,11 +26,12 @@ import com.datastax.oss.driver.internal.core.metadata.token.ReplicationStrategyF
 import com.datastax.oss.driver.internal.core.metadata.token.TokenFactory;
 import com.datastax.oss.driver.internal.core.util.Loggers;
 import com.datastax.oss.driver.internal.core.util.NanoTime;
-import com.google.common.collect.ImmutableMap;
+import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableMap;
 import java.net.InetSocketAddress;
 import java.util.Collections;
 import java.util.Map;
 import java.util.Optional;
+import net.jcip.annotations.Immutable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -39,6 +40,7 @@ import org.slf4j.LoggerFactory;
  * operation must return a new instance, that will replace the existing one in {@link
  * MetadataManager}'s volatile field.
  */
+@Immutable
 public class DefaultMetadata implements Metadata {
   private static final Logger LOG = LoggerFactory.getLogger(DefaultMetadata.class);
   public static DefaultMetadata EMPTY = new DefaultMetadata(Collections.emptyMap());
@@ -76,11 +78,15 @@ public class DefaultMetadata implements Metadata {
   }
 
   /**
-   * @param tokenMapEnabled
+   * Refreshes the current metadata with the given list of nodes.
+   *
+   * @param tokenMapEnabled whether to rebuild the token map or not; if this is {@code false} the
+   *     current token map will be copied into the new metadata without being recomputed.
    * @param tokensChanged whether we observed a change of tokens for at least one node. This will
    *     require a full rebuild of the token map.
    * @param tokenFactory only needed for the initial refresh, afterwards the existing one in the
    *     token map is used.
+   * @return the new metadata.
    */
   public DefaultMetadata withNodes(
       Map<InetSocketAddress, Node> newNodes,

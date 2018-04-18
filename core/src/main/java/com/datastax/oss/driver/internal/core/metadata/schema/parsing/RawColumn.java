@@ -19,16 +19,18 @@ import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.metadata.schema.ColumnMetadata;
 import com.datastax.oss.driver.api.core.type.UserDefinedType;
 import com.datastax.oss.driver.internal.core.adminrequest.AdminRow;
-import com.google.common.collect.Lists;
+import com.datastax.oss.driver.shaded.guava.common.collect.Lists;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import net.jcip.annotations.NotThreadSafe;
 
 /**
  * An intermediary format to manipulate columns before we turn them into {@link ColumnMetadata}
  * instances.
  */
+@NotThreadSafe
 class RawColumn implements Comparable<RawColumn> {
 
   static List<RawColumn> toRawColumns(

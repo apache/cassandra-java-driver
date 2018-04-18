@@ -15,7 +15,6 @@
  */
 package com.datastax.oss.driver.internal.core.context;
 
-import com.codahale.metrics.MetricRegistry;
 import com.datastax.oss.driver.api.core.ProtocolVersion;
 import com.datastax.oss.driver.api.core.addresstranslation.AddressTranslator;
 import com.datastax.oss.driver.api.core.auth.AuthProvider;
@@ -26,6 +25,8 @@ import com.datastax.oss.driver.api.core.config.DriverConfigProfile;
 import com.datastax.oss.driver.api.core.config.DriverOption;
 import com.datastax.oss.driver.api.core.connection.ReconnectionPolicy;
 import com.datastax.oss.driver.api.core.loadbalancing.LoadBalancingPolicy;
+import com.datastax.oss.driver.api.core.metadata.NodeStateListener;
+import com.datastax.oss.driver.api.core.metadata.schema.SchemaChangeListener;
 import com.datastax.oss.driver.api.core.retry.RetryPolicy;
 import com.datastax.oss.driver.api.core.specex.SpeculativeExecutionPolicy;
 import com.datastax.oss.driver.api.core.ssl.SslEngineFactory;
@@ -51,14 +52,15 @@ import com.datastax.oss.driver.internal.core.metadata.token.DefaultReplicationSt
 import com.datastax.oss.driver.internal.core.metadata.token.DefaultTokenFactoryRegistry;
 import com.datastax.oss.driver.internal.core.metadata.token.ReplicationStrategyFactory;
 import com.datastax.oss.driver.internal.core.metadata.token.TokenFactoryRegistry;
-import com.datastax.oss.driver.internal.core.metrics.DefaultMetricUpdaterFactory;
-import com.datastax.oss.driver.internal.core.metrics.MetricUpdaterFactory;
+import com.datastax.oss.driver.internal.core.metrics.DropwizardMetricsFactory;
+import com.datastax.oss.driver.internal.core.metrics.MetricsFactory;
 import com.datastax.oss.driver.internal.core.pool.ChannelPoolFactory;
 import com.datastax.oss.driver.internal.core.protocol.ByteBufPrimitiveCodec;
 import com.datastax.oss.driver.internal.core.servererrors.DefaultWriteTypeRegistry;
 import com.datastax.oss.driver.internal.core.servererrors.WriteTypeRegistry;
 import com.datastax.oss.driver.internal.core.session.PoolManager;
 import com.datastax.oss.driver.internal.core.session.RequestProcessorRegistry;
+import com.datastax.oss.driver.internal.core.session.throttling.RequestThrottler;
 import com.datastax.oss.driver.internal.core.ssl.JdkSslHandlerFactory;
 import com.datastax.oss.driver.internal.core.ssl.SslHandlerFactory;
 import com.datastax.oss.driver.internal.core.type.codec.registry.DefaultCodecRegistry;
@@ -70,9 +72,8 @@ import com.datastax.oss.protocol.internal.FrameCodec;
 import io.netty.buffer.ByteBuf;
 import java.util.List;
 import java.util.Optional;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicInteger;
+import net.jcip.annotations.ThreadSafe;
 
 /**
  * Default implementation of the driver context.
@@ -91,6 +92,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  * configuration: the intent is that someone can extend this class, override one (or more) of the
  * buildXxx methods, and initialize the cluster with this new implementation.
  */
+@ThreadSafe
 public class DefaultDriverContext implements InternalDriverContext {
 
   private static final AtomicInteger SESSION_NAME_COUNTER = new AtomicInteger();
@@ -161,19 +163,26 @@ public class DefaultDriverContext implements InternalDriverContext {
           "replicationStrategyFactory", this::buildReplicationStrategyFactory, cycleDetector);
   private final LazyReference<PoolManager> poolManagerRef =
       new LazyReference<>("poolManager", this::buildPoolManager, cycleDetector);
-  private final LazyReference<MetricRegistry> metricRegistryRef =
-      new LazyReference<>("metricRegistry", this::buildMetricRegistry, cycleDetector);
-  private final LazyReference<MetricUpdaterFactory> metricUpdaterFactoryRef =
-      new LazyReference<>("metricUpdaterFactory", this::buildMetricUpdaterFactory, cycleDetector);
+  private final LazyReference<MetricsFactory> metricsFactoryRef =
+      new LazyReference<>("metricsFactory", this::buildMetricsFactory, cycleDetector);
+  private final LazyReference<RequestThrottler> requestThrottlerRef =
+      new LazyReference<>("requestThrottler", this::buildRequestThrottler, cycleDetector);
+  private final LazyReference<NodeStateListener> nodeStateListenerRef;
+  private final LazyReference<SchemaChangeListener> schemaChangeListenerRef;
 
   private final DriverConfig config;
   private final DriverConfigLoader configLoader;
   private final ChannelPoolFactory channelPoolFactory = new ChannelPoolFactory();
   private final CodecRegistry codecRegistry;
   private final String sessionName;
-  private final ConcurrentMap<String, Object> attributes = new ConcurrentHashMap<>();
+  private final NodeStateListener nodeStateListenerFromBuilder;
+  private final SchemaChangeListener schemaChangeListenerFromBuilder;
 
-  public DefaultDriverContext(DriverConfigLoader configLoader, List<TypeCodec<?>> typeCodecs) {
+  public DefaultDriverContext(
+      DriverConfigLoader configLoader,
+      List<TypeCodec<?>> typeCodecs,
+      NodeStateListener nodeStateListener,
+      SchemaChangeListener schemaChangeListener) {
     this.config = configLoader.getInitialConfig();
     this.configLoader = configLoader;
     DriverConfigProfile defaultProfile = config.getDefaultProfile();
@@ -183,6 +192,18 @@ public class DefaultDriverContext implements InternalDriverContext {
       this.sessionName = "s" + SESSION_NAME_COUNTER.getAndIncrement();
     }
     this.codecRegistry = buildCodecRegistry(this.sessionName, typeCodecs);
+    this.nodeStateListenerFromBuilder = nodeStateListener;
+    this.nodeStateListenerRef =
+        new LazyReference<>(
+            "nodeStateListener",
+            () -> buildNodeStateListener(nodeStateListenerFromBuilder),
+            cycleDetector);
+    this.schemaChangeListenerFromBuilder = schemaChangeListener;
+    this.schemaChangeListenerRef =
+        new LazyReference<>(
+            "schemaChangeListener",
+            () -> buildSchemaChangeListener(schemaChangeListenerFromBuilder),
+            cycleDetector);
   }
 
   protected LoadBalancingPolicy buildLoadBalancingPolicy() {
@@ -364,12 +385,51 @@ public class DefaultDriverContext implements InternalDriverContext {
     return new PoolManager(this);
   }
 
-  protected MetricRegistry buildMetricRegistry() {
-    return new MetricRegistry();
+  protected MetricsFactory buildMetricsFactory() {
+    return new DropwizardMetricsFactory(this);
   }
 
-  protected MetricUpdaterFactory buildMetricUpdaterFactory() {
-    return new DefaultMetricUpdaterFactory(this);
+  protected RequestThrottler buildRequestThrottler() {
+    return Reflection.buildFromConfig(
+            this, DefaultDriverOption.REQUEST_THROTTLER_CLASS, RequestThrottler.class)
+        .orElseThrow(
+            () ->
+                new IllegalArgumentException(
+                    String.format(
+                        "Missing request throttler, check your configuration (%s)",
+                        DefaultDriverOption.REQUEST_THROTTLER_CLASS)));
+  }
+
+  protected NodeStateListener buildNodeStateListener(
+      NodeStateListener nodeStateListenerFromBuilder) {
+    return (nodeStateListenerFromBuilder != null)
+        ? nodeStateListenerFromBuilder
+        : Reflection.buildFromConfig(
+                this,
+                DefaultDriverOption.METADATA_NODE_STATE_LISTENER_CLASS,
+                NodeStateListener.class)
+            .orElseThrow(
+                () ->
+                    new IllegalArgumentException(
+                        String.format(
+                            "Missing node state listener, check your configuration (%s)",
+                            DefaultDriverOption.METADATA_NODE_STATE_LISTENER_CLASS)));
+  }
+
+  protected SchemaChangeListener buildSchemaChangeListener(
+      SchemaChangeListener schemaChangeListenerFromBuilder) {
+    return (schemaChangeListenerFromBuilder != null)
+        ? schemaChangeListenerFromBuilder
+        : Reflection.buildFromConfig(
+                this,
+                DefaultDriverOption.METADATA_SCHEMA_CHANGE_LISTENER_CLASS,
+                SchemaChangeListener.class)
+            .orElseThrow(
+                () ->
+                    new IllegalArgumentException(
+                        String.format(
+                            "Missing schema change listener, check your configuration (%s)",
+                            DefaultDriverOption.METADATA_SCHEMA_CHANGE_LISTENER_CLASS)));
   }
 
   @Override
@@ -533,13 +593,23 @@ public class DefaultDriverContext implements InternalDriverContext {
   }
 
   @Override
-  public MetricRegistry metricRegistry() {
-    return metricRegistryRef.get();
+  public MetricsFactory metricsFactory() {
+    return metricsFactoryRef.get();
   }
 
   @Override
-  public MetricUpdaterFactory metricUpdaterFactory() {
-    return metricUpdaterFactoryRef.get();
+  public RequestThrottler requestThrottler() {
+    return requestThrottlerRef.get();
+  }
+
+  @Override
+  public NodeStateListener nodeStateListener() {
+    return nodeStateListenerRef.get();
+  }
+
+  @Override
+  public SchemaChangeListener schemaChangeListener() {
+    return schemaChangeListenerRef.get();
   }
 
   @Override
@@ -550,10 +620,5 @@ public class DefaultDriverContext implements InternalDriverContext {
   @Override
   public ProtocolVersion protocolVersion() {
     return channelFactory().getProtocolVersion();
-  }
-
-  @Override
-  public ConcurrentMap<String, Object> getAttributes() {
-    return attributes;
   }
 }

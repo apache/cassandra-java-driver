@@ -17,12 +17,14 @@ package com.datastax.oss.driver.internal.core.metadata.token;
 
 import com.datastax.oss.driver.api.core.metadata.token.Token;
 import com.datastax.oss.driver.api.core.metadata.token.TokenRange;
+import com.datastax.oss.driver.shaded.guava.common.collect.Lists;
 import com.datastax.oss.protocol.internal.util.Bytes;
-import com.google.common.collect.Lists;
 import java.math.BigInteger;
 import java.nio.ByteBuffer;
 import java.util.List;
+import net.jcip.annotations.Immutable;
 
+@Immutable
 public class ByteOrderedTokenRange extends TokenRangeBase {
 
   private static final BigInteger TWO = BigInteger.valueOf(2);

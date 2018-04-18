@@ -15,74 +15,106 @@
  */
 package com.datastax.oss.driver.api.core.metadata.schema;
 
-import com.datastax.oss.driver.api.core.session.Session;
 import com.datastax.oss.driver.api.core.type.UserDefinedType;
 
 /**
- * Convenience schema change listener implementation that defines all methods as no-ops.
- *
- * <p>Implementors that are only interested in a subset of events can extend this class and override
- * the relevant methods.
+ * Convenience class for listener implementations that that don't need to override all methods (all
+ * methods in this class are empty).
  */
 public class SchemaChangeListenerBase implements SchemaChangeListener {
 
   @Override
-  public void onKeyspaceCreated(KeyspaceMetadata keyspace) {}
+  public void onKeyspaceCreated(KeyspaceMetadata keyspace) {
+    // nothing to do
+  }
 
   @Override
-  public void onKeyspaceDropped(KeyspaceMetadata keyspace) {}
+  public void onKeyspaceDropped(KeyspaceMetadata keyspace) {
+    // nothing to do
+  }
 
   @Override
-  public void onKeyspaceUpdated(KeyspaceMetadata current, KeyspaceMetadata previous) {}
+  public void onKeyspaceUpdated(KeyspaceMetadata current, KeyspaceMetadata previous) {
+    // nothing to do
+  }
 
   @Override
-  public void onTableCreated(TableMetadata table) {}
+  public void onTableCreated(TableMetadata table) {
+    // nothing to do
+  }
 
   @Override
-  public void onTableDropped(TableMetadata table) {}
+  public void onTableDropped(TableMetadata table) {
+    // nothing to do
+  }
 
   @Override
-  public void onTableUpdated(TableMetadata current, TableMetadata previous) {}
+  public void onTableUpdated(TableMetadata current, TableMetadata previous) {
+    // nothing to do
+  }
 
   @Override
-  public void onUserDefinedTypeCreated(UserDefinedType type) {}
+  public void onUserDefinedTypeCreated(UserDefinedType type) {
+    // nothing to do
+  }
 
   @Override
-  public void onUserDefinedTypeDropped(UserDefinedType type) {}
+  public void onUserDefinedTypeDropped(UserDefinedType type) {
+    // nothing to do
+  }
 
   @Override
-  public void onUserDefinedTypeUpdated(UserDefinedType current, UserDefinedType previous) {}
+  public void onUserDefinedTypeUpdated(UserDefinedType current, UserDefinedType previous) {
+    // nothing to do
+  }
 
   @Override
-  public void onFunctionCreated(FunctionMetadata function) {}
+  public void onFunctionCreated(FunctionMetadata function) {
+    // nothing to do
+  }
 
   @Override
-  public void onFunctionDropped(FunctionMetadata function) {}
+  public void onFunctionDropped(FunctionMetadata function) {
+    // nothing to do
+  }
 
   @Override
-  public void onFunctionUpdated(FunctionMetadata current, FunctionMetadata previous) {}
+  public void onFunctionUpdated(FunctionMetadata current, FunctionMetadata previous) {
+    // nothing to do
+  }
 
   @Override
-  public void onAggregateCreated(AggregateMetadata aggregate) {}
+  public void onAggregateCreated(AggregateMetadata aggregate) {
+    // nothing to do
+  }
 
   @Override
-  public void onAggregateDropped(AggregateMetadata aggregate) {}
+  public void onAggregateDropped(AggregateMetadata aggregate) {
+    // nothing to do
+  }
 
   @Override
-  public void onAggregateUpdated(AggregateMetadata current, AggregateMetadata previous) {}
+  public void onAggregateUpdated(AggregateMetadata current, AggregateMetadata previous) {
+    // nothing to do
+  }
 
   @Override
-  public void onViewCreated(ViewMetadata view) {}
+  public void onViewCreated(ViewMetadata view) {
+    // nothing to do
+  }
 
   @Override
-  public void onViewDropped(ViewMetadata view) {}
+  public void onViewDropped(ViewMetadata view) {
+    // nothing to do
+  }
 
   @Override
-  public void onViewUpdated(ViewMetadata current, ViewMetadata previous) {}
+  public void onViewUpdated(ViewMetadata current, ViewMetadata previous) {
+    // nothing to do
+  }
 
   @Override
-  public void onRegister(Session session) {}
-
-  @Override
-  public void onUnregister(Session session) {}
+  public void close() throws Exception {
+    // nothing to do
+  }
 }

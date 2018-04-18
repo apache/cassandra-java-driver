@@ -17,9 +17,10 @@ package com.datastax.oss.driver.api.core.metadata.schema;
 
 import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.type.DataType;
-import com.google.common.collect.ImmutableList;
+import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableList;
 import java.util.List;
 import java.util.Objects;
+import net.jcip.annotations.Immutable;
 
 /**
  * The signature that uniquely identifies a CQL function or aggregate in a keyspace.
@@ -27,6 +28,7 @@ import java.util.Objects;
  * <p>It's composed of a name and a list of parameter types. Overloads (such as {@code sum(int)} and
  * {@code sum(int, int)} are not equal.
  */
+@Immutable
 public class FunctionSignature {
   private final CqlIdentifier name;
   private final List<DataType> parameterTypes;
@@ -38,6 +40,22 @@ public class FunctionSignature {
 
   public FunctionSignature(CqlIdentifier name, DataType... parameterTypes) {
     this(name, ImmutableList.<DataType>builder().add(parameterTypes).build());
+  }
+
+  /**
+   * Shortcut for {@link #FunctionSignature(CqlIdentifier, Iterable) new
+   * FunctionSignature(CqlIdentifier.fromCql(name), parameterTypes)}.
+   */
+  public FunctionSignature(String name, Iterable<DataType> parameterTypes) {
+    this(CqlIdentifier.fromCql(name), parameterTypes);
+  }
+
+  /**
+   * Shortcut for {@link #FunctionSignature(CqlIdentifier, DataType...)} new
+   * FunctionSignature(CqlIdentifier.fromCql(name), parameterTypes)}.
+   */
+  public FunctionSignature(String name, DataType... parameterTypes) {
+    this(CqlIdentifier.fromCql(name), parameterTypes);
   }
 
   public CqlIdentifier getName() {

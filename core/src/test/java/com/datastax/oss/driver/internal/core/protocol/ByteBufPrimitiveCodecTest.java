@@ -240,7 +240,7 @@ public class ByteBufPrimitiveCodecTest {
     expectedException.expect(IllegalArgumentException.class);
     expectedException.expectMessage(
         "Not enough bytes to read an UTF-8 serialized string of size 4");
-    ByteBuf source = codec.allocate(2);
+    ByteBuf source = codec.allocate(4);
     source.writeInt(4);
 
     codec.readLongString(source);

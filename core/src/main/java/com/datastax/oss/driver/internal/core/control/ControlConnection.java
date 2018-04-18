@@ -33,13 +33,13 @@ import com.datastax.oss.driver.internal.core.util.Loggers;
 import com.datastax.oss.driver.internal.core.util.concurrent.Reconnection;
 import com.datastax.oss.driver.internal.core.util.concurrent.RunOrSchedule;
 import com.datastax.oss.driver.internal.core.util.concurrent.UncaughtExceptions;
+import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableList;
 import com.datastax.oss.protocol.internal.Message;
 import com.datastax.oss.protocol.internal.ProtocolConstants;
 import com.datastax.oss.protocol.internal.response.Event;
 import com.datastax.oss.protocol.internal.response.event.SchemaChangeEvent;
 import com.datastax.oss.protocol.internal.response.event.StatusChangeEvent;
 import com.datastax.oss.protocol.internal.response.event.TopologyChangeEvent;
-import com.google.common.collect.ImmutableList;
 import io.netty.util.concurrent.EventExecutor;
 import java.net.InetSocketAddress;
 import java.util.LinkedHashMap;
@@ -49,6 +49,7 @@ import java.util.WeakHashMap;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.function.Consumer;
+import net.jcip.annotations.ThreadSafe;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -63,6 +64,7 @@ import org.slf4j.LoggerFactory;
  * <p>If a custom {@link TopologyMonitor} is used, the control connection is used only for schema
  * refreshes; if schema metadata is also disabled, the control connection never initializes.
  */
+@ThreadSafe
 public class ControlConnection implements EventCallback, AsyncAutoCloseable {
   private static final Logger LOG = LoggerFactory.getLogger(ControlConnection.class);
 

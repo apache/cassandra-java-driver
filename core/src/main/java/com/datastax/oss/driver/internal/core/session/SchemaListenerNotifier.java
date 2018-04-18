@@ -25,16 +25,17 @@ import com.datastax.oss.driver.internal.core.metadata.schema.events.TypeChangeEv
 import com.datastax.oss.driver.internal.core.metadata.schema.events.ViewChangeEvent;
 import com.datastax.oss.driver.internal.core.util.concurrent.RunOrSchedule;
 import io.netty.util.concurrent.EventExecutor;
-import java.util.Set;
+import net.jcip.annotations.ThreadSafe;
 
+@ThreadSafe
 class SchemaListenerNotifier {
 
-  private final Set<SchemaChangeListener> listeners;
+  private final SchemaChangeListener listener;
   private final EventExecutor adminExecutor;
 
   SchemaListenerNotifier(
-      Set<SchemaChangeListener> listeners, EventBus eventBus, EventExecutor adminExecutor) {
-    this.listeners = listeners;
+      SchemaChangeListener listener, EventBus eventBus, EventExecutor adminExecutor) {
+    this.listener = listener;
     this.adminExecutor = adminExecutor;
 
     // No need to unregister at shutdown, this component has the same lifecycle as the cluster
@@ -56,19 +57,13 @@ class SchemaListenerNotifier {
     assert adminExecutor.inEventLoop();
     switch (event.changeType) {
       case CREATED:
-        for (SchemaChangeListener listener : listeners) {
-          listener.onAggregateCreated(event.newAggregate);
-        }
+        listener.onAggregateCreated(event.newAggregate);
         break;
       case UPDATED:
-        for (SchemaChangeListener listener : listeners) {
-          listener.onAggregateUpdated(event.newAggregate, event.oldAggregate);
-        }
+        listener.onAggregateUpdated(event.newAggregate, event.oldAggregate);
         break;
       case DROPPED:
-        for (SchemaChangeListener listener : listeners) {
-          listener.onAggregateDropped(event.oldAggregate);
-        }
+        listener.onAggregateDropped(event.oldAggregate);
         break;
     }
   }
@@ -77,19 +72,13 @@ class SchemaListenerNotifier {
     assert adminExecutor.inEventLoop();
     switch (event.changeType) {
       case CREATED:
-        for (SchemaChangeListener listener : listeners) {
-          listener.onFunctionCreated(event.newFunction);
-        }
+        listener.onFunctionCreated(event.newFunction);
         break;
       case UPDATED:
-        for (SchemaChangeListener listener : listeners) {
-          listener.onFunctionUpdated(event.newFunction, event.oldFunction);
-        }
+        listener.onFunctionUpdated(event.newFunction, event.oldFunction);
         break;
       case DROPPED:
-        for (SchemaChangeListener listener : listeners) {
-          listener.onFunctionDropped(event.oldFunction);
-        }
+        listener.onFunctionDropped(event.oldFunction);
         break;
     }
   }
@@ -98,19 +87,13 @@ class SchemaListenerNotifier {
     assert adminExecutor.inEventLoop();
     switch (event.changeType) {
       case CREATED:
-        for (SchemaChangeListener listener : listeners) {
-          listener.onKeyspaceCreated(event.newKeyspace);
-        }
+        listener.onKeyspaceCreated(event.newKeyspace);
         break;
       case UPDATED:
-        for (SchemaChangeListener listener : listeners) {
-          listener.onKeyspaceUpdated(event.newKeyspace, event.oldKeyspace);
-        }
+        listener.onKeyspaceUpdated(event.newKeyspace, event.oldKeyspace);
         break;
       case DROPPED:
-        for (SchemaChangeListener listener : listeners) {
-          listener.onKeyspaceDropped(event.oldKeyspace);
-        }
+        listener.onKeyspaceDropped(event.oldKeyspace);
         break;
     }
   }
@@ -119,19 +102,13 @@ class SchemaListenerNotifier {
     assert adminExecutor.inEventLoop();
     switch (event.changeType) {
       case CREATED:
-        for (SchemaChangeListener listener : listeners) {
-          listener.onTableCreated(event.newTable);
-        }
+        listener.onTableCreated(event.newTable);
         break;
       case UPDATED:
-        for (SchemaChangeListener listener : listeners) {
-          listener.onTableUpdated(event.newTable, event.oldTable);
-        }
+        listener.onTableUpdated(event.newTable, event.oldTable);
         break;
       case DROPPED:
-        for (SchemaChangeListener listener : listeners) {
-          listener.onTableDropped(event.oldTable);
-        }
+        listener.onTableDropped(event.oldTable);
         break;
     }
   }
@@ -140,19 +117,13 @@ class SchemaListenerNotifier {
     assert adminExecutor.inEventLoop();
     switch (event.changeType) {
       case CREATED:
-        for (SchemaChangeListener listener : listeners) {
-          listener.onUserDefinedTypeCreated(event.newType);
-        }
+        listener.onUserDefinedTypeCreated(event.newType);
         break;
       case UPDATED:
-        for (SchemaChangeListener listener : listeners) {
-          listener.onUserDefinedTypeUpdated(event.newType, event.oldType);
-        }
+        listener.onUserDefinedTypeUpdated(event.newType, event.oldType);
         break;
       case DROPPED:
-        for (SchemaChangeListener listener : listeners) {
-          listener.onUserDefinedTypeDropped(event.oldType);
-        }
+        listener.onUserDefinedTypeDropped(event.oldType);
         break;
     }
   }
@@ -161,19 +132,13 @@ class SchemaListenerNotifier {
     assert adminExecutor.inEventLoop();
     switch (event.changeType) {
       case CREATED:
-        for (SchemaChangeListener listener : listeners) {
-          listener.onViewCreated(event.newView);
-        }
+        listener.onViewCreated(event.newView);
         break;
       case UPDATED:
-        for (SchemaChangeListener listener : listeners) {
-          listener.onViewUpdated(event.newView, event.oldView);
-        }
+        listener.onViewUpdated(event.newView, event.oldView);
         break;
       case DROPPED:
-        for (SchemaChangeListener listener : listeners) {
-          listener.onViewDropped(event.oldView);
-        }
+        listener.onViewDropped(event.oldView);
         break;
     }
   }

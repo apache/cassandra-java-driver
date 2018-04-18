@@ -16,8 +16,10 @@
 package com.datastax.oss.driver.api.core;
 
 import com.datastax.oss.driver.api.core.session.SessionBuilder;
+import net.jcip.annotations.NotThreadSafe;
 
 /** Helper class to build a {@link CqlSession} instance. */
+@NotThreadSafe
 public class CqlSessionBuilder extends SessionBuilder<CqlSessionBuilder, CqlSession> {
 
   @Override

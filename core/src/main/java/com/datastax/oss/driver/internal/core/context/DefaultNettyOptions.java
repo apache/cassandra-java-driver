@@ -18,7 +18,7 @@ package com.datastax.oss.driver.internal.core.context;
 import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
 import com.datastax.oss.driver.api.core.config.DriverConfigProfile;
 import com.datastax.oss.driver.internal.core.util.concurrent.BlockingOperation;
-import com.google.common.util.concurrent.ThreadFactoryBuilder;
+import com.datastax.oss.driver.shaded.guava.common.util.concurrent.ThreadFactoryBuilder;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.buffer.ByteBufAllocator;
 import io.netty.channel.Channel;
@@ -33,7 +33,9 @@ import io.netty.util.concurrent.GlobalEventExecutor;
 import io.netty.util.concurrent.PromiseCombiner;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
+import net.jcip.annotations.Immutable;
 
+@Immutable
 public class DefaultNettyOptions implements NettyOptions {
   private final EventLoopGroup ioEventLoopGroup;
   private final EventLoopGroup adminEventLoopGroup;

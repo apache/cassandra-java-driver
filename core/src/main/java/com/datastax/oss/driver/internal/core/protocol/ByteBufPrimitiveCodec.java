@@ -24,7 +24,9 @@ import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
+import net.jcip.annotations.ThreadSafe;
 
+@ThreadSafe
 public class ByteBufPrimitiveCodec implements PrimitiveCodec<ByteBuf> {
 
   private final ByteBufAllocator allocator;
@@ -35,7 +37,7 @@ public class ByteBufPrimitiveCodec implements PrimitiveCodec<ByteBuf> {
 
   @Override
   public ByteBuf allocate(int size) {
-    return allocator.ioBuffer();
+    return allocator.ioBuffer(size, size);
   }
 
   @Override

@@ -5,6 +5,16 @@
 ### 4.0.0-alpha4 (in progress)
 
 - [improvement] JAVA-1735: Log driver version on first use
+- [improvement] JAVA-1801: Revisit NodeStateListener and SchemaChangeListener APIs
+- [improvement] JAVA-1759: Revisit metrics API
+- [improvement] JAVA-1776: Use concurrency annotations
+- [improvement] JAVA-1799: Use CqlIdentifier for simple statement named values
+- [new feature] JAVA-1515: Add query builder
+- [improvement] JAVA-1773: Make DriverConfigProfile enumerable
+- [improvement] JAVA-1787: Use standalone shaded Guava artifact
+- [improvement] JAVA-1769: Allocate exact buffer size for outgoing requests
+- [documentation] JAVA-1780: Add manual section about case sensitivity
+- [new feature] JAVA-1536: Add request throttling
 - [improvement] JAVA-1772: Revisit multi-response callbacks
 - [new feature] JAVA-1537: Add remaining socket options
 - [bug] JAVA-1756: Propagate custom payload when preparing a statement

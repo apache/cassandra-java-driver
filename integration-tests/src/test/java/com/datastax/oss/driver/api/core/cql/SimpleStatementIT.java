@@ -17,6 +17,7 @@ package com.datastax.oss.driver.api.core.cql;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.CqlSession;
 import com.datastax.oss.driver.api.core.servererrors.InvalidQueryException;
 import com.datastax.oss.driver.api.testinfra.ccm.CcmRule;
@@ -246,7 +247,7 @@ public class SimpleStatementIT {
     // given a statement with a missing named value (:k)
     SimpleStatement insert =
         SimpleStatement.builder("SELECT * from test where k = :k and v = :v")
-            .addNamedValue(":v", 0)
+            .addNamedValue("v", 0)
             .build();
 
     // when executing that statement
@@ -258,7 +259,7 @@ public class SimpleStatementIT {
   @Test(expected = IllegalArgumentException.class)
   public void should_fail_when_mixing_named_and_positional_values() {
     SimpleStatement.builder("SELECT * from test where k = :k and v = :v")
-        .addNamedValue(":k", KEY)
+        .addNamedValue("k", KEY)
         .addPositionalValue(0)
         .build();
   }
@@ -267,7 +268,17 @@ public class SimpleStatementIT {
   public void should_fail_when_mixing_positional_and_named_values() {
     SimpleStatement.builder("SELECT * from test where k = :k and v = :v")
         .addPositionalValue(0)
-        .addNamedValue(":k", KEY)
+        .addNamedValue("k", KEY)
         .build();
+  }
+
+  @Test
+  public void should_use_positional_value_with_case_sensitive_id() {
+    SimpleStatement statement =
+        SimpleStatement.builder("SELECT count(*) FROM test2 WHERE k=:\"theKey\"")
+            .addNamedValue(CqlIdentifier.fromCql("\"theKey\""), 0)
+            .build();
+    Row row = cluster.session().execute(statement).one();
+    assertThat(row.getLong(0)).isEqualTo(0);
   }
 }

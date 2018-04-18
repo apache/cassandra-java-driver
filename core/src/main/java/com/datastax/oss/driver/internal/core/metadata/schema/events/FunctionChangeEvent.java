@@ -18,7 +18,9 @@ package com.datastax.oss.driver.internal.core.metadata.schema.events;
 import com.datastax.oss.driver.api.core.metadata.schema.FunctionMetadata;
 import com.datastax.oss.driver.internal.core.metadata.schema.SchemaChangeType;
 import java.util.Objects;
+import net.jcip.annotations.Immutable;
 
+@Immutable
 public class FunctionChangeEvent {
 
   public static FunctionChangeEvent dropped(FunctionMetadata oldFunction) {

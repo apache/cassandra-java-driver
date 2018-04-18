@@ -15,21 +15,24 @@
  */
 package com.datastax.oss.driver.api.core.metadata.schema;
 
-import com.datastax.oss.driver.api.core.session.Session;
+import com.datastax.oss.driver.api.core.session.SessionBuilder;
 import com.datastax.oss.driver.api.core.type.UserDefinedType;
 
 /**
  * Tracks schema changes.
  *
- * <p>An implementation of this interface can be registered with {@link
- * Session#register(SchemaChangeListener)}.
+ * <p>An implementation of this interface can be registered in the configuration, or with {@link
+ * SessionBuilder#withSchemaChangeListener(SchemaChangeListener)}.
  *
  * <p>Note that the methods defined by this interface will be executed by internal driver threads,
  * and are therefore expected to have short execution times. If you need to perform long
  * computations or blocking calls in response to schema change events, it is strongly recommended to
  * schedule them asynchronously on a separate thread provided by your application code.
+ *
+ * <p>If you implement this interface but don't need to implement all the methods, extend {@link
+ * SchemaChangeListenerBase}.
  */
-public interface SchemaChangeListener {
+public interface SchemaChangeListener extends AutoCloseable {
 
   void onKeyspaceCreated(KeyspaceMetadata keyspace);
 
@@ -66,13 +69,4 @@ public interface SchemaChangeListener {
   void onViewDropped(ViewMetadata view);
 
   void onViewUpdated(ViewMetadata current, ViewMetadata previous);
-
-  /** Invoked when the listener is registered with a session. */
-  void onRegister(Session session);
-
-  /**
-   * Invoked when the listener is unregistered from a session, or at session shutdown, whichever
-   * comes first.
-   */
-  void onUnregister(Session session);
 }

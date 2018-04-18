@@ -16,25 +16,9 @@
 package com.datastax.oss.driver.api.core.metrics;
 
 import com.datastax.oss.driver.api.core.session.Session;
-import java.net.InetAddress;
 
 /**
- * A node-level metric exposed through {@link Session#getMetricRegistry()}.
- *
- * <p>Note that the actual key in the registry is composed of the {@link Session#getName() name of
- * the session}, followed by "nodes", followed by a textual representation of the address of the
- * node, followed by the path of the metric. IPv4 addresses are represented as the decimal
- * components followed by the port, separated with underscores; IPv6 addresses are represented as
- * the result of {@link InetAddress#getHostAddress()}, followed by an underscore, followed by the
- * port. For example:
- *
- * <pre>
- * // Retrieve the `retries.total` metric for node 127.0.0.1:9042 in session `s0`:
- * Meter retriesMeter = session.getMetricRegistry().meter("s0.nodes.127_0_0_1_9042.retries.total");
- *
- * // Retrieve the `retries.total` metric for node ::1:9042 in session `s0`:
- * Meter retriesMeter = session.getMetricRegistry().meter("s0.nodes.0:0:0:0:0:0:0:1_9042.retries.total");
- * </pre>
+ * A node-level metric exposed through {@link Session#getMetrics()}.
  *
  * <p>All metrics exposed out of the box by the driver are instances of {@link DefaultNodeMetric}
  * (this interface only exists to allow custom metrics in driver extensions).

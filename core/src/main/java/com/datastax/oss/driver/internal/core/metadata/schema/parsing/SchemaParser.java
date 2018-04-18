@@ -29,9 +29,10 @@ import com.datastax.oss.driver.internal.core.metadata.schema.DefaultKeyspaceMeta
 import com.datastax.oss.driver.internal.core.metadata.schema.queries.SchemaRows;
 import com.datastax.oss.driver.internal.core.metadata.schema.refresh.SchemaRefresh;
 import com.datastax.oss.driver.internal.core.util.NanoTime;
-import com.google.common.base.MoreObjects;
-import com.google.common.collect.ImmutableMap;
+import com.datastax.oss.driver.shaded.guava.common.base.MoreObjects;
+import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableMap;
 import java.util.Map;
+import net.jcip.annotations.ThreadSafe;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -41,6 +42,7 @@ import org.slf4j.LoggerFactory;
  * <p>For modularity, the code for each element row is split into separate classes (schema stuff is
  * not on the hot path, so creating a few extra objects doesn't matter).
  */
+@ThreadSafe
 public class SchemaParser {
 
   private static final Logger LOG = LoggerFactory.getLogger(SchemaParser.class);

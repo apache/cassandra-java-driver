@@ -19,7 +19,7 @@ import static com.datastax.oss.driver.Assertions.assertThat;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 
-import com.google.common.base.Joiner;
+import com.datastax.oss.driver.shaded.guava.common.base.Joiner;
 import io.netty.util.concurrent.EventExecutor;
 import io.netty.util.concurrent.ScheduledFuture;
 import java.time.Duration;

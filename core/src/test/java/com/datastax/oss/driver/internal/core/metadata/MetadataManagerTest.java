@@ -28,10 +28,10 @@ import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
 import com.datastax.oss.driver.internal.core.context.NettyOptions;
 import com.datastax.oss.driver.internal.core.metadata.schema.parsing.SchemaParserFactory;
 import com.datastax.oss.driver.internal.core.metadata.schema.queries.SchemaQueriesFactory;
-import com.datastax.oss.driver.internal.core.metrics.MetricUpdaterFactory;
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableSet;
-import com.google.common.util.concurrent.Uninterruptibles;
+import com.datastax.oss.driver.internal.core.metrics.MetricsFactory;
+import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableList;
+import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableSet;
+import com.datastax.oss.driver.shaded.guava.common.util.concurrent.Uninterruptibles;
 import io.netty.channel.DefaultEventLoopGroup;
 import io.netty.util.concurrent.Future;
 import java.net.InetSocketAddress;
@@ -65,7 +65,7 @@ public class MetadataManagerTest {
   @Mock private EventBus eventBus;
   @Mock private SchemaQueriesFactory schemaQueriesFactory;
   @Mock private SchemaParserFactory schemaParserFactory;
-  @Mock protected MetricUpdaterFactory metricUpdaterFactory;
+  @Mock protected MetricsFactory metricsFactory;
 
   private DefaultEventLoopGroup adminEventLoopGroup;
 
@@ -92,7 +92,7 @@ public class MetadataManagerTest {
     Mockito.when(context.schemaQueriesFactory()).thenReturn(schemaQueriesFactory);
     Mockito.when(context.schemaParserFactory()).thenReturn(schemaParserFactory);
 
-    Mockito.when(context.metricUpdaterFactory()).thenReturn(metricUpdaterFactory);
+    Mockito.when(context.metricsFactory()).thenReturn(metricsFactory);
 
     metadataManager = new TestMetadataManager(context);
   }

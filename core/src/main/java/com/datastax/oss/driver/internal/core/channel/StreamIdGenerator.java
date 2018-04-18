@@ -16,6 +16,7 @@
 package com.datastax.oss.driver.internal.core.channel;
 
 import java.util.BitSet;
+import net.jcip.annotations.NotThreadSafe;
 
 /**
  * Manages the set of identifiers used to distinguish multiplexed requests on a channel.
@@ -24,6 +25,7 @@ import java.util.BitSet;
  * properly synchronized (in practice this is done by only calling them from the I/O thread).
  * However, {@link #getAvailableIds()} has volatile semantics.
  */
+@NotThreadSafe
 class StreamIdGenerator {
 
   private final int maxAvailableIds;

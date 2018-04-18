@@ -1,5 +1,6 @@
 .settings
 .DS_Store
+.documenter_local_last_run
 
 /.idea
 *.iml
@@ -8,6 +9,7 @@
 
 .java-version
 
+.documenter_local_last_run
 /docs
 target/
 dependency-reduced-pom.xml

@@ -22,8 +22,8 @@ import com.datastax.oss.driver.api.core.UnsupportedProtocolVersionException;
 import com.datastax.oss.driver.api.core.Version;
 import com.datastax.oss.driver.api.core.metadata.Node;
 import com.datastax.oss.driver.internal.core.context.DefaultDriverContext;
-import com.google.common.base.Preconditions;
-import com.google.common.collect.ImmutableList;
+import com.datastax.oss.driver.shaded.guava.common.base.Preconditions;
+import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableList;
 import java.util.Collection;
 import java.util.Map;
 import java.util.NavigableMap;
@@ -31,6 +31,7 @@ import java.util.Optional;
 import java.util.SortedSet;
 import java.util.TreeMap;
 import java.util.TreeSet;
+import net.jcip.annotations.ThreadSafe;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -43,6 +44,7 @@ import org.slf4j.LoggerFactory;
  *
  * @see DefaultProtocolVersion
  */
+@ThreadSafe
 public class CassandraProtocolVersionRegistry implements ProtocolVersionRegistry {
 
   private static final Logger LOG = LoggerFactory.getLogger(CassandraProtocolVersionRegistry.class);

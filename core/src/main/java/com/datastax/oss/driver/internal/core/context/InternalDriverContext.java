@@ -17,6 +17,8 @@ package com.datastax.oss.driver.internal.core.context;
 
 import com.datastax.oss.driver.api.core.config.DriverConfigLoader;
 import com.datastax.oss.driver.api.core.context.DriverContext;
+import com.datastax.oss.driver.api.core.metadata.NodeStateListener;
+import com.datastax.oss.driver.api.core.metadata.schema.SchemaChangeListener;
 import com.datastax.oss.driver.internal.core.ConsistencyLevelRegistry;
 import com.datastax.oss.driver.internal.core.ProtocolVersionRegistry;
 import com.datastax.oss.driver.internal.core.channel.ChannelFactory;
@@ -29,11 +31,12 @@ import com.datastax.oss.driver.internal.core.metadata.schema.parsing.SchemaParse
 import com.datastax.oss.driver.internal.core.metadata.schema.queries.SchemaQueriesFactory;
 import com.datastax.oss.driver.internal.core.metadata.token.ReplicationStrategyFactory;
 import com.datastax.oss.driver.internal.core.metadata.token.TokenFactoryRegistry;
-import com.datastax.oss.driver.internal.core.metrics.MetricUpdaterFactory;
+import com.datastax.oss.driver.internal.core.metrics.MetricsFactory;
 import com.datastax.oss.driver.internal.core.pool.ChannelPoolFactory;
 import com.datastax.oss.driver.internal.core.servererrors.WriteTypeRegistry;
 import com.datastax.oss.driver.internal.core.session.PoolManager;
 import com.datastax.oss.driver.internal.core.session.RequestProcessorRegistry;
+import com.datastax.oss.driver.internal.core.session.throttling.RequestThrottler;
 import com.datastax.oss.driver.internal.core.ssl.SslHandlerFactory;
 import com.datastax.oss.protocol.internal.Compressor;
 import com.datastax.oss.protocol.internal.FrameCodec;
@@ -87,5 +90,11 @@ public interface InternalDriverContext extends DriverContext {
 
   PoolManager poolManager();
 
-  MetricUpdaterFactory metricUpdaterFactory();
+  MetricsFactory metricsFactory();
+
+  RequestThrottler requestThrottler();
+
+  NodeStateListener nodeStateListener();
+
+  SchemaChangeListener schemaChangeListener();
 }

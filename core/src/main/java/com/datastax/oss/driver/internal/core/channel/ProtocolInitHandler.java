@@ -45,6 +45,7 @@ import io.netty.channel.ChannelHandlerContext;
 import java.net.SocketAddress;
 import java.nio.ByteBuffer;
 import java.util.List;
+import net.jcip.annotations.NotThreadSafe;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -52,6 +53,7 @@ import org.slf4j.LoggerFactory;
  * Handles the sequence of internal requests that we send on a channel before it's ready to accept
  * user requests.
  */
+@NotThreadSafe
 class ProtocolInitHandler extends ConnectInitHandler {
   private static final Logger LOG = LoggerFactory.getLogger(ProtocolInitHandler.class);
   private static final Query CLUSTER_NAME_QUERY =
@@ -294,6 +296,8 @@ class ProtocolInitHandler extends ConnectInitHandler {
         }
       } catch (AuthenticationException e) {
         fail(e);
+      } catch (Throwable t) {
+        fail("Unexpected exception at step " + step, t);
       }
     }
 

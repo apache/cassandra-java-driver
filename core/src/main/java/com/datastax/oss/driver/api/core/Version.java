@@ -21,6 +21,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import net.jcip.annotations.Immutable;
 
 /**
  * A structured version number.
@@ -43,6 +44,7 @@ import java.util.regex.Pattern;
  * versions that don't have one, and labels are sorted alphabetically if necessary. Build metadata
  * are ignored when sorting versions.
  */
+@Immutable
 public class Version implements Comparable<Version> {
 
   private static final String VERSION_REGEXP =

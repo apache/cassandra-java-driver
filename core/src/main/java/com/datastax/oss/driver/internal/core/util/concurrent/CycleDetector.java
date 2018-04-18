@@ -15,14 +15,16 @@
  */
 package com.datastax.oss.driver.internal.core.util.concurrent;
 
-import com.google.common.annotations.VisibleForTesting;
-import com.google.common.graph.Graphs;
-import com.google.common.graph.MutableValueGraph;
-import com.google.common.graph.ValueGraphBuilder;
+import com.datastax.oss.driver.shaded.guava.common.annotations.VisibleForTesting;
+import com.datastax.oss.driver.shaded.guava.common.graph.Graphs;
+import com.datastax.oss.driver.shaded.guava.common.graph.MutableValueGraph;
+import com.datastax.oss.driver.shaded.guava.common.graph.ValueGraphBuilder;
+import net.jcip.annotations.ThreadSafe;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /** Detects cycles between a set of {@link LazyReference} instances. */
+@ThreadSafe
 public class CycleDetector {
   private static final boolean ENABLED =
       Boolean.getBoolean("com.datastax.oss.driver.DETECT_CYCLES");
@@ -50,7 +52,7 @@ public class CycleDetector {
         LOG.debug("{} wants to initialize {}", me, reference.getName());
         graph.putEdgeValue(me.getName(), reference.getName(), "wants to initialize");
         LOG.debug("{}", graph);
-        if (Graphs.hasCycle(graph)) {
+        if (Graphs.hasCycle(graph.asGraph())) {
           throw new IllegalStateException(errorMessage + " " + graph);
         }
       }

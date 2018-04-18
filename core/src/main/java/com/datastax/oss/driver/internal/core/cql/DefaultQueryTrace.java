@@ -21,7 +21,9 @@ import java.net.InetAddress;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import net.jcip.annotations.Immutable;
 
+@Immutable
 public class DefaultQueryTrace implements QueryTrace {
 
   private final UUID tracingId;

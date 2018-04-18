@@ -20,9 +20,9 @@ import com.datastax.oss.driver.api.core.data.GettableByIndex;
 import com.datastax.oss.driver.api.core.data.TupleValue;
 import com.datastax.oss.driver.api.core.data.UdtValue;
 import com.datastax.oss.driver.api.core.type.codec.TypeCodec;
-import com.google.common.reflect.TypeParameter;
-import com.google.common.reflect.TypeResolver;
-import com.google.common.reflect.TypeToken;
+import com.datastax.oss.driver.shaded.guava.common.reflect.TypeParameter;
+import com.datastax.oss.driver.shaded.guava.common.reflect.TypeResolver;
+import com.datastax.oss.driver.shaded.guava.common.reflect.TypeToken;
 import java.lang.reflect.Type;
 import java.math.BigDecimal;
 import java.math.BigInteger;
@@ -35,6 +35,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+import net.jcip.annotations.Immutable;
 
 /**
  * Runtime representation of a generic Java type.
@@ -75,6 +76,7 @@ import java.util.UUID;
  * {@code TypeToken} is not used directly is because Guava is not exposed in the driver's public API
  * (it's used internally, but shaded).
  */
+@Immutable
 public class GenericType<T> {
 
   public static final GenericType<Boolean> BOOLEAN = of(Boolean.class);

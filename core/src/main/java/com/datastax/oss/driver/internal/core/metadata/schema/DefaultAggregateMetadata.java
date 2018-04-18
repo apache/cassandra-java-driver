@@ -21,9 +21,11 @@ import com.datastax.oss.driver.api.core.metadata.schema.FunctionSignature;
 import com.datastax.oss.driver.api.core.type.DataType;
 import com.datastax.oss.driver.api.core.type.codec.TypeCodec;
 import java.util.Objects;
+import net.jcip.annotations.Immutable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+@Immutable
 public class DefaultAggregateMetadata implements AggregateMetadata {
 
   private static final Logger LOG = LoggerFactory.getLogger(DefaultAggregateMetadata.class);

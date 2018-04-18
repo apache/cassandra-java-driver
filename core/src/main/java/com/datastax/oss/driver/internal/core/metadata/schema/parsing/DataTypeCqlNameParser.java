@@ -23,12 +23,13 @@ import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
 import com.datastax.oss.driver.internal.core.metadata.schema.ShallowUserDefinedType;
 import com.datastax.oss.driver.internal.core.type.DefaultTupleType;
 import com.datastax.oss.driver.internal.core.type.codec.ParseUtils;
-import com.google.common.annotations.VisibleForTesting;
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableMap;
+import com.datastax.oss.driver.shaded.guava.common.annotations.VisibleForTesting;
+import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableList;
+import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableMap;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import net.jcip.annotations.ThreadSafe;
 
 /**
  * Parses data types from schema tables, for Cassandra 3.0 and above.
@@ -36,6 +37,7 @@ import java.util.Map;
  * <p>In these versions, data types appear as string literals, like "ascii" or
  * "tuple&lt;int,int&gt;".
  */
+@ThreadSafe
 public class DataTypeCqlNameParser implements DataTypeParser {
 
   @Override

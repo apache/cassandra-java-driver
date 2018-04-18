@@ -36,8 +36,15 @@ public interface RelationMetadata extends Describable {
 
   Map<CqlIdentifier, ColumnMetadata> getColumns();
 
-  default ColumnMetadata getColumn(CqlIdentifier columnName) {
-    return getColumns().get(columnName);
+  default ColumnMetadata getColumn(CqlIdentifier columnId) {
+    return getColumns().get(columnId);
+  }
+
+  /**
+   * Shortcut for {@link #getColumn(CqlIdentifier) getColumn(CqlIdentifier.fromCql(columnName))}.
+   */
+  default ColumnMetadata getColumn(String columnName) {
+    return getColumn(CqlIdentifier.fromCql(columnName));
   }
 
   /**

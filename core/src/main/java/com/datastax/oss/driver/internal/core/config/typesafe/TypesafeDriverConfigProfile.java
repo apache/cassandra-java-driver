@@ -17,18 +17,28 @@ package com.datastax.oss.driver.internal.core.config.typesafe;
 
 import com.datastax.oss.driver.api.core.config.DriverConfigProfile;
 import com.datastax.oss.driver.api.core.config.DriverOption;
-import com.google.common.collect.MapMaker;
+import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableMap;
+import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableSortedSet;
+import com.datastax.oss.driver.shaded.guava.common.collect.MapMaker;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
+import com.typesafe.config.ConfigValue;
 import com.typesafe.config.ConfigValueFactory;
+import com.typesafe.config.ConfigValueType;
 import java.time.Duration;
+import java.util.AbstractMap;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
+import java.util.SortedSet;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.function.Function;
+import net.jcip.annotations.ThreadSafe;
 
+@ThreadSafe
 public abstract class TypesafeDriverConfigProfile implements DriverConfigProfile {
 
   /** The original profile in the driver's configuration that this profile was derived from. */
@@ -98,6 +108,33 @@ public abstract class TypesafeDriverConfigProfile implements DriverConfigProfile
   }
 
   @Override
+  public Map<String, String> getStringMap(DriverOption option) {
+    Config subConfig = getCached(option.getPath(), getEffectiveOptions()::getConfig);
+    ImmutableMap.Builder<String, String> builder = ImmutableMap.builder();
+    for (Map.Entry<String, ConfigValue> entry : subConfig.entrySet()) {
+      if (entry.getValue().valueType().equals(ConfigValueType.STRING)) {
+        builder.put(entry.getKey(), (String) entry.getValue().unwrapped());
+      }
+    }
+    return builder.build();
+  }
+
+  @Override
+  public DriverConfigProfile withStringMap(DriverOption option, Map<String, String> map) {
+    Base base = getBaseProfile();
+    // Add the new option to any already derived options
+    Config newAdded = getAddedOptions();
+    for (String key : map.keySet()) {
+      newAdded =
+          newAdded.withValue(
+              option.getPath() + "." + key, ConfigValueFactory.fromAnyRef(map.get(key)));
+    }
+    Derived derived = new Derived(base, newAdded);
+    base.register(derived);
+    return derived;
+  }
+
+  @Override
   public long getBytes(DriverOption option) {
     return getCached(option.getPath(), getEffectiveOptions()::getBytes);
   }
@@ -105,6 +142,16 @@ public abstract class TypesafeDriverConfigProfile implements DriverConfigProfile
   @Override
   public DriverConfigProfile withBytes(DriverOption option, long value) {
     return with(option, value);
+  }
+
+  @Override
+  public SortedSet<Map.Entry<String, Object>> entrySet() {
+    ImmutableSortedSet.Builder<Map.Entry<String, Object>> builder =
+        ImmutableSortedSet.orderedBy(Comparator.comparing(Map.Entry::getKey));
+    for (Map.Entry<String, ConfigValue> entry : getEffectiveOptions().entrySet()) {
+      builder.add(new AbstractMap.SimpleEntry<>(entry.getKey(), entry.getValue().unwrapped()));
+    }
+    return builder.build();
   }
 
   private <T> T getCached(String path, Function<String, T> compute) {
@@ -126,6 +173,7 @@ public abstract class TypesafeDriverConfigProfile implements DriverConfigProfile
   }
 
   /** A profile that was loaded directly from the driver's configuration. */
+  @ThreadSafe
   static class Base extends TypesafeDriverConfigProfile {
 
     private volatile Config options;
@@ -183,6 +231,7 @@ public abstract class TypesafeDriverConfigProfile implements DriverConfigProfile
   /**
    * A profile that was copied from another profile programmatically using {@code withXxx} methods.
    */
+  @ThreadSafe
   static class Derived extends TypesafeDriverConfigProfile {
 
     private final Base baseProfile;

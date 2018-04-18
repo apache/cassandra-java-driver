@@ -178,6 +178,20 @@ literals.
 `toString()` can delegate to `toCqlLiteral()` if that is appropriate for logs. 
 
 
+### Concurrency annotations
+
+We use the [JCIP annotations](http://jcip.net/annotations/doc/index.html) to document thread-safety
+policies.
+
+Add them for all new code, with the exception of:
+
+* enums and interfaces;
+* utility classes (only static methods);
+* test code.
+
+Make sure you import the types from `net.jcip`, there are homonyms in the classpath.
+
+
 ## Coding style -- test code
 
 Static imports are permitted in a couple of places:
@@ -283,13 +297,17 @@ the changes if the first attempt failed and you fixed the tests.
 ## Commits
 
 Keep your changes **focused**. Each commit should have a single, clear purpose expressed in its 
-message. (Note: these rules can be somewhat relaxed during the initial developement phase, when
-adding a feature sometimes requires other semi-related features).
+message.
 
-Resist the urge to "fix" cosmetic issues (add/remove blank lines, etc.) in existing code. This adds
-cognitive load for reviewers, who have to figure out which changes are relevant to the actual
-issue. If you see legitimate issues, like typos, address them in a separate commit (it's fine to
-group multiple typo fixes in a single commit).
+Resist the urge to "fix" cosmetic issues (add/remove blank lines, move methods, etc.) in existing
+code. This adds cognitive load for reviewers, who have to figure out which changes are relevant to
+the actual issue. If you see legitimate issues, like typos, address them in a separate commit (it's
+fine to group multiple typo fixes in a single commit).
+
+Isolate trivial refactorings into separate commits. For example, a method rename that affects dozens
+of call sites can be reviewed in a few seconds, but if it's part of a larger diff it gets mixed up
+with more complex changes (that might affect the same lines), and reviewers have to check every
+line.
 
 Commit message subjects start with a capital letter, use the imperative form and do **not** end
 with a period:

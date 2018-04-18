@@ -18,7 +18,8 @@ package com.datastax.oss.driver.internal.core.type;
 import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.type.DataType;
 import com.datastax.oss.driver.api.core.type.UserDefinedType;
-import com.google.common.collect.ImmutableList;
+import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableList;
+import net.jcip.annotations.NotThreadSafe;
 
 /**
  * Helper class to build {@link UserDefinedType} instances.
@@ -28,6 +29,7 @@ import com.google.common.collect.ImmutableList;
  * you will insert corrupt data in your database. If you decide to use this class anyway, make sure
  * that you define fields in the correct order, and that the database schema never changes.
  */
+@NotThreadSafe
 public class UserDefinedTypeBuilder {
 
   private final CqlIdentifier keyspaceName;
@@ -43,6 +45,10 @@ public class UserDefinedTypeBuilder {
     this.fieldTypes = ImmutableList.builder();
   }
 
+  public UserDefinedTypeBuilder(String keyspaceName, String typeName) {
+    this(CqlIdentifier.fromCql(keyspaceName), CqlIdentifier.fromCql(typeName));
+  }
+
   /**
    * Adds a new field. The fields in the resulting type will be in the order of the calls to this
    * method.
@@ -51,6 +57,10 @@ public class UserDefinedTypeBuilder {
     fieldNames.add(name);
     fieldTypes.add(type);
     return this;
+  }
+
+  public UserDefinedTypeBuilder withField(String name, DataType type) {
+    return withField(CqlIdentifier.fromCql(name), type);
   }
 
   /** Makes the type frozen (by default, it is not). */

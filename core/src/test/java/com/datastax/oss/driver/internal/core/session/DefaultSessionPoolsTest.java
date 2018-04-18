@@ -33,6 +33,8 @@ import com.datastax.oss.driver.api.core.loadbalancing.NodeDistance;
 import com.datastax.oss.driver.api.core.metadata.Metadata;
 import com.datastax.oss.driver.api.core.metadata.Node;
 import com.datastax.oss.driver.api.core.metadata.NodeState;
+import com.datastax.oss.driver.api.core.metadata.NodeStateListener;
+import com.datastax.oss.driver.api.core.metadata.schema.SchemaChangeListener;
 import com.datastax.oss.driver.api.core.retry.RetryPolicy;
 import com.datastax.oss.driver.api.core.session.Session;
 import com.datastax.oss.driver.api.core.specex.SpeculativeExecutionPolicy;
@@ -46,12 +48,12 @@ import com.datastax.oss.driver.internal.core.metadata.LoadBalancingPolicyWrapper
 import com.datastax.oss.driver.internal.core.metadata.MetadataManager;
 import com.datastax.oss.driver.internal.core.metadata.NodeStateEvent;
 import com.datastax.oss.driver.internal.core.metadata.TopologyMonitor;
-import com.datastax.oss.driver.internal.core.metrics.MetricUpdaterFactory;
+import com.datastax.oss.driver.internal.core.metrics.MetricsFactory;
 import com.datastax.oss.driver.internal.core.pool.ChannelPool;
 import com.datastax.oss.driver.internal.core.pool.ChannelPoolFactory;
 import com.datastax.oss.driver.internal.core.util.concurrent.CompletableFutures;
-import com.google.common.collect.ImmutableMap;
-import com.google.common.util.concurrent.Uninterruptibles;
+import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableMap;
+import com.datastax.oss.driver.shaded.guava.common.util.concurrent.Uninterruptibles;
 import io.netty.channel.DefaultEventLoopGroup;
 import io.netty.util.concurrent.DefaultPromise;
 import io.netty.util.concurrent.Future;
@@ -89,7 +91,9 @@ public class DefaultSessionPoolsTest {
   @Mock private SpeculativeExecutionPolicy speculativeExecutionPolicy;
   @Mock private AddressTranslator addressTranslator;
   @Mock private ControlConnection controlConnection;
-  @Mock private MetricUpdaterFactory metricUpdaterFactory;
+  @Mock private MetricsFactory metricsFactory;
+  @Mock private NodeStateListener nodeStateListener;
+  @Mock private SchemaChangeListener schemaChangeListener;
 
   private DefaultNode node1;
   private DefaultNode node2;
@@ -135,7 +139,7 @@ public class DefaultSessionPoolsTest {
 
     Mockito.when(context.configLoader()).thenReturn(configLoader);
 
-    Mockito.when(context.metricUpdaterFactory()).thenReturn(metricUpdaterFactory);
+    Mockito.when(context.metricsFactory()).thenReturn(metricsFactory);
 
     // Runtime behavior:
     Mockito.when(context.sessionName()).thenReturn("test");
@@ -164,6 +168,8 @@ public class DefaultSessionPoolsTest {
     Mockito.when(context.retryPolicy()).thenReturn(retryPolicy);
     Mockito.when(context.speculativeExecutionPolicy()).thenReturn(speculativeExecutionPolicy);
     Mockito.when(context.addressTranslator()).thenReturn(addressTranslator);
+    Mockito.when(context.nodeStateListener()).thenReturn(nodeStateListener);
+    Mockito.when(context.schemaChangeListener()).thenReturn(schemaChangeListener);
 
     Mockito.when(metadataManager.closeAsync()).thenReturn(CompletableFuture.completedFuture(null));
     Mockito.when(metadataManager.forceCloseAsync())
@@ -926,10 +932,7 @@ public class DefaultSessionPoolsTest {
   }
 
   private CompletionStage<CqlSession> newSession() {
-    DefaultSession session =
-        new DefaultSession(
-            context, Collections.emptySet(), Collections.emptySet(), Collections.emptySet());
-    return session.init(KEYSPACE);
+    return DefaultSession.init(context, Collections.emptySet(), KEYSPACE);
   }
 
   private static DefaultNode mockLocalNode(int i) {

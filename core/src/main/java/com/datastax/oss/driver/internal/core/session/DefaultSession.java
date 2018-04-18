@@ -15,7 +15,6 @@
  */
 package com.datastax.oss.driver.internal.core.session;
 
-import com.codahale.metrics.MetricRegistry;
 import com.datastax.oss.driver.api.core.AsyncAutoCloseable;
 import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.CqlSession;
@@ -26,10 +25,8 @@ import com.datastax.oss.driver.api.core.loadbalancing.LoadBalancingPolicy;
 import com.datastax.oss.driver.api.core.metadata.Metadata;
 import com.datastax.oss.driver.api.core.metadata.Node;
 import com.datastax.oss.driver.api.core.metadata.NodeState;
-import com.datastax.oss.driver.api.core.metadata.NodeStateListener;
-import com.datastax.oss.driver.api.core.metadata.schema.SchemaChangeListener;
+import com.datastax.oss.driver.api.core.metrics.Metrics;
 import com.datastax.oss.driver.api.core.session.Request;
-import com.datastax.oss.driver.api.core.session.SessionLifecycleListener;
 import com.datastax.oss.driver.api.core.type.reflect.GenericType;
 import com.datastax.oss.driver.internal.core.channel.DriverChannel;
 import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
@@ -42,19 +39,19 @@ import com.datastax.oss.driver.internal.core.pool.ChannelPool;
 import com.datastax.oss.driver.internal.core.util.Loggers;
 import com.datastax.oss.driver.internal.core.util.concurrent.CompletableFutures;
 import com.datastax.oss.driver.internal.core.util.concurrent.RunOrSchedule;
-import com.datastax.oss.driver.internal.core.util.concurrent.UncaughtExceptions;
-import com.google.common.collect.ImmutableList;
+import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableList;
 import io.netty.util.concurrent.EventExecutor;
 import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ConcurrentMap;
+import net.jcip.annotations.ThreadSafe;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -73,9 +70,15 @@ import org.slf4j.LoggerFactory;
  *   <li>trying to send the message on each pool, in the order of the query plan
  * </ul>
  */
+@ThreadSafe
 public class DefaultSession implements CqlSession {
 
   private static final Logger LOG = LoggerFactory.getLogger(DefaultSession.class);
+
+  public static CompletionStage<CqlSession> init(
+      InternalDriverContext context, Set<InetSocketAddress> contactPoints, CqlIdentifier keyspace) {
+    return new DefaultSession(context, contactPoints).init(keyspace);
+  }
 
   private final InternalDriverContext context;
   private final EventExecutor adminExecutor;
@@ -86,24 +89,19 @@ public class DefaultSession implements CqlSession {
   private final PoolManager poolManager;
   private final SessionMetricUpdater metricUpdater;
 
-  public DefaultSession(
-      InternalDriverContext context,
-      Set<InetSocketAddress> contactPoints,
-      Set<NodeStateListener> nodeStateListeners,
-      Set<SessionLifecycleListener> sessionLifecycleListeners) {
+  private DefaultSession(InternalDriverContext context, Set<InetSocketAddress> contactPoints) {
     LOG.debug("Creating new session {}", context.sessionName());
     this.adminExecutor = context.nettyOptions().adminEventExecutorGroup().next();
     this.context = context;
-    this.singleThreaded =
-        new SingleThreaded(context, contactPoints, nodeStateListeners, sessionLifecycleListeners);
+    this.singleThreaded = new SingleThreaded(context, contactPoints);
     this.metadataManager = context.metadataManager();
     this.processorRegistry = context.requestProcessorRegistry();
     this.poolManager = context.poolManager();
     this.logPrefix = context.sessionName();
-    this.metricUpdater = context.metricUpdaterFactory().newSessionUpdater();
+    this.metricUpdater = context.metricsFactory().getSessionUpdater();
   }
 
-  public CompletionStage<CqlSession> init(CqlIdentifier keyspace) {
+  private CompletionStage<CqlSession> init(CqlIdentifier keyspace) {
     RunOrSchedule.on(adminExecutor, () -> singleThreaded.init(keyspace));
     return singleThreaded.initFuture;
   }
@@ -149,8 +147,8 @@ public class DefaultSession implements CqlSession {
   }
 
   @Override
-  public MetricRegistry getMetricRegistry() {
-    return context.metricRegistry();
+  public Optional<? extends Metrics> getMetrics() {
+    return context.metricsFactory().getMetrics();
   }
 
   /**
@@ -205,36 +203,6 @@ public class DefaultSession implements CqlSession {
   }
 
   @Override
-  public void register(SchemaChangeListener listener) {
-    RunOrSchedule.on(adminExecutor, () -> singleThreaded.register(listener));
-  }
-
-  @Override
-  public void unregister(SchemaChangeListener listener) {
-    RunOrSchedule.on(adminExecutor, () -> singleThreaded.unregister(listener));
-  }
-
-  @Override
-  public void register(NodeStateListener listener) {
-    RunOrSchedule.on(adminExecutor, () -> singleThreaded.register(listener));
-  }
-
-  @Override
-  public void unregister(NodeStateListener listener) {
-    RunOrSchedule.on(adminExecutor, () -> singleThreaded.unregister(listener));
-  }
-
-  @Override
-  public void register(SessionLifecycleListener listener) {
-    RunOrSchedule.on(adminExecutor, () -> singleThreaded.register(listener));
-  }
-
-  @Override
-  public void unregister(SessionLifecycleListener listener) {
-    RunOrSchedule.on(adminExecutor, () -> singleThreaded.unregister(listener));
-  }
-
-  @Override
   public CompletionStage<Void> closeFuture() {
     return singleThreaded.closeFuture;
   }
@@ -261,48 +229,16 @@ public class DefaultSession implements CqlSession {
     private final CompletableFuture<Void> closeFuture = new CompletableFuture<>();
     private boolean closeWasCalled;
     private boolean forceCloseWasCalled;
-    private final Set<SchemaChangeListener> schemaChangeListeners = new HashSet<>();
-    private final Set<NodeStateListener> nodeStateListeners;
-    private final Set<SessionLifecycleListener> sessionLifecycleListeners;
 
-    private SingleThreaded(
-        InternalDriverContext context,
-        Set<InetSocketAddress> contactPoints,
-        Set<NodeStateListener> nodeStateListeners,
-        Set<SessionLifecycleListener> sessionLifecycleListeners) {
+    private SingleThreaded(InternalDriverContext context, Set<InetSocketAddress> contactPoints) {
       this.context = context;
       this.nodeStateManager = new NodeStateManager(context);
       this.initialContactPoints = contactPoints;
-      this.nodeStateListeners = nodeStateListeners;
-      this.sessionLifecycleListeners = sessionLifecycleListeners;
-      new SchemaListenerNotifier(schemaChangeListeners, context.eventBus(), adminExecutor);
+      new SchemaListenerNotifier(context.schemaChangeListener(), context.eventBus(), adminExecutor);
       context
           .eventBus()
           .register(
               NodeStateEvent.class, RunOrSchedule.on(adminExecutor, this::onNodeStateChanged));
-      initFuture
-          .whenComplete(
-              (result, error) -> {
-                if (error == null) {
-                  sessionLifecycleListeners.forEach(l -> l.afterInit(DefaultSession.this));
-                } else {
-                  sessionLifecycleListeners.forEach(
-                      l -> l.onInitFailed(DefaultSession.this, error));
-                }
-              })
-          .exceptionally(UncaughtExceptions::log);
-      closeFuture
-          .whenComplete(
-              (result, error) -> {
-                if (error == null) {
-                  sessionLifecycleListeners.forEach(l -> l.afterClose(DefaultSession.this));
-                } else {
-                  sessionLifecycleListeners.forEach(
-                      l -> l.onCloseFailed(DefaultSession.this, error));
-                }
-                sessionLifecycleListeners.clear();
-              })
-          .exceptionally(UncaughtExceptions::log);
     }
 
     private void init(CqlIdentifier keyspace) {
@@ -312,9 +248,6 @@ public class DefaultSession implements CqlSession {
       }
       initWasCalled = true;
       LOG.debug("[{}] Starting initialization", logPrefix);
-
-      sessionLifecycleListeners.forEach(l -> l.beforeInit(DefaultSession.this));
-      nodeStateListeners.forEach(l -> l.onRegister(DefaultSession.this));
 
       MetadataManager metadataManager = context.metadataManager();
       metadataManager
@@ -393,74 +326,16 @@ public class DefaultSession implements CqlSession {
       }
     }
 
-    private void register(SchemaChangeListener listener) {
-      assert adminExecutor.inEventLoop();
-      if (closeWasCalled) {
-        return;
-      }
-      // We want onRegister to be called before any event. We can add the listener before, because
-      // schema events are processed on this same thread.
-      if (schemaChangeListeners.add(listener)) {
-        listener.onRegister(DefaultSession.this);
-      }
-    }
-
-    private void unregister(SchemaChangeListener listener) {
-      assert adminExecutor.inEventLoop();
-      if (closeWasCalled) {
-        return;
-      }
-      if (schemaChangeListeners.remove(listener)) {
-        listener.onUnregister(DefaultSession.this);
-      }
-    }
-
-    private void register(NodeStateListener listener) {
-      assert adminExecutor.inEventLoop();
-      if (closeWasCalled) {
-        return;
-      }
-      if (nodeStateListeners.add(listener)) {
-        listener.onRegister(DefaultSession.this);
-      }
-    }
-
-    private void unregister(NodeStateListener listener) {
-      assert adminExecutor.inEventLoop();
-      if (closeWasCalled) {
-        return;
-      }
-      if (nodeStateListeners.remove(listener)) {
-        listener.onUnregister(DefaultSession.this);
-      }
-    }
-
-    private void register(SessionLifecycleListener listener) {
-      assert adminExecutor.inEventLoop();
-      if (closeWasCalled) {
-        return;
-      }
-      sessionLifecycleListeners.add(listener);
-    }
-
-    private void unregister(SessionLifecycleListener listener) {
-      assert adminExecutor.inEventLoop();
-      if (closeWasCalled) {
-        return;
-      }
-      sessionLifecycleListeners.remove(listener);
-    }
-
     private void onNodeStateChanged(NodeStateEvent event) {
       assert adminExecutor.inEventLoop();
       if (event.newState == null) {
-        nodeStateListeners.forEach(listener -> listener.onRemove(event.node));
+        context.nodeStateListener().onRemove(event.node);
       } else if (event.oldState == null && event.newState == NodeState.UNKNOWN) {
-        nodeStateListeners.forEach(listener -> listener.onAdd(event.node));
+        context.nodeStateListener().onAdd(event.node);
       } else if (event.newState == NodeState.UP) {
-        nodeStateListeners.forEach(listener -> listener.onUp(event.node));
+        context.nodeStateListener().onUp(event.node);
       } else if (event.newState == NodeState.DOWN || event.newState == NodeState.FORCED_DOWN) {
-        nodeStateListeners.forEach(listener -> listener.onDown(event.node));
+        context.nodeStateListener().onDown(event.node);
       }
     }
 
@@ -471,17 +346,6 @@ public class DefaultSession implements CqlSession {
       }
       closeWasCalled = true;
       LOG.debug("[{}] Starting shutdown", logPrefix);
-
-      sessionLifecycleListeners.forEach(l -> l.beforeClose(DefaultSession.this));
-
-      for (SchemaChangeListener listener : schemaChangeListeners) {
-        listener.onUnregister(DefaultSession.this);
-      }
-      schemaChangeListeners.clear();
-      for (NodeStateListener listener : nodeStateListeners) {
-        listener.onUnregister(DefaultSession.this);
-      }
-      nodeStateListeners.clear();
 
       closePolicies();
 
@@ -510,15 +374,6 @@ public class DefaultSession implements CqlSession {
           closeable.forceCloseAsync();
         }
       } else {
-        sessionLifecycleListeners.forEach(l -> l.beforeClose(DefaultSession.this));
-        for (SchemaChangeListener listener : schemaChangeListeners) {
-          listener.onUnregister(DefaultSession.this);
-        }
-        schemaChangeListeners.clear();
-        for (NodeStateListener listener : nodeStateListeners) {
-          listener.onUnregister(DefaultSession.this);
-        }
-        nodeStateListeners.clear();
         closePolicies();
         List<CompletionStage<Void>> childrenCloseStages = new ArrayList<>();
         for (AsyncAutoCloseable closeable : internalComponentsToClose()) {
@@ -568,7 +423,9 @@ public class DefaultSession implements CqlSession {
               context.loadBalancingPolicyWrapper(),
               context.speculativeExecutionPolicy(),
               context.addressTranslator(),
-              context.configLoader())) {
+              context.configLoader(),
+              context.nodeStateListener(),
+              context.schemaChangeListener())) {
         try {
           closeable.close();
         } catch (Throwable t) {

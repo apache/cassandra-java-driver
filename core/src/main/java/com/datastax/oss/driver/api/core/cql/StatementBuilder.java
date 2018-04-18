@@ -18,10 +18,11 @@ package com.datastax.oss.driver.api.core.cql;
 import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.config.DriverConfigProfile;
 import com.datastax.oss.driver.api.core.metadata.token.Token;
-import com.google.common.collect.ImmutableMap;
+import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableMap;
 import java.nio.ByteBuffer;
 import java.util.Collections;
 import java.util.Map;
+import net.jcip.annotations.NotThreadSafe;
 
 /**
  * Handle options common to all statement builders.
@@ -30,6 +31,7 @@ import java.util.Map;
  * @see BatchStatement#builder(BatchType)
  * @see PreparedStatement#boundStatementBuilder()
  */
+@NotThreadSafe
 public abstract class StatementBuilder<T extends StatementBuilder<T, S>, S extends Statement<S>> {
 
   @SuppressWarnings("unchecked")
@@ -78,6 +80,14 @@ public abstract class StatementBuilder<T extends StatementBuilder<T, S>, S exten
   public T withRoutingKeyspace(CqlIdentifier routingKeyspace) {
     this.routingKeyspace = routingKeyspace;
     return self;
+  }
+
+  /**
+   * Shortcut for {@link #withRoutingKeyspace(CqlIdentifier)
+   * withRoutingKeyspace(CqlIdentifier.fromCql(routingKeyspaceName))}.
+   */
+  public T withRoutingKeyspace(String routingKeyspaceName) {
+    return withRoutingKeyspace(CqlIdentifier.fromCql(routingKeyspaceName));
   }
 
   /** @see Statement#setRoutingKey(ByteBuffer) */

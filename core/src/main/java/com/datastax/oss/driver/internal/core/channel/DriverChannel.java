@@ -30,11 +30,13 @@ import java.net.SocketAddress;
 import java.nio.ByteBuffer;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
+import net.jcip.annotations.ThreadSafe;
 
 /**
  * A thin wrapper around a Netty {@link Channel}, to send requests to a Cassandra node and receive
  * responses.
  */
+@ThreadSafe
 public class DriverChannel {
   static final AttributeKey<String> CLUSTER_NAME_KEY = AttributeKey.newInstance("cluster_name");
 

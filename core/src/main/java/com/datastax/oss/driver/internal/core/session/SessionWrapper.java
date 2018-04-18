@@ -15,17 +15,16 @@
  */
 package com.datastax.oss.driver.internal.core.session;
 
-import com.codahale.metrics.MetricRegistry;
 import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.context.DriverContext;
 import com.datastax.oss.driver.api.core.metadata.Metadata;
-import com.datastax.oss.driver.api.core.metadata.NodeStateListener;
-import com.datastax.oss.driver.api.core.metadata.schema.SchemaChangeListener;
+import com.datastax.oss.driver.api.core.metrics.Metrics;
 import com.datastax.oss.driver.api.core.session.Request;
 import com.datastax.oss.driver.api.core.session.Session;
-import com.datastax.oss.driver.api.core.session.SessionLifecycleListener;
 import com.datastax.oss.driver.api.core.type.reflect.GenericType;
+import java.util.Optional;
 import java.util.concurrent.CompletionStage;
+import net.jcip.annotations.ThreadSafe;
 
 /**
  * Utility class to wrap a session.
@@ -40,6 +39,7 @@ import java.util.concurrent.CompletionStage;
  * }
  * }</pre>
  */
+@ThreadSafe
 public class SessionWrapper implements Session {
 
   private final Session delegate;
@@ -93,44 +93,14 @@ public class SessionWrapper implements Session {
   }
 
   @Override
-  public MetricRegistry getMetricRegistry() {
-    return delegate.getMetricRegistry();
+  public Optional<? extends Metrics> getMetrics() {
+    return delegate.getMetrics();
   }
 
   @Override
   public <RequestT extends Request, ResultT> ResultT execute(
       RequestT request, GenericType<ResultT> resultType) {
     return delegate.execute(request, resultType);
-  }
-
-  @Override
-  public void register(SchemaChangeListener listener) {
-    delegate.register(listener);
-  }
-
-  @Override
-  public void unregister(SchemaChangeListener listener) {
-    delegate.unregister(listener);
-  }
-
-  @Override
-  public void register(NodeStateListener listener) {
-    delegate.register(listener);
-  }
-
-  @Override
-  public void unregister(NodeStateListener listener) {
-    delegate.unregister(listener);
-  }
-
-  @Override
-  public void register(SessionLifecycleListener listener) {
-    delegate.register(listener);
-  }
-
-  @Override
-  public void unregister(SessionLifecycleListener listener) {
-    delegate.unregister(listener);
   }
 
   @Override

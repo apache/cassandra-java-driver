@@ -21,7 +21,9 @@ import com.datastax.oss.driver.api.core.type.DataTypes;
 import com.datastax.oss.driver.api.core.type.codec.PrimitiveBooleanCodec;
 import com.datastax.oss.driver.api.core.type.reflect.GenericType;
 import java.nio.ByteBuffer;
+import net.jcip.annotations.ThreadSafe;
 
+@ThreadSafe
 public class BooleanCodec implements PrimitiveBooleanCodec {
 
   private static final ByteBuffer TRUE = ByteBuffer.wrap(new byte[] {1});

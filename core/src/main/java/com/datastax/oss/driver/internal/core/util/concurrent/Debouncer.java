@@ -15,8 +15,8 @@
  */
 package com.datastax.oss.driver.internal.core.util.concurrent;
 
-import com.google.common.base.Preconditions;
-import com.google.common.collect.ImmutableList;
+import com.datastax.oss.driver.shaded.guava.common.base.Preconditions;
+import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableList;
 import io.netty.util.concurrent.EventExecutor;
 import io.netty.util.concurrent.ScheduledFuture;
 import java.time.Duration;
@@ -25,6 +25,7 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 import java.util.function.Function;
+import net.jcip.annotations.NotThreadSafe;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -39,6 +40,7 @@ import org.slf4j.LoggerFactory;
  * @param <T> the type of event.
  * @param <R> the resulting type after the events of a batch have been coalesced.
  */
+@NotThreadSafe // must be confined to adminExecutor
 public class Debouncer<T, R> {
   private static final Logger LOG = LoggerFactory.getLogger(Debouncer.class);
 

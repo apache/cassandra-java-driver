@@ -15,13 +15,15 @@
  */
 package com.datastax.oss.driver.internal.core.util.concurrent;
 
-import com.google.common.annotations.VisibleForTesting;
-import com.google.common.collect.ImmutableList;
+import com.datastax.oss.driver.shaded.guava.common.annotations.VisibleForTesting;
+import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableList;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.function.Consumer;
+import net.jcip.annotations.GuardedBy;
+import net.jcip.annotations.ThreadSafe;
 
 /**
  * Filters a list of events, accumulating them during an initialization period.
@@ -35,6 +37,7 @@ import java.util.function.Consumer;
  *       propagated directly. The order of events is preserved at all times.
  * </ul>
  */
+@ThreadSafe
 public class ReplayingEventFilter<T> {
 
   private enum State {
@@ -47,7 +50,11 @@ public class ReplayingEventFilter<T> {
 
   // Exceptionally, we use a lock: it will rarely be contended, and if so for only a short period.
   private final ReadWriteLock stateLock = new ReentrantReadWriteLock();
+
+  @GuardedBy("stateLock")
   private State state;
+
+  @GuardedBy("stateLock")
   private List<T> recordedEvents;
 
   public ReplayingEventFilter(Consumer<T> consumer) {

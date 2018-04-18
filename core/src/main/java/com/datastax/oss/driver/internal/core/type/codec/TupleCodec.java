@@ -24,7 +24,9 @@ import com.datastax.oss.driver.api.core.type.codec.registry.CodecRegistry;
 import com.datastax.oss.driver.api.core.type.reflect.GenericType;
 import java.nio.BufferUnderflowException;
 import java.nio.ByteBuffer;
+import net.jcip.annotations.ThreadSafe;
 
+@ThreadSafe
 public class TupleCodec implements TypeCodec<TupleValue> {
 
   private final TupleType cqlType;

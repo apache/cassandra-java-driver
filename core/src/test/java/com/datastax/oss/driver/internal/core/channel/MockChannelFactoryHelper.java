@@ -22,9 +22,9 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.timeout;
 
 import com.datastax.oss.driver.internal.core.util.concurrent.CompletableFutures;
-import com.google.common.collect.ListMultimap;
-import com.google.common.collect.MultimapBuilder;
-import com.google.common.collect.Sets;
+import com.datastax.oss.driver.shaded.guava.common.collect.ListMultimap;
+import com.datastax.oss.driver.shaded.guava.common.collect.MultimapBuilder;
+import com.datastax.oss.driver.shaded.guava.common.collect.Sets;
 import java.net.SocketAddress;
 import java.util.ArrayDeque;
 import java.util.Deque;

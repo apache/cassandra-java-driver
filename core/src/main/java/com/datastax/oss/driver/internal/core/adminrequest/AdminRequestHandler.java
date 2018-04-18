@@ -21,6 +21,7 @@ import com.datastax.oss.driver.api.core.type.codec.TypeCodecs;
 import com.datastax.oss.driver.internal.core.channel.DriverChannel;
 import com.datastax.oss.driver.internal.core.channel.ResponseCallback;
 import com.datastax.oss.driver.internal.core.util.concurrent.UncaughtExceptions;
+import com.datastax.oss.driver.shaded.guava.common.collect.Maps;
 import com.datastax.oss.protocol.internal.Frame;
 import com.datastax.oss.protocol.internal.Message;
 import com.datastax.oss.protocol.internal.ProtocolConstants;
@@ -28,7 +29,6 @@ import com.datastax.oss.protocol.internal.request.Query;
 import com.datastax.oss.protocol.internal.request.query.QueryOptions;
 import com.datastax.oss.protocol.internal.response.result.Prepared;
 import com.datastax.oss.protocol.internal.response.result.Rows;
-import com.google.common.collect.Maps;
 import io.netty.util.concurrent.Future;
 import io.netty.util.concurrent.ScheduledFuture;
 import java.net.InetAddress;
@@ -40,10 +40,12 @@ import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.TimeUnit;
+import net.jcip.annotations.ThreadSafe;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /** Handles the lifecyle of an admin request (such as a node refresh or schema refresh query). */
+@ThreadSafe
 public class AdminRequestHandler implements ResponseCallback {
   private static final Logger LOG = LoggerFactory.getLogger(AdminRequestHandler.class);
 
@@ -62,7 +64,8 @@ public class AdminRequestHandler implements ResponseCallback {
     if (!parameters.isEmpty()) {
       debugString += " with parameters " + parameters;
     }
-    return new AdminRequestHandler(channel, message, timeout, logPrefix, debugString);
+    return new AdminRequestHandler(
+        channel, message, Frame.NO_PAYLOAD, timeout, logPrefix, debugString);
   }
 
   public static AdminRequestHandler query(
@@ -72,10 +75,11 @@ public class AdminRequestHandler implements ResponseCallback {
 
   private final DriverChannel channel;
   private final Message message;
+  private final Map<String, ByteBuffer> customPayload;
   private final Duration timeout;
   private final String logPrefix;
   private final String debugString;
-  private final CompletableFuture<AdminResult> result = new CompletableFuture<>();
+  protected final CompletableFuture<AdminResult> result = new CompletableFuture<>();
 
   // This is only ever accessed on the channel's event loop, so it doesn't need to be volatile
   private ScheduledFuture<?> timeoutFuture;
@@ -83,21 +87,19 @@ public class AdminRequestHandler implements ResponseCallback {
   public AdminRequestHandler(
       DriverChannel channel,
       Message message,
+      Map<String, ByteBuffer> customPayload,
       Duration timeout,
       String logPrefix,
       String debugString) {
     this.channel = channel;
     this.message = message;
+    this.customPayload = customPayload;
     this.timeout = timeout;
     this.logPrefix = logPrefix;
     this.debugString = debugString;
   }
 
   public CompletionStage<AdminResult> start() {
-    return start(Frame.NO_PAYLOAD);
-  }
-
-  public CompletionStage<AdminResult> start(Map<String, ByteBuffer> customPayload) {
     LOG.debug("[{}] Executing {}", logPrefix, this);
     channel.write(message, false, customPayload, this).addListener(this::onWriteComplete);
     return result;
@@ -110,12 +112,12 @@ public class AdminRequestHandler implements ResponseCallback {
           channel.eventLoop().schedule(this::fireTimeout, timeout.toNanos(), TimeUnit.NANOSECONDS);
       timeoutFuture.addListener(UncaughtExceptions::log);
     } else {
-      result.completeExceptionally(future.cause());
+      setFinalError(future.cause());
     }
   }
 
   private void fireTimeout() {
-    result.completeExceptionally(
+    setFinalError(
         new DriverTimeoutException(String.format("%s timed out after %s", debugString, timeout)));
     if (!channel.closeFuture().isDone()) {
       channel.cancel(this);
@@ -127,7 +129,7 @@ public class AdminRequestHandler implements ResponseCallback {
     if (timeoutFuture != null) {
       timeoutFuture.cancel(true);
     }
-    result.completeExceptionally(error);
+    setFinalError(error);
   }
 
   @Override
@@ -141,14 +143,22 @@ public class AdminRequestHandler implements ResponseCallback {
       Rows rows = (Rows) message;
       ByteBuffer pagingState = rows.getMetadata().pagingState;
       AdminRequestHandler nextHandler = (pagingState == null) ? null : this.copy(pagingState);
-      result.complete(new AdminResult(rows, nextHandler, channel.protocolVersion()));
+      setFinalResult(new AdminResult(rows, nextHandler, channel.protocolVersion()));
     } else if (message instanceof Prepared) {
       // Internal prepares are only "reprepare on up" types of queries, where we only care about
       // success, not the actual result, so this is good enough:
-      result.complete(null);
+      setFinalResult(null);
     } else {
-      result.completeExceptionally(new UnexpectedResponseException(debugString, message));
+      setFinalError(new UnexpectedResponseException(debugString, message));
     }
+  }
+
+  protected boolean setFinalResult(AdminResult result) {
+    return this.result.complete(result);
+  }
+
+  protected boolean setFinalError(Throwable error) {
+    return result.completeExceptionally(error);
   }
 
   private AdminRequestHandler copy(ByteBuffer pagingState) {
@@ -158,7 +168,12 @@ public class AdminRequestHandler implements ResponseCallback {
     QueryOptions newOptions =
         buildQueryOptions(currentOptions.pageSize, currentOptions.namedValues, pagingState);
     return new AdminRequestHandler(
-        channel, new Query(current.query, newOptions), timeout, logPrefix, debugString);
+        channel,
+        new Query(current.query, newOptions),
+        customPayload,
+        timeout,
+        logPrefix,
+        debugString);
   }
 
   private static QueryOptions buildQueryOptions(

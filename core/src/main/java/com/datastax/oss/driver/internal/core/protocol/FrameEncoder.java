@@ -23,8 +23,10 @@ import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.MessageToMessageEncoder;
 import java.util.List;
+import net.jcip.annotations.ThreadSafe;
 
 @ChannelHandler.Sharable
+@ThreadSafe
 public class FrameEncoder extends MessageToMessageEncoder<Frame> {
 
   private final FrameCodec<ByteBuf> frameCodec;

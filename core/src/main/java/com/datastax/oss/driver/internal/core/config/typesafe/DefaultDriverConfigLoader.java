@@ -34,10 +34,12 @@ import io.netty.util.concurrent.ScheduledFuture;
 import java.time.Duration;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
+import net.jcip.annotations.ThreadSafe;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-/** The default loader; it is based on TypeSafe Config and reloads at a configurable interval. */
+/** The default loader; it is based on Typesafe Config and reloads at a configurable interval. */
+@ThreadSafe
 public class DefaultDriverConfigLoader implements DriverConfigLoader {
 
   private static final Logger LOG = LoggerFactory.getLogger(DefaultDriverConfigLoader.class);
@@ -49,12 +51,12 @@ public class DefaultDriverConfigLoader implements DriverConfigLoader {
       };
 
   private final Supplier<Config> configSupplier;
-  private final TypeSafeDriverConfig driverConfig;
+  private final TypesafeDriverConfig driverConfig;
 
   private volatile SingleThreaded singleThreaded;
 
   /**
-   * Builds a new instance with the default TypeSafe config loading rules (documented in {@link
+   * Builds a new instance with the default Typesafe config loading rules (documented in {@link
    * SessionBuilder#withConfigLoader(DriverConfigLoader)}) and the core driver options.
    */
   public DefaultDriverConfigLoader() {
@@ -67,7 +69,7 @@ public class DefaultDriverConfigLoader implements DriverConfigLoader {
    */
   public DefaultDriverConfigLoader(Supplier<Config> configSupplier, DriverOption[]... options) {
     this.configSupplier = configSupplier;
-    this.driverConfig = new TypeSafeDriverConfig(configSupplier.get(), options);
+    this.driverConfig = new TypesafeDriverConfig(configSupplier.get(), options);
   }
 
   @Override

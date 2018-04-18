@@ -22,6 +22,7 @@ import com.datastax.oss.driver.api.core.config.DriverConfigLoader;
 import com.datastax.oss.driver.api.core.config.DriverConfigProfile;
 import com.datastax.oss.driver.api.core.context.DriverContext;
 import com.datastax.oss.driver.api.core.metadata.NodeStateListener;
+import com.datastax.oss.driver.api.core.metadata.schema.SchemaChangeListener;
 import com.datastax.oss.driver.api.core.type.codec.TypeCodec;
 import com.datastax.oss.driver.internal.core.ContactPoints;
 import com.datastax.oss.driver.internal.core.config.typesafe.DefaultDriverConfigLoader;
@@ -35,11 +36,11 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
-import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.CompletionStage;
 import java.util.function.Supplier;
+import net.jcip.annotations.NotThreadSafe;
 
 /**
  * Base implementation to build session instances.
@@ -47,7 +48,8 @@ import java.util.function.Supplier;
  * <p>You only need to deal with this directly if you use custom driver extensions. For the default
  * session implementation, see {@link CqlSession#builder()}.
  */
-public abstract class SessionBuilder<SelfT extends SessionBuilder<SelfT, SessionT>, SessionT> {
+@NotThreadSafe
+public abstract class SessionBuilder<SelfT extends SessionBuilder, SessionT> {
 
   @SuppressWarnings("unchecked")
   protected final SelfT self = (SelfT) this;
@@ -55,8 +57,8 @@ public abstract class SessionBuilder<SelfT extends SessionBuilder<SelfT, Session
   protected DriverConfigLoader configLoader;
   protected Set<InetSocketAddress> programmaticContactPoints = new HashSet<>();
   protected List<TypeCodec<?>> typeCodecs = new ArrayList<>();
-  protected final Set<NodeStateListener> nodeStateListeners = new HashSet<>();
-  protected final Set<SessionLifecycleListener> sessionLifecycleListeners = new LinkedHashSet<>();
+  private NodeStateListener nodeStateListener;
+  private SchemaChangeListener schemaChangeListener;
   protected CqlIdentifier keyspace;
 
   /**
@@ -133,27 +135,25 @@ public abstract class SessionBuilder<SelfT extends SessionBuilder<SelfT, Session
   }
 
   /**
-   * Registers initial {@linkplain SessionLifecycleListener lifecycle listeners} for the new
-   * session.
+   * Registers a node state listener to use with the session.
    *
-   * <p>Note that such listeners can also be {@linkplain Session#register(SessionLifecycleListener)
-   * registered} or {@linkplain Session#unregister(SessionLifecycleListener) unregistered} after the
-   * session is created.
+   * <p>If the listener is specified programmatically with this method, it overrides the
+   * configuration (that is, the {@code metadata.node-state-listener.class} option will be ignored.
    */
-  public SelfT addSessionLifecycleListeners(SessionLifecycleListener... newListeners) {
-    Collections.addAll(this.sessionLifecycleListeners, newListeners);
+  public SelfT withNodeStateListener(NodeStateListener nodeStateListener) {
+    this.nodeStateListener = nodeStateListener;
     return self;
   }
 
   /**
-   * Registers initial {@linkplain NodeStateListener node state listeners} for the new session.
+   * Registers a schema change listener to use with the session.
    *
-   * <p>Note that such listeners can also be {@linkplain Session#register(NodeStateListener)
-   * registered} or {@linkplain Session#unregister(NodeStateListener) unregistered} after the
-   * session is created.
+   * <p>If the listener is specified programmatically with this method, it overrides the
+   * configuration (that is, the {@code metadata.schema-change-listener.class} option will be
+   * ignored.
    */
-  public SelfT addNodeStateListeners(NodeStateListener... newListeners) {
-    Collections.addAll(this.nodeStateListeners, newListeners);
+  public SelfT withSchemaChangeListener(SchemaChangeListener schemaChangeListener) {
+    this.schemaChangeListener = schemaChangeListener;
     return self;
   }
 
@@ -169,12 +169,20 @@ public abstract class SessionBuilder<SelfT extends SessionBuilder<SelfT, Session
   }
 
   /**
+   * Shortcut for {@link #withKeyspace(CqlIdentifier)
+   * withKeyspace(CqlIdentifier.fromCql(keyspaceName))}
+   */
+  public SelfT withKeyspace(String keyspaceName) {
+    return withKeyspace(CqlIdentifier.fromCql(keyspaceName));
+  }
+
+  /**
    * Creates the session with the options set by this builder.
    *
    * @return a completion stage that completes with the session when it is fully initialized.
    */
   public CompletionStage<SessionT> buildAsync() {
-    return buildAndInitDefaultSessionAsync().thenApply(this::wrap);
+    return buildDefaultSessionAsync().thenApply(this::wrap);
   }
 
   /**
@@ -189,7 +197,7 @@ public abstract class SessionBuilder<SelfT extends SessionBuilder<SelfT, Session
 
   protected abstract SessionT wrap(CqlSession defaultSession);
 
-  protected final CompletionStage<CqlSession> buildAndInitDefaultSessionAsync() {
+  protected final CompletionStage<CqlSession> buildDefaultSessionAsync() {
     DriverConfigLoader configLoader = buildIfNull(this.configLoader, this::defaultConfigLoader);
 
     DriverConfigProfile defaultConfig = configLoader.getInitialConfig().getDefaultProfile();
@@ -206,12 +214,11 @@ public abstract class SessionBuilder<SelfT extends SessionBuilder<SelfT, Session
           CqlIdentifier.fromCql(defaultConfig.getString(DefaultDriverOption.SESSION_KEYSPACE));
     }
 
-    InternalDriverContext context = (InternalDriverContext) buildContext(configLoader, typeCodecs);
-    DefaultSession session =
-        (DefaultSession)
-            buildDefaultSession(
-                context, contactPoints, nodeStateListeners, sessionLifecycleListeners);
-    return session.init(keyspace);
+    return DefaultSession.init(
+        (InternalDriverContext)
+            buildContext(configLoader, typeCodecs, nodeStateListener, schemaChangeListener),
+        contactPoints,
+        keyspace);
   }
 
   /**
@@ -219,24 +226,12 @@ public abstract class SessionBuilder<SelfT extends SessionBuilder<SelfT, Session
    * directly in the signature to avoid leaking that type through the protected API).
    */
   protected DriverContext buildContext(
-      DriverConfigLoader configLoader, List<TypeCodec<?>> typeCodecs) {
-    return new DefaultDriverContext(configLoader, typeCodecs);
-  }
-
-  /**
-   * This <b>must</b> return an instance of {@code DefaultSession} (it's not expressed directly in
-   * the signature to avoid leaking that type through the protected API).
-   */
-  protected Session buildDefaultSession(
-      DriverContext context,
-      Set<InetSocketAddress> contactPoints,
-      Set<NodeStateListener> nodeStateListeners,
-      Set<SessionLifecycleListener> sessionLifecycleListeners) {
-    return new DefaultSession(
-        (InternalDriverContext) context,
-        contactPoints,
-        nodeStateListeners,
-        sessionLifecycleListeners);
+      DriverConfigLoader configLoader,
+      List<TypeCodec<?>> typeCodecs,
+      NodeStateListener nodeStateListener,
+      SchemaChangeListener schemaChangeListener) {
+    return new DefaultDriverContext(
+        configLoader, typeCodecs, nodeStateListener, schemaChangeListener);
   }
 
   private static <T> T buildIfNull(T value, Supplier<T> builder) {

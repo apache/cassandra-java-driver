@@ -22,7 +22,7 @@ import com.datastax.oss.driver.api.core.metadata.token.Token;
 import com.datastax.oss.driver.api.core.metadata.token.TokenRange;
 import com.datastax.oss.driver.api.core.session.Session;
 import com.datastax.oss.driver.api.core.type.codec.TypeCodec;
-import com.google.common.collect.ImmutableSet;
+import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableSet;
 import java.nio.ByteBuffer;
 import java.util.Set;
 
@@ -78,11 +78,35 @@ public interface TokenMap {
   /** The token ranges that are replicated on the given node, for the given keyspace. */
   Set<TokenRange> getTokenRanges(CqlIdentifier keyspace, Node replica);
 
+  /**
+   * Shortcut for {@link #getTokenRanges(CqlIdentifier, Node)
+   * getTokenRanges(CqlIdentifier.fromCql(keyspaceName), replica)}.
+   */
+  default Set<TokenRange> getTokenRanges(String keyspaceName, Node replica) {
+    return getTokenRanges(CqlIdentifier.fromCql(keyspaceName), replica);
+  }
+
   /** The replicas for a given partition key in the given keyspace. */
   Set<Node> getReplicas(CqlIdentifier keyspace, ByteBuffer partitionKey);
 
+  /**
+   * Shortcut for {@link #getReplicas(CqlIdentifier, ByteBuffer)
+   * getReplicas(CqlIdentifier.fromCql(keyspaceName), partitionKey)}.
+   */
+  default Set<Node> getReplicas(String keyspaceName, ByteBuffer partitionKey) {
+    return getReplicas(CqlIdentifier.fromCql(keyspaceName), partitionKey);
+  }
+
   /** The replicas for a given token in the given keyspace. */
   Set<Node> getReplicas(CqlIdentifier keyspace, Token token);
+
+  /**
+   * Shortcut for {@link #getReplicas(CqlIdentifier, Token)
+   * getReplicas(CqlIdentifier.fromCql(keyspaceName), token)}.
+   */
+  default Set<Node> getReplicas(String keyspaceName, Token token) {
+    return getReplicas(CqlIdentifier.fromCql(keyspaceName), token);
+  }
 
   /**
    * The replicas for a given range in the given keyspace.
@@ -94,5 +118,13 @@ public interface TokenMap {
    */
   default Set<Node> getReplicas(CqlIdentifier keyspace, TokenRange range) {
     return getReplicas(keyspace, range.getEnd());
+  }
+
+  /**
+   * Shortcut for {@link #getReplicas(CqlIdentifier, TokenRange)
+   * getReplicas(CqlIdentifier.fromCql(keyspaceName), range)}.
+   */
+  default Set<Node> getReplicas(String keyspaceName, TokenRange range) {
+    return getReplicas(CqlIdentifier.fromCql(keyspaceName), range);
   }
 }

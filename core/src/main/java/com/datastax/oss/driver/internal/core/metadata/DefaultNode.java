@@ -28,11 +28,13 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
+import net.jcip.annotations.ThreadSafe;
 
 /**
  * Implementation note: all the mutable state in this class is read concurrently, but only mutated
  * from {@link MetadataManager}'s admin thread.
  */
+@ThreadSafe
 public class DefaultNode implements Node {
 
   private final InetSocketAddress connectAddress;
@@ -64,7 +66,7 @@ public class DefaultNode implements Node {
     this.extras = Collections.emptyMap();
     // We leak a reference to a partially constructed object (this), but in practice this won't be a
     // problem because the node updater only needs the connect address to initialize.
-    this.metricUpdater = context.metricUpdaterFactory().newNodeUpdater(this);
+    this.metricUpdater = context.metricsFactory().newNodeUpdater(this);
   }
 
   @Override

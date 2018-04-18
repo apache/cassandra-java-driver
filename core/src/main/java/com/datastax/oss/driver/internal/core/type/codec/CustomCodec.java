@@ -22,7 +22,9 @@ import com.datastax.oss.driver.api.core.type.codec.TypeCodec;
 import com.datastax.oss.driver.api.core.type.reflect.GenericType;
 import com.datastax.oss.protocol.internal.util.Bytes;
 import java.nio.ByteBuffer;
+import net.jcip.annotations.ThreadSafe;
 
+@ThreadSafe
 public class CustomCodec implements TypeCodec<ByteBuffer> {
 
   private final CustomType cqlType;

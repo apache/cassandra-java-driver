@@ -17,7 +17,8 @@ package com.datastax.oss.driver.api.core.time;
 
 import com.datastax.oss.driver.api.core.context.DriverContext;
 import com.datastax.oss.driver.internal.core.time.Clock;
-import com.google.common.annotations.VisibleForTesting;
+import com.datastax.oss.driver.shaded.guava.common.annotations.VisibleForTesting;
+import net.jcip.annotations.ThreadSafe;
 
 /**
  * A timestamp generator that guarantees monotonically increasing timestamps within each thread, and
@@ -27,6 +28,7 @@ import com.google.common.annotations.VisibleForTesting;
  * than one thread at a time; only use it when threads are not in direct competition for timestamp
  * ties (i.e., they are executing independent statements).
  */
+@ThreadSafe
 public class ThreadLocalTimestampGenerator extends MonotonicTimestampGenerator {
 
   private final ThreadLocal<Long> lastRef = ThreadLocal.withInitial(() -> 0L);

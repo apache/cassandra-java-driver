@@ -24,7 +24,9 @@ import java.nio.ByteBuffer;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ConcurrentMap;
+import net.jcip.annotations.ThreadSafe;
 
+@ThreadSafe
 public class CqlPrepareAsyncHandler extends CqlPrepareHandlerBase
     implements RequestHandler<PrepareRequest, CompletionStage<PreparedStatement>> {
 

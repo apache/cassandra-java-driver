@@ -27,7 +27,7 @@ import com.datastax.oss.driver.internal.core.metadata.schema.DefaultKeyspaceMeta
 import com.datastax.oss.driver.internal.core.metadata.schema.events.KeyspaceChangeEvent;
 import com.datastax.oss.driver.internal.core.metadata.schema.events.TypeChangeEvent;
 import com.datastax.oss.driver.internal.core.type.UserDefinedTypeBuilder;
-import com.google.common.collect.ImmutableMap;
+import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableMap;
 import java.util.Collections;
 import org.junit.Before;
 import org.junit.Test;

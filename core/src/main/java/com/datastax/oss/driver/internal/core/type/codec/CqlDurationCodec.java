@@ -22,13 +22,15 @@ import com.datastax.oss.driver.api.core.type.DataTypes;
 import com.datastax.oss.driver.api.core.type.codec.TypeCodec;
 import com.datastax.oss.driver.api.core.type.reflect.GenericType;
 import com.datastax.oss.driver.internal.core.type.util.VIntCoding;
+import com.datastax.oss.driver.shaded.guava.common.io.ByteArrayDataOutput;
+import com.datastax.oss.driver.shaded.guava.common.io.ByteStreams;
 import com.datastax.oss.protocol.internal.util.Bytes;
-import com.google.common.io.ByteArrayDataOutput;
-import com.google.common.io.ByteStreams;
 import java.io.DataInput;
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import net.jcip.annotations.ThreadSafe;
 
+@ThreadSafe
 public class CqlDurationCodec implements TypeCodec<CqlDuration> {
   @Override
   public GenericType<CqlDuration> getJavaType() {

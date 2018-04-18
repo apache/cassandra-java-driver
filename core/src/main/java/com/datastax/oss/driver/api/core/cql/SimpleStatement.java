@@ -19,6 +19,7 @@ import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.CqlSession;
 import com.datastax.oss.driver.api.core.DefaultProtocolVersion;
 import com.datastax.oss.driver.api.core.session.Request;
+import com.datastax.oss.driver.internal.core.CqlIdentifiers;
 import com.datastax.oss.driver.internal.core.cql.DefaultSimpleStatement;
 import java.util.Arrays;
 import java.util.Collections;
@@ -100,7 +101,7 @@ public interface SimpleStatement extends BatchableStatement<SimpleStatement> {
     return new DefaultSimpleStatement(
         cqlQuery,
         Collections.emptyList(),
-        namedValues,
+        CqlIdentifiers.wrapKeys(namedValues),
         null,
         null,
         null,
@@ -148,7 +149,7 @@ public interface SimpleStatement extends BatchableStatement<SimpleStatement> {
    * method. However custom implementations may choose to be mutable and return the same instance.
    *
    * @see #setPositionalValues(List)
-   * @see #setNamedValues(Map)
+   * @see #setNamedValuesWithIds(Map)
    */
   SimpleStatement setQuery(String newQuery);
 
@@ -163,14 +164,22 @@ public interface SimpleStatement extends BatchableStatement<SimpleStatement> {
    */
   SimpleStatement setKeyspace(CqlIdentifier newKeyspace);
 
+  /**
+   * Shortcut for {@link #setKeyspace(CqlIdentifier)
+   * setKeyspace(CqlIdentifier.fromCql(newKeyspaceName))}.
+   */
+  default SimpleStatement setKeyspace(String newKeyspaceName) {
+    return setKeyspace(CqlIdentifier.fromCql(newKeyspaceName));
+  }
+
   List<Object> getPositionalValues();
 
   /**
    * Sets the positional values to bind to anonymous placeholders.
    *
-   * <p>You can use either positional or named values, but not both. Therefore if this method
-   * returns a non-empty list, then {@link #getNamedValues()} must return an empty map, otherwise a
-   * runtime error will be thrown.
+   * <p>You can use either positional or named values, but not both. Therefore if you call this
+   * method but {@link #getNamedValues()} returns a non-empty map, an {@link
+   * IllegalArgumentException} will be thrown.
    *
    * <p>The driver's built-in implementation is immutable, and returns a new instance from this
    * method. However custom implementations may choose to be mutable and return the same instance.
@@ -179,21 +188,29 @@ public interface SimpleStatement extends BatchableStatement<SimpleStatement> {
    */
   SimpleStatement setPositionalValues(List<Object> newPositionalValues);
 
-  Map<String, Object> getNamedValues();
+  Map<CqlIdentifier, Object> getNamedValues();
 
   /**
    * Sets the named values to bind to named placeholders.
    *
    * <p>Names must be stripped of the leading column.
    *
-   * <p>You can use either positional or named values, but not both. Therefore if this method
-   * returns a non-empty map, then {@link #getPositionalValues()} must return an empty list,
-   * otherwise a runtime error will be thrown.
+   * <p>You can use either positional or named values, but not both. Therefore if you call this
+   * method but {@link #getPositionalValues()} returns a non-empty list, an {@link
+   * IllegalArgumentException} will be thrown.
    *
    * <p>The driver's built-in implementation is immutable, and returns a new instance from this
    * method. However custom implementations may choose to be mutable and return the same instance.
    *
    * @see #setQuery(String)
    */
-  SimpleStatement setNamedValues(Map<String, Object> newNamedValues);
+  SimpleStatement setNamedValuesWithIds(Map<CqlIdentifier, Object> newNamedValues);
+
+  /**
+   * Shortcut for {@link #setNamedValuesWithIds(Map)} with raw strings as value names. The keys are
+   * converted on the fly with {@link CqlIdentifier#fromCql(String)}.
+   */
+  default SimpleStatement setNamedValues(Map<String, Object> newNamedValues) {
+    return setNamedValuesWithIds(CqlIdentifiers.wrapKeys(newNamedValues));
+  }
 }

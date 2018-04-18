@@ -17,7 +17,7 @@ package com.datastax.oss.driver.api.core.metadata.schema;
 
 import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.internal.core.metadata.schema.ScriptBuilder;
-import com.google.common.collect.Maps;
+import com.datastax.oss.driver.shaded.guava.common.collect.Maps;
 import java.util.Map;
 
 /** A secondary index in the schema metadata. */

@@ -22,12 +22,14 @@ import com.datastax.oss.driver.internal.core.cql.CqlPrepareSyncProcessor;
 import com.datastax.oss.driver.internal.core.cql.CqlRequestAsyncProcessor;
 import com.datastax.oss.driver.internal.core.cql.CqlRequestSyncProcessor;
 import com.datastax.oss.driver.internal.core.cql.DefaultPreparedStatement;
-import com.google.common.collect.MapMaker;
+import com.datastax.oss.driver.shaded.guava.common.collect.MapMaker;
 import java.nio.ByteBuffer;
 import java.util.concurrent.ConcurrentMap;
+import net.jcip.annotations.ThreadSafe;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+@ThreadSafe
 public class RequestProcessorRegistry {
 
   private static final Logger LOG = LoggerFactory.getLogger(RequestProcessorRegistry.class);

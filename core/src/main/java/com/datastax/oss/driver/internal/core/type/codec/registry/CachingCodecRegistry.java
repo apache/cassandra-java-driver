@@ -29,15 +29,16 @@ import com.datastax.oss.driver.api.core.type.codec.TypeCodec;
 import com.datastax.oss.driver.api.core.type.codec.TypeCodecs;
 import com.datastax.oss.driver.api.core.type.codec.registry.CodecRegistry;
 import com.datastax.oss.driver.api.core.type.reflect.GenericType;
+import com.datastax.oss.driver.shaded.guava.common.base.Preconditions;
+import com.datastax.oss.driver.shaded.guava.common.reflect.TypeToken;
 import com.datastax.oss.protocol.internal.util.IntMap;
-import com.google.common.base.Preconditions;
-import com.google.common.reflect.TypeToken;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.nio.ByteBuffer;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import net.jcip.annotations.ThreadSafe;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -52,6 +53,7 @@ import org.slf4j.LoggerFactory;
  * <p>This class is abstract in order to be agnostic from the cache implementation. Subclasses must
  * implement {@link #getCachedCodec(DataType, GenericType)}.
  */
+@ThreadSafe
 public abstract class CachingCodecRegistry implements CodecRegistry {
 
   private static final Logger LOG = LoggerFactory.getLogger(CachingCodecRegistry.class);

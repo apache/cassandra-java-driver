@@ -16,9 +16,11 @@
 package com.datastax.oss.driver.internal.core.metadata.token;
 
 import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
+import net.jcip.annotations.ThreadSafe;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+@ThreadSafe
 public class DefaultTokenFactoryRegistry implements TokenFactoryRegistry {
 
   private static final Logger LOG = LoggerFactory.getLogger(DefaultTokenFactoryRegistry.class);
