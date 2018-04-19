@@ -19,7 +19,6 @@ import com.datastax.oss.driver.api.core.ProtocolVersion;
 import com.datastax.oss.driver.api.core.type.DataType;
 import com.datastax.oss.driver.api.core.type.reflect.GenericType;
 import com.datastax.oss.driver.shaded.guava.common.base.Preconditions;
-import com.datastax.oss.driver.shaded.guava.common.reflect.TypeToken;
 import java.nio.ByteBuffer;
 
 /** Manages the two-way conversion between a CQL type and a Java type. */
@@ -66,9 +65,13 @@ public interface TypeCodec<T> {
    * <p>The object's Java type is inferred from its runtime (raw) type, contrary to {@link
    * #accepts(GenericType)} which is capable of handling generic types.
    *
-   * <p>The default implementation is <em>covariant</em> with respect to the passed argument and
-   * <em>it's strongly recommended not to modify this behavior</em>. This means that, by default, a
-   * codec will accept <em>any subtype</em> of the Java type that it has been created for.
+   * <p>Contrary to other {@code accept} methods, this method's default implementation is
+   * <em>covariant</em> with respect to the passed argument and <em>it's strongly recommended not to
+   * modify this behavior</em>. This means that, by default, a codec will accept <em>any
+   * subtype</em> of the Java type that it has been created for. This is so because codec lookups by
+   * arbitrary Java objects only make sense when attempting to encode, never when attempting to
+   * decode, and indeed the {@linkplain #encode(Object, ProtocolVersion) encode} method is covariant
+   * with {@code T}.
    *
    * <p>It can only handle non-parameterized types; codecs handling parameterized types, such as
    * collection types, must override this method and perform some sort of "manual" inspection of the
