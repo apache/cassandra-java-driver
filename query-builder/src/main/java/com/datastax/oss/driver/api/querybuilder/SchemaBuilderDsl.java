@@ -32,7 +32,7 @@ import com.datastax.oss.driver.api.querybuilder.schema.CreateTableStart;
 import com.datastax.oss.driver.api.querybuilder.schema.CreateTableWithOptions;
 import com.datastax.oss.driver.api.querybuilder.schema.CreateTypeStart;
 import com.datastax.oss.driver.api.querybuilder.schema.Drop;
-import com.datastax.oss.driver.api.querybuilder.schema.RelationStructure;
+import com.datastax.oss.driver.api.querybuilder.schema.RelationOptions;
 import com.datastax.oss.driver.api.querybuilder.schema.compaction.CompactionStrategy;
 import com.datastax.oss.driver.api.querybuilder.schema.compaction.LeveledCompactionStrategy;
 import com.datastax.oss.driver.api.querybuilder.schema.compaction.SizeTieredCompactionStrategy;
@@ -558,7 +558,7 @@ public class SchemaBuilderDsl {
   /**
    * Specifies the rows_per_partition configuration for table caching options.
    *
-   * @see RelationStructure#withCaching(boolean, RowsPerPartition)
+   * @see RelationOptions#withCaching(boolean, SchemaBuilderDsl.RowsPerPartition)
    */
   public static class RowsPerPartition {
 
