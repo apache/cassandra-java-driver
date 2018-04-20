@@ -79,6 +79,8 @@ import com.datastax.oss.protocol.internal.response.result.Prepared;
 import com.datastax.oss.protocol.internal.response.result.Rows;
 import com.datastax.oss.protocol.internal.response.result.RowsMetadata;
 import com.datastax.oss.protocol.internal.util.Bytes;
+import com.datastax.oss.protocol.internal.util.collection.NullAllowingImmutableList;
+import com.datastax.oss.protocol.internal.util.collection.NullAllowingImmutableMap;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -214,11 +216,16 @@ public class Conversions {
     if (values.isEmpty()) {
       return Collections.emptyList();
     } else {
-      List<ByteBuffer> encodedValues = new ArrayList<>(values.size());
+      NullAllowingImmutableList.Builder<ByteBuffer> encodedValues =
+          NullAllowingImmutableList.builder(values.size());
       for (Object value : values) {
-        encodedValues.add(encode(value, codecRegistry, protocolVersion));
+        if (value == null) {
+          encodedValues.add(null);
+        } else {
+          encodedValues.add(encode(value, codecRegistry, protocolVersion));
+        }
       }
-      return encodedValues;
+      return encodedValues.build();
     }
   }
 
@@ -229,10 +236,16 @@ public class Conversions {
     if (values.isEmpty()) {
       return Collections.emptyMap();
     } else {
-      ImmutableMap.Builder<String, ByteBuffer> encodedValues = ImmutableMap.builder();
+      NullAllowingImmutableMap.Builder<String, ByteBuffer> encodedValues =
+          NullAllowingImmutableMap.builder(values.size());
       for (Map.Entry<CqlIdentifier, Object> entry : values.entrySet()) {
-        encodedValues.put(
-            entry.getKey().asInternal(), encode(entry.getValue(), codecRegistry, protocolVersion));
+        if (entry.getValue() == null) {
+          encodedValues.put(entry.getKey().asInternal(), null);
+        } else {
+          encodedValues.put(
+              entry.getKey().asInternal(),
+              encode(entry.getValue(), codecRegistry, protocolVersion));
+        }
       }
       return encodedValues.build();
     }

@@ -188,6 +188,32 @@ public class SimpleStatementIT {
     assertThat(row.getInt("v")).isEqualTo(4);
   }
 
+  @Test
+  public void should_allow_nulls_in_positional_values() {
+    // given a statement with positional values
+    SimpleStatement insert =
+        SimpleStatement.builder("INSERT into test2 (k, v) values (?, ?)")
+            .addPositionalValue(name.getMethodName())
+            .addPositionalValue(null)
+            .build();
+
+    // when executing that statement
+    cluster.session().execute(insert);
+
+    // then we should be able to retrieve the data as inserted.
+    SimpleStatement select =
+        SimpleStatement.builder("select k,v from test2 where k=?")
+            .addPositionalValue(name.getMethodName())
+            .build();
+
+    ResultSet result = cluster.session().execute(select);
+    assertThat(result.getAvailableWithoutFetching()).isEqualTo(1);
+
+    Row row = result.iterator().next();
+    assertThat(row.getString("k")).isEqualTo(name.getMethodName());
+    assertThat(row.getObject("v")).isNull();
+  }
+
   @Test(expected = InvalidQueryException.class)
   public void should_fail_when_too_many_positional_values_provided() {
     // given a statement with more bound values than anticipated (3 given vs. 2 expected)
@@ -240,6 +266,32 @@ public class SimpleStatementIT {
     Row row = result.iterator().next();
     assertThat(row.getString("k")).isEqualTo(name.getMethodName());
     assertThat(row.getInt("v")).isEqualTo(7);
+  }
+
+  @Test
+  public void should_allow_nulls_in_named_values() {
+    // given a statement with named values
+    SimpleStatement insert =
+        SimpleStatement.builder("INSERT into test2 (k, v) values (:k, :v)")
+            .addNamedValue("k", name.getMethodName())
+            .addNamedValue("v", null)
+            .build();
+
+    // when executing that statement
+    cluster.session().execute(insert);
+
+    // then we should be able to retrieve the data as inserted.
+    SimpleStatement select =
+        SimpleStatement.builder("select k,v from test2 where k=:k")
+            .addNamedValue("k", name.getMethodName())
+            .build();
+
+    ResultSet result = cluster.session().execute(select);
+    assertThat(result.getAvailableWithoutFetching()).isEqualTo(1);
+
+    Row row = result.iterator().next();
+    assertThat(row.getString("k")).isEqualTo(name.getMethodName());
+    assertThat(row.getObject("v")).isNull();
   }
 
   @Test(expected = InvalidQueryException.class)

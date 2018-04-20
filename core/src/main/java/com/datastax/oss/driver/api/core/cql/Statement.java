@@ -118,8 +118,13 @@ public interface Statement<T extends Statement<T>> extends Request {
   /**
    * Sets the custom payload to use for execution.
    *
-   * <p>All the driver's built-in implementations are immutable, and return a new instance from this
-   * method. However custom implementations may choose to be mutable and return the same instance.
+   * <p>All the driver's built-in statement implementations are immutable, and return a new instance
+   * from this method. However custom implementations may choose to be mutable and return the same
+   * instance.
+   *
+   * <p>Note that it's your responsibility to provide a thread-safe map. This can be achieved with a
+   * concurrent or immutable implementation, or by making it effectively immutable (meaning that
+   * it's never modified after being set on the statement).
    */
   T setCustomPayload(Map<String, ByteBuffer> newCustomPayload);
 
