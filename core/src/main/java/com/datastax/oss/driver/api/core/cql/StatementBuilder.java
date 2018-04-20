@@ -18,7 +18,7 @@ package com.datastax.oss.driver.api.core.cql;
 import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.config.DriverConfigProfile;
 import com.datastax.oss.driver.api.core.metadata.token.Token;
-import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableMap;
+import com.datastax.oss.protocol.internal.util.collection.NullAllowingImmutableMap;
 import java.nio.ByteBuffer;
 import java.util.Collections;
 import java.util.Map;
@@ -42,7 +42,7 @@ public abstract class StatementBuilder<T extends StatementBuilder<T, S>, S exten
   protected CqlIdentifier routingKeyspace;
   protected ByteBuffer routingKey;
   protected Token routingToken;
-  private ImmutableMap.Builder<String, ByteBuffer> customPayloadBuilder;
+  private NullAllowingImmutableMap.Builder<String, ByteBuffer> customPayloadBuilder;
   protected Boolean idempotent;
   protected boolean tracing;
   protected long timestamp = Long.MIN_VALUE;
@@ -56,7 +56,7 @@ public abstract class StatementBuilder<T extends StatementBuilder<T, S>, S exten
     this.configProfileName = template.getConfigProfileName();
     this.configProfile = template.getConfigProfile();
     this.customPayloadBuilder =
-        ImmutableMap.<String, ByteBuffer>builder().putAll(template.getCustomPayload());
+        NullAllowingImmutableMap.<String, ByteBuffer>builder().putAll(template.getCustomPayload());
     this.idempotent = template.isIdempotent();
     this.tracing = template.isTracing();
     this.timestamp = template.getTimestamp();
@@ -105,7 +105,7 @@ public abstract class StatementBuilder<T extends StatementBuilder<T, S>, S exten
   /** @see Statement#setCustomPayload(Map) */
   public T addCustomPayload(String key, ByteBuffer value) {
     if (customPayloadBuilder == null) {
-      customPayloadBuilder = ImmutableMap.builder();
+      customPayloadBuilder = NullAllowingImmutableMap.builder();
     }
     customPayloadBuilder.put(key, value);
     return self;

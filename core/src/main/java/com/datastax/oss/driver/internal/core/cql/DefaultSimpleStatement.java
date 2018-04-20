@@ -19,8 +19,8 @@ import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.config.DriverConfigProfile;
 import com.datastax.oss.driver.api.core.cql.SimpleStatement;
 import com.datastax.oss.driver.api.core.metadata.token.Token;
-import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableList;
-import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableMap;
+import com.datastax.oss.protocol.internal.util.collection.NullAllowingImmutableList;
+import com.datastax.oss.protocol.internal.util.collection.NullAllowingImmutableMap;
 import java.nio.ByteBuffer;
 import java.util.List;
 import java.util.Map;
@@ -65,8 +65,8 @@ public class DefaultSimpleStatement implements SimpleStatement {
       throw new IllegalArgumentException("Can't have both positional and named values");
     }
     this.query = query;
-    this.positionalValues = ImmutableList.copyOf(positionalValues);
-    this.namedValues = ImmutableMap.copyOf(namedValues);
+    this.positionalValues = NullAllowingImmutableList.copyOf(positionalValues);
+    this.namedValues = NullAllowingImmutableMap.copyOf(namedValues);
     this.configProfileName = configProfileName;
     this.configProfile = configProfile;
     this.keyspace = keyspace;
@@ -414,5 +414,14 @@ public class DefaultSimpleStatement implements SimpleStatement {
         tracing,
         timestamp,
         newPagingState);
+  }
+
+  public static Map<CqlIdentifier, Object> wrapKeys(Map<String, Object> namedValues) {
+    NullAllowingImmutableMap.Builder<CqlIdentifier, Object> builder =
+        NullAllowingImmutableMap.builder();
+    for (Map.Entry<String, Object> entry : namedValues.entrySet()) {
+      builder.put(CqlIdentifier.fromCql(entry.getKey()), entry.getValue());
+    }
+    return builder.build();
   }
 }
