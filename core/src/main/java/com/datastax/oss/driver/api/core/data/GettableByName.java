@@ -16,9 +16,21 @@
 package com.datastax.oss.driver.api.core.data;
 
 import com.datastax.oss.driver.api.core.metadata.token.Token;
+import com.datastax.oss.driver.api.core.type.DataType;
+import com.datastax.oss.driver.api.core.type.DataTypes;
 import com.datastax.oss.driver.api.core.type.codec.CodecNotFoundException;
+import com.datastax.oss.driver.api.core.type.codec.PrimitiveBooleanCodec;
+import com.datastax.oss.driver.api.core.type.codec.PrimitiveByteCodec;
+import com.datastax.oss.driver.api.core.type.codec.PrimitiveDoubleCodec;
+import com.datastax.oss.driver.api.core.type.codec.PrimitiveFloatCodec;
+import com.datastax.oss.driver.api.core.type.codec.PrimitiveIntCodec;
+import com.datastax.oss.driver.api.core.type.codec.PrimitiveLongCodec;
+import com.datastax.oss.driver.api.core.type.codec.PrimitiveShortCodec;
 import com.datastax.oss.driver.api.core.type.codec.TypeCodec;
 import com.datastax.oss.driver.api.core.type.reflect.GenericType;
+import com.datastax.oss.driver.internal.core.metadata.token.ByteOrderedToken;
+import com.datastax.oss.driver.internal.core.metadata.token.Murmur3Token;
+import com.datastax.oss.driver.internal.core.metadata.token.RandomToken;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.net.InetAddress;
@@ -32,7 +44,7 @@ import java.util.Set;
 import java.util.UUID;
 
 /** A data structure that provides methods to retrieve its values via a name. */
-public interface GettableByName extends GettableByIndex, AccessibleByName {
+public interface GettableByName extends AccessibleByName {
 
   /**
    * Returns the raw binary representation of the value for the first occurrence of {@code name}.
@@ -53,9 +65,7 @@ public interface GettableByName extends GettableByIndex, AccessibleByName {
    *     invocation for this value will have unpredictable results.
    * @throws IndexOutOfBoundsException if the name is invalid.
    */
-  default ByteBuffer getBytesUnsafe(String name) {
-    return getBytesUnsafe(firstIndexOf(name));
-  }
+  ByteBuffer getBytesUnsafe(String name);
 
   /**
    * Indicates whether the value for the first occurrence of {@code name} is a CQL {@code NULL}.
@@ -69,7 +79,7 @@ public interface GettableByName extends GettableByIndex, AccessibleByName {
    * @throws IndexOutOfBoundsException if the name is invalid.
    */
   default boolean isNull(String name) {
-    return isNull(firstIndexOf(name));
+    return getBytesUnsafe(name) == null;
   }
 
   /**
@@ -92,7 +102,7 @@ public interface GettableByName extends GettableByIndex, AccessibleByName {
    * @throws IndexOutOfBoundsException if the name is invalid.
    */
   default <T> T get(String name, TypeCodec<T> codec) {
-    return get(firstIndexOf(name), codec);
+    return codec.decode(getBytesUnsafe(name), protocolVersion());
   }
 
   /**
@@ -102,7 +112,7 @@ public interface GettableByName extends GettableByIndex, AccessibleByName {
    * <p>The {@link #codecRegistry()} will be used to look up a codec to handle the conversion.
    *
    * <p>This variant is for generic Java types. If the target type is not generic, use {@link
-   * #get(int, Class)} instead, which may perform slightly better.
+   * #get(String, Class)} instead, which may perform slightly better.
    *
    * <p>If an identifier appears multiple times, this can only be used to access the first value.
    * For the other ones, use positional getters.
@@ -114,7 +124,9 @@ public interface GettableByName extends GettableByIndex, AccessibleByName {
    * @throws CodecNotFoundException if no codec can perform the conversion.
    */
   default <T> T get(String name, GenericType<T> targetType) {
-    return get(firstIndexOf(name), targetType);
+    DataType cqlType = getType(name);
+    TypeCodec<T> codec = codecRegistry().codecFor(cqlType, targetType);
+    return get(name, codec);
   }
 
   /**
@@ -123,7 +135,7 @@ public interface GettableByName extends GettableByIndex, AccessibleByName {
    *
    * <p>The {@link #codecRegistry()} will be used to look up a codec to handle the conversion.
    *
-   * <p>If the target type is generic, use {@link #get(int, GenericType)} instead.
+   * <p>If the target type is generic, use {@link #get(String, GenericType)} instead.
    *
    * <p>If an identifier appears multiple times, this can only be used to access the first value.
    * For the other ones, use positional getters.
@@ -135,7 +147,11 @@ public interface GettableByName extends GettableByIndex, AccessibleByName {
    * @throws CodecNotFoundException if no codec can perform the conversion.
    */
   default <T> T get(String name, Class<T> targetClass) {
-    return get(firstIndexOf(name), targetClass);
+    // This is duplicated from the GenericType variant, because we want to give the codec registry
+    // a chance to process the unwrapped class directly, if it can do so in a more efficient way.
+    DataType cqlType = getType(name);
+    TypeCodec<T> codec = codecRegistry().codecFor(cqlType, targetClass);
+    return get(name, codec);
   }
 
   /**
@@ -147,13 +163,13 @@ public interface GettableByName extends GettableByIndex, AccessibleByName {
    * <p>Use this method to dynamically inspect elements when types aren't known in advance, for
    * instance if you're writing a generic row logger. If you know the target Java type, it is
    * generally preferable to use typed variants, such as the ones for built-in types ({@link
-   * #getBoolean(int)}, {@link #getInt(int)}, etc.), or {@link #get(int, Class)} and {@link
-   * #get(int, GenericType)} for custom types.
+   * #getBoolean(String)}, {@link #getInt(String)}, etc.), or {@link #get(String, Class)} and {@link
+   * #get(String, GenericType)} for custom types.
    *
    * <p>The definition of "most appropriate" is unspecified, and left to the appreciation of the
    * {@link #codecRegistry()} implementation. By default, the driver uses the mapping described in
-   * the other {@code getXxx()} methods (for example {@link #getString(int) String for text, varchar
-   * and ascii}, etc).
+   * the other {@code getXxx()} methods (for example {@link #getString(String) String for text,
+   * varchar and ascii}, etc).
    *
    * <p>If an identifier appears multiple times, this can only be used to access the first value.
    * For the other ones, use positional getters.
@@ -165,7 +181,9 @@ public interface GettableByName extends GettableByIndex, AccessibleByName {
    * @throws CodecNotFoundException if no codec can perform the conversion.
    */
   default Object getObject(String name) {
-    return getObject(firstIndexOf(name));
+    DataType cqlType = getType(name);
+    TypeCodec<?> codec = codecRegistry().codecFor(cqlType);
+    return codec.decode(getBytesUnsafe(name), protocolVersion());
   }
 
   /**
@@ -186,7 +204,11 @@ public interface GettableByName extends GettableByIndex, AccessibleByName {
    * @throws IndexOutOfBoundsException if the name is invalid.
    */
   default boolean getBoolean(String name) {
-    return getBoolean(firstIndexOf(name));
+    DataType cqlType = getType(name);
+    TypeCodec<Boolean> codec = codecRegistry().codecFor(cqlType, Boolean.class);
+    return (codec instanceof PrimitiveBooleanCodec)
+        ? ((PrimitiveBooleanCodec) codec).decodePrimitive(getBytesUnsafe(name), protocolVersion())
+        : get(name, codec);
   }
 
   /**
@@ -207,7 +229,11 @@ public interface GettableByName extends GettableByIndex, AccessibleByName {
    * @throws IndexOutOfBoundsException if the name is invalid.
    */
   default byte getByte(String name) {
-    return getByte(firstIndexOf(name));
+    DataType cqlType = getType(name);
+    TypeCodec<Byte> codec = codecRegistry().codecFor(cqlType, Byte.class);
+    return (codec instanceof PrimitiveByteCodec)
+        ? ((PrimitiveByteCodec) codec).decodePrimitive(getBytesUnsafe(name), protocolVersion())
+        : get(name, codec);
   }
 
   /**
@@ -228,11 +254,15 @@ public interface GettableByName extends GettableByIndex, AccessibleByName {
    * @throws IndexOutOfBoundsException if the name is invalid.
    */
   default double getDouble(String name) {
-    return getDouble(firstIndexOf(name));
+    DataType cqlType = getType(name);
+    TypeCodec<Double> codec = codecRegistry().codecFor(cqlType, Double.class);
+    return (codec instanceof PrimitiveDoubleCodec)
+        ? ((PrimitiveDoubleCodec) codec).decodePrimitive(getBytesUnsafe(name), protocolVersion())
+        : get(name, codec);
   }
 
   /**
-   * Returns the value for the first occurrence of {@code name} as a Java primitive float.
+   * Returns the {@code i}th value as a Java primitive float.
    *
    * <p>By default, this works with CQL type {@code float}.
    *
@@ -249,7 +279,11 @@ public interface GettableByName extends GettableByIndex, AccessibleByName {
    * @throws IndexOutOfBoundsException if the name is invalid.
    */
   default float getFloat(String name) {
-    return getFloat(firstIndexOf(name));
+    DataType cqlType = getType(name);
+    TypeCodec<Float> codec = codecRegistry().codecFor(cqlType, Float.class);
+    return (codec instanceof PrimitiveFloatCodec)
+        ? ((PrimitiveFloatCodec) codec).decodePrimitive(getBytesUnsafe(name), protocolVersion())
+        : get(name, codec);
   }
 
   /**
@@ -270,7 +304,11 @@ public interface GettableByName extends GettableByIndex, AccessibleByName {
    * @throws IndexOutOfBoundsException if the name is invalid.
    */
   default int getInt(String name) {
-    return getInt(firstIndexOf(name));
+    DataType cqlType = getType(name);
+    TypeCodec<Integer> codec = codecRegistry().codecFor(cqlType, Integer.class);
+    return (codec instanceof PrimitiveIntCodec)
+        ? ((PrimitiveIntCodec) codec).decodePrimitive(getBytesUnsafe(name), protocolVersion())
+        : get(name, codec);
   }
 
   /**
@@ -291,7 +329,11 @@ public interface GettableByName extends GettableByIndex, AccessibleByName {
    * @throws IndexOutOfBoundsException if the name is invalid.
    */
   default long getLong(String name) {
-    return getLong(firstIndexOf(name));
+    DataType cqlType = getType(name);
+    TypeCodec<Long> codec = codecRegistry().codecFor(cqlType, Long.class);
+    return (codec instanceof PrimitiveLongCodec)
+        ? ((PrimitiveLongCodec) codec).decodePrimitive(getBytesUnsafe(name), protocolVersion())
+        : get(name, codec);
   }
 
   /**
@@ -312,7 +354,11 @@ public interface GettableByName extends GettableByIndex, AccessibleByName {
    * @throws IndexOutOfBoundsException if the name is invalid.
    */
   default short getShort(String name) {
-    return getShort(firstIndexOf(name));
+    DataType cqlType = getType(name);
+    TypeCodec<Short> codec = codecRegistry().codecFor(cqlType, Short.class);
+    return (codec instanceof PrimitiveShortCodec)
+        ? ((PrimitiveShortCodec) codec).decodePrimitive(getBytesUnsafe(name), protocolVersion())
+        : get(name, codec);
   }
 
   /**
@@ -329,7 +375,7 @@ public interface GettableByName extends GettableByIndex, AccessibleByName {
    * @throws IndexOutOfBoundsException if the name is invalid.
    */
   default Instant getInstant(String name) {
-    return getInstant(firstIndexOf(name));
+    return get(name, Instant.class);
   }
 
   /**
@@ -346,7 +392,7 @@ public interface GettableByName extends GettableByIndex, AccessibleByName {
    * @throws IndexOutOfBoundsException if the name is invalid.
    */
   default LocalDate getLocalDate(String name) {
-    return getLocalDate(firstIndexOf(name));
+    return get(name, LocalDate.class);
   }
 
   /**
@@ -363,7 +409,7 @@ public interface GettableByName extends GettableByIndex, AccessibleByName {
    * @throws IndexOutOfBoundsException if the name is invalid.
    */
   default LocalTime getLocalTime(String name) {
-    return getLocalTime(firstIndexOf(name));
+    return get(name, LocalTime.class);
   }
 
   /**
@@ -380,7 +426,7 @@ public interface GettableByName extends GettableByIndex, AccessibleByName {
    * @throws IndexOutOfBoundsException if the name is invalid.
    */
   default ByteBuffer getByteBuffer(String name) {
-    return getByteBuffer(firstIndexOf(name));
+    return get(name, ByteBuffer.class);
   }
 
   /**
@@ -397,7 +443,7 @@ public interface GettableByName extends GettableByIndex, AccessibleByName {
    * @throws IndexOutOfBoundsException if the name is invalid.
    */
   default String getString(String name) {
-    return getString(firstIndexOf(name));
+    return get(name, String.class);
   }
 
   /**
@@ -414,7 +460,7 @@ public interface GettableByName extends GettableByIndex, AccessibleByName {
    * @throws IndexOutOfBoundsException if the name is invalid.
    */
   default BigInteger getBigInteger(String name) {
-    return getBigInteger(firstIndexOf(name));
+    return get(name, BigInteger.class);
   }
 
   /**
@@ -431,7 +477,7 @@ public interface GettableByName extends GettableByIndex, AccessibleByName {
    * @throws IndexOutOfBoundsException if the name is invalid.
    */
   default BigDecimal getBigDecimal(String name) {
-    return getBigDecimal(firstIndexOf(name));
+    return get(name, BigDecimal.class);
   }
 
   /**
@@ -448,7 +494,7 @@ public interface GettableByName extends GettableByIndex, AccessibleByName {
    * @throws IndexOutOfBoundsException if the name is invalid.
    */
   default UUID getUuid(String name) {
-    return getUuid(firstIndexOf(name));
+    return get(name, UUID.class);
   }
 
   /**
@@ -465,7 +511,7 @@ public interface GettableByName extends GettableByIndex, AccessibleByName {
    * @throws IndexOutOfBoundsException if the name is invalid.
    */
   default InetAddress getInetAddress(String name) {
-    return getInetAddress(firstIndexOf(name));
+    return get(name, InetAddress.class);
   }
 
   /**
@@ -482,7 +528,7 @@ public interface GettableByName extends GettableByIndex, AccessibleByName {
    * @throws IndexOutOfBoundsException if the name is invalid.
    */
   default CqlDuration getCqlDuration(String name) {
-    return getCqlDuration(firstIndexOf(name));
+    return get(name, CqlDuration.class);
   }
 
   /**
@@ -505,7 +551,20 @@ public interface GettableByName extends GettableByIndex, AccessibleByName {
    * @throws IllegalArgumentException if the column type can not be converted to a known token type.
    */
   default Token getToken(String name) {
-    return getToken(firstIndexOf(name));
+    DataType type = getType(name);
+    // Simply enumerate all known implementations. This goes against the concept of TokenFactory,
+    // but injecting the factory here is too much of a hassle.
+    // The only issue is if someone uses a custom partitioner, but this is highly unlikely, and even
+    // then they can get the value manually as a workaround.
+    if (type.equals(DataTypes.BIGINT)) {
+      return isNull(name) ? null : new Murmur3Token(getLong(name));
+    } else if (type.equals(DataTypes.BLOB)) {
+      return isNull(name) ? null : new ByteOrderedToken(getByteBuffer(name));
+    } else if (type.equals(DataTypes.VARINT)) {
+      return isNull(name) ? null : new RandomToken(getBigInteger(name));
+    } else {
+      throw new IllegalArgumentException("Can't convert CQL type " + type + " into a token");
+    }
   }
 
   /**
@@ -514,7 +573,7 @@ public interface GettableByName extends GettableByIndex, AccessibleByName {
    * <p>By default, this works with CQL type {@code list}.
    *
    * <p>This method is provided for convenience when the element type is a non-generic type. For
-   * more complex list types, use {@link #get(int, GenericType)}.
+   * more complex list types, use {@link #get(String, GenericType)}.
    *
    * <p>If an identifier appears multiple times, this can only be used to access the first value.
    * For the other ones, use positional getters.
@@ -525,7 +584,7 @@ public interface GettableByName extends GettableByIndex, AccessibleByName {
    * @throws IndexOutOfBoundsException if the name is invalid.
    */
   default <T> List<T> getList(String name, Class<T> elementsClass) {
-    return getList(firstIndexOf(name), elementsClass);
+    return get(name, GenericType.listOf(elementsClass));
   }
 
   /**
@@ -534,7 +593,7 @@ public interface GettableByName extends GettableByIndex, AccessibleByName {
    * <p>By default, this works with CQL type {@code set}.
    *
    * <p>This method is provided for convenience when the element type is a non-generic type. For
-   * more complex set types, use {@link #get(int, GenericType)}.
+   * more complex set types, use {@link #get(String, GenericType)}.
    *
    * <p>If an identifier appears multiple times, this can only be used to access the first value.
    * For the other ones, use positional getters.
@@ -545,7 +604,7 @@ public interface GettableByName extends GettableByIndex, AccessibleByName {
    * @throws IndexOutOfBoundsException if the name is invalid.
    */
   default <T> Set<T> getSet(String name, Class<T> elementsClass) {
-    return getSet(firstIndexOf(name), elementsClass);
+    return get(name, GenericType.setOf(elementsClass));
   }
 
   /**
@@ -554,7 +613,7 @@ public interface GettableByName extends GettableByIndex, AccessibleByName {
    * <p>By default, this works with CQL type {@code map}.
    *
    * <p>This method is provided for convenience when the element type is a non-generic type. For
-   * more complex map types, use {@link #get(int, GenericType)}.
+   * more complex map types, use {@link #get(String, GenericType)}.
    *
    * <p>If an identifier appears multiple times, this can only be used to access the first value.
    * For the other ones, use positional getters.
@@ -565,7 +624,7 @@ public interface GettableByName extends GettableByIndex, AccessibleByName {
    * @throws IndexOutOfBoundsException if the name is invalid.
    */
   default <K, V> Map<K, V> getMap(String name, Class<K> keyClass, Class<V> valueClass) {
-    return getMap(firstIndexOf(name), keyClass, valueClass);
+    return get(name, GenericType.mapOf(keyClass, valueClass));
   }
 
   /**
@@ -582,7 +641,7 @@ public interface GettableByName extends GettableByIndex, AccessibleByName {
    * @throws IndexOutOfBoundsException if the name is invalid.
    */
   default UdtValue getUdtValue(String name) {
-    return getUdtValue(firstIndexOf(name));
+    return get(name, UdtValue.class);
   }
 
   /**
@@ -599,6 +658,6 @@ public interface GettableByName extends GettableByIndex, AccessibleByName {
    * @throws IndexOutOfBoundsException if the name is invalid.
    */
   default TupleValue getTupleValue(String name) {
-    return getTupleValue(firstIndexOf(name));
+    return get(name, TupleValue.class);
   }
 }

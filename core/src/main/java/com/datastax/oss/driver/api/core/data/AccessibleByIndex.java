@@ -20,9 +20,6 @@ import com.datastax.oss.driver.api.core.type.DataType;
 /** A data structure where the values are accessible via an integer index. */
 public interface AccessibleByIndex extends Data {
 
-  /** Returns the number of values. */
-  int size();
-
   /**
    * Returns the CQL type of the {@code i}th value.
    *

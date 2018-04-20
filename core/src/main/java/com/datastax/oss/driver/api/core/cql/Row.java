@@ -15,15 +15,13 @@
  */
 package com.datastax.oss.driver.api.core.cql;
 
-import com.datastax.oss.driver.api.core.data.GettableById;
-import com.datastax.oss.driver.api.core.data.GettableByIndex;
-import com.datastax.oss.driver.api.core.data.GettableByName;
+import com.datastax.oss.driver.api.core.data.Accessible;
+import com.datastax.oss.driver.api.core.data.Gettable;
 import com.datastax.oss.driver.api.core.detach.Detachable;
 import java.io.Serializable;
 
 /** A row from a CQL table. */
-public interface Row
-    extends GettableByIndex, GettableByName, GettableById, Detachable, Serializable {
+public interface Row extends Accessible, Gettable, Detachable, Serializable {
 
   ColumnDefinitions getColumnDefinitions();
 }

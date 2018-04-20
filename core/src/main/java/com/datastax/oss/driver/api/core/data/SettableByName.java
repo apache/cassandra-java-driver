@@ -18,8 +18,18 @@ package com.datastax.oss.driver.api.core.data;
 import com.datastax.oss.driver.api.core.metadata.token.Token;
 import com.datastax.oss.driver.api.core.type.DataType;
 import com.datastax.oss.driver.api.core.type.codec.CodecNotFoundException;
+import com.datastax.oss.driver.api.core.type.codec.PrimitiveBooleanCodec;
+import com.datastax.oss.driver.api.core.type.codec.PrimitiveByteCodec;
+import com.datastax.oss.driver.api.core.type.codec.PrimitiveDoubleCodec;
+import com.datastax.oss.driver.api.core.type.codec.PrimitiveFloatCodec;
+import com.datastax.oss.driver.api.core.type.codec.PrimitiveIntCodec;
+import com.datastax.oss.driver.api.core.type.codec.PrimitiveLongCodec;
+import com.datastax.oss.driver.api.core.type.codec.PrimitiveShortCodec;
 import com.datastax.oss.driver.api.core.type.codec.TypeCodec;
 import com.datastax.oss.driver.api.core.type.reflect.GenericType;
+import com.datastax.oss.driver.internal.core.metadata.token.ByteOrderedToken;
+import com.datastax.oss.driver.internal.core.metadata.token.Murmur3Token;
+import com.datastax.oss.driver.internal.core.metadata.token.RandomToken;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.net.InetAddress;
@@ -33,8 +43,7 @@ import java.util.Set;
 import java.util.UUID;
 
 /** A data structure that provides methods to set its values via a name. */
-public interface SettableByName<T extends SettableByName<T>>
-    extends SettableByIndex<T>, AccessibleByName {
+public interface SettableByName<T extends SettableByName<T>> extends AccessibleByName {
 
   /**
    * Sets the raw binary representation of the value for the first occurrence of {@code name}.
@@ -52,14 +61,7 @@ public interface SettableByName<T extends SettableByName<T>>
    *     further usage of this data will have unpredictable results.
    * @throws IndexOutOfBoundsException if the name is invalid.
    */
-  default T setBytesUnsafe(String name, ByteBuffer v) {
-    return setBytesUnsafe(firstIndexOf(name), v);
-  }
-
-  @Override
-  default DataType getType(String name) {
-    return getType(firstIndexOf(name));
-  }
+  T setBytesUnsafe(String name, ByteBuffer v);
 
   /**
    * Sets the value for the first occurrence of {@code name} to CQL {@code NULL}.
@@ -70,7 +72,7 @@ public interface SettableByName<T extends SettableByName<T>>
    * @throws IndexOutOfBoundsException if the name is invalid.
    */
   default T setToNull(String name) {
-    return setToNull(firstIndexOf(name));
+    return setBytesUnsafe(name, null);
   }
 
   /**
@@ -90,7 +92,7 @@ public interface SettableByName<T extends SettableByName<T>>
    * @throws IndexOutOfBoundsException if the name is invalid.
    */
   default <V> T set(String name, V v, TypeCodec<V> codec) {
-    return set(firstIndexOf(name), v, codec);
+    return setBytesUnsafe(name, codec.encode(v, protocolVersion()));
   }
 
   /**
@@ -99,7 +101,7 @@ public interface SettableByName<T extends SettableByName<T>>
    * <p>The {@link #codecRegistry()} will be used to look up a codec to handle the conversion.
    *
    * <p>This variant is for generic Java types. If the target type is not generic, use {@link
-   * #set(int, Object, Class)} instead, which may perform slightly better.
+   * #set(String, Object, Class)} instead, which may perform slightly better.
    *
    * <p>This method deals with case sensitivity in the way explained in the documentation of {@link
    * AccessibleByName}.
@@ -108,7 +110,9 @@ public interface SettableByName<T extends SettableByName<T>>
    * @throws CodecNotFoundException if no codec can perform the conversion.
    */
   default <V> T set(String name, V v, GenericType<V> targetType) {
-    return set(firstIndexOf(name), v, targetType);
+    DataType cqlType = getType(name);
+    TypeCodec<V> codec = codecRegistry().codecFor(cqlType, targetType);
+    return set(name, v, codec);
   }
 
   /**
@@ -117,7 +121,7 @@ public interface SettableByName<T extends SettableByName<T>>
    *
    * <p>The {@link #codecRegistry()} will be used to look up a codec to handle the conversion.
    *
-   * <p>If the target type is generic, use {@link #set(int, Object, GenericType)} instead.
+   * <p>If the target type is generic, use {@link #set(String, Object, GenericType)} instead.
    *
    * <p>This method deals with case sensitivity in the way explained in the documentation of {@link
    * AccessibleByName}.
@@ -126,7 +130,11 @@ public interface SettableByName<T extends SettableByName<T>>
    * @throws CodecNotFoundException if no codec can perform the conversion.
    */
   default <V> T set(String name, V v, Class<V> targetClass) {
-    return set(firstIndexOf(name), v, targetClass);
+    // This is duplicated from the GenericType variant, because we want to give the codec registry
+    // a chance to process the unwrapped class directly, if it can do so in a more efficient way.
+    DataType cqlType = getType(name);
+    TypeCodec<V> codec = codecRegistry().codecFor(cqlType, targetClass);
+    return set(name, v, codec);
   }
 
   /**
@@ -134,7 +142,7 @@ public interface SettableByName<T extends SettableByName<T>>
    *
    * <p>By default, this works with CQL type {@code boolean}.
    *
-   * <p>To set the value to CQL {@code NULL}, use {@link #setToNull(int)}, or {@code set(i, v,
+   * <p>To set the value to CQL {@code NULL}, use {@link #setToNull(String)}, or {@code set(i, v,
    * Boolean.class)}.
    *
    * <p>This method deals with case sensitivity in the way explained in the documentation of {@link
@@ -143,7 +151,12 @@ public interface SettableByName<T extends SettableByName<T>>
    * @throws IndexOutOfBoundsException if the name is invalid.
    */
   default T setBoolean(String name, boolean v) {
-    return setBoolean(firstIndexOf(name), v);
+    DataType cqlType = getType(name);
+    TypeCodec<Boolean> codec = codecRegistry().codecFor(cqlType, Boolean.class);
+    return (codec instanceof PrimitiveBooleanCodec)
+        ? setBytesUnsafe(
+            name, ((PrimitiveBooleanCodec) codec).encodePrimitive(v, protocolVersion()))
+        : set(name, v, codec);
   }
 
   /**
@@ -151,7 +164,7 @@ public interface SettableByName<T extends SettableByName<T>>
    *
    * <p>By default, this works with CQL type {@code tinyint}.
    *
-   * <p>To set the value to CQL {@code NULL}, use {@link #setToNull(int)}, or {@code set(i, v,
+   * <p>To set the value to CQL {@code NULL}, use {@link #setToNull(String)}, or {@code set(i, v,
    * Boolean.class)}.
    *
    * <p>This method deals with case sensitivity in the way explained in the documentation of {@link
@@ -160,7 +173,11 @@ public interface SettableByName<T extends SettableByName<T>>
    * @throws IndexOutOfBoundsException if the name is invalid.
    */
   default T setByte(String name, byte v) {
-    return setByte(firstIndexOf(name), v);
+    DataType cqlType = getType(name);
+    TypeCodec<Byte> codec = codecRegistry().codecFor(cqlType, Byte.class);
+    return (codec instanceof PrimitiveByteCodec)
+        ? setBytesUnsafe(name, ((PrimitiveByteCodec) codec).encodePrimitive(v, protocolVersion()))
+        : set(name, v, codec);
   }
 
   /**
@@ -168,7 +185,7 @@ public interface SettableByName<T extends SettableByName<T>>
    *
    * <p>By default, this works with CQL type {@code double}.
    *
-   * <p>To set the value to CQL {@code NULL}, use {@link #setToNull(int)}, or {@code set(i, v,
+   * <p>To set the value to CQL {@code NULL}, use {@link #setToNull(String)}, or {@code set(i, v,
    * Double.class)}.
    *
    * <p>This method deals with case sensitivity in the way explained in the documentation of {@link
@@ -177,7 +194,11 @@ public interface SettableByName<T extends SettableByName<T>>
    * @throws IndexOutOfBoundsException if the name is invalid.
    */
   default T setDouble(String name, double v) {
-    return setDouble(firstIndexOf(name), v);
+    DataType cqlType = getType(name);
+    TypeCodec<Double> codec = codecRegistry().codecFor(cqlType, Double.class);
+    return (codec instanceof PrimitiveDoubleCodec)
+        ? setBytesUnsafe(name, ((PrimitiveDoubleCodec) codec).encodePrimitive(v, protocolVersion()))
+        : set(name, v, codec);
   }
 
   /**
@@ -185,7 +206,7 @@ public interface SettableByName<T extends SettableByName<T>>
    *
    * <p>By default, this works with CQL type {@code float}.
    *
-   * <p>To set the value to CQL {@code NULL}, use {@link #setToNull(int)}, or {@code set(i, v,
+   * <p>To set the value to CQL {@code NULL}, use {@link #setToNull(String)}, or {@code set(i, v,
    * Float.class)}.
    *
    * <p>This method deals with case sensitivity in the way explained in the documentation of {@link
@@ -194,7 +215,11 @@ public interface SettableByName<T extends SettableByName<T>>
    * @throws IndexOutOfBoundsException if the name is invalid.
    */
   default T setFloat(String name, float v) {
-    return setFloat(firstIndexOf(name), v);
+    DataType cqlType = getType(name);
+    TypeCodec<Float> codec = codecRegistry().codecFor(cqlType, Float.class);
+    return (codec instanceof PrimitiveFloatCodec)
+        ? setBytesUnsafe(name, ((PrimitiveFloatCodec) codec).encodePrimitive(v, protocolVersion()))
+        : set(name, v, codec);
   }
 
   /**
@@ -202,7 +227,7 @@ public interface SettableByName<T extends SettableByName<T>>
    *
    * <p>By default, this works with CQL type {@code int}.
    *
-   * <p>To set the value to CQL {@code NULL}, use {@link #setToNull(int)}, or {@code set(i, v,
+   * <p>To set the value to CQL {@code NULL}, use {@link #setToNull(String)}, or {@code set(i, v,
    * Integer.class)}.
    *
    * <p>This method deals with case sensitivity in the way explained in the documentation of {@link
@@ -211,7 +236,11 @@ public interface SettableByName<T extends SettableByName<T>>
    * @throws IndexOutOfBoundsException if the name is invalid.
    */
   default T setInt(String name, int v) {
-    return setInt(firstIndexOf(name), v);
+    DataType cqlType = getType(name);
+    TypeCodec<Integer> codec = codecRegistry().codecFor(cqlType, Integer.class);
+    return (codec instanceof PrimitiveIntCodec)
+        ? setBytesUnsafe(name, ((PrimitiveIntCodec) codec).encodePrimitive(v, protocolVersion()))
+        : set(name, v, codec);
   }
 
   /**
@@ -219,7 +248,7 @@ public interface SettableByName<T extends SettableByName<T>>
    *
    * <p>By default, this works with CQL types {@code bigint} and {@code counter}.
    *
-   * <p>To set the value to CQL {@code NULL}, use {@link #setToNull(int)}, or {@code set(i, v,
+   * <p>To set the value to CQL {@code NULL}, use {@link #setToNull(String)}, or {@code set(i, v,
    * Long.class)}.
    *
    * <p>This method deals with case sensitivity in the way explained in the documentation of {@link
@@ -228,7 +257,11 @@ public interface SettableByName<T extends SettableByName<T>>
    * @throws IndexOutOfBoundsException if the name is invalid.
    */
   default T setLong(String name, long v) {
-    return setLong(firstIndexOf(name), v);
+    DataType cqlType = getType(name);
+    TypeCodec<Long> codec = codecRegistry().codecFor(cqlType, Long.class);
+    return (codec instanceof PrimitiveLongCodec)
+        ? setBytesUnsafe(name, ((PrimitiveLongCodec) codec).encodePrimitive(v, protocolVersion()))
+        : set(name, v, codec);
   }
 
   /**
@@ -236,7 +269,7 @@ public interface SettableByName<T extends SettableByName<T>>
    *
    * <p>By default, this works with CQL type {@code smallint}.
    *
-   * <p>To set the value to CQL {@code NULL}, use {@link #setToNull(int)}, or {@code set(i, v,
+   * <p>To set the value to CQL {@code NULL}, use {@link #setToNull(String)}, or {@code set(i, v,
    * Short.class)}.
    *
    * <p>This method deals with case sensitivity in the way explained in the documentation of {@link
@@ -245,7 +278,11 @@ public interface SettableByName<T extends SettableByName<T>>
    * @throws IndexOutOfBoundsException if the name is invalid.
    */
   default T setShort(String name, short v) {
-    return setShort(firstIndexOf(name), v);
+    DataType cqlType = getType(name);
+    TypeCodec<Short> codec = codecRegistry().codecFor(cqlType, Short.class);
+    return (codec instanceof PrimitiveShortCodec)
+        ? setBytesUnsafe(name, ((PrimitiveShortCodec) codec).encodePrimitive(v, protocolVersion()))
+        : set(name, v, codec);
   }
 
   /**
@@ -259,7 +296,7 @@ public interface SettableByName<T extends SettableByName<T>>
    * @throws IndexOutOfBoundsException if the name is invalid.
    */
   default T setInstant(String name, Instant v) {
-    return setInstant(firstIndexOf(name), v);
+    return set(name, v, Instant.class);
   }
 
   /**
@@ -273,7 +310,7 @@ public interface SettableByName<T extends SettableByName<T>>
    * @throws IndexOutOfBoundsException if the name is invalid.
    */
   default T setLocalDate(String name, LocalDate v) {
-    return setLocalDate(firstIndexOf(name), v);
+    return set(name, v, LocalDate.class);
   }
 
   /**
@@ -287,7 +324,7 @@ public interface SettableByName<T extends SettableByName<T>>
    * @throws IndexOutOfBoundsException if the name is invalid.
    */
   default T setLocalTime(String name, LocalTime v) {
-    return setLocalTime(firstIndexOf(name), v);
+    return set(name, v, LocalTime.class);
   }
 
   /**
@@ -301,7 +338,7 @@ public interface SettableByName<T extends SettableByName<T>>
    * @throws IndexOutOfBoundsException if the name is invalid.
    */
   default T setByteBuffer(String name, ByteBuffer v) {
-    return setByteBuffer(firstIndexOf(name), v);
+    return set(name, v, ByteBuffer.class);
   }
 
   /**
@@ -315,7 +352,7 @@ public interface SettableByName<T extends SettableByName<T>>
    * @throws IndexOutOfBoundsException if the name is invalid.
    */
   default T setString(String name, String v) {
-    return setString(firstIndexOf(name), v);
+    return set(name, v, String.class);
   }
 
   /**
@@ -329,7 +366,7 @@ public interface SettableByName<T extends SettableByName<T>>
    * @throws IndexOutOfBoundsException if the name is invalid.
    */
   default T setBigInteger(String name, BigInteger v) {
-    return setBigInteger(firstIndexOf(name), v);
+    return set(name, v, BigInteger.class);
   }
 
   /**
@@ -343,7 +380,7 @@ public interface SettableByName<T extends SettableByName<T>>
    * @throws IndexOutOfBoundsException if the name is invalid.
    */
   default T setBigDecimal(String name, BigDecimal v) {
-    return setBigDecimal(firstIndexOf(name), v);
+    return set(name, v, BigDecimal.class);
   }
 
   /**
@@ -357,7 +394,7 @@ public interface SettableByName<T extends SettableByName<T>>
    * @throws IndexOutOfBoundsException if the name is invalid.
    */
   default T setUuid(String name, UUID v) {
-    return setUuid(firstIndexOf(name), v);
+    return set(name, v, UUID.class);
   }
 
   /**
@@ -371,7 +408,7 @@ public interface SettableByName<T extends SettableByName<T>>
    * @throws IndexOutOfBoundsException if the name is invalid.
    */
   default T setInetAddress(String name, InetAddress v) {
-    return setInetAddress(firstIndexOf(name), v);
+    return set(name, v, InetAddress.class);
   }
 
   /**
@@ -385,7 +422,7 @@ public interface SettableByName<T extends SettableByName<T>>
    * @throws IndexOutOfBoundsException if the name is invalid.
    */
   default T setCqlDuration(String name, CqlDuration v) {
-    return setCqlDuration(firstIndexOf(name), v);
+    return set(name, v, CqlDuration.class);
   }
 
   /**
@@ -401,7 +438,19 @@ public interface SettableByName<T extends SettableByName<T>>
    * @throws IndexOutOfBoundsException if the index is invalid.
    */
   default T setToken(String name, Token v) {
-    return setToken(firstIndexOf(name), v);
+    // Simply enumerate all known implementations. This goes against the concept of TokenFactory,
+    // but injecting the factory here is too much of a hassle.
+    // The only issue is if someone uses a custom partitioner, but this is highly unlikely, and even
+    // then they can set the value manually as a workaround.
+    if (v instanceof Murmur3Token) {
+      return setLong(name, ((Murmur3Token) v).getValue());
+    } else if (v instanceof ByteOrderedToken) {
+      return setByteBuffer(name, ((ByteOrderedToken) v).getValue());
+    } else if (v instanceof RandomToken) {
+      return setBigInteger(name, ((RandomToken) v).getValue());
+    } else {
+      throw new IllegalArgumentException("Unsupported token type " + v.getClass());
+    }
   }
 
   /**
@@ -410,7 +459,7 @@ public interface SettableByName<T extends SettableByName<T>>
    * <p>By default, this works with CQL type {@code list}.
    *
    * <p>This method is provided for convenience when the element type is a non-generic type. For
-   * more complex list types, use {@link #set(int, Object, GenericType)}.
+   * more complex list types, use {@link #set(String, Object, GenericType)}.
    *
    * <p>This method deals with case sensitivity in the way explained in the documentation of {@link
    * AccessibleByName}.
@@ -418,7 +467,7 @@ public interface SettableByName<T extends SettableByName<T>>
    * @throws IndexOutOfBoundsException if the name is invalid.
    */
   default <V> T setList(String name, List<V> v, Class<V> elementsClass) {
-    return setList(firstIndexOf(name), v, elementsClass);
+    return set(name, v, GenericType.listOf(elementsClass));
   }
 
   /**
@@ -427,7 +476,7 @@ public interface SettableByName<T extends SettableByName<T>>
    * <p>By default, this works with CQL type {@code set}.
    *
    * <p>This method is provided for convenience when the element type is a non-generic type. For
-   * more complex set types, use {@link #set(int, Object, GenericType)}.
+   * more complex set types, use {@link #set(String, Object, GenericType)}.
    *
    * <p>This method deals with case sensitivity in the way explained in the documentation of {@link
    * AccessibleByName}.
@@ -435,7 +484,7 @@ public interface SettableByName<T extends SettableByName<T>>
    * @throws IndexOutOfBoundsException if the name is invalid.
    */
   default <V> T setSet(String name, Set<V> v, Class<V> elementsClass) {
-    return setSet(firstIndexOf(name), v, elementsClass);
+    return set(name, v, GenericType.setOf(elementsClass));
   }
 
   /**
@@ -444,7 +493,7 @@ public interface SettableByName<T extends SettableByName<T>>
    * <p>By default, this works with CQL type {@code map}.
    *
    * <p>This method is provided for convenience when the element type is a non-generic type. For
-   * more complex map types, use {@link #set(int, Object, GenericType)}.
+   * more complex map types, use {@link #set(String, Object, GenericType)}.
    *
    * <p>This method deals with case sensitivity in the way explained in the documentation of {@link
    * AccessibleByName}.
@@ -452,7 +501,7 @@ public interface SettableByName<T extends SettableByName<T>>
    * @throws IndexOutOfBoundsException if the name is invalid.
    */
   default <K, V> T setMap(String name, Map<K, V> v, Class<K> keyClass, Class<V> valueClass) {
-    return setMap(firstIndexOf(name), v, keyClass, valueClass);
+    return set(name, v, GenericType.mapOf(keyClass, valueClass));
   }
 
   /**
@@ -467,7 +516,7 @@ public interface SettableByName<T extends SettableByName<T>>
    * @throws IndexOutOfBoundsException if the name is invalid.
    */
   default T setUdtValue(String name, UdtValue v) {
-    return setUdtValue(firstIndexOf(name), v);
+    return set(name, v, UdtValue.class);
   }
 
   /**
@@ -481,6 +530,6 @@ public interface SettableByName<T extends SettableByName<T>>
    * @throws IndexOutOfBoundsException if the name is invalid.
    */
   default T setTupleValue(String name, TupleValue v) {
-    return setTupleValue(firstIndexOf(name), v);
+    return set(name, v, TupleValue.class);
   }
 }

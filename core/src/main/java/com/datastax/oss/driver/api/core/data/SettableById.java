@@ -19,8 +19,18 @@ import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.metadata.token.Token;
 import com.datastax.oss.driver.api.core.type.DataType;
 import com.datastax.oss.driver.api.core.type.codec.CodecNotFoundException;
+import com.datastax.oss.driver.api.core.type.codec.PrimitiveBooleanCodec;
+import com.datastax.oss.driver.api.core.type.codec.PrimitiveByteCodec;
+import com.datastax.oss.driver.api.core.type.codec.PrimitiveDoubleCodec;
+import com.datastax.oss.driver.api.core.type.codec.PrimitiveFloatCodec;
+import com.datastax.oss.driver.api.core.type.codec.PrimitiveIntCodec;
+import com.datastax.oss.driver.api.core.type.codec.PrimitiveLongCodec;
+import com.datastax.oss.driver.api.core.type.codec.PrimitiveShortCodec;
 import com.datastax.oss.driver.api.core.type.codec.TypeCodec;
 import com.datastax.oss.driver.api.core.type.reflect.GenericType;
+import com.datastax.oss.driver.internal.core.metadata.token.ByteOrderedToken;
+import com.datastax.oss.driver.internal.core.metadata.token.Murmur3Token;
+import com.datastax.oss.driver.internal.core.metadata.token.RandomToken;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.net.InetAddress;
@@ -34,8 +44,7 @@ import java.util.Set;
 import java.util.UUID;
 
 /** A data structure that provides methods to set its values via a CQL identifier. */
-public interface SettableById<T extends SettableById<T>>
-    extends SettableByIndex<T>, AccessibleById {
+public interface SettableById<T extends SettableById<T>> extends AccessibleById {
 
   /**
    * Sets the raw binary representation of the value for the first occurrence of {@code id}.
@@ -53,14 +62,7 @@ public interface SettableById<T extends SettableById<T>>
    *     further usage of this data will have unpredictable results.
    * @throws IndexOutOfBoundsException if the id is invalid.
    */
-  default T setBytesUnsafe(CqlIdentifier id, ByteBuffer v) {
-    return setBytesUnsafe(firstIndexOf(id), v);
-  }
-
-  @Override
-  default DataType getType(CqlIdentifier id) {
-    return getType(firstIndexOf(id));
-  }
+  T setBytesUnsafe(CqlIdentifier id, ByteBuffer v);
 
   /**
    * Sets the value for the first occurrence of {@code id} to CQL {@code NULL}.
@@ -71,7 +73,7 @@ public interface SettableById<T extends SettableById<T>>
    * @throws IndexOutOfBoundsException if the id is invalid.
    */
   default T setToNull(CqlIdentifier id) {
-    return setToNull(firstIndexOf(id));
+    return setBytesUnsafe(id, null);
   }
 
   /**
@@ -91,7 +93,7 @@ public interface SettableById<T extends SettableById<T>>
    * @throws IndexOutOfBoundsException if the id is invalid.
    */
   default <V> T set(CqlIdentifier id, V v, TypeCodec<V> codec) {
-    return set(firstIndexOf(id), v, codec);
+    return setBytesUnsafe(id, codec.encode(v, protocolVersion()));
   }
 
   /**
@@ -100,7 +102,7 @@ public interface SettableById<T extends SettableById<T>>
    * <p>The {@link #codecRegistry()} will be used to look up a codec to handle the conversion.
    *
    * <p>This variant is for generic Java types. If the target type is not generic, use {@link
-   * #set(int, Object, Class)} instead, which may perform slightly better.
+   * #set(CqlIdentifier, Object, Class)} instead, which may perform slightly better.
    *
    * <p>If you want to avoid the overhead of building a {@code CqlIdentifier}, use the variant of
    * this method that takes a string argument.
@@ -109,7 +111,9 @@ public interface SettableById<T extends SettableById<T>>
    * @throws CodecNotFoundException if no codec can perform the conversion.
    */
   default <V> T set(CqlIdentifier id, V v, GenericType<V> targetType) {
-    return set(firstIndexOf(id), v, targetType);
+    DataType cqlType = getType(id);
+    TypeCodec<V> codec = codecRegistry().codecFor(cqlType, targetType);
+    return set(id, v, codec);
   }
 
   /**
@@ -117,7 +121,7 @@ public interface SettableById<T extends SettableById<T>>
    *
    * <p>The {@link #codecRegistry()} will be used to look up a codec to handle the conversion.
    *
-   * <p>If the target type is generic, use {@link #set(int, Object, GenericType)} instead.
+   * <p>If the target type is generic, use {@link #set(CqlIdentifier, Object, GenericType)} instead.
    *
    * <p>If you want to avoid the overhead of building a {@code CqlIdentifier}, use the variant of
    * this method that takes a string argument.
@@ -126,7 +130,11 @@ public interface SettableById<T extends SettableById<T>>
    * @throws CodecNotFoundException if no codec can perform the conversion.
    */
   default <V> T set(CqlIdentifier id, V v, Class<V> targetClass) {
-    return set(firstIndexOf(id), v, targetClass);
+    // This is duplicated from the GenericType variant, because we want to give the codec registry
+    // a chance to process the unwrapped class directly, if it can do so in a more efficient way.
+    DataType cqlType = getType(id);
+    TypeCodec<V> codec = codecRegistry().codecFor(cqlType, targetClass);
+    return set(id, v, codec);
   }
 
   /**
@@ -134,8 +142,8 @@ public interface SettableById<T extends SettableById<T>>
    *
    * <p>By default, this works with CQL type {@code boolean}.
    *
-   * <p>To set the value to CQL {@code NULL}, use {@link #setToNull(int)}, or {@code set(i, v,
-   * Boolean.class)}.
+   * <p>To set the value to CQL {@code NULL}, use {@link #setToNull(CqlIdentifier)}, or {@code
+   * set(i, v, Boolean.class)}.
    *
    * <p>If you want to avoid the overhead of building a {@code CqlIdentifier}, use the variant of
    * this method that takes a string argument.
@@ -143,7 +151,11 @@ public interface SettableById<T extends SettableById<T>>
    * @throws IndexOutOfBoundsException if the id is invalid.
    */
   default T setBoolean(CqlIdentifier id, boolean v) {
-    return setBoolean(firstIndexOf(id), v);
+    DataType cqlType = getType(id);
+    TypeCodec<Boolean> codec = codecRegistry().codecFor(cqlType, Boolean.class);
+    return (codec instanceof PrimitiveBooleanCodec)
+        ? setBytesUnsafe(id, ((PrimitiveBooleanCodec) codec).encodePrimitive(v, protocolVersion()))
+        : set(id, v, codec);
   }
 
   /**
@@ -151,8 +163,8 @@ public interface SettableById<T extends SettableById<T>>
    *
    * <p>By default, this works with CQL type {@code tinyint}.
    *
-   * <p>To set the value to CQL {@code NULL}, use {@link #setToNull(int)}, or {@code set(i, v,
-   * Boolean.class)}.
+   * <p>To set the value to CQL {@code NULL}, use {@link #setToNull(CqlIdentifier)}, or {@code
+   * set(i, v, Boolean.class)}.
    *
    * <p>If you want to avoid the overhead of building a {@code CqlIdentifier}, use the variant of
    * this method that takes a string argument.
@@ -160,7 +172,11 @@ public interface SettableById<T extends SettableById<T>>
    * @throws IndexOutOfBoundsException if the id is invalid.
    */
   default T setByte(CqlIdentifier id, byte v) {
-    return setByte(firstIndexOf(id), v);
+    DataType cqlType = getType(id);
+    TypeCodec<Byte> codec = codecRegistry().codecFor(cqlType, Byte.class);
+    return (codec instanceof PrimitiveByteCodec)
+        ? setBytesUnsafe(id, ((PrimitiveByteCodec) codec).encodePrimitive(v, protocolVersion()))
+        : set(id, v, codec);
   }
 
   /**
@@ -168,8 +184,8 @@ public interface SettableById<T extends SettableById<T>>
    *
    * <p>By default, this works with CQL type {@code double}.
    *
-   * <p>To set the value to CQL {@code NULL}, use {@link #setToNull(int)}, or {@code set(i, v,
-   * Double.class)}.
+   * <p>To set the value to CQL {@code NULL}, use {@link #setToNull(CqlIdentifier)}, or {@code
+   * set(i, v, Double.class)}.
    *
    * <p>If you want to avoid the overhead of building a {@code CqlIdentifier}, use the variant of
    * this method that takes a string argument.
@@ -177,7 +193,11 @@ public interface SettableById<T extends SettableById<T>>
    * @throws IndexOutOfBoundsException if the id is invalid.
    */
   default T setDouble(CqlIdentifier id, double v) {
-    return setDouble(firstIndexOf(id), v);
+    DataType cqlType = getType(id);
+    TypeCodec<Double> codec = codecRegistry().codecFor(cqlType, Double.class);
+    return (codec instanceof PrimitiveDoubleCodec)
+        ? setBytesUnsafe(id, ((PrimitiveDoubleCodec) codec).encodePrimitive(v, protocolVersion()))
+        : set(id, v, codec);
   }
 
   /**
@@ -185,8 +205,8 @@ public interface SettableById<T extends SettableById<T>>
    *
    * <p>By default, this works with CQL type {@code float}.
    *
-   * <p>To set the value to CQL {@code NULL}, use {@link #setToNull(int)}, or {@code set(i, v,
-   * Float.class)}.
+   * <p>To set the value to CQL {@code NULL}, use {@link #setToNull(CqlIdentifier)}, or {@code
+   * set(i, v, Float.class)}.
    *
    * <p>If you want to avoid the overhead of building a {@code CqlIdentifier}, use the variant of
    * this method that takes a string argument.
@@ -194,7 +214,11 @@ public interface SettableById<T extends SettableById<T>>
    * @throws IndexOutOfBoundsException if the id is invalid.
    */
   default T setFloat(CqlIdentifier id, float v) {
-    return setFloat(firstIndexOf(id), v);
+    DataType cqlType = getType(id);
+    TypeCodec<Float> codec = codecRegistry().codecFor(cqlType, Float.class);
+    return (codec instanceof PrimitiveFloatCodec)
+        ? setBytesUnsafe(id, ((PrimitiveFloatCodec) codec).encodePrimitive(v, protocolVersion()))
+        : set(id, v, codec);
   }
 
   /**
@@ -202,8 +226,8 @@ public interface SettableById<T extends SettableById<T>>
    *
    * <p>By default, this works with CQL type {@code int}.
    *
-   * <p>To set the value to CQL {@code NULL}, use {@link #setToNull(int)}, or {@code set(i, v,
-   * Integer.class)}.
+   * <p>To set the value to CQL {@code NULL}, use {@link #setToNull(CqlIdentifier)}, or {@code
+   * set(i, v, Integer.class)}.
    *
    * <p>If you want to avoid the overhead of building a {@code CqlIdentifier}, use the variant of
    * this method that takes a string argument.
@@ -211,7 +235,11 @@ public interface SettableById<T extends SettableById<T>>
    * @throws IndexOutOfBoundsException if the id is invalid.
    */
   default T setInt(CqlIdentifier id, int v) {
-    return setInt(firstIndexOf(id), v);
+    DataType cqlType = getType(id);
+    TypeCodec<Integer> codec = codecRegistry().codecFor(cqlType, Integer.class);
+    return (codec instanceof PrimitiveIntCodec)
+        ? setBytesUnsafe(id, ((PrimitiveIntCodec) codec).encodePrimitive(v, protocolVersion()))
+        : set(id, v, codec);
   }
 
   /**
@@ -219,8 +247,8 @@ public interface SettableById<T extends SettableById<T>>
    *
    * <p>By default, this works with CQL types {@code bigint} and {@code counter}.
    *
-   * <p>To set the value to CQL {@code NULL}, use {@link #setToNull(int)}, or {@code set(i, v,
-   * Long.class)}.
+   * <p>To set the value to CQL {@code NULL}, use {@link #setToNull(CqlIdentifier)}, or {@code
+   * set(i, v, Long.class)}.
    *
    * <p>If you want to avoid the overhead of building a {@code CqlIdentifier}, use the variant of
    * this method that takes a string argument.
@@ -228,7 +256,11 @@ public interface SettableById<T extends SettableById<T>>
    * @throws IndexOutOfBoundsException if the id is invalid.
    */
   default T setLong(CqlIdentifier id, long v) {
-    return setLong(firstIndexOf(id), v);
+    DataType cqlType = getType(id);
+    TypeCodec<Long> codec = codecRegistry().codecFor(cqlType, Long.class);
+    return (codec instanceof PrimitiveLongCodec)
+        ? setBytesUnsafe(id, ((PrimitiveLongCodec) codec).encodePrimitive(v, protocolVersion()))
+        : set(id, v, codec);
   }
 
   /**
@@ -236,8 +268,8 @@ public interface SettableById<T extends SettableById<T>>
    *
    * <p>By default, this works with CQL type {@code smallint}.
    *
-   * <p>To set the value to CQL {@code NULL}, use {@link #setToNull(int)}, or {@code set(i, v,
-   * Short.class)}.
+   * <p>To set the value to CQL {@code NULL}, use {@link #setToNull(CqlIdentifier)}, or {@code
+   * set(i, v, Short.class)}.
    *
    * <p>If you want to avoid the overhead of building a {@code CqlIdentifier}, use the variant of
    * this method that takes a string argument.
@@ -245,7 +277,11 @@ public interface SettableById<T extends SettableById<T>>
    * @throws IndexOutOfBoundsException if the id is invalid.
    */
   default T setShort(CqlIdentifier id, short v) {
-    return setShort(firstIndexOf(id), v);
+    DataType cqlType = getType(id);
+    TypeCodec<Short> codec = codecRegistry().codecFor(cqlType, Short.class);
+    return (codec instanceof PrimitiveShortCodec)
+        ? setBytesUnsafe(id, ((PrimitiveShortCodec) codec).encodePrimitive(v, protocolVersion()))
+        : set(id, v, codec);
   }
 
   /**
@@ -259,7 +295,7 @@ public interface SettableById<T extends SettableById<T>>
    * @throws IndexOutOfBoundsException if the id is invalid.
    */
   default T setInstant(CqlIdentifier id, Instant v) {
-    return setInstant(firstIndexOf(id), v);
+    return set(id, v, Instant.class);
   }
 
   /**
@@ -273,7 +309,7 @@ public interface SettableById<T extends SettableById<T>>
    * @throws IndexOutOfBoundsException if the id is invalid.
    */
   default T setLocalDate(CqlIdentifier id, LocalDate v) {
-    return setLocalDate(firstIndexOf(id), v);
+    return set(id, v, LocalDate.class);
   }
 
   /**
@@ -287,7 +323,7 @@ public interface SettableById<T extends SettableById<T>>
    * @throws IndexOutOfBoundsException if the id is invalid.
    */
   default T setLocalTime(CqlIdentifier id, LocalTime v) {
-    return setLocalTime(firstIndexOf(id), v);
+    return set(id, v, LocalTime.class);
   }
 
   /**
@@ -301,7 +337,7 @@ public interface SettableById<T extends SettableById<T>>
    * @throws IndexOutOfBoundsException if the id is invalid.
    */
   default T setByteBuffer(CqlIdentifier id, ByteBuffer v) {
-    return setByteBuffer(firstIndexOf(id), v);
+    return set(id, v, ByteBuffer.class);
   }
 
   /**
@@ -315,7 +351,7 @@ public interface SettableById<T extends SettableById<T>>
    * @throws IndexOutOfBoundsException if the id is invalid.
    */
   default T setString(CqlIdentifier id, String v) {
-    return setString(firstIndexOf(id), v);
+    return set(id, v, String.class);
   }
 
   /**
@@ -329,7 +365,7 @@ public interface SettableById<T extends SettableById<T>>
    * @throws IndexOutOfBoundsException if the id is invalid.
    */
   default T setBigInteger(CqlIdentifier id, BigInteger v) {
-    return setBigInteger(firstIndexOf(id), v);
+    return set(id, v, BigInteger.class);
   }
 
   /**
@@ -343,7 +379,7 @@ public interface SettableById<T extends SettableById<T>>
    * @throws IndexOutOfBoundsException if the id is invalid.
    */
   default T setBigDecimal(CqlIdentifier id, BigDecimal v) {
-    return setBigDecimal(firstIndexOf(id), v);
+    return set(id, v, BigDecimal.class);
   }
 
   /**
@@ -357,7 +393,7 @@ public interface SettableById<T extends SettableById<T>>
    * @throws IndexOutOfBoundsException if the id is invalid.
    */
   default T setUuid(CqlIdentifier id, UUID v) {
-    return setUuid(firstIndexOf(id), v);
+    return set(id, v, UUID.class);
   }
 
   /**
@@ -371,7 +407,7 @@ public interface SettableById<T extends SettableById<T>>
    * @throws IndexOutOfBoundsException if the id is invalid.
    */
   default T setInetAddress(CqlIdentifier id, InetAddress v) {
-    return setInetAddress(firstIndexOf(id), v);
+    return set(id, v, InetAddress.class);
   }
 
   /**
@@ -385,7 +421,7 @@ public interface SettableById<T extends SettableById<T>>
    * @throws IndexOutOfBoundsException if the id is invalid.
    */
   default T setCqlDuration(CqlIdentifier id, CqlDuration v) {
-    return setCqlDuration(firstIndexOf(id), v);
+    return set(id, v, CqlDuration.class);
   }
 
   /**
@@ -401,7 +437,19 @@ public interface SettableById<T extends SettableById<T>>
    * @throws IndexOutOfBoundsException if the index is invalid.
    */
   default T setToken(CqlIdentifier id, Token v) {
-    return setToken(firstIndexOf(id), v);
+    // Simply enumerate all known implementations. This goes against the concept of TokenFactory,
+    // but injecting the factory here is too much of a hassle.
+    // The only issue is if someone uses a custom partitioner, but this is highly unlikely, and even
+    // then they can set the value manually as a workaround.
+    if (v instanceof Murmur3Token) {
+      return setLong(id, ((Murmur3Token) v).getValue());
+    } else if (v instanceof ByteOrderedToken) {
+      return setByteBuffer(id, ((ByteOrderedToken) v).getValue());
+    } else if (v instanceof RandomToken) {
+      return setBigInteger(id, ((RandomToken) v).getValue());
+    } else {
+      throw new IllegalArgumentException("Unsupported token type " + v.getClass());
+    }
   }
 
   /**
@@ -410,7 +458,7 @@ public interface SettableById<T extends SettableById<T>>
    * <p>By default, this works with CQL type {@code list}.
    *
    * <p>This method is provided for convenience when the element type is a non-generic type. For
-   * more complex list types, use {@link #set(int, Object, GenericType)}.
+   * more complex list types, use {@link #set(CqlIdentifier, Object, GenericType)}.
    *
    * <p>If you want to avoid the overhead of building a {@code CqlIdentifier}, use the variant of
    * this method that takes a string argument.
@@ -418,7 +466,7 @@ public interface SettableById<T extends SettableById<T>>
    * @throws IndexOutOfBoundsException if the id is invalid.
    */
   default <V> T setList(CqlIdentifier id, List<V> v, Class<V> elementsClass) {
-    return setList(firstIndexOf(id), v, elementsClass);
+    return set(id, v, GenericType.listOf(elementsClass));
   }
 
   /**
@@ -427,7 +475,7 @@ public interface SettableById<T extends SettableById<T>>
    * <p>By default, this works with CQL type {@code set}.
    *
    * <p>This method is provided for convenience when the element type is a non-generic type. For
-   * more complex set types, use {@link #set(int, Object, GenericType)}.
+   * more complex set types, use {@link #set(CqlIdentifier, Object, GenericType)}.
    *
    * <p>If you want to avoid the overhead of building a {@code CqlIdentifier}, use the variant of
    * this method that takes a string argument.
@@ -435,7 +483,7 @@ public interface SettableById<T extends SettableById<T>>
    * @throws IndexOutOfBoundsException if the id is invalid.
    */
   default <V> T setSet(CqlIdentifier id, Set<V> v, Class<V> elementsClass) {
-    return setSet(firstIndexOf(id), v, elementsClass);
+    return set(id, v, GenericType.setOf(elementsClass));
   }
 
   /**
@@ -444,7 +492,7 @@ public interface SettableById<T extends SettableById<T>>
    * <p>By default, this works with CQL type {@code map}.
    *
    * <p>This method is provided for convenience when the element type is a non-generic type. For
-   * more complex map types, use {@link #set(int, Object, GenericType)}.
+   * more complex map types, use {@link #set(CqlIdentifier, Object, GenericType)}.
    *
    * <p>If you want to avoid the overhead of building a {@code CqlIdentifier}, use the variant of
    * this method that takes a string argument.
@@ -452,7 +500,7 @@ public interface SettableById<T extends SettableById<T>>
    * @throws IndexOutOfBoundsException if the id is invalid.
    */
   default <K, V> T setMap(CqlIdentifier id, Map<K, V> v, Class<K> keyClass, Class<V> valueClass) {
-    return setMap(firstIndexOf(id), v, keyClass, valueClass);
+    return set(id, v, GenericType.mapOf(keyClass, valueClass));
   }
 
   /**
@@ -466,7 +514,7 @@ public interface SettableById<T extends SettableById<T>>
    * @throws IndexOutOfBoundsException if the id is invalid.
    */
   default T setUdtValue(CqlIdentifier id, UdtValue v) {
-    return setUdtValue(firstIndexOf(id), v);
+    return set(id, v, UdtValue.class);
   }
 
   /**
@@ -480,6 +528,6 @@ public interface SettableById<T extends SettableById<T>>
    * @throws IndexOutOfBoundsException if the id is invalid.
    */
   default T setTupleValue(CqlIdentifier id, TupleValue v) {
-    return setTupleValue(firstIndexOf(id), v);
+    return set(id, v, TupleValue.class);
   }
 }

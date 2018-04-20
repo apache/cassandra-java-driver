@@ -39,13 +39,7 @@ import com.datastax.oss.driver.api.core.type.DataType;
  *
  * <p>In the driver, these data structures are always accessible by index as well.
  */
-public interface AccessibleByName extends AccessibleByIndex {
-
-  /**
-   * Returns the first index where a given identifier appears (depending on the implementation,
-   * identifiers may appear multiple times).
-   */
-  int firstIndexOf(String name);
+public interface AccessibleByName extends Data {
 
   /**
    * Returns the CQL type of the value for the first occurrence of {@code name}.

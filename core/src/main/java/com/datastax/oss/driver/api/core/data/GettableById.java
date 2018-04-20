@@ -17,9 +17,21 @@ package com.datastax.oss.driver.api.core.data;
 
 import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.metadata.token.Token;
+import com.datastax.oss.driver.api.core.type.DataType;
+import com.datastax.oss.driver.api.core.type.DataTypes;
 import com.datastax.oss.driver.api.core.type.codec.CodecNotFoundException;
+import com.datastax.oss.driver.api.core.type.codec.PrimitiveBooleanCodec;
+import com.datastax.oss.driver.api.core.type.codec.PrimitiveByteCodec;
+import com.datastax.oss.driver.api.core.type.codec.PrimitiveDoubleCodec;
+import com.datastax.oss.driver.api.core.type.codec.PrimitiveFloatCodec;
+import com.datastax.oss.driver.api.core.type.codec.PrimitiveIntCodec;
+import com.datastax.oss.driver.api.core.type.codec.PrimitiveLongCodec;
+import com.datastax.oss.driver.api.core.type.codec.PrimitiveShortCodec;
 import com.datastax.oss.driver.api.core.type.codec.TypeCodec;
 import com.datastax.oss.driver.api.core.type.reflect.GenericType;
+import com.datastax.oss.driver.internal.core.metadata.token.ByteOrderedToken;
+import com.datastax.oss.driver.internal.core.metadata.token.Murmur3Token;
+import com.datastax.oss.driver.internal.core.metadata.token.RandomToken;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.net.InetAddress;
@@ -33,7 +45,7 @@ import java.util.Set;
 import java.util.UUID;
 
 /** A data structure that provides methods to retrieve its values via a CQL identifier. */
-public interface GettableById extends GettableByIndex, AccessibleById {
+public interface GettableById extends AccessibleById {
 
   /**
    * Returns the raw binary representation of the value for the first occurrence of {@code id}.
@@ -54,9 +66,7 @@ public interface GettableById extends GettableByIndex, AccessibleById {
    *     invocation for this value will have unpredictable results.
    * @throws IndexOutOfBoundsException if the id is invalid.
    */
-  default ByteBuffer getBytesUnsafe(CqlIdentifier id) {
-    return getBytesUnsafe(firstIndexOf(id));
-  }
+  ByteBuffer getBytesUnsafe(CqlIdentifier id);
 
   /**
    * Indicates whether the value for the first occurrence of {@code id} is a CQL {@code NULL}.
@@ -70,7 +80,7 @@ public interface GettableById extends GettableByIndex, AccessibleById {
    * @throws IndexOutOfBoundsException if the id is invalid.
    */
   default boolean isNull(CqlIdentifier id) {
-    return isNull(firstIndexOf(id));
+    return getBytesUnsafe(id) == null;
   }
 
   /**
@@ -93,7 +103,7 @@ public interface GettableById extends GettableByIndex, AccessibleById {
    * @throws IndexOutOfBoundsException if the id is invalid.
    */
   default <T> T get(CqlIdentifier id, TypeCodec<T> codec) {
-    return get(firstIndexOf(id), codec);
+    return codec.decode(getBytesUnsafe(id), protocolVersion());
   }
 
   /**
@@ -102,7 +112,7 @@ public interface GettableById extends GettableByIndex, AccessibleById {
    * <p>The {@link #codecRegistry()} will be used to look up a codec to handle the conversion.
    *
    * <p>This variant is for generic Java types. If the target type is not generic, use {@link
-   * #get(int, Class)} instead, which may perform slightly better.
+   * #get(CqlIdentifier, Class)} instead, which may perform slightly better.
    *
    * <p>If an identifier appears multiple times, this can only be used to access the first value.
    * For the other ones, use positional getters.
@@ -114,7 +124,9 @@ public interface GettableById extends GettableByIndex, AccessibleById {
    * @throws CodecNotFoundException if no codec can perform the conversion.
    */
   default <T> T get(CqlIdentifier id, GenericType<T> targetType) {
-    return get(firstIndexOf(id), targetType);
+    DataType cqlType = getType(id);
+    TypeCodec<T> codec = codecRegistry().codecFor(cqlType, targetType);
+    return get(id, codec);
   }
 
   /**
@@ -122,7 +134,7 @@ public interface GettableById extends GettableByIndex, AccessibleById {
    *
    * <p>The {@link #codecRegistry()} will be used to look up a codec to handle the conversion.
    *
-   * <p>If the target type is generic, use {@link #get(int, GenericType)} instead.
+   * <p>If the target type is generic, use {@link #get(CqlIdentifier, GenericType)} instead.
    *
    * <p>If an identifier appears multiple times, this can only be used to access the first value.
    * For the other ones, use positional getters.
@@ -134,7 +146,11 @@ public interface GettableById extends GettableByIndex, AccessibleById {
    * @throws CodecNotFoundException if no codec can perform the conversion.
    */
   default <T> T get(CqlIdentifier id, Class<T> targetClass) {
-    return get(firstIndexOf(id), targetClass);
+    // This is duplicated from the GenericType variant, because we want to give the codec registry
+    // a chance to process the unwrapped class directly, if it can do so in a more efficient way.
+    DataType cqlType = getType(id);
+    TypeCodec<T> codec = codecRegistry().codecFor(cqlType, targetClass);
+    return get(id, codec);
   }
 
   /**
@@ -146,13 +162,13 @@ public interface GettableById extends GettableByIndex, AccessibleById {
    * <p>Use this method to dynamically inspect elements when types aren't known in advance, for
    * instance if you're writing a generic row logger. If you know the target Java type, it is
    * generally preferable to use typed variants, such as the ones for built-in types ({@link
-   * #getBoolean(int)}, {@link #getInt(int)}, etc.), or {@link #get(int, Class)} and {@link
-   * #get(int, GenericType)} for custom types.
+   * #getBoolean(CqlIdentifier)}, {@link #getInt(CqlIdentifier)}, etc.), or {@link
+   * #get(CqlIdentifier, Class)} and {@link #get(CqlIdentifier, GenericType)} for custom types.
    *
    * <p>The definition of "most appropriate" is unspecified, and left to the appreciation of the
    * {@link #codecRegistry()} implementation. By default, the driver uses the mapping described in
-   * the other {@code getXxx()} methods (for example {@link #getString(int) String for text, varchar
-   * and ascii}, etc).
+   * the other {@code getXxx()} methods (for example {@link #getString(CqlIdentifier) String for
+   * text, varchar and ascii}, etc).
    *
    * <p>If an identifier appears multiple times, this can only be used to access the first value.
    * For the other ones, use positional getters.
@@ -164,7 +180,9 @@ public interface GettableById extends GettableByIndex, AccessibleById {
    * @throws CodecNotFoundException if no codec can perform the conversion.
    */
   default Object getObject(CqlIdentifier id) {
-    return getObject(firstIndexOf(id));
+    DataType cqlType = getType(id);
+    TypeCodec<?> codec = codecRegistry().codecFor(cqlType);
+    return codec.decode(getBytesUnsafe(id), protocolVersion());
   }
 
   /**
@@ -186,7 +204,11 @@ public interface GettableById extends GettableByIndex, AccessibleById {
    * @throws IndexOutOfBoundsException if the id is invalid.
    */
   default boolean getBoolean(CqlIdentifier id) {
-    return getBoolean(firstIndexOf(id));
+    DataType cqlType = getType(id);
+    TypeCodec<Boolean> codec = codecRegistry().codecFor(cqlType, Boolean.class);
+    return (codec instanceof PrimitiveBooleanCodec)
+        ? ((PrimitiveBooleanCodec) codec).decodePrimitive(getBytesUnsafe(id), protocolVersion())
+        : get(id, codec);
   }
 
   /**
@@ -207,7 +229,11 @@ public interface GettableById extends GettableByIndex, AccessibleById {
    * @throws IndexOutOfBoundsException if the id is invalid.
    */
   default byte getByte(CqlIdentifier id) {
-    return getByte(firstIndexOf(id));
+    DataType cqlType = getType(id);
+    TypeCodec<Byte> codec = codecRegistry().codecFor(cqlType, Byte.class);
+    return (codec instanceof PrimitiveByteCodec)
+        ? ((PrimitiveByteCodec) codec).decodePrimitive(getBytesUnsafe(id), protocolVersion())
+        : get(id, codec);
   }
 
   /**
@@ -229,7 +255,11 @@ public interface GettableById extends GettableByIndex, AccessibleById {
    * @throws IndexOutOfBoundsException if the id is invalid.
    */
   default double getDouble(CqlIdentifier id) {
-    return getDouble(firstIndexOf(id));
+    DataType cqlType = getType(id);
+    TypeCodec<Double> codec = codecRegistry().codecFor(cqlType, Double.class);
+    return (codec instanceof PrimitiveDoubleCodec)
+        ? ((PrimitiveDoubleCodec) codec).decodePrimitive(getBytesUnsafe(id), protocolVersion())
+        : get(id, codec);
   }
 
   /**
@@ -251,7 +281,11 @@ public interface GettableById extends GettableByIndex, AccessibleById {
    * @throws IndexOutOfBoundsException if the id is invalid.
    */
   default float getFloat(CqlIdentifier id) {
-    return getFloat(firstIndexOf(id));
+    DataType cqlType = getType(id);
+    TypeCodec<Float> codec = codecRegistry().codecFor(cqlType, Float.class);
+    return (codec instanceof PrimitiveFloatCodec)
+        ? ((PrimitiveFloatCodec) codec).decodePrimitive(getBytesUnsafe(id), protocolVersion())
+        : get(id, codec);
   }
 
   /**
@@ -273,7 +307,11 @@ public interface GettableById extends GettableByIndex, AccessibleById {
    * @throws IndexOutOfBoundsException if the id is invalid.
    */
   default int getInt(CqlIdentifier id) {
-    return getInt(firstIndexOf(id));
+    DataType cqlType = getType(id);
+    TypeCodec<Integer> codec = codecRegistry().codecFor(cqlType, Integer.class);
+    return (codec instanceof PrimitiveIntCodec)
+        ? ((PrimitiveIntCodec) codec).decodePrimitive(getBytesUnsafe(id), protocolVersion())
+        : get(id, codec);
   }
 
   /**
@@ -294,7 +332,11 @@ public interface GettableById extends GettableByIndex, AccessibleById {
    * @throws IndexOutOfBoundsException if the id is invalid.
    */
   default long getLong(CqlIdentifier id) {
-    return getLong(firstIndexOf(id));
+    DataType cqlType = getType(id);
+    TypeCodec<Long> codec = codecRegistry().codecFor(cqlType, Long.class);
+    return (codec instanceof PrimitiveLongCodec)
+        ? ((PrimitiveLongCodec) codec).decodePrimitive(getBytesUnsafe(id), protocolVersion())
+        : get(id, codec);
   }
 
   /**
@@ -316,7 +358,11 @@ public interface GettableById extends GettableByIndex, AccessibleById {
    * @throws IndexOutOfBoundsException if the id is invalid.
    */
   default short getShort(CqlIdentifier id) {
-    return getShort(firstIndexOf(id));
+    DataType cqlType = getType(id);
+    TypeCodec<Short> codec = codecRegistry().codecFor(cqlType, Short.class);
+    return (codec instanceof PrimitiveShortCodec)
+        ? ((PrimitiveShortCodec) codec).decodePrimitive(getBytesUnsafe(id), protocolVersion())
+        : get(id, codec);
   }
 
   /**
@@ -333,7 +379,7 @@ public interface GettableById extends GettableByIndex, AccessibleById {
    * @throws IndexOutOfBoundsException if the id is invalid.
    */
   default Instant getInstant(CqlIdentifier id) {
-    return getInstant(firstIndexOf(id));
+    return get(id, Instant.class);
   }
 
   /**
@@ -350,7 +396,7 @@ public interface GettableById extends GettableByIndex, AccessibleById {
    * @throws IndexOutOfBoundsException if the id is invalid.
    */
   default LocalDate getLocalDate(CqlIdentifier id) {
-    return getLocalDate(firstIndexOf(id));
+    return get(id, LocalDate.class);
   }
 
   /**
@@ -367,7 +413,7 @@ public interface GettableById extends GettableByIndex, AccessibleById {
    * @throws IndexOutOfBoundsException if the id is invalid.
    */
   default LocalTime getLocalTime(CqlIdentifier id) {
-    return getLocalTime(firstIndexOf(id));
+    return get(id, LocalTime.class);
   }
 
   /**
@@ -384,7 +430,7 @@ public interface GettableById extends GettableByIndex, AccessibleById {
    * @throws IndexOutOfBoundsException if the id is invalid.
    */
   default ByteBuffer getByteBuffer(CqlIdentifier id) {
-    return getByteBuffer(firstIndexOf(id));
+    return get(id, ByteBuffer.class);
   }
 
   /**
@@ -401,7 +447,7 @@ public interface GettableById extends GettableByIndex, AccessibleById {
    * @throws IndexOutOfBoundsException if the id is invalid.
    */
   default String getString(CqlIdentifier id) {
-    return getString(firstIndexOf(id));
+    return get(id, String.class);
   }
 
   /**
@@ -418,7 +464,7 @@ public interface GettableById extends GettableByIndex, AccessibleById {
    * @throws IndexOutOfBoundsException if the id is invalid.
    */
   default BigInteger getBigInteger(CqlIdentifier id) {
-    return getBigInteger(firstIndexOf(id));
+    return get(id, BigInteger.class);
   }
 
   /**
@@ -435,7 +481,7 @@ public interface GettableById extends GettableByIndex, AccessibleById {
    * @throws IndexOutOfBoundsException if the id is invalid.
    */
   default BigDecimal getBigDecimal(CqlIdentifier id) {
-    return getBigDecimal(firstIndexOf(id));
+    return get(id, BigDecimal.class);
   }
 
   /**
@@ -452,7 +498,7 @@ public interface GettableById extends GettableByIndex, AccessibleById {
    * @throws IndexOutOfBoundsException if the id is invalid.
    */
   default UUID getUuid(CqlIdentifier id) {
-    return getUuid(firstIndexOf(id));
+    return get(id, UUID.class);
   }
 
   /**
@@ -469,7 +515,7 @@ public interface GettableById extends GettableByIndex, AccessibleById {
    * @throws IndexOutOfBoundsException if the id is invalid.
    */
   default InetAddress getInetAddress(CqlIdentifier id) {
-    return getInetAddress(firstIndexOf(id));
+    return get(id, InetAddress.class);
   }
 
   /**
@@ -486,7 +532,7 @@ public interface GettableById extends GettableByIndex, AccessibleById {
    * @throws IndexOutOfBoundsException if the id is invalid.
    */
   default CqlDuration getCqlDuration(CqlIdentifier id) {
-    return getCqlDuration(firstIndexOf(id));
+    return get(id, CqlDuration.class);
   }
 
   /**
@@ -509,7 +555,20 @@ public interface GettableById extends GettableByIndex, AccessibleById {
    * @throws IllegalArgumentException if the column type can not be converted to a known token type.
    */
   default Token getToken(CqlIdentifier id) {
-    return getToken(firstIndexOf(id));
+    DataType type = getType(id);
+    // Simply enumerate all known implementations. This goes against the concept of TokenFactory,
+    // but injecting the factory here is too much of a hassle.
+    // The only issue is if someone uses a custom partitioner, but this is highly unlikely, and even
+    // then they can get the value manually as a workaround.
+    if (type.equals(DataTypes.BIGINT)) {
+      return isNull(id) ? null : new Murmur3Token(getLong(id));
+    } else if (type.equals(DataTypes.BLOB)) {
+      return isNull(id) ? null : new ByteOrderedToken(getByteBuffer(id));
+    } else if (type.equals(DataTypes.VARINT)) {
+      return isNull(id) ? null : new RandomToken(getBigInteger(id));
+    } else {
+      throw new IllegalArgumentException("Can't convert CQL type " + type + " into a token");
+    }
   }
 
   /**
@@ -518,7 +577,7 @@ public interface GettableById extends GettableByIndex, AccessibleById {
    * <p>By default, this works with CQL type {@code list}.
    *
    * <p>This method is provided for convenience when the element type is a non-generic type. For
-   * more complex list types, use {@link #get(int, GenericType)}.
+   * more complex list types, use {@link #get(CqlIdentifier, GenericType)}.
    *
    * <p>If an identifier appears multiple times, this can only be used to access the first value.
    * For the other ones, use positional getters.
@@ -529,7 +588,7 @@ public interface GettableById extends GettableByIndex, AccessibleById {
    * @throws IndexOutOfBoundsException if the id is invalid.
    */
   default <T> List<T> getList(CqlIdentifier id, Class<T> elementsClass) {
-    return getList(firstIndexOf(id), elementsClass);
+    return get(id, GenericType.listOf(elementsClass));
   }
 
   /**
@@ -538,7 +597,7 @@ public interface GettableById extends GettableByIndex, AccessibleById {
    * <p>By default, this works with CQL type {@code set}.
    *
    * <p>This method is provided for convenience when the element type is a non-generic type. For
-   * more complex set types, use {@link #get(int, GenericType)}.
+   * more complex set types, use {@link #get(CqlIdentifier, GenericType)}.
    *
    * <p>If an identifier appears multiple times, this can only be used to access the first value.
    * For the other ones, use positional getters.
@@ -549,7 +608,7 @@ public interface GettableById extends GettableByIndex, AccessibleById {
    * @throws IndexOutOfBoundsException if the id is invalid.
    */
   default <T> Set<T> getSet(CqlIdentifier id, Class<T> elementsClass) {
-    return getSet(firstIndexOf(id), elementsClass);
+    return get(id, GenericType.setOf(elementsClass));
   }
 
   /**
@@ -558,7 +617,7 @@ public interface GettableById extends GettableByIndex, AccessibleById {
    * <p>By default, this works with CQL type {@code map}.
    *
    * <p>This method is provided for convenience when the element type is a non-generic type. For
-   * more complex map types, use {@link #get(int, GenericType)}.
+   * more complex map types, use {@link #get(CqlIdentifier, GenericType)}.
    *
    * <p>If an identifier appears multiple times, this can only be used to access the first value.
    * For the other ones, use positional getters.
@@ -569,7 +628,7 @@ public interface GettableById extends GettableByIndex, AccessibleById {
    * @throws IndexOutOfBoundsException if the id is invalid.
    */
   default <K, V> Map<K, V> getMap(CqlIdentifier id, Class<K> keyClass, Class<V> valueClass) {
-    return getMap(firstIndexOf(id), keyClass, valueClass);
+    return get(id, GenericType.mapOf(keyClass, valueClass));
   }
 
   /**
@@ -586,7 +645,7 @@ public interface GettableById extends GettableByIndex, AccessibleById {
    * @throws IndexOutOfBoundsException if the id is invalid.
    */
   default UdtValue getUdtValue(CqlIdentifier id) {
-    return getUdtValue(firstIndexOf(id));
+    return get(id, UdtValue.class);
   }
 
   /**
@@ -603,6 +662,6 @@ public interface GettableById extends GettableByIndex, AccessibleById {
    * @throws IndexOutOfBoundsException if the id is invalid.
    */
   default TupleValue getTupleValue(CqlIdentifier id) {
-    return getTupleValue(firstIndexOf(id));
+    return get(id, TupleValue.class);
   }
 }
