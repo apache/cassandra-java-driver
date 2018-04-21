@@ -96,7 +96,7 @@ public class DefaultRow implements Row {
 
   @Override
   public boolean isDetached() {
-    return attachmentPoint != AttachmentPoint.NONE;
+    return attachmentPoint == AttachmentPoint.NONE;
   }
 
   @Override
