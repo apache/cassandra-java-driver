@@ -107,7 +107,7 @@ public class DefaultNettyOptions implements NettyOptions {
   }
 
   @Override
-  public Future<?> onClose() {
+  public Future<Void> onClose() {
     PromiseCombiner combiner = new PromiseCombiner();
     combiner.add(
         adminEventLoopGroup.shutdownGracefully(

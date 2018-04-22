@@ -69,9 +69,7 @@ public class CompletableFutures {
   /** Do something when all inputs are done (success or failure). */
   public static <T> void whenAllDone(
       List<CompletionStage<T>> inputs, Runnable callback, Executor executor) {
-    allDone(inputs)
-        .thenAcceptAsync(success -> callback.run(), executor)
-        .exceptionally(UncaughtExceptions::log);
+    allDone(inputs).thenRunAsync(callback, executor).exceptionally(UncaughtExceptions::log);
   }
 
   /** Get the result now, when we know for sure that the future is complete. */

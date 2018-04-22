@@ -29,7 +29,7 @@
   <artifactId>java-driver-query-builder</artifactId>
   <packaging>jar</packaging>
 
-  <name>DataStax Java driver for Apache Cassandra® - query builder</name>
+  <name>DataStax Java driver for Apache Cassandra(R) - query builder</name>
 
   <dependencies>
     <dependency>

@@ -229,7 +229,7 @@ public abstract class TypesafeDriverConfigProfile implements DriverConfigProfile
   }
 
   /**
-   * A profile that was copied from another profile programatically using {@code withXxx} methods.
+   * A profile that was copied from another profile programmatically using {@code withXxx} methods.
    */
   @ThreadSafe
   static class Derived extends TypesafeDriverConfigProfile {

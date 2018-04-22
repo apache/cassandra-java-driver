@@ -15,10 +15,11 @@
  */
 package com.datastax.oss.driver.internal.core;
 
-import com.datastax.oss.driver.api.core.CassandraVersion;
+import com.datastax.oss.driver.api.core.CassandraVersions;
 import com.datastax.oss.driver.api.core.DefaultProtocolVersion;
 import com.datastax.oss.driver.api.core.ProtocolVersion;
 import com.datastax.oss.driver.api.core.UnsupportedProtocolVersionException;
+import com.datastax.oss.driver.api.core.Version;
 import com.datastax.oss.driver.api.core.metadata.Node;
 import com.datastax.oss.driver.internal.core.context.DefaultDriverContext;
 import com.datastax.oss.driver.shaded.guava.common.base.Preconditions;
@@ -124,8 +125,8 @@ public class CassandraProtocolVersionRegistry implements ProtocolVersionRegistry
     // The C*<=>protocol mapping is hardcoded in the code below, I don't see a need to be more
     // sophisticated right now.
     for (Node node : nodes) {
-      CassandraVersion cassandraVersion = node.getCassandraVersion();
-      if (cassandraVersion == null) {
+      Version version = node.getCassandraVersion();
+      if (version == null) {
         LOG.warn(
             "[{}] Node {} reports null Cassandra version, "
                 + "ignoring it from optimal protocol version computation",
@@ -133,14 +134,14 @@ public class CassandraProtocolVersionRegistry implements ProtocolVersionRegistry
             node.getConnectAddress());
         continue;
       }
-      cassandraVersion = cassandraVersion.nextStable();
-      if (cassandraVersion.compareTo(CassandraVersion.V2_1_0) < 0) {
+      version = version.nextStable();
+      if (version.compareTo(CassandraVersions.CASSANDRA_2_1_0) < 0) {
         throw new UnsupportedProtocolVersionException(
             node.getConnectAddress(),
             String.format(
                 "Node %s reports Cassandra version %s, "
                     + "but the driver only supports 2.1.0 and above",
-                node.getConnectAddress(), cassandraVersion),
+                node.getConnectAddress(), version),
             ImmutableList.of(DefaultProtocolVersion.V3, DefaultProtocolVersion.V4));
       }
 
@@ -148,8 +149,8 @@ public class CassandraProtocolVersionRegistry implements ProtocolVersionRegistry
           "[{}] Node {} reports Cassandra version {}",
           logPrefix,
           node.getConnectAddress(),
-          cassandraVersion);
-      if (cassandraVersion.compareTo(CassandraVersion.V2_2_0) < 0
+          version);
+      if (version.compareTo(CassandraVersions.CASSANDRA_2_2_0) < 0
           && candidates.remove(DefaultProtocolVersion.V4)) {
         LOG.debug("[{}] Excluding protocol V4", logPrefix);
       }

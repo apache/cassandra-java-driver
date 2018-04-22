@@ -17,7 +17,8 @@ package com.datastax.oss.driver.api.testinfra.ccm;
 
 import static io.netty.util.internal.PlatformDependent.isWindows;
 
-import com.datastax.oss.driver.api.core.CassandraVersion;
+import com.datastax.oss.driver.api.core.CassandraVersions;
+import com.datastax.oss.driver.api.core.Version;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -67,8 +68,7 @@ public class CcmBridge implements AutoCloseable {
 
   private final String jvmArgs;
 
-  public static final CassandraVersion VERSION =
-      CassandraVersion.parse(System.getProperty("ccm.version", "3.11.0"));
+  public static final Version VERSION = Version.parse(System.getProperty("ccm.version", "3.11.0"));
 
   public static final String INSTALL_DIRECTORY = System.getProperty("ccm.directory");
 
@@ -103,15 +103,15 @@ public class CcmBridge implements AutoCloseable {
       createTempStore(DEFAULT_SERVER_KEYSTORE_PATH);
 
   // major DSE versions
-  private static final CassandraVersion V6_0_0 = CassandraVersion.parse("6.0.0");
-  private static final CassandraVersion V5_1_0 = CassandraVersion.parse("5.1.0");
-  private static final CassandraVersion V5_0_0 = CassandraVersion.parse("5.0.0");
+  private static final Version V6_0_0 = Version.parse("6.0.0");
+  private static final Version V5_1_0 = Version.parse("5.1.0");
+  private static final Version V5_0_0 = Version.parse("5.0.0");
 
   // mapped C* versions from DSE versions
-  private static final CassandraVersion V4_0_0 = CassandraVersion.parse("4.0.0");
-  private static final CassandraVersion V3_10 = CassandraVersion.parse("3.10");
-  private static final CassandraVersion V3_0_15 = CassandraVersion.parse("3.0.15");
-  private static final CassandraVersion V2_1_19 = CassandraVersion.parse("2.1.19");
+  private static final Version V4_0_0 = Version.parse("4.0.0");
+  private static final Version V3_10 = Version.parse("3.10");
+  private static final Version V3_0_15 = Version.parse("3.0.15");
+  private static final Version V2_1_19 = Version.parse("2.1.19");
 
   private CcmBridge(
       Path configDirectory,
@@ -153,15 +153,15 @@ public class CcmBridge implements AutoCloseable {
     this.dseWorkloads = dseWorkloads;
   }
 
-  public Optional<CassandraVersion> getDseVersion() {
+  public Optional<Version> getDseVersion() {
     return DSE_ENABLEMENT ? Optional.of(VERSION) : Optional.empty();
   }
 
-  public CassandraVersion getCassandraVersion() {
+  public Version getCassandraVersion() {
     if (!DSE_ENABLEMENT) {
       return VERSION;
     } else {
-      CassandraVersion stableVersion = VERSION.nextStable();
+      Version stableVersion = VERSION.nextStable();
       if (stableVersion.compareTo(V6_0_0) >= 0) {
         return V4_0_0;
       } else if (stableVersion.compareTo(V5_1_0) >= 0) {
@@ -196,7 +196,7 @@ public class CcmBridge implements AutoCloseable {
       for (Map.Entry<String, Object> conf : cassandraConfiguration.entrySet()) {
         execute("updateconf", String.format("%s:%s", conf.getKey(), conf.getValue()));
       }
-      if (getCassandraVersion().compareTo(CassandraVersion.V2_2_0) >= 0) {
+      if (getCassandraVersion().compareTo(CassandraVersions.CASSANDRA_2_2_0) >= 0) {
         execute("updateconf", "enable_user_defined_functions:true");
       }
       if (DSE_ENABLEMENT) {
