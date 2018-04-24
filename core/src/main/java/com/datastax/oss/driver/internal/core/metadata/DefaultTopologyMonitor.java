@@ -152,7 +152,7 @@ public class DefaultTopologyMonitor implements TopologyMonitor {
             // shouldn't
             // need this fallback anywhere else.
             this.isSchemaV2 = false;
-            query(channel, "SELECT * from system.peers")
+            query(channel, "SELECT * FROM system.peers")
                 .whenComplete(
                     (r2, t2) -> {
                       peersQ.complete(r2);
