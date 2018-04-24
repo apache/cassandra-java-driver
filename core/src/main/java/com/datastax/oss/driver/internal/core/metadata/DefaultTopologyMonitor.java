@@ -61,7 +61,9 @@ public class DefaultTopologyMonitor implements TopologyMonitor {
   private final AddressTranslator addressTranslator;
   private final Duration timeout;
   private final CompletableFuture<Void> closeFuture;
+  private final boolean allowPortDiscovery;
 
+  @VisibleForTesting volatile boolean isSchemaV2;
   @VisibleForTesting volatile int port = -1;
 
   public DefaultTopologyMonitor(InternalDriverContext context) {
@@ -71,7 +73,12 @@ public class DefaultTopologyMonitor implements TopologyMonitor {
     this.addressTranslator = context.addressTranslator();
     DriverConfigProfile config = context.config().getDefaultProfile();
     this.timeout = config.getDuration(DefaultDriverOption.CONTROL_CONNECTION_TIMEOUT);
+    this.allowPortDiscovery =
+        config.getBoolean(DefaultDriverOption.CONTROL_CONNECTION_ALLOW_PORT_DISCOVERY);
     this.closeFuture = new CompletableFuture<>();
+    // Set this to true initially, after the first refreshNodes is called this will either stay true
+    // or be set to false;
+    this.isSchemaV2 = true;
   }
 
   @Override
@@ -96,13 +103,14 @@ public class DefaultTopologyMonitor implements TopologyMonitor {
       LOG.debug("[{}] Ignoring refresh of control node", logPrefix);
       return CompletableFuture.completedFuture(Optional.empty());
     } else if (node.getBroadcastAddress().isPresent()) {
+      String queryString;
       return query(
               channel,
-              "SELECT * FROM system.peers WHERE peer = :address",
+              "SELECT * FROM " + fetchPeersTable() + " WHERE peer = :address",
               ImmutableMap.of("address", node.getBroadcastAddress().get()))
           .thenApply(this::firstRowAsNodeInfo);
     } else {
-      return query(channel, "SELECT * FROM system.peers")
+      return query(channel, "SELECT * FROM " + fetchPeersTable())
           .thenApply(result -> this.findInPeers(result, node.getConnectAddress()));
     }
   }
@@ -114,7 +122,7 @@ public class DefaultTopologyMonitor implements TopologyMonitor {
     }
     LOG.debug("[{}] Fetching info for new node {}", logPrefix, connectAddress);
     DriverChannel channel = controlConnection.channel();
-    return query(channel, "SELECT * FROM system.peers")
+    return query(channel, "SELECT * FROM " + fetchPeersTable())
         .thenApply(result -> this.findInPeers(result, connectAddress));
   }
 
@@ -133,10 +141,29 @@ public class DefaultTopologyMonitor implements TopologyMonitor {
     savePort(channel);
 
     CompletionStage<AdminResult> localQuery = query(channel, "SELECT * FROM system.local");
-    CompletionStage<AdminResult> peersQuery = query(channel, "SELECT * FROM system.peers");
+    CompletionStage<AdminResult> peersV2Query = query(channel, "SELECT * FROM system.peers_v2");
+    CompletableFuture<AdminResult> peersQ = new CompletableFuture<>();
+
+    peersV2Query.whenComplete(
+        (r, t) -> {
+          if (t != null) {
+            // The query to system.peers_v2 failed, whe should not attempt this query in the future.
+            // Since this method should be run as part of the control connection initialization, we
+            // shouldn't
+            // need this fallback anywhere else.
+            this.isSchemaV2 = false;
+            query(channel, "SELECT * from system.peers")
+                .whenComplete(
+                    (r2, t2) -> {
+                      peersQ.complete(r2);
+                    });
+          } else {
+            peersQ.complete(r);
+          }
+        });
 
     return localQuery.thenCombine(
-        peersQuery,
+        peersQ,
         (controlNodeResult, peersResult) -> {
           List<NodeInfo> nodeInfos = new ArrayList<>();
           // Don't rely on system.local.rpc_address for the control row, because it mistakenly
@@ -188,13 +215,19 @@ public class DefaultTopologyMonitor implements TopologyMonitor {
     return query(channel, queryString, Collections.emptyMap());
   }
 
-  private NodeInfo asNodeInfo(AdminRow row) {
-    InetAddress broadcastRpcAddress = row.getInetAddress("rpc_address");
-    if (broadcastRpcAddress == null) {
-      throw new IllegalArgumentException("Missing rpc_address in system row, can't refresh node");
+  private String fetchPeersTable() {
+    if (isSchemaV2) {
+      return "system.peers_v2";
     }
-    InetSocketAddress connectAddress =
-        addressTranslator.translate(new InetSocketAddress(broadcastRpcAddress, port));
+    return "system.peers";
+  }
+
+  private NodeInfo asNodeInfo(AdminRow row) {
+    InetSocketAddress connectAddress = getNativeAddressFromPeers(row);
+    if (connectAddress == null) {
+      throw new IllegalArgumentException(
+          "Missing rpc_address or native in system row, can't refresh node");
+    }
     return nodeInfoBuilder(row, connectAddress).build();
   }
 
@@ -215,9 +248,17 @@ public class DefaultTopologyMonitor implements TopologyMonitor {
     if (broadcastAddress == null) {
       broadcastAddress = row.getInetAddress("peer"); // in system.peers
     }
-    builder.withBroadcastAddress(broadcastAddress);
-
-    builder.withListenAddress(row.getInetAddress("listen_address"));
+    int broadcastPort = 0;
+    if (row.contains("peer_port")) {
+      broadcastPort = row.getInteger("peer_port");
+    }
+    builder.withBroadcastAddress(new InetSocketAddress(broadcastAddress, broadcastPort));
+    InetAddress listenAddress = row.getInetAddress("listen_address");
+    int listen_port = 0;
+    if (row.contains("listen_port")) {
+      listen_port = row.getInteger("listen_port");
+    }
+    builder.withListenAddress(new InetSocketAddress(listenAddress, listen_port));
     builder.withDatacenter(row.getString("data_center"));
     builder.withRack(row.getString("rack"));
     builder.withCassandraVersion(row.getString("release_version"));
@@ -232,12 +273,9 @@ public class DefaultTopologyMonitor implements TopologyMonitor {
     // The peers table is keyed by broadcast_address, but we only have the translated
     // broadcast_rpc_address, so we have to traverse the whole table and check the rows one by one.
     for (AdminRow row : result) {
-      InetAddress broadcastRpcAddress = row.getInetAddress("rpc_address");
-      if (broadcastRpcAddress != null
-          && addressTranslator
-              .translate(new InetSocketAddress(broadcastRpcAddress, port))
-              .equals(connectAddress)) {
-        return Optional.of(nodeInfoBuilder(row, connectAddress).build());
+      InetSocketAddress nativeAddress = getNativeAddressFromPeers(row);
+      if (nativeAddress != null && nativeAddress.equals(connectAddress)) {
+        return Optional.of(nodeInfoBuilder(row, nativeAddress).build());
       }
     }
     LOG.debug("[{}] Could not find any peer row matching {}", logPrefix, connectAddress);
@@ -251,5 +289,20 @@ public class DefaultTopologyMonitor implements TopologyMonitor {
     if (port < 0 && channel.remoteAddress() instanceof InetSocketAddress) {
       port = ((InetSocketAddress) channel.remoteAddress()).getPort();
     }
+  }
+
+  private InetSocketAddress getNativeAddressFromPeers(AdminRow row) {
+    InetAddress native_address = row.getInetAddress("native_address");
+    if (native_address == null) {
+      native_address = row.getInetAddress("rpc_address");
+    }
+    if (native_address == null) {
+      return null;
+    }
+    int row_port = port;
+    if (allowPortDiscovery && row.contains("native_port")) {
+      row_port = row.getInteger("native_port");
+    }
+    return addressTranslator.translate(new InetSocketAddress(native_address, row_port));
   }
 }

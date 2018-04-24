@@ -20,7 +20,6 @@ import com.datastax.oss.driver.api.core.loadbalancing.LoadBalancingPolicy;
 import com.datastax.oss.driver.api.core.loadbalancing.NodeDistance;
 import com.datastax.oss.driver.api.core.metadata.Metadata;
 import com.datastax.oss.driver.api.core.metadata.Node;
-import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.util.Map;
 import java.util.Optional;
@@ -44,7 +43,6 @@ public interface NodeInfo {
    * which the request was made, otherwise the new node will be ignored.
    */
   InetSocketAddress getConnectAddress();
-
   /**
    * The node's broadcast address. That is, the address that other nodes use to communicate with
    * that node.
@@ -52,7 +50,7 @@ public interface NodeInfo {
    * <p>This is only used by the default topology monitor, so if you are writing a custom one and
    * don't need this information, you can leave it empty.
    */
-  Optional<InetAddress> getBroadcastAddress();
+  Optional<InetSocketAddress> getBroadcastAddress();
 
   /**
    * The node's listen address. That is, the address that the Cassandra process binds to.
@@ -60,13 +58,12 @@ public interface NodeInfo {
    * <p>This is currently not used anywhere in the driver. If you write a custom topology monitor
    * and don't need this information, you can leave it empty.
    */
-  Optional<InetAddress> getListenAddress();
-
+  Optional<InetSocketAddress> getListenAddress();
   /**
-   * The data center that this node belongs to, according to the Cassandra snitch.
+   * The node's listen port. That is, the port that the Cassandra process binds to.
    *
-   * <p>This is used by some {@link LoadBalancingPolicy} implementations to compute the {@link
-   * NodeDistance}.
+   * <p>This is currently not used anywhere in the driver. If you write a custom topology monitor
+   * and don't need this information, you can leave it empty.
    */
   String getDatacenter();
 

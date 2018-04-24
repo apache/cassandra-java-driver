@@ -15,7 +15,6 @@
  */
 package com.datastax.oss.driver.internal.core.metadata;
 
-import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.util.Collections;
 import java.util.HashMap;
@@ -33,8 +32,8 @@ public class DefaultNodeInfo implements NodeInfo {
   }
 
   private final InetSocketAddress connectAddress;
-  private final Optional<InetAddress> broadcastAddress;
-  private final Optional<InetAddress> listenAddress;
+  private final Optional<InetSocketAddress> broadcastAddress;
+  private final Optional<InetSocketAddress> listenAddress;
   private final String datacenter;
   private final String rack;
   private final String cassandraVersion;
@@ -64,12 +63,12 @@ public class DefaultNodeInfo implements NodeInfo {
   }
 
   @Override
-  public Optional<InetAddress> getBroadcastAddress() {
+  public Optional<InetSocketAddress> getBroadcastAddress() {
     return broadcastAddress;
   }
 
   @Override
-  public Optional<InetAddress> getListenAddress() {
+  public Optional<InetSocketAddress> getListenAddress() {
     return listenAddress;
   }
 
@@ -116,8 +115,8 @@ public class DefaultNodeInfo implements NodeInfo {
   @NotThreadSafe
   public static class Builder {
     private InetSocketAddress connectAddress;
-    private Optional<InetAddress> broadcastAddress = Optional.empty();
-    private Optional<InetAddress> listenAddress = Optional.empty();
+    private Optional<InetSocketAddress> broadcastAddress = Optional.empty();
+    private Optional<InetSocketAddress> listenAddress = Optional.empty();
     private String datacenter;
     private String rack;
     private String cassandraVersion;
@@ -132,14 +131,14 @@ public class DefaultNodeInfo implements NodeInfo {
       return this;
     }
 
-    public Builder withBroadcastAddress(InetAddress address) {
+    public Builder withBroadcastAddress(InetSocketAddress address) {
       if (address != null) {
         this.broadcastAddress = Optional.of(address);
       }
       return this;
     }
 
-    public Builder withListenAddress(InetAddress address) {
+    public Builder withListenAddress(InetSocketAddress address) {
       if (address != null) {
         this.listenAddress = Optional.of(address);
       }

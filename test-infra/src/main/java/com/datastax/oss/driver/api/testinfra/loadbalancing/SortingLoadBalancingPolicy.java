@@ -42,9 +42,17 @@ public class SortingLoadBalancingPolicy implements LoadBalancingPolicy {
           (node1, node2) -> {
             // compare address bytes, byte by byte.
             byte[] address1 =
-                node1.getBroadcastAddress().map(InetAddress::getAddress).orElse(empty);
+                node1
+                    .getBroadcastAddress()
+                    .map(InetSocketAddress::getAddress)
+                    .map(InetAddress::getAddress)
+                    .orElse(empty);
             byte[] address2 =
-                node2.getBroadcastAddress().map(InetAddress::getAddress).orElse(empty);
+                node2
+                    .getBroadcastAddress()
+                    .map(InetSocketAddress::getAddress)
+                    .map(InetAddress::getAddress)
+                    .orElse(empty);
 
             // ipv6 vs ipv4, favor ipv6.
             if (address1.length != address2.length) {

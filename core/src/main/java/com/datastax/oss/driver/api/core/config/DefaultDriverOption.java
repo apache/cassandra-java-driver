@@ -79,6 +79,8 @@ public enum DefaultDriverOption implements DriverOption {
   REQUEST_LOGGER_STACK_TRACES("request.tracker.logs.show-stack-traces", false),
 
   CONTROL_CONNECTION_TIMEOUT("connection.control-connection.timeout", true),
+  CONTROL_CONNECTION_ALLOW_PORT_DISCOVERY(
+      "connection.control-connection.allow-port-discovery", false),
   CONTROL_CONNECTION_AGREEMENT_INTERVAL(
       "connection.control-connection.schema-agreement.interval", true),
   CONTROL_CONNECTION_AGREEMENT_TIMEOUT(

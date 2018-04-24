@@ -19,7 +19,6 @@ import com.datastax.oss.driver.api.core.CassandraVersion;
 import com.datastax.oss.driver.api.core.addresstranslation.AddressTranslator;
 import com.datastax.oss.driver.api.core.loadbalancing.LoadBalancingPolicy;
 import com.datastax.oss.driver.api.core.loadbalancing.NodeDistance;
-import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.util.Map;
 import java.util.Optional;
@@ -48,7 +47,7 @@ public interface Node {
    * the {@code system.local} table, so this will be unknown for the control node, until the control
    * connection reconnects to another node.
    */
-  Optional<InetAddress> getBroadcastAddress();
+  Optional<InetSocketAddress> getBroadcastAddress();
 
   /**
    * The node's listen address. That is, the address that the Cassandra process binds to.
@@ -56,7 +55,7 @@ public interface Node {
    * <p>This may not be know at all times. In particular, current Cassandra versions (3.10) only
    * store it in {@code system.local}, so this will be known only for the control node.
    */
-  Optional<InetAddress> getListenAddress();
+  Optional<InetSocketAddress> getListenAddress();
 
   String getDatacenter();
 

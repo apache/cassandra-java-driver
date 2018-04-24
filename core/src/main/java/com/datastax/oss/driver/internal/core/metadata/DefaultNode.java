@@ -21,7 +21,6 @@ import com.datastax.oss.driver.api.core.metadata.Node;
 import com.datastax.oss.driver.api.core.metadata.NodeState;
 import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
 import com.datastax.oss.driver.internal.core.metrics.NodeMetricUpdater;
-import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.util.Collections;
 import java.util.Map;
@@ -40,8 +39,8 @@ public class DefaultNode implements Node {
   private final InetSocketAddress connectAddress;
   private final NodeMetricUpdater metricUpdater;
 
-  volatile Optional<InetAddress> broadcastAddress;
-  volatile Optional<InetAddress> listenAddress;
+  volatile Optional<InetSocketAddress> broadcastAddress;
+  volatile Optional<InetSocketAddress> listenAddress;
   volatile String datacenter;
   volatile String rack;
   volatile CassandraVersion cassandraVersion;
@@ -75,12 +74,12 @@ public class DefaultNode implements Node {
   }
 
   @Override
-  public Optional<InetAddress> getBroadcastAddress() {
+  public Optional<InetSocketAddress> getBroadcastAddress() {
     return broadcastAddress;
   }
 
   @Override
-  public Optional<InetAddress> getListenAddress() {
+  public Optional<InetSocketAddress> getListenAddress() {
     return listenAddress;
   }
 
