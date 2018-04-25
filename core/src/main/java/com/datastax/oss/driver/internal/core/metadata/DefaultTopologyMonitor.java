@@ -103,12 +103,27 @@ public class DefaultTopologyMonitor implements TopologyMonitor {
       LOG.debug("[{}] Ignoring refresh of control node", logPrefix);
       return CompletableFuture.completedFuture(Optional.empty());
     } else if (node.getBroadcastAddress().isPresent()) {
-      String queryString;
-      return query(
-              channel,
-              "SELECT * FROM " + fetchPeersTable() + " WHERE peer = :address",
-              ImmutableMap.of("address", node.getBroadcastAddress().get()))
-          .thenApply(this::firstRowAsNodeInfo);
+      CompletionStage<AdminResult> query;
+      if (isSchemaV2) {
+        query =
+            query(
+                channel,
+                "SELECT * FROM "
+                    + fetchPeersTable()
+                    + " WHERE peer = :address and peer_port = :port",
+                ImmutableMap.of(
+                    "address",
+                    node.getBroadcastAddress().get().getAddress(),
+                    "peer",
+                    node.getBroadcastAddress().get().getPort()));
+      } else {
+        query =
+            query(
+                channel,
+                "SELECT * FROM " + fetchPeersTable() + " WHERE peer = :address",
+                ImmutableMap.of("address", node.getBroadcastAddress().get().getAddress()));
+      }
+      return query.thenApply(this::firstRowAsNodeInfo);
     } else {
       return query(channel, "SELECT * FROM " + fetchPeersTable())
           .thenApply(result -> this.findInPeers(result, node.getConnectAddress()));
