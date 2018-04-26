@@ -47,8 +47,10 @@ public class NodeMetadataIT {
     node.getBroadcastAddress()
         .ifPresent(
             broadcastAddress ->
-                assertThat(broadcastAddress).isEqualTo(node.getConnectAddress().getAddress()));
-    assertThat(node.getListenAddress().get()).isEqualTo(node.getConnectAddress().getAddress());
+                assertThat(broadcastAddress.getAddress())
+                    .isEqualTo(node.getConnectAddress().getAddress()));
+    assertThat(node.getListenAddress().get().getAddress())
+        .isEqualTo(node.getConnectAddress().getAddress());
     assertThat(node.getDatacenter()).isEqualTo("dc1");
     assertThat(node.getRack()).isEqualTo("r1");
     assertThat(node.getCassandraVersion()).isEqualTo(ccmRule.getCassandraVersion());
