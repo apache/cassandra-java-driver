@@ -21,7 +21,7 @@ public interface MavenCoordinates {
 
   String getArtifactId();
 
-  CassandraVersion getVersion();
+  Version getVersion();
 
   String getName();
 }

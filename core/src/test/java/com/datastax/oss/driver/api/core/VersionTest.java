@@ -19,11 +19,11 @@ import static com.datastax.oss.driver.Assertions.assertThat;
 
 import org.junit.Test;
 
-public class CassandraVersionTest {
+public class VersionTest {
 
   @Test
   public void should_parse_release_version() {
-    assertThat(CassandraVersion.parse("1.2.19"))
+    assertThat(Version.parse("1.2.19"))
         .hasMajorMinorPatch(1, 2, 19)
         .hasDsePatch(-1)
         .hasNoPreReleaseLabels()
@@ -34,12 +34,12 @@ public class CassandraVersionTest {
 
   @Test
   public void should_parse_release_without_patch() {
-    assertThat(CassandraVersion.parse("1.2")).hasMajorMinorPatch(1, 2, 0);
+    assertThat(Version.parse("1.2")).hasMajorMinorPatch(1, 2, 0);
   }
 
   @Test
   public void should_parse_pre_release_version() {
-    assertThat(CassandraVersion.parse("1.2.0-beta1-SNAPSHOT"))
+    assertThat(Version.parse("1.2.0-beta1-SNAPSHOT"))
         .hasMajorMinorPatch(1, 2, 0)
         .hasDsePatch(-1)
         .hasPreReleaseLabels("beta1", "SNAPSHOT")
@@ -50,7 +50,7 @@ public class CassandraVersionTest {
 
   @Test
   public void should_allow_tilde_as_first_pre_release_delimiter() {
-    assertThat(CassandraVersion.parse("1.2.0~beta1-SNAPSHOT"))
+    assertThat(Version.parse("1.2.0~beta1-SNAPSHOT"))
         .hasMajorMinorPatch(1, 2, 0)
         .hasDsePatch(-1)
         .hasPreReleaseLabels("beta1", "SNAPSHOT")
@@ -61,7 +61,7 @@ public class CassandraVersionTest {
 
   @Test
   public void should_parse_dse_patch() {
-    assertThat(CassandraVersion.parse("1.2.19.2-SNAPSHOT"))
+    assertThat(Version.parse("1.2.19.2-SNAPSHOT"))
         .hasMajorMinorPatch(1, 2, 19)
         .hasDsePatch(2)
         .hasToString("1.2.19.2-SNAPSHOT")
@@ -98,7 +98,6 @@ public class CassandraVersionTest {
   }
 
   private void assertOrder(String version1, String version2, int expected) {
-    assertThat(CassandraVersion.parse(version1).compareTo(CassandraVersion.parse(version2)))
-        .isEqualTo(expected);
+    assertThat(Version.parse(version1).compareTo(Version.parse(version2))).isEqualTo(expected);
   }
 }

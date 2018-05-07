@@ -20,10 +20,10 @@ import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.junit.Assert.fail;
 import static org.junit.Assume.assumeThat;
 
-import com.datastax.oss.driver.api.core.CassandraVersion;
 import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.CqlSession;
 import com.datastax.oss.driver.api.core.ProtocolVersion;
+import com.datastax.oss.driver.api.core.Version;
 import com.datastax.oss.driver.api.core.cql.BoundStatement;
 import com.datastax.oss.driver.api.core.cql.BoundStatementBuilder;
 import com.datastax.oss.driver.api.core.cql.PreparedStatement;
@@ -141,19 +141,19 @@ public class DataTypeIT {
           }
         };
 
-    CassandraVersion version = ccm.getCassandraVersion();
+    Version version = ccm.getCassandraVersion();
     // Filter types if they aren't supported by cassandra version in use.
     return Arrays.stream(samples)
         .filter(
             o -> {
               DataType dataType = (DataType) o[0];
               if (dataType == DataTypes.DURATION) {
-                return version.compareTo(CassandraVersion.parse("3.10")) >= 0;
+                return version.compareTo(Version.parse("3.10")) >= 0;
               } else if (dataType == DataTypes.TINYINT
                   || dataType == DataTypes.SMALLINT
                   || dataType == DataTypes.DATE
                   || dataType == DataTypes.TIME) {
-                return version.compareTo(CassandraVersion.V2_2_0) >= 0;
+                return version.compareTo(Version.V2_2_0) >= 0;
               }
               return true;
             })
