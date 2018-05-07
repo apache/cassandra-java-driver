@@ -24,7 +24,7 @@ import java.util.regex.Pattern;
 import net.jcip.annotations.Immutable;
 
 /**
- * The version of a Cassandra release.
+ * A structured version number.
  *
  * <p>It is in the form X.Y.Z, with optional pre-release labels and build metadata.
  *
@@ -34,15 +34,15 @@ import net.jcip.annotations.Immutable;
  * are ignored for sorting versions.
  */
 @Immutable
-public class CassandraVersion implements Comparable<CassandraVersion> {
+public class Version implements Comparable<Version> {
 
   private static final String VERSION_REGEXP =
       "(\\d+)\\.(\\d+)(\\.\\d+)?(\\.\\d+)?([~\\-]\\w[.\\w]*(?:\\-\\w[.\\w]*)*)?(\\+[.\\w]+)?";
   private static final Pattern pattern = Pattern.compile(VERSION_REGEXP);
 
-  public static final CassandraVersion V2_1_0 = parse("2.1.0");
-  public static final CassandraVersion V2_2_0 = parse("2.2.0");
-  public static final CassandraVersion V3_0_0 = parse("3.0.0");
+  public static final Version V2_1_0 = parse("2.1.0");
+  public static final Version V2_2_0 = parse("2.2.0");
+  public static final Version V3_0_0 = parse("3.0.0");
 
   private final int major;
   private final int minor;
@@ -52,7 +52,7 @@ public class CassandraVersion implements Comparable<CassandraVersion> {
   private final String[] preReleases;
   private final String build;
 
-  private CassandraVersion(
+  private Version(
       int major, int minor, int patch, int dsePatch, String[] preReleases, String build) {
     this.major = major;
     this.minor = minor;
@@ -74,7 +74,7 @@ public class CassandraVersion implements Comparable<CassandraVersion> {
    * @return the parsed version number.
    * @throws IllegalArgumentException if the provided string does not represent a valid version.
    */
-  public static CassandraVersion parse(String version) {
+  public static Version parse(String version) {
     if (version == null) {
       return null;
     }
@@ -112,7 +112,7 @@ public class CassandraVersion implements Comparable<CassandraVersion> {
       String bl = matcher.group(6);
       String build = bl == null || bl.isEmpty() ? null : bl.substring(1); // drop the initial '+'
 
-      return new CassandraVersion(major, minor, patch, dsePatch, preReleases, build);
+      return new Version(major, minor, patch, dsePatch, preReleases, build);
     } catch (NumberFormatException e) {
       throw new IllegalArgumentException("Invalid version number: " + version);
     }
@@ -188,12 +188,12 @@ public class CassandraVersion implements Comparable<CassandraVersion> {
    *
    * @return the next stable version.
    */
-  public CassandraVersion nextStable() {
-    return new CassandraVersion(major, minor, patch, dsePatch, null, null);
+  public Version nextStable() {
+    return new Version(major, minor, patch, dsePatch, null, null);
   }
 
   @Override
-  public int compareTo(CassandraVersion other) {
+  public int compareTo(Version other) {
     if (major < other.major) {
       return -1;
     }
@@ -256,8 +256,8 @@ public class CassandraVersion implements Comparable<CassandraVersion> {
   public boolean equals(Object other) {
     if (other == this) {
       return true;
-    } else if (other instanceof CassandraVersion) {
-      CassandraVersion that = (CassandraVersion) other;
+    } else if (other instanceof Version) {
+      Version that = (Version) other;
       return this.major == that.major
           && this.minor == that.minor
           && this.patch == that.patch

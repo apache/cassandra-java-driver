@@ -15,8 +15,8 @@
  */
 package com.datastax.oss.driver.internal.core;
 
-import com.datastax.oss.driver.api.core.CassandraVersion;
 import com.datastax.oss.driver.api.core.MavenCoordinates;
+import com.datastax.oss.driver.api.core.Version;
 import io.netty.buffer.ByteBuf;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -52,8 +52,7 @@ public class DefaultMavenCoordinates implements MavenCoordinates {
       if (ByteBuf.class.getPackage().getName().contains("com.datastax.oss.driver.shaded")) {
         version += "-shaded";
       }
-      return new DefaultMavenCoordinates(
-          name, groupId, artifactId, CassandraVersion.parse(version));
+      return new DefaultMavenCoordinates(name, groupId, artifactId, Version.parse(version));
     } catch (IOException e) {
       throw new UncheckedIOException(e);
     }
@@ -62,10 +61,9 @@ public class DefaultMavenCoordinates implements MavenCoordinates {
   private final String name;
   private final String groupId;
   private final String artifactId;
-  private final CassandraVersion version;
+  private final Version version;
 
-  public DefaultMavenCoordinates(
-      String name, String groupId, String artifactId, CassandraVersion version) {
+  public DefaultMavenCoordinates(String name, String groupId, String artifactId, Version version) {
     this.name = name;
     this.groupId = groupId;
     this.artifactId = artifactId;
@@ -88,7 +86,7 @@ public class DefaultMavenCoordinates implements MavenCoordinates {
   }
 
   @Override
-  public CassandraVersion getVersion() {
+  public Version getVersion() {
     return version;
   }
 

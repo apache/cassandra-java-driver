@@ -15,7 +15,7 @@
  */
 package com.datastax.oss.driver.api.core.metadata;
 
-import com.datastax.oss.driver.api.core.CassandraVersion;
+import com.datastax.oss.driver.api.core.Version;
 import com.datastax.oss.driver.api.core.addresstranslation.AddressTranslator;
 import com.datastax.oss.driver.api.core.loadbalancing.LoadBalancingPolicy;
 import com.datastax.oss.driver.api.core.loadbalancing.NodeDistance;
@@ -62,7 +62,7 @@ public interface Node {
 
   String getRack();
 
-  CassandraVersion getCassandraVersion();
+  Version getCassandraVersion();
 
   /**
    * An additional map of free-form properties.

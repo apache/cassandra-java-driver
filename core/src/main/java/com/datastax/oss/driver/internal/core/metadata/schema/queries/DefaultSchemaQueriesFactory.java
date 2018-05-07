@@ -15,7 +15,7 @@
  */
 package com.datastax.oss.driver.internal.core.metadata.schema.queries;
 
-import com.datastax.oss.driver.api.core.CassandraVersion;
+import com.datastax.oss.driver.api.core.Version;
 import com.datastax.oss.driver.api.core.config.DriverConfigProfile;
 import com.datastax.oss.driver.api.core.metadata.Metadata;
 import com.datastax.oss.driver.api.core.metadata.Node;
@@ -53,23 +53,22 @@ public class DefaultSchemaQueriesFactory implements SchemaQueriesFactory {
               + channel.remoteAddress()
               + ", aborting schema refresh");
     }
-    CassandraVersion cassandraVersion = node.getCassandraVersion();
-    if (cassandraVersion == null) {
+    Version version = node.getCassandraVersion();
+    if (version == null) {
       LOG.warn(
           "[{}] Cassandra version missing for {}, defaulting to {}",
           logPrefix,
           node,
-          CassandraVersion.V3_0_0);
-      cassandraVersion = CassandraVersion.V3_0_0;
+          Version.V3_0_0);
+      version = Version.V3_0_0;
     } else {
-      cassandraVersion = cassandraVersion.nextStable();
+      version = version.nextStable();
     }
     DriverConfigProfile config = context.config().getDefaultProfile();
-    LOG.debug(
-        "[{}] Sending schema queries to {} with version {}", logPrefix, node, cassandraVersion);
-    if (cassandraVersion.compareTo(CassandraVersion.V2_2_0) < 0) {
+    LOG.debug("[{}] Sending schema queries to {} with version {}", logPrefix, node, version);
+    if (version.compareTo(Version.V2_2_0) < 0) {
       return new Cassandra21SchemaQueries(channel, refreshFuture, config, logPrefix);
-    } else if (cassandraVersion.compareTo(CassandraVersion.V3_0_0) < 0) {
+    } else if (version.compareTo(Version.V3_0_0) < 0) {
       return new Cassandra22SchemaQueries(channel, refreshFuture, config, logPrefix);
     } else {
       return new Cassandra3SchemaQueries(channel, refreshFuture, config, logPrefix);
