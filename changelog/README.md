@@ -4,6 +4,7 @@
 
 ### 4.0.0-alpha4 (in progress)
 
+- [improvement] JAVA-1803: Log driver version on first use
 - [improvement] JAVA-1792: Add AuthProvider callback to handle missing challenge from server
 - [improvement] JAVA-1775: Assume default packages for built-in policies
 - [improvement] JAVA-1774: Standardize policy locations
