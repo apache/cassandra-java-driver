@@ -346,8 +346,8 @@ After your change, what will change.
 
 Like commits, pull requests should be focused on a single, clearly stated goal.
 
-Avoid basing a pull request onto another one. If possible, the first one should be merged in first,
-and only then should the second one be created.
+Don't base a pull request onto another one, it's too complicated to follow two branches that evolve
+at the same time. If a ticket depends on another, wait for the first one to be merged. 
 
 If you have to address feedback, avoid rebasing your branch and force-pushing (this makes the
 reviewers' job harder, because they have to re-read the full diff and figure out where your new
@@ -361,4 +361,10 @@ where the changes should be squashed:
 * 574dd08 - Add metadata parsing logic (2 days ago)
 ```
 
-(Note that the message refers to the other commit's subject line, not the SHA-1.)
+(Note that the message refers to the other commit's subject line, not the SHA-1. This way it's still
+relevant if there are intermediary rebases.)
+
+If you *really* need a newer commit from the base branch, or if the history is getting too
+complicated, it can be OK to force-push occasionally, provided that **all current reviewers agree**.
+
+Don't push a merge commit to a pull request under any circumstance.
