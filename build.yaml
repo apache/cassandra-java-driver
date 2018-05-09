@@ -8,7 +8,7 @@ schedules:
         - java: oraclejdk8
           cassandra: ['2.2', '3.0']
         # Exclude all java 7 builds
-        - java: oraclejdk7
+        - java: openjdk7
         # Exclude java6 with all versions except latest
         - java: openjdk6
           cassandra: ['2.1', '2.2', '3.0']
@@ -44,7 +44,7 @@ schedules:
       slack: java-driver-dev-bots
 java:
   - openjdk6
-  - oraclejdk7
+  - openjdk7
   - oraclejdk8
 os:
   - ubuntu/trusty64/m3.large
