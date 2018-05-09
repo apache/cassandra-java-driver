@@ -25,7 +25,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 /**
  * Tests targeting protocol v1 specifically.
  */
-@CCMConfig(version = "1.2.19", dse = false)
 public class ProtocolV1Test extends CCMTestsSupport {
 
     @Override
@@ -36,8 +35,9 @@ public class ProtocolV1Test extends CCMTestsSupport {
 
     @Override
     public void beforeTestClass(Object testInstance) throws Exception {
-        if (CCMBridge.isWindows())
-            throw new SkipException("C* 1.2 is not supported on Windows.");
+        if (CCMBridge.getGlobalCassandraVersion().compareTo(VersionNumber.parse("3.0")) >= 0) {
+            throw new SkipException("C* 3.0+ does not support Protocol V1");
+        }
         super.beforeTestClass(testInstance);
     }
 
