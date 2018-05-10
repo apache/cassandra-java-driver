@@ -35,9 +35,9 @@ versions of the Java driver.
     `DowngradingConsistencyRetryPolicy`, see this [online example] that illustrates
     how to implement a downgrading logic at application level.
     
-    [JAVA-1752]:https://datastax-oss.atlassian.net/browse/JAVA-1752
-    [JAVA-1376]:https://datastax-oss.atlassian.net/browse/JAVA-1376
-    [online example]:https://github.com/datastax/java-driver/blob/3.x/driver-examples/src/main/java/com/datastax/driver/examples/retry/DowngradingRetry.java
+[JAVA-1752]:https://datastax-oss.atlassian.net/browse/JAVA-1752
+[JAVA-1376]:https://datastax-oss.atlassian.net/browse/JAVA-1376
+[online example]:https://github.com/datastax/java-driver/blob/3.x/driver-examples/src/main/java/com/datastax/driver/examples/retry/DowngradingRetry.java
 
 2.  The `TokenAwarePolicy` now has a new constructor that takes a `ReplicaOrdering` 
     argument, see [JAVA-1448]. 
@@ -53,7 +53,7 @@ versions of the Java driver.
     As a consequence, the constructor taking a boolean parameter `shuffleReplicas` 
     is now deprecated and will be removed in the next major release.
     
-    [JAVA-1448]:https://datastax-oss.atlassian.net/browse/JAVA-1448
+[JAVA-1448]:https://datastax-oss.atlassian.net/browse/JAVA-1448
 
 
 ### 3.4.0
