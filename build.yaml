@@ -5,10 +5,10 @@ schedules:
     matrix:
       exclude:
         # Exclude all java 7 builds
-        - java: oraclejdk7
+        - java: openjdk7
         # Exclude java6 with all versions except latest
         - java: openjdk6
-          cassandra: ['1.2', '2.0', '2.1', '2.2', '3.0']
+          cassandra: ['2.1', '2.2', '3.0']
         # Exclude 2.2 and 3.0 always since 3.X provides latest protocol version
         - cassandra: ['2.2', '3.0']
     env_vars: |
@@ -31,17 +31,15 @@ schedules:
       TEST_GROUP="long"
 java:
   - openjdk6
-  - oraclejdk7
+  - openjdk7
   - oraclejdk8
 os:
   - ubuntu/trusty64
 cassandra:
-  - '1.2'
-  - '2.0'
   - '2.1'
   - '2.2'
   - '3.0'
-  - '3.10'
+  - '3.11'
 build:
   - script: |
       . /usr/local/bin/jdk_switcher.sh
