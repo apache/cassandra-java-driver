@@ -16,6 +16,11 @@
 package com.datastax.oss.driver.api.core.cql;
 
 import com.datastax.oss.driver.api.core.CqlIdentifier;
+import com.datastax.oss.driver.api.core.context.DriverContext;
+import com.datastax.oss.driver.internal.core.time.ServerSideTimestampGenerator;
+import com.datastax.oss.driver.internal.core.util.Sizes;
+import com.datastax.oss.protocol.internal.PrimitiveSizes;
+import com.datastax.oss.protocol.internal.request.query.Values;
 import java.nio.ByteBuffer;
 import java.util.List;
 
@@ -41,5 +46,45 @@ public interface BoundStatement
   @Override
   default CqlIdentifier getKeyspace() {
     return null;
+  }
+
+  @Override
+  default int computeSizeInBytes(DriverContext context) {
+    int size = Sizes.minimumStatementSize(this, context);
+
+    // BoundStatement's additional elements to take into account are:
+    // - prepared ID
+    // - result metadata ID
+    // - parameters
+    // - page size
+    // - paging state
+    // - timestamp
+
+    // prepared ID
+    size += PrimitiveSizes.sizeOfShortBytes(getPreparedStatement().getId().array());
+
+    // result metadata ID
+    if (getPreparedStatement().getResultMetadataId() != null) {
+      size += PrimitiveSizes.sizeOfShortBytes(getPreparedStatement().getResultMetadataId().array());
+    }
+
+    // parameters (always sent as positional values for bound statements)
+    size += Values.sizeOfPositionalValues(getValues());
+
+    // page size
+    size += PrimitiveSizes.INT;
+
+    // paging state
+    if (getPagingState() != null) {
+      size += PrimitiveSizes.sizeOfBytes(getPagingState());
+    }
+
+    // timestamp
+    if (!(context.timestampGenerator() instanceof ServerSideTimestampGenerator)
+        || getTimestamp() != Long.MIN_VALUE) {
+      size += PrimitiveSizes.LONG;
+    }
+
+    return size;
   }
 }

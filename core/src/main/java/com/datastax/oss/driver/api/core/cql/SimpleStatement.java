@@ -18,9 +18,13 @@ package com.datastax.oss.driver.api.core.cql;
 import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.CqlSession;
 import com.datastax.oss.driver.api.core.DefaultProtocolVersion;
+import com.datastax.oss.driver.api.core.context.DriverContext;
 import com.datastax.oss.driver.api.core.session.Request;
 import com.datastax.oss.driver.internal.core.CqlIdentifiers;
 import com.datastax.oss.driver.internal.core.cql.DefaultSimpleStatement;
+import com.datastax.oss.driver.internal.core.time.ServerSideTimestampGenerator;
+import com.datastax.oss.driver.internal.core.util.Sizes;
+import com.datastax.oss.protocol.internal.PrimitiveSizes;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -212,5 +216,46 @@ public interface SimpleStatement extends BatchableStatement<SimpleStatement> {
    */
   default SimpleStatement setNamedValues(Map<String, Object> newNamedValues) {
     return setNamedValuesWithIds(CqlIdentifiers.wrapKeys(newNamedValues));
+  }
+
+  @Override
+  default int computeSizeInBytes(DriverContext context) {
+    int size = Sizes.minimumStatementSize(this, context);
+
+    // SimpleStatement's additional elements to take into account are:
+    // - query string
+    // - parameters (named or not)
+    // - per-query keyspace
+    // - page size
+    // - paging state
+    // - timestamp
+
+    // query
+    size += PrimitiveSizes.sizeOfLongString(getQuery());
+
+    // parameters
+    size +=
+        Sizes.sizeOfSimpleStatementValues(this, context.protocolVersion(), context.codecRegistry());
+
+    // per-query keyspace
+    if (getKeyspace() != null) {
+      size += PrimitiveSizes.sizeOfString(getKeyspace().asInternal());
+    }
+
+    // page size
+    size += PrimitiveSizes.INT;
+
+    // paging state
+    if (getPagingState() != null) {
+      size += PrimitiveSizes.sizeOfBytes(getPagingState());
+    }
+
+    // timestamp
+    if (!(context.timestampGenerator() instanceof ServerSideTimestampGenerator)
+        || getTimestamp() != Long.MIN_VALUE) {
+      size += PrimitiveSizes.LONG;
+    }
+
+    return size;
   }
 }

@@ -4,6 +4,7 @@
 
 ### 4.0.0-alpha4 (in progress)
 
+- [new feature] JAVA-1592: Expose request's total Frame size through API
 - [new feature] JAVA-1829: Add metrics for bytes-sent and bytes-received 
 - [improvement] JAVA-1755: Normalize usage of DEBUG/TRACE log levels
 - [improvement] JAVA-1803: Log driver version on first use
