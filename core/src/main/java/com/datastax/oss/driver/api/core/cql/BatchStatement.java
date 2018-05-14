@@ -17,9 +17,13 @@ package com.datastax.oss.driver.api.core.cql;
 
 import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.DefaultProtocolVersion;
+import com.datastax.oss.driver.api.core.context.DriverContext;
 import com.datastax.oss.driver.api.core.session.Request;
 import com.datastax.oss.driver.internal.core.cql.DefaultBatchStatement;
+import com.datastax.oss.driver.internal.core.time.ServerSideTimestampGenerator;
+import com.datastax.oss.driver.internal.core.util.Sizes;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableList;
+import com.datastax.oss.protocol.internal.PrimitiveSizes;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -155,4 +159,41 @@ public interface BatchStatement extends Statement<BatchStatement>, Iterable<Batc
    * method. However custom implementations may choose to be mutable and return the same instance.
    */
   BatchStatement clear();
+
+  @Override
+  default int computeSizeInBytes(DriverContext context) {
+    int size = Sizes.minimumStatementSize(this, context);
+
+    // BatchStatement's additional elements to take into account are:
+    // - batch type
+    // - inner statements (simple or bound)
+    // - per-query keyspace
+    // - timestamp
+
+    // batch type
+    size += PrimitiveSizes.BYTE;
+
+    // inner statements
+    size += PrimitiveSizes.SHORT; // number of statements
+
+    for (BatchableStatement<?> batchableStatement : this) {
+      size +=
+          Sizes.sizeOfInnerBatchStatementInBytes(
+              batchableStatement, context.protocolVersion(), context.codecRegistry());
+    }
+
+    // per-query keyspace
+    if (getKeyspace() != null) {
+      size += PrimitiveSizes.sizeOfString(getKeyspace().asInternal());
+    }
+
+    // timestamp
+    if (!(context.timestampGenerator() instanceof ServerSideTimestampGenerator)
+        || getTimestamp() != Long.MIN_VALUE) {
+
+      size += PrimitiveSizes.LONG;
+    }
+
+    return size;
+  }
 }

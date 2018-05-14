@@ -18,6 +18,7 @@ package com.datastax.oss.driver.api.core.cql;
 import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.CqlSession;
 import com.datastax.oss.driver.api.core.config.DriverConfigProfile;
+import com.datastax.oss.driver.api.core.context.DriverContext;
 import com.datastax.oss.driver.api.core.metadata.token.Token;
 import com.datastax.oss.driver.api.core.session.Request;
 import com.datastax.oss.driver.api.core.session.Session;
@@ -164,6 +165,20 @@ public interface Statement<T extends Statement<T>> extends Request {
    * if you do so, you must override {@link #copy(ByteBuffer)}.
    */
   T setPagingState(ByteBuffer newPagingState);
+
+  /**
+   * Calculates the approximate size in bytes that the statement will have when encoded.
+   *
+   * <p>The size might be over-estimated by a few bytes due to global options that may be defined on
+   * a {@link Session} but not explicitly set on the statement itself.
+   *
+   * <p>The result of this method is not cached, calling it will cause some encoding to be done in
+   * order to determine some of the statement's attributes sizes. Therefore, use this method
+   * sparingly in order to avoid unnecessary computation.
+   *
+   * @return the approximate number of bytes this statement will take when encoded.
+   */
+  int computeSizeInBytes(DriverContext context);
 
   /**
    * Creates a <b>new instance</b> with a different paging state.
