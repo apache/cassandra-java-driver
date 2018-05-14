@@ -118,15 +118,16 @@ public class SessionUtils {
       SchemaChangeListener schemaChangeListener,
       Predicate<Node> nodeFilter,
       String... options) {
-    return (SessionT)
+    SessionBuilder builder =
         baseBuilder()
             .addContactPoints(cassandraResource.getContactPoints())
             .withKeyspace(keyspace)
             .withNodeStateListener(nodeStateListener)
-            .withSchemaChangeListener(schemaChangeListener)
-            .withNodeFilter(nodeFilter)
-            .withConfigLoader(new TestConfigLoader(options))
-            .build();
+            .withSchemaChangeListener(schemaChangeListener);
+    if (nodeFilter != null) {
+      builder = builder.withNodeFilter(nodeFilter);
+    }
+    return (SessionT) builder.withConfigLoader(new TestConfigLoader(options)).build();
   }
 
   /**

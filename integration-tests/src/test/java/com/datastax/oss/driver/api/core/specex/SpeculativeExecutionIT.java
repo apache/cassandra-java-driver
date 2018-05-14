@@ -22,13 +22,20 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import com.datastax.oss.driver.api.core.AllNodesFailedException;
 import com.datastax.oss.driver.api.core.CqlSession;
+import com.datastax.oss.driver.api.core.config.DriverConfig;
+import com.datastax.oss.driver.api.core.config.DriverConfigProfile;
+import com.datastax.oss.driver.api.core.context.DriverContext;
 import com.datastax.oss.driver.api.core.cql.ResultSet;
 import com.datastax.oss.driver.api.core.cql.SimpleStatement;
 import com.datastax.oss.driver.api.testinfra.session.SessionUtils;
 import com.datastax.oss.driver.api.testinfra.simulacron.SimulacronRule;
 import com.datastax.oss.driver.categories.ParallelizableTests;
+import com.datastax.oss.driver.internal.core.specex.ConstantSpeculativeExecutionPolicy;
+import com.datastax.oss.driver.internal.core.specex.NoSpeculativeExecutionPolicy;
 import com.datastax.oss.simulacron.common.cluster.ClusterSpec;
 import com.datastax.oss.simulacron.common.stubbing.PrimeDsl;
+import com.google.common.collect.Lists;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 import org.junit.Before;
 import org.junit.ClassRule;
@@ -228,6 +235,94 @@ public class SpeculativeExecutionIT {
     }
   }
 
+  @Test
+  public void should_use_policy_from_request_profile() {
+    // each host takes same amount of time
+    for (int i = 0; i < 2; i++) {
+      primeNode(
+          i, when(QUERY_STRING).then(noRows()).delay(2 * SPECULATIVE_DELAY, TimeUnit.MILLISECONDS));
+    }
+
+    // Set large delay for default so we ensure profile is used.
+    try (CqlSession session = buildSessionWithProfile(3, 100, 2, 0)) {
+      ResultSet resultSet = session.execute(QUERY.setConfigProfileName("profile1"));
+
+      // Expect only 1 speculative execution as that is all profile called for.
+      assertThat(resultSet.getExecutionInfo().getSpeculativeExecutionCount()).isEqualTo(1);
+
+      // Expect node 0 and 1 to be queried, but not 2.
+      assertQueryCount(0, 1);
+      assertQueryCount(1, 1);
+      assertQueryCount(2, 0);
+    }
+  }
+
+  @Test
+  public void should_use_policy_from_request_profile_when_not_configured_in_config() {
+    // each host takes same amount of time
+    for (int i = 0; i < 2; i++) {
+      primeNode(
+          i, when(QUERY_STRING).then(noRows()).delay(2 * SPECULATIVE_DELAY, TimeUnit.MILLISECONDS));
+    }
+
+    // Disable in primary configuration
+    try (CqlSession session = buildSessionWithProfile(-1, -1, 3, 0)) {
+      ResultSet resultSet = session.execute(QUERY.setConfigProfileName("profile1"));
+
+      // Expect speculative executions on each node.
+      assertThat(resultSet.getExecutionInfo().getSpeculativeExecutionCount()).isEqualTo(2);
+
+      // Expect all nodes to be queried.
+      assertQueryCount(0, 1);
+      assertQueryCount(1, 1);
+      assertQueryCount(2, 1);
+    }
+  }
+
+  @Test
+  public void should_use_policy_from_config_when_not_configured_in_request_profile() {
+    // each host takes same amount of time
+    for (int i = 0; i < 2; i++) {
+      primeNode(
+          i, when(QUERY_STRING).then(noRows()).delay(2 * SPECULATIVE_DELAY, TimeUnit.MILLISECONDS));
+    }
+
+    try (CqlSession session = buildSessionWithProfile(3, 0, 3, 0)) {
+      // use profile where speculative execution is not configured.
+      ResultSet resultSet = session.execute(QUERY.setConfigProfileName("profile2"));
+
+      // Expect speculative executions on each node since default configuration is used.
+      assertThat(resultSet.getExecutionInfo().getSpeculativeExecutionCount()).isEqualTo(2);
+
+      // Expect all nodes to be queried.
+      assertQueryCount(0, 1);
+      assertQueryCount(1, 1);
+      assertQueryCount(2, 1);
+    }
+  }
+
+  @Test
+  public void should_not_speculatively_execute_when_defined_in_profile() {
+    // each host takes same amount of time
+    for (int i = 0; i < 2; i++) {
+      primeNode(
+          i, when(QUERY_STRING).then(noRows()).delay(2 * SPECULATIVE_DELAY, TimeUnit.MILLISECONDS));
+    }
+
+    // Disable in profile
+    try (CqlSession session = buildSessionWithProfile(3, 100, -1, -1)) {
+      ResultSet resultSet = session.execute(QUERY.setConfigProfileName("profile1"));
+
+      // Expect no speculative executions.
+      assertThat(resultSet.getExecutionInfo().getSpeculativeExecutionCount()).isEqualTo(0);
+
+      // Expect only node 0 to be queries since speculative execution is disabled for this profile.
+      assertQueryCount(0, 1);
+      assertQueryCount(1, 0);
+      assertQueryCount(2, 0);
+    }
+  }
+
   // Build a new Cluster instance for each test, because we need different configurations
   private CqlSession buildSession(int maxSpeculativeExecutions, long speculativeDelayMs) {
     return SessionUtils.newSession(
@@ -240,6 +335,96 @@ public class SpeculativeExecutionIT {
             "request.speculative-execution-policy.max-executions = %d", maxSpeculativeExecutions),
         String.format(
             "request.speculative-execution-policy.delay = %d milliseconds", speculativeDelayMs));
+  }
+
+  private CqlSession buildSessionWithProfile(
+      int defaultMaxSpeculativeExecutions,
+      long defaultSpeculativeDelayMs,
+      int profile1MaxSpeculativeExecutions,
+      long profile1SpeculativeDelayMs) {
+
+    List<String> config = Lists.newArrayList();
+    config.add(String.format("request.timeout = %d milliseconds", SPECULATIVE_DELAY * 10));
+    config.add("request.default-idempotence = true");
+    config.add(
+        "load-balancing-policy.class = com.datastax.oss.driver.api.testinfra.loadbalancing.SortingLoadBalancingPolicy");
+
+    if (defaultMaxSpeculativeExecutions != -1 || defaultSpeculativeDelayMs != -1) {
+      config.add("request.speculative-execution-policy.class = ConstantSpeculativeExecutionPolicy");
+      if (defaultMaxSpeculativeExecutions != -1) {
+        config.add(
+            String.format(
+                "request.speculative-execution-policy.max-executions = %d",
+                defaultMaxSpeculativeExecutions));
+      }
+      if (defaultSpeculativeDelayMs != -1) {
+        config.add(
+            String.format(
+                "request.speculative-execution-policy.delay = %d milliseconds",
+                defaultSpeculativeDelayMs));
+      }
+    } else {
+      config.add("request.speculative-execution-policy.class = NoSpeculativeExecutionPolicy");
+    }
+
+    if (profile1MaxSpeculativeExecutions != -1 || profile1SpeculativeDelayMs != -1) {
+      config.add(
+          "profiles.profile1.request.speculative-execution-policy.class = ConstantSpeculativeExecutionPolicy");
+      if (profile1MaxSpeculativeExecutions != -1) {
+        config.add(
+            String.format(
+                "profiles.profile1.request.speculative-execution-policy.max-executions = %d",
+                profile1MaxSpeculativeExecutions));
+      }
+      if (profile1SpeculativeDelayMs != -1) {
+        config.add(
+            String.format(
+                "profiles.profile1.request.speculative-execution-policy.delay = %d milliseconds",
+                profile1SpeculativeDelayMs));
+      }
+    } else {
+      config.add(
+          "profiles.profile1.request.speculative-execution-policy.class = NoSpeculativeExecutionPolicy");
+    }
+
+    config.add("profiles.profile2 = {}");
+
+    CqlSession session = SessionUtils.newSession(simulacron, config.toArray(new String[0]));
+
+    // validate profile data
+    DriverContext context = session.getContext();
+    DriverConfig driverConfig = context.config();
+    assertThat(driverConfig.getNamedProfiles()).containsKeys("profile1", "profile2");
+
+    assertThat(context.speculativeExecutionPolicies())
+        .hasSize(3)
+        .containsKeys(DriverConfigProfile.DEFAULT_NAME, "profile1", "profile2");
+
+    SpeculativeExecutionPolicy defaultPolicy =
+        context.speculativeExecutionPolicy(DriverConfigProfile.DEFAULT_NAME);
+    SpeculativeExecutionPolicy policy1 = context.speculativeExecutionPolicy("profile1");
+    SpeculativeExecutionPolicy policy2 = context.speculativeExecutionPolicy("profile2");
+    Class<? extends SpeculativeExecutionPolicy> expectedDefaultPolicyClass =
+        defaultMaxSpeculativeExecutions != -1 || defaultSpeculativeDelayMs != -1
+            ? ConstantSpeculativeExecutionPolicy.class
+            : NoSpeculativeExecutionPolicy.class;
+    assertThat(defaultPolicy).isInstanceOf(expectedDefaultPolicyClass).isSameAs(policy2);
+
+    // If configuration was same, same policy instance should be used.
+    if (defaultMaxSpeculativeExecutions == profile1MaxSpeculativeExecutions
+        && defaultSpeculativeDelayMs == profile1SpeculativeDelayMs) {
+      assertThat(defaultPolicy).isSameAs(policy1);
+    } else {
+      assertThat(defaultPolicy).isNotSameAs(policy1);
+    }
+
+    Class<? extends SpeculativeExecutionPolicy> expectedProfile1PolicyClass =
+        profile1MaxSpeculativeExecutions != -1 || profile1SpeculativeDelayMs != -1
+            ? ConstantSpeculativeExecutionPolicy.class
+            : NoSpeculativeExecutionPolicy.class;
+    assertThat(policy1).isInstanceOf(expectedProfile1PolicyClass);
+
+    return session;
   }
 
   private void primeNode(int id, PrimeDsl.PrimeBuilder primeBuilder) {

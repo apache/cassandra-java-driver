@@ -4,6 +4,7 @@
 
 ### 4.0.0-alpha4 (in progress)
 
+- [improvement] JAVA-1824: Make policies overridable in profiles
 - [bug] JAVA-1569: Allow null to be used in positional and named values in statements
 - [new feature] JAVA-1592: Expose request's total Frame size through API
 - [new feature] JAVA-1829: Add metrics for bytes-sent and bytes-received 

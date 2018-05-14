@@ -59,24 +59,33 @@ public class DefaultLoadBalancingPolicy implements LoadBalancingPolicy {
   private final MetadataManager metadataManager;
   private final Predicate<Node> filter;
   private final AtomicInteger roundRobinAmount = new AtomicInteger();
+  private final boolean isDefaultPolicy;
   @VisibleForTesting final CopyOnWriteArraySet<Node> localDcLiveNodes = new CopyOnWriteArraySet<>();
 
   private volatile DistanceReporter distanceReporter;
   @VisibleForTesting volatile String localDc;
 
-  public DefaultLoadBalancingPolicy(DriverContext context) {
-    this(getLocalDcFromConfig(context), getFilterFromConfig(context), context);
+  public DefaultLoadBalancingPolicy(DriverContext context, String profileName) {
+    this(
+        getLocalDcFromConfig(context, profileName),
+        getFilterFromConfig(context, profileName),
+        context,
+        profileName.equals(DriverConfigProfile.DEFAULT_NAME));
   }
 
   @VisibleForTesting
   DefaultLoadBalancingPolicy(
-      String localDcFromConfig, Predicate<Node> filterFromConfig, DriverContext context) {
+      String localDcFromConfig,
+      Predicate<Node> filterFromConfig,
+      DriverContext context,
+      boolean isDefaultPolicy) {
     this.logPrefix = context.sessionName();
     this.metadataManager = ((InternalDriverContext) context).metadataManager();
     if (localDcFromConfig != null) {
       LOG.debug("[{}] Local DC set from configuration: {}", logPrefix, localDcFromConfig);
       this.localDc = localDcFromConfig;
     }
+    this.isDefaultPolicy = isDefaultPolicy;
 
     this.filter =
         node -> {
@@ -129,7 +138,7 @@ public class DefaultLoadBalancingPolicy implements LoadBalancingPolicy {
         }
       }
       ImmutableMap<InetSocketAddress, String> badContactPoints = builder.build();
-      if (!badContactPoints.isEmpty()) {
+      if (isDefaultPolicy && !badContactPoints.isEmpty()) {
         LOG.warn(
             "[{}] You specified {} as the local DC, but some contact points are from a different DC ({})",
             logPrefix,
@@ -273,21 +282,27 @@ public class DefaultLoadBalancingPolicy implements LoadBalancingPolicy {
     // nothing to do
   }
 
-  private static String getLocalDcFromConfig(DriverContext context) {
-    DriverConfigProfile config = context.config().getDefaultProfile();
+  private static String getLocalDcFromConfig(DriverContext context, String profileName) {
+    DriverConfigProfile config =
+        (profileName.equals(DriverConfigProfile.DEFAULT_NAME))
+            ? context.config().getDefaultProfile()
+            : context.config().getNamedProfile(profileName);
     return (config.isDefined(DefaultDriverOption.LOAD_BALANCING_LOCAL_DATACENTER))
         ? config.getString(DefaultDriverOption.LOAD_BALANCING_LOCAL_DATACENTER)
         : null;
   }
 
   @SuppressWarnings("unchecked")
-  private static Predicate<Node> getFilterFromConfig(DriverContext context) {
-    Predicate<Node> filterFromBuilder = ((InternalDriverContext) context).nodeFilter();
+  private static Predicate<Node> getFilterFromConfig(DriverContext context, String profileName) {
+    Predicate<Node> filterFromBuilder = ((InternalDriverContext) context).nodeFilter(profileName);
     return (filterFromBuilder != null)
         ? filterFromBuilder
         : (Predicate<Node>)
             Reflection.buildFromConfig(
-                    context, DefaultDriverOption.LOAD_BALANCING_FILTER_CLASS, Predicate.class)
+                    context,
+                    profileName,
+                    DefaultDriverOption.LOAD_BALANCING_FILTER_CLASS,
+                    Predicate.class)
                 .orElse(INCLUDE_ALL_NODES);
   }
 }

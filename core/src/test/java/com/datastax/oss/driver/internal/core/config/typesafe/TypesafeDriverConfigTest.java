@@ -52,6 +52,11 @@ public class TypesafeDriverConfigTest {
     parse("");
   }
 
+  @Test(expected = IllegalArgumentException.class)
+  public void should_fail_if_profile_uses_default_name() {
+    parse("required_int = 42\n profiles { default { required_int = 43 } }");
+  }
+
   @Test
   public void should_inherit_option_in_profile() {
     TypesafeDriverConfig config = parse("required_int = 42\n profiles { profile1 { } }");

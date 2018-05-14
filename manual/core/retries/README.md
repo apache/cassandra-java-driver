@@ -133,6 +133,35 @@ directly to the user. These include:
 * [FunctionFailureException];
 * [ProtocolError].
 
+### Using multiple policies
+
+The retry policy can be overridden in [configuration profiles](../configuration/#profiles):
+
+```
+datastax-java-driver {
+  request.retry-policy {
+    class = DefaultRetryPolicy
+  }
+  profiles {
+    custom-retries {
+      request.retry-policy {
+        class = CustomRetryPolicy
+      }
+    }
+    slow {
+      request.timeout = 30 seconds
+    }
+  }
+}
+```
+
+The `custom-retries` profile uses a dedicated policy. The `slow` profile inherits the default
+profile's. Note that this goes beyond configuration inheritance: the driver only creates a single
+`DefaultRetryPolicy` instance and reuses it (this also occurs if two sibling profiles have the same
+configuration).
+
+Each request uses its declared profile's policy. If it doesn't declare any profile, or if the
+profile doesn't have a dedicated policy, then the default profile's policy is used.
 
 [AllNodesFailedException]:   https://docs.datastax.com/en/drivers/java/4.0/com/datastax/oss/driver/api/core/AllNodesFailedException.html
 [ClosedConnectionException]: https://docs.datastax.com/en/drivers/java/4.0/com/datastax/oss/driver/api/core/connection/ClosedConnectionException.html

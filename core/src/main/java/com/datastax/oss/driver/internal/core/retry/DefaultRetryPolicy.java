@@ -37,7 +37,9 @@ import net.jcip.annotations.ThreadSafe;
 @ThreadSafe
 public class DefaultRetryPolicy implements RetryPolicy {
 
-  public DefaultRetryPolicy(@SuppressWarnings("unused") DriverContext context) {
+  public DefaultRetryPolicy(
+      @SuppressWarnings("unused") DriverContext context,
+      @SuppressWarnings("unused") String profileName) {
     // nothing to do
   }
 

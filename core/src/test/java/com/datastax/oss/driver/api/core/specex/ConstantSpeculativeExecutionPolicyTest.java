@@ -54,19 +54,20 @@ public class ConstantSpeculativeExecutionPolicyTest {
   @Test(expected = IllegalArgumentException.class)
   public void should_fail_if_delay_negative() {
     mockOptions(1, -10);
-    new ConstantSpeculativeExecutionPolicy(context);
+    new ConstantSpeculativeExecutionPolicy(context, DriverConfigProfile.DEFAULT_NAME);
   }
 
   @Test(expected = IllegalArgumentException.class)
   public void should_fail_if_max_less_than_one() {
     mockOptions(0, 10);
-    new ConstantSpeculativeExecutionPolicy(context);
+    new ConstantSpeculativeExecutionPolicy(context, DriverConfigProfile.DEFAULT_NAME);
   }
 
   @Test
   public void should_return_delay_until_max() {
     mockOptions(3, 10);
-    SpeculativeExecutionPolicy policy = new ConstantSpeculativeExecutionPolicy(context);
+    SpeculativeExecutionPolicy policy =
+        new ConstantSpeculativeExecutionPolicy(context, DriverConfigProfile.DEFAULT_NAME);
 
     // Initial execution starts, schedule first speculative execution
     assertThat(policy.nextExecution(null, null, request, 1)).isEqualTo(10);

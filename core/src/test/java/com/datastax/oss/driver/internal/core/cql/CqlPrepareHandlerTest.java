@@ -18,6 +18,7 @@ package com.datastax.oss.driver.internal.core.cql;
 import static com.datastax.oss.driver.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 
 import com.datastax.oss.driver.api.core.DefaultProtocolVersion;
@@ -28,6 +29,7 @@ import com.datastax.oss.driver.api.core.cql.PreparedStatement;
 import com.datastax.oss.driver.api.core.cql.SimpleStatement;
 import com.datastax.oss.driver.api.core.metadata.Node;
 import com.datastax.oss.driver.api.core.retry.RetryDecision;
+import com.datastax.oss.driver.api.core.retry.RetryPolicy;
 import com.datastax.oss.driver.api.core.servererrors.OverloadedException;
 import com.datastax.oss.driver.internal.core.channel.ResponseCallback;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableList;
@@ -235,7 +237,7 @@ public class CqlPrepareHandlerTest {
       Mockito.when(
               harness
                   .getContext()
-                  .retryPolicy()
+                  .retryPolicy(anyString())
                   .onErrorResponse(eq(PREPARE_REQUEST), any(OverloadedException.class), eq(0)))
           .thenReturn(RetryDecision.RETRY_NEXT);
 
@@ -274,7 +276,7 @@ public class CqlPrepareHandlerTest {
       Mockito.when(
               harness
                   .getContext()
-                  .retryPolicy()
+                  .retryPolicy(anyString())
                   .onErrorResponse(eq(PREPARE_REQUEST), any(OverloadedException.class), eq(0)))
           .thenReturn(RetryDecision.RETHROW);
 
@@ -311,11 +313,11 @@ public class CqlPrepareHandlerTest {
     try (RequestHandlerTestHarness harness = harnessBuilder.build()) {
 
       // Make node1's error unrecoverable, will rethrow
+      RetryPolicy mockRetryPolicy =
+          harness.getContext().retryPolicy(DriverConfigProfile.DEFAULT_NAME);
       Mockito.when(
-              harness
-                  .getContext()
-                  .retryPolicy()
-                  .onErrorResponse(eq(PREPARE_REQUEST), any(OverloadedException.class), eq(0)))
+              mockRetryPolicy.onErrorResponse(
+                  eq(PREPARE_REQUEST), any(OverloadedException.class), eq(0)))
           .thenReturn(RetryDecision.IGNORE);
 
       CompletionStage<PreparedStatement> prepareFuture =

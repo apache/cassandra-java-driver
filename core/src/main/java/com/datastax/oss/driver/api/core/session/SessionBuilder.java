@@ -34,12 +34,14 @@ import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
 import com.datastax.oss.driver.internal.core.session.DefaultSession;
 import com.datastax.oss.driver.internal.core.util.concurrent.BlockingOperation;
 import com.datastax.oss.driver.internal.core.util.concurrent.CompletableFutures;
+import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableMap;
 import java.net.InetSocketAddress;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CompletionStage;
 import java.util.function.Predicate;
@@ -64,7 +66,7 @@ public abstract class SessionBuilder<SelfT extends SessionBuilder, SessionT> {
   private NodeStateListener nodeStateListener;
   private SchemaChangeListener schemaChangeListener;
   protected RequestTracker requestTracker;
-  private Predicate<Node> nodeFilter;
+  private ImmutableMap.Builder<String, Predicate<Node>> nodeFilters = ImmutableMap.builder();
   protected CqlIdentifier keyspace;
 
   /**
@@ -175,22 +177,30 @@ public abstract class SessionBuilder<SelfT extends SessionBuilder, SessionT> {
   }
 
   /**
-   * A custom filter to include/exclude nodes.
+   * Adds a custom filter to include/exclude nodes for a particular configuration profile. This
+   * assumes that you're also using a dedicated load balancing policy for that profile.
    *
    * <p>The predicate's {@link Predicate#test(Object) test()} method will be invoked each time the
-   * {@link LoadBalancingPolicy} processes a topology or state change: if it returns false, the node
-   * will be set at distance IGNORED (meaning the driver won't ever connect to it), and never
-   * included in any query plan.
+   * {@link LoadBalancingPolicy} processes a topology or state change: if it returns false, the
+   * policy will suggest distance IGNORED (meaning the driver won't ever connect to it if all
+   * policies agree), and never included in any query plan.
    *
    * <p>Note that this behavior is implemented in the default load balancing policy. If you use a
    * custom policy implementation, you'll need to explicitly invoke the filter.
    *
    * <p>If the filter is specified programmatically with this method, it overrides the configuration
    * (that is, the {@code load-balancing-policy.filter.class} option will be ignored).
+   *
+   * @see #withNodeFilter(Predicate)
    */
-  public SelfT withNodeFilter(Predicate<Node> nodeFilter) {
-    this.nodeFilter = nodeFilter;
+  public SelfT withNodeFilter(String profileName, Predicate<Node> nodeFilter) {
+    this.nodeFilters.put(profileName, nodeFilter);
     return self;
+  }
+
+  /** Alias to {@link #withNodeFilter(String, Predicate)} for the default profile. */
+  public SelfT withNodeFilter(Predicate<Node> nodeFilter) {
+    return withNodeFilter(DriverConfigProfile.DEFAULT_NAME, nodeFilter);
   }
 
   /**
@@ -258,7 +268,7 @@ public abstract class SessionBuilder<SelfT extends SessionBuilder, SessionT> {
                 nodeStateListener,
                 schemaChangeListener,
                 requestTracker,
-                nodeFilter),
+                nodeFilters.build()),
         contactPoints,
         keyspace);
   }
@@ -273,14 +283,14 @@ public abstract class SessionBuilder<SelfT extends SessionBuilder, SessionT> {
       NodeStateListener nodeStateListener,
       SchemaChangeListener schemaChangeListener,
       RequestTracker requestTracker,
-      Predicate<Node> nodeFilter) {
+      Map<String, Predicate<Node>> nodeFilters) {
     return new DefaultDriverContext(
         configLoader,
         typeCodecs,
         nodeStateListener,
         schemaChangeListener,
         requestTracker,
-        nodeFilter);
+        nodeFilters);
   }
 
   private static <T> T buildIfNull(T value, Supplier<T> builder) {

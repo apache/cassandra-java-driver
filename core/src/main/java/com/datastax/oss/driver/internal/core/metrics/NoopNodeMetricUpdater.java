@@ -27,27 +27,27 @@ public class NoopNodeMetricUpdater implements NodeMetricUpdater {
   private NoopNodeMetricUpdater() {}
 
   @Override
-  public void incrementCounter(NodeMetric metric, long amount) {
+  public void incrementCounter(NodeMetric metric, String profileName, long amount) {
     // nothing to do
   }
 
   @Override
-  public void updateHistogram(NodeMetric metric, long value) {
+  public void updateHistogram(NodeMetric metric, String profileName, long value) {
     // nothing to do
   }
 
   @Override
-  public void markMeter(NodeMetric metric, long amount) {
+  public void markMeter(NodeMetric metric, String profileName, long amount) {
     // nothing to do
   }
 
   @Override
-  public void updateTimer(NodeMetric metric, long duration, TimeUnit unit) {
+  public void updateTimer(NodeMetric metric, String profileName, long duration, TimeUnit unit) {
     // nothing to do
   }
 
   @Override
-  public boolean isEnabled(NodeMetric metric) {
+  public boolean isEnabled(NodeMetric metric, String profileName) {
     // since methods don't do anything, return false
     return false;
   }

@@ -206,4 +206,38 @@ The workaround is to either specify a timestamp in your CQL queries:
     
 Or use a client-side [timestamp generator](../query_timestamps/).
 
+### Using multiple policies
+
+The speculative execution policy can be overridden in [configuration
+profiles](../configuration/#profiles):
+
+```
+datastax-java-driver {
+  request.speculative-execution-policy {
+    class = ConstantSpeculativeExecutionPolicy
+    max-executions = 3
+    delay = 100 milliseconds
+  }
+  profiles {
+    oltp {
+      request.timeout = 100 milliseconds
+    }
+    olap {
+      request {
+        timeout = 30 seconds
+        speculative-execution-policy.class = NoSpeculativeExecutionPolicy
+      }
+    }
+  }
+}
+```
+
+The `olap` profile uses its own policy. The `oltp` profile inherits the default profile's. Note that
+this goes beyond configuration inheritance: the driver only creates a single
+`ConstantSpeculativeExecutionPolicy` instance and reuses it (this also occurs if two sibling
+profiles have the same configuration).
+
+Each request uses its declared profile's policy. If it doesn't declare any profile, or if the
+profile doesn't have a dedicated policy, then the default profile's policy is used.
+
 [SpeculativeExecutionPolicy]: http://docs.datastax.com/en/drivers/java/4.0/com/datastax/oss/driver/api/core/specex/SpeculativeExecutionPolicy.html

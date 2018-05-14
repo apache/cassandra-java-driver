@@ -39,7 +39,7 @@ public class DefaultLoadBalancingPolicyEventsTest extends DefaultLoadBalancingPo
   public void setup() {
     super.setup();
 
-    policy = new DefaultLoadBalancingPolicy("dc1", filter, context);
+    policy = new DefaultLoadBalancingPolicy("dc1", filter, context, true);
     policy.init(
         ImmutableMap.of(ADDRESS1, node1, ADDRESS2, node2),
         distanceReporter,

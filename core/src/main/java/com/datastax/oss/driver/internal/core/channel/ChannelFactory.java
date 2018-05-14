@@ -274,15 +274,15 @@ public class ChannelFactory {
 
           // Only add meter handlers on the pipeline if metrics are enabled.
           SessionMetricUpdater sessionMetricUpdater = context.metricsFactory().getSessionUpdater();
-          if (nodeMetricUpdater.isEnabled(DefaultNodeMetric.BYTES_RECEIVED)
-              || sessionMetricUpdater.isEnabled(DefaultSessionMetric.BYTES_RECEIVED)) {
+          if (nodeMetricUpdater.isEnabled(DefaultNodeMetric.BYTES_RECEIVED, null)
+              || sessionMetricUpdater.isEnabled(DefaultSessionMetric.BYTES_RECEIVED, null)) {
             pipeline.addLast(
                 "inboundTrafficMeter",
                 new InboundTrafficMeter(nodeMetricUpdater, sessionMetricUpdater));
           }
 
-          if (nodeMetricUpdater.isEnabled(DefaultNodeMetric.BYTES_SENT)
-              || sessionMetricUpdater.isEnabled(DefaultSessionMetric.BYTES_SENT)) {
+          if (nodeMetricUpdater.isEnabled(DefaultNodeMetric.BYTES_SENT, null)
+              || sessionMetricUpdater.isEnabled(DefaultSessionMetric.BYTES_SENT, null)) {
             pipeline.addLast(
                 "outboundTrafficMeter",
                 new OutboundTrafficMeter(nodeMetricUpdater, sessionMetricUpdater));

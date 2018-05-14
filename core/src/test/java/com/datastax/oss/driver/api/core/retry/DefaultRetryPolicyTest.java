@@ -35,7 +35,7 @@ import org.junit.Test;
 public class DefaultRetryPolicyTest extends RetryPolicyTestBase {
 
   public DefaultRetryPolicyTest() {
-    super(new DefaultRetryPolicy(null));
+    super(new DefaultRetryPolicy(null, null));
   }
 
   @Test

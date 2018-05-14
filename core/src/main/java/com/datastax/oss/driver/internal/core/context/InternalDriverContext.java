@@ -105,8 +105,9 @@ public interface InternalDriverContext extends DriverContext {
   RequestTracker requestTracker();
 
   /**
-   * This is the filter from {@link SessionBuilder#withNodeFilter(Predicate)}. If the filter is
-   * specified through the configuration, this method will return {@code null}.
+   * This is the filter from {@link SessionBuilder#withNodeFilter(String, Predicate)}. If the filter
+   * for this profile was specified through the configuration instead, this method will return
+   * {@code null}.
    */
-  Predicate<Node> nodeFilter();
+  Predicate<Node> nodeFilter(String profileName);
 }

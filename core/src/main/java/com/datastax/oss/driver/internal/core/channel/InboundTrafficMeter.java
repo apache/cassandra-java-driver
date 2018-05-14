@@ -38,8 +38,8 @@ public class InboundTrafficMeter extends ChannelInboundHandlerAdapter {
   public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
     if (msg instanceof ByteBuf) {
       int bytes = ((ByteBuf) msg).readableBytes();
-      nodeMetricUpdater.markMeter(DefaultNodeMetric.BYTES_RECEIVED, bytes);
-      sessionMetricUpdater.markMeter(DefaultSessionMetric.BYTES_RECEIVED, bytes);
+      nodeMetricUpdater.markMeter(DefaultNodeMetric.BYTES_RECEIVED, null, bytes);
+      sessionMetricUpdater.markMeter(DefaultSessionMetric.BYTES_RECEIVED, null, bytes);
     }
     super.channelRead(ctx, msg);
   }

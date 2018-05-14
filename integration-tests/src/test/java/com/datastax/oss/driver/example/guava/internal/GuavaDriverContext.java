@@ -34,6 +34,7 @@ import com.datastax.oss.driver.internal.core.session.RequestProcessorRegistry;
 import com.google.common.collect.MapMaker;
 import java.nio.ByteBuffer;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ConcurrentMap;
 import java.util.function.Predicate;
 
@@ -49,14 +50,14 @@ public class GuavaDriverContext extends DefaultDriverContext {
       NodeStateListener nodeStateListener,
       SchemaChangeListener schemaChangeListener,
       RequestTracker requestTracker,
-      Predicate<Node> nodeFilter) {
+      Map<String, Predicate<Node>> nodeFilters) {
     super(
         configLoader,
         typeCodecs,
         nodeStateListener,
         schemaChangeListener,
         requestTracker,
-        nodeFilter);
+        nodeFilters);
   }
 
   @Override

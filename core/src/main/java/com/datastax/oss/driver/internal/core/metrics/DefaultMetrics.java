@@ -42,14 +42,14 @@ public class DefaultMetrics implements Metrics {
 
   @Override
   @SuppressWarnings("TypeParameterUnusedInFormals")
-  public <T extends Metric> T getSessionMetric(SessionMetric metric) {
-    return sessionUpdater.getMetric(metric);
+  public <T extends Metric> T getSessionMetric(SessionMetric metric, String profileName) {
+    return sessionUpdater.getMetric(metric, profileName);
   }
 
   @Override
   @SuppressWarnings("TypeParameterUnusedInFormals")
-  public <T extends Metric> T getNodeMetric(Node node, NodeMetric metric) {
+  public <T extends Metric> T getNodeMetric(Node node, NodeMetric metric, String profileName) {
     NodeMetricUpdater nodeUpdater = ((DefaultNode) node).getMetricUpdater();
-    return ((DropwizardNodeMetricUpdater) nodeUpdater).getMetric(metric);
+    return ((DropwizardNodeMetricUpdater) nodeUpdater).getMetric(metric, profileName);
   }
 }

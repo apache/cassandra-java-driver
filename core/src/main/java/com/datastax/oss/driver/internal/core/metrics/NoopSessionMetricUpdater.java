@@ -27,27 +27,27 @@ public class NoopSessionMetricUpdater implements SessionMetricUpdater {
   private NoopSessionMetricUpdater() {}
 
   @Override
-  public void incrementCounter(SessionMetric metric, long amount) {
+  public void incrementCounter(SessionMetric metric, String profileName, long amount) {
     // nothing to do
   }
 
   @Override
-  public void updateHistogram(SessionMetric metric, long value) {
+  public void updateHistogram(SessionMetric metric, String profileName, long value) {
     // nothing to do
   }
 
   @Override
-  public void markMeter(SessionMetric metric, long amount) {
+  public void markMeter(SessionMetric metric, String profileName, long amount) {
     // nothing to do
   }
 
   @Override
-  public void updateTimer(SessionMetric metric, long duration, TimeUnit unit) {
+  public void updateTimer(SessionMetric metric, String profileName, long duration, TimeUnit unit) {
     // nothing to do
   }
 
   @Override
-  public boolean isEnabled(SessionMetric metric) {
+  public boolean isEnabled(SessionMetric metric, String profileName) {
     // since methods don't do anything, return false
     return false;
   }

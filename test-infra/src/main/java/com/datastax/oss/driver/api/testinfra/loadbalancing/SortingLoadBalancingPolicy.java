@@ -32,7 +32,7 @@ import java.util.TreeSet;
 public class SortingLoadBalancingPolicy implements LoadBalancingPolicy {
 
   @SuppressWarnings("unused")
-  public SortingLoadBalancingPolicy(DriverContext context) {
+  public SortingLoadBalancingPolicy(DriverContext context, String profileName) {
     // constructor needed for loading via config.
   }
 

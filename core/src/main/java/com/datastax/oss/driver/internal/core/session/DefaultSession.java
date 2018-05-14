@@ -417,16 +417,18 @@ public class DefaultSession implements CqlSession {
 
     private void closePolicies() {
       for (AutoCloseable closeable :
-          ImmutableList.of(
-              context.reconnectionPolicy(),
-              context.retryPolicy(),
-              context.loadBalancingPolicyWrapper(),
-              context.speculativeExecutionPolicy(),
-              context.addressTranslator(),
-              context.configLoader(),
-              context.nodeStateListener(),
-              context.schemaChangeListener(),
-              context.requestTracker())) {
+          ImmutableList.<AutoCloseable>builder()
+              .add(
+                  context.reconnectionPolicy(),
+                  context.loadBalancingPolicyWrapper(),
+                  context.addressTranslator(),
+                  context.configLoader(),
+                  context.nodeStateListener(),
+                  context.schemaChangeListener(),
+                  context.requestTracker())
+              .addAll(context.retryPolicies().values())
+              .addAll(context.speculativeExecutionPolicies().values())
+              .build()) {
         try {
           closeable.close();
         } catch (Throwable t) {

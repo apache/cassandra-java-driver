@@ -26,7 +26,9 @@ import net.jcip.annotations.ThreadSafe;
 @ThreadSafe
 public class NoSpeculativeExecutionPolicy implements SpeculativeExecutionPolicy {
 
-  public NoSpeculativeExecutionPolicy(@SuppressWarnings("unused") DriverContext context) {
+  public NoSpeculativeExecutionPolicy(
+      @SuppressWarnings("unused") DriverContext context,
+      @SuppressWarnings("unused") String profileName) {
     // nothing to do
   }
 

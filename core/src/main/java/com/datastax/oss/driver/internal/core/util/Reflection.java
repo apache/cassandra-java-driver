@@ -18,9 +18,15 @@ package com.datastax.oss.driver.internal.core.util;
 import com.datastax.oss.driver.api.core.config.DriverConfigProfile;
 import com.datastax.oss.driver.api.core.config.DriverOption;
 import com.datastax.oss.driver.api.core.context.DriverContext;
+import com.datastax.oss.driver.shaded.guava.common.base.Joiner;
 import com.datastax.oss.driver.shaded.guava.common.base.Preconditions;
+import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableMap;
+import com.datastax.oss.driver.shaded.guava.common.collect.ListMultimap;
+import com.datastax.oss.driver.shaded.guava.common.collect.MultimapBuilder;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
+import java.util.Collection;
+import java.util.Map;
 import java.util.Optional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -78,10 +84,92 @@ public class Reflection {
       DriverOption classNameOption,
       Class<T> expectedSuperType,
       String... defaultPackages) {
+    return buildFromConfig(context, null, classNameOption, expectedSuperType, defaultPackages);
+  }
 
-    DriverConfigProfile config = context.config().getDefaultProfile();
+  /**
+   * Tries to create multiple instances of a class, given options defined in the driver
+   * configuration and possibly overridden in profiles.
+   *
+   * <p>For example:
+   *
+   * <pre>
+   * my-policy.class = package1.PolicyImpl1
+   * profiles {
+   *   my-profile { my-policy.class = package2.PolicyImpl2 }
+   * }
+   * </pre>
+   *
+   * The class will be instantiated via reflection, it must have a constructor that takes two
+   * arguments: the {@link DriverContext}, and a string representing the profile name.
+   *
+   * <p>This method assumes the policy is mandatory, the class option must be present at least for
+   * the default profile.
+   *
+   * @param context the driver context.
+   * @param rootOption the root option for the policy (my-policy in the example above). The class
+   *     name is assumed to be in a 'class' child option.
+   * @param expectedSuperType a super-type that the class is expected to implement/extend.
+   * @param defaultPackages the default packages to prepend to the class name if it's not qualified.
+   *     They will be tried in order, the first one that matches an existing class will be used.
+   * @return the policy instances by profile name. If multiple profiles share the same
+   *     configuration, a single instance will be shared by all their entries.
+   */
+  public static <T> Map<String, T> buildFromConfigProfiles(
+      DriverContext context,
+      DriverOption rootOption,
+      Class<T> expectedSuperType,
+      String... defaultPackages) {
+
+    // Find out how many distinct configurations we have
+    ListMultimap<Object, String> profilesByConfig =
+        MultimapBuilder.hashKeys().arrayListValues().build();
+    DriverConfigProfile defaultProfile = context.config().getDefaultProfile();
+    profilesByConfig.put(
+        defaultProfile.getComparisonKey(rootOption), DriverConfigProfile.DEFAULT_NAME);
+    for (DriverConfigProfile profile : context.config().getNamedProfiles().values()) {
+      profilesByConfig.put(profile.getComparisonKey(rootOption), profile.getName());
+    }
+
+    // Instantiate each distinct configuration, and associate it with the corresponding profiles
+    ImmutableMap.Builder<String, T> result = ImmutableMap.builder();
+    for (Collection<String> profiles : profilesByConfig.asMap().values()) {
+      // Since all profiles use the same config, we can use any of them
+      String profileName = profiles.iterator().next();
+      T policy =
+          buildFromConfig(
+                  context, profileName, classOption(rootOption), expectedSuperType, defaultPackages)
+              .orElseThrow(
+                  () ->
+                      new IllegalArgumentException(
+                          String.format(
+                              "Missing configuration for %s in profile %s",
+                              rootOption.getPath(), profileName)));
+      for (String profile : profiles) {
+        result.put(profile, policy);
+      }
+    }
+    return result.build();
+  }
+
+  /**
+   * @param profileName if null, this is a global policy, use the default profile and look for a
+   *     one-arg constructor. If not null, this is a per-profile policy, look for a two-arg
+   *     constructor.
+   */
+  public static <T> Optional<T> buildFromConfig(
+      DriverContext context,
+      String profileName,
+      DriverOption classNameOption,
+      Class<T> expectedSuperType,
+      String... defaultPackages) {
+
+    DriverConfigProfile config =
+        (profileName == null || profileName.equals(DriverConfigProfile.DEFAULT_NAME))
+            ? context.config().getDefaultProfile()
+            : context.config().getNamedProfile(profileName);
+
     String configPath = classNameOption.getPath();
-
     LOG.debug("Creating a {} from config option {}", expectedSuperType.getSimpleName(), configPath);
 
     if (!config.isDefined(classNameOption)) {
@@ -117,17 +205,25 @@ public class Reflection {
         expectedSuperType.getName());
 
     Constructor<?> constructor;
+    Class<?>[] argumentTypes =
+        (profileName == null)
+            ? new Class<?>[] {DriverContext.class}
+            : new Class<?>[] {DriverContext.class, String.class};
     try {
-      constructor = clazz.getConstructor(DriverContext.class);
+      constructor = clazz.getConstructor(argumentTypes);
     } catch (NoSuchMethodException e) {
       throw new IllegalArgumentException(
           String.format(
               "Expected class %s (specified by %s) "
-                  + "to have an accessible constructor with argument (%s)",
-              className, configPath, DriverContext.class.getSimpleName()));
+                  + "to have an accessible constructor with arguments (%s)",
+              className, configPath, Joiner.on(',').join(argumentTypes)));
     }
     try {
-      Object instance = constructor.newInstance(context);
+      @SuppressWarnings("JavaReflectionInvocation")
+      Object instance =
+          (profileName == null)
+              ? constructor.newInstance(context)
+              : constructor.newInstance(context, profileName);
       return Optional.of(expectedSuperType.cast(instance));
     } catch (Exception e) {
       // ITE just wraps an exception thrown by the constructor, get rid of it:
@@ -138,5 +234,19 @@ public class Reflection {
               className, configPath, cause.getMessage()),
           cause);
     }
+  }
+
+  private static DriverOption classOption(DriverOption rootOption) {
+    return new DriverOption() {
+      @Override
+      public String getPath() {
+        return rootOption.getPath() + ".class";
+      }
+
+      @Override
+      public boolean required() {
+        return rootOption.required();
+      }
+    };
   }
 }

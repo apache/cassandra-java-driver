@@ -18,6 +18,7 @@ package com.datastax.oss.driver.api.core.context;
 import com.datastax.oss.driver.api.core.addresstranslation.AddressTranslator;
 import com.datastax.oss.driver.api.core.auth.AuthProvider;
 import com.datastax.oss.driver.api.core.config.DriverConfig;
+import com.datastax.oss.driver.api.core.config.DriverConfigProfile;
 import com.datastax.oss.driver.api.core.connection.ReconnectionPolicy;
 import com.datastax.oss.driver.api.core.detach.AttachmentPoint;
 import com.datastax.oss.driver.api.core.loadbalancing.LoadBalancingPolicy;
@@ -26,6 +27,7 @@ import com.datastax.oss.driver.api.core.session.Session;
 import com.datastax.oss.driver.api.core.specex.SpeculativeExecutionPolicy;
 import com.datastax.oss.driver.api.core.ssl.SslEngineFactory;
 import com.datastax.oss.driver.api.core.time.TimestampGenerator;
+import java.util.Map;
 import java.util.Optional;
 
 /** Holds common components that are shared throughout a driver instance. */
@@ -39,13 +41,34 @@ public interface DriverContext extends AttachmentPoint {
 
   DriverConfig config();
 
-  LoadBalancingPolicy loadBalancingPolicy();
+  Map<String, LoadBalancingPolicy> loadBalancingPolicies();
+
+  default LoadBalancingPolicy loadBalancingPolicy(String profileName) {
+    LoadBalancingPolicy policy = loadBalancingPolicies().get(profileName);
+    return (policy != null)
+        ? policy
+        : loadBalancingPolicies().get(DriverConfigProfile.DEFAULT_NAME);
+  }
+
+  Map<String, RetryPolicy> retryPolicies();
+
+  default RetryPolicy retryPolicy(String profileName) {
+    RetryPolicy policy = retryPolicies().get(profileName);
+    return (policy != null) ? policy : retryPolicies().get(DriverConfigProfile.DEFAULT_NAME);
+  }
+
+  Map<String, SpeculativeExecutionPolicy> speculativeExecutionPolicies();
+
+  default SpeculativeExecutionPolicy speculativeExecutionPolicy(String profileName) {
+    SpeculativeExecutionPolicy policy = speculativeExecutionPolicies().get(profileName);
+    return (policy != null)
+        ? policy
+        : speculativeExecutionPolicies().get(DriverConfigProfile.DEFAULT_NAME);
+  }
+
+  TimestampGenerator timestampGenerator();
 
   ReconnectionPolicy reconnectionPolicy();
-
-  RetryPolicy retryPolicy();
-
-  SpeculativeExecutionPolicy speculativeExecutionPolicy();
 
   AddressTranslator addressTranslator();
 
@@ -54,6 +77,4 @@ public interface DriverContext extends AttachmentPoint {
 
   /** The SSL engine factory, if SSL was configured. */
   Optional<SslEngineFactory> sslEngineFactory();
-
-  TimestampGenerator timestampGenerator();
 }

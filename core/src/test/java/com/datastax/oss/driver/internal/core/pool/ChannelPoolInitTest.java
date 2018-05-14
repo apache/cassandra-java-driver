@@ -86,7 +86,7 @@ public class ChannelPoolInitTest extends ChannelPoolTestBase {
     assertThat(poolFuture).isSuccess(pool -> assertThat(pool.channels).isEmpty());
     Mockito.verify(eventBus, never()).fire(ChannelEvent.channelOpened(node));
     Mockito.verify(nodeMetricUpdater, times(3))
-        .incrementCounter(DefaultNodeMetric.CONNECTION_INIT_ERRORS);
+        .incrementCounter(DefaultNodeMetric.CONNECTION_INIT_ERRORS, null);
 
     factoryHelper.verifyNoMoreCalls();
   }
@@ -113,7 +113,7 @@ public class ChannelPoolInitTest extends ChannelPoolTestBase {
             pool -> {
               assertThat(pool.isInvalidKeyspace()).isTrue();
               Mockito.verify(nodeMetricUpdater, times(3))
-                  .incrementCounter(DefaultNodeMetric.CONNECTION_INIT_ERRORS);
+                  .incrementCounter(DefaultNodeMetric.CONNECTION_INIT_ERRORS, null);
             });
   }
 
@@ -140,7 +140,7 @@ public class ChannelPoolInitTest extends ChannelPoolTestBase {
     Mockito.verify(eventBus, never()).fire(ChannelEvent.channelOpened(node));
 
     Mockito.verify(nodeMetricUpdater, times(3))
-        .incrementCounter(DefaultNodeMetric.CONNECTION_INIT_ERRORS);
+        .incrementCounter(DefaultNodeMetric.CONNECTION_INIT_ERRORS, null);
     factoryHelper.verifyNoMoreCalls();
   }
 
@@ -188,7 +188,8 @@ public class ChannelPoolInitTest extends ChannelPoolTestBase {
 
     assertThat(pool.channels).containsOnly(channel1, channel2);
 
-    Mockito.verify(nodeMetricUpdater).incrementCounter(DefaultNodeMetric.CONNECTION_INIT_ERRORS);
+    Mockito.verify(nodeMetricUpdater)
+        .incrementCounter(DefaultNodeMetric.CONNECTION_INIT_ERRORS, null);
     factoryHelper.verifyNoMoreCalls();
   }
 }
