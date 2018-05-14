@@ -747,6 +747,7 @@ limitations under the License.
                     <configuration>
                         <groups>${test.groups}</groups>
                         <useFile>false</useFile>
+                        <argLine>-Djdk.attach.allowAttachSelf=true</argLine>
                         <systemPropertyVariables>
                             <cassandra.version>${cassandra.version}</cassandra.version>
                             <ipprefix>${ipprefix}</ipprefix>
