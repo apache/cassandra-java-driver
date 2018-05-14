@@ -157,8 +157,8 @@ that overrides a subset of options:
 ```java
 DriverConfigProfile defaultProfile = session.getContext().config().getDefaultProfile();
 DriverConfigProfile dynamicProfile =
-    defaultProfile.withConsistencyLevel(
-        DefaultDriverOption.REQUEST_CONSISTENCY, ConsistencyLevel.EACH_QUORUM);
+  defaultProfile.withString(
+      DefaultDriverOption.REQUEST_CONSISTENCY, DefaultConsistencyLevel.EACH_QUORUM.name());
 SimpleStatement s =
     SimpleStatement.builder("SELECT name FROM user WHERE id = 1")
         .withConfigProfile(dynamicProfile)
