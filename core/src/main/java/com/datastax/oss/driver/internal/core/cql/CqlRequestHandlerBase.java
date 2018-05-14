@@ -41,6 +41,7 @@ import com.datastax.oss.driver.api.core.servererrors.UnavailableException;
 import com.datastax.oss.driver.api.core.servererrors.WriteTimeoutException;
 import com.datastax.oss.driver.api.core.session.throttling.RequestThrottler;
 import com.datastax.oss.driver.api.core.session.throttling.Throttled;
+import com.datastax.oss.driver.api.core.specex.SpeculativeExecutionPolicy;
 import com.datastax.oss.driver.internal.core.adminrequest.ThrottledAdminRequestHandler;
 import com.datastax.oss.driver.internal.core.adminrequest.UnexpectedResponseException;
 import com.datastax.oss.driver.internal.core.channel.DriverChannel;
@@ -118,6 +119,7 @@ public abstract class CqlRequestHandlerBase implements Throttled {
   private final List<ScheduledFuture<?>> scheduledExecutions;
   private final List<NodeResponseCallback> inFlightCallbacks;
   private final RetryPolicy retryPolicy;
+  private final SpeculativeExecutionPolicy speculativeExecutionPolicy;
   private final RequestThrottler throttler;
 
   // The errors on the nodes that were already tried (lazily initialized on the first error).
@@ -138,7 +140,6 @@ public abstract class CqlRequestHandlerBase implements Throttled {
     this.session = session;
     this.keyspace = session.getKeyspace();
     this.context = context;
-    this.queryPlan = context.loadBalancingPolicyWrapper().newQueryPlan(statement, session);
 
     if (statement.getConfigProfile() != null) {
       this.configProfile = statement.getConfigProfile();
@@ -150,6 +151,12 @@ public abstract class CqlRequestHandlerBase implements Throttled {
               ? config.getDefaultProfile()
               : config.getNamedProfile(profileName);
     }
+    this.queryPlan =
+        context
+            .loadBalancingPolicyWrapper()
+            .newQueryPlan(statement, configProfile.getName(), session);
+    this.retryPolicy = context.retryPolicy(configProfile.getName());
+    this.speculativeExecutionPolicy = context.speculativeExecutionPolicy(configProfile.getName());
     this.isIdempotent =
         (statement.isIdempotent() == null)
             ? configProfile.getBoolean(DefaultDriverOption.REQUEST_DEFAULT_IDEMPOTENCE)
@@ -172,7 +179,6 @@ public abstract class CqlRequestHandlerBase implements Throttled {
     this.timeout = configProfile.getDuration(DefaultDriverOption.REQUEST_TIMEOUT);
     this.timeoutFuture = scheduleTimeout(timeout);
 
-    this.retryPolicy = context.retryPolicy();
     this.activeExecutionsCount = new AtomicInteger(1);
     this.startedSpeculativeExecutionsCount = new AtomicInteger(0);
     this.scheduledExecutions = isIdempotent ? new CopyOnWriteArrayList<>() : null;
@@ -189,6 +195,7 @@ public abstract class CqlRequestHandlerBase implements Throttled {
           .getMetricUpdater()
           .updateTimer(
               DefaultSessionMetric.THROTTLING_DELAY,
+              configProfile.getName(),
               System.nanoTime() - startTimeNanos,
               TimeUnit.NANOSECONDS);
     }
@@ -291,7 +298,11 @@ public abstract class CqlRequestHandlerBase implements Throttled {
         context.requestTracker().onSuccess(statement, latencyNanos, configProfile, callback.node);
         session
             .getMetricUpdater()
-            .updateTimer(DefaultSessionMetric.CQL_REQUESTS, latencyNanos, TimeUnit.NANOSECONDS);
+            .updateTimer(
+                DefaultSessionMetric.CQL_REQUESTS,
+                configProfile.getName(),
+                latencyNanos,
+                TimeUnit.NANOSECONDS);
       }
     } catch (Throwable error) {
       setFinalError(error, callback.node);
@@ -321,7 +332,9 @@ public abstract class CqlRequestHandlerBase implements Throttled {
 
   @Override
   public void onThrottleFailure(RequestThrottlingException error) {
-    session.getMetricUpdater().incrementCounter(DefaultSessionMetric.THROTTLING_ERRORS);
+    session
+        .getMetricUpdater()
+        .incrementCounter(DefaultSessionMetric.THROTTLING_ERRORS, configProfile.getName());
     setFinalError(error, null);
   }
 
@@ -332,7 +345,9 @@ public abstract class CqlRequestHandlerBase implements Throttled {
       context.requestTracker().onError(statement, error, latencyNanos, configProfile, node);
       if (error instanceof DriverTimeoutException) {
         throttler.signalTimeout(this);
-        session.getMetricUpdater().incrementCounter(DefaultSessionMetric.CQL_CLIENT_TIMEOUTS);
+        session
+            .getMetricUpdater()
+            .incrementCounter(DefaultSessionMetric.CQL_CLIENT_TIMEOUTS, configProfile.getName());
       } else if (!(error instanceof RequestThrottlingException)) {
         throttler.signalError(this, error);
       }
@@ -391,7 +406,7 @@ public abstract class CqlRequestHandlerBase implements Throttled {
           recordError(node, error);
           ((DefaultNode) node)
               .getMetricUpdater()
-              .incrementCounter(DefaultNodeMetric.UNSENT_REQUESTS);
+              .incrementCounter(DefaultNodeMetric.UNSENT_REQUESTS, configProfile.getName());
           sendRequest(null, execution, retryCount, scheduleNextExecution); // try next node
         }
       } else {
@@ -407,9 +422,7 @@ public abstract class CqlRequestHandlerBase implements Throttled {
             // Note that `node` is the first node of the execution, it might not be the "slow" one
             // if there were retries, but in practice retries are rare.
             long nextDelay =
-                context
-                    .speculativeExecutionPolicy()
-                    .nextExecution(node, keyspace, statement, nextExecution);
+                speculativeExecutionPolicy.nextExecution(node, keyspace, statement, nextExecution);
             if (nextDelay >= 0) {
               LOG.trace(
                   "[{}] Scheduling speculative execution {} in {} ms",
@@ -428,7 +441,9 @@ public abstract class CqlRequestHandlerBase implements Throttled {
                           startedSpeculativeExecutionsCount.incrementAndGet();
                           ((DefaultNode) node)
                               .getMetricUpdater()
-                              .incrementCounter(DefaultNodeMetric.SPECULATIVE_EXECUTIONS);
+                              .incrementCounter(
+                                  DefaultNodeMetric.SPECULATIVE_EXECUTIONS,
+                                  configProfile.getName());
                           sendRequest(null, nextExecution, 0, true);
                         }
                       },
@@ -450,7 +465,10 @@ public abstract class CqlRequestHandlerBase implements Throttled {
       ((DefaultNode) node)
           .getMetricUpdater()
           .updateTimer(
-              DefaultNodeMetric.CQL_MESSAGES, System.nanoTime() - start, TimeUnit.NANOSECONDS);
+              DefaultNodeMetric.CQL_MESSAGES,
+              configProfile.getName(),
+              System.nanoTime() - start,
+              TimeUnit.NANOSECONDS);
       inFlightCallbacks.remove(this);
       if (result.isDone()) {
         return;
@@ -554,7 +572,7 @@ public abstract class CqlRequestHandlerBase implements Throttled {
           || error instanceof FunctionFailureException
           || error instanceof ProtocolError) {
         LOG.trace("[{}] Unrecoverable error, rethrowing", logPrefix);
-        metricUpdater.incrementCounter(DefaultNodeMetric.OTHER_ERRORS);
+        metricUpdater.incrementCounter(DefaultNodeMetric.OTHER_ERRORS, configProfile.getName());
         setFinalError(error, node);
       } else {
         RetryDecision decision;
@@ -649,16 +667,16 @@ public abstract class CqlRequestHandlerBase implements Throttled {
         DefaultNodeMetric error,
         DefaultNodeMetric retriesOnError,
         DefaultNodeMetric ignoresOnError) {
-      metricUpdater.incrementCounter(error);
+      metricUpdater.incrementCounter(error, configProfile.getName());
       switch (decision) {
         case RETRY_SAME:
         case RETRY_NEXT:
-          metricUpdater.incrementCounter(DefaultNodeMetric.RETRIES);
-          metricUpdater.incrementCounter(retriesOnError);
+          metricUpdater.incrementCounter(DefaultNodeMetric.RETRIES, configProfile.getName());
+          metricUpdater.incrementCounter(retriesOnError, configProfile.getName());
           break;
         case IGNORE:
-          metricUpdater.incrementCounter(DefaultNodeMetric.IGNORES);
-          metricUpdater.incrementCounter(ignoresOnError);
+          metricUpdater.incrementCounter(DefaultNodeMetric.IGNORES, configProfile.getName());
+          metricUpdater.incrementCounter(ignoresOnError, configProfile.getName());
           break;
         case RETHROW:
           // nothing do do

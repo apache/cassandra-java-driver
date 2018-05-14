@@ -40,8 +40,8 @@ public class OutboundTrafficMeter extends ChannelOutboundHandlerAdapter {
       throws Exception {
     if (msg instanceof ByteBuf) {
       int bytes = ((ByteBuf) msg).readableBytes();
-      nodeMetricUpdater.markMeter(DefaultNodeMetric.BYTES_SENT, bytes);
-      sessionMetricUpdater.markMeter(DefaultSessionMetric.BYTES_SENT, bytes);
+      nodeMetricUpdater.markMeter(DefaultNodeMetric.BYTES_SENT, null, bytes);
+      sessionMetricUpdater.markMeter(DefaultSessionMetric.BYTES_SENT, null, bytes);
     }
     super.write(ctx, msg, promise);
   }

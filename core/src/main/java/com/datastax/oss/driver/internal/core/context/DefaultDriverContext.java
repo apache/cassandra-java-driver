@@ -22,7 +22,6 @@ import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
 import com.datastax.oss.driver.api.core.config.DriverConfig;
 import com.datastax.oss.driver.api.core.config.DriverConfigLoader;
 import com.datastax.oss.driver.api.core.config.DriverConfigProfile;
-import com.datastax.oss.driver.api.core.config.DriverOption;
 import com.datastax.oss.driver.api.core.connection.ReconnectionPolicy;
 import com.datastax.oss.driver.api.core.loadbalancing.LoadBalancingPolicy;
 import com.datastax.oss.driver.api.core.metadata.Node;
@@ -74,6 +73,7 @@ import com.datastax.oss.protocol.internal.Compressor;
 import com.datastax.oss.protocol.internal.FrameCodec;
 import io.netty.buffer.ByteBuf;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Predicate;
@@ -104,15 +104,20 @@ public class DefaultDriverContext implements InternalDriverContext {
   private final CycleDetector cycleDetector =
       new CycleDetector("Detected cycle in context initialization");
 
-  private final LazyReference<LoadBalancingPolicy> loadBalancingPolicyRef =
-      new LazyReference<>("loadBalancingPolicy", this::buildLoadBalancingPolicy, cycleDetector);
+  private final LazyReference<Map<String, LoadBalancingPolicy>> loadBalancingPoliciesRef =
+      new LazyReference<>("loadBalancingPolicies", this::buildLoadBalancingPolicies, cycleDetector);
   private final LazyReference<ReconnectionPolicy> reconnectionPolicyRef =
       new LazyReference<>("reconnectionPolicy", this::buildReconnectionPolicy, cycleDetector);
-  private final LazyReference<RetryPolicy> retryPolicyRef =
-      new LazyReference<>("retryPolicy", this::buildRetryPolicy, cycleDetector);
-  private final LazyReference<SpeculativeExecutionPolicy> speculativeExecutionPolicyRef =
-      new LazyReference<>(
-          "speculativeExecutionPolicy", this::buildSpeculativeExecutionPolicy, cycleDetector);
+  private final LazyReference<Map<String, RetryPolicy>> retryPoliciesRef =
+      new LazyReference<>("retryPolicies", this::buildRetryPolicies, cycleDetector);
+  private final LazyReference<Map<String, SpeculativeExecutionPolicy>>
+      speculativeExecutionPoliciesRef =
+          new LazyReference<>(
+              "speculativeExecutionPolicies",
+              this::buildSpeculativeExecutionPolicies,
+              cycleDetector);
+  private final LazyReference<TimestampGenerator> timestampGeneratorRef =
+      new LazyReference<>("timestampGenerator", this::buildTimestampGenerator, cycleDetector);
   private final LazyReference<AddressTranslator> addressTranslatorRef =
       new LazyReference<>("addressTranslator", this::buildAddressTranslator, cycleDetector);
   private final LazyReference<Optional<AuthProvider>> authProviderRef =
@@ -154,8 +159,6 @@ public class DefaultDriverContext implements InternalDriverContext {
   private final LazyReference<RequestProcessorRegistry> requestProcessorRegistryRef =
       new LazyReference<>(
           "requestProcessorRegistry", this::buildRequestProcessorRegistry, cycleDetector);
-  private final LazyReference<TimestampGenerator> timestampGeneratorRef =
-      new LazyReference<>("timestampGenerator", this::buildTimestampGenerator, cycleDetector);
   private final LazyReference<SchemaQueriesFactory> schemaQueriesFactoryRef =
       new LazyReference<>("schemaQueriesFactory", this::buildSchemaQueriesFactory, cycleDetector);
   private final LazyReference<SchemaParserFactory> schemaParserFactoryRef =
@@ -183,7 +186,7 @@ public class DefaultDriverContext implements InternalDriverContext {
   private final NodeStateListener nodeStateListenerFromBuilder;
   private final SchemaChangeListener schemaChangeListenerFromBuilder;
   private final RequestTracker requestTrackerFromBuilder;
-  private final Predicate<Node> nodeFilterFromBuilder;
+  private final Map<String, Predicate<Node>> nodeFiltersFromBuilder;
 
   public DefaultDriverContext(
       DriverConfigLoader configLoader,
@@ -191,7 +194,7 @@ public class DefaultDriverContext implements InternalDriverContext {
       NodeStateListener nodeStateListener,
       SchemaChangeListener schemaChangeListener,
       RequestTracker requestTracker,
-      Predicate<Node> nodeFilter) {
+      Map<String, Predicate<Node>> nodeFilters) {
     this.config = configLoader.getInitialConfig();
     this.configLoader = configLoader;
     DriverConfigProfile defaultProfile = config.getDefaultProfile();
@@ -217,21 +220,45 @@ public class DefaultDriverContext implements InternalDriverContext {
     this.requestTrackerRef =
         new LazyReference<>(
             "requestTracker", () -> buildRequestTracker(requestTrackerFromBuilder), cycleDetector);
-    this.nodeFilterFromBuilder = nodeFilter;
+    this.nodeFiltersFromBuilder = nodeFilters;
   }
 
-  protected LoadBalancingPolicy buildLoadBalancingPolicy() {
+  protected Map<String, LoadBalancingPolicy> buildLoadBalancingPolicies() {
+    return Reflection.buildFromConfigProfiles(
+        this,
+        DefaultDriverOption.LOAD_BALANCING_POLICY,
+        LoadBalancingPolicy.class,
+        "com.datastax.oss.driver.internal.core.loadbalancing");
+  }
+
+  protected Map<String, RetryPolicy> buildRetryPolicies() {
+    return Reflection.buildFromConfigProfiles(
+        this,
+        DefaultDriverOption.RETRY_POLICY,
+        RetryPolicy.class,
+        "com.datastax.oss.driver.internal.core.retry");
+  }
+
+  protected Map<String, SpeculativeExecutionPolicy> buildSpeculativeExecutionPolicies() {
+    return Reflection.buildFromConfigProfiles(
+        this,
+        DefaultDriverOption.SPECULATIVE_EXECUTION_POLICY,
+        SpeculativeExecutionPolicy.class,
+        "com.datastax.oss.driver.internal.core.specex");
+  }
+
+  protected TimestampGenerator buildTimestampGenerator() {
     return Reflection.buildFromConfig(
             this,
-            DefaultDriverOption.LOAD_BALANCING_POLICY_CLASS,
-            LoadBalancingPolicy.class,
-            "com.datastax.oss.driver.internal.core.loadbalancing")
+            DefaultDriverOption.TIMESTAMP_GENERATOR_CLASS,
+            TimestampGenerator.class,
+            "com.datastax.oss.driver.internal.core.time")
         .orElseThrow(
             () ->
                 new IllegalArgumentException(
                     String.format(
-                        "Missing load balancing policy, check your configuration (%s)",
-                        (DriverOption) DefaultDriverOption.LOAD_BALANCING_POLICY_CLASS)));
+                        "Missing timestamp generator, check your configuration (%s)",
+                        DefaultDriverOption.TIMESTAMP_GENERATOR_CLASS)));
   }
 
   protected ReconnectionPolicy buildReconnectionPolicy() {
@@ -246,34 +273,6 @@ public class DefaultDriverContext implements InternalDriverContext {
                     String.format(
                         "Missing reconnection policy, check your configuration (%s)",
                         DefaultDriverOption.RECONNECTION_POLICY_CLASS)));
-  }
-
-  protected RetryPolicy buildRetryPolicy() {
-    return Reflection.buildFromConfig(
-            this,
-            DefaultDriverOption.RETRY_POLICY_CLASS,
-            RetryPolicy.class,
-            "com.datastax.oss.driver.internal.core.retry")
-        .orElseThrow(
-            () ->
-                new IllegalArgumentException(
-                    String.format(
-                        "Missing retry policy, check your configuration (%s)",
-                        DefaultDriverOption.RETRY_POLICY_CLASS)));
-  }
-
-  protected SpeculativeExecutionPolicy buildSpeculativeExecutionPolicy() {
-    return Reflection.buildFromConfig(
-            this,
-            DefaultDriverOption.SPECULATIVE_EXECUTION_POLICY_CLASS,
-            SpeculativeExecutionPolicy.class,
-            "com.datastax.oss.driver.internal.core.specex")
-        .orElseThrow(
-            () ->
-                new IllegalArgumentException(
-                    String.format(
-                        "Missing speculative execution policy, check your configuration (%s)",
-                        DefaultDriverOption.SPECULATIVE_EXECUTION_POLICY_CLASS)));
   }
 
   protected AddressTranslator buildAddressTranslator() {
@@ -367,7 +366,7 @@ public class DefaultDriverContext implements InternalDriverContext {
   }
 
   protected LoadBalancingPolicyWrapper buildLoadBalancingPolicyWrapper() {
-    return new LoadBalancingPolicyWrapper(this, loadBalancingPolicy());
+    return new LoadBalancingPolicyWrapper(this, loadBalancingPolicies());
   }
 
   protected ControlConnection buildControlConnection() {
@@ -381,20 +380,6 @@ public class DefaultDriverContext implements InternalDriverContext {
   protected CodecRegistry buildCodecRegistry(String logPrefix, List<TypeCodec<?>> codecs) {
     TypeCodec<?>[] array = new TypeCodec<?>[codecs.size()];
     return new DefaultCodecRegistry(logPrefix, codecs.toArray(array));
-  }
-
-  protected TimestampGenerator buildTimestampGenerator() {
-    return Reflection.buildFromConfig(
-            this,
-            DefaultDriverOption.TIMESTAMP_GENERATOR_CLASS,
-            TimestampGenerator.class,
-            "com.datastax.oss.driver.internal.core.time")
-        .orElseThrow(
-            () ->
-                new IllegalArgumentException(
-                    String.format(
-                        "Missing timestamp generator, check your configuration (%s)",
-                        DefaultDriverOption.TIMESTAMP_GENERATOR_CLASS)));
   }
 
   protected SchemaQueriesFactory buildSchemaQueriesFactory() {
@@ -501,23 +486,28 @@ public class DefaultDriverContext implements InternalDriverContext {
   }
 
   @Override
-  public LoadBalancingPolicy loadBalancingPolicy() {
-    return loadBalancingPolicyRef.get();
+  public Map<String, LoadBalancingPolicy> loadBalancingPolicies() {
+    return loadBalancingPoliciesRef.get();
+  }
+
+  @Override
+  public Map<String, RetryPolicy> retryPolicies() {
+    return retryPoliciesRef.get();
+  }
+
+  @Override
+  public Map<String, SpeculativeExecutionPolicy> speculativeExecutionPolicies() {
+    return speculativeExecutionPoliciesRef.get();
+  }
+
+  @Override
+  public TimestampGenerator timestampGenerator() {
+    return timestampGeneratorRef.get();
   }
 
   @Override
   public ReconnectionPolicy reconnectionPolicy() {
     return reconnectionPolicyRef.get();
-  }
-
-  @Override
-  public RetryPolicy retryPolicy() {
-    return retryPolicyRef.get();
-  }
-
-  @Override
-  public SpeculativeExecutionPolicy speculativeExecutionPolicy() {
-    return speculativeExecutionPolicyRef.get();
   }
 
   @Override
@@ -616,11 +606,6 @@ public class DefaultDriverContext implements InternalDriverContext {
   }
 
   @Override
-  public TimestampGenerator timestampGenerator() {
-    return timestampGeneratorRef.get();
-  }
-
-  @Override
   public SchemaQueriesFactory schemaQueriesFactory() {
     return schemaQueriesFactoryRef.get();
   }
@@ -671,8 +656,8 @@ public class DefaultDriverContext implements InternalDriverContext {
   }
 
   @Override
-  public Predicate<Node> nodeFilter() {
-    return nodeFilterFromBuilder;
+  public Predicate<Node> nodeFilter(String profileName) {
+    return nodeFiltersFromBuilder.get(profileName);
   }
 
   @Override

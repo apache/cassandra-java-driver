@@ -19,7 +19,6 @@ import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
 import com.datastax.oss.driver.api.core.config.DriverConfigProfile;
 import com.datastax.oss.driver.api.core.context.DriverContext;
 import com.datastax.oss.driver.api.core.time.TimestampGenerator;
-import com.datastax.oss.driver.shaded.guava.common.annotations.VisibleForTesting;
 import java.util.concurrent.atomic.AtomicLong;
 import net.jcip.annotations.ThreadSafe;
 import org.slf4j.Logger;
@@ -43,7 +42,6 @@ abstract class MonotonicTimestampGenerator implements TimestampGenerator {
     this(buildClock(context), context);
   }
 
-  @VisibleForTesting
   protected MonotonicTimestampGenerator(Clock clock, DriverContext context) {
     this.clock = clock;
 

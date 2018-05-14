@@ -16,6 +16,7 @@
 package com.datastax.oss.driver.api.core.loadbalancing;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.fail;
 import static org.assertj.core.api.Assertions.withinPercentage;
 
 import com.datastax.oss.driver.api.core.CqlIdentifier;
@@ -224,8 +225,10 @@ public class DefaultLoadBalancingPolicyIT {
       }
     }
     assertThat(localNodes.size()).isEqualTo(4);
-    // Pick a random node to exclude
-    InetSocketAddress ignoredAddress = localNodes.iterator().next().getConnectAddress();
+    // Pick a random node to exclude -- just ensure that it's not the default contact point since
+    // we assert 0 connections at the end of this test (the filter is not applied to contact
+    // points).
+    InetSocketAddress ignoredAddress = firstNonDefaultContactPoint(localNodes);
 
     // Open a separate session with a filter
     try (CqlSession session =
@@ -247,5 +250,16 @@ public class DefaultLoadBalancingPolicyIT {
       Node ignoredNode = session.getMetadata().getNodes().get(ignoredAddress);
       assertThat(ignoredNode.getOpenConnections()).isEqualTo(0);
     }
+  }
+
+  private InetSocketAddress firstNonDefaultContactPoint(Iterable<Node> nodes) {
+    for (Node localNode : nodes) {
+      InetSocketAddress address = localNode.getConnectAddress();
+      if (!address.getAddress().getHostAddress().equals("127.0.0.1")) {
+        return address;
+      }
+    }
+    fail("should have other nodes than the default contact point");
+    return null; // never reached
   }
 }

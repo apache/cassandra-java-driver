@@ -36,6 +36,22 @@ import java.util.SortedSet;
  * @see DriverConfig
  */
 public interface DriverConfigProfile {
+
+  /**
+   * The name of the default profile (the string {@value}).
+   *
+   * <p>Named profiles can't use this name. If you try to declare such a profile, a runtime error
+   * will be thrown.
+   */
+  String DEFAULT_NAME = "default";
+
+  /**
+   * The name of the profile in the configuration.
+   *
+   * <p>Derived profiles inherit the name of their parent.
+   */
+  String getName();
+
   boolean isDefined(DriverOption option);
 
   boolean getBoolean(DriverOption option);
@@ -66,6 +82,15 @@ public interface DriverConfigProfile {
   Duration getDuration(DriverOption option);
 
   DriverConfigProfile withDuration(DriverOption option, Duration value);
+
+  /**
+   * Returns a representation of all the child options under a given option.
+   *
+   * <p>This is only used to compare configuration sections across profiles, so the actual
+   * implementation does not matter, as long as identical sections (same options with same values,
+   * regardless of order) compare as equal and have the same {@code hashCode()}.
+   */
+  Object getComparisonKey(DriverOption option);
 
   /**
    * Enumerates all the entries in this profile, including those that were inherited from another

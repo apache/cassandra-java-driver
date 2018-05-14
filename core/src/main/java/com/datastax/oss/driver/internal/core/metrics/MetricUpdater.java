@@ -17,23 +17,29 @@ package com.datastax.oss.driver.internal.core.metrics;
 
 import java.util.concurrent.TimeUnit;
 
+/**
+ * Note about profiles names: they are included to keep the possibility to break up metrics per
+ * profile in the future, but right now the default updater implementations ignore them. The driver
+ * internals provide a profile name when it makes sense and is practical; in other cases, it passes
+ * {@code null}.
+ */
 public interface MetricUpdater<MetricT> {
 
-  void incrementCounter(MetricT metric, long amount);
+  void incrementCounter(MetricT metric, String profileName, long amount);
 
-  default void incrementCounter(MetricT metric) {
-    incrementCounter(metric, 1);
+  default void incrementCounter(MetricT metric, String profileName) {
+    incrementCounter(metric, profileName, 1);
   }
 
-  void updateHistogram(MetricT metric, long value);
+  void updateHistogram(MetricT metric, String profileName, long value);
 
-  void markMeter(MetricT metric, long amount);
+  void markMeter(MetricT metric, String profileName, long amount);
 
-  default void markMeter(MetricT metric) {
-    markMeter(metric, 1);
+  default void markMeter(MetricT metric, String profileName) {
+    markMeter(metric, profileName, 1);
   }
 
-  void updateTimer(MetricT metric, long duration, TimeUnit unit);
+  void updateTimer(MetricT metric, String profileName, long duration, TimeUnit unit);
 
-  boolean isEnabled(MetricT metric);
+  boolean isEnabled(MetricT metric, String profileName);
 }

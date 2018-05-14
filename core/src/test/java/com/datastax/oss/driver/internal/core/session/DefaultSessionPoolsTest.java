@@ -167,8 +167,9 @@ public class DefaultSessionPoolsTest {
 
     // Shutdown sequence:
     Mockito.when(context.reconnectionPolicy()).thenReturn(reconnectionPolicy);
-    Mockito.when(context.retryPolicy()).thenReturn(retryPolicy);
-    Mockito.when(context.speculativeExecutionPolicy()).thenReturn(speculativeExecutionPolicy);
+    Mockito.when(context.retryPolicy(DriverConfigProfile.DEFAULT_NAME)).thenReturn(retryPolicy);
+    Mockito.when(context.speculativeExecutionPolicies())
+        .thenReturn(ImmutableMap.of(DriverConfigProfile.DEFAULT_NAME, speculativeExecutionPolicy));
     Mockito.when(context.addressTranslator()).thenReturn(addressTranslator);
     Mockito.when(context.nodeStateListener()).thenReturn(nodeStateListener);
     Mockito.when(context.schemaChangeListener()).thenReturn(schemaChangeListener);

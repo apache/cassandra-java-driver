@@ -97,6 +97,7 @@ public class RequestHandlerTestHarness implements AutoCloseable {
     Mockito.when(nettyOptions.ioEventLoopGroup()).thenReturn(eventLoopGroup);
     Mockito.when(context.nettyOptions()).thenReturn(nettyOptions);
 
+    Mockito.when(defaultConfigProfile.getName()).thenReturn(DriverConfigProfile.DEFAULT_NAME);
     // TODO make configurable in the test, also handle profiles
     Mockito.when(defaultConfigProfile.getDuration(DefaultDriverOption.REQUEST_TIMEOUT))
         .thenReturn(Duration.ofMillis(500));
@@ -114,18 +115,21 @@ public class RequestHandlerTestHarness implements AutoCloseable {
     Mockito.when(config.getDefaultProfile()).thenReturn(defaultConfigProfile);
     Mockito.when(context.config()).thenReturn(config);
 
-    Mockito.when(loadBalancingPolicyWrapper.newQueryPlan(any(Request.class), any(Session.class)))
+    Mockito.when(
+            loadBalancingPolicyWrapper.newQueryPlan(
+                any(Request.class), anyString(), any(Session.class)))
         .thenReturn(builder.buildQueryPlan());
     Mockito.when(context.loadBalancingPolicyWrapper()).thenReturn(loadBalancingPolicyWrapper);
 
-    Mockito.when(context.retryPolicy()).thenReturn(retryPolicy);
+    Mockito.when(context.retryPolicy(anyString())).thenReturn(retryPolicy);
 
     // Disable speculative executions by default
     Mockito.when(
             speculativeExecutionPolicy.nextExecution(
                 any(Node.class), any(CqlIdentifier.class), any(Request.class), anyInt()))
         .thenReturn(-1L);
-    Mockito.when(context.speculativeExecutionPolicy()).thenReturn(speculativeExecutionPolicy);
+    Mockito.when(context.speculativeExecutionPolicy(anyString()))
+        .thenReturn(speculativeExecutionPolicy);
 
     Mockito.when(context.codecRegistry()).thenReturn(new DefaultCodecRegistry("test"));
 

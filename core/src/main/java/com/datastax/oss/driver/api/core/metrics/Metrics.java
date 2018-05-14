@@ -54,10 +54,22 @@ public interface Metrics {
    * Counter connectedNodes = getNodeMetric(node, DefaultSessionMetric.CONNECTED_NODES);
    * }</pre>
    *
+   * @param profileName the name of the execution profile, or {@code null} if the metric is not
+   *     associated to any profile. Note that this is only included for future extensibility: at
+   *     this time, the driver does not break up metrics per profile. Therefore you can always use
+   *     {@link #getSessionMetric(SessionMetric)} instead of this method.
    * @return the metric, or {@code null} if it is disabled.
    */
   @SuppressWarnings("TypeParameterUnusedInFormals")
-  <T extends Metric> T getSessionMetric(SessionMetric metric);
+  <T extends Metric> T getSessionMetric(SessionMetric metric, String profileName);
+
+  /**
+   * Shortcut for {@link #getSessionMetric(SessionMetric, String) getSessionMetric(metric, null)}.
+   */
+  @SuppressWarnings("TypeParameterUnusedInFormals")
+  default <T extends Metric> T getSessionMetric(SessionMetric metric) {
+    return getSessionMetric(metric, null);
+  }
 
   /**
    * Retrieves a node-level metric for a given node from the registry.
@@ -75,8 +87,21 @@ public interface Metrics {
    * Counter openConnections = getNodeMetric(node, DefaultNodeMetric.OPEN_CONNECTIONS);
    * }</pre>
    *
+   * @param profileName the name of the execution profile, or {@code null} if the metric is not
+   *     associated to any profile. Note that this is only included for future extensibility: at
+   *     this time, the driver does not break up metrics per profile. Therefore you can always use
+   *     {@link #getNodeMetric(Node, NodeMetric)} instead of this method.
    * @return the metric, or {@code null} if it is disabled.
    */
   @SuppressWarnings("TypeParameterUnusedInFormals")
-  <T extends Metric> T getNodeMetric(Node node, NodeMetric metric);
+  <T extends Metric> T getNodeMetric(Node node, NodeMetric metric, String profileName);
+
+  /**
+   * Shortcut for {@link #getNodeMetric(Node, NodeMetric, String) getNodeMetric(node, metric,
+   * null)}.
+   */
+  @SuppressWarnings("TypeParameterUnusedInFormals")
+  default <T extends Metric> T getNodeMetric(Node node, NodeMetric metric) {
+    return getNodeMetric(node, metric, null);
+  }
 }

@@ -84,6 +84,7 @@ public abstract class CqlPrepareHandlerBase implements Throttled {
   private final ConcurrentMap<ByteBuffer, DefaultPreparedStatement> preparedStatementsCache;
   private final DefaultSession session;
   private final InternalDriverContext context;
+  private final DriverConfigProfile configProfile;
   private final Queue<Node> queryPlan;
   protected final CompletableFuture<PreparedStatement> result;
   private final Message message;
@@ -114,19 +115,22 @@ public abstract class CqlPrepareHandlerBase implements Throttled {
     this.preparedStatementsCache = preparedStatementsCache;
     this.session = session;
     this.context = context;
-    this.queryPlan = context.loadBalancingPolicyWrapper().newQueryPlan(request, session);
 
-    DriverConfigProfile configProfile;
     if (request.getConfigProfile() != null) {
-      configProfile = request.getConfigProfile();
+      this.configProfile = request.getConfigProfile();
     } else {
       DriverConfig config = context.config();
       String profileName = request.getConfigProfileName();
-      configProfile =
+      this.configProfile =
           (profileName == null || profileName.isEmpty())
               ? config.getDefaultProfile()
               : config.getNamedProfile(profileName);
     }
+    this.queryPlan =
+        context
+            .loadBalancingPolicyWrapper()
+            .newQueryPlan(request, configProfile.getName(), session);
+    this.retryPolicy = context.retryPolicy(configProfile.getName());
 
     this.result = new CompletableFuture<>();
     this.result.exceptionally(
@@ -154,7 +158,6 @@ public abstract class CqlPrepareHandlerBase implements Throttled {
 
     this.timeout = configProfile.getDuration(DefaultDriverOption.REQUEST_TIMEOUT);
     this.timeoutFuture = scheduleTimeout(timeout);
-    this.retryPolicy = context.retryPolicy();
     this.prepareOnAllNodes = configProfile.getBoolean(DefaultDriverOption.PREPARE_ON_ALL_NODES);
 
     this.throttler = context.requestThrottler();
@@ -168,6 +171,7 @@ public abstract class CqlPrepareHandlerBase implements Throttled {
           .getMetricUpdater()
           .updateTimer(
               DefaultSessionMetric.THROTTLING_DELAY,
+              configProfile.getName(),
               System.nanoTime() - startTimeNanos,
               TimeUnit.NANOSECONDS);
     }
@@ -337,7 +341,9 @@ public abstract class CqlPrepareHandlerBase implements Throttled {
 
   @Override
   public void onThrottleFailure(RequestThrottlingException error) {
-    session.getMetricUpdater().incrementCounter(DefaultSessionMetric.THROTTLING_ERRORS);
+    session
+        .getMetricUpdater()
+        .incrementCounter(DefaultSessionMetric.THROTTLING_ERRORS, configProfile.getName());
     setFinalError(error);
   }
 

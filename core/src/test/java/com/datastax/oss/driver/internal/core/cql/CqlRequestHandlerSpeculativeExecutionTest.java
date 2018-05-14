@@ -22,6 +22,7 @@ import static org.mockito.ArgumentMatchers.eq;
 
 import com.datastax.oss.driver.api.core.AllNodesFailedException;
 import com.datastax.oss.driver.api.core.NoNodeAvailableException;
+import com.datastax.oss.driver.api.core.config.DriverConfigProfile;
 import com.datastax.oss.driver.api.core.cql.AsyncResultSet;
 import com.datastax.oss.driver.api.core.cql.SimpleStatement;
 import com.datastax.oss.driver.api.core.metadata.Node;
@@ -50,7 +51,7 @@ public class CqlRequestHandlerSpeculativeExecutionTest extends CqlRequestHandler
 
     try (RequestHandlerTestHarness harness = harnessBuilder.build()) {
       SpeculativeExecutionPolicy speculativeExecutionPolicy =
-          harness.getContext().speculativeExecutionPolicy();
+          harness.getContext().speculativeExecutionPolicy(DriverConfigProfile.DEFAULT_NAME);
 
       new CqlRequestAsyncHandler(statement, harness.getSession(), harness.getContext(), "test")
           .handle();
@@ -77,7 +78,7 @@ public class CqlRequestHandlerSpeculativeExecutionTest extends CqlRequestHandler
 
     try (RequestHandlerTestHarness harness = harnessBuilder.build()) {
       SpeculativeExecutionPolicy speculativeExecutionPolicy =
-          harness.getContext().speculativeExecutionPolicy();
+          harness.getContext().speculativeExecutionPolicy(DriverConfigProfile.DEFAULT_NAME);
       long firstExecutionDelay = 100L;
       long secondExecutionDelay = 200L;
       Mockito.when(
@@ -107,7 +108,9 @@ public class CqlRequestHandlerSpeculativeExecutionTest extends CqlRequestHandler
           .isEqualTo(firstExecutionDelay);
       Mockito.verifyNoMoreInteractions(nodeMetricUpdater1);
       firstExecutionTask.run();
-      Mockito.verify(nodeMetricUpdater1).incrementCounter(DefaultNodeMetric.SPECULATIVE_EXECUTIONS);
+      Mockito.verify(nodeMetricUpdater1)
+          .incrementCounter(
+              DefaultNodeMetric.SPECULATIVE_EXECUTIONS, DriverConfigProfile.DEFAULT_NAME);
       node2Behavior.verifyWrite();
       node2Behavior.setWriteSuccess();
 
@@ -117,7 +120,9 @@ public class CqlRequestHandlerSpeculativeExecutionTest extends CqlRequestHandler
           .isEqualTo(secondExecutionDelay);
       Mockito.verifyNoMoreInteractions(nodeMetricUpdater2);
       secondExecutionTask.run();
-      Mockito.verify(nodeMetricUpdater2).incrementCounter(DefaultNodeMetric.SPECULATIVE_EXECUTIONS);
+      Mockito.verify(nodeMetricUpdater2)
+          .incrementCounter(
+              DefaultNodeMetric.SPECULATIVE_EXECUTIONS, DriverConfigProfile.DEFAULT_NAME);
       node3Behavior.verifyWrite();
       node3Behavior.setWriteSuccess();
 
@@ -140,7 +145,7 @@ public class CqlRequestHandlerSpeculativeExecutionTest extends CqlRequestHandler
 
     try (RequestHandlerTestHarness harness = harnessBuilder.build()) {
       SpeculativeExecutionPolicy speculativeExecutionPolicy =
-          harness.getContext().speculativeExecutionPolicy();
+          harness.getContext().speculativeExecutionPolicy(DriverConfigProfile.DEFAULT_NAME);
       long firstExecutionDelay = 100L;
       Mockito.when(
               speculativeExecutionPolicy.nextExecution(
@@ -179,7 +184,11 @@ public class CqlRequestHandlerSpeculativeExecutionTest extends CqlRequestHandler
       node2Behavior.verifyNoWrite();
 
       Mockito.verify(nodeMetricUpdater1)
-          .updateTimer(eq(DefaultNodeMetric.CQL_MESSAGES), anyLong(), eq(TimeUnit.NANOSECONDS));
+          .updateTimer(
+              eq(DefaultNodeMetric.CQL_MESSAGES),
+              eq(DriverConfigProfile.DEFAULT_NAME),
+              anyLong(),
+              eq(TimeUnit.NANOSECONDS));
       Mockito.verifyNoMoreInteractions(nodeMetricUpdater1);
     }
   }
@@ -193,7 +202,7 @@ public class CqlRequestHandlerSpeculativeExecutionTest extends CqlRequestHandler
 
     try (RequestHandlerTestHarness harness = harnessBuilder.build()) {
       SpeculativeExecutionPolicy speculativeExecutionPolicy =
-          harness.getContext().speculativeExecutionPolicy();
+          harness.getContext().speculativeExecutionPolicy(DriverConfigProfile.DEFAULT_NAME);
       long firstExecutionDelay = 100L;
       Mockito.when(
               speculativeExecutionPolicy.nextExecution(
@@ -224,7 +233,7 @@ public class CqlRequestHandlerSpeculativeExecutionTest extends CqlRequestHandler
 
     try (RequestHandlerTestHarness harness = harnessBuilder.build()) {
       SpeculativeExecutionPolicy speculativeExecutionPolicy =
-          harness.getContext().speculativeExecutionPolicy();
+          harness.getContext().speculativeExecutionPolicy(DriverConfigProfile.DEFAULT_NAME);
       long firstExecutionDelay = 100L;
       Mockito.when(
               speculativeExecutionPolicy.nextExecution(
@@ -277,7 +286,7 @@ public class CqlRequestHandlerSpeculativeExecutionTest extends CqlRequestHandler
 
     try (RequestHandlerTestHarness harness = harnessBuilder.build()) {
       SpeculativeExecutionPolicy speculativeExecutionPolicy =
-          harness.getContext().speculativeExecutionPolicy();
+          harness.getContext().speculativeExecutionPolicy(DriverConfigProfile.DEFAULT_NAME);
       long firstExecutionDelay = 100L;
       Mockito.when(
               speculativeExecutionPolicy.nextExecution(
@@ -334,7 +343,7 @@ public class CqlRequestHandlerSpeculativeExecutionTest extends CqlRequestHandler
 
     try (RequestHandlerTestHarness harness = harnessBuilder.build()) {
       SpeculativeExecutionPolicy speculativeExecutionPolicy =
-          harness.getContext().speculativeExecutionPolicy();
+          harness.getContext().speculativeExecutionPolicy(DriverConfigProfile.DEFAULT_NAME);
       long firstExecutionDelay = 100L;
       Mockito.when(
               speculativeExecutionPolicy.nextExecution(
@@ -383,7 +392,7 @@ public class CqlRequestHandlerSpeculativeExecutionTest extends CqlRequestHandler
 
     try (RequestHandlerTestHarness harness = harnessBuilder.build()) {
       SpeculativeExecutionPolicy speculativeExecutionPolicy =
-          harness.getContext().speculativeExecutionPolicy();
+          harness.getContext().speculativeExecutionPolicy(DriverConfigProfile.DEFAULT_NAME);
       long firstExecutionDelay = 100L;
       Mockito.when(
               speculativeExecutionPolicy.nextExecution(

@@ -21,8 +21,12 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.timeout;
 
 import com.datastax.oss.driver.api.core.CqlSession;
+import com.datastax.oss.driver.api.core.config.DriverConfigProfile;
 import com.datastax.oss.driver.api.core.context.DriverContext;
+import com.datastax.oss.driver.api.core.loadbalancing.LoadBalancingPolicy;
 import com.datastax.oss.driver.api.core.loadbalancing.NodeDistance;
+import com.datastax.oss.driver.api.core.session.Request;
+import com.datastax.oss.driver.api.core.session.Session;
 import com.datastax.oss.driver.api.testinfra.session.SessionRule;
 import com.datastax.oss.driver.api.testinfra.session.SessionUtils;
 import com.datastax.oss.driver.api.testinfra.simulacron.SimulacronRule;
@@ -38,18 +42,20 @@ import com.datastax.oss.simulacron.common.cluster.NodeConnectionReport;
 import com.datastax.oss.simulacron.common.stubbing.CloseType;
 import com.datastax.oss.simulacron.server.BoundNode;
 import com.datastax.oss.simulacron.server.RejectScope;
-import com.google.common.collect.Sets;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.net.SocketAddress;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.Queue;
 import java.util.Set;
 import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.CopyOnWriteArraySet;
 import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.TimeUnit;
-import java.util.function.Predicate;
+import java.util.concurrent.atomic.AtomicInteger;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
@@ -77,7 +83,7 @@ public class NodeStateIT {
               "connection.pool.local.size = 2",
               "connection.reconnection-policy.max-delay = 1 second",
               String.format(
-                  "load-balancing-policy.filter.class = \"%s$CustomNodeFilter\"",
+                  "load-balancing-policy.class = \"%s$ConfigurableIgnoresPolicy\"",
                   NodeStateIT.class.getName()))
           .withNodeStateListener(nodeStateListener)
           .build();
@@ -85,6 +91,7 @@ public class NodeStateIT {
   private @Captor ArgumentCaptor<DefaultNode> nodeCaptor;
 
   private InternalDriverContext driverContext;
+  private ConfigurableIgnoresPolicy defaultLoadBalancingPolicy;
   private final BlockingQueue<NodeStateEvent> stateEvents = new LinkedBlockingDeque<>();
 
   private BoundNode simulacronControlNode;
@@ -98,6 +105,10 @@ public class NodeStateIT {
 
     driverContext = (InternalDriverContext) sessionRule.session().getContext();
     driverContext.eventBus().register(NodeStateEvent.class, stateEvents::add);
+
+    defaultLoadBalancingPolicy =
+        (ConfigurableIgnoresPolicy)
+            driverContext.loadBalancingPolicy(DriverConfigProfile.DEFAULT_NAME);
 
     // Sanity check: the driver should have connected to simulacron
     ConditionChecker.checkThat(
@@ -235,10 +246,7 @@ public class NodeStateIT {
 
   @Test
   public void should_apply_up_and_down_topology_events_when_ignored() {
-    CustomNodeFilter.IGNORED_NODES.add(metadataRegularNode);
-    driverContext
-        .loadBalancingPolicyWrapper()
-        .setDistance(metadataRegularNode, NodeDistance.IGNORED);
+    defaultLoadBalancingPolicy.ignore(metadataRegularNode);
 
     ConditionChecker.checkThat(
             () ->
@@ -279,8 +287,7 @@ public class NodeStateIT {
         .becomesTrue();
     inOrder.verify(nodeStateListener, timeout(500)).onUp(metadataRegularNode);
 
-    CustomNodeFilter.IGNORED_NODES.clear();
-    driverContext.loadBalancingPolicyWrapper().setDistance(metadataRegularNode, NodeDistance.LOCAL);
+    defaultLoadBalancingPolicy.stopIgnoring(metadataRegularNode);
   }
 
   @Test
@@ -379,10 +386,7 @@ public class NodeStateIT {
 
   @Test
   public void should_force_down_when_ignored() throws InterruptedException {
-    CustomNodeFilter.IGNORED_NODES.add(metadataRegularNode);
-    driverContext
-        .loadBalancingPolicyWrapper()
-        .setDistance(metadataRegularNode, NodeDistance.IGNORED);
+    defaultLoadBalancingPolicy.ignore(metadataRegularNode);
 
     driverContext.eventBus().fire(TopologyEvent.forceDown(metadataRegularNode.getConnectAddress()));
     ConditionChecker.checkThat(
@@ -422,8 +426,7 @@ public class NodeStateIT {
         .becomesTrue();
     inOrder.verify(nodeStateListener, timeout(500)).onUp(metadataRegularNode);
 
-    CustomNodeFilter.IGNORED_NODES.clear();
-    driverContext.loadBalancingPolicyWrapper().setDistance(metadataRegularNode, NodeDistance.LOCAL);
+    defaultLoadBalancingPolicy.stopIgnoring(metadataRegularNode);
   }
 
   @Test
@@ -579,15 +582,94 @@ public class NodeStateIT {
     }
   }
 
-  // Hack to allow tests to dynamically configure which nodes should be ignored
-  public static class CustomNodeFilter implements Predicate<Node> {
-    public static Set<Node> IGNORED_NODES = Sets.newConcurrentHashSet();
+  /**
+   * A load balancing policy that can be told to ignore a node temporarily (the rest of the
+   * implementation uses a simple round-robin, non DC-aware shuffle).
+   */
+  public static class ConfigurableIgnoresPolicy implements LoadBalancingPolicy {
 
-    public CustomNodeFilter(@SuppressWarnings("unused") DriverContext context) {}
+    private final CopyOnWriteArraySet<Node> liveNodes = new CopyOnWriteArraySet<>();
+    private final AtomicInteger offset = new AtomicInteger();
+    private final Set<Node> ignoredNodes = new CopyOnWriteArraySet<>();
+
+    private volatile DistanceReporter distanceReporter;
+
+    public ConfigurableIgnoresPolicy(
+        @SuppressWarnings("unused") DriverContext context,
+        @SuppressWarnings("unused") String profileName) {
+      // nothing to do
+    }
 
     @Override
-    public boolean test(Node node) {
-      return !IGNORED_NODES.contains(node);
+    public void init(
+        Map<InetSocketAddress, Node> nodes,
+        DistanceReporter distanceReporter,
+        Set<InetSocketAddress> contactPoints) {
+      this.distanceReporter = distanceReporter;
+      for (Node node : nodes.values()) {
+        liveNodes.add(node);
+        distanceReporter.setDistance(node, NodeDistance.LOCAL);
+      }
+    }
+
+    public void ignore(Node node) {
+      if (ignoredNodes.add(node)) {
+        liveNodes.remove(node);
+        distanceReporter.setDistance(node, NodeDistance.IGNORED);
+      }
+    }
+
+    public void stopIgnoring(Node node) {
+      if (ignoredNodes.remove(node)) {
+        distanceReporter.setDistance(node, NodeDistance.LOCAL);
+        // There might be a short delay until the node's pool becomes usable, but clients know how
+        // to deal with that.
+        liveNodes.add(node);
+      }
+    }
+
+    @Override
+    public Queue<Node> newQueryPlan(Request request, Session session) {
+      Object[] snapshot = liveNodes.toArray();
+      Queue<Node> queryPlan = new ConcurrentLinkedQueue<>();
+      int start = offset.getAndIncrement(); // Note: offset overflow won't be an issue in tests
+      for (int i = 0; i < snapshot.length; i++) {
+        queryPlan.add((Node) snapshot[(start + i) % snapshot.length]);
+      }
+      return queryPlan;
+    }
+
+    @Override
+    public void onAdd(Node node) {
+      if (ignoredNodes.contains(node)) {
+        distanceReporter.setDistance(node, NodeDistance.IGNORED);
+      } else {
+        // Setting to a non-ignored distance triggers the session to open a pool, which will in turn
+        // set the node UP when the first channel gets opened.
+        distanceReporter.setDistance(node, NodeDistance.LOCAL);
+      }
+    }
+
+    @Override
+    public void onUp(Node node) {
+      if (!ignoredNodes.contains(node)) {
+        liveNodes.add(node);
+      }
+    }
+
+    @Override
+    public void onDown(Node node) {
+      liveNodes.remove(node);
+    }
+
+    @Override
+    public void onRemove(Node node) {
+      liveNodes.remove(node);
+    }
+
+    @Override
+    public void close() {
+      // nothing to do
     }
   }
 }

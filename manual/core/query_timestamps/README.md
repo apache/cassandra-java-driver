@@ -114,6 +114,30 @@ This implementation always lets the server assign a timestamp.
 You can create your own generator by implementing [TimestampGenerator], and referencing your
 implementation class from the configuration.
 
+#### Using multiple generators
+
+The timestamp generator can be overridden in [configuration profiles](../configuration/#profiles):
+
+```
+datastax-java-driver {
+  request.timestamp-generator = AtomicTimestampGenerator
+  profiles {
+    profile1 {
+      request.timestamp-generator = ServerSideTimestampGenerator
+    }
+    profile2 {}
+  } 
+}
+```
+
+The `profile1` profile uses its own generator. The `profile2` profile inherits the default
+profile's. Note that this goes beyond configuration inheritance: the driver only creates a single
+`AtomicTimestampGenerator` instance and reuses it (this also occurs if two sibling profiles have the
+same configuration).
+
+Each request uses its declared profile's generator. If it doesn't declare any profile, or if the
+profile doesn't have a dedicated policy, then the default profile's generator is used.
+
 ### Per-statement timestamp
 
 Finally, you can assign a timestamp to a statement directly from application code:

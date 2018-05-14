@@ -27,6 +27,7 @@ import com.datastax.oss.driver.api.core.type.codec.TypeCodec;
 import com.datastax.oss.driver.example.guava.internal.DefaultGuavaSession;
 import com.datastax.oss.driver.example.guava.internal.GuavaDriverContext;
 import java.util.List;
+import java.util.Map;
 import java.util.function.Predicate;
 
 public class GuavaSessionBuilder extends SessionBuilder<GuavaSessionBuilder, GuavaSession> {
@@ -38,14 +39,14 @@ public class GuavaSessionBuilder extends SessionBuilder<GuavaSessionBuilder, Gua
       NodeStateListener nodeStateListener,
       SchemaChangeListener schemaChangeListener,
       RequestTracker requestTracker,
-      Predicate<Node> nodeFilter) {
+      Map<String, Predicate<Node>> nodeFilters) {
     return new GuavaDriverContext(
         configLoader,
         typeCodecs,
         nodeStateListener,
         schemaChangeListener,
         requestTracker,
-        nodeFilter);
+        nodeFilters);
   }
 
   @Override

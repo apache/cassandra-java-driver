@@ -295,7 +295,8 @@ public class ChannelPool implements AsyncAutoCloseable {
               .incrementCounter(
                   error instanceof AuthenticationException
                       ? DefaultNodeMetric.AUTHENTICATION_ERRORS
-                      : DefaultNodeMetric.CONNECTION_INIT_ERRORS);
+                      : DefaultNodeMetric.CONNECTION_INIT_ERRORS,
+                  null);
           if (error instanceof ClusterNameMismatchException
               || error instanceof UnsupportedProtocolVersionException) {
             // This will likely be thrown by all channels, but finish the loop cleanly

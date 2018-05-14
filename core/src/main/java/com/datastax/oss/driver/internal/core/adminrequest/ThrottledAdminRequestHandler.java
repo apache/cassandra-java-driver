@@ -64,6 +64,7 @@ public class ThrottledAdminRequestHandler extends AdminRequestHandler implements
     if (wasDelayed) {
       metricUpdater.updateTimer(
           DefaultSessionMetric.THROTTLING_DELAY,
+          null,
           System.nanoTime() - startTimeNanos,
           TimeUnit.NANOSECONDS);
     }
@@ -72,7 +73,7 @@ public class ThrottledAdminRequestHandler extends AdminRequestHandler implements
 
   @Override
   public void onThrottleFailure(RequestThrottlingException error) {
-    metricUpdater.incrementCounter(DefaultSessionMetric.THROTTLING_ERRORS);
+    metricUpdater.incrementCounter(DefaultSessionMetric.THROTTLING_ERRORS, null);
     setFinalError(error);
   }
 

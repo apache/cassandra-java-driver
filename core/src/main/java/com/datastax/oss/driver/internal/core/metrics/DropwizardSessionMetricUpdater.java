@@ -45,7 +45,7 @@ public class DropwizardSessionMetricUpdater extends DropwizardMetricUpdater<Sess
 
     if (enabledMetrics.contains(DefaultSessionMetric.CONNECTED_NODES)) {
       this.registry.register(
-          buildFullName(DefaultSessionMetric.CONNECTED_NODES),
+          buildFullName(DefaultSessionMetric.CONNECTED_NODES, null),
           (Gauge<Integer>)
               () -> {
                 int count = 0;
@@ -59,7 +59,7 @@ public class DropwizardSessionMetricUpdater extends DropwizardMetricUpdater<Sess
     }
     if (enabledMetrics.contains(DefaultSessionMetric.THROTTLING_QUEUE_SIZE)) {
       this.registry.register(
-          buildFullName(DefaultSessionMetric.THROTTLING_QUEUE_SIZE),
+          buildFullName(DefaultSessionMetric.THROTTLING_QUEUE_SIZE, null),
           buildQueueGauge(context.requestThrottler(), context.sessionName()));
     }
     initializeHdrTimer(
@@ -68,18 +68,18 @@ public class DropwizardSessionMetricUpdater extends DropwizardMetricUpdater<Sess
         DefaultDriverOption.METRICS_SESSION_CQL_REQUESTS_HIGHEST,
         DefaultDriverOption.METRICS_SESSION_CQL_REQUESTS_DIGITS,
         DefaultDriverOption.METRICS_SESSION_CQL_REQUESTS_INTERVAL);
-    initializeDefaultCounter(DefaultSessionMetric.CQL_CLIENT_TIMEOUTS);
+    initializeDefaultCounter(DefaultSessionMetric.CQL_CLIENT_TIMEOUTS, null);
     initializeHdrTimer(
         DefaultSessionMetric.THROTTLING_DELAY,
         context.config().getDefaultProfile(),
         DefaultDriverOption.METRICS_SESSION_THROTTLING_HIGHEST,
         DefaultDriverOption.METRICS_SESSION_THROTTLING_DIGITS,
         DefaultDriverOption.METRICS_SESSION_THROTTLING_INTERVAL);
-    initializeDefaultCounter(DefaultSessionMetric.THROTTLING_ERRORS);
+    initializeDefaultCounter(DefaultSessionMetric.THROTTLING_ERRORS, null);
   }
 
   @Override
-  public String buildFullName(SessionMetric metric) {
+  public String buildFullName(SessionMetric metric, String profileName) {
     return metricNamePrefix + metric.getPath();
   }
 

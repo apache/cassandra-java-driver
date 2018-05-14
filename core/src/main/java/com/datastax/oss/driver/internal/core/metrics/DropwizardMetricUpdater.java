@@ -40,50 +40,50 @@ public abstract class DropwizardMetricUpdater<MetricT> implements MetricUpdater<
     this.registry = registry;
   }
 
-  protected abstract String buildFullName(MetricT metric);
+  protected abstract String buildFullName(MetricT metric, String profileName);
 
   @Override
-  public void incrementCounter(MetricT metric, long amount) {
-    if (isEnabled(metric)) {
-      registry.counter(buildFullName(metric)).inc(amount);
+  public void incrementCounter(MetricT metric, String profileName, long amount) {
+    if (isEnabled(metric, profileName)) {
+      registry.counter(buildFullName(metric, profileName)).inc(amount);
     }
   }
 
   @Override
-  public void updateHistogram(MetricT metric, long value) {
-    if (isEnabled(metric)) {
-      registry.histogram(buildFullName(metric)).update(value);
+  public void updateHistogram(MetricT metric, String profileName, long value) {
+    if (isEnabled(metric, profileName)) {
+      registry.histogram(buildFullName(metric, profileName)).update(value);
     }
   }
 
   @Override
-  public void markMeter(MetricT metric, long amount) {
-    if (isEnabled(metric)) {
-      registry.meter(buildFullName(metric)).mark(amount);
+  public void markMeter(MetricT metric, String profileName, long amount) {
+    if (isEnabled(metric, profileName)) {
+      registry.meter(buildFullName(metric, profileName)).mark(amount);
     }
   }
 
   @Override
-  public void updateTimer(MetricT metric, long duration, TimeUnit unit) {
-    if (isEnabled(metric)) {
-      registry.timer(buildFullName(metric)).update(duration, unit);
+  public void updateTimer(MetricT metric, String profileName, long duration, TimeUnit unit) {
+    if (isEnabled(metric, profileName)) {
+      registry.timer(buildFullName(metric, profileName)).update(duration, unit);
     }
   }
 
   @SuppressWarnings({"unchecked", "TypeParameterUnusedInFormals"})
-  public <T extends Metric> T getMetric(MetricT metric) {
-    return (T) registry.getMetrics().get(buildFullName(metric));
+  public <T extends Metric> T getMetric(MetricT metric, String profileName) {
+    return (T) registry.getMetrics().get(buildFullName(metric, profileName));
   }
 
   @Override
-  public boolean isEnabled(MetricT metric) {
+  public boolean isEnabled(MetricT metric, String profileName) {
     return enabledMetrics.contains(metric);
   }
 
-  protected void initializeDefaultCounter(MetricT metric) {
-    if (isEnabled(metric)) {
+  protected void initializeDefaultCounter(MetricT metric, String profileName) {
+    if (isEnabled(metric, profileName)) {
       // Just initialize eagerly so that the metric appears even when it has no data yet
-      registry.counter(buildFullName(metric));
+      registry.counter(buildFullName(metric, profileName));
     }
   }
 
@@ -93,8 +93,9 @@ public abstract class DropwizardMetricUpdater<MetricT> implements MetricUpdater<
       DefaultDriverOption highestLatencyOption,
       DefaultDriverOption significantDigitsOption,
       DefaultDriverOption intervalOption) {
-    if (isEnabled(metric)) {
-      String fullName = buildFullName(metric);
+    String profileName = config.getName();
+    if (isEnabled(metric, profileName)) {
+      String fullName = buildFullName(metric, profileName);
 
       Duration highestLatency = config.getDuration(highestLatencyOption);
       final int significantDigits;

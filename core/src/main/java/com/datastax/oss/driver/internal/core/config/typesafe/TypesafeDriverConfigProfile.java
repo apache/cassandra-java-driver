@@ -145,6 +145,12 @@ public abstract class TypesafeDriverConfigProfile implements DriverConfigProfile
   }
 
   @Override
+  public Object getComparisonKey(DriverOption option) {
+    // No need to cache this, it's only used for policy initialization
+    return getEffectiveOptions().getConfig(option.getPath());
+  }
+
+  @Override
   public SortedSet<Map.Entry<String, Object>> entrySet() {
     ImmutableSortedSet.Builder<Map.Entry<String, Object>> builder =
         ImmutableSortedSet.orderedBy(Comparator.comparing(Map.Entry::getKey));
@@ -176,11 +182,18 @@ public abstract class TypesafeDriverConfigProfile implements DriverConfigProfile
   @ThreadSafe
   static class Base extends TypesafeDriverConfigProfile {
 
+    private final String name;
     private volatile Config options;
     private volatile Set<Derived> derivedProfiles;
 
-    Base(Config options) {
+    Base(String name, Config options) {
+      this.name = name;
       this.options = options;
+    }
+
+    @Override
+    public String getName() {
+      return name;
     }
 
     @Override
@@ -247,6 +260,11 @@ public abstract class TypesafeDriverConfigProfile implements DriverConfigProfile
     void refresh() {
       this.effectiveOptions = addedOptions.withFallback(baseProfile.getEffectiveOptions());
       this.cache.clear();
+    }
+
+    @Override
+    public String getName() {
+      return baseProfile.getName();
     }
 
     @Override

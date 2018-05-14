@@ -38,7 +38,6 @@ import org.slf4j.LoggerFactory;
 public class TypesafeDriverConfig implements DriverConfig {
 
   private static final Logger LOG = LoggerFactory.getLogger(TypesafeDriverConfig.class);
-  private static final String DEFAULT_PROFILE_KEY = "__default_internal__";
 
   private final Collection<DriverOption> options;
   private final TypesafeDriverConfigProfile.Base defaultProfile;
@@ -52,7 +51,8 @@ public class TypesafeDriverConfig implements DriverConfig {
 
     Map<String, Config> profileConfigs = extractProfiles(config);
     this.defaultProfile =
-        new TypesafeDriverConfigProfile.Base(profileConfigs.get(DEFAULT_PROFILE_KEY));
+        new TypesafeDriverConfigProfile.Base(
+            DriverConfigProfile.DEFAULT_NAME, profileConfigs.get(DriverConfigProfile.DEFAULT_NAME));
 
     if (profileConfigs.size() == 1) {
       this.profiles = Collections.emptyMap();
@@ -61,8 +61,9 @@ public class TypesafeDriverConfig implements DriverConfig {
           ImmutableMap.builder();
       for (Map.Entry<String, Config> entry : profileConfigs.entrySet()) {
         String profileName = entry.getKey();
-        if (!profileName.equals(DEFAULT_PROFILE_KEY)) {
-          builder.put(profileName, new TypesafeDriverConfigProfile.Base(entry.getValue()));
+        if (!profileName.equals(DriverConfigProfile.DEFAULT_NAME)) {
+          builder.put(
+              profileName, new TypesafeDriverConfigProfile.Base(profileName, entry.getValue()));
         }
       }
       this.profiles = builder.build();
@@ -77,11 +78,11 @@ public class TypesafeDriverConfig implements DriverConfig {
       lastLoadedConfig = config;
       try {
         Map<String, Config> profileConfigs = extractProfiles(config);
-        this.defaultProfile.refresh(profileConfigs.get(DEFAULT_PROFILE_KEY));
+        this.defaultProfile.refresh(profileConfigs.get(DriverConfigProfile.DEFAULT_NAME));
         if (profileConfigs.size() > 1) {
           for (Map.Entry<String, Config> entry : profileConfigs.entrySet()) {
             String profileName = entry.getKey();
-            if (!profileName.equals(DEFAULT_PROFILE_KEY)) {
+            if (!profileName.equals(DriverConfigProfile.DEFAULT_NAME)) {
               TypesafeDriverConfigProfile.Base profile = this.profiles.get(profileName);
               if (profile == null) {
                 LOG.warn(
@@ -111,15 +112,15 @@ public class TypesafeDriverConfig implements DriverConfig {
    *         }
    *     }
    * Would produce:
-   *     DEFAULT_PROFILE_KEY => { foo = 1, bar = 2 }
-   *     "custom1"           => { foo = 1, bar = 3 }
+   *     "default" => { foo = 1, bar = 2 }
+   *     "custom1" => { foo = 1, bar = 3 }
    */
   private Map<String, Config> extractProfiles(Config sourceConfig) {
     ImmutableMap.Builder<String, Config> result = ImmutableMap.builder();
 
     Config defaultProfileConfig = sourceConfig.withoutPath("profiles");
     validateRequired(defaultProfileConfig, options);
-    result.put(DEFAULT_PROFILE_KEY, defaultProfileConfig);
+    result.put(DriverConfigProfile.DEFAULT_NAME, defaultProfileConfig);
 
     // The rest of the method is a bit confusing because we navigate between Typesafe config's two
     // APIs, see https://github.com/typesafehub/config#understanding-config-and-configobject
@@ -130,7 +131,7 @@ public class TypesafeDriverConfig implements DriverConfig {
     if (rootObject.containsKey("profiles") && rootObject.get("profiles").valueType() == OBJECT) {
       ConfigObject profilesObject = (ConfigObject) rootObject.get("profiles");
       for (String profileName : profilesObject.keySet()) {
-        if (profileName.equals(DEFAULT_PROFILE_KEY)) {
+        if (profileName.equals(DriverConfigProfile.DEFAULT_NAME)) {
           throw new IllegalArgumentException(
               String.format(
                   "Can't have %s as a profile name because it's used internally. Pick another name.",

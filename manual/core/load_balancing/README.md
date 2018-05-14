@@ -212,6 +212,43 @@ You can use your own implementation by specifying its fully-qualified name in th
 
 Study the [LoadBalancingPolicy] interface and the default implementation for the low-level details.
 
+### Using multiple policies
+
+The load balancing policy can be overridden in [configuration profiles](../configuration/#profiles):
+
+```
+datastax-java-driver {
+  load-balancing-policy {
+    class = DefaultLoadBalancingPolicy
+  }
+  profiles {
+    custom-lbp {
+      load-balancing-policy {
+        class = CustomLoadBalancingPolicy
+      }
+    }
+    slow {
+      request.timeout = 30 seconds
+    }
+  }
+}
+```
+
+The `custom-lbp` profile uses a dedicated policy. The `slow` profile inherits the default profile's.
+Note that this goes beyond configuration inheritance: the driver only creates a single
+`DefaultLoadBalancingPolicy` instance and reuses it (this also occurs if two sibling profiles have
+the same configuration).
+
+For query plans, each request uses its declared profile's policy. If it doesn't declare any profile,
+or if the profile doesn't have a dedicated policy, then the default profile's policy is used.
+
+For node distances, the driver remembers the last distance suggested by each policy for each node.
+Then it uses the "closest" distance for any given node. For example:
+
+* for node1, policy1 suggests distance LOCAL and policy2 suggests REMOTE. node1 is set to LOCAL;
+* policy1 changes its suggestion to IGNORED. node1 is set to REMOTE;
+* policy1 changes its suggestion to REMOTE. node1 stays at REMOTE.
+
 [LoadBalancingPolicy]:  https://docs.datastax.com/en/drivers/java/4.0/com/datastax/oss/driver/api/core/loadbalancing/LoadBalancingPolicy.html
 [getRoutingKeyspace()]: https://docs.datastax.com/en/drivers/java/4.0/com/datastax/oss/driver/api/core/session/Request.html#getRoutingKeyspace--
 [getRoutingToken()]:    https://docs.datastax.com/en/drivers/java/4.0/com/datastax/oss/driver/api/core/session/Request.html#getRoutingToken--

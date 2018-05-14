@@ -50,7 +50,7 @@ public class DropwizardNodeMetricUpdater extends DropwizardMetricUpdater<NodeMet
 
     if (enabledMetrics.contains(DefaultNodeMetric.OPEN_CONNECTIONS)) {
       this.registry.register(
-          buildFullName(DefaultNodeMetric.OPEN_CONNECTIONS),
+          buildFullName(DefaultNodeMetric.OPEN_CONNECTIONS, null),
           (Gauge<Integer>) node::getOpenConnections);
     }
     initializePoolGauge(
@@ -64,31 +64,31 @@ public class DropwizardNodeMetricUpdater extends DropwizardMetricUpdater<NodeMet
         DefaultDriverOption.METRICS_NODE_CQL_MESSAGES_HIGHEST,
         DefaultDriverOption.METRICS_NODE_CQL_MESSAGES_DIGITS,
         DefaultDriverOption.METRICS_NODE_CQL_MESSAGES_INTERVAL);
-    initializeDefaultCounter(DefaultNodeMetric.UNSENT_REQUESTS);
-    initializeDefaultCounter(DefaultNodeMetric.ABORTED_REQUESTS);
-    initializeDefaultCounter(DefaultNodeMetric.WRITE_TIMEOUTS);
-    initializeDefaultCounter(DefaultNodeMetric.READ_TIMEOUTS);
-    initializeDefaultCounter(DefaultNodeMetric.UNAVAILABLES);
-    initializeDefaultCounter(DefaultNodeMetric.OTHER_ERRORS);
-    initializeDefaultCounter(DefaultNodeMetric.RETRIES);
-    initializeDefaultCounter(DefaultNodeMetric.RETRIES_ON_ABORTED);
-    initializeDefaultCounter(DefaultNodeMetric.RETRIES_ON_READ_TIMEOUT);
-    initializeDefaultCounter(DefaultNodeMetric.RETRIES_ON_WRITE_TIMEOUT);
-    initializeDefaultCounter(DefaultNodeMetric.RETRIES_ON_UNAVAILABLE);
-    initializeDefaultCounter(DefaultNodeMetric.RETRIES_ON_OTHER_ERROR);
-    initializeDefaultCounter(DefaultNodeMetric.IGNORES);
-    initializeDefaultCounter(DefaultNodeMetric.IGNORES_ON_ABORTED);
-    initializeDefaultCounter(DefaultNodeMetric.IGNORES_ON_READ_TIMEOUT);
-    initializeDefaultCounter(DefaultNodeMetric.IGNORES_ON_WRITE_TIMEOUT);
-    initializeDefaultCounter(DefaultNodeMetric.IGNORES_ON_UNAVAILABLE);
-    initializeDefaultCounter(DefaultNodeMetric.IGNORES_ON_OTHER_ERROR);
-    initializeDefaultCounter(DefaultNodeMetric.SPECULATIVE_EXECUTIONS);
-    initializeDefaultCounter(DefaultNodeMetric.CONNECTION_INIT_ERRORS);
-    initializeDefaultCounter(DefaultNodeMetric.AUTHENTICATION_ERRORS);
+    initializeDefaultCounter(DefaultNodeMetric.UNSENT_REQUESTS, null);
+    initializeDefaultCounter(DefaultNodeMetric.ABORTED_REQUESTS, null);
+    initializeDefaultCounter(DefaultNodeMetric.WRITE_TIMEOUTS, null);
+    initializeDefaultCounter(DefaultNodeMetric.READ_TIMEOUTS, null);
+    initializeDefaultCounter(DefaultNodeMetric.UNAVAILABLES, null);
+    initializeDefaultCounter(DefaultNodeMetric.OTHER_ERRORS, null);
+    initializeDefaultCounter(DefaultNodeMetric.RETRIES, null);
+    initializeDefaultCounter(DefaultNodeMetric.RETRIES_ON_ABORTED, null);
+    initializeDefaultCounter(DefaultNodeMetric.RETRIES_ON_READ_TIMEOUT, null);
+    initializeDefaultCounter(DefaultNodeMetric.RETRIES_ON_WRITE_TIMEOUT, null);
+    initializeDefaultCounter(DefaultNodeMetric.RETRIES_ON_UNAVAILABLE, null);
+    initializeDefaultCounter(DefaultNodeMetric.RETRIES_ON_OTHER_ERROR, null);
+    initializeDefaultCounter(DefaultNodeMetric.IGNORES, null);
+    initializeDefaultCounter(DefaultNodeMetric.IGNORES_ON_ABORTED, null);
+    initializeDefaultCounter(DefaultNodeMetric.IGNORES_ON_READ_TIMEOUT, null);
+    initializeDefaultCounter(DefaultNodeMetric.IGNORES_ON_WRITE_TIMEOUT, null);
+    initializeDefaultCounter(DefaultNodeMetric.IGNORES_ON_UNAVAILABLE, null);
+    initializeDefaultCounter(DefaultNodeMetric.IGNORES_ON_OTHER_ERROR, null);
+    initializeDefaultCounter(DefaultNodeMetric.SPECULATIVE_EXECUTIONS, null);
+    initializeDefaultCounter(DefaultNodeMetric.CONNECTION_INIT_ERRORS, null);
+    initializeDefaultCounter(DefaultNodeMetric.AUTHENTICATION_ERRORS, null);
   }
 
   @Override
-  public String buildFullName(NodeMetric metric) {
+  public String buildFullName(NodeMetric metric, String profileName) {
     return metricNamePrefix + metric.getPath();
   }
 
@@ -116,7 +116,7 @@ public class DropwizardNodeMetricUpdater extends DropwizardMetricUpdater<NodeMet
       InternalDriverContext context) {
     if (enabledMetrics.contains(metric)) {
       registry.register(
-          buildFullName(metric),
+          buildFullName(metric, null),
           (Gauge<Integer>)
               () -> {
                 ChannelPool pool = context.poolManager().getPools().get(node);
