@@ -463,5 +463,20 @@ public interface Session extends Closeable {
          * queries to {@code host}.
          */
         int getInFlightQueries(Host host);
+
+        /**
+         * The number of queries that are queued to be executed on a given host.
+         * <p/>
+         *
+         * This corresponds to the number of queries that are waiting to be executed.  The number of requests
+         * that could be waiting can be affected by a combination of the {@link PoolingOptions#getMaxQueueSize()},
+         * {@link PoolingOptions#getPoolTimeoutMillis()} and
+         * {@link PoolingOptions#getMaxRequestsPerConnection(HostDistance)} settings
+         *
+         * @param host the host to get the request queue depth for
+         * @return The number of queries waiting to be executed on {@code host}.  If the session
+         * is not connected to that host, 0 is returned.
+         */
+        int getRequestQueueDepth(Host host);
     }
 }

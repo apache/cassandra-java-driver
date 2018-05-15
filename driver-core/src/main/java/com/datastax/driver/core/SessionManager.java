@@ -691,6 +691,7 @@ class SessionManager extends AbstractSession {
         private final int[] openConnections;
         private final int[] trashedConnections;
         private final int[] inFlightQueries;
+        private final int[] requestQueueDepths;
 
         private State(SessionManager session) {
             this.session = session;
@@ -699,6 +700,7 @@ class SessionManager extends AbstractSession {
             this.openConnections = new int[connectedHosts.size()];
             this.trashedConnections = new int[connectedHosts.size()];
             this.inFlightQueries = new int[connectedHosts.size()];
+            this.requestQueueDepths = new int[connectedHosts.size()];
 
             int i = 0;
             for (Host h : connectedHosts) {
@@ -710,12 +712,14 @@ class SessionManager extends AbstractSession {
                     openConnections[i] = 0;
                     trashedConnections[i] = 0;
                     inFlightQueries[i] = 0;
+                    requestQueueDepths[i] = 0;
                     continue;
                 }
 
                 openConnections[i] = p.opened();
                 inFlightQueries[i] = p.totalInFlight.get();
                 trashedConnections[i] = p.trashed();
+                requestQueueDepths[i] = p.pendingBorrowCount.get();
                 i++;
             }
         }
@@ -759,6 +763,12 @@ class SessionManager extends AbstractSession {
         public int getInFlightQueries(Host host) {
             int i = getIdx(host);
             return i < 0 ? 0 : inFlightQueries[i];
+        }
+
+        @Override
+        public int getRequestQueueDepth(Host host) {
+            int i = getIdx(host);
+            return i < 0 ? 0 : requestQueueDepths[i];
         }
     }
 }
