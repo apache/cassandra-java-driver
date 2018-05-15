@@ -85,10 +85,9 @@ public class TypesafeDriverConfig implements DriverConfig {
               TypesafeDriverConfigProfile.Base profile = this.profiles.get(profileName);
               if (profile == null) {
                 LOG.warn(
-                    String.format(
-                        "Unknown profile '%s' while reloading configuration. "
-                            + "Adding profiles at runtime is not supported.",
-                        profileName));
+                    "Unknown profile '{}' while reloading configuration. "
+                        + "Adding profiles at runtime is not supported.",
+                    profileName);
               } else {
                 profile.refresh(entry.getValue());
               }
