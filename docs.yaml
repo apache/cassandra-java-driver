@@ -61,6 +61,7 @@ versions:
     ref: '3.3.2'
   - name: '4.0-alpha'
     ref: '4.0.0-alpha3'
+    prerelease: true
   - name: '3.2'
     ref: '3.2_docfixes'
   - name: '3.1'
