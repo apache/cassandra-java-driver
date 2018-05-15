@@ -92,6 +92,17 @@ public class Metrics {
         }
     });
 
+    private final Gauge<Integer> requestQueueDepth = registry.register("request-queue-depth", new Gauge<Integer>() {
+        @Override
+        public Integer getValue() {
+            int value = 0;
+            for (SessionManager session : manager.sessions)
+                for (HostConnectionPool pool : session.pools.values())
+                    value += pool.pendingBorrowCount.get();
+            return value;
+        }
+    });
+
     private final Gauge<Integer> executorQueueDepth;
     private final Gauge<Integer> blockingExecutorQueueDepth;
     private final Gauge<Integer> reconnectionSchedulerQueueSize;
@@ -237,6 +248,16 @@ public class Metrics {
      */
     public Gauge<Integer> getInFlightRequests() {
         return inFlightRequests;
+    }
+
+    /**
+     * Returns the total number of enqueued requests on all Cassandra hosts.
+     *
+     * @see Session.State#getRequestQueueDepth(Host)
+     * @return The total number of enqueued requests on all Cassandra hosts.
+     */
+    public Gauge<Integer> getRequestQueueDepth() {
+        return requestQueueDepth;
     }
 
     /**
