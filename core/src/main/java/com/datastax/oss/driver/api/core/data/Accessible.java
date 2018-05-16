@@ -19,19 +19,30 @@ import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.type.DataType;
 
 /**
- * A data structure where the values are accessible via a CQL identifier.
- *
- * <p>In the driver, these data structures are always accessible by index as well.
+ * A data structure where the values are accessible via an integer index, a name, or a CQL
+ * identifier.
  */
-public interface AccessibleById extends Data {
+public interface Accessible extends AccessibleByIndex, AccessibleByName, AccessibleById {
 
   /**
-   * Returns the CQL type of the value for the first occurrence of {@code id}.
-   *
-   * <p>If you want to avoid the overhead of building a {@code CqlIdentifier}, use the variant of
-   * this method that takes a string argument.
-   *
-   * @throws IndexOutOfBoundsException if the index is invalid.
+   * Returns the first index where a given identifier appears (depending on the implementation,
+   * identifiers may appear multiple times).
    */
-  DataType getType(CqlIdentifier id);
+  int firstIndexOf(CqlIdentifier id);
+
+  /**
+   * Returns the first index where a given identifier appears (depending on the implementation,
+   * identifiers may appear multiple times).
+   */
+  int firstIndexOf(String name);
+
+  @Override
+  default DataType getType(CqlIdentifier id) {
+    return getType(firstIndexOf(id));
+  }
+
+  @Override
+  default DataType getType(String name) {
+    return getType(firstIndexOf(name));
+  }
 }

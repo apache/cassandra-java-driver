@@ -23,6 +23,9 @@ import com.datastax.oss.driver.api.core.type.codec.registry.CodecRegistry;
 /** A data structure containing CQL values. */
 public interface Data {
 
+  /** Returns the number of values. */
+  int size();
+
   /**
    * Returns the registry of all the codecs currently available to convert values for this instance.
    *

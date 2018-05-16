@@ -15,18 +15,23 @@
  */
 package com.datastax.oss.driver.api.core.data;
 
-import com.datastax.oss.driver.api.core.detach.Detachable;
-import com.datastax.oss.driver.api.core.type.UserDefinedType;
-import java.io.Serializable;
+import com.datastax.oss.driver.api.core.CqlIdentifier;
+import java.nio.ByteBuffer;
 
 /**
- * Driver-side representation of an instance of a CQL user defined type.
- *
- * <p>It is an ordered set of named, typed fields.
- *
- * <p>A tuple value is attached if and only if its type is attached (see {@link Detachable}).
+ * A data structure that provides methods to set its values via an integer index, a name, or CQL
+ * identifier.
  */
-public interface UdtValue extends Accessible, Gettable, Settable<UdtValue>, Serializable {
+public interface Settable<T extends Settable<T>>
+    extends Accessible, SettableByIndex<T>, SettableByName<T>, SettableById<T> {
 
-  UserDefinedType getType();
+  @Override
+  default T setBytesUnsafe(CqlIdentifier id, ByteBuffer v) {
+    return setBytesUnsafe(firstIndexOf(id), v);
+  }
+
+  @Override
+  default T setBytesUnsafe(String name, ByteBuffer v) {
+    return setBytesUnsafe(firstIndexOf(name), v);
+  }
 }

@@ -21,10 +21,8 @@ import static org.mockito.ArgumentMatchers.eq;
 
 import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.ProtocolVersion;
-import com.datastax.oss.driver.api.core.data.GettableById;
-import com.datastax.oss.driver.api.core.data.GettableByName;
-import com.datastax.oss.driver.api.core.data.SettableById;
-import com.datastax.oss.driver.api.core.data.SettableByName;
+import com.datastax.oss.driver.api.core.data.Gettable;
+import com.datastax.oss.driver.api.core.data.Settable;
 import com.datastax.oss.driver.api.core.type.DataTypes;
 import com.datastax.oss.driver.api.core.type.reflect.GenericType;
 import com.datastax.oss.driver.internal.core.type.codec.CqlIntToStringCodec;
@@ -34,8 +32,7 @@ import java.nio.ByteBuffer;
 import org.junit.Test;
 import org.mockito.Mockito;
 
-public abstract class AccessibleByIdTestBase<
-        T extends GettableById & SettableById<T> & GettableByName & SettableByName<T>>
+public abstract class AccessibleByIdTestBase<T extends Gettable & Settable<T>>
     extends AccessibleByIndexTestBase<T> {
 
   private static final CqlIdentifier FIELD0_ID = CqlIdentifier.fromInternal("field0");
