@@ -283,10 +283,7 @@ public class DefaultLoadBalancingPolicy implements LoadBalancingPolicy {
   }
 
   private static String getLocalDcFromConfig(DriverContext context, String profileName) {
-    DriverConfigProfile config =
-        (profileName.equals(DriverConfigProfile.DEFAULT_NAME))
-            ? context.config().getDefaultProfile()
-            : context.config().getNamedProfile(profileName);
+    DriverConfigProfile config = context.config().getNamedProfile(profileName);
     return (config.isDefined(DefaultDriverOption.LOAD_BALANCING_LOCAL_DATACENTER))
         ? config.getString(DefaultDriverOption.LOAD_BALANCING_LOCAL_DATACENTER)
         : null;

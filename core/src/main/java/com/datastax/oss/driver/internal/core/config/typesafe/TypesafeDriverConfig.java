@@ -28,7 +28,6 @@ import com.typesafe.config.Config;
 import com.typesafe.config.ConfigObject;
 import com.typesafe.config.ConfigValue;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.Map;
 import net.jcip.annotations.ThreadSafe;
 import org.slf4j.Logger;
@@ -40,7 +39,6 @@ public class TypesafeDriverConfig implements DriverConfig {
   private static final Logger LOG = LoggerFactory.getLogger(TypesafeDriverConfig.class);
 
   private final Collection<DriverOption> options;
-  private final TypesafeDriverConfigProfile.Base defaultProfile;
   private final Map<String, TypesafeDriverConfigProfile.Base> profiles;
   // Only used to detect if reload saw any change
   private volatile Config lastLoadedConfig;
@@ -50,24 +48,13 @@ public class TypesafeDriverConfig implements DriverConfig {
     this.options = merge(optionArrays);
 
     Map<String, Config> profileConfigs = extractProfiles(config);
-    this.defaultProfile =
-        new TypesafeDriverConfigProfile.Base(
-            DriverConfigProfile.DEFAULT_NAME, profileConfigs.get(DriverConfigProfile.DEFAULT_NAME));
 
-    if (profileConfigs.size() == 1) {
-      this.profiles = Collections.emptyMap();
-    } else {
-      ImmutableMap.Builder<String, TypesafeDriverConfigProfile.Base> builder =
-          ImmutableMap.builder();
-      for (Map.Entry<String, Config> entry : profileConfigs.entrySet()) {
-        String profileName = entry.getKey();
-        if (!profileName.equals(DriverConfigProfile.DEFAULT_NAME)) {
-          builder.put(
-              profileName, new TypesafeDriverConfigProfile.Base(profileName, entry.getValue()));
-        }
-      }
-      this.profiles = builder.build();
+    ImmutableMap.Builder<String, TypesafeDriverConfigProfile.Base> builder = ImmutableMap.builder();
+    for (Map.Entry<String, Config> entry : profileConfigs.entrySet()) {
+      builder.put(
+          entry.getKey(), new TypesafeDriverConfigProfile.Base(entry.getKey(), entry.getValue()));
     }
+    this.profiles = builder.build();
   }
 
   /** @return whether the configuration changed */
@@ -78,21 +65,16 @@ public class TypesafeDriverConfig implements DriverConfig {
       lastLoadedConfig = config;
       try {
         Map<String, Config> profileConfigs = extractProfiles(config);
-        this.defaultProfile.refresh(profileConfigs.get(DriverConfigProfile.DEFAULT_NAME));
-        if (profileConfigs.size() > 1) {
-          for (Map.Entry<String, Config> entry : profileConfigs.entrySet()) {
-            String profileName = entry.getKey();
-            if (!profileName.equals(DriverConfigProfile.DEFAULT_NAME)) {
-              TypesafeDriverConfigProfile.Base profile = this.profiles.get(profileName);
-              if (profile == null) {
-                LOG.warn(
-                    "Unknown profile '{}' while reloading configuration. "
-                        + "Adding profiles at runtime is not supported.",
-                    profileName);
-              } else {
-                profile.refresh(entry.getValue());
-              }
-            }
+        for (Map.Entry<String, Config> entry : profileConfigs.entrySet()) {
+          String profileName = entry.getKey();
+          TypesafeDriverConfigProfile.Base profile = this.profiles.get(profileName);
+          if (profile == null) {
+            LOG.warn(
+                "Unknown profile '{}' while reloading configuration. "
+                    + "Adding profiles at runtime is not supported.",
+                profileName);
+          } else {
+            profile.refresh(entry.getValue());
           }
         }
         return true;
@@ -145,11 +127,6 @@ public class TypesafeDriverConfig implements DriverConfig {
       }
     }
     return result.build();
-  }
-
-  @Override
-  public DriverConfigProfile getDefaultProfile() {
-    return defaultProfile;
   }
 
   @Override

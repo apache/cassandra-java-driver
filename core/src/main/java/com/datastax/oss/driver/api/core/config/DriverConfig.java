@@ -26,13 +26,20 @@ import java.util.Map;
  * "analytics" profile vs. a "transactional" profile).
  */
 public interface DriverConfig {
-  DriverConfigProfile getDefaultProfile();
+
+  /**
+   * Alias to get the default profile, which is stored under the name {@link
+   * DriverConfigProfile#DEFAULT_NAME} and always present.
+   */
+  default DriverConfigProfile getDefaultProfile() {
+    return getNamedProfile(DriverConfigProfile.DEFAULT_NAME);
+  }
 
   /** @throws IllegalArgumentException if there is no profile with this name. */
   DriverConfigProfile getNamedProfile(String profileName);
 
   /**
-   * Returns an <b>immutable</b> view of all the named profiles.
+   * Returns an <b>immutable</b> view of all named profiles (including the default profile).
    *
    * <p>Implementations typically return a defensive copy of their internal state; therefore this
    * should not be used in performance-sensitive parts of the code, see {@link
