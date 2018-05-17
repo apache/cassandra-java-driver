@@ -86,7 +86,7 @@ public class PerProfileRetryPolicyIT {
     // sanity checks
     DriverContext context = sessionRule.session().getContext();
     DriverConfig config = context.config();
-    assertThat(config.getNamedProfiles()).containsKeys("profile1", "profile2");
+    assertThat(config.getProfiles()).containsKeys("profile1", "profile2");
 
     assertThat(context.retryPolicies())
         .hasSize(3)

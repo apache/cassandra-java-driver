@@ -130,7 +130,7 @@ public class TypesafeDriverConfig implements DriverConfig {
   }
 
   @Override
-  public DriverConfigProfile getNamedProfile(String profileName) {
+  public DriverConfigProfile getProfile(String profileName) {
     Preconditions.checkArgument(
         profiles.containsKey(profileName),
         "Unknown profile '%s'. Check your configuration.",
@@ -139,7 +139,7 @@ public class TypesafeDriverConfig implements DriverConfig {
   }
 
   @Override
-  public Map<String, DriverConfigProfile> getNamedProfiles() {
+  public Map<String, DriverConfigProfile> getProfiles() {
     return ImmutableMap.copyOf(profiles);
   }
 

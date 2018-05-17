@@ -394,7 +394,7 @@ public class SpeculativeExecutionIT {
     // validate profile data
     DriverContext context = session.getContext();
     DriverConfig driverConfig = context.config();
-    assertThat(driverConfig.getNamedProfiles()).containsKeys("profile1", "profile2");
+    assertThat(driverConfig.getProfiles()).containsKeys("profile1", "profile2");
 
     assertThat(context.speculativeExecutionPolicies())
         .hasSize(3)
