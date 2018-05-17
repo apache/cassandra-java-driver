@@ -59,7 +59,7 @@ public class DropwizardMetricsFactory implements MetricsFactory {
     if (enabledSessionMetrics.isEmpty() && enabledNodeMetrics.isEmpty()) {
       LOG.debug("[{}] All metrics are disabled, Session.getMetrics will be empty", logPrefix);
       this.registry = null;
-      this.sessionUpdater = new NoopSessionMetricUpdater();
+      this.sessionUpdater = NoopSessionMetricUpdater.INSTANCE;
       this.metrics = Optional.empty();
     } else {
       this.registry = new MetricRegistry();
@@ -83,7 +83,7 @@ public class DropwizardMetricsFactory implements MetricsFactory {
   @Override
   public NodeMetricUpdater newNodeUpdater(Node node) {
     return (registry == null)
-        ? new NoopNodeMetricUpdater()
+        ? NoopNodeMetricUpdater.INSTANCE
         : new DropwizardNodeMetricUpdater(node, enabledNodeMetrics, registry, context);
   }
 

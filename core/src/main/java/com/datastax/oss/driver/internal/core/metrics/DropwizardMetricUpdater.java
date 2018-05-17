@@ -44,28 +44,28 @@ public abstract class DropwizardMetricUpdater<MetricT> implements MetricUpdater<
 
   @Override
   public void incrementCounter(MetricT metric, long amount) {
-    if (enabledMetrics.contains(metric)) {
+    if (isEnabled(metric)) {
       registry.counter(buildFullName(metric)).inc(amount);
     }
   }
 
   @Override
   public void updateHistogram(MetricT metric, long value) {
-    if (enabledMetrics.contains(metric)) {
+    if (isEnabled(metric)) {
       registry.histogram(buildFullName(metric)).update(value);
     }
   }
 
   @Override
   public void markMeter(MetricT metric, long amount) {
-    if (enabledMetrics.contains(metric)) {
+    if (isEnabled(metric)) {
       registry.meter(buildFullName(metric)).mark(amount);
     }
   }
 
   @Override
   public void updateTimer(MetricT metric, long duration, TimeUnit unit) {
-    if (enabledMetrics.contains(metric)) {
+    if (isEnabled(metric)) {
       registry.timer(buildFullName(metric)).update(duration, unit);
     }
   }
@@ -75,8 +75,13 @@ public abstract class DropwizardMetricUpdater<MetricT> implements MetricUpdater<
     return (T) registry.getMetrics().get(buildFullName(metric));
   }
 
+  @Override
+  public boolean isEnabled(MetricT metric) {
+    return enabledMetrics.contains(metric);
+  }
+
   protected void initializeDefaultCounter(MetricT metric) {
-    if (enabledMetrics.contains(metric)) {
+    if (isEnabled(metric)) {
       // Just initialize eagerly so that the metric appears even when it has no data yet
       registry.counter(buildFullName(metric));
     }
@@ -88,7 +93,7 @@ public abstract class DropwizardMetricUpdater<MetricT> implements MetricUpdater<
       DefaultDriverOption highestLatencyOption,
       DefaultDriverOption significantDigitsOption,
       DefaultDriverOption intervalOption) {
-    if (enabledMetrics.contains(metric)) {
+    if (isEnabled(metric)) {
       String fullName = buildFullName(metric);
 
       Duration highestLatency = config.getDuration(highestLatencyOption);

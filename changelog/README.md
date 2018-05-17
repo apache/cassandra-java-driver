@@ -4,6 +4,7 @@
 
 ### 4.0.0-alpha4 (in progress)
 
+- [new feature] JAVA-1829: Add metrics for bytes-sent and bytes-received 
 - [improvement] JAVA-1755: Normalize usage of DEBUG/TRACE log levels
 - [improvement] JAVA-1803: Log driver version on first use
 - [improvement] JAVA-1792: Add AuthProvider callback to handle missing challenge from server
@@ -24,6 +25,7 @@
 - [improvement] JAVA-1772: Revisit multi-response callbacks
 - [new feature] JAVA-1537: Add remaining socket options
 - [bug] JAVA-1756: Propagate custom payload when preparing a statement
+- [improvement] JAVA-1829: Add metrics for bytes-sent and bytes-received
 
 ### 4.0.0-alpha3
 

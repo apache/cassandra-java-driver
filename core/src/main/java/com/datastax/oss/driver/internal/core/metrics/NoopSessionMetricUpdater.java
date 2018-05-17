@@ -22,6 +22,10 @@ import net.jcip.annotations.ThreadSafe;
 @ThreadSafe
 public class NoopSessionMetricUpdater implements SessionMetricUpdater {
 
+  public static NoopSessionMetricUpdater INSTANCE = new NoopSessionMetricUpdater();
+
+  private NoopSessionMetricUpdater() {}
+
   @Override
   public void incrementCounter(SessionMetric metric, long amount) {
     // nothing to do
@@ -40,5 +44,11 @@ public class NoopSessionMetricUpdater implements SessionMetricUpdater {
   @Override
   public void updateTimer(SessionMetric metric, long duration, TimeUnit unit) {
     // nothing to do
+  }
+
+  @Override
+  public boolean isEnabled(SessionMetric metric) {
+    // since methods don't do anything, return false
+    return false;
   }
 }

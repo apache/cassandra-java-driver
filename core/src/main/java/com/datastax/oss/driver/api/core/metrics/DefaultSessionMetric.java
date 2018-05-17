@@ -20,6 +20,8 @@ import java.util.Map;
 
 /** See {@code reference.conf} for a description of each metric. */
 public enum DefaultSessionMetric implements SessionMetric {
+  BYTES_SENT("bytes-sent"),
+  BYTES_RECEIVED("bytes-received"),
   CONNECTED_NODES("connected-nodes"),
   CQL_REQUESTS("cql-requests"),
   CQL_CLIENT_TIMEOUTS("cql-client-timeouts"),

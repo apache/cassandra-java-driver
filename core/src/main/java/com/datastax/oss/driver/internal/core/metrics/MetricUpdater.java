@@ -34,4 +34,6 @@ public interface MetricUpdater<MetricT> {
   }
 
   void updateTimer(MetricT metric, long duration, TimeUnit unit);
+
+  boolean isEnabled(MetricT metric);
 }

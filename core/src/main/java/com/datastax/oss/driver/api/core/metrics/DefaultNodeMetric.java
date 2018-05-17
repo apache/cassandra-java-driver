@@ -24,6 +24,8 @@ public enum DefaultNodeMetric implements NodeMetric {
   AVAILABLE_STREAMS("pool.available-streams"),
   IN_FLIGHT("pool.in-flight"),
   ORPHANED_STREAMS("pool.orphaned-streams"),
+  BYTES_SENT("bytes-sent"),
+  BYTES_RECEIVED("bytes-received"),
   CQL_MESSAGES("cql-messages"),
   UNSENT_REQUESTS("errors.request.unsent"),
   ABORTED_REQUESTS("errors.request.aborted"),

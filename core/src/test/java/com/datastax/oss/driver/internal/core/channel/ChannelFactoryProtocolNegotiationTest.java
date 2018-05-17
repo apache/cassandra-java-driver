@@ -21,6 +21,7 @@ import com.datastax.oss.driver.api.core.DefaultProtocolVersion;
 import com.datastax.oss.driver.api.core.UnsupportedProtocolVersionException;
 import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
 import com.datastax.oss.driver.internal.core.TestResponses;
+import com.datastax.oss.driver.internal.core.metrics.NoopNodeMetricUpdater;
 import com.datastax.oss.protocol.internal.Frame;
 import com.datastax.oss.protocol.internal.ProtocolConstants;
 import com.datastax.oss.protocol.internal.response.Error;
@@ -46,7 +47,8 @@ public class ChannelFactoryProtocolNegotiationTest extends ChannelFactoryTestBas
 
     // When
     CompletionStage<DriverChannel> channelFuture =
-        factory.connect(SERVER_ADDRESS, DriverChannelOptions.DEFAULT);
+        factory.connect(
+            SERVER_ADDRESS, DriverChannelOptions.DEFAULT, NoopNodeMetricUpdater.INSTANCE);
 
     completeSimpleChannelInit();
 
@@ -69,7 +71,8 @@ public class ChannelFactoryProtocolNegotiationTest extends ChannelFactoryTestBas
 
     // When
     CompletionStage<DriverChannel> channelFuture =
-        factory.connect(SERVER_ADDRESS, DriverChannelOptions.DEFAULT);
+        factory.connect(
+            SERVER_ADDRESS, DriverChannelOptions.DEFAULT, NoopNodeMetricUpdater.INSTANCE);
 
     Frame requestFrame = readOutboundFrame();
     assertThat(requestFrame.protocolVersion).isEqualTo(DefaultProtocolVersion.V4.getCode());
@@ -99,7 +102,8 @@ public class ChannelFactoryProtocolNegotiationTest extends ChannelFactoryTestBas
 
     // When
     CompletionStage<DriverChannel> channelFuture =
-        factory.connect(SERVER_ADDRESS, DriverChannelOptions.DEFAULT);
+        factory.connect(
+            SERVER_ADDRESS, DriverChannelOptions.DEFAULT, NoopNodeMetricUpdater.INSTANCE);
 
     Frame requestFrame = readOutboundFrame();
     assertThat(requestFrame.protocolVersion).isEqualTo(DefaultProtocolVersion.V4.getCode());
@@ -127,7 +131,8 @@ public class ChannelFactoryProtocolNegotiationTest extends ChannelFactoryTestBas
 
     // When
     CompletionStage<DriverChannel> channelFuture =
-        factory.connect(SERVER_ADDRESS, DriverChannelOptions.DEFAULT);
+        factory.connect(
+            SERVER_ADDRESS, DriverChannelOptions.DEFAULT, NoopNodeMetricUpdater.INSTANCE);
 
     Frame requestFrame = readOutboundFrame();
     assertThat(requestFrame.protocolVersion).isEqualTo(DefaultProtocolVersion.V4.getCode());
@@ -163,7 +168,8 @@ public class ChannelFactoryProtocolNegotiationTest extends ChannelFactoryTestBas
 
     // When
     CompletionStage<DriverChannel> channelFuture =
-        factory.connect(SERVER_ADDRESS, DriverChannelOptions.DEFAULT);
+        factory.connect(
+            SERVER_ADDRESS, DriverChannelOptions.DEFAULT, NoopNodeMetricUpdater.INSTANCE);
 
     Frame requestFrame = readOutboundFrame();
     assertThat(requestFrame.protocolVersion).isEqualTo(DefaultProtocolVersion.V4.getCode());
