@@ -45,6 +45,7 @@ public interface DriverContext extends AttachmentPoint {
 
   default LoadBalancingPolicy loadBalancingPolicy(String profileName) {
     LoadBalancingPolicy policy = loadBalancingPolicies().get(profileName);
+    // Protect against a non-existent name
     return (policy != null)
         ? policy
         : loadBalancingPolicies().get(DriverConfigProfile.DEFAULT_NAME);
