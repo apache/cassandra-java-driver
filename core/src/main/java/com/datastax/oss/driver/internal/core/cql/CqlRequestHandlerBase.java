@@ -149,7 +149,7 @@ public abstract class CqlRequestHandlerBase implements Throttled {
       this.configProfile =
           (profileName == null || profileName.isEmpty())
               ? config.getDefaultProfile()
-              : config.getNamedProfile(profileName);
+              : config.getProfile(profileName);
     }
     this.queryPlan =
         context

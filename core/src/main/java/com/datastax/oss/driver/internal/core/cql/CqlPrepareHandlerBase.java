@@ -124,7 +124,7 @@ public abstract class CqlPrepareHandlerBase implements Throttled {
       this.configProfile =
           (profileName == null || profileName.isEmpty())
               ? config.getDefaultProfile()
-              : config.getNamedProfile(profileName);
+              : config.getProfile(profileName);
     }
     this.queryPlan =
         context

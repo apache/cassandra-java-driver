@@ -150,7 +150,7 @@ public class TypesafeDriverConfigTest {
     DriverConfigProfile derivedFromDefault =
         config.getDefaultProfile().withInt(MockOptions.OPTIONAL_INT, 50);
     DriverConfigProfile derivedFromProfile1 =
-        config.getNamedProfile("profile1").withInt(MockOptions.OPTIONAL_INT, 51);
+        config.getProfile("profile1").withInt(MockOptions.OPTIONAL_INT, 51);
 
     config.reload(
         ConfigFactory.parseString(
@@ -178,7 +178,7 @@ public class TypesafeDriverConfigTest {
             entry("auth_provider.auth_thing_two", "two"),
             entry("required_int", 42));
 
-    assertThat(config.getNamedProfile("profile1").entrySet())
+    assertThat(config.getProfile("profile1").entrySet())
         .containsExactly(
             entry("auth_provider.auth_thing_one", "one"),
             entry("auth_provider.auth_thing_three", "three"),

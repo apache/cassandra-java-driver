@@ -134,10 +134,10 @@ The driver's context exposes a [DriverConfig] instance:
 ```java
 DriverConfig config = session.getContext().config();
 DriverConfigProfile defaultProfile = config.getDefaultProfile();
-DriverConfigProfile olapProfile = config.getNamedProfile("olap");
+DriverConfigProfile olapProfile = config.getProfile("olap");
 
 // This method creates a defensive copy of the map, do not use in performance-sensitive code:
-config.getNamedProfiles().forEach((name, profile) -> ...);
+config.getProfiles().forEach((name, profile) -> ...);
 ```
 
 [DriverConfigProfile] has typed option getters:

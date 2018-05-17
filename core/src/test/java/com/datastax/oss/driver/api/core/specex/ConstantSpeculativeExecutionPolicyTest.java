@@ -41,8 +41,7 @@ public class ConstantSpeculativeExecutionPolicyTest {
   @Before
   public void setup() {
     Mockito.when(context.config()).thenReturn(config);
-    Mockito.when(config.getNamedProfile(DriverConfigProfile.DEFAULT_NAME))
-        .thenReturn(defaultProfile);
+    Mockito.when(config.getProfile(DriverConfigProfile.DEFAULT_NAME)).thenReturn(defaultProfile);
   }
 
   private void mockOptions(int maxExecutions, long constantDelayMillis) {

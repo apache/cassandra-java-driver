@@ -124,7 +124,7 @@ public class Reflection {
     // Find out how many distinct configurations we have
     ListMultimap<Object, String> profilesByConfig =
         MultimapBuilder.hashKeys().arrayListValues().build();
-    for (DriverConfigProfile profile : context.config().getNamedProfiles().values()) {
+    for (DriverConfigProfile profile : context.config().getProfiles().values()) {
       profilesByConfig.put(profile.getComparisonKey(rootOption), profile.getName());
     }
 
@@ -164,7 +164,7 @@ public class Reflection {
     DriverConfigProfile config =
         (profileName == null)
             ? context.config().getDefaultProfile()
-            : context.config().getNamedProfile(profileName);
+            : context.config().getProfile(profileName);
 
     String configPath = classNameOption.getPath();
     LOG.debug("Creating a {} from config option {}", expectedSuperType.getSimpleName(), configPath);
