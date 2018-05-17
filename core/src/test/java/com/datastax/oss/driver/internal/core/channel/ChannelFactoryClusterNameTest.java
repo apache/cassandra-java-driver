@@ -20,6 +20,7 @@ import static com.datastax.oss.driver.Assertions.assertThat;
 import com.datastax.oss.driver.api.core.DefaultProtocolVersion;
 import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
 import com.datastax.oss.driver.internal.core.TestResponses;
+import com.datastax.oss.driver.internal.core.metrics.NoopNodeMetricUpdater;
 import com.datastax.oss.protocol.internal.response.Ready;
 import java.util.concurrent.CompletionStage;
 import org.junit.Test;
@@ -37,7 +38,8 @@ public class ChannelFactoryClusterNameTest extends ChannelFactoryTestBase {
 
     // When
     CompletionStage<DriverChannel> channelFuture =
-        factory.connect(SERVER_ADDRESS, DriverChannelOptions.DEFAULT);
+        factory.connect(
+            SERVER_ADDRESS, DriverChannelOptions.DEFAULT, NoopNodeMetricUpdater.INSTANCE);
 
     writeInboundFrame(readOutboundFrame(), new Ready());
     writeInboundFrame(readOutboundFrame(), TestResponses.clusterNameResponse("mockClusterName"));
@@ -57,13 +59,16 @@ public class ChannelFactoryClusterNameTest extends ChannelFactoryTestBase {
 
     // When
     CompletionStage<DriverChannel> channelFuture =
-        factory.connect(SERVER_ADDRESS, DriverChannelOptions.DEFAULT);
+        factory.connect(
+            SERVER_ADDRESS, DriverChannelOptions.DEFAULT, NoopNodeMetricUpdater.INSTANCE);
     // open a first connection that will define the cluster name
     writeInboundFrame(readOutboundFrame(), new Ready());
     writeInboundFrame(readOutboundFrame(), TestResponses.clusterNameResponse("mockClusterName"));
     assertThat(channelFuture).isSuccess();
     // open a second connection that returns the same cluster name
-    channelFuture = factory.connect(SERVER_ADDRESS, DriverChannelOptions.DEFAULT);
+    channelFuture =
+        factory.connect(
+            SERVER_ADDRESS, DriverChannelOptions.DEFAULT, NoopNodeMetricUpdater.INSTANCE);
     writeInboundFrame(readOutboundFrame(), new Ready());
     writeInboundFrame(readOutboundFrame(), TestResponses.clusterNameResponse("mockClusterName"));
 
@@ -72,7 +77,9 @@ public class ChannelFactoryClusterNameTest extends ChannelFactoryTestBase {
 
     // When
     // open a third connection that returns a different cluster name
-    channelFuture = factory.connect(SERVER_ADDRESS, DriverChannelOptions.DEFAULT);
+    channelFuture =
+        factory.connect(
+            SERVER_ADDRESS, DriverChannelOptions.DEFAULT, NoopNodeMetricUpdater.INSTANCE);
     writeInboundFrame(readOutboundFrame(), new Ready());
     writeInboundFrame(readOutboundFrame(), TestResponses.clusterNameResponse("wrongClusterName"));
 

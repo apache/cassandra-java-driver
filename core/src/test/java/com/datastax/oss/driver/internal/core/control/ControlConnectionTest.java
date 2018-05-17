@@ -50,11 +50,11 @@ public class ControlConnectionTest extends ControlConnectionTestBase {
     // Given
     DriverChannel channel1 = newMockDriverChannel(1);
     MockChannelFactoryHelper factoryHelper =
-        MockChannelFactoryHelper.builder(channelFactory).success(ADDRESS1, channel1).build();
+        MockChannelFactoryHelper.builder(channelFactory).success(node1, channel1).build();
 
     // When
     CompletionStage<Void> initFuture = controlConnection.init(false, false);
-    factoryHelper.waitForCall(ADDRESS1);
+    factoryHelper.waitForCall(node1);
     waitForPendingAdminTasks();
 
     // Then
@@ -70,11 +70,11 @@ public class ControlConnectionTest extends ControlConnectionTestBase {
     // Given
     DriverChannel channel1 = newMockDriverChannel(1);
     MockChannelFactoryHelper factoryHelper =
-        MockChannelFactoryHelper.builder(channelFactory).success(ADDRESS1, channel1).build();
+        MockChannelFactoryHelper.builder(channelFactory).success(node1, channel1).build();
 
     // When
     CompletionStage<Void> initFuture1 = controlConnection.init(false, false);
-    factoryHelper.waitForCall(ADDRESS1);
+    factoryHelper.waitForCall(node1);
     CompletionStage<Void> initFuture2 = controlConnection.init(false, false);
 
     // Then
@@ -89,14 +89,14 @@ public class ControlConnectionTest extends ControlConnectionTestBase {
     DriverChannel channel2 = newMockDriverChannel(2);
     MockChannelFactoryHelper factoryHelper =
         MockChannelFactoryHelper.builder(channelFactory)
-            .failure(ADDRESS1, "mock failure")
-            .success(ADDRESS2, channel2)
+            .failure(node1, "mock failure")
+            .success(node2, channel2)
             .build();
 
     // When
     CompletionStage<Void> initFuture = controlConnection.init(false, false);
-    factoryHelper.waitForCall(ADDRESS1);
-    factoryHelper.waitForCall(ADDRESS2);
+    factoryHelper.waitForCall(node1);
+    factoryHelper.waitForCall(node2);
     waitForPendingAdminTasks();
 
     // Then
@@ -115,14 +115,14 @@ public class ControlConnectionTest extends ControlConnectionTestBase {
     // Given
     MockChannelFactoryHelper factoryHelper =
         MockChannelFactoryHelper.builder(channelFactory)
-            .failure(ADDRESS1, "mock failure")
-            .failure(ADDRESS2, "mock failure")
+            .failure(node1, "mock failure")
+            .failure(node2, "mock failure")
             .build();
 
     // When
     CompletionStage<Void> initFuture = controlConnection.init(false, false);
-    factoryHelper.waitForCall(ADDRESS1);
-    factoryHelper.waitForCall(ADDRESS2);
+    factoryHelper.waitForCall(node1);
+    factoryHelper.waitForCall(node2);
     waitForPendingAdminTasks();
 
     // Then
@@ -143,13 +143,13 @@ public class ControlConnectionTest extends ControlConnectionTestBase {
     DriverChannel channel2 = newMockDriverChannel(2);
     MockChannelFactoryHelper factoryHelper =
         MockChannelFactoryHelper.builder(channelFactory)
-            .success(ADDRESS1, channel1)
-            .failure(ADDRESS1, "mock failure")
-            .success(ADDRESS2, channel2)
+            .success(node1, channel1)
+            .failure(node1, "mock failure")
+            .success(node2, channel2)
             .build();
 
     CompletionStage<Void> initFuture = controlConnection.init(false, false);
-    factoryHelper.waitForCall(ADDRESS1);
+    factoryHelper.waitForCall(node1);
 
     waitForPendingAdminTasks();
     assertThat(initFuture).isSuccess();
@@ -163,8 +163,8 @@ public class ControlConnectionTest extends ControlConnectionTestBase {
     // Then
     // a reconnection was started
     Mockito.verify(reconnectionSchedule).nextDelay();
-    factoryHelper.waitForCall(ADDRESS1);
-    factoryHelper.waitForCall(ADDRESS2);
+    factoryHelper.waitForCall(node1);
+    factoryHelper.waitForCall(node2);
     waitForPendingAdminTasks();
     assertThat(controlConnection.channel()).isEqualTo(channel2);
     Mockito.verify(eventBus).fire(ChannelEvent.channelClosed(node1));
@@ -183,12 +183,12 @@ public class ControlConnectionTest extends ControlConnectionTestBase {
     DriverChannel channel2 = newMockDriverChannel(2);
     MockChannelFactoryHelper factoryHelper =
         MockChannelFactoryHelper.builder(channelFactory)
-            .success(ADDRESS1, channel1)
-            .success(ADDRESS2, channel2)
+            .success(node1, channel1)
+            .success(node2, channel2)
             .build();
 
     CompletionStage<Void> initFuture = controlConnection.init(false, false);
-    factoryHelper.waitForCall(ADDRESS1);
+    factoryHelper.waitForCall(node1);
 
     waitForPendingAdminTasks();
     assertThat(initFuture).isSuccess();
@@ -203,7 +203,7 @@ public class ControlConnectionTest extends ControlConnectionTestBase {
     // Then
     // an immediate reconnection was started
     Mockito.verify(reconnectionSchedule, never()).nextDelay();
-    factoryHelper.waitForCall(ADDRESS2);
+    factoryHelper.waitForCall(node2);
     waitForPendingAdminTasks();
     assertThat(controlConnection.channel()).isEqualTo(channel2);
     Mockito.verify(eventBus).fire(ChannelEvent.channelClosed(node1));
@@ -231,12 +231,12 @@ public class ControlConnectionTest extends ControlConnectionTestBase {
     DriverChannel channel2 = newMockDriverChannel(2);
     MockChannelFactoryHelper factoryHelper =
         MockChannelFactoryHelper.builder(channelFactory)
-            .success(ADDRESS1, channel1)
-            .success(ADDRESS2, channel2)
+            .success(node1, channel1)
+            .success(node2, channel2)
             .build();
 
     CompletionStage<Void> initFuture = controlConnection.init(false, false);
-    factoryHelper.waitForCall(ADDRESS1);
+    factoryHelper.waitForCall(node1);
 
     waitForPendingAdminTasks();
     assertThat(initFuture).isSuccess();
@@ -251,7 +251,7 @@ public class ControlConnectionTest extends ControlConnectionTestBase {
     // Then
     // an immediate reconnection was started
     Mockito.verify(reconnectionSchedule, never()).nextDelay();
-    factoryHelper.waitForCall(ADDRESS2);
+    factoryHelper.waitForCall(node2);
     waitForPendingAdminTasks();
     assertThat(controlConnection.channel()).isEqualTo(channel2);
     Mockito.verify(eventBus).fire(ChannelEvent.channelClosed(node1));
@@ -273,14 +273,14 @@ public class ControlConnectionTest extends ControlConnectionTestBase {
     MockChannelFactoryHelper factoryHelper =
         MockChannelFactoryHelper.builder(channelFactory)
             // init
-            .success(ADDRESS1, channel1)
+            .success(node1, channel1)
             // reconnection
-            .pending(ADDRESS2, channel2Future)
-            .success(ADDRESS1, channel3)
+            .pending(node2, channel2Future)
+            .success(node1, channel3)
             .build();
 
     CompletionStage<Void> initFuture = controlConnection.init(false, false);
-    factoryHelper.waitForCall(ADDRESS1);
+    factoryHelper.waitForCall(node1);
 
     waitForPendingAdminTasks();
     assertThat(initFuture).isSuccess();
@@ -294,7 +294,7 @@ public class ControlConnectionTest extends ControlConnectionTestBase {
     Mockito.verify(eventBus).fire(ChannelEvent.channelClosed(node1));
     Mockito.verify(reconnectionSchedule).nextDelay();
     // the reconnection to node2 is in progress
-    factoryHelper.waitForCall(ADDRESS2);
+    factoryHelper.waitForCall(node2);
 
     // When
     // node2 becomes ignored
@@ -306,7 +306,7 @@ public class ControlConnectionTest extends ControlConnectionTestBase {
     // Then
     // The channel should get closed and we should try the next node
     Mockito.verify(channel2).forceClose();
-    factoryHelper.waitForCall(ADDRESS1);
+    factoryHelper.waitForCall(node1);
   }
 
   @Test
@@ -330,14 +330,14 @@ public class ControlConnectionTest extends ControlConnectionTestBase {
     MockChannelFactoryHelper factoryHelper =
         MockChannelFactoryHelper.builder(channelFactory)
             // init
-            .success(ADDRESS1, channel1)
+            .success(node1, channel1)
             // reconnection
-            .pending(ADDRESS2, channel2Future)
-            .success(ADDRESS1, channel3)
+            .pending(node2, channel2Future)
+            .success(node1, channel3)
             .build();
 
     CompletionStage<Void> initFuture = controlConnection.init(false, false);
-    factoryHelper.waitForCall(ADDRESS1);
+    factoryHelper.waitForCall(node1);
 
     waitForPendingAdminTasks();
     assertThat(initFuture).isSuccess();
@@ -351,7 +351,7 @@ public class ControlConnectionTest extends ControlConnectionTestBase {
     Mockito.verify(eventBus).fire(ChannelEvent.channelClosed(node1));
     Mockito.verify(reconnectionSchedule).nextDelay();
     // the reconnection to node2 is in progress
-    factoryHelper.waitForCall(ADDRESS2);
+    factoryHelper.waitForCall(node2);
 
     // When
     // node2 goes into the new state
@@ -363,7 +363,7 @@ public class ControlConnectionTest extends ControlConnectionTestBase {
     // Then
     // The channel should get closed and we should try the next node
     Mockito.verify(channel2).forceClose();
-    factoryHelper.waitForCall(ADDRESS1);
+    factoryHelper.waitForCall(node1);
   }
 
   @Test
@@ -375,13 +375,13 @@ public class ControlConnectionTest extends ControlConnectionTestBase {
     DriverChannel channel2 = newMockDriverChannel(2);
     MockChannelFactoryHelper factoryHelper =
         MockChannelFactoryHelper.builder(channelFactory)
-            .success(ADDRESS1, channel1)
-            .failure(ADDRESS1, "mock failure")
-            .success(ADDRESS2, channel2)
+            .success(node1, channel1)
+            .failure(node1, "mock failure")
+            .success(node2, channel2)
             .build();
 
     CompletionStage<Void> initFuture = controlConnection.init(false, false);
-    factoryHelper.waitForCall(ADDRESS1);
+    factoryHelper.waitForCall(node1);
     waitForPendingAdminTasks();
     assertThat(initFuture).isSuccess();
     assertThat(controlConnection.channel()).isEqualTo(channel1);
@@ -395,8 +395,8 @@ public class ControlConnectionTest extends ControlConnectionTestBase {
 
     // When
     controlConnection.reconnectNow();
-    factoryHelper.waitForCall(ADDRESS1);
-    factoryHelper.waitForCall(ADDRESS2);
+    factoryHelper.waitForCall(node1);
+    factoryHelper.waitForCall(node2);
     waitForPendingAdminTasks();
 
     // Then
@@ -413,13 +413,13 @@ public class ControlConnectionTest extends ControlConnectionTestBase {
     DriverChannel channel2 = newMockDriverChannel(2);
     MockChannelFactoryHelper factoryHelper =
         MockChannelFactoryHelper.builder(channelFactory)
-            .success(ADDRESS1, channel1)
-            .failure(ADDRESS1, "mock failure")
-            .success(ADDRESS2, channel2)
+            .success(node1, channel1)
+            .failure(node1, "mock failure")
+            .success(node2, channel2)
             .build();
 
     CompletionStage<Void> initFuture = controlConnection.init(false, false);
-    factoryHelper.waitForCall(ADDRESS1);
+    factoryHelper.waitForCall(node1);
     waitForPendingAdminTasks();
     assertThat(initFuture).isSuccess();
     assertThat(controlConnection.channel()).isEqualTo(channel1);
@@ -429,8 +429,8 @@ public class ControlConnectionTest extends ControlConnectionTestBase {
     controlConnection.reconnectNow();
 
     // Then
-    factoryHelper.waitForCall(ADDRESS1);
-    factoryHelper.waitForCall(ADDRESS2);
+    factoryHelper.waitForCall(node1);
+    factoryHelper.waitForCall(node2);
     waitForPendingAdminTasks();
     assertThat(controlConnection.channel()).isEqualTo(channel2);
     Mockito.verify(channel1).forceClose();
@@ -455,9 +455,9 @@ public class ControlConnectionTest extends ControlConnectionTestBase {
     // Given
     DriverChannel channel1 = newMockDriverChannel(1);
     MockChannelFactoryHelper factoryHelper =
-        MockChannelFactoryHelper.builder(channelFactory).success(ADDRESS1, channel1).build();
+        MockChannelFactoryHelper.builder(channelFactory).success(node1, channel1).build();
     CompletionStage<Void> initFuture = controlConnection.init(false, false);
-    factoryHelper.waitForCall(ADDRESS1);
+    factoryHelper.waitForCall(node1);
     waitForPendingAdminTasks();
     assertThat(initFuture).isSuccess();
     CompletionStage<Void> closeFuture = controlConnection.forceCloseAsync();
@@ -478,10 +478,10 @@ public class ControlConnectionTest extends ControlConnectionTestBase {
     // Given
     DriverChannel channel1 = newMockDriverChannel(1);
     MockChannelFactoryHelper factoryHelper =
-        MockChannelFactoryHelper.builder(channelFactory).success(ADDRESS1, channel1).build();
+        MockChannelFactoryHelper.builder(channelFactory).success(node1, channel1).build();
 
     CompletionStage<Void> initFuture = controlConnection.init(false, false);
-    factoryHelper.waitForCall(ADDRESS1);
+    factoryHelper.waitForCall(node1);
     waitForPendingAdminTasks();
     assertThat(initFuture).isSuccess();
 
@@ -506,13 +506,13 @@ public class ControlConnectionTest extends ControlConnectionTestBase {
     CompletableFuture<DriverChannel> channel2Future = new CompletableFuture<>();
     MockChannelFactoryHelper factoryHelper =
         MockChannelFactoryHelper.builder(channelFactory)
-            .success(ADDRESS1, channel1)
-            .failure(ADDRESS1, "mock failure")
-            .pending(ADDRESS2, channel2Future)
+            .success(node1, channel1)
+            .failure(node1, "mock failure")
+            .pending(node2, channel2Future)
             .build();
 
     CompletionStage<Void> initFuture = controlConnection.init(false, false);
-    factoryHelper.waitForCall(ADDRESS1);
+    factoryHelper.waitForCall(node1);
     waitForPendingAdminTasks();
     assertThat(initFuture).isSuccess();
     assertThat(controlConnection.channel()).isEqualTo(channel1);
@@ -523,9 +523,9 @@ public class ControlConnectionTest extends ControlConnectionTestBase {
     waitForPendingAdminTasks();
     Mockito.verify(eventBus).fire(ChannelEvent.channelClosed(node1));
     Mockito.verify(reconnectionSchedule).nextDelay();
-    factoryHelper.waitForCall(ADDRESS1);
+    factoryHelper.waitForCall(node1);
     // channel2 starts initializing (but the future is not completed yet)
-    factoryHelper.waitForCall(ADDRESS2);
+    factoryHelper.waitForCall(node2);
 
     // When
     // the control connection gets closed before channel2 initialization is complete
@@ -553,13 +553,13 @@ public class ControlConnectionTest extends ControlConnectionTestBase {
     CompletableFuture<DriverChannel> channel1Future = new CompletableFuture<>();
     MockChannelFactoryHelper factoryHelper =
         MockChannelFactoryHelper.builder(channelFactory)
-            .success(ADDRESS1, channel1)
-            .pending(ADDRESS1, channel1Future)
-            .success(ADDRESS2, channel2)
+            .success(node1, channel1)
+            .pending(node1, channel1Future)
+            .success(node2, channel2)
             .build();
 
     CompletionStage<Void> initFuture = controlConnection.init(false, false);
-    factoryHelper.waitForCall(ADDRESS1);
+    factoryHelper.waitForCall(node1);
     waitForPendingAdminTasks();
     assertThat(initFuture).isSuccess();
     assertThat(controlConnection.channel()).isEqualTo(channel1);
@@ -571,7 +571,7 @@ public class ControlConnectionTest extends ControlConnectionTestBase {
     Mockito.verify(eventBus).fire(ChannelEvent.channelClosed(node1));
     Mockito.verify(reconnectionSchedule).nextDelay();
     // channel1 starts initializing (but the future is not completed yet)
-    factoryHelper.waitForCall(ADDRESS1);
+    factoryHelper.waitForCall(node1);
 
     // When
     // the control connection gets closed before channel1 initialization fails

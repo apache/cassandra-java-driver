@@ -27,6 +27,7 @@ import com.datastax.oss.driver.internal.core.TestResponses;
 import com.datastax.oss.driver.internal.core.context.EventBus;
 import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
 import com.datastax.oss.driver.internal.core.context.NettyOptions;
+import com.datastax.oss.driver.internal.core.metrics.NodeMetricUpdater;
 import com.datastax.oss.driver.internal.core.protocol.ByteBufPrimitiveCodec;
 import com.datastax.oss.protocol.internal.Compressor;
 import com.datastax.oss.protocol.internal.Frame;
@@ -229,6 +230,7 @@ public abstract class ChannelFactoryTestBase {
         SocketAddress address,
         ProtocolVersion protocolVersion,
         DriverChannelOptions options,
+        NodeMetricUpdater nodeMetricUpdater,
         CompletableFuture<DriverChannel> resultFuture) {
       return new ChannelInitializer<Channel>() {
         @Override

@@ -47,17 +47,17 @@ public class ChannelPoolResizeTest extends ChannelPoolTestBase {
     DriverChannel channel4 = newMockDriverChannel(4);
     MockChannelFactoryHelper factoryHelper =
         MockChannelFactoryHelper.builder(channelFactory)
-            .success(ADDRESS, channel1)
-            .success(ADDRESS, channel2)
-            .success(ADDRESS, channel3)
-            .success(ADDRESS, channel4)
+            .success(node, channel1)
+            .success(node, channel2)
+            .success(node, channel3)
+            .success(node, channel4)
             .build();
     InOrder inOrder = Mockito.inOrder(eventBus);
 
     CompletionStage<ChannelPool> poolFuture =
         ChannelPool.init(node, null, NodeDistance.REMOTE, context, "test");
 
-    factoryHelper.waitForCalls(ADDRESS, 4);
+    factoryHelper.waitForCalls(node, 4);
     waitForPendingAdminTasks();
 
     assertThat(poolFuture).isSuccess();
@@ -93,20 +93,20 @@ public class ChannelPoolResizeTest extends ChannelPoolTestBase {
     MockChannelFactoryHelper factoryHelper =
         MockChannelFactoryHelper.builder(channelFactory)
             // init
-            .success(ADDRESS, channel1)
-            .success(ADDRESS, channel2)
-            .failure(ADDRESS, "mock channel init failure")
-            .failure(ADDRESS, "mock channel init failure")
+            .success(node, channel1)
+            .success(node, channel2)
+            .failure(node, "mock channel init failure")
+            .failure(node, "mock channel init failure")
             // reconnection
-            .pending(ADDRESS, channel3Future)
-            .pending(ADDRESS, channel4Future)
+            .pending(node, channel3Future)
+            .pending(node, channel4Future)
             .build();
     InOrder inOrder = Mockito.inOrder(eventBus);
 
     CompletionStage<ChannelPool> poolFuture =
         ChannelPool.init(node, null, NodeDistance.REMOTE, context, "test");
 
-    factoryHelper.waitForCalls(ADDRESS, 4);
+    factoryHelper.waitForCalls(node, 4);
     waitForPendingAdminTasks();
 
     inOrder.verify(eventBus, times(2)).fire(ChannelEvent.channelOpened(node));
@@ -126,7 +126,7 @@ public class ChannelPoolResizeTest extends ChannelPoolTestBase {
     channel3Future.complete(channel3);
     channel4Future.complete(channel4);
 
-    factoryHelper.waitForCalls(ADDRESS, 2);
+    factoryHelper.waitForCalls(node, 2);
     waitForPendingAdminTasks();
 
     // Pool should have shrinked back to 2. We keep the most recent channels so 1 and 2 get closed.
@@ -154,18 +154,18 @@ public class ChannelPoolResizeTest extends ChannelPoolTestBase {
     MockChannelFactoryHelper factoryHelper =
         MockChannelFactoryHelper.builder(channelFactory)
             // init
-            .success(ADDRESS, channel1)
-            .success(ADDRESS, channel2)
+            .success(node, channel1)
+            .success(node, channel2)
             // growth attempt
-            .success(ADDRESS, channel3)
-            .success(ADDRESS, channel4)
+            .success(node, channel3)
+            .success(node, channel4)
             .build();
     InOrder inOrder = Mockito.inOrder(eventBus);
 
     CompletionStage<ChannelPool> poolFuture =
         ChannelPool.init(node, null, NodeDistance.LOCAL, context, "test");
 
-    factoryHelper.waitForCalls(ADDRESS, 2);
+    factoryHelper.waitForCalls(node, 2);
     waitForPendingAdminTasks();
     inOrder.verify(eventBus, times(2)).fire(ChannelEvent.channelOpened(node));
 
@@ -180,7 +180,7 @@ public class ChannelPoolResizeTest extends ChannelPoolTestBase {
     Mockito.verify(reconnectionSchedule).nextDelay();
     inOrder.verify(eventBus).fire(ChannelEvent.reconnectionStarted(node));
 
-    factoryHelper.waitForCalls(ADDRESS, 2);
+    factoryHelper.waitForCalls(node, 2);
     waitForPendingAdminTasks();
     inOrder.verify(eventBus, times(2)).fire(ChannelEvent.channelOpened(node));
     inOrder.verify(eventBus).fire(ChannelEvent.reconnectionStopped(node));
@@ -209,20 +209,20 @@ public class ChannelPoolResizeTest extends ChannelPoolTestBase {
     MockChannelFactoryHelper factoryHelper =
         MockChannelFactoryHelper.builder(channelFactory)
             // init
-            .success(ADDRESS, channel1)
-            .failure(ADDRESS, "mock channel init failure")
+            .success(node, channel1)
+            .failure(node, "mock channel init failure")
             // first reconnection attempt
-            .pending(ADDRESS, channel2Future)
+            .pending(node, channel2Future)
             // extra reconnection attempt after we realize the pool must grow
-            .pending(ADDRESS, channel3Future)
-            .pending(ADDRESS, channel4Future)
+            .pending(node, channel3Future)
+            .pending(node, channel4Future)
             .build();
     InOrder inOrder = Mockito.inOrder(eventBus);
 
     CompletionStage<ChannelPool> poolFuture =
         ChannelPool.init(node, null, NodeDistance.LOCAL, context, "test");
 
-    factoryHelper.waitForCalls(ADDRESS, 2);
+    factoryHelper.waitForCalls(node, 2);
     waitForPendingAdminTasks();
     inOrder.verify(eventBus).fire(ChannelEvent.channelOpened(node));
 
@@ -240,7 +240,7 @@ public class ChannelPoolResizeTest extends ChannelPoolTestBase {
 
     // Complete the channel for the first reconnection, bringing the count to 2
     channel2Future.complete(channel2);
-    factoryHelper.waitForCall(ADDRESS);
+    factoryHelper.waitForCall(node);
     waitForPendingAdminTasks();
     inOrder.verify(eventBus).fire(ChannelEvent.channelOpened(node));
 
@@ -253,7 +253,7 @@ public class ChannelPoolResizeTest extends ChannelPoolTestBase {
     inOrder.verify(eventBus, never()).fire(ChannelEvent.reconnectionStarted(node));
 
     // Two more channels get opened, bringing us to the target count
-    factoryHelper.waitForCalls(ADDRESS, 2);
+    factoryHelper.waitForCalls(node, 2);
     channel3Future.complete(channel3);
     channel4Future.complete(channel4);
     waitForPendingAdminTasks();
@@ -279,18 +279,18 @@ public class ChannelPoolResizeTest extends ChannelPoolTestBase {
     MockChannelFactoryHelper factoryHelper =
         MockChannelFactoryHelper.builder(channelFactory)
             // init
-            .success(ADDRESS, channel1)
-            .success(ADDRESS, channel2)
+            .success(node, channel1)
+            .success(node, channel2)
             // growth attempt
-            .success(ADDRESS, channel3)
-            .success(ADDRESS, channel4)
+            .success(node, channel3)
+            .success(node, channel4)
             .build();
     InOrder inOrder = Mockito.inOrder(eventBus);
 
     CompletionStage<ChannelPool> poolFuture =
         ChannelPool.init(node, null, NodeDistance.LOCAL, context, "test");
 
-    factoryHelper.waitForCalls(ADDRESS, 2);
+    factoryHelper.waitForCalls(node, 2);
     waitForPendingAdminTasks();
     inOrder.verify(eventBus, times(2)).fire(ChannelEvent.channelOpened(node));
 
@@ -308,7 +308,7 @@ public class ChannelPoolResizeTest extends ChannelPoolTestBase {
     Mockito.verify(reconnectionSchedule).nextDelay();
     inOrder.verify(eventBus).fire(ChannelEvent.reconnectionStarted(node));
 
-    factoryHelper.waitForCalls(ADDRESS, 2);
+    factoryHelper.waitForCalls(node, 2);
     waitForPendingAdminTasks();
     inOrder.verify(eventBus, times(2)).fire(ChannelEvent.channelOpened(node));
     inOrder.verify(eventBus).fire(ChannelEvent.reconnectionStopped(node));
@@ -335,20 +335,20 @@ public class ChannelPoolResizeTest extends ChannelPoolTestBase {
     MockChannelFactoryHelper factoryHelper =
         MockChannelFactoryHelper.builder(channelFactory)
             // init
-            .success(ADDRESS, channel1)
-            .failure(ADDRESS, "mock channel init failure")
+            .success(node, channel1)
+            .failure(node, "mock channel init failure")
             // first reconnection attempt
-            .pending(ADDRESS, channel2Future)
+            .pending(node, channel2Future)
             // extra reconnection attempt after we realize the pool must grow
-            .pending(ADDRESS, channel3Future)
-            .pending(ADDRESS, channel4Future)
+            .pending(node, channel3Future)
+            .pending(node, channel4Future)
             .build();
     InOrder inOrder = Mockito.inOrder(eventBus);
 
     CompletionStage<ChannelPool> poolFuture =
         ChannelPool.init(node, null, NodeDistance.LOCAL, context, "test");
 
-    factoryHelper.waitForCalls(ADDRESS, 2);
+    factoryHelper.waitForCalls(node, 2);
     waitForPendingAdminTasks();
     inOrder.verify(eventBus).fire(ChannelEvent.channelOpened(node));
 
@@ -368,7 +368,7 @@ public class ChannelPoolResizeTest extends ChannelPoolTestBase {
 
     // Complete the channel for the first reconnection, bringing the count to 2
     channel2Future.complete(channel2);
-    factoryHelper.waitForCall(ADDRESS);
+    factoryHelper.waitForCall(node);
     waitForPendingAdminTasks();
     inOrder.verify(eventBus).fire(ChannelEvent.channelOpened(node));
 
@@ -381,7 +381,7 @@ public class ChannelPoolResizeTest extends ChannelPoolTestBase {
     inOrder.verify(eventBus, never()).fire(ChannelEvent.reconnectionStarted(node));
 
     // Two more channels get opened, bringing us to the target count
-    factoryHelper.waitForCalls(ADDRESS, 2);
+    factoryHelper.waitForCalls(node, 2);
     channel3Future.complete(channel3);
     channel4Future.complete(channel4);
     waitForPendingAdminTasks();
@@ -404,15 +404,15 @@ public class ChannelPoolResizeTest extends ChannelPoolTestBase {
     DriverChannel channel2 = newMockDriverChannel(2);
     MockChannelFactoryHelper factoryHelper =
         MockChannelFactoryHelper.builder(channelFactory)
-            .success(ADDRESS, channel1)
-            .success(ADDRESS, channel2)
+            .success(node, channel1)
+            .success(node, channel2)
             .build();
     InOrder inOrder = Mockito.inOrder(eventBus);
 
     CompletionStage<ChannelPool> poolFuture =
         ChannelPool.init(node, null, NodeDistance.LOCAL, context, "test");
 
-    factoryHelper.waitForCalls(ADDRESS, 2);
+    factoryHelper.waitForCalls(node, 2);
     waitForPendingAdminTasks();
     inOrder.verify(eventBus, times(2)).fire(ChannelEvent.channelOpened(node));
 

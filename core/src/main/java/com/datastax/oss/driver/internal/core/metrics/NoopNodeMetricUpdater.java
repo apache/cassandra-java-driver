@@ -22,6 +22,10 @@ import net.jcip.annotations.ThreadSafe;
 @ThreadSafe
 public class NoopNodeMetricUpdater implements NodeMetricUpdater {
 
+  public static NoopNodeMetricUpdater INSTANCE = new NoopNodeMetricUpdater();
+
+  private NoopNodeMetricUpdater() {}
+
   @Override
   public void incrementCounter(NodeMetric metric, long amount) {
     // nothing to do
@@ -40,5 +44,11 @@ public class NoopNodeMetricUpdater implements NodeMetricUpdater {
   @Override
   public void updateTimer(NodeMetric metric, long duration, TimeUnit unit) {
     // nothing to do
+  }
+
+  @Override
+  public boolean isEnabled(NodeMetric metric) {
+    // since methods don't do anything, return false
+    return false;
   }
 }

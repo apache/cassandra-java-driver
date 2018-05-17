@@ -40,14 +40,14 @@ public class ChannelPoolKeyspaceTest extends ChannelPoolTestBase {
     DriverChannel channel2 = newMockDriverChannel(2);
     MockChannelFactoryHelper factoryHelper =
         MockChannelFactoryHelper.builder(channelFactory)
-            .success(ADDRESS, channel1)
-            .success(ADDRESS, channel2)
+            .success(node, channel1)
+            .success(node, channel2)
             .build();
 
     CompletionStage<ChannelPool> poolFuture =
         ChannelPool.init(node, null, NodeDistance.LOCAL, context, "test");
 
-    factoryHelper.waitForCalls(ADDRESS, 2);
+    factoryHelper.waitForCalls(node, 2);
     waitForPendingAdminTasks();
 
     assertThat(poolFuture).isSuccess();
@@ -80,17 +80,17 @@ public class ChannelPoolKeyspaceTest extends ChannelPoolTestBase {
     MockChannelFactoryHelper factoryHelper =
         MockChannelFactoryHelper.builder(channelFactory)
             // init
-            .failure(ADDRESS, "mock channel init failure")
-            .failure(ADDRESS, "mock channel init failure")
+            .failure(node, "mock channel init failure")
+            .failure(node, "mock channel init failure")
             // reconnection
-            .pending(ADDRESS, channel1Future)
-            .pending(ADDRESS, channel2Future)
+            .pending(node, channel1Future)
+            .pending(node, channel2Future)
             .build();
 
     CompletionStage<ChannelPool> poolFuture =
         ChannelPool.init(node, null, NodeDistance.LOCAL, context, "test");
 
-    factoryHelper.waitForCalls(ADDRESS, 2);
+    factoryHelper.waitForCalls(node, 2);
     waitForPendingAdminTasks();
 
     assertThat(poolFuture).isSuccess();
@@ -99,7 +99,7 @@ public class ChannelPoolKeyspaceTest extends ChannelPoolTestBase {
     // Check that reconnection has kicked in, but do not complete it yet
     Mockito.verify(reconnectionSchedule).nextDelay();
     Mockito.verify(eventBus).fire(ChannelEvent.reconnectionStarted(node));
-    factoryHelper.waitForCalls(ADDRESS, 2);
+    factoryHelper.waitForCalls(node, 2);
 
     // Switch keyspace, it succeeds immediately since there is no active channel
     CqlIdentifier newKeyspace = CqlIdentifier.fromCql("new_keyspace");

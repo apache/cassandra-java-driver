@@ -49,18 +49,18 @@ public class ChannelPoolShutdownTest extends ChannelPoolTestBase {
     MockChannelFactoryHelper factoryHelper =
         MockChannelFactoryHelper.builder(channelFactory)
             // init
-            .success(ADDRESS, channel1)
-            .success(ADDRESS, channel2)
-            .success(ADDRESS, channel3)
+            .success(node, channel1)
+            .success(node, channel2)
+            .success(node, channel3)
             // reconnection
-            .pending(ADDRESS, channel4Future)
+            .pending(node, channel4Future)
             .build();
     InOrder inOrder = Mockito.inOrder(eventBus);
 
     CompletionStage<ChannelPool> poolFuture =
         ChannelPool.init(node, null, NodeDistance.LOCAL, context, "test");
 
-    factoryHelper.waitForCalls(ADDRESS, 3);
+    factoryHelper.waitForCalls(node, 3);
     waitForPendingAdminTasks();
     inOrder.verify(eventBus, times(3)).fire(ChannelEvent.channelOpened(node));
 
@@ -74,7 +74,7 @@ public class ChannelPoolShutdownTest extends ChannelPoolTestBase {
 
     // Reconnection should have kicked in and started to open channel4, do not complete it yet
     Mockito.verify(reconnectionSchedule).nextDelay();
-    factoryHelper.waitForCalls(ADDRESS, 1);
+    factoryHelper.waitForCalls(node, 1);
 
     CompletionStage<Void> closeFuture = pool.closeAsync();
     waitForPendingAdminTasks();
@@ -121,18 +121,18 @@ public class ChannelPoolShutdownTest extends ChannelPoolTestBase {
     MockChannelFactoryHelper factoryHelper =
         MockChannelFactoryHelper.builder(channelFactory)
             // init
-            .success(ADDRESS, channel1)
-            .success(ADDRESS, channel2)
-            .success(ADDRESS, channel3)
+            .success(node, channel1)
+            .success(node, channel2)
+            .success(node, channel3)
             // reconnection
-            .pending(ADDRESS, channel4Future)
+            .pending(node, channel4Future)
             .build();
     InOrder inOrder = Mockito.inOrder(eventBus);
 
     CompletionStage<ChannelPool> poolFuture =
         ChannelPool.init(node, null, NodeDistance.LOCAL, context, "test");
 
-    factoryHelper.waitForCalls(ADDRESS, 3);
+    factoryHelper.waitForCalls(node, 3);
     waitForPendingAdminTasks();
 
     assertThat(poolFuture).isSuccess();
@@ -146,7 +146,7 @@ public class ChannelPoolShutdownTest extends ChannelPoolTestBase {
 
     // Reconnection should have kicked in and started to open a channel, do not complete it yet
     Mockito.verify(reconnectionSchedule).nextDelay();
-    factoryHelper.waitForCalls(ADDRESS, 1);
+    factoryHelper.waitForCalls(node, 1);
 
     CompletionStage<Void> closeFuture = pool.forceCloseAsync();
     waitForPendingAdminTasks();
