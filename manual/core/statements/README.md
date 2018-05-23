@@ -6,8 +6,8 @@ implementations:
 
 * [SimpleStatement](simple/): a simple implementation built directly from a character string. 
   Typically used for queries that are executed only once or a few times.
-* [BoundStatement](prepared/): obtained by binding values to a prepared statement. Typically used
-  for queries that are executed often, with different values.
+* [BoundStatement (from PreparedStatement)](prepared/): obtained by binding values to a prepared
+  query. Typically used for queries that are executed often, with different values.
 * [BatchStatement](batch/): a statement that groups multiple statements to be executed as a batch.
 
 All statement types share a [common set of options][StatementBuilder], that can be set through
