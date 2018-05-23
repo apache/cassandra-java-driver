@@ -26,7 +26,6 @@ import com.datastax.oss.driver.internal.core.channel.DriverChannel;
 import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
 import com.datastax.oss.driver.internal.core.control.ControlConnection;
 import com.datastax.oss.driver.internal.core.util.concurrent.CompletableFutures;
-import com.datastax.oss.driver.internal.core.util.concurrent.UncaughtExceptions;
 import com.datastax.oss.driver.shaded.guava.common.annotations.VisibleForTesting;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableMap;
 import java.net.InetAddress;
@@ -157,20 +156,18 @@ public class DefaultTopologyMonitor implements TopologyMonitor {
     CompletionStage<AdminResult> peersV2Query = query(channel, "SELECT * FROM system.peers_v2");
     CompletableFuture<AdminResult> peersQuery = new CompletableFuture<>();
 
-    peersV2Query
-        .whenComplete(
-            (r, t) -> {
-              if (t != null) {
-                // The query to system.peers_v2 failed, we should not attempt this query in the
-                // future.
-                this.isSchemaV2 = false;
-                CompletableFutures.completeFrom(
-                    query(channel, "SELECT * FROM system.peers"), peersQuery);
-              } else {
-                peersQuery.complete(r);
-              }
-            })
-        .exceptionally(UncaughtExceptions::log);
+    peersV2Query.whenComplete(
+        (r, t) -> {
+          if (t != null) {
+            // The query to system.peers_v2 failed, we should not attempt this query in the
+            // future.
+            this.isSchemaV2 = false;
+            CompletableFutures.completeFrom(
+                query(channel, "SELECT * FROM system.peers"), peersQuery);
+          } else {
+            peersQuery.complete(r);
+          }
+        });
 
     return localQuery.thenCombine(
         peersQuery,
