@@ -20,7 +20,7 @@ import java.util.Map;
 /**
  * The configuration of the driver.
  *
- * <p>Is is composed of options, that are organized into profiles. There is a default profile that
+ * <p>It is composed of options, that are organized into profiles. There is a default profile that
  * is always present, and additional, named profiles, that can override part of the options.
  * Profiles can be used to categorize queries that use the same parameters (for example, an
  * "analytics" profile vs. a "transactional" profile).
