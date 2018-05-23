@@ -70,8 +70,14 @@ of that library:
 The driver ships with a [reference.conf] that defines sensible defaults for all the options. That
 file is heavily documented, so refer to it for details about each option. It is included in the core
 driver JAR, so it is in your application's classpath. If you need to customize something, add an
-`application.conf` in your source tree and also place it in the classpath; since it inherits from
-`reference.conf`, you only need to redeclare what you override:
+`application.conf` to the classpath. There are various ways to do it:
+ 
+* place the file in a directory that is on your application or application server's classpath
+  ([example for Apache Tomcat](https://stackoverflow.com/questions/1300780/adding-a-directory-to-tomcat-classpath));
+* if you use Maven, place it in the `src/main/resources` directory.
+
+Since `application.conf` inherits from `reference.conf`, you only need to redeclare what you
+override:
 
 ```
 # Sample application.conf: overrides one option and adds a profile
