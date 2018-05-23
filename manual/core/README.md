@@ -259,8 +259,8 @@ for (ColumnDefinitions.Definition definition : row.getColumnDefinitions()) {
 }
 ```
 
-[CqlSession]:           http://docs.datastax.com/en/drivers/java/4.0/com/datastax/oss/driver/api/core/cql/CqlSession.html
-[CqlSession#builder()]: http://docs.datastax.com/en/drivers/java/4.0/com/datastax/oss/driver/api/core/cql/CqlSession.html#builder--
+[CqlSession]:           http://docs.datastax.com/en/drivers/java/4.0/com/datastax/oss/driver/api/core/CqlSession.html
+[CqlSession#builder()]: http://docs.datastax.com/en/drivers/java/4.0/com/datastax/oss/driver/api/core/CqlSession.html#builder--
 [ResultSet]:            http://docs.datastax.com/en/drivers/java/4.0/com/datastax/oss/driver/api/core/cql/ResultSet.html
 [Row]:                  http://docs.datastax.com/en/drivers/java/4.0/com/datastax/oss/driver/api/core/cql/Row.html
 [CqlIdentifier]:        http://docs.datastax.com/en/drivers/java/4.0/com/datastax/oss/driver/api/core/CqlIdentifier.html
