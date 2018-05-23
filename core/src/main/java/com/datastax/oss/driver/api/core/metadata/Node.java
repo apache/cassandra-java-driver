@@ -41,8 +41,8 @@ public interface Node {
 
   /**
    * The node's broadcast address. That is, the address that other nodes use to communicate with
-   * that node. This is also the value of the {@code peer} column in {@code system.peers}.
-   * If the port is set to 0 it is unknown.
+   * that node. This is also the value of the {@code peer} column in {@code system.peers}. If the
+   * port is set to 0 it is unknown.
    *
    * <p>This may not be known at all times. In particular, some Cassandra versions don't store it in
    * the {@code system.local} table, so this will be unknown for the control node, until the control
@@ -51,8 +51,8 @@ public interface Node {
   Optional<InetSocketAddress> getBroadcastAddress();
 
   /**
-   * The node's listen address. That is, the address that the Cassandra process binds to.
-   * If the port is set to 0 it is unknown.
+   * The node's listen address. That is, the address that the Cassandra process binds to. If the
+   * port is set to 0 it is unknown.
    *
    * <p>This may not be know at all times. In particular, current Cassandra versions (3.10) only
    * store it in {@code system.local}, so this will be known only for the control node.
