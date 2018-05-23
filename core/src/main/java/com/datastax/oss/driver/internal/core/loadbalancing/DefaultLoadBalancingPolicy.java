@@ -107,17 +107,19 @@ public class DefaultLoadBalancingPolicy implements LoadBalancingPolicy {
       Set<InetSocketAddress> contactPoints) {
     this.distanceReporter = distanceReporter;
 
-    if (contactPoints.isEmpty()) {
-      // No explicit contact points provided => the driver used the default one, and we allow
-      // inferring the local DC in this case
-      Node contactPoint = nodes.get(MetadataManager.DEFAULT_CONTACT_POINT);
-      localDc = contactPoint.getDatacenter();
-      LOG.debug("[{}] Local DC set from contact point {}: {}", logPrefix, contactPoint, localDc);
-    } else if (localDc == null) {
-      throw new IllegalStateException(
-          "You provided explicit contact points, the local DC must be specified (see "
-              + DefaultDriverOption.LOAD_BALANCING_LOCAL_DATACENTER.getPath()
-              + " in the config)");
+    if (localDc == null) {
+      if (contactPoints.isEmpty()) {
+        // No explicit contact points provided => the driver used the default (127.0.0.1:9042), and
+        // we allow inferring the local DC in this case
+        Node contactPoint = nodes.get(MetadataManager.DEFAULT_CONTACT_POINT);
+        localDc = contactPoint.getDatacenter();
+        LOG.debug("[{}] Local DC set from contact point {}: {}", logPrefix, contactPoint, localDc);
+      } else {
+        throw new IllegalStateException(
+            "You provided explicit contact points, the local DC must be specified (see "
+                + DefaultDriverOption.LOAD_BALANCING_LOCAL_DATACENTER.getPath()
+                + " in the config)");
+      }
     } else {
       ImmutableMap.Builder<InetSocketAddress, String> builder = ImmutableMap.builder();
       for (InetSocketAddress address : contactPoints) {
