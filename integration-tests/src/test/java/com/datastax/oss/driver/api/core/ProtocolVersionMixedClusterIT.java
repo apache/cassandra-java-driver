@@ -68,19 +68,21 @@ public class ProtocolVersionMixedClusterIT {
         }
       }
       assertThat(currentControlNode).isNotNull();
-      assertThat(queries(simulacron)).hasSize(6);
+      assertThat(queries(simulacron)).hasSize(8);
 
       assertThat(protocolQueries(contactPoint, 4))
           .containsExactly(
               // Initial connection with protocol v4
               "SELECT cluster_name FROM system.local",
               "SELECT * FROM system.local",
+              "SELECT * FROM system.peers_v2",
               "SELECT * FROM system.peers");
       assertThat(protocolQueries(currentControlNode, 3))
           .containsExactly(
               // Reconnection with protocol v3
               "SELECT cluster_name FROM system.local",
               "SELECT * FROM system.local",
+              "SELECT * FROM system.peers_v2",
               "SELECT * FROM system.peers");
     }
   }
@@ -97,12 +99,13 @@ public class ProtocolVersionMixedClusterIT {
 
       InternalDriverContext context = (InternalDriverContext) session.getContext();
       assertThat(context.protocolVersion()).isEqualTo(DefaultProtocolVersion.V4);
-      assertThat(queries(simulacron)).hasSize(3);
+      assertThat(queries(simulacron)).hasSize(4);
       assertThat(protocolQueries(contactPoint, 4))
           .containsExactly(
               // Initial connection with protocol v4
               "SELECT cluster_name FROM system.local",
               "SELECT * FROM system.local",
+              "SELECT * FROM system.peers_v2",
               "SELECT * FROM system.peers");
     }
   }
@@ -137,12 +140,13 @@ public class ProtocolVersionMixedClusterIT {
                 .build()) {
       assertThat(session.getContext().protocolVersion()).isEqualTo(DefaultProtocolVersion.V4);
 
-      assertThat(queries(simulacron)).hasSize(3);
+      assertThat(queries(simulacron)).hasSize(4);
       assertThat(protocolQueries(contactPoint, 4))
           .containsExactly(
               // Initial connection with protocol v4
               "SELECT cluster_name FROM system.local",
               "SELECT * FROM system.local",
+              "SELECT * FROM system.peers_v2",
               "SELECT * FROM system.peers");
 
       // Note: the 2.0.0 would be forced down if we try to open a connection to it. We can't check

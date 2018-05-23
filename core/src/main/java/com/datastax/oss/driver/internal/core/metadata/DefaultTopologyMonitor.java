@@ -26,6 +26,7 @@ import com.datastax.oss.driver.internal.core.channel.DriverChannel;
 import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
 import com.datastax.oss.driver.internal.core.control.ControlConnection;
 import com.datastax.oss.driver.internal.core.util.concurrent.CompletableFutures;
+import com.datastax.oss.driver.internal.core.util.concurrent.UncaughtExceptions;
 import com.datastax.oss.driver.shaded.guava.common.annotations.VisibleForTesting;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableMap;
 import java.net.InetAddress;
@@ -62,6 +63,7 @@ public class DefaultTopologyMonitor implements TopologyMonitor {
   private final Duration timeout;
   private final CompletableFuture<Void> closeFuture;
 
+  @VisibleForTesting volatile boolean isSchemaV2;
   @VisibleForTesting volatile int port = -1;
 
   public DefaultTopologyMonitor(InternalDriverContext context) {
@@ -72,6 +74,9 @@ public class DefaultTopologyMonitor implements TopologyMonitor {
     DriverConfigProfile config = context.config().getDefaultProfile();
     this.timeout = config.getDuration(DefaultDriverOption.CONTROL_CONNECTION_TIMEOUT);
     this.closeFuture = new CompletableFuture<>();
+    // Set this to true initially, after the first refreshNodes is called this will either stay true
+    // or be set to false;
+    this.isSchemaV2 = true;
   }
 
   @Override
@@ -96,13 +101,29 @@ public class DefaultTopologyMonitor implements TopologyMonitor {
       LOG.debug("[{}] Ignoring refresh of control node", logPrefix);
       return CompletableFuture.completedFuture(Optional.empty());
     } else if (node.getBroadcastAddress().isPresent()) {
-      return query(
-              channel,
-              "SELECT * FROM system.peers WHERE peer = :address",
-              ImmutableMap.of("address", node.getBroadcastAddress().get()))
-          .thenApply(this::firstRowAsNodeInfo);
+      CompletionStage<AdminResult> query;
+      if (isSchemaV2) {
+        query =
+            query(
+                channel,
+                "SELECT * FROM "
+                    + retrievePeerTableName()
+                    + " WHERE peer = :address and peer_port = :port",
+                ImmutableMap.of(
+                    "address",
+                    node.getBroadcastAddress().get().getAddress(),
+                    "peer",
+                    node.getBroadcastAddress().get().getPort()));
+      } else {
+        query =
+            query(
+                channel,
+                "SELECT * FROM " + retrievePeerTableName() + " WHERE peer = :address",
+                ImmutableMap.of("address", node.getBroadcastAddress().get().getAddress()));
+      }
+      return query.thenApply(this::firstRowAsNodeInfo);
     } else {
-      return query(channel, "SELECT * FROM system.peers")
+      return query(channel, "SELECT * FROM " + retrievePeerTableName())
           .thenApply(result -> this.findInPeers(result, node.getConnectAddress()));
     }
   }
@@ -114,7 +135,7 @@ public class DefaultTopologyMonitor implements TopologyMonitor {
     }
     LOG.debug("[{}] Fetching info for new node {}", logPrefix, connectAddress);
     DriverChannel channel = controlConnection.channel();
-    return query(channel, "SELECT * FROM system.peers")
+    return query(channel, "SELECT * FROM " + retrievePeerTableName())
         .thenApply(result -> this.findInPeers(result, connectAddress));
   }
 
@@ -133,7 +154,23 @@ public class DefaultTopologyMonitor implements TopologyMonitor {
     savePort(channel);
 
     CompletionStage<AdminResult> localQuery = query(channel, "SELECT * FROM system.local");
-    CompletionStage<AdminResult> peersQuery = query(channel, "SELECT * FROM system.peers");
+    CompletionStage<AdminResult> peersV2Query = query(channel, "SELECT * FROM system.peers_v2");
+    CompletableFuture<AdminResult> peersQuery = new CompletableFuture<>();
+
+    peersV2Query
+        .whenComplete(
+            (r, t) -> {
+              if (t != null) {
+                // The query to system.peers_v2 failed, we should not attempt this query in the
+                // future.
+                this.isSchemaV2 = false;
+                CompletableFutures.completeFrom(
+                    query(channel, "SELECT * FROM system.peers"), peersQuery);
+              } else {
+                peersQuery.complete(r);
+              }
+            })
+        .exceptionally(UncaughtExceptions::log);
 
     return localQuery.thenCombine(
         peersQuery,
@@ -188,13 +225,19 @@ public class DefaultTopologyMonitor implements TopologyMonitor {
     return query(channel, queryString, Collections.emptyMap());
   }
 
-  private NodeInfo asNodeInfo(AdminRow row) {
-    InetAddress broadcastRpcAddress = row.getInetAddress("rpc_address");
-    if (broadcastRpcAddress == null) {
-      throw new IllegalArgumentException("Missing rpc_address in system row, can't refresh node");
+  private String retrievePeerTableName() {
+    if (isSchemaV2) {
+      return "system.peers_v2";
     }
-    InetSocketAddress connectAddress =
-        addressTranslator.translate(new InetSocketAddress(broadcastRpcAddress, port));
+    return "system.peers";
+  }
+
+  private NodeInfo asNodeInfo(AdminRow row) {
+    InetSocketAddress connectAddress = getNativeAddressFromPeers(row);
+    if (connectAddress == null) {
+      throw new IllegalArgumentException(
+          "Missing rpc_address or native in system row, can't refresh node");
+    }
     return nodeInfoBuilder(row, connectAddress).build();
   }
 
@@ -215,9 +258,17 @@ public class DefaultTopologyMonitor implements TopologyMonitor {
     if (broadcastAddress == null) {
       broadcastAddress = row.getInetAddress("peer"); // in system.peers
     }
-    builder.withBroadcastAddress(broadcastAddress);
-
-    builder.withListenAddress(row.getInetAddress("listen_address"));
+    int broadcastPort = 0;
+    if (row.contains("peer_port")) {
+      broadcastPort = row.getInteger("peer_port");
+    }
+    builder.withBroadcastAddress(new InetSocketAddress(broadcastAddress, broadcastPort));
+    InetAddress listenAddress = row.getInetAddress("listen_address");
+    int listen_port = 0;
+    if (row.contains("listen_port")) {
+      listen_port = row.getInteger("listen_port");
+    }
+    builder.withListenAddress(new InetSocketAddress(listenAddress, listen_port));
     builder.withDatacenter(row.getString("data_center"));
     builder.withRack(row.getString("rack"));
     builder.withCassandraVersion(row.getString("release_version"));
@@ -232,12 +283,9 @@ public class DefaultTopologyMonitor implements TopologyMonitor {
     // The peers table is keyed by broadcast_address, but we only have the translated
     // broadcast_rpc_address, so we have to traverse the whole table and check the rows one by one.
     for (AdminRow row : result) {
-      InetAddress broadcastRpcAddress = row.getInetAddress("rpc_address");
-      if (broadcastRpcAddress != null
-          && addressTranslator
-              .translate(new InetSocketAddress(broadcastRpcAddress, port))
-              .equals(connectAddress)) {
-        return Optional.of(nodeInfoBuilder(row, connectAddress).build());
+      InetSocketAddress nativeAddress = getNativeAddressFromPeers(row);
+      if (nativeAddress != null && nativeAddress.equals(connectAddress)) {
+        return Optional.of(nodeInfoBuilder(row, nativeAddress).build());
       }
     }
     LOG.debug("[{}] Could not find any peer row matching {}", logPrefix, connectAddress);
@@ -251,5 +299,17 @@ public class DefaultTopologyMonitor implements TopologyMonitor {
     if (port < 0 && channel.remoteAddress() instanceof InetSocketAddress) {
       port = ((InetSocketAddress) channel.remoteAddress()).getPort();
     }
+  }
+
+  private InetSocketAddress getNativeAddressFromPeers(AdminRow row) {
+    InetAddress nativeAddress = row.getInetAddress("native_address");
+    if (nativeAddress == null) {
+      nativeAddress = row.getInetAddress("rpc_address");
+    }
+    if (nativeAddress == null) {
+      return null;
+    }
+    int row_port = port;
+    return addressTranslator.translate(new InetSocketAddress(nativeAddress, row_port));
   }
 }

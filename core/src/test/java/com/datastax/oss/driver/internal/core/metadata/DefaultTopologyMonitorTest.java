@@ -116,12 +116,12 @@ public class DefaultTopologyMonitorTest {
   @Test
   public void should_refresh_node_from_peers_if_broadcast_address_is_present() {
     // Given
-    InetAddress broadcastAddress = ADDRESS2.getAddress();
-    node2.broadcastAddress = Optional.of(broadcastAddress);
+    node2.broadcastAddress = Optional.of(ADDRESS2);
+    topologyMonitor.isSchemaV2 = false;
     topologyMonitor.stubQueries(
         new StubbedQuery(
             "SELECT * FROM system.peers WHERE peer = :address",
-            ImmutableMap.of("address", broadcastAddress),
+            ImmutableMap.of("address", ADDRESS2.getAddress()),
             mockResult(mockPeersRow(2))));
 
     // When
@@ -138,8 +138,34 @@ public class DefaultTopologyMonitorTest {
   }
 
   @Test
+  public void should_refresh_node_from_peers_if_broadcast_address_is_present_v2() {
+    // Given
+    node2.broadcastAddress = Optional.of(ADDRESS2);
+    topologyMonitor.isSchemaV2 = true;
+    topologyMonitor.stubQueries(
+        new StubbedQuery(
+            "SELECT * FROM system.peers_v2 WHERE peer = :address and peer_port = :port",
+            ImmutableMap.of("address", ADDRESS2.getAddress(), "peer", 9042),
+            mockResult(mockPeersV2Row(2))));
+
+    // When
+    CompletionStage<Optional<NodeInfo>> futureInfo = topologyMonitor.refreshNode(node2);
+
+    // Then
+    assertThat(futureInfo)
+        .isSuccess(
+            maybeInfo -> {
+              assertThat(maybeInfo.isPresent()).isTrue();
+              NodeInfo info = maybeInfo.get();
+              assertThat(info.getDatacenter()).isEqualTo("dc2");
+              assertThat(info.getBroadcastAddress().get().getPort()).isEqualTo(7002);
+            });
+  }
+
+  @Test
   public void should_refresh_node_from_peers_if_broadcast_address_is_not_present() {
     // Given
+    topologyMonitor.isSchemaV2 = false;
     node2.broadcastAddress = Optional.empty();
     AdminRow peer3 = mockPeersRow(3);
     AdminRow peer2 = mockPeersRow(2);
@@ -169,11 +195,44 @@ public class DefaultTopologyMonitorTest {
   }
 
   @Test
+  public void should_refresh_node_from_peers_if_broadcast_address_is_not_present_V2() {
+    // Given
+    topologyMonitor.isSchemaV2 = true;
+    node2.broadcastAddress = Optional.empty();
+    AdminRow peer3 = mockPeersV2Row(3);
+    AdminRow peer2 = mockPeersV2Row(2);
+    topologyMonitor.stubQueries(
+        new StubbedQuery("SELECT * FROM system.peers_v2", mockResult(peer3, peer2)));
+
+    // When
+    CompletionStage<Optional<NodeInfo>> futureInfo = topologyMonitor.refreshNode(node2);
+
+    // Then
+    assertThat(futureInfo)
+        .isSuccess(
+            maybeInfo -> {
+              assertThat(maybeInfo.isPresent()).isTrue();
+              NodeInfo info = maybeInfo.get();
+              assertThat(info.getDatacenter()).isEqualTo("dc2");
+            });
+    // The rpc_address in each row should have been tried, only the last row should have been
+    // converted
+    Mockito.verify(peer3).getInetAddress("native_address");
+    Mockito.verify(addressTranslator).translate(new InetSocketAddress("127.0.0.3", 9042));
+    Mockito.verify(peer3, never()).getString(anyString());
+
+    Mockito.verify(peer2).getInetAddress("native_address");
+    Mockito.verify(addressTranslator).translate(new InetSocketAddress("127.0.0.2", 9042));
+    Mockito.verify(peer2).getString("data_center");
+  }
+
+  @Test
   public void should_get_new_node_from_peers() {
     // Given
     AdminRow peer3 = mockPeersRow(3);
     AdminRow peer2 = mockPeersRow(2);
     AdminRow peer1 = mockPeersRow(1);
+    topologyMonitor.isSchemaV2 = false;
     topologyMonitor.stubQueries(
         new StubbedQuery("SELECT * FROM system.peers", mockResult(peer3, peer2, peer1)));
 
@@ -204,12 +263,53 @@ public class DefaultTopologyMonitorTest {
   }
 
   @Test
+  public void should_get_new_node_from_peers_v2() {
+    // Given
+    AdminRow peer3 = mockPeersV2Row(3);
+    AdminRow peer2 = mockPeersV2Row(2);
+    AdminRow peer1 = mockPeersV2Row(1);
+    topologyMonitor.isSchemaV2 = true;
+    topologyMonitor.stubQueries(
+        new StubbedQuery("SELECT * FROM system.peers_v2", mockResult(peer3, peer2, peer1)));
+
+    // When
+    CompletionStage<Optional<NodeInfo>> futureInfo = topologyMonitor.getNewNodeInfo(ADDRESS1);
+
+    // Then
+    assertThat(futureInfo)
+        .isSuccess(
+            maybeInfo -> {
+              assertThat(maybeInfo.isPresent()).isTrue();
+              NodeInfo info = maybeInfo.get();
+              assertThat(info.getDatacenter()).isEqualTo("dc1");
+            });
+    // The natove in each row should have been tried, only the last row should have been
+    // converted
+    Mockito.verify(peer3).getInetAddress("native_address");
+    Mockito.verify(addressTranslator).translate(new InetSocketAddress("127.0.0.3", 9042));
+    Mockito.verify(peer3, never()).getString(anyString());
+
+    Mockito.verify(peer2).getInetAddress("native_address");
+    Mockito.verify(addressTranslator).translate(new InetSocketAddress("127.0.0.2", 9042));
+    Mockito.verify(peer2, never()).getString(anyString());
+
+    Mockito.verify(peer1).getInetAddress("native_address");
+    Mockito.verify(addressTranslator).translate(new InetSocketAddress("127.0.0.1", 9042));
+    Mockito.verify(peer1).getString("data_center");
+  }
+
+  @Test
   public void should_refresh_node_list_from_local_and_peers() {
     // Given
     AdminRow peer3 = mockPeersRow(3);
     AdminRow peer2 = mockPeersRow(2);
     topologyMonitor.stubQueries(
         new StubbedQuery("SELECT * FROM system.local", mockResult(mockLocalRow(1))),
+        new StubbedQuery(
+            "SELECT * FROM system.peers_v2",
+            Collections.emptyMap(),
+            mockResult(peer3, peer2),
+            true),
         new StubbedQuery("SELECT * FROM system.peers", mockResult(peer3, peer2)));
 
     // When
@@ -268,6 +368,9 @@ public class DefaultTopologyMonitorTest {
       assertThat(nextQuery).isNotNull();
       assertThat(nextQuery.queryString).isEqualTo(queryString);
       assertThat(nextQuery.parameters).isEqualTo(parameters);
+      if (nextQuery.error) {
+        new CompletableFuture<AdminResult>().completeExceptionally(new Exception("PlaceHolder"));
+      }
       return CompletableFuture.completedFuture(nextQuery.result);
     }
   }
@@ -276,15 +379,26 @@ public class DefaultTopologyMonitorTest {
     private final String queryString;
     private final Map<String, Object> parameters;
     private final AdminResult result;
+    private final boolean error;
 
-    private StubbedQuery(String queryString, Map<String, Object> parameters, AdminResult result) {
+    private StubbedQuery(
+        String queryString, Map<String, Object> parameters, AdminResult result, boolean error) {
       this.queryString = queryString;
       this.parameters = parameters;
       this.result = result;
+      this.error = error;
+    }
+
+    private StubbedQuery(String queryString, Map<String, Object> parameters, AdminResult result) {
+      this(queryString, parameters, result, false);
     }
 
     private StubbedQuery(String queryString, AdminResult result) {
       this(queryString, Collections.emptyMap(), result);
+    }
+
+    private CompletionStage<AdminResult> throwException() throws Exception {
+      throw new Exception("Placeholder");
     }
   }
 
@@ -328,9 +442,34 @@ public class DefaultTopologyMonitorTest {
     }
   }
 
+  private AdminRow mockPeersV2Row(int i) {
+    try {
+      AdminRow row = Mockito.mock(AdminRow.class);
+      Mockito.when(row.getInetAddress("peer")).thenReturn(InetAddress.getByName("127.0.0." + i));
+      Mockito.when(row.getInteger("peer_port")).thenReturn(7000 + i);
+      Mockito.when(row.getString("data_center")).thenReturn("dc" + i);
+      Mockito.when(row.getString("rack")).thenReturn("rack" + i);
+      Mockito.when(row.getString("release_version")).thenReturn("release_version" + i);
+      Mockito.when(row.getInetAddress("native_address"))
+          .thenReturn(InetAddress.getByName("127.0.0." + i));
+      Mockito.when(row.getInteger("native_port")).thenReturn(9042);
+      Mockito.when(row.getSetOfString("tokens")).thenReturn(ImmutableSet.of("token" + i));
+      Mockito.when(row.contains("peer_port")).thenReturn(true);
+      Mockito.when(row.contains("native_port")).thenReturn(true);
+      return row;
+    } catch (UnknownHostException e) {
+      fail("unexpected", e);
+      return null;
+    }
+  }
+
   private AdminResult mockResult(AdminRow... rows) {
     AdminResult result = Mockito.mock(AdminResult.class);
     Mockito.when(result.iterator()).thenReturn(Iterators.forArray(rows));
     return result;
+  }
+
+  private AdminResult errorResult() throws Exception {
+    throw new Exception("Boiler plate Exception");
   }
 }
