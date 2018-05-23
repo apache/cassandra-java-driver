@@ -23,6 +23,13 @@ are multiple modules, all prefixed with `java-driver-`. Refer to the [manual] fo
 [com.datastax.oss]: http://search.maven.org/#search%7Cga%7C1%7Cg%3A%22com.datastax.oss%22
 [manual]: manual/
 
+## Migrating from previous versions
+
+Java driver 4 is **not binary compatible** with previous versions. However, most of the concepts
+remain unchanged, and the new API will look very familiar to 2.x and 3.x users.
+
+See the [upgrade guide](upgrade_guide/) for details.
+
 ## Useful links
 
 * [Manual][manual]
@@ -32,7 +39,6 @@ are multiple modules, all prefixed with `java-driver-`. Refer to the [manual] fo
 * Twitter: [@dsJavaDriver] tweets Java driver releases and important announcements (low frequency).
     [@DataStaxEng] has more news, including other drivers, Cassandra, and DSE.
 * [Changelog]
-* [Upgrade guide]
 * [FAQ]
 
 [API docs]: http://www.datastax.com/drivers/java/4.0
@@ -41,7 +47,6 @@ are multiple modules, all prefixed with `java-driver-`. Refer to the [manual] fo
 [@dsJavaDriver]: https://twitter.com/dsJavaDriver
 [@DataStaxEng]: https://twitter.com/datastaxeng
 [Changelog]: changelog/
-[Upgrade guide]: upgrade_guide/
 [FAQ]: faq/
 
 ## License
