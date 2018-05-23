@@ -26,6 +26,7 @@ import com.datastax.oss.driver.internal.core.channel.DriverChannel;
 import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
 import com.datastax.oss.driver.internal.core.control.ControlConnection;
 import com.datastax.oss.driver.internal.core.util.concurrent.CompletableFutures;
+import com.datastax.oss.driver.internal.core.util.concurrent.UncaughtExceptions;
 import com.datastax.oss.driver.shaded.guava.common.annotations.VisibleForTesting;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableMap;
 import java.net.InetAddress;
@@ -61,7 +62,6 @@ public class DefaultTopologyMonitor implements TopologyMonitor {
   private final AddressTranslator addressTranslator;
   private final Duration timeout;
   private final CompletableFuture<Void> closeFuture;
-  private final boolean allowPortDiscovery;
 
   @VisibleForTesting volatile boolean isSchemaV2;
   @VisibleForTesting volatile int port = -1;
@@ -73,8 +73,6 @@ public class DefaultTopologyMonitor implements TopologyMonitor {
     this.addressTranslator = context.addressTranslator();
     DriverConfigProfile config = context.config().getDefaultProfile();
     this.timeout = config.getDuration(DefaultDriverOption.CONTROL_CONNECTION_TIMEOUT);
-    this.allowPortDiscovery =
-        config.getBoolean(DefaultDriverOption.CONTROL_CONNECTION_ALLOW_PORT_DISCOVERY);
     this.closeFuture = new CompletableFuture<>();
     // Set this to true initially, after the first refreshNodes is called this will either stay true
     // or be set to false;
@@ -109,7 +107,7 @@ public class DefaultTopologyMonitor implements TopologyMonitor {
             query(
                 channel,
                 "SELECT * FROM "
-                    + fetchPeersTable()
+                    + retrievePeerTableName()
                     + " WHERE peer = :address and peer_port = :port",
                 ImmutableMap.of(
                     "address",
@@ -120,12 +118,12 @@ public class DefaultTopologyMonitor implements TopologyMonitor {
         query =
             query(
                 channel,
-                "SELECT * FROM " + fetchPeersTable() + " WHERE peer = :address",
+                "SELECT * FROM " + retrievePeerTableName() + " WHERE peer = :address",
                 ImmutableMap.of("address", node.getBroadcastAddress().get().getAddress()));
       }
       return query.thenApply(this::firstRowAsNodeInfo);
     } else {
-      return query(channel, "SELECT * FROM " + fetchPeersTable())
+      return query(channel, "SELECT * FROM " + retrievePeerTableName())
           .thenApply(result -> this.findInPeers(result, node.getConnectAddress()));
     }
   }
@@ -137,7 +135,7 @@ public class DefaultTopologyMonitor implements TopologyMonitor {
     }
     LOG.debug("[{}] Fetching info for new node {}", logPrefix, connectAddress);
     DriverChannel channel = controlConnection.channel();
-    return query(channel, "SELECT * FROM " + fetchPeersTable())
+    return query(channel, "SELECT * FROM " + retrievePeerTableName())
         .thenApply(result -> this.findInPeers(result, connectAddress));
   }
 
@@ -157,28 +155,25 @@ public class DefaultTopologyMonitor implements TopologyMonitor {
 
     CompletionStage<AdminResult> localQuery = query(channel, "SELECT * FROM system.local");
     CompletionStage<AdminResult> peersV2Query = query(channel, "SELECT * FROM system.peers_v2");
-    CompletableFuture<AdminResult> peersQ = new CompletableFuture<>();
+    CompletableFuture<AdminResult> peersQuery = new CompletableFuture<>();
 
-    peersV2Query.whenComplete(
-        (r, t) -> {
-          if (t != null) {
-            // The query to system.peers_v2 failed, whe should not attempt this query in the future.
-            // Since this method should be run as part of the control connection initialization, we
-            // shouldn't
-            // need this fallback anywhere else.
-            this.isSchemaV2 = false;
-            query(channel, "SELECT * FROM system.peers")
-                .whenComplete(
-                    (r2, t2) -> {
-                      peersQ.complete(r2);
-                    });
-          } else {
-            peersQ.complete(r);
-          }
-        });
+    peersV2Query
+        .whenComplete(
+            (r, t) -> {
+              if (t != null) {
+                // The query to system.peers_v2 failed, we should not attempt this query in the
+                // future.
+                this.isSchemaV2 = false;
+                CompletableFutures.completeFrom(
+                    query(channel, "SELECT * FROM system.peers"), peersQuery);
+              } else {
+                peersQuery.complete(r);
+              }
+            })
+        .exceptionally(UncaughtExceptions::log);
 
     return localQuery.thenCombine(
-        peersQ,
+        peersQuery,
         (controlNodeResult, peersResult) -> {
           List<NodeInfo> nodeInfos = new ArrayList<>();
           // Don't rely on system.local.rpc_address for the control row, because it mistakenly
@@ -230,7 +225,7 @@ public class DefaultTopologyMonitor implements TopologyMonitor {
     return query(channel, queryString, Collections.emptyMap());
   }
 
-  private String fetchPeersTable() {
+  private String retrievePeerTableName() {
     if (isSchemaV2) {
       return "system.peers_v2";
     }
@@ -307,17 +302,14 @@ public class DefaultTopologyMonitor implements TopologyMonitor {
   }
 
   private InetSocketAddress getNativeAddressFromPeers(AdminRow row) {
-    InetAddress native_address = row.getInetAddress("native_address");
-    if (native_address == null) {
-      native_address = row.getInetAddress("rpc_address");
+    InetAddress nativeAddress = row.getInetAddress("native_address");
+    if (nativeAddress == null) {
+      nativeAddress = row.getInetAddress("rpc_address");
     }
-    if (native_address == null) {
+    if (nativeAddress == null) {
       return null;
     }
     int row_port = port;
-    if (allowPortDiscovery && row.contains("native_port")) {
-      row_port = row.getInteger("native_port");
-    }
-    return addressTranslator.translate(new InetSocketAddress(native_address, row_port));
+    return addressTranslator.translate(new InetSocketAddress(nativeAddress, row_port));
   }
 }

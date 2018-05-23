@@ -77,9 +77,6 @@ public class DefaultTopologyMonitorTest {
 
     Mockito.when(defaultConfig.getDuration(DefaultDriverOption.CONTROL_CONNECTION_TIMEOUT))
         .thenReturn(Duration.ofSeconds(1));
-    Mockito.when(
-            defaultConfig.getBoolean(DefaultDriverOption.CONTROL_CONNECTION_ALLOW_PORT_DISCOVERY))
-        .thenReturn(true);
     Mockito.when(config.getDefaultProfile()).thenReturn(defaultConfig);
     Mockito.when(context.config()).thenReturn(config);
 
