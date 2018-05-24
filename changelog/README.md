@@ -1,5 +1,10 @@
 ## Changelog
 
+### 3.6.0 (In progress)
+
+- [improvement] JAVA-1394: Add request-queue-depth metric.
+
+
 ### 3.5.0
 
 - [improvement] JAVA-1448: TokenAwarePolicy should respect child policy ordering.

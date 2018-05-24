@@ -59,7 +59,7 @@ class HostConnectionPool implements Connection.Owner {
     final Set<Connection> trash = new CopyOnWriteArraySet<Connection>();
 
     private final Queue<PendingBorrow> pendingBorrows = new ConcurrentLinkedQueue<PendingBorrow>();
-    private final AtomicInteger pendingBorrowCount = new AtomicInteger();
+    final AtomicInteger pendingBorrowCount = new AtomicInteger();
 
     private final Runnable newConnectionTask;
 
