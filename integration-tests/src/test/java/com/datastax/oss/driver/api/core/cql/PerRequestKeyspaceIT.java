@@ -35,7 +35,7 @@ import org.junit.rules.TestName;
  * test against a local build, run with
  *
  * <pre>
- *   -Dccm.version=4.0.0 -Dccm.directory=/path/to/cassandra -Ddatastax-java-driver.protocol.version=V5
+ *   -Dccm.version=4.0.0 -Dccm.directory=/path/to/cassandra -Ddatastax-java-driver.advanced.protocol.version=V5
  * </pre>
  */
 @Category(ParallelizableTests.class)
@@ -93,7 +93,7 @@ public class PerRequestKeyspaceIT {
   }
 
   private void should_reject_statement_with_keyspace_in_protocol_v4(Statement statement) {
-    try (CqlSession session = SessionUtils.newSession(ccmRule, "protocol.version = V4")) {
+    try (CqlSession session = SessionUtils.newSession(ccmRule, "advanced.protocol.version = V4")) {
       thrown.expect(IllegalArgumentException.class);
       thrown.expectMessage("Can't use per-request keyspace with protocol V4");
       session.execute(statement);

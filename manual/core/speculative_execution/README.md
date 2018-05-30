@@ -69,7 +69,7 @@ Speculative executions are controlled by a policy defined in the [configuration]
 The default implementation never schedules an execution:
 
 ```
-datastax-java-driver.request.speculative-execution-policy {
+datastax-java-driver.advanced.speculative-execution-policy {
   class = com.datastax.oss.driver.internal.core.specex.NoSpeculativeExecutionPolicy
 }
 ```
@@ -77,7 +77,7 @@ datastax-java-driver.request.speculative-execution-policy {
 The "constant" policy schedules executions at a fixed delay:
 
 ```
-datastax-java-driver.request.speculative-execution-policy {
+datastax-java-driver.advanced.speculative-execution-policy {
   class = com.datastax.oss.driver.internal.core.specex.ConstantSpeculativeExecutionPolicy
   
   # The maximum number of executions (including the initial, non-speculative execution).
@@ -213,20 +213,18 @@ profiles](../configuration/#profiles):
 
 ```
 datastax-java-driver {
-  request.speculative-execution-policy {
+  advanced.speculative-execution-policy {
     class = ConstantSpeculativeExecutionPolicy
     max-executions = 3
     delay = 100 milliseconds
   }
   profiles {
     oltp {
-      request.timeout = 100 milliseconds
+      basic.request.timeout = 100 milliseconds
     }
     olap {
-      request {
-        timeout = 30 seconds
-        speculative-execution-policy.class = NoSpeculativeExecutionPolicy
-      }
+      basic.request.timeout = 30 seconds
+      advanced.speculative-execution-policy.class = NoSpeculativeExecutionPolicy
     }
   }
 }

@@ -73,7 +73,7 @@ public class DriverConfigProfileIT {
   @Test
   public void should_use_profile_request_timeout() {
     try (CqlSession session =
-        SessionUtils.newSession(simulacron, "profiles.olap.request.timeout = 10s")) {
+        SessionUtils.newSession(simulacron, "profiles.olap.basic.request.timeout = 10s")) {
       String query = "mockquery";
       // configure query with delay of 4 seconds.
       simulacron.cluster().prime(when(query).then(noRows()).delay(4, TimeUnit.SECONDS));
@@ -94,7 +94,8 @@ public class DriverConfigProfileIT {
   @Test
   public void should_use_profile_default_idempotence() {
     try (CqlSession session =
-        SessionUtils.newSession(simulacron, "profiles.idem.request.default-idempotence = true")) {
+        SessionUtils.newSession(
+            simulacron, "profiles.idem.basic.request.default-idempotence = true")) {
       String query = "mockquery";
       // configure query with server error which should invoke onRequestError in retry policy.
       simulacron.cluster().prime(when(query).then(serverError("fail")));
@@ -118,8 +119,8 @@ public class DriverConfigProfileIT {
     try (CqlSession session =
         SessionUtils.newSession(
             simulacron,
-            "profiles.cl.request.consistency = LOCAL_QUORUM",
-            "profiles.cl.request.serial-consistency = LOCAL_SERIAL")) {
+            "profiles.cl.basic.request.consistency = LOCAL_QUORUM",
+            "profiles.cl.basic.request.serial-consistency = LOCAL_SERIAL")) {
       String query = "mockquery";
 
       // Execute query without profile, should use default CLs (LOCAL_ONE, SERIAL).
@@ -170,7 +171,9 @@ public class DriverConfigProfileIT {
   public void should_use_profile_page_size() {
     try (CqlSession session =
         SessionUtils.newSession(
-            ccm, "request.page-size = 100", "profiles.smallpages.request.page-size = 10")) {
+            ccm,
+            "basic.request.page-size = 100",
+            "profiles.smallpages.basic.request.page-size = 10")) {
 
       CqlIdentifier keyspace = SessionUtils.uniqueKeyspaceId();
       DriverConfigProfile slowProfile = SessionUtils.slowProfile(session);

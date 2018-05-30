@@ -30,7 +30,7 @@ public class Murmur3TokenVnodesIT extends TokenITBase {
 
   @ClassRule
   public static SessionRule<CqlSession> sessionRule =
-      new SessionRule<>(ccmRule, false, null, null, "request.timeout = 30 seconds");
+      new SessionRule<>(ccmRule, false, null, null, "basic.request.timeout = 30 seconds");
 
   public Murmur3TokenVnodesIT() {
     super(Murmur3Token.class, true);

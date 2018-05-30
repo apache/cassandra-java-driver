@@ -115,7 +115,7 @@ public class HeartbeatIT {
     try (CqlSession session =
         newSession(
             // Ensure we only have the control connection
-            "connection.pool.local.size = 0")) {
+            "advanced.connection.pool.local.size = 0")) {
       AtomicInteger heartbeats = countHeartbeatsOnControlConnection();
       checkThat(() -> heartbeats.get() > 0).becomesTrue();
     }
@@ -203,10 +203,10 @@ public class HeartbeatIT {
   private CqlSession newSession(String... extraOptions) {
     String[] defaultOptions =
         new String[] {
-          "connection.heartbeat.interval = 1 second",
-          "connection.heartbeat.timeout = 500 milliseconds",
-          "connection.init-query-timeout = 2 seconds",
-          "connection.reconnection-policy.max-delay = 1 second"
+          "advanced.heartbeat.interval = 1 second",
+          "advanced.heartbeat.timeout = 500 milliseconds",
+          "advanced.connection.init-query-timeout = 2 seconds",
+          "advanced.connection.reconnection-policy.max-delay = 1 second"
         };
     String[] allOptions =
         Arrays.copyOf(defaultOptions, defaultOptions.length + extraOptions.length);

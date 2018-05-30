@@ -14,7 +14,7 @@ For a complete list of built-in options, see the [reference configuration][refer
 #### Options
 
 Essentially, an option is a path in the configuration with an expected type, for example
-`connection.heartbeat.interval`, representing a duration.
+`basic.request.timeout`, representing a duration.
 
 #### Profiles
 
@@ -29,12 +29,12 @@ Instead of manually adjusting the options on every request, you can create confi
 datastax-java-driver {
   profiles {
     oltp {
-      request.timeout = 100 milliseconds
-      request.consistency = ONE
+      basic.request.timeout = 100 milliseconds
+      basic.request.consistency = ONE
     }
     olap {
-      request.timeout = 5 seconds
-      request.consistency = QUORUM
+      basic.request.timeout = 5 seconds
+      basic.request.consistency = QUORUM
     }
 }
 ```
@@ -82,10 +82,10 @@ override:
 ```
 # Sample application.conf: overrides one option and adds a profile
 datastax-java-driver {
-  protocol.version = V4
+  advanced.protocol.version = V4
   profiles {
     slow {
-      request.timeout = 10 seconds
+      basic.request.timeout = 10 seconds
     }
   }
 }
@@ -100,7 +100,7 @@ changed at runtime and will be ignored). The reload interval is defined in the c
 
 ```
 # To disable periodic reloading, set this to 0.
-datastax-java-driver.config-reload-interval = 5 minutes
+datastax-java-driver.basic.config-reload-interval = 5 minutes
 ```
 
 As mentioned previously, system properties can also be used to override individual options. This is
@@ -108,7 +108,7 @@ great for temporary changes, for example in your development environment:
  
 ```
 # Increase heartbeat interval to limit the amount of debug logs:
-java -Ddatastax-java-driver.connection.heartbeat.interval="5 minutes" ...
+java -Ddatastax-java-driver.advanced.heartbeat.interval="5 minutes" ...
 ```
 
 We recommend reserving system properties for the early phases of the project; in production, having
@@ -195,13 +195,13 @@ VM, but with different configurations. What you want instead is separate option 
 ```
 # application.conf
 session1 {
-  session-name = "session1"
-  protocol-version = V4
+  basic.session-name = "session1"
+  advanced.protocol-version = V4
   // etc.
 }
 session2 {
-  session-name = "session2"
-  protocol-version = V3
+  basic.session-name = "session2"
+  advanced.protocol-version = V3
   // etc.
 }
 ```
@@ -330,7 +330,7 @@ The preferred way to instantiate policies (load balancing policy, retry policy, 
 configuration:
 
 ```
-reconnection-policy {
+advanced.reconnection-policy {
   class = com.datastax.oss.driver.internal.core.connection.ExponentialReconnectionPolicy
   base-delay = 1 second
   max-delay = 60 seconds

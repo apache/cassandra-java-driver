@@ -52,7 +52,7 @@ public class ProtocolVersionInitialNegotiationIT {
   )
   @Test
   public void should_fail_if_provided_version_isnt_supported() {
-    try (CqlSession session = SessionUtils.newSession(ccm, "protocol.version = V4")) {
+    try (CqlSession session = SessionUtils.newSession(ccm, "advanced.protocol.version = V4")) {
       assertThat(session.getContext().protocolVersion().getCode()).isEqualTo(3);
       session.execute("select * from system.local");
       fail("Expected an AllNodesFailedException");
@@ -78,7 +78,7 @@ public class ProtocolVersionInitialNegotiationIT {
   @CassandraRequirement(min = "2.2", description = "required to use an older protocol version")
   @Test
   public void should_use_explicitly_provided_protocol_version() {
-    try (CqlSession session = SessionUtils.newSession(ccm, "protocol.version = V3")) {
+    try (CqlSession session = SessionUtils.newSession(ccm, "advanced.protocol.version = V3")) {
       assertThat(session.getContext().protocolVersion().getCode()).isEqualTo(3);
       session.execute("select * from system.local");
     }

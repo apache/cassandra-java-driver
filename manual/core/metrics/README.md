@@ -30,7 +30,7 @@ By default, all metrics are disabled. You can turn them on individually in the c
 adding their name to these lists:
 
 ```
-datastax-java-driver.metrics {
+datastax-java-driver.advanced.metrics {
   session.enabled = [ connected-nodes, cql-requests ]
   node.enabled = [ pool.open-connections, pool.in-flight ]
 }

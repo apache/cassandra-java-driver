@@ -37,7 +37,7 @@ public class HeartbeatDisabledIT {
     // Disable heartbeats entirely, wait longer than the default timeout and make sure we didn't
     // receive any
     try (CqlSession session =
-        SessionUtils.newSession(simulacron, "connection.heartbeat.interval = 0 second")) {
+        SessionUtils.newSession(simulacron, "advanced.heartbeat.interval = 0 second")) {
       AtomicInteger heartbeats = registerHeartbeatListener();
       SECONDS.sleep(35);
 

@@ -69,7 +69,7 @@ control this behavior through the configuration:
 ```
 # These options can be changed at runtime, the new values will be used for requests issued after
 # the change. They can be overridden in a profile.
-datastax-java-driver.request.trace {
+datastax-java-driver.advanced.request.trace {
   # How many times the driver will attempt to fetch the query if it is not ready yet.
   attempts = 5
   

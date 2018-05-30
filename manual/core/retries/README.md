@@ -5,7 +5,7 @@ might work on a different node. The driver uses a *retry policy* to determine wh
 It is defined in the [configuration](../configuration/):
                      
 ```
-datastax-java-driver.request.retry-policy {
+datastax-java-driver.advanced.retry-policy {
   class = com.datastax.oss.driver.internal.core.retry.DefaultRetryPolicy
 }
 ```
@@ -139,12 +139,12 @@ The retry policy can be overridden in [configuration profiles](../configuration/
 
 ```
 datastax-java-driver {
-  request.retry-policy {
+  advanced.retry-policy {
     class = DefaultRetryPolicy
   }
   profiles {
     custom-retries {
-      request.retry-policy {
+      advanced.retry-policy {
         class = CustomRetryPolicy
       }
     }

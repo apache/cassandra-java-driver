@@ -48,10 +48,10 @@ public class ThrottlingIT {
     try (CqlSession session =
         SessionUtils.newSession(
             simulacron,
-            "request.throttler.class = "
+            "advanced.throttler.class = "
                 + ConcurrencyLimitingRequestThrottler.class.getSimpleName(),
-            "request.throttler.max-concurrent-requests = " + maxConcurrentRequests,
-            "request.throttler.max-queue-size = " + maxQueueSize)) {
+            "advanced.throttler.max-concurrent-requests = " + maxConcurrentRequests,
+            "advanced.throttler.max-queue-size = " + maxQueueSize)) {
 
       // Saturate the session and fill the queue
       for (int i = 0; i < maxConcurrentRequests + maxQueueSize; i++) {

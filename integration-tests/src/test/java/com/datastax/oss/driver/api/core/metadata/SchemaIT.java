@@ -60,7 +60,7 @@ public class SchemaIT {
         SessionUtils.newSession(
             ccmRule,
             String.format(
-                "metadata.schema.refreshed-keyspaces = [ \"%s\"] ",
+                "advanced.metadata.schema.refreshed-keyspaces = [ \"%s\"] ",
                 sessionRule.keyspace().asInternal()))) {
 
       assertThat(session.getMetadata().getKeyspaces()).containsOnlyKeys(sessionRule.keyspace());
@@ -74,7 +74,8 @@ public class SchemaIT {
 
   @Test
   public void should_not_load_schema_if_disabled_in_config() {
-    try (CqlSession session = SessionUtils.newSession(ccmRule, "metadata.schema.enabled = false")) {
+    try (CqlSession session =
+        SessionUtils.newSession(ccmRule, "advanced.metadata.schema.enabled = false")) {
 
       assertThat(session.isSchemaMetadataEnabled()).isFalse();
       assertThat(session.getMetadata().getKeyspaces()).isEmpty();
@@ -83,7 +84,8 @@ public class SchemaIT {
 
   @Test
   public void should_enable_schema_programmatically_when_disabled_in_config() {
-    try (CqlSession session = SessionUtils.newSession(ccmRule, "metadata.schema.enabled = false")) {
+    try (CqlSession session =
+        SessionUtils.newSession(ccmRule, "advanced.metadata.schema.enabled = false")) {
 
       assertThat(session.isSchemaMetadataEnabled()).isFalse();
       assertThat(session.getMetadata().getKeyspaces()).isEmpty();
@@ -134,7 +136,8 @@ public class SchemaIT {
 
   @Test
   public void should_refresh_schema_manually() {
-    try (CqlSession session = SessionUtils.newSession(ccmRule, "metadata.schema.enabled = false")) {
+    try (CqlSession session =
+        SessionUtils.newSession(ccmRule, "advanced.metadata.schema.enabled = false")) {
 
       assertThat(session.isSchemaMetadataEnabled()).isFalse();
       assertThat(session.getMetadata().getKeyspaces()).isEmpty();

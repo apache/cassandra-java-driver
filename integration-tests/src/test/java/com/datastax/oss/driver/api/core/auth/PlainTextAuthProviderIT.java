@@ -48,9 +48,9 @@ public class PlainTextAuthProviderIT {
     try (CqlSession session =
         SessionUtils.newSession(
             ccm,
-            "protocol.auth-provider.class = PlainTextAuthProvider",
-            "protocol.auth-provider.username = cassandra",
-            "protocol.auth-provider.password = cassandra")) {
+            "advanced.auth-provider.class = PlainTextAuthProvider",
+            "advanced.auth-provider.username = cassandra",
+            "advanced.auth-provider.password = cassandra")) {
       session.execute("select * from system.local");
     }
   }
@@ -60,9 +60,9 @@ public class PlainTextAuthProviderIT {
     try (CqlSession session =
         SessionUtils.newSession(
             ccm,
-            "protocol.auth-provider.class = PlainTextAuthProvider",
-            "protocol.auth-provider.username = baduser",
-            "protocol.auth-provider.password = badpass")) {
+            "advanced.auth-provider.class = PlainTextAuthProvider",
+            "advanced.auth-provider.username = baduser",
+            "advanced.auth-provider.password = badpass")) {
       session.execute("select * from system.local");
     }
   }

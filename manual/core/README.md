@@ -65,7 +65,9 @@ You can also specify a keyspace at construction time, either through the
 [configuration](configuration/):
 
 ```
-session-keyspace = my_keyspace
+datastax-java-driver {
+  basic.session-keyspace = my_keyspace
+}
 ```
 
 Or with the builder:

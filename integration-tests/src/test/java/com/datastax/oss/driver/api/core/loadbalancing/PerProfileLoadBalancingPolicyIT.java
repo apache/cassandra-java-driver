@@ -47,8 +47,8 @@ public class PerProfileLoadBalancingPolicyIT {
   public static @ClassRule SessionRule<CqlSession> sessionRule =
       SessionRule.builder(simulacron)
           .withOptions(
-              "load-balancing-policy.local-datacenter = dc1",
-              "profiles.profile1.load-balancing-policy.local-datacenter = dc3",
+              "basic.load-balancing-policy.local-datacenter = dc1",
+              "profiles.profile1.basic.load-balancing-policy.local-datacenter = dc3",
               "profiles.profile2 = {}")
           .build();
 

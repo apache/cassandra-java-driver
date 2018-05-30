@@ -49,7 +49,9 @@ public class SchemaChangesIT {
   @Rule
   public SessionRule<CqlSession> adminSessionRule =
       new SessionRule<>(
-          ccmRule, "request.timeout = 30 seconds", "metadata.schema.debouncer.window = 0 seconds");
+          ccmRule,
+          "basic.request.timeout = 30 seconds",
+          "advanced.metadata.schema.debouncer.window = 0 seconds");
 
   @Before
   public void setup() {
@@ -406,7 +408,7 @@ public class SchemaChangesIT {
     String keyspaceStr =
         Arrays.stream(keyspaces).map(i -> i.asCql(false)).collect(Collectors.joining(","));
 
-    return String.format("metadata.schema.refreshed-keyspaces = [%s]", keyspaceStr);
+    return String.format("advanced.metadata.schema.refreshed-keyspaces = [%s]", keyspaceStr);
   }
 
   private <T> void should_handle_creation(
@@ -433,7 +435,7 @@ public class SchemaChangesIT {
                 null,
                 listener1,
                 null,
-                "request.timeout = 30 seconds",
+                "basic.request.timeout = 30 seconds",
                 keyspaceFilterOption(keyspaces));
         CqlSession session2 =
             SessionUtils.newSession(
@@ -477,7 +479,7 @@ public class SchemaChangesIT {
                 null,
                 listener1,
                 null,
-                "request.timeout = 30 seconds",
+                "basic.request.timeout = 30 seconds",
                 keyspaceFilterOption(keyspaces));
         CqlSession session2 =
             SessionUtils.newSession(
@@ -521,7 +523,7 @@ public class SchemaChangesIT {
                 null,
                 listener1,
                 null,
-                "request.timeout = 30 seconds",
+                "basic.request.timeout = 30 seconds",
                 keyspaceFilterOption(keyspaces));
         CqlSession session2 =
             SessionUtils.newSession(
@@ -569,7 +571,7 @@ public class SchemaChangesIT {
                 null,
                 listener1,
                 null,
-                "request.timeout = 30 seconds",
+                "basic.request.timeout = 30 seconds",
                 keyspaceFilterOption(keyspaces));
         CqlSession session2 =
             SessionUtils.newSession(

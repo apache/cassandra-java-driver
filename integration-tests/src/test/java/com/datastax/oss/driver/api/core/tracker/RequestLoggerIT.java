@@ -64,20 +64,20 @@ public class RequestLoggerIT {
   public SessionRule<CqlSession> sessionRule =
       SessionRule.builder(simulacronRule)
           .withOptions(
-              "request.tracker.class = com.datastax.oss.driver.internal.core.tracker.RequestLogger",
-              "request.tracker.logs.success.enabled = true",
-              "request.tracker.logs.slow.enabled = true",
-              "request.tracker.logs.error.enabled = true",
-              "request.tracker.logs.max-query-length = 500",
-              "request.tracker.logs.show-values = true",
-              "request.tracker.logs.max-value-length = 50",
-              "request.tracker.logs.max-values = 50",
-              "request.tracker.logs.show-stack-traces = true",
-              "profiles.low-threshold.request.tracker.logs.slow.threshold = 1 nanosecond",
-              "profiles.no-logs.request.tracker.logs.success.enabled = false",
-              "profiles.no-logs.request.tracker.logs.slow.enabled = false",
-              "profiles.no-logs.request.tracker.logs.error.enabled = false",
-              "profiles.no-traces.request.tracker.logs.show-stack-traces = false")
+              "advanced.request-tracker.class = com.datastax.oss.driver.internal.core.tracker.RequestLogger",
+              "advanced.request-tracker.logs.success.enabled = true",
+              "advanced.request-tracker.logs.slow.enabled = true",
+              "advanced.request-tracker.logs.error.enabled = true",
+              "advanced.request-tracker.logs.max-query-length = 500",
+              "advanced.request-tracker.logs.show-values = true",
+              "advanced.request-tracker.logs.max-value-length = 50",
+              "advanced.request-tracker.logs.max-values = 50",
+              "advanced.request-tracker.logs.show-stack-traces = true",
+              "profiles.low-threshold.advanced.request-tracker.logs.slow.threshold = 1 nanosecond",
+              "profiles.no-logs.advanced.request-tracker.logs.success.enabled = false",
+              "profiles.no-logs.advanced.request-tracker.logs.slow.enabled = false",
+              "profiles.no-logs.advanced.request-tracker.logs.error.enabled = false",
+              "profiles.no-traces.advanced.request-tracker.logs.show-stack-traces = false")
           .build();
 
   @Captor private ArgumentCaptor<ILoggingEvent> loggingEventCaptor;

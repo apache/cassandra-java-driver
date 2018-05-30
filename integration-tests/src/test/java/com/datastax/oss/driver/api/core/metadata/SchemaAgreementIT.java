@@ -35,9 +35,9 @@ public class SchemaAgreementIT {
   private static SessionRule<CqlSession> sessionRule =
       SessionRule.builder(ccm)
           .withOptions(
-              "request.timeout = 30s",
-              "load-balancing-policy.class = com.datastax.oss.driver.api.testinfra.loadbalancing.SortingLoadBalancingPolicy",
-              "connection.control-connection.schema-agreement.timeout = 3s")
+              "basic.request.timeout = 30s",
+              "basic.load-balancing-policy.class = com.datastax.oss.driver.api.testinfra.loadbalancing.SortingLoadBalancingPolicy",
+              "advanced.control-connection.schema-agreement.timeout = 3s")
           .build();
 
   @ClassRule public static RuleChain ruleChain = RuleChain.outerRule(ccm).around(sessionRule);
@@ -86,8 +86,8 @@ public class SchemaAgreementIT {
         SessionUtils.newSession(
             ccm,
             sessionRule.keyspace(),
-            "request.timeout = 30s",
-            "connection.control-connection.schema-agreement.timeout = 0s")) {
+            "basic.request.timeout = 30s",
+            "advanced.control-connection.schema-agreement.timeout = 0s")) {
       ResultSet result = createTable(session);
 
       // Should not agree because schema metadata is disabled

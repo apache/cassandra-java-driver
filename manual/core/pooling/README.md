@@ -36,7 +36,7 @@ Pool sizes are defined in the `connection` section of the [configuration](../con
 are the relevant options with their default values:
 
 ```
-datastax-java-driver.connection {
+datastax-java-driver.advanced.connection {
   max-requests-per-connection = 1024
   pool {
     local.size = 1
@@ -61,14 +61,12 @@ by writing a dummy request to it. If that request fails, the connection is trash
 This feature is enabled by default. Here are the default values in the configuration:
 
 ```
-datastax-java-driver.connection {
-  heartbeat {
-    interval = 30 seconds
-  
-    # How long the driver waits for the response to a heartbeat. If this timeout fires, the heartbeat
-    # is considered failed.
-    timeout = 500 milliseconds
-  }
+datastax-java-driver.advanced.heartbeat {
+  interval = 30 seconds
+
+  # How long the driver waits for the response to a heartbeat. If this timeout fires, the heartbeat
+  # is considered failed.
+  timeout = 500 milliseconds
 }
 ```
 
@@ -82,7 +80,7 @@ are disabled by default, you'll need to change your configuration to enable them
 
 ```
 datastax-java-driver {
-  metrics.node.enabled = [
+  advanced.metrics.node.enabled = [
     # The number of connections open to this node for regular requests (exposed as a
     # Gauge<Integer>).
     #

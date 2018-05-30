@@ -82,7 +82,7 @@ public class MyAddressTranslator implements AddressTranslator {
 Then reference this class from the [configuration](../configuration/):
 
 ```
-datastax-java-driver.address-translator.class = com.mycompany.MyAddressTranslator
+datastax-java-driver.advanced.address-translator.class = com.mycompany.MyAddressTranslator
 ```
 
 Note: the contact points provided while creating the `CqlSession` are not translated, only addresses
@@ -100,7 +100,7 @@ The driver provides [Ec2MultiRegionAddressTranslator] which does exactly that.  
 the [configuration](../configuration/):
 
 ```
-datastax-java-driver.address-translator.class = Ec2MultiRegionAddressTranslator
+datastax-java-driver.advanced.address-translator.class = Ec2MultiRegionAddressTranslator
 ```
 
 With this configuration, you keep broadcasting public RPC addresses. But each time the driver connects to a new

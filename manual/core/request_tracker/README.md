@@ -9,7 +9,7 @@ The tracker is enabled in the [configuration](../configuration/). The default im
 nothing:
 
 ```
-datastax-java-driver.request.tracker {
+datastax-java-driver.advanced.request-tracker {
   class = com.datastax.oss.driver.internal.core.tracker.NoopRequestTracker
 }
 ```
@@ -34,7 +34,7 @@ The request logger is a built-in implementation that logs every request. It has 
 requests as "slow" above a given threshold, limit the line size for large queries, etc:
 
 ```
-datastax-java-driver.request.tracker {
+datastax-java-driver.advanced.request-tracker {
   class = com.datastax.oss.driver.internal.core.tracker.RequestLogger
 
   logs {

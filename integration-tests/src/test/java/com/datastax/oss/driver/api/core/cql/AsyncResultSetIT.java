@@ -42,7 +42,7 @@ public class AsyncResultSetIT {
 
   @ClassRule
   public static SessionRule<CqlSession> sessionRule =
-      new SessionRule<>(ccm, "request.page-size = " + PAGE_SIZE);
+      new SessionRule<>(ccm, "basic.request.page-size = " + PAGE_SIZE);
 
   @BeforeClass
   public static void setupSchema() {
