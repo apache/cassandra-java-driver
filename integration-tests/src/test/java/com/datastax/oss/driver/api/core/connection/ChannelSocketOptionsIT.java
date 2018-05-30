@@ -15,12 +15,12 @@
  */
 package com.datastax.oss.driver.api.core.connection;
 
-import static com.datastax.oss.driver.api.core.config.DefaultDriverOption.CONNECTION_SOCKET_KEEP_ALIVE;
-import static com.datastax.oss.driver.api.core.config.DefaultDriverOption.CONNECTION_SOCKET_LINGER_INTERVAL;
-import static com.datastax.oss.driver.api.core.config.DefaultDriverOption.CONNECTION_SOCKET_RECEIVE_BUFFER_SIZE;
-import static com.datastax.oss.driver.api.core.config.DefaultDriverOption.CONNECTION_SOCKET_REUSE_ADDRESS;
-import static com.datastax.oss.driver.api.core.config.DefaultDriverOption.CONNECTION_SOCKET_SEND_BUFFER_SIZE;
-import static com.datastax.oss.driver.api.core.config.DefaultDriverOption.CONNECTION_SOCKET_TCP_NODELAY;
+import static com.datastax.oss.driver.api.core.config.DefaultDriverOption.SOCKET_KEEP_ALIVE;
+import static com.datastax.oss.driver.api.core.config.DefaultDriverOption.SOCKET_LINGER_INTERVAL;
+import static com.datastax.oss.driver.api.core.config.DefaultDriverOption.SOCKET_RECEIVE_BUFFER_SIZE;
+import static com.datastax.oss.driver.api.core.config.DefaultDriverOption.SOCKET_REUSE_ADDRESS;
+import static com.datastax.oss.driver.api.core.config.DefaultDriverOption.SOCKET_SEND_BUFFER_SIZE;
+import static com.datastax.oss.driver.api.core.config.DefaultDriverOption.SOCKET_TCP_NODELAY;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import com.datastax.oss.driver.api.core.config.DriverConfigProfile;
@@ -48,23 +48,23 @@ public class ChannelSocketOptionsIT {
   public static SessionRule<DefaultSession> sessionRule =
       new SessionRule<>(
           simulacron,
-          "connection.socket.tcpNoDelay = true",
-          "connection.socket.keepAlive = false",
-          "connection.socket.reuseAddress = false",
-          "connection.socket.lingerInterval = 10",
-          "connection.socket.receiveBufferSize = 123456",
-          "connection.socket.sendBufferSize = 123456");
+          "advanced.socket.tcp-no-delay = true",
+          "advanced.socket.keep-alive = false",
+          "advanced.socket.reuse-address = false",
+          "advanced.socket.linger-interval = 10",
+          "advanced.socket.receive-buffer-size = 123456",
+          "advanced.socket.send-buffer-size = 123456");
 
   @Test
   public void should_report_socket_options() {
     DefaultSession session = sessionRule.session();
     DriverConfigProfile config = session.getContext().config().getDefaultProfile();
-    assertThat(config.getBoolean(CONNECTION_SOCKET_TCP_NODELAY)).isTrue();
-    assertThat(config.getBoolean(CONNECTION_SOCKET_KEEP_ALIVE)).isFalse();
-    assertThat(config.getBoolean(CONNECTION_SOCKET_REUSE_ADDRESS)).isFalse();
-    assertThat(config.getInt(CONNECTION_SOCKET_LINGER_INTERVAL)).isEqualTo(10);
-    assertThat(config.getInt(CONNECTION_SOCKET_RECEIVE_BUFFER_SIZE)).isEqualTo(123456);
-    assertThat(config.getInt(CONNECTION_SOCKET_SEND_BUFFER_SIZE)).isEqualTo(123456);
+    assertThat(config.getBoolean(SOCKET_TCP_NODELAY)).isTrue();
+    assertThat(config.getBoolean(SOCKET_KEEP_ALIVE)).isFalse();
+    assertThat(config.getBoolean(SOCKET_REUSE_ADDRESS)).isFalse();
+    assertThat(config.getInt(SOCKET_LINGER_INTERVAL)).isEqualTo(10);
+    assertThat(config.getInt(SOCKET_RECEIVE_BUFFER_SIZE)).isEqualTo(123456);
+    assertThat(config.getInt(SOCKET_SEND_BUFFER_SIZE)).isEqualTo(123456);
     Node node = session.getMetadata().getNodes().values().iterator().next();
     DriverChannel channel = session.getChannel(node, null);
     assertThat(channel.config()).isInstanceOf(SocketChannelConfig.class);

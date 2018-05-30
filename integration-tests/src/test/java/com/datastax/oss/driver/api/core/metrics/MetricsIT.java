@@ -36,7 +36,7 @@ public class MetricsIT {
   @Test
   public void should_expose_metrics() {
     try (CqlSession session =
-        SessionUtils.newSession(ccmRule, "metrics.session.enabled = [ cql-requests ]")) {
+        SessionUtils.newSession(ccmRule, "advanced.metrics.session.enabled = [ cql-requests ]")) {
       for (int i = 0; i < 10; i++) {
         session.execute("SELECT release_version FROM system.local");
       }
@@ -59,8 +59,8 @@ public class MetricsIT {
     try (CqlSession session =
         SessionUtils.newSession(
             ccmRule,
-            "metrics.session.enabled = [ bytes-sent, bytes-received ]",
-            "metrics.node.enabled = [ bytes-sent, bytes-received ]")) {
+            "advanced.metrics.session.enabled = [ bytes-sent, bytes-received ]",
+            "advanced.metrics.node.enabled = [ bytes-sent, bytes-received ]")) {
       for (int i = 0; i < 10; i++) {
         session.execute("SELECT release_version FROM system.local");
       }
@@ -94,7 +94,9 @@ public class MetricsIT {
   public void should_not_expose_metrics_if_disabled() {
     try (CqlSession session =
         SessionUtils.newSession(
-            ccmRule, "metrics.session.enabled = []", "metrics.node.enabled = []")) {
+            ccmRule,
+            "advanced.metrics.session.enabled = []",
+            "advanced.metrics.node.enabled = []")) {
       for (int i = 0; i < 10; i++) {
         session.execute("SELECT release_version FROM system.local");
       }

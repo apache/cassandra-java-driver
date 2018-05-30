@@ -314,7 +314,7 @@ public class DefaultDriverContext implements InternalDriverContext {
     return (Compressor<ByteBuf>)
         Reflection.buildFromConfig(
                 this,
-                DefaultDriverOption.PROTOCOL_COMPRESSOR_CLASS,
+                DefaultDriverOption.COMPRESSOR_CLASS,
                 Compressor.class,
                 "com.datastax.oss.driver.internal.core.protocol")
             .orElse(Compressor.none());

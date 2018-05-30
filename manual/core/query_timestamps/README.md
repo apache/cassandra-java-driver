@@ -24,7 +24,7 @@ The timestamp generator is defined in the [configuration](../configuration/).
 #### AtomicTimestampGenerator
 
 ```
-datastax-java-driver.request.timestamp-generator {
+datastax-java-driver.advanced.timestamp-generator {
   class = com.datastax.oss.driver.internal.core.time.AtomicTimestampGenerator
 }
 ```
@@ -45,7 +45,7 @@ returned timestamps will be artificially incremented to guarantee monotonicity.
 You can control that message with these options:
 
 ```
-datastax-java-driver.request.timestamp-generator {
+datastax-java-driver.advanced.timestamp-generator {
   drift-warning {
     # How far in the future timestamps are allowed to drift before the warning is logged.
     # If it is undefined or set to 0, warnings are disabled.
@@ -67,7 +67,7 @@ On some systems, however, it is possible to have a better granularity by using a
 with this configuration option: 
 
 ```
-datastax-java-driver.request.timestamp-generator {
+datastax-java-driver.advanced.timestamp-generator {
   force-java-clock = true
 }
 ```
@@ -83,7 +83,7 @@ initialization:
 #### ThreadLocalTimestampGenerator
 
 ```
-datastax-java-driver.request.timestamp-generator {
+datastax-java-driver.advanced.timestamp-generator {
   class = com.datastax.oss.driver.internal.core.time.ThreadLocalTimestampGenerator
 }
 ```
@@ -102,7 +102,7 @@ section for details.
 #### ServerSideTimestampGenerator
 
 ```
-datastax-java-driver.request.timestamp-generator {
+datastax-java-driver.advanced.timestamp-generator {
   class = com.datastax.oss.driver.internal.core.time.ServerSideTimestampGenerator
 }
 ```
@@ -120,10 +120,10 @@ The timestamp generator can be overridden in [configuration profiles](../configu
 
 ```
 datastax-java-driver {
-  request.timestamp-generator = AtomicTimestampGenerator
+  advanced.timestamp-generator = AtomicTimestampGenerator
   profiles {
     profile1 {
-      request.timestamp-generator = ServerSideTimestampGenerator
+      advanced.timestamp-generator = ServerSideTimestampGenerator
     }
     profile2 {}
   } 

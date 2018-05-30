@@ -52,8 +52,9 @@ public class DescribeIT {
           false,
           null,
           null,
-          "request.timeout = 30 seconds",
-          "metadata.schema.debouncer.window = 0 seconds"); // disable debouncer to speed up test.
+          "basic.request.timeout = 30 seconds",
+          "advanced.metadata.schema.debouncer.window = 0 seconds"); // disable debouncer to speed up
+  // test.
 
   /**
    * Creates a keyspace using a variety of features and ensures {@link

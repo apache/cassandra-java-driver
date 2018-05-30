@@ -35,7 +35,7 @@ public class ReflectionTest {
   @Test
   public void should_build_policies_per_profile() {
     String configSource =
-        "request.speculative-execution-policy {\n"
+        "advanced.speculative-execution-policy {\n"
             + "  class = ConstantSpeculativeExecutionPolicy\n"
             + "  max-executions = 3\n"
             + "  delay = 100 milliseconds\n"
@@ -45,15 +45,15 @@ public class ReflectionTest {
             + "  profile1 {}\n"
             // Inherits but changes one option
             + "  profile2 { \n"
-            + "    request.speculative-execution-policy.max-executions = 2"
+            + "    advanced.speculative-execution-policy.max-executions = 2"
             + "  }\n"
             // Same as previous profile, should share the same policy instance
             + "  profile3 { \n"
-            + "    request.speculative-execution-policy.max-executions = 2"
+            + "    advanced.speculative-execution-policy.max-executions = 2"
             + "  }\n"
             // Completely overrides default profile
             + "  profile4 { \n"
-            + "    request.speculative-execution-policy.class = NoSpeculativeExecutionPolicy\n"
+            + "    advanced.speculative-execution-policy.class = NoSpeculativeExecutionPolicy\n"
             + "  }\n"
             + "}\n";
     DriverContext context = Mockito.mock(DriverContext.class);

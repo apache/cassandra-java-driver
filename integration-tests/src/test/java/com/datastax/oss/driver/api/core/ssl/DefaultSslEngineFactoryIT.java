@@ -36,7 +36,8 @@ public class DefaultSslEngineFactoryIT {
     System.setProperty(
         "javax.net.ssl.trustStorePassword", CcmBridge.DEFAULT_CLIENT_TRUSTSTORE_PASSWORD);
     try (CqlSession session =
-        SessionUtils.newSession(ccm, "ssl-engine-factory.class = DefaultSslEngineFactory")) {
+        SessionUtils.newSession(
+            ccm, "advanced.ssl-engine-factory.class = DefaultSslEngineFactory")) {
       session.execute("select * from system.local");
     }
   }

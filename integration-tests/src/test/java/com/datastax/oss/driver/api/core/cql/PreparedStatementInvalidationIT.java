@@ -40,7 +40,7 @@ import org.junit.rules.ExpectedException;
  * version. To test against a local build, run with
  *
  * <pre>
- *   -Dccm.version=4.0.0 -Dccm.directory=/path/to/cassandra -Ddatastax-java-driver.protocol.version=V5
+ *   -Dccm.version=4.0.0 -Dccm.directory=/path/to/cassandra -Ddatastax-java-driver.advanced.protocol.version=V5
  * </pre>
  */
 @Category(ParallelizableTests.class)
@@ -50,7 +50,8 @@ public class PreparedStatementInvalidationIT {
 
   @Rule
   public SessionRule<CqlSession> sessionRule =
-      new SessionRule<>(ccmRule, "request.page-size = 2", "request.timeout = 30 seconds");
+      new SessionRule<>(
+          ccmRule, "basic.request.page-size = 2", "basic.request.timeout = 30 seconds");
 
   @Rule public ExpectedException thrown = ExpectedException.none();
 
@@ -224,8 +225,8 @@ public class PreparedStatementInvalidationIT {
         SessionUtils.newSession(
             ccmRule,
             sessionRule.keyspace(),
-            "protocol.version = V4",
-            "request.timeout = 30 seconds")) {
+            "advanced.protocol.version = V4",
+            "basic.request.timeout = 30 seconds")) {
       should_not_store_metadata_for_conditional_updates(session);
     }
   }

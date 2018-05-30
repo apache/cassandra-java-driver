@@ -123,8 +123,7 @@ public abstract class ChannelFactoryTestBase {
         .thenReturn(Duration.ofMillis(TIMEOUT_MILLIS));
     Mockito.when(defaultConfigProfile.getInt(DefaultDriverOption.CONNECTION_MAX_REQUESTS))
         .thenReturn(1);
-    Mockito.when(
-            defaultConfigProfile.getDuration(DefaultDriverOption.CONNECTION_HEARTBEAT_INTERVAL))
+    Mockito.when(defaultConfigProfile.getDuration(DefaultDriverOption.HEARTBEAT_INTERVAL))
         .thenReturn(Duration.ofSeconds(30));
 
     Mockito.when(context.protocolVersionRegistry()).thenReturn(protocolVersionRegistry);

@@ -31,13 +31,13 @@ Note that the following requests are also affected by throttling:
 ### Configuration
 
 Request throttling is parameterized in the [configuration](../configuration/) under
-`request.throttler`. There are various implementations, detailed in the following sections:
+`advanced.throttler`. There are various implementations, detailed in the following sections:
 
 #### Pass through
 
 ```
 datastax-java-driver {
-  request.throttler {
+  advanced.throttler {
     class = com.datastax.oss.driver.internal.core.session.throttling.PassThroughRequestThrottler
   }
 }
@@ -55,7 +55,7 @@ requests will fail with an [AllNodesFailedException], with the `getErrors()` met
 
 ```
 datastax-java-driver {
-  request.throttler {
+  advanced.throttler {
     class = com.datastax.oss.driver.internal.core.session.throttling.ConcurrencyLimitingRequestThrottler
     
     # Note: the values below are for illustration purposes only, not prescriptive
@@ -84,7 +84,7 @@ on every node, and make sure it never reaches 0.
 
 ```
 datastax-java-driver {
-  request.throttler {
+  advanced.throttler {
     class = com.datastax.oss.driver.internal.core.session.throttling.RateLimitingRequestThrottler
     
     # Note: the values below are for illustration purposes only, not prescriptive
@@ -114,7 +114,7 @@ Enable the following [metrics](../metrics/) to monitor how the throttler is perf
 
 ```
 datastax-java-driver {
-  metrics.session.enabled = [
+  advanced.metrics.session.enabled = [
     # How long requests are being throttled (exposed as a Timer).
     #
     # This is the time between the start of the session.execute() call, and the moment when the

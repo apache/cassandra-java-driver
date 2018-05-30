@@ -327,14 +327,14 @@ public class SpeculativeExecutionIT {
   private CqlSession buildSession(int maxSpeculativeExecutions, long speculativeDelayMs) {
     return SessionUtils.newSession(
         simulacron,
-        String.format("request.timeout = %d milliseconds", SPECULATIVE_DELAY * 10),
-        "request.default-idempotence = true",
-        "load-balancing-policy.class = com.datastax.oss.driver.api.testinfra.loadbalancing.SortingLoadBalancingPolicy",
-        "request.speculative-execution-policy.class = ConstantSpeculativeExecutionPolicy",
+        String.format("basic.request.timeout = %d milliseconds", SPECULATIVE_DELAY * 10),
+        "basic.request.default-idempotence = true",
+        "basic.load-balancing-policy.class = com.datastax.oss.driver.api.testinfra.loadbalancing.SortingLoadBalancingPolicy",
+        "advanced.speculative-execution-policy.class = ConstantSpeculativeExecutionPolicy",
         String.format(
-            "request.speculative-execution-policy.max-executions = %d", maxSpeculativeExecutions),
+            "advanced.speculative-execution-policy.max-executions = %d", maxSpeculativeExecutions),
         String.format(
-            "request.speculative-execution-policy.delay = %d milliseconds", speculativeDelayMs));
+            "advanced.speculative-execution-policy.delay = %d milliseconds", speculativeDelayMs));
   }
 
   private CqlSession buildSessionWithProfile(
@@ -344,47 +344,48 @@ public class SpeculativeExecutionIT {
       long profile1SpeculativeDelayMs) {
 
     List<String> config = Lists.newArrayList();
-    config.add(String.format("request.timeout = %d milliseconds", SPECULATIVE_DELAY * 10));
-    config.add("request.default-idempotence = true");
+    config.add(String.format("basic.request.timeout = %d milliseconds", SPECULATIVE_DELAY * 10));
+    config.add("basic.request.default-idempotence = true");
     config.add(
-        "load-balancing-policy.class = com.datastax.oss.driver.api.testinfra.loadbalancing.SortingLoadBalancingPolicy");
+        "basic.load-balancing-policy.class = com.datastax.oss.driver.api.testinfra.loadbalancing.SortingLoadBalancingPolicy");
 
     if (defaultMaxSpeculativeExecutions != -1 || defaultSpeculativeDelayMs != -1) {
-      config.add("request.speculative-execution-policy.class = ConstantSpeculativeExecutionPolicy");
+      config.add(
+          "advanced.speculative-execution-policy.class = ConstantSpeculativeExecutionPolicy");
       if (defaultMaxSpeculativeExecutions != -1) {
         config.add(
             String.format(
-                "request.speculative-execution-policy.max-executions = %d",
+                "advanced.speculative-execution-policy.max-executions = %d",
                 defaultMaxSpeculativeExecutions));
       }
       if (defaultSpeculativeDelayMs != -1) {
         config.add(
             String.format(
-                "request.speculative-execution-policy.delay = %d milliseconds",
+                "advanced.speculative-execution-policy.delay = %d milliseconds",
                 defaultSpeculativeDelayMs));
       }
     } else {
-      config.add("request.speculative-execution-policy.class = NoSpeculativeExecutionPolicy");
+      config.add("advanced.speculative-execution-policy.class = NoSpeculativeExecutionPolicy");
     }
 
     if (profile1MaxSpeculativeExecutions != -1 || profile1SpeculativeDelayMs != -1) {
       config.add(
-          "profiles.profile1.request.speculative-execution-policy.class = ConstantSpeculativeExecutionPolicy");
+          "profiles.profile1.advanced.speculative-execution-policy.class = ConstantSpeculativeExecutionPolicy");
       if (profile1MaxSpeculativeExecutions != -1) {
         config.add(
             String.format(
-                "profiles.profile1.request.speculative-execution-policy.max-executions = %d",
+                "profiles.profile1.advanced.speculative-execution-policy.max-executions = %d",
                 profile1MaxSpeculativeExecutions));
       }
       if (profile1SpeculativeDelayMs != -1) {
         config.add(
             String.format(
-                "profiles.profile1.request.speculative-execution-policy.delay = %d milliseconds",
+                "profiles.profile1.advanced.speculative-execution-policy.delay = %d milliseconds",
                 profile1SpeculativeDelayMs));
       }
     } else {
       config.add(
-          "profiles.profile1.request.speculative-execution-policy.class = NoSpeculativeExecutionPolicy");
+          "profiles.profile1.advanced.speculative-execution-policy.class = NoSpeculativeExecutionPolicy");
     }
 
     config.add("profiles.profile2 = {}");

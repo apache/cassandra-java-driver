@@ -35,7 +35,8 @@ public class BoundStatementIT {
   @Rule public CcmRule ccm = CcmRule.getInstance();
 
   @Rule
-  public SessionRule<CqlSession> sessionRule = new SessionRule<>(ccm, "request.page-size = 20");
+  public SessionRule<CqlSession> sessionRule =
+      new SessionRule<>(ccm, "basic.request.page-size = 20");
 
   @Rule public TestName name = new TestName();
 
@@ -55,7 +56,7 @@ public class BoundStatementIT {
   @Test(expected = IllegalStateException.class)
   public void should_not_allow_unset_value_when_protocol_less_than_v4() {
     try (CqlSession v3Session =
-        SessionUtils.newSession(ccm, sessionRule.keyspace(), "protocol.version = V3")) {
+        SessionUtils.newSession(ccm, sessionRule.keyspace(), "advanced.protocol.version = V3")) {
       PreparedStatement prepared = v3Session.prepare("INSERT INTO test2 (k, v0) values (?, ?)");
 
       BoundStatement boundStatement =

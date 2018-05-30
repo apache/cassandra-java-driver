@@ -51,9 +51,9 @@ public class FrameLengthIT {
   public static SessionRule<CqlSession> sessionRule =
       new SessionRule<>(
           simulacron,
-          "load-balancing-policy.class = com.datastax.oss.driver.api.testinfra.loadbalancing.SortingLoadBalancingPolicy",
-          "request.retry-policy.class = \"com.datastax.oss.driver.api.core.connection.FrameLengthIT$AlwaysRetryAbortedPolicy\"",
-          "protocol.max-frame-length = 100 kilobytes");
+          "basic.load-balancing-policy.class = com.datastax.oss.driver.api.testinfra.loadbalancing.SortingLoadBalancingPolicy",
+          "advanced.retry-policy.class = \"com.datastax.oss.driver.api.core.connection.FrameLengthIT$AlwaysRetryAbortedPolicy\"",
+          "advanced.protocol.max-frame-length = 100 kilobytes");
 
   private static final SimpleStatement LARGE_QUERY =
       SimpleStatement.newInstance("select * from foo").setIdempotent(true);

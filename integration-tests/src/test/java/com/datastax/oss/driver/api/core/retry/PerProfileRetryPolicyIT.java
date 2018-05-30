@@ -55,9 +55,9 @@ public class PerProfileRetryPolicyIT {
   public static @ClassRule SessionRule<CqlSession> sessionRule =
       SessionRule.builder(simulacron)
           .withOptions(
-              "load-balancing-policy.class = com.datastax.oss.driver.api.testinfra.loadbalancing.SortingLoadBalancingPolicy",
-              "request.retry-policy.class = DefaultRetryPolicy",
-              "profiles.profile1.request.retry-policy.class = \"com.datastax.oss.driver.api.core.retry.PerProfileRetryPolicyIT$NoRetryPolicy\"",
+              "basic.load-balancing-policy.class = com.datastax.oss.driver.api.testinfra.loadbalancing.SortingLoadBalancingPolicy",
+              "advanced.retry-policy.class = DefaultRetryPolicy",
+              "profiles.profile1.advanced.retry-policy.class = \"com.datastax.oss.driver.api.core.retry.PerProfileRetryPolicyIT$NoRetryPolicy\"",
               "profiles.profile2 {}")
           .build();
 

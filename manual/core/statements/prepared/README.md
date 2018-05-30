@@ -230,10 +230,10 @@ achieve this:
 
 You can customize these strategies through the [configuration](../../configuration/):
 
-* `datastax-java-driver.prepared-statements.prepare-on-all-nodes` controls whether statements are 
-  initially re-prepared on other hosts (step 1 above);
-* `datastax-java-driver.prepared-statements.reprepare-on-up` controls how statements are re-prepared
-  on a node that comes back up (step 2 above).
+* `datastax-java-driver.advanced.prepared-statements.prepare-on-all-nodes` controls whether
+  statements are initially re-prepared on other hosts (step 1 above);
+* `datastax-java-driver.advanced.prepared-statements.reprepare-on-up` controls how statements are
+  re-prepared on a node that comes back up (step 2 above).
 
 Read the [reference configuration](../../configuration/reference/) for a detailed description of each
 of those options.

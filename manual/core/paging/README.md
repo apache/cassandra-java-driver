@@ -10,10 +10,10 @@ The page size specifies how many rows the server will return in each network fra
 in the configuration:
 
 ```
-datastax-java-driver.request.page-size = 5000
+datastax-java-driver.basic.request.page-size = 5000
 ```
 
-It can be changed at runtime ()the new value will be used for requests issued after the change). If
+It can be changed at runtime (the new value will be used for requests issued after the change). If
 you have categories of queries that require different page sizes, use
 [configuration profiles](../configuration#profiles).
 

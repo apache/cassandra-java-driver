@@ -40,10 +40,7 @@ class HeartbeatHandler extends IdleStateHandler {
 
   HeartbeatHandler(DriverConfigProfile defaultConfigProfile) {
     super(
-        (int)
-            defaultConfigProfile
-                .getDuration(DefaultDriverOption.CONNECTION_HEARTBEAT_INTERVAL)
-                .getSeconds(),
+        (int) defaultConfigProfile.getDuration(DefaultDriverOption.HEARTBEAT_INTERVAL).getSeconds(),
         0,
         0);
     this.defaultConfigProfile = defaultConfigProfile;
@@ -56,18 +53,14 @@ class HeartbeatHandler extends IdleStateHandler {
         LOG.warn(
             "Not sending heartbeat because a previous one is still in progress. "
                 + "Check that {} is not lower than {}.",
-            DefaultDriverOption.CONNECTION_HEARTBEAT_INTERVAL.getPath(),
-            DefaultDriverOption.CONNECTION_HEARTBEAT_TIMEOUT.getPath());
+            DefaultDriverOption.HEARTBEAT_INTERVAL.getPath(),
+            DefaultDriverOption.HEARTBEAT_TIMEOUT.getPath());
       } else {
         LOG.debug(
             "Connection was inactive for {} seconds, sending heartbeat",
-            defaultConfigProfile
-                .getDuration(DefaultDriverOption.CONNECTION_HEARTBEAT_INTERVAL)
-                .getSeconds());
+            defaultConfigProfile.getDuration(DefaultDriverOption.HEARTBEAT_INTERVAL).getSeconds());
         long timeoutMillis =
-            defaultConfigProfile
-                .getDuration(DefaultDriverOption.CONNECTION_HEARTBEAT_TIMEOUT)
-                .toMillis();
+            defaultConfigProfile.getDuration(DefaultDriverOption.HEARTBEAT_TIMEOUT).toMillis();
         this.request = new HeartbeatRequest(ctx, timeoutMillis);
         this.request.send();
       }

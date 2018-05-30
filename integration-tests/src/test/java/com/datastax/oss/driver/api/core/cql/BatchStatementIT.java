@@ -324,7 +324,7 @@ public class BatchStatementIT {
   public void should_not_allow_unset_value_when_protocol_less_than_v4() {
     //    CREATE TABLE test (k0 text, k1 int, v int, PRIMARY KEY (k0, k1))
     try (CqlSession v3Session =
-        SessionUtils.newSession(ccm, sessionRule.keyspace(), "protocol.version = V3")) {
+        SessionUtils.newSession(ccm, sessionRule.keyspace(), "advanced.protocol.version = V3")) {
       PreparedStatement prepared =
           v3Session.prepare("INSERT INTO test (k0, k1, v) values (?, ?, ?)");
 

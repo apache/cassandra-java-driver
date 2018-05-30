@@ -73,8 +73,8 @@ public class DefaultRetryPolicyIT {
   public @Rule SessionRule<CqlSession> sessionRule =
       new SessionRule<>(
           simulacron,
-          "request.default-idempotence = true",
-          "load-balancing-policy.class = com.datastax.oss.driver.api.testinfra.loadbalancing.SortingLoadBalancingPolicy");
+          "basic.request.default-idempotence = true",
+          "basic.load-balancing-policy.class = com.datastax.oss.driver.api.testinfra.loadbalancing.SortingLoadBalancingPolicy");
 
   private static String queryStr = "select * from foo";
   private static final SimpleStatement query = SimpleStatement.builder(queryStr).build();

@@ -145,7 +145,7 @@ Set<TokenRange> ranges2 = tokenMap.getTokenRanges(CqlIdentifier.fromCql("ks2"), 
 You can disable token metadata globally from the configuration:
 
 ```
-datastax-java-driver.metadata.token-map.enabled = false
+datastax-java-driver.advanced.metadata.token-map.enabled = false
 ```
 
 If it is disabled at startup, [Metadata#getTokenMap] will stay empty, and token-aware routing won't

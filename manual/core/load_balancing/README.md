@@ -9,7 +9,7 @@ abbreviated LBP) is a central component that determines:
 It is defined in the [configuration](../configuration/):
 
 ```
-datastax-java-driver.load-balancing-policy {
+datastax-java-driver.basic.load-balancing-policy {
   class = com.datastax.oss.driver.internal.core.loadbalancing.DefaultLoadBalancingPolicy
 }
 ```
@@ -96,7 +96,7 @@ Therefore the default policy does not allow remote nodes; it only ever assigns t
 `IGNORED` distance, based on the local datacenter name specified in the configuration:
 
 ```
-datastax-java-driver.load-balancing-policy {
+datastax-java-driver.basic.load-balancing-policy {
   class = com.datastax.oss.driver.internal.core.loadbalancing.DefaultLoadBalancingPolicy
   local-datacenter = datacenter1
 }
@@ -197,7 +197,7 @@ for inclusion in the local DC. If a node doesn't pass this test, it will be set 
 `IGNORED` and the driver will never try to connect to it.
 
 ```
-datastax-java-driver.load-balancing-policy {
+datastax-java-driver.basic.load-balancing-policy {
   class = com.datastax.oss.driver.internal.core.loadbalancing.DefaultLoadBalancingPolicy
   local-datacenter = datacenter1
   filter-class = com.acme.MyNodeFilter
@@ -218,12 +218,12 @@ The load balancing policy can be overridden in [configuration profiles](../confi
 
 ```
 datastax-java-driver {
-  load-balancing-policy {
+  basic.load-balancing-policy {
     class = DefaultLoadBalancingPolicy
   }
   profiles {
     custom-lbp {
-      load-balancing-policy {
+      basic.load-balancing-policy {
         class = CustomLoadBalancingPolicy
       }
     }

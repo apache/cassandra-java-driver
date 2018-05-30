@@ -49,7 +49,7 @@ convenience implementation with empty methods, for when you only need to overrid
 You can disable schema metadata globally from the configuration:
 
 ```
-datastax-java-driver.metadata.schema.enabled = false
+datastax-java-driver.advanced.metadata.schema.enabled = false
 ```
 
 If it is disabled at startup, [Metadata#getKeyspaces] will stay empty. If you disable it at runtime,
@@ -80,7 +80,7 @@ the API), a refresh is triggered immediately.
 You can also limit the metadata to a subset of keyspaces: 
 
 ```
-datastax-java-driver.metadata.schema.refreshed-keyspaces = [ "users", "products" ]
+datastax-java-driver.advanced.metadata.schema.refreshed-keyspaces = [ "users", "products" ]
 ```
 
 If the property is absent or the list is empty, it is interpreted as "all keyspaces".
@@ -158,7 +158,7 @@ UP. If all the versions match, the check succeeds, otherwise it is retried perio
 given timeout. This process is tunable in the driver's configuration:
 
 ```
-datastax-java-driver.connection.control-connection.schema-agreement {
+datastax-java-driver.advanced.control-connection.schema-agreement {
   interval = 200 milliseconds
   timeout = 10 seconds
   warn-on-failure = true

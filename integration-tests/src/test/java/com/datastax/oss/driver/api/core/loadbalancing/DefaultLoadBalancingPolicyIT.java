@@ -58,7 +58,7 @@ public class DefaultLoadBalancingPolicyIT {
   public static SessionRule<CqlSession> sessionRule =
       SessionRule.builder(ccmRule)
           .withKeyspace(false)
-          .withOptions("request.timeout = 30 seconds")
+          .withOptions("basic.request.timeout = 30 seconds")
           .build();
 
   @BeforeClass

@@ -80,10 +80,10 @@ public class NodeStateIT {
   public @Rule SessionRule<CqlSession> sessionRule =
       SessionRule.builder(simulacron)
           .withOptions(
-              "connection.pool.local.size = 2",
-              "connection.reconnection-policy.max-delay = 1 second",
+              "advanced.connection.pool.local.size = 2",
+              "advanced.reconnection-policy.max-delay = 1 second",
               String.format(
-                  "load-balancing-policy.class = \"%s$ConfigurableIgnoresPolicy\"",
+                  "basic.load-balancing-policy.class = \"%s$ConfigurableIgnoresPolicy\"",
                   NodeStateIT.class.getName()))
           .withNodeStateListener(nodeStateListener)
           .build();
@@ -311,8 +311,8 @@ public class NodeStateIT {
             localNodeStateListener,
             null,
             null,
-            "connection.reconnection-policy.base-delay = 1 hour",
-            "connection.reconnection-policy.max-delay = 1 hour")) {
+            "advanced.reconnection-policy.base-delay = 1 hour",
+            "advanced.reconnection-policy.max-delay = 1 hour")) {
 
       BoundNode localSimulacronNode = simulacron.cluster().getNodes().iterator().next();
       assertThat(localSimulacronNode).isNotNull();
@@ -443,10 +443,10 @@ public class NodeStateIT {
             .withNodeStateListener(localNodeStateListener)
             .withConfigLoader(
                 new TestConfigLoader(
-                    "connection.reconnection-policy.base-delay = 1 hour",
-                    "connection.reconnection-policy.max-delay = 1 hour",
+                    "avanced.reconnection-policy.base-delay = 1 hour",
+                    "advanced.reconnection-policy.max-delay = 1 hour",
                     // Ensure we only have the control connection
-                    "connection.pool.local.size = 0"))
+                    "advanced.connection.pool.local.size = 0"))
             .build()) {
 
       Map<InetSocketAddress, Node> nodes = localSession.getMetadata().getNodes();
@@ -477,8 +477,8 @@ public class NodeStateIT {
             .withNodeStateListener(localNodeStateListener)
             .withConfigLoader(
                 new TestConfigLoader(
-                    "connection.reconnection-policy.base-delay = 1 hour",
-                    "connection.reconnection-policy.max-delay = 1 hour"))
+                    "advanced.reconnection-policy.base-delay = 1 hour",
+                    "advanced.reconnection-policy.max-delay = 1 hour"))
             .build()) {
 
       Map<InetSocketAddress, Node> nodes = localSession.getMetadata().getNodes();
@@ -524,8 +524,8 @@ public class NodeStateIT {
                 .withNodeStateListener(localNodeStateListener)
                 .withConfigLoader(
                     new TestConfigLoader(
-                        "connection.reconnection-policy.base-delay = 1 hour",
-                        "connection.reconnection-policy.max-delay = 1 hour"))
+                        "advanced.reconnection-policy.base-delay = 1 hour",
+                        "advanced.reconnection-policy.max-delay = 1 hour"))
                 .build()) {
 
           Map<InetSocketAddress, Node> nodes = localSession.getMetadata().getNodes();

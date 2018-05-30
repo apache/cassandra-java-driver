@@ -38,7 +38,8 @@ public class SimpleStatementIT {
   @ClassRule public static CcmRule ccm = CcmRule.getInstance();
 
   @ClassRule
-  public static SessionRule<CqlSession> cluster = new SessionRule<>(ccm, "request.page-size = 20");
+  public static SessionRule<CqlSession> cluster =
+      new SessionRule<>(ccm, "basic.request.page-size = 20");
 
   @Rule public TestName name = new TestName();
 

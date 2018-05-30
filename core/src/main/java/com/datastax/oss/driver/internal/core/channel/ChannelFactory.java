@@ -149,31 +149,30 @@ public class ChannelFactory {
 
     DriverConfigProfile config = context.config().getDefaultProfile();
 
-    boolean tcpNoDelay = config.getBoolean(DefaultDriverOption.CONNECTION_SOCKET_TCP_NODELAY);
+    boolean tcpNoDelay = config.getBoolean(DefaultDriverOption.SOCKET_TCP_NODELAY);
     bootstrap = bootstrap.option(ChannelOption.TCP_NODELAY, tcpNoDelay);
-    if (config.isDefined(DefaultDriverOption.CONNECTION_SOCKET_KEEP_ALIVE)) {
-      boolean keepAlive = config.getBoolean(DefaultDriverOption.CONNECTION_SOCKET_KEEP_ALIVE);
+    if (config.isDefined(DefaultDriverOption.SOCKET_KEEP_ALIVE)) {
+      boolean keepAlive = config.getBoolean(DefaultDriverOption.SOCKET_KEEP_ALIVE);
       bootstrap = bootstrap.option(ChannelOption.SO_KEEPALIVE, keepAlive);
     }
-    if (config.isDefined(DefaultDriverOption.CONNECTION_SOCKET_REUSE_ADDRESS)) {
-      boolean reuseAddress = config.getBoolean(DefaultDriverOption.CONNECTION_SOCKET_REUSE_ADDRESS);
+    if (config.isDefined(DefaultDriverOption.SOCKET_REUSE_ADDRESS)) {
+      boolean reuseAddress = config.getBoolean(DefaultDriverOption.SOCKET_REUSE_ADDRESS);
       bootstrap = bootstrap.option(ChannelOption.SO_REUSEADDR, reuseAddress);
     }
-    if (config.isDefined(DefaultDriverOption.CONNECTION_SOCKET_LINGER_INTERVAL)) {
-      int lingerInterval = config.getInt(DefaultDriverOption.CONNECTION_SOCKET_LINGER_INTERVAL);
+    if (config.isDefined(DefaultDriverOption.SOCKET_LINGER_INTERVAL)) {
+      int lingerInterval = config.getInt(DefaultDriverOption.SOCKET_LINGER_INTERVAL);
       bootstrap = bootstrap.option(ChannelOption.SO_LINGER, lingerInterval);
     }
-    if (config.isDefined(DefaultDriverOption.CONNECTION_SOCKET_RECEIVE_BUFFER_SIZE)) {
-      int receiveBufferSize =
-          config.getInt(DefaultDriverOption.CONNECTION_SOCKET_RECEIVE_BUFFER_SIZE);
+    if (config.isDefined(DefaultDriverOption.SOCKET_RECEIVE_BUFFER_SIZE)) {
+      int receiveBufferSize = config.getInt(DefaultDriverOption.SOCKET_RECEIVE_BUFFER_SIZE);
       bootstrap =
           bootstrap
               .option(ChannelOption.SO_RCVBUF, receiveBufferSize)
               .option(
                   ChannelOption.RCVBUF_ALLOCATOR, new FixedRecvByteBufAllocator(receiveBufferSize));
     }
-    if (config.isDefined(DefaultDriverOption.CONNECTION_SOCKET_SEND_BUFFER_SIZE)) {
-      int sendBufferSize = config.getInt(DefaultDriverOption.CONNECTION_SOCKET_SEND_BUFFER_SIZE);
+    if (config.isDefined(DefaultDriverOption.SOCKET_SEND_BUFFER_SIZE)) {
+      int sendBufferSize = config.getInt(DefaultDriverOption.SOCKET_SEND_BUFFER_SIZE);
       bootstrap = bootstrap.option(ChannelOption.SO_SNDBUF, sendBufferSize);
     }
 
