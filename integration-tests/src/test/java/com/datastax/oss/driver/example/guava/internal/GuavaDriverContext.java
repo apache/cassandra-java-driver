@@ -61,7 +61,7 @@ public class GuavaDriverContext extends DefaultDriverContext {
   }
 
   @Override
-  public RequestProcessorRegistry requestProcessorRegistry() {
+  public RequestProcessorRegistry buildRequestProcessorRegistry() {
     // Register the typical request processors, except instead of the normal async processors,
     // use GuavaRequestAsyncProcessor to return ListenableFutures in async methods.
     ConcurrentMap<ByteBuffer, DefaultPreparedStatement> preparedStatementsCache =
