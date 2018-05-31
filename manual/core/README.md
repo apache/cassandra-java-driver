@@ -50,8 +50,8 @@ variants that return a `CompletionStage`).
 customization is done through the driver configuration (refer to the
 [corresponding section](configuration/) of this manual for full details).
 
-We recommend that you take a look at the `reference.conf` file bundled with the driver for the list
-of available options, and cross-reference with the sub-sections in this manual for more
+We recommend that you take a look at the [reference configuration](configuration/reference/) for the
+list of available options, and cross-reference with the sub-sections in this manual for more
 explanations.
 
 By default, a session isn't tied to any specific keyspace. You'll need to prefix table names in your

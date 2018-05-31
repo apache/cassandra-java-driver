@@ -36,14 +36,13 @@ datastax-java-driver.metrics {
 }
 ```
 
-To find out which metrics are available, see to the [reference.conf] file corresponding to your
-version of the driver (it can be found in the driver's JAR or in the sources). It contains a
+To find out which metrics are available, see the [reference configuration]. It contains a
 commented-out line for each metric, with detailed explanations on its intended usage.
 
 If you specify a metric that doesn't exist, it will be ignored and a warning will be logged.
 
 The `metrics` section may also contain additional configuration for some specific metrics; again,
-refer to `reference.conf` for more details.
+see the [reference configuration] for more details.
 
 ### Export
 
@@ -129,4 +128,4 @@ CSV files, SLF4J logs and Graphite. Refer to their [manual][Dropwizard manual] f
 
 [Dropwizard Metrics]: http://metrics.dropwizard.io/4.0.0/manual/index.html
 [Dropwizard Manual]: http://metrics.dropwizard.io/4.0.0/getting-started.html#reporting-via-http
-[reference.conf]: https://github.com/datastax/java-driver/blob/4.x/core/src/main/resources/reference.conf
+[reference configuration]: ../configuration/reference/

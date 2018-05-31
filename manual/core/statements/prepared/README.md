@@ -235,8 +235,8 @@ You can customize these strategies through the [configuration](../../configurati
 * `datastax-java-driver.prepared-statements.reprepare-on-up` controls how statements are re-prepared
   on a node that comes back up (step 2 above).
 
-Read the `reference.conf` file provided with the driver for a detailed description of each of those
-options.
+Read the [reference configuration](../../configuration/reference/) for a detailed description of each
+of those options.
 
 ### Avoid preparing 'SELECT *' queries (Cassandra 3 and below)
 
