@@ -6,7 +6,7 @@ it can define *profiles* that customize a set of options for a particular kind o
 The default implementation is based on the Typesafe Config framework. It can be completely
 overridden if needed.
 
-For a complete list of built-in options, see [reference.conf] in the driver sources.
+For a complete list of built-in options, see the [reference configuration][reference.conf].
 
 
 ### Concepts
@@ -447,6 +447,6 @@ config.getDefaultProfile().getInt(MyCustomOption.AWESOMENESS_FACTOR);
 
 [Typesafe Config]: https://github.com/typesafehub/config
 [config standard behavior]: https://github.com/typesafehub/config#standard-behavior
-[reference.conf]: https://github.com/datastax/java-driver/blob/4.x/core/src/main/resources/reference.conf
+[reference.conf]: reference/
 [HOCON]: https://github.com/typesafehub/config/blob/master/HOCON.md
 [API conventions]: ../../api_conventions
