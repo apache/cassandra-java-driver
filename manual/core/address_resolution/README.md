@@ -62,7 +62,7 @@ translation. Write a class that implements [AddressTranslator] with the followin
 
 ```java
 public class MyAddressTranslator implements AddressTranslator {
-  
+
   public PassThroughAddressTranslator(DriverContext context, DriverOption configRoot) {
     // retrieve any required dependency or extra configuration option, otherwise can stay empty
   }
@@ -71,7 +71,7 @@ public class MyAddressTranslator implements AddressTranslator {
   public InetSocketAddress translate(InetSocketAddress address) {
     // your custom translation logic
   }
-  
+
   @Override
   public void close() {
     // free any resources if needed, otherwise can stay empty
@@ -83,15 +83,38 @@ Then reference this class from the [configuration](../configuration/):
 
 ```
 datastax-java-driver.address-translator.class = com.mycompany.MyAddressTranslator
-``` 
+```
 
 Note: the contact points provided while creating the `CqlSession` are not translated, only addresses
 retrieved from or sent by Cassandra nodes are.
 
-<!-- TODO ec2 multi-region translator -->
+### EC2 multi-region
 
+If you deploy both Cassandra and client applications on Amazon EC2, and your cluster spans multiple regions, you'll have
+to configure your Cassandra nodes to broadcast public RPC addresses.
+
+However, this is not always the most cost-effective: if a client and a node are in the same region, it would be cheaper
+to connect over the private IP. Ideally, you'd want to pick the best address in each case.
+
+The driver provides [Ec2MultiRegionAddressTranslator] which does exactly that.  To use it, specify the following in
+the [configuration](../configuration/):
+
+```
+datastax-java-driver.address-translator.class = Ec2MultiRegionAddressTranslator
+```
+
+With this configuration, you keep broadcasting public RPC addresses. But each time the driver connects to a new
+Cassandra node:
+
+* if the node is *in the same EC2 region*, the public IP will be translated to the intra-region private IP;
+* otherwise, it will not be translated.
+
+(To achieve this, `Ec2MultiRegionAddressTranslator` performs a reverse DNS lookup of the origin address, to find the
+domain name of the target instance. Then it performs a forward DNS lookup of the domain name; the EC2 DNS does the
+private/public switch automatically based on location).
 
 [AddressTranslator]: http://docs.datastax.com/en/drivers/java/4.0/com/datastax/oss/driver/api/core/addresstranslation/AddressTranslator.html
+[Ec2MultiRegionAddressTranslator]: http://docs.datastax.com/en/drivers/java/4.0/com/datastax/oss/driver/internal/core/addresstranslation/Ec2MultiRegionAddressTranslator.html
 
 [cassandra.yaml]:        https://docs.datastax.com/en/cassandra/3.x/cassandra/configuration/configCassandra_yaml.html
 [rpc_address]:           https://docs.datastax.com/en/cassandra/3.x/cassandra/configuration/configCassandra_yaml.html?scroll=configCassandra_yaml__rpc_address
