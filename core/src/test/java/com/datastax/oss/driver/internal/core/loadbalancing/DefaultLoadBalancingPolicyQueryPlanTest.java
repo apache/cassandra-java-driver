@@ -187,7 +187,7 @@ public class DefaultLoadBalancingPolicyQueryPlanTest extends DefaultLoadBalancin
   static class NonShufflingPolicy extends DefaultLoadBalancingPolicy {
     NonShufflingPolicy(
         String localDcFromConfig, Predicate<Node> filterFromConfig, DriverContext context) {
-      super(localDcFromConfig, filterFromConfig, context, true);
+      super("test", localDcFromConfig, filterFromConfig, context, true);
     }
 
     @Override
