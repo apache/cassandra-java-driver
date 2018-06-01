@@ -89,11 +89,10 @@ public enum DefaultDriverOption implements DriverOption {
 
   METADATA_SCHEMA_CHANGE_LISTENER_CLASS("advanced.schema-change-listener.class", false),
 
-  COMPRESSOR_CLASS("advanced.compressor.class", false),
-
   ADDRESS_TRANSLATOR_CLASS("advanced.address-translator.class", true),
 
   PROTOCOL_VERSION("advanced.protocol.version", false),
+  PROTOCOL_COMPRESSION("advanced.protocol.compression", false),
   PROTOCOL_MAX_FRAME_LENGTH("advanced.protocol.max-frame-length", true),
 
   REQUEST_WARN_IF_SET_KEYSPACE("advanced.request.warn-if-set-keyspace", true),

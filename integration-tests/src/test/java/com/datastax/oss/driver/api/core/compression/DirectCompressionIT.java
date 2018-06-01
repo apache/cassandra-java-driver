@@ -56,7 +56,7 @@ public class DirectCompressionIT {
    */
   @Test
   public void should_execute_queries_with_snappy_compression() throws Exception {
-    createAndCheckCluster("advanced.compressor.class = SnappyCompressor");
+    createAndCheckCluster("advanced.protocol.compression = snappy");
   }
 
   /**
@@ -68,7 +68,7 @@ public class DirectCompressionIT {
    */
   @Test
   public void should_execute_queries_with_lz4_compression() throws Exception {
-    createAndCheckCluster("advanced.compressor.class = Lz4Compressor");
+    createAndCheckCluster("advanced.protocol.compression = lz4");
   }
 
   private void createAndCheckCluster(String compressorOption) {
