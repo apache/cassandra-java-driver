@@ -4,6 +4,7 @@
 
 ### 4.0.0-alpha4 (in progress)
 
+- [improvement] JAVA-1825: Add remaining Typesafe config primitive types to DriverConfigProfile
 - [new feature] JAVA-1846: Add ConstantReconnectionPolicy
 - [improvement] JAVA-1824: Make policies overridable in profiles
 - [bug] JAVA-1569: Allow null to be used in positional and named values in statements
