@@ -2,6 +2,12 @@ language: java
 jdk:
 - oraclejdk8
 sudo: false
+before_install:
+  - git clone --depth 1 https://github.com/datastax/native-protocol.git
+  - pushd native-protocol
+  - mvn install -Dmaven.javadoc.skip=true -B -V
+  - popd
+  - rm -rf native-protocol
 cache:
   directories:
   - $HOME/.m2
