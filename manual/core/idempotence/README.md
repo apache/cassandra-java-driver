@@ -12,18 +12,15 @@ For example:
   
 Idempotence matters because the driver sometimes re-runs requests automatically:
 
-* **retries**: if we're waiting for a response from a node and the connection gets dropped, the
-  default retry policy automatically retries on another node. But we can't know what went wrong with
-  the first node: maybe it went down, or maybe it was just a network issue; in any case, it might
-  have applied the changes already. Therefore non-idempotent requests are never retried.
+* [retries](../retries): if we're waiting for a response from a node and the connection gets
+  dropped, the default retry policy automatically retries on another node. But we can't know what
+  went wrong with the first node: maybe it went down, or maybe it was just a network issue; in any
+  case, it might have applied the changes already. Therefore non-idempotent requests are never
+  retried.
 
-  <!-- TODO link to retry section when available -->
-  
-* **speculative executions**: if they are enabled and a node takes too long to respond, the driver
-  queries another node to get the response faster. But maybe both nodes will eventually apply the
-  changes. Therefore non-idempotent requests are never speculatively executed.
-
-  <!-- TODO link to specex section when available -->
+* [speculative executions](../speculative_execution): if they are enabled and a node takes too long
+  to respond, the driver queries another node to get the response faster. But maybe both nodes will
+  eventually apply the changes. Therefore non-idempotent requests are never speculatively executed.
 
 In most cases, you need to flag your statements manually:
 
