@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.datastax.oss.driver.api.core.retry;
+package com.datastax.oss.driver.internal.core.retry;
 
 import static com.datastax.oss.simulacron.common.codec.ConsistencyLevel.LOCAL_QUORUM;
 import static com.datastax.oss.simulacron.common.codec.WriteType.BATCH_LOG;
@@ -25,7 +25,14 @@ import static com.datastax.oss.simulacron.common.stubbing.PrimeDsl.when;
 import static com.datastax.oss.simulacron.common.stubbing.PrimeDsl.writeTimeout;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.after;
+import static org.mockito.Mockito.timeout;
 
+import ch.qos.logback.classic.Level;
+import ch.qos.logback.classic.Logger;
+import ch.qos.logback.classic.spi.ILoggingEvent;
+import ch.qos.logback.core.Appender;
 import com.datastax.oss.driver.api.core.AllNodesFailedException;
 import com.datastax.oss.driver.api.core.CqlSession;
 import com.datastax.oss.driver.api.core.DefaultConsistencyLevel;
@@ -55,6 +62,10 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.junit.runner.RunWith;
+import org.mockito.ArgumentCaptor;
+import org.mockito.Mockito;
+import org.slf4j.LoggerFactory;
+import org.slf4j.helpers.MessageFormatter;
 
 @Category(ParallelizableTests.class)
 @RunWith(DataProviderRunner.class)
@@ -71,11 +82,32 @@ public class DefaultRetryPolicyIT {
   private static String queryStr = "select * from foo";
   private static final SimpleStatement query = SimpleStatement.builder(queryStr).build();
 
+  private ArgumentCaptor<ILoggingEvent> loggingEventCaptor =
+      ArgumentCaptor.forClass(ILoggingEvent.class);
+
+  @SuppressWarnings("unchecked")
+  private Appender<ILoggingEvent> appender = (Appender<ILoggingEvent>) Mockito.mock(Appender.class);
+
+  private Logger logger;
+  private Level oldLevel;
+  private String logPrefix;
+
   @Before
-  public void clear() {
+  public void setup() {
+    logger = (Logger) LoggerFactory.getLogger(DefaultRetryPolicy.class);
+    oldLevel = logger.getLevel();
+    logger.setLevel(Level.TRACE);
+    logger.addAppender(appender);
+    // the log prefix we expect in retry logging messages.
+    logPrefix = sessionRule.session().getName() + "|default";
     // clear activity logs and primes between tests since simulacron instance is shared.
     simulacron.cluster().clearLogs();
     simulacron.cluster().clearPrimes(true);
+  }
+
+  public void teardown() {
+    logger.detachAppender(appender);
+    logger.setLevel(oldLevel);
   }
 
   private void assertQueryCount(int expected) {
@@ -122,6 +154,9 @@ public class DefaultRetryPolicyIT {
 
     // should not have been retried.
     assertQueryCount(1);
+
+    // expect no logging messages since there was no retry
+    Mockito.verify(appender, after(500).times(0)).doAppend(any(ILoggingEvent.class));
   }
 
   @Test
@@ -145,6 +180,9 @@ public class DefaultRetryPolicyIT {
 
     // should not have been retried.
     assertQueryCount(1);
+
+    // expect no logging messages since there was no retry
+    Mockito.verify(appender, after(500).times(0)).doAppend(any(ILoggingEvent.class));
   }
 
   @Test
@@ -169,6 +207,19 @@ public class DefaultRetryPolicyIT {
     // there should have been a retry, and it should have been executed on the same host.
     assertQueryCount(2);
     assertQueryCount(0, 2);
+
+    // verify log event was emitted as expected
+    Mockito.verify(appender, timeout(500)).doAppend(loggingEventCaptor.capture());
+    assertThat(loggingEventCaptor.getValue().getFormattedMessage())
+        .isEqualTo(
+            expectedMessage(
+                DefaultRetryPolicy.RETRYING_ON_READ_TIMEOUT,
+                logPrefix,
+                "LOCAL_QUORUM",
+                3,
+                3,
+                false,
+                0));
   }
 
   @Test
@@ -201,6 +252,11 @@ public class DefaultRetryPolicyIT {
     assertQueryCount(0, 1);
     // expected retry on node 1.
     assertQueryCount(1, 1);
+
+    // verify log event was emitted as expected
+    Mockito.verify(appender, timeout(500)).doAppend(loggingEventCaptor.capture());
+    assertThat(loggingEventCaptor.getValue().getFormattedMessage())
+        .isEqualTo(expectedMessage(DefaultRetryPolicy.RETRYING_ON_ABORTED, logPrefix, 0));
   }
 
   @Test
@@ -230,6 +286,12 @@ public class DefaultRetryPolicyIT {
     assertQueryCount(1, 1);
     // expected query on node 2.
     assertQueryCount(2, 1);
+
+    // verify log event was emitted for each host as expected
+    Mockito.verify(appender, after(500).times(3)).doAppend(loggingEventCaptor.capture());
+    // final log message should have 2 retries
+    assertThat(loggingEventCaptor.getValue().getFormattedMessage())
+        .isEqualTo(expectedMessage(DefaultRetryPolicy.RETRYING_ON_ABORTED, logPrefix, 2));
   }
 
   @Test
@@ -259,6 +321,9 @@ public class DefaultRetryPolicyIT {
 
     // should not have been retried.
     assertQueryCount(1);
+
+    // expect no logging messages since there was no retry
+    Mockito.verify(appender, after(500).times(0)).doAppend(any(ILoggingEvent.class));
   }
 
   @Test
@@ -284,6 +349,19 @@ public class DefaultRetryPolicyIT {
     // there should have been a retry, and it should have been executed on the same host.
     assertQueryCount(2);
     assertQueryCount(0, 2);
+
+    // verify log event was emitted as expected
+    Mockito.verify(appender, timeout(500)).doAppend(loggingEventCaptor.capture());
+    assertThat(loggingEventCaptor.getValue().getFormattedMessage())
+        .isEqualTo(
+            expectedMessage(
+                DefaultRetryPolicy.RETRYING_ON_WRITE_TIMEOUT,
+                logPrefix,
+                "LOCAL_QUORUM",
+                "BATCH_LOG",
+                3,
+                1,
+                0));
   }
 
   /**
@@ -321,6 +399,9 @@ public class DefaultRetryPolicyIT {
 
     // should not have been retried.
     assertQueryCount(1);
+
+    // expect no logging messages since there was no retry
+    Mockito.verify(appender, after(500).times(0)).doAppend(any(ILoggingEvent.class));
   }
 
   @Test
@@ -347,6 +428,9 @@ public class DefaultRetryPolicyIT {
 
     // should not have been retried.
     assertQueryCount(1);
+
+    // expect no logging messages since there was no retry
+    Mockito.verify(appender, after(500).times(0)).doAppend(any(ILoggingEvent.class));
   }
 
   @Test
@@ -372,6 +456,13 @@ public class DefaultRetryPolicyIT {
     assertQueryCount(2);
     assertQueryCount(0, 1);
     assertQueryCount(1, 1);
+
+    // verify log event was emitted as expected
+    Mockito.verify(appender, timeout(500)).doAppend(loggingEventCaptor.capture());
+    assertThat(loggingEventCaptor.getValue().getFormattedMessage())
+        .isEqualTo(
+            expectedMessage(
+                DefaultRetryPolicy.RETRYING_ON_UNAVAILABLE, logPrefix, "LOCAL_QUORUM", 3, 0, 0));
   }
 
   @Test
@@ -425,6 +516,12 @@ public class DefaultRetryPolicyIT {
     assertQueryCount(1, 1);
     // expected query on node 2.
     assertQueryCount(2, 1);
+
+    // verify log event was emitted for each host as expected
+    Mockito.verify(appender, after(500).times(3)).doAppend(loggingEventCaptor.capture());
+    // final log message should have 2 retries
+    assertThat(loggingEventCaptor.getValue().getFormattedMessage())
+        .isEqualTo(expectedMessage(DefaultRetryPolicy.RETRYING_ON_ERROR, logPrefix, 2));
   }
 
   @Test
@@ -447,5 +544,12 @@ public class DefaultRetryPolicyIT {
     assertQueryCount(1);
     // expected query on node 0.
     assertQueryCount(0, 1);
+
+    // expect no logging messages since there was no retry
+    Mockito.verify(appender, after(500).times(0)).doAppend(any(ILoggingEvent.class));
+  }
+
+  private String expectedMessage(String template, Object... args) {
+    return MessageFormatter.arrayFormat(template, args).getMessage();
   }
 }

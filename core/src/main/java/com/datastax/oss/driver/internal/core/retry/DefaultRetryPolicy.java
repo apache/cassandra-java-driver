@@ -27,7 +27,10 @@ import com.datastax.oss.driver.api.core.servererrors.ReadFailureException;
 import com.datastax.oss.driver.api.core.servererrors.WriteFailureException;
 import com.datastax.oss.driver.api.core.servererrors.WriteType;
 import com.datastax.oss.driver.api.core.session.Request;
+import com.datastax.oss.driver.shaded.guava.common.annotations.VisibleForTesting;
 import net.jcip.annotations.ThreadSafe;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * The default retry policy. This is a very conservative implementation: it triggers a maximum of
@@ -37,10 +40,36 @@ import net.jcip.annotations.ThreadSafe;
 @ThreadSafe
 public class DefaultRetryPolicy implements RetryPolicy {
 
+  private static final Logger LOG = LoggerFactory.getLogger(DefaultRetryPolicy.class);
+
+  @VisibleForTesting
+  static final String RETRYING_ON_READ_TIMEOUT =
+      "[{}] Retrying on read timeout on same host (consistency: {}, required responses: {}, "
+          + "received responses: {}, data retrieved: {}, retries: {})";
+
+  @VisibleForTesting
+  static final String RETRYING_ON_WRITE_TIMEOUT =
+      "[{}] Retrying on write timeout on same host (consistency: {}, write type: {}, "
+          + "required acknowledgments: {}, received acknowledgments: {}, retries: {})";
+
+  @VisibleForTesting
+  static final String RETRYING_ON_UNAVAILABLE =
+      "[{}] Retrying on unavailable exception on next host (consistency: {}, "
+          + "required replica: {}, alive replica: {}, retries: {})";
+
+  @VisibleForTesting
+  static final String RETRYING_ON_ABORTED =
+      "[{}] Retrying on aborted request on next host (retries: {})";
+
+  @VisibleForTesting
+  static final String RETRYING_ON_ERROR = "[{}] Retrying on node error on next host (retries: {})";
+
+  private final String logPrefix;
+
   public DefaultRetryPolicy(
       @SuppressWarnings("unused") DriverContext context,
       @SuppressWarnings("unused") String profileName) {
-    // nothing to do
+    this.logPrefix = (context != null ? context.sessionName() : null) + "|" + profileName;
   }
 
   /**
@@ -64,9 +93,16 @@ public class DefaultRetryPolicy implements RetryPolicy {
       boolean dataPresent,
       int retryCount) {
 
-    return (retryCount == 0 && received >= blockFor && !dataPresent)
-        ? RetryDecision.RETRY_SAME
-        : RetryDecision.RETHROW;
+    RetryDecision decision =
+        (retryCount == 0 && received >= blockFor && !dataPresent)
+            ? RetryDecision.RETRY_SAME
+            : RetryDecision.RETHROW;
+
+    if (decision == RetryDecision.RETRY_SAME && LOG.isTraceEnabled()) {
+      LOG.trace(RETRYING_ON_READ_TIMEOUT, logPrefix, cl, blockFor, received, false, retryCount);
+    }
+
+    return decision;
   }
 
   /**
@@ -90,9 +126,16 @@ public class DefaultRetryPolicy implements RetryPolicy {
       int received,
       int retryCount) {
 
-    return (retryCount == 0 && writeType == DefaultWriteType.BATCH_LOG)
-        ? RetryDecision.RETRY_SAME
-        : RetryDecision.RETHROW;
+    RetryDecision decision =
+        (retryCount == 0 && writeType == DefaultWriteType.BATCH_LOG)
+            ? RetryDecision.RETRY_SAME
+            : RetryDecision.RETHROW;
+
+    if (decision == RetryDecision.RETRY_SAME && LOG.isTraceEnabled()) {
+      LOG.trace(
+          RETRYING_ON_WRITE_TIMEOUT, logPrefix, cl, writeType, blockFor, received, retryCount);
+    }
+    return decision;
   }
 
   /**
@@ -110,7 +153,13 @@ public class DefaultRetryPolicy implements RetryPolicy {
   public RetryDecision onUnavailable(
       Request request, ConsistencyLevel cl, int required, int alive, int retryCount) {
 
-    return (retryCount == 0) ? RetryDecision.RETRY_NEXT : RetryDecision.RETHROW;
+    RetryDecision decision = (retryCount == 0) ? RetryDecision.RETRY_NEXT : RetryDecision.RETHROW;
+
+    if (decision == RetryDecision.RETRY_NEXT && LOG.isTraceEnabled()) {
+      LOG.trace(RETRYING_ON_UNAVAILABLE, logPrefix, cl, required, alive, retryCount);
+    }
+
+    return decision;
   }
 
   /**
@@ -121,9 +170,17 @@ public class DefaultRetryPolicy implements RetryPolicy {
    */
   @Override
   public RetryDecision onRequestAborted(Request request, Throwable error, int retryCount) {
-    return (error instanceof ClosedConnectionException || error instanceof HeartbeatException)
-        ? RetryDecision.RETRY_NEXT
-        : RetryDecision.RETHROW;
+
+    RetryDecision decision =
+        (error instanceof ClosedConnectionException || error instanceof HeartbeatException)
+            ? RetryDecision.RETRY_NEXT
+            : RetryDecision.RETHROW;
+
+    if (decision == RetryDecision.RETRY_NEXT && LOG.isTraceEnabled()) {
+      LOG.trace(RETRYING_ON_ABORTED, logPrefix, retryCount, error);
+    }
+
+    return decision;
   }
 
   /**
@@ -135,9 +192,17 @@ public class DefaultRetryPolicy implements RetryPolicy {
   @Override
   public RetryDecision onErrorResponse(
       Request request, CoordinatorException error, int retryCount) {
-    return (error instanceof ReadFailureException || error instanceof WriteFailureException)
-        ? RetryDecision.RETHROW
-        : RetryDecision.RETRY_NEXT;
+
+    RetryDecision decision =
+        (error instanceof ReadFailureException || error instanceof WriteFailureException)
+            ? RetryDecision.RETHROW
+            : RetryDecision.RETRY_NEXT;
+
+    if (decision == RetryDecision.RETRY_NEXT && LOG.isTraceEnabled()) {
+      LOG.trace(RETRYING_ON_ERROR, logPrefix, retryCount, error);
+    }
+
+    return decision;
   }
 
   @Override

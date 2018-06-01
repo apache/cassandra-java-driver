@@ -4,6 +4,7 @@
 
 ### 4.0.0-alpha4 (in progress)
 
+- [improvement] JAVA-1848: Add logs to DefaultRetryPolicy
 - [new feature] JAVA-1832: Add Ec2MultiRegionAddressTranslator
 - [improvement] JAVA-1825: Add remaining Typesafe config primitive types to DriverConfigProfile
 - [new feature] JAVA-1846: Add ConstantReconnectionPolicy
