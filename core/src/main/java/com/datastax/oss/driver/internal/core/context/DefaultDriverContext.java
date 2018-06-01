@@ -59,6 +59,8 @@ import com.datastax.oss.driver.internal.core.metrics.DropwizardMetricsFactory;
 import com.datastax.oss.driver.internal.core.metrics.MetricsFactory;
 import com.datastax.oss.driver.internal.core.pool.ChannelPoolFactory;
 import com.datastax.oss.driver.internal.core.protocol.ByteBufPrimitiveCodec;
+import com.datastax.oss.driver.internal.core.protocol.Lz4Compressor;
+import com.datastax.oss.driver.internal.core.protocol.SnappyCompressor;
 import com.datastax.oss.driver.internal.core.servererrors.DefaultWriteTypeRegistry;
 import com.datastax.oss.driver.internal.core.servererrors.WriteTypeRegistry;
 import com.datastax.oss.driver.internal.core.session.PoolManager;
@@ -311,13 +313,22 @@ public class DefaultDriverContext implements InternalDriverContext {
 
   @SuppressWarnings("unchecked")
   protected Compressor<ByteBuf> buildCompressor() {
-    return (Compressor<ByteBuf>)
-        Reflection.buildFromConfig(
-                this,
-                DefaultDriverOption.COMPRESSOR_CLASS,
-                Compressor.class,
-                "com.datastax.oss.driver.internal.core.protocol")
-            .orElse(Compressor.none());
+    DriverConfigProfile defaultProfile = config().getDefaultProfile();
+    if (defaultProfile.isDefined(DefaultDriverOption.PROTOCOL_COMPRESSION)) {
+      String name = defaultProfile.getString(DefaultDriverOption.PROTOCOL_COMPRESSION);
+      if (name.equalsIgnoreCase("lz4")) {
+        return new Lz4Compressor(this);
+      } else if (name.equalsIgnoreCase("snappy")) {
+        return new SnappyCompressor(this);
+      } else {
+        throw new IllegalArgumentException(
+            String.format(
+                "Unsupported compression algorithm '%s' (from configuration option %s)",
+                name, DefaultDriverOption.PROTOCOL_COMPRESSION.getPath()));
+      }
+    } else {
+      return Compressor.none();
+    }
   }
 
   protected FrameCodec<ByteBuf> buildFrameCodec() {
