@@ -58,9 +58,33 @@ public interface DriverConfigProfile {
 
   DriverConfigProfile withBoolean(DriverOption option, boolean value);
 
+  List<Boolean> getBooleanList(DriverOption option);
+
+  DriverConfigProfile withBooleanList(DriverOption option, List<Boolean> value);
+
   int getInt(DriverOption option);
 
   DriverConfigProfile withInt(DriverOption option, int value);
+
+  List<Integer> getIntList(DriverOption option);
+
+  DriverConfigProfile withIntList(DriverOption option, List<Integer> value);
+
+  long getLong(DriverOption option);
+
+  DriverConfigProfile withLong(DriverOption option, long value);
+
+  List<Long> getLongList(DriverOption option);
+
+  DriverConfigProfile withLongList(DriverOption option, List<Long> value);
+
+  double getDouble(DriverOption option);
+
+  DriverConfigProfile withDouble(DriverOption option, double value);
+
+  List<Double> getDoubleList(DriverOption option);
+
+  DriverConfigProfile withDoubleList(DriverOption option, List<Double> value);
 
   String getString(DriverOption option);
 
@@ -74,14 +98,32 @@ public interface DriverConfigProfile {
 
   DriverConfigProfile withStringMap(DriverOption option, Map<String, String> value);
 
-  /** Returns a size in bytes. */
+  /**
+   * @return a size in bytes. This is separate from {@link #getLong(DriverOption)}, in case
+   *     implementations want to allow users to provide sizes in a more human-readable way, for
+   *     example "256 MB".
+   */
   long getBytes(DriverOption option);
 
+  /** @see #getBytes(DriverOption) */
   DriverConfigProfile withBytes(DriverOption option, long value);
+
+  /** @see #getBytes(DriverOption) */
+  List<Long> getBytesList(DriverOption option);
+
+  /** @see #getBytes(DriverOption) */
+  DriverConfigProfile withBytesList(DriverOption option, List<Long> value);
 
   Duration getDuration(DriverOption option);
 
   DriverConfigProfile withDuration(DriverOption option, Duration value);
+
+  List<Duration> getDurationList(DriverOption option);
+
+  DriverConfigProfile withDurationList(DriverOption option, List<Duration> value);
+
+  /** Unsets an option. */
+  DriverConfigProfile without(DriverOption option);
 
   /**
    * Returns a representation of all the child options under a given option.

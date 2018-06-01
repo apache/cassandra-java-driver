@@ -103,6 +103,16 @@ public class TypesafeDriverConfigTest {
   }
 
   @Test
+  public void should_create_derived_profile_unsetting_option() {
+    TypesafeDriverConfig config = parse("required_int = 42\n optional_int = 43");
+    DriverConfigProfile base = config.getDefaultProfile();
+    DriverConfigProfile derived = base.without(MockOptions.OPTIONAL_INT);
+
+    assertThat(base.getInt(MockOptions.OPTIONAL_INT)).isEqualTo(43);
+    assertThat(derived.isDefined(MockOptions.OPTIONAL_INT)).isFalse();
+  }
+
+  @Test
   public void should_fetch_string_map() {
     TypesafeDriverConfig config =
         parse(

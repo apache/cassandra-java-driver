@@ -68,6 +68,16 @@ public abstract class TypesafeDriverConfigProfile implements DriverConfigProfile
   }
 
   @Override
+  public List<Boolean> getBooleanList(DriverOption option) {
+    return getCached(option.getPath(), getEffectiveOptions()::getBooleanList);
+  }
+
+  @Override
+  public DriverConfigProfile withBooleanList(DriverOption option, List<Boolean> value) {
+    return with(option, value);
+  }
+
+  @Override
   public int getInt(DriverOption option) {
     return getCached(option.getPath(), getEffectiveOptions()::getInt);
   }
@@ -78,12 +88,52 @@ public abstract class TypesafeDriverConfigProfile implements DriverConfigProfile
   }
 
   @Override
-  public Duration getDuration(DriverOption option) {
-    return getCached(option.getPath(), getEffectiveOptions()::getDuration);
+  public List<Integer> getIntList(DriverOption option) {
+    return getCached(option.getPath(), getEffectiveOptions()::getIntList);
   }
 
   @Override
-  public DriverConfigProfile withDuration(DriverOption option, Duration value) {
+  public DriverConfigProfile withIntList(DriverOption option, List<Integer> value) {
+    return with(option, value);
+  }
+
+  @Override
+  public long getLong(DriverOption option) {
+    return getCached(option.getPath(), getEffectiveOptions()::getLong);
+  }
+
+  @Override
+  public DriverConfigProfile withLong(DriverOption option, long value) {
+    return with(option, value);
+  }
+
+  @Override
+  public List<Long> getLongList(DriverOption option) {
+    return getCached(option.getPath(), getEffectiveOptions()::getLongList);
+  }
+
+  @Override
+  public DriverConfigProfile withLongList(DriverOption option, List<Long> value) {
+    return with(option, value);
+  }
+
+  @Override
+  public double getDouble(DriverOption option) {
+    return getCached(option.getPath(), getEffectiveOptions()::getDouble);
+  }
+
+  @Override
+  public DriverConfigProfile withDouble(DriverOption option, double value) {
+    return with(option, value);
+  }
+
+  @Override
+  public List<Double> getDoubleList(DriverOption option) {
+    return getCached(option.getPath(), getEffectiveOptions()::getDoubleList);
+  }
+
+  @Override
+  public DriverConfigProfile withDoubleList(DriverOption option, List<Double> value) {
     return with(option, value);
   }
 
@@ -142,6 +192,41 @@ public abstract class TypesafeDriverConfigProfile implements DriverConfigProfile
   @Override
   public DriverConfigProfile withBytes(DriverOption option, long value) {
     return with(option, value);
+  }
+
+  @Override
+  public List<Long> getBytesList(DriverOption option) {
+    return getCached(option.getPath(), getEffectiveOptions()::getBytesList);
+  }
+
+  @Override
+  public DriverConfigProfile withBytesList(DriverOption option, List<Long> value) {
+    return with(option, value);
+  }
+
+  @Override
+  public Duration getDuration(DriverOption option) {
+    return getCached(option.getPath(), getEffectiveOptions()::getDuration);
+  }
+
+  @Override
+  public DriverConfigProfile withDuration(DriverOption option, Duration value) {
+    return with(option, value);
+  }
+
+  @Override
+  public List<Duration> getDurationList(DriverOption option) {
+    return getCached(option.getPath(), getEffectiveOptions()::getDurationList);
+  }
+
+  @Override
+  public DriverConfigProfile withDurationList(DriverOption option, List<Duration> value) {
+    return with(option, value);
+  }
+
+  @Override
+  public DriverConfigProfile without(DriverOption option) {
+    return with(option, null);
   }
 
   @Override
