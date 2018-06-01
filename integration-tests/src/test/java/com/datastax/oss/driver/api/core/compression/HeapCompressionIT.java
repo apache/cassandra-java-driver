@@ -22,7 +22,7 @@ import com.datastax.oss.driver.api.core.CqlSession;
 import com.datastax.oss.driver.api.core.cql.ResultSet;
 import com.datastax.oss.driver.api.core.cql.Row;
 import com.datastax.oss.driver.api.core.cql.SimpleStatement;
-import com.datastax.oss.driver.api.testinfra.ccm.CcmRule;
+import com.datastax.oss.driver.api.testinfra.ccm.CustomCcmRule;
 import com.datastax.oss.driver.api.testinfra.session.SessionRule;
 import com.datastax.oss.driver.api.testinfra.session.SessionUtils;
 import com.datastax.oss.driver.categories.IsolatedTests;
@@ -39,7 +39,7 @@ public class HeapCompressionIT {
     System.setProperty("io.netty.noUnsafe", "true");
   }
 
-  @ClassRule public static CcmRule ccmRule = CcmRule.getInstance();
+  @ClassRule public static CustomCcmRule ccmRule = CustomCcmRule.builder().build();
 
   @ClassRule
   public static SessionRule<CqlSession> schemaSessionRule =

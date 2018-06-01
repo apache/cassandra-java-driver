@@ -16,6 +16,7 @@
 package com.datastax.oss.driver.api.testinfra.session;
 
 import com.datastax.oss.driver.api.core.CqlIdentifier;
+import com.datastax.oss.driver.api.core.NoNodeAvailableException;
 import com.datastax.oss.driver.api.core.config.DriverConfigProfile;
 import com.datastax.oss.driver.api.core.cql.SimpleStatement;
 import com.datastax.oss.driver.api.core.cql.Statement;
@@ -116,7 +117,13 @@ public class SessionRule<SessionT extends Session> extends ExternalResource {
   @Override
   protected void after() {
     if (keyspace != null) {
-      SessionUtils.dropKeyspace(session, keyspace, slowProfile);
+      try {
+        SessionUtils.dropKeyspace(session, keyspace, slowProfile);
+      } catch (NoNodeAvailableException e) {
+        // Rule ordering is not deterministic, so the cassandraResource might have shut down
+        // already. Dropping the keyspace is not critical since we're throwing the cluster away, so
+        // just ignore.
+      }
     }
     session.close();
   }
