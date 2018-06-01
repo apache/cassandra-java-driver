@@ -18,15 +18,20 @@ package com.datastax.oss.driver.api.core.context;
 import com.datastax.oss.driver.api.core.addresstranslation.AddressTranslator;
 import com.datastax.oss.driver.api.core.auth.AuthProvider;
 import com.datastax.oss.driver.api.core.config.DriverConfig;
+import com.datastax.oss.driver.api.core.config.DriverConfigLoader;
 import com.datastax.oss.driver.api.core.config.DriverConfigProfile;
 import com.datastax.oss.driver.api.core.connection.ReconnectionPolicy;
 import com.datastax.oss.driver.api.core.detach.AttachmentPoint;
 import com.datastax.oss.driver.api.core.loadbalancing.LoadBalancingPolicy;
+import com.datastax.oss.driver.api.core.metadata.NodeStateListener;
+import com.datastax.oss.driver.api.core.metadata.schema.SchemaChangeListener;
 import com.datastax.oss.driver.api.core.retry.RetryPolicy;
 import com.datastax.oss.driver.api.core.session.Session;
+import com.datastax.oss.driver.api.core.session.throttling.RequestThrottler;
 import com.datastax.oss.driver.api.core.specex.SpeculativeExecutionPolicy;
 import com.datastax.oss.driver.api.core.ssl.SslEngineFactory;
 import com.datastax.oss.driver.api.core.time.TimestampGenerator;
+import com.datastax.oss.driver.api.core.tracker.RequestTracker;
 import java.util.Map;
 import java.util.Optional;
 
@@ -40,6 +45,8 @@ public interface DriverContext extends AttachmentPoint {
   String sessionName();
 
   DriverConfig config();
+
+  DriverConfigLoader configLoader();
 
   Map<String, LoadBalancingPolicy> loadBalancingPolicies();
 
@@ -78,4 +85,12 @@ public interface DriverContext extends AttachmentPoint {
 
   /** The SSL engine factory, if SSL was configured. */
   Optional<SslEngineFactory> sslEngineFactory();
+
+  RequestTracker requestTracker();
+
+  RequestThrottler requestThrottler();
+
+  NodeStateListener nodeStateListener();
+
+  SchemaChangeListener schemaChangeListener();
 }

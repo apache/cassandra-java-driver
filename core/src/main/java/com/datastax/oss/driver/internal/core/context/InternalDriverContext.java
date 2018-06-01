@@ -15,14 +15,9 @@
  */
 package com.datastax.oss.driver.internal.core.context;
 
-import com.datastax.oss.driver.api.core.config.DriverConfigLoader;
 import com.datastax.oss.driver.api.core.context.DriverContext;
 import com.datastax.oss.driver.api.core.metadata.Node;
-import com.datastax.oss.driver.api.core.metadata.NodeStateListener;
-import com.datastax.oss.driver.api.core.metadata.schema.SchemaChangeListener;
 import com.datastax.oss.driver.api.core.session.SessionBuilder;
-import com.datastax.oss.driver.api.core.session.throttling.RequestThrottler;
-import com.datastax.oss.driver.api.core.tracker.RequestTracker;
 import com.datastax.oss.driver.internal.core.ConsistencyLevelRegistry;
 import com.datastax.oss.driver.internal.core.ProtocolVersionRegistry;
 import com.datastax.oss.driver.internal.core.channel.ChannelFactory;
@@ -82,8 +77,6 @@ public interface InternalDriverContext extends DriverContext {
 
   RequestProcessorRegistry requestProcessorRegistry();
 
-  DriverConfigLoader configLoader();
-
   SchemaQueriesFactory schemaQueriesFactory();
 
   SchemaParserFactory schemaParserFactory();
@@ -95,14 +88,6 @@ public interface InternalDriverContext extends DriverContext {
   PoolManager poolManager();
 
   MetricsFactory metricsFactory();
-
-  RequestThrottler requestThrottler();
-
-  NodeStateListener nodeStateListener();
-
-  SchemaChangeListener schemaChangeListener();
-
-  RequestTracker requestTracker();
 
   /**
    * This is the filter from {@link SessionBuilder#withNodeFilter(String, Predicate)}. If the filter
