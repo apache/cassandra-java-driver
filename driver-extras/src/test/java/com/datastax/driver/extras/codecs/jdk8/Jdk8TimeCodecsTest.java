@@ -28,6 +28,7 @@ import org.testng.annotations.Test;
 
 import java.time.Instant;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.ZoneId;
 import java.time.ZoneOffset;
@@ -70,6 +71,7 @@ public class Jdk8TimeCodecsTest extends CCMTestsSupport {
         codecRegistry
                 .register(LocalTimeCodec.instance)
                 .register(LocalDateCodec.instance)
+                .register(LocalDateTimeCodec.instance)
                 .register(InstantCodec.instance)
                 .register(ZoneIdCodec.instance)
                 .register(new ZonedDateTimeCodec(dateWithTimeZoneType));
@@ -124,6 +126,31 @@ public class Jdk8TimeCodecsTest extends CCMTestsSupport {
         Row row = result.one();
         assertThat(row.get("cdate", LocalDate.class)).isEqualTo(localDate);
         assertThat(row.getDate("cdate")).isEqualTo(driverLocalDate);
+    }
+
+    /**
+     * <p>
+     * Validates that a <code>timestamp</code> column can be mapped to a {@link LocalDateTime} by using
+     * {@link LocalDateTime}.
+     * </p>
+     *
+     * @test_category data_types:serialization
+     * @expected_result properly maps.
+     * @jira_ticket JAVA-1532
+     * @since 3.6.0
+     */
+    @Test(groups = "short")
+    public void should_map_timestamp_to_localdatetime() {
+        // given
+        LocalDateTime expected = LocalDateTime.of(2015, 1, 1, 12, 12, 1);
+        // when
+        session().execute("insert into foo (c1, ctimestamp) values (?, ?)", "should_map_timestamp_to_localdatetime", expected);
+        ResultSet result = session().execute("select ctimestamp from foo where c1=?", "should_map_timestamp_to_localdatetime");
+        // then
+        assertThat(result.getAvailableWithoutFetching()).isEqualTo(1);
+        Row row = result.one();
+        LocalDateTime actual = row.get("ctimestamp", LocalDateTime.class);
+        assertThat(actual).isEqualTo(expected);
     }
 
     /**

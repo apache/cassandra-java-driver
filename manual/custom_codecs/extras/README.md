@@ -41,6 +41,7 @@ session.execute("INSERT INTO example (id, t) VALUES (1, ?)",
 Similarly:
 
 * [LocalDateCodec] maps [LocalDate] to `date`;
+* [LocalDateTimeCodec] maps [LocalDateTime] to `timestamp`;
 * [LocalTimeCodec] maps [LocalTime] to `time`.
 
 One problem with `timestamp` is that it does not store time zones. [ZonedDateTimeCodec] addresses that, by mapping a
