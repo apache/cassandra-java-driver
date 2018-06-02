@@ -20,11 +20,14 @@ import static com.datastax.oss.simulacron.common.stubbing.PrimeDsl.serverError;
 import static com.datastax.oss.simulacron.common.stubbing.PrimeDsl.when;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.timeout;
 
 import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.Logger;
 import ch.qos.logback.classic.spi.ILoggingEvent;
+import ch.qos.logback.classic.spi.LoggingEvent;
 import ch.qos.logback.core.Appender;
 import com.datastax.oss.driver.api.core.CqlSession;
 import com.datastax.oss.driver.api.core.cql.SimpleStatement;
@@ -34,6 +37,7 @@ import com.datastax.oss.driver.api.testinfra.simulacron.SimulacronRule;
 import com.datastax.oss.driver.categories.ParallelizableTests;
 import com.datastax.oss.driver.internal.core.tracker.RequestLogger;
 import com.datastax.oss.simulacron.common.cluster.ClusterSpec;
+import java.util.concurrent.TimeUnit;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
@@ -70,9 +74,9 @@ public class RequestLoggerIT {
               "request.tracker.logs.max-values = 50",
               "request.tracker.logs.show-stack-traces = true",
               "profiles.low-threshold.request.tracker.logs.slow.threshold = 1 nanosecond",
-              "profiles.no-logs.request.tracker.logs.success.enabled = true",
-              "profiles.no-logs.request.tracker.logs.slow.enabled = true",
-              "profiles.no-logs.request.tracker.logs.error.enabled = true",
+              "profiles.no-logs.request.tracker.logs.success.enabled = false",
+              "profiles.no-logs.request.tracker.logs.slow.enabled = false",
+              "profiles.no-logs.request.tracker.logs.error.enabled = false",
               "profiles.no-traces.request.tracker.logs.show-stack-traces = false")
           .build();
 
@@ -171,7 +175,7 @@ public class RequestLoggerIT {
   }
 
   @Test
-  public void should_not_log_when_disabled() {
+  public void should_not_log_when_disabled() throws InterruptedException {
     // Given
     simulacronRule.cluster().prime(when(QUERY).then(rows().row("release_version", "3.0.0")));
 
@@ -179,12 +183,10 @@ public class RequestLoggerIT {
     sessionRule
         .session()
         .execute(SimpleStatement.builder(QUERY).withConfigProfileName("no-logs").build());
-    // We expect no messages but logging is asynchronous, so add an extra message to make sure we've
-    // waited long enough.
-    logger.info("test");
 
     // Then
-    Mockito.verify(appender, timeout(500)).doAppend(loggingEventCaptor.capture());
-    assertThat(loggingEventCaptor.getValue().getFormattedMessage()).isEqualTo("test");
+    // We expect no messages. The request logger is invoked asynchronously, so simply wait a bit
+    TimeUnit.MILLISECONDS.sleep(500);
+    Mockito.verify(appender, never()).doAppend(any(LoggingEvent.class));
   }
 }
