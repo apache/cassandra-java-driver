@@ -1035,7 +1035,7 @@ public final class QueryBuilder {
      * {@code
      *     Insert i = QueryBuilder.insertInto("test").value("k", 0)
      *                                               .value("c", QueryBuilder.bindMarker());
-     *     PreparedState p = session.prepare(i.toString());
+     *     PreparedStatement p = session.prepare(i.toString());
      * }
      * </pre>
      *
@@ -1053,7 +1053,7 @@ public final class QueryBuilder {
      * {@code
      *     Insert i = QueryBuilder.insertInto("test").value("k", 0)
      *                                               .value("c", QueryBuilder.bindMarker("c_val"));
-     *     PreparedState p = session.prepare(i.toString());
+     *     PreparedStatement p = session.prepare(i.toString());
      * }
      * </pre>
      * <p/>
