@@ -37,7 +37,7 @@ import org.slf4j.LoggerFactory;
  *
  * <pre>
  * datastax-java-driver {
- *   auth-provider {
+ *   advanced.auth-provider {
  *     class = com.datastax.driver.api.core.auth.PlainTextAuthProvider
  *     username = cassandra
  *     password = cassandra
