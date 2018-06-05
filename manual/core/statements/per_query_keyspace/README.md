@@ -5,7 +5,7 @@ switching the whole session to that keyspace either. For example, you might have
 setup where identical requests are executed against different keyspaces.
 
 **This feature is only available with Cassandra 4.0 or above** ([CASSANDRA-10145]). Make sure you
-are using native protocol v5 or above to connect.
+are using [native protocol](../../native_protocol/) v5 or above to connect.
 
 If you try against an older version, you will get an error:
 
