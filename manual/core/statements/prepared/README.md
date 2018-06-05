@@ -131,10 +131,12 @@ This can be ambiguous if the query uses the same column multiple times, like in 
 where sku = ? and date > ? and date < ?`. In these situations, use positional setters or named
 parameters.
 
-With native protocol V3, all variables must be bound. With native protocol V4 or above, variables
-can be left unset, in which case they will be ignored (no tombstones will be generated). If you're
-reusing a bound statement, you can use the `unset` method to unset variables that were previously
-set:
+#### Unset values
+
+With [native protocol](../../native_protocol/) V3, all variables must be bound. With native protocol
+V4 or above, variables can be left unset, in which case they will be ignored (no tombstones will be
+generated). If you're reusing a bound statement, you can use the `unset` method to unset variables
+that were previously set:
 
 ```java
 BoundStatement bound = ps1.bind()
@@ -238,10 +240,11 @@ You can customize these strategies through the [configuration](../../configurati
 Read the [reference configuration](../../configuration/reference/) for a detailed description of each
 of those options.
 
-### Avoid preparing 'SELECT *' queries (Cassandra 3 and below)
+### Prepared statements and schema changes 
 
-With Cassandra 3 and below, the driver does not handle schema changes that would affect the results
-of a prepared statement. Therefore `SELECT *` queries can create issues, for example:
+**With Cassandra 3 and below, avoid preparing `SELECT *` queries**; the driver does not handle
+schema changes that would affect the results of a prepared statement. Therefore `SELECT *` queries
+can create issues, for example:
 
 * table `foo` contains columns `b` and `c`.
 * the driver prepares `SELECT * FROM foo`. It gets a reply indicating that executing this statement
@@ -257,10 +260,10 @@ To avoid this, do not create prepared statements for `SELECT *` queries if you p
 changes involving adding or dropping columns. Instead, always list all columns of interest in your
 statement, i.e.: `SELECT b, c FROM foo`.
 
-With Cassandra 4 and native protocol v5, this issue is fixed ([CASSANDRA-10786]): the server detects
-that the driver is operating on stale metadata and sends the new version with the response; the
-driver updates its local cache transparently, and the client can observe the new columns in the
-result set.   
+With Cassandra 4 and [native protocol](../../native_protocol/) v5, this issue is fixed
+([CASSANDRA-10786]): the server detects that the driver is operating on stale metadata and sends the
+new version with the response; the driver updates its local cache transparently, and the client can
+observe the new columns in the result set.
 
 [BoundStatement]:  http://docs.datastax.com/en/drivers/java/4.0/com/datastax/oss/driver/api/core/cql/BoundStatement.html
 
