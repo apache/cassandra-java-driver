@@ -42,6 +42,16 @@ public class DefaultUdtValue implements UdtValue {
     this(type, new ByteBuffer[type.getFieldTypes().size()]);
   }
 
+  public DefaultUdtValue(UserDefinedType type, Object... values) {
+    this(
+        type,
+        ValuesHelper.encodeValues(
+            values,
+            type.getFieldTypes(),
+            type.getAttachmentPoint().codecRegistry(),
+            type.getAttachmentPoint().protocolVersion()));
+  }
+
   private DefaultUdtValue(UserDefinedType type, ByteBuffer[] values) {
     Preconditions.checkNotNull(type);
     this.type = type;

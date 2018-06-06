@@ -59,6 +59,11 @@ public class DefaultTupleType implements TupleType {
   }
 
   @Override
+  public TupleValue newValue(Object... values) {
+    return new DefaultTupleValue(this, values);
+  }
+
+  @Override
   public boolean isDetached() {
     return attachmentPoint == AttachmentPoint.NONE;
   }

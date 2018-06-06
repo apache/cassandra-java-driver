@@ -20,7 +20,6 @@ import com.datastax.oss.driver.api.core.ProtocolVersion;
 import com.datastax.oss.driver.api.core.type.DataType;
 import com.datastax.oss.driver.api.core.type.codec.registry.CodecRegistry;
 import com.datastax.oss.driver.internal.core.cql.DefaultBoundStatement;
-import com.datastax.oss.protocol.internal.ProtocolConstants;
 import java.nio.ByteBuffer;
 import net.jcip.annotations.NotThreadSafe;
 
@@ -37,16 +36,14 @@ public class BoundStatementBuilder extends StatementBuilder<BoundStatementBuilde
   public BoundStatementBuilder(
       PreparedStatement preparedStatement,
       ColumnDefinitions variableDefinitions,
+      ByteBuffer[] values,
       CqlIdentifier routingKeyspace,
       CodecRegistry codecRegistry,
       ProtocolVersion protocolVersion) {
     this.preparedStatement = preparedStatement;
     this.variableDefinitions = variableDefinitions;
     this.routingKeyspace = routingKeyspace;
-    this.values = new ByteBuffer[variableDefinitions.size()];
-    for (int i = 0; i < values.length; i++) {
-      values[i] = ProtocolConstants.UNSET_VALUE;
-    }
+    this.values = values;
     this.codecRegistry = codecRegistry;
     this.protocolVersion = protocolVersion;
   }

@@ -45,6 +45,9 @@ public abstract class AccessibleByIndexTestBase<T extends GettableByIndex & Sett
 
   protected abstract T newInstance(List<DataType> dataTypes, AttachmentPoint attachmentPoint);
 
+  protected abstract T newInstance(
+      List<DataType> dataTypes, List<Object> values, AttachmentPoint attachmentPoint);
+
   @Mock protected AttachmentPoint attachmentPoint;
   @Mock protected CodecRegistry codecRegistry;
   protected PrimitiveIntCodec intCodec;
@@ -170,6 +173,52 @@ public abstract class AccessibleByIndexTestBase<T extends GettableByIndex & Sett
     Mockito.verifyZeroInteractions(codecRegistry);
     Mockito.verify(intToStringCodec).encode("1", ProtocolVersion.DEFAULT);
     assertThat(t.getBytesUnsafe(0)).isEqualTo(Bytes.fromHexString("0x00000001"));
+  }
+
+  @Test
+  public void should_set_values_in_bulk() {
+    // Given
+    Mockito.when(codecRegistry.codecFor(DataTypes.TEXT, "foo")).thenReturn(TypeCodecs.TEXT);
+    Mockito.when(codecRegistry.codecFor(DataTypes.INT, 1)).thenReturn(TypeCodecs.INT);
+
+    // When
+    T t =
+        newInstance(
+            ImmutableList.of(DataTypes.TEXT, DataTypes.INT),
+            ImmutableList.of("foo", 1),
+            attachmentPoint);
+
+    // Then
+    assertThat(t.getString(0)).isEqualTo("foo");
+    assertThat(t.getInt(1)).isEqualTo(1);
+    Mockito.verify(codecRegistry).codecFor(DataTypes.TEXT, "foo");
+    Mockito.verify(codecRegistry).codecFor(DataTypes.INT, 1);
+  }
+
+  @Test
+  public void should_set_values_in_bulk_when_not_enough_values() {
+    // Given
+    Mockito.when(codecRegistry.codecFor(DataTypes.TEXT, "foo")).thenReturn(TypeCodecs.TEXT);
+
+    // When
+    T t =
+        newInstance(
+            ImmutableList.of(DataTypes.TEXT, DataTypes.INT),
+            ImmutableList.of("foo"),
+            attachmentPoint);
+
+    // Then
+    assertThat(t.getString(0)).isEqualTo("foo");
+    assertThat(t.isNull(1)).isTrue();
+    Mockito.verify(codecRegistry).codecFor(DataTypes.TEXT, "foo");
+  }
+
+  @Test(expected = IllegalArgumentException.class)
+  public void should_fail_to_set_values_in_bulk_when_too_many_values() {
+    newInstance(
+        ImmutableList.of(DataTypes.TEXT, DataTypes.INT),
+        ImmutableList.of("foo", 1, "bar"),
+        attachmentPoint);
   }
 
   @Test

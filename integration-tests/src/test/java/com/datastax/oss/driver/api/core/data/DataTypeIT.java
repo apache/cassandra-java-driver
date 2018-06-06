@@ -222,6 +222,10 @@ public class DataTypeIT {
               setValue(1, tupleValue, dataType, o[1]);
               samples.add(new Object[] {tupleType, tupleValue});
 
+              // tuple of int, type, created using newValue
+              TupleValue tupleValue2 = tupleType.newValue(1, o[1]);
+              samples.add(new Object[] {tupleType, tupleValue2});
+
               // udt of int, type.
               final AtomicInteger fieldNameCounter = new AtomicInteger();
               List<CqlIdentifier> typeNames =
@@ -243,6 +247,10 @@ public class DataTypeIT {
               udtValue.setInt(0, 0);
               setValue(1, udtValue, dataType, o[1]);
               samples.add(new Object[] {udt, udtValue});
+
+              // udt of int, type, created using newValue
+              UdtValue udtValue2 = udt.newValue(1, o[1]);
+              samples.add(new Object[] {udt, udtValue2});
 
               return samples.stream();
             })

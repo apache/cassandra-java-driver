@@ -44,6 +44,20 @@ public class DefaultUdtValueTest extends AccessibleByIdTestBase<UdtValue> {
     return userDefinedType.newValue();
   }
 
+  @Override
+  protected UdtValue newInstance(
+      List<DataType> dataTypes, List<Object> values, AttachmentPoint attachmentPoint) {
+    UserDefinedTypeBuilder builder =
+        new UserDefinedTypeBuilder(
+            CqlIdentifier.fromInternal("ks"), CqlIdentifier.fromInternal("type"));
+    for (int i = 0; i < dataTypes.size(); i++) {
+      builder.withField(CqlIdentifier.fromInternal("field" + i), dataTypes.get(i));
+    }
+    UserDefinedType userDefinedType = builder.build();
+    userDefinedType.attach(attachmentPoint);
+    return userDefinedType.newValue(values.toArray());
+  }
+
   @Test
   public void should_serialize_and_deserialize() {
     UserDefinedType type =

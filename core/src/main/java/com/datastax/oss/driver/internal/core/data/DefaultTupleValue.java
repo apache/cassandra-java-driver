@@ -40,6 +40,16 @@ public class DefaultTupleValue implements TupleValue {
     this(type, new ByteBuffer[type.getComponentTypes().size()]);
   }
 
+  public DefaultTupleValue(TupleType type, Object... values) {
+    this(
+        type,
+        ValuesHelper.encodeValues(
+            values,
+            type.getComponentTypes(),
+            type.getAttachmentPoint().codecRegistry(),
+            type.getAttachmentPoint().protocolVersion()));
+  }
+
   private DefaultTupleValue(TupleType type, ByteBuffer[] values) {
     Preconditions.checkNotNull(type);
     this.type = type;

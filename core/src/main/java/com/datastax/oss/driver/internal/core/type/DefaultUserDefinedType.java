@@ -132,6 +132,11 @@ public class DefaultUserDefinedType implements UserDefinedType {
   }
 
   @Override
+  public UdtValue newValue(Object... fields) {
+    return new DefaultUdtValue(this, fields);
+  }
+
+  @Override
   public boolean isDetached() {
     return attachmentPoint == AttachmentPoint.NONE;
   }
