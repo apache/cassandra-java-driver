@@ -145,7 +145,8 @@ public class DefaultPreparedStatement implements PreparedStatement {
           throw new IllegalArgumentException("Unsupported token type " + value.getClass());
         }
       } else {
-        TypeCodec<Object> codec = codecRegistry.codecFor(variableDefinitions.get(i).getType());
+        TypeCodec<Object> codec =
+            codecRegistry.codecFor(variableDefinitions.get(i).getType(), value);
         encodedValue = codec.encode(value, protocolVersion);
       }
       encodedValues[i] = encodedValue;
