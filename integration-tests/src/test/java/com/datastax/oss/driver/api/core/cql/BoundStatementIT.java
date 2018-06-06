@@ -23,6 +23,7 @@ import com.datastax.oss.driver.api.testinfra.ccm.CcmRule;
 import com.datastax.oss.driver.api.testinfra.session.SessionRule;
 import com.datastax.oss.driver.api.testinfra.session.SessionUtils;
 import com.datastax.oss.driver.categories.ParallelizableTests;
+import com.datastax.oss.driver.internal.core.type.codec.CqlIntToStringCodec;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -128,6 +129,22 @@ public class BoundStatementIT {
     assertThat(rs.getColumnDefinitions()).hasSize(0);
   }
 
+  @Test
+  public void should_allow_custom_codecs_when_setting_values_in_bulk() {
+    // v0 is an int column, but we'll bind a String to it
+    CqlIntToStringCodec codec = new CqlIntToStringCodec();
+    try (CqlSession session = sessionWithCustomCodec(codec)) {
+      PreparedStatement prepared = session.prepare("INSERT INTO test2 (k, v0) values (?, ?)");
+      session.execute(prepared.bind(name.getMethodName(), "42"));
+
+      ResultSet rs =
+          session.execute(
+              SimpleStatement.newInstance(
+                  "SELECT v0 FROM test2 WHERE k = ?", name.getMethodName()));
+      assertThat(rs.one().getInt(0)).isEqualTo(42);
+    }
+  }
+
   private void verifyUnset(BoundStatement boundStatement) {
     sessionRule.session().execute(boundStatement.unset(1));
 
@@ -143,5 +160,15 @@ public class BoundStatementIT {
 
     Row row = result.iterator().next();
     assertThat(row.getInt(0)).isEqualTo(VALUE);
+  }
+
+  @SuppressWarnings("unchecked")
+  private CqlSession sessionWithCustomCodec(CqlIntToStringCodec codec) {
+    return (CqlSession)
+        SessionUtils.baseBuilder()
+            .addContactPoints(ccm.getContactPoints())
+            .withKeyspace(sessionRule.keyspace())
+            .addTypeCodecs(codec)
+            .build();
   }
 }
