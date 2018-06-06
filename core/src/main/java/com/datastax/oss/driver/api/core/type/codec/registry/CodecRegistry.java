@@ -15,12 +15,15 @@
  */
 package com.datastax.oss.driver.api.core.type.codec.registry;
 
+import com.datastax.oss.driver.api.core.cql.PreparedStatement;
 import com.datastax.oss.driver.api.core.cql.Row;
 import com.datastax.oss.driver.api.core.cql.SimpleStatement;
 import com.datastax.oss.driver.api.core.data.GettableByIndex;
 import com.datastax.oss.driver.api.core.data.TupleValue;
 import com.datastax.oss.driver.api.core.type.DataType;
 import com.datastax.oss.driver.api.core.type.DataTypes;
+import com.datastax.oss.driver.api.core.type.TupleType;
+import com.datastax.oss.driver.api.core.type.UserDefinedType;
 import com.datastax.oss.driver.api.core.type.codec.CodecNotFoundException;
 import com.datastax.oss.driver.api.core.type.codec.TypeCodec;
 import com.datastax.oss.driver.api.core.type.reflect.GenericType;
@@ -115,6 +118,24 @@ public interface CodecRegistry {
   default <T> TypeCodec<T> codecFor(Class<T> javaType) {
     return codecFor(GenericType.of(javaType));
   }
+
+  /**
+   * Returns a codec to convert the given Java object to the given CQL type.
+   *
+   * <p>This is used internally by the driver when you bulk-set values in a {@link
+   * PreparedStatement#bind(Object...) bound statement}, {@link UserDefinedType#newValue(Object...)
+   * UDT} or {@link TupleType#newValue(Object...) tuple}.
+   *
+   * <p>Unlike other methods, the driver's default registry implementation is <em>covariant</em>
+   * with regard to the Java type: for example, if {@code B extends A} and an {@code A<=>int} codec
+   * is registered, {@code codecFor(DataTypes.INT, someB)} <b>will</b> find that codec. This is
+   * because this method is always used in encoding scenarios; if a bound statement has a value with
+   * a runtime type of {@code ArrayList<String>}, it should be possible to encode it with a codec
+   * that accepts a {@code List<String>}.
+   *
+   * @throws CodecNotFoundException if there is no such codec.
+   */
+  <T> TypeCodec<T> codecFor(DataType cqlType, T value);
 
   /**
    * Returns a codec to convert the given Java object to the CQL type deemed most appropriate to
