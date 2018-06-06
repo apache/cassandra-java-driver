@@ -17,6 +17,7 @@ package com.datastax.oss.driver.api.core.type;
 
 import com.datastax.oss.driver.api.core.data.TupleValue;
 import com.datastax.oss.driver.api.core.detach.AttachmentPoint;
+import com.datastax.oss.driver.api.core.type.codec.registry.CodecRegistry;
 import com.datastax.oss.protocol.internal.ProtocolConstants;
 import java.util.List;
 
@@ -24,6 +25,21 @@ public interface TupleType extends DataType {
   List<DataType> getComponentTypes();
 
   TupleValue newValue();
+
+  /**
+   * Creates a new instance with the specified values for the fields.
+   *
+   * <p>The values must be in the same order as the fields in the tuple's definition. You can
+   * specify less values than there are fields (the remaining ones will be set to NULL), but not
+   * more (a runtime exception will be thrown).
+   *
+   * <p>To encode the values, this method uses the {@link CodecRegistry} that this type is {@link
+   * #getAttachmentPoint() attached} to; it looks for the best codec to handle the target CQL type
+   * and actual runtime type of each value (see {@link CodecRegistry#codecFor(DataType, Object)}).
+   *
+   * @throws IllegalArgumentException if there are too many values.
+   */
+  TupleValue newValue(Object... values);
 
   AttachmentPoint getAttachmentPoint();
 

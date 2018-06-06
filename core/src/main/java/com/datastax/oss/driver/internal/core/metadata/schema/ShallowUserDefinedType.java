@@ -101,6 +101,12 @@ public class ShallowUserDefinedType implements UserDefinedType {
   }
 
   @Override
+  public UdtValue newValue(Object... fields) {
+    throw new UnsupportedOperationException(
+        "This implementation should only be used internally, this is likely a driver bug");
+  }
+
+  @Override
   public AttachmentPoint getAttachmentPoint() {
     throw new UnsupportedOperationException(
         "This implementation should only be used internally, this is likely a driver bug");

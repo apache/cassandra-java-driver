@@ -115,7 +115,7 @@ public interface PreparedStatement {
    * multiple execution parameters on the bound statement (such as {@link
    * BoundStatement#setConfigProfileName(String)}, {@link
    * BoundStatement#setPagingState(ByteBuffer)}, etc.), consider using {@link
-   * #boundStatementBuilder()} instead to avoid unnecessary allocations.
+   * #boundStatementBuilder(Object...)} instead to avoid unnecessary allocations.
    */
   BoundStatement bind(Object... values);
 
@@ -124,5 +124,5 @@ public interface PreparedStatement {
    *
    * @see #bind(Object...)
    */
-  BoundStatementBuilder boundStatementBuilder();
+  BoundStatementBuilder boundStatementBuilder(Object... values);
 }

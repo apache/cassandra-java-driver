@@ -4,6 +4,7 @@
 
 ### 4.0.0-alpha4 (in progress)
 
+- [improvement] JAVA-1853: Add newValue(Object...) to TupleType and UserDefinedType
 - [improvement] JAVA-1815: Reorganize configuration into basic/advanced categories
 - [improvement] JAVA-1848: Add logs to DefaultRetryPolicy
 - [new feature] JAVA-1832: Add Ec2MultiRegionAddressTranslator

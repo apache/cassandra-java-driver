@@ -29,7 +29,7 @@ import net.jcip.annotations.NotThreadSafe;
  *
  * @see SimpleStatement#builder(String)
  * @see BatchStatement#builder(BatchType)
- * @see PreparedStatement#boundStatementBuilder()
+ * @see PreparedStatement#boundStatementBuilder(Object...)
  */
 @NotThreadSafe
 public abstract class StatementBuilder<T extends StatementBuilder<T, S>, S extends Statement<S>> {

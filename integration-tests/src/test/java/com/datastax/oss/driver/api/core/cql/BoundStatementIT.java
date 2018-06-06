@@ -24,6 +24,7 @@ import com.datastax.oss.driver.api.testinfra.session.SessionRule;
 import com.datastax.oss.driver.api.testinfra.session.SessionUtils;
 import com.datastax.oss.driver.categories.ParallelizableTests;
 import com.datastax.oss.driver.internal.core.type.codec.CqlIntToStringCodec;
+import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableList;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -135,13 +136,18 @@ public class BoundStatementIT {
     CqlIntToStringCodec codec = new CqlIntToStringCodec();
     try (CqlSession session = sessionWithCustomCodec(codec)) {
       PreparedStatement prepared = session.prepare("INSERT INTO test2 (k, v0) values (?, ?)");
-      session.execute(prepared.bind(name.getMethodName(), "42"));
+      for (BoundStatement boundStatement :
+          ImmutableList.of(
+              prepared.bind(name.getMethodName(), "42"),
+              prepared.boundStatementBuilder(name.getMethodName(), "42").build())) {
 
-      ResultSet rs =
-          session.execute(
-              SimpleStatement.newInstance(
-                  "SELECT v0 FROM test2 WHERE k = ?", name.getMethodName()));
-      assertThat(rs.one().getInt(0)).isEqualTo(42);
+        session.execute(boundStatement);
+        ResultSet rs =
+            session.execute(
+                SimpleStatement.newInstance(
+                    "SELECT v0 FROM test2 WHERE k = ?", name.getMethodName()));
+        assertThat(rs.one().getInt(0)).isEqualTo(42);
+      }
     }
   }
 

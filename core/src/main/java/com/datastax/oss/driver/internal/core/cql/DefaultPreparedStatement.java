@@ -22,15 +22,9 @@ import com.datastax.oss.driver.api.core.cql.BoundStatement;
 import com.datastax.oss.driver.api.core.cql.BoundStatementBuilder;
 import com.datastax.oss.driver.api.core.cql.ColumnDefinitions;
 import com.datastax.oss.driver.api.core.cql.PreparedStatement;
-import com.datastax.oss.driver.api.core.metadata.token.Token;
-import com.datastax.oss.driver.api.core.type.codec.TypeCodec;
-import com.datastax.oss.driver.api.core.type.codec.TypeCodecs;
 import com.datastax.oss.driver.api.core.type.codec.registry.CodecRegistry;
-import com.datastax.oss.driver.internal.core.metadata.token.ByteOrderedToken;
-import com.datastax.oss.driver.internal.core.metadata.token.Murmur3Token;
-import com.datastax.oss.driver.internal.core.metadata.token.RandomToken;
+import com.datastax.oss.driver.internal.core.data.ValuesHelper;
 import com.datastax.oss.driver.internal.core.session.RepreparePayload;
-import com.datastax.oss.protocol.internal.ProtocolConstants;
 import java.nio.ByteBuffer;
 import java.util.List;
 import java.util.Map;
@@ -120,44 +114,11 @@ public class DefaultPreparedStatement implements PreparedStatement {
 
   @Override
   public BoundStatement bind(Object... values) {
-    if (values.length > variableDefinitions.size()) {
-      throw new IllegalArgumentException(
-          String.format(
-              "Too many variables (expected %d, got %d)",
-              variableDefinitions.size(), values.length));
-    }
-    ByteBuffer[] encodedValues = new ByteBuffer[variableDefinitions.size()];
-    int i;
-    for (i = 0; i < values.length; i++) {
-      Object value = values[i];
-      ByteBuffer encodedValue;
-      if (value instanceof Token) {
-        if (value instanceof Murmur3Token) {
-          encodedValue =
-              TypeCodecs.BIGINT.encode(((Murmur3Token) value).getValue(), protocolVersion);
-        } else if (value instanceof ByteOrderedToken) {
-          encodedValue =
-              TypeCodecs.BLOB.encode(((ByteOrderedToken) value).getValue(), protocolVersion);
-        } else if (value instanceof RandomToken) {
-          encodedValue =
-              TypeCodecs.VARINT.encode(((RandomToken) value).getValue(), protocolVersion);
-        } else {
-          throw new IllegalArgumentException("Unsupported token type " + value.getClass());
-        }
-      } else {
-        TypeCodec<Object> codec =
-            codecRegistry.codecFor(variableDefinitions.get(i).getType(), value);
-        encodedValue = codec.encode(value, protocolVersion);
-      }
-      encodedValues[i] = encodedValue;
-    }
-    for (; i < encodedValues.length; i++) {
-      encodedValues[i] = ProtocolConstants.UNSET_VALUE;
-    }
     return new DefaultBoundStatement(
         this,
         variableDefinitions,
-        encodedValues,
+        ValuesHelper.encodePreparedValues(
+            values, variableDefinitions, codecRegistry, protocolVersion),
         configProfileName,
         configProfile,
         // If the prepared statement had a per-request keyspace, we want to use that as the routing
@@ -175,9 +136,15 @@ public class DefaultPreparedStatement implements PreparedStatement {
   }
 
   @Override
-  public BoundStatementBuilder boundStatementBuilder() {
+  public BoundStatementBuilder boundStatementBuilder(Object... values) {
     return new BoundStatementBuilder(
-        this, variableDefinitions, repreparePayload.keyspace, codecRegistry, protocolVersion);
+        this,
+        variableDefinitions,
+        ValuesHelper.encodePreparedValues(
+            values, variableDefinitions, codecRegistry, protocolVersion),
+        repreparePayload.keyspace,
+        codecRegistry,
+        protocolVersion);
   }
 
   public RepreparePayload getRepreparePayload() {

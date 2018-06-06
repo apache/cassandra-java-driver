@@ -37,6 +37,13 @@ public class DefaultTupleValueTest extends AccessibleByIndexTestBase<TupleValue>
     return type.newValue();
   }
 
+  @Override
+  protected TupleValue newInstance(
+      List<DataType> dataTypes, List<Object> values, AttachmentPoint attachmentPoint) {
+    DefaultTupleType type = new DefaultTupleType(dataTypes, attachmentPoint);
+    return type.newValue(values.toArray());
+  }
+
   @Test
   public void should_serialize_and_deserialize() {
     DefaultTupleType type =
