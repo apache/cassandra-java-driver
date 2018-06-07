@@ -759,6 +759,12 @@ public class DataTypeIT {
                           udt.getName().asCql(false), String.join(",", fieldParts)))
                   .withConfigProfile(sessionRule.slowProfile())
                   .build());
+
+      // Chances are the UDT isn't labeled as frozen in the context we're given, so we add it as
+      // older versions of C* don't support non-frozen UDTs.
+      if (!udt.isFrozen()) {
+        typeName = "frozen<" + typeName + ">";
+      }
     }
     return typeName;
   }
