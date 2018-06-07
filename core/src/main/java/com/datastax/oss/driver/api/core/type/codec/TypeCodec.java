@@ -16,12 +16,46 @@
 package com.datastax.oss.driver.api.core.type.codec;
 
 import com.datastax.oss.driver.api.core.ProtocolVersion;
+import com.datastax.oss.driver.api.core.cql.Row;
+import com.datastax.oss.driver.api.core.data.TupleValue;
+import com.datastax.oss.driver.api.core.data.UdtValue;
+import com.datastax.oss.driver.api.core.metadata.schema.AggregateMetadata;
 import com.datastax.oss.driver.api.core.type.DataType;
 import com.datastax.oss.driver.api.core.type.reflect.GenericType;
 import com.datastax.oss.driver.shaded.guava.common.base.Preconditions;
 import java.nio.ByteBuffer;
 
-/** Manages the two-way conversion between a CQL type and a Java type. */
+/**
+ * Manages the two-way conversion between a CQL type and a Java type.
+ *
+ * <p>Type codec implementations:
+ *
+ * <ol>
+ *   <li><em>must</em> be thread-safe.
+ *   <li><em>must</em> perform fast and never block.
+ *   <li><em>must</em> support all native protocol versions; it is not possible to use different
+ *       codecs for the same types but under different protocol versions.
+ *   <li><em>must</em> comply with the native protocol specifications; failing to do so will result
+ *       in unexpected results and could cause the driver to crash.
+ *   <li><em>should</em> be stateless and immutable.
+ *   <li><em>should</em> interpret {@code null} values and empty byte buffers (i.e. <code>
+ *       {@link ByteBuffer#remaining()} == 0</code>) in a <em>reasonable</em> way; usually, {@code
+ *       NULL} CQL values should map to {@code null} references, but exceptions exist; e.g. for
+ *       varchar types, a {@code NULL} CQL value maps to a {@code null} reference, whereas an empty
+ *       buffer maps to an empty String. For collection types, it is also admitted that {@code NULL}
+ *       CQL values map to empty Java collections instead of {@code null} references. In any case,
+ *       the codec's behavior with respect to {@code null} values and empty ByteBuffers should be
+ *       clearly documented.
+ *   <li>for Java types that have a primitive equivalent, <em>should</em> implement the appropriate
+ *       "primitive" codec interface, e.g. {@link PrimitiveBooleanCodec} for {@code boolean}. This
+ *       allows the driver to avoid the overhead of boxing when using primitive accessors such as
+ *       {@link Row#getBoolean(int)}.
+ *   <li>when decoding, <em>must</em> not consume {@link ByteBuffer} instances by performing
+ *       relative read operations that modify their current position; codecs should instead prefer
+ *       absolute read methods or, if necessary, {@link ByteBuffer#duplicate() duplicate} their byte
+ *       buffers prior to reading them.
+ * </ol>
+ */
 public interface TypeCodec<T> {
 
   GenericType<T> getJavaType();
@@ -95,11 +129,78 @@ public interface TypeCodec<T> {
     return this.getCqlType().equals(cqlType);
   }
 
+  /**
+   * Encodes the given value in the binary format of the CQL type handled by this codec.
+   *
+   * <ul>
+   *   <li>Null values should be gracefully handled and no exception should be raised; they should
+   *       be considered as the equivalent of a NULL CQL value;
+   *   <li>Codecs for CQL collection types should not permit null elements;
+   *   <li>Codecs for CQL collection types should treat a {@code null} input as the equivalent of an
+   *       empty collection.
+   * </ul>
+   */
   ByteBuffer encode(T value, ProtocolVersion protocolVersion);
 
+  /**
+   * Decodes a value from the binary format of the CQL type handled by this codec.
+   *
+   * <ul>
+   *   <li>Null or empty buffers should be gracefully handled and no exception should be raised;
+   *       they should be considered as the equivalent of a NULL CQL value and, in most cases,
+   *       should map to {@code null} or a default value for the corresponding Java type, if
+   *       applicable;
+   *   <li>Codecs for CQL collection types should clearly document whether they return immutable
+   *       collections or not (note that the driver's default collection codecs return
+   *       <em>mutable</em> collections);
+   *   <li>Codecs for CQL collection types should avoid returning {@code null}; they should return
+   *       empty collections instead (the driver's default collection codecs all comply with this
+   *       rule);
+   *   <li>The provided {@link ByteBuffer} should never be consumed by read operations that modify
+   *       its current position; if necessary, {@link ByteBuffer#duplicate()} duplicate} it before
+   *       consuming.
+   * </ul>
+   */
   T decode(ByteBuffer bytes, ProtocolVersion protocolVersion);
 
+  /**
+   * Formats the given value as a valid CQL literal according to the CQL type handled by this codec.
+   *
+   * <p>Implementors should take care of quoting and escaping the resulting CQL literal where
+   * applicable. Null values should be accepted; in most cases, implementations should return the
+   * CQL keyword {@code "NULL"} for {@code null} inputs.
+   *
+   * <p>Implementing this method is not strictly mandatory. It is used:
+   *
+   * <ol>
+   *   <li>by the request logger, if parameter logging is enabled;
+   *   <li>to format the INITCOND in {@link AggregateMetadata#describe(boolean)};
+   *   <li>in the {@code toString()} representation of some driver objects (such as {@link UdtValue}
+   *       and {@link TupleValue}), which is only used in driver logs;
+   *   <li>for literal values in the query builder (see {@code QueryBuilderDsl#literal(Object,
+   *       CodecRegistry)} and {@code QueryBuilderDsl#literal(Object, TypeCodec)}).
+   * </ol>
+   *
+   * If you choose not to implement this method, don't throw an exception but instead return a
+   * constant string (for example "XxxCodec.format not implemented").
+   */
   String format(T value);
 
+  /**
+   * Parse the given CQL literal into an instance of the Java type handled by this codec.
+   *
+   * <p>Implementors should take care of unquoting and unescaping the given CQL string where
+   * applicable. Null values and empty strings should be accepted, as well as the string {@code
+   * "NULL"}; in most cases, implementations should interpret these inputs has equivalent to a
+   * {@code null} reference.
+   *
+   * <p>Implementing this method is not strictly mandatory: internally, the driver only uses it to
+   * parse the INITCOND when building the {@link AggregateMetadata metadata of an aggregate
+   * function} (and in most cases it will use a built-in codec, unless the INITCOND has a custom
+   * type).
+   *
+   * <p>If you choose not to implement this method, don't throw an exception but instead return
+   * {@code null}.
+   */
   T parse(String value);
 }
