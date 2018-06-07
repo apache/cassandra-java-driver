@@ -189,6 +189,7 @@ public class DefaultDriverContext implements InternalDriverContext {
   private final SchemaChangeListener schemaChangeListenerFromBuilder;
   private final RequestTracker requestTrackerFromBuilder;
   private final Map<String, Predicate<Node>> nodeFiltersFromBuilder;
+  private final ClassLoader classLoader;
 
   public DefaultDriverContext(
       DriverConfigLoader configLoader,
@@ -196,7 +197,8 @@ public class DefaultDriverContext implements InternalDriverContext {
       NodeStateListener nodeStateListener,
       SchemaChangeListener schemaChangeListener,
       RequestTracker requestTracker,
-      Map<String, Predicate<Node>> nodeFilters) {
+      Map<String, Predicate<Node>> nodeFilters,
+      ClassLoader classLoader) {
     this.config = configLoader.getInitialConfig();
     this.configLoader = configLoader;
     DriverConfigProfile defaultProfile = config.getDefaultProfile();
@@ -223,6 +225,7 @@ public class DefaultDriverContext implements InternalDriverContext {
         new LazyReference<>(
             "requestTracker", () -> buildRequestTracker(requestTrackerFromBuilder), cycleDetector);
     this.nodeFiltersFromBuilder = nodeFilters;
+    this.classLoader = classLoader;
   }
 
   protected Map<String, LoadBalancingPolicy> buildLoadBalancingPolicies() {
@@ -669,6 +672,11 @@ public class DefaultDriverContext implements InternalDriverContext {
   @Override
   public Predicate<Node> nodeFilter(String profileName) {
     return nodeFiltersFromBuilder.get(profileName);
+  }
+
+  @Override
+  public ClassLoader classLoader() {
+    return classLoader;
   }
 
   @Override

@@ -22,7 +22,6 @@ import io.netty.channel.Channel;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelPromise;
 import io.netty.channel.EventLoop;
-import io.netty.util.internal.shaded.org.jctools.queues.atomic.MpscLinkedAtomicQueue;
 import java.util.HashSet;
 import java.util.Queue;
 import java.util.Set;
@@ -31,6 +30,7 @@ import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import net.jcip.annotations.ThreadSafe;
+import org.jctools.queues.atomic.MpscLinkedAtomicQueue;
 
 /**
  * Default write coalescing strategy.

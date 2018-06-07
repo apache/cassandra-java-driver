@@ -43,6 +43,12 @@
       <scope>test</scope>
     </dependency>
     <dependency>
+      <groupId>com.datastax.oss</groupId>
+      <artifactId>java-driver-query-builder</artifactId>
+      <version>${project.parent.version}</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
       <groupId>com.tngtech.java</groupId>
       <artifactId>junit-dataprovider</artifactId>
       <scope>test</scope>
@@ -72,6 +78,26 @@
       <artifactId>lz4-java</artifactId>
       <scope>test</scope>
     </dependency>
+    <dependency>
+      <groupId>org.ops4j.pax.exam</groupId>
+      <artifactId>pax-exam-junit4</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.ops4j.pax.exam</groupId>
+      <artifactId>pax-exam-container-native</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.ops4j.pax.exam</groupId>
+      <artifactId>pax-exam-link-mvn</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.felix</groupId>
+      <artifactId>org.apache.felix.framework</artifactId>
+      <scope>test</scope>
+    </dependency>
   </dependencies>
 
   <build>
@@ -89,7 +115,51 @@
       </plugin>
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-surefire-plugin</artifactId>
+        <configuration>
+          <!-- Not needed for maven build but useful for testing from intellij -->
+          <systemPropertyVariables>
+            <project.version>${project.version}</project.version>
+            <assertj.version>${assertj.version}</assertj.version>
+            <config.version>${config.version}</config.version>
+            <commons-exec.version>${commons-exec.version}</commons-exec.version>
+            <guava.version>${guava.version}</guava.version>
+            <hdrhistogram.version>${hdrhistogram.version}</hdrhistogram.version>
+            <jackson.version>${jackson.version}</jackson.version>
+            <logback.version>${logback.version}</logback.version>
+            <lz4.version>${lz4.version}</lz4.version>
+            <metrics.version>${metrics.version}</metrics.version>
+            <native-protocol.version>${native-protocol.version}</native-protocol.version>
+            <netty.version>${netty.version}</netty.version>
+            <simulacron.version>${simulacron.version}</simulacron.version>
+            <slf4j.version>${slf4j.version}</slf4j.version>
+            <snappy.version>${snappy.version}</snappy.version>
+          </systemPropertyVariables>
+        </configuration>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-failsafe-plugin</artifactId>
+        <configuration>
+          <!-- provide version properties for OSGi tests -->
+          <systemPropertyVariables>
+            <project.version>${project.version}</project.version>
+            <assertj.version>${assertj.version}</assertj.version>
+            <config.version>${config.version}</config.version>
+            <commons-exec.version>${commons-exec.version}</commons-exec.version>
+            <guava.version>${guava.version}</guava.version>
+            <hdrhistogram.version>${hdrhistogram.version}</hdrhistogram.version>
+            <jackson.version>${jackson.version}</jackson.version>
+            <logback.version>${logback.version}</logback.version>
+            <lz4.version>${lz4.version}</lz4.version>
+            <metrics.version>${metrics.version}</metrics.version>
+            <native-protocol.version>${native-protocol.version}</native-protocol.version>
+            <netty.version>${netty.version}</netty.version>
+            <simulacron.version>${simulacron.version}</simulacron.version>
+            <slf4j.version>${slf4j.version}</slf4j.version>
+            <snappy.version>${snappy.version}</snappy.version>
+          </systemPropertyVariables>
+        </configuration>
         <executions>
           <execution>
             <id>parallelizable-tests</id>

@@ -95,4 +95,11 @@ public interface InternalDriverContext extends DriverContext {
    * {@code null}.
    */
   Predicate<Node> nodeFilter(String profileName);
+
+  /**
+   * The {@link ClassLoader} to use to reflectively load class names defined in configuration. If
+   * null, the driver attempts to use {@link Thread#getContextClassLoader()} of the current thread
+   * or {@link com.datastax.oss.driver.internal.core.util.Reflection}'s {@link ClassLoader}.
+   */
+  ClassLoader classLoader();
 }

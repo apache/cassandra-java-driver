@@ -27,7 +27,7 @@
   </parent>
 
   <artifactId>java-driver-query-builder</artifactId>
-  <packaging>jar</packaging>
+  <packaging>bundle</packaging>
 
   <name>DataStax Java driver for Apache Cassandra(R) - query builder</name>
 
@@ -56,4 +56,19 @@
       <scope>test</scope>
     </dependency>
   </dependencies>
+
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>org.apache.felix</groupId>
+        <artifactId>maven-bundle-plugin</artifactId>
+        <configuration>
+          <instructions>
+            <Bundle-SymbolicName>com.datastax.oss.driver.querybuilder</Bundle-SymbolicName>
+            <Import-Package>!net.jcip.annotations,*</Import-Package>
+          </instructions>
+        </configuration>
+      </plugin>
+    </plugins>
+  </build>
 </project>
