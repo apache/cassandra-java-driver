@@ -50,14 +50,16 @@ public class GuavaDriverContext extends DefaultDriverContext {
       NodeStateListener nodeStateListener,
       SchemaChangeListener schemaChangeListener,
       RequestTracker requestTracker,
-      Map<String, Predicate<Node>> nodeFilters) {
+      Map<String, Predicate<Node>> nodeFilters,
+      ClassLoader classLoader) {
     super(
         configLoader,
         typeCodecs,
         nodeStateListener,
         schemaChangeListener,
         requestTracker,
-        nodeFilters);
+        nodeFilters,
+        classLoader);
   }
 
   @Override

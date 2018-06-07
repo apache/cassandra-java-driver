@@ -39,14 +39,16 @@ public class GuavaSessionBuilder extends SessionBuilder<GuavaSessionBuilder, Gua
       NodeStateListener nodeStateListener,
       SchemaChangeListener schemaChangeListener,
       RequestTracker requestTracker,
-      Map<String, Predicate<Node>> nodeFilters) {
+      Map<String, Predicate<Node>> nodeFilters,
+      ClassLoader classLoader) {
     return new GuavaDriverContext(
         configLoader,
         typeCodecs,
         nodeStateListener,
         schemaChangeListener,
         requestTracker,
-        nodeFilters);
+        nodeFilters,
+        classLoader);
   }
 
   @Override

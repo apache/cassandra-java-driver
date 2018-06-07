@@ -298,7 +298,7 @@ public class DefaultLoadBalancingPolicy implements LoadBalancingPolicy {
         ? filterFromBuilder
         : (Predicate<Node>)
             Reflection.buildFromConfig(
-                    context,
+                    (InternalDriverContext) context,
                     profileName,
                     DefaultDriverOption.LOAD_BALANCING_FILTER_CLASS,
                     Predicate.class)

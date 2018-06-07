@@ -18,6 +18,7 @@ package com.datastax.oss.driver.internal.core.util;
 import com.datastax.oss.driver.api.core.config.DriverConfigProfile;
 import com.datastax.oss.driver.api.core.config.DriverOption;
 import com.datastax.oss.driver.api.core.context.DriverContext;
+import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
 import com.datastax.oss.driver.shaded.guava.common.base.Joiner;
 import com.datastax.oss.driver.shaded.guava.common.base.Preconditions;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableMap;
@@ -45,11 +46,14 @@ public class Reflection {
    *
    * @return null if the class does not exist.
    */
-  public static Class<?> loadClass(String className) {
+  public static Class<?> loadClass(ClassLoader classLoader, String className) {
     try {
-      ClassLoader contextClassLoader = Thread.currentThread().getContextClassLoader();
-      if (contextClassLoader != null) {
-        return Class.forName(className, true, contextClassLoader);
+      // If input classLoader is null, use current thread's ClassLoader, if that is null, use
+      // default (calling class') ClassLoader.
+      ClassLoader cl =
+          classLoader != null ? classLoader : Thread.currentThread().getContextClassLoader();
+      if (cl != null) {
+        return Class.forName(className, true, cl);
       } else {
         return Class.forName(className);
       }
@@ -80,7 +84,7 @@ public class Reflection {
    *     configuration.
    */
   public static <T> Optional<T> buildFromConfig(
-      DriverContext context,
+      InternalDriverContext context,
       DriverOption classNameOption,
       Class<T> expectedSuperType,
       String... defaultPackages) {
@@ -116,7 +120,7 @@ public class Reflection {
    *     configuration, a single instance will be shared by all their entries.
    */
   public static <T> Map<String, T> buildFromConfigProfiles(
-      DriverContext context,
+      InternalDriverContext context,
       DriverOption rootOption,
       Class<T> expectedSuperType,
       String... defaultPackages) {
@@ -155,7 +159,7 @@ public class Reflection {
    *     constructor.
    */
   public static <T> Optional<T> buildFromConfig(
-      DriverContext context,
+      InternalDriverContext context,
       String profileName,
       DriverOption classNameOption,
       Class<T> expectedSuperType,
@@ -178,13 +182,13 @@ public class Reflection {
     Class<?> clazz = null;
     if (className.contains(".")) {
       LOG.debug("Building from fully-qualified name {}", className);
-      clazz = loadClass(className);
+      clazz = loadClass(context.classLoader(), className);
     } else {
       LOG.debug("Building from unqualified name {}", className);
       for (String defaultPackage : defaultPackages) {
         String qualifiedClassName = defaultPackage + "." + className;
         LOG.debug("Trying with default package {}", qualifiedClassName);
-        clazz = loadClass(qualifiedClassName);
+        clazz = loadClass(context.classLoader(), qualifiedClassName);
         if (clazz != null) {
           break;
         }
@@ -201,13 +205,13 @@ public class Reflection {
         configPath,
         expectedSuperType.getName());
 
-    Constructor<?> constructor;
+    Constructor<? extends T> constructor;
     Class<?>[] argumentTypes =
         (profileName == null)
             ? new Class<?>[] {DriverContext.class}
             : new Class<?>[] {DriverContext.class, String.class};
     try {
-      constructor = clazz.getConstructor(argumentTypes);
+      constructor = clazz.asSubclass(expectedSuperType).getConstructor(argumentTypes);
     } catch (NoSuchMethodException e) {
       throw new IllegalArgumentException(
           String.format(
@@ -217,11 +221,11 @@ public class Reflection {
     }
     try {
       @SuppressWarnings("JavaReflectionInvocation")
-      Object instance =
+      T instance =
           (profileName == null)
               ? constructor.newInstance(context)
               : constructor.newInstance(context, profileName);
-      return Optional.of(expectedSuperType.cast(instance));
+      return Optional.of(instance);
     } catch (Exception e) {
       // ITE just wraps an exception thrown by the constructor, get rid of it:
       Throwable cause = (e instanceof InvocationTargetException) ? e.getCause() : e;

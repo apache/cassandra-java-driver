@@ -68,6 +68,7 @@ public abstract class SessionBuilder<SelfT extends SessionBuilder, SessionT> {
   protected RequestTracker requestTracker;
   private ImmutableMap.Builder<String, Predicate<Node>> nodeFilters = ImmutableMap.builder();
   protected CqlIdentifier keyspace;
+  private ClassLoader classLoader = null;
 
   /**
    * Sets the configuration loader to use.
@@ -223,6 +224,20 @@ public abstract class SessionBuilder<SelfT extends SessionBuilder, SessionT> {
   }
 
   /**
+   * The {@link ClassLoader} to use to reflectively load class names defined in configuration.
+   *
+   * <p>This is typically only needed when using OSGi or other in environments where there are
+   * complex class loading requirements.
+   *
+   * <p>If null, the driver attempts to use {@link Thread#getContextClassLoader()} of the current
+   * thread or the same {@link ClassLoader} that loaded the core driver classes.
+   */
+  public SelfT withClassLoader(ClassLoader classLoader) {
+    this.classLoader = classLoader;
+    return self;
+  }
+
+  /**
    * Creates the session with the options set by this builder.
    *
    * @return a completion stage that completes with the session when it is fully initialized.
@@ -269,7 +284,8 @@ public abstract class SessionBuilder<SelfT extends SessionBuilder, SessionT> {
                   nodeStateListener,
                   schemaChangeListener,
                   requestTracker,
-                  nodeFilters.build()),
+                  nodeFilters.build(),
+                  classLoader),
           contactPoints,
           keyspace);
 
@@ -290,14 +306,16 @@ public abstract class SessionBuilder<SelfT extends SessionBuilder, SessionT> {
       NodeStateListener nodeStateListener,
       SchemaChangeListener schemaChangeListener,
       RequestTracker requestTracker,
-      Map<String, Predicate<Node>> nodeFilters) {
+      Map<String, Predicate<Node>> nodeFilters,
+      ClassLoader classLoader) {
     return new DefaultDriverContext(
         configLoader,
         typeCodecs,
         nodeStateListener,
         schemaChangeListener,
         requestTracker,
-        nodeFilters);
+        nodeFilters,
+        classLoader);
   }
 
   private static <T> T buildIfNull(T value, Supplier<T> builder) {
