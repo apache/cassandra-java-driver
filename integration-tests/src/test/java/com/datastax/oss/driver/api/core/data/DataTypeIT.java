@@ -16,9 +16,7 @@
 package com.datastax.oss.driver.api.core.data;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.junit.Assert.fail;
-import static org.junit.Assume.assumeThat;
 
 import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.CqlSession;
@@ -322,9 +320,6 @@ public class DataTypeIT {
   @Test
   public <K> void should_insert_non_primary_key_column_simple_statement_positional_value(
       DataType dataType, K value, K expectedPrimitiveValue) {
-    // TODO: Remove assumption once JAVA-1569 is fixed.
-    assumeThat(value, notNullValue());
-
     int key = nextKey();
     String columnName = columnNameFor(dataType);
 
@@ -348,9 +343,6 @@ public class DataTypeIT {
   @Test
   public <K> void should_insert_non_primary_key_column_simple_statement_named_value(
       DataType dataType, K value, K expectedPrimitiveValue) {
-    // TODO: Remove assumption once JAVA-1569 is fixed.
-    assumeThat(value, notNullValue());
-
     int key = nextKey();
     String columnName = columnNameFor(dataType);
 
@@ -715,42 +707,21 @@ public class DataTypeIT {
         assertThat(row.get(0, codec)).isEqualTo(expectedValue);
         break;
       case ProtocolConstants.DataType.TUPLE:
-        // TODO: Replace this when JAVA-1572 is fixed
         TupleValue returnedValue = row.getTupleValue(columnName);
         TupleValue exValue = (TupleValue) expectedValue;
 
         assertThat(returnedValue.getType()).isEqualTo(exValue.getType());
-
-        for (int i = 0; i < exValue.getType().getComponentTypes().size(); i++) {
-          DataType compType = exValue.getType().getComponentTypes().get(i);
-          TypeCodec<?> typeCodec =
-              sessionRule.session().getContext().codecRegistry().codecFor(compType);
-          assertThat(returnedValue.get(i, typeCodec)).isEqualTo(exValue.get(i, typeCodec));
-        }
-
-        // assertThat(row.getTupleValue(columnName)).isEqualTo(expectedValue);
-        // assertThat(row.getTupleValue(0)).isEqualTo(expectedValue);
-        return; // return instead of break here since we don't want to compare using decode output
-        // since it has same problem.
+        assertThat(row.getTupleValue(columnName)).isEqualTo(expectedValue);
+        assertThat(row.getTupleValue(0)).isEqualTo(expectedValue);
+        break;
       case ProtocolConstants.DataType.UDT:
-        // TODO: Replace this when JAVA-1572 is fixed
         UdtValue returnedUdtValue = row.getUdtValue(columnName);
         UdtValue exUdtValue = (UdtValue) expectedValue;
 
         assertThat(returnedUdtValue.getType()).isEqualTo(exUdtValue.getType());
-
-        for (int i = 0; i < exUdtValue.getType().getFieldTypes().size(); i++) {
-          DataType compType = exUdtValue.getType().getFieldTypes().get(i);
-          String compName = exUdtValue.getType().getFieldNames().get(i).asCql(false);
-
-          TypeCodec<?> typeCodec =
-              sessionRule.session().getContext().codecRegistry().codecFor(compType);
-
-          assertThat(returnedUdtValue.get(compName, typeCodec))
-              .isEqualTo(exUdtValue.get(compName, typeCodec));
-          assertThat(returnedUdtValue.get(i, typeCodec)).isEqualTo(exUdtValue.get(i, typeCodec));
-        }
-        return;
+        assertThat(row.getUdtValue(columnName)).isEqualTo(expectedValue);
+        assertThat(row.getUdtValue(0)).isEqualTo(expectedValue);
+        break;
       default:
         fail("Unhandled DataType " + dataType);
     }
@@ -767,29 +738,8 @@ public class DataTypeIT {
   }
 
   private static String typeFor(DataType dataType) {
-    // TODO: Replace this when JAVA-1573 is fixed.
-    String typeName;
-    if (dataType instanceof CustomType) {
-      typeName = "'" + ((CustomType) dataType).getClassName() + "'";
-    } else if (dataType instanceof ListType) {
-      typeName = "list<" + typeFor(((ListType) dataType).getElementType()) + ">";
-    } else if (dataType instanceof SetType) {
-      typeName = "set<" + typeFor(((SetType) dataType).getElementType()) + ">";
-    } else if (dataType instanceof MapType) {
-      MapType mapType = (MapType) dataType;
-      typeName =
-          "map<" + typeFor(mapType.getKeyType()) + "," + typeFor(mapType.getValueType()) + ">";
-    } else if (dataType instanceof TupleType) {
-      TupleType tupleType = (TupleType) dataType;
-      String dtPart =
-          tupleType
-              .getComponentTypes()
-              .stream()
-              .map(DataTypeIT::typeFor)
-              .collect(Collectors.joining(","));
-
-      typeName = "tuple<" + dtPart + ">";
-    } else if (dataType instanceof UserDefinedType) {
+    String typeName = dataType.asCql(true, true);
+    if (dataType instanceof UserDefinedType) {
       UserDefinedType udt = (UserDefinedType) dataType;
 
       // Create type if it doesn't already exist.
@@ -809,10 +759,6 @@ public class DataTypeIT {
                           udt.getName().asCql(false), String.join(",", fieldParts)))
                   .withConfigProfile(sessionRule.slowProfile())
                   .build());
-
-      typeName = "frozen<" + udt.getName().asCql(false) + ">";
-    } else {
-      typeName = dataType.toString();
     }
     return typeName;
   }
