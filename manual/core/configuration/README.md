@@ -330,22 +330,34 @@ The preferred way to instantiate policies (load balancing policy, retry policy, 
 configuration:
 
 ```
-advanced.reconnection-policy {
-  class = ExponentialReconnectionPolicy
-  base-delay = 1 second
-  max-delay = 60 seconds
+datastax-java-driver {
+  basic.load-balancing-policy.class = DefaultLoadBalancingPolicy
+  advanced.reconnection-policy {
+    class = ExponentialReconnectionPolicy
+    base-delay = 1 second
+    max-delay = 60 seconds
+  }
 }
 ```
 
-When the driver encounters such a declaration, it will load the class and look for a constructor
-with the following signature:
+When the driver encounters such a declaration, it will load the class and use reflection to invoke a
+constructor with the following signature:
 
-```java
-ExponentialReconnectionPolicy(DriverContext context)
-```
+* for policies that can be overridden in a profile (load balancing policy, retry policy, speculative
+  execution policy):
+  
+    ```java
+    public DefaultLoadBalancingPolicy(DriverContext context, String profileName)
+    ```
 
-Where `context` is the object returned by `session.getContext()`, which allows the policy to access
-other driver components (for example the configuration).
+* for session-wide policies (all the others):
+
+    ```java
+    public ExponentialReconnectionPolicy(DriverContext context)
+    ```
+
+Where [DriverContext] is the object returned by `session.getContext()`, which allows the policy to
+access other driver components (for example the configuration).
  
 If you write custom policy implementations, you should follow that same pattern; it provides an
 elegant way to switch policies without having to recompile the application (if your policy needs
@@ -441,6 +453,7 @@ config.getDefaultProfile().getInt(MyCustomOption.AWESOMENESS_FACTOR);
 
 [DriverConfig]:        http://docs.datastax.com/en/drivers/java/4.0/com/datastax/oss/driver/api/core/config/DriverConfig.html
 [DriverConfigProfile]: http://docs.datastax.com/en/drivers/java/4.0/com/datastax/oss/driver/api/core/config/DriverConfigProfile.html
+[DriverContext]:       https://docs.datastax.com/en/drivers/java/4.0/com/datastax/oss/driver/api/core/context/DriverContext.html
 [DriverOption]:        http://docs.datastax.com/en/drivers/java/4.0/com/datastax/oss/driver/api/core/config/DriverOption.html
 [DefaultDriverOption]: http://docs.datastax.com/en/drivers/java/4.0/com/datastax/oss/driver/api/core/config/DefaultDriverOption.html
 [DriverConfigLoader]:  http://docs.datastax.com/en/drivers/java/4.0/com/datastax/oss/driver/api/core/config/DriverConfigLoader.html
