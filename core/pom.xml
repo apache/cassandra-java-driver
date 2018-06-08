@@ -27,7 +27,6 @@
   </parent>
 
   <artifactId>java-driver-core</artifactId>
-  <packaging>bundle</packaging>
 
   <name>DataStax Java driver for Apache Cassandra(R) - core</name>
 
@@ -140,6 +139,11 @@
     <plugins>
       <plugin>
         <artifactId>maven-jar-plugin</artifactId>
+        <configuration>
+          <archive>
+            <manifestFile>${project.build.outputDirectory}/META-INF/MANIFEST.MF</manifestFile>
+          </archive>
+        </configuration>
         <executions>
           <execution>
             <id>test-jar</id>
@@ -160,30 +164,16 @@
           </properties>
         </configuration>
       </plugin>
+      <!--
+      We avoid packaging bundle because it does not play nicely with the shade plugin, see
+      https://stackoverflow.com/questions/31262032/maven-shade-plugin-and-custom-packaging-type
+      -->
       <plugin>
         <groupId>org.apache.felix</groupId>
         <artifactId>maven-bundle-plugin</artifactId>
         <configuration>
-          <manifestLocation>${project.build.outputDirectory}/META-INF</manifestLocation>
           <instructions>
             <Bundle-SymbolicName>com.datastax.oss.driver.core</Bundle-SymbolicName>
-            <!-- Allow importing code from other packages (so reflection-based loading of policies works) -->
-            <DynamicImport-Package>*</DynamicImport-Package>
-            <!-- Don't include JNR packages since some JNR modules are not OSGi bundles,
-                 jcip because its not an OSGi bundle, jctools because its shaded.
-                 Import sun.misc as jctools does this. -->
-            <Import-Package>
-              !net.jcip.annotations,!jnr.*,!org.jctools.*,sun.misc;resolution:=optional,*
-            </Import-Package>
-            <!-- Explicitly declare shaded jctools packages since this isn't covered by shade plugin -->
-            <Export-Package>
-              com.datastax.oss.driver.*.core.*,
-              com.datastax.oss.driver.shaded.jctools.util;version="${project.version}";uses:="sun.misc",
-              com.datastax.oss.driver.shaded.jctools.queues;version="${project.version}";uses:="com.datastax.oss.driver.shaded.jctools.queues.spec",
-              com.datastax.oss.driver.shaded.jctools.queues.spec;version="${project.version}",
-              com.datastax.oss.driver.shaded.jctools.queues.atomic;version="${project.version}";uses:="com.datastax.oss.driver.shaded.jctools.queues,com.datastax.oss.driver.shaded.jctools.queues.spec",
-              com.datastax.oss.driver.shaded.jctools.maps;version="${project.version}"
-            </Export-Package>
           </instructions>
           <!--
           Prevent customized manifest entries from the project's maven-jar-plugin configuration from being read, see
@@ -193,6 +183,64 @@
             <forced>true</forced>
           </archive>
         </configuration>
+        <executions>
+          <execution>
+            <id>bundle-manifest</id>
+            <phase>process-classes</phase>
+            <goals>
+              <goal>manifest</goal>
+            </goals>
+            <configuration>
+              <manifestLocation>${project.build.outputDirectory}/META-INF</manifestLocation>
+              <instructions>
+                <!-- Allow importing code from other packages (so reflection-based loading of policies works) -->
+                <DynamicImport-Package>*</DynamicImport-Package>
+                <!-- Don't include JNR packages since some JNR modules are not OSGi bundles,
+                     jcip because its not an OSGi bundle, jctools because its shaded.
+                     Import sun.misc as jctools does this. -->
+                <Import-Package>
+                  !net.jcip.annotations,!jnr.*,!org.jctools.*,sun.misc;resolution:=optional,*
+                </Import-Package>
+                <!-- Explicitly declare shaded jctools packages since this isn't covered by shade plugin -->
+                <Export-Package>
+                  com.datastax.oss.driver.*.core.*,
+                  com.datastax.oss.driver.shaded.jctools.util;version="${project.version}";uses:="sun.misc",
+                  com.datastax.oss.driver.shaded.jctools.queues;version="${project.version}";uses:="com.datastax.oss.driver.shaded.jctools.queues.spec",
+                  com.datastax.oss.driver.shaded.jctools.queues.spec;version="${project.version}",
+                  com.datastax.oss.driver.shaded.jctools.queues.atomic;version="${project.version}";uses:="com.datastax.oss.driver.shaded.jctools.queues,com.datastax.oss.driver.shaded.jctools.queues.spec",
+                  com.datastax.oss.driver.shaded.jctools.maps;version="${project.version}"
+                </Export-Package>
+              </instructions>
+            </configuration>
+          </execution>
+          <!-- Alternate execution to generate the manifest to be used by the java-driver-core-shaded module -->
+          <execution>
+            <id>bundle-manifest-shaded</id>
+            <phase>process-classes</phase>
+            <goals>
+              <goal>manifest</goal>
+            </goals>
+            <configuration>
+              <manifestLocation>${project.build.directory}/classes/META-INF-shaded</manifestLocation>
+              <instructions>
+                <Bundle-Name>DataStax Java driver for Apache Cassandra(R) - core netty shaded</Bundle-Name>
+                <DynamicImport-Package>*</DynamicImport-Package>
+                <!-- Don't include netty since it will be shaded, import javax.security.cert as needed by netty ssl -->
+                <Import-Package>
+                  !net.jcip.annotations,!jnr.*,!org.jctools.*,sun.misc;resolution:=optional,!io.netty.*,javax.security.cert,*
+                </Import-Package>
+                <Export-Package>
+                  com.datastax.oss.driver.*.core.*,
+                  com.datastax.oss.driver.shaded.jctools.util;version="${project.version}";uses:="sun.misc",
+                  com.datastax.oss.driver.shaded.jctools.queues;version="${project.version}";uses:="com.datastax.oss.driver.shaded.jctools.queues.spec",
+                  com.datastax.oss.driver.shaded.jctools.queues.spec;version="${project.version}",
+                  com.datastax.oss.driver.shaded.jctools.queues.atomic;version="${project.version}";uses:="com.datastax.oss.driver.shaded.jctools.queues,com.datastax.oss.driver.shaded.jctools.queues.spec",
+                  com.datastax.oss.driver.shaded.jctools.maps;version="${project.version}"
+                </Export-Package>
+              </instructions>
+            </configuration>
+          </execution>
+        </executions>
       </plugin>
       <!-- shade jctools -->
       <plugin>
