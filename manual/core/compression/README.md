@@ -29,9 +29,9 @@ Dependency:
 
 ```xml
 <dependency>
-  <groupId>net.jpountz.lz4</groupId>
-  <artifactId>lz4</artifactId>
-  <version>1.3.0</version>
+  <groupId>org.lz4</groupId>
+  <artifactId>lz4-java</artifactId>
+  <version>1.4.1</version>
 </dependency>
 ```
 
