@@ -55,6 +55,7 @@ public class ChannelFactory {
 
   private static final Logger LOG = LoggerFactory.getLogger(ChannelFactory.class);
 
+  private final String logPrefix;
   protected final InternalDriverContext context;
 
   /** either set from the configuration, or null and will be negotiated */
@@ -63,6 +64,7 @@ public class ChannelFactory {
   @VisibleForTesting volatile String clusterName;
 
   public ChannelFactory(InternalDriverContext context) {
+    this.logPrefix = context.sessionName();
     this.context = context;
 
     DriverConfigProfile defaultConfig = context.config().getDefaultProfile();
@@ -203,7 +205,8 @@ public class ChannelFactory {
                   context.protocolVersionRegistry().downgrade(currentVersion);
               if (downgraded.isPresent()) {
                 LOG.info(
-                    "Failed to connect with protocol {}, retrying with {}",
+                    "[{}] Failed to connect with protocol {}, retrying with {}",
+                    logPrefix,
                     currentVersion,
                     downgraded.get());
                 connect(
