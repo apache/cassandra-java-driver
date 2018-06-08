@@ -227,26 +227,30 @@ public class ControlConnection implements EventCallback, AsyncAutoCloseable {
         return;
       }
       initWasCalled = true;
-      ImmutableList<String> eventTypes = buildEventTypes(listenToClusterEvents);
-      LOG.debug("[{}] Initializing with event types {}", logPrefix, eventTypes);
-      channelOptions =
-          DriverChannelOptions.builder()
-              .withEvents(eventTypes, ControlConnection.this)
-              .withOwnerLogPrefix(logPrefix + "|control")
-              .build();
+      try {
+        ImmutableList<String> eventTypes = buildEventTypes(listenToClusterEvents);
+        LOG.debug("[{}] Initializing with event types {}", logPrefix, eventTypes);
+        channelOptions =
+            DriverChannelOptions.builder()
+                .withEvents(eventTypes, ControlConnection.this)
+                .withOwnerLogPrefix(logPrefix + "|control")
+                .build();
 
-      Queue<Node> nodes = context.loadBalancingPolicyWrapper().newQueryPlan();
+        Queue<Node> nodes = context.loadBalancingPolicyWrapper().newQueryPlan();
 
-      connect(
-          nodes,
-          null,
-          () -> initFuture.complete(null),
-          error -> {
-            if (reconnectOnFailure && !closeWasCalled) {
-              reconnection.start();
-            }
-            initFuture.completeExceptionally(error);
-          });
+        connect(
+            nodes,
+            null,
+            () -> initFuture.complete(null),
+            error -> {
+              if (reconnectOnFailure && !closeWasCalled) {
+                reconnection.start();
+              }
+              initFuture.completeExceptionally(error);
+            });
+      } catch (Throwable t) {
+        initFuture.completeExceptionally(t);
+      }
     }
 
     private CompletionStage<Boolean> reconnect() {

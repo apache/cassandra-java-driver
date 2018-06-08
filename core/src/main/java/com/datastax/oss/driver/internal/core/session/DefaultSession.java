@@ -51,6 +51,7 @@ import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ConcurrentMap;
+import java.util.function.Supplier;
 import net.jcip.annotations.ThreadSafe;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -249,6 +250,27 @@ public class DefaultSession implements CqlSession {
       initWasCalled = true;
       LOG.debug("[{}] Starting initialization", logPrefix);
 
+      // Eagerly fetch user-facing policies right now, no need to start opening connections if
+      // something is wrong in the configuration.
+      try {
+        context.loadBalancingPolicies();
+        context.retryPolicies();
+        context.speculativeExecutionPolicies();
+        context.reconnectionPolicy();
+        context.addressTranslator();
+        context.nodeStateListener();
+        context.schemaChangeListener();
+        context.requestTracker();
+        context.requestThrottler();
+        context.authProvider();
+        context.sslHandlerFactory();
+        context.timestampGenerator();
+      } catch (Throwable error) {
+        initFuture.completeExceptionally(error);
+        RunOrSchedule.on(adminExecutor, this::closePolicies);
+        return;
+      }
+
       MetadataManager metadataManager = context.metadataManager();
       metadataManager
           // Store contact points in the metadata right away, the control connection will need them
@@ -416,36 +438,66 @@ public class DefaultSession implements CqlSession {
     }
 
     private void closePolicies() {
-      for (AutoCloseable closeable :
-          ImmutableList.<AutoCloseable>builder()
-              .add(
-                  context.reconnectionPolicy(),
-                  context.loadBalancingPolicyWrapper(),
-                  context.addressTranslator(),
-                  context.configLoader(),
-                  context.nodeStateListener(),
-                  context.schemaChangeListener(),
-                  context.requestTracker())
-              .addAll(context.retryPolicies().values())
-              .addAll(context.speculativeExecutionPolicies().values())
-              .build()) {
+      // This is a bit tricky: we might be closing the session because of an initialization error.
+      // This error might have been triggered by a policy failing to initialize. If we try to access
+      // the policy here to close it, it will fail again. So make sure we ignore that error and
+      // proceed to close the other policies.
+      List<AutoCloseable> policies = new ArrayList<>();
+      for (Supplier<AutoCloseable> supplier :
+          ImmutableList.<Supplier<AutoCloseable>>of(
+              context::reconnectionPolicy,
+              context::loadBalancingPolicyWrapper,
+              context::addressTranslator,
+              context::configLoader,
+              context::nodeStateListener,
+              context::schemaChangeListener,
+              context::requestTracker,
+              context::requestThrottler)) {
         try {
-          closeable.close();
+          policies.add(supplier.get());
         } catch (Throwable t) {
-          Loggers.warnWithException(LOG, "[{}] Error while closing {}", logPrefix, closeable, t);
+          // Assume the policy had failed to initialize, and we don't need to close it => ignore
+        }
+      }
+      try {
+        policies.addAll(context.retryPolicies().values());
+      } catch (Throwable t) {
+        // Same as above, assume the policies had failed to initialize.
+      }
+      try {
+        policies.addAll(context.speculativeExecutionPolicies().values());
+      } catch (Throwable t) {
+        // Same as above, assume the policies had failed to initialize.
+      }
+
+      // Finally we have a list of all the policies that initialized successfully, close them:
+      for (AutoCloseable policy : policies) {
+        try {
+          policy.close();
+        } catch (Throwable t) {
+          Loggers.warnWithException(LOG, "[{}] Error while closing {}", logPrefix, policy, t);
         }
       }
     }
 
     private List<AsyncAutoCloseable> internalComponentsToClose() {
-      return ImmutableList.<AsyncAutoCloseable>builder()
-          .add(
-              poolManager,
-              nodeStateManager,
-              metadataManager,
-              context.topologyMonitor(),
-              context.controlConnection())
-          .build();
+      ImmutableList.Builder<AsyncAutoCloseable> components =
+          ImmutableList.<AsyncAutoCloseable>builder()
+              .add(poolManager, nodeStateManager, metadataManager);
+
+      // Same as closePolicies(): make sure we don't trigger errors by accessing context components
+      // that had failed to initialize:
+      try {
+        components.add(context.topologyMonitor());
+      } catch (Throwable t) {
+        // ignore
+      }
+      try {
+        components.add(context.controlConnection());
+      } catch (Throwable t) {
+        // ignore
+      }
+      return components.build();
     }
   }
 }
