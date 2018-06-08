@@ -35,8 +35,8 @@ import net.jcip.annotations.ThreadSafe;
  *
  * <pre>
  * datastax-java-driver {
- *   ssl-engine-factory {
- *     class = com.datastax.driver.api.core.ssl.DefaultSslEngineFactory
+ *   advanced.ssl-engine-factory {
+ *     class = DefaultSslEngineFactory
  *     cipher-suites = [ "TLS_RSA_WITH_AES_128_CBC_SHA", "TLS_RSA_WITH_AES_256_CBC_SHA" ]
  *   }
  * }
