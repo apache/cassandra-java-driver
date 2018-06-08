@@ -4,6 +4,7 @@
 
 ### 4.0.0-alpha4 (in progress)
 
+- [bug] JAVA-1560: Correctly propagate policy initialization errors
 - [improvement] JAVA-1865: Add RelationMetadata.getPrimaryKey()
 - [improvement] JAVA-1862: Add ConsistencyLevel.isDcLocal and isSerial
 - [improvement] JAVA-1858: Implement Serializable in implementations, not interfaces

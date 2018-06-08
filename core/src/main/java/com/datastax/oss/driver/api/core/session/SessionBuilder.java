@@ -244,33 +244,40 @@ public abstract class SessionBuilder<SelfT extends SessionBuilder, SessionT> {
   protected abstract SessionT wrap(CqlSession defaultSession);
 
   protected final CompletionStage<CqlSession> buildDefaultSessionAsync() {
-    DriverConfigLoader configLoader = buildIfNull(this.configLoader, this::defaultConfigLoader);
+    try {
+      DriverConfigLoader configLoader = buildIfNull(this.configLoader, this::defaultConfigLoader);
 
-    DriverConfigProfile defaultConfig = configLoader.getInitialConfig().getDefaultProfile();
-    List<String> configContactPoints =
-        defaultConfig.isDefined(DefaultDriverOption.CONTACT_POINTS)
-            ? defaultConfig.getStringList(DefaultDriverOption.CONTACT_POINTS)
-            : Collections.emptyList();
+      DriverConfigProfile defaultConfig = configLoader.getInitialConfig().getDefaultProfile();
+      List<String> configContactPoints =
+          defaultConfig.isDefined(DefaultDriverOption.CONTACT_POINTS)
+              ? defaultConfig.getStringList(DefaultDriverOption.CONTACT_POINTS)
+              : Collections.emptyList();
 
-    Set<InetSocketAddress> contactPoints =
-        ContactPoints.merge(programmaticContactPoints, configContactPoints);
+      Set<InetSocketAddress> contactPoints =
+          ContactPoints.merge(programmaticContactPoints, configContactPoints);
 
-    if (keyspace == null && defaultConfig.isDefined(DefaultDriverOption.SESSION_KEYSPACE)) {
-      keyspace =
-          CqlIdentifier.fromCql(defaultConfig.getString(DefaultDriverOption.SESSION_KEYSPACE));
+      if (keyspace == null && defaultConfig.isDefined(DefaultDriverOption.SESSION_KEYSPACE)) {
+        keyspace =
+            CqlIdentifier.fromCql(defaultConfig.getString(DefaultDriverOption.SESSION_KEYSPACE));
+      }
+
+      return DefaultSession.init(
+          (InternalDriverContext)
+              buildContext(
+                  configLoader,
+                  typeCodecs,
+                  nodeStateListener,
+                  schemaChangeListener,
+                  requestTracker,
+                  nodeFilters.build()),
+          contactPoints,
+          keyspace);
+
+    } catch (Throwable t) {
+      // We construct the session synchronously (until the init() call), but async clients expect a
+      // failed future if anything goes wrong. So wrap any error from that synchronous part.
+      return CompletableFutures.failedFuture(t);
     }
-
-    return DefaultSession.init(
-        (InternalDriverContext)
-            buildContext(
-                configLoader,
-                typeCodecs,
-                nodeStateListener,
-                schemaChangeListener,
-                requestTracker,
-                nodeFilters.build()),
-        contactPoints,
-        keyspace);
   }
 
   /**
