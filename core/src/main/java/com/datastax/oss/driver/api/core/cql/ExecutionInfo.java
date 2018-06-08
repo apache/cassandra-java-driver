@@ -18,6 +18,7 @@ package com.datastax.oss.driver.api.core.cql;
 import com.datastax.oss.driver.api.core.DefaultProtocolVersion;
 import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
 import com.datastax.oss.driver.api.core.metadata.Node;
+import com.datastax.oss.driver.api.core.retry.RetryDecision;
 import com.datastax.oss.driver.api.core.session.Request;
 import com.datastax.oss.driver.api.core.session.Session;
 import com.datastax.oss.driver.api.core.specex.SpeculativeExecutionPolicy;
@@ -147,4 +148,31 @@ public interface ExecutionInfo {
     BlockingOperation.checkNotDriverThread();
     return CompletableFutures.getUninterruptibly(getQueryTraceAsync());
   }
+
+  /**
+   * The size of the binary response in bytes.
+   *
+   * <p>This is the size of the protocol-level frame (including the frame header) before it was
+   * decoded by the driver, but after decompression (if compression is enabled).
+   *
+   * <p>If the information is not available (for example if this execution info comes from an {@link
+   * RetryDecision#IGNORE IGNORE} decision of the retry policy), this method returns -1.
+   *
+   * @see #getCompressedResponseSizeInBytes()
+   */
+  int getResponseSizeInBytes();
+
+  /**
+   * The size of the compressed binary response in bytes.
+   *
+   * <p>This is the size of the protocol-level frame (including the frame header) as it came in the
+   * TCP response, before decompression and decoding by the driver.
+   *
+   * <p>If compression is disabled, or if the information is not available (for example if this
+   * execution info comes from an {@link RetryDecision#IGNORE IGNORE} decision of the retry policy),
+   * this method returns -1.
+   *
+   * @see #getResponseSizeInBytes()
+   */
+  int getCompressedResponseSizeInBytes();
 }
