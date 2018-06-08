@@ -234,16 +234,6 @@ public class Reflection {
   }
 
   private static DriverOption classOption(DriverOption rootOption) {
-    return new DriverOption() {
-      @Override
-      public String getPath() {
-        return rootOption.getPath() + ".class";
-      }
-
-      @Override
-      public boolean required() {
-        return rootOption.required();
-      }
-    };
+    return () -> rootOption.getPath() + ".class";
   }
 }

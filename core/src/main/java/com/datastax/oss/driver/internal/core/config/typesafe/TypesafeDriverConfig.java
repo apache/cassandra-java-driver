@@ -19,15 +19,12 @@ import static com.typesafe.config.ConfigValueType.OBJECT;
 
 import com.datastax.oss.driver.api.core.config.DriverConfig;
 import com.datastax.oss.driver.api.core.config.DriverConfigProfile;
-import com.datastax.oss.driver.api.core.config.DriverOption;
 import com.datastax.oss.driver.internal.core.util.Loggers;
 import com.datastax.oss.driver.shaded.guava.common.base.Preconditions;
-import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableList;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableMap;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigObject;
 import com.typesafe.config.ConfigValue;
-import java.util.Collection;
 import java.util.Map;
 import net.jcip.annotations.ThreadSafe;
 import org.slf4j.Logger;
@@ -38,14 +35,12 @@ public class TypesafeDriverConfig implements DriverConfig {
 
   private static final Logger LOG = LoggerFactory.getLogger(TypesafeDriverConfig.class);
 
-  private final Collection<DriverOption> options;
   private final Map<String, TypesafeDriverConfigProfile.Base> profiles;
   // Only used to detect if reload saw any change
   private volatile Config lastLoadedConfig;
 
-  public TypesafeDriverConfig(Config config, DriverOption[]... optionArrays) {
+  public TypesafeDriverConfig(Config config) {
     this.lastLoadedConfig = config;
-    this.options = merge(optionArrays);
 
     Map<String, Config> profileConfigs = extractProfiles(config);
 
@@ -101,7 +96,6 @@ public class TypesafeDriverConfig implements DriverConfig {
     ImmutableMap.Builder<String, Config> result = ImmutableMap.builder();
 
     Config defaultProfileConfig = sourceConfig.withoutPath("profiles");
-    validateRequired(defaultProfileConfig, options);
     result.put(DriverConfigProfile.DEFAULT_NAME, defaultProfileConfig);
 
     // The rest of the method is a bit confusing because we navigate between Typesafe config's two
@@ -141,25 +135,5 @@ public class TypesafeDriverConfig implements DriverConfig {
   @Override
   public Map<String, DriverConfigProfile> getProfiles() {
     return ImmutableMap.copyOf(profiles);
-  }
-
-  private static void validateRequired(Config config, Collection<DriverOption> options) {
-    for (DriverOption option : options) {
-      Preconditions.checkArgument(
-          !option.required() || config.hasPath(option.getPath()),
-          "Missing option %s. Check your configuration file.",
-          option.getPath());
-    }
-  }
-
-  private Collection<DriverOption> merge(DriverOption[][] optionArrays) {
-    Preconditions.checkArgument(optionArrays.length > 0, "Must provide some options");
-    ImmutableList.Builder<DriverOption> optionsBuilder = ImmutableList.builder();
-    for (DriverOption[] optionArray : optionArrays) {
-      for (DriverOption driverOption : optionArray) {
-        optionsBuilder.add(driverOption);
-      }
-    }
-    return optionsBuilder.build();
   }
 }

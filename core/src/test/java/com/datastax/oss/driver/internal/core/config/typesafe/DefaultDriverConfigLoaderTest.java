@@ -72,23 +72,21 @@ public class DefaultDriverConfigLoaderTest {
     Mockito.when(defaultConfigProfile.getDuration(DefaultDriverOption.CONFIG_RELOAD_INTERVAL))
         .thenReturn(Duration.ofSeconds(12));
 
-    configSource = new AtomicReference<>("required_int = 42");
+    configSource = new AtomicReference<>("int1 = 42");
   }
 
   @Test
   public void should_build_initial_config() {
     DefaultDriverConfigLoader loader =
-        new DefaultDriverConfigLoader(
-            () -> ConfigFactory.parseString(configSource.get()), MockOptions.values());
+        new DefaultDriverConfigLoader(() -> ConfigFactory.parseString(configSource.get()));
     DriverConfig initialConfig = loader.getInitialConfig();
-    assertThat(initialConfig).hasIntOption(MockOptions.REQUIRED_INT, 42);
+    assertThat(initialConfig).hasIntOption(MockOptions.INT1, 42);
   }
 
   @Test
   public void should_schedule_reloading_task() {
     DefaultDriverConfigLoader loader =
-        new DefaultDriverConfigLoader(
-            () -> ConfigFactory.parseString(configSource.get()), MockOptions.values());
+        new DefaultDriverConfigLoader(() -> ConfigFactory.parseString(configSource.get()));
 
     loader.onDriverInit(context);
     adminExecutor.waitForNonScheduledTasks();
@@ -101,51 +99,48 @@ public class DefaultDriverConfigLoaderTest {
   @Test
   public void should_reload_if_config_has_changed() {
     DefaultDriverConfigLoader loader =
-        new DefaultDriverConfigLoader(
-            () -> ConfigFactory.parseString(configSource.get()), MockOptions.values());
+        new DefaultDriverConfigLoader(() -> ConfigFactory.parseString(configSource.get()));
     DriverConfig initialConfig = loader.getInitialConfig();
-    assertThat(initialConfig).hasIntOption(MockOptions.REQUIRED_INT, 42);
+    assertThat(initialConfig).hasIntOption(MockOptions.INT1, 42);
 
     loader.onDriverInit(context);
     adminExecutor.waitForNonScheduledTasks();
 
     CapturedTask<?> task = adminExecutor.nextTask();
 
-    configSource.set("required_int = 43");
+    configSource.set("int1 = 43");
 
     task.run();
 
-    assertThat(initialConfig).hasIntOption(MockOptions.REQUIRED_INT, 43);
+    assertThat(initialConfig).hasIntOption(MockOptions.INT1, 43);
     Mockito.verify(eventBus).fire(ConfigChangeEvent.INSTANCE);
   }
 
   @Test
   public void should_reload_if_forced() {
     DefaultDriverConfigLoader loader =
-        new DefaultDriverConfigLoader(
-            () -> ConfigFactory.parseString(configSource.get()), MockOptions.values());
+        new DefaultDriverConfigLoader(() -> ConfigFactory.parseString(configSource.get()));
     DriverConfig initialConfig = loader.getInitialConfig();
-    assertThat(initialConfig).hasIntOption(MockOptions.REQUIRED_INT, 42);
+    assertThat(initialConfig).hasIntOption(MockOptions.INT1, 42);
 
     loader.onDriverInit(context);
     adminExecutor.waitForNonScheduledTasks();
 
-    configSource.set("required_int = 43");
+    configSource.set("int1 = 43");
 
     eventBus.fire(ForceReloadConfigEvent.INSTANCE);
     adminExecutor.waitForNonScheduledTasks();
 
-    assertThat(initialConfig).hasIntOption(MockOptions.REQUIRED_INT, 43);
+    assertThat(initialConfig).hasIntOption(MockOptions.INT1, 43);
     Mockito.verify(eventBus).fire(ConfigChangeEvent.INSTANCE);
   }
 
   @Test
   public void should_not_notify_if_config_has_not_changed() {
     DefaultDriverConfigLoader loader =
-        new DefaultDriverConfigLoader(
-            () -> ConfigFactory.parseString(configSource.get()), MockOptions.values());
+        new DefaultDriverConfigLoader(() -> ConfigFactory.parseString(configSource.get()));
     DriverConfig initialConfig = loader.getInitialConfig();
-    assertThat(initialConfig).hasIntOption(MockOptions.REQUIRED_INT, 42);
+    assertThat(initialConfig).hasIntOption(MockOptions.INT1, 42);
 
     loader.onDriverInit(context);
     adminExecutor.waitForNonScheduledTasks();

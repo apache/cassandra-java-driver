@@ -15,9 +15,12 @@
  */
 package com.datastax.oss.driver.api.core.config;
 
-/** Describes an option in the driver's configuration. */
+/**
+ * Describes an option in the driver's configuration.
+ *
+ * <p>This is just a thin wrapper around the option's path, to make it easier to find where it is
+ * referenced in the code. We recommend using enums for implementations.
+ */
 public interface DriverOption {
   String getPath();
-
-  boolean required();
 }
