@@ -395,40 +395,22 @@ First, write an enum that implements [DriverOption]:
 ```java
 public enum MyCustomOption implements DriverOption {
 
-  ADMIN_NAME("admin.name", true),
-  ADMIN_EMAIL("admin.email", true),
-  AWESOMENESS_FACTOR("awesomeness-factor", true),
+  ADMIN_NAME("admin.name"),
+  ADMIN_EMAIL("admin.email"),
+  AWESOMENESS_FACTOR("awesomeness-factor"),
   ;
 
   private final String path;
-  private final boolean required;
 
-  MyCustomOption(String path, boolean required) {
+  MyCustomOption(String path) {
     this.path = path;
-    this.required = required;
   }
 
   @Override
   public String getPath() {
     return path;
   }
-
-  @Override
-  public boolean required() {
-    return required;
-  }
 }
-```
-
-Pass the options to the config loader:
-
-```java
-CqlSession session = CqlSession.builder()
-    .withConfigLoader(new DefaultDriverConfigLoader(
-        DefaultDriverConfigLoader.DEFAULT_CONFIG_SUPPLIER,
-        DefaultDriverOption.values(), // don't forget to keep the core options
-        MyCustomOption.values()))
-    .build();
 ```
 
 You can now add the options to your configuration:

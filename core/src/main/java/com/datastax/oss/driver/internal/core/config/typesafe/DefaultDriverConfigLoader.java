@@ -19,7 +19,6 @@ import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
 import com.datastax.oss.driver.api.core.config.DriverConfig;
 import com.datastax.oss.driver.api.core.config.DriverConfigLoader;
 import com.datastax.oss.driver.api.core.config.DriverConfigProfile;
-import com.datastax.oss.driver.api.core.config.DriverOption;
 import com.datastax.oss.driver.api.core.context.DriverContext;
 import com.datastax.oss.driver.api.core.session.SessionBuilder;
 import com.datastax.oss.driver.internal.core.config.ConfigChangeEvent;
@@ -60,16 +59,16 @@ public class DefaultDriverConfigLoader implements DriverConfigLoader {
    * SessionBuilder#withConfigLoader(DriverConfigLoader)}) and the core driver options.
    */
   public DefaultDriverConfigLoader() {
-    this(DEFAULT_CONFIG_SUPPLIER, DefaultDriverOption.values());
+    this(DEFAULT_CONFIG_SUPPLIER);
   }
 
   /**
    * Builds an instance with custom arguments, if you want to load the configuration from somewhere
-   * else or have custom options.
+   * else.
    */
-  public DefaultDriverConfigLoader(Supplier<Config> configSupplier, DriverOption[]... options) {
+  public DefaultDriverConfigLoader(Supplier<Config> configSupplier) {
     this.configSupplier = configSupplier;
-    this.driverConfig = new TypesafeDriverConfig(configSupplier.get(), options);
+    this.driverConfig = new TypesafeDriverConfig(configSupplier.get());
   }
 
   @Override

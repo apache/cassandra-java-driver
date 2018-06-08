@@ -19,7 +19,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
 import com.datastax.oss.driver.api.core.config.DriverConfigProfile;
-import com.datastax.oss.driver.api.core.config.DriverOption;
 import com.datastax.oss.driver.api.core.context.DriverContext;
 import com.datastax.oss.driver.api.core.specex.SpeculativeExecutionPolicy;
 import com.datastax.oss.driver.internal.core.config.typesafe.TypesafeDriverConfig;
@@ -57,8 +56,7 @@ public class ReflectionTest {
             + "  }\n"
             + "}\n";
     DriverContext context = Mockito.mock(DriverContext.class);
-    TypesafeDriverConfig config =
-        new TypesafeDriverConfig(ConfigFactory.parseString(configSource), new DriverOption[0]);
+    TypesafeDriverConfig config = new TypesafeDriverConfig(ConfigFactory.parseString(configSource));
     Mockito.when(context.config()).thenReturn(config);
 
     Map<String, SpeculativeExecutionPolicy> policies =

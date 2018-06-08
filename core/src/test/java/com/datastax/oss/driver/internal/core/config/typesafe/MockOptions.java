@@ -18,25 +18,19 @@ package com.datastax.oss.driver.internal.core.config.typesafe;
 import com.datastax.oss.driver.api.core.config.DriverOption;
 
 enum MockOptions implements DriverOption {
-  REQUIRED_INT("required_int", true),
-  OPTIONAL_INT("optional_int", false),
-  OPTIONAL_AUTH("auth_provider", false);
+  INT1("int1"),
+  INT2("int2"),
+  AUTH_PROVIDER("auth_provider"),
+  ;
 
   private final String path;
-  private final boolean required;
 
-  MockOptions(String path, boolean required) {
+  MockOptions(String path) {
     this.path = path;
-    this.required = required;
   }
 
   @Override
   public String getPath() {
     return path;
-  }
-
-  @Override
-  public boolean required() {
-    return required;
   }
 }
