@@ -42,6 +42,8 @@ public class DefaultExecutionInfo implements ExecutionInfo {
   private final List<Map.Entry<Node, Throwable>> errors;
   private final ByteBuffer pagingState;
   private final UUID tracingId;
+  private final int responseSizeInBytes;
+  private final int compressedResponseSizeInBytes;
   private final List<String> warnings;
   private final Map<String, ByteBuffer> customPayload;
   private final boolean schemaInAgreement;
@@ -69,6 +71,8 @@ public class DefaultExecutionInfo implements ExecutionInfo {
     this.pagingState = pagingState;
 
     this.tracingId = (frame == null) ? null : frame.tracingId;
+    this.responseSizeInBytes = (frame == null) ? -1 : frame.size;
+    this.compressedResponseSizeInBytes = (frame == null) ? -1 : frame.compressedSize;
     // Note: the collections returned by the protocol layer are already unmodifiable
     this.warnings = (frame == null) ? Collections.emptyList() : frame.warnings;
     this.customPayload = (frame == null) ? Collections.emptyMap() : frame.customPayload;
@@ -138,5 +142,15 @@ public class DefaultExecutionInfo implements ExecutionInfo {
     } else {
       return new QueryTraceFetcher(tracingId, session, context, configProfile).fetch();
     }
+  }
+
+  @Override
+  public int getResponseSizeInBytes() {
+    return responseSizeInBytes;
+  }
+
+  @Override
+  public int getCompressedResponseSizeInBytes() {
+    return compressedResponseSizeInBytes;
   }
 }

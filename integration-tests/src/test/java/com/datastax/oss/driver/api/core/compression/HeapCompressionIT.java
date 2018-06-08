@@ -19,6 +19,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.offset;
 
 import com.datastax.oss.driver.api.core.CqlSession;
+import com.datastax.oss.driver.api.core.cql.ExecutionInfo;
 import com.datastax.oss.driver.api.core.cql.ResultSet;
 import com.datastax.oss.driver.api.core.cql.Row;
 import com.datastax.oss.driver.api.core.cql.SimpleStatement;
@@ -93,6 +94,13 @@ public class HeapCompressionIT {
       assertThat(row.getString("t")).isEqualTo("foo");
       assertThat(row.getInt("i")).isEqualTo(42);
       assertThat(row.getFloat("f")).isEqualTo(24.03f, offset(0.1f));
+
+      ExecutionInfo executionInfo = rs.getExecutionInfo();
+      // There's not much more we can check without hard-coding sizes.
+      // We are testing with small responses, so the compressed payload is not even guaranteed to be
+      // smaller.
+      assertThat(executionInfo.getResponseSizeInBytes()).isGreaterThan(0);
+      assertThat(executionInfo.getCompressedResponseSizeInBytes()).isGreaterThan(0);
     }
   }
 }
