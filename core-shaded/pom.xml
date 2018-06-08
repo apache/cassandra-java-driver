@@ -1,0 +1,128 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+
+    Copyright DataStax, Inc.
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+
+  <parent>
+    <groupId>com.datastax.oss</groupId>
+    <artifactId>java-driver-parent</artifactId>
+    <version>4.0.0-alpha4-SNAPSHOT</version>
+  </parent>
+
+  <artifactId>java-driver-core-shaded</artifactId>
+  <packaging>bundle</packaging>
+
+  <name>DataStax Java driver for Apache Cassandra(R) - core with netty shaded</name>
+
+  <dependencies>
+    <dependency>
+      <groupId>com.datastax.oss</groupId>
+      <artifactId>java-driver-core</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+  </dependencies>
+
+  <build>
+    <plugins>
+      <!-- extract shaded manifest from core jar -->
+      <plugin>
+        <artifactId>maven-dependency-plugin</artifactId>
+        <executions>
+          <execution>
+            <id>unpack-manifest</id>
+            <phase>prepare-package</phase>
+            <goals>
+              <goal>unpack</goal>
+            </goals>
+            <configuration>
+              <artifactItems>
+                <artifactItem>
+                  <groupId>com.datastax.oss</groupId>
+                  <artifactId>java-driver-core</artifactId>
+                  <version>${project.version}</version>
+                  <includes>META-INF-shaded/MANIFEST.MF</includes>
+                  <outputDirectory>${project.build.directory}</outputDirectory>
+                </artifactItem>
+              </artifactItems>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+      <plugin>
+        <artifactId>maven-shade-plugin</artifactId>
+        <executions>
+          <execution>
+            <phase>package</phase>
+            <goals>
+              <goal>shade</goal>
+            </goals>
+            <configuration>
+              <artifactSet>
+                <includes>
+                  <include>com.datastax.oss:java-driver-core</include>
+                  <include>io.netty:*</include>
+                </includes>
+              </artifactSet>
+              <relocations>
+                <relocation>
+                  <pattern>io.netty</pattern>
+                  <shadedPattern>com.datastax.oss.driver.shaded.netty</shadedPattern>
+                </relocation>
+              </relocations>
+              <transformers>
+                <transformer implementation="org.apache.maven.plugins.shade.resource.DontIncludeResourceTransformer">
+                  <resources>
+                    <resource>META-INF/MANIFEST.MF</resource>
+                    <resource>META-INF-shaded/MANIFEST.MF</resource>
+                    <resource>META-INF/maven/com.datastax.oss/java-driver-core/pom.xml</resource>
+                    <resource>META-INF/maven/com.datastax.oss/java-driver-core/pom.properties</resource>
+                    <resource>META-INF/maven/io.netty/netty-handler/pom.properties</resource>
+                    <resource>META-INF/maven/io.netty/netty-handler/pom.xml</resource>
+                    <resource>META-INF/maven/io.netty/netty-buffer/pom.properties</resource>
+                    <resource>META-INF/maven/io.netty/netty-buffer/pom.xml</resource>
+                    <resource>META-INF/maven/io.netty/netty-common/pom.properties</resource>
+                    <resource>META-INF/maven/io.netty/netty-common/pom.xml</resource>
+                    <resource>META-INF/maven/io.netty/netty-transport/pom.properties</resource>
+                    <resource>META-INF/maven/io.netty/netty-transport/pom.xml</resource>
+                    <resource>META-INF/maven/io.netty/netty-resolver/pom.properties</resource>
+                    <resource>META-INF/maven/io.netty/netty-resolver/pom.xml</resource>
+                    <resource>META-INF/maven/io.netty/netty-codec/pom.properties</resource>
+                    <resource>META-INF/maven/io.netty/netty-codec/pom.xml</resource>
+                    <!-- netty's shading of jctools does not remove its pom files -->
+                    <resource>META-INF/maven/org.jctools/jctools-core/pom.properties</resource>
+                    <resource>META-INF/maven/org.jctools/jctools-core/pom.xml</resource>
+                  </resources>
+                </transformer>
+                <!-- Pick up the alternate manifest that was extracted from the core module -->
+                <transformer implementation="org.apache.maven.plugins.shade.resource.IncludeResourceTransformer">
+                  <resource>META-INF/MANIFEST.MF</resource>
+                  <file>${project.build.directory}/META-INF-shaded/MANIFEST.MF</file>
+                </transformer>
+              </transformers>
+              <!-- Keep the dependencies of driver-core -->
+              <promoteTransitiveDependencies>true</promoteTransitiveDependencies>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+    </plugins>
+  </build>
+</project>

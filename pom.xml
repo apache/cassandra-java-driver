@@ -35,6 +35,7 @@
 
   <modules>
     <module>core</module>
+    <module>core-shaded</module>
     <module>query-builder</module>
     <module>test-infra</module>
     <module>integration-tests</module>

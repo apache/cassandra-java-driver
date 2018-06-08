@@ -55,6 +55,15 @@ public class BundleOptions {
             + ".jar");
   }
 
+  public static UrlProvisionOption driverCoreShadedBundle() {
+    return bundle(
+        "reference:file:"
+            + PathUtils.getBaseDir()
+            + "/../core-shaded/target/java-driver-core-shaded-"
+            + getVersion("project.version")
+            + ".jar");
+  }
+
   public static UrlProvisionOption driverQueryBuilderBundle() {
     return bundle(
         "reference:file:"
