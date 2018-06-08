@@ -25,7 +25,7 @@ The timestamp generator is defined in the [configuration](../configuration/).
 
 ```
 datastax-java-driver.advanced.timestamp-generator {
-  class = com.datastax.oss.driver.internal.core.time.AtomicTimestampGenerator
+  class = AtomicTimestampGenerator
 }
 ```
 
@@ -84,7 +84,7 @@ initialization:
 
 ```
 datastax-java-driver.advanced.timestamp-generator {
-  class = com.datastax.oss.driver.internal.core.time.ThreadLocalTimestampGenerator
+  class = ThreadLocalTimestampGenerator
 }
 ```
 
@@ -103,7 +103,7 @@ section for details.
 
 ```
 datastax-java-driver.advanced.timestamp-generator {
-  class = com.datastax.oss.driver.internal.core.time.ServerSideTimestampGenerator
+  class = ServerSideTimestampGenerator
 }
 ```
 
@@ -120,10 +120,10 @@ The timestamp generator can be overridden in [configuration profiles](../configu
 
 ```
 datastax-java-driver {
-  advanced.timestamp-generator = AtomicTimestampGenerator
+  advanced.timestamp-generator.class = AtomicTimestampGenerator
   profiles {
     profile1 {
-      advanced.timestamp-generator = ServerSideTimestampGenerator
+      advanced.timestamp-generator.class = ServerSideTimestampGenerator
     }
     profile2 {}
   } 

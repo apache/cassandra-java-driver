@@ -10,7 +10,7 @@ It is defined in the [configuration](../configuration/):
 
 ```
 datastax-java-driver.basic.load-balancing-policy {
-  class = com.datastax.oss.driver.internal.core.loadbalancing.DefaultLoadBalancingPolicy
+  class = DefaultLoadBalancingPolicy
 }
 ```
 
@@ -97,7 +97,7 @@ Therefore the default policy does not allow remote nodes; it only ever assigns t
 
 ```
 datastax-java-driver.basic.load-balancing-policy {
-  class = com.datastax.oss.driver.internal.core.loadbalancing.DefaultLoadBalancingPolicy
+  class = DefaultLoadBalancingPolicy
   local-datacenter = datacenter1
 }
 ```
@@ -198,7 +198,7 @@ for inclusion in the local DC. If a node doesn't pass this test, it will be set 
 
 ```
 datastax-java-driver.basic.load-balancing-policy {
-  class = com.datastax.oss.driver.internal.core.loadbalancing.DefaultLoadBalancingPolicy
+  class = DefaultLoadBalancingPolicy
   local-datacenter = datacenter1
   filter-class = com.acme.MyNodeFilter
 }
