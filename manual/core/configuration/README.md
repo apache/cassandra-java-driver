@@ -331,7 +331,7 @@ configuration:
 
 ```
 advanced.reconnection-policy {
-  class = com.datastax.oss.driver.internal.core.connection.ExponentialReconnectionPolicy
+  class = ExponentialReconnectionPolicy
   base-delay = 1 second
   max-delay = 60 seconds
 }

@@ -38,7 +38,7 @@ Request throttling is parameterized in the [configuration](../configuration/) un
 ```
 datastax-java-driver {
   advanced.throttler {
-    class = com.datastax.oss.driver.internal.core.session.throttling.PassThroughRequestThrottler
+    class = PassThroughRequestThrottler
   }
 }
 ```
@@ -56,7 +56,7 @@ requests will fail with an [AllNodesFailedException], with the `getErrors()` met
 ```
 datastax-java-driver {
   advanced.throttler {
-    class = com.datastax.oss.driver.internal.core.session.throttling.ConcurrencyLimitingRequestThrottler
+    class = ConcurrencyLimitingRequestThrottler
     
     # Note: the values below are for illustration purposes only, not prescriptive
     max-concurrent-requests = 10000
@@ -85,7 +85,7 @@ on every node, and make sure it never reaches 0.
 ```
 datastax-java-driver {
   advanced.throttler {
-    class = com.datastax.oss.driver.internal.core.session.throttling.RateLimitingRequestThrottler
+    class = RateLimitingRequestThrottler
     
     # Note: the values below are for illustration purposes only, not prescriptive
     max-requests-per-second = 5000

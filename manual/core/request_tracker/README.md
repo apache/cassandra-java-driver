@@ -10,7 +10,7 @@ nothing:
 
 ```
 datastax-java-driver.advanced.request-tracker {
-  class = com.datastax.oss.driver.internal.core.tracker.NoopRequestTracker
+  class = NoopRequestTracker
 }
 ```
 
@@ -35,7 +35,7 @@ requests as "slow" above a given threshold, limit the line size for large querie
 
 ```
 datastax-java-driver.advanced.request-tracker {
-  class = com.datastax.oss.driver.internal.core.tracker.RequestLogger
+  class = RequestLogger
 
   logs {
     # Whether to log successful requests.
