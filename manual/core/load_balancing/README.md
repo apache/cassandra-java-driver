@@ -190,11 +190,12 @@ followed by a round-robin shuffle of the rest of the nodes.
 
 #### Optional node filtering
 
-<!-- TODO JAVA-1798 -->
-
 Finally, the default policy accepts an optional node filter that gets applied just after the test
 for inclusion in the local DC. If a node doesn't pass this test, it will be set at distance
-`IGNORED` and the driver will never try to connect to it.
+`IGNORED` and the driver will never try to connect to it. This is a good way to exclude nodes on
+some custom criteria.
+
+You can pass the filter through the configuration:
 
 ```
 datastax-java-driver.basic.load-balancing-policy {
@@ -204,7 +205,20 @@ datastax-java-driver.basic.load-balancing-policy {
 }
 ```
 
-This is a good way to exclude nodes on some custom criteria.
+The filter class must implement `java.util.function.predicate<Node>`, and have a public constructor
+that takes a [DriverContext] argument: `public MyNodeFilter(DriverContext context)`.
+
+Sometimes it's more convenient to pass the filter programmatically; you can do that with
+`SessionBuilder.withNodeFilter`:
+
+```java
+List<Node> whiteList = ...
+CqlSession session = CqlSession.builder()
+    .withNodeFilter(whiteList::contains)
+    .build();
+```
+
+If a programmatic filter is provided, the configuration option is ignored.
 
 ### Custom implementation
 
@@ -249,6 +263,7 @@ Then it uses the "closest" distance for any given node. For example:
 * policy1 changes its suggestion to IGNORED. node1 is set to REMOTE;
 * policy1 changes its suggestion to REMOTE. node1 stays at REMOTE.
 
+[DriverContext]:        https://docs.datastax.com/en/drivers/java/4.0/com/datastax/oss/driver/api/core/context/DriverContext.html
 [LoadBalancingPolicy]:  https://docs.datastax.com/en/drivers/java/4.0/com/datastax/oss/driver/api/core/loadbalancing/LoadBalancingPolicy.html
 [getRoutingKeyspace()]: https://docs.datastax.com/en/drivers/java/4.0/com/datastax/oss/driver/api/core/session/Request.html#getRoutingKeyspace--
 [getRoutingToken()]:    https://docs.datastax.com/en/drivers/java/4.0/com/datastax/oss/driver/api/core/session/Request.html#getRoutingToken--
