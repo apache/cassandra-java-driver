@@ -45,6 +45,8 @@ public interface AccessibleByName extends AccessibleByIndex {
   /**
    * Returns the first index where a given identifier appears (depending on the implementation,
    * identifiers may appear multiple times).
+   *
+   * @throws IllegalArgumentException if the name is invalid.
    */
   int firstIndexOf(@NonNull String name);
 
@@ -54,7 +56,7 @@ public interface AccessibleByName extends AccessibleByIndex {
    * <p>This method deals with case sensitivity in the way explained in the documentation of {@link
    * GettableByName}.
    *
-   * @throws IndexOutOfBoundsException if the index is invalid.
+   * @throws IllegalArgumentException if the name is invalid.
    */
   @NonNull
   DataType getType(@NonNull String name);

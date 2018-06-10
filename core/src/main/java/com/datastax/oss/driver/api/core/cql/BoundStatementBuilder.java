@@ -62,12 +62,20 @@ public class BoundStatementBuilder extends StatementBuilder<BoundStatementBuilde
 
   @Override
   public int firstIndexOf(@NonNull CqlIdentifier id) {
-    return variableDefinitions.firstIndexOf(id);
+    int indexOf = variableDefinitions.firstIndexOf(id);
+    if (indexOf == -1) {
+      throw new IllegalArgumentException(id + " is not a variable in this bound statement");
+    }
+    return indexOf;
   }
 
   @Override
   public int firstIndexOf(@NonNull String name) {
-    return variableDefinitions.firstIndexOf(name);
+    int indexOf = variableDefinitions.firstIndexOf(name);
+    if (indexOf == -1) {
+      throw new IllegalArgumentException(name + " is not a variable in this bound statement");
+    }
+    return indexOf;
   }
 
   @NonNull

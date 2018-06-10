@@ -53,7 +53,7 @@ public interface GettableByName extends GettableByIndex, AccessibleByName {
    *     make sure to {@link ByteBuffer#duplicate() duplicate} it beforehand, or only use relative
    *     methods. If you change the buffer's index or its contents in any way, any other getter
    *     invocation for this value will have unpredictable results.
-   * @throws IndexOutOfBoundsException if the name is invalid.
+   * @throws IllegalArgumentException if the name is invalid.
    */
   @Nullable
   default ByteBuffer getBytesUnsafe(@NonNull String name) {
@@ -69,7 +69,7 @@ public interface GettableByName extends GettableByIndex, AccessibleByName {
    * <p>This method deals with case sensitivity in the way explained in the documentation of {@link
    * AccessibleByName}.
    *
-   * @throws IndexOutOfBoundsException if the name is invalid.
+   * @throws IllegalArgumentException if the name is invalid.
    */
   default boolean isNull(@NonNull String name) {
     return isNull(firstIndexOf(name));
@@ -92,7 +92,7 @@ public interface GettableByName extends GettableByIndex, AccessibleByName {
    * <p>This method deals with case sensitivity in the way explained in the documentation of {@link
    * AccessibleByName}.
    *
-   * @throws IndexOutOfBoundsException if the name is invalid.
+   * @throws IllegalArgumentException if the name is invalid.
    */
   @Nullable
   default <T> T get(@NonNull String name, @NonNull TypeCodec<T> codec) {
@@ -114,7 +114,7 @@ public interface GettableByName extends GettableByIndex, AccessibleByName {
    * <p>This method deals with case sensitivity in the way explained in the documentation of {@link
    * AccessibleByName}.
    *
-   * @throws IndexOutOfBoundsException if the name is invalid.
+   * @throws IllegalArgumentException if the name is invalid.
    * @throws CodecNotFoundException if no codec can perform the conversion.
    */
   @Nullable
@@ -136,7 +136,7 @@ public interface GettableByName extends GettableByIndex, AccessibleByName {
    * <p>This method deals with case sensitivity in the way explained in the documentation of {@link
    * AccessibleByName}.
    *
-   * @throws IndexOutOfBoundsException if the name is invalid.
+   * @throws IllegalArgumentException if the name is invalid.
    * @throws CodecNotFoundException if no codec can perform the conversion.
    */
   @Nullable
@@ -167,7 +167,7 @@ public interface GettableByName extends GettableByIndex, AccessibleByName {
    * <p>This method deals with case sensitivity in the way explained in the documentation of {@link
    * AccessibleByName}.
    *
-   * @throws IndexOutOfBoundsException if the name is invalid.
+   * @throws IllegalArgumentException if the name is invalid.
    * @throws CodecNotFoundException if no codec can perform the conversion.
    */
   @Nullable
@@ -190,7 +190,7 @@ public interface GettableByName extends GettableByIndex, AccessibleByName {
    * <p>This method deals with case sensitivity in the way explained in the documentation of {@link
    * AccessibleByName}.
    *
-   * @throws IndexOutOfBoundsException if the name is invalid.
+   * @throws IllegalArgumentException if the name is invalid.
    */
   default boolean getBoolean(@NonNull String name) {
     return getBoolean(firstIndexOf(name));
@@ -211,7 +211,7 @@ public interface GettableByName extends GettableByIndex, AccessibleByName {
    * <p>This method deals with case sensitivity in the way explained in the documentation of {@link
    * AccessibleByName}.
    *
-   * @throws IndexOutOfBoundsException if the name is invalid.
+   * @throws IllegalArgumentException if the name is invalid.
    */
   default byte getByte(@NonNull String name) {
     return getByte(firstIndexOf(name));
@@ -232,7 +232,7 @@ public interface GettableByName extends GettableByIndex, AccessibleByName {
    * <p>This method deals with case sensitivity in the way explained in the documentation of {@link
    * AccessibleByName}.
    *
-   * @throws IndexOutOfBoundsException if the name is invalid.
+   * @throws IllegalArgumentException if the name is invalid.
    */
   default double getDouble(@NonNull String name) {
     return getDouble(firstIndexOf(name));
@@ -253,7 +253,7 @@ public interface GettableByName extends GettableByIndex, AccessibleByName {
    * <p>This method deals with case sensitivity in the way explained in the documentation of {@link
    * AccessibleByName}.
    *
-   * @throws IndexOutOfBoundsException if the name is invalid.
+   * @throws IllegalArgumentException if the name is invalid.
    */
   default float getFloat(@NonNull String name) {
     return getFloat(firstIndexOf(name));
@@ -274,7 +274,7 @@ public interface GettableByName extends GettableByIndex, AccessibleByName {
    * <p>This method deals with case sensitivity in the way explained in the documentation of {@link
    * AccessibleByName}.
    *
-   * @throws IndexOutOfBoundsException if the name is invalid.
+   * @throws IllegalArgumentException if the name is invalid.
    */
   default int getInt(@NonNull String name) {
     return getInt(firstIndexOf(name));
@@ -295,7 +295,7 @@ public interface GettableByName extends GettableByIndex, AccessibleByName {
    * <p>This method deals with case sensitivity in the way explained in the documentation of {@link
    * AccessibleByName}.
    *
-   * @throws IndexOutOfBoundsException if the name is invalid.
+   * @throws IllegalArgumentException if the name is invalid.
    */
   default long getLong(@NonNull String name) {
     return getLong(firstIndexOf(name));
@@ -316,7 +316,7 @@ public interface GettableByName extends GettableByIndex, AccessibleByName {
    * <p>This method deals with case sensitivity in the way explained in the documentation of {@link
    * AccessibleByName}.
    *
-   * @throws IndexOutOfBoundsException if the name is invalid.
+   * @throws IllegalArgumentException if the name is invalid.
    */
   default short getShort(@NonNull String name) {
     return getShort(firstIndexOf(name));
@@ -333,7 +333,7 @@ public interface GettableByName extends GettableByIndex, AccessibleByName {
    * <p>This method deals with case sensitivity in the way explained in the documentation of {@link
    * AccessibleByName}.
    *
-   * @throws IndexOutOfBoundsException if the name is invalid.
+   * @throws IllegalArgumentException if the name is invalid.
    */
   @Nullable
   default Instant getInstant(@NonNull String name) {
@@ -351,7 +351,7 @@ public interface GettableByName extends GettableByIndex, AccessibleByName {
    * <p>This method deals with case sensitivity in the way explained in the documentation of {@link
    * AccessibleByName}.
    *
-   * @throws IndexOutOfBoundsException if the name is invalid.
+   * @throws IllegalArgumentException if the name is invalid.
    */
   @Nullable
   default LocalDate getLocalDate(@NonNull String name) {
@@ -369,7 +369,7 @@ public interface GettableByName extends GettableByIndex, AccessibleByName {
    * <p>This method deals with case sensitivity in the way explained in the documentation of {@link
    * AccessibleByName}.
    *
-   * @throws IndexOutOfBoundsException if the name is invalid.
+   * @throws IllegalArgumentException if the name is invalid.
    */
   @Nullable
   default LocalTime getLocalTime(@NonNull String name) {
@@ -387,7 +387,7 @@ public interface GettableByName extends GettableByIndex, AccessibleByName {
    * <p>This method deals with case sensitivity in the way explained in the documentation of {@link
    * AccessibleByName}.
    *
-   * @throws IndexOutOfBoundsException if the name is invalid.
+   * @throws IllegalArgumentException if the name is invalid.
    */
   @Nullable
   default ByteBuffer getByteBuffer(@NonNull String name) {
@@ -405,7 +405,7 @@ public interface GettableByName extends GettableByIndex, AccessibleByName {
    * <p>This method deals with case sensitivity in the way explained in the documentation of {@link
    * AccessibleByName}.
    *
-   * @throws IndexOutOfBoundsException if the name is invalid.
+   * @throws IllegalArgumentException if the name is invalid.
    */
   @Nullable
   default String getString(@NonNull String name) {
@@ -423,7 +423,7 @@ public interface GettableByName extends GettableByIndex, AccessibleByName {
    * <p>This method deals with case sensitivity in the way explained in the documentation of {@link
    * AccessibleByName}.
    *
-   * @throws IndexOutOfBoundsException if the name is invalid.
+   * @throws IllegalArgumentException if the name is invalid.
    */
   @Nullable
   default BigInteger getBigInteger(@NonNull String name) {
@@ -441,7 +441,7 @@ public interface GettableByName extends GettableByIndex, AccessibleByName {
    * <p>This method deals with case sensitivity in the way explained in the documentation of {@link
    * AccessibleByName}.
    *
-   * @throws IndexOutOfBoundsException if the name is invalid.
+   * @throws IllegalArgumentException if the name is invalid.
    */
   @Nullable
   default BigDecimal getBigDecimal(@NonNull String name) {
@@ -459,7 +459,7 @@ public interface GettableByName extends GettableByIndex, AccessibleByName {
    * <p>This method deals with case sensitivity in the way explained in the documentation of {@link
    * AccessibleByName}.
    *
-   * @throws IndexOutOfBoundsException if the name is invalid.
+   * @throws IllegalArgumentException if the name is invalid.
    */
   @Nullable
   default UUID getUuid(@NonNull String name) {
@@ -477,7 +477,7 @@ public interface GettableByName extends GettableByIndex, AccessibleByName {
    * <p>This method deals with case sensitivity in the way explained in the documentation of {@link
    * AccessibleByName}.
    *
-   * @throws IndexOutOfBoundsException if the name is invalid.
+   * @throws IllegalArgumentException if the name is invalid.
    */
   @Nullable
   default InetAddress getInetAddress(@NonNull String name) {
@@ -495,7 +495,7 @@ public interface GettableByName extends GettableByIndex, AccessibleByName {
    * <p>This method deals with case sensitivity in the way explained in the documentation of {@link
    * AccessibleByName}.
    *
-   * @throws IndexOutOfBoundsException if the name is invalid.
+   * @throws IllegalArgumentException if the name is invalid.
    */
   @Nullable
   default CqlDuration getCqlDuration(@NonNull String name) {
@@ -518,8 +518,8 @@ public interface GettableByName extends GettableByIndex, AccessibleByName {
    * <p>This method deals with case sensitivity in the way explained in the documentation of {@link
    * AccessibleByName}.
    *
-   * @throws IndexOutOfBoundsException if the index is invalid.
-   * @throws IllegalArgumentException if the column type can not be converted to a known token type.
+   * @throws IllegalArgumentException if the column type can not be converted to a known token type
+   *     or if the name is invalid.
    */
   @Nullable
   default Token getToken(@NonNull String name) {
@@ -544,7 +544,7 @@ public interface GettableByName extends GettableByIndex, AccessibleByName {
    * Whether this method will return an empty collection or {@code null} will depend on the codec
    * used; by default, the driver's built-in codecs all return empty collections.
    *
-   * @throws IndexOutOfBoundsException if the name is invalid.
+   * @throws IllegalArgumentException if the name is invalid.
    */
   @Nullable
   default <T> List<T> getList(@NonNull String name, @NonNull Class<T> elementsClass) {
@@ -569,7 +569,7 @@ public interface GettableByName extends GettableByIndex, AccessibleByName {
    * Whether this method will return an empty collection or {@code null} will depend on the codec
    * used; by default, the driver's built-in codecs all return empty collections.
    *
-   * @throws IndexOutOfBoundsException if the name is invalid.
+   * @throws IllegalArgumentException if the name is invalid.
    */
   @Nullable
   default <T> Set<T> getSet(@NonNull String name, @NonNull Class<T> elementsClass) {
@@ -594,7 +594,7 @@ public interface GettableByName extends GettableByIndex, AccessibleByName {
    * Whether this method will return an empty collection or {@code null} will depend on the codec
    * used; by default, the driver's built-in codecs all return empty collections.
    *
-   * @throws IndexOutOfBoundsException if the name is invalid.
+   * @throws IllegalArgumentException if the name is invalid.
    */
   @Nullable
   default <K, V> Map<K, V> getMap(
@@ -613,7 +613,7 @@ public interface GettableByName extends GettableByIndex, AccessibleByName {
    * <p>This method deals with case sensitivity in the way explained in the documentation of {@link
    * AccessibleByName}.
    *
-   * @throws IndexOutOfBoundsException if the name is invalid.
+   * @throws IllegalArgumentException if the name is invalid.
    */
   @Nullable
   default UdtValue getUdtValue(@NonNull String name) {
@@ -631,7 +631,7 @@ public interface GettableByName extends GettableByIndex, AccessibleByName {
    * <p>This method deals with case sensitivity in the way explained in the documentation of {@link
    * AccessibleByName}.
    *
-   * @throws IndexOutOfBoundsException if the name is invalid.
+   * @throws IllegalArgumentException if the name is invalid.
    */
   @Nullable
   default TupleValue getTupleValue(@NonNull String name) {

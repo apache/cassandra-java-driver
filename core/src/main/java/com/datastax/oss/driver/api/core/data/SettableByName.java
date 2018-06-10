@@ -52,7 +52,7 @@ public interface SettableByName<T extends SettableByName<T>>
    *     to modify elsewhere in your application, make sure to {@link ByteBuffer#duplicate()
    *     duplicate} it beforehand. If you change the buffer's index or its contents in any way,
    *     further usage of this data will have unpredictable results.
-   * @throws IndexOutOfBoundsException if the name is invalid.
+   * @throws IllegalArgumentException if the name is invalid.
    */
   @NonNull
   default T setBytesUnsafe(@NonNull String name, @Nullable ByteBuffer v) {
@@ -71,7 +71,7 @@ public interface SettableByName<T extends SettableByName<T>>
    * <p>This method deals with case sensitivity in the way explained in the documentation of {@link
    * AccessibleByName}.
    *
-   * @throws IndexOutOfBoundsException if the name is invalid.
+   * @throws IllegalArgumentException if the name is invalid.
    */
   @NonNull
   default T setToNull(@NonNull String name) {
@@ -92,7 +92,7 @@ public interface SettableByName<T extends SettableByName<T>>
    * <p>This method deals with case sensitivity in the way explained in the documentation of {@link
    * AccessibleByName}.
    *
-   * @throws IndexOutOfBoundsException if the name is invalid.
+   * @throws IllegalArgumentException if the name is invalid.
    */
   @NonNull
   default <V> T set(@NonNull String name, @Nullable V v, @NonNull TypeCodec<V> codec) {
@@ -110,7 +110,7 @@ public interface SettableByName<T extends SettableByName<T>>
    * <p>This method deals with case sensitivity in the way explained in the documentation of {@link
    * AccessibleByName}.
    *
-   * @throws IndexOutOfBoundsException if the name is invalid.
+   * @throws IllegalArgumentException if the name is invalid.
    * @throws CodecNotFoundException if no codec can perform the conversion.
    */
   @NonNull
@@ -129,7 +129,7 @@ public interface SettableByName<T extends SettableByName<T>>
    * <p>This method deals with case sensitivity in the way explained in the documentation of {@link
    * AccessibleByName}.
    *
-   * @throws IndexOutOfBoundsException if the name is invalid.
+   * @throws IllegalArgumentException if the name is invalid.
    * @throws CodecNotFoundException if no codec can perform the conversion.
    */
   @NonNull
@@ -148,7 +148,7 @@ public interface SettableByName<T extends SettableByName<T>>
    * <p>This method deals with case sensitivity in the way explained in the documentation of {@link
    * AccessibleByName}.
    *
-   * @throws IndexOutOfBoundsException if the name is invalid.
+   * @throws IllegalArgumentException if the name is invalid.
    */
   @NonNull
   default T setBoolean(@NonNull String name, boolean v) {
@@ -166,7 +166,7 @@ public interface SettableByName<T extends SettableByName<T>>
    * <p>This method deals with case sensitivity in the way explained in the documentation of {@link
    * AccessibleByName}.
    *
-   * @throws IndexOutOfBoundsException if the name is invalid.
+   * @throws IllegalArgumentException if the name is invalid.
    */
   @NonNull
   default T setByte(@NonNull String name, byte v) {
@@ -184,7 +184,7 @@ public interface SettableByName<T extends SettableByName<T>>
    * <p>This method deals with case sensitivity in the way explained in the documentation of {@link
    * AccessibleByName}.
    *
-   * @throws IndexOutOfBoundsException if the name is invalid.
+   * @throws IllegalArgumentException if the name is invalid.
    */
   @NonNull
   default T setDouble(@NonNull String name, double v) {
@@ -202,7 +202,7 @@ public interface SettableByName<T extends SettableByName<T>>
    * <p>This method deals with case sensitivity in the way explained in the documentation of {@link
    * AccessibleByName}.
    *
-   * @throws IndexOutOfBoundsException if the name is invalid.
+   * @throws IllegalArgumentException if the name is invalid.
    */
   @NonNull
   default T setFloat(@NonNull String name, float v) {
@@ -220,7 +220,7 @@ public interface SettableByName<T extends SettableByName<T>>
    * <p>This method deals with case sensitivity in the way explained in the documentation of {@link
    * AccessibleByName}.
    *
-   * @throws IndexOutOfBoundsException if the name is invalid.
+   * @throws IllegalArgumentException if the name is invalid.
    */
   @NonNull
   default T setInt(@NonNull String name, int v) {
@@ -238,7 +238,7 @@ public interface SettableByName<T extends SettableByName<T>>
    * <p>This method deals with case sensitivity in the way explained in the documentation of {@link
    * AccessibleByName}.
    *
-   * @throws IndexOutOfBoundsException if the name is invalid.
+   * @throws IllegalArgumentException if the name is invalid.
    */
   @NonNull
   default T setLong(@NonNull String name, long v) {
@@ -256,7 +256,7 @@ public interface SettableByName<T extends SettableByName<T>>
    * <p>This method deals with case sensitivity in the way explained in the documentation of {@link
    * AccessibleByName}.
    *
-   * @throws IndexOutOfBoundsException if the name is invalid.
+   * @throws IllegalArgumentException if the name is invalid.
    */
   @NonNull
   default T setShort(@NonNull String name, short v) {
@@ -271,7 +271,7 @@ public interface SettableByName<T extends SettableByName<T>>
    * <p>This method deals with case sensitivity in the way explained in the documentation of {@link
    * AccessibleByName}.
    *
-   * @throws IndexOutOfBoundsException if the name is invalid.
+   * @throws IllegalArgumentException if the name is invalid.
    */
   @NonNull
   default T setInstant(@NonNull String name, @Nullable Instant v) {
@@ -286,7 +286,7 @@ public interface SettableByName<T extends SettableByName<T>>
    * <p>This method deals with case sensitivity in the way explained in the documentation of {@link
    * AccessibleByName}.
    *
-   * @throws IndexOutOfBoundsException if the name is invalid.
+   * @throws IllegalArgumentException if the name is invalid.
    */
   @NonNull
   default T setLocalDate(@NonNull String name, @Nullable LocalDate v) {
@@ -301,7 +301,7 @@ public interface SettableByName<T extends SettableByName<T>>
    * <p>This method deals with case sensitivity in the way explained in the documentation of {@link
    * AccessibleByName}.
    *
-   * @throws IndexOutOfBoundsException if the name is invalid.
+   * @throws IllegalArgumentException if the name is invalid.
    */
   @NonNull
   default T setLocalTime(@NonNull String name, @Nullable LocalTime v) {
@@ -316,7 +316,7 @@ public interface SettableByName<T extends SettableByName<T>>
    * <p>This method deals with case sensitivity in the way explained in the documentation of {@link
    * AccessibleByName}.
    *
-   * @throws IndexOutOfBoundsException if the name is invalid.
+   * @throws IllegalArgumentException if the name is invalid.
    */
   @NonNull
   default T setByteBuffer(@NonNull String name, @Nullable ByteBuffer v) {
@@ -331,7 +331,7 @@ public interface SettableByName<T extends SettableByName<T>>
    * <p>This method deals with case sensitivity in the way explained in the documentation of {@link
    * AccessibleByName}.
    *
-   * @throws IndexOutOfBoundsException if the name is invalid.
+   * @throws IllegalArgumentException if the name is invalid.
    */
   @NonNull
   default T setString(@NonNull String name, @Nullable String v) {
@@ -346,7 +346,7 @@ public interface SettableByName<T extends SettableByName<T>>
    * <p>This method deals with case sensitivity in the way explained in the documentation of {@link
    * AccessibleByName}.
    *
-   * @throws IndexOutOfBoundsException if the name is invalid.
+   * @throws IllegalArgumentException if the name is invalid.
    */
   @NonNull
   default T setBigInteger(@NonNull String name, @Nullable BigInteger v) {
@@ -361,7 +361,7 @@ public interface SettableByName<T extends SettableByName<T>>
    * <p>This method deals with case sensitivity in the way explained in the documentation of {@link
    * AccessibleByName}.
    *
-   * @throws IndexOutOfBoundsException if the name is invalid.
+   * @throws IllegalArgumentException if the name is invalid.
    */
   @NonNull
   default T setBigDecimal(@NonNull String name, @Nullable BigDecimal v) {
@@ -376,7 +376,7 @@ public interface SettableByName<T extends SettableByName<T>>
    * <p>This method deals with case sensitivity in the way explained in the documentation of {@link
    * AccessibleByName}.
    *
-   * @throws IndexOutOfBoundsException if the name is invalid.
+   * @throws IllegalArgumentException if the name is invalid.
    */
   @NonNull
   default T setUuid(@NonNull String name, @Nullable UUID v) {
@@ -391,7 +391,7 @@ public interface SettableByName<T extends SettableByName<T>>
    * <p>This method deals with case sensitivity in the way explained in the documentation of {@link
    * AccessibleByName}.
    *
-   * @throws IndexOutOfBoundsException if the name is invalid.
+   * @throws IllegalArgumentException if the name is invalid.
    */
   @NonNull
   default T setInetAddress(@NonNull String name, @Nullable InetAddress v) {
@@ -406,7 +406,7 @@ public interface SettableByName<T extends SettableByName<T>>
    * <p>This method deals with case sensitivity in the way explained in the documentation of {@link
    * AccessibleByName}.
    *
-   * @throws IndexOutOfBoundsException if the name is invalid.
+   * @throws IllegalArgumentException if the name is invalid.
    */
   @NonNull
   default T setCqlDuration(@NonNull String name, @Nullable CqlDuration v) {
@@ -423,7 +423,7 @@ public interface SettableByName<T extends SettableByName<T>>
    * <p>This method deals with case sensitivity in the way explained in the documentation of {@link
    * AccessibleByName}.
    *
-   * @throws IndexOutOfBoundsException if the index is invalid.
+   * @throws IllegalArgumentException if the name is invalid.
    */
   @NonNull
   default T setToken(@NonNull String name, @NonNull Token v) {
@@ -441,7 +441,7 @@ public interface SettableByName<T extends SettableByName<T>>
    * <p>This method deals with case sensitivity in the way explained in the documentation of {@link
    * AccessibleByName}.
    *
-   * @throws IndexOutOfBoundsException if the name is invalid.
+   * @throws IllegalArgumentException if the name is invalid.
    */
   @NonNull
   default <V> T setList(
@@ -460,7 +460,7 @@ public interface SettableByName<T extends SettableByName<T>>
    * <p>This method deals with case sensitivity in the way explained in the documentation of {@link
    * AccessibleByName}.
    *
-   * @throws IndexOutOfBoundsException if the name is invalid.
+   * @throws IllegalArgumentException if the name is invalid.
    */
   @NonNull
   default <V> T setSet(@NonNull String name, @Nullable Set<V> v, @NonNull Class<V> elementsClass) {
@@ -478,7 +478,7 @@ public interface SettableByName<T extends SettableByName<T>>
    * <p>This method deals with case sensitivity in the way explained in the documentation of {@link
    * AccessibleByName}.
    *
-   * @throws IndexOutOfBoundsException if the name is invalid.
+   * @throws IllegalArgumentException if the name is invalid.
    */
   @NonNull
   default <K, V> T setMap(
@@ -498,7 +498,7 @@ public interface SettableByName<T extends SettableByName<T>>
    * <p>This method deals with case sensitivity in the way explained in the documentation of {@link
    * AccessibleByName}.
    *
-   * @throws IndexOutOfBoundsException if the name is invalid.
+   * @throws IllegalArgumentException if the name is invalid.
    */
   @NonNull
   default T setUdtValue(@NonNull String name, @Nullable UdtValue v) {
@@ -513,7 +513,7 @@ public interface SettableByName<T extends SettableByName<T>>
    * <p>This method deals with case sensitivity in the way explained in the documentation of {@link
    * AccessibleByName}.
    *
-   * @throws IndexOutOfBoundsException if the name is invalid.
+   * @throws IllegalArgumentException if the name is invalid.
    */
   @NonNull
   default T setTupleValue(@NonNull String name, @Nullable TupleValue v) {

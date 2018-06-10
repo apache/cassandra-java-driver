@@ -54,7 +54,7 @@ public interface GettableById extends GettableByIndex, AccessibleById {
    *     make sure to {@link ByteBuffer#duplicate() duplicate} it beforehand, or only use relative
    *     methods. If you change the buffer's index or its contents in any way, any other getter
    *     invocation for this value will have unpredictable results.
-   * @throws IndexOutOfBoundsException if the id is invalid.
+   * @throws IllegalArgumentException if the id is invalid.
    */
   @Nullable
   default ByteBuffer getBytesUnsafe(@NonNull CqlIdentifier id) {
@@ -70,7 +70,7 @@ public interface GettableById extends GettableByIndex, AccessibleById {
    * <p>If you want to avoid the overhead of building a {@code CqlIdentifier}, use the variant of
    * this method that takes a string argument.
    *
-   * @throws IndexOutOfBoundsException if the id is invalid.
+   * @throws IllegalArgumentException if the id is invalid.
    */
   default boolean isNull(@NonNull CqlIdentifier id) {
     return isNull(firstIndexOf(id));
@@ -93,7 +93,7 @@ public interface GettableById extends GettableByIndex, AccessibleById {
    * <p>If you want to avoid the overhead of building a {@code CqlIdentifier}, use the variant of
    * this method that takes a string argument.
    *
-   * @throws IndexOutOfBoundsException if the id is invalid.
+   * @throws IllegalArgumentException if the id is invalid.
    */
   @Nullable
   default <T> T get(@NonNull CqlIdentifier id, @NonNull TypeCodec<T> codec) {
@@ -114,7 +114,7 @@ public interface GettableById extends GettableByIndex, AccessibleById {
    * <p>If you want to avoid the overhead of building a {@code CqlIdentifier}, use the variant of
    * this method that takes a string argument.
    *
-   * @throws IndexOutOfBoundsException if the id is invalid.
+   * @throws IllegalArgumentException if the id is invalid.
    * @throws CodecNotFoundException if no codec can perform the conversion.
    */
   @Nullable
@@ -135,7 +135,7 @@ public interface GettableById extends GettableByIndex, AccessibleById {
    * <p>If you want to avoid the overhead of building a {@code CqlIdentifier}, use the variant of
    * this method that takes a string argument.
    *
-   * @throws IndexOutOfBoundsException if the id is invalid.
+   * @throws IllegalArgumentException if the id is invalid.
    * @throws CodecNotFoundException if no codec can perform the conversion.
    */
   @Nullable
@@ -166,7 +166,7 @@ public interface GettableById extends GettableByIndex, AccessibleById {
    * <p>If you want to avoid the overhead of building a {@code CqlIdentifier}, use the variant of
    * this method that takes a string argument.
    *
-   * @throws IndexOutOfBoundsException if the id is invalid.
+   * @throws IllegalArgumentException if the id is invalid.
    * @throws CodecNotFoundException if no codec can perform the conversion.
    */
   @Nullable
@@ -190,7 +190,7 @@ public interface GettableById extends GettableByIndex, AccessibleById {
    * <p>If you want to avoid the overhead of building a {@code CqlIdentifier}, use the variant of
    * this method that takes a string argument.
    *
-   * @throws IndexOutOfBoundsException if the id is invalid.
+   * @throws IllegalArgumentException if the id is invalid.
    */
   default boolean getBoolean(@NonNull CqlIdentifier id) {
     return getBoolean(firstIndexOf(id));
@@ -211,7 +211,7 @@ public interface GettableById extends GettableByIndex, AccessibleById {
    * <p>If you want to avoid the overhead of building a {@code CqlIdentifier}, use the variant of
    * this method that takes a string argument.
    *
-   * @throws IndexOutOfBoundsException if the id is invalid.
+   * @throws IllegalArgumentException if the id is invalid.
    */
   default byte getByte(@NonNull CqlIdentifier id) {
     return getByte(firstIndexOf(id));
@@ -233,7 +233,7 @@ public interface GettableById extends GettableByIndex, AccessibleById {
    * <p>If you want to avoid the overhead of building a {@code CqlIdentifier}, use the variant of
    * this method that takes a string argument.
    *
-   * @throws IndexOutOfBoundsException if the id is invalid.
+   * @throws IllegalArgumentException if the id is invalid.
    */
   default double getDouble(@NonNull CqlIdentifier id) {
     return getDouble(firstIndexOf(id));
@@ -255,7 +255,7 @@ public interface GettableById extends GettableByIndex, AccessibleById {
    * <p>If you want to avoid the overhead of building a {@code CqlIdentifier}, use the variant of
    * this method that takes a string argument.
    *
-   * @throws IndexOutOfBoundsException if the id is invalid.
+   * @throws IllegalArgumentException if the id is invalid.
    */
   default float getFloat(@NonNull CqlIdentifier id) {
     return getFloat(firstIndexOf(id));
@@ -277,7 +277,7 @@ public interface GettableById extends GettableByIndex, AccessibleById {
    * <p>If you want to avoid the overhead of building a {@code CqlIdentifier}, use the variant of
    * this method that takes a string argument.
    *
-   * @throws IndexOutOfBoundsException if the id is invalid.
+   * @throws IllegalArgumentException if the id is invalid.
    */
   default int getInt(@NonNull CqlIdentifier id) {
     return getInt(firstIndexOf(id));
@@ -298,7 +298,7 @@ public interface GettableById extends GettableByIndex, AccessibleById {
    * <p>If you want to avoid the overhead of building a {@code CqlIdentifier}, use the variant of
    * this method that takes a string argument.
    *
-   * @throws IndexOutOfBoundsException if the id is invalid.
+   * @throws IllegalArgumentException if the id is invalid.
    */
   default long getLong(@NonNull CqlIdentifier id) {
     return getLong(firstIndexOf(id));
@@ -320,7 +320,7 @@ public interface GettableById extends GettableByIndex, AccessibleById {
    * <p>If you want to avoid the overhead of building a {@code CqlIdentifier}, use the variant of
    * this method that takes a string argument.
    *
-   * @throws IndexOutOfBoundsException if the id is invalid.
+   * @throws IllegalArgumentException if the id is invalid.
    */
   default short getShort(@NonNull CqlIdentifier id) {
     return getShort(firstIndexOf(id));
@@ -337,7 +337,7 @@ public interface GettableById extends GettableByIndex, AccessibleById {
    * <p>If you want to avoid the overhead of building a {@code CqlIdentifier}, use the variant of
    * this method that takes a string argument.
    *
-   * @throws IndexOutOfBoundsException if the id is invalid.
+   * @throws IllegalArgumentException if the id is invalid.
    */
   @Nullable
   default Instant getInstant(@NonNull CqlIdentifier id) {
@@ -355,7 +355,7 @@ public interface GettableById extends GettableByIndex, AccessibleById {
    * <p>If you want to avoid the overhead of building a {@code CqlIdentifier}, use the variant of
    * this method that takes a string argument.
    *
-   * @throws IndexOutOfBoundsException if the id is invalid.
+   * @throws IllegalArgumentException if the id is invalid.
    */
   @Nullable
   default LocalDate getLocalDate(@NonNull CqlIdentifier id) {
@@ -373,7 +373,7 @@ public interface GettableById extends GettableByIndex, AccessibleById {
    * <p>If you want to avoid the overhead of building a {@code CqlIdentifier}, use the variant of
    * this method that takes a string argument.
    *
-   * @throws IndexOutOfBoundsException if the id is invalid.
+   * @throws IllegalArgumentException if the id is invalid.
    */
   @Nullable
   default LocalTime getLocalTime(@NonNull CqlIdentifier id) {
@@ -391,7 +391,7 @@ public interface GettableById extends GettableByIndex, AccessibleById {
    * <p>If you want to avoid the overhead of building a {@code CqlIdentifier}, use the variant of
    * this method that takes a string argument.
    *
-   * @throws IndexOutOfBoundsException if the id is invalid.
+   * @throws IllegalArgumentException if the id is invalid.
    */
   @Nullable
   default ByteBuffer getByteBuffer(@NonNull CqlIdentifier id) {
@@ -409,7 +409,7 @@ public interface GettableById extends GettableByIndex, AccessibleById {
    * <p>If you want to avoid the overhead of building a {@code CqlIdentifier}, use the variant of
    * this method that takes a string argument.
    *
-   * @throws IndexOutOfBoundsException if the id is invalid.
+   * @throws IllegalArgumentException if the id is invalid.
    */
   @Nullable
   default String getString(@NonNull CqlIdentifier id) {
@@ -427,7 +427,7 @@ public interface GettableById extends GettableByIndex, AccessibleById {
    * <p>If you want to avoid the overhead of building a {@code CqlIdentifier}, use the variant of
    * this method that takes a string argument.
    *
-   * @throws IndexOutOfBoundsException if the id is invalid.
+   * @throws IllegalArgumentException if the id is invalid.
    */
   @Nullable
   default BigInteger getBigInteger(@NonNull CqlIdentifier id) {
@@ -445,7 +445,7 @@ public interface GettableById extends GettableByIndex, AccessibleById {
    * <p>If you want to avoid the overhead of building a {@code CqlIdentifier}, use the variant of
    * this method that takes a string argument.
    *
-   * @throws IndexOutOfBoundsException if the id is invalid.
+   * @throws IllegalArgumentException if the id is invalid.
    */
   @Nullable
   default BigDecimal getBigDecimal(@NonNull CqlIdentifier id) {
@@ -463,7 +463,7 @@ public interface GettableById extends GettableByIndex, AccessibleById {
    * <p>If you want to avoid the overhead of building a {@code CqlIdentifier}, use the variant of
    * this method that takes a string argument.
    *
-   * @throws IndexOutOfBoundsException if the id is invalid.
+   * @throws IllegalArgumentException if the id is invalid.
    */
   @Nullable
   default UUID getUuid(@NonNull CqlIdentifier id) {
@@ -481,7 +481,7 @@ public interface GettableById extends GettableByIndex, AccessibleById {
    * <p>If you want to avoid the overhead of building a {@code CqlIdentifier}, use the variant of
    * this method that takes a string argument.
    *
-   * @throws IndexOutOfBoundsException if the id is invalid.
+   * @throws IllegalArgumentException if the id is invalid.
    */
   @Nullable
   default InetAddress getInetAddress(@NonNull CqlIdentifier id) {
@@ -499,7 +499,7 @@ public interface GettableById extends GettableByIndex, AccessibleById {
    * <p>If you want to avoid the overhead of building a {@code CqlIdentifier}, use the variant of
    * this method that takes a string argument.
    *
-   * @throws IndexOutOfBoundsException if the id is invalid.
+   * @throws IllegalArgumentException if the id is invalid.
    */
   @Nullable
   default CqlDuration getCqlDuration(@NonNull CqlIdentifier id) {
@@ -522,8 +522,8 @@ public interface GettableById extends GettableByIndex, AccessibleById {
    * <p>If you want to avoid the overhead of building a {@code CqlIdentifier}, use the variant of
    * this method that takes a string argument.
    *
-   * @throws IndexOutOfBoundsException if the index is invalid.
-   * @throws IllegalArgumentException if the column type can not be converted to a known token type.
+   * @throws IllegalArgumentException if the column type can not be converted to a known token type
+   *     or if the name is invalid.
    */
   @Nullable
   default Token getToken(@NonNull CqlIdentifier id) {
@@ -548,7 +548,7 @@ public interface GettableById extends GettableByIndex, AccessibleById {
    * Whether this method will return an empty collection or {@code null} will depend on the codec
    * used; by default, the driver's built-in codecs all return empty collections.
    *
-   * @throws IndexOutOfBoundsException if the id is invalid.
+   * @throws IllegalArgumentException if the id is invalid.
    */
   @Nullable
   default <T> List<T> getList(@NonNull CqlIdentifier id, @NonNull Class<T> elementsClass) {
@@ -573,7 +573,7 @@ public interface GettableById extends GettableByIndex, AccessibleById {
    * Whether this method will return an empty collection or {@code null} will depend on the codec
    * used; by default, the driver's built-in codecs all return empty collections.
    *
-   * @throws IndexOutOfBoundsException if the id is invalid.
+   * @throws IllegalArgumentException if the id is invalid.
    */
   @Nullable
   default <T> Set<T> getSet(@NonNull CqlIdentifier id, @NonNull Class<T> elementsClass) {
@@ -598,7 +598,7 @@ public interface GettableById extends GettableByIndex, AccessibleById {
    * Whether this method will return an empty collection or {@code null} will depend on the codec
    * used; by default, the driver's built-in codecs all return empty collections.
    *
-   * @throws IndexOutOfBoundsException if the id is invalid.
+   * @throws IllegalArgumentException if the id is invalid.
    */
   @Nullable
   default <K, V> Map<K, V> getMap(
@@ -617,7 +617,7 @@ public interface GettableById extends GettableByIndex, AccessibleById {
    * <p>If you want to avoid the overhead of building a {@code CqlIdentifier}, use the variant of
    * this method that takes a string argument.
    *
-   * @throws IndexOutOfBoundsException if the id is invalid.
+   * @throws IllegalArgumentException if the id is invalid.
    */
   @Nullable
   default UdtValue getUdtValue(@NonNull CqlIdentifier id) {
@@ -635,7 +635,7 @@ public interface GettableById extends GettableByIndex, AccessibleById {
    * <p>If you want to avoid the overhead of building a {@code CqlIdentifier}, use the variant of
    * this method that takes a string argument.
    *
-   * @throws IndexOutOfBoundsException if the id is invalid.
+   * @throws IllegalArgumentException if the id is invalid.
    */
   @Nullable
   default TupleValue getTupleValue(@NonNull CqlIdentifier id) {
