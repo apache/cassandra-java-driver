@@ -29,6 +29,8 @@ public interface AccessibleById extends AccessibleByIndex {
   /**
    * Returns the first index where a given identifier appears (depending on the implementation,
    * identifiers may appear multiple times).
+   *
+   * @throws IllegalArgumentException if the id is invalid.
    */
   int firstIndexOf(@NonNull CqlIdentifier id);
 
@@ -38,7 +40,7 @@ public interface AccessibleById extends AccessibleByIndex {
    * <p>If you want to avoid the overhead of building a {@code CqlIdentifier}, use the variant of
    * this method that takes a string argument.
    *
-   * @throws IndexOutOfBoundsException if the index is invalid.
+   * @throws IllegalArgumentException if the id is invalid.
    */
   @NonNull
   DataType getType(@NonNull CqlIdentifier id);

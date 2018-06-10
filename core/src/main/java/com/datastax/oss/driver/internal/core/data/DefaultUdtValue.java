@@ -73,12 +73,20 @@ public class DefaultUdtValue implements UdtValue, Serializable {
 
   @Override
   public int firstIndexOf(@NonNull CqlIdentifier id) {
-    return type.firstIndexOf(id);
+    int indexOf = type.firstIndexOf(id);
+    if (indexOf == -1) {
+      throw new IllegalArgumentException(id + " is not a field in this UDT");
+    }
+    return indexOf;
   }
 
   @Override
   public int firstIndexOf(@NonNull String name) {
-    return type.firstIndexOf(name);
+    int indexOf = type.firstIndexOf(name);
+    if (indexOf == -1) {
+      throw new IllegalArgumentException(name + " is not a field in this UDT");
+    }
+    return indexOf;
   }
 
   @NonNull

@@ -70,7 +70,11 @@ public class DefaultRow implements Row, Serializable {
 
   @Override
   public int firstIndexOf(@NonNull CqlIdentifier id) {
-    return definitions.firstIndexOf(id);
+    int indexOf = definitions.firstIndexOf(id);
+    if (indexOf == -1) {
+      throw new IllegalArgumentException(id + " is not a column in this row");
+    }
+    return indexOf;
   }
 
   @NonNull
@@ -81,7 +85,11 @@ public class DefaultRow implements Row, Serializable {
 
   @Override
   public int firstIndexOf(@NonNull String name) {
-    return definitions.firstIndexOf(name);
+    int indexOf = definitions.firstIndexOf(name);
+    if (indexOf == -1) {
+      throw new IllegalArgumentException(name + " is not a column in this row");
+    }
+    return indexOf;
   }
 
   @NonNull
