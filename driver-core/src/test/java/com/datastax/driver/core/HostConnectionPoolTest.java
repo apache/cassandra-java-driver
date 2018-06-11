@@ -1320,6 +1320,52 @@ public class HostConnectionPoolTest extends ScassandraTestBase.PerClassCluster {
         }
     }
 
+    /**
+     * Ensures that on a a host is bring up with a reused connection and zero core connections
+     * the driver do not try to create any connections.
+     *
+     * @jira_ticket JAVA-1794
+     * @test_category connection:connection_pool
+     * @since 3.5.1
+     */
+    @Test(groups = "short")
+    public void should_not_create_connections_if_zero_core_connections_and_reused_connection_on_reconnect() throws Exception {
+        int reconnectInterval = 1000;
+
+        Cluster cluster = this.createClusterBuilder()
+                .withReconnectionPolicy(new ConstantReconnectionPolicy(1000)).build();
+
+        Host.StateListener stateListener = mock(Host.StateListener.class);
+
+        try {
+            // Init cluster so control connection is created.
+            cluster.init();
+            assertThat(cluster).hasOpenControlConnection();
+
+            Connection.Factory factory = spy(cluster.manager.connectionFactory);
+            cluster.manager.connectionFactory = factory;
+
+            HostConnectionPool pool = createPool(cluster, 0, 2);
+
+            cluster.register(stateListener);
+            cluster.manager.triggerOnDown(pool.host, true);
+
+            Thread.sleep(reconnectInterval * 3);
+
+            verify(stateListener, times(1)).onUp(pool.host);
+
+            // Pool should be empty.
+            assertThat(pool.connections).hasSize(0);
+
+            // Control connection should stay up with the host.
+            assertThat(cluster).host(1).hasState(Host.State.UP);
+            assertThat(cluster).hasOpenControlConnection();
+
+        } finally {
+            cluster.close();
+        }
+    }
+
     private String generateJava349InsertStatement() {
         StringBuilder sb = new StringBuilder("INSERT INTO Java349 (mykey");
         for (int i = 0; i < 1000; i++) {
