@@ -54,9 +54,9 @@ api_docs:
   2.0: http://docs.datastax.com/en/drivers/java/2.0
 versions:
   - name: '3.5'
-    ref: '3.5.0'
+    ref: '3.5.0_docfixes'
   - name: '3.4'
-    ref: '3.4.0'
+    ref: '3.4.0_docfixes'
   - name: '3.3'
     ref: '3.3.2'
   - name: '4.0-alpha'
