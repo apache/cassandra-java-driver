@@ -344,7 +344,7 @@ public class ByteBufPrimitiveCodecTest {
   @Test
   public void should_write_null_bytes() {
     ByteBuf dest = allocate(4);
-    codec.writeBytes(null, dest);
+    codec.writeBytes((ByteBuffer) null, dest);
     assertThat(dest).containsExactly("0xFFFFFFFF");
   }
 
