@@ -40,8 +40,31 @@ import java.util.concurrent.CompletionStage;
  */
 public interface TopologyMonitor extends AsyncAutoCloseable {
 
-  /** Triggers the initialization of the monitor. */
+  /**
+   * Triggers the initialization of the monitor.
+   *
+   * <p>The completion of the future returned by this method marks the point when the driver
+   * considers itself "connected" to the cluster, and proceeds with the rest of the initialization:
+   * refreshing the list of nodes and the metadata, opening connection pools, etc.
+   *
+   * <p>If {@code advanced.reconnect-on-init = true} in the configuration, this method is
+   * responsible for handling reconnection. That is, if the initial attempt to "connect" to the
+   * cluster fails, it must schedule reattempts, and only complete the returned future when
+   * connection eventually succeeds. If the user cancels the returned future, then the reconnection
+   * attempts should stop.
+   *
+   * <p>If this method is called multiple times, it should trigger initialization only once, and
+   * return the same future on subsequent invocations.
+   */
   CompletionStage<Void> init();
+
+  /**
+   * The future returned by {@link #init()}.
+   *
+   * <p>Note that this method may be called before {@link #init()}; at that stage, the future should
+   * already exist, but be incomplete.
+   */
+  CompletionStage<Void> initFuture();
 
   /**
    * Invoked when the driver needs to refresh the information about an existing node. This is called

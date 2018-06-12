@@ -4,6 +4,7 @@
 
 ### 4.0.0-alpha4 (in progress)
 
+- [new feature] JAVA-1860: Allow reconnection at startup if no contact point is available
 - [improvement] JAVA-1866: Make all public policies implement AutoCloseable
 - [new feature] JAVA-1762: Build alternate core artifact with Netty shaded
 - [new feature] JAVA-1761: Add OSGi descriptors

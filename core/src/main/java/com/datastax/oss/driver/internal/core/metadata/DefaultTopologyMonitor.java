@@ -60,6 +60,7 @@ public class DefaultTopologyMonitor implements TopologyMonitor {
   private final ControlConnection controlConnection;
   private final AddressTranslator addressTranslator;
   private final Duration timeout;
+  private final boolean reconnectOnInit;
   private final CompletableFuture<Void> closeFuture;
 
   @VisibleForTesting volatile boolean isSchemaV2;
@@ -72,6 +73,7 @@ public class DefaultTopologyMonitor implements TopologyMonitor {
     this.addressTranslator = context.addressTranslator();
     DriverConfigProfile config = context.config().getDefaultProfile();
     this.timeout = config.getDuration(DefaultDriverOption.CONTROL_CONNECTION_TIMEOUT);
+    this.reconnectOnInit = config.getBoolean(DefaultDriverOption.RECONNECT_ON_INIT);
     this.closeFuture = new CompletableFuture<>();
     // Set this to true initially, after the first refreshNodes is called this will either stay true
     // or be set to false;
@@ -83,7 +85,12 @@ public class DefaultTopologyMonitor implements TopologyMonitor {
     if (closeFuture.isDone()) {
       return CompletableFutures.failedFuture(new IllegalStateException("closed"));
     }
-    return controlConnection.init(true, false);
+    return controlConnection.init(true, reconnectOnInit);
+  }
+
+  @Override
+  public CompletionStage<Void> initFuture() {
+    return controlConnection.initFuture();
   }
 
   @Override

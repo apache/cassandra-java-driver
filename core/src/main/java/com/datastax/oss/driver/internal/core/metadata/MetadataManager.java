@@ -403,10 +403,16 @@ public class MetadataManager implements AsyncAutoCloseable {
 
     // The control connection may or may not have been initialized already by TopologyMonitor.
     private CompletionStage<Void> maybeInitControlConnection() {
-      return firstSchemaRefreshFuture.isDone()
-          // Not the first schema refresh, so we know init was attempted already
-          ? firstSchemaRefreshFuture
-          : controlConnection.init(false, true);
+      if (firstSchemaRefreshFuture.isDone()) {
+        // Not the first schema refresh, so we know init was attempted already
+        return firstSchemaRefreshFuture;
+      } else {
+        controlConnection.init(false, true);
+        // The control connection might fail to connect and reattempt, but for the metadata refresh
+        // that led us here we only care about the first attempt (metadata is not vital, so if we
+        // can't get it right now it's OK to move on)
+        return controlConnection.firstConnectionAttemptFuture();
+      }
     }
 
     private Void parseAndApplySchemaRows(SchemaRows schemaRows) {

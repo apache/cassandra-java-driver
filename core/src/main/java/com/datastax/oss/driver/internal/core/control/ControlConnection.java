@@ -30,6 +30,7 @@ import com.datastax.oss.driver.internal.core.metadata.NodeStateEvent;
 import com.datastax.oss.driver.internal.core.metadata.TopologyEvent;
 import com.datastax.oss.driver.internal.core.metadata.TopologyMonitor;
 import com.datastax.oss.driver.internal.core.util.Loggers;
+import com.datastax.oss.driver.internal.core.util.concurrent.CompletableFutures;
 import com.datastax.oss.driver.internal.core.util.concurrent.Reconnection;
 import com.datastax.oss.driver.internal.core.util.concurrent.RunOrSchedule;
 import com.datastax.oss.driver.internal.core.util.concurrent.UncaughtExceptions;
@@ -98,8 +99,16 @@ public class ControlConnection implements EventCallback, AsyncAutoCloseable {
     return singleThreaded.initFuture;
   }
 
+  public CompletionStage<Void> initFuture() {
+    return singleThreaded.initFuture;
+  }
+
   public boolean isInit() {
     return singleThreaded.initFuture.isDone();
+  }
+
+  public CompletionStage<Void> firstConnectionAttemptFuture() {
+    return singleThreaded.firstConnectionAttemptFuture;
   }
 
   /**
@@ -199,6 +208,7 @@ public class ControlConnection implements EventCallback, AsyncAutoCloseable {
   private class SingleThreaded {
     private final InternalDriverContext context;
     private final CompletableFuture<Void> initFuture = new CompletableFuture<>();
+    private final CompletableFuture<Void> firstConnectionAttemptFuture = new CompletableFuture<>();
     private boolean initWasCalled;
     private final CompletableFuture<Void> closeFuture = new CompletableFuture<>();
     private boolean closeWasCalled;
@@ -212,6 +222,13 @@ public class ControlConnection implements EventCallback, AsyncAutoCloseable {
       this.context = context;
       this.reconnection =
           new Reconnection(logPrefix, adminExecutor, context.reconnectionPolicy(), this::reconnect);
+      // In "reconnect-on-init" mode, handle cancellation of the initFuture by user code
+      CompletableFutures.whenCancelled(
+          this.initFuture,
+          () -> {
+            LOG.debug("[{}] Init future was cancelled, stopping reconnection", logPrefix);
+            reconnection.stop();
+          });
 
       context
           .eventBus()
@@ -241,12 +258,17 @@ public class ControlConnection implements EventCallback, AsyncAutoCloseable {
         connect(
             nodes,
             null,
-            () -> initFuture.complete(null),
+            () -> {
+              initFuture.complete(null);
+              firstConnectionAttemptFuture.complete(null);
+            },
             error -> {
               if (reconnectOnFailure && !closeWasCalled) {
                 reconnection.start();
+              } else {
+                initFuture.completeExceptionally(error);
               }
-              initFuture.completeExceptionally(error);
+              firstConnectionAttemptFuture.completeExceptionally(error);
             });
       } catch (Throwable t) {
         initFuture.completeExceptionally(t);
@@ -288,7 +310,7 @@ public class ControlConnection implements EventCallback, AsyncAutoCloseable {
                     DistanceEvent lastDistanceEvent = lastDistanceEvents.get(node);
                     NodeStateEvent lastStateEvent = lastStateEvents.get(node);
                     if (error != null) {
-                      if (closeWasCalled) {
+                      if (closeWasCalled || initFuture.isCancelled()) {
                         onSuccess.run(); // abort, we don't really care about the result
                       } else {
                         LOG.debug(
@@ -302,7 +324,7 @@ public class ControlConnection implements EventCallback, AsyncAutoCloseable {
                         context.eventBus().fire(ChannelEvent.controlConnectionFailed(node));
                         connect(nodes, newErrors, onSuccess, onFailure);
                       }
-                    } else if (closeWasCalled) {
+                    } else if (closeWasCalled || initFuture.isCancelled()) {
                       LOG.debug(
                           "[{}] New channel opened ({}) but the control connection was closed, closing it",
                           logPrefix,
@@ -360,6 +382,10 @@ public class ControlConnection implements EventCallback, AsyncAutoCloseable {
     }
 
     private void onSuccessfulReconnect() {
+      // If reconnectOnFailure was true and we've never connected before, complete the future now,
+      // otherwise it's already complete and this is a no-op.
+      initFuture.complete(null);
+
       // Always perform a full refresh (we don't know how long we were disconnected)
       context
           .metadataManager()
