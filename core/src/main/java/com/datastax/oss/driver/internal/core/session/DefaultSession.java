@@ -240,6 +240,8 @@ public class DefaultSession implements CqlSession {
           .eventBus()
           .register(
               NodeStateEvent.class, RunOrSchedule.on(adminExecutor, this::onNodeStateChanged));
+      CompletableFutures.propagateCancellation(
+          this.initFuture, context.topologyMonitor().initFuture());
     }
 
     private void init(CqlIdentifier keyspace) {

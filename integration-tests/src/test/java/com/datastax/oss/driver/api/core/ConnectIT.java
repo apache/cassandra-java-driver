@@ -18,38 +18,79 @@ package com.datastax.oss.driver.api.core;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import com.datastax.oss.driver.api.core.session.Session;
-import com.datastax.oss.driver.api.testinfra.ccm.CcmRule;
-import com.datastax.oss.driver.api.testinfra.session.SessionRule;
 import com.datastax.oss.driver.api.testinfra.session.SessionUtils;
+import com.datastax.oss.driver.api.testinfra.simulacron.SimulacronRule;
 import com.datastax.oss.driver.categories.ParallelizableTests;
+import com.datastax.oss.driver.internal.testinfra.session.TestConfigLoader;
+import com.datastax.oss.simulacron.common.cluster.ClusterSpec;
+import com.datastax.oss.simulacron.server.RejectScope;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
+import java.util.concurrent.TimeUnit;
+import org.junit.Before;
 import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
 @Category(ParallelizableTests.class)
 public class ConnectIT {
-  @ClassRule public static CcmRule ccm = CcmRule.getInstance();
 
-  @ClassRule public static SessionRule<CqlSession> sessionRule = SessionRule.builder(ccm).build();
+  @ClassRule
+  public static SimulacronRule simulacronRule =
+      new SimulacronRule(ClusterSpec.builder().withNodes(1));
 
-  @Test
-  public void should_connect_to_existing_keyspace() {
-    CqlIdentifier keyspace = sessionRule.keyspace();
-    try (Session session = SessionUtils.newSession(ccm, keyspace)) {
-      assertThat(session.getKeyspace()).isEqualTo(keyspace);
-    }
+  @Before
+  public void setup() {
+    simulacronRule.cluster().acceptConnections();
+  }
+
+  @Test(expected = AllNodesFailedException.class)
+  public void should_fail_fast_if_contact_points_unreachable_and_reconnection_disabled() {
+    // Given
+    simulacronRule.cluster().rejectConnections(0, RejectScope.STOP);
+
+    // When
+    SessionUtils.newSession(simulacronRule);
+
+    // Then the exception is thrown
   }
 
   @Test
-  public void should_connect_with_no_keyspace() {
-    try (Session session = SessionUtils.newSession(ccm)) {
-      assertThat(session.getKeyspace()).isNull();
-    }
+  public void should_wait_for_contact_points_if_reconnection_enabled() throws Exception {
+    // Given
+    simulacronRule.cluster().rejectConnections(0, RejectScope.STOP);
+
+    // When
+    CompletableFuture<? extends Session> sessionFuture =
+        newSessionAsync(
+                simulacronRule,
+                "advanced.reconnect-on-init = true",
+                // Use a short delay so we don't have to wait too long:
+                "advanced.reconnection-policy.class = ConstantReconnectionPolicy",
+                "advanced.reconnection-policy.base-delay = 500 milliseconds")
+            .toCompletableFuture();
+    // wait a bit to ensure we have a couple of reconnections, otherwise we might race and allow
+    // reconnections before the initial attempt
+    TimeUnit.SECONDS.sleep(2);
+
+    // Then
+    assertThat(sessionFuture).isNotCompleted();
+
+    // When
+    simulacronRule.cluster().acceptConnections();
+
+    // Then this doesn't throw
+    Session session = sessionFuture.get(2, TimeUnit.SECONDS);
+
+    session.close();
   }
 
-  @Test(expected = InvalidKeyspaceException.class)
-  public void should_fail_to_connect_to_non_existent_keyspace() {
-    CqlIdentifier keyspace = CqlIdentifier.fromInternal("does not exist");
-    SessionUtils.newSession(ccm, keyspace);
+  @SuppressWarnings("unchecked")
+  private CompletionStage<? extends Session> newSessionAsync(
+      SimulacronRule serverRule, String... options) {
+    return SessionUtils.baseBuilder()
+        .addContactPoints(serverRule.getContactPoints())
+        .withConfigLoader(new TestConfigLoader(options))
+        .buildAsync();
   }
 }

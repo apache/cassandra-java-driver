@@ -19,6 +19,7 @@ import com.datastax.oss.driver.api.core.DriverException;
 import com.datastax.oss.driver.api.core.DriverExecutionException;
 import com.datastax.oss.driver.shaded.guava.common.base.Preconditions;
 import java.util.List;
+import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ExecutionException;
@@ -137,5 +138,19 @@ public class CompletableFutures {
     } catch (Throwable t) {
       return failedFuture(t);
     }
+  }
+
+  public static void whenCancelled(CompletionStage<?> stage, Runnable action) {
+    stage.exceptionally(
+        (error) -> {
+          if (error instanceof CancellationException) {
+            action.run();
+          }
+          return null;
+        });
+  }
+
+  public static void propagateCancellation(CompletionStage<?> source, CompletionStage<?> target) {
+    whenCancelled(source, () -> target.toCompletableFuture().cancel(true));
   }
 }

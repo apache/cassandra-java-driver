@@ -243,7 +243,11 @@ public abstract class SessionBuilder<SelfT extends SessionBuilder, SessionT> {
    * @return a completion stage that completes with the session when it is fully initialized.
    */
   public CompletionStage<SessionT> buildAsync() {
-    return buildDefaultSessionAsync().thenApply(this::wrap);
+    CompletionStage<CqlSession> buildStage = buildDefaultSessionAsync();
+    CompletionStage<SessionT> wrapStage = buildStage.thenApply(this::wrap);
+    // thenApply does not propagate cancellation (!)
+    CompletableFutures.propagateCancellation(wrapStage, buildStage);
+    return wrapStage;
   }
 
   /**

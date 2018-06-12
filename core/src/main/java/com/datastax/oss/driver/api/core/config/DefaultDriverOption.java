@@ -44,6 +44,8 @@ public enum DefaultDriverOption implements DriverOption {
   CONNECTION_POOL_LOCAL_SIZE("advanced.connection.pool.local.size"),
   CONNECTION_POOL_REMOTE_SIZE("advanced.connection.pool.remote.size"),
 
+  RECONNECT_ON_INIT("advanced.reconnect-on-init"),
+
   RECONNECTION_POLICY_CLASS("advanced.reconnection-policy.class"),
   RECONNECTION_BASE_DELAY("advanced.reconnection-policy.base-delay"),
   RECONNECTION_MAX_DELAY("advanced.reconnection-policy.max-delay"),
