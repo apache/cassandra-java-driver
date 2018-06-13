@@ -29,4 +29,17 @@ public interface ConsistencyLevel {
 
   /** The textual representation of the level in configuration files. */
   String name();
+
+  /** Whether this consistency level applies to the local datacenter only. */
+  boolean isDcLocal();
+
+  /**
+   * Whether this consistency level is serial, that is, applies only to the "paxos" phase of a <a
+   * href="https://docs.datastax.com/en/cassandra/3.0/cassandra/dml/dmlLtwtTransactions.html">lightweight
+   * transaction</a>.
+   *
+   * <p>Serial consistency levels are only meaningful when executing conditional updates ({@code
+   * INSERT}, {@code UPDATE} or {@code DELETE} statements with an {@code IF} condition).
+   */
+  boolean isSerial();
 }

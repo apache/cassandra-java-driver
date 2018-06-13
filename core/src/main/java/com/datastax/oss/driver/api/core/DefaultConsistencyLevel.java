@@ -54,6 +54,16 @@ public enum DefaultConsistencyLevel implements ConsistencyLevel {
     return level;
   }
 
+  @Override
+  public boolean isDcLocal() {
+    return this == LOCAL_ONE || this == LOCAL_QUORUM || this == LOCAL_SERIAL;
+  }
+
+  @Override
+  public boolean isSerial() {
+    return this == SERIAL || this == LOCAL_SERIAL;
+  }
+
   private static Map<Integer, DefaultConsistencyLevel> BY_CODE = mapByCode(values());
 
   private static Map<Integer, DefaultConsistencyLevel> mapByCode(DefaultConsistencyLevel[] levels) {
