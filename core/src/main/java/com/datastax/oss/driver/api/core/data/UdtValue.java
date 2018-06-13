@@ -17,7 +17,6 @@ package com.datastax.oss.driver.api.core.data;
 
 import com.datastax.oss.driver.api.core.detach.Detachable;
 import com.datastax.oss.driver.api.core.type.UserDefinedType;
-import java.io.Serializable;
 
 /**
  * Driver-side representation of an instance of a CQL user defined type.
@@ -25,13 +24,13 @@ import java.io.Serializable;
  * <p>It is an ordered set of named, typed fields.
  *
  * <p>A tuple value is attached if and only if its type is attached (see {@link Detachable}).
+ *
+ * <p>The default implementation returned by the driver is immutable and serializable. If you write
+ * your own implementation, it should at least be thread-safe; serializability is not mandatory, but
+ * recommended for use with some 3rd-party tools like Apache Spark &trade;.
  */
 public interface UdtValue
-    extends GettableById,
-        GettableByName,
-        SettableById<UdtValue>,
-        SettableByName<UdtValue>,
-        Serializable {
+    extends GettableById, GettableByName, SettableById<UdtValue>, SettableByName<UdtValue> {
 
   UserDefinedType getType();
 }

@@ -17,7 +17,6 @@ package com.datastax.oss.driver.api.core.data;
 
 import com.datastax.oss.driver.api.core.detach.Detachable;
 import com.datastax.oss.driver.api.core.type.TupleType;
-import java.io.Serializable;
 
 /**
  * Driver-side representation of a CQL {@code tuple} value.
@@ -25,7 +24,11 @@ import java.io.Serializable;
  * <p>It is an ordered set of anonymous, typed fields.
  *
  * <p>A tuple value is attached if and only if its type is attached (see {@link Detachable}).
+ *
+ * <p>The default implementation returned by the driver is immutable and serializable. If you write
+ * your own implementation, it should at least be thread-safe; serializability is not mandatory, but
+ * recommended for use with some 3rd-party tools like Apache Spark &trade;.
  */
-public interface TupleValue extends GettableByIndex, SettableByIndex<TupleValue>, Serializable {
+public interface TupleValue extends GettableByIndex, SettableByIndex<TupleValue> {
   TupleType getType();
 }

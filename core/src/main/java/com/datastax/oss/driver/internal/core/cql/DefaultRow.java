@@ -32,7 +32,7 @@ import java.util.List;
 import net.jcip.annotations.Immutable;
 
 @Immutable
-public class DefaultRow implements Row {
+public class DefaultRow implements Row, Serializable {
 
   private final ColumnDefinitions definitions;
   private final List<ByteBuffer> data;

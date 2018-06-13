@@ -24,6 +24,7 @@ import com.datastax.oss.driver.internal.core.type.DefaultUserDefinedType;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.io.Serializable;
 import java.util.List;
 import net.jcip.annotations.Immutable;
 
@@ -37,7 +38,9 @@ import net.jcip.annotations.Immutable;
  * definitions by the actual instance (which will be a {@link DefaultUserDefinedType}).
  */
 @Immutable
-public class ShallowUserDefinedType implements UserDefinedType {
+public class ShallowUserDefinedType implements UserDefinedType, Serializable {
+
+  private static final long serialVersionUID = 1;
 
   private final CqlIdentifier keyspace;
   private final CqlIdentifier name;

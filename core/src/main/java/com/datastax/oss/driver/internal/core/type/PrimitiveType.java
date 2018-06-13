@@ -18,10 +18,11 @@ package com.datastax.oss.driver.internal.core.type;
 import com.datastax.oss.driver.api.core.detach.AttachmentPoint;
 import com.datastax.oss.driver.api.core.type.DataType;
 import com.datastax.oss.protocol.internal.ProtocolConstants;
+import java.io.Serializable;
 import net.jcip.annotations.Immutable;
 
 @Immutable
-public class PrimitiveType implements DataType {
+public class PrimitiveType implements DataType, Serializable {
 
   /** @serial */
   private final int protocolCode;

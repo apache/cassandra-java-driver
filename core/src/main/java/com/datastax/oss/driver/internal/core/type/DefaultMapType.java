@@ -21,11 +21,12 @@ import com.datastax.oss.driver.api.core.type.MapType;
 import com.datastax.oss.driver.shaded.guava.common.base.Preconditions;
 import java.io.IOException;
 import java.io.ObjectInputStream;
+import java.io.Serializable;
 import java.util.Objects;
 import net.jcip.annotations.Immutable;
 
 @Immutable
-public class DefaultMapType implements MapType {
+public class DefaultMapType implements MapType, Serializable {
 
   private static final long serialVersionUID = 1;
 

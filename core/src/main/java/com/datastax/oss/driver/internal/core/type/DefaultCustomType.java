@@ -20,10 +20,11 @@ import com.datastax.oss.driver.api.core.type.CustomType;
 import com.datastax.oss.driver.shaded.guava.common.base.Preconditions;
 import java.io.IOException;
 import java.io.ObjectInputStream;
+import java.io.Serializable;
 import net.jcip.annotations.Immutable;
 
 @Immutable
-public class DefaultCustomType implements CustomType {
+public class DefaultCustomType implements CustomType, Serializable {
 
   private static final long serialVersionUID = 1;
 

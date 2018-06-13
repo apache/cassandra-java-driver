@@ -19,11 +19,15 @@ import com.datastax.oss.driver.api.core.data.GettableById;
 import com.datastax.oss.driver.api.core.data.GettableByIndex;
 import com.datastax.oss.driver.api.core.data.GettableByName;
 import com.datastax.oss.driver.api.core.detach.Detachable;
-import java.io.Serializable;
 
-/** A row from a CQL table. */
-public interface Row
-    extends GettableByIndex, GettableByName, GettableById, Detachable, Serializable {
+/**
+ * A row from a CQL table.
+ *
+ * <p>The default implementation returned by the driver is immutable and serializable. If you write
+ * your own implementation, it should at least be thread-safe; serializability is not mandatory, but
+ * recommended for use with some 3rd-party tools like Apache Spark &trade;.
+ */
+public interface Row extends GettableByIndex, GettableByName, GettableById, Detachable {
 
   ColumnDefinitions getColumnDefinitions();
 }

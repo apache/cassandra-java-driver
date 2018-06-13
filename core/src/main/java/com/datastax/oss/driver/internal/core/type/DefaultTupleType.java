@@ -25,11 +25,12 @@ import com.datastax.oss.driver.shaded.guava.common.base.Preconditions;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableList;
 import java.io.IOException;
 import java.io.ObjectInputStream;
+import java.io.Serializable;
 import java.util.List;
 import net.jcip.annotations.Immutable;
 
 @Immutable
-public class DefaultTupleType implements TupleType {
+public class DefaultTupleType implements TupleType, Serializable {
 
   private static final long serialVersionUID = 1;
 

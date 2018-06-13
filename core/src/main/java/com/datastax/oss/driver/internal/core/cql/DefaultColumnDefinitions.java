@@ -29,7 +29,7 @@ import java.util.List;
 import net.jcip.annotations.Immutable;
 
 @Immutable
-public class DefaultColumnDefinitions implements ColumnDefinitions {
+public class DefaultColumnDefinitions implements ColumnDefinitions, Serializable {
 
   public static ColumnDefinitions valueOf(List<ColumnDefinition> definitions) {
     return definitions.isEmpty()

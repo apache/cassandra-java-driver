@@ -30,7 +30,7 @@ import java.util.Objects;
 import net.jcip.annotations.Immutable;
 
 @Immutable
-public class DefaultTupleValue implements TupleValue {
+public class DefaultTupleValue implements TupleValue, Serializable {
 
   private static final long serialVersionUID = 1;
   private final TupleType type;

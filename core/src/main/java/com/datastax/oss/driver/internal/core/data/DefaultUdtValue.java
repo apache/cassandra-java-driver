@@ -31,7 +31,7 @@ import java.util.Objects;
 import net.jcip.annotations.Immutable;
 
 @Immutable
-public class DefaultUdtValue implements UdtValue {
+public class DefaultUdtValue implements UdtValue, Serializable {
 
   private static final long serialVersionUID = 1;
 
