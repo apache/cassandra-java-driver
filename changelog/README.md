@@ -4,6 +4,7 @@
 
 ### 4.0.0-alpha4 (in progress)
 
+- [improvement] JAVA-1866: Make all public policies implement AutoCloseable
 - [new feature] JAVA-1762: Build alternate core artifact with Netty shaded
 - [new feature] JAVA-1761: Add OSGi descriptors
 - [bug] JAVA-1560: Correctly propagate policy initialization errors

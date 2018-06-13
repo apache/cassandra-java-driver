@@ -34,4 +34,9 @@ public class ServerSideTimestampGenerator implements TimestampGenerator {
   public long next() {
     return Long.MIN_VALUE;
   }
+
+  @Override
+  public void close() throws Exception {
+    // nothing to do
+  }
 }
