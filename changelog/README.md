@@ -4,6 +4,7 @@
 
 ### 4.0.0-alpha4 (in progress)
 
+- [improvement] JAVA-1851: Make dependency to JCIP annotations non optional
 - [improvement] JAVA-1830: Surface response frame size in ExecutionInfo
 - [improvement] JAVA-1853: Add newValue(Object...) to TupleType and UserDefinedType
 - [improvement] JAVA-1815: Reorganize configuration into basic/advanced categories
