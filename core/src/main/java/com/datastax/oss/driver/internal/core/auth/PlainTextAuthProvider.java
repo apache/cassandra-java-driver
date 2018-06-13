@@ -77,6 +77,11 @@ public class PlainTextAuthProvider implements AuthProvider {
         host);
   }
 
+  @Override
+  public void close() throws Exception {
+    // nothing to do
+  }
+
   private static class PlainTextAuthenticator implements SyncAuthenticator {
 
     private final ByteBuffer initialToken;

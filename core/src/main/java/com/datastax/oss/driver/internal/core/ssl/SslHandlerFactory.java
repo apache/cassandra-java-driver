@@ -36,6 +36,6 @@ import java.net.SocketAddress;
  *
  * @see DefaultDriverContext#buildSslHandlerFactory()
  */
-public interface SslHandlerFactory {
+public interface SslHandlerFactory extends AutoCloseable {
   SslHandler newSslHandler(Channel channel, SocketAddress remoteEndpoint);
 }

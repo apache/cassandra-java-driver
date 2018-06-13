@@ -25,7 +25,7 @@ import java.net.SocketAddress;
  * <p>See {@link PlainTextAuthProvider} for an implementation which uses SASL PLAIN mechanism to
  * authenticate using username/password strings.
  */
-public interface AuthProvider {
+public interface AuthProvider extends AutoCloseable {
 
   /**
    * The authenticator to use when connecting to {@code host}.

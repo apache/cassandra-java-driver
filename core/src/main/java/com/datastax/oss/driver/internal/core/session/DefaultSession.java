@@ -452,7 +452,8 @@ public class DefaultSession implements CqlSession {
               context::nodeStateListener,
               context::schemaChangeListener,
               context::requestTracker,
-              context::requestThrottler)) {
+              context::requestThrottler,
+              context::timestampGenerator)) {
         try {
           policies.add(supplier.get());
         } catch (Throwable t) {
@@ -460,14 +461,24 @@ public class DefaultSession implements CqlSession {
         }
       }
       try {
+        context.authProvider().ifPresent(policies::add);
+      } catch (Throwable t) {
+        // ignore
+      }
+      try {
+        context.sslHandlerFactory().ifPresent(policies::add);
+      } catch (Throwable t) {
+        // ignore
+      }
+      try {
         policies.addAll(context.retryPolicies().values());
       } catch (Throwable t) {
-        // Same as above, assume the policies had failed to initialize.
+        // ignore
       }
       try {
         policies.addAll(context.speculativeExecutionPolicies().values());
       } catch (Throwable t) {
-        // Same as above, assume the policies had failed to initialize.
+        // ignore
       }
 
       // Finally we have a list of all the policies that initialized successfully, close them:

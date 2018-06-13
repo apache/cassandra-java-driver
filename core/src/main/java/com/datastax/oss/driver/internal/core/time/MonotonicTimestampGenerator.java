@@ -79,6 +79,11 @@ abstract class MonotonicTimestampGenerator implements TimestampGenerator {
     return currentTick;
   }
 
+  @Override
+  public void close() throws Exception {
+    // nothing to do
+  }
+
   private void maybeLog(long currentTick, long last) {
     if (warningThresholdMicros != 0
         && LOG.isWarnEnabled()

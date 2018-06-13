@@ -36,4 +36,9 @@ public class JdkSslHandlerFactory implements SslHandlerFactory {
     SSLEngine engine = sslEngineFactory.newSslEngine(remoteEndpoint);
     return new SslHandler(engine);
   }
+
+  @Override
+  public void close() throws Exception {
+    sslEngineFactory.close();
+  }
 }

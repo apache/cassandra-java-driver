@@ -25,7 +25,7 @@ import javax.net.ssl.SSLEngine;
  * implementation), the driver's internal API provides a lower-level interface: {@link
  * com.datastax.oss.driver.internal.core.ssl.SslHandlerFactory}.
  */
-public interface SslEngineFactory {
+public interface SslEngineFactory extends AutoCloseable {
   /**
    * Creates a new SSL engine each time a connection is established.
    *

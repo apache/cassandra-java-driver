@@ -82,4 +82,9 @@ public class DefaultSslEngineFactory implements SslEngineFactory {
     }
     return engine;
   }
+
+  @Override
+  public void close() throws Exception {
+    // nothing to do
+  }
 }

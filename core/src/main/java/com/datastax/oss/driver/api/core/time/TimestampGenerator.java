@@ -20,7 +20,7 @@ package com.datastax.oss.driver.api.core.time;
  *
  * <p>These timestamps are used to order queries server-side, and resolve potential conflicts.
  */
-public interface TimestampGenerator {
+public interface TimestampGenerator extends AutoCloseable {
 
   /**
    * Returns the next timestamp, in <b>microseconds</b>.
