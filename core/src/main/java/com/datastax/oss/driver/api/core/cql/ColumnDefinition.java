@@ -18,10 +18,15 @@ package com.datastax.oss.driver.api.core.cql;
 import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.detach.Detachable;
 import com.datastax.oss.driver.api.core.type.DataType;
-import java.io.Serializable;
 
-/** Metadata about a CQL column. */
-public interface ColumnDefinition extends Detachable, Serializable {
+/**
+ * Metadata about a CQL column.
+ *
+ * <p>The default implementation returned by the driver is immutable and serializable. If you write
+ * your own implementation, it should at least be thread-safe; serializability is not mandatory, but
+ * recommended for use with some 3rd-party tools like Apache Spark &trade;.
+ */
+public interface ColumnDefinition extends Detachable {
 
   CqlIdentifier getKeyspace();
 

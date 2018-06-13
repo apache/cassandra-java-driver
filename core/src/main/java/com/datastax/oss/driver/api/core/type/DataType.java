@@ -17,14 +17,17 @@ package com.datastax.oss.driver.api.core.type;
 
 import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.detach.Detachable;
-import java.io.Serializable;
 
 /**
  * The type of a CQL column, field or function argument.
  *
+ * <p>The default implementations returned by the driver are immutable and serializable. If you
+ * write your own implementations, they should at least be thread-safe; serializability is not
+ * mandatory, but recommended for use with some 3rd-party tools like Apache Spark &trade;.
+ *
  * @see DataTypes
  */
-public interface DataType extends Detachable, Serializable {
+public interface DataType extends Detachable {
   /** The code of the data type in the native protocol specification. */
   int getProtocolCode();
 

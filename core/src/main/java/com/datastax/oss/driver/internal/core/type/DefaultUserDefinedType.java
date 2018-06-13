@@ -26,12 +26,13 @@ import com.datastax.oss.driver.shaded.guava.common.base.Preconditions;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableList;
 import java.io.IOException;
 import java.io.ObjectInputStream;
+import java.io.Serializable;
 import java.util.List;
 import java.util.Objects;
 import net.jcip.annotations.Immutable;
 
 @Immutable
-public class DefaultUserDefinedType implements UserDefinedType {
+public class DefaultUserDefinedType implements UserDefinedType, Serializable {
 
   private static final long serialVersionUID = 1;
 
