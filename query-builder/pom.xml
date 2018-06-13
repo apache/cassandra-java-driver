@@ -42,9 +42,8 @@
       <artifactId>java-driver-shaded-guava</artifactId>
     </dependency>
     <dependency>
-      <groupId>net.jcip</groupId>
+      <groupId>com.github.stephenc.jcip</groupId>
       <artifactId>jcip-annotations</artifactId>
-      <optional>true</optional>
     </dependency>
     <dependency>
       <groupId>junit</groupId>

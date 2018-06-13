@@ -115,9 +115,9 @@
         <version>2.1.10</version>
       </dependency>
       <dependency>
-        <groupId>net.jcip</groupId>
+        <groupId>com.github.stephenc.jcip</groupId>
         <artifactId>jcip-annotations</artifactId>
-        <version>1.0</version>
+        <version>1.0-1</version>
       </dependency>
       <dependency>
         <groupId>junit</groupId>
