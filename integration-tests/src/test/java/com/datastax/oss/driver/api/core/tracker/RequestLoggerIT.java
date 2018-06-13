@@ -15,9 +15,7 @@
  */
 package com.datastax.oss.driver.api.core.tracker;
 
-import static com.datastax.oss.simulacron.common.stubbing.PrimeDsl.rows;
-import static com.datastax.oss.simulacron.common.stubbing.PrimeDsl.serverError;
-import static com.datastax.oss.simulacron.common.stubbing.PrimeDsl.when;
+import static com.datastax.oss.simulacron.common.stubbing.PrimeDsl.*;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
 import static org.mockito.ArgumentMatchers.any;
@@ -30,6 +28,7 @@ import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.classic.spi.LoggingEvent;
 import ch.qos.logback.core.Appender;
 import com.datastax.oss.driver.api.core.CqlSession;
+import com.datastax.oss.driver.api.core.cql.ResultSet;
 import com.datastax.oss.driver.api.core.cql.SimpleStatement;
 import com.datastax.oss.driver.api.core.servererrors.ServerError;
 import com.datastax.oss.driver.api.testinfra.session.SessionRule;
@@ -37,6 +36,8 @@ import com.datastax.oss.driver.api.testinfra.simulacron.SimulacronRule;
 import com.datastax.oss.driver.categories.ParallelizableTests;
 import com.datastax.oss.driver.internal.core.tracker.RequestLogger;
 import com.datastax.oss.simulacron.common.cluster.ClusterSpec;
+import com.datastax.oss.simulacron.common.codec.ConsistencyLevel;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 import org.junit.After;
 import org.junit.Before;
@@ -48,7 +49,9 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.Mock;
 import org.mockito.Mockito;
+import org.mockito.internal.verification.VerificationModeFactory;
 import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.verification.Timeout;
 import org.slf4j.LoggerFactory;
 
 @Category(ParallelizableTests.class)
@@ -58,10 +61,10 @@ public class RequestLoggerIT {
   private static final String QUERY = "SELECT release_version FROM system.local";
 
   @Rule
-  public SimulacronRule simulacronRule = new SimulacronRule(ClusterSpec.builder().withNodes(1));
+  public SimulacronRule simulacronRule = new SimulacronRule(ClusterSpec.builder().withNodes(3));
 
   @Rule
-  public SessionRule<CqlSession> sessionRule =
+  public SessionRule<CqlSession> sessionRuleRequest =
       SessionRule.builder(simulacronRule)
           .withOptions(
               "advanced.request-tracker.class = com.datastax.oss.driver.internal.core.tracker.RequestLogger",
@@ -73,6 +76,29 @@ public class RequestLoggerIT {
               "advanced.request-tracker.logs.max-value-length = 50",
               "advanced.request-tracker.logs.max-values = 50",
               "advanced.request-tracker.logs.show-stack-traces = true",
+              "advanced.request-tracker.logs.node-level = false",
+              "profiles.low-threshold.advanced.request-tracker.logs.slow.threshold = 1 nanosecond",
+              "profiles.no-logs.advanced.request-tracker.logs.success.enabled = false",
+              "profiles.no-logs.advanced.request-tracker.logs.slow.enabled = false",
+              "profiles.no-logs.advanced.request-tracker.logs.error.enabled = false",
+              "profiles.no-traces.advanced.request-tracker.logs.show-stack-traces = false")
+          .build();
+
+  @Rule
+  public SessionRule<CqlSession> sessionRuleNode =
+      SessionRule.builder(simulacronRule)
+          .withOptions(
+              "basic.request.consistency = ONE",
+              "advanced.request-tracker.class = com.datastax.oss.driver.internal.core.tracker.RequestLogger",
+              "advanced.request-tracker.logs.success.enabled = true",
+              "advanced.request-tracker.logs.slow.enabled = true",
+              "advanced.request-tracker.logs.error.enabled = true",
+              "advanced.request-tracker.logs.max-query-length = 500",
+              "advanced.request-tracker.logs.show-values = true",
+              "advanced.request-tracker.logs.max-value-length = 50",
+              "advanced.request-tracker.logs.max-values = 50",
+              "advanced.request-tracker.logs.show-stack-traces = true",
+              "advanced.request-tracker.logs.node-level = true",
               "profiles.low-threshold.advanced.request-tracker.logs.slow.threshold = 1 nanosecond",
               "profiles.no-logs.advanced.request-tracker.logs.success.enabled = false",
               "profiles.no-logs.advanced.request-tracker.logs.slow.enabled = false",
@@ -105,7 +131,7 @@ public class RequestLoggerIT {
     simulacronRule.cluster().prime(when(QUERY).then(rows().row("release_version", "3.0.0")));
 
     // When
-    sessionRule.session().execute(QUERY);
+    sessionRuleRequest.session().execute(QUERY);
 
     // Then
     Mockito.verify(appender, timeout(500)).doAppend(loggingEventCaptor.capture());
@@ -120,7 +146,7 @@ public class RequestLoggerIT {
 
     // When
     try {
-      sessionRule.session().execute(QUERY);
+      sessionRuleRequest.session().execute(QUERY);
       fail("Expected a ServerError");
     } catch (ServerError error) {
       // expected
@@ -142,7 +168,7 @@ public class RequestLoggerIT {
 
     // When
     try {
-      sessionRule
+      sessionRuleRequest
           .session()
           .execute(SimpleStatement.builder(QUERY).withConfigProfileName("no-traces").build());
       fail("Expected a ServerError");
@@ -164,7 +190,7 @@ public class RequestLoggerIT {
     simulacronRule.cluster().prime(when(QUERY).then(rows().row("release_version", "3.0.0")));
 
     // When
-    sessionRule
+    sessionRuleRequest
         .session()
         .execute(SimpleStatement.builder(QUERY).withConfigProfileName("low-threshold").build());
 
@@ -180,7 +206,7 @@ public class RequestLoggerIT {
     simulacronRule.cluster().prime(when(QUERY).then(rows().row("release_version", "3.0.0")));
 
     // When
-    sessionRule
+    sessionRuleRequest
         .session()
         .execute(SimpleStatement.builder(QUERY).withConfigProfileName("no-logs").build());
 
@@ -188,5 +214,64 @@ public class RequestLoggerIT {
     // We expect no messages. The request logger is invoked asynchronously, so simply wait a bit
     TimeUnit.MILLISECONDS.sleep(500);
     Mockito.verify(appender, never()).doAppend(any(LoggingEvent.class));
+  }
+
+  @Test
+  public void should_log_failed_nodes_on_succesfull_request() {
+    // Given
+    simulacronRule
+        .cluster()
+        .node(0)
+        .prime(when(QUERY).then(unavailable(ConsistencyLevel.ONE, 1, 3)));
+    simulacronRule
+        .cluster()
+        .node(1)
+        .prime(when(QUERY).then(rows().row("release_version", "3.0.0")));
+    simulacronRule
+        .cluster()
+        .node(2)
+        .prime(when(QUERY).then(rows().row("release_version", "3.0.0")));
+
+    // When
+    ResultSet set = sessionRuleNode.session().execute(QUERY);
+
+    // Then
+    Mockito.verify(appender, new Timeout(500, VerificationModeFactory.times(3)))
+        .doAppend(loggingEventCaptor.capture());
+    List<ILoggingEvent> events = loggingEventCaptor.getAllValues();
+    assertThat(events.get(0).getFormattedMessage())
+        .contains("[NODE]", "Error", "[0 values]", QUERY);
+    assertThat(events.get(1).getFormattedMessage())
+        .contains("[NODE]", "Success", "[0 values]", QUERY);
+    assertThat(events.get(2).getFormattedMessage())
+        .contains("[REQUEST]", "Success", "[0 values]", QUERY);
+  }
+
+  @Test
+  public void should_log_successful_nodes_on_succesfull_request() {
+    simulacronRule
+        .cluster()
+        .node(0)
+        .prime(when(QUERY).then(rows().row("release_version", "3.0.0")));
+    simulacronRule
+        .cluster()
+        .node(1)
+        .prime(when(QUERY).then(rows().row("release_version", "3.0.0")));
+    simulacronRule
+        .cluster()
+        .node(2)
+        .prime(when(QUERY).then(rows().row("release_version", "3.0.0")));
+
+    // When
+    ResultSet set = sessionRuleNode.session().execute(QUERY);
+
+    // Then
+    Mockito.verify(appender, new Timeout(500, VerificationModeFactory.times(2)))
+        .doAppend(loggingEventCaptor.capture());
+    List<ILoggingEvent> events = loggingEventCaptor.getAllValues();
+    assertThat(events.get(0).getFormattedMessage())
+        .contains("[NODE]", "Success", "[0 values]", QUERY);
+    assertThat(events.get(1).getFormattedMessage())
+        .contains("[REQUEST]", "Success", "[0 values]", QUERY);
   }
 }

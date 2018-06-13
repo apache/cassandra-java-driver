@@ -43,6 +43,7 @@ import com.datastax.oss.driver.api.core.servererrors.WriteTimeoutException;
 import com.datastax.oss.driver.api.core.session.throttling.RequestThrottler;
 import com.datastax.oss.driver.api.core.session.throttling.Throttled;
 import com.datastax.oss.driver.api.core.specex.SpeculativeExecutionPolicy;
+import com.datastax.oss.driver.api.core.tracker.RequestTracker.TrackerLevel;
 import com.datastax.oss.driver.internal.core.adminrequest.ThrottledAdminRequestHandler;
 import com.datastax.oss.driver.internal.core.adminrequest.UnexpectedResponseException;
 import com.datastax.oss.driver.internal.core.channel.DriverChannel;
@@ -272,6 +273,13 @@ public abstract class CqlRequestHandlerBase implements Throttled {
     errorsSnapshot.add(new AbstractMap.SimpleEntry<>(node, error));
   }
 
+  private void trackNodeError(Node node, Throwable error) {
+    long latencyNanos = System.nanoTime() - startTimeNanos;
+    context
+        .requestTracker()
+        .onError(statement, error, latencyNanos, configProfile, node, TrackerLevel.NODE);
+  }
+
   private void cancelScheduledTasks() {
     if (this.timeoutFuture != null) {
       this.timeoutFuture.cancel(false);
@@ -300,7 +308,12 @@ public abstract class CqlRequestHandlerBase implements Throttled {
         cancelScheduledTasks();
         throttler.signalSuccess(this);
         long latencyNanos = System.nanoTime() - startTimeNanos;
-        context.requestTracker().onSuccess(statement, latencyNanos, configProfile, callback.node);
+        context
+            .requestTracker()
+            .onSuccess(statement, latencyNanos, configProfile, callback.node, TrackerLevel.NODE);
+        context
+            .requestTracker()
+            .onSuccess(statement, latencyNanos, configProfile, callback.node, TrackerLevel.REQUEST);
         session
             .getMetricUpdater()
             .updateTimer(
@@ -363,7 +376,12 @@ public abstract class CqlRequestHandlerBase implements Throttled {
     if (result.completeExceptionally(error)) {
       cancelScheduledTasks();
       long latencyNanos = System.nanoTime() - startTimeNanos;
-      context.requestTracker().onError(statement, error, latencyNanos, configProfile, node);
+      if (node != null) {
+        trackNodeError(node, error);
+      }
+      context
+          .requestTracker()
+          .onError(statement, error, latencyNanos, configProfile, node, TrackerLevel.REQUEST);
       if (error instanceof DriverTimeoutException) {
         throttler.signalTimeout(this);
         session
@@ -425,6 +443,7 @@ public abstract class CqlRequestHandlerBase implements Throttled {
               channel,
               error);
           recordError(node, error);
+          trackNodeError(node, error);
           ((DefaultNode) node)
               .getMetricUpdater()
               .incrementCounter(DefaultNodeMetric.UNSENT_REQUESTS, configProfile.getName());
@@ -574,6 +593,7 @@ public abstract class CqlRequestHandlerBase implements Throttled {
                       return null;
                     }
                     recordError(node, exception);
+                    trackNodeError(node, exception);
                     LOG.trace("[{}] Reprepare failed, trying next node", logPrefix);
                     sendRequest(null, execution, retryCount, false);
                   } else {
@@ -589,6 +609,7 @@ public abstract class CqlRequestHandlerBase implements Throttled {
       if (error instanceof BootstrappingException) {
         LOG.trace("[{}] {} is bootstrapping, trying next node", logPrefix, node);
         recordError(node, error);
+        trackNodeError(node, error);
         sendRequest(null, execution, retryCount, false);
       } else if (error instanceof QueryValidationException
           || error instanceof FunctionFailureException
@@ -668,10 +689,12 @@ public abstract class CqlRequestHandlerBase implements Throttled {
       switch (decision) {
         case RETRY_SAME:
           recordError(node, error);
+          trackNodeError(node, error);
           sendRequest(node, execution, retryCount + 1, false);
           break;
         case RETRY_NEXT:
           recordError(node, error);
+          trackNodeError(node, error);
           sendRequest(null, execution, retryCount + 1, false);
           break;
         case RETHROW:
