@@ -18,6 +18,8 @@ package com.datastax.oss.driver.api.core.cql;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import com.datastax.oss.driver.api.core.CqlSession;
+import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
+import com.datastax.oss.driver.api.core.config.DriverConfigLoader;
 import com.datastax.oss.driver.api.core.servererrors.InvalidQueryException;
 import com.datastax.oss.driver.api.testinfra.CassandraRequirement;
 import com.datastax.oss.driver.api.testinfra.ccm.CcmRule;
@@ -36,7 +38,7 @@ public class BatchStatementIT {
 
   @Rule public CcmRule ccm = CcmRule.getInstance();
 
-  @Rule public SessionRule<CqlSession> sessionRule = new SessionRule<>(ccm);
+  @Rule public SessionRule<CqlSession> sessionRule = SessionRule.builder(ccm).build();
 
   @Rule public TestName name = new TestName();
 
@@ -323,8 +325,11 @@ public class BatchStatementIT {
   @Test(expected = IllegalStateException.class)
   public void should_not_allow_unset_value_when_protocol_less_than_v4() {
     //    CREATE TABLE test (k0 text, k1 int, v int, PRIMARY KEY (k0, k1))
-    try (CqlSession v3Session =
-        SessionUtils.newSession(ccm, sessionRule.keyspace(), "advanced.protocol.version = V3")) {
+    DriverConfigLoader loader =
+        SessionUtils.configLoaderBuilder()
+            .withString(DefaultDriverOption.PROTOCOL_VERSION, "V3")
+            .build();
+    try (CqlSession v3Session = SessionUtils.newSession(ccm, sessionRule.keyspace(), loader)) {
       PreparedStatement prepared =
           v3Session.prepare("INSERT INTO test (k0, k1, v) values (?, ?, ?)");
 

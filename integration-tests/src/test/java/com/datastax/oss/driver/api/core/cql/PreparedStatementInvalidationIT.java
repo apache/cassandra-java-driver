@@ -19,6 +19,8 @@ import static junit.framework.TestCase.fail;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import com.datastax.oss.driver.api.core.CqlSession;
+import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
+import com.datastax.oss.driver.api.core.config.DriverConfigLoader;
 import com.datastax.oss.driver.api.core.servererrors.InvalidQueryException;
 import com.datastax.oss.driver.api.core.type.DataTypes;
 import com.datastax.oss.driver.api.testinfra.CassandraRequirement;
@@ -29,6 +31,7 @@ import com.datastax.oss.driver.categories.ParallelizableTests;
 import com.datastax.oss.protocol.internal.util.Bytes;
 import com.google.common.collect.ImmutableList;
 import java.nio.ByteBuffer;
+import java.time.Duration;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -50,8 +53,13 @@ public class PreparedStatementInvalidationIT {
 
   @Rule
   public SessionRule<CqlSession> sessionRule =
-      new SessionRule<>(
-          ccmRule, "basic.request.page-size = 2", "basic.request.timeout = 30 seconds");
+      SessionRule.builder(ccmRule)
+          .withConfigLoader(
+              SessionUtils.configLoaderBuilder()
+                  .withInt(DefaultDriverOption.REQUEST_PAGE_SIZE, 2)
+                  .withDuration(DefaultDriverOption.REQUEST_TIMEOUT, Duration.ofSeconds(30))
+                  .build())
+          .build();
 
   @Rule public ExpectedException thrown = ExpectedException.none();
 
@@ -223,12 +231,12 @@ public class PreparedStatementInvalidationIT {
   @Test
   @CassandraRequirement(min = "2.2")
   public void should_not_store_metadata_for_conditional_updates_in_legacy_protocol() {
-    try (CqlSession session =
-        SessionUtils.newSession(
-            ccmRule,
-            sessionRule.keyspace(),
-            "advanced.protocol.version = V4",
-            "basic.request.timeout = 30 seconds")) {
+    DriverConfigLoader loader =
+        SessionUtils.configLoaderBuilder()
+            .withString(DefaultDriverOption.PROTOCOL_VERSION, "V4")
+            .withDuration(DefaultDriverOption.REQUEST_TIMEOUT, Duration.ofSeconds(30))
+            .build();
+    try (CqlSession session = SessionUtils.newSession(ccmRule, sessionRule.keyspace(), loader)) {
       should_not_store_metadata_for_conditional_updates(session);
     }
   }

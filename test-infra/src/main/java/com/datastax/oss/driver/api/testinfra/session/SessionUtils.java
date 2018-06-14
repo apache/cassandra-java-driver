@@ -18,6 +18,7 @@ package com.datastax.oss.driver.api.testinfra.session;
 import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.CqlSession;
 import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
+import com.datastax.oss.driver.api.core.config.DriverConfigLoader;
 import com.datastax.oss.driver.api.core.config.DriverExecutionProfile;
 import com.datastax.oss.driver.api.core.cql.SimpleStatement;
 import com.datastax.oss.driver.api.core.cql.Statement;
@@ -27,7 +28,8 @@ import com.datastax.oss.driver.api.core.metadata.schema.SchemaChangeListener;
 import com.datastax.oss.driver.api.core.session.Session;
 import com.datastax.oss.driver.api.core.session.SessionBuilder;
 import com.datastax.oss.driver.api.testinfra.CassandraResourceRule;
-import com.datastax.oss.driver.internal.testinfra.session.TestConfigLoader;
+import com.datastax.oss.driver.internal.core.config.typesafe.DefaultDriverConfigLoader;
+import com.datastax.oss.driver.internal.core.config.typesafe.DefaultDriverConfigLoaderBuilder;
 import java.lang.reflect.Method;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Predicate;
@@ -61,11 +63,9 @@ import org.slf4j.LoggerFactory;
 public class SessionUtils {
   private static final Logger LOG = LoggerFactory.getLogger(SessionUtils.class);
   private static final AtomicInteger keyspaceId = new AtomicInteger();
-
+  private static final String DEFAULT_SESSION_CLASS_NAME = CqlSession.class.getName();
   private static final String SESSION_BUILDER_CLASS =
-      System.getProperty(
-          "session.builder",
-          "com.datastax.oss.driver.api.testinfra.session.DefaultSessionBuilderInstantiator");
+      System.getProperty("session.builder", DEFAULT_SESSION_CLASS_NAME);
 
   @SuppressWarnings("unchecked")
   public static <SessionT extends Session> SessionBuilder<?, SessionT> baseBuilder() {
@@ -75,21 +75,29 @@ public class SessionUtils {
       return (SessionBuilder<?, SessionT>) m.invoke(null);
     } catch (Exception e) {
       LOG.warn(
-          "Could not construct SessionBuilder from {}, using default implementation.",
+          "Could not construct SessionBuilder from {} using builder(), using default "
+              + "implementation.",
           SESSION_BUILDER_CLASS,
           e);
       return (SessionBuilder<?, SessionT>) CqlSession.builder();
     }
   }
 
-  public static String getConfigPath() {
+  /** @leaks-private-api Tests use this for programmatic config loading. */
+  public static DefaultDriverConfigLoaderBuilder configLoaderBuilder() {
     try {
       Class<?> clazz = Class.forName(SESSION_BUILDER_CLASS);
-      Method m = clazz.getMethod("configPath");
-      return (String) m.invoke(null);
+      Method m = clazz.getMethod("configLoaderBuilder");
+      return (DefaultDriverConfigLoaderBuilder) m.invoke(null);
     } catch (Exception e) {
-      LOG.warn("Could not get config path from {}, using default.", SESSION_BUILDER_CLASS, e);
-      return "datastax-java-driver";
+      if (!SESSION_BUILDER_CLASS.equals(DEFAULT_SESSION_CLASS_NAME)) {
+        LOG.warn(
+            "Could not construct DefaultDriverConfigLoaderBuilder from {} using "
+                + "configLoaderBuilder(), using default implementation.",
+            SESSION_BUILDER_CLASS,
+            e);
+      }
+      return DefaultDriverConfigLoader.builder();
     }
   }
 
@@ -100,24 +108,36 @@ public class SessionUtils {
    */
   @SuppressWarnings("TypeParameterUnusedInFormals")
   public static <SessionT extends Session> SessionT newSession(
-      CassandraResourceRule cassandraResource, String... options) {
-    return newSession(cassandraResource, null, null, null, null, options);
+      CassandraResourceRule cassandraResource) {
+    return newSession(cassandraResource, null, null);
   }
 
   @SuppressWarnings("TypeParameterUnusedInFormals")
   public static <SessionT extends Session> SessionT newSession(
-      CassandraResourceRule cassandraResource, CqlIdentifier keyspace, String... options) {
-    return newSession(cassandraResource, keyspace, null, null, null, options);
+      CassandraResourceRule cassandraResource, CqlIdentifier keyspace) {
+    return newSession(cassandraResource, keyspace, null, null, null);
   }
 
-  @SuppressWarnings({"unchecked", "TypeParameterUnusedInFormals"})
+  @SuppressWarnings("TypeParameterUnusedInFormals")
   public static <SessionT extends Session> SessionT newSession(
+      CassandraResourceRule cassandraResourceRule, DriverConfigLoader loader) {
+    return newSession(cassandraResourceRule, null, null, null, null, loader);
+  }
+
+  @SuppressWarnings("TypeParameterUnusedInFormals")
+  public static <SessionT extends Session> SessionT newSession(
+      CassandraResourceRule cassandraResourceRule,
+      CqlIdentifier keyspace,
+      DriverConfigLoader loader) {
+    return newSession(cassandraResourceRule, keyspace, null, null, null, loader);
+  }
+
+  private static SessionBuilder builder(
       CassandraResourceRule cassandraResource,
       CqlIdentifier keyspace,
       NodeStateListener nodeStateListener,
       SchemaChangeListener schemaChangeListener,
-      Predicate<Node> nodeFilter,
-      String... options) {
+      Predicate<Node> nodeFilter) {
     SessionBuilder builder =
         baseBuilder()
             .addContactPoints(cassandraResource.getContactPoints())
@@ -127,7 +147,32 @@ public class SessionUtils {
     if (nodeFilter != null) {
       builder = builder.withNodeFilter(nodeFilter);
     }
-    return (SessionT) builder.withConfigLoader(new TestConfigLoader(options)).build();
+    return builder;
+  }
+
+  @SuppressWarnings({"unchecked", "TypeParameterUnusedInFormals"})
+  public static <SessionT extends Session> SessionT newSession(
+      CassandraResourceRule cassandraResource,
+      CqlIdentifier keyspace,
+      NodeStateListener nodeStateListener,
+      SchemaChangeListener schemaChangeListener,
+      Predicate<Node> nodeFilter) {
+    SessionBuilder builder =
+        builder(cassandraResource, keyspace, nodeStateListener, schemaChangeListener, nodeFilter);
+    return (SessionT) builder.build();
+  }
+
+  @SuppressWarnings({"unchecked", "TypeParameterUnusedInFormals"})
+  public static <SessionT extends Session> SessionT newSession(
+      CassandraResourceRule cassandraResource,
+      CqlIdentifier keyspace,
+      NodeStateListener nodeStateListener,
+      SchemaChangeListener schemaChangeListener,
+      Predicate<Node> nodeFilter,
+      DriverConfigLoader loader) {
+    SessionBuilder builder =
+        builder(cassandraResource, keyspace, nodeStateListener, schemaChangeListener, nodeFilter);
+    return (SessionT) builder.withConfigLoader(loader).build();
   }
 
   /**

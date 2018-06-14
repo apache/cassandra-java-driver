@@ -17,6 +17,8 @@ package com.datastax.oss.driver.api.core;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
+import com.datastax.oss.driver.api.core.config.DriverConfigLoader;
 import com.datastax.oss.driver.api.core.session.Session;
 import com.datastax.oss.driver.api.testinfra.ccm.CcmRule;
 import com.datastax.oss.driver.api.testinfra.session.SessionRule;
@@ -49,17 +51,20 @@ public class ConnectKeyspaceIT {
 
   @Test(expected = InvalidKeyspaceException.class)
   public void should_fail_to_connect_to_non_existent_keyspace_when_not_reconnecting_on_init() {
-    should_fail_to_connect_to_non_existent_keyspace();
+    should_fail_to_connect_to_non_existent_keyspace(null);
   }
 
   @Test(expected = InvalidKeyspaceException.class)
   public void should_fail_to_connect_to_non_existent_keyspace_when_reconnecting_on_init() {
     // Just checking that we don't trigger retries for this unrecoverable error
-    should_fail_to_connect_to_non_existent_keyspace("advanced.reconnect-on-init = true");
+    should_fail_to_connect_to_non_existent_keyspace(
+        SessionUtils.configLoaderBuilder()
+            .withBoolean(DefaultDriverOption.RECONNECT_ON_INIT, true)
+            .build());
   }
 
-  private void should_fail_to_connect_to_non_existent_keyspace(String... options) {
+  private void should_fail_to_connect_to_non_existent_keyspace(DriverConfigLoader loader) {
     CqlIdentifier keyspace = CqlIdentifier.fromInternal("does not exist");
-    SessionUtils.newSession(ccm, keyspace, options);
+    SessionUtils.newSession(ccm, keyspace, loader);
   }
 }

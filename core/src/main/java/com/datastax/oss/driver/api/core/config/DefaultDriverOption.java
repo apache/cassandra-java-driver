@@ -35,6 +35,7 @@ public enum DefaultDriverOption implements DriverOption {
   REQUEST_DEFAULT_IDEMPOTENCE("basic.request.default-idempotence"),
 
   LOAD_BALANCING_POLICY("basic.load-balancing-policy"),
+  LOAD_BALANCING_POLICY_CLASS("basic.load-balancing-policy.class"),
   LOAD_BALANCING_LOCAL_DATACENTER("basic.load-balancing-policy.local-datacenter"),
   LOAD_BALANCING_FILTER_CLASS("basic.load-balancing-policy.filter.class"),
 
@@ -53,8 +54,10 @@ public enum DefaultDriverOption implements DriverOption {
   RECONNECTION_MAX_DELAY("advanced.reconnection-policy.max-delay"),
 
   RETRY_POLICY("advanced.retry-policy"),
+  RETRY_POLICY_CLASS("advanced.retry-policy.class"),
 
   SPECULATIVE_EXECUTION_POLICY("advanced.speculative-execution-policy"),
+  SPECULATIVE_EXECUTION_POLICY_CLASS("advanced.speculative-execution-policy.class"),
   SPECULATIVE_EXECUTION_MAX("advanced.speculative-execution-policy.max-executions"),
   SPECULATIVE_EXECUTION_DELAY("advanced.speculative-execution-policy.delay"),
 

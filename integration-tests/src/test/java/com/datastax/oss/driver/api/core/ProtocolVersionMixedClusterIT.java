@@ -18,10 +18,12 @@ package com.datastax.oss.driver.api.core;
 import static com.datastax.oss.driver.assertions.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
 
+import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
+import com.datastax.oss.driver.api.core.config.DriverConfigLoader;
+import com.datastax.oss.driver.api.testinfra.session.SessionUtils;
 import com.datastax.oss.driver.api.testinfra.simulacron.SimulacronRule;
 import com.datastax.oss.driver.categories.ParallelizableTests;
 import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
-import com.datastax.oss.driver.internal.testinfra.session.TestConfigLoader;
 import com.datastax.oss.protocol.internal.request.Query;
 import com.datastax.oss.simulacron.common.cluster.ClusterSpec;
 import com.datastax.oss.simulacron.common.cluster.DataCenterSpec;
@@ -47,13 +49,18 @@ public class ProtocolVersionMixedClusterIT {
 
   @Test
   public void should_downgrade_if_peer_does_not_support_negotiated_version() {
+    DriverConfigLoader loader =
+        SessionUtils.configLoaderBuilder()
+            .withBoolean(DefaultDriverOption.METADATA_SCHEMA_ENABLED, false)
+            .build();
     try (BoundCluster simulacron = mixedVersions("3.0.0", "2.2.0", "2.1.0");
         BoundNode contactPoint = simulacron.node(0);
         CqlSession session =
-            CqlSession.builder()
-                .addContactPoint(contactPoint.inetSocketAddress())
-                .withConfigLoader(new TestConfigLoader("advanced.metadata.schema.enabled = false"))
-                .build()) {
+            (CqlSession)
+                SessionUtils.baseBuilder()
+                    .addContactPoint(contactPoint.inetSocketAddress())
+                    .withConfigLoader(loader)
+                    .build()) {
 
       InternalDriverContext context = (InternalDriverContext) session.getContext();
       assertThat(context.protocolVersion()).isEqualTo(DefaultProtocolVersion.V3);
@@ -89,13 +96,18 @@ public class ProtocolVersionMixedClusterIT {
 
   @Test
   public void should_keep_current_if_supported_by_all_peers() {
+    DriverConfigLoader loader =
+        SessionUtils.configLoaderBuilder()
+            .withBoolean(DefaultDriverOption.METADATA_SCHEMA_ENABLED, false)
+            .build();
     try (BoundCluster simulacron = mixedVersions("3.0.0", "2.2.0", "3.11");
         BoundNode contactPoint = simulacron.node(0);
         CqlSession session =
-            CqlSession.builder()
-                .addContactPoint(contactPoint.inetSocketAddress())
-                .withConfigLoader(new TestConfigLoader("advanced.metadata.schema.enabled = false"))
-                .build()) {
+            (CqlSession)
+                SessionUtils.baseBuilder()
+                    .addContactPoint(contactPoint.inetSocketAddress())
+                    .withConfigLoader(loader)
+                    .build()) {
 
       InternalDriverContext context = (InternalDriverContext) session.getContext();
       assertThat(context.protocolVersion()).isEqualTo(DefaultProtocolVersion.V4);
@@ -119,26 +131,29 @@ public class ProtocolVersionMixedClusterIT {
     try (BoundCluster simulacron = mixedVersions("3.0.0", "2.0.9", "3.11");
         BoundNode contactPoint = simulacron.node(0);
         CqlSession ignored =
-            CqlSession.builder()
-                .addContactPoint(contactPoint.inetSocketAddress())
-                .withConfigLoader(new TestConfigLoader())
-                .build()) {
+            (CqlSession)
+                SessionUtils.baseBuilder()
+                    .addContactPoint(contactPoint.inetSocketAddress())
+                    .build()) {
       fail("Cluster init should have failed");
     }
   }
 
   @Test
   public void should_not_downgrade_and_force_down_old_nodes_if_version_forced() {
+    DriverConfigLoader loader =
+        SessionUtils.configLoaderBuilder()
+            .withString(DefaultDriverOption.PROTOCOL_VERSION, "V4")
+            .withBoolean(DefaultDriverOption.METADATA_SCHEMA_ENABLED, false)
+            .build();
     try (BoundCluster simulacron = mixedVersions("3.0.0", "2.2.0", "2.0.0");
         BoundNode contactPoint = simulacron.node(0);
         CqlSession session =
-            CqlSession.builder()
-                .addContactPoint(contactPoint.inetSocketAddress())
-                .withConfigLoader(
-                    new TestConfigLoader(
-                        "advanced.protocol.version = V4",
-                        "advanced.metadata.schema.enabled = false"))
-                .build()) {
+            (CqlSession)
+                SessionUtils.baseBuilder()
+                    .addContactPoint(contactPoint.inetSocketAddress())
+                    .withConfigLoader(loader)
+                    .build()) {
       assertThat(session.getContext().protocolVersion()).isEqualTo(DefaultProtocolVersion.V4);
 
       assertThat(queries(simulacron)).hasSize(4);

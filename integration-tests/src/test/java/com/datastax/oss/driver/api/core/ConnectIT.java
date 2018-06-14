@@ -17,13 +17,16 @@ package com.datastax.oss.driver.api.core;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
+import com.datastax.oss.driver.api.core.config.DriverConfigLoader;
 import com.datastax.oss.driver.api.core.session.Session;
 import com.datastax.oss.driver.api.testinfra.session.SessionUtils;
 import com.datastax.oss.driver.api.testinfra.simulacron.SimulacronRule;
 import com.datastax.oss.driver.categories.ParallelizableTests;
-import com.datastax.oss.driver.internal.testinfra.session.TestConfigLoader;
+import com.datastax.oss.driver.internal.core.connection.ConstantReconnectionPolicy;
 import com.datastax.oss.simulacron.common.cluster.ClusterSpec;
 import com.datastax.oss.simulacron.server.RejectScope;
+import java.time.Duration;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.TimeUnit;
@@ -61,14 +64,16 @@ public class ConnectIT {
     simulacronRule.cluster().rejectConnections(0, RejectScope.STOP);
 
     // When
+    DriverConfigLoader loader =
+        SessionUtils.configLoaderBuilder()
+            .withBoolean(DefaultDriverOption.RECONNECT_ON_INIT, true)
+            .withClass(
+                DefaultDriverOption.RECONNECTION_POLICY_CLASS, ConstantReconnectionPolicy.class)
+            // Use a short delay so we don't have to wait too long:
+            .withDuration(DefaultDriverOption.RECONNECTION_BASE_DELAY, Duration.ofMillis(500))
+            .build();
     CompletableFuture<? extends Session> sessionFuture =
-        newSessionAsync(
-                simulacronRule,
-                "advanced.reconnect-on-init = true",
-                // Use a short delay so we don't have to wait too long:
-                "advanced.reconnection-policy.class = ConstantReconnectionPolicy",
-                "advanced.reconnection-policy.base-delay = 500 milliseconds")
-            .toCompletableFuture();
+        newSessionAsync(simulacronRule, loader).toCompletableFuture();
     // wait a bit to ensure we have a couple of reconnections, otherwise we might race and allow
     // reconnections before the initial attempt
     TimeUnit.SECONDS.sleep(2);
@@ -87,10 +92,10 @@ public class ConnectIT {
 
   @SuppressWarnings("unchecked")
   private CompletionStage<? extends Session> newSessionAsync(
-      SimulacronRule serverRule, String... options) {
+      SimulacronRule serverRule, DriverConfigLoader loader) {
     return SessionUtils.baseBuilder()
         .addContactPoints(serverRule.getContactPoints())
-        .withConfigLoader(new TestConfigLoader(options))
+        .withConfigLoader(loader)
         .buildAsync();
   }
 }

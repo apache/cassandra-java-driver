@@ -36,8 +36,10 @@ import com.datastax.oss.driver.api.testinfra.ccm.CcmRule;
 import com.datastax.oss.driver.api.testinfra.session.SessionUtils;
 import com.datastax.oss.driver.api.testinfra.simulacron.SimulacronRule;
 import com.datastax.oss.driver.categories.ParallelizableTests;
+import com.datastax.oss.driver.internal.core.config.typesafe.DefaultDriverConfigLoaderBuilder;
 import com.datastax.oss.simulacron.common.cluster.ClusterSpec;
 import com.datastax.oss.simulacron.common.cluster.QueryLog;
+import java.time.Duration;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import org.junit.Rule;
@@ -72,8 +74,15 @@ public class DriverExecutionProfileIT {
 
   @Test
   public void should_use_profile_request_timeout() {
-    try (CqlSession session =
-        SessionUtils.newSession(simulacron, "profiles.olap.basic.request.timeout = 10s")) {
+    DriverConfigLoader loader =
+        SessionUtils.configLoaderBuilder()
+            .withProfile(
+                "olap",
+                DefaultDriverConfigLoaderBuilder.profileBuilder()
+                    .withDuration(DefaultDriverOption.REQUEST_TIMEOUT, Duration.ofSeconds(10))
+                    .build())
+            .build();
+    try (CqlSession session = SessionUtils.newSession(simulacron, loader)) {
       String query = "mockquery";
       // configure query with delay of 4 seconds.
       simulacron.cluster().prime(when(query).then(noRows()).delay(4, TimeUnit.SECONDS));
@@ -93,9 +102,15 @@ public class DriverExecutionProfileIT {
 
   @Test
   public void should_use_profile_default_idempotence() {
-    try (CqlSession session =
-        SessionUtils.newSession(
-            simulacron, "profiles.idem.basic.request.default-idempotence = true")) {
+    DriverConfigLoader loader =
+        SessionUtils.configLoaderBuilder()
+            .withProfile(
+                "idem",
+                DefaultDriverConfigLoaderBuilder.profileBuilder()
+                    .withBoolean(DefaultDriverOption.REQUEST_DEFAULT_IDEMPOTENCE, true)
+                    .build())
+            .build();
+    try (CqlSession session = SessionUtils.newSession(simulacron, loader)) {
       String query = "mockquery";
       // configure query with server error which should invoke onRequestError in retry policy.
       simulacron.cluster().prime(when(query).then(serverError("fail")));
@@ -116,11 +131,16 @@ public class DriverExecutionProfileIT {
 
   @Test
   public void should_use_profile_consistency() {
-    try (CqlSession session =
-        SessionUtils.newSession(
-            simulacron,
-            "profiles.cl.basic.request.consistency = LOCAL_QUORUM",
-            "profiles.cl.basic.request.serial-consistency = LOCAL_SERIAL")) {
+    DriverConfigLoader loader =
+        SessionUtils.configLoaderBuilder()
+            .withProfile(
+                "cl",
+                DefaultDriverConfigLoaderBuilder.profileBuilder()
+                    .withString(DefaultDriverOption.REQUEST_CONSISTENCY, "LOCAL_QUORUM")
+                    .withString(DefaultDriverOption.REQUEST_SERIAL_CONSISTENCY, "LOCAL_SERIAL")
+                    .build())
+            .build();
+    try (CqlSession session = SessionUtils.newSession(simulacron, loader)) {
       String query = "mockquery";
 
       // Execute query without profile, should use default CLs (LOCAL_ONE, SERIAL).
@@ -169,11 +189,16 @@ public class DriverExecutionProfileIT {
 
   @Test
   public void should_use_profile_page_size() {
-    try (CqlSession session =
-        SessionUtils.newSession(
-            ccm,
-            "basic.request.page-size = 100",
-            "profiles.smallpages.basic.request.page-size = 10")) {
+    DriverConfigLoader loader =
+        SessionUtils.configLoaderBuilder()
+            .withInt(DefaultDriverOption.REQUEST_PAGE_SIZE, 100)
+            .withProfile(
+                "smallpages",
+                DefaultDriverConfigLoaderBuilder.profileBuilder()
+                    .withInt(DefaultDriverOption.REQUEST_PAGE_SIZE, 10)
+                    .build())
+            .build();
+    try (CqlSession session = SessionUtils.newSession(ccm, loader)) {
 
       CqlIdentifier keyspace = SessionUtils.uniqueKeyspaceId();
       DriverExecutionProfile slowProfile = SessionUtils.slowProfile(session);

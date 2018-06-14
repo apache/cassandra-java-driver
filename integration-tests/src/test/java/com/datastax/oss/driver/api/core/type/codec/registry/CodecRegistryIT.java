@@ -33,6 +33,7 @@ import com.datastax.oss.driver.api.core.type.reflect.GenericType;
 import com.datastax.oss.driver.api.core.type.reflect.GenericTypeParameter;
 import com.datastax.oss.driver.api.testinfra.ccm.CcmRule;
 import com.datastax.oss.driver.api.testinfra.session.SessionRule;
+import com.datastax.oss.driver.api.testinfra.session.SessionUtils;
 import com.datastax.oss.driver.categories.ParallelizableTests;
 import com.datastax.oss.driver.internal.core.type.codec.IntCodec;
 import edu.umd.cs.findbugs.annotations.NonNull;
@@ -56,7 +57,7 @@ public class CodecRegistryIT {
 
   @ClassRule public static CcmRule ccm = CcmRule.getInstance();
 
-  @ClassRule public static SessionRule<CqlSession> sessionRule = new SessionRule<>(ccm);
+  @ClassRule public static SessionRule<CqlSession> sessionRule = SessionRule.builder(ccm).build();
 
   @Rule public TestName name = new TestName();
 
@@ -162,11 +163,12 @@ public class CodecRegistryIT {
   public void should_be_able_to_register_and_use_custom_codec() {
     // create a cluster with a registered codec from Float <-> cql int.
     try (CqlSession session =
-        CqlSession.builder()
-            .addTypeCodecs(new FloatCIntCodec())
-            .addContactPoints(ccm.getContactPoints())
-            .withKeyspace(sessionRule.keyspace())
-            .build()) {
+        (CqlSession)
+            SessionUtils.baseBuilder()
+                .addTypeCodecs(new FloatCIntCodec())
+                .addContactPoints(ccm.getContactPoints())
+                .withKeyspace(sessionRule.keyspace())
+                .build()) {
       PreparedStatement prepared = session.prepare("INSERT INTO test (k, v) values (?, ?)");
 
       // float value for int column should work.
@@ -281,11 +283,12 @@ public class CodecRegistryIT {
         TypeCodecs.mapOf(TypeCodecs.INT, new OptionalCodec<>(TypeCodecs.TEXT));
 
     try (CqlSession session =
-        CqlSession.builder()
-            .addTypeCodecs(optionalMapCodec, mapWithOptionalValueCodec)
-            .addContactPoints(ccm.getContactPoints())
-            .withKeyspace(sessionRule.keyspace())
-            .build()) {
+        (CqlSession)
+            SessionUtils.baseBuilder()
+                .addTypeCodecs(optionalMapCodec, mapWithOptionalValueCodec)
+                .addContactPoints(ccm.getContactPoints())
+                .withKeyspace(sessionRule.keyspace())
+                .build()) {
       PreparedStatement prepared =
           session.prepare("INSERT INTO test2 (k0, k1, v) values (?, ?, ?)");
 

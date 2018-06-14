@@ -18,6 +18,7 @@ package com.datastax.oss.driver.api.core.metadata;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import com.datastax.oss.driver.api.core.CqlSession;
+import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
 import com.datastax.oss.driver.api.core.loadbalancing.NodeDistance;
 import com.datastax.oss.driver.api.testinfra.ccm.CcmRule;
 import com.datastax.oss.driver.api.testinfra.session.SessionRule;
@@ -38,7 +39,7 @@ public class NodeMetadataIT {
 
   @ClassRule public static CcmRule ccmRule = CcmRule.getInstance();
 
-  @Rule public SessionRule<CqlSession> sessionRule = new SessionRule<>(ccmRule);
+  @Rule public SessionRule<CqlSession> sessionRule = SessionRule.builder(ccmRule).build();
 
   @Test
   public void should_expose_node_metadata() {
@@ -91,26 +92,30 @@ public class NodeMetadataIT {
 
   @Test
   public void should_record_last_response_time_if_enabled() {
-    CqlSession session =
+    try (CqlSession session =
         SessionUtils.newSession(
-            ccmRule, "advanced.metadata.nodes.last-response-time.enabled = true");
-    Node node = getUniqueNode(session);
+            ccmRule,
+            SessionUtils.configLoaderBuilder()
+                .withBoolean(DefaultDriverOption.METADATA_LAST_RESPONSE_TIME_ENABLED, true)
+                .build())) {
+      Node node = getUniqueNode(session);
 
-    // Ensure that we get increasing timestamps as long as we keep querying
-    long[] timestamps = new long[10];
-    timestamps[0] = System.nanoTime();
-    for (int i = 1; i < 9; i++) {
-      session.execute("SELECT release_version FROM system.local");
-      timestamps[i] = node.getLastResponseTimeNanos();
+      // Ensure that we get increasing timestamps as long as we keep querying
+      long[] timestamps = new long[10];
+      timestamps[0] = System.nanoTime();
+      for (int i = 1; i < 9; i++) {
+        session.execute("SELECT release_version FROM system.local");
+        timestamps[i] = node.getLastResponseTimeNanos();
+      }
+      timestamps[9] = System.nanoTime();
+
+      for (int i = 0; i < 9; i++) {
+        assertThat(timestamps[i]).isLessThan(timestamps[i + 1]);
+      }
+
+      // Ensure that the value doesn't change since the last query
+      assertThat(node.getLastResponseTimeNanos()).isEqualTo(timestamps[8]);
     }
-    timestamps[9] = System.nanoTime();
-
-    for (int i = 0; i < 9; i++) {
-      assertThat(timestamps[i]).isLessThan(timestamps[i + 1]);
-    }
-
-    // Ensure that the value doesn't change since the last query
-    assertThat(node.getLastResponseTimeNanos()).isEqualTo(timestamps[8]);
   }
 
   private static Node getUniqueNode(CqlSession session) {

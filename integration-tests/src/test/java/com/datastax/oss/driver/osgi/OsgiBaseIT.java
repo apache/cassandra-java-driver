@@ -24,13 +24,13 @@ import static org.ops4j.pax.exam.CoreOptions.options;
 
 import com.datastax.oss.driver.api.core.CqlSession;
 import com.datastax.oss.driver.api.core.CqlSessionBuilder;
+import com.datastax.oss.driver.api.core.config.DriverConfigLoader;
 import com.datastax.oss.driver.api.core.cql.ResultSet;
 import com.datastax.oss.driver.api.core.cql.Row;
 import com.datastax.oss.driver.api.core.session.SessionBuilder;
 import com.datastax.oss.driver.api.testinfra.ccm.CustomCcmRule;
 import com.datastax.oss.driver.api.testinfra.session.SessionUtils;
 import com.datastax.oss.driver.categories.IsolatedTests;
-import com.datastax.oss.driver.internal.testinfra.session.TestConfigLoader;
 import com.google.common.collect.ObjectArrays;
 import org.junit.ClassRule;
 import org.junit.Test;
@@ -65,8 +65,10 @@ public abstract class OsgiBaseIT {
         Option.class);
   }
 
-  /** @return Additional options that should be used during session construction. */
-  public abstract String[] sessionOptions();
+  /** @return config loader to be used to create session. */
+  public DriverConfigLoader configLoader() {
+    return SessionUtils.configLoaderBuilder().build();
+  }
 
   /**
    * A very simple test that ensures a session can be established and a query made when running in
@@ -80,7 +82,7 @@ public abstract class OsgiBaseIT {
             .addContactPoints(ccmRule.getContactPoints())
             // use the driver's ClassLoader instead of the OSGI application thread's.
             .withClassLoader(CqlSession.class.getClassLoader())
-            .withConfigLoader(new TestConfigLoader(sessionOptions()));
+            .withConfigLoader(configLoader());
     try (CqlSession session = builder.build()) {
       ResultSet result = session.execute(selectFrom("system", "local").all().build());
 

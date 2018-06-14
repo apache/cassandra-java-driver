@@ -18,6 +18,9 @@ package com.datastax.oss.driver.osgi;
 import static com.datastax.oss.driver.osgi.BundleOptions.snappyBundle;
 import static org.ops4j.pax.exam.CoreOptions.options;
 
+import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
+import com.datastax.oss.driver.api.core.config.DriverConfigLoader;
+import com.datastax.oss.driver.api.testinfra.session.SessionUtils;
 import org.ops4j.pax.exam.Option;
 
 public class OsgiSnappyIT extends OsgiBaseIT {
@@ -28,7 +31,9 @@ public class OsgiSnappyIT extends OsgiBaseIT {
   }
 
   @Override
-  public String[] sessionOptions() {
-    return new String[] {"advanced.protocol.compression = snappy"};
+  public DriverConfigLoader configLoader() {
+    return SessionUtils.configLoaderBuilder()
+        .withString(DefaultDriverOption.PROTOCOL_COMPRESSION, "snappy")
+        .build();
   }
 }

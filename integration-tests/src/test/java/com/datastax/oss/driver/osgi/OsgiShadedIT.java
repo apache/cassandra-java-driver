@@ -39,9 +39,4 @@ public class OsgiShadedIT extends OsgiBaseIT {
   public Option[] additionalOptions() {
     return new Option[0];
   }
-
-  @Override
-  public String[] sessionOptions() {
-    return new String[0];
-  }
 }

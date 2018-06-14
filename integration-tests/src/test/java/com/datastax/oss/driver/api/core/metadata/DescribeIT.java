@@ -21,6 +21,7 @@ import static org.assertj.core.api.Assertions.fail;
 import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.CqlSession;
 import com.datastax.oss.driver.api.core.Version;
+import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
 import com.datastax.oss.driver.api.core.metadata.schema.KeyspaceMetadata;
 import com.datastax.oss.driver.api.testinfra.ccm.CcmRule;
 import com.datastax.oss.driver.api.testinfra.session.SessionRule;
@@ -32,6 +33,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.PrintStream;
+import java.time.Duration;
 import java.util.Optional;
 import org.junit.ClassRule;
 import org.junit.Test;
@@ -46,16 +48,17 @@ public class DescribeIT {
 
   @ClassRule public static CcmRule ccmRule = CcmRule.getInstance();
 
+  // disable debouncer to speed up test.
   @ClassRule
   public static SessionRule<CqlSession> sessionRule =
-      new SessionRule<>(
-          ccmRule,
-          false,
-          null,
-          null,
-          "basic.request.timeout = 30 seconds",
-          "advanced.metadata.schema.debouncer.window = 0 seconds"); // disable debouncer to speed up
-  // test.
+      SessionRule.builder(ccmRule)
+          .withKeyspace(false)
+          .withConfigLoader(
+              SessionUtils.configLoaderBuilder()
+                  .withDuration(DefaultDriverOption.REQUEST_TIMEOUT, Duration.ofSeconds(30))
+                  .withDuration(DefaultDriverOption.METADATA_SCHEMA_WINDOW, Duration.ofSeconds(0))
+                  .build())
+          .build();
 
   /**
    * Creates a keyspace using a variety of features and ensures {@link

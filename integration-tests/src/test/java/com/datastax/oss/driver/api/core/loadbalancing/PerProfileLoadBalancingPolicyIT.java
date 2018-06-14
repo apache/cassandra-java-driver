@@ -18,6 +18,7 @@ package com.datastax.oss.driver.api.core.loadbalancing;
 import static com.datastax.oss.driver.assertions.Assertions.assertThat;
 
 import com.datastax.oss.driver.api.core.CqlSession;
+import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
 import com.datastax.oss.driver.api.core.config.DriverConfig;
 import com.datastax.oss.driver.api.core.config.DriverExecutionProfile;
 import com.datastax.oss.driver.api.core.context.DriverContext;
@@ -26,8 +27,10 @@ import com.datastax.oss.driver.api.core.cql.SimpleStatement;
 import com.datastax.oss.driver.api.core.cql.Statement;
 import com.datastax.oss.driver.api.core.metadata.Node;
 import com.datastax.oss.driver.api.testinfra.session.SessionRule;
+import com.datastax.oss.driver.api.testinfra.session.SessionUtils;
 import com.datastax.oss.driver.api.testinfra.simulacron.SimulacronRule;
 import com.datastax.oss.driver.categories.ParallelizableTests;
+import com.datastax.oss.driver.internal.core.config.typesafe.DefaultDriverConfigLoaderBuilder;
 import com.datastax.oss.driver.internal.core.loadbalancing.DefaultLoadBalancingPolicy;
 import com.datastax.oss.simulacron.common.cluster.ClusterSpec;
 import org.junit.Before;
@@ -46,10 +49,20 @@ public class PerProfileLoadBalancingPolicyIT {
   // default lb policy should consider dc1 local, profile1 dc3, profile2 empty.
   public static @ClassRule SessionRule<CqlSession> sessionRule =
       SessionRule.builder(simulacron)
-          .withOptions(
-              "basic.load-balancing-policy.local-datacenter = dc1",
-              "profiles.profile1.basic.load-balancing-policy.local-datacenter = dc3",
-              "profiles.profile2 = {}")
+          .withConfigLoader(
+              SessionUtils.configLoaderBuilder()
+                  .withString(DefaultDriverOption.LOAD_BALANCING_LOCAL_DATACENTER, "dc1")
+                  .withProfile(
+                      "profile1",
+                      DefaultDriverConfigLoaderBuilder.profileBuilder()
+                          .withString(DefaultDriverOption.LOAD_BALANCING_LOCAL_DATACENTER, "dc3")
+                          .build())
+                  .withProfile(
+                      "profile2",
+                      DefaultDriverConfigLoaderBuilder.profileBuilder()
+                          .withString(DefaultDriverOption.REQUEST_CONSISTENCY, "ONE")
+                          .build())
+                  .build())
           .build();
 
   private static String QUERY_STRING = "select * from foo";

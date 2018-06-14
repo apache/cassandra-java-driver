@@ -19,9 +19,12 @@ import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import com.datastax.oss.driver.api.core.CqlSession;
+import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
+import com.datastax.oss.driver.api.core.config.DriverConfigLoader;
 import com.datastax.oss.driver.api.testinfra.session.SessionUtils;
 import com.datastax.oss.driver.api.testinfra.simulacron.SimulacronRule;
 import com.datastax.oss.simulacron.common.cluster.ClusterSpec;
+import java.time.Duration;
 import java.util.concurrent.atomic.AtomicInteger;
 import org.junit.ClassRule;
 import org.junit.Test;
@@ -36,8 +39,11 @@ public class HeartbeatDisabledIT {
   public void should_not_send_heartbeat_when_disabled() throws InterruptedException {
     // Disable heartbeats entirely, wait longer than the default timeout and make sure we didn't
     // receive any
-    try (CqlSession session =
-        SessionUtils.newSession(simulacron, "advanced.heartbeat.interval = 0 second")) {
+    DriverConfigLoader loader =
+        SessionUtils.configLoaderBuilder()
+            .withDuration(DefaultDriverOption.HEARTBEAT_INTERVAL, Duration.ofSeconds(0))
+            .build();
+    try (CqlSession session = SessionUtils.newSession(simulacron, loader)) {
       AtomicInteger heartbeats = registerHeartbeatListener();
       SECONDS.sleep(35);
 

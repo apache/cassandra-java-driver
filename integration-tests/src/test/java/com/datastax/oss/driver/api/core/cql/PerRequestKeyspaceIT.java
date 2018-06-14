@@ -18,6 +18,8 @@ package com.datastax.oss.driver.api.core.cql;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import com.datastax.oss.driver.api.core.CqlSession;
+import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
+import com.datastax.oss.driver.api.core.config.DriverConfigLoader;
 import com.datastax.oss.driver.api.testinfra.CassandraRequirement;
 import com.datastax.oss.driver.api.testinfra.ccm.CcmRule;
 import com.datastax.oss.driver.api.testinfra.session.SessionRule;
@@ -43,7 +45,7 @@ public class PerRequestKeyspaceIT {
 
   @Rule public CcmRule ccmRule = CcmRule.getInstance();
 
-  @Rule public SessionRule<CqlSession> sessionRule = new SessionRule<>(ccmRule);
+  @Rule public SessionRule<CqlSession> sessionRule = SessionRule.builder(ccmRule).build();
 
   @Rule public ExpectedException thrown = ExpectedException.none();
   @Rule public TestName nameRule = new TestName();
@@ -93,7 +95,11 @@ public class PerRequestKeyspaceIT {
   }
 
   private void should_reject_statement_with_keyspace_in_protocol_v4(Statement statement) {
-    try (CqlSession session = SessionUtils.newSession(ccmRule, "advanced.protocol.version = V4")) {
+    DriverConfigLoader loader =
+        SessionUtils.configLoaderBuilder()
+            .withString(DefaultDriverOption.PROTOCOL_VERSION, "V4")
+            .build();
+    try (CqlSession session = SessionUtils.newSession(ccmRule, loader)) {
       thrown.expect(IllegalArgumentException.class);
       thrown.expectMessage("Can't use per-request keyspace with protocol V4");
       session.execute(statement);

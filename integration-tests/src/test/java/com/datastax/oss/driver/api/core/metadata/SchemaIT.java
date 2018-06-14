@@ -19,6 +19,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.CqlSession;
+import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
+import com.datastax.oss.driver.api.core.config.DriverConfigLoader;
 import com.datastax.oss.driver.api.core.config.DriverExecutionProfile;
 import com.datastax.oss.driver.api.core.cql.SimpleStatement;
 import com.datastax.oss.driver.api.core.metadata.schema.KeyspaceMetadata;
@@ -27,6 +29,7 @@ import com.datastax.oss.driver.api.testinfra.session.SessionRule;
 import com.datastax.oss.driver.api.testinfra.session.SessionUtils;
 import com.datastax.oss.driver.api.testinfra.utils.ConditionChecker;
 import com.datastax.oss.driver.categories.ParallelizableTests;
+import java.util.Collections;
 import java.util.Map;
 import org.junit.Rule;
 import org.junit.Test;
@@ -37,7 +40,7 @@ public class SchemaIT {
 
   @Rule public CcmRule ccmRule = CcmRule.getInstance();
 
-  @Rule public SessionRule<CqlSession> sessionRule = new SessionRule<>(ccmRule);
+  @Rule public SessionRule<CqlSession> sessionRule = SessionRule.builder(ccmRule).build();
 
   @Test
   public void should_expose_system_and_test_keyspace() {
@@ -56,12 +59,13 @@ public class SchemaIT {
 
   @Test
   public void should_filter_by_keyspaces() {
-    try (CqlSession session =
-        SessionUtils.newSession(
-            ccmRule,
-            String.format(
-                "advanced.metadata.schema.refreshed-keyspaces = [ \"%s\"] ",
-                sessionRule.keyspace().asInternal()))) {
+    DriverConfigLoader loader =
+        SessionUtils.configLoaderBuilder()
+            .withStringList(
+                DefaultDriverOption.METADATA_SCHEMA_REFRESHED_KEYSPACES,
+                Collections.singletonList(sessionRule.keyspace().asInternal()))
+            .build();
+    try (CqlSession session = SessionUtils.newSession(ccmRule, loader)) {
 
       assertThat(session.getMetadata().getKeyspaces()).containsOnlyKeys(sessionRule.keyspace());
 
@@ -74,8 +78,11 @@ public class SchemaIT {
 
   @Test
   public void should_not_load_schema_if_disabled_in_config() {
-    try (CqlSession session =
-        SessionUtils.newSession(ccmRule, "advanced.metadata.schema.enabled = false")) {
+    DriverConfigLoader loader =
+        SessionUtils.configLoaderBuilder()
+            .withBoolean(DefaultDriverOption.METADATA_SCHEMA_ENABLED, false)
+            .build();
+    try (CqlSession session = SessionUtils.newSession(ccmRule, loader)) {
 
       assertThat(session.isSchemaMetadataEnabled()).isFalse();
       assertThat(session.getMetadata().getKeyspaces()).isEmpty();
@@ -84,8 +91,11 @@ public class SchemaIT {
 
   @Test
   public void should_enable_schema_programmatically_when_disabled_in_config() {
-    try (CqlSession session =
-        SessionUtils.newSession(ccmRule, "advanced.metadata.schema.enabled = false")) {
+    DriverConfigLoader loader =
+        SessionUtils.configLoaderBuilder()
+            .withBoolean(DefaultDriverOption.METADATA_SCHEMA_ENABLED, false)
+            .build();
+    try (CqlSession session = SessionUtils.newSession(ccmRule, loader)) {
 
       assertThat(session.isSchemaMetadataEnabled()).isFalse();
       assertThat(session.getMetadata().getKeyspaces()).isEmpty();
@@ -137,8 +147,11 @@ public class SchemaIT {
 
   @Test
   public void should_refresh_schema_manually() {
-    try (CqlSession session =
-        SessionUtils.newSession(ccmRule, "advanced.metadata.schema.enabled = false")) {
+    DriverConfigLoader loader =
+        SessionUtils.configLoaderBuilder()
+            .withBoolean(DefaultDriverOption.METADATA_SCHEMA_ENABLED, false)
+            .build();
+    try (CqlSession session = SessionUtils.newSession(ccmRule, loader)) {
 
       assertThat(session.isSchemaMetadataEnabled()).isFalse();
       assertThat(session.getMetadata().getKeyspaces()).isEmpty();

@@ -17,6 +17,8 @@ package com.datastax.oss.driver.api.core.throttling;
 
 import com.datastax.oss.driver.api.core.CqlSession;
 import com.datastax.oss.driver.api.core.RequestThrottlingException;
+import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
+import com.datastax.oss.driver.api.core.config.DriverConfigLoader;
 import com.datastax.oss.driver.api.testinfra.session.SessionUtils;
 import com.datastax.oss.driver.api.testinfra.simulacron.SimulacronRule;
 import com.datastax.oss.driver.internal.core.session.throttling.ConcurrencyLimitingRequestThrottler;
@@ -45,13 +47,18 @@ public class ThrottlingIT {
     int maxConcurrentRequests = 10;
     int maxQueueSize = 10;
 
-    try (CqlSession session =
-        SessionUtils.newSession(
-            simulacron,
-            "advanced.throttler.class = "
-                + ConcurrencyLimitingRequestThrottler.class.getSimpleName(),
-            "advanced.throttler.max-concurrent-requests = " + maxConcurrentRequests,
-            "advanced.throttler.max-queue-size = " + maxQueueSize)) {
+    DriverConfigLoader loader =
+        SessionUtils.configLoaderBuilder()
+            .withClass(
+                DefaultDriverOption.REQUEST_THROTTLER_CLASS,
+                ConcurrencyLimitingRequestThrottler.class)
+            .withInt(
+                DefaultDriverOption.REQUEST_THROTTLER_MAX_CONCURRENT_REQUESTS,
+                maxConcurrentRequests)
+            .withInt(DefaultDriverOption.REQUEST_THROTTLER_MAX_QUEUE_SIZE, maxQueueSize)
+            .build();
+
+    try (CqlSession session = SessionUtils.newSession(simulacron, loader)) {
 
       // Saturate the session and fill the queue
       for (int i = 0; i < maxConcurrentRequests + maxQueueSize; i++) {

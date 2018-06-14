@@ -18,6 +18,8 @@ package com.datastax.oss.driver.api.core;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
 
+import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
+import com.datastax.oss.driver.api.core.config.DriverConfigLoader;
 import com.datastax.oss.driver.api.testinfra.CassandraRequirement;
 import com.datastax.oss.driver.api.testinfra.ccm.CcmRule;
 import com.datastax.oss.driver.api.testinfra.session.SessionUtils;
@@ -52,7 +54,11 @@ public class ProtocolVersionInitialNegotiationIT {
   )
   @Test
   public void should_fail_if_provided_version_isnt_supported() {
-    try (CqlSession session = SessionUtils.newSession(ccm, "advanced.protocol.version = V4")) {
+    DriverConfigLoader loader =
+        SessionUtils.configLoaderBuilder()
+            .withString(DefaultDriverOption.PROTOCOL_VERSION, "V4")
+            .build();
+    try (CqlSession session = SessionUtils.newSession(ccm, loader)) {
       assertThat(session.getContext().protocolVersion().getCode()).isEqualTo(3);
       session.execute("select * from system.local");
       fail("Expected an AllNodesFailedException");
@@ -78,7 +84,11 @@ public class ProtocolVersionInitialNegotiationIT {
   @CassandraRequirement(min = "2.2", description = "required to use an older protocol version")
   @Test
   public void should_use_explicitly_provided_protocol_version() {
-    try (CqlSession session = SessionUtils.newSession(ccm, "advanced.protocol.version = V3")) {
+    DriverConfigLoader loader =
+        SessionUtils.configLoaderBuilder()
+            .withString(DefaultDriverOption.PROTOCOL_VERSION, "V3")
+            .build();
+    try (CqlSession session = SessionUtils.newSession(ccm, loader)) {
       assertThat(session.getContext().protocolVersion().getCode()).isEqualTo(3);
       session.execute("select * from system.local");
     }
