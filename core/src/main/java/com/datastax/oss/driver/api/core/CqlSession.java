@@ -21,6 +21,7 @@ import com.datastax.oss.driver.api.core.cql.PreparedStatement;
 import com.datastax.oss.driver.api.core.cql.ResultSet;
 import com.datastax.oss.driver.api.core.cql.SimpleStatement;
 import com.datastax.oss.driver.api.core.cql.Statement;
+import com.datastax.oss.driver.api.core.session.Request;
 import com.datastax.oss.driver.api.core.session.Session;
 import com.datastax.oss.driver.internal.core.cql.DefaultPrepareRequest;
 import edu.umd.cs.findbugs.annotations.NonNull;
@@ -77,6 +78,47 @@ public interface CqlSession extends Session {
   /**
    * Prepares a CQL statement synchronously (the calling thread blocks until the statement is
    * prepared).
+   *
+   * <p>Note that the bound statements created from the resulting prepared statement will inherit
+   * some of the attributes of the provided simple statement. That is, given:
+   *
+   * <pre>{@code
+   * SimpleStatement simpleStatement = SimpleStatement.newInstance("...");
+   * PreparedStatement preparedStatement = session.prepare(simpleStatement);
+   * BoundStatement boundStatement = preparedStatement.bind();
+   * }</pre>
+   *
+   * Then:
+   *
+   * <ul>
+   *   <li>the following methods return the same value as their counterpart on {@code
+   *       simpleStatement}:
+   *       <ul>
+   *         <li>{@link Request#getConfigProfileName() boundStatement.getConfigProfileName()}
+   *         <li>{@link Request#getConfigProfile() boundStatement.getConfigProfile()}
+   *         <li>{@link Statement#getPagingState() boundStatement.getPagingState()}
+   *         <li>{@link Request#getRoutingKey() boundStatement.getRoutingKey()}
+   *         <li>{@link Request#getRoutingToken() boundStatement.getRoutingToken()}
+   *         <li>{@link Request#getCustomPayload() boundStatement.getCustomPayload()}
+   *         <li>{@link Request#isIdempotent() boundStatement.isIdempotent()}
+   *         <li>{@link Request#getTimeout() boundStatement.getTimeout()}
+   *         <li>{@link Statement#getPagingState() boundStatement.getPagingState()}
+   *         <li>{@link Statement#getPageSize() boundStatement.getPageSize()}
+   *         <li>{@link Statement#getConsistencyLevel() boundStatement.getConsistencyLevel()}
+   *         <li>{@link Statement#getSerialConsistencyLevel()
+   *             boundStatement.getSerialConsistencyLevel()}
+   *         <li>{@link Request#isTracing() boundStatement.isTracing()}
+   *       </ul>
+   *   <li>{@link Request#getRoutingKeyspace() boundStatement.getRoutingKeyspace()} is set from
+   *       either {@link Request#getKeyspace() simpleStatement.getKeyspace()} (if it's not {@code
+   *       null}), or {@code simpleStatement.getRoutingKeyspace()};
+   *   <li>on the other hand, {@link Statement#getTimestamp() boundStatement.getTimestamp()} is
+   *       <b>not</b> copied from the simple statement. It will be set to {@link Long#MIN_VALUE},
+   *       meaning that the value will be assigned by the session's timestamp generator.
+   * </ul>
+   *
+   * If you want to customize this behavior, you can write your own implementation of {@link
+   * PrepareRequest} and pass it to {@link #prepare(PrepareRequest)}.
    */
   @NonNull
   default PreparedStatement prepare(@NonNull SimpleStatement statement) {
@@ -97,6 +139,37 @@ public interface CqlSession extends Session {
   }
 
   /**
+   * Prepares a CQL statement synchronously (the calling thread blocks until the statement is
+   * prepared).
+   *
+   * <p>This variant is exposed in case you use an ad hoc {@link PrepareRequest} implementation to
+   * customize how attributes are propagated when you prepare a {@link SimpleStatement} (see {@link
+   * #prepare(SimpleStatement)} for more explanations). Otherwise, you should rarely have to deal
+   * with {@link PrepareRequest} directly.
+   */
+  @NonNull
+  default PreparedStatement prepare(@NonNull PrepareRequest request) {
+    return Objects.requireNonNull(
+        execute(request, PrepareRequest.SYNC),
+        "The CQL prepare processor should never return a null result");
+  }
+
+  /**
+   * Prepares a CQL statement asynchronously (the call returns as soon as the prepare query was
+   * sent, generally before the statement is prepared).
+   *
+   * <p>Note that the bound statements created from the resulting prepared statement will inherit
+   * some of the attributes of {@code query}; see {@link #prepare(SimpleStatement)} for more
+   * details.
+   */
+  @NonNull
+  default CompletionStage<PreparedStatement> prepareAsync(@NonNull SimpleStatement statement) {
+    return Objects.requireNonNull(
+        execute(new DefaultPrepareRequest(statement), PrepareRequest.ASYNC),
+        "The CQL prepare processor should never return a null result");
+  }
+
+  /**
    * Prepares a CQL statement asynchronously (the call returns as soon as the prepare query was
    * sent, generally before the statement is prepared).
    */
@@ -110,11 +183,16 @@ public interface CqlSession extends Session {
   /**
    * Prepares a CQL statement asynchronously (the call returns as soon as the prepare query was
    * sent, generally before the statement is prepared).
+   *
+   * <p>This variant is exposed in case you use an ad hoc {@link PrepareRequest} implementation to
+   * customize how attributes are propagated when you prepare a {@link SimpleStatement} (see {@link
+   * #prepare(SimpleStatement)} for more explanations). Otherwise, you should rarely have to deal
+   * with {@link PrepareRequest} directly.
    */
   @NonNull
-  default CompletionStage<PreparedStatement> prepareAsync(@NonNull SimpleStatement statement) {
+  default CompletionStage<PreparedStatement> prepareAsync(PrepareRequest request) {
     return Objects.requireNonNull(
-        execute(new DefaultPrepareRequest(statement), PrepareRequest.ASYNC),
+        execute(request, PrepareRequest.ASYNC),
         "The CQL prepare processor should never return a null result");
   }
 }

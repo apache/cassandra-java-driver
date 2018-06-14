@@ -15,14 +15,19 @@
  */
 package com.datastax.oss.driver.api.core.cql;
 
+import com.datastax.oss.driver.api.core.ConsistencyLevel;
 import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.ProtocolVersion;
+import com.datastax.oss.driver.api.core.config.DriverConfigProfile;
+import com.datastax.oss.driver.api.core.metadata.token.Token;
 import com.datastax.oss.driver.api.core.type.DataType;
 import com.datastax.oss.driver.api.core.type.codec.registry.CodecRegistry;
 import com.datastax.oss.driver.internal.core.cql.DefaultBoundStatement;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import edu.umd.cs.findbugs.annotations.Nullable;
 import java.nio.ByteBuffer;
+import java.time.Duration;
+import java.util.Map;
 import net.jcip.annotations.NotThreadSafe;
 
 @NotThreadSafe
@@ -39,13 +44,41 @@ public class BoundStatementBuilder extends StatementBuilder<BoundStatementBuilde
       @NonNull PreparedStatement preparedStatement,
       @NonNull ColumnDefinitions variableDefinitions,
       @NonNull ByteBuffer[] values,
+      @Nullable String configProfileName,
+      @Nullable DriverConfigProfile configProfile,
       @Nullable CqlIdentifier routingKeyspace,
+      @Nullable ByteBuffer routingKey,
+      @Nullable Token routingToken,
+      @NonNull Map<String, ByteBuffer> customPayload,
+      @Nullable Boolean idempotent,
+      boolean tracing,
+      long timestamp,
+      @Nullable ByteBuffer pagingState,
+      int pageSize,
+      @Nullable ConsistencyLevel consistencyLevel,
+      @Nullable ConsistencyLevel serialConsistencyLevel,
+      @Nullable Duration timeout,
       @NonNull CodecRegistry codecRegistry,
       @NonNull ProtocolVersion protocolVersion) {
     this.preparedStatement = preparedStatement;
     this.variableDefinitions = variableDefinitions;
-    this.routingKeyspace = routingKeyspace;
     this.values = values;
+    this.configProfileName = configProfileName;
+    this.configProfile = configProfile;
+    this.routingKeyspace = routingKeyspace;
+    this.routingKey = routingKey;
+    this.routingToken = routingToken;
+    for (Map.Entry<String, ByteBuffer> entry : customPayload.entrySet()) {
+      this.addCustomPayload(entry.getKey(), entry.getValue());
+    }
+    this.idempotent = idempotent;
+    this.tracing = tracing;
+    this.timestamp = timestamp;
+    this.pagingState = pagingState;
+    this.pageSize = pageSize;
+    this.consistencyLevel = consistencyLevel;
+    this.serialConsistencyLevel = serialConsistencyLevel;
+    this.timeout = timeout;
     this.codecRegistry = codecRegistry;
     this.protocolVersion = protocolVersion;
   }
@@ -54,7 +87,6 @@ public class BoundStatementBuilder extends StatementBuilder<BoundStatementBuilde
     super(template);
     this.preparedStatement = template.getPreparedStatement();
     this.variableDefinitions = template.getPreparedStatement().getVariableDefinitions();
-    this.routingKeyspace = template.getRoutingKeyspace();
     this.values = template.getValues().toArray(new ByteBuffer[this.variableDefinitions.size()]);
     this.codecRegistry = template.codecRegistry();
     this.protocolVersion = template.protocolVersion();
