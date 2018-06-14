@@ -23,6 +23,7 @@ import com.datastax.oss.driver.api.core.cql.BoundStatement;
 import com.datastax.oss.driver.api.core.cql.BoundStatementBuilder;
 import com.datastax.oss.driver.api.core.cql.ColumnDefinitions;
 import com.datastax.oss.driver.api.core.cql.PreparedStatement;
+import com.datastax.oss.driver.api.core.metadata.token.Token;
 import com.datastax.oss.driver.api.core.type.codec.registry.CodecRegistry;
 import com.datastax.oss.driver.internal.core.data.ValuesHelper;
 import com.datastax.oss.driver.internal.core.session.RepreparePayload;
@@ -43,15 +44,19 @@ public class DefaultPreparedStatement implements PreparedStatement {
   private volatile ResultMetadata resultMetadata;
   private final CodecRegistry codecRegistry;
   private final ProtocolVersion protocolVersion;
-  // The options to propagate to the bound statements:
-  private final String configProfileName;
-  private final DriverConfigProfile configProfile;
+  private final String configProfileNameForBoundStatements;
+  private final DriverConfigProfile configProfileForBoundStatements;
+  private final ByteBuffer pagingStateForBoundStatements;
+  private final CqlIdentifier routingKeyspaceForBoundStatements;
+  private final ByteBuffer routingKeyForBoundStatements;
+  private final Token routingTokenForBoundStatements;
   private final Map<String, ByteBuffer> customPayloadForBoundStatements;
-  private final Boolean idempotent;
-  private final int pageSize;
-  private final ConsistencyLevel consistencyLevel;
-  private final ConsistencyLevel serialConsistencyLevel;
-  private final Duration timeout;
+  private final Boolean areBoundStatementsIdempotent;
+  private final boolean areBoundStatementsTracing;
+  private final int pageSizeForBoundStatements;
+  private final ConsistencyLevel consistencyLevelForBoundStatements;
+  private final ConsistencyLevel serialConsistencyLevelForBoundStatements;
+  private final Duration timeoutForBoundStatements;
 
   public DefaultPreparedStatement(
       ByteBuffer id,
@@ -60,18 +65,23 @@ public class DefaultPreparedStatement implements PreparedStatement {
       List<Integer> partitionKeyIndices,
       ByteBuffer resultMetadataId,
       ColumnDefinitions resultSetDefinitions,
-      String configProfileName,
-      DriverConfigProfile configProfile,
       CqlIdentifier keyspace,
-      Map<String, ByteBuffer> customPayloadForBoundStatements,
-      Boolean idempotent,
-      CodecRegistry codecRegistry,
-      ProtocolVersion protocolVersion,
       Map<String, ByteBuffer> customPayloadForPrepare,
-      int pageSize,
-      ConsistencyLevel consistencyLevel,
-      ConsistencyLevel serialConsistencyLevel,
-      Duration timeout) {
+      String configProfileNameForBoundStatements,
+      DriverConfigProfile configProfileForBoundStatements,
+      CqlIdentifier routingKeyspaceForBoundStatements,
+      ByteBuffer routingKeyForBoundStatements,
+      Token routingTokenForBoundStatements,
+      Map<String, ByteBuffer> customPayloadForBoundStatements,
+      Boolean areBoundStatementsIdempotent,
+      Duration timeoutForBoundStatements,
+      ByteBuffer pagingStateForBoundStatements,
+      int pageSizeForBoundStatements,
+      ConsistencyLevel consistencyLevelForBoundStatements,
+      ConsistencyLevel serialConsistencyLevelForBoundStatements,
+      boolean areBoundStatementsTracing,
+      CodecRegistry codecRegistry,
+      ProtocolVersion protocolVersion) {
     this.id = id;
     this.partitionKeyIndices = partitionKeyIndices;
     // It's important that we keep a reference to this object, so that it only gets evicted from
@@ -79,16 +89,23 @@ public class DefaultPreparedStatement implements PreparedStatement {
     this.repreparePayload = new RepreparePayload(id, query, keyspace, customPayloadForPrepare);
     this.variableDefinitions = variableDefinitions;
     this.resultMetadata = new ResultMetadata(resultMetadataId, resultSetDefinitions);
-    this.configProfileName = configProfileName;
-    this.configProfile = configProfile;
+
+    this.configProfileNameForBoundStatements = configProfileNameForBoundStatements;
+    this.configProfileForBoundStatements = configProfileForBoundStatements;
+    this.routingKeyspaceForBoundStatements = routingKeyspaceForBoundStatements;
+    this.routingKeyForBoundStatements = routingKeyForBoundStatements;
+    this.routingTokenForBoundStatements = routingTokenForBoundStatements;
     this.customPayloadForBoundStatements = customPayloadForBoundStatements;
-    this.idempotent = idempotent;
+    this.areBoundStatementsIdempotent = areBoundStatementsIdempotent;
+    this.timeoutForBoundStatements = timeoutForBoundStatements;
+    this.pagingStateForBoundStatements = pagingStateForBoundStatements;
+    this.pageSizeForBoundStatements = pageSizeForBoundStatements;
+    this.consistencyLevelForBoundStatements = consistencyLevelForBoundStatements;
+    this.serialConsistencyLevelForBoundStatements = serialConsistencyLevelForBoundStatements;
+    this.areBoundStatementsTracing = areBoundStatementsTracing;
+
     this.codecRegistry = codecRegistry;
     this.protocolVersion = protocolVersion;
-    this.pageSize = pageSize;
-    this.consistencyLevel = consistencyLevel;
-    this.serialConsistencyLevel = serialConsistencyLevel;
-    this.timeout = timeout;
   }
 
   @NonNull
@@ -140,22 +157,20 @@ public class DefaultPreparedStatement implements PreparedStatement {
         variableDefinitions,
         ValuesHelper.encodePreparedValues(
             values, variableDefinitions, codecRegistry, protocolVersion),
-        configProfileName,
-        configProfile,
-        // If the prepared statement had a per-request keyspace, we want to use that as the routing
-        // keyspace.
-        repreparePayload.keyspace,
-        null,
-        null,
+        configProfileNameForBoundStatements,
+        configProfileForBoundStatements,
+        routingKeyspaceForBoundStatements,
+        routingKeyForBoundStatements,
+        routingTokenForBoundStatements,
         customPayloadForBoundStatements,
-        idempotent,
-        false,
+        areBoundStatementsIdempotent,
+        areBoundStatementsTracing,
         Long.MIN_VALUE,
-        null,
-        pageSize,
-        consistencyLevel,
-        serialConsistencyLevel,
-        timeout,
+        pagingStateForBoundStatements,
+        pageSizeForBoundStatements,
+        consistencyLevelForBoundStatements,
+        serialConsistencyLevelForBoundStatements,
+        timeoutForBoundStatements,
         codecRegistry,
         protocolVersion);
   }
@@ -168,7 +183,20 @@ public class DefaultPreparedStatement implements PreparedStatement {
         variableDefinitions,
         ValuesHelper.encodePreparedValues(
             values, variableDefinitions, codecRegistry, protocolVersion),
-        repreparePayload.keyspace,
+        configProfileNameForBoundStatements,
+        configProfileForBoundStatements,
+        routingKeyspaceForBoundStatements,
+        routingKeyForBoundStatements,
+        routingTokenForBoundStatements,
+        customPayloadForBoundStatements,
+        areBoundStatementsIdempotent,
+        areBoundStatementsTracing,
+        Long.MIN_VALUE,
+        pagingStateForBoundStatements,
+        pageSizeForBoundStatements,
+        consistencyLevelForBoundStatements,
+        serialConsistencyLevelForBoundStatements,
+        timeoutForBoundStatements,
         codecRegistry,
         protocolVersion);
   }

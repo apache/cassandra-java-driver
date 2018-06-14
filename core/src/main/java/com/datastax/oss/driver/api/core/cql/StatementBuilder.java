@@ -62,8 +62,14 @@ public abstract class StatementBuilder<T extends StatementBuilder<T, S>, S exten
   protected StatementBuilder(S template) {
     this.configProfileName = template.getConfigProfileName();
     this.configProfile = template.getConfigProfile();
-    this.customPayloadBuilder =
-        NullAllowingImmutableMap.<String, ByteBuffer>builder().putAll(template.getCustomPayload());
+    this.routingKeyspace = template.getRoutingKeyspace();
+    this.routingKey = template.getRoutingKey();
+    this.routingToken = template.getRoutingToken();
+    if (!template.getCustomPayload().isEmpty()) {
+      this.customPayloadBuilder =
+          NullAllowingImmutableMap.<String, ByteBuffer>builder()
+              .putAll(template.getCustomPayload());
+    }
     this.idempotent = template.isIdempotent();
     this.tracing = template.isTracing();
     this.timestamp = template.getTimestamp();

@@ -347,18 +347,23 @@ public class Conversions {
             ? null
             : ByteBuffer.wrap(response.resultMetadataId).asReadOnlyBuffer(),
         toColumnDefinitions(response.resultMetadata, context),
+        request.getKeyspace(),
+        NullAllowingImmutableMap.copyOf(request.getCustomPayload()),
         request.getConfigProfileNameForBoundStatements(),
         request.getConfigProfileForBoundStatements(),
-        request.getKeyspace(),
+        request.getRoutingKeyspaceForBoundStatements(),
+        request.getRoutingKeyForBoundStatements(),
+        request.getRoutingTokenForBoundStatements(),
         NullAllowingImmutableMap.copyOf(request.getCustomPayloadForBoundStatements()),
         request.areBoundStatementsIdempotent(),
-        context.codecRegistry(),
-        context.protocolVersion(),
-        NullAllowingImmutableMap.copyOf(request.getCustomPayload()),
+        request.getTimeoutForBoundStatements(),
+        request.getPagingStateForBoundStatements(),
         request.getPageSizeForBoundStatements(),
         request.getConsistencyLevelForBoundStatements(),
         request.getSerialConsistencyLevelForBoundStatements(),
-        request.getTimeout());
+        request.areBoundStatementsTracing(),
+        context.codecRegistry(),
+        context.protocolVersion());
   }
 
   public static ColumnDefinitions toColumnDefinitions(

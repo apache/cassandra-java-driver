@@ -68,7 +68,7 @@ public class SimpleStatementBuilder
 
   /** @see SimpleStatement#getKeyspace() */
   @NonNull
-  public SimpleStatementBuilder withKeyspace(@NonNull CqlIdentifier keyspace) {
+  public SimpleStatementBuilder withKeyspace(@Nullable CqlIdentifier keyspace) {
     this.keyspace = keyspace;
     return this;
   }
@@ -78,8 +78,8 @@ public class SimpleStatementBuilder
    * withKeyspace(CqlIdentifier.fromCql(keyspaceName))}.
    */
   @NonNull
-  public SimpleStatementBuilder withKeyspace(@NonNull String keyspaceName) {
-    return withKeyspace(CqlIdentifier.fromCql(keyspaceName));
+  public SimpleStatementBuilder withKeyspace(@Nullable String keyspaceName) {
+    return withKeyspace(keyspaceName == null ? null : CqlIdentifier.fromCql(keyspaceName));
   }
 
   /** @see SimpleStatement#setPositionalValues(List) */

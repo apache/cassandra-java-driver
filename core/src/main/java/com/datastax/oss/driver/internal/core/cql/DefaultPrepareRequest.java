@@ -33,34 +33,18 @@ import net.jcip.annotations.Immutable;
  * Default implementation of a prepare request, which is built internally to handle calls such as
  * {@link CqlSession#prepare(String)} and {@link CqlSession#prepare(SimpleStatement)}.
  *
- * <p>When a {@link SimpleStatement} gets prepared, some of its fields are propagated automatically.
- * For simplicity, this implementation makes the following opinionated choices:
+ * <p>When built from a {@link SimpleStatement}, it propagates the attributes to bound statements
+ * according to the rules described in {@link CqlSession#prepare(SimpleStatement)}. The prepare
+ * request itself:
  *
  * <ul>
- *   <li>the prepare request:
- *       <ul>
- *         <li>will use the same configuration profile (or configuration profile name) as the {@code
- *             SimpleStatement};
- *         <li>will use the same custom payload as the {@code SimpleStatement};
- *         <li>will use the same timeout as the {@code SimpleStatement}.
- *       </ul>
- *   <li>any bound statement created from the prepared statement:
- *       <ul>
- *         <li>will use the same configuration profile (or configuration profile name) as the {@code
- *             SimpleStatement};
- *         <li>will use the same custom payload as the {@code SimpleStatement};
- *         <li>will use the same page size as the {@code SimpleStatement};
- *         <li>will use the same consistency level as the {@code SimpleStatement};
- *         <li>will use the same serial consistency level as the {@code SimpleStatement};
- *         <li>will use the same timeout as the {@code SimpleStatement};
- *         <li>will be idempotent if and only if the {@code SimpleStatement} was idempotent.
- *       </ul>
+ *   <li>will use the same configuration profile (or configuration profile name) as the {@code
+ *       SimpleStatement};
+ *   <li>will use the same custom payload as the {@code SimpleStatement};
+ *   <li>will use a {@code null} timeout in order to default to the configuration (assuming that if
+ *       a statement with a custom timeout is prepared, it is intended for the bound statements, not
+ *       the preparation itself).
  * </ul>
- *
- * <p>This should be appropriate for most use cases; however if you need something more exotic (for
- * example, preparing with one profile, but executing bound statements with another one), you can
- * either write your own {@code PrepareRequest} implementation, or set the options manually on every
- * bound statement.
  */
 @Immutable
 public class DefaultPrepareRequest implements PrepareRequest {
@@ -127,7 +111,7 @@ public class DefaultPrepareRequest implements PrepareRequest {
   @Nullable
   @Override
   public Duration getTimeout() {
-    return statement.getTimeout();
+    return null;
   }
 
   @Nullable
@@ -142,6 +126,26 @@ public class DefaultPrepareRequest implements PrepareRequest {
     return statement.getConfigProfile();
   }
 
+  @Nullable
+  @Override
+  public CqlIdentifier getRoutingKeyspaceForBoundStatements() {
+    return (statement.getKeyspace() != null)
+        ? statement.getKeyspace()
+        : statement.getRoutingKeyspace();
+  }
+
+  @Nullable
+  @Override
+  public ByteBuffer getRoutingKeyForBoundStatements() {
+    return statement.getRoutingKey();
+  }
+
+  @Nullable
+  @Override
+  public Token getRoutingTokenForBoundStatements() {
+    return statement.getRoutingToken();
+  }
+
   @NonNull
   @Override
   public Map<String, ByteBuffer> getCustomPayloadForBoundStatements() {
@@ -152,6 +156,18 @@ public class DefaultPrepareRequest implements PrepareRequest {
   @Override
   public Boolean areBoundStatementsIdempotent() {
     return statement.isIdempotent();
+  }
+
+  @Nullable
+  @Override
+  public Duration getTimeoutForBoundStatements() {
+    return statement.getTimeout();
+  }
+
+  @Nullable
+  @Override
+  public ByteBuffer getPagingStateForBoundStatements() {
+    return statement.getPagingState();
   }
 
   @Override
@@ -169,5 +185,10 @@ public class DefaultPrepareRequest implements PrepareRequest {
   @Override
   public ConsistencyLevel getSerialConsistencyLevelForBoundStatements() {
     return statement.getSerialConsistencyLevel();
+  }
+
+  @Override
+  public boolean areBoundStatementsTracing() {
+    return statement.isTracing();
   }
 }

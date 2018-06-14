@@ -20,9 +20,14 @@ import static com.datastax.oss.simulacron.common.stubbing.PrimeDsl.query;
 import static com.datastax.oss.simulacron.common.stubbing.PrimeDsl.when;
 import static org.assertj.core.api.Assertions.assertThat;
 
+import com.datastax.oss.driver.api.core.ConsistencyLevel;
+import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.CqlSession;
 import com.datastax.oss.driver.api.core.DefaultConsistencyLevel;
 import com.datastax.oss.driver.api.core.DriverTimeoutException;
+import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
+import com.datastax.oss.driver.api.core.config.DriverConfigProfile;
+import com.datastax.oss.driver.api.core.metadata.token.Token;
 import com.datastax.oss.driver.api.core.type.codec.TypeCodecs;
 import com.datastax.oss.driver.api.testinfra.CassandraRequirement;
 import com.datastax.oss.driver.api.testinfra.ccm.CcmRule;
@@ -30,18 +35,25 @@ import com.datastax.oss.driver.api.testinfra.session.SessionRule;
 import com.datastax.oss.driver.api.testinfra.session.SessionUtils;
 import com.datastax.oss.driver.api.testinfra.simulacron.SimulacronRule;
 import com.datastax.oss.driver.categories.ParallelizableTests;
+import com.datastax.oss.driver.internal.core.ProtocolFeature;
+import com.datastax.oss.driver.internal.core.ProtocolVersionRegistry;
+import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
 import com.datastax.oss.driver.internal.core.type.codec.CqlIntToStringCodec;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableList;
 import com.datastax.oss.protocol.internal.Message;
 import com.datastax.oss.protocol.internal.request.Execute;
+import com.datastax.oss.protocol.internal.util.Bytes;
+import com.datastax.oss.protocol.internal.util.collection.NullAllowingImmutableMap;
 import com.datastax.oss.simulacron.common.cluster.ClusterSpec;
 import com.datastax.oss.simulacron.common.cluster.QueryLog;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
+import java.nio.ByteBuffer;
 import java.time.Duration;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Function;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
@@ -366,6 +378,81 @@ public class BoundStatementIT {
     }
   }
 
+  @Test
+  @CassandraRequirement(min = "2.2")
+  public void should_propagate_attributes_when_preparing_a_simple_statement() {
+    CqlSession session = sessionRule.session();
+
+    DriverConfigProfile mockProfile =
+        session
+            .getContext()
+            .config()
+            .getDefaultProfile()
+            // Value doesn't matter, we just want a distinct profile
+            .withDuration(DefaultDriverOption.REQUEST_TIMEOUT, Duration.ofSeconds(10));
+    String mockConfigProfileName = "mockConfigProfileName";
+    ByteBuffer mockPagingState = Bytes.fromHexString("0xaaaa");
+    CqlIdentifier mockKeyspace =
+        supportsPerRequestKeyspace(session) ? CqlIdentifier.fromCql("system") : null;
+    CqlIdentifier mockRoutingKeyspace = CqlIdentifier.fromCql("mockRoutingKeyspace");
+    ByteBuffer mockRoutingKey = Bytes.fromHexString("0xbbbb");
+    Token mockRoutingToken = session.getMetadata().getTokenMap().get().newToken(mockRoutingKey);
+    Map<String, ByteBuffer> mockCustomPayload =
+        NullAllowingImmutableMap.of("key1", Bytes.fromHexString("0xcccc"));
+    Duration mockTimeout = Duration.ofSeconds(1);
+    ConsistencyLevel mockCl = DefaultConsistencyLevel.LOCAL_QUORUM;
+    ConsistencyLevel mockSerialCl = DefaultConsistencyLevel.LOCAL_SERIAL;
+    int mockPageSize = 2000;
+
+    SimpleStatement simpleStatement =
+        SimpleStatement.builder("SELECT release_version FROM system.local")
+            .withConfigProfile(mockProfile)
+            .withConfigProfileName(mockConfigProfileName)
+            .withPagingState(mockPagingState)
+            .withKeyspace(mockKeyspace)
+            .withRoutingKeyspace(mockRoutingKeyspace)
+            .withRoutingKey(mockRoutingKey)
+            .withRoutingToken(mockRoutingToken)
+            .addCustomPayload("key1", mockCustomPayload.get("key1"))
+            .withTimestamp(42)
+            .withIdempotence(true)
+            .withTracing()
+            .withTimeout(mockTimeout)
+            .withConsistencyLevel(mockCl)
+            .withSerialConsistencyLevel(mockSerialCl)
+            .withPageSize(mockPageSize)
+            .build();
+    PreparedStatement preparedStatement = session.prepare(simpleStatement);
+
+    // Cover all the ways to create bound statements:
+    ImmutableList<Function<PreparedStatement, BoundStatement>> createMethods =
+        ImmutableList.of(PreparedStatement::bind, p -> p.boundStatementBuilder().build());
+
+    for (Function<PreparedStatement, BoundStatement> createMethod : createMethods) {
+      BoundStatement boundStatement = createMethod.apply(preparedStatement);
+
+      assertThat(boundStatement.getConfigProfile()).isEqualTo(mockProfile);
+      assertThat(boundStatement.getConfigProfileName()).isEqualTo(mockConfigProfileName);
+      assertThat(boundStatement.getPagingState()).isEqualTo(mockPagingState);
+      assertThat(boundStatement.getRoutingKeyspace())
+          .isEqualTo(mockKeyspace != null ? mockKeyspace : mockRoutingKeyspace);
+      assertThat(boundStatement.getRoutingKey()).isEqualTo(mockRoutingKey);
+      assertThat(boundStatement.getRoutingToken()).isEqualTo(mockRoutingToken);
+      assertThat(boundStatement.getCustomPayload()).isEqualTo(mockCustomPayload);
+      assertThat(boundStatement.isIdempotent()).isTrue();
+      assertThat(boundStatement.isTracing()).isTrue();
+      assertThat(boundStatement.getTimeout()).isEqualTo(mockTimeout);
+      assertThat(boundStatement.getConsistencyLevel()).isEqualTo(mockCl);
+      assertThat(boundStatement.getSerialConsistencyLevel()).isEqualTo(mockSerialCl);
+      assertThat(boundStatement.getPageSize()).isEqualTo(mockPageSize);
+
+      // Bound statements do not support per-query keyspaces, so this is not set
+      assertThat(boundStatement.getKeyspace()).isNull();
+      // Should not be propagated
+      assertThat(boundStatement.getTimestamp()).isEqualTo(Long.MIN_VALUE);
+    }
+  }
+
   private static void verifyUnset(
       CqlSession session, BoundStatement boundStatement, String valueName) {
     session.execute(boundStatement.unset(1));
@@ -390,5 +477,12 @@ public class BoundStatementIT {
             .withKeyspace(sessionRule.keyspace())
             .addTypeCodecs(codec)
             .build();
+  }
+
+  private boolean supportsPerRequestKeyspace(CqlSession session) {
+    InternalDriverContext context = (InternalDriverContext) session.getContext();
+    ProtocolVersionRegistry protocolVersionRegistry = context.protocolVersionRegistry();
+    return protocolVersionRegistry.supports(
+        context.protocolVersion(), ProtocolFeature.PER_REQUEST_KEYSPACE);
   }
 }
