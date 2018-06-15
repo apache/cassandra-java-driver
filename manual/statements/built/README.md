@@ -22,9 +22,9 @@ functions to form a complete CQL statement (like, `where`, `from`, etc.).  The c
 target could be specified as table name (if you set default keyspace when creating a
 `Session` object), keyspace & table name, or as [TableMetadata].
 
-Note: The `QueryBuilder` doesn't provide support for full set of CQL.  For example, DDL
-operations (`CREATE TABLE`, etc.), and many others aren't supported.  To perform them you
-still need to use [simple statements](../simple/).
+Note: The `QueryBuilder` doesn't provide support for full set of CQL.  For generation of
+DDL operations (`CREATE TABLE`, etc.) you can use the [SchemaBuilder].  To perform other
+operations you still need to use [simple statements](../simple/).
 
 ### Selecting data
 
@@ -265,3 +265,4 @@ Note: the call to these functions changes the object type from `BuiltStatement` 
 
 [QueryBuilder]: http://docs.datastax.com/en/drivers/java/3.5/com/datastax/driver/core/querybuilder/QueryBuilder.html
 [TableMetadata]: http://docs.datastax.com/en/drivers/java/3.5/com/datastax/driver/core/TableMetadata.html
+[SchemaBuilder]: https://docs.datastax.com/en/drivers/java/3.5/com/datastax/driver/core/schemabuilder/SchemaBuilder.html
