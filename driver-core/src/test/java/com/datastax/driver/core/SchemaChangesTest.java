@@ -187,6 +187,68 @@ public class SchemaChangesTest extends CCMTestsSupport {
             assertThat(m.getKeyspace(keyspace).getTable("table1")).hasColumn("j");
     }
 
+    /**
+     * Verifies that when a table is updated that its associated views remain accessible from the table via
+     * {@link TableMetadata#getView(String)}.
+     *
+     * @jira_ticket JAVA-1872
+     */
+    @Test(groups = "short", dataProvider = "existingKeyspaceName")
+    @CassandraVersion("3.0")
+    public void should_retain_view_on_table_update(String keyspace) throws InterruptedException {
+        // Create table and ensure event is received and metadata is updated
+        session1.execute(String.format("CREATE TABLE %s.table1 (pk int PRIMARY KEY, c int)", keyspace));
+        ArgumentCaptor<TableMetadata> added = null;
+        for (SchemaChangeListener listener : listeners) {
+            added = ArgumentCaptor.forClass(TableMetadata.class);
+            verify(listener, timeout(NOTIF_TIMEOUT_MS).times(1)).onTableAdded(added.capture());
+            assertThat(added.getValue())
+                    .isInKeyspace(handleId(keyspace))
+                    .hasName("table1");
+        }
+        for (Metadata m : metadatas()) {
+            assertThat(m.getKeyspace(keyspace).getTable("table1")).hasNoColumn("j");
+        }
+        assert added != null;
+
+        // Create view and ensure event is received and metadata is updated
+        session1.execute(String.format("CREATE MATERIALIZED VIEW %s.mv1 AS SELECT c FROM %s.table1 WHERE c IS NOT NULL PRIMARY KEY (pk, c)", keyspace, keyspace));
+        for (SchemaChangeListener listener : listeners) {
+            ArgumentCaptor<MaterializedViewMetadata> viewAdded = ArgumentCaptor.forClass(MaterializedViewMetadata.class);
+            verify(listener, timeout(NOTIF_TIMEOUT_MS).times(1)).onMaterializedViewAdded(viewAdded.capture());
+            assertThat(viewAdded.getValue())
+                    .hasName("mv1");
+        }
+        for (Metadata m : metadatas()) {
+            // Ensure materialized view exists and table has reference to it.
+            assertThat(m.getKeyspace(keyspace).getMaterializedView("mv1")).isNotNull();
+            assertThat(m.getKeyspace(keyspace).getTable("table1").getView("mv1")).isNotNull();
+        }
+
+        // Alter table, ensure event is received and metadata is updated.  Most importantly, ensure view is
+        // present on table metadata.
+        execute(ALTER_TABLE, keyspace);
+        for (SchemaChangeListener listener : listeners) {
+            ArgumentCaptor<TableMetadata> current = ArgumentCaptor.forClass(TableMetadata.class);
+            ArgumentCaptor<TableMetadata> previous = ArgumentCaptor.forClass(TableMetadata.class);
+            verify(listener, timeout(NOTIF_TIMEOUT_MS).times(1)).onTableChanged(current.capture(), previous.capture());
+            assertThat(previous.getValue())
+                    .isEqualTo(added.getValue())
+                    .hasNoColumn("j");
+            assertThat(current.getValue())
+                    .isInKeyspace(handleId(keyspace))
+                    .hasName("table1")
+                    .hasColumn("j");
+        }
+        for (Metadata m : metadatas()) {
+            // Ensure table changed.
+            assertThat(m.getKeyspace(keyspace).getTable("table1")).hasColumn("j");
+            // Ensure view is present on table even after it changes.
+            assertThat(m.getKeyspace(keyspace).getMaterializedView("mv1")).isNotNull();
+            assertThat(m.getKeyspace(keyspace).getTable("table1").getView("mv1")).isNotNull();
+        }
+    }
+
     @Test(groups = "short", dataProvider = "existingKeyspaceName")
     public void should_notify_of_table_drop(String keyspace) throws InterruptedException {
         execute(CREATE_TABLE, keyspace);

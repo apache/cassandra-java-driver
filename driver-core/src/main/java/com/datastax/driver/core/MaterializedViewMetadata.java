@@ -30,7 +30,7 @@ public class MaterializedViewMetadata extends AbstractTableMetadata {
 
     private static final Logger logger = LoggerFactory.getLogger(MaterializedViewMetadata.class);
 
-    private final TableMetadata baseTable;
+    private volatile TableMetadata baseTable;
 
     private final boolean includeAllColumns;
 
@@ -211,6 +211,15 @@ public class MaterializedViewMetadata extends AbstractTableMetadata {
         appendOptions(sb, formatted);
         return sb.toString();
 
+    }
+
+    /**
+     * Updates the base table for this view and adds it to that table.  This is used when a table update
+     * is processed and the views need to be carried over.
+     */
+    void setBaseTable(TableMetadata table) {
+        this.baseTable = table;
+        table.add(this);
     }
 
     @Override

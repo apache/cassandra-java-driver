@@ -1,5 +1,10 @@
 ## Changelog
 
+### 3.5.1
+
+- [bug] JAVA-1872: Retain table's views when processing table update.
+
+
 ### 3.5.0
 
 - [improvement] JAVA-1448: TokenAwarePolicy should respect child policy ordering.
