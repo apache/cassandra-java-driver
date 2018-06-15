@@ -32,6 +32,18 @@ public interface DataType extends Detachable {
   int getProtocolCode();
 
   /**
+   * The type arguments of this type.
+   *
+   * <ul>
+   *   <li>for list and set types: the element type;
+   *   <li>for map types: the key type and the value type;
+   *   <li>for tuples and user defined types: the types of the fields;
+   *   <li>for all other types: an empty iterable.
+   * </ul>
+   */
+  Iterable<DataType> getTypeArguments();
+
+  /**
    * Builds an appropriate representation for use in a CQL query.
    *
    * @param includeFrozen whether to include the {@code frozen<...>} keyword if applicable. This

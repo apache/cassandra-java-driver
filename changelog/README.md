@@ -4,6 +4,7 @@
 
 ### 4.0.0-alpha4 (in progress)
 
+- [improvement] JAVA-1864: Add DataType.getTypeArguments()
 - [bug] JAVA-1560: Correctly propagate policy initialization errors
 - [improvement] JAVA-1865: Add RelationMetadata.getPrimaryKey()
 - [improvement] JAVA-1862: Add ConsistencyLevel.isDcLocal and isSerial

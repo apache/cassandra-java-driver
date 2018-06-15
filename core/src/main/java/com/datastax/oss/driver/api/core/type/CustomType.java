@@ -16,6 +16,7 @@
 package com.datastax.oss.driver.api.core.type;
 
 import com.datastax.oss.protocol.internal.ProtocolConstants;
+import java.util.Collections;
 
 public interface CustomType extends DataType {
   /**
@@ -23,6 +24,11 @@ public interface CustomType extends DataType {
    * that represents this type server-side.
    */
   String getClassName();
+
+  @Override
+  default Iterable<DataType> getTypeArguments() {
+    return Collections.emptyList();
+  }
 
   @Override
   default String asCql(boolean includeFrozen, boolean pretty) {

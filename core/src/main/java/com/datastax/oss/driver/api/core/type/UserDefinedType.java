@@ -47,6 +47,11 @@ public interface UserDefinedType extends DataType, Describable {
 
   List<DataType> getFieldTypes();
 
+  @Override
+  default Iterable<DataType> getTypeArguments() {
+    return getFieldTypes();
+  }
+
   UserDefinedType copy(boolean newFrozen);
 
   UdtValue newValue();

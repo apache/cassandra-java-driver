@@ -19,6 +19,7 @@ import com.datastax.oss.driver.api.core.detach.AttachmentPoint;
 import com.datastax.oss.driver.api.core.type.DataType;
 import com.datastax.oss.protocol.internal.ProtocolConstants;
 import java.io.Serializable;
+import java.util.Collections;
 import net.jcip.annotations.Immutable;
 
 @Immutable
@@ -34,6 +35,11 @@ public class PrimitiveType implements DataType, Serializable {
   @Override
   public int getProtocolCode() {
     return protocolCode;
+  }
+
+  @Override
+  public Iterable<DataType> getTypeArguments() {
+    return Collections.emptyList();
   }
 
   @Override
