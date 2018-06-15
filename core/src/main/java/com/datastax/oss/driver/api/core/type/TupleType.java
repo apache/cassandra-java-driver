@@ -24,6 +24,11 @@ import java.util.List;
 public interface TupleType extends DataType {
   List<DataType> getComponentTypes();
 
+  @Override
+  default Iterable<DataType> getTypeArguments() {
+    return getComponentTypes();
+  }
+
   TupleValue newValue();
 
   /**

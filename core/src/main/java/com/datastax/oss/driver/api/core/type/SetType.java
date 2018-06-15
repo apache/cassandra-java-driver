@@ -15,10 +15,16 @@
  */
 package com.datastax.oss.driver.api.core.type;
 
+import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableList;
 import com.datastax.oss.protocol.internal.ProtocolConstants;
 
 public interface SetType extends DataType {
   DataType getElementType();
+
+  @Override
+  default Iterable<DataType> getTypeArguments() {
+    return ImmutableList.of(getElementType());
+  }
 
   boolean isFrozen();
 

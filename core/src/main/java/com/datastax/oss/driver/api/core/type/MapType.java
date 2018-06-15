@@ -15,12 +15,18 @@
  */
 package com.datastax.oss.driver.api.core.type;
 
+import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableList;
 import com.datastax.oss.protocol.internal.ProtocolConstants;
 
 public interface MapType extends DataType {
   DataType getKeyType();
 
   DataType getValueType();
+
+  @Override
+  default Iterable<DataType> getTypeArguments() {
+    return ImmutableList.of(getKeyType(), getValueType());
+  }
 
   boolean isFrozen();
 
