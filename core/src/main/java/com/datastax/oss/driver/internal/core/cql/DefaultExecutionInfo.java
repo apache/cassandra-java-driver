@@ -90,7 +90,7 @@ public class DefaultExecutionInfo implements ExecutionInfo {
     return statement;
   }
 
-  @NonNull
+  @Nullable
   @Override
   public Node getCoordinator() {
     return coordinator;

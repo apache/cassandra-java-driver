@@ -18,6 +18,7 @@ package com.datastax.oss.driver.api.core.servererrors;
 import com.datastax.oss.driver.api.core.AllNodesFailedException;
 import com.datastax.oss.driver.api.core.ConsistencyLevel;
 import com.datastax.oss.driver.api.core.DriverException;
+import com.datastax.oss.driver.api.core.cql.ExecutionInfo;
 import com.datastax.oss.driver.api.core.metadata.Node;
 import com.datastax.oss.driver.api.core.retry.RetryPolicy;
 import com.datastax.oss.driver.api.core.session.Request;
@@ -50,6 +51,7 @@ public class ReadTimeoutException extends QueryConsistencyException {
         received,
         blockFor,
         dataPresent,
+        null,
         false);
   }
 
@@ -60,8 +62,16 @@ public class ReadTimeoutException extends QueryConsistencyException {
       int received,
       int blockFor,
       boolean dataPresent,
+      ExecutionInfo executionInfo,
       boolean writableStackTrace) {
-    super(coordinator, message, consistencyLevel, received, blockFor, writableStackTrace);
+    super(
+        coordinator,
+        message,
+        consistencyLevel,
+        received,
+        blockFor,
+        executionInfo,
+        writableStackTrace);
     this.dataPresent = dataPresent;
   }
 
@@ -98,6 +108,7 @@ public class ReadTimeoutException extends QueryConsistencyException {
         getReceived(),
         getBlockFor(),
         dataPresent,
+        getExecutionInfo(),
         true);
   }
 }

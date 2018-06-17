@@ -16,6 +16,7 @@
 package com.datastax.oss.driver.api.core.servererrors;
 
 import com.datastax.oss.driver.api.core.ConsistencyLevel;
+import com.datastax.oss.driver.api.core.cql.ExecutionInfo;
 import com.datastax.oss.driver.api.core.metadata.Node;
 import edu.umd.cs.findbugs.annotations.NonNull;
 
@@ -43,8 +44,9 @@ public abstract class QueryConsistencyException extends QueryExecutionException 
       @NonNull ConsistencyLevel consistencyLevel,
       int received,
       int blockFor,
+      ExecutionInfo executionInfo,
       boolean writableStackTrace) {
-    super(coordinator, message, writableStackTrace);
+    super(coordinator, message, executionInfo, writableStackTrace);
     this.consistencyLevel = consistencyLevel;
     this.received = received;
     this.blockFor = blockFor;

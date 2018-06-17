@@ -15,17 +15,22 @@
  */
 package com.datastax.oss.driver.api.core;
 
+import com.datastax.oss.driver.api.core.cql.ExecutionInfo;
 import edu.umd.cs.findbugs.annotations.NonNull;
 
 /** Thrown when a session gets created with an invalid keyspace. */
 public class InvalidKeyspaceException extends DriverException {
   public InvalidKeyspaceException(@NonNull String message) {
-    super(message, null, true);
+    this(message, null);
+  }
+
+  private InvalidKeyspaceException(String message, ExecutionInfo executionInfo) {
+    super(message, executionInfo, null, true);
   }
 
   @NonNull
   @Override
   public DriverException copy() {
-    return new InvalidKeyspaceException(getMessage());
+    return new InvalidKeyspaceException(getMessage(), getExecutionInfo());
   }
 }

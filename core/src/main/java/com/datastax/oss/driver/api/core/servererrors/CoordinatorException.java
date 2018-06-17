@@ -16,20 +16,29 @@
 package com.datastax.oss.driver.api.core.servererrors;
 
 import com.datastax.oss.driver.api.core.DriverException;
+import com.datastax.oss.driver.api.core.cql.ExecutionInfo;
 import com.datastax.oss.driver.api.core.metadata.Node;
 import edu.umd.cs.findbugs.annotations.NonNull;
+import edu.umd.cs.findbugs.annotations.Nullable;
 
 /** A server-side error thrown by the coordinator node in response to a driver request. */
 public abstract class CoordinatorException extends DriverException {
 
+  // This is also present on ExecutionInfo. But the execution info is only set for errors that are
+  // rethrown to the client, not on errors that get retried. It can be useful to know the node in
+  // the retry policy, so store it here, it might be duplicated but that doesn't matter.
   private final Node coordinator;
 
   protected CoordinatorException(
-      @NonNull Node coordinator, @NonNull String message, boolean writableStackTrace) {
-    super(message, null, writableStackTrace);
+      @NonNull Node coordinator,
+      @NonNull String message,
+      @Nullable ExecutionInfo executionInfo,
+      boolean writableStackTrace) {
+    super(message, executionInfo, null, writableStackTrace);
     this.coordinator = coordinator;
   }
 
+  @NonNull
   public Node getCoordinator() {
     return coordinator;
   }

@@ -15,6 +15,7 @@
  */
 package com.datastax.oss.driver.api.core;
 
+import com.datastax.oss.driver.api.core.cql.ExecutionInfo;
 import com.datastax.oss.driver.api.core.metadata.Node;
 import com.datastax.oss.driver.shaded.guava.common.base.Joiner;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableMap;
@@ -57,13 +58,16 @@ public class AllNodesFailedException extends DriverException {
 
   private final Map<Node, Throwable> errors;
 
-  protected AllNodesFailedException(@NonNull String message, @NonNull Map<Node, Throwable> errors) {
-    super(message, null, true);
+  protected AllNodesFailedException(
+      @NonNull String message,
+      @Nullable ExecutionInfo executionInfo,
+      @NonNull Map<Node, Throwable> errors) {
+    super(message, null, null, true);
     this.errors = errors;
   }
 
   private AllNodesFailedException(Map<Node, Throwable> errors) {
-    this(buildMessage(errors), errors);
+    this(buildMessage(errors), null, errors);
   }
 
   private static String buildMessage(Map<Node, Throwable> errors) {
@@ -85,6 +89,6 @@ public class AllNodesFailedException extends DriverException {
   @NonNull
   @Override
   public DriverException copy() {
-    return new AllNodesFailedException(getMessage(), errors);
+    return new AllNodesFailedException(getMessage(), getExecutionInfo(), errors);
   }
 }

@@ -41,7 +41,7 @@ public class ClosedConnectionException extends DriverException {
 
   private ClosedConnectionException(
       @NonNull String message, @Nullable Throwable cause, boolean writableStackTrace) {
-    super(message, cause, writableStackTrace);
+    super(message, null, cause, writableStackTrace);
   }
 
   @Override

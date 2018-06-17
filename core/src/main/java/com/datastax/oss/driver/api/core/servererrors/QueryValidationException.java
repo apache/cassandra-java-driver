@@ -15,8 +15,10 @@
  */
 package com.datastax.oss.driver.api.core.servererrors;
 
+import com.datastax.oss.driver.api.core.cql.ExecutionInfo;
 import com.datastax.oss.driver.api.core.metadata.Node;
 import edu.umd.cs.findbugs.annotations.NonNull;
+import edu.umd.cs.findbugs.annotations.Nullable;
 
 /**
  * A server-side error thrown when a query cannot be executed because it is syntactically incorrect,
@@ -25,7 +27,10 @@ import edu.umd.cs.findbugs.annotations.NonNull;
 public abstract class QueryValidationException extends CoordinatorException {
 
   protected QueryValidationException(
-      @NonNull Node coordinator, @NonNull String message, boolean writableStackTrace) {
-    super(coordinator, message, writableStackTrace);
+      @NonNull Node coordinator,
+      @NonNull String message,
+      @Nullable ExecutionInfo executionInfo,
+      boolean writableStackTrace) {
+    super(coordinator, message, executionInfo, writableStackTrace);
   }
 }

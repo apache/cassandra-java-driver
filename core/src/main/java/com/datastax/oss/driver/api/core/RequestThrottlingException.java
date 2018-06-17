@@ -15,6 +15,7 @@
  */
 package com.datastax.oss.driver.api.core;
 
+import com.datastax.oss.driver.api.core.cql.ExecutionInfo;
 import edu.umd.cs.findbugs.annotations.NonNull;
 
 /**
@@ -27,12 +28,16 @@ import edu.umd.cs.findbugs.annotations.NonNull;
 public class RequestThrottlingException extends DriverException {
 
   public RequestThrottlingException(@NonNull String message) {
-    super(message, null, true);
+    this(message, null);
+  }
+
+  private RequestThrottlingException(String message, ExecutionInfo executionInfo) {
+    super(message, executionInfo, null, true);
   }
 
   @NonNull
   @Override
   public DriverException copy() {
-    return new RequestThrottlingException(getMessage());
+    return new RequestThrottlingException(getMessage(), getExecutionInfo());
   }
 }

@@ -17,6 +17,7 @@ package com.datastax.oss.driver.api.core.connection;
 
 import com.datastax.oss.driver.api.core.AllNodesFailedException;
 import com.datastax.oss.driver.api.core.DriverException;
+import com.datastax.oss.driver.api.core.cql.ExecutionInfo;
 import edu.umd.cs.findbugs.annotations.NonNull;
 
 /**
@@ -33,16 +34,18 @@ public class BusyConnectionException extends DriverException {
     this(
         String.format(
             "Connection has exceeded its maximum of %d simultaneous requests", maxAvailableIds),
+        null,
         false);
   }
 
-  private BusyConnectionException(String message, boolean writableStackTrace) {
-    super(message, null, writableStackTrace);
+  private BusyConnectionException(
+      String message, ExecutionInfo executionInfo, boolean writableStackTrace) {
+    super(message, executionInfo, null, writableStackTrace);
   }
 
   @Override
   @NonNull
   public DriverException copy() {
-    return new BusyConnectionException(getMessage(), true);
+    return new BusyConnectionException(getMessage(), getExecutionInfo(), true);
   }
 }
