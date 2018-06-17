@@ -16,9 +16,12 @@
 package com.datastax.oss.driver.api.core.cql;
 
 import com.datastax.oss.driver.api.core.DefaultProtocolVersion;
+import com.datastax.oss.driver.api.core.DriverException;
+import com.datastax.oss.driver.api.core.RequestThrottlingException;
 import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
 import com.datastax.oss.driver.api.core.metadata.Node;
 import com.datastax.oss.driver.api.core.retry.RetryDecision;
+import com.datastax.oss.driver.api.core.servererrors.CoordinatorException;
 import com.datastax.oss.driver.api.core.session.Request;
 import com.datastax.oss.driver.api.core.session.Session;
 import com.datastax.oss.driver.api.core.specex.SpeculativeExecutionPolicy;
@@ -32,15 +35,33 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.CompletionStage;
 
-/** Information about the execution of a query. */
+/**
+ * Information about the execution of a query.
+ *
+ * <p>This can be obtained either from a result set for a successful query, or from a driver
+ * exception for a failed query.
+ *
+ * @see ResultSet#getExecutionInfo()
+ * @see DriverException#getExecutionInfo()
+ */
 public interface ExecutionInfo {
 
   /** The statement that was executed. */
   @NonNull
   Statement<?> getStatement();
 
-  /** The node that was used as a coordinator to successfully complete the query. */
-  @NonNull
+  /**
+   * The node that acted as a coordinator for the query.
+   *
+   * <p>For successful queries, this is never {@code null}. It is the node that sent the response
+   * from which the result was decoded.
+   *
+   * <p>For failed queries, this can either be {@code null} if the error occurred before any node
+   * could be contacted (for example a {@link RequestThrottlingException}), or present if a node was
+   * successfully contacted, but replied with an error response (any subclass of {@link
+   * CoordinatorException}).
+   */
+  @Nullable
   Node getCoordinator();
 
   /**
@@ -58,7 +79,8 @@ public interface ExecutionInfo {
    * The index of the execution that completed this query.
    *
    * <p>0 represents the initial, normal execution of the query, 1 the first speculative execution,
-   * etc.
+   * etc. If this execution info is attached to an error, this might not be applicable, and will
+   * return -1.
    *
    * @see SpeculativeExecutionPolicy
    */

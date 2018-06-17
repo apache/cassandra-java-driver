@@ -4,6 +4,7 @@
 
 ### 4.0.0-alpha4 (in progress)
 
+- [improvement] JAVA-1624: Expose ExecutionInfo on exceptions where applicable
 - [improvement] JAVA-1766: Revisit nullability
 - [new feature] JAVA-1860: Allow reconnection at startup if no contact point is available
 - [improvement] JAVA-1866: Make all public policies implement AutoCloseable

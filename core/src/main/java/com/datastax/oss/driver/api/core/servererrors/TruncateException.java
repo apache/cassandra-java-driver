@@ -17,10 +17,12 @@ package com.datastax.oss.driver.api.core.servererrors;
 
 import com.datastax.oss.driver.api.core.AllNodesFailedException;
 import com.datastax.oss.driver.api.core.DriverException;
+import com.datastax.oss.driver.api.core.cql.ExecutionInfo;
 import com.datastax.oss.driver.api.core.metadata.Node;
 import com.datastax.oss.driver.api.core.retry.RetryPolicy;
 import com.datastax.oss.driver.api.core.session.Request;
 import edu.umd.cs.findbugs.annotations.NonNull;
+import edu.umd.cs.findbugs.annotations.Nullable;
 
 /**
  * An error during a truncation operation.
@@ -33,17 +35,20 @@ import edu.umd.cs.findbugs.annotations.NonNull;
 public class TruncateException extends QueryExecutionException {
 
   public TruncateException(@NonNull Node coordinator, @NonNull String message) {
-    this(coordinator, message, false);
+    this(coordinator, message, null, false);
   }
 
   private TruncateException(
-      @NonNull Node coordinator, @NonNull String message, boolean writableStackTrace) {
-    super(coordinator, message, writableStackTrace);
+      @NonNull Node coordinator,
+      @NonNull String message,
+      @Nullable ExecutionInfo executionInfo,
+      boolean writableStackTrace) {
+    super(coordinator, message, executionInfo, writableStackTrace);
   }
 
   @NonNull
   @Override
   public DriverException copy() {
-    return new TruncateException(getCoordinator(), getMessage(), true);
+    return new TruncateException(getCoordinator(), getMessage(), getExecutionInfo(), true);
   }
 }

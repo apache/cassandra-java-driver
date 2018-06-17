@@ -15,17 +15,22 @@
  */
 package com.datastax.oss.driver.api.core;
 
+import com.datastax.oss.driver.api.core.cql.ExecutionInfo;
 import edu.umd.cs.findbugs.annotations.NonNull;
 
 /** Thrown when a driver request timed out. */
 public class DriverTimeoutException extends DriverException {
   public DriverTimeoutException(@NonNull String message) {
-    super(message, null, true);
+    this(message, null);
+  }
+
+  private DriverTimeoutException(String message, ExecutionInfo executionInfo) {
+    super(message, executionInfo, null, true);
   }
 
   @NonNull
   @Override
   public DriverException copy() {
-    return new DriverTimeoutException(getMessage());
+    return new DriverTimeoutException(getMessage(), getExecutionInfo());
   }
 }

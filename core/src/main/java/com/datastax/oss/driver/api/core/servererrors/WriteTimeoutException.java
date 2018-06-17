@@ -18,10 +18,12 @@ package com.datastax.oss.driver.api.core.servererrors;
 import com.datastax.oss.driver.api.core.AllNodesFailedException;
 import com.datastax.oss.driver.api.core.ConsistencyLevel;
 import com.datastax.oss.driver.api.core.DriverException;
+import com.datastax.oss.driver.api.core.cql.ExecutionInfo;
 import com.datastax.oss.driver.api.core.metadata.Node;
 import com.datastax.oss.driver.api.core.retry.RetryPolicy;
 import com.datastax.oss.driver.api.core.session.Request;
 import edu.umd.cs.findbugs.annotations.NonNull;
+import edu.umd.cs.findbugs.annotations.Nullable;
 
 /**
  * A server-side timeout during a write query.
@@ -51,6 +53,7 @@ public class WriteTimeoutException extends QueryConsistencyException {
         received,
         blockFor,
         writeType,
+        null,
         false);
   }
 
@@ -61,8 +64,16 @@ public class WriteTimeoutException extends QueryConsistencyException {
       int received,
       int blockFor,
       @NonNull WriteType writeType,
+      @Nullable ExecutionInfo executionInfo,
       boolean writableStackTrace) {
-    super(coordinator, message, consistencyLevel, received, blockFor, writableStackTrace);
+    super(
+        coordinator,
+        message,
+        consistencyLevel,
+        received,
+        blockFor,
+        executionInfo,
+        writableStackTrace);
     this.writeType = writeType;
   }
 
@@ -82,6 +93,7 @@ public class WriteTimeoutException extends QueryConsistencyException {
         getReceived(),
         getBlockFor(),
         writeType,
+        getExecutionInfo(),
         true);
   }
 }

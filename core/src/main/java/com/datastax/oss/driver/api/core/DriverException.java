@@ -15,6 +15,8 @@
  */
 package com.datastax.oss.driver.api.core;
 
+import com.datastax.oss.driver.api.core.cql.ExecutionInfo;
+import com.datastax.oss.driver.api.core.cql.ResultSet;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import edu.umd.cs.findbugs.annotations.Nullable;
 
@@ -37,9 +39,51 @@ import edu.umd.cs.findbugs.annotations.Nullable;
  */
 public abstract class DriverException extends RuntimeException {
 
+  private volatile ExecutionInfo executionInfo;
+
   protected DriverException(
-      @Nullable String message, @Nullable Throwable cause, boolean writableStackTrace) {
+      @Nullable String message,
+      @Nullable ExecutionInfo executionInfo,
+      @Nullable Throwable cause,
+      boolean writableStackTrace) {
     super(message, cause, true, writableStackTrace);
+    this.executionInfo = executionInfo;
+  }
+
+  /**
+   * Returns execution information about the request that led to this error.
+   *
+   * <p>This is similar to the information returned for a successful query in {@link ResultSet},
+   * except that some fields may be absent:
+   *
+   * <ul>
+   *   <li>{@link ExecutionInfo#getCoordinator()} may be null if the error occurred before any node
+   *       was contacted;
+   *   <li>{@link ExecutionInfo#getErrors()} will contain the errors encountered for other nodes,
+   *       but not this error itself;
+   *   <li>{@link ExecutionInfo#getSuccessfulExecutionIndex()} may be -1 if the error occurred
+   *       before any execution was started;
+   *   <li>{@link ExecutionInfo#getPagingState()} and {@link ExecutionInfo#getTracingId()} will
+   *       always be null;
+   *   <li>{@link ExecutionInfo#getWarnings()} and {@link ExecutionInfo#getIncomingPayload()} will
+   *       always be empty;
+   *   <li>{@link ExecutionInfo#isSchemaInAgreement()} will always be true;
+   *   <li>{@link ExecutionInfo#getResponseSizeInBytes()} and {@link
+   *       ExecutionInfo#getCompressedResponseSizeInBytes()} will always be -1.
+   * </ul>
+   *
+   * <p>Note that this is only set for exceptions that are rethrown directly to the client from a
+   * session call. For example, individual node errors stored in {@link
+   * AllNodesFailedException#getErrors()} or {@link ExecutionInfo#getErrors()} do not contain their
+   * own execution info, and therefore return null from this method.
+   */
+  public ExecutionInfo getExecutionInfo() {
+    return executionInfo;
+  }
+
+  /** This is for internal use by the driver, a client application has no reason to call it. */
+  public void setExecutionInfo(ExecutionInfo executionInfo) {
+    this.executionInfo = executionInfo;
   }
 
   /**

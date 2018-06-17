@@ -16,9 +16,11 @@
 package com.datastax.oss.driver.api.core.servererrors;
 
 import com.datastax.oss.driver.api.core.DriverException;
+import com.datastax.oss.driver.api.core.cql.ExecutionInfo;
 import com.datastax.oss.driver.api.core.metadata.Node;
 import com.datastax.oss.driver.api.core.retry.RetryPolicy;
 import edu.umd.cs.findbugs.annotations.NonNull;
+import edu.umd.cs.findbugs.annotations.Nullable;
 
 /**
  * Thrown when a query attempts to create a keyspace or table that already exists.
@@ -33,7 +35,7 @@ public class AlreadyExistsException extends QueryValidationException {
 
   public AlreadyExistsException(
       @NonNull Node coordinator, @NonNull String keyspace, @NonNull String table) {
-    this(coordinator, makeMessage(keyspace, table), keyspace, table, false);
+    this(coordinator, makeMessage(keyspace, table), keyspace, table, null, false);
   }
 
   private AlreadyExistsException(
@@ -41,8 +43,9 @@ public class AlreadyExistsException extends QueryValidationException {
       @NonNull String message,
       @NonNull String keyspace,
       @NonNull String table,
+      @Nullable ExecutionInfo executionInfo,
       boolean writableStackTrace) {
-    super(coordinator, message, writableStackTrace);
+    super(coordinator, message, executionInfo, writableStackTrace);
     this.keyspace = keyspace;
     this.table = table;
   }
@@ -58,6 +61,7 @@ public class AlreadyExistsException extends QueryValidationException {
   @NonNull
   @Override
   public DriverException copy() {
-    return new AlreadyExistsException(getCoordinator(), getMessage(), keyspace, table, true);
+    return new AlreadyExistsException(
+        getCoordinator(), getMessage(), keyspace, table, getExecutionInfo(), true);
   }
 }

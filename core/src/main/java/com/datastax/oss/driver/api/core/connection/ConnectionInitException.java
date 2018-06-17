@@ -17,6 +17,7 @@ package com.datastax.oss.driver.api.core.connection;
 
 import com.datastax.oss.driver.api.core.AllNodesFailedException;
 import com.datastax.oss.driver.api.core.DriverException;
+import com.datastax.oss.driver.api.core.cql.ExecutionInfo;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import edu.umd.cs.findbugs.annotations.Nullable;
 
@@ -29,12 +30,16 @@ import edu.umd.cs.findbugs.annotations.Nullable;
  */
 public class ConnectionInitException extends DriverException {
   public ConnectionInitException(@NonNull String message, @Nullable Throwable cause) {
-    super(message, cause, true);
+    super(message, null, cause, true);
+  }
+
+  private ConnectionInitException(String message, ExecutionInfo executionInfo, Throwable cause) {
+    super(message, executionInfo, cause, true);
   }
 
   @NonNull
   @Override
   public DriverException copy() {
-    return new ConnectionInitException(getMessage(), getCause());
+    return new ConnectionInitException(getMessage(), getExecutionInfo(), getCause());
   }
 }

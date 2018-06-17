@@ -18,10 +18,12 @@ package com.datastax.oss.driver.api.core.servererrors;
 import com.datastax.oss.driver.api.core.AllNodesFailedException;
 import com.datastax.oss.driver.api.core.ConsistencyLevel;
 import com.datastax.oss.driver.api.core.DriverException;
+import com.datastax.oss.driver.api.core.cql.ExecutionInfo;
 import com.datastax.oss.driver.api.core.metadata.Node;
 import com.datastax.oss.driver.api.core.retry.RetryPolicy;
 import com.datastax.oss.driver.api.core.session.Request;
 import edu.umd.cs.findbugs.annotations.NonNull;
+import edu.umd.cs.findbugs.annotations.Nullable;
 import java.net.InetAddress;
 import java.util.Map;
 
@@ -62,6 +64,7 @@ public class WriteFailureException extends QueryConsistencyException {
         writeType,
         numFailures,
         reasonMap,
+        null,
         false);
   }
 
@@ -74,8 +77,16 @@ public class WriteFailureException extends QueryConsistencyException {
       @NonNull WriteType writeType,
       int numFailures,
       @NonNull Map<InetAddress, Integer> reasonMap,
+      @Nullable ExecutionInfo executionInfo,
       boolean writableStackTrace) {
-    super(coordinator, message, consistencyLevel, received, blockFor, writableStackTrace);
+    super(
+        coordinator,
+        message,
+        consistencyLevel,
+        received,
+        blockFor,
+        executionInfo,
+        writableStackTrace);
     this.writeType = writeType;
     this.numFailures = numFailures;
     this.reasonMap = reasonMap;
@@ -128,6 +139,7 @@ public class WriteFailureException extends QueryConsistencyException {
         writeType,
         numFailures,
         reasonMap,
+        getExecutionInfo(),
         true);
   }
 }

@@ -15,6 +15,7 @@
  */
 package com.datastax.oss.driver.api.core;
 
+import com.datastax.oss.driver.api.core.cql.ExecutionInfo;
 import com.datastax.oss.driver.api.core.cql.Statement;
 import edu.umd.cs.findbugs.annotations.NonNull;
 
@@ -27,12 +28,16 @@ import edu.umd.cs.findbugs.annotations.NonNull;
  */
 public class DriverExecutionException extends DriverException {
   public DriverExecutionException(Throwable cause) {
-    super(null, cause, true);
+    this(null, cause);
+  }
+
+  private DriverExecutionException(ExecutionInfo executionInfo, Throwable cause) {
+    super(null, executionInfo, cause, true);
   }
 
   @NonNull
   @Override
   public DriverException copy() {
-    return new DriverExecutionException(getCause());
+    return new DriverExecutionException(getExecutionInfo(), getCause());
   }
 }

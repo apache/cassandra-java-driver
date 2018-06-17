@@ -15,6 +15,7 @@
  */
 package com.datastax.oss.driver.api.core;
 
+import com.datastax.oss.driver.api.core.cql.ExecutionInfo;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableList;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import edu.umd.cs.findbugs.annotations.Nullable;
@@ -42,7 +43,7 @@ public class UnsupportedProtocolVersionException extends DriverException {
     String message =
         String.format("[%s] Host does not support protocol version %s", address, attemptedVersion);
     return new UnsupportedProtocolVersionException(
-        address, message, Collections.singletonList(attemptedVersion));
+        address, message, Collections.singletonList(attemptedVersion), null);
   }
 
   @NonNull
@@ -54,14 +55,22 @@ public class UnsupportedProtocolVersionException extends DriverException {
                 + "Note that the driver does not support Cassandra 2.0 or lower.",
             address, attemptedVersions);
     return new UnsupportedProtocolVersionException(
-        address, message, ImmutableList.copyOf(attemptedVersions));
+        address, message, ImmutableList.copyOf(attemptedVersions), null);
   }
 
   public UnsupportedProtocolVersionException(
       @Nullable SocketAddress address, // technically nullable, but should never be in real life
       @NonNull String message,
       @NonNull List<ProtocolVersion> attemptedVersions) {
-    super(message, null, true);
+    this(address, message, attemptedVersions, null);
+  }
+
+  private UnsupportedProtocolVersionException(
+      SocketAddress address,
+      String message,
+      List<ProtocolVersion> attemptedVersions,
+      ExecutionInfo executionInfo) {
+    super(message, executionInfo, null, true);
     this.address = address;
     this.attemptedVersions = attemptedVersions;
   }
@@ -81,6 +90,7 @@ public class UnsupportedProtocolVersionException extends DriverException {
   @NonNull
   @Override
   public DriverException copy() {
-    return new UnsupportedProtocolVersionException(address, getMessage(), attemptedVersions);
+    return new UnsupportedProtocolVersionException(
+        address, getMessage(), attemptedVersions, getExecutionInfo());
   }
 }

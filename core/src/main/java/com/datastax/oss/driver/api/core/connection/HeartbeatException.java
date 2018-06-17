@@ -16,6 +16,7 @@
 package com.datastax.oss.driver.api.core.connection;
 
 import com.datastax.oss.driver.api.core.DriverException;
+import com.datastax.oss.driver.api.core.cql.ExecutionInfo;
 import com.datastax.oss.driver.api.core.retry.RetryPolicy;
 import com.datastax.oss.driver.api.core.session.Request;
 import edu.umd.cs.findbugs.annotations.NonNull;
@@ -36,7 +37,12 @@ public class HeartbeatException extends DriverException {
 
   public HeartbeatException(
       @NonNull SocketAddress address, @Nullable String message, @Nullable Throwable cause) {
-    super(message, cause, true);
+    this(address, message, null, cause);
+  }
+
+  public HeartbeatException(
+      SocketAddress address, String message, ExecutionInfo executionInfo, Throwable cause) {
+    super(message, executionInfo, cause, true);
     this.address = address;
   }
 
@@ -49,6 +55,6 @@ public class HeartbeatException extends DriverException {
   @NonNull
   @Override
   public DriverException copy() {
-    return new HeartbeatException(address, getMessage(), getCause());
+    return new HeartbeatException(address, getMessage(), getExecutionInfo(), getCause());
   }
 }

@@ -16,6 +16,7 @@
 package com.datastax.oss.driver.api.core.connection;
 
 import com.datastax.oss.driver.api.core.DriverException;
+import com.datastax.oss.driver.api.core.cql.ExecutionInfo;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import java.net.SocketAddress;
 
@@ -30,7 +31,12 @@ public class FrameTooLongException extends DriverException {
   private final SocketAddress address;
 
   public FrameTooLongException(@NonNull SocketAddress address, @NonNull String message) {
-    super(message, null, false);
+    this(address, message, null);
+  }
+
+  private FrameTooLongException(
+      SocketAddress address, String message, ExecutionInfo executionInfo) {
+    super(message, executionInfo, null, false);
     this.address = address;
   }
 
@@ -43,6 +49,6 @@ public class FrameTooLongException extends DriverException {
   @NonNull
   @Override
   public DriverException copy() {
-    return new FrameTooLongException(address, getMessage());
+    return new FrameTooLongException(address, getMessage(), getExecutionInfo());
   }
 }

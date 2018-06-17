@@ -18,6 +18,7 @@ package com.datastax.oss.driver.api.core.servererrors;
 import com.datastax.oss.driver.api.core.AllNodesFailedException;
 import com.datastax.oss.driver.api.core.ConsistencyLevel;
 import com.datastax.oss.driver.api.core.DriverException;
+import com.datastax.oss.driver.api.core.cql.ExecutionInfo;
 import com.datastax.oss.driver.api.core.metadata.Node;
 import com.datastax.oss.driver.api.core.retry.RetryPolicy;
 import com.datastax.oss.driver.api.core.session.Request;
@@ -50,6 +51,7 @@ public class UnavailableException extends QueryExecutionException {
         consistencyLevel,
         required,
         alive,
+        null,
         false);
   }
 
@@ -59,8 +61,9 @@ public class UnavailableException extends QueryExecutionException {
       @NonNull ConsistencyLevel consistencyLevel,
       int required,
       int alive,
+      ExecutionInfo executionInfo,
       boolean writableStackTrace) {
-    super(coordinator, message, writableStackTrace);
+    super(coordinator, message, executionInfo, writableStackTrace);
     this.consistencyLevel = consistencyLevel;
     this.required = required;
     this.alive = alive;
@@ -92,6 +95,12 @@ public class UnavailableException extends QueryExecutionException {
   @Override
   public DriverException copy() {
     return new UnavailableException(
-        getCoordinator(), getMessage(), consistencyLevel, required, alive, true);
+        getCoordinator(),
+        getMessage(),
+        consistencyLevel,
+        required,
+        alive,
+        getExecutionInfo(),
+        true);
   }
 }
