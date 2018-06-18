@@ -4,6 +4,7 @@
 
 ### 4.0.0-beta1 (in progress)
 
+- [improvement] JAVA-1870: Use sensible defaults in RequestLogger if config options are missing
 - [improvement] JAVA-1877: Use a separate reconnection schedule for the control connection
 - [improvement] JAVA-1763: Generate a binary tarball as part of the build process
 - [improvement] JAVA-1884: Add additional methods from TypeToken to GenericType
