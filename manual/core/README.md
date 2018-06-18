@@ -11,6 +11,8 @@ following coordinates:
 </dependency>
 ```
 
+(For more details on setting up your build tool, see the [integration](integration/) page.)
+
 ### Quick start
 
 Here's a short program that connects to Cassandra and executes a query:
