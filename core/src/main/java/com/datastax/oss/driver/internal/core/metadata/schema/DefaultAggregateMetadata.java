@@ -20,7 +20,10 @@ import com.datastax.oss.driver.api.core.metadata.schema.AggregateMetadata;
 import com.datastax.oss.driver.api.core.metadata.schema.FunctionSignature;
 import com.datastax.oss.driver.api.core.type.DataType;
 import com.datastax.oss.driver.api.core.type.codec.TypeCodec;
+import edu.umd.cs.findbugs.annotations.NonNull;
+import edu.umd.cs.findbugs.annotations.Nullable;
 import java.util.Objects;
+import java.util.Optional;
 import net.jcip.annotations.Immutable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -30,24 +33,24 @@ public class DefaultAggregateMetadata implements AggregateMetadata {
 
   private static final Logger LOG = LoggerFactory.getLogger(DefaultAggregateMetadata.class);
 
-  private final CqlIdentifier keyspace;
-  private final FunctionSignature signature;
-  private final FunctionSignature finalFuncSignature;
-  private final Object initCond;
-  private final DataType returnType;
-  private final FunctionSignature stateFuncSignature;
-  private final DataType stateType;
-  private final TypeCodec<Object> stateTypeCodec;
+  @NonNull private final CqlIdentifier keyspace;
+  @NonNull private final FunctionSignature signature;
+  @Nullable private final FunctionSignature finalFuncSignature;
+  @Nullable private final Object initCond;
+  @NonNull private final DataType returnType;
+  @NonNull private final FunctionSignature stateFuncSignature;
+  @NonNull private final DataType stateType;
+  @NonNull private final TypeCodec<Object> stateTypeCodec;
 
   public DefaultAggregateMetadata(
-      CqlIdentifier keyspace,
-      FunctionSignature signature,
-      FunctionSignature finalFuncSignature,
-      Object initCond,
-      DataType returnType,
-      FunctionSignature stateFuncSignature,
-      DataType stateType,
-      TypeCodec<Object> stateTypeCodec) {
+      @NonNull CqlIdentifier keyspace,
+      @NonNull FunctionSignature signature,
+      @Nullable FunctionSignature finalFuncSignature,
+      @Nullable Object initCond,
+      @NonNull DataType returnType,
+      @NonNull FunctionSignature stateFuncSignature,
+      @NonNull DataType stateType,
+      @NonNull TypeCodec<Object> stateTypeCodec) {
     this.keyspace = keyspace;
     this.signature = signature;
     this.finalFuncSignature = finalFuncSignature;
@@ -58,51 +61,62 @@ public class DefaultAggregateMetadata implements AggregateMetadata {
     this.stateTypeCodec = stateTypeCodec;
   }
 
+  @NonNull
   @Override
   public CqlIdentifier getKeyspace() {
     return keyspace;
   }
 
+  @NonNull
   @Override
   public FunctionSignature getSignature() {
     return signature;
   }
 
+  @NonNull
   @Override
-  public FunctionSignature getFinalFuncSignature() {
-    return finalFuncSignature;
+  public Optional<FunctionSignature> getFinalFuncSignature() {
+    return Optional.ofNullable(finalFuncSignature);
   }
 
+  @NonNull
   @Override
-  public Object getInitCond() {
-    return initCond;
+  public Optional<Object> getInitCond() {
+    return Optional.ofNullable(initCond);
   }
 
+  @NonNull
   @Override
   public DataType getReturnType() {
     return returnType;
   }
 
+  @NonNull
   @Override
   public FunctionSignature getStateFuncSignature() {
     return stateFuncSignature;
   }
 
+  @NonNull
   @Override
   public DataType getStateType() {
     return stateType;
   }
 
+  @NonNull
   @Override
-  public String formatInitCond() {
+  public Optional<String> formatInitCond() {
+    if (initCond == null) {
+      return Optional.empty();
+    }
     try {
-      return stateTypeCodec.format(initCond);
+      return Optional.of(stateTypeCodec.format(initCond));
     } catch (Throwable t) {
       LOG.warn(
           String.format(
               "Failed to format INITCOND for %s.%s, using toString instead",
               keyspace.asInternal(), signature.getName().asInternal()));
-      return initCond.toString();
+      return Optional.of(initCond.toString());
     }
   }
 
@@ -114,8 +128,8 @@ public class DefaultAggregateMetadata implements AggregateMetadata {
       AggregateMetadata that = (AggregateMetadata) other;
       return Objects.equals(this.keyspace, that.getKeyspace())
           && Objects.equals(this.signature, that.getSignature())
-          && Objects.equals(this.finalFuncSignature, that.getFinalFuncSignature())
-          && Objects.equals(this.initCond, that.getInitCond())
+          && Objects.equals(this.finalFuncSignature, that.getFinalFuncSignature().orElse(null))
+          && Objects.equals(this.initCond, that.getInitCond().orElse(null))
           && Objects.equals(this.returnType, that.getReturnType())
           && Objects.equals(this.stateFuncSignature, that.getStateFuncSignature())
           && Objects.equals(this.stateType, that.getStateType());

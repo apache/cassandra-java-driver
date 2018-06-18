@@ -17,6 +17,7 @@ package com.datastax.oss.driver.internal.querybuilder.lhs;
 
 import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.internal.querybuilder.CqlHelper;
+import edu.umd.cs.findbugs.annotations.NonNull;
 import net.jcip.annotations.Immutable;
 
 @Immutable
@@ -24,15 +25,16 @@ public class TupleLeftOperand implements LeftOperand {
 
   private final Iterable<CqlIdentifier> identifiers;
 
-  public TupleLeftOperand(Iterable<CqlIdentifier> identifiers) {
+  public TupleLeftOperand(@NonNull Iterable<CqlIdentifier> identifiers) {
     this.identifiers = identifiers;
   }
 
   @Override
-  public void appendTo(StringBuilder builder) {
+  public void appendTo(@NonNull StringBuilder builder) {
     CqlHelper.appendIds(identifiers, builder, "(", ",", ")");
   }
 
+  @NonNull
   public Iterable<CqlIdentifier> getIdentifiers() {
     return identifiers;
   }

@@ -20,6 +20,8 @@ import com.datastax.oss.driver.api.core.metadata.NodeState;
 import com.datastax.oss.driver.api.core.session.Request;
 import com.datastax.oss.driver.api.core.session.Session;
 import com.datastax.oss.driver.api.core.session.SessionBuilder;
+import edu.umd.cs.findbugs.annotations.NonNull;
+import edu.umd.cs.findbugs.annotations.Nullable;
 import java.net.InetSocketAddress;
 import java.util.Collection;
 import java.util.Map;
@@ -48,9 +50,9 @@ public interface LoadBalancingPolicy extends AutoCloseable {
    *     but the set will be empty.
    */
   void init(
-      Map<InetSocketAddress, Node> nodes,
-      DistanceReporter distanceReporter,
-      Set<InetSocketAddress> contactPoints);
+      @NonNull Map<InetSocketAddress, Node> nodes,
+      @NonNull DistanceReporter distanceReporter,
+      @NonNull Set<InetSocketAddress> contactPoints);
 
   /**
    * Returns the coordinators to use for a new query.
@@ -64,7 +66,8 @@ public interface LoadBalancingPolicy extends AutoCloseable {
    * @return the list of coordinators to try. <b>This must be a concurrent queue</b>; {@link
    *     java.util.concurrent.ConcurrentLinkedQueue} is a good choice.
    */
-  Queue<Node> newQueryPlan(Request request, Session session);
+  @NonNull
+  Queue<Node> newQueryPlan(@Nullable Request request, @Nullable Session session);
 
   /**
    * Called when a node is added to the cluster.
@@ -78,16 +81,16 @@ public interface LoadBalancingPolicy extends AutoCloseable {
    *   <li>or a topology event is received from the cluster.
    * </ul>
    */
-  void onAdd(Node node);
+  void onAdd(@NonNull Node node);
 
   /** Called when a node is determined to be up. */
-  void onUp(Node node);
+  void onUp(@NonNull Node node);
 
   /** Called when a node is determined to be down. */
-  void onDown(Node node);
+  void onDown(@NonNull Node node);
 
   /** Called when a node is removed from the cluster. */
-  void onRemove(Node node);
+  void onRemove(@NonNull Node node);
 
   /** Called when the cluster that this policy is associated with closes. */
   @Override
@@ -95,6 +98,6 @@ public interface LoadBalancingPolicy extends AutoCloseable {
 
   /** An object that the policy uses to signal decisions it makes about node distances. */
   interface DistanceReporter {
-    void setDistance(Node node, NodeDistance distance);
+    void setDistance(@NonNull Node node, @NonNull NodeDistance distance);
   }
 }

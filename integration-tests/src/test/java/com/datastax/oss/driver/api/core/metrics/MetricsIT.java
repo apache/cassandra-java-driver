@@ -43,14 +43,14 @@ public class MetricsIT {
 
       assertThat(session.getMetrics())
           .hasValueSatisfying(
-              metrics -> {
-                Timer requestsTimer = metrics.getSessionMetric(DefaultSessionMetric.CQL_REQUESTS);
-                assertThat(requestsTimer).isNotNull();
-
-                // No need to be very sophisticated, metrics are already covered individually in
-                // unit tests.
-                assertThat(requestsTimer.getCount()).isEqualTo(10);
-              });
+              metrics ->
+                  assertThat(metrics.<Timer>getSessionMetric(DefaultSessionMetric.CQL_REQUESTS))
+                      .hasValueSatisfying(
+                          cqlRequests -> {
+                            // No need to be very sophisticated, metrics are already covered
+                            // individually in unit tests.
+                            assertThat(cqlRequests.getCount()).isEqualTo(10);
+                          }));
     }
   }
 
@@ -68,24 +68,22 @@ public class MetricsIT {
       assertThat(session.getMetrics())
           .hasValueSatisfying(
               metrics -> {
-                Meter bytesSent = metrics.getSessionMetric(DefaultSessionMetric.BYTES_SENT);
-                assertThat(bytesSent).isNotNull();
-                // Can't be precise here as payload can be dependent on protocol version.
-                assertThat(bytesSent.getCount()).isGreaterThan(0);
-
-                Meter bytesReceived = metrics.getSessionMetric(DefaultSessionMetric.BYTES_RECEIVED);
-                assertThat(bytesReceived).isNotNull();
-                assertThat(bytesReceived.getCount()).isGreaterThan(0);
+                assertThat(metrics.<Meter>getSessionMetric(DefaultSessionMetric.BYTES_SENT))
+                    .hasValueSatisfying(
+                        // Can't be precise here as payload can be dependent on protocol version.
+                        bytesSent -> assertThat(bytesSent.getCount()).isGreaterThan(0));
+                assertThat(metrics.<Meter>getSessionMetric(DefaultSessionMetric.BYTES_RECEIVED))
+                    .hasValueSatisfying(
+                        bytesReceived -> assertThat(bytesReceived.getCount()).isGreaterThan(0));
 
                 // get only node in cluster and evaluate its metrics.
                 Node node = session.getMetadata().getNodes().values().iterator().next();
-                bytesSent = metrics.getNodeMetric(node, DefaultNodeMetric.BYTES_SENT);
-                assertThat(bytesSent).isNotNull();
-                assertThat(bytesSent.getCount()).isGreaterThan(0);
-
-                bytesReceived = metrics.getNodeMetric(node, DefaultNodeMetric.BYTES_RECEIVED);
-                assertThat(bytesReceived).isNotNull();
-                assertThat(bytesReceived.getCount()).isGreaterThan(0);
+                assertThat(metrics.<Meter>getNodeMetric(node, DefaultNodeMetric.BYTES_SENT))
+                    .hasValueSatisfying(
+                        bytesSent -> assertThat(bytesSent.getCount()).isGreaterThan(0));
+                assertThat(metrics.<Meter>getNodeMetric(node, DefaultNodeMetric.BYTES_RECEIVED))
+                    .hasValueSatisfying(
+                        bytesReceived -> assertThat(bytesReceived.getCount()).isGreaterThan(0));
               });
     }
   }

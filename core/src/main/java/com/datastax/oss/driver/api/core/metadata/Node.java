@@ -19,6 +19,8 @@ import com.datastax.oss.driver.api.core.Version;
 import com.datastax.oss.driver.api.core.addresstranslation.AddressTranslator;
 import com.datastax.oss.driver.api.core.loadbalancing.LoadBalancingPolicy;
 import com.datastax.oss.driver.api.core.loadbalancing.NodeDistance;
+import edu.umd.cs.findbugs.annotations.NonNull;
+import edu.umd.cs.findbugs.annotations.Nullable;
 import java.net.InetSocketAddress;
 import java.util.Map;
 import java.util.Optional;
@@ -37,6 +39,7 @@ public interface Node {
    *
    * <p>The driver also uses this to uniquely identify a node.
    */
+  @NonNull
   InetSocketAddress getConnectAddress();
 
   /**
@@ -48,6 +51,7 @@ public interface Node {
    * the {@code system.local} table, so this will be unknown for the control node, until the control
    * connection reconnects to another node.
    */
+  @NonNull
   Optional<InetSocketAddress> getBroadcastAddress();
 
   /**
@@ -57,12 +61,35 @@ public interface Node {
    * <p>This may not be know at all times. In particular, current Cassandra versions (3.10) only
    * store it in {@code system.local}, so this will be known only for the control node.
    */
+  @NonNull
   Optional<InetSocketAddress> getListenAddress();
 
+  /**
+   * The datacenter that this node belongs to (according to the server-side snitch).
+   *
+   * <p>This should be non-null in a healthy deployment, but the driver will still function, and
+   * report {@code null} here, if the server metadata was corrupted.
+   */
+  @Nullable
   String getDatacenter();
 
+  /**
+   * The rack that this node belongs to (according to the server-side snitch).
+   *
+   * <p>This should be non-null in a healthy deployment, but the driver will still function, and
+   * report {@code null} here, if the server metadata was corrupted.
+   */
+  @Nullable
   String getRack();
 
+  /**
+   * The Cassandra version of the server.
+   *
+   * <p>This should be non-null in a healthy deployment, but the driver will still function, and
+   * report {@code null} here, if the server metadata was corrupted or the reported version could
+   * not be parsed.
+   */
+  @Nullable
   Version getCassandraVersion();
 
   /**
@@ -75,8 +102,10 @@ public interface Node {
    * <p>Note that the returned map is immutable: if the properties change, this is reflected by
    * publishing a new map instance, therefore you must call this method again to see the changes.
    */
+  @NonNull
   Map<String, Object> getExtras();
 
+  @NonNull
   NodeState getState();
 
   /**
@@ -99,14 +128,25 @@ public interface Node {
    * <p>This is exposed here for information only. Distance events are handled internally by the
    * driver.
    */
+  @NonNull
   NodeDistance getDistance();
 
   /**
    * The host ID that is assigned to this node by Cassandra. This value can be used to uniquely
    * identify a node even when the underling IP address changes.
+   *
+   * <p>This should be non-null in a healthy deployment, but the driver will still function, and
+   * report {@code null} here, if the server metadata was corrupted.
    */
+  @Nullable
   UUID getHostId();
 
-  /** The current version that is associated with the node's schema. */
+  /**
+   * The current version that is associated with the node's schema.
+   *
+   * <p>This should be non-null in a healthy deployment, but the driver will still function, and
+   * report {@code null} here, if the server metadata was corrupted.
+   */
+  @Nullable
   UUID getSchemaVersion();
 }

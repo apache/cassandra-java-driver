@@ -19,6 +19,8 @@ import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.querybuilder.select.Selector;
 import com.datastax.oss.driver.api.querybuilder.term.Term;
 import com.datastax.oss.driver.shaded.guava.common.base.Preconditions;
+import edu.umd.cs.findbugs.annotations.NonNull;
+import edu.umd.cs.findbugs.annotations.Nullable;
 import java.util.Objects;
 import net.jcip.annotations.Immutable;
 
@@ -30,11 +32,15 @@ public class RangeSelector implements Selector {
   private final Term right;
   private final CqlIdentifier alias;
 
-  public RangeSelector(Selector collection, Term left, Term right) {
+  public RangeSelector(@NonNull Selector collection, @Nullable Term left, @Nullable Term right) {
     this(collection, left, right, null);
   }
 
-  public RangeSelector(Selector collection, Term left, Term right, CqlIdentifier alias) {
+  public RangeSelector(
+      @NonNull Selector collection,
+      @Nullable Term left,
+      @Nullable Term right,
+      @Nullable CqlIdentifier alias) {
     Preconditions.checkNotNull(collection);
     Preconditions.checkArgument(
         left != null || right != null, "At least one of the bounds must be specified");
@@ -44,13 +50,14 @@ public class RangeSelector implements Selector {
     this.alias = alias;
   }
 
+  @NonNull
   @Override
-  public Selector as(CqlIdentifier alias) {
+  public Selector as(@NonNull CqlIdentifier alias) {
     return new RangeSelector(collection, left, right, alias);
   }
 
   @Override
-  public void appendTo(StringBuilder builder) {
+  public void appendTo(@NonNull StringBuilder builder) {
     collection.appendTo(builder);
     builder.append('[');
     if (left != null) {
@@ -66,18 +73,22 @@ public class RangeSelector implements Selector {
     }
   }
 
+  @NonNull
   public Selector getCollection() {
     return collection;
   }
 
+  @Nullable
   public Term getLeft() {
     return left;
   }
 
+  @Nullable
   public Term getRight() {
     return right;
   }
 
+  @Nullable
   @Override
   public CqlIdentifier getAlias() {
     return alias;

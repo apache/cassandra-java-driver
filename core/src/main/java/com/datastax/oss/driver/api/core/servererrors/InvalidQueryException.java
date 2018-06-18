@@ -18,6 +18,7 @@ package com.datastax.oss.driver.api.core.servererrors;
 import com.datastax.oss.driver.api.core.DriverException;
 import com.datastax.oss.driver.api.core.metadata.Node;
 import com.datastax.oss.driver.api.core.retry.RetryPolicy;
+import edu.umd.cs.findbugs.annotations.NonNull;
 
 /**
  * Indicates a syntactically correct, but invalid query.
@@ -27,14 +28,16 @@ import com.datastax.oss.driver.api.core.retry.RetryPolicy;
  */
 public class InvalidQueryException extends QueryValidationException {
 
-  public InvalidQueryException(Node coordinator, String message) {
+  public InvalidQueryException(@NonNull Node coordinator, @NonNull String message) {
     this(coordinator, message, false);
   }
 
-  private InvalidQueryException(Node coordinator, String message, boolean writableStackTrace) {
+  private InvalidQueryException(
+      @NonNull Node coordinator, @NonNull String message, boolean writableStackTrace) {
     super(coordinator, message, writableStackTrace);
   }
 
+  @NonNull
   @Override
   public DriverException copy() {
     return new InvalidQueryException(getCoordinator(), getMessage(), true);

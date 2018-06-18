@@ -17,6 +17,7 @@ package com.datastax.oss.driver.api.core.data;
 
 import com.datastax.oss.driver.api.core.detach.Detachable;
 import com.datastax.oss.driver.api.core.type.UserDefinedType;
+import edu.umd.cs.findbugs.annotations.NonNull;
 
 /**
  * Driver-side representation of an instance of a CQL user defined type.
@@ -32,5 +33,6 @@ import com.datastax.oss.driver.api.core.type.UserDefinedType;
 public interface UdtValue
     extends GettableById, GettableByName, SettableById<UdtValue>, SettableByName<UdtValue> {
 
+  @NonNull
   UserDefinedType getType();
 }

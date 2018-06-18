@@ -18,6 +18,8 @@ package com.datastax.oss.driver.internal.querybuilder.condition;
 import com.datastax.oss.driver.api.querybuilder.condition.Condition;
 import com.datastax.oss.driver.api.querybuilder.term.Term;
 import com.datastax.oss.driver.internal.querybuilder.lhs.LeftOperand;
+import edu.umd.cs.findbugs.annotations.NonNull;
+import edu.umd.cs.findbugs.annotations.Nullable;
 import net.jcip.annotations.Immutable;
 
 @Immutable
@@ -27,14 +29,15 @@ public class DefaultCondition implements Condition {
   private final String operator;
   private final Term rightOperand;
 
-  public DefaultCondition(LeftOperand leftOperand, String operator, Term rightOperand) {
+  public DefaultCondition(
+      @NonNull LeftOperand leftOperand, @NonNull String operator, @Nullable Term rightOperand) {
     this.leftOperand = leftOperand;
     this.operator = operator;
     this.rightOperand = rightOperand;
   }
 
   @Override
-  public void appendTo(StringBuilder builder) {
+  public void appendTo(@NonNull StringBuilder builder) {
     leftOperand.appendTo(builder);
     builder.append(operator);
     if (rightOperand != null) {
@@ -42,14 +45,17 @@ public class DefaultCondition implements Condition {
     }
   }
 
+  @NonNull
   public LeftOperand getLeftOperand() {
     return leftOperand;
   }
 
+  @NonNull
   public String getOperator() {
     return operator;
   }
 
+  @Nullable
   public Term getRightOperand() {
     return rightOperand;
   }

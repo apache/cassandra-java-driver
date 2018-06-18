@@ -21,49 +21,57 @@ import com.datastax.oss.driver.api.core.type.DataTypes;
 import com.datastax.oss.driver.api.core.type.codec.TypeCodec;
 import com.datastax.oss.driver.api.core.type.reflect.GenericType;
 import com.datastax.oss.protocol.internal.util.Bytes;
+import edu.umd.cs.findbugs.annotations.NonNull;
+import edu.umd.cs.findbugs.annotations.Nullable;
 import java.math.BigInteger;
 import java.nio.ByteBuffer;
 import net.jcip.annotations.ThreadSafe;
 
 @ThreadSafe
 public class VarIntCodec implements TypeCodec<BigInteger> {
+  @NonNull
   @Override
   public GenericType<BigInteger> getJavaType() {
     return GenericType.BIG_INTEGER;
   }
 
+  @NonNull
   @Override
   public DataType getCqlType() {
     return DataTypes.VARINT;
   }
 
   @Override
-  public boolean accepts(Object value) {
+  public boolean accepts(@NonNull Object value) {
     return value instanceof BigInteger;
   }
 
   @Override
-  public boolean accepts(Class<?> javaClass) {
+  public boolean accepts(@NonNull Class<?> javaClass) {
     return BigInteger.class.isAssignableFrom(javaClass);
   }
 
+  @Nullable
   @Override
-  public ByteBuffer encode(BigInteger value, ProtocolVersion protocolVersion) {
+  public ByteBuffer encode(@Nullable BigInteger value, @NonNull ProtocolVersion protocolVersion) {
     return (value == null) ? null : ByteBuffer.wrap(value.toByteArray());
   }
 
+  @Nullable
   @Override
-  public BigInteger decode(ByteBuffer bytes, ProtocolVersion protocolVersion) {
+  public BigInteger decode(@Nullable ByteBuffer bytes, @NonNull ProtocolVersion protocolVersion) {
     return (bytes == null) || bytes.remaining() == 0 ? null : new BigInteger(Bytes.getArray(bytes));
   }
 
+  @NonNull
   @Override
-  public String format(BigInteger value) {
+  public String format(@Nullable BigInteger value) {
     return (value == null) ? "NULL" : value.toString();
   }
 
+  @Nullable
   @Override
-  public BigInteger parse(String value) {
+  public BigInteger parse(@Nullable String value) {
     try {
       return (value == null || value.isEmpty() || value.equalsIgnoreCase("NULL"))
           ? null

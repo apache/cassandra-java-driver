@@ -23,6 +23,8 @@ import com.datastax.oss.driver.api.core.type.UserDefinedType;
 import com.datastax.oss.driver.api.core.type.codec.registry.CodecRegistry;
 import com.datastax.oss.driver.shaded.guava.common.base.Preconditions;
 import com.datastax.oss.protocol.internal.util.Bytes;
+import edu.umd.cs.findbugs.annotations.NonNull;
+import edu.umd.cs.findbugs.annotations.Nullable;
 import java.io.InvalidObjectException;
 import java.io.ObjectInputStream;
 import java.io.Serializable;
@@ -38,11 +40,11 @@ public class DefaultUdtValue implements UdtValue, Serializable {
   private final UserDefinedType type;
   private final ByteBuffer[] values;
 
-  public DefaultUdtValue(UserDefinedType type) {
+  public DefaultUdtValue(@NonNull UserDefinedType type) {
     this(type, new ByteBuffer[type.getFieldTypes().size()]);
   }
 
-  public DefaultUdtValue(UserDefinedType type, Object... values) {
+  public DefaultUdtValue(@NonNull UserDefinedType type, @NonNull Object... values) {
     this(
         type,
         ValuesHelper.encodeValues(
@@ -58,6 +60,7 @@ public class DefaultUdtValue implements UdtValue, Serializable {
     this.values = values;
   }
 
+  @NonNull
   @Override
   public UserDefinedType getType() {
     return type;
@@ -69,15 +72,16 @@ public class DefaultUdtValue implements UdtValue, Serializable {
   }
 
   @Override
-  public int firstIndexOf(CqlIdentifier id) {
+  public int firstIndexOf(@NonNull CqlIdentifier id) {
     return type.firstIndexOf(id);
   }
 
   @Override
-  public int firstIndexOf(String name) {
+  public int firstIndexOf(@NonNull String name) {
     return type.firstIndexOf(name);
   }
 
+  @NonNull
   @Override
   public DataType getType(int i) {
     return type.getFieldTypes().get(i);
@@ -88,17 +92,20 @@ public class DefaultUdtValue implements UdtValue, Serializable {
     return values[i];
   }
 
+  @NonNull
   @Override
-  public UdtValue setBytesUnsafe(int i, ByteBuffer v) {
+  public UdtValue setBytesUnsafe(int i, @Nullable ByteBuffer v) {
     values[i] = v;
     return this;
   }
 
+  @NonNull
   @Override
   public CodecRegistry codecRegistry() {
     return type.getAttachmentPoint().codecRegistry();
   }
 
+  @NonNull
   @Override
   public ProtocolVersion protocolVersion() {
     return type.getAttachmentPoint().protocolVersion();
@@ -153,7 +160,9 @@ public class DefaultUdtValue implements UdtValue, Serializable {
           this.codecRegistry()
               .codecFor(innerThisType)
               .decode(this.values[i], this.protocolVersion());
-      result = 31 * result + thisValue.hashCode();
+      if (thisValue != null) {
+        result = 31 * result + thisValue.hashCode();
+      }
     }
     return result;
   }

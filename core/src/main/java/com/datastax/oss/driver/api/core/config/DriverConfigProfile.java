@@ -15,6 +15,7 @@
  */
 package com.datastax.oss.driver.api.core.config;
 
+import edu.umd.cs.findbugs.annotations.NonNull;
 import java.time.Duration;
 import java.util.List;
 import java.util.Map;
@@ -50,80 +51,108 @@ public interface DriverConfigProfile {
    *
    * <p>Derived profiles inherit the name of their parent.
    */
+  @NonNull
   String getName();
 
-  boolean isDefined(DriverOption option);
+  boolean isDefined(@NonNull DriverOption option);
 
-  boolean getBoolean(DriverOption option);
+  boolean getBoolean(@NonNull DriverOption option);
 
-  DriverConfigProfile withBoolean(DriverOption option, boolean value);
+  @NonNull
+  DriverConfigProfile withBoolean(@NonNull DriverOption option, boolean value);
 
-  List<Boolean> getBooleanList(DriverOption option);
+  @NonNull
+  List<Boolean> getBooleanList(@NonNull DriverOption option);
 
-  DriverConfigProfile withBooleanList(DriverOption option, List<Boolean> value);
+  @NonNull
+  DriverConfigProfile withBooleanList(@NonNull DriverOption option, @NonNull List<Boolean> value);
 
-  int getInt(DriverOption option);
+  int getInt(@NonNull DriverOption option);
 
-  DriverConfigProfile withInt(DriverOption option, int value);
+  @NonNull
+  DriverConfigProfile withInt(@NonNull DriverOption option, int value);
 
-  List<Integer> getIntList(DriverOption option);
+  @NonNull
+  List<Integer> getIntList(@NonNull DriverOption option);
 
-  DriverConfigProfile withIntList(DriverOption option, List<Integer> value);
+  @NonNull
+  DriverConfigProfile withIntList(@NonNull DriverOption option, @NonNull List<Integer> value);
 
-  long getLong(DriverOption option);
+  long getLong(@NonNull DriverOption option);
 
-  DriverConfigProfile withLong(DriverOption option, long value);
+  @NonNull
+  DriverConfigProfile withLong(@NonNull DriverOption option, long value);
 
-  List<Long> getLongList(DriverOption option);
+  @NonNull
+  List<Long> getLongList(@NonNull DriverOption option);
 
-  DriverConfigProfile withLongList(DriverOption option, List<Long> value);
+  @NonNull
+  DriverConfigProfile withLongList(@NonNull DriverOption option, @NonNull List<Long> value);
 
-  double getDouble(DriverOption option);
+  double getDouble(@NonNull DriverOption option);
 
-  DriverConfigProfile withDouble(DriverOption option, double value);
+  @NonNull
+  DriverConfigProfile withDouble(@NonNull DriverOption option, double value);
 
-  List<Double> getDoubleList(DriverOption option);
+  @NonNull
+  List<Double> getDoubleList(@NonNull DriverOption option);
 
-  DriverConfigProfile withDoubleList(DriverOption option, List<Double> value);
+  @NonNull
+  DriverConfigProfile withDoubleList(@NonNull DriverOption option, @NonNull List<Double> value);
 
-  String getString(DriverOption option);
+  @NonNull
+  String getString(@NonNull DriverOption option);
 
-  DriverConfigProfile withString(DriverOption option, String value);
+  @NonNull
+  DriverConfigProfile withString(@NonNull DriverOption option, @NonNull String value);
 
-  List<String> getStringList(DriverOption option);
+  @NonNull
+  List<String> getStringList(@NonNull DriverOption option);
 
-  DriverConfigProfile withStringList(DriverOption option, List<String> value);
+  @NonNull
+  DriverConfigProfile withStringList(@NonNull DriverOption option, @NonNull List<String> value);
 
-  Map<String, String> getStringMap(DriverOption option);
+  @NonNull
+  Map<String, String> getStringMap(@NonNull DriverOption option);
 
-  DriverConfigProfile withStringMap(DriverOption option, Map<String, String> value);
+  @NonNull
+  DriverConfigProfile withStringMap(
+      @NonNull DriverOption option, @NonNull Map<String, String> value);
 
   /**
    * @return a size in bytes. This is separate from {@link #getLong(DriverOption)}, in case
    *     implementations want to allow users to provide sizes in a more human-readable way, for
    *     example "256 MB".
    */
-  long getBytes(DriverOption option);
+  long getBytes(@NonNull DriverOption option);
 
   /** @see #getBytes(DriverOption) */
-  DriverConfigProfile withBytes(DriverOption option, long value);
+  @NonNull
+  DriverConfigProfile withBytes(@NonNull DriverOption option, long value);
 
   /** @see #getBytes(DriverOption) */
+  @NonNull
   List<Long> getBytesList(DriverOption option);
 
   /** @see #getBytes(DriverOption) */
-  DriverConfigProfile withBytesList(DriverOption option, List<Long> value);
+  @NonNull
+  DriverConfigProfile withBytesList(@NonNull DriverOption option, @NonNull List<Long> value);
 
-  Duration getDuration(DriverOption option);
+  @NonNull
+  Duration getDuration(@NonNull DriverOption option);
 
-  DriverConfigProfile withDuration(DriverOption option, Duration value);
+  @NonNull
+  DriverConfigProfile withDuration(@NonNull DriverOption option, @NonNull Duration value);
 
-  List<Duration> getDurationList(DriverOption option);
+  @NonNull
+  List<Duration> getDurationList(@NonNull DriverOption option);
 
-  DriverConfigProfile withDurationList(DriverOption option, List<Duration> value);
+  @NonNull
+  DriverConfigProfile withDurationList(@NonNull DriverOption option, @NonNull List<Duration> value);
 
   /** Unsets an option. */
-  DriverConfigProfile without(DriverOption option);
+  @NonNull
+  DriverConfigProfile without(@NonNull DriverOption option);
 
   /**
    * Returns a representation of all the child options under a given option.
@@ -132,7 +161,8 @@ public interface DriverConfigProfile {
    * implementation does not matter, as long as identical sections (same options with same values,
    * regardless of order) compare as equal and have the same {@code hashCode()}.
    */
-  Object getComparisonKey(DriverOption option);
+  @NonNull
+  Object getComparisonKey(@NonNull DriverOption option);
 
   /**
    * Enumerates all the entries in this profile, including those that were inherited from another
@@ -144,5 +174,6 @@ public interface DriverConfigProfile {
    * possible types are {@code String}, {@code Number}, {@code Boolean}, {@code Map<String,Object>},
    * {@code List<Object>}, or {@code null}.
    */
+  @NonNull
   SortedSet<Map.Entry<String, Object>> entrySet();
 }

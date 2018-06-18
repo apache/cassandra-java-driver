@@ -16,12 +16,16 @@
 package com.datastax.oss.driver.api.core.type;
 
 import com.datastax.oss.protocol.internal.ProtocolConstants;
+import edu.umd.cs.findbugs.annotations.NonNull;
 
 public interface SetType extends DataType {
+
+  @NonNull
   DataType getElementType();
 
   boolean isFrozen();
 
+  @NonNull
   @Override
   default String asCql(boolean includeFrozen, boolean pretty) {
     String template = (isFrozen() && includeFrozen) ? "frozen<set<%s>>" : "set<%s>";

@@ -22,6 +22,8 @@ import com.datastax.oss.driver.api.core.metrics.Metrics;
 import com.datastax.oss.driver.api.core.metrics.NodeMetric;
 import com.datastax.oss.driver.api.core.metrics.SessionMetric;
 import com.datastax.oss.driver.internal.core.metadata.DefaultNode;
+import edu.umd.cs.findbugs.annotations.NonNull;
+import java.util.Optional;
 import net.jcip.annotations.ThreadSafe;
 
 @ThreadSafe
@@ -35,21 +37,27 @@ public class DefaultMetrics implements Metrics {
     this.sessionUpdater = sessionUpdater;
   }
 
+  @NonNull
   @Override
   public MetricRegistry getRegistry() {
     return registry;
   }
 
+  @NonNull
   @Override
   @SuppressWarnings("TypeParameterUnusedInFormals")
-  public <T extends Metric> T getSessionMetric(SessionMetric metric, String profileName) {
-    return sessionUpdater.getMetric(metric, profileName);
+  public <T extends Metric> Optional<T> getSessionMetric(
+      @NonNull SessionMetric metric, String profileName) {
+    return Optional.ofNullable(sessionUpdater.getMetric(metric, profileName));
   }
 
+  @NonNull
   @Override
   @SuppressWarnings("TypeParameterUnusedInFormals")
-  public <T extends Metric> T getNodeMetric(Node node, NodeMetric metric, String profileName) {
+  public <T extends Metric> Optional<T> getNodeMetric(
+      @NonNull Node node, @NonNull NodeMetric metric, String profileName) {
     NodeMetricUpdater nodeUpdater = ((DefaultNode) node).getMetricUpdater();
-    return ((DropwizardNodeMetricUpdater) nodeUpdater).getMetric(metric, profileName);
+    return Optional.ofNullable(
+        ((DropwizardNodeMetricUpdater) nodeUpdater).getMetric(metric, profileName));
   }
 }

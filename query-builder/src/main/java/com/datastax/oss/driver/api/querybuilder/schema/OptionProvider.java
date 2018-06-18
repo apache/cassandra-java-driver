@@ -15,6 +15,7 @@
  */
 package com.datastax.oss.driver.api.querybuilder.schema;
 
+import edu.umd.cs.findbugs.annotations.NonNull;
 import java.util.Map;
 
 public interface OptionProvider<SelfT extends OptionProvider<SelfT>> {
@@ -22,7 +23,9 @@ public interface OptionProvider<SelfT extends OptionProvider<SelfT>> {
    * Adds a free-form option. This is useful for custom options or new options that have not yet
    * been added to this API.
    */
-  SelfT withOption(String name, Object value);
+  @NonNull
+  SelfT withOption(@NonNull String name, @NonNull Object value);
 
+  @NonNull
   Map<String, Object> getOptions();
 }

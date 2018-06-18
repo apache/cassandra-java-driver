@@ -28,6 +28,7 @@ import com.datastax.oss.driver.api.core.type.codec.CodecNotFoundException;
 import com.datastax.oss.driver.api.core.type.codec.TypeCodec;
 import com.datastax.oss.driver.api.core.type.reflect.GenericType;
 import com.datastax.oss.driver.internal.core.type.codec.registry.DefaultCodecRegistry;
+import edu.umd.cs.findbugs.annotations.NonNull;
 import java.util.List;
 
 /**
@@ -61,7 +62,8 @@ public interface CodecRegistry {
    *
    * @throws CodecNotFoundException if there is no such codec.
    */
-  <T> TypeCodec<T> codecFor(DataType cqlType, GenericType<T> javaType);
+  @NonNull
+  <T> TypeCodec<T> codecFor(@NonNull DataType cqlType, @NonNull GenericType<T> javaType);
 
   /**
    * Shortcut for {@link #codecFor(DataType, GenericType) codecFor(cqlType,
@@ -72,7 +74,8 @@ public interface CodecRegistry {
    *
    * @throws CodecNotFoundException if there is no such codec.
    */
-  default <T> TypeCodec<T> codecFor(DataType cqlType, Class<T> javaType) {
+  @NonNull
+  default <T> TypeCodec<T> codecFor(@NonNull DataType cqlType, @NonNull Class<T> javaType) {
     return codecFor(cqlType, GenericType.of(javaType));
   }
 
@@ -89,7 +92,8 @@ public interface CodecRegistry {
    *
    * @throws CodecNotFoundException if there is no such codec.
    */
-  <T> TypeCodec<T> codecFor(DataType cqlType);
+  @NonNull
+  <T> TypeCodec<T> codecFor(@NonNull DataType cqlType);
 
   /**
    * Returns a codec to convert the given Java type to the CQL type deemed most appropriate to
@@ -105,7 +109,8 @@ public interface CodecRegistry {
    *
    * @throws CodecNotFoundException if there is no such codec.
    */
-  <T> TypeCodec<T> codecFor(GenericType<T> javaType);
+  @NonNull
+  <T> TypeCodec<T> codecFor(@NonNull GenericType<T> javaType);
 
   /**
    * Shortcut for {@link #codecFor(GenericType) codecFor(GenericType.of(javaType))}.
@@ -115,7 +120,8 @@ public interface CodecRegistry {
    *
    * @throws CodecNotFoundException if there is no such codec.
    */
-  default <T> TypeCodec<T> codecFor(Class<T> javaType) {
+  @NonNull
+  default <T> TypeCodec<T> codecFor(@NonNull Class<T> javaType) {
     return codecFor(GenericType.of(javaType));
   }
 
@@ -135,7 +141,8 @@ public interface CodecRegistry {
    *
    * @throws CodecNotFoundException if there is no such codec.
    */
-  <T> TypeCodec<T> codecFor(DataType cqlType, T value);
+  @NonNull
+  <T> TypeCodec<T> codecFor(@NonNull DataType cqlType, @NonNull T value);
 
   /**
    * Returns a codec to convert the given Java object to the CQL type deemed most appropriate to
@@ -154,5 +161,6 @@ public interface CodecRegistry {
    *
    * @throws CodecNotFoundException if there is no such codec.
    */
-  <T> TypeCodec<T> codecFor(T value);
+  @NonNull
+  <T> TypeCodec<T> codecFor(@NonNull T value);
 }

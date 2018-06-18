@@ -18,6 +18,7 @@ package com.datastax.oss.driver.internal.core.metadata.schema;
 import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.metadata.schema.IndexKind;
 import com.datastax.oss.driver.api.core.metadata.schema.IndexMetadata;
+import edu.umd.cs.findbugs.annotations.NonNull;
 import java.util.Map;
 import java.util.Objects;
 import net.jcip.annotations.Immutable;
@@ -25,20 +26,20 @@ import net.jcip.annotations.Immutable;
 @Immutable
 public class DefaultIndexMetadata implements IndexMetadata {
 
-  private final CqlIdentifier keyspace;
-  private final CqlIdentifier table;
-  private final CqlIdentifier name;
-  private final IndexKind kind;
-  private final String target;
-  private final Map<String, String> options;
+  @NonNull private final CqlIdentifier keyspace;
+  @NonNull private final CqlIdentifier table;
+  @NonNull private final CqlIdentifier name;
+  @NonNull private final IndexKind kind;
+  @NonNull private final String target;
+  @NonNull private final Map<String, String> options;
 
   public DefaultIndexMetadata(
-      CqlIdentifier keyspace,
-      CqlIdentifier table,
-      CqlIdentifier name,
-      IndexKind kind,
-      String target,
-      Map<String, String> options) {
+      @NonNull CqlIdentifier keyspace,
+      @NonNull CqlIdentifier table,
+      @NonNull CqlIdentifier name,
+      @NonNull IndexKind kind,
+      @NonNull String target,
+      @NonNull Map<String, String> options) {
     this.keyspace = keyspace;
     this.table = table;
     this.name = name;
@@ -47,31 +48,37 @@ public class DefaultIndexMetadata implements IndexMetadata {
     this.options = options;
   }
 
+  @NonNull
   @Override
   public CqlIdentifier getKeyspace() {
     return keyspace;
   }
 
+  @NonNull
   @Override
   public CqlIdentifier getTable() {
     return table;
   }
 
+  @NonNull
   @Override
   public CqlIdentifier getName() {
     return name;
   }
 
+  @NonNull
   @Override
   public IndexKind getKind() {
     return kind;
   }
 
+  @NonNull
   @Override
   public String getTarget() {
     return target;
   }
 
+  @NonNull
   @Override
   public Map<String, String> getOptions() {
     return options;

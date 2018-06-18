@@ -20,6 +20,7 @@ import com.datastax.oss.driver.api.core.config.DriverConfigProfile;
 import com.datastax.oss.driver.api.core.connection.ReconnectionPolicy;
 import com.datastax.oss.driver.api.core.context.DriverContext;
 import com.datastax.oss.driver.shaded.guava.common.base.Preconditions;
+import edu.umd.cs.findbugs.annotations.NonNull;
 import java.time.Duration;
 import net.jcip.annotations.ThreadSafe;
 
@@ -91,6 +92,7 @@ public class ExponentialReconnectionPolicy implements ReconnectionPolicy {
    *
    * @return the newly created schedule.
    */
+  @NonNull
   @Override
   public ReconnectionSchedule newSchedule() {
     return new ExponentialSchedule();
@@ -105,6 +107,7 @@ public class ExponentialReconnectionPolicy implements ReconnectionPolicy {
 
     private int attempts;
 
+    @NonNull
     @Override
     public Duration nextDelay() {
       long delay =

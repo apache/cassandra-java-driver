@@ -22,6 +22,8 @@ import com.datastax.oss.driver.api.core.type.codec.TypeCodec;
 import com.datastax.oss.driver.api.core.type.codec.TypeCodecs;
 import com.datastax.oss.driver.api.core.type.reflect.GenericType;
 import com.datastax.oss.driver.internal.core.util.Strings;
+import edu.umd.cs.findbugs.annotations.NonNull;
+import edu.umd.cs.findbugs.annotations.Nullable;
 import java.nio.ByteBuffer;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
@@ -33,35 +35,39 @@ public class TimeCodec implements TypeCodec<LocalTime> {
   private static final DateTimeFormatter FORMATTER =
       DateTimeFormatter.ofPattern("HH:mm:ss.SSSSSSSSS");
 
+  @NonNull
   @Override
   public GenericType<LocalTime> getJavaType() {
     return GenericType.LOCAL_TIME;
   }
 
+  @NonNull
   @Override
   public DataType getCqlType() {
     return DataTypes.TIME;
   }
 
   @Override
-  public boolean accepts(Object value) {
+  public boolean accepts(@NonNull Object value) {
     return value instanceof LocalTime;
   }
 
   @Override
-  public boolean accepts(Class<?> javaClass) {
+  public boolean accepts(@NonNull Class<?> javaClass) {
     return javaClass == LocalTime.class;
   }
 
+  @Nullable
   @Override
-  public ByteBuffer encode(LocalTime value, ProtocolVersion protocolVersion) {
+  public ByteBuffer encode(@Nullable LocalTime value, @NonNull ProtocolVersion protocolVersion) {
     return (value == null)
         ? null
         : TypeCodecs.BIGINT.encodePrimitive(value.toNanoOfDay(), protocolVersion);
   }
 
+  @Nullable
   @Override
-  public LocalTime decode(ByteBuffer bytes, ProtocolVersion protocolVersion) {
+  public LocalTime decode(@Nullable ByteBuffer bytes, @NonNull ProtocolVersion protocolVersion) {
     if (bytes == null || bytes.remaining() == 0) {
       return null;
     } else {
@@ -70,13 +76,15 @@ public class TimeCodec implements TypeCodec<LocalTime> {
     }
   }
 
+  @NonNull
   @Override
-  public String format(LocalTime value) {
+  public String format(@Nullable LocalTime value) {
     return (value == null) ? "NULL" : Strings.quote(FORMATTER.format(value));
   }
 
+  @Nullable
   @Override
-  public LocalTime parse(String value) {
+  public LocalTime parse(@Nullable String value) {
     if (value == null || value.isEmpty() || value.equalsIgnoreCase("NULL")) {
       return null;
     }

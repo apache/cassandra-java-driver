@@ -20,6 +20,8 @@ import com.datastax.oss.driver.api.core.ProtocolVersion;
 import com.datastax.oss.driver.api.core.type.DataType;
 import com.datastax.oss.driver.api.core.type.codec.registry.CodecRegistry;
 import com.datastax.oss.driver.internal.core.cql.DefaultBoundStatement;
+import edu.umd.cs.findbugs.annotations.NonNull;
+import edu.umd.cs.findbugs.annotations.Nullable;
 import java.nio.ByteBuffer;
 import net.jcip.annotations.NotThreadSafe;
 
@@ -27,19 +29,19 @@ import net.jcip.annotations.NotThreadSafe;
 public class BoundStatementBuilder extends StatementBuilder<BoundStatementBuilder, BoundStatement>
     implements Bindable<BoundStatementBuilder> {
 
-  private final PreparedStatement preparedStatement;
-  private final ColumnDefinitions variableDefinitions;
-  private final ByteBuffer[] values;
-  private final CodecRegistry codecRegistry;
-  private final ProtocolVersion protocolVersion;
+  @NonNull private final PreparedStatement preparedStatement;
+  @NonNull private final ColumnDefinitions variableDefinitions;
+  @NonNull private final ByteBuffer[] values;
+  @NonNull private final CodecRegistry codecRegistry;
+  @NonNull private final ProtocolVersion protocolVersion;
 
   public BoundStatementBuilder(
-      PreparedStatement preparedStatement,
-      ColumnDefinitions variableDefinitions,
-      ByteBuffer[] values,
-      CqlIdentifier routingKeyspace,
-      CodecRegistry codecRegistry,
-      ProtocolVersion protocolVersion) {
+      @NonNull PreparedStatement preparedStatement,
+      @NonNull ColumnDefinitions variableDefinitions,
+      @NonNull ByteBuffer[] values,
+      @Nullable CqlIdentifier routingKeyspace,
+      @NonNull CodecRegistry codecRegistry,
+      @NonNull ProtocolVersion protocolVersion) {
     this.preparedStatement = preparedStatement;
     this.variableDefinitions = variableDefinitions;
     this.routingKeyspace = routingKeyspace;
@@ -48,7 +50,7 @@ public class BoundStatementBuilder extends StatementBuilder<BoundStatementBuilde
     this.protocolVersion = protocolVersion;
   }
 
-  public BoundStatementBuilder(BoundStatement template) {
+  public BoundStatementBuilder(@NonNull BoundStatement template) {
     super(template);
     this.preparedStatement = template.getPreparedStatement();
     this.variableDefinitions = template.getPreparedStatement().getVariableDefinitions();
@@ -59,15 +61,16 @@ public class BoundStatementBuilder extends StatementBuilder<BoundStatementBuilde
   }
 
   @Override
-  public int firstIndexOf(CqlIdentifier id) {
+  public int firstIndexOf(@NonNull CqlIdentifier id) {
     return variableDefinitions.firstIndexOf(id);
   }
 
   @Override
-  public int firstIndexOf(String name) {
+  public int firstIndexOf(@NonNull String name) {
     return variableDefinitions.firstIndexOf(name);
   }
 
+  @NonNull
   @Override
   public BoundStatementBuilder setBytesUnsafe(int i, ByteBuffer v) {
     values[i] = v;
@@ -84,21 +87,25 @@ public class BoundStatementBuilder extends StatementBuilder<BoundStatementBuilde
     return values.length;
   }
 
+  @NonNull
   @Override
   public DataType getType(int i) {
     return variableDefinitions.get(i).getType();
   }
 
+  @NonNull
   @Override
   public CodecRegistry codecRegistry() {
     return codecRegistry;
   }
 
+  @NonNull
   @Override
   public ProtocolVersion protocolVersion() {
     return protocolVersion;
   }
 
+  @NonNull
   @Override
   public BoundStatement build() {
     return new DefaultBoundStatement(

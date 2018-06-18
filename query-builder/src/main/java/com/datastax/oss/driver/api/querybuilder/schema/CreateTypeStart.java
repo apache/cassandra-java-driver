@@ -15,11 +15,14 @@
  */
 package com.datastax.oss.driver.api.querybuilder.schema;
 
+import edu.umd.cs.findbugs.annotations.NonNull;
+
 public interface CreateTypeStart extends OngoingCreateType {
 
   /**
    * Adds IF NOT EXISTS to the create type specification. This indicates that the type should not be
    * created if it already exists.
    */
+  @NonNull
   CreateTypeStart ifNotExists();
 }

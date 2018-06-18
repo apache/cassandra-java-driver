@@ -19,7 +19,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.CqlSession;
-import com.datastax.oss.driver.api.core.metadata.schema.ColumnMetadata;
 import com.datastax.oss.driver.api.core.metadata.schema.SchemaChangeListener;
 import com.datastax.oss.driver.api.core.type.DataTypes;
 import com.datastax.oss.driver.api.testinfra.CassandraRequirement;
@@ -30,6 +29,7 @@ import com.datastax.oss.driver.api.testinfra.utils.ConditionChecker;
 import com.datastax.oss.driver.categories.ParallelizableTests;
 import com.google.common.collect.ImmutableList;
 import java.util.Arrays;
+import java.util.Optional;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -128,14 +128,18 @@ public class SchemaChangesIT {
         metadata ->
             metadata
                 .getKeyspace(adminSessionRule.keyspace())
+                .orElseThrow(IllegalStateException::new)
                 .getTable(CqlIdentifier.fromInternal("foo")),
         table -> {
           assertThat(table.getKeyspace()).isEqualTo(adminSessionRule.keyspace());
           assertThat(table.getName().asInternal()).isEqualTo("foo");
           assertThat(table.getColumns()).containsOnlyKeys(CqlIdentifier.fromInternal("k"));
-          ColumnMetadata k = table.getColumn(CqlIdentifier.fromInternal("k"));
-          assertThat(k.getType()).isEqualTo(DataTypes.INT);
-          assertThat(table.getPartitionKey()).containsExactly(k);
+          assertThat(table.getColumn(CqlIdentifier.fromInternal("k")))
+              .hasValueSatisfying(
+                  k -> {
+                    assertThat(k.getType()).isEqualTo(DataTypes.INT);
+                    assertThat(table.getPartitionKey()).containsExactly(k);
+                  });
           assertThat(table.getClusteringColumns()).isEmpty();
         },
         (listener, table) -> Mockito.verify(listener).onTableCreated(table));
@@ -149,7 +153,7 @@ public class SchemaChangesIT {
         metadata ->
             metadata
                 .getKeyspace(adminSessionRule.keyspace())
-                .getTable(CqlIdentifier.fromInternal("foo")),
+                .flatMap(ks -> ks.getTable(CqlIdentifier.fromInternal("foo"))),
         (listener, oldTable) -> Mockito.verify(listener).onTableDropped(oldTable));
   }
 
@@ -161,8 +165,8 @@ public class SchemaChangesIT {
         metadata ->
             metadata
                 .getKeyspace(adminSessionRule.keyspace())
-                .getTable(CqlIdentifier.fromInternal("foo")),
-        newTable -> assertThat(newTable.getColumn(CqlIdentifier.fromInternal("v"))).isNotNull(),
+                .flatMap(ks -> ks.getTable(CqlIdentifier.fromInternal("foo"))),
+        newTable -> assertThat(newTable.getColumn(CqlIdentifier.fromInternal("v"))).isPresent(),
         (listener, oldTable, newTable) ->
             Mockito.verify(listener).onTableUpdated(newTable, oldTable));
   }
@@ -175,7 +179,7 @@ public class SchemaChangesIT {
         metadata ->
             metadata
                 .getKeyspace(adminSessionRule.keyspace())
-                .getUserDefinedType(CqlIdentifier.fromInternal("t")),
+                .flatMap(ks -> ks.getUserDefinedType(CqlIdentifier.fromInternal("t"))),
         type -> {
           assertThat(type.getKeyspace()).isEqualTo(adminSessionRule.keyspace());
           assertThat(type.getName().asInternal()).isEqualTo("t");
@@ -193,7 +197,7 @@ public class SchemaChangesIT {
         metadata ->
             metadata
                 .getKeyspace(adminSessionRule.keyspace())
-                .getUserDefinedType(CqlIdentifier.fromInternal("t")),
+                .flatMap(ks -> ks.getUserDefinedType(CqlIdentifier.fromInternal("t"))),
         (listener, oldType) -> Mockito.verify(listener).onUserDefinedTypeDropped(oldType));
   }
 
@@ -205,7 +209,7 @@ public class SchemaChangesIT {
         metadata ->
             metadata
                 .getKeyspace(adminSessionRule.keyspace())
-                .getUserDefinedType(CqlIdentifier.fromInternal("t")),
+                .flatMap(ks -> ks.getUserDefinedType(CqlIdentifier.fromInternal("t"))),
         newType ->
             assertThat(newType.getFieldNames())
                 .containsExactly(CqlIdentifier.fromInternal("i"), CqlIdentifier.fromInternal("j")),
@@ -225,13 +229,13 @@ public class SchemaChangesIT {
         metadata ->
             metadata
                 .getKeyspace(adminSessionRule.keyspace())
-                .getView(CqlIdentifier.fromInternal("highscores")),
+                .flatMap(ks -> ks.getView(CqlIdentifier.fromInternal("highscores"))),
         view -> {
           assertThat(view.getKeyspace()).isEqualTo(adminSessionRule.keyspace());
           assertThat(view.getName().asInternal()).isEqualTo("highscores");
           assertThat(view.getBaseTable().asInternal()).isEqualTo("scores");
           assertThat(view.includesAllColumns()).isFalse();
-          assertThat(view.getWhereClause()).isEqualTo("game IS NOT NULL AND score IS NOT NULL");
+          assertThat(view.getWhereClause()).hasValue("game IS NOT NULL AND score IS NOT NULL");
           assertThat(view.getColumns())
               .containsOnlyKeys(
                   CqlIdentifier.fromInternal("game"),
@@ -255,7 +259,7 @@ public class SchemaChangesIT {
         metadata ->
             metadata
                 .getKeyspace(adminSessionRule.keyspace())
-                .getView(CqlIdentifier.fromInternal("highscores")),
+                .flatMap(ks -> ks.getView(CqlIdentifier.fromInternal("highscores"))),
         (listener, oldView) -> Mockito.verify(listener).onViewDropped(oldView));
   }
 
@@ -273,7 +277,7 @@ public class SchemaChangesIT {
         metadata ->
             metadata
                 .getKeyspace(adminSessionRule.keyspace())
-                .getView(CqlIdentifier.fromInternal("highscores")),
+                .flatMap(ks -> ks.getView(CqlIdentifier.fromInternal("highscores"))),
         newView ->
             assertThat(newView.getOptions().get(CqlIdentifier.fromInternal("comment")))
                 .isEqualTo("The best score for each game"),
@@ -290,7 +294,7 @@ public class SchemaChangesIT {
         metadata ->
             metadata
                 .getKeyspace(adminSessionRule.keyspace())
-                .getFunction(CqlIdentifier.fromInternal("id"), DataTypes.INT),
+                .flatMap(ks -> ks.getFunction(CqlIdentifier.fromInternal("id"), DataTypes.INT)),
         function -> {
           assertThat(function.getKeyspace()).isEqualTo(adminSessionRule.keyspace());
           assertThat(function.getSignature().getName().asInternal()).isEqualTo("id");
@@ -314,7 +318,7 @@ public class SchemaChangesIT {
         metadata ->
             metadata
                 .getKeyspace(adminSessionRule.keyspace())
-                .getFunction(CqlIdentifier.fromInternal("id"), DataTypes.INT),
+                .flatMap(ks -> ks.getFunction(CqlIdentifier.fromInternal("id"), DataTypes.INT)),
         (listener, oldFunction) -> Mockito.verify(listener).onFunctionDropped(oldFunction));
   }
 
@@ -331,7 +335,7 @@ public class SchemaChangesIT {
         metadata ->
             metadata
                 .getKeyspace(adminSessionRule.keyspace())
-                .getFunction(CqlIdentifier.fromInternal("id"), DataTypes.INT),
+                .flatMap(ks -> ks.getFunction(CqlIdentifier.fromInternal("id"), DataTypes.INT)),
         newFunction -> assertThat(newFunction.getBody()).isEqualTo("return j;"),
         (listener, oldFunction, newFunction) ->
             Mockito.verify(listener).onFunctionUpdated(newFunction, oldFunction));
@@ -347,7 +351,7 @@ public class SchemaChangesIT {
         metadata ->
             metadata
                 .getKeyspace(adminSessionRule.keyspace())
-                .getAggregate(CqlIdentifier.fromInternal("sum"), DataTypes.INT),
+                .flatMap(ks -> ks.getAggregate(CqlIdentifier.fromInternal("sum"), DataTypes.INT)),
         aggregate -> {
           assertThat(aggregate.getKeyspace()).isEqualTo(adminSessionRule.keyspace());
           assertThat(aggregate.getSignature().getName().asInternal()).isEqualTo("sum");
@@ -356,8 +360,8 @@ public class SchemaChangesIT {
           assertThat(aggregate.getStateFuncSignature().getName().asInternal()).isEqualTo("plus");
           assertThat(aggregate.getStateFuncSignature().getParameterTypes())
               .containsExactly(DataTypes.INT, DataTypes.INT);
-          assertThat(aggregate.getFinalFuncSignature()).isNull();
-          assertThat(aggregate.getInitCond()).isEqualTo(0);
+          assertThat(aggregate.getFinalFuncSignature()).isEmpty();
+          assertThat(aggregate.getInitCond()).hasValue(0);
         },
         (listener, aggregate) -> Mockito.verify(listener).onAggregateCreated(aggregate));
   }
@@ -374,7 +378,7 @@ public class SchemaChangesIT {
         metadata ->
             metadata
                 .getKeyspace(adminSessionRule.keyspace())
-                .getAggregate(CqlIdentifier.fromInternal("sum"), DataTypes.INT),
+                .flatMap(ks -> ks.getAggregate(CqlIdentifier.fromInternal("sum"), DataTypes.INT)),
         (listener, oldAggregate) -> Mockito.verify(listener).onAggregateDropped(oldAggregate));
   }
 
@@ -391,8 +395,8 @@ public class SchemaChangesIT {
         metadata ->
             metadata
                 .getKeyspace(adminSessionRule.keyspace())
-                .getAggregate(CqlIdentifier.fromInternal("sum"), DataTypes.INT),
-        newAggregate -> assertThat(newAggregate.getInitCond()).isEqualTo(1),
+                .flatMap(ks -> ks.getAggregate(CqlIdentifier.fromInternal("sum"), DataTypes.INT)),
+        newAggregate -> assertThat(newAggregate.getInitCond()).hasValue(1),
         (listener, oldAggregate, newAggregate) ->
             Mockito.verify(listener).onAggregateUpdated(newAggregate, oldAggregate));
   }
@@ -414,7 +418,7 @@ public class SchemaChangesIT {
   private <T> void should_handle_creation(
       String beforeStatement,
       String createStatement,
-      Function<Metadata, T> extract,
+      Function<Metadata, Optional<T>> extract,
       Consumer<T> verifyMetadata,
       BiConsumer<SchemaChangeListener, T> verifyListener,
       CqlIdentifier... keyspaces) {
@@ -444,14 +448,15 @@ public class SchemaChangesIT {
       session1.execute(createStatement);
 
       // Refreshes on a response are synchronous:
-      T newElement1 = extract.apply(session1.getMetadata());
+      T newElement1 = extract.apply(session1.getMetadata()).orElseThrow(AssertionError::new);
       verifyMetadata.accept(newElement1);
       verifyListener.accept(listener1, newElement1);
 
       // Refreshes on a server event are asynchronous:
       ConditionChecker.checkThat(
               () -> {
-                T newElement2 = extract.apply(session2.getMetadata());
+                T newElement2 =
+                    extract.apply(session2.getMetadata()).orElseThrow(AssertionError::new);
                 verifyMetadata.accept(newElement2);
                 verifyListener.accept(listener2, newElement2);
               })
@@ -462,7 +467,7 @@ public class SchemaChangesIT {
   private <T> void should_handle_drop(
       Iterable<String> beforeStatements,
       String dropStatement,
-      Function<Metadata, T> extract,
+      Function<Metadata, Optional<T>> extract,
       BiConsumer<SchemaChangeListener, T> verifyListener,
       CqlIdentifier... keyspaces) {
 
@@ -485,17 +490,17 @@ public class SchemaChangesIT {
             SessionUtils.newSession(
                 ccmRule, null, null, listener2, null, keyspaceFilterOption(keyspaces))) {
 
-      T oldElement = extract.apply(session1.getMetadata());
+      T oldElement = extract.apply(session1.getMetadata()).orElseThrow(AssertionError::new);
       assertThat(oldElement).isNotNull();
 
       session1.execute(dropStatement);
 
-      assertThat(extract.apply(session1.getMetadata())).isNull();
+      assertThat(extract.apply(session1.getMetadata())).isEmpty();
       verifyListener.accept(listener1, oldElement);
 
       ConditionChecker.checkThat(
               () -> {
-                assertThat(extract.apply(session2.getMetadata())).isNull();
+                assertThat(extract.apply(session2.getMetadata())).isEmpty();
                 verifyListener.accept(listener2, oldElement);
               })
           .becomesTrue();
@@ -505,7 +510,7 @@ public class SchemaChangesIT {
   private <T> void should_handle_update(
       Iterable<String> beforeStatements,
       String updateStatement,
-      Function<Metadata, T> extract,
+      Function<Metadata, Optional<T>> extract,
       Consumer<T> verifyNewMetadata,
       TriConsumer<SchemaChangeListener, T, T> verifyListener,
       CqlIdentifier... keyspaces) {
@@ -529,18 +534,19 @@ public class SchemaChangesIT {
             SessionUtils.newSession(
                 ccmRule, null, null, listener2, null, keyspaceFilterOption(keyspaces))) {
 
-      T oldElement = extract.apply(session1.getMetadata());
+      T oldElement = extract.apply(session1.getMetadata()).orElseThrow(AssertionError::new);
       assertThat(oldElement).isNotNull();
 
       session1.execute(updateStatement);
 
-      T newElement = extract.apply(session1.getMetadata());
+      T newElement = extract.apply(session1.getMetadata()).orElseThrow(AssertionError::new);
       verifyNewMetadata.accept(newElement);
       verifyListener.accept(listener1, oldElement, newElement);
 
       ConditionChecker.checkThat(
               () -> {
-                verifyNewMetadata.accept(extract.apply(session2.getMetadata()));
+                verifyNewMetadata.accept(
+                    extract.apply(session2.getMetadata()).orElseThrow(AssertionError::new));
                 verifyListener.accept(listener2, oldElement, newElement);
               })
           .becomesTrue();
@@ -553,7 +559,7 @@ public class SchemaChangesIT {
       Iterable<String> beforeStatements,
       String dropStatement,
       String recreateStatement,
-      Function<Metadata, T> extract,
+      Function<Metadata, Optional<T>> extract,
       Consumer<T> verifyNewMetadata,
       TriConsumer<SchemaChangeListener, T, T> verifyListener,
       CqlIdentifier... keyspaces) {
@@ -577,7 +583,7 @@ public class SchemaChangesIT {
             SessionUtils.newSession(
                 ccmRule, null, null, listener2, null, keyspaceFilterOption(keyspaces))) {
 
-      T oldElement = extract.apply(session1.getMetadata());
+      T oldElement = extract.apply(session1.getMetadata()).orElseThrow(AssertionError::new);
       assertThat(oldElement).isNotNull();
 
       session1.setSchemaMetadataEnabled(false);
@@ -591,7 +597,8 @@ public class SchemaChangesIT {
 
       ConditionChecker.checkThat(
               () -> {
-                T newElement = extract.apply(session1.getMetadata());
+                T newElement =
+                    extract.apply(session1.getMetadata()).orElseThrow(AssertionError::new);
                 verifyNewMetadata.accept(newElement);
                 verifyListener.accept(listener1, oldElement, newElement);
               })
@@ -599,8 +606,9 @@ public class SchemaChangesIT {
 
       ConditionChecker.checkThat(
               () -> {
-                T newElement = extract.apply(session2.getMetadata());
-                verifyNewMetadata.accept(extract.apply(session2.getMetadata()));
+                T newElement =
+                    extract.apply(session2.getMetadata()).orElseThrow(AssertionError::new);
+                verifyNewMetadata.accept(newElement);
                 verifyListener.accept(listener2, oldElement, newElement);
               })
           .becomesTrue();

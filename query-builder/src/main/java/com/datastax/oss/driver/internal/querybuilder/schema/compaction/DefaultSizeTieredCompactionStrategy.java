@@ -18,6 +18,7 @@ package com.datastax.oss.driver.internal.querybuilder.schema.compaction;
 import com.datastax.oss.driver.api.querybuilder.schema.compaction.SizeTieredCompactionStrategy;
 import com.datastax.oss.driver.internal.querybuilder.ImmutableCollections;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableMap;
+import edu.umd.cs.findbugs.annotations.NonNull;
 import net.jcip.annotations.Immutable;
 
 @Immutable
@@ -29,12 +30,14 @@ public class DefaultSizeTieredCompactionStrategy
     super("SizeTieredCompactionStrategy");
   }
 
-  protected DefaultSizeTieredCompactionStrategy(ImmutableMap<String, Object> options) {
+  protected DefaultSizeTieredCompactionStrategy(@NonNull ImmutableMap<String, Object> options) {
     super(options);
   }
 
+  @NonNull
   @Override
-  public DefaultSizeTieredCompactionStrategy withOption(String name, Object value) {
+  public DefaultSizeTieredCompactionStrategy withOption(
+      @NonNull String name, @NonNull Object value) {
     return new DefaultSizeTieredCompactionStrategy(
         ImmutableCollections.append(getInternalOptions(), name, value));
   }

@@ -15,7 +15,9 @@
  */
 package com.datastax.oss.driver.api.querybuilder;
 
+import edu.umd.cs.findbugs.annotations.NonNull;
+
 /** An element in the query builder DSL, that will generate part of a CQL query. */
 public interface CqlSnippet {
-  void appendTo(StringBuilder builder);
+  void appendTo(@NonNull StringBuilder builder);
 }

@@ -16,6 +16,7 @@
 package com.datastax.oss.driver.api.core.cql;
 
 import com.datastax.oss.driver.api.core.session.Request;
+import edu.umd.cs.findbugs.annotations.NonNull;
 import java.net.InetAddress;
 import java.util.List;
 import java.util.Map;
@@ -30,17 +31,21 @@ import java.util.UUID;
  */
 public interface QueryTrace {
 
+  @NonNull
   UUID getTracingId();
 
+  @NonNull
   String getRequestType();
 
   /** The server-side duration of the query in microseconds. */
   int getDurationMicros();
 
   /** The IP of the node that coordinated the query. */
+  @NonNull
   InetAddress getCoordinator();
 
   /** The parameters attached to this trace. */
+  @NonNull
   Map<String, String> getParameters();
 
   /** The server-side timestamp of the start of this query. */
@@ -54,5 +59,6 @@ public interface QueryTrace {
    * requested just after the return of the query (the only guarantee being that the list will
    * contain the events pertaining to the coordinator).
    */
+  @NonNull
   List<TraceEvent> getEvents();
 }

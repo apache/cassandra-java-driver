@@ -20,6 +20,7 @@ import com.datastax.oss.driver.api.core.metadata.Node;
 import com.datastax.oss.driver.api.core.session.Request;
 import com.datastax.oss.driver.api.core.session.Session;
 import com.datastax.oss.driver.api.core.type.reflect.GenericType;
+import edu.umd.cs.findbugs.annotations.NonNull;
 
 /** Tracks request execution for a session. */
 public interface RequestTracker extends AutoCloseable {
@@ -32,7 +33,11 @@ public interface RequestTracker extends AutoCloseable {
    * @param configProfile the configuration profile that this request was executed with.
    * @param node the node that returned the successful response.
    */
-  void onSuccess(Request request, long latencyNanos, DriverConfigProfile configProfile, Node node);
+  void onSuccess(
+      @NonNull Request request,
+      long latencyNanos,
+      @NonNull DriverConfigProfile configProfile,
+      @NonNull Node node);
 
   /**
    * Invoked each time a request fails.
@@ -43,9 +48,9 @@ public interface RequestTracker extends AutoCloseable {
    * @param node the node that returned the error response, or {@code null} if the error occurred
    */
   void onError(
-      Request request,
-      Throwable error,
+      @NonNull Request request,
+      @NonNull Throwable error,
       long latencyNanos,
-      DriverConfigProfile configProfile,
+      @NonNull DriverConfigProfile configProfile,
       Node node);
 }

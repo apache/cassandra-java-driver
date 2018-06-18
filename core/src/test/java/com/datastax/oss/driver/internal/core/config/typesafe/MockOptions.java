@@ -16,6 +16,7 @@
 package com.datastax.oss.driver.internal.core.config.typesafe;
 
 import com.datastax.oss.driver.api.core.config.DriverOption;
+import edu.umd.cs.findbugs.annotations.NonNull;
 
 enum MockOptions implements DriverOption {
   INT1("int1"),
@@ -29,6 +30,7 @@ enum MockOptions implements DriverOption {
     this.path = path;
   }
 
+  @NonNull
   @Override
   public String getPath() {
     return path;

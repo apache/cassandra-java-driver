@@ -22,6 +22,7 @@ import com.datastax.oss.driver.internal.querybuilder.condition.DefaultConditionB
 import com.datastax.oss.driver.internal.querybuilder.lhs.ColumnComponentLeftOperand;
 import com.datastax.oss.driver.internal.querybuilder.lhs.ColumnLeftOperand;
 import com.datastax.oss.driver.internal.querybuilder.lhs.FieldLeftOperand;
+import edu.umd.cs.findbugs.annotations.NonNull;
 import java.util.Arrays;
 
 /**
@@ -36,6 +37,7 @@ public interface ConditionalStatement<SelfT extends ConditionalStatement<SelfT>>
    *
    * <p>If any column conditions were added before, they will be cleared.
    */
+  @NonNull
   SelfT ifExists();
 
   /**
@@ -48,7 +50,8 @@ public interface ConditionalStatement<SelfT extends ConditionalStatement<SelfT>>
    * <p>If you add multiple conditions as once, consider {@link #if_(Iterable)} as a more efficient
    * alternative.
    */
-  SelfT if_(Condition condition);
+  @NonNull
+  SelfT if_(@NonNull Condition condition);
 
   /**
    * Adds multiple IF conditions at once. All conditions are logically joined with AND. If {@link
@@ -60,10 +63,12 @@ public interface ConditionalStatement<SelfT extends ConditionalStatement<SelfT>>
    * <p>To create the arguments, use one of the factory methods in {@link Condition}, for example
    * {@link Condition#column(CqlIdentifier) column}.
    */
-  SelfT if_(Iterable<Condition> conditions);
+  @NonNull
+  SelfT if_(@NonNull Iterable<Condition> conditions);
 
   /** Var-arg equivalent of {@link #if_(Iterable)}. */
-  default SelfT if_(Condition... conditions) {
+  @NonNull
+  default SelfT if_(@NonNull Condition... conditions) {
     return if_(Arrays.asList(conditions));
   }
 
@@ -73,7 +78,8 @@ public interface ConditionalStatement<SelfT extends ConditionalStatement<SelfT>>
    * <p>This is the equivalent of creating a condition with {@link Condition#column(CqlIdentifier)}
    * and passing it to {@link #if_(Condition)}.
    */
-  default ConditionBuilder<SelfT> ifColumn(CqlIdentifier columnId) {
+  @NonNull
+  default ConditionBuilder<SelfT> ifColumn(@NonNull CqlIdentifier columnId) {
     return new DefaultConditionBuilder.Fluent<>(this, new ColumnLeftOperand(columnId));
   }
 
@@ -83,7 +89,8 @@ public interface ConditionalStatement<SelfT extends ConditionalStatement<SelfT>>
    * <p>This is the equivalent of creating a condition with {@link Condition#column(String)} and
    * passing it to {@link #if_(Condition)}.
    */
-  default ConditionBuilder<SelfT> ifColumn(String columnName) {
+  @NonNull
+  default ConditionBuilder<SelfT> ifColumn(@NonNull String columnName) {
     return ifColumn(CqlIdentifier.fromCql(columnName));
   }
 
@@ -94,7 +101,9 @@ public interface ConditionalStatement<SelfT extends ConditionalStatement<SelfT>>
    * <p>This is the equivalent of creating a condition with {@link Condition#field(CqlIdentifier,
    * CqlIdentifier)} and passing it to {@link #if_(Condition)}.
    */
-  default ConditionBuilder<SelfT> ifField(CqlIdentifier columnId, CqlIdentifier fieldId) {
+  @NonNull
+  default ConditionBuilder<SelfT> ifField(
+      @NonNull CqlIdentifier columnId, @NonNull CqlIdentifier fieldId) {
     return new DefaultConditionBuilder.Fluent<>(this, new FieldLeftOperand(columnId, fieldId));
   }
 
@@ -105,7 +114,8 @@ public interface ConditionalStatement<SelfT extends ConditionalStatement<SelfT>>
    * <p>This is the equivalent of creating a condition with {@link Condition#field(String, String)}
    * and passing it to {@link #if_(Condition)}.
    */
-  default ConditionBuilder<SelfT> ifField(String columnName, String fieldName) {
+  @NonNull
+  default ConditionBuilder<SelfT> ifField(@NonNull String columnName, @NonNull String fieldName) {
     return ifField(CqlIdentifier.fromCql(columnName), CqlIdentifier.fromCql(fieldName));
   }
 
@@ -116,7 +126,8 @@ public interface ConditionalStatement<SelfT extends ConditionalStatement<SelfT>>
    * <p>This is the equivalent of creating a condition with {@link Condition#element(CqlIdentifier,
    * Term)} and passing it to {@link #if_(Condition)}.
    */
-  default ConditionBuilder<SelfT> ifElement(CqlIdentifier columnId, Term index) {
+  @NonNull
+  default ConditionBuilder<SelfT> ifElement(@NonNull CqlIdentifier columnId, @NonNull Term index) {
     return new DefaultConditionBuilder.Fluent<>(
         this, new ColumnComponentLeftOperand(columnId, index));
   }
@@ -128,7 +139,8 @@ public interface ConditionalStatement<SelfT extends ConditionalStatement<SelfT>>
    * <p>This is the equivalent of creating a condition with {@link Condition#element(String, Term)}
    * and passing it to {@link #if_(Condition)}.
    */
-  default ConditionBuilder<SelfT> ifElement(String columnName, Term index) {
+  @NonNull
+  default ConditionBuilder<SelfT> ifElement(@NonNull String columnName, @NonNull Term index) {
     return ifElement(CqlIdentifier.fromCql(columnName), index);
   }
 
@@ -145,7 +157,8 @@ public interface ConditionalStatement<SelfT extends ConditionalStatement<SelfT>>
    *
    * @see QueryBuilderDsl#raw(String)
    */
-  default SelfT ifRaw(String raw) {
+  @NonNull
+  default SelfT ifRaw(@NonNull String raw) {
     return if_(QueryBuilderDsl.raw(raw));
   }
 }

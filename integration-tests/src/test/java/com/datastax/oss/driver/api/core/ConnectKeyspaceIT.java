@@ -36,14 +36,14 @@ public class ConnectKeyspaceIT {
   public void should_connect_to_existing_keyspace() {
     CqlIdentifier keyspace = sessionRule.keyspace();
     try (Session session = SessionUtils.newSession(ccm, keyspace)) {
-      assertThat(session.getKeyspace()).isEqualTo(keyspace);
+      assertThat(session.getKeyspace()).hasValue(keyspace);
     }
   }
 
   @Test
   public void should_connect_with_no_keyspace() {
     try (Session session = SessionUtils.newSession(ccm)) {
-      assertThat(session.getKeyspace()).isNull();
+      assertThat(session.getKeyspace()).isEmpty();
     }
   }
 

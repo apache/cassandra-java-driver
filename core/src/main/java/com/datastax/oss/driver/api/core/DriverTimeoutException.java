@@ -15,12 +15,15 @@
  */
 package com.datastax.oss.driver.api.core;
 
+import edu.umd.cs.findbugs.annotations.NonNull;
+
 /** Thrown when a driver request timed out. */
 public class DriverTimeoutException extends DriverException {
-  public DriverTimeoutException(String message) {
+  public DriverTimeoutException(@NonNull String message) {
     super(message, null, true);
   }
 
+  @NonNull
   @Override
   public DriverException copy() {
     return new DriverTimeoutException(getMessage());

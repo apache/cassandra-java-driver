@@ -16,6 +16,8 @@
 package com.datastax.oss.driver.api.core.cql;
 
 import com.datastax.oss.driver.api.core.CqlSession;
+import edu.umd.cs.findbugs.annotations.NonNull;
+import edu.umd.cs.findbugs.annotations.Nullable;
 import java.util.Iterator;
 import java.util.concurrent.CompletionStage;
 
@@ -27,8 +29,12 @@ import java.util.concurrent.CompletionStage;
  */
 public interface AsyncResultSet {
 
+  /** Returns metadata about the {@linkplain ColumnDefinitions columns} contained in this row. */
+  @NonNull
   ColumnDefinitions getColumnDefinitions();
 
+  /** Returns {@linkplain ExecutionInfo information about the execution} of this page of results. */
+  @NonNull
   ExecutionInfo getExecutionInfo();
 
   /** How many rows are left before the current page is exhausted. */
@@ -41,6 +47,7 @@ public interface AsyncResultSet {
    * <p>Note that this method always returns the same object, and that that object can only be
    * iterated once: rows are "consumed" as they are read.
    */
+  @NonNull
   Iterable<Row> currentPage();
 
   /**
@@ -49,6 +56,7 @@ public interface AsyncResultSet {
    * <p>This is convenient for queries that are known to return exactly one row, for example count
    * queries.
    */
+  @Nullable
   default Row one() {
     Iterator<Row> iterator = currentPage().iterator();
     return iterator.hasNext() ? iterator.next() : null;
@@ -66,6 +74,7 @@ public interface AsyncResultSet {
    * @throws IllegalStateException if there are no more pages. Use {@link #hasMorePages()} to check
    *     if you can call this method.
    */
+  @NonNull
   CompletionStage<? extends AsyncResultSet> fetchNextPage() throws IllegalStateException;
 
   /**

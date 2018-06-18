@@ -25,6 +25,7 @@ import com.datastax.oss.driver.api.core.metrics.Metrics;
 import com.datastax.oss.driver.api.core.metrics.NodeMetric;
 import com.datastax.oss.driver.api.core.metrics.SessionMetric;
 import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
+import edu.umd.cs.findbugs.annotations.Nullable;
 import java.util.Collections;
 import java.util.EnumSet;
 import java.util.List;
@@ -43,7 +44,7 @@ public class DropwizardMetricsFactory implements MetricsFactory {
   private final InternalDriverContext context;
   private final Set<NodeMetric> enabledNodeMetrics;
   private final MetricRegistry registry;
-  private final Optional<Metrics> metrics;
+  @Nullable private final Metrics metrics;
   private final SessionMetricUpdater sessionUpdater;
 
   public DropwizardMetricsFactory(InternalDriverContext context) {
@@ -60,19 +61,19 @@ public class DropwizardMetricsFactory implements MetricsFactory {
       LOG.debug("[{}] All metrics are disabled, Session.getMetrics will be empty", logPrefix);
       this.registry = null;
       this.sessionUpdater = NoopSessionMetricUpdater.INSTANCE;
-      this.metrics = Optional.empty();
+      this.metrics = null;
     } else {
       this.registry = new MetricRegistry();
       DropwizardSessionMetricUpdater dropwizardSessionUpdater =
           new DropwizardSessionMetricUpdater(enabledSessionMetrics, registry, context);
       this.sessionUpdater = dropwizardSessionUpdater;
-      this.metrics = Optional.of(new DefaultMetrics(registry, dropwizardSessionUpdater));
+      this.metrics = new DefaultMetrics(registry, dropwizardSessionUpdater);
     }
   }
 
   @Override
   public Optional<Metrics> getMetrics() {
-    return metrics;
+    return Optional.ofNullable(metrics);
   }
 
   @Override

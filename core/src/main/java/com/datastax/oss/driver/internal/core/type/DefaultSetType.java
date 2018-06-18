@@ -19,6 +19,7 @@ import com.datastax.oss.driver.api.core.detach.AttachmentPoint;
 import com.datastax.oss.driver.api.core.type.DataType;
 import com.datastax.oss.driver.api.core.type.SetType;
 import com.datastax.oss.driver.shaded.guava.common.base.Preconditions;
+import edu.umd.cs.findbugs.annotations.NonNull;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.Serializable;
@@ -35,12 +36,13 @@ public class DefaultSetType implements SetType, Serializable {
   /** @serial */
   private final boolean frozen;
 
-  public DefaultSetType(DataType elementType, boolean frozen) {
+  public DefaultSetType(@NonNull DataType elementType, boolean frozen) {
     Preconditions.checkNotNull(elementType);
     this.elementType = elementType;
     this.frozen = frozen;
   }
 
+  @NonNull
   @Override
   public DataType getElementType() {
     return elementType;
@@ -57,7 +59,7 @@ public class DefaultSetType implements SetType, Serializable {
   }
 
   @Override
-  public void attach(AttachmentPoint attachmentPoint) {
+  public void attach(@NonNull AttachmentPoint attachmentPoint) {
     elementType.attach(attachmentPoint);
   }
 

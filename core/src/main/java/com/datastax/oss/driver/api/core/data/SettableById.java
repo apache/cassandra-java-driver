@@ -21,6 +21,8 @@ import com.datastax.oss.driver.api.core.type.DataType;
 import com.datastax.oss.driver.api.core.type.codec.CodecNotFoundException;
 import com.datastax.oss.driver.api.core.type.codec.TypeCodec;
 import com.datastax.oss.driver.api.core.type.reflect.GenericType;
+import edu.umd.cs.findbugs.annotations.NonNull;
+import edu.umd.cs.findbugs.annotations.Nullable;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.net.InetAddress;
@@ -53,12 +55,14 @@ public interface SettableById<T extends SettableById<T>>
    *     further usage of this data will have unpredictable results.
    * @throws IndexOutOfBoundsException if the id is invalid.
    */
-  default T setBytesUnsafe(CqlIdentifier id, ByteBuffer v) {
+  @NonNull
+  default T setBytesUnsafe(@NonNull CqlIdentifier id, @Nullable ByteBuffer v) {
     return setBytesUnsafe(firstIndexOf(id), v);
   }
 
+  @NonNull
   @Override
-  default DataType getType(CqlIdentifier id) {
+  default DataType getType(@NonNull CqlIdentifier id) {
     return getType(firstIndexOf(id));
   }
 
@@ -70,7 +74,8 @@ public interface SettableById<T extends SettableById<T>>
    *
    * @throws IndexOutOfBoundsException if the id is invalid.
    */
-  default T setToNull(CqlIdentifier id) {
+  @NonNull
+  default T setToNull(@NonNull CqlIdentifier id) {
     return setToNull(firstIndexOf(id));
   }
 
@@ -90,7 +95,8 @@ public interface SettableById<T extends SettableById<T>>
    *
    * @throws IndexOutOfBoundsException if the id is invalid.
    */
-  default <V> T set(CqlIdentifier id, V v, TypeCodec<V> codec) {
+  @NonNull
+  default <V> T set(@NonNull CqlIdentifier id, @Nullable V v, @NonNull TypeCodec<V> codec) {
     return set(firstIndexOf(id), v, codec);
   }
 
@@ -108,7 +114,8 @@ public interface SettableById<T extends SettableById<T>>
    * @throws IndexOutOfBoundsException if the id is invalid.
    * @throws CodecNotFoundException if no codec can perform the conversion.
    */
-  default <V> T set(CqlIdentifier id, V v, GenericType<V> targetType) {
+  @NonNull
+  default <V> T set(@NonNull CqlIdentifier id, @Nullable V v, @NonNull GenericType<V> targetType) {
     return set(firstIndexOf(id), v, targetType);
   }
 
@@ -125,7 +132,8 @@ public interface SettableById<T extends SettableById<T>>
    * @throws IndexOutOfBoundsException if the id is invalid.
    * @throws CodecNotFoundException if no codec can perform the conversion.
    */
-  default <V> T set(CqlIdentifier id, V v, Class<V> targetClass) {
+  @NonNull
+  default <V> T set(@NonNull CqlIdentifier id, @Nullable V v, @NonNull Class<V> targetClass) {
     return set(firstIndexOf(id), v, targetClass);
   }
 
@@ -142,7 +150,8 @@ public interface SettableById<T extends SettableById<T>>
    *
    * @throws IndexOutOfBoundsException if the id is invalid.
    */
-  default T setBoolean(CqlIdentifier id, boolean v) {
+  @NonNull
+  default T setBoolean(@NonNull CqlIdentifier id, boolean v) {
     return setBoolean(firstIndexOf(id), v);
   }
 
@@ -159,7 +168,8 @@ public interface SettableById<T extends SettableById<T>>
    *
    * @throws IndexOutOfBoundsException if the id is invalid.
    */
-  default T setByte(CqlIdentifier id, byte v) {
+  @NonNull
+  default T setByte(@NonNull CqlIdentifier id, byte v) {
     return setByte(firstIndexOf(id), v);
   }
 
@@ -176,7 +186,8 @@ public interface SettableById<T extends SettableById<T>>
    *
    * @throws IndexOutOfBoundsException if the id is invalid.
    */
-  default T setDouble(CqlIdentifier id, double v) {
+  @NonNull
+  default T setDouble(@NonNull CqlIdentifier id, double v) {
     return setDouble(firstIndexOf(id), v);
   }
 
@@ -193,7 +204,8 @@ public interface SettableById<T extends SettableById<T>>
    *
    * @throws IndexOutOfBoundsException if the id is invalid.
    */
-  default T setFloat(CqlIdentifier id, float v) {
+  @NonNull
+  default T setFloat(@NonNull CqlIdentifier id, float v) {
     return setFloat(firstIndexOf(id), v);
   }
 
@@ -210,7 +222,8 @@ public interface SettableById<T extends SettableById<T>>
    *
    * @throws IndexOutOfBoundsException if the id is invalid.
    */
-  default T setInt(CqlIdentifier id, int v) {
+  @NonNull
+  default T setInt(@NonNull CqlIdentifier id, int v) {
     return setInt(firstIndexOf(id), v);
   }
 
@@ -227,7 +240,8 @@ public interface SettableById<T extends SettableById<T>>
    *
    * @throws IndexOutOfBoundsException if the id is invalid.
    */
-  default T setLong(CqlIdentifier id, long v) {
+  @NonNull
+  default T setLong(@NonNull CqlIdentifier id, long v) {
     return setLong(firstIndexOf(id), v);
   }
 
@@ -244,7 +258,8 @@ public interface SettableById<T extends SettableById<T>>
    *
    * @throws IndexOutOfBoundsException if the id is invalid.
    */
-  default T setShort(CqlIdentifier id, short v) {
+  @NonNull
+  default T setShort(@NonNull CqlIdentifier id, short v) {
     return setShort(firstIndexOf(id), v);
   }
 
@@ -258,7 +273,8 @@ public interface SettableById<T extends SettableById<T>>
    *
    * @throws IndexOutOfBoundsException if the id is invalid.
    */
-  default T setInstant(CqlIdentifier id, Instant v) {
+  @NonNull
+  default T setInstant(@NonNull CqlIdentifier id, @Nullable Instant v) {
     return setInstant(firstIndexOf(id), v);
   }
 
@@ -272,7 +288,8 @@ public interface SettableById<T extends SettableById<T>>
    *
    * @throws IndexOutOfBoundsException if the id is invalid.
    */
-  default T setLocalDate(CqlIdentifier id, LocalDate v) {
+  @NonNull
+  default T setLocalDate(@NonNull CqlIdentifier id, @Nullable LocalDate v) {
     return setLocalDate(firstIndexOf(id), v);
   }
 
@@ -286,7 +303,8 @@ public interface SettableById<T extends SettableById<T>>
    *
    * @throws IndexOutOfBoundsException if the id is invalid.
    */
-  default T setLocalTime(CqlIdentifier id, LocalTime v) {
+  @NonNull
+  default T setLocalTime(@NonNull CqlIdentifier id, @Nullable LocalTime v) {
     return setLocalTime(firstIndexOf(id), v);
   }
 
@@ -300,7 +318,8 @@ public interface SettableById<T extends SettableById<T>>
    *
    * @throws IndexOutOfBoundsException if the id is invalid.
    */
-  default T setByteBuffer(CqlIdentifier id, ByteBuffer v) {
+  @NonNull
+  default T setByteBuffer(@NonNull CqlIdentifier id, @Nullable ByteBuffer v) {
     return setByteBuffer(firstIndexOf(id), v);
   }
 
@@ -314,7 +333,8 @@ public interface SettableById<T extends SettableById<T>>
    *
    * @throws IndexOutOfBoundsException if the id is invalid.
    */
-  default T setString(CqlIdentifier id, String v) {
+  @NonNull
+  default T setString(@NonNull CqlIdentifier id, @Nullable String v) {
     return setString(firstIndexOf(id), v);
   }
 
@@ -328,7 +348,8 @@ public interface SettableById<T extends SettableById<T>>
    *
    * @throws IndexOutOfBoundsException if the id is invalid.
    */
-  default T setBigInteger(CqlIdentifier id, BigInteger v) {
+  @NonNull
+  default T setBigInteger(@NonNull CqlIdentifier id, @Nullable BigInteger v) {
     return setBigInteger(firstIndexOf(id), v);
   }
 
@@ -342,7 +363,8 @@ public interface SettableById<T extends SettableById<T>>
    *
    * @throws IndexOutOfBoundsException if the id is invalid.
    */
-  default T setBigDecimal(CqlIdentifier id, BigDecimal v) {
+  @NonNull
+  default T setBigDecimal(@NonNull CqlIdentifier id, @Nullable BigDecimal v) {
     return setBigDecimal(firstIndexOf(id), v);
   }
 
@@ -356,7 +378,8 @@ public interface SettableById<T extends SettableById<T>>
    *
    * @throws IndexOutOfBoundsException if the id is invalid.
    */
-  default T setUuid(CqlIdentifier id, UUID v) {
+  @NonNull
+  default T setUuid(@NonNull CqlIdentifier id, @Nullable UUID v) {
     return setUuid(firstIndexOf(id), v);
   }
 
@@ -370,7 +393,8 @@ public interface SettableById<T extends SettableById<T>>
    *
    * @throws IndexOutOfBoundsException if the id is invalid.
    */
-  default T setInetAddress(CqlIdentifier id, InetAddress v) {
+  @NonNull
+  default T setInetAddress(@NonNull CqlIdentifier id, @Nullable InetAddress v) {
     return setInetAddress(firstIndexOf(id), v);
   }
 
@@ -384,7 +408,8 @@ public interface SettableById<T extends SettableById<T>>
    *
    * @throws IndexOutOfBoundsException if the id is invalid.
    */
-  default T setCqlDuration(CqlIdentifier id, CqlDuration v) {
+  @NonNull
+  default T setCqlDuration(@NonNull CqlIdentifier id, @Nullable CqlDuration v) {
     return setCqlDuration(firstIndexOf(id), v);
   }
 
@@ -400,7 +425,8 @@ public interface SettableById<T extends SettableById<T>>
    *
    * @throws IndexOutOfBoundsException if the index is invalid.
    */
-  default T setToken(CqlIdentifier id, Token v) {
+  @NonNull
+  default T setToken(@NonNull CqlIdentifier id, @NonNull Token v) {
     return setToken(firstIndexOf(id), v);
   }
 
@@ -417,7 +443,9 @@ public interface SettableById<T extends SettableById<T>>
    *
    * @throws IndexOutOfBoundsException if the id is invalid.
    */
-  default <V> T setList(CqlIdentifier id, List<V> v, Class<V> elementsClass) {
+  @NonNull
+  default <V> T setList(
+      @NonNull CqlIdentifier id, @Nullable List<V> v, @NonNull Class<V> elementsClass) {
     return setList(firstIndexOf(id), v, elementsClass);
   }
 
@@ -434,7 +462,9 @@ public interface SettableById<T extends SettableById<T>>
    *
    * @throws IndexOutOfBoundsException if the id is invalid.
    */
-  default <V> T setSet(CqlIdentifier id, Set<V> v, Class<V> elementsClass) {
+  @NonNull
+  default <V> T setSet(
+      @NonNull CqlIdentifier id, @Nullable Set<V> v, @NonNull Class<V> elementsClass) {
     return setSet(firstIndexOf(id), v, elementsClass);
   }
 
@@ -451,7 +481,12 @@ public interface SettableById<T extends SettableById<T>>
    *
    * @throws IndexOutOfBoundsException if the id is invalid.
    */
-  default <K, V> T setMap(CqlIdentifier id, Map<K, V> v, Class<K> keyClass, Class<V> valueClass) {
+  @NonNull
+  default <K, V> T setMap(
+      @NonNull CqlIdentifier id,
+      @Nullable Map<K, V> v,
+      @NonNull Class<K> keyClass,
+      @NonNull Class<V> valueClass) {
     return setMap(firstIndexOf(id), v, keyClass, valueClass);
   }
 
@@ -465,7 +500,8 @@ public interface SettableById<T extends SettableById<T>>
    *
    * @throws IndexOutOfBoundsException if the id is invalid.
    */
-  default T setUdtValue(CqlIdentifier id, UdtValue v) {
+  @NonNull
+  default T setUdtValue(@NonNull CqlIdentifier id, @Nullable UdtValue v) {
     return setUdtValue(firstIndexOf(id), v);
   }
 
@@ -479,7 +515,8 @@ public interface SettableById<T extends SettableById<T>>
    *
    * @throws IndexOutOfBoundsException if the id is invalid.
    */
-  default T setTupleValue(CqlIdentifier id, TupleValue v) {
+  @NonNull
+  default T setTupleValue(@NonNull CqlIdentifier id, @Nullable TupleValue v) {
     return setTupleValue(firstIndexOf(id), v);
   }
 }

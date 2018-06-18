@@ -20,6 +20,8 @@ import com.datastax.oss.driver.api.core.metadata.token.Token;
 import com.datastax.oss.driver.api.core.type.codec.CodecNotFoundException;
 import com.datastax.oss.driver.api.core.type.codec.TypeCodec;
 import com.datastax.oss.driver.api.core.type.reflect.GenericType;
+import edu.umd.cs.findbugs.annotations.NonNull;
+import edu.umd.cs.findbugs.annotations.Nullable;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.net.InetAddress;
@@ -54,7 +56,8 @@ public interface GettableById extends GettableByIndex, AccessibleById {
    *     invocation for this value will have unpredictable results.
    * @throws IndexOutOfBoundsException if the id is invalid.
    */
-  default ByteBuffer getBytesUnsafe(CqlIdentifier id) {
+  @Nullable
+  default ByteBuffer getBytesUnsafe(@NonNull CqlIdentifier id) {
     return getBytesUnsafe(firstIndexOf(id));
   }
 
@@ -69,7 +72,7 @@ public interface GettableById extends GettableByIndex, AccessibleById {
    *
    * @throws IndexOutOfBoundsException if the id is invalid.
    */
-  default boolean isNull(CqlIdentifier id) {
+  default boolean isNull(@NonNull CqlIdentifier id) {
     return isNull(firstIndexOf(id));
   }
 
@@ -92,7 +95,8 @@ public interface GettableById extends GettableByIndex, AccessibleById {
    *
    * @throws IndexOutOfBoundsException if the id is invalid.
    */
-  default <T> T get(CqlIdentifier id, TypeCodec<T> codec) {
+  @Nullable
+  default <T> T get(@NonNull CqlIdentifier id, @NonNull TypeCodec<T> codec) {
     return get(firstIndexOf(id), codec);
   }
 
@@ -113,7 +117,8 @@ public interface GettableById extends GettableByIndex, AccessibleById {
    * @throws IndexOutOfBoundsException if the id is invalid.
    * @throws CodecNotFoundException if no codec can perform the conversion.
    */
-  default <T> T get(CqlIdentifier id, GenericType<T> targetType) {
+  @Nullable
+  default <T> T get(@NonNull CqlIdentifier id, @NonNull GenericType<T> targetType) {
     return get(firstIndexOf(id), targetType);
   }
 
@@ -133,7 +138,8 @@ public interface GettableById extends GettableByIndex, AccessibleById {
    * @throws IndexOutOfBoundsException if the id is invalid.
    * @throws CodecNotFoundException if no codec can perform the conversion.
    */
-  default <T> T get(CqlIdentifier id, Class<T> targetClass) {
+  @Nullable
+  default <T> T get(@NonNull CqlIdentifier id, @NonNull Class<T> targetClass) {
     return get(firstIndexOf(id), targetClass);
   }
 
@@ -163,7 +169,8 @@ public interface GettableById extends GettableByIndex, AccessibleById {
    * @throws IndexOutOfBoundsException if the id is invalid.
    * @throws CodecNotFoundException if no codec can perform the conversion.
    */
-  default Object getObject(CqlIdentifier id) {
+  @Nullable
+  default Object getObject(@NonNull CqlIdentifier id) {
     return getObject(firstIndexOf(id));
   }
 
@@ -185,7 +192,7 @@ public interface GettableById extends GettableByIndex, AccessibleById {
    *
    * @throws IndexOutOfBoundsException if the id is invalid.
    */
-  default boolean getBoolean(CqlIdentifier id) {
+  default boolean getBoolean(@NonNull CqlIdentifier id) {
     return getBoolean(firstIndexOf(id));
   }
 
@@ -206,7 +213,7 @@ public interface GettableById extends GettableByIndex, AccessibleById {
    *
    * @throws IndexOutOfBoundsException if the id is invalid.
    */
-  default byte getByte(CqlIdentifier id) {
+  default byte getByte(@NonNull CqlIdentifier id) {
     return getByte(firstIndexOf(id));
   }
 
@@ -228,7 +235,7 @@ public interface GettableById extends GettableByIndex, AccessibleById {
    *
    * @throws IndexOutOfBoundsException if the id is invalid.
    */
-  default double getDouble(CqlIdentifier id) {
+  default double getDouble(@NonNull CqlIdentifier id) {
     return getDouble(firstIndexOf(id));
   }
 
@@ -250,7 +257,7 @@ public interface GettableById extends GettableByIndex, AccessibleById {
    *
    * @throws IndexOutOfBoundsException if the id is invalid.
    */
-  default float getFloat(CqlIdentifier id) {
+  default float getFloat(@NonNull CqlIdentifier id) {
     return getFloat(firstIndexOf(id));
   }
 
@@ -272,7 +279,7 @@ public interface GettableById extends GettableByIndex, AccessibleById {
    *
    * @throws IndexOutOfBoundsException if the id is invalid.
    */
-  default int getInt(CqlIdentifier id) {
+  default int getInt(@NonNull CqlIdentifier id) {
     return getInt(firstIndexOf(id));
   }
 
@@ -293,7 +300,7 @@ public interface GettableById extends GettableByIndex, AccessibleById {
    *
    * @throws IndexOutOfBoundsException if the id is invalid.
    */
-  default long getLong(CqlIdentifier id) {
+  default long getLong(@NonNull CqlIdentifier id) {
     return getLong(firstIndexOf(id));
   }
 
@@ -315,7 +322,7 @@ public interface GettableById extends GettableByIndex, AccessibleById {
    *
    * @throws IndexOutOfBoundsException if the id is invalid.
    */
-  default short getShort(CqlIdentifier id) {
+  default short getShort(@NonNull CqlIdentifier id) {
     return getShort(firstIndexOf(id));
   }
 
@@ -332,7 +339,8 @@ public interface GettableById extends GettableByIndex, AccessibleById {
    *
    * @throws IndexOutOfBoundsException if the id is invalid.
    */
-  default Instant getInstant(CqlIdentifier id) {
+  @Nullable
+  default Instant getInstant(@NonNull CqlIdentifier id) {
     return getInstant(firstIndexOf(id));
   }
 
@@ -349,7 +357,8 @@ public interface GettableById extends GettableByIndex, AccessibleById {
    *
    * @throws IndexOutOfBoundsException if the id is invalid.
    */
-  default LocalDate getLocalDate(CqlIdentifier id) {
+  @Nullable
+  default LocalDate getLocalDate(@NonNull CqlIdentifier id) {
     return getLocalDate(firstIndexOf(id));
   }
 
@@ -366,7 +375,8 @@ public interface GettableById extends GettableByIndex, AccessibleById {
    *
    * @throws IndexOutOfBoundsException if the id is invalid.
    */
-  default LocalTime getLocalTime(CqlIdentifier id) {
+  @Nullable
+  default LocalTime getLocalTime(@NonNull CqlIdentifier id) {
     return getLocalTime(firstIndexOf(id));
   }
 
@@ -383,7 +393,8 @@ public interface GettableById extends GettableByIndex, AccessibleById {
    *
    * @throws IndexOutOfBoundsException if the id is invalid.
    */
-  default ByteBuffer getByteBuffer(CqlIdentifier id) {
+  @Nullable
+  default ByteBuffer getByteBuffer(@NonNull CqlIdentifier id) {
     return getByteBuffer(firstIndexOf(id));
   }
 
@@ -400,7 +411,8 @@ public interface GettableById extends GettableByIndex, AccessibleById {
    *
    * @throws IndexOutOfBoundsException if the id is invalid.
    */
-  default String getString(CqlIdentifier id) {
+  @Nullable
+  default String getString(@NonNull CqlIdentifier id) {
     return getString(firstIndexOf(id));
   }
 
@@ -417,7 +429,8 @@ public interface GettableById extends GettableByIndex, AccessibleById {
    *
    * @throws IndexOutOfBoundsException if the id is invalid.
    */
-  default BigInteger getBigInteger(CqlIdentifier id) {
+  @Nullable
+  default BigInteger getBigInteger(@NonNull CqlIdentifier id) {
     return getBigInteger(firstIndexOf(id));
   }
 
@@ -434,7 +447,8 @@ public interface GettableById extends GettableByIndex, AccessibleById {
    *
    * @throws IndexOutOfBoundsException if the id is invalid.
    */
-  default BigDecimal getBigDecimal(CqlIdentifier id) {
+  @Nullable
+  default BigDecimal getBigDecimal(@NonNull CqlIdentifier id) {
     return getBigDecimal(firstIndexOf(id));
   }
 
@@ -451,7 +465,8 @@ public interface GettableById extends GettableByIndex, AccessibleById {
    *
    * @throws IndexOutOfBoundsException if the id is invalid.
    */
-  default UUID getUuid(CqlIdentifier id) {
+  @Nullable
+  default UUID getUuid(@NonNull CqlIdentifier id) {
     return getUuid(firstIndexOf(id));
   }
 
@@ -468,7 +483,8 @@ public interface GettableById extends GettableByIndex, AccessibleById {
    *
    * @throws IndexOutOfBoundsException if the id is invalid.
    */
-  default InetAddress getInetAddress(CqlIdentifier id) {
+  @Nullable
+  default InetAddress getInetAddress(@NonNull CqlIdentifier id) {
     return getInetAddress(firstIndexOf(id));
   }
 
@@ -485,7 +501,8 @@ public interface GettableById extends GettableByIndex, AccessibleById {
    *
    * @throws IndexOutOfBoundsException if the id is invalid.
    */
-  default CqlDuration getCqlDuration(CqlIdentifier id) {
+  @Nullable
+  default CqlDuration getCqlDuration(@NonNull CqlIdentifier id) {
     return getCqlDuration(firstIndexOf(id));
   }
 
@@ -508,7 +525,8 @@ public interface GettableById extends GettableByIndex, AccessibleById {
    * @throws IndexOutOfBoundsException if the index is invalid.
    * @throws IllegalArgumentException if the column type can not be converted to a known token type.
    */
-  default Token getToken(CqlIdentifier id) {
+  @Nullable
+  default Token getToken(@NonNull CqlIdentifier id) {
     return getToken(firstIndexOf(id));
   }
 
@@ -526,9 +544,14 @@ public interface GettableById extends GettableByIndex, AccessibleById {
    * <p>If you want to avoid the overhead of building a {@code CqlIdentifier}, use the variant of
    * this method that takes a string argument.
    *
+   * <p>Apache Cassandra does not make any distinction between an empty collection and {@code null}.
+   * Whether this method will return an empty collection or {@code null} will depend on the codec
+   * used; by default, the driver's built-in codecs all return empty collections.
+   *
    * @throws IndexOutOfBoundsException if the id is invalid.
    */
-  default <T> List<T> getList(CqlIdentifier id, Class<T> elementsClass) {
+  @Nullable
+  default <T> List<T> getList(@NonNull CqlIdentifier id, @NonNull Class<T> elementsClass) {
     return getList(firstIndexOf(id), elementsClass);
   }
 
@@ -546,9 +569,14 @@ public interface GettableById extends GettableByIndex, AccessibleById {
    * <p>If you want to avoid the overhead of building a {@code CqlIdentifier}, use the variant of
    * this method that takes a string argument.
    *
+   * <p>Apache Cassandra does not make any distinction between an empty collection and {@code null}.
+   * Whether this method will return an empty collection or {@code null} will depend on the codec
+   * used; by default, the driver's built-in codecs all return empty collections.
+   *
    * @throws IndexOutOfBoundsException if the id is invalid.
    */
-  default <T> Set<T> getSet(CqlIdentifier id, Class<T> elementsClass) {
+  @Nullable
+  default <T> Set<T> getSet(@NonNull CqlIdentifier id, @NonNull Class<T> elementsClass) {
     return getSet(firstIndexOf(id), elementsClass);
   }
 
@@ -566,9 +594,15 @@ public interface GettableById extends GettableByIndex, AccessibleById {
    * <p>If you want to avoid the overhead of building a {@code CqlIdentifier}, use the variant of
    * this method that takes a string argument.
    *
+   * <p>Apache Cassandra does not make any distinction between an empty collection and {@code null}.
+   * Whether this method will return an empty collection or {@code null} will depend on the codec
+   * used; by default, the driver's built-in codecs all return empty collections.
+   *
    * @throws IndexOutOfBoundsException if the id is invalid.
    */
-  default <K, V> Map<K, V> getMap(CqlIdentifier id, Class<K> keyClass, Class<V> valueClass) {
+  @Nullable
+  default <K, V> Map<K, V> getMap(
+      @NonNull CqlIdentifier id, @NonNull Class<K> keyClass, @NonNull Class<V> valueClass) {
     return getMap(firstIndexOf(id), keyClass, valueClass);
   }
 
@@ -585,7 +619,8 @@ public interface GettableById extends GettableByIndex, AccessibleById {
    *
    * @throws IndexOutOfBoundsException if the id is invalid.
    */
-  default UdtValue getUdtValue(CqlIdentifier id) {
+  @Nullable
+  default UdtValue getUdtValue(@NonNull CqlIdentifier id) {
     return getUdtValue(firstIndexOf(id));
   }
 
@@ -602,7 +637,8 @@ public interface GettableById extends GettableByIndex, AccessibleById {
    *
    * @throws IndexOutOfBoundsException if the id is invalid.
    */
-  default TupleValue getTupleValue(CqlIdentifier id) {
+  @Nullable
+  default TupleValue getTupleValue(@NonNull CqlIdentifier id) {
     return getTupleValue(firstIndexOf(id));
   }
 }

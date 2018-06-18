@@ -35,6 +35,7 @@ import com.datastax.oss.driver.api.testinfra.ccm.CcmRule;
 import com.datastax.oss.driver.api.testinfra.session.SessionRule;
 import com.datastax.oss.driver.categories.ParallelizableTests;
 import com.datastax.oss.driver.internal.core.type.codec.IntCodec;
+import edu.umd.cs.findbugs.annotations.NonNull;
 import java.nio.ByteBuffer;
 import java.util.Collection;
 import java.util.Iterator;
@@ -85,26 +86,29 @@ public class CodecRegistryIT {
 
     private static final IntCodec intCodec = new IntCodec();
 
+    @NonNull
     @Override
     public GenericType<Float> getJavaType() {
       return GenericType.of(Float.class);
     }
 
+    @NonNull
     @Override
     public DataType getCqlType() {
       return DataTypes.INT;
     }
 
     @Override
-    public ByteBuffer encode(Float value, ProtocolVersion protocolVersion) {
+    public ByteBuffer encode(Float value, @NonNull ProtocolVersion protocolVersion) {
       return intCodec.encode(value.intValue(), protocolVersion);
     }
 
     @Override
-    public Float decode(ByteBuffer bytes, ProtocolVersion protocolVersion) {
+    public Float decode(ByteBuffer bytes, @NonNull ProtocolVersion protocolVersion) {
       return intCodec.decode(bytes, protocolVersion).floatValue();
     }
 
+    @NonNull
     @Override
     public String format(Float value) {
       return intCodec.format(value.intValue());
@@ -201,26 +205,29 @@ public class CodecRegistryIT {
       this.javaType = javaType;
     }
 
+    @NonNull
     @Override
     public GenericType<O> getJavaType() {
       return javaType;
     }
 
+    @NonNull
     @Override
     public DataType getCqlType() {
       return innerCodec.getCqlType();
     }
 
     @Override
-    public ByteBuffer encode(O value, ProtocolVersion protocolVersion) {
+    public ByteBuffer encode(O value, @NonNull ProtocolVersion protocolVersion) {
       return innerCodec.encode(encode(value), protocolVersion);
     }
 
     @Override
-    public O decode(ByteBuffer bytes, ProtocolVersion protocolVersion) {
+    public O decode(ByteBuffer bytes, @NonNull ProtocolVersion protocolVersion) {
       return decode(innerCodec.decode(bytes, protocolVersion));
     }
 
+    @NonNull
     @Override
     public String format(O value) {
       return value == null ? null : innerCodec.format(encode(value));

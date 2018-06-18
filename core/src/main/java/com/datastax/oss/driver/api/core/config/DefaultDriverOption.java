@@ -15,6 +15,8 @@
  */
 package com.datastax.oss.driver.api.core.config;
 
+import edu.umd.cs.findbugs.annotations.NonNull;
+
 /**
  * Built-in driver options for the core driver.
  *
@@ -164,6 +166,7 @@ public enum DefaultDriverOption implements DriverOption {
     this.path = path;
   }
 
+  @NonNull
   @Override
   public String getPath() {
     return path;

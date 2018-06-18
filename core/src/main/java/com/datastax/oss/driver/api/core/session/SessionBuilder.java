@@ -35,6 +35,8 @@ import com.datastax.oss.driver.internal.core.session.DefaultSession;
 import com.datastax.oss.driver.internal.core.util.concurrent.BlockingOperation;
 import com.datastax.oss.driver.internal.core.util.concurrent.CompletableFutures;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableMap;
+import edu.umd.cs.findbugs.annotations.NonNull;
+import edu.umd.cs.findbugs.annotations.Nullable;
 import java.net.InetSocketAddress;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -97,11 +99,13 @@ public abstract class SessionBuilder<SelfT extends SessionBuilder, SessionT> {
    * @see <a href="https://github.com/typesafehub/config#standard-behavior">Typesafe config's
    *     standard loading behavior</a>
    */
-  public SelfT withConfigLoader(DriverConfigLoader configLoader) {
+  @NonNull
+  public SelfT withConfigLoader(@Nullable DriverConfigLoader configLoader) {
     this.configLoader = configLoader;
     return self;
   }
 
+  @NonNull
   protected DriverConfigLoader defaultConfigLoader() {
     return new DefaultDriverConfigLoader();
   }
@@ -122,7 +126,8 @@ public abstract class SessionBuilder<SelfT extends SessionBuilder, SessionT> {
    * If you need that, call {@link java.net.InetAddress#getAllByName(String)} before calling this
    * method.
    */
-  public SelfT addContactPoints(Collection<InetSocketAddress> contactPoints) {
+  @NonNull
+  public SelfT addContactPoints(@NonNull Collection<InetSocketAddress> contactPoints) {
     this.programmaticContactPoints.addAll(contactPoints);
     return self;
   }
@@ -132,13 +137,20 @@ public abstract class SessionBuilder<SelfT extends SessionBuilder, SessionT> {
    *
    * @see #addContactPoints(Collection)
    */
-  public SelfT addContactPoint(InetSocketAddress contactPoint) {
+  @NonNull
+  public SelfT addContactPoint(@NonNull InetSocketAddress contactPoint) {
     this.programmaticContactPoints.add(contactPoint);
     return self;
   }
 
-  /** Registers additional codecs for custom type mappings. */
-  public SelfT addTypeCodecs(TypeCodec<?>... typeCodecs) {
+  /**
+   * Registers additional codecs for custom type mappings.
+   *
+   * @param typeCodecs neither the individual codecs, nor the vararg array itself, can be {@code
+   *     null}.
+   */
+  @NonNull
+  public SelfT addTypeCodecs(@NonNull TypeCodec<?>... typeCodecs) {
     Collections.addAll(this.typeCodecs, typeCodecs);
     return self;
   }
@@ -149,7 +161,8 @@ public abstract class SessionBuilder<SelfT extends SessionBuilder, SessionT> {
    * <p>If the listener is specified programmatically with this method, it overrides the
    * configuration (that is, the {@code metadata.node-state-listener.class} option will be ignored).
    */
-  public SelfT withNodeStateListener(NodeStateListener nodeStateListener) {
+  @NonNull
+  public SelfT withNodeStateListener(@Nullable NodeStateListener nodeStateListener) {
     this.nodeStateListener = nodeStateListener;
     return self;
   }
@@ -161,7 +174,8 @@ public abstract class SessionBuilder<SelfT extends SessionBuilder, SessionT> {
    * configuration (that is, the {@code metadata.schema-change-listener.class} option will be
    * ignored).
    */
-  public SelfT withSchemaChangeListener(SchemaChangeListener schemaChangeListener) {
+  @NonNull
+  public SelfT withSchemaChangeListener(@Nullable SchemaChangeListener schemaChangeListener) {
     this.schemaChangeListener = schemaChangeListener;
     return self;
   }
@@ -172,7 +186,8 @@ public abstract class SessionBuilder<SelfT extends SessionBuilder, SessionT> {
    * <p>If the tracker is specified programmatically with this method, it overrides the
    * configuration (that is, the {@code request.tracker.class} option will be ignored).
    */
-  public SelfT withRequestTracker(RequestTracker requestTracker) {
+  @NonNull
+  public SelfT withRequestTracker(@Nullable RequestTracker requestTracker) {
     this.requestTracker = requestTracker;
     return self;
   }
@@ -194,13 +209,15 @@ public abstract class SessionBuilder<SelfT extends SessionBuilder, SessionT> {
    *
    * @see #withNodeFilter(Predicate)
    */
-  public SelfT withNodeFilter(String profileName, Predicate<Node> nodeFilter) {
+  @NonNull
+  public SelfT withNodeFilter(@NonNull String profileName, @NonNull Predicate<Node> nodeFilter) {
     this.nodeFilters.put(profileName, nodeFilter);
     return self;
   }
 
   /** Alias to {@link #withNodeFilter(String, Predicate)} for the default profile. */
-  public SelfT withNodeFilter(Predicate<Node> nodeFilter) {
+  @NonNull
+  public SelfT withNodeFilter(@NonNull Predicate<Node> nodeFilter) {
     return withNodeFilter(DriverConfigProfile.DEFAULT_NAME, nodeFilter);
   }
 
@@ -210,7 +227,8 @@ public abstract class SessionBuilder<SelfT extends SessionBuilder, SessionT> {
    * <p>Note that this can also be provided by the configuration; if both are defined, this method
    * takes precedence.
    */
-  public SelfT withKeyspace(CqlIdentifier keyspace) {
+  @NonNull
+  public SelfT withKeyspace(@Nullable CqlIdentifier keyspace) {
     this.keyspace = keyspace;
     return self;
   }
@@ -219,8 +237,9 @@ public abstract class SessionBuilder<SelfT extends SessionBuilder, SessionT> {
    * Shortcut for {@link #withKeyspace(CqlIdentifier)
    * withKeyspace(CqlIdentifier.fromCql(keyspaceName))}
    */
-  public SelfT withKeyspace(String keyspaceName) {
-    return withKeyspace(CqlIdentifier.fromCql(keyspaceName));
+  @NonNull
+  public SelfT withKeyspace(@Nullable String keyspaceName) {
+    return withKeyspace(keyspaceName == null ? null : CqlIdentifier.fromCql(keyspaceName));
   }
 
   /**
@@ -232,7 +251,8 @@ public abstract class SessionBuilder<SelfT extends SessionBuilder, SessionT> {
    * <p>If null, the driver attempts to use {@link Thread#getContextClassLoader()} of the current
    * thread or the same {@link ClassLoader} that loaded the core driver classes.
    */
-  public SelfT withClassLoader(ClassLoader classLoader) {
+  @NonNull
+  public SelfT withClassLoader(@Nullable ClassLoader classLoader) {
     this.classLoader = classLoader;
     return self;
   }
@@ -242,6 +262,7 @@ public abstract class SessionBuilder<SelfT extends SessionBuilder, SessionT> {
    *
    * @return a completion stage that completes with the session when it is fully initialized.
    */
+  @NonNull
   public CompletionStage<SessionT> buildAsync() {
     CompletionStage<CqlSession> buildStage = buildDefaultSessionAsync();
     CompletionStage<SessionT> wrapStage = buildStage.thenApply(this::wrap);
@@ -255,13 +276,15 @@ public abstract class SessionBuilder<SelfT extends SessionBuilder, SessionT> {
    *
    * <p>This must not be called on a driver thread.
    */
+  @NonNull
   public SessionT build() {
     BlockingOperation.checkNotDriverThread();
     return CompletableFutures.getUninterruptibly(buildAsync());
   }
 
-  protected abstract SessionT wrap(CqlSession defaultSession);
+  protected abstract SessionT wrap(@NonNull CqlSession defaultSession);
 
+  @NonNull
   protected final CompletionStage<CqlSession> buildDefaultSessionAsync() {
     try {
       DriverConfigLoader configLoader = buildIfNull(this.configLoader, this::defaultConfigLoader);

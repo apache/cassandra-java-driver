@@ -21,6 +21,8 @@ import com.datastax.oss.driver.api.core.detach.AttachmentPoint;
 import com.datastax.oss.driver.api.core.type.DataType;
 import com.datastax.oss.driver.api.core.type.UserDefinedType;
 import com.datastax.oss.driver.internal.core.type.DefaultUserDefinedType;
+import edu.umd.cs.findbugs.annotations.NonNull;
+import edu.umd.cs.findbugs.annotations.Nullable;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
@@ -52,11 +54,13 @@ public class ShallowUserDefinedType implements UserDefinedType, Serializable {
     this.frozen = frozen;
   }
 
+  @Nullable
   @Override
   public CqlIdentifier getKeyspace() {
     return keyspace;
   }
 
+  @NonNull
   @Override
   public CqlIdentifier getName() {
     return name;
@@ -67,6 +71,7 @@ public class ShallowUserDefinedType implements UserDefinedType, Serializable {
     return frozen;
   }
 
+  @NonNull
   @Override
   public List<CqlIdentifier> getFieldNames() {
     throw new UnsupportedOperationException(
@@ -85,30 +90,35 @@ public class ShallowUserDefinedType implements UserDefinedType, Serializable {
         "This implementation should only be used internally, this is likely a driver bug");
   }
 
+  @NonNull
   @Override
   public List<DataType> getFieldTypes() {
     throw new UnsupportedOperationException(
         "This implementation should only be used internally, this is likely a driver bug");
   }
 
+  @NonNull
   @Override
   public UserDefinedType copy(boolean newFrozen) {
     throw new UnsupportedOperationException(
         "This implementation should only be used internally, this is likely a driver bug");
   }
 
+  @NonNull
   @Override
   public UdtValue newValue() {
     throw new UnsupportedOperationException(
         "This implementation should only be used internally, this is likely a driver bug");
   }
 
+  @NonNull
   @Override
-  public UdtValue newValue(Object... fields) {
+  public UdtValue newValue(@NonNull Object... fields) {
     throw new UnsupportedOperationException(
         "This implementation should only be used internally, this is likely a driver bug");
   }
 
+  @NonNull
   @Override
   public AttachmentPoint getAttachmentPoint() {
     throw new UnsupportedOperationException(
@@ -122,7 +132,7 @@ public class ShallowUserDefinedType implements UserDefinedType, Serializable {
   }
 
   @Override
-  public void attach(AttachmentPoint attachmentPoint) {
+  public void attach(@NonNull AttachmentPoint attachmentPoint) {
     throw new UnsupportedOperationException(
         "This implementation should only be used internally, this is likely a driver bug");
   }

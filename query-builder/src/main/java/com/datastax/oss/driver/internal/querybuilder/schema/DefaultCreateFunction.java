@@ -25,6 +25,8 @@ import com.datastax.oss.driver.api.querybuilder.schema.CreateFunctionWithType;
 import com.datastax.oss.driver.internal.querybuilder.CqlHelper;
 import com.datastax.oss.driver.internal.querybuilder.ImmutableCollections;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableMap;
+import edu.umd.cs.findbugs.annotations.NonNull;
+import edu.umd.cs.findbugs.annotations.Nullable;
 import java.util.Map;
 import net.jcip.annotations.Immutable;
 
@@ -46,24 +48,25 @@ public class DefaultCreateFunction
   private final String language;
   private final String functionBody;
 
-  public DefaultCreateFunction(CqlIdentifier functionName) {
+  public DefaultCreateFunction(@NonNull CqlIdentifier functionName) {
     this(null, functionName);
   }
 
-  public DefaultCreateFunction(CqlIdentifier keyspace, CqlIdentifier functionName) {
+  public DefaultCreateFunction(
+      @Nullable CqlIdentifier keyspace, @NonNull CqlIdentifier functionName) {
     this(keyspace, functionName, false, false, ImmutableMap.of(), false, null, null, null);
   }
 
   public DefaultCreateFunction(
-      CqlIdentifier keyspace,
-      CqlIdentifier functionName,
+      @Nullable CqlIdentifier keyspace,
+      @NonNull CqlIdentifier functionName,
       boolean orReplace,
       boolean ifNotExists,
-      ImmutableMap<CqlIdentifier, DataType> parameters,
+      @NonNull ImmutableMap<CqlIdentifier, DataType> parameters,
       boolean returnsNullOnNull,
-      DataType returns,
-      String language,
-      String functionBody) {
+      @Nullable DataType returns,
+      @Nullable String language,
+      @Nullable String functionBody) {
     this.keyspace = keyspace;
     this.functionName = functionName;
     this.orReplace = orReplace;
@@ -75,6 +78,7 @@ public class DefaultCreateFunction
     this.functionBody = functionBody;
   }
 
+  @NonNull
   @Override
   public String asCql() {
     StringBuilder builder = new StringBuilder();
@@ -144,8 +148,9 @@ public class DefaultCreateFunction
     return asCql();
   }
 
+  @NonNull
   @Override
-  public CreateFunctionEnd as(String functionBody) {
+  public CreateFunctionEnd as(@NonNull String functionBody) {
     return new DefaultCreateFunction(
         keyspace,
         functionName,
@@ -158,8 +163,9 @@ public class DefaultCreateFunction
         functionBody);
   }
 
+  @NonNull
   @Override
-  public CreateFunctionWithLanguage withLanguage(String language) {
+  public CreateFunctionWithLanguage withLanguage(@NonNull String language) {
     return new DefaultCreateFunction(
         keyspace,
         functionName,
@@ -172,8 +178,9 @@ public class DefaultCreateFunction
         functionBody);
   }
 
+  @NonNull
   @Override
-  public CreateFunctionWithType returnsType(DataType returnType) {
+  public CreateFunctionWithType returnsType(@NonNull DataType returnType) {
     return new DefaultCreateFunction(
         keyspace,
         functionName,
@@ -186,6 +193,7 @@ public class DefaultCreateFunction
         functionBody);
   }
 
+  @NonNull
   @Override
   public CreateFunctionStart ifNotExists() {
     return new DefaultCreateFunction(
@@ -200,6 +208,7 @@ public class DefaultCreateFunction
         functionBody);
   }
 
+  @NonNull
   @Override
   public CreateFunctionStart orReplace() {
     return new DefaultCreateFunction(
@@ -214,8 +223,10 @@ public class DefaultCreateFunction
         functionBody);
   }
 
+  @NonNull
   @Override
-  public CreateFunctionStart withParameter(CqlIdentifier paramName, DataType paramType) {
+  public CreateFunctionStart withParameter(
+      @NonNull CqlIdentifier paramName, @NonNull DataType paramType) {
     return new DefaultCreateFunction(
         keyspace,
         functionName,
@@ -228,6 +239,7 @@ public class DefaultCreateFunction
         functionBody);
   }
 
+  @NonNull
   @Override
   public CreateFunctionWithNullOption returnsNullOnNull() {
     return new DefaultCreateFunction(
@@ -242,6 +254,7 @@ public class DefaultCreateFunction
         functionBody);
   }
 
+  @NonNull
   @Override
   public CreateFunctionWithNullOption calledOnNull() {
     return new DefaultCreateFunction(
@@ -256,10 +269,12 @@ public class DefaultCreateFunction
         functionBody);
   }
 
+  @Nullable
   public CqlIdentifier getKeyspace() {
     return keyspace;
   }
 
+  @NonNull
   public CqlIdentifier getFunction() {
     return functionName;
   }
@@ -272,6 +287,7 @@ public class DefaultCreateFunction
     return ifNotExists;
   }
 
+  @NonNull
   public ImmutableMap<CqlIdentifier, DataType> getParameters() {
     return parameters;
   }
@@ -280,14 +296,17 @@ public class DefaultCreateFunction
     return returnsNullOnNull;
   }
 
+  @Nullable
   public DataType getReturnType() {
     return returnType;
   }
 
+  @Nullable
   public String getLanguage() {
     return language;
   }
 
+  @Nullable
   public String getFunctionBody() {
     return functionBody;
   }

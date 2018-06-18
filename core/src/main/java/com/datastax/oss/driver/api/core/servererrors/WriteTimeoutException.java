@@ -21,6 +21,7 @@ import com.datastax.oss.driver.api.core.DriverException;
 import com.datastax.oss.driver.api.core.metadata.Node;
 import com.datastax.oss.driver.api.core.retry.RetryPolicy;
 import com.datastax.oss.driver.api.core.session.Request;
+import edu.umd.cs.findbugs.annotations.NonNull;
 
 /**
  * A server-side timeout during a write query.
@@ -35,11 +36,11 @@ public class WriteTimeoutException extends QueryConsistencyException {
   private final WriteType writeType;
 
   public WriteTimeoutException(
-      Node coordinator,
-      ConsistencyLevel consistencyLevel,
+      @NonNull Node coordinator,
+      @NonNull ConsistencyLevel consistencyLevel,
       int received,
       int blockFor,
-      WriteType writeType) {
+      @NonNull WriteType writeType) {
     this(
         coordinator,
         String.format(
@@ -54,22 +55,24 @@ public class WriteTimeoutException extends QueryConsistencyException {
   }
 
   private WriteTimeoutException(
-      Node coordinator,
-      String message,
-      ConsistencyLevel consistencyLevel,
+      @NonNull Node coordinator,
+      @NonNull String message,
+      @NonNull ConsistencyLevel consistencyLevel,
       int received,
       int blockFor,
-      WriteType writeType,
+      @NonNull WriteType writeType,
       boolean writableStackTrace) {
     super(coordinator, message, consistencyLevel, received, blockFor, writableStackTrace);
     this.writeType = writeType;
   }
 
   /** The type of the write for which a timeout was raised. */
+  @NonNull
   public WriteType getWriteType() {
     return writeType;
   }
 
+  @NonNull
   @Override
   public DriverException copy() {
     return new WriteTimeoutException(

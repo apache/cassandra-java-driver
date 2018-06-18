@@ -50,6 +50,7 @@ import com.datastax.oss.driver.internal.core.type.codec.UuidCodec;
 import com.datastax.oss.driver.internal.core.type.codec.VarIntCodec;
 import com.datastax.oss.driver.shaded.guava.common.base.Charsets;
 import com.datastax.oss.driver.shaded.guava.common.base.Preconditions;
+import edu.umd.cs.findbugs.annotations.NonNull;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.net.InetAddress;
@@ -86,29 +87,36 @@ public class TypeCodecs {
   public static final TypeCodec<InetAddress> INET = new InetCodec();
   public static final TypeCodec<CqlDuration> DURATION = new CqlDurationCodec();
 
-  public static TypeCodec<ByteBuffer> custom(DataType cqlType) {
+  @NonNull
+  public static TypeCodec<ByteBuffer> custom(@NonNull DataType cqlType) {
     Preconditions.checkArgument(cqlType instanceof CustomType, "cqlType must be a custom type");
     return new CustomCodec((CustomType) cqlType);
   }
 
-  public static <T> TypeCodec<List<T>> listOf(TypeCodec<T> elementCodec) {
+  @NonNull
+  public static <T> TypeCodec<List<T>> listOf(@NonNull TypeCodec<T> elementCodec) {
     return new ListCodec<>(DataTypes.listOf(elementCodec.getCqlType()), elementCodec);
   }
 
-  public static <T> TypeCodec<Set<T>> setOf(TypeCodec<T> elementCodec) {
+  @NonNull
+  public static <T> TypeCodec<Set<T>> setOf(@NonNull TypeCodec<T> elementCodec) {
     return new SetCodec<>(DataTypes.setOf(elementCodec.getCqlType()), elementCodec);
   }
 
-  public static <K, V> TypeCodec<Map<K, V>> mapOf(TypeCodec<K> keyCodec, TypeCodec<V> valueCodec) {
+  @NonNull
+  public static <K, V> TypeCodec<Map<K, V>> mapOf(
+      @NonNull TypeCodec<K> keyCodec, @NonNull TypeCodec<V> valueCodec) {
     return new MapCodec<>(
         DataTypes.mapOf(keyCodec.getCqlType(), valueCodec.getCqlType()), keyCodec, valueCodec);
   }
 
-  public static TypeCodec<TupleValue> tupleOf(TupleType cqlType) {
+  @NonNull
+  public static TypeCodec<TupleValue> tupleOf(@NonNull TupleType cqlType) {
     return new TupleCodec(cqlType);
   }
 
-  public static TypeCodec<UdtValue> udtOf(UserDefinedType cqlType) {
+  @NonNull
+  public static TypeCodec<UdtValue> udtOf(@NonNull UserDefinedType cqlType) {
     return new UdtCodec(cqlType);
   }
 }

@@ -25,6 +25,7 @@ import com.datastax.oss.driver.api.core.cql.PreparedStatement;
 import com.datastax.oss.driver.api.core.type.codec.registry.CodecRegistry;
 import com.datastax.oss.driver.internal.core.data.ValuesHelper;
 import com.datastax.oss.driver.internal.core.session.RepreparePayload;
+import edu.umd.cs.findbugs.annotations.NonNull;
 import java.nio.ByteBuffer;
 import java.util.List;
 import java.util.Map;
@@ -76,21 +77,25 @@ public class DefaultPreparedStatement implements PreparedStatement {
     this.protocolVersion = protocolVersion;
   }
 
+  @NonNull
   @Override
   public ByteBuffer getId() {
     return id;
   }
 
+  @NonNull
   @Override
   public String getQuery() {
     return repreparePayload.query;
   }
 
+  @NonNull
   @Override
   public ColumnDefinitions getVariableDefinitions() {
     return variableDefinitions;
   }
 
+  @NonNull
   @Override
   public List<Integer> getPrimaryKeyIndices() {
     return primaryKeyIndices;
@@ -101,6 +106,7 @@ public class DefaultPreparedStatement implements PreparedStatement {
     return resultMetadata.resultMetadataId;
   }
 
+  @NonNull
   @Override
   public ColumnDefinitions getResultSetDefinitions() {
     return resultMetadata.resultSetDefinitions;
@@ -108,12 +114,13 @@ public class DefaultPreparedStatement implements PreparedStatement {
 
   @Override
   public void setResultMetadata(
-      ByteBuffer newResultMetadataId, ColumnDefinitions newResultSetDefinitions) {
+      @NonNull ByteBuffer newResultMetadataId, @NonNull ColumnDefinitions newResultSetDefinitions) {
     this.resultMetadata = new ResultMetadata(newResultMetadataId, newResultSetDefinitions);
   }
 
+  @NonNull
   @Override
-  public BoundStatement bind(Object... values) {
+  public BoundStatement bind(@NonNull Object... values) {
     return new DefaultBoundStatement(
         this,
         variableDefinitions,
@@ -135,8 +142,9 @@ public class DefaultPreparedStatement implements PreparedStatement {
         protocolVersion);
   }
 
+  @NonNull
   @Override
-  public BoundStatementBuilder boundStatementBuilder(Object... values) {
+  public BoundStatementBuilder boundStatementBuilder(@NonNull Object... values) {
     return new BoundStatementBuilder(
         this,
         variableDefinitions,

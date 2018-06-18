@@ -25,6 +25,8 @@ import com.datastax.oss.driver.api.core.metadata.token.Token;
 import com.datastax.oss.driver.api.core.type.DataType;
 import com.datastax.oss.driver.api.core.type.codec.registry.CodecRegistry;
 import com.datastax.oss.driver.internal.core.util.RoutingKey;
+import edu.umd.cs.findbugs.annotations.NonNull;
+import edu.umd.cs.findbugs.annotations.Nullable;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
 import java.util.List;
@@ -88,26 +90,29 @@ public class DefaultBoundStatement implements BoundStatement {
     return variableDefinitions.size();
   }
 
+  @NonNull
   @Override
   public DataType getType(int i) {
     return variableDefinitions.get(i).getType();
   }
 
   @Override
-  public int firstIndexOf(CqlIdentifier id) {
+  public int firstIndexOf(@NonNull CqlIdentifier id) {
     return variableDefinitions.firstIndexOf(id);
   }
 
   @Override
-  public int firstIndexOf(String name) {
+  public int firstIndexOf(@NonNull String name) {
     return variableDefinitions.firstIndexOf(name);
   }
 
+  @NonNull
   @Override
   public CodecRegistry codecRegistry() {
     return codecRegistry;
   }
 
+  @NonNull
   @Override
   public ProtocolVersion protocolVersion() {
     return protocolVersion;
@@ -118,6 +123,7 @@ public class DefaultBoundStatement implements BoundStatement {
     return values[i];
   }
 
+  @NonNull
   @Override
   public BoundStatement setBytesUnsafe(int i, ByteBuffer v) {
     ByteBuffer[] newValues = Arrays.copyOf(values, values.length);
@@ -140,11 +146,13 @@ public class DefaultBoundStatement implements BoundStatement {
         protocolVersion);
   }
 
+  @NonNull
   @Override
   public PreparedStatement getPreparedStatement() {
     return preparedStatement;
   }
 
+  @NonNull
   @Override
   public List<ByteBuffer> getValues() {
     return Arrays.asList(values);
@@ -155,8 +163,9 @@ public class DefaultBoundStatement implements BoundStatement {
     return configProfileName;
   }
 
+  @NonNull
   @Override
-  public BoundStatement setConfigProfileName(String newConfigProfileName) {
+  public BoundStatement setConfigProfileName(@Nullable String newConfigProfileName) {
     return new DefaultBoundStatement(
         preparedStatement,
         variableDefinitions,
@@ -180,8 +189,9 @@ public class DefaultBoundStatement implements BoundStatement {
     return configProfile;
   }
 
+  @NonNull
   @Override
-  public BoundStatement setConfigProfile(DriverConfigProfile newConfigProfile) {
+  public BoundStatement setConfigProfile(@Nullable DriverConfigProfile newConfigProfile) {
     return new DefaultBoundStatement(
         preparedStatement,
         variableDefinitions,
@@ -212,8 +222,9 @@ public class DefaultBoundStatement implements BoundStatement {
     }
   }
 
+  @NonNull
   @Override
-  public BoundStatement setRoutingKeyspace(CqlIdentifier newRoutingKeyspace) {
+  public BoundStatement setRoutingKeyspace(@Nullable CqlIdentifier newRoutingKeyspace) {
     return new DefaultBoundStatement(
         preparedStatement,
         variableDefinitions,
@@ -257,8 +268,9 @@ public class DefaultBoundStatement implements BoundStatement {
     }
   }
 
+  @NonNull
   @Override
-  public BoundStatement setRoutingKey(ByteBuffer newRoutingKey) {
+  public BoundStatement setRoutingKey(@Nullable ByteBuffer newRoutingKey) {
     return new DefaultBoundStatement(
         preparedStatement,
         variableDefinitions,
@@ -282,8 +294,9 @@ public class DefaultBoundStatement implements BoundStatement {
     return routingToken;
   }
 
+  @NonNull
   @Override
-  public BoundStatement setRoutingToken(Token newRoutingToken) {
+  public BoundStatement setRoutingToken(@Nullable Token newRoutingToken) {
     return new DefaultBoundStatement(
         preparedStatement,
         variableDefinitions,
@@ -302,13 +315,15 @@ public class DefaultBoundStatement implements BoundStatement {
         protocolVersion);
   }
 
+  @NonNull
   @Override
   public Map<String, ByteBuffer> getCustomPayload() {
     return customPayload;
   }
 
+  @NonNull
   @Override
-  public BoundStatement setCustomPayload(Map<String, ByteBuffer> newCustomPayload) {
+  public BoundStatement setCustomPayload(@NonNull Map<String, ByteBuffer> newCustomPayload) {
     return new DefaultBoundStatement(
         preparedStatement,
         variableDefinitions,
@@ -332,8 +347,9 @@ public class DefaultBoundStatement implements BoundStatement {
     return idempotent;
   }
 
+  @NonNull
   @Override
-  public BoundStatement setIdempotent(Boolean newIdempotence) {
+  public BoundStatement setIdempotent(@Nullable Boolean newIdempotence) {
     return new DefaultBoundStatement(
         preparedStatement,
         variableDefinitions,
@@ -357,6 +373,7 @@ public class DefaultBoundStatement implements BoundStatement {
     return tracing;
   }
 
+  @NonNull
   @Override
   public BoundStatement setTracing(boolean newTracing) {
     return new DefaultBoundStatement(
@@ -382,6 +399,7 @@ public class DefaultBoundStatement implements BoundStatement {
     return timestamp;
   }
 
+  @NonNull
   @Override
   public BoundStatement setTimestamp(long newTimestamp) {
     return new DefaultBoundStatement(
@@ -407,8 +425,9 @@ public class DefaultBoundStatement implements BoundStatement {
     return pagingState;
   }
 
+  @NonNull
   @Override
-  public BoundStatement setPagingState(ByteBuffer newPagingState) {
+  public BoundStatement setPagingState(@Nullable ByteBuffer newPagingState) {
     return new DefaultBoundStatement(
         preparedStatement,
         variableDefinitions,

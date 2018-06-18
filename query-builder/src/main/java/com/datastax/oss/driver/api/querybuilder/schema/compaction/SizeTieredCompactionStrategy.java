@@ -15,34 +15,43 @@
  */
 package com.datastax.oss.driver.api.querybuilder.schema.compaction;
 
+import edu.umd.cs.findbugs.annotations.NonNull;
+
 public interface SizeTieredCompactionStrategy<SelfT extends SizeTieredCompactionStrategy<SelfT>>
     extends CompactionStrategy<SelfT> {
 
+  @NonNull
   default SelfT withMaxThreshold(int maxThreshold) {
     return withOption("max_threshold", maxThreshold);
   }
 
+  @NonNull
   default SelfT withMinThreshold(int minThreshold) {
     return withOption("min_threshold", minThreshold);
   }
 
+  @NonNull
   default SelfT withMinSSTableSizeInBytes(long bytes) {
     return withOption("min_sstable_size", bytes);
   }
 
+  @NonNull
   default SelfT withOnlyPurgeRepairedTombstones(boolean enabled) {
     return withOption("only_purge_repaired_tombstones", enabled);
   }
 
+  @NonNull
   default SelfT withBucketHigh(double bucketHigh) {
     return withOption("bucket_high", bucketHigh);
   }
 
+  @NonNull
   default SelfT withBucketLow(double bucketHigh) {
     return withOption("bucket_low", bucketHigh);
   }
 
   // 2.1 only
+  @NonNull
   default SelfT withColdReadsToOmit(double ratio) {
     return withOption("cold_reads_to_omit", ratio);
   }

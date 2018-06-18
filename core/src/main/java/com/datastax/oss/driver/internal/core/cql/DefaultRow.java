@@ -23,6 +23,8 @@ import com.datastax.oss.driver.api.core.detach.AttachmentPoint;
 import com.datastax.oss.driver.api.core.type.DataType;
 import com.datastax.oss.driver.api.core.type.codec.registry.CodecRegistry;
 import com.datastax.oss.protocol.internal.util.Bytes;
+import edu.umd.cs.findbugs.annotations.NonNull;
+import edu.umd.cs.findbugs.annotations.Nullable;
 import java.io.InvalidObjectException;
 import java.io.ObjectInputStream;
 import java.io.Serializable;
@@ -49,6 +51,7 @@ public class DefaultRow implements Row, Serializable {
     this(definitions, data, AttachmentPoint.NONE);
   }
 
+  @NonNull
   @Override
   public ColumnDefinitions getColumnDefinitions() {
     return definitions;
@@ -59,36 +62,41 @@ public class DefaultRow implements Row, Serializable {
     return definitions.size();
   }
 
+  @NonNull
   @Override
   public DataType getType(int i) {
     return definitions.get(i).getType();
   }
 
   @Override
-  public int firstIndexOf(CqlIdentifier id) {
+  public int firstIndexOf(@NonNull CqlIdentifier id) {
     return definitions.firstIndexOf(id);
   }
 
+  @NonNull
   @Override
-  public DataType getType(CqlIdentifier id) {
+  public DataType getType(@NonNull CqlIdentifier id) {
     return definitions.get(firstIndexOf(id)).getType();
   }
 
   @Override
-  public int firstIndexOf(String name) {
+  public int firstIndexOf(@NonNull String name) {
     return definitions.firstIndexOf(name);
   }
 
+  @NonNull
   @Override
-  public DataType getType(String name) {
+  public DataType getType(@NonNull String name) {
     return definitions.get(firstIndexOf(name)).getType();
   }
 
+  @NonNull
   @Override
   public CodecRegistry codecRegistry() {
     return attachmentPoint.codecRegistry();
   }
 
+  @NonNull
   @Override
   public ProtocolVersion protocolVersion() {
     return attachmentPoint.protocolVersion();
@@ -100,11 +108,12 @@ public class DefaultRow implements Row, Serializable {
   }
 
   @Override
-  public void attach(AttachmentPoint attachmentPoint) {
+  public void attach(@NonNull AttachmentPoint attachmentPoint) {
     this.attachmentPoint = attachmentPoint;
     this.definitions.attach(attachmentPoint);
   }
 
+  @Nullable
   @Override
   public ByteBuffer getBytesUnsafe(int i) {
     return data.get(i);

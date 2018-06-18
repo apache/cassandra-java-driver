@@ -28,6 +28,8 @@ import com.datastax.oss.driver.api.querybuilder.update.UpdateWithAssignments;
 import com.datastax.oss.driver.internal.querybuilder.CqlHelper;
 import com.datastax.oss.driver.internal.querybuilder.ImmutableCollections;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableList;
+import edu.umd.cs.findbugs.annotations.NonNull;
+import edu.umd.cs.findbugs.annotations.Nullable;
 import net.jcip.annotations.Immutable;
 
 @Immutable
@@ -41,18 +43,18 @@ public class DefaultUpdate implements UpdateStart, UpdateWithAssignments, Update
   private final boolean ifExists;
   private final ImmutableList<Condition> conditions;
 
-  public DefaultUpdate(CqlIdentifier keyspace, CqlIdentifier table) {
+  public DefaultUpdate(@Nullable CqlIdentifier keyspace, @NonNull CqlIdentifier table) {
     this(keyspace, table, null, ImmutableList.of(), ImmutableList.of(), false, ImmutableList.of());
   }
 
   public DefaultUpdate(
-      CqlIdentifier keyspace,
-      CqlIdentifier table,
-      Object timestamp,
-      ImmutableList<Assignment> assignments,
-      ImmutableList<Relation> relations,
+      @Nullable CqlIdentifier keyspace,
+      @NonNull CqlIdentifier table,
+      @Nullable Object timestamp,
+      @NonNull ImmutableList<Assignment> assignments,
+      @NonNull ImmutableList<Relation> relations,
       boolean ifExists,
-      ImmutableList<Condition> conditions) {
+      @NonNull ImmutableList<Condition> conditions) {
     this.keyspace = keyspace;
     this.table = table;
     this.timestamp = timestamp;
@@ -62,68 +64,81 @@ public class DefaultUpdate implements UpdateStart, UpdateWithAssignments, Update
     this.conditions = conditions;
   }
 
+  @NonNull
   @Override
   public UpdateStart usingTimestamp(long newTimestamp) {
     return new DefaultUpdate(
         keyspace, table, newTimestamp, assignments, relations, ifExists, conditions);
   }
 
+  @NonNull
   @Override
-  public UpdateStart usingTimestamp(BindMarker newTimestamp) {
+  public UpdateStart usingTimestamp(@NonNull BindMarker newTimestamp) {
     return new DefaultUpdate(
         keyspace, table, newTimestamp, assignments, relations, ifExists, conditions);
   }
 
+  @NonNull
   @Override
-  public UpdateWithAssignments set(Assignment assignment) {
+  public UpdateWithAssignments set(@NonNull Assignment assignment) {
     return withAssignments(ImmutableCollections.append(assignments, assignment));
   }
 
+  @NonNull
   @Override
-  public UpdateWithAssignments set(Iterable<Assignment> additionalAssignments) {
+  public UpdateWithAssignments set(@NonNull Iterable<Assignment> additionalAssignments) {
     return withAssignments(ImmutableCollections.concat(assignments, additionalAssignments));
   }
 
-  public UpdateWithAssignments withAssignments(ImmutableList<Assignment> newAssignments) {
+  @NonNull
+  public UpdateWithAssignments withAssignments(@NonNull ImmutableList<Assignment> newAssignments) {
     return new DefaultUpdate(
         keyspace, table, timestamp, newAssignments, relations, ifExists, conditions);
   }
 
+  @NonNull
   @Override
-  public Update where(Relation relation) {
+  public Update where(@NonNull Relation relation) {
     return withRelations(ImmutableCollections.append(relations, relation));
   }
 
+  @NonNull
   @Override
-  public Update where(Iterable<Relation> additionalRelations) {
+  public Update where(@NonNull Iterable<Relation> additionalRelations) {
     return withRelations(ImmutableCollections.concat(relations, additionalRelations));
   }
 
-  public Update withRelations(ImmutableList<Relation> newRelations) {
+  @NonNull
+  public Update withRelations(@NonNull ImmutableList<Relation> newRelations) {
     return new DefaultUpdate(
         keyspace, table, timestamp, assignments, newRelations, ifExists, conditions);
   }
 
+  @NonNull
   @Override
   public Update ifExists() {
     return new DefaultUpdate(keyspace, table, timestamp, assignments, relations, true, conditions);
   }
 
+  @NonNull
   @Override
-  public Update if_(Condition condition) {
+  public Update if_(@NonNull Condition condition) {
     return withConditions(ImmutableCollections.append(conditions, condition));
   }
 
+  @NonNull
   @Override
-  public Update if_(Iterable<Condition> additionalConditions) {
+  public Update if_(@NonNull Iterable<Condition> additionalConditions) {
     return withConditions(ImmutableCollections.concat(conditions, additionalConditions));
   }
 
-  public Update withConditions(ImmutableList<Condition> newConditions) {
+  @NonNull
+  public Update withConditions(@NonNull ImmutableList<Condition> newConditions) {
     return new DefaultUpdate(
         keyspace, table, timestamp, assignments, relations, false, newConditions);
   }
 
+  @NonNull
   @Override
   public String asCql() {
     StringBuilder builder = new StringBuilder("UPDATE ");
@@ -149,11 +164,13 @@ public class DefaultUpdate implements UpdateStart, UpdateWithAssignments, Update
     return builder.toString();
   }
 
+  @NonNull
   @Override
   public SimpleStatement build() {
     return builder().build();
   }
 
+  @NonNull
   @Override
   public SimpleStatementBuilder builder() {
     return SimpleStatement.builder(asCql()).withIdempotence(isIdempotent());
@@ -178,22 +195,27 @@ public class DefaultUpdate implements UpdateStart, UpdateWithAssignments, Update
     }
   }
 
+  @Nullable
   public CqlIdentifier getKeyspace() {
     return keyspace;
   }
 
+  @NonNull
   public CqlIdentifier getTable() {
     return table;
   }
 
+  @Nullable
   public Object getTimestamp() {
     return timestamp;
   }
 
+  @NonNull
   public ImmutableList<Assignment> getAssignments() {
     return assignments;
   }
 
+  @NonNull
   public ImmutableList<Relation> getRelations() {
     return relations;
   }
@@ -202,6 +224,7 @@ public class DefaultUpdate implements UpdateStart, UpdateWithAssignments, Update
     return ifExists;
   }
 
+  @NonNull
   public ImmutableList<Condition> getConditions() {
     return conditions;
   }

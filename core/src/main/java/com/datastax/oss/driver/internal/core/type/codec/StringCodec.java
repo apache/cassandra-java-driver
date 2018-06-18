@@ -21,6 +21,8 @@ import com.datastax.oss.driver.api.core.type.codec.TypeCodec;
 import com.datastax.oss.driver.api.core.type.reflect.GenericType;
 import com.datastax.oss.driver.internal.core.util.Strings;
 import com.datastax.oss.protocol.internal.util.Bytes;
+import edu.umd.cs.findbugs.annotations.NonNull;
+import edu.umd.cs.findbugs.annotations.Nullable;
 import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
 import net.jcip.annotations.ThreadSafe;
@@ -31,38 +33,42 @@ public class StringCodec implements TypeCodec<String> {
   private final DataType cqlType;
   private final Charset charset;
 
-  public StringCodec(DataType cqlType, Charset charset) {
+  public StringCodec(@NonNull DataType cqlType, @NonNull Charset charset) {
     this.cqlType = cqlType;
     this.charset = charset;
   }
 
+  @NonNull
   @Override
   public GenericType<String> getJavaType() {
     return GenericType.STRING;
   }
 
+  @NonNull
   @Override
   public DataType getCqlType() {
     return cqlType;
   }
 
   @Override
-  public boolean accepts(Object value) {
+  public boolean accepts(@NonNull Object value) {
     return value instanceof String;
   }
 
   @Override
-  public boolean accepts(Class<?> javaClass) {
+  public boolean accepts(@NonNull Class<?> javaClass) {
     return javaClass == String.class;
   }
 
+  @Nullable
   @Override
-  public ByteBuffer encode(String value, ProtocolVersion protocolVersion) {
+  public ByteBuffer encode(@Nullable String value, @NonNull ProtocolVersion protocolVersion) {
     return (value == null) ? null : ByteBuffer.wrap(value.getBytes(charset));
   }
 
+  @Nullable
   @Override
-  public String decode(ByteBuffer bytes, ProtocolVersion protocolVersion) {
+  public String decode(@Nullable ByteBuffer bytes, @NonNull ProtocolVersion protocolVersion) {
     if (bytes == null) {
       return null;
     } else if (bytes.remaining() == 0) {
@@ -72,11 +78,13 @@ public class StringCodec implements TypeCodec<String> {
     }
   }
 
+  @NonNull
   @Override
-  public String format(String value) {
+  public String format(@Nullable String value) {
     return (value == null) ? "NULL" : Strings.quote(value);
   }
 
+  @Nullable
   @Override
   public String parse(String value) {
     if (value == null || value.isEmpty() || value.equalsIgnoreCase("NULL")) {

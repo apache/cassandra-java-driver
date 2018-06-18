@@ -20,6 +20,7 @@ import com.datastax.oss.driver.api.core.metadata.token.TokenRange;
 import com.datastax.oss.driver.shaded.guava.common.annotations.VisibleForTesting;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableList;
 import com.datastax.oss.driver.shaded.guava.common.collect.Lists;
+import edu.umd.cs.findbugs.annotations.NonNull;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.List;
@@ -39,16 +40,19 @@ public abstract class TokenRangeBase implements TokenRange {
     this.minToken = minToken;
   }
 
+  @NonNull
   @Override
   public Token getStart() {
     return start;
   }
 
+  @NonNull
   @Override
   public Token getEnd() {
     return end;
   }
 
+  @NonNull
   @Override
   public List<TokenRange> splitEvenly(int numberOfSplits) {
     if (numberOfSplits < 1)
@@ -114,6 +118,7 @@ public abstract class TokenRangeBase implements TokenRange {
     return start.equals(minToken) && end.equals(minToken);
   }
 
+  @NonNull
   @Override
   public List<TokenRange> unwrap() {
     if (isWrappedAround()) {
@@ -124,7 +129,7 @@ public abstract class TokenRangeBase implements TokenRange {
   }
 
   @Override
-  public boolean intersects(TokenRange that) {
+  public boolean intersects(@NonNull TokenRange that) {
     // Empty ranges never intersect any other range
     if (this.isEmpty() || that.isEmpty()) {
       return false;
@@ -136,8 +141,9 @@ public abstract class TokenRangeBase implements TokenRange {
         || contains(that, this.end, false);
   }
 
+  @NonNull
   @Override
-  public List<TokenRange> intersectWith(TokenRange that) {
+  public List<TokenRange> intersectWith(@NonNull TokenRange that) {
     if (!this.intersects(that)) {
       throw new IllegalArgumentException(
           "The two ranges do not intersect, use intersects() before calling this method");
@@ -173,7 +179,7 @@ public abstract class TokenRangeBase implements TokenRange {
   }
 
   @Override
-  public boolean contains(Token token) {
+  public boolean contains(@NonNull Token token) {
     return contains(this, token, false);
   }
 
@@ -206,8 +212,9 @@ public abstract class TokenRangeBase implements TokenRange {
     }
   }
 
+  @NonNull
   @Override
-  public TokenRange mergeWith(TokenRange that) {
+  public TokenRange mergeWith(@NonNull TokenRange that) {
     if (this.equals(that)) {
       return this;
     }
@@ -272,7 +279,7 @@ public abstract class TokenRangeBase implements TokenRange {
   }
 
   @Override
-  public int compareTo(TokenRange that) {
+  public int compareTo(@NonNull TokenRange that) {
     if (this.equals(that)) {
       return 0;
     } else {

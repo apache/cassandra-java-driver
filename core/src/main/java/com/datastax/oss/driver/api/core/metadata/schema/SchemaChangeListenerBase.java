@@ -16,6 +16,7 @@
 package com.datastax.oss.driver.api.core.metadata.schema;
 
 import com.datastax.oss.driver.api.core.type.UserDefinedType;
+import edu.umd.cs.findbugs.annotations.NonNull;
 
 /**
  * Convenience class for listener implementations that that don't need to override all methods (all
@@ -24,92 +25,96 @@ import com.datastax.oss.driver.api.core.type.UserDefinedType;
 public class SchemaChangeListenerBase implements SchemaChangeListener {
 
   @Override
-  public void onKeyspaceCreated(KeyspaceMetadata keyspace) {
+  public void onKeyspaceCreated(@NonNull KeyspaceMetadata keyspace) {
     // nothing to do
   }
 
   @Override
-  public void onKeyspaceDropped(KeyspaceMetadata keyspace) {
+  public void onKeyspaceDropped(@NonNull KeyspaceMetadata keyspace) {
     // nothing to do
   }
 
   @Override
-  public void onKeyspaceUpdated(KeyspaceMetadata current, KeyspaceMetadata previous) {
+  public void onKeyspaceUpdated(
+      @NonNull KeyspaceMetadata current, @NonNull KeyspaceMetadata previous) {
     // nothing to do
   }
 
   @Override
-  public void onTableCreated(TableMetadata table) {
+  public void onTableCreated(@NonNull TableMetadata table) {
     // nothing to do
   }
 
   @Override
-  public void onTableDropped(TableMetadata table) {
+  public void onTableDropped(@NonNull TableMetadata table) {
     // nothing to do
   }
 
   @Override
-  public void onTableUpdated(TableMetadata current, TableMetadata previous) {
+  public void onTableUpdated(@NonNull TableMetadata current, @NonNull TableMetadata previous) {
     // nothing to do
   }
 
   @Override
-  public void onUserDefinedTypeCreated(UserDefinedType type) {
+  public void onUserDefinedTypeCreated(@NonNull UserDefinedType type) {
     // nothing to do
   }
 
   @Override
-  public void onUserDefinedTypeDropped(UserDefinedType type) {
+  public void onUserDefinedTypeDropped(@NonNull UserDefinedType type) {
     // nothing to do
   }
 
   @Override
-  public void onUserDefinedTypeUpdated(UserDefinedType current, UserDefinedType previous) {
+  public void onUserDefinedTypeUpdated(
+      @NonNull UserDefinedType current, @NonNull UserDefinedType previous) {
     // nothing to do
   }
 
   @Override
-  public void onFunctionCreated(FunctionMetadata function) {
+  public void onFunctionCreated(@NonNull FunctionMetadata function) {
     // nothing to do
   }
 
   @Override
-  public void onFunctionDropped(FunctionMetadata function) {
+  public void onFunctionDropped(@NonNull FunctionMetadata function) {
     // nothing to do
   }
 
   @Override
-  public void onFunctionUpdated(FunctionMetadata current, FunctionMetadata previous) {
+  public void onFunctionUpdated(
+      @NonNull FunctionMetadata current, @NonNull FunctionMetadata previous) {
     // nothing to do
   }
 
   @Override
-  public void onAggregateCreated(AggregateMetadata aggregate) {
+  public void onAggregateCreated(@NonNull AggregateMetadata aggregate) {
     // nothing to do
   }
 
   @Override
-  public void onAggregateDropped(AggregateMetadata aggregate) {
+  public void onAggregateDropped(@NonNull AggregateMetadata aggregate) {
     // nothing to do
   }
 
   @Override
-  public void onAggregateUpdated(AggregateMetadata current, AggregateMetadata previous) {
+  public void onAggregateUpdated(
+      @NonNull AggregateMetadata current, @NonNull AggregateMetadata previous) {
     // nothing to do
   }
 
   @Override
-  public void onViewCreated(ViewMetadata view) {
+  public void onViewCreated(@NonNull ViewMetadata view) {
     // nothing to do
   }
 
   @Override
-  public void onViewDropped(ViewMetadata view) {
+  public void onViewDropped(@NonNull ViewMetadata view) {
     // nothing to do
   }
 
   @Override
-  public void onViewUpdated(ViewMetadata current, ViewMetadata previous) {
+  public void onViewUpdated(@NonNull ViewMetadata current, @NonNull ViewMetadata previous) {
     // nothing to do
   }
 

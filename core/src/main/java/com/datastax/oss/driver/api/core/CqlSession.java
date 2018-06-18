@@ -23,12 +23,15 @@ import com.datastax.oss.driver.api.core.cql.SimpleStatement;
 import com.datastax.oss.driver.api.core.cql.Statement;
 import com.datastax.oss.driver.api.core.session.Session;
 import com.datastax.oss.driver.internal.core.cql.DefaultPrepareRequest;
+import edu.umd.cs.findbugs.annotations.NonNull;
+import java.util.Objects;
 import java.util.concurrent.CompletionStage;
 
 /** A specialized session with convenience methods to execute CQL statements. */
 public interface CqlSession extends Session {
 
   /** Returns a builder to create a new instance. */
+  @NonNull
   static CqlSessionBuilder builder() {
     return new CqlSessionBuilder();
   }
@@ -37,15 +40,18 @@ public interface CqlSession extends Session {
    * Executes a CQL statement synchronously (the calling thread blocks until the result becomes
    * available).
    */
-  default ResultSet execute(Statement<?> statement) {
-    return execute(statement, Statement.SYNC);
+  @NonNull
+  default ResultSet execute(@NonNull Statement<?> statement) {
+    return Objects.requireNonNull(
+        execute(statement, Statement.SYNC), "The CQL processor should never return a null result");
   }
 
   /**
    * Executes a CQL statement synchronously (the calling thread blocks until the result becomes
    * available).
    */
-  default ResultSet execute(String query) {
+  @NonNull
+  default ResultSet execute(@NonNull String query) {
     return execute(SimpleStatement.newInstance(query));
   }
 
@@ -53,15 +59,18 @@ public interface CqlSession extends Session {
    * Executes a CQL statement asynchronously (the call returns as soon as the statement was sent,
    * generally before the result is available).
    */
-  default CompletionStage<AsyncResultSet> executeAsync(Statement<?> statement) {
-    return execute(statement, Statement.ASYNC);
+  @NonNull
+  default CompletionStage<AsyncResultSet> executeAsync(@NonNull Statement<?> statement) {
+    return Objects.requireNonNull(
+        execute(statement, Statement.ASYNC), "The CQL processor should never return a null result");
   }
 
   /**
    * Executes a CQL statement asynchronously (the call returns as soon as the statement was sent,
    * generally before the result is available).
    */
-  default CompletionStage<AsyncResultSet> executeAsync(String query) {
+  @NonNull
+  default CompletionStage<AsyncResultSet> executeAsync(@NonNull String query) {
     return executeAsync(SimpleStatement.newInstance(query));
   }
 
@@ -69,31 +78,43 @@ public interface CqlSession extends Session {
    * Prepares a CQL statement synchronously (the calling thread blocks until the statement is
    * prepared).
    */
-  default PreparedStatement prepare(SimpleStatement query) {
-    return execute(new DefaultPrepareRequest(query), PrepareRequest.SYNC);
+  @NonNull
+  default PreparedStatement prepare(@NonNull SimpleStatement statement) {
+    return Objects.requireNonNull(
+        execute(new DefaultPrepareRequest(statement), PrepareRequest.SYNC),
+        "The CQL prepare processor should never return a null result");
   }
 
   /**
    * Prepares a CQL statement synchronously (the calling thread blocks until the statement is
    * prepared).
    */
-  default PreparedStatement prepare(String query) {
-    return execute(new DefaultPrepareRequest(query), PrepareRequest.SYNC);
+  @NonNull
+  default PreparedStatement prepare(@NonNull String query) {
+    return Objects.requireNonNull(
+        execute(new DefaultPrepareRequest(query), PrepareRequest.SYNC),
+        "The CQL prepare processor should never return a null result");
   }
 
   /**
    * Prepares a CQL statement asynchronously (the call returns as soon as the prepare query was
    * sent, generally before the statement is prepared).
    */
-  default CompletionStage<PreparedStatement> prepareAsync(String query) {
-    return execute(new DefaultPrepareRequest(query), PrepareRequest.ASYNC);
+  @NonNull
+  default CompletionStage<PreparedStatement> prepareAsync(@NonNull String query) {
+    return Objects.requireNonNull(
+        execute(new DefaultPrepareRequest(query), PrepareRequest.ASYNC),
+        "The CQL prepare processor should never return a null result");
   }
 
   /**
    * Prepares a CQL statement asynchronously (the call returns as soon as the prepare query was
    * sent, generally before the statement is prepared).
    */
-  default CompletionStage<PreparedStatement> prepareAsync(SimpleStatement query) {
-    return execute(new DefaultPrepareRequest(query), PrepareRequest.ASYNC);
+  @NonNull
+  default CompletionStage<PreparedStatement> prepareAsync(@NonNull SimpleStatement statement) {
+    return Objects.requireNonNull(
+        execute(new DefaultPrepareRequest(statement), PrepareRequest.ASYNC),
+        "The CQL prepare processor should never return a null result");
   }
 }

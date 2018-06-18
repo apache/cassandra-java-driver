@@ -26,6 +26,7 @@ import com.datastax.oss.driver.shaded.guava.common.cache.LoadingCache;
 import com.datastax.oss.driver.shaded.guava.common.cache.RemovalListener;
 import com.datastax.oss.driver.shaded.guava.common.util.concurrent.ExecutionError;
 import com.datastax.oss.driver.shaded.guava.common.util.concurrent.UncheckedExecutionException;
+import edu.umd.cs.findbugs.annotations.NonNull;
 import java.util.Objects;
 import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
@@ -73,7 +74,7 @@ public class DefaultCodecRegistry extends CachingCodecRegistry {
     CacheLoader<CacheKey, TypeCodec<?>> cacheLoader =
         new CacheLoader<CacheKey, TypeCodec<?>>() {
           @Override
-          public TypeCodec<?> load(CacheKey key) throws Exception {
+          public TypeCodec<?> load(@NonNull CacheKey key) throws Exception {
             return createCodec(key.cqlType, key.javaType, key.isJavaCovariant);
           }
         };

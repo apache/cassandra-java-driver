@@ -17,6 +17,7 @@ package com.datastax.oss.driver.api.core;
 
 import com.datastax.oss.driver.internal.core.util.Strings;
 import com.datastax.oss.driver.shaded.guava.common.base.Preconditions;
+import edu.umd.cs.findbugs.annotations.NonNull;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.Serializable;
@@ -66,7 +67,8 @@ public class CqlIdentifier implements Serializable {
   // One exception is named getters, where we keep raw strings with the 3.x rules.
 
   /** Creates an identifier from its {@link CqlIdentifier CQL form}. */
-  public static CqlIdentifier fromCql(String cql) {
+  @NonNull
+  public static CqlIdentifier fromCql(@NonNull String cql) {
     Preconditions.checkNotNull(cql, "cql must not be null");
     final String internal;
     if (Strings.isDoubleQuoted(cql)) {
@@ -80,7 +82,8 @@ public class CqlIdentifier implements Serializable {
   }
 
   /** Creates an identifier from its {@link CqlIdentifier internal form}. */
-  public static CqlIdentifier fromInternal(String internal) {
+  @NonNull
+  public static CqlIdentifier fromInternal(@NonNull String internal) {
     Preconditions.checkNotNull(internal, "internal must not be null");
     return new CqlIdentifier(internal);
   }
@@ -97,6 +100,7 @@ public class CqlIdentifier implements Serializable {
    *
    * @return the identifier in its exact case, unquoted.
    */
+  @NonNull
   public String asInternal() {
     return this.internal;
   }
@@ -109,6 +113,7 @@ public class CqlIdentifier implements Serializable {
    *     {@code false}, always use the double-quoted form (this is slightly more efficient since we
    *     don't need to inspect the string).
    */
+  @NonNull
   public String asCql(boolean pretty) {
     if (pretty) {
       return Strings.needsDoubleQuotes(internal) ? Strings.doubleQuote(internal) : internal;

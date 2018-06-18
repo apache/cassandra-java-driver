@@ -16,6 +16,8 @@
 package com.datastax.oss.driver.api.core.type.codec;
 
 import com.datastax.oss.driver.api.core.ProtocolVersion;
+import edu.umd.cs.findbugs.annotations.NonNull;
+import edu.umd.cs.findbugs.annotations.Nullable;
 import java.nio.ByteBuffer;
 
 /**
@@ -26,17 +28,20 @@ import java.nio.ByteBuffer;
  */
 public interface PrimitiveDoubleCodec extends TypeCodec<Double> {
 
-  ByteBuffer encodePrimitive(double value, ProtocolVersion protocolVersion);
+  @Nullable
+  ByteBuffer encodePrimitive(double value, @NonNull ProtocolVersion protocolVersion);
 
-  double decodePrimitive(ByteBuffer value, ProtocolVersion protocolVersion);
+  double decodePrimitive(@Nullable ByteBuffer value, @NonNull ProtocolVersion protocolVersion);
 
+  @Nullable
   @Override
-  default ByteBuffer encode(Double value, ProtocolVersion protocolVersion) {
+  default ByteBuffer encode(@Nullable Double value, @NonNull ProtocolVersion protocolVersion) {
     return (value == null) ? null : encodePrimitive(value, protocolVersion);
   }
 
+  @Nullable
   @Override
-  default Double decode(ByteBuffer bytes, ProtocolVersion protocolVersion) {
+  default Double decode(@Nullable ByteBuffer bytes, @NonNull ProtocolVersion protocolVersion) {
     return (bytes == null || bytes.remaining() == 0)
         ? null
         : decodePrimitive(bytes, protocolVersion);

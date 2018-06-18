@@ -18,6 +18,7 @@ package com.datastax.oss.driver.internal.core;
 import static com.datastax.oss.driver.Assertions.assertThat;
 
 import com.datastax.oss.driver.api.core.ProtocolVersion;
+import edu.umd.cs.findbugs.annotations.NonNull;
 import java.util.Optional;
 import org.junit.Rule;
 import org.junit.Test;
@@ -101,6 +102,7 @@ public class CassandraProtocolVersionRegistryTest {
       return code;
     }
 
+    @NonNull
     @Override
     public String name() {
       return "V" + code;

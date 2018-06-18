@@ -32,6 +32,7 @@ import com.datastax.oss.driver.api.core.servererrors.TruncateException;
 import com.datastax.oss.driver.api.core.servererrors.WriteFailureException;
 import com.datastax.oss.driver.api.core.servererrors.WriteType;
 import com.datastax.oss.driver.api.core.session.Request;
+import edu.umd.cs.findbugs.annotations.NonNull;
 
 /**
  * Defines the behavior to adopt when a request fails.
@@ -59,8 +60,8 @@ public interface RetryPolicy extends AutoCloseable {
    *     (not counting the current invocation).
    */
   RetryDecision onReadTimeout(
-      Request request,
-      ConsistencyLevel cl,
+      @NonNull Request request,
+      @NonNull ConsistencyLevel cl,
       int blockFor,
       int received,
       boolean dataPresent,
@@ -87,9 +88,9 @@ public interface RetryPolicy extends AutoCloseable {
    *     (not counting the current invocation).
    */
   RetryDecision onWriteTimeout(
-      Request request,
-      ConsistencyLevel cl,
-      WriteType writeType,
+      @NonNull Request request,
+      @NonNull ConsistencyLevel cl,
+      @NonNull WriteType writeType,
       int blockFor,
       int received,
       int retryCount);
@@ -109,7 +110,11 @@ public interface RetryPolicy extends AutoCloseable {
    *     (not counting the current invocation).
    */
   RetryDecision onUnavailable(
-      Request request, ConsistencyLevel cl, int required, int alive, int retryCount);
+      @NonNull Request request,
+      @NonNull ConsistencyLevel cl,
+      int required,
+      int alive,
+      int retryCount);
 
   /**
    * Whether to retry when a request was aborted before we could get a response from the server.
@@ -129,7 +134,8 @@ public interface RetryPolicy extends AutoCloseable {
    * @param retryCount how many times the retry policy has been invoked already for this request
    *     (not counting the current invocation).
    */
-  RetryDecision onRequestAborted(Request request, Throwable error, int retryCount);
+  RetryDecision onRequestAborted(
+      @NonNull Request request, @NonNull Throwable error, int retryCount);
 
   /**
    * Whether to retry when the server replied with a recoverable error (other than {@code
@@ -157,7 +163,8 @@ public interface RetryPolicy extends AutoCloseable {
    * @param retryCount how many times the retry policy has been invoked already for this request
    *     (not counting the current invocation).
    */
-  RetryDecision onErrorResponse(Request request, CoordinatorException error, int retryCount);
+  RetryDecision onErrorResponse(
+      @NonNull Request request, @NonNull CoordinatorException error, int retryCount);
 
   /** Called when the cluster that this policy is associated with closes. */
   @Override

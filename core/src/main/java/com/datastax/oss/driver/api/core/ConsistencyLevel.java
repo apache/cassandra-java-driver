@@ -15,6 +15,8 @@
  */
 package com.datastax.oss.driver.api.core;
 
+import edu.umd.cs.findbugs.annotations.NonNull;
+
 /**
  * The consistency level of a request.
  *
@@ -28,6 +30,7 @@ public interface ConsistencyLevel {
   int getProtocolCode();
 
   /** The textual representation of the level in configuration files. */
+  @NonNull
   String name();
 
   /** Whether this consistency level applies to the local datacenter only. */

@@ -23,6 +23,7 @@ import com.datastax.oss.driver.api.core.metadata.schema.KeyspaceMetadata;
 import com.datastax.oss.driver.api.core.metadata.schema.TableMetadata;
 import com.datastax.oss.driver.api.core.metadata.schema.ViewMetadata;
 import com.datastax.oss.driver.api.core.type.UserDefinedType;
+import edu.umd.cs.findbugs.annotations.NonNull;
 import java.util.Map;
 import java.util.Objects;
 import net.jcip.annotations.Immutable;
@@ -30,24 +31,24 @@ import net.jcip.annotations.Immutable;
 @Immutable
 public class DefaultKeyspaceMetadata implements KeyspaceMetadata {
 
-  private final CqlIdentifier name;
+  @NonNull private final CqlIdentifier name;
   private final boolean durableWrites;
-  private final Map<String, String> replication;
-  private final Map<CqlIdentifier, UserDefinedType> types;
-  private final Map<CqlIdentifier, TableMetadata> tables;
-  private final Map<CqlIdentifier, ViewMetadata> views;
-  private final Map<FunctionSignature, FunctionMetadata> functions;
-  private final Map<FunctionSignature, AggregateMetadata> aggregates;
+  @NonNull private final Map<String, String> replication;
+  @NonNull private final Map<CqlIdentifier, UserDefinedType> types;
+  @NonNull private final Map<CqlIdentifier, TableMetadata> tables;
+  @NonNull private final Map<CqlIdentifier, ViewMetadata> views;
+  @NonNull private final Map<FunctionSignature, FunctionMetadata> functions;
+  @NonNull private final Map<FunctionSignature, AggregateMetadata> aggregates;
 
   public DefaultKeyspaceMetadata(
-      CqlIdentifier name,
+      @NonNull CqlIdentifier name,
       boolean durableWrites,
-      Map<String, String> replication,
-      Map<CqlIdentifier, UserDefinedType> types,
-      Map<CqlIdentifier, TableMetadata> tables,
-      Map<CqlIdentifier, ViewMetadata> views,
-      Map<FunctionSignature, FunctionMetadata> functions,
-      Map<FunctionSignature, AggregateMetadata> aggregates) {
+      @NonNull Map<String, String> replication,
+      @NonNull Map<CqlIdentifier, UserDefinedType> types,
+      @NonNull Map<CqlIdentifier, TableMetadata> tables,
+      @NonNull Map<CqlIdentifier, ViewMetadata> views,
+      @NonNull Map<FunctionSignature, FunctionMetadata> functions,
+      @NonNull Map<FunctionSignature, AggregateMetadata> aggregates) {
     this.name = name;
     this.durableWrites = durableWrites;
     this.replication = replication;
@@ -58,6 +59,7 @@ public class DefaultKeyspaceMetadata implements KeyspaceMetadata {
     this.aggregates = aggregates;
   }
 
+  @NonNull
   @Override
   public CqlIdentifier getName() {
     return name;
@@ -68,31 +70,37 @@ public class DefaultKeyspaceMetadata implements KeyspaceMetadata {
     return durableWrites;
   }
 
+  @NonNull
   @Override
   public Map<String, String> getReplication() {
     return replication;
   }
 
+  @NonNull
   @Override
   public Map<CqlIdentifier, UserDefinedType> getUserDefinedTypes() {
     return types;
   }
 
+  @NonNull
   @Override
   public Map<CqlIdentifier, TableMetadata> getTables() {
     return tables;
   }
 
+  @NonNull
   @Override
   public Map<CqlIdentifier, ViewMetadata> getViews() {
     return views;
   }
 
+  @NonNull
   @Override
   public Map<FunctionSignature, FunctionMetadata> getFunctions() {
     return functions;
   }
 
+  @NonNull
   @Override
   public Map<FunctionSignature, AggregateMetadata> getAggregates() {
     return aggregates;

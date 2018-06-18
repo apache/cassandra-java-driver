@@ -17,6 +17,7 @@ package com.datastax.oss.driver.internal.core.addresstranslation;
 
 import com.datastax.oss.driver.api.core.addresstranslation.AddressTranslator;
 import com.datastax.oss.driver.api.core.context.DriverContext;
+import edu.umd.cs.findbugs.annotations.NonNull;
 import java.net.InetSocketAddress;
 import net.jcip.annotations.ThreadSafe;
 
@@ -28,8 +29,9 @@ public class PassThroughAddressTranslator implements AddressTranslator {
     // nothing to do
   }
 
+  @NonNull
   @Override
-  public InetSocketAddress translate(InetSocketAddress address) {
+  public InetSocketAddress translate(@NonNull InetSocketAddress address) {
     return address;
   }
 

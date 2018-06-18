@@ -17,6 +17,7 @@ package com.datastax.oss.driver.internal.querybuilder.schema;
 
 import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.querybuilder.schema.Drop;
+import edu.umd.cs.findbugs.annotations.NonNull;
 import net.jcip.annotations.Immutable;
 
 @Immutable
@@ -25,20 +26,22 @@ public class DefaultDropKeyspace implements Drop {
   private final CqlIdentifier keyspaceName;
   private final boolean ifExists;
 
-  public DefaultDropKeyspace(CqlIdentifier keyspaceName) {
+  public DefaultDropKeyspace(@NonNull CqlIdentifier keyspaceName) {
     this(keyspaceName, false);
   }
 
-  public DefaultDropKeyspace(CqlIdentifier keyspaceName, boolean ifExists) {
+  public DefaultDropKeyspace(@NonNull CqlIdentifier keyspaceName, boolean ifExists) {
     this.keyspaceName = keyspaceName;
     this.ifExists = ifExists;
   }
 
+  @NonNull
   @Override
   public Drop ifExists() {
     return new DefaultDropKeyspace(keyspaceName, true);
   }
 
+  @NonNull
   @Override
   public String asCql() {
     StringBuilder builder = new StringBuilder("DROP KEYSPACE ");
@@ -57,6 +60,7 @@ public class DefaultDropKeyspace implements Drop {
     return asCql();
   }
 
+  @NonNull
   public CqlIdentifier getKeyspace() {
     return keyspaceName;
   }

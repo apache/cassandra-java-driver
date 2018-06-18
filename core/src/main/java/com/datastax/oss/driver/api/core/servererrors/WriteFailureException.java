@@ -21,6 +21,7 @@ import com.datastax.oss.driver.api.core.DriverException;
 import com.datastax.oss.driver.api.core.metadata.Node;
 import com.datastax.oss.driver.api.core.retry.RetryPolicy;
 import com.datastax.oss.driver.api.core.session.Request;
+import edu.umd.cs.findbugs.annotations.NonNull;
 import java.net.InetAddress;
 import java.util.Map;
 
@@ -42,13 +43,13 @@ public class WriteFailureException extends QueryConsistencyException {
   private final Map<InetAddress, Integer> reasonMap;
 
   public WriteFailureException(
-      Node coordinator,
-      ConsistencyLevel consistencyLevel,
+      @NonNull Node coordinator,
+      @NonNull ConsistencyLevel consistencyLevel,
       int received,
       int blockFor,
-      WriteType writeType,
+      @NonNull WriteType writeType,
       int numFailures,
-      Map<InetAddress, Integer> reasonMap) {
+      @NonNull Map<InetAddress, Integer> reasonMap) {
     this(
         coordinator,
         String.format(
@@ -65,14 +66,14 @@ public class WriteFailureException extends QueryConsistencyException {
   }
 
   private WriteFailureException(
-      Node coordinator,
-      String message,
-      ConsistencyLevel consistencyLevel,
+      @NonNull Node coordinator,
+      @NonNull String message,
+      @NonNull ConsistencyLevel consistencyLevel,
       int received,
       int blockFor,
-      WriteType writeType,
+      @NonNull WriteType writeType,
       int numFailures,
-      Map<InetAddress, Integer> reasonMap,
+      @NonNull Map<InetAddress, Integer> reasonMap,
       boolean writableStackTrace) {
     super(coordinator, message, consistencyLevel, received, blockFor, writableStackTrace);
     this.writeType = writeType;
@@ -81,6 +82,7 @@ public class WriteFailureException extends QueryConsistencyException {
   }
 
   /** The type of the write for which this failure was raised. */
+  @NonNull
   public WriteType getWriteType() {
     return writeType;
   }
@@ -109,10 +111,12 @@ public class WriteFailureException extends QueryConsistencyException {
    * <p>This feature is available for protocol v5 or above only. With lower protocol versions, the
    * map will always be empty.
    */
+  @NonNull
   public Map<InetAddress, Integer> getReasonMap() {
     return reasonMap;
   }
 
+  @NonNull
   @Override
   public DriverException copy() {
     return new WriteFailureException(

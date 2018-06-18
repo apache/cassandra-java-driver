@@ -17,6 +17,7 @@ package com.datastax.oss.driver.internal.querybuilder.term;
 
 import com.datastax.oss.driver.api.querybuilder.term.Term;
 import com.datastax.oss.driver.internal.querybuilder.CqlHelper;
+import edu.umd.cs.findbugs.annotations.NonNull;
 import net.jcip.annotations.Immutable;
 
 @Immutable
@@ -24,12 +25,12 @@ public class TupleTerm implements Term {
 
   private final Iterable<? extends Term> components;
 
-  public TupleTerm(Iterable<? extends Term> components) {
+  public TupleTerm(@NonNull Iterable<? extends Term> components) {
     this.components = components;
   }
 
   @Override
-  public void appendTo(StringBuilder builder) {
+  public void appendTo(@NonNull StringBuilder builder) {
     CqlHelper.append(components, builder, "(", ",", ")");
   }
 
@@ -43,6 +44,7 @@ public class TupleTerm implements Term {
     return true;
   }
 
+  @NonNull
   public Iterable<? extends Term> getComponents() {
     return components;
   }

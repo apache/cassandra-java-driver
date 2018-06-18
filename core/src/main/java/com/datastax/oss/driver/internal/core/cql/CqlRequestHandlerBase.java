@@ -64,6 +64,7 @@ import com.datastax.oss.protocol.internal.response.result.SchemaChange;
 import com.datastax.oss.protocol.internal.response.result.SetKeyspace;
 import com.datastax.oss.protocol.internal.response.result.Void;
 import com.datastax.oss.protocol.internal.util.Bytes;
+import edu.umd.cs.findbugs.annotations.NonNull;
 import io.netty.handler.codec.EncoderException;
 import io.netty.util.concurrent.EventExecutor;
 import io.netty.util.concurrent.Future;
@@ -96,7 +97,7 @@ public abstract class CqlRequestHandlerBase implements Throttled {
   private final CqlIdentifier keyspace;
   private final InternalDriverContext context;
   private final Queue<Node> queryPlan;
-  private final DriverConfigProfile configProfile;
+  @NonNull private final DriverConfigProfile configProfile;
   private final boolean isIdempotent;
   protected final CompletableFuture<AsyncResultSet> result;
   private final Message message;
@@ -138,7 +139,7 @@ public abstract class CqlRequestHandlerBase implements Throttled {
 
     this.statement = statement;
     this.session = session;
-    this.keyspace = session.getKeyspace();
+    this.keyspace = session.getKeyspace().orElse(null);
     this.context = context;
 
     if (statement.getConfigProfile() != null) {
@@ -157,10 +158,11 @@ public abstract class CqlRequestHandlerBase implements Throttled {
             .newQueryPlan(statement, configProfile.getName(), session);
     this.retryPolicy = context.retryPolicy(configProfile.getName());
     this.speculativeExecutionPolicy = context.speculativeExecutionPolicy(configProfile.getName());
+    Boolean statementIsIdempotent = statement.isIdempotent();
     this.isIdempotent =
-        (statement.isIdempotent() == null)
+        (statementIsIdempotent == null)
             ? configProfile.getBoolean(DefaultDriverOption.REQUEST_DEFAULT_IDEMPOTENCE)
-            : statement.isIdempotent();
+            : statementIsIdempotent;
     this.result = new CompletableFuture<>();
     this.result.exceptionally(
         t -> {
@@ -331,7 +333,7 @@ public abstract class CqlRequestHandlerBase implements Throttled {
   }
 
   @Override
-  public void onThrottleFailure(RequestThrottlingException error) {
+  public void onThrottleFailure(@NonNull RequestThrottlingException error) {
     session
         .getMetricUpdater()
         .incrementCounter(DefaultSessionMetric.THROTTLING_ERRORS, configProfile.getName());

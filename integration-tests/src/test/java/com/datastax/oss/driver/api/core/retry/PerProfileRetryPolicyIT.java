@@ -37,6 +37,7 @@ import com.datastax.oss.driver.api.testinfra.simulacron.SimulacronRule;
 import com.datastax.oss.driver.categories.ParallelizableTests;
 import com.datastax.oss.driver.internal.core.retry.DefaultRetryPolicy;
 import com.datastax.oss.simulacron.common.cluster.ClusterSpec;
+import edu.umd.cs.findbugs.annotations.NonNull;
 import java.util.List;
 import java.util.Map;
 import org.junit.Before;
@@ -143,8 +144,8 @@ public class PerProfileRetryPolicyIT {
 
     @Override
     public RetryDecision onReadTimeout(
-        Request request,
-        ConsistencyLevel cl,
+        @NonNull Request request,
+        @NonNull ConsistencyLevel cl,
         int blockFor,
         int received,
         boolean dataPresent,
@@ -154,9 +155,9 @@ public class PerProfileRetryPolicyIT {
 
     @Override
     public RetryDecision onWriteTimeout(
-        Request request,
-        ConsistencyLevel cl,
-        WriteType writeType,
+        @NonNull Request request,
+        @NonNull ConsistencyLevel cl,
+        @NonNull WriteType writeType,
         int blockFor,
         int received,
         int retryCount) {
@@ -165,18 +166,23 @@ public class PerProfileRetryPolicyIT {
 
     @Override
     public RetryDecision onUnavailable(
-        Request request, ConsistencyLevel cl, int required, int alive, int retryCount) {
+        @NonNull Request request,
+        @NonNull ConsistencyLevel cl,
+        int required,
+        int alive,
+        int retryCount) {
       return RetryDecision.RETHROW;
     }
 
     @Override
-    public RetryDecision onRequestAborted(Request request, Throwable error, int retryCount) {
+    public RetryDecision onRequestAborted(
+        @NonNull Request request, @NonNull Throwable error, int retryCount) {
       return RetryDecision.RETHROW;
     }
 
     @Override
     public RetryDecision onErrorResponse(
-        Request request, CoordinatorException error, int retryCount) {
+        @NonNull Request request, @NonNull CoordinatorException error, int retryCount) {
       return RetryDecision.RETHROW;
     }
 

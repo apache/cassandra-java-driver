@@ -25,6 +25,7 @@ import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableMap;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigObject;
 import com.typesafe.config.ConfigValue;
+import edu.umd.cs.findbugs.annotations.NonNull;
 import java.util.Map;
 import net.jcip.annotations.ThreadSafe;
 import org.slf4j.Logger;
@@ -123,8 +124,9 @@ public class TypesafeDriverConfig implements DriverConfig {
     return result.build();
   }
 
+  @NonNull
   @Override
-  public DriverConfigProfile getProfile(String profileName) {
+  public DriverConfigProfile getProfile(@NonNull String profileName) {
     Preconditions.checkArgument(
         profiles.containsKey(profileName),
         "Unknown profile '%s'. Check your configuration.",
@@ -132,6 +134,7 @@ public class TypesafeDriverConfig implements DriverConfig {
     return profiles.get(profileName);
   }
 
+  @NonNull
   @Override
   public Map<String, DriverConfigProfile> getProfiles() {
     return ImmutableMap.copyOf(profiles);

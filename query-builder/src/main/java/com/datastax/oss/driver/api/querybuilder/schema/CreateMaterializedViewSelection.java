@@ -17,18 +17,22 @@ package com.datastax.oss.driver.api.querybuilder.schema;
 
 import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.internal.core.CqlIdentifiers;
+import edu.umd.cs.findbugs.annotations.NonNull;
 import java.util.Arrays;
 
 public interface CreateMaterializedViewSelection {
 
   /** Selects all columns from the base table. */
+  @NonNull
   CreateMaterializedViewWhereStart all();
 
   /** Selects a particular column by its CQL identifier. */
-  CreateMaterializedViewSelectionWithColumns column(CqlIdentifier columnName);
+  @NonNull
+  CreateMaterializedViewSelectionWithColumns column(@NonNull CqlIdentifier columnName);
 
   /** Shortcut for {@link #column(CqlIdentifier) column(CqlIdentifier.fromCql(columnName))} */
-  default CreateMaterializedViewSelectionWithColumns column(String columnName) {
+  @NonNull
+  default CreateMaterializedViewSelectionWithColumns column(@NonNull String columnName) {
     return column(CqlIdentifier.fromCql(columnName));
   }
 
@@ -37,10 +41,12 @@ public interface CreateMaterializedViewSelection {
    *
    * <p>This is the same as calling {@link #column(CqlIdentifier)} for each element.
    */
-  CreateMaterializedViewSelectionWithColumns columnsIds(Iterable<CqlIdentifier> columnIds);
+  @NonNull
+  CreateMaterializedViewSelectionWithColumns columnsIds(@NonNull Iterable<CqlIdentifier> columnIds);
 
   /** Var-arg equivalent of {@link #columnsIds(Iterable)}. */
-  default CreateMaterializedViewSelectionWithColumns columns(CqlIdentifier... columnIds) {
+  @NonNull
+  default CreateMaterializedViewSelectionWithColumns columns(@NonNull CqlIdentifier... columnIds) {
     return columnsIds(Arrays.asList(columnIds));
   }
 
@@ -49,12 +55,15 @@ public interface CreateMaterializedViewSelection {
    *
    * <p>This is the same as calling {@link #column(String)} for each element.
    */
-  default CreateMaterializedViewSelectionWithColumns columns(Iterable<String> columnNames) {
+  @NonNull
+  default CreateMaterializedViewSelectionWithColumns columns(
+      @NonNull Iterable<String> columnNames) {
     return columnsIds(CqlIdentifiers.wrap(columnNames));
   }
 
   /** Var-arg equivalent of {@link #columns(Iterable)}. */
-  default CreateMaterializedViewSelectionWithColumns columns(String... columnNames) {
+  @NonNull
+  default CreateMaterializedViewSelectionWithColumns columns(@NonNull String... columnNames) {
     return columns(Arrays.asList(columnNames));
   }
 }

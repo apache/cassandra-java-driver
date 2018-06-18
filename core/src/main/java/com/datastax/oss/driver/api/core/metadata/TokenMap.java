@@ -23,6 +23,7 @@ import com.datastax.oss.driver.api.core.metadata.token.TokenRange;
 import com.datastax.oss.driver.api.core.session.Session;
 import com.datastax.oss.driver.api.core.type.codec.TypeCodec;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableSet;
+import edu.umd.cs.findbugs.annotations.NonNull;
 import java.nio.ByteBuffer;
 import java.util.Set;
 
@@ -40,25 +41,32 @@ import java.util.Set;
 public interface TokenMap {
 
   /** Builds a token from its string representation. */
-  Token parse(String tokenString);
+  @NonNull
+  Token parse(@NonNull String tokenString);
 
   /** Formats a token into a string representation appropriate for concatenation in a CQL query. */
-  String format(Token token);
+  @NonNull
+  String format(@NonNull Token token);
 
   /**
    * Builds a token from a partition key.
    *
    * @param partitionKey the partition key components, in their serialized form (which can be
-   *     obtained with {@link TypeCodec#encode(Object, ProtocolVersion)}
+   *     obtained with {@link TypeCodec#encode(Object, ProtocolVersion)}. Neither the individual
+   *     components, nor the vararg array itself, can be {@code null}.
    */
-  Token newToken(ByteBuffer... partitionKey);
+  @NonNull
+  Token newToken(@NonNull ByteBuffer... partitionKey);
 
-  TokenRange newTokenRange(Token start, Token end);
+  @NonNull
+  TokenRange newTokenRange(@NonNull Token start, @NonNull Token end);
 
   /** The token ranges that define data distribution on the ring. */
+  @NonNull
   Set<TokenRange> getTokenRanges();
 
   /** The token ranges for which a given node is the primary replica. */
+  @NonNull
   Set<TokenRange> getTokenRanges(Node node);
 
   /**
@@ -67,7 +75,8 @@ public interface TokenMap {
    * <p>This is functionally equivalent to {@code getTokenRanges(node).map(r -> r.getEnd())}. Note
    * that the set is rebuilt every time you call this method.
    */
-  default Set<Token> getTokens(Node node) {
+  @NonNull
+  default Set<Token> getTokens(@NonNull Node node) {
     ImmutableSet.Builder<Token> result = ImmutableSet.builder();
     for (TokenRange range : getTokenRanges(node)) {
       result.add(range.getEnd());
@@ -76,35 +85,41 @@ public interface TokenMap {
   }
 
   /** The token ranges that are replicated on the given node, for the given keyspace. */
-  Set<TokenRange> getTokenRanges(CqlIdentifier keyspace, Node replica);
+  @NonNull
+  Set<TokenRange> getTokenRanges(@NonNull CqlIdentifier keyspace, @NonNull Node replica);
 
   /**
    * Shortcut for {@link #getTokenRanges(CqlIdentifier, Node)
    * getTokenRanges(CqlIdentifier.fromCql(keyspaceName), replica)}.
    */
-  default Set<TokenRange> getTokenRanges(String keyspaceName, Node replica) {
+  @NonNull
+  default Set<TokenRange> getTokenRanges(@NonNull String keyspaceName, @NonNull Node replica) {
     return getTokenRanges(CqlIdentifier.fromCql(keyspaceName), replica);
   }
 
   /** The replicas for a given partition key in the given keyspace. */
-  Set<Node> getReplicas(CqlIdentifier keyspace, ByteBuffer partitionKey);
+  @NonNull
+  Set<Node> getReplicas(@NonNull CqlIdentifier keyspace, @NonNull ByteBuffer partitionKey);
 
   /**
    * Shortcut for {@link #getReplicas(CqlIdentifier, ByteBuffer)
    * getReplicas(CqlIdentifier.fromCql(keyspaceName), partitionKey)}.
    */
-  default Set<Node> getReplicas(String keyspaceName, ByteBuffer partitionKey) {
+  @NonNull
+  default Set<Node> getReplicas(@NonNull String keyspaceName, @NonNull ByteBuffer partitionKey) {
     return getReplicas(CqlIdentifier.fromCql(keyspaceName), partitionKey);
   }
 
   /** The replicas for a given token in the given keyspace. */
-  Set<Node> getReplicas(CqlIdentifier keyspace, Token token);
+  @NonNull
+  Set<Node> getReplicas(@NonNull CqlIdentifier keyspace, @NonNull Token token);
 
   /**
    * Shortcut for {@link #getReplicas(CqlIdentifier, Token)
    * getReplicas(CqlIdentifier.fromCql(keyspaceName), token)}.
    */
-  default Set<Node> getReplicas(String keyspaceName, Token token) {
+  @NonNull
+  default Set<Node> getReplicas(@NonNull String keyspaceName, @NonNull Token token) {
     return getReplicas(CqlIdentifier.fromCql(keyspaceName), token);
   }
 
@@ -116,7 +131,8 @@ public interface TokenMap {
    * token of the range. In other words, this method is a shortcut for {@code getReplicas(keyspace,
    * range.getEnd())}.
    */
-  default Set<Node> getReplicas(CqlIdentifier keyspace, TokenRange range) {
+  @NonNull
+  default Set<Node> getReplicas(@NonNull CqlIdentifier keyspace, @NonNull TokenRange range) {
     return getReplicas(keyspace, range.getEnd());
   }
 
@@ -124,7 +140,8 @@ public interface TokenMap {
    * Shortcut for {@link #getReplicas(CqlIdentifier, TokenRange)
    * getReplicas(CqlIdentifier.fromCql(keyspaceName), range)}.
    */
-  default Set<Node> getReplicas(String keyspaceName, TokenRange range) {
+  @NonNull
+  default Set<Node> getReplicas(@NonNull String keyspaceName, @NonNull TokenRange range) {
     return getReplicas(CqlIdentifier.fromCql(keyspaceName), range);
   }
 }

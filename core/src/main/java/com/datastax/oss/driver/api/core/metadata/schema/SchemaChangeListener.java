@@ -17,6 +17,7 @@ package com.datastax.oss.driver.api.core.metadata.schema;
 
 import com.datastax.oss.driver.api.core.session.SessionBuilder;
 import com.datastax.oss.driver.api.core.type.UserDefinedType;
+import edu.umd.cs.findbugs.annotations.NonNull;
 
 /**
  * Tracks schema changes.
@@ -34,39 +35,40 @@ import com.datastax.oss.driver.api.core.type.UserDefinedType;
  */
 public interface SchemaChangeListener extends AutoCloseable {
 
-  void onKeyspaceCreated(KeyspaceMetadata keyspace);
+  void onKeyspaceCreated(@NonNull KeyspaceMetadata keyspace);
 
-  void onKeyspaceDropped(KeyspaceMetadata keyspace);
+  void onKeyspaceDropped(@NonNull KeyspaceMetadata keyspace);
 
-  void onKeyspaceUpdated(KeyspaceMetadata current, KeyspaceMetadata previous);
+  void onKeyspaceUpdated(@NonNull KeyspaceMetadata current, @NonNull KeyspaceMetadata previous);
 
-  void onTableCreated(TableMetadata table);
+  void onTableCreated(@NonNull TableMetadata table);
 
-  void onTableDropped(TableMetadata table);
+  void onTableDropped(@NonNull TableMetadata table);
 
-  void onTableUpdated(TableMetadata current, TableMetadata previous);
+  void onTableUpdated(@NonNull TableMetadata current, @NonNull TableMetadata previous);
 
-  void onUserDefinedTypeCreated(UserDefinedType type);
+  void onUserDefinedTypeCreated(@NonNull UserDefinedType type);
 
-  void onUserDefinedTypeDropped(UserDefinedType type);
+  void onUserDefinedTypeDropped(@NonNull UserDefinedType type);
 
-  void onUserDefinedTypeUpdated(UserDefinedType current, UserDefinedType previous);
+  void onUserDefinedTypeUpdated(
+      @NonNull UserDefinedType current, @NonNull UserDefinedType previous);
 
-  void onFunctionCreated(FunctionMetadata function);
+  void onFunctionCreated(@NonNull FunctionMetadata function);
 
-  void onFunctionDropped(FunctionMetadata function);
+  void onFunctionDropped(@NonNull FunctionMetadata function);
 
-  void onFunctionUpdated(FunctionMetadata current, FunctionMetadata previous);
+  void onFunctionUpdated(@NonNull FunctionMetadata current, @NonNull FunctionMetadata previous);
 
-  void onAggregateCreated(AggregateMetadata aggregate);
+  void onAggregateCreated(@NonNull AggregateMetadata aggregate);
 
-  void onAggregateDropped(AggregateMetadata aggregate);
+  void onAggregateDropped(@NonNull AggregateMetadata aggregate);
 
-  void onAggregateUpdated(AggregateMetadata current, AggregateMetadata previous);
+  void onAggregateUpdated(@NonNull AggregateMetadata current, @NonNull AggregateMetadata previous);
 
-  void onViewCreated(ViewMetadata view);
+  void onViewCreated(@NonNull ViewMetadata view);
 
-  void onViewDropped(ViewMetadata view);
+  void onViewDropped(@NonNull ViewMetadata view);
 
-  void onViewUpdated(ViewMetadata current, ViewMetadata previous);
+  void onViewUpdated(@NonNull ViewMetadata current, @NonNull ViewMetadata previous);
 }

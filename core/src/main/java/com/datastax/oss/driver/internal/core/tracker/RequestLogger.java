@@ -21,6 +21,7 @@ import com.datastax.oss.driver.api.core.context.DriverContext;
 import com.datastax.oss.driver.api.core.metadata.Node;
 import com.datastax.oss.driver.api.core.session.Request;
 import com.datastax.oss.driver.api.core.tracker.RequestTracker;
+import edu.umd.cs.findbugs.annotations.NonNull;
 import net.jcip.annotations.ThreadSafe;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -44,7 +45,10 @@ public class RequestLogger implements RequestTracker {
 
   @Override
   public void onSuccess(
-      Request request, long latencyNanos, DriverConfigProfile configProfile, Node node) {
+      @NonNull Request request,
+      long latencyNanos,
+      @NonNull DriverConfigProfile configProfile,
+      @NonNull Node node) {
 
     boolean successEnabled =
         configProfile.getBoolean(DefaultDriverOption.REQUEST_LOGGER_SUCCESS_ENABLED);
@@ -75,10 +79,10 @@ public class RequestLogger implements RequestTracker {
 
   @Override
   public void onError(
-      Request request,
-      Throwable error,
+      @NonNull Request request,
+      @NonNull Throwable error,
       long latencyNanos,
-      DriverConfigProfile configProfile,
+      @NonNull DriverConfigProfile configProfile,
       Node node) {
 
     if (!configProfile.getBoolean(DefaultDriverOption.REQUEST_LOGGER_ERROR_ENABLED)) {

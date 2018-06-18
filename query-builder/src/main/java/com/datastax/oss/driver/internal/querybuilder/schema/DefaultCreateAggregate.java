@@ -24,6 +24,8 @@ import com.datastax.oss.driver.api.querybuilder.term.Term;
 import com.datastax.oss.driver.internal.querybuilder.CqlHelper;
 import com.datastax.oss.driver.internal.querybuilder.ImmutableCollections;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableList;
+import edu.umd.cs.findbugs.annotations.NonNull;
+import edu.umd.cs.findbugs.annotations.Nullable;
 import net.jcip.annotations.Immutable;
 
 @Immutable
@@ -40,24 +42,25 @@ public class DefaultCreateAggregate
   private final CqlIdentifier finalFunc;
   private final Term term;
 
-  public DefaultCreateAggregate(CqlIdentifier functionName) {
+  public DefaultCreateAggregate(@NonNull CqlIdentifier functionName) {
     this(null, functionName);
   }
 
-  public DefaultCreateAggregate(CqlIdentifier keyspace, CqlIdentifier functionName) {
+  public DefaultCreateAggregate(
+      @Nullable CqlIdentifier keyspace, @NonNull CqlIdentifier functionName) {
     this(keyspace, functionName, false, false, ImmutableList.of(), null, null, null, null);
   }
 
   public DefaultCreateAggregate(
-      CqlIdentifier keyspace,
-      CqlIdentifier functionName,
+      @Nullable CqlIdentifier keyspace,
+      @NonNull CqlIdentifier functionName,
       boolean orReplace,
       boolean ifNotExists,
-      ImmutableList<DataType> parameters,
-      CqlIdentifier sFunc,
-      DataType sType,
-      CqlIdentifier finalFunc,
-      Term term) {
+      @NonNull ImmutableList<DataType> parameters,
+      @Nullable CqlIdentifier sFunc,
+      @Nullable DataType sType,
+      @Nullable CqlIdentifier finalFunc,
+      @Nullable Term term) {
     this.keyspace = keyspace;
     this.functionName = functionName;
     this.orReplace = orReplace;
@@ -69,6 +72,7 @@ public class DefaultCreateAggregate
     this.term = term;
   }
 
+  @NonNull
   @Override
   public String asCql() {
     StringBuilder builder = new StringBuilder();
@@ -114,26 +118,30 @@ public class DefaultCreateAggregate
     return builder.toString();
   }
 
+  @NonNull
   @Override
-  public CreateAggregateEnd withInitCond(Term term) {
+  public CreateAggregateEnd withInitCond(@NonNull Term term) {
     return new DefaultCreateAggregate(
         keyspace, functionName, orReplace, ifNotExists, parameters, sFunc, sType, finalFunc, term);
   }
 
+  @NonNull
   @Override
   public CreateAggregateStart ifNotExists() {
     return new DefaultCreateAggregate(
         keyspace, functionName, orReplace, true, parameters, sFunc, sType, finalFunc, term);
   }
 
+  @NonNull
   @Override
   public CreateAggregateStart orReplace() {
     return new DefaultCreateAggregate(
         keyspace, functionName, true, ifNotExists, parameters, sFunc, sType, finalFunc, term);
   }
 
+  @NonNull
   @Override
-  public CreateAggregateStart withParameter(DataType paramType) {
+  public CreateAggregateStart withParameter(@NonNull DataType paramType) {
     return new DefaultCreateAggregate(
         keyspace,
         functionName,
@@ -146,20 +154,23 @@ public class DefaultCreateAggregate
         term);
   }
 
+  @NonNull
   @Override
-  public CreateAggregateStateFunc withSFunc(CqlIdentifier sFunc) {
+  public CreateAggregateStateFunc withSFunc(@NonNull CqlIdentifier sFunc) {
     return new DefaultCreateAggregate(
         keyspace, functionName, orReplace, ifNotExists, parameters, sFunc, sType, finalFunc, term);
   }
 
+  @NonNull
   @Override
-  public CreateAggregateEnd withSType(DataType sType) {
+  public CreateAggregateEnd withSType(@NonNull DataType sType) {
     return new DefaultCreateAggregate(
         keyspace, functionName, orReplace, ifNotExists, parameters, sFunc, sType, finalFunc, term);
   }
 
+  @NonNull
   @Override
-  public CreateAggregateEnd withFinalFunc(CqlIdentifier finalFunc) {
+  public CreateAggregateEnd withFinalFunc(@NonNull CqlIdentifier finalFunc) {
     return new DefaultCreateAggregate(
         keyspace, functionName, orReplace, ifNotExists, parameters, sFunc, sType, finalFunc, term);
   }
@@ -169,10 +180,12 @@ public class DefaultCreateAggregate
     return asCql();
   }
 
+  @Nullable
   public CqlIdentifier getKeyspace() {
     return keyspace;
   }
 
+  @NonNull
   public CqlIdentifier getFunctionName() {
     return functionName;
   }
@@ -185,22 +198,27 @@ public class DefaultCreateAggregate
     return ifNotExists;
   }
 
+  @NonNull
   public ImmutableList<DataType> getParameters() {
     return parameters;
   }
 
+  @Nullable
   public CqlIdentifier getsFunc() {
     return sFunc;
   }
 
+  @Nullable
   public DataType getsType() {
     return sType;
   }
 
+  @Nullable
   public CqlIdentifier getFinalFunc() {
     return finalFunc;
   }
 
+  @Nullable
   public Term getTerm() {
     return term;
   }

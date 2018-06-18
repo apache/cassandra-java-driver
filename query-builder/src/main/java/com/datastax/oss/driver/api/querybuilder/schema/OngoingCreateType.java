@@ -19,6 +19,7 @@ import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.type.DataType;
 import com.datastax.oss.driver.api.core.type.DataTypes;
 import com.datastax.oss.driver.api.querybuilder.SchemaBuilderDsl;
+import edu.umd.cs.findbugs.annotations.NonNull;
 
 public interface OngoingCreateType {
 
@@ -30,13 +31,15 @@ public interface OngoingCreateType {
    * <p>To create the data type, use the constants and static methods in {@link DataTypes}, or
    * {@link SchemaBuilderDsl#udt(CqlIdentifier, boolean)}.
    */
-  CreateType withField(CqlIdentifier identifier, DataType dataType);
+  @NonNull
+  CreateType withField(@NonNull CqlIdentifier identifier, @NonNull DataType dataType);
 
   /**
    * Shortcut for {@link #withField(CqlIdentifier, DataType)} (CqlIdentifier, DataType)
    * withField(CqlIdentifier.asCql(columnName), dataType)}.
    */
-  default CreateType withField(String columnName, DataType dataType) {
+  @NonNull
+  default CreateType withField(@NonNull String columnName, @NonNull DataType dataType) {
     return withField(CqlIdentifier.fromCql(columnName), dataType);
   }
 }

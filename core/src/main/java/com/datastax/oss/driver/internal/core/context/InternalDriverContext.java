@@ -38,6 +38,8 @@ import com.datastax.oss.driver.internal.core.session.RequestProcessorRegistry;
 import com.datastax.oss.driver.internal.core.ssl.SslHandlerFactory;
 import com.datastax.oss.protocol.internal.Compressor;
 import com.datastax.oss.protocol.internal.FrameCodec;
+import edu.umd.cs.findbugs.annotations.NonNull;
+import edu.umd.cs.findbugs.annotations.Nullable;
 import io.netty.buffer.ByteBuf;
 import java.util.Optional;
 import java.util.function.Predicate;
@@ -45,48 +47,70 @@ import java.util.function.Predicate;
 /** Extends the driver context with additional components that are not exposed by our public API. */
 public interface InternalDriverContext extends DriverContext {
 
+  @NonNull
   EventBus eventBus();
 
+  @NonNull
   Compressor<ByteBuf> compressor();
 
+  @NonNull
   FrameCodec<ByteBuf> frameCodec();
 
+  @NonNull
   ProtocolVersionRegistry protocolVersionRegistry();
 
+  @NonNull
   ConsistencyLevelRegistry consistencyLevelRegistry();
 
+  @NonNull
   WriteTypeRegistry writeTypeRegistry();
 
+  @NonNull
   NettyOptions nettyOptions();
 
+  @NonNull
   WriteCoalescer writeCoalescer();
 
+  @NonNull
   Optional<SslHandlerFactory> sslHandlerFactory();
 
+  @NonNull
   ChannelFactory channelFactory();
 
+  @NonNull
   ChannelPoolFactory channelPoolFactory();
 
+  @NonNull
   TopologyMonitor topologyMonitor();
 
+  @NonNull
   MetadataManager metadataManager();
 
+  @NonNull
   LoadBalancingPolicyWrapper loadBalancingPolicyWrapper();
 
+  @NonNull
   ControlConnection controlConnection();
 
+  @NonNull
   RequestProcessorRegistry requestProcessorRegistry();
 
+  @NonNull
   SchemaQueriesFactory schemaQueriesFactory();
 
+  @NonNull
   SchemaParserFactory schemaParserFactory();
 
+  @NonNull
   TokenFactoryRegistry tokenFactoryRegistry();
 
+  @NonNull
   ReplicationStrategyFactory replicationStrategyFactory();
 
+  @NonNull
   PoolManager poolManager();
 
+  @NonNull
   MetricsFactory metricsFactory();
 
   /**
@@ -94,6 +118,7 @@ public interface InternalDriverContext extends DriverContext {
    * for this profile was specified through the configuration instead, this method will return
    * {@code null}.
    */
+  @Nullable
   Predicate<Node> nodeFilter(String profileName);
 
   /**
@@ -101,5 +126,6 @@ public interface InternalDriverContext extends DriverContext {
    * null, the driver attempts to use {@link Thread#getContextClassLoader()} of the current thread
    * or {@link com.datastax.oss.driver.internal.core.util.Reflection}'s {@link ClassLoader}.
    */
+  @Nullable
   ClassLoader classLoader();
 }

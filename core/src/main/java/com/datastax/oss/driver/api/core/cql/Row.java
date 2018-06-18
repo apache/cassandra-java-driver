@@ -19,6 +19,7 @@ import com.datastax.oss.driver.api.core.data.GettableById;
 import com.datastax.oss.driver.api.core.data.GettableByIndex;
 import com.datastax.oss.driver.api.core.data.GettableByName;
 import com.datastax.oss.driver.api.core.detach.Detachable;
+import edu.umd.cs.findbugs.annotations.NonNull;
 
 /**
  * A row from a CQL table.
@@ -29,5 +30,7 @@ import com.datastax.oss.driver.api.core.detach.Detachable;
  */
 public interface Row extends GettableByIndex, GettableByName, GettableById, Detachable {
 
+  /** @return the column definitions contained in this result set. */
+  @NonNull
   ColumnDefinitions getColumnDefinitions();
 }

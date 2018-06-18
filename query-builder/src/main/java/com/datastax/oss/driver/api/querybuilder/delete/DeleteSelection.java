@@ -21,6 +21,8 @@ import com.datastax.oss.driver.api.querybuilder.QueryBuilderDsl;
 import com.datastax.oss.driver.api.querybuilder.relation.OngoingWhereClause;
 import com.datastax.oss.driver.api.querybuilder.select.Selector;
 import com.datastax.oss.driver.api.querybuilder.term.Term;
+import edu.umd.cs.findbugs.annotations.NonNull;
+import edu.umd.cs.findbugs.annotations.Nullable;
 import java.util.Arrays;
 
 /**
@@ -44,7 +46,8 @@ public interface DeleteSelection extends OngoingWhereClause<Delete> {
    * <p>If you add multiple selectors as once, consider {@link #selectors(Iterable)} as a more
    * efficient alternative.
    */
-  DeleteSelection selector(Selector selector);
+  @NonNull
+  DeleteSelection selector(@NonNull Selector selector);
 
   /**
    * Adds multiple selectors at once.
@@ -61,10 +64,12 @@ public interface DeleteSelection extends OngoingWhereClause<Delete> {
    *
    * @see #selector(Selector)
    */
-  DeleteSelection selectors(Iterable<Selector> additionalSelectors);
+  @NonNull
+  DeleteSelection selectors(@NonNull Iterable<Selector> additionalSelectors);
 
   /** Var-arg equivalent of {@link #selectors(Iterable)}. */
-  default DeleteSelection selectors(Selector... additionalSelectors) {
+  @NonNull
+  default DeleteSelection selectors(@NonNull Selector... additionalSelectors) {
     return selectors(Arrays.asList(additionalSelectors));
   }
 
@@ -75,12 +80,14 @@ public interface DeleteSelection extends OngoingWhereClause<Delete> {
    *
    * @see Selector#column(CqlIdentifier)
    */
-  default DeleteSelection column(CqlIdentifier columnId) {
+  @NonNull
+  default DeleteSelection column(@NonNull CqlIdentifier columnId) {
     return selector(Selector.column(columnId));
   }
 
   /** Shortcut for {@link #column(CqlIdentifier) column(CqlIdentifier.fromCql(columnName))} */
-  default DeleteSelection column(String columnName) {
+  @NonNull
+  default DeleteSelection column(@NonNull String columnName) {
     return column(CqlIdentifier.fromCql(columnName));
   }
 
@@ -92,7 +99,9 @@ public interface DeleteSelection extends OngoingWhereClause<Delete> {
    *
    * @see Selector#field(CqlIdentifier, CqlIdentifier)
    */
-  default DeleteSelection field(CqlIdentifier udtColumnId, CqlIdentifier fieldId) {
+  @NonNull
+  default DeleteSelection field(
+      @NonNull CqlIdentifier udtColumnId, @NonNull CqlIdentifier fieldId) {
     return selector(Selector.field(udtColumnId, fieldId));
   }
 
@@ -102,7 +111,8 @@ public interface DeleteSelection extends OngoingWhereClause<Delete> {
    *
    * @see Selector#field(String, String)
    */
-  default DeleteSelection field(String udtColumnName, String fieldName) {
+  @NonNull
+  default DeleteSelection field(@NonNull String udtColumnName, @NonNull String fieldName) {
     return field(CqlIdentifier.fromCql(udtColumnName), CqlIdentifier.fromCql(fieldName));
   }
 
@@ -114,7 +124,8 @@ public interface DeleteSelection extends OngoingWhereClause<Delete> {
    *
    * @see Selector#element(CqlIdentifier, Term)
    */
-  default DeleteSelection element(CqlIdentifier collectionId, Term index) {
+  @NonNull
+  default DeleteSelection element(@NonNull CqlIdentifier collectionId, @NonNull Term index) {
     return selector(Selector.element(collectionId, index));
   }
 
@@ -124,7 +135,8 @@ public interface DeleteSelection extends OngoingWhereClause<Delete> {
    *
    * @see Selector#element(String, Term)
    */
-  default DeleteSelection element(String collectionName, Term index) {
+  @NonNull
+  default DeleteSelection element(@NonNull String collectionName, @NonNull Term index) {
     return element(CqlIdentifier.fromCql(collectionName), index);
   }
 
@@ -140,7 +152,8 @@ public interface DeleteSelection extends OngoingWhereClause<Delete> {
    *
    * @see QueryBuilderDsl#raw(String)
    */
-  default DeleteSelection raw(String raw) {
+  @NonNull
+  default DeleteSelection raw(@NonNull String raw) {
     return selector(QueryBuilderDsl.raw(raw));
   }
 
@@ -150,13 +163,15 @@ public interface DeleteSelection extends OngoingWhereClause<Delete> {
    * <p>If this method or {@link #usingTimestamp(BindMarker)} is called multiple times, the last
    * value is used.
    */
+  @NonNull
   DeleteSelection usingTimestamp(long timestamp);
 
   /**
    * Adds a USING TIMESTAMP clause to this statement with a bind marker.
    *
    * <p>If this method or {@link #usingTimestamp(long)} is called multiple times, the last value is
-   * used.
+   * used. Passing {@code null} to this method removes any previous timestamp.
    */
-  DeleteSelection usingTimestamp(BindMarker bindMarker);
+  @NonNull
+  DeleteSelection usingTimestamp(@Nullable BindMarker bindMarker);
 }

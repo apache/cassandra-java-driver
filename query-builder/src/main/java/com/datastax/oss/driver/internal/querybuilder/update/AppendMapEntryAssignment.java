@@ -17,12 +17,14 @@ package com.datastax.oss.driver.internal.querybuilder.update;
 
 import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.querybuilder.term.Term;
+import edu.umd.cs.findbugs.annotations.NonNull;
 import net.jcip.annotations.Immutable;
 
 @Immutable
 public class AppendMapEntryAssignment extends CollectionElementAssignment {
 
-  public AppendMapEntryAssignment(CqlIdentifier columnId, Term key, Term value) {
+  public AppendMapEntryAssignment(
+      @NonNull CqlIdentifier columnId, @NonNull Term key, @NonNull Term value) {
     super(columnId, Operator.APPEND, key, value, '{', '}');
   }
 }

@@ -51,6 +51,7 @@ import com.datastax.oss.protocol.internal.ProtocolConstants;
 import com.datastax.oss.protocol.internal.request.Prepare;
 import com.datastax.oss.protocol.internal.response.Error;
 import com.datastax.oss.protocol.internal.response.result.Prepared;
+import edu.umd.cs.findbugs.annotations.NonNull;
 import io.netty.util.concurrent.EventExecutor;
 import io.netty.util.concurrent.Future;
 import io.netty.util.concurrent.GenericFutureListener;
@@ -340,7 +341,7 @@ public abstract class CqlPrepareHandlerBase implements Throttled {
   }
 
   @Override
-  public void onThrottleFailure(RequestThrottlingException error) {
+  public void onThrottleFailure(@NonNull RequestThrottlingException error) {
     session
         .getMetricUpdater()
         .incrementCounter(DefaultSessionMetric.THROTTLING_ERRORS, configProfile.getName());

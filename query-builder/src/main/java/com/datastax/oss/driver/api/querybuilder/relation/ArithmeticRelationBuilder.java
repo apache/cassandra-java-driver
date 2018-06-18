@@ -16,6 +16,8 @@
 package com.datastax.oss.driver.api.querybuilder.relation;
 
 import com.datastax.oss.driver.api.querybuilder.term.Term;
+import edu.umd.cs.findbugs.annotations.NonNull;
+import edu.umd.cs.findbugs.annotations.Nullable;
 
 public interface ArithmeticRelationBuilder<ResultT> {
 
@@ -24,7 +26,8 @@ public interface ArithmeticRelationBuilder<ResultT> {
    *
    * <p>Use one of the static factory method in {@link Term} to create the argument.
    */
-  default ResultT isEqualTo(Term rightOperand) {
+  @NonNull
+  default ResultT isEqualTo(@NonNull Term rightOperand) {
     return build("=", rightOperand);
   }
 
@@ -33,7 +36,8 @@ public interface ArithmeticRelationBuilder<ResultT> {
    *
    * <p>Use one of the static factory method in {@link Term} to create the argument.
    */
-  default ResultT isLessThan(Term rightOperand) {
+  @NonNull
+  default ResultT isLessThan(@NonNull Term rightOperand) {
     return build("<", rightOperand);
   }
 
@@ -42,7 +46,8 @@ public interface ArithmeticRelationBuilder<ResultT> {
    *
    * <p>Use one of the static factory method in {@link Term} to create the argument.
    */
-  default ResultT isLessThanOrEqualTo(Term rightOperand) {
+  @NonNull
+  default ResultT isLessThanOrEqualTo(@NonNull Term rightOperand) {
     return build("<=", rightOperand);
   }
 
@@ -51,7 +56,8 @@ public interface ArithmeticRelationBuilder<ResultT> {
    *
    * <p>Use one of the static factory method in {@link Term} to create the argument.
    */
-  default ResultT isGreaterThan(Term rightOperand) {
+  @NonNull
+  default ResultT isGreaterThan(@NonNull Term rightOperand) {
     return build(">", rightOperand);
   }
 
@@ -60,7 +66,8 @@ public interface ArithmeticRelationBuilder<ResultT> {
    *
    * <p>Use one of the static factory method in {@link Term} to create the argument.
    */
-  default ResultT isGreaterThanOrEqualTo(Term rightOperand) {
+  @NonNull
+  default ResultT isGreaterThanOrEqualTo(@NonNull Term rightOperand) {
     return build(">=", rightOperand);
   }
 
@@ -69,9 +76,11 @@ public interface ArithmeticRelationBuilder<ResultT> {
    *
    * <p>Use one of the static factory method in {@link Term} to create the argument.
    */
-  default ResultT isNotEqualTo(Term rightOperand) {
+  @NonNull
+  default ResultT isNotEqualTo(@NonNull Term rightOperand) {
     return build("!=", rightOperand);
   }
 
-  ResultT build(String operator, Term rightOperand);
+  @NonNull
+  ResultT build(@NonNull String operator, @Nullable Term rightOperand);
 }

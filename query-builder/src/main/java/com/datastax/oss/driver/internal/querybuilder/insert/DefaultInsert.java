@@ -29,6 +29,8 @@ import com.datastax.oss.driver.internal.querybuilder.CqlHelper;
 import com.datastax.oss.driver.internal.querybuilder.ImmutableCollections;
 import com.datastax.oss.driver.shaded.guava.common.base.Preconditions;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableMap;
+import edu.umd.cs.findbugs.annotations.NonNull;
+import edu.umd.cs.findbugs.annotations.Nullable;
 import net.jcip.annotations.Immutable;
 
 @Immutable
@@ -47,17 +49,17 @@ public class DefaultInsert implements InsertInto, RegularInsert, JsonInsert {
   private final Object timestamp;
   private final boolean ifNotExists;
 
-  public DefaultInsert(CqlIdentifier keyspace, CqlIdentifier table) {
+  public DefaultInsert(@Nullable CqlIdentifier keyspace, @NonNull CqlIdentifier table) {
     this(keyspace, table, null, null, ImmutableMap.of(), null, false);
   }
 
   public DefaultInsert(
-      CqlIdentifier keyspace,
-      CqlIdentifier table,
-      Term json,
-      MissingJsonBehavior missingJsonBehavior,
-      ImmutableMap<CqlIdentifier, Term> assignments,
-      Object timestamp,
+      @Nullable CqlIdentifier keyspace,
+      @NonNull CqlIdentifier table,
+      @Nullable Term json,
+      @Nullable MissingJsonBehavior missingJsonBehavior,
+      @NonNull ImmutableMap<CqlIdentifier, Term> assignments,
+      @Nullable Object timestamp,
       boolean ifNotExists) {
     // Note: the public API guarantees this, but check in case someone is calling the internal API
     // directly.
@@ -72,8 +74,9 @@ public class DefaultInsert implements InsertInto, RegularInsert, JsonInsert {
     this.ifNotExists = ifNotExists;
   }
 
+  @NonNull
   @Override
-  public JsonInsert json(String json) {
+  public JsonInsert json(@NonNull String json) {
     return new DefaultInsert(
         keyspace,
         table,
@@ -84,18 +87,21 @@ public class DefaultInsert implements InsertInto, RegularInsert, JsonInsert {
         ifNotExists);
   }
 
+  @NonNull
   @Override
-  public JsonInsert json(BindMarker json) {
+  public JsonInsert json(@NonNull BindMarker json) {
     return new DefaultInsert(
         keyspace, table, json, missingJsonBehavior, ImmutableMap.of(), timestamp, ifNotExists);
   }
 
+  @NonNull
   @Override
   public JsonInsert defaultNull() {
     return new DefaultInsert(
         keyspace, table, json, MissingJsonBehavior.NULL, ImmutableMap.of(), timestamp, ifNotExists);
   }
 
+  @NonNull
   @Override
   public JsonInsert defaultUnset() {
     return new DefaultInsert(
@@ -108,8 +114,9 @@ public class DefaultInsert implements InsertInto, RegularInsert, JsonInsert {
         ifNotExists);
   }
 
+  @NonNull
   @Override
-  public RegularInsert value(CqlIdentifier columnId, Term value) {
+  public RegularInsert value(@NonNull CqlIdentifier columnId, @NonNull Term value) {
     return new DefaultInsert(
         keyspace,
         table,
@@ -120,24 +127,28 @@ public class DefaultInsert implements InsertInto, RegularInsert, JsonInsert {
         ifNotExists);
   }
 
+  @NonNull
   @Override
   public Insert ifNotExists() {
     return new DefaultInsert(
         keyspace, table, json, missingJsonBehavior, assignments, timestamp, true);
   }
 
+  @NonNull
   @Override
   public Insert usingTimestamp(long timestamp) {
     return new DefaultInsert(
         keyspace, table, json, missingJsonBehavior, assignments, timestamp, ifNotExists);
   }
 
+  @NonNull
   @Override
-  public Insert usingTimestamp(BindMarker timestamp) {
+  public Insert usingTimestamp(@Nullable BindMarker timestamp) {
     return new DefaultInsert(
         keyspace, table, json, missingJsonBehavior, assignments, timestamp, ifNotExists);
   }
 
+  @NonNull
   @Override
   public String asCql() {
     StringBuilder builder = new StringBuilder("INSERT INTO ");
@@ -169,11 +180,13 @@ public class DefaultInsert implements InsertInto, RegularInsert, JsonInsert {
     return builder.toString();
   }
 
+  @NonNull
   @Override
   public SimpleStatement build() {
     return builder().build();
   }
 
+  @NonNull
   @Override
   public SimpleStatementBuilder builder() {
     return SimpleStatement.builder(asCql()).withIdempotence(isIdempotent());
@@ -193,26 +206,32 @@ public class DefaultInsert implements InsertInto, RegularInsert, JsonInsert {
     }
   }
 
+  @Nullable
   public CqlIdentifier getKeyspace() {
     return keyspace;
   }
 
+  @NonNull
   public CqlIdentifier getTable() {
     return table;
   }
 
+  @Nullable
   public Object getJson() {
     return json;
   }
 
+  @Nullable
   public MissingJsonBehavior getMissingJsonBehavior() {
     return missingJsonBehavior;
   }
 
+  @NonNull
   public ImmutableMap<CqlIdentifier, Term> getAssignments() {
     return assignments;
   }
 
+  @Nullable
   public Object getTimestamp() {
     return timestamp;
   }

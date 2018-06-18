@@ -15,6 +15,8 @@
  */
 package com.datastax.oss.driver.internal.querybuilder;
 
+import edu.umd.cs.findbugs.annotations.NonNull;
+
 public enum ArithmeticOperator {
   OPPOSITE("-", 2, 2),
   PRODUCT("*", 2, 2),
@@ -34,6 +36,7 @@ public enum ArithmeticOperator {
     this.precedenceRight = precedenceRight;
   }
 
+  @NonNull
   public String getSymbol() {
     return symbol;
   }

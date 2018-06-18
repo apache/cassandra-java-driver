@@ -19,6 +19,7 @@ import com.datastax.oss.driver.api.core.addresstranslation.AddressTranslator;
 import com.datastax.oss.driver.api.core.context.DriverContext;
 import com.datastax.oss.driver.internal.core.util.Loggers;
 import com.datastax.oss.driver.shaded.guava.common.annotations.VisibleForTesting;
+import edu.umd.cs.findbugs.annotations.NonNull;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.util.Enumeration;
@@ -58,7 +59,8 @@ public class Ec2MultiRegionAddressTranslator implements AddressTranslator {
   private final DirContext ctx;
   private final String logPrefix;
 
-  public Ec2MultiRegionAddressTranslator(@SuppressWarnings("unused") DriverContext context) {
+  public Ec2MultiRegionAddressTranslator(
+      @SuppressWarnings("unused") @NonNull DriverContext context) {
     this.logPrefix = context.sessionName();
     @SuppressWarnings("JdkObsolete")
     Hashtable<Object, Object> env = new Hashtable<>();
@@ -71,13 +73,14 @@ public class Ec2MultiRegionAddressTranslator implements AddressTranslator {
   }
 
   @VisibleForTesting
-  Ec2MultiRegionAddressTranslator(DirContext ctx) {
+  Ec2MultiRegionAddressTranslator(@NonNull DirContext ctx) {
     this.logPrefix = "test";
     this.ctx = ctx;
   }
 
+  @NonNull
   @Override
-  public InetSocketAddress translate(InetSocketAddress socketAddress) {
+  public InetSocketAddress translate(@NonNull InetSocketAddress socketAddress) {
     InetAddress address = socketAddress.getAddress();
     try {
       // InetAddress#getHostName() is supposed to perform a reverse DNS lookup, but for some reason

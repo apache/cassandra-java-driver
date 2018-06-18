@@ -37,6 +37,7 @@ import com.datastax.oss.driver.internal.core.util.concurrent.RunOrSchedule;
 import com.datastax.oss.driver.internal.core.util.concurrent.UncaughtExceptions;
 import com.datastax.oss.driver.shaded.guava.common.collect.Lists;
 import com.datastax.oss.driver.shaded.guava.common.collect.MapMaker;
+import edu.umd.cs.findbugs.annotations.NonNull;
 import io.netty.util.concurrent.EventExecutor;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
@@ -134,17 +135,20 @@ public class PoolManager implements AsyncAutoCloseable {
     return repreparePayloads;
   }
 
+  @NonNull
   @Override
   public CompletionStage<Void> closeFuture() {
     return singleThreaded.closeFuture;
   }
 
+  @NonNull
   @Override
   public CompletionStage<Void> closeAsync() {
     RunOrSchedule.on(adminExecutor, singleThreaded::close);
     return singleThreaded.closeFuture;
   }
 
+  @NonNull
   @Override
   public CompletionStage<Void> forceCloseAsync() {
     RunOrSchedule.on(adminExecutor, singleThreaded::forceClose);

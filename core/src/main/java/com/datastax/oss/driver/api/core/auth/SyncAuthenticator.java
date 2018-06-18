@@ -16,6 +16,8 @@
 package com.datastax.oss.driver.api.core.auth;
 
 import com.datastax.oss.driver.internal.core.util.concurrent.CompletableFutures;
+import edu.umd.cs.findbugs.annotations.NonNull;
+import edu.umd.cs.findbugs.annotations.Nullable;
 import java.nio.ByteBuffer;
 import java.util.concurrent.CompletionStage;
 
@@ -32,7 +34,10 @@ public interface SyncAuthenticator extends Authenticator {
    *
    * <p>{@link #initialResponse()} calls this and wraps the result in an immediately completed
    * future.
+   *
+   * @return The initial response to send to the server (which may be {@code null}).
    */
+  @Nullable
   ByteBuffer initialResponseSync();
 
   /**
@@ -40,8 +45,13 @@ public interface SyncAuthenticator extends Authenticator {
    *
    * <p>{@link #evaluateChallenge(ByteBuffer)} calls this and wraps the result in an immediately
    * completed future.
+   *
+   * @param challenge the server's SASL challenge; may be {@code null}.
+   * @return The updated SASL token (which may be {@code null} to indicate the client requires no
+   *     further action).
    */
-  ByteBuffer evaluateChallengeSync(ByteBuffer challenge);
+  @Nullable
+  ByteBuffer evaluateChallengeSync(@Nullable ByteBuffer challenge);
 
   /**
    * Called when authentication is successful with the last information optionally sent by the
@@ -49,21 +59,28 @@ public interface SyncAuthenticator extends Authenticator {
    *
    * <p>{@link #onAuthenticationSuccess(ByteBuffer)} calls this, and then returns an immediately
    * completed future.
+   *
+   * @param token the information sent by the server with the authentication successful message.
+   *     This will be {@code null} if the server sends no particular information on authentication
+   *     success.
    */
-  void onAuthenticationSuccessSync(ByteBuffer token);
+  void onAuthenticationSuccessSync(@Nullable ByteBuffer token);
 
+  @NonNull
   @Override
   default CompletionStage<ByteBuffer> initialResponse() {
     return CompletableFutures.wrap(this::initialResponseSync);
   }
 
+  @NonNull
   @Override
-  default CompletionStage<ByteBuffer> evaluateChallenge(ByteBuffer challenge) {
+  default CompletionStage<ByteBuffer> evaluateChallenge(@Nullable ByteBuffer challenge) {
     return CompletableFutures.wrap(() -> evaluateChallengeSync(challenge));
   }
 
+  @NonNull
   @Override
-  default CompletionStage<Void> onAuthenticationSuccess(ByteBuffer token) {
+  default CompletionStage<Void> onAuthenticationSuccess(@Nullable ByteBuffer token) {
     return CompletableFutures.wrap(
         () -> {
           onAuthenticationSuccessSync(token);

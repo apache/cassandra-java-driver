@@ -21,6 +21,8 @@ import com.datastax.oss.driver.api.querybuilder.relation.Relation;
 import com.datastax.oss.driver.api.querybuilder.relation.TokenRelationBuilder;
 import com.datastax.oss.driver.api.querybuilder.term.Term;
 import com.datastax.oss.driver.internal.querybuilder.lhs.TokenLeftOperand;
+import edu.umd.cs.findbugs.annotations.NonNull;
+import edu.umd.cs.findbugs.annotations.Nullable;
 import net.jcip.annotations.Immutable;
 
 @Immutable
@@ -28,12 +30,13 @@ public class DefaultTokenRelationBuilder implements TokenRelationBuilder<Relatio
 
   private final Iterable<CqlIdentifier> identifiers;
 
-  public DefaultTokenRelationBuilder(Iterable<CqlIdentifier> identifiers) {
+  public DefaultTokenRelationBuilder(@NonNull Iterable<CqlIdentifier> identifiers) {
     this.identifiers = identifiers;
   }
 
+  @NonNull
   @Override
-  public Relation build(String operator, Term rightOperand) {
+  public Relation build(@NonNull String operator, @Nullable Term rightOperand) {
     return new DefaultRelation(new TokenLeftOperand(identifiers), operator, rightOperand);
   }
 
@@ -44,13 +47,16 @@ public class DefaultTokenRelationBuilder implements TokenRelationBuilder<Relatio
     private final OngoingWhereClause<StatementT> statement;
     private final TokenRelationBuilder<Relation> delegate;
 
-    public Fluent(OngoingWhereClause<StatementT> statement, Iterable<CqlIdentifier> identifiers) {
+    public Fluent(
+        @NonNull OngoingWhereClause<StatementT> statement,
+        @NonNull Iterable<CqlIdentifier> identifiers) {
       this.statement = statement;
       this.delegate = new DefaultTokenRelationBuilder(identifiers);
     }
 
+    @NonNull
     @Override
-    public StatementT build(String operator, Term rightOperand) {
+    public StatementT build(@NonNull String operator, @Nullable Term rightOperand) {
       return statement.where(delegate.build(operator, rightOperand));
     }
   }

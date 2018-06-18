@@ -17,6 +17,7 @@ package com.datastax.oss.driver.api.querybuilder.insert;
 
 import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.querybuilder.term.Term;
+import edu.umd.cs.findbugs.annotations.NonNull;
 
 public interface OngoingValues {
 
@@ -26,13 +27,15 @@ public interface OngoingValues {
    * <p>If this is called twice for the same column, the previous entry is discarded and the new
    * entry will remain at its current position.
    */
-  RegularInsert value(CqlIdentifier columnId, Term value);
+  @NonNull
+  RegularInsert value(@NonNull CqlIdentifier columnId, @NonNull Term value);
 
   /**
    * Shortcut for {@link #value(CqlIdentifier, Term) value(CqlIdentifier.fromCql(columnName),
    * value)}.
    */
-  default RegularInsert value(String columnName, Term value) {
+  @NonNull
+  default RegularInsert value(@NonNull String columnName, @NonNull Term value) {
     return value(CqlIdentifier.fromCql(columnName), value);
   }
 }

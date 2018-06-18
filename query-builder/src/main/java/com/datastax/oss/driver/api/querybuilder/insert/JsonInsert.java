@@ -15,6 +15,8 @@
  */
 package com.datastax.oss.driver.api.querybuilder.insert;
 
+import edu.umd.cs.findbugs.annotations.NonNull;
+
 /** An INSERT JSON statement. */
 public interface JsonInsert extends Insert {
 
@@ -23,6 +25,7 @@ public interface JsonInsert extends Insert {
    *
    * <p>If this or {@link #defaultUnset()} is called multiple times, the last value is used.
    */
+  @NonNull
   JsonInsert defaultNull();
 
   /**
@@ -30,5 +33,6 @@ public interface JsonInsert extends Insert {
    *
    * <p>If this or {@link #defaultNull()} is called multiple times, the last value is used.
    */
+  @NonNull
   JsonInsert defaultUnset();
 }

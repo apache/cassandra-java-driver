@@ -20,6 +20,8 @@ import com.datastax.oss.driver.api.core.type.DataType;
 import com.datastax.oss.driver.api.core.type.codec.CodecNotFoundException;
 import com.datastax.oss.driver.api.core.type.codec.TypeCodec;
 import com.datastax.oss.driver.api.core.type.reflect.GenericType;
+import edu.umd.cs.findbugs.annotations.NonNull;
+import edu.umd.cs.findbugs.annotations.Nullable;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.net.InetAddress;
@@ -52,12 +54,14 @@ public interface SettableByName<T extends SettableByName<T>>
    *     further usage of this data will have unpredictable results.
    * @throws IndexOutOfBoundsException if the name is invalid.
    */
-  default T setBytesUnsafe(String name, ByteBuffer v) {
+  @NonNull
+  default T setBytesUnsafe(@NonNull String name, @Nullable ByteBuffer v) {
     return setBytesUnsafe(firstIndexOf(name), v);
   }
 
+  @NonNull
   @Override
-  default DataType getType(String name) {
+  default DataType getType(@NonNull String name) {
     return getType(firstIndexOf(name));
   }
 
@@ -69,7 +73,8 @@ public interface SettableByName<T extends SettableByName<T>>
    *
    * @throws IndexOutOfBoundsException if the name is invalid.
    */
-  default T setToNull(String name) {
+  @NonNull
+  default T setToNull(@NonNull String name) {
     return setToNull(firstIndexOf(name));
   }
 
@@ -89,7 +94,8 @@ public interface SettableByName<T extends SettableByName<T>>
    *
    * @throws IndexOutOfBoundsException if the name is invalid.
    */
-  default <V> T set(String name, V v, TypeCodec<V> codec) {
+  @NonNull
+  default <V> T set(@NonNull String name, @Nullable V v, @NonNull TypeCodec<V> codec) {
     return set(firstIndexOf(name), v, codec);
   }
 
@@ -107,7 +113,8 @@ public interface SettableByName<T extends SettableByName<T>>
    * @throws IndexOutOfBoundsException if the name is invalid.
    * @throws CodecNotFoundException if no codec can perform the conversion.
    */
-  default <V> T set(String name, V v, GenericType<V> targetType) {
+  @NonNull
+  default <V> T set(@NonNull String name, @Nullable V v, @NonNull GenericType<V> targetType) {
     return set(firstIndexOf(name), v, targetType);
   }
 
@@ -125,7 +132,8 @@ public interface SettableByName<T extends SettableByName<T>>
    * @throws IndexOutOfBoundsException if the name is invalid.
    * @throws CodecNotFoundException if no codec can perform the conversion.
    */
-  default <V> T set(String name, V v, Class<V> targetClass) {
+  @NonNull
+  default <V> T set(@NonNull String name, @Nullable V v, @NonNull Class<V> targetClass) {
     return set(firstIndexOf(name), v, targetClass);
   }
 
@@ -142,7 +150,8 @@ public interface SettableByName<T extends SettableByName<T>>
    *
    * @throws IndexOutOfBoundsException if the name is invalid.
    */
-  default T setBoolean(String name, boolean v) {
+  @NonNull
+  default T setBoolean(@NonNull String name, boolean v) {
     return setBoolean(firstIndexOf(name), v);
   }
 
@@ -159,7 +168,8 @@ public interface SettableByName<T extends SettableByName<T>>
    *
    * @throws IndexOutOfBoundsException if the name is invalid.
    */
-  default T setByte(String name, byte v) {
+  @NonNull
+  default T setByte(@NonNull String name, byte v) {
     return setByte(firstIndexOf(name), v);
   }
 
@@ -176,7 +186,8 @@ public interface SettableByName<T extends SettableByName<T>>
    *
    * @throws IndexOutOfBoundsException if the name is invalid.
    */
-  default T setDouble(String name, double v) {
+  @NonNull
+  default T setDouble(@NonNull String name, double v) {
     return setDouble(firstIndexOf(name), v);
   }
 
@@ -193,7 +204,8 @@ public interface SettableByName<T extends SettableByName<T>>
    *
    * @throws IndexOutOfBoundsException if the name is invalid.
    */
-  default T setFloat(String name, float v) {
+  @NonNull
+  default T setFloat(@NonNull String name, float v) {
     return setFloat(firstIndexOf(name), v);
   }
 
@@ -210,7 +222,8 @@ public interface SettableByName<T extends SettableByName<T>>
    *
    * @throws IndexOutOfBoundsException if the name is invalid.
    */
-  default T setInt(String name, int v) {
+  @NonNull
+  default T setInt(@NonNull String name, int v) {
     return setInt(firstIndexOf(name), v);
   }
 
@@ -227,7 +240,8 @@ public interface SettableByName<T extends SettableByName<T>>
    *
    * @throws IndexOutOfBoundsException if the name is invalid.
    */
-  default T setLong(String name, long v) {
+  @NonNull
+  default T setLong(@NonNull String name, long v) {
     return setLong(firstIndexOf(name), v);
   }
 
@@ -244,7 +258,8 @@ public interface SettableByName<T extends SettableByName<T>>
    *
    * @throws IndexOutOfBoundsException if the name is invalid.
    */
-  default T setShort(String name, short v) {
+  @NonNull
+  default T setShort(@NonNull String name, short v) {
     return setShort(firstIndexOf(name), v);
   }
 
@@ -258,7 +273,8 @@ public interface SettableByName<T extends SettableByName<T>>
    *
    * @throws IndexOutOfBoundsException if the name is invalid.
    */
-  default T setInstant(String name, Instant v) {
+  @NonNull
+  default T setInstant(@NonNull String name, @Nullable Instant v) {
     return setInstant(firstIndexOf(name), v);
   }
 
@@ -272,7 +288,8 @@ public interface SettableByName<T extends SettableByName<T>>
    *
    * @throws IndexOutOfBoundsException if the name is invalid.
    */
-  default T setLocalDate(String name, LocalDate v) {
+  @NonNull
+  default T setLocalDate(@NonNull String name, @Nullable LocalDate v) {
     return setLocalDate(firstIndexOf(name), v);
   }
 
@@ -286,7 +303,8 @@ public interface SettableByName<T extends SettableByName<T>>
    *
    * @throws IndexOutOfBoundsException if the name is invalid.
    */
-  default T setLocalTime(String name, LocalTime v) {
+  @NonNull
+  default T setLocalTime(@NonNull String name, @Nullable LocalTime v) {
     return setLocalTime(firstIndexOf(name), v);
   }
 
@@ -300,7 +318,8 @@ public interface SettableByName<T extends SettableByName<T>>
    *
    * @throws IndexOutOfBoundsException if the name is invalid.
    */
-  default T setByteBuffer(String name, ByteBuffer v) {
+  @NonNull
+  default T setByteBuffer(@NonNull String name, @Nullable ByteBuffer v) {
     return setByteBuffer(firstIndexOf(name), v);
   }
 
@@ -314,7 +333,8 @@ public interface SettableByName<T extends SettableByName<T>>
    *
    * @throws IndexOutOfBoundsException if the name is invalid.
    */
-  default T setString(String name, String v) {
+  @NonNull
+  default T setString(@NonNull String name, @Nullable String v) {
     return setString(firstIndexOf(name), v);
   }
 
@@ -328,7 +348,8 @@ public interface SettableByName<T extends SettableByName<T>>
    *
    * @throws IndexOutOfBoundsException if the name is invalid.
    */
-  default T setBigInteger(String name, BigInteger v) {
+  @NonNull
+  default T setBigInteger(@NonNull String name, @Nullable BigInteger v) {
     return setBigInteger(firstIndexOf(name), v);
   }
 
@@ -342,7 +363,8 @@ public interface SettableByName<T extends SettableByName<T>>
    *
    * @throws IndexOutOfBoundsException if the name is invalid.
    */
-  default T setBigDecimal(String name, BigDecimal v) {
+  @NonNull
+  default T setBigDecimal(@NonNull String name, @Nullable BigDecimal v) {
     return setBigDecimal(firstIndexOf(name), v);
   }
 
@@ -356,7 +378,8 @@ public interface SettableByName<T extends SettableByName<T>>
    *
    * @throws IndexOutOfBoundsException if the name is invalid.
    */
-  default T setUuid(String name, UUID v) {
+  @NonNull
+  default T setUuid(@NonNull String name, @Nullable UUID v) {
     return setUuid(firstIndexOf(name), v);
   }
 
@@ -370,7 +393,8 @@ public interface SettableByName<T extends SettableByName<T>>
    *
    * @throws IndexOutOfBoundsException if the name is invalid.
    */
-  default T setInetAddress(String name, InetAddress v) {
+  @NonNull
+  default T setInetAddress(@NonNull String name, @Nullable InetAddress v) {
     return setInetAddress(firstIndexOf(name), v);
   }
 
@@ -384,7 +408,8 @@ public interface SettableByName<T extends SettableByName<T>>
    *
    * @throws IndexOutOfBoundsException if the name is invalid.
    */
-  default T setCqlDuration(String name, CqlDuration v) {
+  @NonNull
+  default T setCqlDuration(@NonNull String name, @Nullable CqlDuration v) {
     return setCqlDuration(firstIndexOf(name), v);
   }
 
@@ -400,7 +425,8 @@ public interface SettableByName<T extends SettableByName<T>>
    *
    * @throws IndexOutOfBoundsException if the index is invalid.
    */
-  default T setToken(String name, Token v) {
+  @NonNull
+  default T setToken(@NonNull String name, @NonNull Token v) {
     return setToken(firstIndexOf(name), v);
   }
 
@@ -417,7 +443,9 @@ public interface SettableByName<T extends SettableByName<T>>
    *
    * @throws IndexOutOfBoundsException if the name is invalid.
    */
-  default <V> T setList(String name, List<V> v, Class<V> elementsClass) {
+  @NonNull
+  default <V> T setList(
+      @NonNull String name, @Nullable List<V> v, @NonNull Class<V> elementsClass) {
     return setList(firstIndexOf(name), v, elementsClass);
   }
 
@@ -434,7 +462,8 @@ public interface SettableByName<T extends SettableByName<T>>
    *
    * @throws IndexOutOfBoundsException if the name is invalid.
    */
-  default <V> T setSet(String name, Set<V> v, Class<V> elementsClass) {
+  @NonNull
+  default <V> T setSet(@NonNull String name, @Nullable Set<V> v, @NonNull Class<V> elementsClass) {
     return setSet(firstIndexOf(name), v, elementsClass);
   }
 
@@ -451,7 +480,12 @@ public interface SettableByName<T extends SettableByName<T>>
    *
    * @throws IndexOutOfBoundsException if the name is invalid.
    */
-  default <K, V> T setMap(String name, Map<K, V> v, Class<K> keyClass, Class<V> valueClass) {
+  @NonNull
+  default <K, V> T setMap(
+      @NonNull String name,
+      @Nullable Map<K, V> v,
+      @NonNull Class<K> keyClass,
+      @NonNull Class<V> valueClass) {
     return setMap(firstIndexOf(name), v, keyClass, valueClass);
   }
 
@@ -466,7 +500,8 @@ public interface SettableByName<T extends SettableByName<T>>
    *
    * @throws IndexOutOfBoundsException if the name is invalid.
    */
-  default T setUdtValue(String name, UdtValue v) {
+  @NonNull
+  default T setUdtValue(@NonNull String name, @Nullable UdtValue v) {
     return setUdtValue(firstIndexOf(name), v);
   }
 
@@ -480,7 +515,8 @@ public interface SettableByName<T extends SettableByName<T>>
    *
    * @throws IndexOutOfBoundsException if the name is invalid.
    */
-  default T setTupleValue(String name, TupleValue v) {
+  @NonNull
+  default T setTupleValue(@NonNull String name, @Nullable TupleValue v) {
     return setTupleValue(firstIndexOf(name), v);
   }
 }

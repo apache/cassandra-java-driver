@@ -24,6 +24,8 @@ import com.datastax.oss.driver.api.querybuilder.schema.AlterTypeStart;
 import com.datastax.oss.driver.internal.querybuilder.CqlHelper;
 import com.datastax.oss.driver.internal.querybuilder.ImmutableCollections;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableMap;
+import edu.umd.cs.findbugs.annotations.NonNull;
+import edu.umd.cs.findbugs.annotations.Nullable;
 import java.util.Map;
 import net.jcip.annotations.Immutable;
 
@@ -42,22 +44,22 @@ public class DefaultAlterType
   private final CqlIdentifier fieldToAlter;
   private final DataType fieldToAlterType;
 
-  public DefaultAlterType(CqlIdentifier typeName) {
+  public DefaultAlterType(@NonNull CqlIdentifier typeName) {
     this(null, typeName);
   }
 
-  public DefaultAlterType(CqlIdentifier keyspace, CqlIdentifier typeName) {
+  public DefaultAlterType(@Nullable CqlIdentifier keyspace, @NonNull CqlIdentifier typeName) {
     this(keyspace, typeName, null, null, ImmutableMap.of(), null, null);
   }
 
   public DefaultAlterType(
-      CqlIdentifier keyspace,
-      CqlIdentifier typeName,
-      CqlIdentifier fieldToAdd,
-      DataType fieldToAddType,
-      ImmutableMap<CqlIdentifier, CqlIdentifier> fieldsToRename,
-      CqlIdentifier fieldToAlter,
-      DataType fieldToAlterType) {
+      @Nullable CqlIdentifier keyspace,
+      @NonNull CqlIdentifier typeName,
+      @Nullable CqlIdentifier fieldToAdd,
+      @Nullable DataType fieldToAddType,
+      @NonNull ImmutableMap<CqlIdentifier, CqlIdentifier> fieldsToRename,
+      @Nullable CqlIdentifier fieldToAlter,
+      @Nullable DataType fieldToAlterType) {
     this.keyspace = keyspace;
     this.typeName = typeName;
     this.fieldToAdd = fieldToAdd;
@@ -67,20 +69,24 @@ public class DefaultAlterType
     this.fieldToAlterType = fieldToAlterType;
   }
 
+  @NonNull
   @Override
-  public BuildableQuery alterField(CqlIdentifier fieldName, DataType dataType) {
+  public BuildableQuery alterField(@NonNull CqlIdentifier fieldName, @NonNull DataType dataType) {
     return new DefaultAlterType(
         keyspace, typeName, fieldToAdd, fieldToAddType, fieldsToRename, fieldName, dataType);
   }
 
+  @NonNull
   @Override
-  public BuildableQuery addField(CqlIdentifier fieldName, DataType dataType) {
+  public BuildableQuery addField(@NonNull CqlIdentifier fieldName, @NonNull DataType dataType) {
     return new DefaultAlterType(
         keyspace, typeName, fieldName, dataType, fieldsToRename, fieldToAlter, fieldToAlterType);
   }
 
+  @NonNull
   @Override
-  public AlterTypeRenameFieldEnd renameField(CqlIdentifier from, CqlIdentifier to) {
+  public AlterTypeRenameFieldEnd renameField(
+      @NonNull CqlIdentifier from, @NonNull CqlIdentifier to) {
     return new DefaultAlterType(
         keyspace,
         typeName,
@@ -91,6 +97,7 @@ public class DefaultAlterType
         fieldToAlterType);
   }
 
+  @NonNull
   @Override
   public String asCql() {
     StringBuilder builder = new StringBuilder("ALTER TYPE ");
@@ -138,30 +145,37 @@ public class DefaultAlterType
     return asCql();
   }
 
+  @Nullable
   public CqlIdentifier getKeyspace() {
     return keyspace;
   }
 
+  @NonNull
   public CqlIdentifier getType() {
     return typeName;
   }
 
+  @Nullable
   public CqlIdentifier getFieldToAdd() {
     return fieldToAdd;
   }
 
+  @Nullable
   public DataType getFieldToAddType() {
     return fieldToAddType;
   }
 
+  @NonNull
   public ImmutableMap<CqlIdentifier, CqlIdentifier> getFieldsToRename() {
     return fieldsToRename;
   }
 
+  @Nullable
   public CqlIdentifier getFieldToAlter() {
     return fieldToAlter;
   }
 
+  @Nullable
   public DataType getFieldToAlterType() {
     return fieldToAlterType;
   }

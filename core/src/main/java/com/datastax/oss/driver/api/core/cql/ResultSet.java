@@ -18,6 +18,8 @@ package com.datastax.oss.driver.api.core.cql;
 import com.datastax.oss.driver.api.core.CqlSession;
 import com.datastax.oss.driver.shaded.guava.common.collect.Iterables;
 import com.datastax.oss.driver.shaded.guava.common.collect.Lists;
+import edu.umd.cs.findbugs.annotations.NonNull;
+import edu.umd.cs.findbugs.annotations.Nullable;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
@@ -41,6 +43,8 @@ import java.util.List;
  */
 public interface ResultSet extends Iterable<Row> {
 
+  /** @return the column definitions contained in this result set. */
+  @NonNull
   ColumnDefinitions getColumnDefinitions();
 
   /**
@@ -54,6 +58,7 @@ public interface ResultSet extends Iterable<Row> {
    *
    * @see #getExecutionInfos()
    */
+  @NonNull
   default ExecutionInfo getExecutionInfo() {
     List<ExecutionInfo> infos = getExecutionInfos();
     return infos.get(infos.size() - 1);
@@ -66,6 +71,7 @@ public interface ResultSet extends Iterable<Row> {
    * <p>This will have multiple elements if the query is paged, since the driver performs blocking
    * background queries to fetch additional pages transparently as the result set is being iterated.
    */
+  @NonNull
   List<ExecutionInfo> getExecutionInfos();
 
   /**
@@ -74,6 +80,7 @@ public interface ResultSet extends Iterable<Row> {
    * <p>This is convenient for queries that are known to return exactly one row, for example count
    * queries.
    */
+  @Nullable
   default Row one() {
     Iterator<Row> iterator = iterator();
     return iterator.hasNext() ? iterator.next() : null;
@@ -89,6 +96,7 @@ public interface ResultSet extends Iterable<Row> {
    * memory locally. Therefore it is crucial to only call this method for queries that are known to
    * return a reasonable number of results.
    */
+  @NonNull
   default List<Row> all() {
     if (!iterator().hasNext()) {
       return Collections.emptyList();

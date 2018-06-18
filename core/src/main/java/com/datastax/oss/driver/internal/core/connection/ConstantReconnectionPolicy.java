@@ -19,6 +19,7 @@ import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
 import com.datastax.oss.driver.api.core.config.DriverConfigProfile;
 import com.datastax.oss.driver.api.core.connection.ReconnectionPolicy;
 import com.datastax.oss.driver.api.core.context.DriverContext;
+import edu.umd.cs.findbugs.annotations.NonNull;
 import java.time.Duration;
 
 /** A reconnection policy that waits a constant time between each reconnection attempt. */
@@ -41,6 +42,7 @@ public class ConstantReconnectionPolicy implements ReconnectionPolicy {
     this.schedule = () -> delay;
   }
 
+  @NonNull
   @Override
   public ReconnectionSchedule newSchedule() {
     return schedule;

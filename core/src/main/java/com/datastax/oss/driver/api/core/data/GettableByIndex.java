@@ -31,6 +31,8 @@ import com.datastax.oss.driver.api.core.type.reflect.GenericType;
 import com.datastax.oss.driver.internal.core.metadata.token.ByteOrderedToken;
 import com.datastax.oss.driver.internal.core.metadata.token.Murmur3Token;
 import com.datastax.oss.driver.internal.core.metadata.token.RandomToken;
+import edu.umd.cs.findbugs.annotations.NonNull;
+import edu.umd.cs.findbugs.annotations.Nullable;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.net.InetAddress;
@@ -59,6 +61,7 @@ public interface GettableByIndex extends AccessibleByIndex {
    *     invocation for this value will have unpredictable results.
    * @throws IndexOutOfBoundsException if the index is invalid.
    */
+  @Nullable
   ByteBuffer getBytesUnsafe(int i);
 
   /**
@@ -82,6 +85,7 @@ public interface GettableByIndex extends AccessibleByIndex {
    *
    * @throws IndexOutOfBoundsException if the index is invalid.
    */
+  @Nullable
   default <T> T get(int i, TypeCodec<T> codec) {
     return codec.decode(getBytesUnsafe(i), protocolVersion());
   }
@@ -97,6 +101,7 @@ public interface GettableByIndex extends AccessibleByIndex {
    * @throws IndexOutOfBoundsException if the index is invalid.
    * @throws CodecNotFoundException if no codec can perform the conversion.
    */
+  @Nullable
   default <T> T get(int i, GenericType<T> targetType) {
     DataType cqlType = getType(i);
     TypeCodec<T> codec = codecRegistry().codecFor(cqlType, targetType);
@@ -113,6 +118,7 @@ public interface GettableByIndex extends AccessibleByIndex {
    * @throws IndexOutOfBoundsException if the index is invalid.
    * @throws CodecNotFoundException if no codec can perform the conversion.
    */
+  @Nullable
   default <T> T get(int i, Class<T> targetClass) {
     // This is duplicated from the GenericType variant, because we want to give the codec registry
     // a chance to process the unwrapped class directly, if it can do so in a more efficient way.
@@ -140,6 +146,7 @@ public interface GettableByIndex extends AccessibleByIndex {
    * @throws IndexOutOfBoundsException if the index is invalid.
    * @throws CodecNotFoundException if no codec can perform the conversion.
    */
+  @Nullable
   default Object getObject(int i) {
     DataType cqlType = getType(i);
     TypeCodec<?> codec = codecRegistry().codecFor(cqlType);
@@ -160,9 +167,12 @@ public interface GettableByIndex extends AccessibleByIndex {
   default boolean getBoolean(int i) {
     DataType cqlType = getType(i);
     TypeCodec<Boolean> codec = codecRegistry().codecFor(cqlType, Boolean.class);
-    return (codec instanceof PrimitiveBooleanCodec)
-        ? ((PrimitiveBooleanCodec) codec).decodePrimitive(getBytesUnsafe(i), protocolVersion())
-        : get(i, codec);
+    if (codec instanceof PrimitiveBooleanCodec) {
+      return ((PrimitiveBooleanCodec) codec).decodePrimitive(getBytesUnsafe(i), protocolVersion());
+    } else {
+      Boolean value = get(i, codec);
+      return value == null ? false : value;
+    }
   }
 
   /**
@@ -179,9 +189,12 @@ public interface GettableByIndex extends AccessibleByIndex {
   default byte getByte(int i) {
     DataType cqlType = getType(i);
     TypeCodec<Byte> codec = codecRegistry().codecFor(cqlType, Byte.class);
-    return (codec instanceof PrimitiveByteCodec)
-        ? ((PrimitiveByteCodec) codec).decodePrimitive(getBytesUnsafe(i), protocolVersion())
-        : get(i, codec);
+    if (codec instanceof PrimitiveByteCodec) {
+      return ((PrimitiveByteCodec) codec).decodePrimitive(getBytesUnsafe(i), protocolVersion());
+    } else {
+      Byte value = get(i, codec);
+      return value == null ? 0 : value;
+    }
   }
 
   /**
@@ -198,9 +211,12 @@ public interface GettableByIndex extends AccessibleByIndex {
   default double getDouble(int i) {
     DataType cqlType = getType(i);
     TypeCodec<Double> codec = codecRegistry().codecFor(cqlType, Double.class);
-    return (codec instanceof PrimitiveDoubleCodec)
-        ? ((PrimitiveDoubleCodec) codec).decodePrimitive(getBytesUnsafe(i), protocolVersion())
-        : get(i, codec);
+    if (codec instanceof PrimitiveDoubleCodec) {
+      return ((PrimitiveDoubleCodec) codec).decodePrimitive(getBytesUnsafe(i), protocolVersion());
+    } else {
+      Double value = get(i, codec);
+      return value == null ? 0 : value;
+    }
   }
 
   /**
@@ -217,9 +233,12 @@ public interface GettableByIndex extends AccessibleByIndex {
   default float getFloat(int i) {
     DataType cqlType = getType(i);
     TypeCodec<Float> codec = codecRegistry().codecFor(cqlType, Float.class);
-    return (codec instanceof PrimitiveFloatCodec)
-        ? ((PrimitiveFloatCodec) codec).decodePrimitive(getBytesUnsafe(i), protocolVersion())
-        : get(i, codec);
+    if (codec instanceof PrimitiveFloatCodec) {
+      return ((PrimitiveFloatCodec) codec).decodePrimitive(getBytesUnsafe(i), protocolVersion());
+    } else {
+      Float value = get(i, codec);
+      return value == null ? 0 : value;
+    }
   }
 
   /**
@@ -236,9 +255,12 @@ public interface GettableByIndex extends AccessibleByIndex {
   default int getInt(int i) {
     DataType cqlType = getType(i);
     TypeCodec<Integer> codec = codecRegistry().codecFor(cqlType, Integer.class);
-    return (codec instanceof PrimitiveIntCodec)
-        ? ((PrimitiveIntCodec) codec).decodePrimitive(getBytesUnsafe(i), protocolVersion())
-        : get(i, codec);
+    if (codec instanceof PrimitiveIntCodec) {
+      return ((PrimitiveIntCodec) codec).decodePrimitive(getBytesUnsafe(i), protocolVersion());
+    } else {
+      Integer value = get(i, codec);
+      return value == null ? 0 : value;
+    }
   }
 
   /**
@@ -255,9 +277,12 @@ public interface GettableByIndex extends AccessibleByIndex {
   default long getLong(int i) {
     DataType cqlType = getType(i);
     TypeCodec<Long> codec = codecRegistry().codecFor(cqlType, Long.class);
-    return (codec instanceof PrimitiveLongCodec)
-        ? ((PrimitiveLongCodec) codec).decodePrimitive(getBytesUnsafe(i), protocolVersion())
-        : get(i, codec);
+    if (codec instanceof PrimitiveLongCodec) {
+      return ((PrimitiveLongCodec) codec).decodePrimitive(getBytesUnsafe(i), protocolVersion());
+    } else {
+      Long value = get(i, codec);
+      return value == null ? 0 : value;
+    }
   }
 
   /**
@@ -274,9 +299,12 @@ public interface GettableByIndex extends AccessibleByIndex {
   default short getShort(int i) {
     DataType cqlType = getType(i);
     TypeCodec<Short> codec = codecRegistry().codecFor(cqlType, Short.class);
-    return (codec instanceof PrimitiveShortCodec)
-        ? ((PrimitiveShortCodec) codec).decodePrimitive(getBytesUnsafe(i), protocolVersion())
-        : get(i, codec);
+    if (codec instanceof PrimitiveShortCodec) {
+      return ((PrimitiveShortCodec) codec).decodePrimitive(getBytesUnsafe(i), protocolVersion());
+    } else {
+      Short value = get(i, codec);
+      return value == null ? 0 : value;
+    }
   }
 
   /**
@@ -286,6 +314,7 @@ public interface GettableByIndex extends AccessibleByIndex {
    *
    * @throws IndexOutOfBoundsException if the index is invalid.
    */
+  @Nullable
   default Instant getInstant(int i) {
     return get(i, Instant.class);
   }
@@ -297,6 +326,7 @@ public interface GettableByIndex extends AccessibleByIndex {
    *
    * @throws IndexOutOfBoundsException if the index is invalid.
    */
+  @Nullable
   default LocalDate getLocalDate(int i) {
     return get(i, LocalDate.class);
   }
@@ -308,6 +338,7 @@ public interface GettableByIndex extends AccessibleByIndex {
    *
    * @throws IndexOutOfBoundsException if the index is invalid.
    */
+  @Nullable
   default LocalTime getLocalTime(int i) {
     return get(i, LocalTime.class);
   }
@@ -319,6 +350,7 @@ public interface GettableByIndex extends AccessibleByIndex {
    *
    * @throws IndexOutOfBoundsException if the index is invalid.
    */
+  @Nullable
   default ByteBuffer getByteBuffer(int i) {
     return get(i, ByteBuffer.class);
   }
@@ -330,6 +362,7 @@ public interface GettableByIndex extends AccessibleByIndex {
    *
    * @throws IndexOutOfBoundsException if the index is invalid.
    */
+  @Nullable
   default String getString(int i) {
     return get(i, String.class);
   }
@@ -341,6 +374,7 @@ public interface GettableByIndex extends AccessibleByIndex {
    *
    * @throws IndexOutOfBoundsException if the index is invalid.
    */
+  @Nullable
   default BigInteger getBigInteger(int i) {
     return get(i, BigInteger.class);
   }
@@ -352,6 +386,7 @@ public interface GettableByIndex extends AccessibleByIndex {
    *
    * @throws IndexOutOfBoundsException if the index is invalid.
    */
+  @Nullable
   default BigDecimal getBigDecimal(int i) {
     return get(i, BigDecimal.class);
   }
@@ -363,6 +398,7 @@ public interface GettableByIndex extends AccessibleByIndex {
    *
    * @throws IndexOutOfBoundsException if the index is invalid.
    */
+  @Nullable
   default UUID getUuid(int i) {
     return get(i, UUID.class);
   }
@@ -374,6 +410,7 @@ public interface GettableByIndex extends AccessibleByIndex {
    *
    * @throws IndexOutOfBoundsException if the index is invalid.
    */
+  @Nullable
   default InetAddress getInetAddress(int i) {
     return get(i, InetAddress.class);
   }
@@ -385,6 +422,7 @@ public interface GettableByIndex extends AccessibleByIndex {
    *
    * @throws IndexOutOfBoundsException if the index is invalid.
    */
+  @Nullable
   default CqlDuration getCqlDuration(int i) {
     return get(i, CqlDuration.class);
   }
@@ -402,6 +440,7 @@ public interface GettableByIndex extends AccessibleByIndex {
    * @throws IndexOutOfBoundsException if the index is invalid.
    * @throws IllegalArgumentException if the column type can not be converted to a known token type.
    */
+  @Nullable
   default Token getToken(int i) {
     DataType type = getType(i);
     // Simply enumerate all known implementations. This goes against the concept of TokenFactory,
@@ -427,9 +466,14 @@ public interface GettableByIndex extends AccessibleByIndex {
    * <p>This method is provided for convenience when the element type is a non-generic type. For
    * more complex list types, use {@link #get(int, GenericType)}.
    *
+   * <p>Apache Cassandra does not make any distinction between an empty collection and {@code null}.
+   * Whether this method will return an empty collection or {@code null} will depend on the codec
+   * used; by default, the driver's built-in codecs all return empty collections.
+   *
    * @throws IndexOutOfBoundsException if the index is invalid.
    */
-  default <T> List<T> getList(int i, Class<T> elementsClass) {
+  @Nullable
+  default <T> List<T> getList(int i, @NonNull Class<T> elementsClass) {
     return get(i, GenericType.listOf(elementsClass));
   }
 
@@ -441,9 +485,14 @@ public interface GettableByIndex extends AccessibleByIndex {
    * <p>This method is provided for convenience when the element type is a non-generic type. For
    * more complex set types, use {@link #get(int, GenericType)}.
    *
+   * <p>Apache Cassandra does not make any distinction between an empty collection and {@code null}.
+   * Whether this method will return an empty collection or {@code null} will depend on the codec
+   * used; by default, the driver's built-in codecs all return empty collections.
+   *
    * @throws IndexOutOfBoundsException if the index is invalid.
    */
-  default <T> Set<T> getSet(int i, Class<T> elementsClass) {
+  @Nullable
+  default <T> Set<T> getSet(int i, @NonNull Class<T> elementsClass) {
     return get(i, GenericType.setOf(elementsClass));
   }
 
@@ -455,9 +504,14 @@ public interface GettableByIndex extends AccessibleByIndex {
    * <p>This method is provided for convenience when the element type is a non-generic type. For
    * more complex map types, use {@link #get(int, GenericType)}.
    *
+   * <p>Apache Cassandra does not make any distinction between an empty collection and {@code null}.
+   * Whether this method will return an empty collection or {@code null} will depend on the codec
+   * used; by default, the driver's built-in codecs all return empty collections.
+   *
    * @throws IndexOutOfBoundsException if the index is invalid.
    */
-  default <K, V> Map<K, V> getMap(int i, Class<K> keyClass, Class<V> valueClass) {
+  @Nullable
+  default <K, V> Map<K, V> getMap(int i, @NonNull Class<K> keyClass, @NonNull Class<V> valueClass) {
     return get(i, GenericType.mapOf(keyClass, valueClass));
   }
 
@@ -468,6 +522,7 @@ public interface GettableByIndex extends AccessibleByIndex {
    *
    * @throws IndexOutOfBoundsException if the index is invalid.
    */
+  @Nullable
   default UdtValue getUdtValue(int i) {
     return get(i, UdtValue.class);
   }
@@ -479,6 +534,7 @@ public interface GettableByIndex extends AccessibleByIndex {
    *
    * @throws IndexOutOfBoundsException if the index is invalid.
    */
+  @Nullable
   default TupleValue getTupleValue(int i) {
     return get(i, TupleValue.class);
   }

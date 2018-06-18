@@ -15,6 +15,7 @@
  */
 package com.datastax.oss.driver.api.core;
 
+import edu.umd.cs.findbugs.annotations.NonNull;
 import java.util.Collections;
 
 /**
@@ -28,6 +29,7 @@ public class NoNodeAvailableException extends AllNodesFailedException {
     super("No node was available to execute the query", Collections.emptyMap());
   }
 
+  @NonNull
   @Override
   public DriverException copy() {
     return new NoNodeAvailableException();

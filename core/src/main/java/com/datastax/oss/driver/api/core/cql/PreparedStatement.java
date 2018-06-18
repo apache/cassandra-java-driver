@@ -17,6 +17,8 @@ package com.datastax.oss.driver.api.core.cql;
 
 import com.datastax.oss.driver.api.core.CqlSession;
 import com.datastax.oss.driver.api.core.DefaultProtocolVersion;
+import edu.umd.cs.findbugs.annotations.NonNull;
+import edu.umd.cs.findbugs.annotations.Nullable;
 import java.nio.ByteBuffer;
 import java.util.List;
 
@@ -39,11 +41,14 @@ public interface PreparedStatement {
    *
    * <p>Note: the returned buffer is read-only.
    */
+  @NonNull
   ByteBuffer getId();
 
+  @NonNull
   String getQuery();
 
   /** A description of the bind variables of this prepared statement. */
+  @NonNull
   ColumnDefinitions getVariableDefinitions();
 
   /**
@@ -68,6 +73,7 @@ public interface PreparedStatement {
    * ps2.getPrimaryKeyIndices()} is empty (because one of the partition key components is hard-coded
    * in the query string).
    */
+  @NonNull
   List<Integer> getPrimaryKeyIndices();
 
   /**
@@ -78,11 +84,12 @@ public interface PreparedStatement {
    * or higher, the driver sends it with every execution of the prepared statement, to validate that
    * its result metadata is still up-to-date.
    *
-   * <p>Note: this method returns null for protocol {@link DefaultProtocolVersion#V4} or lower;
-   * otherwise, the returned buffer is read-only.
+   * <p>Note: this method returns {@code null} for protocol {@link DefaultProtocolVersion#V4} or
+   * lower; otherwise, the returned buffer is read-only.
    *
    * @see <a href="https://issues.apache.org/jira/browse/CASSANDRA-10786">CASSANDRA-10786</a>
    */
+  @Nullable
   ByteBuffer getResultMetadataId();
 
   /**
@@ -94,6 +101,7 @@ public interface PreparedStatement {
    * EXISTS}), which do return columns; for those cases, use {@link
    * ResultSet#getColumnDefinitions()} on the result, not this method.
    */
+  @NonNull
   ColumnDefinitions getResultSetDefinitions();
 
   /**
@@ -102,27 +110,32 @@ public interface PreparedStatement {
    * <p>This is for internal use by the driver. Calling this manually with incorrect information can
    * cause existing queries to fail.
    */
-  void setResultMetadata(ByteBuffer newResultMetadataId, ColumnDefinitions newResultSetDefinitions);
+  void setResultMetadata(
+      @NonNull ByteBuffer newResultMetadataId, @NonNull ColumnDefinitions newResultSetDefinitions);
 
   /**
    * Builds an executable statement that associates a set of values with the bind variables.
-   *
-   * <p>You can provide less values than the actual number of variables (or even none at all), in
-   * which case the remaining variables will be left unset. However, this method will throw an
-   * {@link IllegalArgumentException} if there are more values than variables.
    *
    * <p>Note that the built-in bound statement implementation is immutable. If you need to set
    * multiple execution parameters on the bound statement (such as {@link
    * BoundStatement#setConfigProfileName(String)}, {@link
    * BoundStatement#setPagingState(ByteBuffer)}, etc.), consider using {@link
    * #boundStatementBuilder(Object...)} instead to avoid unnecessary allocations.
+   *
+   * @param values the values of the bound variables in the statement. You can provide less values
+   *     than the actual number of variables (or even none at all), in which case the remaining
+   *     variables will be left unset. However, this method will throw an {@link
+   *     IllegalArgumentException} if there are more values than variables. Individual values can be
+   *     {@code null}, but the vararg array itself can't.
    */
-  BoundStatement bind(Object... values);
+  @NonNull
+  BoundStatement bind(@NonNull Object... values);
 
   /**
    * Returns a builder to construct an executable statement.
    *
    * @see #bind(Object...)
    */
-  BoundStatementBuilder boundStatementBuilder(Object... values);
+  @NonNull
+  BoundStatementBuilder boundStatementBuilder(@NonNull Object... values);
 }

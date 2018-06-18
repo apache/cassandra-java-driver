@@ -15,6 +15,7 @@
  */
 package com.datastax.oss.driver.api.core.ssl;
 
+import edu.umd.cs.findbugs.annotations.NonNull;
 import java.net.SocketAddress;
 import javax.net.ssl.SSLEngine;
 
@@ -32,5 +33,6 @@ public interface SslEngineFactory extends AutoCloseable {
    * @param remoteEndpoint the remote endpoint we are connecting to (the address of the Cassandra
    *     node).
    */
-  SSLEngine newSslEngine(SocketAddress remoteEndpoint);
+  @NonNull
+  SSLEngine newSslEngine(@NonNull SocketAddress remoteEndpoint);
 }

@@ -17,6 +17,7 @@ package com.datastax.oss.driver.internal.core.metadata.token;
 
 import com.datastax.oss.driver.api.core.metadata.token.Token;
 import com.datastax.oss.driver.shaded.guava.common.base.Preconditions;
+import edu.umd.cs.findbugs.annotations.NonNull;
 import java.math.BigInteger;
 import net.jcip.annotations.Immutable;
 
@@ -52,7 +53,7 @@ public class RandomToken implements Token {
   }
 
   @Override
-  public int compareTo(Token other) {
+  public int compareTo(@NonNull Token other) {
     Preconditions.checkArgument(
         other instanceof RandomToken, "Can only compare tokens of the same type");
     RandomToken that = (RandomToken) other;

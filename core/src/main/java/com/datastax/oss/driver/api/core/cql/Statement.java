@@ -25,6 +25,8 @@ import com.datastax.oss.driver.api.core.session.Session;
 import com.datastax.oss.driver.api.core.time.TimestampGenerator;
 import com.datastax.oss.driver.api.core.type.reflect.GenericType;
 import com.datastax.oss.driver.internal.core.util.RoutingKey;
+import edu.umd.cs.findbugs.annotations.NonNull;
+import edu.umd.cs.findbugs.annotations.Nullable;
 import java.nio.ByteBuffer;
 import java.util.Map;
 import java.util.concurrent.CompletionStage;
@@ -66,7 +68,8 @@ public interface Statement<T extends Statement<T>> extends Request {
    * <p>All the driver's built-in implementations are immutable, and return a new instance from this
    * method. However custom implementations may choose to be mutable and return the same instance.
    */
-  T setConfigProfileName(String newConfigProfileName);
+  @NonNull
+  T setConfigProfileName(@Nullable String newConfigProfileName);
 
   /**
    * Sets the configuration profile to use for execution.
@@ -74,37 +77,51 @@ public interface Statement<T extends Statement<T>> extends Request {
    * <p>All the driver's built-in implementations are immutable, and return a new instance from this
    * method. However custom implementations may choose to be mutable and return the same instance.
    */
-  T setConfigProfile(DriverConfigProfile newProfile);
+  @NonNull
+  T setConfigProfile(@Nullable DriverConfigProfile newProfile);
 
   /**
    * Sets the keyspace to use for token-aware routing.
    *
    * <p>See {@link Request#getRoutingKey()} for a description of the token-aware routing algorithm.
+   *
+   * @param newRoutingKeyspace The keyspace to use, or {@code null} to disable token-aware routing.
    */
-  T setRoutingKeyspace(CqlIdentifier newRoutingKeyspace);
+  @NonNull
+  T setRoutingKeyspace(@Nullable CqlIdentifier newRoutingKeyspace);
 
   /**
    * Shortcut for {@link #setRoutingKeyspace(CqlIdentifier)
    * setRoutingKeyspace(CqlIdentifier.fromCql(newRoutingKeyspaceName))}.
+   *
+   * @param newRoutingKeyspaceName The keyspace to use, or {@code null} to disable token-aware
+   *     routing.
    */
-  default T setRoutingKeyspace(String newRoutingKeyspaceName) {
-    return setRoutingKeyspace(CqlIdentifier.fromCql(newRoutingKeyspaceName));
+  @NonNull
+  default T setRoutingKeyspace(@Nullable String newRoutingKeyspaceName) {
+    return setRoutingKeyspace(
+        newRoutingKeyspaceName == null ? null : CqlIdentifier.fromCql(newRoutingKeyspaceName));
   }
 
   /**
    * Sets the key to use for token-aware routing.
    *
    * <p>See {@link Request#getRoutingKey()} for a description of the token-aware routing algorithm.
+   *
+   * @param newRoutingKey The routing key to use, or {@code null} to disable token-aware routing.
    */
-  T setRoutingKey(ByteBuffer newRoutingKey);
+  @NonNull
+  T setRoutingKey(@Nullable ByteBuffer newRoutingKey);
 
   /**
    * Sets the key to use for token-aware routing, when the partition key has multiple components.
    *
    * <p>This method assembles the components into a single byte buffer and passes it to {@link
-   * #setRoutingKey(ByteBuffer)}.
+   * #setRoutingKey(ByteBuffer)}. Neither the individual components, nor the vararg array itself,
+   * can be {@code null}.
    */
-  default T setRoutingKey(ByteBuffer... newRoutingKeyComponents) {
+  @NonNull
+  default T setRoutingKey(@NonNull ByteBuffer... newRoutingKeyComponents) {
     return setRoutingKey(RoutingKey.compose(newRoutingKeyComponents));
   }
 
@@ -112,8 +129,12 @@ public interface Statement<T extends Statement<T>> extends Request {
    * Sets the token to use for token-aware routing.
    *
    * <p>See {@link Request#getRoutingKey()} for a description of the token-aware routing algorithm.
+   *
+   * @param newRoutingToken The routing token to use, or {@code null} to disable token-aware
+   *     routing.
    */
-  T setRoutingToken(Token newRoutingToken);
+  @NonNull
+  T setRoutingToken(@Nullable Token newRoutingToken);
 
   /**
    * Sets the custom payload to use for execution.
@@ -126,7 +147,8 @@ public interface Statement<T extends Statement<T>> extends Request {
    * concurrent or immutable implementation, or by making it effectively immutable (meaning that
    * it's never modified after being set on the statement).
    */
-  T setCustomPayload(Map<String, ByteBuffer> newCustomPayload);
+  @NonNull
+  T setCustomPayload(@NonNull Map<String, ByteBuffer> newCustomPayload);
 
   /**
    * Sets the idempotence to use for execution.
@@ -137,7 +159,8 @@ public interface Statement<T extends Statement<T>> extends Request {
    * @param newIdempotence a boolean instance to set a statement-specific value, or {@code null} to
    *     use the default idempotence defined in the configuration.
    */
-  T setIdempotent(Boolean newIdempotence);
+  @NonNull
+  T setIdempotent(@Nullable Boolean newIdempotence);
 
   /**
    * Sets tracing for execution.
@@ -145,31 +168,62 @@ public interface Statement<T extends Statement<T>> extends Request {
    * <p>All the driver's built-in implementations are immutable, and return a new instance from this
    * method. However custom implementations may choose to be mutable and return the same instance.
    */
+  @NonNull
   T setTracing(boolean newTracing);
 
+  /**
+   * Returns the query timestamp, in microseconds, to send with the statement.
+   *
+   * <p>If this is equal to {@link Long#MIN_VALUE}, the {@link TimestampGenerator} configured for
+   * this driver instance will be used to generate a timestamp.
+   *
+   * @see TimestampGenerator
+   */
   long getTimestamp();
 
   /**
-   * Sets the query timestamp to send with the statement.
+   * Sets the query timestamp, in microseconds, to send with the statement.
    *
    * <p>If this is equal to {@link Long#MIN_VALUE}, the {@link TimestampGenerator} configured for
    * this driver instance will be used to generate a timestamp.
    *
    * <p>All the driver's built-in implementations are immutable, and return a new instance from this
    * method. However custom implementations may choose to be mutable and return the same instance.
+   *
+   * @see TimestampGenerator
    */
+  @NonNull
   T setTimestamp(long newTimestamp);
 
+  /**
+   * Returns the paging state to send with the statement, or {@code null} if this statement has no
+   * paging state.
+   *
+   * <p>Paging states are used in scenarios where a paged result is interrupted then resumed later.
+   * The paging state can only be reused with the exact same statement (same query string, same
+   * parameters). It is an opaque value that is only meant to be collected, stored and re-used. If
+   * you try to modify its contents or reuse it with a different statement, the results are
+   * unpredictable.
+   */
+  @Nullable
   ByteBuffer getPagingState();
 
   /**
-   * Sets the paging state to send with the statement.
+   * Sets the paging state to send with the statement, or {@code null} if this statement has no
+   * paging state.
+   *
+   * <p>Paging states are used in scenarios where a paged result is interrupted then resumed later.
+   * The paging state can only be reused with the exact same statement (same query string, same
+   * parameters). It is an opaque value that is only meant to be collected, stored and re-used. If
+   * you try to modify its contents or reuse it with a different statement, the results are
+   * unpredictable.
    *
    * <p>All the driver's built-in implementations are immutable, and return a new instance from this
    * method. However custom implementations may choose to be mutable and return the same instance;
    * if you do so, you must override {@link #copy(ByteBuffer)}.
    */
-  T setPagingState(ByteBuffer newPagingState);
+  @NonNull
+  T setPagingState(@Nullable ByteBuffer newPagingState);
 
   /**
    * Calculates the approximate size in bytes that the statement will have when encoded.
@@ -183,7 +237,7 @@ public interface Statement<T extends Statement<T>> extends Request {
    *
    * @return the approximate number of bytes this statement will take when encoded.
    */
-  int computeSizeInBytes(DriverContext context);
+  int computeSizeInBytes(@NonNull DriverContext context);
 
   /**
    * Creates a <b>new instance</b> with a different paging state.
@@ -192,7 +246,8 @@ public interface Statement<T extends Statement<T>> extends Request {
    * default implementation delegates to {@link #setPagingState(ByteBuffer)}. However, if you write
    * your own mutable implementation, make sure it returns a different instance.
    */
-  default T copy(ByteBuffer newPagingState) {
+  @NonNull
+  default T copy(@Nullable ByteBuffer newPagingState) {
     return setPagingState(newPagingState);
   }
 }

@@ -21,6 +21,8 @@ import com.datastax.oss.driver.api.core.config.DriverConfigProfile;
 import com.datastax.oss.driver.api.core.cql.PrepareRequest;
 import com.datastax.oss.driver.api.core.cql.SimpleStatement;
 import com.datastax.oss.driver.api.core.metadata.token.Token;
+import edu.umd.cs.findbugs.annotations.NonNull;
+import edu.umd.cs.findbugs.annotations.Nullable;
 import java.nio.ByteBuffer;
 import java.util.Map;
 import net.jcip.annotations.Immutable;
@@ -66,62 +68,74 @@ public class DefaultPrepareRequest implements PrepareRequest {
     this.statement = SimpleStatement.newInstance(query);
   }
 
+  @NonNull
   @Override
   public String getQuery() {
     return statement.getQuery();
   }
 
+  @Nullable
   @Override
   public String getConfigProfileName() {
     return statement.getConfigProfileName();
   }
 
+  @Nullable
   @Override
   public DriverConfigProfile getConfigProfile() {
     return statement.getConfigProfile();
   }
 
+  @Nullable
   @Override
   public CqlIdentifier getKeyspace() {
     return statement.getKeyspace();
   }
 
+  @Nullable
   @Override
   public CqlIdentifier getRoutingKeyspace() {
     // Prepare requests do not operate on a particular partition, token-aware routing doesn't apply.
     return null;
   }
 
+  @Nullable
   @Override
   public ByteBuffer getRoutingKey() {
     return null;
   }
 
+  @Nullable
   @Override
   public Token getRoutingToken() {
     return null;
   }
 
+  @NonNull
   @Override
   public Map<String, ByteBuffer> getCustomPayload() {
     return statement.getCustomPayload();
   }
 
+  @Nullable
   @Override
   public String getConfigProfileNameForBoundStatements() {
     return statement.getConfigProfileName();
   }
 
+  @Nullable
   @Override
   public DriverConfigProfile getConfigProfileForBoundStatements() {
     return statement.getConfigProfile();
   }
 
+  @NonNull
   @Override
   public Map<String, ByteBuffer> getCustomPayloadForBoundStatements() {
     return statement.getCustomPayload();
   }
 
+  @Nullable
   @Override
   public Boolean areBoundStatementsIdempotent() {
     return statement.isIdempotent();

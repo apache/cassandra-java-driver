@@ -20,6 +20,7 @@ import com.datastax.oss.driver.api.core.type.DataType;
 import com.datastax.oss.driver.api.core.type.DataTypes;
 import com.datastax.oss.driver.api.querybuilder.BuildableQuery;
 import com.datastax.oss.driver.api.querybuilder.SchemaBuilderDsl;
+import edu.umd.cs.findbugs.annotations.NonNull;
 
 public interface CreateTable extends BuildableQuery, OngoingPartitionKey, CreateTableWithOptions {
 
@@ -34,13 +35,15 @@ public interface CreateTable extends BuildableQuery, OngoingPartitionKey, Create
    * <p>To create the data type, use the constants and static methods in {@link DataTypes}, or
    * {@link SchemaBuilderDsl#udt(CqlIdentifier, boolean)}.
    */
-  CreateTable withClusteringColumn(CqlIdentifier columnName, DataType dataType);
+  @NonNull
+  CreateTable withClusteringColumn(@NonNull CqlIdentifier columnName, @NonNull DataType dataType);
 
   /**
    * Shortcut for {@link #withClusteringColumn(CqlIdentifier, DataType)
    * withClusteringColumn(CqlIdentifier.asCql(columnName), dataType)}.
    */
-  default CreateTable withClusteringColumn(String columnName, DataType dataType) {
+  @NonNull
+  default CreateTable withClusteringColumn(@NonNull String columnName, @NonNull DataType dataType) {
     return withClusteringColumn(CqlIdentifier.fromCql(columnName), dataType);
   }
 
@@ -50,13 +53,15 @@ public interface CreateTable extends BuildableQuery, OngoingPartitionKey, Create
    * <p>To create the data type, use the constants and static methods in {@link DataTypes}, or
    * {@link SchemaBuilderDsl#udt(CqlIdentifier, boolean)}.
    */
-  CreateTable withColumn(CqlIdentifier columnName, DataType dataType);
+  @NonNull
+  CreateTable withColumn(@NonNull CqlIdentifier columnName, @NonNull DataType dataType);
 
   /**
    * Shortcut for {@link #withColumn(CqlIdentifier, DataType)
    * withColumn(CqlIdentifier.asCql(columnName), dataType)}.
    */
-  default CreateTable withColumn(String columnName, DataType dataType) {
+  @NonNull
+  default CreateTable withColumn(@NonNull String columnName, @NonNull DataType dataType) {
     return withColumn(CqlIdentifier.fromCql(columnName), dataType);
   }
 
@@ -69,13 +74,15 @@ public interface CreateTable extends BuildableQuery, OngoingPartitionKey, Create
    * <p>To create the data type, use the constants and static methods in {@link DataTypes}, or
    * {@link SchemaBuilderDsl#udt(CqlIdentifier, boolean)}.
    */
-  CreateTable withStaticColumn(CqlIdentifier columnName, DataType dataType);
+  @NonNull
+  CreateTable withStaticColumn(@NonNull CqlIdentifier columnName, @NonNull DataType dataType);
 
   /**
    * Shortcut for {@link #withStaticColumn(CqlIdentifier, DataType)
    * withStaticColumn(CqlIdentifier.asCql(columnName), dataType)}.
    */
-  default CreateTable withStaticColumn(String columnName, DataType dataType) {
+  @NonNull
+  default CreateTable withStaticColumn(@NonNull String columnName, @NonNull DataType dataType) {
     return withStaticColumn(CqlIdentifier.fromCql(columnName), dataType);
   }
 }

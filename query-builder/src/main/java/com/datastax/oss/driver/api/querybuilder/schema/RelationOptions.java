@@ -20,6 +20,7 @@ import static com.datastax.oss.driver.api.querybuilder.SchemaBuilderDsl.RowsPerP
 import com.datastax.oss.driver.api.querybuilder.SchemaBuilderDsl;
 import com.datastax.oss.driver.api.querybuilder.schema.compaction.CompactionStrategy;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableMap;
+import edu.umd.cs.findbugs.annotations.NonNull;
 
 public interface RelationOptions<SelfT extends RelationOptions<SelfT>>
     extends OptionProvider<SelfT> {
@@ -34,6 +35,7 @@ public interface RelationOptions<SelfT extends RelationOptions<SelfT>>
    *   <li><strong>0.1</strong> for the leveled compaction strategy.
    * </ul>
    */
+  @NonNull
   default SelfT withBloomFilterFpChance(double bloomFilterFpChance) {
     return withOption("bloom_filter_fp_chance", bloomFilterFpChance);
   }
@@ -46,6 +48,7 @@ public interface RelationOptions<SelfT extends RelationOptions<SelfT>>
    *
    * <p>If no call is made to this method, the default value set is {@code false}.
    */
+  @NonNull
   default SelfT withCDC(boolean enabled) {
     return withOption("cdc", enabled);
   }
@@ -59,7 +62,8 @@ public interface RelationOptions<SelfT extends RelationOptions<SelfT>>
    * @param keys If true, caches all keys, otherwise none.
    * @param rowsPerPartition Whether to cache ALL, NONE or the first N rows per partition.
    */
-  default SelfT withCaching(boolean keys, RowsPerPartition rowsPerPartition) {
+  @NonNull
+  default SelfT withCaching(boolean keys, @NonNull RowsPerPartition rowsPerPartition) {
     return withOption(
         "caching",
         ImmutableMap.of(
@@ -67,7 +71,8 @@ public interface RelationOptions<SelfT extends RelationOptions<SelfT>>
   }
 
   /** Defines documentation for this relation. */
-  default SelfT withComment(String comment) {
+  @NonNull
+  default SelfT withComment(@NonNull String comment) {
     return withOption("comment", comment);
   }
 
@@ -78,7 +83,8 @@ public interface RelationOptions<SelfT extends RelationOptions<SelfT>>
    * @see SchemaBuilderDsl#leveledCompactionStrategy()
    * @see SchemaBuilderDsl#timeWindowCompactionStrategy()
    */
-  default SelfT withCompaction(CompactionStrategy<?> compactionStrategy) {
+  @NonNull
+  default SelfT withCompaction(@NonNull CompactionStrategy<?> compactionStrategy) {
     return withOption("compaction", compactionStrategy.getOptions());
   }
 
@@ -88,6 +94,7 @@ public interface RelationOptions<SelfT extends RelationOptions<SelfT>>
    *
    * @see #withCompression(String, int, double)
    */
+  @NonNull
   default SelfT withLZ4Compression(int chunkLengthKB, double crcCheckChance) {
     return withCompression("LZ4Compressor", chunkLengthKB, crcCheckChance);
   }
@@ -98,6 +105,7 @@ public interface RelationOptions<SelfT extends RelationOptions<SelfT>>
    *
    * @see #withCompression(String, int, double)
    */
+  @NonNull
   default SelfT withLZ4Compression() {
     return withCompression("LZ4Compressor");
   }
@@ -108,6 +116,7 @@ public interface RelationOptions<SelfT extends RelationOptions<SelfT>>
    *
    * @see #withCompression(String, int, double)
    */
+  @NonNull
   default SelfT withSnappyCompression(int chunkLengthKB, double crcCheckChance) {
     return withCompression("SnappyCompressor", chunkLengthKB, crcCheckChance);
   }
@@ -118,6 +127,7 @@ public interface RelationOptions<SelfT extends RelationOptions<SelfT>>
    *
    * @see #withCompression(String, int, double)
    */
+  @NonNull
   default SelfT withSnappyCompression() {
     return withCompression("SnappyCompressor");
   }
@@ -128,6 +138,7 @@ public interface RelationOptions<SelfT extends RelationOptions<SelfT>>
    *
    * @see #withCompression(String, int, double)
    */
+  @NonNull
   default SelfT withDeflateCompression(int chunkLengthKB, double crcCheckChance) {
     return withCompression("DeflateCompressor", chunkLengthKB, crcCheckChance);
   }
@@ -138,6 +149,7 @@ public interface RelationOptions<SelfT extends RelationOptions<SelfT>>
    *
    * @see #withCompression(String, int, double)
    */
+  @NonNull
   default SelfT withDeflateCompression() {
     return withCompression("DeflateCompressor");
   }
@@ -152,7 +164,8 @@ public interface RelationOptions<SelfT extends RelationOptions<SelfT>>
    *
    * @see #withCompression(String, int, double)
    */
-  default SelfT withCompression(String compressionAlgorithmName) {
+  @NonNull
+  default SelfT withCompression(@NonNull String compressionAlgorithmName) {
     return withOption("compression", ImmutableMap.of("class", compressionAlgorithmName));
   }
 
@@ -168,8 +181,9 @@ public interface RelationOptions<SelfT extends RelationOptions<SelfT>>
    * @param crcCheckChance The probability (0.0 to 1.0) that checksum will be checked on each read.
    *     Defaults to 1.0.
    */
+  @NonNull
   default SelfT withCompression(
-      String compressionAlgorithmName, int chunkLengthKB, double crcCheckChance) {
+      @NonNull String compressionAlgorithmName, int chunkLengthKB, double crcCheckChance) {
     return withOption(
         "compression",
         ImmutableMap.of(
@@ -182,6 +196,7 @@ public interface RelationOptions<SelfT extends RelationOptions<SelfT>>
   }
 
   /** Defines that compression should be disabled. */
+  @NonNull
   default SelfT withNoCompression() {
     return withOption("compression", ImmutableMap.of("sstable_compression", ""));
   }
@@ -195,6 +210,7 @@ public interface RelationOptions<SelfT extends RelationOptions<SelfT>>
    * @param dcLocalReadRepairChance the probability.
    * @return this {@code TableOptions} object.
    */
+  @NonNull
   default SelfT withDcLocalReadRepairChance(double dcLocalReadRepairChance) {
     return withOption("dclocal_read_repair_chance", dcLocalReadRepairChance);
   }
@@ -204,6 +220,7 @@ public interface RelationOptions<SelfT extends RelationOptions<SelfT>>
    *
    * <p>If no call is made to this method, the default value is 0 (no TTL).
    */
+  @NonNull
   default SelfT withDefaultTimeToLiveSeconds(int ttl) {
     return withOption("default_time_to_live", ttl);
   }
@@ -217,6 +234,7 @@ public interface RelationOptions<SelfT extends RelationOptions<SelfT>>
    *
    * <p>If no call is made to this method, the default value set is 864000 secs (10 days).
    */
+  @NonNull
   default SelfT withGcGraceSeconds(int gcGraceSeconds) {
     return withOption("gc_grace_seconds", gcGraceSeconds);
   }
@@ -228,6 +246,7 @@ public interface RelationOptions<SelfT extends RelationOptions<SelfT>>
    *
    * <p>If no call is made to this method, the default value is 0 (unset).
    */
+  @NonNull
   default SelfT withMemtableFlushPeriodInMs(int memtableFlushPeriodInMs) {
     return withOption("memtable_flush_period_in_ms", memtableFlushPeriodInMs);
   }
@@ -239,6 +258,7 @@ public interface RelationOptions<SelfT extends RelationOptions<SelfT>>
    *
    * <p>If no call is made to this method, the default value set is 128.
    */
+  @NonNull
   default SelfT withMinIndexInterval(int min) {
     return withOption("min_index_interval", min);
   }
@@ -250,6 +270,7 @@ public interface RelationOptions<SelfT extends RelationOptions<SelfT>>
    *
    * @see #withMinIndexInterval(int)
    */
+  @NonNull
   default SelfT withMaxIndexInterval(int max) {
     return withOption("max_index_interval", max);
   }
@@ -260,6 +281,7 @@ public interface RelationOptions<SelfT extends RelationOptions<SelfT>>
    *
    * <p>If no call is made to this method, the default value set is 0.1.
    */
+  @NonNull
   default SelfT withReadRepairChance(double readRepairChance) {
     return withOption("read_repair_chance", readRepairChance);
   }
@@ -285,7 +307,8 @@ public interface RelationOptions<SelfT extends RelationOptions<SelfT>>
    *
    * <p>If no call is made to this method, the default value set is {@code 99percentile}.
    */
-  default SelfT withSpeculativeRetry(String speculativeRetry) {
+  @NonNull
+  default SelfT withSpeculativeRetry(@NonNull String speculativeRetry) {
     return withOption("speculative_retry", speculativeRetry);
   }
 }

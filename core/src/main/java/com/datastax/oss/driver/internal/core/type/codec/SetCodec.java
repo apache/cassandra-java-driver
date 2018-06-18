@@ -22,6 +22,8 @@ import com.datastax.oss.driver.api.core.type.codec.TypeCodec;
 import com.datastax.oss.driver.api.core.type.reflect.GenericType;
 import com.datastax.oss.driver.shaded.guava.common.base.Preconditions;
 import com.datastax.oss.driver.shaded.guava.common.collect.Sets;
+import edu.umd.cs.findbugs.annotations.NonNull;
+import edu.umd.cs.findbugs.annotations.Nullable;
 import java.nio.ByteBuffer;
 import java.util.LinkedHashSet;
 import java.util.Set;
@@ -41,18 +43,20 @@ public class SetCodec<T> implements TypeCodec<Set<T>> {
     Preconditions.checkArgument(cqlType instanceof SetType);
   }
 
+  @NonNull
   @Override
   public GenericType<Set<T>> getJavaType() {
     return javaType;
   }
 
+  @NonNull
   @Override
   public DataType getCqlType() {
     return cqlType;
   }
 
   @Override
-  public boolean accepts(Object value) {
+  public boolean accepts(@NonNull Object value) {
     if (Set.class.isAssignableFrom(value.getClass())) {
       // runtime type ok, now check element type
       Set<?> set = (Set<?>) value;
@@ -62,8 +66,9 @@ public class SetCodec<T> implements TypeCodec<Set<T>> {
     }
   }
 
+  @Nullable
   @Override
-  public ByteBuffer encode(Set<T> value, ProtocolVersion protocolVersion) {
+  public ByteBuffer encode(@Nullable Set<T> value, @NonNull ProtocolVersion protocolVersion) {
     // An int indicating the number of elements in the set, followed by the elements. Each element
     // is a byte array representing the serialized value, preceded by an int indicating its size.
     if (value == null) {
@@ -82,6 +87,9 @@ public class SetCodec<T> implements TypeCodec<Set<T>> {
         } catch (ClassCastException e) {
           throw new IllegalArgumentException("Invalid type for element: " + element.getClass());
         }
+        if (encodedElement == null) {
+          throw new NullPointerException("Collection elements cannot encode to CQL NULL");
+        }
         encodedElements[i++] = encodedElement;
         toAllocate += 4 + encodedElement.remaining(); // the element preceded by its size
       }
@@ -96,8 +104,9 @@ public class SetCodec<T> implements TypeCodec<Set<T>> {
     }
   }
 
+  @Nullable
   @Override
-  public Set<T> decode(ByteBuffer bytes, ProtocolVersion protocolVersion) {
+  public Set<T> decode(@Nullable ByteBuffer bytes, @NonNull ProtocolVersion protocolVersion) {
     if (bytes == null || bytes.remaining() == 0) {
       return new LinkedHashSet<>(0);
     } else {
@@ -115,8 +124,9 @@ public class SetCodec<T> implements TypeCodec<Set<T>> {
     }
   }
 
+  @NonNull
   @Override
-  public String format(Set<T> value) {
+  public String format(@Nullable Set<T> value) {
     if (value == null) {
       return "NULL";
     }
@@ -134,8 +144,9 @@ public class SetCodec<T> implements TypeCodec<Set<T>> {
     return sb.toString();
   }
 
+  @Nullable
   @Override
-  public Set<T> parse(String value) {
+  public Set<T> parse(@Nullable String value) {
     if (value == null || value.isEmpty() || value.equalsIgnoreCase("NULL")) return null;
 
     int idx = ParseUtils.skipSpaces(value, 0);

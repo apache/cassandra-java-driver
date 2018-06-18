@@ -15,6 +15,8 @@
  */
 package com.datastax.oss.driver.api.core.config;
 
+import edu.umd.cs.findbugs.annotations.NonNull;
+
 /**
  * Describes an option in the driver's configuration.
  *
@@ -22,5 +24,11 @@ package com.datastax.oss.driver.api.core.config;
  * referenced in the code. We recommend using enums for implementations.
  */
 public interface DriverOption {
+
+  /**
+   * The option's path. Paths are hierarchical and each segment is separated by a dot, e.g. {@code
+   * metadata.schema.enabled}.
+   */
+  @NonNull
   String getPath();
 }

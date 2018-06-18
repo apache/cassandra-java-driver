@@ -17,6 +17,7 @@ package com.datastax.oss.driver.internal.core.session.throttling;
 
 import com.datastax.oss.driver.api.core.RequestThrottlingException;
 import com.datastax.oss.driver.api.core.session.throttling.Throttled;
+import edu.umd.cs.findbugs.annotations.NonNull;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 
@@ -30,7 +31,7 @@ class MockThrottled implements Throttled {
   }
 
   @Override
-  public void onThrottleFailure(RequestThrottlingException error) {
+  public void onThrottleFailure(@NonNull RequestThrottlingException error) {
     started.toCompletableFuture().completeExceptionally(error);
   }
 }

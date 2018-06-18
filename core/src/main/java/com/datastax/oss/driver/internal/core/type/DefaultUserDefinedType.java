@@ -24,6 +24,7 @@ import com.datastax.oss.driver.internal.core.data.DefaultUdtValue;
 import com.datastax.oss.driver.internal.core.data.IdentifierIndex;
 import com.datastax.oss.driver.shaded.guava.common.base.Preconditions;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableList;
+import edu.umd.cs.findbugs.annotations.NonNull;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.Serializable;
@@ -53,18 +54,19 @@ public class DefaultUserDefinedType implements UserDefinedType, Serializable {
   private transient volatile AttachmentPoint attachmentPoint;
 
   public DefaultUserDefinedType(
-      CqlIdentifier keyspace,
-      CqlIdentifier name,
+      @NonNull CqlIdentifier keyspace,
+      @NonNull CqlIdentifier name,
       boolean frozen,
       List<CqlIdentifier> fieldNames,
-      List<DataType> fieldTypes,
-      AttachmentPoint attachmentPoint) {
+      @NonNull List<DataType> fieldTypes,
+      @NonNull AttachmentPoint attachmentPoint) {
     Preconditions.checkNotNull(keyspace);
     Preconditions.checkNotNull(name);
+    Preconditions.checkNotNull(fieldNames);
+    Preconditions.checkNotNull(fieldTypes);
+    Preconditions.checkArgument(fieldNames.size() > 0, "Field names list can't be null or empty");
     Preconditions.checkArgument(
-        fieldNames != null && fieldNames.size() > 0, "Field names list can't be null or empty");
-    Preconditions.checkArgument(
-        fieldTypes != null && fieldTypes.size() == fieldNames.size(),
+        fieldTypes.size() == fieldNames.size(),
         "There should be the same number of field names and types");
     this.keyspace = keyspace;
     this.name = name;
@@ -76,19 +78,21 @@ public class DefaultUserDefinedType implements UserDefinedType, Serializable {
   }
 
   public DefaultUserDefinedType(
-      CqlIdentifier keyspace,
-      CqlIdentifier name,
+      @NonNull CqlIdentifier keyspace,
+      @NonNull CqlIdentifier name,
       boolean frozen,
-      List<CqlIdentifier> fieldNames,
-      List<DataType> fieldTypes) {
+      @NonNull List<CqlIdentifier> fieldNames,
+      @NonNull List<DataType> fieldTypes) {
     this(keyspace, name, frozen, fieldNames, fieldTypes, AttachmentPoint.NONE);
   }
 
+  @NonNull
   @Override
   public CqlIdentifier getKeyspace() {
     return keyspace;
   }
 
+  @NonNull
   @Override
   public CqlIdentifier getName() {
     return name;
@@ -99,26 +103,29 @@ public class DefaultUserDefinedType implements UserDefinedType, Serializable {
     return frozen;
   }
 
+  @NonNull
   @Override
   public List<CqlIdentifier> getFieldNames() {
     return fieldNames;
   }
 
   @Override
-  public int firstIndexOf(CqlIdentifier id) {
+  public int firstIndexOf(@NonNull CqlIdentifier id) {
     return index.firstIndexOf(id);
   }
 
   @Override
-  public int firstIndexOf(String name) {
+  public int firstIndexOf(@NonNull String name) {
     return index.firstIndexOf(name);
   }
 
+  @NonNull
   @Override
   public List<DataType> getFieldTypes() {
     return fieldTypes;
   }
 
+  @NonNull
   @Override
   public UserDefinedType copy(boolean newFrozen) {
     return (newFrozen == frozen)
@@ -127,13 +134,15 @@ public class DefaultUserDefinedType implements UserDefinedType, Serializable {
             keyspace, name, newFrozen, fieldNames, fieldTypes, attachmentPoint);
   }
 
+  @NonNull
   @Override
   public UdtValue newValue() {
     return new DefaultUdtValue(this);
   }
 
+  @NonNull
   @Override
-  public UdtValue newValue(Object... fields) {
+  public UdtValue newValue(@NonNull Object... fields) {
     return new DefaultUdtValue(this, fields);
   }
 
@@ -143,13 +152,14 @@ public class DefaultUserDefinedType implements UserDefinedType, Serializable {
   }
 
   @Override
-  public void attach(AttachmentPoint attachmentPoint) {
+  public void attach(@NonNull AttachmentPoint attachmentPoint) {
     this.attachmentPoint = attachmentPoint;
     for (DataType fieldType : fieldTypes) {
       fieldType.attach(attachmentPoint);
     }
   }
 
+  @NonNull
   @Override
   public AttachmentPoint getAttachmentPoint() {
     return attachmentPoint;

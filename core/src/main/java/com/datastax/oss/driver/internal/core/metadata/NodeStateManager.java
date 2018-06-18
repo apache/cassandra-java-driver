@@ -27,6 +27,7 @@ import com.datastax.oss.driver.internal.core.util.Loggers;
 import com.datastax.oss.driver.internal.core.util.concurrent.Debouncer;
 import com.datastax.oss.driver.internal.core.util.concurrent.RunOrSchedule;
 import com.datastax.oss.driver.shaded.guava.common.collect.Maps;
+import edu.umd.cs.findbugs.annotations.NonNull;
 import io.netty.util.concurrent.EventExecutor;
 import java.net.InetSocketAddress;
 import java.util.Collection;
@@ -66,17 +67,20 @@ public class NodeStateManager implements AsyncAutoCloseable {
     RunOrSchedule.on(adminExecutor, singleThreaded::markInitialized);
   }
 
+  @NonNull
   @Override
   public CompletionStage<Void> closeFuture() {
     return singleThreaded.closeFuture;
   }
 
+  @NonNull
   @Override
   public CompletionStage<Void> closeAsync() {
     RunOrSchedule.on(adminExecutor, singleThreaded::close);
     return singleThreaded.closeFuture;
   }
 
+  @NonNull
   @Override
   public CompletionStage<Void> forceCloseAsync() {
     return closeAsync();

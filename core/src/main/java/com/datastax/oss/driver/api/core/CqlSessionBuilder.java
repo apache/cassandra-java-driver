@@ -16,6 +16,7 @@
 package com.datastax.oss.driver.api.core;
 
 import com.datastax.oss.driver.api.core.session.SessionBuilder;
+import edu.umd.cs.findbugs.annotations.NonNull;
 import net.jcip.annotations.NotThreadSafe;
 
 /** Helper class to build a {@link CqlSession} instance. */
@@ -23,7 +24,7 @@ import net.jcip.annotations.NotThreadSafe;
 public class CqlSessionBuilder extends SessionBuilder<CqlSessionBuilder, CqlSession> {
 
   @Override
-  protected CqlSession wrap(CqlSession defaultSession) {
+  protected CqlSession wrap(@NonNull CqlSession defaultSession) {
     return defaultSession;
   }
 }

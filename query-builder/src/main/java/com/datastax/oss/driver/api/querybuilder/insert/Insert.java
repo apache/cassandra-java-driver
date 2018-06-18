@@ -17,11 +17,14 @@ package com.datastax.oss.driver.api.querybuilder.insert;
 
 import com.datastax.oss.driver.api.querybuilder.BindMarker;
 import com.datastax.oss.driver.api.querybuilder.BuildableQuery;
+import edu.umd.cs.findbugs.annotations.NonNull;
+import edu.umd.cs.findbugs.annotations.Nullable;
 
 /** A complete INSERT statement that is ready to be built. */
 public interface Insert extends BuildableQuery {
 
   /** Adds an IF NOT EXISTS clause to this statement. */
+  @NonNull
   Insert ifNotExists();
 
   /**
@@ -30,13 +33,15 @@ public interface Insert extends BuildableQuery {
    * <p>If this method or {@link #usingTimestamp(BindMarker)} is called multiple times, the last
    * value is used.
    */
+  @NonNull
   Insert usingTimestamp(long timestamp);
 
   /**
    * Adds a USING TIMESTAMP clause to this statement with a bind marker.
    *
    * <p>If this method or {@link #usingTimestamp(long)} is called multiple times, the last value is
-   * used.
+   * used. Passing {@code null} to this method removes any previous timestamp.
    */
-  Insert usingTimestamp(BindMarker bindMarker);
+  @NonNull
+  Insert usingTimestamp(@Nullable BindMarker bindMarker);
 }

@@ -24,6 +24,7 @@ import com.datastax.oss.driver.api.core.cql.Statement;
 import com.datastax.oss.driver.api.core.type.DataTypes;
 import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
 import com.datastax.oss.driver.internal.core.util.CountingIterator;
+import edu.umd.cs.findbugs.annotations.NonNull;
 import java.nio.ByteBuffer;
 import java.util.Collections;
 import java.util.List;
@@ -64,16 +65,19 @@ public class DefaultAsyncResultSet implements AsyncResultSet {
     this.currentPage = () -> iterator;
   }
 
+  @NonNull
   @Override
   public ColumnDefinitions getColumnDefinitions() {
     return definitions;
   }
 
+  @NonNull
   @Override
   public ExecutionInfo getExecutionInfo() {
     return executionInfo;
   }
 
+  @NonNull
   @Override
   public Iterable<Row> currentPage() {
     return currentPage;
@@ -89,6 +93,7 @@ public class DefaultAsyncResultSet implements AsyncResultSet {
     return executionInfo.getPagingState() != null;
   }
 
+  @NonNull
   @Override
   public CompletionStage<AsyncResultSet> fetchNextPage() throws IllegalStateException {
     ByteBuffer nextState = executionInfo.getPagingState();
@@ -121,16 +126,19 @@ public class DefaultAsyncResultSet implements AsyncResultSet {
 
   static AsyncResultSet empty(final ExecutionInfo executionInfo) {
     return new AsyncResultSet() {
+      @NonNull
       @Override
       public ColumnDefinitions getColumnDefinitions() {
         return EmptyColumnDefinitions.INSTANCE;
       }
 
+      @NonNull
       @Override
       public ExecutionInfo getExecutionInfo() {
         return executionInfo;
       }
 
+      @NonNull
       @Override
       public Iterable<Row> currentPage() {
         return Collections.emptyList();
@@ -146,6 +154,7 @@ public class DefaultAsyncResultSet implements AsyncResultSet {
         return false;
       }
 
+      @NonNull
       @Override
       public CompletionStage<AsyncResultSet> fetchNextPage() throws IllegalStateException {
         throw new IllegalStateException(

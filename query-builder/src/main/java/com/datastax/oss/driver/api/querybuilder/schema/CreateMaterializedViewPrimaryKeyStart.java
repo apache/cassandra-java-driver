@@ -16,6 +16,7 @@
 package com.datastax.oss.driver.api.querybuilder.schema;
 
 import com.datastax.oss.driver.api.core.CqlIdentifier;
+import edu.umd.cs.findbugs.annotations.NonNull;
 
 public interface CreateMaterializedViewPrimaryKeyStart {
 
@@ -24,13 +25,15 @@ public interface CreateMaterializedViewPrimaryKeyStart {
    *
    * <p>Partition keys are added in the order of their declaration.
    */
-  CreateMaterializedViewPrimaryKey withPartitionKey(CqlIdentifier columnName);
+  @NonNull
+  CreateMaterializedViewPrimaryKey withPartitionKey(@NonNull CqlIdentifier columnName);
 
   /**
    * Shortcut for {@link #withPartitionKey(CqlIdentifier)
    * withPartitionKey(CqlIdentifier.asCql(columnName)}.
    */
-  default CreateMaterializedViewPrimaryKey withPartitionKey(String columnName) {
+  @NonNull
+  default CreateMaterializedViewPrimaryKey withPartitionKey(@NonNull String columnName) {
     return withPartitionKey(CqlIdentifier.fromCql(columnName));
   }
 }

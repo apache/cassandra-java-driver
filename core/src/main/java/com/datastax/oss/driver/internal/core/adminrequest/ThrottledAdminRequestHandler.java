@@ -23,6 +23,7 @@ import com.datastax.oss.driver.api.core.session.throttling.Throttled;
 import com.datastax.oss.driver.internal.core.channel.DriverChannel;
 import com.datastax.oss.driver.internal.core.metrics.SessionMetricUpdater;
 import com.datastax.oss.protocol.internal.Message;
+import edu.umd.cs.findbugs.annotations.NonNull;
 import java.nio.ByteBuffer;
 import java.time.Duration;
 import java.util.Map;
@@ -72,7 +73,7 @@ public class ThrottledAdminRequestHandler extends AdminRequestHandler implements
   }
 
   @Override
-  public void onThrottleFailure(RequestThrottlingException error) {
+  public void onThrottleFailure(@NonNull RequestThrottlingException error) {
     metricUpdater.incrementCounter(DefaultSessionMetric.THROTTLING_ERRORS, null);
     setFinalError(error);
   }

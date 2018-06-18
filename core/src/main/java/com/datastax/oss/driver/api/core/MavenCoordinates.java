@@ -15,13 +15,19 @@
  */
 package com.datastax.oss.driver.api.core;
 
+import edu.umd.cs.findbugs.annotations.NonNull;
+
 public interface MavenCoordinates {
 
+  @NonNull
   String getGroupId();
 
+  @NonNull
   String getArtifactId();
 
+  @NonNull
   Version getVersion();
 
+  @NonNull
   String getName();
 }

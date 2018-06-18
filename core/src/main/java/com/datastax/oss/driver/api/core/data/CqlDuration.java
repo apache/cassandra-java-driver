@@ -18,6 +18,7 @@ package com.datastax.oss.driver.api.core.data;
 import com.datastax.oss.driver.shaded.guava.common.annotations.VisibleForTesting;
 import com.datastax.oss.driver.shaded.guava.common.base.Objects;
 import com.datastax.oss.driver.shaded.guava.common.base.Preconditions;
+import edu.umd.cs.findbugs.annotations.NonNull;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import net.jcip.annotations.Immutable;
@@ -118,7 +119,7 @@ public final class CqlDuration {
    *
    * @param input the <code>String</code> to convert
    */
-  public static CqlDuration from(String input) {
+  public static CqlDuration from(@NonNull String input) {
     boolean isNegative = input.startsWith("-");
     String source = isNegative ? input.substring(1) : input;
 
@@ -134,7 +135,7 @@ public final class CqlDuration {
     return parseStandardFormat(isNegative, source);
   }
 
-  private static CqlDuration parseIso8601Format(boolean isNegative, String source) {
+  private static CqlDuration parseIso8601Format(boolean isNegative, @NonNull String source) {
     Matcher matcher = ISO8601_PATTERN.matcher(source);
     if (!matcher.matches())
       throw new IllegalArgumentException(
@@ -165,7 +166,8 @@ public final class CqlDuration {
     return builder.build();
   }
 
-  private static CqlDuration parseIso8601AlternativeFormat(boolean isNegative, String source) {
+  private static CqlDuration parseIso8601AlternativeFormat(
+      boolean isNegative, @NonNull String source) {
     Matcher matcher = ISO8601_ALTERNATIVE_PATTERN.matcher(source);
     if (!matcher.matches()) {
       throw new IllegalArgumentException(
@@ -181,7 +183,7 @@ public final class CqlDuration {
         .build();
   }
 
-  private static CqlDuration parseIso8601WeekFormat(boolean isNegative, String source) {
+  private static CqlDuration parseIso8601WeekFormat(boolean isNegative, @NonNull String source) {
     Matcher matcher = ISO8601_WEEK_PATTERN.matcher(source);
     if (!matcher.matches()) {
       throw new IllegalArgumentException(
@@ -190,7 +192,7 @@ public final class CqlDuration {
     return new Builder(isNegative).addWeeks(groupAsLong(matcher, 1)).build();
   }
 
-  private static CqlDuration parseStandardFormat(boolean isNegative, String source) {
+  private static CqlDuration parseStandardFormat(boolean isNegative, @NonNull String source) {
     Matcher matcher = STANDARD_PATTERN.matcher(source);
     if (!matcher.find()) {
       throw new IllegalArgumentException(
@@ -213,11 +215,11 @@ public final class CqlDuration {
     return builder.build();
   }
 
-  private static long groupAsLong(Matcher matcher, int group) {
+  private static long groupAsLong(@NonNull Matcher matcher, int group) {
     return Long.parseLong(matcher.group(group));
   }
 
-  private static Builder add(Builder builder, long number, String symbol) {
+  private static Builder add(@NonNull Builder builder, long number, @NonNull String symbol) {
     String s = symbol.toLowerCase();
     if (s.equals("y")) {
       return builder.addYears(number);
@@ -252,7 +254,8 @@ public final class CqlDuration {
    * @param unit the time unit to append after the result of the division
    * @return the remainder of the division
    */
-  private static long append(StringBuilder builder, long dividend, long divisor, String unit) {
+  private static long append(
+      @NonNull StringBuilder builder, long dividend, long divisor, @NonNull String unit) {
     if (dividend == 0 || dividend < divisor) {
       return dividend;
     }
@@ -348,6 +351,7 @@ public final class CqlDuration {
      * @param numberOfYears the number of years to add.
      * @return this {@code Builder}
      */
+    @NonNull
     public Builder addYears(long numberOfYears) {
       validateOrder(1);
       validateMonths(numberOfYears, MONTHS_PER_YEAR);
@@ -364,6 +368,7 @@ public final class CqlDuration {
      * @param numberOfMonths the number of months to add.
      * @return this {@code Builder}
      */
+    @NonNull
     public Builder addMonths(long numberOfMonths) {
       validateOrder(2);
       validateMonths(numberOfMonths, 1);
@@ -377,6 +382,7 @@ public final class CqlDuration {
      * @param numberOfWeeks the number of weeks to add.
      * @return this {@code Builder}
      */
+    @NonNull
     public Builder addWeeks(long numberOfWeeks) {
       validateOrder(3);
       validateDays(numberOfWeeks, DAYS_PER_WEEK);
@@ -390,6 +396,7 @@ public final class CqlDuration {
      * @param numberOfDays the number of days to add.
      * @return this {@code Builder}
      */
+    @NonNull
     public Builder addDays(long numberOfDays) {
       validateOrder(4);
       validateDays(numberOfDays, 1);
@@ -403,6 +410,7 @@ public final class CqlDuration {
      * @param numberOfHours the number of hours to add.
      * @return this {@code Builder}
      */
+    @NonNull
     public Builder addHours(long numberOfHours) {
       validateOrder(5);
       validateNanos(numberOfHours, NANOS_PER_HOUR);
@@ -416,6 +424,7 @@ public final class CqlDuration {
      * @param numberOfMinutes the number of minutes to add.
      * @return this {@code Builder}
      */
+    @NonNull
     public Builder addMinutes(long numberOfMinutes) {
       validateOrder(6);
       validateNanos(numberOfMinutes, NANOS_PER_MINUTE);
@@ -429,6 +438,7 @@ public final class CqlDuration {
      * @param numberOfSeconds the number of seconds to add.
      * @return this {@code Builder}
      */
+    @NonNull
     public Builder addSeconds(long numberOfSeconds) {
       validateOrder(7);
       validateNanos(numberOfSeconds, NANOS_PER_SECOND);
@@ -442,6 +452,7 @@ public final class CqlDuration {
      * @param numberOfMillis the number of milliseconds to add.
      * @return this {@code Builder}
      */
+    @NonNull
     public Builder addMillis(long numberOfMillis) {
       validateOrder(8);
       validateNanos(numberOfMillis, NANOS_PER_MILLI);
@@ -455,6 +466,7 @@ public final class CqlDuration {
      * @param numberOfMicros the number of microseconds to add.
      * @return this {@code Builder}
      */
+    @NonNull
     public Builder addMicros(long numberOfMicros) {
       validateOrder(9);
       validateNanos(numberOfMicros, NANOS_PER_MICRO);
@@ -468,6 +480,7 @@ public final class CqlDuration {
      * @param numberOfNanos the number of nanoseconds to add.
      * @return this {@code Builder}
      */
+    @NonNull
     public Builder addNanos(long numberOfNanos) {
       validateOrder(10);
       validateNanos(numberOfNanos, 1);
@@ -512,7 +525,7 @@ public final class CqlDuration {
      * @param limit the limit on the number of units
      * @param unitName the unit name
      */
-    private void validate(long units, long limit, String unitName) {
+    private void validate(long units, long limit, @NonNull String unitName) {
       Preconditions.checkArgument(
           units <= limit,
           "Invalid duration. The total number of %s must be less or equal to %s",
@@ -546,6 +559,7 @@ public final class CqlDuration {
      * @param unitIndex the unit index
      * @return the name of the unit corresponding to the specified index.
      */
+    @NonNull
     private String getUnitName(int unitIndex) {
       switch (unitIndex) {
         case 1:
@@ -573,6 +587,7 @@ public final class CqlDuration {
       }
     }
 
+    @NonNull
     public CqlDuration build() {
       return isNegative
           ? new CqlDuration(-months, -days, -nanoseconds)

@@ -34,8 +34,8 @@ abstract class NodesRefresh implements MetadataRefresh {
    */
   protected static boolean copyInfos(
       NodeInfo nodeInfo, DefaultNode node, TokenFactory tokenFactory, String logPrefix) {
-    node.broadcastAddress = nodeInfo.getBroadcastAddress();
-    node.listenAddress = nodeInfo.getListenAddress();
+    node.broadcastAddress = nodeInfo.getBroadcastAddress().orElse(null);
+    node.listenAddress = nodeInfo.getListenAddress().orElse(null);
     node.datacenter = nodeInfo.getDatacenter();
     node.rack = nodeInfo.getRack();
     node.hostId = nodeInfo.getHostId();

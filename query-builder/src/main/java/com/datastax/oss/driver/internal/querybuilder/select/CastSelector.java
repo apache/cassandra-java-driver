@@ -19,6 +19,8 @@ import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.type.DataType;
 import com.datastax.oss.driver.api.querybuilder.select.Selector;
 import com.datastax.oss.driver.shaded.guava.common.base.Preconditions;
+import edu.umd.cs.findbugs.annotations.NonNull;
+import edu.umd.cs.findbugs.annotations.Nullable;
 import java.util.Objects;
 import net.jcip.annotations.Immutable;
 
@@ -29,11 +31,12 @@ public class CastSelector implements Selector {
   private final DataType targetType;
   private final CqlIdentifier alias;
 
-  public CastSelector(Selector selector, DataType targetType) {
+  public CastSelector(@NonNull Selector selector, @NonNull DataType targetType) {
     this(selector, targetType, null);
   }
 
-  public CastSelector(Selector selector, DataType targetType, CqlIdentifier alias) {
+  public CastSelector(
+      @NonNull Selector selector, @NonNull DataType targetType, @Nullable CqlIdentifier alias) {
     Preconditions.checkNotNull(selector);
     Preconditions.checkNotNull(targetType);
     Preconditions.checkArgument(selector.getAlias() == null, "Inner selector can't be aliased");
@@ -43,7 +46,7 @@ public class CastSelector implements Selector {
   }
 
   @Override
-  public void appendTo(StringBuilder builder) {
+  public void appendTo(@NonNull StringBuilder builder) {
     builder.append("CAST(");
     selector.appendTo(builder);
     builder.append(" AS ").append(targetType.asCql(false, true)).append(')');
@@ -52,19 +55,23 @@ public class CastSelector implements Selector {
     }
   }
 
+  @NonNull
   @Override
-  public Selector as(CqlIdentifier alias) {
+  public Selector as(@NonNull CqlIdentifier alias) {
     return new CastSelector(selector, targetType, alias);
   }
 
+  @NonNull
   public Selector getSelector() {
     return selector;
   }
 
+  @NonNull
   public DataType getTargetType() {
     return targetType;
   }
 
+  @Nullable
   @Override
   public CqlIdentifier getAlias() {
     return alias;

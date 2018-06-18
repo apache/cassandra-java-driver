@@ -18,6 +18,8 @@ package com.datastax.oss.driver.internal.querybuilder.schema;
 import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.querybuilder.schema.Drop;
 import com.datastax.oss.driver.internal.querybuilder.CqlHelper;
+import edu.umd.cs.findbugs.annotations.NonNull;
+import edu.umd.cs.findbugs.annotations.Nullable;
 import net.jcip.annotations.Immutable;
 
 @Immutable
@@ -29,27 +31,35 @@ public class DefaultDrop implements Drop {
 
   private final boolean ifExists;
 
-  public DefaultDrop(CqlIdentifier itemName, String schemaTypeName) {
+  public DefaultDrop(@NonNull CqlIdentifier itemName, @NonNull String schemaTypeName) {
     this(null, itemName, schemaTypeName);
   }
 
-  public DefaultDrop(CqlIdentifier keyspace, CqlIdentifier itemName, String schemaTypeName) {
+  public DefaultDrop(
+      @Nullable CqlIdentifier keyspace,
+      @NonNull CqlIdentifier itemName,
+      @NonNull String schemaTypeName) {
     this(keyspace, itemName, schemaTypeName, false);
   }
 
   public DefaultDrop(
-      CqlIdentifier keyspace, CqlIdentifier itemName, String schemaTypeName, boolean ifExists) {
+      @Nullable CqlIdentifier keyspace,
+      @NonNull CqlIdentifier itemName,
+      @NonNull String schemaTypeName,
+      boolean ifExists) {
     this.keyspace = keyspace;
     this.itemName = itemName;
     this.schemaTypeName = schemaTypeName;
     this.ifExists = ifExists;
   }
 
+  @NonNull
   @Override
   public Drop ifExists() {
     return new DefaultDrop(keyspace, itemName, schemaTypeName, true);
   }
 
+  @NonNull
   @Override
   public String asCql() {
     StringBuilder builder = new StringBuilder("DROP ").append(schemaTypeName).append(' ');
@@ -68,14 +78,17 @@ public class DefaultDrop implements Drop {
     return asCql();
   }
 
+  @Nullable
   public CqlIdentifier getKeyspace() {
     return keyspace;
   }
 
+  @NonNull
   public CqlIdentifier getName() {
     return itemName;
   }
 
+  @NonNull
   public String getSchemaType() {
     return schemaTypeName;
   }

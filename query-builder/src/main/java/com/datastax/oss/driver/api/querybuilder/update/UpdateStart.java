@@ -16,6 +16,7 @@
 package com.datastax.oss.driver.api.querybuilder.update;
 
 import com.datastax.oss.driver.api.querybuilder.BindMarker;
+import edu.umd.cs.findbugs.annotations.NonNull;
 
 /**
  * The beginning of an UPDATE statement. It needs at least one assignment before the WHERE clause
@@ -29,6 +30,7 @@ public interface UpdateStart extends OngoingAssignment {
    * <p>If this method or {@link #usingTimestamp(BindMarker)} is called multiple times, the last
    * value is used.
    */
+  @NonNull
   UpdateStart usingTimestamp(long timestamp);
 
   /**
@@ -37,5 +39,6 @@ public interface UpdateStart extends OngoingAssignment {
    * <p>If this method or {@link #usingTimestamp(long)} is called multiple times, the last value is
    * used.
    */
-  UpdateStart usingTimestamp(BindMarker bindMarker);
+  @NonNull
+  UpdateStart usingTimestamp(@NonNull BindMarker bindMarker);
 }

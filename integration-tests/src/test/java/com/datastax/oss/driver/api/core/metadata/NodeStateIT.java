@@ -42,6 +42,7 @@ import com.datastax.oss.simulacron.common.cluster.NodeConnectionReport;
 import com.datastax.oss.simulacron.common.stubbing.CloseType;
 import com.datastax.oss.simulacron.server.BoundNode;
 import com.datastax.oss.simulacron.server.RejectScope;
+import edu.umd.cs.findbugs.annotations.NonNull;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.ServerSocket;
@@ -602,9 +603,9 @@ public class NodeStateIT {
 
     @Override
     public void init(
-        Map<InetSocketAddress, Node> nodes,
-        DistanceReporter distanceReporter,
-        Set<InetSocketAddress> contactPoints) {
+        @NonNull Map<InetSocketAddress, Node> nodes,
+        @NonNull DistanceReporter distanceReporter,
+        @NonNull Set<InetSocketAddress> contactPoints) {
       this.distanceReporter = distanceReporter;
       for (Node node : nodes.values()) {
         liveNodes.add(node);
@@ -628,8 +629,9 @@ public class NodeStateIT {
       }
     }
 
+    @NonNull
     @Override
-    public Queue<Node> newQueryPlan(Request request, Session session) {
+    public Queue<Node> newQueryPlan(@NonNull Request request, @NonNull Session session) {
       Object[] snapshot = liveNodes.toArray();
       Queue<Node> queryPlan = new ConcurrentLinkedQueue<>();
       int start = offset.getAndIncrement(); // Note: offset overflow won't be an issue in tests
@@ -640,7 +642,7 @@ public class NodeStateIT {
     }
 
     @Override
-    public void onAdd(Node node) {
+    public void onAdd(@NonNull Node node) {
       if (ignoredNodes.contains(node)) {
         distanceReporter.setDistance(node, NodeDistance.IGNORED);
       } else {
@@ -651,19 +653,19 @@ public class NodeStateIT {
     }
 
     @Override
-    public void onUp(Node node) {
+    public void onUp(@NonNull Node node) {
       if (!ignoredNodes.contains(node)) {
         liveNodes.add(node);
       }
     }
 
     @Override
-    public void onDown(Node node) {
+    public void onDown(@NonNull Node node) {
       liveNodes.remove(node);
     }
 
     @Override
-    public void onRemove(Node node) {
+    public void onRemove(@NonNull Node node) {
       liveNodes.remove(node);
     }
 

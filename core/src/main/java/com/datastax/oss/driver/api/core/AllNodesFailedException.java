@@ -19,6 +19,8 @@ import com.datastax.oss.driver.api.core.metadata.Node;
 import com.datastax.oss.driver.shaded.guava.common.base.Joiner;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableMap;
 import com.datastax.oss.driver.shaded.guava.common.collect.Iterables;
+import edu.umd.cs.findbugs.annotations.NonNull;
+import edu.umd.cs.findbugs.annotations.Nullable;
 import java.util.List;
 import java.util.Map;
 
@@ -27,7 +29,9 @@ import java.util.Map;
  * multiple errors, use {@link #getErrors()} to inspect the individual problem on each node.
  */
 public class AllNodesFailedException extends DriverException {
-  public static AllNodesFailedException fromErrors(Map<Node, Throwable> errors) {
+
+  @NonNull
+  public static AllNodesFailedException fromErrors(@Nullable Map<Node, Throwable> errors) {
     if (errors == null || errors.isEmpty()) {
       return new NoNodeAvailableException();
     } else {
@@ -35,7 +39,9 @@ public class AllNodesFailedException extends DriverException {
     }
   }
 
-  public static AllNodesFailedException fromErrors(List<Map.Entry<Node, Throwable>> errors) {
+  @NonNull
+  public static AllNodesFailedException fromErrors(
+      @Nullable List<Map.Entry<Node, Throwable>> errors) {
     Map<Node, Throwable> map;
     if (errors == null || errors.isEmpty()) {
       map = null;
@@ -51,7 +57,7 @@ public class AllNodesFailedException extends DriverException {
 
   private final Map<Node, Throwable> errors;
 
-  protected AllNodesFailedException(String message, Map<Node, Throwable> errors) {
+  protected AllNodesFailedException(@NonNull String message, @NonNull Map<Node, Throwable> errors) {
     super(message, null, true);
     this.errors = errors;
   }
@@ -71,10 +77,12 @@ public class AllNodesFailedException extends DriverException {
   }
 
   /** The details of the individual error on each node. */
+  @NonNull
   public Map<Node, Throwable> getErrors() {
     return errors;
   }
 
+  @NonNull
   @Override
   public DriverException copy() {
     return new AllNodesFailedException(getMessage(), errors);

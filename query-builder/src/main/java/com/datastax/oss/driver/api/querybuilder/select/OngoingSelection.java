@@ -25,6 +25,8 @@ import com.datastax.oss.driver.api.core.type.codec.registry.CodecRegistry;
 import com.datastax.oss.driver.api.querybuilder.QueryBuilderDsl;
 import com.datastax.oss.driver.api.querybuilder.term.Term;
 import com.datastax.oss.driver.shaded.guava.common.collect.Iterables;
+import edu.umd.cs.findbugs.annotations.NonNull;
+import edu.umd.cs.findbugs.annotations.Nullable;
 import java.util.Arrays;
 import java.util.Map;
 
@@ -45,7 +47,8 @@ public interface OngoingSelection {
    * <p>If you add multiple selectors as once, consider {@link #selectors(Iterable)} as a more
    * efficient alternative.
    */
-  Select selector(Selector selector);
+  @NonNull
+  Select selector(@NonNull Selector selector);
 
   /**
    * Adds multiple selectors at once.
@@ -60,10 +63,12 @@ public interface OngoingSelection {
    *     can only be used on its own).
    * @see #selector(Selector)
    */
-  Select selectors(Iterable<Selector> additionalSelectors);
+  @NonNull
+  Select selectors(@NonNull Iterable<Selector> additionalSelectors);
 
   /** Var-arg equivalent of {@link #selectors(Iterable)}. */
-  default Select selectors(Selector... additionalSelectors) {
+  @NonNull
+  default Select selectors(@NonNull Selector... additionalSelectors) {
     return selectors(Arrays.asList(additionalSelectors));
   }
 
@@ -77,6 +82,7 @@ public interface OngoingSelection {
    *
    * @see Selector#all()
    */
+  @NonNull
   default Select all() {
     return selector(Selector.all());
   }
@@ -88,6 +94,7 @@ public interface OngoingSelection {
    *
    * @see Selector#countAll()
    */
+  @NonNull
   default Select countAll() {
     return selector(Selector.countAll());
   }
@@ -99,12 +106,14 @@ public interface OngoingSelection {
    *
    * @see Selector#column(CqlIdentifier)
    */
-  default Select column(CqlIdentifier columnId) {
+  @NonNull
+  default Select column(@NonNull CqlIdentifier columnId) {
     return selector(Selector.column(columnId));
   }
 
   /** Shortcut for {@link #column(CqlIdentifier) column(CqlIdentifier.fromCql(columnName))} */
-  default Select column(String columnName) {
+  @NonNull
+  default Select column(@NonNull String columnName) {
     return column(CqlIdentifier.fromCql(columnName));
   }
 
@@ -113,12 +122,14 @@ public interface OngoingSelection {
    *
    * <p>This is the same as calling {@link #column(CqlIdentifier)} for each element.
    */
-  default Select columnsIds(Iterable<CqlIdentifier> columnIds) {
+  @NonNull
+  default Select columnsIds(@NonNull Iterable<CqlIdentifier> columnIds) {
     return selectors(Iterables.transform(columnIds, Selector::column));
   }
 
   /** Var-arg equivalent of {@link #columnsIds(Iterable)}. */
-  default Select columns(CqlIdentifier... columnIds) {
+  @NonNull
+  default Select columns(@NonNull CqlIdentifier... columnIds) {
     return columnsIds(Arrays.asList(columnIds));
   }
 
@@ -127,12 +138,14 @@ public interface OngoingSelection {
    *
    * <p>This is the same as calling {@link #column(String)} for each element.
    */
-  default Select columns(Iterable<String> columnNames) {
+  @NonNull
+  default Select columns(@NonNull Iterable<String> columnNames) {
     return selectors(Iterables.transform(columnNames, Selector::column));
   }
 
   /** Var-arg equivalent of {@link #columns(Iterable)}. */
-  default Select columns(String... columnNames) {
+  @NonNull
+  default Select columns(@NonNull String... columnNames) {
     return columns(Arrays.asList(columnNames));
   }
 
@@ -145,7 +158,8 @@ public interface OngoingSelection {
    *
    * @see Selector#add(Selector, Selector)
    */
-  default Select add(Selector left, Selector right) {
+  @NonNull
+  default Select add(@NonNull Selector left, @NonNull Selector right) {
     return selector(Selector.add(left, right));
   }
 
@@ -158,7 +172,8 @@ public interface OngoingSelection {
    *
    * @see Selector#subtract(Selector, Selector)
    */
-  default Select subtract(Selector left, Selector right) {
+  @NonNull
+  default Select subtract(@NonNull Selector left, @NonNull Selector right) {
     return selector(Selector.subtract(left, right));
   }
 
@@ -174,7 +189,8 @@ public interface OngoingSelection {
    *
    * @see Selector#multiply(Selector, Selector)
    */
-  default Select multiply(Selector left, Selector right) {
+  @NonNull
+  default Select multiply(@NonNull Selector left, @NonNull Selector right) {
     return selector(Selector.multiply(left, right));
   }
 
@@ -190,7 +206,8 @@ public interface OngoingSelection {
    *
    * @see Selector#divide(Selector, Selector)
    */
-  default Select divide(Selector left, Selector right) {
+  @NonNull
+  default Select divide(@NonNull Selector left, @NonNull Selector right) {
     return selector(Selector.divide(left, right));
   }
 
@@ -207,7 +224,8 @@ public interface OngoingSelection {
    *
    * @see Selector#remainder(Selector, Selector)
    */
-  default Select remainder(Selector left, Selector right) {
+  @NonNull
+  default Select remainder(@NonNull Selector left, @NonNull Selector right) {
     return selector(Selector.remainder(left, right));
   }
 
@@ -223,7 +241,8 @@ public interface OngoingSelection {
    *
    * @see Selector#negate(Selector)
    */
-  default Select negate(Selector argument) {
+  @NonNull
+  default Select negate(@NonNull Selector argument) {
     return selector(Selector.negate(argument));
   }
 
@@ -234,7 +253,8 @@ public interface OngoingSelection {
    *
    * @see Selector#field(Selector, CqlIdentifier)
    */
-  default Select field(Selector udt, CqlIdentifier fieldId) {
+  @NonNull
+  default Select field(@NonNull Selector udt, @NonNull CqlIdentifier fieldId) {
     return selector(Selector.field(udt, fieldId));
   }
 
@@ -242,7 +262,8 @@ public interface OngoingSelection {
    * Shortcut for {@link #field(Selector, CqlIdentifier) field(udt,
    * CqlIdentifier.fromCql(fieldName))}.
    */
-  default Select field(Selector udt, String fieldName) {
+  @NonNull
+  default Select field(@NonNull Selector udt, @NonNull String fieldName) {
     return field(udt, CqlIdentifier.fromCql(fieldName));
   }
 
@@ -255,7 +276,8 @@ public interface OngoingSelection {
    *
    * @see Selector#field(CqlIdentifier, CqlIdentifier)
    */
-  default Select field(CqlIdentifier udtColumnId, CqlIdentifier fieldId) {
+  @NonNull
+  default Select field(@NonNull CqlIdentifier udtColumnId, @NonNull CqlIdentifier fieldId) {
     return field(Selector.column(udtColumnId), fieldId);
   }
 
@@ -265,7 +287,8 @@ public interface OngoingSelection {
    *
    * @see Selector#field(String, String)
    */
-  default Select field(String udtColumnName, String fieldName) {
+  @NonNull
+  default Select field(@NonNull String udtColumnName, @NonNull String fieldName) {
     return field(CqlIdentifier.fromCql(udtColumnName), CqlIdentifier.fromCql(fieldName));
   }
 
@@ -279,7 +302,8 @@ public interface OngoingSelection {
    *
    * @see Selector#element(Selector, Term)
    */
-  default Select element(Selector collection, Term index) {
+  @NonNull
+  default Select element(@NonNull Selector collection, @NonNull Term index) {
     return selector(Selector.element(collection, index));
   }
 
@@ -291,7 +315,8 @@ public interface OngoingSelection {
    *
    * @see Selector#element(CqlIdentifier, Term)
    */
-  default Select element(CqlIdentifier collectionId, Term index) {
+  @NonNull
+  default Select element(@NonNull CqlIdentifier collectionId, @NonNull Term index) {
     return element(Selector.column(collectionId), index);
   }
 
@@ -301,7 +326,8 @@ public interface OngoingSelection {
    *
    * @see Selector#element(String, Term)
    */
-  default Select element(String collectionName, Term index) {
+  @NonNull
+  default Select element(@NonNull String collectionName, @NonNull Term index) {
     return element(CqlIdentifier.fromCql(collectionName), index);
   }
 
@@ -321,7 +347,8 @@ public interface OngoingSelection {
    *     only left-bound.
    * @see Selector#range(Selector, Term, Term)
    */
-  default Select range(Selector collection, Term left, Term right) {
+  @NonNull
+  default Select range(@NonNull Selector collection, @NonNull Term left, @NonNull Term right) {
     return selector(Selector.range(collection, left, right));
   }
 
@@ -333,7 +360,9 @@ public interface OngoingSelection {
    *
    * @see Selector#range(CqlIdentifier, Term, Term)
    */
-  default Select range(CqlIdentifier collectionId, Term left, Term right) {
+  @NonNull
+  default Select range(
+      @NonNull CqlIdentifier collectionId, @NonNull Term left, @NonNull Term right) {
     return range(Selector.column(collectionId), left, right);
   }
 
@@ -343,7 +372,8 @@ public interface OngoingSelection {
    *
    * @see Selector#range(String, Term, Term)
    */
-  default Select range(String collectionName, Term left, Term right) {
+  @NonNull
+  default Select range(@NonNull String collectionName, @NonNull Term left, @NonNull Term right) {
     return range(CqlIdentifier.fromCql(collectionName), left, right);
   }
 
@@ -360,12 +390,14 @@ public interface OngoingSelection {
    * @throws IllegalArgumentException if any of the selectors is aliased.
    * @see Selector#listOf(Iterable)
    */
-  default Select listOf(Iterable<Selector> elementSelectors) {
+  @NonNull
+  default Select listOf(@NonNull Iterable<Selector> elementSelectors) {
     return selector(Selector.listOf(elementSelectors));
   }
 
   /** Var-arg equivalent of {@link #listOf(Iterable)}. */
-  default Select listOf(Selector... elementSelectors) {
+  @NonNull
+  default Select listOf(@NonNull Selector... elementSelectors) {
     return listOf(Arrays.asList(elementSelectors));
   }
 
@@ -382,12 +414,14 @@ public interface OngoingSelection {
    * @throws IllegalArgumentException if any of the selectors is aliased.
    * @see Selector#setOf(Iterable)
    */
-  default Select setOf(Iterable<Selector> elementSelectors) {
+  @NonNull
+  default Select setOf(@NonNull Iterable<Selector> elementSelectors) {
     return selector(Selector.setOf(elementSelectors));
   }
 
   /** Var-arg equivalent of {@link #setOf(Iterable)}. */
-  default Select setOf(Selector... elementSelectors) {
+  @NonNull
+  default Select setOf(@NonNull Selector... elementSelectors) {
     return setOf(Arrays.asList(elementSelectors));
   }
 
@@ -402,12 +436,14 @@ public interface OngoingSelection {
    * @throws IllegalArgumentException if any of the selectors is aliased.
    * @see Selector#tupleOf(Iterable)
    */
-  default Select tupleOf(Iterable<Selector> elementSelectors) {
+  @NonNull
+  default Select tupleOf(@NonNull Iterable<Selector> elementSelectors) {
     return selector(Selector.tupleOf(elementSelectors));
   }
 
   /** Var-arg equivalent of {@link #tupleOf(Iterable)}. */
-  default Select tupleOf(Selector... elementSelectors) {
+  @NonNull
+  default Select tupleOf(@NonNull Selector... elementSelectors) {
     return tupleOf(Arrays.asList(elementSelectors));
   }
 
@@ -435,7 +471,8 @@ public interface OngoingSelection {
    * @throws IllegalArgumentException if any of the selectors is aliased.
    * @see Selector#mapOf(Map)
    */
-  default Select mapOf(Map<Selector, Selector> elementSelectors) {
+  @NonNull
+  default Select mapOf(@NonNull Map<Selector, Selector> elementSelectors) {
     return selector(Selector.mapOf(elementSelectors));
   }
 
@@ -452,8 +489,11 @@ public interface OngoingSelection {
    * @see #mapOf(Map)
    * @see Selector#mapOf(Map, DataType, DataType)
    */
+  @NonNull
   default Select mapOf(
-      Map<Selector, Selector> elementSelectors, DataType keyType, DataType valueType) {
+      @NonNull Map<Selector, Selector> elementSelectors,
+      @NonNull DataType keyType,
+      @NonNull DataType valueType) {
     return selector(Selector.mapOf(elementSelectors, keyType, valueType));
   }
 
@@ -467,7 +507,8 @@ public interface OngoingSelection {
    *
    * @see Selector#typeHint(Selector, DataType)
    */
-  default Select typeHint(Selector selector, DataType targetType) {
+  @NonNull
+  default Select typeHint(@NonNull Selector selector, @NonNull DataType targetType) {
     return selector(Selector.typeHint(selector, targetType));
   }
 
@@ -482,7 +523,9 @@ public interface OngoingSelection {
    * @throws IllegalArgumentException if any of the selectors is aliased.
    * @see Selector#function(CqlIdentifier, Iterable)
    */
-  default Select function(CqlIdentifier functionId, Iterable<Selector> arguments) {
+  @NonNull
+  default Select function(
+      @NonNull CqlIdentifier functionId, @NonNull Iterable<Selector> arguments) {
     return selector(Selector.function(functionId, arguments));
   }
 
@@ -491,7 +534,8 @@ public interface OngoingSelection {
    *
    * @see Selector#function(CqlIdentifier, Selector...)
    */
-  default Select function(CqlIdentifier functionId, Selector... arguments) {
+  @NonNull
+  default Select function(@NonNull CqlIdentifier functionId, @NonNull Selector... arguments) {
     return function(functionId, Arrays.asList(arguments));
   }
 
@@ -501,7 +545,8 @@ public interface OngoingSelection {
    *
    * @see Selector#function(String, Iterable)
    */
-  default Select function(String functionName, Iterable<Selector> arguments) {
+  @NonNull
+  default Select function(@NonNull String functionName, @NonNull Iterable<Selector> arguments) {
     return function(CqlIdentifier.fromCql(functionName), arguments);
   }
 
@@ -510,7 +555,8 @@ public interface OngoingSelection {
    *
    * @see Selector#function(String, Selector...)
    */
-  default Select function(String functionName, Selector... arguments) {
+  @NonNull
+  default Select function(@NonNull String functionName, @NonNull Selector... arguments) {
     return function(functionName, Arrays.asList(arguments));
   }
 
@@ -525,8 +571,11 @@ public interface OngoingSelection {
    * @throws IllegalArgumentException if any of the selectors is aliased.
    * @see Selector#function(CqlIdentifier, CqlIdentifier, Iterable)
    */
+  @NonNull
   default Select function(
-      CqlIdentifier keyspaceId, CqlIdentifier functionId, Iterable<Selector> arguments) {
+      @Nullable CqlIdentifier keyspaceId,
+      @NonNull CqlIdentifier functionId,
+      @NonNull Iterable<Selector> arguments) {
     return selector(Selector.function(keyspaceId, functionId, arguments));
   }
 
@@ -535,8 +584,11 @@ public interface OngoingSelection {
    *
    * @see Selector#function(CqlIdentifier, CqlIdentifier, Selector...)
    */
+  @NonNull
   default Select function(
-      CqlIdentifier keyspaceId, CqlIdentifier functionId, Selector... arguments) {
+      @Nullable CqlIdentifier keyspaceId,
+      @NonNull CqlIdentifier functionId,
+      @NonNull Selector... arguments) {
     return function(keyspaceId, functionId, Arrays.asList(arguments));
   }
 
@@ -546,9 +598,15 @@ public interface OngoingSelection {
    *
    * @see Selector#function(String, String, Iterable)
    */
-  default Select function(String keyspaceName, String functionName, Iterable<Selector> arguments) {
+  @NonNull
+  default Select function(
+      @Nullable String keyspaceName,
+      @NonNull String functionName,
+      @NonNull Iterable<Selector> arguments) {
     return function(
-        CqlIdentifier.fromCql(keyspaceName), CqlIdentifier.fromCql(functionName), arguments);
+        keyspaceName == null ? null : CqlIdentifier.fromCql(keyspaceName),
+        CqlIdentifier.fromCql(functionName),
+        arguments);
   }
 
   /**
@@ -556,7 +614,9 @@ public interface OngoingSelection {
    *
    * @see Selector#function(String, String, Selector...)
    */
-  default Select function(String keyspaceName, String functionName, Selector... arguments) {
+  @NonNull
+  default Select function(
+      @Nullable String keyspaceName, @NonNull String functionName, @NonNull Selector... arguments) {
     return function(keyspaceName, functionName, Arrays.asList(arguments));
   }
 
@@ -566,7 +626,8 @@ public interface OngoingSelection {
    *
    * @see Selector#writeTime(CqlIdentifier)
    */
-  default Select writeTime(CqlIdentifier columnId) {
+  @NonNull
+  default Select writeTime(@NonNull CqlIdentifier columnId) {
     return selector(Selector.writeTime(columnId));
   }
 
@@ -575,7 +636,8 @@ public interface OngoingSelection {
    *
    * @see Selector#writeTime(String)
    */
-  default Select writeTime(String columnName) {
+  @NonNull
+  default Select writeTime(@NonNull String columnName) {
     return writeTime(CqlIdentifier.fromCql(columnName));
   }
 
@@ -585,7 +647,8 @@ public interface OngoingSelection {
    *
    * @see Selector#ttl(CqlIdentifier)
    */
-  default Select ttl(CqlIdentifier columnId) {
+  @NonNull
+  default Select ttl(@NonNull CqlIdentifier columnId) {
     return selector(Selector.ttl(columnId));
   }
 
@@ -594,7 +657,8 @@ public interface OngoingSelection {
    *
    * @see Selector#ttl(String)
    */
-  default Select ttl(String columnName) {
+  @NonNull
+  default Select ttl(@NonNull String columnName) {
     return ttl(CqlIdentifier.fromCql(columnName));
   }
 
@@ -610,7 +674,8 @@ public interface OngoingSelection {
    * @throws IllegalArgumentException if the selector is aliased.
    * @see Selector#cast(Selector, DataType)
    */
-  default Select cast(Selector selector, DataType targetType) {
+  @NonNull
+  default Select cast(@NonNull Selector selector, @NonNull DataType targetType) {
     return selector(Selector.cast(selector, targetType));
   }
 
@@ -619,12 +684,14 @@ public interface OngoingSelection {
    *
    * @see Selector#toDate(CqlIdentifier)
    */
-  default Select toDate(CqlIdentifier columnId) {
+  @NonNull
+  default Select toDate(@NonNull CqlIdentifier columnId) {
     return selector(Selector.toDate(columnId));
   }
 
   /** Shortcut for {@link #toDate(CqlIdentifier) toDate(CqlIdentifier.fromCql(columnName))}. */
-  default Select toDate(String columnName) {
+  @NonNull
+  default Select toDate(@NonNull String columnName) {
     return toDate(CqlIdentifier.fromCql(columnName));
   }
 
@@ -633,7 +700,8 @@ public interface OngoingSelection {
    *
    * @see Selector#toTimestamp(CqlIdentifier)
    */
-  default Select toTimestamp(CqlIdentifier columnId) {
+  @NonNull
+  default Select toTimestamp(@NonNull CqlIdentifier columnId) {
     return selector(Selector.toTimestamp(columnId));
   }
 
@@ -641,7 +709,8 @@ public interface OngoingSelection {
    * Shortcut for {@link #toTimestamp(CqlIdentifier)
    * toTimestamp(CqlIdentifier.fromCql(columnName))}.
    */
-  default Select toTimestamp(String columnName) {
+  @NonNull
+  default Select toTimestamp(@NonNull String columnName) {
     return toTimestamp(CqlIdentifier.fromCql(columnName));
   }
 
@@ -650,7 +719,8 @@ public interface OngoingSelection {
    *
    * @see Selector#toUnixTimestamp(CqlIdentifier)
    */
-  default Select toUnixTimestamp(CqlIdentifier columnId) {
+  @NonNull
+  default Select toUnixTimestamp(@NonNull CqlIdentifier columnId) {
     return selector(Selector.toUnixTimestamp(columnId));
   }
 
@@ -658,7 +728,8 @@ public interface OngoingSelection {
    * Shortcut for {@link #toUnixTimestamp(CqlIdentifier)
    * toUnixTimestamp(CqlIdentifier.fromCql(columnName))}.
    */
-  default Select toUnixTimestamp(String columnName) {
+  @NonNull
+  default Select toUnixTimestamp(@NonNull String columnName) {
     return toUnixTimestamp(CqlIdentifier.fromCql(columnName));
   }
 
@@ -678,7 +749,8 @@ public interface OngoingSelection {
    *     value}.
    * @see QueryBuilderDsl#literal(Object)
    */
-  default Select literal(Object value) {
+  @NonNull
+  default Select literal(@Nullable Object value) {
     return literal(value, CodecRegistry.DEFAULT);
   }
 
@@ -694,7 +766,8 @@ public interface OngoingSelection {
    *     handle {@code value}.
    * @see QueryBuilderDsl#literal(Object, CodecRegistry)
    */
-  default Select literal(Object value, CodecRegistry codecRegistry) {
+  @NonNull
+  default Select literal(@Nullable Object value, @NonNull CodecRegistry codecRegistry) {
     return literal(value, (value == null) ? null : codecRegistry.codecFor(value));
   }
 
@@ -706,7 +779,8 @@ public interface OngoingSelection {
    *
    * @see QueryBuilderDsl#literal(Object, TypeCodec)
    */
-  default <T> Select literal(T value, TypeCodec<T> codec) {
+  @NonNull
+  default <T> Select literal(@Nullable T value, @Nullable TypeCodec<T> codec) {
     return selector(QueryBuilderDsl.literal(value, codec));
   }
 
@@ -721,7 +795,8 @@ public interface OngoingSelection {
    * <p>This is a shortcut for {@link #selector(Selector)
    * selector(QueryBuilderDsl.raw(rawExpression))}.
    */
-  default Select raw(String rawExpression) {
+  @NonNull
+  default Select raw(@NonNull String rawExpression) {
     return selector(QueryBuilderDsl.raw(rawExpression));
   }
 
@@ -740,10 +815,12 @@ public interface OngoingSelection {
    *       query will fail at runtime.
    * </ul>
    */
-  Select as(CqlIdentifier alias);
+  @NonNull
+  Select as(@NonNull CqlIdentifier alias);
 
   /** Shortcut for {@link #as(CqlIdentifier) as(CqlIdentifier.fromCql(alias))} */
-  default Select as(String alias) {
+  @NonNull
+  default Select as(@NonNull String alias) {
     return as(CqlIdentifier.fromCql(alias));
   }
 }

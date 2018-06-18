@@ -19,6 +19,7 @@ import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.cql.ColumnDefinition;
 import com.datastax.oss.driver.api.core.cql.ColumnDefinitions;
 import com.datastax.oss.driver.api.core.detach.AttachmentPoint;
+import edu.umd.cs.findbugs.annotations.NonNull;
 import java.util.Collections;
 import java.util.Iterator;
 
@@ -34,28 +35,29 @@ public enum EmptyColumnDefinitions implements ColumnDefinitions {
     return 0;
   }
 
+  @NonNull
   @Override
   public ColumnDefinition get(int i) {
     throw new ArrayIndexOutOfBoundsException();
   }
 
   @Override
-  public boolean contains(String name) {
+  public boolean contains(@NonNull String name) {
     return false;
   }
 
   @Override
-  public boolean contains(CqlIdentifier id) {
+  public boolean contains(@NonNull CqlIdentifier id) {
     return false;
   }
 
   @Override
-  public int firstIndexOf(String name) {
+  public int firstIndexOf(@NonNull String name) {
     return -1;
   }
 
   @Override
-  public int firstIndexOf(CqlIdentifier id) {
+  public int firstIndexOf(@NonNull CqlIdentifier id) {
     return -1;
   }
 
@@ -65,7 +67,7 @@ public enum EmptyColumnDefinitions implements ColumnDefinitions {
   }
 
   @Override
-  public void attach(AttachmentPoint attachmentPoint) {}
+  public void attach(@NonNull AttachmentPoint attachmentPoint) {}
 
   @Override
   public Iterator<ColumnDefinition> iterator() {

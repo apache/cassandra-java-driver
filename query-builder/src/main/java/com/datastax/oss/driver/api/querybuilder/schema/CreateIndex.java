@@ -16,6 +16,7 @@
 package com.datastax.oss.driver.api.querybuilder.schema;
 
 import com.datastax.oss.driver.api.querybuilder.BuildableQuery;
+import edu.umd.cs.findbugs.annotations.NonNull;
 import java.util.Map;
 
 public interface CreateIndex extends OptionProvider<CreateIndex>, BuildableQuery {
@@ -25,7 +26,8 @@ public interface CreateIndex extends OptionProvider<CreateIndex>, BuildableQuery
    * specific options that are provided under the index 'OPTIONS' property. Is equivalent to {@link
    * #withOption(String, Object) withOption("OPTIONS", sasiOptions)}.
    */
-  default CreateIndex withSASIOptions(Map<String, Object> sasiOptions) {
+  @NonNull
+  default CreateIndex withSASIOptions(@NonNull Map<String, Object> sasiOptions) {
     return withOption("OPTIONS", sasiOptions);
   }
 }

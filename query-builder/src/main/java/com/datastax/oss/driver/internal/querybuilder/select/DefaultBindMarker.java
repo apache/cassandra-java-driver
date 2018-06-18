@@ -17,6 +17,8 @@ package com.datastax.oss.driver.internal.querybuilder.select;
 
 import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.querybuilder.BindMarker;
+import edu.umd.cs.findbugs.annotations.NonNull;
+import edu.umd.cs.findbugs.annotations.Nullable;
 import net.jcip.annotations.Immutable;
 
 @Immutable
@@ -24,7 +26,7 @@ public class DefaultBindMarker implements BindMarker {
 
   private final CqlIdentifier id;
 
-  public DefaultBindMarker(CqlIdentifier id) {
+  public DefaultBindMarker(@Nullable CqlIdentifier id) {
     this.id = id;
   }
 
@@ -33,7 +35,7 @@ public class DefaultBindMarker implements BindMarker {
   }
 
   @Override
-  public void appendTo(StringBuilder builder) {
+  public void appendTo(@NonNull StringBuilder builder) {
     if (id == null) {
       builder.append('?');
     } else {
@@ -46,6 +48,7 @@ public class DefaultBindMarker implements BindMarker {
     return true;
   }
 
+  @Nullable
   public CqlIdentifier getId() {
     return id;
   }

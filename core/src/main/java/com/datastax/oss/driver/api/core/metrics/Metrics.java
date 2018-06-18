@@ -18,6 +18,9 @@ package com.datastax.oss.driver.api.core.metrics;
 import com.codahale.metrics.Metric;
 import com.codahale.metrics.MetricRegistry;
 import com.datastax.oss.driver.api.core.metadata.Node;
+import edu.umd.cs.findbugs.annotations.NonNull;
+import edu.umd.cs.findbugs.annotations.Nullable;
+import java.util.Optional;
 
 /**
  * A wrapper around a {@link MetricRegistry} to expose the driver's metrics.
@@ -36,6 +39,7 @@ public interface Metrics {
    * @see <a href="http://metrics.dropwizard.io/4.0.0/manual/core.html#reporters">Reporters
    *     (Dropwizard Metrics manual)</a>
    */
+  @NonNull
   MetricRegistry getRegistry();
 
   /**
@@ -58,16 +62,19 @@ public interface Metrics {
    *     associated to any profile. Note that this is only included for future extensibility: at
    *     this time, the driver does not break up metrics per profile. Therefore you can always use
    *     {@link #getSessionMetric(SessionMetric)} instead of this method.
-   * @return the metric, or {@code null} if it is disabled.
+   * @return the metric, or empty if it is disabled.
    */
   @SuppressWarnings("TypeParameterUnusedInFormals")
-  <T extends Metric> T getSessionMetric(SessionMetric metric, String profileName);
+  @NonNull
+  <T extends Metric> Optional<T> getSessionMetric(
+      @NonNull SessionMetric metric, @Nullable String profileName);
 
   /**
    * Shortcut for {@link #getSessionMetric(SessionMetric, String) getSessionMetric(metric, null)}.
    */
   @SuppressWarnings("TypeParameterUnusedInFormals")
-  default <T extends Metric> T getSessionMetric(SessionMetric metric) {
+  @NonNull
+  default <T extends Metric> Optional<T> getSessionMetric(@NonNull SessionMetric metric) {
     return getSessionMetric(metric, null);
   }
 
@@ -91,17 +98,21 @@ public interface Metrics {
    *     associated to any profile. Note that this is only included for future extensibility: at
    *     this time, the driver does not break up metrics per profile. Therefore you can always use
    *     {@link #getNodeMetric(Node, NodeMetric)} instead of this method.
-   * @return the metric, or {@code null} if it is disabled.
+   * @return the metric, or empty if it is disabled.
    */
   @SuppressWarnings("TypeParameterUnusedInFormals")
-  <T extends Metric> T getNodeMetric(Node node, NodeMetric metric, String profileName);
+  @NonNull
+  <T extends Metric> Optional<T> getNodeMetric(
+      @NonNull Node node, @NonNull NodeMetric metric, @Nullable String profileName);
 
   /**
    * Shortcut for {@link #getNodeMetric(Node, NodeMetric, String) getNodeMetric(node, metric,
    * null)}.
    */
   @SuppressWarnings("TypeParameterUnusedInFormals")
-  default <T extends Metric> T getNodeMetric(Node node, NodeMetric metric) {
+  @NonNull
+  default <T extends Metric> Optional<T> getNodeMetric(
+      @NonNull Node node, @NonNull NodeMetric metric) {
     return getNodeMetric(node, metric, null);
   }
 }

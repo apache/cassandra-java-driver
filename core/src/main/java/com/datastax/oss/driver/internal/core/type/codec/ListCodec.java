@@ -21,6 +21,8 @@ import com.datastax.oss.driver.api.core.type.ListType;
 import com.datastax.oss.driver.api.core.type.codec.TypeCodec;
 import com.datastax.oss.driver.api.core.type.reflect.GenericType;
 import com.datastax.oss.driver.shaded.guava.common.base.Preconditions;
+import edu.umd.cs.findbugs.annotations.NonNull;
+import edu.umd.cs.findbugs.annotations.Nullable;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
@@ -40,18 +42,20 @@ public class ListCodec<T> implements TypeCodec<List<T>> {
     Preconditions.checkArgument(cqlType instanceof ListType);
   }
 
+  @NonNull
   @Override
   public GenericType<List<T>> getJavaType() {
     return javaType;
   }
 
+  @NonNull
   @Override
   public DataType getCqlType() {
     return cqlType;
   }
 
   @Override
-  public boolean accepts(Object value) {
+  public boolean accepts(@NonNull Object value) {
     if (List.class.isAssignableFrom(value.getClass())) {
       // runtime type ok, now check element type
       List<?> list = (List<?>) value;
@@ -61,8 +65,9 @@ public class ListCodec<T> implements TypeCodec<List<T>> {
     }
   }
 
+  @Nullable
   @Override
-  public ByteBuffer encode(List<T> value, ProtocolVersion protocolVersion) {
+  public ByteBuffer encode(@Nullable List<T> value, @NonNull ProtocolVersion protocolVersion) {
     // An int indicating the number of elements in the list, followed by the elements. Each element
     // is a byte array representing the serialized value, preceded by an int indicating its size.
     if (value == null) {
@@ -81,6 +86,9 @@ public class ListCodec<T> implements TypeCodec<List<T>> {
         } catch (ClassCastException e) {
           throw new IllegalArgumentException("Invalid type for element: " + element.getClass());
         }
+        if (encodedElement == null) {
+          throw new NullPointerException("Collection elements cannot encode to CQL NULL");
+        }
         encodedElements[i++] = encodedElement;
         toAllocate += 4 + encodedElement.remaining(); // the element preceded by its size
       }
@@ -95,8 +103,9 @@ public class ListCodec<T> implements TypeCodec<List<T>> {
     }
   }
 
+  @Nullable
   @Override
-  public List<T> decode(ByteBuffer bytes, ProtocolVersion protocolVersion) {
+  public List<T> decode(@Nullable ByteBuffer bytes, @NonNull ProtocolVersion protocolVersion) {
     if (bytes == null || bytes.remaining() == 0) {
       return new ArrayList<>(0);
     } else {
@@ -114,8 +123,9 @@ public class ListCodec<T> implements TypeCodec<List<T>> {
     }
   }
 
+  @NonNull
   @Override
-  public String format(List<T> value) {
+  public String format(@Nullable List<T> value) {
     if (value == null) {
       return "NULL";
     }
@@ -133,8 +143,9 @@ public class ListCodec<T> implements TypeCodec<List<T>> {
     return sb.toString();
   }
 
+  @Nullable
   @Override
-  public List<T> parse(String value) {
+  public List<T> parse(@Nullable String value) {
     if (value == null || value.isEmpty() || value.equalsIgnoreCase("NULL")) return null;
 
     int idx = ParseUtils.skipSpaces(value, 0);

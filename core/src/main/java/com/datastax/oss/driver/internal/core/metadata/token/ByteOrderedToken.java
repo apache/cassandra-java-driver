@@ -19,6 +19,7 @@ import com.datastax.oss.driver.api.core.metadata.token.Token;
 import com.datastax.oss.driver.shaded.guava.common.base.Preconditions;
 import com.datastax.oss.driver.shaded.guava.common.primitives.UnsignedBytes;
 import com.datastax.oss.protocol.internal.util.Bytes;
+import edu.umd.cs.findbugs.annotations.NonNull;
 import java.nio.ByteBuffer;
 import net.jcip.annotations.Immutable;
 
@@ -54,7 +55,7 @@ public class ByteOrderedToken implements Token {
   }
 
   @Override
-  public int compareTo(Token other) {
+  public int compareTo(@NonNull Token other) {
     Preconditions.checkArgument(
         other instanceof ByteOrderedToken, "Can only compare tokens of the same type");
     return UnsignedBytes.lexicographicalComparator()

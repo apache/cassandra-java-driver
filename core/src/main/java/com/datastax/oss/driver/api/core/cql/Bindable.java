@@ -22,6 +22,7 @@ import com.datastax.oss.driver.api.core.data.GettableByName;
 import com.datastax.oss.driver.api.core.data.SettableById;
 import com.datastax.oss.driver.api.core.data.SettableByName;
 import com.datastax.oss.protocol.internal.ProtocolConstants;
+import edu.umd.cs.findbugs.annotations.NonNull;
 
 /** A data container with the ability to unset values. */
 public interface Bindable<T extends Bindable<T>>
@@ -45,7 +46,7 @@ public interface Bindable<T extends Bindable<T>>
    * @throws IndexOutOfBoundsException if the id is invalid.
    */
   @SuppressWarnings("ReferenceEquality")
-  default boolean isSet(CqlIdentifier id) {
+  default boolean isSet(@NonNull CqlIdentifier id) {
     return getBytesUnsafe(id) != ProtocolConstants.UNSET_VALUE;
   }
 
@@ -58,7 +59,7 @@ public interface Bindable<T extends Bindable<T>>
    * @throws IndexOutOfBoundsException if the name is invalid.
    */
   @SuppressWarnings("ReferenceEquality")
-  default boolean isSet(String name) {
+  default boolean isSet(@NonNull String name) {
     return getBytesUnsafe(name) != ProtocolConstants.UNSET_VALUE;
   }
 
@@ -68,6 +69,7 @@ public interface Bindable<T extends Bindable<T>>
    *
    * @throws IndexOutOfBoundsException if the index is invalid.
    */
+  @NonNull
   default T unset(int i) {
     return setBytesUnsafe(i, ProtocolConstants.UNSET_VALUE);
   }
@@ -78,7 +80,8 @@ public interface Bindable<T extends Bindable<T>>
    *
    * @throws IndexOutOfBoundsException if the id is invalid.
    */
-  default T unset(CqlIdentifier id) {
+  @NonNull
+  default T unset(@NonNull CqlIdentifier id) {
     return setBytesUnsafe(id, ProtocolConstants.UNSET_VALUE);
   }
 
@@ -88,7 +91,8 @@ public interface Bindable<T extends Bindable<T>>
    *
    * @throws IndexOutOfBoundsException if the name is invalid.
    */
-  default T unset(String name) {
+  @NonNull
+  default T unset(@NonNull String name) {
     return setBytesUnsafe(name, ProtocolConstants.UNSET_VALUE);
   }
 }

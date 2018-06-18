@@ -24,6 +24,8 @@ import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
 import com.datastax.oss.driver.internal.core.session.DefaultSession;
 import com.datastax.oss.driver.internal.core.util.concurrent.CompletableFutures;
 import com.datastax.oss.protocol.internal.Frame;
+import edu.umd.cs.findbugs.annotations.NonNull;
+import edu.umd.cs.findbugs.annotations.Nullable;
 import java.nio.ByteBuffer;
 import java.util.Collections;
 import java.util.List;
@@ -82,11 +84,13 @@ public class DefaultExecutionInfo implements ExecutionInfo {
     this.configProfile = configProfile;
   }
 
+  @NonNull
   @Override
   public Statement<?> getStatement() {
     return statement;
   }
 
+  @NonNull
   @Override
   public Node getCoordinator() {
     return coordinator;
@@ -102,6 +106,7 @@ public class DefaultExecutionInfo implements ExecutionInfo {
     return successfulExecutionIndex;
   }
 
+  @NonNull
   @Override
   public List<Map.Entry<Node, Throwable>> getErrors() {
     // Assume this method will be called 0 or 1 time, so we create the unmodifiable wrapper on
@@ -110,15 +115,18 @@ public class DefaultExecutionInfo implements ExecutionInfo {
   }
 
   @Override
+  @Nullable
   public ByteBuffer getPagingState() {
     return pagingState;
   }
 
+  @NonNull
   @Override
   public List<String> getWarnings() {
     return warnings;
   }
 
+  @NonNull
   @Override
   public Map<String, ByteBuffer> getIncomingPayload() {
     return customPayload;
@@ -130,10 +138,12 @@ public class DefaultExecutionInfo implements ExecutionInfo {
   }
 
   @Override
+  @Nullable
   public UUID getTracingId() {
     return tracingId;
   }
 
+  @NonNull
   @Override
   public CompletionStage<QueryTrace> getQueryTraceAsync() {
     if (tracingId == null) {

@@ -15,6 +15,7 @@
  */
 package com.datastax.oss.driver.api.core.config;
 
+import edu.umd.cs.findbugs.annotations.NonNull;
 import java.util.Map;
 
 /**
@@ -31,12 +32,14 @@ public interface DriverConfig {
    * Alias to get the default profile, which is stored under the name {@link
    * DriverConfigProfile#DEFAULT_NAME} and always present.
    */
+  @NonNull
   default DriverConfigProfile getDefaultProfile() {
     return getProfile(DriverConfigProfile.DEFAULT_NAME);
   }
 
   /** @throws IllegalArgumentException if there is no profile with this name. */
-  DriverConfigProfile getProfile(String profileName);
+  @NonNull
+  DriverConfigProfile getProfile(@NonNull String profileName);
 
   /**
    * Returns an <b>immutable</b> view of all named profiles (including the default profile).
@@ -45,5 +48,6 @@ public interface DriverConfig {
    * should not be used in performance-sensitive parts of the code, see {@link #getProfile(String)}
    * instead.
    */
+  @NonNull
   Map<String, DriverConfigProfile> getProfiles();
 }

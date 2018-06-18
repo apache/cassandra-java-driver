@@ -16,6 +16,7 @@
 package com.datastax.oss.driver.api.querybuilder.insert;
 
 import com.datastax.oss.driver.api.querybuilder.BindMarker;
+import edu.umd.cs.findbugs.annotations.NonNull;
 
 /**
  * The beginning of an INSERT statement; at this point only the table is known, it might become a
@@ -24,8 +25,10 @@ import com.datastax.oss.driver.api.querybuilder.BindMarker;
 public interface InsertInto extends OngoingValues {
 
   /** Makes this statement an INSERT JSON with the provided JSON string. */
-  JsonInsert json(String json);
+  @NonNull
+  JsonInsert json(@NonNull String json);
 
   /** Makes this statement an INSERT JSON with a bind marker, as in {@code INSERT JSON ?}. */
-  JsonInsert json(BindMarker bindMarker);
+  @NonNull
+  JsonInsert json(@NonNull BindMarker bindMarker);
 }

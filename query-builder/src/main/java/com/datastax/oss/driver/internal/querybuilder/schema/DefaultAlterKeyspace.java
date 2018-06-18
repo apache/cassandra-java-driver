@@ -20,6 +20,7 @@ import com.datastax.oss.driver.api.querybuilder.schema.AlterKeyspace;
 import com.datastax.oss.driver.api.querybuilder.schema.AlterKeyspaceStart;
 import com.datastax.oss.driver.internal.querybuilder.ImmutableCollections;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableMap;
+import edu.umd.cs.findbugs.annotations.NonNull;
 import java.util.Map;
 import net.jcip.annotations.Immutable;
 
@@ -29,36 +30,42 @@ public class DefaultAlterKeyspace implements AlterKeyspaceStart, AlterKeyspace {
   private final CqlIdentifier keyspaceName;
   private final ImmutableMap<String, Object> options;
 
-  public DefaultAlterKeyspace(CqlIdentifier keyspaceName) {
+  public DefaultAlterKeyspace(@NonNull CqlIdentifier keyspaceName) {
     this(keyspaceName, ImmutableMap.of());
   }
 
-  public DefaultAlterKeyspace(CqlIdentifier keyspaceName, ImmutableMap<String, Object> options) {
+  public DefaultAlterKeyspace(
+      @NonNull CqlIdentifier keyspaceName, @NonNull ImmutableMap<String, Object> options) {
     this.keyspaceName = keyspaceName;
     this.options = options;
   }
 
+  @NonNull
   @Override
-  public AlterKeyspace withReplicationOptions(Map<String, Object> replicationOptions) {
+  public AlterKeyspace withReplicationOptions(@NonNull Map<String, Object> replicationOptions) {
     return withOption("replication", replicationOptions);
   }
 
+  @NonNull
   @Override
-  public AlterKeyspace withOption(String name, Object value) {
+  public AlterKeyspace withOption(@NonNull String name, @NonNull Object value) {
     return new DefaultAlterKeyspace(
         keyspaceName, ImmutableCollections.append(options, name, value));
   }
 
+  @NonNull
   @Override
   public String asCql() {
     return "ALTER KEYSPACE " + keyspaceName.asCql(true) + OptionsUtils.buildOptions(options, true);
   }
 
+  @NonNull
   @Override
   public Map<String, Object> getOptions() {
     return options;
   }
 
+  @NonNull
   public CqlIdentifier getKeyspace() {
     return keyspaceName;
   }

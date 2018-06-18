@@ -121,7 +121,7 @@ public class SchemaIT {
             SimpleStatement.builder("CREATE TABLE foo(k int primary key)")
                 .withConfigProfile(slowProfile)
                 .build());
-    assertThat(session.getMetadata().getKeyspace(sessionRule.keyspace()).getTables())
+    assertThat(session.getMetadata().getKeyspace(sessionRule.keyspace()).get().getTables())
         .doesNotContainKey(CqlIdentifier.fromInternal("foo"));
 
     // Reset to config value (true), should refresh and load the new table
@@ -129,7 +129,8 @@ public class SchemaIT {
     assertThat(session.isSchemaMetadataEnabled()).isTrue();
     ConditionChecker.checkThat(
             () ->
-                assertThat(session.getMetadata().getKeyspace(sessionRule.keyspace()).getTables())
+                assertThat(
+                        session.getMetadata().getKeyspace(sessionRule.keyspace()).get().getTables())
                     .containsKey(CqlIdentifier.fromInternal("foo")))
         .becomesTrue();
   }

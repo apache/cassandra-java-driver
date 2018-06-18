@@ -21,6 +21,7 @@ import com.datastax.oss.driver.api.core.cql.ExecutionInfo;
 import com.datastax.oss.driver.api.core.cql.ResultSet;
 import com.datastax.oss.driver.api.core.cql.Row;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableList;
+import edu.umd.cs.findbugs.annotations.NonNull;
 import java.util.Iterator;
 import java.util.List;
 import net.jcip.annotations.NotThreadSafe;
@@ -34,16 +35,19 @@ public class SinglePageResultSet implements ResultSet {
     assert !onlyPage.hasMorePages();
   }
 
+  @NonNull
   @Override
   public ColumnDefinitions getColumnDefinitions() {
     return onlyPage.getColumnDefinitions();
   }
 
+  @NonNull
   @Override
   public ExecutionInfo getExecutionInfo() {
     return onlyPage.getExecutionInfo();
   }
 
+  @NonNull
   @Override
   public List<ExecutionInfo> getExecutionInfos() {
     // Assuming this will be called 0 or 1 time, avoid creating the list if it's 0.
@@ -65,6 +69,7 @@ public class SinglePageResultSet implements ResultSet {
     // nothing to do
   }
 
+  @NonNull
   @Override
   public Iterator<Row> iterator() {
     return onlyPage.currentPage().iterator();

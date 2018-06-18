@@ -32,6 +32,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.PrintStream;
+import java.util.Optional;
 import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
@@ -87,7 +88,7 @@ public class DescribeIT {
     // connect session to this keyspace.
     session.execute(String.format("USE %s", keyspace.asCql(false)));
 
-    KeyspaceMetadata originalKsMeta = session.getMetadata().getKeyspace(keyspace);
+    Optional<KeyspaceMetadata> originalKsMeta = session.getMetadata().getKeyspace(keyspace);
 
     // Usertype 'ztype' with two columns.  Given name to ensure that even though it has an
     // alphabetically later name, it shows up before other user types ('ctype') that depend on it.
@@ -189,21 +190,23 @@ public class DescribeIT {
     }
 
     // Since metadata is immutable, do not expect anything in the original keyspace meta.
-    assertThat(originalKsMeta.getTables()).isEmpty();
-    assertThat(originalKsMeta.getViews()).isEmpty();
-    assertThat(originalKsMeta.getFunctions()).isEmpty();
-    assertThat(originalKsMeta.getAggregates()).isEmpty();
-    assertThat(originalKsMeta.getUserDefinedTypes()).isEmpty();
+    assertThat(originalKsMeta).isPresent();
+
+    assertThat(originalKsMeta.get().getTables()).isEmpty();
+    assertThat(originalKsMeta.get().getViews()).isEmpty();
+    assertThat(originalKsMeta.get().getFunctions()).isEmpty();
+    assertThat(originalKsMeta.get().getAggregates()).isEmpty();
+    assertThat(originalKsMeta.get().getUserDefinedTypes()).isEmpty();
 
     // validate that the exported schema matches what was expected exactly.
-    KeyspaceMetadata ks = sessionRule.session().getMetadata().getKeyspace(keyspace);
-    assertThat(ks.describeWithChildren(true).trim()).isEqualTo(expectedCql);
+    Optional<KeyspaceMetadata> ks = sessionRule.session().getMetadata().getKeyspace(keyspace);
+    assertThat(ks.get().describeWithChildren(true).trim()).isEqualTo(expectedCql);
 
     // Also validate that when you create a Session with schema already created that the exported
     // string is the same.
     try (CqlSession newSession = SessionUtils.newSession(ccmRule)) {
       ks = newSession.getMetadata().getKeyspace(keyspace);
-      assertThat(ks.describeWithChildren(true).trim()).isEqualTo(expectedCql);
+      assertThat(ks.get().describeWithChildren(true).trim()).isEqualTo(expectedCql);
     }
   }
 

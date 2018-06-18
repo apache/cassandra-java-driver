@@ -18,6 +18,7 @@ package com.datastax.oss.driver.api.core.metadata.schema;
 import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.internal.core.metadata.schema.ScriptBuilder;
 import com.datastax.oss.driver.internal.core.metadata.schema.parsing.RelationParser;
+import edu.umd.cs.findbugs.annotations.NonNull;
 import java.util.Map;
 
 /** A table in the schema metadata. */
@@ -25,8 +26,10 @@ public interface TableMetadata extends RelationMetadata {
 
   boolean isCompactStorage();
 
+  @NonNull
   Map<CqlIdentifier, IndexMetadata> getIndexes();
 
+  @NonNull
   @Override
   default String describe(boolean pretty) {
     ScriptBuilder builder =
@@ -100,6 +103,7 @@ public interface TableMetadata extends RelationMetadata {
    * <p>This describes the table and all of its indices. Contrary to previous driver versions, views
    * are <b>not</b> included.
    */
+  @NonNull
   @Override
   default String describeWithChildren(boolean pretty) {
     String createTable = describe(pretty);

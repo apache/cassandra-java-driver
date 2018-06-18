@@ -28,6 +28,7 @@ import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
 import com.datastax.oss.driver.internal.core.util.concurrent.RunOrSchedule;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
+import edu.umd.cs.findbugs.annotations.NonNull;
 import io.netty.util.concurrent.EventExecutor;
 import io.netty.util.concurrent.ScheduledFuture;
 import java.time.Duration;
@@ -71,13 +72,14 @@ public class DefaultDriverConfigLoader implements DriverConfigLoader {
     this.driverConfig = new TypesafeDriverConfig(configSupplier.get());
   }
 
+  @NonNull
   @Override
   public DriverConfig getInitialConfig() {
     return driverConfig;
   }
 
   @Override
-  public void onDriverInit(DriverContext driverContext) {
+  public void onDriverInit(@NonNull DriverContext driverContext) {
     this.singleThreaded = new SingleThreaded((InternalDriverContext) driverContext);
   }
 

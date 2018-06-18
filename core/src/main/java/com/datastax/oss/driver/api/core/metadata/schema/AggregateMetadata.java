@@ -19,20 +19,26 @@ import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.type.DataType;
 import com.datastax.oss.driver.api.core.type.codec.TypeCodec;
 import com.datastax.oss.driver.internal.core.metadata.schema.ScriptBuilder;
+import edu.umd.cs.findbugs.annotations.NonNull;
+import java.util.Optional;
 
 /** A CQL aggregate in the schema metadata. */
 public interface AggregateMetadata extends Describable {
+
+  @NonNull
   CqlIdentifier getKeyspace();
 
+  @NonNull
   FunctionSignature getSignature();
 
   /**
-   * The signature of the final function of this aggregate, or {@code null} if there is none.
+   * The signature of the final function of this aggregate, or empty if there is none.
    *
    * <p>This is the function specified with {@code FINALFUNC} in the {@code CREATE AGGREGATE...}
    * statement. It transforms the final value after the aggregation is complete.
    */
-  FunctionSignature getFinalFuncSignature();
+  @NonNull
+  Optional<FunctionSignature> getFinalFuncSignature();
 
   /**
    * The initial state value of this aggregate, or {@code null} if there is none.
@@ -49,9 +55,10 @@ public interface AggregateMetadata extends Describable {
    * and the returned object will be the original {@code INITCOND} literal in its textual,
    * non-parsed form.
    *
-   * @return the initial state, or {@code null} if there is none.
+   * @return the initial state, or empty if there is none.
    */
-  Object getInitCond();
+  @NonNull
+  Optional<Object> getInitCond();
 
   /**
    * The return type of this aggregate.
@@ -59,6 +66,7 @@ public interface AggregateMetadata extends Describable {
    * <p>This is the final type of the value computed by this aggregate; in other words, the return
    * type of the final function if it is defined, or the state type otherwise.
    */
+  @NonNull
   DataType getReturnType();
 
   /**
@@ -67,6 +75,7 @@ public interface AggregateMetadata extends Describable {
    * <p>This is the function specified with {@code SFUNC} in the {@code CREATE AGGREGATE...}
    * statement. It aggregates the current state with each row to produce a new state.
    */
+  @NonNull
   FunctionSignature getStateFuncSignature();
 
   /**
@@ -76,14 +85,17 @@ public interface AggregateMetadata extends Describable {
    * It defines the type of the value that is accumulated as the aggregate iterates through the
    * rows.
    */
+  @NonNull
   DataType getStateType();
 
+  @NonNull
   @Override
   default String describeWithChildren(boolean pretty) {
     // An aggregate has no children
     return describe(pretty);
   }
 
+  @NonNull
   @Override
   default String describe(boolean pretty) {
     ScriptBuilder builder = new ScriptBuilder(pretty);
@@ -113,15 +125,20 @@ public interface AggregateMetadata extends Describable {
         .append("STYPE ")
         .append(getStateType().asCql(false, pretty));
 
-    if (getFinalFuncSignature() != null) {
-      builder.newLine().append("FINALFUNC ").append(getFinalFuncSignature().getName());
+    if (getFinalFuncSignature().isPresent()) {
+      builder.newLine().append("FINALFUNC ").append(getFinalFuncSignature().get().getName());
     }
-    if (getInitCond() != null) {
-      builder.newLine().append("INITCOND ").append(formatInitCond());
+    if (getInitCond().isPresent()) {
+      Optional<String> formatInitCond = formatInitCond();
+      assert formatInitCond.isPresent();
+      builder.newLine().append("INITCOND ").append(formatInitCond.get());
     }
     return builder.append(";").build();
   }
 
-  /** Formats the {@link #getInitCond() initial state value} for inclusion in a CQL statement. */
-  String formatInitCond();
+  /**
+   * Formats the {@linkplain #getInitCond() initial state value} for inclusion in a CQL statement.
+   */
+  @NonNull
+  Optional<String> formatInitCond();
 }
