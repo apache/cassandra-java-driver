@@ -16,6 +16,7 @@
 package com.datastax.oss.driver.api.core.config;
 
 import edu.umd.cs.findbugs.annotations.NonNull;
+import edu.umd.cs.findbugs.annotations.Nullable;
 import java.time.Duration;
 import java.util.List;
 import java.util.Map;
@@ -58,16 +59,30 @@ public interface DriverConfigProfile {
 
   boolean getBoolean(@NonNull DriverOption option);
 
+  default boolean getBoolean(@NonNull DriverOption option, boolean defaultValue) {
+    return isDefined(option) ? getBoolean(option) : defaultValue;
+  }
+
   @NonNull
   DriverConfigProfile withBoolean(@NonNull DriverOption option, boolean value);
 
   @NonNull
   List<Boolean> getBooleanList(@NonNull DriverOption option);
 
+  @Nullable
+  default List<Boolean> getBooleanList(
+      @NonNull DriverOption option, @Nullable List<Boolean> defaultValue) {
+    return isDefined(option) ? getBooleanList(option) : defaultValue;
+  }
+
   @NonNull
   DriverConfigProfile withBooleanList(@NonNull DriverOption option, @NonNull List<Boolean> value);
 
   int getInt(@NonNull DriverOption option);
+
+  default int getInt(@NonNull DriverOption option, int defaultValue) {
+    return isDefined(option) ? getInt(option) : defaultValue;
+  }
 
   @NonNull
   DriverConfigProfile withInt(@NonNull DriverOption option, int value);
@@ -75,21 +90,39 @@ public interface DriverConfigProfile {
   @NonNull
   List<Integer> getIntList(@NonNull DriverOption option);
 
+  @Nullable
+  default List<Integer> getIntList(
+      @NonNull DriverOption option, @Nullable List<Integer> defaultValue) {
+    return isDefined(option) ? getIntList(option) : defaultValue;
+  }
+
   @NonNull
   DriverConfigProfile withIntList(@NonNull DriverOption option, @NonNull List<Integer> value);
 
   long getLong(@NonNull DriverOption option);
 
-  @NonNull
+  default long getLong(@NonNull DriverOption option, long defaultValue) {
+    return isDefined(option) ? getLong(option) : defaultValue;
+  }
+
   DriverConfigProfile withLong(@NonNull DriverOption option, long value);
 
   @NonNull
   List<Long> getLongList(@NonNull DriverOption option);
 
+  @Nullable
+  default List<Long> getLongList(@NonNull DriverOption option, @Nullable List<Long> defaultValue) {
+    return isDefined(option) ? getLongList(option) : defaultValue;
+  }
+
   @NonNull
   DriverConfigProfile withLongList(@NonNull DriverOption option, @NonNull List<Long> value);
 
   double getDouble(@NonNull DriverOption option);
+
+  default double getDouble(@NonNull DriverOption option, double defaultValue) {
+    return isDefined(option) ? getDouble(option) : defaultValue;
+  }
 
   @NonNull
   DriverConfigProfile withDouble(@NonNull DriverOption option, double value);
@@ -97,11 +130,22 @@ public interface DriverConfigProfile {
   @NonNull
   List<Double> getDoubleList(@NonNull DriverOption option);
 
+  @Nullable
+  default List<Double> getDoubleList(
+      @NonNull DriverOption option, @Nullable List<Double> defaultValue) {
+    return isDefined(option) ? getDoubleList(option) : defaultValue;
+  }
+
   @NonNull
   DriverConfigProfile withDoubleList(@NonNull DriverOption option, @NonNull List<Double> value);
 
   @NonNull
   String getString(@NonNull DriverOption option);
+
+  @Nullable
+  default String getString(@NonNull DriverOption option, @Nullable String defaultValue) {
+    return isDefined(option) ? getString(option) : defaultValue;
+  }
 
   @NonNull
   DriverConfigProfile withString(@NonNull DriverOption option, @NonNull String value);
@@ -109,11 +153,23 @@ public interface DriverConfigProfile {
   @NonNull
   List<String> getStringList(@NonNull DriverOption option);
 
+  @Nullable
+  default List<String> getStringList(
+      @NonNull DriverOption option, @Nullable List<String> defaultValue) {
+    return isDefined(option) ? getStringList(option) : defaultValue;
+  }
+
   @NonNull
   DriverConfigProfile withStringList(@NonNull DriverOption option, @NonNull List<String> value);
 
   @NonNull
   Map<String, String> getStringMap(@NonNull DriverOption option);
+
+  @Nullable
+  default Map<String, String> getStringMap(
+      @NonNull DriverOption option, @Nullable Map<String, String> defaultValue) {
+    return isDefined(option) ? getStringMap(option) : defaultValue;
+  }
 
   @NonNull
   DriverConfigProfile withStringMap(
@@ -126,6 +182,10 @@ public interface DriverConfigProfile {
    */
   long getBytes(@NonNull DriverOption option);
 
+  default long getBytes(@NonNull DriverOption option, long defaultValue) {
+    return isDefined(option) ? getBytes(option) : defaultValue;
+  }
+
   /** @see #getBytes(DriverOption) */
   @NonNull
   DriverConfigProfile withBytes(@NonNull DriverOption option, long value);
@@ -134,6 +194,11 @@ public interface DriverConfigProfile {
   @NonNull
   List<Long> getBytesList(DriverOption option);
 
+  @Nullable
+  default List<Long> getBytesList(DriverOption option, @Nullable List<Long> defaultValue) {
+    return isDefined(option) ? getBytesList(option) : defaultValue;
+  }
+
   /** @see #getBytes(DriverOption) */
   @NonNull
   DriverConfigProfile withBytesList(@NonNull DriverOption option, @NonNull List<Long> value);
@@ -141,11 +206,22 @@ public interface DriverConfigProfile {
   @NonNull
   Duration getDuration(@NonNull DriverOption option);
 
+  @Nullable
+  default Duration getDuration(@NonNull DriverOption option, @Nullable Duration defaultValue) {
+    return isDefined(option) ? getDuration(option) : defaultValue;
+  }
+
   @NonNull
   DriverConfigProfile withDuration(@NonNull DriverOption option, @NonNull Duration value);
 
   @NonNull
   List<Duration> getDurationList(@NonNull DriverOption option);
+
+  @Nullable
+  default List<Duration> getDurationList(
+      @NonNull DriverOption option, @Nullable List<Duration> defaultValue) {
+    return isDefined(option) ? getDurationList(option) : defaultValue;
+  }
 
   @NonNull
   DriverConfigProfile withDurationList(@NonNull DriverOption option, @NonNull List<Duration> value);

@@ -23,6 +23,7 @@ import com.datastax.oss.driver.api.core.session.Request;
 import com.datastax.oss.driver.api.core.session.SessionBuilder;
 import com.datastax.oss.driver.api.core.tracker.RequestTracker;
 import edu.umd.cs.findbugs.annotations.NonNull;
+import java.time.Duration;
 import net.jcip.annotations.ThreadSafe;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -82,27 +83,28 @@ public class RequestLogger implements RequestTracker {
       @NonNull Node node) {
 
     boolean successEnabled =
-        configProfile.getBoolean(DefaultDriverOption.REQUEST_LOGGER_SUCCESS_ENABLED);
-    boolean slowEnabled = configProfile.getBoolean(DefaultDriverOption.REQUEST_LOGGER_SLOW_ENABLED);
+        configProfile.getBoolean(DefaultDriverOption.REQUEST_LOGGER_SUCCESS_ENABLED, false);
+    boolean slowEnabled =
+        configProfile.getBoolean(DefaultDriverOption.REQUEST_LOGGER_SLOW_ENABLED, false);
     if (!successEnabled && !slowEnabled) {
       return;
     }
 
     long slowThresholdNanos =
-        configProfile.isDefined(DefaultDriverOption.REQUEST_LOGGER_SLOW_THRESHOLD)
-            ? configProfile.getDuration(DefaultDriverOption.REQUEST_LOGGER_SLOW_THRESHOLD).toNanos()
-            : Long.MAX_VALUE;
+        configProfile
+            .getDuration(DefaultDriverOption.REQUEST_LOGGER_SLOW_THRESHOLD, Duration.ofSeconds(1))
+            .toNanos();
     boolean isSlow = latencyNanos > slowThresholdNanos;
     if ((isSlow && !slowEnabled) || (!isSlow && !successEnabled)) {
       return;
     }
 
-    int maxQueryLength = configProfile.getInt(DefaultDriverOption.REQUEST_LOGGER_MAX_QUERY_LENGTH);
-    boolean showValues = configProfile.getBoolean(DefaultDriverOption.REQUEST_LOGGER_VALUES);
-    int maxValues =
-        showValues ? configProfile.getInt(DefaultDriverOption.REQUEST_LOGGER_MAX_VALUES) : 0;
+    int maxQueryLength =
+        configProfile.getInt(DefaultDriverOption.REQUEST_LOGGER_MAX_QUERY_LENGTH, 500);
+    boolean showValues = configProfile.getBoolean(DefaultDriverOption.REQUEST_LOGGER_VALUES, false);
+    int maxValues = configProfile.getInt(DefaultDriverOption.REQUEST_LOGGER_MAX_VALUES, 0);
     int maxValueLength =
-        showValues ? configProfile.getInt(DefaultDriverOption.REQUEST_LOGGER_MAX_VALUE_LENGTH) : 0;
+        configProfile.getInt(DefaultDriverOption.REQUEST_LOGGER_MAX_VALUE_LENGTH, 0);
 
     logSuccess(
         request, latencyNanos, isSlow, node, maxQueryLength, showValues, maxValues, maxValueLength);
@@ -116,18 +118,19 @@ public class RequestLogger implements RequestTracker {
       @NonNull DriverConfigProfile configProfile,
       Node node) {
 
-    if (!configProfile.getBoolean(DefaultDriverOption.REQUEST_LOGGER_ERROR_ENABLED)) {
+    if (!configProfile.getBoolean(DefaultDriverOption.REQUEST_LOGGER_ERROR_ENABLED, false)) {
       return;
     }
 
-    int maxQueryLength = configProfile.getInt(DefaultDriverOption.REQUEST_LOGGER_MAX_QUERY_LENGTH);
-    boolean showValues = configProfile.getBoolean(DefaultDriverOption.REQUEST_LOGGER_VALUES);
-    int maxValues =
-        showValues ? configProfile.getInt(DefaultDriverOption.REQUEST_LOGGER_MAX_VALUES) : 0;
+    int maxQueryLength =
+        configProfile.getInt(DefaultDriverOption.REQUEST_LOGGER_MAX_QUERY_LENGTH, 500);
+    boolean showValues = configProfile.getBoolean(DefaultDriverOption.REQUEST_LOGGER_VALUES, false);
+    int maxValues = configProfile.getInt(DefaultDriverOption.REQUEST_LOGGER_MAX_VALUES, 0);
+
     int maxValueLength =
-        showValues ? configProfile.getInt(DefaultDriverOption.REQUEST_LOGGER_MAX_VALUE_LENGTH) : 0;
+        configProfile.getInt(DefaultDriverOption.REQUEST_LOGGER_MAX_VALUE_LENGTH, 0);
     boolean showStackTraces =
-        configProfile.getBoolean(DefaultDriverOption.REQUEST_LOGGER_STACK_TRACES);
+        configProfile.getBoolean(DefaultDriverOption.REQUEST_LOGGER_STACK_TRACES, false);
 
     logError(
         request,

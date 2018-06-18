@@ -105,6 +105,20 @@ public class RequestLoggerIT {
               "profiles.no-traces.advanced.request-tracker.logs.show-stack-traces = false")
           .build();
 
+  @Rule
+  public SessionRule<CqlSession> sessionRuleDefaults =
+      SessionRule.builder(simulacronRule)
+          .withOptions(
+              "advanced.request-tracker.class = com.datastax.oss.driver.internal.core.tracker.RequestLogger",
+              "advanced.request-tracker.logs.success.enabled = true",
+              "advanced.request-tracker.logs.error.enabled = true",
+              "profiles.low-threshold.advanced.request-tracker.logs.slow.threshold = 1 nanosecond",
+              "profiles.no-logs.advanced.request-tracker.logs.success.enabled = false",
+              "profiles.no-logs.advanced.request-tracker.logs.slow.enabled = false",
+              "profiles.no-logs.advanced.request-tracker.logs.error.enabled = false",
+              "profiles.no-traces.advanced.request-tracker.logs.show-stack-traces = false")
+          .build();
+
   @Captor private ArgumentCaptor<ILoggingEvent> loggingEventCaptor;
   @Mock private Appender<ILoggingEvent> appender;
   private Logger logger;
@@ -139,6 +153,20 @@ public class RequestLoggerIT {
   }
 
   @Test
+  public void should_log_successful_request_with_defaults() {
+    // Given
+    simulacronRule.cluster().prime(when(QUERY).then(rows().row("release_version", "3.0.0")));
+
+    // When
+    sessionRuleDefaults.session().execute(QUERY);
+
+    // Then
+    Mockito.verify(appender, timeout(500)).doAppend(loggingEventCaptor.capture());
+    assertThat(loggingEventCaptor.getValue().getFormattedMessage())
+        .contains("Success", "[0 values]", QUERY);
+  }
+
+  @Test
   public void should_log_failed_request_with_stack_trace() {
     // Given
     simulacronRule.cluster().prime(when(QUERY).then(serverError("test")));
@@ -158,6 +186,26 @@ public class RequestLoggerIT {
         .contains("Error", "[0 values]", QUERY)
         .doesNotContain(ServerError.class.getName());
     assertThat(log.getThrowableProxy().getClassName()).isEqualTo(ServerError.class.getName());
+  }
+
+  @Test
+  public void should_log_failed_request_with_stack_trace_with_defaults() {
+    // Given
+    simulacronRule.cluster().prime(when(QUERY).then(serverError("test")));
+
+    // When
+    try {
+      sessionRuleDefaults.session().execute(QUERY);
+      fail("Expected a ServerError");
+    } catch (ServerError error) {
+      // expected
+    }
+
+    // Then
+    Mockito.verify(appender, timeout(500)).doAppend(loggingEventCaptor.capture());
+    ILoggingEvent log = loggingEventCaptor.getValue();
+    assertThat(log.getFormattedMessage())
+        .contains("Error", "[0 values]", QUERY, ServerError.class.getName());
   }
 
   @Test
