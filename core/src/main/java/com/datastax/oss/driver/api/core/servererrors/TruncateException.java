@@ -20,6 +20,7 @@ import com.datastax.oss.driver.api.core.DriverException;
 import com.datastax.oss.driver.api.core.metadata.Node;
 import com.datastax.oss.driver.api.core.retry.RetryPolicy;
 import com.datastax.oss.driver.api.core.session.Request;
+import edu.umd.cs.findbugs.annotations.NonNull;
 
 /**
  * An error during a truncation operation.
@@ -31,14 +32,16 @@ import com.datastax.oss.driver.api.core.session.Request;
  */
 public class TruncateException extends QueryExecutionException {
 
-  public TruncateException(Node coordinator, String message) {
+  public TruncateException(@NonNull Node coordinator, @NonNull String message) {
     this(coordinator, message, false);
   }
 
-  private TruncateException(Node coordinator, String message, boolean writableStackTrace) {
+  private TruncateException(
+      @NonNull Node coordinator, @NonNull String message, boolean writableStackTrace) {
     super(coordinator, message, writableStackTrace);
   }
 
+  @NonNull
   @Override
   public DriverException copy() {
     return new TruncateException(getCoordinator(), getMessage(), true);

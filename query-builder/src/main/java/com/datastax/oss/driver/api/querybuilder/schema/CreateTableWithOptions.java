@@ -16,10 +16,12 @@
 package com.datastax.oss.driver.api.querybuilder.schema;
 
 import com.datastax.oss.driver.api.querybuilder.BuildableQuery;
+import edu.umd.cs.findbugs.annotations.NonNull;
 
 public interface CreateTableWithOptions
     extends BuildableQuery, RelationStructure<CreateTableWithOptions> {
 
   /** Enables COMPACT STORAGE in the CREATE TABLE statement. */
+  @NonNull
   CreateTableWithOptions withCompactStorage();
 }

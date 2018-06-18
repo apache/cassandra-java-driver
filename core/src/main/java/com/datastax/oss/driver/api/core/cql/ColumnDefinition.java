@@ -18,6 +18,7 @@ package com.datastax.oss.driver.api.core.cql;
 import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.detach.Detachable;
 import com.datastax.oss.driver.api.core.type.DataType;
+import edu.umd.cs.findbugs.annotations.NonNull;
 
 /**
  * Metadata about a CQL column.
@@ -28,11 +29,15 @@ import com.datastax.oss.driver.api.core.type.DataType;
  */
 public interface ColumnDefinition extends Detachable {
 
+  @NonNull
   CqlIdentifier getKeyspace();
 
+  @NonNull
   CqlIdentifier getTable();
 
+  @NonNull
   CqlIdentifier getName();
 
+  @NonNull
   DataType getType();
 }

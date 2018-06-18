@@ -16,22 +16,27 @@
 package com.datastax.oss.driver.api.querybuilder.schema.compaction;
 
 import com.datastax.oss.driver.api.querybuilder.schema.OptionProvider;
+import edu.umd.cs.findbugs.annotations.NonNull;
 
 public interface CompactionStrategy<SelfT extends CompactionStrategy<SelfT>>
     extends OptionProvider<SelfT> {
 
+  @NonNull
   default SelfT withEnabled(boolean enabled) {
     return withOption("enabled", enabled);
   }
 
+  @NonNull
   default SelfT withTombstoneCompactionIntervalInSeconds(int seconds) {
     return withOption("tombstone_compaction_interval", seconds);
   }
 
+  @NonNull
   default SelfT withTombstoneThreshold(double threshold) {
     return withOption("tombstone_threshold", threshold);
   }
 
+  @NonNull
   default SelfT withUncheckedTombstoneCompaction(boolean enabled) {
     return withOption("unchecked_tombstone_compaction", enabled);
   }

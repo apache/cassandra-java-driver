@@ -15,10 +15,13 @@
  */
 package com.datastax.oss.driver.api.querybuilder.schema;
 
+import edu.umd.cs.findbugs.annotations.NonNull;
+
 public interface CreateKeyspaceStart extends KeyspaceReplicationOptions<CreateKeyspace> {
   /**
    * Adds IF NOT EXISTS to the create keyspace specification. This indicates that the keyspace
    * should not be created it already exists.
    */
+  @NonNull
   CreateKeyspaceStart ifNotExists();
 }

@@ -20,6 +20,7 @@ import com.datastax.oss.driver.api.core.metadata.schema.FunctionMetadata;
 import com.datastax.oss.driver.api.core.metadata.schema.FunctionSignature;
 import com.datastax.oss.driver.api.core.type.DataType;
 import com.datastax.oss.driver.shaded.guava.common.base.Preconditions;
+import edu.umd.cs.findbugs.annotations.NonNull;
 import java.util.List;
 import java.util.Objects;
 import net.jcip.annotations.Immutable;
@@ -27,22 +28,22 @@ import net.jcip.annotations.Immutable;
 @Immutable
 public class DefaultFunctionMetadata implements FunctionMetadata {
 
-  private final CqlIdentifier keyspace;
-  private final FunctionSignature signature;
-  private final List<CqlIdentifier> parameterNames;
-  private final String body;
+  @NonNull private final CqlIdentifier keyspace;
+  @NonNull private final FunctionSignature signature;
+  @NonNull private final List<CqlIdentifier> parameterNames;
+  @NonNull private final String body;
   private final boolean calledOnNullInput;
-  private final String language;
-  private final DataType returnType;
+  @NonNull private final String language;
+  @NonNull private final DataType returnType;
 
   public DefaultFunctionMetadata(
-      CqlIdentifier keyspace,
-      FunctionSignature signature,
-      List<CqlIdentifier> parameterNames,
-      String body,
+      @NonNull CqlIdentifier keyspace,
+      @NonNull FunctionSignature signature,
+      @NonNull List<CqlIdentifier> parameterNames,
+      @NonNull String body,
       boolean calledOnNullInput,
-      String language,
-      DataType returnType) {
+      @NonNull String language,
+      @NonNull DataType returnType) {
     Preconditions.checkArgument(
         signature.getParameterTypes().size() == parameterNames.size(),
         "Number of parameter names should match number of types in the signature (got %s and %s)",
@@ -57,21 +58,25 @@ public class DefaultFunctionMetadata implements FunctionMetadata {
     this.returnType = returnType;
   }
 
+  @NonNull
   @Override
   public CqlIdentifier getKeyspace() {
     return keyspace;
   }
 
+  @NonNull
   @Override
   public FunctionSignature getSignature() {
     return signature;
   }
 
+  @NonNull
   @Override
   public List<CqlIdentifier> getParameterNames() {
     return parameterNames;
   }
 
+  @NonNull
   @Override
   public String getBody() {
     return body;
@@ -82,11 +87,13 @@ public class DefaultFunctionMetadata implements FunctionMetadata {
     return calledOnNullInput;
   }
 
+  @NonNull
   @Override
   public String getLanguage() {
     return language;
   }
 
+  @NonNull
   @Override
   public DataType getReturnType() {
     return returnType;

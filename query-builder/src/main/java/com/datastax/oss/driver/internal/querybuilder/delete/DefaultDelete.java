@@ -28,6 +28,8 @@ import com.datastax.oss.driver.internal.querybuilder.CqlHelper;
 import com.datastax.oss.driver.internal.querybuilder.ImmutableCollections;
 import com.datastax.oss.driver.internal.querybuilder.select.ElementSelector;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableList;
+import edu.umd.cs.findbugs.annotations.NonNull;
+import edu.umd.cs.findbugs.annotations.Nullable;
 import net.jcip.annotations.Immutable;
 
 @Immutable
@@ -41,18 +43,18 @@ public class DefaultDelete implements DeleteSelection, Delete {
   private final boolean ifExists;
   private final ImmutableList<Condition> conditions;
 
-  public DefaultDelete(CqlIdentifier keyspace, CqlIdentifier table) {
+  public DefaultDelete(@Nullable CqlIdentifier keyspace, @NonNull CqlIdentifier table) {
     this(keyspace, table, ImmutableList.of(), ImmutableList.of(), null, false, ImmutableList.of());
   }
 
   public DefaultDelete(
-      CqlIdentifier keyspace,
-      CqlIdentifier table,
-      ImmutableList<Selector> selectors,
-      ImmutableList<Relation> relations,
-      Object timestamp,
+      @Nullable CqlIdentifier keyspace,
+      @NonNull CqlIdentifier table,
+      @NonNull ImmutableList<Selector> selectors,
+      @NonNull ImmutableList<Relation> relations,
+      @Nullable Object timestamp,
       boolean ifExists,
-      ImmutableList<Condition> conditions) {
+      @NonNull ImmutableList<Condition> conditions) {
     this.keyspace = keyspace;
     this.table = table;
     this.selectors = selectors;
@@ -62,69 +64,82 @@ public class DefaultDelete implements DeleteSelection, Delete {
     this.conditions = conditions;
   }
 
+  @NonNull
   @Override
-  public DeleteSelection selector(Selector selector) {
+  public DeleteSelection selector(@NonNull Selector selector) {
     return withSelectors(ImmutableCollections.append(selectors, selector));
   }
 
+  @NonNull
   @Override
-  public DeleteSelection selectors(Iterable<Selector> additionalSelectors) {
+  public DeleteSelection selectors(@NonNull Iterable<Selector> additionalSelectors) {
     return withSelectors(ImmutableCollections.concat(selectors, additionalSelectors));
   }
 
-  public DeleteSelection withSelectors(ImmutableList<Selector> newSelectors) {
+  @NonNull
+  public DeleteSelection withSelectors(@NonNull ImmutableList<Selector> newSelectors) {
     return new DefaultDelete(
         keyspace, table, newSelectors, relations, timestamp, ifExists, conditions);
   }
 
+  @NonNull
   @Override
-  public Delete where(Relation relation) {
+  public Delete where(@NonNull Relation relation) {
     return withRelations(ImmutableCollections.append(relations, relation));
   }
 
+  @NonNull
   @Override
-  public Delete where(Iterable<Relation> additionalRelations) {
+  public Delete where(@NonNull Iterable<Relation> additionalRelations) {
     return withRelations(ImmutableCollections.concat(relations, additionalRelations));
   }
 
-  public Delete withRelations(ImmutableList<Relation> newRelations) {
+  @NonNull
+  public Delete withRelations(@NonNull ImmutableList<Relation> newRelations) {
     return new DefaultDelete(
         keyspace, table, selectors, newRelations, timestamp, ifExists, conditions);
   }
 
+  @NonNull
   @Override
   public DeleteSelection usingTimestamp(long newTimestamp) {
     return new DefaultDelete(
         keyspace, table, selectors, relations, newTimestamp, ifExists, conditions);
   }
 
+  @NonNull
   @Override
-  public DeleteSelection usingTimestamp(BindMarker newTimestamp) {
+  public DeleteSelection usingTimestamp(@Nullable BindMarker newTimestamp) {
     return new DefaultDelete(
         keyspace, table, selectors, relations, newTimestamp, ifExists, conditions);
   }
 
+  @NonNull
   @Override
   public Delete ifExists() {
     return new DefaultDelete(
         keyspace, table, selectors, relations, timestamp, true, ImmutableList.of());
   }
 
+  @NonNull
   @Override
-  public Delete if_(Condition condition) {
+  public Delete if_(@NonNull Condition condition) {
     return withConditions(ImmutableCollections.append(conditions, condition));
   }
 
+  @NonNull
   @Override
-  public Delete if_(Iterable<Condition> additionalConditions) {
+  public Delete if_(@NonNull Iterable<Condition> additionalConditions) {
     return withConditions(ImmutableCollections.concat(conditions, additionalConditions));
   }
 
-  public Delete withConditions(ImmutableList<Condition> newConditions) {
+  @NonNull
+  public Delete withConditions(@NonNull ImmutableList<Condition> newConditions) {
     return new DefaultDelete(
         keyspace, table, selectors, relations, timestamp, false, newConditions);
   }
 
+  @NonNull
   @Override
   public String asCql() {
     StringBuilder builder = new StringBuilder("DELETE");
@@ -153,11 +168,13 @@ public class DefaultDelete implements DeleteSelection, Delete {
     return builder.toString();
   }
 
+  @NonNull
   @Override
   public SimpleStatement build() {
     return builder().build();
   }
 
+  @NonNull
   @Override
   public SimpleStatementBuilder builder() {
     return SimpleStatement.builder(asCql()).withIdempotence(isIdempotent());
@@ -184,22 +201,27 @@ public class DefaultDelete implements DeleteSelection, Delete {
     }
   }
 
+  @Nullable
   public CqlIdentifier getKeyspace() {
     return keyspace;
   }
 
+  @NonNull
   public CqlIdentifier getTable() {
     return table;
   }
 
+  @NonNull
   public ImmutableList<Selector> getSelectors() {
     return selectors;
   }
 
+  @NonNull
   public ImmutableList<Relation> getRelations() {
     return relations;
   }
 
+  @Nullable
   public Object getTimestamp() {
     return timestamp;
   }

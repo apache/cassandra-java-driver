@@ -20,6 +20,7 @@ import com.datastax.oss.driver.api.core.type.DataType;
 import com.datastax.oss.driver.api.core.type.DataTypes;
 import com.datastax.oss.driver.api.querybuilder.BuildableQuery;
 import com.datastax.oss.driver.api.querybuilder.SchemaBuilderDsl;
+import edu.umd.cs.findbugs.annotations.NonNull;
 
 public interface AlterTypeStart extends AlterTypeRenameField {
 
@@ -29,13 +30,15 @@ public interface AlterTypeStart extends AlterTypeRenameField {
    * <p>To create the data type, use the constants and static methods in {@link DataTypes}, or
    * {@link SchemaBuilderDsl#udt(CqlIdentifier, boolean)}.
    */
-  BuildableQuery alterField(CqlIdentifier fieldName, DataType dataType);
+  @NonNull
+  BuildableQuery alterField(@NonNull CqlIdentifier fieldName, @NonNull DataType dataType);
 
   /**
    * Shortcut for {@link #alterField(CqlIdentifier,DataType)
    * alterField(CqlIdentifier.fromCql(columnName,dataType)}.
    */
-  default BuildableQuery alterField(String fieldName, DataType dataType) {
+  @NonNull
+  default BuildableQuery alterField(@NonNull String fieldName, @NonNull DataType dataType) {
     return alterField(CqlIdentifier.fromCql(fieldName), dataType);
   }
 
@@ -45,13 +48,15 @@ public interface AlterTypeStart extends AlterTypeRenameField {
    * <p>To create the data type, use the constants and static methods in {@link DataTypes}, or
    * {@link SchemaBuilderDsl#udt(CqlIdentifier, boolean)}.
    */
-  BuildableQuery addField(CqlIdentifier fieldName, DataType dataType);
+  @NonNull
+  BuildableQuery addField(@NonNull CqlIdentifier fieldName, @NonNull DataType dataType);
 
   /**
    * Shortcut for {@link #addField(CqlIdentifier, DataType) addField(CqlIdentifier.asCql(fieldName),
    * dataType)}.
    */
-  default BuildableQuery addField(String fieldName, DataType dataType) {
+  @NonNull
+  default BuildableQuery addField(@NonNull String fieldName, @NonNull DataType dataType) {
     return addField(CqlIdentifier.fromCql(fieldName), dataType);
   }
 }

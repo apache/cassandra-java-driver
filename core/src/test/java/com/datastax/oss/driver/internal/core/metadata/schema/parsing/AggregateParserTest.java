@@ -26,6 +26,7 @@ import com.datastax.oss.driver.internal.core.type.codec.registry.DefaultCodecReg
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableList;
 import com.datastax.oss.protocol.internal.util.Bytes;
 import java.util.Collections;
+import java.util.Optional;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mockito;
@@ -76,12 +77,17 @@ public class AggregateParserTest extends SchemaParserTestBase {
         .containsExactly(DataTypes.INT, DataTypes.INT);
     assertThat(aggregate.getStateType()).isEqualTo(DataTypes.INT);
 
-    FunctionSignature finalFuncSignature = aggregate.getFinalFuncSignature();
-    assertThat(finalFuncSignature.getName().asInternal()).isEqualTo("to_string");
-    assertThat(finalFuncSignature.getParameterTypes()).containsExactly(DataTypes.INT);
+    Optional<FunctionSignature> finalFuncSignature = aggregate.getFinalFuncSignature();
+    assertThat(finalFuncSignature).isPresent();
+    assertThat(finalFuncSignature)
+        .hasValueSatisfying(
+            signature -> {
+              assertThat(signature.getName().asInternal()).isEqualTo("to_string");
+              assertThat(signature.getParameterTypes()).containsExactly(DataTypes.INT);
+            });
     assertThat(aggregate.getReturnType()).isEqualTo(DataTypes.TEXT);
 
-    assertThat(aggregate.getInitCond()).isInstanceOf(Integer.class).isEqualTo(0);
+    assertThat(aggregate.getInitCond().get()).isInstanceOf(Integer.class).isEqualTo(0);
   }
 
   @Test
@@ -100,11 +106,16 @@ public class AggregateParserTest extends SchemaParserTestBase {
         .containsExactly(DataTypes.INT, DataTypes.INT);
     assertThat(aggregate.getStateType()).isEqualTo(DataTypes.INT);
 
-    FunctionSignature finalFuncSignature = aggregate.getFinalFuncSignature();
-    assertThat(finalFuncSignature.getName().asInternal()).isEqualTo("to_string");
-    assertThat(finalFuncSignature.getParameterTypes()).containsExactly(DataTypes.INT);
+    Optional<FunctionSignature> finalFuncSignature = aggregate.getFinalFuncSignature();
+    assertThat(finalFuncSignature).isPresent();
+    assertThat(finalFuncSignature)
+        .hasValueSatisfying(
+            signature -> {
+              assertThat(signature.getName().asInternal()).isEqualTo("to_string");
+              assertThat(signature.getParameterTypes()).containsExactly(DataTypes.INT);
+            });
     assertThat(aggregate.getReturnType()).isEqualTo(DataTypes.TEXT);
 
-    assertThat(aggregate.getInitCond()).isInstanceOf(Integer.class).isEqualTo(0);
+    assertThat(aggregate.getInitCond().get()).isInstanceOf(Integer.class).isEqualTo(0);
   }
 }

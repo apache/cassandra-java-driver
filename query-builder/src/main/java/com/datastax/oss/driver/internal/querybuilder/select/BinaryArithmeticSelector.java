@@ -19,6 +19,8 @@ import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.querybuilder.select.Selector;
 import com.datastax.oss.driver.internal.querybuilder.ArithmeticOperator;
 import com.datastax.oss.driver.shaded.guava.common.base.Preconditions;
+import edu.umd.cs.findbugs.annotations.NonNull;
+import edu.umd.cs.findbugs.annotations.Nullable;
 import java.util.Objects;
 import net.jcip.annotations.Immutable;
 
@@ -29,12 +31,16 @@ public class BinaryArithmeticSelector extends ArithmeticSelector {
   private final Selector right;
   private final CqlIdentifier alias;
 
-  public BinaryArithmeticSelector(ArithmeticOperator operator, Selector left, Selector right) {
+  public BinaryArithmeticSelector(
+      @NonNull ArithmeticOperator operator, @NonNull Selector left, @NonNull Selector right) {
     this(operator, left, right, null);
   }
 
   public BinaryArithmeticSelector(
-      ArithmeticOperator operator, Selector left, Selector right, CqlIdentifier alias) {
+      @NonNull ArithmeticOperator operator,
+      @NonNull Selector left,
+      @NonNull Selector right,
+      @Nullable CqlIdentifier alias) {
     super(operator);
     Preconditions.checkNotNull(left);
     Preconditions.checkNotNull(right);
@@ -43,13 +49,14 @@ public class BinaryArithmeticSelector extends ArithmeticSelector {
     this.alias = alias;
   }
 
+  @NonNull
   @Override
-  public Selector as(CqlIdentifier alias) {
+  public Selector as(@NonNull CqlIdentifier alias) {
     return new BinaryArithmeticSelector(operator, left, right, alias);
   }
 
   @Override
-  public void appendTo(StringBuilder builder) {
+  public void appendTo(@NonNull StringBuilder builder) {
     appendAndMaybeParenthesize(operator.getPrecedenceLeft(), left, builder);
     builder.append(operator.getSymbol());
     appendAndMaybeParenthesize(operator.getPrecedenceRight(), right, builder);
@@ -58,14 +65,17 @@ public class BinaryArithmeticSelector extends ArithmeticSelector {
     }
   }
 
+  @NonNull
   public Selector getLeft() {
     return left;
   }
 
+  @NonNull
   public Selector getRight() {
     return right;
   }
 
+  @Nullable
   @Override
   public CqlIdentifier getAlias() {
     return alias;

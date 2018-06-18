@@ -15,6 +15,9 @@
  */
 package com.datastax.oss.driver.api.core;
 
+import edu.umd.cs.findbugs.annotations.NonNull;
+import edu.umd.cs.findbugs.annotations.Nullable;
+
 /**
  * Base class for all exceptions thrown by the driver.
  *
@@ -33,7 +36,9 @@ package com.datastax.oss.driver.api.core;
  * have a stack trace.
  */
 public abstract class DriverException extends RuntimeException {
-  protected DriverException(String message, Throwable cause, boolean writableStackTrace) {
+
+  protected DriverException(
+      @Nullable String message, @Nullable Throwable cause, boolean writableStackTrace) {
     super(message, cause, true, writableStackTrace);
   }
 
@@ -50,5 +55,6 @@ public abstract class DriverException extends RuntimeException {
    * more user-friendly stack trace (that includes the line in the user code where the driver
    * rethrew the error).
    */
+  @NonNull
   public abstract DriverException copy();
 }

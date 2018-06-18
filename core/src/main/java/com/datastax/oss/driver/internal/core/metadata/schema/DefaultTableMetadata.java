@@ -20,6 +20,7 @@ import com.datastax.oss.driver.api.core.metadata.schema.ClusteringOrder;
 import com.datastax.oss.driver.api.core.metadata.schema.ColumnMetadata;
 import com.datastax.oss.driver.api.core.metadata.schema.IndexMetadata;
 import com.datastax.oss.driver.api.core.metadata.schema.TableMetadata;
+import edu.umd.cs.findbugs.annotations.NonNull;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -29,26 +30,26 @@ import net.jcip.annotations.Immutable;
 @Immutable
 public class DefaultTableMetadata implements TableMetadata {
 
-  private final CqlIdentifier keyspace;
-  private final CqlIdentifier name;
-  private final UUID id;
+  @NonNull private final CqlIdentifier keyspace;
+  @NonNull private final CqlIdentifier name;
+  @NonNull private final UUID id;
   private final boolean compactStorage;
-  private final List<ColumnMetadata> partitionKey;
-  private final Map<ColumnMetadata, ClusteringOrder> clusteringColumns;
-  private final Map<CqlIdentifier, ColumnMetadata> columns;
-  private final Map<CqlIdentifier, Object> options;
-  private final Map<CqlIdentifier, IndexMetadata> indexes;
+  @NonNull private final List<ColumnMetadata> partitionKey;
+  @NonNull private final Map<ColumnMetadata, ClusteringOrder> clusteringColumns;
+  @NonNull private final Map<CqlIdentifier, ColumnMetadata> columns;
+  @NonNull private final Map<CqlIdentifier, Object> options;
+  @NonNull private final Map<CqlIdentifier, IndexMetadata> indexes;
 
   public DefaultTableMetadata(
-      CqlIdentifier keyspace,
-      CqlIdentifier name,
-      UUID id,
+      @NonNull CqlIdentifier keyspace,
+      @NonNull CqlIdentifier name,
+      @NonNull UUID id,
       boolean compactStorage,
-      List<ColumnMetadata> partitionKey,
-      Map<ColumnMetadata, ClusteringOrder> clusteringColumns,
-      Map<CqlIdentifier, ColumnMetadata> columns,
-      Map<CqlIdentifier, Object> options,
-      Map<CqlIdentifier, IndexMetadata> indexes) {
+      @NonNull List<ColumnMetadata> partitionKey,
+      @NonNull Map<ColumnMetadata, ClusteringOrder> clusteringColumns,
+      @NonNull Map<CqlIdentifier, ColumnMetadata> columns,
+      @NonNull Map<CqlIdentifier, Object> options,
+      @NonNull Map<CqlIdentifier, IndexMetadata> indexes) {
     this.keyspace = keyspace;
     this.name = name;
     this.id = id;
@@ -60,16 +61,19 @@ public class DefaultTableMetadata implements TableMetadata {
     this.indexes = indexes;
   }
 
+  @NonNull
   @Override
   public CqlIdentifier getKeyspace() {
     return keyspace;
   }
 
+  @NonNull
   @Override
   public CqlIdentifier getName() {
     return name;
   }
 
+  @NonNull
   @Override
   public UUID getId() {
     return id;
@@ -80,26 +84,31 @@ public class DefaultTableMetadata implements TableMetadata {
     return compactStorage;
   }
 
+  @NonNull
   @Override
   public List<ColumnMetadata> getPartitionKey() {
     return partitionKey;
   }
 
+  @NonNull
   @Override
   public Map<ColumnMetadata, ClusteringOrder> getClusteringColumns() {
     return clusteringColumns;
   }
 
+  @NonNull
   @Override
   public Map<CqlIdentifier, ColumnMetadata> getColumns() {
     return columns;
   }
 
+  @NonNull
   @Override
   public Map<CqlIdentifier, Object> getOptions() {
     return options;
   }
 
+  @NonNull
   @Override
   public Map<CqlIdentifier, IndexMetadata> getIndexes() {
     return indexes;

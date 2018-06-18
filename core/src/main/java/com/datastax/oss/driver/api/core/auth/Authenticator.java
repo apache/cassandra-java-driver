@@ -15,6 +15,8 @@
  */
 package com.datastax.oss.driver.api.core.auth;
 
+import edu.umd.cs.findbugs.annotations.NonNull;
+import edu.umd.cs.findbugs.annotations.Nullable;
 import java.nio.ByteBuffer;
 import java.util.concurrent.CompletionStage;
 
@@ -55,8 +57,9 @@ public interface Authenticator {
    * Obtain an initial response token for initializing the SASL handshake.
    *
    * @return a completion stage that will complete with the initial response to send to the server
-   *     (which may be null).
+   *     (which may be {@code null}).
    */
+  @NonNull
   CompletionStage<ByteBuffer> initialResponse();
 
   /**
@@ -67,7 +70,8 @@ public interface Authenticator {
    * @return a completion stage that will complete with the updated SASL token (which may be null to
    *     indicate the client requires no further action).
    */
-  CompletionStage<ByteBuffer> evaluateChallenge(ByteBuffer challenge);
+  @NonNull
+  CompletionStage<ByteBuffer> evaluateChallenge(@Nullable ByteBuffer challenge);
 
   /**
    * Called when authentication is successful with the last information optionally sent by the
@@ -79,5 +83,6 @@ public interface Authenticator {
    * @return a completion stage that completes when the authenticator is done processing this
    *     response.
    */
-  CompletionStage<Void> onAuthenticationSuccess(ByteBuffer token);
+  @NonNull
+  CompletionStage<Void> onAuthenticationSuccess(@Nullable ByteBuffer token);
 }

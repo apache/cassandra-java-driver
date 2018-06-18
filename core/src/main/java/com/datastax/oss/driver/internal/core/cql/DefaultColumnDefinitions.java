@@ -20,6 +20,7 @@ import com.datastax.oss.driver.api.core.cql.ColumnDefinition;
 import com.datastax.oss.driver.api.core.cql.ColumnDefinitions;
 import com.datastax.oss.driver.api.core.detach.AttachmentPoint;
 import com.datastax.oss.driver.internal.core.data.IdentifierIndex;
+import edu.umd.cs.findbugs.annotations.NonNull;
 import java.io.InvalidObjectException;
 import java.io.ObjectInputStream;
 import java.io.Serializable;
@@ -51,33 +52,35 @@ public class DefaultColumnDefinitions implements ColumnDefinitions, Serializable
     return definitions.size();
   }
 
+  @NonNull
   @Override
   public ColumnDefinition get(int i) {
     return definitions.get(i);
   }
 
+  @NonNull
   @Override
   public Iterator<ColumnDefinition> iterator() {
     return definitions.iterator();
   }
 
   @Override
-  public boolean contains(String name) {
+  public boolean contains(@NonNull String name) {
     return index.firstIndexOf(name) >= 0;
   }
 
   @Override
-  public boolean contains(CqlIdentifier id) {
+  public boolean contains(@NonNull CqlIdentifier id) {
     return index.firstIndexOf(id) >= 0;
   }
 
   @Override
-  public int firstIndexOf(String name) {
+  public int firstIndexOf(@NonNull String name) {
     return index.firstIndexOf(name);
   }
 
   @Override
-  public int firstIndexOf(CqlIdentifier id) {
+  public int firstIndexOf(@NonNull CqlIdentifier id) {
     return index.firstIndexOf(id);
   }
 
@@ -87,7 +90,7 @@ public class DefaultColumnDefinitions implements ColumnDefinitions, Serializable
   }
 
   @Override
-  public void attach(AttachmentPoint attachmentPoint) {
+  public void attach(@NonNull AttachmentPoint attachmentPoint) {
     for (ColumnDefinition definition : definitions) {
       definition.attach(attachmentPoint);
     }

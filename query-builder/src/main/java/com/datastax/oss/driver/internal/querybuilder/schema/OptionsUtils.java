@@ -15,11 +15,12 @@
  */
 package com.datastax.oss.driver.internal.querybuilder.schema;
 
+import edu.umd.cs.findbugs.annotations.NonNull;
 import java.util.Map;
 
 public class OptionsUtils {
-
-  public static String buildOptions(Map<String, Object> options, boolean first) {
+  @NonNull
+  public static String buildOptions(@NonNull Map<String, Object> options, boolean first) {
     StringBuilder builder = new StringBuilder();
     for (Map.Entry<String, Object> option : options.entrySet()) {
       if (first) {
@@ -34,7 +35,8 @@ public class OptionsUtils {
     return builder.toString();
   }
 
-  private static String extractOptionValue(Object option) {
+  @NonNull
+  private static String extractOptionValue(@NonNull Object option) {
     StringBuilder optionValue = new StringBuilder();
     if (option instanceof String) {
       optionValue.append("'").append((String) option).append("'");

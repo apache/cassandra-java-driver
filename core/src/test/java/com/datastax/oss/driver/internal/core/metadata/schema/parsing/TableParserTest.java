@@ -152,7 +152,7 @@ public class TableParserTest extends SchemaParserTestBase {
     assertThat(index.getKeyspace().asInternal()).isEqualTo("ks");
     assertThat(index.getTable().asInternal()).isEqualTo("foo");
     assertThat(index.getName().asInternal()).isEqualTo("foo_v_idx");
-    assertThat(index.getClassName()).isNull();
+    assertThat(index.getClassName()).isNotPresent();
     assertThat(index.getKind()).isEqualTo(IndexKind.COMPOSITES);
     assertThat(index.getTarget()).isEqualTo("v");
     assertThat(

@@ -20,6 +20,8 @@ import com.datastax.oss.driver.api.core.type.DataType;
 import com.datastax.oss.driver.api.core.type.DataTypes;
 import com.datastax.oss.driver.api.core.type.codec.PrimitiveBooleanCodec;
 import com.datastax.oss.driver.api.core.type.reflect.GenericType;
+import edu.umd.cs.findbugs.annotations.NonNull;
+import edu.umd.cs.findbugs.annotations.Nullable;
 import java.nio.ByteBuffer;
 import net.jcip.annotations.ThreadSafe;
 
@@ -29,33 +31,37 @@ public class BooleanCodec implements PrimitiveBooleanCodec {
   private static final ByteBuffer TRUE = ByteBuffer.wrap(new byte[] {1});
   private static final ByteBuffer FALSE = ByteBuffer.wrap(new byte[] {0});
 
+  @NonNull
   @Override
   public GenericType<Boolean> getJavaType() {
     return GenericType.BOOLEAN;
   }
 
+  @NonNull
   @Override
   public DataType getCqlType() {
     return DataTypes.BOOLEAN;
   }
 
   @Override
-  public boolean accepts(Object value) {
+  public boolean accepts(@NonNull Object value) {
     return value instanceof Boolean;
   }
 
   @Override
-  public boolean accepts(Class<?> javaClass) {
+  public boolean accepts(@NonNull Class<?> javaClass) {
     return javaClass == Boolean.class;
   }
 
+  @Nullable
   @Override
-  public ByteBuffer encodePrimitive(boolean value, ProtocolVersion protocolVersion) {
+  public ByteBuffer encodePrimitive(boolean value, @NonNull ProtocolVersion protocolVersion) {
     return value ? TRUE.duplicate() : FALSE.duplicate();
   }
 
   @Override
-  public boolean decodePrimitive(ByteBuffer bytes, ProtocolVersion protocolVersion) {
+  public boolean decodePrimitive(
+      @Nullable ByteBuffer bytes, @NonNull ProtocolVersion protocolVersion) {
     if (bytes == null || bytes.remaining() == 0) {
       return false;
     } else if (bytes.remaining() != 1) {
@@ -66,8 +72,9 @@ public class BooleanCodec implements PrimitiveBooleanCodec {
     }
   }
 
+  @NonNull
   @Override
-  public String format(Boolean value) {
+  public String format(@Nullable Boolean value) {
     if (value == null) {
       return "NULL";
     } else {
@@ -75,8 +82,9 @@ public class BooleanCodec implements PrimitiveBooleanCodec {
     }
   }
 
+  @Nullable
   @Override
-  public Boolean parse(String value) {
+  public Boolean parse(@Nullable String value) {
     if (value == null || value.isEmpty() || value.equalsIgnoreCase("NULL")) {
       return null;
     } else if (value.equalsIgnoreCase(Boolean.FALSE.toString())) {

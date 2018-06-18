@@ -22,6 +22,8 @@ import com.datastax.oss.driver.api.core.type.TupleType;
 import com.datastax.oss.driver.api.core.type.codec.registry.CodecRegistry;
 import com.datastax.oss.driver.shaded.guava.common.base.Preconditions;
 import com.datastax.oss.protocol.internal.util.Bytes;
+import edu.umd.cs.findbugs.annotations.NonNull;
+import edu.umd.cs.findbugs.annotations.Nullable;
 import java.io.InvalidObjectException;
 import java.io.ObjectInputStream;
 import java.io.Serializable;
@@ -36,11 +38,11 @@ public class DefaultTupleValue implements TupleValue, Serializable {
   private final TupleType type;
   private final ByteBuffer[] values;
 
-  public DefaultTupleValue(TupleType type) {
+  public DefaultTupleValue(@NonNull TupleType type) {
     this(type, new ByteBuffer[type.getComponentTypes().size()]);
   }
 
-  public DefaultTupleValue(TupleType type, Object... values) {
+  public DefaultTupleValue(@NonNull TupleType type, @NonNull Object... values) {
     this(
         type,
         ValuesHelper.encodeValues(
@@ -56,6 +58,7 @@ public class DefaultTupleValue implements TupleValue, Serializable {
     this.values = values;
   }
 
+  @NonNull
   @Override
   public TupleType getType() {
     return type;
@@ -71,22 +74,26 @@ public class DefaultTupleValue implements TupleValue, Serializable {
     return values[i];
   }
 
+  @NonNull
   @Override
-  public TupleValue setBytesUnsafe(int i, ByteBuffer v) {
+  public TupleValue setBytesUnsafe(int i, @Nullable ByteBuffer v) {
     values[i] = v;
     return this;
   }
 
+  @NonNull
   @Override
   public DataType getType(int i) {
     return type.getComponentTypes().get(i);
   }
 
+  @NonNull
   @Override
   public CodecRegistry codecRegistry() {
     return type.getAttachmentPoint().codecRegistry();
   }
 
+  @NonNull
   @Override
   public ProtocolVersion protocolVersion() {
     return type.getAttachmentPoint().protocolVersion();
@@ -156,7 +163,9 @@ public class DefaultTupleValue implements TupleValue, Serializable {
           this.codecRegistry()
               .codecFor(innerThisType)
               .decode(this.values[i], this.protocolVersion());
-      result = 31 * result + thisValue.hashCode();
+      if (thisValue != null) {
+        result = 31 * result + thisValue.hashCode();
+      }
     }
 
     return result;

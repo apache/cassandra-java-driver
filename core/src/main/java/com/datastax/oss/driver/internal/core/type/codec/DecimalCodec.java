@@ -20,6 +20,8 @@ import com.datastax.oss.driver.api.core.type.DataType;
 import com.datastax.oss.driver.api.core.type.DataTypes;
 import com.datastax.oss.driver.api.core.type.codec.TypeCodec;
 import com.datastax.oss.driver.api.core.type.reflect.GenericType;
+import edu.umd.cs.findbugs.annotations.NonNull;
+import edu.umd.cs.findbugs.annotations.Nullable;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.nio.ByteBuffer;
@@ -27,28 +29,31 @@ import net.jcip.annotations.ThreadSafe;
 
 @ThreadSafe
 public class DecimalCodec implements TypeCodec<BigDecimal> {
+  @NonNull
   @Override
   public GenericType<BigDecimal> getJavaType() {
     return GenericType.BIG_DECIMAL;
   }
 
+  @NonNull
   @Override
   public DataType getCqlType() {
     return DataTypes.DECIMAL;
   }
 
   @Override
-  public boolean accepts(Object value) {
+  public boolean accepts(@NonNull Object value) {
     return value instanceof BigDecimal;
   }
 
   @Override
-  public boolean accepts(Class<?> javaClass) {
+  public boolean accepts(@NonNull Class<?> javaClass) {
     return BigDecimal.class.isAssignableFrom(javaClass);
   }
 
+  @Nullable
   @Override
-  public ByteBuffer encode(BigDecimal value, ProtocolVersion protocolVersion) {
+  public ByteBuffer encode(@Nullable BigDecimal value, @NonNull ProtocolVersion protocolVersion) {
     if (value == null) {
       return null;
     }
@@ -63,8 +68,9 @@ public class DecimalCodec implements TypeCodec<BigDecimal> {
     return bytes;
   }
 
+  @Nullable
   @Override
-  public BigDecimal decode(ByteBuffer bytes, ProtocolVersion protocolVersion) {
+  public BigDecimal decode(@Nullable ByteBuffer bytes, @NonNull ProtocolVersion protocolVersion) {
     if (bytes == null || bytes.remaining() == 0) {
       return null;
     } else if (bytes.remaining() < 4) {
@@ -81,13 +87,15 @@ public class DecimalCodec implements TypeCodec<BigDecimal> {
     return new BigDecimal(bi, scale);
   }
 
+  @NonNull
   @Override
-  public String format(BigDecimal value) {
+  public String format(@Nullable BigDecimal value) {
     return (value == null) ? "NULL" : value.toString();
   }
 
+  @Nullable
   @Override
-  public BigDecimal parse(String value) {
+  public BigDecimal parse(@Nullable String value) {
     try {
       return (value == null || value.isEmpty() || value.equalsIgnoreCase("NULL"))
           ? null

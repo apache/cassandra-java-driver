@@ -15,6 +15,8 @@
  */
 package com.datastax.oss.driver.api.core.servererrors;
 
+import edu.umd.cs.findbugs.annotations.NonNull;
+
 /**
  * The type of a Cassandra write query.
  *
@@ -28,5 +30,6 @@ package com.datastax.oss.driver.api.core.servererrors;
 public interface WriteType {
 
   /** The textual representation that the write type is encoded to in protocol frames. */
+  @NonNull
   String name();
 }

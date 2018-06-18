@@ -17,6 +17,7 @@ package com.datastax.oss.driver.api.core.auth;
 
 import com.datastax.oss.driver.api.core.connection.ReconnectionPolicy;
 import com.datastax.oss.driver.internal.core.auth.PlainTextAuthProvider;
+import edu.umd.cs.findbugs.annotations.NonNull;
 import java.net.SocketAddress;
 
 /**
@@ -34,7 +35,8 @@ public interface AuthProvider extends AutoCloseable {
    * @param serverAuthenticator the configured authenticator on the host.
    * @return the authentication implementation to use.
    */
-  Authenticator newAuthenticator(SocketAddress host, String serverAuthenticator)
+  @NonNull
+  Authenticator newAuthenticator(@NonNull SocketAddress host, @NonNull String serverAuthenticator)
       throws AuthenticationException;
 
   /**
@@ -53,5 +55,5 @@ public interface AuthProvider extends AutoCloseable {
    *       will be retried according to the {@link ReconnectionPolicy}).
    * </ul>
    */
-  void onMissingChallenge(SocketAddress host) throws AuthenticationException;
+  void onMissingChallenge(@NonNull SocketAddress host) throws AuthenticationException;
 }

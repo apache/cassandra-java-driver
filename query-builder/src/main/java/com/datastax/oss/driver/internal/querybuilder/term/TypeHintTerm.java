@@ -17,6 +17,7 @@ package com.datastax.oss.driver.internal.querybuilder.term;
 
 import com.datastax.oss.driver.api.core.type.DataType;
 import com.datastax.oss.driver.api.querybuilder.term.Term;
+import edu.umd.cs.findbugs.annotations.NonNull;
 import net.jcip.annotations.Immutable;
 
 @Immutable
@@ -25,13 +26,13 @@ public class TypeHintTerm implements Term {
   private final Term term;
   private final DataType targetType;
 
-  public TypeHintTerm(Term term, DataType targetType) {
+  public TypeHintTerm(@NonNull Term term, @NonNull DataType targetType) {
     this.term = term;
     this.targetType = targetType;
   }
 
   @Override
-  public void appendTo(StringBuilder builder) {
+  public void appendTo(@NonNull StringBuilder builder) {
     builder.append('(').append(targetType.asCql(false, true)).append(')');
     term.appendTo(builder);
   }
@@ -41,10 +42,12 @@ public class TypeHintTerm implements Term {
     return term.isIdempotent();
   }
 
+  @NonNull
   public Term getTerm() {
     return term;
   }
 
+  @NonNull
   public DataType getTargetType() {
     return targetType;
   }

@@ -18,6 +18,7 @@ package com.datastax.oss.driver.internal.querybuilder.select;
 import com.datastax.oss.driver.api.querybuilder.select.Selector;
 import com.datastax.oss.driver.internal.querybuilder.ArithmeticOperator;
 import com.datastax.oss.driver.shaded.guava.common.base.Preconditions;
+import edu.umd.cs.findbugs.annotations.NonNull;
 import net.jcip.annotations.Immutable;
 
 @Immutable
@@ -25,17 +26,18 @@ public abstract class ArithmeticSelector implements Selector {
 
   protected final ArithmeticOperator operator;
 
-  protected ArithmeticSelector(ArithmeticOperator operator) {
+  protected ArithmeticSelector(@NonNull ArithmeticOperator operator) {
     Preconditions.checkNotNull(operator);
     this.operator = operator;
   }
 
+  @NonNull
   public ArithmeticOperator getOperator() {
     return operator;
   }
 
   protected static void appendAndMaybeParenthesize(
-      int myPrecedence, Selector child, StringBuilder builder) {
+      int myPrecedence, @NonNull Selector child, @NonNull StringBuilder builder) {
     boolean parenthesize =
         (child instanceof ArithmeticSelector)
             && (((ArithmeticSelector) child).operator.getPrecedenceLeft() < myPrecedence);

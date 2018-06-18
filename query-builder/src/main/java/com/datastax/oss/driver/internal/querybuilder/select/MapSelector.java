@@ -19,6 +19,8 @@ import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.type.DataType;
 import com.datastax.oss.driver.api.querybuilder.select.Selector;
 import com.datastax.oss.driver.shaded.guava.common.base.Preconditions;
+import edu.umd.cs.findbugs.annotations.NonNull;
+import edu.umd.cs.findbugs.annotations.Nullable;
 import java.util.Map;
 import java.util.Objects;
 import net.jcip.annotations.Immutable;
@@ -32,15 +34,17 @@ public class MapSelector implements Selector {
   private final CqlIdentifier alias;
 
   public MapSelector(
-      Map<Selector, Selector> elementSelectors, DataType keyType, DataType valueType) {
+      @NonNull Map<Selector, Selector> elementSelectors,
+      @Nullable DataType keyType,
+      @Nullable DataType valueType) {
     this(elementSelectors, keyType, valueType, null);
   }
 
   public MapSelector(
-      Map<Selector, Selector> elementSelectors,
-      DataType keyType,
-      DataType valueType,
-      CqlIdentifier alias) {
+      @NonNull Map<Selector, Selector> elementSelectors,
+      @Nullable DataType keyType,
+      @Nullable DataType valueType,
+      @Nullable CqlIdentifier alias) {
     Preconditions.checkNotNull(elementSelectors);
     Preconditions.checkArgument(
         !elementSelectors.isEmpty(), "Must have at least one key/value pair");
@@ -54,13 +58,14 @@ public class MapSelector implements Selector {
     this.alias = alias;
   }
 
+  @NonNull
   @Override
-  public Selector as(CqlIdentifier alias) {
+  public Selector as(@NonNull CqlIdentifier alias) {
     return new MapSelector(elementSelectors, keyType, valueType, alias);
   }
 
   @Override
-  public void appendTo(StringBuilder builder) {
+  public void appendTo(@NonNull StringBuilder builder) {
     if (keyType != null) {
       assert valueType != null;
       builder
@@ -85,18 +90,22 @@ public class MapSelector implements Selector {
     builder.append("}");
   }
 
+  @NonNull
   public Map<Selector, Selector> getElementSelectors() {
     return elementSelectors;
   }
 
+  @Nullable
   public DataType getKeyType() {
     return keyType;
   }
 
+  @Nullable
   public DataType getValueType() {
     return valueType;
   }
 
+  @Nullable
   @Override
   public CqlIdentifier getAlias() {
     return alias;

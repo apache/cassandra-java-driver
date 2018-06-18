@@ -20,6 +20,7 @@ import static org.assertj.core.api.Assertions.fail;
 import static org.mockito.ArgumentMatchers.anyBoolean;
 
 import com.datastax.oss.driver.shaded.guava.common.util.concurrent.Uninterruptibles;
+import edu.umd.cs.findbugs.annotations.NonNull;
 import io.netty.channel.DefaultEventLoop;
 import io.netty.channel.EventLoopGroup;
 import io.netty.util.concurrent.ScheduledFuture;
@@ -51,6 +52,7 @@ public class ScheduledTaskCapturingEventLoop extends DefaultEventLoop {
     super(parent);
   }
 
+  @NonNull
   @Override
   public <V> ScheduledFuture<V> schedule(Callable<V> callable, long delay, TimeUnit unit) {
     CapturedTask<V> task = new CapturedTask<>(callable, delay, unit);
@@ -59,6 +61,7 @@ public class ScheduledTaskCapturingEventLoop extends DefaultEventLoop {
     return task.scheduledFuture;
   }
 
+  @NonNull
   @Override
   public ScheduledFuture<?> schedule(Runnable command, long delay, TimeUnit unit) {
     return schedule(
@@ -70,6 +73,7 @@ public class ScheduledTaskCapturingEventLoop extends DefaultEventLoop {
         unit);
   }
 
+  @NonNull
   @Override
   public ScheduledFuture<?> scheduleAtFixedRate(
       Runnable command, long initialDelay, long period, TimeUnit unit) {
@@ -87,6 +91,7 @@ public class ScheduledTaskCapturingEventLoop extends DefaultEventLoop {
     return task.scheduledFuture;
   }
 
+  @NonNull
   @Override
   public ScheduledFuture<?> scheduleWithFixedDelay(
       Runnable command, long initialDelay, long delay, TimeUnit unit) {

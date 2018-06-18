@@ -28,6 +28,7 @@ import com.datastax.oss.driver.api.core.servererrors.WriteFailureException;
 import com.datastax.oss.driver.api.core.servererrors.WriteType;
 import com.datastax.oss.driver.api.core.session.Request;
 import com.datastax.oss.driver.shaded.guava.common.annotations.VisibleForTesting;
+import edu.umd.cs.findbugs.annotations.NonNull;
 import net.jcip.annotations.ThreadSafe;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -86,8 +87,8 @@ public class DefaultRetryPolicy implements RetryPolicy {
    */
   @Override
   public RetryDecision onReadTimeout(
-      Request request,
-      ConsistencyLevel cl,
+      @NonNull Request request,
+      @NonNull ConsistencyLevel cl,
       int blockFor,
       int received,
       boolean dataPresent,
@@ -119,9 +120,9 @@ public class DefaultRetryPolicy implements RetryPolicy {
    */
   @Override
   public RetryDecision onWriteTimeout(
-      Request request,
-      ConsistencyLevel cl,
-      WriteType writeType,
+      @NonNull Request request,
+      @NonNull ConsistencyLevel cl,
+      @NonNull WriteType writeType,
       int blockFor,
       int received,
       int retryCount) {
@@ -151,7 +152,11 @@ public class DefaultRetryPolicy implements RetryPolicy {
    */
   @Override
   public RetryDecision onUnavailable(
-      Request request, ConsistencyLevel cl, int required, int alive, int retryCount) {
+      @NonNull Request request,
+      @NonNull ConsistencyLevel cl,
+      int required,
+      int alive,
+      int retryCount) {
 
     RetryDecision decision = (retryCount == 0) ? RetryDecision.RETRY_NEXT : RetryDecision.RETHROW;
 
@@ -169,7 +174,8 @@ public class DefaultRetryPolicy implements RetryPolicy {
    * (assuming a driver bug) in all other cases.
    */
   @Override
-  public RetryDecision onRequestAborted(Request request, Throwable error, int retryCount) {
+  public RetryDecision onRequestAborted(
+      @NonNull Request request, @NonNull Throwable error, int retryCount) {
 
     RetryDecision decision =
         (error instanceof ClosedConnectionException || error instanceof HeartbeatException)
@@ -191,7 +197,7 @@ public class DefaultRetryPolicy implements RetryPolicy {
    */
   @Override
   public RetryDecision onErrorResponse(
-      Request request, CoordinatorException error, int retryCount) {
+      @NonNull Request request, @NonNull CoordinatorException error, int retryCount) {
 
     RetryDecision decision =
         (error instanceof ReadFailureException || error instanceof WriteFailureException)

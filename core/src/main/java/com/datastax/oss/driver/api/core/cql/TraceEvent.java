@@ -15,18 +15,21 @@
  */
 package com.datastax.oss.driver.api.core.cql;
 
+import edu.umd.cs.findbugs.annotations.Nullable;
 import java.net.InetAddress;
 
 /** An event in a {@link QueryTrace}. */
 public interface TraceEvent {
 
   /** Which activity this event corresponds to. */
+  @Nullable
   String getActivity();
 
   /** The server-side timestamp of the event. */
   long getTimestamp();
 
   /** The IP of the host having generated this event. */
+  @Nullable
   InetAddress getSource();
 
   /**
@@ -36,5 +39,6 @@ public interface TraceEvent {
   int getSourceElapsedMicros();
 
   /** The name of the thread on which this event occurred. */
+  @Nullable
   String getThreadName();
 }

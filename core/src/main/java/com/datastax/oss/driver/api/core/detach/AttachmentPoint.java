@@ -17,23 +17,28 @@ package com.datastax.oss.driver.api.core.detach;
 
 import com.datastax.oss.driver.api.core.ProtocolVersion;
 import com.datastax.oss.driver.api.core.type.codec.registry.CodecRegistry;
+import edu.umd.cs.findbugs.annotations.NonNull;
 
 /** @see Detachable */
 public interface AttachmentPoint {
   AttachmentPoint NONE =
       new AttachmentPoint() {
+        @NonNull
         @Override
         public ProtocolVersion protocolVersion() {
           return ProtocolVersion.DEFAULT;
         }
 
+        @NonNull
         @Override
         public CodecRegistry codecRegistry() {
           return CodecRegistry.DEFAULT;
         }
       };
 
+  @NonNull
   ProtocolVersion protocolVersion();
 
+  @NonNull
   CodecRegistry codecRegistry();
 }

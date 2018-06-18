@@ -18,6 +18,8 @@ package com.datastax.oss.driver.api.core.connection;
 import com.datastax.oss.driver.api.core.DriverException;
 import com.datastax.oss.driver.api.core.retry.RetryPolicy;
 import com.datastax.oss.driver.api.core.session.Request;
+import edu.umd.cs.findbugs.annotations.NonNull;
+import edu.umd.cs.findbugs.annotations.Nullable;
 import java.net.SocketAddress;
 
 /**
@@ -32,16 +34,19 @@ public class HeartbeatException extends DriverException {
 
   private final SocketAddress address;
 
-  public HeartbeatException(SocketAddress address, String message, Throwable cause) {
+  public HeartbeatException(
+      @NonNull SocketAddress address, @Nullable String message, @Nullable Throwable cause) {
     super(message, cause, true);
     this.address = address;
   }
 
   /** The address of the node that encountered the error. */
+  @NonNull
   public SocketAddress getAddress() {
     return address;
   }
 
+  @NonNull
   @Override
   public DriverException copy() {
     return new HeartbeatException(address, getMessage(), getCause());

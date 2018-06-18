@@ -16,6 +16,7 @@
 package com.datastax.oss.driver.api.core.session.throttling;
 
 import com.datastax.oss.driver.api.core.RequestThrottlingException;
+import edu.umd.cs.findbugs.annotations.NonNull;
 
 /**
  * A request that may be subjected to throttling by a {@link
@@ -39,5 +40,5 @@ public interface Throttled {
    *
    * @param error the error that the request should be completed (exceptionally) with.
    */
-  void onThrottleFailure(RequestThrottlingException error);
+  void onThrottleFailure(@NonNull RequestThrottlingException error);
 }

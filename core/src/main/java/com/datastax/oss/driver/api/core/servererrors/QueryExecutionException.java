@@ -16,11 +16,13 @@
 package com.datastax.oss.driver.api.core.servererrors;
 
 import com.datastax.oss.driver.api.core.metadata.Node;
+import edu.umd.cs.findbugs.annotations.NonNull;
 
 /** A server-side error thrown when a valid query cannot be executed. */
 public abstract class QueryExecutionException extends CoordinatorException {
 
-  protected QueryExecutionException(Node coordinator, String message, boolean writableStackTrace) {
+  protected QueryExecutionException(
+      @NonNull Node coordinator, @NonNull String message, boolean writableStackTrace) {
     super(coordinator, message, writableStackTrace);
   }
 }

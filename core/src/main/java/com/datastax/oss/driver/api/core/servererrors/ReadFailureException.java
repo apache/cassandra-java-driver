@@ -21,6 +21,7 @@ import com.datastax.oss.driver.api.core.DriverException;
 import com.datastax.oss.driver.api.core.metadata.Node;
 import com.datastax.oss.driver.api.core.retry.RetryPolicy;
 import com.datastax.oss.driver.api.core.session.Request;
+import edu.umd.cs.findbugs.annotations.NonNull;
 import java.net.InetAddress;
 import java.util.Map;
 
@@ -42,13 +43,13 @@ public class ReadFailureException extends QueryConsistencyException {
   private final Map<InetAddress, Integer> reasonMap;
 
   public ReadFailureException(
-      Node coordinator,
-      ConsistencyLevel consistencyLevel,
+      @NonNull Node coordinator,
+      @NonNull ConsistencyLevel consistencyLevel,
       int received,
       int blockFor,
       int numFailures,
       boolean dataPresent,
-      Map<InetAddress, Integer> reasonMap) {
+      @NonNull Map<InetAddress, Integer> reasonMap) {
     this(
         coordinator,
         String.format(
@@ -65,14 +66,14 @@ public class ReadFailureException extends QueryConsistencyException {
   }
 
   private ReadFailureException(
-      Node coordinator,
-      String message,
-      ConsistencyLevel consistencyLevel,
+      @NonNull Node coordinator,
+      @NonNull String message,
+      @NonNull ConsistencyLevel consistencyLevel,
       int received,
       int blockFor,
       int numFailures,
       boolean dataPresent,
-      Map<InetAddress, Integer> reasonMap,
+      @NonNull Map<InetAddress, Integer> reasonMap,
       boolean writableStackTrace) {
     super(coordinator, message, consistencyLevel, received, blockFor, writableStackTrace);
     this.numFailures = numFailures;
@@ -116,10 +117,12 @@ public class ReadFailureException extends QueryConsistencyException {
    * <p>This feature is available for protocol v5 or above only. With lower protocol versions, the
    * map will always be empty.
    */
+  @NonNull
   public Map<InetAddress, Integer> getReasonMap() {
     return reasonMap;
   }
 
+  @NonNull
   @Override
   public DriverException copy() {
     return new ReadFailureException(

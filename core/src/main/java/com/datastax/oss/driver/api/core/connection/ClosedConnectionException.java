@@ -17,6 +17,8 @@ package com.datastax.oss.driver.api.core.connection;
 
 import com.datastax.oss.driver.api.core.AllNodesFailedException;
 import com.datastax.oss.driver.api.core.DriverException;
+import edu.umd.cs.findbugs.annotations.NonNull;
+import edu.umd.cs.findbugs.annotations.Nullable;
 
 /**
  * Thrown when the connection on which a request was executing is closed due to an unrelated event.
@@ -29,19 +31,21 @@ import com.datastax.oss.driver.api.core.DriverException;
  */
 public class ClosedConnectionException extends DriverException {
 
-  public ClosedConnectionException(String message) {
+  public ClosedConnectionException(@NonNull String message) {
     this(message, null, false);
   }
 
-  public ClosedConnectionException(String message, Throwable cause) {
+  public ClosedConnectionException(@NonNull String message, @Nullable Throwable cause) {
     this(message, cause, false);
   }
 
-  private ClosedConnectionException(String message, Throwable cause, boolean writableStackTrace) {
+  private ClosedConnectionException(
+      @NonNull String message, @Nullable Throwable cause, boolean writableStackTrace) {
     super(message, cause, writableStackTrace);
   }
 
   @Override
+  @NonNull
   public DriverException copy() {
     return new ClosedConnectionException(getMessage(), getCause(), true);
   }

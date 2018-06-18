@@ -20,6 +20,7 @@ import com.datastax.oss.driver.api.core.DriverException;
 import com.datastax.oss.driver.api.core.metadata.Node;
 import com.datastax.oss.driver.api.core.retry.RetryPolicy;
 import com.datastax.oss.driver.api.core.session.Request;
+import edu.umd.cs.findbugs.annotations.NonNull;
 
 /**
  * Thrown when the coordinator reported itself as being overloaded.
@@ -31,14 +32,16 @@ import com.datastax.oss.driver.api.core.session.Request;
  */
 public class OverloadedException extends QueryExecutionException {
 
-  public OverloadedException(Node coordinator) {
+  public OverloadedException(@NonNull Node coordinator) {
     super(coordinator, String.format("%s is bootstrapping", coordinator), false);
   }
 
-  private OverloadedException(Node coordinator, String message, boolean writableStackTrace) {
+  private OverloadedException(
+      @NonNull Node coordinator, @NonNull String message, boolean writableStackTrace) {
     super(coordinator, message, writableStackTrace);
   }
 
+  @NonNull
   @Override
   public DriverException copy() {
     return new OverloadedException(getCoordinator(), getMessage(), true);

@@ -20,6 +20,7 @@ import com.datastax.oss.driver.api.core.DriverException;
 import com.datastax.oss.driver.api.core.metadata.Node;
 import com.datastax.oss.driver.api.core.retry.RetryPolicy;
 import com.datastax.oss.driver.api.core.session.Request;
+import edu.umd.cs.findbugs.annotations.NonNull;
 
 /**
  * Indicates that the contacted node reported an internal error.
@@ -33,14 +34,16 @@ import com.datastax.oss.driver.api.core.session.Request;
  */
 public class ServerError extends CoordinatorException {
 
-  public ServerError(Node coordinator, String message) {
+  public ServerError(@NonNull Node coordinator, @NonNull String message) {
     this(coordinator, message, false);
   }
 
-  private ServerError(Node coordinator, String message, boolean writableStackTrace) {
+  private ServerError(
+      @NonNull Node coordinator, @NonNull String message, boolean writableStackTrace) {
     super(coordinator, message, writableStackTrace);
   }
 
+  @NonNull
   @Override
   public DriverException copy() {
     return new ServerError(getCoordinator(), getMessage(), true);

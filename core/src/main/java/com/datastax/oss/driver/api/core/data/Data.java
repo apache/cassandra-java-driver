@@ -19,6 +19,7 @@ import com.datastax.oss.driver.api.core.DefaultProtocolVersion;
 import com.datastax.oss.driver.api.core.ProtocolVersion;
 import com.datastax.oss.driver.api.core.detach.Detachable;
 import com.datastax.oss.driver.api.core.type.codec.registry.CodecRegistry;
+import edu.umd.cs.findbugs.annotations.NonNull;
 
 /** A data structure containing CQL values. */
 public interface Data {
@@ -32,6 +33,7 @@ public interface Data {
    *
    * @see Detachable
    */
+  @NonNull
   CodecRegistry codecRegistry();
 
   /**
@@ -43,5 +45,6 @@ public interface Data {
    *
    * @see Detachable
    */
+  @NonNull
   ProtocolVersion protocolVersion();
 }

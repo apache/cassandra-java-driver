@@ -19,6 +19,7 @@ import com.datastax.oss.driver.api.core.ProtocolVersion;
 import com.datastax.oss.driver.api.core.data.Data;
 import com.datastax.oss.driver.api.core.type.TupleType;
 import com.datastax.oss.driver.api.core.type.codec.registry.CodecRegistry;
+import edu.umd.cs.findbugs.annotations.NonNull;
 
 /**
  * Defines the contract of an object that can be detached and reattached to a driver instance.
@@ -50,5 +51,5 @@ import com.datastax.oss.driver.api.core.type.codec.registry.CodecRegistry;
 public interface Detachable {
   boolean isDetached();
 
-  void attach(AttachmentPoint attachmentPoint);
+  void attach(@NonNull AttachmentPoint attachmentPoint);
 }

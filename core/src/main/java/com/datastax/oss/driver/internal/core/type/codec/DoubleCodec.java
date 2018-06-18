@@ -20,40 +20,46 @@ import com.datastax.oss.driver.api.core.type.DataType;
 import com.datastax.oss.driver.api.core.type.DataTypes;
 import com.datastax.oss.driver.api.core.type.codec.PrimitiveDoubleCodec;
 import com.datastax.oss.driver.api.core.type.reflect.GenericType;
+import edu.umd.cs.findbugs.annotations.NonNull;
+import edu.umd.cs.findbugs.annotations.Nullable;
 import java.nio.ByteBuffer;
 import net.jcip.annotations.ThreadSafe;
 
 @ThreadSafe
 public class DoubleCodec implements PrimitiveDoubleCodec {
+  @NonNull
   @Override
   public GenericType<Double> getJavaType() {
     return GenericType.DOUBLE;
   }
 
+  @NonNull
   @Override
   public DataType getCqlType() {
     return DataTypes.DOUBLE;
   }
 
   @Override
-  public boolean accepts(Object value) {
+  public boolean accepts(@NonNull Object value) {
     return value instanceof Double;
   }
 
   @Override
-  public boolean accepts(Class<?> javaClass) {
+  public boolean accepts(@NonNull Class<?> javaClass) {
     return javaClass == Double.class;
   }
 
+  @Nullable
   @Override
-  public ByteBuffer encodePrimitive(double value, ProtocolVersion protocolVersion) {
+  public ByteBuffer encodePrimitive(double value, @NonNull ProtocolVersion protocolVersion) {
     ByteBuffer bytes = ByteBuffer.allocate(8);
     bytes.putDouble(0, value);
     return bytes;
   }
 
   @Override
-  public double decodePrimitive(ByteBuffer bytes, ProtocolVersion protocolVersion) {
+  public double decodePrimitive(
+      @Nullable ByteBuffer bytes, @NonNull ProtocolVersion protocolVersion) {
     if (bytes == null || bytes.remaining() == 0) {
       return 0;
     } else if (bytes.remaining() != 8) {
@@ -64,13 +70,15 @@ public class DoubleCodec implements PrimitiveDoubleCodec {
     }
   }
 
+  @NonNull
   @Override
-  public String format(Double value) {
+  public String format(@Nullable Double value) {
     return (value == null) ? "NULL" : Double.toString(value);
   }
 
+  @Nullable
   @Override
-  public Double parse(String value) {
+  public Double parse(@Nullable String value) {
     try {
       return (value == null || value.isEmpty() || value.equalsIgnoreCase("NULL"))
           ? null

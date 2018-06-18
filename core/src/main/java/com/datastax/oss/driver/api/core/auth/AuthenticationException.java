@@ -16,6 +16,8 @@
 package com.datastax.oss.driver.api.core.auth;
 
 import com.datastax.oss.driver.api.core.AllNodesFailedException;
+import edu.umd.cs.findbugs.annotations.NonNull;
+import edu.umd.cs.findbugs.annotations.Nullable;
 import java.net.SocketAddress;
 
 /**
@@ -30,16 +32,18 @@ public class AuthenticationException extends RuntimeException {
 
   private final SocketAddress address;
 
-  public AuthenticationException(SocketAddress address, String message) {
+  public AuthenticationException(@NonNull SocketAddress address, @NonNull String message) {
     this(address, message, null);
   }
 
-  public AuthenticationException(SocketAddress address, String message, Throwable cause) {
+  public AuthenticationException(
+      @NonNull SocketAddress address, @NonNull String message, @Nullable Throwable cause) {
     super(String.format("Authentication error on host %s: %s", address, message), cause);
     this.address = address;
   }
 
   /** The address of the node that encountered the error. */
+  @NonNull
   public SocketAddress getAddress() {
     return address;
   }

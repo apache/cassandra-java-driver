@@ -16,6 +16,7 @@
 package com.datastax.oss.driver.api.core.metadata.schema;
 
 import com.datastax.oss.driver.api.core.CqlIdentifier;
+import edu.umd.cs.findbugs.annotations.NonNull;
 
 /** A schema element that can be described in terms of CQL {@code CREATE} statements. */
 public interface Describable {
@@ -27,6 +28,7 @@ public interface Describable {
    *     {@link CqlIdentifier#asCql(boolean) pretty identifiers}). If {@code false}, return the
    *     statement on a single line with minimal formatting.
    */
+  @NonNull
   String describe(boolean pretty);
 
   /**
@@ -37,5 +39,6 @@ public interface Describable {
    *     {@link CqlIdentifier#asCql(boolean) pretty identifiers}). If {@code false}, return each
    *     statement on a single line with minimal formatting.
    */
+  @NonNull
   String describeWithChildren(boolean pretty);
 }

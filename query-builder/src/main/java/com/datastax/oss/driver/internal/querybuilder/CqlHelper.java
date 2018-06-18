@@ -17,16 +17,18 @@ package com.datastax.oss.driver.internal.querybuilder;
 
 import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.querybuilder.CqlSnippet;
+import edu.umd.cs.findbugs.annotations.NonNull;
+import edu.umd.cs.findbugs.annotations.Nullable;
 import java.util.Collection;
 
 public class CqlHelper {
 
   public static void appendIds(
-      Iterable<CqlIdentifier> ids,
-      StringBuilder builder,
-      String prefix,
-      String separator,
-      String suffix) {
+      @NonNull Iterable<CqlIdentifier> ids,
+      @NonNull StringBuilder builder,
+      @Nullable String prefix,
+      @NonNull String separator,
+      @Nullable String suffix) {
     boolean first = true;
     for (CqlIdentifier id : ids) {
       if (first) {
@@ -45,11 +47,11 @@ public class CqlHelper {
   }
 
   public static void append(
-      Iterable<? extends CqlSnippet> snippets,
-      StringBuilder builder,
-      String prefix,
-      String separator,
-      String suffix) {
+      @NonNull Iterable<? extends CqlSnippet> snippets,
+      @NonNull StringBuilder builder,
+      @Nullable String prefix,
+      @NonNull String separator,
+      @Nullable String suffix) {
     boolean first = true;
     for (CqlSnippet snippet : snippets) {
       if (first) {
@@ -67,7 +69,10 @@ public class CqlHelper {
     }
   }
 
-  public static void qualify(CqlIdentifier keyspace, CqlIdentifier element, StringBuilder builder) {
+  public static void qualify(
+      @Nullable CqlIdentifier keyspace,
+      @NonNull CqlIdentifier element,
+      @NonNull StringBuilder builder) {
     if (keyspace != null) {
       builder.append(keyspace.asCql(true)).append('.');
     }
@@ -75,9 +80,9 @@ public class CqlHelper {
   }
 
   public static void buildPrimaryKey(
-      Collection<CqlIdentifier> partitionKeyColumns,
-      Collection<CqlIdentifier> clusteringKeyColumns,
-      StringBuilder builder) {
+      @NonNull Collection<CqlIdentifier> partitionKeyColumns,
+      @NonNull Collection<CqlIdentifier> clusteringKeyColumns,
+      @NonNull StringBuilder builder) {
     builder.append("PRIMARY KEY(");
     boolean firstKey = true;
 

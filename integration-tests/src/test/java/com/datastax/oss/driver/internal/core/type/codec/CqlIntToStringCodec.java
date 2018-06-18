@@ -21,6 +21,7 @@ import com.datastax.oss.driver.api.core.type.DataTypes;
 import com.datastax.oss.driver.api.core.type.codec.TypeCodec;
 import com.datastax.oss.driver.api.core.type.codec.TypeCodecs;
 import com.datastax.oss.driver.api.core.type.reflect.GenericType;
+import edu.umd.cs.findbugs.annotations.NonNull;
 import java.nio.ByteBuffer;
 
 /**
@@ -30,18 +31,20 @@ import java.nio.ByteBuffer;
  */
 public class CqlIntToStringCodec implements TypeCodec<String> {
 
+  @NonNull
   @Override
   public GenericType<String> getJavaType() {
     return GenericType.STRING;
   }
 
+  @NonNull
   @Override
   public DataType getCqlType() {
     return DataTypes.INT;
   }
 
   @Override
-  public ByteBuffer encode(String value, ProtocolVersion protocolVersion) {
+  public ByteBuffer encode(String value, @NonNull ProtocolVersion protocolVersion) {
     if (value == null) {
       return null;
     } else {
@@ -50,10 +53,11 @@ public class CqlIntToStringCodec implements TypeCodec<String> {
   }
 
   @Override
-  public String decode(ByteBuffer bytes, ProtocolVersion protocolVersion) {
+  public String decode(ByteBuffer bytes, @NonNull ProtocolVersion protocolVersion) {
     return TypeCodecs.INT.decode(bytes, protocolVersion).toString();
   }
 
+  @NonNull
   @Override
   public String format(String value) {
     throw new UnsupportedOperationException("Not implemented for this test");

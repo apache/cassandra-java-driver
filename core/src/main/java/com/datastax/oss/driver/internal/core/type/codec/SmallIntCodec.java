@@ -20,40 +20,46 @@ import com.datastax.oss.driver.api.core.type.DataType;
 import com.datastax.oss.driver.api.core.type.DataTypes;
 import com.datastax.oss.driver.api.core.type.codec.PrimitiveShortCodec;
 import com.datastax.oss.driver.api.core.type.reflect.GenericType;
+import edu.umd.cs.findbugs.annotations.NonNull;
+import edu.umd.cs.findbugs.annotations.Nullable;
 import java.nio.ByteBuffer;
 import net.jcip.annotations.ThreadSafe;
 
 @ThreadSafe
 public class SmallIntCodec implements PrimitiveShortCodec {
+  @NonNull
   @Override
   public GenericType<Short> getJavaType() {
     return GenericType.SHORT;
   }
 
+  @NonNull
   @Override
   public DataType getCqlType() {
     return DataTypes.SMALLINT;
   }
 
   @Override
-  public boolean accepts(Object value) {
+  public boolean accepts(@NonNull Object value) {
     return value instanceof Short;
   }
 
   @Override
-  public boolean accepts(Class<?> javaClass) {
+  public boolean accepts(@NonNull Class<?> javaClass) {
     return javaClass == Short.class;
   }
 
+  @Nullable
   @Override
-  public ByteBuffer encodePrimitive(short value, ProtocolVersion protocolVersion) {
+  public ByteBuffer encodePrimitive(short value, @NonNull ProtocolVersion protocolVersion) {
     ByteBuffer bytes = ByteBuffer.allocate(2);
     bytes.putShort(0, value);
     return bytes;
   }
 
   @Override
-  public short decodePrimitive(ByteBuffer bytes, ProtocolVersion protocolVersion) {
+  public short decodePrimitive(
+      @Nullable ByteBuffer bytes, @NonNull ProtocolVersion protocolVersion) {
     if (bytes == null || bytes.remaining() == 0) {
       return 0;
     } else if (bytes.remaining() != 2) {
@@ -64,13 +70,15 @@ public class SmallIntCodec implements PrimitiveShortCodec {
     }
   }
 
+  @NonNull
   @Override
-  public String format(Short value) {
+  public String format(@Nullable Short value) {
     return (value == null) ? "NULL" : Short.toString(value);
   }
 
+  @Nullable
   @Override
-  public Short parse(String value) {
+  public Short parse(@Nullable String value) {
     try {
       return (value == null || value.isEmpty() || value.equalsIgnoreCase("NULL"))
           ? null

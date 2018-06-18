@@ -28,6 +28,7 @@ import com.datastax.oss.driver.api.core.cql.DefaultBatchType;
 import com.datastax.oss.driver.api.core.cql.PreparedStatement;
 import com.datastax.oss.driver.api.core.cql.SimpleStatement;
 import com.datastax.oss.driver.api.core.cql.Statement;
+import com.datastax.oss.driver.api.core.detach.AttachmentPoint;
 import com.datastax.oss.driver.api.core.time.TimestampGenerator;
 import com.datastax.oss.driver.api.core.type.codec.registry.CodecRegistry;
 import com.datastax.oss.driver.internal.core.CassandraProtocolVersionRegistry;
@@ -93,7 +94,8 @@ public class StatementSizeTest {
   private ColumnDefinition phonyColumnDef(
       String keyspace, String table, String column, int index, int typeCode) {
     return new DefaultColumnDefinition(
-        new ColumnSpec(keyspace, table, column, index, RawType.PRIMITIVES.get(typeCode)), null);
+        new ColumnSpec(keyspace, table, column, index, RawType.PRIMITIVES.get(typeCode)),
+        AttachmentPoint.NONE);
   }
 
   @Test

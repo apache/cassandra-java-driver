@@ -24,6 +24,7 @@ import com.datastax.oss.driver.shaded.guava.common.primitives.Primitives;
 import com.datastax.oss.driver.shaded.guava.common.reflect.TypeParameter;
 import com.datastax.oss.driver.shaded.guava.common.reflect.TypeResolver;
 import com.datastax.oss.driver.shaded.guava.common.reflect.TypeToken;
+import edu.umd.cs.findbugs.annotations.NonNull;
 import java.lang.reflect.Type;
 import java.math.BigDecimal;
 import java.math.BigInteger;
@@ -100,47 +101,56 @@ public class GenericType<T> {
   public static final GenericType<TupleValue> TUPLE_VALUE = of(TupleValue.class);
   public static final GenericType<UdtValue> UDT_VALUE = of(UdtValue.class);
 
-  public static <T> GenericType<T> of(Class<T> type) {
+  @NonNull
+  public static <T> GenericType<T> of(@NonNull Class<T> type) {
     return new SimpleGenericType<>(type);
   }
 
-  public static GenericType<?> of(java.lang.reflect.Type type) {
+  @NonNull
+  public static GenericType<?> of(@NonNull java.lang.reflect.Type type) {
     return new GenericType<>(TypeToken.of(type));
   }
 
-  public static <T> GenericType<List<T>> listOf(Class<T> elementType) {
+  @NonNull
+  public static <T> GenericType<List<T>> listOf(@NonNull Class<T> elementType) {
     TypeToken<List<T>> token =
         new TypeToken<List<T>>() {}.where(new TypeParameter<T>() {}, TypeToken.of(elementType));
     return new GenericType<>(token);
   }
 
-  public static <T> GenericType<List<T>> listOf(GenericType<T> elementType) {
+  @NonNull
+  public static <T> GenericType<List<T>> listOf(@NonNull GenericType<T> elementType) {
     TypeToken<List<T>> token =
         new TypeToken<List<T>>() {}.where(new TypeParameter<T>() {}, elementType.token);
     return new GenericType<>(token);
   }
 
-  public static <T> GenericType<Set<T>> setOf(Class<T> elementType) {
+  @NonNull
+  public static <T> GenericType<Set<T>> setOf(@NonNull Class<T> elementType) {
     TypeToken<Set<T>> token =
         new TypeToken<Set<T>>() {}.where(new TypeParameter<T>() {}, TypeToken.of(elementType));
     return new GenericType<>(token);
   }
 
-  public static <T> GenericType<Set<T>> setOf(GenericType<T> elementType) {
+  @NonNull
+  public static <T> GenericType<Set<T>> setOf(@NonNull GenericType<T> elementType) {
     TypeToken<Set<T>> token =
         new TypeToken<Set<T>>() {}.where(new TypeParameter<T>() {}, elementType.token);
     return new GenericType<>(token);
   }
 
-  public static <K, V> GenericType<Map<K, V>> mapOf(Class<K> keyType, Class<V> valueType) {
+  @NonNull
+  public static <K, V> GenericType<Map<K, V>> mapOf(
+      @NonNull Class<K> keyType, @NonNull Class<V> valueType) {
     TypeToken<Map<K, V>> token =
         new TypeToken<Map<K, V>>() {}.where(new TypeParameter<K>() {}, TypeToken.of(keyType))
             .where(new TypeParameter<V>() {}, TypeToken.of(valueType));
     return new GenericType<>(token);
   }
 
+  @NonNull
   public static <K, V> GenericType<Map<K, V>> mapOf(
-      GenericType<K> keyType, GenericType<V> valueType) {
+      @NonNull GenericType<K> keyType, @NonNull GenericType<V> valueType) {
     TypeToken<Map<K, V>> token =
         new TypeToken<Map<K, V>>() {}.where(new TypeParameter<K>() {}, keyType.token)
             .where(new TypeParameter<V>() {}, valueType.token);
@@ -163,7 +173,7 @@ public class GenericType<T> {
    * href="http://docs.oracle.com/javase/specs/jls/se8/html/jls-4.html#jls-4.5.1">the rules for type
    * arguments</a> introduced with Java generics.
    */
-  public final boolean isSupertypeOf(GenericType<?> type) {
+  public final boolean isSupertypeOf(@NonNull GenericType<?> type) {
     return token.isSupertypeOf(type.token);
   }
 
@@ -173,7 +183,7 @@ public class GenericType<T> {
    * href="http://docs.oracle.com/javase/specs/jls/se8/html/jls-4.html#jls-4.5.1">the rules for type
    * arguments</a> introduced with Java generics.
    */
-  public final boolean isSubtypeOf(GenericType<?> type) {
+  public final boolean isSubtypeOf(@NonNull GenericType<?> type) {
     return token.isSubtypeOf(type.token);
   }
 
@@ -208,8 +218,9 @@ public class GenericType<T> {
    * Substitutes a free type variable with an actual type. See {@link GenericType this class's
    * javadoc} for an example.
    */
+  @NonNull
   public final <X> GenericType<T> where(
-      GenericTypeParameter<X> freeVariable, GenericType<X> actualType) {
+      @NonNull GenericTypeParameter<X> freeVariable, @NonNull GenericType<X> actualType) {
     TypeResolver resolver =
         new TypeResolver().where(freeVariable.getTypeVariable(), actualType.__getToken().getType());
     Type resolvedType = resolver.resolveType(this.token.getType());
@@ -222,7 +233,9 @@ public class GenericType<T> {
    * Substitutes a free type variable with an actual type. See {@link GenericType this class's
    * javadoc} for an example.
    */
-  public final <X> GenericType<T> where(GenericTypeParameter<X> freeVariable, Class<X> actualType) {
+  @NonNull
+  public final <X> GenericType<T> where(
+      @NonNull GenericTypeParameter<X> freeVariable, @NonNull Class<X> actualType) {
     return where(freeVariable, GenericType.of(actualType));
   }
 
@@ -234,6 +247,7 @@ public class GenericType<T> {
    *
    * @leaks-private-api
    */
+  @NonNull
   public TypeToken<T> __getToken() {
     return token;
   }

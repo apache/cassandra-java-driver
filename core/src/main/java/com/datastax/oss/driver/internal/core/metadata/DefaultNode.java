@@ -21,6 +21,7 @@ import com.datastax.oss.driver.api.core.metadata.Node;
 import com.datastax.oss.driver.api.core.metadata.NodeState;
 import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
 import com.datastax.oss.driver.internal.core.metrics.NodeMetricUpdater;
+import edu.umd.cs.findbugs.annotations.NonNull;
 import java.net.InetSocketAddress;
 import java.util.Collections;
 import java.util.Map;
@@ -39,8 +40,8 @@ public class DefaultNode implements Node {
   private final InetSocketAddress connectAddress;
   private final NodeMetricUpdater metricUpdater;
 
-  volatile Optional<InetSocketAddress> broadcastAddress;
-  volatile Optional<InetSocketAddress> listenAddress;
+  volatile InetSocketAddress broadcastAddress;
+  volatile InetSocketAddress listenAddress;
   volatile String datacenter;
   volatile String rack;
   volatile Version cassandraVersion;
@@ -68,51 +69,61 @@ public class DefaultNode implements Node {
     this.metricUpdater = context.metricsFactory().newNodeUpdater(this);
   }
 
+  @NonNull
   @Override
   public InetSocketAddress getConnectAddress() {
     return connectAddress;
   }
 
+  @NonNull
   @Override
   public Optional<InetSocketAddress> getBroadcastAddress() {
-    return broadcastAddress;
+    return Optional.ofNullable(broadcastAddress);
   }
 
+  @NonNull
   @Override
   public Optional<InetSocketAddress> getListenAddress() {
-    return listenAddress;
+    return Optional.ofNullable(listenAddress);
   }
 
+  @NonNull
   @Override
   public String getDatacenter() {
     return datacenter;
   }
 
+  @NonNull
   @Override
   public String getRack() {
     return rack;
   }
 
+  @NonNull
   @Override
   public Version getCassandraVersion() {
     return cassandraVersion;
   }
 
+  @NonNull
   @Override
   public UUID getHostId() {
     return hostId;
   }
 
+  @NonNull
   @Override
   public UUID getSchemaVersion() {
     return schemaVersion;
   }
 
+  @NonNull
   @Override
   public Map<String, Object> getExtras() {
     return extras;
   }
 
+  @NonNull
   @Override
   public NodeState getState() {
     return state;
@@ -128,6 +139,7 @@ public class DefaultNode implements Node {
     return reconnections > 0;
   }
 
+  @NonNull
   @Override
   public NodeDistance getDistance() {
     return distance;

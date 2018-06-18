@@ -24,6 +24,8 @@ import com.datastax.oss.driver.api.core.type.codec.TypeCodec;
 import com.datastax.oss.driver.api.core.type.codec.TypeCodecs;
 import com.datastax.oss.driver.api.core.type.reflect.GenericType;
 import com.datastax.oss.driver.internal.core.util.Strings;
+import edu.umd.cs.findbugs.annotations.NonNull;
+import edu.umd.cs.findbugs.annotations.Nullable;
 import java.nio.ByteBuffer;
 import java.time.Instant;
 import java.time.ZoneOffset;
@@ -63,47 +65,53 @@ public class TimestampCodec implements TypeCodec<Instant> {
   private static final DateTimeFormatter FORMATTER =
       DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSSxxx").withZone(ZoneOffset.UTC);
 
+  @NonNull
   @Override
   public GenericType<Instant> getJavaType() {
     return GenericType.INSTANT;
   }
 
+  @NonNull
   @Override
   public DataType getCqlType() {
     return DataTypes.TIMESTAMP;
   }
 
   @Override
-  public boolean accepts(Object value) {
+  public boolean accepts(@NonNull Object value) {
     return value instanceof Instant;
   }
 
   @Override
-  public boolean accepts(Class<?> javaClass) {
+  public boolean accepts(@NonNull Class<?> javaClass) {
     return javaClass == Instant.class;
   }
 
+  @Nullable
   @Override
-  public ByteBuffer encode(Instant value, ProtocolVersion protocolVersion) {
+  public ByteBuffer encode(@Nullable Instant value, @NonNull ProtocolVersion protocolVersion) {
     return (value == null)
         ? null
         : TypeCodecs.BIGINT.encodePrimitive(value.toEpochMilli(), protocolVersion);
   }
 
+  @Nullable
   @Override
-  public Instant decode(ByteBuffer bytes, ProtocolVersion protocolVersion) {
+  public Instant decode(@Nullable ByteBuffer bytes, @NonNull ProtocolVersion protocolVersion) {
     return (bytes == null || bytes.remaining() == 0)
         ? null
         : Instant.ofEpochMilli(TypeCodecs.BIGINT.decodePrimitive(bytes, protocolVersion));
   }
 
+  @NonNull
   @Override
-  public String format(Instant value) {
+  public String format(@Nullable Instant value) {
     return (value == null) ? "NULL" : Strings.quote(FORMATTER.format(value));
   }
 
+  @Nullable
   @Override
-  public Instant parse(String value) {
+  public Instant parse(@Nullable String value) {
     if (value == null || value.isEmpty() || value.equalsIgnoreCase("NULL")) {
       return null;
     }

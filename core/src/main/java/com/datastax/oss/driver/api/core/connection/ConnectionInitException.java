@@ -17,6 +17,8 @@ package com.datastax.oss.driver.api.core.connection;
 
 import com.datastax.oss.driver.api.core.AllNodesFailedException;
 import com.datastax.oss.driver.api.core.DriverException;
+import edu.umd.cs.findbugs.annotations.NonNull;
+import edu.umd.cs.findbugs.annotations.Nullable;
 
 /**
  * Indicates a generic error while initializing a connection.
@@ -26,10 +28,11 @@ import com.datastax.oss.driver.api.core.DriverException;
  * connected, it is just logged an the connection is reattempted.
  */
 public class ConnectionInitException extends DriverException {
-  public ConnectionInitException(String message, Throwable cause) {
+  public ConnectionInitException(@NonNull String message, @Nullable Throwable cause) {
     super(message, cause, true);
   }
 
+  @NonNull
   @Override
   public DriverException copy() {
     return new ConnectionInitException(getMessage(), getCause());

@@ -16,6 +16,7 @@
 package com.datastax.oss.driver.api.core.config;
 
 import com.datastax.oss.driver.api.core.context.DriverContext;
+import edu.umd.cs.findbugs.annotations.NonNull;
 
 /**
  * Manages the initialization, and optionally the periodic reloading, of the driver configuration.
@@ -23,13 +24,14 @@ import com.datastax.oss.driver.api.core.context.DriverContext;
 public interface DriverConfigLoader extends AutoCloseable {
 
   /** Loads the first configuration that will be used to initialize the driver. */
+  @NonNull
   DriverConfig getInitialConfig();
 
   /**
    * Called when the driver initializes. For loaders that periodically check for configuration
    * updates, this is a good time to grab an internal executor and schedule a recurring task.
    */
-  void onDriverInit(DriverContext context);
+  void onDriverInit(@NonNull DriverContext context);
 
   /**
    * Called when the cluster closes. This is a good time to release any external resource, for

@@ -18,11 +18,14 @@ package com.datastax.oss.driver.api.core.metadata.schema;
 import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.internal.core.metadata.schema.ScriptBuilder;
 import com.datastax.oss.driver.internal.core.metadata.schema.parsing.RelationParser;
+import edu.umd.cs.findbugs.annotations.NonNull;
+import java.util.Optional;
 
 /** A materialized view in the schema metadata. */
 public interface ViewMetadata extends RelationMetadata {
 
   /** The table that this view is based on. */
+  @NonNull
   CqlIdentifier getBaseTable();
 
   /**
@@ -31,8 +34,10 @@ public interface ViewMetadata extends RelationMetadata {
    */
   boolean includesAllColumns();
 
-  String getWhereClause();
+  @NonNull
+  Optional<String> getWhereClause();
 
+  @NonNull
   @Override
   default String describe(boolean pretty) {
     ScriptBuilder builder =
@@ -63,9 +68,9 @@ public interface ViewMetadata extends RelationMetadata {
 
     builder.append("FROM ").append(getKeyspace()).append(".").append(getBaseTable());
 
-    String whereClause = getWhereClause();
-    if (whereClause != null && !whereClause.isEmpty()) {
-      builder.newLine().append("WHERE ").append(whereClause);
+    Optional<String> whereClause = getWhereClause();
+    if (whereClause.isPresent() && !whereClause.get().isEmpty()) {
+      builder.newLine().append("WHERE ").append(whereClause.get());
     }
 
     builder.newLine().append("PRIMARY KEY (");
@@ -94,6 +99,7 @@ public interface ViewMetadata extends RelationMetadata {
     return builder.append(";").build();
   }
 
+  @NonNull
   @Override
   default String describeWithChildren(boolean pretty) {
     return describe(pretty); // A view has no children

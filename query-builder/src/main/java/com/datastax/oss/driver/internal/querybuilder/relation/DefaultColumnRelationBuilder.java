@@ -22,6 +22,8 @@ import com.datastax.oss.driver.api.querybuilder.relation.Relation;
 import com.datastax.oss.driver.api.querybuilder.term.Term;
 import com.datastax.oss.driver.internal.querybuilder.lhs.ColumnLeftOperand;
 import com.datastax.oss.driver.shaded.guava.common.base.Preconditions;
+import edu.umd.cs.findbugs.annotations.NonNull;
+import edu.umd.cs.findbugs.annotations.Nullable;
 import net.jcip.annotations.Immutable;
 
 @Immutable
@@ -29,13 +31,14 @@ public class DefaultColumnRelationBuilder implements ColumnRelationBuilder<Relat
 
   private final CqlIdentifier columnId;
 
-  public DefaultColumnRelationBuilder(CqlIdentifier columnId) {
+  public DefaultColumnRelationBuilder(@NonNull CqlIdentifier columnId) {
     Preconditions.checkNotNull(columnId);
     this.columnId = columnId;
   }
 
+  @NonNull
   @Override
-  public Relation build(String operator, Term rightOperand) {
+  public Relation build(@NonNull String operator, @Nullable Term rightOperand) {
     return new DefaultRelation(new ColumnLeftOperand(columnId), operator, rightOperand);
   }
 
@@ -46,13 +49,15 @@ public class DefaultColumnRelationBuilder implements ColumnRelationBuilder<Relat
     private final OngoingWhereClause<StatementT> statement;
     private final ColumnRelationBuilder<Relation> delegate;
 
-    public Fluent(OngoingWhereClause<StatementT> statement, CqlIdentifier columnId) {
+    public Fluent(
+        @NonNull OngoingWhereClause<StatementT> statement, @NonNull CqlIdentifier columnId) {
       this.statement = statement;
       this.delegate = new DefaultColumnRelationBuilder(columnId);
     }
 
+    @NonNull
     @Override
-    public StatementT build(String operator, Term rightOperand) {
+    public StatementT build(@NonNull String operator, @Nullable Term rightOperand) {
       return statement.where(delegate.build(operator, rightOperand));
     }
   }

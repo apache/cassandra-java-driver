@@ -19,6 +19,7 @@ import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.type.DataType;
 import com.datastax.oss.driver.api.core.type.DataTypes;
 import com.datastax.oss.driver.api.querybuilder.SchemaBuilderDsl;
+import edu.umd.cs.findbugs.annotations.NonNull;
 
 public interface CreateAggregateStateFunc {
 
@@ -29,5 +30,6 @@ public interface CreateAggregateStateFunc {
    * <p>To create the data type, use the constants and static methods in {@link DataTypes}, or
    * {@link SchemaBuilderDsl#udt(CqlIdentifier, boolean)}.
    */
-  CreateAggregateEnd withSType(DataType dataType);
+  @NonNull
+  CreateAggregateEnd withSType(@NonNull DataType dataType);
 }

@@ -21,6 +21,8 @@ import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
 import com.datastax.oss.driver.api.core.config.DriverConfig;
 import com.datastax.oss.driver.api.core.config.DriverConfigProfile;
 import com.datastax.oss.driver.api.core.metadata.token.Token;
+import edu.umd.cs.findbugs.annotations.NonNull;
+import edu.umd.cs.findbugs.annotations.Nullable;
 import java.nio.ByteBuffer;
 import java.util.Map;
 
@@ -34,27 +36,31 @@ import java.util.Map;
 public interface Request {
 
   /**
-   * The name of the driver configuration profile that will be used for execution.
+   * The name of the driver configuration profile that will be used for execution, or {@code null}
+   * if no profile has been set.
    *
    * <p>Note that this will be ignored if {@link #getConfigProfile()} returns a non-null value.
    *
    * @see DriverConfig
    */
+  @Nullable
   String getConfigProfileName();
 
   /**
-   * The configuration profile to use for execution.
+   * The configuration profile to use for execution, or {@code null} if no profile has been set.
    *
    * <p>It is generally simpler to specify a profile name with {@link #getConfigProfileName()}.
-   * However, this method can be used to provide a "derived" profile that was built programatically
+   * However, this method can be used to provide a "derived" profile that was built programmatically
    * by the client code. If specified, it overrides the profile name.
    *
    * @see DriverConfigProfile
    */
+  @Nullable
   DriverConfigProfile getConfigProfile();
 
   /**
-   * The CQL keyspace to execute this request in.
+   * The CQL keyspace to execute this request in, or {@code null} if this request does not specify
+   * any keyspace.
    *
    * <p>This overrides {@link Session#getKeyspace()} for this particular request, providing a way to
    * specify the keyspace without forcing it globally on the session, nor hard-coding it in the
@@ -66,20 +72,23 @@ public interface Request {
    *
    * @see <a href="https://issues.apache.org/jira/browse/CASSANDRA-10145">CASSANDRA-10145</a>
    */
+  @Nullable
   CqlIdentifier getKeyspace();
 
   /**
    * The keyspace to use for token-aware routing, if no {@link #getKeyspace() per-request keyspace}
-   * is defined.
+   * is defined, or {@code null} if this request does not use token-aware routing.
    *
    * <p>See {@link #getRoutingKey()} for a detailed explanation of token-aware routing.
    *
    * <p>Note that this is the only way to define a routing keyspace for protocol v4 or lower.
    */
+  @Nullable
   CqlIdentifier getRoutingKeyspace();
 
   /**
-   * The (encoded) partition key to use for token-aware routing.
+   * The (encoded) partition key to use for token-aware routing, or {@code null} if this request
+   * does not use token-aware routing.
    *
    * <p>When the driver picks a coordinator to execute a request, it prioritizes the replicas of the
    * partition that this query operates on, in order to avoid an extra network jump on the server
@@ -90,24 +99,28 @@ public interface Request {
    *   <li>if a per-request keyspace is specified with {@link #getKeyspace()}, it is used as the
    *       keyspace;
    *   <li>otherwise, if {@link #getRoutingKeyspace()} is specified, it is used as the keyspace;
-   *   <li>otherwise, if {@link Session#getKeyspace()} is not null, it is used as the keyspace;
+   *   <li>otherwise, if {@link Session#getKeyspace()} is not {@code null}, it is used as the
+   *       keyspace;
    *   <li>if a routing token is defined with {@link #getRoutingToken()}, it is used as the key;
    *   <li>otherwise, the result of this method is used as the key.
    * </ul>
    *
-   * If either keyspace or key is null at the end of this process, then token-aware routing is
-   * disabled.
+   * If either keyspace or key is {@code null} at the end of this process, then token-aware routing
+   * is disabled.
    */
+  @Nullable
   ByteBuffer getRoutingKey();
 
   /**
-   * The token to use for token-aware routing.
+   * The token to use for token-aware routing, or {@code null} if this request does not use
+   * token-aware routing.
    *
    * <p>This is the same information as {@link #getRoutingKey()}, but already hashed in a token. It
    * is probably more useful for analytics tools that "shard" a query on a set of token ranges.
    *
    * <p>See {@link #getRoutingKey()} for a detailed explanation of token-aware routing.
    */
+  @Nullable
   Token getRoutingToken();
 
   /**
@@ -116,7 +129,10 @@ public interface Request {
    * <p>This is used to exchange extra information with the server. By default, Cassandra doesn't do
    * anything with this, you'll only need it if you have a custom request handler on the
    * server-side.
+   *
+   * @return The custom payload, or an empty map if no payload is present.
    */
+  @NonNull
   Map<String, ByteBuffer> getCustomPayload();
 
   /**
@@ -130,6 +146,7 @@ public interface Request {
    * @return a boolean value, or {@code null} to use the default value defined in the configuration.
    * @see DefaultDriverOption#REQUEST_DEFAULT_IDEMPOTENCE
    */
+  @Nullable
   Boolean isIdempotent();
 
   /**

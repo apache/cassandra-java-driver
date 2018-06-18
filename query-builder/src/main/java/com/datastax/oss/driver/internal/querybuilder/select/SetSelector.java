@@ -17,21 +17,24 @@ package com.datastax.oss.driver.internal.querybuilder.select;
 
 import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.querybuilder.select.Selector;
+import edu.umd.cs.findbugs.annotations.NonNull;
+import edu.umd.cs.findbugs.annotations.Nullable;
 import net.jcip.annotations.Immutable;
 
 @Immutable
 public class SetSelector extends CollectionSelector {
 
-  public SetSelector(Iterable<Selector> elementSelectors) {
+  public SetSelector(@NonNull Iterable<Selector> elementSelectors) {
     this(elementSelectors, null);
   }
 
-  public SetSelector(Iterable<Selector> elementSelectors, CqlIdentifier alias) {
+  public SetSelector(@NonNull Iterable<Selector> elementSelectors, @Nullable CqlIdentifier alias) {
     super(elementSelectors, "{", "}", alias);
   }
 
+  @NonNull
   @Override
-  public Selector as(CqlIdentifier alias) {
+  public Selector as(@NonNull CqlIdentifier alias) {
     return new SetSelector(getElementSelectors(), alias);
   }
 }

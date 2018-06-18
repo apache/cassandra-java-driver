@@ -20,6 +20,8 @@ import com.datastax.oss.driver.api.core.type.DataType;
 import com.datastax.oss.driver.api.core.type.codec.TypeCodec;
 import com.datastax.oss.driver.api.core.type.reflect.GenericType;
 import com.datastax.oss.driver.shaded.guava.common.collect.Maps;
+import edu.umd.cs.findbugs.annotations.NonNull;
+import edu.umd.cs.findbugs.annotations.Nullable;
 import java.nio.ByteBuffer;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -40,18 +42,20 @@ public class MapCodec<K, V> implements TypeCodec<Map<K, V>> {
     this.javaType = GenericType.mapOf(keyCodec.getJavaType(), valueCodec.getJavaType());
   }
 
+  @NonNull
   @Override
   public GenericType<Map<K, V>> getJavaType() {
     return javaType;
   }
 
+  @NonNull
   @Override
   public DataType getCqlType() {
     return cqlType;
   }
 
   @Override
-  public boolean accepts(Object value) {
+  public boolean accepts(@NonNull Object value) {
     if (value instanceof Map) {
       // runtime type ok, now check key and value types
       Map<?, ?> map = (Map<?, ?>) value;
@@ -65,7 +69,8 @@ public class MapCodec<K, V> implements TypeCodec<Map<K, V>> {
   }
 
   @Override
-  public ByteBuffer encode(Map<K, V> value, ProtocolVersion protocolVersion) {
+  @Nullable
+  public ByteBuffer encode(@Nullable Map<K, V> value, @NonNull ProtocolVersion protocolVersion) {
     // An int indicating the number of key/value pairs in the map, followed by the pairs. Each pair
     // is a byte array representing the serialized key, preceded by an int indicating its size,
     // followed by the value in the same format.
@@ -76,14 +81,20 @@ public class MapCodec<K, V> implements TypeCodec<Map<K, V>> {
       ByteBuffer[] encodedElements = new ByteBuffer[value.size() * 2];
       int toAllocate = 4; // initialize with number of elements
       for (Map.Entry<K, V> entry : value.entrySet()) {
+        if (entry.getKey() == null) {
+          throw new NullPointerException("Map keys cannot be null");
+        }
         if (entry.getValue() == null) {
-          throw new NullPointerException("Collection elements cannot be null");
+          throw new NullPointerException("Map values cannot be null");
         }
         ByteBuffer encodedKey;
         try {
           encodedKey = keyCodec.encode(entry.getKey(), protocolVersion);
         } catch (ClassCastException e) {
           throw new IllegalArgumentException("Invalid type for key: " + entry.getKey().getClass());
+        }
+        if (encodedKey == null) {
+          throw new NullPointerException("Map keys cannot encode to CQL NULL");
         }
         encodedElements[i++] = encodedKey;
         toAllocate += 4 + encodedKey.remaining(); // the key preceded by its size
@@ -93,6 +104,9 @@ public class MapCodec<K, V> implements TypeCodec<Map<K, V>> {
         } catch (ClassCastException e) {
           throw new IllegalArgumentException(
               "Invalid type for value: " + entry.getValue().getClass());
+        }
+        if (encodedValue == null) {
+          throw new NullPointerException("Map values cannot encode to CQL NULL");
         }
         encodedElements[i++] = encodedValue;
         toAllocate += 4 + encodedValue.remaining(); // the value preceded by its size
@@ -108,8 +122,9 @@ public class MapCodec<K, V> implements TypeCodec<Map<K, V>> {
     }
   }
 
+  @Nullable
   @Override
-  public Map<K, V> decode(ByteBuffer bytes, ProtocolVersion protocolVersion) {
+  public Map<K, V> decode(@Nullable ByteBuffer bytes, @NonNull ProtocolVersion protocolVersion) {
     if (bytes == null || bytes.remaining() == 0) {
       return new LinkedHashMap<>(0);
     } else {
@@ -135,8 +150,9 @@ public class MapCodec<K, V> implements TypeCodec<Map<K, V>> {
     }
   }
 
+  @NonNull
   @Override
-  public String format(Map<K, V> value) {
+  public String format(@Nullable Map<K, V> value) {
     if (value == null) {
       return "NULL";
     }
@@ -157,8 +173,9 @@ public class MapCodec<K, V> implements TypeCodec<Map<K, V>> {
     return sb.toString();
   }
 
+  @Nullable
   @Override
-  public Map<K, V> parse(String value) {
+  public Map<K, V> parse(@Nullable String value) {
     if (value == null || value.isEmpty() || value.equalsIgnoreCase("NULL")) {
       return null;
     }

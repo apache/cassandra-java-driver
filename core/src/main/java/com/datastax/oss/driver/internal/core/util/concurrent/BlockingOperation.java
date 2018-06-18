@@ -15,6 +15,7 @@
  */
 package com.datastax.oss.driver.internal.core.util.concurrent;
 
+import edu.umd.cs.findbugs.annotations.NonNull;
 import java.util.concurrent.ThreadFactory;
 
 /**
@@ -52,7 +53,7 @@ public class BlockingOperation {
    */
   public static class SafeThreadFactory implements ThreadFactory {
     @Override
-    public Thread newThread(Runnable r) {
+    public Thread newThread(@NonNull Runnable r) {
       return new InternalThread(r);
     }
   }

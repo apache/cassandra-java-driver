@@ -18,6 +18,7 @@ package com.datastax.oss.driver.internal.core.session.throttling;
 import com.datastax.oss.driver.api.core.context.DriverContext;
 import com.datastax.oss.driver.api.core.session.throttling.RequestThrottler;
 import com.datastax.oss.driver.api.core.session.throttling.Throttled;
+import edu.umd.cs.findbugs.annotations.NonNull;
 import java.io.IOException;
 import net.jcip.annotations.ThreadSafe;
 
@@ -34,22 +35,22 @@ public class PassThroughRequestThrottler implements RequestThrottler {
   }
 
   @Override
-  public void register(Throttled request) {
+  public void register(@NonNull Throttled request) {
     request.onThrottleReady(false);
   }
 
   @Override
-  public void signalSuccess(Throttled request) {
+  public void signalSuccess(@NonNull Throttled request) {
     // nothing to do
   }
 
   @Override
-  public void signalError(Throttled request, Throwable error) {
+  public void signalError(@NonNull Throttled request, @NonNull Throwable error) {
     // nothing to do
   }
 
   @Override
-  public void signalTimeout(Throttled request) {
+  public void signalTimeout(@NonNull Throttled request) {
     // nothing to do
   }
 

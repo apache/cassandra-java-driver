@@ -24,6 +24,8 @@ import com.datastax.oss.driver.api.core.cql.SimpleStatement;
 import com.datastax.oss.driver.api.core.metadata.token.Token;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableList;
 import com.datastax.oss.driver.shaded.guava.common.collect.Iterables;
+import edu.umd.cs.findbugs.annotations.NonNull;
+import edu.umd.cs.findbugs.annotations.Nullable;
 import java.nio.ByteBuffer;
 import java.util.Iterator;
 import java.util.List;
@@ -76,13 +78,15 @@ public class DefaultBatchStatement implements BatchStatement {
     this.pagingState = pagingState;
   }
 
+  @NonNull
   @Override
   public BatchType getBatchType() {
     return batchType;
   }
 
+  @NonNull
   @Override
-  public BatchStatement setBatchType(BatchType newBatchType) {
+  public BatchStatement setBatchType(@NonNull BatchType newBatchType) {
     return new DefaultBatchStatement(
         newBatchType,
         statements,
@@ -99,8 +103,9 @@ public class DefaultBatchStatement implements BatchStatement {
         pagingState);
   }
 
+  @NonNull
   @Override
-  public BatchStatement setKeyspace(CqlIdentifier newKeyspace) {
+  public BatchStatement setKeyspace(@Nullable CqlIdentifier newKeyspace) {
     return new DefaultBatchStatement(
         batchType,
         statements,
@@ -117,8 +122,9 @@ public class DefaultBatchStatement implements BatchStatement {
         pagingState);
   }
 
+  @NonNull
   @Override
-  public BatchStatement add(BatchableStatement<?> statement) {
+  public BatchStatement add(@NonNull BatchableStatement<?> statement) {
     if (statements.size() >= 0xFFFF) {
       throw new IllegalStateException(
           "Batch statement cannot contain more than " + 0xFFFF + " statements.");
@@ -140,8 +146,9 @@ public class DefaultBatchStatement implements BatchStatement {
     }
   }
 
+  @NonNull
   @Override
-  public BatchStatement addAll(Iterable<? extends BatchableStatement<?>> newStatements) {
+  public BatchStatement addAll(@NonNull Iterable<? extends BatchableStatement<?>> newStatements) {
     if (statements.size() + Iterables.size(newStatements) > 0xFFFF) {
       throw new IllegalStateException(
           "Batch statement cannot contain more than " + 0xFFFF + " statements.");
@@ -171,6 +178,7 @@ public class DefaultBatchStatement implements BatchStatement {
     return statements.size();
   }
 
+  @NonNull
   @Override
   public BatchStatement clear() {
     return new DefaultBatchStatement(
@@ -189,6 +197,7 @@ public class DefaultBatchStatement implements BatchStatement {
         pagingState);
   }
 
+  @NonNull
   @Override
   public Iterator<BatchableStatement<?>> iterator() {
     return statements.iterator();
@@ -199,6 +208,7 @@ public class DefaultBatchStatement implements BatchStatement {
     return pagingState;
   }
 
+  @NonNull
   @Override
   public BatchStatement setPagingState(ByteBuffer newPagingState) {
     return new DefaultBatchStatement(
@@ -222,8 +232,9 @@ public class DefaultBatchStatement implements BatchStatement {
     return configProfileName;
   }
 
+  @NonNull
   @Override
-  public BatchStatement setConfigProfileName(String newConfigProfileName) {
+  public BatchStatement setConfigProfileName(@Nullable String newConfigProfileName) {
     return new DefaultBatchStatement(
         batchType,
         statements,
@@ -245,8 +256,9 @@ public class DefaultBatchStatement implements BatchStatement {
     return configProfile;
   }
 
+  @NonNull
   @Override
-  public DefaultBatchStatement setConfigProfile(DriverConfigProfile newProfile) {
+  public DefaultBatchStatement setConfigProfile(@Nullable DriverConfigProfile newProfile) {
     return new DefaultBatchStatement(
         batchType,
         statements,
@@ -292,6 +304,7 @@ public class DefaultBatchStatement implements BatchStatement {
     return null;
   }
 
+  @NonNull
   @Override
   public BatchStatement setRoutingKeyspace(CqlIdentifier newRoutingKeyspace) {
     return new DefaultBatchStatement(
@@ -325,6 +338,7 @@ public class DefaultBatchStatement implements BatchStatement {
     return null;
   }
 
+  @NonNull
   @Override
   public BatchStatement setRoutingKey(ByteBuffer newRoutingKey) {
     return new DefaultBatchStatement(
@@ -358,6 +372,7 @@ public class DefaultBatchStatement implements BatchStatement {
     return null;
   }
 
+  @NonNull
   @Override
   public BatchStatement setRoutingToken(Token newRoutingToken) {
     return new DefaultBatchStatement(
@@ -376,13 +391,15 @@ public class DefaultBatchStatement implements BatchStatement {
         pagingState);
   }
 
+  @NonNull
   @Override
   public Map<String, ByteBuffer> getCustomPayload() {
     return customPayload;
   }
 
+  @NonNull
   @Override
-  public DefaultBatchStatement setCustomPayload(Map<String, ByteBuffer> newCustomPayload) {
+  public DefaultBatchStatement setCustomPayload(@NonNull Map<String, ByteBuffer> newCustomPayload) {
     return new DefaultBatchStatement(
         batchType,
         statements,
@@ -404,6 +421,7 @@ public class DefaultBatchStatement implements BatchStatement {
     return idempotent;
   }
 
+  @NonNull
   @Override
   public DefaultBatchStatement setIdempotent(Boolean newIdempotence) {
     return new DefaultBatchStatement(
@@ -427,6 +445,7 @@ public class DefaultBatchStatement implements BatchStatement {
     return tracing;
   }
 
+  @NonNull
   @Override
   public BatchStatement setTracing(boolean newTracing) {
     return new DefaultBatchStatement(
@@ -450,6 +469,7 @@ public class DefaultBatchStatement implements BatchStatement {
     return timestamp;
   }
 
+  @NonNull
   @Override
   public BatchStatement setTimestamp(long newTimestamp) {
     return new DefaultBatchStatement(

@@ -41,6 +41,7 @@ import com.datastax.oss.protocol.internal.response.Event;
 import com.datastax.oss.protocol.internal.response.event.SchemaChangeEvent;
 import com.datastax.oss.protocol.internal.response.event.StatusChangeEvent;
 import com.datastax.oss.protocol.internal.response.event.TopologyChangeEvent;
+import edu.umd.cs.findbugs.annotations.NonNull;
 import io.netty.util.concurrent.EventExecutor;
 import java.net.InetSocketAddress;
 import java.util.LinkedHashMap;
@@ -130,17 +131,20 @@ public class ControlConnection implements EventCallback, AsyncAutoCloseable {
     RunOrSchedule.on(adminExecutor, singleThreaded::reconnectNow);
   }
 
+  @NonNull
   @Override
   public CompletionStage<Void> closeFuture() {
     return singleThreaded.closeFuture;
   }
 
+  @NonNull
   @Override
   public CompletionStage<Void> closeAsync() {
     // Control queries are never critical, so there is no graceful close.
     return forceCloseAsync();
   }
 
+  @NonNull
   @Override
   public CompletionStage<Void> forceCloseAsync() {
     RunOrSchedule.on(adminExecutor, singleThreaded::forceClose);

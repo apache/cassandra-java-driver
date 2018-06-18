@@ -16,6 +16,7 @@
 package com.datastax.oss.driver.api.core.metrics;
 
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableMap;
+import edu.umd.cs.findbugs.annotations.NonNull;
 import java.util.Map;
 
 /** See {@code reference.conf} for a description of each metric. */
@@ -59,11 +60,13 @@ public enum DefaultNodeMetric implements NodeMetric {
   }
 
   @Override
+  @NonNull
   public String getPath() {
     return path;
   }
 
-  public static DefaultNodeMetric fromPath(String path) {
+  @NonNull
+  public static DefaultNodeMetric fromPath(@NonNull String path) {
     DefaultNodeMetric metric = BY_PATH.get(path);
     if (metric == null) {
       throw new IllegalArgumentException("Unknown node metric path " + path);

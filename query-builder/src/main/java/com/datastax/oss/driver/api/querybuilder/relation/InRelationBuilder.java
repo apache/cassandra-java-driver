@@ -18,6 +18,8 @@ package com.datastax.oss.driver.api.querybuilder.relation;
 import com.datastax.oss.driver.api.querybuilder.BindMarker;
 import com.datastax.oss.driver.api.querybuilder.QueryBuilderDsl;
 import com.datastax.oss.driver.api.querybuilder.term.Term;
+import edu.umd.cs.findbugs.annotations.NonNull;
+import edu.umd.cs.findbugs.annotations.Nullable;
 import java.util.Arrays;
 
 public interface InRelationBuilder<ResultT> {
@@ -26,7 +28,8 @@ public interface InRelationBuilder<ResultT> {
    * Builds an IN relation where the whole set of possible values is a bound variable, as in {@code
    * IN ?}.
    */
-  default ResultT in(BindMarker bindMarker) {
+  @NonNull
+  default ResultT in(@NonNull BindMarker bindMarker) {
     return build(" IN ", bindMarker);
   }
 
@@ -34,14 +37,17 @@ public interface InRelationBuilder<ResultT> {
    * Builds an IN relation where the arguments are the possible values, as in {@code IN (term1,
    * term2...)}.
    */
-  default ResultT in(Iterable<Term> alternatives) {
+  @NonNull
+  default ResultT in(@NonNull Iterable<Term> alternatives) {
     return build(" IN ", QueryBuilderDsl.tuple(alternatives));
   }
 
   /** Var-arg equivalent of {@link #in(Iterable)} . */
-  default ResultT in(Term... alternatives) {
+  @NonNull
+  default ResultT in(@NonNull Term... alternatives) {
     return in(Arrays.asList(alternatives));
   }
 
-  ResultT build(String operator, Term rightOperand);
+  @NonNull
+  ResultT build(@NonNull String operator, @Nullable Term rightOperand);
 }

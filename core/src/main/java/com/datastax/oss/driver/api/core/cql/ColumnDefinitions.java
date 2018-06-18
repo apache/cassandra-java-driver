@@ -18,6 +18,7 @@ package com.datastax.oss.driver.api.core.cql;
 import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.data.AccessibleByName;
 import com.datastax.oss.driver.api.core.detach.Detachable;
+import edu.umd.cs.findbugs.annotations.NonNull;
 
 /**
  * Metadata about a set of CQL columns.
@@ -27,8 +28,16 @@ import com.datastax.oss.driver.api.core.detach.Detachable;
  * recommended for use with some 3rd-party tools like Apache Spark &trade;.
  */
 public interface ColumnDefinitions extends Iterable<ColumnDefinition>, Detachable {
+
+  /** @return the number of definitions contained in this metadata. */
   int size();
 
+  /**
+   * @param i the index to check.
+   * @throws IndexOutOfBoundsException if the index is invalid.
+   * @return the {@code i}th {@link ColumnDefinition} in this metadata.
+   */
+  @NonNull
   ColumnDefinition get(int i);
 
   /**
@@ -45,7 +54,8 @@ public interface ColumnDefinitions extends Iterable<ColumnDefinition>, Detachabl
    * @see #contains(String)
    * @see #firstIndexOf(String)
    */
-  default ColumnDefinition get(String name) {
+  @NonNull
+  default ColumnDefinition get(@NonNull String name) {
     if (!contains(name)) {
       throw new IllegalArgumentException("No definition named " + name);
     } else {
@@ -67,7 +77,8 @@ public interface ColumnDefinitions extends Iterable<ColumnDefinition>, Detachabl
    * @see #contains(CqlIdentifier)
    * @see #firstIndexOf(CqlIdentifier)
    */
-  default ColumnDefinition get(CqlIdentifier name) {
+  @NonNull
+  default ColumnDefinition get(@NonNull CqlIdentifier name) {
     if (!contains(name)) {
       throw new IllegalArgumentException("No definition named " + name);
     } else {
@@ -81,10 +92,10 @@ public interface ColumnDefinitions extends Iterable<ColumnDefinition>, Detachabl
    * <p>Because raw strings are ambiguous with regard to case-sensitivity, the argument will be
    * interpreted according to the rules described in {@link AccessibleByName}.
    */
-  boolean contains(String name);
+  boolean contains(@NonNull String name);
 
   /** Whether there is a definition using the given CQL identifier. */
-  boolean contains(CqlIdentifier id);
+  boolean contains(@NonNull CqlIdentifier id);
 
   /**
    * Returns the index of the first column that uses the given name.
@@ -95,7 +106,7 @@ public interface ColumnDefinitions extends Iterable<ColumnDefinition>, Detachabl
    * <p>Also, note that if multiple columns use the same name, there is no way to find the index for
    * the next occurrences. One way to avoid this is to use aliases in your CQL queries.
    */
-  int firstIndexOf(String name);
+  int firstIndexOf(@NonNull String name);
 
   /**
    * Returns the index of the first column that uses the given identifier.
@@ -103,5 +114,5 @@ public interface ColumnDefinitions extends Iterable<ColumnDefinition>, Detachabl
    * <p>Note that if multiple columns use the same identifier, there is no way to find the index for
    * the next occurrences. One way to avoid this is to use aliases in your CQL queries.
    */
-  int firstIndexOf(CqlIdentifier id);
+  int firstIndexOf(@NonNull CqlIdentifier id);
 }

@@ -16,6 +16,7 @@
 package com.datastax.oss.driver.api.core;
 
 import com.datastax.oss.driver.api.core.detach.Detachable;
+import edu.umd.cs.findbugs.annotations.NonNull;
 
 /**
  * A version of the native protocol used by the driver to communicate with the server.
@@ -36,6 +37,7 @@ public interface ProtocolVersion {
   int getCode();
 
   /** A string representation of the version. */
+  @NonNull
   String name();
 
   /**

@@ -20,6 +20,8 @@ import com.datastax.oss.driver.api.querybuilder.select.Selector;
 import com.datastax.oss.driver.internal.querybuilder.CqlHelper;
 import com.datastax.oss.driver.shaded.guava.common.base.Preconditions;
 import com.datastax.oss.driver.shaded.guava.common.collect.Iterables;
+import edu.umd.cs.findbugs.annotations.NonNull;
+import edu.umd.cs.findbugs.annotations.Nullable;
 import java.util.Objects;
 import net.jcip.annotations.Immutable;
 
@@ -32,7 +34,10 @@ public abstract class CollectionSelector implements Selector {
   private final CqlIdentifier alias;
 
   protected CollectionSelector(
-      Iterable<Selector> elementSelectors, String opening, String closing, CqlIdentifier alias) {
+      @NonNull Iterable<Selector> elementSelectors,
+      @NonNull String opening,
+      @NonNull String closing,
+      @Nullable CqlIdentifier alias) {
     Preconditions.checkNotNull(elementSelectors);
     Preconditions.checkArgument(
         elementSelectors.iterator().hasNext(), "Must have at least one selector");
@@ -46,14 +51,16 @@ public abstract class CollectionSelector implements Selector {
   }
 
   @Override
-  public void appendTo(StringBuilder builder) {
+  public void appendTo(@NonNull StringBuilder builder) {
     CqlHelper.append(elementSelectors, builder, opening, ",", closing);
   }
 
+  @NonNull
   public Iterable<Selector> getElementSelectors() {
     return elementSelectors;
   }
 
+  @Nullable
   @Override
   public CqlIdentifier getAlias() {
     return alias;

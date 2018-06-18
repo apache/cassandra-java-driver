@@ -21,6 +21,7 @@ import com.datastax.oss.driver.api.core.detach.AttachmentPoint;
 import com.datastax.oss.driver.api.core.type.DataType;
 import com.datastax.oss.driver.internal.core.type.DataTypeHelper;
 import com.datastax.oss.protocol.internal.response.result.ColumnSpec;
+import edu.umd.cs.findbugs.annotations.NonNull;
 import java.io.Serializable;
 import net.jcip.annotations.Immutable;
 
@@ -39,28 +40,33 @@ public class DefaultColumnDefinition implements ColumnDefinition, Serializable {
   private final DataType type;
 
   /** @param spec the raw data decoded by the protocol layer */
-  public DefaultColumnDefinition(ColumnSpec spec, AttachmentPoint attachmentPoint) {
+  public DefaultColumnDefinition(
+      @NonNull ColumnSpec spec, @NonNull AttachmentPoint attachmentPoint) {
     this.keyspace = CqlIdentifier.fromInternal(spec.ksName);
     this.table = CqlIdentifier.fromInternal(spec.tableName);
     this.name = CqlIdentifier.fromInternal(spec.name);
     this.type = DataTypeHelper.fromProtocolSpec(spec.type, attachmentPoint);
   }
 
+  @NonNull
   @Override
   public CqlIdentifier getKeyspace() {
     return keyspace;
   }
 
+  @NonNull
   @Override
   public CqlIdentifier getTable() {
     return table;
   }
 
+  @NonNull
   @Override
   public CqlIdentifier getName() {
     return name;
   }
 
+  @NonNull
   @Override
   public DataType getType() {
     return type;
@@ -72,7 +78,7 @@ public class DefaultColumnDefinition implements ColumnDefinition, Serializable {
   }
 
   @Override
-  public void attach(AttachmentPoint attachmentPoint) {
+  public void attach(@NonNull AttachmentPoint attachmentPoint) {
     type.attach(attachmentPoint);
   }
 

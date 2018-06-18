@@ -22,6 +22,8 @@ import com.datastax.oss.driver.api.core.metrics.Metrics;
 import com.datastax.oss.driver.api.core.session.Request;
 import com.datastax.oss.driver.api.core.session.Session;
 import com.datastax.oss.driver.api.core.type.reflect.GenericType;
+import edu.umd.cs.findbugs.annotations.NonNull;
+import edu.umd.cs.findbugs.annotations.Nullable;
 import java.util.Optional;
 import java.util.concurrent.CompletionStage;
 import net.jcip.annotations.ThreadSafe;
@@ -44,19 +46,22 @@ public class SessionWrapper implements Session {
 
   private final Session delegate;
 
-  public SessionWrapper(Session delegate) {
+  public SessionWrapper(@NonNull Session delegate) {
     this.delegate = delegate;
   }
 
+  @NonNull
   public Session getDelegate() {
     return delegate;
   }
 
+  @NonNull
   @Override
   public String getName() {
     return delegate.getName();
   }
 
+  @NonNull
   @Override
   public Metadata getMetadata() {
     return delegate.getMetadata();
@@ -67,52 +72,62 @@ public class SessionWrapper implements Session {
     return delegate.isSchemaMetadataEnabled();
   }
 
+  @NonNull
   @Override
-  public CompletionStage<Metadata> setSchemaMetadataEnabled(Boolean newValue) {
+  public CompletionStage<Metadata> setSchemaMetadataEnabled(@Nullable Boolean newValue) {
     return delegate.setSchemaMetadataEnabled(newValue);
   }
 
+  @NonNull
   @Override
   public CompletionStage<Metadata> refreshSchemaAsync() {
     return delegate.refreshSchemaAsync();
   }
 
+  @NonNull
   @Override
   public CompletionStage<Boolean> checkSchemaAgreementAsync() {
     return delegate.checkSchemaAgreementAsync();
   }
 
+  @NonNull
   @Override
   public DriverContext getContext() {
     return delegate.getContext();
   }
 
+  @NonNull
   @Override
-  public CqlIdentifier getKeyspace() {
+  public Optional<CqlIdentifier> getKeyspace() {
     return delegate.getKeyspace();
   }
 
+  @NonNull
   @Override
   public Optional<? extends Metrics> getMetrics() {
     return delegate.getMetrics();
   }
 
+  @Nullable
   @Override
   public <RequestT extends Request, ResultT> ResultT execute(
-      RequestT request, GenericType<ResultT> resultType) {
+      @NonNull RequestT request, @NonNull GenericType<ResultT> resultType) {
     return delegate.execute(request, resultType);
   }
 
+  @NonNull
   @Override
   public CompletionStage<Void> closeFuture() {
     return delegate.closeFuture();
   }
 
+  @NonNull
   @Override
   public CompletionStage<Void> closeAsync() {
     return delegate.closeAsync();
   }
 
+  @NonNull
   @Override
   public CompletionStage<Void> forceCloseAsync() {
     return delegate.forceCloseAsync();

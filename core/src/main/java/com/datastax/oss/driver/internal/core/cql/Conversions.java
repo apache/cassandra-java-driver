@@ -59,7 +59,6 @@ import com.datastax.oss.driver.internal.core.metadata.token.ByteOrderedToken;
 import com.datastax.oss.driver.internal.core.metadata.token.Murmur3Token;
 import com.datastax.oss.driver.internal.core.metadata.token.RandomToken;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableList;
-import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableMap;
 import com.datastax.oss.protocol.internal.Message;
 import com.datastax.oss.protocol.internal.ProtocolConstants;
 import com.datastax.oss.protocol.internal.request.Batch;
@@ -345,11 +344,11 @@ public class Conversions {
         request.getConfigProfileNameForBoundStatements(),
         request.getConfigProfileForBoundStatements(),
         request.getKeyspace(),
-        ImmutableMap.copyOf(request.getCustomPayloadForBoundStatements()),
+        NullAllowingImmutableMap.copyOf(request.getCustomPayloadForBoundStatements()),
         request.areBoundStatementsIdempotent(),
         context.codecRegistry(),
         context.protocolVersion(),
-        ImmutableMap.copyOf(request.getCustomPayload()));
+        NullAllowingImmutableMap.copyOf(request.getCustomPayload()));
   }
 
   public static ColumnDefinitions toColumnDefinitions(

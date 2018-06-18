@@ -19,6 +19,8 @@ import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.type.DataType;
 import com.datastax.oss.driver.api.querybuilder.select.Selector;
 import com.datastax.oss.driver.shaded.guava.common.base.Preconditions;
+import edu.umd.cs.findbugs.annotations.NonNull;
+import edu.umd.cs.findbugs.annotations.Nullable;
 import java.util.Objects;
 import net.jcip.annotations.Immutable;
 
@@ -29,11 +31,12 @@ public class TypeHintSelector implements Selector {
   private final DataType targetType;
   private final CqlIdentifier alias;
 
-  public TypeHintSelector(Selector selector, DataType targetType) {
+  public TypeHintSelector(@NonNull Selector selector, @NonNull DataType targetType) {
     this(selector, targetType, null);
   }
 
-  public TypeHintSelector(Selector selector, DataType targetType, CqlIdentifier alias) {
+  public TypeHintSelector(
+      @NonNull Selector selector, @NonNull DataType targetType, @Nullable CqlIdentifier alias) {
     Preconditions.checkNotNull(selector);
     Preconditions.checkNotNull(targetType);
     this.selector = selector;
@@ -41,13 +44,14 @@ public class TypeHintSelector implements Selector {
     this.alias = alias;
   }
 
+  @NonNull
   @Override
-  public Selector as(CqlIdentifier alias) {
+  public Selector as(@NonNull CqlIdentifier alias) {
     return new TypeHintSelector(selector, targetType, alias);
   }
 
   @Override
-  public void appendTo(StringBuilder builder) {
+  public void appendTo(@NonNull StringBuilder builder) {
     builder.append('(').append(targetType.asCql(false, true)).append(')');
     selector.appendTo(builder);
     if (alias != null) {
@@ -55,14 +59,17 @@ public class TypeHintSelector implements Selector {
     }
   }
 
+  @NonNull
   public Selector getSelector() {
     return selector;
   }
 
+  @NonNull
   public DataType getTargetType() {
     return targetType;
   }
 
+  @Nullable
   @Override
   public CqlIdentifier getAlias() {
     return alias;

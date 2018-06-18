@@ -34,11 +34,11 @@ import com.datastax.oss.driver.internal.core.util.concurrent.Debouncer;
 import com.datastax.oss.driver.internal.core.util.concurrent.RunOrSchedule;
 import com.datastax.oss.driver.shaded.guava.common.annotations.VisibleForTesting;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableSet;
+import edu.umd.cs.findbugs.annotations.NonNull;
 import io.netty.util.concurrent.EventExecutor;
 import java.net.InetSocketAddress;
 import java.util.Collections;
 import java.util.List;
-import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
@@ -174,7 +174,7 @@ public class MetadataManager implements AsyncAutoCloseable {
                     address,
                     error);
               } else {
-                singleThreaded.addNode(address, info);
+                singleThreaded.addNode(address, info.orElse(null));
               }
             },
             adminExecutor);
@@ -225,17 +225,20 @@ public class MetadataManager implements AsyncAutoCloseable {
     return singleThreaded.firstSchemaRefreshFuture;
   }
 
+  @NonNull
   @Override
   public CompletionStage<Void> closeFuture() {
     return singleThreaded.closeFuture;
   }
 
+  @NonNull
   @Override
   public CompletionStage<Void> closeAsync() {
     RunOrSchedule.on(adminExecutor, singleThreaded::close);
     return singleThreaded.closeFuture;
   }
 
+  @NonNull
   @Override
   public CompletionStage<Void> forceCloseAsync() {
     return this.closeAsync();
@@ -280,10 +283,9 @@ public class MetadataManager implements AsyncAutoCloseable {
       return apply(new FullNodeListRefresh(nodeInfos));
     }
 
-    private void addNode(InetSocketAddress address, Optional<NodeInfo> maybeInfo) {
+    private void addNode(InetSocketAddress address, NodeInfo info) {
       try {
-        if (maybeInfo.isPresent()) {
-          NodeInfo info = maybeInfo.get();
+        if (info != null) {
           if (!address.equals(info.getConnectAddress())) {
             // This would be a bug in the TopologyMonitor, protect against it
             LOG.warn(

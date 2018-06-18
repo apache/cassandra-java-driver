@@ -22,52 +22,64 @@ import com.datastax.oss.driver.api.core.metadata.schema.Describable;
 import com.datastax.oss.driver.api.core.type.codec.registry.CodecRegistry;
 import com.datastax.oss.driver.internal.core.metadata.schema.ScriptBuilder;
 import com.datastax.oss.protocol.internal.ProtocolConstants;
+import edu.umd.cs.findbugs.annotations.NonNull;
+import edu.umd.cs.findbugs.annotations.Nullable;
 import java.util.List;
 
 public interface UserDefinedType extends DataType, Describable {
+
+  @Nullable // because of ShallowUserDefinedType usage in the query builder
   CqlIdentifier getKeyspace();
 
+  @NonNull
   CqlIdentifier getName();
 
   boolean isFrozen();
 
+  @NonNull
   List<CqlIdentifier> getFieldNames();
 
   int firstIndexOf(CqlIdentifier id);
 
   int firstIndexOf(String name);
 
-  default boolean contains(CqlIdentifier id) {
+  default boolean contains(@NonNull CqlIdentifier id) {
     return firstIndexOf(id) >= 0;
   }
 
-  default boolean contains(String name) {
+  default boolean contains(@NonNull String name) {
     return firstIndexOf(name) >= 0;
   }
 
+  @NonNull
   List<DataType> getFieldTypes();
 
+  @NonNull
   UserDefinedType copy(boolean newFrozen);
 
+  @NonNull
   UdtValue newValue();
 
   /**
    * Creates a new instance with the specified values for the fields.
    *
-   * <p>The values must be in the same order as the fields in the type's definition. You can specify
-   * less values than there are fields (the remaining ones will be set to NULL), but not more (a
-   * runtime exception will be thrown).
-   *
    * <p>To encode the values, this method uses the {@link CodecRegistry} that this type is {@link
    * #getAttachmentPoint() attached} to; it looks for the best codec to handle the target CQL type
    * and actual runtime type of each value (see {@link CodecRegistry#codecFor(DataType, Object)}).
    *
+   * @param fields the value of the fields. They must be in the same order as the fields in the
+   *     type's definition. You can specify less values than there are fields (the remaining ones
+   *     will be set to NULL), but not more (a runtime exception will be thrown). Individual values
+   *     can be {@code null}, but the array itself can't.
    * @throws IllegalArgumentException if there are too many values.
    */
-  UdtValue newValue(Object... fields);
+  @NonNull
+  UdtValue newValue(@NonNull Object... fields);
 
+  @NonNull
   AttachmentPoint getAttachmentPoint();
 
+  @NonNull
   @Override
   default String asCql(boolean includeFrozen, boolean pretty) {
     if (getKeyspace() != null) {
@@ -79,6 +91,7 @@ public interface UserDefinedType extends DataType, Describable {
     }
   }
 
+  @NonNull
   @Override
   default String describe(boolean pretty) {
     ScriptBuilder builder = new ScriptBuilder(pretty);
@@ -106,6 +119,7 @@ public interface UserDefinedType extends DataType, Describable {
     return builder.build();
   }
 
+  @NonNull
   @Override
   default String describeWithChildren(boolean pretty) {
     // No children (if it uses other types, they're considered dependencies, not sub-elements)

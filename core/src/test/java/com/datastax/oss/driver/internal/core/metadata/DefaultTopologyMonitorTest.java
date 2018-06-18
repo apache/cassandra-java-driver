@@ -116,7 +116,7 @@ public class DefaultTopologyMonitorTest {
   @Test
   public void should_refresh_node_from_peers_if_broadcast_address_is_present() {
     // Given
-    node2.broadcastAddress = Optional.of(ADDRESS2);
+    node2.broadcastAddress = ADDRESS2;
     topologyMonitor.isSchemaV2 = false;
     topologyMonitor.stubQueries(
         new StubbedQuery(
@@ -140,7 +140,7 @@ public class DefaultTopologyMonitorTest {
   @Test
   public void should_refresh_node_from_peers_if_broadcast_address_is_present_v2() {
     // Given
-    node2.broadcastAddress = Optional.of(ADDRESS2);
+    node2.broadcastAddress = ADDRESS2;
     topologyMonitor.isSchemaV2 = true;
     topologyMonitor.stubQueries(
         new StubbedQuery(
@@ -166,7 +166,7 @@ public class DefaultTopologyMonitorTest {
   public void should_refresh_node_from_peers_if_broadcast_address_is_not_present() {
     // Given
     topologyMonitor.isSchemaV2 = false;
-    node2.broadcastAddress = Optional.empty();
+    node2.broadcastAddress = null;
     AdminRow peer3 = mockPeersRow(3);
     AdminRow peer2 = mockPeersRow(2);
     topologyMonitor.stubQueries(
@@ -198,7 +198,7 @@ public class DefaultTopologyMonitorTest {
   public void should_refresh_node_from_peers_if_broadcast_address_is_not_present_V2() {
     // Given
     topologyMonitor.isSchemaV2 = true;
-    node2.broadcastAddress = Optional.empty();
+    node2.broadcastAddress = null;
     AdminRow peer3 = mockPeersV2Row(3);
     AdminRow peer2 = mockPeersV2Row(2);
     topologyMonitor.stubQueries(

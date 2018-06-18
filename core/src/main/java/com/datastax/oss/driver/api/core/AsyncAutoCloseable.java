@@ -17,6 +17,7 @@ package com.datastax.oss.driver.api.core;
 
 import com.datastax.oss.driver.internal.core.util.concurrent.BlockingOperation;
 import com.datastax.oss.driver.internal.core.util.concurrent.CompletableFutures;
+import edu.umd.cs.findbugs.annotations.NonNull;
 import java.util.concurrent.CompletionStage;
 
 /**
@@ -31,6 +32,7 @@ public interface AsyncAutoCloseable extends AutoCloseable {
    * Returns a stage that will complete when {@link #close()} or {@link #forceCloseAsync()} is
    * called, and the shutdown sequence completes.
    */
+  @NonNull
   CompletionStage<Void> closeFuture();
 
   /**
@@ -40,6 +42,7 @@ public interface AsyncAutoCloseable extends AutoCloseable {
    * @return a stage that will complete when the shutdown sequence is complete. Multiple calls to
    *     this method or {@link #forceCloseAsync()} always return the same instance.
    */
+  @NonNull
   CompletionStage<Void> closeAsync();
 
   /**
@@ -49,6 +52,7 @@ public interface AsyncAutoCloseable extends AutoCloseable {
    * @return a stage that will complete when the shutdown sequence is complete. Multiple calls to
    *     this method or {@link #close()} always return the same instance.
    */
+  @NonNull
   CompletionStage<Void> forceCloseAsync();
 
   /**

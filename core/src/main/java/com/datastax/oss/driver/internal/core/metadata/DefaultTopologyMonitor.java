@@ -28,6 +28,7 @@ import com.datastax.oss.driver.internal.core.control.ControlConnection;
 import com.datastax.oss.driver.internal.core.util.concurrent.CompletableFutures;
 import com.datastax.oss.driver.shaded.guava.common.annotations.VisibleForTesting;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableMap;
+import edu.umd.cs.findbugs.annotations.NonNull;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.time.Duration;
@@ -201,17 +202,20 @@ public class DefaultTopologyMonitor implements TopologyMonitor {
     return new SchemaAgreementChecker(channel, context, port, logPrefix).run();
   }
 
+  @NonNull
   @Override
   public CompletionStage<Void> closeFuture() {
     return closeFuture;
   }
 
+  @NonNull
   @Override
   public CompletionStage<Void> closeAsync() {
     closeFuture.complete(null);
     return closeFuture;
   }
 
+  @NonNull
   @Override
   public CompletionStage<Void> forceCloseAsync() {
     return closeAsync();

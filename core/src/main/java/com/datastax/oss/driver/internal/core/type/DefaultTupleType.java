@@ -23,6 +23,7 @@ import com.datastax.oss.driver.internal.core.data.DefaultTupleValue;
 import com.datastax.oss.driver.shaded.guava.common.base.Joiner;
 import com.datastax.oss.driver.shaded.guava.common.base.Preconditions;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableList;
+import edu.umd.cs.findbugs.annotations.NonNull;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.Serializable;
@@ -39,28 +40,32 @@ public class DefaultTupleType implements TupleType, Serializable {
 
   private transient volatile AttachmentPoint attachmentPoint;
 
-  public DefaultTupleType(List<DataType> componentTypes, AttachmentPoint attachmentPoint) {
+  public DefaultTupleType(
+      @NonNull List<DataType> componentTypes, @NonNull AttachmentPoint attachmentPoint) {
     Preconditions.checkNotNull(componentTypes);
     this.componentTypes = ImmutableList.copyOf(componentTypes);
     this.attachmentPoint = attachmentPoint;
   }
 
-  public DefaultTupleType(List<DataType> componentTypes) {
+  public DefaultTupleType(@NonNull List<DataType> componentTypes) {
     this(componentTypes, AttachmentPoint.NONE);
   }
 
+  @NonNull
   @Override
   public List<DataType> getComponentTypes() {
     return componentTypes;
   }
 
+  @NonNull
   @Override
   public TupleValue newValue() {
     return new DefaultTupleValue(this);
   }
 
+  @NonNull
   @Override
-  public TupleValue newValue(Object... values) {
+  public TupleValue newValue(@NonNull Object... values) {
     return new DefaultTupleValue(this, values);
   }
 
@@ -70,13 +75,14 @@ public class DefaultTupleType implements TupleType, Serializable {
   }
 
   @Override
-  public void attach(AttachmentPoint attachmentPoint) {
+  public void attach(@NonNull AttachmentPoint attachmentPoint) {
     this.attachmentPoint = attachmentPoint;
     for (DataType componentType : componentTypes) {
       componentType.attach(attachmentPoint);
     }
   }
 
+  @NonNull
   @Override
   public AttachmentPoint getAttachmentPoint() {
     return attachmentPoint;

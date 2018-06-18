@@ -17,12 +17,14 @@ package com.datastax.oss.driver.internal.querybuilder.update;
 
 import com.datastax.oss.driver.api.querybuilder.term.Term;
 import com.datastax.oss.driver.internal.querybuilder.lhs.LeftOperand;
+import edu.umd.cs.findbugs.annotations.NonNull;
 import net.jcip.annotations.Immutable;
 
 @Immutable
 public class CounterAssignment extends DefaultAssignment {
 
-  public CounterAssignment(LeftOperand leftOperand, String operator, Term rightOperand) {
+  public CounterAssignment(
+      @NonNull LeftOperand leftOperand, @NonNull String operator, @NonNull Term rightOperand) {
     super(leftOperand, operator, rightOperand);
   }
 

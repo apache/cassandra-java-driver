@@ -40,6 +40,8 @@ import com.datastax.oss.driver.internal.core.util.Loggers;
 import com.datastax.oss.driver.internal.core.util.concurrent.CompletableFutures;
 import com.datastax.oss.driver.internal.core.util.concurrent.RunOrSchedule;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableList;
+import edu.umd.cs.findbugs.annotations.NonNull;
+import edu.umd.cs.findbugs.annotations.Nullable;
 import io.netty.util.concurrent.EventExecutor;
 import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
@@ -107,11 +109,13 @@ public class DefaultSession implements CqlSession {
     return singleThreaded.initFuture;
   }
 
+  @NonNull
   @Override
   public String getName() {
     return context.sessionName();
   }
 
+  @NonNull
   @Override
   public Metadata getMetadata() {
     return metadataManager.getMetadata();
@@ -122,31 +126,37 @@ public class DefaultSession implements CqlSession {
     return metadataManager.isSchemaEnabled();
   }
 
+  @NonNull
   @Override
-  public CompletionStage<Metadata> setSchemaMetadataEnabled(Boolean newValue) {
+  public CompletionStage<Metadata> setSchemaMetadataEnabled(@Nullable Boolean newValue) {
     return metadataManager.setSchemaEnabled(newValue);
   }
 
+  @NonNull
   @Override
   public CompletionStage<Metadata> refreshSchemaAsync() {
     return metadataManager.refreshSchema(null, true, true);
   }
 
+  @NonNull
   @Override
   public CompletionStage<Boolean> checkSchemaAgreementAsync() {
     return context.topologyMonitor().checkSchemaAgreement();
   }
 
+  @NonNull
   @Override
   public DriverContext getContext() {
     return context;
   }
 
+  @NonNull
   @Override
-  public CqlIdentifier getKeyspace() {
-    return poolManager.getKeyspace();
+  public Optional<CqlIdentifier> getKeyspace() {
+    return Optional.ofNullable(poolManager.getKeyspace());
   }
 
+  @NonNull
   @Override
   public Optional<? extends Metrics> getMetrics() {
     return context.metricsFactory().getMetrics();
@@ -159,24 +169,28 @@ public class DefaultSession implements CqlSession {
    * session. Calling it from anywhere else is highly discouraged, as an invalid keyspace would
    * wreak havoc (close all connections and make the session unusable).
    */
-  public CompletionStage<Void> setKeyspace(CqlIdentifier newKeyspace) {
+  @NonNull
+  public CompletionStage<Void> setKeyspace(@NonNull CqlIdentifier newKeyspace) {
     return poolManager.setKeyspace(newKeyspace);
   }
 
+  @NonNull
   public Map<Node, ChannelPool> getPools() {
     return poolManager.getPools();
   }
 
+  @Nullable
   @Override
   public <RequestT extends Request, ResultT> ResultT execute(
-      RequestT request, GenericType<ResultT> resultType) {
+      @NonNull RequestT request, @NonNull GenericType<ResultT> resultType) {
     return processorRegistry
         .processorFor(request, resultType)
         .newHandler(request, this, context, logPrefix)
         .handle();
   }
 
-  public DriverChannel getChannel(Node node, String logPrefix) {
+  @Nullable
+  public DriverChannel getChannel(@NonNull Node node, @NonNull String logPrefix) {
     ChannelPool pool = poolManager.getPools().get(node);
     if (pool == null) {
       LOG.trace("[{}] No pool to {}, skipping", logPrefix, node);
@@ -195,25 +209,30 @@ public class DefaultSession implements CqlSession {
     }
   }
 
+  @NonNull
   public ConcurrentMap<ByteBuffer, RepreparePayload> getRepreparePayloads() {
     return poolManager.getRepreparePayloads();
   }
 
+  @NonNull
   public SessionMetricUpdater getMetricUpdater() {
     return metricUpdater;
   }
 
+  @NonNull
   @Override
   public CompletionStage<Void> closeFuture() {
     return singleThreaded.closeFuture;
   }
 
+  @NonNull
   @Override
   public CompletionStage<Void> closeAsync() {
     RunOrSchedule.on(adminExecutor, singleThreaded::close);
     return singleThreaded.closeFuture;
   }
 
+  @NonNull
   @Override
   public CompletionStage<Void> forceCloseAsync() {
     RunOrSchedule.on(adminExecutor, singleThreaded::forceClose);

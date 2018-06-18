@@ -19,6 +19,8 @@ import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.config.DriverConfigProfile;
 import com.datastax.oss.driver.api.core.metadata.token.Token;
 import com.datastax.oss.driver.api.core.session.Request;
+import com.datastax.oss.protocol.internal.util.collection.NullAllowingImmutableMap;
+import edu.umd.cs.findbugs.annotations.NonNull;
 import java.nio.ByteBuffer;
 import java.util.Map;
 
@@ -65,9 +67,10 @@ public class KeyRequest implements Request {
     return null;
   }
 
+  @NonNull
   @Override
   public Map<String, ByteBuffer> getCustomPayload() {
-    return null;
+    return NullAllowingImmutableMap.of();
   }
 
   @Override

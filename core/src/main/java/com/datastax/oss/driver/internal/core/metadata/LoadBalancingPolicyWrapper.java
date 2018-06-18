@@ -27,6 +27,8 @@ import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
 import com.datastax.oss.driver.internal.core.util.concurrent.ReplayingEventFilter;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableMap;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableSet;
+import edu.umd.cs.findbugs.annotations.NonNull;
+import edu.umd.cs.findbugs.annotations.Nullable;
 import java.net.InetSocketAddress;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -86,7 +88,8 @@ public class LoadBalancingPolicyWrapper implements AutoCloseable {
   private AtomicReference<State> stateRef = new AtomicReference<>(State.BEFORE_INIT);
 
   public LoadBalancingPolicyWrapper(
-      InternalDriverContext context, Map<String, LoadBalancingPolicy> policiesPerProfile) {
+      @NonNull InternalDriverContext context,
+      @NonNull Map<String, LoadBalancingPolicy> policiesPerProfile) {
     this.context = context;
 
     this.policiesPerProfile = policiesPerProfile;
@@ -136,7 +139,9 @@ public class LoadBalancingPolicyWrapper implements AutoCloseable {
    *
    * @see LoadBalancingPolicy#newQueryPlan(Request, Session)
    */
-  public Queue<Node> newQueryPlan(Request request, String configProfileName, Session session) {
+  @NonNull
+  public Queue<Node> newQueryPlan(
+      @Nullable Request request, @NonNull String configProfileName, @Nullable Session session) {
     switch (stateRef.get()) {
       case BEFORE_INIT:
       case DURING_INIT:
@@ -157,6 +162,7 @@ public class LoadBalancingPolicyWrapper implements AutoCloseable {
     }
   }
 
+  @NonNull
   public Queue<Node> newQueryPlan() {
     return newQueryPlan(null, DriverConfigProfile.DEFAULT_NAME, null);
   }
@@ -233,7 +239,7 @@ public class LoadBalancingPolicyWrapper implements AutoCloseable {
     }
 
     @Override
-    public void setDistance(Node node, NodeDistance suggestedDistance) {
+    public void setDistance(@NonNull Node node, @NonNull NodeDistance suggestedDistance) {
       LOG.debug(
           "[{}] {} suggested {} to {}, checking what other policies said",
           logPrefix,

@@ -23,6 +23,8 @@ import com.datastax.oss.driver.api.core.metadata.schema.AggregateMetadata;
 import com.datastax.oss.driver.api.core.type.DataType;
 import com.datastax.oss.driver.api.core.type.reflect.GenericType;
 import com.datastax.oss.driver.shaded.guava.common.base.Preconditions;
+import edu.umd.cs.findbugs.annotations.NonNull;
+import edu.umd.cs.findbugs.annotations.Nullable;
 import java.nio.ByteBuffer;
 
 /**
@@ -58,8 +60,10 @@ import java.nio.ByteBuffer;
  */
 public interface TypeCodec<T> {
 
+  @NonNull
   GenericType<T> getJavaType();
 
+  @NonNull
   DataType getCqlType();
 
   /**
@@ -72,7 +76,7 @@ public interface TypeCodec<T> {
    *
    * <p>If the argument represents a Java primitive type, its wrapper type is considered instead.
    */
-  default boolean accepts(GenericType<?> javaType) {
+  default boolean accepts(@NonNull GenericType<?> javaType) {
     Preconditions.checkNotNull(javaType);
     return getJavaType().equals(javaType.wrap());
   }
@@ -88,7 +92,7 @@ public interface TypeCodec<T> {
    * Class#isAssignableFrom}. Or even better, with {@code ==} if that class also happens to be
    * final.
    */
-  default boolean accepts(Class<?> javaClass) {
+  default boolean accepts(@NonNull Class<?> javaClass) {
     Preconditions.checkNotNull(javaClass);
     return accepts(GenericType.of(javaClass));
   }
@@ -118,13 +122,13 @@ public interface TypeCodec<T> {
    * <p>Finally, if the codec targets a non-generic Java class, it might be possible to implement
    * this method with a simple {@code instanceof} check.
    */
-  default boolean accepts(Object value) {
+  default boolean accepts(@NonNull Object value) {
     Preconditions.checkNotNull(value);
     return getJavaType().isSupertypeOf(GenericType.of(value.getClass()));
   }
 
   /** Whether this codec is capable of processing the given CQL type. */
-  default boolean accepts(DataType cqlType) {
+  default boolean accepts(@NonNull DataType cqlType) {
     Preconditions.checkNotNull(cqlType);
     return this.getCqlType().equals(cqlType);
   }
@@ -140,7 +144,8 @@ public interface TypeCodec<T> {
    *       empty collection.
    * </ul>
    */
-  ByteBuffer encode(T value, ProtocolVersion protocolVersion);
+  @Nullable
+  ByteBuffer encode(@Nullable T value, @NonNull ProtocolVersion protocolVersion);
 
   /**
    * Decodes a value from the binary format of the CQL type handled by this codec.
@@ -161,7 +166,8 @@ public interface TypeCodec<T> {
    *       consuming.
    * </ul>
    */
-  T decode(ByteBuffer bytes, ProtocolVersion protocolVersion);
+  @Nullable
+  T decode(@Nullable ByteBuffer bytes, @NonNull ProtocolVersion protocolVersion);
 
   /**
    * Formats the given value as a valid CQL literal according to the CQL type handled by this codec.
@@ -184,7 +190,8 @@ public interface TypeCodec<T> {
    * If you choose not to implement this method, don't throw an exception but instead return a
    * constant string (for example "XxxCodec.format not implemented").
    */
-  String format(T value);
+  @NonNull
+  String format(@Nullable T value);
 
   /**
    * Parse the given CQL literal into an instance of the Java type handled by this codec.
@@ -202,5 +209,6 @@ public interface TypeCodec<T> {
    * <p>If you choose not to implement this method, don't throw an exception but instead return
    * {@code null}.
    */
-  T parse(String value);
+  @Nullable
+  T parse(@Nullable String value);
 }

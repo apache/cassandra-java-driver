@@ -16,6 +16,7 @@
 package com.datastax.oss.driver.api.querybuilder.schema;
 
 import com.datastax.oss.driver.api.core.CqlIdentifier;
+import edu.umd.cs.findbugs.annotations.NonNull;
 
 public interface AlterTypeRenameField {
 
@@ -23,13 +24,15 @@ public interface AlterTypeRenameField {
    * Adds a field rename to ALTER TYPE specification. This may be repeated with successive calls to
    * rename fields.
    */
-  AlterTypeRenameFieldEnd renameField(CqlIdentifier from, CqlIdentifier to);
+  @NonNull
+  AlterTypeRenameFieldEnd renameField(@NonNull CqlIdentifier from, @NonNull CqlIdentifier to);
 
   /**
    * Shortcut for {@link #renameField(CqlIdentifier,CqlIdentifier)
    * renameField(CqlIdentifier.fromCql(from),CqlIdentifier.fromCql(to))}.
    */
-  default AlterTypeRenameFieldEnd renameField(String from, String to) {
+  @NonNull
+  default AlterTypeRenameFieldEnd renameField(@NonNull String from, @NonNull String to) {
     return renameField(CqlIdentifier.fromCql(from), CqlIdentifier.fromCql(to));
   }
 }

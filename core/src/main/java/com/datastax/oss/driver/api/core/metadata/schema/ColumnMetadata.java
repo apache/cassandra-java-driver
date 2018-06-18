@@ -17,20 +17,25 @@ package com.datastax.oss.driver.api.core.metadata.schema;
 
 import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.type.DataType;
+import edu.umd.cs.findbugs.annotations.NonNull;
 
 /** A column in the schema metadata. */
 public interface ColumnMetadata {
 
+  @NonNull
   CqlIdentifier getKeyspace();
 
   /**
    * The identifier of the {@link TableMetadata} or a {@link ViewMetadata} that this column belongs
    * to.
    */
+  @NonNull
   CqlIdentifier getParent();
 
+  @NonNull
   CqlIdentifier getName();
 
+  @NonNull
   DataType getType();
 
   boolean isStatic();

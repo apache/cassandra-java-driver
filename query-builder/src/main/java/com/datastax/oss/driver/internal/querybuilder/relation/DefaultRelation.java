@@ -19,6 +19,8 @@ import com.datastax.oss.driver.api.querybuilder.relation.Relation;
 import com.datastax.oss.driver.api.querybuilder.term.Term;
 import com.datastax.oss.driver.internal.querybuilder.lhs.LeftOperand;
 import com.datastax.oss.driver.shaded.guava.common.base.Preconditions;
+import edu.umd.cs.findbugs.annotations.NonNull;
+import edu.umd.cs.findbugs.annotations.Nullable;
 import net.jcip.annotations.Immutable;
 
 @Immutable
@@ -28,7 +30,8 @@ public class DefaultRelation implements Relation {
   private final String operator;
   private final Term rightOperand;
 
-  public DefaultRelation(LeftOperand leftOperand, String operator, Term rightOperand) {
+  public DefaultRelation(
+      @NonNull LeftOperand leftOperand, @NonNull String operator, @Nullable Term rightOperand) {
     Preconditions.checkNotNull(leftOperand);
     Preconditions.checkNotNull(operator);
     this.leftOperand = leftOperand;
@@ -37,7 +40,7 @@ public class DefaultRelation implements Relation {
   }
 
   @Override
-  public void appendTo(StringBuilder builder) {
+  public void appendTo(@NonNull StringBuilder builder) {
     leftOperand.appendTo(builder);
     builder.append(operator);
     if (rightOperand != null) {
@@ -50,14 +53,17 @@ public class DefaultRelation implements Relation {
     return rightOperand.isIdempotent();
   }
 
+  @NonNull
   public LeftOperand getLeftOperand() {
     return leftOperand;
   }
 
+  @NonNull
   public String getOperator() {
     return operator;
   }
 
+  @Nullable
   public Term getRightOperand() {
     return rightOperand;
   }

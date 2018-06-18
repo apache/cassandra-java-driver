@@ -20,6 +20,7 @@ import com.datastax.oss.driver.api.core.context.DriverContext;
 import com.datastax.oss.driver.api.core.metadata.Node;
 import com.datastax.oss.driver.api.core.session.Request;
 import com.datastax.oss.driver.api.core.tracker.RequestTracker;
+import edu.umd.cs.findbugs.annotations.NonNull;
 import net.jcip.annotations.ThreadSafe;
 
 @ThreadSafe
@@ -31,16 +32,19 @@ public class NoopRequestTracker implements RequestTracker {
 
   @Override
   public void onSuccess(
-      Request request, long latencyNanos, DriverConfigProfile configProfile, Node node) {
+      @NonNull Request request,
+      long latencyNanos,
+      @NonNull DriverConfigProfile configProfile,
+      @NonNull Node node) {
     // nothing to do
   }
 
   @Override
   public void onError(
-      Request request,
-      Throwable error,
+      @NonNull Request request,
+      @NonNull Throwable error,
       long latencyNanos,
-      DriverConfigProfile configProfile,
+      @NonNull DriverConfigProfile configProfile,
       Node node) {
     // nothing to do
   }

@@ -17,6 +17,7 @@ package com.datastax.oss.driver.api.core.data;
 
 import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.type.DataType;
+import edu.umd.cs.findbugs.annotations.NonNull;
 
 /**
  * A data structure where the values are accessible via a name string.
@@ -45,7 +46,7 @@ public interface AccessibleByName extends AccessibleByIndex {
    * Returns the first index where a given identifier appears (depending on the implementation,
    * identifiers may appear multiple times).
    */
-  int firstIndexOf(String name);
+  int firstIndexOf(@NonNull String name);
 
   /**
    * Returns the CQL type of the value for the first occurrence of {@code name}.
@@ -55,5 +56,6 @@ public interface AccessibleByName extends AccessibleByIndex {
    *
    * @throws IndexOutOfBoundsException if the index is invalid.
    */
-  DataType getType(String name);
+  @NonNull
+  DataType getType(@NonNull String name);
 }

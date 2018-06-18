@@ -17,13 +17,15 @@ package com.datastax.oss.driver.api.core.servererrors;
 
 import com.datastax.oss.driver.api.core.DriverException;
 import com.datastax.oss.driver.api.core.metadata.Node;
+import edu.umd.cs.findbugs.annotations.NonNull;
 
 /** A server-side error thrown by the coordinator node in response to a driver request. */
 public abstract class CoordinatorException extends DriverException {
 
   private final Node coordinator;
 
-  protected CoordinatorException(Node coordinator, String message, boolean writableStackTrace) {
+  protected CoordinatorException(
+      @NonNull Node coordinator, @NonNull String message, boolean writableStackTrace) {
     super(message, null, writableStackTrace);
     this.coordinator = coordinator;
   }

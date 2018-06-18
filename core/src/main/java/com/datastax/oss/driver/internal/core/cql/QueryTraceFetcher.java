@@ -28,6 +28,7 @@ import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableList;
 import com.datastax.oss.driver.shaded.guava.common.collect.Iterables;
 import io.netty.util.concurrent.EventExecutor;
 import java.nio.ByteBuffer;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -142,21 +143,23 @@ class QueryTraceFetcher {
   private QueryTrace buildTrace(Row sessionRow, Iterable<Row> eventRows) {
     ImmutableList.Builder<TraceEvent> eventsBuilder = ImmutableList.builder();
     for (Row eventRow : eventRows) {
+      UUID eventId = eventRow.getUuid("event_id");
       eventsBuilder.add(
           new DefaultTraceEvent(
               eventRow.getString("activity"),
-              eventRow.getUuid("event_id").timestamp(),
+              eventId == null ? -1 : eventId.timestamp(),
               eventRow.getInetAddress("source"),
               eventRow.getInt("source_elapsed"),
               eventRow.getString("thread")));
     }
+    Instant startedAt = sessionRow.getInstant("started_at");
     return new DefaultQueryTrace(
         tracingId,
         sessionRow.getString("request"),
         sessionRow.getInt("duration"),
         sessionRow.getInetAddress("coordinator"),
         sessionRow.getMap("parameters", String.class, String.class),
-        sessionRow.getInstant("started_at").toEpochMilli(),
+        startedAt == null ? -1 : startedAt.toEpochMilli(),
         eventsBuilder.build());
   }
 }

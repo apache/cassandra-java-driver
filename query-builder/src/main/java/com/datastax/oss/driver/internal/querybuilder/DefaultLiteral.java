@@ -20,6 +20,8 @@ import com.datastax.oss.driver.api.core.type.codec.TypeCodec;
 import com.datastax.oss.driver.api.querybuilder.Literal;
 import com.datastax.oss.driver.api.querybuilder.select.Selector;
 import com.datastax.oss.driver.shaded.guava.common.base.Preconditions;
+import edu.umd.cs.findbugs.annotations.NonNull;
+import edu.umd.cs.findbugs.annotations.Nullable;
 import net.jcip.annotations.Immutable;
 
 @Immutable
@@ -29,11 +31,12 @@ public class DefaultLiteral<T> implements Literal {
   private final TypeCodec<T> codec;
   private final CqlIdentifier alias;
 
-  public DefaultLiteral(T value, TypeCodec<T> codec) {
+  public DefaultLiteral(@Nullable T value, @Nullable TypeCodec<T> codec) {
     this(value, codec, null);
   }
 
-  public DefaultLiteral(T value, TypeCodec<T> codec, CqlIdentifier alias) {
+  public DefaultLiteral(
+      @Nullable T value, @Nullable TypeCodec<T> codec, @Nullable CqlIdentifier alias) {
     Preconditions.checkArgument(
         value == null || codec != null, "Must provide a codec if the value is not null");
     this.value = value;
@@ -42,7 +45,7 @@ public class DefaultLiteral<T> implements Literal {
   }
 
   @Override
-  public void appendTo(StringBuilder builder) {
+  public void appendTo(@NonNull StringBuilder builder) {
     if (value == null) {
       builder.append("NULL");
     } else {
@@ -58,19 +61,23 @@ public class DefaultLiteral<T> implements Literal {
     return true;
   }
 
+  @NonNull
   @Override
-  public Selector as(CqlIdentifier alias) {
+  public Selector as(@NonNull CqlIdentifier alias) {
     return new DefaultLiteral<>(value, codec, alias);
   }
 
+  @Nullable
   public T getValue() {
     return value;
   }
 
+  @Nullable
   public TypeCodec<T> getCodec() {
     return codec;
   }
 
+  @Nullable
   @Override
   public CqlIdentifier getAlias() {
     return alias;

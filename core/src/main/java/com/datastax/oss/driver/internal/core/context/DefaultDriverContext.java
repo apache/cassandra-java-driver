@@ -73,6 +73,8 @@ import com.datastax.oss.driver.internal.core.util.concurrent.CycleDetector;
 import com.datastax.oss.driver.internal.core.util.concurrent.LazyReference;
 import com.datastax.oss.protocol.internal.Compressor;
 import com.datastax.oss.protocol.internal.FrameCodec;
+import edu.umd.cs.findbugs.annotations.NonNull;
+import edu.umd.cs.findbugs.annotations.Nullable;
 import io.netty.buffer.ByteBuf;
 import java.util.List;
 import java.util.Map;
@@ -484,206 +486,247 @@ public class DefaultDriverContext implements InternalDriverContext {
                             DefaultDriverOption.REQUEST_TRACKER_CLASS)));
   }
 
+  @NonNull
   @Override
   public String sessionName() {
     return sessionName;
   }
 
+  @NonNull
   @Override
   public DriverConfig config() {
     return config;
   }
 
+  @NonNull
   @Override
   public DriverConfigLoader configLoader() {
     return configLoader;
   }
 
+  @NonNull
   @Override
   public Map<String, LoadBalancingPolicy> loadBalancingPolicies() {
     return loadBalancingPoliciesRef.get();
   }
 
+  @NonNull
   @Override
   public Map<String, RetryPolicy> retryPolicies() {
     return retryPoliciesRef.get();
   }
 
+  @NonNull
   @Override
   public Map<String, SpeculativeExecutionPolicy> speculativeExecutionPolicies() {
     return speculativeExecutionPoliciesRef.get();
   }
 
+  @NonNull
   @Override
   public TimestampGenerator timestampGenerator() {
     return timestampGeneratorRef.get();
   }
 
+  @NonNull
   @Override
   public ReconnectionPolicy reconnectionPolicy() {
     return reconnectionPolicyRef.get();
   }
 
+  @NonNull
   @Override
   public AddressTranslator addressTranslator() {
     return addressTranslatorRef.get();
   }
 
+  @NonNull
   @Override
   public Optional<AuthProvider> authProvider() {
     return authProviderRef.get();
   }
 
+  @NonNull
   @Override
   public Optional<SslEngineFactory> sslEngineFactory() {
     return sslEngineFactoryRef.get();
   }
 
+  @NonNull
   @Override
   public EventBus eventBus() {
     return eventBusRef.get();
   }
 
+  @NonNull
   @Override
   public Compressor<ByteBuf> compressor() {
     return compressorRef.get();
   }
 
+  @NonNull
   @Override
   public FrameCodec<ByteBuf> frameCodec() {
     return frameCodecRef.get();
   }
 
+  @NonNull
   @Override
   public ProtocolVersionRegistry protocolVersionRegistry() {
     return protocolVersionRegistryRef.get();
   }
 
+  @NonNull
   @Override
   public ConsistencyLevelRegistry consistencyLevelRegistry() {
     return consistencyLevelRegistryRef.get();
   }
 
+  @NonNull
   @Override
   public WriteTypeRegistry writeTypeRegistry() {
     return writeTypeRegistryRef.get();
   }
 
+  @NonNull
   @Override
   public NettyOptions nettyOptions() {
     return nettyOptionsRef.get();
   }
 
+  @NonNull
   @Override
   public WriteCoalescer writeCoalescer() {
     return writeCoalescerRef.get();
   }
 
+  @NonNull
   @Override
   public Optional<SslHandlerFactory> sslHandlerFactory() {
     return sslHandlerFactoryRef.get();
   }
 
+  @NonNull
   @Override
   public ChannelFactory channelFactory() {
     return channelFactoryRef.get();
   }
 
+  @NonNull
   @Override
   public ChannelPoolFactory channelPoolFactory() {
     return channelPoolFactory;
   }
 
+  @NonNull
   @Override
   public TopologyMonitor topologyMonitor() {
     return topologyMonitorRef.get();
   }
 
+  @NonNull
   @Override
   public MetadataManager metadataManager() {
     return metadataManagerRef.get();
   }
 
+  @NonNull
   @Override
   public LoadBalancingPolicyWrapper loadBalancingPolicyWrapper() {
     return loadBalancingPolicyWrapperRef.get();
   }
 
+  @NonNull
   @Override
   public ControlConnection controlConnection() {
     return controlConnectionRef.get();
   }
 
+  @NonNull
   @Override
   public RequestProcessorRegistry requestProcessorRegistry() {
     return requestProcessorRegistryRef.get();
   }
 
+  @NonNull
   @Override
   public SchemaQueriesFactory schemaQueriesFactory() {
     return schemaQueriesFactoryRef.get();
   }
 
+  @NonNull
   @Override
   public SchemaParserFactory schemaParserFactory() {
     return schemaParserFactoryRef.get();
   }
 
+  @NonNull
   @Override
   public TokenFactoryRegistry tokenFactoryRegistry() {
     return tokenFactoryRegistryRef.get();
   }
 
+  @NonNull
   @Override
   public ReplicationStrategyFactory replicationStrategyFactory() {
     return replicationStrategyFactoryRef.get();
   }
 
+  @NonNull
   @Override
   public PoolManager poolManager() {
     return poolManagerRef.get();
   }
 
+  @NonNull
   @Override
   public MetricsFactory metricsFactory() {
     return metricsFactoryRef.get();
   }
 
+  @NonNull
   @Override
   public RequestThrottler requestThrottler() {
     return requestThrottlerRef.get();
   }
 
+  @NonNull
   @Override
   public NodeStateListener nodeStateListener() {
     return nodeStateListenerRef.get();
   }
 
+  @NonNull
   @Override
   public SchemaChangeListener schemaChangeListener() {
     return schemaChangeListenerRef.get();
   }
 
+  @NonNull
   @Override
   public RequestTracker requestTracker() {
     return requestTrackerRef.get();
   }
 
+  @Nullable
   @Override
   public Predicate<Node> nodeFilter(String profileName) {
     return nodeFiltersFromBuilder.get(profileName);
   }
 
+  @Nullable
   @Override
   public ClassLoader classLoader() {
     return classLoader;
   }
 
+  @NonNull
   @Override
   public CodecRegistry codecRegistry() {
     return codecRegistry;
   }
 
+  @NonNull
   @Override
   public ProtocolVersion protocolVersion() {
     return channelFactory().getProtocolVersion();

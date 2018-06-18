@@ -15,6 +15,8 @@
  */
 package com.datastax.oss.driver.api.core;
 
+import edu.umd.cs.findbugs.annotations.NonNull;
+import edu.umd.cs.findbugs.annotations.Nullable;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -74,7 +76,8 @@ public class Version implements Comparable<Version> {
    * @return the parsed version number.
    * @throws IllegalArgumentException if the provided string does not represent a valid version.
    */
-  public static Version parse(String version) {
+  @Nullable
+  public static Version parse(@Nullable String version) {
     if (version == null) {
       return null;
     }
@@ -193,7 +196,7 @@ public class Version implements Comparable<Version> {
   }
 
   @Override
-  public int compareTo(Version other) {
+  public int compareTo(@NonNull Version other) {
     if (major < other.major) {
       return -1;
     }

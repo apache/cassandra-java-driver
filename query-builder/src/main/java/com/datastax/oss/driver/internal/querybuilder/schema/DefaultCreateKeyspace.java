@@ -20,6 +20,7 @@ import com.datastax.oss.driver.api.querybuilder.schema.CreateKeyspace;
 import com.datastax.oss.driver.api.querybuilder.schema.CreateKeyspaceStart;
 import com.datastax.oss.driver.internal.querybuilder.ImmutableCollections;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableMap;
+import edu.umd.cs.findbugs.annotations.NonNull;
 import java.util.Map;
 import net.jcip.annotations.Immutable;
 
@@ -30,33 +31,39 @@ public class DefaultCreateKeyspace implements CreateKeyspace, CreateKeyspaceStar
   private final boolean ifNotExists;
   private final ImmutableMap<String, Object> options;
 
-  public DefaultCreateKeyspace(CqlIdentifier keyspaceName) {
+  public DefaultCreateKeyspace(@NonNull CqlIdentifier keyspaceName) {
     this(keyspaceName, false, ImmutableMap.of());
   }
 
   public DefaultCreateKeyspace(
-      CqlIdentifier keyspaceName, boolean ifNotExists, ImmutableMap<String, Object> options) {
+      @NonNull CqlIdentifier keyspaceName,
+      boolean ifNotExists,
+      @NonNull ImmutableMap<String, Object> options) {
     this.keyspaceName = keyspaceName;
     this.ifNotExists = ifNotExists;
     this.options = options;
   }
 
+  @NonNull
   @Override
-  public CreateKeyspace withOption(String name, Object value) {
+  public CreateKeyspace withOption(@NonNull String name, @NonNull Object value) {
     return new DefaultCreateKeyspace(
         keyspaceName, ifNotExists, ImmutableCollections.append(options, name, value));
   }
 
+  @NonNull
   @Override
   public CreateKeyspaceStart ifNotExists() {
     return new DefaultCreateKeyspace(keyspaceName, true, options);
   }
 
+  @NonNull
   @Override
-  public CreateKeyspace withReplicationOptions(Map<String, Object> replicationOptions) {
+  public CreateKeyspace withReplicationOptions(@NonNull Map<String, Object> replicationOptions) {
     return withOption("replication", replicationOptions);
   }
 
+  @NonNull
   @Override
   public String asCql() {
     StringBuilder builder = new StringBuilder();
@@ -76,11 +83,13 @@ public class DefaultCreateKeyspace implements CreateKeyspace, CreateKeyspaceStar
     return asCql();
   }
 
+  @NonNull
   @Override
   public Map<String, Object> getOptions() {
     return options;
   }
 
+  @NonNull
   public CqlIdentifier getKeyspace() {
     return keyspaceName;
   }

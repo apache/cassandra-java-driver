@@ -27,6 +27,8 @@ import com.datastax.oss.driver.internal.querybuilder.CqlHelper;
 import com.datastax.oss.driver.internal.querybuilder.ImmutableCollections;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableMap;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableSet;
+import edu.umd.cs.findbugs.annotations.NonNull;
+import edu.umd.cs.findbugs.annotations.Nullable;
 import java.util.Map;
 import net.jcip.annotations.Immutable;
 
@@ -50,11 +52,11 @@ public class DefaultCreateTable implements CreateTableStart, CreateTable, Create
 
   private final ImmutableMap<CqlIdentifier, ClusteringOrder> orderings;
 
-  public DefaultCreateTable(CqlIdentifier tableName) {
+  public DefaultCreateTable(@NonNull CqlIdentifier tableName) {
     this(null, tableName);
   }
 
-  public DefaultCreateTable(CqlIdentifier keyspace, CqlIdentifier tableName) {
+  public DefaultCreateTable(@Nullable CqlIdentifier keyspace, @NonNull CqlIdentifier tableName) {
     this(
         keyspace,
         tableName,
@@ -70,17 +72,17 @@ public class DefaultCreateTable implements CreateTableStart, CreateTable, Create
   }
 
   public DefaultCreateTable(
-      CqlIdentifier keyspace,
-      CqlIdentifier tableName,
+      @Nullable CqlIdentifier keyspace,
+      @NonNull CqlIdentifier tableName,
       boolean ifNotExists,
       boolean compactStorage,
-      ImmutableMap<CqlIdentifier, DataType> columnsInOrder,
-      ImmutableSet<CqlIdentifier> partitionKeyColumns,
-      ImmutableSet<CqlIdentifier> clusteringKeyColumns,
-      ImmutableSet<CqlIdentifier> staticColumns,
-      ImmutableSet<CqlIdentifier> regularColumns,
-      ImmutableMap<CqlIdentifier, ClusteringOrder> orderings,
-      ImmutableMap<String, Object> options) {
+      @NonNull ImmutableMap<CqlIdentifier, DataType> columnsInOrder,
+      @NonNull ImmutableSet<CqlIdentifier> partitionKeyColumns,
+      @NonNull ImmutableSet<CqlIdentifier> clusteringKeyColumns,
+      @NonNull ImmutableSet<CqlIdentifier> staticColumns,
+      @NonNull ImmutableSet<CqlIdentifier> regularColumns,
+      @NonNull ImmutableMap<CqlIdentifier, ClusteringOrder> orderings,
+      @NonNull ImmutableMap<String, Object> options) {
     this.keyspace = keyspace;
     this.tableName = tableName;
     this.ifNotExists = ifNotExists;
@@ -94,6 +96,7 @@ public class DefaultCreateTable implements CreateTableStart, CreateTable, Create
     this.options = options;
   }
 
+  @NonNull
   @Override
   public CreateTableStart ifNotExists() {
     return new DefaultCreateTable(
@@ -110,8 +113,10 @@ public class DefaultCreateTable implements CreateTableStart, CreateTable, Create
         options);
   }
 
+  @NonNull
   @Override
-  public CreateTable withPartitionKey(CqlIdentifier columnName, DataType dataType) {
+  public CreateTable withPartitionKey(
+      @NonNull CqlIdentifier columnName, @NonNull DataType dataType) {
     return new DefaultCreateTable(
         keyspace,
         tableName,
@@ -126,8 +131,10 @@ public class DefaultCreateTable implements CreateTableStart, CreateTable, Create
         options);
   }
 
+  @NonNull
   @Override
-  public CreateTable withClusteringColumn(CqlIdentifier columnName, DataType dataType) {
+  public CreateTable withClusteringColumn(
+      @NonNull CqlIdentifier columnName, @NonNull DataType dataType) {
     return new DefaultCreateTable(
         keyspace,
         tableName,
@@ -142,8 +149,9 @@ public class DefaultCreateTable implements CreateTableStart, CreateTable, Create
         options);
   }
 
+  @NonNull
   @Override
-  public CreateTable withColumn(CqlIdentifier columnName, DataType dataType) {
+  public CreateTable withColumn(@NonNull CqlIdentifier columnName, @NonNull DataType dataType) {
     return new DefaultCreateTable(
         keyspace,
         tableName,
@@ -158,8 +166,10 @@ public class DefaultCreateTable implements CreateTableStart, CreateTable, Create
         options);
   }
 
+  @NonNull
   @Override
-  public CreateTable withStaticColumn(CqlIdentifier columnName, DataType dataType) {
+  public CreateTable withStaticColumn(
+      @NonNull CqlIdentifier columnName, @NonNull DataType dataType) {
     return new DefaultCreateTable(
         keyspace,
         tableName,
@@ -174,6 +184,7 @@ public class DefaultCreateTable implements CreateTableStart, CreateTable, Create
         options);
   }
 
+  @NonNull
   @Override
   public CreateTableWithOptions withCompactStorage() {
     return new DefaultCreateTable(
@@ -190,20 +201,23 @@ public class DefaultCreateTable implements CreateTableStart, CreateTable, Create
         options);
   }
 
+  @NonNull
   @Override
   public CreateTableWithOptions withClusteringOrderByIds(
-      Map<CqlIdentifier, ClusteringOrder> orderings) {
+      @NonNull Map<CqlIdentifier, ClusteringOrder> orderings) {
     return withClusteringOrders(ImmutableCollections.concat(this.orderings, orderings));
   }
 
+  @NonNull
   @Override
   public CreateTableWithOptions withClusteringOrder(
-      CqlIdentifier columnName, ClusteringOrder order) {
+      @NonNull CqlIdentifier columnName, @NonNull ClusteringOrder order) {
     return withClusteringOrders(ImmutableCollections.append(orderings, columnName, order));
   }
 
+  @NonNull
   public CreateTableWithOptions withClusteringOrders(
-      ImmutableMap<CqlIdentifier, ClusteringOrder> orderings) {
+      @NonNull ImmutableMap<CqlIdentifier, ClusteringOrder> orderings) {
     return new DefaultCreateTable(
         keyspace,
         tableName,
@@ -218,6 +232,7 @@ public class DefaultCreateTable implements CreateTableStart, CreateTable, Create
         options);
   }
 
+  @NonNull
   @Override
   public String asCql() {
     StringBuilder builder = new StringBuilder();
@@ -308,8 +323,9 @@ public class DefaultCreateTable implements CreateTableStart, CreateTable, Create
     return asCql();
   }
 
+  @NonNull
   @Override
-  public CreateTable withOption(String name, Object value) {
+  public CreateTable withOption(@NonNull String name, @NonNull Object value) {
     return new DefaultCreateTable(
         keyspace,
         tableName,
@@ -324,15 +340,18 @@ public class DefaultCreateTable implements CreateTableStart, CreateTable, Create
         ImmutableCollections.append(options, name, value));
   }
 
+  @NonNull
   @Override
   public Map<String, Object> getOptions() {
     return options;
   }
 
+  @Nullable
   public CqlIdentifier getKeyspace() {
     return keyspace;
   }
 
+  @NonNull
   public CqlIdentifier getTable() {
     return tableName;
   }
@@ -345,26 +364,32 @@ public class DefaultCreateTable implements CreateTableStart, CreateTable, Create
     return compactStorage;
   }
 
+  @NonNull
   public ImmutableMap<CqlIdentifier, DataType> getColumnsInOrder() {
     return columnsInOrder;
   }
 
+  @NonNull
   public ImmutableSet<CqlIdentifier> getPartitionKeyColumns() {
     return partitionKeyColumns;
   }
 
+  @NonNull
   public ImmutableSet<CqlIdentifier> getClusteringKeyColumns() {
     return clusteringKeyColumns;
   }
 
+  @NonNull
   public ImmutableSet<CqlIdentifier> getStaticColumns() {
     return staticColumns;
   }
 
+  @NonNull
   public ImmutableSet<CqlIdentifier> getRegularColumns() {
     return regularColumns;
   }
 
+  @NonNull
   public ImmutableMap<CqlIdentifier, ClusteringOrder> getOrderings() {
     return orderings;
   }

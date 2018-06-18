@@ -17,20 +17,26 @@ package com.datastax.oss.driver.internal.querybuilder;
 
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableList;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableMap;
+import edu.umd.cs.findbugs.annotations.NonNull;
 import java.util.Map;
 import java.util.function.Function;
 
 public class ImmutableCollections {
 
-  public static <T> ImmutableList<T> append(ImmutableList<T> list, T newElement) {
+  @NonNull
+  public static <T> ImmutableList<T> append(@NonNull ImmutableList<T> list, @NonNull T newElement) {
     return ImmutableList.<T>builder().addAll(list).add(newElement).build();
   }
 
-  public static <T> ImmutableList<T> concat(ImmutableList<T> list1, Iterable<T> list2) {
+  @NonNull
+  public static <T> ImmutableList<T> concat(
+      @NonNull ImmutableList<T> list1, @NonNull Iterable<T> list2) {
     return ImmutableList.<T>builder().addAll(list1).addAll(list2).build();
   }
 
-  public static <T> ImmutableList<T> modifyLast(ImmutableList<T> list, Function<T, T> change) {
+  @NonNull
+  public static <T> ImmutableList<T> modifyLast(
+      @NonNull ImmutableList<T> list, @NonNull Function<T, T> change) {
     ImmutableList.Builder<T> builder = ImmutableList.builder();
     int size = list.size();
     for (int i = 0; i < size - 1; i++) {
@@ -48,7 +54,9 @@ public class ImmutableCollections {
    * append({a=>1, b=>2, c=>3}, a, 4) == {b=>2, c=>3, a=>4}
    * }</pre>
    */
-  public static <K, V> ImmutableMap<K, V> append(ImmutableMap<K, V> map, K newKey, V newValue) {
+  @NonNull
+  public static <K, V> ImmutableMap<K, V> append(
+      @NonNull ImmutableMap<K, V> map, @NonNull K newKey, @NonNull V newValue) {
     ImmutableMap.Builder<K, V> builder = ImmutableMap.builder();
     for (Map.Entry<K, V> entry : map.entrySet()) {
       if (!entry.getKey().equals(newKey)) {
@@ -68,7 +76,9 @@ public class ImmutableCollections {
    * concat({a=>1, b=>2, c=>3}, {c=>4, a=>5}) == {b=>2, c=>4, a=>5}
    * }</pre>
    */
-  public static <K, V> ImmutableMap<K, V> concat(ImmutableMap<K, V> map1, Map<K, V> map2) {
+  @NonNull
+  public static <K, V> ImmutableMap<K, V> concat(
+      @NonNull ImmutableMap<K, V> map1, @NonNull Map<K, V> map2) {
     ImmutableMap.Builder<K, V> builder = ImmutableMap.builder();
     for (Map.Entry<K, V> entry : map1.entrySet()) {
       if (!map2.containsKey(entry.getKey())) {

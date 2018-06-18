@@ -22,6 +22,7 @@ import com.datastax.oss.driver.api.core.context.DriverContext;
 import com.datastax.oss.driver.api.core.session.throttling.RequestThrottler;
 import com.datastax.oss.driver.api.core.session.throttling.Throttled;
 import com.datastax.oss.driver.shaded.guava.common.annotations.VisibleForTesting;
+import edu.umd.cs.findbugs.annotations.NonNull;
 import java.util.ArrayDeque;
 import java.util.Deque;
 import java.util.concurrent.locks.ReentrantLock;
@@ -66,7 +67,7 @@ public class ConcurrencyLimitingRequestThrottler implements RequestThrottler {
   }
 
   @Override
-  public void register(Throttled request) {
+  public void register(@NonNull Throttled request) {
     lock.lock();
     try {
       if (closed) {
@@ -95,7 +96,7 @@ public class ConcurrencyLimitingRequestThrottler implements RequestThrottler {
   }
 
   @Override
-  public void signalSuccess(Throttled request) {
+  public void signalSuccess(@NonNull Throttled request) {
     lock.lock();
     try {
       onRequestDone();
@@ -105,12 +106,12 @@ public class ConcurrencyLimitingRequestThrottler implements RequestThrottler {
   }
 
   @Override
-  public void signalError(Throttled request, Throwable error) {
+  public void signalError(@NonNull Throttled request, @NonNull Throwable error) {
     signalSuccess(request); // not treated differently
   }
 
   @Override
-  public void signalTimeout(Throttled request) {
+  public void signalTimeout(@NonNull Throttled request) {
     lock.lock();
     try {
       if (!closed) {

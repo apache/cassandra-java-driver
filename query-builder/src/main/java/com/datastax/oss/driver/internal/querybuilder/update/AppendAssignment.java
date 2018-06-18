@@ -17,12 +17,13 @@ package com.datastax.oss.driver.internal.querybuilder.update;
 
 import com.datastax.oss.driver.api.querybuilder.term.Term;
 import com.datastax.oss.driver.internal.querybuilder.lhs.LeftOperand;
+import edu.umd.cs.findbugs.annotations.NonNull;
 import net.jcip.annotations.Immutable;
 
 @Immutable
 public class AppendAssignment extends DefaultAssignment {
 
-  public AppendAssignment(LeftOperand leftOperand, Term rightOperand) {
+  public AppendAssignment(@NonNull LeftOperand leftOperand, @NonNull Term rightOperand) {
     super(leftOperand, "+=", rightOperand);
   }
 

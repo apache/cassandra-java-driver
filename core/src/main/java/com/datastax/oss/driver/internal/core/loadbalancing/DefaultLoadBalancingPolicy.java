@@ -32,10 +32,13 @@ import com.datastax.oss.driver.internal.core.util.ArrayUtils;
 import com.datastax.oss.driver.internal.core.util.Reflection;
 import com.datastax.oss.driver.shaded.guava.common.annotations.VisibleForTesting;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableMap;
+import edu.umd.cs.findbugs.annotations.NonNull;
+import edu.umd.cs.findbugs.annotations.Nullable;
 import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
 import java.util.Collections;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Queue;
 import java.util.Set;
@@ -65,7 +68,7 @@ public class DefaultLoadBalancingPolicy implements LoadBalancingPolicy {
   private volatile DistanceReporter distanceReporter;
   @VisibleForTesting volatile String localDc;
 
-  public DefaultLoadBalancingPolicy(DriverContext context, String profileName) {
+  public DefaultLoadBalancingPolicy(@NonNull DriverContext context, @NonNull String profileName) {
     this(
         context.sessionName() + "|" + profileName,
         getLocalDcFromConfig(context, profileName),
@@ -76,10 +79,10 @@ public class DefaultLoadBalancingPolicy implements LoadBalancingPolicy {
 
   @VisibleForTesting
   DefaultLoadBalancingPolicy(
-      String logPrefix,
-      String localDcFromConfig,
-      Predicate<Node> filterFromConfig,
-      DriverContext context,
+      @NonNull String logPrefix,
+      @Nullable String localDcFromConfig,
+      @NonNull Predicate<Node> filterFromConfig,
+      @NonNull DriverContext context,
       boolean isDefaultPolicy) {
     this.logPrefix = logPrefix;
     this.metadataManager = ((InternalDriverContext) context).metadataManager();
@@ -113,9 +116,9 @@ public class DefaultLoadBalancingPolicy implements LoadBalancingPolicy {
 
   @Override
   public void init(
-      Map<InetSocketAddress, Node> nodes,
-      DistanceReporter distanceReporter,
-      Set<InetSocketAddress> contactPoints) {
+      @NonNull Map<InetSocketAddress, Node> nodes,
+      @NonNull DistanceReporter distanceReporter,
+      @NonNull Set<InetSocketAddress> contactPoints) {
     this.distanceReporter = distanceReporter;
 
     if (localDc == null) {
@@ -135,8 +138,11 @@ public class DefaultLoadBalancingPolicy implements LoadBalancingPolicy {
       ImmutableMap.Builder<InetSocketAddress, String> builder = ImmutableMap.builder();
       for (InetSocketAddress address : contactPoints) {
         Node node = nodes.get(address);
-        if (node != null && !localDc.equals(node.getDatacenter())) {
-          builder.put(address, node.getDatacenter());
+        if (node != null) {
+          String datacenter = node.getDatacenter();
+          if (!Objects.equals(localDc, datacenter)) {
+            builder.put(address, (datacenter == null) ? "<null>" : datacenter);
+          }
         }
       }
       ImmutableMap<InetSocketAddress, String> badContactPoints = builder.build();
@@ -159,8 +165,9 @@ public class DefaultLoadBalancingPolicy implements LoadBalancingPolicy {
     }
   }
 
+  @NonNull
   @Override
-  public Queue<Node> newQueryPlan(Request request, Session session) {
+  public Queue<Node> newQueryPlan(@Nullable Request request, @Nullable Session session) {
     // Take a snapshot since the set is concurrent:
     Object[] currentNodes = localDcLiveNodes.toArray();
 
@@ -210,8 +217,8 @@ public class DefaultLoadBalancingPolicy implements LoadBalancingPolicy {
     if (keyspace == null) {
       keyspace = request.getRoutingKeyspace();
     }
-    if (keyspace == null) {
-      keyspace = session.getKeyspace();
+    if (keyspace == null && session.getKeyspace().isPresent()) {
+      keyspace = session.getKeyspace().get();
     }
     if (keyspace == null) {
       return Collections.emptySet();
@@ -240,7 +247,7 @@ public class DefaultLoadBalancingPolicy implements LoadBalancingPolicy {
   }
 
   @Override
-  public void onAdd(Node node) {
+  public void onAdd(@NonNull Node node) {
     if (filter.test(node)) {
       LOG.debug("[{}] {} was added, setting distance to LOCAL", logPrefix, node);
       // Setting to a non-ignored distance triggers the session to open a pool, which will in turn
@@ -252,7 +259,7 @@ public class DefaultLoadBalancingPolicy implements LoadBalancingPolicy {
   }
 
   @Override
-  public void onUp(Node node) {
+  public void onUp(@NonNull Node node) {
     if (filter.test(node)) {
       // Normally this is already the case, but the filter could be dynamic and have ignored the
       // node previously.
@@ -266,14 +273,14 @@ public class DefaultLoadBalancingPolicy implements LoadBalancingPolicy {
   }
 
   @Override
-  public void onDown(Node node) {
+  public void onDown(@NonNull Node node) {
     if (localDcLiveNodes.remove(node)) {
       LOG.debug("[{}] {} went DOWN, removed from live set", logPrefix, node);
     }
   }
 
   @Override
-  public void onRemove(Node node) {
+  public void onRemove(@NonNull Node node) {
     if (localDcLiveNodes.remove(node)) {
       LOG.debug("[{}] {} was removed, removed from live set", logPrefix, node);
     }

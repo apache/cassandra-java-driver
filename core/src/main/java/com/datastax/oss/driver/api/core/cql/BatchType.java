@@ -24,7 +24,7 @@ package com.datastax.oss.driver.api.core.cql;
  */
 public interface BatchType {
 
-  /** The numerical value that the level is encoded to. */
+  /** The numerical value that the batch type is encoded to. */
   byte getProtocolCode();
 
   // Implementation note: we don't have a "BatchTypeRegistry" because we never decode batch types.

@@ -19,6 +19,7 @@ import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.type.DataType;
 import com.datastax.oss.driver.api.core.type.DataTypes;
 import com.datastax.oss.driver.api.querybuilder.SchemaBuilderDsl;
+import edu.umd.cs.findbugs.annotations.NonNull;
 
 public interface CreateFunctionStart {
 
@@ -26,12 +27,14 @@ public interface CreateFunctionStart {
    * Adds IF NOT EXISTS to the create function specification. This indicates that the function
    * should not be created if it already exists.
    */
+  @NonNull
   CreateFunctionStart ifNotExists();
 
   /**
    * Adds OR REPLACE to the create function specification. This indicates that the function should
    * replace an existing function with the same name if it exists.
    */
+  @NonNull
   CreateFunctionStart orReplace();
 
   /**
@@ -42,13 +45,16 @@ public interface CreateFunctionStart {
    * <p>To create the data type, use the constants and static methods in {@link DataTypes}, or
    * {@link SchemaBuilderDsl#udt(CqlIdentifier, boolean)}.
    */
-  CreateFunctionStart withParameter(CqlIdentifier paramName, DataType paramType);
+  @NonNull
+  CreateFunctionStart withParameter(@NonNull CqlIdentifier paramName, @NonNull DataType paramType);
 
   /**
    * Shortcut for {@link #withParameter(CqlIdentifier, DataType)
    * withParameter(CqlIdentifier.asCql(paramName), dataType)}.
    */
-  default CreateFunctionStart withParameter(String paramName, DataType paramType) {
+  @NonNull
+  default CreateFunctionStart withParameter(
+      @NonNull String paramName, @NonNull DataType paramType) {
     return withParameter(CqlIdentifier.fromCql(paramName), paramType);
   }
 
@@ -56,11 +62,13 @@ public interface CreateFunctionStart {
    * Adds RETURNS NULL ON NULL to the create function specification. This indicates that the body of
    * the function should be skipped when null input is provided.
    */
+  @NonNull
   CreateFunctionWithNullOption returnsNullOnNull();
 
   /**
    * Adds CALLED ON NULL to the create function specification. This indicates that the body of the
    * function not be skipped when null input is provided.
    */
+  @NonNull
   CreateFunctionWithNullOption calledOnNull();
 }

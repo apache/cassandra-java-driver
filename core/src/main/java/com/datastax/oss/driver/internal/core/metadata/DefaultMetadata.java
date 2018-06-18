@@ -27,6 +27,8 @@ import com.datastax.oss.driver.internal.core.metadata.token.TokenFactory;
 import com.datastax.oss.driver.internal.core.util.Loggers;
 import com.datastax.oss.driver.internal.core.util.NanoTime;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableMap;
+import edu.umd.cs.findbugs.annotations.NonNull;
+import edu.umd.cs.findbugs.annotations.Nullable;
 import java.net.InetSocketAddress;
 import java.util.Collections;
 import java.util.Map;
@@ -47,34 +49,37 @@ public class DefaultMetadata implements Metadata {
 
   private final Map<InetSocketAddress, Node> nodes;
   private final Map<CqlIdentifier, KeyspaceMetadata> keyspaces;
-  private final Optional<TokenMap> tokenMap;
+  private final TokenMap tokenMap;
 
   public DefaultMetadata(Map<InetSocketAddress, Node> nodes) {
-    this(ImmutableMap.copyOf(nodes), Collections.emptyMap(), Optional.empty());
+    this(ImmutableMap.copyOf(nodes), Collections.emptyMap(), null);
   }
 
   private DefaultMetadata(
       Map<InetSocketAddress, Node> nodes,
       Map<CqlIdentifier, KeyspaceMetadata> keyspaces,
-      Optional<TokenMap> tokenMap) {
+      TokenMap tokenMap) {
     this.nodes = nodes;
     this.keyspaces = keyspaces;
     this.tokenMap = tokenMap;
   }
 
+  @NonNull
   @Override
   public Map<InetSocketAddress, Node> getNodes() {
     return nodes;
   }
 
+  @NonNull
   @Override
   public Map<CqlIdentifier, KeyspaceMetadata> getKeyspaces() {
     return keyspaces;
   }
 
+  @NonNull
   @Override
   public Optional<TokenMap> getTokenMap() {
-    return tokenMap;
+    return Optional.ofNullable(tokenMap);
   }
 
   /**
@@ -115,7 +120,8 @@ public class DefaultMetadata implements Metadata {
         rebuildTokenMap(nodes, newKeyspaces, tokenMapEnabled, false, null, context));
   }
 
-  private Optional<TokenMap> rebuildTokenMap(
+  @Nullable
+  private TokenMap rebuildTokenMap(
       Map<InetSocketAddress, Node> newNodes,
       Map<CqlIdentifier, KeyspaceMetadata> newKeyspaces,
       boolean tokenMapEnabled,
@@ -132,39 +138,36 @@ public class DefaultMetadata implements Metadata {
     }
     long start = System.nanoTime();
     try {
-      DefaultTokenMap oldTokenMap = (DefaultTokenMap) this.tokenMap.orElse(null);
+      DefaultTokenMap oldTokenMap = (DefaultTokenMap) this.tokenMap;
       if (oldTokenMap == null) {
         // Initial build, we need the token factory
         if (tokenFactory == null) {
           LOG.debug(
               "[{}] Building initial token map but the token factory is missing, skipping",
               logPrefix);
-          return this.tokenMap;
+          return null;
         } else {
           LOG.debug("[{}] Building initial token map", logPrefix);
-          return Optional.of(
-              DefaultTokenMap.build(
-                  newNodes.values(),
-                  newKeyspaces.values(),
-                  tokenFactory,
-                  replicationStrategyFactory,
-                  logPrefix));
+          return DefaultTokenMap.build(
+              newNodes.values(),
+              newKeyspaces.values(),
+              tokenFactory,
+              replicationStrategyFactory,
+              logPrefix);
         }
       } else if (forceFullRebuild) {
         LOG.debug(
             "[{}] Updating token map but some nodes/tokens have changed, full rebuild", logPrefix);
-        return Optional.of(
-            DefaultTokenMap.build(
-                newNodes.values(),
-                newKeyspaces.values(),
-                oldTokenMap.getTokenFactory(),
-                replicationStrategyFactory,
-                logPrefix));
+        return DefaultTokenMap.build(
+            newNodes.values(),
+            newKeyspaces.values(),
+            oldTokenMap.getTokenFactory(),
+            replicationStrategyFactory,
+            logPrefix);
       } else {
         LOG.debug("[{}] Refreshing token map (only schema has changed)", logPrefix);
-        return Optional.of(
-            oldTokenMap.refresh(
-                newNodes.values(), newKeyspaces.values(), replicationStrategyFactory));
+        return oldTokenMap.refresh(
+            newNodes.values(), newKeyspaces.values(), replicationStrategyFactory);
       }
     } catch (Throwable t) {
       Loggers.warnWithException(

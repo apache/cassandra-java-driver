@@ -23,6 +23,7 @@ import com.datastax.oss.driver.api.core.session.throttling.RequestThrottler;
 import com.datastax.oss.driver.api.core.session.throttling.Throttled;
 import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
 import com.datastax.oss.driver.shaded.guava.common.annotations.VisibleForTesting;
+import edu.umd.cs.findbugs.annotations.NonNull;
 import io.netty.util.concurrent.EventExecutor;
 import java.time.Duration;
 import java.util.ArrayDeque;
@@ -96,7 +97,7 @@ public class RateLimitingRequestThrottler implements RequestThrottler {
   }
 
   @Override
-  public void register(Throttled request) {
+  public void register(@NonNull Throttled request) {
     long now = clock.nanoTime();
     lock.lock();
     try {
@@ -156,17 +157,17 @@ public class RateLimitingRequestThrottler implements RequestThrottler {
   }
 
   @Override
-  public void signalSuccess(Throttled request) {
+  public void signalSuccess(@NonNull Throttled request) {
     // nothing to do
   }
 
   @Override
-  public void signalError(Throttled request, Throwable error) {
+  public void signalError(@NonNull Throttled request, @NonNull Throwable error) {
     // nothing to do
   }
 
   @Override
-  public void signalTimeout(Throttled request) {
+  public void signalTimeout(@NonNull Throttled request) {
     lock.lock();
     try {
       if (!closed && queue.remove(request)) { // The request timed out before it was active

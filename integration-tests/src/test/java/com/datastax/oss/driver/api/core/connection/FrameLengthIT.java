@@ -33,6 +33,7 @@ import com.datastax.oss.driver.api.testinfra.simulacron.SimulacronRule;
 import com.datastax.oss.driver.categories.ParallelizableTests;
 import com.datastax.oss.driver.internal.core.retry.DefaultRetryPolicy;
 import com.datastax.oss.simulacron.common.cluster.ClusterSpec;
+import edu.umd.cs.findbugs.annotations.NonNull;
 import java.nio.Buffer;
 import java.nio.ByteBuffer;
 import java.util.concurrent.CompletionStage;
@@ -108,7 +109,8 @@ public class FrameLengthIT {
     }
 
     @Override
-    public RetryDecision onRequestAborted(Request request, Throwable error, int retryCount) {
+    public RetryDecision onRequestAborted(
+        @NonNull Request request, @NonNull Throwable error, int retryCount) {
       return RetryDecision.RETRY_NEXT;
     }
   }

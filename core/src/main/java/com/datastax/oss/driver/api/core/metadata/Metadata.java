@@ -19,6 +19,7 @@ import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
 import com.datastax.oss.driver.api.core.metadata.schema.KeyspaceMetadata;
 import com.datastax.oss.driver.api.core.session.Session;
+import edu.umd.cs.findbugs.annotations.NonNull;
 import java.net.InetSocketAddress;
 import java.util.Map;
 import java.util.Optional;
@@ -38,6 +39,7 @@ public interface Metadata {
    * The nodes known to the driver, indexed by the address that it uses to connect to them. This
    * might include nodes that are currently viewed as down, or ignored by the load balancing policy.
    */
+  @NonNull
   Map<InetSocketAddress, Node> getNodes();
 
   /**
@@ -50,17 +52,20 @@ public interface Metadata {
    * @see Session#setSchemaMetadataEnabled(Boolean)
    * @see DefaultDriverOption#METADATA_SCHEMA_REFRESHED_KEYSPACES
    */
+  @NonNull
   Map<CqlIdentifier, KeyspaceMetadata> getKeyspaces();
 
-  default KeyspaceMetadata getKeyspace(CqlIdentifier keyspaceId) {
-    return getKeyspaces().get(keyspaceId);
+  @NonNull
+  default Optional<KeyspaceMetadata> getKeyspace(@NonNull CqlIdentifier keyspaceId) {
+    return Optional.ofNullable(getKeyspaces().get(keyspaceId));
   }
 
   /**
    * Shortcut for {@link #getKeyspace(CqlIdentifier)
    * getKeyspace(CqlIdentifier.fromCql(keyspaceName))}.
    */
-  default KeyspaceMetadata getKeyspace(String keyspaceName) {
+  @NonNull
+  default Optional<KeyspaceMetadata> getKeyspace(@NonNull String keyspaceName) {
     return getKeyspace(CqlIdentifier.fromCql(keyspaceName));
   }
 
@@ -72,5 +77,6 @@ public interface Metadata {
    *
    * @see DefaultDriverOption#METADATA_TOKEN_MAP_ENABLED
    */
+  @NonNull
   Optional<TokenMap> getTokenMap();
 }

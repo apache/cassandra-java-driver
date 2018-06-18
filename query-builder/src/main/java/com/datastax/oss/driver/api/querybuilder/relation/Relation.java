@@ -26,6 +26,7 @@ import com.datastax.oss.driver.internal.querybuilder.relation.DefaultColumnCompo
 import com.datastax.oss.driver.internal.querybuilder.relation.DefaultColumnRelationBuilder;
 import com.datastax.oss.driver.internal.querybuilder.relation.DefaultMultiColumnRelationBuilder;
 import com.datastax.oss.driver.internal.querybuilder.relation.DefaultTokenRelationBuilder;
+import edu.umd.cs.findbugs.annotations.NonNull;
 import java.util.Arrays;
 
 /**
@@ -60,17 +61,21 @@ public interface Relation extends CqlSnippet {
    * Relation r = Relation.column("k").isEqualTo(bindMarker());
    * }</pre>
    */
-  static ColumnRelationBuilder<Relation> column(CqlIdentifier id) {
+  @NonNull
+  static ColumnRelationBuilder<Relation> column(@NonNull CqlIdentifier id) {
     return new DefaultColumnRelationBuilder(id);
   }
 
   /** Shortcut for {@link #column(CqlIdentifier) column(CqlIdentifier.fromCql(name))} */
-  static ColumnRelationBuilder<Relation> column(String name) {
+  @NonNull
+  static ColumnRelationBuilder<Relation> column(@NonNull String name) {
     return column(CqlIdentifier.fromCql(name));
   }
 
   /** Builds a relation testing a value in a map (Cassandra 4 and above). */
-  static ColumnComponentRelationBuilder<Relation> mapValue(CqlIdentifier columnId, Term index) {
+  @NonNull
+  static ColumnComponentRelationBuilder<Relation> mapValue(
+      @NonNull CqlIdentifier columnId, @NonNull Term index) {
     // The concept could easily be extended to list elements and tuple components, so use a generic
     // name internally, we'll add other shortcuts if necessary.
     return new DefaultColumnComponentRelationBuilder(columnId, index);
@@ -80,17 +85,21 @@ public interface Relation extends CqlSnippet {
    * Shortcut for {@link #mapValue(CqlIdentifier, Term) mapValue(CqlIdentifier.fromCql(columnName),
    * index)}
    */
-  static ColumnComponentRelationBuilder<Relation> mapValue(String columnName, Term index) {
+  @NonNull
+  static ColumnComponentRelationBuilder<Relation> mapValue(
+      @NonNull String columnName, @NonNull Term index) {
     return mapValue(CqlIdentifier.fromCql(columnName), index);
   }
 
   /** Builds a relation testing a token generated from a set of columns. */
-  static TokenRelationBuilder<Relation> tokenFromIds(Iterable<CqlIdentifier> identifiers) {
+  @NonNull
+  static TokenRelationBuilder<Relation> tokenFromIds(@NonNull Iterable<CqlIdentifier> identifiers) {
     return new DefaultTokenRelationBuilder(identifiers);
   }
 
   /** Var-arg equivalent of {@link #tokenFromIds(Iterable)}. */
-  static TokenRelationBuilder<Relation> token(CqlIdentifier... identifiers) {
+  @NonNull
+  static TokenRelationBuilder<Relation> token(@NonNull CqlIdentifier... identifiers) {
     return tokenFromIds(Arrays.asList(identifiers));
   }
 
@@ -98,22 +107,27 @@ public interface Relation extends CqlSnippet {
    * Equivalent of {@link #tokenFromIds(Iterable)} with raw strings; the names are converted with
    * {@link CqlIdentifier#fromCql(String)}.
    */
-  static TokenRelationBuilder<Relation> token(Iterable<String> names) {
+  @NonNull
+  static TokenRelationBuilder<Relation> token(@NonNull Iterable<String> names) {
     return tokenFromIds(CqlIdentifiers.wrap(names));
   }
 
   /** Var-arg equivalent of {@link #token(Iterable)}. */
-  static TokenRelationBuilder<Relation> token(String... names) {
+  @NonNull
+  static TokenRelationBuilder<Relation> token(@NonNull String... names) {
     return token(Arrays.asList(names));
   }
 
   /** Builds a multi-column relation, as in {@code WHERE (c1, c2, c3) IN ...}. */
-  static MultiColumnRelationBuilder<Relation> columnIds(Iterable<CqlIdentifier> identifiers) {
+  @NonNull
+  static MultiColumnRelationBuilder<Relation> columnIds(
+      @NonNull Iterable<CqlIdentifier> identifiers) {
     return new DefaultMultiColumnRelationBuilder(identifiers);
   }
 
   /** Var-arg equivalent of {@link #columnIds(Iterable)}. */
-  static MultiColumnRelationBuilder<Relation> columns(CqlIdentifier... identifiers) {
+  @NonNull
+  static MultiColumnRelationBuilder<Relation> columns(@NonNull CqlIdentifier... identifiers) {
     return columnIds(Arrays.asList(identifiers));
   }
 
@@ -121,17 +135,20 @@ public interface Relation extends CqlSnippet {
    * Equivalent of {@link #columnIds(Iterable)} with raw strings; the names are converted with
    * {@link CqlIdentifier#fromCql(String)}.
    */
-  static MultiColumnRelationBuilder<Relation> columns(Iterable<String> names) {
+  @NonNull
+  static MultiColumnRelationBuilder<Relation> columns(@NonNull Iterable<String> names) {
     return columnIds(CqlIdentifiers.wrap(names));
   }
 
   /** Var-arg equivalent of {@link #columns(Iterable)}. */
-  static MultiColumnRelationBuilder<Relation> columns(String... names) {
+  @NonNull
+  static MultiColumnRelationBuilder<Relation> columns(@NonNull String... names) {
     return columns(Arrays.asList(names));
   }
 
   /** Builds a relation on a custom index. */
-  static Relation customIndex(CqlIdentifier indexId, Term expression) {
+  @NonNull
+  static Relation customIndex(@NonNull CqlIdentifier indexId, @NonNull Term expression) {
     return new CustomIndexRelation(indexId, expression);
   }
 
@@ -139,7 +156,8 @@ public interface Relation extends CqlSnippet {
    * Shortcut for {@link #customIndex(CqlIdentifier, Term)
    * customIndex(CqlIdentifier.fromCql(indexName), expression)}
    */
-  static Relation customIndex(String indexName, Term expression) {
+  @NonNull
+  static Relation customIndex(@NonNull String indexName, @NonNull Term expression) {
     return customIndex(CqlIdentifier.fromCql(indexName), expression);
   }
 

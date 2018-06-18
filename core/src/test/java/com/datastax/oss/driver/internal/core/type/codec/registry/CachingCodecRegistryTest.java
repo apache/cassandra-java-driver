@@ -44,6 +44,7 @@ import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableList;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableMap;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableSet;
 import com.datastax.oss.driver.shaded.guava.common.collect.Lists;
+import edu.umd.cs.findbugs.annotations.NonNull;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.net.Inet4Address;
@@ -830,26 +831,29 @@ public class CachingCodecRegistryTest {
   }
 
   public static class TextToPeriodCodec implements TypeCodec<Period> {
+    @NonNull
     @Override
     public GenericType<Period> getJavaType() {
       return GenericType.of(Period.class);
     }
 
+    @NonNull
     @Override
     public DataType getCqlType() {
       return DataTypes.TEXT;
     }
 
     @Override
-    public ByteBuffer encode(Period value, ProtocolVersion protocolVersion) {
+    public ByteBuffer encode(Period value, @NonNull ProtocolVersion protocolVersion) {
       throw new UnsupportedOperationException("not implemented for this test");
     }
 
     @Override
-    public Period decode(ByteBuffer bytes, ProtocolVersion protocolVersion) {
+    public Period decode(ByteBuffer bytes, @NonNull ProtocolVersion protocolVersion) {
       throw new UnsupportedOperationException("not implemented for this test");
     }
 
+    @NonNull
     @Override
     public String format(Period value) {
       throw new UnsupportedOperationException("not implemented for this test");
@@ -867,26 +871,29 @@ public class CachingCodecRegistryTest {
 
   private static class ACodec implements TypeCodec<A> {
 
+    @NonNull
     @Override
     public GenericType<A> getJavaType() {
       return GenericType.of(A.class);
     }
 
+    @NonNull
     @Override
     public DataType getCqlType() {
       return DataTypes.INT;
     }
 
     @Override
-    public ByteBuffer encode(A value, ProtocolVersion protocolVersion) {
+    public ByteBuffer encode(A value, @NonNull ProtocolVersion protocolVersion) {
       throw new UnsupportedOperationException("irrelevant");
     }
 
     @Override
-    public A decode(ByteBuffer bytes, ProtocolVersion protocolVersion) {
+    public A decode(ByteBuffer bytes, @NonNull ProtocolVersion protocolVersion) {
       throw new UnsupportedOperationException("irrelevant");
     }
 
+    @NonNull
     @Override
     public String format(A value) {
       throw new UnsupportedOperationException("irrelevant");

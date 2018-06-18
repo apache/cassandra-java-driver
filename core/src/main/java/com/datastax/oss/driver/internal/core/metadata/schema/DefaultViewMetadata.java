@@ -21,37 +21,40 @@ import com.datastax.oss.driver.api.core.metadata.schema.ColumnMetadata;
 import com.datastax.oss.driver.api.core.metadata.schema.ViewMetadata;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableList;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableMap;
+import edu.umd.cs.findbugs.annotations.NonNull;
+import edu.umd.cs.findbugs.annotations.Nullable;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.UUID;
 import net.jcip.annotations.Immutable;
 
 @Immutable
 public class DefaultViewMetadata implements ViewMetadata {
 
-  private final CqlIdentifier keyspace;
-  private final CqlIdentifier name;
-  private final CqlIdentifier baseTable;
+  @NonNull private final CqlIdentifier keyspace;
+  @NonNull private final CqlIdentifier name;
+  @NonNull private final CqlIdentifier baseTable;
   private final boolean includesAllColumns;
-  private final String whereClause;
-  private final UUID id;
-  private final ImmutableList<ColumnMetadata> partitionKey;
-  private final ImmutableMap<ColumnMetadata, ClusteringOrder> clusteringColumns;
-  private final ImmutableMap<CqlIdentifier, ColumnMetadata> columns;
-  private final Map<CqlIdentifier, Object> options;
+  @Nullable private final String whereClause;
+  @NonNull private final UUID id;
+  @NonNull private final ImmutableList<ColumnMetadata> partitionKey;
+  @NonNull private final ImmutableMap<ColumnMetadata, ClusteringOrder> clusteringColumns;
+  @NonNull private final ImmutableMap<CqlIdentifier, ColumnMetadata> columns;
+  @NonNull private final Map<CqlIdentifier, Object> options;
 
   public DefaultViewMetadata(
-      CqlIdentifier keyspace,
-      CqlIdentifier name,
-      CqlIdentifier baseTable,
+      @NonNull CqlIdentifier keyspace,
+      @NonNull CqlIdentifier name,
+      @NonNull CqlIdentifier baseTable,
       boolean includesAllColumns,
-      String whereClause,
-      UUID id,
-      ImmutableList<ColumnMetadata> partitionKey,
-      ImmutableMap<ColumnMetadata, ClusteringOrder> clusteringColumns,
-      ImmutableMap<CqlIdentifier, ColumnMetadata> columns,
-      Map<CqlIdentifier, Object> options) {
+      @Nullable String whereClause,
+      @NonNull UUID id,
+      @NonNull ImmutableList<ColumnMetadata> partitionKey,
+      @NonNull ImmutableMap<ColumnMetadata, ClusteringOrder> clusteringColumns,
+      @NonNull ImmutableMap<CqlIdentifier, ColumnMetadata> columns,
+      @NonNull Map<CqlIdentifier, Object> options) {
     this.keyspace = keyspace;
     this.name = name;
     this.baseTable = baseTable;
@@ -64,21 +67,25 @@ public class DefaultViewMetadata implements ViewMetadata {
     this.options = options;
   }
 
+  @NonNull
   @Override
   public CqlIdentifier getKeyspace() {
     return keyspace;
   }
 
+  @NonNull
   @Override
   public CqlIdentifier getName() {
     return name;
   }
 
+  @NonNull
   @Override
   public UUID getId() {
     return id;
   }
 
+  @NonNull
   @Override
   public CqlIdentifier getBaseTable() {
     return baseTable;
@@ -89,26 +96,31 @@ public class DefaultViewMetadata implements ViewMetadata {
     return includesAllColumns;
   }
 
+  @NonNull
   @Override
-  public String getWhereClause() {
-    return whereClause;
+  public Optional<String> getWhereClause() {
+    return Optional.ofNullable(whereClause);
   }
 
+  @NonNull
   @Override
   public List<ColumnMetadata> getPartitionKey() {
     return partitionKey;
   }
 
+  @NonNull
   @Override
   public Map<ColumnMetadata, ClusteringOrder> getClusteringColumns() {
     return clusteringColumns;
   }
 
+  @NonNull
   @Override
   public Map<CqlIdentifier, ColumnMetadata> getColumns() {
     return columns;
   }
 
+  @NonNull
   @Override
   public Map<CqlIdentifier, Object> getOptions() {
     return options;
@@ -124,7 +136,7 @@ public class DefaultViewMetadata implements ViewMetadata {
           && Objects.equals(this.name, that.getName())
           && Objects.equals(this.baseTable, that.getBaseTable())
           && this.includesAllColumns == that.includesAllColumns()
-          && Objects.equals(this.whereClause, that.getWhereClause())
+          && Objects.equals(this.whereClause, that.getWhereClause().orElse(null))
           && Objects.equals(this.id, that.getId())
           && Objects.equals(this.partitionKey, that.getPartitionKey())
           && Objects.equals(this.clusteringColumns, that.getClusteringColumns())

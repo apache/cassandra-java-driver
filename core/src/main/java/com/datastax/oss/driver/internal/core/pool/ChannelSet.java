@@ -18,6 +18,7 @@ package com.datastax.oss.driver.internal.core.pool;
 import com.datastax.oss.driver.internal.core.channel.DriverChannel;
 import com.datastax.oss.driver.shaded.guava.common.base.Preconditions;
 import com.datastax.oss.driver.shaded.guava.common.collect.Iterators;
+import edu.umd.cs.findbugs.annotations.NonNull;
 import java.util.Arrays;
 import java.util.Iterator;
 import java.util.concurrent.locks.ReentrantLock;
@@ -128,6 +129,7 @@ class ChannelSet implements Iterable<DriverChannel> {
     return this.channels.length;
   }
 
+  @NonNull
   @Override
   public Iterator<DriverChannel> iterator() {
     return Iterators.forArray(this.channels);

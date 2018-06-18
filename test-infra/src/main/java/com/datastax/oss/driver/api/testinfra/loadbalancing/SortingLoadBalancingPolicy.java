@@ -21,6 +21,7 @@ import com.datastax.oss.driver.api.core.loadbalancing.NodeDistance;
 import com.datastax.oss.driver.api.core.metadata.Node;
 import com.datastax.oss.driver.api.core.session.Request;
 import com.datastax.oss.driver.api.core.session.Session;
+import edu.umd.cs.findbugs.annotations.NonNull;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.util.ArrayDeque;
@@ -73,35 +74,36 @@ public class SortingLoadBalancingPolicy implements LoadBalancingPolicy {
 
   @Override
   public void init(
-      Map<InetSocketAddress, Node> nodes,
-      DistanceReporter distanceReporter,
-      Set<InetSocketAddress> contactPoints) {
+      @NonNull Map<InetSocketAddress, Node> nodes,
+      @NonNull DistanceReporter distanceReporter,
+      @NonNull Set<InetSocketAddress> contactPoints) {
     this.nodes.addAll(nodes.values());
     this.nodes.forEach(n -> distanceReporter.setDistance(n, NodeDistance.LOCAL));
   }
 
+  @NonNull
   @Override
-  public Queue<Node> newQueryPlan(Request request, Session session) {
+  public Queue<Node> newQueryPlan(@NonNull Request request, @NonNull Session session) {
     return new ArrayDeque<>(nodes);
   }
 
   @Override
-  public void onAdd(Node node) {
+  public void onAdd(@NonNull Node node) {
     this.nodes.add(node);
   }
 
   @Override
-  public void onUp(Node node) {
+  public void onUp(@NonNull Node node) {
     onAdd(node);
   }
 
   @Override
-  public void onDown(Node node) {
+  public void onDown(@NonNull Node node) {
     onRemove(node);
   }
 
   @Override
-  public void onRemove(Node node) {
+  public void onRemove(@NonNull Node node) {
     this.nodes.remove(node);
   }
 

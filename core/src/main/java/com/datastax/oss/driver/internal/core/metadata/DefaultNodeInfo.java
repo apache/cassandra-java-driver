@@ -32,8 +32,8 @@ public class DefaultNodeInfo implements NodeInfo {
   }
 
   private final InetSocketAddress connectAddress;
-  private final Optional<InetSocketAddress> broadcastAddress;
-  private final Optional<InetSocketAddress> listenAddress;
+  private final InetSocketAddress broadcastAddress;
+  private final InetSocketAddress listenAddress;
   private final String datacenter;
   private final String rack;
   private final String cassandraVersion;
@@ -64,12 +64,12 @@ public class DefaultNodeInfo implements NodeInfo {
 
   @Override
   public Optional<InetSocketAddress> getBroadcastAddress() {
-    return broadcastAddress;
+    return Optional.ofNullable(broadcastAddress);
   }
 
   @Override
   public Optional<InetSocketAddress> getListenAddress() {
-    return listenAddress;
+    return Optional.ofNullable(listenAddress);
   }
 
   @Override
@@ -115,8 +115,8 @@ public class DefaultNodeInfo implements NodeInfo {
   @NotThreadSafe
   public static class Builder {
     private InetSocketAddress connectAddress;
-    private Optional<InetSocketAddress> broadcastAddress = Optional.empty();
-    private Optional<InetSocketAddress> listenAddress = Optional.empty();
+    private InetSocketAddress broadcastAddress;
+    private InetSocketAddress listenAddress;
     private String datacenter;
     private String rack;
     private String cassandraVersion;
@@ -133,14 +133,14 @@ public class DefaultNodeInfo implements NodeInfo {
 
     public Builder withBroadcastAddress(InetSocketAddress address) {
       if (address != null) {
-        this.broadcastAddress = Optional.of(address);
+        this.broadcastAddress = address;
       }
       return this;
     }
 
     public Builder withListenAddress(InetSocketAddress address) {
       if (address != null) {
-        this.listenAddress = Optional.of(address);
+        this.listenAddress = address;
       }
       return this;
     }

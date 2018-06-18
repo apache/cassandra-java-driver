@@ -21,6 +21,8 @@ import com.datastax.oss.driver.api.core.retry.RetryPolicy;
 import com.datastax.oss.driver.api.core.session.Request;
 import com.datastax.oss.driver.api.core.session.Session;
 import com.datastax.oss.driver.api.core.type.reflect.GenericType;
+import edu.umd.cs.findbugs.annotations.NonNull;
+import edu.umd.cs.findbugs.annotations.Nullable;
 import java.nio.ByteBuffer;
 import java.util.Map;
 import java.util.concurrent.CompletionStage;
@@ -55,6 +57,7 @@ public interface PrepareRequest extends Request {
       new GenericType<CompletionStage<PreparedStatement>>() {};
 
   /** The CQL query to prepare. */
+  @NonNull
   String getQuery();
 
   /**
@@ -63,6 +66,7 @@ public interface PrepareRequest extends Request {
    * <p>Note that this refers to the prepare query itself, not to the bound statements that will be
    * created from the prepared statement (see {@link #areBoundStatementsIdempotent()}).
    */
+  @NonNull
   @Override
   default Boolean isIdempotent() {
     // Retrying to prepare is always safe
@@ -82,18 +86,21 @@ public interface PrepareRequest extends Request {
    * <p>Note that this will be ignored if {@link #getConfigProfileForBoundStatements()} returns a
    * non-null value.
    */
+  @Nullable
   String getConfigProfileNameForBoundStatements();
 
   /**
    * The configuration profile to use for the bound statements that will be created from the
    * prepared statement.
    */
+  @Nullable
   DriverConfigProfile getConfigProfileForBoundStatements();
 
   /**
    * Returns the custom payload to send alongside the bound statements that will be created from the
    * prepared statement.
    */
+  @NonNull
   Map<String, ByteBuffer> getCustomPayloadForBoundStatements();
 
   /**
@@ -101,5 +108,6 @@ public interface PrepareRequest extends Request {
    *
    * <p>This follows the same semantics as {@link #isIdempotent()}.
    */
+  @Nullable
   Boolean areBoundStatementsIdempotent();
 }

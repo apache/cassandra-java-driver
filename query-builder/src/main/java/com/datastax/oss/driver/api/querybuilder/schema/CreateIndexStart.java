@@ -16,6 +16,8 @@
 package com.datastax.oss.driver.api.querybuilder.schema;
 
 import com.datastax.oss.driver.api.core.CqlIdentifier;
+import edu.umd.cs.findbugs.annotations.NonNull;
+import edu.umd.cs.findbugs.annotations.Nullable;
 import java.util.Map;
 
 public interface CreateIndexStart {
@@ -24,13 +26,15 @@ public interface CreateIndexStart {
    * Adds IF NOT EXISTS to the create index specification. This indicates that the index should not
    * be created if it already exists.
    */
+  @NonNull
   CreateIndexStart ifNotExists();
 
   /**
    * Adds CUSTOM specification to the index for the given class name. The class name will added to
    * the end of the CREATE INDEX specification with <code>USING 'classname'</code>.
    */
-  CreateIndexStart custom(String className);
+  @NonNull
+  CreateIndexStart custom(@NonNull String className);
 
   /**
    * Declares that the index is a "SSTable Attached Secondary Index" (SASI) type index. This is a
@@ -38,18 +42,21 @@ public interface CreateIndexStart {
    *
    * @see CreateIndex#withSASIOptions(Map)
    */
+  @NonNull
   default CreateIndexStart usingSASI() {
     return custom("org.apache.cassandra.index.sasi.SASIIndex");
   }
 
   /** Indicates which table this index is on. */
-  CreateIndexOnTable onTable(CqlIdentifier keyspace, CqlIdentifier table);
+  @NonNull
+  CreateIndexOnTable onTable(@Nullable CqlIdentifier keyspace, @NonNull CqlIdentifier table);
 
   /**
    * Indicates which table this index is on. This assumes the keyspace name is already qualified for
    * the Session or Statement.
    */
-  default CreateIndexOnTable onTable(CqlIdentifier table) {
+  @NonNull
+  default CreateIndexOnTable onTable(@NonNull CqlIdentifier table) {
     return onTable(null, table);
   }
 
@@ -57,12 +64,15 @@ public interface CreateIndexStart {
    * Shortcut for {@link #onTable(CqlIdentifier,CqlIdentifier)
    * onTable(CqlIdentifier.fromCql(keyspace),CqlIdentifier.fromCql(table))}.
    */
-  default CreateIndexOnTable onTable(String keyspace, String table) {
-    return onTable(CqlIdentifier.fromCql(keyspace), CqlIdentifier.fromCql(table));
+  @NonNull
+  default CreateIndexOnTable onTable(@Nullable String keyspace, @NonNull String table) {
+    return onTable(
+        keyspace == null ? null : CqlIdentifier.fromCql(keyspace), CqlIdentifier.fromCql(table));
   }
 
   /** Shortcut for {@link #onTable(CqlIdentifier) onTable(CqlIdentifier.fromCql(table))}. */
-  default CreateIndexOnTable onTable(String table) {
+  @NonNull
+  default CreateIndexOnTable onTable(@NonNull String table) {
     return onTable(CqlIdentifier.fromCql(table));
   }
 }

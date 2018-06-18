@@ -19,8 +19,9 @@ import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.config.DriverConfigProfile;
 import com.datastax.oss.driver.api.core.metadata.token.Token;
 import com.datastax.oss.protocol.internal.util.collection.NullAllowingImmutableMap;
+import edu.umd.cs.findbugs.annotations.NonNull;
+import edu.umd.cs.findbugs.annotations.Nullable;
 import java.nio.ByteBuffer;
-import java.util.Collections;
 import java.util.Map;
 import net.jcip.annotations.NotThreadSafe;
 
@@ -37,16 +38,16 @@ public abstract class StatementBuilder<T extends StatementBuilder<T, S>, S exten
   @SuppressWarnings("unchecked")
   private final T self = (T) this;
 
-  protected String configProfileName;
-  protected DriverConfigProfile configProfile;
-  protected CqlIdentifier routingKeyspace;
-  protected ByteBuffer routingKey;
-  protected Token routingToken;
-  private NullAllowingImmutableMap.Builder<String, ByteBuffer> customPayloadBuilder;
-  protected Boolean idempotent;
+  @Nullable protected String configProfileName;
+  @Nullable protected DriverConfigProfile configProfile;
+  @Nullable protected CqlIdentifier routingKeyspace;
+  @Nullable protected ByteBuffer routingKey;
+  @Nullable protected Token routingToken;
+  @Nullable private NullAllowingImmutableMap.Builder<String, ByteBuffer> customPayloadBuilder;
+  @Nullable protected Boolean idempotent;
   protected boolean tracing;
   protected long timestamp = Long.MIN_VALUE;
-  protected ByteBuffer pagingState;
+  @Nullable protected ByteBuffer pagingState;
 
   protected StatementBuilder() {
     // nothing to do
@@ -64,20 +65,23 @@ public abstract class StatementBuilder<T extends StatementBuilder<T, S>, S exten
   }
 
   /** @see Statement#setConfigProfileName(String) */
-  public T withConfigProfileName(String configProfileName) {
+  @NonNull
+  public T withConfigProfileName(@Nullable String configProfileName) {
     this.configProfileName = configProfileName;
     return self;
   }
 
   /** @see Statement#setConfigProfile(DriverConfigProfile) */
-  public T withConfigProfile(DriverConfigProfile configProfile) {
+  @NonNull
+  public T withConfigProfile(@Nullable DriverConfigProfile configProfile) {
     this.configProfile = configProfile;
     this.configProfileName = null;
     return self;
   }
 
   /** @see Statement#setRoutingKeyspace(CqlIdentifier) */
-  public T withRoutingKeyspace(CqlIdentifier routingKeyspace) {
+  @NonNull
+  public T withRoutingKeyspace(@Nullable CqlIdentifier routingKeyspace) {
     this.routingKeyspace = routingKeyspace;
     return self;
   }
@@ -86,24 +90,29 @@ public abstract class StatementBuilder<T extends StatementBuilder<T, S>, S exten
    * Shortcut for {@link #withRoutingKeyspace(CqlIdentifier)
    * withRoutingKeyspace(CqlIdentifier.fromCql(routingKeyspaceName))}.
    */
-  public T withRoutingKeyspace(String routingKeyspaceName) {
-    return withRoutingKeyspace(CqlIdentifier.fromCql(routingKeyspaceName));
+  @NonNull
+  public T withRoutingKeyspace(@Nullable String routingKeyspaceName) {
+    return withRoutingKeyspace(
+        routingKeyspaceName == null ? null : CqlIdentifier.fromCql(routingKeyspaceName));
   }
 
   /** @see Statement#setRoutingKey(ByteBuffer) */
-  public T withRoutingKey(ByteBuffer routingKey) {
+  @NonNull
+  public T withRoutingKey(@Nullable ByteBuffer routingKey) {
     this.routingKey = routingKey;
     return self;
   }
 
   /** @see Statement#setRoutingToken(Token) */
-  public T withRoutingToken(Token routingToken) {
+  @NonNull
+  public T withRoutingToken(@Nullable Token routingToken) {
     this.routingToken = routingToken;
     return self;
   }
 
   /** @see Statement#setCustomPayload(Map) */
-  public T addCustomPayload(String key, ByteBuffer value) {
+  @NonNull
+  public T addCustomPayload(@NonNull String key, @Nullable ByteBuffer value) {
     if (customPayloadBuilder == null) {
       customPayloadBuilder = NullAllowingImmutableMap.builder();
     }
@@ -112,38 +121,47 @@ public abstract class StatementBuilder<T extends StatementBuilder<T, S>, S exten
   }
 
   /** @see Statement#setCustomPayload(Map) */
+  @NonNull
   public T clearCustomPayload() {
     customPayloadBuilder = null;
     return self;
   }
 
   /** @see Statement#setIdempotent(Boolean) */
-  public T withIdempotence(boolean idempotent) {
+  @NonNull
+  public T withIdempotence(@Nullable Boolean idempotent) {
     this.idempotent = idempotent;
     return self;
   }
 
   /** @see Statement#setTracing(boolean) */
+  @NonNull
   public T withTracing() {
     this.tracing = true;
     return self;
   }
 
   /** @see Statement#setTimestamp(long) */
+  @NonNull
   public T withTimestamp(long timestamp) {
     this.timestamp = timestamp;
     return self;
   }
 
   /** @see Statement#setPagingState(ByteBuffer) */
-  public T withPagingState(ByteBuffer pagingState) {
+  @NonNull
+  public T withPagingState(@Nullable ByteBuffer pagingState) {
     this.pagingState = pagingState;
     return self;
   }
 
+  @NonNull
   protected Map<String, ByteBuffer> buildCustomPayload() {
-    return (customPayloadBuilder == null) ? Collections.emptyMap() : customPayloadBuilder.build();
+    return (customPayloadBuilder == null)
+        ? NullAllowingImmutableMap.of()
+        : customPayloadBuilder.build();
   }
 
+  @NonNull
   public abstract S build();
 }

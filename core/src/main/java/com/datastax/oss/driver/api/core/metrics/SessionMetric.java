@@ -16,6 +16,7 @@
 package com.datastax.oss.driver.api.core.metrics;
 
 import com.datastax.oss.driver.api.core.session.Session;
+import edu.umd.cs.findbugs.annotations.NonNull;
 
 /**
  * A session-level metric exposed through {@link Session#getMetrics()}.
@@ -26,5 +27,7 @@ import com.datastax.oss.driver.api.core.session.Session;
  * @see NodeMetric
  */
 public interface SessionMetric {
+
+  @NonNull
   String getPath();
 }

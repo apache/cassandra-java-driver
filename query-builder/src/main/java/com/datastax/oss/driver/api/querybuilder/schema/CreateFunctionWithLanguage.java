@@ -15,6 +15,8 @@
  */
 package com.datastax.oss.driver.api.querybuilder.schema;
 
+import edu.umd.cs.findbugs.annotations.NonNull;
+
 public interface CreateFunctionWithLanguage {
 
   /**
@@ -25,7 +27,8 @@ public interface CreateFunctionWithLanguage {
    * postgres-style string literal, which is surrounded in two dollar signs, i.e. <code>$$ myBody $$
    * </code>.
    */
-  CreateFunctionEnd as(String functionBody);
+  @NonNull
+  CreateFunctionEnd as(@NonNull String functionBody);
 
   /**
    * Adds AS to the create function specification and quotes the function body. Assumes that if the
@@ -34,7 +37,8 @@ public interface CreateFunctionWithLanguage {
    * ' myBody '</code>. If the function body is already quoted {@link #as(String)} should be used
    * instead.
    */
-  default CreateFunctionEnd asQuoted(String functionBody) {
+  @NonNull
+  default CreateFunctionEnd asQuoted(@NonNull String functionBody) {
     if (functionBody.contains("'")) {
       return as("$$ " + functionBody + " $$");
     } else {

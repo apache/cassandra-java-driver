@@ -16,6 +16,7 @@
 package com.datastax.oss.driver.api.querybuilder.schema;
 
 import com.datastax.oss.driver.api.core.CqlIdentifier;
+import edu.umd.cs.findbugs.annotations.NonNull;
 
 public interface AlterTableRenameColumn {
 
@@ -23,13 +24,15 @@ public interface AlterTableRenameColumn {
    * Adds a column rename to ALTER TABLE specification. This may be repeated with successive calls
    * to rename columns.
    */
-  AlterTableRenameColumnEnd renameColumn(CqlIdentifier from, CqlIdentifier to);
+  @NonNull
+  AlterTableRenameColumnEnd renameColumn(@NonNull CqlIdentifier from, @NonNull CqlIdentifier to);
 
   /**
    * Shortcut for {@link #renameColumn(CqlIdentifier,CqlIdentifier)
    * renameField(CqlIdentifier.fromCql(from),CqlIdentifier.fromCql(to))}.
    */
-  default AlterTableRenameColumnEnd renameColumn(String from, String to) {
+  @NonNull
+  default AlterTableRenameColumnEnd renameColumn(@NonNull String from, @NonNull String to) {
     return renameColumn(CqlIdentifier.fromCql(from), CqlIdentifier.fromCql(to));
   }
 }

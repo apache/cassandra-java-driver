@@ -22,6 +22,8 @@ import com.datastax.oss.driver.api.core.type.TupleType;
 import com.datastax.oss.driver.api.core.type.codec.TypeCodec;
 import com.datastax.oss.driver.api.core.type.codec.registry.CodecRegistry;
 import com.datastax.oss.driver.api.core.type.reflect.GenericType;
+import edu.umd.cs.findbugs.annotations.NonNull;
+import edu.umd.cs.findbugs.annotations.Nullable;
 import java.nio.BufferUnderflowException;
 import java.nio.ByteBuffer;
 import net.jcip.annotations.ThreadSafe;
@@ -31,32 +33,35 @@ public class TupleCodec implements TypeCodec<TupleValue> {
 
   private final TupleType cqlType;
 
-  public TupleCodec(TupleType cqlType) {
+  public TupleCodec(@NonNull TupleType cqlType) {
     this.cqlType = cqlType;
   }
 
+  @NonNull
   @Override
   public GenericType<TupleValue> getJavaType() {
     return GenericType.TUPLE_VALUE;
   }
 
+  @NonNull
   @Override
   public DataType getCqlType() {
     return cqlType;
   }
 
   @Override
-  public boolean accepts(Object value) {
+  public boolean accepts(@NonNull Object value) {
     return (value instanceof TupleValue) && ((TupleValue) value).getType().equals(cqlType);
   }
 
   @Override
-  public boolean accepts(Class<?> javaClass) {
+  public boolean accepts(@NonNull Class<?> javaClass) {
     return TupleValue.class.isAssignableFrom(javaClass);
   }
 
+  @Nullable
   @Override
-  public ByteBuffer encode(TupleValue value, ProtocolVersion protocolVersion) {
+  public ByteBuffer encode(@Nullable TupleValue value, @NonNull ProtocolVersion protocolVersion) {
     if (value == null) {
       return null;
     }
@@ -84,8 +89,9 @@ public class TupleCodec implements TypeCodec<TupleValue> {
     return (ByteBuffer) result.flip();
   }
 
+  @Nullable
   @Override
-  public TupleValue decode(ByteBuffer bytes, ProtocolVersion protocolVersion) {
+  public TupleValue decode(@Nullable ByteBuffer bytes, @NonNull ProtocolVersion protocolVersion) {
     if (bytes == null) {
       return null;
     }
@@ -119,8 +125,9 @@ public class TupleCodec implements TypeCodec<TupleValue> {
     }
   }
 
+  @NonNull
   @Override
-  public String format(TupleValue value) {
+  public String format(@Nullable TupleValue value) {
     if (value == null) {
       return "NULL";
     }
@@ -146,8 +153,9 @@ public class TupleCodec implements TypeCodec<TupleValue> {
     return sb.toString();
   }
 
+  @Nullable
   @Override
-  public TupleValue parse(String value) {
+  public TupleValue parse(@Nullable String value) {
     if (value == null || value.isEmpty() || value.equalsIgnoreCase("NULL")) {
       return null;
     }

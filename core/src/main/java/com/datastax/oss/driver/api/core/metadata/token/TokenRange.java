@@ -15,6 +15,7 @@
  */
 package com.datastax.oss.driver.api.core.metadata.token;
 
+import edu.umd.cs.findbugs.annotations.NonNull;
 import java.util.List;
 
 /**
@@ -30,9 +31,11 @@ import java.util.List;
 public interface TokenRange extends Comparable<TokenRange> {
 
   /** The start of the range (exclusive). */
+  @NonNull
   Token getStart();
 
   /** The end of the range (inclusive). */
+  @NonNull
   Token getEnd();
 
   /**
@@ -44,6 +47,7 @@ public interface TokenRange extends Comparable<TokenRange> {
    *
    * @throws IllegalArgumentException if the range is empty or if {@code numberOfSplits < 1}.
    */
+  @NonNull
   List<TokenRange> splitEvenly(int numberOfSplits);
 
   /**
@@ -84,6 +88,7 @@ public interface TokenRange extends Comparable<TokenRange> {
    * }
    * }</pre>
    */
+  @NonNull
   List<TokenRange> unwrap();
 
   /**
@@ -96,7 +101,7 @@ public interface TokenRange extends Comparable<TokenRange> {
    *   <li>{@code ]3,5]} does not intersect {@code ]1,2]}, {@code ]2,3]}, {@code ]5,7]}...
    * </ul>
    */
-  boolean intersects(TokenRange that);
+  boolean intersects(@NonNull TokenRange that);
 
   /**
    * Computes the intersection of this range with another one, producing one or more ranges.
@@ -111,13 +116,14 @@ public interface TokenRange extends Comparable<TokenRange> {
    * @return the range(s) resulting from the intersection.
    * @throws IllegalArgumentException if the ranges do not intersect.
    */
-  List<TokenRange> intersectWith(TokenRange that);
+  @NonNull
+  List<TokenRange> intersectWith(@NonNull TokenRange that);
 
   /**
    * Checks whether this range contains a given token, i.e. {@code range.start < token <=
    * range.end}.
    */
-  boolean contains(Token token);
+  boolean contains(@NonNull Token token);
 
   /**
    * Merges this range with another one.
@@ -136,5 +142,6 @@ public interface TokenRange extends Comparable<TokenRange> {
    *
    * @throws IllegalArgumentException if the ranges neither intersect nor are adjacent.
    */
-  TokenRange mergeWith(TokenRange that);
+  @NonNull
+  TokenRange mergeWith(@NonNull TokenRange that);
 }

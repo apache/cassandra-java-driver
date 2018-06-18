@@ -26,6 +26,7 @@ import com.datastax.oss.driver.api.core.tracker.RequestTracker;
 import com.datastax.oss.driver.api.core.type.codec.TypeCodec;
 import com.datastax.oss.driver.example.guava.internal.DefaultGuavaSession;
 import com.datastax.oss.driver.example.guava.internal.GuavaDriverContext;
+import edu.umd.cs.findbugs.annotations.NonNull;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Predicate;
@@ -52,7 +53,7 @@ public class GuavaSessionBuilder extends SessionBuilder<GuavaSessionBuilder, Gua
   }
 
   @Override
-  protected GuavaSession wrap(CqlSession defaultSession) {
+  protected GuavaSession wrap(@NonNull CqlSession defaultSession) {
     return new DefaultGuavaSession(defaultSession);
   }
 }

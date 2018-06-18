@@ -17,6 +17,7 @@ package com.datastax.oss.driver.api.core.servererrors;
 
 import com.datastax.oss.driver.api.core.ConsistencyLevel;
 import com.datastax.oss.driver.api.core.metadata.Node;
+import edu.umd.cs.findbugs.annotations.NonNull;
 
 /**
  * A failure to reach the required consistency level during the execution of a query.
@@ -37,9 +38,9 @@ public abstract class QueryConsistencyException extends QueryExecutionException 
   private final int blockFor;
 
   protected QueryConsistencyException(
-      Node coordinator,
-      String message,
-      ConsistencyLevel consistencyLevel,
+      @NonNull Node coordinator,
+      @NonNull String message,
+      @NonNull ConsistencyLevel consistencyLevel,
       int received,
       int blockFor,
       boolean writableStackTrace) {
@@ -50,6 +51,7 @@ public abstract class QueryConsistencyException extends QueryExecutionException 
   }
 
   /** The consistency level of the operation that failed. */
+  @NonNull
   public ConsistencyLevel getConsistencyLevel() {
     return consistencyLevel;
   }

@@ -30,6 +30,8 @@ import com.datastax.oss.driver.api.core.type.reflect.GenericType;
 import com.datastax.oss.driver.internal.core.DefaultMavenCoordinates;
 import com.datastax.oss.driver.internal.core.util.concurrent.BlockingOperation;
 import com.datastax.oss.driver.internal.core.util.concurrent.CompletableFutures;
+import edu.umd.cs.findbugs.annotations.NonNull;
+import edu.umd.cs.findbugs.annotations.Nullable;
 import java.util.Optional;
 import java.util.concurrent.CompletionStage;
 
@@ -56,6 +58,7 @@ public interface Session extends AsyncAutoCloseable {
    * <p>This is intended for products that wrap or extend the driver, as a way to check
    * compatibility if end-users override the driver version in their application.
    */
+  @NonNull
   MavenCoordinates OSS_DRIVER_COORDINATES =
       DefaultMavenCoordinates.buildFromResourceAndPrint(
           Session.class.getResource("/com/datastax/oss/driver/Driver.properties"));
@@ -65,6 +68,7 @@ public interface Session extends AsyncAutoCloseable {
    *
    * @see DefaultDriverOption#SESSION_NAME
    */
+  @NonNull
   String getName();
 
   /**
@@ -82,7 +86,11 @@ public interface Session extends AsyncAutoCloseable {
    * <p>If a metadata refresh triggers events (such as node added/removed, or schema events), then
    * the new version of the metadata is guaranteed to be visible by the time you receive these
    * events.
+   *
+   * <p>The returned object is never {@code null}, but may be empty if metadata has been disabled in
+   * the configuration.
    */
+  @NonNull
   Metadata getMetadata();
 
   /** Whether schema metadata is currently enabled. */
@@ -104,7 +112,8 @@ public interface Session extends AsyncAutoCloseable {
    * @return if this call triggered a refresh, a future that will complete when that refresh is
    *     complete. Otherwise, a completed future with the current metadata.
    */
-  CompletionStage<Metadata> setSchemaMetadataEnabled(Boolean newValue);
+  @NonNull
+  CompletionStage<Metadata> setSchemaMetadataEnabled(@Nullable Boolean newValue);
 
   /**
    * Force an immediate refresh of the schema metadata, even if it is currently disabled (either in
@@ -113,6 +122,7 @@ public interface Session extends AsyncAutoCloseable {
    * <p>The new metadata is returned in the resulting future (and will also be reflected by {@link
    * #getMetadata()} when that future completes).
    */
+  @NonNull
   CompletionStage<Metadata> refreshSchemaAsync();
 
   /**
@@ -120,6 +130,7 @@ public interface Session extends AsyncAutoCloseable {
    *
    * <p>This must not be called on a driver thread.
    */
+  @NonNull
   default Metadata refreshSchema() {
     BlockingOperation.checkNotDriverThread();
     return CompletableFutures.getUninterruptibly(refreshSchemaAsync());
@@ -149,6 +160,7 @@ public interface Session extends AsyncAutoCloseable {
    * @see DefaultDriverOption#CONTROL_CONNECTION_AGREEMENT_INTERVAL
    * @see DefaultDriverOption#CONTROL_CONNECTION_AGREEMENT_TIMEOUT
    */
+  @NonNull
   CompletionStage<Boolean> checkSchemaAgreementAsync();
 
   /**
@@ -162,10 +174,12 @@ public interface Session extends AsyncAutoCloseable {
   }
 
   /** Returns a context that provides access to all the policies used by this driver instance. */
+  @NonNull
   DriverContext getContext();
 
   /**
-   * The keyspace that this session is currently connected to.
+   * The keyspace that this session is currently connected to, or {@link Optional#empty()} if this
+   * session is not connected to any keyspace.
    *
    * <p>There are two ways that this can be set: before initializing the session (either with the
    * {@code session-keyspace} option in the configuration, or with {@link
@@ -175,12 +189,14 @@ public interface Session extends AsyncAutoCloseable {
    * concurrently. Therefore it is highly discouraged, aside from trivial cases (such as a
    * cqlsh-style program where requests are never concurrent).
    */
-  CqlIdentifier getKeyspace();
+  @NonNull
+  Optional<CqlIdentifier> getKeyspace();
 
   /**
    * Returns a gateway to the driver's metrics, or {@link Optional#empty()} if all metrics are
    * disabled.
    */
+  @NonNull
   Optional<? extends Metrics> getMetrics();
 
   /**
@@ -190,6 +206,7 @@ public interface Session extends AsyncAutoCloseable {
    *     (built-in or custom) that will be used to handle the request.
    * @see Session
    */
+  @Nullable // because ResultT could be Void
   <RequestT extends Request, ResultT> ResultT execute(
-      RequestT request, GenericType<ResultT> resultType);
+      @NonNull RequestT request, @NonNull GenericType<ResultT> resultType);
 }

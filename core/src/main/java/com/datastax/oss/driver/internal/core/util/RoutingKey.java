@@ -15,12 +15,14 @@
  */
 package com.datastax.oss.driver.internal.core.util;
 
+import edu.umd.cs.findbugs.annotations.NonNull;
 import java.nio.ByteBuffer;
 
 public class RoutingKey {
 
   /** Assembles multiple routing key components into a single buffer. */
-  public static ByteBuffer compose(ByteBuffer... components) {
+  @NonNull
+  public static ByteBuffer compose(@NonNull ByteBuffer... components) {
     if (components.length == 1) return components[0];
 
     int totalLength = 0;

@@ -15,6 +15,8 @@
  */
 package com.datastax.oss.driver.api.core;
 
+import edu.umd.cs.findbugs.annotations.NonNull;
+
 /**
  * Thrown if the session uses a request throttler, and it didn't allow the current request to
  * execute.
@@ -24,10 +26,11 @@ package com.datastax.oss.driver.api.core;
  */
 public class RequestThrottlingException extends DriverException {
 
-  public RequestThrottlingException(String message) {
+  public RequestThrottlingException(@NonNull String message) {
     super(message, null, true);
   }
 
+  @NonNull
   @Override
   public DriverException copy() {
     return new RequestThrottlingException(getMessage());

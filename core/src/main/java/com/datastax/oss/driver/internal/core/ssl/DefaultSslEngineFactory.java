@@ -19,6 +19,7 @@ import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
 import com.datastax.oss.driver.api.core.config.DriverConfigProfile;
 import com.datastax.oss.driver.api.core.context.DriverContext;
 import com.datastax.oss.driver.api.core.ssl.SslEngineFactory;
+import edu.umd.cs.findbugs.annotations.NonNull;
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
 import java.security.NoSuchAlgorithmException;
@@ -67,8 +68,9 @@ public class DefaultSslEngineFactory implements SslEngineFactory {
     }
   }
 
+  @NonNull
   @Override
-  public SSLEngine newSslEngine(SocketAddress remoteEndpoint) {
+  public SSLEngine newSslEngine(@NonNull SocketAddress remoteEndpoint) {
     SSLEngine engine;
     if (remoteEndpoint instanceof InetSocketAddress) {
       InetSocketAddress address = (InetSocketAddress) remoteEndpoint;

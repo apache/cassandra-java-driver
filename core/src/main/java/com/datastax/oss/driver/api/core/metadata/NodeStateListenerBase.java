@@ -15,6 +15,8 @@
  */
 package com.datastax.oss.driver.api.core.metadata;
 
+import edu.umd.cs.findbugs.annotations.NonNull;
+
 /**
  * Convenience class for listener implementations that that don't need to override all methods (all
  * methods in this class are empty).
@@ -22,22 +24,22 @@ package com.datastax.oss.driver.api.core.metadata;
 public class NodeStateListenerBase implements NodeStateListener {
 
   @Override
-  public void onAdd(Node node) {
+  public void onAdd(@NonNull Node node) {
     // nothing to do
   }
 
   @Override
-  public void onUp(Node node) {
+  public void onUp(@NonNull Node node) {
     // nothing to do
   }
 
   @Override
-  public void onDown(Node node) {
+  public void onDown(@NonNull Node node) {
     // nothing to do
   }
 
   @Override
-  public void onRemove(Node node) {
+  public void onRemove(@NonNull Node node) {
     // nothing to do
   }
 

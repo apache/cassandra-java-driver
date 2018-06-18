@@ -15,6 +15,7 @@
  */
 package com.datastax.oss.driver.api.core.connection;
 
+import edu.umd.cs.findbugs.annotations.NonNull;
 import java.time.Duration;
 
 /**
@@ -28,7 +29,8 @@ import java.time.Duration;
  */
 public interface ReconnectionPolicy extends AutoCloseable {
 
-  /** Creates a new schedule. */
+  /** Creates a new {@linkplain ReconnectionSchedule schedule}. */
+  @NonNull
   ReconnectionSchedule newSchedule();
 
   /** Called when the cluster that this policy is associated with closes. */
@@ -41,6 +43,7 @@ public interface ReconnectionPolicy extends AutoCloseable {
    */
   interface ReconnectionSchedule {
     /** How long to wait before the next reconnection attempt. */
+    @NonNull
     Duration nextDelay();
   }
 }

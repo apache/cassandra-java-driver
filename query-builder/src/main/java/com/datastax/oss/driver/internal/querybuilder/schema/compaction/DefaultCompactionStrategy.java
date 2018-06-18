@@ -17,6 +17,7 @@ package com.datastax.oss.driver.internal.querybuilder.schema.compaction;
 
 import com.datastax.oss.driver.api.querybuilder.schema.compaction.CompactionStrategy;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableMap;
+import edu.umd.cs.findbugs.annotations.NonNull;
 import java.util.Map;
 import net.jcip.annotations.Immutable;
 
@@ -26,18 +27,20 @@ public abstract class DefaultCompactionStrategy<SelfT extends DefaultCompactionS
 
   private final ImmutableMap<String, Object> options;
 
-  protected DefaultCompactionStrategy(String className) {
+  protected DefaultCompactionStrategy(@NonNull String className) {
     this(ImmutableMap.of("class", className));
   }
 
-  protected DefaultCompactionStrategy(ImmutableMap<String, Object> options) {
+  protected DefaultCompactionStrategy(@NonNull ImmutableMap<String, Object> options) {
     this.options = options;
   }
 
+  @NonNull
   public ImmutableMap<String, Object> getInternalOptions() {
     return options;
   }
 
+  @NonNull
   @Override
   public Map<String, Object> getOptions() {
     return options;

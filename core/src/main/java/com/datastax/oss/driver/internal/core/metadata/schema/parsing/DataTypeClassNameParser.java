@@ -102,18 +102,21 @@ class DataTypeClassNameParser implements DataTypeParser {
 
       CqlIdentifier keyspace = CqlIdentifier.fromInternal(parser.readOne());
       parser.skipBlankAndComma();
-      CqlIdentifier typeName =
-          CqlIdentifier.fromInternal(
-              TypeCodecs.TEXT.decode(
-                  Bytes.fromHexString("0x" + parser.readOne()), context.protocolVersion()));
+      String typeName =
+          TypeCodecs.TEXT.decode(
+              Bytes.fromHexString("0x" + parser.readOne()), context.protocolVersion());
+      if (typeName == null) {
+        throw new AssertionError("Type name cannot be null, this is a server bug");
+      }
+      CqlIdentifier typeId = CqlIdentifier.fromInternal(typeName);
       Map<String, String> nameAndTypeParameters = parser.getNameAndTypeParameters();
 
       // Avoid re-parsing if we already have the definition
-      if (userTypes != null && userTypes.containsKey(typeName)) {
+      if (userTypes != null && userTypes.containsKey(typeId)) {
         // copy as frozen since C* 2.x UDTs are always frozen.
-        return userTypes.get(typeName).copy(true);
+        return userTypes.get(typeId).copy(true);
       } else {
-        UserDefinedTypeBuilder builder = new UserDefinedTypeBuilder(keyspace, typeName);
+        UserDefinedTypeBuilder builder = new UserDefinedTypeBuilder(keyspace, typeId);
         parser.skipBlankAndComma();
         for (Map.Entry<String, String> entry : nameAndTypeParameters.entrySet()) {
           CqlIdentifier fieldName = CqlIdentifier.fromInternal(entry.getKey());

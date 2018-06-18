@@ -29,6 +29,8 @@ import com.datastax.oss.driver.internal.querybuilder.CqlHelper;
 import com.datastax.oss.driver.internal.querybuilder.ImmutableCollections;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableMap;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableSet;
+import edu.umd.cs.findbugs.annotations.NonNull;
+import edu.umd.cs.findbugs.annotations.Nullable;
 import java.util.Map;
 import net.jcip.annotations.Immutable;
 
@@ -54,11 +56,11 @@ public class DefaultAlterTable
   private final ImmutableMap<String, Object> options;
   private final boolean dropCompactStorage;
 
-  public DefaultAlterTable(CqlIdentifier tableName) {
+  public DefaultAlterTable(@NonNull CqlIdentifier tableName) {
     this(null, tableName);
   }
 
-  public DefaultAlterTable(CqlIdentifier keyspace, CqlIdentifier tableName) {
+  public DefaultAlterTable(@Nullable CqlIdentifier keyspace, @NonNull CqlIdentifier tableName) {
     this(
         keyspace,
         tableName,
@@ -74,17 +76,17 @@ public class DefaultAlterTable
   }
 
   public DefaultAlterTable(
-      CqlIdentifier keyspace,
-      CqlIdentifier tableName,
+      @Nullable CqlIdentifier keyspace,
+      @NonNull CqlIdentifier tableName,
       boolean dropCompactStorage,
-      ImmutableMap<CqlIdentifier, DataType> columnsToAddInOrder,
-      ImmutableSet<CqlIdentifier> columnsToAdd,
-      ImmutableSet<CqlIdentifier> columnsToAddStatic,
-      ImmutableSet<CqlIdentifier> columnsToDrop,
-      ImmutableMap<CqlIdentifier, CqlIdentifier> columnsToRename,
-      CqlIdentifier columnToAlter,
-      DataType columnToAlterType,
-      ImmutableMap<String, Object> options) {
+      @NonNull ImmutableMap<CqlIdentifier, DataType> columnsToAddInOrder,
+      @NonNull ImmutableSet<CqlIdentifier> columnsToAdd,
+      @NonNull ImmutableSet<CqlIdentifier> columnsToAddStatic,
+      @NonNull ImmutableSet<CqlIdentifier> columnsToDrop,
+      @NonNull ImmutableMap<CqlIdentifier, CqlIdentifier> columnsToRename,
+      @Nullable CqlIdentifier columnToAlter,
+      @Nullable DataType columnToAlterType,
+      @NonNull ImmutableMap<String, Object> options) {
     this.keyspace = keyspace;
     this.tableName = tableName;
     this.dropCompactStorage = dropCompactStorage;
@@ -98,8 +100,10 @@ public class DefaultAlterTable
     this.options = options;
   }
 
+  @NonNull
   @Override
-  public AlterTableAddColumnEnd addColumn(CqlIdentifier columnName, DataType dataType) {
+  public AlterTableAddColumnEnd addColumn(
+      @NonNull CqlIdentifier columnName, @NonNull DataType dataType) {
     return new DefaultAlterTable(
         keyspace,
         tableName,
@@ -114,8 +118,10 @@ public class DefaultAlterTable
         options);
   }
 
+  @NonNull
   @Override
-  public AlterTableAddColumnEnd addStaticColumn(CqlIdentifier columnName, DataType dataType) {
+  public AlterTableAddColumnEnd addStaticColumn(
+      @NonNull CqlIdentifier columnName, @NonNull DataType dataType) {
     return new DefaultAlterTable(
         keyspace,
         tableName,
@@ -130,6 +136,7 @@ public class DefaultAlterTable
         options);
   }
 
+  @NonNull
   @Override
   public BuildableQuery dropCompactStorage() {
     return new DefaultAlterTable(
@@ -146,8 +153,9 @@ public class DefaultAlterTable
         options);
   }
 
+  @NonNull
   @Override
-  public AlterTableDropColumnEnd dropColumns(CqlIdentifier... columnNames) {
+  public AlterTableDropColumnEnd dropColumns(@NonNull CqlIdentifier... columnNames) {
     ImmutableSet.Builder<CqlIdentifier> builder =
         ImmutableSet.<CqlIdentifier>builder().addAll(columnsToDrop);
     for (CqlIdentifier columnName : columnNames) {
@@ -168,8 +176,10 @@ public class DefaultAlterTable
         options);
   }
 
+  @NonNull
   @Override
-  public AlterTableRenameColumnEnd renameColumn(CqlIdentifier from, CqlIdentifier to) {
+  public AlterTableRenameColumnEnd renameColumn(
+      @NonNull CqlIdentifier from, @NonNull CqlIdentifier to) {
     return new DefaultAlterTable(
         keyspace,
         tableName,
@@ -184,8 +194,9 @@ public class DefaultAlterTable
         options);
   }
 
+  @NonNull
   @Override
-  public BuildableQuery alterColumn(CqlIdentifier columnName, DataType dataType) {
+  public BuildableQuery alterColumn(@NonNull CqlIdentifier columnName, @NonNull DataType dataType) {
     return new DefaultAlterTable(
         keyspace,
         tableName,
@@ -200,8 +211,9 @@ public class DefaultAlterTable
         options);
   }
 
+  @NonNull
   @Override
-  public AlterTableWithOptionsEnd withOption(String name, Object value) {
+  public AlterTableWithOptionsEnd withOption(@NonNull String name, @NonNull Object value) {
     return new DefaultAlterTable(
         keyspace,
         tableName,
@@ -216,6 +228,7 @@ public class DefaultAlterTable
         ImmutableCollections.append(options, name, value));
   }
 
+  @NonNull
   @Override
   public String asCql() {
     StringBuilder builder = new StringBuilder("ALTER TABLE ");
@@ -294,43 +307,53 @@ public class DefaultAlterTable
     return asCql();
   }
 
+  @NonNull
   @Override
   public Map<String, Object> getOptions() {
     return options;
   }
 
+  @Nullable
   public CqlIdentifier getKeyspace() {
     return keyspace;
   }
 
+  @NonNull
   public CqlIdentifier getTable() {
     return tableName;
   }
 
+  @NonNull
   public ImmutableMap<CqlIdentifier, DataType> getColumnsToAddInOrder() {
     return columnsToAddInOrder;
   }
 
+  @NonNull
   public ImmutableSet<CqlIdentifier> getColumnsToAddRegular() {
     return columnsToAdd;
   }
 
+  @NonNull
   public ImmutableSet<CqlIdentifier> getColumnsToAddStatic() {
     return columnsToAddStatic;
   }
 
+  @NonNull
   public ImmutableSet<CqlIdentifier> getColumnsToDrop() {
     return columnsToDrop;
   }
 
+  @NonNull
   public ImmutableMap<CqlIdentifier, CqlIdentifier> getColumnsToRename() {
     return columnsToRename;
   }
 
+  @Nullable
   public CqlIdentifier getColumnToAlter() {
     return columnToAlter;
   }
 
+  @Nullable
   public DataType getColumnToAlterType() {
     return columnToAlterType;
   }

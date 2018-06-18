@@ -24,6 +24,7 @@ import com.datastax.oss.driver.api.core.type.DataTypes;
 import com.datastax.oss.driver.internal.core.util.CountingIterator;
 import com.datastax.oss.driver.internal.core.util.concurrent.BlockingOperation;
 import com.datastax.oss.driver.internal.core.util.concurrent.CompletableFutures;
+import edu.umd.cs.findbugs.annotations.NonNull;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Deque;
@@ -38,18 +39,20 @@ public class MultiPageResultSet implements ResultSet {
   private final List<ExecutionInfo> executionInfos = new ArrayList<>();
   private ColumnDefinitions columnDefinitions;
 
-  public MultiPageResultSet(AsyncResultSet firstPage) {
+  public MultiPageResultSet(@NonNull AsyncResultSet firstPage) {
     assert firstPage.hasMorePages();
     this.iterator = new RowIterator(firstPage);
     this.executionInfos.add(firstPage.getExecutionInfo());
     this.columnDefinitions = firstPage.getColumnDefinitions();
   }
 
+  @NonNull
   @Override
   public ColumnDefinitions getColumnDefinitions() {
     return columnDefinitions;
   }
 
+  @NonNull
   @Override
   public List<ExecutionInfo> getExecutionInfos() {
     return executionInfos;
@@ -70,6 +73,7 @@ public class MultiPageResultSet implements ResultSet {
     iterator.fetchNextPage();
   }
 
+  @NonNull
   @Override
   public Iterator<Row> iterator() {
     return iterator;

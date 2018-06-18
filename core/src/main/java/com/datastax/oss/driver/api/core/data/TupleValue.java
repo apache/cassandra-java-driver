@@ -17,6 +17,7 @@ package com.datastax.oss.driver.api.core.data;
 
 import com.datastax.oss.driver.api.core.detach.Detachable;
 import com.datastax.oss.driver.api.core.type.TupleType;
+import edu.umd.cs.findbugs.annotations.NonNull;
 
 /**
  * Driver-side representation of a CQL {@code tuple} value.
@@ -30,5 +31,7 @@ import com.datastax.oss.driver.api.core.type.TupleType;
  * recommended for use with some 3rd-party tools like Apache Spark &trade;.
  */
 public interface TupleValue extends GettableByIndex, SettableByIndex<TupleValue> {
+
+  @NonNull
   TupleType getType();
 }

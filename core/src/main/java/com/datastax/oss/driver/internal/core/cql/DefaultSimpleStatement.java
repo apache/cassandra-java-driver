@@ -21,6 +21,8 @@ import com.datastax.oss.driver.api.core.cql.SimpleStatement;
 import com.datastax.oss.driver.api.core.metadata.token.Token;
 import com.datastax.oss.protocol.internal.util.collection.NullAllowingImmutableList;
 import com.datastax.oss.protocol.internal.util.collection.NullAllowingImmutableMap;
+import edu.umd.cs.findbugs.annotations.NonNull;
+import edu.umd.cs.findbugs.annotations.Nullable;
 import java.nio.ByteBuffer;
 import java.util.List;
 import java.util.Map;
@@ -80,13 +82,15 @@ public class DefaultSimpleStatement implements SimpleStatement {
     this.pagingState = pagingState;
   }
 
+  @NonNull
   @Override
   public String getQuery() {
     return query;
   }
 
+  @NonNull
   @Override
-  public SimpleStatement setQuery(String newQuery) {
+  public SimpleStatement setQuery(@NonNull String newQuery) {
     return new DefaultSimpleStatement(
         newQuery,
         positionalValues,
@@ -104,13 +108,15 @@ public class DefaultSimpleStatement implements SimpleStatement {
         pagingState);
   }
 
+  @NonNull
   @Override
   public List<Object> getPositionalValues() {
     return positionalValues;
   }
 
+  @NonNull
   @Override
-  public SimpleStatement setPositionalValues(List<Object> newPositionalValues) {
+  public SimpleStatement setPositionalValues(@NonNull List<Object> newPositionalValues) {
     return new DefaultSimpleStatement(
         query,
         newPositionalValues,
@@ -128,13 +134,15 @@ public class DefaultSimpleStatement implements SimpleStatement {
         pagingState);
   }
 
+  @NonNull
   @Override
   public Map<CqlIdentifier, Object> getNamedValues() {
     return namedValues;
   }
 
+  @NonNull
   @Override
-  public SimpleStatement setNamedValuesWithIds(Map<CqlIdentifier, Object> newNamedValues) {
+  public SimpleStatement setNamedValuesWithIds(@NonNull Map<CqlIdentifier, Object> newNamedValues) {
     return new DefaultSimpleStatement(
         query,
         positionalValues,
@@ -152,13 +160,15 @@ public class DefaultSimpleStatement implements SimpleStatement {
         pagingState);
   }
 
+  @Nullable
   @Override
   public String getConfigProfileName() {
     return configProfileName;
   }
 
+  @NonNull
   @Override
-  public SimpleStatement setConfigProfileName(String newConfigProfileName) {
+  public SimpleStatement setConfigProfileName(@Nullable String newConfigProfileName) {
     return new DefaultSimpleStatement(
         query,
         positionalValues,
@@ -176,13 +186,15 @@ public class DefaultSimpleStatement implements SimpleStatement {
         pagingState);
   }
 
+  @Nullable
   @Override
   public DriverConfigProfile getConfigProfile() {
     return configProfile;
   }
 
+  @NonNull
   @Override
-  public SimpleStatement setConfigProfile(DriverConfigProfile newProfile) {
+  public SimpleStatement setConfigProfile(@Nullable DriverConfigProfile newProfile) {
     return new DefaultSimpleStatement(
         query,
         positionalValues,
@@ -200,13 +212,15 @@ public class DefaultSimpleStatement implements SimpleStatement {
         pagingState);
   }
 
+  @Nullable
   @Override
   public CqlIdentifier getKeyspace() {
     return keyspace;
   }
 
+  @NonNull
   @Override
-  public SimpleStatement setKeyspace(CqlIdentifier newKeyspace) {
+  public SimpleStatement setKeyspace(@Nullable CqlIdentifier newKeyspace) {
     return new DefaultSimpleStatement(
         query,
         positionalValues,
@@ -224,13 +238,15 @@ public class DefaultSimpleStatement implements SimpleStatement {
         pagingState);
   }
 
+  @Nullable
   @Override
   public CqlIdentifier getRoutingKeyspace() {
     return routingKeyspace;
   }
 
+  @NonNull
   @Override
-  public SimpleStatement setRoutingKeyspace(CqlIdentifier newRoutingKeyspace) {
+  public SimpleStatement setRoutingKeyspace(@Nullable CqlIdentifier newRoutingKeyspace) {
     return new DefaultSimpleStatement(
         query,
         positionalValues,
@@ -248,13 +264,15 @@ public class DefaultSimpleStatement implements SimpleStatement {
         pagingState);
   }
 
+  @Nullable
   @Override
   public ByteBuffer getRoutingKey() {
     return routingKey;
   }
 
+  @NonNull
   @Override
-  public SimpleStatement setRoutingKey(ByteBuffer newRoutingKey) {
+  public SimpleStatement setRoutingKey(@Nullable ByteBuffer newRoutingKey) {
     return new DefaultSimpleStatement(
         query,
         positionalValues,
@@ -272,13 +290,15 @@ public class DefaultSimpleStatement implements SimpleStatement {
         pagingState);
   }
 
+  @Nullable
   @Override
   public Token getRoutingToken() {
     return routingToken;
   }
 
+  @NonNull
   @Override
-  public SimpleStatement setRoutingToken(Token newRoutingToken) {
+  public SimpleStatement setRoutingToken(@Nullable Token newRoutingToken) {
     return new DefaultSimpleStatement(
         query,
         positionalValues,
@@ -296,13 +316,15 @@ public class DefaultSimpleStatement implements SimpleStatement {
         pagingState);
   }
 
+  @NonNull
   @Override
   public Map<String, ByteBuffer> getCustomPayload() {
     return customPayload;
   }
 
+  @NonNull
   @Override
-  public SimpleStatement setCustomPayload(Map<String, ByteBuffer> newCustomPayload) {
+  public SimpleStatement setCustomPayload(@NonNull Map<String, ByteBuffer> newCustomPayload) {
     return new DefaultSimpleStatement(
         query,
         positionalValues,
@@ -320,13 +342,15 @@ public class DefaultSimpleStatement implements SimpleStatement {
         pagingState);
   }
 
+  @Nullable
   @Override
   public Boolean isIdempotent() {
     return idempotent;
   }
 
+  @NonNull
   @Override
-  public SimpleStatement setIdempotent(Boolean newIdempotence) {
+  public SimpleStatement setIdempotent(@Nullable Boolean newIdempotence) {
     return new DefaultSimpleStatement(
         query,
         positionalValues,
@@ -349,6 +373,7 @@ public class DefaultSimpleStatement implements SimpleStatement {
     return tracing;
   }
 
+  @NonNull
   @Override
   public SimpleStatement setTracing(boolean newTracing) {
     return new DefaultSimpleStatement(
@@ -373,6 +398,7 @@ public class DefaultSimpleStatement implements SimpleStatement {
     return timestamp;
   }
 
+  @NonNull
   @Override
   public SimpleStatement setTimestamp(long newTimestamp) {
     return new DefaultSimpleStatement(
@@ -392,13 +418,15 @@ public class DefaultSimpleStatement implements SimpleStatement {
         pagingState);
   }
 
+  @Nullable
   @Override
   public ByteBuffer getPagingState() {
     return pagingState;
   }
 
+  @NonNull
   @Override
-  public SimpleStatement setPagingState(ByteBuffer newPagingState) {
+  public SimpleStatement setPagingState(@Nullable ByteBuffer newPagingState) {
     return new DefaultSimpleStatement(
         query,
         positionalValues,

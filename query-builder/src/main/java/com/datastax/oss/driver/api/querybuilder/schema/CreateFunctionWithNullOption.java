@@ -19,6 +19,7 @@ import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.type.DataType;
 import com.datastax.oss.driver.api.core.type.DataTypes;
 import com.datastax.oss.driver.api.querybuilder.SchemaBuilderDsl;
+import edu.umd.cs.findbugs.annotations.NonNull;
 
 public interface CreateFunctionWithNullOption {
   /**
@@ -28,5 +29,6 @@ public interface CreateFunctionWithNullOption {
    * <p>To create the data type, use the constants and static methods in {@link DataTypes}, or
    * {@link SchemaBuilderDsl#udt(CqlIdentifier, boolean)}.
    */
-  CreateFunctionWithType returnsType(DataType dataType);
+  @NonNull
+  CreateFunctionWithType returnsType(@NonNull DataType dataType);
 }

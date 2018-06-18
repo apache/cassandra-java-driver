@@ -18,22 +18,23 @@ package com.datastax.oss.driver.internal.core.metadata.schema;
 import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.metadata.schema.ColumnMetadata;
 import com.datastax.oss.driver.api.core.type.DataType;
+import edu.umd.cs.findbugs.annotations.NonNull;
 import java.util.Objects;
 import net.jcip.annotations.Immutable;
 
 @Immutable
 public class DefaultColumnMetadata implements ColumnMetadata {
-  private final CqlIdentifier keyspace;
-  private final CqlIdentifier parent;
-  private final CqlIdentifier name;
-  private final DataType dataType;
+  @NonNull private final CqlIdentifier keyspace;
+  @NonNull private final CqlIdentifier parent;
+  @NonNull private final CqlIdentifier name;
+  @NonNull private final DataType dataType;
   private final boolean isStatic;
 
   public DefaultColumnMetadata(
-      CqlIdentifier keyspace,
-      CqlIdentifier parent,
-      CqlIdentifier name,
-      DataType dataType,
+      @NonNull CqlIdentifier keyspace,
+      @NonNull CqlIdentifier parent,
+      @NonNull CqlIdentifier name,
+      @NonNull DataType dataType,
       boolean isStatic) {
     this.keyspace = keyspace;
     this.parent = parent;
@@ -42,21 +43,25 @@ public class DefaultColumnMetadata implements ColumnMetadata {
     this.isStatic = isStatic;
   }
 
+  @NonNull
   @Override
   public CqlIdentifier getKeyspace() {
     return keyspace;
   }
 
+  @NonNull
   @Override
   public CqlIdentifier getParent() {
     return parent;
   }
 
+  @NonNull
   @Override
   public CqlIdentifier getName() {
     return name;
   }
 
+  @NonNull
   @Override
   public DataType getType() {
     return dataType;

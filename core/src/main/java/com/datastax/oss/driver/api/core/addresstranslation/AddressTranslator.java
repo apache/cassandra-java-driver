@@ -15,6 +15,7 @@
  */
 package com.datastax.oss.driver.api.core.addresstranslation;
 
+import edu.umd.cs.findbugs.annotations.NonNull;
 import java.net.InetSocketAddress;
 
 /**
@@ -40,7 +41,8 @@ public interface AddressTranslator extends AutoCloseable {
    * Translates an address reported by a Cassandra node into the address that the driver will use to
    * connect.
    */
-  InetSocketAddress translate(InetSocketAddress address);
+  @NonNull
+  InetSocketAddress translate(@NonNull InetSocketAddress address);
 
   /** Called when the cluster that this translator is associated with closes. */
   @Override

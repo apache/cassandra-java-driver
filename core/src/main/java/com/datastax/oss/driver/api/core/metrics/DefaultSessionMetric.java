@@ -16,6 +16,7 @@
 package com.datastax.oss.driver.api.core.metrics;
 
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableMap;
+import edu.umd.cs.findbugs.annotations.NonNull;
 import java.util.Map;
 
 /** See {@code reference.conf} for a description of each metric. */
@@ -38,12 +39,14 @@ public enum DefaultSessionMetric implements SessionMetric {
     this.path = path;
   }
 
+  @NonNull
   @Override
   public String getPath() {
     return path;
   }
 
-  public static DefaultSessionMetric fromPath(String path) {
+  @NonNull
+  public static DefaultSessionMetric fromPath(@NonNull String path) {
     DefaultSessionMetric metric = BY_PATH.get(path);
     if (metric == null) {
       throw new IllegalArgumentException("Unknown session metric path " + path);

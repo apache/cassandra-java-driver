@@ -19,6 +19,8 @@ import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.metadata.Node;
 import com.datastax.oss.driver.api.core.session.Request;
 import com.datastax.oss.driver.api.core.session.SessionBuilder;
+import edu.umd.cs.findbugs.annotations.NonNull;
+import edu.umd.cs.findbugs.annotations.Nullable;
 
 /**
  * The policy that decides if the driver will send speculative queries to the next nodes when the
@@ -41,7 +43,11 @@ public interface SpeculativeExecutionPolicy extends AutoCloseable {
    * @return the time (in milliseconds) until a speculative request is sent to the next node, or 0
    *     to send it immediately, or a negative value to stop sending requests.
    */
-  long nextExecution(Node node, CqlIdentifier keyspace, Request request, int runningExecutions);
+  long nextExecution(
+      @NonNull Node node,
+      @Nullable CqlIdentifier keyspace,
+      @NonNull Request request,
+      int runningExecutions);
 
   /** Called when the cluster that this policy is associated with closes. */
   @Override

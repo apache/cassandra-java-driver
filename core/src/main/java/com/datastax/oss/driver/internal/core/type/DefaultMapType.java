@@ -19,6 +19,7 @@ import com.datastax.oss.driver.api.core.detach.AttachmentPoint;
 import com.datastax.oss.driver.api.core.type.DataType;
 import com.datastax.oss.driver.api.core.type.MapType;
 import com.datastax.oss.driver.shaded.guava.common.base.Preconditions;
+import edu.umd.cs.findbugs.annotations.NonNull;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.Serializable;
@@ -37,7 +38,7 @@ public class DefaultMapType implements MapType, Serializable {
   /** @serial */
   private final boolean frozen;
 
-  public DefaultMapType(DataType keyType, DataType valueType, boolean frozen) {
+  public DefaultMapType(@NonNull DataType keyType, @NonNull DataType valueType, boolean frozen) {
     Preconditions.checkNotNull(keyType);
     Preconditions.checkNotNull(valueType);
     this.keyType = keyType;
@@ -45,11 +46,13 @@ public class DefaultMapType implements MapType, Serializable {
     this.frozen = frozen;
   }
 
+  @NonNull
   @Override
   public DataType getKeyType() {
     return keyType;
   }
 
+  @NonNull
   @Override
   public DataType getValueType() {
     return valueType;
@@ -66,7 +69,7 @@ public class DefaultMapType implements MapType, Serializable {
   }
 
   @Override
-  public void attach(AttachmentPoint attachmentPoint) {
+  public void attach(@NonNull AttachmentPoint attachmentPoint) {
     keyType.attach(attachmentPoint);
     valueType.attach(attachmentPoint);
   }

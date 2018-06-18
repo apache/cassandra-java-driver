@@ -19,6 +19,7 @@ import com.datastax.oss.driver.api.core.CqlSession;
 import com.datastax.oss.driver.api.core.cql.SimpleStatement;
 import com.datastax.oss.driver.api.core.cql.SimpleStatementBuilder;
 import com.datastax.oss.driver.api.core.cql.Statement;
+import edu.umd.cs.findbugs.annotations.NonNull;
 
 /**
  * End state for the query builder DSL, which allows the generation of a CQL query.
@@ -34,6 +35,7 @@ public interface BuildableQuery {
    * <p>Use this if you plan to pass the query to {@link CqlSession#execute(String)} or {@link
    * CqlSession#prepare(String)} without any further customization.
    */
+  @NonNull
   String asCql();
 
   /**
@@ -48,6 +50,7 @@ public interface BuildableQuery {
    * In addition, some query implementation might try to infer additional statement properties (such
    * as {@link Statement#isIdempotent()}).
    */
+  @NonNull
   default SimpleStatement build() {
     return SimpleStatement.newInstance(asCql());
   }
@@ -69,6 +72,7 @@ public interface BuildableQuery {
    *     builder.addNamedValue("k", 1).addNamedValue("c", 2).withTracing().build();
    * }</pre>
    */
+  @NonNull
   default SimpleStatementBuilder builder() {
     return SimpleStatement.builder(asCql());
   }

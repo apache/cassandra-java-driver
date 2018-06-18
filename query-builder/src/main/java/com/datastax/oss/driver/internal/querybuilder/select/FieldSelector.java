@@ -18,6 +18,8 @@ package com.datastax.oss.driver.internal.querybuilder.select;
 import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.querybuilder.select.Selector;
 import com.datastax.oss.driver.shaded.guava.common.base.Preconditions;
+import edu.umd.cs.findbugs.annotations.NonNull;
+import edu.umd.cs.findbugs.annotations.Nullable;
 import java.util.Objects;
 import net.jcip.annotations.Immutable;
 
@@ -28,11 +30,12 @@ public class FieldSelector implements Selector {
   private final CqlIdentifier fieldId;
   private final CqlIdentifier alias;
 
-  public FieldSelector(Selector udt, CqlIdentifier fieldId) {
+  public FieldSelector(@NonNull Selector udt, @NonNull CqlIdentifier fieldId) {
     this(udt, fieldId, null);
   }
 
-  public FieldSelector(Selector udt, CqlIdentifier fieldId, CqlIdentifier alias) {
+  public FieldSelector(
+      @NonNull Selector udt, @NonNull CqlIdentifier fieldId, @Nullable CqlIdentifier alias) {
     Preconditions.checkNotNull(udt);
     Preconditions.checkNotNull(fieldId);
     this.udt = udt;
@@ -40,13 +43,14 @@ public class FieldSelector implements Selector {
     this.alias = alias;
   }
 
+  @NonNull
   @Override
-  public Selector as(CqlIdentifier alias) {
+  public Selector as(@NonNull CqlIdentifier alias) {
     return new FieldSelector(udt, fieldId, alias);
   }
 
   @Override
-  public void appendTo(StringBuilder builder) {
+  public void appendTo(@NonNull StringBuilder builder) {
     udt.appendTo(builder);
     builder.append('.').append(fieldId.asCql(true));
     if (alias != null) {
@@ -54,14 +58,17 @@ public class FieldSelector implements Selector {
     }
   }
 
+  @NonNull
   public Selector getUdt() {
     return udt;
   }
 
+  @NonNull
   public CqlIdentifier getFieldId() {
     return fieldId;
   }
 
+  @Nullable
   @Override
   public CqlIdentifier getAlias() {
     return alias;

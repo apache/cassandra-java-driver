@@ -22,6 +22,7 @@ import com.datastax.oss.driver.internal.querybuilder.condition.DefaultConditionB
 import com.datastax.oss.driver.internal.querybuilder.lhs.ColumnComponentLeftOperand;
 import com.datastax.oss.driver.internal.querybuilder.lhs.ColumnLeftOperand;
 import com.datastax.oss.driver.internal.querybuilder.lhs.FieldLeftOperand;
+import edu.umd.cs.findbugs.annotations.NonNull;
 
 /**
  * A condition in a {@link ConditionalStatement}.
@@ -49,12 +50,14 @@ import com.datastax.oss.driver.internal.querybuilder.lhs.FieldLeftOperand;
 public interface Condition extends CqlSnippet {
 
   /** Builds a condition on a column for a conditional statement, as in {@code DELETE... IF k=1}. */
-  static ConditionBuilder<Condition> column(CqlIdentifier columnId) {
+  @NonNull
+  static ConditionBuilder<Condition> column(@NonNull CqlIdentifier columnId) {
     return new DefaultConditionBuilder(new ColumnLeftOperand(columnId));
   }
 
   /** Shortcut for {@link #column(CqlIdentifier) column(CqlIdentifier.fromCql(columnName))}. */
-  static ConditionBuilder<Condition> column(String columnName) {
+  @NonNull
+  static ConditionBuilder<Condition> column(@NonNull String columnName) {
     return column(CqlIdentifier.fromCql(columnName));
   }
 
@@ -62,7 +65,9 @@ public interface Condition extends CqlSnippet {
    * Builds a condition on a field in a UDT column for a conditional statement, as in {@code
    * DELETE... IF address.street='test'}.
    */
-  static ConditionBuilder<Condition> field(CqlIdentifier columnId, CqlIdentifier fieldId) {
+  @NonNull
+  static ConditionBuilder<Condition> field(
+      @NonNull CqlIdentifier columnId, @NonNull CqlIdentifier fieldId) {
     return new DefaultConditionBuilder(new FieldLeftOperand(columnId, fieldId));
   }
 
@@ -70,7 +75,8 @@ public interface Condition extends CqlSnippet {
    * Shortcut for {@link #field(CqlIdentifier, CqlIdentifier)
    * field(CqlIdentifier.fromCql(columnName), CqlIdentifier.fromCql(fieldName))}.
    */
-  static ConditionBuilder<Condition> field(String columnName, String fieldName) {
+  @NonNull
+  static ConditionBuilder<Condition> field(@NonNull String columnName, @NonNull String fieldName) {
     return field(CqlIdentifier.fromCql(columnName), CqlIdentifier.fromCql(fieldName));
   }
 
@@ -78,7 +84,8 @@ public interface Condition extends CqlSnippet {
    * Builds a condition on an element in a collection column for a conditional statement, as in
    * {@code DELETE... IF m[0]=1}.
    */
-  static ConditionBuilder<Condition> element(CqlIdentifier columnId, Term index) {
+  @NonNull
+  static ConditionBuilder<Condition> element(@NonNull CqlIdentifier columnId, @NonNull Term index) {
     return new DefaultConditionBuilder(new ColumnComponentLeftOperand(columnId, index));
   }
 
@@ -86,7 +93,8 @@ public interface Condition extends CqlSnippet {
    * Shortcut for {@link #element(CqlIdentifier, Term) element(CqlIdentifier.fromCql(columnName),
    * index)}.
    */
-  static ConditionBuilder<Condition> element(String columnName, Term index) {
+  @NonNull
+  static ConditionBuilder<Condition> element(@NonNull String columnName, @NonNull Term index) {
     return element(CqlIdentifier.fromCql(columnName), index);
   }
 }

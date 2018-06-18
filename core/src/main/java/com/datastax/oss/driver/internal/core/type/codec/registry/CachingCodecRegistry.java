@@ -32,6 +32,7 @@ import com.datastax.oss.driver.api.core.type.reflect.GenericType;
 import com.datastax.oss.driver.shaded.guava.common.base.Preconditions;
 import com.datastax.oss.driver.shaded.guava.common.reflect.TypeToken;
 import com.datastax.oss.protocol.internal.util.IntMap;
+import edu.umd.cs.findbugs.annotations.NonNull;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.nio.ByteBuffer;
@@ -86,8 +87,9 @@ public abstract class CachingCodecRegistry implements CodecRegistry {
   protected abstract TypeCodec<?> getCachedCodec(
       DataType cqlType, GenericType<?> javaType, boolean isJavaCovariant);
 
+  @NonNull
   @Override
-  public <T> TypeCodec<T> codecFor(DataType cqlType, GenericType<T> javaType) {
+  public <T> TypeCodec<T> codecFor(@NonNull DataType cqlType, @NonNull GenericType<T> javaType) {
     return codecFor(cqlType, javaType, false);
   }
 
@@ -109,8 +111,9 @@ public abstract class CachingCodecRegistry implements CodecRegistry {
     return uncheckedCast(getCachedCodec(cqlType, javaType, isJavaCovariant));
   }
 
+  @NonNull
   @Override
-  public <T> TypeCodec<T> codecFor(DataType cqlType, Class<T> javaType) {
+  public <T> TypeCodec<T> codecFor(@NonNull DataType cqlType, @NonNull Class<T> javaType) {
     LOG.trace("[{}] Looking up codec for {} <-> {}", logPrefix, cqlType, javaType);
     TypeCodec<?> primitiveCodec = primitiveCodecsByCode.get(cqlType.getProtocolCode());
     if (primitiveCodec != null && primitiveCodec.getJavaType().__getToken().getType() == javaType) {
@@ -126,8 +129,9 @@ public abstract class CachingCodecRegistry implements CodecRegistry {
     return uncheckedCast(getCachedCodec(cqlType, GenericType.of(javaType), false));
   }
 
+  @NonNull
   @Override
-  public <T> TypeCodec<T> codecFor(DataType cqlType) {
+  public <T> TypeCodec<T> codecFor(@NonNull DataType cqlType) {
     LOG.trace("[{}] Looking up codec for CQL type {}", logPrefix, cqlType);
     TypeCodec<?> primitiveCodec = primitiveCodecsByCode.get(cqlType.getProtocolCode());
     if (primitiveCodec != null) {
@@ -143,8 +147,9 @@ public abstract class CachingCodecRegistry implements CodecRegistry {
     return uncheckedCast(getCachedCodec(cqlType, null, false));
   }
 
+  @NonNull
   @Override
-  public <T> TypeCodec<T> codecFor(DataType cqlType, T value) {
+  public <T> TypeCodec<T> codecFor(@NonNull DataType cqlType, @NonNull T value) {
     Preconditions.checkNotNull(cqlType);
     Preconditions.checkNotNull(value);
     LOG.trace("[{}] Looking up codec for CQL type {} and object {}", logPrefix, cqlType, value);
@@ -172,8 +177,9 @@ public abstract class CachingCodecRegistry implements CodecRegistry {
     return uncheckedCast(getCachedCodec(cqlType, javaType, true));
   }
 
+  @NonNull
   @Override
-  public <T> TypeCodec<T> codecFor(T value) {
+  public <T> TypeCodec<T> codecFor(@NonNull T value) {
     Preconditions.checkNotNull(value);
     LOG.trace("[{}] Looking up codec for object {}", logPrefix, value);
 
@@ -201,8 +207,9 @@ public abstract class CachingCodecRegistry implements CodecRegistry {
     return uncheckedCast(getCachedCodec(null, javaType, true));
   }
 
+  @NonNull
   @Override
-  public <T> TypeCodec<T> codecFor(GenericType<T> javaType) {
+  public <T> TypeCodec<T> codecFor(@NonNull GenericType<T> javaType) {
     return codecFor(javaType, false);
   }
 

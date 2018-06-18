@@ -21,6 +21,8 @@ import com.datastax.oss.driver.api.querybuilder.schema.AlterMaterializedViewStar
 import com.datastax.oss.driver.internal.querybuilder.CqlHelper;
 import com.datastax.oss.driver.internal.querybuilder.ImmutableCollections;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableMap;
+import edu.umd.cs.findbugs.annotations.NonNull;
+import edu.umd.cs.findbugs.annotations.Nullable;
 import java.util.Map;
 import net.jcip.annotations.Immutable;
 
@@ -33,27 +35,32 @@ public class DefaultAlterMaterializedView
 
   private final ImmutableMap<String, Object> options;
 
-  public DefaultAlterMaterializedView(CqlIdentifier viewName) {
+  public DefaultAlterMaterializedView(@NonNull CqlIdentifier viewName) {
     this(null, viewName);
   }
 
-  public DefaultAlterMaterializedView(CqlIdentifier keyspace, CqlIdentifier viewName) {
+  public DefaultAlterMaterializedView(
+      @Nullable CqlIdentifier keyspace, @NonNull CqlIdentifier viewName) {
     this(keyspace, viewName, ImmutableMap.of());
   }
 
   public DefaultAlterMaterializedView(
-      CqlIdentifier keyspace, CqlIdentifier viewName, ImmutableMap<String, Object> options) {
+      @Nullable CqlIdentifier keyspace,
+      @NonNull CqlIdentifier viewName,
+      @NonNull ImmutableMap<String, Object> options) {
     this.keyspace = keyspace;
     this.viewName = viewName;
     this.options = options;
   }
 
+  @NonNull
   @Override
-  public AlterMaterializedView withOption(String name, Object value) {
+  public AlterMaterializedView withOption(@NonNull String name, @NonNull Object value) {
     return new DefaultAlterMaterializedView(
         keyspace, viewName, ImmutableCollections.append(options, name, value));
   }
 
+  @NonNull
   @Override
   public String asCql() {
     StringBuilder builder = new StringBuilder("ALTER MATERIALIZED VIEW ");
@@ -67,15 +74,18 @@ public class DefaultAlterMaterializedView
     return asCql();
   }
 
+  @NonNull
   @Override
   public Map<String, Object> getOptions() {
     return options;
   }
 
+  @Nullable
   public CqlIdentifier getKeyspace() {
     return keyspace;
   }
 
+  @NonNull
   public CqlIdentifier getMaterializedView() {
     return viewName;
   }

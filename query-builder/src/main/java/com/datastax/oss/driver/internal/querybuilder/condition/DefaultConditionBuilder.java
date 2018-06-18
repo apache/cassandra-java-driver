@@ -20,6 +20,8 @@ import com.datastax.oss.driver.api.querybuilder.condition.ConditionBuilder;
 import com.datastax.oss.driver.api.querybuilder.condition.ConditionalStatement;
 import com.datastax.oss.driver.api.querybuilder.term.Term;
 import com.datastax.oss.driver.internal.querybuilder.lhs.LeftOperand;
+import edu.umd.cs.findbugs.annotations.NonNull;
+import edu.umd.cs.findbugs.annotations.Nullable;
 import net.jcip.annotations.Immutable;
 
 @Immutable
@@ -27,12 +29,13 @@ public class DefaultConditionBuilder implements ConditionBuilder<Condition> {
 
   private final LeftOperand leftOperand;
 
-  public DefaultConditionBuilder(LeftOperand leftOperand) {
+  public DefaultConditionBuilder(@NonNull LeftOperand leftOperand) {
     this.leftOperand = leftOperand;
   }
 
+  @NonNull
   @Override
-  public Condition build(String operator, Term rightOperand) {
+  public Condition build(@NonNull String operator, @Nullable Term rightOperand) {
     return new DefaultCondition(leftOperand, operator, rightOperand);
   }
 
@@ -43,13 +46,15 @@ public class DefaultConditionBuilder implements ConditionBuilder<Condition> {
     private final ConditionalStatement<StatementT> statement;
     private final ConditionBuilder<Condition> delegate;
 
-    public Fluent(ConditionalStatement<StatementT> statement, LeftOperand leftOperand) {
+    public Fluent(
+        @NonNull ConditionalStatement<StatementT> statement, @NonNull LeftOperand leftOperand) {
       this.statement = statement;
       this.delegate = new DefaultConditionBuilder(leftOperand);
     }
 
+    @NonNull
     @Override
-    public StatementT build(String operator, Term rightOperand) {
+    public StatementT build(@NonNull String operator, @Nullable Term rightOperand) {
       return statement.if_(delegate.build(operator, rightOperand));
     }
   }

@@ -17,6 +17,8 @@ package com.datastax.oss.driver.internal.querybuilder.select;
 
 import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.querybuilder.select.Selector;
+import edu.umd.cs.findbugs.annotations.NonNull;
+import edu.umd.cs.findbugs.annotations.Nullable;
 import java.util.Objects;
 import net.jcip.annotations.Immutable;
 
@@ -29,23 +31,25 @@ public class CountAllSelector implements Selector {
     this(null);
   }
 
-  public CountAllSelector(CqlIdentifier alias) {
+  public CountAllSelector(@Nullable CqlIdentifier alias) {
     this.alias = alias;
   }
 
+  @NonNull
   @Override
-  public Selector as(CqlIdentifier alias) {
+  public Selector as(@NonNull CqlIdentifier alias) {
     return new CountAllSelector(alias);
   }
 
   @Override
-  public void appendTo(StringBuilder builder) {
+  public void appendTo(@NonNull StringBuilder builder) {
     builder.append("count(*)");
     if (alias != null) {
       builder.append(" AS ").append(alias.asCql(true));
     }
   }
 
+  @Nullable
   @Override
   public CqlIdentifier getAlias() {
     return alias;
