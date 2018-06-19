@@ -39,6 +39,7 @@
     <module>query-builder</module>
     <module>test-infra</module>
     <module>integration-tests</module>
+    <module>distribution</module>
   </modules>
 
   <properties>
@@ -230,6 +231,10 @@
           <artifactId>maven-shade-plugin</artifactId>
           <version>3.0.0</version>
         </plugin>
+        <plugin>
+          <artifactId>maven-assembly-plugin</artifactId>
+          <version>3.1.0</version>
+        </plugin>
         <!-- See console.scala in the submodules -->
         <plugin>
           <groupId>net.alchim31.maven</groupId>
@@ -249,7 +254,7 @@
         </plugin>
         <plugin>
           <artifactId>maven-javadoc-plugin</artifactId>
-          <version>3.0.0</version>
+          <version>3.0.1</version>
         </plugin>
         <plugin>
           <artifactId>maven-jar-plugin</artifactId>
