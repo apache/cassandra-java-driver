@@ -430,6 +430,7 @@ limitations under the License.]]>
           <verbose>false</verbose>
           <quiet>true</quiet>
           <doclint>all,-missing</doclint>
+          <excludePackageNames>com.datastax.oss.driver.internal</excludePackageNames>
           <tags>
             <!--
               For custom `leaks-private-api` tag (apparently dash separators are not handled
@@ -462,7 +463,6 @@ limitations under the License.]]>
                 <artifactId>api-plumber-doclet</artifactId>
                 <version>1.0.0</version>
               </docletArtifact>
-              <excludePackageNames>com.datastax.oss.driver.internal.*</excludePackageNames>
               <additionalJOptions>
                 <!-- API types do not leak internal types -->
                 <additionalparam>-preventleak</additionalparam>
