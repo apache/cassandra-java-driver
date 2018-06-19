@@ -43,7 +43,6 @@ import com.datastax.oss.driver.api.core.servererrors.WriteTimeoutException;
 import com.datastax.oss.driver.api.core.session.throttling.RequestThrottler;
 import com.datastax.oss.driver.api.core.session.throttling.Throttled;
 import com.datastax.oss.driver.api.core.specex.SpeculativeExecutionPolicy;
-import com.datastax.oss.driver.api.core.tracker.RequestTracker.TrackerLevel;
 import com.datastax.oss.driver.internal.core.adminrequest.ThrottledAdminRequestHandler;
 import com.datastax.oss.driver.internal.core.adminrequest.UnexpectedResponseException;
 import com.datastax.oss.driver.internal.core.channel.DriverChannel;
@@ -275,9 +274,7 @@ public abstract class CqlRequestHandlerBase implements Throttled {
 
   private void trackNodeError(Node node, Throwable error) {
     long latencyNanos = System.nanoTime() - startTimeNanos;
-    context
-        .requestTracker()
-        .onError(statement, error, latencyNanos, configProfile, node, TrackerLevel.NODE);
+    context.requestTracker().onNodeError(statement, error, latencyNanos, configProfile, node);
   }
 
   private void cancelScheduledTasks() {
@@ -310,10 +307,8 @@ public abstract class CqlRequestHandlerBase implements Throttled {
         long latencyNanos = System.nanoTime() - startTimeNanos;
         context
             .requestTracker()
-            .onSuccess(statement, latencyNanos, configProfile, callback.node, TrackerLevel.NODE);
-        context
-            .requestTracker()
-            .onSuccess(statement, latencyNanos, configProfile, callback.node, TrackerLevel.REQUEST);
+            .onNodeSuccess(statement, latencyNanos, configProfile, callback.node);
+        context.requestTracker().onSuccess(statement, latencyNanos, configProfile, callback.node);
         session
             .getMetricUpdater()
             .updateTimer(
@@ -379,9 +374,7 @@ public abstract class CqlRequestHandlerBase implements Throttled {
       if (node != null) {
         trackNodeError(node, error);
       }
-      context
-          .requestTracker()
-          .onError(statement, error, latencyNanos, configProfile, node, TrackerLevel.REQUEST);
+      context.requestTracker().onError(statement, error, latencyNanos, configProfile, node);
       if (error instanceof DriverTimeoutException) {
         throttler.signalTimeout(this);
         session

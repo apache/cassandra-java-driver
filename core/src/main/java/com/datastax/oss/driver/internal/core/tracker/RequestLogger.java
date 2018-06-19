@@ -111,6 +111,22 @@ public class RequestLogger implements RequestTracker {
   }
 
   @Override
+  public void onNodeError(
+      Request request,
+      Throwable error,
+      long latencyNanos,
+      DriverConfigProfile configProfile,
+      Node node) {
+    // Nothing to do
+  }
+
+  @Override
+  public void onNodeSuccess(
+      Request request, long latencyNanos, DriverConfigProfile configProfile, Node node) {
+    // Nothing to do
+  }
+
+  @Override
   public void close() throws Exception {
     // nothing to do
   }

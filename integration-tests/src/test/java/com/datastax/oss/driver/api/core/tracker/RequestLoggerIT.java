@@ -89,7 +89,7 @@ public class RequestLoggerIT {
       SessionRule.builder(simulacronRule)
           .withOptions(
               "basic.request.consistency = ONE",
-              "advanced.request-tracker.class = com.datastax.oss.driver.internal.core.tracker.RequestLogger",
+              "advanced.request-tracker.class = com.datastax.oss.driver.api.core.tracker.RequestNodeLoggerExample",
               "advanced.request-tracker.logs.success.enabled = true",
               "advanced.request-tracker.logs.slow.enabled = true",
               "advanced.request-tracker.logs.error.enabled = true",
@@ -98,7 +98,6 @@ public class RequestLoggerIT {
               "advanced.request-tracker.logs.max-value-length = 50",
               "advanced.request-tracker.logs.max-values = 50",
               "advanced.request-tracker.logs.show-stack-traces = true",
-              "advanced.request-tracker.logs.node-level = true",
               "profiles.low-threshold.advanced.request-tracker.logs.slow.threshold = 1 nanosecond",
               "profiles.no-logs.advanced.request-tracker.logs.success.enabled = false",
               "profiles.no-logs.advanced.request-tracker.logs.slow.enabled = false",
@@ -217,7 +216,7 @@ public class RequestLoggerIT {
   }
 
   @Test
-  public void should_log_failed_nodes_on_succesfull_request() {
+  public void should_log_failed_nodes_on_successful_request() {
     // Given
     simulacronRule
         .cluster()
@@ -239,16 +238,13 @@ public class RequestLoggerIT {
     Mockito.verify(appender, new Timeout(500, VerificationModeFactory.times(3)))
         .doAppend(loggingEventCaptor.capture());
     List<ILoggingEvent> events = loggingEventCaptor.getAllValues();
-    assertThat(events.get(0).getFormattedMessage())
-        .contains("[NODE]", "Error", "[0 values]", QUERY);
-    assertThat(events.get(1).getFormattedMessage())
-        .contains("[NODE]", "Success", "[0 values]", QUERY);
-    assertThat(events.get(2).getFormattedMessage())
-        .contains("[REQUEST]", "Success", "[0 values]", QUERY);
+    assertThat(events.get(0).getFormattedMessage()).contains("Error", "[0 values]", QUERY);
+    assertThat(events.get(1).getFormattedMessage()).contains("Success", "[0 values]", QUERY);
+    assertThat(events.get(2).getFormattedMessage()).contains("Success", "[0 values]", QUERY);
   }
 
   @Test
-  public void should_log_successful_nodes_on_succesfull_request() {
+  public void should_log_successful_nodes_on_successful_request() {
     simulacronRule
         .cluster()
         .node(0)

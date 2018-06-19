@@ -53,4 +53,32 @@ public interface RequestTracker extends AutoCloseable {
       long latencyNanos,
       @NonNull DriverConfigProfile configProfile,
       Node node);
+
+  /**
+   * Invoked each time a request fails at the node level. Similar to onError but at a per node
+   * level.
+   *
+   * @param latencyNanos the overall execution time (from the {@link Session#execute(Request,
+   *     GenericType) session.execute} call until the error is propagated to the client).
+   * @param configProfile the configuration profile that this request was executed with.
+   * @param node the node that returned the error response, or {@code null} if the error occurred
+   */
+  void onNodeError(
+      Request request,
+      Throwable error,
+      long latencyNanos,
+      DriverConfigProfile configProfile,
+      Node node);
+
+  /**
+   * Invoked each time a request succeeds at the node level. Similar to on Success but at per Node
+   * level.
+   *
+   * @param latencyNanos the overall execution time (from the {@link Session#execute(Request,
+   *     GenericType) session.execute} call until the result is made available to the client).
+   * @param configProfile the configuration profile that this request was executed with.
+   * @param node the node that returned the successful response.
+   */
+  void onNodeSuccess(
+      Request request, long latencyNanos, DriverConfigProfile configProfile, Node node);
 }

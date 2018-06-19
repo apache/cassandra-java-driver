@@ -25,7 +25,6 @@ import com.datastax.oss.driver.api.core.cql.DefaultBatchType;
 import com.datastax.oss.driver.api.core.cql.SimpleStatement;
 import com.datastax.oss.driver.api.core.metadata.Node;
 import com.datastax.oss.driver.api.core.session.Request;
-import com.datastax.oss.driver.api.core.tracker.RequestTracker;
 import com.datastax.oss.driver.api.core.type.DataType;
 import com.datastax.oss.driver.api.core.type.DataTypes;
 import com.datastax.oss.driver.api.core.type.codec.TypeCodec;
@@ -47,15 +46,8 @@ public class RequestLogFormatter {
     this.context = context;
   }
 
-  public StringBuilder logBuilder(
-      String logPrefix, Node node, RequestTracker.TrackerLevel trackerLevel) {
-    StringBuilder logBuilder = new StringBuilder("[").append(logPrefix).append("][");
-    if (trackerLevel == RequestTracker.TrackerLevel.NODE) {
-      logBuilder.append("NODE");
-    } else {
-      logBuilder.append("REQUEST");
-    }
-    return logBuilder.append("][").append(node).append("] ");
+  public StringBuilder logBuilder(String logPrefix, Node node) {
+    return new StringBuilder("[").append(logPrefix).append("][").append(node).append("] ");
   }
 
   public void appendSuccessDescription(StringBuilder builder) {
