@@ -372,7 +372,7 @@ public abstract class CqlRequestHandlerBase implements Throttled {
       cancelScheduledTasks();
       long latencyNanos = System.nanoTime() - startTimeNanos;
       if (node != null) {
-        trackNodeError(node, error);
+        context.requestTracker().onNodeError(statement, error, latencyNanos, configProfile, node);
       }
       context.requestTracker().onError(statement, error, latencyNanos, configProfile, node);
       if (error instanceof DriverTimeoutException) {
