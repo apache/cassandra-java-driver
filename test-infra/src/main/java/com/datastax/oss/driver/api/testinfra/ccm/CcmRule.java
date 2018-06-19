@@ -16,10 +16,13 @@
 package com.datastax.oss.driver.api.testinfra.ccm;
 
 import com.datastax.oss.driver.categories.ParallelizableTests;
+import java.lang.reflect.Method;
 import org.junit.AssumptionViolatedException;
 import org.junit.experimental.categories.Category;
 import org.junit.runner.Description;
 import org.junit.runners.model.Statement;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * A rule that creates a globally shared single node Ccm cluster that is only shut down after the
@@ -35,7 +38,26 @@ public class CcmRule extends BaseCcmRule {
   private volatile boolean started = false;
 
   private CcmRule() {
-    super(CcmBridge.builder().build());
+    super(configureCcmBridge(CcmBridge.builder()).build());
+  }
+
+  public static CcmBridge.Builder configureCcmBridge(CcmBridge.Builder builder) {
+    Logger logger = LoggerFactory.getLogger(CcmRule.class);
+    String customizerClass =
+        System.getProperty(
+            "ccmrule.bridgecustomizer",
+            "com.datastax.oss.driver.api.testinfra.ccm.DefaultCcmBridgeBuilderCustomizer");
+    try {
+      Class<?> clazz = Class.forName(customizerClass);
+      Method method = clazz.getMethod("configureBuilder", CcmBridge.Builder.class);
+      return (CcmBridge.Builder) method.invoke(null, builder);
+    } catch (Exception e) {
+      logger.warn(
+          "Could not find CcmRule customizer {}, will use the default CcmBridge.",
+          customizerClass,
+          e);
+      return builder;
+    }
   }
 
   @Override
