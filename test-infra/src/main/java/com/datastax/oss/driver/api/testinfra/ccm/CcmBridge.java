@@ -18,6 +18,7 @@ package com.datastax.oss.driver.api.testinfra.ccm;
 import static io.netty.util.internal.PlatformDependent.isWindows;
 
 import com.datastax.oss.driver.api.core.Version;
+import com.datastax.oss.driver.shaded.guava.common.base.Joiner;
 import com.datastax.oss.driver.shaded.guava.common.io.Resources;
 import java.io.File;
 import java.io.FileOutputStream;
@@ -225,6 +226,14 @@ public class CcmBridge implements AutoCloseable {
         }
       }
     }
+  }
+
+  public void dsetool(int node, String... args) {
+    execute(String.format("node%d dsetool %s", node, Joiner.on(" ").join(args)));
+  }
+
+  public void reloadCore(int node, String keyspace, String table, boolean reindex) {
+    dsetool(node, "reload_core", keyspace + "." + table, "reindex=" + reindex);
   }
 
   public void start() {
