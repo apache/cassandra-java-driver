@@ -30,6 +30,7 @@ import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
 import com.datastax.oss.driver.internal.core.metadata.MetadataManager;
 import com.datastax.oss.driver.internal.core.util.ArrayUtils;
 import com.datastax.oss.driver.internal.core.util.Reflection;
+import com.datastax.oss.driver.internal.core.util.collection.QueryPlan;
 import com.datastax.oss.driver.shaded.guava.common.annotations.VisibleForTesting;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableMap;
 import edu.umd.cs.findbugs.annotations.NonNull;
@@ -42,7 +43,6 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Queue;
 import java.util.Set;
-import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.CopyOnWriteArraySet;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.IntUnaryOperator;
@@ -198,11 +198,7 @@ public class DefaultLoadBalancingPolicy implements LoadBalancingPolicy {
         currentNodes.length - replicaCount,
         roundRobinAmount.getAndUpdate(INCREMENT));
 
-    ConcurrentLinkedQueue<Node> queryPlan = new ConcurrentLinkedQueue<>();
-    for (Object currentNode : currentNodes) {
-      queryPlan.offer((Node) currentNode);
-    }
-    return queryPlan;
+    return new QueryPlan(currentNodes);
   }
 
   private Set<Node> getReplicas(Request request, Session session) {
