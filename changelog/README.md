@@ -4,6 +4,7 @@
 
 ### 4.0.0-alpha4 (in progress)
 
+- [improvement] JAVA-1883: Use custom queue implementation for LBP's query plan
 - [improvement] JAVA-1890: Add more configuration options to DefaultSslEngineFactory
 - [bug] JAVA-1895: Rename PreparedStatement.getPrimaryKeyIndices to getPartitionKeyIndices
 - [bug] JAVA-1891: Allow null items when setting values in bulk
