@@ -85,8 +85,47 @@ public class GenericTypeTest {
     assertThat(stringType.unwrap()).isSameAs(stringType);
   }
 
+  @Test
+  public void should_return_raw_type() {
+    assertThat(GenericType.INTEGER.getRawType()).isEqualTo(Integer.class);
+    assertThat(GenericType.listOf(Integer.class).getRawType()).isEqualTo(List.class);
+  }
+
+  @Test
+  public void should_return_super_type() {
+    GenericType<Iterable<Integer>> expectedType = iterableOf(GenericType.INTEGER);
+    assertThat(GenericType.listOf(Integer.class).getSupertype(Iterable.class))
+        .isEqualTo(expectedType);
+  }
+
+  @Test
+  public void should_return_sub_type() {
+    GenericType<Iterable<Integer>> superType = iterableOf(GenericType.INTEGER);
+    assertThat(superType.getSubtype(List.class)).isEqualTo(GenericType.listOf(GenericType.INTEGER));
+  }
+
+  @Test
+  public void should_return_type() {
+    assertThat(GenericType.INTEGER.getType()).isEqualTo(Integer.class);
+  }
+
+  @Test
+  public void should_return_component_type() {
+    assertThat(GenericType.of(Integer[].class).getComponentType()).isEqualTo(GenericType.INTEGER);
+  }
+
+  @Test
+  public void should_report_is_array() {
+    assertThat(GenericType.INTEGER.isArray()).isFalse();
+    assertThat(GenericType.of(Integer[].class).isArray()).isTrue();
+  }
+
   private <T> GenericType<Optional<T>> optionalOf(GenericType<T> elementType) {
     return new GenericType<Optional<T>>() {}.where(new GenericTypeParameter<T>() {}, elementType);
+  }
+
+  private <T> GenericType<Iterable<T>> iterableOf(GenericType<T> elementType) {
+    return new GenericType<Iterable<T>>() {}.where(new GenericTypeParameter<T>() {}, elementType);
   }
 
   private <K, V> GenericType<Map<K, V>> mapOf(Class<K> keyClass, Class<V> valueClass) {
