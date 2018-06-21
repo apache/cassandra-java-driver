@@ -25,6 +25,7 @@ import com.datastax.oss.driver.shaded.guava.common.reflect.TypeParameter;
 import com.datastax.oss.driver.shaded.guava.common.reflect.TypeResolver;
 import com.datastax.oss.driver.shaded.guava.common.reflect.TypeToken;
 import edu.umd.cs.findbugs.annotations.NonNull;
+import edu.umd.cs.findbugs.annotations.Nullable;
 import java.lang.reflect.Type;
 import java.math.BigDecimal;
 import java.math.BigInteger;
@@ -187,6 +188,14 @@ public class GenericType<T> {
     return token.isSubtypeOf(type.token);
   }
 
+  /**
+   * Returns true if this type is known to be an array type, such as {@code int[]}, {@code T[]},
+   * {@code <? extends Map<String, Integer>[]>} etc.
+   */
+  public final boolean isArray() {
+    return token.isArray();
+  }
+
   /** Returns true if this type is one of the nine primitive types (including {@code void}). */
   public final boolean isPrimitive() {
     return token.isPrimitive();
@@ -196,6 +205,7 @@ public class GenericType<T> {
    * Returns the corresponding wrapper type if this is a primitive type; otherwise returns {@code
    * this} itself. Idempotent.
    */
+  @NonNull
   public final GenericType<T> wrap() {
     if (isPrimitive()) {
       return new GenericType<>(token.wrap());
@@ -207,6 +217,7 @@ public class GenericType<T> {
    * Returns the corresponding primitive type if this is a wrapper type; otherwise returns {@code
    * this} itself. Idempotent.
    */
+  @NonNull
   public final GenericType<T> unwrap() {
     if (Primitives.allWrapperTypes().contains(token.getRawType())) {
       return new GenericType<>(token.unwrap());
@@ -237,6 +248,64 @@ public class GenericType<T> {
   public final <X> GenericType<T> where(
       @NonNull GenericTypeParameter<X> freeVariable, @NonNull Class<X> actualType) {
     return where(freeVariable, GenericType.of(actualType));
+  }
+
+  /**
+   * Returns the array component type if this type represents an array ({@code int[]}, {@code T[]},
+   * {@code <? extends Map<String, Integer>[]>} etc.), or else {@code null} is returned.
+   */
+  @Nullable
+  @SuppressWarnings("unchecked")
+  public final GenericType<?> getComponentType() {
+    TypeToken<?> componentTypeToken = token.getComponentType();
+    return (componentTypeToken == null) ? null : new GenericType(componentTypeToken);
+  }
+
+  /**
+   * Returns the raw type of {@code T}. Formally speaking, if {@code T} is returned by {@link
+   * java.lang.reflect.Method#getGenericReturnType}, the raw type is what's returned by {@link
+   * java.lang.reflect.Method#getReturnType} of the same method object. Specifically:
+   *
+   * <ul>
+   *   <li>If {@code T} is a {@code Class} itself, {@code T} itself is returned.
+   *   <li>If {@code T} is a parameterized type, the raw type of the parameterized type is returned.
+   *   <li>If {@code T} is an array type , the returned type is the corresponding array class. For
+   *       example: {@code List<Integer>[] => List[]}.
+   *   <li>If {@code T} is a type variable or a wildcard type, the raw type of the first upper bound
+   *       is returned. For example: {@code <X extends Foo> => Foo}.
+   * </ul>
+   */
+  @NonNull
+  public Class<? super T> getRawType() {
+    return token.getRawType();
+  }
+
+  /**
+   * Returns the generic form of {@code superclass}. For example, if this is {@code
+   * ArrayList<String>}, {@code Iterable<String>} is returned given the input {@code
+   * Iterable.class}.
+   */
+  @SuppressWarnings("unchecked")
+  @NonNull
+  public final GenericType<? super T> getSupertype(@NonNull Class<? super T> superclass) {
+    return new GenericType(token.getSupertype(superclass));
+  }
+
+  /**
+   * Returns subtype of {@code this} with {@code subclass} as the raw class. For example, if this is
+   * {@code Iterable<String>} and {@code subclass} is {@code List}, {@code List<String>} is
+   * returned.
+   */
+  @SuppressWarnings("unchecked")
+  @NonNull
+  public final GenericType<? extends T> getSubtype(@NonNull Class<?> subclass) {
+    return new GenericType(token.getSubtype(subclass));
+  }
+
+  /** Returns the represented type. */
+  @NonNull
+  public final Type getType() {
+    return token.getType();
   }
 
   /**
