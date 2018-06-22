@@ -15,7 +15,6 @@
  */
 package com.datastax.oss.driver.api.core.ssl;
 
-import com.datastax.oss.driver.api.core.AllNodesFailedException;
 import com.datastax.oss.driver.api.core.CqlSession;
 import com.datastax.oss.driver.api.testinfra.ccm.CcmBridge;
 import com.datastax.oss.driver.api.testinfra.ccm.CustomCcmRule;
@@ -23,34 +22,23 @@ import com.datastax.oss.driver.api.testinfra.session.SessionUtils;
 import org.junit.ClassRule;
 import org.junit.Test;
 
-public class DefaultSslEngineFactoryWithClientAuthIT {
+public class DefaultSslEngineFactoryHostnameValidationIT {
 
-  @ClassRule public static CustomCcmRule ccm = CustomCcmRule.builder().withSslAuth().build();
+  @ClassRule public static CustomCcmRule ccm = CustomCcmRule.builder().withSslLocalhostCn().build();
 
+  /**
+   * Ensures that SSL connectivity can be established with hostname validation enabled when the
+   * server's certificate has a common name that matches its hostname. In this case the certificate
+   * uses a CN of 'localhost' which is expected to work, but may not if localhost does not resolve
+   * to 127.0.0.1.
+   */
   @Test
-  public void should_connect_with_ssl_using_client_auth() {
+  public void should_connect_if_hostname_validation_enabled_and_hostname_matches() {
     try (CqlSession session =
         SessionUtils.newSession(
             ccm,
             "advanced.ssl-engine-factory.class = DefaultSslEngineFactory",
-            "advanced.ssl-engine-factory.keystore-path = "
-                + CcmBridge.DEFAULT_CLIENT_KEYSTORE_FILE.getAbsolutePath(),
-            "advanced.ssl-engine-factory.keystore-password = "
-                + CcmBridge.DEFAULT_CLIENT_KEYSTORE_PASSWORD,
-            "advanced.ssl-engine-factory.truststore-path = "
-                + CcmBridge.DEFAULT_CLIENT_TRUSTSTORE_FILE.getAbsolutePath(),
-            "advanced.ssl-engine-factory.truststore-password = "
-                + CcmBridge.DEFAULT_CLIENT_TRUSTSTORE_PASSWORD)) {
-      session.execute("select * from system.local");
-    }
-  }
-
-  @Test(expected = AllNodesFailedException.class)
-  public void should_not_connect_with_ssl_using_client_auth_if_keystore_not_set() {
-    try (CqlSession session =
-        SessionUtils.newSession(
-            ccm,
-            "advanced.ssl-engine-factory.class = DefaultSslEngineFactory",
+            "advanced.ssl-engine-factory.hostname-validation = true",
             "advanced.ssl-engine-factory.truststore-path = "
                 + CcmBridge.DEFAULT_CLIENT_TRUSTSTORE_FILE.getAbsolutePath(),
             "advanced.ssl-engine-factory.truststore-password = "

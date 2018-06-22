@@ -64,6 +64,11 @@ public enum DefaultDriverOption implements DriverOption {
 
   SSL_ENGINE_FACTORY_CLASS("advanced.ssl-engine-factory.class"),
   SSL_CIPHER_SUITES("advanced.ssl-engine-factory.cipher-suites"),
+  SSL_HOSTNAME_VALIDATION("advanced.ssl-engine-factory.hostname-validation"),
+  SSL_KEYSTORE_PATH("advanced.ssl-engine-factory.keystore-path"),
+  SSL_KEYSTORE_PASSWORD("advanced.ssl-engine-factory.keystore-password"),
+  SSL_TRUSTSTORE_PATH("advanced.ssl-engine-factory.truststore-path"),
+  SSL_TRUSTSTORE_PASSWORD("advanced.ssl-engine-factory.truststore-password"),
 
   TIMESTAMP_GENERATOR_CLASS("advanced.timestamp-generator.class"),
   TIMESTAMP_GENERATOR_FORCE_JAVA_CLOCK("advanced.timestamp-generator.force-java-clock"),

@@ -15,8 +15,8 @@
  */
 package com.datastax.oss.driver.api.core.ssl;
 
-import com.datastax.oss.driver.api.core.AllNodesFailedException;
 import com.datastax.oss.driver.api.core.CqlSession;
+import com.datastax.oss.driver.api.testinfra.ccm.CcmBridge;
 import com.datastax.oss.driver.api.testinfra.ccm.CustomCcmRule;
 import com.datastax.oss.driver.api.testinfra.session.SessionUtils;
 import com.datastax.oss.driver.categories.IsolatedTests;
@@ -25,13 +25,19 @@ import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
 @Category(IsolatedTests.class)
-public class DefaultSslEngineFactoryWithTruststoreNotProvidedIT {
+public class DefaultSslEngineFactoryPropertyBasedIT {
 
   @ClassRule public static CustomCcmRule ccm = CustomCcmRule.builder().withSsl().build();
 
-  @Test(expected = AllNodesFailedException.class)
-  public void should_not_connect_if_not_using_ssl() {
-    try (CqlSession session = SessionUtils.newSession(ccm)) {
+  @Test
+  public void should_connect_with_ssl() {
+    System.setProperty(
+        "javax.net.ssl.trustStore", CcmBridge.DEFAULT_CLIENT_TRUSTSTORE_FILE.getAbsolutePath());
+    System.setProperty(
+        "javax.net.ssl.trustStorePassword", CcmBridge.DEFAULT_CLIENT_TRUSTSTORE_PASSWORD);
+    try (CqlSession session =
+        SessionUtils.newSession(
+            ccm, "advanced.ssl-engine-factory.class = DefaultSslEngineFactory")) {
       session.execute("select * from system.local");
     }
   }

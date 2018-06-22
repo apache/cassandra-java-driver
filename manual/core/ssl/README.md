@@ -82,12 +82,25 @@ datastax-java-driver {
     # suites on the engine, which according to the JDK documentations results in "a minimum quality
     # of service".
     // cipher-suites = [ "TLS_RSA_WITH_AES_128_CBC_SHA", "TLS_RSA_WITH_AES_256_CBC_SHA" ]
+
+    # Whether or not to require validation that the hostname of the server certificate's common
+    # name matches the hostname of the server being connected to.
+    hostname-validation = false
+
+    # The locations and passwords used to access truststore and keystore contents.
+    # These properties are optional. If either truststore-path or keystore-path are specified,
+    # the driver builds an SSLContext from these files.  If neither option is specified, the
+    # default SSLContext is used, which is based on system property configuration.
+    // truststore-path = /path/to/client.truststore
+    // truststore-password = password123
+    // keystore-path = /path/to/client.keystore
+    // keystore-password = password123
   }
 }
 ```
 
-You can then use [JSSE system properties] for specific details, like keystore locations and
-passwords:
+Alternatively to storing keystore and truststore information in your configuration, you can instead
+use [JSSE system properties]:
 
 ```
 -Djavax.net.ssl.trustStore=/path/to/client.truststore
@@ -101,12 +114,13 @@ passwords:
 
 If you need more control than what system properties allow, you need to write your own engine
 factory. If you just need specific configuration on the `SSLEngine`, you can extend the default
-factory and override `newSslEngine`. For example, here is how to enable hostname verification:
+factory and override `newSslEngine`. For example, here is how you would configure custom
+`AlgorithmConstraints`:
 
 ```java
-public class HostnameVerificationSslEngineFactory extends DefaultSslEngineFactory {
+public class CustomSslEngineFactory extends DefaultSslEngineFactory {
 
-  public HostnameVerificationSslEngineFactory(DriverContext context) {
+  public CustomSslEngineFactory(DriverContext context) {
     super(context);
   }
 
@@ -114,9 +128,7 @@ public class HostnameVerificationSslEngineFactory extends DefaultSslEngineFactor
   public SSLEngine newSslEngine(SocketAddress remoteEndpoint) {
     SSLEngine engine = super.newSslEngine(remoteEndpoint);
     SSLParameters parameters = engine.getSSLParameters();
-    // HTTPS endpoint identification includes hostname verification against certificate's common
-    // name.
-    parameters.setEndpointIdentificationAlgorithm("HTTPS");
+    parameters.setAlgorithmConstraints(...);
     engine.setSSLParameters(parameters);
     return engine;
   }
@@ -128,7 +140,7 @@ Then declare your custom implementation in the configuration:
 ```
 datastax-java-driver {
   advanced.ssl-engine-factory {
-    class = com.mycompany.HostnameVerificationSslEngineFactory
+    class = com.mycompany.CustomSslEngineFactory
   }
 }
 ```
