@@ -61,7 +61,10 @@ public class ValuesHelper {
           throw new IllegalArgumentException("Unsupported token type " + value.getClass());
         }
       } else {
-        TypeCodec<Object> codec = codecRegistry.codecFor(fieldTypes.get(i), value);
+        TypeCodec<Object> codec =
+            (value == null)
+                ? codecRegistry.codecFor(fieldTypes.get(i))
+                : codecRegistry.codecFor(fieldTypes.get(i), value);
         encodedValue = codec.encode(value, protocolVersion);
       }
       encodedValues[i] = encodedValue;
@@ -104,7 +107,9 @@ public class ValuesHelper {
         }
       } else {
         TypeCodec<Object> codec =
-            codecRegistry.codecFor(variableDefinitions.get(i).getType(), value);
+            (value == null)
+                ? codecRegistry.codecFor(variableDefinitions.get(i).getType())
+                : codecRegistry.codecFor(variableDefinitions.get(i).getType(), value);
         encodedValue = codec.encode(value, protocolVersion);
       }
       encodedValues[i] = encodedValue;

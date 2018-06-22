@@ -18,6 +18,7 @@ package com.datastax.oss.driver.api.core.cql;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import com.datastax.oss.driver.api.core.CqlSession;
+import com.datastax.oss.driver.api.core.type.codec.TypeCodecs;
 import com.datastax.oss.driver.api.testinfra.CassandraRequirement;
 import com.datastax.oss.driver.api.testinfra.ccm.CcmRule;
 import com.datastax.oss.driver.api.testinfra.session.SessionRule;
@@ -128,6 +129,14 @@ public class BoundStatementIT {
 
     ResultSet rs = sessionRule.session().execute(prepared.bind(name.getMethodName(), VALUE));
     assertThat(rs.getColumnDefinitions()).hasSize(0);
+  }
+
+  @Test
+  public void should_bind_null_value_when_setting_values_in_bulk() {
+    PreparedStatement prepared =
+        sessionRule.session().prepare("INSERT INTO test2 (k, v0) values (?, ?)");
+    BoundStatement boundStatement = prepared.bind(name.getMethodName(), null);
+    assertThat(boundStatement.get(1, TypeCodecs.INT)).isNull();
   }
 
   @Test
