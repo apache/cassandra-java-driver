@@ -4,6 +4,7 @@
 
 ### 4.0.0-alpha4 (in progress)
 
+- [improvement] JAVA-1890: Add more configuration options to DefaultSslEngineFactory
 - [bug] JAVA-1895: Rename PreparedStatement.getPrimaryKeyIndices to getPartitionKeyIndices
 - [bug] JAVA-1891: Allow null items when setting values in bulk
 - [improvement] JAVA-1767: Improve message when column not in result set

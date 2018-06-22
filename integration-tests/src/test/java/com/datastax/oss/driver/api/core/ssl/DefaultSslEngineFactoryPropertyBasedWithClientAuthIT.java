@@ -15,7 +15,6 @@
  */
 package com.datastax.oss.driver.api.core.ssl;
 
-import com.datastax.oss.driver.api.core.AllNodesFailedException;
 import com.datastax.oss.driver.api.core.CqlSession;
 import com.datastax.oss.driver.api.testinfra.ccm.CcmBridge;
 import com.datastax.oss.driver.api.testinfra.ccm.CustomCcmRule;
@@ -26,12 +25,16 @@ import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
 @Category(IsolatedTests.class)
-public class DefaultSslEngineFactoryWithClientAuthNotProvidedIT {
+public class DefaultSslEngineFactoryPropertyBasedWithClientAuthIT {
 
   @ClassRule public static CustomCcmRule ccm = CustomCcmRule.builder().withSslAuth().build();
 
-  @Test(expected = AllNodesFailedException.class)
-  public void should_not_connect_with_ssl_using_client_auth_if_keystore_not_set() {
+  @Test
+  public void should_connect_with_ssl_using_client_auth() {
+    System.setProperty(
+        "javax.net.ssl.keyStore", CcmBridge.DEFAULT_CLIENT_KEYSTORE_FILE.getAbsolutePath());
+    System.setProperty(
+        "javax.net.ssl.keyStorePassword", CcmBridge.DEFAULT_CLIENT_KEYSTORE_PASSWORD);
     System.setProperty(
         "javax.net.ssl.trustStore", CcmBridge.DEFAULT_CLIENT_TRUSTSTORE_FILE.getAbsolutePath());
     System.setProperty(

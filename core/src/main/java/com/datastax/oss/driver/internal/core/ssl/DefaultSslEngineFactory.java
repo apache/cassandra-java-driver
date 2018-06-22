@@ -20,12 +20,19 @@ import com.datastax.oss.driver.api.core.config.DriverConfigProfile;
 import com.datastax.oss.driver.api.core.context.DriverContext;
 import com.datastax.oss.driver.api.core.ssl.SslEngineFactory;
 import edu.umd.cs.findbugs.annotations.NonNull;
+import java.io.InputStream;
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
-import java.security.NoSuchAlgorithmException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.security.KeyStore;
+import java.security.SecureRandom;
 import java.util.List;
+import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLEngine;
+import javax.net.ssl.SSLParameters;
+import javax.net.ssl.TrustManagerFactory;
 import net.jcip.annotations.ThreadSafe;
 
 /**
@@ -39,6 +46,11 @@ import net.jcip.annotations.ThreadSafe;
  *   advanced.ssl-engine-factory {
  *     class = DefaultSslEngineFactory
  *     cipher-suites = [ "TLS_RSA_WITH_AES_128_CBC_SHA", "TLS_RSA_WITH_AES_256_CBC_SHA" ]
+ *     hostname-validation = false
+ *     truststore-path = /path/to/client.truststore
+ *     truststore-psasword = password123
+ *     keystore-path = /path/to/client.keystore
+ *     keystore-password = password123
  *   }
  * }
  * </pre>
@@ -50,21 +62,28 @@ public class DefaultSslEngineFactory implements SslEngineFactory {
 
   private final SSLContext sslContext;
   private final String[] cipherSuites;
+  private final boolean requireHostnameValidation;
 
   /** Builds a new instance from the driver configuration. */
   public DefaultSslEngineFactory(DriverContext driverContext) {
+    DriverConfigProfile config = driverContext.config().getDefaultProfile();
     try {
-      this.sslContext = SSLContext.getDefault();
-    } catch (NoSuchAlgorithmException e) {
+      this.sslContext = buildContext(config);
+    } catch (Exception e) {
       throw new IllegalStateException("Cannot initialize SSL Context", e);
     }
-    DriverConfigProfile config = driverContext.config().getDefaultProfile();
     if (config.isDefined(DefaultDriverOption.SSL_CIPHER_SUITES)) {
       List<String> list = config.getStringList(DefaultDriverOption.SSL_CIPHER_SUITES);
       String tmp[] = new String[list.size()];
       this.cipherSuites = list.toArray(tmp);
     } else {
       this.cipherSuites = null;
+    }
+    if (config.isDefined(DefaultDriverOption.SSL_HOSTNAME_VALIDATION)) {
+      this.requireHostnameValidation =
+          config.getBoolean(DefaultDriverOption.SSL_HOSTNAME_VALIDATION);
+    } else {
+      this.requireHostnameValidation = false;
     }
   }
 
@@ -82,7 +101,62 @@ public class DefaultSslEngineFactory implements SslEngineFactory {
     if (cipherSuites != null) {
       engine.setEnabledCipherSuites(cipherSuites);
     }
+    if (requireHostnameValidation) {
+      SSLParameters parameters = engine.getSSLParameters();
+      parameters.setEndpointIdentificationAlgorithm("HTTPS");
+      engine.setSSLParameters(parameters);
+    }
     return engine;
+  }
+
+  protected SSLContext buildContext(DriverConfigProfile config) throws Exception {
+    if (config.isDefined(DefaultDriverOption.SSL_KEYSTORE_PATH)
+        || config.isDefined(DefaultDriverOption.SSL_TRUSTSTORE_PATH)) {
+      SSLContext context = SSLContext.getInstance("SSL");
+
+      // initialize truststore if configured.
+      TrustManagerFactory tmf = null;
+      if (config.isDefined(DefaultDriverOption.SSL_TRUSTSTORE_PATH)) {
+        try (InputStream tsf =
+            Files.newInputStream(
+                Paths.get(config.getString(DefaultDriverOption.SSL_TRUSTSTORE_PATH)))) {
+          KeyStore ts = KeyStore.getInstance("JKS");
+          char[] password =
+              config.isDefined(DefaultDriverOption.SSL_TRUSTSTORE_PASSWORD)
+                  ? config.getString(DefaultDriverOption.SSL_TRUSTSTORE_PASSWORD).toCharArray()
+                  : null;
+          ts.load(tsf, password);
+          tmf = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
+          tmf.init(ts);
+        }
+      }
+
+      // initialize keystore if configured.
+      KeyManagerFactory kmf = null;
+      if (config.isDefined(DefaultDriverOption.SSL_KEYSTORE_PATH)) {
+        try (InputStream ksf =
+            Files.newInputStream(
+                Paths.get(config.getString(DefaultDriverOption.SSL_KEYSTORE_PATH)))) {
+          KeyStore ks = KeyStore.getInstance("JKS");
+          char[] password =
+              config.isDefined(DefaultDriverOption.SSL_KEYSTORE_PASSWORD)
+                  ? config.getString(DefaultDriverOption.SSL_KEYSTORE_PASSWORD).toCharArray()
+                  : null;
+          ks.load(ksf, password);
+          kmf = KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
+          kmf.init(ks, password);
+        }
+      }
+
+      context.init(
+          kmf != null ? kmf.getKeyManagers() : null,
+          tmf != null ? tmf.getTrustManagers() : null,
+          new SecureRandom());
+      return context;
+    } else {
+      // if both keystore and truststore aren't configured, use default SSLContext.
+      return SSLContext.getDefault();
+    }
   }
 
   @Override

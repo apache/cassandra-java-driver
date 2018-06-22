@@ -101,6 +101,13 @@ public class CcmBridge implements AutoCloseable {
   private static final File DEFAULT_SERVER_KEYSTORE_FILE =
       createTempStore(DEFAULT_SERVER_KEYSTORE_PATH);
 
+  // A separate keystore where the certificate has a CN of localhost, used for hostname
+  // validation testing.
+  public static final String DEFAULT_SERVER_LOCALHOST_KEYSTORE_PATH = "/server_localhost.keystore";
+
+  private static final File DEFAULT_SERVER_LOCALHOST_KEYSTORE_FILE =
+      createTempStore(DEFAULT_SERVER_LOCALHOST_KEYSTORE_PATH);
+
   // major DSE versions
   private static final Version V6_0_0 = Version.parse("6.0.0");
   private static final Version V5_1_0 = Version.parse("5.1.0");
@@ -380,6 +387,16 @@ public class CcmBridge implements AutoCloseable {
       cassandraConfiguration.put("client_encryption_options.enabled", "true");
       cassandraConfiguration.put(
           "client_encryption_options.keystore", DEFAULT_SERVER_KEYSTORE_FILE.getAbsolutePath());
+      cassandraConfiguration.put(
+          "client_encryption_options.keystore_password", DEFAULT_SERVER_KEYSTORE_PASSWORD);
+      return this;
+    }
+
+    public Builder withSslLocalhostCn() {
+      cassandraConfiguration.put("client_encryption_options.enabled", "true");
+      cassandraConfiguration.put(
+          "client_encryption_options.keystore",
+          DEFAULT_SERVER_LOCALHOST_KEYSTORE_FILE.getAbsolutePath());
       cassandraConfiguration.put(
           "client_encryption_options.keystore_password", DEFAULT_SERVER_KEYSTORE_PASSWORD);
       return this;

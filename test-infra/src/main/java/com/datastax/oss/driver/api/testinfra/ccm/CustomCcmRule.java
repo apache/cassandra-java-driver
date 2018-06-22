@@ -97,6 +97,11 @@ public class CustomCcmRule extends BaseCcmRule {
       return this;
     }
 
+    public Builder withSslLocalhostCn() {
+      bridgeBuilder.withSslLocalhostCn();
+      return this;
+    }
+
     public Builder withSslAuth() {
       bridgeBuilder.withSslAuth();
       return this;
