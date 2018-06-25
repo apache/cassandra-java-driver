@@ -37,7 +37,7 @@ public class DefaultPreparedStatement implements PreparedStatement {
   private final ByteBuffer id;
   private final RepreparePayload repreparePayload;
   private final ColumnDefinitions variableDefinitions;
-  private final List<Integer> primaryKeyIndices;
+  private final List<Integer> partitionKeyIndices;
   private volatile ResultMetadata resultMetadata;
   private final CodecRegistry codecRegistry;
   private final ProtocolVersion protocolVersion;
@@ -51,7 +51,7 @@ public class DefaultPreparedStatement implements PreparedStatement {
       ByteBuffer id,
       String query,
       ColumnDefinitions variableDefinitions,
-      List<Integer> primaryKeyIndices,
+      List<Integer> partitionKeyIndices,
       ByteBuffer resultMetadataId,
       ColumnDefinitions resultSetDefinitions,
       String configProfileName,
@@ -63,7 +63,7 @@ public class DefaultPreparedStatement implements PreparedStatement {
       ProtocolVersion protocolVersion,
       Map<String, ByteBuffer> customPayloadForPrepare) {
     this.id = id;
-    this.primaryKeyIndices = primaryKeyIndices;
+    this.partitionKeyIndices = partitionKeyIndices;
     // It's important that we keep a reference to this object, so that it only gets evicted from
     // the map in DefaultSession if no client reference the PreparedStatement anymore.
     this.repreparePayload = new RepreparePayload(id, query, keyspace, customPayloadForPrepare);
@@ -97,8 +97,8 @@ public class DefaultPreparedStatement implements PreparedStatement {
 
   @NonNull
   @Override
-  public List<Integer> getPrimaryKeyIndices() {
-    return primaryKeyIndices;
+  public List<Integer> getPartitionKeyIndices() {
+    return partitionKeyIndices;
   }
 
   @Override

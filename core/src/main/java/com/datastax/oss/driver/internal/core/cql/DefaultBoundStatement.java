@@ -256,7 +256,7 @@ public class DefaultBoundStatement implements BoundStatement {
     if (routingKey != null) {
       return routingKey;
     } else {
-      List<Integer> indices = preparedStatement.getPrimaryKeyIndices();
+      List<Integer> indices = preparedStatement.getPartitionKeyIndices();
       if (indices.isEmpty()) {
         return null;
       } else if (indices.size() == 1) {

@@ -69,12 +69,12 @@ public interface PreparedStatement {
    * PreparedStatement ps2 = session.prepare("UPDATE foo SET v = ? WHERE pk1 = 1 AND pk2 = ? AND v = ?");
    * </pre>
    *
-   * Then {@code ps1.getPrimaryKeyIndices()} contains 1 and 2, and {@code
-   * ps2.getPrimaryKeyIndices()} is empty (because one of the partition key components is hard-coded
-   * in the query string).
+   * Then {@code ps1.getPartitionKeyIndices()} contains 1 and 2, and {@code
+   * ps2.getPartitionKeyIndices()} is empty (because one of the partition key components is
+   * hard-coded in the query string).
    */
   @NonNull
-  List<Integer> getPrimaryKeyIndices();
+  List<Integer> getPartitionKeyIndices();
 
   /**
    * A unique identifier for result metadata (essentially a hash of {@link
