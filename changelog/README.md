@@ -16,7 +16,6 @@
 - [improvement] JAVA-1865: Add RelationMetadata.getPrimaryKey()
 - [improvement] JAVA-1862: Add ConsistencyLevel.isDcLocal and isSerial
 - [improvement] JAVA-1858: Implement Serializable in implementations, not interfaces
-- [improvement] JAVA-1851: Make dependency to JCIP annotations non optional
 - [improvement] JAVA-1830: Surface response frame size in ExecutionInfo
 - [improvement] JAVA-1853: Add newValue(Object...) to TupleType and UserDefinedType
 - [improvement] JAVA-1815: Reorganize configuration into basic/advanced categories
