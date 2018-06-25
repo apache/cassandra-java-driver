@@ -449,6 +449,7 @@ limitations under the License.]]>
             </goals>
           </execution>
           <execution>
+            <!-- Check that our "official" API (api.* packages) does not leak unwanted types -->
             <id>check-api-leaks</id>
             <goals>
               <goal>javadoc</goal>
@@ -463,10 +464,47 @@ limitations under the License.]]>
               </docletArtifact>
               <excludePackageNames>com.datastax.oss.driver.internal.*</excludePackageNames>
               <additionalJOptions>
+                <!-- API types do not leak internal types -->
                 <additionalparam>-preventleak</additionalparam>
                 <additionalparam>com.datastax.oss.driver.internal</additionalparam>
+                <!-- Shaded dependencies (Guava, JCTools) -->
                 <additionalparam>-preventleak</additionalparam>
-                <additionalparam>com.google.common</additionalparam>
+                <additionalparam>com.datastax.oss.driver.shaded</additionalparam>
+                <!--
+                  Typesafe config: implementation detail, can be excluded if the user wrote a custom
+                  DriverConfig implementation.
+                -->
+                <additionalparam>-preventleak</additionalparam>
+                <additionalparam>com.typesafe.config</additionalparam>
+                <!--
+                  DropWizard metrics: can be excluded if metrics are disabled, or the user plugged
+                  another framework.
+                -->
+                <additionalparam>-preventleak</additionalparam>
+                <additionalparam>com.codahale.metrics</additionalparam>
+                <!--
+                  HDR Histogram: implementation detail of Timer metrics, can be excluded if they are
+                  all disabled.
+                -->
+                <additionalparam>-preventleak</additionalparam>
+                <additionalparam>org.HdrHistogram</additionalparam>
+                <!-- Netty: implementation detail, only tweakable via internal classes. -->
+                <additionalparam>-preventleak</additionalparam>
+                <additionalparam>io.netty</additionalparam>
+                <!-- JNR: can be excluded, the driver will fallback to non-native alternatives -->
+                <additionalparam>-preventleak</additionalparam>
+                <additionalparam>jnr</additionalparam>
+                <additionalparam>-preventleak</additionalparam>
+                <additionalparam>com.kenai.constantine</additionalparam>
+                <additionalparam>-preventleak</additionalparam>
+                <additionalparam>com.kenai.jffi</additionalparam>
+                <additionalparam>-preventleak</additionalparam>
+                <additionalparam>com.kenai.jnr</additionalparam>
+                <!-- Compression libraries: optional dependencies -->
+                <additionalparam>-preventleak</additionalparam>
+                <additionalparam>net.jpountz</additionalparam>
+                <additionalparam>-preventleak</additionalparam>
+                <additionalparam>org.xerial.snappy</additionalparam>
               </additionalJOptions>
               <useStandardDocletOptions>false</useStandardDocletOptions>
             </configuration>

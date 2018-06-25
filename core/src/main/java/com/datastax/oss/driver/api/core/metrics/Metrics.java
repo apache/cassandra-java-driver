@@ -38,6 +38,7 @@ public interface Metrics {
    *
    * @see <a href="http://metrics.dropwizard.io/4.0.0/manual/core.html#reporters">Reporters
    *     (Dropwizard Metrics manual)</a>
+   * @leaks-private-api
    */
   @NonNull
   MetricRegistry getRegistry();
