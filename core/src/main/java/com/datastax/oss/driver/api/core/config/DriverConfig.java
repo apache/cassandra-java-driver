@@ -41,13 +41,7 @@ public interface DriverConfig {
   @NonNull
   DriverConfigProfile getProfile(@NonNull String profileName);
 
-  /**
-   * Returns an <b>immutable</b> view of all named profiles (including the default profile).
-   *
-   * <p>Implementations typically return a defensive copy of their internal state; therefore this
-   * should not be used in performance-sensitive parts of the code, see {@link #getProfile(String)}
-   * instead.
-   */
+  /** Returns an <b>immutable</b> view of all named profiles (including the default profile). */
   @NonNull
-  Map<String, DriverConfigProfile> getProfiles();
+  Map<String, ? extends DriverConfigProfile> getProfiles();
 }

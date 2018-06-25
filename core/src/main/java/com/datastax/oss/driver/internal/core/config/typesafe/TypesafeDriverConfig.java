@@ -36,7 +36,7 @@ public class TypesafeDriverConfig implements DriverConfig {
 
   private static final Logger LOG = LoggerFactory.getLogger(TypesafeDriverConfig.class);
 
-  private final Map<String, TypesafeDriverConfigProfile.Base> profiles;
+  private final ImmutableMap<String, TypesafeDriverConfigProfile.Base> profiles;
   // Only used to detect if reload saw any change
   private volatile Config lastLoadedConfig;
 
@@ -136,7 +136,7 @@ public class TypesafeDriverConfig implements DriverConfig {
 
   @NonNull
   @Override
-  public Map<String, DriverConfigProfile> getProfiles() {
-    return ImmutableMap.copyOf(profiles);
+  public Map<String, ? extends DriverConfigProfile> getProfiles() {
+    return profiles;
   }
 }
