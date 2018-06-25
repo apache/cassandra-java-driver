@@ -9,7 +9,7 @@ schedules:
         - os: ubuntu/bionic64/java-driver
           java: ['openjdk6','openjdk7']
         # Exclude java8 with all versions exception 2.1 and latest
-        - java: oraclejdk8
+        - java: openjdk8
           cassandra: ['2.2', '3.0']
         - java: oraclejdk10
           cassandra: ['2.1', '2.2', '3.0']
@@ -26,7 +26,7 @@ schedules:
       exclude:
         # Run jdk8 and 10 on bionic, 6 and 7 on trusty
         - os: ubuntu/trusty64/java-driver
-          java: ['oraclejdk8','oraclejdk10']
+          java: ['openjdk8','oraclejdk10']
         - os: ubuntu/bionic64/java-driver
           java: ['openjdk6','openjdk7']
     branches:
@@ -45,7 +45,7 @@ schedules:
       exclude:
         # Run jdk8 and 10 on bionic, 6 and 7 on trusty
         - os: ubuntu/trusty64/java-driver
-          java: ['oraclejdk8','oraclejdk10']
+          java: ['openjdk8','oraclejdk10']
         - os: ubuntu/bionic64/java-driver
           java: ['openjdk6','openjdk7']
     branches:
@@ -60,7 +60,7 @@ schedules:
 java:
   - openjdk6
   - openjdk7
-  - oraclejdk8
+  - openjdk8
   - oraclejdk10
 os:
   - ubuntu/trusty64/java-driver
@@ -73,7 +73,7 @@ cassandra:
 build:
   - script: |
       . /usr/local/bin/jdk_switcher.sh
-      jdk_switcher use oraclejdk8
+      jdk_switcher use openjdk8
       export MAVEN_HOME=/home/jenkins/.mvn/apache-maven-3.2.5
       export PATH=$MAVEN_HOME/bin:$PATH
       mvn -B -V install -DskipTests
