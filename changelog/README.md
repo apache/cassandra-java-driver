@@ -50,6 +50,7 @@
 - [improvement] JAVA-1772: Revisit multi-response callbacks
 - [new feature] JAVA-1537: Add remaining socket options
 - [bug] JAVA-1756: Propagate custom payload when preparing a statement
+- [improvement] JAVA-1847: Add per-node request tracking
 
 ### 4.0.0-alpha3
 
