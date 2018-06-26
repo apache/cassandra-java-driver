@@ -21,6 +21,7 @@ import com.datastax.oss.driver.api.core.session.Request;
 import com.datastax.oss.driver.api.core.session.Session;
 import com.datastax.oss.driver.api.core.type.reflect.GenericType;
 import edu.umd.cs.findbugs.annotations.NonNull;
+import edu.umd.cs.findbugs.annotations.Nullable;
 
 /** Tracks request execution for a session. */
 public interface RequestTracker extends AutoCloseable {
@@ -52,5 +53,36 @@ public interface RequestTracker extends AutoCloseable {
       @NonNull Throwable error,
       long latencyNanos,
       @NonNull DriverConfigProfile configProfile,
-      Node node);
+      @Nullable Node node);
+
+  /**
+   * Invoked each time a request fails at the node level. Similar to {@link #onError(Request,
+   * Throwable, long, DriverConfigProfile, Node)} but at a per node level.
+   *
+   * @param latencyNanos the overall execution time (from the {@link Session#execute(Request,
+   *     GenericType) session.execute} call until the error is propagated to the client).
+   * @param configProfile the configuration profile that this request was executed with.
+   * @param node the node that returned the error response.
+   */
+  void onNodeError(
+      @NonNull Request request,
+      @NonNull Throwable error,
+      long latencyNanos,
+      @NonNull DriverConfigProfile configProfile,
+      @NonNull Node node);
+
+  /**
+   * Invoked each time a request succeeds at the node level. Similar to {@link #onSuccess(Request,
+   * long, DriverConfigProfile, Node)} but at per Node level.
+   *
+   * @param latencyNanos the overall execution time (from the {@link Session#execute(Request,
+   *     GenericType) session.execute} call until the result is made available to the client).
+   * @param configProfile the configuration profile that this request was executed with.
+   * @param node the node that returned the successful response.
+   */
+  void onNodeSuccess(
+      @NonNull Request request,
+      long latencyNanos,
+      @NonNull DriverConfigProfile configProfile,
+      @NonNull Node node);
 }
