@@ -50,7 +50,7 @@ import org.slf4j.LoggerFactory;
  * never in a critical path.
  */
 @ThreadSafe
-class DataTypeClassNameParser implements DataTypeParser {
+public class DataTypeClassNameParser implements DataTypeParser {
 
   private static final Logger LOG = LoggerFactory.getLogger(DataTypeClassNameParser.class);
 

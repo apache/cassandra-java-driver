@@ -27,9 +27,9 @@ import java.util.Map;
 import net.jcip.annotations.ThreadSafe;
 
 @ThreadSafe
-class DataTypeClassNameCompositeParser extends DataTypeClassNameParser {
+public class DataTypeClassNameCompositeParser extends DataTypeClassNameParser {
 
-  ParseResult parseWithComposite(
+  public ParseResult parseWithComposite(
       String className,
       CqlIdentifier keyspaceId,
       Map<CqlIdentifier, UserDefinedType> userTypes,
