@@ -64,10 +64,10 @@ public interface RequestTracker extends AutoCloseable {
    * @param node the node that returned the error response.
    */
   void onNodeError(
-      Request request,
-      Throwable error,
+      @NonNull Request request,
+      @NonNull Throwable error,
       long latencyNanos,
-      DriverConfigProfile configProfile,
+      @NonNull DriverConfigProfile configProfile,
       Node node);
 
   /**
@@ -80,5 +80,8 @@ public interface RequestTracker extends AutoCloseable {
    * @param node the node that returned the successful response.
    */
   void onNodeSuccess(
-      Request request, long latencyNanos, DriverConfigProfile configProfile, Node node);
+      @NonNull Request request,
+      long latencyNanos,
+      @NonNull DriverConfigProfile configProfile,
+      @NonNull Node node);
 }

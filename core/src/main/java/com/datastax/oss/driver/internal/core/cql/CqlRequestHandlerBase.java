@@ -528,7 +528,8 @@ public abstract class CqlRequestHandlerBase implements Throttled {
           processErrorResponse((Error) responseMessage);
         } else {
           trackNodeError(node, new IllegalStateException("Unexpected response " + responseMessage));
-          setFinalError(new IllegalStateException("Unexpected response " + responseMessage), node, execution);
+          setFinalError(
+              new IllegalStateException("Unexpected response " + responseMessage), node, execution);
         }
       } catch (Throwable t) {
         trackNodeError(node, t);
@@ -692,7 +693,7 @@ public abstract class CqlRequestHandlerBase implements Throttled {
           break;
         case RETHROW:
           trackNodeError(node, error);
-          setFinalError(error, node,execution);
+          setFinalError(error, node, execution);
           break;
         case IGNORE:
           setFinalResult(Void.INSTANCE, null, true, this);

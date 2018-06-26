@@ -46,8 +46,10 @@ public class NoopRequestTracker implements RequestTracker {
       long latencyNanos,
       @NonNull DriverConfigProfile configProfile,
       Node node) {
-      // nothing to do
+    // nothing to do
   }
+
+  @Override
   public void onNodeError(
       @NonNull Request request,
       @NonNull Throwable error,
@@ -56,6 +58,7 @@ public class NoopRequestTracker implements RequestTracker {
       Node node) {
     // nothing to do
   }
+
   @Override
   public void onNodeSuccess(
       @NonNull Request request,

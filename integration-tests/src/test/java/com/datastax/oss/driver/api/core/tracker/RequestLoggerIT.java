@@ -266,7 +266,6 @@ public class RequestLoggerIT {
         .doAppend(loggingEventCaptor.capture());
     List<ILoggingEvent> events = loggingEventCaptor.getAllValues();
     assertThat(events.get(0).getFormattedMessage()).contains("Success", "[0 values]", QUERY);
-    assertThat(events.get(1).getFormattedMessage())
-        .contains("Error", "Success", "[0 values]", QUERY);
+    assertThat(events.get(1).getFormattedMessage()).contains("Success", "[0 values]", QUERY);
   }
 }
