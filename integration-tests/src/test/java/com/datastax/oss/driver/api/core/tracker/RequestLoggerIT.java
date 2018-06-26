@@ -265,9 +265,8 @@ public class RequestLoggerIT {
     Mockito.verify(appender, new Timeout(500, VerificationModeFactory.times(2)))
         .doAppend(loggingEventCaptor.capture());
     List<ILoggingEvent> events = loggingEventCaptor.getAllValues();
-    assertThat(events.get(0).getFormattedMessage())
-        .contains("[NODE]", "Success", "[0 values]", QUERY);
+    assertThat(events.get(0).getFormattedMessage()).contains("Success", "[0 values]", QUERY);
     assertThat(events.get(1).getFormattedMessage())
-        .contains("[REQUEST]", "Success", "[0 values]", QUERY);
+        .contains("Error", "Success", "[0 values]", QUERY);
   }
 }
