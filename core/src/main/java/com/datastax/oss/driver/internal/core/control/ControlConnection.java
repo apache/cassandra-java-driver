@@ -17,6 +17,7 @@ package com.datastax.oss.driver.internal.core.control;
 
 import com.datastax.oss.driver.api.core.AllNodesFailedException;
 import com.datastax.oss.driver.api.core.AsyncAutoCloseable;
+import com.datastax.oss.driver.api.core.connection.ReconnectionPolicy;
 import com.datastax.oss.driver.api.core.loadbalancing.NodeDistance;
 import com.datastax.oss.driver.api.core.metadata.Node;
 import com.datastax.oss.driver.api.core.metadata.NodeState;
@@ -224,8 +225,13 @@ public class ControlConnection implements EventCallback, AsyncAutoCloseable {
 
     private SingleThreaded(InternalDriverContext context) {
       this.context = context;
+      ReconnectionPolicy reconnectionPolicy = context.reconnectionPolicy();
       this.reconnection =
-          new Reconnection(logPrefix, adminExecutor, context.reconnectionPolicy(), this::reconnect);
+          new Reconnection(
+              logPrefix,
+              adminExecutor,
+              reconnectionPolicy::newControlConnectionSchedule,
+              this::reconnect);
       // In "reconnect-on-init" mode, handle cancellation of the initFuture by user code
       CompletableFutures.whenCancelled(
           this.initFuture,

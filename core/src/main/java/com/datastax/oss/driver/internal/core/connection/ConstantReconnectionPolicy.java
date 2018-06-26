@@ -19,16 +19,23 @@ import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
 import com.datastax.oss.driver.api.core.config.DriverConfigProfile;
 import com.datastax.oss.driver.api.core.connection.ReconnectionPolicy;
 import com.datastax.oss.driver.api.core.context.DriverContext;
+import com.datastax.oss.driver.api.core.metadata.Node;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import java.time.Duration;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /** A reconnection policy that waits a constant time between each reconnection attempt. */
 public class ConstantReconnectionPolicy implements ReconnectionPolicy {
 
+  private static final Logger LOG = LoggerFactory.getLogger(ConstantReconnectionPolicy.class);
+
+  private final String logPrefix;
   private final ReconnectionSchedule schedule;
 
   /** Builds a new instance. */
   public ConstantReconnectionPolicy(DriverContext context) {
+    this.logPrefix = context.sessionName();
     DriverConfigProfile config = context.config().getDefaultProfile();
     Duration delay = config.getDuration(DefaultDriverOption.RECONNECTION_BASE_DELAY);
     if (delay.isNegative()) {
@@ -44,7 +51,15 @@ public class ConstantReconnectionPolicy implements ReconnectionPolicy {
 
   @NonNull
   @Override
-  public ReconnectionSchedule newSchedule() {
+  public ReconnectionSchedule newNodeSchedule(@NonNull Node node) {
+    LOG.debug("[{}] Creating new schedule for {}", logPrefix, node);
+    return schedule;
+  }
+
+  @NonNull
+  @Override
+  public ReconnectionSchedule newControlConnectionSchedule() {
+    LOG.debug("[{}] Creating new schedule for the control connection", logPrefix);
     return schedule;
   }
 

@@ -19,24 +19,36 @@ import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
 import com.datastax.oss.driver.api.core.config.DriverConfigProfile;
 import com.datastax.oss.driver.api.core.connection.ReconnectionPolicy;
 import com.datastax.oss.driver.api.core.context.DriverContext;
+import com.datastax.oss.driver.api.core.metadata.Node;
 import com.datastax.oss.driver.shaded.guava.common.base.Preconditions;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import java.time.Duration;
 import net.jcip.annotations.ThreadSafe;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * A reconnection policy that waits exponentially longer between each reconnection attempt (but
  * keeps a constant delay once a maximum delay is reached).
+ *
+ * <p>It uses the same schedule implementation for individual nodes or the control connection:
+ * reconnection attempt {@code i} will be tried {@code Math.min(2^(i-1) * getBaseDelayMs(),
+ * getMaxDelayMs())} milliseconds after the previous one.
  */
 @ThreadSafe
 public class ExponentialReconnectionPolicy implements ReconnectionPolicy {
 
+  private static final Logger LOG = LoggerFactory.getLogger(ExponentialReconnectionPolicy.class);
+
+  private final String logPrefix;
   private final long baseDelayMs;
   private final long maxDelayMs;
   private final long maxAttempts;
 
   /** Builds a new instance. */
   public ExponentialReconnectionPolicy(DriverContext context) {
+    this.logPrefix = context.sessionName();
+
     DriverConfigProfile config = context.config().getDefaultProfile();
 
     this.baseDelayMs = config.getDuration(DefaultDriverOption.RECONNECTION_BASE_DELAY).toMillis();
@@ -84,17 +96,17 @@ public class ExponentialReconnectionPolicy implements ReconnectionPolicy {
     return maxDelayMs;
   }
 
-  /**
-   * A new schedule that used an exponentially growing delay between reconnection attempts.
-   *
-   * <p>For this schedule, reconnection attempt {@code i} will be tried {@code Math.min(2^(i-1) *
-   * getBaseDelayMs(), getMaxDelayMs())} milliseconds after the previous one.
-   *
-   * @return the newly created schedule.
-   */
   @NonNull
   @Override
-  public ReconnectionSchedule newSchedule() {
+  public ReconnectionSchedule newNodeSchedule(@NonNull Node node) {
+    LOG.debug("[{}] Creating new schedule for {}", logPrefix, node);
+    return new ExponentialSchedule();
+  }
+
+  @NonNull
+  @Override
+  public ReconnectionSchedule newControlConnectionSchedule() {
+    LOG.debug("[{}] Creating new schedule for the control connection", logPrefix);
     return new ExponentialSchedule();
   }
 

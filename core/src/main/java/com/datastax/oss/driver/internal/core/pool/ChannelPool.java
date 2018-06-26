@@ -22,6 +22,7 @@ import com.datastax.oss.driver.api.core.UnsupportedProtocolVersionException;
 import com.datastax.oss.driver.api.core.auth.AuthenticationException;
 import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
 import com.datastax.oss.driver.api.core.config.DriverConfig;
+import com.datastax.oss.driver.api.core.connection.ReconnectionPolicy;
 import com.datastax.oss.driver.api.core.loadbalancing.NodeDistance;
 import com.datastax.oss.driver.api.core.metadata.Node;
 import com.datastax.oss.driver.api.core.metrics.DefaultNodeMetric;
@@ -234,11 +235,12 @@ public class ChannelPool implements AsyncAutoCloseable {
       this.wantedCount = getConfiguredSize(distance);
       this.channelFactory = context.channelFactory();
       this.eventBus = context.eventBus();
+      ReconnectionPolicy reconnectionPolicy = context.reconnectionPolicy();
       this.reconnection =
           new Reconnection(
               logPrefix,
               adminExecutor,
-              context.reconnectionPolicy(),
+              () -> reconnectionPolicy.newNodeSchedule(node),
               this::addMissingChannels,
               () -> eventBus.fire(ChannelEvent.reconnectionStarted(node)),
               () -> eventBus.fire(ChannelEvent.reconnectionStopped(node)));

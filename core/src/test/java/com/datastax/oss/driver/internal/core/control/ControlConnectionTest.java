@@ -16,9 +16,11 @@
 package com.datastax.oss.driver.internal.core.control;
 
 import static com.datastax.oss.driver.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.never;
 
 import com.datastax.oss.driver.api.core.loadbalancing.NodeDistance;
+import com.datastax.oss.driver.api.core.metadata.Node;
 import com.datastax.oss.driver.api.core.metadata.NodeState;
 import com.datastax.oss.driver.internal.core.channel.ChannelEvent;
 import com.datastax.oss.driver.internal.core.channel.DriverChannel;
@@ -105,7 +107,7 @@ public class ControlConnectionTest extends ControlConnectionTestBase {
     Mockito.verify(eventBus).fire(ChannelEvent.controlConnectionFailed(node1));
     Mockito.verify(eventBus).fire(ChannelEvent.channelOpened(node2));
     // each attempt tries all nodes, so there is no reconnection
-    Mockito.verify(reconnectionPolicy, never()).newSchedule();
+    Mockito.verify(reconnectionPolicy, never()).newNodeSchedule(any(Node.class));
 
     factoryHelper.verifyNoMoreCalls();
   }
@@ -130,7 +132,7 @@ public class ControlConnectionTest extends ControlConnectionTestBase {
     Mockito.verify(eventBus).fire(ChannelEvent.controlConnectionFailed(node1));
     Mockito.verify(eventBus).fire(ChannelEvent.controlConnectionFailed(node2));
     // no reconnections at init
-    Mockito.verify(reconnectionPolicy, never()).newSchedule();
+    Mockito.verify(reconnectionPolicy, never()).newNodeSchedule(any(Node.class));
 
     factoryHelper.verifyNoMoreCalls();
   }

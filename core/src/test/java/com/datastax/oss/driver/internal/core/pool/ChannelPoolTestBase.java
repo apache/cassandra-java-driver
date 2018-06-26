@@ -22,6 +22,7 @@ import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.config.DriverConfig;
 import com.datastax.oss.driver.api.core.config.DriverConfigProfile;
 import com.datastax.oss.driver.api.core.connection.ReconnectionPolicy;
+import com.datastax.oss.driver.api.core.metadata.Node;
 import com.datastax.oss.driver.internal.core.channel.ChannelFactory;
 import com.datastax.oss.driver.internal.core.channel.DriverChannel;
 import com.datastax.oss.driver.internal.core.context.EventBus;
@@ -76,7 +77,8 @@ abstract class ChannelPoolTestBase {
     Mockito.when(context.channelFactory()).thenReturn(channelFactory);
 
     Mockito.when(context.reconnectionPolicy()).thenReturn(reconnectionPolicy);
-    Mockito.when(reconnectionPolicy.newSchedule()).thenReturn(reconnectionSchedule);
+    Mockito.when(reconnectionPolicy.newNodeSchedule(any(Node.class)))
+        .thenReturn(reconnectionSchedule);
     // By default, set a large reconnection delay. Tests that care about reconnection will override
     // it.
     Mockito.when(reconnectionSchedule.nextDelay()).thenReturn(Duration.ofDays(1));

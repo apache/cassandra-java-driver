@@ -95,7 +95,8 @@ abstract class ControlConnectionTestBase {
             });
 
     Mockito.when(context.reconnectionPolicy()).thenReturn(reconnectionPolicy);
-    Mockito.when(reconnectionPolicy.newSchedule()).thenReturn(reconnectionSchedule);
+    Mockito.when(reconnectionPolicy.newControlConnectionSchedule())
+        .thenReturn(reconnectionSchedule);
     // By default, set a large reconnection delay. Tests that care about reconnection will override
     // it.
     Mockito.when(reconnectionSchedule.nextDelay()).thenReturn(Duration.ofDays(1));
