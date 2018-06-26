@@ -2,7 +2,7 @@
 
 <!-- Note: contrary to 3.x, insert new entries *first* in their section -->
 
-### 4.0.0-alpha4 (in progress)
+### 4.0.0-beta1 (in progress)
 
 - [improvement] JAVA-1884: Add additional methods from TypeToken to GenericType
 - [improvement] JAVA-1883: Use custom queue implementation for LBP's query plan

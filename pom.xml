@@ -22,7 +22,7 @@
 
   <groupId>com.datastax.oss</groupId>
   <artifactId>java-driver-parent</artifactId>
-  <version>4.0.0-alpha4-SNAPSHOT</version>
+  <version>4.0.0-beta1-SNAPSHOT</version>
   <packaging>pom</packaging>
 
   <name>DataStax Java driver for Apache Cassandra(R)</name>
