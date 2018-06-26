@@ -55,7 +55,7 @@ public class NoopRequestTracker implements RequestTracker {
       @NonNull Throwable error,
       long latencyNanos,
       @NonNull DriverConfigProfile configProfile,
-      Node node) {
+      @NonNull Node node) {
     // nothing to do
   }
 

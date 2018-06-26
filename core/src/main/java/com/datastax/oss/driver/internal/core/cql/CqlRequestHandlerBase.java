@@ -299,8 +299,9 @@ public abstract class CqlRequestHandlerBase implements Throttled {
       if (result.complete(resultSet)) {
         cancelScheduledTasks();
         throttler.signalSuccess(this);
-        long totalLatencyNanos = System.nanoTime() - startTimeNanos;
-        long nodeLatencyNanos = System.nanoTime() - callback.start;
+        long now = System.nanoTime();
+        long totalLatencyNanos = now - startTimeNanos;
+        long nodeLatencyNanos = now - callback.start;
         context
             .requestTracker()
             .onNodeSuccess(statement, nodeLatencyNanos, configProfile, callback.node);

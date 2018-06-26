@@ -22,6 +22,7 @@ import com.datastax.oss.driver.api.core.metadata.Node;
 import com.datastax.oss.driver.api.core.session.Request;
 import com.datastax.oss.driver.internal.core.tracker.RequestLogFormatter;
 import com.datastax.oss.driver.internal.core.tracker.RequestLogger;
+import edu.umd.cs.findbugs.annotations.NonNull;
 
 public class RequestNodeLoggerExample extends RequestLogger {
 
@@ -31,11 +32,11 @@ public class RequestNodeLoggerExample extends RequestLogger {
 
   @Override
   public void onNodeError(
-      Request request,
-      Throwable error,
+      @NonNull Request request,
+      @NonNull Throwable error,
       long latencyNanos,
-      DriverConfigProfile configProfile,
-      Node node) {
+      @NonNull DriverConfigProfile configProfile,
+      @NonNull Node node) {
     if (!configProfile.getBoolean(DefaultDriverOption.REQUEST_LOGGER_ERROR_ENABLED)) {
       return;
     }
@@ -63,7 +64,10 @@ public class RequestNodeLoggerExample extends RequestLogger {
 
   @Override
   public void onNodeSuccess(
-      Request request, long latencyNanos, DriverConfigProfile configProfile, Node node) {
+      @NonNull Request request,
+      long latencyNanos,
+      @NonNull DriverConfigProfile configProfile,
+      @NonNull Node node) {
     boolean successEnabled =
         configProfile.getBoolean(DefaultDriverOption.REQUEST_LOGGER_SUCCESS_ENABLED);
     boolean slowEnabled = configProfile.getBoolean(DefaultDriverOption.REQUEST_LOGGER_SLOW_ENABLED);

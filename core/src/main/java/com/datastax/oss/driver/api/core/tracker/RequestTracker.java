@@ -21,6 +21,7 @@ import com.datastax.oss.driver.api.core.session.Request;
 import com.datastax.oss.driver.api.core.session.Session;
 import com.datastax.oss.driver.api.core.type.reflect.GenericType;
 import edu.umd.cs.findbugs.annotations.NonNull;
+import edu.umd.cs.findbugs.annotations.Nullable;
 
 /** Tracks request execution for a session. */
 public interface RequestTracker extends AutoCloseable {
@@ -52,7 +53,7 @@ public interface RequestTracker extends AutoCloseable {
       @NonNull Throwable error,
       long latencyNanos,
       @NonNull DriverConfigProfile configProfile,
-      Node node);
+      @Nullable Node node);
 
   /**
    * Invoked each time a request fails at the node level. Similar to {@link #onError(Request,
@@ -68,7 +69,7 @@ public interface RequestTracker extends AutoCloseable {
       @NonNull Throwable error,
       long latencyNanos,
       @NonNull DriverConfigProfile configProfile,
-      Node node);
+      @NonNull Node node);
 
   /**
    * Invoked each time a request succeeds at the node level. Similar to {@link #onSuccess(Request,

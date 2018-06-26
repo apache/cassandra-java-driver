@@ -116,7 +116,7 @@ public class RequestLogger implements RequestTracker {
       @NonNull Throwable error,
       long latencyNanos,
       @NonNull DriverConfigProfile configProfile,
-      Node node) {
+      @NonNull Node node) {
     // Nothing to do
   }
 
