@@ -15,23 +15,43 @@
  */
 package com.datastax.oss.driver.api.core.connection;
 
+import com.datastax.oss.driver.api.core.metadata.Node;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import java.time.Duration;
 
 /**
- * Decides how often the driver tries to re-establish lost connections to a node.
+ * Decides how often the driver tries to re-establish lost connections.
  *
- * <p>Each time a connection to a node is lost, a {@link #newSchedule() new schedule} instance gets
- * created. Then {@link ReconnectionSchedule#nextDelay()} will be called each time the driver needs
- * to schedule the next connection attempt. When the node is back to its required number of
- * connections, the schedule will be reset (that is, the next failure will create a fresh schedule
- * instance).
+ * <p>When a reconnection starts, the driver invokes this policy to create a {@link
+ * ReconnectionSchedule ReconnectionSchedule} instance. That schedule's {@link
+ * ReconnectionSchedule#nextDelay() nextDelay()} method will get called each time the driver needs
+ * to program the next connection attempt. When the reconnection succeeds, the schedule is
+ * discarded; if the connection is lost again later, the next reconnection attempt will query the
+ * policy again to obtain a new schedule.
+ *
+ * <p>There are two types of reconnection:
+ *
+ * <ul>
+ *   <li>{@linkplain #newNodeSchedule(Node) for regular node connections}: when the connection pool
+ *       for a node does not have its configured number of connections (see {@code
+ *       advanced.connection.pool.*.size} in the configuration), a reconnection starts for that
+ *       pool.
+ *   <li>{@linkplain #newControlConnectionSchedule() for the control connection}: when the control
+ *       node goes down, a reconnection starts to find another node to replace it.
+ * </ul>
+ *
+ * This interface defines separate methods for those two cases, but implementations are free to
+ * delegate to the same method internally if the same type of schedule can be used.
  */
 public interface ReconnectionPolicy extends AutoCloseable {
 
-  /** Creates a new {@linkplain ReconnectionSchedule schedule}. */
+  /** Creates a new schedule for the given node. */
   @NonNull
-  ReconnectionSchedule newSchedule();
+  ReconnectionSchedule newNodeSchedule(@NonNull Node node);
+
+  /** Creates a new schedule for the control connection. */
+  @NonNull
+  ReconnectionSchedule newControlConnectionSchedule();
 
   /** Called when the cluster that this policy is associated with closes. */
   @Override

@@ -19,7 +19,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.times;
 
 import com.datastax.oss.driver.TestDataProviders;
-import com.datastax.oss.driver.api.core.connection.ReconnectionPolicy;
 import com.datastax.oss.driver.api.core.connection.ReconnectionPolicy.ReconnectionSchedule;
 import com.tngtech.java.junit.dataprovider.DataProviderRunner;
 import com.tngtech.java.junit.dataprovider.UseDataProvider;
@@ -40,7 +39,6 @@ import org.mockito.MockitoAnnotations;
 @RunWith(DataProviderRunner.class)
 public class ReconnectionTest {
 
-  @Mock private ReconnectionPolicy reconnectionPolicy;
   @Mock private ReconnectionSchedule reconnectionSchedule;
   @Mock private Runnable onStartCallback;
   @Mock private Runnable onStopCallback;
@@ -53,8 +51,6 @@ public class ReconnectionTest {
   public void setup() {
     MockitoAnnotations.initMocks(this);
 
-    Mockito.when(reconnectionPolicy.newSchedule()).thenReturn(reconnectionSchedule);
-
     // Unfortunately Netty does not expose EmbeddedEventLoop, so we have to go through a channel
     channel = new EmbeddedChannel();
     EventExecutor eventExecutor = channel.eventLoop();
@@ -64,7 +60,7 @@ public class ReconnectionTest {
         new Reconnection(
             "test",
             eventExecutor,
-            reconnectionPolicy,
+            () -> reconnectionSchedule,
             reconnectionTask,
             onStartCallback,
             onStopCallback);
