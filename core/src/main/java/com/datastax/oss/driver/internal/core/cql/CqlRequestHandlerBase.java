@@ -760,8 +760,6 @@ public abstract class CqlRequestHandlerBase implements Throttled {
       context.requestTracker().onNodeError(statement, error, latencyNanos, configProfile, node);
     }
 
-    private void trackNodeSuccess(Node node) {}
-
     @Override
     public String toString() {
       return logPrefix;
