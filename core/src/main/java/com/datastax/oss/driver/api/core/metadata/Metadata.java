@@ -53,10 +53,10 @@ public interface Metadata {
    * @see DefaultDriverOption#METADATA_SCHEMA_REFRESHED_KEYSPACES
    */
   @NonNull
-  Map<CqlIdentifier, KeyspaceMetadata> getKeyspaces();
+  Map<CqlIdentifier, ? extends KeyspaceMetadata> getKeyspaces();
 
   @NonNull
-  default Optional<KeyspaceMetadata> getKeyspace(@NonNull CqlIdentifier keyspaceId) {
+  default Optional<? extends KeyspaceMetadata> getKeyspace(@NonNull CqlIdentifier keyspaceId) {
     return Optional.ofNullable(getKeyspaces().get(keyspaceId));
   }
 
@@ -65,7 +65,7 @@ public interface Metadata {
    * getKeyspace(CqlIdentifier.fromCql(keyspaceName))}.
    */
   @NonNull
-  default Optional<KeyspaceMetadata> getKeyspace(@NonNull String keyspaceName) {
+  default Optional<? extends KeyspaceMetadata> getKeyspace(@NonNull String keyspaceName) {
     return getKeyspace(CqlIdentifier.fromCql(keyspaceName));
   }
 
@@ -78,5 +78,5 @@ public interface Metadata {
    * @see DefaultDriverOption#METADATA_TOKEN_MAP_ENABLED
    */
   @NonNull
-  Optional<TokenMap> getTokenMap();
+  Optional<? extends TokenMap> getTokenMap();
 }

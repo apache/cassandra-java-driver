@@ -49,7 +49,7 @@ public class SchemaRefresh implements MetadataRefresh {
       DefaultMetadata oldMetadata, boolean tokenMapEnabled, InternalDriverContext context) {
     ImmutableList.Builder<Object> events = ImmutableList.builder();
 
-    Map<CqlIdentifier, KeyspaceMetadata> oldKeyspaces = oldMetadata.getKeyspaces();
+    Map<CqlIdentifier, ? extends KeyspaceMetadata> oldKeyspaces = oldMetadata.getKeyspaces();
     for (CqlIdentifier removedKey : Sets.difference(oldKeyspaces.keySet(), newKeyspaces.keySet())) {
       events.add(KeyspaceChangeEvent.dropped(oldKeyspaces.get(removedKey)));
     }
@@ -132,8 +132,8 @@ public class SchemaRefresh implements MetadataRefresh {
   }
 
   private <K, V> void computeChildEvents(
-      Map<K, V> oldChildren,
-      Map<K, V> newChildren,
+      Map<K, ? extends V> oldChildren,
+      Map<K, ? extends V> newChildren,
       Function<V, Object> newDroppedEvent,
       Function<V, Object> newCreatedEvent,
       BiFunction<V, V, Object> newUpdatedEvent,
@@ -141,7 +141,7 @@ public class SchemaRefresh implements MetadataRefresh {
     for (K removedKey : Sets.difference(oldChildren.keySet(), newChildren.keySet())) {
       events.add(newDroppedEvent.apply(oldChildren.get(removedKey)));
     }
-    for (Map.Entry<K, V> entry : newChildren.entrySet()) {
+    for (Map.Entry<K, ? extends V> entry : newChildren.entrySet()) {
       K key = entry.getKey();
       V newChild = entry.getValue();
       V oldChild = oldChildren.get(key);

@@ -27,7 +27,7 @@ public interface TableMetadata extends RelationMetadata {
   boolean isCompactStorage();
 
   @NonNull
-  Map<CqlIdentifier, IndexMetadata> getIndexes();
+  Map<CqlIdentifier, ? extends IndexMetadata> getIndexes();
 
   @NonNull
   @Override
@@ -82,7 +82,8 @@ public interface TableMetadata extends RelationMetadata {
     if (getClusteringColumns().containsValue(ClusteringOrder.DESC)) {
       builder.andWith().append("CLUSTERING ORDER BY (");
       boolean first = true;
-      for (Map.Entry<ColumnMetadata, ClusteringOrder> entry : getClusteringColumns().entrySet()) {
+      for (Map.Entry<? extends ColumnMetadata, ClusteringOrder> entry :
+          getClusteringColumns().entrySet()) {
         if (first) {
           first = false;
         } else {

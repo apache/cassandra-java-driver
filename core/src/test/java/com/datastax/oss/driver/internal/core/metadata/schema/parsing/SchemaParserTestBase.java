@@ -127,6 +127,8 @@ public abstract class SchemaParserTestBase {
   protected static AdminRow mockLegacyTableRow(String keyspace, String name, String comparator) {
     AdminRow row = Mockito.mock(AdminRow.class);
 
+    Mockito.when(row.contains("table_name")).thenReturn(false);
+
     Mockito.when(row.getString("keyspace_name")).thenReturn(keyspace);
     Mockito.when(row.getString("columnfamily_name")).thenReturn(name);
     Mockito.when(row.getBoolean("is_dense")).thenReturn(false);
@@ -184,6 +186,7 @@ public abstract class SchemaParserTestBase {
     AdminRow row = Mockito.mock(AdminRow.class);
 
     Mockito.when(row.contains("flags")).thenReturn(true);
+    Mockito.when(row.contains("table_name")).thenReturn(true);
 
     Mockito.when(row.getString("keyspace_name")).thenReturn(keyspace);
     Mockito.when(row.getString("table_name")).thenReturn(name);

@@ -88,7 +88,8 @@ public class DescribeIT {
     // connect session to this keyspace.
     session.execute(String.format("USE %s", keyspace.asCql(false)));
 
-    Optional<KeyspaceMetadata> originalKsMeta = session.getMetadata().getKeyspace(keyspace);
+    Optional<? extends KeyspaceMetadata> originalKsMeta =
+        session.getMetadata().getKeyspace(keyspace);
 
     // Usertype 'ztype' with two columns.  Given name to ensure that even though it has an
     // alphabetically later name, it shows up before other user types ('ctype') that depend on it.
@@ -199,7 +200,8 @@ public class DescribeIT {
     assertThat(originalKsMeta.get().getUserDefinedTypes()).isEmpty();
 
     // validate that the exported schema matches what was expected exactly.
-    Optional<KeyspaceMetadata> ks = sessionRule.session().getMetadata().getKeyspace(keyspace);
+    Optional<? extends KeyspaceMetadata> ks =
+        sessionRule.session().getMetadata().getKeyspace(keyspace);
     assertThat(ks.get().describeWithChildren(true).trim()).isEqualTo(expectedCql);
 
     // Also validate that when you create a Session with schema already created that the exported

@@ -31,16 +31,16 @@ public class DefaultSchemaQueriesFactory implements SchemaQueriesFactory {
 
   private static final Logger LOG = LoggerFactory.getLogger(DefaultSchemaQueriesFactory.class);
 
-  private final InternalDriverContext context;
+  protected final InternalDriverContext context;
+  protected final String logPrefix;
 
   public DefaultSchemaQueriesFactory(InternalDriverContext context) {
     this.context = context;
+    this.logPrefix = context.sessionName();
   }
 
   @Override
   public SchemaQueries newInstance(CompletableFuture<Metadata> refreshFuture) {
-    String logPrefix = context.sessionName();
-
     DriverChannel channel = context.controlConnection().channel();
     if (channel == null || channel.closeFuture().isDone()) {
       throw new IllegalStateException("Control channel not available, aborting schema refresh");
@@ -53,6 +53,11 @@ public class DefaultSchemaQueriesFactory implements SchemaQueriesFactory {
               + channel.remoteAddress()
               + ", aborting schema refresh");
     }
+    return newInstance(node, channel, refreshFuture);
+  }
+
+  protected SchemaQueries newInstance(
+      Node node, DriverChannel channel, CompletableFuture<Metadata> refreshFuture) {
     Version version = node.getCassandraVersion();
     if (version == null) {
       LOG.warn(

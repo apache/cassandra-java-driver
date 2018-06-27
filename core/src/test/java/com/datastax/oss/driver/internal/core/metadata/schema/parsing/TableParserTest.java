@@ -25,6 +25,7 @@ import com.datastax.oss.driver.api.core.metadata.schema.IndexMetadata;
 import com.datastax.oss.driver.api.core.metadata.schema.TableMetadata;
 import com.datastax.oss.driver.api.core.type.DataTypes;
 import com.datastax.oss.driver.internal.core.adminrequest.AdminRow;
+import com.datastax.oss.driver.internal.core.metadata.schema.queries.CassandraSchemaRows;
 import com.datastax.oss.driver.internal.core.metadata.schema.queries.SchemaRows;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableList;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableMap;
@@ -81,7 +82,7 @@ public class TableParserTest extends SchemaParserTestBase {
   @Test
   public void should_skip_when_no_column_rows() {
     SchemaRows rows = legacyRows(TABLE_ROW_2_2, Collections.emptyList());
-    TableParser parser = new TableParser(rows, new DataTypeClassNameParser(), context);
+    TableParser parser = new TableParser(rows, context);
     TableMetadata table = parser.parseTable(TABLE_ROW_2_2, KEYSPACE_ID, Collections.emptyMap());
 
     assertThat(table).isNull();
@@ -90,7 +91,7 @@ public class TableParserTest extends SchemaParserTestBase {
   @Test
   public void should_parse_legacy_tables() {
     SchemaRows rows = legacyRows(TABLE_ROW_2_2, COLUMN_ROWS_2_2);
-    TableParser parser = new TableParser(rows, new DataTypeClassNameParser(), context);
+    TableParser parser = new TableParser(rows, context);
     TableMetadata table = parser.parseTable(TABLE_ROW_2_2, KEYSPACE_ID, Collections.emptyMap());
 
     checkTable(table);
@@ -102,7 +103,7 @@ public class TableParserTest extends SchemaParserTestBase {
   @Test
   public void should_parse_modern_tables() {
     SchemaRows rows = modernRows(TABLE_ROW_3_0, COLUMN_ROWS_3_0, INDEX_ROWS_3_0);
-    TableParser parser = new TableParser(rows, new DataTypeCqlNameParser(), context);
+    TableParser parser = new TableParser(rows, context);
     TableMetadata table = parser.parseTable(TABLE_ROW_3_0, KEYSPACE_ID, Collections.emptyMap());
 
     checkTable(table);
@@ -127,7 +128,7 @@ public class TableParserTest extends SchemaParserTestBase {
     assertThat(pk1.getType()).isEqualTo(DataTypes.TEXT);
 
     assertThat(table.getClusteringColumns().entrySet()).hasSize(2);
-    Iterator<ColumnMetadata> clusteringColumnsIterator =
+    Iterator<? extends ColumnMetadata> clusteringColumnsIterator =
         table.getClusteringColumns().keySet().iterator();
     ColumnMetadata clusteringColumn1 = clusteringColumnsIterator.next();
     assertThat(clusteringColumn1.getName().asInternal()).isEqualTo("cc1");
@@ -176,8 +177,8 @@ public class TableParserTest extends SchemaParserTestBase {
       Iterable<AdminRow> columnRows,
       Iterable<AdminRow> indexesRows,
       boolean isCassandraV3) {
-    SchemaRows.Builder builder =
-        new SchemaRows.Builder(isCassandraV3, null, "test")
+    CassandraSchemaRows.Builder builder =
+        new CassandraSchemaRows.Builder(isCassandraV3, null, "test")
             .withTables(ImmutableList.of(tableRow))
             .withColumns(columnRows);
     if (indexesRows != null) {

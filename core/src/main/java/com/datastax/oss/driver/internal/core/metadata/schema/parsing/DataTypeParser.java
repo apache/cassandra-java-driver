@@ -26,7 +26,7 @@ import java.util.List;
 import java.util.Map;
 
 /** Parses data types from their string representation in schema tables. */
-interface DataTypeParser {
+public interface DataTypeParser {
 
   /**
    * @param userTypes the UDTs in the current keyspace, if we know them already. This is used to

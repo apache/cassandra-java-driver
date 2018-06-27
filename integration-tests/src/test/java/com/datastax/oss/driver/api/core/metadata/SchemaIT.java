@@ -41,7 +41,7 @@ public class SchemaIT {
 
   @Test
   public void should_expose_system_and_test_keyspace() {
-    Map<CqlIdentifier, KeyspaceMetadata> keyspaces =
+    Map<CqlIdentifier, ? extends KeyspaceMetadata> keyspaces =
         sessionRule.session().getMetadata().getKeyspaces();
     assertThat(keyspaces)
         .containsKeys(

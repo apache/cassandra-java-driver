@@ -36,7 +36,7 @@ import net.jcip.annotations.NotThreadSafe;
  * obviously not expose this publicly.
  */
 @NotThreadSafe
-class SimpleJsonParser {
+public class SimpleJsonParser {
 
   private final String input;
   private int idx;
@@ -45,7 +45,7 @@ class SimpleJsonParser {
     this.input = input;
   }
 
-  static List<String> parseStringList(String input) {
+  public static List<String> parseStringList(String input) {
     if (input == null || input.isEmpty()) {
       return Collections.emptyList();
     }
@@ -73,7 +73,7 @@ class SimpleJsonParser {
     }
   }
 
-  static Map<String, String> parseStringMap(String input) {
+  public static Map<String, String> parseStringMap(String input) {
     if (input == null || input.isEmpty()) {
       return Collections.emptyMap();
     }

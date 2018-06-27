@@ -30,6 +30,6 @@ public class DefaultSchemaParserFactory implements SchemaParserFactory {
 
   @Override
   public SchemaParser newInstance(SchemaRows rows) {
-    return new SchemaParser(rows, context);
+    return new CassandraSchemaParser(rows, context);
   }
 }

@@ -23,6 +23,7 @@ import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
 import com.datastax.oss.driver.internal.core.metrics.MetricsFactory;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableMap;
 import java.net.InetSocketAddress;
+import java.util.Collections;
 import java.util.Map;
 import java.util.UUID;
 import org.junit.Before;
@@ -51,7 +52,8 @@ public class AddNodeRefreshTest {
   @Test
   public void should_add_new_node() {
     // Given
-    DefaultMetadata oldMetadata = new DefaultMetadata(ImmutableMap.of(ADDRESS1, node1));
+    DefaultMetadata oldMetadata =
+        new DefaultMetadata(ImmutableMap.of(ADDRESS1, node1), Collections.emptyMap(), null);
     UUID hostId = Uuids.random();
     UUID schemaVersion = Uuids.random();
     DefaultNodeInfo newNodeInfo =
@@ -81,7 +83,8 @@ public class AddNodeRefreshTest {
   @Test
   public void should_not_add_existing_node() {
     // Given
-    DefaultMetadata oldMetadata = new DefaultMetadata(ImmutableMap.of(ADDRESS1, node1));
+    DefaultMetadata oldMetadata =
+        new DefaultMetadata(ImmutableMap.of(ADDRESS1, node1), Collections.emptyMap(), null);
     DefaultNodeInfo newNodeInfo =
         DefaultNodeInfo.builder()
             .withConnectAddress(ADDRESS1)

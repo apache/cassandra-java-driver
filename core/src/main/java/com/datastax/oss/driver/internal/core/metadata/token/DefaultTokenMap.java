@@ -49,7 +49,7 @@ public class DefaultTokenMap implements TokenMap {
 
   public static DefaultTokenMap build(
       @NonNull Collection<Node> nodes,
-      @NonNull Collection<KeyspaceMetadata> keyspaces,
+      @NonNull Collection<? extends KeyspaceMetadata> keyspaces,
       @NonNull TokenFactory tokenFactory,
       @NonNull ReplicationStrategyFactory replicationStrategyFactory,
       @NonNull String logPrefix) {
@@ -191,7 +191,7 @@ public class DefaultTokenMap implements TokenMap {
   /** Called when only the schema has changed. */
   public DefaultTokenMap refresh(
       @NonNull Collection<Node> nodes,
-      @NonNull Collection<KeyspaceMetadata> keyspaces,
+      @NonNull Collection<? extends KeyspaceMetadata> keyspaces,
       @NonNull ReplicationStrategyFactory replicationStrategyFactory) {
 
     Map<CqlIdentifier, Map<String, String>> newReplicationConfigs =
@@ -266,7 +266,7 @@ public class DefaultTokenMap implements TokenMap {
   }
 
   private static Map<CqlIdentifier, Map<String, String>> buildReplicationConfigs(
-      Collection<KeyspaceMetadata> keyspaces, String logPrefix) {
+      Collection<? extends KeyspaceMetadata> keyspaces, String logPrefix) {
     ImmutableMap.Builder<CqlIdentifier, Map<String, String>> builder = ImmutableMap.builder();
     for (KeyspaceMetadata keyspace : keyspaces) {
       builder.put(keyspace.getName(), keyspace.getReplication());

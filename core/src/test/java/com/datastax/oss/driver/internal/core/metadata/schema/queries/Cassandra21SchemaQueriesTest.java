@@ -75,27 +75,27 @@ public class Cassandra21SchemaQueriesTest extends SchemaQueriesTest {
         .isSuccess(
             rows -> {
               // Keyspace
-              assertThat(rows.keyspaces).hasSize(2);
-              assertThat(rows.keyspaces.get(0).getString("keyspace_name")).isEqualTo("ks1");
-              assertThat(rows.keyspaces.get(1).getString("keyspace_name")).isEqualTo("ks2");
+              assertThat(rows.keyspaces()).hasSize(2);
+              assertThat(rows.keyspaces().get(0).getString("keyspace_name")).isEqualTo("ks1");
+              assertThat(rows.keyspaces().get(1).getString("keyspace_name")).isEqualTo("ks2");
 
               // Types
-              assertThat(rows.types.keySet()).containsOnly(KS1_ID);
-              assertThat(rows.types.get(KS1_ID)).hasSize(1);
-              assertThat(rows.types.get(KS1_ID).iterator().next().getString("type_name"))
+              assertThat(rows.types().keySet()).containsOnly(KS1_ID);
+              assertThat(rows.types().get(KS1_ID)).hasSize(1);
+              assertThat(rows.types().get(KS1_ID).iterator().next().getString("type_name"))
                   .isEqualTo("type");
 
               // Tables
-              assertThat(rows.tables.keySet()).containsOnly(KS1_ID);
-              assertThat(rows.tables.get(KS1_ID)).hasSize(1);
-              assertThat(rows.tables.get(KS1_ID).iterator().next().getString("columnfamily_name"))
+              assertThat(rows.tables().keySet()).containsOnly(KS1_ID);
+              assertThat(rows.tables().get(KS1_ID)).hasSize(1);
+              assertThat(rows.tables().get(KS1_ID).iterator().next().getString("columnfamily_name"))
                   .isEqualTo("foo");
 
               // Rows
-              assertThat(rows.columns.keySet()).containsOnly(KS1_ID);
-              assertThat(rows.columns.get(KS1_ID).keySet()).containsOnly(FOO_ID);
+              assertThat(rows.columns().keySet()).containsOnly(KS1_ID);
+              assertThat(rows.columns().get(KS1_ID).keySet()).containsOnly(FOO_ID);
               assertThat(
-                      rows.columns
+                      rows.columns()
                           .get(KS1_ID)
                           .get(FOO_ID)
                           .iterator()
@@ -104,9 +104,9 @@ public class Cassandra21SchemaQueriesTest extends SchemaQueriesTest {
                   .isEqualTo("k");
 
               // No views, functions or aggregates in this version
-              assertThat(rows.views.keySet()).isEmpty();
-              assertThat(rows.functions.keySet()).isEmpty();
-              assertThat(rows.aggregates.keySet()).isEmpty();
+              assertThat(rows.views().keySet()).isEmpty();
+              assertThat(rows.functions().keySet()).isEmpty();
+              assertThat(rows.aggregates().keySet()).isEmpty();
             });
   }
 

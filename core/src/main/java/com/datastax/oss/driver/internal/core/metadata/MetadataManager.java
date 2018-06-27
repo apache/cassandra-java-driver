@@ -69,13 +69,17 @@ public class MetadataManager implements AsyncAutoCloseable {
   private volatile Set<InetSocketAddress> providedContactPoints;
 
   public MetadataManager(InternalDriverContext context) {
+    this(context, DefaultMetadata.EMPTY);
+  }
+
+  protected MetadataManager(InternalDriverContext context, DefaultMetadata initialMetadata) {
     this.context = context;
+    this.metadata = initialMetadata;
     this.logPrefix = context.sessionName();
     this.adminExecutor = context.nettyOptions().adminEventExecutorGroup().next();
     this.config = context.config().getDefaultProfile();
     this.singleThreaded = new SingleThreaded(context, config);
     this.controlConnection = context.controlConnection();
-    this.metadata = DefaultMetadata.EMPTY;
     this.schemaEnabledInConfig = config.getBoolean(DefaultDriverOption.METADATA_SCHEMA_ENABLED);
     this.refreshedKeyspaces =
         config.getStringList(
@@ -417,7 +421,7 @@ public class MetadataManager implements AsyncAutoCloseable {
 
     private Void parseAndApplySchemaRows(SchemaRows schemaRows) {
       assert adminExecutor.inEventLoop();
-      assert schemaRows.refreshFuture == currentSchemaRefresh;
+      assert schemaRows.refreshFuture() == currentSchemaRefresh;
       try {
         SchemaRefresh schemaRefresh = schemaParserFactory.newInstance(schemaRows).parse();
         long start = System.nanoTime();

@@ -19,6 +19,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.CqlSession;
+import com.datastax.oss.driver.api.core.metadata.schema.ColumnMetadata;
 import com.datastax.oss.driver.api.core.metadata.schema.SchemaChangeListener;
 import com.datastax.oss.driver.api.core.type.DataTypes;
 import com.datastax.oss.driver.api.testinfra.CassandraRequirement;
@@ -34,6 +35,7 @@ import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import org.assertj.core.api.Assertions;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -138,7 +140,8 @@ public class SchemaChangesIT {
               .hasValueSatisfying(
                   k -> {
                     assertThat(k.getType()).isEqualTo(DataTypes.INT);
-                    assertThat(table.getPartitionKey()).containsExactly(k);
+                    Assertions.<ColumnMetadata>assertThat(table.getPartitionKey())
+                        .containsExactly(k);
                   });
           assertThat(table.getClusteringColumns()).isEmpty();
         },
@@ -418,7 +421,7 @@ public class SchemaChangesIT {
   private <T> void should_handle_creation(
       String beforeStatement,
       String createStatement,
-      Function<Metadata, Optional<T>> extract,
+      Function<Metadata, Optional<? extends T>> extract,
       Consumer<T> verifyMetadata,
       BiConsumer<SchemaChangeListener, T> verifyListener,
       CqlIdentifier... keyspaces) {
@@ -467,7 +470,7 @@ public class SchemaChangesIT {
   private <T> void should_handle_drop(
       Iterable<String> beforeStatements,
       String dropStatement,
-      Function<Metadata, Optional<T>> extract,
+      Function<Metadata, Optional<? extends T>> extract,
       BiConsumer<SchemaChangeListener, T> verifyListener,
       CqlIdentifier... keyspaces) {
 
@@ -510,7 +513,7 @@ public class SchemaChangesIT {
   private <T> void should_handle_update(
       Iterable<String> beforeStatements,
       String updateStatement,
-      Function<Metadata, Optional<T>> extract,
+      Function<Metadata, Optional<? extends T>> extract,
       Consumer<T> verifyNewMetadata,
       TriConsumer<SchemaChangeListener, T, T> verifyListener,
       CqlIdentifier... keyspaces) {
@@ -559,7 +562,7 @@ public class SchemaChangesIT {
       Iterable<String> beforeStatements,
       String dropStatement,
       String recreateStatement,
-      Function<Metadata, Optional<T>> extract,
+      Function<Metadata, Optional<? extends T>> extract,
       Consumer<T> verifyNewMetadata,
       TriConsumer<SchemaChangeListener, T, T> verifyListener,
       CqlIdentifier... keyspaces) {

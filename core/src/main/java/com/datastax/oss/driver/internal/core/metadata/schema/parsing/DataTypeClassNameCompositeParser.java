@@ -65,11 +65,11 @@ public class DataTypeClassNameCompositeParser extends DataTypeClassNameParser {
     return new ParseResult(true, types, reversed, collections);
   }
 
-  static class ParseResult {
-    final boolean isComposite;
-    final List<DataType> types;
-    final List<Boolean> reversed;
-    final Map<String, DataType> collections;
+  public static class ParseResult {
+    public final boolean isComposite;
+    public final List<DataType> types;
+    public final List<Boolean> reversed;
+    public final Map<String, DataType> collections;
 
     private ParseResult(DataType type, boolean reversed) {
       this(
