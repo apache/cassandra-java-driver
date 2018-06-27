@@ -33,14 +33,11 @@ import net.jcip.annotations.ThreadSafe;
 public abstract class RelationParser {
 
   protected final SchemaRows rows;
-  protected final DataTypeParser dataTypeParser;
   protected final InternalDriverContext context;
   protected final String logPrefix;
 
-  protected RelationParser(
-      SchemaRows rows, DataTypeParser dataTypeParser, InternalDriverContext context) {
+  protected RelationParser(SchemaRows rows, InternalDriverContext context) {
     this.rows = rows;
-    this.dataTypeParser = dataTypeParser;
     this.context = context;
     this.logPrefix = context.sessionName();
   }

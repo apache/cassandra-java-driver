@@ -45,19 +45,16 @@ import org.slf4j.LoggerFactory;
 @Immutable
 public class DefaultMetadata implements Metadata {
   private static final Logger LOG = LoggerFactory.getLogger(DefaultMetadata.class);
-  public static DefaultMetadata EMPTY = new DefaultMetadata(Collections.emptyMap());
+  public static DefaultMetadata EMPTY =
+      new DefaultMetadata(Collections.emptyMap(), Collections.emptyMap(), null);
 
-  private final Map<InetSocketAddress, Node> nodes;
-  private final Map<CqlIdentifier, KeyspaceMetadata> keyspaces;
-  private final TokenMap tokenMap;
+  protected final Map<InetSocketAddress, Node> nodes;
+  protected final Map<CqlIdentifier, ? extends KeyspaceMetadata> keyspaces;
+  protected final TokenMap tokenMap;
 
-  public DefaultMetadata(Map<InetSocketAddress, Node> nodes) {
-    this(ImmutableMap.copyOf(nodes), Collections.emptyMap(), null);
-  }
-
-  private DefaultMetadata(
+  protected DefaultMetadata(
       Map<InetSocketAddress, Node> nodes,
-      Map<CqlIdentifier, KeyspaceMetadata> keyspaces,
+      Map<CqlIdentifier, ? extends KeyspaceMetadata> keyspaces,
       TokenMap tokenMap) {
     this.nodes = nodes;
     this.keyspaces = keyspaces;
@@ -72,7 +69,7 @@ public class DefaultMetadata implements Metadata {
 
   @NonNull
   @Override
-  public Map<CqlIdentifier, KeyspaceMetadata> getKeyspaces() {
+  public Map<CqlIdentifier, ? extends KeyspaceMetadata> getKeyspaces() {
     return keyspaces;
   }
 
@@ -121,9 +118,9 @@ public class DefaultMetadata implements Metadata {
   }
 
   @Nullable
-  private TokenMap rebuildTokenMap(
+  protected TokenMap rebuildTokenMap(
       Map<InetSocketAddress, Node> newNodes,
-      Map<CqlIdentifier, KeyspaceMetadata> newKeyspaces,
+      Map<CqlIdentifier, ? extends KeyspaceMetadata> newKeyspaces,
       boolean tokenMapEnabled,
       boolean forceFullRebuild,
       TokenFactory tokenFactory,

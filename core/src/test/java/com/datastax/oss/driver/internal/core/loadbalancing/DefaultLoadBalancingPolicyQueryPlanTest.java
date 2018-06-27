@@ -63,7 +63,7 @@ public class DefaultLoadBalancingPolicyQueryPlanTest extends DefaultLoadBalancin
 
     Mockito.when(context.metadataManager()).thenReturn(metadataManager);
     Mockito.when(metadataManager.getMetadata()).thenReturn(metadata);
-    Mockito.when(metadata.getTokenMap()).thenReturn(Optional.of(tokenMap));
+    Mockito.when(metadata.getTokenMap()).thenAnswer(invocation -> Optional.of(this.tokenMap));
 
     // Use a subclass to disable shuffling, we just spy to make sure that the shuffling method was
     // called (makes tests easier)

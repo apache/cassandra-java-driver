@@ -18,193 +18,41 @@ package com.datastax.oss.driver.internal.core.metadata.schema.queries;
 import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.metadata.Metadata;
 import com.datastax.oss.driver.internal.core.adminrequest.AdminRow;
-import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableList;
-import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableListMultimap;
-import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableMap;
-import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableMultimap;
+import com.datastax.oss.driver.internal.core.metadata.schema.parsing.DataTypeParser;
 import com.datastax.oss.driver.shaded.guava.common.collect.Multimap;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
-import net.jcip.annotations.Immutable;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
- * Gathers all the rows returned by the queries for a schema refresh, categorizing them by
- * keyspace/table where relevant.
+ * The system rows returned by the queries for a schema refresh, categorized by keyspace/table where
+ * relevant.
+ *
+ * <p>Implementations must be thread-safe.
  */
-@Immutable
-public class SchemaRows {
+public interface SchemaRows {
 
-  public final boolean isCassandraV3;
-  public final CompletableFuture<Metadata> refreshFuture;
-  public final List<AdminRow> keyspaces;
-  public final Multimap<CqlIdentifier, AdminRow> tables;
-  public final Multimap<CqlIdentifier, AdminRow> views;
-  public final Multimap<CqlIdentifier, AdminRow> types;
-  public final Multimap<CqlIdentifier, AdminRow> functions;
-  public final Multimap<CqlIdentifier, AdminRow> aggregates;
-  public final Map<CqlIdentifier, Multimap<CqlIdentifier, AdminRow>> columns;
-  public final Map<CqlIdentifier, Multimap<CqlIdentifier, AdminRow>> indexes;
+  List<AdminRow> keyspaces();
 
-  private SchemaRows(
-      boolean isCassandraV3,
-      CompletableFuture<Metadata> refreshFuture,
-      List<AdminRow> keyspaces,
-      Multimap<CqlIdentifier, AdminRow> tables,
-      Multimap<CqlIdentifier, AdminRow> views,
-      Map<CqlIdentifier, Multimap<CqlIdentifier, AdminRow>> columns,
-      Map<CqlIdentifier, Multimap<CqlIdentifier, AdminRow>> indexes,
-      Multimap<CqlIdentifier, AdminRow> types,
-      Multimap<CqlIdentifier, AdminRow> functions,
-      Multimap<CqlIdentifier, AdminRow> aggregates) {
-    this.isCassandraV3 = isCassandraV3;
-    this.refreshFuture = refreshFuture;
-    this.keyspaces = keyspaces;
-    this.tables = tables;
-    this.views = views;
-    this.columns = columns;
-    this.indexes = indexes;
-    this.types = types;
-    this.functions = functions;
-    this.aggregates = aggregates;
-  }
+  Multimap<CqlIdentifier, AdminRow> tables();
 
-  public static class Builder {
-    private static final Logger LOG = LoggerFactory.getLogger(Builder.class);
+  Multimap<CqlIdentifier, AdminRow> views();
 
-    private final boolean isCassandraV3;
-    private final CompletableFuture<Metadata> refreshFuture;
-    private final String tableNameColumn;
-    private final String logPrefix;
-    private final ImmutableList.Builder<AdminRow> keyspacesBuilder = ImmutableList.builder();
-    private final ImmutableMultimap.Builder<CqlIdentifier, AdminRow> tablesBuilder =
-        ImmutableListMultimap.builder();
-    private final ImmutableMultimap.Builder<CqlIdentifier, AdminRow> viewsBuilder =
-        ImmutableListMultimap.builder();
-    private final ImmutableMultimap.Builder<CqlIdentifier, AdminRow> typesBuilder =
-        ImmutableListMultimap.builder();
-    private final ImmutableMultimap.Builder<CqlIdentifier, AdminRow> functionsBuilder =
-        ImmutableListMultimap.builder();
-    private final ImmutableMultimap.Builder<CqlIdentifier, AdminRow> aggregatesBuilder =
-        ImmutableListMultimap.builder();
-    private final Map<CqlIdentifier, ImmutableMultimap.Builder<CqlIdentifier, AdminRow>>
-        columnsBuilders = new LinkedHashMap<>();
-    private final Map<CqlIdentifier, ImmutableMultimap.Builder<CqlIdentifier, AdminRow>>
-        indexesBuilders = new LinkedHashMap<>();
+  Multimap<CqlIdentifier, AdminRow> types();
 
-    public Builder(
-        boolean isCassandraV3, CompletableFuture<Metadata> refreshFuture, String logPrefix) {
-      this.isCassandraV3 = isCassandraV3;
-      this.refreshFuture = refreshFuture;
-      this.logPrefix = logPrefix;
-      this.tableNameColumn = isCassandraV3 ? "table_name" : "columnfamily_name";
-    }
+  Multimap<CqlIdentifier, AdminRow> functions();
 
-    public Builder withKeyspaces(Iterable<AdminRow> rows) {
-      keyspacesBuilder.addAll(rows);
-      return this;
-    }
+  Multimap<CqlIdentifier, AdminRow> aggregates();
 
-    public Builder withTables(Iterable<AdminRow> rows) {
-      for (AdminRow row : rows) {
-        putByKeyspace(row, tablesBuilder);
-      }
-      return this;
-    }
+  Map<CqlIdentifier, Multimap<CqlIdentifier, AdminRow>> columns();
 
-    public Builder withViews(Iterable<AdminRow> rows) {
-      for (AdminRow row : rows) {
-        putByKeyspace(row, viewsBuilder);
-      }
-      return this;
-    }
+  Map<CqlIdentifier, Multimap<CqlIdentifier, AdminRow>> indexes();
 
-    public Builder withTypes(Iterable<AdminRow> rows) {
-      for (AdminRow row : rows) {
-        putByKeyspace(row, typesBuilder);
-      }
-      return this;
-    }
+  DataTypeParser dataTypeParser();
 
-    public Builder withFunctions(Iterable<AdminRow> rows) {
-      for (AdminRow row : rows) {
-        putByKeyspace(row, functionsBuilder);
-      }
-      return this;
-    }
-
-    public Builder withAggregates(Iterable<AdminRow> rows) {
-      for (AdminRow row : rows) {
-        putByKeyspace(row, aggregatesBuilder);
-      }
-      return this;
-    }
-
-    public Builder withColumns(Iterable<AdminRow> rows) {
-      for (AdminRow row : rows) {
-        putByKeyspaceAndTable(row, columnsBuilders);
-      }
-      return this;
-    }
-
-    public Builder withIndexes(Iterable<AdminRow> rows) {
-      for (AdminRow row : rows) {
-        putByKeyspaceAndTable(row, indexesBuilders);
-      }
-      return this;
-    }
-
-    private void putByKeyspace(
-        AdminRow row, ImmutableMultimap.Builder<CqlIdentifier, AdminRow> builder) {
-      String keyspace = row.getString("keyspace_name");
-      if (keyspace == null) {
-        LOG.warn("[{}] Skipping system row with missing keyspace name", logPrefix);
-      } else {
-        builder.put(CqlIdentifier.fromInternal(keyspace), row);
-      }
-    }
-
-    private void putByKeyspaceAndTable(
-        AdminRow row,
-        Map<CqlIdentifier, ImmutableMultimap.Builder<CqlIdentifier, AdminRow>> builders) {
-      String keyspace = row.getString("keyspace_name");
-      String table = row.getString(tableNameColumn);
-      if (keyspace == null) {
-        LOG.warn("[{}] Skipping system row with missing keyspace name", logPrefix);
-      } else if (table == null) {
-        LOG.warn("[{}] Skipping system row with missing table name", logPrefix);
-      } else {
-        ImmutableMultimap.Builder<CqlIdentifier, AdminRow> builder =
-            builders.computeIfAbsent(
-                CqlIdentifier.fromInternal(keyspace), s -> ImmutableListMultimap.builder());
-        builder.put(CqlIdentifier.fromInternal(table), row);
-      }
-    }
-
-    public SchemaRows build() {
-      return new SchemaRows(
-          isCassandraV3,
-          refreshFuture,
-          keyspacesBuilder.build(),
-          tablesBuilder.build(),
-          viewsBuilder.build(),
-          build(columnsBuilders),
-          build(indexesBuilders),
-          typesBuilder.build(),
-          functionsBuilder.build(),
-          aggregatesBuilder.build());
-    }
-
-    private static <K1, K2, V> Map<K1, Multimap<K2, V>> build(
-        Map<K1, ImmutableMultimap.Builder<K2, V>> builders) {
-      ImmutableMap.Builder<K1, Multimap<K2, V>> builder = ImmutableMap.builder();
-      for (Map.Entry<K1, ImmutableMultimap.Builder<K2, V>> entry : builders.entrySet()) {
-        builder.put(entry.getKey(), entry.getValue().build());
-      }
-      return builder.build();
-    }
-  }
+  /**
+   * The future to complete when the schema refresh is complete (here just to be propagated further
+   * down the chain).
+   */
+  CompletableFuture<Metadata> refreshFuture();
 }

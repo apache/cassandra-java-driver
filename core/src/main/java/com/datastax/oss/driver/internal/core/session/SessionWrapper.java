@@ -74,13 +74,13 @@ public class SessionWrapper implements Session {
 
   @NonNull
   @Override
-  public CompletionStage<Metadata> setSchemaMetadataEnabled(@Nullable Boolean newValue) {
+  public CompletionStage<? extends Metadata> setSchemaMetadataEnabled(@Nullable Boolean newValue) {
     return delegate.setSchemaMetadataEnabled(newValue);
   }
 
   @NonNull
   @Override
-  public CompletionStage<Metadata> refreshSchemaAsync() {
+  public CompletionStage<? extends Metadata> refreshSchemaAsync() {
     return delegate.refreshSchemaAsync();
   }
 

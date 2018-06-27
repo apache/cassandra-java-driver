@@ -18,11 +18,12 @@ package com.datastax.oss.driver.internal.core;
 import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableList;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableMap;
+import java.util.List;
 import java.util.Map;
 
 public class CqlIdentifiers {
 
-  public static Iterable<CqlIdentifier> wrap(Iterable<String> in) {
+  public static List<CqlIdentifier> wrap(Iterable<String> in) {
     ImmutableList.Builder<CqlIdentifier> out = ImmutableList.builder();
     for (String name : in) {
       out.add(CqlIdentifier.fromCql(name));

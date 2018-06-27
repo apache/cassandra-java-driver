@@ -22,6 +22,7 @@ import com.datastax.oss.driver.api.core.metadata.schema.FunctionSignature;
 import com.datastax.oss.driver.api.core.metadata.schema.KeyspaceMetadata;
 import com.datastax.oss.driver.api.core.type.DataTypes;
 import com.datastax.oss.driver.internal.core.metadata.MetadataRefresh;
+import com.datastax.oss.driver.internal.core.metadata.schema.queries.CassandraSchemaRows;
 import com.datastax.oss.driver.internal.core.metadata.schema.queries.SchemaRows;
 import com.datastax.oss.driver.internal.core.metadata.schema.refresh.SchemaRefresh;
 import com.datastax.oss.driver.internal.core.type.codec.registry.DefaultCodecRegistry;
@@ -135,10 +136,10 @@ public class SchemaParserTest extends SchemaParserTestBase {
     assertThat(ks2.getUserDefinedTypes()).hasSize(1).containsKey(CqlIdentifier.fromInternal("t2"));
   }
 
-  private MetadataRefresh parse(Consumer<SchemaRows.Builder> builderConfig) {
-    SchemaRows.Builder builder = new SchemaRows.Builder(true, null, "test");
+  private MetadataRefresh parse(Consumer<CassandraSchemaRows.Builder> builderConfig) {
+    CassandraSchemaRows.Builder builder = new CassandraSchemaRows.Builder(true, null, "test");
     builderConfig.accept(builder);
     SchemaRows rows = builder.build();
-    return new SchemaParser(rows, context).parse();
+    return new CassandraSchemaParser(rows, context).parse();
   }
 }

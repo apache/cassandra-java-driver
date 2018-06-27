@@ -23,6 +23,7 @@ import com.datastax.oss.driver.internal.core.metrics.MetricsFactory;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableList;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableMap;
 import java.net.InetSocketAddress;
+import java.util.Collections;
 import java.util.UUID;
 import org.junit.Before;
 import org.junit.Test;
@@ -58,7 +59,8 @@ public class FullNodeListRefreshTest {
   public void should_add_and_remove_nodes() {
     // Given
     DefaultMetadata oldMetadata =
-        new DefaultMetadata(ImmutableMap.of(ADDRESS1, node1, ADDRESS2, node2));
+        new DefaultMetadata(
+            ImmutableMap.of(ADDRESS1, node1, ADDRESS2, node2), Collections.emptyMap(), null);
     Iterable<NodeInfo> newInfos =
         ImmutableList.of(
             DefaultNodeInfo.builder().withConnectAddress(ADDRESS2).build(),
@@ -78,7 +80,8 @@ public class FullNodeListRefreshTest {
   public void should_update_existing_nodes() {
     // Given
     DefaultMetadata oldMetadata =
-        new DefaultMetadata(ImmutableMap.of(ADDRESS1, node1, ADDRESS2, node2));
+        new DefaultMetadata(
+            ImmutableMap.of(ADDRESS1, node1, ADDRESS2, node2), Collections.emptyMap(), null);
 
     UUID hostId1 = Uuids.random();
     UUID hostId2 = Uuids.random();

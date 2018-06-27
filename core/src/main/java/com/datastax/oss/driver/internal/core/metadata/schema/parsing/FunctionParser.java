@@ -32,7 +32,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 @ThreadSafe
-class FunctionParser {
+public class FunctionParser {
 
   private static final Logger LOG = LoggerFactory.getLogger(FunctionParser.class);
 
@@ -40,13 +40,13 @@ class FunctionParser {
   private final InternalDriverContext context;
   private final String logPrefix;
 
-  FunctionParser(DataTypeParser dataTypeParser, InternalDriverContext context) {
+  public FunctionParser(DataTypeParser dataTypeParser, InternalDriverContext context) {
     this.dataTypeParser = dataTypeParser;
     this.context = context;
     this.logPrefix = context.sessionName();
   }
 
-  FunctionMetadata parseFunction(
+  public FunctionMetadata parseFunction(
       AdminRow row,
       CqlIdentifier keyspaceId,
       Map<CqlIdentifier, UserDefinedType> userDefinedTypes) {

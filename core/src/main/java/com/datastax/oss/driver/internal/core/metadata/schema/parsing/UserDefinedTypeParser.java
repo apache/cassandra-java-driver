@@ -39,11 +39,11 @@ import java.util.Map;
 import net.jcip.annotations.ThreadSafe;
 
 @ThreadSafe
-class UserDefinedTypeParser {
+public class UserDefinedTypeParser {
   private final DataTypeParser dataTypeParser;
   private final InternalDriverContext context;
 
-  UserDefinedTypeParser(DataTypeParser dataTypeParser, InternalDriverContext context) {
+  public UserDefinedTypeParser(DataTypeParser dataTypeParser, InternalDriverContext context) {
     this.dataTypeParser = dataTypeParser;
     this.context = context;
   }
@@ -54,7 +54,7 @@ class UserDefinedTypeParser {
    * order to properly build the definitions, we need to do a topological sort of the rows first, so
    * that each type is parsed after its dependencies.
    */
-  Map<CqlIdentifier, UserDefinedType> parse(
+  public Map<CqlIdentifier, UserDefinedType> parse(
       Collection<AdminRow> typeRows, CqlIdentifier keyspaceId) {
     if (typeRows.isEmpty()) {
       return Collections.emptyMap();

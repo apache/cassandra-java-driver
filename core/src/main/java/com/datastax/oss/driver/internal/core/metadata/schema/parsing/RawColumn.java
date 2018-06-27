@@ -24,6 +24,7 @@ import edu.umd.cs.findbugs.annotations.NonNull;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.ListIterator;
 import java.util.Map;
 import net.jcip.annotations.NotThreadSafe;
 
@@ -32,56 +33,22 @@ import net.jcip.annotations.NotThreadSafe;
  * instances.
  */
 @NotThreadSafe
-class RawColumn implements Comparable<RawColumn> {
+public class RawColumn implements Comparable<RawColumn> {
 
-  static List<RawColumn> toRawColumns(
-      Collection<AdminRow> rows,
-      CqlIdentifier keyspaceId,
-      Map<CqlIdentifier, UserDefinedType> userTypes) {
-    if (rows.isEmpty()) {
-      return Collections.emptyList();
-    } else {
-      // Use a mutable list, we might remove some elements later
-      List<RawColumn> result = Lists.newArrayListWithExpectedSize(rows.size());
-      for (AdminRow row : rows) {
-        result.add(new RawColumn(row, keyspaceId, userTypes));
-      }
-      return result;
-    }
-  }
+  public static final String KIND_PARTITION_KEY = "partition_key";
+  public static final String KIND_CLUSTERING_COLUMN = "clustering";
+  public static final String KIND_REGULAR = "regular";
+  public static final String KIND_COMPACT_VALUE = "compact_value";
+  public static final String KIND_STATIC = "static";
 
-  enum Kind {
-    PARTITION_KEY,
-    CLUSTERING_COLUMN,
-    REGULAR,
-    COMPACT_VALUE,
-    STATIC,
-    ;
-
-    static Kind from(String s) {
-      if ("partition_key".equalsIgnoreCase(s)) {
-        return PARTITION_KEY;
-      } else if ("clustering_key".equalsIgnoreCase(s) || "clustering".equalsIgnoreCase(s)) {
-        return CLUSTERING_COLUMN;
-      } else if ("regular".equalsIgnoreCase(s)) {
-        return REGULAR;
-      } else if ("compact_value".equalsIgnoreCase(s)) {
-        return COMPACT_VALUE;
-      } else if ("static".equalsIgnoreCase(s)) {
-        return STATIC;
-      }
-      throw new IllegalArgumentException("Unknown column kind " + s);
-    }
-  }
-
-  final CqlIdentifier name;
-  Kind kind;
-  final int position;
-  final String dataType;
-  final boolean reversed;
-  final String indexName;
-  final String indexType;
-  final Map<String, String> indexOptions;
+  public final CqlIdentifier name;
+  public String kind;
+  public final int position;
+  public final String dataType;
+  public final boolean reversed;
+  public final String indexName;
+  public final String indexType;
+  public final Map<String, String> indexOptions;
 
   private RawColumn(
       AdminRow row, CqlIdentifier keyspaceId, Map<CqlIdentifier, UserDefinedType> userTypes) {
@@ -112,7 +79,15 @@ class RawColumn implements Comparable<RawColumn> {
     //     PRIMARY KEY (keyspace_name, table_name, column_name)
     // ) WITH CLUSTERING ORDER BY (table_name ASC, column_name ASC)
     this.name = CqlIdentifier.fromInternal(row.getString("column_name"));
-    this.kind = Kind.from((row.contains("kind") ? row.getString("kind") : row.getString("type")));
+    if (row.contains("kind")) {
+      this.kind = row.getString("kind");
+    } else {
+      this.kind = row.getString("type");
+      // remap clustering_key to KIND_CLUSTERING_COLUMN so code doesn't have to check for both.
+      if (this.kind.equals("clustering_key")) {
+        this.kind = KIND_CLUSTERING_COLUMN;
+      }
+    }
 
     Integer rawPosition =
         row.contains("position") ? row.getInteger("position") : row.getInteger("component_index");
@@ -137,12 +112,86 @@ class RawColumn implements Comparable<RawColumn> {
   public int compareTo(@NonNull RawColumn that) {
     // First, order by kind. Then order partition key and clustering columns by position. For
     // other kinds, order by column name.
-    if (this.kind != that.kind) {
+    if (!this.kind.equals(that.kind)) {
       return this.kind.compareTo(that.kind);
-    } else if (kind == Kind.PARTITION_KEY || kind == Kind.CLUSTERING_COLUMN) {
+    } else if (kind.equals(KIND_PARTITION_KEY) || kind.equals(KIND_CLUSTERING_COLUMN)) {
       return Integer.compare(this.position, that.position);
     } else {
       return this.name.asInternal().compareTo(that.name.asInternal());
+    }
+  }
+
+  public static List<RawColumn> toRawColumns(
+      Collection<AdminRow> rows,
+      CqlIdentifier keyspaceId,
+      Map<CqlIdentifier, UserDefinedType> userTypes) {
+    if (rows.isEmpty()) {
+      return Collections.emptyList();
+    } else {
+      // Use a mutable list, we might remove some elements later
+      List<RawColumn> result = Lists.newArrayListWithExpectedSize(rows.size());
+      for (AdminRow row : rows) {
+        result.add(new RawColumn(row, keyspaceId, userTypes));
+      }
+      return result;
+    }
+  }
+
+  /**
+   * Helper method to filter columns while parsing a table's metadata.
+   *
+   * <p>Upon migration from thrift to CQL, we internally create a pair of surrogate
+   * clustering/regular columns for compact static tables. These columns shouldn't be exposed to the
+   * user but are currently returned by C*. We also need to remove the static keyword for all other
+   * columns in the table.
+   */
+  public static void pruneStaticCompactTableColumns(List<RawColumn> columns) {
+    ListIterator<RawColumn> iterator = columns.listIterator();
+    while (iterator.hasNext()) {
+      RawColumn column = iterator.next();
+      switch (column.kind) {
+        case KIND_CLUSTERING_COLUMN:
+        case KIND_REGULAR:
+          iterator.remove();
+          break;
+        case KIND_STATIC:
+          column.kind = KIND_REGULAR;
+          break;
+        default:
+          // nothing to do
+      }
+    }
+  }
+
+  /**
+   * Helper method to filter columns while parsing a table's metadata.
+   *
+   * <p>Upon migration from thrift to CQL, we internally create a surrogate column "value" of type
+   * EmptyType for dense tables. This column shouldn't be exposed to the user but is currently
+   * returned by C*.
+   */
+  public static void pruneDenseTableColumnsV3(List<RawColumn> columns) {
+    ListIterator<RawColumn> iterator = columns.listIterator();
+    while (iterator.hasNext()) {
+      RawColumn column = iterator.next();
+      if (column.kind.equals(KIND_REGULAR) && "empty".equals(column.dataType)) {
+        iterator.remove();
+      }
+    }
+  }
+
+  /**
+   * Helper method to filter columns while parsing a table's metadata.
+   *
+   * <p>This is similar to {@link #pruneDenseTableColumnsV3(List)}, but for legacy C* versions.
+   */
+  public static void pruneDenseTableColumnsV2(List<RawColumn> columns) {
+    ListIterator<RawColumn> iterator = columns.listIterator();
+    while (iterator.hasNext()) {
+      RawColumn column = iterator.next();
+      if (column.kind.equals(KIND_COMPACT_VALUE) && column.name.asInternal().isEmpty()) {
+        iterator.remove();
+      }
     }
   }
 }

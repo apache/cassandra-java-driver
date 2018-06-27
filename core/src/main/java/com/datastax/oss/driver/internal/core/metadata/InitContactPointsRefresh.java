@@ -39,7 +39,7 @@ class InitContactPointsRefresh implements MetadataRefresh {
   @Override
   public Result compute(
       DefaultMetadata oldMetadata, boolean tokenMapEnabled, InternalDriverContext context) {
-    assert oldMetadata == DefaultMetadata.EMPTY;
+
     String logPrefix = context.sessionName();
     LOG.debug("[{}] Initializing node metadata with contact points {}", logPrefix, contactPoints);
 
@@ -47,7 +47,13 @@ class InitContactPointsRefresh implements MetadataRefresh {
     for (InetSocketAddress address : contactPoints) {
       newNodes.put(address, new DefaultNode(address, context));
     }
-    return new Result(new DefaultMetadata(newNodes.build()));
-    // No token map refresh, because we don't have enough information yet
+    return new Result(
+        oldMetadata.withNodes(
+            newNodes.build(),
+            // At this stage there is no token map and we don't have the info to refresh it yet
+            false,
+            false,
+            null,
+            context));
   }
 }

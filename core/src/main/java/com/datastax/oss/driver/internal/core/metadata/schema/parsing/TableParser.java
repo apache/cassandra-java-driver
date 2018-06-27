@@ -39,7 +39,6 @@ import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableMultimap;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
-import java.util.ListIterator;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
@@ -48,15 +47,15 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 @ThreadSafe
-class TableParser extends RelationParser {
+public class TableParser extends RelationParser {
 
   private static final Logger LOG = LoggerFactory.getLogger(TableParser.class);
 
-  TableParser(SchemaRows rows, DataTypeParser dataTypeParser, InternalDriverContext context) {
-    super(rows, dataTypeParser, context);
+  public TableParser(SchemaRows rows, InternalDriverContext context) {
+    super(rows, context);
   }
 
-  TableMetadata parseTable(
+  public TableMetadata parseTable(
       AdminRow tableRow, CqlIdentifier keyspaceId, Map<CqlIdentifier, UserDefinedType> userTypes) {
     // Cassandra <= 2.2:
     // CREATE TABLE system.schema_columnfamilies (
@@ -119,13 +118,14 @@ class TableParser extends RelationParser {
     // ) WITH CLUSTERING ORDER BY (table_name ASC)
     CqlIdentifier tableId =
         CqlIdentifier.fromInternal(
-            tableRow.getString(rows.isCassandraV3 ? "table_name" : "columnfamily_name"));
+            tableRow.getString(
+                tableRow.contains("table_name") ? "table_name" : "columnfamily_name"));
 
     UUID uuid = (tableRow.contains("id")) ? tableRow.getUuid("id") : tableRow.getUuid("cf_id");
 
     List<RawColumn> rawColumns =
         RawColumn.toRawColumns(
-            rows.columns.getOrDefault(keyspaceId, ImmutableMultimap.of()).get(tableId),
+            rows.columns().getOrDefault(keyspaceId, ImmutableMultimap.of()).get(tableId),
             keyspaceId,
             userTypes);
     if (rawColumns.isEmpty()) {
@@ -146,14 +146,14 @@ class TableParser extends RelationParser {
       isCompactStorage = isSuper || isDense || !isCompound;
       boolean isStaticCompact = !isSuper && !isDense && !isCompound;
       if (isStaticCompact) {
-        pruneStaticCompactTableColumns(rawColumns);
+        RawColumn.pruneStaticCompactTableColumns(rawColumns);
       } else if (isDense) {
-        pruneDenseTableColumnsV3(rawColumns);
+        RawColumn.pruneDenseTableColumnsV3(rawColumns);
       }
     } else {
       boolean isDense = tableRow.getBoolean("is_dense");
       if (isDense) {
-        pruneDenseTableColumnsV2(rawColumns);
+        RawColumn.pruneDenseTableColumnsV2(rawColumns);
       }
       DataTypeClassNameCompositeParser.ParseResult comparator =
           new DataTypeClassNameCompositeParser()
@@ -169,15 +169,15 @@ class TableParser extends RelationParser {
     ImmutableMap.Builder<CqlIdentifier, IndexMetadata> indexesBuilder = ImmutableMap.builder();
 
     for (RawColumn raw : rawColumns) {
-      DataType dataType = dataTypeParser.parse(keyspaceId, raw.dataType, userTypes, context);
+      DataType dataType = rows.dataTypeParser().parse(keyspaceId, raw.dataType, userTypes, context);
       ColumnMetadata column =
           new DefaultColumnMetadata(
-              keyspaceId, tableId, raw.name, dataType, raw.kind == RawColumn.Kind.STATIC);
+              keyspaceId, tableId, raw.name, dataType, raw.kind.equals(RawColumn.KIND_STATIC));
       switch (raw.kind) {
-        case PARTITION_KEY:
+        case RawColumn.KIND_PARTITION_KEY:
           partitionKeyBuilder.add(column);
           break;
-        case CLUSTERING_COLUMN:
+        case RawColumn.KIND_CLUSTERING_COLUMN:
           clusteringColumnsBuilder.put(
               column, raw.reversed ? ClusteringOrder.DESC : ClusteringOrder.ASC);
           break;
@@ -208,7 +208,7 @@ class TableParser extends RelationParser {
     }
 
     Collection<AdminRow> indexRows =
-        rows.indexes.getOrDefault(keyspaceId, ImmutableMultimap.of()).get(tableId);
+        rows.indexes().getOrDefault(keyspaceId, ImmutableMultimap.of()).get(tableId);
     for (AdminRow indexRow : indexRows) {
       IndexMetadata index = buildModernIndex(keyspaceId, tableId, indexRow);
       indexesBuilder.put(index.getName(), index);
@@ -224,51 +224,6 @@ class TableParser extends RelationParser {
         allColumnsBuilder.build(),
         options,
         indexesBuilder.build());
-  }
-
-  // Upon migration from thrift to CQL, we internally create a pair of surrogate clustering/regular
-  // columns for compact static tables. These columns shouldn't be exposed to the user but are
-  // currently returned by C*. We also need to remove the static keyword for all other columns in
-  // the table.
-  private void pruneStaticCompactTableColumns(List<RawColumn> columns) {
-    ListIterator<RawColumn> iterator = columns.listIterator();
-    while (iterator.hasNext()) {
-      RawColumn column = iterator.next();
-      switch (column.kind) {
-        case CLUSTERING_COLUMN:
-        case REGULAR:
-          iterator.remove();
-          break;
-        case STATIC:
-          column.kind = RawColumn.Kind.REGULAR;
-          break;
-        default:
-          // nothing to do
-      }
-    }
-  }
-
-  // Upon migration from thrift to CQL, we internally create a surrogate column "value" of type
-  // EmptyType for dense tables. This column shouldn't be exposed to the user but is currently
-  // returned by C*.
-  private void pruneDenseTableColumnsV3(List<RawColumn> columns) {
-    ListIterator<RawColumn> iterator = columns.listIterator();
-    while (iterator.hasNext()) {
-      RawColumn column = iterator.next();
-      if (column.kind == RawColumn.Kind.REGULAR && "empty".equals(column.dataType)) {
-        iterator.remove();
-      }
-    }
-  }
-
-  private void pruneDenseTableColumnsV2(List<RawColumn> columns) {
-    ListIterator<RawColumn> iterator = columns.listIterator();
-    while (iterator.hasNext()) {
-      RawColumn column = iterator.next();
-      if (column.kind == RawColumn.Kind.COMPACT_VALUE && column.name.asInternal().isEmpty()) {
-        iterator.remove();
-      }
-    }
   }
 
   // In C*<=2.2, index information is stored alongside the column.

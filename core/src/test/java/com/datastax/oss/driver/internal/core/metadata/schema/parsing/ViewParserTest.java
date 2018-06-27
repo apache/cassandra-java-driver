@@ -22,6 +22,7 @@ import com.datastax.oss.driver.api.core.metadata.schema.ColumnMetadata;
 import com.datastax.oss.driver.api.core.metadata.schema.ViewMetadata;
 import com.datastax.oss.driver.api.core.type.DataTypes;
 import com.datastax.oss.driver.internal.core.adminrequest.AdminRow;
+import com.datastax.oss.driver.internal.core.metadata.schema.queries.CassandraSchemaRows;
 import com.datastax.oss.driver.internal.core.metadata.schema.queries.SchemaRows;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableList;
 import java.util.Collections;
@@ -44,7 +45,7 @@ public class ViewParserTest extends SchemaParserTestBase {
   @Test
   public void should_skip_when_no_column_rows() {
     SchemaRows rows = rows(VIEW_ROW_3_0, Collections.emptyList());
-    ViewParser parser = new ViewParser(rows, new DataTypeClassNameParser(), context);
+    ViewParser parser = new ViewParser(rows, context);
     ViewMetadata view = parser.parseView(VIEW_ROW_3_0, KEYSPACE_ID, Collections.emptyMap());
 
     assertThat(view).isNull();
@@ -53,7 +54,7 @@ public class ViewParserTest extends SchemaParserTestBase {
   @Test
   public void should_parse_view() {
     SchemaRows rows = rows(VIEW_ROW_3_0, COLUMN_ROWS_3_0);
-    ViewParser parser = new ViewParser(rows, new DataTypeCqlNameParser(), context);
+    ViewParser parser = new ViewParser(rows, context);
     ViewMetadata view = parser.parseView(VIEW_ROW_3_0, KEYSPACE_ID, Collections.emptyMap());
 
     assertThat(view.getKeyspace().asInternal()).isEqualTo("ks");
@@ -66,7 +67,7 @@ public class ViewParserTest extends SchemaParserTestBase {
     assertThat(pk0.getType()).isEqualTo(DataTypes.TEXT);
 
     assertThat(view.getClusteringColumns().entrySet()).hasSize(5);
-    Iterator<ColumnMetadata> clusteringColumnsIterator =
+    Iterator<? extends ColumnMetadata> clusteringColumnsIterator =
         view.getClusteringColumns().keySet().iterator();
     assertThat(clusteringColumnsIterator.next().getName().asInternal()).isEqualTo("score");
     assertThat(clusteringColumnsIterator.next().getName().asInternal()).isEqualTo("user");
@@ -85,7 +86,7 @@ public class ViewParserTest extends SchemaParserTestBase {
   }
 
   private SchemaRows rows(AdminRow viewRow, Iterable<AdminRow> columnRows) {
-    return new SchemaRows.Builder(true, null, "test")
+    return new CassandraSchemaRows.Builder(true, null, "test")
         .withViews(ImmutableList.of(viewRow))
         .withColumns(columnRows)
         .build();

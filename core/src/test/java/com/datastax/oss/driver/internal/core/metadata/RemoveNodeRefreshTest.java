@@ -21,6 +21,7 @@ import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
 import com.datastax.oss.driver.internal.core.metrics.MetricsFactory;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableMap;
 import java.net.InetSocketAddress;
+import java.util.Collections;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -51,7 +52,8 @@ public class RemoveNodeRefreshTest {
   public void should_remove_existing_node() {
     // Given
     DefaultMetadata oldMetadata =
-        new DefaultMetadata(ImmutableMap.of(ADDRESS1, node1, ADDRESS2, node2));
+        new DefaultMetadata(
+            ImmutableMap.of(ADDRESS1, node1, ADDRESS2, node2), Collections.emptyMap(), null);
     RemoveNodeRefresh refresh = new RemoveNodeRefresh(ADDRESS2);
 
     // When
@@ -65,7 +67,8 @@ public class RemoveNodeRefreshTest {
   @Test
   public void should_not_remove_nonexistent_node() {
     // Given
-    DefaultMetadata oldMetadata = new DefaultMetadata(ImmutableMap.of(ADDRESS1, node1));
+    DefaultMetadata oldMetadata =
+        new DefaultMetadata(ImmutableMap.of(ADDRESS1, node1), Collections.emptyMap(), null);
     RemoveNodeRefresh refresh = new RemoveNodeRefresh(ADDRESS2);
 
     // When

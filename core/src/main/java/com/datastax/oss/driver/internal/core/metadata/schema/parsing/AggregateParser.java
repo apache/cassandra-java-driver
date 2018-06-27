@@ -31,16 +31,16 @@ import java.util.Map;
 import net.jcip.annotations.ThreadSafe;
 
 @ThreadSafe
-class AggregateParser {
+public class AggregateParser {
   private final DataTypeParser dataTypeParser;
   private final InternalDriverContext context;
 
-  AggregateParser(DataTypeParser dataTypeParser, InternalDriverContext context) {
+  public AggregateParser(DataTypeParser dataTypeParser, InternalDriverContext context) {
     this.dataTypeParser = dataTypeParser;
     this.context = context;
   }
 
-  AggregateMetadata parseAggregate(
+  public AggregateMetadata parseAggregate(
       AdminRow row,
       CqlIdentifier keyspaceId,
       Map<CqlIdentifier, UserDefinedType> userDefinedTypes) {
