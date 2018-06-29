@@ -307,8 +307,16 @@ abstract class SchemaParser {
             TableMetadata oldTable = oldTables.put(newTable.getName(), newTable);
             if (oldTable == null) {
                 metadata.triggerOnTableAdded(newTable);
-            } else if (!oldTable.equals(newTable)) {
-                metadata.triggerOnTableChanged(newTable, oldTable);
+            } else {
+                // if we're updating a table only, we need to copy views from old table to the new table.
+                if (tableToRebuild != null) {
+                    for (MaterializedViewMetadata view : oldTable.getViews()) {
+                        view.setBaseTable(newTable);
+                    }
+                }
+                if (!oldTable.equals(newTable)) {
+                    metadata.triggerOnTableChanged(newTable, oldTable);
+                }
             }
         }
     }

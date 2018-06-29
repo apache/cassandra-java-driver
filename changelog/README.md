@@ -4,6 +4,10 @@
 
 - [improvement] JAVA-1394: Add request-queue-depth metric.
 
+Merged from 3.5.x:
+
+- [bug] JAVA-1872: Retain table's views when processing table update.
+
 
 ### 3.5.0
 
