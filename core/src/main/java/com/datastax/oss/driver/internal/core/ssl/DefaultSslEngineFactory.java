@@ -79,12 +79,8 @@ public class DefaultSslEngineFactory implements SslEngineFactory {
     } else {
       this.cipherSuites = null;
     }
-    if (config.isDefined(DefaultDriverOption.SSL_HOSTNAME_VALIDATION)) {
-      this.requireHostnameValidation =
-          config.getBoolean(DefaultDriverOption.SSL_HOSTNAME_VALIDATION);
-    } else {
-      this.requireHostnameValidation = false;
-    }
+    this.requireHostnameValidation =
+        config.getBoolean(DefaultDriverOption.SSL_HOSTNAME_VALIDATION, false);
   }
 
   @NonNull

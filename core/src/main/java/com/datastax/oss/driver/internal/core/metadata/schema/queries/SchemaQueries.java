@@ -82,9 +82,8 @@ public abstract class SchemaQueries {
     this.pageSize = config.getInt(DefaultDriverOption.METADATA_SCHEMA_REQUEST_PAGE_SIZE);
 
     List<String> refreshedKeyspaces =
-        config.isDefined(DefaultDriverOption.METADATA_SCHEMA_REFRESHED_KEYSPACES)
-            ? config.getStringList(DefaultDriverOption.METADATA_SCHEMA_REFRESHED_KEYSPACES)
-            : Collections.emptyList();
+        config.getStringList(
+            DefaultDriverOption.METADATA_SCHEMA_REFRESHED_KEYSPACES, Collections.emptyList());
     this.whereClause = buildWhereClause(refreshedKeyspaces);
   }
 

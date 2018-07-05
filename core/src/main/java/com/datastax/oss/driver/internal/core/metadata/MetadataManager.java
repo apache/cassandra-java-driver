@@ -78,9 +78,8 @@ public class MetadataManager implements AsyncAutoCloseable {
     this.metadata = DefaultMetadata.EMPTY;
     this.schemaEnabledInConfig = config.getBoolean(DefaultDriverOption.METADATA_SCHEMA_ENABLED);
     this.refreshedKeyspaces =
-        config.isDefined(DefaultDriverOption.METADATA_SCHEMA_REFRESHED_KEYSPACES)
-            ? config.getStringList(DefaultDriverOption.METADATA_SCHEMA_REFRESHED_KEYSPACES)
-            : Collections.emptyList();
+        config.getStringList(
+            DefaultDriverOption.METADATA_SCHEMA_REFRESHED_KEYSPACES, Collections.emptyList());
     this.tokenMapEnabled = config.getBoolean(DefaultDriverOption.METADATA_TOKEN_MAP_ENABLED);
 
     context.eventBus().register(ConfigChangeEvent.class, this::onConfigChanged);
@@ -93,9 +92,8 @@ public class MetadataManager implements AsyncAutoCloseable {
 
     this.schemaEnabledInConfig = config.getBoolean(DefaultDriverOption.METADATA_SCHEMA_ENABLED);
     this.refreshedKeyspaces =
-        config.isDefined(DefaultDriverOption.METADATA_SCHEMA_REFRESHED_KEYSPACES)
-            ? config.getStringList(DefaultDriverOption.METADATA_SCHEMA_REFRESHED_KEYSPACES)
-            : Collections.emptyList();
+        config.getStringList(
+            DefaultDriverOption.METADATA_SCHEMA_REFRESHED_KEYSPACES, Collections.emptyList());
     this.tokenMapEnabled = config.getBoolean(DefaultDriverOption.METADATA_TOKEN_MAP_ENABLED);
 
     if ((!schemaEnabledBefore

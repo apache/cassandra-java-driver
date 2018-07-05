@@ -291,9 +291,7 @@ public abstract class SessionBuilder<SelfT extends SessionBuilder, SessionT> {
 
       DriverConfigProfile defaultConfig = configLoader.getInitialConfig().getDefaultProfile();
       List<String> configContactPoints =
-          defaultConfig.isDefined(DefaultDriverOption.CONTACT_POINTS)
-              ? defaultConfig.getStringList(DefaultDriverOption.CONTACT_POINTS)
-              : Collections.emptyList();
+          defaultConfig.getStringList(DefaultDriverOption.CONTACT_POINTS, Collections.emptyList());
 
       Set<InetSocketAddress> contactPoints =
           ContactPoints.merge(programmaticContactPoints, configContactPoints);
