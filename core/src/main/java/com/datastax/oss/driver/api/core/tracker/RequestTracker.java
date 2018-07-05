@@ -19,11 +19,18 @@ import com.datastax.oss.driver.api.core.config.DriverConfigProfile;
 import com.datastax.oss.driver.api.core.metadata.Node;
 import com.datastax.oss.driver.api.core.session.Request;
 import com.datastax.oss.driver.api.core.session.Session;
+import com.datastax.oss.driver.api.core.session.SessionBuilder;
 import com.datastax.oss.driver.api.core.type.reflect.GenericType;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import edu.umd.cs.findbugs.annotations.Nullable;
 
-/** Tracks request execution for a session. */
+/**
+ * Tracks request execution for a session.
+ *
+ * <p>There is exactly one tracker per {@link Session}. It can be provided either via the
+ * configuration (see {@code reference.conf} in the manual or core driver JAR), or programmatically
+ * via {@link SessionBuilder#withRequestTracker(RequestTracker)}.
+ */
 public interface RequestTracker extends AutoCloseable {
 
   /**

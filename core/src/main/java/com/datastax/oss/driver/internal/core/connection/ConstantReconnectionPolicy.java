@@ -25,7 +25,23 @@ import java.time.Duration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-/** A reconnection policy that waits a constant time between each reconnection attempt. */
+/**
+ * A reconnection policy that waits a constant time between each reconnection attempt.
+ *
+ * <p>To activate this policy, modify the {@code advanced.reconnection-policy} section in the driver
+ * configuration, for example:
+ *
+ * <pre>
+ * datastax-java-driver {
+ *   advanced.reconnection-policy {
+ *     class = ConstantReconnectionPolicy
+ *     base-delay = 1 second
+ *   }
+ * }
+ * </pre>
+ *
+ * See {@code reference.conf} (in the manual or core driver JAR) for more details.
+ */
 public class ConstantReconnectionPolicy implements ReconnectionPolicy {
 
   private static final Logger LOG = LoggerFactory.getLogger(ConstantReconnectionPolicy.class);

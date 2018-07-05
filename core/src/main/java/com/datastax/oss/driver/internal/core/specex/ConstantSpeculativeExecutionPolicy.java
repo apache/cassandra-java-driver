@@ -30,8 +30,20 @@ import net.jcip.annotations.ThreadSafe;
  * A policy that schedules a configurable number of speculative executions, separated by a fixed
  * delay.
  *
- * <p>See the (commented) sample configuration in {@code reference.conf} for detailed explanations
- * about each option.
+ * <p>To activate this policy, modify the {@code advanced.speculative-execution-policy} section in
+ * the driver configuration, for example:
+ *
+ * <pre>
+ * datastax-java-driver {
+ *   advanced.speculative-execution-policy {
+ *     class = ConstantSpeculativeExecutionPolicy
+ *     max-executions = 3
+ *     delay = 100 milliseconds
+ *   }
+ * }
+ * </pre>
+ *
+ * See {@code reference.conf} (in the manual or core driver JAR) for more details.
  */
 @ThreadSafe
 public class ConstantSpeculativeExecutionPolicy implements SpeculativeExecutionPolicy {

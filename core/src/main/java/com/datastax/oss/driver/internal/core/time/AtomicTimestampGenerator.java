@@ -24,6 +24,24 @@ import net.jcip.annotations.ThreadSafe;
 /**
  * A timestamp generator that guarantees monotonically increasing timestamps across all client
  * threads, and logs warnings when timestamps drift in the future.
+ *
+ * <p>To activate this generator, modify the {@code advanced.timestamp-generator} section in the
+ * driver configuration, for example:
+ *
+ * <pre>
+ * datastax-java-driver {
+ *   advanced.timestamp-generator {
+ *     class = AtomicTimestampGenerator
+ *     drift-warning {
+ *       threshold = 1 second
+ *       interval = 10 seconds
+ *     }
+ *     force-java-clock = false
+ *   }
+ * }
+ * </pre>
+ *
+ * See {@code reference.conf} (in the manual or core driver JAR) for more details.
  */
 @ThreadSafe
 public class AtomicTimestampGenerator extends MonotonicTimestampGenerator {

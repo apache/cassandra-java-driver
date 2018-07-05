@@ -34,6 +34,21 @@ import org.slf4j.LoggerFactory;
  * <p>It uses the same schedule implementation for individual nodes or the control connection:
  * reconnection attempt {@code i} will be tried {@code Math.min(2^(i-1) * getBaseDelayMs(),
  * getMaxDelayMs())} milliseconds after the previous one.
+ *
+ * <p>To activate this policy, modify the {@code advanced.reconnection-policy} section in the driver
+ * configuration, for example:
+ *
+ * <pre>
+ * datastax-java-driver {
+ *   advanced.reconnection-policy {
+ *     class = ExponentialReconnectionPolicy
+ *     base-delay = 1 second
+ *     max-delay = 60 seconds
+ *   }
+ * }
+ * </pre>
+ *
+ * See {@code reference.conf} (in the manual or core driver JAR) for more details.
  */
 @ThreadSafe
 public class ExponentialReconnectionPolicy implements ReconnectionPolicy {

@@ -26,6 +26,24 @@ import net.jcip.annotations.ThreadSafe;
  * <p>Beware that there is a risk of timestamp collision with this generator when accessed by more
  * than one thread at a time; only use it when threads are not in direct competition for timestamp
  * ties (i.e., they are executing independent statements).
+ *
+ * <p>To activate this generator, modify the {@code advanced.timestamp-generator} section in the
+ * driver configuration, for example:
+ *
+ * <pre>
+ * datastax-java-driver {
+ *   advanced.timestamp-generator {
+ *     class = ThreadLocalTimestampGenerator
+ *     drift-warning {
+ *       threshold = 1 second
+ *       interval = 10 seconds
+ *     }
+ *     force-java-clock = false
+ *   }
+ * }
+ * </pre>
+ *
+ * See {@code reference.conf} (in the manual or core driver JAR) for more details.
  */
 @ThreadSafe
 public class ThreadLocalTimestampGenerator extends MonotonicTimestampGenerator {

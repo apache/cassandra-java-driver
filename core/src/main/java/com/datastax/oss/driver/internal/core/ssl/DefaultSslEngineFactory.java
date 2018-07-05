@@ -38,7 +38,7 @@ import net.jcip.annotations.ThreadSafe;
 /**
  * Default SSL implementation.
  *
- * <p>To activate this class, an {@code ssl-engine-factory} section must be included in the driver
+ * <p>To activate this class, add an {@code advanced.ssl-engine-factory} section in the driver
  * configuration, for example:
  *
  * <pre>
@@ -48,14 +48,14 @@ import net.jcip.annotations.ThreadSafe;
  *     cipher-suites = [ "TLS_RSA_WITH_AES_128_CBC_SHA", "TLS_RSA_WITH_AES_256_CBC_SHA" ]
  *     hostname-validation = false
  *     truststore-path = /path/to/client.truststore
- *     truststore-psasword = password123
+ *     truststore-password = password123
  *     keystore-path = /path/to/client.keystore
  *     keystore-password = password123
  *   }
  * }
  * </pre>
  *
- * See the {@code reference.conf} file included with the driver for more information.
+ * See {@code reference.conf} (in the manual or core driver JAR) for more details.
  */
 @ThreadSafe
 public class DefaultSslEngineFactory implements SslEngineFactory {
