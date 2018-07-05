@@ -58,13 +58,9 @@ abstract class MonotonicTimestampGeneratorTestBase {
 
     // Disable warnings by default
     Mockito.when(
-            defaultConfigProfile.isDefined(
-                DefaultDriverOption.TIMESTAMP_GENERATOR_DRIFT_WARNING_THRESHOLD))
-        .thenReturn(true);
-    Mockito.when(
             defaultConfigProfile.getDuration(
-                DefaultDriverOption.TIMESTAMP_GENERATOR_DRIFT_WARNING_THRESHOLD))
-        .thenReturn(Duration.ofNanos(0));
+                DefaultDriverOption.TIMESTAMP_GENERATOR_DRIFT_WARNING_THRESHOLD, Duration.ZERO))
+        .thenReturn(Duration.ZERO);
     // Actual value doesn't really matter since we only test the first warning
     Mockito.when(
             defaultConfigProfile.getDuration(
@@ -112,7 +108,7 @@ abstract class MonotonicTimestampGeneratorTestBase {
   public void should_warn_if_timestamps_drift() {
     Mockito.when(
             defaultConfigProfile.getDuration(
-                DefaultDriverOption.TIMESTAMP_GENERATOR_DRIFT_WARNING_THRESHOLD))
+                DefaultDriverOption.TIMESTAMP_GENERATOR_DRIFT_WARNING_THRESHOLD, Duration.ZERO))
         .thenReturn(Duration.ofNanos(2 * 1000));
     Mockito.when(clock.currentTimeMicros()).thenReturn(1L, 1L, 1L, 1L, 1L);
 

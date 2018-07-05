@@ -22,6 +22,7 @@ import com.datastax.oss.driver.api.core.config.DriverConfigProfile;
 import com.datastax.oss.driver.api.core.metadata.Metadata;
 import com.datastax.oss.driver.internal.core.adminrequest.AdminResult;
 import com.datastax.oss.driver.internal.core.channel.DriverChannel;
+import java.util.Collections;
 import java.util.Queue;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
@@ -35,8 +36,10 @@ public class Cassandra22SchemaQueriesTest extends SchemaQueriesTest {
 
   @Test
   public void should_query() {
-    Mockito.when(config.isDefined(DefaultDriverOption.METADATA_SCHEMA_REFRESHED_KEYSPACES))
-        .thenReturn(false);
+    Mockito.when(
+            config.getStringList(
+                DefaultDriverOption.METADATA_SCHEMA_REFRESHED_KEYSPACES, Collections.emptyList()))
+        .thenReturn(Collections.emptyList());
 
     SchemaQueriesWithMockedChannel queries =
         new SchemaQueriesWithMockedChannel(driverChannel, null, config, "test");

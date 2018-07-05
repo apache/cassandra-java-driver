@@ -33,7 +33,6 @@ import com.datastax.oss.driver.api.core.time.TimestampGenerator;
 import com.datastax.oss.driver.api.core.type.codec.registry.CodecRegistry;
 import com.datastax.oss.driver.internal.core.CassandraProtocolVersionRegistry;
 import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
-import com.datastax.oss.driver.internal.core.time.AtomicTimestampGenerator;
 import com.datastax.oss.driver.shaded.guava.common.base.Charsets;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableList;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableMap;
@@ -63,6 +62,7 @@ public class StatementSizeTest {
   @Mock InternalDriverContext driverContext;
   @Mock DriverConfig config;
   @Mock DriverConfigProfile defaultConfigProfile;
+  @Mock TimestampGenerator timestampGenerator;
 
   @Before
   public void setup() {
@@ -87,7 +87,6 @@ public class StatementSizeTest {
         .thenReturn(new CassandraProtocolVersionRegistry(null));
     Mockito.when(config.getDefaultProfile()).thenReturn(defaultConfigProfile);
     Mockito.when(driverContext.config()).thenReturn(config);
-    TimestampGenerator timestampGenerator = new AtomicTimestampGenerator(driverContext);
     Mockito.when(driverContext.timestampGenerator()).thenReturn(timestampGenerator);
   }
 

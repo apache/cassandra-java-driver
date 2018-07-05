@@ -19,6 +19,7 @@ import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
 import com.datastax.oss.driver.api.core.config.DriverConfigProfile;
 import com.datastax.oss.driver.api.core.context.DriverContext;
 import com.datastax.oss.driver.api.core.time.TimestampGenerator;
+import java.time.Duration;
 import java.util.concurrent.atomic.AtomicLong;
 import net.jcip.annotations.ThreadSafe;
 import org.slf4j.Logger;
@@ -47,12 +48,11 @@ abstract class MonotonicTimestampGenerator implements TimestampGenerator {
 
     DriverConfigProfile config = context.config().getDefaultProfile();
     this.warningThresholdMicros =
-        (config.isDefined(DefaultDriverOption.TIMESTAMP_GENERATOR_DRIFT_WARNING_THRESHOLD))
-            ? config
-                    .getDuration(DefaultDriverOption.TIMESTAMP_GENERATOR_DRIFT_WARNING_THRESHOLD)
-                    .toNanos()
-                / 1000
-            : 0;
+        config
+                .getDuration(
+                    DefaultDriverOption.TIMESTAMP_GENERATOR_DRIFT_WARNING_THRESHOLD, Duration.ZERO)
+                .toNanos()
+            / 1000;
 
     if (this.warningThresholdMicros == 0) {
       this.warningIntervalMillis = 0;
@@ -105,8 +105,7 @@ abstract class MonotonicTimestampGenerator implements TimestampGenerator {
   private static Clock buildClock(DriverContext context) {
     DriverConfigProfile config = context.config().getDefaultProfile();
     boolean forceJavaClock =
-        config.isDefined(DefaultDriverOption.TIMESTAMP_GENERATOR_FORCE_JAVA_CLOCK)
-            && config.getBoolean(DefaultDriverOption.TIMESTAMP_GENERATOR_FORCE_JAVA_CLOCK);
+        config.getBoolean(DefaultDriverOption.TIMESTAMP_GENERATOR_FORCE_JAVA_CLOCK, false);
     return Clock.getInstance(forceJavaClock);
   }
 }
