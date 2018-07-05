@@ -24,7 +24,22 @@ import edu.umd.cs.findbugs.annotations.NonNull;
 import edu.umd.cs.findbugs.annotations.Nullable;
 import net.jcip.annotations.ThreadSafe;
 
-/** A policy that never triggers speculative executions. */
+/**
+ * A policy that never triggers speculative executions.
+ *
+ * <p>To activate this policy, modify the {@code advanced.speculative-execution-policy} section in
+ * the driver configuration, for example:
+ *
+ * <pre>
+ * datastax-java-driver {
+ *   advanced.speculative-execution-policy {
+ *     class = NoSpeculativeExecutionPolicy
+ *   }
+ * }
+ * </pre>
+ *
+ * See {@code reference.conf} (in the manual or core driver JAR) for more details.
+ */
 @ThreadSafe
 public class NoSpeculativeExecutionPolicy implements SpeculativeExecutionPolicy {
 

@@ -34,9 +34,24 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * The default retry policy. This is a very conservative implementation: it triggers a maximum of
- * one retry per request, and only in cases that have a high chance of success (see the method
- * javadocs for detailed explanations of each case).
+ * The default retry policy.
+ *
+ * <p>This is a very conservative implementation: it triggers a maximum of one retry per request,
+ * and only in cases that have a high chance of success (see the method javadocs for detailed
+ * explanations of each case).
+ *
+ * <p>To activate this policy, modify the {@code advanced.retry-policy} section in the driver
+ * configuration, for example:
+ *
+ * <pre>
+ * datastax-java-driver {
+ *   advanced.retry-policy {
+ *     class = DefaultRetryPolicy
+ *   }
+ * }
+ * </pre>
+ *
+ * See {@code reference.conf} (in the manual or core driver JAR) for more details.
  */
 @ThreadSafe
 public class DefaultRetryPolicy implements RetryPolicy {

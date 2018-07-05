@@ -31,7 +31,24 @@ import net.jcip.annotations.ThreadSafe;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-/** A request throttler that limits the number of concurrent requests. */
+/**
+ * A request throttler that limits the number of concurrent requests.
+ *
+ * <p>To activate this throttler, modify the {@code advanced.throttler} section in the driver
+ * configuration, for example:
+ *
+ * <pre>
+ * datastax-java-driver {
+ *   advanced.throttler {
+ *     class = ConcurrencyLimitingRequestThrottler
+ *     max-concurrent-requests = 10000
+ *     max-queue-size = 10000
+ *   }
+ * }
+ * </pre>
+ *
+ * See {@code reference.conf} (in the manual or core driver JAR) for more details.
+ */
 @ThreadSafe
 public class ConcurrencyLimitingRequestThrottler implements RequestThrottler {
 

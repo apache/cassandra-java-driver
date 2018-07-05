@@ -25,6 +25,19 @@ import net.jcip.annotations.ThreadSafe;
 /**
  * A request throttler that does not enforce any kind of limitation: requests are always executed
  * immediately.
+ *
+ * <p>To activate this throttler, modify the {@code advanced.throttler} section in the driver
+ * configuration, for example:
+ *
+ * <pre>
+ * datastax-java-driver {
+ *   advanced.throttler {
+ *     class = PassThroughRequestThrottler
+ *   }
+ * }
+ * </pre>
+ *
+ * See {@code reference.conf} (in the manual or core driver JAR) for more details.
  */
 @ThreadSafe
 public class PassThroughRequestThrottler implements RequestThrottler {

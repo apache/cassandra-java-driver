@@ -51,6 +51,23 @@ import net.jcip.annotations.ThreadSafe;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/**
+ * The default load balancing policy implementation.
+ *
+ * <p>To activate this policy, modify the {@code basic.load-balancing-policy} section in the driver
+ * configuration, for example:
+ *
+ * <pre>
+ * datastax-java-driver {
+ *   basic.load-balancing-policy {
+ *     class = DefaultLoadBalancingPolicy
+ *     local-datacenter = datacenter1
+ *   }
+ * }
+ * </pre>
+ *
+ * See {@code reference.conf} (in the manual or core driver JAR) for more details.
+ */
 @ThreadSafe
 public class DefaultLoadBalancingPolicy implements LoadBalancingPolicy {
 

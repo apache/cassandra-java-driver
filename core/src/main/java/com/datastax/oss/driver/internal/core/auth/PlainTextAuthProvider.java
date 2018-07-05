@@ -33,7 +33,7 @@ import org.slf4j.LoggerFactory;
  * A simple authentication provider that supports SASL authentication using the PLAIN mechanism for
  * version 3 (or above) of the CQL native protocol.
  *
- * <p>To activate this provider, an {@code auth-provider} section must be included in the driver
+ * <p>To activate this provider, add an {@code advanced.auth-provider} section in the driver
  * configuration, for example:
  *
  * <pre>
@@ -46,7 +46,7 @@ import org.slf4j.LoggerFactory;
  * }
  * </pre>
  *
- * See the {@code reference.conf} file included with the driver for more information.
+ * See {@code reference.conf} (in the manual or core driver JAR) for more details.
  */
 @ThreadSafe
 public class PlainTextAuthProvider implements AuthProvider {

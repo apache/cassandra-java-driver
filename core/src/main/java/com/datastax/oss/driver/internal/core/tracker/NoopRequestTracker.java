@@ -19,10 +19,30 @@ import com.datastax.oss.driver.api.core.config.DriverConfigProfile;
 import com.datastax.oss.driver.api.core.context.DriverContext;
 import com.datastax.oss.driver.api.core.metadata.Node;
 import com.datastax.oss.driver.api.core.session.Request;
+import com.datastax.oss.driver.api.core.session.SessionBuilder;
 import com.datastax.oss.driver.api.core.tracker.RequestTracker;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import net.jcip.annotations.ThreadSafe;
 
+/**
+ * A no-op request tracker.
+ *
+ * <p>To activate this tracker, modify the {@code advanced.request-tracker} section in the driver
+ * configuration, for example:
+ *
+ * <pre>
+ * datastax-java-driver {
+ *   advanced.request-tracker {
+ *     class = NoopRequestTracker
+ *   }
+ * }
+ * </pre>
+ *
+ * See {@code reference.conf} (in the manual or core driver JAR) for more details.
+ *
+ * <p>Note that if a tracker is specified programmatically with {@link
+ * SessionBuilder#withRequestTracker(RequestTracker)}, the configuration is ignored.
+ */
 @ThreadSafe
 public class NoopRequestTracker implements RequestTracker {
 

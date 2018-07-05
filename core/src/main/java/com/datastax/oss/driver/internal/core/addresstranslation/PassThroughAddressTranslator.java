@@ -21,7 +21,22 @@ import edu.umd.cs.findbugs.annotations.NonNull;
 import java.net.InetSocketAddress;
 import net.jcip.annotations.ThreadSafe;
 
-/** An address translator that always returns the same address unchanged. */
+/**
+ * An address translator that always returns the same address unchanged.
+ *
+ * <p>To activate this translator, modify the {@code advanced.address-translator} section in the
+ * driver configuration, for example:
+ *
+ * <pre>
+ * datastax-java-driver {
+ *   advanced.address-translator {
+ *     class = PassThroughAddressTranslator
+ *   }
+ * }
+ * </pre>
+ *
+ * See {@code reference.conf} (in the manual or core driver JAR) for more details.
+ */
 @ThreadSafe
 public class PassThroughAddressTranslator implements AddressTranslator {
 

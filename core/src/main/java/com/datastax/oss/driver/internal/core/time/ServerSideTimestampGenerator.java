@@ -22,6 +22,19 @@ import net.jcip.annotations.ThreadSafe;
 /**
  * A timestamp generator that never sends a timestamp with any query, therefore letting Cassandra
  * assign a server-side timestamp.
+ *
+ * <p>To activate this generator, modify the {@code advanced.timestamp-generator} section in the
+ * driver configuration, for example:
+ *
+ * <pre>
+ * datastax-java-driver {
+ *   advanced.timestamp-generator {
+ *     class = ServerSideTimestampGenerator
+ *   }
+ * }
+ * </pre>
+ *
+ * See {@code reference.conf} (in the manual or core driver JAR) for more details.
  */
 @ThreadSafe
 public class ServerSideTimestampGenerator implements TimestampGenerator {
