@@ -35,6 +35,7 @@ public class KeyspaceMetadata {
 
     private final String name;
     private final boolean durableWrites;
+    private final boolean isVirtual;
 
     private final ReplicationStrategy strategy;
     private final Map<String, String> replication;
@@ -51,6 +52,15 @@ public class KeyspaceMetadata {
         this.durableWrites = durableWrites;
         this.replication = replication;
         this.strategy = ReplicationStrategy.create(replication);
+        this.isVirtual=false;
+    }
+    @VisibleForTesting
+    KeyspaceMetadata(String name, boolean durableWrites, Map<String, String> replication, boolean isVirtual) {
+        this.name = name;
+        this.durableWrites = durableWrites;
+        this.replication = replication;
+        this.strategy = ReplicationStrategy.create(replication);
+        this.isVirtual=isVirtual;
     }
 
     static KeyspaceMetadata build(Row row, VersionNumber cassandraVersion) {
@@ -61,12 +71,16 @@ public class KeyspaceMetadata {
             replicationOptions = new HashMap<String, String>();
             replicationOptions.put("class", row.getString(STRATEGY_CLASS));
             replicationOptions.putAll(SimpleJSONParser.parseStringMap(row.getString(STRATEGY_OPTIONS)));
-            return new KeyspaceMetadata(name, durableWrites, replicationOptions);
+            return new KeyspaceMetadata(name, durableWrites, replicationOptions, false);
         } else {
             String name = row.getString(KS_NAME);
             boolean durableWrites = row.getBool(DURABLE_WRITES);
-            return new KeyspaceMetadata(name, durableWrites, row.getMap(REPLICATION, String.class, String.class));
+            return new KeyspaceMetadata(name, durableWrites, row.getMap(REPLICATION, String.class, String.class), false);
         }
+    }
+    static KeyspaceMetadata buildVirtual(Row row, VersionNumber cassandraVersion) {
+            String name = row.getString(KS_NAME);
+            return new KeyspaceMetadata(name, false, Collections.<String, String>emptyMap(), true);
     }
 
     /**
@@ -86,6 +100,15 @@ public class KeyspaceMetadata {
      */
     public boolean isDurableWrites() {
         return durableWrites;
+    }
+
+    /**
+     * Returns whether or not this keyspace is a virtual keyspace
+     * @return {@code true} if virtual keyspace
+     * default), {@code false} otherwise.
+     */
+    public boolean isVirtual() {
+        return isVirtual;
     }
 
     /**
@@ -351,6 +374,9 @@ public class KeyspaceMetadata {
      * @see #exportAsString
      */
     public String asCQLQuery() {
+        if(isVirtual){
+            return "";
+        }
         StringBuilder sb = new StringBuilder();
 
         sb.append("CREATE KEYSPACE ").append(Metadata.quoteIfNecessary(name)).append(" WITH ");
@@ -367,6 +393,9 @@ public class KeyspaceMetadata {
 
     @Override
     public String toString() {
+        if(isVirtual){
+            return name;
+        }
         return asCQLQuery();
     }
 

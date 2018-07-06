@@ -73,6 +73,10 @@ public class TableMetadata extends AbstractTableMetadata {
     static TableMetadata build(KeyspaceMetadata ksm, Row row, Map<String, ColumnMetadata.Raw> rawCols, List<Row> indexRows, String nameColumn, VersionNumber cassandraVersion, Cluster cluster) {
 
         String name = row.getString(nameColumn);
+        if(ksm.isVirtual()){
+            return  new TableMetadata(ksm, name, new UUID(0L, 0L), Collections.<ColumnMetadata>emptyList(), Collections.<ColumnMetadata>emptyList(),
+                    Collections.<String, ColumnMetadata>emptyMap(), Collections.<String, IndexMetadata>emptyMap(), null, Collections.<ClusteringOrder>emptyList(), cassandraVersion);
+        }
 
         UUID id = null;
 
@@ -381,6 +385,9 @@ public class TableMetadata extends AbstractTableMetadata {
      */
     @Override
     public String exportAsString() {
+        if(keyspace.isVirtual()){
+            return "";
+        }
         StringBuilder sb = new StringBuilder();
 
         sb.append(super.exportAsString());
@@ -416,6 +423,9 @@ public class TableMetadata extends AbstractTableMetadata {
 
     @Override
     protected String asCQLQuery(boolean formatted) {
+        if(keyspace.isVirtual()){
+            return "";
+        }
         StringBuilder sb = new StringBuilder();
         sb.append("CREATE TABLE ").append(Metadata.quoteIfNecessary(keyspace.getName())).append('.').append(Metadata.quoteIfNecessary(name)).append(" (");
         if (formatted) {

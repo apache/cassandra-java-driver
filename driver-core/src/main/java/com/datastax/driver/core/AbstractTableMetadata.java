@@ -286,6 +286,10 @@ public abstract class AbstractTableMetadata {
 
     @Override
     public String toString() {
+        if(keyspace.isVirtual()){
+            return name;
+        }
+
         return asCQLQuery();
     }
 
