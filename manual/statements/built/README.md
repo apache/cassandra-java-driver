@@ -1,36 +1,36 @@
 ## Built statements
 
 Built statements are generated via [QueryBuilder]'s Fluent API.  Use of Fluent API allows
-easier build of the complex queries, comparing with hardcoding the CQL statements into the
-source code.
+easier build of complex queries, as opposed to use of hardcoded query strings.
 
-Note: The provider builders perform very little validation of the built query. There is
-thus no guarantee that a built query is valid, and it is definitively possible to create
+Note: The provided builders perform very little validation of the built query. There is
+no guarantee that a built query is valid, and it is definitively possible to create
 invalid queries.
 
-Queries built with `QueryBuilder` are execute the same way as other queries - via
-`execute` or `executeAsync`.  When query is built with putting all data into it, then it
-doesn't differ much from statement specified as string.  But it's also possible to build
-the query with bind markers inside it, and then convert it into [prepared statement](../prepared/).
+Queries built with `QueryBuilder` are executed the same way as other queries--via
+`execute` or `executeAsync`.  When query is built with inlined values, then it doesn't
+differ much from a statement specified as a string.  But it's also possible to build
+the query with bind markers inside it, and then convert it into a [prepared statement](../prepared/).
 
 ### Basics
 
-Generation of `BuiltStatement` is easy - just start with calling of one of the
-[QueryBuilder]'s methods of that represent the CQL "verb": `select`, `update`, `delete`,
-`insertInto`, or `truncate`, providing required parameters, and then call "verb"-specific
-functions to form a complete CQL statement (like, `where`, `from`, etc.).  The command's
-target could be specified as table name (if you set default keyspace when creating a
-`Session` object), keyspace & table name, or as [TableMetadata].
+Generation of `BuiltStatement` is easy--start by calling of one of the
+[QueryBuilder]'s methods of that represent the CQL's "verb": `select`, `update`, `delete`,
+`insertInto`, or `truncate`, provide required parameters, and then call "verb"-specific
+functions to form a complete CQL statement (like, `where`, `from`, etc.).  The statement's
+target table can be specified as a simple table name (if a default keyspace has been set
+when creating the `Session` object), as a combination of keyspace name and table name, or as
+a [TableMetadata] object.
 
-Note: The `QueryBuilder` doesn't provide support for full set of CQL.  For generation of
+Note: The `QueryBuilder` doesn't provide support for the full set of CQL.  For
 DDL operations (`CREATE TABLE`, etc.) you can use the [SchemaBuilder].  To perform other
 operations you still need to use [simple statements](../simple/).
 
 ### Selecting data
 
-Selection of data is quite simple - at minimum you need to provide a list of columns to
-select, and the specify from which table to select these columns (and conditions as
-described in the next section):
+Selection of data is quite simple--at minimum you need to provide a list of columns to
+select, and then specify  from which table to select these columns (you can also optionally
+specify a condition, as described in the next section):
 
 ```java
 BuiltStatement selectAll1 = QueryBuilder.select("id", "t").from("test", "test");
@@ -43,7 +43,7 @@ for (Row row: rs) {
 Note: The call `select("column1", "column2")` is really a shortcut for a chain of calls
 `select().column("column1").column("column2")`.
 
-Please note that you can't pass the `*` as column name to select all columns - if you do
+Please note that you can't pass the `*` as column name to select all columns--if you do
 this, you'll get an exception about unknown column. To select all columns you either need to use
 `select` in combination with `all` function, or simply don't specify a list of columns:
 
@@ -52,8 +52,8 @@ BuiltStatement selectAll2 = QueryBuilder.select().all().from("test", "test");
 BuiltStatement selectAll3 = QueryBuilder.select().from("test", "test");
 ```
 
-Besides selection of the specific columns there is also a possibility of calling of
-arbitrary function by using the `fcall` (this is just example, don't do this on real
+Besides selection of the specific columns, there is also a possibility of calling of
+arbitrary CQL function by using the `fcall` (this is just example, don't do this on real
 data):
 
 ```java
@@ -61,8 +61,8 @@ BuiltStatement sum = QueryBuilder.select().fcall("sum", column("id")).as("sum_id
         .from("test", "test");
 ```
 
-Note: When using functions, Cassandra will generate column names for you, but you can
-provide explicit name by using `as` right after given expression.
+Note: When using functions, Cassandra will generate aliases for you, but you can provide
+explicit aliases by using `as` right after a given selector.
 
 For often used functions, there are shortcuts, such as, `countAll`, `ttl`, `writeTime`,
 `uuid`, `now`, `toJson`, etc.:
@@ -76,15 +76,14 @@ BuiltStatement ttlAndWriteTime = QueryBuilder.select().column("id").column("t")
                 .from("test", "test");
 ```
 
-You can also cast the value of the given column to another type by using the `cast`
-function,
+You can also cast the value of the given column to another type by using the `cast` function,
 [specifying](https://docs.datastax.com/en/drivers/java/3.5/com/datastax/driver/core/querybuilder/QueryBuilder.html#cast-java.lang.Object-com.datastax.driver.core.DataType-)
-the column for which it should be performed & to what type it should be casted.
+the column for which it should be performed, and to what type it should be casted.
 
 #### Specifying conditions
 
-Selection of data rarely happen on the whole table - in most cases, people are interested
-for particular rows, located in one or several partitions.  Conditions are specified by
+Selection of data rarely happen on the whole table--in most cases, people are interested
+in particular rows, located in one or several partitions.  Conditions are specified by
 using the `where` call, like this:
 
 ```java
@@ -92,16 +91,17 @@ BuiltStatement selectOne = QueryBuilder.select().from("test", "test")
         .where(QueryBuilder.eq("id", 1));
 ```
 
-The `where` function accept the `Clause` object that is generated by calling
+The `where` function accepts the `Clause` object that is generated by calling
 `QueryBuilder`'s
 [functions](https://docs.datastax.com/en/drivers/java/3.5/com/datastax/driver/core/querybuilder/QueryBuilder.html#eq-java.lang.Iterable-java.lang.Iterable-),
 such as, `eq`, `ne`, `lt`, `in`, `contains`, `notNull`, etc.  In most cases, these
-functions receive 2 arguments - the name of the column, and value to compare, but there
-are also variants that receive 2 iterables for columns & values separately.
+functions receive 2 arguments: the name of the column, and the value to compare, but there
+are also variants that receive 2 iterables for columns and values correspondingly.
 
-Note: as query are becoming more complex, repeating `QueryBuilder` at all places will make
-code less readable.  In this case you can import all (or only required) static functions
-for code simplification (this is rewritten example from above):
+Note: as queries are becoming more and more complex, repeating `QueryBuilder` at all
+places will make code less readable.  In this case to simplify the code you can import all
+(or only required) static functions of the `QueryBuilder` class (this is the same example
+from above):
 
 ```java
 import static com.datastax.driver.core.querybuilder.QueryBuilder.*;
@@ -112,8 +112,8 @@ BuiltStatement selectOne = QueryBuilder.select().from("test", "test")
         .where(eq("id", 1));
 ```
 
-In case if you need to specify complex condition you can put additional clauses into chain
-of the `and` calls that accepts the same clauses as `where`:
+In case if you need to specify complex conditions,  you can chain additional clauses
+together with the `and` operator, that accepts the same clauses as `where`:
 
 ```java
 BuiltStatement select = QueryBuilder.select().from("test", "test")
@@ -123,9 +123,9 @@ BuiltStatement select = QueryBuilder.select().from("test", "test")
 #### Other selection options
 
 For `SELECT` statements you can also specify a lot of different options: 
- - `allowFiltering` generates corresponding `ALLOW FILTERING` part of query (***only use if you know what you're doing!***);
- - `limit` & `perPartitionLimit` allows to specify amount of data to fetch;
- - `groupBy` performs group of data;
+ - `allowFiltering` generates a corresponding `ALLOW FILTERING` part of query (***only use if you know what you're doing!***);
+ - `limit` and `perPartitionLimit` allows to specify the amount of data to fetch;
+ - `groupBy` performs grouping of data;
  - `orderBy` allows to specify sorting direction for specified clustering columns;
  
 This very "artificial" example shows the use for some of them:
@@ -138,10 +138,10 @@ BuiltStatement selectOne = QueryBuilder.select().from("test")
 
 ### Inserting data
 
-Insertion of data is straightforward - you're specifying the target table in call to
-`insertInto`, and then provide values to insert either by chaining the several calls to
-`value` function, or by using the `values` function passing the lists or arrays of column
-names & corresponding values. Following 2 examples are equivalent:
+Insertion of data is straightforward--you specify the target table in call to
+`insertInto`, and then provide values to insert either by chaining several calls to the
+`value` function, or by using the `values` function and passing lists or arrays of column
+names and their corresponding values. The following 2 examples are equivalent:
 
 ```java
 QueryBuilder.insertInto("test").value("id", 4).value("t", "test 4");
@@ -154,7 +154,7 @@ You can also insert JSON-formatted data by calling the `json` function & passing
 QueryBuilder.insertInto("test").json("{\"id\":4, \"t\":\"test 4\"}");
 ```
 
-`QueryBuilder` also allows to generate the statement that will use lightweight
+`QueryBuilder` also allows generation of the statement that use lightweight
 transactions (LWT) to check that inserted data doesn't exist yet.  You just need to add
 the call to `ifNotExists` to the statement:
 
@@ -162,11 +162,10 @@ the call to `ifNotExists` to the statement:
 QueryBuilder.insertInto("test").value("id", 4).ifNotExists();
 ```
 
-It also possible to specify additional metadata for inserted data, such as, TTL or
+It also possible to specify additional metadata for inserted data, such as TTL (time to live) or
 timestamp.  This is achieved by using the `using` function and providing the `Using`
-object generated either by `ttl`, or `timestamp` functions of the `QueryBuilder` class. In
-case if you want to specify both of them, you need to wrap other into the call to `and`
-function:
+object that is generated either by `ttl`, or `timestamp` functions of the `QueryBuilder` class. If
+you want to specify both, you need to chain them together with the `and` operator: 
 
 ```java
 QueryBuilder.insertInto("test").value("id", 4).using(ttl(10)).and(timestamp(1000));
@@ -178,7 +177,7 @@ statements, by using `defaultUnset` & `defaultNull` correspondingly.
 
 ### Update statements
 
-Updating the data also relatively straightforward - you specify the data to update,
+Updating the data is also relatively straightforward: you specify the data to update,
 condition, and additional options if necessary:
 
 ```java
@@ -186,7 +185,7 @@ BuiltStatement updateStatement = QueryBuilder.update("test").with(set("test", 1)
         .where(eq("id", 1));
 ```
 
-Update operation is passed as an argument to the `with` function, and additional
+The first update operation is passed as an argument to the `with` function, and additional
 operations could be chained via `and` calls:
 
 ```java
@@ -196,26 +195,27 @@ BuiltStatement updateStatement = QueryBuilder.update("test").with(set("t", "test
 
 Besides the most often used `set` operation, there is a plenty of operations for work with
 all types of collections (lists, maps & sets): `add`, `discard`, `prepend`, `put`,
-`remove`, `setIdx`, etc.  For full list see the [QueryBuilder]'s documentation.
+`remove`, `setIdx`, etc.  For the full list of operations, see the [QueryBuilder]'s documentation.
 
-To update counters you can use the `incr` & `decr` functions that takes the column name,
-and value by which column will be increased or decreased:
+To update counters you can use the `incr` & `decr` functions that take the column name,
+and the value by which column will be increased or decreased:
 
 ```java
 BuiltStatement query = QueryBuilder.update("counters")
         .with(incr("counter", 1)).where(eq("id", 1));
 ```
 
-Similarly to insert statements, it's also possible to perform conditional update by
-calling either `ifExists` to perform only if entry exists, or calling `onlyIf` with
-`Clause` object - in this case row will be updated only if clause returns true:
+Similarly to insert statements, it's also possible to perform conditional updates by
+calling either `ifExists` (to perform the update only if the entry exists), or by calling
+`onlyIf` with a `Clause` object—in this case the row will be updated only if the clause
+returns true:
 
 ```java
 Statement updateStatement = QueryBuilder.update("test").with(set("t", "test 1"))
         .where(eq("id", 1)).ifExists();
 ```
 
-Setting the TTL & write timestamp is done the same way as described in previous section.
+Setting the TTL & write timestamp is done the same way as for insert statements.
 
 ### Deleting data
 
@@ -229,20 +229,20 @@ BuiltStatement deleteStmt = QueryBuilder.delete().from("test")
 or specify a list of columns to delete:
 
 ```java
-BuiltStatement deleteStmt = QueryBuilder.delete().from("test")
+BuiltStatement deleteStmt = QueryBuilder.delete("col1", "col2").from("test")
                               .where(eq("id", "1")).and(eq("txt", "test"));
 ```
 
 Specification of conditions is similar to the other operations described above, including
-conditional delete with `ifExists` & `onlyIf`.
+conditional deletes with `ifExists` & `onlyIf`.
 
 ### Prepared statements
 
 If you're repeating the same operation very often, the more effective way will be to
-create the [prepared statement](../prepared/) from the `BuiltStatement`. To do it, instead
-of the real values, use the bind marker that is created either by calling of `bindMarker`
-that generates unnamed placeholder, or by calling `bindMarker("name")` to create a named
-placeholder.  After the statement is generated, just prepare it as usual, then bind &
+create a [prepared statement](../prepared/) from the `BuiltStatement`. To do this, instead
+of the real values, use bind markers created either by calling `bindMarker` (which generates
+a positional placeholder), or by calling `bindMarker("name")` (which creates a named
+placeholder).  After the statement is generated, just prepare it as usual, then bind, and
 execute:
 
 ```java
@@ -254,12 +254,13 @@ ResultSet rs = session.execute(preparedStatement.bind(1));
 
 ### Setting additional options
 
-As in the case of the usual statements, you can also set additional options for given
-statement, such as, consistency level (with `setConsistencyLevel`), enable/disable tracing
-(with `enableTracing`/`disableTracing`), retry policy (with `setRetryPolicy`), etc.
+As in the case of regular statements, you can also set options on built statements,
+such as the consistency level (with `setConsistencyLevel`), enable/disable tracing
+(with `enableTracing`/`disableTracing`), specify retry policy (with `setRetryPolicy`), etc.
 
-Note: the call to these functions changes the object type from `BuiltStatement` to the
-`Statement` or `RegularStatement`.
+Note: the call to these functions changes the object type from `BuiltStatement` to
+`Statement` or `RegularStatement`, so you won't be able to use functions specific to
+`BuiltStatement` without explicit casting.
 
 
 
