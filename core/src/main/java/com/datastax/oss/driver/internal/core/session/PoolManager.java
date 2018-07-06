@@ -19,7 +19,7 @@ import com.datastax.oss.driver.api.core.AsyncAutoCloseable;
 import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.InvalidKeyspaceException;
 import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
-import com.datastax.oss.driver.api.core.config.DriverConfigProfile;
+import com.datastax.oss.driver.api.core.config.DriverExecutionProfile;
 import com.datastax.oss.driver.api.core.loadbalancing.NodeDistance;
 import com.datastax.oss.driver.api.core.metadata.Node;
 import com.datastax.oss.driver.api.core.metadata.NodeState;
@@ -87,7 +87,7 @@ public class PoolManager implements AsyncAutoCloseable {
 
   private final String logPrefix;
   private final EventExecutor adminExecutor;
-  private final DriverConfigProfile config;
+  private final DriverExecutionProfile config;
   private final SingleThreaded singleThreaded;
 
   public PoolManager(InternalDriverContext context) {

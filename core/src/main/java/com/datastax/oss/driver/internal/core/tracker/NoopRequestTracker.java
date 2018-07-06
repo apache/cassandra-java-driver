@@ -15,7 +15,7 @@
  */
 package com.datastax.oss.driver.internal.core.tracker;
 
-import com.datastax.oss.driver.api.core.config.DriverConfigProfile;
+import com.datastax.oss.driver.api.core.config.DriverExecutionProfile;
 import com.datastax.oss.driver.api.core.context.DriverContext;
 import com.datastax.oss.driver.api.core.metadata.Node;
 import com.datastax.oss.driver.api.core.session.Request;
@@ -54,7 +54,7 @@ public class NoopRequestTracker implements RequestTracker {
   public void onSuccess(
       @NonNull Request request,
       long latencyNanos,
-      @NonNull DriverConfigProfile configProfile,
+      @NonNull DriverExecutionProfile executionProfile,
       @NonNull Node node) {
     // nothing to do
   }
@@ -64,7 +64,7 @@ public class NoopRequestTracker implements RequestTracker {
       @NonNull Request request,
       @NonNull Throwable error,
       long latencyNanos,
-      @NonNull DriverConfigProfile configProfile,
+      @NonNull DriverExecutionProfile executionProfile,
       Node node) {
     // nothing to do
   }
@@ -74,7 +74,7 @@ public class NoopRequestTracker implements RequestTracker {
       @NonNull Request request,
       @NonNull Throwable error,
       long latencyNanos,
-      @NonNull DriverConfigProfile configProfile,
+      @NonNull DriverExecutionProfile executionProfile,
       @NonNull Node node) {
     // nothing to do
   }
@@ -83,7 +83,7 @@ public class NoopRequestTracker implements RequestTracker {
   public void onNodeSuccess(
       @NonNull Request request,
       long latencyNanos,
-      @NonNull DriverConfigProfile configProfile,
+      @NonNull DriverExecutionProfile executionProfile,
       @NonNull Node node) {
     // nothing to do
   }

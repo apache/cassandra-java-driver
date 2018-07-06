@@ -23,7 +23,7 @@ import static com.datastax.oss.driver.api.core.config.DefaultDriverOption.SOCKET
 import static com.datastax.oss.driver.api.core.config.DefaultDriverOption.SOCKET_TCP_NODELAY;
 import static org.assertj.core.api.Assertions.assertThat;
 
-import com.datastax.oss.driver.api.core.config.DriverConfigProfile;
+import com.datastax.oss.driver.api.core.config.DriverExecutionProfile;
 import com.datastax.oss.driver.api.core.metadata.Node;
 import com.datastax.oss.driver.api.testinfra.session.SessionRule;
 import com.datastax.oss.driver.api.testinfra.simulacron.SimulacronRule;
@@ -58,7 +58,7 @@ public class ChannelSocketOptionsIT {
   @Test
   public void should_report_socket_options() {
     DefaultSession session = sessionRule.session();
-    DriverConfigProfile config = session.getContext().config().getDefaultProfile();
+    DriverExecutionProfile config = session.getContext().config().getDefaultProfile();
     assertThat(config.getBoolean(SOCKET_TCP_NODELAY)).isTrue();
     assertThat(config.getBoolean(SOCKET_KEEP_ALIVE)).isFalse();
     assertThat(config.getBoolean(SOCKET_REUSE_ADDRESS)).isFalse();

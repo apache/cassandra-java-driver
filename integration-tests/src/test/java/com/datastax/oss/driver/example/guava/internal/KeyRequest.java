@@ -16,7 +16,7 @@
 package com.datastax.oss.driver.example.guava.internal;
 
 import com.datastax.oss.driver.api.core.CqlIdentifier;
-import com.datastax.oss.driver.api.core.config.DriverConfigProfile;
+import com.datastax.oss.driver.api.core.config.DriverExecutionProfile;
 import com.datastax.oss.driver.api.core.metadata.token.Token;
 import com.datastax.oss.driver.api.core.session.Request;
 import com.datastax.oss.protocol.internal.util.collection.NullAllowingImmutableMap;
@@ -40,12 +40,12 @@ public class KeyRequest implements Request {
   }
 
   @Override
-  public String getConfigProfileName() {
+  public String getExecutionProfileName() {
     return null;
   }
 
   @Override
-  public DriverConfigProfile getConfigProfile() {
+  public DriverExecutionProfile getExecutionProfile() {
     return null;
   }
 

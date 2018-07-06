@@ -30,18 +30,18 @@ public interface DriverConfig {
 
   /**
    * Alias to get the default profile, which is stored under the name {@link
-   * DriverConfigProfile#DEFAULT_NAME} and always present.
+   * DriverExecutionProfile#DEFAULT_NAME} and always present.
    */
   @NonNull
-  default DriverConfigProfile getDefaultProfile() {
-    return getProfile(DriverConfigProfile.DEFAULT_NAME);
+  default DriverExecutionProfile getDefaultProfile() {
+    return getProfile(DriverExecutionProfile.DEFAULT_NAME);
   }
 
   /** @throws IllegalArgumentException if there is no profile with this name. */
   @NonNull
-  DriverConfigProfile getProfile(@NonNull String profileName);
+  DriverExecutionProfile getProfile(@NonNull String profileName);
 
   /** Returns an <b>immutable</b> view of all named profiles (including the default profile). */
   @NonNull
-  Map<String, ? extends DriverConfigProfile> getProfiles();
+  Map<String, ? extends DriverExecutionProfile> getProfiles();
 }

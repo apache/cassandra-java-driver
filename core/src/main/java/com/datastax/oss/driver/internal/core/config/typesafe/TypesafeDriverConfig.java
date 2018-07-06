@@ -18,7 +18,7 @@ package com.datastax.oss.driver.internal.core.config.typesafe;
 import static com.typesafe.config.ConfigValueType.OBJECT;
 
 import com.datastax.oss.driver.api.core.config.DriverConfig;
-import com.datastax.oss.driver.api.core.config.DriverConfigProfile;
+import com.datastax.oss.driver.api.core.config.DriverExecutionProfile;
 import com.datastax.oss.driver.internal.core.util.Loggers;
 import com.datastax.oss.driver.shaded.guava.common.base.Preconditions;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableMap;
@@ -36,7 +36,7 @@ public class TypesafeDriverConfig implements DriverConfig {
 
   private static final Logger LOG = LoggerFactory.getLogger(TypesafeDriverConfig.class);
 
-  private final ImmutableMap<String, TypesafeDriverConfigProfile.Base> profiles;
+  private final ImmutableMap<String, TypesafeDriverExecutionProfile.Base> profiles;
   // Only used to detect if reload saw any change
   private volatile Config lastLoadedConfig;
 
@@ -45,10 +45,12 @@ public class TypesafeDriverConfig implements DriverConfig {
 
     Map<String, Config> profileConfigs = extractProfiles(config);
 
-    ImmutableMap.Builder<String, TypesafeDriverConfigProfile.Base> builder = ImmutableMap.builder();
+    ImmutableMap.Builder<String, TypesafeDriverExecutionProfile.Base> builder =
+        ImmutableMap.builder();
     for (Map.Entry<String, Config> entry : profileConfigs.entrySet()) {
       builder.put(
-          entry.getKey(), new TypesafeDriverConfigProfile.Base(entry.getKey(), entry.getValue()));
+          entry.getKey(),
+          new TypesafeDriverExecutionProfile.Base(entry.getKey(), entry.getValue()));
     }
     this.profiles = builder.build();
   }
@@ -63,7 +65,7 @@ public class TypesafeDriverConfig implements DriverConfig {
         Map<String, Config> profileConfigs = extractProfiles(config);
         for (Map.Entry<String, Config> entry : profileConfigs.entrySet()) {
           String profileName = entry.getKey();
-          TypesafeDriverConfigProfile.Base profile = this.profiles.get(profileName);
+          TypesafeDriverExecutionProfile.Base profile = this.profiles.get(profileName);
           if (profile == null) {
             LOG.warn(
                 "Unknown profile '{}' while reloading configuration. "
@@ -97,7 +99,7 @@ public class TypesafeDriverConfig implements DriverConfig {
     ImmutableMap.Builder<String, Config> result = ImmutableMap.builder();
 
     Config defaultProfileConfig = sourceConfig.withoutPath("profiles");
-    result.put(DriverConfigProfile.DEFAULT_NAME, defaultProfileConfig);
+    result.put(DriverExecutionProfile.DEFAULT_NAME, defaultProfileConfig);
 
     // The rest of the method is a bit confusing because we navigate between Typesafe config's two
     // APIs, see https://github.com/typesafehub/config#understanding-config-and-configobject
@@ -108,7 +110,7 @@ public class TypesafeDriverConfig implements DriverConfig {
     if (rootObject.containsKey("profiles") && rootObject.get("profiles").valueType() == OBJECT) {
       ConfigObject profilesObject = (ConfigObject) rootObject.get("profiles");
       for (String profileName : profilesObject.keySet()) {
-        if (profileName.equals(DriverConfigProfile.DEFAULT_NAME)) {
+        if (profileName.equals(DriverExecutionProfile.DEFAULT_NAME)) {
           throw new IllegalArgumentException(
               String.format(
                   "Can't have %s as a profile name because it's used internally. Pick another name.",
@@ -126,7 +128,7 @@ public class TypesafeDriverConfig implements DriverConfig {
 
   @NonNull
   @Override
-  public DriverConfigProfile getProfile(@NonNull String profileName) {
+  public DriverExecutionProfile getProfile(@NonNull String profileName) {
     Preconditions.checkArgument(
         profiles.containsKey(profileName),
         "Unknown profile '%s'. Check your configuration.",
@@ -136,7 +138,7 @@ public class TypesafeDriverConfig implements DriverConfig {
 
   @NonNull
   @Override
-  public Map<String, ? extends DriverConfigProfile> getProfiles() {
+  public Map<String, ? extends DriverExecutionProfile> getProfiles() {
     return profiles;
   }
 }

@@ -17,7 +17,7 @@ package com.datastax.oss.driver.api.testinfra.session;
 
 import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.NoNodeAvailableException;
-import com.datastax.oss.driver.api.core.config.DriverConfigProfile;
+import com.datastax.oss.driver.api.core.config.DriverExecutionProfile;
 import com.datastax.oss.driver.api.core.cql.SimpleStatement;
 import com.datastax.oss.driver.api.core.cql.Statement;
 import com.datastax.oss.driver.api.core.metadata.NodeStateListener;
@@ -64,7 +64,7 @@ public class SessionRule<SessionT extends Session> extends ExternalResource {
   // the session that is auto created for this rule and is tied to the given keyspace.
   private SessionT session;
 
-  private DriverConfigProfile slowProfile;
+  private DriverExecutionProfile slowProfile;
 
   /**
    * Returns a builder to construct an instance with a fluent API.
@@ -143,7 +143,7 @@ public class SessionRule<SessionT extends Session> extends ExternalResource {
   }
 
   /** @return a config profile where the request timeout is 30 seconds. * */
-  public DriverConfigProfile slowProfile() {
+  public DriverExecutionProfile slowProfile() {
     return slowProfile;
   }
 }

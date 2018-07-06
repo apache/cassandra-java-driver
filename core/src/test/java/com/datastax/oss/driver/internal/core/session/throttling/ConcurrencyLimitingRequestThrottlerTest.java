@@ -21,7 +21,7 @@ import static com.datastax.oss.driver.Assertions.assertThatStage;
 import com.datastax.oss.driver.api.core.RequestThrottlingException;
 import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
 import com.datastax.oss.driver.api.core.config.DriverConfig;
-import com.datastax.oss.driver.api.core.config.DriverConfigProfile;
+import com.datastax.oss.driver.api.core.config.DriverExecutionProfile;
 import com.datastax.oss.driver.api.core.context.DriverContext;
 import com.datastax.oss.driver.api.core.session.throttling.Throttled;
 import com.datastax.oss.driver.shaded.guava.common.collect.Lists;
@@ -39,7 +39,7 @@ public class ConcurrencyLimitingRequestThrottlerTest {
 
   @Mock private DriverContext context;
   @Mock private DriverConfig config;
-  @Mock private DriverConfigProfile defaultProfile;
+  @Mock private DriverExecutionProfile defaultProfile;
 
   private ConcurrencyLimitingRequestThrottler throttler;
 

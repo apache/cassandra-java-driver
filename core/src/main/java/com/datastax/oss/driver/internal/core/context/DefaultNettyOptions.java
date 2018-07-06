@@ -16,7 +16,7 @@
 package com.datastax.oss.driver.internal.core.context;
 
 import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
-import com.datastax.oss.driver.api.core.config.DriverConfigProfile;
+import com.datastax.oss.driver.api.core.config.DriverExecutionProfile;
 import com.datastax.oss.driver.internal.core.util.concurrent.BlockingOperation;
 import com.datastax.oss.driver.shaded.guava.common.util.concurrent.ThreadFactoryBuilder;
 import io.netty.bootstrap.Bootstrap;
@@ -47,7 +47,7 @@ public class DefaultNettyOptions implements NettyOptions {
   private final TimeUnit adminShutdownUnit;
 
   public DefaultNettyOptions(InternalDriverContext context) {
-    DriverConfigProfile config = context.config().getDefaultProfile();
+    DriverExecutionProfile config = context.config().getDefaultProfile();
     int ioGroupSize = config.getInt(DefaultDriverOption.NETTY_IO_SIZE);
     this.ioShutdownQuietPeriod = config.getInt(DefaultDriverOption.NETTY_IO_SHUTDOWN_QUIET_PERIOD);
     this.ioShutdownTimeout = config.getInt(DefaultDriverOption.NETTY_IO_SHUTDOWN_TIMEOUT);

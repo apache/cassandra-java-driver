@@ -41,13 +41,11 @@ public class ChannelFactoryAvailableIdsTest extends ChannelFactoryTestBase {
   @Override
   public void setup() throws InterruptedException {
     super.setup();
-    Mockito.when(defaultConfigProfile.isDefined(DefaultDriverOption.PROTOCOL_VERSION))
-        .thenReturn(true);
-    Mockito.when(defaultConfigProfile.getString(DefaultDriverOption.PROTOCOL_VERSION))
-        .thenReturn("V4");
+    Mockito.when(defaultProfile.isDefined(DefaultDriverOption.PROTOCOL_VERSION)).thenReturn(true);
+    Mockito.when(defaultProfile.getString(DefaultDriverOption.PROTOCOL_VERSION)).thenReturn("V4");
     Mockito.when(protocolVersionRegistry.fromName("V4")).thenReturn(DefaultProtocolVersion.V4);
 
-    Mockito.when(defaultConfigProfile.getInt(DefaultDriverOption.CONNECTION_MAX_REQUESTS))
+    Mockito.when(defaultProfile.getInt(DefaultDriverOption.CONNECTION_MAX_REQUESTS))
         .thenReturn(128);
 
     Mockito.when(responseCallback.isLastResponse(any(Frame.class))).thenReturn(true);

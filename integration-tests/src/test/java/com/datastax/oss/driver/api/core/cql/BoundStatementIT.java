@@ -26,7 +26,7 @@ import com.datastax.oss.driver.api.core.CqlSession;
 import com.datastax.oss.driver.api.core.DefaultConsistencyLevel;
 import com.datastax.oss.driver.api.core.DriverTimeoutException;
 import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
-import com.datastax.oss.driver.api.core.config.DriverConfigProfile;
+import com.datastax.oss.driver.api.core.config.DriverExecutionProfile;
 import com.datastax.oss.driver.api.core.metadata.token.Token;
 import com.datastax.oss.driver.api.core.type.codec.TypeCodecs;
 import com.datastax.oss.driver.api.testinfra.CassandraRequirement;
@@ -91,7 +91,7 @@ public class BoundStatementIT {
         .execute(
             SimpleStatement.builder(
                     "CREATE TABLE IF NOT EXISTS test (k text, v int, PRIMARY KEY(k, v))")
-                .withConfigProfile(sessionRule.slowProfile())
+                .withExecutionProfile(sessionRule.slowProfile())
                 .build());
     for (int i = 0; i < 100; i++) {
       sessionRule
@@ -107,7 +107,7 @@ public class BoundStatementIT {
         .session()
         .execute(
             SimpleStatement.builder("CREATE TABLE IF NOT EXISTS test2 (k text primary key, v0 int)")
-                .withConfigProfile(sessionRule.slowProfile())
+                .withExecutionProfile(sessionRule.slowProfile())
                 .build());
   }
 
@@ -383,7 +383,7 @@ public class BoundStatementIT {
   public void should_propagate_attributes_when_preparing_a_simple_statement() {
     CqlSession session = sessionRule.session();
 
-    DriverConfigProfile mockProfile =
+    DriverExecutionProfile mockProfile =
         session
             .getContext()
             .config()
@@ -406,8 +406,8 @@ public class BoundStatementIT {
 
     SimpleStatement simpleStatement =
         SimpleStatement.builder("SELECT release_version FROM system.local")
-            .withConfigProfile(mockProfile)
-            .withConfigProfileName(mockConfigProfileName)
+            .withExecutionProfile(mockProfile)
+            .withExecutionProfileName(mockConfigProfileName)
             .withPagingState(mockPagingState)
             .withKeyspace(mockKeyspace)
             .withRoutingKeyspace(mockRoutingKeyspace)
@@ -431,8 +431,8 @@ public class BoundStatementIT {
     for (Function<PreparedStatement, BoundStatement> createMethod : createMethods) {
       BoundStatement boundStatement = createMethod.apply(preparedStatement);
 
-      assertThat(boundStatement.getConfigProfile()).isEqualTo(mockProfile);
-      assertThat(boundStatement.getConfigProfileName()).isEqualTo(mockConfigProfileName);
+      assertThat(boundStatement.getExecutionProfile()).isEqualTo(mockProfile);
+      assertThat(boundStatement.getExecutionProfileName()).isEqualTo(mockConfigProfileName);
       assertThat(boundStatement.getPagingState()).isEqualTo(mockPagingState);
       assertThat(boundStatement.getRoutingKeyspace())
           .isEqualTo(mockKeyspace != null ? mockKeyspace : mockRoutingKeyspace);

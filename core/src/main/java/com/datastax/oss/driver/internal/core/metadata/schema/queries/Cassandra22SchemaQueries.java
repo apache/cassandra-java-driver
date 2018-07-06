@@ -15,7 +15,7 @@
  */
 package com.datastax.oss.driver.internal.core.metadata.schema.queries;
 
-import com.datastax.oss.driver.api.core.config.DriverConfigProfile;
+import com.datastax.oss.driver.api.core.config.DriverExecutionProfile;
 import com.datastax.oss.driver.api.core.metadata.Metadata;
 import com.datastax.oss.driver.internal.core.channel.DriverChannel;
 import java.util.Optional;
@@ -27,7 +27,7 @@ class Cassandra22SchemaQueries extends CassandraSchemaQueries {
   Cassandra22SchemaQueries(
       DriverChannel channel,
       CompletableFuture<Metadata> refreshFuture,
-      DriverConfigProfile config,
+      DriverExecutionProfile config,
       String logPrefix) {
     super(channel, false, refreshFuture, config, logPrefix);
   }

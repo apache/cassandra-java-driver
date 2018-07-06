@@ -22,7 +22,7 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 
-import com.datastax.oss.driver.api.core.config.DriverConfigProfile;
+import com.datastax.oss.driver.api.core.config.DriverExecutionProfile;
 import com.datastax.oss.driver.api.core.loadbalancing.LoadBalancingPolicy;
 import com.datastax.oss.driver.api.core.loadbalancing.LoadBalancingPolicy.DistanceReporter;
 import com.datastax.oss.driver.api.core.loadbalancing.NodeDistance;
@@ -101,7 +101,7 @@ public class LoadBalancingPolicyWrapperTest {
         new LoadBalancingPolicyWrapper(
             context,
             ImmutableMap.of(
-                DriverConfigProfile.DEFAULT_NAME,
+                DriverExecutionProfile.DEFAULT_NAME,
                 policy1,
                 "profile1",
                 policy1,

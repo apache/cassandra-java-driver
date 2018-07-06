@@ -22,7 +22,7 @@ import com.datastax.oss.driver.api.core.DriverTimeoutException;
 import com.datastax.oss.driver.api.core.RequestThrottlingException;
 import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
 import com.datastax.oss.driver.api.core.config.DriverConfig;
-import com.datastax.oss.driver.api.core.config.DriverConfigProfile;
+import com.datastax.oss.driver.api.core.config.DriverExecutionProfile;
 import com.datastax.oss.driver.api.core.connection.FrameTooLongException;
 import com.datastax.oss.driver.api.core.cql.AsyncResultSet;
 import com.datastax.oss.driver.api.core.cql.ExecutionInfo;
@@ -98,7 +98,7 @@ public abstract class CqlRequestHandlerBase implements Throttled {
   private final CqlIdentifier keyspace;
   private final InternalDriverContext context;
   private final Queue<Node> queryPlan;
-  @NonNull private final DriverConfigProfile configProfile;
+  @NonNull private final DriverExecutionProfile executionProfile;
   private final boolean isIdempotent;
   protected final CompletableFuture<AsyncResultSet> result;
   private final Message message;
@@ -143,12 +143,12 @@ public abstract class CqlRequestHandlerBase implements Throttled {
     this.keyspace = session.getKeyspace().orElse(null);
     this.context = context;
 
-    if (statement.getConfigProfile() != null) {
-      this.configProfile = statement.getConfigProfile();
+    if (statement.getExecutionProfile() != null) {
+      this.executionProfile = statement.getExecutionProfile();
     } else {
       DriverConfig config = context.config();
-      String profileName = statement.getConfigProfileName();
-      this.configProfile =
+      String profileName = statement.getExecutionProfileName();
+      this.executionProfile =
           (profileName == null || profileName.isEmpty())
               ? config.getDefaultProfile()
               : config.getProfile(profileName);
@@ -156,13 +156,14 @@ public abstract class CqlRequestHandlerBase implements Throttled {
     this.queryPlan =
         context
             .loadBalancingPolicyWrapper()
-            .newQueryPlan(statement, configProfile.getName(), session);
-    this.retryPolicy = context.retryPolicy(configProfile.getName());
-    this.speculativeExecutionPolicy = context.speculativeExecutionPolicy(configProfile.getName());
+            .newQueryPlan(statement, executionProfile.getName(), session);
+    this.retryPolicy = context.retryPolicy(executionProfile.getName());
+    this.speculativeExecutionPolicy =
+        context.speculativeExecutionPolicy(executionProfile.getName());
     Boolean statementIsIdempotent = statement.isIdempotent();
     this.isIdempotent =
         (statementIsIdempotent == null)
-            ? configProfile.getBoolean(DefaultDriverOption.REQUEST_DEFAULT_IDEMPOTENCE)
+            ? executionProfile.getBoolean(DefaultDriverOption.REQUEST_DEFAULT_IDEMPOTENCE)
             : statementIsIdempotent;
     this.result = new CompletableFuture<>();
     this.result.exceptionally(
@@ -176,13 +177,13 @@ public abstract class CqlRequestHandlerBase implements Throttled {
           }
           return null;
         });
-    this.message = Conversions.toMessage(statement, configProfile, context);
+    this.message = Conversions.toMessage(statement, executionProfile, context);
     this.scheduler = context.nettyOptions().ioEventLoopGroup().next();
 
     this.timeout =
         statement.getTimeout() != null
             ? statement.getTimeout()
-            : configProfile.getDuration(DefaultDriverOption.REQUEST_TIMEOUT);
+            : executionProfile.getDuration(DefaultDriverOption.REQUEST_TIMEOUT);
     this.timeoutFuture = scheduleTimeout(timeout);
 
     this.activeExecutionsCount = new AtomicInteger(1);
@@ -201,7 +202,7 @@ public abstract class CqlRequestHandlerBase implements Throttled {
           .getMetricUpdater()
           .updateTimer(
               DefaultSessionMetric.THROTTLING_DELAY,
-              configProfile.getName(),
+              executionProfile.getName(),
               System.nanoTime() - startTimeNanos,
               TimeUnit.NANOSECONDS);
     }
@@ -307,15 +308,15 @@ public abstract class CqlRequestHandlerBase implements Throttled {
         long nodeLatencyNanos = now - callback.start;
         context
             .requestTracker()
-            .onNodeSuccess(statement, nodeLatencyNanos, configProfile, callback.node);
+            .onNodeSuccess(statement, nodeLatencyNanos, executionProfile, callback.node);
         context
             .requestTracker()
-            .onSuccess(statement, totalLatencyNanos, configProfile, callback.node);
+            .onSuccess(statement, totalLatencyNanos, executionProfile, callback.node);
         session
             .getMetricUpdater()
             .updateTimer(
                 DefaultSessionMetric.CQL_REQUESTS,
-                configProfile.getName(),
+                executionProfile.getName(),
                 totalLatencyNanos,
                 TimeUnit.NANOSECONDS);
       }
@@ -342,14 +343,14 @@ public abstract class CqlRequestHandlerBase implements Throttled {
         schemaInAgreement,
         session,
         context,
-        configProfile);
+        executionProfile);
   }
 
   @Override
   public void onThrottleFailure(@NonNull RequestThrottlingException error) {
     session
         .getMetricUpdater()
-        .incrementCounter(DefaultSessionMetric.THROTTLING_ERRORS, configProfile.getName());
+        .incrementCounter(DefaultSessionMetric.THROTTLING_ERRORS, executionProfile.getName());
     setFinalError(error, null, -1);
   }
 
@@ -368,17 +369,17 @@ public abstract class CqlRequestHandlerBase implements Throttled {
                   true,
                   session,
                   context,
-                  configProfile));
+                  executionProfile));
     }
     if (result.completeExceptionally(error)) {
       cancelScheduledTasks();
       long latencyNanos = System.nanoTime() - startTimeNanos;
-      context.requestTracker().onError(statement, error, latencyNanos, configProfile, node);
+      context.requestTracker().onError(statement, error, latencyNanos, executionProfile, node);
       if (error instanceof DriverTimeoutException) {
         throttler.signalTimeout(this);
         session
             .getMetricUpdater()
-            .incrementCounter(DefaultSessionMetric.CQL_CLIENT_TIMEOUTS, configProfile.getName());
+            .incrementCounter(DefaultSessionMetric.CQL_CLIENT_TIMEOUTS, executionProfile.getName());
       } else if (!(error instanceof RequestThrottlingException)) {
         throttler.signalError(this, error);
       }
@@ -439,7 +440,7 @@ public abstract class CqlRequestHandlerBase implements Throttled {
           trackNodeError(node, error);
           ((DefaultNode) node)
               .getMetricUpdater()
-              .incrementCounter(DefaultNodeMetric.UNSENT_REQUESTS, configProfile.getName());
+              .incrementCounter(DefaultNodeMetric.UNSENT_REQUESTS, executionProfile.getName());
           sendRequest(null, execution, retryCount, scheduleNextExecution); // try next node
         }
       } else {
@@ -476,7 +477,7 @@ public abstract class CqlRequestHandlerBase implements Throttled {
                               .getMetricUpdater()
                               .incrementCounter(
                                   DefaultNodeMetric.SPECULATIVE_EXECUTIONS,
-                                  configProfile.getName());
+                                  executionProfile.getName());
                           sendRequest(null, nextExecution, 0, true);
                         }
                       },
@@ -499,7 +500,7 @@ public abstract class CqlRequestHandlerBase implements Throttled {
           .getMetricUpdater()
           .updateTimer(
               DefaultNodeMetric.CQL_MESSAGES,
-              configProfile.getName(),
+              executionProfile.getName(),
               System.nanoTime() - start,
               TimeUnit.NANOSECONDS);
       inFlightCallbacks.remove(this);
@@ -612,7 +613,7 @@ public abstract class CqlRequestHandlerBase implements Throttled {
           || error instanceof FunctionFailureException
           || error instanceof ProtocolError) {
         LOG.trace("[{}] Unrecoverable error, rethrowing", logPrefix);
-        metricUpdater.incrementCounter(DefaultNodeMetric.OTHER_ERRORS, configProfile.getName());
+        metricUpdater.incrementCounter(DefaultNodeMetric.OTHER_ERRORS, executionProfile.getName());
         trackNodeError(node, error);
         setFinalError(error, node, execution);
       } else {
@@ -711,16 +712,16 @@ public abstract class CqlRequestHandlerBase implements Throttled {
         DefaultNodeMetric error,
         DefaultNodeMetric retriesOnError,
         DefaultNodeMetric ignoresOnError) {
-      metricUpdater.incrementCounter(error, configProfile.getName());
+      metricUpdater.incrementCounter(error, executionProfile.getName());
       switch (decision) {
         case RETRY_SAME:
         case RETRY_NEXT:
-          metricUpdater.incrementCounter(DefaultNodeMetric.RETRIES, configProfile.getName());
-          metricUpdater.incrementCounter(retriesOnError, configProfile.getName());
+          metricUpdater.incrementCounter(DefaultNodeMetric.RETRIES, executionProfile.getName());
+          metricUpdater.incrementCounter(retriesOnError, executionProfile.getName());
           break;
         case IGNORE:
-          metricUpdater.incrementCounter(DefaultNodeMetric.IGNORES, configProfile.getName());
-          metricUpdater.incrementCounter(ignoresOnError, configProfile.getName());
+          metricUpdater.incrementCounter(DefaultNodeMetric.IGNORES, executionProfile.getName());
+          metricUpdater.incrementCounter(ignoresOnError, executionProfile.getName());
           break;
         case RETHROW:
           // nothing do do
@@ -761,7 +762,7 @@ public abstract class CqlRequestHandlerBase implements Throttled {
 
     private void trackNodeError(Node node, Throwable error) {
       long latencyNanos = System.nanoTime() - this.start;
-      context.requestTracker().onNodeError(statement, error, latencyNanos, configProfile, node);
+      context.requestTracker().onNodeError(statement, error, latencyNanos, executionProfile, node);
     }
 
     @Override

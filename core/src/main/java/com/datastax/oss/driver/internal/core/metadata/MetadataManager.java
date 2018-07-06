@@ -17,7 +17,7 @@ package com.datastax.oss.driver.internal.core.metadata;
 
 import com.datastax.oss.driver.api.core.AsyncAutoCloseable;
 import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
-import com.datastax.oss.driver.api.core.config.DriverConfigProfile;
+import com.datastax.oss.driver.api.core.config.DriverExecutionProfile;
 import com.datastax.oss.driver.api.core.metadata.Metadata;
 import com.datastax.oss.driver.api.core.metadata.Node;
 import com.datastax.oss.driver.internal.core.config.ConfigChangeEvent;
@@ -57,7 +57,7 @@ public class MetadataManager implements AsyncAutoCloseable {
   private final InternalDriverContext context;
   private final String logPrefix;
   private final EventExecutor adminExecutor;
-  private final DriverConfigProfile config;
+  private final DriverExecutionProfile config;
   private final SingleThreaded singleThreaded;
   private final ControlConnection controlConnection;
 
@@ -262,7 +262,7 @@ public class MetadataManager implements AsyncAutoCloseable {
 
     private boolean didFirstNodeListRefresh;
 
-    private SingleThreaded(InternalDriverContext context, DriverConfigProfile config) {
+    private SingleThreaded(InternalDriverContext context, DriverExecutionProfile config) {
       this.schemaRefreshDebouncer =
           new Debouncer<>(
               adminExecutor,

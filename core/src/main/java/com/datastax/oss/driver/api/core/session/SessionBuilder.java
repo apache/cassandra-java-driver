@@ -19,7 +19,7 @@ import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.CqlSession;
 import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
 import com.datastax.oss.driver.api.core.config.DriverConfigLoader;
-import com.datastax.oss.driver.api.core.config.DriverConfigProfile;
+import com.datastax.oss.driver.api.core.config.DriverExecutionProfile;
 import com.datastax.oss.driver.api.core.context.DriverContext;
 import com.datastax.oss.driver.api.core.loadbalancing.LoadBalancingPolicy;
 import com.datastax.oss.driver.api.core.metadata.Node;
@@ -193,8 +193,8 @@ public abstract class SessionBuilder<SelfT extends SessionBuilder, SessionT> {
   }
 
   /**
-   * Adds a custom filter to include/exclude nodes for a particular configuration profile. This
-   * assumes that you're also using a dedicated load balancing policy for that profile.
+   * Adds a custom filter to include/exclude nodes for a particular execution profile. This assumes
+   * that you're also using a dedicated load balancing policy for that profile.
    *
    * <p>The predicate's {@link Predicate#test(Object) test()} method will be invoked each time the
    * {@link LoadBalancingPolicy} processes a topology or state change: if it returns false, the
@@ -218,7 +218,7 @@ public abstract class SessionBuilder<SelfT extends SessionBuilder, SessionT> {
   /** Alias to {@link #withNodeFilter(String, Predicate)} for the default profile. */
   @NonNull
   public SelfT withNodeFilter(@NonNull Predicate<Node> nodeFilter) {
-    return withNodeFilter(DriverConfigProfile.DEFAULT_NAME, nodeFilter);
+    return withNodeFilter(DriverExecutionProfile.DEFAULT_NAME, nodeFilter);
   }
 
   /**
@@ -289,7 +289,7 @@ public abstract class SessionBuilder<SelfT extends SessionBuilder, SessionT> {
     try {
       DriverConfigLoader configLoader = buildIfNull(this.configLoader, this::defaultConfigLoader);
 
-      DriverConfigProfile defaultConfig = configLoader.getInitialConfig().getDefaultProfile();
+      DriverExecutionProfile defaultConfig = configLoader.getInitialConfig().getDefaultProfile();
       List<String> configContactPoints =
           defaultConfig.getStringList(DefaultDriverOption.CONTACT_POINTS, Collections.emptyList());
 

@@ -21,7 +21,7 @@ import com.datastax.oss.driver.api.core.auth.AuthProvider;
 import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
 import com.datastax.oss.driver.api.core.config.DriverConfig;
 import com.datastax.oss.driver.api.core.config.DriverConfigLoader;
-import com.datastax.oss.driver.api.core.config.DriverConfigProfile;
+import com.datastax.oss.driver.api.core.config.DriverExecutionProfile;
 import com.datastax.oss.driver.api.core.connection.ReconnectionPolicy;
 import com.datastax.oss.driver.api.core.loadbalancing.LoadBalancingPolicy;
 import com.datastax.oss.driver.api.core.metadata.Node;
@@ -203,7 +203,7 @@ public class DefaultDriverContext implements InternalDriverContext {
       ClassLoader classLoader) {
     this.config = configLoader.getInitialConfig();
     this.configLoader = configLoader;
-    DriverConfigProfile defaultProfile = config.getDefaultProfile();
+    DriverExecutionProfile defaultProfile = config.getDefaultProfile();
     if (defaultProfile.isDefined(DefaultDriverOption.SESSION_NAME)) {
       this.sessionName = defaultProfile.getString(DefaultDriverOption.SESSION_NAME);
     } else {
@@ -318,7 +318,7 @@ public class DefaultDriverContext implements InternalDriverContext {
 
   @SuppressWarnings("unchecked")
   protected Compressor<ByteBuf> buildCompressor() {
-    DriverConfigProfile defaultProfile = config().getDefaultProfile();
+    DriverExecutionProfile defaultProfile = config().getDefaultProfile();
     if (defaultProfile.isDefined(DefaultDriverOption.PROTOCOL_COMPRESSION)) {
       String name = defaultProfile.getString(DefaultDriverOption.PROTOCOL_COMPRESSION);
       if (name.equalsIgnoreCase("lz4")) {

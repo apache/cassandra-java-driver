@@ -16,7 +16,7 @@
 package com.datastax.oss.driver.internal.core.ssl;
 
 import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
-import com.datastax.oss.driver.api.core.config.DriverConfigProfile;
+import com.datastax.oss.driver.api.core.config.DriverExecutionProfile;
 import com.datastax.oss.driver.api.core.context.DriverContext;
 import com.datastax.oss.driver.api.core.ssl.SslEngineFactory;
 import edu.umd.cs.findbugs.annotations.NonNull;
@@ -66,7 +66,7 @@ public class DefaultSslEngineFactory implements SslEngineFactory {
 
   /** Builds a new instance from the driver configuration. */
   public DefaultSslEngineFactory(DriverContext driverContext) {
-    DriverConfigProfile config = driverContext.config().getDefaultProfile();
+    DriverExecutionProfile config = driverContext.config().getDefaultProfile();
     try {
       this.sslContext = buildContext(config);
     } catch (Exception e) {
@@ -105,7 +105,7 @@ public class DefaultSslEngineFactory implements SslEngineFactory {
     return engine;
   }
 
-  protected SSLContext buildContext(DriverConfigProfile config) throws Exception {
+  protected SSLContext buildContext(DriverExecutionProfile config) throws Exception {
     if (config.isDefined(DefaultDriverOption.SSL_KEYSTORE_PATH)
         || config.isDefined(DefaultDriverOption.SSL_TRUSTSTORE_PATH)) {
       SSLContext context = SSLContext.getInstance("SSL");

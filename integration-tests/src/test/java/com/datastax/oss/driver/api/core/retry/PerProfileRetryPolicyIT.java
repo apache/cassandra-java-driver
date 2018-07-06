@@ -23,7 +23,7 @@ import static com.datastax.oss.simulacron.common.stubbing.PrimeDsl.when;
 import com.datastax.oss.driver.api.core.ConsistencyLevel;
 import com.datastax.oss.driver.api.core.CqlSession;
 import com.datastax.oss.driver.api.core.config.DriverConfig;
-import com.datastax.oss.driver.api.core.config.DriverConfigProfile;
+import com.datastax.oss.driver.api.core.config.DriverExecutionProfile;
 import com.datastax.oss.driver.api.core.context.DriverContext;
 import com.datastax.oss.driver.api.core.cql.ResultSet;
 import com.datastax.oss.driver.api.core.cql.SimpleStatement;
@@ -91,9 +91,9 @@ public class PerProfileRetryPolicyIT {
 
     assertThat(context.retryPolicies())
         .hasSize(3)
-        .containsKeys(DriverConfigProfile.DEFAULT_NAME, "profile1", "profile2");
+        .containsKeys(DriverExecutionProfile.DEFAULT_NAME, "profile1", "profile2");
 
-    RetryPolicy defaultPolicy = context.retryPolicy(DriverConfigProfile.DEFAULT_NAME);
+    RetryPolicy defaultPolicy = context.retryPolicy(DriverExecutionProfile.DEFAULT_NAME);
     RetryPolicy policy1 = context.retryPolicy("profile1");
     RetryPolicy policy2 = context.retryPolicy("profile2");
     assertThat(defaultPolicy)
@@ -106,14 +106,14 @@ public class PerProfileRetryPolicyIT {
   @Test(expected = UnavailableException.class)
   public void should_use_policy_from_request_profile() {
     // since profile1 uses a NoRetryPolicy, UnavailableException should surface to client.
-    sessionRule.session().execute(QUERY.setConfigProfileName("profile1"));
+    sessionRule.session().execute(QUERY.setExecutionProfileName("profile1"));
   }
 
   @Test
   public void should_use_policy_from_config_when_not_configured_in_request_profile() {
     // since profile2 has no configured retry policy, it should defer to configuration which uses
     // DefaultRetryPolicy, which should try request on next host (host 1).
-    ResultSet result = sessionRule.session().execute(QUERY.setConfigProfileName("profile2"));
+    ResultSet result = sessionRule.session().execute(QUERY.setExecutionProfileName("profile2"));
 
     // expect an unavailable exception to be present in errors.
     List<Map.Entry<Node, Throwable>> errors = result.getExecutionInfo().getErrors();

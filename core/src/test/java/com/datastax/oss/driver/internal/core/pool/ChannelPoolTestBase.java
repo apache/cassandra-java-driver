@@ -20,7 +20,7 @@ import static org.mockito.ArgumentMatchers.any;
 
 import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.config.DriverConfig;
-import com.datastax.oss.driver.api.core.config.DriverConfigProfile;
+import com.datastax.oss.driver.api.core.config.DriverExecutionProfile;
 import com.datastax.oss.driver.api.core.connection.ReconnectionPolicy;
 import com.datastax.oss.driver.api.core.metadata.Node;
 import com.datastax.oss.driver.internal.core.channel.ChannelFactory;
@@ -53,7 +53,7 @@ abstract class ChannelPoolTestBase {
 
   @Mock protected InternalDriverContext context;
   @Mock private DriverConfig config;
-  @Mock protected DriverConfigProfile defaultProfile;
+  @Mock protected DriverExecutionProfile defaultProfile;
   @Mock private ReconnectionPolicy reconnectionPolicy;
   @Mock protected ReconnectionPolicy.ReconnectionSchedule reconnectionSchedule;
   @Mock private NettyOptions nettyOptions;

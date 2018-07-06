@@ -24,7 +24,7 @@ import static org.mockito.Mockito.never;
 import com.datastax.oss.driver.api.core.addresstranslation.AddressTranslator;
 import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
 import com.datastax.oss.driver.api.core.config.DriverConfig;
-import com.datastax.oss.driver.api.core.config.DriverConfigProfile;
+import com.datastax.oss.driver.api.core.config.DriverExecutionProfile;
 import com.datastax.oss.driver.internal.core.addresstranslation.PassThroughAddressTranslator;
 import com.datastax.oss.driver.internal.core.adminrequest.AdminResult;
 import com.datastax.oss.driver.internal.core.adminrequest.AdminRow;
@@ -61,7 +61,7 @@ public class DefaultTopologyMonitorTest {
 
   @Mock private InternalDriverContext context;
   @Mock private DriverConfig config;
-  @Mock private DriverConfigProfile defaultConfig;
+  @Mock private DriverExecutionProfile defaultConfig;
   @Mock private ControlConnection controlConnection;
   @Mock private DriverChannel channel;
   @Mock protected MetricsFactory metricsFactory;

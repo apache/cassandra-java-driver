@@ -162,8 +162,8 @@ public class SimpleStatementBuilder
             ? NullAllowingImmutableList.of()
             : positionalValuesBuilder.build(),
         (namedValuesBuilder == null) ? NullAllowingImmutableMap.of() : namedValuesBuilder.build(),
-        configProfileName,
-        configProfile,
+        executionProfileName,
+        executionProfile,
         keyspace,
         routingKeyspace,
         routingKey,

@@ -19,7 +19,7 @@ import static com.datastax.oss.driver.assertions.Assertions.assertThat;
 
 import com.datastax.oss.driver.api.core.CqlSession;
 import com.datastax.oss.driver.api.core.config.DriverConfig;
-import com.datastax.oss.driver.api.core.config.DriverConfigProfile;
+import com.datastax.oss.driver.api.core.config.DriverExecutionProfile;
 import com.datastax.oss.driver.api.core.context.DriverContext;
 import com.datastax.oss.driver.api.core.cql.ResultSet;
 import com.datastax.oss.driver.api.core.cql.SimpleStatement;
@@ -69,10 +69,11 @@ public class PerProfileLoadBalancingPolicyIT {
 
     assertThat(context.loadBalancingPolicies())
         .hasSize(3)
-        .containsKeys(DriverConfigProfile.DEFAULT_NAME, "profile1", "profile2");
+        .containsKeys(DriverExecutionProfile.DEFAULT_NAME, "profile1", "profile2");
 
     DefaultLoadBalancingPolicy defaultPolicy =
-        (DefaultLoadBalancingPolicy) context.loadBalancingPolicy(DriverConfigProfile.DEFAULT_NAME);
+        (DefaultLoadBalancingPolicy)
+            context.loadBalancingPolicy(DriverExecutionProfile.DEFAULT_NAME);
     DefaultLoadBalancingPolicy policy1 =
         (DefaultLoadBalancingPolicy) context.loadBalancingPolicy("profile1");
     DefaultLoadBalancingPolicy policy2 =
@@ -91,7 +92,7 @@ public class PerProfileLoadBalancingPolicyIT {
   @Test
   public void should_use_policy_from_request_profile() {
     // Since profile1 uses dc3 as localDC, only those nodes should receive these queries.
-    Statement statement = QUERY.setConfigProfileName("profile1");
+    Statement statement = QUERY.setExecutionProfileName("profile1");
     for (int i = 0; i < 10; i++) {
       ResultSet result = sessionRule.session().execute(statement);
       assertThat(result.getExecutionInfo().getCoordinator().getDatacenter()).isEqualTo("dc3");
@@ -105,7 +106,7 @@ public class PerProfileLoadBalancingPolicyIT {
   @Test
   public void should_use_policy_from_config_when_not_configured_in_request_profile() {
     // Since profile2 does not define an lbp config, it should use default which uses dc1.
-    Statement statement = QUERY.setConfigProfileName("profile2");
+    Statement statement = QUERY.setExecutionProfileName("profile2");
     for (int i = 0; i < 10; i++) {
       ResultSet result = sessionRule.session().execute(statement);
       assertThat(result.getExecutionInfo().getCoordinator().getDatacenter()).isEqualTo("dc1");

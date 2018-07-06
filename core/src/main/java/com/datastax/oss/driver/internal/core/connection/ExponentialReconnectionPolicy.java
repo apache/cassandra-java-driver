@@ -16,7 +16,7 @@
 package com.datastax.oss.driver.internal.core.connection;
 
 import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
-import com.datastax.oss.driver.api.core.config.DriverConfigProfile;
+import com.datastax.oss.driver.api.core.config.DriverExecutionProfile;
 import com.datastax.oss.driver.api.core.connection.ReconnectionPolicy;
 import com.datastax.oss.driver.api.core.context.DriverContext;
 import com.datastax.oss.driver.api.core.metadata.Node;
@@ -64,7 +64,7 @@ public class ExponentialReconnectionPolicy implements ReconnectionPolicy {
   public ExponentialReconnectionPolicy(DriverContext context) {
     this.logPrefix = context.sessionName();
 
-    DriverConfigProfile config = context.config().getDefaultProfile();
+    DriverExecutionProfile config = context.config().getDefaultProfile();
 
     this.baseDelayMs = config.getDuration(DefaultDriverOption.RECONNECTION_BASE_DELAY).toMillis();
     this.maxDelayMs = config.getDuration(DefaultDriverOption.RECONNECTION_MAX_DELAY).toMillis();

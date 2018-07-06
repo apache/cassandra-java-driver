@@ -15,7 +15,7 @@
  */
 package com.datastax.oss.driver.internal.core.util;
 
-import com.datastax.oss.driver.api.core.config.DriverConfigProfile;
+import com.datastax.oss.driver.api.core.config.DriverExecutionProfile;
 import com.datastax.oss.driver.api.core.config.DriverOption;
 import com.datastax.oss.driver.api.core.context.DriverContext;
 import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
@@ -128,7 +128,7 @@ public class Reflection {
     // Find out how many distinct configurations we have
     ListMultimap<Object, String> profilesByConfig =
         MultimapBuilder.hashKeys().arrayListValues().build();
-    for (DriverConfigProfile profile : context.config().getProfiles().values()) {
+    for (DriverExecutionProfile profile : context.config().getProfiles().values()) {
       profilesByConfig.put(profile.getComparisonKey(rootOption), profile.getName());
     }
 
@@ -165,7 +165,7 @@ public class Reflection {
       Class<T> expectedSuperType,
       String... defaultPackages) {
 
-    DriverConfigProfile config =
+    DriverExecutionProfile config =
         (profileName == null)
             ? context.config().getDefaultProfile()
             : context.config().getProfile(profileName);

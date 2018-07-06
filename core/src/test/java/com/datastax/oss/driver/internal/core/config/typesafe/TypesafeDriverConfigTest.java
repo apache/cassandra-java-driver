@@ -18,7 +18,7 @@ package com.datastax.oss.driver.internal.core.config.typesafe;
 import static com.datastax.oss.driver.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.entry;
 
-import com.datastax.oss.driver.api.core.config.DriverConfigProfile;
+import com.datastax.oss.driver.api.core.config.DriverExecutionProfile;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
 import java.util.HashMap;
@@ -68,8 +68,8 @@ public class TypesafeDriverConfigTest {
   @Test
   public void should_create_derived_profile_with_new_option() {
     TypesafeDriverConfig config = parse("int1 = 42");
-    DriverConfigProfile base = config.getDefaultProfile();
-    DriverConfigProfile derived = base.withInt(MockOptions.INT2, 43);
+    DriverExecutionProfile base = config.getDefaultProfile();
+    DriverExecutionProfile derived = base.withInt(MockOptions.INT2, 43);
 
     assertThat(base.isDefined(MockOptions.INT2)).isFalse();
     assertThat(derived.isDefined(MockOptions.INT2)).isTrue();
@@ -79,8 +79,8 @@ public class TypesafeDriverConfigTest {
   @Test
   public void should_create_derived_profile_overriding_option() {
     TypesafeDriverConfig config = parse("int1 = 42");
-    DriverConfigProfile base = config.getDefaultProfile();
-    DriverConfigProfile derived = base.withInt(MockOptions.INT1, 43);
+    DriverExecutionProfile base = config.getDefaultProfile();
+    DriverExecutionProfile derived = base.withInt(MockOptions.INT1, 43);
 
     assertThat(base.getInt(MockOptions.INT1)).isEqualTo(42);
     assertThat(derived.getInt(MockOptions.INT1)).isEqualTo(43);
@@ -89,8 +89,8 @@ public class TypesafeDriverConfigTest {
   @Test
   public void should_create_derived_profile_unsetting_option() {
     TypesafeDriverConfig config = parse("int1 = 42\n int2 = 43");
-    DriverConfigProfile base = config.getDefaultProfile();
-    DriverConfigProfile derived = base.without(MockOptions.INT2);
+    DriverExecutionProfile base = config.getDefaultProfile();
+    DriverExecutionProfile derived = base.without(MockOptions.INT2);
 
     assertThat(base.getInt(MockOptions.INT2)).isEqualTo(43);
     assertThat(derived.isDefined(MockOptions.INT2)).isFalse();
@@ -101,7 +101,7 @@ public class TypesafeDriverConfigTest {
     TypesafeDriverConfig config =
         parse(
             "int1 = 42 \n auth_provider { auth_thing_one= one \n auth_thing_two = two \n auth_thing_three = three}");
-    DriverConfigProfile base = config.getDefaultProfile();
+    DriverExecutionProfile base = config.getDefaultProfile();
     base.getStringMap(MockOptions.AUTH_PROVIDER);
     Map<String, String> map = base.getStringMap(MockOptions.AUTH_PROVIDER);
     assertThat(map.entrySet().size()).isEqualTo(3);
@@ -117,8 +117,8 @@ public class TypesafeDriverConfigTest {
     authThingMap.put("auth_thing_one", "one");
     authThingMap.put("auth_thing_two", "two");
     authThingMap.put("auth_thing_three", "three");
-    DriverConfigProfile base = config.getDefaultProfile();
-    DriverConfigProfile mapBase = base.withStringMap(MockOptions.AUTH_PROVIDER, authThingMap);
+    DriverExecutionProfile base = config.getDefaultProfile();
+    DriverExecutionProfile mapBase = base.withStringMap(MockOptions.AUTH_PROVIDER, authThingMap);
     Map<String, String> fetchedMap = mapBase.getStringMap(MockOptions.AUTH_PROVIDER);
     assertThat(fetchedMap).isEqualTo(authThingMap);
   }
@@ -137,9 +137,9 @@ public class TypesafeDriverConfigTest {
   public void should_update_derived_profiles_after_reloading() {
     TypesafeDriverConfig config = parse("int1 = 42\n profiles { profile1 { int1 = 43 } }");
 
-    DriverConfigProfile derivedFromDefault =
+    DriverExecutionProfile derivedFromDefault =
         config.getDefaultProfile().withInt(MockOptions.INT2, 50);
-    DriverConfigProfile derivedFromProfile1 =
+    DriverExecutionProfile derivedFromProfile1 =
         config.getProfile("profile1").withInt(MockOptions.INT2, 51);
 
     config.reload(ConfigFactory.parseString("int1 = 44\n profiles { profile1 { int1 = 45 } }"));

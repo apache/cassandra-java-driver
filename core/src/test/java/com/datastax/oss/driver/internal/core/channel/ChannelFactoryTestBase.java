@@ -21,7 +21,7 @@ import static org.assertj.core.api.Assertions.fail;
 import com.datastax.oss.driver.api.core.ProtocolVersion;
 import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
 import com.datastax.oss.driver.api.core.config.DriverConfig;
-import com.datastax.oss.driver.api.core.config.DriverConfigProfile;
+import com.datastax.oss.driver.api.core.config.DriverExecutionProfile;
 import com.datastax.oss.driver.internal.core.ProtocolVersionRegistry;
 import com.datastax.oss.driver.internal.core.TestResponses;
 import com.datastax.oss.driver.internal.core.context.EventBus;
@@ -88,7 +88,7 @@ public abstract class ChannelFactoryTestBase {
 
   @Mock InternalDriverContext context;
   @Mock DriverConfig driverConfig;
-  @Mock DriverConfigProfile defaultConfigProfile;
+  @Mock DriverExecutionProfile defaultProfile;
   @Mock NettyOptions nettyOptions;
   @Mock ProtocolVersionRegistry protocolVersionRegistry;
   @Mock EventBus eventBus;
@@ -112,18 +112,15 @@ public abstract class ChannelFactoryTestBase {
     clientGroup = new DefaultEventLoopGroup(1);
 
     Mockito.when(context.config()).thenReturn(driverConfig);
-    Mockito.when(driverConfig.getDefaultProfile()).thenReturn(defaultConfigProfile);
-    Mockito.when(defaultConfigProfile.isDefined(DefaultDriverOption.AUTH_PROVIDER_CLASS))
+    Mockito.when(driverConfig.getDefaultProfile()).thenReturn(defaultProfile);
+    Mockito.when(defaultProfile.isDefined(DefaultDriverOption.AUTH_PROVIDER_CLASS))
         .thenReturn(false);
-    Mockito.when(
-            defaultConfigProfile.getDuration(DefaultDriverOption.CONNECTION_INIT_QUERY_TIMEOUT))
+    Mockito.when(defaultProfile.getDuration(DefaultDriverOption.CONNECTION_INIT_QUERY_TIMEOUT))
         .thenReturn(Duration.ofMillis(TIMEOUT_MILLIS));
-    Mockito.when(
-            defaultConfigProfile.getDuration(DefaultDriverOption.CONNECTION_SET_KEYSPACE_TIMEOUT))
+    Mockito.when(defaultProfile.getDuration(DefaultDriverOption.CONNECTION_SET_KEYSPACE_TIMEOUT))
         .thenReturn(Duration.ofMillis(TIMEOUT_MILLIS));
-    Mockito.when(defaultConfigProfile.getInt(DefaultDriverOption.CONNECTION_MAX_REQUESTS))
-        .thenReturn(1);
-    Mockito.when(defaultConfigProfile.getDuration(DefaultDriverOption.HEARTBEAT_INTERVAL))
+    Mockito.when(defaultProfile.getInt(DefaultDriverOption.CONNECTION_MAX_REQUESTS)).thenReturn(1);
+    Mockito.when(defaultProfile.getDuration(DefaultDriverOption.HEARTBEAT_INTERVAL))
         .thenReturn(Duration.ofSeconds(30));
 
     Mockito.when(context.protocolVersionRegistry()).thenReturn(protocolVersionRegistry);
@@ -235,14 +232,14 @@ public abstract class ChannelFactoryTestBase {
         @Override
         protected void initChannel(Channel channel) throws Exception {
           try {
-            DriverConfigProfile defaultConfigProfile = context.config().getDefaultProfile();
+            DriverExecutionProfile defaultProfile = context.config().getDefaultProfile();
 
             long setKeyspaceTimeoutMillis =
-                defaultConfigProfile
+                defaultProfile
                     .getDuration(DefaultDriverOption.CONNECTION_SET_KEYSPACE_TIMEOUT)
                     .toMillis();
             int maxRequestsPerConnection =
-                defaultConfigProfile.getInt(DefaultDriverOption.CONNECTION_MAX_REQUESTS);
+                defaultProfile.getInt(DefaultDriverOption.CONNECTION_MAX_REQUESTS);
 
             InFlightHandler inFlightHandler =
                 new InFlightHandler(
@@ -254,7 +251,7 @@ public abstract class ChannelFactoryTestBase {
                     null,
                     "test");
 
-            HeartbeatHandler heartbeatHandler = new HeartbeatHandler(defaultConfigProfile);
+            HeartbeatHandler heartbeatHandler = new HeartbeatHandler(defaultProfile);
             ProtocolInitHandler initHandler =
                 new ProtocolInitHandler(
                     context, protocolVersion, clusterName, options, heartbeatHandler);

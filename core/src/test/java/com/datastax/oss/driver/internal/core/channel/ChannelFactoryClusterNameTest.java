@@ -32,8 +32,7 @@ public class ChannelFactoryClusterNameTest extends ChannelFactoryTestBase {
   @Test
   public void should_set_cluster_name_from_first_connection() {
     // Given
-    Mockito.when(defaultConfigProfile.isDefined(DefaultDriverOption.PROTOCOL_VERSION))
-        .thenReturn(false);
+    Mockito.when(defaultProfile.isDefined(DefaultDriverOption.PROTOCOL_VERSION)).thenReturn(false);
     Mockito.when(protocolVersionRegistry.highestNonBeta()).thenReturn(DefaultProtocolVersion.V4);
     ChannelFactory factory = newChannelFactory();
 
@@ -53,8 +52,7 @@ public class ChannelFactoryClusterNameTest extends ChannelFactoryTestBase {
   @Test
   public void should_check_cluster_name_for_next_connections() throws Throwable {
     // Given
-    Mockito.when(defaultConfigProfile.isDefined(DefaultDriverOption.PROTOCOL_VERSION))
-        .thenReturn(false);
+    Mockito.when(defaultProfile.isDefined(DefaultDriverOption.PROTOCOL_VERSION)).thenReturn(false);
     Mockito.when(protocolVersionRegistry.highestNonBeta()).thenReturn(DefaultProtocolVersion.V4);
     ChannelFactory factory = newChannelFactory();
 

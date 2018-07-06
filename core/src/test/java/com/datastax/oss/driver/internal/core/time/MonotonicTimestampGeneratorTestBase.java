@@ -23,7 +23,7 @@ import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.Appender;
 import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
 import com.datastax.oss.driver.api.core.config.DriverConfig;
-import com.datastax.oss.driver.api.core.config.DriverConfigProfile;
+import com.datastax.oss.driver.api.core.config.DriverExecutionProfile;
 import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
 import java.time.Duration;
 import org.junit.After;
@@ -42,7 +42,7 @@ abstract class MonotonicTimestampGeneratorTestBase {
   @Mock protected Clock clock;
   @Mock protected InternalDriverContext context;
   @Mock private DriverConfig config;
-  @Mock protected DriverConfigProfile defaultConfigProfile;
+  @Mock protected DriverExecutionProfile defaultProfile;
 
   @Mock private Appender<ILoggingEvent> appender;
   @Captor private ArgumentCaptor<ILoggingEvent> loggingEventCaptor;
@@ -53,17 +53,17 @@ abstract class MonotonicTimestampGeneratorTestBase {
   public void setup() {
     MockitoAnnotations.initMocks(this);
 
-    Mockito.when(config.getDefaultProfile()).thenReturn(defaultConfigProfile);
+    Mockito.when(config.getDefaultProfile()).thenReturn(defaultProfile);
     Mockito.when(context.config()).thenReturn(config);
 
     // Disable warnings by default
     Mockito.when(
-            defaultConfigProfile.getDuration(
+            defaultProfile.getDuration(
                 DefaultDriverOption.TIMESTAMP_GENERATOR_DRIFT_WARNING_THRESHOLD, Duration.ZERO))
         .thenReturn(Duration.ZERO);
     // Actual value doesn't really matter since we only test the first warning
     Mockito.when(
-            defaultConfigProfile.getDuration(
+            defaultProfile.getDuration(
                 DefaultDriverOption.TIMESTAMP_GENERATOR_DRIFT_WARNING_INTERVAL))
         .thenReturn(Duration.ofSeconds(10));
 
@@ -107,7 +107,7 @@ abstract class MonotonicTimestampGeneratorTestBase {
   @Test
   public void should_warn_if_timestamps_drift() {
     Mockito.when(
-            defaultConfigProfile.getDuration(
+            defaultProfile.getDuration(
                 DefaultDriverOption.TIMESTAMP_GENERATOR_DRIFT_WARNING_THRESHOLD, Duration.ZERO))
         .thenReturn(Duration.ofNanos(2 * 1000));
     Mockito.when(clock.currentTimeMicros()).thenReturn(1L, 1L, 1L, 1L, 1L);

@@ -19,7 +19,7 @@ import com.codahale.metrics.Metric;
 import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.Timer;
 import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
-import com.datastax.oss.driver.api.core.config.DriverConfigProfile;
+import com.datastax.oss.driver.api.core.config.DriverExecutionProfile;
 import java.time.Duration;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
@@ -89,7 +89,7 @@ public abstract class DropwizardMetricUpdater<MetricT> implements MetricUpdater<
 
   protected void initializeHdrTimer(
       MetricT metric,
-      DriverConfigProfile config,
+      DriverExecutionProfile config,
       DefaultDriverOption highestLatencyOption,
       DefaultDriverOption significantDigitsOption,
       DefaultDriverOption intervalOption) {

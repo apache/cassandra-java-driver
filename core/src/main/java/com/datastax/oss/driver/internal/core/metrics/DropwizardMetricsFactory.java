@@ -17,7 +17,7 @@ package com.datastax.oss.driver.internal.core.metrics;
 
 import com.codahale.metrics.MetricRegistry;
 import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
-import com.datastax.oss.driver.api.core.config.DriverConfigProfile;
+import com.datastax.oss.driver.api.core.config.DriverExecutionProfile;
 import com.datastax.oss.driver.api.core.metadata.Node;
 import com.datastax.oss.driver.api.core.metrics.DefaultNodeMetric;
 import com.datastax.oss.driver.api.core.metrics.DefaultSessionMetric;
@@ -51,7 +51,7 @@ public class DropwizardMetricsFactory implements MetricsFactory {
     this.logPrefix = context.sessionName();
     this.context = context;
 
-    DriverConfigProfile config = context.config().getDefaultProfile();
+    DriverExecutionProfile config = context.config().getDefaultProfile();
     Set<SessionMetric> enabledSessionMetrics =
         parseSessionMetricPaths(config.getStringList(DefaultDriverOption.METRICS_SESSION_ENABLED));
     this.enabledNodeMetrics =

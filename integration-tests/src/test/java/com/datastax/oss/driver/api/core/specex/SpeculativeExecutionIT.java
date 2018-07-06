@@ -23,7 +23,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import com.datastax.oss.driver.api.core.AllNodesFailedException;
 import com.datastax.oss.driver.api.core.CqlSession;
 import com.datastax.oss.driver.api.core.config.DriverConfig;
-import com.datastax.oss.driver.api.core.config.DriverConfigProfile;
+import com.datastax.oss.driver.api.core.config.DriverExecutionProfile;
 import com.datastax.oss.driver.api.core.context.DriverContext;
 import com.datastax.oss.driver.api.core.cql.ResultSet;
 import com.datastax.oss.driver.api.core.cql.SimpleStatement;
@@ -245,7 +245,7 @@ public class SpeculativeExecutionIT {
 
     // Set large delay for default so we ensure profile is used.
     try (CqlSession session = buildSessionWithProfile(3, 100, 2, 0)) {
-      ResultSet resultSet = session.execute(QUERY.setConfigProfileName("profile1"));
+      ResultSet resultSet = session.execute(QUERY.setExecutionProfileName("profile1"));
 
       // Expect only 1 speculative execution as that is all profile called for.
       assertThat(resultSet.getExecutionInfo().getSpeculativeExecutionCount()).isEqualTo(1);
@@ -267,7 +267,7 @@ public class SpeculativeExecutionIT {
 
     // Disable in primary configuration
     try (CqlSession session = buildSessionWithProfile(-1, -1, 3, 0)) {
-      ResultSet resultSet = session.execute(QUERY.setConfigProfileName("profile1"));
+      ResultSet resultSet = session.execute(QUERY.setExecutionProfileName("profile1"));
 
       // Expect speculative executions on each node.
       assertThat(resultSet.getExecutionInfo().getSpeculativeExecutionCount()).isEqualTo(2);
@@ -289,7 +289,7 @@ public class SpeculativeExecutionIT {
 
     try (CqlSession session = buildSessionWithProfile(3, 0, 3, 0)) {
       // use profile where speculative execution is not configured.
-      ResultSet resultSet = session.execute(QUERY.setConfigProfileName("profile2"));
+      ResultSet resultSet = session.execute(QUERY.setExecutionProfileName("profile2"));
 
       // Expect speculative executions on each node since default configuration is used.
       assertThat(resultSet.getExecutionInfo().getSpeculativeExecutionCount()).isEqualTo(2);
@@ -311,7 +311,7 @@ public class SpeculativeExecutionIT {
 
     // Disable in profile
     try (CqlSession session = buildSessionWithProfile(3, 100, -1, -1)) {
-      ResultSet resultSet = session.execute(QUERY.setConfigProfileName("profile1"));
+      ResultSet resultSet = session.execute(QUERY.setExecutionProfileName("profile1"));
 
       // Expect no speculative executions.
       assertThat(resultSet.getExecutionInfo().getSpeculativeExecutionCount()).isEqualTo(0);
@@ -399,10 +399,10 @@ public class SpeculativeExecutionIT {
 
     assertThat(context.speculativeExecutionPolicies())
         .hasSize(3)
-        .containsKeys(DriverConfigProfile.DEFAULT_NAME, "profile1", "profile2");
+        .containsKeys(DriverExecutionProfile.DEFAULT_NAME, "profile1", "profile2");
 
     SpeculativeExecutionPolicy defaultPolicy =
-        context.speculativeExecutionPolicy(DriverConfigProfile.DEFAULT_NAME);
+        context.speculativeExecutionPolicy(DriverExecutionProfile.DEFAULT_NAME);
     SpeculativeExecutionPolicy policy1 = context.speculativeExecutionPolicy("profile1");
     SpeculativeExecutionPolicy policy2 = context.speculativeExecutionPolicy("profile2");
     Class<? extends SpeculativeExecutionPolicy> expectedDefaultPolicyClass =

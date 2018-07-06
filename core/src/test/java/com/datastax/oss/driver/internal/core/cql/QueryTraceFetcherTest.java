@@ -24,7 +24,7 @@ import static org.mockito.Mockito.times;
 import com.datastax.oss.driver.api.core.CqlSession;
 import com.datastax.oss.driver.api.core.DefaultConsistencyLevel;
 import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
-import com.datastax.oss.driver.api.core.config.DriverConfigProfile;
+import com.datastax.oss.driver.api.core.config.DriverExecutionProfile;
 import com.datastax.oss.driver.api.core.cql.AsyncResultSet;
 import com.datastax.oss.driver.api.core.cql.ExecutionInfo;
 import com.datastax.oss.driver.api.core.cql.QueryTrace;
@@ -68,8 +68,8 @@ public class QueryTraceFetcherTest {
 
   @Mock private CqlSession session;
   @Mock private InternalDriverContext context;
-  @Mock private DriverConfigProfile config;
-  @Mock private DriverConfigProfile traceConfig;
+  @Mock private DriverExecutionProfile config;
+  @Mock private DriverExecutionProfile traceConfig;
   @Mock private NettyOptions nettyOptions;
   @Mock private EventExecutorGroup adminEventExecutorGroup;
   @Mock private EventExecutor eventExecutor;
@@ -363,13 +363,13 @@ public class QueryTraceFetcherTest {
     assertThat(statement.getQuery())
         .isEqualTo("SELECT * FROM system_traces.sessions WHERE session_id = ?");
     assertThat(statement.getPositionalValues()).containsOnly(TRACING_ID);
-    assertThat(statement.getConfigProfile()).isEqualTo(traceConfig);
+    assertThat(statement.getExecutionProfile()).isEqualTo(traceConfig);
   }
 
   private void assertEventsQuery(SimpleStatement statement) {
     assertThat(statement.getQuery())
         .isEqualTo("SELECT * FROM system_traces.events WHERE session_id = ?");
     assertThat(statement.getPositionalValues()).containsOnly(TRACING_ID);
-    assertThat(statement.getConfigProfile()).isEqualTo(traceConfig);
+    assertThat(statement.getExecutionProfile()).isEqualTo(traceConfig);
   }
 }

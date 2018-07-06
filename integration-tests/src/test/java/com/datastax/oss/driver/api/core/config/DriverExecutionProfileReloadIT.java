@@ -38,7 +38,7 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
 
-public class DriverConfigProfileReloadIT {
+public class DriverExecutionProfileReloadIT {
 
   @Rule public SimulacronRule simulacron = new SimulacronRule(ClusterSpec.builder().withNodes(3));
 
@@ -136,7 +136,7 @@ public class DriverConfigProfileReloadIT {
 
       // Expect failure because profile doesn't exist.
       try {
-        session.execute(SimpleStatement.builder(query).withConfigProfileName("slow").build());
+        session.execute(SimpleStatement.builder(query).withExecutionProfileName("slow").build());
         fail("Expected IllegalArgumentException");
       } catch (IllegalArgumentException e) {
         // expected.
@@ -149,7 +149,7 @@ public class DriverConfigProfileReloadIT {
       // Execute again, should expect to fail again because doesn't allow to dynamically define
       // profile.
       thrown.expect(IllegalArgumentException.class);
-      session.execute(SimpleStatement.builder(query).withConfigProfileName("slow").build());
+      session.execute(SimpleStatement.builder(query).withExecutionProfileName("slow").build());
     }
   }
 
@@ -175,7 +175,7 @@ public class DriverConfigProfileReloadIT {
 
       // Expect failure because profile doesn't exist.
       try {
-        session.execute(SimpleStatement.builder(query).withConfigProfileName("slow").build());
+        session.execute(SimpleStatement.builder(query).withExecutionProfileName("slow").build());
         fail("Expected DriverTimeoutException");
       } catch (DriverTimeoutException e) {
         // expected.
@@ -186,7 +186,7 @@ public class DriverConfigProfileReloadIT {
       waitForConfigChange(session, 3, TimeUnit.SECONDS);
 
       // Execute again, should succeed because profile timeout was increased.
-      session.execute(SimpleStatement.builder(query).withConfigProfileName("slow").build());
+      session.execute(SimpleStatement.builder(query).withExecutionProfileName("slow").build());
     }
   }
 

@@ -19,7 +19,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.CqlSession;
-import com.datastax.oss.driver.api.core.config.DriverConfigProfile;
+import com.datastax.oss.driver.api.core.config.DriverExecutionProfile;
 import com.datastax.oss.driver.api.core.cql.SimpleStatement;
 import com.datastax.oss.driver.api.core.metadata.schema.KeyspaceMetadata;
 import com.datastax.oss.driver.api.testinfra.ccm.CcmRule;
@@ -114,12 +114,12 @@ public class SchemaIT {
     assertThat(session.isSchemaMetadataEnabled()).isFalse();
 
     // Create a table, metadata should not be updated
-    DriverConfigProfile slowProfile = SessionUtils.slowProfile(session);
+    DriverExecutionProfile slowProfile = SessionUtils.slowProfile(session);
     sessionRule
         .session()
         .execute(
             SimpleStatement.builder("CREATE TABLE foo(k int primary key)")
-                .withConfigProfile(slowProfile)
+                .withExecutionProfile(slowProfile)
                 .build());
     assertThat(session.getMetadata().getKeyspace(sessionRule.keyspace()).get().getTables())
         .doesNotContainKey(CqlIdentifier.fromInternal("foo"));

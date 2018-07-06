@@ -18,7 +18,7 @@ package com.datastax.oss.driver.api.testinfra.session;
 import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.CqlSession;
 import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
-import com.datastax.oss.driver.api.core.config.DriverConfigProfile;
+import com.datastax.oss.driver.api.core.config.DriverExecutionProfile;
 import com.datastax.oss.driver.api.core.cql.SimpleStatement;
 import com.datastax.oss.driver.api.core.cql.Statement;
 import com.datastax.oss.driver.api.core.metadata.Node;
@@ -141,19 +141,19 @@ public class SessionUtils {
 
   /** Creates a keyspace through the given session instance, with the given profile. */
   public static void createKeyspace(
-      Session session, CqlIdentifier keyspace, DriverConfigProfile profile) {
+      Session session, CqlIdentifier keyspace, DriverExecutionProfile profile) {
     SimpleStatement createKeyspace =
         SimpleStatement.builder(
                 String.format(
                     "CREATE KEYSPACE %s WITH REPLICATION = { 'class' : 'SimpleStrategy', 'replication_factor' : 1 };",
                     keyspace.asCql(false)))
-            .withConfigProfile(profile)
+            .withExecutionProfile(profile)
             .build();
     session.execute(createKeyspace, Statement.SYNC);
   }
 
   /**
-   * Calls {@link #createKeyspace(Session, CqlIdentifier, DriverConfigProfile)} with {@link
+   * Calls {@link #createKeyspace(Session, CqlIdentifier, DriverExecutionProfile)} with {@link
    * #slowProfile(Session)} as the third argument.
    *
    * <p>Note that this creates a derived profile for each invocation, which has a slight performance
@@ -166,16 +166,16 @@ public class SessionUtils {
 
   /** Drops a keyspace through the given session instance, with the given profile. */
   public static void dropKeyspace(
-      Session session, CqlIdentifier keyspace, DriverConfigProfile profile) {
+      Session session, CqlIdentifier keyspace, DriverExecutionProfile profile) {
     session.execute(
         SimpleStatement.builder(String.format("DROP KEYSPACE IF EXISTS %s", keyspace.asCql(false)))
-            .withConfigProfile(profile)
+            .withExecutionProfile(profile)
             .build(),
         Statement.SYNC);
   }
 
   /**
-   * Calls {@link #dropKeyspace(Session, CqlIdentifier, DriverConfigProfile)} with {@link
+   * Calls {@link #dropKeyspace(Session, CqlIdentifier, DriverExecutionProfile)} with {@link
    * #slowProfile(Session)} as the third argument.
    *
    * <p>Note that this creates a derived profile for each invocation, which has a slight performance
@@ -190,7 +190,7 @@ public class SessionUtils {
    * Builds a profile derived from the given cluster's default profile, with a higher request
    * timeout (30 seconds) that is appropriate for DML operations.
    */
-  public static DriverConfigProfile slowProfile(Session session) {
+  public static DriverExecutionProfile slowProfile(Session session) {
     return session
         .getContext()
         .config()

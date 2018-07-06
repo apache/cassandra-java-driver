@@ -17,7 +17,7 @@ package com.datastax.oss.driver.internal.core.metadata;
 
 import com.datastax.oss.driver.api.core.AsyncAutoCloseable;
 import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
-import com.datastax.oss.driver.api.core.config.DriverConfigProfile;
+import com.datastax.oss.driver.api.core.config.DriverExecutionProfile;
 import com.datastax.oss.driver.api.core.loadbalancing.NodeDistance;
 import com.datastax.oss.driver.api.core.metadata.NodeState;
 import com.datastax.oss.driver.internal.core.channel.ChannelEvent;
@@ -98,7 +98,7 @@ public class NodeStateManager implements AsyncAutoCloseable {
     private SingleThreaded(InternalDriverContext context) {
       this.metadataManager = context.metadataManager();
 
-      DriverConfigProfile config = context.config().getDefaultProfile();
+      DriverExecutionProfile config = context.config().getDefaultProfile();
       this.topologyEventDebouncer =
           new Debouncer<>(
               adminExecutor,

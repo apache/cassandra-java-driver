@@ -228,7 +228,7 @@ Study the [LoadBalancingPolicy] interface and the default implementation for the
 
 ### Using multiple policies
 
-The load balancing policy can be overridden in [configuration profiles](../configuration/#profiles):
+The load balancing policy can be overridden in [execution profiles](../configuration/#profiles):
 
 ```
 datastax-java-driver {

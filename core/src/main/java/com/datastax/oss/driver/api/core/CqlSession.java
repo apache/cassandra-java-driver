@@ -94,8 +94,8 @@ public interface CqlSession extends Session {
    *   <li>the following methods return the same value as their counterpart on {@code
    *       simpleStatement}:
    *       <ul>
-   *         <li>{@link Request#getConfigProfileName() boundStatement.getConfigProfileName()}
-   *         <li>{@link Request#getConfigProfile() boundStatement.getConfigProfile()}
+   *         <li>{@link Request#getExecutionProfileName() boundStatement.getExecutionProfileName()}
+   *         <li>{@link Request#getExecutionProfile() boundStatement.getExecutionProfile()}
    *         <li>{@link Statement#getPagingState() boundStatement.getPagingState()}
    *         <li>{@link Request#getRoutingKey() boundStatement.getRoutingKey()}
    *         <li>{@link Request#getRoutingToken() boundStatement.getRoutingToken()}

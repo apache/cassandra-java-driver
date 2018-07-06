@@ -19,7 +19,7 @@ import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.DefaultProtocolVersion;
 import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
 import com.datastax.oss.driver.api.core.config.DriverConfig;
-import com.datastax.oss.driver.api.core.config.DriverConfigProfile;
+import com.datastax.oss.driver.api.core.config.DriverExecutionProfile;
 import com.datastax.oss.driver.api.core.metadata.token.Token;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import edu.umd.cs.findbugs.annotations.Nullable;
@@ -37,27 +37,27 @@ import java.util.Map;
 public interface Request {
 
   /**
-   * The name of the driver configuration profile that will be used for execution, or {@code null}
-   * if no profile has been set.
+   * The name of the execution profile that will be used for this request, or {@code null} if no
+   * profile has been set.
    *
-   * <p>Note that this will be ignored if {@link #getConfigProfile()} returns a non-null value.
+   * <p>Note that this will be ignored if {@link #getExecutionProfile()} returns a non-null value.
    *
    * @see DriverConfig
    */
   @Nullable
-  String getConfigProfileName();
+  String getExecutionProfileName();
 
   /**
-   * The configuration profile to use for execution, or {@code null} if no profile has been set.
+   * The execution profile to use for this request, or {@code null} if no profile has been set.
    *
-   * <p>It is generally simpler to specify a profile name with {@link #getConfigProfileName()}.
+   * <p>It is generally simpler to specify a profile name with {@link #getExecutionProfileName()}.
    * However, this method can be used to provide a "derived" profile that was built programmatically
    * by the client code. If specified, it overrides the profile name.
    *
-   * @see DriverConfigProfile
+   * @see DriverExecutionProfile
    */
   @Nullable
-  DriverConfigProfile getConfigProfile();
+  DriverExecutionProfile getExecutionProfile();
 
   /**
    * The CQL keyspace to execute this request in, or {@code null} if this request does not specify

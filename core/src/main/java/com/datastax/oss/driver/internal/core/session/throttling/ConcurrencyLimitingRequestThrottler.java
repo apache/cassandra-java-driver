@@ -17,7 +17,7 @@ package com.datastax.oss.driver.internal.core.session.throttling;
 
 import com.datastax.oss.driver.api.core.RequestThrottlingException;
 import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
-import com.datastax.oss.driver.api.core.config.DriverConfigProfile;
+import com.datastax.oss.driver.api.core.config.DriverExecutionProfile;
 import com.datastax.oss.driver.api.core.context.DriverContext;
 import com.datastax.oss.driver.api.core.session.throttling.RequestThrottler;
 import com.datastax.oss.driver.api.core.session.throttling.Throttled;
@@ -72,7 +72,7 @@ public class ConcurrencyLimitingRequestThrottler implements RequestThrottler {
 
   public ConcurrencyLimitingRequestThrottler(DriverContext context) {
     this.logPrefix = context.sessionName();
-    DriverConfigProfile config = context.config().getDefaultProfile();
+    DriverExecutionProfile config = context.config().getDefaultProfile();
     this.maxConcurrentRequests =
         config.getInt(DefaultDriverOption.REQUEST_THROTTLER_MAX_CONCURRENT_REQUESTS);
     this.maxQueueSize = config.getInt(DefaultDriverOption.REQUEST_THROTTLER_MAX_QUEUE_SIZE);

@@ -25,7 +25,7 @@ import static org.mockito.Mockito.atMost;
 
 import com.datastax.oss.driver.TestDataProviders;
 import com.datastax.oss.driver.api.core.DefaultConsistencyLevel;
-import com.datastax.oss.driver.api.core.config.DriverConfigProfile;
+import com.datastax.oss.driver.api.core.config.DriverExecutionProfile;
 import com.datastax.oss.driver.api.core.connection.HeartbeatException;
 import com.datastax.oss.driver.api.core.cql.AsyncResultSet;
 import com.datastax.oss.driver.api.core.cql.ExecutionInfo;
@@ -125,11 +125,11 @@ public class CqlRequestHandlerRetryTest extends CqlRequestHandlerTestBase {
 
                 Mockito.verify(nodeMetricUpdater1)
                     .incrementCounter(
-                        DefaultNodeMetric.OTHER_ERRORS, DriverConfigProfile.DEFAULT_NAME);
+                        DefaultNodeMetric.OTHER_ERRORS, DriverExecutionProfile.DEFAULT_NAME);
                 Mockito.verify(nodeMetricUpdater1)
                     .updateTimer(
                         eq(DefaultNodeMetric.CQL_MESSAGES),
-                        eq(DriverConfigProfile.DEFAULT_NAME),
+                        eq(DriverExecutionProfile.DEFAULT_NAME),
                         anyLong(),
                         eq(TimeUnit.NANOSECONDS));
                 Mockito.verifyNoMoreInteractions(nodeMetricUpdater1);
@@ -168,16 +168,17 @@ public class CqlRequestHandlerRetryTest extends CqlRequestHandlerTestBase {
 
                 Mockito.verify(nodeMetricUpdater1)
                     .incrementCounter(
-                        failureScenario.errorMetric, DriverConfigProfile.DEFAULT_NAME);
-                Mockito.verify(nodeMetricUpdater1)
-                    .incrementCounter(DefaultNodeMetric.RETRIES, DriverConfigProfile.DEFAULT_NAME);
+                        failureScenario.errorMetric, DriverExecutionProfile.DEFAULT_NAME);
                 Mockito.verify(nodeMetricUpdater1)
                     .incrementCounter(
-                        failureScenario.retryMetric, DriverConfigProfile.DEFAULT_NAME);
+                        DefaultNodeMetric.RETRIES, DriverExecutionProfile.DEFAULT_NAME);
+                Mockito.verify(nodeMetricUpdater1)
+                    .incrementCounter(
+                        failureScenario.retryMetric, DriverExecutionProfile.DEFAULT_NAME);
                 Mockito.verify(nodeMetricUpdater1, atMost(1))
                     .updateTimer(
                         eq(DefaultNodeMetric.CQL_MESSAGES),
-                        eq(DriverConfigProfile.DEFAULT_NAME),
+                        eq(DriverExecutionProfile.DEFAULT_NAME),
                         anyLong(),
                         eq(TimeUnit.NANOSECONDS));
                 Mockito.verifyNoMoreInteractions(nodeMetricUpdater1);
@@ -216,16 +217,17 @@ public class CqlRequestHandlerRetryTest extends CqlRequestHandlerTestBase {
 
                 Mockito.verify(nodeMetricUpdater1)
                     .incrementCounter(
-                        failureScenario.errorMetric, DriverConfigProfile.DEFAULT_NAME);
-                Mockito.verify(nodeMetricUpdater1)
-                    .incrementCounter(DefaultNodeMetric.RETRIES, DriverConfigProfile.DEFAULT_NAME);
+                        failureScenario.errorMetric, DriverExecutionProfile.DEFAULT_NAME);
                 Mockito.verify(nodeMetricUpdater1)
                     .incrementCounter(
-                        failureScenario.retryMetric, DriverConfigProfile.DEFAULT_NAME);
+                        DefaultNodeMetric.RETRIES, DriverExecutionProfile.DEFAULT_NAME);
+                Mockito.verify(nodeMetricUpdater1)
+                    .incrementCounter(
+                        failureScenario.retryMetric, DriverExecutionProfile.DEFAULT_NAME);
                 Mockito.verify(nodeMetricUpdater1, atMost(2))
                     .updateTimer(
                         eq(DefaultNodeMetric.CQL_MESSAGES),
-                        eq(DriverConfigProfile.DEFAULT_NAME),
+                        eq(DriverExecutionProfile.DEFAULT_NAME),
                         anyLong(),
                         eq(TimeUnit.NANOSECONDS));
                 Mockito.verifyNoMoreInteractions(nodeMetricUpdater1);
@@ -261,16 +263,17 @@ public class CqlRequestHandlerRetryTest extends CqlRequestHandlerTestBase {
 
                 Mockito.verify(nodeMetricUpdater1)
                     .incrementCounter(
-                        failureScenario.errorMetric, DriverConfigProfile.DEFAULT_NAME);
-                Mockito.verify(nodeMetricUpdater1)
-                    .incrementCounter(DefaultNodeMetric.IGNORES, DriverConfigProfile.DEFAULT_NAME);
+                        failureScenario.errorMetric, DriverExecutionProfile.DEFAULT_NAME);
                 Mockito.verify(nodeMetricUpdater1)
                     .incrementCounter(
-                        failureScenario.ignoreMetric, DriverConfigProfile.DEFAULT_NAME);
+                        DefaultNodeMetric.IGNORES, DriverExecutionProfile.DEFAULT_NAME);
+                Mockito.verify(nodeMetricUpdater1)
+                    .incrementCounter(
+                        failureScenario.ignoreMetric, DriverExecutionProfile.DEFAULT_NAME);
                 Mockito.verify(nodeMetricUpdater1, atMost(1))
                     .updateTimer(
                         eq(DefaultNodeMetric.CQL_MESSAGES),
-                        eq(DriverConfigProfile.DEFAULT_NAME),
+                        eq(DriverExecutionProfile.DEFAULT_NAME),
                         anyLong(),
                         eq(TimeUnit.NANOSECONDS));
                 Mockito.verifyNoMoreInteractions(nodeMetricUpdater1);
@@ -302,11 +305,11 @@ public class CqlRequestHandlerRetryTest extends CqlRequestHandlerTestBase {
 
                 Mockito.verify(nodeMetricUpdater1)
                     .incrementCounter(
-                        failureScenario.errorMetric, DriverConfigProfile.DEFAULT_NAME);
+                        failureScenario.errorMetric, DriverExecutionProfile.DEFAULT_NAME);
                 Mockito.verify(nodeMetricUpdater1, atMost(1))
                     .updateTimer(
                         eq(DefaultNodeMetric.CQL_MESSAGES),
-                        eq(DriverConfigProfile.DEFAULT_NAME),
+                        eq(DriverExecutionProfile.DEFAULT_NAME),
                         anyLong(),
                         eq(TimeUnit.NANOSECONDS));
                 Mockito.verifyNoMoreInteractions(nodeMetricUpdater1);
@@ -352,11 +355,11 @@ public class CqlRequestHandlerRetryTest extends CqlRequestHandlerTestBase {
 
                 Mockito.verify(nodeMetricUpdater1)
                     .incrementCounter(
-                        failureScenario.errorMetric, DriverConfigProfile.DEFAULT_NAME);
+                        failureScenario.errorMetric, DriverExecutionProfile.DEFAULT_NAME);
                 Mockito.verify(nodeMetricUpdater1, atMost(1))
                     .updateTimer(
                         eq(DefaultNodeMetric.CQL_MESSAGES),
-                        eq(DriverConfigProfile.DEFAULT_NAME),
+                        eq(DriverExecutionProfile.DEFAULT_NAME),
                         anyLong(),
                         eq(TimeUnit.NANOSECONDS));
                 Mockito.verifyNoMoreInteractions(nodeMetricUpdater1);
