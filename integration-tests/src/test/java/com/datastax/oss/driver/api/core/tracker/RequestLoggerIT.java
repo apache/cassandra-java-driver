@@ -217,7 +217,7 @@ public class RequestLoggerIT {
     try {
       sessionRuleRequest
           .session()
-          .execute(SimpleStatement.builder(QUERY).withConfigProfileName("no-traces").build());
+          .execute(SimpleStatement.builder(QUERY).withExecutionProfileName("no-traces").build());
       fail("Expected a ServerError");
     } catch (ServerError error) {
       // expected
@@ -239,7 +239,7 @@ public class RequestLoggerIT {
     // When
     sessionRuleRequest
         .session()
-        .execute(SimpleStatement.builder(QUERY).withConfigProfileName("low-threshold").build());
+        .execute(SimpleStatement.builder(QUERY).withExecutionProfileName("low-threshold").build());
 
     // Then
     Mockito.verify(appender, timeout(500)).doAppend(loggingEventCaptor.capture());
@@ -255,7 +255,7 @@ public class RequestLoggerIT {
     // When
     sessionRuleRequest
         .session()
-        .execute(SimpleStatement.builder(QUERY).withConfigProfileName("no-logs").build());
+        .execute(SimpleStatement.builder(QUERY).withExecutionProfileName("no-logs").build());
 
     // Then
     // We expect no messages. The request logger is invoked asynchronously, so simply wait a bit

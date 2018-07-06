@@ -20,7 +20,7 @@ import static org.mockito.Mockito.never;
 
 import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
 import com.datastax.oss.driver.api.core.config.DriverConfig;
-import com.datastax.oss.driver.api.core.config.DriverConfigProfile;
+import com.datastax.oss.driver.api.core.config.DriverExecutionProfile;
 import com.datastax.oss.driver.internal.core.config.ConfigChangeEvent;
 import com.datastax.oss.driver.internal.core.config.ForceReloadConfigEvent;
 import com.datastax.oss.driver.internal.core.context.EventBus;
@@ -45,7 +45,7 @@ public class DefaultDriverConfigLoaderTest {
   @Mock private NettyOptions nettyOptions;
   @Mock private EventLoopGroup adminEventExecutorGroup;
   @Mock private DriverConfig config;
-  @Mock private DriverConfigProfile defaultConfigProfile;
+  @Mock private DriverExecutionProfile defaultProfile;
   private ScheduledTaskCapturingEventLoop adminExecutor;
   private EventBus eventBus;
   private AtomicReference<String> configSource;
@@ -68,8 +68,8 @@ public class DefaultDriverConfigLoaderTest {
     // In real life, it's the object managed by the loader, but in this test it's simpler to mock
     // it.
     Mockito.when(context.config()).thenReturn(config);
-    Mockito.when(config.getDefaultProfile()).thenReturn(defaultConfigProfile);
-    Mockito.when(defaultConfigProfile.getDuration(DefaultDriverOption.CONFIG_RELOAD_INTERVAL))
+    Mockito.when(config.getDefaultProfile()).thenReturn(defaultProfile);
+    Mockito.when(defaultProfile.getDuration(DefaultDriverOption.CONFIG_RELOAD_INTERVAL))
         .thenReturn(Duration.ofSeconds(12));
 
     configSource = new AtomicReference<>("int1 = 42");

@@ -208,7 +208,7 @@ Or use a client-side [timestamp generator](../query_timestamps/).
 
 ### Using multiple policies
 
-The speculative execution policy can be overridden in [configuration
+The speculative execution policy can be overridden in [execution
 profiles](../configuration/#profiles):
 
 ```

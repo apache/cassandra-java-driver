@@ -19,7 +19,7 @@ import com.datastax.oss.driver.api.core.addresstranslation.AddressTranslator;
 import com.datastax.oss.driver.api.core.auth.AuthProvider;
 import com.datastax.oss.driver.api.core.config.DriverConfig;
 import com.datastax.oss.driver.api.core.config.DriverConfigLoader;
-import com.datastax.oss.driver.api.core.config.DriverConfigProfile;
+import com.datastax.oss.driver.api.core.config.DriverExecutionProfile;
 import com.datastax.oss.driver.api.core.connection.ReconnectionPolicy;
 import com.datastax.oss.driver.api.core.detach.AttachmentPoint;
 import com.datastax.oss.driver.api.core.loadbalancing.LoadBalancingPolicy;
@@ -68,7 +68,7 @@ public interface DriverContext extends AttachmentPoint {
     // Protect against a non-existent name
     return (policy != null)
         ? policy
-        : loadBalancingPolicies().get(DriverConfigProfile.DEFAULT_NAME);
+        : loadBalancingPolicies().get(DriverExecutionProfile.DEFAULT_NAME);
   }
 
   /** @return The driver's load balancing policies; may be empty but never {@code null}. */
@@ -82,7 +82,7 @@ public interface DriverContext extends AttachmentPoint {
   @NonNull
   default RetryPolicy retryPolicy(@NonNull String profileName) {
     RetryPolicy policy = retryPolicies().get(profileName);
-    return (policy != null) ? policy : retryPolicies().get(DriverConfigProfile.DEFAULT_NAME);
+    return (policy != null) ? policy : retryPolicies().get(DriverExecutionProfile.DEFAULT_NAME);
   }
 
   /** @return The driver's load balancing policies; may be empty but never {@code null}. */
@@ -98,7 +98,7 @@ public interface DriverContext extends AttachmentPoint {
     SpeculativeExecutionPolicy policy = speculativeExecutionPolicies().get(profileName);
     return (policy != null)
         ? policy
-        : speculativeExecutionPolicies().get(DriverConfigProfile.DEFAULT_NAME);
+        : speculativeExecutionPolicies().get(DriverExecutionProfile.DEFAULT_NAME);
   }
 
   /** @return The driver's timestamp generator; never {@code null}. */

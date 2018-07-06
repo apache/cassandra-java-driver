@@ -18,7 +18,7 @@ package com.datastax.oss.driver.api.core.cql;
 import com.datastax.oss.driver.api.core.ConsistencyLevel;
 import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.ProtocolVersion;
-import com.datastax.oss.driver.api.core.config.DriverConfigProfile;
+import com.datastax.oss.driver.api.core.config.DriverExecutionProfile;
 import com.datastax.oss.driver.api.core.metadata.token.Token;
 import com.datastax.oss.driver.api.core.type.DataType;
 import com.datastax.oss.driver.api.core.type.codec.registry.CodecRegistry;
@@ -44,8 +44,8 @@ public class BoundStatementBuilder extends StatementBuilder<BoundStatementBuilde
       @NonNull PreparedStatement preparedStatement,
       @NonNull ColumnDefinitions variableDefinitions,
       @NonNull ByteBuffer[] values,
-      @Nullable String configProfileName,
-      @Nullable DriverConfigProfile configProfile,
+      @Nullable String executionProfileName,
+      @Nullable DriverExecutionProfile executionProfile,
       @Nullable CqlIdentifier routingKeyspace,
       @Nullable ByteBuffer routingKey,
       @Nullable Token routingToken,
@@ -63,8 +63,8 @@ public class BoundStatementBuilder extends StatementBuilder<BoundStatementBuilde
     this.preparedStatement = preparedStatement;
     this.variableDefinitions = variableDefinitions;
     this.values = values;
-    this.configProfileName = configProfileName;
-    this.configProfile = configProfile;
+    this.executionProfileName = executionProfileName;
+    this.executionProfile = executionProfile;
     this.routingKeyspace = routingKeyspace;
     this.routingKey = routingKey;
     this.routingToken = routingToken;
@@ -152,8 +152,8 @@ public class BoundStatementBuilder extends StatementBuilder<BoundStatementBuilde
         preparedStatement,
         variableDefinitions,
         values,
-        configProfileName,
-        configProfile,
+        executionProfileName,
+        executionProfile,
         routingKeyspace,
         routingKey,
         routingToken,

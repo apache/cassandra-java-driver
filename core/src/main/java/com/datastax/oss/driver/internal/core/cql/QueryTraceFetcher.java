@@ -18,7 +18,7 @@ package com.datastax.oss.driver.internal.core.cql;
 import com.datastax.oss.driver.api.core.ConsistencyLevel;
 import com.datastax.oss.driver.api.core.CqlSession;
 import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
-import com.datastax.oss.driver.api.core.config.DriverConfigProfile;
+import com.datastax.oss.driver.api.core.config.DriverExecutionProfile;
 import com.datastax.oss.driver.api.core.cql.QueryTrace;
 import com.datastax.oss.driver.api.core.cql.Row;
 import com.datastax.oss.driver.api.core.cql.SimpleStatement;
@@ -42,7 +42,7 @@ class QueryTraceFetcher {
 
   private final UUID tracingId;
   private final CqlSession session;
-  private final DriverConfigProfile configProfile;
+  private final DriverExecutionProfile config;
   private final int maxAttempts;
   private final long intervalNanos;
   private final EventExecutor scheduler;
@@ -52,27 +52,25 @@ class QueryTraceFetcher {
       UUID tracingId,
       CqlSession session,
       InternalDriverContext context,
-      DriverConfigProfile configProfile) {
+      DriverExecutionProfile config) {
     this.tracingId = tracingId;
     this.session = session;
 
     ConsistencyLevel regularConsistency =
         context
             .consistencyLevelRegistry()
-            .fromName(configProfile.getString(DefaultDriverOption.REQUEST_CONSISTENCY));
+            .fromName(config.getString(DefaultDriverOption.REQUEST_CONSISTENCY));
     ConsistencyLevel traceConsistency =
         context
             .consistencyLevelRegistry()
-            .fromName(configProfile.getString(DefaultDriverOption.REQUEST_TRACE_CONSISTENCY));
-    this.configProfile =
+            .fromName(config.getString(DefaultDriverOption.REQUEST_TRACE_CONSISTENCY));
+    this.config =
         (traceConsistency.equals(regularConsistency))
-            ? configProfile
-            : configProfile.withString(
-                DefaultDriverOption.REQUEST_CONSISTENCY, traceConsistency.name());
+            ? config
+            : config.withString(DefaultDriverOption.REQUEST_CONSISTENCY, traceConsistency.name());
 
-    this.maxAttempts = configProfile.getInt(DefaultDriverOption.REQUEST_TRACE_ATTEMPTS);
-    this.intervalNanos =
-        configProfile.getDuration(DefaultDriverOption.REQUEST_TRACE_INTERVAL).toNanos();
+    this.maxAttempts = config.getInt(DefaultDriverOption.REQUEST_TRACE_ATTEMPTS);
+    this.intervalNanos = config.getDuration(DefaultDriverOption.REQUEST_TRACE_INTERVAL).toNanos();
     this.scheduler = context.nettyOptions().adminEventExecutorGroup().next();
 
     querySession(maxAttempts);
@@ -87,7 +85,7 @@ class QueryTraceFetcher {
         .executeAsync(
             SimpleStatement.builder("SELECT * FROM system_traces.sessions WHERE session_id = ?")
                 .addPositionalValue(tracingId)
-                .withConfigProfile(configProfile)
+                .withExecutionProfile(config)
                 .build())
         .whenComplete(
             (rs, error) -> {
@@ -122,7 +120,7 @@ class QueryTraceFetcher {
             SimpleStatement.builder("SELECT * FROM system_traces.events WHERE session_id = ?")
                 .addPositionalValue(tracingId)
                 .withPagingState(pagingState)
-                .withConfigProfile(configProfile)
+                .withExecutionProfile(config)
                 .build())
         .whenComplete(
             (rs, error) -> {

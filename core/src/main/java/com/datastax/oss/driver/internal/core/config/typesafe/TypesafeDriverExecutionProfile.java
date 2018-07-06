@@ -15,7 +15,7 @@
  */
 package com.datastax.oss.driver.internal.core.config.typesafe;
 
-import com.datastax.oss.driver.api.core.config.DriverConfigProfile;
+import com.datastax.oss.driver.api.core.config.DriverExecutionProfile;
 import com.datastax.oss.driver.api.core.config.DriverOption;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableMap;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableSortedSet;
@@ -41,7 +41,7 @@ import java.util.function.Function;
 import net.jcip.annotations.ThreadSafe;
 
 @ThreadSafe
-public abstract class TypesafeDriverConfigProfile implements DriverConfigProfile {
+public abstract class TypesafeDriverExecutionProfile implements DriverExecutionProfile {
 
   /** The original profile in the driver's configuration that this profile was derived from. */
   protected abstract Base getBaseProfile();
@@ -66,7 +66,7 @@ public abstract class TypesafeDriverConfigProfile implements DriverConfigProfile
 
   @NonNull
   @Override
-  public DriverConfigProfile withBoolean(@NonNull DriverOption option, boolean value) {
+  public DriverExecutionProfile withBoolean(@NonNull DriverOption option, boolean value) {
     return with(option, value);
   }
 
@@ -78,7 +78,7 @@ public abstract class TypesafeDriverConfigProfile implements DriverConfigProfile
 
   @NonNull
   @Override
-  public DriverConfigProfile withBooleanList(
+  public DriverExecutionProfile withBooleanList(
       @NonNull DriverOption option, @NonNull List<Boolean> value) {
     return with(option, value);
   }
@@ -90,7 +90,7 @@ public abstract class TypesafeDriverConfigProfile implements DriverConfigProfile
 
   @NonNull
   @Override
-  public DriverConfigProfile withInt(@NonNull DriverOption option, int value) {
+  public DriverExecutionProfile withInt(@NonNull DriverOption option, int value) {
     return with(option, value);
   }
 
@@ -102,7 +102,7 @@ public abstract class TypesafeDriverConfigProfile implements DriverConfigProfile
 
   @NonNull
   @Override
-  public DriverConfigProfile withIntList(
+  public DriverExecutionProfile withIntList(
       @NonNull DriverOption option, @NonNull List<Integer> value) {
     return with(option, value);
   }
@@ -114,7 +114,7 @@ public abstract class TypesafeDriverConfigProfile implements DriverConfigProfile
 
   @NonNull
   @Override
-  public DriverConfigProfile withLong(@NonNull DriverOption option, long value) {
+  public DriverExecutionProfile withLong(@NonNull DriverOption option, long value) {
     return with(option, value);
   }
 
@@ -126,7 +126,8 @@ public abstract class TypesafeDriverConfigProfile implements DriverConfigProfile
 
   @NonNull
   @Override
-  public DriverConfigProfile withLongList(@NonNull DriverOption option, @NonNull List<Long> value) {
+  public DriverExecutionProfile withLongList(
+      @NonNull DriverOption option, @NonNull List<Long> value) {
     return with(option, value);
   }
 
@@ -137,7 +138,7 @@ public abstract class TypesafeDriverConfigProfile implements DriverConfigProfile
 
   @NonNull
   @Override
-  public DriverConfigProfile withDouble(@NonNull DriverOption option, double value) {
+  public DriverExecutionProfile withDouble(@NonNull DriverOption option, double value) {
     return with(option, value);
   }
 
@@ -149,7 +150,7 @@ public abstract class TypesafeDriverConfigProfile implements DriverConfigProfile
 
   @NonNull
   @Override
-  public DriverConfigProfile withDoubleList(
+  public DriverExecutionProfile withDoubleList(
       @NonNull DriverOption option, @NonNull List<Double> value) {
     return with(option, value);
   }
@@ -162,7 +163,7 @@ public abstract class TypesafeDriverConfigProfile implements DriverConfigProfile
 
   @NonNull
   @Override
-  public DriverConfigProfile withString(@NonNull DriverOption option, @NonNull String value) {
+  public DriverExecutionProfile withString(@NonNull DriverOption option, @NonNull String value) {
     return with(option, value);
   }
 
@@ -174,7 +175,7 @@ public abstract class TypesafeDriverConfigProfile implements DriverConfigProfile
 
   @NonNull
   @Override
-  public DriverConfigProfile withStringList(
+  public DriverExecutionProfile withStringList(
       @NonNull DriverOption option, @NonNull List<String> value) {
     return with(option, value);
   }
@@ -194,7 +195,7 @@ public abstract class TypesafeDriverConfigProfile implements DriverConfigProfile
 
   @NonNull
   @Override
-  public DriverConfigProfile withStringMap(
+  public DriverExecutionProfile withStringMap(
       @NonNull DriverOption option, @NonNull Map<String, String> map) {
     Base base = getBaseProfile();
     // Add the new option to any already derived options
@@ -216,7 +217,7 @@ public abstract class TypesafeDriverConfigProfile implements DriverConfigProfile
 
   @NonNull
   @Override
-  public DriverConfigProfile withBytes(@NonNull DriverOption option, long value) {
+  public DriverExecutionProfile withBytes(@NonNull DriverOption option, long value) {
     return with(option, value);
   }
 
@@ -228,7 +229,7 @@ public abstract class TypesafeDriverConfigProfile implements DriverConfigProfile
 
   @NonNull
   @Override
-  public DriverConfigProfile withBytesList(
+  public DriverExecutionProfile withBytesList(
       @NonNull DriverOption option, @NonNull List<Long> value) {
     return with(option, value);
   }
@@ -241,7 +242,8 @@ public abstract class TypesafeDriverConfigProfile implements DriverConfigProfile
 
   @NonNull
   @Override
-  public DriverConfigProfile withDuration(@NonNull DriverOption option, @NonNull Duration value) {
+  public DriverExecutionProfile withDuration(
+      @NonNull DriverOption option, @NonNull Duration value) {
     return with(option, value);
   }
 
@@ -253,14 +255,14 @@ public abstract class TypesafeDriverConfigProfile implements DriverConfigProfile
 
   @NonNull
   @Override
-  public DriverConfigProfile withDurationList(
+  public DriverExecutionProfile withDurationList(
       @NonNull DriverOption option, @NonNull List<Duration> value) {
     return with(option, value);
   }
 
   @NonNull
   @Override
-  public DriverConfigProfile without(@NonNull DriverOption option) {
+  public DriverExecutionProfile without(@NonNull DriverOption option) {
     return with(option, null);
   }
 
@@ -290,7 +292,7 @@ public abstract class TypesafeDriverConfigProfile implements DriverConfigProfile
     return t;
   }
 
-  private DriverConfigProfile with(@NonNull DriverOption option, @Nullable Object value) {
+  private DriverExecutionProfile with(@NonNull DriverOption option, @Nullable Object value) {
     Base base = getBaseProfile();
     // Add the new option to any already derived options
     Config newAdded =
@@ -302,7 +304,7 @@ public abstract class TypesafeDriverConfigProfile implements DriverConfigProfile
 
   /** A profile that was loaded directly from the driver's configuration. */
   @ThreadSafe
-  static class Base extends TypesafeDriverConfigProfile {
+  static class Base extends TypesafeDriverExecutionProfile {
 
     private final String name;
     private volatile Config options;
@@ -368,7 +370,7 @@ public abstract class TypesafeDriverConfigProfile implements DriverConfigProfile
    * A profile that was copied from another profile programatically using {@code withXxx} methods.
    */
   @ThreadSafe
-  static class Derived extends TypesafeDriverConfigProfile {
+  static class Derived extends TypesafeDriverExecutionProfile {
 
     private final Base baseProfile;
     private final Config addedOptions;

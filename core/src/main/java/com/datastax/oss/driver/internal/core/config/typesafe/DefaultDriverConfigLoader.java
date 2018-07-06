@@ -18,7 +18,7 @@ package com.datastax.oss.driver.internal.core.config.typesafe;
 import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
 import com.datastax.oss.driver.api.core.config.DriverConfig;
 import com.datastax.oss.driver.api.core.config.DriverConfigLoader;
-import com.datastax.oss.driver.api.core.config.DriverConfigProfile;
+import com.datastax.oss.driver.api.core.config.DriverExecutionProfile;
 import com.datastax.oss.driver.api.core.context.DriverContext;
 import com.datastax.oss.driver.api.core.session.SessionBuilder;
 import com.datastax.oss.driver.internal.core.config.ConfigChangeEvent;
@@ -95,7 +95,7 @@ public class DefaultDriverConfigLoader implements DriverConfigLoader {
     private final String logPrefix;
     private final EventExecutor adminExecutor;
     private final EventBus eventBus;
-    private final DriverConfigProfile config;
+    private final DriverExecutionProfile config;
     private final Object forceLoadListenerKey;
 
     private Duration reloadInterval;

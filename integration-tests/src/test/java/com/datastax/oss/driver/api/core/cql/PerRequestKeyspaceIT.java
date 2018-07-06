@@ -55,7 +55,7 @@ public class PerRequestKeyspaceIT {
         .execute(
             SimpleStatement.builder(
                     "CREATE TABLE IF NOT EXISTS foo (k text, cc int, v int, PRIMARY KEY(k, cc))")
-                .withConfigProfile(sessionRule.slowProfile())
+                .withExecutionProfile(sessionRule.slowProfile())
                 .build());
   }
 

@@ -75,7 +75,7 @@ public class SimpleStatementIT {
         .execute(
             SimpleStatement.builder(
                     "CREATE TABLE IF NOT EXISTS test (k text, v int, PRIMARY KEY(k, v))")
-                .withConfigProfile(sessionRule.slowProfile())
+                .withExecutionProfile(sessionRule.slowProfile())
                 .build());
     for (int i = 0; i < 100; i++) {
       sessionRule
@@ -91,7 +91,7 @@ public class SimpleStatementIT {
         .session()
         .execute(
             SimpleStatement.builder("CREATE TABLE IF NOT EXISTS test2 (k text primary key, v int)")
-                .withConfigProfile(sessionRule.slowProfile())
+                .withExecutionProfile(sessionRule.slowProfile())
                 .build());
   }
 

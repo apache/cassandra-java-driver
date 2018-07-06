@@ -22,7 +22,7 @@ import com.datastax.oss.driver.api.core.UnsupportedProtocolVersionException;
 import com.datastax.oss.driver.api.core.auth.AuthenticationException;
 import com.datastax.oss.driver.api.core.auth.Authenticator;
 import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
-import com.datastax.oss.driver.api.core.config.DriverConfigProfile;
+import com.datastax.oss.driver.api.core.config.DriverExecutionProfile;
 import com.datastax.oss.driver.api.core.connection.ConnectionInitException;
 import com.datastax.oss.driver.api.core.type.codec.TypeCodecs;
 import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
@@ -78,7 +78,7 @@ class ProtocolInitHandler extends ConnectInitHandler {
 
     this.context = context;
 
-    DriverConfigProfile defaultConfig = context.config().getDefaultProfile();
+    DriverExecutionProfile defaultConfig = context.config().getDefaultProfile();
 
     this.timeoutMillis =
         defaultConfig.getDuration(DefaultDriverOption.CONNECTION_INIT_QUERY_TIMEOUT).toMillis();

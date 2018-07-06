@@ -18,7 +18,7 @@ package com.datastax.oss.driver.internal.core.util;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
-import com.datastax.oss.driver.api.core.config.DriverConfigProfile;
+import com.datastax.oss.driver.api.core.config.DriverExecutionProfile;
 import com.datastax.oss.driver.api.core.specex.SpeculativeExecutionPolicy;
 import com.datastax.oss.driver.internal.core.config.typesafe.TypesafeDriverConfig;
 import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
@@ -67,7 +67,7 @@ public class ReflectionTest {
             "com.datastax.oss.driver.internal.core.specex");
 
     assertThat(policies).hasSize(5);
-    SpeculativeExecutionPolicy defaultPolicy = policies.get(DriverConfigProfile.DEFAULT_NAME);
+    SpeculativeExecutionPolicy defaultPolicy = policies.get(DriverExecutionProfile.DEFAULT_NAME);
     SpeculativeExecutionPolicy policy1 = policies.get("profile1");
     SpeculativeExecutionPolicy policy2 = policies.get("profile2");
     SpeculativeExecutionPolicy policy3 = policies.get("profile3");

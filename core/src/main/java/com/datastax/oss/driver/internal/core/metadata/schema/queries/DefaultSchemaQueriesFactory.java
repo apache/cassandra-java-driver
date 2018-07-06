@@ -16,7 +16,7 @@
 package com.datastax.oss.driver.internal.core.metadata.schema.queries;
 
 import com.datastax.oss.driver.api.core.Version;
-import com.datastax.oss.driver.api.core.config.DriverConfigProfile;
+import com.datastax.oss.driver.api.core.config.DriverExecutionProfile;
 import com.datastax.oss.driver.api.core.metadata.Metadata;
 import com.datastax.oss.driver.api.core.metadata.Node;
 import com.datastax.oss.driver.internal.core.channel.DriverChannel;
@@ -69,7 +69,7 @@ public class DefaultSchemaQueriesFactory implements SchemaQueriesFactory {
     } else {
       version = version.nextStable();
     }
-    DriverConfigProfile config = context.config().getDefaultProfile();
+    DriverExecutionProfile config = context.config().getDefaultProfile();
     LOG.debug("[{}] Sending schema queries to {} with version {}", logPrefix, node, version);
     if (version.compareTo(Version.V2_2_0) < 0) {
       return new Cassandra21SchemaQueries(channel, refreshFuture, config, logPrefix);

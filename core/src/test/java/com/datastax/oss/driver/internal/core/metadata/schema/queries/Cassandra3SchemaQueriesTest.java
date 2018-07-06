@@ -19,7 +19,7 @@ import static com.datastax.oss.driver.Assertions.assertThat;
 import static com.datastax.oss.driver.Assertions.assertThatStage;
 
 import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
-import com.datastax.oss.driver.api.core.config.DriverConfigProfile;
+import com.datastax.oss.driver.api.core.config.DriverExecutionProfile;
 import com.datastax.oss.driver.api.core.metadata.Metadata;
 import com.datastax.oss.driver.internal.core.adminrequest.AdminResult;
 import com.datastax.oss.driver.internal.core.channel.DriverChannel;
@@ -333,7 +333,7 @@ public class Cassandra3SchemaQueriesTest extends SchemaQueriesTest {
     SchemaQueriesWithMockedChannel(
         DriverChannel channel,
         CompletableFuture<Metadata> refreshFuture,
-        DriverConfigProfile config,
+        DriverExecutionProfile config,
         String logPrefix) {
       super(channel, refreshFuture, config, logPrefix);
     }

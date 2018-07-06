@@ -57,7 +57,7 @@ public class BatchStatementIT {
           .session()
           .execute(
               SimpleStatement.newInstance(schemaStatement)
-                  .setConfigProfile(sessionRule.slowProfile()));
+                  .setExecutionProfile(sessionRule.slowProfile()));
     }
   }
 

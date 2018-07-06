@@ -24,7 +24,7 @@ import com.datastax.oss.driver.api.core.auth.AuthProvider;
 import com.datastax.oss.driver.api.core.auth.AuthenticationException;
 import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
 import com.datastax.oss.driver.api.core.config.DriverConfig;
-import com.datastax.oss.driver.api.core.config.DriverConfigProfile;
+import com.datastax.oss.driver.api.core.config.DriverExecutionProfile;
 import com.datastax.oss.driver.internal.core.CassandraProtocolVersionRegistry;
 import com.datastax.oss.driver.internal.core.ProtocolVersionRegistry;
 import com.datastax.oss.driver.internal.core.TestResponses;
@@ -63,7 +63,7 @@ public class ProtocolInitHandlerTest extends ChannelHandlerTestBase {
 
   @Mock private InternalDriverContext internalDriverContext;
   @Mock private DriverConfig driverConfig;
-  @Mock private DriverConfigProfile defaultConfigProfile;
+  @Mock private DriverExecutionProfile defaultProfile;
   @Mock private Compressor<ByteBuf> compressor;
 
   private ProtocolVersionRegistry protocolVersionRegistry =
@@ -76,11 +76,10 @@ public class ProtocolInitHandlerTest extends ChannelHandlerTestBase {
     super.setup();
     MockitoAnnotations.initMocks(this);
     Mockito.when(internalDriverContext.config()).thenReturn(driverConfig);
-    Mockito.when(driverConfig.getDefaultProfile()).thenReturn(defaultConfigProfile);
-    Mockito.when(
-            defaultConfigProfile.getDuration(DefaultDriverOption.CONNECTION_INIT_QUERY_TIMEOUT))
+    Mockito.when(driverConfig.getDefaultProfile()).thenReturn(defaultProfile);
+    Mockito.when(defaultProfile.getDuration(DefaultDriverOption.CONNECTION_INIT_QUERY_TIMEOUT))
         .thenReturn(Duration.ofMillis(QUERY_TIMEOUT_MILLIS));
-    Mockito.when(defaultConfigProfile.getDuration(DefaultDriverOption.HEARTBEAT_INTERVAL))
+    Mockito.when(defaultProfile.getDuration(DefaultDriverOption.HEARTBEAT_INTERVAL))
         .thenReturn(Duration.ofSeconds(30));
     Mockito.when(internalDriverContext.protocolVersionRegistry())
         .thenReturn(protocolVersionRegistry);
@@ -100,7 +99,7 @@ public class ProtocolInitHandlerTest extends ChannelHandlerTestBase {
                 null,
                 "test"));
 
-    heartbeatHandler = new HeartbeatHandler(defaultConfigProfile);
+    heartbeatHandler = new HeartbeatHandler(defaultProfile);
   }
 
   @Test

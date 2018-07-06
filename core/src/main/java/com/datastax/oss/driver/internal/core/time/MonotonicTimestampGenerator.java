@@ -16,7 +16,7 @@
 package com.datastax.oss.driver.internal.core.time;
 
 import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
-import com.datastax.oss.driver.api.core.config.DriverConfigProfile;
+import com.datastax.oss.driver.api.core.config.DriverExecutionProfile;
 import com.datastax.oss.driver.api.core.context.DriverContext;
 import com.datastax.oss.driver.api.core.time.TimestampGenerator;
 import java.time.Duration;
@@ -46,7 +46,7 @@ abstract class MonotonicTimestampGenerator implements TimestampGenerator {
   protected MonotonicTimestampGenerator(Clock clock, DriverContext context) {
     this.clock = clock;
 
-    DriverConfigProfile config = context.config().getDefaultProfile();
+    DriverExecutionProfile config = context.config().getDefaultProfile();
     this.warningThresholdMicros =
         config
                 .getDuration(
@@ -103,7 +103,7 @@ abstract class MonotonicTimestampGenerator implements TimestampGenerator {
   }
 
   private static Clock buildClock(DriverContext context) {
-    DriverConfigProfile config = context.config().getDefaultProfile();
+    DriverExecutionProfile config = context.config().getDefaultProfile();
     boolean forceJavaClock =
         config.getBoolean(DefaultDriverOption.TIMESTAMP_GENERATOR_FORCE_JAVA_CLOCK, false);
     return Clock.getInstance(forceJavaClock);

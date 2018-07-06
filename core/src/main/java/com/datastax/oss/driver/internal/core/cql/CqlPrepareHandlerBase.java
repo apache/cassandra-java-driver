@@ -22,7 +22,7 @@ import com.datastax.oss.driver.api.core.ProtocolVersion;
 import com.datastax.oss.driver.api.core.RequestThrottlingException;
 import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
 import com.datastax.oss.driver.api.core.config.DriverConfig;
-import com.datastax.oss.driver.api.core.config.DriverConfigProfile;
+import com.datastax.oss.driver.api.core.config.DriverExecutionProfile;
 import com.datastax.oss.driver.api.core.cql.PrepareRequest;
 import com.datastax.oss.driver.api.core.cql.PreparedStatement;
 import com.datastax.oss.driver.api.core.metadata.Node;
@@ -85,7 +85,7 @@ public abstract class CqlPrepareHandlerBase implements Throttled {
   private final ConcurrentMap<ByteBuffer, DefaultPreparedStatement> preparedStatementsCache;
   private final DefaultSession session;
   private final InternalDriverContext context;
-  private final DriverConfigProfile configProfile;
+  private final DriverExecutionProfile executionProfile;
   private final Queue<Node> queryPlan;
   protected final CompletableFuture<PreparedStatement> result;
   private final Message message;
@@ -117,12 +117,12 @@ public abstract class CqlPrepareHandlerBase implements Throttled {
     this.session = session;
     this.context = context;
 
-    if (request.getConfigProfile() != null) {
-      this.configProfile = request.getConfigProfile();
+    if (request.getExecutionProfile() != null) {
+      this.executionProfile = request.getExecutionProfile();
     } else {
       DriverConfig config = context.config();
-      String profileName = request.getConfigProfileName();
-      this.configProfile =
+      String profileName = request.getExecutionProfileName();
+      this.executionProfile =
           (profileName == null || profileName.isEmpty())
               ? config.getDefaultProfile()
               : config.getProfile(profileName);
@@ -130,8 +130,8 @@ public abstract class CqlPrepareHandlerBase implements Throttled {
     this.queryPlan =
         context
             .loadBalancingPolicyWrapper()
-            .newQueryPlan(request, configProfile.getName(), session);
-    this.retryPolicy = context.retryPolicy(configProfile.getName());
+            .newQueryPlan(request, executionProfile.getName(), session);
+    this.retryPolicy = context.retryPolicy(executionProfile.getName());
 
     this.result = new CompletableFuture<>();
     this.result.exceptionally(
@@ -160,9 +160,9 @@ public abstract class CqlPrepareHandlerBase implements Throttled {
     this.timeout =
         request.getTimeout() != null
             ? request.getTimeout()
-            : configProfile.getDuration(DefaultDriverOption.REQUEST_TIMEOUT);
+            : executionProfile.getDuration(DefaultDriverOption.REQUEST_TIMEOUT);
     this.timeoutFuture = scheduleTimeout(timeout);
-    this.prepareOnAllNodes = configProfile.getBoolean(DefaultDriverOption.PREPARE_ON_ALL_NODES);
+    this.prepareOnAllNodes = executionProfile.getBoolean(DefaultDriverOption.PREPARE_ON_ALL_NODES);
 
     this.throttler = context.requestThrottler();
     this.throttler.register(this);
@@ -175,7 +175,7 @@ public abstract class CqlPrepareHandlerBase implements Throttled {
           .getMetricUpdater()
           .updateTimer(
               DefaultSessionMetric.THROTTLING_DELAY,
-              configProfile.getName(),
+              executionProfile.getName(),
               System.nanoTime() - startTimeNanos,
               TimeUnit.NANOSECONDS);
     }
@@ -350,7 +350,7 @@ public abstract class CqlPrepareHandlerBase implements Throttled {
   public void onThrottleFailure(@NonNull RequestThrottlingException error) {
     session
         .getMetricUpdater()
-        .incrementCounter(DefaultSessionMetric.THROTTLING_ERRORS, configProfile.getName());
+        .incrementCounter(DefaultSessionMetric.THROTTLING_ERRORS, executionProfile.getName());
     setFinalError(error);
   }
 

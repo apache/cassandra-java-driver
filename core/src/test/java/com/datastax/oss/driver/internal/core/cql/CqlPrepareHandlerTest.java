@@ -24,7 +24,7 @@ import static org.mockito.ArgumentMatchers.eq;
 
 import com.datastax.oss.driver.api.core.DefaultProtocolVersion;
 import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
-import com.datastax.oss.driver.api.core.config.DriverConfigProfile;
+import com.datastax.oss.driver.api.core.config.DriverExecutionProfile;
 import com.datastax.oss.driver.api.core.cql.ColumnDefinitions;
 import com.datastax.oss.driver.api.core.cql.PreparedStatement;
 import com.datastax.oss.driver.api.core.cql.SimpleStatement;
@@ -126,7 +126,7 @@ public class CqlPrepareHandlerTest {
 
     try (RequestHandlerTestHarness harness = harnessBuilder.build()) {
 
-      DriverConfigProfile config = harness.getContext().config().getDefaultProfile();
+      DriverExecutionProfile config = harness.getContext().config().getDefaultProfile();
       Mockito.when(config.getBoolean(DefaultDriverOption.PREPARE_ON_ALL_NODES)).thenReturn(false);
 
       CompletionStage<PreparedStatement> prepareFuture =
@@ -315,7 +315,7 @@ public class CqlPrepareHandlerTest {
 
       // Make node1's error unrecoverable, will rethrow
       RetryPolicy mockRetryPolicy =
-          harness.getContext().retryPolicy(DriverConfigProfile.DEFAULT_NAME);
+          harness.getContext().retryPolicy(DriverExecutionProfile.DEFAULT_NAME);
       Mockito.when(
               mockRetryPolicy.onErrorResponse(
                   eq(PREPARE_REQUEST), any(OverloadedException.class), eq(0)))
@@ -356,7 +356,7 @@ public class CqlPrepareHandlerTest {
     PoolBehavior node3Behavior = harnessBuilder.customBehavior(node3);
     node1Behavior.setResponseSuccess(defaultFrameOf(simplePrepared()));
     try (RequestHandlerTestHarness harness = harnessBuilder.build()) {
-      DriverConfigProfile config = harness.getContext().config().getDefaultProfile();
+      DriverExecutionProfile config = harness.getContext().config().getDefaultProfile();
       Mockito.when(config.getBoolean(DefaultDriverOption.PREPARE_ON_ALL_NODES)).thenReturn(false);
       CompletionStage<PreparedStatement> prepareFuture =
           new CqlPrepareAsyncHandler(
@@ -387,7 +387,7 @@ public class CqlPrepareHandlerTest {
     node2Behavior.setResponseSuccess(defaultFrameOf(simplePrepared()));
     node3Behavior.setResponseSuccess(defaultFrameOf(simplePrepared()));
     try (RequestHandlerTestHarness harness = harnessBuilder.build()) {
-      DriverConfigProfile config = harness.getContext().config().getDefaultProfile();
+      DriverExecutionProfile config = harness.getContext().config().getDefaultProfile();
       Mockito.when(config.getBoolean(DefaultDriverOption.PREPARE_ON_ALL_NODES)).thenReturn(true);
       CompletionStage<PreparedStatement> prepareFuture =
           new CqlPrepareAsyncHandler(

@@ -16,14 +16,14 @@ For a complete list of built-in options, see the [reference configuration][refer
 Essentially, an option is a path in the configuration with an expected type, for example
 `basic.request.timeout`, representing a duration.
 
-#### Profiles
+#### Execution profiles
 
 Imagine an application that does both transactional and analytical requests. Transactional requests
 are simpler and must return quickly, so they will typically use a short timeout, let's say 100 
 milliseconds; analytical requests are more complex and less frequent so a higher SLA is acceptable,
 for example 5 seconds. In addition, maybe you want to use a different consistency level.
 
-Instead of manually adjusting the options on every request, you can create configuration profiles:
+Instead of manually adjusting the options on every request, you can create execution profiles:
 
 ```
 datastax-java-driver {
@@ -44,7 +44,7 @@ Now each request only needs a profile name:
 ```java
 SimpleStatement s =
   SimpleStatement.builder("SELECT name FROM user WHERE id = 1")
-      .withConfigProfileName("oltp")
+      .withExecutionProfileName("oltp")
       .build();
 session.execute(s);
 ```
@@ -133,14 +133,13 @@ The driver's context exposes a [DriverConfig] instance:
 
 ```java
 DriverConfig config = session.getContext().config();
-DriverConfigProfile defaultProfile = config.getDefaultProfile();
-DriverConfigProfile olapProfile = config.getProfile("olap");
+DriverExecutionProfile defaultProfile = config.getDefaultProfile();
+DriverExecutionProfile olapProfile = config.getProfile("olap");
 
-// This method creates a defensive copy of the map, do not use in performance-sensitive code:
 config.getProfiles().forEach((name, profile) -> ...);
 ```
 
-[DriverConfigProfile] has typed option getters:
+[DriverExecutionProfile] has typed option getters:
 
 ```java
 Duration requestTimeout = defaultProfile.getDuration(DefaultDriverOption.REQUEST_TIMEOUT);
@@ -153,7 +152,7 @@ more generic [DriverOption] interface. This is intended to allow custom options,
 
 #### Derived profiles
 
-Configuration profiles are hard-coded in the configuration, and can't be changed at runtime (except
+Execution profiles are hard-coded in the configuration, and can't be changed at runtime (except
 by modifying and reloading the files). What if you want to adjust an option for a single request,
 without having a dedicated profile for it?
 
@@ -161,8 +160,8 @@ To allow this, you start from an existing profile in the configuration and build
 that overrides a subset of options:
 
 ```java
-DriverConfigProfile defaultProfile = session.getContext().config().getDefaultProfile();
-DriverConfigProfile dynamicProfile =
+DriverExecutionProfile defaultProfile = session.getContext().config().getDefaultProfile();
+DriverExecutionProfile dynamicProfile =
   defaultProfile.withString(
       DefaultDriverOption.REQUEST_CONSISTENCY, DefaultConsistencyLevel.EACH_QUORUM.name());
 SimpleStatement s =
@@ -280,16 +279,17 @@ CqlSession session = CqlSession.builder().withConfigLoader(loader).build();
 
 If Typesafe Config doesn't work for you, it is possible to get rid of it entirely.
 
-You will need to provide your own implementations of [DriverConfig] and [DriverConfigProfile]. Then
-write a [DriverConfigLoader] and pass it to the session at initialization, as shown in the previous
-sections. Study the built-in implementation (package 
+You will need to provide your own implementations of [DriverConfig] and [DriverExecutionProfile].
+Then write a [DriverConfigLoader] and pass it to the session at initialization, as shown in the
+previous sections. Study the built-in implementation (package
 `com.datastax.oss.driver.internal.core.config.typesafe`) for reference.
 
 Reloading is not mandatory: you can choose not to implement it, and the driver will simply keep
 using the initial configuration.
 
-Note that the option getters (`DriverConfigProfile.getInt` and similar) are invoked very frequently
-on the hot code path; if your implementation is slow, consider caching the results between reloads.
+Note that the option getters (`DriverExecutionProfile.getInt` and similar) are invoked very
+frequently on the hot code path; if your implementation is slow, consider caching the results
+between reloads.
 
 #### Configuration change events
 
@@ -433,12 +433,12 @@ config.getDefaultProfile().getString(MyCustomOption.ADMIN_EMAIL);
 config.getDefaultProfile().getInt(MyCustomOption.AWESOMENESS_FACTOR);
 ```
 
-[DriverConfig]:        http://docs.datastax.com/en/drivers/java/4.0/com/datastax/oss/driver/api/core/config/DriverConfig.html
-[DriverConfigProfile]: http://docs.datastax.com/en/drivers/java/4.0/com/datastax/oss/driver/api/core/config/DriverConfigProfile.html
-[DriverContext]:       https://docs.datastax.com/en/drivers/java/4.0/com/datastax/oss/driver/api/core/context/DriverContext.html
-[DriverOption]:        http://docs.datastax.com/en/drivers/java/4.0/com/datastax/oss/driver/api/core/config/DriverOption.html
-[DefaultDriverOption]: http://docs.datastax.com/en/drivers/java/4.0/com/datastax/oss/driver/api/core/config/DefaultDriverOption.html
-[DriverConfigLoader]:  http://docs.datastax.com/en/drivers/java/4.0/com/datastax/oss/driver/api/core/config/DriverConfigLoader.html
+[DriverConfig]:           https://docs.datastax.com/en/drivers/java/4.0/com/datastax/oss/driver/api/core/config/DriverConfig.html
+[DriverExecutionProfile]: https://docs.datastax.com/en/drivers/java/4.0/com/datastax/oss/driver/api/core/config/DriverExecutionProfile.html
+[DriverContext]:          https://docs.datastax.com/en/drivers/java/4.0/com/datastax/oss/driver/api/core/context/DriverContext.html
+[DriverOption]:           https://docs.datastax.com/en/drivers/java/4.0/com/datastax/oss/driver/api/core/config/DriverOption.html
+[DefaultDriverOption]:    https://docs.datastax.com/en/drivers/java/4.0/com/datastax/oss/driver/api/core/config/DefaultDriverOption.html
+[DriverConfigLoader]:     https://docs.datastax.com/en/drivers/java/4.0/com/datastax/oss/driver/api/core/config/DriverConfigLoader.html
 
 [Typesafe Config]: https://github.com/typesafehub/config
 [config standard behavior]: https://github.com/typesafehub/config#standard-behavior

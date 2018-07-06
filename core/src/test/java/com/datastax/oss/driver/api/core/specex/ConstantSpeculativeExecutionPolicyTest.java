@@ -19,7 +19,7 @@ import static com.datastax.oss.driver.Assertions.assertThat;
 
 import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
 import com.datastax.oss.driver.api.core.config.DriverConfig;
-import com.datastax.oss.driver.api.core.config.DriverConfigProfile;
+import com.datastax.oss.driver.api.core.config.DriverExecutionProfile;
 import com.datastax.oss.driver.api.core.context.DriverContext;
 import com.datastax.oss.driver.api.core.session.Request;
 import com.datastax.oss.driver.internal.core.specex.ConstantSpeculativeExecutionPolicy;
@@ -35,13 +35,13 @@ import org.mockito.junit.MockitoJUnitRunner;
 public class ConstantSpeculativeExecutionPolicyTest {
   @Mock private DriverContext context;
   @Mock private DriverConfig config;
-  @Mock private DriverConfigProfile defaultProfile;
+  @Mock private DriverExecutionProfile defaultProfile;
   @Mock private Request request;
 
   @Before
   public void setup() {
     Mockito.when(context.config()).thenReturn(config);
-    Mockito.when(config.getProfile(DriverConfigProfile.DEFAULT_NAME)).thenReturn(defaultProfile);
+    Mockito.when(config.getProfile(DriverExecutionProfile.DEFAULT_NAME)).thenReturn(defaultProfile);
   }
 
   private void mockOptions(int maxExecutions, long constantDelayMillis) {
@@ -54,20 +54,20 @@ public class ConstantSpeculativeExecutionPolicyTest {
   @Test(expected = IllegalArgumentException.class)
   public void should_fail_if_delay_negative() {
     mockOptions(1, -10);
-    new ConstantSpeculativeExecutionPolicy(context, DriverConfigProfile.DEFAULT_NAME);
+    new ConstantSpeculativeExecutionPolicy(context, DriverExecutionProfile.DEFAULT_NAME);
   }
 
   @Test(expected = IllegalArgumentException.class)
   public void should_fail_if_max_less_than_one() {
     mockOptions(0, 10);
-    new ConstantSpeculativeExecutionPolicy(context, DriverConfigProfile.DEFAULT_NAME);
+    new ConstantSpeculativeExecutionPolicy(context, DriverExecutionProfile.DEFAULT_NAME);
   }
 
   @Test
   public void should_return_delay_until_max() {
     mockOptions(3, 10);
     SpeculativeExecutionPolicy policy =
-        new ConstantSpeculativeExecutionPolicy(context, DriverConfigProfile.DEFAULT_NAME);
+        new ConstantSpeculativeExecutionPolicy(context, DriverExecutionProfile.DEFAULT_NAME);
 
     // Initial execution starts, schedule first speculative execution
     assertThat(policy.nextExecution(null, null, request, 1)).isEqualTo(10);

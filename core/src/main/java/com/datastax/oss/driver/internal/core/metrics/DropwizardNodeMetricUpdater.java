@@ -18,7 +18,7 @@ package com.datastax.oss.driver.internal.core.metrics;
 import com.codahale.metrics.Gauge;
 import com.codahale.metrics.MetricRegistry;
 import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
-import com.datastax.oss.driver.api.core.config.DriverConfigProfile;
+import com.datastax.oss.driver.api.core.config.DriverExecutionProfile;
 import com.datastax.oss.driver.api.core.metadata.Node;
 import com.datastax.oss.driver.api.core.metrics.DefaultNodeMetric;
 import com.datastax.oss.driver.api.core.metrics.NodeMetric;
@@ -46,7 +46,7 @@ public class DropwizardNodeMetricUpdater extends DropwizardMetricUpdater<NodeMet
     super(enabledMetrics, registry);
     this.metricNamePrefix = buildPrefix(context.sessionName(), node.getConnectAddress());
 
-    DriverConfigProfile config = context.config().getDefaultProfile();
+    DriverExecutionProfile config = context.config().getDefaultProfile();
 
     if (enabledMetrics.contains(DefaultNodeMetric.OPEN_CONNECTIONS)) {
       this.registry.register(

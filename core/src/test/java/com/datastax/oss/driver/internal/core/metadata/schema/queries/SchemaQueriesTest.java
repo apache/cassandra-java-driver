@@ -19,7 +19,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
-import com.datastax.oss.driver.api.core.config.DriverConfigProfile;
+import com.datastax.oss.driver.api.core.config.DriverExecutionProfile;
 import com.datastax.oss.driver.api.core.metadata.Node;
 import com.datastax.oss.driver.internal.core.adminrequest.AdminResult;
 import com.datastax.oss.driver.internal.core.adminrequest.AdminRow;
@@ -43,7 +43,7 @@ public abstract class SchemaQueriesTest {
   protected static final CqlIdentifier FOO_ID = CqlIdentifier.fromInternal("foo");
 
   @Mock protected Node node;
-  @Mock protected DriverConfigProfile config;
+  @Mock protected DriverExecutionProfile config;
   @Mock protected DriverChannel driverChannel;
   protected EmbeddedChannel channel;
 

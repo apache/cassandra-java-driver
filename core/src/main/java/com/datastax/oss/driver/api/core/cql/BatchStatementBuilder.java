@@ -132,8 +132,8 @@ public class BatchStatementBuilder extends StatementBuilder<BatchStatementBuilde
     return new DefaultBatchStatement(
         batchType,
         statementsBuilder.build(),
-        configProfileName,
-        configProfile,
+        executionProfileName,
+        executionProfile,
         keyspace,
         routingKeyspace,
         routingKey,

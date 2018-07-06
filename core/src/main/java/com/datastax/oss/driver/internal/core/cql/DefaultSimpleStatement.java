@@ -17,7 +17,7 @@ package com.datastax.oss.driver.internal.core.cql;
 
 import com.datastax.oss.driver.api.core.ConsistencyLevel;
 import com.datastax.oss.driver.api.core.CqlIdentifier;
-import com.datastax.oss.driver.api.core.config.DriverConfigProfile;
+import com.datastax.oss.driver.api.core.config.DriverExecutionProfile;
 import com.datastax.oss.driver.api.core.cql.SimpleStatement;
 import com.datastax.oss.driver.api.core.metadata.token.Token;
 import com.datastax.oss.protocol.internal.util.collection.NullAllowingImmutableList;
@@ -36,8 +36,8 @@ public class DefaultSimpleStatement implements SimpleStatement {
   private final String query;
   private final List<Object> positionalValues;
   private final Map<CqlIdentifier, Object> namedValues;
-  private final String configProfileName;
-  private final DriverConfigProfile configProfile;
+  private final String executionProfileName;
+  private final DriverExecutionProfile executionProfile;
   private final CqlIdentifier keyspace;
   private final CqlIdentifier routingKeyspace;
   private final ByteBuffer routingKey;
@@ -58,8 +58,8 @@ public class DefaultSimpleStatement implements SimpleStatement {
       String query,
       List<Object> positionalValues,
       Map<CqlIdentifier, Object> namedValues,
-      String configProfileName,
-      DriverConfigProfile configProfile,
+      String executionProfileName,
+      DriverExecutionProfile executionProfile,
       CqlIdentifier keyspace,
       CqlIdentifier routingKeyspace,
       ByteBuffer routingKey,
@@ -79,8 +79,8 @@ public class DefaultSimpleStatement implements SimpleStatement {
     this.query = query;
     this.positionalValues = NullAllowingImmutableList.copyOf(positionalValues);
     this.namedValues = NullAllowingImmutableMap.copyOf(namedValues);
-    this.configProfileName = configProfileName;
-    this.configProfile = configProfile;
+    this.executionProfileName = executionProfileName;
+    this.executionProfile = executionProfile;
     this.keyspace = keyspace;
     this.routingKeyspace = routingKeyspace;
     this.routingKey = routingKey;
@@ -109,8 +109,8 @@ public class DefaultSimpleStatement implements SimpleStatement {
         newQuery,
         positionalValues,
         namedValues,
-        configProfileName,
-        configProfile,
+        executionProfileName,
+        executionProfile,
         keyspace,
         routingKeyspace,
         routingKey,
@@ -139,8 +139,8 @@ public class DefaultSimpleStatement implements SimpleStatement {
         query,
         newPositionalValues,
         namedValues,
-        configProfileName,
-        configProfile,
+        executionProfileName,
+        executionProfile,
         keyspace,
         routingKeyspace,
         routingKey,
@@ -169,8 +169,8 @@ public class DefaultSimpleStatement implements SimpleStatement {
         query,
         positionalValues,
         newNamedValues,
-        configProfileName,
-        configProfile,
+        executionProfileName,
+        executionProfile,
         keyspace,
         routingKeyspace,
         routingKey,
@@ -188,19 +188,19 @@ public class DefaultSimpleStatement implements SimpleStatement {
 
   @Nullable
   @Override
-  public String getConfigProfileName() {
-    return configProfileName;
+  public String getExecutionProfileName() {
+    return executionProfileName;
   }
 
   @NonNull
   @Override
-  public SimpleStatement setConfigProfileName(@Nullable String newConfigProfileName) {
+  public SimpleStatement setExecutionProfileName(@Nullable String newConfigProfileName) {
     return new DefaultSimpleStatement(
         query,
         positionalValues,
         namedValues,
         newConfigProfileName,
-        configProfile,
+        executionProfile,
         keyspace,
         routingKeyspace,
         routingKey,
@@ -218,13 +218,13 @@ public class DefaultSimpleStatement implements SimpleStatement {
 
   @Nullable
   @Override
-  public DriverConfigProfile getConfigProfile() {
-    return configProfile;
+  public DriverExecutionProfile getExecutionProfile() {
+    return executionProfile;
   }
 
   @NonNull
   @Override
-  public SimpleStatement setConfigProfile(@Nullable DriverConfigProfile newProfile) {
+  public SimpleStatement setExecutionProfile(@Nullable DriverExecutionProfile newProfile) {
     return new DefaultSimpleStatement(
         query,
         positionalValues,
@@ -259,8 +259,8 @@ public class DefaultSimpleStatement implements SimpleStatement {
         query,
         positionalValues,
         namedValues,
-        configProfileName,
-        configProfile,
+        executionProfileName,
+        executionProfile,
         newKeyspace,
         routingKeyspace,
         routingKey,
@@ -289,8 +289,8 @@ public class DefaultSimpleStatement implements SimpleStatement {
         query,
         positionalValues,
         namedValues,
-        configProfileName,
-        configProfile,
+        executionProfileName,
+        executionProfile,
         keyspace,
         newRoutingKeyspace,
         routingKey,
@@ -319,8 +319,8 @@ public class DefaultSimpleStatement implements SimpleStatement {
         query,
         positionalValues,
         namedValues,
-        configProfileName,
-        configProfile,
+        executionProfileName,
+        executionProfile,
         keyspace,
         routingKeyspace,
         newRoutingKey,
@@ -349,8 +349,8 @@ public class DefaultSimpleStatement implements SimpleStatement {
         query,
         positionalValues,
         namedValues,
-        configProfileName,
-        configProfile,
+        executionProfileName,
+        executionProfile,
         keyspace,
         routingKeyspace,
         routingKey,
@@ -379,8 +379,8 @@ public class DefaultSimpleStatement implements SimpleStatement {
         query,
         positionalValues,
         namedValues,
-        configProfileName,
-        configProfile,
+        executionProfileName,
+        executionProfile,
         keyspace,
         routingKeyspace,
         routingKey,
@@ -409,8 +409,8 @@ public class DefaultSimpleStatement implements SimpleStatement {
         query,
         positionalValues,
         namedValues,
-        configProfileName,
-        configProfile,
+        executionProfileName,
+        executionProfile,
         keyspace,
         routingKeyspace,
         routingKey,
@@ -438,8 +438,8 @@ public class DefaultSimpleStatement implements SimpleStatement {
         query,
         positionalValues,
         namedValues,
-        configProfileName,
-        configProfile,
+        executionProfileName,
+        executionProfile,
         keyspace,
         routingKeyspace,
         routingKey,
@@ -467,8 +467,8 @@ public class DefaultSimpleStatement implements SimpleStatement {
         query,
         positionalValues,
         namedValues,
-        configProfileName,
-        configProfile,
+        executionProfileName,
+        executionProfile,
         keyspace,
         routingKeyspace,
         routingKey,
@@ -497,8 +497,8 @@ public class DefaultSimpleStatement implements SimpleStatement {
         query,
         positionalValues,
         namedValues,
-        configProfileName,
-        configProfile,
+        executionProfileName,
+        executionProfile,
         keyspace,
         routingKeyspace,
         routingKey,
@@ -527,8 +527,8 @@ public class DefaultSimpleStatement implements SimpleStatement {
         query,
         positionalValues,
         namedValues,
-        configProfileName,
-        configProfile,
+        executionProfileName,
+        executionProfile,
         keyspace,
         routingKeyspace,
         routingKey,
@@ -556,8 +556,8 @@ public class DefaultSimpleStatement implements SimpleStatement {
         query,
         positionalValues,
         namedValues,
-        configProfileName,
-        configProfile,
+        executionProfileName,
+        executionProfile,
         keyspace,
         routingKeyspace,
         routingKey,
@@ -585,8 +585,8 @@ public class DefaultSimpleStatement implements SimpleStatement {
         query,
         positionalValues,
         namedValues,
-        configProfileName,
-        configProfile,
+        executionProfileName,
+        executionProfile,
         keyspace,
         routingKeyspace,
         routingKey,
@@ -616,8 +616,8 @@ public class DefaultSimpleStatement implements SimpleStatement {
         query,
         positionalValues,
         namedValues,
-        configProfileName,
-        configProfile,
+        executionProfileName,
+        executionProfile,
         keyspace,
         routingKeyspace,
         routingKey,

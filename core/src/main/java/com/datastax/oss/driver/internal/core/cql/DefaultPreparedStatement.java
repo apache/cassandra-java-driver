@@ -18,7 +18,7 @@ package com.datastax.oss.driver.internal.core.cql;
 import com.datastax.oss.driver.api.core.ConsistencyLevel;
 import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.ProtocolVersion;
-import com.datastax.oss.driver.api.core.config.DriverConfigProfile;
+import com.datastax.oss.driver.api.core.config.DriverExecutionProfile;
 import com.datastax.oss.driver.api.core.cql.BoundStatement;
 import com.datastax.oss.driver.api.core.cql.BoundStatementBuilder;
 import com.datastax.oss.driver.api.core.cql.ColumnDefinitions;
@@ -44,8 +44,8 @@ public class DefaultPreparedStatement implements PreparedStatement {
   private volatile ResultMetadata resultMetadata;
   private final CodecRegistry codecRegistry;
   private final ProtocolVersion protocolVersion;
-  private final String configProfileNameForBoundStatements;
-  private final DriverConfigProfile configProfileForBoundStatements;
+  private final String executionProfileNameForBoundStatements;
+  private final DriverExecutionProfile executionProfileForBoundStatements;
   private final ByteBuffer pagingStateForBoundStatements;
   private final CqlIdentifier routingKeyspaceForBoundStatements;
   private final ByteBuffer routingKeyForBoundStatements;
@@ -67,8 +67,8 @@ public class DefaultPreparedStatement implements PreparedStatement {
       ColumnDefinitions resultSetDefinitions,
       CqlIdentifier keyspace,
       Map<String, ByteBuffer> customPayloadForPrepare,
-      String configProfileNameForBoundStatements,
-      DriverConfigProfile configProfileForBoundStatements,
+      String executionProfileNameForBoundStatements,
+      DriverExecutionProfile executionProfileForBoundStatements,
       CqlIdentifier routingKeyspaceForBoundStatements,
       ByteBuffer routingKeyForBoundStatements,
       Token routingTokenForBoundStatements,
@@ -90,8 +90,8 @@ public class DefaultPreparedStatement implements PreparedStatement {
     this.variableDefinitions = variableDefinitions;
     this.resultMetadata = new ResultMetadata(resultMetadataId, resultSetDefinitions);
 
-    this.configProfileNameForBoundStatements = configProfileNameForBoundStatements;
-    this.configProfileForBoundStatements = configProfileForBoundStatements;
+    this.executionProfileNameForBoundStatements = executionProfileNameForBoundStatements;
+    this.executionProfileForBoundStatements = executionProfileForBoundStatements;
     this.routingKeyspaceForBoundStatements = routingKeyspaceForBoundStatements;
     this.routingKeyForBoundStatements = routingKeyForBoundStatements;
     this.routingTokenForBoundStatements = routingTokenForBoundStatements;
@@ -157,8 +157,8 @@ public class DefaultPreparedStatement implements PreparedStatement {
         variableDefinitions,
         ValuesHelper.encodePreparedValues(
             values, variableDefinitions, codecRegistry, protocolVersion),
-        configProfileNameForBoundStatements,
-        configProfileForBoundStatements,
+        executionProfileNameForBoundStatements,
+        executionProfileForBoundStatements,
         routingKeyspaceForBoundStatements,
         routingKeyForBoundStatements,
         routingTokenForBoundStatements,
@@ -183,8 +183,8 @@ public class DefaultPreparedStatement implements PreparedStatement {
         variableDefinitions,
         ValuesHelper.encodePreparedValues(
             values, variableDefinitions, codecRegistry, protocolVersion),
-        configProfileNameForBoundStatements,
-        configProfileForBoundStatements,
+        executionProfileNameForBoundStatements,
+        executionProfileForBoundStatements,
         routingKeyspaceForBoundStatements,
         routingKeyForBoundStatements,
         routingTokenForBoundStatements,

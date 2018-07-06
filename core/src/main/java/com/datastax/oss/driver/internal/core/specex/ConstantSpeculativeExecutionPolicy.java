@@ -17,7 +17,7 @@ package com.datastax.oss.driver.internal.core.specex;
 
 import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
-import com.datastax.oss.driver.api.core.config.DriverConfigProfile;
+import com.datastax.oss.driver.api.core.config.DriverExecutionProfile;
 import com.datastax.oss.driver.api.core.context.DriverContext;
 import com.datastax.oss.driver.api.core.metadata.Node;
 import com.datastax.oss.driver.api.core.session.Request;
@@ -52,7 +52,7 @@ public class ConstantSpeculativeExecutionPolicy implements SpeculativeExecutionP
   private final long constantDelayMillis;
 
   public ConstantSpeculativeExecutionPolicy(DriverContext context, String profileName) {
-    DriverConfigProfile config = context.config().getProfile(profileName);
+    DriverExecutionProfile config = context.config().getProfile(profileName);
     this.maxExecutions = config.getInt(DefaultDriverOption.SPECULATIVE_EXECUTION_MAX);
     if (this.maxExecutions < 1) {
       throw new IllegalArgumentException("Max must be at least 1");

@@ -17,7 +17,7 @@ package com.datastax.oss.driver.api.core.cql;
 
 import com.datastax.oss.driver.api.core.ConsistencyLevel;
 import com.datastax.oss.driver.api.core.CqlIdentifier;
-import com.datastax.oss.driver.api.core.config.DriverConfigProfile;
+import com.datastax.oss.driver.api.core.config.DriverExecutionProfile;
 import com.datastax.oss.driver.api.core.metadata.token.Token;
 import com.datastax.oss.protocol.internal.util.collection.NullAllowingImmutableMap;
 import edu.umd.cs.findbugs.annotations.NonNull;
@@ -40,8 +40,8 @@ public abstract class StatementBuilder<T extends StatementBuilder<T, S>, S exten
   @SuppressWarnings("unchecked")
   private final T self = (T) this;
 
-  @Nullable protected String configProfileName;
-  @Nullable protected DriverConfigProfile configProfile;
+  @Nullable protected String executionProfileName;
+  @Nullable protected DriverExecutionProfile executionProfile;
   @Nullable protected CqlIdentifier routingKeyspace;
   @Nullable protected ByteBuffer routingKey;
   @Nullable protected Token routingToken;
@@ -60,8 +60,8 @@ public abstract class StatementBuilder<T extends StatementBuilder<T, S>, S exten
   }
 
   protected StatementBuilder(S template) {
-    this.configProfileName = template.getConfigProfileName();
-    this.configProfile = template.getConfigProfile();
+    this.executionProfileName = template.getExecutionProfileName();
+    this.executionProfile = template.getExecutionProfile();
     this.routingKeyspace = template.getRoutingKeyspace();
     this.routingKey = template.getRoutingKey();
     this.routingToken = template.getRoutingToken();
@@ -80,18 +80,18 @@ public abstract class StatementBuilder<T extends StatementBuilder<T, S>, S exten
     this.timeout = template.getTimeout();
   }
 
-  /** @see Statement#setConfigProfileName(String) */
+  /** @see Statement#setExecutionProfileName(String) */
   @NonNull
-  public T withConfigProfileName(@Nullable String configProfileName) {
-    this.configProfileName = configProfileName;
+  public T withExecutionProfileName(@Nullable String executionProfileName) {
+    this.executionProfileName = executionProfileName;
     return self;
   }
 
-  /** @see Statement#setConfigProfile(DriverConfigProfile) */
+  /** @see Statement#setExecutionProfile(DriverExecutionProfile) */
   @NonNull
-  public T withConfigProfile(@Nullable DriverConfigProfile configProfile) {
-    this.configProfile = configProfile;
-    this.configProfileName = null;
+  public T withExecutionProfile(@Nullable DriverExecutionProfile executionProfile) {
+    this.executionProfile = executionProfile;
+    this.executionProfileName = null;
     return self;
   }
 

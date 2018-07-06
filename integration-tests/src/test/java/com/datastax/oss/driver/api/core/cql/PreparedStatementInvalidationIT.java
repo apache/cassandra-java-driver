@@ -67,7 +67,9 @@ public class PreparedStatementInvalidationIT {
       sessionRule
           .session()
           .execute(
-              SimpleStatement.builder(query).withConfigProfile(sessionRule.slowProfile()).build());
+              SimpleStatement.builder(query)
+                  .withExecutionProfile(sessionRule.slowProfile())
+                  .build());
     }
   }
 
@@ -83,7 +85,7 @@ public class PreparedStatementInvalidationIT {
     // When
     session.execute(
         SimpleStatement.builder("ALTER TABLE prepared_statement_invalidation_test ADD d int")
-            .withConfigProfile(sessionRule.slowProfile())
+            .withExecutionProfile(sessionRule.slowProfile())
             .build());
     BoundStatement bs = ps.bind(1);
     ResultSet rows = session.execute(bs);
@@ -128,7 +130,7 @@ public class PreparedStatementInvalidationIT {
     // When
     session.execute(
         SimpleStatement.builder("ALTER TABLE prepared_statement_invalidation_test ADD d int")
-            .withConfigProfile(sessionRule.slowProfile())
+            .withExecutionProfile(sessionRule.slowProfile())
             .build());
 
     // Then

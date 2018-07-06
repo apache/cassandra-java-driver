@@ -19,7 +19,7 @@ import com.datastax.oss.driver.api.core.auth.AuthProvider;
 import com.datastax.oss.driver.api.core.auth.Authenticator;
 import com.datastax.oss.driver.api.core.auth.SyncAuthenticator;
 import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
-import com.datastax.oss.driver.api.core.config.DriverConfigProfile;
+import com.datastax.oss.driver.api.core.config.DriverExecutionProfile;
 import com.datastax.oss.driver.api.core.context.DriverContext;
 import com.datastax.oss.driver.shaded.guava.common.base.Charsets;
 import edu.umd.cs.findbugs.annotations.NonNull;
@@ -54,7 +54,7 @@ public class PlainTextAuthProvider implements AuthProvider {
   private static final Logger LOG = LoggerFactory.getLogger(PlainTextAuthProvider.class);
 
   private final String logPrefix;
-  private final DriverConfigProfile config;
+  private final DriverExecutionProfile config;
 
   /** Builds a new instance. */
   public PlainTextAuthProvider(DriverContext context) {

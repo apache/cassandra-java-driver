@@ -18,7 +18,7 @@ package com.datastax.oss.driver.internal.core.cql;
 import com.datastax.oss.driver.api.core.ConsistencyLevel;
 import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.CqlSession;
-import com.datastax.oss.driver.api.core.config.DriverConfigProfile;
+import com.datastax.oss.driver.api.core.config.DriverExecutionProfile;
 import com.datastax.oss.driver.api.core.cql.PrepareRequest;
 import com.datastax.oss.driver.api.core.cql.SimpleStatement;
 import com.datastax.oss.driver.api.core.metadata.token.Token;
@@ -38,7 +38,7 @@ import net.jcip.annotations.Immutable;
  * request itself:
  *
  * <ul>
- *   <li>will use the same configuration profile (or configuration profile name) as the {@code
+ *   <li>will use the same execution profile (or execution profile name) as the {@code
  *       SimpleStatement};
  *   <li>will use the same custom payload as the {@code SimpleStatement};
  *   <li>will use a {@code null} timeout in order to default to the configuration (assuming that if
@@ -67,14 +67,14 @@ public class DefaultPrepareRequest implements PrepareRequest {
 
   @Nullable
   @Override
-  public String getConfigProfileName() {
-    return statement.getConfigProfileName();
+  public String getExecutionProfileName() {
+    return statement.getExecutionProfileName();
   }
 
   @Nullable
   @Override
-  public DriverConfigProfile getConfigProfile() {
-    return statement.getConfigProfile();
+  public DriverExecutionProfile getExecutionProfile() {
+    return statement.getExecutionProfile();
   }
 
   @Nullable
@@ -116,14 +116,14 @@ public class DefaultPrepareRequest implements PrepareRequest {
 
   @Nullable
   @Override
-  public String getConfigProfileNameForBoundStatements() {
-    return statement.getConfigProfileName();
+  public String getExecutionProfileNameForBoundStatements() {
+    return statement.getExecutionProfileName();
   }
 
   @Nullable
   @Override
-  public DriverConfigProfile getConfigProfileForBoundStatements() {
-    return statement.getConfigProfile();
+  public DriverExecutionProfile getExecutionProfileForBoundStatements() {
+    return statement.getExecutionProfile();
   }
 
   @Nullable

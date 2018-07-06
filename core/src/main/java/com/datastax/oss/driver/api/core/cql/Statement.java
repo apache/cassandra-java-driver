@@ -19,7 +19,7 @@ import com.datastax.oss.driver.api.core.ConsistencyLevel;
 import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.CqlSession;
 import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
-import com.datastax.oss.driver.api.core.config.DriverConfigProfile;
+import com.datastax.oss.driver.api.core.config.DriverExecutionProfile;
 import com.datastax.oss.driver.api.core.context.DriverContext;
 import com.datastax.oss.driver.api.core.metadata.token.Token;
 import com.datastax.oss.driver.api.core.session.Request;
@@ -63,25 +63,25 @@ public interface Statement<T extends Statement<T>> extends Request {
       new GenericType<CompletionStage<AsyncResultSet>>() {};
 
   /**
-   * Sets the name of the driver configuration profile that will be used for execution.
+   * Sets the name of the execution profile that will be used for this statement.
    *
    * <p>For all the driver's built-in implementations, this method has no effect if {@link
-   * #getConfigProfile()} has been called with a non-null argument.
+   * #setExecutionProfile(DriverExecutionProfile)} has been called with a non-null argument.
    *
    * <p>All the driver's built-in implementations are immutable, and return a new instance from this
    * method. However custom implementations may choose to be mutable and return the same instance.
    */
   @NonNull
-  T setConfigProfileName(@Nullable String newConfigProfileName);
+  T setExecutionProfileName(@Nullable String newConfigProfileName);
 
   /**
-   * Sets the configuration profile to use for execution.
+   * Sets the execution profile to use for this statement.
    *
    * <p>All the driver's built-in implementations are immutable, and return a new instance from this
    * method. However custom implementations may choose to be mutable and return the same instance.
    */
   @NonNull
-  T setConfigProfile(@Nullable DriverConfigProfile newProfile);
+  T setExecutionProfile(@Nullable DriverExecutionProfile newProfile);
 
   /**
    * Sets the keyspace to use for token-aware routing.

@@ -28,7 +28,7 @@ import com.datastax.oss.driver.api.core.addresstranslation.AddressTranslator;
 import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
 import com.datastax.oss.driver.api.core.config.DriverConfig;
 import com.datastax.oss.driver.api.core.config.DriverConfigLoader;
-import com.datastax.oss.driver.api.core.config.DriverConfigProfile;
+import com.datastax.oss.driver.api.core.config.DriverExecutionProfile;
 import com.datastax.oss.driver.api.core.connection.ReconnectionPolicy;
 import com.datastax.oss.driver.api.core.loadbalancing.NodeDistance;
 import com.datastax.oss.driver.api.core.metadata.Metadata;
@@ -87,7 +87,7 @@ public class DefaultSessionPoolsTest {
   @Mock private DriverConfigLoader configLoader;
   @Mock private Metadata metadata;
   @Mock private DriverConfig config;
-  @Mock private DriverConfigProfile defaultConfigProfile;
+  @Mock private DriverExecutionProfile defaultProfile;
   @Mock private ReconnectionPolicy reconnectionPolicy;
   @Mock private RetryPolicy retryPolicy;
   @Mock private SpeculativeExecutionPolicy speculativeExecutionPolicy;
@@ -113,17 +113,16 @@ public class DefaultSessionPoolsTest {
     Mockito.when(context.nettyOptions()).thenReturn(nettyOptions);
 
     // Config:
-    Mockito.when(defaultConfigProfile.getBoolean(DefaultDriverOption.REQUEST_WARN_IF_SET_KEYSPACE))
+    Mockito.when(defaultProfile.getBoolean(DefaultDriverOption.REQUEST_WARN_IF_SET_KEYSPACE))
         .thenReturn(true);
-    Mockito.when(defaultConfigProfile.getBoolean(DefaultDriverOption.REPREPARE_ENABLED))
+    Mockito.when(defaultProfile.getBoolean(DefaultDriverOption.REPREPARE_ENABLED))
         .thenReturn(false);
-    Mockito.when(defaultConfigProfile.isDefined(DefaultDriverOption.PROTOCOL_VERSION))
-        .thenReturn(true);
-    Mockito.when(defaultConfigProfile.getDuration(DefaultDriverOption.METADATA_TOPOLOGY_WINDOW))
+    Mockito.when(defaultProfile.isDefined(DefaultDriverOption.PROTOCOL_VERSION)).thenReturn(true);
+    Mockito.when(defaultProfile.getDuration(DefaultDriverOption.METADATA_TOPOLOGY_WINDOW))
         .thenReturn(Duration.ZERO);
-    Mockito.when(defaultConfigProfile.getInt(DefaultDriverOption.METADATA_TOPOLOGY_MAX_EVENTS))
+    Mockito.when(defaultProfile.getInt(DefaultDriverOption.METADATA_TOPOLOGY_MAX_EVENTS))
         .thenReturn(1);
-    Mockito.when(config.getDefaultProfile()).thenReturn(defaultConfigProfile);
+    Mockito.when(config.getDefaultProfile()).thenReturn(defaultProfile);
     Mockito.when(context.config()).thenReturn(config);
 
     // Init sequence:
@@ -168,9 +167,10 @@ public class DefaultSessionPoolsTest {
 
     // Shutdown sequence:
     Mockito.when(context.reconnectionPolicy()).thenReturn(reconnectionPolicy);
-    Mockito.when(context.retryPolicy(DriverConfigProfile.DEFAULT_NAME)).thenReturn(retryPolicy);
+    Mockito.when(context.retryPolicy(DriverExecutionProfile.DEFAULT_NAME)).thenReturn(retryPolicy);
     Mockito.when(context.speculativeExecutionPolicies())
-        .thenReturn(ImmutableMap.of(DriverConfigProfile.DEFAULT_NAME, speculativeExecutionPolicy));
+        .thenReturn(
+            ImmutableMap.of(DriverExecutionProfile.DEFAULT_NAME, speculativeExecutionPolicy));
     Mockito.when(context.addressTranslator()).thenReturn(addressTranslator);
     Mockito.when(context.nodeStateListener()).thenReturn(nodeStateListener);
     Mockito.when(context.schemaChangeListener()).thenReturn(schemaChangeListener);

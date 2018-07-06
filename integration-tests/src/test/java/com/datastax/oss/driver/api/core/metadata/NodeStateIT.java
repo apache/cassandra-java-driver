@@ -21,7 +21,7 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.timeout;
 
 import com.datastax.oss.driver.api.core.CqlSession;
-import com.datastax.oss.driver.api.core.config.DriverConfigProfile;
+import com.datastax.oss.driver.api.core.config.DriverExecutionProfile;
 import com.datastax.oss.driver.api.core.context.DriverContext;
 import com.datastax.oss.driver.api.core.loadbalancing.LoadBalancingPolicy;
 import com.datastax.oss.driver.api.core.loadbalancing.NodeDistance;
@@ -109,7 +109,7 @@ public class NodeStateIT {
 
     defaultLoadBalancingPolicy =
         (ConfigurableIgnoresPolicy)
-            driverContext.loadBalancingPolicy(DriverConfigProfile.DEFAULT_NAME);
+            driverContext.loadBalancingPolicy(DriverExecutionProfile.DEFAULT_NAME);
 
     // Sanity check: the driver should have connected to simulacron
     ConditionChecker.checkThat(

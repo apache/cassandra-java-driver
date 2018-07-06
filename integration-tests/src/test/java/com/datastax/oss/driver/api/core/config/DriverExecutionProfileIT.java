@@ -46,7 +46,7 @@ import org.junit.experimental.categories.Category;
 import org.junit.rules.ExpectedException;
 
 @Category(ParallelizableTests.class)
-public class DriverConfigProfileIT {
+public class DriverExecutionProfileIT {
 
   @Rule public SimulacronRule simulacron = new SimulacronRule(ClusterSpec.builder().withNodes(3));
 
@@ -61,7 +61,7 @@ public class DriverConfigProfileIT {
     try (CqlSession session = SessionUtils.newSession(simulacron)) {
       SimpleStatement statement =
           SimpleStatement.builder("select * from system.local")
-              .withConfigProfileName("IDONTEXIST")
+              .withExecutionProfileName("IDONTEXIST")
               .build();
 
       thrown.expect(IllegalArgumentException.class);
@@ -87,7 +87,7 @@ public class DriverConfigProfileIT {
       }
 
       // Execute query with profile, should not timeout since waits up to 10 seconds.
-      session.execute(SimpleStatement.builder(query).withConfigProfileName("olap").build());
+      session.execute(SimpleStatement.builder(query).withExecutionProfileName("olap").build());
     }
   }
 
@@ -110,7 +110,7 @@ public class DriverConfigProfileIT {
 
       // Execute query with profile, should retry on all hosts since query is idempotent.
       thrown.expect(AllNodesFailedException.class);
-      session.execute(SimpleStatement.builder(query).withConfigProfileName("idem").build());
+      session.execute(SimpleStatement.builder(query).withExecutionProfileName("idem").build());
     }
   }
 
@@ -146,7 +146,7 @@ public class DriverConfigProfileIT {
       simulacron.cluster().clearLogs();
 
       // Execute query with profile, should use profile CLs
-      session.execute(SimpleStatement.builder(query).withConfigProfileName("cl").build());
+      session.execute(SimpleStatement.builder(query).withExecutionProfileName("cl").build());
 
       log =
           simulacron
@@ -176,7 +176,7 @@ public class DriverConfigProfileIT {
             "profiles.smallpages.basic.request.page-size = 10")) {
 
       CqlIdentifier keyspace = SessionUtils.uniqueKeyspaceId();
-      DriverConfigProfile slowProfile = SessionUtils.slowProfile(session);
+      DriverExecutionProfile slowProfile = SessionUtils.slowProfile(session);
       SessionUtils.createKeyspace(session, keyspace, slowProfile);
 
       session.execute(String.format("USE %s", keyspace.asCql(false)));
@@ -185,11 +185,11 @@ public class DriverConfigProfileIT {
       session.execute(
           SimpleStatement.builder(
                   "CREATE TABLE IF NOT EXISTS test (k int, v int, PRIMARY KEY (k,v))")
-              .withConfigProfile(slowProfile)
+              .withExecutionProfile(slowProfile)
               .build());
       PreparedStatement prepared = session.prepare("INSERT INTO test (k, v) values (0, ?)");
       BatchStatementBuilder bs =
-          BatchStatement.builder(DefaultBatchType.UNLOGGED).withConfigProfile(slowProfile);
+          BatchStatement.builder(DefaultBatchType.UNLOGGED).withExecutionProfile(slowProfile);
       for (int i = 0; i < 500; i++) {
         bs.addStatement(prepared.bind(i));
       }
@@ -206,7 +206,7 @@ public class DriverConfigProfileIT {
       // Execute query with profile, should use profile page size
       result =
           session.execute(
-              SimpleStatement.builder(query).withConfigProfileName("smallpages").build());
+              SimpleStatement.builder(query).withExecutionProfileName("smallpages").build());
       assertThat(result.getAvailableWithoutFetching()).isEqualTo(10);
       // next fetch should also be 10 pages.
       result.fetchNextPage();

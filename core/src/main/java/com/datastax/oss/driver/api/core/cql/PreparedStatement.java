@@ -118,7 +118,7 @@ public interface PreparedStatement {
    *
    * <p>Note that the built-in bound statement implementation is immutable. If you need to set
    * multiple execution parameters on the bound statement (such as {@link
-   * BoundStatement#setConfigProfileName(String)}, {@link
+   * BoundStatement#setExecutionProfileName(String)}, {@link
    * BoundStatement#setPagingState(ByteBuffer)}, etc.), consider using {@link
    * #boundStatementBuilder(Object...)} instead to avoid unnecessary allocations.
    *

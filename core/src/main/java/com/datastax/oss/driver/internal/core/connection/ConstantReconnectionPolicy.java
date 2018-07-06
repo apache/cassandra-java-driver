@@ -16,7 +16,7 @@
 package com.datastax.oss.driver.internal.core.connection;
 
 import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
-import com.datastax.oss.driver.api.core.config.DriverConfigProfile;
+import com.datastax.oss.driver.api.core.config.DriverExecutionProfile;
 import com.datastax.oss.driver.api.core.connection.ReconnectionPolicy;
 import com.datastax.oss.driver.api.core.context.DriverContext;
 import com.datastax.oss.driver.api.core.metadata.Node;
@@ -52,7 +52,7 @@ public class ConstantReconnectionPolicy implements ReconnectionPolicy {
   /** Builds a new instance. */
   public ConstantReconnectionPolicy(DriverContext context) {
     this.logPrefix = context.sessionName();
-    DriverConfigProfile config = context.config().getDefaultProfile();
+    DriverExecutionProfile config = context.config().getDefaultProfile();
     Duration delay = config.getDuration(DefaultDriverOption.RECONNECTION_BASE_DELAY);
     if (delay.isNegative()) {
       throw new IllegalArgumentException(

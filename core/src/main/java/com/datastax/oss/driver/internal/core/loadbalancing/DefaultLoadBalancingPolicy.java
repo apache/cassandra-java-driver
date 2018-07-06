@@ -17,7 +17,7 @@ package com.datastax.oss.driver.internal.core.loadbalancing;
 
 import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
-import com.datastax.oss.driver.api.core.config.DriverConfigProfile;
+import com.datastax.oss.driver.api.core.config.DriverExecutionProfile;
 import com.datastax.oss.driver.api.core.context.DriverContext;
 import com.datastax.oss.driver.api.core.loadbalancing.LoadBalancingPolicy;
 import com.datastax.oss.driver.api.core.loadbalancing.NodeDistance;
@@ -91,7 +91,7 @@ public class DefaultLoadBalancingPolicy implements LoadBalancingPolicy {
         getLocalDcFromConfig(context, profileName),
         getFilterFromConfig(context, profileName),
         context,
-        profileName.equals(DriverConfigProfile.DEFAULT_NAME));
+        profileName.equals(DriverExecutionProfile.DEFAULT_NAME));
   }
 
   @VisibleForTesting
@@ -305,7 +305,7 @@ public class DefaultLoadBalancingPolicy implements LoadBalancingPolicy {
   }
 
   private static String getLocalDcFromConfig(DriverContext context, String profileName) {
-    DriverConfigProfile config = context.config().getProfile(profileName);
+    DriverExecutionProfile config = context.config().getProfile(profileName);
     return config.getString(DefaultDriverOption.LOAD_BALANCING_LOCAL_DATACENTER, null);
   }
 

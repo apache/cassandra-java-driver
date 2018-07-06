@@ -15,7 +15,7 @@
  */
 package com.datastax.oss.driver.internal.core.cql;
 
-import com.datastax.oss.driver.api.core.config.DriverConfigProfile;
+import com.datastax.oss.driver.api.core.config.DriverExecutionProfile;
 import com.datastax.oss.driver.api.core.cql.ExecutionInfo;
 import com.datastax.oss.driver.api.core.cql.QueryTrace;
 import com.datastax.oss.driver.api.core.cql.Statement;
@@ -51,7 +51,7 @@ public class DefaultExecutionInfo implements ExecutionInfo {
   private final boolean schemaInAgreement;
   private final DefaultSession session;
   private final InternalDriverContext context;
-  private final DriverConfigProfile configProfile;
+  private final DriverExecutionProfile executionProfile;
 
   public DefaultExecutionInfo(
       Statement<?> statement,
@@ -64,7 +64,7 @@ public class DefaultExecutionInfo implements ExecutionInfo {
       boolean schemaInAgreement,
       DefaultSession session,
       InternalDriverContext context,
-      DriverConfigProfile configProfile) {
+      DriverExecutionProfile executionProfile) {
     this.statement = statement;
     this.coordinator = coordinator;
     this.speculativeExecutionCount = speculativeExecutionCount;
@@ -81,7 +81,7 @@ public class DefaultExecutionInfo implements ExecutionInfo {
     this.schemaInAgreement = schemaInAgreement;
     this.session = session;
     this.context = context;
-    this.configProfile = configProfile;
+    this.executionProfile = executionProfile;
   }
 
   @NonNull
@@ -150,7 +150,7 @@ public class DefaultExecutionInfo implements ExecutionInfo {
       return CompletableFutures.failedFuture(
           new IllegalStateException("Tracing was disabled for this request"));
     } else {
-      return new QueryTraceFetcher(tracingId, session, context, configProfile).fetch();
+      return new QueryTraceFetcher(tracingId, session, context, executionProfile).fetch();
     }
   }
 

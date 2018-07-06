@@ -18,7 +18,7 @@ package com.datastax.oss.driver.internal.core.channel;
 import com.datastax.oss.driver.api.core.ProtocolVersion;
 import com.datastax.oss.driver.api.core.UnsupportedProtocolVersionException;
 import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
-import com.datastax.oss.driver.api.core.config.DriverConfigProfile;
+import com.datastax.oss.driver.api.core.config.DriverExecutionProfile;
 import com.datastax.oss.driver.api.core.metadata.Node;
 import com.datastax.oss.driver.api.core.metrics.DefaultNodeMetric;
 import com.datastax.oss.driver.api.core.metrics.DefaultSessionMetric;
@@ -67,7 +67,7 @@ public class ChannelFactory {
     this.logPrefix = context.sessionName();
     this.context = context;
 
-    DriverConfigProfile defaultConfig = context.config().getDefaultProfile();
+    DriverExecutionProfile defaultConfig = context.config().getDefaultProfile();
     if (defaultConfig.isDefined(DefaultDriverOption.PROTOCOL_VERSION)) {
       String versionName = defaultConfig.getString(DefaultDriverOption.PROTOCOL_VERSION);
       this.protocolVersion = context.protocolVersionRegistry().fromName(versionName);
@@ -149,7 +149,7 @@ public class ChannelFactory {
             .handler(
                 initializer(address, currentVersion, options, nodeMetricUpdater, resultFuture));
 
-    DriverConfigProfile config = context.config().getDefaultProfile();
+    DriverExecutionProfile config = context.config().getDefaultProfile();
 
     boolean tcpNoDelay = config.getBoolean(DefaultDriverOption.SOCKET_TCP_NODELAY);
     bootstrap = bootstrap.option(ChannelOption.TCP_NODELAY, tcpNoDelay);
@@ -241,18 +241,18 @@ public class ChannelFactory {
       @Override
       protected void initChannel(Channel channel) {
         try {
-          DriverConfigProfile defaultConfigProfile = context.config().getDefaultProfile();
+          DriverExecutionProfile defaultConfig = context.config().getDefaultProfile();
 
           long setKeyspaceTimeoutMillis =
-              defaultConfigProfile
+              defaultConfig
                   .getDuration(DefaultDriverOption.CONNECTION_SET_KEYSPACE_TIMEOUT)
                   .toMillis();
           int maxFrameLength =
-              (int) defaultConfigProfile.getBytes(DefaultDriverOption.PROTOCOL_MAX_FRAME_LENGTH);
+              (int) defaultConfig.getBytes(DefaultDriverOption.PROTOCOL_MAX_FRAME_LENGTH);
           int maxRequestsPerConnection =
-              defaultConfigProfile.getInt(DefaultDriverOption.CONNECTION_MAX_REQUESTS);
+              defaultConfig.getInt(DefaultDriverOption.CONNECTION_MAX_REQUESTS);
           int maxOrphanRequests =
-              defaultConfigProfile.getInt(DefaultDriverOption.CONNECTION_MAX_ORPHAN_REQUESTS);
+              defaultConfig.getInt(DefaultDriverOption.CONNECTION_MAX_ORPHAN_REQUESTS);
 
           InFlightHandler inFlightHandler =
               new InFlightHandler(
@@ -263,7 +263,7 @@ public class ChannelFactory {
                   channel.newPromise(),
                   options.eventCallback,
                   options.ownerLogPrefix);
-          HeartbeatHandler heartbeatHandler = new HeartbeatHandler(defaultConfigProfile);
+          HeartbeatHandler heartbeatHandler = new HeartbeatHandler(defaultConfig);
           ProtocolInitHandler initHandler =
               new ProtocolInitHandler(
                   context, protocolVersion, clusterName, options, heartbeatHandler);
