@@ -16,6 +16,7 @@
 package com.datastax.oss.driver.internal.core.metadata;
 
 import static com.datastax.oss.driver.Assertions.assertThat;
+import static com.datastax.oss.driver.Assertions.assertThatStage;
 import static org.assertj.core.api.Assertions.fail;
 import static org.mockito.Mockito.timeout;
 
@@ -110,7 +111,7 @@ public class MetadataManagerTest {
     waitForPendingAdminTasks();
 
     // Then
-    assertThat(addContactPointsFuture).isSuccess();
+    assertThatStage(addContactPointsFuture).isSuccess();
     assertThat(metadataManager.refreshes).hasSize(1);
     InitContactPointsRefresh refresh =
         ((InitContactPointsRefresh) metadataManager.refreshes.get(0));
@@ -125,7 +126,7 @@ public class MetadataManagerTest {
     waitForPendingAdminTasks();
 
     // Then
-    assertThat(addContactPointsFuture).isSuccess();
+    assertThatStage(addContactPointsFuture).isSuccess();
     assertThat(metadataManager.refreshes).hasSize(1);
     InitContactPointsRefresh refresh =
         ((InitContactPointsRefresh) metadataManager.refreshes.get(0));
@@ -146,7 +147,7 @@ public class MetadataManagerTest {
     waitForPendingAdminTasks();
 
     // Then
-    assertThat(refreshNodesFuture).isSuccess();
+    assertThatStage(refreshNodesFuture).isSuccess();
     assertThat(metadataManager.refreshes).hasSize(1);
     FullNodeListRefresh refresh = (FullNodeListRefresh) metadataManager.refreshes.get(0);
     assertThat(refresh.nodeInfos).containsExactlyInAnyOrder(info1, info2);
@@ -166,7 +167,7 @@ public class MetadataManagerTest {
 
     // Then
     // the info should have been copied to the node
-    assertThat(refreshNodeFuture).isSuccess();
+    assertThatStage(refreshNodeFuture).isSuccess();
     Mockito.verify(info, timeout(500)).getDatacenter();
     assertThat(node.getDatacenter()).isEqualTo("dc1");
   }
@@ -182,7 +183,7 @@ public class MetadataManagerTest {
     CompletionStage<Void> refreshNodeFuture = metadataManager.refreshNode(node);
 
     // Then
-    assertThat(refreshNodeFuture).isSuccess();
+    assertThatStage(refreshNodeFuture).isSuccess();
   }
 
   @Test

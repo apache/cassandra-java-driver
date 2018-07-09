@@ -40,7 +40,11 @@ public class Assertions extends org.assertj.core.api.Assertions {
     return new NettyFutureAssert<>(actual);
   }
 
-  public static <V> CompletionStageAssert<V> assertThat(CompletionStage<V> actual) {
+  /**
+   * Use a different name because this clashes with AssertJ's built-in one. Our implementation is a
+   * bit more flexible for checking completion values and errors.
+   */
+  public static <V> CompletionStageAssert<V> assertThatStage(CompletionStage<V> actual) {
     return new CompletionStageAssert<>(actual);
   }
 

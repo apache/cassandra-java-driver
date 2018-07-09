@@ -16,6 +16,7 @@
 package com.datastax.oss.driver.internal.core.cql;
 
 import static com.datastax.oss.driver.Assertions.assertThat;
+import static com.datastax.oss.driver.Assertions.assertThatStage;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.times;
@@ -129,7 +130,7 @@ public class QueryTraceFetcherTest {
     assertEventsQuery(statement);
     Mockito.verifyNoMoreInteractions(session);
 
-    assertThat(traceFuture)
+    assertThatStage(traceFuture)
         .isSuccess(
             trace -> {
               assertThat(trace.getTracingId()).isEqualTo(TRACING_ID);
@@ -181,7 +182,7 @@ public class QueryTraceFetcherTest {
     assertThat(statements.get(2).getPagingState()).isEqualTo(PAGING_STATE);
     Mockito.verifyNoMoreInteractions(session);
 
-    assertThat(traceFuture).isSuccess(trace -> assertThat(trace.getEvents()).hasSize(2));
+    assertThatStage(traceFuture).isSuccess(trace -> assertThat(trace.getEvents()).hasSize(2));
   }
 
   @Test
@@ -205,7 +206,7 @@ public class QueryTraceFetcherTest {
     assertEventsQuery(statements.get(2));
     Mockito.verifyNoMoreInteractions(session);
 
-    assertThat(traceFuture)
+    assertThatStage(traceFuture)
         .isSuccess(
             trace -> {
               assertThat(trace.getTracingId()).isEqualTo(TRACING_ID);
@@ -248,7 +249,7 @@ public class QueryTraceFetcherTest {
     assertSessionQuery(statement);
     Mockito.verifyNoMoreInteractions(session);
 
-    assertThat(traceFuture).isFailed(error -> assertThat(error).isSameAs(mockError));
+    assertThatStage(traceFuture).isFailed(error -> assertThat(error).isSameAs(mockError));
   }
 
   @Test
@@ -271,7 +272,7 @@ public class QueryTraceFetcherTest {
       assertSessionQuery(statements.get(i));
     }
 
-    assertThat(traceFuture)
+    assertThatStage(traceFuture)
         .isFailed(
             error ->
                 assertThat(error.getMessage())

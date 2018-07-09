@@ -16,6 +16,7 @@
 package com.datastax.oss.driver.internal.core.cql;
 
 import static com.datastax.oss.driver.Assertions.assertThat;
+import static com.datastax.oss.driver.Assertions.assertThatStage;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -74,7 +75,7 @@ public class CqlRequestHandlerRetryTest extends CqlRequestHandlerTestBase {
           new CqlRequestAsyncHandler(statement, harness.getSession(), harness.getContext(), "test")
               .handle();
 
-      assertThat(resultSetFuture)
+      assertThatStage(resultSetFuture)
           .isSuccess(
               resultSet -> {
                 Iterator<Row> rows = resultSet.currentPage().iterator();
@@ -114,7 +115,7 @@ public class CqlRequestHandlerRetryTest extends CqlRequestHandlerTestBase {
           new CqlRequestAsyncHandler(statement, harness.getSession(), harness.getContext(), "test")
               .handle();
 
-      assertThat(resultSetFuture)
+      assertThatStage(resultSetFuture)
           .isFailed(
               error -> {
                 assertThat(error)
@@ -153,7 +154,7 @@ public class CqlRequestHandlerRetryTest extends CqlRequestHandlerTestBase {
           new CqlRequestAsyncHandler(statement, harness.getSession(), harness.getContext(), "test")
               .handle();
 
-      assertThat(resultSetFuture)
+      assertThatStage(resultSetFuture)
           .isSuccess(
               resultSet -> {
                 Iterator<Row> rows = resultSet.currentPage().iterator();
@@ -201,7 +202,7 @@ public class CqlRequestHandlerRetryTest extends CqlRequestHandlerTestBase {
           new CqlRequestAsyncHandler(statement, harness.getSession(), harness.getContext(), "test")
               .handle();
 
-      assertThat(resultSetFuture)
+      assertThatStage(resultSetFuture)
           .isSuccess(
               resultSet -> {
                 Iterator<Row> rows = resultSet.currentPage().iterator();
@@ -248,7 +249,7 @@ public class CqlRequestHandlerRetryTest extends CqlRequestHandlerTestBase {
           new CqlRequestAsyncHandler(statement, harness.getSession(), harness.getContext(), "test")
               .handle();
 
-      assertThat(resultSetFuture)
+      assertThatStage(resultSetFuture)
           .isSuccess(
               resultSet -> {
                 Iterator<Row> rows = resultSet.currentPage().iterator();
@@ -294,7 +295,7 @@ public class CqlRequestHandlerRetryTest extends CqlRequestHandlerTestBase {
           new CqlRequestAsyncHandler(statement, harness.getSession(), harness.getContext(), "test")
               .handle();
 
-      assertThat(resultSetFuture)
+      assertThatStage(resultSetFuture)
           .isFailed(
               error -> {
                 assertThat(error).isInstanceOf(failureScenario.expectedExceptionClass);
@@ -340,7 +341,7 @@ public class CqlRequestHandlerRetryTest extends CqlRequestHandlerTestBase {
           new CqlRequestAsyncHandler(statement, harness.getSession(), harness.getContext(), "test")
               .handle();
 
-      assertThat(resultSetFuture)
+      assertThatStage(resultSetFuture)
           .isFailed(
               error -> {
                 assertThat(error).isInstanceOf(failureScenario.expectedExceptionClass);

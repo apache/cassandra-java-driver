@@ -16,6 +16,7 @@
 package com.datastax.oss.driver.internal.core.pool;
 
 import static com.datastax.oss.driver.Assertions.assertThat;
+import static com.datastax.oss.driver.Assertions.assertThatStage;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
@@ -63,7 +64,7 @@ public class ChannelPoolReconnectTest extends ChannelPoolTestBase {
     factoryHelper.waitForCalls(node, 2);
     waitForPendingAdminTasks();
 
-    assertThat(poolFuture).isSuccess();
+    assertThatStage(poolFuture).isSuccess();
     ChannelPool pool = poolFuture.toCompletableFuture().get();
     assertThat(pool.channels).containsOnly(channel1, channel2);
     inOrder.verify(eventBus, times(2)).fire(ChannelEvent.channelOpened(node));
@@ -115,7 +116,7 @@ public class ChannelPoolReconnectTest extends ChannelPoolTestBase {
     factoryHelper.waitForCalls(node, 2);
     waitForPendingAdminTasks();
 
-    assertThat(poolFuture).isSuccess();
+    assertThatStage(poolFuture).isSuccess();
     ChannelPool pool = poolFuture.toCompletableFuture().get();
     assertThat(pool.channels).containsOnly(channel1, channel2);
     inOrder.verify(eventBus, times(2)).fire(ChannelEvent.channelOpened(node));
@@ -165,7 +166,7 @@ public class ChannelPoolReconnectTest extends ChannelPoolTestBase {
         ChannelPool.init(node, null, NodeDistance.LOCAL, context, "test");
     factoryHelper.waitForCalls(node, 1);
     waitForPendingAdminTasks();
-    assertThat(poolFuture).isSuccess();
+    assertThatStage(poolFuture).isSuccess();
     ChannelPool pool = poolFuture.toCompletableFuture().get();
     inOrder.verify(eventBus, times(1)).fire(ChannelEvent.channelOpened(node));
 

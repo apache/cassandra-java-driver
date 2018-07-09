@@ -119,7 +119,7 @@ public class MockChannelPoolFactoryHelper {
         MultimapBuilder.hashKeys().arrayListValues().build();
 
     private Builder(ChannelPoolFactory channelPoolFactory) {
-      assertThat(MockUtil.isMock(channelPoolFactory)).isTrue().as("expected a mock");
+      assertThat(MockUtil.isMock(channelPoolFactory)).as("expected a mock").isTrue();
       Mockito.verifyZeroInteractions(channelPoolFactory);
       this.channelPoolFactory = channelPoolFactory;
     }

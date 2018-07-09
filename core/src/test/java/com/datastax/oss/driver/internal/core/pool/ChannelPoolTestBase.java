@@ -31,6 +31,7 @@ import com.datastax.oss.driver.internal.core.context.NettyOptions;
 import com.datastax.oss.driver.internal.core.metadata.DefaultNode;
 import com.datastax.oss.driver.internal.core.metrics.NodeMetricUpdater;
 import com.datastax.oss.driver.shaded.guava.common.util.concurrent.Uninterruptibles;
+import io.netty.channel.Channel;
 import io.netty.channel.DefaultChannelPromise;
 import io.netty.channel.DefaultEventLoopGroup;
 import io.netty.channel.EventLoop;
@@ -93,18 +94,19 @@ abstract class ChannelPoolTestBase {
   }
 
   DriverChannel newMockDriverChannel(int id) {
-    DriverChannel channel = Mockito.mock(DriverChannel.class);
+    DriverChannel driverChannel = Mockito.mock(DriverChannel.class);
     EventLoop adminExecutor = adminEventLoopGroup.next();
-    DefaultChannelPromise closeFuture = new DefaultChannelPromise(null, adminExecutor);
-    DefaultChannelPromise closeStartedFuture = new DefaultChannelPromise(null, adminExecutor);
-    Mockito.when(channel.close()).thenReturn(closeFuture);
-    Mockito.when(channel.forceClose()).thenReturn(closeFuture);
-    Mockito.when(channel.closeFuture()).thenReturn(closeFuture);
-    Mockito.when(channel.closeStartedFuture()).thenReturn(closeStartedFuture);
-    Mockito.when(channel.setKeyspace(any(CqlIdentifier.class)))
+    Channel channel = Mockito.mock(Channel.class);
+    DefaultChannelPromise closeFuture = new DefaultChannelPromise(channel, adminExecutor);
+    DefaultChannelPromise closeStartedFuture = new DefaultChannelPromise(channel, adminExecutor);
+    Mockito.when(driverChannel.close()).thenReturn(closeFuture);
+    Mockito.when(driverChannel.forceClose()).thenReturn(closeFuture);
+    Mockito.when(driverChannel.closeFuture()).thenReturn(closeFuture);
+    Mockito.when(driverChannel.closeStartedFuture()).thenReturn(closeStartedFuture);
+    Mockito.when(driverChannel.setKeyspace(any(CqlIdentifier.class)))
         .thenReturn(adminExecutor.newSucceededFuture(null));
-    Mockito.when(channel.toString()).thenReturn("channel" + id);
-    return channel;
+    Mockito.when(driverChannel.toString()).thenReturn("channel" + id);
+    return driverChannel;
   }
 
   // Wait for all the tasks on the pool's admin executor to complete.

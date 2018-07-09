@@ -16,6 +16,7 @@
 package com.datastax.oss.driver.internal.core.cql;
 
 import static com.datastax.oss.driver.Assertions.assertThat;
+import static com.datastax.oss.driver.Assertions.assertThatStage;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.eq;
@@ -168,7 +169,7 @@ public class CqlRequestHandlerSpeculativeExecutionTest extends CqlRequestHandler
 
       // Complete the request from the initial execution
       node1Behavior.setResponseSuccess(defaultFrameOf(singleRow()));
-      assertThat(resultSetFuture).isSuccess();
+      assertThatStage(resultSetFuture).isSuccess();
 
       // Pending speculative executions should have been cancelled. However we don't check
       // firstExecutionTask directly because the request handler's onResponse can sometimes be
@@ -215,7 +216,7 @@ public class CqlRequestHandlerSpeculativeExecutionTest extends CqlRequestHandler
 
       harness.nextScheduledTask(); // Discard the timeout task
 
-      assertThat(resultSetFuture)
+      assertThatStage(resultSetFuture)
           .isFailed(error -> assertThat(error).isInstanceOf(NoNodeAvailableException.class));
     }
   }
@@ -263,7 +264,7 @@ public class CqlRequestHandlerSpeculativeExecutionTest extends CqlRequestHandler
           defaultFrameOf(new Error(ProtocolConstants.ErrorCode.IS_BOOTSTRAPPING, "mock message")));
 
       // But again the query plan is empty so that should fail the request
-      assertThat(resultSetFuture)
+      assertThatStage(resultSetFuture)
           .isFailed(
               error -> {
                 assertThat(error).isInstanceOf(AllNodesFailedException.class);
@@ -319,7 +320,7 @@ public class CqlRequestHandlerSpeculativeExecutionTest extends CqlRequestHandler
       node2Behavior.setResponseSuccess(
           defaultFrameOf(new Error(ProtocolConstants.ErrorCode.IS_BOOTSTRAPPING, "mock message")));
 
-      assertThat(resultSetFuture)
+      assertThatStage(resultSetFuture)
           .isFailed(
               error -> {
                 assertThat(error).isInstanceOf(AllNodesFailedException.class);
@@ -373,7 +374,7 @@ public class CqlRequestHandlerSpeculativeExecutionTest extends CqlRequestHandler
           defaultFrameOf(new Error(ProtocolConstants.ErrorCode.IS_BOOTSTRAPPING, "mock message")));
 
       // The second execution should move to node3 and complete the request
-      assertThat(resultSetFuture).isSuccess();
+      assertThatStage(resultSetFuture).isSuccess();
 
       // The request to node1 was still in flight, it should have been cancelled
       node1Behavior.verifyCancellation();
@@ -417,7 +418,7 @@ public class CqlRequestHandlerSpeculativeExecutionTest extends CqlRequestHandler
 
       // Complete the request from the initial execution
       node1Behavior.setResponseSuccess(defaultFrameOf(singleRow()));
-      assertThat(resultSetFuture).isSuccess();
+      assertThatStage(resultSetFuture).isSuccess();
 
       // node2 replies with a response that would trigger a RETRY_NEXT if the request was still
       // running

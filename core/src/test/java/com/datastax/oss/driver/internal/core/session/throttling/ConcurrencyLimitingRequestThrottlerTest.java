@@ -16,6 +16,7 @@
 package com.datastax.oss.driver.internal.core.session.throttling;
 
 import static com.datastax.oss.driver.Assertions.assertThat;
+import static com.datastax.oss.driver.Assertions.assertThatStage;
 
 import com.datastax.oss.driver.api.core.RequestThrottlingException;
 import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
@@ -65,7 +66,7 @@ public class ConcurrencyLimitingRequestThrottlerTest {
     throttler.register(request);
 
     // Then
-    assertThat(request.started).isSuccess(wasDelayed -> assertThat(wasDelayed).isFalse());
+    assertThatStage(request.started).isSuccess(wasDelayed -> assertThat(wasDelayed).isFalse());
     assertThat(throttler.getConcurrentRequests()).isEqualTo(1);
     assertThat(throttler.getQueue()).isEmpty();
   }
@@ -91,7 +92,7 @@ public class ConcurrencyLimitingRequestThrottlerTest {
     // Given
     MockThrottled first = new MockThrottled();
     throttler.register(first);
-    assertThat(first.started).isSuccess(wasDelayed -> assertThat(wasDelayed).isFalse());
+    assertThatStage(first.started).isSuccess(wasDelayed -> assertThat(wasDelayed).isFalse());
     for (int i = 0; i < 4; i++) { // fill to capacity
       throttler.register(new MockThrottled());
     }
@@ -106,7 +107,7 @@ public class ConcurrencyLimitingRequestThrottlerTest {
     throttler.register(incoming);
 
     // Then
-    assertThat(incoming.started).isSuccess(wasDelayed -> assertThat(wasDelayed).isFalse());
+    assertThatStage(incoming.started).isSuccess(wasDelayed -> assertThat(wasDelayed).isFalse());
     assertThat(throttler.getConcurrentRequests()).isEqualTo(5);
     assertThat(throttler.getQueue()).isEmpty();
   }
@@ -125,7 +126,7 @@ public class ConcurrencyLimitingRequestThrottlerTest {
     throttler.register(incoming);
 
     // Then
-    assertThat(incoming.started).isNotDone();
+    assertThatStage(incoming.started).isNotDone();
     assertThat(throttler.getConcurrentRequests()).isEqualTo(5);
     assertThat(throttler.getQueue()).containsExactly(incoming);
   }
@@ -150,20 +151,20 @@ public class ConcurrencyLimitingRequestThrottlerTest {
     // Given
     MockThrottled first = new MockThrottled();
     throttler.register(first);
-    assertThat(first.started).isSuccess(wasDelayed -> assertThat(wasDelayed).isFalse());
+    assertThatStage(first.started).isSuccess(wasDelayed -> assertThat(wasDelayed).isFalse());
     for (int i = 0; i < 4; i++) {
       throttler.register(new MockThrottled());
     }
 
     MockThrottled incoming = new MockThrottled();
     throttler.register(incoming);
-    assertThat(incoming.started).isNotDone();
+    assertThatStage(incoming.started).isNotDone();
 
     // When
     completeCallback.accept(first);
 
     // Then
-    assertThat(incoming.started).isSuccess(wasDelayed -> assertThat(wasDelayed).isTrue());
+    assertThatStage(incoming.started).isSuccess(wasDelayed -> assertThat(wasDelayed).isTrue());
     assertThat(throttler.getConcurrentRequests()).isEqualTo(5);
     assertThat(throttler.getQueue()).isEmpty();
   }
@@ -182,7 +183,7 @@ public class ConcurrencyLimitingRequestThrottlerTest {
     throttler.register(incoming);
 
     // Then
-    assertThat(incoming.started)
+    assertThatStage(incoming.started)
         .isFailed(error -> assertThat(error).isInstanceOf(RequestThrottlingException.class));
   }
 
@@ -201,7 +202,7 @@ public class ConcurrencyLimitingRequestThrottlerTest {
     throttler.signalTimeout(queued1);
 
     // Then
-    assertThat(queued2.started).isNotDone();
+    assertThatStage(queued2.started).isNotDone();
     assertThat(throttler.getConcurrentRequests()).isEqualTo(5);
     assertThat(throttler.getQueue()).hasSize(1);
   }
@@ -216,7 +217,7 @@ public class ConcurrencyLimitingRequestThrottlerTest {
     for (int i = 0; i < 10; i++) {
       MockThrottled request = new MockThrottled();
       throttler.register(request);
-      assertThat(request.started).isNotDone();
+      assertThatStage(request.started).isNotDone();
       enqueued.add(request);
     }
 
@@ -225,7 +226,7 @@ public class ConcurrencyLimitingRequestThrottlerTest {
 
     // Then
     for (MockThrottled request : enqueued) {
-      assertThat(request.started)
+      assertThatStage(request.started)
           .isFailed(error -> assertThat(error).isInstanceOf(RequestThrottlingException.class));
     }
 
@@ -234,7 +235,7 @@ public class ConcurrencyLimitingRequestThrottlerTest {
     throttler.register(request);
 
     // Then
-    assertThat(request.started)
+    assertThatStage(request.started)
         .isFailed(error -> assertThat(error).isInstanceOf(RequestThrottlingException.class));
   }
 }

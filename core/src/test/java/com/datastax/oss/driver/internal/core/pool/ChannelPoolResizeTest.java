@@ -16,6 +16,7 @@
 package com.datastax.oss.driver.internal.core.pool;
 
 import static com.datastax.oss.driver.Assertions.assertThat;
+import static com.datastax.oss.driver.Assertions.assertThatStage;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 
@@ -60,7 +61,7 @@ public class ChannelPoolResizeTest extends ChannelPoolTestBase {
     factoryHelper.waitForCalls(node, 4);
     waitForPendingAdminTasks();
 
-    assertThat(poolFuture).isSuccess();
+    assertThatStage(poolFuture).isSuccess();
     ChannelPool pool = poolFuture.toCompletableFuture().get();
     assertThat(pool.channels).containsOnly(channel1, channel2, channel3, channel4);
     inOrder.verify(eventBus, times(4)).fire(ChannelEvent.channelOpened(node));
@@ -110,7 +111,7 @@ public class ChannelPoolResizeTest extends ChannelPoolTestBase {
     waitForPendingAdminTasks();
 
     inOrder.verify(eventBus, times(2)).fire(ChannelEvent.channelOpened(node));
-    assertThat(poolFuture).isSuccess();
+    assertThatStage(poolFuture).isSuccess();
     ChannelPool pool = poolFuture.toCompletableFuture().get();
     assertThat(pool.channels).containsOnly(channel1, channel2);
 
@@ -169,7 +170,7 @@ public class ChannelPoolResizeTest extends ChannelPoolTestBase {
     waitForPendingAdminTasks();
     inOrder.verify(eventBus, times(2)).fire(ChannelEvent.channelOpened(node));
 
-    assertThat(poolFuture).isSuccess();
+    assertThatStage(poolFuture).isSuccess();
     ChannelPool pool = poolFuture.toCompletableFuture().get();
     assertThat(pool.channels).containsOnly(channel1, channel2);
 
@@ -226,7 +227,7 @@ public class ChannelPoolResizeTest extends ChannelPoolTestBase {
     waitForPendingAdminTasks();
     inOrder.verify(eventBus).fire(ChannelEvent.channelOpened(node));
 
-    assertThat(poolFuture).isSuccess();
+    assertThatStage(poolFuture).isSuccess();
     ChannelPool pool = poolFuture.toCompletableFuture().get();
     assertThat(pool.channels).containsOnly(channel1);
 
@@ -294,7 +295,7 @@ public class ChannelPoolResizeTest extends ChannelPoolTestBase {
     waitForPendingAdminTasks();
     inOrder.verify(eventBus, times(2)).fire(ChannelEvent.channelOpened(node));
 
-    assertThat(poolFuture).isSuccess();
+    assertThatStage(poolFuture).isSuccess();
     ChannelPool pool = poolFuture.toCompletableFuture().get();
     assertThat(pool.channels).containsOnly(channel1, channel2);
 
@@ -352,7 +353,7 @@ public class ChannelPoolResizeTest extends ChannelPoolTestBase {
     waitForPendingAdminTasks();
     inOrder.verify(eventBus).fire(ChannelEvent.channelOpened(node));
 
-    assertThat(poolFuture).isSuccess();
+    assertThatStage(poolFuture).isSuccess();
     ChannelPool pool = poolFuture.toCompletableFuture().get();
     assertThat(pool.channels).containsOnly(channel1);
 
@@ -416,7 +417,7 @@ public class ChannelPoolResizeTest extends ChannelPoolTestBase {
     waitForPendingAdminTasks();
     inOrder.verify(eventBus, times(2)).fire(ChannelEvent.channelOpened(node));
 
-    assertThat(poolFuture).isSuccess();
+    assertThatStage(poolFuture).isSuccess();
     ChannelPool pool = poolFuture.toCompletableFuture().get();
     assertThat(pool.channels).containsOnly(channel1, channel2);
 

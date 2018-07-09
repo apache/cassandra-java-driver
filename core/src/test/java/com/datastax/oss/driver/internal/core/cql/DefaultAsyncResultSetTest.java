@@ -16,6 +16,7 @@
 package com.datastax.oss.driver.internal.core.cql;
 
 import static com.datastax.oss.driver.Assertions.assertThat;
+import static com.datastax.oss.driver.Assertions.assertThatStage;
 
 import com.datastax.oss.driver.api.core.CqlSession;
 import com.datastax.oss.driver.api.core.DefaultProtocolVersion;
@@ -96,7 +97,7 @@ public class DefaultAsyncResultSetTest {
     // Then
     Mockito.verify(statement).copy(mockPagingState);
     Mockito.verify(session).executeAsync(mockNextStatement);
-    assertThat(nextPageFuture).isEqualTo(mockResultFuture);
+    assertThatStage(nextPageFuture).isEqualTo(mockResultFuture);
   }
 
   @Test

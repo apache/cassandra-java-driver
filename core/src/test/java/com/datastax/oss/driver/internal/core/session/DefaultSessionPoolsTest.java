@@ -16,6 +16,7 @@
 package com.datastax.oss.driver.internal.core.session;
 
 import static com.datastax.oss.driver.Assertions.assertThat;
+import static com.datastax.oss.driver.Assertions.assertThatStage;
 import static org.assertj.core.api.Assertions.fail;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anySet;
@@ -218,14 +219,14 @@ public class DefaultSessionPoolsTest {
     factoryHelper.waitForCall(node3, KEYSPACE, NodeDistance.REMOTE);
     waitForPendingAdminTasks();
 
-    assertThat(initFuture).isNotDone();
+    assertThatStage(initFuture).isNotDone();
 
     pool1Future.complete(pool1);
     pool2Future.complete(pool2);
     pool3Future.complete(pool3);
     waitForPendingAdminTasks();
 
-    assertThat(initFuture)
+    assertThatStage(initFuture)
         .isSuccess(
             session ->
                 assertThat(((DefaultSession) session).getPools())
@@ -250,7 +251,7 @@ public class DefaultSessionPoolsTest {
     factoryHelper.waitForCall(node1, KEYSPACE, NodeDistance.LOCAL);
     factoryHelper.waitForCall(node3, KEYSPACE, NodeDistance.LOCAL);
     waitForPendingAdminTasks();
-    assertThat(initFuture)
+    assertThatStage(initFuture)
         .isSuccess(
             session ->
                 assertThat(((DefaultSession) session).getPools()).containsValues(pool1, pool3));
@@ -274,7 +275,7 @@ public class DefaultSessionPoolsTest {
     factoryHelper.waitForCall(node1, KEYSPACE, NodeDistance.LOCAL);
     factoryHelper.waitForCall(node3, KEYSPACE, NodeDistance.LOCAL);
     waitForPendingAdminTasks();
-    assertThat(initFuture)
+    assertThatStage(initFuture)
         .isSuccess(
             session ->
                 assertThat(((DefaultSession) session).getPools()).containsValues(pool1, pool3));
@@ -302,7 +303,7 @@ public class DefaultSessionPoolsTest {
     factoryHelper.waitForCall(node3, KEYSPACE, NodeDistance.LOCAL);
     waitForPendingAdminTasks();
 
-    assertThat(initFuture).isNotDone();
+    assertThatStage(initFuture).isNotDone();
 
     // Distance changes while init still pending
     eventBus.fire(new DistanceEvent(NodeDistance.REMOTE, node2));
@@ -314,7 +315,7 @@ public class DefaultSessionPoolsTest {
 
     Mockito.verify(pool2).resize(NodeDistance.REMOTE);
 
-    assertThat(initFuture)
+    assertThatStage(initFuture)
         .isSuccess(
             session ->
                 assertThat(((DefaultSession) session).getPools())
@@ -343,7 +344,7 @@ public class DefaultSessionPoolsTest {
     factoryHelper.waitForCall(node3, KEYSPACE, NodeDistance.LOCAL);
     waitForPendingAdminTasks();
 
-    assertThat(initFuture).isNotDone();
+    assertThatStage(initFuture).isNotDone();
 
     // Distance changes while init still pending
     eventBus.fire(new DistanceEvent(NodeDistance.IGNORED, node2));
@@ -355,7 +356,7 @@ public class DefaultSessionPoolsTest {
 
     Mockito.verify(pool2).closeAsync();
 
-    assertThat(initFuture)
+    assertThatStage(initFuture)
         .isSuccess(
             session ->
                 assertThat(((DefaultSession) session).getPools()).containsValues(pool1, pool3));
@@ -383,7 +384,7 @@ public class DefaultSessionPoolsTest {
     factoryHelper.waitForCall(node3, KEYSPACE, NodeDistance.LOCAL);
     waitForPendingAdminTasks();
 
-    assertThat(initFuture).isNotDone();
+    assertThatStage(initFuture).isNotDone();
 
     // Forced down while init still pending
     eventBus.fire(NodeStateEvent.changed(NodeState.UP, NodeState.FORCED_DOWN, node2));
@@ -395,7 +396,7 @@ public class DefaultSessionPoolsTest {
 
     Mockito.verify(pool2).closeAsync();
 
-    assertThat(initFuture)
+    assertThatStage(initFuture)
         .isSuccess(
             session ->
                 assertThat(((DefaultSession) session).getPools()).containsValues(pool1, pool3));
@@ -419,7 +420,7 @@ public class DefaultSessionPoolsTest {
     factoryHelper.waitForCall(node2, KEYSPACE, NodeDistance.LOCAL);
     factoryHelper.waitForCall(node3, KEYSPACE, NodeDistance.LOCAL);
     waitForPendingAdminTasks();
-    assertThat(initFuture).isSuccess();
+    assertThatStage(initFuture).isSuccess();
 
     eventBus.fire(new DistanceEvent(NodeDistance.REMOTE, node2));
     Mockito.verify(pool2, timeout(500)).resize(NodeDistance.REMOTE);
@@ -443,7 +444,7 @@ public class DefaultSessionPoolsTest {
     factoryHelper.waitForCall(node2, KEYSPACE, NodeDistance.LOCAL);
     factoryHelper.waitForCall(node3, KEYSPACE, NodeDistance.LOCAL);
     waitForPendingAdminTasks();
-    assertThat(initFuture).isSuccess();
+    assertThatStage(initFuture).isSuccess();
 
     eventBus.fire(new DistanceEvent(NodeDistance.IGNORED, node2));
     Mockito.verify(pool2, timeout(500)).closeAsync();
@@ -470,7 +471,7 @@ public class DefaultSessionPoolsTest {
     factoryHelper.waitForCall(node2, KEYSPACE, NodeDistance.LOCAL);
     factoryHelper.waitForCall(node3, KEYSPACE, NodeDistance.LOCAL);
     waitForPendingAdminTasks();
-    assertThat(initFuture).isSuccess();
+    assertThatStage(initFuture).isSuccess();
 
     eventBus.fire(new DistanceEvent(NodeDistance.IGNORED, node2));
     Mockito.verify(pool2, timeout(100)).closeAsync();
@@ -505,7 +506,7 @@ public class DefaultSessionPoolsTest {
     factoryHelper.waitForCall(node1, KEYSPACE, NodeDistance.LOCAL);
     factoryHelper.waitForCall(node3, KEYSPACE, NodeDistance.LOCAL);
     waitForPendingAdminTasks();
-    assertThat(initFuture).isSuccess();
+    assertThatStage(initFuture).isSuccess();
     Session session = CompletableFutures.getCompleted(initFuture.toCompletableFuture());
     assertThat(((DefaultSession) session).getPools()).containsValues(pool1, pool3);
 
@@ -534,7 +535,7 @@ public class DefaultSessionPoolsTest {
     factoryHelper.waitForCall(node2, KEYSPACE, NodeDistance.LOCAL);
     factoryHelper.waitForCall(node3, KEYSPACE, NodeDistance.LOCAL);
     waitForPendingAdminTasks();
-    assertThat(initFuture).isSuccess();
+    assertThatStage(initFuture).isSuccess();
 
     eventBus.fire(NodeStateEvent.changed(NodeState.UP, NodeState.FORCED_DOWN, node2));
     Mockito.verify(pool2, timeout(500)).closeAsync();
@@ -564,7 +565,7 @@ public class DefaultSessionPoolsTest {
     factoryHelper.waitForCall(node1, KEYSPACE, NodeDistance.LOCAL);
     factoryHelper.waitForCall(node3, KEYSPACE, NodeDistance.LOCAL);
     waitForPendingAdminTasks();
-    assertThat(initFuture).isSuccess();
+    assertThatStage(initFuture).isSuccess();
     Session session = CompletableFutures.getCompleted(initFuture.toCompletableFuture());
     assertThat(((DefaultSession) session).getPools()).containsValues(pool1, pool3);
 
@@ -594,7 +595,7 @@ public class DefaultSessionPoolsTest {
     factoryHelper.waitForCall(node1, KEYSPACE, NodeDistance.LOCAL);
     factoryHelper.waitForCall(node3, KEYSPACE, NodeDistance.LOCAL);
     waitForPendingAdminTasks();
-    assertThat(initFuture).isSuccess();
+    assertThatStage(initFuture).isSuccess();
     Session session = CompletableFutures.getCompleted(initFuture.toCompletableFuture());
     assertThat(((DefaultSession) session).getPools()).containsValues(pool1, pool3);
 
@@ -626,7 +627,7 @@ public class DefaultSessionPoolsTest {
     factoryHelper.waitForCall(node1, KEYSPACE, NodeDistance.LOCAL);
     factoryHelper.waitForCall(node3, KEYSPACE, NodeDistance.LOCAL);
     waitForPendingAdminTasks();
-    assertThat(initFuture).isSuccess();
+    assertThatStage(initFuture).isSuccess();
     Session session = CompletableFutures.getCompleted(initFuture.toCompletableFuture());
     assertThat(((DefaultSession) session).getPools()).containsValues(pool1, pool3);
 
@@ -669,7 +670,7 @@ public class DefaultSessionPoolsTest {
     factoryHelper.waitForCall(node1, KEYSPACE, NodeDistance.LOCAL);
     factoryHelper.waitForCall(node3, KEYSPACE, NodeDistance.LOCAL);
     waitForPendingAdminTasks();
-    assertThat(initFuture).isSuccess();
+    assertThatStage(initFuture).isSuccess();
     Session session = CompletableFutures.getCompleted(initFuture.toCompletableFuture());
     assertThat(((DefaultSession) session).getPools()).containsValues(pool1, pool3);
 
@@ -712,7 +713,7 @@ public class DefaultSessionPoolsTest {
     factoryHelper.waitForCall(node1, KEYSPACE, NodeDistance.LOCAL);
     factoryHelper.waitForCall(node3, KEYSPACE, NodeDistance.LOCAL);
     waitForPendingAdminTasks();
-    assertThat(initFuture).isSuccess();
+    assertThatStage(initFuture).isSuccess();
     Session session = CompletableFutures.getCompleted(initFuture.toCompletableFuture());
     assertThat(((DefaultSession) session).getPools()).containsValues(pool1, pool3);
 
@@ -751,12 +752,12 @@ public class DefaultSessionPoolsTest {
     factoryHelper.waitForCall(node2, KEYSPACE, NodeDistance.LOCAL);
     factoryHelper.waitForCall(node3, KEYSPACE, NodeDistance.LOCAL);
     waitForPendingAdminTasks();
-    assertThat(initFuture).isSuccess();
+    assertThatStage(initFuture).isSuccess();
     Session session = CompletableFutures.getCompleted(initFuture.toCompletableFuture());
 
     CompletionStage<Void> closeFuture = session.closeAsync();
     waitForPendingAdminTasks();
-    assertThat(closeFuture).isSuccess();
+    assertThatStage(closeFuture).isSuccess();
 
     Mockito.verify(pool1).closeAsync();
     Mockito.verify(pool2).closeAsync();
@@ -781,12 +782,12 @@ public class DefaultSessionPoolsTest {
     factoryHelper.waitForCall(node2, KEYSPACE, NodeDistance.LOCAL);
     factoryHelper.waitForCall(node3, KEYSPACE, NodeDistance.LOCAL);
     waitForPendingAdminTasks();
-    assertThat(initFuture).isSuccess();
+    assertThatStage(initFuture).isSuccess();
     Session session = CompletableFutures.getCompleted(initFuture.toCompletableFuture());
 
     CompletionStage<Void> closeFuture = session.forceCloseAsync();
     waitForPendingAdminTasks();
-    assertThat(closeFuture).isSuccess();
+    assertThatStage(closeFuture).isSuccess();
 
     Mockito.verify(pool1).forceCloseAsync();
     Mockito.verify(pool2).forceCloseAsync();
@@ -815,7 +816,7 @@ public class DefaultSessionPoolsTest {
     factoryHelper.waitForCall(node1, KEYSPACE, NodeDistance.LOCAL);
     factoryHelper.waitForCall(node3, KEYSPACE, NodeDistance.LOCAL);
     waitForPendingAdminTasks();
-    assertThat(initFuture).isSuccess();
+    assertThatStage(initFuture).isSuccess();
     Session session = CompletableFutures.getCompleted(initFuture.toCompletableFuture());
     assertThat(((DefaultSession) session).getPools()).containsValues(pool1, pool3);
 
@@ -826,7 +827,7 @@ public class DefaultSessionPoolsTest {
     // but the session gets closed before pool init completes
     CompletionStage<Void> closeFuture = session.closeAsync();
     waitForPendingAdminTasks();
-    assertThat(closeFuture).isSuccess();
+    assertThatStage(closeFuture).isSuccess();
 
     // now pool init completes
     pool2Future.complete(pool2);
@@ -854,7 +855,7 @@ public class DefaultSessionPoolsTest {
     factoryHelper.waitForCall(node2, KEYSPACE, NodeDistance.LOCAL);
     factoryHelper.waitForCall(node3, KEYSPACE, NodeDistance.LOCAL);
     waitForPendingAdminTasks();
-    assertThat(initFuture).isSuccess();
+    assertThatStage(initFuture).isSuccess();
     Session session = CompletableFutures.getCompleted(initFuture.toCompletableFuture());
 
     CqlIdentifier newKeyspace = CqlIdentifier.fromInternal("newKeyspace");
@@ -888,7 +889,7 @@ public class DefaultSessionPoolsTest {
     factoryHelper.waitForCall(node1, KEYSPACE, NodeDistance.LOCAL);
     factoryHelper.waitForCall(node3, KEYSPACE, NodeDistance.LOCAL);
     waitForPendingAdminTasks();
-    assertThat(initFuture).isSuccess();
+    assertThatStage(initFuture).isSuccess();
     DefaultSession session =
         (DefaultSession) CompletableFutures.getCompleted(initFuture.toCompletableFuture());
     assertThat(session.getPools()).containsValues(pool1, pool3);

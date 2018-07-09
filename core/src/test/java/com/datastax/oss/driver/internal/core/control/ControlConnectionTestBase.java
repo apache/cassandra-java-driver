@@ -33,6 +33,7 @@ import com.datastax.oss.driver.internal.core.metadata.LoadBalancingPolicyWrapper
 import com.datastax.oss.driver.internal.core.metadata.MetadataManager;
 import com.datastax.oss.driver.internal.core.metrics.MetricsFactory;
 import com.datastax.oss.driver.shaded.guava.common.util.concurrent.Uninterruptibles;
+import io.netty.channel.Channel;
 import io.netty.channel.DefaultChannelPromise;
 import io.netty.channel.DefaultEventLoopGroup;
 import io.netty.channel.EventLoop;
@@ -136,25 +137,27 @@ abstract class ControlConnectionTestBase {
   }
 
   protected DriverChannel newMockDriverChannel(int id) {
-    DriverChannel channel = Mockito.mock(DriverChannel.class);
+    DriverChannel driverChannel = Mockito.mock(DriverChannel.class);
+    Channel channel = Mockito.mock(Channel.class);
     EventLoop adminExecutor = adminEventLoopGroup.next();
-    DefaultChannelPromise closeFuture = new DefaultChannelPromise(null, adminExecutor);
-    Mockito.when(channel.close())
+    DefaultChannelPromise closeFuture = new DefaultChannelPromise(channel, adminExecutor);
+    Mockito.when(driverChannel.close())
         .thenAnswer(
             i -> {
               closeFuture.trySuccess(null);
               return closeFuture;
             });
-    Mockito.when(channel.forceClose())
+    Mockito.when(driverChannel.forceClose())
         .thenAnswer(
             i -> {
               closeFuture.trySuccess(null);
               return closeFuture;
             });
-    Mockito.when(channel.closeFuture()).thenReturn(closeFuture);
-    Mockito.when(channel.toString()).thenReturn("channel" + id);
-    Mockito.when(channel.remoteAddress()).thenReturn(new InetSocketAddress("127.0.0." + id, 9042));
-    return channel;
+    Mockito.when(driverChannel.closeFuture()).thenReturn(closeFuture);
+    Mockito.when(driverChannel.toString()).thenReturn("channel" + id);
+    Mockito.when(driverChannel.remoteAddress())
+        .thenReturn(new InetSocketAddress("127.0.0." + id, 9042));
+    return driverChannel;
   }
 
   // Wait for all the tasks on the admin executor to complete.

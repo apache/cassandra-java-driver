@@ -16,6 +16,7 @@
 package com.datastax.oss.driver.internal.core.metadata;
 
 import static com.datastax.oss.driver.Assertions.assertThat;
+import static com.datastax.oss.driver.Assertions.assertThatStage;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.never;
@@ -119,7 +120,7 @@ public class SchemaAgreementCheckerTest {
     CompletionStage<Boolean> future = checker.run();
 
     // Then
-    assertThat(future).isSuccess(b -> assertThat(b).isFalse());
+    assertThatStage(future).isSuccess(b -> assertThat(b).isFalse());
   }
 
   @Test
@@ -137,7 +138,7 @@ public class SchemaAgreementCheckerTest {
     CompletionStage<Boolean> future = checker.run();
 
     // Then
-    assertThat(future).isSuccess(b -> assertThat(b).isTrue());
+    assertThatStage(future).isSuccess(b -> assertThat(b).isTrue());
   }
 
   @Test
@@ -156,7 +157,7 @@ public class SchemaAgreementCheckerTest {
     CompletionStage<Boolean> future = checker.run();
 
     // Then
-    assertThat(future).isSuccess(b -> assertThat(b).isTrue());
+    assertThatStage(future).isSuccess(b -> assertThat(b).isTrue());
     Mockito.verify(addressTranslator).translate(ADDRESS2);
   }
 
@@ -177,7 +178,7 @@ public class SchemaAgreementCheckerTest {
     CompletionStage<Boolean> future = checker.run();
 
     // Then
-    assertThat(future).isSuccess(b -> assertThat(b).isTrue());
+    assertThatStage(future).isSuccess(b -> assertThat(b).isTrue());
     Mockito.verify(addressTranslator).translate(ADDRESS2);
   }
 
@@ -197,7 +198,7 @@ public class SchemaAgreementCheckerTest {
     CompletionStage<Boolean> future = checker.run();
 
     // Then
-    assertThat(future).isSuccess(b -> assertThat(b).isTrue());
+    assertThatStage(future).isSuccess(b -> assertThat(b).isTrue());
     Mockito.verify(addressTranslator, never()).translate(ADDRESS2);
   }
 
@@ -220,7 +221,7 @@ public class SchemaAgreementCheckerTest {
     CompletionStage<Boolean> future = checker.run();
 
     // Then
-    assertThat(future).isSuccess(b -> assertThat(b).isTrue());
+    assertThatStage(future).isSuccess(b -> assertThat(b).isTrue());
     Mockito.verify(addressTranslator).translate(ADDRESS2);
   }
 
@@ -249,7 +250,7 @@ public class SchemaAgreementCheckerTest {
     CompletionStage<Boolean> future = checker.run();
 
     // Then
-    assertThat(future).isSuccess(b -> assertThat(b).isTrue());
+    assertThatStage(future).isSuccess(b -> assertThat(b).isTrue());
   }
 
   @Test
@@ -271,7 +272,7 @@ public class SchemaAgreementCheckerTest {
     CompletionStage<Boolean> future = checker.run();
 
     // Then
-    assertThat(future).isSuccess(b -> assertThat(b).isFalse());
+    assertThatStage(future).isSuccess(b -> assertThat(b).isFalse());
   }
 
   /** Extend to mock the query execution logic. */

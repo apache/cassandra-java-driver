@@ -16,6 +16,7 @@
 package com.datastax.oss.driver.internal.core.time;
 
 import static com.datastax.oss.driver.Assertions.assertThat;
+import static com.datastax.oss.driver.Assertions.assertThatStage;
 import static com.datastax.oss.driver.Assertions.fail;
 
 import com.datastax.oss.driver.internal.core.util.concurrent.CompletableFutures;
@@ -70,7 +71,7 @@ public class ThreadLocalTimestampGeneratorTest extends MonotonicTimestampGenerat
 
     assertThat(futures).hasSize(testThreadsCount);
     for (CompletionStage<Void> future : futures) {
-      assertThat(future).isSuccess();
+      assertThatStage(future).isSuccess();
     }
   }
 }

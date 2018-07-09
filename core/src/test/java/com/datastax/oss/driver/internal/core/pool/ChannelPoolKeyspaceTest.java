@@ -16,6 +16,7 @@
 package com.datastax.oss.driver.internal.core.pool;
 
 import static com.datastax.oss.driver.Assertions.assertThat;
+import static com.datastax.oss.driver.Assertions.assertThatStage;
 
 import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
@@ -50,7 +51,7 @@ public class ChannelPoolKeyspaceTest extends ChannelPoolTestBase {
     factoryHelper.waitForCalls(node, 2);
     waitForPendingAdminTasks();
 
-    assertThat(poolFuture).isSuccess();
+    assertThatStage(poolFuture).isSuccess();
     ChannelPool pool = poolFuture.toCompletableFuture().get();
     assertThat(pool.channels).containsOnly(channel1, channel2);
 
@@ -61,7 +62,7 @@ public class ChannelPoolKeyspaceTest extends ChannelPoolTestBase {
     Mockito.verify(channel1).setKeyspace(newKeyspace);
     Mockito.verify(channel2).setKeyspace(newKeyspace);
 
-    assertThat(setKeyspaceFuture).isSuccess();
+    assertThatStage(setKeyspaceFuture).isSuccess();
 
     factoryHelper.verifyNoMoreCalls();
   }
@@ -93,7 +94,7 @@ public class ChannelPoolKeyspaceTest extends ChannelPoolTestBase {
     factoryHelper.waitForCalls(node, 2);
     waitForPendingAdminTasks();
 
-    assertThat(poolFuture).isSuccess();
+    assertThatStage(poolFuture).isSuccess();
     ChannelPool pool = poolFuture.toCompletableFuture().get();
 
     // Check that reconnection has kicked in, but do not complete it yet
@@ -105,7 +106,7 @@ public class ChannelPoolKeyspaceTest extends ChannelPoolTestBase {
     CqlIdentifier newKeyspace = CqlIdentifier.fromCql("new_keyspace");
     CompletionStage<Void> setKeyspaceFuture = pool.setKeyspace(newKeyspace);
     waitForPendingAdminTasks();
-    assertThat(setKeyspaceFuture).isSuccess();
+    assertThatStage(setKeyspaceFuture).isSuccess();
 
     // Now let the two channels succeed to complete the reconnection
     channel1Future.complete(channel1);
