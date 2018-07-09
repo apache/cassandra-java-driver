@@ -202,10 +202,31 @@ public class TableMetadataTest extends CCMTestsSupport {
                             + "   AND comment = 'My awesome table'\n"
                             + "   AND compaction = { 'class' : 'org.apache.cassandra.db.compaction.LeveledCompactionStrategy', 'sstable_size_in_mb' : 15 }\n"
                             + "   AND compression = { 'sstable_compression' : 'org.apache.cassandra.io.compress.SnappyCompressor', 'chunk_length_kb' : 128 }\n"
-                            + "   AND crc_check_chance = 0.5;", // available from C* 3.0
+                            + "   AND crc_check_chance = 0.5\n" // available from C* 3.0
+                            + "   AND memtable_flush_period_in_ms = 1000;",
                     keyspace);
 
-            // older versions
+        // Cassandra 2.0 +    
+        } else if(version.getMajor() > 1) {
+        	cql = String.format("CREATE TABLE %s.with_options (\n"
+                            + "    k text,\n"
+                            + "    c1 int,\n"
+                            + "    c2 int,\n"
+                            + "    i int,\n"
+                            + "    PRIMARY KEY (k, c1, c2)\n"
+                            + ") WITH CLUSTERING ORDER BY (c1 DESC, c2 ASC)\n"
+                            + "   AND read_repair_chance = 0.5\n"
+                            + "   AND dclocal_read_repair_chance = 0.6\n"
+                            + "   AND replicate_on_write = true\n"
+                            + "   AND gc_grace_seconds = 42\n"
+                            + "   AND bloom_filter_fp_chance = 0.01\n"
+                            + "   AND caching = 'ALL'\n"
+                            + "   AND comment = 'My awesome table'\n"
+                            + "   AND compaction = { 'class' : 'org.apache.cassandra.db.compaction.LeveledCompactionStrategy', 'sstable_size_in_mb' : 15 }\n"
+                            + "   AND compression = { 'sstable_compression' : 'org.apache.cassandra.io.compress.SnappyCompressor', 'chunk_length_kb' : 128 }\n"
+                            + "   AND memtable_flush_period_in_ms = 1000;",
+                    keyspace);
+      // older versions
         } else {
             cql = String.format("CREATE TABLE %s.with_options (\n"
                             + "    k text,\n"
@@ -260,6 +281,7 @@ public class TableMetadataTest extends CCMTestsSupport {
             assertThat(table.getOptions().getReplicateOnWrite()).isTrue(); // default
             assertThat(table.getOptions().getCrcCheckChance()).isEqualTo(0.5);
             assertThat(table.getOptions().getExtensions()).isEmpty(); // default
+            assertThat(table.getOptions().getMemtableFlushPeriodInMs()).isEqualTo(1000);
             assertThat(table.asCQLQuery())
                     .contains("read_repair_chance = 0.5")
                     .contains("dclocal_read_repair_chance = 0.6")
@@ -278,6 +300,7 @@ public class TableMetadataTest extends CCMTestsSupport {
                     .contains("max_index_interval = 2048")
                     .contains("crc_check_chance = 0.5")
                     .contains("cdc = false")
+                    .contains("memtable_flush_period_in_ms = 1000")
                     .doesNotContain(" index_interval")
                     .doesNotContain("replicate_on_write");
             // Cassandra 3.0 +
@@ -302,6 +325,7 @@ public class TableMetadataTest extends CCMTestsSupport {
             assertThat(table.getOptions().getReplicateOnWrite()).isTrue(); // default
             assertThat(table.getOptions().getCrcCheckChance()).isEqualTo(0.5);
             assertThat(table.getOptions().getExtensions()).isEmpty(); // default
+            assertThat(table.getOptions().getMemtableFlushPeriodInMs()).isEqualTo(1000);
             assertThat(table.asCQLQuery())
                     .contains("read_repair_chance = 0.5")
                     .contains("dclocal_read_repair_chance = 0.6")
@@ -319,6 +343,7 @@ public class TableMetadataTest extends CCMTestsSupport {
                     .contains("min_index_interval = 128")
                     .contains("max_index_interval = 2048")
                     .contains("crc_check_chance = 0.5")
+                    .contains("memtable_flush_period_in_ms = 1000")
                     .doesNotContain(" index_interval")
                     .doesNotContain("replicate_on_write")
                     .doesNotContain("cdc"); // 3.8+
@@ -345,6 +370,7 @@ public class TableMetadataTest extends CCMTestsSupport {
             assertThat(table.getOptions().getMaxIndexInterval()).isEqualTo(2048);
             assertThat(table.getOptions().getReplicateOnWrite()).isTrue(); // default
             assertThat(table.getOptions().getExtensions()).isEmpty();
+            assertThat(table.getOptions().getMemtableFlushPeriodInMs()).isEqualTo(1000);
             assertThat(table.asCQLQuery())
                     .contains("read_repair_chance = 0.5")
                     .contains("dclocal_read_repair_chance = 0.6")
@@ -361,6 +387,7 @@ public class TableMetadataTest extends CCMTestsSupport {
                     .contains("speculative_retry = '99.0PERCENTILE'")
                     .contains("min_index_interval = 128")
                     .contains("max_index_interval = 2048")
+                    .contains("memtable_flush_period_in_ms = 1000")
                     .doesNotContain(" index_interval")
                     .doesNotContain("replicate_on_write")
                     .doesNotContain("cdc");
@@ -386,6 +413,7 @@ public class TableMetadataTest extends CCMTestsSupport {
             assertThat(table.getOptions().getMaxIndexInterval()).isNull();
             assertThat(table.getOptions().getReplicateOnWrite()).isTrue(); // explicitly set
             assertThat(table.getOptions().getExtensions()).isEmpty();
+            assertThat(table.getOptions().getMemtableFlushPeriodInMs()).isEqualTo(1000);
             assertThat(table.asCQLQuery())
                     .contains("read_repair_chance = 0.5")
                     .contains("dclocal_read_repair_chance = 0.6")
@@ -401,6 +429,7 @@ public class TableMetadataTest extends CCMTestsSupport {
                     .contains("index_interval = 128")
                     .contains("speculative_retry = '99.0PERCENTILE'")
                     .contains("default_time_to_live = 0")
+                    .contains("memtable_flush_period_in_ms = 1000")
                     .doesNotContain("min_index_interval") // 2.1 +
                     .doesNotContain("max_index_interval") // 2.1 +
                     .doesNotContain("cdc");
@@ -443,7 +472,8 @@ public class TableMetadataTest extends CCMTestsSupport {
                     .doesNotContain("max_index_interval")  // 2.1 +
                     .doesNotContain("speculative_retry")  // 2.0 +
                     .doesNotContain("default_time_to_live") // 2.0 +
-                    .doesNotContain("cdc");
+                    .doesNotContain("cdc")
+                    .doesNotContain("memtable_flush_period_in_ms"); // 2.0 +
 
         }
 

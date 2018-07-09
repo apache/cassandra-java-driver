@@ -7,6 +7,7 @@
 - [bug] JAVA-1920: Use nanosecond precision in LocalTimeCodec#format().
 - [bug] JAVA-1794: Driver tries to create a connection array of size -1.
 - [new feature] JAVA-1899: Support virtual tables.
+- [bug] JAVA-1908: TableMetadata.asCQLQuery does not add table option 'memtable_flush_period_in_ms' in the generated query.
 
 Merged from 3.5.x:
 
