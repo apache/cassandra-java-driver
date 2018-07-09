@@ -16,6 +16,7 @@
 package com.datastax.oss.driver.internal.core.metadata;
 
 import static com.datastax.oss.driver.Assertions.assertThat;
+import static com.datastax.oss.driver.Assertions.assertThatStage;
 import static org.assertj.core.api.Assertions.fail;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.never;
@@ -110,7 +111,7 @@ public class DefaultTopologyMonitorTest {
     CompletionStage<Optional<NodeInfo>> futureInfo = topologyMonitor.refreshNode(node1);
 
     // Then
-    assertThat(futureInfo).isSuccess(maybeInfo -> assertThat(maybeInfo.isPresent()).isFalse());
+    assertThatStage(futureInfo).isSuccess(maybeInfo -> assertThat(maybeInfo.isPresent()).isFalse());
   }
 
   @Test
@@ -128,7 +129,7 @@ public class DefaultTopologyMonitorTest {
     CompletionStage<Optional<NodeInfo>> futureInfo = topologyMonitor.refreshNode(node2);
 
     // Then
-    assertThat(futureInfo)
+    assertThatStage(futureInfo)
         .isSuccess(
             maybeInfo -> {
               assertThat(maybeInfo.isPresent()).isTrue();
@@ -152,7 +153,7 @@ public class DefaultTopologyMonitorTest {
     CompletionStage<Optional<NodeInfo>> futureInfo = topologyMonitor.refreshNode(node2);
 
     // Then
-    assertThat(futureInfo)
+    assertThatStage(futureInfo)
         .isSuccess(
             maybeInfo -> {
               assertThat(maybeInfo.isPresent()).isTrue();
@@ -176,7 +177,7 @@ public class DefaultTopologyMonitorTest {
     CompletionStage<Optional<NodeInfo>> futureInfo = topologyMonitor.refreshNode(node2);
 
     // Then
-    assertThat(futureInfo)
+    assertThatStage(futureInfo)
         .isSuccess(
             maybeInfo -> {
               assertThat(maybeInfo.isPresent()).isTrue();
@@ -208,7 +209,7 @@ public class DefaultTopologyMonitorTest {
     CompletionStage<Optional<NodeInfo>> futureInfo = topologyMonitor.refreshNode(node2);
 
     // Then
-    assertThat(futureInfo)
+    assertThatStage(futureInfo)
         .isSuccess(
             maybeInfo -> {
               assertThat(maybeInfo.isPresent()).isTrue();
@@ -240,7 +241,7 @@ public class DefaultTopologyMonitorTest {
     CompletionStage<Optional<NodeInfo>> futureInfo = topologyMonitor.getNewNodeInfo(ADDRESS1);
 
     // Then
-    assertThat(futureInfo)
+    assertThatStage(futureInfo)
         .isSuccess(
             maybeInfo -> {
               assertThat(maybeInfo.isPresent()).isTrue();
@@ -276,7 +277,7 @@ public class DefaultTopologyMonitorTest {
     CompletionStage<Optional<NodeInfo>> futureInfo = topologyMonitor.getNewNodeInfo(ADDRESS1);
 
     // Then
-    assertThat(futureInfo)
+    assertThatStage(futureInfo)
         .isSuccess(
             maybeInfo -> {
               assertThat(maybeInfo.isPresent()).isTrue();
@@ -316,7 +317,7 @@ public class DefaultTopologyMonitorTest {
     CompletionStage<Iterable<NodeInfo>> futureInfos = topologyMonitor.refreshNodeList();
 
     // Then
-    assertThat(futureInfos)
+    assertThatStage(futureInfos)
         .isSuccess(
             infos -> {
               Iterator<NodeInfo> iterator = infos.iterator();
@@ -343,7 +344,7 @@ public class DefaultTopologyMonitorTest {
     CompletionStage<Iterable<NodeInfo>> futureInfos = topologyMonitor.refreshNodeList();
 
     // Then
-    assertThat(futureInfos)
+    assertThatStage(futureInfos)
         .isFailed(error -> assertThat(error).isInstanceOf(IllegalStateException.class));
   }
 

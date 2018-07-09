@@ -16,6 +16,7 @@
 package com.datastax.oss.driver.internal.core.cql;
 
 import static com.datastax.oss.driver.Assertions.assertThat;
+import static com.datastax.oss.driver.Assertions.assertThatStage;
 
 import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.DriverTimeoutException;
@@ -62,7 +63,7 @@ public class CqlRequestHandlerTest extends CqlRequestHandlerTestBase {
                   "test")
               .handle();
 
-      assertThat(resultSetFuture)
+      assertThatStage(resultSetFuture)
           .isSuccess(
               resultSet -> {
                 Iterator<Row> rows = resultSet.currentPage().iterator();
@@ -96,7 +97,7 @@ public class CqlRequestHandlerTest extends CqlRequestHandlerTestBase {
                   "test")
               .handle();
 
-      assertThat(resultSetFuture)
+      assertThatStage(resultSetFuture)
           .isFailed(error -> assertThat(error).isInstanceOf(NoNodeAvailableException.class));
     }
   }
@@ -129,7 +130,7 @@ public class CqlRequestHandlerTest extends CqlRequestHandlerTestBase {
           .isEqualTo(configuredTimeout.toNanos());
       scheduledTask.run();
 
-      assertThat(resultSetFuture)
+      assertThatStage(resultSetFuture)
           .isFailed(t -> assertThat(t).isInstanceOf(DriverTimeoutException.class));
     }
   }
@@ -149,7 +150,7 @@ public class CqlRequestHandlerTest extends CqlRequestHandlerTestBase {
                   "test")
               .handle();
 
-      assertThat(resultSetFuture)
+      assertThatStage(resultSetFuture)
           .isSuccess(
               resultSet ->
                   Mockito.verify(harness.getSession())
@@ -199,7 +200,7 @@ public class CqlRequestHandlerTest extends CqlRequestHandlerTestBase {
           defaultFrameOf(new Unprepared("mock message", mockId.array())));
 
       // Should now re-prepare, re-execute and succeed.
-      assertThat(resultSetFuture).isSuccess();
+      assertThatStage(resultSetFuture).isSuccess();
     }
   }
 }

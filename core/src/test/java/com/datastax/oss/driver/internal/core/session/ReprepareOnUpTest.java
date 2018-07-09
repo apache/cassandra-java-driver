@@ -16,6 +16,7 @@
 package com.datastax.oss.driver.internal.core.session;
 
 import static com.datastax.oss.driver.Assertions.assertThat;
+import static com.datastax.oss.driver.Assertions.assertThatStage;
 
 import com.datastax.oss.driver.api.core.DefaultProtocolVersion;
 import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
@@ -106,7 +107,7 @@ public class ReprepareOnUpTest {
     reprepareOnUp.start();
 
     // Then
-    assertThat(done).isSuccess(v -> assertThat(reprepareOnUp.queries).isEmpty());
+    assertThatStage(done).isSuccess(v -> assertThat(reprepareOnUp.queries).isEmpty());
   }
 
   @Test
@@ -120,7 +121,7 @@ public class ReprepareOnUpTest {
     reprepareOnUp.start();
 
     // Then
-    assertThat(done).isSuccess(v -> assertThat(reprepareOnUp.queries).isEmpty());
+    assertThatStage(done).isSuccess(v -> assertThat(reprepareOnUp.queries).isEmpty());
   }
 
   @Test
@@ -144,7 +145,7 @@ public class ReprepareOnUpTest {
       adminQuery.resultFuture.complete(null);
     }
 
-    assertThat(done).isSuccess(v -> assertThat(reprepareOnUp.queries).isEmpty());
+    assertThatStage(done).isSuccess(v -> assertThat(reprepareOnUp.queries).isEmpty());
   }
 
   @Test
@@ -170,7 +171,7 @@ public class ReprepareOnUpTest {
       adminQuery.resultFuture.complete(null);
     }
 
-    assertThat(done).isSuccess(v -> assertThat(reprepareOnUp.queries).isEmpty());
+    assertThatStage(done).isSuccess(v -> assertThat(reprepareOnUp.queries).isEmpty());
   }
 
   @Test
@@ -192,7 +193,7 @@ public class ReprepareOnUpTest {
       adminQuery.resultFuture.complete(null);
     }
 
-    assertThat(done).isSuccess(v -> assertThat(reprepareOnUp.queries).isEmpty());
+    assertThatStage(done).isSuccess(v -> assertThat(reprepareOnUp.queries).isEmpty());
   }
 
   @Test
@@ -218,7 +219,7 @@ public class ReprepareOnUpTest {
       adminQuery.resultFuture.complete(null);
     }
 
-    assertThat(done).isSuccess(v -> assertThat(reprepareOnUp.queries).isEmpty());
+    assertThatStage(done).isSuccess(v -> assertThat(reprepareOnUp.queries).isEmpty());
   }
 
   @Test
@@ -261,7 +262,7 @@ public class ReprepareOnUpTest {
       adminQuery.resultFuture.complete(null);
     }
 
-    assertThat(done).isSuccess(v -> assertThat(reprepareOnUp.queries).isEmpty());
+    assertThatStage(done).isSuccess(v -> assertThat(reprepareOnUp.queries).isEmpty());
   }
 
   @Test
@@ -303,7 +304,7 @@ public class ReprepareOnUpTest {
       adminQuery.resultFuture.complete(null);
     }
 
-    assertThat(done).isSuccess(v -> assertThat(reprepareOnUp.queries).isEmpty());
+    assertThatStage(done).isSuccess(v -> assertThat(reprepareOnUp.queries).isEmpty());
   }
 
   private Map<ByteBuffer, RepreparePayload> getMockPayloads(char... values) {

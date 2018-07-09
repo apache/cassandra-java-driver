@@ -16,6 +16,7 @@
 package com.datastax.oss.driver.internal.core.control;
 
 import static com.datastax.oss.driver.Assertions.assertThat;
+import static com.datastax.oss.driver.Assertions.assertThatStage;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.never;
 
@@ -44,7 +45,7 @@ public class ControlConnectionTest extends ControlConnectionTestBase {
     CompletionStage<Void> closeFuture = controlConnection.forceCloseAsync();
 
     // Then
-    assertThat(closeFuture).isSuccess();
+    assertThatStage(closeFuture).isSuccess();
   }
 
   @Test
@@ -60,7 +61,7 @@ public class ControlConnectionTest extends ControlConnectionTestBase {
     waitForPendingAdminTasks();
 
     // Then
-    assertThat(initFuture).isSuccess();
+    assertThatStage(initFuture).isSuccess();
     assertThat(controlConnection.channel()).isEqualTo(channel1);
     Mockito.verify(eventBus).fire(ChannelEvent.channelOpened(node1));
 
@@ -80,7 +81,7 @@ public class ControlConnectionTest extends ControlConnectionTestBase {
     CompletionStage<Void> initFuture2 = controlConnection.init(false, false);
 
     // Then
-    assertThat(initFuture1).isEqualTo(initFuture2);
+    assertThatStage(initFuture1).isEqualTo(initFuture2);
 
     factoryHelper.verifyNoMoreCalls();
   }
@@ -102,7 +103,7 @@ public class ControlConnectionTest extends ControlConnectionTestBase {
     waitForPendingAdminTasks();
 
     // Then
-    assertThat(initFuture)
+    assertThatStage(initFuture)
         .isSuccess(v -> assertThat(controlConnection.channel()).isEqualTo(channel2));
     Mockito.verify(eventBus).fire(ChannelEvent.controlConnectionFailed(node1));
     Mockito.verify(eventBus).fire(ChannelEvent.channelOpened(node2));
@@ -128,7 +129,7 @@ public class ControlConnectionTest extends ControlConnectionTestBase {
     waitForPendingAdminTasks();
 
     // Then
-    assertThat(initFuture).isFailed();
+    assertThatStage(initFuture).isFailed();
     Mockito.verify(eventBus).fire(ChannelEvent.controlConnectionFailed(node1));
     Mockito.verify(eventBus).fire(ChannelEvent.controlConnectionFailed(node2));
     // no reconnections at init
@@ -154,7 +155,7 @@ public class ControlConnectionTest extends ControlConnectionTestBase {
     factoryHelper.waitForCall(node1);
 
     waitForPendingAdminTasks();
-    assertThat(initFuture).isSuccess();
+    assertThatStage(initFuture).isSuccess();
     assertThat(controlConnection.channel()).isEqualTo(channel1);
     Mockito.verify(eventBus).fire(ChannelEvent.channelOpened(node1));
 
@@ -193,7 +194,7 @@ public class ControlConnectionTest extends ControlConnectionTestBase {
     factoryHelper.waitForCall(node1);
 
     waitForPendingAdminTasks();
-    assertThat(initFuture).isSuccess();
+    assertThatStage(initFuture).isSuccess();
     assertThat(controlConnection.channel()).isEqualTo(channel1);
     Mockito.verify(eventBus).fire(ChannelEvent.channelOpened(node1));
 
@@ -241,7 +242,7 @@ public class ControlConnectionTest extends ControlConnectionTestBase {
     factoryHelper.waitForCall(node1);
 
     waitForPendingAdminTasks();
-    assertThat(initFuture).isSuccess();
+    assertThatStage(initFuture).isSuccess();
     assertThat(controlConnection.channel()).isEqualTo(channel1);
     Mockito.verify(eventBus).fire(ChannelEvent.channelOpened(node1));
 
@@ -285,7 +286,7 @@ public class ControlConnectionTest extends ControlConnectionTestBase {
     factoryHelper.waitForCall(node1);
 
     waitForPendingAdminTasks();
-    assertThat(initFuture).isSuccess();
+    assertThatStage(initFuture).isSuccess();
     assertThat(controlConnection.channel()).isEqualTo(channel1);
     Mockito.verify(eventBus).fire(ChannelEvent.channelOpened(node1));
 
@@ -342,7 +343,7 @@ public class ControlConnectionTest extends ControlConnectionTestBase {
     factoryHelper.waitForCall(node1);
 
     waitForPendingAdminTasks();
-    assertThat(initFuture).isSuccess();
+    assertThatStage(initFuture).isSuccess();
     assertThat(controlConnection.channel()).isEqualTo(channel1);
     Mockito.verify(eventBus).fire(ChannelEvent.channelOpened(node1));
 
@@ -385,7 +386,7 @@ public class ControlConnectionTest extends ControlConnectionTestBase {
     CompletionStage<Void> initFuture = controlConnection.init(false, false);
     factoryHelper.waitForCall(node1);
     waitForPendingAdminTasks();
-    assertThat(initFuture).isSuccess();
+    assertThatStage(initFuture).isSuccess();
     assertThat(controlConnection.channel()).isEqualTo(channel1);
     Mockito.verify(eventBus).fire(ChannelEvent.channelOpened(node1));
 
@@ -423,7 +424,7 @@ public class ControlConnectionTest extends ControlConnectionTestBase {
     CompletionStage<Void> initFuture = controlConnection.init(false, false);
     factoryHelper.waitForCall(node1);
     waitForPendingAdminTasks();
-    assertThat(initFuture).isSuccess();
+    assertThatStage(initFuture).isSuccess();
     assertThat(controlConnection.channel()).isEqualTo(channel1);
     Mockito.verify(eventBus).fire(ChannelEvent.channelOpened(node1));
 
@@ -461,9 +462,9 @@ public class ControlConnectionTest extends ControlConnectionTestBase {
     CompletionStage<Void> initFuture = controlConnection.init(false, false);
     factoryHelper.waitForCall(node1);
     waitForPendingAdminTasks();
-    assertThat(initFuture).isSuccess();
+    assertThatStage(initFuture).isSuccess();
     CompletionStage<Void> closeFuture = controlConnection.forceCloseAsync();
-    assertThat(closeFuture).isSuccess();
+    assertThatStage(closeFuture).isSuccess();
 
     // When
     controlConnection.reconnectNow();
@@ -485,14 +486,14 @@ public class ControlConnectionTest extends ControlConnectionTestBase {
     CompletionStage<Void> initFuture = controlConnection.init(false, false);
     factoryHelper.waitForCall(node1);
     waitForPendingAdminTasks();
-    assertThat(initFuture).isSuccess();
+    assertThatStage(initFuture).isSuccess();
 
     // When
     CompletionStage<Void> closeFuture = controlConnection.forceCloseAsync();
     waitForPendingAdminTasks();
 
     // Then
-    assertThat(closeFuture).isSuccess();
+    assertThatStage(closeFuture).isSuccess();
     Mockito.verify(channel1).forceClose();
 
     factoryHelper.verifyNoMoreCalls();
@@ -516,7 +517,7 @@ public class ControlConnectionTest extends ControlConnectionTestBase {
     CompletionStage<Void> initFuture = controlConnection.init(false, false);
     factoryHelper.waitForCall(node1);
     waitForPendingAdminTasks();
-    assertThat(initFuture).isSuccess();
+    assertThatStage(initFuture).isSuccess();
     assertThat(controlConnection.channel()).isEqualTo(channel1);
     Mockito.verify(eventBus).fire(ChannelEvent.channelOpened(node1));
 
@@ -563,7 +564,7 @@ public class ControlConnectionTest extends ControlConnectionTestBase {
     CompletionStage<Void> initFuture = controlConnection.init(false, false);
     factoryHelper.waitForCall(node1);
     waitForPendingAdminTasks();
-    assertThat(initFuture).isSuccess();
+    assertThatStage(initFuture).isSuccess();
     assertThat(controlConnection.channel()).isEqualTo(channel1);
     Mockito.verify(eventBus).fire(ChannelEvent.channelOpened(node1));
 

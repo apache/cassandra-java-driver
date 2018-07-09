@@ -16,6 +16,7 @@
 package com.datastax.oss.driver.internal.core.metadata.schema.queries;
 
 import static com.datastax.oss.driver.Assertions.assertThat;
+import static com.datastax.oss.driver.Assertions.assertThatStage;
 
 import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
 import com.datastax.oss.driver.api.core.config.DriverConfigProfile;
@@ -71,7 +72,7 @@ public class Cassandra21SchemaQueriesTest extends SchemaQueriesTest {
 
     channel.runPendingTasks();
 
-    assertThat(result)
+    assertThatStage(result)
         .isSuccess(
             rows -> {
               // Keyspace

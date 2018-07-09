@@ -16,6 +16,7 @@
 package com.datastax.oss.driver.internal.core.channel;
 
 import static com.datastax.oss.driver.Assertions.assertThat;
+import static com.datastax.oss.driver.Assertions.assertThatStage;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.timeout;
 
@@ -64,7 +65,7 @@ public class ChannelFactoryAvailableIdsTest extends ChannelFactoryTestBase {
     completeSimpleChannelInit();
 
     // Then
-    assertThat(channelFuture)
+    assertThatStage(channelFuture)
         .isSuccess(
             channel -> {
               assertThat(channel.getAvailableIds()).isEqualTo(128);

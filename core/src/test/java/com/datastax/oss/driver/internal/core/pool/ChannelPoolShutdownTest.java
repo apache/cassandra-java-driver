@@ -15,7 +15,7 @@
  */
 package com.datastax.oss.driver.internal.core.pool;
 
-import static com.datastax.oss.driver.Assertions.assertThat;
+import static com.datastax.oss.driver.Assertions.assertThatStage;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 
@@ -64,7 +64,7 @@ public class ChannelPoolShutdownTest extends ChannelPoolTestBase {
     waitForPendingAdminTasks();
     inOrder.verify(eventBus, times(3)).fire(ChannelEvent.channelOpened(node));
 
-    assertThat(poolFuture).isSuccess();
+    assertThatStage(poolFuture).isSuccess();
     ChannelPool pool = poolFuture.toCompletableFuture().get();
 
     // Simulate graceful shutdown on channel3
@@ -101,7 +101,7 @@ public class ChannelPoolShutdownTest extends ChannelPoolTestBase {
     ((ChannelPromise) channel2.closeFuture()).setSuccess();
     ((ChannelPromise) channel3.closeFuture()).setSuccess();
 
-    assertThat(closeFuture).isSuccess();
+    assertThatStage(closeFuture).isSuccess();
 
     factoryHelper.verifyNoMoreCalls();
   }
@@ -135,7 +135,7 @@ public class ChannelPoolShutdownTest extends ChannelPoolTestBase {
     factoryHelper.waitForCalls(node, 3);
     waitForPendingAdminTasks();
 
-    assertThat(poolFuture).isSuccess();
+    assertThatStage(poolFuture).isSuccess();
     ChannelPool pool = poolFuture.toCompletableFuture().get();
     inOrder.verify(eventBus, times(3)).fire(ChannelEvent.channelOpened(node));
 
@@ -173,7 +173,7 @@ public class ChannelPoolShutdownTest extends ChannelPoolTestBase {
     ((ChannelPromise) channel2.closeFuture()).setSuccess();
     ((ChannelPromise) channel3.closeFuture()).setSuccess();
 
-    assertThat(closeFuture).isSuccess();
+    assertThatStage(closeFuture).isSuccess();
 
     factoryHelper.verifyNoMoreCalls();
   }

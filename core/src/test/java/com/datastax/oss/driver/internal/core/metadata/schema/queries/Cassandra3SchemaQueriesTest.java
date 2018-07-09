@@ -16,6 +16,7 @@
 package com.datastax.oss.driver.internal.core.metadata.schema.queries;
 
 import static com.datastax.oss.driver.Assertions.assertThat;
+import static com.datastax.oss.driver.Assertions.assertThatStage;
 
 import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
 import com.datastax.oss.driver.api.core.config.DriverConfigProfile;
@@ -111,7 +112,7 @@ public class Cassandra3SchemaQueriesTest extends SchemaQueriesTest {
 
     channel.runPendingTasks();
 
-    assertThat(result)
+    assertThatStage(result)
         .isSuccess(
             rows -> {
               // Keyspace
@@ -229,7 +230,7 @@ public class Cassandra3SchemaQueriesTest extends SchemaQueriesTest {
 
     channel.runPendingTasks();
 
-    assertThat(result)
+    assertThatStage(result)
         .isSuccess(
             rows -> {
               assertThat(rows.columns().keySet()).containsOnly(KS1_ID);
@@ -303,7 +304,7 @@ public class Cassandra3SchemaQueriesTest extends SchemaQueriesTest {
 
     channel.runPendingTasks();
 
-    assertThat(result)
+    assertThatStage(result)
         .isSuccess(
             rows -> {
               assertThat(rows.tables().keySet()).containsOnly(KS_ID);

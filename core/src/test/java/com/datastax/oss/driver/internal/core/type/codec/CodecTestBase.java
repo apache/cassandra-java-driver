@@ -26,7 +26,7 @@ public class CodecTestBase<T> {
   protected TypeCodec<T> codec;
 
   protected String encode(T t, ProtocolVersion protocolVersion) {
-    assertThat(codec).isNotNull().as("Must set codec before calling this method");
+    assertThat(codec).as("Must set codec before calling this method").isNotNull();
     ByteBuffer bytes = codec.encode(t, protocolVersion);
     return (bytes == null) ? null : Bytes.toHexString(bytes);
   }
@@ -36,7 +36,7 @@ public class CodecTestBase<T> {
   }
 
   protected T decode(String hexString, ProtocolVersion protocolVersion) {
-    assertThat(codec).isNotNull().as("Must set codec before calling this method");
+    assertThat(codec).as("Must set codec before calling this method").isNotNull();
     ByteBuffer bytes = (hexString == null) ? null : Bytes.fromHexString(hexString);
     // Decode twice, to assert that decode leaves the input buffer in its original state
     codec.decode(bytes, protocolVersion);
@@ -48,12 +48,12 @@ public class CodecTestBase<T> {
   }
 
   protected String format(T t) {
-    assertThat(codec).isNotNull().as("Must set codec before calling this method");
+    assertThat(codec).as("Must set codec before calling this method").isNotNull();
     return codec.format(t);
   }
 
   protected T parse(String s) {
-    assertThat(codec).isNotNull().as("Must set codec before calling this method");
+    assertThat(codec).as("Must set codec before calling this method").isNotNull();
     return codec.parse(s);
   }
 }

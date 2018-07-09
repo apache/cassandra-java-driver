@@ -16,6 +16,7 @@
 package com.datastax.oss.driver.internal.core.session.throttling;
 
 import static com.datastax.oss.driver.Assertions.assertThat;
+import static com.datastax.oss.driver.Assertions.assertThatStage;
 
 import com.datastax.oss.driver.api.core.RequestThrottlingException;
 import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
@@ -94,7 +95,7 @@ public class RateLimitingRequestThrottlerTest {
     throttler.register(request);
 
     // Then
-    assertThat(request.started).isSuccess(wasDelayed -> assertThat(wasDelayed).isFalse());
+    assertThatStage(request.started).isSuccess(wasDelayed -> assertThat(wasDelayed).isFalse());
     assertThat(throttler.getStoredPermits()).isEqualTo(4);
     assertThat(throttler.getQueue()).isEmpty();
   }
@@ -113,7 +114,7 @@ public class RateLimitingRequestThrottlerTest {
     throttler.register(request);
 
     // Then
-    assertThat(request.started).isSuccess(wasDelayed -> assertThat(wasDelayed).isFalse());
+    assertThatStage(request.started).isSuccess(wasDelayed -> assertThat(wasDelayed).isFalse());
     assertThat(throttler.getStoredPermits()).isEqualTo(0);
     assertThat(throttler.getQueue()).isEmpty();
   }
@@ -132,7 +133,7 @@ public class RateLimitingRequestThrottlerTest {
     throttler.register(request);
 
     // Then
-    assertThat(request.started).isNotDone();
+    assertThatStage(request.started).isNotDone();
     assertThat(throttler.getStoredPermits()).isEqualTo(0);
     assertThat(throttler.getQueue()).containsExactly(request);
 
@@ -156,7 +157,7 @@ public class RateLimitingRequestThrottlerTest {
     throttler.register(request);
 
     // Then
-    assertThat(request.started)
+    assertThatStage(request.started)
         .isFailed(error -> assertThat(error).isInstanceOf(RequestThrottlingException.class));
   }
 
@@ -175,7 +176,7 @@ public class RateLimitingRequestThrottlerTest {
     throttler.signalTimeout(queued1);
 
     // Then
-    assertThat(queued2.started).isNotDone();
+    assertThatStage(queued2.started).isNotDone();
     assertThat(throttler.getStoredPermits()).isEqualTo(0);
     assertThat(throttler.getQueue()).containsExactly(queued2);
   }
@@ -189,10 +190,10 @@ public class RateLimitingRequestThrottlerTest {
 
     MockThrottled queued1 = new MockThrottled();
     throttler.register(queued1);
-    assertThat(queued1.started).isNotDone();
+    assertThatStage(queued1.started).isNotDone();
     MockThrottled queued2 = new MockThrottled();
     throttler.register(queued2);
-    assertThat(queued2.started).isNotDone();
+    assertThatStage(queued2.started).isNotDone();
     assertThat(throttler.getStoredPermits()).isEqualTo(0);
     assertThat(throttler.getQueue()).hasSize(2);
 
@@ -217,8 +218,8 @@ public class RateLimitingRequestThrottlerTest {
     task.run();
 
     // Then
-    assertThat(queued1.started).isSuccess(wasDelayed -> assertThat(wasDelayed).isTrue());
-    assertThat(queued2.started).isNotDone();
+    assertThatStage(queued1.started).isSuccess(wasDelayed -> assertThat(wasDelayed).isTrue());
+    assertThatStage(queued2.started).isNotDone();
     assertThat(throttler.getStoredPermits()).isEqualTo(0);
     assertThat(throttler.getQueue()).containsExactly(queued2);
     // task reschedules itself since it did not empty the queue
@@ -231,7 +232,7 @@ public class RateLimitingRequestThrottlerTest {
     task.run();
 
     // Then
-    assertThat(queued2.started).isSuccess(wasDelayed -> assertThat(wasDelayed).isTrue());
+    assertThatStage(queued2.started).isSuccess(wasDelayed -> assertThat(wasDelayed).isTrue());
     assertThat(throttler.getStoredPermits()).isEqualTo(0);
     assertThat(throttler.getQueue()).isEmpty();
     assertThat(adminExecutor.nextTask()).isNull();
@@ -273,14 +274,14 @@ public class RateLimitingRequestThrottlerTest {
     // Then
     MockThrottled queued = new MockThrottled();
     throttler.register(queued);
-    assertThat(queued.started).isNotDone();
+    assertThatStage(queued.started).isNotDone();
 
     // When
     clock.add(ONE_HUNDRED_MILLISECONDS);
     adminExecutor.nextTask().run();
 
     // Then
-    assertThat(queued.started).isSuccess(wasDelayed -> assertThat(wasDelayed).isTrue());
+    assertThatStage(queued.started).isSuccess(wasDelayed -> assertThat(wasDelayed).isTrue());
   }
 
   @Test
@@ -293,7 +294,7 @@ public class RateLimitingRequestThrottlerTest {
     for (int i = 0; i < 10; i++) {
       MockThrottled request = new MockThrottled();
       throttler.register(request);
-      assertThat(request.started).isNotDone();
+      assertThatStage(request.started).isNotDone();
       enqueued.add(request);
     }
 
@@ -302,7 +303,7 @@ public class RateLimitingRequestThrottlerTest {
 
     // Then
     for (MockThrottled request : enqueued) {
-      assertThat(request.started)
+      assertThatStage(request.started)
           .isFailed(error -> assertThat(error).isInstanceOf(RequestThrottlingException.class));
     }
 
@@ -311,7 +312,7 @@ public class RateLimitingRequestThrottlerTest {
     throttler.register(request);
 
     // Then
-    assertThat(request.started)
+    assertThatStage(request.started)
         .isFailed(error -> assertThat(error).isInstanceOf(RequestThrottlingException.class));
   }
 }

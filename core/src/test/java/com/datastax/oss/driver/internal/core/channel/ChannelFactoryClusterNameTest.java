@@ -16,6 +16,7 @@
 package com.datastax.oss.driver.internal.core.channel;
 
 import static com.datastax.oss.driver.Assertions.assertThat;
+import static com.datastax.oss.driver.Assertions.assertThatStage;
 
 import com.datastax.oss.driver.api.core.DefaultProtocolVersion;
 import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
@@ -45,7 +46,7 @@ public class ChannelFactoryClusterNameTest extends ChannelFactoryTestBase {
     writeInboundFrame(readOutboundFrame(), TestResponses.clusterNameResponse("mockClusterName"));
 
     // Then
-    assertThat(channelFuture).isSuccess();
+    assertThatStage(channelFuture).isSuccess();
     assertThat(factory.clusterName).isEqualTo("mockClusterName");
   }
 
@@ -64,7 +65,7 @@ public class ChannelFactoryClusterNameTest extends ChannelFactoryTestBase {
     // open a first connection that will define the cluster name
     writeInboundFrame(readOutboundFrame(), new Ready());
     writeInboundFrame(readOutboundFrame(), TestResponses.clusterNameResponse("mockClusterName"));
-    assertThat(channelFuture).isSuccess();
+    assertThatStage(channelFuture).isSuccess();
     // open a second connection that returns the same cluster name
     channelFuture =
         factory.connect(
@@ -73,7 +74,7 @@ public class ChannelFactoryClusterNameTest extends ChannelFactoryTestBase {
     writeInboundFrame(readOutboundFrame(), TestResponses.clusterNameResponse("mockClusterName"));
 
     // Then
-    assertThat(channelFuture).isSuccess();
+    assertThatStage(channelFuture).isSuccess();
 
     // When
     // open a third connection that returns a different cluster name
@@ -84,7 +85,7 @@ public class ChannelFactoryClusterNameTest extends ChannelFactoryTestBase {
     writeInboundFrame(readOutboundFrame(), TestResponses.clusterNameResponse("wrongClusterName"));
 
     // Then
-    assertThat(channelFuture)
+    assertThatStage(channelFuture)
         .isFailed(
             e ->
                 assertThat(e)

@@ -16,6 +16,7 @@
 package com.datastax.oss.driver.internal.core.channel;
 
 import static com.datastax.oss.driver.Assertions.assertThat;
+import static com.datastax.oss.driver.Assertions.assertThatStage;
 
 import com.datastax.oss.driver.api.core.DefaultProtocolVersion;
 import com.datastax.oss.driver.api.core.UnsupportedProtocolVersionException;
@@ -53,7 +54,7 @@ public class ChannelFactoryProtocolNegotiationTest extends ChannelFactoryTestBas
     completeSimpleChannelInit();
 
     // Then
-    assertThat(channelFuture)
+    assertThatStage(channelFuture)
         .isSuccess(channel -> assertThat(channel.getClusterName()).isEqualTo("mockClusterName"));
     assertThat(factory.protocolVersion).isEqualTo(DefaultProtocolVersion.V4);
   }
@@ -81,7 +82,7 @@ public class ChannelFactoryProtocolNegotiationTest extends ChannelFactoryTestBas
         requestFrame, new Error(errorCode, "Invalid or unsupported protocol version"));
 
     // Then
-    assertThat(channelFuture)
+    assertThatStage(channelFuture)
         .isFailed(
             e -> {
               assertThat(e)
@@ -113,7 +114,7 @@ public class ChannelFactoryProtocolNegotiationTest extends ChannelFactoryTestBas
     writeInboundFrame(requestFrame, TestResponses.clusterNameResponse("mockClusterName"));
 
     // Then
-    assertThat(channelFuture)
+    assertThatStage(channelFuture)
         .isSuccess(channel -> assertThat(channel.getClusterName()).isEqualTo("mockClusterName"));
     assertThat(factory.protocolVersion).isEqualTo(DefaultProtocolVersion.V4);
   }
@@ -148,7 +149,7 @@ public class ChannelFactoryProtocolNegotiationTest extends ChannelFactoryTestBas
 
     requestFrame = readOutboundFrame();
     writeInboundFrame(requestFrame, TestResponses.clusterNameResponse("mockClusterName"));
-    assertThat(channelFuture)
+    assertThatStage(channelFuture)
         .isSuccess(channel -> assertThat(channel.getClusterName()).isEqualTo("mockClusterName"));
     assertThat(factory.protocolVersion).isEqualTo(DefaultProtocolVersion.V3);
   }
@@ -185,7 +186,7 @@ public class ChannelFactoryProtocolNegotiationTest extends ChannelFactoryTestBas
         requestFrame, new Error(errorCode, "Invalid or unsupported protocol version"));
 
     // Then
-    assertThat(channelFuture)
+    assertThatStage(channelFuture)
         .isFailed(
             e -> {
               assertThat(e)

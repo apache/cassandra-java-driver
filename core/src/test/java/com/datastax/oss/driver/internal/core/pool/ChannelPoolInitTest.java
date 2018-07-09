@@ -16,6 +16,7 @@
 package com.datastax.oss.driver.internal.core.pool;
 
 import static com.datastax.oss.driver.Assertions.assertThat;
+import static com.datastax.oss.driver.Assertions.assertThatStage;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 
@@ -58,7 +59,7 @@ public class ChannelPoolInitTest extends ChannelPoolTestBase {
     factoryHelper.waitForCalls(node, 3);
     waitForPendingAdminTasks();
 
-    assertThat(poolFuture)
+    assertThatStage(poolFuture)
         .isSuccess(pool -> assertThat(pool.channels).containsOnly(channel1, channel2, channel3));
     Mockito.verify(eventBus, times(3)).fire(ChannelEvent.channelOpened(node));
 
@@ -83,7 +84,7 @@ public class ChannelPoolInitTest extends ChannelPoolTestBase {
     factoryHelper.waitForCalls(node, 3);
     waitForPendingAdminTasks();
 
-    assertThat(poolFuture).isSuccess(pool -> assertThat(pool.channels).isEmpty());
+    assertThatStage(poolFuture).isSuccess(pool -> assertThat(pool.channels).isEmpty());
     Mockito.verify(eventBus, never()).fire(ChannelEvent.channelOpened(node));
     Mockito.verify(nodeMetricUpdater, times(3))
         .incrementCounter(DefaultNodeMetric.CONNECTION_INIT_ERRORS, null);
@@ -108,7 +109,7 @@ public class ChannelPoolInitTest extends ChannelPoolTestBase {
 
     factoryHelper.waitForCalls(node, 3);
     waitForPendingAdminTasks();
-    assertThat(poolFuture)
+    assertThatStage(poolFuture)
         .isSuccess(
             pool -> {
               assertThat(pool.isInvalidKeyspace()).isTrue();
@@ -171,7 +172,7 @@ public class ChannelPoolInitTest extends ChannelPoolTestBase {
     factoryHelper.waitForCalls(node, 2);
     waitForPendingAdminTasks();
 
-    assertThat(poolFuture).isSuccess();
+    assertThatStage(poolFuture).isSuccess();
     ChannelPool pool = poolFuture.toCompletableFuture().get();
     assertThat(pool.channels).containsOnly(channel1);
     inOrder.verify(eventBus).fire(ChannelEvent.channelOpened(node));

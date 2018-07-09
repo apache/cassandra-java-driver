@@ -16,6 +16,7 @@
 package com.datastax.oss.driver.internal.core.cql;
 
 import static com.datastax.oss.driver.Assertions.assertThat;
+import static com.datastax.oss.driver.Assertions.assertThatStage;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -101,7 +102,7 @@ public class CqlPrepareHandlerTest {
       node1Behavior.setResponseSuccess(defaultFrameOf(simplePrepared()));
 
       // The future waits for the reprepare attempt on other nodes, so it's not done yet.
-      assertThat(prepareFuture).isNotDone();
+      assertThatStage(prepareFuture).isNotDone();
 
       // Should now reprepare on the remaining nodes:
       node2Behavior.verifyWrite();
@@ -112,7 +113,7 @@ public class CqlPrepareHandlerTest {
       node3Behavior.setWriteSuccess();
       node3Behavior.setResponseSuccess(defaultFrameOf(simplePrepared()));
 
-      assertThat(prepareFuture).isSuccess(CqlPrepareHandlerTest::assertMatchesSimplePrepared);
+      assertThatStage(prepareFuture).isSuccess(CqlPrepareHandlerTest::assertMatchesSimplePrepared);
     }
   }
 
@@ -142,7 +143,7 @@ public class CqlPrepareHandlerTest {
       node1Behavior.setResponseSuccess(defaultFrameOf(simplePrepared()));
 
       // The future should complete immediately:
-      assertThat(prepareFuture).isSuccess();
+      assertThatStage(prepareFuture).isSuccess();
 
       // And the other nodes should not be contacted:
       node2Behavior.verifyNoWrite();
@@ -178,7 +179,7 @@ public class CqlPrepareHandlerTest {
 
       // When the statement already existed, we don't prepare on other nodes, so the future should
       // complete immediately.
-      assertThat(prepareFuture)
+      assertThatStage(prepareFuture)
           .isSuccess(
               preparedStatement -> assertThat(preparedStatement).isSameAs(mockExistingStatement));
 
@@ -206,7 +207,7 @@ public class CqlPrepareHandlerTest {
                   "test")
               .handle();
 
-      assertThat(prepareFuture).isNotDone();
+      assertThatStage(prepareFuture).isNotDone();
 
       // Other nodes fail, the future should still succeed when all done
       node2Behavior.verifyWrite();
@@ -217,7 +218,7 @@ public class CqlPrepareHandlerTest {
       node3Behavior.verifyWrite();
       node3Behavior.setWriteFailure(new RuntimeException("mock error"));
 
-      assertThat(prepareFuture).isSuccess(CqlPrepareHandlerTest::assertMatchesSimplePrepared);
+      assertThatStage(prepareFuture).isSuccess(CqlPrepareHandlerTest::assertMatchesSimplePrepared);
     }
   }
 
@@ -251,12 +252,12 @@ public class CqlPrepareHandlerTest {
               .handle();
 
       // Success on node2, reprepare on node3
-      assertThat(prepareFuture).isNotDone();
+      assertThatStage(prepareFuture).isNotDone();
       node3Behavior.verifyWrite();
       node3Behavior.setWriteSuccess();
       node3Behavior.setResponseSuccess(defaultFrameOf(simplePrepared()));
 
-      assertThat(prepareFuture).isSuccess(CqlPrepareHandlerTest::assertMatchesSimplePrepared);
+      assertThatStage(prepareFuture).isSuccess(CqlPrepareHandlerTest::assertMatchesSimplePrepared);
     }
   }
 
@@ -290,7 +291,7 @@ public class CqlPrepareHandlerTest {
               .handle();
 
       // Success on node2, reprepare on node3
-      assertThat(prepareFuture)
+      assertThatStage(prepareFuture)
           .isFailed(
               error -> {
                 assertThat(error).isInstanceOf(OverloadedException.class);
@@ -330,7 +331,7 @@ public class CqlPrepareHandlerTest {
               .handle();
 
       // Success on node2, reprepare on node3
-      assertThat(prepareFuture)
+      assertThatStage(prepareFuture)
           .isFailed(
               error -> {
                 assertThat(error)
@@ -369,7 +370,7 @@ public class CqlPrepareHandlerTest {
           .write(any(Prepare.class), anyBoolean(), eq(payload), any(ResponseCallback.class));
       node2Behavior.verifyNoWrite();
       node3Behavior.verifyNoWrite();
-      assertThat(prepareFuture).isSuccess(CqlPrepareHandlerTest::assertMatchesSimplePrepared);
+      assertThatStage(prepareFuture).isSuccess(CqlPrepareHandlerTest::assertMatchesSimplePrepared);
     }
   }
 
@@ -402,7 +403,7 @@ public class CqlPrepareHandlerTest {
           .write(any(Prepare.class), anyBoolean(), eq(payload), any(ResponseCallback.class));
       Mockito.verify(node3Behavior.channel)
           .write(any(Prepare.class), anyBoolean(), eq(payload), any(ResponseCallback.class));
-      assertThat(prepareFuture).isSuccess(CqlPrepareHandlerTest::assertMatchesSimplePrepared);
+      assertThatStage(prepareFuture).isSuccess(CqlPrepareHandlerTest::assertMatchesSimplePrepared);
     }
   }
 
