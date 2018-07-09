@@ -21,7 +21,9 @@ import com.datastax.oss.driver.api.core.metadata.token.Token;
 import com.datastax.oss.driver.api.core.session.Request;
 import com.datastax.oss.protocol.internal.util.collection.NullAllowingImmutableMap;
 import edu.umd.cs.findbugs.annotations.NonNull;
+import edu.umd.cs.findbugs.annotations.Nullable;
 import java.nio.ByteBuffer;
+import java.time.Duration;
 import java.util.Map;
 
 /** A custom request that simply wraps an integer key and uses it as a parameter for a query. */
@@ -76,6 +78,12 @@ public class KeyRequest implements Request {
   @Override
   public Boolean isIdempotent() {
     return true;
+  }
+
+  @Nullable
+  @Override
+  public Duration getTimeout() {
+    return null;
   }
 
   @Override

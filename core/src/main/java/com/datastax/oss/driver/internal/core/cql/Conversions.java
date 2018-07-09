@@ -15,6 +15,7 @@
  */
 package com.datastax.oss.driver.internal.core.cql;
 
+import com.datastax.oss.driver.api.core.ConsistencyLevel;
 import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.CqlSession;
 import com.datastax.oss.driver.api.core.ProtocolVersion;
@@ -95,17 +96,22 @@ public class Conversions {
 
   public static Message toMessage(
       Statement<?> statement, DriverConfigProfile config, InternalDriverContext context) {
-    int consistency =
-        context
-            .consistencyLevelRegistry()
-            .fromName(config.getString(DefaultDriverOption.REQUEST_CONSISTENCY))
-            .getProtocolCode();
-    int pageSize = config.getInt(DefaultDriverOption.REQUEST_PAGE_SIZE);
-    int serialConsistency =
-        context
-            .consistencyLevelRegistry()
-            .fromName(config.getString(DefaultDriverOption.REQUEST_SERIAL_CONSISTENCY))
-            .getProtocolCode();
+    ConsistencyLevel consistency =
+        statement.getConsistencyLevel() != null
+            ? statement.getConsistencyLevel()
+            : context
+                .consistencyLevelRegistry()
+                .fromName(config.getString(DefaultDriverOption.REQUEST_CONSISTENCY));
+    int pageSize =
+        statement.getPageSize() > 0
+            ? statement.getPageSize()
+            : config.getInt(DefaultDriverOption.REQUEST_PAGE_SIZE);
+    ConsistencyLevel serialConsistency =
+        statement.getSerialConsistencyLevel() != null
+            ? statement.getSerialConsistencyLevel()
+            : context
+                .consistencyLevelRegistry()
+                .fromName(config.getString(DefaultDriverOption.REQUEST_SERIAL_CONSISTENCY));
     long timestamp = statement.getTimestamp();
     if (timestamp == Long.MIN_VALUE) {
       timestamp = context.timestampGenerator().next();
@@ -128,13 +134,13 @@ public class Conversions {
       }
       QueryOptions queryOptions =
           new QueryOptions(
-              consistency,
+              consistency.getProtocolCode(),
               encode(simpleStatement.getPositionalValues(), codecRegistry, protocolVersion),
               encode(simpleStatement.getNamedValues(), codecRegistry, protocolVersion),
               false,
               pageSize,
               statement.getPagingState(),
-              serialConsistency,
+              serialConsistency.getProtocolCode(),
               timestamp,
               (keyspace == null) ? null : keyspace.asInternal());
       return new Query(simpleStatement.getQuery(), queryOptions);
@@ -147,13 +153,13 @@ public class Conversions {
           boundStatement.getPreparedStatement().getResultSetDefinitions().size() > 0;
       QueryOptions queryOptions =
           new QueryOptions(
-              consistency,
+              consistency.getProtocolCode(),
               boundStatement.getValues(),
               Collections.emptyMap(),
               skipMetadata,
               pageSize,
               statement.getPagingState(),
-              serialConsistency,
+              serialConsistency.getProtocolCode(),
               timestamp,
               null);
       PreparedStatement preparedStatement = boundStatement.getPreparedStatement();
@@ -200,8 +206,8 @@ public class Conversions {
           batchStatement.getBatchType().getProtocolCode(),
           queriesOrIds,
           values,
-          consistency,
-          serialConsistency,
+          consistency.getProtocolCode(),
+          serialConsistency.getProtocolCode(),
           timestamp,
           (keyspace == null) ? null : keyspace.asInternal());
     } else {
@@ -348,7 +354,11 @@ public class Conversions {
         request.areBoundStatementsIdempotent(),
         context.codecRegistry(),
         context.protocolVersion(),
-        NullAllowingImmutableMap.copyOf(request.getCustomPayload()));
+        NullAllowingImmutableMap.copyOf(request.getCustomPayload()),
+        request.getPageSizeForBoundStatements(),
+        request.getConsistencyLevelForBoundStatements(),
+        request.getSerialConsistencyLevelForBoundStatements(),
+        request.getTimeout());
   }
 
   public static ColumnDefinitions toColumnDefinitions(

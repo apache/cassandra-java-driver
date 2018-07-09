@@ -15,6 +15,7 @@
  */
 package com.datastax.oss.driver.internal.core.cql;
 
+import com.datastax.oss.driver.api.core.ConsistencyLevel;
 import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.ProtocolVersion;
 import com.datastax.oss.driver.api.core.config.DriverConfigProfile;
@@ -28,6 +29,7 @@ import com.datastax.oss.driver.internal.core.util.RoutingKey;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import edu.umd.cs.findbugs.annotations.Nullable;
 import java.nio.ByteBuffer;
+import java.time.Duration;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
@@ -49,6 +51,10 @@ public class DefaultBoundStatement implements BoundStatement {
   private final boolean tracing;
   private final long timestamp;
   private final ByteBuffer pagingState;
+  private final int pageSize;
+  private final ConsistencyLevel consistencyLevel;
+  private final ConsistencyLevel serialConsistencyLevel;
+  private final Duration timeout;
   private final CodecRegistry codecRegistry;
   private final ProtocolVersion protocolVersion;
 
@@ -66,6 +72,10 @@ public class DefaultBoundStatement implements BoundStatement {
       boolean tracing,
       long timestamp,
       ByteBuffer pagingState,
+      int pageSize,
+      ConsistencyLevel consistencyLevel,
+      ConsistencyLevel serialConsistencyLevel,
+      Duration timeout,
       CodecRegistry codecRegistry,
       ProtocolVersion protocolVersion) {
     this.preparedStatement = preparedStatement;
@@ -81,6 +91,10 @@ public class DefaultBoundStatement implements BoundStatement {
     this.tracing = tracing;
     this.timestamp = timestamp;
     this.pagingState = pagingState;
+    this.pageSize = pageSize;
+    this.consistencyLevel = consistencyLevel;
+    this.serialConsistencyLevel = serialConsistencyLevel;
+    this.timeout = timeout;
     this.codecRegistry = codecRegistry;
     this.protocolVersion = protocolVersion;
   }
@@ -150,6 +164,10 @@ public class DefaultBoundStatement implements BoundStatement {
         tracing,
         timestamp,
         pagingState,
+        pageSize,
+        consistencyLevel,
+        serialConsistencyLevel,
+        timeout,
         codecRegistry,
         protocolVersion);
   }
@@ -188,6 +206,10 @@ public class DefaultBoundStatement implements BoundStatement {
         tracing,
         timestamp,
         pagingState,
+        pageSize,
+        consistencyLevel,
+        serialConsistencyLevel,
+        timeout,
         codecRegistry,
         protocolVersion);
   }
@@ -214,6 +236,10 @@ public class DefaultBoundStatement implements BoundStatement {
         tracing,
         timestamp,
         pagingState,
+        pageSize,
+        consistencyLevel,
+        serialConsistencyLevel,
+        timeout,
         codecRegistry,
         protocolVersion);
   }
@@ -247,6 +273,10 @@ public class DefaultBoundStatement implements BoundStatement {
         tracing,
         timestamp,
         pagingState,
+        pageSize,
+        consistencyLevel,
+        serialConsistencyLevel,
+        timeout,
         codecRegistry,
         protocolVersion);
   }
@@ -293,6 +323,10 @@ public class DefaultBoundStatement implements BoundStatement {
         tracing,
         timestamp,
         pagingState,
+        pageSize,
+        consistencyLevel,
+        serialConsistencyLevel,
+        timeout,
         codecRegistry,
         protocolVersion);
   }
@@ -319,6 +353,10 @@ public class DefaultBoundStatement implements BoundStatement {
         tracing,
         timestamp,
         pagingState,
+        pageSize,
+        consistencyLevel,
+        serialConsistencyLevel,
+        timeout,
         codecRegistry,
         protocolVersion);
   }
@@ -346,6 +384,10 @@ public class DefaultBoundStatement implements BoundStatement {
         tracing,
         timestamp,
         pagingState,
+        pageSize,
+        consistencyLevel,
+        serialConsistencyLevel,
+        timeout,
         codecRegistry,
         protocolVersion);
   }
@@ -372,6 +414,10 @@ public class DefaultBoundStatement implements BoundStatement {
         tracing,
         timestamp,
         pagingState,
+        pageSize,
+        consistencyLevel,
+        serialConsistencyLevel,
+        timeout,
         codecRegistry,
         protocolVersion);
   }
@@ -398,6 +444,10 @@ public class DefaultBoundStatement implements BoundStatement {
         newTracing,
         timestamp,
         pagingState,
+        pageSize,
+        consistencyLevel,
+        serialConsistencyLevel,
+        timeout,
         codecRegistry,
         protocolVersion);
   }
@@ -424,6 +474,41 @@ public class DefaultBoundStatement implements BoundStatement {
         tracing,
         newTimestamp,
         pagingState,
+        pageSize,
+        consistencyLevel,
+        serialConsistencyLevel,
+        timeout,
+        codecRegistry,
+        protocolVersion);
+  }
+
+  @Nullable
+  @Override
+  public Duration getTimeout() {
+    return timeout;
+  }
+
+  @NonNull
+  @Override
+  public BoundStatement setTimeout(@Nullable Duration newTimeout) {
+    return new DefaultBoundStatement(
+        preparedStatement,
+        variableDefinitions,
+        values,
+        configProfileName,
+        configProfile,
+        routingKeyspace,
+        routingKey,
+        routingToken,
+        customPayload,
+        idempotent,
+        tracing,
+        timestamp,
+        pagingState,
+        pageSize,
+        consistencyLevel,
+        serialConsistencyLevel,
+        newTimeout,
         codecRegistry,
         protocolVersion);
   }
@@ -450,6 +535,102 @@ public class DefaultBoundStatement implements BoundStatement {
         tracing,
         timestamp,
         newPagingState,
+        pageSize,
+        consistencyLevel,
+        serialConsistencyLevel,
+        timeout,
+        codecRegistry,
+        protocolVersion);
+  }
+
+  @Override
+  public int getPageSize() {
+    return pageSize;
+  }
+
+  @NonNull
+  @Override
+  public BoundStatement setPageSize(int newPageSize) {
+    return new DefaultBoundStatement(
+        preparedStatement,
+        variableDefinitions,
+        values,
+        configProfileName,
+        configProfile,
+        routingKeyspace,
+        routingKey,
+        routingToken,
+        customPayload,
+        idempotent,
+        tracing,
+        timestamp,
+        pagingState,
+        newPageSize,
+        consistencyLevel,
+        serialConsistencyLevel,
+        timeout,
+        codecRegistry,
+        protocolVersion);
+  }
+
+  @Nullable
+  @Override
+  public ConsistencyLevel getConsistencyLevel() {
+    return consistencyLevel;
+  }
+
+  @Override
+  public BoundStatement setConsistencyLevel(@Nullable ConsistencyLevel newConsistencyLevel) {
+    return new DefaultBoundStatement(
+        preparedStatement,
+        variableDefinitions,
+        values,
+        configProfileName,
+        configProfile,
+        routingKeyspace,
+        routingKey,
+        routingToken,
+        customPayload,
+        idempotent,
+        tracing,
+        timestamp,
+        pagingState,
+        pageSize,
+        newConsistencyLevel,
+        serialConsistencyLevel,
+        timeout,
+        codecRegistry,
+        protocolVersion);
+  }
+
+  @Nullable
+  @Override
+  public ConsistencyLevel getSerialConsistencyLevel() {
+    return serialConsistencyLevel;
+  }
+
+  @NonNull
+  @Override
+  public BoundStatement setSerialConsistencyLevel(
+      @Nullable ConsistencyLevel newSerialConsistencyLevel) {
+    return new DefaultBoundStatement(
+        preparedStatement,
+        variableDefinitions,
+        values,
+        configProfileName,
+        configProfile,
+        routingKeyspace,
+        routingKey,
+        routingToken,
+        customPayload,
+        idempotent,
+        tracing,
+        timestamp,
+        pagingState,
+        pageSize,
+        consistencyLevel,
+        newSerialConsistencyLevel,
+        timeout,
         codecRegistry,
         protocolVersion);
   }

@@ -157,7 +157,10 @@ public abstract class CqlPrepareHandlerBase implements Throttled {
         new Prepare(request.getQuery(), (keyspace == null) ? null : keyspace.asInternal());
     this.scheduler = context.nettyOptions().ioEventLoopGroup().next();
 
-    this.timeout = configProfile.getDuration(DefaultDriverOption.REQUEST_TIMEOUT);
+    this.timeout =
+        request.getTimeout() != null
+            ? request.getTimeout()
+            : configProfile.getDuration(DefaultDriverOption.REQUEST_TIMEOUT);
     this.timeoutFuture = scheduleTimeout(timeout);
     this.prepareOnAllNodes = configProfile.getBoolean(DefaultDriverOption.PREPARE_ON_ALL_NODES);
 
@@ -284,7 +287,10 @@ public abstract class CqlPrepareHandlerBase implements Throttled {
       LOG.warn(
           "Re-preparing already prepared query. "
               + "This is generally an anti-pattern and will likely affect performance. "
-              + "Consider preparing the statement only once. Query='{}'",
+              + "The cached version of the PreparedStatement will be returned, which may use "
+              + "different bound statement execution parameters (CL, timeout, etc.) from the "
+              + "current session.prepare call. Consider preparing the statement only once. "
+              + "Query='{}'",
           preparedStatement.getQuery());
 
       // The one object in the cache will get GCed once it's not referenced by the client anymore

@@ -172,6 +172,10 @@ public class SimpleStatementBuilder
         idempotent,
         tracing,
         timestamp,
-        pagingState);
+        pagingState,
+        pageSize,
+        consistencyLevel,
+        serialConsistencyLevel,
+        timeout);
   }
 }

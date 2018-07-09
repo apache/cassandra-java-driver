@@ -179,7 +179,10 @@ public abstract class CqlRequestHandlerBase implements Throttled {
     this.message = Conversions.toMessage(statement, configProfile, context);
     this.scheduler = context.nettyOptions().ioEventLoopGroup().next();
 
-    this.timeout = configProfile.getDuration(DefaultDriverOption.REQUEST_TIMEOUT);
+    this.timeout =
+        statement.getTimeout() != null
+            ? statement.getTimeout()
+            : configProfile.getDuration(DefaultDriverOption.REQUEST_TIMEOUT);
     this.timeoutFuture = scheduleTimeout(timeout);
 
     this.activeExecutionsCount = new AtomicInteger(1);

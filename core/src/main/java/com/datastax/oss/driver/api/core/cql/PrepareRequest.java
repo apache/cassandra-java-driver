@@ -15,6 +15,7 @@
  */
 package com.datastax.oss.driver.api.core.cql;
 
+import com.datastax.oss.driver.api.core.ConsistencyLevel;
 import com.datastax.oss.driver.api.core.CqlSession;
 import com.datastax.oss.driver.api.core.config.DriverConfigProfile;
 import com.datastax.oss.driver.api.core.retry.RetryPolicy;
@@ -110,4 +111,24 @@ public interface PrepareRequest extends Request {
    */
   @Nullable
   Boolean areBoundStatementsIdempotent();
+
+  /**
+   * The page size to use for the bound statements that will be created from the prepared statement.
+   * If the value is 0 or negative, the default value will be used from the configuration.
+   */
+  int getPageSizeForBoundStatements();
+
+  /**
+   * The consistency level to use for the bound statements that will be created from the prepared
+   * statement or {@link null} to use the default value from the configuration.
+   */
+  @Nullable
+  ConsistencyLevel getConsistencyLevelForBoundStatements();
+
+  /**
+   * The serial consistency level to use for the bound statements that will be created from the
+   * prepared statement or {@code null} to use the default value from the configuration.
+   */
+  @Nullable
+  ConsistencyLevel getSerialConsistencyLevelForBoundStatements();
 }

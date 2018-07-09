@@ -278,6 +278,10 @@ public class StatementSizeTest {
         false,
         -1,
         null,
+        Integer.MIN_VALUE,
+        null,
+        null,
+        null,
         CodecRegistry.DEFAULT,
         DefaultProtocolVersion.V5);
   }

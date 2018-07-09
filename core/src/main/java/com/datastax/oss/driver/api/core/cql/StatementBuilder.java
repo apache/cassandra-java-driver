@@ -15,6 +15,7 @@
  */
 package com.datastax.oss.driver.api.core.cql;
 
+import com.datastax.oss.driver.api.core.ConsistencyLevel;
 import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.config.DriverConfigProfile;
 import com.datastax.oss.driver.api.core.metadata.token.Token;
@@ -22,6 +23,7 @@ import com.datastax.oss.protocol.internal.util.collection.NullAllowingImmutableM
 import edu.umd.cs.findbugs.annotations.NonNull;
 import edu.umd.cs.findbugs.annotations.Nullable;
 import java.nio.ByteBuffer;
+import java.time.Duration;
 import java.util.Map;
 import net.jcip.annotations.NotThreadSafe;
 
@@ -48,6 +50,10 @@ public abstract class StatementBuilder<T extends StatementBuilder<T, S>, S exten
   protected boolean tracing;
   protected long timestamp = Long.MIN_VALUE;
   @Nullable protected ByteBuffer pagingState;
+  protected int pageSize = Integer.MIN_VALUE;
+  @Nullable protected ConsistencyLevel consistencyLevel;
+  @Nullable protected ConsistencyLevel serialConsistencyLevel;
+  @Nullable protected Duration timeout;
 
   protected StatementBuilder() {
     // nothing to do
@@ -62,6 +68,10 @@ public abstract class StatementBuilder<T extends StatementBuilder<T, S>, S exten
     this.tracing = template.isTracing();
     this.timestamp = template.getTimestamp();
     this.pagingState = template.getPagingState();
+    this.pageSize = template.getPageSize();
+    this.consistencyLevel = template.getConsistencyLevel();
+    this.serialConsistencyLevel = template.getSerialConsistencyLevel();
+    this.timeout = template.getTimeout();
   }
 
   /** @see Statement#setConfigProfileName(String) */
@@ -152,6 +162,34 @@ public abstract class StatementBuilder<T extends StatementBuilder<T, S>, S exten
   @NonNull
   public T withPagingState(@Nullable ByteBuffer pagingState) {
     this.pagingState = pagingState;
+    return self;
+  }
+
+  /** @see Statement#setPageSize(int) */
+  @NonNull
+  public T withPageSize(int pageSize) {
+    this.pageSize = pageSize;
+    return self;
+  }
+
+  /** @see Statement#setConsistencyLevel(ConsistencyLevel) */
+  @NonNull
+  public T withConsistencyLevel(@Nullable ConsistencyLevel consistencyLevel) {
+    this.consistencyLevel = consistencyLevel;
+    return self;
+  }
+
+  /** @see Statement#setSerialConsistencyLevel(ConsistencyLevel) */
+  @NonNull
+  public T withSerialConsistencyLevel(@Nullable ConsistencyLevel serialConsistencyLevel) {
+    this.serialConsistencyLevel = serialConsistencyLevel;
+    return self;
+  }
+
+  /** @see Statement#setTimeout(Duration) */
+  @NonNull
+  public T withTimeout(@Nullable Duration timeout) {
+    this.timeout = timeout;
     return self;
   }
 

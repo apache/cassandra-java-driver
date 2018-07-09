@@ -15,8 +15,10 @@
  */
 package com.datastax.oss.driver.api.core.cql;
 
+import com.datastax.oss.driver.api.core.ConsistencyLevel;
 import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.CqlSession;
+import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
 import com.datastax.oss.driver.api.core.config.DriverConfigProfile;
 import com.datastax.oss.driver.api.core.context.DriverContext;
 import com.datastax.oss.driver.api.core.metadata.token.Token;
@@ -28,6 +30,7 @@ import com.datastax.oss.driver.internal.core.util.RoutingKey;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import edu.umd.cs.findbugs.annotations.Nullable;
 import java.nio.ByteBuffer;
+import java.time.Duration;
 import java.util.Map;
 import java.util.concurrent.CompletionStage;
 
@@ -196,6 +199,17 @@ public interface Statement<T extends Statement<T>> extends Request {
   T setTimestamp(long newTimestamp);
 
   /**
+   * Sets how long to wait for this request to complete. This is a global limit on the duration of a
+   * session.execute() call, including any retries the driver might do.
+   *
+   * @param newTimeout the timeout to use, or {@code null} to use the default value defined in the
+   *     configuration.
+   * @see DefaultDriverOption#REQUEST_TIMEOUT
+   */
+  @NonNull
+  T setTimeout(@Nullable Duration newTimeout);
+
+  /**
    * Returns the paging state to send with the statement, or {@code null} if this statement has no
    * paging state.
    *
@@ -224,6 +238,65 @@ public interface Statement<T extends Statement<T>> extends Request {
    */
   @NonNull
   T setPagingState(@Nullable ByteBuffer newPagingState);
+
+  /**
+   * Returns the page size to use for the statement.
+   *
+   * @return the set page size, otherwise 0 or a negative value to use the default value defined in
+   *     the configuration.
+   * @see DefaultDriverOption#REQUEST_PAGE_SIZE
+   */
+  int getPageSize();
+
+  /**
+   * Configures how many rows will be retrieved simultaneously in a single network roundtrip (the
+   * goal being to avoid loading too many results in memory at the same time).
+   *
+   * @param newPageSize the page size to use, set to 0 or a negative value to use the default value
+   *     defined in the configuration.
+   * @see DefaultDriverOption#REQUEST_PAGE_SIZE
+   */
+  @NonNull
+  T setPageSize(int newPageSize);
+
+  /**
+   * Returns the {@link ConsistencyLevel} to use for the statement.
+   *
+   * @return the set consistency, or {@code null} to use the default value defined in the
+   *     configuration.
+   * @see DefaultDriverOption#REQUEST_CONSISTENCY
+   */
+  @Nullable
+  ConsistencyLevel getConsistencyLevel();
+
+  /**
+   * Sets the {@link ConsistencyLevel} to use for this statement.
+   *
+   * @param newConsistencyLevel the consistency level to use, or null to use the default value
+   *     defined in the configuration.
+   * @see DefaultDriverOption#REQUEST_CONSISTENCY
+   */
+  T setConsistencyLevel(@Nullable ConsistencyLevel newConsistencyLevel);
+
+  /**
+   * Returns the serial {@link ConsistencyLevel} to use for the statement.
+   *
+   * @return the set serial consistency, or {@code null} to use the default value defined in the
+   *     configuration.
+   * @see DefaultDriverOption#REQUEST_SERIAL_CONSISTENCY
+   */
+  @Nullable
+  ConsistencyLevel getSerialConsistencyLevel();
+
+  /**
+   * Sets the serial {@link ConsistencyLevel} to use for this statement.
+   *
+   * @param newSerialConsistencyLevel the serial consistency level to use, or null to use the
+   *     default value defined in the configuration.
+   * @see DefaultDriverOption#REQUEST_SERIAL_CONSISTENCY
+   */
+  @NonNull
+  T setSerialConsistencyLevel(@Nullable ConsistencyLevel newSerialConsistencyLevel);
 
   /**
    * Calculates the approximate size in bytes that the statement will have when encoded.

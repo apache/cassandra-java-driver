@@ -24,6 +24,7 @@ import com.datastax.oss.driver.api.core.metadata.token.Token;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import edu.umd.cs.findbugs.annotations.Nullable;
 import java.nio.ByteBuffer;
+import java.time.Duration;
 import java.util.Map;
 
 /**
@@ -148,6 +149,17 @@ public interface Request {
    */
   @Nullable
   Boolean isIdempotent();
+
+  /**
+   * How long to wait for this request to complete. This is a global limit on the duration of a
+   * session.execute() call, including any retries the driver might do.
+   *
+   * @return the set duration, or {@code null} to use the default value defined in the
+   *     configuration.
+   * @see DefaultDriverOption#REQUEST_TIMEOUT
+   */
+  @Nullable
+  Duration getTimeout();
 
   /**
    * Whether tracing information should be recorded for this request.

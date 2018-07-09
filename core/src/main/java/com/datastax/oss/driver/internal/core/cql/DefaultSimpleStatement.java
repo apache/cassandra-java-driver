@@ -15,6 +15,7 @@
  */
 package com.datastax.oss.driver.internal.core.cql;
 
+import com.datastax.oss.driver.api.core.ConsistencyLevel;
 import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.config.DriverConfigProfile;
 import com.datastax.oss.driver.api.core.cql.SimpleStatement;
@@ -24,6 +25,7 @@ import com.datastax.oss.protocol.internal.util.collection.NullAllowingImmutableM
 import edu.umd.cs.findbugs.annotations.NonNull;
 import edu.umd.cs.findbugs.annotations.Nullable;
 import java.nio.ByteBuffer;
+import java.time.Duration;
 import java.util.List;
 import java.util.Map;
 import net.jcip.annotations.Immutable;
@@ -46,6 +48,10 @@ public class DefaultSimpleStatement implements SimpleStatement {
   private final boolean tracing;
   private final long timestamp;
   private final ByteBuffer pagingState;
+  private final int pageSize;
+  private final ConsistencyLevel consistencyLevel;
+  private final ConsistencyLevel serialConsistencyLevel;
+  private final Duration timeout;
 
   /** @see SimpleStatement#builder(String) */
   public DefaultSimpleStatement(
@@ -62,7 +68,11 @@ public class DefaultSimpleStatement implements SimpleStatement {
       Boolean idempotent,
       boolean tracing,
       long timestamp,
-      ByteBuffer pagingState) {
+      ByteBuffer pagingState,
+      int pageSize,
+      ConsistencyLevel consistencyLevel,
+      ConsistencyLevel serialConsistencyLevel,
+      Duration timeout) {
     if (!positionalValues.isEmpty() && !namedValues.isEmpty()) {
       throw new IllegalArgumentException("Can't have both positional and named values");
     }
@@ -80,6 +90,10 @@ public class DefaultSimpleStatement implements SimpleStatement {
     this.tracing = tracing;
     this.timestamp = timestamp;
     this.pagingState = pagingState;
+    this.pageSize = pageSize;
+    this.consistencyLevel = consistencyLevel;
+    this.serialConsistencyLevel = serialConsistencyLevel;
+    this.timeout = timeout;
   }
 
   @NonNull
@@ -105,7 +119,11 @@ public class DefaultSimpleStatement implements SimpleStatement {
         idempotent,
         tracing,
         timestamp,
-        pagingState);
+        pagingState,
+        pageSize,
+        consistencyLevel,
+        serialConsistencyLevel,
+        timeout);
   }
 
   @NonNull
@@ -131,7 +149,11 @@ public class DefaultSimpleStatement implements SimpleStatement {
         idempotent,
         tracing,
         timestamp,
-        pagingState);
+        pagingState,
+        pageSize,
+        consistencyLevel,
+        serialConsistencyLevel,
+        timeout);
   }
 
   @NonNull
@@ -157,7 +179,11 @@ public class DefaultSimpleStatement implements SimpleStatement {
         idempotent,
         tracing,
         timestamp,
-        pagingState);
+        pagingState,
+        pageSize,
+        consistencyLevel,
+        serialConsistencyLevel,
+        timeout);
   }
 
   @Nullable
@@ -183,7 +209,11 @@ public class DefaultSimpleStatement implements SimpleStatement {
         idempotent,
         tracing,
         timestamp,
-        pagingState);
+        pagingState,
+        pageSize,
+        consistencyLevel,
+        serialConsistencyLevel,
+        timeout);
   }
 
   @Nullable
@@ -209,7 +239,11 @@ public class DefaultSimpleStatement implements SimpleStatement {
         idempotent,
         tracing,
         timestamp,
-        pagingState);
+        pagingState,
+        pageSize,
+        consistencyLevel,
+        serialConsistencyLevel,
+        timeout);
   }
 
   @Nullable
@@ -235,7 +269,11 @@ public class DefaultSimpleStatement implements SimpleStatement {
         idempotent,
         tracing,
         timestamp,
-        pagingState);
+        pagingState,
+        pageSize,
+        consistencyLevel,
+        serialConsistencyLevel,
+        timeout);
   }
 
   @Nullable
@@ -261,7 +299,11 @@ public class DefaultSimpleStatement implements SimpleStatement {
         idempotent,
         tracing,
         timestamp,
-        pagingState);
+        pagingState,
+        pageSize,
+        consistencyLevel,
+        serialConsistencyLevel,
+        timeout);
   }
 
   @Nullable
@@ -287,7 +329,11 @@ public class DefaultSimpleStatement implements SimpleStatement {
         idempotent,
         tracing,
         timestamp,
-        pagingState);
+        pagingState,
+        pageSize,
+        consistencyLevel,
+        serialConsistencyLevel,
+        timeout);
   }
 
   @Nullable
@@ -313,7 +359,11 @@ public class DefaultSimpleStatement implements SimpleStatement {
         idempotent,
         tracing,
         timestamp,
-        pagingState);
+        pagingState,
+        pageSize,
+        consistencyLevel,
+        serialConsistencyLevel,
+        timeout);
   }
 
   @NonNull
@@ -339,7 +389,11 @@ public class DefaultSimpleStatement implements SimpleStatement {
         idempotent,
         tracing,
         timestamp,
-        pagingState);
+        pagingState,
+        pageSize,
+        consistencyLevel,
+        serialConsistencyLevel,
+        timeout);
   }
 
   @Nullable
@@ -365,7 +419,11 @@ public class DefaultSimpleStatement implements SimpleStatement {
         newIdempotence,
         tracing,
         timestamp,
-        pagingState);
+        pagingState,
+        pageSize,
+        consistencyLevel,
+        serialConsistencyLevel,
+        timeout);
   }
 
   @Override
@@ -390,7 +448,11 @@ public class DefaultSimpleStatement implements SimpleStatement {
         idempotent,
         newTracing,
         timestamp,
-        pagingState);
+        pagingState,
+        pageSize,
+        consistencyLevel,
+        serialConsistencyLevel,
+        timeout);
   }
 
   @Override
@@ -415,7 +477,41 @@ public class DefaultSimpleStatement implements SimpleStatement {
         idempotent,
         tracing,
         newTimestamp,
-        pagingState);
+        pagingState,
+        pageSize,
+        consistencyLevel,
+        serialConsistencyLevel,
+        timeout);
+  }
+
+  @Nullable
+  @Override
+  public Duration getTimeout() {
+    return timeout;
+  }
+
+  @NonNull
+  @Override
+  public SimpleStatement setTimeout(@Nullable Duration newTimeout) {
+    return new DefaultSimpleStatement(
+        query,
+        positionalValues,
+        namedValues,
+        configProfileName,
+        configProfile,
+        keyspace,
+        routingKeyspace,
+        routingKey,
+        routingToken,
+        customPayload,
+        idempotent,
+        tracing,
+        timestamp,
+        pagingState,
+        pageSize,
+        consistencyLevel,
+        serialConsistencyLevel,
+        newTimeout);
   }
 
   @Nullable
@@ -441,7 +537,100 @@ public class DefaultSimpleStatement implements SimpleStatement {
         idempotent,
         tracing,
         timestamp,
-        newPagingState);
+        newPagingState,
+        pageSize,
+        consistencyLevel,
+        serialConsistencyLevel,
+        timeout);
+  }
+
+  @Override
+  public int getPageSize() {
+    return pageSize;
+  }
+
+  @NonNull
+  @Override
+  public SimpleStatement setPageSize(int newPageSize) {
+    return new DefaultSimpleStatement(
+        query,
+        positionalValues,
+        namedValues,
+        configProfileName,
+        configProfile,
+        keyspace,
+        routingKeyspace,
+        routingKey,
+        routingToken,
+        customPayload,
+        idempotent,
+        tracing,
+        timestamp,
+        pagingState,
+        newPageSize,
+        consistencyLevel,
+        serialConsistencyLevel,
+        timeout);
+  }
+
+  @Nullable
+  @Override
+  public ConsistencyLevel getConsistencyLevel() {
+    return consistencyLevel;
+  }
+
+  @Override
+  public SimpleStatement setConsistencyLevel(@Nullable ConsistencyLevel newConsistencyLevel) {
+    return new DefaultSimpleStatement(
+        query,
+        positionalValues,
+        namedValues,
+        configProfileName,
+        configProfile,
+        keyspace,
+        routingKeyspace,
+        routingKey,
+        routingToken,
+        customPayload,
+        idempotent,
+        tracing,
+        timestamp,
+        pagingState,
+        pageSize,
+        newConsistencyLevel,
+        serialConsistencyLevel,
+        timeout);
+  }
+
+  @Nullable
+  @Override
+  public ConsistencyLevel getSerialConsistencyLevel() {
+    return serialConsistencyLevel;
+  }
+
+  @NonNull
+  @Override
+  public SimpleStatement setSerialConsistencyLevel(
+      @Nullable ConsistencyLevel newSerialConsistencyLevel) {
+    return new DefaultSimpleStatement(
+        query,
+        positionalValues,
+        namedValues,
+        configProfileName,
+        configProfile,
+        keyspace,
+        routingKeyspace,
+        routingKey,
+        routingToken,
+        customPayload,
+        idempotent,
+        tracing,
+        timestamp,
+        pagingState,
+        pageSize,
+        consistencyLevel,
+        newSerialConsistencyLevel,
+        timeout);
   }
 
   public static Map<CqlIdentifier, Object> wrapKeys(Map<String, Object> namedValues) {
