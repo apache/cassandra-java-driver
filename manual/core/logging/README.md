@@ -73,8 +73,9 @@ test). This is an anti-pattern that should be avoided in production (see
 'request.warn-if-set-keyspace' in the configuration).
 
 WARN  c.d.o.d.i.c.c.CqlPrepareHandlerBase - Re-preparing already prepared query. This is generally
-an anti-pattern and will likely affect performance. Consider preparing the statement only once.
-Query='...'
+an anti-pattern and will likely affect performance. The cached version of the PreparedStatement
+will be returned, which may use different bound statement execution parameters (CL, timeout, etc.)
+from the current session.prepare call. Consider preparing the statement only once. Query='...'
 ```
   
 #### INFO

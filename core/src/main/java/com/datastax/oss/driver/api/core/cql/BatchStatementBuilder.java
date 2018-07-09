@@ -142,6 +142,10 @@ public class BatchStatementBuilder extends StatementBuilder<BatchStatementBuilde
         idempotent,
         tracing,
         timestamp,
-        pagingState);
+        pagingState,
+        pageSize,
+        consistencyLevel,
+        serialConsistencyLevel,
+        timeout);
   }
 }

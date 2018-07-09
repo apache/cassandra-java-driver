@@ -15,6 +15,7 @@
  */
 package com.datastax.oss.driver.internal.core.cql;
 
+import com.datastax.oss.driver.api.core.ConsistencyLevel;
 import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.CqlSession;
 import com.datastax.oss.driver.api.core.config.DriverConfigProfile;
@@ -24,6 +25,7 @@ import com.datastax.oss.driver.api.core.metadata.token.Token;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import edu.umd.cs.findbugs.annotations.Nullable;
 import java.nio.ByteBuffer;
+import java.time.Duration;
 import java.util.Map;
 import net.jcip.annotations.Immutable;
 
@@ -40,12 +42,17 @@ import net.jcip.annotations.Immutable;
  *         <li>will use the same configuration profile (or configuration profile name) as the {@code
  *             SimpleStatement};
  *         <li>will use the same custom payload as the {@code SimpleStatement};
+ *         <li>will use the same timeout as the {@code SimpleStatement}.
  *       </ul>
  *   <li>any bound statement created from the prepared statement:
  *       <ul>
  *         <li>will use the same configuration profile (or configuration profile name) as the {@code
  *             SimpleStatement};
  *         <li>will use the same custom payload as the {@code SimpleStatement};
+ *         <li>will use the same page size as the {@code SimpleStatement};
+ *         <li>will use the same consistency level as the {@code SimpleStatement};
+ *         <li>will use the same serial consistency level as the {@code SimpleStatement};
+ *         <li>will use the same timeout as the {@code SimpleStatement};
  *         <li>will be idempotent if and only if the {@code SimpleStatement} was idempotent.
  *       </ul>
  * </ul>
@@ -119,6 +126,12 @@ public class DefaultPrepareRequest implements PrepareRequest {
 
   @Nullable
   @Override
+  public Duration getTimeout() {
+    return statement.getTimeout();
+  }
+
+  @Nullable
+  @Override
   public String getConfigProfileNameForBoundStatements() {
     return statement.getConfigProfileName();
   }
@@ -139,5 +152,22 @@ public class DefaultPrepareRequest implements PrepareRequest {
   @Override
   public Boolean areBoundStatementsIdempotent() {
     return statement.isIdempotent();
+  }
+
+  @Override
+  public int getPageSizeForBoundStatements() {
+    return statement.getPageSize();
+  }
+
+  @Nullable
+  @Override
+  public ConsistencyLevel getConsistencyLevelForBoundStatements() {
+    return statement.getConsistencyLevel();
+  }
+
+  @Nullable
+  @Override
+  public ConsistencyLevel getSerialConsistencyLevelForBoundStatements() {
+    return statement.getSerialConsistencyLevel();
   }
 }

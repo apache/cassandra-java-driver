@@ -130,6 +130,10 @@ public class BoundStatementBuilder extends StatementBuilder<BoundStatementBuilde
         tracing,
         timestamp,
         pagingState,
+        pageSize,
+        consistencyLevel,
+        serialConsistencyLevel,
+        timeout,
         codecRegistry,
         protocolVersion);
   }

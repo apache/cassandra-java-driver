@@ -15,6 +15,7 @@
  */
 package com.datastax.oss.driver.internal.core.cql;
 
+import com.datastax.oss.driver.api.core.ConsistencyLevel;
 import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.ProtocolVersion;
 import com.datastax.oss.driver.api.core.config.DriverConfigProfile;
@@ -27,6 +28,7 @@ import com.datastax.oss.driver.internal.core.data.ValuesHelper;
 import com.datastax.oss.driver.internal.core.session.RepreparePayload;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import java.nio.ByteBuffer;
+import java.time.Duration;
 import java.util.List;
 import java.util.Map;
 import net.jcip.annotations.ThreadSafe;
@@ -46,6 +48,10 @@ public class DefaultPreparedStatement implements PreparedStatement {
   private final DriverConfigProfile configProfile;
   private final Map<String, ByteBuffer> customPayloadForBoundStatements;
   private final Boolean idempotent;
+  private final int pageSize;
+  private final ConsistencyLevel consistencyLevel;
+  private final ConsistencyLevel serialConsistencyLevel;
+  private final Duration timeout;
 
   public DefaultPreparedStatement(
       ByteBuffer id,
@@ -61,7 +67,11 @@ public class DefaultPreparedStatement implements PreparedStatement {
       Boolean idempotent,
       CodecRegistry codecRegistry,
       ProtocolVersion protocolVersion,
-      Map<String, ByteBuffer> customPayloadForPrepare) {
+      Map<String, ByteBuffer> customPayloadForPrepare,
+      int pageSize,
+      ConsistencyLevel consistencyLevel,
+      ConsistencyLevel serialConsistencyLevel,
+      Duration timeout) {
     this.id = id;
     this.partitionKeyIndices = partitionKeyIndices;
     // It's important that we keep a reference to this object, so that it only gets evicted from
@@ -75,6 +85,10 @@ public class DefaultPreparedStatement implements PreparedStatement {
     this.idempotent = idempotent;
     this.codecRegistry = codecRegistry;
     this.protocolVersion = protocolVersion;
+    this.pageSize = pageSize;
+    this.consistencyLevel = consistencyLevel;
+    this.serialConsistencyLevel = serialConsistencyLevel;
+    this.timeout = timeout;
   }
 
   @NonNull
@@ -138,6 +152,10 @@ public class DefaultPreparedStatement implements PreparedStatement {
         false,
         Long.MIN_VALUE,
         null,
+        pageSize,
+        consistencyLevel,
+        serialConsistencyLevel,
+        timeout,
         codecRegistry,
         protocolVersion);
   }

@@ -15,6 +15,7 @@
  */
 package com.datastax.oss.driver.internal.core.cql;
 
+import com.datastax.oss.driver.api.core.ConsistencyLevel;
 import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.config.DriverConfigProfile;
 import com.datastax.oss.driver.api.core.cql.BatchStatement;
@@ -27,6 +28,7 @@ import com.datastax.oss.driver.shaded.guava.common.collect.Iterables;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import edu.umd.cs.findbugs.annotations.Nullable;
 import java.nio.ByteBuffer;
+import java.time.Duration;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -48,6 +50,10 @@ public class DefaultBatchStatement implements BatchStatement {
   private final boolean tracing;
   private final long timestamp;
   private final ByteBuffer pagingState;
+  private final int pageSize;
+  private final ConsistencyLevel consistencyLevel;
+  private final ConsistencyLevel serialConsistencyLevel;
+  private final Duration timeout;
 
   public DefaultBatchStatement(
       BatchType batchType,
@@ -62,7 +68,11 @@ public class DefaultBatchStatement implements BatchStatement {
       Boolean idempotent,
       boolean tracing,
       long timestamp,
-      ByteBuffer pagingState) {
+      ByteBuffer pagingState,
+      int pageSize,
+      ConsistencyLevel consistencyLevel,
+      ConsistencyLevel serialConsistencyLevel,
+      Duration timeout) {
     this.batchType = batchType;
     this.statements = ImmutableList.copyOf(statements);
     this.configProfileName = configProfileName;
@@ -76,6 +86,10 @@ public class DefaultBatchStatement implements BatchStatement {
     this.tracing = tracing;
     this.timestamp = timestamp;
     this.pagingState = pagingState;
+    this.pageSize = pageSize;
+    this.consistencyLevel = consistencyLevel;
+    this.serialConsistencyLevel = serialConsistencyLevel;
+    this.timeout = timeout;
   }
 
   @NonNull
@@ -100,7 +114,11 @@ public class DefaultBatchStatement implements BatchStatement {
         idempotent,
         tracing,
         timestamp,
-        pagingState);
+        pagingState,
+        pageSize,
+        consistencyLevel,
+        serialConsistencyLevel,
+        timeout);
   }
 
   @NonNull
@@ -119,7 +137,11 @@ public class DefaultBatchStatement implements BatchStatement {
         idempotent,
         tracing,
         timestamp,
-        pagingState);
+        pagingState,
+        pageSize,
+        consistencyLevel,
+        serialConsistencyLevel,
+        timeout);
   }
 
   @NonNull
@@ -142,7 +164,11 @@ public class DefaultBatchStatement implements BatchStatement {
           idempotent,
           tracing,
           timestamp,
-          pagingState);
+          pagingState,
+          pageSize,
+          consistencyLevel,
+          serialConsistencyLevel,
+          timeout);
     }
   }
 
@@ -169,7 +195,11 @@ public class DefaultBatchStatement implements BatchStatement {
           idempotent,
           tracing,
           timestamp,
-          pagingState);
+          pagingState,
+          pageSize,
+          consistencyLevel,
+          serialConsistencyLevel,
+          timeout);
     }
   }
 
@@ -194,7 +224,11 @@ public class DefaultBatchStatement implements BatchStatement {
         idempotent,
         tracing,
         timestamp,
-        pagingState);
+        pagingState,
+        pageSize,
+        consistencyLevel,
+        serialConsistencyLevel,
+        timeout);
   }
 
   @NonNull
@@ -224,7 +258,97 @@ public class DefaultBatchStatement implements BatchStatement {
         idempotent,
         tracing,
         timestamp,
-        newPagingState);
+        newPagingState,
+        pageSize,
+        consistencyLevel,
+        serialConsistencyLevel,
+        timeout);
+  }
+
+  @Override
+  public int getPageSize() {
+    return pageSize;
+  }
+
+  @NonNull
+  @Override
+  public BatchStatement setPageSize(int newPageSize) {
+    return new DefaultBatchStatement(
+        batchType,
+        statements,
+        configProfileName,
+        configProfile,
+        keyspace,
+        routingKeyspace,
+        routingKey,
+        routingToken,
+        customPayload,
+        idempotent,
+        tracing,
+        timestamp,
+        pagingState,
+        newPageSize,
+        consistencyLevel,
+        serialConsistencyLevel,
+        timeout);
+  }
+
+  @Nullable
+  @Override
+  public ConsistencyLevel getConsistencyLevel() {
+    return consistencyLevel;
+  }
+
+  @Override
+  public BatchStatement setConsistencyLevel(@Nullable ConsistencyLevel newConsistencyLevel) {
+    return new DefaultBatchStatement(
+        batchType,
+        statements,
+        configProfileName,
+        configProfile,
+        keyspace,
+        routingKeyspace,
+        routingKey,
+        routingToken,
+        customPayload,
+        idempotent,
+        tracing,
+        timestamp,
+        pagingState,
+        pageSize,
+        newConsistencyLevel,
+        serialConsistencyLevel,
+        timeout);
+  }
+
+  @Nullable
+  @Override
+  public ConsistencyLevel getSerialConsistencyLevel() {
+    return serialConsistencyLevel;
+  }
+
+  @NonNull
+  @Override
+  public BatchStatement setSerialConsistencyLevel(
+      @Nullable ConsistencyLevel newSerialConsistencyLevel) {
+    return new DefaultBatchStatement(
+        batchType,
+        statements,
+        configProfileName,
+        configProfile,
+        keyspace,
+        routingKeyspace,
+        routingKey,
+        routingToken,
+        customPayload,
+        idempotent,
+        tracing,
+        timestamp,
+        pagingState,
+        pageSize,
+        consistencyLevel,
+        newSerialConsistencyLevel,
+        timeout);
   }
 
   @Override
@@ -248,7 +372,11 @@ public class DefaultBatchStatement implements BatchStatement {
         idempotent,
         tracing,
         timestamp,
-        pagingState);
+        pagingState,
+        pageSize,
+        consistencyLevel,
+        serialConsistencyLevel,
+        timeout);
   }
 
   @Override
@@ -272,7 +400,11 @@ public class DefaultBatchStatement implements BatchStatement {
         idempotent,
         tracing,
         timestamp,
-        pagingState);
+        pagingState,
+        pageSize,
+        consistencyLevel,
+        serialConsistencyLevel,
+        timeout);
   }
 
   @Override
@@ -320,7 +452,11 @@ public class DefaultBatchStatement implements BatchStatement {
         idempotent,
         tracing,
         timestamp,
-        pagingState);
+        pagingState,
+        pageSize,
+        consistencyLevel,
+        serialConsistencyLevel,
+        timeout);
   }
 
   @Override
@@ -354,7 +490,11 @@ public class DefaultBatchStatement implements BatchStatement {
         idempotent,
         tracing,
         timestamp,
-        pagingState);
+        pagingState,
+        pageSize,
+        consistencyLevel,
+        serialConsistencyLevel,
+        timeout);
   }
 
   @Override
@@ -388,7 +528,11 @@ public class DefaultBatchStatement implements BatchStatement {
         idempotent,
         tracing,
         timestamp,
-        pagingState);
+        pagingState,
+        pageSize,
+        consistencyLevel,
+        serialConsistencyLevel,
+        timeout);
   }
 
   @NonNull
@@ -413,12 +557,22 @@ public class DefaultBatchStatement implements BatchStatement {
         idempotent,
         tracing,
         timestamp,
-        pagingState);
+        pagingState,
+        pageSize,
+        consistencyLevel,
+        serialConsistencyLevel,
+        timeout);
   }
 
   @Override
   public Boolean isIdempotent() {
     return idempotent;
+  }
+
+  @Nullable
+  @Override
+  public Duration getTimeout() {
+    return null;
   }
 
   @NonNull
@@ -437,7 +591,11 @@ public class DefaultBatchStatement implements BatchStatement {
         newIdempotence,
         tracing,
         timestamp,
-        pagingState);
+        pagingState,
+        pageSize,
+        consistencyLevel,
+        serialConsistencyLevel,
+        timeout);
   }
 
   @Override
@@ -461,7 +619,11 @@ public class DefaultBatchStatement implements BatchStatement {
         idempotent,
         newTracing,
         timestamp,
-        pagingState);
+        pagingState,
+        pageSize,
+        consistencyLevel,
+        serialConsistencyLevel,
+        timeout);
   }
 
   @Override
@@ -485,6 +647,33 @@ public class DefaultBatchStatement implements BatchStatement {
         idempotent,
         tracing,
         newTimestamp,
-        pagingState);
+        pagingState,
+        pageSize,
+        consistencyLevel,
+        serialConsistencyLevel,
+        timeout);
+  }
+
+  @NonNull
+  @Override
+  public BatchStatement setTimeout(@Nullable Duration newTimeout) {
+    return new DefaultBatchStatement(
+        batchType,
+        statements,
+        configProfileName,
+        configProfile,
+        keyspace,
+        routingKeyspace,
+        routingKey,
+        routingToken,
+        customPayload,
+        idempotent,
+        tracing,
+        timestamp,
+        pagingState,
+        pageSize,
+        consistencyLevel,
+        serialConsistencyLevel,
+        newTimeout);
   }
 }

@@ -56,6 +56,10 @@ public interface BatchStatement extends Statement<BatchStatement>, Iterable<Batc
         false,
         false,
         Long.MIN_VALUE,
+        null,
+        Integer.MIN_VALUE,
+        null,
+        null,
         null);
   }
 
@@ -79,6 +83,10 @@ public interface BatchStatement extends Statement<BatchStatement>, Iterable<Batc
         false,
         false,
         Long.MIN_VALUE,
+        null,
+        Integer.MIN_VALUE,
+        null,
+        null,
         null);
   }
 
