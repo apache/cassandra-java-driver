@@ -123,6 +123,7 @@ public abstract class CqlRequestHandlerBase implements Throttled {
   private final RetryPolicy retryPolicy;
   private final SpeculativeExecutionPolicy speculativeExecutionPolicy;
   private final RequestThrottler throttler;
+  private final boolean recordLastResponseTime;
 
   // The errors on the nodes that were already tried (lazily initialized on the first error).
   // We don't use a map because nodes can appear multiple times.
@@ -165,6 +166,8 @@ public abstract class CqlRequestHandlerBase implements Throttled {
         (statementIsIdempotent == null)
             ? executionProfile.getBoolean(DefaultDriverOption.REQUEST_DEFAULT_IDEMPOTENCE)
             : statementIsIdempotent;
+    this.recordLastResponseTime =
+        executionProfile.getBoolean(DefaultDriverOption.METADATA_LAST_RESPONSE_TIME_ENABLED, false);
     this.result = new CompletableFuture<>();
     this.result.exceptionally(
         t -> {
@@ -496,12 +499,16 @@ public abstract class CqlRequestHandlerBase implements Throttled {
 
     @Override
     public void onResponse(Frame responseFrame) {
+      long now = System.nanoTime();
+      if (recordLastResponseTime) {
+        ((DefaultNode) node).setLastResponseTimeNanos(now);
+      }
       ((DefaultNode) node)
           .getMetricUpdater()
           .updateTimer(
               DefaultNodeMetric.CQL_MESSAGES,
               executionProfile.getName(),
-              System.nanoTime() - start,
+              now - start,
               TimeUnit.NANOSECONDS);
       inFlightCallbacks.remove(this);
       if (result.isDone()) {

@@ -4,6 +4,7 @@
 
 ### 4.0.0-beta1 (in progress)
 
+- [improvement] JAVA-1913: Expose additional counters on Node
 - [improvement] JAVA-1880: Rename "config profile" to "execution profile"
 - [improvement] JAVA-1889: Upgrade dependencies to the latest minor versions
 - [improvement] JAVA-1819: Propagate more attributes to bound statements
