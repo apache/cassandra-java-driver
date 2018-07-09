@@ -33,8 +33,8 @@ public class TestConfigLoader extends DefaultDriverConfigLoader {
         String.join(
             "\n",
             customConfig,
-            "netty.io-group.shutdown.quiet-period = 0",
-            "netty.admin-group.shutdown.quiet-period = 0");
+            "advanced.netty.io-group.shutdown.quiet-period = 0",
+            "advanced.netty.admin-group.shutdown.quiet-period = 0");
     return ConfigFactory.parseString(additionalCustomConfig).withFallback(getConfig());
   }
 
