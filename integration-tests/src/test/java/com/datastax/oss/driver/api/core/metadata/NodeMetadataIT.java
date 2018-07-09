@@ -21,7 +21,12 @@ import com.datastax.oss.driver.api.core.CqlSession;
 import com.datastax.oss.driver.api.core.loadbalancing.NodeDistance;
 import com.datastax.oss.driver.api.testinfra.ccm.CcmRule;
 import com.datastax.oss.driver.api.testinfra.session.SessionRule;
+import com.datastax.oss.driver.api.testinfra.session.SessionUtils;
+import com.datastax.oss.driver.api.testinfra.utils.ConditionChecker;
 import com.datastax.oss.driver.categories.ParallelizableTests;
+import com.datastax.oss.driver.internal.core.context.EventBus;
+import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
+import com.datastax.oss.driver.internal.core.metadata.TopologyEvent;
 import java.util.Collection;
 import org.junit.ClassRule;
 import org.junit.Rule;
@@ -37,10 +42,8 @@ public class NodeMetadataIT {
 
   @Test
   public void should_expose_node_metadata() {
-    Collection<Node> values = sessionRule.session().getMetadata().getNodes().values();
-    assertThat(values).hasSize(1);
-
-    Node node = values.iterator().next();
+    CqlSession session = sessionRule.session();
+    Node node = getUniqueNode(session);
 
     // Run a few basic checks given what we know about our test environment:
     assertThat(node.getConnectAddress()).isNotNull();
@@ -58,7 +61,61 @@ public class NodeMetadataIT {
     assertThat(node.getDistance()).isSameAs(NodeDistance.LOCAL);
     assertThat(node.getHostId()).isNotNull();
     assertThat(node.getSchemaVersion()).isNotNull();
+    long upTime1 = node.getUpSinceMillis();
+    assertThat(upTime1).isGreaterThan(-1);
+    assertThat(node.getLastResponseTimeNanos()).isEqualTo(-1);
 
     // Note: open connections and reconnection status are covered in NodeStateIT
+
+    // Force the node down and back up to check that upSinceMillis gets updated
+    EventBus eventBus = ((InternalDriverContext) session.getContext()).eventBus();
+    eventBus.fire(TopologyEvent.forceDown(node.getConnectAddress()));
+    ConditionChecker.checkThat(() -> node.getState() == NodeState.FORCED_DOWN).becomesTrue();
+    assertThat(node.getUpSinceMillis()).isEqualTo(-1);
+    eventBus.fire(TopologyEvent.forceUp(node.getConnectAddress()));
+    ConditionChecker.checkThat(() -> node.getState() == NodeState.UP).becomesTrue();
+    assertThat(node.getUpSinceMillis()).isGreaterThan(upTime1);
+  }
+
+  @Test
+  public void should_not_record_last_response_time_if_disabled() {
+    CqlSession session = sessionRule.session();
+    Node node = getUniqueNode(session);
+    assertThat(node.getLastResponseTimeNanos()).isEqualTo(-1);
+
+    for (int i = 0; i < 10; i++) {
+      session.execute("SELECT release_version FROM system.local");
+      assertThat(node.getLastResponseTimeNanos()).isEqualTo(-1);
+    }
+  }
+
+  @Test
+  public void should_record_last_response_time_if_enabled() {
+    CqlSession session =
+        SessionUtils.newSession(
+            ccmRule, "advanced.metadata.nodes.last-response-time.enabled = true");
+    Node node = getUniqueNode(session);
+
+    // Ensure that we get increasing timestamps as long as we keep querying
+    long[] timestamps = new long[10];
+    timestamps[0] = System.nanoTime();
+    for (int i = 1; i < 9; i++) {
+      session.execute("SELECT release_version FROM system.local");
+      timestamps[i] = node.getLastResponseTimeNanos();
+    }
+    timestamps[9] = System.nanoTime();
+
+    for (int i = 0; i < 9; i++) {
+      assertThat(timestamps[i]).isLessThan(timestamps[i + 1]);
+    }
+
+    // Ensure that the value doesn't change since the last query
+    assertThat(node.getLastResponseTimeNanos()).isEqualTo(timestamps[8]);
+  }
+
+  private static Node getUniqueNode(CqlSession session) {
+    Collection<Node> nodes = session.getMetadata().getNodes().values();
+    assertThat(nodes).hasSize(1);
+    return nodes.iterator().next();
   }
 }

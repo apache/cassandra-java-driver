@@ -51,12 +51,15 @@ public class DefaultNode implements Node {
   volatile UUID hostId;
   volatile UUID schemaVersion;
 
-  // These 3 fields are read concurrently, but only mutated on NodeStateManager's admin thread
+  // These 4 fields are read concurrently, but only mutated on NodeStateManager's admin thread
   volatile NodeState state;
   volatile int openConnections;
   volatile int reconnections;
+  volatile long upSinceMillis;
 
   volatile NodeDistance distance;
+
+  private volatile long lastResponseTimeNanos;
 
   public DefaultNode(InetSocketAddress connectAddress, InternalDriverContext context) {
     this.connectAddress = connectAddress;
@@ -67,6 +70,8 @@ public class DefaultNode implements Node {
     // We leak a reference to a partially constructed object (this), but in practice this won't be a
     // problem because the node updater only needs the connect address to initialize.
     this.metricUpdater = context.metricsFactory().newNodeUpdater(this);
+    this.upSinceMillis = -1;
+    this.lastResponseTimeNanos = -1;
   }
 
   @NonNull
@@ -130,6 +135,11 @@ public class DefaultNode implements Node {
   }
 
   @Override
+  public long getUpSinceMillis() {
+    return upSinceMillis;
+  }
+
+  @Override
   public int getOpenConnections() {
     return openConnections;
   }
@@ -147,6 +157,15 @@ public class DefaultNode implements Node {
 
   public NodeMetricUpdater getMetricUpdater() {
     return metricUpdater;
+  }
+
+  @Override
+  public long getLastResponseTimeNanos() {
+    return lastResponseTimeNanos;
+  }
+
+  public void setLastResponseTimeNanos(long lastResponseTimeNanos) {
+    this.lastResponseTimeNanos = lastResponseTimeNanos;
   }
 
   @Override

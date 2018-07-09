@@ -301,6 +301,11 @@ public class NodeStateManager implements AsyncAutoCloseable {
             newState,
             reason);
         node.state = newState;
+        if (newState == NodeState.UP) {
+          node.upSinceMillis = System.currentTimeMillis();
+        } else {
+          node.upSinceMillis = -1;
+        }
         // Fire the state change event, either immediately, or after a refresh if the node just came
         // back up.
         // If oldState == UNKNOWN, the node was just added, we already refreshed while processing
