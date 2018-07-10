@@ -4,6 +4,7 @@
 
 ### 4.0.0-beta1 (in progress)
 
+- [improvement] JAVA-1437: Enable SSL hostname validation by default
 - [improvement] JAVA-1879: Duplicate basic.request options as Request/Statement attributes
 - [improvement] JAVA-1870: Use sensible defaults in RequestLogger if config options are missing
 - [improvement] JAVA-1877: Use a separate reconnection schedule for the control connection

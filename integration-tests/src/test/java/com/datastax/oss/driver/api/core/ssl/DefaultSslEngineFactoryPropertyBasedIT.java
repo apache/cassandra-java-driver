@@ -27,7 +27,7 @@ import org.junit.experimental.categories.Category;
 @Category(IsolatedTests.class)
 public class DefaultSslEngineFactoryPropertyBasedIT {
 
-  @ClassRule public static CustomCcmRule ccm = CustomCcmRule.builder().withSsl().build();
+  @ClassRule public static CustomCcmRule ccm = CustomCcmRule.builder().withSslLocalhostCn().build();
 
   @Test
   public void should_connect_with_ssl() {

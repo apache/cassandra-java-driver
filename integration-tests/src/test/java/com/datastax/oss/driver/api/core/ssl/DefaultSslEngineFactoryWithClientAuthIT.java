@@ -33,6 +33,7 @@ public class DefaultSslEngineFactoryWithClientAuthIT {
         SessionUtils.newSession(
             ccm,
             "advanced.ssl-engine-factory.class = DefaultSslEngineFactory",
+            "advanced.ssl-engine-factory.hostname-validation = false",
             "advanced.ssl-engine-factory.keystore-path = "
                 + CcmBridge.DEFAULT_CLIENT_KEYSTORE_FILE.getAbsolutePath(),
             "advanced.ssl-engine-factory.keystore-password = "
@@ -51,6 +52,7 @@ public class DefaultSslEngineFactoryWithClientAuthIT {
         SessionUtils.newSession(
             ccm,
             "advanced.ssl-engine-factory.class = DefaultSslEngineFactory",
+            "advanced.ssl-engine-factory.hostname-validation = false",
             "advanced.ssl-engine-factory.truststore-path = "
                 + CcmBridge.DEFAULT_CLIENT_TRUSTSTORE_FILE.getAbsolutePath(),
             "advanced.ssl-engine-factory.truststore-password = "

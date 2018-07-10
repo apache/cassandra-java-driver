@@ -33,6 +33,7 @@ public class DefaultSslEngineFactoryIT {
         SessionUtils.newSession(
             ccm,
             "advanced.ssl-engine-factory.class = DefaultSslEngineFactory",
+            "advanced.ssl-engine-factory.hostname-validation = false",
             "advanced.ssl-engine-factory.truststore-path = "
                 + CcmBridge.DEFAULT_CLIENT_TRUSTSTORE_FILE.getAbsolutePath(),
             "advanced.ssl-engine-factory.truststore-password = "
@@ -49,7 +50,6 @@ public class DefaultSslEngineFactoryIT {
         SessionUtils.newSession(
             ccm,
             "advanced.ssl-engine-factory.class = DefaultSslEngineFactory",
-            "advanced.ssl-engine-factory.hostname-validation = true",
             "advanced.ssl-engine-factory.truststore-path = "
                 + CcmBridge.DEFAULT_CLIENT_TRUSTSTORE_FILE.getAbsolutePath(),
             "advanced.ssl-engine-factory.truststore-password = "
@@ -62,7 +62,9 @@ public class DefaultSslEngineFactoryIT {
   public void should_not_connect_if_truststore_not_provided() {
     try (CqlSession session =
         SessionUtils.newSession(
-            ccm, "advanced.ssl-engine-factory.class = DefaultSslEngineFactory")) {
+            ccm,
+            "advanced.ssl-engine-factory.class = DefaultSslEngineFactory",
+            "advanced.ssl-engine-factory.hostname-validation = false")) {
       session.execute("select * from system.local");
     }
   }
