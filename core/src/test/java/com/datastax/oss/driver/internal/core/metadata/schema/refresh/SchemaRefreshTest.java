@@ -149,6 +149,7 @@ public class SchemaRefreshTest {
     return new DefaultKeyspaceMetadata(
         CqlIdentifier.fromInternal(name),
         durableWrites,
+        false,
         Collections.emptyMap(),
         typesMapBuilder.build(),
         Collections.emptyMap(),

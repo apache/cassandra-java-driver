@@ -34,6 +34,9 @@ public interface KeyspaceMetadata extends Describable {
   /** Whether durable writes are set on this keyspace. */
   boolean isDurableWrites();
 
+  /** Whether durable writes are set on this keyspace. */
+  boolean isVirtual();
+
   /** The replication options defined for this keyspace. */
   @NonNull
   Map<String, String> getReplication();

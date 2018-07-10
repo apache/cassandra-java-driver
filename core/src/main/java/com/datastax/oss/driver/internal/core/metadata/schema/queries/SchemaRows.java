@@ -36,6 +36,8 @@ public interface SchemaRows {
 
   Multimap<CqlIdentifier, AdminRow> tables();
 
+    Multimap<CqlIdentifier, AdminRow> virtualTables();
+
   Multimap<CqlIdentifier, AdminRow> views();
 
   Multimap<CqlIdentifier, AdminRow> types();
@@ -45,6 +47,8 @@ public interface SchemaRows {
   Multimap<CqlIdentifier, AdminRow> aggregates();
 
   Map<CqlIdentifier, Multimap<CqlIdentifier, AdminRow>> columns();
+
+  Map<CqlIdentifier, Multimap<CqlIdentifier, AdminRow>> virutalColumns();
 
   Map<CqlIdentifier, Multimap<CqlIdentifier, AdminRow>> indexes();
 

@@ -225,6 +225,49 @@ public class TableParser extends RelationParser {
         options,
         indexesBuilder.build());
   }
+  TableMetadata parseVirtualTable(
+      AdminRow tableRow, CqlIdentifier keyspaceId, Map<CqlIdentifier, UserDefinedType> userTypes) {
+
+    CqlIdentifier tableId =
+        CqlIdentifier.fromInternal(
+            tableRow.getString(rows.isCassandraV3 ? "table_name" : "columnfamily_name"));
+
+    List<RawColumn> rawColumns =
+        RawColumn.toRawColumns(
+            rows.virtualColumns.getOrDefault(keyspaceId, ImmutableMultimap.of()).get(tableId),
+            keyspaceId,
+            userTypes);
+    if (rawColumns.isEmpty()) {
+      LOG.warn(
+          "[{}] Processing TABLE refresh for {}.{} but found no matching rows, skipping",
+          logPrefix,
+          keyspaceId,
+          tableId);
+      return null;
+    }
+
+    Collections.sort(rawColumns);
+    ImmutableMap.Builder<CqlIdentifier, ColumnMetadata> allColumnsBuilder = ImmutableMap.builder();
+
+    for (RawColumn raw : rawColumns) {
+      DataType dataType = dataTypeParser.parse(keyspaceId, raw.dataType, userTypes, context);
+      ColumnMetadata column =
+          new DefaultColumnMetadata(
+              keyspaceId, tableId, raw.name, dataType, raw.kind == RawColumn.Kind.STATIC);
+      allColumnsBuilder.put(column.getName(), column);
+    }
+
+    return new DefaultTableMetadata(
+        keyspaceId,
+        tableId,
+        new UUID(0L, 0L),
+        false,
+        Collections.emptyList(),
+        Collections.emptyMap(),
+        allColumnsBuilder.build(),
+        Collections.emptyMap(),
+        Collections.emptyMap());
+  }
 
   // In C*<=2.2, index information is stored alongside the column.
   private IndexMetadata buildLegacyIndex(RawColumn raw, ColumnMetadata column) {
