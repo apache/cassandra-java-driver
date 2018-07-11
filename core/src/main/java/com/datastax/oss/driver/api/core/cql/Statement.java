@@ -298,6 +298,9 @@ public interface Statement<T extends Statement<T>> extends Request {
   @NonNull
   T setSerialConsistencyLevel(@Nullable ConsistencyLevel newSerialConsistencyLevel);
 
+  /** Whether tracing information should be recorded for this statement. */
+  boolean isTracing();
+
   /**
    * Calculates the approximate size in bytes that the statement will have when encoded.
    *

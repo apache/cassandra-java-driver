@@ -22,7 +22,6 @@ import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
 import com.datastax.oss.driver.api.core.metadata.Node;
 import com.datastax.oss.driver.api.core.retry.RetryDecision;
 import com.datastax.oss.driver.api.core.servererrors.CoordinatorException;
-import com.datastax.oss.driver.api.core.session.Request;
 import com.datastax.oss.driver.api.core.session.Session;
 import com.datastax.oss.driver.api.core.specex.SpeculativeExecutionPolicy;
 import com.datastax.oss.driver.internal.core.util.concurrent.BlockingOperation;
@@ -150,7 +149,7 @@ public interface ExecutionInfo {
   boolean isSchemaInAgreement();
 
   /**
-   * The tracing identifier if tracing was {@link Request#isTracing() enabled} for this query,
+   * The tracing identifier if tracing was {@link Statement#isTracing() enabled} for this query,
    * otherwise {@code null}.
    */
   @Nullable

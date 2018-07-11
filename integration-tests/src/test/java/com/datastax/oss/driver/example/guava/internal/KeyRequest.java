@@ -85,9 +85,4 @@ public class KeyRequest implements Request {
   public Duration getTimeout() {
     return null;
   }
-
-  @Override
-  public boolean isTracing() {
-    return false;
-  }
 }
