@@ -81,12 +81,6 @@ public interface PrepareRequest extends Request {
     return true;
   }
 
-  @Override
-  default boolean isTracing() {
-    // Tracing prepare requests is unlikely to be useful, we don't expose an API for it.
-    return false;
-  }
-
   /**
    * The name of the driver configuration profile to use for the bound statements that will be
    * created from the prepared statement.

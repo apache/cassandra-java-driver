@@ -15,7 +15,6 @@
  */
 package com.datastax.oss.driver.api.core.cql;
 
-import com.datastax.oss.driver.api.core.session.Request;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import java.net.InetAddress;
 import java.util.List;
@@ -25,7 +24,7 @@ import java.util.UUID;
 /**
  * Tracing information for a query.
  *
- * <p>When {@link Request#isTracing() tracing} is enabled for a query, Cassandra generates rows in
+ * <p>When {@link Statement#isTracing() tracing} is enabled for a query, Cassandra generates rows in
  * the {@code sessions} and {@code events} table of the {@code system_traces} keyspace. This class
  * is a client-side representation of that information.
  */

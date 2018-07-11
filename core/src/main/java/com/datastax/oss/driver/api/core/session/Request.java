@@ -160,13 +160,4 @@ public interface Request {
    */
   @Nullable
   Duration getTimeout();
-
-  /**
-   * Whether tracing information should be recorded for this request.
-   *
-   * <p>Tracing is rather specific to CQL, but this is exposed in this interface because it is
-   * available at the protocol level. Request implementations are free to use it if it is relevant
-   * to them, or always return {@code false} otherwise.
-   */
-  boolean isTracing();
 }

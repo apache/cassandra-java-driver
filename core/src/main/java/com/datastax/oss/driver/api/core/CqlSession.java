@@ -107,7 +107,7 @@ public interface CqlSession extends Session {
    *         <li>{@link Statement#getConsistencyLevel() boundStatement.getConsistencyLevel()}
    *         <li>{@link Statement#getSerialConsistencyLevel()
    *             boundStatement.getSerialConsistencyLevel()}
-   *         <li>{@link Request#isTracing() boundStatement.isTracing()}
+   *         <li>{@link Statement#isTracing() boundStatement.isTracing()}
    *       </ul>
    *   <li>{@link Request#getRoutingKeyspace() boundStatement.getRoutingKeyspace()} is set from
    *       either {@link Request#getKeyspace() simpleStatement.getKeyspace()} (if it's not {@code
