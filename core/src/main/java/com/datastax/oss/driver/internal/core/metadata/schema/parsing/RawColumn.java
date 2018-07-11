@@ -20,6 +20,7 @@ import com.datastax.oss.driver.api.core.metadata.schema.ColumnMetadata;
 import com.datastax.oss.driver.api.core.type.UserDefinedType;
 import com.datastax.oss.driver.internal.core.adminrequest.AdminRow;
 import com.datastax.oss.driver.shaded.guava.common.collect.Lists;
+import com.datastax.oss.driver.shaded.guava.common.primitives.Ints;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import java.util.Collection;
 import java.util.Collections;
@@ -113,11 +114,28 @@ public class RawColumn implements Comparable<RawColumn> {
     // First, order by kind. Then order partition key and clustering columns by position. For
     // other kinds, order by column name.
     if (!this.kind.equals(that.kind)) {
-      return this.kind.compareTo(that.kind);
+      return Ints.compare(rank(this.kind), rank(that.kind));
     } else if (kind.equals(KIND_PARTITION_KEY) || kind.equals(KIND_CLUSTERING_COLUMN)) {
       return Integer.compare(this.position, that.position);
     } else {
       return this.name.asInternal().compareTo(that.name.asInternal());
+    }
+  }
+
+  private static int rank(String kind) {
+    switch (kind) {
+      case KIND_PARTITION_KEY:
+        return 1;
+      case KIND_CLUSTERING_COLUMN:
+        return 2;
+      case KIND_REGULAR:
+        return 3;
+      case KIND_COMPACT_VALUE:
+        return 4;
+      case KIND_STATIC:
+        return 5;
+      default:
+        return Integer.MAX_VALUE;
     }
   }
 
