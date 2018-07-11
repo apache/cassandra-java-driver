@@ -32,6 +32,10 @@ public interface TableMetadata extends RelationMetadata {
   @NonNull
   @Override
   default String describe(boolean pretty) {
+    // this is a virtual table, do not return a describe string
+    if (getPrimaryKey().size() == 0) {
+      return "";
+    }
     ScriptBuilder builder =
         new ScriptBuilder(pretty)
             .append("CREATE TABLE ")
