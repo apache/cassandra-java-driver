@@ -19,6 +19,7 @@ import static com.datastax.oss.simulacron.common.stubbing.PrimeDsl.noRows;
 import static com.datastax.oss.simulacron.common.stubbing.PrimeDsl.query;
 import static com.datastax.oss.simulacron.common.stubbing.PrimeDsl.when;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assumptions.assumeThat;
 
 import com.datastax.oss.driver.api.core.ConsistencyLevel;
 import com.datastax.oss.driver.api.core.CqlIdentifier;
@@ -29,7 +30,6 @@ import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
 import com.datastax.oss.driver.api.core.config.DriverExecutionProfile;
 import com.datastax.oss.driver.api.core.metadata.token.Token;
 import com.datastax.oss.driver.api.core.type.codec.TypeCodecs;
-import com.datastax.oss.driver.api.testinfra.CassandraRequirement;
 import com.datastax.oss.driver.api.testinfra.ccm.CcmRule;
 import com.datastax.oss.driver.api.testinfra.session.SessionRule;
 import com.datastax.oss.driver.api.testinfra.session.SessionUtils;
@@ -70,6 +70,8 @@ public class BoundStatementIT {
   public static SimulacronRule simulacron = new SimulacronRule(ClusterSpec.builder().withNodes(1));
 
   @ClassRule public static CcmRule ccm = CcmRule.getInstance();
+
+  private static boolean atLeastV4 = ccm.getHighestProtocolVersion().getCode() >= 4;
 
   @ClassRule
   public static SessionRule<CqlSession> sessionRule =
@@ -131,8 +133,8 @@ public class BoundStatementIT {
   }
 
   @Test
-  @CassandraRequirement(min = "2.2")
   public void should_not_write_tombstone_if_value_is_implicitly_unset() {
+    assumeThat(atLeastV4).as("unset values require protocol V4+").isTrue();
     try (CqlSession session = SessionUtils.newSession(ccm, sessionRule.keyspace())) {
       PreparedStatement prepared = session.prepare("INSERT INTO test2 (k, v0) values (?, ?)");
 
@@ -146,8 +148,8 @@ public class BoundStatementIT {
   }
 
   @Test
-  @CassandraRequirement(min = "2.2")
   public void should_write_tombstone_if_value_is_explicitly_unset() {
+    assumeThat(atLeastV4).as("unset values require protocol V4+").isTrue();
     try (CqlSession session = SessionUtils.newSession(ccm, sessionRule.keyspace())) {
       PreparedStatement prepared = session.prepare("INSERT INTO test2 (k, v0) values (?, ?)");
 
@@ -165,8 +167,8 @@ public class BoundStatementIT {
   }
 
   @Test
-  @CassandraRequirement(min = "2.2")
   public void should_write_tombstone_if_value_is_explicitly_unset_on_builder() {
+    assumeThat(atLeastV4).as("unset values require protocol V4+").isTrue();
     try (CqlSession session = SessionUtils.newSession(ccm, sessionRule.keyspace())) {
       PreparedStatement prepared = session.prepare("INSERT INTO test2 (k, v0) values (?, ?)");
 
@@ -379,7 +381,6 @@ public class BoundStatementIT {
   }
 
   @Test
-  @CassandraRequirement(min = "2.2")
   public void should_propagate_attributes_when_preparing_a_simple_statement() {
     CqlSession session = sessionRule.session();
 
@@ -404,7 +405,7 @@ public class BoundStatementIT {
     ConsistencyLevel mockSerialCl = DefaultConsistencyLevel.LOCAL_SERIAL;
     int mockPageSize = 2000;
 
-    SimpleStatement simpleStatement =
+    SimpleStatementBuilder simpleStatementBuilder =
         SimpleStatement.builder("SELECT release_version FROM system.local")
             .withExecutionProfile(mockProfile)
             .withExecutionProfileName(mockConfigProfileName)
@@ -413,16 +414,20 @@ public class BoundStatementIT {
             .withRoutingKeyspace(mockRoutingKeyspace)
             .withRoutingKey(mockRoutingKey)
             .withRoutingToken(mockRoutingToken)
-            .addCustomPayload("key1", mockCustomPayload.get("key1"))
             .withTimestamp(42)
             .withIdempotence(true)
             .withTracing()
             .withTimeout(mockTimeout)
             .withConsistencyLevel(mockCl)
             .withSerialConsistencyLevel(mockSerialCl)
-            .withPageSize(mockPageSize)
-            .build();
-    PreparedStatement preparedStatement = session.prepare(simpleStatement);
+            .withPageSize(mockPageSize);
+
+    if (atLeastV4) {
+      simpleStatementBuilder =
+          simpleStatementBuilder.addCustomPayload("key1", mockCustomPayload.get("key1"));
+    }
+
+    PreparedStatement preparedStatement = session.prepare(simpleStatementBuilder.build());
 
     // Cover all the ways to create bound statements:
     ImmutableList<Function<PreparedStatement, BoundStatement>> createMethods =
@@ -438,7 +443,9 @@ public class BoundStatementIT {
           .isEqualTo(mockKeyspace != null ? mockKeyspace : mockRoutingKeyspace);
       assertThat(boundStatement.getRoutingKey()).isEqualTo(mockRoutingKey);
       assertThat(boundStatement.getRoutingToken()).isEqualTo(mockRoutingToken);
-      assertThat(boundStatement.getCustomPayload()).isEqualTo(mockCustomPayload);
+      if (atLeastV4) {
+        assertThat(boundStatement.getCustomPayload()).isEqualTo(mockCustomPayload);
+      }
       assertThat(boundStatement.isIdempotent()).isTrue();
       assertThat(boundStatement.isTracing()).isTrue();
       assertThat(boundStatement.getTimeout()).isEqualTo(mockTimeout);
