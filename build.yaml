@@ -8,12 +8,6 @@ cassandra:
   - '3.0'
   - '3.11'
 build:
-  - script: |
-      git clone --depth 1 https://github.com/datastax/native-protocol.git
-      pushd native-protocol
-      mvn install -Dmaven.javadoc.skip=true -B -V
-      popd
-      rm -rf native-protocol
   - type: maven
     version: 3.2.5
     goals: verify
@@ -24,3 +18,5 @@ build:
     - "**/target/failsafe-reports/TEST-*.xml"
   - jacoco: true
 disable_commit_status: true
+notify:
+  slack: java-driver-dev-bots
