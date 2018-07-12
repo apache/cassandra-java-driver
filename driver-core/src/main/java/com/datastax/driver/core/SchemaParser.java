@@ -148,10 +148,10 @@ abstract class SchemaParser {
             }
             keyspaces.put(keyspace.getName(), keyspace);
         }
-        if(rows.virtualKeyspaces!=null) {
+        if(rows.virtualKeyspaces != null) {
             for (Row keyspaceRow : rows.virtualKeyspaces) {
                 KeyspaceMetadata keyspace = KeyspaceMetadata.buildVirtual(keyspaceRow, cassandraVersion);
-                Map<String, TableMetadata> tables = buildTables(keyspace, rows.virtualTables.get(keyspace.getName()), rows.virtualcolumns.get(keyspace.getName()), Collections.<String, List<Row>>emptyMap(), cassandraVersion, cluster);
+                Map<String, TableMetadata> tables = buildTables(keyspace, rows.virtualTables.get(keyspace.getName()), rows.virtualColumns.get(keyspace.getName()), Collections.<String, List<Row>>emptyMap(), cassandraVersion, cluster);
                 for (TableMetadata table : tables.values()) {
                     keyspace.add(table);
                 }
@@ -506,7 +506,7 @@ abstract class SchemaParser {
         final Map<String, Map<String, List<Row>>> indexes;
         final ResultSet virtualKeyspaces;
         final Map<String, List<Row>> virtualTables;
-        final Map<String, Map<String, Map<String, ColumnMetadata.Raw>>> virtualcolumns;
+        final Map<String, Map<String, Map<String, ColumnMetadata.Raw>>> virtualColumns;
 
         public SystemRows(ResultSet keyspaces, Map<String, List<Row>> tables, Map<String, Map<String, Map<String, ColumnMetadata.Raw>>> columns, Map<String, List<Row>> udts, Map<String, List<Row>> functions,
                           Map<String, List<Row>> aggregates, Map<String, List<Row>> views, Map<String, Map<String, List<Row>>> indexes, ResultSet virtualKeyspaces, Map<String, List<Row>> virtualTables,
@@ -521,7 +521,7 @@ abstract class SchemaParser {
             this.indexes = indexes;
             this.virtualKeyspaces = virtualKeyspaces;
             this.virtualTables = virtualTables;
-            this.virtualcolumns = virtualcolumns;
+            this.virtualColumns = virtualcolumns;
         }
     }
 
@@ -614,14 +614,14 @@ abstract class SchemaParser {
 
     private static class V3SchemaParser extends SchemaParser {
 
-        private static final String SELECT_KEYSPACES = "SELECT * FROM system_schema.keyspaces";
-        private static final String SELECT_TABLES = "SELECT * FROM system_schema.tables";
-        private static final String SELECT_COLUMNS = "SELECT * FROM system_schema.columns";
-        private static final String SELECT_USERTYPES = "SELECT * FROM system_schema.types";
-        private static final String SELECT_FUNCTIONS = "SELECT * FROM system_schema.functions";
-        private static final String SELECT_AGGREGATES = "SELECT * FROM system_schema.aggregates";
-        private static final String SELECT_INDEXES = "SELECT * FROM system_schema.indexes";
-        private static final String SELECT_VIEWS = "SELECT * FROM system_schema.views";
+        protected static final String SELECT_KEYSPACES = "SELECT * FROM system_schema.keyspaces";
+        protected static final String SELECT_TABLES = "SELECT * FROM system_schema.tables";
+        protected static final String SELECT_COLUMNS = "SELECT * FROM system_schema.columns";
+        protected static final String SELECT_USERTYPES = "SELECT * FROM system_schema.types";
+        protected static final String SELECT_FUNCTIONS = "SELECT * FROM system_schema.functions";
+        protected static final String SELECT_AGGREGATES = "SELECT * FROM system_schema.aggregates";
+        protected static final String SELECT_INDEXES = "SELECT * FROM system_schema.indexes";
+        protected static final String SELECT_VIEWS = "SELECT * FROM system_schema.views";
 
         private static final String TABLE_NAME = "table_name";
 
@@ -764,14 +764,6 @@ abstract class SchemaParser {
 
     private static class V4SchemaParser extends V3SchemaParser {
 
-        private static final String SELECT_KEYSPACES = "SELECT * FROM system_schema.keyspaces";
-        private static final String SELECT_TABLES = "SELECT * FROM system_schema.tables";
-        private static final String SELECT_COLUMNS = "SELECT * FROM system_schema.columns";
-        private static final String SELECT_USERTYPES = "SELECT * FROM system_schema.types";
-        private static final String SELECT_FUNCTIONS = "SELECT * FROM system_schema.functions";
-        private static final String SELECT_AGGREGATES = "SELECT * FROM system_schema.aggregates";
-        private static final String SELECT_INDEXES = "SELECT * FROM system_schema.indexes";
-        private static final String SELECT_VIEWS = "SELECT * FROM system_schema.views";
         private static final String SELECT_VIRTUAL_KEYSPACES = "SELECT * FROM system_virtual_schema.keyspaces";
         private static final String SELECT_VIRTUAL_TABLES = "SELECT * FROM system_virtual_schema.tables";
         private static final String SELECT_VIRTUAL_COLUMNS = "SELECT * FROM system_virtual_schema.columns";
@@ -801,16 +793,16 @@ abstract class SchemaParser {
 
             if (isSchemaOrKeyspace)
                 ksFuture = queryAsync(SELECT_KEYSPACES + whereClause(targetType, targetKeyspace, targetName, targetSignature), connection, protocolVersion);
-            virtualKeyspacesFuture = queryAsync(SELECT_VIRTUAL_KEYSPACES + whereClause(targetType, targetKeyspace, targetName, targetSignature), connection, protocolVersion);
+                virtualKeyspacesFuture = queryAsync(SELECT_VIRTUAL_KEYSPACES + whereClause(targetType, targetKeyspace, targetName, targetSignature), connection, protocolVersion);
+                virtualColumnsFuture = queryAsync(SELECT_VIRTUAL_COLUMNS + whereClause(targetType, targetKeyspace, targetName, targetSignature), connection, protocolVersion);
+                virtualTableFuture = queryAsync(SELECT_VIRTUAL_TABLES + whereClause(targetType, targetKeyspace, targetName, targetSignature), connection, protocolVersion);
 
             if (isSchemaOrKeyspace || targetType == TYPE)
                 udtFuture = queryAsync(SELECT_USERTYPES + whereClause(targetType, targetKeyspace, targetName, targetSignature), connection, protocolVersion);
 
             if (isSchemaOrKeyspace || targetType == TABLE) {
                 cfFuture = queryAsync(SELECT_TABLES + whereClause(targetType, targetKeyspace, targetName, targetSignature), connection, protocolVersion);
-                virtualTableFuture = queryAsync(SELECT_VIRTUAL_TABLES + whereClause(targetType, targetKeyspace, targetName, targetSignature), connection, protocolVersion);
                 colsFuture = queryAsync(SELECT_COLUMNS + whereClause(targetType, targetKeyspace, targetName, targetSignature), connection, protocolVersion);
-                virtualColumnsFuture = queryAsync(SELECT_VIRTUAL_COLUMNS + whereClause(targetType, targetKeyspace, targetName, targetSignature), connection, protocolVersion);
                 indexesFuture = queryAsync(SELECT_INDEXES + whereClause(targetType, targetKeyspace, targetName, targetSignature), connection, protocolVersion);
                 viewsFuture = queryAsync(SELECT_VIEWS + whereClause(targetType == TABLE ? VIEW : targetType, targetKeyspace, targetName, targetSignature), connection, protocolVersion);
             }

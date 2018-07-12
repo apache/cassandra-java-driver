@@ -35,7 +35,7 @@ public class KeyspaceMetadata {
 
     private final String name;
     private final boolean durableWrites;
-    private final boolean isVirtual;
+    private final boolean virtual;
 
     private final ReplicationStrategy strategy;
     private final Map<String, String> replication;
@@ -48,19 +48,15 @@ public class KeyspaceMetadata {
 
     @VisibleForTesting
     KeyspaceMetadata(String name, boolean durableWrites, Map<String, String> replication) {
-        this.name = name;
-        this.durableWrites = durableWrites;
-        this.replication = replication;
-        this.strategy = ReplicationStrategy.create(replication);
-        this.isVirtual=false;
+        this(name,durableWrites,replication,false);
     }
     @VisibleForTesting
-    KeyspaceMetadata(String name, boolean durableWrites, Map<String, String> replication, boolean isVirtual) {
+    KeyspaceMetadata(String name, boolean durableWrites, Map<String, String> replication, boolean virtual) {
         this.name = name;
         this.durableWrites = durableWrites;
         this.replication = replication;
         this.strategy = ReplicationStrategy.create(replication);
-        this.isVirtual=isVirtual;
+        this.virtual = virtual;
     }
 
     static KeyspaceMetadata build(Row row, VersionNumber cassandraVersion) {
@@ -78,6 +74,7 @@ public class KeyspaceMetadata {
             return new KeyspaceMetadata(name, durableWrites, row.getMap(REPLICATION, String.class, String.class), false);
         }
     }
+
     static KeyspaceMetadata buildVirtual(Row row, VersionNumber cassandraVersion) {
             String name = row.getString(KS_NAME);
             return new KeyspaceMetadata(name, false, Collections.<String, String>emptyMap(), true);
@@ -108,7 +105,7 @@ public class KeyspaceMetadata {
      * default), {@code false} otherwise.
      */
     public boolean isVirtual() {
-        return isVirtual;
+        return virtual;
     }
 
     /**
@@ -374,7 +371,7 @@ public class KeyspaceMetadata {
      * @see #exportAsString
      */
     public String asCQLQuery() {
-        if(isVirtual){
+        if(virtual){
             return "";
         }
         StringBuilder sb = new StringBuilder();
@@ -393,7 +390,7 @@ public class KeyspaceMetadata {
 
     @Override
     public String toString() {
-        if(isVirtual){
+        if(virtual){
             return name;
         }
         return asCQLQuery();
