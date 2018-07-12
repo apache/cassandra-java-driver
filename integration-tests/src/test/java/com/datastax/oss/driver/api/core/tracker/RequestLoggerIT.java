@@ -15,7 +15,10 @@
  */
 package com.datastax.oss.driver.api.core.tracker;
 
-import static com.datastax.oss.simulacron.common.stubbing.PrimeDsl.*;
+import static com.datastax.oss.simulacron.common.stubbing.PrimeDsl.rows;
+import static com.datastax.oss.simulacron.common.stubbing.PrimeDsl.serverError;
+import static com.datastax.oss.simulacron.common.stubbing.PrimeDsl.unavailable;
+import static com.datastax.oss.simulacron.common.stubbing.PrimeDsl.when;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
 import static org.mockito.ArgumentMatchers.any;
@@ -33,7 +36,6 @@ import com.datastax.oss.driver.api.core.cql.SimpleStatement;
 import com.datastax.oss.driver.api.core.servererrors.ServerError;
 import com.datastax.oss.driver.api.testinfra.session.SessionRule;
 import com.datastax.oss.driver.api.testinfra.simulacron.SimulacronRule;
-import com.datastax.oss.driver.categories.ParallelizableTests;
 import com.datastax.oss.driver.internal.core.tracker.RequestLogger;
 import com.datastax.oss.simulacron.common.cluster.ClusterSpec;
 import com.datastax.oss.simulacron.common.codec.ConsistencyLevel;
@@ -43,7 +45,6 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
-import org.junit.experimental.categories.Category;
 import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
@@ -54,7 +55,6 @@ import org.mockito.junit.MockitoJUnitRunner;
 import org.mockito.verification.Timeout;
 import org.slf4j.LoggerFactory;
 
-@Category(ParallelizableTests.class)
 @RunWith(MockitoJUnitRunner.class)
 public class RequestLoggerIT {
 
