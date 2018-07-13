@@ -19,6 +19,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.offset;
 
 import com.datastax.oss.driver.api.core.CqlSession;
+import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
+import com.datastax.oss.driver.api.core.config.DriverConfigLoader;
 import com.datastax.oss.driver.api.core.cql.ExecutionInfo;
 import com.datastax.oss.driver.api.core.cql.ResultSet;
 import com.datastax.oss.driver.api.core.cql.Row;
@@ -27,6 +29,7 @@ import com.datastax.oss.driver.api.testinfra.ccm.CustomCcmRule;
 import com.datastax.oss.driver.api.testinfra.session.SessionRule;
 import com.datastax.oss.driver.api.testinfra.session.SessionUtils;
 import com.datastax.oss.driver.categories.IsolatedTests;
+import java.time.Duration;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Test;
@@ -44,7 +47,12 @@ public class HeapCompressionIT {
 
   @ClassRule
   public static SessionRule<CqlSession> schemaSessionRule =
-      new SessionRule<>(ccmRule, "basic.request.timeout = 30 seconds");
+      SessionRule.builder(ccmRule)
+          .withConfigLoader(
+              SessionUtils.configLoaderBuilder()
+                  .withDuration(DefaultDriverOption.REQUEST_TIMEOUT, Duration.ofSeconds(30))
+                  .build())
+          .build();
 
   @BeforeClass
   public static void setup() {
@@ -61,7 +69,7 @@ public class HeapCompressionIT {
    */
   @Test
   public void should_execute_queries_with_snappy_compression() throws Exception {
-    createAndCheckCluster("advanced.protocol.compression = snappy");
+    createAndCheckCluster("snappy");
   }
 
   /**
@@ -72,13 +80,16 @@ public class HeapCompressionIT {
    */
   @Test
   public void should_execute_queries_with_lz4_compression() throws Exception {
-    createAndCheckCluster("advanced.protocol.compression = lz4");
+    createAndCheckCluster("lz4");
   }
 
   private void createAndCheckCluster(String compressorOption) {
-
+    DriverConfigLoader loader =
+        SessionUtils.configLoaderBuilder()
+            .withString(DefaultDriverOption.PROTOCOL_COMPRESSION, compressorOption)
+            .build();
     try (CqlSession session =
-        SessionUtils.newSession(ccmRule, schemaSessionRule.keyspace(), compressorOption)) {
+        SessionUtils.newSession(ccmRule, schemaSessionRule.keyspace(), loader)) {
       // Run a couple of simple test queries
       ResultSet rs =
           session.execute(

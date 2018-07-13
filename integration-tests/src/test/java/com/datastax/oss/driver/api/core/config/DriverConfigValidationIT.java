@@ -36,24 +36,25 @@ public class DriverConfigValidationIT {
 
   @Test
   public void should_fail_to_init_with_invalid_policy() {
-    should_fail_to_init_with_invalid_policy("basic.load-balancing-policy.class");
-    should_fail_to_init_with_invalid_policy("advanced.reconnection-policy.class");
-    should_fail_to_init_with_invalid_policy("advanced.retry-policy.class");
-    should_fail_to_init_with_invalid_policy("advanced.speculative-execution-policy.class");
-    should_fail_to_init_with_invalid_policy("advanced.auth-provider.class");
-    should_fail_to_init_with_invalid_policy("advanced.ssl-engine-factory.class");
-    should_fail_to_init_with_invalid_policy("advanced.timestamp-generator.class");
-    should_fail_to_init_with_invalid_policy("advanced.request-tracker.class");
-    should_fail_to_init_with_invalid_policy("advanced.throttler.class");
-    should_fail_to_init_with_invalid_policy("advanced.node-state-listener.class");
-    should_fail_to_init_with_invalid_policy("advanced.schema-change-listener.class");
-    should_fail_to_init_with_invalid_policy("advanced.address-translator.class");
+    should_fail_to_init_with_invalid_policy(DefaultDriverOption.LOAD_BALANCING_POLICY_CLASS);
+    should_fail_to_init_with_invalid_policy(DefaultDriverOption.RECONNECTION_POLICY_CLASS);
+    should_fail_to_init_with_invalid_policy(DefaultDriverOption.RETRY_POLICY_CLASS);
+    should_fail_to_init_with_invalid_policy(DefaultDriverOption.SPECULATIVE_EXECUTION_POLICY_CLASS);
+    should_fail_to_init_with_invalid_policy(DefaultDriverOption.AUTH_PROVIDER_CLASS);
+    should_fail_to_init_with_invalid_policy(DefaultDriverOption.SSL_ENGINE_FACTORY_CLASS);
+    should_fail_to_init_with_invalid_policy(DefaultDriverOption.TIMESTAMP_GENERATOR_CLASS);
+    should_fail_to_init_with_invalid_policy(DefaultDriverOption.REQUEST_TRACKER_CLASS);
+    should_fail_to_init_with_invalid_policy(DefaultDriverOption.REQUEST_THROTTLER_CLASS);
+    should_fail_to_init_with_invalid_policy(DefaultDriverOption.METADATA_NODE_STATE_LISTENER_CLASS);
+    should_fail_to_init_with_invalid_policy(
+        DefaultDriverOption.METADATA_SCHEMA_CHANGE_LISTENER_CLASS);
+    should_fail_to_init_with_invalid_policy(DefaultDriverOption.ADDRESS_TRANSLATOR_CLASS);
   }
 
-  private void should_fail_to_init_with_invalid_policy(String classConfigPath) {
-    assertThatThrownBy(
-            () ->
-                SessionUtils.newSession(simulacron, classConfigPath + " = AClassThatDoesNotExist"))
+  private void should_fail_to_init_with_invalid_policy(DefaultDriverOption option) {
+    DriverConfigLoader loader =
+        SessionUtils.configLoaderBuilder().withString(option, "AClassThatDoesNotExist").build();
+    assertThatThrownBy(() -> SessionUtils.newSession(simulacron, loader))
         .satisfies(
             error -> {
               assertThat(error).isInstanceOf(DriverExecutionException.class);
@@ -62,7 +63,7 @@ public class DriverConfigValidationIT {
                   .hasMessage(
                       "Can't find class AClassThatDoesNotExist "
                           + "(specified by "
-                          + classConfigPath
+                          + option.getPath()
                           + ")");
             });
   }

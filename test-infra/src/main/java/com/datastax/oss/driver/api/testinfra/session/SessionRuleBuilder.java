@@ -15,6 +15,7 @@
  */
 package com.datastax.oss.driver.api.testinfra.session;
 
+import com.datastax.oss.driver.api.core.config.DriverConfigLoader;
 import com.datastax.oss.driver.api.core.metadata.NodeStateListener;
 import com.datastax.oss.driver.api.core.metadata.schema.SchemaChangeListener;
 import com.datastax.oss.driver.api.core.session.Session;
@@ -27,9 +28,9 @@ public abstract class SessionRuleBuilder<
 
   protected final CassandraResourceRule cassandraResource;
   protected boolean createKeyspace = true;
-  protected String[] options = new String[] {};
   protected NodeStateListener nodeStateListener;
   protected SchemaChangeListener schemaChangeListener;
+  protected DriverConfigLoader loader;
 
   @SuppressWarnings("unchecked")
   protected final SelfT self = (SelfT) this;
@@ -58,8 +59,8 @@ public abstract class SessionRuleBuilder<
   }
 
   /** A set of options to override in the session configuration. */
-  public SelfT withOptions(String... options) {
-    this.options = options;
+  public SelfT withConfigLoader(DriverConfigLoader loader) {
+    this.loader = loader;
     return self;
   }
 

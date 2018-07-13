@@ -26,11 +26,14 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
 
 import com.datastax.oss.driver.api.core.CqlSession;
+import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
+import com.datastax.oss.driver.api.core.config.DriverConfigLoader;
 import com.datastax.oss.driver.api.core.metadata.Node;
 import com.datastax.oss.driver.api.core.metadata.NodeState;
 import com.datastax.oss.driver.api.testinfra.session.SessionUtils;
 import com.datastax.oss.driver.api.testinfra.simulacron.SimulacronRule;
 import com.datastax.oss.driver.categories.ParallelizableTests;
+import com.datastax.oss.driver.internal.core.config.typesafe.DefaultDriverConfigLoaderBuilder;
 import com.datastax.oss.protocol.internal.request.Register;
 import com.datastax.oss.simulacron.common.cluster.ClusterSpec;
 import com.datastax.oss.simulacron.common.cluster.QueryLog;
@@ -41,7 +44,7 @@ import com.datastax.oss.simulacron.common.stubbing.PrimeDsl;
 import com.datastax.oss.simulacron.server.BoundNode;
 import com.datastax.oss.simulacron.server.RejectScope;
 import java.net.SocketAddress;
-import java.util.Arrays;
+import java.time.Duration;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Predicate;
@@ -111,11 +114,11 @@ public class HeartbeatIT {
 
   @Test
   public void should_send_heartbeat_on_control_connection() {
-
-    try (CqlSession session =
-        newSession(
-            // Ensure we only have the control connection
-            "advanced.connection.pool.local.size = 0")) {
+    // Ensure we only have the control connection)
+    DefaultDriverConfigLoaderBuilder loader =
+        SessionUtils.configLoaderBuilder()
+            .withInt(DefaultDriverOption.CONNECTION_POOL_LOCAL_SIZE, 0);
+    try (CqlSession session = newSession(loader)) {
       AtomicInteger heartbeats = countHeartbeatsOnControlConnection();
       checkThat(() -> heartbeats.get() > 0).becomesTrue();
     }
@@ -200,18 +203,22 @@ public class HeartbeatIT {
     }
   }
 
-  private CqlSession newSession(String... extraOptions) {
-    String[] defaultOptions =
-        new String[] {
-          "advanced.heartbeat.interval = 1 second",
-          "advanced.heartbeat.timeout = 500 milliseconds",
-          "advanced.connection.init-query-timeout = 2 seconds",
-          "advanced.connection.reconnection-policy.max-delay = 1 second"
-        };
-    String[] allOptions =
-        Arrays.copyOf(defaultOptions, defaultOptions.length + extraOptions.length);
-    System.arraycopy(extraOptions, 0, allOptions, defaultOptions.length, extraOptions.length);
-    return SessionUtils.newSession(simulacron, allOptions);
+  private CqlSession newSession() {
+    return newSession(null);
+  }
+
+  private CqlSession newSession(DefaultDriverConfigLoaderBuilder loaderBuilder) {
+    if (loaderBuilder == null) {
+      loaderBuilder = SessionUtils.configLoaderBuilder();
+    }
+    DriverConfigLoader loader =
+        loaderBuilder
+            .withDuration(DefaultDriverOption.HEARTBEAT_INTERVAL, Duration.ofSeconds(1))
+            .withDuration(DefaultDriverOption.HEARTBEAT_TIMEOUT, Duration.ofMillis(500))
+            .withDuration(DefaultDriverOption.CONNECTION_INIT_QUERY_TIMEOUT, Duration.ofSeconds(2))
+            .withDuration(DefaultDriverOption.RECONNECTION_MAX_DELAY, Duration.ofSeconds(1))
+            .build();
+    return SessionUtils.newSession(simulacron, loader);
   }
 
   private AtomicInteger countHeartbeatsOnRegularConnection() {

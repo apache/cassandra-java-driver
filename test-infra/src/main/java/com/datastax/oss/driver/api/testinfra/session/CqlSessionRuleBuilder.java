@@ -27,6 +27,6 @@ public class CqlSessionRuleBuilder extends SessionRuleBuilder<CqlSessionRuleBuil
   @Override
   public SessionRule<CqlSession> build() {
     return new SessionRule<>(
-        cassandraResource, createKeyspace, nodeStateListener, schemaChangeListener, options);
+        cassandraResource, createKeyspace, nodeStateListener, schemaChangeListener, loader);
   }
 }

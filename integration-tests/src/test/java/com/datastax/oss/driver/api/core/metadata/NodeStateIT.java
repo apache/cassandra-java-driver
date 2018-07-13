@@ -21,6 +21,8 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.timeout;
 
 import com.datastax.oss.driver.api.core.CqlSession;
+import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
+import com.datastax.oss.driver.api.core.config.DriverConfigLoader;
 import com.datastax.oss.driver.api.core.config.DriverExecutionProfile;
 import com.datastax.oss.driver.api.core.context.DriverContext;
 import com.datastax.oss.driver.api.core.loadbalancing.LoadBalancingPolicy;
@@ -36,7 +38,6 @@ import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
 import com.datastax.oss.driver.internal.core.metadata.DefaultNode;
 import com.datastax.oss.driver.internal.core.metadata.NodeStateEvent;
 import com.datastax.oss.driver.internal.core.metadata.TopologyEvent;
-import com.datastax.oss.driver.internal.testinfra.session.TestConfigLoader;
 import com.datastax.oss.simulacron.common.cluster.ClusterSpec;
 import com.datastax.oss.simulacron.common.cluster.NodeConnectionReport;
 import com.datastax.oss.simulacron.common.stubbing.CloseType;
@@ -47,6 +48,7 @@ import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.net.SocketAddress;
+import java.time.Duration;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Queue;
@@ -80,12 +82,14 @@ public class NodeStateIT {
 
   public @Rule SessionRule<CqlSession> sessionRule =
       SessionRule.builder(simulacron)
-          .withOptions(
-              "advanced.connection.pool.local.size = 2",
-              "advanced.reconnection-policy.max-delay = 1 second",
-              String.format(
-                  "basic.load-balancing-policy.class = \"%s$ConfigurableIgnoresPolicy\"",
-                  NodeStateIT.class.getName()))
+          .withConfigLoader(
+              SessionUtils.configLoaderBuilder()
+                  .withInt(DefaultDriverOption.CONNECTION_POOL_LOCAL_SIZE, 2)
+                  .withDuration(DefaultDriverOption.RECONNECTION_MAX_DELAY, Duration.ofSeconds(1))
+                  .withClass(
+                      DefaultDriverOption.LOAD_BALANCING_POLICY_CLASS,
+                      NodeStateIT.ConfigurableIgnoresPolicy.class)
+                  .build())
           .withNodeStateListener(nodeStateListener)
           .build();
 
@@ -304,16 +308,14 @@ public class NodeStateIT {
   public void should_force_immediate_reconnection_when_up_topology_event()
       throws InterruptedException {
     // This test requires a longer reconnection interval, so create a separate driver instance
+    DriverConfigLoader loader =
+        SessionUtils.configLoaderBuilder()
+            .withDuration(DefaultDriverOption.RECONNECTION_BASE_DELAY, Duration.ofHours(1))
+            .withDuration(DefaultDriverOption.RECONNECTION_MAX_DELAY, Duration.ofHours(1))
+            .build();
     NodeStateListener localNodeStateListener = Mockito.mock(NodeStateListener.class);
     try (CqlSession session =
-        SessionUtils.newSession(
-            simulacron,
-            null,
-            localNodeStateListener,
-            null,
-            null,
-            "advanced.reconnection-policy.base-delay = 1 hour",
-            "advanced.reconnection-policy.max-delay = 1 hour")) {
+        SessionUtils.newSession(simulacron, null, localNodeStateListener, null, null, loader)) {
 
       BoundNode localSimulacronNode = simulacron.cluster().getNodes().iterator().next();
       assertThat(localSimulacronNode).isNotNull();
@@ -438,17 +440,19 @@ public class NodeStateIT {
     InetSocketAddress address1 = contactPoints.next();
     InetSocketAddress address2 = contactPoints.next();
     NodeStateListener localNodeStateListener = Mockito.mock(NodeStateListener.class);
+    DriverConfigLoader loader =
+        SessionUtils.configLoaderBuilder()
+            .withDuration(DefaultDriverOption.RECONNECTION_BASE_DELAY, Duration.ofHours(1))
+            .withDuration(DefaultDriverOption.RECONNECTION_MAX_DELAY, Duration.ofHours(1))
+            .withInt(DefaultDriverOption.CONNECTION_POOL_LOCAL_SIZE, 0)
+            .build();
     try (CqlSession localSession =
-        CqlSession.builder()
-            .addContactPoint(address1)
-            .withNodeStateListener(localNodeStateListener)
-            .withConfigLoader(
-                new TestConfigLoader(
-                    "avanced.reconnection-policy.base-delay = 1 hour",
-                    "advanced.reconnection-policy.max-delay = 1 hour",
-                    // Ensure we only have the control connection
-                    "advanced.connection.pool.local.size = 0"))
-            .build()) {
+        (CqlSession)
+            SessionUtils.baseBuilder()
+                .addContactPoint(address1)
+                .withNodeStateListener(localNodeStateListener)
+                .withConfigLoader(loader)
+                .build()) {
 
       Map<InetSocketAddress, Node> nodes = localSession.getMetadata().getNodes();
       Node localMetadataNode1 = nodes.get(address1);
@@ -471,16 +475,19 @@ public class NodeStateIT {
 
     // Initialize the driver with 1 wrong address and 1 valid address
     InetSocketAddress wrongContactPoint = withUnusedPort(address1);
+    DriverConfigLoader loader =
+        SessionUtils.configLoaderBuilder()
+            .withDuration(DefaultDriverOption.RECONNECTION_BASE_DELAY, Duration.ofHours(1))
+            .withDuration(DefaultDriverOption.RECONNECTION_MAX_DELAY, Duration.ofHours(1))
+            .build();
     try (CqlSession localSession =
-        CqlSession.builder()
-            .addContactPoint(address1)
-            .addContactPoint(wrongContactPoint)
-            .withNodeStateListener(localNodeStateListener)
-            .withConfigLoader(
-                new TestConfigLoader(
-                    "advanced.reconnection-policy.base-delay = 1 hour",
-                    "advanced.reconnection-policy.max-delay = 1 hour"))
-            .build()) {
+        (CqlSession)
+            SessionUtils.baseBuilder()
+                .addContactPoint(address1)
+                .addContactPoint(wrongContactPoint)
+                .withNodeStateListener(localNodeStateListener)
+                .withConfigLoader(loader)
+                .build()) {
 
       Map<InetSocketAddress, Node> nodes = localSession.getMetadata().getNodes();
       assertThat(nodes).doesNotContainKey(wrongContactPoint);
@@ -517,17 +524,20 @@ public class NodeStateIT {
     try {
       // Since contact points are shuffled, we have a 50% chance that our bad contact point will be
       // hit first. So we retry the scenario a few times if needed.
+      DriverConfigLoader loader =
+          SessionUtils.configLoaderBuilder()
+              .withDuration(DefaultDriverOption.RECONNECTION_BASE_DELAY, Duration.ofHours(1))
+              .withDuration(DefaultDriverOption.RECONNECTION_MAX_DELAY, Duration.ofHours(1))
+              .build();
       for (int i = 0; i < 10; i++) {
         try (CqlSession localSession =
-            CqlSession.builder()
-                .addContactPoint(address1)
-                .addContactPoint(address2)
-                .withNodeStateListener(localNodeStateListener)
-                .withConfigLoader(
-                    new TestConfigLoader(
-                        "advanced.reconnection-policy.base-delay = 1 hour",
-                        "advanced.reconnection-policy.max-delay = 1 hour"))
-                .build()) {
+            (CqlSession)
+                SessionUtils.baseBuilder()
+                    .addContactPoint(address1)
+                    .addContactPoint(address2)
+                    .withNodeStateListener(localNodeStateListener)
+                    .withConfigLoader(loader)
+                    .build()) {
 
           Map<InetSocketAddress, Node> nodes = localSession.getMetadata().getNodes();
           Node localMetadataNode1 = nodes.get(address1);

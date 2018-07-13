@@ -18,6 +18,9 @@ package com.datastax.oss.driver.osgi;
 import static com.datastax.oss.driver.osgi.BundleOptions.lz4Bundle;
 import static org.ops4j.pax.exam.CoreOptions.options;
 
+import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
+import com.datastax.oss.driver.api.core.config.DriverConfigLoader;
+import com.datastax.oss.driver.api.testinfra.session.SessionUtils;
 import org.ops4j.pax.exam.Option;
 
 public class OsgiLz4IT extends OsgiBaseIT {
@@ -28,7 +31,9 @@ public class OsgiLz4IT extends OsgiBaseIT {
   }
 
   @Override
-  public String[] sessionOptions() {
-    return new String[] {"advanced.protocol.compression = lz4"};
+  public DriverConfigLoader configLoader() {
+    return SessionUtils.configLoaderBuilder()
+        .withString(DefaultDriverOption.PROTOCOL_COMPRESSION, "lz4")
+        .build();
   }
 }

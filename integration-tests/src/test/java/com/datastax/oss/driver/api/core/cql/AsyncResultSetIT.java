@@ -18,8 +18,10 @@ package com.datastax.oss.driver.api.core.cql;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import com.datastax.oss.driver.api.core.CqlSession;
+import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
 import com.datastax.oss.driver.api.testinfra.ccm.CcmRule;
 import com.datastax.oss.driver.api.testinfra.session.SessionRule;
+import com.datastax.oss.driver.api.testinfra.session.SessionUtils;
 import com.datastax.oss.driver.categories.ParallelizableTests;
 import java.util.Iterator;
 import java.util.concurrent.CompletableFuture;
@@ -42,7 +44,12 @@ public class AsyncResultSetIT {
 
   @ClassRule
   public static SessionRule<CqlSession> sessionRule =
-      new SessionRule<>(ccm, "basic.request.page-size = " + PAGE_SIZE);
+      SessionRule.builder(ccm)
+          .withConfigLoader(
+              SessionUtils.configLoaderBuilder()
+                  .withInt(DefaultDriverOption.REQUEST_PAGE_SIZE, PAGE_SIZE)
+                  .build())
+          .build();
 
   @BeforeClass
   public static void setupSchema() {

@@ -23,9 +23,11 @@ import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.CqlSession;
 import com.datastax.oss.driver.api.core.DefaultConsistencyLevel;
 import com.datastax.oss.driver.api.core.DriverTimeoutException;
+import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
 import com.datastax.oss.driver.api.core.servererrors.InvalidQueryException;
 import com.datastax.oss.driver.api.testinfra.ccm.CcmRule;
 import com.datastax.oss.driver.api.testinfra.session.SessionRule;
+import com.datastax.oss.driver.api.testinfra.session.SessionUtils;
 import com.datastax.oss.driver.api.testinfra.simulacron.SimulacronRule;
 import com.datastax.oss.driver.categories.ParallelizableTests;
 import com.datastax.oss.protocol.internal.Message;
@@ -55,7 +57,12 @@ public class SimpleStatementIT {
 
   @ClassRule
   public static SessionRule<CqlSession> sessionRule =
-      new SessionRule<>(ccm, "basic.request.page-size = 20");
+      SessionRule.builder(ccm)
+          .withConfigLoader(
+              SessionUtils.configLoaderBuilder()
+                  .withInt(DefaultDriverOption.REQUEST_PAGE_SIZE, 20)
+                  .build())
+          .build();
 
   @ClassRule
   public static SessionRule<CqlSession> simulacronSessionRule =

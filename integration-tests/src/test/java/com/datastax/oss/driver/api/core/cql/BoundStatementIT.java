@@ -27,6 +27,7 @@ import com.datastax.oss.driver.api.core.CqlSession;
 import com.datastax.oss.driver.api.core.DefaultConsistencyLevel;
 import com.datastax.oss.driver.api.core.DriverTimeoutException;
 import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
+import com.datastax.oss.driver.api.core.config.DriverConfigLoader;
 import com.datastax.oss.driver.api.core.config.DriverExecutionProfile;
 import com.datastax.oss.driver.api.core.metadata.token.Token;
 import com.datastax.oss.driver.api.core.type.codec.TypeCodecs;
@@ -75,7 +76,12 @@ public class BoundStatementIT {
 
   @ClassRule
   public static SessionRule<CqlSession> sessionRule =
-      new SessionRule<>(ccm, "basic.request.page-size = 20");
+      SessionRule.builder(ccm)
+          .withConfigLoader(
+              SessionUtils.configLoaderBuilder()
+                  .withInt(DefaultDriverOption.REQUEST_PAGE_SIZE, 20)
+                  .build())
+          .build();
 
   @Rule public TestName name = new TestName();
 
@@ -121,8 +127,11 @@ public class BoundStatementIT {
 
   @Test(expected = IllegalStateException.class)
   public void should_not_allow_unset_value_when_protocol_less_than_v4() {
-    try (CqlSession v3Session =
-        SessionUtils.newSession(ccm, sessionRule.keyspace(), "advanced.protocol.version = V3")) {
+    DriverConfigLoader loader =
+        SessionUtils.configLoaderBuilder()
+            .withString(DefaultDriverOption.PROTOCOL_VERSION, "V3")
+            .build();
+    try (CqlSession v3Session = SessionUtils.newSession(ccm, sessionRule.keyspace(), loader)) {
       PreparedStatement prepared = v3Session.prepare("INSERT INTO test2 (k, v0) values (?, ?)");
 
       BoundStatement boundStatement =

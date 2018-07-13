@@ -82,7 +82,7 @@ import org.junit.runner.RunWith;
 public class DataTypeIT {
   @ClassRule public static CcmRule ccm = CcmRule.getInstance();
 
-  @ClassRule public static SessionRule<CqlSession> sessionRule = new SessionRule<>(ccm);
+  @ClassRule public static SessionRule<CqlSession> sessionRule = SessionRule.builder(ccm).build();
 
   @Rule public TestName name = new TestName();
 

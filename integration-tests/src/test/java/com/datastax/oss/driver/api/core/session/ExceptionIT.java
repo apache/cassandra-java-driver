@@ -21,14 +21,18 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import com.datastax.oss.driver.api.core.CqlSession;
+import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
 import com.datastax.oss.driver.api.core.cql.ExecutionInfo;
 import com.datastax.oss.driver.api.core.cql.SimpleStatement;
 import com.datastax.oss.driver.api.core.metadata.Node;
 import com.datastax.oss.driver.api.core.servererrors.InvalidQueryException;
 import com.datastax.oss.driver.api.core.servererrors.UnavailableException;
+import com.datastax.oss.driver.api.testinfra.loadbalancing.SortingLoadBalancingPolicy;
 import com.datastax.oss.driver.api.testinfra.session.SessionRule;
+import com.datastax.oss.driver.api.testinfra.session.SessionUtils;
 import com.datastax.oss.driver.api.testinfra.simulacron.SimulacronRule;
 import com.datastax.oss.driver.categories.ParallelizableTests;
+import com.datastax.oss.driver.internal.core.retry.DefaultRetryPolicy;
 import com.datastax.oss.simulacron.common.cluster.ClusterSpec;
 import com.datastax.oss.simulacron.common.stubbing.PrimeDsl;
 import java.util.List;
@@ -47,9 +51,13 @@ public class ExceptionIT {
   @ClassRule
   public static SessionRule<CqlSession> sessionRule =
       SessionRule.builder(simulacron)
-          .withOptions(
-              "basic.load-balancing-policy.class = com.datastax.oss.driver.api.testinfra.loadbalancing.SortingLoadBalancingPolicy",
-              "advanced.retry-policy.class = DefaultRetryPolicy")
+          .withConfigLoader(
+              SessionUtils.configLoaderBuilder()
+                  .withClass(
+                      DefaultDriverOption.LOAD_BALANCING_POLICY_CLASS,
+                      SortingLoadBalancingPolicy.class)
+                  .withClass(DefaultDriverOption.RETRY_POLICY_CLASS, DefaultRetryPolicy.class)
+                  .build())
           .build();
 
   private static String QUERY_STRING = "select * from foo";

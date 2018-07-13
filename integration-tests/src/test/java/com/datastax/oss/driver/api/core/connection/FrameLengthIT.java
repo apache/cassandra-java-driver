@@ -23,12 +23,16 @@ import static org.assertj.core.api.Assertions.fail;
 
 import com.datastax.oss.driver.api.core.AllNodesFailedException;
 import com.datastax.oss.driver.api.core.CqlSession;
+import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
+import com.datastax.oss.driver.api.core.config.DriverConfigLoader;
 import com.datastax.oss.driver.api.core.context.DriverContext;
 import com.datastax.oss.driver.api.core.cql.AsyncResultSet;
 import com.datastax.oss.driver.api.core.cql.SimpleStatement;
 import com.datastax.oss.driver.api.core.retry.RetryDecision;
 import com.datastax.oss.driver.api.core.session.Request;
+import com.datastax.oss.driver.api.testinfra.loadbalancing.SortingLoadBalancingPolicy;
 import com.datastax.oss.driver.api.testinfra.session.SessionRule;
+import com.datastax.oss.driver.api.testinfra.session.SessionUtils;
 import com.datastax.oss.driver.api.testinfra.simulacron.SimulacronRule;
 import com.datastax.oss.driver.categories.ParallelizableTests;
 import com.datastax.oss.driver.internal.core.retry.DefaultRetryPolicy;
@@ -48,13 +52,17 @@ public class FrameLengthIT {
   public static @ClassRule SimulacronRule simulacron =
       new SimulacronRule(ClusterSpec.builder().withNodes(1));
 
+  private static DriverConfigLoader loader =
+      SessionUtils.configLoaderBuilder()
+          .withClass(
+              DefaultDriverOption.LOAD_BALANCING_POLICY_CLASS, SortingLoadBalancingPolicy.class)
+          .withClass(DefaultDriverOption.RETRY_POLICY_CLASS, AlwaysRetryAbortedPolicy.class)
+          .withBytes(DefaultDriverOption.PROTOCOL_MAX_FRAME_LENGTH, "100 kilobytes")
+          .build();
+
   @ClassRule
   public static SessionRule<CqlSession> sessionRule =
-      new SessionRule<>(
-          simulacron,
-          "basic.load-balancing-policy.class = com.datastax.oss.driver.api.testinfra.loadbalancing.SortingLoadBalancingPolicy",
-          "advanced.retry-policy.class = \"com.datastax.oss.driver.api.core.connection.FrameLengthIT$AlwaysRetryAbortedPolicy\"",
-          "advanced.protocol.max-frame-length = 100 kilobytes");
+      SessionRule.builder(simulacron).withConfigLoader(loader).build();
 
   private static final SimpleStatement LARGE_QUERY =
       SimpleStatement.newInstance("select * from foo").setIdempotent(true);

@@ -16,9 +16,12 @@
 package com.datastax.oss.driver.api.core.ssl;
 
 import com.datastax.oss.driver.api.core.CqlSession;
+import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
+import com.datastax.oss.driver.api.core.config.DriverConfigLoader;
 import com.datastax.oss.driver.api.testinfra.ccm.CcmBridge;
 import com.datastax.oss.driver.api.testinfra.ccm.CustomCcmRule;
 import com.datastax.oss.driver.api.testinfra.session.SessionUtils;
+import com.datastax.oss.driver.internal.core.ssl.DefaultSslEngineFactory;
 import org.junit.ClassRule;
 import org.junit.Test;
 
@@ -34,15 +37,18 @@ public class DefaultSslEngineFactoryHostnameValidationIT {
    */
   @Test
   public void should_connect_if_hostname_validation_enabled_and_hostname_matches() {
-    try (CqlSession session =
-        SessionUtils.newSession(
-            ccm,
-            "advanced.ssl-engine-factory.class = DefaultSslEngineFactory",
-            "advanced.ssl-engine-factory.hostname-validation = true",
-            "advanced.ssl-engine-factory.truststore-path = "
-                + CcmBridge.DEFAULT_CLIENT_TRUSTSTORE_FILE.getAbsolutePath(),
-            "advanced.ssl-engine-factory.truststore-password = "
-                + CcmBridge.DEFAULT_CLIENT_TRUSTSTORE_PASSWORD)) {
+    DriverConfigLoader loader =
+        SessionUtils.configLoaderBuilder()
+            .withClass(DefaultDriverOption.SSL_ENGINE_FACTORY_CLASS, DefaultSslEngineFactory.class)
+            .withBoolean(DefaultDriverOption.SSL_HOSTNAME_VALIDATION, true)
+            .withString(
+                DefaultDriverOption.SSL_TRUSTSTORE_PATH,
+                CcmBridge.DEFAULT_CLIENT_TRUSTSTORE_FILE.getAbsolutePath())
+            .withString(
+                DefaultDriverOption.SSL_TRUSTSTORE_PASSWORD,
+                CcmBridge.DEFAULT_CLIENT_TRUSTSTORE_PASSWORD)
+            .build();
+    try (CqlSession session = SessionUtils.newSession(ccm, loader)) {
       session.execute("select * from system.local");
     }
   }

@@ -31,14 +31,19 @@ import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.classic.spi.LoggingEvent;
 import ch.qos.logback.core.Appender;
 import com.datastax.oss.driver.api.core.CqlSession;
+import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
+import com.datastax.oss.driver.api.core.config.DriverConfigLoader;
 import com.datastax.oss.driver.api.core.cql.ResultSet;
 import com.datastax.oss.driver.api.core.cql.SimpleStatement;
 import com.datastax.oss.driver.api.core.servererrors.ServerError;
 import com.datastax.oss.driver.api.testinfra.session.SessionRule;
+import com.datastax.oss.driver.api.testinfra.session.SessionUtils;
 import com.datastax.oss.driver.api.testinfra.simulacron.SimulacronRule;
+import com.datastax.oss.driver.internal.core.config.typesafe.DefaultDriverConfigLoaderBuilder;
 import com.datastax.oss.driver.internal.core.tracker.RequestLogger;
 import com.datastax.oss.simulacron.common.cluster.ClusterSpec;
 import com.datastax.oss.simulacron.common.codec.ConsistencyLevel;
+import java.time.Duration;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import org.junit.After;
@@ -63,60 +68,75 @@ public class RequestLoggerIT {
   @Rule
   public SimulacronRule simulacronRule = new SimulacronRule(ClusterSpec.builder().withNodes(3));
 
+  private final DefaultDriverConfigLoaderBuilder.Profile lowThresholdProfile =
+      DefaultDriverConfigLoaderBuilder.profileBuilder()
+          .withDuration(DefaultDriverOption.REQUEST_LOGGER_SLOW_THRESHOLD, Duration.ofNanos(1))
+          .build();
+
+  private final DefaultDriverConfigLoaderBuilder.Profile noLogsProfile =
+      DefaultDriverConfigLoaderBuilder.profileBuilder()
+          .withBoolean(DefaultDriverOption.REQUEST_LOGGER_SUCCESS_ENABLED, false)
+          .withBoolean(DefaultDriverOption.REQUEST_LOGGER_SLOW_ENABLED, false)
+          .withBoolean(DefaultDriverOption.REQUEST_LOGGER_ERROR_ENABLED, false)
+          .build();
+
+  private final DefaultDriverConfigLoaderBuilder.Profile noTracesProfile =
+      DefaultDriverConfigLoaderBuilder.profileBuilder()
+          .withBoolean(DefaultDriverOption.REQUEST_LOGGER_STACK_TRACES, false)
+          .build();
+
+  private final DriverConfigLoader requestLoader =
+      SessionUtils.configLoaderBuilder()
+          .withClass(DefaultDriverOption.REQUEST_TRACKER_CLASS, RequestLogger.class)
+          .withBoolean(DefaultDriverOption.REQUEST_LOGGER_SUCCESS_ENABLED, true)
+          .withBoolean(DefaultDriverOption.REQUEST_LOGGER_SLOW_ENABLED, true)
+          .withBoolean(DefaultDriverOption.REQUEST_LOGGER_ERROR_ENABLED, true)
+          .withInt(DefaultDriverOption.REQUEST_LOGGER_MAX_QUERY_LENGTH, 500)
+          .withBoolean(DefaultDriverOption.REQUEST_LOGGER_VALUES, true)
+          .withInt(DefaultDriverOption.REQUEST_LOGGER_MAX_VALUE_LENGTH, 50)
+          .withInt(DefaultDriverOption.REQUEST_LOGGER_MAX_VALUES, 50)
+          .withBoolean(DefaultDriverOption.REQUEST_LOGGER_STACK_TRACES, true)
+          .withProfile("low-threshold", lowThresholdProfile)
+          .withProfile("no-logs", noLogsProfile)
+          .withProfile("no-traces", noTracesProfile)
+          .build();
+
   @Rule
   public SessionRule<CqlSession> sessionRuleRequest =
-      SessionRule.builder(simulacronRule)
-          .withOptions(
-              "advanced.request-tracker.class = com.datastax.oss.driver.internal.core.tracker.RequestLogger",
-              "advanced.request-tracker.logs.success.enabled = true",
-              "advanced.request-tracker.logs.slow.enabled = true",
-              "advanced.request-tracker.logs.error.enabled = true",
-              "advanced.request-tracker.logs.max-query-length = 500",
-              "advanced.request-tracker.logs.show-values = true",
-              "advanced.request-tracker.logs.max-value-length = 50",
-              "advanced.request-tracker.logs.max-values = 50",
-              "advanced.request-tracker.logs.show-stack-traces = true",
-              "advanced.request-tracker.logs.node-level = false",
-              "profiles.low-threshold.advanced.request-tracker.logs.slow.threshold = 1 nanosecond",
-              "profiles.no-logs.advanced.request-tracker.logs.success.enabled = false",
-              "profiles.no-logs.advanced.request-tracker.logs.slow.enabled = false",
-              "profiles.no-logs.advanced.request-tracker.logs.error.enabled = false",
-              "profiles.no-traces.advanced.request-tracker.logs.show-stack-traces = false")
+      SessionRule.builder(simulacronRule).withConfigLoader(requestLoader).build();
+
+  private final DriverConfigLoader nodeLoader =
+      SessionUtils.configLoaderBuilder()
+          .withClass(DefaultDriverOption.REQUEST_TRACKER_CLASS, RequestNodeLoggerExample.class)
+          .withBoolean(DefaultDriverOption.REQUEST_LOGGER_SUCCESS_ENABLED, true)
+          .withBoolean(DefaultDriverOption.REQUEST_LOGGER_SLOW_ENABLED, true)
+          .withBoolean(DefaultDriverOption.REQUEST_LOGGER_ERROR_ENABLED, true)
+          .withInt(DefaultDriverOption.REQUEST_LOGGER_MAX_QUERY_LENGTH, 500)
+          .withBoolean(DefaultDriverOption.REQUEST_LOGGER_VALUES, true)
+          .withInt(DefaultDriverOption.REQUEST_LOGGER_MAX_VALUE_LENGTH, 50)
+          .withInt(DefaultDriverOption.REQUEST_LOGGER_MAX_VALUES, 50)
+          .withBoolean(DefaultDriverOption.REQUEST_LOGGER_STACK_TRACES, true)
+          .withProfile("low-threshold", lowThresholdProfile)
+          .withProfile("no-logs", noLogsProfile)
+          .withProfile("no-traces", noTracesProfile)
           .build();
 
   @Rule
   public SessionRule<CqlSession> sessionRuleNode =
-      SessionRule.builder(simulacronRule)
-          .withOptions(
-              "basic.request.consistency = ONE",
-              "advanced.request-tracker.class = com.datastax.oss.driver.api.core.tracker.RequestNodeLoggerExample",
-              "advanced.request-tracker.logs.success.enabled = true",
-              "advanced.request-tracker.logs.slow.enabled = true",
-              "advanced.request-tracker.logs.error.enabled = true",
-              "advanced.request-tracker.logs.max-query-length = 500",
-              "advanced.request-tracker.logs.show-values = true",
-              "advanced.request-tracker.logs.max-value-length = 50",
-              "advanced.request-tracker.logs.max-values = 50",
-              "advanced.request-tracker.logs.show-stack-traces = true",
-              "profiles.low-threshold.advanced.request-tracker.logs.slow.threshold = 1 nanosecond",
-              "profiles.no-logs.advanced.request-tracker.logs.success.enabled = false",
-              "profiles.no-logs.advanced.request-tracker.logs.slow.enabled = false",
-              "profiles.no-logs.advanced.request-tracker.logs.error.enabled = false",
-              "profiles.no-traces.advanced.request-tracker.logs.show-stack-traces = false")
-          .build();
+      SessionRule.builder(simulacronRule).withConfigLoader(nodeLoader).build();
 
   @Rule
   public SessionRule<CqlSession> sessionRuleDefaults =
       SessionRule.builder(simulacronRule)
-          .withOptions(
-              "advanced.request-tracker.class = com.datastax.oss.driver.internal.core.tracker.RequestLogger",
-              "advanced.request-tracker.logs.success.enabled = true",
-              "advanced.request-tracker.logs.error.enabled = true",
-              "profiles.low-threshold.advanced.request-tracker.logs.slow.threshold = 1 nanosecond",
-              "profiles.no-logs.advanced.request-tracker.logs.success.enabled = false",
-              "profiles.no-logs.advanced.request-tracker.logs.slow.enabled = false",
-              "profiles.no-logs.advanced.request-tracker.logs.error.enabled = false",
-              "profiles.no-traces.advanced.request-tracker.logs.show-stack-traces = false")
+          .withConfigLoader(
+              SessionUtils.configLoaderBuilder()
+                  .withClass(DefaultDriverOption.REQUEST_TRACKER_CLASS, RequestLogger.class)
+                  .withBoolean(DefaultDriverOption.REQUEST_LOGGER_SUCCESS_ENABLED, true)
+                  .withBoolean(DefaultDriverOption.REQUEST_LOGGER_ERROR_ENABLED, true)
+                  .withProfile("low-threshold", lowThresholdProfile)
+                  .withProfile("no-logs", noLogsProfile)
+                  .withProfile("no-traces", noTracesProfile)
+                  .build())
           .build();
 
   @Captor private ArgumentCaptor<ILoggingEvent> loggingEventCaptor;

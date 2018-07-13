@@ -18,10 +18,14 @@ package com.datastax.oss.driver.api.core.metadata;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import com.datastax.oss.driver.api.core.CqlSession;
+import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
+import com.datastax.oss.driver.api.core.config.DriverConfigLoader;
 import com.datastax.oss.driver.api.core.cql.ResultSet;
 import com.datastax.oss.driver.api.testinfra.ccm.CustomCcmRule;
+import com.datastax.oss.driver.api.testinfra.loadbalancing.SortingLoadBalancingPolicy;
 import com.datastax.oss.driver.api.testinfra.session.SessionRule;
 import com.datastax.oss.driver.api.testinfra.session.SessionUtils;
+import java.time.Duration;
 import java.util.concurrent.atomic.AtomicInteger;
 import org.junit.ClassRule;
 import org.junit.Rule;
@@ -34,10 +38,16 @@ public class SchemaAgreementIT {
   private static CustomCcmRule ccm = CustomCcmRule.builder().withNodes(3).build();
   private static SessionRule<CqlSession> sessionRule =
       SessionRule.builder(ccm)
-          .withOptions(
-              "basic.request.timeout = 30s",
-              "basic.load-balancing-policy.class = com.datastax.oss.driver.api.testinfra.loadbalancing.SortingLoadBalancingPolicy",
-              "advanced.control-connection.schema-agreement.timeout = 3s")
+          .withConfigLoader(
+              SessionUtils.configLoaderBuilder()
+                  .withDuration(DefaultDriverOption.REQUEST_TIMEOUT, Duration.ofSeconds(30))
+                  .withClass(
+                      DefaultDriverOption.LOAD_BALANCING_POLICY_CLASS,
+                      SortingLoadBalancingPolicy.class)
+                  .withDuration(
+                      DefaultDriverOption.CONTROL_CONNECTION_AGREEMENT_TIMEOUT,
+                      Duration.ofSeconds(3))
+                  .build())
           .build();
 
   @ClassRule public static RuleChain ruleChain = RuleChain.outerRule(ccm).around(sessionRule);
@@ -82,12 +92,13 @@ public class SchemaAgreementIT {
 
   @Test
   public void should_fail_if_timeout_is_zero() {
-    try (CqlSession session =
-        SessionUtils.newSession(
-            ccm,
-            sessionRule.keyspace(),
-            "basic.request.timeout = 30s",
-            "advanced.control-connection.schema-agreement.timeout = 0s")) {
+    DriverConfigLoader loader =
+        SessionUtils.configLoaderBuilder()
+            .withDuration(DefaultDriverOption.REQUEST_TIMEOUT, Duration.ofSeconds(30))
+            .withDuration(
+                DefaultDriverOption.CONTROL_CONNECTION_AGREEMENT_TIMEOUT, Duration.ofSeconds(0))
+            .build();
+    try (CqlSession session = SessionUtils.newSession(ccm, sessionRule.keyspace(), loader)) {
       ResultSet result = createTable(session);
 
       // Should not agree because schema metadata is disabled

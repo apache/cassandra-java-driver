@@ -15,6 +15,10 @@
  */
 package com.datastax.oss.driver.osgi;
 
+import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
+import com.datastax.oss.driver.api.core.config.DriverConfigLoader;
+import com.datastax.oss.driver.api.testinfra.loadbalancing.SortingLoadBalancingPolicy;
+import com.datastax.oss.driver.api.testinfra.session.SessionUtils;
 import org.ops4j.pax.exam.Option;
 
 /**
@@ -29,9 +33,10 @@ public class OsgiCustomLoadBalancingPolicyIT extends OsgiBaseIT {
   }
 
   @Override
-  public String[] sessionOptions() {
-    return new String[] {
-      "basic.load-balancing-policy.class = com.datastax.oss.driver.api.testinfra.loadbalancing.SortingLoadBalancingPolicy"
-    };
+  public DriverConfigLoader configLoader() {
+    return SessionUtils.configLoaderBuilder()
+        .withClass(
+            DefaultDriverOption.LOAD_BALANCING_POLICY_CLASS, SortingLoadBalancingPolicy.class)
+        .build();
   }
 }

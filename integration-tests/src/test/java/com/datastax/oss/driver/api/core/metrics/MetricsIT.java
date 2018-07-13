@@ -20,10 +20,14 @@ import static org.assertj.core.api.Assertions.assertThat;
 import com.codahale.metrics.Meter;
 import com.codahale.metrics.Timer;
 import com.datastax.oss.driver.api.core.CqlSession;
+import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
+import com.datastax.oss.driver.api.core.config.DriverConfigLoader;
 import com.datastax.oss.driver.api.core.metadata.Node;
 import com.datastax.oss.driver.api.testinfra.ccm.CcmRule;
 import com.datastax.oss.driver.api.testinfra.session.SessionUtils;
 import com.datastax.oss.driver.categories.ParallelizableTests;
+import com.google.common.collect.Lists;
+import java.util.Collections;
 import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
@@ -35,8 +39,13 @@ public class MetricsIT {
 
   @Test
   public void should_expose_metrics() {
-    try (CqlSession session =
-        SessionUtils.newSession(ccmRule, "advanced.metrics.session.enabled = [ cql-requests ]")) {
+    DriverConfigLoader loader =
+        SessionUtils.configLoaderBuilder()
+            .withStringList(
+                DefaultDriverOption.METRICS_SESSION_ENABLED,
+                Collections.singletonList("cql-requests"))
+            .build();
+    try (CqlSession session = SessionUtils.newSession(ccmRule, loader)) {
       for (int i = 0; i < 10; i++) {
         session.execute("SELECT release_version FROM system.local");
       }
@@ -56,11 +65,16 @@ public class MetricsIT {
 
   @Test
   public void should_expose_bytes_sent_and_received() {
-    try (CqlSession session =
-        SessionUtils.newSession(
-            ccmRule,
-            "advanced.metrics.session.enabled = [ bytes-sent, bytes-received ]",
-            "advanced.metrics.node.enabled = [ bytes-sent, bytes-received ]")) {
+    DriverConfigLoader loader =
+        SessionUtils.configLoaderBuilder()
+            .withStringList(
+                DefaultDriverOption.METRICS_SESSION_ENABLED,
+                Lists.newArrayList("bytes-sent", "bytes-received"))
+            .withStringList(
+                DefaultDriverOption.METRICS_NODE_ENABLED,
+                Lists.newArrayList("bytes-sent", "bytes-received"))
+            .build();
+    try (CqlSession session = SessionUtils.newSession(ccmRule, loader)) {
       for (int i = 0; i < 10; i++) {
         session.execute("SELECT release_version FROM system.local");
       }
@@ -90,11 +104,12 @@ public class MetricsIT {
 
   @Test
   public void should_not_expose_metrics_if_disabled() {
-    try (CqlSession session =
-        SessionUtils.newSession(
-            ccmRule,
-            "advanced.metrics.session.enabled = []",
-            "advanced.metrics.node.enabled = []")) {
+    DriverConfigLoader loader =
+        SessionUtils.configLoaderBuilder()
+            .withStringList(DefaultDriverOption.METRICS_SESSION_ENABLED, Collections.emptyList())
+            .withStringList(DefaultDriverOption.METRICS_NODE_ENABLED, Collections.emptyList())
+            .build();
+    try (CqlSession session = SessionUtils.newSession(ccmRule, loader)) {
       for (int i = 0; i < 10; i++) {
         session.execute("SELECT release_version FROM system.local");
       }

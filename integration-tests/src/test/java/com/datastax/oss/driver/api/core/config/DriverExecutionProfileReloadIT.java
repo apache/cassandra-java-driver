@@ -24,6 +24,7 @@ import static org.junit.Assert.fail;
 import com.datastax.oss.driver.api.core.CqlSession;
 import com.datastax.oss.driver.api.core.DriverTimeoutException;
 import com.datastax.oss.driver.api.core.cql.SimpleStatement;
+import com.datastax.oss.driver.api.testinfra.session.SessionUtils;
 import com.datastax.oss.driver.api.testinfra.simulacron.SimulacronRule;
 import com.datastax.oss.driver.internal.core.config.ConfigChangeEvent;
 import com.datastax.oss.driver.internal.core.config.ForceReloadConfigEvent;
@@ -56,10 +57,11 @@ public class DriverExecutionProfileReloadIT {
                         "basic.config-reload-interval = 2s\n" + configSource.get())
                     .withFallback(DEFAULT_CONFIG_SUPPLIER.get()));
     try (CqlSession session =
-        CqlSession.builder()
-            .withConfigLoader(loader)
-            .addContactPoints(simulacron.getContactPoints())
-            .build()) {
+        (CqlSession)
+            SessionUtils.baseBuilder()
+                .withConfigLoader(loader)
+                .addContactPoints(simulacron.getContactPoints())
+                .build()) {
       simulacron.cluster().prime(when(query).then(noRows()).delay(4, TimeUnit.SECONDS));
 
       // Expect timeout since default timeout is 2s
@@ -90,10 +92,11 @@ public class DriverExecutionProfileReloadIT {
                 ConfigFactory.parseString("basic.config-reload-interval = 0\n" + configSource.get())
                     .withFallback(DEFAULT_CONFIG_SUPPLIER.get()));
     try (CqlSession session =
-        CqlSession.builder()
-            .withConfigLoader(loader)
-            .addContactPoints(simulacron.getContactPoints())
-            .build()) {
+        (CqlSession)
+            SessionUtils.baseBuilder()
+                .withConfigLoader(loader)
+                .addContactPoints(simulacron.getContactPoints())
+                .build()) {
       simulacron.cluster().prime(when(query).then(noRows()).delay(4, TimeUnit.SECONDS));
 
       // Expect timeout since default timeout is 2s
@@ -128,10 +131,11 @@ public class DriverExecutionProfileReloadIT {
                         "basic.config-reload-interval = 2s\n" + configSource.get())
                     .withFallback(DEFAULT_CONFIG_SUPPLIER.get()));
     try (CqlSession session =
-        CqlSession.builder()
-            .withConfigLoader(loader)
-            .addContactPoints(simulacron.getContactPoints())
-            .build()) {
+        (CqlSession)
+            SessionUtils.baseBuilder()
+                .withConfigLoader(loader)
+                .addContactPoints(simulacron.getContactPoints())
+                .build()) {
       simulacron.cluster().prime(when(query).then(noRows()).delay(4, TimeUnit.SECONDS));
 
       // Expect failure because profile doesn't exist.
@@ -167,10 +171,11 @@ public class DriverExecutionProfileReloadIT {
                             + configSource.get())
                     .withFallback(DEFAULT_CONFIG_SUPPLIER.get()));
     try (CqlSession session =
-        CqlSession.builder()
-            .withConfigLoader(loader)
-            .addContactPoints(simulacron.getContactPoints())
-            .build()) {
+        (CqlSession)
+            SessionUtils.baseBuilder()
+                .withConfigLoader(loader)
+                .addContactPoints(simulacron.getContactPoints())
+                .build()) {
       simulacron.cluster().prime(when(query).then(noRows()).delay(4, TimeUnit.SECONDS));
 
       // Expect failure because profile doesn't exist.

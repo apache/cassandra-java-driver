@@ -32,7 +32,6 @@ import com.datastax.oss.driver.example.guava.internal.GuavaDriverContext;
 import com.datastax.oss.driver.example.guava.internal.KeyRequest;
 import com.datastax.oss.driver.example.guava.internal.KeyRequestProcessor;
 import com.datastax.oss.driver.internal.core.context.DefaultDriverContext;
-import com.datastax.oss.driver.internal.testinfra.session.TestConfigLoader;
 import com.google.common.collect.Iterables;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.Uninterruptibles;
@@ -66,7 +65,7 @@ public class RequestProcessorIT {
 
   @ClassRule public static CcmRule ccm = CcmRule.getInstance();
 
-  @ClassRule public static SessionRule<CqlSession> sessionRule = new SessionRule<>(ccm);
+  @ClassRule public static SessionRule<CqlSession> sessionRule = SessionRule.builder(ccm).build();
 
   @Rule public ExpectedException thrown = ExpectedException.none();
 
@@ -92,11 +91,10 @@ public class RequestProcessorIT {
     }
   }
 
-  private GuavaSession newSession(CqlIdentifier keyspace, String... options) {
+  private GuavaSession newSession(CqlIdentifier keyspace) {
     return GuavaSessionUtils.builder()
         .addContactPoints(ccm.getContactPoints())
         .withKeyspace(keyspace)
-        .withConfigLoader(new TestConfigLoader(options))
         .build();
   }
 

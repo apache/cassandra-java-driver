@@ -19,6 +19,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.CqlSession;
+import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
+import com.datastax.oss.driver.api.core.config.DriverConfigLoader;
 import com.datastax.oss.driver.api.core.metadata.schema.ColumnMetadata;
 import com.datastax.oss.driver.api.core.metadata.schema.SchemaChangeListener;
 import com.datastax.oss.driver.api.core.type.DataTypes;
@@ -29,12 +31,13 @@ import com.datastax.oss.driver.api.testinfra.session.SessionUtils;
 import com.datastax.oss.driver.api.testinfra.utils.ConditionChecker;
 import com.datastax.oss.driver.categories.ParallelizableTests;
 import com.google.common.collect.ImmutableList;
-import java.util.Arrays;
+import com.google.common.collect.Lists;
+import java.time.Duration;
+import java.util.List;
 import java.util.Optional;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.Function;
-import java.util.stream.Collectors;
 import org.assertj.core.api.Assertions;
 import org.junit.Before;
 import org.junit.Rule;
@@ -50,10 +53,13 @@ public class SchemaChangesIT {
   // A client that we only use to set up the tests
   @Rule
   public SessionRule<CqlSession> adminSessionRule =
-      new SessionRule<>(
-          ccmRule,
-          "basic.request.timeout = 30 seconds",
-          "advanced.metadata.schema.debouncer.window = 0 seconds");
+      SessionRule.builder(ccmRule)
+          .withConfigLoader(
+              SessionUtils.configLoaderBuilder()
+                  .withDuration(DefaultDriverOption.REQUEST_TIMEOUT, Duration.ofSeconds(30))
+                  .withDuration(DefaultDriverOption.METADATA_SCHEMA_WINDOW, Duration.ofSeconds(0))
+                  .build())
+          .build();
 
   @Before
   public void setup() {
@@ -404,20 +410,6 @@ public class SchemaChangesIT {
             Mockito.verify(listener).onAggregateUpdated(newAggregate, oldAggregate));
   }
 
-  private String keyspaceFilterOption(CqlIdentifier... keyspaces) {
-    // create option to filter keyspace refreshes based on input keyspaces, if none are provided,
-    // assume the
-    // one associated wiht the cluster rule.
-    if (keyspaces.length == 0) {
-      keyspaces = new CqlIdentifier[] {adminSessionRule.keyspace()};
-    }
-
-    String keyspaceStr =
-        Arrays.stream(keyspaces).map(i -> i.asCql(false)).collect(Collectors.joining(","));
-
-    return String.format("advanced.metadata.schema.refreshed-keyspaces = [%s]", keyspaceStr);
-  }
-
   private <T> void should_handle_creation(
       String beforeStatement,
       String createStatement,
@@ -435,18 +427,23 @@ public class SchemaChangesIT {
 
     // cluster1 executes the DDL query and gets a SCHEMA_CHANGE response.
     // cluster2 gets a SCHEMA_CHANGE push event on its control connection.
+
+    List<String> keyspaceList = Lists.newArrayList();
+    for (CqlIdentifier keyspace : keyspaces) {
+      keyspaceList.add(keyspace.asInternal());
+    }
+
+    DriverConfigLoader loader =
+        SessionUtils.configLoaderBuilder()
+            .withDuration(DefaultDriverOption.REQUEST_TIMEOUT, Duration.ofSeconds(30))
+            .withStringList(DefaultDriverOption.METADATA_SCHEMA_REFRESHED_KEYSPACES, keyspaceList)
+            .build();
+
     try (CqlSession session1 =
             SessionUtils.newSession(
-                ccmRule,
-                adminSessionRule.keyspace(),
-                null,
-                listener1,
-                null,
-                "basic.request.timeout = 30 seconds",
-                keyspaceFilterOption(keyspaces));
+                ccmRule, adminSessionRule.keyspace(), null, listener1, null, loader);
         CqlSession session2 =
-            SessionUtils.newSession(
-                ccmRule, null, null, listener2, null, keyspaceFilterOption(keyspaces))) {
+            SessionUtils.newSession(ccmRule, null, null, listener2, null, loader)) {
 
       session1.execute(createStatement);
 
@@ -480,18 +477,22 @@ public class SchemaChangesIT {
 
     SchemaChangeListener listener1 = Mockito.mock(SchemaChangeListener.class);
     SchemaChangeListener listener2 = Mockito.mock(SchemaChangeListener.class);
+
+    List<String> keyspaceList = Lists.newArrayList();
+    for (CqlIdentifier keyspace : keyspaces) {
+      keyspaceList.add(keyspace.asInternal());
+    }
+    DriverConfigLoader loader =
+        SessionUtils.configLoaderBuilder()
+            .withDuration(DefaultDriverOption.REQUEST_TIMEOUT, Duration.ofSeconds(30))
+            .withStringList(DefaultDriverOption.METADATA_SCHEMA_REFRESHED_KEYSPACES, keyspaceList)
+            .build();
+
     try (CqlSession session1 =
             SessionUtils.newSession(
-                ccmRule,
-                adminSessionRule.keyspace(),
-                null,
-                listener1,
-                null,
-                "basic.request.timeout = 30 seconds",
-                keyspaceFilterOption(keyspaces));
+                ccmRule, adminSessionRule.keyspace(), null, listener1, null, loader);
         CqlSession session2 =
-            SessionUtils.newSession(
-                ccmRule, null, null, listener2, null, keyspaceFilterOption(keyspaces))) {
+            SessionUtils.newSession(ccmRule, null, null, listener2, null, loader)) {
 
       T oldElement = extract.apply(session1.getMetadata()).orElseThrow(AssertionError::new);
       assertThat(oldElement).isNotNull();
@@ -524,18 +525,21 @@ public class SchemaChangesIT {
 
     SchemaChangeListener listener1 = Mockito.mock(SchemaChangeListener.class);
     SchemaChangeListener listener2 = Mockito.mock(SchemaChangeListener.class);
+    List<String> keyspaceList = Lists.newArrayList();
+    for (CqlIdentifier keyspace : keyspaces) {
+      keyspaceList.add(keyspace.asInternal());
+    }
+    DriverConfigLoader loader =
+        SessionUtils.configLoaderBuilder()
+            .withDuration(DefaultDriverOption.REQUEST_TIMEOUT, Duration.ofSeconds(30))
+            .withStringList(DefaultDriverOption.METADATA_SCHEMA_REFRESHED_KEYSPACES, keyspaceList)
+            .build();
+
     try (CqlSession session1 =
             SessionUtils.newSession(
-                ccmRule,
-                adminSessionRule.keyspace(),
-                null,
-                listener1,
-                null,
-                "basic.request.timeout = 30 seconds",
-                keyspaceFilterOption(keyspaces));
+                ccmRule, adminSessionRule.keyspace(), null, listener1, null, loader);
         CqlSession session2 =
-            SessionUtils.newSession(
-                ccmRule, null, null, listener2, null, keyspaceFilterOption(keyspaces))) {
+            SessionUtils.newSession(ccmRule, null, null, listener2, null, loader)) {
 
       T oldElement = extract.apply(session1.getMetadata()).orElseThrow(AssertionError::new);
       assertThat(oldElement).isNotNull();
@@ -573,18 +577,20 @@ public class SchemaChangesIT {
 
     SchemaChangeListener listener1 = Mockito.mock(SchemaChangeListener.class);
     SchemaChangeListener listener2 = Mockito.mock(SchemaChangeListener.class);
+    List<String> keyspaceList = Lists.newArrayList();
+    for (CqlIdentifier keyspace : keyspaces) {
+      keyspaceList.add(keyspace.asInternal());
+    }
+    DriverConfigLoader loader =
+        SessionUtils.configLoaderBuilder()
+            .withDuration(DefaultDriverOption.REQUEST_TIMEOUT, Duration.ofSeconds(30))
+            .withStringList(DefaultDriverOption.METADATA_SCHEMA_REFRESHED_KEYSPACES, keyspaceList)
+            .build();
     try (CqlSession session1 =
             SessionUtils.newSession(
-                ccmRule,
-                adminSessionRule.keyspace(),
-                null,
-                listener1,
-                null,
-                "basic.request.timeout = 30 seconds",
-                keyspaceFilterOption(keyspaces));
+                ccmRule, adminSessionRule.keyspace(), null, listener1, null, loader);
         CqlSession session2 =
-            SessionUtils.newSession(
-                ccmRule, null, null, listener2, null, keyspaceFilterOption(keyspaces))) {
+            SessionUtils.newSession(ccmRule, null, null, listener2, null, loader)) {
 
       T oldElement = extract.apply(session1.getMetadata()).orElseThrow(AssertionError::new);
       assertThat(oldElement).isNotNull();

@@ -16,9 +16,12 @@
 package com.datastax.oss.driver.api.core.metadata;
 
 import com.datastax.oss.driver.api.core.CqlSession;
+import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
 import com.datastax.oss.driver.api.testinfra.ccm.CustomCcmRule;
 import com.datastax.oss.driver.api.testinfra.session.SessionRule;
+import com.datastax.oss.driver.api.testinfra.session.SessionUtils;
 import com.datastax.oss.driver.internal.core.metadata.token.ByteOrderedToken;
+import java.time.Duration;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
 
@@ -34,7 +37,13 @@ public class ByteOrderedTokenVnodesIT extends TokenITBase {
 
   @ClassRule
   public static SessionRule<CqlSession> sessionRule =
-      new SessionRule<>(ccmRule, false, null, null, "basic.request.timeout = 30 seconds");
+      SessionRule.builder(ccmRule)
+          .withKeyspace(false)
+          .withConfigLoader(
+              SessionUtils.configLoaderBuilder()
+                  .withDuration(DefaultDriverOption.REQUEST_TIMEOUT, Duration.ofSeconds(30))
+                  .build())
+          .build();
 
   public ByteOrderedTokenVnodesIT() {
     super(ByteOrderedToken.class, true);

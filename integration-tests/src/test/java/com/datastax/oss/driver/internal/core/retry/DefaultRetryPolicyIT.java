@@ -36,6 +36,7 @@ import ch.qos.logback.core.Appender;
 import com.datastax.oss.driver.api.core.AllNodesFailedException;
 import com.datastax.oss.driver.api.core.CqlSession;
 import com.datastax.oss.driver.api.core.DefaultConsistencyLevel;
+import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
 import com.datastax.oss.driver.api.core.connection.ClosedConnectionException;
 import com.datastax.oss.driver.api.core.cql.ResultSet;
 import com.datastax.oss.driver.api.core.cql.SimpleStatement;
@@ -45,7 +46,9 @@ import com.datastax.oss.driver.api.core.servererrors.ReadTimeoutException;
 import com.datastax.oss.driver.api.core.servererrors.ServerError;
 import com.datastax.oss.driver.api.core.servererrors.UnavailableException;
 import com.datastax.oss.driver.api.core.servererrors.WriteTimeoutException;
+import com.datastax.oss.driver.api.testinfra.loadbalancing.SortingLoadBalancingPolicy;
 import com.datastax.oss.driver.api.testinfra.session.SessionRule;
+import com.datastax.oss.driver.api.testinfra.session.SessionUtils;
 import com.datastax.oss.driver.api.testinfra.simulacron.SimulacronRule;
 import com.datastax.oss.simulacron.common.cluster.ClusterSpec;
 import com.datastax.oss.simulacron.common.stubbing.CloseType;
@@ -70,11 +73,17 @@ public class DefaultRetryPolicyIT {
 
   public static @ClassRule SimulacronRule simulacron =
       new SimulacronRule(ClusterSpec.builder().withNodes(3));
+
   public @Rule SessionRule<CqlSession> sessionRule =
-      new SessionRule<>(
-          simulacron,
-          "basic.request.default-idempotence = true",
-          "basic.load-balancing-policy.class = com.datastax.oss.driver.api.testinfra.loadbalancing.SortingLoadBalancingPolicy");
+      SessionRule.builder(simulacron)
+          .withConfigLoader(
+              SessionUtils.configLoaderBuilder()
+                  .withBoolean(DefaultDriverOption.REQUEST_DEFAULT_IDEMPOTENCE, true)
+                  .withClass(
+                      DefaultDriverOption.LOAD_BALANCING_POLICY_CLASS,
+                      SortingLoadBalancingPolicy.class)
+                  .build())
+          .build();
 
   private static String queryStr = "select * from foo";
   private static final SimpleStatement query = SimpleStatement.builder(queryStr).build();

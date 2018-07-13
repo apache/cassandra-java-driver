@@ -18,8 +18,11 @@ package com.datastax.oss.driver.api.core.auth;
 import com.datastax.oss.driver.api.core.AllNodesFailedException;
 import com.datastax.oss.driver.api.core.CqlSession;
 import com.datastax.oss.driver.api.core.Version;
+import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
+import com.datastax.oss.driver.api.core.config.DriverConfigLoader;
 import com.datastax.oss.driver.api.testinfra.ccm.CustomCcmRule;
 import com.datastax.oss.driver.api.testinfra.session.SessionUtils;
+import com.datastax.oss.driver.internal.core.auth.PlainTextAuthProvider;
 import com.google.common.util.concurrent.Uninterruptibles;
 import java.util.concurrent.TimeUnit;
 import org.junit.BeforeClass;
@@ -45,24 +48,26 @@ public class PlainTextAuthProviderIT {
 
   @Test
   public void should_connect_with_credentials() {
-    try (CqlSession session =
-        SessionUtils.newSession(
-            ccm,
-            "advanced.auth-provider.class = PlainTextAuthProvider",
-            "advanced.auth-provider.username = cassandra",
-            "advanced.auth-provider.password = cassandra")) {
+    DriverConfigLoader loader =
+        SessionUtils.configLoaderBuilder()
+            .withClass(DefaultDriverOption.AUTH_PROVIDER_CLASS, PlainTextAuthProvider.class)
+            .withString(DefaultDriverOption.AUTH_PROVIDER_USER_NAME, "cassandra")
+            .withString(DefaultDriverOption.AUTH_PROVIDER_PASSWORD, "cassandra")
+            .build();
+    try (CqlSession session = SessionUtils.newSession(ccm, loader)) {
       session.execute("select * from system.local");
     }
   }
 
   @Test(expected = AllNodesFailedException.class)
   public void should_not_connect_with_invalid_credentials() {
-    try (CqlSession session =
-        SessionUtils.newSession(
-            ccm,
-            "advanced.auth-provider.class = PlainTextAuthProvider",
-            "advanced.auth-provider.username = baduser",
-            "advanced.auth-provider.password = badpass")) {
+    DriverConfigLoader loader =
+        SessionUtils.configLoaderBuilder()
+            .withClass(DefaultDriverOption.AUTH_PROVIDER_CLASS, PlainTextAuthProvider.class)
+            .withString(DefaultDriverOption.AUTH_PROVIDER_USER_NAME, "baduser")
+            .withString(DefaultDriverOption.AUTH_PROVIDER_PASSWORD, "badpass")
+            .build();
+    try (CqlSession session = SessionUtils.newSession(ccm, loader)) {
       session.execute("select * from system.local");
     }
   }

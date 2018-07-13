@@ -91,6 +91,27 @@ public class DefaultDriverConfigLoader implements DriverConfigLoader {
     }
   }
 
+  /**
+   * Constructs a builder that may be used to provide additional configuration beyond those defined
+   * in your configuration files programmatically. For example:
+   *
+   * <pre>{@code
+   * CqlSession session = CqlSession.builder()
+   *   .withConfigLoader(DefaultDriverConfigLoader.builder()
+   *     .withDuration(DefaultDriverOption.REQUEST_TIMEOUT, Duration.ofMillis(500))
+   *     .build())
+   *   .build();
+   * }</pre>
+   *
+   * <p>In the general case, use of this is not recommended, but it may be useful in situations
+   * where configuration must be defined at runtime or is derived from some other configuration
+   * source.
+   */
+  @NonNull
+  public static DefaultDriverConfigLoaderBuilder builder() {
+    return new DefaultDriverConfigLoaderBuilder();
+  }
+
   private class SingleThreaded {
     private final String logPrefix;
     private final EventExecutor adminExecutor;

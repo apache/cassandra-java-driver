@@ -34,7 +34,10 @@ import org.junit.rules.ExpectedException;
 public class QueryTraceIT {
 
   @ClassRule public static CcmRule ccmRule = CcmRule.getInstance();
-  @ClassRule public static SessionRule<CqlSession> sessionRule = new SessionRule<>(ccmRule);
+
+  @ClassRule
+  public static SessionRule<CqlSession> sessionRule = SessionRule.builder(ccmRule).build();
+
   @Rule public ExpectedException thrown = ExpectedException.none();
 
   @Test
