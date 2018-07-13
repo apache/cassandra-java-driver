@@ -29,7 +29,9 @@ public class VirtualTableMetadataTest extends CCMTestsSupport {
     @Test(groups = "short")
     public void should_parse_virtual_metadata() {
         KeyspaceMetadata km=session().getCluster().getMetadata().getKeyspace("system_views");
-        assertThat(km.getTables().size()>=2);
+        // Keyspace name should be set, marked as virtual, and have a clients table.
+        // All other values should be defaulted since they are not defined in the virtual schema tables.
+        assertThat(km.getTables().size() >= 2);
         assertThat(km.isVirtual()).isTrue();
         assertThat(km.getTable("clients")).isNotNull();
         assertThat(km.isDurableWrites()).isFalse();
@@ -40,6 +42,8 @@ public class VirtualTableMetadataTest extends CCMTestsSupport {
         assertThat(km.getAggregates().size()).isEqualTo(0);
         assertThat(km.asCQLQuery()).isEqualTo("/* VIRTUAL KEYSPACE system_views WITH REPLICATION = { 'class' : 'null' } " +
                 "AND DURABLE_WRITES = false;*/");
+        // Table name should be set, marked as virtual, and it should have columns set.
+        // indexes, views, clustering column, clustering order and id are not defined in the virtual schema tables.
         TableMetadata tm = km.getTable("clients");
         assertThat(tm).isNotNull();
         assertThat(tm.getName()).isEqualTo("clients");
@@ -55,7 +59,8 @@ public class VirtualTableMetadataTest extends CCMTestsSupport {
         assertThat(tm.asCQLQuery()).isEqualTo("/* VIRTUAL TABLE system_views.clients (driver_name text, connection_stage" +
                 " text, hostname text, protocol_version int, address inet, port int, ssl_enabled boolean, driver_version" +
                 " text, ssl_cipher_suite text, ssl_protocol text, request_count bigint, username text, PRIMARY KEY (()))  */");
-        ColumnMetadata cm= tm.getColumn("driver_name");
+        // ColumnMetadata is as expected
+        ColumnMetadata cm = tm.getColumn("driver_name");
         assertThat(cm).isNotNull();
         assertThat(cm.getParent()).isEqualTo(tm);
         assertThat(cm.getType()).isEqualTo(DataType.text());

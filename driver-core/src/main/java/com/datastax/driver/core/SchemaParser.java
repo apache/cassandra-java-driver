@@ -510,7 +510,7 @@ abstract class SchemaParser {
 
         public SystemRows(ResultSet keyspaces, Map<String, List<Row>> tables, Map<String, Map<String, Map<String, ColumnMetadata.Raw>>> columns, Map<String, List<Row>> udts, Map<String, List<Row>> functions,
                           Map<String, List<Row>> aggregates, Map<String, List<Row>> views, Map<String, Map<String, List<Row>>> indexes, ResultSet virtualKeyspaces, Map<String, List<Row>> virtualTables,
-                          Map<String, Map<String, Map<String, ColumnMetadata.Raw>>> virtualcolumns) {
+                          Map<String, Map<String, Map<String, ColumnMetadata.Raw>>> virtualColumns) {
             this.keyspaces = keyspaces;
             this.tables = tables;
             this.columns = columns;
@@ -521,7 +521,7 @@ abstract class SchemaParser {
             this.indexes = indexes;
             this.virtualKeyspaces = virtualKeyspaces;
             this.virtualTables = virtualTables;
-            this.virtualColumns = virtualcolumns;
+            this.virtualColumns = virtualColumns;
         }
     }
 
@@ -592,7 +592,7 @@ abstract class SchemaParser {
                     // No views nor separate indexes table in Cassandra 2:
                     Collections.<String, List<Row>>emptyMap(),
                     Collections.<String, Map<String, List<Row>>>emptyMap(),
-                   null,
+                    null,
                     Collections.<String, List<Row>>emptyMap(),
                     Collections.<String, Map<String,Map<String,ColumnMetadata.Raw>>>emptyMap());
         }

@@ -47,8 +47,9 @@ public class KeyspaceMetadata {
     final Map<String, AggregateMetadata> aggregates = new ConcurrentHashMap<String, AggregateMetadata>();
 
     @VisibleForTesting
+    @Deprecated
     KeyspaceMetadata(String name, boolean durableWrites, Map<String, String> replication) {
-        this(name,durableWrites,replication,false);
+        this(name, durableWrites, replication, false);
     }
     @VisibleForTesting
     KeyspaceMetadata(String name, boolean durableWrites, Map<String, String> replication, boolean virtual) {

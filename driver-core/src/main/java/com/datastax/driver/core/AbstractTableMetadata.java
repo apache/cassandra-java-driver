@@ -201,8 +201,7 @@ public abstract class AbstractTableMetadata {
 
     /**
      * Returns whether or not this keyspace is a virtual keyspace
-     * @return {@code true} if virtual keyspace
-     * default), {@code false} otherwise.
+     * @return {@code true} if virtual keyspace, {@code false} otherwise.
      */
     public boolean isVirtual(){
         return getKeyspace().isVirtual();
