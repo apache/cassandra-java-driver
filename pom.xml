@@ -289,6 +289,18 @@
           <artifactId>maven-bundle-plugin</artifactId>
           <version>3.5.0</version>
         </plugin>
+        <plugin>
+          <groupId>org.revapi</groupId>
+          <artifactId>revapi-maven-plugin</artifactId>
+          <version>0.10.4</version>
+          <dependencies>
+            <dependency>
+              <groupId>org.revapi</groupId>
+              <artifactId>revapi-java</artifactId>
+              <version>0.18.0</version>
+            </dependency>
+          </dependencies>
+        </plugin>
       </plugins>
     </pluginManagement>
     <plugins>
@@ -541,6 +553,23 @@ limitations under the License.]]>
             <supportedProjectType>pom</supportedProjectType>
           </supportedProjectTypes>
         </configuration>
+      </plugin>
+      <plugin>
+        <groupId>org.revapi</groupId>
+        <artifactId>revapi-maven-plugin</artifactId>
+        <executions>
+          <execution>
+            <goals>
+              <goal>check</goal>
+            </goals>
+            <configuration>
+              <analysisConfigurationFiles>
+                <!-- Present at the root of each module that doesn't skip this goal -->
+                <analysisConfigurationFile>revapi.json</analysisConfigurationFile>
+              </analysisConfigurationFiles>
+            </configuration>
+          </execution>
+        </executions>
       </plugin>
     </plugins>
   </build>

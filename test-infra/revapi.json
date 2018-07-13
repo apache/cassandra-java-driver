@@ -1,0 +1,16 @@
+// Configures Revapi (https://revapi.org/getting-started.html) to check API compatibility between
+// successive driver versions.
+{
+  "revapi": {
+    "java": {
+      "filter": {
+        "packages": {
+          "regex": true,
+          "include": [
+            "com\\.datastax\\.oss\\.driver\\.api\\..*"
+          ]
+        }
+      }
+    }
+  }
+}
