@@ -4,6 +4,7 @@
 
 ### 4.0.0-beta2 (in progress)
 
+- [improvement] JAVA-1544: Check API compatibility with Revapi
 
 ### 4.0.0-beta1
 
