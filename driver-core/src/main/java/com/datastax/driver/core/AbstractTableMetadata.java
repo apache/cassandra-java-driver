@@ -254,6 +254,9 @@ public abstract class AbstractTableMetadata {
 
     protected StringBuilder appendOptions(StringBuilder sb, boolean formatted) {
         // Options
+        if(options==null){
+            return sb;
+        }
         sb.append("WITH ");
         if (options.isCompactStorage())
             and(sb.append("COMPACT STORAGE"), formatted);

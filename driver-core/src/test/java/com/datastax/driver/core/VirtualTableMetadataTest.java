@@ -38,6 +38,8 @@ public class VirtualTableMetadataTest extends CCMTestsSupport {
         assertThat(km.getFunctions().size()).isEqualTo(0);
         assertThat(km.getMaterializedViews().size()).isEqualTo(0);
         assertThat(km.getAggregates().size()).isEqualTo(0);
+        assertThat(km.asCQLQuery()).isEqualTo("/* VIRTUAL KEYSPACE system_views WITH REPLICATION = { 'class' : 'null' } " +
+                "AND DURABLE_WRITES = false;*/");
         TableMetadata tm = km.getTable("clients");
         assertThat(tm).isNotNull();
         assertThat(tm.getName()).isEqualTo("clients");
@@ -50,6 +52,9 @@ public class VirtualTableMetadataTest extends CCMTestsSupport {
         assertThat(tm.getId()).isEqualTo( new UUID(0L, 0L));
         assertThat(tm.getOptions()).isNull();
         assertThat(tm.getKeyspace()).isEqualTo(km);
+        assertThat(tm.asCQLQuery()).isEqualTo("/* VIRTUAL TABLE system_views.clients (driver_name text, connection_stage" +
+                " text, hostname text, protocol_version int, address inet, port int, ssl_enabled boolean, driver_version" +
+                " text, ssl_cipher_suite text, ssl_protocol text, request_count bigint, username text, PRIMARY KEY (()))  */");
         ColumnMetadata cm= tm.getColumn("driver_name");
         assertThat(cm).isNotNull();
         assertThat(cm.getParent()).isEqualTo(tm);

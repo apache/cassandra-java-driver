@@ -371,12 +371,15 @@ public class KeyspaceMetadata {
      * @see #exportAsString
      */
     public String asCQLQuery() {
-        if(virtual){
-            return "";
-        }
         StringBuilder sb = new StringBuilder();
+        if(virtual){
+            sb.append("/* VIRTUAL ");
+        }
+        else{
+            sb.append("CREATE ");
+        }
 
-        sb.append("CREATE KEYSPACE ").append(Metadata.quoteIfNecessary(name)).append(" WITH ");
+        sb.append("KEYSPACE ").append(Metadata.quoteIfNecessary(name)).append(" WITH ");
         sb.append("REPLICATION = { 'class' : '").append(replication.get("class")).append('\'');
         for (Map.Entry<String, String> entry : replication.entrySet()) {
             if (entry.getKey().equals("class"))
@@ -385,6 +388,9 @@ public class KeyspaceMetadata {
         }
         sb.append(" } AND DURABLE_WRITES = ").append(durableWrites);
         sb.append(';');
+        if(virtual){
+            sb.append("*/");
+        }
         return sb.toString();
     }
 

@@ -398,9 +398,6 @@ public class TableMetadata extends AbstractTableMetadata {
      */
     @Override
     public String exportAsString() {
-        if(isVirtual()){
-            return "";
-        }
         StringBuilder sb = new StringBuilder();
 
         sb.append(super.exportAsString());
@@ -436,11 +433,14 @@ public class TableMetadata extends AbstractTableMetadata {
 
     @Override
     protected String asCQLQuery(boolean formatted) {
-        if(isVirtual()){
-            return "";
-        }
         StringBuilder sb = new StringBuilder();
-        sb.append("CREATE TABLE ").append(Metadata.quoteIfNecessary(keyspace.getName())).append('.').append(Metadata.quoteIfNecessary(name)).append(" (");
+        if(isVirtual()){
+            sb.append("/* VIRTUAL ");
+        }
+        else{
+            sb.append("CREATE ");
+        }
+        sb.append("TABLE ").append(Metadata.quoteIfNecessary(keyspace.getName())).append('.').append(Metadata.quoteIfNecessary(name)).append(" (");
         if (formatted) {
             spaceOrNewLine(sb, true);
         }
@@ -448,7 +448,6 @@ public class TableMetadata extends AbstractTableMetadata {
             sb.append(cm).append(',');
             spaceOrNewLine(sb, formatted);
         }
-
         // PK
         sb.append("PRIMARY KEY (");
         if (partitionKey.size() == 1) {
@@ -470,9 +469,11 @@ public class TableMetadata extends AbstractTableMetadata {
         sb.append(')');
         newLine(sb, formatted);
         // end PK
-
         sb.append(") ");
         appendOptions(sb, formatted);
+        if(isVirtual()) {
+            sb.append(" */");
+        }
         return sb.toString();
     }
 
