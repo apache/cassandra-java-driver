@@ -77,7 +77,7 @@ public class SessionRule<SessionT extends Session> extends ExternalResource {
   }
 
   /** @see #builder(CassandraResourceRule) */
-  SessionRule(
+  public SessionRule(
       CassandraResourceRule cassandraResource,
       boolean createKeyspace,
       NodeStateListener nodeStateListener,
