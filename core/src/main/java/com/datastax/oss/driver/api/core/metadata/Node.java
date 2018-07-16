@@ -17,7 +17,6 @@ package com.datastax.oss.driver.api.core.metadata;
 
 import com.datastax.oss.driver.api.core.Version;
 import com.datastax.oss.driver.api.core.addresstranslation.AddressTranslator;
-import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
 import com.datastax.oss.driver.api.core.loadbalancing.LoadBalancingPolicy;
 import com.datastax.oss.driver.api.core.loadbalancing.NodeDistance;
 import edu.umd.cs.findbugs.annotations.NonNull;
@@ -156,21 +155,4 @@ public interface Node {
    */
   @Nullable
   UUID getSchemaVersion();
-
-  /**
-   * The last time that the driver received a response from this node, or -1 if it has not responded
-   * yet.
-   *
-   * <p>This is recorded with {@link System#nanoTime()}, and should only be used to measure elapsed
-   * time.
-   *
-   * <p>Note that this feature is controlled by a configuration option ({@code
-   * advanced.metadata.nodes.last-response-time.enabled}) and <b>disabled by default</b> (i.e. will
-   * always return -1). You might want to enable it for information purposes, or for use in custom
-   * policy implementations. It incurs a bit of overhead (namely, a volatile write for every
-   * request).
-   *
-   * @see DefaultDriverOption#METADATA_LAST_RESPONSE_TIME_ENABLED
-   */
-  long getLastResponseTimeNanos();
 }

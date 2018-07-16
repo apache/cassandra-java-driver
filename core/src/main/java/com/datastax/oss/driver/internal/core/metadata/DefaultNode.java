@@ -59,8 +59,6 @@ public class DefaultNode implements Node {
 
   volatile NodeDistance distance;
 
-  private volatile long lastResponseTimeNanos;
-
   public DefaultNode(InetSocketAddress connectAddress, InternalDriverContext context) {
     this.connectAddress = connectAddress;
     this.state = NodeState.UNKNOWN;
@@ -71,7 +69,6 @@ public class DefaultNode implements Node {
     // problem because the node updater only needs the connect address to initialize.
     this.metricUpdater = context.metricsFactory().newNodeUpdater(this);
     this.upSinceMillis = -1;
-    this.lastResponseTimeNanos = -1;
   }
 
   @NonNull
@@ -157,15 +154,6 @@ public class DefaultNode implements Node {
 
   public NodeMetricUpdater getMetricUpdater() {
     return metricUpdater;
-  }
-
-  @Override
-  public long getLastResponseTimeNanos() {
-    return lastResponseTimeNanos;
-  }
-
-  public void setLastResponseTimeNanos(long lastResponseTimeNanos) {
-    this.lastResponseTimeNanos = lastResponseTimeNanos;
   }
 
   @Override

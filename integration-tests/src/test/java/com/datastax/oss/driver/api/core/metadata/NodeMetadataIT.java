@@ -18,11 +18,9 @@ package com.datastax.oss.driver.api.core.metadata;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import com.datastax.oss.driver.api.core.CqlSession;
-import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
 import com.datastax.oss.driver.api.core.loadbalancing.NodeDistance;
 import com.datastax.oss.driver.api.testinfra.ccm.CcmRule;
 import com.datastax.oss.driver.api.testinfra.session.SessionRule;
-import com.datastax.oss.driver.api.testinfra.session.SessionUtils;
 import com.datastax.oss.driver.api.testinfra.utils.ConditionChecker;
 import com.datastax.oss.driver.categories.ParallelizableTests;
 import com.datastax.oss.driver.internal.core.context.EventBus;
@@ -64,7 +62,6 @@ public class NodeMetadataIT {
     assertThat(node.getSchemaVersion()).isNotNull();
     long upTime1 = node.getUpSinceMillis();
     assertThat(upTime1).isGreaterThan(-1);
-    assertThat(node.getLastResponseTimeNanos()).isEqualTo(-1);
 
     // Note: open connections and reconnection status are covered in NodeStateIT
 
@@ -76,46 +73,6 @@ public class NodeMetadataIT {
     eventBus.fire(TopologyEvent.forceUp(node.getConnectAddress()));
     ConditionChecker.checkThat(() -> node.getState() == NodeState.UP).becomesTrue();
     assertThat(node.getUpSinceMillis()).isGreaterThan(upTime1);
-  }
-
-  @Test
-  public void should_not_record_last_response_time_if_disabled() {
-    CqlSession session = sessionRule.session();
-    Node node = getUniqueNode(session);
-    assertThat(node.getLastResponseTimeNanos()).isEqualTo(-1);
-
-    for (int i = 0; i < 10; i++) {
-      session.execute("SELECT release_version FROM system.local");
-      assertThat(node.getLastResponseTimeNanos()).isEqualTo(-1);
-    }
-  }
-
-  @Test
-  public void should_record_last_response_time_if_enabled() {
-    try (CqlSession session =
-        SessionUtils.newSession(
-            ccmRule,
-            SessionUtils.configLoaderBuilder()
-                .withBoolean(DefaultDriverOption.METADATA_LAST_RESPONSE_TIME_ENABLED, true)
-                .build())) {
-      Node node = getUniqueNode(session);
-
-      // Ensure that we get increasing timestamps as long as we keep querying
-      long[] timestamps = new long[10];
-      timestamps[0] = System.nanoTime();
-      for (int i = 1; i < 9; i++) {
-        session.execute("SELECT release_version FROM system.local");
-        timestamps[i] = node.getLastResponseTimeNanos();
-      }
-      timestamps[9] = System.nanoTime();
-
-      for (int i = 0; i < 9; i++) {
-        assertThat(timestamps[i]).isLessThan(timestamps[i + 1]);
-      }
-
-      // Ensure that the value doesn't change since the last query
-      assertThat(node.getLastResponseTimeNanos()).isEqualTo(timestamps[8]);
-    }
   }
 
   private static Node getUniqueNode(CqlSession session) {

@@ -42,7 +42,6 @@ import com.datastax.oss.driver.internal.core.adminrequest.ThrottledAdminRequestH
 import com.datastax.oss.driver.internal.core.channel.DriverChannel;
 import com.datastax.oss.driver.internal.core.channel.ResponseCallback;
 import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
-import com.datastax.oss.driver.internal.core.metadata.DefaultNode;
 import com.datastax.oss.driver.internal.core.session.DefaultSession;
 import com.datastax.oss.driver.internal.core.util.Loggers;
 import com.datastax.oss.driver.internal.core.util.concurrent.CompletableFutures;
@@ -97,7 +96,6 @@ public abstract class CqlPrepareHandlerBase implements Throttled {
   private final RequestThrottler throttler;
   private final Boolean prepareOnAllNodes;
   private volatile InitialPrepareCallback initialCallback;
-  private final boolean recordLastResponseTime;
 
   // The errors on the nodes that were already tried (lazily initialized on the first error).
   // We don't use a map because nodes can appear multiple times.
@@ -129,8 +127,6 @@ public abstract class CqlPrepareHandlerBase implements Throttled {
               ? config.getDefaultProfile()
               : config.getProfile(profileName);
     }
-    this.recordLastResponseTime =
-        executionProfile.getBoolean(DefaultDriverOption.METADATA_LAST_RESPONSE_TIME_ENABLED, false);
     this.queryPlan =
         context
             .loadBalancingPolicyWrapper()
@@ -407,9 +403,6 @@ public abstract class CqlPrepareHandlerBase implements Throttled {
 
     @Override
     public void onResponse(Frame responseFrame) {
-      if (recordLastResponseTime) {
-        ((DefaultNode) node).setLastResponseTimeNanos(System.nanoTime());
-      }
       if (result.isDone()) {
         return;
       }

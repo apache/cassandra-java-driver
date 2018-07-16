@@ -142,7 +142,6 @@ public enum DefaultDriverOption implements DriverOption {
   METADATA_SCHEMA_WINDOW("advanced.metadata.schema.debouncer.window"),
   METADATA_SCHEMA_MAX_EVENTS("advanced.metadata.schema.debouncer.max-events"),
   METADATA_TOKEN_MAP_ENABLED("advanced.metadata.token-map.enabled"),
-  METADATA_LAST_RESPONSE_TIME_ENABLED("advanced.metadata.nodes.last-response-time.enabled"),
 
   CONTROL_CONNECTION_TIMEOUT("advanced.control-connection.timeout"),
   CONTROL_CONNECTION_AGREEMENT_INTERVAL("advanced.control-connection.schema-agreement.interval"),
