@@ -107,6 +107,7 @@ public class ConditionChecker {
   private final Lock lock;
   private final Condition condition;
   private final Timer timer;
+  private Throwable lastFailure;
 
   public ConditionChecker(
       Object predicate,
@@ -138,11 +139,17 @@ public class ConditionChecker {
     lock.lock();
     try {
       while (!evalCondition()) {
-        if (nanos <= 0L)
-          fail(
+        if (nanos <= 0L) {
+          String msg =
               String.format(
                   "Timeout after %s %s while waiting for '%s'",
-                  timeout, unit.toString().toLowerCase(), description));
+                  timeout, unit.toString().toLowerCase(), description);
+          if (lastFailure != null) {
+            fail(msg, lastFailure);
+          } else {
+            fail(msg);
+          }
+        }
         try {
           nanos = condition.awaitNanos(nanos);
         } catch (InterruptedException e) {
@@ -175,6 +182,7 @@ public class ConditionChecker {
         ((Runnable) predicate).run();
       } catch (Throwable t) {
         succeeded = false;
+        lastFailure = t;
       }
       return succeeded == expectedOutcome;
     } else {

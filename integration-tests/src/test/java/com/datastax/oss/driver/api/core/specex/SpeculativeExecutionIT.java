@@ -30,6 +30,7 @@ import com.datastax.oss.driver.api.core.cql.ResultSet;
 import com.datastax.oss.driver.api.core.cql.SimpleStatement;
 import com.datastax.oss.driver.api.testinfra.loadbalancing.SortingLoadBalancingPolicy;
 import com.datastax.oss.driver.api.testinfra.session.SessionUtils;
+import com.datastax.oss.driver.api.testinfra.simulacron.QueryCounter;
 import com.datastax.oss.driver.api.testinfra.simulacron.SimulacronRule;
 import com.datastax.oss.driver.categories.ParallelizableTests;
 import com.datastax.oss.driver.internal.core.config.typesafe.DefaultDriverConfigLoaderBuilder;
@@ -58,9 +59,14 @@ public class SpeculativeExecutionIT {
   public static @ClassRule SimulacronRule simulacron =
       new SimulacronRule(ClusterSpec.builder().withNodes(3));
 
+  @SuppressWarnings("deprecation")
+  private final QueryCounter counter =
+      QueryCounter.builder(simulacron.cluster())
+          .withFilter((l) -> l.getQuery().equals(QUERY_STRING))
+          .build();
+
   @Before
   public void clear() {
-    simulacron.cluster().clearLogs();
     simulacron.cluster().clearPrimes(true);
   }
 
@@ -75,9 +81,7 @@ public class SpeculativeExecutionIT {
       assertThat(resultSet.getExecutionInfo().getSuccessfulExecutionIndex()).isEqualTo(0);
       assertThat(resultSet.getExecutionInfo().getSpeculativeExecutionCount()).isEqualTo(0);
 
-      assertQueryCount(0, 1);
-      assertQueryCount(1, 0);
-      assertQueryCount(2, 0);
+      counter.assertNodeCounts(1, 0, 0);
     }
   }
 
@@ -93,9 +97,7 @@ public class SpeculativeExecutionIT {
       assertThat(resultSet.getExecutionInfo().getSuccessfulExecutionIndex()).isEqualTo(1);
       assertThat(resultSet.getExecutionInfo().getSpeculativeExecutionCount()).isEqualTo(1);
 
-      assertQueryCount(0, 1);
-      assertQueryCount(1, 1);
-      assertQueryCount(2, 0);
+      counter.assertNodeCounts(1, 1, 0);
     }
   }
 
@@ -112,9 +114,7 @@ public class SpeculativeExecutionIT {
       assertThat(resultSet.getExecutionInfo().getSuccessfulExecutionIndex()).isEqualTo(0);
       assertThat(resultSet.getExecutionInfo().getSpeculativeExecutionCount()).isEqualTo(1);
 
-      assertQueryCount(0, 1);
-      assertQueryCount(1, 1);
-      assertQueryCount(2, 0);
+      counter.assertNodeCounts(1, 1, 0);
     }
   }
 
@@ -132,9 +132,7 @@ public class SpeculativeExecutionIT {
       assertThat(resultSet.getExecutionInfo().getSuccessfulExecutionIndex()).isEqualTo(2);
       assertThat(resultSet.getExecutionInfo().getSpeculativeExecutionCount()).isEqualTo(2);
 
-      assertQueryCount(0, 1);
-      assertQueryCount(1, 1);
-      assertQueryCount(2, 1);
+      counter.assertNodeCounts(1, 1, 1);
     }
   }
 
@@ -150,9 +148,7 @@ public class SpeculativeExecutionIT {
       assertThat(resultSet.getExecutionInfo().getSuccessfulExecutionIndex()).isEqualTo(0);
       assertThat(resultSet.getExecutionInfo().getSpeculativeExecutionCount()).isEqualTo(0);
 
-      assertQueryCount(0, 1);
-      assertQueryCount(1, 1);
-      assertQueryCount(2, 0);
+      counter.assertNodeCounts(1, 1, 0);
     }
   }
 
@@ -170,9 +166,7 @@ public class SpeculativeExecutionIT {
       assertThat(resultSet.getExecutionInfo().getSuccessfulExecutionIndex()).isEqualTo(1);
       assertThat(resultSet.getExecutionInfo().getSpeculativeExecutionCount()).isEqualTo(1);
 
-      assertQueryCount(0, 1);
-      assertQueryCount(1, 1);
-      assertQueryCount(2, 1);
+      counter.assertNodeCounts(1, 1, 1);
     }
   }
 
@@ -191,9 +185,7 @@ public class SpeculativeExecutionIT {
       assertThat(resultSet.getExecutionInfo().getSuccessfulExecutionIndex()).isEqualTo(0);
       assertThat(resultSet.getExecutionInfo().getSpeculativeExecutionCount()).isEqualTo(1);
 
-      assertQueryCount(0, 1);
-      assertQueryCount(1, 1);
-      assertQueryCount(2, 1);
+      counter.assertNodeCounts(1, 1, 1);
     }
   }
 
@@ -211,9 +203,7 @@ public class SpeculativeExecutionIT {
     try (CqlSession session = buildSession(3, SPECULATIVE_DELAY)) {
       session.execute(QUERY);
     } finally {
-      assertQueryCount(0, 1);
-      assertQueryCount(1, 1);
-      assertQueryCount(2, 1);
+      counter.assertNodeCounts(1, 1, 1);
     }
   }
 
@@ -232,9 +222,7 @@ public class SpeculativeExecutionIT {
       assertThat(resultSet.getExecutionInfo().getSuccessfulExecutionIndex()).isEqualTo(2);
       assertThat(resultSet.getExecutionInfo().getSpeculativeExecutionCount()).isEqualTo(2);
 
-      assertQueryCount(0, 1);
-      assertQueryCount(1, 1);
-      assertQueryCount(2, 1);
+      counter.assertNodeCounts(1, 1, 1);
     }
   }
 
@@ -254,9 +242,7 @@ public class SpeculativeExecutionIT {
       assertThat(resultSet.getExecutionInfo().getSpeculativeExecutionCount()).isEqualTo(1);
 
       // Expect node 0 and 1 to be queried, but not 2.
-      assertQueryCount(0, 1);
-      assertQueryCount(1, 1);
-      assertQueryCount(2, 0);
+      counter.assertNodeCounts(1, 1, 0);
     }
   }
 
@@ -276,9 +262,7 @@ public class SpeculativeExecutionIT {
       assertThat(resultSet.getExecutionInfo().getSpeculativeExecutionCount()).isEqualTo(2);
 
       // Expect all nodes to be queried.
-      assertQueryCount(0, 1);
-      assertQueryCount(1, 1);
-      assertQueryCount(2, 1);
+      counter.assertNodeCounts(1, 1, 1);
     }
   }
 
@@ -297,10 +281,7 @@ public class SpeculativeExecutionIT {
       // Expect speculative executions on each node since default configuration is used.
       assertThat(resultSet.getExecutionInfo().getSpeculativeExecutionCount()).isEqualTo(2);
 
-      // Expect all nodes to be queried.
-      assertQueryCount(0, 1);
-      assertQueryCount(1, 1);
-      assertQueryCount(2, 1);
+      counter.assertNodeCounts(1, 1, 1);
     }
   }
 
@@ -319,10 +300,8 @@ public class SpeculativeExecutionIT {
       // Expect no speculative executions.
       assertThat(resultSet.getExecutionInfo().getSpeculativeExecutionCount()).isEqualTo(0);
 
-      // Expect only node 0 to be queries since speculative execution is disabled for this profile.
-      assertQueryCount(0, 1);
-      assertQueryCount(1, 0);
-      assertQueryCount(2, 0);
+      // Expect only node 0 to be queried since speculative execution is disabled for this profile.
+      counter.assertNodeCounts(1, 0, 0);
     }
   }
 
@@ -455,18 +434,5 @@ public class SpeculativeExecutionIT {
 
   private void primeNode(int id, PrimeDsl.PrimeBuilder primeBuilder) {
     simulacron.cluster().node(id).prime(primeBuilder);
-  }
-
-  private void assertQueryCount(int node, int expected) {
-    assertThat(
-            simulacron
-                .cluster()
-                .node(node)
-                .getLogs()
-                .getQueryLogs()
-                .stream()
-                .filter(l -> l.getQuery().equals(QUERY_STRING)))
-        .as("Expected query count to be %d for node %d", expected, node)
-        .hasSize(expected);
   }
 }

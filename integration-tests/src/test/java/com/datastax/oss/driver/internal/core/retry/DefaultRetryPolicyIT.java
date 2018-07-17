@@ -49,6 +49,7 @@ import com.datastax.oss.driver.api.core.servererrors.WriteTimeoutException;
 import com.datastax.oss.driver.api.testinfra.loadbalancing.SortingLoadBalancingPolicy;
 import com.datastax.oss.driver.api.testinfra.session.SessionRule;
 import com.datastax.oss.driver.api.testinfra.session.SessionUtils;
+import com.datastax.oss.driver.api.testinfra.simulacron.QueryCounter;
 import com.datastax.oss.driver.api.testinfra.simulacron.SimulacronRule;
 import com.datastax.oss.simulacron.common.cluster.ClusterSpec;
 import com.datastax.oss.simulacron.common.stubbing.CloseType;
@@ -99,6 +100,12 @@ public class DefaultRetryPolicyIT {
   private Level oldLevel;
   private String logPrefix;
 
+  @SuppressWarnings("deprecation")
+  private final QueryCounter counter =
+      QueryCounter.builder(simulacron.cluster())
+          .withFilter((l) -> l.getQuery().equals(queryStr))
+          .build();
+
   @Before
   public void setup() {
     logger = (Logger) LoggerFactory.getLogger(DefaultRetryPolicy.class);
@@ -116,31 +123,6 @@ public class DefaultRetryPolicyIT {
   public void teardown() {
     logger.detachAppender(appender);
     logger.setLevel(oldLevel);
-  }
-
-  private void assertQueryCount(int expected) {
-    assertThat(
-            simulacron
-                .cluster()
-                .getLogs()
-                .getQueryLogs()
-                .stream()
-                .filter(l -> l.getQuery().equals(queryStr)))
-        .as("Expected query count to be %d", expected)
-        .hasSize(expected);
-  }
-
-  private void assertQueryCount(int node, int expected) {
-    assertThat(
-            simulacron
-                .cluster()
-                .node(node)
-                .getLogs()
-                .getQueryLogs()
-                .stream()
-                .filter(l -> l.getQuery().equals(queryStr)))
-        .as("Expected query count to be %d for node %d", expected, node)
-        .hasSize(expected);
   }
 
   @Test
@@ -161,7 +143,7 @@ public class DefaultRetryPolicyIT {
     }
 
     // should not have been retried.
-    assertQueryCount(1);
+    counter.assertTotalCount(1);
 
     // expect no logging messages since there was no retry
     Mockito.verify(appender, after(500).times(0)).doAppend(any(ILoggingEvent.class));
@@ -187,7 +169,7 @@ public class DefaultRetryPolicyIT {
     }
 
     // should not have been retried.
-    assertQueryCount(1);
+    counter.assertTotalCount(1);
 
     // expect no logging messages since there was no retry
     Mockito.verify(appender, after(500).times(0)).doAppend(any(ILoggingEvent.class));
@@ -213,8 +195,8 @@ public class DefaultRetryPolicyIT {
     }
 
     // there should have been a retry, and it should have been executed on the same host.
-    assertQueryCount(2);
-    assertQueryCount(0, 2);
+    counter.assertTotalCount(2);
+    counter.assertNodeCounts(2, 0, 0);
 
     // verify log event was emitted as expected
     Mockito.verify(appender, timeout(500)).doAppend(loggingEventCaptor.capture());
@@ -255,11 +237,9 @@ public class DefaultRetryPolicyIT {
         .isEqualTo(simulacron.cluster().node(1).inetSocketAddress());
 
     // should have been retried.
-    assertQueryCount(2);
-    // expected query on node 0.
-    assertQueryCount(0, 1);
-    // expected retry on node 1.
-    assertQueryCount(1, 1);
+    counter.assertTotalCount(2);
+    // expected query on node 0, and retry on node 2.
+    counter.assertNodeCounts(1, 1, 0);
 
     // verify log event was emitted as expected
     Mockito.verify(appender, timeout(500)).doAppend(loggingEventCaptor.capture());
@@ -287,13 +267,10 @@ public class DefaultRetryPolicyIT {
     }
 
     // should have been tried on all nodes.
-    assertQueryCount(3);
-    // expected query on node 0.
-    assertQueryCount(0, 1);
-    // expected retry on node 1.
-    assertQueryCount(1, 1);
-    // expected query on node 2.
-    assertQueryCount(2, 1);
+    // should have been retried.
+    counter.assertTotalCount(3);
+    // expected query on node 0, and retry on node 2 and 3.
+    counter.assertNodeCounts(1, 1, 1);
 
     // verify log event was emitted for each host as expected
     Mockito.verify(appender, after(500).times(3)).doAppend(loggingEventCaptor.capture());
@@ -328,7 +305,7 @@ public class DefaultRetryPolicyIT {
     }
 
     // should not have been retried.
-    assertQueryCount(1);
+    counter.assertTotalCount(1);
 
     // expect no logging messages since there was no retry
     Mockito.verify(appender, after(500).times(0)).doAppend(any(ILoggingEvent.class));
@@ -355,8 +332,8 @@ public class DefaultRetryPolicyIT {
     }
 
     // there should have been a retry, and it should have been executed on the same host.
-    assertQueryCount(2);
-    assertQueryCount(0, 2);
+    counter.assertTotalCount(2);
+    counter.assertNodeCounts(2, 0, 0);
 
     // verify log event was emitted as expected
     Mockito.verify(appender, timeout(500)).doAppend(loggingEventCaptor.capture());
@@ -406,7 +383,7 @@ public class DefaultRetryPolicyIT {
     }
 
     // should not have been retried.
-    assertQueryCount(1);
+    counter.assertTotalCount(1);
 
     // expect no logging messages since there was no retry
     Mockito.verify(appender, after(500).times(0)).doAppend(any(ILoggingEvent.class));
@@ -435,7 +412,7 @@ public class DefaultRetryPolicyIT {
     }
 
     // should not have been retried.
-    assertQueryCount(1);
+    counter.assertTotalCount(1);
 
     // expect no logging messages since there was no retry
     Mockito.verify(appender, after(500).times(0)).doAppend(any(ILoggingEvent.class));
@@ -461,9 +438,8 @@ public class DefaultRetryPolicyIT {
         .isEqualTo(simulacron.cluster().node(1).inetSocketAddress());
 
     // should have been retried on another host.
-    assertQueryCount(2);
-    assertQueryCount(0, 1);
-    assertQueryCount(1, 1);
+    counter.assertTotalCount(2);
+    counter.assertNodeCounts(1, 1, 0);
 
     // verify log event was emitted as expected
     Mockito.verify(appender, timeout(500)).doAppend(loggingEventCaptor.capture());
@@ -494,9 +470,8 @@ public class DefaultRetryPolicyIT {
     }
 
     // should have been retried on another host.
-    assertQueryCount(2);
-    assertQueryCount(0, 1);
-    assertQueryCount(1, 1);
+    counter.assertTotalCount(2);
+    counter.assertNodeCounts(1, 1, 0);
   }
 
   @Test
@@ -517,13 +492,8 @@ public class DefaultRetryPolicyIT {
     }
 
     // should have been tried on all nodes.
-    assertQueryCount(3);
-    // expected query on node 0.
-    assertQueryCount(0, 1);
-    // expected retry on node 1.
-    assertQueryCount(1, 1);
-    // expected query on node 2.
-    assertQueryCount(2, 1);
+    counter.assertTotalCount(3);
+    counter.assertNodeCounts(1, 1, 1);
 
     // verify log event was emitted for each host as expected
     Mockito.verify(appender, after(500).times(3)).doAppend(loggingEventCaptor.capture());
@@ -548,10 +518,9 @@ public class DefaultRetryPolicyIT {
       assertThat(e.getMessage()).isEqualTo("this is a server error");
     }
 
-    // should have been tried on all nodes.
-    assertQueryCount(1);
-    // expected query on node 0.
-    assertQueryCount(0, 1);
+    // should only have been tried on first node.
+    counter.assertTotalCount(1);
+    counter.assertNodeCounts(1, 0, 0);
 
     // expect no logging messages since there was no retry
     Mockito.verify(appender, after(500).times(0)).doAppend(any(ILoggingEvent.class));
