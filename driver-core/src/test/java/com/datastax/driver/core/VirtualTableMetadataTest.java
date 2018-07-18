@@ -28,12 +28,11 @@ public class VirtualTableMetadataTest extends CCMTestsSupport {
 
     @Test(groups = "short")
     public void should_parse_virtual_metadata() {
-        KeyspaceMetadata km=session().getCluster().getMetadata().getKeyspace("system_views");
+        KeyspaceMetadata km = session().getCluster().getMetadata().getKeyspace("system_views");
         // Keyspace name should be set, marked as virtual, and have a clients table.
         // All other values should be defaulted since they are not defined in the virtual schema tables.
         assertThat(km.getTables().size() >= 2);
         assertThat(km.isVirtual()).isTrue();
-        assertThat(km.getTable("clients")).isNotNull();
         assertThat(km.isDurableWrites()).isFalse();
         assertThat(km.getName()).isEqualTo("system_views");
         assertThat(km.getUserTypes().size()).isEqualTo(0);
@@ -53,7 +52,7 @@ public class VirtualTableMetadataTest extends CCMTestsSupport {
         assertThat(tm.getViews().size()).isEqualTo(0);
         assertThat(tm.getClusteringColumns().size()).isEqualTo(0);
         assertThat(tm.getClusteringOrder().size()).isEqualTo(0);
-        assertThat(tm.getId()).isEqualTo( new UUID(0L, 0L));
+        assertThat(tm.getId()).isEqualTo(new UUID(0L, 0L));
         assertThat(tm.getOptions()).isNull();
         assertThat(tm.getKeyspace()).isEqualTo(km);
         assertThat(tm.asCQLQuery()).isEqualTo("/* VIRTUAL TABLE system_views.clients (driver_name text, connection_stage" +

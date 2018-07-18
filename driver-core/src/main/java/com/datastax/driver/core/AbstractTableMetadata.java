@@ -17,7 +17,6 @@ package com.datastax.driver.core;
 
 
 import com.google.common.base.Predicate;
-import com.google.common.collect.Iterables;
 
 import java.util.*;
 
@@ -200,10 +199,11 @@ public abstract class AbstractTableMetadata {
     }
 
     /**
-     * Returns whether or not this keyspace is a virtual keyspace
+     * Returns whether or not this table is a virtual table
+     *
      * @return {@code true} if virtual keyspace, {@code false} otherwise.
      */
-    public boolean isVirtual(){
+    public boolean isVirtual() {
         return getKeyspace().isVirtual();
     }
 
@@ -253,7 +253,7 @@ public abstract class AbstractTableMetadata {
 
     protected StringBuilder appendOptions(StringBuilder sb, boolean formatted) {
         // Options
-        if(options==null){
+        if (options == null) {
             return sb;
         }
         sb.append("WITH ");
@@ -297,7 +297,7 @@ public abstract class AbstractTableMetadata {
 
     @Override
     public String toString() {
-        if(keyspace.isVirtual()){
+        if (keyspace.isVirtual()) {
             return name;
         }
 

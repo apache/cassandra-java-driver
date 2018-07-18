@@ -148,7 +148,7 @@ abstract class SchemaParser {
             }
             keyspaces.put(keyspace.getName(), keyspace);
         }
-        if(rows.virtualKeyspaces != null) {
+        if (rows.virtualKeyspaces != null) {
             for (Row keyspaceRow : rows.virtualKeyspaces) {
                 KeyspaceMetadata keyspace = KeyspaceMetadata.buildVirtual(keyspaceRow, cassandraVersion);
                 Map<String, TableMetadata> tables = buildTables(keyspace, rows.virtualTables.get(keyspace.getName()), rows.virtualColumns.get(keyspace.getName()), Collections.<String, List<Row>>emptyMap(), cassandraVersion, cluster);
@@ -594,7 +594,7 @@ abstract class SchemaParser {
                     Collections.<String, Map<String, List<Row>>>emptyMap(),
                     null,
                     Collections.<String, List<Row>>emptyMap(),
-                    Collections.<String, Map<String,Map<String,ColumnMetadata.Raw>>>emptyMap());
+                    Collections.<String, Map<String, Map<String, ColumnMetadata.Raw>>>emptyMap());
         }
 
         @Override
@@ -671,7 +671,7 @@ abstract class SchemaParser {
                     groupByKeyspaceAndCf(get(indexesFuture), TABLE_NAME),
                     null,
                     Collections.<String, List<Row>>emptyMap(),
-                    Collections.<String, Map<String,Map<String,ColumnMetadata.Raw>>>emptyMap());
+                    Collections.<String, Map<String, Map<String, ColumnMetadata.Raw>>>emptyMap());
         }
 
         @Override
@@ -791,14 +791,16 @@ abstract class SchemaParser {
 
             ProtocolVersion protocolVersion = cluster.getConfiguration().getProtocolOptions().getProtocolVersion();
 
-            if (isSchemaOrKeyspace)
+            if (isSchemaOrKeyspace) {
                 ksFuture = queryAsync(SELECT_KEYSPACES + whereClause(targetType, targetKeyspace, targetName, targetSignature), connection, protocolVersion);
                 virtualKeyspacesFuture = queryAsync(SELECT_VIRTUAL_KEYSPACES + whereClause(targetType, targetKeyspace, targetName, targetSignature), connection, protocolVersion);
                 virtualColumnsFuture = queryAsync(SELECT_VIRTUAL_COLUMNS + whereClause(targetType, targetKeyspace, targetName, targetSignature), connection, protocolVersion);
                 virtualTableFuture = queryAsync(SELECT_VIRTUAL_TABLES + whereClause(targetType, targetKeyspace, targetName, targetSignature), connection, protocolVersion);
+            }
 
-            if (isSchemaOrKeyspace || targetType == TYPE)
+            if (isSchemaOrKeyspace || targetType == TYPE) {
                 udtFuture = queryAsync(SELECT_USERTYPES + whereClause(targetType, targetKeyspace, targetName, targetSignature), connection, protocolVersion);
+            }
 
             if (isSchemaOrKeyspace || targetType == TABLE) {
                 cfFuture = queryAsync(SELECT_TABLES + whereClause(targetType, targetKeyspace, targetName, targetSignature), connection, protocolVersion);
@@ -807,11 +809,13 @@ abstract class SchemaParser {
                 viewsFuture = queryAsync(SELECT_VIEWS + whereClause(targetType == TABLE ? VIEW : targetType, targetKeyspace, targetName, targetSignature), connection, protocolVersion);
             }
 
-            if (isSchemaOrKeyspace || targetType == FUNCTION)
+            if (isSchemaOrKeyspace || targetType == FUNCTION) {
                 functionsFuture = queryAsync(SELECT_FUNCTIONS + whereClause(targetType, targetKeyspace, targetName, targetSignature), connection, protocolVersion);
+            }
 
-            if (isSchemaOrKeyspace || targetType == AGGREGATE)
+            if (isSchemaOrKeyspace || targetType == AGGREGATE) {
                 aggregatesFuture = queryAsync(SELECT_AGGREGATES + whereClause(targetType, targetKeyspace, targetName, targetSignature), connection, protocolVersion);
+            }
 
 
             return new SystemRows(get(ksFuture),
