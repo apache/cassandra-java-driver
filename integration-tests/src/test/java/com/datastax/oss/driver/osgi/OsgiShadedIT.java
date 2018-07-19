@@ -20,23 +20,20 @@ import static com.datastax.oss.driver.osgi.BundleOptions.driverCoreShadedBundle;
 import static com.datastax.oss.driver.osgi.BundleOptions.driverQueryBuilderBundle;
 import static org.ops4j.pax.exam.CoreOptions.options;
 
-import com.google.common.collect.ObjectArrays;
+import com.datastax.oss.driver.api.core.config.DriverConfigLoader;
+import com.datastax.oss.driver.api.testinfra.session.SessionUtils;
 import org.ops4j.pax.exam.Configuration;
 import org.ops4j.pax.exam.Option;
 
 public class OsgiShadedIT extends OsgiBaseIT {
 
-  @Override
   @Configuration
   public Option[] config() {
-    return ObjectArrays.concat(
-        options(driverCoreShadedBundle(), driverQueryBuilderBundle(), baseOptions()),
-        additionalOptions(),
-        Option.class);
+    return options(driverCoreShadedBundle(), driverQueryBuilderBundle(), baseOptions());
   }
 
   @Override
-  public Option[] additionalOptions() {
-    return new Option[0];
+  protected DriverConfigLoader configLoader() {
+    return SessionUtils.configLoaderBuilder().build();
   }
 }

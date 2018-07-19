@@ -16,7 +16,9 @@
     limitations under the License.
 
 -->
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
 
   <parent>
@@ -26,57 +28,112 @@
   </parent>
 
   <artifactId>java-driver-core-shaded</artifactId>
-  <packaging>bundle</packaging>
 
-  <name>DataStax Java driver for Apache Cassandra(R) - core with netty shaded</name>
+  <name>DataStax Java driver for Apache Cassandra(R) - core with shaded deps</name>
 
   <dependencies>
+    <!--
+    Declare a dependency to the core driver itself so that all its classes get included;
+    this dependency will be removed from the final pom by the shade plugin.
+    -->
     <dependency>
       <groupId>com.datastax.oss</groupId>
       <artifactId>java-driver-core</artifactId>
       <version>${project.version}</version>
     </dependency>
+    <!--
+    Repeat all dependencies of the core driver *except* the ones that are going to be shaded,
+    so that they get included in the final pom (we don't use the "promoteTransitiveDependencies"
+    option of the shade plugin because it promotes all dependencies, even nested ones, to top level).
+    -->
+    <dependency>
+      <groupId>com.datastax.oss</groupId>
+      <artifactId>native-protocol</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.datastax.oss</groupId>
+      <artifactId>java-driver-shaded-guava</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.typesafe</groupId>
+      <artifactId>config</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.github.jnr</groupId>
+      <artifactId>jnr-ffi</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.github.jnr</groupId>
+      <artifactId>jnr-posix</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.xerial.snappy</groupId>
+      <artifactId>snappy-java</artifactId>
+      <optional>true</optional>
+    </dependency>
+    <dependency>
+      <groupId>org.lz4</groupId>
+      <artifactId>lz4-java</artifactId>
+      <optional>true</optional>
+    </dependency>
+    <dependency>
+      <groupId>org.slf4j</groupId>
+      <artifactId>slf4j-api</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>io.dropwizard.metrics</groupId>
+      <artifactId>metrics-core</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.hdrhistogram</groupId>
+      <artifactId>HdrHistogram</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.github.stephenc.jcip</groupId>
+      <artifactId>jcip-annotations</artifactId>
+      <optional>true</optional>
+    </dependency>
+    <dependency>
+      <groupId>com.github.spotbugs</groupId>
+      <artifactId>spotbugs-annotations</artifactId>
+      <optional>true</optional>
+    </dependency>
   </dependencies>
+
+  <!--
+  Generation of the shaded driver-core bundle during package phase:
+  1) shade plugin shades the driver and creates a shaded jar + source jar
+  2) dependency plugin unpacks the shaded jar to target/classes (and removes unwanted content)
+  3) bundle plugin analyzes shaded classes and generates the bundle manifest
+  4) assembly plugin re-creates the shaded jar by packing target/classes + manifest + shaded pom
+  -->
 
   <build>
     <plugins>
-      <!-- extract shaded manifest from core jar -->
-      <plugin>
-        <artifactId>maven-dependency-plugin</artifactId>
-        <executions>
-          <execution>
-            <id>unpack-manifest</id>
-            <phase>prepare-package</phase>
-            <goals>
-              <goal>unpack</goal>
-            </goals>
-            <configuration>
-              <artifactItems>
-                <artifactItem>
-                  <groupId>com.datastax.oss</groupId>
-                  <artifactId>java-driver-core</artifactId>
-                  <version>${project.version}</version>
-                  <includes>META-INF-shaded/MANIFEST.MF</includes>
-                  <outputDirectory>${project.build.directory}</outputDirectory>
-                </artifactItem>
-              </artifactItems>
-            </configuration>
-          </execution>
-        </executions>
-      </plugin>
       <plugin>
         <artifactId>maven-shade-plugin</artifactId>
         <executions>
           <execution>
+            <id>shade-core-dependencies</id>
             <phase>package</phase>
             <goals>
               <goal>shade</goal>
             </goals>
             <configuration>
+              <createSourcesJar>true</createSourcesJar>
+              <shadeSourcesContent>true</shadeSourcesContent>
               <artifactSet>
                 <includes>
+                  <!--
+                  Include:
+                  - The core driver itself; it is not relocated but needs to be included.
+                  - All the dependencies we want to shade & relocate: currently
+                    - all the Netty artifacts;
+                    - JCTools.
+                  -->
                   <include>com.datastax.oss:java-driver-core</include>
                   <include>io.netty:*</include>
+                  <include>org.jctools:*</include>
                 </includes>
               </artifactSet>
               <relocations>
@@ -84,39 +141,130 @@
                   <pattern>io.netty</pattern>
                   <shadedPattern>com.datastax.oss.driver.shaded.netty</shadedPattern>
                 </relocation>
+                <relocation>
+                  <pattern>org.jctools</pattern>
+                  <shadedPattern>com.datastax.oss.driver.shaded.jctools</shadedPattern>
+                </relocation>
               </relocations>
-              <transformers>
-                <transformer implementation="org.apache.maven.plugins.shade.resource.DontIncludeResourceTransformer">
-                  <resources>
-                    <resource>META-INF/MANIFEST.MF</resource>
-                    <resource>META-INF-shaded/MANIFEST.MF</resource>
-                    <resource>META-INF/maven/com.datastax.oss/java-driver-core/pom.xml</resource>
-                    <resource>META-INF/maven/com.datastax.oss/java-driver-core/pom.properties</resource>
-                    <resource>META-INF/maven/io.netty/netty-handler/pom.properties</resource>
-                    <resource>META-INF/maven/io.netty/netty-handler/pom.xml</resource>
-                    <resource>META-INF/maven/io.netty/netty-buffer/pom.properties</resource>
-                    <resource>META-INF/maven/io.netty/netty-buffer/pom.xml</resource>
-                    <resource>META-INF/maven/io.netty/netty-common/pom.properties</resource>
-                    <resource>META-INF/maven/io.netty/netty-common/pom.xml</resource>
-                    <resource>META-INF/maven/io.netty/netty-transport/pom.properties</resource>
-                    <resource>META-INF/maven/io.netty/netty-transport/pom.xml</resource>
-                    <resource>META-INF/maven/io.netty/netty-resolver/pom.properties</resource>
-                    <resource>META-INF/maven/io.netty/netty-resolver/pom.xml</resource>
-                    <resource>META-INF/maven/io.netty/netty-codec/pom.properties</resource>
-                    <resource>META-INF/maven/io.netty/netty-codec/pom.xml</resource>
-                    <!-- netty's shading of jctools does not remove its pom files -->
-                    <resource>META-INF/maven/org.jctools/jctools-core/pom.properties</resource>
-                    <resource>META-INF/maven/org.jctools/jctools-core/pom.xml</resource>
-                  </resources>
-                </transformer>
-                <!-- Pick up the alternate manifest that was extracted from the core module -->
-                <transformer implementation="org.apache.maven.plugins.shade.resource.IncludeResourceTransformer">
-                  <resource>META-INF/MANIFEST.MF</resource>
-                  <file>${project.build.directory}/META-INF-shaded/MANIFEST.MF</file>
-                </transformer>
-              </transformers>
-              <!-- Keep the dependencies of driver-core -->
-              <promoteTransitiveDependencies>true</promoteTransitiveDependencies>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+      <plugin>
+        <artifactId>maven-dependency-plugin</artifactId>
+        <executions>
+          <execution>
+            <id>unpack-shaded-classes</id>
+            <phase>package</phase>
+            <goals>
+              <goal>unpack</goal>
+            </goals>
+            <configuration>
+              <artifactItems>
+                <artifactItem>
+                  <groupId>com.datastax.oss</groupId>
+                  <artifactId>java-driver-core-shaded</artifactId>
+                  <version>${project.version}</version>
+                  <type>jar</type>
+                  <outputDirectory>${project.build.outputDirectory}</outputDirectory>
+                </artifactItem>
+              </artifactItems>
+              <!--
+              Exclude leftovers from the shading phase (this could also be done with a
+              resource transformer by the shade plugin itself, but this way is more flexible).
+              -->
+              <excludes>
+                META-INF/maven/com.datastax.oss/java-driver-core/**,
+                META-INF/maven/io.netty/**,
+                META-INF/maven/org.jctools/**
+              </excludes>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.felix</groupId>
+        <artifactId>maven-bundle-plugin</artifactId>
+        <extensions>true</extensions>
+        <executions>
+          <execution>
+            <id>generate-shaded-manifest</id>
+            <phase>package</phase>
+            <goals>
+              <goal>manifest</goal>
+            </goals>
+            <configuration>
+              <instructions>
+                <Bundle-SymbolicName>com.datastax.oss.driver.core</Bundle-SymbolicName>
+                <!--
+                Allow importing code from other packages
+                (so reflection-based loading of policies works)
+                -->
+                <DynamicImport-Package>*</DynamicImport-Package>
+                <!--
+                Don't import the packages below because either:
+                1) they were shaded (except Guava which resides in a separate bundle); or
+                2) they aren't OSGi bundles, and the driver bundle can live without them; or
+                3) they are imported by shaded classes, but not used by the driver bundle.
+                -->
+                <Import-Package>
+                  !com.datastax.oss.driver.shaded.netty.*,
+                  !com.datastax.oss.driver.shaded.jctools.*,
+                  !jnr.*,
+                  !net.jcip.annotations.*,
+                  !edu.umd.cs.findbugs.annotations.*,
+                  !com.google.protobuf.*,
+                  !com.jcraft.jzlib.*,
+                  !com.ning.compress.*,
+                  !lzma.sdk.*,
+                  !net.jpountz.xxhash.*,
+                  !org.bouncycastle.*,
+                  !org.conscrypt.*,
+                  !org.apache.commons.logging.*,
+                  !org.apache.log4j.*,
+                  !org.apache.logging.log4j.*,
+                  !org.eclipse.jetty.*,
+                  !org.jboss.marshalling.*,
+                  !sun.misc.*,
+                  !sun.security.*,
+                  *
+                </Import-Package>
+                <!--
+                Export:
+                1) The driver's packages (API and internal);
+                2) All shaded packages, except Guava which resides in a separate bundle.
+                -->
+                <Export-Package>
+                  com.datastax.oss.driver.api.core.*,
+                  com.datastax.oss.driver.internal.core.*,
+                  com.datastax.oss.driver.shaded.netty.*,
+                  com.datastax.oss.driver.shaded.jctools.*
+                </Export-Package>
+              </instructions>
+              <rebuildBundle>true</rebuildBundle>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+      <plugin>
+        <artifactId>maven-assembly-plugin</artifactId>
+        <executions>
+          <execution>
+            <id>generate-final-shaded-jar</id>
+            <phase>package</phase>
+            <goals>
+              <goal>single</goal>
+            </goals>
+            <configuration>
+              <archive>
+                <!-- this is the manifest generated by the bundle plugin -->
+                <manifestFile>${project.build.outputDirectory}/META-INF/MANIFEST.MF</manifestFile>
+              </archive>
+              <descriptors>
+                <descriptor>src/assembly/shaded-jar.xml</descriptor>
+              </descriptors>
+              <!-- Replace the original artifact -->
+              <appendAssemblyId>false</appendAssemblyId>
             </configuration>
           </execution>
         </executions>

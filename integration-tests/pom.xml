@@ -15,7 +15,9 @@
     limitations under the License.
 
 -->
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
   <modelVersion>4.0.0</modelVersion>
 
   <parent>
@@ -132,6 +134,7 @@
             <project.version>${project.version}</project.version>
             <assertj.version>${assertj.version}</assertj.version>
             <config.version>${config.version}</config.version>
+            <jctools.version>${jctools.version}</jctools.version>
             <commons-exec.version>${commons-exec.version}</commons-exec.version>
             <guava.version>${guava.version}</guava.version>
             <hdrhistogram.version>${hdrhistogram.version}</hdrhistogram.version>
@@ -156,6 +159,7 @@
             <project.version>${project.version}</project.version>
             <assertj.version>${assertj.version}</assertj.version>
             <config.version>${config.version}</config.version>
+            <jctools.version>${jctools.version}</jctools.version>
             <commons-exec.version>${commons-exec.version}</commons-exec.version>
             <guava.version>${guava.version}</guava.version>
             <hdrhistogram.version>${hdrhistogram.version}</hdrhistogram.version>
