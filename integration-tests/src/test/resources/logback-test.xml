@@ -25,4 +25,6 @@
     <appender-ref ref="STDOUT"/>
   </root>
   <logger name="com.datastax.oss.driver" level="${driverLevel:-ERROR}"/>
+  <!-- Set this logger to DEBUG to help debugging OSGi tests -->
+  <logger name="org.ops4j" level="ERROR"/>
 </configuration>
