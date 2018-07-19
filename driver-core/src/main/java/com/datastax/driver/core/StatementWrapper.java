@@ -210,4 +210,15 @@ public abstract class StatementWrapper extends Statement {
     public int requestSizeInBytes(ProtocolVersion protocolVersion, CodecRegistry codecRegistry) {
         return wrapped.requestSizeInBytes(protocolVersion, codecRegistry);
     }
+
+    @Override
+    public Host getHost() {
+        return wrapped.getHost();
+    }
+
+    @Override
+    public Statement setHost(Host host) {
+        wrapped.setHost(host);
+        return this;
+    }
 }
