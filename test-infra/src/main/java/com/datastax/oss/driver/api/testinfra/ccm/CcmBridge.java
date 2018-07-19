@@ -71,6 +71,8 @@ public class CcmBridge implements AutoCloseable {
 
   public static final String INSTALL_DIRECTORY = System.getProperty("ccm.directory");
 
+  public static final String BRANCH = System.getProperty("ccm.branch");
+
   public static final Boolean DSE_ENABLEMENT = Boolean.getBoolean("ccm.dse");
 
   public static final String DEFAULT_CLIENT_TRUSTSTORE_PASSWORD = "cassandra1sfun";
@@ -184,6 +186,9 @@ public class CcmBridge implements AutoCloseable {
     if (created.compareAndSet(false, true)) {
       if (INSTALL_DIRECTORY != null) {
         createOptions.add("--install-dir=" + new File(INSTALL_DIRECTORY).getAbsolutePath());
+      } else if (BRANCH != null) {
+        createOptions.add("-v git:" + BRANCH.trim().replaceAll("\"", ""));
+
       } else {
         createOptions.add("-v " + VERSION.toString());
       }

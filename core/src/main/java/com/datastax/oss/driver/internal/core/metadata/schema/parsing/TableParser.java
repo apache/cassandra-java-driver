@@ -219,6 +219,7 @@ public class TableParser extends RelationParser {
         tableId,
         uuid,
         isCompactStorage,
+        false,
         partitionKeyBuilder.build(),
         clusteringColumnsBuilder.build(),
         allColumnsBuilder.build(),
@@ -228,9 +229,7 @@ public class TableParser extends RelationParser {
   TableMetadata parseVirtualTable(
       AdminRow tableRow, CqlIdentifier keyspaceId, Map<CqlIdentifier, UserDefinedType> userTypes) {
 
-    CqlIdentifier tableId =
-        CqlIdentifier.fromInternal(
-            tableRow.getString(rows.isCassandraV3 ? "table_name" : "columnfamily_name"));
+    CqlIdentifier tableId = CqlIdentifier.fromInternal(tableRow.getString("table_name"));
 
     List<RawColumn> rawColumns =
         RawColumn.toRawColumns(
@@ -260,8 +259,9 @@ public class TableParser extends RelationParser {
     return new DefaultTableMetadata(
         keyspaceId,
         tableId,
-        new UUID(0L, 0L),
+        null,
         false,
+        true,
         Collections.emptyList(),
         Collections.emptyMap(),
         allColumnsBuilder.build(),

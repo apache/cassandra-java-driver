@@ -23,7 +23,11 @@ import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
 import com.datastax.oss.driver.api.core.config.DriverConfigLoader;
 import com.datastax.oss.driver.api.core.config.DriverExecutionProfile;
 import com.datastax.oss.driver.api.core.cql.SimpleStatement;
+import com.datastax.oss.driver.api.core.metadata.schema.ColumnMetadata;
 import com.datastax.oss.driver.api.core.metadata.schema.KeyspaceMetadata;
+import com.datastax.oss.driver.api.core.metadata.schema.TableMetadata;
+import com.datastax.oss.driver.api.core.type.DataTypes;
+import com.datastax.oss.driver.api.testinfra.CassandraRequirement;
 import com.datastax.oss.driver.api.testinfra.ccm.CcmRule;
 import com.datastax.oss.driver.api.testinfra.session.SessionRule;
 import com.datastax.oss.driver.api.testinfra.session.SessionUtils;
@@ -165,5 +169,64 @@ public class SchemaIT {
 
       assertThat(session.getMetadata()).isSameAs(newMetadata);
     }
+  }
+
+  @CassandraRequirement(min = "4.0", description = "virtual tables introduced in 4.0")
+  @Test
+  public void should_get_virtual_metadata() {
+    Metadata md = sessionRule.session().getMetadata();
+    KeyspaceMetadata kmd = md.getKeyspace("system_views").get();
+
+    // Keyspace name should be set, marked as virtual, and have a clients table.
+    // All other values should be defaulted since they are not defined in the virtual schema tables.
+    assertThat(kmd.getTables().size() >= 2);
+    assertThat(kmd.isVirtual()).isTrue();
+    assertThat(kmd.isDurableWrites()).isFalse();
+    assertThat(kmd.getName().asCql(true)).isEqualTo("system_views");
+    assertThat(kmd.getUserDefinedTypes().size()).isEqualTo(0);
+    assertThat(kmd.getFunctions().size()).isEqualTo(0);
+    assertThat(kmd.getViews().size()).isEqualTo(0);
+    assertThat(kmd.getAggregates().size()).isEqualTo(0);
+    assertThat(kmd.describe(true))
+        .isEqualTo(
+            "/* VIRTUAL KEYSPACE system_views WITH replication = { 'class' : 'null' } "
+                + "AND durable_writes = false; */");
+    // Table name should be set, marked as virtual, and it should have columns set.
+    // indexes, views, clustering column, clustering order and id are not defined in the virtual
+    // schema tables.
+    TableMetadata tm = kmd.getTable("clients").get();
+    assertThat(tm).isNotNull();
+    assertThat(tm.getName().toString()).isEqualTo("clients");
+    assertThat(tm.isVirtual()).isTrue();
+    assertThat(tm.getColumns().size()).isEqualTo(12);
+    assertThat(tm.getIndexes().size()).isEqualTo(0);
+    assertThat(tm.getIndexes().size()).isEqualTo(0);
+    assertThat(tm.getClusteringColumns().size()).isEqualTo(0);
+    assertThat(tm.getId().isPresent()).isFalse();
+    assertThat(tm.getOptions().size()).isEqualTo(0);
+    assertThat(tm.getKeyspace()).isEqualTo(kmd.getName());
+    assertThat(tm.describe(true))
+        .isEqualTo(
+            "/* VIRTUAL TABLE system_views.clients (\n"
+                + "    address inet,\n"
+                + "    port int,\n"
+                + "    connection_stage text,\n"
+                + "    driver_name text,\n"
+                + "    driver_version text,\n"
+                + "    hostname text,\n"
+                + "    protocol_version int,\n"
+                + "    request_count bigint,\n"
+                + "    ssl_cipher_suite text,\n"
+                + "    ssl_enabled boolean,\n"
+                + "    ssl_protocol text,\n"
+                + "    username text,\n"
+                + "    PRIMARY KEY (())\n"
+                + "); */");
+    // ColumnMetadata is as expected
+    ColumnMetadata cm = tm.getColumn("driver_name").get();
+    assertThat(cm).isNotNull();
+    assertThat(cm.getParent()).isEqualTo(tm.getName());
+    assertThat(cm.getType()).isEqualTo(DataTypes.TEXT);
+    assertThat(cm.getName().toString()).isEqualTo("driver_name");
   }
 }

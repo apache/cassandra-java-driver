@@ -81,8 +81,8 @@ public class DefaultViewMetadata implements ViewMetadata {
 
   @NonNull
   @Override
-  public UUID getId() {
-    return id;
+  public Optional<UUID> getId() {
+    return Optional.of(id);
   }
 
   @NonNull

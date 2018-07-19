@@ -34,7 +34,7 @@ public interface KeyspaceMetadata extends Describable {
   /** Whether durable writes are set on this keyspace. */
   boolean isDurableWrites();
 
-  /** Whether durable writes are set on this keyspace. */
+  /** Whether this keyspace is virtual */
   boolean isVirtual();
 
   /** The replication options defined for this keyspace. */
@@ -198,16 +198,18 @@ public interface KeyspaceMetadata extends Describable {
   @NonNull
   @Override
   default String describe(boolean pretty) {
+    ScriptBuilder builder = new ScriptBuilder(pretty);
     if (isVirtual()) {
-      return "";
+      builder.append("/* VIRTUAL ");
+    } else {
+      builder.append("CREATE ");
     }
-    ScriptBuilder builder =
-        new ScriptBuilder(pretty)
-            .append("CREATE KEYSPACE ")
-            .append(getName())
-            .append(" WITH replication = { 'class' : '")
-            .append(getReplication().get("class"))
-            .append("'");
+    builder
+        .append("KEYSPACE ")
+        .append(getName())
+        .append(" WITH replication = { 'class' : '")
+        .append(getReplication().get("class"))
+        .append("'");
     for (Map.Entry<String, String> entry : getReplication().entrySet()) {
       if (!entry.getKey().equals("class")) {
         builder
@@ -218,11 +220,14 @@ public interface KeyspaceMetadata extends Describable {
             .append("'");
       }
     }
-    return builder
+    builder
         .append(" } AND durable_writes = ")
         .append(Boolean.toString(isDurableWrites()))
-        .append(";")
-        .build();
+        .append(";");
+    if (isVirtual()) {
+      builder.append(" */");
+    }
+    return builder.build();
   }
 
   @NonNull

@@ -21,10 +21,7 @@ import com.datastax.oss.driver.api.core.metadata.schema.ColumnMetadata;
 import com.datastax.oss.driver.api.core.metadata.schema.IndexMetadata;
 import com.datastax.oss.driver.api.core.metadata.schema.TableMetadata;
 import edu.umd.cs.findbugs.annotations.NonNull;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.UUID;
+import java.util.*;
 import net.jcip.annotations.Immutable;
 
 @Immutable
@@ -34,6 +31,7 @@ public class DefaultTableMetadata implements TableMetadata {
   @NonNull private final CqlIdentifier name;
   @NonNull private final UUID id;
   private final boolean compactStorage;
+  private final boolean virtual;
   @NonNull private final List<ColumnMetadata> partitionKey;
   @NonNull private final Map<ColumnMetadata, ClusteringOrder> clusteringColumns;
   @NonNull private final Map<CqlIdentifier, ColumnMetadata> columns;
@@ -43,8 +41,9 @@ public class DefaultTableMetadata implements TableMetadata {
   public DefaultTableMetadata(
       @NonNull CqlIdentifier keyspace,
       @NonNull CqlIdentifier name,
-      @NonNull UUID id,
+      UUID id,
       boolean compactStorage,
+      boolean virtual,
       @NonNull List<ColumnMetadata> partitionKey,
       @NonNull Map<ColumnMetadata, ClusteringOrder> clusteringColumns,
       @NonNull Map<CqlIdentifier, ColumnMetadata> columns,
@@ -54,6 +53,7 @@ public class DefaultTableMetadata implements TableMetadata {
     this.name = name;
     this.id = id;
     this.compactStorage = compactStorage;
+    this.virtual = virtual;
     this.partitionKey = partitionKey;
     this.clusteringColumns = clusteringColumns;
     this.columns = columns;
@@ -75,13 +75,21 @@ public class DefaultTableMetadata implements TableMetadata {
 
   @NonNull
   @Override
-  public UUID getId() {
-    return id;
+  public Optional<UUID> getId() {
+    if (id == null) {
+      return Optional.empty();
+    }
+    return Optional.of(id);
   }
 
   @Override
   public boolean isCompactStorage() {
     return compactStorage;
+  }
+
+  @Override
+  public boolean isVirtual() {
+    return virtual;
   }
 
   @NonNull

@@ -26,25 +26,30 @@ public interface TableMetadata extends RelationMetadata {
 
   boolean isCompactStorage();
 
+  /** Whether this table is virtual */
+  boolean isVirtual();
+
   @NonNull
   Map<CqlIdentifier, ? extends IndexMetadata> getIndexes();
 
   @NonNull
   @Override
   default String describe(boolean pretty) {
-    // this is a virtual table, do not return a describe string
-    if (getPrimaryKey().size() == 0) {
-      return "";
+    ScriptBuilder builder = new ScriptBuilder(pretty);
+    if (isVirtual()) {
+      builder.append("/* VIRTUAL ");
+    } else {
+      builder.append("CREATE ");
     }
-    ScriptBuilder builder =
-        new ScriptBuilder(pretty)
-            .append("CREATE TABLE ")
-            .append(getKeyspace())
-            .append(".")
-            .append(getName())
-            .append(" (")
-            .newLine()
-            .increaseIndent();
+
+    builder
+        .append("TABLE ")
+        .append(getKeyspace())
+        .append(".")
+        .append(getName())
+        .append(" (")
+        .newLine()
+        .increaseIndent();
 
     for (ColumnMetadata column : getColumns().values()) {
       builder.append(column.getName()).append(" ").append(column.getType().asCql(true, pretty));
@@ -99,7 +104,11 @@ public interface TableMetadata extends RelationMetadata {
     }
     Map<CqlIdentifier, Object> options = getOptions();
     RelationParser.appendOptions(options, builder);
-    return builder.append(";").build();
+    builder.append(";");
+    if (isVirtual()) {
+      builder.append(" */");
+    }
+    return builder.build();
   }
 
   /**
