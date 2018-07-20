@@ -2,6 +2,9 @@
 
 <!-- Note: contrary to 3.x, insert new entries *first* in their section -->
 
+### 4.0.0-beta2 (in progress)
+
+
 ### 4.0.0-beta1
 
 - [new feature] JAVA-1869: Add DefaultDriverConfigLoaderBuilder
