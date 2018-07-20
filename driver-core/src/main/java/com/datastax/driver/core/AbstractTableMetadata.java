@@ -17,7 +17,6 @@ package com.datastax.driver.core;
 
 
 import com.google.common.base.Predicate;
-import com.google.common.collect.Iterables;
 
 import java.util.*;
 
@@ -199,6 +198,15 @@ public abstract class AbstractTableMetadata {
         return options;
     }
 
+    /**
+     * Returns whether or not this table is a virtual table
+     *
+     * @return {@code true} if virtual keyspace, {@code false} otherwise.
+     */
+    public boolean isVirtual() {
+        return getKeyspace().isVirtual();
+    }
+
     void add(ColumnMetadata column) {
         columns.put(column.getName(), column);
     }
@@ -245,6 +253,9 @@ public abstract class AbstractTableMetadata {
 
     protected StringBuilder appendOptions(StringBuilder sb, boolean formatted) {
         // Options
+        if (options == null) {
+            return sb;
+        }
         sb.append("WITH ");
         if (options.isCompactStorage())
             and(sb.append("COMPACT STORAGE"), formatted);
@@ -286,6 +297,10 @@ public abstract class AbstractTableMetadata {
 
     @Override
     public String toString() {
+        if (keyspace.isVirtual()) {
+            return name;
+        }
+
         return asCQLQuery();
     }
 

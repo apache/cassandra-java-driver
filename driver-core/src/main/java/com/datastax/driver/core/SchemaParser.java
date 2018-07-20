@@ -35,8 +35,10 @@ abstract class SchemaParser {
 
     private static final SchemaParser V2_PARSER = new V2SchemaParser();
     private static final SchemaParser V3_PARSER = new V3SchemaParser();
+    private static final SchemaParser V4_PARSER = new V4SchemaParser();
 
     static SchemaParser forVersion(VersionNumber cassandraVersion) {
+        if (cassandraVersion.getMajor() >= 4) return V4_PARSER;
         if (cassandraVersion.getMajor() >= 3) return V3_PARSER;
         return V2_PARSER;
     }
@@ -146,6 +148,17 @@ abstract class SchemaParser {
             }
             keyspaces.put(keyspace.getName(), keyspace);
         }
+        if (rows.virtualKeyspaces != null) {
+            for (Row keyspaceRow : rows.virtualKeyspaces) {
+                KeyspaceMetadata keyspace = KeyspaceMetadata.buildVirtual(keyspaceRow, cassandraVersion);
+                Map<String, TableMetadata> tables = buildTables(keyspace, rows.virtualTables.get(keyspace.getName()), rows.virtualColumns.get(keyspace.getName()), Collections.<String, List<Row>>emptyMap(), cassandraVersion, cluster);
+                for (TableMetadata table : tables.values()) {
+                    keyspace.add(table);
+                }
+                keyspaces.put(keyspace.getName(), keyspace);
+            }
+        }
+
         return keyspaces;
     }
 
@@ -491,9 +504,13 @@ abstract class SchemaParser {
         final Map<String, List<Row>> aggregates;
         final Map<String, List<Row>> views;
         final Map<String, Map<String, List<Row>>> indexes;
+        final ResultSet virtualKeyspaces;
+        final Map<String, List<Row>> virtualTables;
+        final Map<String, Map<String, Map<String, ColumnMetadata.Raw>>> virtualColumns;
 
         public SystemRows(ResultSet keyspaces, Map<String, List<Row>> tables, Map<String, Map<String, Map<String, ColumnMetadata.Raw>>> columns, Map<String, List<Row>> udts, Map<String, List<Row>> functions,
-                          Map<String, List<Row>> aggregates, Map<String, List<Row>> views, Map<String, Map<String, List<Row>>> indexes) {
+                          Map<String, List<Row>> aggregates, Map<String, List<Row>> views, Map<String, Map<String, List<Row>>> indexes, ResultSet virtualKeyspaces, Map<String, List<Row>> virtualTables,
+                          Map<String, Map<String, Map<String, ColumnMetadata.Raw>>> virtualColumns) {
             this.keyspaces = keyspaces;
             this.tables = tables;
             this.columns = columns;
@@ -502,6 +519,9 @@ abstract class SchemaParser {
             this.aggregates = aggregates;
             this.views = views;
             this.indexes = indexes;
+            this.virtualKeyspaces = virtualKeyspaces;
+            this.virtualTables = virtualTables;
+            this.virtualColumns = virtualColumns;
         }
     }
 
@@ -571,7 +591,10 @@ abstract class SchemaParser {
                     groupByKeyspace(get(aggregatesFuture)),
                     // No views nor separate indexes table in Cassandra 2:
                     Collections.<String, List<Row>>emptyMap(),
-                    Collections.<String, Map<String, List<Row>>>emptyMap());
+                    Collections.<String, Map<String, List<Row>>>emptyMap(),
+                    null,
+                    Collections.<String, List<Row>>emptyMap(),
+                    Collections.<String, Map<String, Map<String, ColumnMetadata.Raw>>>emptyMap());
         }
 
         @Override
@@ -591,14 +614,14 @@ abstract class SchemaParser {
 
     private static class V3SchemaParser extends SchemaParser {
 
-        private static final String SELECT_KEYSPACES = "SELECT * FROM system_schema.keyspaces";
-        private static final String SELECT_TABLES = "SELECT * FROM system_schema.tables";
-        private static final String SELECT_COLUMNS = "SELECT * FROM system_schema.columns";
-        private static final String SELECT_USERTYPES = "SELECT * FROM system_schema.types";
-        private static final String SELECT_FUNCTIONS = "SELECT * FROM system_schema.functions";
-        private static final String SELECT_AGGREGATES = "SELECT * FROM system_schema.aggregates";
-        private static final String SELECT_INDEXES = "SELECT * FROM system_schema.indexes";
-        private static final String SELECT_VIEWS = "SELECT * FROM system_schema.views";
+        protected static final String SELECT_KEYSPACES = "SELECT * FROM system_schema.keyspaces";
+        protected static final String SELECT_TABLES = "SELECT * FROM system_schema.tables";
+        protected static final String SELECT_COLUMNS = "SELECT * FROM system_schema.columns";
+        protected static final String SELECT_USERTYPES = "SELECT * FROM system_schema.types";
+        protected static final String SELECT_FUNCTIONS = "SELECT * FROM system_schema.functions";
+        protected static final String SELECT_AGGREGATES = "SELECT * FROM system_schema.aggregates";
+        protected static final String SELECT_INDEXES = "SELECT * FROM system_schema.indexes";
+        protected static final String SELECT_VIEWS = "SELECT * FROM system_schema.views";
 
         private static final String TABLE_NAME = "table_name";
 
@@ -645,7 +668,10 @@ abstract class SchemaParser {
                     groupByKeyspace(get(functionsFuture)),
                     groupByKeyspace(get(aggregatesFuture)),
                     groupByKeyspace(get(viewsFuture)),
-                    groupByKeyspaceAndCf(get(indexesFuture), TABLE_NAME));
+                    groupByKeyspaceAndCf(get(indexesFuture), TABLE_NAME),
+                    null,
+                    Collections.<String, List<Row>>emptyMap(),
+                    Collections.<String, Map<String, Map<String, ColumnMetadata.Raw>>>emptyMap());
         }
 
         @Override
@@ -653,7 +679,7 @@ abstract class SchemaParser {
             return TABLE_NAME;
         }
 
-        private String whereClause(SchemaElement targetType, String targetKeyspace, String targetName, List<String> targetSignature) {
+        protected String whereClause(SchemaElement targetType, String targetKeyspace, String targetName, List<String> targetSignature) {
             String whereClause = "";
             if (targetType != null) {
                 whereClause = " WHERE keyspace_name = '" + targetKeyspace + '\'';
@@ -733,6 +759,76 @@ abstract class SchemaParser {
                 }
             }
             return false;
+        }
+    }
+
+    private static class V4SchemaParser extends V3SchemaParser {
+
+        private static final String SELECT_VIRTUAL_KEYSPACES = "SELECT * FROM system_virtual_schema.keyspaces";
+        private static final String SELECT_VIRTUAL_TABLES = "SELECT * FROM system_virtual_schema.tables";
+        private static final String SELECT_VIRTUAL_COLUMNS = "SELECT * FROM system_virtual_schema.columns";
+
+
+        private static final String TABLE_NAME = "table_name";
+
+        @Override
+        SystemRows fetchSystemRows(Cluster cluster, SchemaElement targetType, String targetKeyspace, String targetName, List<String> targetSignature, Connection connection, VersionNumber cassandraVersion)
+                throws ConnectionException, BusyConnectionException, ExecutionException, InterruptedException {
+
+            boolean isSchemaOrKeyspace = (targetType == null || targetType == KEYSPACE);
+
+            ResultSetFuture ksFuture = null,
+                    udtFuture = null,
+                    cfFuture = null,
+                    colsFuture = null,
+                    functionsFuture = null,
+                    aggregatesFuture = null,
+                    indexesFuture = null,
+                    viewsFuture = null,
+                    virtualKeyspacesFuture = null,
+                    virtualTableFuture = null,
+                    virtualColumnsFuture = null;
+
+            ProtocolVersion protocolVersion = cluster.getConfiguration().getProtocolOptions().getProtocolVersion();
+
+            if (isSchemaOrKeyspace) {
+                ksFuture = queryAsync(SELECT_KEYSPACES + whereClause(targetType, targetKeyspace, targetName, targetSignature), connection, protocolVersion);
+                virtualKeyspacesFuture = queryAsync(SELECT_VIRTUAL_KEYSPACES + whereClause(targetType, targetKeyspace, targetName, targetSignature), connection, protocolVersion);
+                virtualColumnsFuture = queryAsync(SELECT_VIRTUAL_COLUMNS + whereClause(targetType, targetKeyspace, targetName, targetSignature), connection, protocolVersion);
+                virtualTableFuture = queryAsync(SELECT_VIRTUAL_TABLES + whereClause(targetType, targetKeyspace, targetName, targetSignature), connection, protocolVersion);
+            }
+
+            if (isSchemaOrKeyspace || targetType == TYPE) {
+                udtFuture = queryAsync(SELECT_USERTYPES + whereClause(targetType, targetKeyspace, targetName, targetSignature), connection, protocolVersion);
+            }
+
+            if (isSchemaOrKeyspace || targetType == TABLE) {
+                cfFuture = queryAsync(SELECT_TABLES + whereClause(targetType, targetKeyspace, targetName, targetSignature), connection, protocolVersion);
+                colsFuture = queryAsync(SELECT_COLUMNS + whereClause(targetType, targetKeyspace, targetName, targetSignature), connection, protocolVersion);
+                indexesFuture = queryAsync(SELECT_INDEXES + whereClause(targetType, targetKeyspace, targetName, targetSignature), connection, protocolVersion);
+                viewsFuture = queryAsync(SELECT_VIEWS + whereClause(targetType == TABLE ? VIEW : targetType, targetKeyspace, targetName, targetSignature), connection, protocolVersion);
+            }
+
+            if (isSchemaOrKeyspace || targetType == FUNCTION) {
+                functionsFuture = queryAsync(SELECT_FUNCTIONS + whereClause(targetType, targetKeyspace, targetName, targetSignature), connection, protocolVersion);
+            }
+
+            if (isSchemaOrKeyspace || targetType == AGGREGATE) {
+                aggregatesFuture = queryAsync(SELECT_AGGREGATES + whereClause(targetType, targetKeyspace, targetName, targetSignature), connection, protocolVersion);
+            }
+
+
+            return new SystemRows(get(ksFuture),
+                    groupByKeyspace(get(cfFuture)),
+                    groupByKeyspaceAndCf(get(colsFuture), cassandraVersion, TABLE_NAME),
+                    groupByKeyspace(get(udtFuture)),
+                    groupByKeyspace(get(functionsFuture)),
+                    groupByKeyspace(get(aggregatesFuture)),
+                    groupByKeyspace(get(viewsFuture)),
+                    groupByKeyspaceAndCf(get(indexesFuture), TABLE_NAME),
+                    get(virtualKeyspacesFuture),
+                    groupByKeyspace(get(virtualTableFuture)),
+                    groupByKeyspaceAndCf(get(virtualColumnsFuture), cassandraVersion, TABLE_NAME));
         }
     }
 }
