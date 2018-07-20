@@ -176,7 +176,7 @@ repositories {
 }
 
 dependencies {
-    compile group: 'com.datastax.oss', name: 'java-driver-core', version: '4.0.0-alpha4-SNAPSHOT'
+    compile group: 'com.datastax.oss', name: 'java-driver-core', version: '4.0.0-beta1'
     compile group: 'ch.qos.logback', name: 'logback-classic', version: '1.2.3'
 }
 ```
