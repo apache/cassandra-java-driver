@@ -48,6 +48,10 @@ public class VirtualTableMetadataTest extends CCMTestsSupport {
         assertThat(tm.getName()).isEqualTo("clients");
         assertThat(tm.isVirtual()).isTrue();
         assertThat(tm.getColumns().size()).isEqualTo(12);
+        assertThat(tm.getPartitionKey().size()).isEqualTo(1);
+        assertThat(tm.getPartitionKey().get(0).getName()).isEqualTo("address");
+        assertThat(tm.getClusteringColumns().size()).isEqualTo(1);
+        assertThat(tm.getClusteringColumns().get(0).getName()).isEqualTo("port");
         assertThat(tm.getIndexes().size()).isEqualTo(0);
         assertThat(tm.getViews().size()).isEqualTo(0);
         assertThat(tm.getClusteringColumns().size()).isEqualTo(1);
