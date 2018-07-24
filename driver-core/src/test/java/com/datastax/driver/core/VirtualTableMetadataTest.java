@@ -48,16 +48,21 @@ public class VirtualTableMetadataTest extends CCMTestsSupport {
         assertThat(tm.getName()).isEqualTo("clients");
         assertThat(tm.isVirtual()).isTrue();
         assertThat(tm.getColumns().size()).isEqualTo(12);
+        assertThat(tm.getPartitionKey().size()).isEqualTo(1);
+        assertThat(tm.getPartitionKey().get(0).getName()).isEqualTo("address");
+        assertThat(tm.getClusteringColumns().size()).isEqualTo(1);
+        assertThat(tm.getClusteringColumns().get(0).getName()).isEqualTo("port");
         assertThat(tm.getIndexes().size()).isEqualTo(0);
         assertThat(tm.getViews().size()).isEqualTo(0);
-        assertThat(tm.getClusteringColumns().size()).isEqualTo(0);
-        assertThat(tm.getClusteringOrder().size()).isEqualTo(0);
+        assertThat(tm.getClusteringColumns().size()).isEqualTo(1);
+        assertThat(tm.getClusteringOrder().size()).isEqualTo(1);
         assertThat(tm.getId()).isEqualTo(new UUID(0L, 0L));
         assertThat(tm.getOptions()).isNull();
         assertThat(tm.getKeyspace()).isEqualTo(km);
-        assertThat(tm.asCQLQuery()).isEqualTo("/* VIRTUAL TABLE system_views.clients (driver_name text, connection_stage" +
-                " text, hostname text, protocol_version int, address inet, port int, ssl_enabled boolean, driver_version" +
-                " text, ssl_cipher_suite text, ssl_protocol text, request_count bigint, username text, PRIMARY KEY (()))  */");
+        assertThat(tm.asCQLQuery()).isEqualTo("/* VIRTUAL TABLE system_views.clients (address inet, port int, " +
+                "connection_stage text, driver_name text, driver_version text, hostname text, protocol_version int, " +
+                "request_count bigint, ssl_cipher_suite text, ssl_enabled boolean, ssl_protocol text, username text, " +
+                "PRIMARY KEY (address, port))  */");
         // ColumnMetadata is as expected
         ColumnMetadata cm = tm.getColumn("driver_name");
         assertThat(cm).isNotNull();
