@@ -635,7 +635,7 @@ public abstract class Statement {
      * </ol>
      * <p/>
      * Configuring a specific host causes the configured {@link LoadBalancingPolicy} to
-     * be completely bypassed.  However, if the load balancing policy dictates that the host is at
+     * be completely bypassed. However, if the load balancing policy dictates that the host is at
      * distance {@link HostDistance#IGNORED} or there is no active connectivity to the host, the
      * request will fail with a {@link NoHostAvailableException}.
      *
