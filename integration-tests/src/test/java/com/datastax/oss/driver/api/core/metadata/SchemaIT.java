@@ -194,39 +194,35 @@ public class SchemaIT {
     // Table name should be set, marked as virtual, and it should have columns set.
     // indexes, views, clustering column, clustering order and id are not defined in the virtual
     // schema tables.
-    TableMetadata tm = kmd.getTable("clients").get();
+    TableMetadata tm = kmd.getTable("sstable_tasks").get();
     assertThat(tm).isNotNull();
-    assertThat(tm.getName().toString()).isEqualTo("clients");
+    assertThat(tm.getName().toString()).isEqualTo("sstable_tasks");
     assertThat(tm.isVirtual()).isTrue();
-    assertThat(tm.getColumns().size()).isEqualTo(12);
+    assertThat(tm.getColumns().size()).isEqualTo(7);
     assertThat(tm.getIndexes().size()).isEqualTo(0);
-    assertThat(tm.getIndexes().size()).isEqualTo(0);
-    assertThat(tm.getClusteringColumns().size()).isEqualTo(0);
+    assertThat(tm.getPartitionKey().size()).isEqualTo(1);
+    assertThat(tm.getPartitionKey().get(0).getName().toString()).isEqualTo("keyspace_name");
+    assertThat(tm.getClusteringColumns().size()).isEqualTo(2);
     assertThat(tm.getId().isPresent()).isFalse();
     assertThat(tm.getOptions().size()).isEqualTo(0);
     assertThat(tm.getKeyspace()).isEqualTo(kmd.getName());
     assertThat(tm.describe(true))
         .isEqualTo(
-            "/* VIRTUAL TABLE system_views.clients (\n"
-                + "    address inet,\n"
-                + "    port int,\n"
-                + "    connection_stage text,\n"
-                + "    driver_name text,\n"
-                + "    driver_version text,\n"
-                + "    hostname text,\n"
-                + "    protocol_version int,\n"
-                + "    request_count bigint,\n"
-                + "    ssl_cipher_suite text,\n"
-                + "    ssl_enabled boolean,\n"
-                + "    ssl_protocol text,\n"
-                + "    username text,\n"
-                + "    PRIMARY KEY (())\n"
+            "/* VIRTUAL TABLE system_views.sstable_tasks (\n"
+                + "    keyspace_name text,\n"
+                + "    table_name text,\n"
+                + "    task_id uuid,\n"
+                + "    kind text,\n"
+                + "    progress bigint,\n"
+                + "    total bigint,\n"
+                + "    unit text,\n"
+                + "    PRIMARY KEY (keyspace_name, table_name, task_id)\n"
                 + "); */");
     // ColumnMetadata is as expected
-    ColumnMetadata cm = tm.getColumn("driver_name").get();
+    ColumnMetadata cm = tm.getColumn("progress").get();
     assertThat(cm).isNotNull();
     assertThat(cm.getParent()).isEqualTo(tm.getName());
-    assertThat(cm.getType()).isEqualTo(DataTypes.TEXT);
-    assertThat(cm.getName().toString()).isEqualTo("driver_name");
+    assertThat(cm.getType()).isEqualTo(DataTypes.BIGINT);
+    assertThat(cm.getName().toString()).isEqualTo("progress");
   }
 }

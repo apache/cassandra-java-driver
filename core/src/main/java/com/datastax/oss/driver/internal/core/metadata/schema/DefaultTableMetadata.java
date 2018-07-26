@@ -76,10 +76,7 @@ public class DefaultTableMetadata implements TableMetadata {
   @NonNull
   @Override
   public Optional<UUID> getId() {
-    if (id == null) {
-      return Optional.empty();
-    }
-    return Optional.of(id);
+    return Optional.ofNullable(id);
   }
 
   @Override

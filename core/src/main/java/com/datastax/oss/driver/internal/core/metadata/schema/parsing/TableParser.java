@@ -247,12 +247,28 @@ public class TableParser extends RelationParser {
 
     Collections.sort(rawColumns);
     ImmutableMap.Builder<CqlIdentifier, ColumnMetadata> allColumnsBuilder = ImmutableMap.builder();
+    ImmutableList.Builder<ColumnMetadata> partitionKeyBuilder = ImmutableList.builder();
+    ImmutableMap.Builder<ColumnMetadata, ClusteringOrder> clusteringColumnsBuilder =
+        ImmutableMap.builder();
 
     for (RawColumn raw : rawColumns) {
       DataType dataType = dataTypeParser.parse(keyspaceId, raw.dataType, userTypes, context);
       ColumnMetadata column =
           new DefaultColumnMetadata(
               keyspaceId, tableId, raw.name, dataType, raw.kind == RawColumn.Kind.STATIC);
+
+      switch (raw.kind) {
+        case PARTITION_KEY:
+          partitionKeyBuilder.add(column);
+          break;
+        case CLUSTERING_COLUMN:
+          clusteringColumnsBuilder.put(
+              column, raw.reversed ? ClusteringOrder.DESC : ClusteringOrder.ASC);
+          break;
+        default:
+          // nothing to do
+      }
+
       allColumnsBuilder.put(column.getName(), column);
     }
 
@@ -262,8 +278,8 @@ public class TableParser extends RelationParser {
         null,
         false,
         true,
-        Collections.emptyList(),
-        Collections.emptyMap(),
+        partitionKeyBuilder.build(),
+        clusteringColumnsBuilder.build(),
         allColumnsBuilder.build(),
         Collections.emptyMap(),
         Collections.emptyMap());
