@@ -280,7 +280,9 @@ public abstract class AbstractTableMetadata {
         if (cassandraVersion.getMajor() > 3 || (cassandraVersion.getMajor() == 3 && cassandraVersion.getMinor() >= 8)) {
             and(sb, formatted).append("cdc = ").append(options.isCDC());
         }
-		and(sb, formatted).append("memtable_flush_period_in_ms = ").append(options.getMemtableFlushPeriodInMs());
+        if(cassandraVersion.getMajor() > 1){
+            and(sb, formatted).append("memtable_flush_period_in_ms = ").append(options.getMemtableFlushPeriodInMs());
+        }
         sb.append(';');
         return sb;
     }
