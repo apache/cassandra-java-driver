@@ -34,7 +34,7 @@ public class LocalTimeCodec extends TypeCodec<java.time.LocalTime> {
 
     public static final LocalTimeCodec instance = new LocalTimeCodec();
 
-    private static final java.time.format.DateTimeFormatter FORMATTER = java.time.format.DateTimeFormatter.ofPattern("HH:mm:ss.SSS");
+    private static final java.time.format.DateTimeFormatter FORMATTER = java.time.format.DateTimeFormatter.ofPattern("HH:mm:ss.SSSSSSSSS");
 
     private LocalTimeCodec() {
         super(DataType.time(), java.time.LocalTime.class);

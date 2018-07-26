@@ -47,8 +47,9 @@ public class LocalTimeCodecTest {
     public Object[][] formatParameters() {
         return new Object[][]{
                 {null, "NULL"},
-                {LocalTime.NOON, "'12:00:00.000'"},
-                {LocalTime.parse("02:20:47.999999"), "'02:20:47.999'"}
+                {LocalTime.NOON, "'12:00:00.000000000'"},
+                {LocalTime.parse("02:20:47.999999999"), "'02:20:47.999999999'"},
+                {LocalTime.parse("02:20:47.000000007"), "'02:20:47.000000007'"}
         };
     }
 
