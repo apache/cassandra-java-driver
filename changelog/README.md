@@ -3,6 +3,7 @@
 ### 3.6.0 (In progress)
 
 - [improvement] JAVA-1394: Add request-queue-depth metric.
+- [improvement] JAVA-1857: Add Statement.setHost.
 
 Merged from 3.5.x:
 

@@ -21,6 +21,7 @@ import com.datastax.driver.core.policies.RetryPolicy;
 import com.datastax.driver.core.policies.RetryPolicy.RetryDecision.Type;
 import com.datastax.driver.core.policies.SpeculativeExecutionPolicy.SpeculativeExecutionPlan;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Iterators;
 import com.google.common.collect.Sets;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
@@ -84,7 +85,14 @@ class RequestHandler {
 
         callback.register(this);
 
-        this.queryPlan = new QueryPlan(manager.loadBalancingPolicy().newQueryPlan(manager.poolsState.keyspace, statement));
+        // If host is explicitly set on statement, bypass load balancing policy.
+        if (statement.getHost() != null) {
+            this.queryPlan = new QueryPlan(Iterators.singletonIterator(statement.getHost()));
+        } else {
+            this.queryPlan = new QueryPlan(manager.loadBalancingPolicy()
+                    .newQueryPlan(manager.poolsState.keyspace, statement));
+        }
+
         this.speculativeExecutionPlan = manager.speculativeExecutionPolicy().newPlan(manager.poolsState.keyspace, statement);
         this.allowSpeculativeExecutions = statement != Statement.DEFAULT
                 && statement.isIdempotentWithDefault(manager.configuration().getQueryOptions());
