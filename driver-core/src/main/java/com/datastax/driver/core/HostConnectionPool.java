@@ -115,7 +115,7 @@ class HostConnectionPool implements Connection.Owner {
 
         int toCreate = coreSize;
 
-        if (reusedConnection != null && reusedConnection.setOwner(this)) {
+        if (reusedConnection != null && toCreate > 0 && reusedConnection.setOwner(this)) {
             toCreate -= 1;
             connections.add(reusedConnection);
             connectionFutures.add(MoreFutures.VOID_SUCCESS);
