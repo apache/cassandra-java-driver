@@ -18,7 +18,6 @@ package com.datastax.driver.core;
 import com.datastax.driver.core.policies.LoadBalancingPolicy;
 import com.datastax.driver.core.policies.RetryPolicy;
 import com.datastax.driver.core.policies.SpeculativeExecutionPolicy;
-
 import java.nio.ByteBuffer;
 import java.util.Map;
 
@@ -78,7 +77,8 @@ public abstract class StatementWrapper extends Statement {
 
     @Override
     public Statement setConsistencyLevel(ConsistencyLevel consistency) {
-        return wrapped.setConsistencyLevel(consistency);
+        wrapped.setConsistencyLevel(consistency);
+        return this;
     }
 
     @Override
@@ -88,7 +88,8 @@ public abstract class StatementWrapper extends Statement {
 
     @Override
     public Statement setSerialConsistencyLevel(ConsistencyLevel serialConsistency) {
-        return wrapped.setSerialConsistencyLevel(serialConsistency);
+        wrapped.setSerialConsistencyLevel(serialConsistency);
+        return this;
     }
 
     @Override
@@ -98,12 +99,14 @@ public abstract class StatementWrapper extends Statement {
 
     @Override
     public Statement enableTracing() {
-        return wrapped.enableTracing();
+        wrapped.enableTracing();
+        return this;
     }
 
     @Override
     public Statement disableTracing() {
-        return wrapped.disableTracing();
+        wrapped.disableTracing();
+        return this;
     }
 
     @Override
@@ -123,7 +126,8 @@ public abstract class StatementWrapper extends Statement {
 
     @Override
     public Statement setRetryPolicy(RetryPolicy policy) {
-        return wrapped.setRetryPolicy(policy);
+        wrapped.setRetryPolicy(policy);
+        return this;
     }
 
     @Override
@@ -133,7 +137,8 @@ public abstract class StatementWrapper extends Statement {
 
     @Override
     public Statement setFetchSize(int fetchSize) {
-        return wrapped.setFetchSize(fetchSize);
+        wrapped.setFetchSize(fetchSize);
+        return this;
     }
 
     @Override
@@ -143,7 +148,8 @@ public abstract class StatementWrapper extends Statement {
 
     @Override
     public Statement setDefaultTimestamp(long defaultTimestamp) {
-        return wrapped.setDefaultTimestamp(defaultTimestamp);
+        wrapped.setDefaultTimestamp(defaultTimestamp);
+        return this;
     }
 
     @Override
@@ -153,7 +159,8 @@ public abstract class StatementWrapper extends Statement {
 
     @Override
     public Statement setReadTimeoutMillis(int readTimeoutMillis) {
-        return wrapped.setReadTimeoutMillis(readTimeoutMillis);
+        wrapped.setReadTimeoutMillis(readTimeoutMillis);
+        return this;
     }
 
     @Override
@@ -163,17 +170,20 @@ public abstract class StatementWrapper extends Statement {
 
     @Override
     public Statement setPagingState(PagingState pagingState, CodecRegistry codecRegistry) {
-        return wrapped.setPagingState(pagingState, codecRegistry);
+        wrapped.setPagingState(pagingState, codecRegistry);
+        return this;
     }
 
     @Override
     public Statement setPagingState(PagingState pagingState) {
-        return wrapped.setPagingState(pagingState);
+        wrapped.setPagingState(pagingState);
+        return this;
     }
 
     @Override
     public Statement setPagingStateUnsafe(byte[] pagingState) {
-        return wrapped.setPagingStateUnsafe(pagingState);
+        wrapped.setPagingStateUnsafe(pagingState);
+        return this;
     }
 
     @Override
@@ -183,7 +193,8 @@ public abstract class StatementWrapper extends Statement {
 
     @Override
     public Statement setIdempotent(boolean idempotent) {
-        return wrapped.setIdempotent(idempotent);
+        wrapped.setIdempotent(idempotent);
+        return this;
     }
 
     @Override
@@ -203,7 +214,8 @@ public abstract class StatementWrapper extends Statement {
 
     @Override
     public Statement setOutgoingPayload(Map<String, ByteBuffer> payload) {
-        return wrapped.setOutgoingPayload(payload);
+        wrapped.setOutgoingPayload(payload);
+        return this;
     }
 
     @Override
