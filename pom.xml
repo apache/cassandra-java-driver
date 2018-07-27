@@ -569,8 +569,6 @@ limitations under the License.]]>
                 <!-- Present at the root of each module that doesn't skip this goal -->
                 <analysisConfigurationFile>revapi.json</analysisConfigurationFile>
               </analysisConfigurationFiles>
-              <!-- Prevents query-builder from re-checking core. -->
-              <checkDependencies>false</checkDependencies>
             </configuration>
           </execution>
         </executions>
