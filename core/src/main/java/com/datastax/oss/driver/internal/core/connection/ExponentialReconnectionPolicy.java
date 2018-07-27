@@ -62,9 +62,9 @@ public class ExponentialReconnectionPolicy implements ReconnectionPolicy {
 
   /** Builds a new instance. */
   public ExponentialReconnectionPolicy(DriverContext context) {
-    this.logPrefix = context.sessionName();
+    this.logPrefix = context.getSessionName();
 
-    DriverExecutionProfile config = context.config().getDefaultProfile();
+    DriverExecutionProfile config = context.getConfig().getDefaultProfile();
 
     this.baseDelayMs = config.getDuration(DefaultDriverOption.RECONNECTION_BASE_DELAY).toMillis();
     this.maxDelayMs = config.getDuration(DefaultDriverOption.RECONNECTION_MAX_DELAY).toMillis();

@@ -58,11 +58,11 @@ class QueryTraceFetcher {
 
     ConsistencyLevel regularConsistency =
         context
-            .consistencyLevelRegistry()
+            .getConsistencyLevelRegistry()
             .fromName(config.getString(DefaultDriverOption.REQUEST_CONSISTENCY));
     ConsistencyLevel traceConsistency =
         context
-            .consistencyLevelRegistry()
+            .getConsistencyLevelRegistry()
             .fromName(config.getString(DefaultDriverOption.REQUEST_TRACE_CONSISTENCY));
     this.config =
         (traceConsistency.equals(regularConsistency))
@@ -71,7 +71,7 @@ class QueryTraceFetcher {
 
     this.maxAttempts = config.getInt(DefaultDriverOption.REQUEST_TRACE_ATTEMPTS);
     this.intervalNanos = config.getDuration(DefaultDriverOption.REQUEST_TRACE_INTERVAL).toNanos();
-    this.scheduler = context.nettyOptions().adminEventExecutorGroup().next();
+    this.scheduler = context.getNettyOptions().adminEventExecutorGroup().next();
 
     querySession(maxAttempts);
   }

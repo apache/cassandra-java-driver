@@ -95,7 +95,7 @@ public class DataTypeClassNameParser implements DataTypeParser {
       LOG.warn(
           "[{}] Got o.a.c.db.marshal.FrozenType for something else than a collection, "
               + "this driver version might be too old for your version of Cassandra",
-          context.sessionName());
+          context.getSessionName());
 
     if (next.startsWith("org.apache.cassandra.db.marshal.UserType")) {
       ++parser.idx; // skipping '('
@@ -104,7 +104,7 @@ public class DataTypeClassNameParser implements DataTypeParser {
       parser.skipBlankAndComma();
       String typeName =
           TypeCodecs.TEXT.decode(
-              Bytes.fromHexString("0x" + parser.readOne()), context.protocolVersion());
+              Bytes.fromHexString("0x" + parser.readOne()), context.getProtocolVersion());
       if (typeName == null) {
         throw new AssertionError("Type name cannot be null, this is a server bug");
       }

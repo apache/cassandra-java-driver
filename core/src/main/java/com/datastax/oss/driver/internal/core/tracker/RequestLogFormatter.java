@@ -241,7 +241,7 @@ public class RequestLogFormatter {
   }
 
   protected void appendValue(ByteBuffer raw, DataType type, int maxLength, StringBuilder builder) {
-    TypeCodec<Object> codec = context.codecRegistry().codecFor(type);
+    TypeCodec<Object> codec = context.getCodecRegistry().codecFor(type);
     if (type.equals(DataTypes.BLOB)) {
       // For very large buffers, apply the limit before converting into a string
       int maxBufferLength = Math.max((maxLength - 2) / 2, 0);
@@ -249,19 +249,19 @@ public class RequestLogFormatter {
       if (bufferTooLarge) {
         raw = (ByteBuffer) raw.duplicate().limit(maxBufferLength);
       }
-      Object value = codec.decode(raw, context.protocolVersion());
+      Object value = codec.decode(raw, context.getProtocolVersion());
       append(codec.format(value), maxLength, builder);
       if (bufferTooLarge) {
         builder.append(TRUNCATED);
       }
     } else {
-      Object value = codec.decode(raw, context.protocolVersion());
+      Object value = codec.decode(raw, context.getProtocolVersion());
       append(codec.format(value), maxLength, builder);
     }
   }
 
   protected void appendValue(Object value, int maxLength, StringBuilder builder) {
-    TypeCodec<Object> codec = context.codecRegistry().codecFor(value);
+    TypeCodec<Object> codec = context.getCodecRegistry().codecFor(value);
     if (value instanceof ByteBuffer) {
       // For very large buffers, apply the limit before converting into a string
       ByteBuffer buffer = (ByteBuffer) value;

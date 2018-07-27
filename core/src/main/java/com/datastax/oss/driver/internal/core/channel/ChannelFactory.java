@@ -64,13 +64,13 @@ public class ChannelFactory {
   @VisibleForTesting volatile String clusterName;
 
   public ChannelFactory(InternalDriverContext context) {
-    this.logPrefix = context.sessionName();
+    this.logPrefix = context.getSessionName();
     this.context = context;
 
-    DriverExecutionProfile defaultConfig = context.config().getDefaultProfile();
+    DriverExecutionProfile defaultConfig = context.getConfig().getDefaultProfile();
     if (defaultConfig.isDefined(DefaultDriverOption.PROTOCOL_VERSION)) {
       String versionName = defaultConfig.getString(DefaultDriverOption.PROTOCOL_VERSION);
-      this.protocolVersion = context.protocolVersionRegistry().fromName(versionName);
+      this.protocolVersion = context.getProtocolVersionRegistry().fromName(versionName);
     } // else it will be negotiated with the first opened connection
   }
 
@@ -115,7 +115,7 @@ public class ChannelFactory {
       currentVersion = protocolVersion;
       isNegotiating = false;
     } else {
-      currentVersion = context.protocolVersionRegistry().highestNonBeta();
+      currentVersion = context.getProtocolVersionRegistry().highestNonBeta();
       isNegotiating = true;
     }
 
@@ -139,7 +139,7 @@ public class ChannelFactory {
       List<ProtocolVersion> attemptedVersions,
       CompletableFuture<DriverChannel> resultFuture) {
 
-    NettyOptions nettyOptions = context.nettyOptions();
+    NettyOptions nettyOptions = context.getNettyOptions();
 
     Bootstrap bootstrap =
         new Bootstrap()
@@ -149,7 +149,7 @@ public class ChannelFactory {
             .handler(
                 initializer(address, currentVersion, options, nodeMetricUpdater, resultFuture));
 
-    DriverExecutionProfile config = context.config().getDefaultProfile();
+    DriverExecutionProfile config = context.getConfig().getDefaultProfile();
 
     boolean tcpNoDelay = config.getBoolean(DefaultDriverOption.SOCKET_TCP_NODELAY);
     bootstrap = bootstrap.option(ChannelOption.TCP_NODELAY, tcpNoDelay);
@@ -187,7 +187,7 @@ public class ChannelFactory {
           if (connectFuture.isSuccess()) {
             Channel channel = connectFuture.channel();
             DriverChannel driverChannel =
-                new DriverChannel(channel, context.writeCoalescer(), currentVersion);
+                new DriverChannel(channel, context.getWriteCoalescer(), currentVersion);
             // If this is the first successful connection, remember the protocol version and
             // cluster name for future connections.
             if (isNegotiating) {
@@ -202,7 +202,7 @@ public class ChannelFactory {
             if (error instanceof UnsupportedProtocolVersionException && isNegotiating) {
               attemptedVersions.add(currentVersion);
               Optional<ProtocolVersion> downgraded =
-                  context.protocolVersionRegistry().downgrade(currentVersion);
+                  context.getProtocolVersionRegistry().downgrade(currentVersion);
               if (downgraded.isPresent()) {
                 LOG.info(
                     "[{}] Failed to connect with protocol {}, retrying with {}",
@@ -241,7 +241,7 @@ public class ChannelFactory {
       @Override
       protected void initChannel(Channel channel) {
         try {
-          DriverExecutionProfile defaultConfig = context.config().getDefaultProfile();
+          DriverExecutionProfile defaultConfig = context.getConfig().getDefaultProfile();
 
           long setKeyspaceTimeoutMillis =
               defaultConfig
@@ -270,12 +270,13 @@ public class ChannelFactory {
 
           ChannelPipeline pipeline = channel.pipeline();
           context
-              .sslHandlerFactory()
+              .getSslHandlerFactory()
               .map(f -> f.newSslHandler(channel, address))
               .map(h -> pipeline.addLast("ssl", h));
 
           // Only add meter handlers on the pipeline if metrics are enabled.
-          SessionMetricUpdater sessionMetricUpdater = context.metricsFactory().getSessionUpdater();
+          SessionMetricUpdater sessionMetricUpdater =
+              context.getMetricsFactory().getSessionUpdater();
           if (nodeMetricUpdater.isEnabled(DefaultNodeMetric.BYTES_RECEIVED, null)
               || sessionMetricUpdater.isEnabled(DefaultSessionMetric.BYTES_RECEIVED, null)) {
             pipeline.addLast(
@@ -291,13 +292,13 @@ public class ChannelFactory {
           }
 
           pipeline
-              .addLast("encoder", new FrameEncoder(context.frameCodec(), maxFrameLength))
-              .addLast("decoder", new FrameDecoder(context.frameCodec(), maxFrameLength))
+              .addLast("encoder", new FrameEncoder(context.getFrameCodec(), maxFrameLength))
+              .addLast("decoder", new FrameDecoder(context.getFrameCodec(), maxFrameLength))
               // Note: HeartbeatHandler is inserted here once init completes
               .addLast("inflight", inFlightHandler)
               .addLast("init", initHandler);
 
-          context.nettyOptions().afterChannelInitialized(channel);
+          context.getNettyOptions().afterChannelInitialized(channel);
         } catch (Throwable t) {
           // If the init handler throws an exception, Netty swallows it and closes the channel. We
           // want to propagate it instead, so fail the outer future (the result of connect()).

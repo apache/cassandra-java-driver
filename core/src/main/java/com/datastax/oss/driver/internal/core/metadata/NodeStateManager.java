@@ -54,9 +54,9 @@ public class NodeStateManager implements AsyncAutoCloseable {
   private final String logPrefix;
 
   public NodeStateManager(InternalDriverContext context) {
-    this.adminExecutor = context.nettyOptions().adminEventExecutorGroup().next();
+    this.adminExecutor = context.getNettyOptions().adminEventExecutorGroup().next();
     this.singleThreaded = new SingleThreaded(context);
-    this.logPrefix = context.sessionName();
+    this.logPrefix = context.getSessionName();
   }
 
   /**
@@ -96,9 +96,9 @@ public class NodeStateManager implements AsyncAutoCloseable {
     private boolean closeWasCalled;
 
     private SingleThreaded(InternalDriverContext context) {
-      this.metadataManager = context.metadataManager();
+      this.metadataManager = context.getMetadataManager();
 
-      DriverExecutionProfile config = context.config().getDefaultProfile();
+      DriverExecutionProfile config = context.getConfig().getDefaultProfile();
       this.topologyEventDebouncer =
           new Debouncer<>(
               adminExecutor,
@@ -107,7 +107,7 @@ public class NodeStateManager implements AsyncAutoCloseable {
               config.getDuration(DefaultDriverOption.METADATA_TOPOLOGY_WINDOW),
               config.getInt(DefaultDriverOption.METADATA_TOPOLOGY_MAX_EVENTS));
 
-      this.eventBus = context.eventBus();
+      this.eventBus = context.getEventBus();
       this.eventBus.register(
           ChannelEvent.class, RunOrSchedule.on(adminExecutor, this::onChannelEvent));
       this.eventBus.register(

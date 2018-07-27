@@ -51,8 +51,8 @@ public class ConstantReconnectionPolicy implements ReconnectionPolicy {
 
   /** Builds a new instance. */
   public ConstantReconnectionPolicy(DriverContext context) {
-    this.logPrefix = context.sessionName();
-    DriverExecutionProfile config = context.config().getDefaultProfile();
+    this.logPrefix = context.getSessionName();
+    DriverExecutionProfile config = context.getConfig().getDefaultProfile();
     Duration delay = config.getDuration(DefaultDriverOption.RECONNECTION_BASE_DELAY);
     if (delay.isNegative()) {
       throw new IllegalArgumentException(

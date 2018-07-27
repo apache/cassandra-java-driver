@@ -59,7 +59,7 @@ public class CassandraSchemaParser implements SchemaParser {
 
   public CassandraSchemaParser(SchemaRows rows, InternalDriverContext context) {
     this.rows = rows;
-    this.logPrefix = context.sessionName();
+    this.logPrefix = context.getSessionName();
 
     this.userDefinedTypeParser = new UserDefinedTypeParser(rows.dataTypeParser(), context);
     this.tableParser = new TableParser(rows, context);

@@ -27,7 +27,7 @@ your session):
 
 ```java
 MyCustomId myCustomId = ...;
-CodecRegistry registry = session.getContext().codecRegistry();
+CodecRegistry registry = session.getContext().getCodecRegistry();
 selectFrom("user").all().whereColumn("id").isEqualTo(literal(myCustomId, registry));
 ```
 

@@ -110,7 +110,7 @@ public class DefaultSessionPoolsTest {
 
     adminEventLoopGroup = new DefaultEventLoopGroup(1);
     Mockito.when(nettyOptions.adminEventExecutorGroup()).thenReturn(adminEventLoopGroup);
-    Mockito.when(context.nettyOptions()).thenReturn(nettyOptions);
+    Mockito.when(context.getNettyOptions()).thenReturn(nettyOptions);
 
     // Config:
     Mockito.when(defaultProfile.getBoolean(DefaultDriverOption.REQUEST_WARN_IF_SET_KEYSPACE))
@@ -123,7 +123,7 @@ public class DefaultSessionPoolsTest {
     Mockito.when(defaultProfile.getInt(DefaultDriverOption.METADATA_TOPOLOGY_MAX_EVENTS))
         .thenReturn(1);
     Mockito.when(config.getDefaultProfile()).thenReturn(defaultProfile);
-    Mockito.when(context.config()).thenReturn(config);
+    Mockito.when(context.getConfig()).thenReturn(config);
 
     // Init sequence:
     Mockito.when(metadataManager.addContactPoints(anySet()))
@@ -132,24 +132,24 @@ public class DefaultSessionPoolsTest {
         .thenReturn(CompletableFuture.completedFuture(null));
     Mockito.when(metadataManager.firstSchemaRefreshFuture())
         .thenReturn(CompletableFuture.completedFuture(null));
-    Mockito.when(context.metadataManager()).thenReturn(metadataManager);
+    Mockito.when(context.getMetadataManager()).thenReturn(metadataManager);
 
     Mockito.when(topologyMonitor.init()).thenReturn(CompletableFuture.completedFuture(null));
-    Mockito.when(context.topologyMonitor()).thenReturn(topologyMonitor);
+    Mockito.when(context.getTopologyMonitor()).thenReturn(topologyMonitor);
 
-    Mockito.when(context.loadBalancingPolicyWrapper()).thenReturn(loadBalancingPolicyWrapper);
+    Mockito.when(context.getLoadBalancingPolicyWrapper()).thenReturn(loadBalancingPolicyWrapper);
 
-    Mockito.when(context.configLoader()).thenReturn(configLoader);
+    Mockito.when(context.getConfigLoader()).thenReturn(configLoader);
 
-    Mockito.when(context.metricsFactory()).thenReturn(metricsFactory);
+    Mockito.when(context.getMetricsFactory()).thenReturn(metricsFactory);
 
     // Runtime behavior:
-    Mockito.when(context.sessionName()).thenReturn("test");
+    Mockito.when(context.getSessionName()).thenReturn("test");
 
-    Mockito.when(context.channelPoolFactory()).thenReturn(channelPoolFactory);
+    Mockito.when(context.getChannelPoolFactory()).thenReturn(channelPoolFactory);
 
     eventBus = Mockito.spy(new EventBus("test"));
-    Mockito.when(context.eventBus()).thenReturn(eventBus);
+    Mockito.when(context.getEventBus()).thenReturn(eventBus);
 
     node1 = mockLocalNode(1);
     node2 = mockLocalNode(2);
@@ -163,18 +163,19 @@ public class DefaultSessionPoolsTest {
     Mockito.when(metadataManager.getMetadata()).thenReturn(metadata);
 
     PoolManager poolManager = new PoolManager(context);
-    Mockito.when(context.poolManager()).thenReturn(poolManager);
+    Mockito.when(context.getPoolManager()).thenReturn(poolManager);
 
     // Shutdown sequence:
-    Mockito.when(context.reconnectionPolicy()).thenReturn(reconnectionPolicy);
-    Mockito.when(context.retryPolicy(DriverExecutionProfile.DEFAULT_NAME)).thenReturn(retryPolicy);
-    Mockito.when(context.speculativeExecutionPolicies())
+    Mockito.when(context.getReconnectionPolicy()).thenReturn(reconnectionPolicy);
+    Mockito.when(context.getRetryPolicy(DriverExecutionProfile.DEFAULT_NAME))
+        .thenReturn(retryPolicy);
+    Mockito.when(context.getSpeculativeExecutionPolicies())
         .thenReturn(
             ImmutableMap.of(DriverExecutionProfile.DEFAULT_NAME, speculativeExecutionPolicy));
-    Mockito.when(context.addressTranslator()).thenReturn(addressTranslator);
-    Mockito.when(context.nodeStateListener()).thenReturn(nodeStateListener);
-    Mockito.when(context.schemaChangeListener()).thenReturn(schemaChangeListener);
-    Mockito.when(context.requestTracker()).thenReturn(requestTracker);
+    Mockito.when(context.getAddressTranslator()).thenReturn(addressTranslator);
+    Mockito.when(context.getNodeStateListener()).thenReturn(nodeStateListener);
+    Mockito.when(context.getSchemaChangeListener()).thenReturn(schemaChangeListener);
+    Mockito.when(context.getRequestTracker()).thenReturn(requestTracker);
 
     Mockito.when(metadataManager.closeAsync()).thenReturn(CompletableFuture.completedFuture(null));
     Mockito.when(metadataManager.forceCloseAsync())
@@ -184,7 +185,7 @@ public class DefaultSessionPoolsTest {
     Mockito.when(topologyMonitor.forceCloseAsync())
         .thenReturn(CompletableFuture.completedFuture(null));
 
-    Mockito.when(context.controlConnection()).thenReturn(controlConnection);
+    Mockito.when(context.getControlConnection()).thenReturn(controlConnection);
     Mockito.when(controlConnection.closeAsync())
         .thenReturn(CompletableFuture.completedFuture(null));
     Mockito.when(controlConnection.forceCloseAsync())

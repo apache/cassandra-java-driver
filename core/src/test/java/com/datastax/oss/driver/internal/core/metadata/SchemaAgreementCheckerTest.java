@@ -86,15 +86,15 @@ public class SchemaAgreementCheckerTest {
     Mockito.when(defaultConfig.getBoolean(DefaultDriverOption.CONTROL_CONNECTION_AGREEMENT_WARN))
         .thenReturn(true);
     Mockito.when(config.getDefaultProfile()).thenReturn(defaultConfig);
-    Mockito.when(context.config()).thenReturn(config);
+    Mockito.when(context.getConfig()).thenReturn(config);
 
     addressTranslator = Mockito.spy(new PassThroughAddressTranslator(context));
-    Mockito.when(context.addressTranslator()).thenReturn(addressTranslator);
+    Mockito.when(context.getAddressTranslator()).thenReturn(addressTranslator);
 
     Map<InetSocketAddress, Node> nodes = ImmutableMap.of(ADDRESS1, node1, ADDRESS2, node2);
     Mockito.when(metadata.getNodes()).thenReturn(nodes);
     Mockito.when(metadataManager.getMetadata()).thenReturn(metadata);
-    Mockito.when(context.metadataManager()).thenReturn(metadataManager);
+    Mockito.when(context.getMetadataManager()).thenReturn(metadataManager);
 
     Mockito.when(node2.getState()).thenReturn(NodeState.UP);
 

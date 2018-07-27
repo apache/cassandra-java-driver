@@ -111,7 +111,7 @@ public abstract class ChannelFactoryTestBase {
     serverGroup = new DefaultEventLoopGroup(1);
     clientGroup = new DefaultEventLoopGroup(1);
 
-    Mockito.when(context.config()).thenReturn(driverConfig);
+    Mockito.when(context.getConfig()).thenReturn(driverConfig);
     Mockito.when(driverConfig.getDefaultProfile()).thenReturn(defaultProfile);
     Mockito.when(defaultProfile.isDefined(DefaultDriverOption.AUTH_PROVIDER_CLASS))
         .thenReturn(false);
@@ -123,19 +123,19 @@ public abstract class ChannelFactoryTestBase {
     Mockito.when(defaultProfile.getDuration(DefaultDriverOption.HEARTBEAT_INTERVAL))
         .thenReturn(Duration.ofSeconds(30));
 
-    Mockito.when(context.protocolVersionRegistry()).thenReturn(protocolVersionRegistry);
-    Mockito.when(context.nettyOptions()).thenReturn(nettyOptions);
+    Mockito.when(context.getProtocolVersionRegistry()).thenReturn(protocolVersionRegistry);
+    Mockito.when(context.getNettyOptions()).thenReturn(nettyOptions);
     Mockito.when(nettyOptions.ioEventLoopGroup()).thenReturn(clientGroup);
     Mockito.when(nettyOptions.channelClass()).thenAnswer((Answer<Object>) i -> LocalChannel.class);
     Mockito.when(nettyOptions.allocator()).thenReturn(ByteBufAllocator.DEFAULT);
-    Mockito.when(context.frameCodec())
+    Mockito.when(context.getFrameCodec())
         .thenReturn(
             FrameCodec.defaultClient(
                 new ByteBufPrimitiveCodec(ByteBufAllocator.DEFAULT), Compressor.none()));
-    Mockito.when(context.sslHandlerFactory()).thenReturn(Optional.empty());
-    Mockito.when(context.eventBus()).thenReturn(eventBus);
-    Mockito.when(context.writeCoalescer()).thenReturn(new PassThroughWriteCoalescer(null));
-    Mockito.when(context.compressor()).thenReturn(compressor);
+    Mockito.when(context.getSslHandlerFactory()).thenReturn(Optional.empty());
+    Mockito.when(context.getEventBus()).thenReturn(eventBus);
+    Mockito.when(context.getWriteCoalescer()).thenReturn(new PassThroughWriteCoalescer(null));
+    Mockito.when(context.getCompressor()).thenReturn(compressor);
 
     // Start local server
     ServerBootstrap serverBootstrap =
@@ -232,7 +232,7 @@ public abstract class ChannelFactoryTestBase {
         @Override
         protected void initChannel(Channel channel) throws Exception {
           try {
-            DriverExecutionProfile defaultProfile = context.config().getDefaultProfile();
+            DriverExecutionProfile defaultProfile = context.getConfig().getDefaultProfile();
 
             long setKeyspaceTimeoutMillis =
                 defaultProfile

@@ -75,7 +75,7 @@ public class LoadBalancingPolicyWrapperTest {
 
   @Before
   public void setup() {
-    Mockito.when(context.metricsFactory()).thenReturn(metricsFactory);
+    Mockito.when(context.getMetricsFactory()).thenReturn(metricsFactory);
 
     node1 = new DefaultNode(new InetSocketAddress("127.0.0.1", 9042), context);
     node2 = new DefaultNode(new InetSocketAddress("127.0.0.2", 9042), context);
@@ -89,13 +89,13 @@ public class LoadBalancingPolicyWrapperTest {
     Mockito.when(metadata.getNodes()).thenReturn(contactPointsMap);
     Mockito.when(metadataManager.getMetadata()).thenReturn(metadata);
     Mockito.when(metadataManager.getContactPoints()).thenReturn(contactPointsMap.keySet());
-    Mockito.when(context.metadataManager()).thenReturn(metadataManager);
+    Mockito.when(context.getMetadataManager()).thenReturn(metadataManager);
 
     defaultPolicysQueryPlan = Lists.newLinkedList(ImmutableList.of(node3, node2, node1));
     Mockito.when(policy1.newQueryPlan(null, null)).thenReturn(defaultPolicysQueryPlan);
 
     eventBus = Mockito.spy(new EventBus("test"));
-    Mockito.when(context.eventBus()).thenReturn(eventBus);
+    Mockito.when(context.getEventBus()).thenReturn(eventBus);
 
     wrapper =
         new LoadBalancingPolicyWrapper(

@@ -95,7 +95,7 @@ public class RequestHandlerTestHarness implements AutoCloseable {
     this.schedulingEventLoop = new ScheduledTaskCapturingEventLoop(eventLoopGroup);
     Mockito.when(eventLoopGroup.next()).thenReturn(schedulingEventLoop);
     Mockito.when(nettyOptions.ioEventLoopGroup()).thenReturn(eventLoopGroup);
-    Mockito.when(context.nettyOptions()).thenReturn(nettyOptions);
+    Mockito.when(context.getNettyOptions()).thenReturn(nettyOptions);
 
     Mockito.when(defaultProfile.getName()).thenReturn(DriverExecutionProfile.DEFAULT_NAME);
     // TODO make configurable in the test, also handle profiles
@@ -112,28 +112,28 @@ public class RequestHandlerTestHarness implements AutoCloseable {
         .thenReturn(true);
 
     Mockito.when(config.getDefaultProfile()).thenReturn(defaultProfile);
-    Mockito.when(context.config()).thenReturn(config);
+    Mockito.when(context.getConfig()).thenReturn(config);
 
     Mockito.when(
             loadBalancingPolicyWrapper.newQueryPlan(
                 any(Request.class), anyString(), any(Session.class)))
         .thenReturn(builder.buildQueryPlan());
-    Mockito.when(context.loadBalancingPolicyWrapper()).thenReturn(loadBalancingPolicyWrapper);
+    Mockito.when(context.getLoadBalancingPolicyWrapper()).thenReturn(loadBalancingPolicyWrapper);
 
-    Mockito.when(context.retryPolicy(anyString())).thenReturn(retryPolicy);
+    Mockito.when(context.getRetryPolicy(anyString())).thenReturn(retryPolicy);
 
     // Disable speculative executions by default
     Mockito.when(
             speculativeExecutionPolicy.nextExecution(
                 any(Node.class), any(CqlIdentifier.class), any(Request.class), anyInt()))
         .thenReturn(-1L);
-    Mockito.when(context.speculativeExecutionPolicy(anyString()))
+    Mockito.when(context.getSpeculativeExecutionPolicy(anyString()))
         .thenReturn(speculativeExecutionPolicy);
 
-    Mockito.when(context.codecRegistry()).thenReturn(new DefaultCodecRegistry("test"));
+    Mockito.when(context.getCodecRegistry()).thenReturn(new DefaultCodecRegistry("test"));
 
     Mockito.when(timestampGenerator.next()).thenReturn(Long.MIN_VALUE);
-    Mockito.when(context.timestampGenerator()).thenReturn(timestampGenerator);
+    Mockito.when(context.getTimestampGenerator()).thenReturn(timestampGenerator);
 
     pools = builder.buildMockPools();
     Mockito.when(session.getChannel(any(Node.class), anyString()))
@@ -151,24 +151,25 @@ public class RequestHandlerTestHarness implements AutoCloseable {
 
     Mockito.when(session.getMetadata()).thenReturn(DefaultMetadata.EMPTY);
 
-    Mockito.when(context.protocolVersionRegistry()).thenReturn(protocolVersionRegistry);
+    Mockito.when(context.getProtocolVersionRegistry()).thenReturn(protocolVersionRegistry);
     Mockito.when(
             protocolVersionRegistry.supports(
                 any(ProtocolVersion.class), any(ProtocolFeature.class)))
         .thenReturn(true);
 
     if (builder.protocolVersion != null) {
-      Mockito.when(context.protocolVersion()).thenReturn(builder.protocolVersion);
+      Mockito.when(context.getProtocolVersion()).thenReturn(builder.protocolVersion);
     }
 
-    Mockito.when(context.consistencyLevelRegistry())
+    Mockito.when(context.getConsistencyLevelRegistry())
         .thenReturn(new DefaultConsistencyLevelRegistry());
 
-    Mockito.when(context.writeTypeRegistry()).thenReturn(new DefaultWriteTypeRegistry());
+    Mockito.when(context.getWriteTypeRegistry()).thenReturn(new DefaultWriteTypeRegistry());
 
-    Mockito.when(context.requestThrottler()).thenReturn(new PassThroughRequestThrottler(context));
+    Mockito.when(context.getRequestThrottler())
+        .thenReturn(new PassThroughRequestThrottler(context));
 
-    Mockito.when(context.requestTracker()).thenReturn(new NoopRequestTracker(context));
+    Mockito.when(context.getRequestTracker()).thenReturn(new NoopRequestTracker(context));
   }
 
   public DefaultSession getSession() {

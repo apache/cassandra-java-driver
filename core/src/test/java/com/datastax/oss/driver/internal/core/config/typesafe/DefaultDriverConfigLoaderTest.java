@@ -54,20 +54,20 @@ public class DefaultDriverConfigLoaderTest {
   public void setup() {
     MockitoAnnotations.initMocks(this);
 
-    Mockito.when(context.sessionName()).thenReturn("test");
-    Mockito.when(context.nettyOptions()).thenReturn(nettyOptions);
+    Mockito.when(context.getSessionName()).thenReturn("test");
+    Mockito.when(context.getNettyOptions()).thenReturn(nettyOptions);
     Mockito.when(nettyOptions.adminEventExecutorGroup()).thenReturn(adminEventExecutorGroup);
 
     adminExecutor = new ScheduledTaskCapturingEventLoop(adminEventExecutorGroup);
     Mockito.when(adminEventExecutorGroup.next()).thenReturn(adminExecutor);
 
     eventBus = Mockito.spy(new EventBus("test"));
-    Mockito.when(context.eventBus()).thenReturn(eventBus);
+    Mockito.when(context.getEventBus()).thenReturn(eventBus);
 
     // The already loaded config in the context.
     // In real life, it's the object managed by the loader, but in this test it's simpler to mock
     // it.
-    Mockito.when(context.config()).thenReturn(config);
+    Mockito.when(context.getConfig()).thenReturn(config);
     Mockito.when(config.getDefaultProfile()).thenReturn(defaultProfile);
     Mockito.when(defaultProfile.getDuration(DefaultDriverOption.CONFIG_RELOAD_INTERVAL))
         .thenReturn(Duration.ofSeconds(12));

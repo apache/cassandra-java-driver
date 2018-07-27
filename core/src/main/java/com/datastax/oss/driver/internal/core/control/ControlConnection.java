@@ -82,8 +82,8 @@ public class ControlConnection implements EventCallback, AsyncAutoCloseable {
 
   public ControlConnection(InternalDriverContext context) {
     this.context = context;
-    this.logPrefix = context.sessionName();
-    this.adminExecutor = context.nettyOptions().adminEventExecutorGroup().next();
+    this.logPrefix = context.getSessionName();
+    this.adminExecutor = context.getNettyOptions().adminEventExecutorGroup().next();
     this.singleThreaded = new SingleThreaded(context);
   }
 
@@ -177,13 +177,13 @@ public class ControlConnection implements EventCallback, AsyncAutoCloseable {
 
   private void processTopologyChange(Event event) {
     TopologyChangeEvent tce = (TopologyChangeEvent) event;
-    InetSocketAddress address = context.addressTranslator().translate(tce.address);
+    InetSocketAddress address = context.getAddressTranslator().translate(tce.address);
     switch (tce.changeType) {
       case ProtocolConstants.TopologyChangeType.NEW_NODE:
-        context.eventBus().fire(TopologyEvent.suggestAdded(address));
+        context.getEventBus().fire(TopologyEvent.suggestAdded(address));
         break;
       case ProtocolConstants.TopologyChangeType.REMOVED_NODE:
-        context.eventBus().fire(TopologyEvent.suggestRemoved(address));
+        context.getEventBus().fire(TopologyEvent.suggestRemoved(address));
         break;
       default:
         LOG.warn("[{}] Unsupported topology change type: {}", logPrefix, tce.changeType);
@@ -192,13 +192,13 @@ public class ControlConnection implements EventCallback, AsyncAutoCloseable {
 
   private void processStatusChange(Event event) {
     StatusChangeEvent sce = (StatusChangeEvent) event;
-    InetSocketAddress address = context.addressTranslator().translate(sce.address);
+    InetSocketAddress address = context.getAddressTranslator().translate(sce.address);
     switch (sce.changeType) {
       case ProtocolConstants.StatusChangeType.UP:
-        context.eventBus().fire(TopologyEvent.suggestUp(address));
+        context.getEventBus().fire(TopologyEvent.suggestUp(address));
         break;
       case ProtocolConstants.StatusChangeType.DOWN:
-        context.eventBus().fire(TopologyEvent.suggestDown(address));
+        context.getEventBus().fire(TopologyEvent.suggestDown(address));
         break;
       default:
         LOG.warn("[{}] Unsupported status change type: {}", logPrefix, sce.changeType);
@@ -207,7 +207,7 @@ public class ControlConnection implements EventCallback, AsyncAutoCloseable {
 
   private void processSchemaChange(Event event) {
     SchemaChangeEvent sce = (SchemaChangeEvent) event;
-    context.metadataManager().refreshSchema(sce.keyspace, false, false);
+    context.getMetadataManager().refreshSchema(sce.keyspace, false, false);
   }
 
   private class SingleThreaded {
@@ -225,7 +225,7 @@ public class ControlConnection implements EventCallback, AsyncAutoCloseable {
 
     private SingleThreaded(InternalDriverContext context) {
       this.context = context;
-      ReconnectionPolicy reconnectionPolicy = context.reconnectionPolicy();
+      ReconnectionPolicy reconnectionPolicy = context.getReconnectionPolicy();
       this.reconnection =
           new Reconnection(
               logPrefix,
@@ -241,10 +241,10 @@ public class ControlConnection implements EventCallback, AsyncAutoCloseable {
           });
 
       context
-          .eventBus()
+          .getEventBus()
           .register(DistanceEvent.class, RunOrSchedule.on(adminExecutor, this::onDistanceEvent));
       context
-          .eventBus()
+          .getEventBus()
           .register(NodeStateEvent.class, RunOrSchedule.on(adminExecutor, this::onStateEvent));
     }
 
@@ -263,7 +263,7 @@ public class ControlConnection implements EventCallback, AsyncAutoCloseable {
                 .withOwnerLogPrefix(logPrefix + "|control")
                 .build();
 
-        Queue<Node> nodes = context.loadBalancingPolicyWrapper().newQueryPlan();
+        Queue<Node> nodes = context.getLoadBalancingPolicyWrapper().newQueryPlan();
 
         connect(
             nodes,
@@ -287,7 +287,7 @@ public class ControlConnection implements EventCallback, AsyncAutoCloseable {
 
     private CompletionStage<Boolean> reconnect() {
       assert adminExecutor.inEventLoop();
-      Queue<Node> nodes = context.loadBalancingPolicyWrapper().newQueryPlan();
+      Queue<Node> nodes = context.getLoadBalancingPolicyWrapper().newQueryPlan();
       CompletableFuture<Boolean> result = new CompletableFuture<>();
       connect(
           nodes,
@@ -312,7 +312,7 @@ public class ControlConnection implements EventCallback, AsyncAutoCloseable {
       } else {
         LOG.debug("[{}] Trying to establish a connection to {}", logPrefix, node);
         context
-            .channelFactory()
+            .getChannelFactory()
             .connect(node, channelOptions)
             .whenCompleteAsync(
                 (channel, error) -> {
@@ -331,7 +331,7 @@ public class ControlConnection implements EventCallback, AsyncAutoCloseable {
                         Map<Node, Throwable> newErrors =
                             (errors == null) ? new LinkedHashMap<>() : errors;
                         newErrors.put(node, error);
-                        context.eventBus().fire(ChannelEvent.controlConnectionFailed(node));
+                        context.getEventBus().fire(ChannelEvent.controlConnectionFailed(node));
                         connect(nodes, newErrors, onSuccess, onFailure);
                       }
                     } else if (closeWasCalled || initFuture.isCancelled()) {
@@ -369,7 +369,7 @@ public class ControlConnection implements EventCallback, AsyncAutoCloseable {
                         previousChannel.forceClose();
                       }
                       ControlConnection.this.channel = channel;
-                      context.eventBus().fire(ChannelEvent.channelOpened(node));
+                      context.getEventBus().fire(ChannelEvent.channelOpened(node));
                       channel
                           .closeFuture()
                           .addListener(
@@ -398,7 +398,7 @@ public class ControlConnection implements EventCallback, AsyncAutoCloseable {
 
       // Always perform a full refresh (we don't know how long we were disconnected)
       context
-          .metadataManager()
+          .getMetadataManager()
           .refreshNodes()
           .whenComplete(
               (result, error) -> {
@@ -409,8 +409,8 @@ public class ControlConnection implements EventCallback, AsyncAutoCloseable {
                     // A failed node list refresh at startup is not fatal, so this might be the
                     // first successful refresh; make sure the LBP gets initialized (this is a no-op
                     // if it was initialized already).
-                    context.loadBalancingPolicyWrapper().init();
-                    context.metadataManager().refreshSchema(null, false, true);
+                    context.getLoadBalancingPolicyWrapper().init();
+                    context.getMetadataManager().refreshSchema(null, false, true);
                   } catch (Throwable t) {
                     Loggers.warnWithException(
                         LOG, "[{}] Unexpected error on control connection reconnect", logPrefix, t);
@@ -423,7 +423,7 @@ public class ControlConnection implements EventCallback, AsyncAutoCloseable {
       assert adminExecutor.inEventLoop();
       if (!closeWasCalled) {
         LOG.debug("[{}] Lost channel {}", logPrefix, channel);
-        context.eventBus().fire(ChannelEvent.channelClosed(node));
+        context.getEventBus().fire(ChannelEvent.channelClosed(node));
         reconnection.start();
       }
     }

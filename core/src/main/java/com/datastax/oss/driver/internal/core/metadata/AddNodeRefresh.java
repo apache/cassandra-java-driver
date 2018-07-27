@@ -41,7 +41,7 @@ public class AddNodeRefresh extends NodesRefresh {
       return new Result(oldMetadata);
     } else {
       DefaultNode newNode = new DefaultNode(newNodeInfo.getConnectAddress(), context);
-      copyInfos(newNodeInfo, newNode, null, context.sessionName());
+      copyInfos(newNodeInfo, newNode, null, context.getSessionName());
       Map<InetSocketAddress, Node> newNodes =
           ImmutableMap.<InetSocketAddress, Node>builder()
               .putAll(oldNodes)

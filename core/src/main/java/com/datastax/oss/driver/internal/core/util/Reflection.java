@@ -128,7 +128,7 @@ public class Reflection {
     // Find out how many distinct configurations we have
     ListMultimap<Object, String> profilesByConfig =
         MultimapBuilder.hashKeys().arrayListValues().build();
-    for (DriverExecutionProfile profile : context.config().getProfiles().values()) {
+    for (DriverExecutionProfile profile : context.getConfig().getProfiles().values()) {
       profilesByConfig.put(profile.getComparisonKey(rootOption), profile.getName());
     }
 
@@ -167,8 +167,8 @@ public class Reflection {
 
     DriverExecutionProfile config =
         (profileName == null)
-            ? context.config().getDefaultProfile()
-            : context.config().getProfile(profileName);
+            ? context.getConfig().getDefaultProfile()
+            : context.getConfig().getProfile(profileName);
 
     String configPath = classNameOption.getPath();
     LOG.debug("Creating a {} from config option {}", expectedSuperType.getSimpleName(), configPath);
@@ -182,13 +182,13 @@ public class Reflection {
     Class<?> clazz = null;
     if (className.contains(".")) {
       LOG.debug("Building from fully-qualified name {}", className);
-      clazz = loadClass(context.classLoader(), className);
+      clazz = loadClass(context.getClassLoader(), className);
     } else {
       LOG.debug("Building from unqualified name {}", className);
       for (String defaultPackage : defaultPackages) {
         String qualifiedClassName = defaultPackage + "." + className;
         LOG.debug("Trying with default package {}", qualifiedClassName);
-        clazz = loadClass(context.classLoader(), qualifiedClassName);
+        clazz = loadClass(context.getClassLoader(), qualifiedClassName);
         if (clazz != null) {
           break;
         }

@@ -59,7 +59,7 @@ public class SchemaParserTest extends SchemaParserTestBase {
   @Test
   public void should_parse_keyspace_with_all_children() {
     // Needed to parse the aggregate
-    Mockito.when(context.codecRegistry()).thenReturn(new DefaultCodecRegistry("test"));
+    Mockito.when(context.getCodecRegistry()).thenReturn(new DefaultCodecRegistry("test"));
 
     SchemaRefresh refresh =
         (SchemaRefresh)

@@ -107,7 +107,7 @@ public class ChannelPool implements AsyncAutoCloseable {
       String sessionLogPrefix) {
     this.node = node;
     this.initialKeyspaceName = keyspaceName;
-    this.adminExecutor = context.nettyOptions().adminEventExecutorGroup().next();
+    this.adminExecutor = context.getNettyOptions().adminEventExecutorGroup().next();
     this.sessionLogPrefix = sessionLogPrefix;
     this.logPrefix = sessionLogPrefix + "|" + node.getConnectAddress();
     this.singleThreaded = new SingleThreaded(keyspaceName, distance, context);
@@ -230,12 +230,12 @@ public class ChannelPool implements AsyncAutoCloseable {
     private SingleThreaded(
         CqlIdentifier keyspaceName, NodeDistance distance, InternalDriverContext context) {
       this.keyspaceName = keyspaceName;
-      this.config = context.config();
+      this.config = context.getConfig();
       this.distance = distance;
       this.wantedCount = getConfiguredSize(distance);
-      this.channelFactory = context.channelFactory();
-      this.eventBus = context.eventBus();
-      ReconnectionPolicy reconnectionPolicy = context.reconnectionPolicy();
+      this.channelFactory = context.getChannelFactory();
+      this.eventBus = context.getEventBus();
+      ReconnectionPolicy reconnectionPolicy = context.getReconnectionPolicy();
       this.reconnection =
           new Reconnection(
               logPrefix,

@@ -57,8 +57,8 @@ public class AggregateParserTest extends SchemaParserTestBase {
 
   @Before
   public void setup() {
-    Mockito.when(context.codecRegistry()).thenReturn(new DefaultCodecRegistry("test"));
-    Mockito.when(context.protocolVersion()).thenReturn(ProtocolVersion.DEFAULT);
+    Mockito.when(context.getCodecRegistry()).thenReturn(new DefaultCodecRegistry("test"));
+    Mockito.when(context.getProtocolVersion()).thenReturn(ProtocolVersion.DEFAULT);
   }
 
   @Test

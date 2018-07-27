@@ -49,7 +49,7 @@ import org.junit.rules.ExpectedException;
  *
  * <p>Uses {@link DefaultGuavaSession} which is a specialized session implementation that uses
  * {@link GuavaDriverContext} which overrides {@link
- * DefaultDriverContext#requestProcessorRegistry()} to provide its own {@link
+ * DefaultDriverContext#getRequestProcessorRegistry()} to provide its own {@link
  * com.datastax.oss.driver.internal.core.session.RequestProcessor} implementations for returning
  * {@link ListenableFuture}s rather than {@link java.util.concurrent.CompletionStage}s in async
  * method responses.

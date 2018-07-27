@@ -77,20 +77,20 @@ public class PerProfileLoadBalancingPolicyIT {
   public static void setup() {
     // sanity checks
     DriverContext context = sessionRule.session().getContext();
-    DriverConfig config = context.config();
+    DriverConfig config = context.getConfig();
     assertThat(config.getProfiles()).containsKeys("profile1", "profile2");
 
-    assertThat(context.loadBalancingPolicies())
+    assertThat(context.getLoadBalancingPolicies())
         .hasSize(3)
         .containsKeys(DriverExecutionProfile.DEFAULT_NAME, "profile1", "profile2");
 
     DefaultLoadBalancingPolicy defaultPolicy =
         (DefaultLoadBalancingPolicy)
-            context.loadBalancingPolicy(DriverExecutionProfile.DEFAULT_NAME);
+            context.getLoadBalancingPolicy(DriverExecutionProfile.DEFAULT_NAME);
     DefaultLoadBalancingPolicy policy1 =
-        (DefaultLoadBalancingPolicy) context.loadBalancingPolicy("profile1");
+        (DefaultLoadBalancingPolicy) context.getLoadBalancingPolicy("profile1");
     DefaultLoadBalancingPolicy policy2 =
-        (DefaultLoadBalancingPolicy) context.loadBalancingPolicy("profile2");
+        (DefaultLoadBalancingPolicy) context.getLoadBalancingPolicy("profile2");
 
     assertThat(defaultPolicy).isSameAs(policy2).isNotSameAs(policy1);
 

@@ -80,11 +80,11 @@ abstract class ControlConnectionTestBase {
 
     adminEventLoopGroup = new DefaultEventLoopGroup(1);
 
-    Mockito.when(context.nettyOptions()).thenReturn(nettyOptions);
+    Mockito.when(context.getNettyOptions()).thenReturn(nettyOptions);
     Mockito.when(nettyOptions.adminEventExecutorGroup()).thenReturn(adminEventLoopGroup);
     eventBus = Mockito.spy(new EventBus("test"));
-    Mockito.when(context.eventBus()).thenReturn(eventBus);
-    Mockito.when(context.channelFactory()).thenReturn(channelFactory);
+    Mockito.when(context.getEventBus()).thenReturn(eventBus);
+    Mockito.when(context.getChannelFactory()).thenReturn(channelFactory);
 
     channelFactoryFuture = new Exchanger<>();
     Mockito.when(channelFactory.connect(any(Node.class), any(DriverChannelOptions.class)))
@@ -95,26 +95,26 @@ abstract class ControlConnectionTestBase {
               return channelFuture;
             });
 
-    Mockito.when(context.reconnectionPolicy()).thenReturn(reconnectionPolicy);
+    Mockito.when(context.getReconnectionPolicy()).thenReturn(reconnectionPolicy);
     Mockito.when(reconnectionPolicy.newControlConnectionSchedule())
         .thenReturn(reconnectionSchedule);
     // By default, set a large reconnection delay. Tests that care about reconnection will override
     // it.
     Mockito.when(reconnectionSchedule.nextDelay()).thenReturn(Duration.ofDays(1));
 
-    Mockito.when(context.loadBalancingPolicyWrapper()).thenReturn(loadBalancingPolicyWrapper);
+    Mockito.when(context.getLoadBalancingPolicyWrapper()).thenReturn(loadBalancingPolicyWrapper);
 
-    Mockito.when(context.metricsFactory()).thenReturn(metricsFactory);
+    Mockito.when(context.getMetricsFactory()).thenReturn(metricsFactory);
     node1 = new DefaultNode(ADDRESS1, context);
     node2 = new DefaultNode(ADDRESS2, context);
     mockQueryPlan(node1, node2);
 
     Mockito.when(metadataManager.refreshNodes())
         .thenReturn(CompletableFuture.completedFuture(null));
-    Mockito.when(context.metadataManager()).thenReturn(metadataManager);
+    Mockito.when(context.getMetadataManager()).thenReturn(metadataManager);
 
     addressTranslator = Mockito.spy(new PassThroughAddressTranslator(context));
-    Mockito.when(context.addressTranslator()).thenReturn(addressTranslator);
+    Mockito.when(context.getAddressTranslator()).thenReturn(addressTranslator);
 
     controlConnection = new ControlConnection(context);
   }

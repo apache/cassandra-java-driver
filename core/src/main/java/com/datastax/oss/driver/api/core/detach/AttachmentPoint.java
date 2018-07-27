@@ -25,20 +25,20 @@ public interface AttachmentPoint {
       new AttachmentPoint() {
         @NonNull
         @Override
-        public ProtocolVersion protocolVersion() {
+        public ProtocolVersion getProtocolVersion() {
           return ProtocolVersion.DEFAULT;
         }
 
         @NonNull
         @Override
-        public CodecRegistry codecRegistry() {
+        public CodecRegistry getCodecRegistry() {
           return CodecRegistry.DEFAULT;
         }
       };
 
   @NonNull
-  ProtocolVersion protocolVersion();
+  ProtocolVersion getProtocolVersion();
 
   @NonNull
-  CodecRegistry codecRegistry();
+  CodecRegistry getCodecRegistry();
 }

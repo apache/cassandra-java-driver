@@ -63,11 +63,11 @@ public class ProtocolVersionMixedClusterIT {
                     .build()) {
 
       InternalDriverContext context = (InternalDriverContext) session.getContext();
-      assertThat(context.protocolVersion()).isEqualTo(DefaultProtocolVersion.V3);
+      assertThat(context.getProtocolVersion()).isEqualTo(DefaultProtocolVersion.V3);
 
       // Find out which node became the control node after the reconnection (not necessarily node 0)
       InetSocketAddress controlAddress =
-          (InetSocketAddress) context.controlConnection().channel().remoteAddress();
+          (InetSocketAddress) context.getControlConnection().channel().remoteAddress();
       BoundNode currentControlNode = null;
       for (BoundNode node : simulacron.getNodes()) {
         if (node.inetSocketAddress().equals(controlAddress)) {
@@ -110,7 +110,7 @@ public class ProtocolVersionMixedClusterIT {
                     .build()) {
 
       InternalDriverContext context = (InternalDriverContext) session.getContext();
-      assertThat(context.protocolVersion()).isEqualTo(DefaultProtocolVersion.V4);
+      assertThat(context.getProtocolVersion()).isEqualTo(DefaultProtocolVersion.V4);
       assertThat(queries(simulacron)).hasSize(4);
       assertThat(protocolQueries(contactPoint, 4))
           .containsExactly(
@@ -154,7 +154,7 @@ public class ProtocolVersionMixedClusterIT {
                     .addContactPoint(contactPoint.inetSocketAddress())
                     .withConfigLoader(loader)
                     .build()) {
-      assertThat(session.getContext().protocolVersion()).isEqualTo(DefaultProtocolVersion.V4);
+      assertThat(session.getContext().getProtocolVersion()).isEqualTo(DefaultProtocolVersion.V4);
 
       assertThat(queries(simulacron)).hasSize(4);
       assertThat(protocolQueries(contactPoint, 4))

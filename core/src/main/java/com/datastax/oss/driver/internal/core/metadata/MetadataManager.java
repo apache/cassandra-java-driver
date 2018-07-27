@@ -75,18 +75,18 @@ public class MetadataManager implements AsyncAutoCloseable {
   protected MetadataManager(InternalDriverContext context, DefaultMetadata initialMetadata) {
     this.context = context;
     this.metadata = initialMetadata;
-    this.logPrefix = context.sessionName();
-    this.adminExecutor = context.nettyOptions().adminEventExecutorGroup().next();
-    this.config = context.config().getDefaultProfile();
+    this.logPrefix = context.getSessionName();
+    this.adminExecutor = context.getNettyOptions().adminEventExecutorGroup().next();
+    this.config = context.getConfig().getDefaultProfile();
     this.singleThreaded = new SingleThreaded(context, config);
-    this.controlConnection = context.controlConnection();
+    this.controlConnection = context.getControlConnection();
     this.schemaEnabledInConfig = config.getBoolean(DefaultDriverOption.METADATA_SCHEMA_ENABLED);
     this.refreshedKeyspaces =
         config.getStringList(
             DefaultDriverOption.METADATA_SCHEMA_REFRESHED_KEYSPACES, Collections.emptyList());
     this.tokenMapEnabled = config.getBoolean(DefaultDriverOption.METADATA_TOKEN_MAP_ENABLED);
 
-    context.eventBus().register(ConfigChangeEvent.class, this::onConfigChanged);
+    context.getEventBus().register(ConfigChangeEvent.class, this::onConfigChanged);
   }
 
   private void onConfigChanged(@SuppressWarnings("unused") ConfigChangeEvent event) {
@@ -134,14 +134,14 @@ public class MetadataManager implements AsyncAutoCloseable {
 
   public CompletionStage<Void> refreshNodes() {
     return context
-        .topologyMonitor()
+        .getTopologyMonitor()
         .refreshNodeList()
         .thenApplyAsync(singleThreaded::refreshNodes, adminExecutor);
   }
 
   public CompletionStage<Void> refreshNode(Node node) {
     return context
-        .topologyMonitor()
+        .getTopologyMonitor()
         .refreshNode(node)
         .thenApplyAsync(
             maybeInfo -> {
@@ -164,7 +164,7 @@ public class MetadataManager implements AsyncAutoCloseable {
 
   public void addNode(InetSocketAddress address) {
     context
-        .topologyMonitor()
+        .getTopologyMonitor()
         .getNewNodeInfo(address)
         .whenCompleteAsync(
             (info, error) -> {
@@ -270,8 +270,8 @@ public class MetadataManager implements AsyncAutoCloseable {
               this::startSchemaRequest,
               config.getDuration(DefaultDriverOption.METADATA_SCHEMA_WINDOW),
               config.getInt(DefaultDriverOption.METADATA_SCHEMA_MAX_EVENTS));
-      this.schemaQueriesFactory = context.schemaQueriesFactory();
-      this.schemaParserFactory = context.schemaParserFactory();
+      this.schemaQueriesFactory = context.getSchemaQueriesFactory();
+      this.schemaParserFactory = context.getSchemaParserFactory();
     }
 
     private void initNodes(
@@ -381,7 +381,7 @@ public class MetadataManager implements AsyncAutoCloseable {
         currentSchemaRefresh = future;
         LOG.debug("[{}] Starting schema refresh", logPrefix);
         maybeInitControlConnection()
-            .thenCompose(v -> context.topologyMonitor().checkSchemaAgreement())
+            .thenCompose(v -> context.getTopologyMonitor().checkSchemaAgreement())
             // 1. Query system tables
             .thenCompose(b -> schemaQueriesFactory.newInstance(future).execute())
             // 2. Parse the rows into metadata objects, put them in a MetadataRefresh
@@ -464,7 +464,7 @@ public class MetadataManager implements AsyncAutoCloseable {
         refresh instanceof SchemaRefresh && !singleThreaded.firstSchemaRefreshFuture.isDone();
     if (!singleThreaded.closeWasCalled && !isFirstSchemaRefresh) {
       for (Object event : result.events) {
-        context.eventBus().fire(event);
+        context.getEventBus().fire(event);
       }
     }
     return null;

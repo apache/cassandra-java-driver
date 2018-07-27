@@ -71,8 +71,8 @@ public class ConcurrencyLimitingRequestThrottler implements RequestThrottler {
   private boolean closed;
 
   public ConcurrencyLimitingRequestThrottler(DriverContext context) {
-    this.logPrefix = context.sessionName();
-    DriverExecutionProfile config = context.config().getDefaultProfile();
+    this.logPrefix = context.getSessionName();
+    DriverExecutionProfile config = context.getConfig().getDefaultProfile();
     this.maxConcurrentRequests =
         config.getInt(DefaultDriverOption.REQUEST_THROTTLER_MAX_CONCURRENT_REQUESTS);
     this.maxQueueSize = config.getInt(DefaultDriverOption.REQUEST_THROTTLER_MAX_QUEUE_SIZE);

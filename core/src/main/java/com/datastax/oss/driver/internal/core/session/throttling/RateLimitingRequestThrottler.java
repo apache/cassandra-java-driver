@@ -87,10 +87,10 @@ public class RateLimitingRequestThrottler implements RequestThrottler {
 
   @VisibleForTesting
   RateLimitingRequestThrottler(DriverContext context, NanoClock clock) {
-    this.logPrefix = context.sessionName();
+    this.logPrefix = context.getSessionName();
     this.clock = clock;
 
-    DriverExecutionProfile config = context.config().getDefaultProfile();
+    DriverExecutionProfile config = context.getConfig().getDefaultProfile();
 
     this.maxRequestsPerSecond =
         config.getInt(DefaultDriverOption.REQUEST_THROTTLER_MAX_REQUESTS_PER_SECOND);
@@ -104,7 +104,7 @@ public class RateLimitingRequestThrottler implements RequestThrottler {
     this.storedPermits = maxRequestsPerSecond;
 
     this.scheduler =
-        ((InternalDriverContext) context).nettyOptions().adminEventExecutorGroup().next();
+        ((InternalDriverContext) context).getNettyOptions().adminEventExecutorGroup().next();
 
     LOG.debug(
         "[{}] Initializing with maxRequestsPerSecond = {}, maxQueueSize = {}, drainInterval = {}",

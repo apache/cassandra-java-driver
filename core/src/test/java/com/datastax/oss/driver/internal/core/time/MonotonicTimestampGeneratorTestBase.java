@@ -54,7 +54,7 @@ abstract class MonotonicTimestampGeneratorTestBase {
     MockitoAnnotations.initMocks(this);
 
     Mockito.when(config.getDefaultProfile()).thenReturn(defaultProfile);
-    Mockito.when(context.config()).thenReturn(config);
+    Mockito.when(context.getConfig()).thenReturn(config);
 
     // Disable warnings by default
     Mockito.when(

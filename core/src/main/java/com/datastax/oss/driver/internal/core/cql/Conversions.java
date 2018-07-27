@@ -100,7 +100,7 @@ public class Conversions {
         statement.getConsistencyLevel() != null
             ? statement.getConsistencyLevel()
             : context
-                .consistencyLevelRegistry()
+                .getConsistencyLevelRegistry()
                 .fromName(config.getString(DefaultDriverOption.REQUEST_CONSISTENCY));
     int pageSize =
         statement.getPageSize() > 0
@@ -110,15 +110,15 @@ public class Conversions {
         statement.getSerialConsistencyLevel() != null
             ? statement.getSerialConsistencyLevel()
             : context
-                .consistencyLevelRegistry()
+                .getConsistencyLevelRegistry()
                 .fromName(config.getString(DefaultDriverOption.REQUEST_SERIAL_CONSISTENCY));
     long timestamp = statement.getTimestamp();
     if (timestamp == Long.MIN_VALUE) {
-      timestamp = context.timestampGenerator().next();
+      timestamp = context.getTimestampGenerator().next();
     }
-    CodecRegistry codecRegistry = context.codecRegistry();
-    ProtocolVersion protocolVersion = context.protocolVersion();
-    ProtocolVersionRegistry registry = context.protocolVersionRegistry();
+    CodecRegistry codecRegistry = context.getCodecRegistry();
+    ProtocolVersion protocolVersion = context.getProtocolVersion();
+    ProtocolVersionRegistry registry = context.getProtocolVersionRegistry();
     CqlIdentifier keyspace = statement.getKeyspace();
     if (statement instanceof SimpleStatement) {
       SimpleStatement simpleStatement = (SimpleStatement) statement;
@@ -362,8 +362,8 @@ public class Conversions {
         request.getConsistencyLevelForBoundStatements(),
         request.getSerialConsistencyLevelForBoundStatements(),
         request.areBoundStatementsTracing(),
-        context.codecRegistry(),
-        context.protocolVersion());
+        context.getCodecRegistry(),
+        context.getProtocolVersion());
   }
 
   public static ColumnDefinitions toColumnDefinitions(
@@ -406,7 +406,7 @@ public class Conversions {
         Unavailable unavailable = (Unavailable) errorMessage;
         return new UnavailableException(
             node,
-            context.consistencyLevelRegistry().fromCode(unavailable.consistencyLevel),
+            context.getConsistencyLevelRegistry().fromCode(unavailable.consistencyLevel),
             unavailable.required,
             unavailable.alive);
       case ProtocolConstants.ErrorCode.OVERLOADED:
@@ -419,15 +419,15 @@ public class Conversions {
         WriteTimeout writeTimeout = (WriteTimeout) errorMessage;
         return new WriteTimeoutException(
             node,
-            context.consistencyLevelRegistry().fromCode(writeTimeout.consistencyLevel),
+            context.getConsistencyLevelRegistry().fromCode(writeTimeout.consistencyLevel),
             writeTimeout.received,
             writeTimeout.blockFor,
-            context.writeTypeRegistry().fromName(writeTimeout.writeType));
+            context.getWriteTypeRegistry().fromName(writeTimeout.writeType));
       case ProtocolConstants.ErrorCode.READ_TIMEOUT:
         ReadTimeout readTimeout = (ReadTimeout) errorMessage;
         return new ReadTimeoutException(
             node,
-            context.consistencyLevelRegistry().fromCode(readTimeout.consistencyLevel),
+            context.getConsistencyLevelRegistry().fromCode(readTimeout.consistencyLevel),
             readTimeout.received,
             readTimeout.blockFor,
             readTimeout.dataPresent);
@@ -435,7 +435,7 @@ public class Conversions {
         ReadFailure readFailure = (ReadFailure) errorMessage;
         return new ReadFailureException(
             node,
-            context.consistencyLevelRegistry().fromCode(readFailure.consistencyLevel),
+            context.getConsistencyLevelRegistry().fromCode(readFailure.consistencyLevel),
             readFailure.received,
             readFailure.blockFor,
             readFailure.numFailures,
@@ -447,10 +447,10 @@ public class Conversions {
         WriteFailure writeFailure = (WriteFailure) errorMessage;
         return new WriteFailureException(
             node,
-            context.consistencyLevelRegistry().fromCode(writeFailure.consistencyLevel),
+            context.getConsistencyLevelRegistry().fromCode(writeFailure.consistencyLevel),
             writeFailure.received,
             writeFailure.blockFor,
-            context.writeTypeRegistry().fromName(writeFailure.writeType),
+            context.getWriteTypeRegistry().fromName(writeFailure.writeType),
             writeFailure.numFailures,
             writeFailure.reasonMap);
       case ProtocolConstants.ErrorCode.SYNTAX_ERROR:

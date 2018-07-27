@@ -46,7 +46,7 @@ abstract class MonotonicTimestampGenerator implements TimestampGenerator {
   protected MonotonicTimestampGenerator(Clock clock, DriverContext context) {
     this.clock = clock;
 
-    DriverExecutionProfile config = context.config().getDefaultProfile();
+    DriverExecutionProfile config = context.getConfig().getDefaultProfile();
     this.warningThresholdMicros =
         config
                 .getDuration(
@@ -103,7 +103,7 @@ abstract class MonotonicTimestampGenerator implements TimestampGenerator {
   }
 
   private static Clock buildClock(DriverContext context) {
-    DriverExecutionProfile config = context.config().getDefaultProfile();
+    DriverExecutionProfile config = context.getConfig().getDefaultProfile();
     boolean forceJavaClock =
         config.getBoolean(DefaultDriverOption.TIMESTAMP_GENERATOR_FORCE_JAVA_CLOCK, false);
     return Clock.getInstance(forceJavaClock);

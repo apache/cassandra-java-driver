@@ -48,8 +48,8 @@ public class DefaultTupleValue implements TupleValue, Serializable {
         ValuesHelper.encodeValues(
             values,
             type.getComponentTypes(),
-            type.getAttachmentPoint().codecRegistry(),
-            type.getAttachmentPoint().protocolVersion()));
+            type.getAttachmentPoint().getCodecRegistry(),
+            type.getAttachmentPoint().getProtocolVersion()));
   }
 
   private DefaultTupleValue(TupleType type, ByteBuffer[] values) {
@@ -90,13 +90,13 @@ public class DefaultTupleValue implements TupleValue, Serializable {
   @NonNull
   @Override
   public CodecRegistry codecRegistry() {
-    return type.getAttachmentPoint().codecRegistry();
+    return type.getAttachmentPoint().getCodecRegistry();
   }
 
   @NonNull
   @Override
   public ProtocolVersion protocolVersion() {
-    return type.getAttachmentPoint().protocolVersion();
+    return type.getAttachmentPoint().getProtocolVersion();
   }
 
   /**

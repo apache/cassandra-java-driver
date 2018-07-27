@@ -56,8 +56,8 @@ public class DefaultAsyncResultSetTest {
     MockitoAnnotations.initMocks(this);
 
     Mockito.when(executionInfo.getStatement()).thenReturn((Statement) statement);
-    Mockito.when(context.codecRegistry()).thenReturn(CodecRegistry.DEFAULT);
-    Mockito.when(context.protocolVersion()).thenReturn(DefaultProtocolVersion.DEFAULT);
+    Mockito.when(context.getCodecRegistry()).thenReturn(CodecRegistry.DEFAULT);
+    Mockito.when(context.getProtocolVersion()).thenReturn(DefaultProtocolVersion.DEFAULT);
   }
 
   @Test(expected = IllegalStateException.class)

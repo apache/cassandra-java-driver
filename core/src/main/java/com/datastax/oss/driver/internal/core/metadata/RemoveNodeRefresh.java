@@ -41,7 +41,7 @@ public class RemoveNodeRefresh extends NodesRefresh {
   public Result compute(
       DefaultMetadata oldMetadata, boolean tokenMapEnabled, InternalDriverContext context) {
 
-    String logPrefix = context.sessionName();
+    String logPrefix = context.getSessionName();
 
     Map<InetSocketAddress, Node> oldNodes = oldMetadata.getNodes();
     Node node = oldNodes.get(toRemove);

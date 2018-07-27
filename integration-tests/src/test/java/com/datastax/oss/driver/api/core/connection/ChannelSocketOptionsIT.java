@@ -65,7 +65,7 @@ public class ChannelSocketOptionsIT {
   @Test
   public void should_report_socket_options() {
     CqlSession session = sessionRule.session();
-    DriverExecutionProfile config = session.getContext().config().getDefaultProfile();
+    DriverExecutionProfile config = session.getContext().getConfig().getDefaultProfile();
     assertThat(config.getBoolean(SOCKET_TCP_NODELAY)).isTrue();
     assertThat(config.getBoolean(SOCKET_KEEP_ALIVE)).isFalse();
     assertThat(config.getBoolean(SOCKET_REUSE_ADDRESS)).isFalse();

@@ -61,7 +61,7 @@ public class DefaultLoadBalancingPolicyQueryPlanTest extends DefaultLoadBalancin
   public void setup() {
     super.setup();
 
-    Mockito.when(context.metadataManager()).thenReturn(metadataManager);
+    Mockito.when(context.getMetadataManager()).thenReturn(metadataManager);
     Mockito.when(metadataManager.getMetadata()).thenReturn(metadata);
     Mockito.when(metadata.getTokenMap()).thenAnswer(invocation -> Optional.of(this.tokenMap));
 

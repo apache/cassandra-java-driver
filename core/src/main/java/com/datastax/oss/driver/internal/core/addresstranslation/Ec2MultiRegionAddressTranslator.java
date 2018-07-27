@@ -61,7 +61,7 @@ public class Ec2MultiRegionAddressTranslator implements AddressTranslator {
 
   public Ec2MultiRegionAddressTranslator(
       @SuppressWarnings("unused") @NonNull DriverContext context) {
-    this.logPrefix = context.sessionName();
+    this.logPrefix = context.getSessionName();
     @SuppressWarnings("JdkObsolete")
     Hashtable<Object, Object> env = new Hashtable<>();
     env.put(Context.INITIAL_CONTEXT_FACTORY, "com.sun.jndi.dns.DnsContextFactory");

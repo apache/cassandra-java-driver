@@ -135,7 +135,7 @@ public class UdtCodec implements TypeCodec<UdtValue> {
       return "NULL";
     }
 
-    CodecRegistry registry = cqlType.getAttachmentPoint().codecRegistry();
+    CodecRegistry registry = cqlType.getAttachmentPoint().getCodecRegistry();
 
     StringBuilder sb = new StringBuilder("{");
     int size = cqlType.getFieldTypes().size();
@@ -180,7 +180,7 @@ public class UdtCodec implements TypeCodec<UdtValue> {
       return udt;
     }
 
-    CodecRegistry registry = cqlType.getAttachmentPoint().codecRegistry();
+    CodecRegistry registry = cqlType.getAttachmentPoint().getCodecRegistry();
 
     while (position < value.length()) {
       int n;

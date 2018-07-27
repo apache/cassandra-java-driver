@@ -75,15 +75,15 @@ public class ProtocolInitHandlerTest extends ChannelHandlerTestBase {
   public void setup() {
     super.setup();
     MockitoAnnotations.initMocks(this);
-    Mockito.when(internalDriverContext.config()).thenReturn(driverConfig);
+    Mockito.when(internalDriverContext.getConfig()).thenReturn(driverConfig);
     Mockito.when(driverConfig.getDefaultProfile()).thenReturn(defaultProfile);
     Mockito.when(defaultProfile.getDuration(DefaultDriverOption.CONNECTION_INIT_QUERY_TIMEOUT))
         .thenReturn(Duration.ofMillis(QUERY_TIMEOUT_MILLIS));
     Mockito.when(defaultProfile.getDuration(DefaultDriverOption.HEARTBEAT_INTERVAL))
         .thenReturn(Duration.ofSeconds(30));
-    Mockito.when(internalDriverContext.protocolVersionRegistry())
+    Mockito.when(internalDriverContext.getProtocolVersionRegistry())
         .thenReturn(protocolVersionRegistry);
-    Mockito.when(internalDriverContext.compressor()).thenReturn(compressor);
+    Mockito.when(internalDriverContext.getCompressor()).thenReturn(compressor);
     Mockito.when(compressor.algorithm()).thenReturn(null);
 
     channel
@@ -247,7 +247,7 @@ public class ProtocolInitHandlerTest extends ChannelHandlerTestBase {
     MockAuthenticator authenticator = new MockAuthenticator();
     Mockito.when(authProvider.newAuthenticator(channel.remoteAddress(), serverAuthenticator))
         .thenReturn(authenticator);
-    Mockito.when(internalDriverContext.authProvider()).thenReturn(Optional.of(authProvider));
+    Mockito.when(internalDriverContext.getAuthProvider()).thenReturn(Optional.of(authProvider));
 
     ChannelFuture connectFuture = channel.connect(new InetSocketAddress("localhost", 9042));
 
@@ -307,7 +307,7 @@ public class ProtocolInitHandlerTest extends ChannelHandlerTestBase {
                 heartbeatHandler));
 
     AuthProvider authProvider = Mockito.mock(AuthProvider.class);
-    Mockito.when(internalDriverContext.authProvider()).thenReturn(Optional.of(authProvider));
+    Mockito.when(internalDriverContext.getAuthProvider()).thenReturn(Optional.of(authProvider));
 
     ChannelFuture connectFuture = channel.connect(new InetSocketAddress("localhost", 9042));
 
@@ -343,7 +343,7 @@ public class ProtocolInitHandlerTest extends ChannelHandlerTestBase {
     MockAuthenticator authenticator = new MockAuthenticator();
     Mockito.when(authProvider.newAuthenticator(channel.remoteAddress(), serverAuthenticator))
         .thenReturn(authenticator);
-    Mockito.when(internalDriverContext.authProvider()).thenReturn(Optional.of(authProvider));
+    Mockito.when(internalDriverContext.getAuthProvider()).thenReturn(Optional.of(authProvider));
 
     ChannelFuture connectFuture = channel.connect(new InetSocketAddress("localhost", 9042));
 

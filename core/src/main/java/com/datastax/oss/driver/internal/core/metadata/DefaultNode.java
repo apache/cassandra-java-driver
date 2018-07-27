@@ -67,7 +67,7 @@ public class DefaultNode implements Node {
     this.extras = Collections.emptyMap();
     // We leak a reference to a partially constructed object (this), but in practice this won't be a
     // problem because the node updater only needs the connect address to initialize.
-    this.metricUpdater = context.metricsFactory().newNodeUpdater(this);
+    this.metricUpdater = context.getMetricsFactory().newNodeUpdater(this);
     this.upSinceMillis = -1;
   }
 

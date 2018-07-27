@@ -50,8 +50,8 @@ public class DefaultUdtValue implements UdtValue, Serializable {
         ValuesHelper.encodeValues(
             values,
             type.getFieldTypes(),
-            type.getAttachmentPoint().codecRegistry(),
-            type.getAttachmentPoint().protocolVersion()));
+            type.getAttachmentPoint().getCodecRegistry(),
+            type.getAttachmentPoint().getProtocolVersion()));
   }
 
   private DefaultUdtValue(UserDefinedType type, ByteBuffer[] values) {
@@ -110,13 +110,13 @@ public class DefaultUdtValue implements UdtValue, Serializable {
   @NonNull
   @Override
   public CodecRegistry codecRegistry() {
-    return type.getAttachmentPoint().codecRegistry();
+    return type.getAttachmentPoint().getCodecRegistry();
   }
 
   @NonNull
   @Override
   public ProtocolVersion protocolVersion() {
-    return type.getAttachmentPoint().protocolVersion();
+    return type.getAttachmentPoint().getProtocolVersion();
   }
 
   @Override

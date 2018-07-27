@@ -39,7 +39,7 @@ public abstract class RelationParser {
   protected RelationParser(SchemaRows rows, InternalDriverContext context) {
     this.rows = rows;
     this.context = context;
-    this.logPrefix = context.sessionName();
+    this.logPrefix = context.getSessionName();
   }
 
   protected Map<CqlIdentifier, Object> parseOptions(AdminRow row) {

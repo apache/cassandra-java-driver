@@ -126,8 +126,8 @@ public class DefaultMetadata implements Metadata {
       TokenFactory tokenFactory,
       InternalDriverContext context) {
 
-    String logPrefix = context.sessionName();
-    ReplicationStrategyFactory replicationStrategyFactory = context.replicationStrategyFactory();
+    String logPrefix = context.getSessionName();
+    ReplicationStrategyFactory replicationStrategyFactory = context.getReplicationStrategyFactory();
 
     if (!tokenMapEnabled) {
       LOG.debug("[{}] Token map is disabled, skipping", logPrefix);

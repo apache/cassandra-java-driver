@@ -39,7 +39,7 @@ import java.util.concurrent.ConcurrentMap;
 import java.util.function.Predicate;
 
 /**
- * A Custom {@link DefaultDriverContext} that overrides {@link #requestProcessorRegistry()} to
+ * A Custom {@link DefaultDriverContext} that overrides {@link #getRequestProcessorRegistry()} to
  * return a {@link RequestProcessorRegistry} that includes processors for returning guava futures.
  */
 public class GuavaDriverContext extends DefaultDriverContext {
@@ -75,7 +75,7 @@ public class GuavaDriverContext extends DefaultDriverContext {
     CqlRequestSyncProcessor cqlRequestSyncProcessor = new CqlRequestSyncProcessor();
 
     return new RequestProcessorRegistry(
-        sessionName(),
+        getSessionName(),
         cqlRequestSyncProcessor,
         new CqlPrepareSyncProcessor(preparedStatementsCache),
         new GuavaRequestAsyncProcessor<>(

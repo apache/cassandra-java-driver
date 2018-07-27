@@ -111,7 +111,7 @@ partitioner:
 ```java
 String pk = "johndoe@example.com";
 // You need to manually encode the key as binary:
-ByteBuffer encodedPk = TypeCodecs.TEXT.encode(pk, session.getContext().protocolVersion());
+ByteBuffer encodedPk = TypeCodecs.TEXT.encode(pk, session.getContext().getProtocolVersion());
 
 Set<Node> nodes1 = tokenMap.getReplicas(CqlIdentifier.fromInternal("ks1"), encodedPk);
 // Assuming the key hashes to "1", it is in the ]12, 2] range

@@ -68,11 +68,11 @@ public class DefaultTopologyMonitor implements TopologyMonitor {
   @VisibleForTesting volatile int port = -1;
 
   public DefaultTopologyMonitor(InternalDriverContext context) {
-    this.logPrefix = context.sessionName();
+    this.logPrefix = context.getSessionName();
     this.context = context;
-    this.controlConnection = context.controlConnection();
-    this.addressTranslator = context.addressTranslator();
-    DriverExecutionProfile config = context.config().getDefaultProfile();
+    this.controlConnection = context.getControlConnection();
+    this.addressTranslator = context.getAddressTranslator();
+    DriverExecutionProfile config = context.getConfig().getDefaultProfile();
     this.timeout = config.getDuration(DefaultDriverOption.CONTROL_CONNECTION_TIMEOUT);
     this.reconnectOnInit = config.getBoolean(DefaultDriverOption.RECONNECT_ON_INIT);
     this.closeFuture = new CompletableFuture<>();

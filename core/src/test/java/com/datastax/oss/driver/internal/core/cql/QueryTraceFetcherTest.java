@@ -79,7 +79,7 @@ public class QueryTraceFetcherTest {
 
   @Before
   public void setup() {
-    Mockito.when(context.nettyOptions()).thenReturn(nettyOptions);
+    Mockito.when(context.getNettyOptions()).thenReturn(nettyOptions);
     Mockito.when(nettyOptions.adminEventExecutorGroup()).thenReturn(adminEventExecutorGroup);
     Mockito.when(adminEventExecutorGroup.next()).thenReturn(eventExecutor);
     // Always execute scheduled tasks immediately:
@@ -106,7 +106,7 @@ public class QueryTraceFetcherTest {
                 DefaultDriverOption.REQUEST_CONSISTENCY, DefaultConsistencyLevel.ONE.name()))
         .thenReturn(traceConfig);
 
-    Mockito.when(context.consistencyLevelRegistry())
+    Mockito.when(context.getConsistencyLevelRegistry())
         .thenReturn(new DefaultConsistencyLevelRegistry());
   }
 

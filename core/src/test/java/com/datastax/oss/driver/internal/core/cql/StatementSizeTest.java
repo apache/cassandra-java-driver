@@ -81,13 +81,13 @@ public class StatementSizeTest {
 
     Mockito.when(preparedStatement.getVariableDefinitions()).thenReturn(columnDefinitions);
 
-    Mockito.when(driverContext.protocolVersion()).thenReturn(DefaultProtocolVersion.V5);
-    Mockito.when(driverContext.codecRegistry()).thenReturn(CodecRegistry.DEFAULT);
-    Mockito.when(driverContext.protocolVersionRegistry())
+    Mockito.when(driverContext.getProtocolVersion()).thenReturn(DefaultProtocolVersion.V5);
+    Mockito.when(driverContext.getCodecRegistry()).thenReturn(CodecRegistry.DEFAULT);
+    Mockito.when(driverContext.getProtocolVersionRegistry())
         .thenReturn(new CassandraProtocolVersionRegistry(null));
     Mockito.when(config.getDefaultProfile()).thenReturn(defaultProfile);
-    Mockito.when(driverContext.config()).thenReturn(config);
-    Mockito.when(driverContext.timestampGenerator()).thenReturn(timestampGenerator);
+    Mockito.when(driverContext.getConfig()).thenReturn(config);
+    Mockito.when(driverContext.getTimestampGenerator()).thenReturn(timestampGenerator);
   }
 
   private ColumnDefinition phonyColumnDef(

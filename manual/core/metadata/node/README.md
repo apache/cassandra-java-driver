@@ -53,8 +53,8 @@ import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
 import com.datastax.oss.driver.internal.core.metadata.TopologyEvent;
 
 InternalDriverContext context = (InternalDriverContext) session.getContext();
-context.eventBus().fire(TopologyEvent.forceDown(node1.getConnectAddress()));
-context.eventBus().fire(TopologyEvent.forceUp(node1.getConnectAddress()));
+context.getEventBus().fire(TopologyEvent.forceDown(node1.getConnectAddress()));
+context.getEventBus().fire(TopologyEvent.forceUp(node1.getConnectAddress()));
 ```
 
 As shown by the imports above, forcing a node down requires the *internal* driver API, which is 

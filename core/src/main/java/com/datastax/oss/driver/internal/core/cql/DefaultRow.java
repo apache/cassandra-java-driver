@@ -101,13 +101,13 @@ public class DefaultRow implements Row, Serializable {
   @NonNull
   @Override
   public CodecRegistry codecRegistry() {
-    return attachmentPoint.codecRegistry();
+    return attachmentPoint.getCodecRegistry();
   }
 
   @NonNull
   @Override
   public ProtocolVersion protocolVersion() {
-    return attachmentPoint.protocolVersion();
+    return attachmentPoint.getProtocolVersion();
   }
 
   @Override

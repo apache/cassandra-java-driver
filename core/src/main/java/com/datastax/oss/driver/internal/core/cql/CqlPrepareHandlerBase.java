@@ -120,7 +120,7 @@ public abstract class CqlPrepareHandlerBase implements Throttled {
     if (request.getExecutionProfile() != null) {
       this.executionProfile = request.getExecutionProfile();
     } else {
-      DriverConfig config = context.config();
+      DriverConfig config = context.getConfig();
       String profileName = request.getExecutionProfileName();
       this.executionProfile =
           (profileName == null || profileName.isEmpty())
@@ -129,9 +129,9 @@ public abstract class CqlPrepareHandlerBase implements Throttled {
     }
     this.queryPlan =
         context
-            .loadBalancingPolicyWrapper()
+            .getLoadBalancingPolicyWrapper()
             .newQueryPlan(request, executionProfile.getName(), session);
-    this.retryPolicy = context.retryPolicy(executionProfile.getName());
+    this.retryPolicy = context.getRetryPolicy(executionProfile.getName());
 
     this.result = new CompletableFuture<>();
     this.result.exceptionally(
@@ -145,8 +145,8 @@ public abstract class CqlPrepareHandlerBase implements Throttled {
           }
           return null;
         });
-    ProtocolVersion protocolVersion = context.protocolVersion();
-    ProtocolVersionRegistry registry = context.protocolVersionRegistry();
+    ProtocolVersion protocolVersion = context.getProtocolVersion();
+    ProtocolVersionRegistry registry = context.getProtocolVersionRegistry();
     CqlIdentifier keyspace = request.getKeyspace();
     if (keyspace != null
         && !registry.supports(protocolVersion, ProtocolFeature.PER_REQUEST_KEYSPACE)) {
@@ -155,7 +155,7 @@ public abstract class CqlPrepareHandlerBase implements Throttled {
     }
     this.message =
         new Prepare(request.getQuery(), (keyspace == null) ? null : keyspace.asInternal());
-    this.scheduler = context.nettyOptions().ioEventLoopGroup().next();
+    this.scheduler = context.getNettyOptions().ioEventLoopGroup().next();
 
     this.timeout =
         request.getTimeout() != null
@@ -164,7 +164,7 @@ public abstract class CqlPrepareHandlerBase implements Throttled {
     this.timeoutFuture = scheduleTimeout(timeout);
     this.prepareOnAllNodes = executionProfile.getBoolean(DefaultDriverOption.PREPARE_ON_ALL_NODES);
 
-    this.throttler = context.requestThrottler();
+    this.throttler = context.getRequestThrottler();
     this.throttler.register(this);
   }
 

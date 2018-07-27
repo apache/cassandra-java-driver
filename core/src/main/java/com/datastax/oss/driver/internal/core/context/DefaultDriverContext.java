@@ -313,12 +313,12 @@ public class DefaultDriverContext implements InternalDriverContext {
   }
 
   protected EventBus buildEventBus() {
-    return new EventBus(sessionName());
+    return new EventBus(getSessionName());
   }
 
   @SuppressWarnings("unchecked")
   protected Compressor<ByteBuf> buildCompressor() {
-    DriverExecutionProfile defaultProfile = config().getDefaultProfile();
+    DriverExecutionProfile defaultProfile = getConfig().getDefaultProfile();
     if (defaultProfile.isDefined(DefaultDriverOption.PROTOCOL_COMPRESSION)) {
       String name = defaultProfile.getString(DefaultDriverOption.PROTOCOL_COMPRESSION);
       if (name.equalsIgnoreCase("lz4")) {
@@ -338,11 +338,11 @@ public class DefaultDriverContext implements InternalDriverContext {
 
   protected FrameCodec<ByteBuf> buildFrameCodec() {
     return FrameCodec.defaultClient(
-        new ByteBufPrimitiveCodec(nettyOptions().allocator()), compressor());
+        new ByteBufPrimitiveCodec(getNettyOptions().allocator()), getCompressor());
   }
 
   protected ProtocolVersionRegistry buildProtocolVersionRegistry() {
-    return new CassandraProtocolVersionRegistry(sessionName());
+    return new CassandraProtocolVersionRegistry(getSessionName());
   }
 
   protected ConsistencyLevelRegistry buildConsistencyLevelRegistry() {
@@ -382,7 +382,7 @@ public class DefaultDriverContext implements InternalDriverContext {
   }
 
   protected LoadBalancingPolicyWrapper buildLoadBalancingPolicyWrapper() {
-    return new LoadBalancingPolicyWrapper(this, loadBalancingPolicies());
+    return new LoadBalancingPolicyWrapper(this, getLoadBalancingPolicies());
   }
 
   protected ControlConnection buildControlConnection() {
@@ -390,7 +390,7 @@ public class DefaultDriverContext implements InternalDriverContext {
   }
 
   protected RequestProcessorRegistry buildRequestProcessorRegistry() {
-    return RequestProcessorRegistry.defaultCqlProcessors(sessionName());
+    return RequestProcessorRegistry.defaultCqlProcessors(getSessionName());
   }
 
   protected CodecRegistry buildCodecRegistry(String logPrefix, List<TypeCodec<?>> codecs) {
@@ -488,247 +488,247 @@ public class DefaultDriverContext implements InternalDriverContext {
 
   @NonNull
   @Override
-  public String sessionName() {
+  public String getSessionName() {
     return sessionName;
   }
 
   @NonNull
   @Override
-  public DriverConfig config() {
+  public DriverConfig getConfig() {
     return config;
   }
 
   @NonNull
   @Override
-  public DriverConfigLoader configLoader() {
+  public DriverConfigLoader getConfigLoader() {
     return configLoader;
   }
 
   @NonNull
   @Override
-  public Map<String, LoadBalancingPolicy> loadBalancingPolicies() {
+  public Map<String, LoadBalancingPolicy> getLoadBalancingPolicies() {
     return loadBalancingPoliciesRef.get();
   }
 
   @NonNull
   @Override
-  public Map<String, RetryPolicy> retryPolicies() {
+  public Map<String, RetryPolicy> getRetryPolicies() {
     return retryPoliciesRef.get();
   }
 
   @NonNull
   @Override
-  public Map<String, SpeculativeExecutionPolicy> speculativeExecutionPolicies() {
+  public Map<String, SpeculativeExecutionPolicy> getSpeculativeExecutionPolicies() {
     return speculativeExecutionPoliciesRef.get();
   }
 
   @NonNull
   @Override
-  public TimestampGenerator timestampGenerator() {
+  public TimestampGenerator getTimestampGenerator() {
     return timestampGeneratorRef.get();
   }
 
   @NonNull
   @Override
-  public ReconnectionPolicy reconnectionPolicy() {
+  public ReconnectionPolicy getReconnectionPolicy() {
     return reconnectionPolicyRef.get();
   }
 
   @NonNull
   @Override
-  public AddressTranslator addressTranslator() {
+  public AddressTranslator getAddressTranslator() {
     return addressTranslatorRef.get();
   }
 
   @NonNull
   @Override
-  public Optional<AuthProvider> authProvider() {
+  public Optional<AuthProvider> getAuthProvider() {
     return authProviderRef.get();
   }
 
   @NonNull
   @Override
-  public Optional<SslEngineFactory> sslEngineFactory() {
+  public Optional<SslEngineFactory> getSslEngineFactory() {
     return sslEngineFactoryRef.get();
   }
 
   @NonNull
   @Override
-  public EventBus eventBus() {
+  public EventBus getEventBus() {
     return eventBusRef.get();
   }
 
   @NonNull
   @Override
-  public Compressor<ByteBuf> compressor() {
+  public Compressor<ByteBuf> getCompressor() {
     return compressorRef.get();
   }
 
   @NonNull
   @Override
-  public FrameCodec<ByteBuf> frameCodec() {
+  public FrameCodec<ByteBuf> getFrameCodec() {
     return frameCodecRef.get();
   }
 
   @NonNull
   @Override
-  public ProtocolVersionRegistry protocolVersionRegistry() {
+  public ProtocolVersionRegistry getProtocolVersionRegistry() {
     return protocolVersionRegistryRef.get();
   }
 
   @NonNull
   @Override
-  public ConsistencyLevelRegistry consistencyLevelRegistry() {
+  public ConsistencyLevelRegistry getConsistencyLevelRegistry() {
     return consistencyLevelRegistryRef.get();
   }
 
   @NonNull
   @Override
-  public WriteTypeRegistry writeTypeRegistry() {
+  public WriteTypeRegistry getWriteTypeRegistry() {
     return writeTypeRegistryRef.get();
   }
 
   @NonNull
   @Override
-  public NettyOptions nettyOptions() {
+  public NettyOptions getNettyOptions() {
     return nettyOptionsRef.get();
   }
 
   @NonNull
   @Override
-  public WriteCoalescer writeCoalescer() {
+  public WriteCoalescer getWriteCoalescer() {
     return writeCoalescerRef.get();
   }
 
   @NonNull
   @Override
-  public Optional<SslHandlerFactory> sslHandlerFactory() {
+  public Optional<SslHandlerFactory> getSslHandlerFactory() {
     return sslHandlerFactoryRef.get();
   }
 
   @NonNull
   @Override
-  public ChannelFactory channelFactory() {
+  public ChannelFactory getChannelFactory() {
     return channelFactoryRef.get();
   }
 
   @NonNull
   @Override
-  public ChannelPoolFactory channelPoolFactory() {
+  public ChannelPoolFactory getChannelPoolFactory() {
     return channelPoolFactory;
   }
 
   @NonNull
   @Override
-  public TopologyMonitor topologyMonitor() {
+  public TopologyMonitor getTopologyMonitor() {
     return topologyMonitorRef.get();
   }
 
   @NonNull
   @Override
-  public MetadataManager metadataManager() {
+  public MetadataManager getMetadataManager() {
     return metadataManagerRef.get();
   }
 
   @NonNull
   @Override
-  public LoadBalancingPolicyWrapper loadBalancingPolicyWrapper() {
+  public LoadBalancingPolicyWrapper getLoadBalancingPolicyWrapper() {
     return loadBalancingPolicyWrapperRef.get();
   }
 
   @NonNull
   @Override
-  public ControlConnection controlConnection() {
+  public ControlConnection getControlConnection() {
     return controlConnectionRef.get();
   }
 
   @NonNull
   @Override
-  public RequestProcessorRegistry requestProcessorRegistry() {
+  public RequestProcessorRegistry getRequestProcessorRegistry() {
     return requestProcessorRegistryRef.get();
   }
 
   @NonNull
   @Override
-  public SchemaQueriesFactory schemaQueriesFactory() {
+  public SchemaQueriesFactory getSchemaQueriesFactory() {
     return schemaQueriesFactoryRef.get();
   }
 
   @NonNull
   @Override
-  public SchemaParserFactory schemaParserFactory() {
+  public SchemaParserFactory getSchemaParserFactory() {
     return schemaParserFactoryRef.get();
   }
 
   @NonNull
   @Override
-  public TokenFactoryRegistry tokenFactoryRegistry() {
+  public TokenFactoryRegistry getTokenFactoryRegistry() {
     return tokenFactoryRegistryRef.get();
   }
 
   @NonNull
   @Override
-  public ReplicationStrategyFactory replicationStrategyFactory() {
+  public ReplicationStrategyFactory getReplicationStrategyFactory() {
     return replicationStrategyFactoryRef.get();
   }
 
   @NonNull
   @Override
-  public PoolManager poolManager() {
+  public PoolManager getPoolManager() {
     return poolManagerRef.get();
   }
 
   @NonNull
   @Override
-  public MetricsFactory metricsFactory() {
+  public MetricsFactory getMetricsFactory() {
     return metricsFactoryRef.get();
   }
 
   @NonNull
   @Override
-  public RequestThrottler requestThrottler() {
+  public RequestThrottler getRequestThrottler() {
     return requestThrottlerRef.get();
   }
 
   @NonNull
   @Override
-  public NodeStateListener nodeStateListener() {
+  public NodeStateListener getNodeStateListener() {
     return nodeStateListenerRef.get();
   }
 
   @NonNull
   @Override
-  public SchemaChangeListener schemaChangeListener() {
+  public SchemaChangeListener getSchemaChangeListener() {
     return schemaChangeListenerRef.get();
   }
 
   @NonNull
   @Override
-  public RequestTracker requestTracker() {
+  public RequestTracker getRequestTracker() {
     return requestTrackerRef.get();
   }
 
   @Nullable
   @Override
-  public Predicate<Node> nodeFilter(String profileName) {
+  public Predicate<Node> getNodeFilter(String profileName) {
     return nodeFiltersFromBuilder.get(profileName);
   }
 
   @Nullable
   @Override
-  public ClassLoader classLoader() {
+  public ClassLoader getClassLoader() {
     return classLoader;
   }
 
   @NonNull
   @Override
-  public CodecRegistry codecRegistry() {
+  public CodecRegistry getCodecRegistry() {
     return codecRegistry;
   }
 
   @NonNull
   @Override
-  public ProtocolVersion protocolVersion() {
-    return channelFactory().getProtocolVersion();
+  public ProtocolVersion getProtocolVersion() {
+    return getChannelFactory().getProtocolVersion();
   }
 }

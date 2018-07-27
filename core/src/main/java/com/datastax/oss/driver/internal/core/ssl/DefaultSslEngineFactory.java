@@ -66,7 +66,7 @@ public class DefaultSslEngineFactory implements SslEngineFactory {
 
   /** Builds a new instance from the driver configuration. */
   public DefaultSslEngineFactory(DriverContext driverContext) {
-    DriverExecutionProfile config = driverContext.config().getDefaultProfile();
+    DriverExecutionProfile config = driverContext.getConfig().getDefaultProfile();
     try {
       this.sslContext = buildContext(config);
     } catch (Exception e) {

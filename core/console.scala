@@ -35,5 +35,5 @@ println("*   implicit val session = builder.build   *")
 println("********************************************")
 
 def fire(event: AnyRef)(implicit session: CqlSession): Unit = {
-  session.getContext.asInstanceOf[InternalDriverContext].eventBus().fire(event)
+  session.getContext.asInstanceOf[InternalDriverContext].getEventBus().fire(event)
 }

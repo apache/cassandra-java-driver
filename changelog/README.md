@@ -4,6 +4,7 @@
 
 ### 4.0.0-beta2 (in progress)
 
+- [improvement] JAVA-1925: Rename context getters
 - [improvement] JAVA-1544: Check API compatibility with Revapi
 - [new feature] JAVA-1900: Add support for virtual tables
 

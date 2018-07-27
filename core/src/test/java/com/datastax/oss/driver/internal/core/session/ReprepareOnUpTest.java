@@ -87,9 +87,9 @@ public class ReprepareOnUpTest {
     Mockito.when(defaultProfile.getInt(DefaultDriverOption.REPREPARE_MAX_STATEMENTS)).thenReturn(0);
     Mockito.when(defaultProfile.getInt(DefaultDriverOption.REPREPARE_MAX_PARALLELISM))
         .thenReturn(100);
-    Mockito.when(context.config()).thenReturn(config);
+    Mockito.when(context.getConfig()).thenReturn(config);
 
-    Mockito.when(context.metricsFactory()).thenReturn(metricsFactory);
+    Mockito.when(context.getMetricsFactory()).thenReturn(metricsFactory);
     Mockito.when(metricsFactory.getSessionUpdater()).thenReturn(metricUpdater);
 
     done = new CompletableFuture<>();

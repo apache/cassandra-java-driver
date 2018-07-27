@@ -396,7 +396,7 @@ public class BoundStatementIT {
     DriverExecutionProfile mockProfile =
         session
             .getContext()
-            .config()
+            .getConfig()
             .getDefaultProfile()
             // Value doesn't matter, we just want a distinct profile
             .withDuration(DefaultDriverOption.REQUEST_TIMEOUT, Duration.ofSeconds(10));
@@ -497,8 +497,8 @@ public class BoundStatementIT {
 
   private boolean supportsPerRequestKeyspace(CqlSession session) {
     InternalDriverContext context = (InternalDriverContext) session.getContext();
-    ProtocolVersionRegistry protocolVersionRegistry = context.protocolVersionRegistry();
+    ProtocolVersionRegistry protocolVersionRegistry = context.getProtocolVersionRegistry();
     return protocolVersionRegistry.supports(
-        context.protocolVersion(), ProtocolFeature.PER_REQUEST_KEYSPACE);
+        context.getProtocolVersion(), ProtocolFeature.PER_REQUEST_KEYSPACE);
   }
 }

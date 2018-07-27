@@ -58,8 +58,8 @@ public class PlainTextAuthProvider implements AuthProvider {
 
   /** Builds a new instance. */
   public PlainTextAuthProvider(DriverContext context) {
-    this.logPrefix = context.sessionName();
-    this.config = context.config().getDefaultProfile();
+    this.logPrefix = context.getSessionName();
+    this.config = context.getConfig().getDefaultProfile();
   }
 
   @NonNull

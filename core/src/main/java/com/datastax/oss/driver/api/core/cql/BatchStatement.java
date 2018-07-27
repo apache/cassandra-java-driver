@@ -203,7 +203,7 @@ public interface BatchStatement extends Statement<BatchStatement>, Iterable<Batc
     for (BatchableStatement<?> batchableStatement : this) {
       size +=
           Sizes.sizeOfInnerBatchStatementInBytes(
-              batchableStatement, context.protocolVersion(), context.codecRegistry());
+              batchableStatement, context.getProtocolVersion(), context.getCodecRegistry());
     }
 
     // per-query keyspace
@@ -212,7 +212,7 @@ public interface BatchStatement extends Statement<BatchStatement>, Iterable<Batc
     }
 
     // timestamp
-    if (!(context.timestampGenerator() instanceof ServerSideTimestampGenerator)
+    if (!(context.getTimestampGenerator() instanceof ServerSideTimestampGenerator)
         || getTimestamp() != Long.MIN_VALUE) {
 
       size += PrimitiveSizes.LONG;

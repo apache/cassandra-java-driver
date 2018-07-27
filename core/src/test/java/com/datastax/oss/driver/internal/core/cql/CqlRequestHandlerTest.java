@@ -123,7 +123,7 @@ public class CqlRequestHandlerTest extends CqlRequestHandlerTestBase {
       Duration configuredTimeout =
           harness
               .getContext()
-              .config()
+              .getConfig()
               .getDefaultProfile()
               .getDuration(DefaultDriverOption.REQUEST_TIMEOUT);
       assertThat(scheduledTask.getInitialDelay(TimeUnit.NANOSECONDS))
