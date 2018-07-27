@@ -8,14 +8,14 @@ no guarantee that a built query is valid, and it is definitively possible to cre
 invalid queries.
 
 Queries built with `QueryBuilder` are executed the same way as other queries--via
-`execute` or `executeAsync`.  When query is built with inlined values, then it doesn't
+`execute` or `executeAsync`.  When a query is built with inlined values, then it doesn't
 differ much from a statement specified as a string.  But it's also possible to build
 the query with bind markers inside it, and then convert it into a [prepared statement](../prepared/).
 
 ### Basics
 
 Generation of `BuiltStatement` is easy--start by calling of one of the
-[QueryBuilder]'s methods of that represent the CQL's "verb": `select`, `update`, `delete`,
+[QueryBuilder]'s methods that represent the CQL's "verb": `select`, `update`, `delete`,
 `insertInto`, or `truncate`, provide required parameters, and then call "verb"-specific
 functions to form a complete CQL statement (like, `where`, `from`, etc.).  The statement's
 target table can be specified as a simple table name (if a default keyspace has been set
@@ -23,8 +23,8 @@ when creating the `Session` object), as a combination of keyspace name and table
 a [TableMetadata] object.
 
 Note: The `QueryBuilder` doesn't provide support for the full set of CQL.  For
-DDL operations (`CREATE TABLE`, etc.) you can use the [SchemaBuilder].  To perform other
-operations you still need to use [simple statements](../simple/).
+most of DDL operations (`CREATE TABLE`, etc.) you can use the [SchemaBuilder].  To perform other
+operations, for example, for role management, you still need to use [simple statements](../simple/).
 
 ### Selecting data
 
@@ -52,9 +52,8 @@ BuiltStatement selectAll2 = QueryBuilder.select().all().from("test", "test");
 BuiltStatement selectAll3 = QueryBuilder.select().from("test", "test");
 ```
 
-Besides selection of the specific columns, there is also a possibility of calling of
-arbitrary CQL function by using the `fcall` (this is just example, don't do this on real
-data):
+Besides selection of the specific columns, it's also possible to call arbitrary CQL
+function by using the `fcall` method (this is just example, don't do this on real data):
 
 ```java
 BuiltStatement sum = QueryBuilder.select().fcall("sum", column("id")).as("sum_id")
@@ -138,7 +137,7 @@ BuiltStatement selectOne = QueryBuilder.select().from("test")
 
 ### Inserting data
 
-Insertion of data is straightforward--you specify the target table in call to
+Insertion of data is straightforward--you specify the target table in a call to
 `insertInto`, and then provide values to insert either by chaining several calls to the
 `value` function, or by using the `values` function and passing lists or arrays of column
 names and their corresponding values. The following 2 examples are equivalent:
@@ -162,8 +161,8 @@ the call to `ifNotExists` to the statement:
 QueryBuilder.insertInto("test").value("id", 4).ifNotExists();
 ```
 
-It also possible to specify additional metadata for inserted data, such as TTL (time to live) or
-timestamp.  This is achieved by using the `using` function and providing the `Using`
+It is also possible to specify additional metadata for inserted data, such as TTL (time to live) or
+timestamp.  This is achieved with the `using` method and providing the `Using`
 object that is generated either by `ttl`, or `timestamp` functions of the `QueryBuilder` class. If
 you want to specify both, you need to chain them together with the `and` operator: 
 
@@ -193,7 +192,7 @@ BuiltStatement updateStatement = QueryBuilder.update("test").with(set("t", "test
         .and(set("x", 10)).where(eq("id", 1));
 ```
 
-Besides the most often used `set` operation, there is a plenty of operations for work with
+Besides the most often used `set` operation, there is a lot of operations for work with
 all types of collections (lists, maps & sets): `add`, `discard`, `prepend`, `put`,
 `remove`, `setIdx`, etc.  For the full list of operations, see the [QueryBuilder]'s documentation.
 
@@ -207,7 +206,7 @@ BuiltStatement query = QueryBuilder.update("counters")
 
 Similarly to insert statements, it's also possible to perform conditional updates by
 calling either `ifExists` (to perform the update only if the entry exists), or by calling
-`onlyIf` with a `Clause` object—in this case the row will be updated only if the clause
+`onlyIf` with a `Clause` object--in this case the row will be updated only if the clause
 returns true:
 
 ```java
@@ -264,6 +263,6 @@ Note: the call to these functions changes the object type from `BuiltStatement` 
 
 
 
-[QueryBuilder]: http://docs.datastax.com/en/drivers/java/3.5/com/datastax/driver/core/querybuilder/QueryBuilder.html
-[TableMetadata]: http://docs.datastax.com/en/drivers/java/3.5/com/datastax/driver/core/TableMetadata.html
+[QueryBuilder]: https://docs.datastax.com/en/drivers/java/3.5/com/datastax/driver/core/querybuilder/QueryBuilder.html
+[TableMetadata]: https://docs.datastax.com/en/drivers/java/3.5/com/datastax/driver/core/TableMetadata.html
 [SchemaBuilder]: https://docs.datastax.com/en/drivers/java/3.5/com/datastax/driver/core/schemabuilder/SchemaBuilder.html
