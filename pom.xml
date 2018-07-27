@@ -87,6 +87,7 @@
         <test.groups>unit</test.groups>
         <test.osgi.skip>true</test.osgi.skip>
         <javadoc.opts />
+        <format.validateOnly>true</format.validateOnly>
     </properties>
 
     <dependencyManagement>
@@ -656,6 +657,21 @@
                 </plugin>
 
                 <plugin>
+                    <groupId>com.coveo</groupId>
+                    <artifactId>fmt-maven-plugin</artifactId>
+                    <version>2.5.1</version>
+                    <executions>
+                        <execution>
+                            <id>check-format</id>
+                            <phase>initialize</phase>
+                            <goals>
+                                <goal>check</goal>
+                            </goals>
+                        </execution>
+                    </executions>
+                </plugin>
+
+                <plugin>
                     <groupId>com.mycila</groupId>
                     <artifactId>license-maven-plugin</artifactId>
                     <version>3.0</version>
@@ -894,6 +910,11 @@ limitations under the License.
         </pluginManagement>
 
         <plugins>
+
+            <plugin>
+                <groupId>com.coveo</groupId>
+                <artifactId>fmt-maven-plugin</artifactId>
+            </plugin>
 
             <plugin>
                 <groupId>com.mycila</groupId>
