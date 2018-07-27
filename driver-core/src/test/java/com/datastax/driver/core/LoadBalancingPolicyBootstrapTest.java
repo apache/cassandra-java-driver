@@ -28,8 +28,11 @@ import java.util.Collection;
 import java.util.List;
 
 import static com.datastax.driver.core.CreateCCM.TestMode.PER_METHOD;
-import static com.datastax.driver.core.LoadBalancingPolicyBootstrapTest.HistoryPolicy.Action.*;
-import static com.datastax.driver.core.LoadBalancingPolicyBootstrapTest.HistoryPolicy.entry;
+import static com.datastax.driver.core.LoadBalancingPolicyBootstrapTest.Action.INIT;
+import static com.datastax.driver.core.LoadBalancingPolicyBootstrapTest.Action.DOWN;
+import static com.datastax.driver.core.LoadBalancingPolicyBootstrapTest.Action.ADD;
+import static com.datastax.driver.core.LoadBalancingPolicyBootstrapTest.Action.UP;
+import static com.datastax.driver.core.LoadBalancingPolicyBootstrapTest.Action.REMOVE;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @CCMConfig(numberOfNodes = 2, dirtiesContext = true, createCluster = false)
@@ -133,43 +136,45 @@ public class LoadBalancingPolicyBootstrapTest extends CCMTestsSupport {
             logger.warn("Could not get first contact point to fail after {} tries", maxTries);
     }
 
+    enum Action {INIT, UP, DOWN, ADD, REMOVE}
+
+    static Entry entry(Action action, Host host) {
+        return new Entry(action, host);
+    }
+
+    static class Entry {
+        final Action action;
+        final Host host;
+
+        public Entry(Action action, Host host) {
+            this.action = action;
+            this.host = host;
+        }
+
+        @Override
+        public boolean equals(Object other) {
+            if (other == this)
+                return true;
+            if (other instanceof Entry) {
+                Entry that = (Entry) other;
+                return this.action == that.action && this.host.equals(that.host);
+            }
+            return false;
+        }
+
+        @Override
+        public int hashCode() {
+            return MoreObjects.hashCode(action, host);
+        }
+
+        @Override
+        public String toString() {
+            return String.format("Entry(action=%s, host=%s)", action, host);
+        }
+    }
+
     static class HistoryPolicy extends DelegatingLoadBalancingPolicy {
-        enum Action {INIT, UP, DOWN, ADD, REMOVE}
 
-        static class Entry {
-            final Action action;
-            final Host host;
-
-            public Entry(Action action, Host host) {
-                this.action = action;
-                this.host = host;
-            }
-
-            @Override
-            public boolean equals(Object other) {
-                if (other == this)
-                    return true;
-                if (other instanceof Entry) {
-                    Entry that = (Entry) other;
-                    return this.action == that.action && this.host.equals(that.host);
-                }
-                return false;
-            }
-
-            @Override
-            public int hashCode() {
-                return MoreObjects.hashCode(action, host);
-            }
-
-            @Override
-            public String toString() {
-                return String.format("Entry(action=%s, host=%s)", action, host);
-            }
-        }
-
-        static Entry entry(Action action, Host host) {
-            return new Entry(action, host);
-        }
 
         List<Entry> history = Lists.newArrayList();
 
