@@ -6,6 +6,7 @@
 - [improvement] JAVA-1857: Add Statement.setHost.
 - [bug] JAVA-1920: Use nanosecond precision in LocalTimeCodec#format().
 - [bug] JAVA-1794: Driver tries to create a connection array of size -1.
+- [new feature] JAVA-1899: Support virtual tables.
 
 Merged from 3.5.x:
 
