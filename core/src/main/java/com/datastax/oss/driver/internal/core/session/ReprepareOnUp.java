@@ -91,9 +91,9 @@ class ReprepareOnUp {
     this.channel = pool.next();
     this.repreparePayloads = repreparePayloads;
     this.whenPrepared = whenPrepared;
-    this.throttler = context.requestThrottler();
+    this.throttler = context.getRequestThrottler();
 
-    DriverConfig config = context.config();
+    DriverConfig config = context.getConfig();
     this.checkSystemTable =
         config.getDefaultProfile().getBoolean(DefaultDriverOption.REPREPARE_CHECK_SYSTEM_TABLE);
     this.timeout = config.getDefaultProfile().getDuration(DefaultDriverOption.REPREPARE_TIMEOUT);
@@ -102,7 +102,7 @@ class ReprepareOnUp {
     this.maxParallelism =
         config.getDefaultProfile().getInt(DefaultDriverOption.REPREPARE_MAX_PARALLELISM);
 
-    this.metricUpdater = context.metricsFactory().getSessionUpdater();
+    this.metricUpdater = context.getMetricsFactory().getSessionUpdater();
   }
 
   void start() {

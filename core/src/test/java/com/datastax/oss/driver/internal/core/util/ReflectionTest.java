@@ -57,7 +57,7 @@ public class ReflectionTest {
             + "}\n";
     InternalDriverContext context = Mockito.mock(InternalDriverContext.class);
     TypesafeDriverConfig config = new TypesafeDriverConfig(ConfigFactory.parseString(configSource));
-    Mockito.when(context.config()).thenReturn(config);
+    Mockito.when(context.getConfig()).thenReturn(config);
 
     Map<String, SpeculativeExecutionPolicy> policies =
         Reflection.buildFromConfigProfiles(

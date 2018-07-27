@@ -78,7 +78,7 @@ class ProtocolInitHandler extends ConnectInitHandler {
 
     this.context = context;
 
-    DriverExecutionProfile defaultConfig = context.config().getDefaultProfile();
+    DriverExecutionProfile defaultConfig = context.getConfig().getDefaultProfile();
 
     this.timeoutMillis =
         defaultConfig.getDuration(DefaultDriverOption.CONNECTION_INIT_QUERY_TIMEOUT).toMillis();
@@ -142,7 +142,7 @@ class ProtocolInitHandler extends ConnectInitHandler {
     Message getRequest() {
       switch (step) {
         case STARTUP:
-          return new Startup(context.compressor().algorithm());
+          return new Startup(context.getCompressor().algorithm());
         case GET_CLUSTER_NAME:
           return CLUSTER_NAME_QUERY;
         case SET_KEYSPACE:
@@ -166,7 +166,7 @@ class ProtocolInitHandler extends ConnectInitHandler {
       try {
         if (step == Step.STARTUP && response instanceof Ready) {
           context
-              .authProvider()
+              .getAuthProvider()
               .ifPresent(provider -> provider.onMissingChallenge(channel.remoteAddress()));
           step = Step.GET_CLUSTER_NAME;
           send();
@@ -301,7 +301,7 @@ class ProtocolInitHandler extends ConnectInitHandler {
 
     private Authenticator buildAuthenticator(SocketAddress address, String authenticator) {
       return context
-          .authProvider()
+          .getAuthProvider()
           .map(p -> p.newAuthenticator(address, authenticator))
           .orElseThrow(
               () ->

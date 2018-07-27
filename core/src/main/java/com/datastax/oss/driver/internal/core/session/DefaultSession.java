@@ -93,15 +93,15 @@ public class DefaultSession implements CqlSession {
   private final SessionMetricUpdater metricUpdater;
 
   private DefaultSession(InternalDriverContext context, Set<InetSocketAddress> contactPoints) {
-    LOG.debug("Creating new session {}", context.sessionName());
-    this.adminExecutor = context.nettyOptions().adminEventExecutorGroup().next();
+    LOG.debug("Creating new session {}", context.getSessionName());
+    this.adminExecutor = context.getNettyOptions().adminEventExecutorGroup().next();
     this.context = context;
     this.singleThreaded = new SingleThreaded(context, contactPoints);
-    this.metadataManager = context.metadataManager();
-    this.processorRegistry = context.requestProcessorRegistry();
-    this.poolManager = context.poolManager();
-    this.logPrefix = context.sessionName();
-    this.metricUpdater = context.metricsFactory().getSessionUpdater();
+    this.metadataManager = context.getMetadataManager();
+    this.processorRegistry = context.getRequestProcessorRegistry();
+    this.poolManager = context.getPoolManager();
+    this.logPrefix = context.getSessionName();
+    this.metricUpdater = context.getMetricsFactory().getSessionUpdater();
   }
 
   private CompletionStage<CqlSession> init(CqlIdentifier keyspace) {
@@ -112,7 +112,7 @@ public class DefaultSession implements CqlSession {
   @NonNull
   @Override
   public String getName() {
-    return context.sessionName();
+    return context.getSessionName();
   }
 
   @NonNull
@@ -141,7 +141,7 @@ public class DefaultSession implements CqlSession {
   @NonNull
   @Override
   public CompletionStage<Boolean> checkSchemaAgreementAsync() {
-    return context.topologyMonitor().checkSchemaAgreement();
+    return context.getTopologyMonitor().checkSchemaAgreement();
   }
 
   @NonNull
@@ -159,7 +159,7 @@ public class DefaultSession implements CqlSession {
   @NonNull
   @Override
   public Optional<? extends Metrics> getMetrics() {
-    return context.metricsFactory().getMetrics();
+    return context.getMetricsFactory().getMetrics();
   }
 
   /**
@@ -254,13 +254,14 @@ public class DefaultSession implements CqlSession {
       this.context = context;
       this.nodeStateManager = new NodeStateManager(context);
       this.initialContactPoints = contactPoints;
-      new SchemaListenerNotifier(context.schemaChangeListener(), context.eventBus(), adminExecutor);
+      new SchemaListenerNotifier(
+          context.getSchemaChangeListener(), context.getEventBus(), adminExecutor);
       context
-          .eventBus()
+          .getEventBus()
           .register(
               NodeStateEvent.class, RunOrSchedule.on(adminExecutor, this::onNodeStateChanged));
       CompletableFutures.propagateCancellation(
-          this.initFuture, context.topologyMonitor().initFuture());
+          this.initFuture, context.getTopologyMonitor().initFuture());
     }
 
     private void init(CqlIdentifier keyspace) {
@@ -274,30 +275,30 @@ public class DefaultSession implements CqlSession {
       // Eagerly fetch user-facing policies right now, no need to start opening connections if
       // something is wrong in the configuration.
       try {
-        context.loadBalancingPolicies();
-        context.retryPolicies();
-        context.speculativeExecutionPolicies();
-        context.reconnectionPolicy();
-        context.addressTranslator();
-        context.nodeStateListener();
-        context.schemaChangeListener();
-        context.requestTracker();
-        context.requestThrottler();
-        context.authProvider();
-        context.sslHandlerFactory();
-        context.timestampGenerator();
+        context.getLoadBalancingPolicies();
+        context.getRetryPolicies();
+        context.getSpeculativeExecutionPolicies();
+        context.getReconnectionPolicy();
+        context.getAddressTranslator();
+        context.getNodeStateListener();
+        context.getSchemaChangeListener();
+        context.getRequestTracker();
+        context.getRequestThrottler();
+        context.getAuthProvider();
+        context.getSslHandlerFactory();
+        context.getTimestampGenerator();
       } catch (Throwable error) {
         initFuture.completeExceptionally(error);
         RunOrSchedule.on(adminExecutor, this::closePolicies);
         return;
       }
 
-      MetadataManager metadataManager = context.metadataManager();
+      MetadataManager metadataManager = context.getMetadataManager();
       metadataManager
           // Store contact points in the metadata right away, the control connection will need them
           // if it has to initialize (if the set is empty, 127.0.0.1 is used as a default).
           .addContactPoints(initialContactPoints)
-          .thenCompose(v -> context.topologyMonitor().init())
+          .thenCompose(v -> context.getTopologyMonitor().init())
           .thenCompose(v -> metadataManager.refreshNodes())
           .thenAccept(v -> afterInitialNodeListRefresh(keyspace))
           .exceptionally(
@@ -311,13 +312,13 @@ public class DefaultSession implements CqlSession {
     private void afterInitialNodeListRefresh(CqlIdentifier keyspace) {
       try {
         boolean protocolWasForced =
-            context.config().getDefaultProfile().isDefined(DefaultDriverOption.PROTOCOL_VERSION);
+            context.getConfig().getDefaultProfile().isDefined(DefaultDriverOption.PROTOCOL_VERSION);
         boolean needSchemaRefresh = true;
         if (!protocolWasForced) {
-          ProtocolVersion currentVersion = context.protocolVersion();
+          ProtocolVersion currentVersion = context.getProtocolVersion();
           ProtocolVersion bestVersion =
               context
-                  .protocolVersionRegistry()
+                  .getProtocolVersionRegistry()
                   .highestCommon(metadataManager.getMetadata().getNodes().values());
           if (!currentVersion.equals(bestVersion)) {
             LOG.info(
@@ -326,8 +327,8 @@ public class DefaultSession implements CqlSession {
                 logPrefix,
                 currentVersion,
                 bestVersion);
-            context.channelFactory().setProtocolVersion(bestVersion);
-            ControlConnection controlConnection = context.controlConnection();
+            context.getChannelFactory().setProtocolVersion(bestVersion);
+            ControlConnection controlConnection = context.getControlConnection();
             // Might not have initialized yet if there is a custom TopologyMonitor
             if (controlConnection.isInit()) {
               controlConnection.reconnectNow();
@@ -351,8 +352,8 @@ public class DefaultSession implements CqlSession {
     private void afterInitialSchemaRefresh(CqlIdentifier keyspace) {
       try {
         nodeStateManager.markInitialized();
-        context.loadBalancingPolicyWrapper().init();
-        context.configLoader().onDriverInit(context);
+        context.getLoadBalancingPolicyWrapper().init();
+        context.getConfigLoader().onDriverInit(context);
         LOG.debug("[{}] Initialization complete, ready", logPrefix);
         poolManager
             .init(keyspace)
@@ -372,13 +373,13 @@ public class DefaultSession implements CqlSession {
     private void onNodeStateChanged(NodeStateEvent event) {
       assert adminExecutor.inEventLoop();
       if (event.newState == null) {
-        context.nodeStateListener().onRemove(event.node);
+        context.getNodeStateListener().onRemove(event.node);
       } else if (event.oldState == null && event.newState == NodeState.UNKNOWN) {
-        context.nodeStateListener().onAdd(event.node);
+        context.getNodeStateListener().onAdd(event.node);
       } else if (event.newState == NodeState.UP) {
-        context.nodeStateListener().onUp(event.node);
+        context.getNodeStateListener().onUp(event.node);
       } else if (event.newState == NodeState.DOWN || event.newState == NodeState.FORCED_DOWN) {
-        context.nodeStateListener().onDown(event.node);
+        context.getNodeStateListener().onDown(event.node);
       }
     }
 
@@ -433,7 +434,7 @@ public class DefaultSession implements CqlSession {
         warnIfFailed(stage);
       }
       context
-          .nettyOptions()
+          .getNettyOptions()
           .onClose()
           .addListener(
               f -> {
@@ -466,15 +467,15 @@ public class DefaultSession implements CqlSession {
       List<AutoCloseable> policies = new ArrayList<>();
       for (Supplier<AutoCloseable> supplier :
           ImmutableList.<Supplier<AutoCloseable>>of(
-              context::reconnectionPolicy,
-              context::loadBalancingPolicyWrapper,
-              context::addressTranslator,
-              context::configLoader,
-              context::nodeStateListener,
-              context::schemaChangeListener,
-              context::requestTracker,
-              context::requestThrottler,
-              context::timestampGenerator)) {
+              context::getReconnectionPolicy,
+              context::getLoadBalancingPolicyWrapper,
+              context::getAddressTranslator,
+              context::getConfigLoader,
+              context::getNodeStateListener,
+              context::getSchemaChangeListener,
+              context::getRequestTracker,
+              context::getRequestThrottler,
+              context::getTimestampGenerator)) {
         try {
           policies.add(supplier.get());
         } catch (Throwable t) {
@@ -482,22 +483,22 @@ public class DefaultSession implements CqlSession {
         }
       }
       try {
-        context.authProvider().ifPresent(policies::add);
+        context.getAuthProvider().ifPresent(policies::add);
       } catch (Throwable t) {
         // ignore
       }
       try {
-        context.sslHandlerFactory().ifPresent(policies::add);
+        context.getSslHandlerFactory().ifPresent(policies::add);
       } catch (Throwable t) {
         // ignore
       }
       try {
-        policies.addAll(context.retryPolicies().values());
+        policies.addAll(context.getRetryPolicies().values());
       } catch (Throwable t) {
         // ignore
       }
       try {
-        policies.addAll(context.speculativeExecutionPolicies().values());
+        policies.addAll(context.getSpeculativeExecutionPolicies().values());
       } catch (Throwable t) {
         // ignore
       }
@@ -520,12 +521,12 @@ public class DefaultSession implements CqlSession {
       // Same as closePolicies(): make sure we don't trigger errors by accessing context components
       // that had failed to initialize:
       try {
-        components.add(context.topologyMonitor());
+        components.add(context.getTopologyMonitor());
       } catch (Throwable t) {
         // ignore
       }
       try {
-        components.add(context.controlConnection());
+        components.add(context.getControlConnection());
       } catch (Throwable t) {
         // ignore
       }

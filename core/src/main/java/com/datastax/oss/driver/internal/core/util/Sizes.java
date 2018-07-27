@@ -60,7 +60,7 @@ public class Sizes {
 
     // These are options in the protocol inside a frame that are common to all Statements
 
-    size += QueryOptions.queryFlagsSize(context.protocolVersion().getCode());
+    size += QueryOptions.queryFlagsSize(context.getProtocolVersion().getCode());
 
     size += PrimitiveSizes.SHORT; // size of consistency level
     size += PrimitiveSizes.SHORT; // size of serial consistency level

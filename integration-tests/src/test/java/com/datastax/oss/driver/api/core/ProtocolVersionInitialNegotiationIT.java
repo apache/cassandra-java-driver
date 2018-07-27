@@ -42,7 +42,7 @@ public class ProtocolVersionInitialNegotiationIT {
   @Test
   public void should_downgrade_to_v3() {
     try (CqlSession session = SessionUtils.newSession(ccm)) {
-      assertThat(session.getContext().protocolVersion().getCode()).isEqualTo(3);
+      assertThat(session.getContext().getProtocolVersion().getCode()).isEqualTo(3);
       session.execute("select * from system.local");
     }
   }
@@ -59,7 +59,7 @@ public class ProtocolVersionInitialNegotiationIT {
             .withString(DefaultDriverOption.PROTOCOL_VERSION, "V4")
             .build();
     try (CqlSession session = SessionUtils.newSession(ccm, loader)) {
-      assertThat(session.getContext().protocolVersion().getCode()).isEqualTo(3);
+      assertThat(session.getContext().getProtocolVersion().getCode()).isEqualTo(3);
       session.execute("select * from system.local");
       fail("Expected an AllNodesFailedException");
     } catch (AllNodesFailedException anfe) {
@@ -76,7 +76,7 @@ public class ProtocolVersionInitialNegotiationIT {
   @Test
   public void should_not_downgrade_if_server_supports_latest_version() {
     try (CqlSession session = SessionUtils.newSession(ccm)) {
-      assertThat(session.getContext().protocolVersion().getCode()).isEqualTo(4);
+      assertThat(session.getContext().getProtocolVersion().getCode()).isEqualTo(4);
       session.execute("select * from system.local");
     }
   }
@@ -89,7 +89,7 @@ public class ProtocolVersionInitialNegotiationIT {
             .withString(DefaultDriverOption.PROTOCOL_VERSION, "V3")
             .build();
     try (CqlSession session = SessionUtils.newSession(ccm, loader)) {
-      assertThat(session.getContext().protocolVersion().getCode()).isEqualTo(3);
+      assertThat(session.getContext().getProtocolVersion().getCode()).isEqualTo(3);
       session.execute("select * from system.local");
     }
   }

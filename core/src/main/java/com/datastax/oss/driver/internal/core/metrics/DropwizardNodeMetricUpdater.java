@@ -44,9 +44,9 @@ public class DropwizardNodeMetricUpdater extends DropwizardMetricUpdater<NodeMet
       MetricRegistry registry,
       InternalDriverContext context) {
     super(enabledMetrics, registry);
-    this.metricNamePrefix = buildPrefix(context.sessionName(), node.getConnectAddress());
+    this.metricNamePrefix = buildPrefix(context.getSessionName(), node.getConnectAddress());
 
-    DriverExecutionProfile config = context.config().getDefaultProfile();
+    DriverExecutionProfile config = context.getConfig().getDefaultProfile();
 
     if (enabledMetrics.contains(DefaultNodeMetric.OPEN_CONNECTIONS)) {
       this.registry.register(
@@ -119,7 +119,7 @@ public class DropwizardNodeMetricUpdater extends DropwizardMetricUpdater<NodeMet
           buildFullName(metric, null),
           (Gauge<Integer>)
               () -> {
-                ChannelPool pool = context.poolManager().getPools().get(node);
+                ChannelPool pool = context.getPoolManager().getPools().get(node);
                 return (pool == null) ? 0 : reading.apply(pool);
               });
     }

@@ -193,7 +193,7 @@ Cat    cat    = row.get(0,    Cat.class); // throws CodecNotFoundException
 The driver stores all codecs (built-in and custom) in an internal [CodecRegistry]:
 
 ```java
-CodecRegistry codecRegistry = session.getContext().codecRegistry();
+CodecRegistry getCodecRegistry = session.getContext().getCodecRegistry();
 
 // Get the custom codec we registered earlier:
 TypeCodec<String> cqlIntToString = codecRegistry.codecFor(DataTypes.INT, GenericType.STRING);

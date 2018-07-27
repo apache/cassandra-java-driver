@@ -56,8 +56,8 @@ public interface NettyOptions {
 
   /**
    * The byte buffer allocator to use. This must always return the same instance. Note that this is
-   * also used by the default implementation of {@link InternalDriverContext#frameCodec()}, and the
-   * built-in {@link com.datastax.oss.protocol.internal.Compressor} implementations.
+   * also used by the default implementation of {@link InternalDriverContext#getFrameCodec()}, and
+   * the built-in {@link com.datastax.oss.protocol.internal.Compressor} implementations.
    */
   ByteBufAllocator allocator();
 

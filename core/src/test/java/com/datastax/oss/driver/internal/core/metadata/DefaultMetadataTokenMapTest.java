@@ -59,7 +59,7 @@ public class DefaultMetadataTokenMapTest {
   public void setup() {
     DefaultReplicationStrategyFactory replicationStrategyFactory =
         new DefaultReplicationStrategyFactory(context);
-    Mockito.when(context.replicationStrategyFactory()).thenReturn(replicationStrategyFactory);
+    Mockito.when(context.getReplicationStrategyFactory()).thenReturn(replicationStrategyFactory);
   }
 
   @Test

@@ -135,7 +135,7 @@ public class TupleCodec implements TypeCodec<TupleValue> {
       throw new IllegalArgumentException(
           String.format("Invalid tuple type, expected %s but got %s", cqlType, value.getType()));
     }
-    CodecRegistry registry = cqlType.getAttachmentPoint().codecRegistry();
+    CodecRegistry registry = cqlType.getAttachmentPoint().getCodecRegistry();
 
     StringBuilder sb = new StringBuilder("(");
     boolean first = true;
@@ -176,7 +176,7 @@ public class TupleCodec implements TypeCodec<TupleValue> {
       return tuple;
     }
 
-    CodecRegistry registry = cqlType.getAttachmentPoint().codecRegistry();
+    CodecRegistry registry = cqlType.getAttachmentPoint().getCodecRegistry();
 
     int i = 0;
     while (position < value.length()) {

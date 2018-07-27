@@ -109,11 +109,11 @@ public class NodeStateIT {
     inOrder = Mockito.inOrder(nodeStateListener);
 
     driverContext = (InternalDriverContext) sessionRule.session().getContext();
-    driverContext.eventBus().register(NodeStateEvent.class, stateEvents::add);
+    driverContext.getEventBus().register(NodeStateEvent.class, stateEvents::add);
 
     defaultLoadBalancingPolicy =
         (ConfigurableIgnoresPolicy)
-            driverContext.loadBalancingPolicy(DriverExecutionProfile.DEFAULT_NAME);
+            driverContext.getLoadBalancingPolicy(DriverExecutionProfile.DEFAULT_NAME);
 
     // Sanity check: the driver should have connected to simulacron
     ConditionChecker.checkThat(
@@ -199,7 +199,7 @@ public class NodeStateIT {
     simulacronControlNode.rejectConnections(0, RejectScope.UNBIND);
 
     // Identify the control connection and close the two other ones
-    SocketAddress controlAddress = driverContext.controlConnection().channel().localAddress();
+    SocketAddress controlAddress = driverContext.getControlConnection().channel().localAddress();
     NodeConnectionReport report = simulacronControlNode.getConnections();
     for (SocketAddress address : report.getConnections()) {
       if (!address.equals(controlAddress)) {
@@ -265,7 +265,7 @@ public class NodeStateIT {
         .becomesTrue();
 
     driverContext
-        .eventBus()
+        .getEventBus()
         .fire(TopologyEvent.suggestDown(metadataRegularNode.getConnectAddress()));
     ConditionChecker.checkThat(
             () ->
@@ -279,7 +279,9 @@ public class NodeStateIT {
         .becomesTrue();
     inOrder.verify(nodeStateListener, timeout(500)).onDown(metadataRegularNode);
 
-    driverContext.eventBus().fire(TopologyEvent.suggestUp(metadataRegularNode.getConnectAddress()));
+    driverContext
+        .getEventBus()
+        .fire(TopologyEvent.suggestUp(metadataRegularNode.getConnectAddress()));
     ConditionChecker.checkThat(
             () ->
                 assertThat(metadataRegularNode)
@@ -298,7 +300,7 @@ public class NodeStateIT {
   @Test
   public void should_ignore_down_topology_event_when_still_connected() throws InterruptedException {
     driverContext
-        .eventBus()
+        .getEventBus()
         .fire(TopologyEvent.suggestDown(metadataRegularNode.getConnectAddress()));
     TimeUnit.MILLISECONDS.sleep(500);
     assertThat(metadataRegularNode).isUp().hasOpenConnections(2).isNotReconnecting();
@@ -339,7 +341,7 @@ public class NodeStateIT {
 
       localSimulacronNode.acceptConnections();
       ((InternalDriverContext) session.getContext())
-          .eventBus()
+          .getEventBus()
           .fire(TopologyEvent.suggestUp(localMetadataNode.getConnectAddress()));
 
       ConditionChecker.checkThat(() -> assertThat(localMetadataNode).isUp().isNotReconnecting())
@@ -354,7 +356,9 @@ public class NodeStateIT {
 
   @Test
   public void should_force_down_when_not_ignored() throws InterruptedException {
-    driverContext.eventBus().fire(TopologyEvent.forceDown(metadataRegularNode.getConnectAddress()));
+    driverContext
+        .getEventBus()
+        .fire(TopologyEvent.forceDown(metadataRegularNode.getConnectAddress()));
     ConditionChecker.checkThat(
             () ->
                 assertThat(metadataRegularNode)
@@ -367,18 +371,22 @@ public class NodeStateIT {
     inOrder.verify(nodeStateListener, timeout(500)).onDown(metadataRegularNode);
 
     // Should ignore up/down topology events while forced down
-    driverContext.eventBus().fire(TopologyEvent.suggestUp(metadataRegularNode.getConnectAddress()));
+    driverContext
+        .getEventBus()
+        .fire(TopologyEvent.suggestUp(metadataRegularNode.getConnectAddress()));
     TimeUnit.MILLISECONDS.sleep(500);
     assertThat(metadataRegularNode).isForcedDown();
 
     driverContext
-        .eventBus()
+        .getEventBus()
         .fire(TopologyEvent.suggestDown(metadataRegularNode.getConnectAddress()));
     TimeUnit.MILLISECONDS.sleep(500);
     assertThat(metadataRegularNode).isForcedDown();
 
     // Should only come back up on a FORCE_UP event
-    driverContext.eventBus().fire(TopologyEvent.forceUp(metadataRegularNode.getConnectAddress()));
+    driverContext
+        .getEventBus()
+        .fire(TopologyEvent.forceUp(metadataRegularNode.getConnectAddress()));
     ConditionChecker.checkThat(
             () -> assertThat(metadataRegularNode).isUp().hasOpenConnections(2).isNotReconnecting())
         .as("Node forced back up")
@@ -391,7 +399,9 @@ public class NodeStateIT {
   public void should_force_down_when_ignored() throws InterruptedException {
     defaultLoadBalancingPolicy.ignore(metadataRegularNode);
 
-    driverContext.eventBus().fire(TopologyEvent.forceDown(metadataRegularNode.getConnectAddress()));
+    driverContext
+        .getEventBus()
+        .fire(TopologyEvent.forceDown(metadataRegularNode.getConnectAddress()));
     ConditionChecker.checkThat(
             () ->
                 assertThat(metadataRegularNode)
@@ -404,19 +414,23 @@ public class NodeStateIT {
     inOrder.verify(nodeStateListener, timeout(500)).onDown(metadataRegularNode);
 
     // Should ignore up/down topology events while forced down
-    driverContext.eventBus().fire(TopologyEvent.suggestUp(metadataRegularNode.getConnectAddress()));
+    driverContext
+        .getEventBus()
+        .fire(TopologyEvent.suggestUp(metadataRegularNode.getConnectAddress()));
     TimeUnit.MILLISECONDS.sleep(500);
     assertThat(metadataRegularNode).isForcedDown();
 
     driverContext
-        .eventBus()
+        .getEventBus()
         .fire(TopologyEvent.suggestDown(metadataRegularNode.getConnectAddress()));
     TimeUnit.MILLISECONDS.sleep(500);
     assertThat(metadataRegularNode).isForcedDown();
 
     // Should only come back up on a FORCE_UP event, will not reopen connections since it is still
     // ignored
-    driverContext.eventBus().fire(TopologyEvent.forceUp(metadataRegularNode.getConnectAddress()));
+    driverContext
+        .getEventBus()
+        .fire(TopologyEvent.forceUp(metadataRegularNode.getConnectAddress()));
     ConditionChecker.checkThat(
             () ->
                 assertThat(metadataRegularNode)

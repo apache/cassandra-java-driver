@@ -146,8 +146,8 @@ statement = statement.setRoutingKeyspace("testKs");
 
 // Set the routing key manually: serialize each partition key component to its target CQL type
 statement = statement.setRoutingKey(
-    TypeCodecs.INT.encodePrimitive(1, session.getContext().protocolVersion()),
-    TypeCodecs.INT.encodePrimitive(2016, session.getContext().protocolVersion()));
+    TypeCodecs.INT.encodePrimitive(1, session.getContext().getProtocolVersion()),
+    TypeCodecs.INT.encodePrimitive(2016, session.getContext().getProtocolVersion()));
 
 session.execute(statement);
 ```

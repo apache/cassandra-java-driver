@@ -57,8 +57,8 @@ public class RequestLogFormatterTest {
 
   @Before
   public void setup() {
-    Mockito.when(context.codecRegistry()).thenReturn(CodecRegistry.DEFAULT);
-    Mockito.when(context.protocolVersion()).thenReturn(protocolVersion);
+    Mockito.when(context.getCodecRegistry()).thenReturn(CodecRegistry.DEFAULT);
+    Mockito.when(context.getProtocolVersion()).thenReturn(protocolVersion);
 
     formatter = new RequestLogFormatter(context);
   }
@@ -283,7 +283,7 @@ public class RequestLogFormatterTest {
         null,
         null,
         false,
-        context.codecRegistry(),
-        context.protocolVersion());
+        context.getCodecRegistry(),
+        context.getProtocolVersion());
   }
 }

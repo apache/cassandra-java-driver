@@ -75,16 +75,16 @@ public class NodeStateManagerTest {
     Mockito.when(defaultProfile.getInt(DefaultDriverOption.METADATA_TOPOLOGY_MAX_EVENTS))
         .thenReturn(1);
     Mockito.when(config.getDefaultProfile()).thenReturn(defaultProfile);
-    Mockito.when(context.config()).thenReturn(config);
+    Mockito.when(context.getConfig()).thenReturn(config);
 
     this.eventBus = Mockito.spy(new EventBus("test"));
-    Mockito.when(context.eventBus()).thenReturn(eventBus);
+    Mockito.when(context.getEventBus()).thenReturn(eventBus);
 
     adminEventLoopGroup = new DefaultEventLoopGroup(1, new BlockingOperation.SafeThreadFactory());
     Mockito.when(nettyOptions.adminEventExecutorGroup()).thenReturn(adminEventLoopGroup);
-    Mockito.when(context.nettyOptions()).thenReturn(nettyOptions);
+    Mockito.when(context.getNettyOptions()).thenReturn(nettyOptions);
 
-    Mockito.when(context.metricsFactory()).thenReturn(metricsFactory);
+    Mockito.when(context.getMetricsFactory()).thenReturn(metricsFactory);
     node1 = new DefaultNode(new InetSocketAddress("127.0.0.1", 9042), context);
     node2 = new DefaultNode(new InetSocketAddress("127.0.0.2", 9042), context);
     ImmutableMap<InetSocketAddress, Node> nodes =
@@ -96,7 +96,7 @@ public class NodeStateManagerTest {
     Mockito.when(metadataManager.getMetadata()).thenReturn(metadata);
     Mockito.when(metadataManager.refreshNode(any(Node.class)))
         .thenReturn(CompletableFuture.completedFuture(null));
-    Mockito.when(context.metadataManager()).thenReturn(metadataManager);
+    Mockito.when(context.getMetadataManager()).thenReturn(metadataManager);
   }
 
   @After

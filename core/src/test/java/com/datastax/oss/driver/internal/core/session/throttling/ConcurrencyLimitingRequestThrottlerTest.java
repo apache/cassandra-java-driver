@@ -45,7 +45,7 @@ public class ConcurrencyLimitingRequestThrottlerTest {
 
   @Before
   public void setup() {
-    Mockito.when(context.config()).thenReturn(config);
+    Mockito.when(context.getConfig()).thenReturn(config);
     Mockito.when(config.getDefaultProfile()).thenReturn(defaultProfile);
 
     Mockito.when(

@@ -40,7 +40,7 @@ public class ConstantSpeculativeExecutionPolicyTest {
 
   @Before
   public void setup() {
-    Mockito.when(context.config()).thenReturn(config);
+    Mockito.when(context.getConfig()).thenReturn(config);
     Mockito.when(config.getProfile(DriverExecutionProfile.DEFAULT_NAME)).thenReturn(defaultProfile);
   }
 

@@ -180,7 +180,7 @@ public class DefaultLoadBalancingPolicyIT {
     for (Node replica : tokenMap.getReplicas(keyspace, routingKey)) {
       if (replica.getDatacenter().equals(LOCAL_DC)) {
         localReplicas.add(replica);
-        context.eventBus().fire(TopologyEvent.forceDown(replica.getConnectAddress()));
+        context.getEventBus().fire(TopologyEvent.forceDown(replica.getConnectAddress()));
         ConditionChecker.checkThat(() -> assertThat(replica.getOpenConnections()).isZero())
             .becomesTrue();
       }
@@ -215,7 +215,7 @@ public class DefaultLoadBalancingPolicyIT {
     }
 
     for (Node replica : localReplicas) {
-      context.eventBus().fire(TopologyEvent.forceUp(replica.getConnectAddress()));
+      context.getEventBus().fire(TopologyEvent.forceUp(replica.getConnectAddress()));
       ConditionChecker.checkThat(() -> assertThat(replica.getOpenConnections()).isPositive())
           .becomesTrue();
     }

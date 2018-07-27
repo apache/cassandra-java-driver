@@ -67,7 +67,7 @@ public class RequestLogger implements RequestTracker {
   private final RequestLogFormatter formatter;
 
   public RequestLogger(DriverContext context) {
-    this(context.sessionName(), new RequestLogFormatter(context));
+    this(context.getSessionName(), new RequestLogFormatter(context));
   }
 
   protected RequestLogger(String logPrefix, RequestLogFormatter formatter) {

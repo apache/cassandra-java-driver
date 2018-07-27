@@ -44,96 +44,96 @@ public interface DriverContext extends AttachmentPoint {
    * a reference to the context.
    */
   @NonNull
-  String sessionName();
+  String getSessionName();
 
   /** @return The driver's configuration; never {@code null}. */
   @NonNull
-  DriverConfig config();
+  DriverConfig getConfig();
 
   /** @return The driver's configuration loader; never {@code null}. */
   @NonNull
-  DriverConfigLoader configLoader();
+  DriverConfigLoader getConfigLoader();
 
   /** @return The driver's load balancing policies; may be empty but never {@code null}. */
   @NonNull
-  Map<String, LoadBalancingPolicy> loadBalancingPolicies();
+  Map<String, LoadBalancingPolicy> getLoadBalancingPolicies();
 
   /**
    * @param profileName the profile name; never {@code null}.
    * @return The driver's load balancing policy for the given profile; never {@code null}.
    */
   @NonNull
-  default LoadBalancingPolicy loadBalancingPolicy(@NonNull String profileName) {
-    LoadBalancingPolicy policy = loadBalancingPolicies().get(profileName);
+  default LoadBalancingPolicy getLoadBalancingPolicy(@NonNull String profileName) {
+    LoadBalancingPolicy policy = getLoadBalancingPolicies().get(profileName);
     // Protect against a non-existent name
     return (policy != null)
         ? policy
-        : loadBalancingPolicies().get(DriverExecutionProfile.DEFAULT_NAME);
+        : getLoadBalancingPolicies().get(DriverExecutionProfile.DEFAULT_NAME);
   }
 
   /** @return The driver's load balancing policies; may be empty but never {@code null}. */
   @NonNull
-  Map<String, RetryPolicy> retryPolicies();
+  Map<String, RetryPolicy> getRetryPolicies();
 
   /**
    * @param profileName the profile name; never {@code null}.
    * @return The driver's retry policy for the given profile; never {@code null}.
    */
   @NonNull
-  default RetryPolicy retryPolicy(@NonNull String profileName) {
-    RetryPolicy policy = retryPolicies().get(profileName);
-    return (policy != null) ? policy : retryPolicies().get(DriverExecutionProfile.DEFAULT_NAME);
+  default RetryPolicy getRetryPolicy(@NonNull String profileName) {
+    RetryPolicy policy = getRetryPolicies().get(profileName);
+    return (policy != null) ? policy : getRetryPolicies().get(DriverExecutionProfile.DEFAULT_NAME);
   }
 
   /** @return The driver's load balancing policies; may be empty but never {@code null}. */
   @NonNull
-  Map<String, SpeculativeExecutionPolicy> speculativeExecutionPolicies();
+  Map<String, SpeculativeExecutionPolicy> getSpeculativeExecutionPolicies();
 
   /**
    * @param profileName the profile name; never {@code null}.
    * @return The driver's speculative execution policy for the given profile; never {@code null}.
    */
   @NonNull
-  default SpeculativeExecutionPolicy speculativeExecutionPolicy(@NonNull String profileName) {
-    SpeculativeExecutionPolicy policy = speculativeExecutionPolicies().get(profileName);
+  default SpeculativeExecutionPolicy getSpeculativeExecutionPolicy(@NonNull String profileName) {
+    SpeculativeExecutionPolicy policy = getSpeculativeExecutionPolicies().get(profileName);
     return (policy != null)
         ? policy
-        : speculativeExecutionPolicies().get(DriverExecutionProfile.DEFAULT_NAME);
+        : getSpeculativeExecutionPolicies().get(DriverExecutionProfile.DEFAULT_NAME);
   }
 
   /** @return The driver's timestamp generator; never {@code null}. */
   @NonNull
-  TimestampGenerator timestampGenerator();
+  TimestampGenerator getTimestampGenerator();
 
   /** @return The driver's reconnection policy; never {@code null}. */
   @NonNull
-  ReconnectionPolicy reconnectionPolicy();
+  ReconnectionPolicy getReconnectionPolicy();
 
   /** @return The driver's address translator; never {@code null}. */
   @NonNull
-  AddressTranslator addressTranslator();
+  AddressTranslator getAddressTranslator();
 
   /** @return The authentication provider, if authentication was configured. */
   @NonNull
-  Optional<AuthProvider> authProvider();
+  Optional<AuthProvider> getAuthProvider();
 
   /** @return The SSL engine factory, if SSL was configured. */
   @NonNull
-  Optional<SslEngineFactory> sslEngineFactory();
+  Optional<SslEngineFactory> getSslEngineFactory();
 
   /** @return The driver's request tracker; never {@code null}. */
   @NonNull
-  RequestTracker requestTracker();
+  RequestTracker getRequestTracker();
 
   /** @return The driver's request throttler; never {@code null}. */
   @NonNull
-  RequestThrottler requestThrottler();
+  RequestThrottler getRequestThrottler();
 
   /** @return The driver's node state listener; never {@code null}. */
   @NonNull
-  NodeStateListener nodeStateListener();
+  NodeStateListener getNodeStateListener();
 
   /** @return The driver's schema change listener; never {@code null}. */
   @NonNull
-  SchemaChangeListener schemaChangeListener();
+  SchemaChangeListener getSchemaChangeListener();
 }

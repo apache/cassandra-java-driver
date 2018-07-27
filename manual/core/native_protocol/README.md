@@ -27,7 +27,7 @@ and must be enabled explicitly (negotiation will yield v4).*
 To find out which version you're currently using, use the following:
 
 ```java
-ProtocolVersion currentVersion = session.getContext().protocolVersion();
+ProtocolVersion currentVersion = session.getContext().getProtocolVersion();
 ```
 
 The protocol version cannot be changed at runtime. However, you can force a particular version in

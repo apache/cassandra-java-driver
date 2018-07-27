@@ -91,9 +91,9 @@ public class PoolManager implements AsyncAutoCloseable {
   private final SingleThreaded singleThreaded;
 
   public PoolManager(InternalDriverContext context) {
-    this.logPrefix = context.sessionName();
-    this.adminExecutor = context.nettyOptions().adminEventExecutorGroup().next();
-    this.config = context.config().getDefaultProfile();
+    this.logPrefix = context.getSessionName();
+    this.adminExecutor = context.getNettyOptions().adminEventExecutorGroup().next();
+    this.config = context.getConfig().getDefaultProfile();
     this.singleThreaded = new SingleThreaded(context);
   }
 
@@ -179,19 +179,19 @@ public class PoolManager implements AsyncAutoCloseable {
 
     private SingleThreaded(InternalDriverContext context) {
       this.context = context;
-      this.channelPoolFactory = context.channelPoolFactory();
+      this.channelPoolFactory = context.getChannelPoolFactory();
       this.distanceListenerKey =
           context
-              .eventBus()
+              .getEventBus()
               .register(
                   DistanceEvent.class, RunOrSchedule.on(adminExecutor, this::onDistanceEvent));
       this.stateListenerKey =
           context
-              .eventBus()
+              .getEventBus()
               .register(NodeStateEvent.class, RunOrSchedule.on(adminExecutor, this::onStateEvent));
       this.topologyListenerKey =
           context
-              .eventBus()
+              .getEventBus()
               .register(
                   TopologyEvent.class, RunOrSchedule.on(adminExecutor, this::onTopologyEvent));
     }
@@ -211,7 +211,7 @@ public class PoolManager implements AsyncAutoCloseable {
       distanceEventFilter.start();
       stateEventFilter.start();
 
-      Collection<Node> nodes = context.metadataManager().getMetadata().getNodes().values();
+      Collection<Node> nodes = context.getMetadataManager().getMetadata().getNodes().values();
       List<CompletionStage<ChannelPool>> poolStages = new ArrayList<>(nodes.size());
       for (Node node : nodes) {
         NodeDistance distance = node.getDistance();
@@ -336,7 +336,7 @@ public class PoolManager implements AsyncAutoCloseable {
     private void onTopologyEvent(TopologyEvent event) {
       assert adminExecutor.inEventLoop();
       if (event.type == TopologyEvent.Type.SUGGEST_UP) {
-        Node node = context.metadataManager().getMetadata().getNodes().get(event.address);
+        Node node = context.getMetadataManager().getMetadata().getNodes().get(event.address);
         if (node.getDistance() != NodeDistance.IGNORED) {
           LOG.debug(
               "[{}] Received a SUGGEST_UP event for {}, reconnecting pool now", logPrefix, node);
@@ -448,9 +448,9 @@ public class PoolManager implements AsyncAutoCloseable {
       LOG.debug("[{}] Starting shutdown", logPrefix);
 
       // Stop listening for events
-      context.eventBus().unregister(distanceListenerKey, DistanceEvent.class);
-      context.eventBus().unregister(stateListenerKey, NodeStateEvent.class);
-      context.eventBus().unregister(topologyListenerKey, TopologyEvent.class);
+      context.getEventBus().unregister(distanceListenerKey, DistanceEvent.class);
+      context.getEventBus().unregister(stateListenerKey, NodeStateEvent.class);
+      context.getEventBus().unregister(topologyListenerKey, TopologyEvent.class);
 
       List<CompletionStage<Void>> closePoolStages = new ArrayList<>(pools.size());
       for (ChannelPool pool : pools.values()) {

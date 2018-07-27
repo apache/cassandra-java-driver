@@ -126,7 +126,7 @@ public class CqlPrepareHandlerTest {
 
     try (RequestHandlerTestHarness harness = harnessBuilder.build()) {
 
-      DriverExecutionProfile config = harness.getContext().config().getDefaultProfile();
+      DriverExecutionProfile config = harness.getContext().getConfig().getDefaultProfile();
       Mockito.when(config.getBoolean(DefaultDriverOption.PREPARE_ON_ALL_NODES)).thenReturn(false);
 
       CompletionStage<PreparedStatement> prepareFuture =
@@ -238,7 +238,7 @@ public class CqlPrepareHandlerTest {
       Mockito.when(
               harness
                   .getContext()
-                  .retryPolicy(anyString())
+                  .getRetryPolicy(anyString())
                   .onErrorResponse(eq(PREPARE_REQUEST), any(OverloadedException.class), eq(0)))
           .thenReturn(RetryDecision.RETRY_NEXT);
 
@@ -277,7 +277,7 @@ public class CqlPrepareHandlerTest {
       Mockito.when(
               harness
                   .getContext()
-                  .retryPolicy(anyString())
+                  .getRetryPolicy(anyString())
                   .onErrorResponse(eq(PREPARE_REQUEST), any(OverloadedException.class), eq(0)))
           .thenReturn(RetryDecision.RETHROW);
 
@@ -315,7 +315,7 @@ public class CqlPrepareHandlerTest {
 
       // Make node1's error unrecoverable, will rethrow
       RetryPolicy mockRetryPolicy =
-          harness.getContext().retryPolicy(DriverExecutionProfile.DEFAULT_NAME);
+          harness.getContext().getRetryPolicy(DriverExecutionProfile.DEFAULT_NAME);
       Mockito.when(
               mockRetryPolicy.onErrorResponse(
                   eq(PREPARE_REQUEST), any(OverloadedException.class), eq(0)))
@@ -356,7 +356,7 @@ public class CqlPrepareHandlerTest {
     PoolBehavior node3Behavior = harnessBuilder.customBehavior(node3);
     node1Behavior.setResponseSuccess(defaultFrameOf(simplePrepared()));
     try (RequestHandlerTestHarness harness = harnessBuilder.build()) {
-      DriverExecutionProfile config = harness.getContext().config().getDefaultProfile();
+      DriverExecutionProfile config = harness.getContext().getConfig().getDefaultProfile();
       Mockito.when(config.getBoolean(DefaultDriverOption.PREPARE_ON_ALL_NODES)).thenReturn(false);
       CompletionStage<PreparedStatement> prepareFuture =
           new CqlPrepareAsyncHandler(
@@ -387,7 +387,7 @@ public class CqlPrepareHandlerTest {
     node2Behavior.setResponseSuccess(defaultFrameOf(simplePrepared()));
     node3Behavior.setResponseSuccess(defaultFrameOf(simplePrepared()));
     try (RequestHandlerTestHarness harness = harnessBuilder.build()) {
-      DriverExecutionProfile config = harness.getContext().config().getDefaultProfile();
+      DriverExecutionProfile config = harness.getContext().getConfig().getDefaultProfile();
       Mockito.when(config.getBoolean(DefaultDriverOption.PREPARE_ON_ALL_NODES)).thenReturn(true);
       CompletionStage<PreparedStatement> prepareFuture =
           new CqlPrepareAsyncHandler(

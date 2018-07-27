@@ -49,8 +49,8 @@ public class TupleCodecTest extends CodecTestBase<TupleValue> {
   public void setup() {
     MockitoAnnotations.initMocks(this);
 
-    Mockito.when(attachmentPoint.codecRegistry()).thenReturn(codecRegistry);
-    Mockito.when(attachmentPoint.protocolVersion()).thenReturn(ProtocolVersion.DEFAULT);
+    Mockito.when(attachmentPoint.getCodecRegistry()).thenReturn(codecRegistry);
+    Mockito.when(attachmentPoint.getProtocolVersion()).thenReturn(ProtocolVersion.DEFAULT);
 
     intCodec = Mockito.spy(TypeCodecs.INT);
     doubleCodec = Mockito.spy(TypeCodecs.DOUBLE);

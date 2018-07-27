@@ -63,7 +63,7 @@ public class RateLimitingRequestThrottlerTest {
 
   @Before
   public void setup() {
-    Mockito.when(context.config()).thenReturn(config);
+    Mockito.when(context.getConfig()).thenReturn(config);
     Mockito.when(config.getDefaultProfile()).thenReturn(defaultProfile);
 
     Mockito.when(
@@ -77,7 +77,7 @@ public class RateLimitingRequestThrottlerTest {
     Mockito.when(defaultProfile.getDuration(DefaultDriverOption.REQUEST_THROTTLER_DRAIN_INTERVAL))
         .thenReturn(DRAIN_INTERVAL);
 
-    Mockito.when(context.nettyOptions()).thenReturn(nettyOptions);
+    Mockito.when(context.getNettyOptions()).thenReturn(nettyOptions);
     Mockito.when(nettyOptions.adminEventExecutorGroup()).thenReturn(adminGroup);
     adminExecutor = new ScheduledTaskCapturingEventLoop(adminGroup);
     Mockito.when(adminGroup.next()).thenReturn(adminExecutor);

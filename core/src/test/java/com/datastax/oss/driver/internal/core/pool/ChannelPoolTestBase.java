@@ -69,15 +69,15 @@ abstract class ChannelPoolTestBase {
 
     adminEventLoopGroup = new DefaultEventLoopGroup(1);
 
-    Mockito.when(context.nettyOptions()).thenReturn(nettyOptions);
+    Mockito.when(context.getNettyOptions()).thenReturn(nettyOptions);
     Mockito.when(nettyOptions.adminEventExecutorGroup()).thenReturn(adminEventLoopGroup);
-    Mockito.when(context.config()).thenReturn(config);
+    Mockito.when(context.getConfig()).thenReturn(config);
     Mockito.when(config.getDefaultProfile()).thenReturn(defaultProfile);
     this.eventBus = Mockito.spy(new EventBus("test"));
-    Mockito.when(context.eventBus()).thenReturn(eventBus);
-    Mockito.when(context.channelFactory()).thenReturn(channelFactory);
+    Mockito.when(context.getEventBus()).thenReturn(eventBus);
+    Mockito.when(context.getChannelFactory()).thenReturn(channelFactory);
 
-    Mockito.when(context.reconnectionPolicy()).thenReturn(reconnectionPolicy);
+    Mockito.when(context.getReconnectionPolicy()).thenReturn(reconnectionPolicy);
     Mockito.when(reconnectionPolicy.newNodeSchedule(any(Node.class)))
         .thenReturn(reconnectionSchedule);
     // By default, set a large reconnection delay. Tests that care about reconnection will override

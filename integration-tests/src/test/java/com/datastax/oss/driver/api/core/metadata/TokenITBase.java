@@ -96,7 +96,7 @@ public abstract class TokenITBase {
 
     // Find the replica for a given partition key of ks1.foo.
     int key = 1;
-    ProtocolVersion protocolVersion = session().getContext().protocolVersion();
+    ProtocolVersion protocolVersion = session().getContext().getProtocolVersion();
     ByteBuffer serializedKey = TypeCodecs.INT.encodePrimitive(key, protocolVersion);
     Set<Node> replicas = tokenMap.getReplicas(KS1, serializedKey);
     assertThat(replicas).hasSize(1);
@@ -335,7 +335,7 @@ public abstract class TokenITBase {
     Row row = session().execute("SELECT token(i) FROM foo WHERE i = 1").one();
     Token expected = row.getToken(0);
 
-    ProtocolVersion protocolVersion = session().getContext().protocolVersion();
+    ProtocolVersion protocolVersion = session().getContext().getProtocolVersion();
     assertThat(tokenMap.newToken(TypeCodecs.INT.encodePrimitive(1, protocolVersion)))
         .isEqualTo(expected);
   }

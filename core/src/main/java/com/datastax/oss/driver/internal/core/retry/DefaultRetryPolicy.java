@@ -85,7 +85,7 @@ public class DefaultRetryPolicy implements RetryPolicy {
   public DefaultRetryPolicy(
       @SuppressWarnings("unused") DriverContext context,
       @SuppressWarnings("unused") String profileName) {
-    this.logPrefix = (context != null ? context.sessionName() : null) + "|" + profileName;
+    this.logPrefix = (context != null ? context.getSessionName() : null) + "|" + profileName;
   }
 
   /**

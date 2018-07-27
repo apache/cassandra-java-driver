@@ -66,7 +66,7 @@ public class NodeMetadataIT {
     // Note: open connections and reconnection status are covered in NodeStateIT
 
     // Force the node down and back up to check that upSinceMillis gets updated
-    EventBus eventBus = ((InternalDriverContext) session.getContext()).eventBus();
+    EventBus eventBus = ((InternalDriverContext) session.getContext()).getEventBus();
     eventBus.fire(TopologyEvent.forceDown(node.getConnectAddress()));
     ConditionChecker.checkThat(() -> node.getState() == NodeState.FORCED_DOWN).becomesTrue();
     assertThat(node.getUpSinceMillis()).isEqualTo(-1);

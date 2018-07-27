@@ -79,7 +79,7 @@ public class AggregateParser {
 
     DataType stateType =
         dataTypeParser.parse(keyspaceId, row.getString("state_type"), userDefinedTypes, context);
-    TypeCodec<Object> stateTypeCodec = context.codecRegistry().codecFor(stateType);
+    TypeCodec<Object> stateTypeCodec = context.getCodecRegistry().codecFor(stateType);
 
     String stateFuncSimpleName = row.getString("state_func");
     FunctionSignature stateFuncSignature =
@@ -108,7 +108,7 @@ public class AggregateParser {
       initCond =
           (initCondBlob == null)
               ? null
-              : stateTypeCodec.decode(initCondBlob, context.protocolVersion());
+              : stateTypeCodec.decode(initCondBlob, context.getProtocolVersion());
     }
     return new DefaultAggregateMetadata(
         keyspaceId,

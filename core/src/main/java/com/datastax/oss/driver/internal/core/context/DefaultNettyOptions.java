@@ -47,7 +47,7 @@ public class DefaultNettyOptions implements NettyOptions {
   private final TimeUnit adminShutdownUnit;
 
   public DefaultNettyOptions(InternalDriverContext context) {
-    DriverExecutionProfile config = context.config().getDefaultProfile();
+    DriverExecutionProfile config = context.getConfig().getDefaultProfile();
     int ioGroupSize = config.getInt(DefaultDriverOption.NETTY_IO_SIZE);
     this.ioShutdownQuietPeriod = config.getInt(DefaultDriverOption.NETTY_IO_SHUTDOWN_QUIET_PERIOD);
     this.ioShutdownTimeout = config.getInt(DefaultDriverOption.NETTY_IO_SHUTDOWN_TIMEOUT);
@@ -64,14 +64,14 @@ public class DefaultNettyOptions implements NettyOptions {
     ThreadFactory ioThreadFactory =
         new ThreadFactoryBuilder()
             .setThreadFactory(safeFactory)
-            .setNameFormat(context.sessionName() + "-io-%d")
+            .setNameFormat(context.getSessionName() + "-io-%d")
             .build();
     this.ioEventLoopGroup = new NioEventLoopGroup(ioGroupSize, ioThreadFactory);
 
     ThreadFactory adminThreadFactory =
         new ThreadFactoryBuilder()
             .setThreadFactory(safeFactory)
-            .setNameFormat(context.sessionName() + "-admin-%d")
+            .setNameFormat(context.getSessionName() + "-admin-%d")
             .build();
     this.adminEventLoopGroup = new DefaultEventLoopGroup(adminGroupSize, adminThreadFactory);
   }

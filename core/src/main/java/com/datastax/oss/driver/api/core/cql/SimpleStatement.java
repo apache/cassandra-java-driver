@@ -264,7 +264,8 @@ public interface SimpleStatement extends BatchableStatement<SimpleStatement> {
 
     // parameters
     size +=
-        Sizes.sizeOfSimpleStatementValues(this, context.protocolVersion(), context.codecRegistry());
+        Sizes.sizeOfSimpleStatementValues(
+            this, context.getProtocolVersion(), context.getCodecRegistry());
 
     // per-query keyspace
     if (getKeyspace() != null) {
@@ -280,7 +281,7 @@ public interface SimpleStatement extends BatchableStatement<SimpleStatement> {
     }
 
     // timestamp
-    if (!(context.timestampGenerator() instanceof ServerSideTimestampGenerator)
+    if (!(context.getTimestampGenerator() instanceof ServerSideTimestampGenerator)
         || getTimestamp() != Long.MIN_VALUE) {
       size += PrimitiveSizes.LONG;
     }

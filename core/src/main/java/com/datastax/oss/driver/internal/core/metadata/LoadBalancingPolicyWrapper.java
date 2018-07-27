@@ -106,8 +106,8 @@ public class LoadBalancingPolicyWrapper implements AutoCloseable {
 
     this.distances = new HashMap<>();
 
-    this.logPrefix = context.sessionName();
-    context.eventBus().register(NodeStateEvent.class, this::onNodeStateEvent);
+    this.logPrefix = context.getSessionName();
+    context.getEventBus().register(NodeStateEvent.class, this::onNodeStateEvent);
   }
 
   public void init() {
@@ -116,7 +116,7 @@ public class LoadBalancingPolicyWrapper implements AutoCloseable {
       // State events can happen concurrently with init, so we must record them and replay once the
       // policy is initialized.
       eventFilter.start();
-      MetadataManager metadataManager = context.metadataManager();
+      MetadataManager metadataManager = context.getMetadataManager();
       Metadata metadata = metadataManager.getMetadata();
       for (LoadBalancingPolicy policy : policies) {
         policy.init(
@@ -148,7 +148,7 @@ public class LoadBalancingPolicyWrapper implements AutoCloseable {
         // Retrieve nodes from the metadata (at this stage it's the contact points). The only time
         // when this can happen is during control connection initialization.
         List<Node> nodes = new ArrayList<>();
-        nodes.addAll(context.metadataManager().getMetadata().getNodes().values());
+        nodes.addAll(context.getMetadataManager().getMetadata().getNodes().values());
         Collections.shuffle(nodes);
         return new ConcurrentLinkedQueue<>(nodes);
       case RUNNING:
@@ -263,7 +263,7 @@ public class LoadBalancingPolicyWrapper implements AutoCloseable {
           LOG.debug("[{}] {} was {}, changing to {}", logPrefix, node, oldDistance, newDistance);
           DefaultNode defaultNode = (DefaultNode) node;
           defaultNode.distance = newDistance;
-          context.eventBus().fire(new DistanceEvent(newDistance, defaultNode));
+          context.getEventBus().fire(new DistanceEvent(newDistance, defaultNode));
         } else {
           LOG.debug("[{}] {} was already {}, ignoring", logPrefix, node, oldDistance);
         }

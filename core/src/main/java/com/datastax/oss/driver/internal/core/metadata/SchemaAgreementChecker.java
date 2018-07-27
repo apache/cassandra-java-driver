@@ -75,7 +75,7 @@ class SchemaAgreementChecker {
     this.context = context;
     this.port = port;
     this.logPrefix = logPrefix;
-    DriverExecutionProfile config = context.config().getDefaultProfile();
+    DriverExecutionProfile config = context.getConfig().getDefaultProfile();
     this.queryTimeout = config.getDuration(DefaultDriverOption.CONTROL_CONNECTION_TIMEOUT);
     this.intervalNs =
         config.getDuration(DefaultDriverOption.CONTROL_CONNECTION_AGREEMENT_INTERVAL).toNanos();
@@ -128,7 +128,7 @@ class SchemaAgreementChecker {
       uuids.add(uuid);
     }
 
-    Map<InetSocketAddress, Node> nodes = context.metadataManager().getMetadata().getNodes();
+    Map<InetSocketAddress, Node> nodes = context.getMetadataManager().getMetadata().getNodes();
     for (AdminRow peerRow : peersResult) {
       InetSocketAddress connectAddress = getConnectAddress(peerRow);
       Node node = nodes.get(connectAddress);
@@ -165,7 +165,7 @@ class SchemaAgreementChecker {
           broadcastAddress);
       rpcAddress = broadcastAddress;
     }
-    return context.addressTranslator().translate(new InetSocketAddress(rpcAddress, port));
+    return context.getAddressTranslator().translate(new InetSocketAddress(rpcAddress, port));
   }
 
   private void completeOrReschedule(Set<UUID> uuids, Throwable error) {

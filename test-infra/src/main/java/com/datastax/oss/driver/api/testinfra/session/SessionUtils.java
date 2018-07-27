@@ -238,7 +238,7 @@ public class SessionUtils {
   public static DriverExecutionProfile slowProfile(Session session) {
     return session
         .getContext()
-        .config()
+        .getConfig()
         .getDefaultProfile()
         .withString(DefaultDriverOption.REQUEST_TIMEOUT, "30s");
   }

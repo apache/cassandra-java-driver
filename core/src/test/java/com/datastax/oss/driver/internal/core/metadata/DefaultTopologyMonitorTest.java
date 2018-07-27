@@ -79,16 +79,16 @@ public class DefaultTopologyMonitorTest {
     Mockito.when(defaultConfig.getDuration(DefaultDriverOption.CONTROL_CONNECTION_TIMEOUT))
         .thenReturn(Duration.ofSeconds(1));
     Mockito.when(config.getDefaultProfile()).thenReturn(defaultConfig);
-    Mockito.when(context.config()).thenReturn(config);
+    Mockito.when(context.getConfig()).thenReturn(config);
 
     addressTranslator = Mockito.spy(new PassThroughAddressTranslator(context));
-    Mockito.when(context.addressTranslator()).thenReturn(addressTranslator);
+    Mockito.when(context.getAddressTranslator()).thenReturn(addressTranslator);
 
     Mockito.when(channel.remoteAddress()).thenReturn(ADDRESS1);
     Mockito.when(controlConnection.channel()).thenReturn(channel);
-    Mockito.when(context.controlConnection()).thenReturn(controlConnection);
+    Mockito.when(context.getControlConnection()).thenReturn(controlConnection);
 
-    Mockito.when(context.metricsFactory()).thenReturn(metricsFactory);
+    Mockito.when(context.getMetricsFactory()).thenReturn(metricsFactory);
 
     node1 = new DefaultNode(ADDRESS1, context);
     node2 = new DefaultNode(ADDRESS2, context);

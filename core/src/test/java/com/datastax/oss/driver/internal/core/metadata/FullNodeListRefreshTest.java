@@ -48,7 +48,7 @@ public class FullNodeListRefreshTest {
 
   @Before
   public void setup() {
-    Mockito.when(context.metricsFactory()).thenReturn(metricsFactory);
+    Mockito.when(context.getMetricsFactory()).thenReturn(metricsFactory);
 
     node1 = new DefaultNode(ADDRESS1, context);
     node2 = new DefaultNode(ADDRESS2, context);

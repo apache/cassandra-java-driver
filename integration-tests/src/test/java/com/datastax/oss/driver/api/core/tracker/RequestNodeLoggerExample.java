@@ -27,7 +27,7 @@ import edu.umd.cs.findbugs.annotations.NonNull;
 public class RequestNodeLoggerExample extends RequestLogger {
 
   public RequestNodeLoggerExample(DriverContext context) {
-    super(context.sessionName(), new RequestLogFormatter(context));
+    super(context.getSessionName(), new RequestLogFormatter(context));
   }
 
   @Override

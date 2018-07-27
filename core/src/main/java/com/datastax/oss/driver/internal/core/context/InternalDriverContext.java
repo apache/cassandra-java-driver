@@ -48,70 +48,70 @@ import java.util.function.Predicate;
 public interface InternalDriverContext extends DriverContext {
 
   @NonNull
-  EventBus eventBus();
+  EventBus getEventBus();
 
   @NonNull
-  Compressor<ByteBuf> compressor();
+  Compressor<ByteBuf> getCompressor();
 
   @NonNull
-  FrameCodec<ByteBuf> frameCodec();
+  FrameCodec<ByteBuf> getFrameCodec();
 
   @NonNull
-  ProtocolVersionRegistry protocolVersionRegistry();
+  ProtocolVersionRegistry getProtocolVersionRegistry();
 
   @NonNull
-  ConsistencyLevelRegistry consistencyLevelRegistry();
+  ConsistencyLevelRegistry getConsistencyLevelRegistry();
 
   @NonNull
-  WriteTypeRegistry writeTypeRegistry();
+  WriteTypeRegistry getWriteTypeRegistry();
 
   @NonNull
-  NettyOptions nettyOptions();
+  NettyOptions getNettyOptions();
 
   @NonNull
-  WriteCoalescer writeCoalescer();
+  WriteCoalescer getWriteCoalescer();
 
   @NonNull
-  Optional<SslHandlerFactory> sslHandlerFactory();
+  Optional<SslHandlerFactory> getSslHandlerFactory();
 
   @NonNull
-  ChannelFactory channelFactory();
+  ChannelFactory getChannelFactory();
 
   @NonNull
-  ChannelPoolFactory channelPoolFactory();
+  ChannelPoolFactory getChannelPoolFactory();
 
   @NonNull
-  TopologyMonitor topologyMonitor();
+  TopologyMonitor getTopologyMonitor();
 
   @NonNull
-  MetadataManager metadataManager();
+  MetadataManager getMetadataManager();
 
   @NonNull
-  LoadBalancingPolicyWrapper loadBalancingPolicyWrapper();
+  LoadBalancingPolicyWrapper getLoadBalancingPolicyWrapper();
 
   @NonNull
-  ControlConnection controlConnection();
+  ControlConnection getControlConnection();
 
   @NonNull
-  RequestProcessorRegistry requestProcessorRegistry();
+  RequestProcessorRegistry getRequestProcessorRegistry();
 
   @NonNull
-  SchemaQueriesFactory schemaQueriesFactory();
+  SchemaQueriesFactory getSchemaQueriesFactory();
 
   @NonNull
-  SchemaParserFactory schemaParserFactory();
+  SchemaParserFactory getSchemaParserFactory();
 
   @NonNull
-  TokenFactoryRegistry tokenFactoryRegistry();
+  TokenFactoryRegistry getTokenFactoryRegistry();
 
   @NonNull
-  ReplicationStrategyFactory replicationStrategyFactory();
+  ReplicationStrategyFactory getReplicationStrategyFactory();
 
   @NonNull
-  PoolManager poolManager();
+  PoolManager getPoolManager();
 
   @NonNull
-  MetricsFactory metricsFactory();
+  MetricsFactory getMetricsFactory();
 
   /**
    * This is the filter from {@link SessionBuilder#withNodeFilter(String, Predicate)}. If the filter
@@ -119,7 +119,7 @@ public interface InternalDriverContext extends DriverContext {
    * {@code null}.
    */
   @Nullable
-  Predicate<Node> nodeFilter(String profileName);
+  Predicate<Node> getNodeFilter(String profileName);
 
   /**
    * The {@link ClassLoader} to use to reflectively load class names defined in configuration. If
@@ -127,5 +127,5 @@ public interface InternalDriverContext extends DriverContext {
    * or {@link com.datastax.oss.driver.internal.core.util.Reflection}'s {@link ClassLoader}.
    */
   @Nullable
-  ClassLoader classLoader();
+  ClassLoader getClassLoader();
 }

@@ -39,7 +39,7 @@ public class InitContactPointsRefreshTest {
 
   @Before
   public void setup() {
-    Mockito.when(context.metricsFactory()).thenReturn(metricsFactory);
+    Mockito.when(context.getMetricsFactory()).thenReturn(metricsFactory);
   }
 
   @Test

@@ -102,16 +102,16 @@ public class PerProfileRetryPolicyIT {
 
     // sanity checks
     DriverContext context = sessionRule.session().getContext();
-    DriverConfig config = context.config();
+    DriverConfig config = context.getConfig();
     assertThat(config.getProfiles()).containsKeys("profile1", "profile2");
 
-    assertThat(context.retryPolicies())
+    assertThat(context.getRetryPolicies())
         .hasSize(3)
         .containsKeys(DriverExecutionProfile.DEFAULT_NAME, "profile1", "profile2");
 
-    RetryPolicy defaultPolicy = context.retryPolicy(DriverExecutionProfile.DEFAULT_NAME);
-    RetryPolicy policy1 = context.retryPolicy("profile1");
-    RetryPolicy policy2 = context.retryPolicy("profile2");
+    RetryPolicy defaultPolicy = context.getRetryPolicy(DriverExecutionProfile.DEFAULT_NAME);
+    RetryPolicy policy1 = context.getRetryPolicy("profile1");
+    RetryPolicy policy2 = context.getRetryPolicy("profile2");
     assertThat(defaultPolicy)
         .isInstanceOf(DefaultRetryPolicy.class)
         .isSameAs(policy2)

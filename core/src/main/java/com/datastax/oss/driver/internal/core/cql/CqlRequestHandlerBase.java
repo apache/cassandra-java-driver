@@ -146,7 +146,7 @@ public abstract class CqlRequestHandlerBase implements Throttled {
     if (statement.getExecutionProfile() != null) {
       this.executionProfile = statement.getExecutionProfile();
     } else {
-      DriverConfig config = context.config();
+      DriverConfig config = context.getConfig();
       String profileName = statement.getExecutionProfileName();
       this.executionProfile =
           (profileName == null || profileName.isEmpty())
@@ -155,11 +155,11 @@ public abstract class CqlRequestHandlerBase implements Throttled {
     }
     this.queryPlan =
         context
-            .loadBalancingPolicyWrapper()
+            .getLoadBalancingPolicyWrapper()
             .newQueryPlan(statement, executionProfile.getName(), session);
-    this.retryPolicy = context.retryPolicy(executionProfile.getName());
+    this.retryPolicy = context.getRetryPolicy(executionProfile.getName());
     this.speculativeExecutionPolicy =
-        context.speculativeExecutionPolicy(executionProfile.getName());
+        context.getSpeculativeExecutionPolicy(executionProfile.getName());
     Boolean statementIsIdempotent = statement.isIdempotent();
     this.isIdempotent =
         (statementIsIdempotent == null)
@@ -178,7 +178,7 @@ public abstract class CqlRequestHandlerBase implements Throttled {
           return null;
         });
     this.message = Conversions.toMessage(statement, executionProfile, context);
-    this.scheduler = context.nettyOptions().ioEventLoopGroup().next();
+    this.scheduler = context.getNettyOptions().ioEventLoopGroup().next();
 
     this.timeout =
         statement.getTimeout() != null
@@ -191,7 +191,7 @@ public abstract class CqlRequestHandlerBase implements Throttled {
     this.scheduledExecutions = isIdempotent ? new CopyOnWriteArrayList<>() : null;
     this.inFlightCallbacks = new CopyOnWriteArrayList<>();
 
-    this.throttler = context.requestThrottler();
+    this.throttler = context.getRequestThrottler();
     this.throttler.register(this);
   }
 
@@ -307,10 +307,10 @@ public abstract class CqlRequestHandlerBase implements Throttled {
         long totalLatencyNanos = now - startTimeNanos;
         long nodeLatencyNanos = now - callback.start;
         context
-            .requestTracker()
+            .getRequestTracker()
             .onNodeSuccess(statement, nodeLatencyNanos, executionProfile, callback.node);
         context
-            .requestTracker()
+            .getRequestTracker()
             .onSuccess(statement, totalLatencyNanos, executionProfile, callback.node);
         session
             .getMetricUpdater()
@@ -374,7 +374,7 @@ public abstract class CqlRequestHandlerBase implements Throttled {
     if (result.completeExceptionally(error)) {
       cancelScheduledTasks();
       long latencyNanos = System.nanoTime() - startTimeNanos;
-      context.requestTracker().onError(statement, error, latencyNanos, executionProfile, node);
+      context.getRequestTracker().onError(statement, error, latencyNanos, executionProfile, node);
       if (error instanceof DriverTimeoutException) {
         throttler.signalTimeout(this);
         session
@@ -512,10 +512,10 @@ public abstract class CqlRequestHandlerBase implements Throttled {
         if (responseMessage instanceof SchemaChange) {
           SchemaChange schemaChange = (SchemaChange) responseMessage;
           context
-              .topologyMonitor()
+              .getTopologyMonitor()
               .checkSchemaAgreement()
               .thenCombine(
-                  context.metadataManager().refreshSchema(schemaChange.keyspace, false, false),
+                  context.getMetadataManager().refreshSchema(schemaChange.keyspace, false, false),
                   (schemaInAgreement, metadata) -> schemaInAgreement)
               .whenComplete(
                   ((schemaInAgreement, error) ->
@@ -762,7 +762,9 @@ public abstract class CqlRequestHandlerBase implements Throttled {
 
     private void trackNodeError(Node node, Throwable error) {
       long latencyNanos = System.nanoTime() - this.start;
-      context.requestTracker().onNodeError(statement, error, latencyNanos, executionProfile, node);
+      context
+          .getRequestTracker()
+          .onNodeError(statement, error, latencyNanos, executionProfile, node);
     }
 
     @Override

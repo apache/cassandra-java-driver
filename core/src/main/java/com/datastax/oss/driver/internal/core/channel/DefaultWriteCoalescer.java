@@ -54,7 +54,7 @@ public class DefaultWriteCoalescer implements WriteCoalescer {
   private final ConcurrentMap<EventLoop, Flusher> flushers = new ConcurrentHashMap<>();
 
   public DefaultWriteCoalescer(DriverContext context) {
-    DriverExecutionProfile config = context.config().getDefaultProfile();
+    DriverExecutionProfile config = context.getConfig().getDefaultProfile();
     this.maxRunsWithNoWork = config.getInt(DefaultDriverOption.COALESCER_MAX_RUNS);
     this.rescheduleIntervalNanos =
         config.getDuration(DefaultDriverOption.COALESCER_INTERVAL).toNanos();

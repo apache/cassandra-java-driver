@@ -301,7 +301,7 @@ public class DataTypeIT {
   @Test
   public <K> void should_insert_non_primary_key_column_simple_statement_using_format(
       DataType dataType, K value, K expectedPrimitiveValue) {
-    TypeCodec<K> codec = sessionRule.session().getContext().codecRegistry().codecFor(dataType);
+    TypeCodec<K> codec = sessionRule.session().getContext().getCodecRegistry().codecFor(dataType);
 
     int key = nextKey();
     String columnName = columnNameFor(dataType);
@@ -435,7 +435,7 @@ public class DataTypeIT {
       int index, S bs, DataType dataType, Object value) {
     TypeCodec<Object> codec =
         sessionRule.session() != null
-            ? sessionRule.session().getContext().codecRegistry().codecFor(dataType)
+            ? sessionRule.session().getContext().getCodecRegistry().codecFor(dataType)
             : null;
 
     // set to null if value is null instead of getting possible NPE when casting from null to
@@ -527,7 +527,7 @@ public class DataTypeIT {
       String name, S bs, DataType dataType, Object value) {
     TypeCodec<Object> codec =
         sessionRule.session() != null
-            ? sessionRule.session().getContext().codecRegistry().codecFor(dataType)
+            ? sessionRule.session().getContext().getCodecRegistry().codecFor(dataType)
             : null;
 
     // set to null if value is null instead of getting possible NPE when casting from null to
@@ -617,7 +617,8 @@ public class DataTypeIT {
 
   private <K> void readValue(
       Statement<?> select, DataType dataType, K value, K expectedPrimitiveValue) {
-    TypeCodec<Object> codec = sessionRule.session().getContext().codecRegistry().codecFor(dataType);
+    TypeCodec<Object> codec =
+        sessionRule.session().getContext().getCodecRegistry().codecFor(dataType);
     ResultSet result = sessionRule.session().execute(select);
 
     String columnName = columnNameFor(dataType);
@@ -740,7 +741,7 @@ public class DataTypeIT {
     }
 
     // Decode directly using the codec
-    ProtocolVersion protocolVersion = sessionRule.session().getContext().protocolVersion();
+    ProtocolVersion protocolVersion = sessionRule.session().getContext().getProtocolVersion();
     assertThat(codec.decode(row.getBytesUnsafe(columnName), protocolVersion)).isEqualTo(value);
     assertThat(codec.decode(row.getBytesUnsafe(0), protocolVersion)).isEqualTo(value);
   }

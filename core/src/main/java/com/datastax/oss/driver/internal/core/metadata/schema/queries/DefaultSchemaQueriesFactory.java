@@ -36,17 +36,17 @@ public class DefaultSchemaQueriesFactory implements SchemaQueriesFactory {
 
   public DefaultSchemaQueriesFactory(InternalDriverContext context) {
     this.context = context;
-    this.logPrefix = context.sessionName();
+    this.logPrefix = context.getSessionName();
   }
 
   @Override
   public SchemaQueries newInstance(CompletableFuture<Metadata> refreshFuture) {
-    DriverChannel channel = context.controlConnection().channel();
+    DriverChannel channel = context.getControlConnection().channel();
     if (channel == null || channel.closeFuture().isDone()) {
       throw new IllegalStateException("Control channel not available, aborting schema refresh");
     }
     @SuppressWarnings("SuspiciousMethodCalls")
-    Node node = context.metadataManager().getMetadata().getNodes().get(channel.remoteAddress());
+    Node node = context.getMetadataManager().getMetadata().getNodes().get(channel.remoteAddress());
     if (node == null) {
       throw new IllegalStateException(
           "Could not find control node metadata "
@@ -69,7 +69,7 @@ public class DefaultSchemaQueriesFactory implements SchemaQueriesFactory {
     } else {
       version = version.nextStable();
     }
-    DriverExecutionProfile config = context.config().getDefaultProfile();
+    DriverExecutionProfile config = context.getConfig().getDefaultProfile();
     LOG.debug("[{}] Sending schema queries to {} with version {}", logPrefix, node, version);
     if (version.compareTo(Version.V2_2_0) < 0) {
       return new Cassandra21SchemaQueries(channel, refreshFuture, config, logPrefix);

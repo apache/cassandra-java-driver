@@ -41,7 +41,7 @@ public class DropwizardSessionMetricUpdater extends DropwizardMetricUpdater<Sess
   public DropwizardSessionMetricUpdater(
       Set<SessionMetric> enabledMetrics, MetricRegistry registry, InternalDriverContext context) {
     super(enabledMetrics, registry);
-    this.metricNamePrefix = context.sessionName() + ".";
+    this.metricNamePrefix = context.getSessionName() + ".";
 
     if (enabledMetrics.contains(DefaultSessionMetric.CONNECTED_NODES)) {
       this.registry.register(
@@ -49,7 +49,7 @@ public class DropwizardSessionMetricUpdater extends DropwizardMetricUpdater<Sess
           (Gauge<Integer>)
               () -> {
                 int count = 0;
-                for (Node node : context.metadataManager().getMetadata().getNodes().values()) {
+                for (Node node : context.getMetadataManager().getMetadata().getNodes().values()) {
                   if (node.getOpenConnections() > 0) {
                     count += 1;
                   }
@@ -60,18 +60,18 @@ public class DropwizardSessionMetricUpdater extends DropwizardMetricUpdater<Sess
     if (enabledMetrics.contains(DefaultSessionMetric.THROTTLING_QUEUE_SIZE)) {
       this.registry.register(
           buildFullName(DefaultSessionMetric.THROTTLING_QUEUE_SIZE, null),
-          buildQueueGauge(context.requestThrottler(), context.sessionName()));
+          buildQueueGauge(context.getRequestThrottler(), context.getSessionName()));
     }
     initializeHdrTimer(
         DefaultSessionMetric.CQL_REQUESTS,
-        context.config().getDefaultProfile(),
+        context.getConfig().getDefaultProfile(),
         DefaultDriverOption.METRICS_SESSION_CQL_REQUESTS_HIGHEST,
         DefaultDriverOption.METRICS_SESSION_CQL_REQUESTS_DIGITS,
         DefaultDriverOption.METRICS_SESSION_CQL_REQUESTS_INTERVAL);
     initializeDefaultCounter(DefaultSessionMetric.CQL_CLIENT_TIMEOUTS, null);
     initializeHdrTimer(
         DefaultSessionMetric.THROTTLING_DELAY,
-        context.config().getDefaultProfile(),
+        context.getConfig().getDefaultProfile(),
         DefaultDriverOption.METRICS_SESSION_THROTTLING_HIGHEST,
         DefaultDriverOption.METRICS_SESSION_THROTTLING_DIGITS,
         DefaultDriverOption.METRICS_SESSION_THROTTLING_INTERVAL);

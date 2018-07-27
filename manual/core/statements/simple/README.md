@@ -157,9 +157,9 @@ In that situation, there is no way to hint at the correct type. Fortunately, you
 value manually as a workaround: 
 
 ```java
-TypeCodec<Object> codec = session.getContext().codecRegistry().codecFor(DataTypes.ASCII);
+TypeCodec<Object> codec = session.getContext().getCodecRegistry().codecFor(DataTypes.ASCII);
 ByteBuffer bytes =
-    codec.encode("Touché sir, touché...", session.getContext().protocolVersion());
+    codec.encode("Touché sir, touché...", session.getContext().getProtocolVersion());
 
 session.execute(
     SimpleStatement.builder("INSERT INTO ascii_quotes (id, t) VALUES (?, ?)")

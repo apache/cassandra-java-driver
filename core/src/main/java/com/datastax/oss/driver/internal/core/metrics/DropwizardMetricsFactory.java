@@ -48,10 +48,10 @@ public class DropwizardMetricsFactory implements MetricsFactory {
   private final SessionMetricUpdater sessionUpdater;
 
   public DropwizardMetricsFactory(InternalDriverContext context) {
-    this.logPrefix = context.sessionName();
+    this.logPrefix = context.getSessionName();
     this.context = context;
 
-    DriverExecutionProfile config = context.config().getDefaultProfile();
+    DriverExecutionProfile config = context.getConfig().getDefaultProfile();
     Set<SessionMetric> enabledSessionMetrics =
         parseSessionMetricPaths(config.getStringList(DefaultDriverOption.METRICS_SESSION_ENABLED));
     this.enabledNodeMetrics =

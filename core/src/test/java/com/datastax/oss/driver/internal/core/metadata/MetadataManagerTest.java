@@ -78,22 +78,22 @@ public class MetadataManagerTest {
 
     adminEventLoopGroup = new DefaultEventLoopGroup(1);
     Mockito.when(nettyOptions.adminEventExecutorGroup()).thenReturn(adminEventLoopGroup);
-    Mockito.when(context.nettyOptions()).thenReturn(nettyOptions);
+    Mockito.when(context.getNettyOptions()).thenReturn(nettyOptions);
 
-    Mockito.when(context.topologyMonitor()).thenReturn(topologyMonitor);
+    Mockito.when(context.getTopologyMonitor()).thenReturn(topologyMonitor);
 
     Mockito.when(defaultProfile.getDuration(DefaultDriverOption.METADATA_SCHEMA_WINDOW))
         .thenReturn(Duration.ZERO);
     Mockito.when(defaultProfile.getInt(DefaultDriverOption.METADATA_SCHEMA_MAX_EVENTS))
         .thenReturn(1);
     Mockito.when(config.getDefaultProfile()).thenReturn(defaultProfile);
-    Mockito.when(context.config()).thenReturn(config);
+    Mockito.when(context.getConfig()).thenReturn(config);
 
-    Mockito.when(context.eventBus()).thenReturn(eventBus);
-    Mockito.when(context.schemaQueriesFactory()).thenReturn(schemaQueriesFactory);
-    Mockito.when(context.schemaParserFactory()).thenReturn(schemaParserFactory);
+    Mockito.when(context.getEventBus()).thenReturn(eventBus);
+    Mockito.when(context.getSchemaQueriesFactory()).thenReturn(schemaQueriesFactory);
+    Mockito.when(context.getSchemaParserFactory()).thenReturn(schemaParserFactory);
 
-    Mockito.when(context.metricsFactory()).thenReturn(metricsFactory);
+    Mockito.when(context.getMetricsFactory()).thenReturn(metricsFactory);
 
     metadataManager = new TestMetadataManager(context);
   }

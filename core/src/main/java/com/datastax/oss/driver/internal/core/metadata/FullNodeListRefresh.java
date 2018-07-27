@@ -48,8 +48,8 @@ class FullNodeListRefresh extends NodesRefresh {
   public Result compute(
       DefaultMetadata oldMetadata, boolean tokenMapEnabled, InternalDriverContext context) {
 
-    String logPrefix = context.sessionName();
-    TokenFactoryRegistry tokenFactoryRegistry = context.tokenFactoryRegistry();
+    String logPrefix = context.getSessionName();
+    TokenFactoryRegistry tokenFactoryRegistry = context.getTokenFactoryRegistry();
 
     Map<InetSocketAddress, Node> oldNodes = oldMetadata.getNodes();
 

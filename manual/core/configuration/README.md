@@ -132,7 +132,7 @@ You don't need the configuration API for everyday usage of the driver, but it ca
 The driver's context exposes a [DriverConfig] instance:
 
 ```java
-DriverConfig config = session.getContext().config();
+DriverConfig config = session.getContext().getConfig();
 DriverExecutionProfile defaultProfile = config.getDefaultProfile();
 DriverExecutionProfile olapProfile = config.getProfile("olap");
 
@@ -156,7 +156,7 @@ To allow this, you start from an existing profile in the configuration and build
 that overrides a subset of options:
 
 ```java
-DriverExecutionProfile defaultProfile = session.getContext().config().getDefaultProfile();
+DriverExecutionProfile defaultProfile = session.getContext().getConfig().getDefaultProfile();
 DriverExecutionProfile dynamicProfile =
   defaultProfile.withString(
       DefaultDriverOption.REQUEST_CONSISTENCY, DefaultConsistencyLevel.EACH_QUORUM.name());
@@ -337,7 +337,7 @@ import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
 // Use responsibly.
 InternalDriverContext context = (InternalDriverContext) session.getContext();
 
-EventBus eventBus = context.eventBus();
+EventBus eventBus = context.getEventBus();
 eventBus.fire(ForceReloadConfigEvent.INSTANCE);
 ```
 
@@ -462,7 +462,7 @@ datastax-java-driver {
 And access them from the code:
 
 ```java
-DriverConfig config = session.getContext().config();
+DriverConfig config = session.getContext().getConfig();
 config.getDefaultProfile().getString(MyCustomOption.ADMIN_EMAIL);
 config.getDefaultProfile().getInt(MyCustomOption.AWESOMENESS_FACTOR);
 ```

@@ -26,7 +26,7 @@ public class DefaultReplicationStrategyFactory implements ReplicationStrategyFac
   private final String logPrefix;
 
   public DefaultReplicationStrategyFactory(InternalDriverContext context) {
-    this.logPrefix = context.sessionName();
+    this.logPrefix = context.getSessionName();
   }
 
   @Override

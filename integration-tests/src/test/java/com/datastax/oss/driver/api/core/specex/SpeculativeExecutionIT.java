@@ -419,17 +419,17 @@ public class SpeculativeExecutionIT {
 
     // validate profile data
     DriverContext context = session.getContext();
-    DriverConfig driverConfig = context.config();
+    DriverConfig driverConfig = context.getConfig();
     assertThat(driverConfig.getProfiles()).containsKeys("profile1", "profile2");
 
-    assertThat(context.speculativeExecutionPolicies())
+    assertThat(context.getSpeculativeExecutionPolicies())
         .hasSize(3)
         .containsKeys(DriverExecutionProfile.DEFAULT_NAME, "profile1", "profile2");
 
     SpeculativeExecutionPolicy defaultPolicy =
-        context.speculativeExecutionPolicy(DriverExecutionProfile.DEFAULT_NAME);
-    SpeculativeExecutionPolicy policy1 = context.speculativeExecutionPolicy("profile1");
-    SpeculativeExecutionPolicy policy2 = context.speculativeExecutionPolicy("profile2");
+        context.getSpeculativeExecutionPolicy(DriverExecutionProfile.DEFAULT_NAME);
+    SpeculativeExecutionPolicy policy1 = context.getSpeculativeExecutionPolicy("profile1");
+    SpeculativeExecutionPolicy policy2 = context.getSpeculativeExecutionPolicy("profile2");
     Class<? extends SpeculativeExecutionPolicy> expectedDefaultPolicyClass =
         defaultMaxSpeculativeExecutions != -1 || defaultSpeculativeDelayMs != -1
             ? ConstantSpeculativeExecutionPolicy.class

@@ -124,13 +124,13 @@ public class DefaultDriverConfigLoader implements DriverConfigLoader {
     private boolean closeWasCalled;
 
     private SingleThreaded(InternalDriverContext context) {
-      this.logPrefix = context.sessionName();
-      this.adminExecutor = context.nettyOptions().adminEventExecutorGroup().next();
-      this.eventBus = context.eventBus();
-      this.config = context.config().getDefaultProfile();
+      this.logPrefix = context.getSessionName();
+      this.adminExecutor = context.getNettyOptions().adminEventExecutorGroup().next();
+      this.eventBus = context.getEventBus();
+      this.config = context.getConfig().getDefaultProfile();
       this.reloadInterval =
           context
-              .config()
+              .getConfig()
               .getDefaultProfile()
               .getDuration(DefaultDriverOption.CONFIG_RELOAD_INTERVAL);
 

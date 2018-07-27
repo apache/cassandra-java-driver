@@ -759,9 +759,9 @@ public interface OngoingSelection {
    *
    * <p>This is an alternative to {@link #literal(Object)} for custom type mappings. The provided
    * registry should contain a codec that can format the value. Typically, this will be your
-   * session's registry, which is accessible via {@code session.getContext().codecRegistry()}.
+   * session's registry, which is accessible via {@code session.getContext().getCodecRegistry()}.
    *
-   * @see DriverContext#codecRegistry()
+   * @see DriverContext#getCodecRegistry()
    * @throws CodecNotFoundException if {@code codecRegistry} does not contain any codec that can
    *     handle {@code value}.
    * @see QueryBuilderDsl#literal(Object, CodecRegistry)

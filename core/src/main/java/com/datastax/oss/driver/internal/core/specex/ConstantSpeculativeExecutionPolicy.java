@@ -52,7 +52,7 @@ public class ConstantSpeculativeExecutionPolicy implements SpeculativeExecutionP
   private final long constantDelayMillis;
 
   public ConstantSpeculativeExecutionPolicy(DriverContext context, String profileName) {
-    DriverExecutionProfile config = context.config().getProfile(profileName);
+    DriverExecutionProfile config = context.getConfig().getProfile(profileName);
     this.maxExecutions = config.getInt(DefaultDriverOption.SPECULATIVE_EXECUTION_MAX);
     if (this.maxExecutions < 1) {
       throw new IllegalArgumentException("Max must be at least 1");
