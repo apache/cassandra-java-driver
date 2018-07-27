@@ -191,6 +191,8 @@ public abstract class AbstractTableMetadata {
 
     /**
      * Returns the options for this table.
+     * <p/>
+     * This value will be null for virtual tables.
      *
      * @return the options for this table.
      */
