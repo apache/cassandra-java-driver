@@ -660,15 +660,6 @@
                     <groupId>com.coveo</groupId>
                     <artifactId>fmt-maven-plugin</artifactId>
                     <version>2.5.1</version>
-                    <executions>
-                        <execution>
-                            <id>check-format</id>
-                            <phase>initialize</phase>
-                            <goals>
-                                <goal>check</goal>
-                            </goals>
-                        </execution>
-                    </executions>
                 </plugin>
 
                 <plugin>
@@ -912,11 +903,6 @@ limitations under the License.
         <plugins>
 
             <plugin>
-                <groupId>com.coveo</groupId>
-                <artifactId>fmt-maven-plugin</artifactId>
-            </plugin>
-
-            <plugin>
                 <groupId>com.mycila</groupId>
                 <artifactId>license-maven-plugin</artifactId>
             </plugin>
@@ -1076,6 +1062,24 @@ limitations under the License.
             <properties>
                 <javadoc.opts>-Xdoclint:none</javadoc.opts>
             </properties>
+            <build>
+                <plugins>
+                    <!-- only activate for jdk8+ since requires java 8 -->
+                    <plugin>
+                        <groupId>com.coveo</groupId>
+                        <artifactId>fmt-maven-plugin</artifactId>
+                        <executions>
+                            <execution>
+                                <id>check-format</id>
+                                <phase>initialize</phase>
+                                <goals>
+                                    <goal>check</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
         </profile>
 
         <profile>
