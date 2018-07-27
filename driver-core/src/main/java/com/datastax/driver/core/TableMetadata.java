@@ -71,8 +71,56 @@ public class TableMetadata extends AbstractTableMetadata {
     }
 
     static TableMetadata build(KeyspaceMetadata ksm, Row row, Map<String, ColumnMetadata.Raw> rawCols, List<Row> indexRows, String nameColumn, VersionNumber cassandraVersion, Cluster cluster) {
+        ProtocolVersion protocolVersion = cluster.getConfiguration().getProtocolOptions().getProtocolVersion();
+        CodecRegistry codecRegistry = cluster.getConfiguration().getCodecRegistry();
 
         String name = row.getString(nameColumn);
+        if (ksm.isVirtual()) {
+
+            //This is always going to be >V3 so key validator can be null
+            int partitionKeySize = findPartitionKeySize(rawCols.values(), null);
+            // This is always going to be >V3 so comparator and columnAliases can be null. They are not used
+            int clusteringSize = findClusteringSize(null, rawCols.values(), null, cassandraVersion);
+            LinkedHashMap<String, ColumnMetadata> columns = new LinkedHashMap<String, ColumnMetadata>();
+            List<ColumnMetadata> partitionKey = new ArrayList<ColumnMetadata>(Collections.<ColumnMetadata>nCopies(partitionKeySize, null));
+            List<ColumnMetadata> clusteringColumns = new ArrayList<ColumnMetadata>(Collections.<ColumnMetadata>nCopies(clusteringSize, null));
+            List<ClusteringOrder> clusteringOrder = new ArrayList<ClusteringOrder>(Collections.<ClusteringOrder>nCopies(clusteringSize, null));
+            Set<ColumnMetadata> otherColumns = new TreeSet<ColumnMetadata>(columnMetadataComparator);
+            TableMetadata tm = new TableMetadata(ksm, name, new UUID(0L, 0L), partitionKey,
+                    clusteringColumns, columns, Collections.<String, IndexMetadata>emptyMap(), null, clusteringOrder, cassandraVersion);
+
+            for (ColumnMetadata.Raw rawCol : rawCols.values()) {
+                DataType dataType;
+                if (cassandraVersion.getMajor() >= 3) {
+                    dataType = DataTypeCqlNameParser.parse(rawCol.dataType, cluster, ksm.getName(), ksm.userTypes, null, false, false);
+                } else {
+                    dataType = DataTypeClassNameParser.parseOne(rawCol.dataType, protocolVersion, codecRegistry);
+                }
+                ColumnMetadata cm = ColumnMetadata.fromRaw(tm, rawCol, dataType);
+
+                switch (rawCol.kind) {
+                    case PARTITION_KEY:
+                        partitionKey.set(rawCol.position, cm);
+                        break;
+                    case CLUSTERING_COLUMN:
+                        clusteringColumns.set(rawCol.position, cm);
+                        clusteringOrder.set(rawCol.position, rawCol.isReversed ? ClusteringOrder.DESC : ClusteringOrder.ASC);
+                        break;
+                    default:
+                        otherColumns.add(cm);
+                        break;
+                }
+            }
+
+            //Order for virtual table columns should mirror that of normal tables.
+            for (ColumnMetadata c : partitionKey)
+                columns.put(c.getName(), c);
+            for (ColumnMetadata c : clusteringColumns)
+                columns.put(c.getName(), c);
+            for (ColumnMetadata c : otherColumns)
+                columns.put(c.getName(), c);
+            return tm;
+        }
 
         UUID id = null;
 
@@ -84,9 +132,6 @@ public class TableMetadata extends AbstractTableMetadata {
         DataTypeClassNameParser.ParseResult comparator = null;
         DataTypeClassNameParser.ParseResult keyValidator = null;
         List<String> columnAliases = null;
-
-        ProtocolVersion protocolVersion = cluster.getConfiguration().getProtocolOptions().getProtocolVersion();
-        CodecRegistry codecRegistry = cluster.getConfiguration().getCodecRegistry();
 
         if (cassandraVersion.getMajor() <= 2) {
             comparator = DataTypeClassNameParser.parseWithComposite(row.getString(COMPARATOR), protocolVersion, codecRegistry);
@@ -417,7 +462,12 @@ public class TableMetadata extends AbstractTableMetadata {
     @Override
     protected String asCQLQuery(boolean formatted) {
         StringBuilder sb = new StringBuilder();
-        sb.append("CREATE TABLE ").append(Metadata.quoteIfNecessary(keyspace.getName())).append('.').append(Metadata.quoteIfNecessary(name)).append(" (");
+        if (isVirtual()) {
+            sb.append("/* VIRTUAL ");
+        } else {
+            sb.append("CREATE ");
+        }
+        sb.append("TABLE ").append(Metadata.quoteIfNecessary(keyspace.getName())).append('.').append(Metadata.quoteIfNecessary(name)).append(" (");
         if (formatted) {
             spaceOrNewLine(sb, true);
         }
@@ -425,7 +475,6 @@ public class TableMetadata extends AbstractTableMetadata {
             sb.append(cm).append(',');
             spaceOrNewLine(sb, formatted);
         }
-
         // PK
         sb.append("PRIMARY KEY (");
         if (partitionKey.size() == 1) {
@@ -447,9 +496,11 @@ public class TableMetadata extends AbstractTableMetadata {
         sb.append(')');
         newLine(sb, formatted);
         // end PK
-
         sb.append(") ");
         appendOptions(sb, formatted);
+        if (isVirtual()) {
+            sb.append(" */");
+        }
         return sb.toString();
     }
 

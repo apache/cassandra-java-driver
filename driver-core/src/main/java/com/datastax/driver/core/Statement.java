@@ -15,8 +15,10 @@
  */
 package com.datastax.driver.core;
 
+import com.datastax.driver.core.exceptions.NoHostAvailableException;
 import com.datastax.driver.core.exceptions.PagingStateException;
 import com.datastax.driver.core.exceptions.UnsupportedProtocolVersionException;
+import com.datastax.driver.core.policies.LoadBalancingPolicy;
 import com.datastax.driver.core.policies.RetryPolicy;
 import com.datastax.driver.core.querybuilder.BuiltStatement;
 import com.google.common.base.Preconditions;
@@ -70,6 +72,7 @@ public abstract class Statement {
     private volatile ByteBuffer pagingState;
     protected volatile Boolean idempotent;
     private volatile Map<String, ByteBuffer> outgoingPayload;
+    private volatile Host host;
 
     // We don't want to expose the constructor, because the code relies on this being only sub-classed by RegularStatement, BoundStatement and BatchStatement
     Statement() {
@@ -609,5 +612,39 @@ public abstract class Statement {
             }
         }
         return (hasNullIdempotentStatements) ? null : true;
+    }
+
+    /**
+     * @return The host configured on this statement, or null if none is configured.
+     * @see #setHost(Host)
+     */
+    public Host getHost() {
+        return host;
+    }
+
+    /**
+     * Sets the {@link Host} that should handle this query.
+     * <p/>
+     * In the general case, use of this method is <em>heavily discouraged</em> and should only be
+     * used in the following cases:
+     * <ol>
+     * <li>Querying node-local tables, such as tables in the {@code system} and
+     * {@code system_views} keyspaces.</li>
+     * <li>Applying a series of schema changes, where it may be advantageous to execute schema
+     * changes in sequence on the same node.</li>
+     * </ol>
+     * <p/>
+     * Configuring a specific host causes the configured {@link LoadBalancingPolicy} to
+     * be completely bypassed. However, if the load balancing policy dictates that the host is at
+     * distance {@link HostDistance#IGNORED} or there is no active connectivity to the host, the
+     * request will fail with a {@link NoHostAvailableException}.
+     *
+     * @param host The host that should be used to handle executions of this statement or null
+     *             to delegate to the configured load balancing policy.
+     * @return this {@code Statement} object.
+     */
+    public Statement setHost(Host host) {
+        this.host = host;
+        return this;
     }
 }
