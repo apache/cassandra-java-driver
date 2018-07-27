@@ -41,6 +41,7 @@ session.execute("INSERT INTO example (id, t) VALUES (1, ?)",
 Similarly:
 
 * [LocalDateCodec] maps [LocalDate] to `date`;
+* [LocalDateTimeCodec] maps [LocalDateTime] to `timestamp`;
 * [LocalTimeCodec] maps [LocalTime] to `time`.
 
 One problem with `timestamp` is that it does not store time zones. [ZonedDateTimeCodec] addresses that, by mapping a
@@ -58,6 +59,20 @@ session.execute("INSERT INTO example (id, t) VALUES (1, ?)",
         ZonedDateTime.parse("2010-06-30T01:20:47.999+01:00"));
 ```
 
+[ZoneIdCodec] maps [ZoneId] to CQL's `varchar`:
+
+```java
+import com.datastax.driver.extras.codecs.jdk8.ZoneIdCodec;
+import java.time.ZoneId;
+
+cluster.getConfiguration().getCodecRegistry()
+    .register(ZoneIdCodec.instance);
+
+// schema: CREATE TABLE example(id int PRIMARY KEY, t varchar)
+session.execute("INSERT INTO example (id, t) VALUES (1, ?)",
+        ZoneId.of("GMT+07:00"));
+```
+
 [InstantCodec]: http://docs.datastax.com/en/drivers/java/3.5/com/datastax/driver/extras/codecs/jdk8/InstantCodec.html
 [LocalDateCodec]: http://docs.datastax.com/en/drivers/java/3.5/com/datastax/driver/extras/codecs/jdk8/LocalDateCodec.html
 [LocalTimeCodec]: http://docs.datastax.com/en/drivers/java/3.5/com/datastax/driver/extras/codecs/jdk8/LocalTimeCodec.html
@@ -66,6 +81,7 @@ session.execute("INSERT INTO example (id, t) VALUES (1, ?)",
 [LocalDate]: https://docs.oracle.com/javase/8/docs/api/java/time/LocalDate.html
 [LocalTime]: https://docs.oracle.com/javase/8/docs/api/java/time/LocalTime.html
 [ZonedDateTime]: https://docs.oracle.com/javase/8/docs/api/java/time/ZonedDateTime.html
+[ZoneId]: https://docs.oracle.com/javase/8/docs/api/java/time/ZoneId.html
 
 
 #### Joda time

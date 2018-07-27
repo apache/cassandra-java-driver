@@ -28,7 +28,10 @@ import org.testng.annotations.Test;
 
 import java.time.Instant;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.time.ZoneId;
+import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.util.Date;
 import java.util.List;
@@ -56,7 +59,8 @@ public class Jdk8TimeCodecsTest extends CCMTestsSupport {
                         + "cdates frozen<list<date>>, "
                         + "ctimes frozen<set<time>>, "
                         + "ctimestamps frozen<map<text,timestamp>>, "
-                        + "ctuples frozen<map<tuple<timestamp,varchar>,varchar>>"
+                        + "ctuples frozen<map<tuple<timestamp,varchar>,varchar>>, "
+                        + "cvarchar varchar"
                         + ")");
     }
 
@@ -67,7 +71,9 @@ public class Jdk8TimeCodecsTest extends CCMTestsSupport {
         codecRegistry
                 .register(LocalTimeCodec.instance)
                 .register(LocalDateCodec.instance)
+                .register(LocalDateTimeCodec.instance)
                 .register(InstantCodec.instance)
+                .register(ZoneIdCodec.instance)
                 .register(new ZonedDateTimeCodec(dateWithTimeZoneType));
     }
 
@@ -124,6 +130,31 @@ public class Jdk8TimeCodecsTest extends CCMTestsSupport {
 
     /**
      * <p>
+     * Validates that a <code>timestamp</code> column can be mapped to a {@link LocalDateTime} by using
+     * {@link LocalDateTime}.
+     * </p>
+     *
+     * @test_category data_types:serialization
+     * @expected_result properly maps.
+     * @jira_ticket JAVA-1532
+     * @since 3.6.0
+     */
+    @Test(groups = "short")
+    public void should_map_timestamp_to_localdatetime() {
+        // given
+        LocalDateTime expected = LocalDateTime.of(2015, 1, 1, 12, 12, 1);
+        // when
+        session().execute("insert into foo (c1, ctimestamp) values (?, ?)", "should_map_timestamp_to_localdatetime", expected);
+        ResultSet result = session().execute("select ctimestamp from foo where c1=?", "should_map_timestamp_to_localdatetime");
+        // then
+        assertThat(result.getAvailableWithoutFetching()).isEqualTo(1);
+        Row row = result.one();
+        LocalDateTime actual = row.get("ctimestamp", LocalDateTime.class);
+        assertThat(actual).isEqualTo(expected);
+    }
+
+    /**
+     * <p>
      * Validates that a <code>timestamp</code> column can be mapped to a {@link Instant} by using
      * {@link InstantCodec}.
      * </p>
@@ -145,6 +176,31 @@ public class Jdk8TimeCodecsTest extends CCMTestsSupport {
         Row row = result.one();
         assertThat(row.get("ctimestamp", Instant.class)).isEqualTo(instant);
         assertThat(row.getTimestamp("ctimestamp")).isEqualTo(Date.from(instant));
+    }
+
+    /**
+     * <p>
+     * Validates that a <code>varchar</code> column can be mapped to a {@link ZoneId} by using
+     * {@link ZoneIdCodec}.
+     * </p>
+     *
+     * @test_category data_types:serialization
+     * @expected_result properly maps.
+     * @jira_ticket JAVA-1532
+     * @since 3.6.0
+     */
+    @Test(groups = "short")
+    public void should_map_varchar_to_zoneid() {
+        // given
+        ZoneId expected = ZoneId.of("GMT+07:00");
+        // when
+        session().execute("insert into foo (c1, cvarchar) values (?, ?)", "should_map_varchar_to_zoneid", expected);
+        ResultSet result = session().execute("select cvarchar from foo where c1=?", "should_map_varchar_to_zoneid");
+        // then
+        assertThat(result.getAvailableWithoutFetching()).isEqualTo(1);
+        Row row = result.one();
+        ZoneId actual = row.get("cvarchar", ZoneId.class);
+        assertThat(actual).isEqualTo(expected);
     }
 
     /**
@@ -221,6 +277,9 @@ public class Jdk8TimeCodecsTest extends CCMTestsSupport {
         @Column(name = "ctuples")
         private Map<ZonedDateTime, String> zdts;
 
+        @Column(name = "cvarchar")
+        private ZoneId zoneId;
+
         public Mapped() {
             c1 = "mapper";
             date = LocalDate.parse("2014-01-01");
@@ -231,6 +290,7 @@ public class Jdk8TimeCodecsTest extends CCMTestsSupport {
             times = newHashSet(time);
             instants = ImmutableMap.of("foo", instant);
             zdts = ImmutableMap.of(zdt, "bar");
+            zoneId = ZoneOffset.UTC;
         }
 
         public String getC1() {
@@ -303,6 +363,14 @@ public class Jdk8TimeCodecsTest extends CCMTestsSupport {
 
         public void setZdts(Map<ZonedDateTime, String> zdts) {
             this.zdts = zdts;
+        }
+
+        public ZoneId getZoneId() {
+            return zoneId;
+        }
+
+        public void setZoneId(ZoneId zoneId) {
+            this.zoneId = zoneId;
         }
     }
 }
