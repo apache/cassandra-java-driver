@@ -179,7 +179,7 @@ public class SchemaIT {
 
     // Keyspace name should be set, marked as virtual, and have a clients table.
     // All other values should be defaulted since they are not defined in the virtual schema tables.
-    assertThat(kmd.getTables().size() >= 2);
+    assertThat(kmd.getTables().size()).isGreaterThanOrEqualTo(2);
     assertThat(kmd.isVirtual()).isTrue();
     assertThat(kmd.isDurableWrites()).isFalse();
     assertThat(kmd.getName().asCql(true)).isEqualTo("system_views");

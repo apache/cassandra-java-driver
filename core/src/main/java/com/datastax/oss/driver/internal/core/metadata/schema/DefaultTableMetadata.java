@@ -127,7 +127,7 @@ public class DefaultTableMetadata implements TableMetadata {
       TableMetadata that = (TableMetadata) other;
       return Objects.equals(this.keyspace, that.getKeyspace())
           && Objects.equals(this.name, that.getName())
-          && Objects.equals(this.id, that.getId())
+          && Objects.equals(Optional.of(this.id), that.getId())
           && this.compactStorage == that.isCompactStorage()
           && Objects.equals(this.partitionKey, that.getPartitionKey())
           && Objects.equals(this.clusteringColumns, that.getClusteringColumns())
