@@ -703,8 +703,14 @@ class ControlConnection implements Connection.Owner {
 
             @Override
             public void onFailure(Throwable t) {
-              isPeersV2 = false;
-              MoreFutures.propagateFuture(peersFuture, selectPeersFuture(connection));
+              // downgrade to system.peers if we get an invalid query as this indicates
+              // the peers_v2 table does not exist.
+              if (t instanceof InvalidQueryException) {
+                isPeersV2 = false;
+                MoreFutures.propagateFuture(peersFuture, selectPeersFuture(connection));
+              } else {
+                peersFuture.setException(t);
+              }
             }
           });
       return peersFuture;
