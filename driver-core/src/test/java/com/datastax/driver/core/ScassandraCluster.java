@@ -36,16 +36,20 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
+import java.net.UnknownHostException;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeSet;
+import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import org.scassandra.Scassandra;
 import org.scassandra.ScassandraFactory;
 import org.scassandra.cql.MapType;
 import org.scassandra.http.client.PrimingClient;
 import org.scassandra.http.client.PrimingRequest;
+import org.scassandra.http.client.Result;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -53,11 +57,11 @@ public class ScassandraCluster {
 
   private static final Logger logger = LoggerFactory.getLogger(ScassandraCluster.class);
 
-  private final String ipPrefix;
-
   private final int binaryPort;
 
   private final List<Scassandra> instances;
+  private final List<InetSocketAddress> binaryAddresses;
+  private final List<InetSocketAddress> listenAddresses;
 
   private final Map<Integer, List<Scassandra>> dcNodeMap;
 
@@ -73,16 +77,43 @@ public class ScassandraCluster {
 
   private final org.scassandra.http.client.types.ColumnMetadata[] keyspaceColumnTypes;
 
+  private final boolean peersV2;
+
   ScassandraCluster(
       Integer[] nodes,
       String ipPrefix,
       int binaryPort,
       int adminPort,
+      int listenPort,
       List<Map<String, ?>> keyspaceRows,
       String cassandraVersion,
-      Map<Integer, Map<Integer, Map<String, Object>>> forcedPeerInfos) {
-    this.ipPrefix = ipPrefix;
+      Map<Integer, Map<Integer, Map<String, Object>>> forcedPeerInfos,
+      boolean peersV2) {
+    this(
+        nodes,
+        binaryPort,
+        buildAddresses(nodes, ipPrefix, binaryPort),
+        buildAddresses(nodes, ipPrefix, adminPort),
+        buildAddresses(nodes, ipPrefix, listenPort),
+        keyspaceRows,
+        cassandraVersion,
+        forcedPeerInfos,
+        peersV2);
+  }
+
+  ScassandraCluster(
+      Integer[] nodes,
+      int binaryPort,
+      List<InetSocketAddress> binaryAddresses,
+      List<InetSocketAddress> adminAddresses,
+      List<InetSocketAddress> listenAddresses,
+      List<Map<String, ?>> keyspaceRows,
+      String cassandraVersion,
+      Map<Integer, Map<Integer, Map<String, Object>>> forcedPeerInfos,
+      boolean peersV2) {
     this.binaryPort = binaryPort;
+    this.binaryAddresses = binaryAddresses;
+    this.listenAddresses = listenAddresses;
     // If cassandraVersion is not explicitly provided, use 3.0.10 as current version of SCassandra
     // that
     // supports up to protocol version 4.  Without specifying a newer version, could cause the
@@ -97,10 +128,17 @@ public class ScassandraCluster {
     for (int dc = 0; dc < nodes.length; dc++) {
       ImmutableList.Builder<Scassandra> dcNodeListBuilder = ImmutableList.builder();
       for (int n = 0; n < nodes[dc]; n++) {
-        String ip = ipPrefix + node++;
-        Scassandra instance = ScassandraFactory.createServer(ip, binaryPort, ip, adminPort);
-        instanceListBuilder = instanceListBuilder.add(instance);
-        dcNodeListBuilder = dcNodeListBuilder.add(instance);
+        InetSocketAddress binaryAddress = binaryAddresses.get(node - 1);
+        InetSocketAddress adminAddress = adminAddresses.get(node - 1);
+        Scassandra instance =
+            ScassandraFactory.createServer(
+                binaryAddress.getAddress().getHostAddress(),
+                binaryAddress.getPort(),
+                adminAddress.getAddress().getHostAddress(),
+                adminAddress.getPort());
+        instanceListBuilder.add(instance);
+        dcNodeListBuilder.add(instance);
+        node++;
       }
       dcNodeMapBuilder.put(dc + 1, dcNodeListBuilder.build());
     }
@@ -129,6 +167,8 @@ public class ScassandraCluster {
         keyspaceRow.remove("strategy_options");
       }
     }
+
+    this.peersV2 = peersV2;
   }
 
   public Scassandra node(int node) {
@@ -148,7 +188,6 @@ public class ScassandraCluster {
   }
 
   public int ipSuffix(int dc, int node) {
-    // TODO: Scassandra should be updated to include address to avoid O(n) lookup.
     int nodeCount = 0;
     for (Integer dcNum : new TreeSet<Integer>(dcNodeMap.keySet())) {
       List<Scassandra> nodesInDc = dcNodeMap.get(dc);
@@ -162,25 +201,38 @@ public class ScassandraCluster {
     return -1;
   }
 
+  /**
+   * @return The binary port for nodes in this cluster. Note that this is only relevant when {@link
+   *     ScassandraClusterBuilder#withSharedIP} is not used.
+   */
   public int getBinaryPort() {
     return binaryPort;
   }
 
   public InetSocketAddress address(int node) {
-    return new InetSocketAddress(ipPrefix + node, binaryPort);
+    return binaryAddresses.get(node - 1);
+  }
+
+  public InetSocketAddress listenAddress(int node) {
+    return listenAddresses.get(node - 1);
   }
 
   public InetSocketAddress address(int dc, int node) {
-    // TODO: Scassandra should be updated to include address to avoid O(n) lookup.
     int ipSuffix = ipSuffix(dc, node);
     if (ipSuffix == -1) return null;
-    return new InetSocketAddress(ipPrefix + ipSuffix, binaryPort);
+    return address(ipSuffix);
+  }
+
+  public InetSocketAddress listenAddress(int dc, int node) {
+    int ipSuffix = ipSuffix(dc, node);
+    if (ipSuffix == -1) return null;
+    return listenAddress(ipSuffix);
   }
 
   public Host host(Cluster cluster, int dc, int node) {
-    InetAddress address = address(dc, node).getAddress();
+    InetSocketAddress address = address(dc, node);
     for (Host host : cluster.getMetadata().getAllHosts()) {
-      if (host.getAddress().equals(address)) {
+      if (host.getSocketAddress().equals(address)) {
         return host;
       }
     }
@@ -319,31 +371,34 @@ public class ScassandraCluster {
 
   private void primeMetadata(Scassandra node) {
     PrimingClient client = node.primingClient();
-    int nodeCount = 0;
+    int nodeCount = 1;
 
     ImmutableList.Builder<Map<String, ?>> rows = ImmutableList.builder();
+    ImmutableList.Builder<Map<String, ?>> rowsV2 = ImmutableList.builder();
     for (Integer dc : new TreeSet<Integer>(dcNodeMap.keySet())) {
       List<Scassandra> nodesInDc = dcNodeMap.get(dc);
       List<Long> tokens = getTokensForDC(dc);
       for (int n = 0; n < nodesInDc.size(); n++) {
-        String address = ipPrefix + ++nodeCount;
+        InetSocketAddress binaryAddress = address(nodeCount);
+        InetSocketAddress listenAddress = listenAddress(nodeCount);
+        nodeCount++;
         Scassandra peer = nodesInDc.get(n);
-        String query;
-        Map<String, Object> row;
-        org.scassandra.http.client.types.ColumnMetadata[] metadata;
         if (node == peer) { // prime system.local.
-          metadata = SELECT_LOCAL;
-          query = "SELECT * FROM system.local WHERE key='local'";
-
-          row = Maps.newHashMap();
+          Map<String, Object> row = Maps.newHashMap();
           addPeerInfo(row, dc, n + 1, "key", "local");
           addPeerInfo(row, dc, n + 1, "bootstrapped", "COMPLETED");
-          addPeerInfo(row, dc, n + 1, "broadcast_address", address);
+          addPeerInfo(
+              row, dc, n + 1, "broadcast_address", listenAddress.getAddress().getHostAddress());
           addPeerInfo(row, dc, n + 1, "cluster_name", "scassandra");
           addPeerInfo(row, dc, n + 1, "cql_version", "3.2.0");
           addPeerInfo(row, dc, n + 1, "data_center", datacenter(dc));
           addPeerInfo(
-              row, dc, n + 1, "listen_address", getPeerInfo(dc, n + 1, "listen_address", address));
+              row,
+              dc,
+              n + 1,
+              "listen_address",
+              getPeerInfo(
+                  dc, n + 1, "listen_address", listenAddress.getAddress().getHostAddress()));
           addPeerInfo(row, dc, n + 1, "partitioner", "org.apache.cassandra.dht.Murmur3Partitioner");
           addPeerInfo(row, dc, n + 1, "rack", getPeerInfo(dc, n + 1, "rack", "rack1"));
           addPeerInfo(
@@ -362,40 +417,111 @@ public class ScassandraCluster {
           // column metadata as it will default them to text columns.
           addPeerInfoIfExists(row, dc, n + 1, "dse_version");
           addPeerInfoIfExists(row, dc, n + 1, "workload");
+
+          String query = "SELECT * FROM system.local WHERE key='local'";
+          if (!peersV2) {
+            client.prime(
+                PrimingRequest.queryBuilder()
+                    .withQuery(query)
+                    .withThen(
+                        then()
+                            .withColumnTypes(SELECT_LOCAL)
+                            .withRows(Collections.<Map<String, ?>>singletonList(row))
+                            .build())
+                    .build());
+          } else {
+            addPeerInfo(row, dc, n + 1, "broadcast_port", listenAddress.getPort());
+            addPeerInfo(row, dc, n + 1, "listen_port", listenAddress.getPort());
+            client.prime(
+                PrimingRequest.queryBuilder()
+                    .withQuery(query)
+                    .withThen(
+                        then()
+                            .withColumnTypes(SELECT_LOCAL_V2)
+                            .withRows(Collections.<Map<String, ?>>singletonList(row))
+                            .build())
+                    .build());
+          }
         } else { // prime system.peers.
-          query = "SELECT * FROM system.peers WHERE peer='" + address + "'";
-          metadata = SELECT_PEERS;
-          row = Maps.newHashMap();
-          addPeerInfo(row, dc, n + 1, "peer", address);
-          addPeerInfo(row, dc, n + 1, "rpc_address", address);
+          Map<String, Object> row = Maps.newHashMap();
+          Map<String, Object> rowV2 = Maps.newHashMap();
+
+          addPeerInfo(row, dc, n + 1, "peer", listenAddress.getAddress().getHostAddress());
+          addPeerInfo(rowV2, dc, n + 1, "peer", listenAddress.getAddress().getHostAddress());
+          addPeerInfo(rowV2, dc, n + 1, "peer_port", listenAddress.getPort());
+
+          addPeerInfo(row, dc, n + 1, "rpc_address", binaryAddress.getAddress().getHostAddress());
+          addPeerInfo(
+              rowV2, dc, n + 1, "native_address", binaryAddress.getAddress().getHostAddress());
+          addPeerInfo(rowV2, dc, n + 1, "native_port", binaryAddress.getPort());
+
           addPeerInfo(row, dc, n + 1, "data_center", datacenter(dc));
+          addPeerInfo(rowV2, dc, n + 1, "data_center", datacenter(dc));
           addPeerInfo(row, dc, n + 1, "rack", getPeerInfo(dc, n + 1, "rack", "rack1"));
+          addPeerInfo(rowV2, dc, n + 1, "rack", getPeerInfo(dc, n + 1, "rack", "rack1"));
           addPeerInfo(
               row,
               dc,
               n + 1,
               "release_version",
               getPeerInfo(dc, n + 1, "release_version", cassandraVersion));
+          addPeerInfo(
+              rowV2,
+              dc,
+              n + 1,
+              "release_version",
+              getPeerInfo(dc, n + 1, "release_version", cassandraVersion));
           addPeerInfo(row, dc, n + 1, "tokens", ImmutableSet.of(Long.toString(tokens.get(n))));
-          addPeerInfo(row, dc, n + 1, "host_id", UUIDs.random());
-          addPeerInfo(row, dc, n + 1, "schema_version", schemaVersion);
-          addPeerInfo(row, dc, n + 1, "graph", false);
+          addPeerInfo(rowV2, dc, n + 1, "tokens", ImmutableSet.of(Long.toString(tokens.get(n))));
 
-          addPeerInfoIfExists(row, dc, n + 1, "listen_address");
+          java.util.UUID hostId = UUIDs.random();
+          addPeerInfo(row, dc, n + 1, "host_id", hostId);
+          addPeerInfo(rowV2, dc, n + 1, "host_id", hostId);
+
+          addPeerInfo(row, dc, n + 1, "schema_version", schemaVersion);
+          addPeerInfo(rowV2, dc, n + 1, "schema_version", schemaVersion);
+
+          addPeerInfo(row, dc, n + 1, "graph", false);
+          addPeerInfo(rowV2, dc, n + 1, "graph", false);
+
           addPeerInfoIfExists(row, dc, n + 1, "dse_version");
           addPeerInfoIfExists(row, dc, n + 1, "workload");
 
+          addPeerInfoIfExists(rowV2, dc, n + 1, "dse_version");
+          addPeerInfoIfExists(rowV2, dc, n + 1, "workload");
+
           rows.add(row);
+          rowsV2.add(rowV2);
+
+          client.prime(
+              PrimingRequest.queryBuilder()
+                  .withQuery(
+                      "SELECT * FROM system.peers WHERE peer='"
+                          + listenAddress.getAddress().getHostAddress()
+                          + "'")
+                  .withThen(
+                      then()
+                          .withColumnTypes(SELECT_PEERS)
+                          .withRows(Collections.<Map<String, ?>>singletonList(row))
+                          .build())
+                  .build());
+
+          if (peersV2) {
+            client.prime(
+                PrimingRequest.queryBuilder()
+                    .withQuery(
+                        "SELECT * FROM system.peers_v2 WHERE peer='"
+                            + listenAddress.getAddress().getHostAddress()
+                            + "' AND peer_port="
+                            + listenAddress.getPort())
+                    .withThen(
+                        then()
+                            .withColumnTypes(SELECT_PEERS_V2)
+                            .withRows(Collections.<Map<String, ?>>singletonList(rowV2))
+                            .build())
+                    .build());
+          }
         }
-        client.prime(
-            PrimingRequest.queryBuilder()
-                .withQuery(query)
-                .withThen(
-                    then()
-                        .withColumnTypes(metadata)
-                        .withRows(Collections.<Map<String, ?>>singletonList(row))
-                        .build())
-                .build());
       }
     }
 
@@ -404,6 +530,21 @@ public class ScassandraCluster {
             .withQuery("SELECT * FROM system.peers")
             .withThen(then().withColumnTypes(SELECT_PEERS).withRows(rows.build()).build())
             .build());
+
+    // return invalid error for peers_v2, indicating the table doesn't exist.
+    if (!peersV2) {
+      client.prime(
+          PrimingRequest.queryBuilder()
+              .withQuery("SELECT * FROM system.peers_v2")
+              .withThen(then().withResult(Result.invalid))
+              .build());
+    } else {
+      client.prime(
+          PrimingRequest.queryBuilder()
+              .withQuery("SELECT * FROM system.peers_v2")
+              .withThen(then().withColumnTypes(SELECT_PEERS_V2).withRows(rowsV2.build()).build())
+              .build());
+    }
 
     // Needed to ensure cluster_name matches what we expect on connection.
     Map<String, Object> clusterNameRow =
@@ -460,7 +601,20 @@ public class ScassandraCluster {
     column("rack", TEXT),
     column("release_version", TEXT),
     column("tokens", set(TEXT)),
-    column("listen_address", INET),
+    column("host_id", UUID),
+    column("graph", BOOLEAN),
+    column("schema_version", UUID)
+  };
+
+  public static final org.scassandra.http.client.types.ColumnMetadata[] SELECT_PEERS_V2 = {
+    column("peer", INET),
+    column("peer_port", INT),
+    column("native_address", INET),
+    column("native_port", INT),
+    column("data_center", TEXT),
+    column("rack", TEXT),
+    column("release_version", TEXT),
+    column("tokens", set(TEXT)),
     column("host_id", UUID),
     column("graph", BOOLEAN),
     column("schema_version", UUID)
@@ -474,6 +628,25 @@ public class ScassandraCluster {
     column("cql_version", TEXT),
     column("data_center", TEXT),
     column("listen_address", INET),
+    column("partitioner", TEXT),
+    column("rack", TEXT),
+    column("release_version", TEXT),
+    column("tokens", set(TEXT)),
+    column("graph", BOOLEAN),
+    column("host_id", UUID),
+    column("schema_version", UUID)
+  };
+
+  public static final org.scassandra.http.client.types.ColumnMetadata[] SELECT_LOCAL_V2 = {
+    column("key", TEXT),
+    column("bootstrapped", TEXT),
+    column("broadcast_address", INET),
+    column("broadcast_port", INT),
+    column("cluster_name", TEXT),
+    column("cql_version", TEXT),
+    column("data_center", TEXT),
+    column("listen_address", INET),
+    column("listen_port", INT),
     column("partitioner", TEXT),
     column("rack", TEXT),
     column("release_version", TEXT),
@@ -552,6 +725,8 @@ public class ScassandraCluster {
   public static class ScassandraClusterBuilder {
 
     private Integer nodes[] = {1};
+    private boolean sharedIP = false;
+    private boolean peersV2 = false;
     private String ipPrefix = TestUtils.IP_PREFIX;
     private final List<Map<String, ?>> keyspaceRows = Lists.newArrayList();
     private final Map<Integer, Map<Integer, Map<String, Object>>> forcedPeerInfos =
@@ -628,20 +803,83 @@ public class ScassandraCluster {
       return this;
     }
 
+    public ScassandraClusterBuilder withPeersV2(boolean enabled) {
+      this.peersV2 = enabled;
+      return this;
+    }
+
+    public ScassandraClusterBuilder withPeersV2() {
+      return withPeersV2(true);
+    }
+
+    public ScassandraClusterBuilder withSharedIP(boolean enabled) {
+      this.sharedIP = enabled;
+      if (this.sharedIP) {
+        this.withPeersV2();
+      }
+      return this;
+    }
+
+    public ScassandraClusterBuilder withSharedIP() {
+      return withSharedIP(true);
+    }
+
     public ScassandraClusterBuilder withCassandraVersion(String version) {
       this.cassandraVersion = version;
       return this;
     }
 
     public ScassandraCluster build() {
-      return new ScassandraCluster(
-          nodes,
-          ipPrefix,
-          TestUtils.findAvailablePort(),
-          TestUtils.findAvailablePort(),
-          keyspaceRows,
-          cassandraVersion,
-          forcedPeerInfos);
+      if (sharedIP) {
+        try {
+          InetAddress address = InetAddress.getByName(ipPrefix + "1");
+          return new ScassandraCluster(
+              nodes,
+              TestUtils.findAvailablePort(),
+              buildAddresses(nodes, address),
+              buildAddresses(nodes, address),
+              buildAddresses(nodes, address),
+              keyspaceRows,
+              cassandraVersion,
+              forcedPeerInfos,
+              peersV2);
+        } catch (UnknownHostException uhe) {
+          throw new RuntimeException(uhe);
+        }
+      } else {
+        return new ScassandraCluster(
+            nodes,
+            ipPrefix,
+            TestUtils.findAvailablePort(),
+            TestUtils.findAvailablePort(),
+            TestUtils.findAvailablePort(),
+            keyspaceRows,
+            cassandraVersion,
+            forcedPeerInfos,
+            peersV2);
+      }
     }
+  }
+
+  public static List<InetSocketAddress> buildAddresses(Integer[] nodes, String ipPrefix, int port) {
+    int node = 1;
+    List<InetSocketAddress> addresses = new ArrayList<InetSocketAddress>();
+    for (int nodesInDcCount : nodes) {
+      for (int n = 0; n < nodesInDcCount; n++) {
+        String ip = ipPrefix + node++;
+        addresses.add(new InetSocketAddress(ip, port));
+      }
+    }
+    return addresses;
+  }
+
+  public static List<InetSocketAddress> buildAddresses(Integer[] nodes, InetAddress address) {
+    List<InetSocketAddress> addresses = new ArrayList<InetSocketAddress>();
+    for (int nodesInDcCount : nodes) {
+      for (int n = 0; n < nodesInDcCount; n++) {
+        addresses.add(new InetSocketAddress(address, TestUtils.findAvailablePort()));
+      }
+    }
+    return addresses;
   }
 }

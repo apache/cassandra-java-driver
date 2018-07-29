@@ -17,6 +17,7 @@
 - [bug] JAVA-1928: Fix GuavaCompatibility for Guava 26.
 - [bug] JAVA-1935: Add null check in QueryConsistencyException.getHost.
 - [improvement] JAVA-1771: Send driver name and version in STARTUP message.
+- [improvement] JAVA-1388: Add dynamic port discovery for system.peers\_v2.
 
 Merged from 3.5.x:
 

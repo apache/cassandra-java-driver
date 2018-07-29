@@ -62,4 +62,9 @@ public class DataProviders {
   public static Object[][] serialConsistencyLevels() {
     return new Object[][] {{ConsistencyLevel.SERIAL}, {ConsistencyLevel.LOCAL_SERIAL}};
   }
+
+  @DataProvider(name = "bool")
+  public static Object[][] bool() {
+    return new Object[][] {{true}, {false}};
+  }
 }

@@ -23,6 +23,7 @@ import com.datastax.driver.core.Host.State;
 import com.datastax.driver.core.Host.StateListener;
 import com.datastax.driver.core.policies.LoadBalancingPolicy;
 import java.net.InetAddress;
+import java.net.InetSocketAddress;
 import java.util.UUID;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CountDownLatch;
@@ -186,8 +187,18 @@ public class HostAssert extends AbstractAssert<HostAssert, Host> {
     return this;
   }
 
+  public HostAssert hasSocketAddress(InetSocketAddress address) {
+    assertThat(actual.getSocketAddress()).isNotNull().isEqualTo(address);
+    return this;
+  }
+
   public HostAssert hasListenAddress(InetAddress address) {
     assertThat(actual.getListenAddress()).isNotNull().isEqualTo(address);
+    return this;
+  }
+
+  public HostAssert hasListenSocketAddress(InetSocketAddress address) {
+    assertThat(actual.getListenSocketAddress()).isNotNull().isEqualTo(address);
     return this;
   }
 
@@ -196,13 +207,28 @@ public class HostAssert extends AbstractAssert<HostAssert, Host> {
     return this;
   }
 
+  public HostAssert hasNoListenSocketAddress() {
+    assertThat(actual.getListenSocketAddress()).isNull();
+    return this;
+  }
+
   public HostAssert hasBroadcastAddress(InetAddress address) {
     assertThat(actual.getBroadcastAddress()).isNotNull().isEqualTo(address);
     return this;
   }
 
+  public HostAssert hasBroadcastSocketAddress(InetSocketAddress address) {
+    assertThat(actual.getBroadcastSocketAddress()).isNotNull().isEqualTo(address);
+    return this;
+  }
+
   public HostAssert hasNoBroadcastAddress() {
     assertThat(actual.getBroadcastAddress()).isNull();
+    return this;
+  }
+
+  public HostAssert hasNoBroadcastSocketAddress() {
+    assertThat(actual.getBroadcastSocketAddress()).isNull();
     return this;
   }
 

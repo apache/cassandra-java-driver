@@ -306,12 +306,12 @@ public abstract class TokenIntegrationTest extends CCMTestsSupport {
       } else {
         // non-control hosts are populated from system.peers and their broadcast address should be
         // known
-        assertThat(host.getBroadcastAddress()).isNotNull();
+        assertThat(host.getBroadcastSocketAddress()).isNotNull();
         row =
             session()
                 .execute(
                     "select tokens from system.peers where peer = '"
-                        + host.getBroadcastAddress().getHostAddress()
+                        + host.getBroadcastSocketAddress().getAddress().getHostAddress()
                         + "'")
                 .one();
       }

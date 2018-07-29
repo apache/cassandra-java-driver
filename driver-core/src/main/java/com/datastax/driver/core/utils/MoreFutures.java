@@ -18,6 +18,7 @@ package com.datastax.driver.core.utils;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.SettableFuture;
 
 /** Helpers to work with Guava's {@link ListenableFuture}. */
 public class MoreFutures {
@@ -38,5 +39,29 @@ public class MoreFutures {
     public void onSuccess(V result) {
       /* nothing */
     }
+  }
+
+  /**
+   * Configures a {@link SettableFuture} to propagate the result of a future.
+   *
+   * @param settable future to be propagated to
+   * @param future future to propagate
+   * @param <T>
+   */
+  public static <T> void propagateFuture(
+      final SettableFuture<T> settable, ListenableFuture<T> future) {
+    Futures.addCallback(
+        future,
+        new FutureCallback<T>() {
+          @Override
+          public void onSuccess(T result) {
+            settable.set(result);
+          }
+
+          @Override
+          public void onFailure(Throwable t) {
+            settable.setException(t);
+          }
+        });
   }
 }

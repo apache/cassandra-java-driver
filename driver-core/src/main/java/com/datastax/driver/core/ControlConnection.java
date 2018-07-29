@@ -25,7 +25,10 @@ import com.datastax.driver.core.exceptions.NoHostAvailableException;
 import com.datastax.driver.core.exceptions.UnsupportedProtocolVersionException;
 import com.datastax.driver.core.utils.MoreObjects;
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.util.concurrent.FutureCallback;
+import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.SettableFuture;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
@@ -64,6 +67,7 @@ class ControlConnection implements Connection.Owner {
   }
 
   private static final String SELECT_PEERS = "SELECT * FROM system.peers";
+  private static final String SELECT_PEERS_V2 = "SELECT * FROM system.peers_v2";
   private static final String SELECT_LOCAL = "SELECT * FROM system.local WHERE key='local'";
 
   private static final String SELECT_SCHEMA_PEERS =
@@ -80,6 +84,10 @@ class ControlConnection implements Connection.Owner {
       new AtomicReference<ListenableFuture<?>>();
 
   private volatile boolean isShutdown;
+
+  // set to true initially, if ever fails will be set to false and peers table will be used
+  // from here on out.
+  private volatile boolean isPeersV2 = true;
 
   public ControlConnection(Cluster.Manager manager) {
     this.cluster = manager;
@@ -434,81 +442,94 @@ class ControlConnection implements Connection.Owner {
     }
   }
 
-  private static InetSocketAddress rpcAddressForPeerHost(
+  private static InetSocketAddress nativeAddressForPeerHost(
       Row peersRow, InetSocketAddress connectedHost, Cluster.Manager cluster) {
+    // if native_address is present, this comes from the peers_v2 table.
+    if (peersRow.getColumnDefinitions().contains("native_address")) {
+      InetAddress nativeAddress = peersRow.getInet("native_address");
+      int nativePort = peersRow.getInt("native_port");
+      return cluster.translateAddress(new InetSocketAddress(nativeAddress, nativePort));
+    } else {
+      // after CASSANDRA-9436, system.peers contains the following inet columns:
+      // - peer: this is actually broadcast_address
+      // - rpc_address: the address we are looking for (this corresponds to broadcast_rpc_address in
+      // the peer's cassandra yaml file;
+      //                if this setting if unset, it defaults to the value for rpc_address or
+      // rpc_interface)
+      // - preferred_ip: used by Ec2MultiRegionSnitch and GossipingPropertyFileSnitch, possibly
+      // others; contents unclear
+      InetAddress broadcastAddress = peersRow.getInet("peer");
+      InetAddress rpcAddress = peersRow.getInet("rpc_address");
 
-    // after CASSANDRA-9436, system.peers contains the following inet columns:
-    // - peer: this is actually broadcast_address
-    // - rpc_address: the address we are looking for (this corresponds to broadcast_rpc_address in
-    // the peer's cassandra yaml file;
-    //                if this setting if unset, it defaults to the value for rpc_address or
-    // rpc_interface)
-    // - preferred_ip: used by Ec2MultiRegionSnitch and GossipingPropertyFileSnitch, possibly
-    // others; contents unclear
-
-    InetAddress broadcastAddress = peersRow.getInet("peer");
-    InetAddress rpcAddress = peersRow.getInet("rpc_address");
-
-    if (broadcastAddress == null) {
-      return null;
-    } else if (broadcastAddress.equals(connectedHost.getAddress())
-        || (rpcAddress != null && rpcAddress.equals(connectedHost.getAddress()))) {
-      // Some DSE versions were inserting a line for the local node in peers (with mostly null
-      // values). This has been fixed, but if we
-      // detect that's the case, ignore it as it's not really a big deal.
-      logger.debug(
-          "System.peers on node {} has a line for itself. This is not normal but is a known problem of some DSE version. Ignoring the entry.",
-          connectedHost);
-      return null;
-    } else if (rpcAddress == null) {
-      return null;
-    } else if (rpcAddress.equals(bindAllAddress)) {
-      logger.warn(
-          "Found host with 0.0.0.0 as rpc_address, using broadcast_address ({}) to contact it instead. If this is incorrect you should avoid the use of 0.0.0.0 server side.",
-          broadcastAddress);
-      rpcAddress = broadcastAddress;
+      if (broadcastAddress == null) {
+        return null;
+      } else if (broadcastAddress.equals(connectedHost.getAddress())
+          || (rpcAddress != null && rpcAddress.equals(connectedHost.getAddress()))) {
+        // Some DSE versions were inserting a line for the local node in peers (with mostly null
+        // values). This has been fixed, but if we
+        // detect that's the case, ignore it as it's not really a big deal.
+        logger.debug(
+            "System.peers on node {} has a line for itself. This is not normal but is a known problem of some DSE version. Ignoring the entry.",
+            connectedHost);
+        return null;
+      } else if (rpcAddress == null) {
+        return null;
+      } else if (rpcAddress.equals(bindAllAddress)) {
+        logger.warn(
+            "Found host with 0.0.0.0 as rpc_address, using broadcast_address ({}) to contact it instead. If this is incorrect you should avoid the use of 0.0.0.0 server side.",
+            broadcastAddress);
+        rpcAddress = broadcastAddress;
+      }
+      return cluster.translateAddress(rpcAddress);
     }
-    return cluster.translateAddress(rpcAddress);
   }
 
   private Row fetchNodeInfo(Host host, Connection c)
       throws ConnectionException, BusyConnectionException, ExecutionException,
           InterruptedException {
     boolean isConnectedHost = c.address.equals(host.getSocketAddress());
-    if (isConnectedHost || host.getBroadcastAddress() != null) {
+    if (isConnectedHost || host.getBroadcastSocketAddress() != null) {
+      String query;
+      if (isConnectedHost) {
+        query = SELECT_LOCAL;
+      } else {
+        InetSocketAddress broadcastAddress = host.getBroadcastSocketAddress();
+        query =
+            isPeersV2
+                ? SELECT_PEERS_V2
+                    + " WHERE peer='"
+                    + broadcastAddress.getAddress().getHostAddress()
+                    + "' AND peer_port="
+                    + broadcastAddress.getPort()
+                : SELECT_PEERS
+                    + " WHERE peer='"
+                    + broadcastAddress.getAddress().getHostAddress()
+                    + "'";
+      }
       DefaultResultSetFuture future =
-          isConnectedHost
-              ? new DefaultResultSetFuture(
-                  null, cluster.protocolVersion(), new Requests.Query(SELECT_LOCAL))
-              : new DefaultResultSetFuture(
-                  null,
-                  cluster.protocolVersion(),
-                  new Requests.Query(
-                      SELECT_PEERS
-                          + " WHERE peer='"
-                          + host.getBroadcastAddress().getHostAddress()
-                          + '\''));
+          new DefaultResultSetFuture(null, cluster.protocolVersion(), new Requests.Query(query));
       c.write(future);
       Row row = future.get().one();
       if (row != null) {
         return row;
       } else {
+        InetSocketAddress address = host.getBroadcastSocketAddress();
+        // Don't include full address if port is 0.
+        String addressToUse =
+            address.getPort() != 0 ? address.toString() : address.getAddress().toString();
         logger.debug(
             "Could not find peer with broadcast address {}, "
                 + "falling back to a full system.peers scan to fetch info for {} "
                 + "(this can happen if the broadcast address changed)",
-            host.getBroadcastAddress(),
+            address,
             host);
       }
     }
 
     // We have to fetch the whole peers table and find the host we're looking for
-    DefaultResultSetFuture future =
-        new DefaultResultSetFuture(
-            null, cluster.protocolVersion(), new Requests.Query(SELECT_PEERS));
-    c.write(future);
+    ListenableFuture<ResultSet> future = selectPeersFuture(c);
     for (Row row : future.get()) {
-      InetSocketAddress addr = rpcAddressForPeerHost(row, c.address, cluster);
+      InetSocketAddress addr = nativeAddressForPeerHost(row, c.address, cluster);
       if (addr != null && addr.equals(host.getSocketAddress())) return row;
     }
     return null;
@@ -594,20 +615,26 @@ class ControlConnection implements Connection.Owner {
     // After CASSANDRA-9603 (2.0.17, 2.1.8, 2.2.0 rc2) local row contains one more column:
     // - listen_address
 
-    InetAddress broadcastAddress = null;
+    InetSocketAddress broadcastAddress = null;
     if (row.getColumnDefinitions().contains("peer")) { // system.peers
-      broadcastAddress = row.getInet("peer");
+      int broadcastPort =
+          row.getColumnDefinitions().contains("peer_port") ? row.getInt("peer_port") : 0;
+      broadcastAddress = new InetSocketAddress(row.getInet("peer"), broadcastPort);
     } else if (row.getColumnDefinitions().contains("broadcast_address")) { // system.local
-      broadcastAddress = row.getInet("broadcast_address");
+      int broadcastPort =
+          row.getColumnDefinitions().contains("broadcast_port") ? row.getInt("broadcast_port") : 0;
+      broadcastAddress = new InetSocketAddress(row.getInet("broadcast_address"), broadcastPort);
     }
     host.setBroadcastAddress(broadcastAddress);
 
     // in system.local only for C* versions >= 2.0.17, 2.1.8, 2.2.0 rc2,
     // not yet in system.peers as of C* 3.2
-    InetAddress listenAddress =
-        row.getColumnDefinitions().contains("listen_address")
-            ? row.getInet("listen_address")
-            : null;
+    InetSocketAddress listenAddress = null;
+    if (row.getColumnDefinitions().contains("listen_address")) {
+      int listenPort =
+          row.getColumnDefinitions().contains("listen_port") ? row.getInt("listen_port") : 0;
+      listenAddress = new InetSocketAddress(row.getInet("listen_address"), listenPort);
+    }
     host.setListenAddress(listenAddress);
 
     if (row.getColumnDefinitions().contains("workload")) {
@@ -644,9 +671,55 @@ class ControlConnection implements Connection.Owner {
     if (!isInitialConnection) cluster.loadBalancingPolicy().onAdd(host);
   }
 
-  private static void refreshNodeListAndTokenMap(
-      Connection connection,
-      Cluster.Manager cluster,
+  /**
+   * Resolves peering information by doing the following:
+   *
+   * <ol>
+   *   <li>if <code>isPeersV2</code> is true, query the <code>system.peers_v2</code> table,
+   *       otherwise query <code>system.peers</code>.
+   *   <li>if <code>system.peers_v2</code> query fails, set <code>isPeersV2</code> to false and call
+   *       selectPeersFuture again.
+   * </ol>
+   *
+   * @param connection connection to send request on.
+   * @return result of peers query.
+   */
+  private ListenableFuture<ResultSet> selectPeersFuture(final Connection connection) {
+    if (isPeersV2) {
+      DefaultResultSetFuture peersV2Future =
+          new DefaultResultSetFuture(
+              null, cluster.protocolVersion(), new Requests.Query(SELECT_PEERS_V2));
+      connection.write(peersV2Future);
+      final SettableFuture<ResultSet> peersFuture = SettableFuture.create();
+      // if peers v2 query fails, query peers stable instead.
+      Futures.addCallback(
+          peersV2Future,
+          new FutureCallback<ResultSet>() {
+
+            @Override
+            public void onSuccess(ResultSet result) {
+              peersFuture.set(result);
+            }
+
+            @Override
+            public void onFailure(Throwable t) {
+              isPeersV2 = false;
+              MoreFutures.propagateFuture(peersFuture, selectPeersFuture(connection));
+            }
+          });
+      return peersFuture;
+    } else {
+      DefaultResultSetFuture peersFuture =
+          new DefaultResultSetFuture(
+              null, cluster.protocolVersion(), new Requests.Query(SELECT_PEERS));
+      connection.write(peersFuture);
+      return peersFuture;
+    }
+  }
+
+  private void refreshNodeListAndTokenMap(
+      final Connection connection,
+      final Cluster.Manager cluster,
       boolean isInitialConnection,
       boolean logInvalidPeers)
       throws ConnectionException, BusyConnectionException, ExecutionException,
@@ -660,11 +733,8 @@ class ControlConnection implements Connection.Owner {
     DefaultResultSetFuture localFuture =
         new DefaultResultSetFuture(
             null, cluster.protocolVersion(), new Requests.Query(SELECT_LOCAL));
-    DefaultResultSetFuture peersFuture =
-        new DefaultResultSetFuture(
-            null, cluster.protocolVersion(), new Requests.Query(SELECT_PEERS));
+    ListenableFuture<ResultSet> peersFuture = selectPeersFuture(connection);
     connection.write(localFuture);
-    connection.write(peersFuture);
 
     String partitioner = null;
     Token.Factory factory = null;
@@ -705,8 +775,8 @@ class ControlConnection implements Connection.Owner {
     List<String> dcs = new ArrayList<String>();
     List<String> racks = new ArrayList<String>();
     List<String> cassandraVersions = new ArrayList<String>();
-    List<InetAddress> broadcastAddresses = new ArrayList<InetAddress>();
-    List<InetAddress> listenAddresses = new ArrayList<InetAddress>();
+    List<InetSocketAddress> broadcastAddresses = new ArrayList<InetSocketAddress>();
+    List<InetSocketAddress> listenAddresses = new ArrayList<InetSocketAddress>();
     List<Set<Token>> allTokens = new ArrayList<Set<Token>>();
     List<String> dseVersions = new ArrayList<String>();
     List<Boolean> dseGraphEnabled = new ArrayList<Boolean>();
@@ -717,13 +787,19 @@ class ControlConnection implements Connection.Owner {
     for (Row row : peersFuture.get()) {
       if (!isValidPeer(row, logInvalidPeers)) continue;
 
-      InetSocketAddress rpcAddress = rpcAddressForPeerHost(row, connection.address, cluster);
+      InetSocketAddress rpcAddress = nativeAddressForPeerHost(row, connection.address, cluster);
       if (rpcAddress == null) continue;
       foundHosts.add(rpcAddress);
       dcs.add(row.getString("data_center"));
       racks.add(row.getString("rack"));
       cassandraVersions.add(row.getString("release_version"));
-      broadcastAddresses.add(row.getInet("peer"));
+
+      int broadcastPort =
+          row.getColumnDefinitions().contains("peer_port") ? row.getInt("peer_port") : 0;
+      InetSocketAddress broadcastAddress =
+          new InetSocketAddress(row.getInet("peer"), broadcastPort);
+
+      broadcastAddresses.add(broadcastAddress);
       if (metadataEnabled && factory != null) {
         Set<String> tokensStr = row.getSet("tokens", String.class);
         Set<Token> tokens = null;
@@ -732,11 +808,16 @@ class ControlConnection implements Connection.Owner {
         }
         allTokens.add(tokens);
       }
-      InetAddress listenAddress =
-          row.getColumnDefinitions().contains("listen_address")
-              ? row.getInet("listen_address")
-              : null;
-      listenAddresses.add(listenAddress);
+
+      if (row.getColumnDefinitions().contains("listen_address")) {
+        int listenPort =
+            row.getColumnDefinitions().contains("listen_port") ? row.getInt("listen_port") : 0;
+        InetSocketAddress listenAddress =
+            new InetSocketAddress(row.getInet("listen_address"), listenPort);
+        listenAddresses.add(listenAddress);
+      } else {
+        listenAddresses.add(null);
+      }
       String dseWorkload =
           row.getColumnDefinitions().contains("workload") ? row.getString("workload") : null;
       dseWorkloads.add(dseWorkload);
@@ -809,7 +890,9 @@ class ControlConnection implements Connection.Owner {
 
   private static boolean isValidPeer(Row peerRow, boolean logIfInvalid) {
     boolean isValid =
-        peerRow.getColumnDefinitions().contains("rpc_address") && !peerRow.isNull("rpc_address");
+        (peerRow.getColumnDefinitions().contains("rpc_address") && !peerRow.isNull("rpc_address"))
+            || (peerRow.getColumnDefinitions().contains("native_address")
+                && !peerRow.isNull("native_address"));
     if (EXTENDED_PEER_CHECK) {
       isValid &=
           peerRow.getColumnDefinitions().contains("host_id")
@@ -834,6 +917,7 @@ class ControlConnection implements Connection.Owner {
   private static String formatInvalidPeer(Row peerRow) {
     StringBuilder sb = new StringBuilder("[peer=" + peerRow.getInet("peer"));
     formatMissingOrNullColumn(peerRow, "rpc_address", sb);
+    formatMissingOrNullColumn(peerRow, "native_address", sb);
     if (EXTENDED_PEER_CHECK) {
       formatMissingOrNullColumn(peerRow, "host_id", sb);
       formatMissingOrNullColumn(peerRow, "data_center", sb);
@@ -889,7 +973,7 @@ class ControlConnection implements Connection.Owner {
 
     for (Row row : peersFuture.get()) {
 
-      InetSocketAddress addr = rpcAddressForPeerHost(row, connection.address, cluster);
+      InetSocketAddress addr = nativeAddressForPeerHost(row, connection.address, cluster);
       if (addr == null || row.isNull("schema_version")) continue;
 
       Host peer = cluster.metadata.getHost(addr);

@@ -39,8 +39,10 @@ import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -374,16 +376,19 @@ public class ControlConnectionTest extends CCMTestsSupport {
       Host host2 = cluster.getMetadata().getHost(node2RpcAddress);
       assertThat(host2).isNotNull();
 
-      InetAddress node2OldBroadcastAddress = host2.getBroadcastAddress();
-      InetAddress node2NewBroadcastAddress = InetAddress.getByName("1.2.3.4");
+      InetSocketAddress node2OldBroadcastAddress = host2.getBroadcastSocketAddress();
+      InetSocketAddress node2NewBroadcastAddress =
+          new InetSocketAddress(InetAddress.getByName("1.2.3.4"), scassandras.getBinaryPort());
 
       // host 2 has the old broadcast_address (which is identical to its rpc_broadcast_address)
-      assertThat(host2.getAddress()).isEqualTo(node2OldBroadcastAddress);
+      assertThat(host2.getSocketAddress().getAddress())
+          .isEqualTo(node2OldBroadcastAddress.getAddress());
 
       // simulate a change in host 2 public IP
       Map<String, ?> rows =
           ImmutableMap.<String, Object>builder()
-              .put("peer", node2NewBroadcastAddress) // new broadcast address for host 2
+              .put(
+                  "peer", node2NewBroadcastAddress.getAddress()) // new broadcast address for host 2
               .put("rpc_address", host2.getAddress()) // rpc_broadcast_address remains unchanged
               .put("host_id", UUID.randomUUID())
               .put("data_center", datacenter(1))
@@ -402,7 +407,9 @@ public class ControlConnectionTest extends CCMTestsSupport {
           .prime(
               PrimingRequest.queryBuilder()
                   .withQuery(
-                      "SELECT * FROM system.peers WHERE peer='" + node2OldBroadcastAddress + "'")
+                      "SELECT * FROM system.peers WHERE peer='"
+                          + node2OldBroadcastAddress.getAddress().getHostAddress()
+                          + "'")
                   .withThen(then().withColumnTypes(SELECT_PEERS).build())
                   .build());
 
@@ -422,7 +429,8 @@ public class ControlConnectionTest extends CCMTestsSupport {
 
       // host2 should now have a new broadcast address
       assertThat(host2).isNotNull();
-      assertThat(host2.getBroadcastAddress()).isEqualTo(node2NewBroadcastAddress);
+      assertThat(host2.getBroadcastSocketAddress().getAddress())
+          .isEqualTo(node2NewBroadcastAddress.getAddress());
 
       // host 2 should keep its old rpc broadcast address
       assertThat(host2.getSocketAddress()).isEqualTo(node2RpcAddress);
@@ -430,6 +438,97 @@ public class ControlConnectionTest extends CCMTestsSupport {
     } finally {
       cluster.close();
       scassandras.stop();
+    }
+  }
+
+  /**
+   * Ensures that multiple C* nodes can share the same ip address (but use different port) if they
+   * support the system.peers_v2 table (CASSANDRA-7544).
+   *
+   * @jira_ticket JAVA-1388
+   * @since 3.6.0
+   */
+  @Test(groups = "short", dataProviderClass = DataProviders.class, dataProvider = "bool")
+  public void should_set_port_on_broadcast_and_listen_address_with_peers_V2(boolean sharedIP) {
+    ScassandraCluster sCluster =
+        ScassandraCluster.builder()
+            .withNodes(5)
+            .withPeersV2(sharedIP)
+            .withSharedIP(sharedIP)
+            .build();
+
+    Cluster.Builder builder =
+        Cluster.builder()
+            .addContactPointsWithPorts(sCluster.address(1))
+            .withNettyOptions(nonQuietClusterCloseOptions);
+
+    // need to specify port in non peers_v2 case as driver can't infer ports without it.
+    if (!sharedIP) {
+      builder.withPort(sCluster.getBinaryPort());
+    }
+
+    Cluster cluster = builder.build();
+
+    try {
+      sCluster.init();
+      cluster.connect();
+      if (!sharedIP) {
+        Set<InetAddress> uniqueAddresses = new HashSet<InetAddress>();
+        for (int i = 1; i <= 5; i++) {
+          Host host = sCluster.host(cluster, 1, i);
+          // we expect broadcast/listen address to not have port set.
+          InetSocketAddress expectedListenAddress =
+              new InetSocketAddress(sCluster.listenAddress(i).getAddress(), 0);
+
+          // host should be up
+          assertThat(host)
+              .isNotNull()
+              .isUp()
+              .hasSocketAddress(sCluster.address(i))
+              .hasBroadcastSocketAddress(expectedListenAddress);
+
+          // host should only have listen address if it is control connection.
+          if (i == 1) {
+            assertThat(host).hasListenSocketAddress(expectedListenAddress);
+          } else {
+            assertThat(host).hasNoListenSocketAddress();
+          }
+          uniqueAddresses.add(host.getAddress());
+        }
+        // each host should have its own address
+        assertThat(uniqueAddresses).hasSize(5);
+      } else {
+        Set<InetAddress> uniqueAddresses = new HashSet<InetAddress>();
+        Set<InetSocketAddress> uniqueSocketAddresses = new HashSet<InetSocketAddress>();
+        for (int i = 1; i <= 5; i++) {
+          Host host = sCluster.host(cluster, 1, i);
+
+          // host is up and broadcast address matches what was configured.
+          assertThat(host)
+              .isNotNull()
+              .isUp()
+              .hasSocketAddress(sCluster.address(i))
+              .hasBroadcastSocketAddress(sCluster.listenAddress(i));
+
+          // host should only have listen address if it is control connection, and the
+          // address should match what was configured.
+          if (i == 1) {
+            assertThat(host).hasListenSocketAddress(sCluster.listenAddress(i));
+          } else {
+            assertThat(host).hasNoListenSocketAddress();
+          }
+          uniqueAddresses.add(host.getAddress());
+          uniqueSocketAddresses.add(host.getSocketAddress());
+        }
+
+        // all hosts share the same ip...
+        assertThat(uniqueAddresses).hasSize(1);
+        // but have a unique port.
+        assertThat(uniqueSocketAddresses).hasSize(5);
+      }
+    } finally {
+      cluster.close();
+      sCluster.stop();
     }
   }
 
