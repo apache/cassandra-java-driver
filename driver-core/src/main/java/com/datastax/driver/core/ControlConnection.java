@@ -21,14 +21,12 @@ import com.datastax.driver.core.exceptions.BusyConnectionException;
 import com.datastax.driver.core.exceptions.ConnectionException;
 import com.datastax.driver.core.exceptions.DriverException;
 import com.datastax.driver.core.exceptions.DriverInternalError;
+import com.datastax.driver.core.exceptions.InvalidQueryException;
 import com.datastax.driver.core.exceptions.NoHostAvailableException;
 import com.datastax.driver.core.exceptions.UnsupportedProtocolVersionException;
 import com.datastax.driver.core.utils.MoreObjects;
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.util.concurrent.FutureCallback;
-import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
-import com.google.common.util.concurrent.SettableFuture;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
@@ -84,10 +82,6 @@ class ControlConnection implements Connection.Owner {
       new AtomicReference<ListenableFuture<?>>();
 
   private volatile boolean isShutdown;
-
-  // set to true initially, if ever fails will be set to false and peers table will be used
-  // from here on out.
-  private volatile boolean isPeersV2 = true;
 
   public ControlConnection(Cluster.Manager manager) {
     this.cluster = manager;
@@ -495,7 +489,7 @@ class ControlConnection implements Connection.Owner {
       } else {
         InetSocketAddress broadcastAddress = host.getBroadcastSocketAddress();
         query =
-            isPeersV2
+            cluster.configuration.getProtocolOptions().isAllowHostPortDiscovery()
                 ? SELECT_PEERS_V2
                     + " WHERE peer='"
                     + broadcastAddress.getAddress().getHostAddress()
@@ -672,55 +666,21 @@ class ControlConnection implements Connection.Owner {
   }
 
   /**
-   * Resolves peering information by doing the following:
-   *
-   * <ol>
-   *   <li>if <code>isPeersV2</code> is true, query the <code>system.peers_v2</code> table,
-   *       otherwise query <code>system.peers</code>.
-   *   <li>if <code>system.peers_v2</code> query fails, set <code>isPeersV2</code> to false and call
-   *       selectPeersFuture again.
-   * </ol>
+   * Submits query to the appropriate system.peers table based on whether or not {@link
+   * ProtocolOptions#isAllowHostPortDiscovery()} is enabled.
    *
    * @param connection connection to send request on.
    * @return result of peers query.
    */
   private ListenableFuture<ResultSet> selectPeersFuture(final Connection connection) {
-    if (isPeersV2) {
-      DefaultResultSetFuture peersV2Future =
-          new DefaultResultSetFuture(
-              null, cluster.protocolVersion(), new Requests.Query(SELECT_PEERS_V2));
-      connection.write(peersV2Future);
-      final SettableFuture<ResultSet> peersFuture = SettableFuture.create();
-      // if peers v2 query fails, query peers stable instead.
-      Futures.addCallback(
-          peersV2Future,
-          new FutureCallback<ResultSet>() {
-
-            @Override
-            public void onSuccess(ResultSet result) {
-              peersFuture.set(result);
-            }
-
-            @Override
-            public void onFailure(Throwable t) {
-              // downgrade to system.peers if we get an invalid query as this indicates
-              // the peers_v2 table does not exist.
-              if (t instanceof InvalidQueryException) {
-                isPeersV2 = false;
-                MoreFutures.propagateFuture(peersFuture, selectPeersFuture(connection));
-              } else {
-                peersFuture.setException(t);
-              }
-            }
-          });
-      return peersFuture;
-    } else {
-      DefaultResultSetFuture peersFuture =
-          new DefaultResultSetFuture(
-              null, cluster.protocolVersion(), new Requests.Query(SELECT_PEERS));
-      connection.write(peersFuture);
-      return peersFuture;
-    }
+    String query =
+        cluster.configuration.getProtocolOptions().isAllowHostPortDiscovery()
+            ? SELECT_PEERS_V2
+            : SELECT_PEERS;
+    DefaultResultSetFuture peersFuture =
+        new DefaultResultSetFuture(null, cluster.protocolVersion(), new Requests.Query(query));
+    connection.write(peersFuture);
+    return peersFuture;
   }
 
   private void refreshNodeListAndTokenMap(

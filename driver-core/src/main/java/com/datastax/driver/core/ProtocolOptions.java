@@ -82,6 +82,7 @@ public class ProtocolOptions {
   private final AuthProvider authProvider;
 
   private final boolean noCompact;
+  private final boolean allowHostPortDiscovery;
 
   private volatile Compression compression = Compression.NONE;
 
@@ -144,12 +145,45 @@ public class ProtocolOptions {
       SSLOptions sslOptions,
       AuthProvider authProvider,
       boolean noCompact) {
+    this(
+        port,
+        protocolVersion,
+        maxSchemaAgreementWaitSeconds,
+        sslOptions,
+        authProvider,
+        noCompact,
+        false);
+  }
+
+  /**
+   * Creates a new {@code ProtocolOptions} instance using the provided port and SSL context.
+   *
+   * @param port the port to use for the binary protocol.
+   * @param protocolVersion the protocol version to use. This can be {@code null}, in which case the
+   *     version used will be the biggest version supported by the <em>first</em> node the driver
+   *     connects to. See {@link Cluster.Builder#withProtocolVersion} for more details.
+   * @param sslOptions the SSL options to use. Use {@code null} if SSL is not to be used.
+   * @param authProvider the {@code AuthProvider} to use for authentication against the Cassandra
+   *     nodes.
+   * @param noCompact whether or not to include the NO_COMPACT startup option.
+   * @param allowHostPortDiscovery whether or not to allow host port discovery via system.peers_v2
+   *     table.
+   */
+  public ProtocolOptions(
+      int port,
+      ProtocolVersion protocolVersion,
+      int maxSchemaAgreementWaitSeconds,
+      SSLOptions sslOptions,
+      AuthProvider authProvider,
+      boolean noCompact,
+      boolean allowHostPortDiscovery) {
     this.port = port;
     this.initialProtocolVersion = protocolVersion;
     this.maxSchemaAgreementWaitSeconds = maxSchemaAgreementWaitSeconds;
     this.sslOptions = sslOptions;
     this.authProvider = authProvider;
     this.noCompact = noCompact;
+    this.allowHostPortDiscovery = allowHostPortDiscovery;
   }
 
   void register(Cluster.Manager manager) {
@@ -246,5 +280,10 @@ public class ProtocolOptions {
   /** @return Whether or not to include the NO_COMPACT startup option. */
   public boolean isNoCompact() {
     return noCompact;
+  }
+
+  /** @return Whether or not host port discovery is allowed. */
+  public boolean isAllowHostPortDiscovery() {
+    return this.allowHostPortDiscovery;
   }
 }

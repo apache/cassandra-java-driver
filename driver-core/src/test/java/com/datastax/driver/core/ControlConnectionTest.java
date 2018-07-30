@@ -24,6 +24,7 @@ import static com.datastax.driver.core.TestUtils.nonQuietClusterCloseOptions;
 import static com.google.common.collect.Lists.newArrayList;
 import static org.scassandra.http.client.PrimingRequest.then;
 
+import com.datastax.driver.core.exceptions.NoHostAvailableException;
 import com.datastax.driver.core.policies.ConstantReconnectionPolicy;
 import com.datastax.driver.core.policies.DelegatingLoadBalancingPolicy;
 import com.datastax.driver.core.policies.LoadBalancingPolicy;
@@ -443,24 +444,22 @@ public class ControlConnectionTest extends CCMTestsSupport {
 
   /**
    * Ensures that multiple C* nodes can share the same ip address (but use different port) if they
-   * support the system.peers_v2 table (CASSANDRA-7544).
+   * support the system.peers_v2 table and {@link Cluster.Builder#allowHostPortDiscovery()} is used.
    *
    * @jira_ticket JAVA-1388
    * @since 3.6.0
    */
   @Test(groups = "short", dataProviderClass = DataProviders.class, dataProvider = "bool")
-  public void should_set_port_on_broadcast_and_listen_address_with_peers_V2(boolean sharedIP) {
+  @CCMConfig(createCcm = false)
+  public void should_use_port_from_peers_v2_table_when_using_host_port_discovery(boolean sharedIP) {
     ScassandraCluster sCluster =
-        ScassandraCluster.builder()
-            .withNodes(5)
-            .withPeersV2(sharedIP)
-            .withSharedIP(sharedIP)
-            .build();
+        ScassandraCluster.builder().withNodes(5).withPeersV2(true).withSharedIP(sharedIP).build();
 
     Cluster.Builder builder =
         Cluster.builder()
             .addContactPointsWithPorts(sCluster.address(1))
-            .withNettyOptions(nonQuietClusterCloseOptions);
+            .withNettyOptions(nonQuietClusterCloseOptions)
+            .allowHostPortDiscovery();
 
     // need to specify port in non peers_v2 case as driver can't infer ports without it.
     if (!sharedIP) {
@@ -472,60 +471,71 @@ public class ControlConnectionTest extends CCMTestsSupport {
     try {
       sCluster.init();
       cluster.connect();
-      if (!sharedIP) {
-        Set<InetAddress> uniqueAddresses = new HashSet<InetAddress>();
-        for (int i = 1; i <= 5; i++) {
-          Host host = sCluster.host(cluster, 1, i);
-          // we expect broadcast/listen address to not have port set.
-          InetSocketAddress expectedListenAddress =
-              new InetSocketAddress(sCluster.listenAddress(i).getAddress(), 0);
+      assertThat(cluster.getMetadata().getAllHosts()).hasSize(5);
 
-          // host should be up
-          assertThat(host)
-              .isNotNull()
-              .isUp()
-              .hasSocketAddress(sCluster.address(i))
-              .hasBroadcastSocketAddress(expectedListenAddress);
+      Set<InetAddress> uniqueAddresses = new HashSet<InetAddress>();
+      Set<InetSocketAddress> uniqueSocketAddresses = new HashSet<InetSocketAddress>();
+      for (int i = 1; i <= 5; i++) {
+        Host host = sCluster.host(cluster, 1, i);
 
-          // host should only have listen address if it is control connection.
-          if (i == 1) {
-            assertThat(host).hasListenSocketAddress(expectedListenAddress);
-          } else {
-            assertThat(host).hasNoListenSocketAddress();
-          }
-          uniqueAddresses.add(host.getAddress());
+        // host is up and broadcast address matches what was configured.
+        assertThat(host)
+            .isNotNull()
+            .isUp()
+            .hasSocketAddress(sCluster.address(i))
+            .hasBroadcastSocketAddress(sCluster.listenAddress(i));
+
+        // host should only have listen address if it is control connection, and the
+        // address should match what was configured.
+        if (i == 1) {
+          assertThat(host).hasListenSocketAddress(sCluster.listenAddress(i));
+        } else {
+          assertThat(host).hasNoListenSocketAddress();
         }
+        uniqueAddresses.add(host.getAddress());
+        uniqueSocketAddresses.add(host.getSocketAddress());
+      }
+
+      if (!sharedIP) {
         // each host should have its own address
         assertThat(uniqueAddresses).hasSize(5);
       } else {
-        Set<InetAddress> uniqueAddresses = new HashSet<InetAddress>();
-        Set<InetSocketAddress> uniqueSocketAddresses = new HashSet<InetSocketAddress>();
-        for (int i = 1; i <= 5; i++) {
-          Host host = sCluster.host(cluster, 1, i);
-
-          // host is up and broadcast address matches what was configured.
-          assertThat(host)
-              .isNotNull()
-              .isUp()
-              .hasSocketAddress(sCluster.address(i))
-              .hasBroadcastSocketAddress(sCluster.listenAddress(i));
-
-          // host should only have listen address if it is control connection, and the
-          // address should match what was configured.
-          if (i == 1) {
-            assertThat(host).hasListenSocketAddress(sCluster.listenAddress(i));
-          } else {
-            assertThat(host).hasNoListenSocketAddress();
-          }
-          uniqueAddresses.add(host.getAddress());
-          uniqueSocketAddresses.add(host.getSocketAddress());
-        }
-
         // all hosts share the same ip...
         assertThat(uniqueAddresses).hasSize(1);
         // but have a unique port.
         assertThat(uniqueSocketAddresses).hasSize(5);
       }
+    } finally {
+      cluster.close();
+      sCluster.stop();
+    }
+  }
+
+  /**
+   * Ensures that if {@link Cluster.Builder#allowHostPortDiscovery()} was used and the cluster does
+   * have the system.peers_v2 table that cluster initialization fails.
+   *
+   * @jira_ticket JAVA-1388
+   * @since 3.6.0
+   */
+  @Test(groups = "short", expectedExceptions = NoHostAvailableException.class)
+  @CCMConfig(createCcm = false)
+  public void
+      should_fail_to_connect_when_using_host_port_discovery_and_peers_v2_table_not_present() {
+    ScassandraCluster sCluster =
+        ScassandraCluster.builder().withNodes(5).withPeersV2(false).build();
+
+    Cluster cluster =
+        Cluster.builder()
+            .addContactPointsWithPorts(sCluster.address(1))
+            .withNettyOptions(nonQuietClusterCloseOptions)
+            .withPort(sCluster.getBinaryPort())
+            .allowHostPortDiscovery()
+            .build();
+
+    try {
+      sCluster.init();
+      cluster.connect();
     } finally {
       cluster.close();
       sCluster.stop();

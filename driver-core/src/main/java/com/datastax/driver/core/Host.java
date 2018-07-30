@@ -165,10 +165,8 @@ public class Host {
    * <p>This is a shortcut for {@code getSocketAddress().getAddress()}.
    *
    * @return the address.
-   * @deprecated
    * @see #getSocketAddress()
    */
-  @Deprecated
   public InetAddress getAddress() {
     return address.getAddress();
   }
@@ -197,13 +195,11 @@ public class Host {
 
   /**
    * @return the node broadcast address, if known. Otherwise {@code null}.
-   * @deprecated
    * @see #getBroadcastSocketAddress()
    * @see <a
    *     href="https://docs.datastax.com/en/cassandra/2.1/cassandra/configuration/configCassandra_yaml_r.html">The
    *     cassandra.yaml configuration file</a>
    */
-  @Deprecated
   public InetAddress getBroadcastAddress() {
     return broadcastAddress != null ? broadcastAddress.getAddress() : null;
   }
@@ -212,7 +208,8 @@ public class Host {
    * Returns the node broadcast address (that is, the address by which it should be contacted by
    * other peers in the cluster), if known.
    *
-   * <p>Note that the port of the returned address may be 0 if it could not be determined.
+   * <p>Note that the port of the returned address will be 0 unless {@link
+   * Cluster.Builder#allowHostPortDiscovery() allowHostPortDiscovery} was used.
    *
    * <p>This corresponds to the {@code broadcast_address} cassandra.yaml file setting and is by
    * default the same as {@link #getListenSocketAddress()}, unless specified otherwise in
@@ -250,7 +247,8 @@ public class Host {
    * Returns the node listen address (that is, the address the node uses to contact other peers in
    * the cluster), if known.
    *
-   * <p>Note that the port of the returned address may be 0 if it could not be determined.
+   * <p>Note that the port of the returned address will be 0 unless {@link
+   * Cluster.Builder#allowHostPortDiscovery() allowHostPortDiscovery} was used.
    *
    * <p>This corresponds to the {@code listen_address} cassandra.yaml file setting. <em>This is NOT
    * the address clients should use to contact this node</em>.

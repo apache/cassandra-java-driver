@@ -717,6 +717,7 @@ public class Cluster implements Closeable {
     private SSLOptions sslOptions = null;
     private boolean metricsEnabled = true;
     private boolean jmxEnabled = true;
+    private boolean allowHostPortDiscovery = false;
     private boolean allowBetaProtocolVersion = false;
     private boolean noCompact = false;
 
@@ -760,11 +761,30 @@ public class Cluster implements Closeable {
      *
      * <p>If not set through this method, the default port (9042) will be used instead.
      *
+     * <p>If {@link #allowHostPortDiscovery()} is used, this value is ignored.
+     *
      * @param port the port to set.
      * @return this Builder.
      */
     public Builder withPort(int port) {
       this.port = port;
+      return this;
+    }
+
+    /**
+     * Enables host port discovery using the system.peers_v2 table added in Cassandra 4.0 (via
+     * CASSANDRA-7544). This enables running multiple Cassandra
+     *
+     * <p>Use of this option only works for clusters running version Cassandra 4.0 or newer. Using
+     * it with an older version of Cassandra will likely cause initialization to fail.
+     *
+     * <p>When using this option configuration provided via {@link #withPort(int)} is unused as
+     * ports are resolved from Cassandra.
+     *
+     * @return this builder.
+     */
+    public Builder allowHostPortDiscovery() {
+      this.allowHostPortDiscovery = true;
       return this;
     }
 
@@ -1338,7 +1358,8 @@ public class Cluster implements Closeable {
                   maxSchemaAgreementWaitSeconds,
                   sslOptions,
                   authProvider,
-                  noCompact)
+                  noCompact,
+                  allowHostPortDiscovery)
               .setCompression(compression);
 
       MetricsOptions metricsOptions = new MetricsOptions(metricsEnabled, jmxEnabled);
