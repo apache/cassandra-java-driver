@@ -11,6 +11,87 @@
           ]
         }
       }
+      "ignore": [
+        {
+          "code": "java.method.addedToInterface",
+          "new": "method boolean com.datastax.oss.driver.api.core.metadata.schema.KeyspaceMetadata::isVirtual()",
+          "package": "com.datastax.oss.driver.api.core.metadata.schema",
+          "classQualifiedName": "com.datastax.oss.driver.api.core.metadata.schema.KeyspaceMetadata",
+          "classSimpleName": "KeyspaceMetadata",
+          "methodName": "isVirtual",
+          "newArchive": "com.datastax.oss:java-driver-core:jar:4.0.0-beta2-SNAPSHOT",
+          "elementKind": "method",
+          "justification": "Adding virtual tables"
+        },
+        {
+          "code": "java.method.returnTypeChanged",
+          "old": "method java.util.UUID com.datastax.oss.driver.api.core.metadata.schema.RelationMetadata::getId()",
+          "new": "method java.util.Optional<java.util.UUID> com.datastax.oss.driver.api.core.metadata.schema.RelationMetadata::getId()",
+          "oldType": "java.util.UUID",
+          "newType": "java.util.Optional<java.util.UUID>",
+          "package": "com.datastax.oss.driver.api.core.metadata.schema",
+          "classQualifiedName": "com.datastax.oss.driver.api.core.metadata.schema.RelationMetadata",
+          "classSimpleName": "RelationMetadata",
+          "methodName": "getId",
+          "oldArchive": "com.datastax.oss:java-driver-core:jar:4.0.0-beta1",
+          "newArchive": "com.datastax.oss:java-driver-core:jar:4.0.0-beta2-SNAPSHOT",
+          "elementKind": "method",
+          "justification": "Adding virtual tables"
+        },
+        {
+          "code": "java.annotation.removed",
+          "old": "method java.util.UUID com.datastax.oss.driver.api.core.metadata.schema.RelationMetadata::getId()",
+          "new": "method java.util.Optional<java.util.UUID> com.datastax.oss.driver.api.core.metadata.schema.RelationMetadata::getId()",
+          "annotationType": "edu.umd.cs.findbugs.annotations.NonNull",
+          "annotation": "@edu.umd.cs.findbugs.annotations.NonNull",
+          "package": "com.datastax.oss.driver.api.core.metadata.schema",
+          "classQualifiedName": "com.datastax.oss.driver.api.core.metadata.schema.RelationMetadata",
+          "classSimpleName": "RelationMetadata",
+          "methodName": "getId",
+          "oldArchive": "com.datastax.oss:java-driver-core:jar:4.0.0-beta1",
+          "elementKind": "method",
+          "justification":"Adding virtual tables"
+        },
+        {
+          "code": "java.annotation.removed",
+          "old": "method java.util.UUID com.datastax.oss.driver.api.core.metadata.schema.RelationMetadata::getId() @ com.datastax.oss.driver.api.core.metadata.schema.TableMetadata",
+          "new": "method java.util.Optional<java.util.UUID> com.datastax.oss.driver.api.core.metadata.schema.RelationMetadata::getId() @ com.datastax.oss.driver.api.core.metadata.schema.TableMetadata",
+          "annotationType": "edu.umd.cs.findbugs.annotations.NonNull",
+          "annotation": "@edu.umd.cs.findbugs.annotations.NonNull",
+          "package": "com.datastax.oss.driver.api.core.metadata.schema",
+          "classQualifiedName": "com.datastax.oss.driver.api.core.metadata.schema.TableMetadata",
+          "classSimpleName": "TableMetadata",
+          "methodName": "getId",
+          "oldArchive": "com.datastax.oss:java-driver-core:jar:4.0.0-beta1",
+          "elementKind": "method",
+          "justification": "Adding virtual tables"
+        },
+        {
+          "code": "java.method.addedToInterface",
+          "new": "method boolean com.datastax.oss.driver.api.core.metadata.schema.TableMetadata::isVirtual()",
+          "package": "com.datastax.oss.driver.api.core.metadata.schema",
+          "classQualifiedName": "com.datastax.oss.driver.api.core.metadata.schema.TableMetadata",
+          "classSimpleName": "TableMetadata",
+          "methodName": "isVirtual",
+          "newArchive": "com.datastax.oss:java-driver-core:jar:4.0.0-beta2-SNAPSHOT",
+          "elementKind": "method",
+          "justification": "Adding virtual tables"
+        },
+        {
+          "code": "java.annotation.removed",
+          "old": "method java.util.UUID com.datastax.oss.driver.api.core.metadata.schema.RelationMetadata::getId() @ com.datastax.oss.driver.api.core.metadata.schema.ViewMetadata",
+          "new": "method java.util.Optional<java.util.UUID> com.datastax.oss.driver.api.core.metadata.schema.RelationMetadata::getId() @ com.datastax.oss.driver.api.core.metadata.schema.ViewMetadata",
+          "annotationType": "edu.umd.cs.findbugs.annotations.NonNull",
+          "annotation": "@edu.umd.cs.findbugs.annotations.NonNull",
+          "package": "com.datastax.oss.driver.api.core.metadata.schema",
+          "classQualifiedName": "com.datastax.oss.driver.api.core.metadata.schema.ViewMetadata",
+          "classSimpleName": "ViewMetadata",
+          "methodName": "getId",
+          "oldArchive": "com.datastax.oss:java-driver-core:jar:4.0.0-beta1",
+          "elementKind": "method",
+          "justification": "Adding virtual tables"
+        },
+      ]
     }
   }
 }
