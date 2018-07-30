@@ -45,6 +45,7 @@ public class Version implements Comparable<Version> {
   public static final Version V2_1_0 = parse("2.1.0");
   public static final Version V2_2_0 = parse("2.2.0");
   public static final Version V3_0_0 = parse("3.0.0");
+  public static final Version V4_0_0 = parse("4.0.0");
 
   private final int major;
   private final int minor;

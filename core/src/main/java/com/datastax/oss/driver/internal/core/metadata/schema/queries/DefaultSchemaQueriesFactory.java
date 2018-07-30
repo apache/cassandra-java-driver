@@ -75,8 +75,10 @@ public class DefaultSchemaQueriesFactory implements SchemaQueriesFactory {
       return new Cassandra21SchemaQueries(channel, refreshFuture, config, logPrefix);
     } else if (version.compareTo(Version.V3_0_0) < 0) {
       return new Cassandra22SchemaQueries(channel, refreshFuture, config, logPrefix);
-    } else {
+    } else if (version.compareTo(Version.V4_0_0) < 0) {
       return new Cassandra3SchemaQueries(channel, refreshFuture, config, logPrefix);
+    } else {
+      return new Cassandra4SchemaQueries(channel, refreshFuture, config, logPrefix);
     }
   }
 }

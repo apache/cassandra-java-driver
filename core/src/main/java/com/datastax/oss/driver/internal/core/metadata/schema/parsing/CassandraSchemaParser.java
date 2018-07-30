@@ -31,6 +31,7 @@ import com.datastax.oss.driver.internal.core.metadata.schema.refresh.SchemaRefre
 import com.datastax.oss.driver.internal.core.util.NanoTime;
 import com.datastax.oss.driver.shaded.guava.common.base.MoreObjects;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableMap;
+import java.util.Collections;
 import java.util.Map;
 import net.jcip.annotations.ThreadSafe;
 import org.slf4j.Logger;
@@ -72,6 +73,10 @@ public class CassandraSchemaParser implements SchemaParser {
     ImmutableMap.Builder<CqlIdentifier, KeyspaceMetadata> keyspacesBuilder = ImmutableMap.builder();
     for (AdminRow row : rows.keyspaces()) {
       KeyspaceMetadata keyspace = parseKeyspace(row);
+      keyspacesBuilder.put(keyspace.getName(), keyspace);
+    }
+    for (AdminRow row : rows.virtualKeyspaces()) {
+      KeyspaceMetadata keyspace = parseVirtualKeyspace(row);
       keyspacesBuilder.put(keyspace.getName(), keyspace);
     }
     SchemaRefresh refresh = new SchemaRefresh(keyspacesBuilder.build());
@@ -118,6 +123,7 @@ public class CassandraSchemaParser implements SchemaParser {
     return new DefaultKeyspaceMetadata(
         keyspaceId,
         durableWrites,
+        false,
         replicationOptions,
         types,
         parseTables(keyspaceId, types),
@@ -126,8 +132,43 @@ public class CassandraSchemaParser implements SchemaParser {
         parseAggregates(keyspaceId, types));
   }
 
+  private KeyspaceMetadata parseVirtualKeyspace(AdminRow keyspaceRow) {
+
+    CqlIdentifier keyspaceId = CqlIdentifier.fromInternal(keyspaceRow.getString("keyspace_name"));
+    boolean durableWrites =
+        MoreObjects.firstNonNull(keyspaceRow.getBoolean("durable_writes"), false);
+
+    Map<String, String> replicationOptions = Collections.emptyMap();
+    ;
+
+    Map<CqlIdentifier, UserDefinedType> types = parseTypes(keyspaceId);
+
+    return new DefaultKeyspaceMetadata(
+        keyspaceId,
+        durableWrites,
+        true,
+        replicationOptions,
+        types,
+        parseVirtualTables(keyspaceId, types),
+        Collections.emptyMap(),
+        Collections.emptyMap(),
+        Collections.emptyMap());
+  }
+
   private Map<CqlIdentifier, UserDefinedType> parseTypes(CqlIdentifier keyspaceId) {
     return userDefinedTypeParser.parse(rows.types().get(keyspaceId), keyspaceId);
+  }
+
+  private Map<CqlIdentifier, TableMetadata> parseVirtualTables(
+      CqlIdentifier keyspaceId, Map<CqlIdentifier, UserDefinedType> types) {
+    ImmutableMap.Builder<CqlIdentifier, TableMetadata> tablesBuilder = ImmutableMap.builder();
+    for (AdminRow tableRow : rows.virtualTables().get(keyspaceId)) {
+      TableMetadata table = tableParser.parseVirtualTable(tableRow, keyspaceId, types);
+      if (table != null) {
+        tablesBuilder.put(table.getName(), table);
+      }
+    }
+    return tablesBuilder.build();
   }
 
   private Map<CqlIdentifier, TableMetadata> parseTables(

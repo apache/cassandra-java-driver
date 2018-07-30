@@ -71,4 +71,19 @@ class Cassandra3SchemaQueries extends CassandraSchemaQueries {
   protected Optional<String> selectAggregatesQuery() {
     return Optional.of("SELECT * FROM system_schema.aggregates");
   }
+
+  @Override
+  protected Optional<String> selectVirtualKeyspacesQuery() {
+    return Optional.empty();
+  }
+
+  @Override
+  protected Optional<String> selectVirtualTablesQuery() {
+    return Optional.empty();
+  }
+
+  @Override
+  protected Optional<String> selectVirtualColumnsQuery() {
+    return Optional.empty();
+  }
 }

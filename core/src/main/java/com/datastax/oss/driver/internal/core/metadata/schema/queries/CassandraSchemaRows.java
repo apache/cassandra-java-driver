@@ -40,21 +40,27 @@ public class CassandraSchemaRows implements SchemaRows {
   private final DataTypeParser dataTypeParser;
   private final CompletableFuture<Metadata> refreshFuture;
   private final List<AdminRow> keyspaces;
+  private final List<AdminRow> virtualKeyspaces;
   private final Multimap<CqlIdentifier, AdminRow> tables;
+  private final Multimap<CqlIdentifier, AdminRow> virtualTables;
   private final Multimap<CqlIdentifier, AdminRow> views;
   private final Multimap<CqlIdentifier, AdminRow> types;
   private final Multimap<CqlIdentifier, AdminRow> functions;
   private final Multimap<CqlIdentifier, AdminRow> aggregates;
   private final Map<CqlIdentifier, Multimap<CqlIdentifier, AdminRow>> columns;
+  private final Map<CqlIdentifier, Multimap<CqlIdentifier, AdminRow>> virtualColumns;
   private final Map<CqlIdentifier, Multimap<CqlIdentifier, AdminRow>> indexes;
 
   private CassandraSchemaRows(
       boolean isCassandraV3,
       CompletableFuture<Metadata> refreshFuture,
       List<AdminRow> keyspaces,
+      List<AdminRow> virtualKeyspaces,
       Multimap<CqlIdentifier, AdminRow> tables,
+      Multimap<CqlIdentifier, AdminRow> virtualTables,
       Multimap<CqlIdentifier, AdminRow> views,
       Map<CqlIdentifier, Multimap<CqlIdentifier, AdminRow>> columns,
+      Map<CqlIdentifier, Multimap<CqlIdentifier, AdminRow>> virtualColumns,
       Map<CqlIdentifier, Multimap<CqlIdentifier, AdminRow>> indexes,
       Multimap<CqlIdentifier, AdminRow> types,
       Multimap<CqlIdentifier, AdminRow> functions,
@@ -63,9 +69,12 @@ public class CassandraSchemaRows implements SchemaRows {
         isCassandraV3 ? new DataTypeCqlNameParser() : new DataTypeClassNameParser();
     this.refreshFuture = refreshFuture;
     this.keyspaces = keyspaces;
+    this.virtualKeyspaces = virtualKeyspaces;
     this.tables = tables;
+    this.virtualTables = virtualTables;
     this.views = views;
     this.columns = columns;
+    this.virtualColumns = virtualColumns;
     this.indexes = indexes;
     this.types = types;
     this.functions = functions;
@@ -88,8 +97,18 @@ public class CassandraSchemaRows implements SchemaRows {
   }
 
   @Override
+  public List<AdminRow> virtualKeyspaces() {
+    return virtualKeyspaces;
+  }
+
+  @Override
   public Multimap<CqlIdentifier, AdminRow> tables() {
     return tables;
+  }
+
+  @Override
+  public Multimap<CqlIdentifier, AdminRow> virtualTables() {
+    return virtualTables;
   }
 
   @Override
@@ -118,6 +137,11 @@ public class CassandraSchemaRows implements SchemaRows {
   }
 
   @Override
+  public Map<CqlIdentifier, Multimap<CqlIdentifier, AdminRow>> virtualColumns() {
+    return virtualColumns;
+  }
+
+  @Override
   public Map<CqlIdentifier, Multimap<CqlIdentifier, AdminRow>> indexes() {
     return indexes;
   }
@@ -130,7 +154,10 @@ public class CassandraSchemaRows implements SchemaRows {
     private final String tableNameColumn;
     private final String logPrefix;
     private final ImmutableList.Builder<AdminRow> keyspacesBuilder = ImmutableList.builder();
+    private final ImmutableList.Builder<AdminRow> virtualKeyspacesBuilder = ImmutableList.builder();
     private final ImmutableMultimap.Builder<CqlIdentifier, AdminRow> tablesBuilder =
+        ImmutableListMultimap.builder();
+    private final ImmutableMultimap.Builder<CqlIdentifier, AdminRow> virtualTablesBuilder =
         ImmutableListMultimap.builder();
     private final ImmutableMultimap.Builder<CqlIdentifier, AdminRow> viewsBuilder =
         ImmutableListMultimap.builder();
@@ -142,6 +169,8 @@ public class CassandraSchemaRows implements SchemaRows {
         ImmutableListMultimap.builder();
     private final Map<CqlIdentifier, ImmutableMultimap.Builder<CqlIdentifier, AdminRow>>
         columnsBuilders = new LinkedHashMap<>();
+    private final Map<CqlIdentifier, ImmutableMultimap.Builder<CqlIdentifier, AdminRow>>
+        virtualColumnsBuilders = new LinkedHashMap<>();
     private final Map<CqlIdentifier, ImmutableMultimap.Builder<CqlIdentifier, AdminRow>>
         indexesBuilders = new LinkedHashMap<>();
 
@@ -158,9 +187,21 @@ public class CassandraSchemaRows implements SchemaRows {
       return this;
     }
 
+    public Builder withVirtualKeyspaces(Iterable<AdminRow> rows) {
+      virtualKeyspacesBuilder.addAll(rows);
+      return this;
+    }
+
     public Builder withTables(Iterable<AdminRow> rows) {
       for (AdminRow row : rows) {
         putByKeyspace(row, tablesBuilder);
+      }
+      return this;
+    }
+
+    public Builder withVirtualTables(Iterable<AdminRow> rows) {
+      for (AdminRow row : rows) {
+        putByKeyspace(row, virtualTablesBuilder);
       }
       return this;
     }
@@ -196,6 +237,13 @@ public class CassandraSchemaRows implements SchemaRows {
     public Builder withColumns(Iterable<AdminRow> rows) {
       for (AdminRow row : rows) {
         putByKeyspaceAndTable(row, columnsBuilders);
+      }
+      return this;
+    }
+
+    public Builder withVirtualColumns(Iterable<AdminRow> rows) {
+      for (AdminRow row : rows) {
+        putByKeyspaceAndTable(row, virtualColumnsBuilders);
       }
       return this;
     }
@@ -239,9 +287,12 @@ public class CassandraSchemaRows implements SchemaRows {
           isCassandraV3,
           refreshFuture,
           keyspacesBuilder.build(),
+          virtualKeyspacesBuilder.build(),
           tablesBuilder.build(),
+          virtualTablesBuilder.build(),
           viewsBuilder.build(),
           build(columnsBuilders),
+          build(virtualColumnsBuilders),
           build(indexesBuilders),
           typesBuilder.build(),
           functionsBuilder.build(),

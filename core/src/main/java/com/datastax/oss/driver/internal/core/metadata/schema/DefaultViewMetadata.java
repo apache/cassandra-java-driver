@@ -81,8 +81,8 @@ public class DefaultViewMetadata implements ViewMetadata {
 
   @NonNull
   @Override
-  public UUID getId() {
-    return id;
+  public Optional<UUID> getId() {
+    return Optional.of(id);
   }
 
   @NonNull
@@ -137,7 +137,7 @@ public class DefaultViewMetadata implements ViewMetadata {
           && Objects.equals(this.baseTable, that.getBaseTable())
           && this.includesAllColumns == that.includesAllColumns()
           && Objects.equals(this.whereClause, that.getWhereClause().orElse(null))
-          && Objects.equals(this.id, that.getId())
+          && Objects.equals(Optional.of(this.id), that.getId())
           && Objects.equals(this.partitionKey, that.getPartitionKey())
           && Objects.equals(this.clusteringColumns, that.getClusteringColumns())
           && Objects.equals(this.columns, that.getColumns())

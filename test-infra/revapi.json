@@ -6,8 +6,11 @@
       "filter": {
         "packages": {
           "regex": true,
-          "include": [
-            "com\\.datastax\\.oss\\.driver\\.api\\..*"
+          "exclude": [
+            "com\\.datastax\\.oss\\.driver\\.internal\\..*",
+            "com\\.datastax\\.oss\\.driver\\.shaded\\..*",
+            // Don't re-check sibling modules that this module depends on
+            "com\\.datastax\\.oss\\.driver\\.api\\.core\\..*"
           ]
         }
       }

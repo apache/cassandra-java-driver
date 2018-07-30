@@ -23,67 +23,27 @@ import java.util.concurrent.CompletableFuture;
 import net.jcip.annotations.ThreadSafe;
 
 @ThreadSafe
-class Cassandra21SchemaQueries extends CassandraSchemaQueries {
-  Cassandra21SchemaQueries(
+class Cassandra4SchemaQueries extends Cassandra3SchemaQueries {
+  Cassandra4SchemaQueries(
       DriverChannel channel,
       CompletableFuture<Metadata> refreshFuture,
       DriverExecutionProfile config,
       String logPrefix) {
-    super(channel, false, refreshFuture, config, logPrefix);
-  }
-
-  @Override
-  protected String selectKeyspacesQuery() {
-    return "SELECT * FROM system.schema_keyspaces";
-  }
-
-  @Override
-  protected String selectTablesQuery() {
-    return "SELECT * FROM system.schema_columnfamilies";
-  }
-
-  @Override
-  protected Optional<String> selectViewsQuery() {
-    return Optional.empty();
-  }
-
-  @Override
-  protected Optional<String> selectIndexesQuery() {
-    return Optional.empty();
-  }
-
-  @Override
-  protected String selectColumnsQuery() {
-    return "SELECT * FROM system.schema_columns";
-  }
-
-  @Override
-  protected String selectTypesQuery() {
-    return "SELECT * FROM system.schema_usertypes";
-  }
-
-  @Override
-  protected Optional<String> selectFunctionsQuery() {
-    return Optional.empty();
-  }
-
-  @Override
-  protected Optional<String> selectAggregatesQuery() {
-    return Optional.empty();
+    super(channel, refreshFuture, config, logPrefix);
   }
 
   @Override
   protected Optional<String> selectVirtualKeyspacesQuery() {
-    return Optional.empty();
+    return Optional.of("SELECT * FROM system_virtual_schema.keyspaces");
   }
 
   @Override
   protected Optional<String> selectVirtualTablesQuery() {
-    return Optional.empty();
+    return Optional.of("SELECT * FROM system_virtual_schema.tables");
   }
 
   @Override
   protected Optional<String> selectVirtualColumnsQuery() {
-    return Optional.empty();
+    return Optional.of("SELECT * FROM system_virtual_schema.columns");
   }
 }

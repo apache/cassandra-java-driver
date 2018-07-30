@@ -23,7 +23,11 @@ import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
 import com.datastax.oss.driver.api.core.config.DriverConfigLoader;
 import com.datastax.oss.driver.api.core.config.DriverExecutionProfile;
 import com.datastax.oss.driver.api.core.cql.SimpleStatement;
+import com.datastax.oss.driver.api.core.metadata.schema.ColumnMetadata;
 import com.datastax.oss.driver.api.core.metadata.schema.KeyspaceMetadata;
+import com.datastax.oss.driver.api.core.metadata.schema.TableMetadata;
+import com.datastax.oss.driver.api.core.type.DataTypes;
+import com.datastax.oss.driver.api.testinfra.CassandraRequirement;
 import com.datastax.oss.driver.api.testinfra.ccm.CcmRule;
 import com.datastax.oss.driver.api.testinfra.session.SessionRule;
 import com.datastax.oss.driver.api.testinfra.session.SessionUtils;
@@ -165,5 +169,60 @@ public class SchemaIT {
 
       assertThat(session.getMetadata()).isSameAs(newMetadata);
     }
+  }
+
+  @CassandraRequirement(min = "4.0", description = "virtual tables introduced in 4.0")
+  @Test
+  public void should_get_virtual_metadata() {
+    Metadata md = sessionRule.session().getMetadata();
+    KeyspaceMetadata kmd = md.getKeyspace("system_views").get();
+
+    // Keyspace name should be set, marked as virtual, and have a clients table.
+    // All other values should be defaulted since they are not defined in the virtual schema tables.
+    assertThat(kmd.getTables().size()).isGreaterThanOrEqualTo(2);
+    assertThat(kmd.isVirtual()).isTrue();
+    assertThat(kmd.isDurableWrites()).isFalse();
+    assertThat(kmd.getName().asCql(true)).isEqualTo("system_views");
+    assertThat(kmd.getUserDefinedTypes().size()).isEqualTo(0);
+    assertThat(kmd.getFunctions().size()).isEqualTo(0);
+    assertThat(kmd.getViews().size()).isEqualTo(0);
+    assertThat(kmd.getAggregates().size()).isEqualTo(0);
+    assertThat(kmd.describe(true))
+        .isEqualTo(
+            "/* VIRTUAL KEYSPACE system_views WITH replication = { 'class' : 'null' } "
+                + "AND durable_writes = false; */");
+    // Table name should be set, marked as virtual, and it should have columns set.
+    // indexes, views, clustering column, clustering order and id are not defined in the virtual
+    // schema tables.
+    TableMetadata tm = kmd.getTable("sstable_tasks").get();
+    assertThat(tm).isNotNull();
+    assertThat(tm.getName().toString()).isEqualTo("sstable_tasks");
+    assertThat(tm.isVirtual()).isTrue();
+    assertThat(tm.getColumns().size()).isEqualTo(7);
+    assertThat(tm.getIndexes().size()).isEqualTo(0);
+    assertThat(tm.getPartitionKey().size()).isEqualTo(1);
+    assertThat(tm.getPartitionKey().get(0).getName().toString()).isEqualTo("keyspace_name");
+    assertThat(tm.getClusteringColumns().size()).isEqualTo(2);
+    assertThat(tm.getId().isPresent()).isFalse();
+    assertThat(tm.getOptions().size()).isEqualTo(0);
+    assertThat(tm.getKeyspace()).isEqualTo(kmd.getName());
+    assertThat(tm.describe(true))
+        .isEqualTo(
+            "/* VIRTUAL TABLE system_views.sstable_tasks (\n"
+                + "    keyspace_name text,\n"
+                + "    table_name text,\n"
+                + "    task_id uuid,\n"
+                + "    kind text,\n"
+                + "    progress bigint,\n"
+                + "    total bigint,\n"
+                + "    unit text,\n"
+                + "    PRIMARY KEY (keyspace_name, table_name, task_id)\n"
+                + "); */");
+    // ColumnMetadata is as expected
+    ColumnMetadata cm = tm.getColumn("progress").get();
+    assertThat(cm).isNotNull();
+    assertThat(cm.getParent()).isEqualTo(tm.getName());
+    assertThat(cm.getType()).isEqualTo(DataTypes.BIGINT);
+    assertThat(cm.getName().toString()).isEqualTo("progress");
   }
 }

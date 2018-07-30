@@ -219,11 +219,69 @@ public class TableParser extends RelationParser {
         tableId,
         uuid,
         isCompactStorage,
+        false,
         partitionKeyBuilder.build(),
         clusteringColumnsBuilder.build(),
         allColumnsBuilder.build(),
         options,
         indexesBuilder.build());
+  }
+
+  TableMetadata parseVirtualTable(
+      AdminRow tableRow, CqlIdentifier keyspaceId, Map<CqlIdentifier, UserDefinedType> userTypes) {
+
+    CqlIdentifier tableId = CqlIdentifier.fromInternal(tableRow.getString("table_name"));
+
+    List<RawColumn> rawColumns =
+        RawColumn.toRawColumns(
+            rows.virtualColumns().getOrDefault(keyspaceId, ImmutableMultimap.of()).get(tableId),
+            keyspaceId,
+            userTypes);
+    if (rawColumns.isEmpty()) {
+      LOG.warn(
+          "[{}] Processing TABLE refresh for {}.{} but found no matching rows, skipping",
+          logPrefix,
+          keyspaceId,
+          tableId);
+      return null;
+    }
+
+    Collections.sort(rawColumns);
+    ImmutableMap.Builder<CqlIdentifier, ColumnMetadata> allColumnsBuilder = ImmutableMap.builder();
+    ImmutableList.Builder<ColumnMetadata> partitionKeyBuilder = ImmutableList.builder();
+    ImmutableMap.Builder<ColumnMetadata, ClusteringOrder> clusteringColumnsBuilder =
+        ImmutableMap.builder();
+
+    for (RawColumn raw : rawColumns) {
+      DataType dataType = rows.dataTypeParser().parse(keyspaceId, raw.dataType, userTypes, context);
+      ColumnMetadata column =
+          new DefaultColumnMetadata(
+              keyspaceId, tableId, raw.name, dataType, raw.kind.equals(RawColumn.KIND_STATIC));
+      switch (raw.kind) {
+        case RawColumn.KIND_PARTITION_KEY:
+          partitionKeyBuilder.add(column);
+          break;
+        case RawColumn.KIND_CLUSTERING_COLUMN:
+          clusteringColumnsBuilder.put(
+              column, raw.reversed ? ClusteringOrder.DESC : ClusteringOrder.ASC);
+          break;
+        default:
+      }
+
+      allColumnsBuilder.put(column.getName(), column);
+    }
+
+    return new DefaultTableMetadata(
+        keyspaceId,
+        tableId,
+        null,
+        false,
+        true,
+        partitionKeyBuilder.build(),
+        clusteringColumnsBuilder.build(),
+        allColumnsBuilder.build(),
+        Collections.emptyMap(),
+        Collections.emptyMap());
   }
 
   // In C*<=2.2, index information is stored alongside the column.

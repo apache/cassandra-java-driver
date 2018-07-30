@@ -33,6 +33,7 @@ public class DefaultKeyspaceMetadata implements KeyspaceMetadata {
 
   @NonNull private final CqlIdentifier name;
   private final boolean durableWrites;
+  private final boolean virtual;
   @NonNull private final Map<String, String> replication;
   @NonNull private final Map<CqlIdentifier, UserDefinedType> types;
   @NonNull private final Map<CqlIdentifier, TableMetadata> tables;
@@ -43,6 +44,7 @@ public class DefaultKeyspaceMetadata implements KeyspaceMetadata {
   public DefaultKeyspaceMetadata(
       @NonNull CqlIdentifier name,
       boolean durableWrites,
+      boolean virtual,
       @NonNull Map<String, String> replication,
       @NonNull Map<CqlIdentifier, UserDefinedType> types,
       @NonNull Map<CqlIdentifier, TableMetadata> tables,
@@ -51,6 +53,7 @@ public class DefaultKeyspaceMetadata implements KeyspaceMetadata {
       @NonNull Map<FunctionSignature, AggregateMetadata> aggregates) {
     this.name = name;
     this.durableWrites = durableWrites;
+    this.virtual = virtual;
     this.replication = replication;
     this.types = types;
     this.tables = tables;
@@ -68,6 +71,11 @@ public class DefaultKeyspaceMetadata implements KeyspaceMetadata {
   @Override
   public boolean isDurableWrites() {
     return durableWrites;
+  }
+
+  @Override
+  public boolean isVirtual() {
+    return virtual;
   }
 
   @NonNull
