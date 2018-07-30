@@ -43,6 +43,11 @@ abstract class SchemaParser {
         return V2_PARSER;
     }
 
+    static SchemaParser forDseVersion(VersionNumber dseVersion) {
+        if (dseVersion.getMajor() >= 5) return V3_PARSER;
+        return V2_PARSER;
+    }
+
     abstract SystemRows fetchSystemRows(Cluster cluster,
                                         SchemaElement targetType, String targetKeyspace, String targetName, List<String> targetSignature,
                                         Connection connection, VersionNumber cassandraVersion)

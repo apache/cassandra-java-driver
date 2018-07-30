@@ -331,8 +331,17 @@ class ControlConnection implements Connection.Owner {
         } else {
             cassandraVersion = host.getCassandraVersion();
         }
+        VersionNumber dseVersion;
+        SchemaParser schemaParser;
+        // If using DSE, derive parser from DSE version.
+        if (host == null || host.getDseVersion() == null) {
+            schemaParser = SchemaParser.forVersion(cassandraVersion);
+        } else {
+            dseVersion = host.getDseVersion();
+            schemaParser = SchemaParser.forDseVersion(dseVersion);
+        }
 
-        SchemaParser.forVersion(cassandraVersion)
+        schemaParser
                 .refresh(cluster.getCluster(),
                         targetType, targetKeyspace, targetName, targetSignature,
                         connection, cassandraVersion);
