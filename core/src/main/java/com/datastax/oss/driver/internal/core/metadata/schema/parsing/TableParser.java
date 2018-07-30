@@ -226,6 +226,7 @@ public class TableParser extends RelationParser {
         options,
         indexesBuilder.build());
   }
+
   TableMetadata parseVirtualTable(
       AdminRow tableRow, CqlIdentifier keyspaceId, Map<CqlIdentifier, UserDefinedType> userTypes) {
 
@@ -233,7 +234,7 @@ public class TableParser extends RelationParser {
 
     List<RawColumn> rawColumns =
         RawColumn.toRawColumns(
-            rows.virtualColumns.getOrDefault(keyspaceId, ImmutableMultimap.of()).get(tableId),
+            rows.virtualColumns().getOrDefault(keyspaceId, ImmutableMultimap.of()).get(tableId),
             keyspaceId,
             userTypes);
     if (rawColumns.isEmpty()) {
@@ -252,21 +253,19 @@ public class TableParser extends RelationParser {
         ImmutableMap.builder();
 
     for (RawColumn raw : rawColumns) {
-      DataType dataType = dataTypeParser.parse(keyspaceId, raw.dataType, userTypes, context);
+      DataType dataType = rows.dataTypeParser().parse(keyspaceId, raw.dataType, userTypes, context);
       ColumnMetadata column =
           new DefaultColumnMetadata(
-              keyspaceId, tableId, raw.name, dataType, raw.kind == RawColumn.Kind.STATIC);
-
+              keyspaceId, tableId, raw.name, dataType, raw.kind.equals(RawColumn.KIND_STATIC));
       switch (raw.kind) {
-        case PARTITION_KEY:
+        case RawColumn.KIND_PARTITION_KEY:
           partitionKeyBuilder.add(column);
           break;
-        case CLUSTERING_COLUMN:
+        case RawColumn.KIND_CLUSTERING_COLUMN:
           clusteringColumnsBuilder.put(
               column, raw.reversed ? ClusteringOrder.DESC : ClusteringOrder.ASC);
           break;
         default:
-          // nothing to do
       }
 
       allColumnsBuilder.put(column.getName(), column);

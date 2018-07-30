@@ -34,9 +34,11 @@ public interface SchemaRows {
 
   List<AdminRow> keyspaces();
 
+  List<AdminRow> virtualKeyspaces();
+
   Multimap<CqlIdentifier, AdminRow> tables();
 
-    Multimap<CqlIdentifier, AdminRow> virtualTables();
+  Multimap<CqlIdentifier, AdminRow> virtualTables();
 
   Multimap<CqlIdentifier, AdminRow> views();
 
@@ -48,7 +50,7 @@ public interface SchemaRows {
 
   Map<CqlIdentifier, Multimap<CqlIdentifier, AdminRow>> columns();
 
-  Map<CqlIdentifier, Multimap<CqlIdentifier, AdminRow>> virutalColumns();
+  Map<CqlIdentifier, Multimap<CqlIdentifier, AdminRow>> virtualColumns();
 
   Map<CqlIdentifier, Multimap<CqlIdentifier, AdminRow>> indexes();
 

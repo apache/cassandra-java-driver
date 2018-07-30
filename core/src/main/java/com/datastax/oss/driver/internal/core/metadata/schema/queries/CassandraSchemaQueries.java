@@ -100,13 +100,19 @@ public abstract class CassandraSchemaQueries implements SchemaQueries {
 
   protected abstract String selectKeyspacesQuery();
 
+  protected abstract Optional<String> selectVirtualKeyspacesQuery();
+
   protected abstract String selectTablesQuery();
+
+  protected abstract Optional<String> selectVirtualTablesQuery();
 
   protected abstract Optional<String> selectViewsQuery();
 
   protected abstract Optional<String> selectIndexesQuery();
 
   protected abstract String selectColumnsQuery();
+
+  protected abstract Optional<String> selectVirtualColumnsQuery();
 
   protected abstract String selectTypesQuery();
 
@@ -137,6 +143,12 @@ public abstract class CassandraSchemaQueries implements SchemaQueries {
         .ifPresent(select -> query(select + whereClause, schemaRowsBuilder::withFunctions));
     selectAggregatesQuery()
         .ifPresent(select -> query(select + whereClause, schemaRowsBuilder::withAggregates));
+    selectVirtualKeyspacesQuery()
+        .ifPresent(select -> query(select + whereClause, schemaRowsBuilder::withVirtualKeyspaces));
+    selectVirtualTablesQuery()
+        .ifPresent(select -> query(select + whereClause, schemaRowsBuilder::withVirtualTables));
+    selectVirtualColumnsQuery()
+        .ifPresent(select -> query(select + whereClause, schemaRowsBuilder::withVirtualColumns));
   }
 
   private void query(

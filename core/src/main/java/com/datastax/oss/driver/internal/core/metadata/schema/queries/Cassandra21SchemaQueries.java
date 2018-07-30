@@ -73,17 +73,17 @@ class Cassandra21SchemaQueries extends CassandraSchemaQueries {
   }
 
   @Override
-  protected Optional<String> selectVirtualKeyspaces() {
+  protected Optional<String> selectVirtualKeyspacesQuery() {
     return Optional.empty();
   }
 
   @Override
-  protected Optional<String> selectVirtualTables() {
+  protected Optional<String> selectVirtualTablesQuery() {
     return Optional.empty();
   }
 
   @Override
-  protected Optional<String> selectVirtualColumns() {
+  protected Optional<String> selectVirtualColumnsQuery() {
     return Optional.empty();
   }
 }
