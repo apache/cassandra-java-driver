@@ -41,7 +41,8 @@ CREATE TABLE complex_ks.cyclist_mv (
     AND speculative_retry = '99PERCENTILE'
     AND min_index_interval = 128
     AND max_index_interval = 2048
-    AND crc_check_chance = 1.0;
+    AND crc_check_chance = 1.0
+    AND memtable_flush_period_in_ms = 0;
 
 CREATE INDEX cyclist_by_country ON complex_ks.cyclist_mv (country);
 
@@ -63,7 +64,8 @@ CREATE MATERIALIZED VIEW complex_ks.cyclist_by_a_age AS
     AND speculative_retry = '99PERCENTILE'
     AND min_index_interval = 128
     AND max_index_interval = 2048
-    AND crc_check_chance = 1.0;
+    AND crc_check_chance = 1.0
+    AND memtable_flush_period_in_ms = 0;
 
 CREATE MATERIALIZED VIEW complex_ks.cyclist_by_age AS
     SELECT age, cid, birthday, country, name
@@ -83,7 +85,8 @@ CREATE MATERIALIZED VIEW complex_ks.cyclist_by_age AS
     AND speculative_retry = '99PERCENTILE'
     AND min_index_interval = 128
     AND max_index_interval = 2048
-    AND crc_check_chance = 1.0;
+    AND crc_check_chance = 1.0
+    AND memtable_flush_period_in_ms = 0;
 
 CREATE MATERIALIZED VIEW complex_ks.cyclist_by_r_age AS
     SELECT age, cid, birthday, country, name
@@ -103,7 +106,8 @@ CREATE MATERIALIZED VIEW complex_ks.cyclist_by_r_age AS
     AND speculative_retry = '99PERCENTILE'
     AND min_index_interval = 128
     AND max_index_interval = 2048
-    AND crc_check_chance = 1.0;
+    AND crc_check_chance = 1.0
+    AND memtable_flush_period_in_ms = 0;
 
 CREATE TABLE complex_ks.rank_by_year_and_name (
     race_year int,
@@ -124,7 +128,8 @@ CREATE TABLE complex_ks.rank_by_year_and_name (
     AND speculative_retry = '99PERCENTILE'
     AND min_index_interval = 128
     AND max_index_interval = 2048
-    AND crc_check_chance = 1.0;
+    AND crc_check_chance = 1.0
+    AND memtable_flush_period_in_ms = 0;
 
 CREATE INDEX rrank ON complex_ks.rank_by_year_and_name (rank);
 
@@ -146,7 +151,8 @@ CREATE TABLE complex_ks.ztable (
     AND speculative_retry = '99PERCENTILE'
     AND min_index_interval = 128
     AND max_index_interval = 2048
-    AND crc_check_chance = 1.0;
+    AND crc_check_chance = 1.0
+    AND memtable_flush_period_in_ms = 0;
 
 CREATE FUNCTION complex_ks.avgfinal(state tuple<int, bigint>)
     CALLED ON NULL INPUT

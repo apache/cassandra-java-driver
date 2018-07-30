@@ -40,7 +40,8 @@ CREATE TABLE complex_ks.cyclist_mv (
     AND default_time_to_live = 0
     AND speculative_retry = '99.0PERCENTILE'
     AND min_index_interval = 128
-    AND max_index_interval = 2048;
+    AND max_index_interval = 2048
+    AND memtable_flush_period_in_ms = 0;
 
 CREATE INDEX cyclist_by_country ON complex_ks.cyclist_mv (country);
 
@@ -62,7 +63,8 @@ CREATE TABLE complex_ks.rank_by_year_and_name (
     AND default_time_to_live = 0
     AND speculative_retry = '99.0PERCENTILE'
     AND min_index_interval = 128
-    AND max_index_interval = 2048;
+    AND max_index_interval = 2048
+    AND memtable_flush_period_in_ms = 0;
 
 CREATE INDEX rrank ON complex_ks.rank_by_year_and_name (rank);
 
@@ -83,7 +85,8 @@ CREATE TABLE complex_ks.ztable (
     AND default_time_to_live = 0
     AND speculative_retry = '99.0PERCENTILE'
     AND min_index_interval = 128
-    AND max_index_interval = 2048;
+    AND max_index_interval = 2048
+    AND memtable_flush_period_in_ms = 0;
 
 CREATE FUNCTION complex_ks.avgfinal(state tuple<int, bigint>)
     CALLED ON NULL INPUT

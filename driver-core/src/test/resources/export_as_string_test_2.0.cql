@@ -18,7 +18,8 @@ CREATE TABLE complex_ks.rank_by_year_and_name (
     AND compression = { 'sstable_compression' : 'org.apache.cassandra.io.compress.LZ4Compressor' }
     AND default_time_to_live = 0
     AND speculative_retry = '99.0PERCENTILE'
-    AND index_interval = 128;
+    AND index_interval = 128
+    AND memtable_flush_period_in_ms = 0;
 
 CREATE INDEX rrank ON complex_ks.rank_by_year_and_name (rank);
 
@@ -39,4 +40,5 @@ CREATE TABLE complex_ks.ztable (
     AND compression = { 'sstable_compression' : 'org.apache.cassandra.io.compress.LZ4Compressor' }
     AND default_time_to_live = 0
     AND speculative_retry = '99.0PERCENTILE'
-    AND index_interval = 128;
+    AND index_interval = 128
+    AND memtable_flush_period_in_ms = 0;
