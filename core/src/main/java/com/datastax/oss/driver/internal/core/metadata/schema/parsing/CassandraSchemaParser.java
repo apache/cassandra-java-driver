@@ -123,7 +123,7 @@ public class CassandraSchemaParser implements SchemaParser {
     return new DefaultKeyspaceMetadata(
         keyspaceId,
         durableWrites,
-        true,
+        false,
         replicationOptions,
         types,
         parseTables(keyspaceId, types),
