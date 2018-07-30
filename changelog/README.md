@@ -5,6 +5,7 @@
 ### 4.0.0-beta2 (in progress)
 
 - [improvement] JAVA-1544: Check API compatibility with Revapi
+- [new feature] JAVA-1900: Add support for virtual tables
 
 ### 4.0.0-beta1
 
