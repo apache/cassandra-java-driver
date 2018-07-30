@@ -6,11 +6,13 @@
       "filter": {
         "packages": {
           "regex": true,
-          "include": [
-            "com\\.datastax\\.oss\\.driver\\.api\\..*"
-          ]
+          "exclude": [
+            "com\\.datastax\\.oss\\.driver\\.internal\\..*",
+            "com\\.datastax\\.oss\\.driver\\.shaded\\..*"
+            ]
         }
       }
+    },
       "ignore": [
         {
           "code": "java.method.addedToInterface",
@@ -91,7 +93,17 @@
           "elementKind": "method",
           "justification": "Adding virtual tables"
         },
+        {
+          "code": "java.class.externalClassExposedInAPI",
+          "new": "class com.datastax.oss.driver.api.core.CqlIdentifier",
+          "classSimpleName": "CqlIdentifier",
+          "newArchive": "com.datastax.oss:java-driver-core:jar:4.0.0-beta2-SNAPSHOT",
+          "exampleUseChainInNewApi": "com.datastax.oss.driver.api.core.CqlIdentifier is used as parameter in method com.datastax.oss.driver.api.querybuilder.condition.ConditionBuilder<com.datastax.oss.driver.api.querybuilder.condition.Condition> com.datastax.oss.driver.api.querybuilder.condition.Condition::element(com.datastax.oss.driver.api.core.CqlIdentifier, com.datastax.oss.driver.api.querybuilder.term.Term) (method com.datastax.oss.driver.api.querybuilder.condition.ConditionBuilder<com.datastax.oss.driver.api.querybuilder.condition.Condition> com.datastax.oss.driver.api.querybuilder.condition.Condition::element(com.datastax.oss.driver.api.core.CqlIdentifier, com.datastax.oss.driver.api.querybuilder.term.Term) is part of the API)",
+          "package": "com.datastax.oss.driver.api.core",
+          "classQualifiedName": "com.datastax.oss.driver.api.core.CqlIdentifier",
+          "elementKind": "class",
+          "justification": "Work around revapi filtering"
+        }
       ]
     }
   }
-}
