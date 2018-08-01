@@ -319,7 +319,7 @@ public class DefaultTopologyMonitor implements TopologyMonitor {
       return null;
     }
     Integer row_port = row.getInteger("native_port");
-    if (row_port == null) {
+    if (row_port == null || row_port == 0) {
       row_port = port;
     }
     return addressTranslator.translate(new InetSocketAddress(nativeAddress, row_port));
