@@ -26,6 +26,8 @@ import com.datastax.driver.core.exceptions.NoHostAvailableException;
 import com.datastax.driver.core.exceptions.UnsupportedProtocolVersionException;
 import com.datastax.driver.core.utils.MoreObjects;
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Function;
+import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
@@ -673,13 +675,29 @@ class ControlConnection implements Connection.Owner {
    * @return result of peers query.
    */
   private ListenableFuture<ResultSet> selectPeersFuture(final Connection connection) {
-    String query =
-        cluster.configuration.getProtocolOptions().isAllowHostPortDiscovery()
-            ? SELECT_PEERS_V2
-            : SELECT_PEERS;
+    boolean useV2 = cluster.configuration.getProtocolOptions().isAllowHostPortDiscovery();
+    String query = useV2 ? SELECT_PEERS_V2 : SELECT_PEERS;
     DefaultResultSetFuture peersFuture =
         new DefaultResultSetFuture(null, cluster.protocolVersion(), new Requests.Query(query));
     connection.write(peersFuture);
+
+    if (useV2) {
+      // throw a specialized error if peers_v2 table query fails.
+      return Futures.catching(
+          peersFuture,
+          InvalidQueryException.class,
+          new Function<InvalidQueryException, ResultSet>() {
+
+            @Override
+            public ResultSet apply(InvalidQueryException e) {
+              throw new DriverException(
+                  "Failure querying system.peers_v2 table. "
+                      + "Use of Cluster.Builder.allowHostPortDiscovery() requires this table to "
+                      + "exist.",
+                  e);
+            }
+          });
+    }
     return peersFuture;
   }
 

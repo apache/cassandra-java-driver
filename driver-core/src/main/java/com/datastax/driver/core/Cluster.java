@@ -773,10 +773,11 @@ public class Cluster implements Closeable {
 
     /**
      * Enables host port discovery using the system.peers_v2 table added in Cassandra 4.0 (via
-     * CASSANDRA-7544). This enables running multiple Cassandra
+     * CASSANDRA-7544). This enables running multiple Cassandra nodes on the same IP address with
+     * each having its own set of ports.
      *
      * <p>Use of this option only works for clusters running version Cassandra 4.0 or newer. Using
-     * it with an older version of Cassandra will likely cause initialization to fail.
+     * it with an older version of Cassandra will cause initialization to fail.
      *
      * <p>When using this option configuration provided via {@link #withPort(int)} is unused as
      * ports are resolved from Cassandra.

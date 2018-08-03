@@ -232,13 +232,11 @@ public class Host {
 
   /**
    * @return the node listen address, if known. Otherwise {@code null}.
-   * @deprecated
    * @see #getListenSocketAddress()
    * @see <a
    *     href="https://docs.datastax.com/en/cassandra/2.1/cassandra/configuration/configCassandra_yaml_r.html">The
    *     cassandra.yaml configuration file</a>
    */
-  @Deprecated
   public InetAddress getListenAddress() {
     return listenAddress != null ? listenAddress.getAddress() : null;
   }
