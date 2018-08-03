@@ -19,40 +19,41 @@ import com.datastax.driver.core.DataType;
 import com.google.common.reflect.TypeToken;
 
 /**
- * Thrown when a suitable {@link com.datastax.driver.core.TypeCodec} cannot be found by
- * {@link com.datastax.driver.core.CodecRegistry} instances.
+ * Thrown when a suitable {@link com.datastax.driver.core.TypeCodec} cannot be found by {@link
+ * com.datastax.driver.core.CodecRegistry} instances.
  */
 @SuppressWarnings("serial")
 public class CodecNotFoundException extends DriverException {
 
-    private final DataType cqlType;
+  private final DataType cqlType;
 
-    private final TypeToken<?> javaType;
+  private final TypeToken<?> javaType;
 
-    public CodecNotFoundException(String msg, DataType cqlType, TypeToken<?> javaType) {
-        this(msg, null, cqlType, javaType);
-    }
+  public CodecNotFoundException(String msg, DataType cqlType, TypeToken<?> javaType) {
+    this(msg, null, cqlType, javaType);
+  }
 
-    public CodecNotFoundException(Throwable cause, DataType cqlType, TypeToken<?> javaType) {
-        this(null, cause, cqlType, javaType);
-    }
+  public CodecNotFoundException(Throwable cause, DataType cqlType, TypeToken<?> javaType) {
+    this(null, cause, cqlType, javaType);
+  }
 
-    private CodecNotFoundException(String msg, Throwable cause, DataType cqlType, TypeToken<?>javaType) {
-        super(msg, cause);
-        this.cqlType = cqlType;
-        this.javaType = javaType;
-    }
+  private CodecNotFoundException(
+      String msg, Throwable cause, DataType cqlType, TypeToken<?> javaType) {
+    super(msg, cause);
+    this.cqlType = cqlType;
+    this.javaType = javaType;
+  }
 
-    public DataType getCqlType() {
-        return cqlType;
-    }
+  public DataType getCqlType() {
+    return cqlType;
+  }
 
-    public TypeToken<?> getJavaType() {
-        return javaType;
-    }
+  public TypeToken<?> getJavaType() {
+    return javaType;
+  }
 
-    @Override
-    public CodecNotFoundException copy() {
-        return new CodecNotFoundException(getMessage(), getCause(), getCqlType(), getJavaType());
-    }
+  @Override
+  public CodecNotFoundException copy() {
+    return new CodecNotFoundException(getMessage(), getCause(), getCqlType(), getJavaType());
+  }
 }

@@ -18,12 +18,12 @@ package com.datastax.driver.core;
 @CCMConfig(options = {"-p RandomPartitioner", "--vnodes"})
 public class RPTokenVnodeIntegrationTest extends TokenIntegrationTest {
 
-    public RPTokenVnodeIntegrationTest() {
-        super(DataType.varint(), true);
-    }
+  public RPTokenVnodeIntegrationTest() {
+    super(DataType.varint(), true);
+  }
 
-    @Override
-    protected Token.Factory tokenFactory() {
-        return Token.RPToken.FACTORY;
-    }
+  @Override
+  protected Token.Factory tokenFactory() {
+    return Token.RPToken.FACTORY;
+  }
 }

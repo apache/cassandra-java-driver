@@ -20,9 +20,8 @@ import org.testng.annotations.Test;
 
 public class NettyUtilIT {
 
-    @Test(groups = "unit")
-    public void should_detect_non_shaded_driver() {
-        Assert.assertFalse(NettyUtil.isShaded());
-    }
-
+  @Test(groups = "unit")
+  public void should_detect_non_shaded_driver() {
+    Assert.assertFalse(NettyUtil.isShaded());
+  }
 }

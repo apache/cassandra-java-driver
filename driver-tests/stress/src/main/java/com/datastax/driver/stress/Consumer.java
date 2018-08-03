@@ -17,7 +17,7 @@ package com.datastax.driver.stress;
 
 public interface Consumer {
 
-    public void start();
+  public void start();
 
-    public void join();
+  public void join();
 }

@@ -18,43 +18,37 @@ package com.datastax.driver.core.exceptions;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 
-/**
- * Indicates an error during the authentication phase while connecting to a node.
- */
+/** Indicates an error during the authentication phase while connecting to a node. */
 public class AuthenticationException extends DriverException implements CoordinatorException {
 
-    private static final long serialVersionUID = 0;
+  private static final long serialVersionUID = 0;
 
-    private final InetSocketAddress address;
+  private final InetSocketAddress address;
 
-    public AuthenticationException(InetSocketAddress address, String message) {
-        super(String.format("Authentication error on host %s: %s", address, message));
-        this.address = address;
-    }
+  public AuthenticationException(InetSocketAddress address, String message) {
+    super(String.format("Authentication error on host %s: %s", address, message));
+    this.address = address;
+  }
 
-    private AuthenticationException(InetSocketAddress address, String message, Throwable cause) {
-        super(message, cause);
-        this.address = address;
-    }
+  private AuthenticationException(InetSocketAddress address, String message, Throwable cause) {
+    super(message, cause);
+    this.address = address;
+  }
 
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public InetAddress getHost() {
-        return address.getAddress();
-    }
+  /** {@inheritDoc} */
+  @Override
+  public InetAddress getHost() {
+    return address.getAddress();
+  }
 
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public InetSocketAddress getAddress() {
-        return address;
-    }
+  /** {@inheritDoc} */
+  @Override
+  public InetSocketAddress getAddress() {
+    return address;
+  }
 
-    @Override
-    public DriverException copy() {
-        return new AuthenticationException(address, getMessage(), this);
-    }
+  @Override
+  public DriverException copy() {
+    return new AuthenticationException(address, getMessage(), this);
+  }
 }

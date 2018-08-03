@@ -18,17 +18,13 @@ package com.datastax.driver.mapping.annotations;
 import com.datastax.driver.core.DataType;
 import com.datastax.driver.core.TypeCodec;
 
-/**
- * Holds common defaults for the mapping annotations.
- */
+/** Holds common defaults for the mapping annotations. */
 public class Defaults {
 
-    /**
-     * A fake codec implementation to use as the default in mapping annotations.
-     */
-    public static abstract class NoCodec extends TypeCodec<String> {
-        private NoCodec() {
-            super(DataType.cint(), String.class);
-        }
+  /** A fake codec implementation to use as the default in mapping annotations. */
+  public abstract static class NoCodec extends TypeCodec<String> {
+    private NoCodec() {
+      super(DataType.cint(), String.class);
     }
+  }
 }

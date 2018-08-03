@@ -15,33 +15,37 @@
  */
 package com.datastax.driver.core;
 
-import org.assertj.core.api.AbstractAssert;
-
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
 
-public class ColumnDefinitionsAssert extends AbstractAssert<ColumnDefinitionsAssert, ColumnDefinitions> {
+import org.assertj.core.api.AbstractAssert;
 
-    public ColumnDefinitionsAssert(ColumnDefinitions actual) {
-        super(actual, ColumnDefinitionsAssert.class);
-    }
+public class ColumnDefinitionsAssert
+    extends AbstractAssert<ColumnDefinitionsAssert, ColumnDefinitions> {
 
-    public ColumnDefinitionsAssert hasSize(int expected) {
-        assertThat(actual.size()).isEqualTo(expected);
-        return this;
-    }
+  public ColumnDefinitionsAssert(ColumnDefinitions actual) {
+    super(actual, ColumnDefinitionsAssert.class);
+  }
 
-    public ColumnDefinitionsAssert containsVariable(String name, DataType type) {
-        try {
-            assertThat(actual.getType(name)).isEqualTo(type);
-        } catch (Exception e) {
-            fail(String.format("Expected actual to contain variable %s of type %s, but it did not", name, type), e);
-        }
-        return this;
-    }
+  public ColumnDefinitionsAssert hasSize(int expected) {
+    assertThat(actual.size()).isEqualTo(expected);
+    return this;
+  }
 
-    public ColumnDefinitionsAssert doesNotContainVariable(String name) {
-        assertThat(actual.getIndexOf(name)).isEqualTo(-1);
-        return this;
+  public ColumnDefinitionsAssert containsVariable(String name, DataType type) {
+    try {
+      assertThat(actual.getType(name)).isEqualTo(type);
+    } catch (Exception e) {
+      fail(
+          String.format(
+              "Expected actual to contain variable %s of type %s, but it did not", name, type),
+          e);
     }
+    return this;
+  }
+
+  public ColumnDefinitionsAssert doesNotContainVariable(String name) {
+    assertThat(actual.getIndexOf(name)).isEqualTo(-1);
+    return this;
+  }
 }

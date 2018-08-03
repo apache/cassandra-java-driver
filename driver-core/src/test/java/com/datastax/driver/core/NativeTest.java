@@ -21,13 +21,13 @@ import org.testng.annotations.Test;
 
 public class NativeTest {
 
-    /**
-     * Verifies that {@link Native#processId()} returns a non-zero process id.
-     *
-     * @jira_ticket JAVA-1797
-     */
-    @Test(groups = "unit")
-    public void should_return_non_zero_pid() {
-        assertThat(Native.processId()).isNotZero();
-    }
+  /**
+   * Verifies that {@link Native#processId()} returns a non-zero process id.
+   *
+   * @jira_ticket JAVA-1797
+   */
+  @Test(groups = "unit")
+  public void should_return_non_zero_pid() {
+    assertThat(Native.processId()).isNotZero();
+  }
 }

@@ -15,241 +15,244 @@
  */
 package com.datastax.driver.core;
 
+import static com.datastax.driver.core.ProtocolVersion.V4;
+
 import com.datastax.driver.core.policies.RetryPolicy;
 import com.google.common.collect.ImmutableMap;
-
 import java.nio.ByteBuffer;
 import java.util.List;
 import java.util.Map;
 
-import static com.datastax.driver.core.ProtocolVersion.V4;
-
 public class DefaultPreparedStatement implements PreparedStatement {
 
-    final PreparedId preparedId;
+  final PreparedId preparedId;
 
-    final String query;
-    final String queryKeyspace;
-    final Map<String, ByteBuffer> incomingPayload;
-    final Cluster cluster;
+  final String query;
+  final String queryKeyspace;
+  final Map<String, ByteBuffer> incomingPayload;
+  final Cluster cluster;
 
-    volatile ByteBuffer routingKey;
+  volatile ByteBuffer routingKey;
 
-    volatile ConsistencyLevel consistency;
-    volatile ConsistencyLevel serialConsistency;
-    volatile boolean traceQuery;
-    volatile RetryPolicy retryPolicy;
-    volatile ImmutableMap<String, ByteBuffer> outgoingPayload;
-    volatile Boolean idempotent;
+  volatile ConsistencyLevel consistency;
+  volatile ConsistencyLevel serialConsistency;
+  volatile boolean traceQuery;
+  volatile RetryPolicy retryPolicy;
+  volatile ImmutableMap<String, ByteBuffer> outgoingPayload;
+  volatile Boolean idempotent;
 
-    private DefaultPreparedStatement(PreparedId id, String query, String queryKeyspace, Map<String, ByteBuffer> incomingPayload, Cluster cluster) {
-        this.preparedId = id;
-        this.query = query;
-        this.queryKeyspace = queryKeyspace;
-        this.incomingPayload = incomingPayload;
-        this.cluster = cluster;
+  private DefaultPreparedStatement(
+      PreparedId id,
+      String query,
+      String queryKeyspace,
+      Map<String, ByteBuffer> incomingPayload,
+      Cluster cluster) {
+    this.preparedId = id;
+    this.query = query;
+    this.queryKeyspace = queryKeyspace;
+    this.incomingPayload = incomingPayload;
+    this.cluster = cluster;
+  }
+
+  static DefaultPreparedStatement fromMessage(
+      Responses.Result.Prepared msg, Cluster cluster, String query, String queryKeyspace) {
+    assert msg.metadata.columns != null;
+
+    ColumnDefinitions defs = msg.metadata.columns;
+
+    ProtocolVersion protocolVersion =
+        cluster.getConfiguration().getProtocolOptions().getProtocolVersion();
+    PreparedId.PreparedMetadata boundValuesMetadata =
+        new PreparedId.PreparedMetadata(msg.statementId, defs);
+    PreparedId.PreparedMetadata resultSetMetadata =
+        new PreparedId.PreparedMetadata(msg.resultMetadataId, msg.resultMetadata.columns);
+
+    int[] pkIndices = null;
+    if (defs.size() > 0) {
+      pkIndices =
+          (protocolVersion.compareTo(V4) >= 0)
+              ? msg.metadata.pkIndices
+              : computePkIndices(cluster.getMetadata(), defs);
     }
 
-    static DefaultPreparedStatement fromMessage(Responses.Result.Prepared msg, Cluster cluster, String query, String queryKeyspace) {
-        assert msg.metadata.columns != null;
+    PreparedId preparedId =
+        new PreparedId(boundValuesMetadata, resultSetMetadata, pkIndices, protocolVersion);
+    return new DefaultPreparedStatement(
+        preparedId, query, queryKeyspace, msg.getCustomPayload(), cluster);
+  }
 
-        ColumnDefinitions defs = msg.metadata.columns;
-
-        ProtocolVersion protocolVersion = cluster.getConfiguration().getProtocolOptions().getProtocolVersion();
-        PreparedId.PreparedMetadata boundValuesMetadata = new PreparedId.PreparedMetadata(msg.statementId, defs);
-        PreparedId.PreparedMetadata resultSetMetadata = new PreparedId.PreparedMetadata(msg.resultMetadataId, msg.resultMetadata.columns);
-
-        int[] pkIndices = null;
-        if (defs.size() > 0) {
-            pkIndices = (protocolVersion.compareTo(V4) >= 0)
-                    ? msg.metadata.pkIndices
-                    : computePkIndices(cluster.getMetadata(), defs);
-        }
-
-        PreparedId preparedId = new PreparedId(boundValuesMetadata, resultSetMetadata, pkIndices, protocolVersion);
-        return new DefaultPreparedStatement(preparedId, query, queryKeyspace, msg.getCustomPayload(), cluster);
+  private static int[] computePkIndices(Metadata clusterMetadata, ColumnDefinitions boundColumns) {
+    List<ColumnMetadata> partitionKeyColumns = null;
+    int[] pkIndexes = null;
+    KeyspaceMetadata km = clusterMetadata.getKeyspace(Metadata.quote(boundColumns.getKeyspace(0)));
+    if (km != null) {
+      TableMetadata tm = km.getTable(Metadata.quote(boundColumns.getTable(0)));
+      if (tm != null) {
+        partitionKeyColumns = tm.getPartitionKey();
+        pkIndexes = new int[partitionKeyColumns.size()];
+        for (int i = 0; i < pkIndexes.length; ++i) pkIndexes[i] = -1;
+      }
     }
 
-    private static int[] computePkIndices(Metadata clusterMetadata, ColumnDefinitions boundColumns) {
-        List<ColumnMetadata> partitionKeyColumns = null;
-        int[] pkIndexes = null;
-        KeyspaceMetadata km = clusterMetadata.getKeyspace(Metadata.quote(boundColumns.getKeyspace(0)));
-        if (km != null) {
-            TableMetadata tm = km.getTable(Metadata.quote(boundColumns.getTable(0)));
-            if (tm != null) {
-                partitionKeyColumns = tm.getPartitionKey();
-                pkIndexes = new int[partitionKeyColumns.size()];
-                for (int i = 0; i < pkIndexes.length; ++i)
-                    pkIndexes[i] = -1;
-            }
-        }
+    // Note: we rely on the fact CQL queries cannot span multiple tables. If that change, we'll have
+    // to get smarter.
+    for (int i = 0; i < boundColumns.size(); i++)
+      maybeGetIndex(boundColumns.getName(i), i, partitionKeyColumns, pkIndexes);
 
-        // Note: we rely on the fact CQL queries cannot span multiple tables. If that change, we'll have to get smarter.
-        for (int i = 0; i < boundColumns.size(); i++)
-            maybeGetIndex(boundColumns.getName(i), i, partitionKeyColumns, pkIndexes);
+    return allSet(pkIndexes) ? pkIndexes : null;
+  }
 
-        return allSet(pkIndexes) ? pkIndexes : null;
+  private static void maybeGetIndex(
+      String name, int j, List<ColumnMetadata> pkColumns, int[] pkIndexes) {
+    if (pkColumns == null) return;
+
+    for (int i = 0; i < pkColumns.size(); ++i) {
+      if (name.equals(pkColumns.get(i).getName())) {
+        // We may have the same column prepared multiple times, but only pick the first value
+        pkIndexes[i] = j;
+        return;
+      }
     }
+  }
 
-    private static void maybeGetIndex(String name, int j, List<ColumnMetadata> pkColumns, int[] pkIndexes) {
-        if (pkColumns == null)
-            return;
+  private static boolean allSet(int[] pkColumns) {
+    if (pkColumns == null) return false;
 
-        for (int i = 0; i < pkColumns.size(); ++i) {
-            if (name.equals(pkColumns.get(i).getName())) {
-                // We may have the same column prepared multiple times, but only pick the first value
-                pkIndexes[i] = j;
-                return;
-            }
-        }
-    }
+    for (int i = 0; i < pkColumns.length; ++i) if (pkColumns[i] < 0) return false;
 
-    private static boolean allSet(int[] pkColumns) {
-        if (pkColumns == null)
-            return false;
+    return true;
+  }
 
-        for (int i = 0; i < pkColumns.length; ++i)
-            if (pkColumns[i] < 0)
-                return false;
+  @Override
+  public ColumnDefinitions getVariables() {
+    return preparedId.boundValuesMetadata.variables;
+  }
 
-        return true;
-    }
+  @Override
+  public BoundStatement bind(Object... values) {
+    BoundStatement bs = new BoundStatement(this);
+    return bs.bind(values);
+  }
 
-    @Override
-    public ColumnDefinitions getVariables() {
-        return preparedId.boundValuesMetadata.variables;
-    }
+  @Override
+  public BoundStatement bind() {
+    return new BoundStatement(this);
+  }
 
-    @Override
-    public BoundStatement bind(Object... values) {
-        BoundStatement bs = new BoundStatement(this);
-        return bs.bind(values);
-    }
+  @Override
+  public PreparedStatement setRoutingKey(ByteBuffer routingKey) {
+    this.routingKey = routingKey;
+    return this;
+  }
 
-    @Override
-    public BoundStatement bind() {
-        return new BoundStatement(this);
-    }
+  @Override
+  public PreparedStatement setRoutingKey(ByteBuffer... routingKeyComponents) {
+    this.routingKey = SimpleStatement.compose(routingKeyComponents);
+    return this;
+  }
 
-    @Override
-    public PreparedStatement setRoutingKey(ByteBuffer routingKey) {
-        this.routingKey = routingKey;
-        return this;
-    }
+  @Override
+  public ByteBuffer getRoutingKey() {
+    return routingKey;
+  }
 
-    @Override
-    public PreparedStatement setRoutingKey(ByteBuffer... routingKeyComponents) {
-        this.routingKey = SimpleStatement.compose(routingKeyComponents);
-        return this;
-    }
+  @Override
+  public PreparedStatement setConsistencyLevel(ConsistencyLevel consistency) {
+    this.consistency = consistency;
+    return this;
+  }
 
-    @Override
-    public ByteBuffer getRoutingKey() {
-        return routingKey;
-    }
+  @Override
+  public ConsistencyLevel getConsistencyLevel() {
+    return consistency;
+  }
 
-    @Override
-    public PreparedStatement setConsistencyLevel(ConsistencyLevel consistency) {
-        this.consistency = consistency;
-        return this;
-    }
+  @Override
+  public PreparedStatement setSerialConsistencyLevel(ConsistencyLevel serialConsistency) {
+    if (!serialConsistency.isSerial()) throw new IllegalArgumentException();
+    this.serialConsistency = serialConsistency;
+    return this;
+  }
 
-    @Override
-    public ConsistencyLevel getConsistencyLevel() {
-        return consistency;
-    }
+  @Override
+  public ConsistencyLevel getSerialConsistencyLevel() {
+    return serialConsistency;
+  }
 
-    @Override
-    public PreparedStatement setSerialConsistencyLevel(ConsistencyLevel serialConsistency) {
-        if (!serialConsistency.isSerial())
-            throw new IllegalArgumentException();
-        this.serialConsistency = serialConsistency;
-        return this;
-    }
+  @Override
+  public String getQueryString() {
+    return query;
+  }
 
-    @Override
-    public ConsistencyLevel getSerialConsistencyLevel() {
-        return serialConsistency;
-    }
+  @Override
+  public String getQueryKeyspace() {
+    return queryKeyspace;
+  }
 
-    @Override
-    public String getQueryString() {
-        return query;
-    }
+  @Override
+  public PreparedStatement enableTracing() {
+    this.traceQuery = true;
+    return this;
+  }
 
-    @Override
-    public String getQueryKeyspace() {
-        return queryKeyspace;
-    }
+  @Override
+  public PreparedStatement disableTracing() {
+    this.traceQuery = false;
+    return this;
+  }
 
-    @Override
-    public PreparedStatement enableTracing() {
-        this.traceQuery = true;
-        return this;
-    }
+  @Override
+  public boolean isTracing() {
+    return traceQuery;
+  }
 
-    @Override
-    public PreparedStatement disableTracing() {
-        this.traceQuery = false;
-        return this;
-    }
+  @Override
+  public PreparedStatement setRetryPolicy(RetryPolicy policy) {
+    this.retryPolicy = policy;
+    return this;
+  }
 
-    @Override
-    public boolean isTracing() {
-        return traceQuery;
-    }
+  @Override
+  public RetryPolicy getRetryPolicy() {
+    return retryPolicy;
+  }
 
-    @Override
-    public PreparedStatement setRetryPolicy(RetryPolicy policy) {
-        this.retryPolicy = policy;
-        return this;
-    }
+  @Override
+  public PreparedId getPreparedId() {
+    return preparedId;
+  }
 
-    @Override
-    public RetryPolicy getRetryPolicy() {
-        return retryPolicy;
-    }
+  @Override
+  public Map<String, ByteBuffer> getIncomingPayload() {
+    return incomingPayload;
+  }
 
-    @Override
-    public PreparedId getPreparedId() {
-        return preparedId;
-    }
+  @Override
+  public Map<String, ByteBuffer> getOutgoingPayload() {
+    return outgoingPayload;
+  }
 
-    @Override
-    public Map<String, ByteBuffer> getIncomingPayload() {
-        return incomingPayload;
-    }
+  @Override
+  public PreparedStatement setOutgoingPayload(Map<String, ByteBuffer> payload) {
+    this.outgoingPayload = payload == null ? null : ImmutableMap.copyOf(payload);
+    return this;
+  }
 
-    @Override
-    public Map<String, ByteBuffer> getOutgoingPayload() {
-        return outgoingPayload;
-    }
+  @Override
+  public CodecRegistry getCodecRegistry() {
+    return cluster.getConfiguration().getCodecRegistry();
+  }
 
-    @Override
-    public PreparedStatement setOutgoingPayload(Map<String, ByteBuffer> payload) {
-        this.outgoingPayload = payload == null ? null : ImmutableMap.copyOf(payload);
-        return this;
-    }
+  /** {@inheritDoc} */
+  @Override
+  public PreparedStatement setIdempotent(Boolean idempotent) {
+    this.idempotent = idempotent;
+    return this;
+  }
 
-    @Override
-    public CodecRegistry getCodecRegistry() {
-        return cluster.getConfiguration().getCodecRegistry();
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public PreparedStatement setIdempotent(Boolean idempotent) {
-        this.idempotent = idempotent;
-        return this;
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public Boolean isIdempotent() {
-        return this.idempotent;
-    }
+  /** {@inheritDoc} */
+  @Override
+  public Boolean isIdempotent() {
+    return this.idempotent;
+  }
 }

@@ -18,46 +18,42 @@ package com.datastax.driver.core.exceptions;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 
-/**
- * Indicates that the contacted host replied with an UNPREPARED error code.
- */
+/** Indicates that the contacted host replied with an UNPREPARED error code. */
 public class UnpreparedException extends QueryValidationException implements CoordinatorException {
 
-    private static final long serialVersionUID = 0;
+  private static final long serialVersionUID = 0;
 
-    private final InetSocketAddress address;
+  private final InetSocketAddress address;
 
-    public UnpreparedException(InetSocketAddress address, String message) {
-        super(String.format("A prepared query was submitted on %s but was not known of that node: %s", address, message));
-        this.address = address;
-    }
+  public UnpreparedException(InetSocketAddress address, String message) {
+    super(
+        String.format(
+            "A prepared query was submitted on %s but was not known of that node: %s",
+            address, message));
+    this.address = address;
+  }
 
-    /**
-     * Private constructor used solely when copying exceptions.
-     */
-    private UnpreparedException(InetSocketAddress address, String message, UnpreparedException cause) {
-        super(message, cause);
-        this.address = address;
-    }
+  /** Private constructor used solely when copying exceptions. */
+  private UnpreparedException(
+      InetSocketAddress address, String message, UnpreparedException cause) {
+    super(message, cause);
+    this.address = address;
+  }
 
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public InetAddress getHost() {
-        return address.getAddress();
-    }
+  /** {@inheritDoc} */
+  @Override
+  public InetAddress getHost() {
+    return address.getAddress();
+  }
 
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public InetSocketAddress getAddress() {
-        return address;
-    }
+  /** {@inheritDoc} */
+  @Override
+  public InetSocketAddress getAddress() {
+    return address;
+  }
 
-    @Override
-    public UnpreparedException copy() {
-        return new UnpreparedException(address, getMessage(), this);
-    }
+  @Override
+  public UnpreparedException copy() {
+    return new UnpreparedException(address, getMessage(), this);
+  }
 }

@@ -18,446 +18,437 @@ package com.datastax.driver.core;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableSortedSet;
 import com.google.common.collect.Lists;
-
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
-/**
- * Describes a keyspace defined in this cluster.
- */
+/** Describes a keyspace defined in this cluster. */
 public class KeyspaceMetadata {
 
-    public static final String KS_NAME = "keyspace_name";
-    private static final String DURABLE_WRITES = "durable_writes";
-    private static final String STRATEGY_CLASS = "strategy_class";
-    private static final String STRATEGY_OPTIONS = "strategy_options";
-    private static final String REPLICATION = "replication";
+  public static final String KS_NAME = "keyspace_name";
+  private static final String DURABLE_WRITES = "durable_writes";
+  private static final String STRATEGY_CLASS = "strategy_class";
+  private static final String STRATEGY_OPTIONS = "strategy_options";
+  private static final String REPLICATION = "replication";
 
-    private final String name;
-    private final boolean durableWrites;
-    private final boolean virtual;
+  private final String name;
+  private final boolean durableWrites;
+  private final boolean virtual;
 
-    private final ReplicationStrategy strategy;
-    private final Map<String, String> replication;
+  private final ReplicationStrategy strategy;
+  private final Map<String, String> replication;
 
-    final Map<String, TableMetadata> tables = new ConcurrentHashMap<String, TableMetadata>();
-    final Map<String, MaterializedViewMetadata> views = new ConcurrentHashMap<String, MaterializedViewMetadata>();
-    final Map<String, UserType> userTypes = Collections.synchronizedMap(new LinkedHashMap<String, UserType>());
-    final Map<String, FunctionMetadata> functions = new ConcurrentHashMap<String, FunctionMetadata>();
-    final Map<String, AggregateMetadata> aggregates = new ConcurrentHashMap<String, AggregateMetadata>();
+  final Map<String, TableMetadata> tables = new ConcurrentHashMap<String, TableMetadata>();
+  final Map<String, MaterializedViewMetadata> views =
+      new ConcurrentHashMap<String, MaterializedViewMetadata>();
+  final Map<String, UserType> userTypes =
+      Collections.synchronizedMap(new LinkedHashMap<String, UserType>());
+  final Map<String, FunctionMetadata> functions = new ConcurrentHashMap<String, FunctionMetadata>();
+  final Map<String, AggregateMetadata> aggregates =
+      new ConcurrentHashMap<String, AggregateMetadata>();
 
-    @VisibleForTesting
-    @Deprecated
-    KeyspaceMetadata(String name, boolean durableWrites, Map<String, String> replication) {
-        this(name, durableWrites, replication, false);
+  @VisibleForTesting
+  @Deprecated
+  KeyspaceMetadata(String name, boolean durableWrites, Map<String, String> replication) {
+    this(name, durableWrites, replication, false);
+  }
+
+  @VisibleForTesting
+  KeyspaceMetadata(
+      String name, boolean durableWrites, Map<String, String> replication, boolean virtual) {
+    this.name = name;
+    this.durableWrites = durableWrites;
+    this.replication = replication;
+    this.strategy = ReplicationStrategy.create(replication);
+    this.virtual = virtual;
+  }
+
+  static KeyspaceMetadata build(Row row, VersionNumber cassandraVersion) {
+    if (cassandraVersion.getMajor() <= 2) {
+      String name = row.getString(KS_NAME);
+      boolean durableWrites = row.getBool(DURABLE_WRITES);
+      Map<String, String> replicationOptions;
+      replicationOptions = new HashMap<String, String>();
+      replicationOptions.put("class", row.getString(STRATEGY_CLASS));
+      replicationOptions.putAll(SimpleJSONParser.parseStringMap(row.getString(STRATEGY_OPTIONS)));
+      return new KeyspaceMetadata(name, durableWrites, replicationOptions, false);
+    } else {
+      String name = row.getString(KS_NAME);
+      boolean durableWrites = row.getBool(DURABLE_WRITES);
+      return new KeyspaceMetadata(
+          name, durableWrites, row.getMap(REPLICATION, String.class, String.class), false);
     }
-    @VisibleForTesting
-    KeyspaceMetadata(String name, boolean durableWrites, Map<String, String> replication, boolean virtual) {
-        this.name = name;
-        this.durableWrites = durableWrites;
-        this.replication = replication;
-        this.strategy = ReplicationStrategy.create(replication);
-        this.virtual = virtual;
-    }
+  }
 
-    static KeyspaceMetadata build(Row row, VersionNumber cassandraVersion) {
-        if (cassandraVersion.getMajor() <= 2) {
-            String name = row.getString(KS_NAME);
-            boolean durableWrites = row.getBool(DURABLE_WRITES);
-            Map<String, String> replicationOptions;
-            replicationOptions = new HashMap<String, String>();
-            replicationOptions.put("class", row.getString(STRATEGY_CLASS));
-            replicationOptions.putAll(SimpleJSONParser.parseStringMap(row.getString(STRATEGY_OPTIONS)));
-            return new KeyspaceMetadata(name, durableWrites, replicationOptions, false);
-        } else {
-            String name = row.getString(KS_NAME);
-            boolean durableWrites = row.getBool(DURABLE_WRITES);
-            return new KeyspaceMetadata(name, durableWrites, row.getMap(REPLICATION, String.class, String.class), false);
-        }
-    }
+  static KeyspaceMetadata buildVirtual(Row row, VersionNumber cassandraVersion) {
+    String name = row.getString(KS_NAME);
+    return new KeyspaceMetadata(name, false, Collections.<String, String>emptyMap(), true);
+  }
 
-    static KeyspaceMetadata buildVirtual(Row row, VersionNumber cassandraVersion) {
-            String name = row.getString(KS_NAME);
-            return new KeyspaceMetadata(name, false, Collections.<String, String>emptyMap(), true);
-    }
+  /**
+   * Returns the name of this keyspace.
+   *
+   * @return the name of this CQL keyspace.
+   */
+  public String getName() {
+    return name;
+  }
 
-    /**
-     * Returns the name of this keyspace.
-     *
-     * @return the name of this CQL keyspace.
-     */
-    public String getName() {
-        return name;
-    }
+  /**
+   * Returns whether durable writes are set on this keyspace.
+   *
+   * @return {@code true} if durable writes are set on this keyspace (the default), {@code false}
+   *     otherwise.
+   */
+  public boolean isDurableWrites() {
+    return durableWrites;
+  }
 
-    /**
-     * Returns whether durable writes are set on this keyspace.
-     *
-     * @return {@code true} if durable writes are set on this keyspace (the
-     * default), {@code false} otherwise.
-     */
-    public boolean isDurableWrites() {
-        return durableWrites;
-    }
+  /**
+   * Returns whether or not this keyspace is a virtual keyspace
+   *
+   * @return {@code true} if virtual keyspace default), {@code false} otherwise.
+   */
+  public boolean isVirtual() {
+    return virtual;
+  }
 
-    /**
-     * Returns whether or not this keyspace is a virtual keyspace
-     * @return {@code true} if virtual keyspace
-     * default), {@code false} otherwise.
-     */
-    public boolean isVirtual() {
-        return virtual;
-    }
+  /**
+   * Returns the replication options for this keyspace.
+   *
+   * @return a map containing the replication options for this keyspace.
+   */
+  public Map<String, String> getReplication() {
+    return Collections.<String, String>unmodifiableMap(replication);
+  }
 
-    /**
-     * Returns the replication options for this keyspace.
-     *
-     * @return a map containing the replication options for this keyspace.
-     */
-    public Map<String, String> getReplication() {
-        return Collections.<String, String>unmodifiableMap(replication);
-    }
+  /**
+   * Returns the metadata for a table contained in this keyspace.
+   *
+   * @param name the name of table to retrieve
+   * @return the metadata for table {@code name} if it exists in this keyspace, {@code null}
+   *     otherwise.
+   */
+  public TableMetadata getTable(String name) {
+    return tables.get(Metadata.handleId(name));
+  }
 
-    /**
-     * Returns the metadata for a table contained in this keyspace.
-     *
-     * @param name the name of table to retrieve
-     * @return the metadata for table {@code name} if it exists in this keyspace,
-     * {@code null} otherwise.
-     */
-    public TableMetadata getTable(String name) {
-        return tables.get(Metadata.handleId(name));
-    }
+  TableMetadata removeTable(String table) {
+    return tables.remove(table);
+  }
 
-    TableMetadata removeTable(String table) {
-        return tables.remove(table);
-    }
+  /**
+   * Returns the tables defined in this keyspace.
+   *
+   * @return a collection of the metadata for the tables defined in this keyspace.
+   */
+  public Collection<TableMetadata> getTables() {
+    return Collections.<TableMetadata>unmodifiableCollection(tables.values());
+  }
 
-    /**
-     * Returns the tables defined in this keyspace.
-     *
-     * @return a collection of the metadata for the tables defined in this
-     * keyspace.
-     */
-    public Collection<TableMetadata> getTables() {
-        return Collections.<TableMetadata>unmodifiableCollection(tables.values());
-    }
+  /**
+   * Returns the metadata for a materialized view contained in this keyspace.
+   *
+   * @param name the name of materialized view to retrieve
+   * @return the metadata for materialized view {@code name} if it exists in this keyspace, {@code
+   *     null} otherwise.
+   */
+  public MaterializedViewMetadata getMaterializedView(String name) {
+    return views.get(Metadata.handleId(name));
+  }
 
-    /**
-     * Returns the metadata for a materialized view contained in this keyspace.
-     *
-     * @param name the name of materialized view to retrieve
-     * @return the metadata for materialized view {@code name} if it exists in this keyspace,
-     * {@code null} otherwise.
-     */
-    public MaterializedViewMetadata getMaterializedView(String name) {
-        return views.get(Metadata.handleId(name));
-    }
+  MaterializedViewMetadata removeMaterializedView(String materializedView) {
+    return views.remove(materializedView);
+  }
 
-    MaterializedViewMetadata removeMaterializedView(String materializedView) {
-        return views.remove(materializedView);
-    }
+  /**
+   * Returns the materialized views defined in this keyspace.
+   *
+   * @return a collection of the metadata for the materialized views defined in this keyspace.
+   */
+  public Collection<MaterializedViewMetadata> getMaterializedViews() {
+    return Collections.unmodifiableCollection(views.values());
+  }
 
-    /**
-     * Returns the materialized views defined in this keyspace.
-     *
-     * @return a collection of the metadata for the materialized views defined in this
-     * keyspace.
-     */
-    public Collection<MaterializedViewMetadata> getMaterializedViews() {
-        return Collections.unmodifiableCollection(views.values());
-    }
+  /**
+   * Returns the definition for a user defined type (UDT) in this keyspace.
+   *
+   * @param name the name of UDT definition to retrieve
+   * @return the definition for {@code name} if it exists in this keyspace, {@code null} otherwise.
+   */
+  public UserType getUserType(String name) {
+    return userTypes.get(Metadata.handleId(name));
+  }
 
-    /**
-     * Returns the definition for a user defined type (UDT) in this keyspace.
-     *
-     * @param name the name of UDT definition to retrieve
-     * @return the definition for {@code name} if it exists in this keyspace,
-     * {@code null} otherwise.
-     */
-    public UserType getUserType(String name) {
-        return userTypes.get(Metadata.handleId(name));
-    }
+  /**
+   * Returns the user types defined in this keyspace.
+   *
+   * @return a collection of the definition for the user types defined in this keyspace.
+   */
+  public Collection<UserType> getUserTypes() {
+    return Collections.unmodifiableCollection(userTypes.values());
+  }
 
-    /**
-     * Returns the user types defined in this keyspace.
-     *
-     * @return a collection of the definition for the user types defined in this
-     * keyspace.
-     */
-    public Collection<UserType> getUserTypes() {
-        return Collections.unmodifiableCollection(userTypes.values());
-    }
+  UserType removeUserType(String userType) {
+    return userTypes.remove(userType);
+  }
 
-    UserType removeUserType(String userType) {
-        return userTypes.remove(userType);
-    }
+  /**
+   * Returns the definition of a function in this keyspace.
+   *
+   * @param name the name of the function.
+   * @param argumentTypes the types of the function's arguments.
+   * @return the function definition if it exists in this keyspace, {@code null} otherwise.
+   */
+  public FunctionMetadata getFunction(String name, Collection<DataType> argumentTypes) {
+    return functions.get(Metadata.fullFunctionName(Metadata.handleId(name), argumentTypes));
+  }
 
-    /**
-     * Returns the definition of a function in this keyspace.
-     *
-     * @param name          the name of the function.
-     * @param argumentTypes the types of the function's arguments.
-     * @return the function definition if it exists in this keyspace, {@code null} otherwise.
-     */
-    public FunctionMetadata getFunction(String name, Collection<DataType> argumentTypes) {
-        return functions.get(Metadata.fullFunctionName(Metadata.handleId(name), argumentTypes));
-    }
+  /**
+   * Returns the definition of a function in this keyspace.
+   *
+   * @param name the name of the function.
+   * @param argumentTypes the types of the function's arguments.
+   * @return the function definition if it exists in this keyspace, {@code null} otherwise.
+   */
+  public FunctionMetadata getFunction(String name, DataType... argumentTypes) {
+    return getFunction(name, Lists.newArrayList(argumentTypes));
+  }
 
-    /**
-     * Returns the definition of a function in this keyspace.
-     *
-     * @param name          the name of the function.
-     * @param argumentTypes the types of the function's arguments.
-     * @return the function definition if it exists in this keyspace, {@code null} otherwise.
-     */
-    public FunctionMetadata getFunction(String name, DataType... argumentTypes) {
-        return getFunction(name, Lists.newArrayList(argumentTypes));
-    }
+  /**
+   * Returns the functions defined in this keyspace.
+   *
+   * @return a collection of the definition for the functions defined in this keyspace.
+   */
+  public Collection<FunctionMetadata> getFunctions() {
+    return Collections.unmodifiableCollection(functions.values());
+  }
 
-    /**
-     * Returns the functions defined in this keyspace.
-     *
-     * @return a collection of the definition for the functions defined in this
-     * keyspace.
-     */
-    public Collection<FunctionMetadata> getFunctions() {
-        return Collections.unmodifiableCollection(functions.values());
-    }
+  FunctionMetadata removeFunction(String fullName) {
+    return functions.remove(fullName);
+  }
 
-    FunctionMetadata removeFunction(String fullName) {
-        return functions.remove(fullName);
-    }
+  /**
+   * Returns the definition of an aggregate in this keyspace.
+   *
+   * @param name the name of the aggregate.
+   * @param argumentTypes the types of the aggregate's arguments.
+   * @return the aggregate definition if it exists in this keyspace, {@code null} otherwise.
+   */
+  public AggregateMetadata getAggregate(String name, Collection<DataType> argumentTypes) {
+    return aggregates.get(Metadata.fullFunctionName(Metadata.handleId(name), argumentTypes));
+  }
 
-    /**
-     * Returns the definition of an aggregate in this keyspace.
-     *
-     * @param name          the name of the aggregate.
-     * @param argumentTypes the types of the aggregate's arguments.
-     * @return the aggregate definition if it exists in this keyspace, {@code null} otherwise.
-     */
-    public AggregateMetadata getAggregate(String name, Collection<DataType> argumentTypes) {
-        return aggregates.get(Metadata.fullFunctionName(Metadata.handleId(name), argumentTypes));
-    }
+  /**
+   * Returns the definition of an aggregate in this keyspace.
+   *
+   * @param name the name of the aggregate.
+   * @param argumentTypes the types of the aggregate's arguments.
+   * @return the aggregate definition if it exists in this keyspace, {@code null} otherwise.
+   */
+  public AggregateMetadata getAggregate(String name, DataType... argumentTypes) {
+    return getAggregate(name, Lists.newArrayList(argumentTypes));
+  }
 
-    /**
-     * Returns the definition of an aggregate in this keyspace.
-     *
-     * @param name          the name of the aggregate.
-     * @param argumentTypes the types of the aggregate's arguments.
-     * @return the aggregate definition if it exists in this keyspace, {@code null} otherwise.
-     */
-    public AggregateMetadata getAggregate(String name, DataType... argumentTypes) {
-        return getAggregate(name, Lists.newArrayList(argumentTypes));
-    }
+  /**
+   * Returns the aggregates defined in this keyspace.
+   *
+   * @return a collection of the definition for the aggregates defined in this keyspace.
+   */
+  public Collection<AggregateMetadata> getAggregates() {
+    return Collections.unmodifiableCollection(aggregates.values());
+  }
 
-    /**
-     * Returns the aggregates defined in this keyspace.
-     *
-     * @return a collection of the definition for the aggregates defined in this
-     * keyspace.
-     */
-    public Collection<AggregateMetadata> getAggregates() {
-        return Collections.unmodifiableCollection(aggregates.values());
-    }
+  AggregateMetadata removeAggregate(String fullName) {
+    return aggregates.remove(fullName);
+  }
 
-    AggregateMetadata removeAggregate(String fullName) {
-        return aggregates.remove(fullName);
-    }
+  // comparators for ordering types in cqlsh output.
 
-    // comparators for ordering types in cqlsh output.
-
-    private static final Comparator<UserType> typeByName = new Comparator<UserType>() {
+  private static final Comparator<UserType> typeByName =
+      new Comparator<UserType>() {
         @Override
         public int compare(UserType o1, UserType o2) {
-            return o1.getTypeName().compareTo(o2.getTypeName());
+          return o1.getTypeName().compareTo(o2.getTypeName());
         }
-    };
+      };
 
-    private static final Comparator<FunctionMetadata> functionByName = new Comparator<FunctionMetadata>() {
+  private static final Comparator<FunctionMetadata> functionByName =
+      new Comparator<FunctionMetadata>() {
         @Override
         public int compare(FunctionMetadata o1, FunctionMetadata o2) {
-            return o1.getSimpleName().compareTo(o2.getSimpleName());
+          return o1.getSimpleName().compareTo(o2.getSimpleName());
         }
-    };
+      };
 
-    private static final Comparator<AggregateMetadata> aggregateByName = new Comparator<AggregateMetadata>() {
+  private static final Comparator<AggregateMetadata> aggregateByName =
+      new Comparator<AggregateMetadata>() {
         @Override
         public int compare(AggregateMetadata o1, AggregateMetadata o2) {
-            return o1.getSimpleName().compareTo(o2.getSimpleName());
+          return o1.getSimpleName().compareTo(o2.getSimpleName());
         }
-    };
+      };
 
-    /**
-     * Returns a {@code String} containing CQL queries representing this
-     * keyspace and the user types and tables it contains.
-     * <p/>
-     * In other words, this method returns the queries that would allow to
-     * recreate the schema of this keyspace, along with all its user
-     * types/tables.
-     * <p/>
-     * Note that the returned String is formatted to be human readable (for
-     * some definition of human readable at least).
-     *
-     * @return the CQL queries representing this keyspace schema as a {code
-     * String}.
-     */
-    public String exportAsString() {
-        StringBuilder sb = new StringBuilder();
+  /**
+   * Returns a {@code String} containing CQL queries representing this keyspace and the user types
+   * and tables it contains.
+   *
+   * <p>In other words, this method returns the queries that would allow to recreate the schema of
+   * this keyspace, along with all its user types/tables.
+   *
+   * <p>Note that the returned String is formatted to be human readable (for some definition of
+   * human readable at least).
+   *
+   * @return the CQL queries representing this keyspace schema as a {code String}.
+   */
+  public String exportAsString() {
+    StringBuilder sb = new StringBuilder();
 
-        sb.append(asCQLQuery()).append('\n');
+    sb.append(asCQLQuery()).append('\n');
 
-        // include types, tables, views, functions and aggregates, each ordered by name, with one small exception
-        // being that user types are ordered topologically and then by name within same level.
-        for (UserType udt : getSortedUserTypes())
-            sb.append('\n').append(udt.exportAsString()).append('\n');
+    // include types, tables, views, functions and aggregates, each ordered by name, with one small
+    // exception
+    // being that user types are ordered topologically and then by name within same level.
+    for (UserType udt : getSortedUserTypes())
+      sb.append('\n').append(udt.exportAsString()).append('\n');
 
-        for (AbstractTableMetadata tm : ImmutableSortedSet.orderedBy(AbstractTableMetadata.byNameComparator).addAll(tables.values()).build())
-            sb.append('\n').append(tm.exportAsString()).append('\n');
+    for (AbstractTableMetadata tm :
+        ImmutableSortedSet.orderedBy(AbstractTableMetadata.byNameComparator)
+            .addAll(tables.values())
+            .build()) sb.append('\n').append(tm.exportAsString()).append('\n');
 
-        for (FunctionMetadata fm : ImmutableSortedSet.orderedBy(functionByName).addAll(functions.values()).build())
-            sb.append('\n').append(fm.exportAsString()).append('\n');
+    for (FunctionMetadata fm :
+        ImmutableSortedSet.orderedBy(functionByName).addAll(functions.values()).build())
+      sb.append('\n').append(fm.exportAsString()).append('\n');
 
-        for (AggregateMetadata am : ImmutableSortedSet.orderedBy(aggregateByName).addAll(aggregates.values()).build())
-            sb.append('\n').append(am.exportAsString()).append('\n');
+    for (AggregateMetadata am :
+        ImmutableSortedSet.orderedBy(aggregateByName).addAll(aggregates.values()).build())
+      sb.append('\n').append(am.exportAsString()).append('\n');
 
-        return sb.toString();
+    return sb.toString();
+  }
+
+  private List<UserType> getSortedUserTypes() {
+    // rebuilds dependency tree of user types so they may be sorted within each dependency level.
+    List<UserType> unsortedTypes = new ArrayList<UserType>(userTypes.values());
+    DirectedGraph<UserType> graph = new DirectedGraph<UserType>(typeByName, unsortedTypes);
+    for (UserType from : unsortedTypes) {
+      for (UserType to : unsortedTypes) {
+        if (from != to && dependsOn(to, from)) graph.addEdge(from, to);
+      }
+    }
+    return graph.topologicalSort();
+  }
+
+  private boolean dependsOn(UserType udt1, UserType udt2) {
+    for (UserType.Field field : udt1) {
+      if (references(field.getType(), udt2)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  private boolean references(DataType dataType, DataType udtType) {
+    if (dataType.equals(udtType)) return true;
+    for (DataType arg : dataType.getTypeArguments()) {
+      if (references(arg, udtType)) return true;
+    }
+    if (dataType instanceof TupleType) {
+      for (DataType arg : ((TupleType) dataType).getComponentTypes()) {
+        if (references(arg, udtType)) return true;
+      }
+    }
+    return false;
+  }
+
+  /**
+   * Returns a CQL query representing this keyspace.
+   *
+   * <p>This method returns a single 'CREATE KEYSPACE' query with the options corresponding to this
+   * keyspace definition.
+   *
+   * @return the 'CREATE KEYSPACE' query corresponding to this keyspace.
+   * @see #exportAsString
+   */
+  public String asCQLQuery() {
+    StringBuilder sb = new StringBuilder();
+    if (virtual) {
+      sb.append("/* VIRTUAL ");
+    } else {
+      sb.append("CREATE ");
     }
 
-    private List<UserType> getSortedUserTypes() {
-        // rebuilds dependency tree of user types so they may be sorted within each dependency level.
-        List<UserType> unsortedTypes = new ArrayList<UserType>(userTypes.values());
-        DirectedGraph<UserType> graph = new DirectedGraph<UserType>(typeByName, unsortedTypes);
-        for (UserType from : unsortedTypes) {
-            for (UserType to : unsortedTypes) {
-                if (from != to && dependsOn(to, from))
-                    graph.addEdge(from, to);
-            }
-        }
-        return graph.topologicalSort();
+    sb.append("KEYSPACE ").append(Metadata.quoteIfNecessary(name)).append(" WITH ");
+    sb.append("REPLICATION = { 'class' : '").append(replication.get("class")).append('\'');
+    for (Map.Entry<String, String> entry : replication.entrySet()) {
+      if (entry.getKey().equals("class")) continue;
+      sb.append(", '").append(entry.getKey()).append("': '").append(entry.getValue()).append('\'');
     }
-
-    private boolean dependsOn(UserType udt1, UserType udt2) {
-        for (UserType.Field field : udt1) {
-            if (references(field.getType(), udt2)) {
-                return true;
-            }
-        }
-        return false;
+    sb.append(" } AND DURABLE_WRITES = ").append(durableWrites);
+    sb.append(';');
+    if (virtual) {
+      sb.append("*/");
     }
+    return sb.toString();
+  }
 
-    private boolean references(DataType dataType, DataType udtType) {
-        if (dataType.equals(udtType))
-            return true;
-        for (DataType arg : dataType.getTypeArguments()) {
-            if (references(arg, udtType))
-                return true;
-        }
-        if (dataType instanceof TupleType) {
-            for (DataType arg : ((TupleType) dataType).getComponentTypes()) {
-                if (references(arg, udtType))
-                    return true;
-            }
-        }
-        return false;
+  @Override
+  public String toString() {
+    if (virtual) {
+      return name;
     }
+    return asCQLQuery();
+  }
 
-    /**
-     * Returns a CQL query representing this keyspace.
-     * <p/>
-     * This method returns a single 'CREATE KEYSPACE' query with the options
-     * corresponding to this keyspace definition.
-     *
-     * @return the 'CREATE KEYSPACE' query corresponding to this keyspace.
-     * @see #exportAsString
-     */
-    public String asCQLQuery() {
-        StringBuilder sb = new StringBuilder();
-        if(virtual){
-            sb.append("/* VIRTUAL ");
-        }
-        else{
-            sb.append("CREATE ");
-        }
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
 
-        sb.append("KEYSPACE ").append(Metadata.quoteIfNecessary(name)).append(" WITH ");
-        sb.append("REPLICATION = { 'class' : '").append(replication.get("class")).append('\'');
-        for (Map.Entry<String, String> entry : replication.entrySet()) {
-            if (entry.getKey().equals("class"))
-                continue;
-            sb.append(", '").append(entry.getKey()).append("': '").append(entry.getValue()).append('\'');
-        }
-        sb.append(" } AND DURABLE_WRITES = ").append(durableWrites);
-        sb.append(';');
-        if(virtual){
-            sb.append("*/");
-        }
-        return sb.toString();
-    }
+    KeyspaceMetadata that = (KeyspaceMetadata) o;
 
-    @Override
-    public String toString() {
-        if(virtual){
-            return name;
-        }
-        return asCQLQuery();
-    }
+    if (durableWrites != that.durableWrites) return false;
+    if (!name.equals(that.name)) return false;
+    if (strategy != null ? !strategy.equals(that.strategy) : that.strategy != null) return false;
+    if (!replication.equals(that.replication)) return false;
+    return tables.equals(that.tables);
+  }
 
-    @Override
-    public boolean equals(Object o) {
-        if (this == o)
-            return true;
-        if (o == null || getClass() != o.getClass())
-            return false;
+  @Override
+  public int hashCode() {
+    int result = name.hashCode();
+    result = 31 * result + (durableWrites ? 1 : 0);
+    result = 31 * result + (strategy != null ? strategy.hashCode() : 0);
+    result = 31 * result + replication.hashCode();
+    result = 31 * result + tables.hashCode();
+    return result;
+  }
 
-        KeyspaceMetadata that = (KeyspaceMetadata) o;
+  void add(TableMetadata tm) {
+    tables.put(tm.getName(), tm);
+  }
 
-        if (durableWrites != that.durableWrites)
-            return false;
-        if (!name.equals(that.name))
-            return false;
-        if (strategy != null ? !strategy.equals(that.strategy) : that.strategy != null)
-            return false;
-        if (!replication.equals(that.replication))
-            return false;
-        return tables.equals(that.tables);
+  void add(MaterializedViewMetadata view) {
+    views.put(view.getName(), view);
+  }
 
-    }
+  void add(FunctionMetadata function) {
+    String functionName =
+        Metadata.fullFunctionName(function.getSimpleName(), function.getArguments().values());
+    functions.put(functionName, function);
+  }
 
-    @Override
-    public int hashCode() {
-        int result = name.hashCode();
-        result = 31 * result + (durableWrites ? 1 : 0);
-        result = 31 * result + (strategy != null ? strategy.hashCode() : 0);
-        result = 31 * result + replication.hashCode();
-        result = 31 * result + tables.hashCode();
-        return result;
-    }
+  void add(AggregateMetadata aggregate) {
+    String aggregateName =
+        Metadata.fullFunctionName(aggregate.getSimpleName(), aggregate.getArgumentTypes());
+    aggregates.put(aggregateName, aggregate);
+  }
 
-    void add(TableMetadata tm) {
-        tables.put(tm.getName(), tm);
-    }
+  void add(UserType type) {
+    userTypes.put(type.getTypeName(), type);
+  }
 
-    void add(MaterializedViewMetadata view) {
-        views.put(view.getName(), view);
-    }
-
-    void add(FunctionMetadata function) {
-        String functionName = Metadata.fullFunctionName(function.getSimpleName(), function.getArguments().values());
-        functions.put(functionName, function);
-    }
-
-    void add(AggregateMetadata aggregate) {
-        String aggregateName = Metadata.fullFunctionName(aggregate.getSimpleName(), aggregate.getArgumentTypes());
-        aggregates.put(aggregateName, aggregate);
-    }
-
-    void add(UserType type) {
-        userTypes.put(type.getTypeName(), type);
-    }
-
-    ReplicationStrategy replicationStrategy() {
-        return strategy;
-    }
-
+  ReplicationStrategy replicationStrategy() {
+    return strategy;
+  }
 }

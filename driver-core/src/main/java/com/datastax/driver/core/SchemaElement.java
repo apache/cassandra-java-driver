@@ -16,10 +16,14 @@
 package com.datastax.driver.core;
 
 /**
- * Values for a SCHEMA_CHANGE event.
- * See protocol v4 section 4.2.6.
- * Note that {@code VIEW} is not a valid string under protocol v4 or lower, but is included for internal use only.
+ * Values for a SCHEMA_CHANGE event. See protocol v4 section 4.2.6. Note that {@code VIEW} is not a
+ * valid string under protocol v4 or lower, but is included for internal use only.
  */
 enum SchemaElement {
-    KEYSPACE, TABLE, TYPE, FUNCTION, AGGREGATE, VIEW
+  KEYSPACE,
+  TABLE,
+  TYPE,
+  FUNCTION,
+  AGGREGATE,
+  VIEW
 }

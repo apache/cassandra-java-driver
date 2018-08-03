@@ -21,7 +21,6 @@ import com.google.common.base.Optional;
 import com.google.common.base.Predicate;
 import com.google.common.reflect.TypeParameter;
 import com.google.common.reflect.TypeToken;
-
 import java.util.Collection;
 import java.util.Map;
 
@@ -32,42 +31,45 @@ import java.util.Map;
  */
 public class OptionalCodec<T> extends MappingCodec<Optional<T>, T> {
 
-    private final Predicate<T> isAbsent;
+  private final Predicate<T> isAbsent;
 
-    public OptionalCodec(TypeCodec<T> codec) {
-        this(codec, new Predicate<T>() {
-            @Override
-            public boolean apply(T input) {
-                return input == null
-                        || input instanceof Collection && ((Collection) input).isEmpty()
-                        || input instanceof Map && ((Map) input).isEmpty();
-            }
+  public OptionalCodec(TypeCodec<T> codec) {
+    this(
+        codec,
+        new Predicate<T>() {
+          @Override
+          public boolean apply(T input) {
+            return input == null
+                || input instanceof Collection && ((Collection) input).isEmpty()
+                || input instanceof Map && ((Map) input).isEmpty();
+          }
         });
-    }
+  }
 
-    public OptionalCodec(TypeCodec<T> codec, Predicate<T> isAbsent) {
-        // @formatter:off
-        super(codec, new TypeToken<Optional<T>>() {}.where(new TypeParameter<T>() {}, codec.getJavaType()));
-        // @formatter:on
-        this.isAbsent = isAbsent;
-    }
+  public OptionalCodec(TypeCodec<T> codec, Predicate<T> isAbsent) {
+    // @formatter:off
+    super(
+        codec,
+        new TypeToken<Optional<T>>() {}.where(new TypeParameter<T>() {}, codec.getJavaType()));
+    // @formatter:on
+    this.isAbsent = isAbsent;
+  }
 
-    @Override
-    protected Optional<T> deserialize(T value) {
-        return isAbsent(value) ? Optional.<T>absent() : Optional.fromNullable(value);
-    }
+  @Override
+  protected Optional<T> deserialize(T value) {
+    return isAbsent(value) ? Optional.<T>absent() : Optional.fromNullable(value);
+  }
 
-    @Override
-    protected T serialize(Optional<T> value) {
-        return value.isPresent() ? value.get() : absentValue();
-    }
+  @Override
+  protected T serialize(Optional<T> value) {
+    return value.isPresent() ? value.get() : absentValue();
+  }
 
-    protected T absentValue() {
-        return null;
-    }
+  protected T absentValue() {
+    return null;
+  }
 
-    protected boolean isAbsent(T value) {
-        return isAbsent.apply(value);
-    }
-
+  protected boolean isAbsent(T value) {
+    return isAbsent.apply(value);
+  }
 }

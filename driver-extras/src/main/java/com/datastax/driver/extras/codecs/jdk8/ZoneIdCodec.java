@@ -19,60 +19,55 @@ import com.datastax.driver.core.DataType;
 import com.datastax.driver.core.ProtocolVersion;
 import com.datastax.driver.core.TypeCodec;
 import com.datastax.driver.core.exceptions.InvalidTypeException;
-
 import java.nio.ByteBuffer;
 import java.time.DateTimeException;
 
-/**
- * {@link TypeCodec} that maps
- * {@link java.time.ZoneId} to CQL {@code varchar}.
- */
+/** {@link TypeCodec} that maps {@link java.time.ZoneId} to CQL {@code varchar}. */
 @IgnoreJDK6Requirement
 @SuppressWarnings("Since15")
 public class ZoneIdCodec extends TypeCodec<java.time.ZoneId> {
 
-    public static final ZoneIdCodec instance = new ZoneIdCodec();
+  public static final ZoneIdCodec instance = new ZoneIdCodec();
 
-    private ZoneIdCodec() {
-        super(DataType.varchar(), java.time.ZoneId.class);
+  private ZoneIdCodec() {
+    super(DataType.varchar(), java.time.ZoneId.class);
+  }
+
+  @Override
+  public ByteBuffer serialize(java.time.ZoneId value, ProtocolVersion protocolVersion) {
+    if (value == null) {
+      return null;
     }
+    return varchar().serialize(value.toString(), protocolVersion);
+  }
 
-    @Override
-    public ByteBuffer serialize(java.time.ZoneId value, ProtocolVersion protocolVersion) {
-        if (value == null) {
-            return null;
-        }
-        return varchar().serialize(value.toString(), protocolVersion);
+  @Override
+  public java.time.ZoneId deserialize(ByteBuffer bytes, ProtocolVersion protocolVersion) {
+    if (bytes == null || bytes.remaining() == 0) {
+      return null;
     }
+    return java.time.ZoneId.of(varchar().deserialize(bytes, protocolVersion));
+  }
 
-    @Override
-    public java.time.ZoneId deserialize(ByteBuffer bytes, ProtocolVersion protocolVersion) {
-        if (bytes == null || bytes.remaining() == 0) {
-            return null;
-        }
-        return java.time.ZoneId.of(varchar().deserialize(bytes, protocolVersion));
+  @Override
+  public String format(java.time.ZoneId value) {
+    if (value == null) {
+      return "NULL";
     }
+    return varchar().format(value.toString());
+  }
 
-    @Override
-    public String format(java.time.ZoneId value) {
-        if (value == null) {
-            return "NULL";
-        }
-        return varchar().format(value.toString());
+  @Override
+  public java.time.ZoneId parse(String value) {
+    String parsed = varchar().parse(value);
+    if (parsed == null || parsed.isEmpty() || parsed.equalsIgnoreCase("NULL")) {
+      return null;
     }
-
-    @Override
-    public java.time.ZoneId parse(String value) {
-        String parsed = varchar().parse(value);
-        if (parsed == null || parsed.isEmpty() || parsed.equalsIgnoreCase("NULL")) {
-            return null;
-        }
-        try {
-            return java.time.ZoneId.of(parsed);
-        } catch (DateTimeException e) {
-            String msg = String.format("Cannot parse zone-ID value from \"%s\"", value);
-            throw new InvalidTypeException(msg);
-        }
+    try {
+      return java.time.ZoneId.of(parsed);
+    } catch (DateTimeException e) {
+      String msg = String.format("Cannot parse zone-ID value from \"%s\"", value);
+      throw new InvalidTypeException(msg);
     }
-
+  }
 }

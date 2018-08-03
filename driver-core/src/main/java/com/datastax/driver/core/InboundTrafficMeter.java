@@ -24,18 +24,17 @@ import io.netty.channel.ChannelInboundHandlerAdapter;
 @Sharable
 class InboundTrafficMeter extends ChannelInboundHandlerAdapter {
 
-    private final Meter meter;
+  private final Meter meter;
 
-    InboundTrafficMeter(Meter meter) {
-        this.meter = meter;
+  InboundTrafficMeter(Meter meter) {
+    this.meter = meter;
+  }
+
+  @Override
+  public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
+    if (msg instanceof ByteBuf) {
+      meter.mark(((ByteBuf) msg).readableBytes());
     }
-
-    @Override
-    public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
-        if (msg instanceof ByteBuf) {
-            meter.mark(((ByteBuf) msg).readableBytes());
-        }
-        super.channelRead(ctx, msg);
-    }
-
+    super.channelRead(ctx, msg);
+  }
 }

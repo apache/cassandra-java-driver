@@ -21,34 +21,34 @@ import org.testng.annotations.Test;
 
 public class HeapCompressionTest extends CompressionTest {
 
-    @BeforeClass(groups = "isolated")
-    public void beforeTestClass() throws Exception {
-        // Configure with noPreferDirect and noUnsafe to force heap buffers.
-        System.setProperty("io.netty.noPreferDirect", "true");
-        System.setProperty("io.netty.noUnsafe", "true");
-        super.beforeTestClass();
-    }
+  @BeforeClass(groups = "isolated")
+  public void beforeTestClass() throws Exception {
+    // Configure with noPreferDirect and noUnsafe to force heap buffers.
+    System.setProperty("io.netty.noPreferDirect", "true");
+    System.setProperty("io.netty.noUnsafe", "true");
+    super.beforeTestClass();
+  }
 
-    /**
-     * Validates that snappy compression still works when using heap buffers.
-     *
-     * @test_category connection:compression
-     * @expected_result session established and queries made successfully using it.
-     */
-    @Test(groups = "isolated")
-    public void should_function_with_snappy_compression() throws Exception {
-        compressionTest(ProtocolOptions.Compression.SNAPPY);
-    }
+  /**
+   * Validates that snappy compression still works when using heap buffers.
+   *
+   * @test_category connection:compression
+   * @expected_result session established and queries made successfully using it.
+   */
+  @Test(groups = "isolated")
+  public void should_function_with_snappy_compression() throws Exception {
+    compressionTest(ProtocolOptions.Compression.SNAPPY);
+  }
 
-    /**
-     * Validates that lz4 compression still works when using heap buffers.
-     *
-     * @test_category connection:compression
-     * @expected_result session established and queries made successfully using it.
-     */
-    @Test(groups = "isolated")
-    @CassandraVersion("2.0.0")
-    public void should_function_with_lz4_compression() throws Exception {
-        compressionTest(ProtocolOptions.Compression.LZ4);
-    }
+  /**
+   * Validates that lz4 compression still works when using heap buffers.
+   *
+   * @test_category connection:compression
+   * @expected_result session established and queries made successfully using it.
+   */
+  @Test(groups = "isolated")
+  @CassandraVersion("2.0.0")
+  public void should_function_with_lz4_compression() throws Exception {
+    compressionTest(ProtocolOptions.Compression.LZ4);
+  }
 }

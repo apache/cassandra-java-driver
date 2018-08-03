@@ -15,34 +15,34 @@
  */
 package com.datastax.driver.core;
 
-import org.assertj.core.api.AbstractAssert;
-
 import static org.assertj.core.api.Assertions.assertThat;
 
+import org.assertj.core.api.AbstractAssert;
+
 public class LocalDateAssert extends AbstractAssert<LocalDateAssert, LocalDate> {
-    public LocalDateAssert(LocalDate actual) {
-        super(actual, LocalDateAssert.class);
-    }
+  public LocalDateAssert(LocalDate actual) {
+    super(actual, LocalDateAssert.class);
+  }
 
-    public LocalDateAssert hasDaysSinceEpoch(int expected) {
-        assertThat(actual.getDaysSinceEpoch()).isEqualTo(expected);
-        return this;
-    }
+  public LocalDateAssert hasDaysSinceEpoch(int expected) {
+    assertThat(actual.getDaysSinceEpoch()).isEqualTo(expected);
+    return this;
+  }
 
-    public LocalDateAssert hasMillisSinceEpoch(long expected) {
-        assertThat(actual.getMillisSinceEpoch()).isEqualTo(expected);
-        return this;
-    }
+  public LocalDateAssert hasMillisSinceEpoch(long expected) {
+    assertThat(actual.getMillisSinceEpoch()).isEqualTo(expected);
+    return this;
+  }
 
-    public LocalDateAssert hasYearMonthDay(int expectedYear, int expectedMonth, int expectedDay) {
-        assertThat(actual.getYear()).isEqualTo(expectedYear);
-        assertThat(actual.getMonth()).isEqualTo(expectedMonth);
-        assertThat(actual.getDay()).isEqualTo(expectedDay);
-        return this;
-    }
+  public LocalDateAssert hasYearMonthDay(int expectedYear, int expectedMonth, int expectedDay) {
+    assertThat(actual.getYear()).isEqualTo(expectedYear);
+    assertThat(actual.getMonth()).isEqualTo(expectedMonth);
+    assertThat(actual.getDay()).isEqualTo(expectedDay);
+    return this;
+  }
 
-    public LocalDateAssert hasToString(String expected) {
-        assertThat(actual.toString()).isEqualTo(expected);
-        return this;
-    }
+  public LocalDateAssert hasToString(String expected) {
+    assertThat(actual.toString()).isEqualTo(expected);
+    return this;
+  }
 }

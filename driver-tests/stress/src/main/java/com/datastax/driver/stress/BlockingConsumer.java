@@ -21,54 +21,51 @@ import com.google.common.util.concurrent.Uninterruptibles;
 
 public class BlockingConsumer implements Consumer {
 
-    private final Runner runner = new Runner();
+  private final Runner runner = new Runner();
 
-    private final Session session;
-    private final QueryGenerator requests;
-    private final Reporter reporter;
+  private final Session session;
+  private final QueryGenerator requests;
+  private final Reporter reporter;
 
-    public BlockingConsumer(Session session,
-                            QueryGenerator requests,
-                            Reporter reporter) {
-        this.session = session;
-        this.requests = requests;
-        this.reporter = reporter;
-        this.runner.setDaemon(true);
+  public BlockingConsumer(Session session, QueryGenerator requests, Reporter reporter) {
+    this.session = session;
+    this.requests = requests;
+    this.reporter = reporter;
+    this.runner.setDaemon(true);
+  }
+
+  @Override
+  public void start() {
+    this.runner.start();
+  }
+
+  @Override
+  public void join() {
+    Uninterruptibles.joinUninterruptibly(this.runner);
+  }
+
+  private class Runner extends Thread {
+
+    public Runner() {
+      super("Consumer Threads");
     }
 
     @Override
-    public void start() {
-        this.runner.start();
+    public void run() {
+      try {
+        while (requests.hasNext()) handle(requests.next());
+      } catch (DriverException e) {
+        System.err.println("Error during query: " + e.getMessage());
+      }
     }
 
-    @Override
-    public void join() {
-        Uninterruptibles.joinUninterruptibly(this.runner);
+    protected void handle(QueryGenerator.Request request) {
+      Reporter.Context ctx = reporter.newRequest();
+      try {
+        request.execute(session);
+      } finally {
+        ctx.done();
+      }
     }
-
-    private class Runner extends Thread {
-
-        public Runner() {
-            super("Consumer Threads");
-        }
-
-        @Override
-        public void run() {
-            try {
-                while (requests.hasNext())
-                    handle(requests.next());
-            } catch (DriverException e) {
-                System.err.println("Error during query: " + e.getMessage());
-            }
-        }
-
-        protected void handle(QueryGenerator.Request request) {
-            Reporter.Context ctx = reporter.newRequest();
-            try {
-                request.execute(session);
-            } finally {
-                ctx.done();
-            }
-        }
-    }
+  }
 }

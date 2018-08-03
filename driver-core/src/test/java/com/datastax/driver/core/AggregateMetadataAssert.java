@@ -15,27 +15,28 @@
  */
 package com.datastax.driver.core;
 
-import org.assertj.core.api.AbstractAssert;
-
 import static org.assertj.core.api.Assertions.assertThat;
 
-public class AggregateMetadataAssert extends AbstractAssert<AggregateMetadataAssert, AggregateMetadata> {
-    protected AggregateMetadataAssert(AggregateMetadata actual) {
-        super(actual, AggregateMetadataAssert.class);
-    }
+import org.assertj.core.api.AbstractAssert;
 
-    public AggregateMetadataAssert hasSignature(String name) {
-        assertThat(actual.getSignature()).isEqualTo(name);
-        return this;
-    }
+public class AggregateMetadataAssert
+    extends AbstractAssert<AggregateMetadataAssert, AggregateMetadata> {
+  protected AggregateMetadataAssert(AggregateMetadata actual) {
+    super(actual, AggregateMetadataAssert.class);
+  }
 
-    public AggregateMetadataAssert isInKeyspace(String keyspaceName) {
-        assertThat(actual.getKeyspace().getName()).isEqualTo(keyspaceName);
-        return this;
-    }
+  public AggregateMetadataAssert hasSignature(String name) {
+    assertThat(actual.getSignature()).isEqualTo(name);
+    return this;
+  }
 
-    public AggregateMetadataAssert hasInitCond(Object initCond) {
-        assertThat(actual.getInitCond()).isEqualTo(initCond);
-        return this;
-    }
+  public AggregateMetadataAssert isInKeyspace(String keyspaceName) {
+    assertThat(actual.getKeyspace().getName()).isEqualTo(keyspaceName);
+    return this;
+  }
+
+  public AggregateMetadataAssert hasInitCond(Object initCond) {
+    assertThat(actual.getInitCond()).isEqualTo(initCond);
+    return this;
+  }
 }

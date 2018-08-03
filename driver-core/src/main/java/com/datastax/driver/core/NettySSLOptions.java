@@ -21,27 +21,29 @@ import io.netty.handler.ssl.SslHandler;
 
 /**
  * {@link SSLOptions} implementation based on Netty's SSL context.
- * <p/>
- * Netty has the ability to use OpenSSL if available, instead of the JDK's built-in engine. This yields better performance.
+ *
+ * <p>Netty has the ability to use OpenSSL if available, instead of the JDK's built-in engine. This
+ * yields better performance.
  *
  * @deprecated Use {@link RemoteEndpointAwareNettySSLOptions} instead.
  */
 @SuppressWarnings("DeprecatedIsStillUsed")
 @Deprecated
 public class NettySSLOptions implements SSLOptions {
-    protected final SslContext context;
+  protected final SslContext context;
 
-    /**
-     * Create a new instance from a given context.
-     *
-     * @param context the Netty context. {@code SslContextBuilder.forClient()} provides a fluent API to build it.
-     */
-    public NettySSLOptions(SslContext context) {
-        this.context = context;
-    }
+  /**
+   * Create a new instance from a given context.
+   *
+   * @param context the Netty context. {@code SslContextBuilder.forClient()} provides a fluent API
+   *     to build it.
+   */
+  public NettySSLOptions(SslContext context) {
+    this.context = context;
+  }
 
-    @Override
-    public SslHandler newSSLHandler(SocketChannel channel) {
-        return context.newHandler(channel.alloc());
-    }
+  @Override
+  public SslHandler newSSLHandler(SocketChannel channel) {
+    return context.newHandler(channel.alloc());
+  }
 }

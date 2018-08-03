@@ -18,46 +18,40 @@ package com.datastax.driver.core.exceptions;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 
-/**
- * Indicates that the contacted host was bootstrapping when it received a read query.
- */
-public class BootstrappingException extends QueryExecutionException implements CoordinatorException {
+/** Indicates that the contacted host was bootstrapping when it received a read query. */
+public class BootstrappingException extends QueryExecutionException
+    implements CoordinatorException {
 
-    private static final long serialVersionUID = 0;
+  private static final long serialVersionUID = 0;
 
-    private final InetSocketAddress address;
+  private final InetSocketAddress address;
 
-    public BootstrappingException(InetSocketAddress address, String message) {
-        super(String.format("Queried host (%s) was bootstrapping: %s", address, message));
-        this.address = address;
-    }
+  public BootstrappingException(InetSocketAddress address, String message) {
+    super(String.format("Queried host (%s) was bootstrapping: %s", address, message));
+    this.address = address;
+  }
 
-    /**
-     * Private constructor used solely when copying exceptions.
-     */
-    private BootstrappingException(InetSocketAddress address, String message, BootstrappingException cause) {
-        super(message, cause);
-        this.address = address;
-    }
+  /** Private constructor used solely when copying exceptions. */
+  private BootstrappingException(
+      InetSocketAddress address, String message, BootstrappingException cause) {
+    super(message, cause);
+    this.address = address;
+  }
 
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public InetAddress getHost() {
-        return address.getAddress();
-    }
+  /** {@inheritDoc} */
+  @Override
+  public InetAddress getHost() {
+    return address.getAddress();
+  }
 
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public InetSocketAddress getAddress() {
-        return address;
-    }
+  /** {@inheritDoc} */
+  @Override
+  public InetSocketAddress getAddress() {
+    return address;
+  }
 
-    @Override
-    public BootstrappingException copy() {
-        return new BootstrappingException(address, getMessage(), this);
-    }
+  @Override
+  public BootstrappingException copy() {
+    return new BootstrappingException(address, getMessage(), this);
+  }
 }

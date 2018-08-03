@@ -21,45 +21,40 @@ import org.testng.ITestListener;
 import org.testng.ITestResult;
 
 /**
- * A listener that fires up a single node CCM instance on test class start and tears it
- * down on test class end.
- * <p/>
- * This is needed for tests that use Pax-Exam since it runs some methods in the OSGi container
+ * A listener that fires up a single node CCM instance on test class start and tears it down on test
+ * class end.
+ *
+ * <p>This is needed for tests that use Pax-Exam since it runs some methods in the OSGi container
  * which we do not want.
  */
 public class CCMBridgeListener implements ITestListener {
 
-    private CCMBridge ccm;
+  private CCMBridge ccm;
 
-    @Override
-    public void onStart(ITestContext context) {
-        ccm = CCMBridge.builder().withNodes(1).withBinaryPort(9042).build();
-    }
+  @Override
+  public void onStart(ITestContext context) {
+    ccm = CCMBridge.builder().withNodes(1).withBinaryPort(9042).build();
+  }
 
-    @Override
-    public void onFinish(ITestContext context) {
-        if (ccm != null) {
-            ccm.remove();
-        }
+  @Override
+  public void onFinish(ITestContext context) {
+    if (ccm != null) {
+      ccm.remove();
     }
+  }
 
-    @Override
-    public void onTestStart(ITestResult result) {
-    }
+  @Override
+  public void onTestStart(ITestResult result) {}
 
-    @Override
-    public void onTestSuccess(ITestResult result) {
-    }
+  @Override
+  public void onTestSuccess(ITestResult result) {}
 
-    @Override
-    public void onTestFailure(ITestResult result) {
-    }
+  @Override
+  public void onTestFailure(ITestResult result) {}
 
-    @Override
-    public void onTestSkipped(ITestResult result) {
-    }
+  @Override
+  public void onTestSkipped(ITestResult result) {}
 
-    @Override
-    public void onTestFailedButWithinSuccessPercentage(ITestResult result) {
-    }
+  @Override
+  public void onTestFailedButWithinSuccessPercentage(ITestResult result) {}
 }

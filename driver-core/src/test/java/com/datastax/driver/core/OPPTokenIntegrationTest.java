@@ -20,12 +20,12 @@ import com.datastax.driver.core.Token.OPPToken;
 @CCMConfig(options = "-p ByteOrderedPartitioner")
 public class OPPTokenIntegrationTest extends TokenIntegrationTest {
 
-    public OPPTokenIntegrationTest() {
-        super(DataType.blob(), false);
-    }
+  public OPPTokenIntegrationTest() {
+    super(DataType.blob(), false);
+  }
 
-    @Override
-    protected Token.Factory tokenFactory() {
-        return OPPToken.FACTORY;
-    }
+  @Override
+  protected Token.Factory tokenFactory() {
+    return OPPToken.FACTORY;
+  }
 }

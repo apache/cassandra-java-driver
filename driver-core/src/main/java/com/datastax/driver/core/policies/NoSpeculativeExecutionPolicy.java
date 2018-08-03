@@ -19,39 +19,36 @@ import com.datastax.driver.core.Cluster;
 import com.datastax.driver.core.Host;
 import com.datastax.driver.core.Statement;
 
-/**
- * A {@link SpeculativeExecutionPolicy} that never schedules speculative executions.
- */
+/** A {@link SpeculativeExecutionPolicy} that never schedules speculative executions. */
 public class NoSpeculativeExecutionPolicy implements SpeculativeExecutionPolicy {
 
-    /**
-     * The single instance (this class is stateless).
-     */
-    public static final NoSpeculativeExecutionPolicy INSTANCE = new NoSpeculativeExecutionPolicy();
+  /** The single instance (this class is stateless). */
+  public static final NoSpeculativeExecutionPolicy INSTANCE = new NoSpeculativeExecutionPolicy();
 
-    private static final SpeculativeExecutionPlan PLAN = new SpeculativeExecutionPlan() {
+  private static final SpeculativeExecutionPlan PLAN =
+      new SpeculativeExecutionPlan() {
         @Override
         public long nextExecution(Host lastQueried) {
-            return -1;
+          return -1;
         }
-    };
+      };
 
-    @Override
-    public SpeculativeExecutionPlan newPlan(String loggedKeyspace, Statement statement) {
-        return PLAN;
-    }
+  @Override
+  public SpeculativeExecutionPlan newPlan(String loggedKeyspace, Statement statement) {
+    return PLAN;
+  }
 
-    private NoSpeculativeExecutionPolicy() {
-        // do nothing
-    }
+  private NoSpeculativeExecutionPolicy() {
+    // do nothing
+  }
 
-    @Override
-    public void init(Cluster cluster) {
-        // do nothing
-    }
+  @Override
+  public void init(Cluster cluster) {
+    // do nothing
+  }
 
-    @Override
-    public void close() {
-        // do nothing
-    }
+  @Override
+  public void close() {
+    // do nothing
+  }
 }

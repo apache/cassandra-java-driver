@@ -17,33 +17,31 @@ package com.datastax.driver.mapping;
 
 /**
  * Represents a single-individual word in a property name. (e.g. "my", "xml" and "parser" in a
- * property named "myXmlParser").
- * Each word contains a String value and a boolean indicating whether or not
- * the value is an abbreviation.
- * In most cases there will be no trivial way to identify abbreviations
- * (i.e. my_xml_parser in snake case), but for some naming conventions this may be helpful.
+ * property named "myXmlParser"). Each word contains a String value and a boolean indicating whether
+ * or not the value is an abbreviation. In most cases there will be no trivial way to identify
+ * abbreviations (i.e. my_xml_parser in snake case), but for some naming conventions this may be
+ * helpful.
  */
 public class Word {
 
-    private final String value;
+  private final String value;
 
-    private final boolean isAbbreviation;
+  private final boolean isAbbreviation;
 
-    public Word(String value, boolean isAbbreviation) {
-        this.value = value;
-        this.isAbbreviation = isAbbreviation;
-    }
+  public Word(String value, boolean isAbbreviation) {
+    this.value = value;
+    this.isAbbreviation = isAbbreviation;
+  }
 
-    public Word(String value) {
-        this(value, false);
-    }
+  public Word(String value) {
+    this(value, false);
+  }
 
-    public String getValue() {
-        return value;
-    }
+  public String getValue() {
+    return value;
+  }
 
-    public boolean isAbbreviation() {
-        return isAbbreviation;
-    }
-
+  public boolean isAbbreviation() {
+    return isAbbreviation;
+  }
 }

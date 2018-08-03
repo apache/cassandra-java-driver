@@ -15,29 +15,29 @@
  */
 package com.datastax.driver.core;
 
-import org.assertj.core.api.AbstractAssert;
-
 import static org.assertj.core.api.Assertions.assertThat;
 
-public class MaterializedViewMetadataAssert extends AbstractAssert<MaterializedViewMetadataAssert, MaterializedViewMetadata> {
+import org.assertj.core.api.AbstractAssert;
 
-    public MaterializedViewMetadataAssert(MaterializedViewMetadata actual) {
-        super(actual, MaterializedViewMetadataAssert.class);
-    }
+public class MaterializedViewMetadataAssert
+    extends AbstractAssert<MaterializedViewMetadataAssert, MaterializedViewMetadata> {
 
-    public MaterializedViewMetadataAssert hasName(String name) {
-        assertThat(actual.getName()).isEqualTo(name);
-        return this;
-    }
+  public MaterializedViewMetadataAssert(MaterializedViewMetadata actual) {
+    super(actual, MaterializedViewMetadataAssert.class);
+  }
 
-    public MaterializedViewMetadataAssert hasBaseTable(TableMetadata table) {
-        assertThat(actual.getBaseTable()).isEqualTo(table);
-        return this;
-    }
+  public MaterializedViewMetadataAssert hasName(String name) {
+    assertThat(actual.getName()).isEqualTo(name);
+    return this;
+  }
 
-    public MaterializedViewMetadataAssert hasNumberOfColumns(int expected) {
-        assertThat(actual.getColumns().size()).isEqualTo(expected);
-        return this;
-    }
+  public MaterializedViewMetadataAssert hasBaseTable(TableMetadata table) {
+    assertThat(actual.getBaseTable()).isEqualTo(table);
+    return this;
+  }
 
+  public MaterializedViewMetadataAssert hasNumberOfColumns(int expected) {
+    assertThat(actual.getColumns().size()).isEqualTo(expected);
+    return this;
+  }
 }

@@ -22,18 +22,18 @@ import org.slf4j.LoggerFactory;
 // our executors.
 abstract class ExceptionCatchingRunnable implements Runnable {
 
-    private static final Logger logger = LoggerFactory.getLogger(ExceptionCatchingRunnable.class);
+  private static final Logger logger = LoggerFactory.getLogger(ExceptionCatchingRunnable.class);
 
-    public abstract void runMayThrow() throws Exception;
+  public abstract void runMayThrow() throws Exception;
 
-    @Override
-    public void run() {
-        try {
-            runMayThrow();
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-        } catch (Exception e) {
-            logger.error("Unexpected error while executing task", e);
-        }
+  @Override
+  public void run() {
+    try {
+      runMayThrow();
+    } catch (InterruptedException e) {
+      Thread.currentThread().interrupt();
+    } catch (Exception e) {
+      logger.error("Unexpected error while executing task", e);
     }
+  }
 }

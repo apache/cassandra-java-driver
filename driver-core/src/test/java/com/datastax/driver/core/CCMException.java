@@ -17,20 +17,19 @@ package com.datastax.driver.core;
 
 public class CCMException extends RuntimeException {
 
-    private final String out;
+  private final String out;
 
-    public CCMException(String message, String out) {
-        super(message);
-        this.out = out;
-    }
+  public CCMException(String message, String out) {
+    super(message);
+    this.out = out;
+  }
 
-    public CCMException(String message, String out, Throwable cause) {
-        super(message, cause);
-        this.out = out;
-    }
+  public CCMException(String message, String out, Throwable cause) {
+    super(message, cause);
+    this.out = out;
+  }
 
-    public String getOut() {
-        return out;
-    }
-
+  public String getOut() {
+    return out;
+  }
 }

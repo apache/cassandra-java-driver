@@ -18,48 +18,44 @@ package com.datastax.driver.core.exceptions;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 
-/**
- * Indicates that a connection to a host has encountered a problem
- * and that it should be closed.
- */
+/** Indicates that a connection to a host has encountered a problem and that it should be closed. */
 public class ConnectionException extends DriverException implements CoordinatorException {
 
-    private static final long serialVersionUID = 0;
+  private static final long serialVersionUID = 0;
 
-    public final InetSocketAddress address;
+  public final InetSocketAddress address;
 
-    public ConnectionException(InetSocketAddress address, String msg, Throwable cause) {
-        super(msg, cause);
-        this.address = address;
-    }
+  public ConnectionException(InetSocketAddress address, String msg, Throwable cause) {
+    super(msg, cause);
+    this.address = address;
+  }
 
-    public ConnectionException(InetSocketAddress address, String msg) {
-        super(msg);
-        this.address = address;
-    }
+  public ConnectionException(InetSocketAddress address, String msg) {
+    super(msg);
+    this.address = address;
+  }
 
-    @Override
-    public InetAddress getHost() {
-        return address == null ? null : address.getAddress();
-    }
+  @Override
+  public InetAddress getHost() {
+    return address == null ? null : address.getAddress();
+  }
 
-    @Override
-    public InetSocketAddress getAddress() {
-        return address;
-    }
+  @Override
+  public InetSocketAddress getAddress() {
+    return address;
+  }
 
-    @Override
-    public String getMessage() {
-        return address == null ? getRawMessage() : String.format("[%s] %s", address, getRawMessage());
-    }
+  @Override
+  public String getMessage() {
+    return address == null ? getRawMessage() : String.format("[%s] %s", address, getRawMessage());
+  }
 
-    @Override
-    public ConnectionException copy() {
-        return new ConnectionException(address, getRawMessage(), this);
-    }
+  @Override
+  public ConnectionException copy() {
+    return new ConnectionException(address, getRawMessage(), this);
+  }
 
-    String getRawMessage() {
-        return super.getMessage();
-    }
-
+  String getRawMessage() {
+    return super.getMessage();
+  }
 }

@@ -17,18 +17,16 @@ package com.datastax.driver.core.schemabuilder;
 
 import com.datastax.driver.core.DataType;
 
-/**
- * Represents a native CQL type in a SchemaBuilder statement.
- */
+/** Represents a native CQL type in a SchemaBuilder statement. */
 class NativeColumnType implements ColumnType {
-    private final String asCQLString;
+  private final String asCQLString;
 
-    NativeColumnType(DataType nativeType) {
-        asCQLString = nativeType.toString();
-    }
+  NativeColumnType(DataType nativeType) {
+    asCQLString = nativeType.toString();
+  }
 
-    @Override
-    public String asCQLString() {
-        return asCQLString;
-    }
+  @Override
+  public String asCQLString() {
+    return asCQLString;
+  }
 }

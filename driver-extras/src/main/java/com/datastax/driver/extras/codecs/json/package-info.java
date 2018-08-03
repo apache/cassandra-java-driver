@@ -14,8 +14,7 @@
  * limitations under the License.
  */
 /**
- * This package contains a collection of convenience
- * {@link com.datastax.driver.core.TypeCodec} instances useful for
- * serializing JSON structures.
+ * This package contains a collection of convenience {@link com.datastax.driver.core.TypeCodec}
+ * instances useful for serializing JSON structures.
  */
 package com.datastax.driver.extras.codecs.json;

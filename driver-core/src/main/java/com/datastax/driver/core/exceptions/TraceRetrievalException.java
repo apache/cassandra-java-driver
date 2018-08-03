@@ -22,18 +22,18 @@ package com.datastax.driver.core.exceptions;
  */
 public class TraceRetrievalException extends DriverException {
 
-    private static final long serialVersionUID = 0;
+  private static final long serialVersionUID = 0;
 
-    public TraceRetrievalException(String message) {
-        super(message);
-    }
+  public TraceRetrievalException(String message) {
+    super(message);
+  }
 
-    public TraceRetrievalException(String message, Throwable cause) {
-        super(message, cause);
-    }
+  public TraceRetrievalException(String message, Throwable cause) {
+    super(message, cause);
+  }
 
-    @Override
-    public TraceRetrievalException copy() {
-        return new TraceRetrievalException(getMessage(), this);
-    }
+  @Override
+  public TraceRetrievalException copy() {
+    return new TraceRetrievalException(getMessage(), this);
+  }
 }

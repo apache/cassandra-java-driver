@@ -17,28 +17,28 @@ package com.datastax.driver.core;
 
 public class BatchStatementIdempotencyTest extends AbstractBatchIdempotencyTest {
 
+  @Override
+  protected TestBatch createBatch() {
+    return new TestBatchStatementWrapper();
+  }
+
+  static class TestBatchStatementWrapper implements TestBatch {
+
+    private final BatchStatement batch = new BatchStatement();
+
     @Override
-    protected TestBatch createBatch() {
-        return new TestBatchStatementWrapper();
+    public void add(RegularStatement statement) {
+      batch.add(statement);
     }
 
-    static class TestBatchStatementWrapper implements TestBatch {
-
-        private final BatchStatement batch = new BatchStatement();
-
-        @Override
-        public void add(RegularStatement statement) {
-            batch.add(statement);
-        }
-
-        @Override
-        public Boolean isIdempotent() {
-            return batch.isIdempotent();
-        }
-
-        @Override
-        public void setIdempotent(boolean idempotent) {
-            batch.setIdempotent(idempotent);
-        }
+    @Override
+    public Boolean isIdempotent() {
+      return batch.isIdempotent();
     }
+
+    @Override
+    public void setIdempotent(boolean idempotent) {
+      batch.setIdempotent(idempotent);
+    }
+  }
 }

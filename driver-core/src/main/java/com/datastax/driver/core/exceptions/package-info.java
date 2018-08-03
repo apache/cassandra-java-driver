@@ -13,7 +13,5 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-/**
- * Exceptions thrown by the DataStax Java driver for Cassandra.
- */
+/** Exceptions thrown by the DataStax Java driver for Cassandra. */
 package com.datastax.driver.core.exceptions;

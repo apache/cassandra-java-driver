@@ -18,45 +18,44 @@ package com.datastax.driver.core.exceptions;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 
-/**
- * Indicates a syntactically correct but invalid query.
- */
-public class InvalidQueryException extends QueryValidationException implements CoordinatorException {
+/** Indicates a syntactically correct but invalid query. */
+public class InvalidQueryException extends QueryValidationException
+    implements CoordinatorException {
 
-    private static final long serialVersionUID = 0;
+  private static final long serialVersionUID = 0;
 
-    private final InetSocketAddress address;
+  private final InetSocketAddress address;
 
-    public InvalidQueryException(String msg) {
-        this(null, msg);
-    }
+  public InvalidQueryException(String msg) {
+    this(null, msg);
+  }
 
-    public InvalidQueryException(InetSocketAddress address, String msg) {
-        super(msg);
-        this.address = address;
-    }
+  public InvalidQueryException(InetSocketAddress address, String msg) {
+    super(msg);
+    this.address = address;
+  }
 
-    public InvalidQueryException(String msg, Throwable cause) {
-        this(null, msg, cause);
-    }
+  public InvalidQueryException(String msg, Throwable cause) {
+    this(null, msg, cause);
+  }
 
-    public InvalidQueryException(InetSocketAddress address, String msg, Throwable cause) {
-        super(msg, cause);
-        this.address = address;
-    }
+  public InvalidQueryException(InetSocketAddress address, String msg, Throwable cause) {
+    super(msg, cause);
+    this.address = address;
+  }
 
-    @Override
-    public DriverException copy() {
-        return new InvalidQueryException(getAddress(), getMessage(), this);
-    }
+  @Override
+  public DriverException copy() {
+    return new InvalidQueryException(getAddress(), getMessage(), this);
+  }
 
-    @Override
-    public InetAddress getHost() {
-        return address != null ? address.getAddress() : null;
-    }
+  @Override
+  public InetAddress getHost() {
+    return address != null ? address.getAddress() : null;
+  }
 
-    @Override
-    public InetSocketAddress getAddress() {
-        return address;
-    }
+  @Override
+  public InetSocketAddress getAddress() {
+    return address;
+  }
 }

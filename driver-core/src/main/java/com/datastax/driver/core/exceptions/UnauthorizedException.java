@@ -19,43 +19,40 @@ import java.net.InetAddress;
 import java.net.InetSocketAddress;
 
 /**
- * Indicates that a query cannot be performed due to the authorization
- * restrictions of the logged user.
+ * Indicates that a query cannot be performed due to the authorization restrictions of the logged
+ * user.
  */
-public class UnauthorizedException extends QueryValidationException implements CoordinatorException {
+public class UnauthorizedException extends QueryValidationException
+    implements CoordinatorException {
 
-    private static final long serialVersionUID = 0;
+  private static final long serialVersionUID = 0;
 
-    private final InetSocketAddress address;
+  private final InetSocketAddress address;
 
-    public UnauthorizedException(InetSocketAddress address, String msg) {
-        super(msg);
-        this.address = address;
-    }
+  public UnauthorizedException(InetSocketAddress address, String msg) {
+    super(msg);
+    this.address = address;
+  }
 
-    private UnauthorizedException(InetSocketAddress address, String msg, Throwable cause) {
-        super(msg, cause);
-        this.address = address;
-    }
+  private UnauthorizedException(InetSocketAddress address, String msg, Throwable cause) {
+    super(msg, cause);
+    this.address = address;
+  }
 
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public InetAddress getHost() {
-        return address.getAddress();
-    }
+  /** {@inheritDoc} */
+  @Override
+  public InetAddress getHost() {
+    return address.getAddress();
+  }
 
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public InetSocketAddress getAddress() {
-        return address;
-    }
+  /** {@inheritDoc} */
+  @Override
+  public InetSocketAddress getAddress() {
+    return address;
+  }
 
-    @Override
-    public UnauthorizedException copy() {
-        return new UnauthorizedException(getAddress(), getMessage(), this);
-    }
+  @Override
+  public UnauthorizedException copy() {
+    return new UnauthorizedException(getAddress(), getMessage(), this);
+  }
 }

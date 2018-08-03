@@ -15,192 +15,180 @@
  */
 package com.datastax.driver.core;
 
+import static com.datastax.driver.core.querybuilder.QueryBuilder.*;
+import static org.assertj.core.api.Assertions.assertThat;
+
 import com.datastax.driver.core.exceptions.InvalidTypeException;
 import com.datastax.driver.core.querybuilder.BuiltStatement;
 import com.datastax.driver.core.utils.CassandraVersion;
 import com.datastax.driver.core.utils.MoreObjects;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.reflect.TypeToken;
+import java.nio.ByteBuffer;
+import java.util.*;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
-import java.nio.ByteBuffer;
-import java.util.*;
-
-import static com.datastax.driver.core.querybuilder.QueryBuilder.*;
-import static org.assertj.core.api.Assertions.assertThat;
-
 /**
- * Validates that nested collections are properly encoded,
- * even if some inner type requires a custom codec.
+ * Validates that nested collections are properly encoded, even if some inner type requires a custom
+ * codec.
  */
 @CassandraVersion("2.1.0")
 public class TypeCodecNestedCollectionsIntegrationTest extends CCMTestsSupport {
 
-    private final String insertQuery = "INSERT INTO \"myTable\" (pk, v) VALUES (?, ?)";
+  private final String insertQuery = "INSERT INTO \"myTable\" (pk, v) VALUES (?, ?)";
 
-    private final String selectQuery = "SELECT pk, v FROM \"myTable\" WHERE pk = ?";
+  private final String selectQuery = "SELECT pk, v FROM \"myTable\" WHERE pk = ?";
 
-    private BuiltStatement insertStmt;
-    private BuiltStatement selectStmt;
+  private BuiltStatement insertStmt;
+  private BuiltStatement selectStmt;
 
-    private int pk = 42;
-    private List<Set<Map<MyInt, String>>> v;
+  private int pk = 42;
+  private List<Set<Map<MyInt, String>>> v;
 
-    // @formatter:off
-    private TypeToken<List<Set<Map<MyInt, String>>>> listType = new TypeToken<List<Set<Map<MyInt, String>>>>() {};
-    private TypeToken<Set<Map<MyInt, String>>> elementsType = new TypeToken<Set<Map<MyInt, String>>>() {};
-    // @formatter:on
+  // @formatter:off
+  private TypeToken<List<Set<Map<MyInt, String>>>> listType =
+      new TypeToken<List<Set<Map<MyInt, String>>>>() {};
+  private TypeToken<Set<Map<MyInt, String>>> elementsType =
+      new TypeToken<Set<Map<MyInt, String>>>() {};
+  // @formatter:on
 
+  @Override
+  public void onTestContextInitialized() {
+    execute(
+        "CREATE TABLE IF NOT EXISTS \"myTable\" ("
+            + "pk int PRIMARY KEY, "
+            + "v frozen<list<frozen<set<frozen<map<int,text>>>>>>"
+            + ")");
+  }
 
-    @Override
-    public void onTestContextInitialized() {
-        execute(
-                "CREATE TABLE IF NOT EXISTS \"myTable\" ("
-                        + "pk int PRIMARY KEY, "
-                        + "v frozen<list<frozen<set<frozen<map<int,text>>>>>>"
-                        + ")"
-        );
-    }
+  public Cluster.Builder createClusterBuilder() {
+    return Cluster.builder()
+        .withCodecRegistry(
+            new CodecRegistry().register(new MyIntCodec()) // global User <-> varchar codec
+            );
+  }
 
-    public Cluster.Builder createClusterBuilder() {
-        return Cluster.builder().withCodecRegistry(
-                new CodecRegistry().register(new MyIntCodec()) // global User <-> varchar codec
-        );
-    }
+  @BeforeClass(groups = "short")
+  public void setupData() {
+    Map<MyInt, String> map = ImmutableMap.of(new MyInt(42), "foo", new MyInt(43), "bar");
+    Set<Map<MyInt, String>> set = new HashSet<Map<MyInt, String>>();
+    set.add(map);
+    v = new ArrayList<Set<Map<MyInt, String>>>();
+    v.add(set);
+  }
 
-    @BeforeClass(groups = "short")
-    public void setupData() {
-        Map<MyInt, String> map = ImmutableMap.of(new MyInt(42), "foo", new MyInt(43), "bar");
-        Set<Map<MyInt, String>> set = new HashSet<Map<MyInt, String>>();
-        set.add(map);
-        v = new ArrayList<Set<Map<MyInt, String>>>();
-        v.add(set);
-    }
+  @BeforeMethod(groups = "short")
+  public void createBuiltStatements() throws Exception {
+    insertStmt = insertInto("\"myTable\"").value("pk", bindMarker()).value("v", bindMarker());
+    selectStmt = select("pk", "v").from("\"myTable\"").where(eq("pk", bindMarker()));
+  }
 
-    @BeforeMethod(groups = "short")
-    public void createBuiltStatements() throws Exception {
-        insertStmt = insertInto("\"myTable\"")
-                .value("pk", bindMarker())
-                .value("v", bindMarker());
-        selectStmt = select("pk", "v")
-                .from("\"myTable\"")
-                .where(eq("pk", bindMarker()));
-    }
+  @Test(groups = "short")
+  public void should_work_with_simple_statements() {
+    session().execute(insertQuery, pk, v);
+    ResultSet rows = session().execute(selectQuery, pk);
+    Row row = rows.one();
+    assertRow(row);
+  }
 
-    @Test(groups = "short")
-    public void should_work_with_simple_statements() {
-        session().execute(insertQuery, pk, v);
-        ResultSet rows = session().execute(selectQuery, pk);
-        Row row = rows.one();
-        assertRow(row);
-    }
+  @Test(groups = "short")
+  public void should_work_with_prepared_statements_1() {
+    session().execute(session().prepare(insertQuery).bind(pk, v));
+    PreparedStatement ps = session().prepare(selectQuery);
+    ResultSet rows = session().execute(ps.bind(pk));
+    Row row = rows.one();
+    assertRow(row);
+  }
 
-    @Test(groups = "short")
-    public void should_work_with_prepared_statements_1() {
-        session().execute(session().prepare(insertQuery).bind(pk, v));
-        PreparedStatement ps = session().prepare(selectQuery);
-        ResultSet rows = session().execute(ps.bind(pk));
-        Row row = rows.one();
-        assertRow(row);
-    }
-
-    @Test(groups = "short")
-    public void should_work_with_prepared_statements_2() {
-        session().execute(session().prepare(insertQuery).bind()
+  @Test(groups = "short")
+  public void should_work_with_prepared_statements_2() {
+    session()
+        .execute(
+            session()
+                .prepare(insertQuery)
+                .bind()
                 .setInt(0, pk)
                 .setList(1, v, elementsType) // variant with element type explicitly set
-        );
-        PreparedStatement ps = session().prepare(selectQuery);
-        ResultSet rows = session().execute(ps.bind()
-                        .setInt(0, pk)
-        );
-        Row row = rows.one();
-        assertRow(row);
+            );
+    PreparedStatement ps = session().prepare(selectQuery);
+    ResultSet rows = session().execute(ps.bind().setInt(0, pk));
+    Row row = rows.one();
+    assertRow(row);
+  }
+
+  @Test(groups = "short")
+  public void should_work_with_prepared_statements_3() {
+    session().execute(session().prepare(insertQuery).bind().setInt(0, pk).set(1, v, listType));
+    PreparedStatement ps = session().prepare(selectQuery);
+    ResultSet rows = session().execute(ps.bind().setInt(0, pk));
+    Row row = rows.one();
+    assertRow(row);
+  }
+
+  @Test(groups = "short")
+  public void should_work_with_built_statements() {
+    session().execute(session().prepare(insertStmt).bind().setInt(0, pk).set(1, v, listType));
+    PreparedStatement ps = session().prepare(selectStmt);
+    ResultSet rows = session().execute(ps.bind().setInt(0, pk));
+    Row row = rows.one();
+    assertRow(row);
+  }
+
+  private void assertRow(Row row) {
+    assertThat(row.getList(1, elementsType)).isEqualTo(v);
+    assertThat(row.get(1, listType)).isEqualTo(v);
+  }
+
+  private class MyInt {
+
+    private final int i;
+
+    private MyInt(int i) {
+      this.i = i;
     }
 
-    @Test(groups = "short")
-    public void should_work_with_prepared_statements_3() {
-        session().execute(session().prepare(insertQuery).bind()
-                        .setInt(0, pk)
-                        .set(1, v, listType)
-        );
-        PreparedStatement ps = session().prepare(selectQuery);
-        ResultSet rows = session().execute(ps.bind()
-                        .setInt(0, pk)
-        );
-        Row row = rows.one();
-        assertRow(row);
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) return true;
+      if (o == null || getClass() != o.getClass()) return false;
+      MyInt myInt = (MyInt) o;
+      return MoreObjects.equal(i, myInt.i);
     }
 
-    @Test(groups = "short")
-    public void should_work_with_built_statements() {
-        session().execute(session().prepare(insertStmt).bind()
-                        .setInt(0, pk)
-                        .set(1, v, listType)
-        );
-        PreparedStatement ps = session().prepare(selectStmt);
-        ResultSet rows = session().execute(ps.bind()
-                        .setInt(0, pk)
-        );
-        Row row = rows.one();
-        assertRow(row);
+    @Override
+    public int hashCode() {
+      return MoreObjects.hashCode(i);
+    }
+  }
+
+  private class MyIntCodec extends TypeCodec<MyInt> {
+
+    MyIntCodec() {
+      super(DataType.cint(), MyInt.class);
     }
 
-    private void assertRow(Row row) {
-        assertThat(row.getList(1, elementsType)).isEqualTo(v);
-        assertThat(row.get(1, listType)).isEqualTo(v);
+    @Override
+    public ByteBuffer serialize(MyInt value, ProtocolVersion protocolVersion)
+        throws InvalidTypeException {
+      return TypeCodec.cint().serialize(value.i, protocolVersion);
     }
 
-    private class MyInt {
-
-        private final int i;
-
-        private MyInt(int i) {
-            this.i = i;
-        }
-
-        @Override
-        public boolean equals(Object o) {
-            if (this == o)
-                return true;
-            if (o == null || getClass() != o.getClass())
-                return false;
-            MyInt myInt = (MyInt) o;
-            return MoreObjects.equal(i, myInt.i);
-        }
-
-        @Override
-        public int hashCode() {
-            return MoreObjects.hashCode(i);
-        }
+    @Override
+    public MyInt deserialize(ByteBuffer bytes, ProtocolVersion protocolVersion)
+        throws InvalidTypeException {
+      return new MyInt(TypeCodec.cint().deserialize(bytes, protocolVersion));
     }
 
-    private class MyIntCodec extends TypeCodec<MyInt> {
-
-        MyIntCodec() {
-            super(DataType.cint(), MyInt.class);
-        }
-
-        @Override
-        public ByteBuffer serialize(MyInt value, ProtocolVersion protocolVersion) throws InvalidTypeException {
-            return TypeCodec.cint().serialize(value.i, protocolVersion);
-        }
-
-        @Override
-        public MyInt deserialize(ByteBuffer bytes, ProtocolVersion protocolVersion) throws InvalidTypeException {
-            return new MyInt(TypeCodec.cint().deserialize(bytes, protocolVersion));
-        }
-
-        @Override
-        public MyInt parse(String value) throws InvalidTypeException {
-            return null; // not tested
-        }
-
-        @Override
-        public String format(MyInt value) throws InvalidTypeException {
-            return null; // not tested
-        }
+    @Override
+    public MyInt parse(String value) throws InvalidTypeException {
+      return null; // not tested
     }
+
+    @Override
+    public String format(MyInt value) throws InvalidTypeException {
+      return null; // not tested
+    }
+  }
 }

@@ -15,27 +15,24 @@
  */
 package com.datastax.driver.core;
 
-import org.testng.annotations.Test;
-
 import static com.datastax.driver.core.Assertions.assertThat;
+
+import org.testng.annotations.Test;
 
 public class ProtocolOptionsTest extends CCMTestsSupport {
 
-    /**
-     * @jira_ticket JAVA-1209
-     */
-    @Test(groups = "unit")
-    public void getProtocolVersion_should_return_null_if_not_connected() {
-        Cluster cluster = Cluster.builder().addContactPoint("127.0.0.1").build();
-        assertThat(cluster.getConfiguration().getProtocolOptions().getProtocolVersion()).isNull();
-    }
+  /** @jira_ticket JAVA-1209 */
+  @Test(groups = "unit")
+  public void getProtocolVersion_should_return_null_if_not_connected() {
+    Cluster cluster = Cluster.builder().addContactPoint("127.0.0.1").build();
+    assertThat(cluster.getConfiguration().getProtocolOptions().getProtocolVersion()).isNull();
+  }
 
-    /**
-     * @jira_ticket JAVA-1209
-     */
-    @Test(groups = "short")
-    public void getProtocolVersion_should_return_version() throws InterruptedException {
-        ProtocolVersion version = cluster().getConfiguration().getProtocolOptions().getProtocolVersion();
-        assertThat(version).isNotNull();
-    }
+  /** @jira_ticket JAVA-1209 */
+  @Test(groups = "short")
+  public void getProtocolVersion_should_return_version() throws InterruptedException {
+    ProtocolVersion version =
+        cluster().getConfiguration().getProtocolOptions().getProtocolVersion();
+    assertThat(version).isNotNull();
+  }
 }

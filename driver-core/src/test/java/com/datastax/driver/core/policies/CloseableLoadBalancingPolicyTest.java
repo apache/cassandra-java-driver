@@ -15,47 +15,47 @@
  */
 package com.datastax.driver.core.policies;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 import com.datastax.driver.core.CCMConfig;
 import com.datastax.driver.core.CCMTestsSupport;
 import com.datastax.driver.core.Cluster;
 import org.testng.annotations.Test;
 
-import static org.assertj.core.api.Assertions.assertThat;
-
 @CCMConfig(createSession = false)
 public class CloseableLoadBalancingPolicyTest extends CCMTestsSupport {
 
-    private CloseMonitoringPolicy policy;
+  private CloseMonitoringPolicy policy;
 
-    @Test(groups = "short")
-    public void should_be_invoked_at_shutdown() {
-        try {
-            cluster().connect();
-            cluster().close();
-        } finally {
-            assertThat(policy.wasClosed).isTrue();
-        }
+  @Test(groups = "short")
+  public void should_be_invoked_at_shutdown() {
+    try {
+      cluster().connect();
+      cluster().close();
+    } finally {
+      assertThat(policy.wasClosed).isTrue();
+    }
+  }
+
+  @Override
+  public Cluster.Builder createClusterBuilder() {
+    policy = new CloseMonitoringPolicy(Policies.defaultLoadBalancingPolicy());
+    return Cluster.builder()
+        .addContactPoints(getContactPoints().get(0))
+        .withLoadBalancingPolicy(policy);
+  }
+
+  static class CloseMonitoringPolicy extends DelegatingLoadBalancingPolicy {
+
+    volatile boolean wasClosed = false;
+
+    public CloseMonitoringPolicy(LoadBalancingPolicy delegate) {
+      super(delegate);
     }
 
     @Override
-    public Cluster.Builder createClusterBuilder() {
-        policy = new CloseMonitoringPolicy(Policies.defaultLoadBalancingPolicy());
-        return Cluster.builder()
-                .addContactPoints(getContactPoints().get(0))
-                .withLoadBalancingPolicy(policy);
+    public void close() {
+      wasClosed = true;
     }
-
-    static class CloseMonitoringPolicy extends DelegatingLoadBalancingPolicy {
-
-        volatile boolean wasClosed = false;
-
-        public CloseMonitoringPolicy(LoadBalancingPolicy delegate) {
-            super(delegate);
-        }
-
-        @Override
-        public void close() {
-            wasClosed = true;
-        }
-    }
+  }
 }

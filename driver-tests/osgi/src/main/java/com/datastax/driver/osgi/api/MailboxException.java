@@ -17,7 +17,7 @@ package com.datastax.driver.osgi.api;
 
 public class MailboxException extends Exception {
 
-    public MailboxException(Throwable cause) {
-        super("Failure interacting with Mailbox", cause);
-    }
+  public MailboxException(Throwable cause) {
+    super("Failure interacting with Mailbox", cause);
+  }
 }
