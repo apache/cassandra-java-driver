@@ -87,7 +87,6 @@
         <test.groups>unit</test.groups>
         <test.osgi.skip>true</test.osgi.skip>
         <javadoc.opts />
-        <format.validateOnly>true</format.validateOnly>
     </properties>
 
     <dependencyManagement>
