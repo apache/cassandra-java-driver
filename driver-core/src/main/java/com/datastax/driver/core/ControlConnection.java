@@ -85,8 +85,11 @@ class ControlConnection implements Connection.Owner {
 
   private volatile boolean isShutdown;
 
+  private final boolean isPeersV2;
+
   public ControlConnection(Cluster.Manager manager) {
     this.cluster = manager;
+    this.isPeersV2 = manager.configuration.getProtocolOptions().isAllowHostPortDiscovery();
   }
 
   // Only for the initial connection. Does not schedule retries if it fails
@@ -491,7 +494,7 @@ class ControlConnection implements Connection.Owner {
       } else {
         InetSocketAddress broadcastAddress = host.getBroadcastSocketAddress();
         query =
-            cluster.configuration.getProtocolOptions().isAllowHostPortDiscovery()
+            isPeersV2
                 ? SELECT_PEERS_V2
                     + " WHERE peer='"
                     + broadcastAddress.getAddress().getHostAddress()
@@ -675,13 +678,12 @@ class ControlConnection implements Connection.Owner {
    * @return result of peers query.
    */
   private ListenableFuture<ResultSet> selectPeersFuture(final Connection connection) {
-    boolean useV2 = cluster.configuration.getProtocolOptions().isAllowHostPortDiscovery();
-    String query = useV2 ? SELECT_PEERS_V2 : SELECT_PEERS;
+    String query = isPeersV2 ? SELECT_PEERS_V2 : SELECT_PEERS;
     DefaultResultSetFuture peersFuture =
         new DefaultResultSetFuture(null, cluster.protocolVersion(), new Requests.Query(query));
     connection.write(peersFuture);
 
-    if (useV2) {
+    if (isPeersV2) {
       // throw a specialized error if peers_v2 table query fails.
       return Futures.catching(
           peersFuture,
@@ -793,7 +795,7 @@ class ControlConnection implements Connection.Owner {
         allTokens.add(tokens);
       }
 
-      if (row.getColumnDefinitions().contains("listen_address")) {
+      if (row.getColumnDefinitions().contains("listen_address") && !row.isNull("listen_address")) {
         int listenPort =
             row.getColumnDefinitions().contains("listen_port") ? row.getInt("listen_port") : 0;
         InetSocketAddress listenAddress =
@@ -872,11 +874,16 @@ class ControlConnection implements Connection.Owner {
     return tokens;
   }
 
-  private static boolean isValidPeer(Row peerRow, boolean logIfInvalid) {
+  private boolean isValidPeer(Row peerRow, boolean logIfInvalid) {
     boolean isValid =
-        (peerRow.getColumnDefinitions().contains("rpc_address") && !peerRow.isNull("rpc_address"))
-            || (peerRow.getColumnDefinitions().contains("native_address")
-                && !peerRow.isNull("native_address"));
+        isPeersV2
+            ? peerRow.getColumnDefinitions().contains("native_address")
+                && peerRow.getColumnDefinitions().contains("native_port")
+                && !peerRow.isNull("native_address")
+                && !peerRow.isNull("native_port")
+            : peerRow.getColumnDefinitions().contains("rpc_address")
+                && !peerRow.isNull("rpc_address");
+
     if (EXTENDED_PEER_CHECK) {
       isValid &=
           peerRow.getColumnDefinitions().contains("host_id")
@@ -898,10 +905,14 @@ class ControlConnection implements Connection.Owner {
 
   // Custom formatting to avoid spamming the logs if 'tokens' is present and contains a gazillion
   // tokens
-  private static String formatInvalidPeer(Row peerRow) {
+  private String formatInvalidPeer(Row peerRow) {
     StringBuilder sb = new StringBuilder("[peer=" + peerRow.getInet("peer"));
-    formatMissingOrNullColumn(peerRow, "rpc_address", sb);
-    formatMissingOrNullColumn(peerRow, "native_address", sb);
+    if (isPeersV2) {
+      formatMissingOrNullColumn(peerRow, "native_address", sb);
+      formatMissingOrNullColumn(peerRow, "native_port", sb);
+    } else {
+      formatMissingOrNullColumn(peerRow, "rpc_address", sb);
+    }
     if (EXTENDED_PEER_CHECK) {
       formatMissingOrNullColumn(peerRow, "host_id", sb);
       formatMissingOrNullColumn(peerRow, "data_center", sb);

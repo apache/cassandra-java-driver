@@ -236,10 +236,28 @@ public class ControlConnectionTest extends CCMTestsSupport {
     }
   }
 
+  /**
+   * @return Configurations of columns that are missing, whether or not this should be evaluated
+   *     with host port discovery enabled, and whether or not an extended peer check is required to
+   *     fail validation.
+   */
   @DataProvider
   public static Object[][] disallowedNullColumnsInPeerData() {
     return new Object[][] {
-      {"host_id"}, {"data_center"}, {"rack"}, {"tokens"}, {"host_id,data_center,rack,tokens"}
+      {"host_id", false, true},
+      {"data_center", false, true},
+      {"rack", false, true},
+      {"tokens", false, true},
+      {"host_id,data_center,rack,tokens", false, true},
+      {"rpc_address", false, false},
+      {"host_id", true, true},
+      {"data_center", true, true},
+      {"rack", true, true},
+      {"tokens", true, true},
+      {"host_id,data_center,rack,tokens", true, true},
+      {"native_address", true, false},
+      {"native_port", true, false},
+      {"native_address,native_port", true, false},
     };
   }
 
@@ -253,9 +271,12 @@ public class ControlConnectionTest extends CCMTestsSupport {
    */
   @Test(groups = "isolated", dataProvider = "disallowedNullColumnsInPeerData")
   @CCMConfig(createCcm = false)
-  public void should_ignore_peer_if_extended_peer_check_is_enabled(String columns) {
+  public void should_ignore_peer_if_extended_peer_check_is_enabled(
+      String columns,
+      boolean allowHostPortDiscovery,
+      @SuppressWarnings("unused") boolean extendPeerCheckRequired) {
     System.setProperty("com.datastax.driver.EXTENDED_PEER_CHECK", "true");
-    run_with_null_peer_info(columns, false);
+    run_with_null_peer_info(columns, false, allowHostPortDiscovery);
   }
 
   /**
@@ -267,13 +288,21 @@ public class ControlConnectionTest extends CCMTestsSupport {
    */
   @Test(groups = "short", dataProvider = "disallowedNullColumnsInPeerData")
   @CCMConfig(createCcm = false)
-  public void should_ignore_and_warn_peers_with_null_entries_by_default(String columns) {
-    run_with_null_peer_info(columns, false);
+  public void should_ignore_and_warn_peers_with_null_entries_by_default(
+      String columns,
+      boolean allowHostPortDiscovery,
+      @SuppressWarnings("unused") boolean extendedPeerCheckRequired) {
+    run_with_null_peer_info(columns, false, allowHostPortDiscovery);
   }
 
-  static void run_with_null_peer_info(String columns, boolean expectPeer2) {
+  static void run_with_null_peer_info(
+      String columns, boolean expectPeer2, boolean allowHostPortDiscovery) {
     // given: A cluster with peer 2 having a null rack.
     ScassandraCluster.ScassandraClusterBuilder builder = ScassandraCluster.builder().withNodes(3);
+
+    if (allowHostPortDiscovery) {
+      builder.withPeersV2(true);
+    }
 
     StringBuilder columnDataBuilder = new StringBuilder();
     for (String column : columns.split(",")) {
@@ -288,12 +317,16 @@ public class ControlConnectionTest extends CCMTestsSupport {
 
     ScassandraCluster scassandraCluster = builder.build();
 
-    Cluster cluster =
+    Cluster.Builder clusterBuilder =
         Cluster.builder()
             .addContactPoints(scassandraCluster.address(1).getAddress())
             .withPort(scassandraCluster.getBinaryPort())
-            .withNettyOptions(nonQuietClusterCloseOptions)
-            .build();
+            .withNettyOptions(nonQuietClusterCloseOptions);
+
+    if (allowHostPortDiscovery) {
+      clusterBuilder.allowHostPortDiscovery();
+    }
+    Cluster cluster = clusterBuilder.build();
 
     // Capture logs to ensure appropriate warnings are logged.
     org.apache.log4j.Logger cLogger = org.apache.log4j.Logger.getLogger("com.datastax.driver.core");

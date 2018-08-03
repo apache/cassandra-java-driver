@@ -484,6 +484,7 @@ public class ScassandraCluster {
           addPeerInfo(row, dc, n + 1, "graph", false);
           addPeerInfo(rowV2, dc, n + 1, "graph", false);
 
+          addPeerInfoIfExists(row, dc, n + 1, "listen_address");
           addPeerInfoIfExists(row, dc, n + 1, "dse_version");
           addPeerInfoIfExists(row, dc, n + 1, "workload");
 
@@ -601,6 +602,7 @@ public class ScassandraCluster {
     column("rack", TEXT),
     column("release_version", TEXT),
     column("tokens", set(TEXT)),
+    column("listen_address", INET),
     column("host_id", UUID),
     column("graph", BOOLEAN),
     column("schema_version", UUID)

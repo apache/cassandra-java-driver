@@ -15,6 +15,7 @@
  */
 package com.datastax.driver.core;
 
+import org.testng.SkipException;
 import org.testng.annotations.Test;
 
 public class ExtendedPeerCheckDisabledTest {
@@ -32,8 +33,12 @@ public class ExtendedPeerCheckDisabledTest {
       dataProvider = "disallowedNullColumnsInPeerData",
       dataProviderClass = ControlConnectionTest.class)
   @CCMConfig(createCcm = false)
-  public void should_use_peer_if_extended_peer_check_is_disabled(String columns) {
+  public void should_use_peer_if_extended_peer_check_is_disabled(
+      String columns, boolean allowHostPortDiscovery, boolean requiresExtendedPeerCheck) {
     System.setProperty("com.datastax.driver.EXTENDED_PEER_CHECK", "false");
-    ControlConnectionTest.run_with_null_peer_info(columns, true);
+    if (!requiresExtendedPeerCheck) {
+      throw new SkipException("Absence of column does not require extended peer check, skipping");
+    }
+    ControlConnectionTest.run_with_null_peer_info(columns, true, allowHostPortDiscovery);
   }
 }
