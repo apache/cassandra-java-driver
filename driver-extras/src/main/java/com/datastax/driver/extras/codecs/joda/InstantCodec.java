@@ -15,7 +15,10 @@
  */
 package com.datastax.driver.extras.codecs.joda;
 
-import static com.datastax.driver.core.ParseUtils.*;
+import static com.datastax.driver.core.ParseUtils.isLongLiteral;
+import static com.datastax.driver.core.ParseUtils.isQuoted;
+import static com.datastax.driver.core.ParseUtils.quote;
+import static com.datastax.driver.core.ParseUtils.unquote;
 import static java.lang.Long.parseLong;
 
 import com.datastax.driver.core.DataType;

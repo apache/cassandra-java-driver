@@ -15,16 +15,33 @@
  */
 package com.datastax.driver.mapping;
 
-import com.datastax.driver.core.*;
+import com.datastax.driver.core.AbstractTableMetadata;
+import com.datastax.driver.core.ConsistencyLevel;
+import com.datastax.driver.core.KeyspaceMetadata;
+import com.datastax.driver.core.Metadata;
+import com.datastax.driver.core.TypeCodec;
+import com.datastax.driver.core.UserType;
 import com.datastax.driver.mapping.MethodMapper.ParamMapper;
-import com.datastax.driver.mapping.annotations.*;
+import com.datastax.driver.mapping.annotations.Accessor;
+import com.datastax.driver.mapping.annotations.Defaults;
+import com.datastax.driver.mapping.annotations.Param;
+import com.datastax.driver.mapping.annotations.Query;
+import com.datastax.driver.mapping.annotations.QueryParameters;
+import com.datastax.driver.mapping.annotations.Table;
+import com.datastax.driver.mapping.annotations.UDT;
 import com.google.common.base.Strings;
 import com.google.common.reflect.TypeToken;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 
 class AnnotationParser {

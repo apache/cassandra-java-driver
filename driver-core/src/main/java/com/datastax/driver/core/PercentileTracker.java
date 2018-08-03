@@ -16,15 +16,26 @@
 package com.datastax.driver.core;
 
 import static com.google.common.base.Preconditions.checkArgument;
-import static java.util.concurrent.TimeUnit.*;
+import static java.util.concurrent.TimeUnit.MILLISECONDS;
+import static java.util.concurrent.TimeUnit.MINUTES;
+import static java.util.concurrent.TimeUnit.NANOSECONDS;
 
-import com.datastax.driver.core.exceptions.*;
+import com.datastax.driver.core.exceptions.BootstrappingException;
+import com.datastax.driver.core.exceptions.DriverInternalError;
+import com.datastax.driver.core.exceptions.OverloadedException;
+import com.datastax.driver.core.exceptions.QueryValidationException;
+import com.datastax.driver.core.exceptions.UnavailableException;
+import com.datastax.driver.core.exceptions.UnpreparedException;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.SettableFuture;
 import java.util.Set;
-import java.util.concurrent.*;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import org.HdrHistogram.Histogram;
 import org.HdrHistogram.Recorder;
 import org.slf4j.Logger;

@@ -19,7 +19,15 @@ import static com.datastax.driver.core.Assertions.assertThat;
 import static com.datastax.driver.core.Metadata.handleId;
 import static com.datastax.driver.core.TestUtils.nonDebouncingQueryOptions;
 import static org.mockito.Matchers.any;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.after;
+import static org.mockito.Mockito.anyListOf;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.reset;
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.timeout;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
 
 import com.datastax.driver.core.utils.Bytes;
 import com.datastax.driver.core.utils.CassandraVersion;
@@ -29,7 +37,12 @@ import com.google.common.util.concurrent.ListenableFuture;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import org.mockito.ArgumentCaptor;
-import org.testng.annotations.*;
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.AfterMethod;
+import org.testng.annotations.BeforeClass;
+import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.DataProvider;
+import org.testng.annotations.Test;
 
 @CCMConfig(createCluster = false, config = "enable_user_defined_functions:true")
 public class SchemaChangesTest extends CCMTestsSupport {

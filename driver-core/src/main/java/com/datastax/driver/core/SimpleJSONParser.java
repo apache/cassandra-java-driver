@@ -15,7 +15,11 @@
  */
 package com.datastax.driver.core;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * A very simple json parser. The only reason we need to read json in the driver is because for

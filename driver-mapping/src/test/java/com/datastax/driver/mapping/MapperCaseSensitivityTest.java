@@ -22,7 +22,11 @@ import com.datastax.driver.core.CCMConfig;
 import com.datastax.driver.core.CCMTestsSupport;
 import com.datastax.driver.core.TestUtils;
 import com.datastax.driver.core.utils.CassandraVersion;
-import com.datastax.driver.mapping.annotations.*;
+import com.datastax.driver.mapping.annotations.Column;
+import com.datastax.driver.mapping.annotations.Field;
+import com.datastax.driver.mapping.annotations.PartitionKey;
+import com.datastax.driver.mapping.annotations.Table;
+import com.datastax.driver.mapping.annotations.UDT;
 import com.google.common.base.Objects;
 import org.testng.annotations.Test;
 

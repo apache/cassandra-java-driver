@@ -15,7 +15,10 @@
  */
 package com.datastax.driver.core.schemabuilder;
 
-import static com.datastax.driver.core.schemabuilder.SchemaBuilder.*;
+import static com.datastax.driver.core.schemabuilder.SchemaBuilder.dateTieredStrategy;
+import static com.datastax.driver.core.schemabuilder.SchemaBuilder.leveledStrategy;
+import static com.datastax.driver.core.schemabuilder.SchemaBuilder.sizedTieredStategy;
+import static com.datastax.driver.core.schemabuilder.SchemaBuilder.timeWindowCompactionStrategy;
 import static com.datastax.driver.core.schemabuilder.TableOptions.CompactionOptions.DateTieredCompactionStrategyOptions;
 import static com.datastax.driver.core.schemabuilder.TableOptions.CompactionOptions.TimeWindowCompactionStrategyOptions;
 import static com.datastax.driver.core.schemabuilder.TableOptions.CompactionOptions.TimeWindowCompactionStrategyOptions.CompactionWindowUnit;

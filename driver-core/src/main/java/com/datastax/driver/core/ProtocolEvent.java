@@ -15,7 +15,10 @@
  */
 package com.datastax.driver.core;
 
-import static com.datastax.driver.core.SchemaElement.*;
+import static com.datastax.driver.core.SchemaElement.AGGREGATE;
+import static com.datastax.driver.core.SchemaElement.FUNCTION;
+import static com.datastax.driver.core.SchemaElement.KEYSPACE;
+import static com.datastax.driver.core.SchemaElement.TABLE;
 
 import io.netty.buffer.ByteBuf;
 import java.net.InetSocketAddress;

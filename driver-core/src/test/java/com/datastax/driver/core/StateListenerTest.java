@@ -16,7 +16,10 @@
 package com.datastax.driver.core;
 
 import static com.datastax.driver.core.CreateCCM.TestMode.PER_METHOD;
-import static com.datastax.driver.core.StateListenerTest.TestListener.Event.*;
+import static com.datastax.driver.core.StateListenerTest.TestListener.Event.ADD;
+import static com.datastax.driver.core.StateListenerTest.TestListener.Event.DOWN;
+import static com.datastax.driver.core.StateListenerTest.TestListener.Event.REMOVE;
+import static com.datastax.driver.core.StateListenerTest.TestListener.Event.UP;
 import static java.util.concurrent.TimeUnit.MINUTES;
 import static org.assertj.core.api.Assertions.assertThat;
 

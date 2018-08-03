@@ -17,7 +17,11 @@ package com.datastax.driver.core.policies;
 
 import static com.datastax.driver.core.TestUtils.nonQuietClusterCloseOptions;
 
-import com.datastax.driver.core.*;
+import com.datastax.driver.core.Cluster;
+import com.datastax.driver.core.ConsistencyLevel;
+import com.datastax.driver.core.QueryTracker;
+import com.datastax.driver.core.ScassandraCluster;
+import com.datastax.driver.core.Session;
 import com.datastax.driver.core.exceptions.NoHostAvailableException;
 import com.google.common.collect.Lists;
 import java.net.InetSocketAddress;

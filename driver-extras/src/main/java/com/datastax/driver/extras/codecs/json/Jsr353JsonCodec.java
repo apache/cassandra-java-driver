@@ -21,10 +21,22 @@ import com.datastax.driver.core.ProtocolVersion;
 import com.datastax.driver.core.TypeCodec;
 import com.datastax.driver.core.exceptions.InvalidTypeException;
 import com.datastax.driver.core.utils.Bytes;
-import java.io.*;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.StringReader;
+import java.io.StringWriter;
 import java.nio.ByteBuffer;
 import java.util.Map;
-import javax.json.*;
+import javax.json.Json;
+import javax.json.JsonArray;
+import javax.json.JsonException;
+import javax.json.JsonObject;
+import javax.json.JsonReader;
+import javax.json.JsonReaderFactory;
+import javax.json.JsonStructure;
+import javax.json.JsonWriter;
+import javax.json.JsonWriterFactory;
 
 /**
  * A JSON codec that uses the <a href="https://jcp.org/en/jsr/detail?id=353">Java API for JSON

@@ -18,7 +18,13 @@ package com.datastax.driver.core.policies;
 import static com.datastax.driver.core.Assertions.assertThat;
 import static com.datastax.driver.core.TestUtils.nonQuietClusterCloseOptions;
 
-import com.datastax.driver.core.*;
+import com.datastax.driver.core.Cluster;
+import com.datastax.driver.core.ConsistencyLevel;
+import com.datastax.driver.core.DataProviders;
+import com.datastax.driver.core.MemoryAppender;
+import com.datastax.driver.core.QueryTracker;
+import com.datastax.driver.core.ScassandraCluster;
+import com.datastax.driver.core.Session;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.testng.annotations.AfterMethod;

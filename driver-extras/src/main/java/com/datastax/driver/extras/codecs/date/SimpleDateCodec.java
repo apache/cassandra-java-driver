@@ -15,11 +15,23 @@
  */
 package com.datastax.driver.extras.codecs.date;
 
-import static com.datastax.driver.core.CodecUtils.*;
-import static com.datastax.driver.core.ParseUtils.*;
+import static com.datastax.driver.core.CodecUtils.fromCqlDateToDaysSinceEpoch;
+import static com.datastax.driver.core.CodecUtils.fromDaysSinceEpochToCqlDate;
+import static com.datastax.driver.core.CodecUtils.fromSignedToUnsignedInt;
+import static com.datastax.driver.core.CodecUtils.fromUnsignedToSignedInt;
+import static com.datastax.driver.core.ParseUtils.isLongLiteral;
+import static com.datastax.driver.core.ParseUtils.isQuoted;
+import static com.datastax.driver.core.ParseUtils.parseDate;
+import static com.datastax.driver.core.ParseUtils.quote;
+import static com.datastax.driver.core.ParseUtils.unquote;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
-import com.datastax.driver.core.*;
+import com.datastax.driver.core.DataType;
+import com.datastax.driver.core.LocalDate;
+import com.datastax.driver.core.PreparedStatement;
+import com.datastax.driver.core.ProtocolVersion;
+import com.datastax.driver.core.SimpleStatement;
+import com.datastax.driver.core.TypeCodec;
 import com.datastax.driver.core.exceptions.InvalidTypeException;
 import java.nio.ByteBuffer;
 import java.text.ParseException;

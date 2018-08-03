@@ -19,9 +19,18 @@ import static com.datastax.driver.core.ConsistencyLevel.LOCAL_ONE;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
 import static org.scassandra.http.client.PrimingRequest.then;
-import static org.scassandra.http.client.Result.*;
+import static org.scassandra.http.client.Result.read_request_timeout;
+import static org.scassandra.http.client.Result.unavailable;
+import static org.scassandra.http.client.Result.write_request_timeout;
 
-import com.datastax.driver.core.*;
+import com.datastax.driver.core.Cluster;
+import com.datastax.driver.core.Host;
+import com.datastax.driver.core.Metrics;
+import com.datastax.driver.core.ResultSet;
+import com.datastax.driver.core.ScassandraCluster;
+import com.datastax.driver.core.Session;
+import com.datastax.driver.core.TestUtils;
+import com.datastax.driver.core.WriteType;
 import com.datastax.driver.core.policies.FallthroughRetryPolicy;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
@@ -30,7 +39,11 @@ import java.util.Map;
 import org.scassandra.Scassandra;
 import org.scassandra.http.client.PrimingRequest;
 import org.scassandra.http.client.Result;
-import org.testng.annotations.*;
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.AfterMethod;
+import org.testng.annotations.BeforeClass;
+import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.Test;
 
 public class ExceptionsScassandraTest {
 

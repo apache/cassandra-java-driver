@@ -18,7 +18,10 @@ package com.datastax.driver.core;
 import static com.datastax.driver.core.Assertions.assertThat;
 import static com.datastax.driver.core.CreateCCM.TestMode.PER_METHOD;
 import static java.util.concurrent.TimeUnit.SECONDS;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.reset;
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 
 import com.datastax.driver.core.Host.State;
 import com.datastax.driver.core.policies.ConstantReconnectionPolicy;

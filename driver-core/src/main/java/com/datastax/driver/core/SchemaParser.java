@@ -15,13 +15,25 @@
  */
 package com.datastax.driver.core;
 
-import static com.datastax.driver.core.SchemaElement.*;
+import static com.datastax.driver.core.SchemaElement.AGGREGATE;
+import static com.datastax.driver.core.SchemaElement.FUNCTION;
+import static com.datastax.driver.core.SchemaElement.KEYSPACE;
+import static com.datastax.driver.core.SchemaElement.TABLE;
+import static com.datastax.driver.core.SchemaElement.TYPE;
+import static com.datastax.driver.core.SchemaElement.VIEW;
 
 import com.datastax.driver.core.exceptions.BusyConnectionException;
 import com.datastax.driver.core.exceptions.ConnectionException;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ExecutionException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

@@ -15,7 +15,11 @@
  */
 package com.datastax.driver.stress;
 
-import com.datastax.driver.core.*;
+import com.datastax.driver.core.BoundStatement;
+import com.datastax.driver.core.ResultSet;
+import com.datastax.driver.core.ResultSetFuture;
+import com.datastax.driver.core.Session;
+import com.datastax.driver.core.Statement;
 import java.util.Iterator;
 import joptsimple.OptionParser;
 import joptsimple.OptionSet;

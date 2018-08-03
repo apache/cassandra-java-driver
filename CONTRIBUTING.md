@@ -18,7 +18,7 @@ Some aspects are not covered by the formatter:
 
 Also, if your IDE sorts import statements automatically, make sure it follows the same order as the
 formatter: all static imports in ASCII sort order, followed by a blank line, followed by all regular
-imports in ASCII sort order.
+imports in ASCII sort order.  In addition, please avoid using wildcard imports.
 
 ## Working on an issue
 

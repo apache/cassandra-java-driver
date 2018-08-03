@@ -15,7 +15,10 @@
  */
 package com.datastax.driver.core;
 
-import static com.datastax.driver.core.querybuilder.QueryBuilder.*;
+import static com.datastax.driver.core.querybuilder.QueryBuilder.bindMarker;
+import static com.datastax.driver.core.querybuilder.QueryBuilder.eq;
+import static com.datastax.driver.core.querybuilder.QueryBuilder.insertInto;
+import static com.datastax.driver.core.querybuilder.QueryBuilder.select;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import com.datastax.driver.core.exceptions.InvalidTypeException;
@@ -25,7 +28,11 @@ import com.datastax.driver.core.utils.MoreObjects;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.reflect.TypeToken;
 import java.nio.ByteBuffer;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;

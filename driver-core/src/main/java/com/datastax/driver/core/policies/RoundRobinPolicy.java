@@ -15,7 +15,12 @@
  */
 package com.datastax.driver.core.policies;
 
-import com.datastax.driver.core.*;
+import com.datastax.driver.core.Cluster;
+import com.datastax.driver.core.Configuration;
+import com.datastax.driver.core.ConsistencyLevel;
+import com.datastax.driver.core.Host;
+import com.datastax.driver.core.HostDistance;
+import com.datastax.driver.core.Statement;
 import com.google.common.collect.AbstractIterator;
 import java.util.Collection;
 import java.util.Iterator;

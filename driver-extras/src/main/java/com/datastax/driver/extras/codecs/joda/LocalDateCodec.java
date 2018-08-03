@@ -15,8 +15,13 @@
  */
 package com.datastax.driver.extras.codecs.joda;
 
-import static com.datastax.driver.core.CodecUtils.*;
-import static com.datastax.driver.core.ParseUtils.*;
+import static com.datastax.driver.core.CodecUtils.fromCqlDateToDaysSinceEpoch;
+import static com.datastax.driver.core.CodecUtils.fromSignedToUnsignedInt;
+import static com.datastax.driver.core.CodecUtils.fromUnsignedToSignedInt;
+import static com.datastax.driver.core.ParseUtils.isLongLiteral;
+import static com.datastax.driver.core.ParseUtils.isQuoted;
+import static com.datastax.driver.core.ParseUtils.quote;
+import static com.datastax.driver.core.ParseUtils.unquote;
 import static java.lang.Long.parseLong;
 import static org.joda.time.Days.daysBetween;
 

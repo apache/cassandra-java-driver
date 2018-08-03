@@ -15,7 +15,23 @@
  */
 package com.datastax.driver.core;
 
-import static com.datastax.driver.core.querybuilder.QueryBuilder.*;
+import static com.datastax.driver.core.querybuilder.QueryBuilder.add;
+import static com.datastax.driver.core.querybuilder.QueryBuilder.append;
+import static com.datastax.driver.core.querybuilder.QueryBuilder.contains;
+import static com.datastax.driver.core.querybuilder.QueryBuilder.delete;
+import static com.datastax.driver.core.querybuilder.QueryBuilder.eq;
+import static com.datastax.driver.core.querybuilder.QueryBuilder.fcall;
+import static com.datastax.driver.core.querybuilder.QueryBuilder.incr;
+import static com.datastax.driver.core.querybuilder.QueryBuilder.insertInto;
+import static com.datastax.driver.core.querybuilder.QueryBuilder.lt;
+import static com.datastax.driver.core.querybuilder.QueryBuilder.now;
+import static com.datastax.driver.core.querybuilder.QueryBuilder.prepend;
+import static com.datastax.driver.core.querybuilder.QueryBuilder.put;
+import static com.datastax.driver.core.querybuilder.QueryBuilder.raw;
+import static com.datastax.driver.core.querybuilder.QueryBuilder.select;
+import static com.datastax.driver.core.querybuilder.QueryBuilder.set;
+import static com.datastax.driver.core.querybuilder.QueryBuilder.update;
+import static com.datastax.driver.core.querybuilder.QueryBuilder.uuid;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;

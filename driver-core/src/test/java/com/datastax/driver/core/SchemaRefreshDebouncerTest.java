@@ -21,7 +21,14 @@ import static com.datastax.driver.core.SchemaElement.KEYSPACE;
 import static com.datastax.driver.core.SchemaElement.TABLE;
 import static com.datastax.driver.core.TestUtils.CREATE_KEYSPACE_SIMPLE_FORMAT;
 import static org.mockito.ArgumentCaptor.forClass;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.any;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.reset;
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.timeout;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 
 import java.util.Collections;
 import org.mockito.ArgumentCaptor;

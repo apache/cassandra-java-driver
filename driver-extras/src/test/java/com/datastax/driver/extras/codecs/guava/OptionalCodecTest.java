@@ -15,11 +15,23 @@
  */
 package com.datastax.driver.extras.codecs.guava;
 
-import static com.datastax.driver.core.TypeCodec.*;
-import static com.datastax.driver.core.querybuilder.QueryBuilder.*;
+import static com.datastax.driver.core.TypeCodec.bigint;
+import static com.datastax.driver.core.TypeCodec.decimal;
+import static com.datastax.driver.core.TypeCodec.list;
+import static com.datastax.driver.core.TypeCodec.varchar;
+import static com.datastax.driver.core.querybuilder.QueryBuilder.bindMarker;
+import static com.datastax.driver.core.querybuilder.QueryBuilder.eq;
+import static com.datastax.driver.core.querybuilder.QueryBuilder.insertInto;
+import static com.datastax.driver.core.querybuilder.QueryBuilder.select;
 import static org.assertj.core.api.Assertions.assertThat;
 
-import com.datastax.driver.core.*;
+import com.datastax.driver.core.BoundStatement;
+import com.datastax.driver.core.CCMTestsSupport;
+import com.datastax.driver.core.Cluster;
+import com.datastax.driver.core.CodecRegistry;
+import com.datastax.driver.core.PreparedStatement;
+import com.datastax.driver.core.ResultSet;
+import com.datastax.driver.core.Row;
 import com.datastax.driver.core.querybuilder.BuiltStatement;
 import com.datastax.driver.core.utils.CassandraVersion;
 import com.google.common.base.Optional;

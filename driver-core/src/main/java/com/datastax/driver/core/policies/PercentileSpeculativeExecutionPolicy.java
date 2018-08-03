@@ -17,7 +17,11 @@ package com.datastax.driver.core.policies;
 
 import static com.google.common.base.Preconditions.checkArgument;
 
-import com.datastax.driver.core.*;
+import com.datastax.driver.core.Cluster;
+import com.datastax.driver.core.Host;
+import com.datastax.driver.core.LatencyTracker;
+import com.datastax.driver.core.PercentileTracker;
+import com.datastax.driver.core.Statement;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**

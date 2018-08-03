@@ -20,7 +20,12 @@ import com.datastax.driver.core.exceptions.FrameTooLongException;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelHandlerContext;
-import io.netty.handler.codec.*;
+import io.netty.handler.codec.ByteToMessageDecoder;
+import io.netty.handler.codec.CorruptedFrameException;
+import io.netty.handler.codec.LengthFieldBasedFrameDecoder;
+import io.netty.handler.codec.MessageToMessageDecoder;
+import io.netty.handler.codec.MessageToMessageEncoder;
+import io.netty.handler.codec.TooLongFrameException;
 import java.util.EnumSet;
 import java.util.List;
 

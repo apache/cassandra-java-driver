@@ -18,7 +18,9 @@ package com.datastax.driver.core;
 import static com.datastax.driver.core.CreateCCM.TestMode.PER_METHOD;
 import static com.datastax.driver.core.TestUtils.findHost;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.atLeastOnce;
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.verify;
 
 import com.datastax.driver.core.exceptions.AuthenticationException;
 import com.google.common.util.concurrent.Uninterruptibles;

@@ -19,7 +19,12 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import com.datastax.driver.core.CCMTestsSupport;
 import com.datastax.driver.core.utils.CassandraVersion;
-import com.datastax.driver.mapping.annotations.*;
+import com.datastax.driver.mapping.annotations.Accessor;
+import com.datastax.driver.mapping.annotations.ClusteringColumn;
+import com.datastax.driver.mapping.annotations.Param;
+import com.datastax.driver.mapping.annotations.PartitionKey;
+import com.datastax.driver.mapping.annotations.Query;
+import com.datastax.driver.mapping.annotations.Table;
 import java.util.Iterator;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;

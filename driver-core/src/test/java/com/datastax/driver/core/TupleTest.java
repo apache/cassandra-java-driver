@@ -22,7 +22,13 @@ import static org.testng.Assert.fail;
 import com.datastax.driver.core.utils.CassandraVersion;
 import com.google.common.base.Joiner;
 import java.nio.ByteBuffer;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
 import org.testng.annotations.Test;
 
 @CassandraVersion("2.1.0")

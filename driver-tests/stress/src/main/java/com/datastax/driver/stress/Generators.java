@@ -15,7 +15,11 @@
  */
 package com.datastax.driver.stress;
 
-import com.datastax.driver.core.*;
+import com.datastax.driver.core.BoundStatement;
+import com.datastax.driver.core.KeyspaceMetadata;
+import com.datastax.driver.core.PreparedStatement;
+import com.datastax.driver.core.Session;
+import com.datastax.driver.core.SimpleStatement;
 import com.datastax.driver.core.exceptions.QueryValidationException;
 import com.datastax.driver.core.utils.Bytes;
 import java.nio.ByteBuffer;

@@ -16,7 +16,12 @@
 package com.datastax.driver.core;
 
 import com.google.common.base.Throwables;
-import com.google.common.cache.*;
+import com.google.common.cache.CacheBuilder;
+import com.google.common.cache.CacheLoader;
+import com.google.common.cache.LoadingCache;
+import com.google.common.cache.RemovalListener;
+import com.google.common.cache.RemovalNotification;
+import com.google.common.cache.Weigher;
 import java.io.File;
 import java.net.InetSocketAddress;
 import java.util.Iterator;

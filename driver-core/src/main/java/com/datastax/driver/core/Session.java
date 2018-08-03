@@ -15,7 +15,11 @@
  */
 package com.datastax.driver.core;
 
-import com.datastax.driver.core.exceptions.*;
+import com.datastax.driver.core.exceptions.AuthenticationException;
+import com.datastax.driver.core.exceptions.NoHostAvailableException;
+import com.datastax.driver.core.exceptions.QueryExecutionException;
+import com.datastax.driver.core.exceptions.QueryValidationException;
+import com.datastax.driver.core.exceptions.UnsupportedFeatureException;
 import com.google.common.util.concurrent.ListenableFuture;
 import java.io.Closeable;
 import java.util.Collection;

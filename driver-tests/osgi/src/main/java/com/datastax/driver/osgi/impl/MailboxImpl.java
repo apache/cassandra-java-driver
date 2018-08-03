@@ -15,7 +15,10 @@
  */
 package com.datastax.driver.osgi.impl;
 
-import static com.datastax.driver.core.querybuilder.QueryBuilder.*;
+import static com.datastax.driver.core.querybuilder.QueryBuilder.bindMarker;
+import static com.datastax.driver.core.querybuilder.QueryBuilder.delete;
+import static com.datastax.driver.core.querybuilder.QueryBuilder.eq;
+import static com.datastax.driver.core.querybuilder.QueryBuilder.select;
 import static com.datastax.driver.osgi.api.MailboxMessage.TABLE;
 
 import com.datastax.driver.core.BoundStatement;

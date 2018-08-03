@@ -15,7 +15,9 @@
  */
 package com.datastax.driver.core;
 
-import static com.datastax.driver.core.CCMAccess.Workload.*;
+import static com.datastax.driver.core.CCMAccess.Workload.cassandra;
+import static com.datastax.driver.core.CCMAccess.Workload.solr;
+import static com.datastax.driver.core.CCMAccess.Workload.spark;
 
 import org.testng.annotations.Test;
 

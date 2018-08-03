@@ -17,13 +17,23 @@ package com.datastax.driver.core;
 
 import static com.datastax.driver.core.Assertions.assertThat;
 import static org.scassandra.cql.MapType.map;
-import static org.scassandra.cql.PrimitiveType.*;
+import static org.scassandra.cql.PrimitiveType.BIG_INT;
+import static org.scassandra.cql.PrimitiveType.BOOLEAN;
+import static org.scassandra.cql.PrimitiveType.DOUBLE;
+import static org.scassandra.cql.PrimitiveType.INET;
+import static org.scassandra.cql.PrimitiveType.INT;
+import static org.scassandra.cql.PrimitiveType.TEXT;
+import static org.scassandra.cql.PrimitiveType.UUID;
 import static org.scassandra.cql.SetType.set;
 import static org.scassandra.http.client.PrimingRequest.then;
 import static org.scassandra.http.client.types.ColumnMetadata.column;
 
 import com.datastax.driver.core.utils.UUIDs;
-import com.google.common.collect.*;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.util.Collections;

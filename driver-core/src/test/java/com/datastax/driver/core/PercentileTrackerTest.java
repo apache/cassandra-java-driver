@@ -18,7 +18,11 @@ package com.datastax.driver.core;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
 
-import com.datastax.driver.core.exceptions.*;
+import com.datastax.driver.core.exceptions.BootstrappingException;
+import com.datastax.driver.core.exceptions.InvalidQueryException;
+import com.datastax.driver.core.exceptions.OverloadedException;
+import com.datastax.driver.core.exceptions.UnavailableException;
+import com.datastax.driver.core.exceptions.UnpreparedException;
 import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.Uninterruptibles;
 import java.util.List;

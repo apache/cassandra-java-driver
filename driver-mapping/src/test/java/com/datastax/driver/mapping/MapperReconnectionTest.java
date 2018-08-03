@@ -16,7 +16,9 @@
 package com.datastax.driver.mapping;
 
 import static com.datastax.driver.core.CreateCCM.TestMode.PER_METHOD;
-import static com.datastax.driver.core.TestUtils.*;
+import static com.datastax.driver.core.TestUtils.ipOfNode;
+import static com.datastax.driver.core.TestUtils.waitForDown;
+import static com.datastax.driver.core.TestUtils.waitForUp;
 import static com.datastax.driver.mapping.MapperTest.User;
 import static org.testng.Assert.fail;
 

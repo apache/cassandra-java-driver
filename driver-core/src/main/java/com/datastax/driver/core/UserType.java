@@ -17,7 +17,12 @@ package com.datastax.driver.core;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Iterators;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
 
 /**
  * A User Defined Type (UDT).

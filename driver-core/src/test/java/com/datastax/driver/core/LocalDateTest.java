@@ -16,7 +16,9 @@
 package com.datastax.driver.core;
 
 import static com.datastax.driver.core.Assertions.assertThat;
-import static com.datastax.driver.core.LocalDate.*;
+import static com.datastax.driver.core.LocalDate.fromDaysSinceEpoch;
+import static com.datastax.driver.core.LocalDate.fromMillisSinceEpoch;
+import static com.datastax.driver.core.LocalDate.fromYearMonthDay;
 
 import java.util.Calendar;
 import java.util.concurrent.TimeUnit;

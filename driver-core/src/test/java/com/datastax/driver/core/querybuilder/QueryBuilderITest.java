@@ -15,10 +15,25 @@
  */
 package com.datastax.driver.core.querybuilder;
 
-import static com.datastax.driver.core.querybuilder.QueryBuilder.*;
-import static org.testng.Assert.*;
+import static com.datastax.driver.core.querybuilder.QueryBuilder.bindMarker;
+import static com.datastax.driver.core.querybuilder.QueryBuilder.delete;
+import static com.datastax.driver.core.querybuilder.QueryBuilder.eq;
+import static com.datastax.driver.core.querybuilder.QueryBuilder.select;
+import static com.datastax.driver.core.querybuilder.QueryBuilder.set;
+import static com.datastax.driver.core.querybuilder.QueryBuilder.update;
+import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertFalse;
+import static org.testng.Assert.assertNotNull;
+import static org.testng.Assert.assertTrue;
+import static org.testng.Assert.fail;
 
-import com.datastax.driver.core.*;
+import com.datastax.driver.core.BoundStatement;
+import com.datastax.driver.core.CCMConfig;
+import com.datastax.driver.core.CCMTestsSupport;
+import com.datastax.driver.core.PreparedStatement;
+import com.datastax.driver.core.Row;
+import com.datastax.driver.core.Statement;
+import com.datastax.driver.core.TableMetadata;
 import com.datastax.driver.core.exceptions.SyntaxError;
 import com.datastax.driver.core.utils.CassandraVersion;
 import org.testng.annotations.Test;

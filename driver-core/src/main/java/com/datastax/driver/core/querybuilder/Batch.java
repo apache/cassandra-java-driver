@@ -15,7 +15,10 @@
  */
 package com.datastax.driver.core.querybuilder;
 
-import com.datastax.driver.core.*;
+import com.datastax.driver.core.CodecRegistry;
+import com.datastax.driver.core.ProtocolVersion;
+import com.datastax.driver.core.RegularStatement;
+import com.datastax.driver.core.SimpleStatement;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;

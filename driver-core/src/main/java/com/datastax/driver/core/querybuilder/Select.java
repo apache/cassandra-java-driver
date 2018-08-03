@@ -15,7 +15,11 @@
  */
 package com.datastax.driver.core.querybuilder;
 
-import com.datastax.driver.core.*;
+import com.datastax.driver.core.CodecRegistry;
+import com.datastax.driver.core.ColumnMetadata;
+import com.datastax.driver.core.DataType;
+import com.datastax.driver.core.Metadata;
+import com.datastax.driver.core.TableMetadata;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;

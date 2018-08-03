@@ -15,7 +15,10 @@
  */
 package com.datastax.driver.core.schemabuilder;
 
-import static com.datastax.driver.core.schemabuilder.SchemaBuilder.*;
+import static com.datastax.driver.core.schemabuilder.SchemaBuilder.deflate;
+import static com.datastax.driver.core.schemabuilder.SchemaBuilder.lz4;
+import static com.datastax.driver.core.schemabuilder.SchemaBuilder.noCompression;
+import static com.datastax.driver.core.schemabuilder.SchemaBuilder.snappy;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import org.testng.annotations.Test;

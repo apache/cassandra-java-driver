@@ -16,7 +16,10 @@
 package com.datastax.driver.core;
 
 import static com.datastax.driver.core.CreateCCM.TestMode.PER_METHOD;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.reset;
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.timeout;
+import static org.mockito.Mockito.verify;
 
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;

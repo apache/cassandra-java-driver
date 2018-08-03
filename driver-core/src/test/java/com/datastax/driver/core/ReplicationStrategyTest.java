@@ -15,7 +15,9 @@
  */
 package com.datastax.driver.core;
 
-import static org.testng.Assert.*;
+import static org.testng.Assert.assertNotNull;
+import static org.testng.Assert.assertNull;
+import static org.testng.Assert.assertTrue;
 
 import com.google.common.collect.ImmutableMap;
 import org.testng.annotations.Test;

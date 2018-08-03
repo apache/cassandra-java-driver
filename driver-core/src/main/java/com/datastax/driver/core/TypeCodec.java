@@ -15,7 +15,11 @@
  */
 package com.datastax.driver.core;
 
-import static com.datastax.driver.core.DataType.*;
+import static com.datastax.driver.core.DataType.CollectionType;
+import static com.datastax.driver.core.DataType.Name;
+import static com.datastax.driver.core.DataType.smallint;
+import static com.datastax.driver.core.DataType.timeuuid;
+import static com.datastax.driver.core.DataType.tinyint;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -35,7 +39,16 @@ import java.nio.BufferUnderflowException;
 import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
 import java.text.ParseException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.UUID;
 import java.util.regex.Pattern;
 
 /**

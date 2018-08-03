@@ -15,7 +15,15 @@
  */
 package com.datastax.driver.mapping;
 
-import com.datastax.driver.core.*;
+import com.datastax.driver.core.BoundStatement;
+import com.datastax.driver.core.ColumnDefinitions;
+import com.datastax.driver.core.ConsistencyLevel;
+import com.datastax.driver.core.PreparedStatement;
+import com.datastax.driver.core.ResultSet;
+import com.datastax.driver.core.ResultSetFuture;
+import com.datastax.driver.core.Session;
+import com.datastax.driver.core.Statement;
+import com.datastax.driver.core.TypeCodec;
 import com.datastax.driver.mapping.annotations.Defaults;
 import com.google.common.collect.Sets;
 import com.google.common.reflect.TypeToken;

@@ -20,7 +20,11 @@ import com.datastax.driver.core.Requests.QueryFlag;
 import com.datastax.driver.core.exceptions.UnsupportedFeatureException;
 import com.google.common.collect.ImmutableList;
 import java.nio.ByteBuffer;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
 
 /**
  * A statement that groups a number of {@link Statement} so they get executed as a batch.

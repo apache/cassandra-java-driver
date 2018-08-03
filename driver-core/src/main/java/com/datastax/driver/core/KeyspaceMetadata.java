@@ -18,7 +18,14 @@ package com.datastax.driver.core;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableSortedSet;
 import com.google.common.collect.Lists;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 /** Describes a keyspace defined in this cluster. */

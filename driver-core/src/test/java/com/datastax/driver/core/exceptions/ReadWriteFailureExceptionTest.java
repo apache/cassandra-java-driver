@@ -19,7 +19,12 @@ import static com.datastax.driver.core.TestUtils.CREATE_KEYSPACE_SIMPLE_FORMAT;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
 
-import com.datastax.driver.core.*;
+import com.datastax.driver.core.BoundStatement;
+import com.datastax.driver.core.CCMConfig;
+import com.datastax.driver.core.CCMTestsSupport;
+import com.datastax.driver.core.PreparedStatement;
+import com.datastax.driver.core.ProtocolVersion;
+import com.datastax.driver.core.ResultSet;
 import com.datastax.driver.core.utils.CassandraVersion;
 import org.testng.annotations.Test;
 

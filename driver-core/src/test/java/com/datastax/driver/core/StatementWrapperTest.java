@@ -18,7 +18,11 @@ package com.datastax.driver.core;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import com.datastax.driver.core.exceptions.DriverException;
-import com.datastax.driver.core.policies.*;
+import com.datastax.driver.core.policies.DelegatingLoadBalancingPolicy;
+import com.datastax.driver.core.policies.DelegatingSpeculativeExecutionPolicy;
+import com.datastax.driver.core.policies.NoSpeculativeExecutionPolicy;
+import com.datastax.driver.core.policies.RetryPolicy;
+import com.datastax.driver.core.policies.RoundRobinPolicy;
 import com.datastax.driver.core.utils.CassandraVersion;
 import java.util.Iterator;
 import java.util.concurrent.atomic.AtomicInteger;

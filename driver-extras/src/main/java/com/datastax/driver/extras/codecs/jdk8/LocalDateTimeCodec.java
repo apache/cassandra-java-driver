@@ -18,7 +18,10 @@ package com.datastax.driver.extras.codecs.jdk8;
 import static com.datastax.driver.core.ParseUtils.isLongLiteral;
 import static com.datastax.driver.core.ParseUtils.quote;
 
-import com.datastax.driver.core.*;
+import com.datastax.driver.core.DataType;
+import com.datastax.driver.core.ParseUtils;
+import com.datastax.driver.core.ProtocolVersion;
+import com.datastax.driver.core.TypeCodec;
 import com.datastax.driver.core.exceptions.InvalidTypeException;
 import java.nio.ByteBuffer;
 

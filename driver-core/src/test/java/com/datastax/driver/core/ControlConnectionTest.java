@@ -24,7 +24,11 @@ import static com.datastax.driver.core.TestUtils.nonQuietClusterCloseOptions;
 import static com.google.common.collect.Lists.newArrayList;
 import static org.scassandra.http.client.PrimingRequest.then;
 
-import com.datastax.driver.core.policies.*;
+import com.datastax.driver.core.policies.ConstantReconnectionPolicy;
+import com.datastax.driver.core.policies.DelegatingLoadBalancingPolicy;
+import com.datastax.driver.core.policies.LoadBalancingPolicy;
+import com.datastax.driver.core.policies.Policies;
+import com.datastax.driver.core.policies.ReconnectionPolicy;
 import com.datastax.driver.core.utils.CassandraVersion;
 import com.google.common.base.Function;
 import com.google.common.collect.HashMultiset;

@@ -23,7 +23,12 @@ import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static java.util.concurrent.TimeUnit.NANOSECONDS;
 import static org.assertj.core.api.Assertions.assertThat;
 
-import com.datastax.driver.core.*;
+import com.datastax.driver.core.CCMTestsSupport;
+import com.datastax.driver.core.CodecRegistry;
+import com.datastax.driver.core.PreparedStatement;
+import com.datastax.driver.core.ResultSet;
+import com.datastax.driver.core.Row;
+import com.datastax.driver.core.TupleType;
 import com.datastax.driver.core.utils.CassandraVersion;
 import com.datastax.driver.mapping.Mapper;
 import com.datastax.driver.mapping.MappingManager;

@@ -15,12 +15,19 @@
  */
 package com.datastax.driver.core;
 
-import static com.datastax.driver.core.DataType.Name.*;
+import static com.datastax.driver.core.DataType.Name.LIST;
+import static com.datastax.driver.core.DataType.Name.MAP;
+import static com.datastax.driver.core.DataType.Name.SET;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 import com.datastax.driver.core.exceptions.CodecNotFoundException;
 import com.datastax.driver.core.utils.MoreObjects;
-import com.google.common.cache.*;
+import com.google.common.cache.CacheBuilder;
+import com.google.common.cache.CacheLoader;
+import com.google.common.cache.LoadingCache;
+import com.google.common.cache.RemovalListener;
+import com.google.common.cache.RemovalNotification;
+import com.google.common.cache.Weigher;
 import com.google.common.reflect.TypeToken;
 import com.google.common.util.concurrent.UncheckedExecutionException;
 import java.lang.reflect.ParameterizedType;

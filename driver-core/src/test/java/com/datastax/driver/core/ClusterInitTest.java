@@ -21,7 +21,10 @@ import static com.datastax.driver.core.FakeHost.Behavior.THROWING_CONNECT_TIMEOU
 import static com.datastax.driver.core.HostDistance.LOCAL;
 import static com.datastax.driver.core.TestUtils.ipOfNode;
 import static com.datastax.driver.core.TestUtils.nonQuietClusterCloseOptions;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.atLeast;
+import static org.mockito.Mockito.atMost;
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.verify;
 import static org.scassandra.http.client.PrimingRequest.then;
 
 import com.datastax.driver.core.exceptions.NoHostAvailableException;

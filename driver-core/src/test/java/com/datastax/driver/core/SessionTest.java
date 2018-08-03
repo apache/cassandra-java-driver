@@ -24,7 +24,11 @@ import com.datastax.driver.core.exceptions.SyntaxError;
 import com.google.common.util.concurrent.ListenableFuture;
 import java.util.List;
 import java.util.Locale;
-import java.util.concurrent.*;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 import org.testng.annotations.Test;
 
 /** Simple test of the Sessions methods against a one node cluster. */

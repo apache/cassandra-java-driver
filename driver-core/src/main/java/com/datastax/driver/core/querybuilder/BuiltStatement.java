@@ -15,7 +15,14 @@
  */
 package com.datastax.driver.core.querybuilder;
 
-import com.datastax.driver.core.*;
+import com.datastax.driver.core.CodecRegistry;
+import com.datastax.driver.core.ColumnMetadata;
+import com.datastax.driver.core.ConsistencyLevel;
+import com.datastax.driver.core.Metadata;
+import com.datastax.driver.core.ProtocolVersion;
+import com.datastax.driver.core.RegularStatement;
+import com.datastax.driver.core.Statement;
+import com.datastax.driver.core.TypeCodec;
 import com.datastax.driver.core.exceptions.CodecNotFoundException;
 import com.datastax.driver.core.policies.RetryPolicy;
 import java.nio.ByteBuffer;

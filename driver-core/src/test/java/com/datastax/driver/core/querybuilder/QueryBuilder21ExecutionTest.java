@@ -16,7 +16,10 @@
 package com.datastax.driver.core.querybuilder;
 
 import static com.datastax.driver.core.Assertions.assertThat;
-import static com.datastax.driver.core.querybuilder.QueryBuilder.*;
+import static com.datastax.driver.core.querybuilder.QueryBuilder.bindMarker;
+import static com.datastax.driver.core.querybuilder.QueryBuilder.contains;
+import static com.datastax.driver.core.querybuilder.QueryBuilder.containsKey;
+import static com.datastax.driver.core.querybuilder.QueryBuilder.select;
 
 import com.datastax.driver.core.CCMTestsSupport;
 import com.datastax.driver.core.PreparedStatement;

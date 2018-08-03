@@ -17,7 +17,10 @@ package com.datastax.driver.core;
 
 import static com.datastax.driver.core.Assertions.assertThat;
 import static org.mockito.ArgumentCaptor.forClass;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.timeout;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
 
 import java.util.concurrent.TimeUnit;
 import org.mockito.ArgumentCaptor;

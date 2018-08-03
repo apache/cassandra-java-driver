@@ -15,16 +15,46 @@
  */
 package com.datastax.driver.core;
 
-import static com.datastax.driver.core.SchemaElement.*;
+import static com.datastax.driver.core.SchemaElement.AGGREGATE;
+import static com.datastax.driver.core.SchemaElement.FUNCTION;
+import static com.datastax.driver.core.SchemaElement.KEYSPACE;
+import static com.datastax.driver.core.SchemaElement.TABLE;
 
 import com.datastax.driver.core.Responses.Result.Rows.Metadata;
-import com.datastax.driver.core.exceptions.*;
+import com.datastax.driver.core.exceptions.AlreadyExistsException;
+import com.datastax.driver.core.exceptions.AuthenticationException;
+import com.datastax.driver.core.exceptions.BootstrappingException;
+import com.datastax.driver.core.exceptions.DriverException;
+import com.datastax.driver.core.exceptions.DriverInternalError;
+import com.datastax.driver.core.exceptions.FunctionExecutionException;
+import com.datastax.driver.core.exceptions.InvalidConfigurationInQueryException;
+import com.datastax.driver.core.exceptions.InvalidQueryException;
+import com.datastax.driver.core.exceptions.OverloadedException;
+import com.datastax.driver.core.exceptions.ProtocolError;
+import com.datastax.driver.core.exceptions.ReadFailureException;
+import com.datastax.driver.core.exceptions.ReadTimeoutException;
+import com.datastax.driver.core.exceptions.ServerError;
+import com.datastax.driver.core.exceptions.SyntaxError;
+import com.datastax.driver.core.exceptions.TruncateException;
+import com.datastax.driver.core.exceptions.UnauthorizedException;
+import com.datastax.driver.core.exceptions.UnavailableException;
+import com.datastax.driver.core.exceptions.UnpreparedException;
+import com.datastax.driver.core.exceptions.WriteFailureException;
+import com.datastax.driver.core.exceptions.WriteTimeoutException;
 import com.datastax.driver.core.utils.Bytes;
 import io.netty.buffer.ByteBuf;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
-import java.util.*;
+import java.util.ArrayDeque;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.EnumSet;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Queue;
+import java.util.Set;
 
 class Responses {
 

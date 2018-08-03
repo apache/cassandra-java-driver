@@ -15,7 +15,11 @@
  */
 package com.datastax.driver.core;
 
-import static com.datastax.driver.core.Duration.*;
+import static com.datastax.driver.core.Duration.NANOS_PER_HOUR;
+import static com.datastax.driver.core.Duration.NANOS_PER_MICRO;
+import static com.datastax.driver.core.Duration.NANOS_PER_MILLI;
+import static com.datastax.driver.core.Duration.NANOS_PER_MINUTE;
+import static com.datastax.driver.core.Duration.NANOS_PER_SECOND;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
 

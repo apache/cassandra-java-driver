@@ -15,7 +15,11 @@
  */
 package com.datastax.driver.core;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
 
 /**
  * Metadata describing the columns returned in a {@link ResultSet} or a {@link PreparedStatement}.

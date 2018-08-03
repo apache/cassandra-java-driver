@@ -15,12 +15,23 @@
  */
 package com.datastax.driver.core.querybuilder;
 
-import static com.datastax.driver.core.querybuilder.QueryBuilder.*;
+import static com.datastax.driver.core.querybuilder.QueryBuilder.batch;
+import static com.datastax.driver.core.querybuilder.QueryBuilder.eq;
+import static com.datastax.driver.core.querybuilder.QueryBuilder.insertInto;
+import static com.datastax.driver.core.querybuilder.QueryBuilder.select;
+import static com.datastax.driver.core.querybuilder.QueryBuilder.timestamp;
+import static com.datastax.driver.core.querybuilder.QueryBuilder.ttl;
+import static com.datastax.driver.core.querybuilder.QueryBuilder.update;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertNotNull;
 import static org.testng.Assert.assertNull;
 
-import com.datastax.driver.core.*;
+import com.datastax.driver.core.CCMConfig;
+import com.datastax.driver.core.CCMTestsSupport;
+import com.datastax.driver.core.CodecRegistry;
+import com.datastax.driver.core.ProtocolVersion;
+import com.datastax.driver.core.Row;
+import com.datastax.driver.core.TableMetadata;
 import java.nio.ByteBuffer;
 import org.testng.annotations.Test;
 

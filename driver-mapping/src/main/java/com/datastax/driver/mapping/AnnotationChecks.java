@@ -15,9 +15,17 @@
  */
 package com.datastax.driver.mapping;
 
-import com.datastax.driver.mapping.annotations.*;
+import com.datastax.driver.mapping.annotations.ClusteringColumn;
+import com.datastax.driver.mapping.annotations.Column;
+import com.datastax.driver.mapping.annotations.Computed;
+import com.datastax.driver.mapping.annotations.PartitionKey;
+import com.datastax.driver.mapping.annotations.Table;
 import java.lang.annotation.Annotation;
-import java.util.*;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
 
 /** Various checks on mapping annotations. */
 class AnnotationChecks {

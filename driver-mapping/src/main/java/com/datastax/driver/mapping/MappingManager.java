@@ -15,7 +15,13 @@
  */
 package com.datastax.driver.mapping;
 
-import com.datastax.driver.core.*;
+import com.datastax.driver.core.Cluster;
+import com.datastax.driver.core.ProtocolVersion;
+import com.datastax.driver.core.SchemaChangeListenerBase;
+import com.datastax.driver.core.Session;
+import com.datastax.driver.core.TableMetadata;
+import com.datastax.driver.core.TypeCodec;
+import com.datastax.driver.core.UserType;
 import com.datastax.driver.core.utils.MoreObjects;
 import com.datastax.driver.mapping.annotations.Accessor;
 import com.datastax.driver.mapping.annotations.Table;

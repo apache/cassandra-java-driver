@@ -18,7 +18,10 @@ package com.datastax.driver.core;
 import static com.datastax.driver.core.Assertions.assertThat;
 import static com.datastax.driver.core.TestUtils.CREATE_KEYSPACE_SIMPLE_FORMAT;
 import static org.mockito.Matchers.any;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.reset;
+import static org.mockito.Mockito.timeout;
+import static org.mockito.Mockito.verify;
 
 import com.datastax.driver.core.policies.DelegatingLoadBalancingPolicy;
 import com.datastax.driver.core.policies.LoadBalancingPolicy;

@@ -17,7 +17,12 @@ package com.datastax.driver.core;
 
 import static com.datastax.driver.core.SchemaElement.KEYSPACE;
 
-import com.datastax.driver.core.exceptions.*;
+import com.datastax.driver.core.exceptions.ConnectionException;
+import com.datastax.driver.core.exceptions.DriverInternalError;
+import com.datastax.driver.core.exceptions.NoHostAvailableException;
+import com.datastax.driver.core.exceptions.OperationTimedOutException;
+import com.datastax.driver.core.exceptions.QueryExecutionException;
+import com.datastax.driver.core.exceptions.QueryValidationException;
 import com.google.common.util.concurrent.AbstractFuture;
 import com.google.common.util.concurrent.Uninterruptibles;
 import java.util.concurrent.ExecutionException;

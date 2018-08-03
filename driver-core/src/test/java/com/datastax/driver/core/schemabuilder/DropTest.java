@@ -15,7 +15,9 @@
  */
 package com.datastax.driver.core.schemabuilder;
 
-import static com.datastax.driver.core.schemabuilder.SchemaBuilder.*;
+import static com.datastax.driver.core.schemabuilder.SchemaBuilder.dropIndex;
+import static com.datastax.driver.core.schemabuilder.SchemaBuilder.dropTable;
+import static com.datastax.driver.core.schemabuilder.SchemaBuilder.dropType;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import org.testng.annotations.Test;

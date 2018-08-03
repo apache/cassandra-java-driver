@@ -17,7 +17,12 @@ package com.datastax.driver.core.querybuilder;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
-import com.datastax.driver.core.*;
+import com.datastax.driver.core.CodecRegistry;
+import com.datastax.driver.core.DataType;
+import com.datastax.driver.core.Metadata;
+import com.datastax.driver.core.ProtocolVersion;
+import com.datastax.driver.core.Token;
+import com.datastax.driver.core.TypeCodec;
 import com.datastax.driver.core.exceptions.InvalidTypeException;
 import java.math.BigDecimal;
 import java.math.BigInteger;

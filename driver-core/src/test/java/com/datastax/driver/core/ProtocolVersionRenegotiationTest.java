@@ -15,7 +15,9 @@
  */
 package com.datastax.driver.core;
 
-import static com.datastax.driver.core.ProtocolVersion.*;
+import static com.datastax.driver.core.ProtocolVersion.V1;
+import static com.datastax.driver.core.ProtocolVersion.V4;
+import static com.datastax.driver.core.ProtocolVersion.V5;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import com.datastax.driver.core.exceptions.UnsupportedProtocolVersionException;

@@ -17,7 +17,9 @@ package com.datastax.driver.core;
 
 import static com.datastax.driver.core.Assertions.assertThat;
 import static com.datastax.driver.core.TestUtils.nonQuietClusterCloseOptions;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 import static org.scassandra.http.client.PrimingRequest.then;
 
 import com.datastax.driver.core.exceptions.DriverException;

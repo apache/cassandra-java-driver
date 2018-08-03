@@ -15,7 +15,11 @@
  */
 package com.datastax.driver.core.policies;
 
-import com.datastax.driver.core.*;
+import com.datastax.driver.core.Cluster;
+import com.datastax.driver.core.ConsistencyLevel;
+import com.datastax.driver.core.QueryOptions;
+import com.datastax.driver.core.Statement;
+import com.datastax.driver.core.WriteType;
 import com.datastax.driver.core.exceptions.DriverException;
 
 /**

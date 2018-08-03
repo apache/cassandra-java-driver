@@ -18,7 +18,12 @@ package com.datastax.driver.core;
 import static com.datastax.driver.core.CreateCCM.TestMode.PER_METHOD;
 import static org.mockito.Answers.CALLS_REAL_METHODS;
 import static org.mockito.Matchers.any;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
 
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.ChannelHandler;

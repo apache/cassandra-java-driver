@@ -15,12 +15,26 @@
  */
 package com.datastax.driver.core.querybuilder;
 
-import static com.datastax.driver.core.querybuilder.QueryBuilder.*;
-import static com.datastax.driver.core.schemabuilder.SchemaBuilder.*;
+import static com.datastax.driver.core.querybuilder.QueryBuilder.eq;
+import static com.datastax.driver.core.querybuilder.QueryBuilder.insertInto;
+import static com.datastax.driver.core.querybuilder.QueryBuilder.path;
+import static com.datastax.driver.core.querybuilder.QueryBuilder.putAll;
+import static com.datastax.driver.core.querybuilder.QueryBuilder.raw;
+import static com.datastax.driver.core.querybuilder.QueryBuilder.select;
+import static com.datastax.driver.core.querybuilder.QueryBuilder.set;
+import static com.datastax.driver.core.querybuilder.QueryBuilder.update;
+import static com.datastax.driver.core.schemabuilder.SchemaBuilder.createTable;
+import static com.datastax.driver.core.schemabuilder.SchemaBuilder.createType;
+import static com.datastax.driver.core.schemabuilder.SchemaBuilder.udtLiteral;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.testng.Assert.assertEquals;
 
-import com.datastax.driver.core.*;
+import com.datastax.driver.core.CCMTestsSupport;
+import com.datastax.driver.core.DataType;
+import com.datastax.driver.core.Row;
+import com.datastax.driver.core.Statement;
+import com.datastax.driver.core.UDTValue;
+import com.datastax.driver.core.UserType;
 import com.datastax.driver.core.utils.CassandraVersion;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Maps;

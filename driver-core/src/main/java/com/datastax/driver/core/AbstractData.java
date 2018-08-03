@@ -21,7 +21,11 @@ import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.net.InetAddress;
 import java.nio.ByteBuffer;
-import java.util.*;
+import java.util.Date;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.UUID;
 
 // We don't want to expose this one: it's less useful externally and it's a bit ugly to expose
 // anyway (but it's convenient).

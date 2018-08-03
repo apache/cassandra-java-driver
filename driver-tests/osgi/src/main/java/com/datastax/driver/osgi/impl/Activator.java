@@ -18,7 +18,13 @@ package com.datastax.driver.osgi.impl;
 import static com.datastax.driver.core.ProtocolOptions.Compression.LZ4;
 import static com.datastax.driver.osgi.api.MailboxMessage.TABLE;
 
-import com.datastax.driver.core.*;
+import com.datastax.driver.core.Cluster;
+import com.datastax.driver.core.CodecRegistry;
+import com.datastax.driver.core.Metadata;
+import com.datastax.driver.core.PerHostPercentileTracker;
+import com.datastax.driver.core.ProtocolOptions;
+import com.datastax.driver.core.Session;
+import com.datastax.driver.core.VersionNumber;
 import com.datastax.driver.core.exceptions.InvalidQueryException;
 import com.datastax.driver.core.policies.PercentileSpeculativeExecutionPolicy;
 import com.datastax.driver.extras.codecs.date.SimpleTimestampCodec;

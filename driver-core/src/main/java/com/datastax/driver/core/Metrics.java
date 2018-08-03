@@ -15,7 +15,12 @@
  */
 package com.datastax.driver.core;
 
-import com.codahale.metrics.*;
+import com.codahale.metrics.Counter;
+import com.codahale.metrics.Gauge;
+import com.codahale.metrics.JmxReporter;
+import com.codahale.metrics.Meter;
+import com.codahale.metrics.MetricRegistry;
+import com.codahale.metrics.Timer;
 import com.datastax.driver.core.policies.SpeculativeExecutionPolicy;
 import java.util.HashSet;
 import java.util.Set;

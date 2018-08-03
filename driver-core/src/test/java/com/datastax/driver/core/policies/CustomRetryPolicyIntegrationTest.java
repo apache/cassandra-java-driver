@@ -18,9 +18,16 @@ package com.datastax.driver.core.policies;
 import static com.datastax.driver.core.Assertions.assertThat;
 import static org.assertj.core.api.Fail.fail;
 import static org.scassandra.http.client.PrimingRequest.then;
-import static org.scassandra.http.client.Result.*;
+import static org.scassandra.http.client.Result.closed_connection;
+import static org.scassandra.http.client.Result.read_request_timeout;
+import static org.scassandra.http.client.Result.unavailable;
 
-import com.datastax.driver.core.*;
+import com.datastax.driver.core.Cluster;
+import com.datastax.driver.core.ConsistencyLevel;
+import com.datastax.driver.core.ResultSet;
+import com.datastax.driver.core.SocketOptions;
+import com.datastax.driver.core.Statement;
+import com.datastax.driver.core.WriteType;
 import com.datastax.driver.core.exceptions.DriverException;
 import com.datastax.driver.core.exceptions.OperationTimedOutException;
 import com.datastax.driver.core.exceptions.TransportException;

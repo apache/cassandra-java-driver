@@ -15,7 +15,14 @@
  */
 package com.datastax.driver.osgi;
 
-import static com.datastax.driver.osgi.BundleOptions.*;
+import static com.datastax.driver.osgi.BundleOptions.defaultOptions;
+import static com.datastax.driver.osgi.BundleOptions.driverBundle;
+import static com.datastax.driver.osgi.BundleOptions.extrasBundle;
+import static com.datastax.driver.osgi.BundleOptions.guavaBundle;
+import static com.datastax.driver.osgi.BundleOptions.lz4Bundle;
+import static com.datastax.driver.osgi.BundleOptions.mailboxBundle;
+import static com.datastax.driver.osgi.BundleOptions.mappingBundle;
+import static com.datastax.driver.osgi.BundleOptions.nettyBundles;
 import static org.ops4j.pax.exam.CoreOptions.options;
 
 import com.datastax.driver.osgi.api.MailboxException;

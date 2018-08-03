@@ -24,7 +24,11 @@ import com.google.common.io.Closeables;
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.Constructor;
-import org.objectweb.asm.*;
+import org.objectweb.asm.ClassReader;
+import org.objectweb.asm.ClassVisitor;
+import org.objectweb.asm.ClassWriter;
+import org.objectweb.asm.FieldVisitor;
+import org.objectweb.asm.Opcodes;
 import org.testng.annotations.Test;
 
 @SuppressWarnings("unused")

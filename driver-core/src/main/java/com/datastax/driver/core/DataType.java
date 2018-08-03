@@ -20,7 +20,12 @@ import com.datastax.driver.core.utils.MoreObjects;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import io.netty.buffer.ByteBuf;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.EnumMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 /** Data types supported by cassandra. */
 public abstract class DataType {

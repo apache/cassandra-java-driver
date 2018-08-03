@@ -20,10 +20,21 @@ import static io.netty.handler.ssl.SslProvider.OPENSSL;
 
 import io.netty.handler.ssl.SslContextBuilder;
 import java.net.Socket;
-import java.security.*;
+import java.security.InvalidAlgorithmParameterException;
+import java.security.KeyStore;
+import java.security.KeyStoreException;
+import java.security.Provider;
+import java.security.SecureRandom;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
-import javax.net.ssl.*;
+import javax.net.ssl.ManagerFactoryParameters;
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLEngine;
+import javax.net.ssl.SSLParameters;
+import javax.net.ssl.TrustManager;
+import javax.net.ssl.TrustManagerFactory;
+import javax.net.ssl.TrustManagerFactorySpi;
+import javax.net.ssl.X509ExtendedTrustManager;
 import org.testng.annotations.Test;
 
 @CreateCCM(PER_METHOD)

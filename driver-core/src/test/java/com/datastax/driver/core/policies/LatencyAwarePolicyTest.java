@@ -23,7 +23,12 @@ import static org.scassandra.http.client.PrimingRequest.then;
 import static org.scassandra.http.client.Result.read_request_timeout;
 import static org.scassandra.http.client.Result.unavailable;
 
-import com.datastax.driver.core.*;
+import com.datastax.driver.core.Cluster;
+import com.datastax.driver.core.Host;
+import com.datastax.driver.core.LatencyTracker;
+import com.datastax.driver.core.ScassandraTestBase;
+import com.datastax.driver.core.Session;
+import com.datastax.driver.core.Statement;
 import com.datastax.driver.core.exceptions.NoHostAvailableException;
 import com.datastax.driver.core.exceptions.ReadTimeoutException;
 import com.datastax.driver.core.exceptions.UnavailableException;

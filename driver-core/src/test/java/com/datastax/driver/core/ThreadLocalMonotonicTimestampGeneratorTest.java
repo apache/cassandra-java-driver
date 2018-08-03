@@ -20,7 +20,11 @@ import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.fail;
 
 import com.google.common.collect.Lists;
-import com.google.common.util.concurrent.*;
+import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.ListeningExecutorService;
+import com.google.common.util.concurrent.MoreExecutors;
+import com.google.common.util.concurrent.Uninterruptibles;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executors;

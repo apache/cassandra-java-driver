@@ -18,7 +18,12 @@ package com.datastax.driver.extras.codecs.date;
 import static com.google.common.collect.Lists.newArrayList;
 import static org.assertj.core.api.Assertions.assertThat;
 
-import com.datastax.driver.core.*;
+import com.datastax.driver.core.BoundStatement;
+import com.datastax.driver.core.CCMTestsSupport;
+import com.datastax.driver.core.CodecRegistry;
+import com.datastax.driver.core.LocalDate;
+import com.datastax.driver.core.ResultSet;
+import com.datastax.driver.core.Row;
 import com.datastax.driver.core.utils.CassandraVersion;
 import com.datastax.driver.mapping.Mapper;
 import com.datastax.driver.mapping.MappingManager;

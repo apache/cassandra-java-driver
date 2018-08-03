@@ -15,7 +15,10 @@
  */
 package com.datastax.driver.core.schemabuilder;
 
-import static com.datastax.driver.core.schemabuilder.SchemaBuilder.*;
+import static com.datastax.driver.core.schemabuilder.SchemaBuilder.dateTieredStrategy;
+import static com.datastax.driver.core.schemabuilder.SchemaBuilder.percentile;
+import static com.datastax.driver.core.schemabuilder.SchemaBuilder.rows;
+import static com.datastax.driver.core.schemabuilder.SchemaBuilder.snappy;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
 

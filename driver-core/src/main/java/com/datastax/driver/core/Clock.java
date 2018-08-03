@@ -15,7 +15,9 @@
  */
 package com.datastax.driver.core;
 
-import static java.util.concurrent.TimeUnit.*;
+import static java.util.concurrent.TimeUnit.MILLISECONDS;
+import static java.util.concurrent.TimeUnit.NANOSECONDS;
+import static java.util.concurrent.TimeUnit.SECONDS;
 
 import java.util.concurrent.atomic.AtomicReference;
 import org.slf4j.Logger;

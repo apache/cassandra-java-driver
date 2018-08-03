@@ -15,7 +15,9 @@
  */
 package com.datastax.driver.core.schemabuilder;
 
-import static com.datastax.driver.core.schemabuilder.SchemaStatement.*;
+import static com.datastax.driver.core.schemabuilder.SchemaStatement.STATEMENT_START;
+import static com.datastax.driver.core.schemabuilder.SchemaStatement.validateNotEmpty;
+import static com.datastax.driver.core.schemabuilder.SchemaStatement.validateNotKeyWord;
 
 import com.google.common.base.Optional;
 

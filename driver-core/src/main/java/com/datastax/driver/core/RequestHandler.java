@@ -16,7 +16,19 @@
 package com.datastax.driver.core;
 
 import com.codahale.metrics.Timer;
-import com.datastax.driver.core.exceptions.*;
+import com.datastax.driver.core.exceptions.BootstrappingException;
+import com.datastax.driver.core.exceptions.BusyConnectionException;
+import com.datastax.driver.core.exceptions.BusyPoolException;
+import com.datastax.driver.core.exceptions.ConnectionException;
+import com.datastax.driver.core.exceptions.DriverException;
+import com.datastax.driver.core.exceptions.DriverInternalError;
+import com.datastax.driver.core.exceptions.NoHostAvailableException;
+import com.datastax.driver.core.exceptions.OperationTimedOutException;
+import com.datastax.driver.core.exceptions.OverloadedException;
+import com.datastax.driver.core.exceptions.ReadTimeoutException;
+import com.datastax.driver.core.exceptions.ServerError;
+import com.datastax.driver.core.exceptions.UnavailableException;
+import com.datastax.driver.core.exceptions.WriteTimeoutException;
 import com.datastax.driver.core.policies.RetryPolicy;
 import com.datastax.driver.core.policies.RetryPolicy.RetryDecision.Type;
 import com.datastax.driver.core.policies.SpeculativeExecutionPolicy.SpeculativeExecutionPlan;

@@ -15,11 +15,22 @@
  */
 package com.datastax.driver.core.policies;
 
-import com.datastax.driver.core.*;
+import com.datastax.driver.core.Cluster;
+import com.datastax.driver.core.CodecRegistry;
+import com.datastax.driver.core.Host;
+import com.datastax.driver.core.HostDistance;
+import com.datastax.driver.core.Metadata;
+import com.datastax.driver.core.ProtocolVersion;
+import com.datastax.driver.core.Statement;
 import com.google.common.collect.AbstractIterator;
 import com.google.common.collect.Lists;
 import java.nio.ByteBuffer;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Set;
 
 /**
  * A wrapper load balancing policy that adds token awareness to a child policy.

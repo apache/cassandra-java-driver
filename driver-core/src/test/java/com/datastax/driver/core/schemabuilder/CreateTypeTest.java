@@ -15,7 +15,9 @@
  */
 package com.datastax.driver.core.schemabuilder;
 
-import static com.datastax.driver.core.schemabuilder.SchemaBuilder.*;
+import static com.datastax.driver.core.schemabuilder.SchemaBuilder.createType;
+import static com.datastax.driver.core.schemabuilder.SchemaBuilder.frozen;
+import static com.datastax.driver.core.schemabuilder.SchemaBuilder.udtLiteral;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import com.datastax.driver.core.DataType;

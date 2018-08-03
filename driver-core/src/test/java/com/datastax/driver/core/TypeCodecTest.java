@@ -16,7 +16,13 @@
 package com.datastax.driver.core;
 
 import static com.datastax.driver.core.Assertions.assertThat;
-import static com.datastax.driver.core.DataType.*;
+import static com.datastax.driver.core.DataType.ascii;
+import static com.datastax.driver.core.DataType.cint;
+import static com.datastax.driver.core.DataType.list;
+import static com.datastax.driver.core.DataType.map;
+import static com.datastax.driver.core.DataType.set;
+import static com.datastax.driver.core.DataType.text;
+import static com.datastax.driver.core.DataType.varchar;
 import static com.datastax.driver.core.ProtocolVersion.V3;
 import static com.google.common.collect.Lists.newArrayList;
 import static org.testng.Assert.fail;
@@ -30,7 +36,13 @@ import com.google.common.base.Strings;
 import com.google.common.collect.Lists;
 import com.google.common.reflect.TypeToken;
 import java.nio.ByteBuffer;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.UUID;
 import org.testng.annotations.Test;
 
 public class TypeCodecTest {

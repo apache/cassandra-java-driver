@@ -20,7 +20,12 @@ import com.datastax.driver.core.utils.DseVersion;
 import java.lang.reflect.AnnotatedElement;
 import java.lang.reflect.Method;
 import java.util.concurrent.TimeUnit;
-import org.testng.*;
+import org.testng.IInvokedMethod;
+import org.testng.IInvokedMethodListener;
+import org.testng.ITestNGMethod;
+import org.testng.ITestResult;
+import org.testng.SkipException;
+import org.testng.TestListenerAdapter;
 import org.testng.internal.ConstructorOrMethod;
 
 public class TestListener extends TestListenerAdapter implements IInvokedMethodListener {

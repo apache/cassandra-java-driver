@@ -20,7 +20,11 @@ import com.datastax.driver.core.Metadata;
 import com.datastax.driver.core.RegularStatement;
 import com.datastax.driver.core.TableMetadata;
 import com.datastax.driver.core.exceptions.InvalidQueryException;
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * Builds CQL3 query via a fluent API.

@@ -22,7 +22,13 @@ import com.datastax.driver.core.utils.MoreObjects;
 import com.google.common.base.Joiner;
 import com.google.common.base.Optional;
 import com.google.common.collect.Lists;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 /** A built CREATE TABLE statement. */
 public class Create extends AbstractCreateStatement<Create> {

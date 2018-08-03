@@ -21,7 +21,12 @@ import static com.google.common.collect.Lists.newArrayList;
 import static com.google.common.collect.Sets.newHashSet;
 import static org.assertj.core.api.Assertions.assertThat;
 
-import com.datastax.driver.core.*;
+import com.datastax.driver.core.CCMTestsSupport;
+import com.datastax.driver.core.CodecRegistry;
+import com.datastax.driver.core.PreparedStatement;
+import com.datastax.driver.core.ResultSet;
+import com.datastax.driver.core.Row;
+import com.datastax.driver.core.TupleType;
 import com.datastax.driver.core.utils.CassandraVersion;
 import com.datastax.driver.mapping.Mapper;
 import com.datastax.driver.mapping.MappingManager;

@@ -16,11 +16,21 @@
 package com.datastax.driver.core;
 
 import static com.datastax.driver.core.Assertions.assertThat;
-import static com.datastax.driver.core.ColumnMetadata.*;
-import static com.datastax.driver.core.DataType.*;
-import static com.datastax.driver.core.IndexMetadata.Kind.*;
+import static com.datastax.driver.core.ColumnMetadata.COLUMN_NAME;
+import static com.datastax.driver.core.ColumnMetadata.COMPONENT_INDEX;
+import static com.datastax.driver.core.ColumnMetadata.INDEX_NAME;
+import static com.datastax.driver.core.ColumnMetadata.INDEX_OPTIONS;
+import static com.datastax.driver.core.ColumnMetadata.INDEX_TYPE;
+import static com.datastax.driver.core.ColumnMetadata.KIND_V2;
+import static com.datastax.driver.core.ColumnMetadata.VALIDATOR;
+import static com.datastax.driver.core.DataType.cint;
+import static com.datastax.driver.core.DataType.map;
+import static com.datastax.driver.core.DataType.text;
+import static com.datastax.driver.core.IndexMetadata.Kind.COMPOSITES;
+import static com.datastax.driver.core.IndexMetadata.Kind.CUSTOM;
+import static com.datastax.driver.core.IndexMetadata.Kind.KEYS;
 
-import com.datastax.driver.core.ColumnMetadata.*;
+import com.datastax.driver.core.ColumnMetadata.Raw;
 import com.datastax.driver.core.Token.M3PToken;
 import com.datastax.driver.core.utils.CassandraVersion;
 import com.google.common.collect.ImmutableList;

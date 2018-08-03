@@ -17,7 +17,9 @@ package com.datastax.driver.core;
 
 import static com.datastax.driver.core.CreateCCM.TestMode.PER_CLASS;
 import static com.datastax.driver.core.CreateCCM.TestMode.PER_METHOD;
-import static com.datastax.driver.core.TestUtils.*;
+import static com.datastax.driver.core.TestUtils.CREATE_KEYSPACE_SIMPLE_FORMAT;
+import static com.datastax.driver.core.TestUtils.executeNoFail;
+import static com.datastax.driver.core.TestUtils.ipOfNode;
 import static org.assertj.core.api.Assertions.fail;
 
 import com.datastax.driver.core.CCMAccess.Workload;
@@ -38,14 +40,26 @@ import java.lang.reflect.Modifier;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.testng.ITestResult;
-import org.testng.annotations.*;
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.AfterMethod;
+import org.testng.annotations.BeforeClass;
+import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.Test;
 
 @SuppressWarnings("unused")
 public class CCMTestsSupport {

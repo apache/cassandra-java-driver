@@ -15,7 +15,10 @@
  */
 package com.datastax.driver.core;
 
-import static com.datastax.driver.core.CCMBridge.*;
+import static com.datastax.driver.core.CCMBridge.DEFAULT_CLIENT_KEYSTORE_FILE;
+import static com.datastax.driver.core.CCMBridge.DEFAULT_CLIENT_KEYSTORE_PASSWORD;
+import static com.datastax.driver.core.CCMBridge.DEFAULT_CLIENT_TRUSTSTORE_FILE;
+import static com.datastax.driver.core.CCMBridge.DEFAULT_CLIENT_TRUSTSTORE_PASSWORD;
 
 import com.datastax.driver.core.exceptions.NoHostAvailableException;
 import org.testng.annotations.Test;

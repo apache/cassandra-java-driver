@@ -15,13 +15,25 @@
  */
 package com.datastax.driver.mapping;
 
-import static com.datastax.driver.core.ConsistencyLevel.*;
+import static com.datastax.driver.core.ConsistencyLevel.ALL;
+import static com.datastax.driver.core.ConsistencyLevel.LOCAL_ONE;
+import static com.datastax.driver.core.ConsistencyLevel.LOCAL_QUORUM;
+import static com.datastax.driver.core.ConsistencyLevel.ONE;
+import static com.datastax.driver.core.ConsistencyLevel.QUORUM;
+import static com.datastax.driver.core.ConsistencyLevel.TWO;
 import static com.datastax.driver.core.ProtocolVersion.V1;
 import static com.datastax.driver.mapping.Mapper.Option;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
 
-import com.datastax.driver.core.*;
+import com.datastax.driver.core.BoundStatement;
+import com.datastax.driver.core.CCMTestsSupport;
+import com.datastax.driver.core.ConsistencyLevel;
+import com.datastax.driver.core.DefaultPreparedStatement;
+import com.datastax.driver.core.ProtocolVersion;
+import com.datastax.driver.core.ResultSet;
+import com.datastax.driver.core.Row;
+import com.datastax.driver.core.Statement;
 import com.datastax.driver.core.exceptions.NoHostAvailableException;
 import com.datastax.driver.core.exceptions.UnavailableException;
 import com.datastax.driver.core.utils.CassandraVersion;

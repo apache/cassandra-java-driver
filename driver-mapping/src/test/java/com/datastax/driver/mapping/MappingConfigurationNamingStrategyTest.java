@@ -21,7 +21,13 @@ import com.datastax.driver.core.CCMTestsSupport;
 import com.datastax.driver.core.Row;
 import com.datastax.driver.core.TypeCodec;
 import com.datastax.driver.core.utils.CassandraVersion;
-import com.datastax.driver.mapping.annotations.*;
+import com.datastax.driver.mapping.annotations.Accessor;
+import com.datastax.driver.mapping.annotations.Column;
+import com.datastax.driver.mapping.annotations.Field;
+import com.datastax.driver.mapping.annotations.PartitionKey;
+import com.datastax.driver.mapping.annotations.Query;
+import com.datastax.driver.mapping.annotations.Table;
+import com.datastax.driver.mapping.annotations.UDT;
 import java.util.concurrent.atomic.AtomicInteger;
 import org.testng.annotations.Test;
 

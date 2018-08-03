@@ -15,8 +15,34 @@
  */
 package com.datastax.driver.core;
 
-import static com.datastax.driver.core.DataType.*;
-import static com.datastax.driver.core.ParseUtils.*;
+import static com.datastax.driver.core.DataType.ascii;
+import static com.datastax.driver.core.DataType.bigint;
+import static com.datastax.driver.core.DataType.blob;
+import static com.datastax.driver.core.DataType.cboolean;
+import static com.datastax.driver.core.DataType.cdouble;
+import static com.datastax.driver.core.DataType.cfloat;
+import static com.datastax.driver.core.DataType.cint;
+import static com.datastax.driver.core.DataType.counter;
+import static com.datastax.driver.core.DataType.custom;
+import static com.datastax.driver.core.DataType.date;
+import static com.datastax.driver.core.DataType.decimal;
+import static com.datastax.driver.core.DataType.duration;
+import static com.datastax.driver.core.DataType.inet;
+import static com.datastax.driver.core.DataType.list;
+import static com.datastax.driver.core.DataType.map;
+import static com.datastax.driver.core.DataType.set;
+import static com.datastax.driver.core.DataType.smallint;
+import static com.datastax.driver.core.DataType.text;
+import static com.datastax.driver.core.DataType.time;
+import static com.datastax.driver.core.DataType.timestamp;
+import static com.datastax.driver.core.DataType.timeuuid;
+import static com.datastax.driver.core.DataType.tinyint;
+import static com.datastax.driver.core.DataType.uuid;
+import static com.datastax.driver.core.DataType.varchar;
+import static com.datastax.driver.core.DataType.varint;
+import static com.datastax.driver.core.ParseUtils.isBlank;
+import static com.datastax.driver.core.ParseUtils.isIdentifierChar;
+import static com.datastax.driver.core.ParseUtils.skipSpaces;
 
 import com.datastax.driver.core.exceptions.DriverInternalError;
 import com.datastax.driver.core.exceptions.UnresolvedUserTypeException;

@@ -16,7 +16,9 @@
 package com.datastax.driver.core.policies;
 
 import static com.datastax.driver.core.ConsistencyLevel.ONE;
-import static com.datastax.driver.core.policies.RetryPolicy.RetryDecision.Type.*;
+import static com.datastax.driver.core.policies.RetryPolicy.RetryDecision.Type.IGNORE;
+import static com.datastax.driver.core.policies.RetryPolicy.RetryDecision.Type.RETHROW;
+import static com.datastax.driver.core.policies.RetryPolicy.RetryDecision.Type.RETRY;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import com.datastax.driver.core.policies.RetryPolicy.RetryDecision;

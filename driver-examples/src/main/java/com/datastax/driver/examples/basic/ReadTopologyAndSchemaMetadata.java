@@ -15,7 +15,11 @@
  */
 package com.datastax.driver.examples.basic;
 
-import com.datastax.driver.core.*;
+import com.datastax.driver.core.Cluster;
+import com.datastax.driver.core.Host;
+import com.datastax.driver.core.KeyspaceMetadata;
+import com.datastax.driver.core.Metadata;
+import com.datastax.driver.core.TableMetadata;
 
 /**
  * Gathers information about a Cassandra cluster's topology (which nodes belong to the cluster) and

@@ -15,7 +15,14 @@
  */
 package com.datastax.driver.core.schemabuilder;
 
-import static com.datastax.driver.core.schemabuilder.SchemaBuilder.*;
+import static com.datastax.driver.core.schemabuilder.SchemaBuilder.Caching;
+import static com.datastax.driver.core.schemabuilder.SchemaBuilder.KeyCaching;
+import static com.datastax.driver.core.schemabuilder.SchemaBuilder.alterTable;
+import static com.datastax.driver.core.schemabuilder.SchemaBuilder.always;
+import static com.datastax.driver.core.schemabuilder.SchemaBuilder.frozen;
+import static com.datastax.driver.core.schemabuilder.SchemaBuilder.leveledStrategy;
+import static com.datastax.driver.core.schemabuilder.SchemaBuilder.lz4;
+import static com.datastax.driver.core.schemabuilder.SchemaBuilder.rows;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import com.datastax.driver.core.DataType;

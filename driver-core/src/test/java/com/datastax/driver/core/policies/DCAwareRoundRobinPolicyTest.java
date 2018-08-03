@@ -24,7 +24,14 @@ import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.spy;
 import static org.mockito.MockitoAnnotations.initMocks;
 
-import com.datastax.driver.core.*;
+import com.datastax.driver.core.Cluster;
+import com.datastax.driver.core.ConsistencyLevel;
+import com.datastax.driver.core.DataProviders;
+import com.datastax.driver.core.Host;
+import com.datastax.driver.core.MemoryAppender;
+import com.datastax.driver.core.QueryTracker;
+import com.datastax.driver.core.ScassandraCluster;
+import com.datastax.driver.core.Session;
 import com.datastax.driver.core.exceptions.NoHostAvailableException;
 import com.google.common.collect.Lists;
 import java.util.Collection;

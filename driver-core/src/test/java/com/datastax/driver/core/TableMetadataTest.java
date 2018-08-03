@@ -18,7 +18,14 @@ package com.datastax.driver.core;
 import static com.datastax.driver.core.Assertions.assertThat;
 import static com.datastax.driver.core.ClusteringOrder.ASC;
 import static com.datastax.driver.core.ClusteringOrder.DESC;
-import static com.datastax.driver.core.DataType.*;
+import static com.datastax.driver.core.DataType.cdouble;
+import static com.datastax.driver.core.DataType.cfloat;
+import static com.datastax.driver.core.DataType.cint;
+import static com.datastax.driver.core.DataType.counter;
+import static com.datastax.driver.core.DataType.list;
+import static com.datastax.driver.core.DataType.map;
+import static com.datastax.driver.core.DataType.text;
+import static com.datastax.driver.core.DataType.timeuuid;
 import static org.assertj.core.api.Assertions.entry;
 
 import com.datastax.driver.core.utils.CassandraVersion;
