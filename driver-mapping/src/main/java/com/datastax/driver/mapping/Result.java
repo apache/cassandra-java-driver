@@ -16,12 +16,12 @@
 package com.datastax.driver.mapping;
 
 import com.datastax.driver.core.ExecutionInfo;
+import com.datastax.driver.core.GuavaCompatibility;
 import com.datastax.driver.core.PagingIterable;
 import com.datastax.driver.core.ResultSet;
 import com.datastax.driver.core.Row;
 import com.datastax.driver.core.TypeCodec;
 import com.google.common.base.Function;
-import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -126,7 +126,7 @@ public class Result<T> implements PagingIterable<Result<T>, T> {
 
   @Override
   public ListenableFuture<Result<T>> fetchMoreResults() {
-    return Futures.transform(
+    return GuavaCompatibility.INSTANCE.transform(
         rs.fetchMoreResults(),
         new Function<ResultSet, Result<T>>() {
           @Override

@@ -278,7 +278,7 @@ class Connection {
             initExecutor);
 
     // Ensure the connection gets closed if the caller cancels the returned future.
-    Futures.addCallback(
+    GuavaCompatibility.INSTANCE.addCallback(
         initFuture,
         new MoreFutures.FailureCallback<Void>() {
           @Override
@@ -648,7 +648,7 @@ class Connection {
         // Note: we quote the keyspace below, because the name is the one coming from Cassandra, so
         // it's in the right case already
         Future future = write(new Requests.Query("USE \"" + keyspace + '"'));
-        Futures.addCallback(
+        GuavaCompatibility.INSTANCE.addCallback(
             future,
             new FutureCallback<Message.Response>() {
 

@@ -106,7 +106,7 @@ class SessionManager extends AbstractSession {
               }
             });
 
-    Futures.addCallback(
+    GuavaCompatibility.INSTANCE.addCallback(
         allPoolsUpdatedFuture,
         new FutureCallback<Object>() {
           @Override
@@ -301,7 +301,7 @@ class SessionManager extends AbstractSession {
 
     final SettableFuture<Boolean> future = SettableFuture.create();
 
-    Futures.addCallback(
+    GuavaCompatibility.INSTANCE.addCallback(
         poolInitFuture,
         new FutureCallback<Void>() {
           @Override
@@ -361,7 +361,7 @@ class SessionManager extends AbstractSession {
 
     ListenableFuture<Void> poolInitFuture = newPool.initAsync(reusedConnection);
 
-    Futures.addCallback(
+    GuavaCompatibility.INSTANCE.addCallback(
         poolInitFuture,
         new FutureCallback<Void>() {
           @Override
@@ -396,7 +396,7 @@ class SessionManager extends AbstractSession {
       final SettableFuture<Boolean> future = SettableFuture.create();
       ListenableFuture<Void> newPoolInit = replacePool(host, distance, previous, reusedConnection);
       if (newPoolInit != null) {
-        Futures.addCallback(
+        GuavaCompatibility.INSTANCE.addCallback(
             newPoolInit,
             new FutureCallback<Void>() {
               @Override
@@ -725,7 +725,7 @@ class SessionManager extends AbstractSession {
                   @Override
                   public ListenableFuture<Response> apply(final Connection c) throws Exception {
                     Connection.Future responseFuture = c.write(new Requests.Prepare(query));
-                    Futures.addCallback(
+                    GuavaCompatibility.INSTANCE.addCallback(
                         responseFuture,
                         new FutureCallback<Response>() {
                           @Override
@@ -752,7 +752,8 @@ class SessionManager extends AbstractSession {
       }
     }
     // Return the statement when all futures are done
-    return Futures.transform(Futures.successfulAsList(futures), Functions.constant(statement));
+    return GuavaCompatibility.INSTANCE.transform(
+        Futures.successfulAsList(futures), Functions.constant(statement));
   }
 
   ResultSetFuture executeQuery(Message.Request msg, Statement statement) {

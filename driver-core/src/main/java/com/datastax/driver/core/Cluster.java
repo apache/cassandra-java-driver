@@ -410,7 +410,7 @@ public class Cluster implements Closeable {
                   throw Throwables.propagate(t);
                 }
               });
-      return Futures.transform(withErrorHandling, Functions.constant(session));
+      return GuavaCompatibility.INSTANCE.transform(withErrorHandling, Functions.constant(session));
     }
   }
 
@@ -2935,7 +2935,7 @@ public class Cluster implements Closeable {
                 @Override
                 public void runMayThrow() throws Exception {
                   ListenableFuture<?> f = execute(task);
-                  Futures.addCallback(
+                  GuavaCompatibility.INSTANCE.addCallback(
                       f,
                       new FutureCallback<Object>() {
                         @Override
