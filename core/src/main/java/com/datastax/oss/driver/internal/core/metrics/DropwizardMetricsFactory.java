@@ -88,7 +88,7 @@ public class DropwizardMetricsFactory implements MetricsFactory {
         : new DropwizardNodeMetricUpdater(node, enabledNodeMetrics, registry, context);
   }
 
-  private Set<SessionMetric> parseSessionMetricPaths(List<String> paths) {
+  protected Set<SessionMetric> parseSessionMetricPaths(List<String> paths) {
     EnumSet<DefaultSessionMetric> result = EnumSet.noneOf(DefaultSessionMetric.class);
     for (String path : paths) {
       try {
@@ -100,7 +100,7 @@ public class DropwizardMetricsFactory implements MetricsFactory {
     return Collections.unmodifiableSet(result);
   }
 
-  private Set<NodeMetric> parseNodeMetricPaths(List<String> paths) {
+  protected Set<NodeMetric> parseNodeMetricPaths(List<String> paths) {
     EnumSet<DefaultNodeMetric> result = EnumSet.noneOf(DefaultNodeMetric.class);
     for (String path : paths) {
       try {
