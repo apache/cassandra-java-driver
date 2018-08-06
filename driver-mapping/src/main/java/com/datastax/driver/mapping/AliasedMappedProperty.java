@@ -17,19 +17,19 @@ package com.datastax.driver.mapping;
 
 class AliasedMappedProperty implements Comparable<AliasedMappedProperty> {
 
-    final MappedProperty<Object> mappedProperty;
-    final String alias;
+  final MappedProperty<Object> mappedProperty;
+  final String alias;
 
-    @SuppressWarnings("unchecked")
-    AliasedMappedProperty(MappedProperty<?> mappedProperty, String alias) {
-        this.mappedProperty = (MappedProperty<Object>) mappedProperty;
-        this.alias = alias;
-    }
+  @SuppressWarnings("unchecked")
+  AliasedMappedProperty(MappedProperty<?> mappedProperty, String alias) {
+    this.mappedProperty = (MappedProperty<Object>) mappedProperty;
+    this.alias = alias;
+  }
 
-    @Override
-    public int compareTo(AliasedMappedProperty that) {
-        String thisColName = mappedProperty.getMappedName();
-        String thatColName = that.mappedProperty.getMappedName();
-        return thisColName.compareTo(thatColName);
-    }
+  @Override
+  public int compareTo(AliasedMappedProperty that) {
+    String thisColName = mappedProperty.getMappedName();
+    String thatColName = that.mappedProperty.getMappedName();
+    return thisColName.compareTo(thatColName);
+  }
 }

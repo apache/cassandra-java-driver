@@ -14,8 +14,11 @@
  * limitations under the License.
  */
 /**
- * This package and its subpackages contain several convenience {@link com.datastax.driver.core.TypeCodec TypeCodec}s.
- * <p/>
+ * This package and its subpackages contain several convenience {@link
+ * com.datastax.driver.core.TypeCodec TypeCodec}s.
+ *
+ * <p>
+ *
  * <table summary="Supported Mappings">
  * <tr>
  * <th>Package</th>

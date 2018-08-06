@@ -20,16 +20,13 @@ package com.datastax.driver.core;
  * assign server-side timestamps.
  */
 public class ServerSideTimestampGenerator implements TimestampGenerator {
-    /**
-     * The unique instance of this generator.
-     */
-    public static final TimestampGenerator INSTANCE = new ServerSideTimestampGenerator();
+  /** The unique instance of this generator. */
+  public static final TimestampGenerator INSTANCE = new ServerSideTimestampGenerator();
 
-    @Override
-    public long next() {
-        return Long.MIN_VALUE;
-    }
+  @Override
+  public long next() {
+    return Long.MIN_VALUE;
+  }
 
-    private ServerSideTimestampGenerator() {
-    }
+  private ServerSideTimestampGenerator() {}
 }

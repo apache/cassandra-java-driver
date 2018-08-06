@@ -22,17 +22,17 @@ import java.lang.annotation.Target;
 
 /**
  * Shorthand to specify that the value type of a collection property is frozen.
- * <p/>
- * This is equivalent to any of the following:
+ *
+ * <p>This is equivalent to any of the following:
+ *
  * <ul>
- * <li>{@code @Frozen("list<frozen<foo>>")}</li>
- * <li>{@code @Frozen("set<frozen<foo>>")}</li>
- * <li>{@code @Frozen("map<foo, frozen<bar>>")}</li>
+ *   <li>{@code @Frozen("list<frozen<foo>>")}
+ *   <li>{@code @Frozen("set<frozen<foo>>")}
+ *   <li>{@code @Frozen("map<foo, frozen<bar>>")}
  * </ul>
  *
  * @see Frozen
  */
 @Target({ElementType.FIELD, ElementType.METHOD})
 @Retention(RetentionPolicy.RUNTIME)
-public @interface FrozenValue {
-}
+public @interface FrozenValue {}

@@ -17,17 +17,17 @@ package com.datastax.driver.core;
 
 public class MetricsUtil {
 
-    public static String hostMetricName(String prefix, Host host) {
-        StringBuilder result = new StringBuilder(prefix);
-        boolean first = true;
-        for (byte b : host.getSocketAddress().getAddress().getAddress()) {
-            if (first) {
-                first = false;
-            } else {
-                result.append('_');
-            }
-            result.append(b & 0xFF);
-        }
-        return result.toString();
+  public static String hostMetricName(String prefix, Host host) {
+    StringBuilder result = new StringBuilder(prefix);
+    boolean first = true;
+    for (byte b : host.getSocketAddress().getAddress().getAddress()) {
+      if (first) {
+        first = false;
+      } else {
+        result.append('_');
+      }
+      result.append(b & 0xFF);
     }
+    return result.toString();
+  }
 }

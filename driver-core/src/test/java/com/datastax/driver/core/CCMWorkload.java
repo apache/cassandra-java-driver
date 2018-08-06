@@ -20,18 +20,15 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
-/**
- * A set of workloads to assign to a specific node.
- */
+/** A set of workloads to assign to a specific node. */
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.ANNOTATION_TYPE)
 public @interface CCMWorkload {
 
-    /**
-     * The workloads to assign to a specific node.
-     *
-     * @return The workloads to assign to a specifc node.
-     */
-    CCMAccess.Workload[] value() default {};
-
+  /**
+   * The workloads to assign to a specific node.
+   *
+   * @return The workloads to assign to a specifc node.
+   */
+  CCMAccess.Workload[] value() default {};
 }

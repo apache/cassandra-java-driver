@@ -15,42 +15,39 @@
  */
 package com.datastax.driver.core.schemabuilder;
 
-/**
- * A built CREATE KEYSPACE statement.
- */
+/** A built CREATE KEYSPACE statement. */
 public class CreateKeyspace {
 
-    static final String command = "CREATE KEYSPACE";
+  static final String command = "CREATE KEYSPACE";
 
-    private final String keyspaceName;
-    private boolean ifNotExists;
+  private final String keyspaceName;
+  private boolean ifNotExists;
 
-    public CreateKeyspace(String keyspaceName) {
-        this.keyspaceName = keyspaceName;
-        this.ifNotExists = false;
+  public CreateKeyspace(String keyspaceName) {
+    this.keyspaceName = keyspaceName;
+    this.ifNotExists = false;
+  }
+
+  public CreateKeyspace ifNotExists() {
+    this.ifNotExists = true;
+    return this;
+  }
+
+  /**
+   * Add options for this CREATE KEYSPACE statement.
+   *
+   * @return the options of this CREATE KEYSPACE statement.
+   */
+  public KeyspaceOptions with() {
+    return new KeyspaceOptions(buildCommand(), keyspaceName);
+  }
+
+  String buildCommand() {
+    StringBuilder createStatement = new StringBuilder();
+    createStatement.append(command);
+    if (ifNotExists) {
+      createStatement.append(" IF NOT EXISTS");
     }
-
-    public CreateKeyspace ifNotExists() {
-        this.ifNotExists = true;
-        return this;
-    }
-
-    /**
-     * Add options for this CREATE KEYSPACE statement.
-     *
-     * @return the options of this CREATE KEYSPACE statement.
-     */
-    public KeyspaceOptions with() {
-        return new KeyspaceOptions(buildCommand(), keyspaceName);
-    }
-
-    String buildCommand() {
-        StringBuilder createStatement = new StringBuilder();
-        createStatement.append(command);
-        if (ifNotExists) {
-            createStatement.append(" IF NOT EXISTS");
-        }
-        return createStatement.toString();
-    }
-
+    return createStatement.toString();
+  }
 }

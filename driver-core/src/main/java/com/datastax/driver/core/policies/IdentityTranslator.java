@@ -16,35 +16,30 @@
 package com.datastax.driver.core.policies;
 
 import com.datastax.driver.core.Cluster;
-
 import java.net.InetSocketAddress;
 
-/**
- * The default {@link AddressTranslator} used by the driver that do no
- * translation.
- */
+/** The default {@link AddressTranslator} used by the driver that do no translation. */
 public class IdentityTranslator implements AddressTranslator {
 
-    @Override
-    public void init(Cluster cluster) {
-        // Nothing to do
-    }
+  @Override
+  public void init(Cluster cluster) {
+    // Nothing to do
+  }
 
-    /**
-     * Translates a Cassandra {@code rpc_address} to another address if necessary.
-     * <p/>
-     * This method is the identity function, it always return the address passed
-     * in argument, doing no translation.
-     *
-     * @param address the address of a node as returned by Cassandra.
-     * @return {@code address} unmodified.
-     */
-    @Override
-    public InetSocketAddress translate(InetSocketAddress address) {
-        return address;
-    }
+  /**
+   * Translates a Cassandra {@code rpc_address} to another address if necessary.
+   *
+   * <p>This method is the identity function, it always return the address passed in argument, doing
+   * no translation.
+   *
+   * @param address the address of a node as returned by Cassandra.
+   * @return {@code address} unmodified.
+   */
+  @Override
+  public InetSocketAddress translate(InetSocketAddress address) {
+    return address;
+  }
 
-    @Override
-    public void close() {
-    }
+  @Override
+  public void close() {}
 }

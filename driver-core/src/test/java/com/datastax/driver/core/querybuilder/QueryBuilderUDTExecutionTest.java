@@ -15,122 +15,148 @@
  */
 package com.datastax.driver.core.querybuilder;
 
-import com.datastax.driver.core.*;
+import static com.datastax.driver.core.querybuilder.QueryBuilder.eq;
+import static com.datastax.driver.core.querybuilder.QueryBuilder.insertInto;
+import static com.datastax.driver.core.querybuilder.QueryBuilder.path;
+import static com.datastax.driver.core.querybuilder.QueryBuilder.putAll;
+import static com.datastax.driver.core.querybuilder.QueryBuilder.raw;
+import static com.datastax.driver.core.querybuilder.QueryBuilder.select;
+import static com.datastax.driver.core.querybuilder.QueryBuilder.set;
+import static com.datastax.driver.core.querybuilder.QueryBuilder.update;
+import static com.datastax.driver.core.schemabuilder.SchemaBuilder.createTable;
+import static com.datastax.driver.core.schemabuilder.SchemaBuilder.createType;
+import static com.datastax.driver.core.schemabuilder.SchemaBuilder.udtLiteral;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.testng.Assert.assertEquals;
+
+import com.datastax.driver.core.CCMTestsSupport;
+import com.datastax.driver.core.DataType;
+import com.datastax.driver.core.Row;
+import com.datastax.driver.core.Statement;
+import com.datastax.driver.core.UDTValue;
+import com.datastax.driver.core.UserType;
 import com.datastax.driver.core.utils.CassandraVersion;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Maps;
-import org.testng.annotations.Test;
-
 import java.net.InetAddress;
 import java.util.List;
 import java.util.Map;
-
-import static com.datastax.driver.core.querybuilder.QueryBuilder.*;
-import static com.datastax.driver.core.schemabuilder.SchemaBuilder.*;
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.testng.Assert.assertEquals;
+import org.testng.annotations.Test;
 
 @CassandraVersion("2.1.3")
 public class QueryBuilderUDTExecutionTest extends CCMTestsSupport {
 
-    @Override
-    public void onTestContextInitialized() {
-        execute("CREATE TYPE udt (i int, a inet)",
-                "CREATE TABLE udtTest(k int PRIMARY KEY, t frozen<udt>, l list<frozen<udt>>, m map<int, frozen<udt>>)");
-    }
+  @Override
+  public void onTestContextInitialized() {
+    execute(
+        "CREATE TYPE udt (i int, a inet)",
+        "CREATE TABLE udtTest(k int PRIMARY KEY, t frozen<udt>, l list<frozen<udt>>, m map<int, frozen<udt>>)");
+  }
 
-    @Test(groups = "short")
-    public void insertUdtTest() throws Exception {
-        UserType udtType = cluster().getMetadata().getKeyspace(keyspace).getUserType("udt");
-        UDTValue udtValue = udtType.newValue().setInt("i", 2).setInet("a", InetAddress.getByName("localhost"));
+  @Test(groups = "short")
+  public void insertUdtTest() throws Exception {
+    UserType udtType = cluster().getMetadata().getKeyspace(keyspace).getUserType("udt");
+    UDTValue udtValue =
+        udtType.newValue().setInt("i", 2).setInet("a", InetAddress.getByName("localhost"));
 
-        Statement insert = insertInto("udtTest").value("k", 1).value("t", udtValue);
-        assertEquals(insert.toString(), "INSERT INTO udtTest (k,t) VALUES (1,{i:2,a:'127.0.0.1'});");
+    Statement insert = insertInto("udtTest").value("k", 1).value("t", udtValue);
+    assertEquals(insert.toString(), "INSERT INTO udtTest (k,t) VALUES (1,{i:2,a:'127.0.0.1'});");
 
-        session().execute(insert);
+    session().execute(insert);
 
-        List<Row> rows = session().execute(select().from("udtTest").where(eq("k", 1))).all();
+    List<Row> rows = session().execute(select().from("udtTest").where(eq("k", 1))).all();
 
-        assertEquals(rows.size(), 1);
+    assertEquals(rows.size(), 1);
 
-        Row r1 = rows.get(0);
-        assertEquals("127.0.0.1", r1.getUDTValue("t").getInet("a").getHostAddress());
-    }
+    Row r1 = rows.get(0);
+    assertEquals("127.0.0.1", r1.getUDTValue("t").getInet("a").getHostAddress());
+  }
 
-    @Test(groups = "short")
-    public void should_handle_collections_of_UDT() throws Exception {
-        UserType udtType = cluster().getMetadata().getKeyspace(keyspace).getUserType("udt");
-        UDTValue udtValue = udtType.newValue().setInt("i", 2).setInet("a", InetAddress.getByName("localhost"));
-        UDTValue udtValue2 = udtType.newValue().setInt("i", 3).setInet("a", InetAddress.getByName("localhost"));
+  @Test(groups = "short")
+  public void should_handle_collections_of_UDT() throws Exception {
+    UserType udtType = cluster().getMetadata().getKeyspace(keyspace).getUserType("udt");
+    UDTValue udtValue =
+        udtType.newValue().setInt("i", 2).setInet("a", InetAddress.getByName("localhost"));
+    UDTValue udtValue2 =
+        udtType.newValue().setInt("i", 3).setInet("a", InetAddress.getByName("localhost"));
 
-        Statement insert = insertInto("udtTest").value("k", 1).value("l", ImmutableList.of(udtValue));
-        assertThat(insert.toString()).isEqualTo("INSERT INTO udtTest (k,l) VALUES (1,[{i:2,a:'127.0.0.1'}]);");
+    Statement insert = insertInto("udtTest").value("k", 1).value("l", ImmutableList.of(udtValue));
+    assertThat(insert.toString())
+        .isEqualTo("INSERT INTO udtTest (k,l) VALUES (1,[{i:2,a:'127.0.0.1'}]);");
 
-        session().execute(insert);
+    session().execute(insert);
 
-        List<Row> rows = session().execute(select().from("udtTest").where(eq("k", 1))).all();
+    List<Row> rows = session().execute(select().from("udtTest").where(eq("k", 1))).all();
 
-        assertThat(rows.size()).isEqualTo(1);
+    assertThat(rows.size()).isEqualTo(1);
 
-        Row r1 = rows.get(0);
-        assertThat(r1.getList("l", UDTValue.class).get(0).getInet("a").getHostAddress()).isEqualTo("127.0.0.1");
+    Row r1 = rows.get(0);
+    assertThat(r1.getList("l", UDTValue.class).get(0).getInet("a").getHostAddress())
+        .isEqualTo("127.0.0.1");
 
-        Map<Integer, UDTValue> map = Maps.newHashMap();
-        map.put(0, udtValue);
-        map.put(2, udtValue2);
-        Statement updateMap = update("udtTest").with(putAll("m", map)).where(eq("k", 1));
-        assertThat(updateMap.toString())
-                .isEqualTo("UPDATE udtTest SET m=m+{0:{i:2,a:'127.0.0.1'},2:{i:3,a:'127.0.0.1'}} WHERE k=1;");
+    Map<Integer, UDTValue> map = Maps.newHashMap();
+    map.put(0, udtValue);
+    map.put(2, udtValue2);
+    Statement updateMap = update("udtTest").with(putAll("m", map)).where(eq("k", 1));
+    assertThat(updateMap.toString())
+        .isEqualTo(
+            "UPDATE udtTest SET m=m+{0:{i:2,a:'127.0.0.1'},2:{i:3,a:'127.0.0.1'}} WHERE k=1;");
 
-        session().execute(updateMap);
+    session().execute(updateMap);
 
-        rows = session().execute(select().from("udtTest").where(eq("k", 1))).all();
-        r1 = rows.get(0);
-        assertThat(r1.getMap("m", Integer.class, UDTValue.class)).isEqualTo(map);
-    }
+    rows = session().execute(select().from("udtTest").where(eq("k", 1))).all();
+    r1 = rows.get(0);
+    assertThat(r1.getMap("m", Integer.class, UDTValue.class)).isEqualTo(map);
+  }
 
-    /**
-     * Ensures that UDT fields can be set and retrieved on their own using {@link QueryBuilder#set} and
-     * {@link QueryBuilder#select} respectively.
-     *
-     * @test_category queries:builder
-     * @jira_ticket JAVA-1286
-     * @jira_ticket CASSANDRA-7423
-     */
-    @CassandraVersion(value = "3.6", description = "Requires CASSANDRA-7423 introduced in Cassandra 3.6")
-    @Test(groups = "short")
-    public void should_support_setting_and_retrieving_udt_fields() {
-        //given
-        String table = "unfrozen_udt_table";
-        String udt = "person";
-        session().execute(createType(udt).addColumn("first", DataType.text()).addColumn("last", DataType.text()));
-        UserType userType = cluster().getMetadata().getKeyspace(keyspace).getUserType(udt);
-        assertThat(userType).isNotNull();
+  /**
+   * Ensures that UDT fields can be set and retrieved on their own using {@link QueryBuilder#set}
+   * and {@link QueryBuilder#select} respectively.
+   *
+   * @test_category queries:builder
+   * @jira_ticket JAVA-1286
+   * @jira_ticket CASSANDRA-7423
+   */
+  @CassandraVersion(
+      value = "3.6",
+      description = "Requires CASSANDRA-7423 introduced in Cassandra 3.6")
+  @Test(groups = "short")
+  public void should_support_setting_and_retrieving_udt_fields() {
+    // given
+    String table = "unfrozen_udt_table";
+    String udt = "person";
+    session()
+        .execute(
+            createType(udt).addColumn("first", DataType.text()).addColumn("last", DataType.text()));
+    UserType userType = cluster().getMetadata().getKeyspace(keyspace).getUserType(udt);
+    assertThat(userType).isNotNull();
 
-        session().execute(createTable(table).addPartitionKey("k", DataType.text())
-                .addUDTColumn("u", udtLiteral(udt))
-        );
+    session()
+        .execute(
+            createTable(table)
+                .addPartitionKey("k", DataType.text())
+                .addUDTColumn("u", udtLiteral(udt)));
 
-        UDTValue value = userType.newValue();
-        value.setString("first", "Bob");
-        value.setString("last", "Smith");
-        session().execute(insertInto(table).value("k", "key").value("u", value));
+    UDTValue value = userType.newValue();
+    value.setString("first", "Bob");
+    value.setString("last", "Smith");
+    session().execute(insertInto(table).value("k", "key").value("u", value));
 
-        //when - updating udt field
-        session().execute(update(table).with(
-                set(path("u", "first"), "Rick"))
+    // when - updating udt field
+    session()
+        .execute(
+            update(table)
+                .with(set(path("u", "first"), "Rick"))
                 .and(set(raw("u.last"), "Jones"))
                 .where(eq("k", "key")));
 
-        //then - field should be updated and retrievable by field name.
-        Row r = session().execute(select()
-                .path("u", "first")
-                .raw("u.last")
-                .from(table)
-                .where(eq("k", "key"))).one();
+    // then - field should be updated and retrievable by field name.
+    Row r =
+        session()
+            .execute(select().path("u", "first").raw("u.last").from(table).where(eq("k", "key")))
+            .one();
 
-        assertThat(r.getString("u.first")).isEqualTo("Rick");
-        assertThat(r.getString("u.last")).isEqualTo("Jones");
-    }
-
+    assertThat(r.getString("u.first")).isEqualTo("Rick");
+    assertThat(r.getString("u.last")).isEqualTo("Jones");
+  }
 }

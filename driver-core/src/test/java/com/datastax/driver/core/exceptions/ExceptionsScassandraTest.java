@@ -15,135 +15,156 @@
  */
 package com.datastax.driver.core.exceptions;
 
-import com.datastax.driver.core.*;
-import com.datastax.driver.core.policies.FallthroughRetryPolicy;
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableMap;
-import org.scassandra.Scassandra;
-import org.scassandra.http.client.PrimingRequest;
-import org.scassandra.http.client.Result;
-import org.testng.annotations.*;
-
-import java.util.List;
-import java.util.Map;
-
 import static com.datastax.driver.core.ConsistencyLevel.LOCAL_ONE;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
 import static org.scassandra.http.client.PrimingRequest.then;
-import static org.scassandra.http.client.Result.*;
+import static org.scassandra.http.client.Result.read_request_timeout;
+import static org.scassandra.http.client.Result.unavailable;
+import static org.scassandra.http.client.Result.write_request_timeout;
+
+import com.datastax.driver.core.Cluster;
+import com.datastax.driver.core.Host;
+import com.datastax.driver.core.Metrics;
+import com.datastax.driver.core.ResultSet;
+import com.datastax.driver.core.ScassandraCluster;
+import com.datastax.driver.core.Session;
+import com.datastax.driver.core.TestUtils;
+import com.datastax.driver.core.WriteType;
+import com.datastax.driver.core.policies.FallthroughRetryPolicy;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
+import java.util.List;
+import java.util.Map;
+import org.scassandra.Scassandra;
+import org.scassandra.http.client.PrimingRequest;
+import org.scassandra.http.client.Result;
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.AfterMethod;
+import org.testng.annotations.BeforeClass;
+import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.Test;
 
 public class ExceptionsScassandraTest {
 
-    protected ScassandraCluster scassandras;
-    protected Cluster cluster;
-    protected Metrics.Errors errors;
-    protected Host host1;
-    protected Session session;
+  protected ScassandraCluster scassandras;
+  protected Cluster cluster;
+  protected Metrics.Errors errors;
+  protected Host host1;
+  protected Session session;
 
-    @BeforeClass(groups = "short")
-    public void beforeClass() {
-        scassandras = ScassandraCluster.builder().withNodes(1).build();
-        scassandras.init();
+  @BeforeClass(groups = "short")
+  public void beforeClass() {
+    scassandras = ScassandraCluster.builder().withNodes(1).build();
+    scassandras.init();
+  }
+
+  @BeforeMethod(groups = "short")
+  public void beforeMethod() {
+    cluster =
+        Cluster.builder()
+            .addContactPoints(scassandras.address(1).getAddress())
+            .withPort(scassandras.getBinaryPort())
+            .withRetryPolicy(FallthroughRetryPolicy.INSTANCE)
+            .build();
+    session = cluster.connect();
+    host1 = TestUtils.findHost(cluster, 1);
+    errors = cluster.getMetrics().getErrorMetrics();
+
+    for (Scassandra node : scassandras.nodes()) {
+      node.primingClient().clearAllPrimes();
+      node.activityClient().clearAllRecordedActivity();
     }
+  }
 
-    @BeforeMethod(groups = "short")
-    public void beforeMethod() {
-        cluster = Cluster.builder()
-                .addContactPoints(scassandras.address(1).getAddress())
-                .withPort(scassandras.getBinaryPort())
-                .withRetryPolicy(FallthroughRetryPolicy.INSTANCE)
-                .build();
-        session = cluster.connect();
-        host1 = TestUtils.findHost(cluster, 1);
-        errors = cluster.getMetrics().getErrorMetrics();
-
-        for (Scassandra node : scassandras.nodes()) {
-            node.primingClient().clearAllPrimes();
-            node.activityClient().clearAllRecordedActivity();
-        }
+  @Test(groups = "short")
+  public void should_throw_proper_unavailable_exception() {
+    simulateError(1, unavailable);
+    try {
+      query();
+      fail("expected an UnavailableException");
+    } catch (UnavailableException e) {
+      assertThat(e.getMessage())
+          .isEqualTo(
+              "Not enough replicas available for query at consistency LOCAL_ONE (1 required but only 0 alive)");
+      assertThat(e.getConsistencyLevel()).isEqualTo(LOCAL_ONE);
+      assertThat(e.getAliveReplicas()).isEqualTo(0);
+      assertThat(e.getRequiredReplicas()).isEqualTo(1);
+      assertThat(e.getAddress()).isEqualTo(host1.getSocketAddress());
+      assertThat(e.getHost()).isEqualTo(host1.getAddress());
     }
+  }
 
-    @Test(groups = "short")
-    public void should_throw_proper_unavailable_exception() {
-        simulateError(1, unavailable);
-        try {
-            query();
-            fail("expected an UnavailableException");
-        } catch (UnavailableException e) {
-            assertThat(e.getMessage()).isEqualTo("Not enough replicas available for query at consistency LOCAL_ONE (1 required but only 0 alive)");
-            assertThat(e.getConsistencyLevel()).isEqualTo(LOCAL_ONE);
-            assertThat(e.getAliveReplicas()).isEqualTo(0);
-            assertThat(e.getRequiredReplicas()).isEqualTo(1);
-            assertThat(e.getAddress()).isEqualTo(host1.getSocketAddress());
-            assertThat(e.getHost()).isEqualTo(host1.getAddress());
-        }
+  @Test(groups = "short")
+  public void should_throw_proper_read_timeout_exception() {
+    simulateError(1, read_request_timeout);
+    try {
+      query();
+      fail("expected a ReadTimeoutException");
+    } catch (ReadTimeoutException e) {
+      assertThat(e.getMessage())
+          .isEqualTo(
+              "Cassandra timeout during read query at consistency LOCAL_ONE (1 responses were required but only 0 replica responded)");
+      assertThat(e.getConsistencyLevel()).isEqualTo(LOCAL_ONE);
+      assertThat(e.getReceivedAcknowledgements()).isEqualTo(0);
+      assertThat(e.getRequiredAcknowledgements()).isEqualTo(1);
+      assertThat(e.getAddress()).isEqualTo(host1.getSocketAddress());
+      assertThat(e.getHost()).isEqualTo(host1.getAddress());
     }
+  }
 
-    @Test(groups = "short")
-    public void should_throw_proper_read_timeout_exception() {
-        simulateError(1, read_request_timeout);
-        try {
-            query();
-            fail("expected a ReadTimeoutException");
-        } catch (ReadTimeoutException e) {
-            assertThat(e.getMessage()).isEqualTo("Cassandra timeout during read query at consistency LOCAL_ONE (1 responses were required but only 0 replica responded)");
-            assertThat(e.getConsistencyLevel()).isEqualTo(LOCAL_ONE);
-            assertThat(e.getReceivedAcknowledgements()).isEqualTo(0);
-            assertThat(e.getRequiredAcknowledgements()).isEqualTo(1);
-            assertThat(e.getAddress()).isEqualTo(host1.getSocketAddress());
-            assertThat(e.getHost()).isEqualTo(host1.getAddress());
-        }
+  @Test(groups = "short")
+  public void should_throw_proper_write_timeout_exception() {
+    simulateError(1, write_request_timeout);
+    try {
+      query();
+      fail("expected a WriteTimeoutException");
+    } catch (WriteTimeoutException e) {
+      assertThat(e.getMessage())
+          .isEqualTo(
+              "Cassandra timeout during SIMPLE write query at consistency LOCAL_ONE (1 replica were required but only 0 acknowledged the write)");
+      assertThat(e.getConsistencyLevel()).isEqualTo(LOCAL_ONE);
+      assertThat(e.getReceivedAcknowledgements()).isEqualTo(0);
+      assertThat(e.getRequiredAcknowledgements()).isEqualTo(1);
+      assertThat(e.getWriteType()).isEqualTo(WriteType.SIMPLE);
+      assertThat(e.getAddress()).isEqualTo(host1.getSocketAddress());
+      assertThat(e.getHost()).isEqualTo(host1.getAddress());
     }
+  }
 
-    @Test(groups = "short")
-    public void should_throw_proper_write_timeout_exception() {
-        simulateError(1, write_request_timeout);
-        try {
-            query();
-            fail("expected a WriteTimeoutException");
-        } catch (WriteTimeoutException e) {
-            assertThat(e.getMessage()).isEqualTo("Cassandra timeout during SIMPLE write query at consistency LOCAL_ONE (1 replica were required but only 0 acknowledged the write)");
-            assertThat(e.getConsistencyLevel()).isEqualTo(LOCAL_ONE);
-            assertThat(e.getReceivedAcknowledgements()).isEqualTo(0);
-            assertThat(e.getRequiredAcknowledgements()).isEqualTo(1);
-            assertThat(e.getWriteType()).isEqualTo(WriteType.SIMPLE);
-            assertThat(e.getAddress()).isEqualTo(host1.getSocketAddress());
-            assertThat(e.getHost()).isEqualTo(host1.getAddress());
-        }
-    }
-
-    protected void simulateError(int hostNumber, Result result) {
-        scassandras.node(hostNumber).primingClient().prime(PrimingRequest.queryBuilder()
+  protected void simulateError(int hostNumber, Result result) {
+    scassandras
+        .node(hostNumber)
+        .primingClient()
+        .prime(
+            PrimingRequest.queryBuilder()
                 .withQuery("mock query")
                 .withThen(then().withResult(result))
                 .build());
-    }
+  }
 
-    private static List<Map<String, ?>> row(String key, String value) {
-        return ImmutableList.<Map<String, ?>>of(ImmutableMap.of(key, value));
-    }
+  private static List<Map<String, ?>> row(String key, String value) {
+    return ImmutableList.<Map<String, ?>>of(ImmutableMap.of(key, value));
+  }
 
-    protected ResultSet query() {
-        return query(session);
-    }
+  protected ResultSet query() {
+    return query(session);
+  }
 
-    protected ResultSet query(Session session) {
-        return session.execute("mock query");
-    }
+  protected ResultSet query(Session session) {
+    return session.execute("mock query");
+  }
 
-    @AfterMethod(groups = "short", alwaysRun = true)
-    public void afterMethod() {
-        for (Scassandra node : scassandras.nodes()) {
-            node.primingClient().clearAllPrimes();
-        }
-        if (cluster != null)
-            cluster.close();
+  @AfterMethod(groups = "short", alwaysRun = true)
+  public void afterMethod() {
+    for (Scassandra node : scassandras.nodes()) {
+      node.primingClient().clearAllPrimes();
     }
+    if (cluster != null) cluster.close();
+  }
 
-    @AfterClass(groups = "short", alwaysRun = true)
-    public void afterClass() {
-        if (scassandras != null)
-            scassandras.stop();
-    }
+  @AfterClass(groups = "short", alwaysRun = true)
+  public void afterClass() {
+    if (scassandras != null) scassandras.stop();
+  }
 }

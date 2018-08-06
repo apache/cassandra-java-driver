@@ -15,13 +15,11 @@
  */
 package com.datastax.driver.core.policies;
 
-/**
- * Wraps System.nanoTime() to make it easy to mock in tests.
- */
+/** Wraps System.nanoTime() to make it easy to mock in tests. */
 class Clock {
-    static final Clock DEFAULT = new Clock();
+  static final Clock DEFAULT = new Clock();
 
-    long nanoTime() {
-        return System.nanoTime();
-    }
+  long nanoTime() {
+    return System.nanoTime();
+  }
 }

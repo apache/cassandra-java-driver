@@ -17,18 +17,18 @@ package com.datastax.driver.core.exceptions;
 
 /**
  * Exception related to the execution of a query.
- * <p/>
- * This corresponds to the exception that Cassandra throws when a (valid) query
- * cannot be executed (TimeoutException, UnavailableException, ...).
+ *
+ * <p>This corresponds to the exception that Cassandra throws when a (valid) query cannot be
+ * executed (TimeoutException, UnavailableException, ...).
  */
 @SuppressWarnings("serial")
 public abstract class QueryExecutionException extends DriverException {
 
-    protected QueryExecutionException(String msg) {
-        super(msg);
-    }
+  protected QueryExecutionException(String msg) {
+    super(msg);
+  }
 
-    protected QueryExecutionException(String msg, Throwable cause) {
-        super(msg, cause);
-    }
+  protected QueryExecutionException(String msg, Throwable cause) {
+    super(msg, cause);
+  }
 }

@@ -16,14 +16,16 @@
 package com.datastax.driver.core;
 
 /**
- * Special exception that gets emitted to {@link LatencyTracker}s with the latencies of cancelled speculative
- * executions. This allows those trackers to choose whether to ignore those latencies or not.
+ * Special exception that gets emitted to {@link LatencyTracker}s with the latencies of cancelled
+ * speculative executions. This allows those trackers to choose whether to ignore those latencies or
+ * not.
  */
 class CancelledSpeculativeExecutionException extends Exception {
 
-    static CancelledSpeculativeExecutionException INSTANCE = new CancelledSpeculativeExecutionException();
+  static CancelledSpeculativeExecutionException INSTANCE =
+      new CancelledSpeculativeExecutionException();
 
-    private CancelledSpeculativeExecutionException() {
-        super();
-    }
+  private CancelledSpeculativeExecutionException() {
+    super();
+  }
 }

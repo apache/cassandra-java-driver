@@ -15,12 +15,38 @@
  */
 package com.datastax.driver.core.policies;
 
-import com.datastax.driver.core.*;
+import static com.datastax.driver.core.TestUtils.nonQuietClusterCloseOptions;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.anyBoolean;
+import static org.mockito.Matchers.anyInt;
+import static org.mockito.Mockito.times;
+import static org.scassandra.http.client.PrimingRequest.then;
+import static org.scassandra.http.client.Result.overloaded;
+import static org.scassandra.http.client.Result.server_error;
+
+import com.datastax.driver.core.Cluster;
+import com.datastax.driver.core.ConsistencyLevel;
+import com.datastax.driver.core.Host;
+import com.datastax.driver.core.HostDistance;
+import com.datastax.driver.core.Metrics;
+import com.datastax.driver.core.PoolingOptions;
+import com.datastax.driver.core.QueryOptions;
+import com.datastax.driver.core.ResultSet;
+import com.datastax.driver.core.ScassandraCluster;
+import com.datastax.driver.core.Session;
+import com.datastax.driver.core.SimpleStatement;
+import com.datastax.driver.core.SortingLoadBalancingPolicy;
+import com.datastax.driver.core.Statement;
+import com.datastax.driver.core.TestUtils;
+import com.datastax.driver.core.WriteType;
 import com.datastax.driver.core.exceptions.DriverException;
 import com.datastax.driver.core.exceptions.OverloadedException;
 import com.datastax.driver.core.exceptions.ServerError;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+import java.util.List;
+import java.util.Map;
 import org.mockito.Mockito;
 import org.scassandra.Scassandra;
 import org.scassandra.http.client.ClosedConnectionConfig.CloseType;
@@ -32,168 +58,169 @@ import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.DataProvider;
 
-import java.util.List;
-import java.util.Map;
-
-import static com.datastax.driver.core.TestUtils.nonQuietClusterCloseOptions;
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Matchers.*;
-import static org.mockito.Mockito.times;
-import static org.scassandra.http.client.PrimingRequest.then;
-import static org.scassandra.http.client.Result.overloaded;
-import static org.scassandra.http.client.Result.server_error;
-
 /**
  * Base class for retry policy integration tests.
- * <p/>
- * We use SCassandra to easily simulate specific errors (unavailable, read timeout...) on nodes,
- * and SortingLoadBalancingPolicy to get a predictable order of the query plan (always host1, host2, host3).
- * <p/>
- * Note that SCassandra only allows a limited number of test cases, for instance it always returns errors
- * with receivedResponses = 0. If that becomes more finely tuneable in the future, we'll be able to add more
- * tests in child classes.
+ *
+ * <p>We use SCassandra to easily simulate specific errors (unavailable, read timeout...) on nodes,
+ * and SortingLoadBalancingPolicy to get a predictable order of the query plan (always host1, host2,
+ * host3).
+ *
+ * <p>Note that SCassandra only allows a limited number of test cases, for instance it always
+ * returns errors with receivedResponses = 0. If that becomes more finely tuneable in the future,
+ * we'll be able to add more tests in child classes.
  */
 public class AbstractRetryPolicyIntegrationTest {
-    protected ScassandraCluster scassandras;
-    protected Cluster cluster = null;
-    protected Metrics.Errors errors;
-    protected Host host1, host2, host3;
-    protected Session session;
+  protected ScassandraCluster scassandras;
+  protected Cluster cluster = null;
+  protected Metrics.Errors errors;
+  protected Host host1, host2, host3;
+  protected Session session;
 
-    protected RetryPolicy retryPolicy;
+  protected RetryPolicy retryPolicy;
 
-    protected AbstractRetryPolicyIntegrationTest() {
+  protected AbstractRetryPolicyIntegrationTest() {}
+
+  protected AbstractRetryPolicyIntegrationTest(RetryPolicy retryPolicy) {
+    setRetryPolicy(retryPolicy);
+  }
+
+  protected final void setRetryPolicy(RetryPolicy retryPolicy) {
+    this.retryPolicy = Mockito.spy(retryPolicy);
+  }
+
+  @BeforeMethod(groups = "short")
+  public void beforeMethod() {
+    scassandras = ScassandraCluster.builder().withNodes(3).build();
+    scassandras.init();
+
+    cluster =
+        Cluster.builder()
+            .addContactPoints(scassandras.address(1).getAddress())
+            .withPort(scassandras.getBinaryPort())
+            .withRetryPolicy(retryPolicy)
+            .withLoadBalancingPolicy(new SortingLoadBalancingPolicy())
+            .withPoolingOptions(
+                new PoolingOptions()
+                    .setCoreConnectionsPerHost(HostDistance.LOCAL, 1)
+                    .setMaxConnectionsPerHost(HostDistance.LOCAL, 1)
+                    .setHeartbeatIntervalSeconds(0))
+            .withNettyOptions(nonQuietClusterCloseOptions)
+            // Mark everything as idempotent by default so RetryPolicy is exercised.
+            .withQueryOptions(new QueryOptions().setDefaultIdempotence(true))
+            .build();
+
+    session = cluster.connect();
+
+    host1 = TestUtils.findHost(cluster, 1);
+    host2 = TestUtils.findHost(cluster, 2);
+    host3 = TestUtils.findHost(cluster, 3);
+
+    errors = cluster.getMetrics().getErrorMetrics();
+
+    Mockito.reset(retryPolicy);
+
+    for (Scassandra node : scassandras.nodes()) {
+      node.activityClient().clearAllRecordedActivity();
     }
+  }
 
-    protected AbstractRetryPolicyIntegrationTest(RetryPolicy retryPolicy) {
-        setRetryPolicy(retryPolicy);
-    }
+  protected void simulateError(int hostNumber, Result result) {
+    simulateError(hostNumber, result, null);
+  }
 
-    protected final void setRetryPolicy(RetryPolicy retryPolicy) {
-        this.retryPolicy = Mockito.spy(retryPolicy);
-    }
+  protected void simulateError(int hostNumber, Result result, Config config) {
+    PrimingRequest.Then.ThenBuilder then = then().withResult(result);
+    PrimingRequestBuilder builder = PrimingRequest.queryBuilder().withQuery("mock query");
 
-    @BeforeMethod(groups = "short")
-    public void beforeMethod() {
-        scassandras = ScassandraCluster.builder().withNodes(3).build();
-        scassandras.init();
+    if (config != null) then = then.withConfig(config);
 
-        cluster = Cluster.builder()
-                .addContactPoints(scassandras.address(1).getAddress())
-                .withPort(scassandras.getBinaryPort())
-                .withRetryPolicy(retryPolicy)
-                .withLoadBalancingPolicy(new SortingLoadBalancingPolicy())
-                .withPoolingOptions(new PoolingOptions()
-                        .setCoreConnectionsPerHost(HostDistance.LOCAL, 1)
-                        .setMaxConnectionsPerHost(HostDistance.LOCAL, 1)
-                        .setHeartbeatIntervalSeconds(0))
-                .withNettyOptions(nonQuietClusterCloseOptions)
-                // Mark everything as idempotent by default so RetryPolicy is exercised.
-                .withQueryOptions(new QueryOptions().setDefaultIdempotence(true))
-                .build();
+    builder = builder.withThen(then);
 
-        session = cluster.connect();
+    scassandras.node(hostNumber).primingClient().prime(builder.build());
+  }
 
-        host1 = TestUtils.findHost(cluster, 1);
-        host2 = TestUtils.findHost(cluster, 2);
-        host3 = TestUtils.findHost(cluster, 3);
-
-        errors = cluster.getMetrics().getErrorMetrics();
-
-        Mockito.reset(retryPolicy);
-
-        for (Scassandra node : scassandras.nodes()) {
-            node.activityClient().clearAllRecordedActivity();
-        }
-    }
-
-    protected void simulateError(int hostNumber, Result result) {
-        simulateError(hostNumber, result, null);
-    }
-
-    protected void simulateError(int hostNumber, Result result, Config config) {
-        PrimingRequest.Then.ThenBuilder then = then().withResult(result);
-        PrimingRequestBuilder builder = PrimingRequest.queryBuilder().withQuery("mock query");
-
-        if (config != null)
-            then = then.withConfig(config);
-
-        builder = builder.withThen(then);
-
-        scassandras.node(hostNumber).primingClient().prime(builder.build());
-    }
-
-    protected void simulateNormalResponse(int hostNumber) {
-        scassandras.node(hostNumber).primingClient().prime(PrimingRequest.queryBuilder()
+  protected void simulateNormalResponse(int hostNumber) {
+    scassandras
+        .node(hostNumber)
+        .primingClient()
+        .prime(
+            PrimingRequest.queryBuilder()
                 .withQuery("mock query")
                 .withThen(then().withRows(row("result", "result1")))
                 .build());
-    }
+  }
 
-    protected static List<Map<String, ?>> row(String key, String value) {
-        return ImmutableList.<Map<String, ?>>of(ImmutableMap.of(key, value));
-    }
+  protected static List<Map<String, ?>> row(String key, String value) {
+    return ImmutableList.<Map<String, ?>>of(ImmutableMap.of(key, value));
+  }
 
-    protected ResultSet query() {
-        return query(session);
-    }
+  protected ResultSet query() {
+    return query(session);
+  }
 
-    protected ResultSet queryWithCL(ConsistencyLevel cl) {
-        Statement statement = new SimpleStatement("mock query").setConsistencyLevel(cl);
-        return session.execute(statement);
-    }
+  protected ResultSet queryWithCL(ConsistencyLevel cl) {
+    Statement statement = new SimpleStatement("mock query").setConsistencyLevel(cl);
+    return session.execute(statement);
+  }
 
-    protected ResultSet query(Session session) {
-        return session.execute("mock query");
-    }
+  protected ResultSet query(Session session) {
+    return session.execute("mock query");
+  }
 
-    protected void assertOnReadTimeoutWasCalled(int times) {
-        Mockito.verify(retryPolicy, times(times)).onReadTimeout(
-                any(Statement.class), any(ConsistencyLevel.class), anyInt(), anyInt(), anyBoolean(), anyInt());
+  protected void assertOnReadTimeoutWasCalled(int times) {
+    Mockito.verify(retryPolicy, times(times))
+        .onReadTimeout(
+            any(Statement.class),
+            any(ConsistencyLevel.class),
+            anyInt(),
+            anyInt(),
+            anyBoolean(),
+            anyInt());
+  }
 
-    }
+  protected void assertOnWriteTimeoutWasCalled(int times) {
+    Mockito.verify(retryPolicy, times(times))
+        .onWriteTimeout(
+            any(Statement.class),
+            any(ConsistencyLevel.class),
+            any(WriteType.class),
+            anyInt(),
+            anyInt(),
+            anyInt());
+  }
 
-    protected void assertOnWriteTimeoutWasCalled(int times) {
-        Mockito.verify(retryPolicy, times(times)).onWriteTimeout(
-                any(Statement.class), any(ConsistencyLevel.class), any(WriteType.class), anyInt(), anyInt(), anyInt());
-    }
+  protected void assertOnUnavailableWasCalled(int times) {
+    Mockito.verify(retryPolicy, times(times))
+        .onUnavailable(
+            any(Statement.class), any(ConsistencyLevel.class), anyInt(), anyInt(), anyInt());
+  }
 
-    protected void assertOnUnavailableWasCalled(int times) {
-        Mockito.verify(retryPolicy, times(times)).onUnavailable(
-                any(Statement.class), any(ConsistencyLevel.class), anyInt(), anyInt(), anyInt());
-    }
+  protected void assertOnRequestErrorWasCalled(
+      int times, Class<? extends DriverException> expected) {
+    Mockito.verify(retryPolicy, times(times))
+        .onRequestError(any(Statement.class), any(ConsistencyLevel.class), any(expected), anyInt());
+  }
 
-    protected void assertOnRequestErrorWasCalled(int times, Class<? extends DriverException> expected) {
-        Mockito.verify(retryPolicy, times(times)).onRequestError(
-                any(Statement.class), any(ConsistencyLevel.class), any(expected), anyInt());
-    }
+  protected void assertQueried(int hostNumber, int times) {
+    assertThat(scassandras.node(hostNumber).activityClient().retrieveQueries()).hasSize(times);
+  }
 
-    protected void assertQueried(int hostNumber, int times) {
-        assertThat(scassandras.node(hostNumber).activityClient().retrieveQueries()).hasSize(times);
-    }
+  @AfterMethod(groups = "short", alwaysRun = true)
+  public void afterMethod() {
+    if (cluster != null) cluster.close();
+    if (scassandras != null) scassandras.stop();
+  }
 
-    @AfterMethod(groups = "short", alwaysRun = true)
-    public void afterMethod() {
-        if (cluster != null)
-            cluster.close();
-        if (scassandras != null)
-            scassandras.stop();
-    }
+  @DataProvider
+  public static Object[][] serverSideErrors() {
+    return new Object[][] {
+      {server_error, ServerError.class},
+      {overloaded, OverloadedException.class},
+    };
+  }
 
-    @DataProvider
-    public static Object[][] serverSideErrors() {
-        return new Object[][]{
-                {server_error, ServerError.class},
-                {overloaded, OverloadedException.class},
-        };
-    }
-
-    @DataProvider
-    public static Object[][] connectionErrors() {
-        return new Object[][]{
-                {CloseType.CLOSE},
-                {CloseType.HALFCLOSE},
-                {CloseType.RESET}
-        };
-    }
+  @DataProvider
+  public static Object[][] connectionErrors() {
+    return new Object[][] {{CloseType.CLOSE}, {CloseType.HALFCLOSE}, {CloseType.RESET}};
+  }
 }

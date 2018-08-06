@@ -25,17 +25,18 @@ import io.netty.channel.ChannelPromise;
 @Sharable
 class OutboundTrafficMeter extends ChannelOutboundHandlerAdapter {
 
-    private final Meter meter;
+  private final Meter meter;
 
-    OutboundTrafficMeter(Meter meter) {
-        this.meter = meter;
-    }
+  OutboundTrafficMeter(Meter meter) {
+    this.meter = meter;
+  }
 
-    @Override
-    public void write(ChannelHandlerContext ctx, Object msg, ChannelPromise promise) throws Exception {
-        if (msg instanceof ByteBuf) {
-            meter.mark(((ByteBuf) msg).readableBytes());
-        }
-        super.write(ctx, msg, promise);
+  @Override
+  public void write(ChannelHandlerContext ctx, Object msg, ChannelPromise promise)
+      throws Exception {
+    if (msg instanceof ByteBuf) {
+      meter.mark(((ByteBuf) msg).readableBytes());
     }
+    super.write(ctx, msg, promise);
+  }
 }

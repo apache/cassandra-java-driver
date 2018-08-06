@@ -15,9 +15,7 @@
  */
 package com.datastax.driver.core.schemabuilder;
 
-/**
- * The start of a statement, that another class will append to, to build the final statement.
- */
+/** The start of a statement, that another class will append to, to build the final statement. */
 interface StatementStart {
-    String buildInternal();
+  String buildInternal();
 }

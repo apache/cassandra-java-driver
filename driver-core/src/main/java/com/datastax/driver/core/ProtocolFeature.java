@@ -15,47 +15,40 @@
  */
 package com.datastax.driver.core;
 
-/**
- * A listing of features that may or not apply to a given {@link ProtocolVersion}.
- */
+/** A listing of features that may or not apply to a given {@link ProtocolVersion}. */
 enum ProtocolFeature {
 
-    /**
-     * The capability of updating a prepared statement if the result's metadata changes at runtime (for example, if the
-     * query is a {@code SELECT *} and the table is altered).
-     */
-    PREPARED_METADATA_CHANGES,
+  /**
+   * The capability of updating a prepared statement if the result's metadata changes at runtime
+   * (for example, if the query is a {@code SELECT *} and the table is altered).
+   */
+  PREPARED_METADATA_CHANGES,
 
-    /**
-     * The capability of sending or receiving custom payloads.
-     */
-    CUSTOM_PAYLOADS,
+  /** The capability of sending or receiving custom payloads. */
+  CUSTOM_PAYLOADS,
 
-    /**
-     * The capability of assigning client-generated timestamps to write requests.
-     */
-    CLIENT_TIMESTAMPS,
+  /** The capability of assigning client-generated timestamps to write requests. */
+  CLIENT_TIMESTAMPS,
 
-    //
-    ;
+//
+;
 
-    /**
-     * Determines whether or not the input version supports ths feature.
-     *
-     * @param version the version to test against.
-     * @return true if supported, false otherwise.
-     */
-    boolean isSupportedBy(ProtocolVersion version) {
-        switch (this) {
-            case PREPARED_METADATA_CHANGES:
-                return version == ProtocolVersion.V5;
-            case CUSTOM_PAYLOADS:
-                return version.compareTo(ProtocolVersion.V4) >= 0;
-            case CLIENT_TIMESTAMPS:
-                return version.compareTo(ProtocolVersion.V3) >= 0;
-            default:
-                return false;
-        }
+  /**
+   * Determines whether or not the input version supports ths feature.
+   *
+   * @param version the version to test against.
+   * @return true if supported, false otherwise.
+   */
+  boolean isSupportedBy(ProtocolVersion version) {
+    switch (this) {
+      case PREPARED_METADATA_CHANGES:
+        return version == ProtocolVersion.V5;
+      case CUSTOM_PAYLOADS:
+        return version.compareTo(ProtocolVersion.V4) >= 0;
+      case CLIENT_TIMESTAMPS:
+        return version.compareTo(ProtocolVersion.V3) >= 0;
+      default:
+        return false;
     }
-
+  }
 }

@@ -19,16 +19,16 @@ import java.util.Arrays;
 
 /**
  * Driver-specific implementation of utility object methods.
- * <p>
- * They are available in some versions of Java/Guava, but not across all versions ranges supported by the driver, hence
- * the custom implementation.
+ *
+ * <p>They are available in some versions of Java/Guava, but not across all versions ranges
+ * supported by the driver, hence the custom implementation.
  */
 public class MoreObjects {
-    public static boolean equal(Object first, Object second) {
-        return (first == second) || (first != null && first.equals(second));
-    }
+  public static boolean equal(Object first, Object second) {
+    return (first == second) || (first != null && first.equals(second));
+  }
 
-    public static int hashCode(Object... objects) {
-        return Arrays.hashCode(objects);
-    }
+  public static int hashCode(Object... objects) {
+    return Arrays.hashCode(objects);
+  }
 }

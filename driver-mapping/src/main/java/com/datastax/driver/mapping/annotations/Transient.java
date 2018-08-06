@@ -21,14 +21,13 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * Whenever this annotation is added on a property, the property will not be mapped
- * to any column (neither during reads nor writes).
- * <p/>
- * Please note that it is thus illegal to have a field that has both the
- * {@code Transient} annotation and one of the following annotations:
- * {@link Column}, {@link PartitionKey}, {@link ClusteringColumn}.
+ * Whenever this annotation is added on a property, the property will not be mapped to any column
+ * (neither during reads nor writes).
+ *
+ * <p>Please note that it is thus illegal to have a field that has both the {@code Transient}
+ * annotation and one of the following annotations: {@link Column}, {@link PartitionKey}, {@link
+ * ClusteringColumn}.
  */
 @Target({ElementType.FIELD, ElementType.METHOD})
 @Retention(RetentionPolicy.RUNTIME)
-public @interface Transient {
-}
+public @interface Transient {}

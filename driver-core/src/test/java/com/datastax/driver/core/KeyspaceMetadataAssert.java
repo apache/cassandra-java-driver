@@ -15,27 +15,28 @@
  */
 package com.datastax.driver.core;
 
-import org.assertj.core.api.AbstractAssert;
-
 import static org.assertj.core.api.Assertions.assertThat;
 
-public class KeyspaceMetadataAssert extends AbstractAssert<KeyspaceMetadataAssert, KeyspaceMetadata> {
-    protected KeyspaceMetadataAssert(KeyspaceMetadata actual) {
-        super(actual, KeyspaceMetadataAssert.class);
-    }
+import org.assertj.core.api.AbstractAssert;
 
-    public KeyspaceMetadataAssert hasName(String name) {
-        assertThat(actual.getName()).isEqualTo(name);
-        return this;
-    }
+public class KeyspaceMetadataAssert
+    extends AbstractAssert<KeyspaceMetadataAssert, KeyspaceMetadata> {
+  protected KeyspaceMetadataAssert(KeyspaceMetadata actual) {
+    super(actual, KeyspaceMetadataAssert.class);
+  }
 
-    public KeyspaceMetadataAssert isDurableWrites() {
-        assertThat(actual.isDurableWrites()).isTrue();
-        return this;
-    }
+  public KeyspaceMetadataAssert hasName(String name) {
+    assertThat(actual.getName()).isEqualTo(name);
+    return this;
+  }
 
-    public KeyspaceMetadataAssert isNotDurableWrites() {
-        assertThat(actual.isDurableWrites()).isFalse();
-        return this;
-    }
+  public KeyspaceMetadataAssert isDurableWrites() {
+    assertThat(actual.isDurableWrites()).isTrue();
+    return this;
+  }
+
+  public KeyspaceMetadataAssert isNotDurableWrites() {
+    assertThat(actual.isDurableWrites()).isFalse();
+    return this;
+  }
 }

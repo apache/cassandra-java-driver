@@ -15,6 +15,9 @@
  */
 package com.datastax.driver.core;
 
+import static org.assertj.core.api.Assertions.fail;
+
+import java.net.InetSocketAddress;
 import org.scassandra.Scassandra;
 import org.scassandra.http.client.ActivityClient;
 import org.scassandra.http.client.CurrentClient;
@@ -24,101 +27,95 @@ import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeMethod;
 
-import java.net.InetSocketAddress;
-
-import static org.assertj.core.api.Assertions.fail;
-
 /**
- * Base class for Scassandra tests.
- * This class takes care of starting and stopping a Scassandra server,
- * and provides some helper methods to leverage the creation of Cluster and Session objects.
- * The actual creation of such objects is however left to subclasses.
- * If a single cluster instance can be shared by all test methods,
- * consider using {@link com.datastax.driver.core.ScassandraTestBase.PerClassCluster} instead.
+ * Base class for Scassandra tests. This class takes care of starting and stopping a Scassandra
+ * server, and provides some helper methods to leverage the creation of Cluster and Session objects.
+ * The actual creation of such objects is however left to subclasses. If a single cluster instance
+ * can be shared by all test methods, consider using {@link
+ * com.datastax.driver.core.ScassandraTestBase.PerClassCluster} instead.
  */
 public abstract class ScassandraTestBase {
 
-    protected Scassandra scassandra;
+  protected Scassandra scassandra;
 
-    protected InetSocketAddress hostAddress;
+  protected InetSocketAddress hostAddress;
 
-    protected PrimingClient primingClient;
+  protected PrimingClient primingClient;
 
-    protected ActivityClient activityClient;
+  protected ActivityClient activityClient;
 
-    protected CurrentClient currentClient;
+  protected CurrentClient currentClient;
 
-    protected static String ip = TestUtils.ipOfNode(1);
+  protected static String ip = TestUtils.ipOfNode(1);
+
+  @BeforeClass(groups = {"short", "long"})
+  public void beforeTestClass() {
+    scassandra = TestUtils.createScassandraServer();
+    scassandra.start();
+    primingClient = scassandra.primingClient();
+    activityClient = scassandra.activityClient();
+    currentClient = scassandra.currentClient();
+    hostAddress = new InetSocketAddress(ip, scassandra.getBinaryPort());
+  }
+
+  @AfterClass(groups = {"short", "long"})
+  public void afterTestClass() {
+    if (scassandra != null) scassandra.stop();
+  }
+
+  @BeforeMethod(groups = {"short", "long"})
+  @AfterMethod(groups = {"short", "long"})
+  public void resetClients() {
+    activityClient.clearAllRecordedActivity();
+    primingClient.clearAllPrimes();
+    currentClient.enableListener();
+  }
+
+  protected Cluster.Builder createClusterBuilder() {
+    return Cluster.builder()
+        .withPort(scassandra.getBinaryPort())
+        .addContactPoints(hostAddress.getAddress())
+        .withPort(scassandra.getBinaryPort())
+        .withPoolingOptions(
+            new PoolingOptions()
+                .setCoreConnectionsPerHost(HostDistance.LOCAL, 1)
+                .setMaxConnectionsPerHost(HostDistance.LOCAL, 1)
+                .setHeartbeatIntervalSeconds(0));
+  }
+
+  protected Host retrieveSingleHost(Cluster cluster) {
+    Host host = cluster.getMetadata().getHost(hostAddress);
+    if (host == null) {
+      fail("Unable to retrieve host");
+    }
+    return host;
+  }
+
+  /**
+   * This subclass of ScassandraTestBase assumes that the same Cluster instance will be used for all
+   * tests.
+   */
+  public abstract static class PerClassCluster extends ScassandraTestBase {
+
+    protected Cluster cluster;
+
+    protected Session session;
+
+    protected Host host;
 
     @BeforeClass(groups = {"short", "long"})
     public void beforeTestClass() {
-        scassandra = TestUtils.createScassandraServer();
-        scassandra.start();
-        primingClient = scassandra.primingClient();
-        activityClient = scassandra.activityClient();
-        currentClient = scassandra.currentClient();
-        hostAddress = new InetSocketAddress(ip, scassandra.getBinaryPort());
+      super.beforeTestClass();
+      Cluster.Builder builder = createClusterBuilder();
+      cluster = builder.build();
+      host = retrieveSingleHost(cluster);
+      session = cluster.connect();
     }
 
     @AfterClass(groups = {"short", "long"})
     public void afterTestClass() {
-        if (scassandra != null)
-            scassandra.stop();
+      if (cluster != null) cluster.close();
+      super.afterTestClass();
     }
-
-    @BeforeMethod(groups = {"short", "long"})
-    @AfterMethod(groups = {"short", "long"})
-    public void resetClients() {
-        activityClient.clearAllRecordedActivity();
-        primingClient.clearAllPrimes();
-        currentClient.enableListener();
-    }
-
-    protected Cluster.Builder createClusterBuilder() {
-        return Cluster.builder()
-                .withPort(scassandra.getBinaryPort())
-                .addContactPoints(hostAddress.getAddress())
-                .withPort(scassandra.getBinaryPort())
-                .withPoolingOptions(new PoolingOptions()
-                        .setCoreConnectionsPerHost(HostDistance.LOCAL, 1)
-                        .setMaxConnectionsPerHost(HostDistance.LOCAL, 1)
-                        .setHeartbeatIntervalSeconds(0));
-    }
-
-    protected Host retrieveSingleHost(Cluster cluster) {
-        Host host = cluster.getMetadata().getHost(hostAddress);
-        if (host == null) {
-            fail("Unable to retrieve host");
-        }
-        return host;
-    }
-
-    /**
-     * This subclass of ScassandraTestBase assumes that
-     * the same Cluster instance will be used for all tests.
-     */
-    public static abstract class PerClassCluster extends ScassandraTestBase {
-
-        protected Cluster cluster;
-
-        protected Session session;
-
-        protected Host host;
-
-        @BeforeClass(groups = {"short", "long"})
-        public void beforeTestClass() {
-            super.beforeTestClass();
-            Cluster.Builder builder = createClusterBuilder();
-            cluster = builder.build();
-            host = retrieveSingleHost(cluster);
-            session = cluster.connect();
-        }
-
-        @AfterClass(groups = {"short", "long"})
-        public void afterTestClass() {
-            if (cluster != null)
-                cluster.close();
-            super.afterTestClass();
-        }
-    }
+  }
 }

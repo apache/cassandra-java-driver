@@ -15,70 +15,70 @@
  */
 package com.datastax.driver.core;
 
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.reset;
+
 import com.datastax.driver.core.DelegatingClusterIntegrationTest.SimpleDelegatingCluster;
 import com.google.common.collect.ImmutableSet;
+import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
+import java.util.Set;
 import org.mockito.Mockito;
 import org.mockito.exceptions.verification.WantedButNotInvoked;
 import org.mockito.invocation.Invocation;
 import org.testng.annotations.Test;
 
-import java.lang.reflect.Method;
-import java.lang.reflect.Modifier;
-import java.util.Set;
-
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.reset;
-
 public class DelegatingClusterTest {
-    private static final Set<String> NON_DELEGATED_METHODS = ImmutableSet.of("getClusterName");
+  private static final Set<String> NON_DELEGATED_METHODS = ImmutableSet.of("getClusterName");
 
-    /**
-     * Checks that all methods of {@link DelegatingCluster} invoke their counterpart in {@link Cluster}.
-     * This protects us from forgetting to add a method to the former when it gets added to the latter.
-     * <p>
-     * Note that a much better, compile-time solution would be to make {@link Cluster} an interface, but that's a
-     * breaking change so it will have to wait until the next major version.
-     */
-    @Test(groups = "unit")
-    public void should_call_delegate_methods() throws Exception {
-        Cluster delegate = mock(Cluster.class);
-        SimpleDelegatingCluster delegatingCluster = new SimpleDelegatingCluster(delegate);
+  /**
+   * Checks that all methods of {@link DelegatingCluster} invoke their counterpart in {@link
+   * Cluster}. This protects us from forgetting to add a method to the former when it gets added to
+   * the latter.
+   *
+   * <p>Note that a much better, compile-time solution would be to make {@link Cluster} an
+   * interface, but that's a breaking change so it will have to wait until the next major version.
+   */
+  @Test(groups = "unit")
+  public void should_call_delegate_methods() throws Exception {
+    Cluster delegate = mock(Cluster.class);
+    SimpleDelegatingCluster delegatingCluster = new SimpleDelegatingCluster(delegate);
 
-        for (Method method : Cluster.class.getMethods()) {
-            if ((method.getModifiers() & Modifier.STATIC) == Modifier.STATIC ||
-                    NON_DELEGATED_METHODS.contains(method.getName()) ||
-                    method.getDeclaringClass() == Object.class) {
-                continue;
-            }
-            // we can leave all parameters to null since we're invoking a mock
-            Object[] parameters = new Object[method.getParameterTypes().length];
-            try {
-                method.invoke(delegatingCluster, parameters);
-            } catch (Exception ignored) {
-            }
-            verify(delegate, method, parameters);
-            reset(delegate);
-        }
+    for (Method method : Cluster.class.getMethods()) {
+      if ((method.getModifiers() & Modifier.STATIC) == Modifier.STATIC
+          || NON_DELEGATED_METHODS.contains(method.getName())
+          || method.getDeclaringClass() == Object.class) {
+        continue;
+      }
+      // we can leave all parameters to null since we're invoking a mock
+      Object[] parameters = new Object[method.getParameterTypes().length];
+      try {
+        method.invoke(delegatingCluster, parameters);
+      } catch (Exception ignored) {
+      }
+      verify(delegate, method, parameters);
+      reset(delegate);
     }
+  }
 
-    private static void verify(Object mock, Method expectedMethod, Object... expectedArguments) {
-        out:
-        for (Invocation invocation : Mockito.mockingDetails(mock).getInvocations()) {
-            if (invocation.getMethod().equals(expectedMethod)) {
-                Object[] actualArguments = invocation.getArguments();
-                assert actualArguments.length == expectedArguments.length; // because it's the same method
-                for (int i = 0; i < actualArguments.length; i++) {
-                    Object actual = actualArguments[i];
-                    Object expected = expectedArguments[i];
-                    boolean equal = (actual == null) ? expected == null : actual.equals(expected);
-                    if (!equal) {
-                        continue out;
-                    }
-                }
-                invocation.markVerified();
-                return;
-            }
+  private static void verify(Object mock, Method expectedMethod, Object... expectedArguments) {
+    out:
+    for (Invocation invocation : Mockito.mockingDetails(mock).getInvocations()) {
+      if (invocation.getMethod().equals(expectedMethod)) {
+        Object[] actualArguments = invocation.getArguments();
+        assert actualArguments.length == expectedArguments.length; // because it's the same method
+        for (int i = 0; i < actualArguments.length; i++) {
+          Object actual = actualArguments[i];
+          Object expected = expectedArguments[i];
+          boolean equal = (actual == null) ? expected == null : actual.equals(expected);
+          if (!equal) {
+            continue out;
+          }
         }
-        throw new WantedButNotInvoked("Not delegated: " + expectedMethod.toString());
+        invocation.markVerified();
+        return;
+      }
     }
+    throw new WantedButNotInvoked("Not delegated: " + expectedMethod.toString());
+  }
 }

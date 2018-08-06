@@ -17,12 +17,11 @@ package com.datastax.driver.core;
 
 /**
  * Clustering orders.
- * <p/>
- * This is used by metadata classes to indicate the clustering
- * order of a clustering column in a table or materialized view.
+ *
+ * <p>This is used by metadata classes to indicate the clustering order of a clustering column in a
+ * table or materialized view.
  */
 public enum ClusteringOrder {
-
-    ASC, DESC;
-
+  ASC,
+  DESC;
 }

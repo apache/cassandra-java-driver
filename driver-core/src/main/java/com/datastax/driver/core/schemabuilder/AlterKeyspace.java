@@ -15,27 +15,23 @@
  */
 package com.datastax.driver.core.schemabuilder;
 
-/**
- * A built ALTER KEYSPACE statement.
- */
+/** A built ALTER KEYSPACE statement. */
 public class AlterKeyspace {
 
-    static final String COMMAND = "ALTER KEYSPACE";
+  static final String COMMAND = "ALTER KEYSPACE";
 
-    private final String keyspaceName;
+  private final String keyspaceName;
 
-    public AlterKeyspace(String keyspaceName) {
-        this.keyspaceName = keyspaceName;
-    }
+  public AlterKeyspace(String keyspaceName) {
+    this.keyspaceName = keyspaceName;
+  }
 
-    /**
-     * Add options for this ALTER KEYSPACE statement.
-     *
-     * @return the options of this ALTER KEYSPACE statement.
-     */
-    public KeyspaceOptions with() {
-        return new KeyspaceOptions(COMMAND, keyspaceName);
-    }
-
+  /**
+   * Add options for this ALTER KEYSPACE statement.
+   *
+   * @return the options of this ALTER KEYSPACE statement.
+   */
+  public KeyspaceOptions with() {
+    return new KeyspaceOptions(COMMAND, keyspaceName);
+  }
 }
-

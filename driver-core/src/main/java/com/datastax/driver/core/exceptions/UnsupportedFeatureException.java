@@ -17,23 +17,23 @@ package com.datastax.driver.core.exceptions;
 
 import com.datastax.driver.core.ProtocolVersion;
 
-/**
- * Exception thrown when a feature is not supported by the native protocol
- * currently in use.
- */
+/** Exception thrown when a feature is not supported by the native protocol currently in use. */
 public class UnsupportedFeatureException extends DriverException {
 
-    private static final long serialVersionUID = 0;
+  private static final long serialVersionUID = 0;
 
-    private final ProtocolVersion currentVersion;
+  private final ProtocolVersion currentVersion;
 
-    public UnsupportedFeatureException(ProtocolVersion currentVersion, String msg) {
-        super("Unsupported feature with the native protocol " + currentVersion + " (which is currently in use): " + msg);
-        this.currentVersion = currentVersion;
-    }
+  public UnsupportedFeatureException(ProtocolVersion currentVersion, String msg) {
+    super(
+        "Unsupported feature with the native protocol "
+            + currentVersion
+            + " (which is currently in use): "
+            + msg);
+    this.currentVersion = currentVersion;
+  }
 
-    public ProtocolVersion getCurrentVersion() {
-        return currentVersion;
-    }
-
+  public ProtocolVersion getCurrentVersion() {
+    return currentVersion;
+  }
 }

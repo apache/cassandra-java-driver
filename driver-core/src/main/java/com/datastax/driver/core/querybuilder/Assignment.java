@@ -15,211 +15,210 @@
  */
 package com.datastax.driver.core.querybuilder;
 
-import com.datastax.driver.core.CodecRegistry;
-
-import java.util.List;
-
 import static com.datastax.driver.core.querybuilder.Utils.appendName;
 import static com.datastax.driver.core.querybuilder.Utils.appendValue;
 
+import com.datastax.driver.core.CodecRegistry;
+import java.util.List;
+
 public abstract class Assignment extends Utils.Appendeable {
 
-    final Object name;
+  final Object name;
 
-    private Assignment(Object name) {
-        this.name = name;
+  private Assignment(Object name) {
+    this.name = name;
+  }
+
+  /**
+   * The name of the column this assignment applies to.
+   *
+   * @return the name of the column this assignment applies to.
+   */
+  public String getColumnName() {
+    return name.toString();
+  }
+
+  abstract boolean isIdempotent();
+
+  static class SetAssignment extends Assignment {
+
+    private final Object value;
+
+    SetAssignment(Object name, Object value) {
+      super(name);
+      this.value = value;
     }
 
-    /**
-     * The name of the column this assignment applies to.
-     *
-     * @return the name of the column this assignment applies to.
-     */
-    public String getColumnName() {
-        return name.toString();
+    @Override
+    void appendTo(StringBuilder sb, List<Object> variables, CodecRegistry codecRegistry) {
+      appendName(name, codecRegistry, sb);
+      sb.append('=');
+      appendValue(value, codecRegistry, sb, variables);
     }
 
-    abstract boolean isIdempotent();
-
-    static class SetAssignment extends Assignment {
-
-        private final Object value;
-
-        SetAssignment(Object name, Object value) {
-            super(name);
-            this.value = value;
-        }
-
-        @Override
-        void appendTo(StringBuilder sb, List<Object> variables, CodecRegistry codecRegistry) {
-            appendName(name, codecRegistry, sb);
-            sb.append('=');
-            appendValue(value, codecRegistry, sb, variables);
-        }
-
-        @Override
-        boolean containsBindMarker() {
-            return Utils.containsBindMarker(value);
-        }
-
-        @Override
-        boolean isIdempotent() {
-            return Utils.isIdempotent(value);
-        }
+    @Override
+    boolean containsBindMarker() {
+      return Utils.containsBindMarker(value);
     }
 
-    static class CounterAssignment extends Assignment {
+    @Override
+    boolean isIdempotent() {
+      return Utils.isIdempotent(value);
+    }
+  }
 
-        private final Object value;
-        private final boolean isIncr;
+  static class CounterAssignment extends Assignment {
 
-        CounterAssignment(String name, Object value, boolean isIncr) {
-            super(name);
-            if (!isIncr && value instanceof Long && ((Long) value) < 0) {
-                this.value = -((Long) value);
-                this.isIncr = true;
-            } else {
-                this.value = value;
-                this.isIncr = isIncr;
-            }
-        }
+    private final Object value;
+    private final boolean isIncr;
 
-        @Override
-        void appendTo(StringBuilder sb, List<Object> variables, CodecRegistry codecRegistry) {
-            appendName(name, codecRegistry, sb).append('=');
-            appendName(name, codecRegistry, sb).append(isIncr ? "+" : "-");
-            appendValue(value, codecRegistry, sb, variables);
-        }
-
-        @Override
-        boolean containsBindMarker() {
-            return Utils.containsBindMarker(value);
-        }
-
-        @Override
-        boolean isIdempotent() {
-            return false;
-        }
+    CounterAssignment(String name, Object value, boolean isIncr) {
+      super(name);
+      if (!isIncr && value instanceof Long && ((Long) value) < 0) {
+        this.value = -((Long) value);
+        this.isIncr = true;
+      } else {
+        this.value = value;
+        this.isIncr = isIncr;
+      }
     }
 
-    static class ListPrependAssignment extends Assignment {
-
-        private final Object value;
-
-        ListPrependAssignment(String name, Object value) {
-            super(name);
-            this.value = value;
-        }
-
-        @Override
-        void appendTo(StringBuilder sb, List<Object> variables, CodecRegistry codecRegistry) {
-            appendName(name, codecRegistry, sb).append('=');
-            appendValue(value, codecRegistry, sb, variables);
-            sb.append('+');
-            appendName(name, codecRegistry, sb);
-        }
-
-        @Override
-        boolean containsBindMarker() {
-            return Utils.containsBindMarker(value);
-        }
-
-        @Override
-        boolean isIdempotent() {
-            return false;
-        }
+    @Override
+    void appendTo(StringBuilder sb, List<Object> variables, CodecRegistry codecRegistry) {
+      appendName(name, codecRegistry, sb).append('=');
+      appendName(name, codecRegistry, sb).append(isIncr ? "+" : "-");
+      appendValue(value, codecRegistry, sb, variables);
     }
 
-    static class ListSetIdxAssignment extends Assignment {
-
-        private final int idx;
-        private final Object value;
-
-        ListSetIdxAssignment(String name, int idx, Object value) {
-            super(name);
-            this.idx = idx;
-            this.value = value;
-        }
-
-        @Override
-        void appendTo(StringBuilder sb, List<Object> variables, CodecRegistry codecRegistry) {
-            appendName(name, codecRegistry, sb).append('[').append(idx).append("]=");
-            appendValue(value, codecRegistry, sb, variables);
-        }
-
-        @Override
-        boolean containsBindMarker() {
-            return Utils.containsBindMarker(value);
-        }
-
-        @Override
-        boolean isIdempotent() {
-            return true;
-        }
+    @Override
+    boolean containsBindMarker() {
+      return Utils.containsBindMarker(value);
     }
 
-    static class CollectionAssignment extends Assignment {
+    @Override
+    boolean isIdempotent() {
+      return false;
+    }
+  }
 
-        private final Object collection;
-        private final boolean isAdd;
-        private final boolean isIdempotent;
+  static class ListPrependAssignment extends Assignment {
 
-        CollectionAssignment(String name, Object collection, boolean isAdd, boolean isIdempotent) {
-            super(name);
-            this.collection = collection;
-            this.isAdd = isAdd;
-            this.isIdempotent = isIdempotent;
-        }
+    private final Object value;
 
-        CollectionAssignment(String name, Object collection, boolean isAdd) {
-            this(name, collection, isAdd, true);
-        }
-
-        @Override
-        void appendTo(StringBuilder sb, List<Object> variables, CodecRegistry codecRegistry) {
-            appendName(name, codecRegistry, sb).append('=');
-            appendName(name, codecRegistry, sb).append(isAdd ? "+" : "-");
-            appendValue(collection, codecRegistry, sb, variables);
-        }
-
-        @Override
-        boolean containsBindMarker() {
-            return Utils.containsBindMarker(collection);
-        }
-
-        @Override
-        public boolean isIdempotent() {
-            return isIdempotent;
-        }
+    ListPrependAssignment(String name, Object value) {
+      super(name);
+      this.value = value;
     }
 
-    static class MapPutAssignment extends Assignment {
-
-        private final Object key;
-        private final Object value;
-
-        MapPutAssignment(String name, Object key, Object value) {
-            super(name);
-            this.key = key;
-            this.value = value;
-        }
-
-        @Override
-        void appendTo(StringBuilder sb, List<Object> variables, CodecRegistry codecRegistry) {
-            appendName(name, codecRegistry, sb).append('[');
-            appendValue(key, codecRegistry, sb, variables);
-            sb.append("]=");
-            appendValue(value, codecRegistry, sb, variables);
-        }
-
-        @Override
-        boolean containsBindMarker() {
-            return Utils.containsBindMarker(key) || Utils.containsBindMarker(value);
-        }
-
-        @Override
-        boolean isIdempotent() {
-            return true;
-        }
+    @Override
+    void appendTo(StringBuilder sb, List<Object> variables, CodecRegistry codecRegistry) {
+      appendName(name, codecRegistry, sb).append('=');
+      appendValue(value, codecRegistry, sb, variables);
+      sb.append('+');
+      appendName(name, codecRegistry, sb);
     }
+
+    @Override
+    boolean containsBindMarker() {
+      return Utils.containsBindMarker(value);
+    }
+
+    @Override
+    boolean isIdempotent() {
+      return false;
+    }
+  }
+
+  static class ListSetIdxAssignment extends Assignment {
+
+    private final int idx;
+    private final Object value;
+
+    ListSetIdxAssignment(String name, int idx, Object value) {
+      super(name);
+      this.idx = idx;
+      this.value = value;
+    }
+
+    @Override
+    void appendTo(StringBuilder sb, List<Object> variables, CodecRegistry codecRegistry) {
+      appendName(name, codecRegistry, sb).append('[').append(idx).append("]=");
+      appendValue(value, codecRegistry, sb, variables);
+    }
+
+    @Override
+    boolean containsBindMarker() {
+      return Utils.containsBindMarker(value);
+    }
+
+    @Override
+    boolean isIdempotent() {
+      return true;
+    }
+  }
+
+  static class CollectionAssignment extends Assignment {
+
+    private final Object collection;
+    private final boolean isAdd;
+    private final boolean isIdempotent;
+
+    CollectionAssignment(String name, Object collection, boolean isAdd, boolean isIdempotent) {
+      super(name);
+      this.collection = collection;
+      this.isAdd = isAdd;
+      this.isIdempotent = isIdempotent;
+    }
+
+    CollectionAssignment(String name, Object collection, boolean isAdd) {
+      this(name, collection, isAdd, true);
+    }
+
+    @Override
+    void appendTo(StringBuilder sb, List<Object> variables, CodecRegistry codecRegistry) {
+      appendName(name, codecRegistry, sb).append('=');
+      appendName(name, codecRegistry, sb).append(isAdd ? "+" : "-");
+      appendValue(collection, codecRegistry, sb, variables);
+    }
+
+    @Override
+    boolean containsBindMarker() {
+      return Utils.containsBindMarker(collection);
+    }
+
+    @Override
+    public boolean isIdempotent() {
+      return isIdempotent;
+    }
+  }
+
+  static class MapPutAssignment extends Assignment {
+
+    private final Object key;
+    private final Object value;
+
+    MapPutAssignment(String name, Object key, Object value) {
+      super(name);
+      this.key = key;
+      this.value = value;
+    }
+
+    @Override
+    void appendTo(StringBuilder sb, List<Object> variables, CodecRegistry codecRegistry) {
+      appendName(name, codecRegistry, sb).append('[');
+      appendValue(key, codecRegistry, sb, variables);
+      sb.append("]=");
+      appendValue(value, codecRegistry, sb, variables);
+    }
+
+    @Override
+    boolean containsBindMarker() {
+      return Utils.containsBindMarker(key) || Utils.containsBindMarker(value);
+    }
+
+    @Override
+    boolean isIdempotent() {
+      return true;
+    }
+  }
 }

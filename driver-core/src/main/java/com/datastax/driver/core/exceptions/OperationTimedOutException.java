@@ -16,7 +16,6 @@
 package com.datastax.driver.core.exceptions;
 
 import com.datastax.driver.core.SocketOptions;
-
 import java.net.InetSocketAddress;
 
 /**
@@ -25,23 +24,22 @@ import java.net.InetSocketAddress;
  */
 public class OperationTimedOutException extends ConnectionException {
 
-    private static final long serialVersionUID = 0;
+  private static final long serialVersionUID = 0;
 
-    public OperationTimedOutException(InetSocketAddress address) {
-        super(address, "Operation timed out");
-    }
+  public OperationTimedOutException(InetSocketAddress address) {
+    super(address, "Operation timed out");
+  }
 
-    public OperationTimedOutException(InetSocketAddress address, String msg) {
-        super(address, msg);
-    }
+  public OperationTimedOutException(InetSocketAddress address, String msg) {
+    super(address, msg);
+  }
 
-    public OperationTimedOutException(InetSocketAddress address, String msg, Throwable cause) {
-        super(address, msg, cause);
-    }
+  public OperationTimedOutException(InetSocketAddress address, String msg, Throwable cause) {
+    super(address, msg, cause);
+  }
 
-    @Override
-    public OperationTimedOutException copy() {
-        return new OperationTimedOutException(address, getRawMessage(), this);
-    }
-
+  @Override
+  public OperationTimedOutException copy() {
+    return new OperationTimedOutException(address, getRawMessage(), this);
+  }
 }

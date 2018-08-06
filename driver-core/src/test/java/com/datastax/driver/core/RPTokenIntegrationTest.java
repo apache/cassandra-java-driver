@@ -20,12 +20,12 @@ import com.datastax.driver.core.Token.RPToken;
 @CCMConfig(options = "-p RandomPartitioner")
 public class RPTokenIntegrationTest extends TokenIntegrationTest {
 
-    public RPTokenIntegrationTest() {
-        super(DataType.varint(), false);
-    }
+  public RPTokenIntegrationTest() {
+    super(DataType.varint(), false);
+  }
 
-    @Override
-    protected Token.Factory tokenFactory() {
-        return RPToken.FACTORY;
-    }
+  @Override
+  protected Token.Factory tokenFactory() {
+    return RPToken.FACTORY;
+  }
 }

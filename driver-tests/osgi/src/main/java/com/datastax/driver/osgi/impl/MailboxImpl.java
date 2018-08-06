@@ -15,6 +15,12 @@
  */
 package com.datastax.driver.osgi.impl;
 
+import static com.datastax.driver.core.querybuilder.QueryBuilder.bindMarker;
+import static com.datastax.driver.core.querybuilder.QueryBuilder.delete;
+import static com.datastax.driver.core.querybuilder.QueryBuilder.eq;
+import static com.datastax.driver.core.querybuilder.QueryBuilder.select;
+import static com.datastax.driver.osgi.api.MailboxMessage.TABLE;
+
 import com.datastax.driver.core.BoundStatement;
 import com.datastax.driver.core.PreparedStatement;
 import com.datastax.driver.core.Session;
@@ -26,80 +32,76 @@ import com.datastax.driver.osgi.api.MailboxService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static com.datastax.driver.core.querybuilder.QueryBuilder.*;
-import static com.datastax.driver.osgi.api.MailboxMessage.TABLE;
-
 public class MailboxImpl implements MailboxService {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(MailboxImpl.class);
+  private static final Logger LOGGER = LoggerFactory.getLogger(MailboxImpl.class);
 
-    private final Session session;
+  private final Session session;
 
-    private final String keyspace;
+  private final String keyspace;
 
-    private volatile boolean initialized = false;
+  private volatile boolean initialized = false;
 
-    private PreparedStatement retrieveStatement;
+  private PreparedStatement retrieveStatement;
 
-    private PreparedStatement deleteStatement;
+  private PreparedStatement deleteStatement;
 
-    private Mapper<MailboxMessage> mapper;
+  private Mapper<MailboxMessage> mapper;
 
-    public MailboxImpl(Session session, String keyspace) {
-        this.session = session;
-        this.keyspace = keyspace;
+  public MailboxImpl(Session session, String keyspace) {
+    this.session = session;
+    this.keyspace = keyspace;
+  }
+
+  public synchronized void init() {
+    if (initialized) return;
+
+    retrieveStatement =
+        session.prepare(select().from(keyspace, TABLE).where(eq("recipient", bindMarker())));
+
+    deleteStatement =
+        session.prepare(delete().from(keyspace, TABLE).where(eq("recipient", bindMarker())));
+
+    MappingManager mappingManager = new MappingManager(session);
+
+    mapper = mappingManager.mapper(MailboxMessage.class);
+
+    // Exercise metrics
+    LOGGER.info(
+        "Number of requests: {}", session.getCluster().getMetrics().getRequestsTimer().getCount());
+
+    initialized = true;
+  }
+
+  @Override
+  public Iterable<MailboxMessage> getMessages(String recipient) throws MailboxException {
+    try {
+      BoundStatement statement = new BoundStatement(retrieveStatement);
+      statement.setString(0, recipient);
+      return mapper.map(session.execute(statement));
+    } catch (Exception e) {
+      throw new MailboxException(e);
     }
+  }
 
-    public synchronized void init() {
-        if (initialized)
-            return;
-
-        retrieveStatement = session.prepare(select()
-                .from(keyspace, TABLE)
-                .where(eq("recipient", bindMarker())));
-
-        deleteStatement = session.prepare(delete().from(keyspace, TABLE)
-                .where(eq("recipient", bindMarker())));
-
-        MappingManager mappingManager = new MappingManager(session);
-
-        mapper = mappingManager.mapper(MailboxMessage.class);
-
-        // Exercise metrics
-        LOGGER.info("Number of requests: {}", session.getCluster().getMetrics().getRequestsTimer().getCount());
-
-        initialized = true;
+  @Override
+  public long sendMessage(MailboxMessage message) throws MailboxException {
+    try {
+      mapper.save(message);
+      return message.getDate();
+    } catch (Exception e) {
+      throw new MailboxException(e);
     }
+  }
 
-    @Override
-    public Iterable<MailboxMessage> getMessages(String recipient) throws MailboxException {
-        try {
-            BoundStatement statement = new BoundStatement(retrieveStatement);
-            statement.setString(0, recipient);
-            return mapper.map(session.execute(statement));
-        } catch (Exception e) {
-            throw new MailboxException(e);
-        }
+  @Override
+  public void clearMailbox(String recipient) throws MailboxException {
+    try {
+      BoundStatement statement = new BoundStatement(deleteStatement);
+      statement.setString(0, recipient);
+      session.execute(statement);
+    } catch (Exception e) {
+      throw new MailboxException(e);
     }
-
-    @Override
-    public long sendMessage(MailboxMessage message) throws MailboxException {
-        try {
-            mapper.save(message);
-            return message.getDate();
-        } catch (Exception e) {
-            throw new MailboxException(e);
-        }
-    }
-
-    @Override
-    public void clearMailbox(String recipient) throws MailboxException {
-        try {
-            BoundStatement statement = new BoundStatement(deleteStatement);
-            statement.setString(0, recipient);
-            session.execute(statement);
-        } catch (Exception e) {
-            throw new MailboxException(e);
-        }
-    }
+  }
 }

@@ -21,19 +21,19 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * Annotation for properties that map to a CQL partition key (or one of it's
- * component if the partition key is composite).
- * <p/>
- * If the partition key of the mapped table is composite, it is mandatory
- * to specify the ordinal parameter to avoid ordering ambiguity.
+ * Annotation for properties that map to a CQL partition key (or one of it's component if the
+ * partition key is composite).
+ *
+ * <p>If the partition key of the mapped table is composite, it is mandatory to specify the ordinal
+ * parameter to avoid ordering ambiguity.
  */
 @Target({ElementType.FIELD, ElementType.METHOD})
 @Retention(RetentionPolicy.RUNTIME)
 public @interface PartitionKey {
-    /**
-     * Ordinal to add when the partition key has multiple components.
-     *
-     * @return the ordinal to use.
-     */
-    int value() default 0;
+  /**
+   * Ordinal to add when the partition key has multiple components.
+   *
+   * @return the ordinal to use.
+   */
+  int value() default 0;
 }

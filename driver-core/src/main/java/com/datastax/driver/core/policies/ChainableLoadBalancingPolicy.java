@@ -15,14 +15,12 @@
  */
 package com.datastax.driver.core.policies;
 
-/**
- * A load balancing policy that wraps another policy.
- */
+/** A load balancing policy that wraps another policy. */
 public interface ChainableLoadBalancingPolicy extends LoadBalancingPolicy {
-    /**
-     * Returns the child policy.
-     *
-     * @return the child policy.
-     */
-    LoadBalancingPolicy getChildPolicy();
+  /**
+   * Returns the child policy.
+   *
+   * @return the child policy.
+   */
+  LoadBalancingPolicy getChildPolicy();
 }

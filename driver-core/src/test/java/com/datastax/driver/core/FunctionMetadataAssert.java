@@ -15,27 +15,28 @@
  */
 package com.datastax.driver.core;
 
-import org.assertj.core.api.AbstractAssert;
-
 import static org.assertj.core.api.Assertions.assertThat;
 
-public class FunctionMetadataAssert extends AbstractAssert<FunctionMetadataAssert, FunctionMetadata> {
-    protected FunctionMetadataAssert(FunctionMetadata actual) {
-        super(actual, FunctionMetadataAssert.class);
-    }
+import org.assertj.core.api.AbstractAssert;
 
-    public FunctionMetadataAssert hasSignature(String name) {
-        assertThat(actual.getSignature()).isEqualTo(name);
-        return this;
-    }
+public class FunctionMetadataAssert
+    extends AbstractAssert<FunctionMetadataAssert, FunctionMetadata> {
+  protected FunctionMetadataAssert(FunctionMetadata actual) {
+    super(actual, FunctionMetadataAssert.class);
+  }
 
-    public FunctionMetadataAssert isInKeyspace(String keyspaceName) {
-        assertThat(actual.getKeyspace().getName()).isEqualTo(keyspaceName);
-        return this;
-    }
+  public FunctionMetadataAssert hasSignature(String name) {
+    assertThat(actual.getSignature()).isEqualTo(name);
+    return this;
+  }
 
-    public FunctionMetadataAssert hasBody(String body) {
-        assertThat(actual.getBody()).isEqualTo(body);
-        return this;
-    }
+  public FunctionMetadataAssert isInKeyspace(String keyspaceName) {
+    assertThat(actual.getKeyspace().getName()).isEqualTo(keyspaceName);
+    return this;
+  }
+
+  public FunctionMetadataAssert hasBody(String body) {
+    assertThat(actual.getBody()).isEqualTo(body);
+    return this;
+  }
 }

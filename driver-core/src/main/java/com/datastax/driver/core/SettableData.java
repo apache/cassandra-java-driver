@@ -18,5 +18,5 @@ package com.datastax.driver.core;
 /**
  * Collection of (typed) CQL values that can be set either by index (starting at zero) or by name.
  */
-public interface SettableData<T extends SettableData<T>> extends SettableByIndexData<T>, SettableByNameData<T> {
-}
+public interface SettableData<T extends SettableData<T>>
+    extends SettableByIndexData<T>, SettableByNameData<T> {}

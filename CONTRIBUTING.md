@@ -1,5 +1,25 @@
 # Contributing guidelines
 
+## Code formatting
+
+We follow the [Google Java Style Guide](https://google.github.io/styleguide/javaguide.html). See
+https://github.com/google/google-java-format for IDE plugins. The rules are not configurable.
+
+The build will fail if the code is not formatted. To format all files from the command line, run:
+
+```
+mvn fmt:format
+```
+
+Some aspects are not covered by the formatter:
+
+* braces must be used with `if`, `else`, `for`, `do` and `while` statements, even when the body is
+  empty or contains only a single statement.
+
+Also, if your IDE sorts import statements automatically, make sure it follows the same order as the
+formatter: all static imports in ASCII sort order, followed by a blank line, followed by all regular
+imports in ASCII sort order.  In addition, please avoid using wildcard imports.
+
 ## Working on an issue
 
 Before starting to work on something, please comment in JIRA or ask on the mailing list

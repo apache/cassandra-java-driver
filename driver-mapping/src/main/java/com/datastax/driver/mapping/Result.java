@@ -15,133 +15,134 @@
  */
 package com.datastax.driver.mapping;
 
-import com.datastax.driver.core.*;
+import com.datastax.driver.core.ExecutionInfo;
+import com.datastax.driver.core.PagingIterable;
+import com.datastax.driver.core.ResultSet;
+import com.datastax.driver.core.Row;
+import com.datastax.driver.core.TypeCodec;
 import com.google.common.base.Function;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
 
-import java.util.*;
-
-/**
- * A result set whose rows are mapped to an entity class.
- */
+/** A result set whose rows are mapped to an entity class. */
 public class Result<T> implements PagingIterable<Result<T>, T> {
 
-    private final ResultSet rs;
-    private final EntityMapper<T> mapper;
-    private final boolean useAlias;
+  private final ResultSet rs;
+  private final EntityMapper<T> mapper;
+  private final boolean useAlias;
 
-    Result(ResultSet rs, EntityMapper<T> mapper, boolean useAlias) {
-        this.rs = rs;
-        this.mapper = mapper;
-        this.useAlias = useAlias;
+  Result(ResultSet rs, EntityMapper<T> mapper, boolean useAlias) {
+    this.rs = rs;
+    this.mapper = mapper;
+    this.useAlias = useAlias;
+  }
+
+  private T map(Row row) {
+    T entity = mapper.newEntity();
+    for (AliasedMappedProperty c : mapper.allColumns) {
+      @SuppressWarnings("unchecked")
+      AliasedMappedProperty col = c;
+      String name =
+          col.alias != null && this.useAlias ? col.alias : col.mappedProperty.getMappedName();
+      if (!row.getColumnDefinitions().contains(name)) continue;
+
+      Object value;
+      TypeCodec<Object> customCodec = col.mappedProperty.getCustomCodec();
+      if (customCodec != null) value = row.get(name, customCodec);
+      else value = row.get(name, col.mappedProperty.getPropertyType());
+
+      if (shouldSetValue(value)) {
+        col.mappedProperty.setValue(entity, value);
+      }
     }
+    return entity;
+  }
 
-    private T map(Row row) {
-        T entity = mapper.newEntity();
-        for (AliasedMappedProperty c : mapper.allColumns) {
-            @SuppressWarnings("unchecked")
-            AliasedMappedProperty col = c;
-            String name = col.alias != null && this.useAlias ? col.alias : col.mappedProperty.getMappedName();
-            if (!row.getColumnDefinitions().contains(name))
-                continue;
+  @SuppressWarnings("SimplifiableIfStatement")
+  private static boolean shouldSetValue(Object value) {
+    if (value == null) return false;
+    if (value instanceof Collection) return !((Collection<?>) value).isEmpty();
+    if (value instanceof Map) return !((Map<?, ?>) value).isEmpty();
+    return true;
+  }
 
-            Object value;
-            TypeCodec<Object> customCodec = col.mappedProperty.getCustomCodec();
-            if (customCodec != null)
-                value = row.get(name, customCodec);
-            else
-                value = row.get(name, col.mappedProperty.getPropertyType());
+  @Override
+  public boolean isExhausted() {
+    return rs.isExhausted();
+  }
 
-            if (shouldSetValue(value)) {
-                col.mappedProperty.setValue(entity, value);
-            }
-        }
-        return entity;
+  @Override
+  public T one() {
+    Row row = rs.one();
+    return row == null ? null : map(row);
+  }
+
+  @Override
+  public List<T> all() {
+    List<Row> rows = rs.all();
+    List<T> entities = new ArrayList<T>(rows.size());
+    for (Row row : rows) {
+      entities.add(map(row));
     }
+    return entities;
+  }
 
-    @SuppressWarnings("SimplifiableIfStatement")
-    private static boolean shouldSetValue(Object value) {
-        if (value == null)
-            return false;
-        if (value instanceof Collection)
-            return !((Collection<?>) value).isEmpty();
-        if (value instanceof Map)
-            return !((Map<?, ?>) value).isEmpty();
-        return true;
-    }
+  @Override
+  public Iterator<T> iterator() {
+    return new Iterator<T>() {
+      private final Iterator<Row> rowIterator = rs.iterator();
 
-    @Override
-    public boolean isExhausted() {
-        return rs.isExhausted();
-    }
+      @Override
+      public boolean hasNext() {
+        return rowIterator.hasNext();
+      }
 
-    @Override
-    public T one() {
-        Row row = rs.one();
-        return row == null ? null : map(row);
-    }
+      @Override
+      public T next() {
+        return map(rowIterator.next());
+      }
 
-    @Override
-    public List<T> all() {
-        List<Row> rows = rs.all();
-        List<T> entities = new ArrayList<T>(rows.size());
-        for (Row row : rows) {
-            entities.add(map(row));
-        }
-        return entities;
-    }
+      @Override
+      public void remove() {
+        throw new UnsupportedOperationException();
+      }
+    };
+  }
 
-    @Override
-    public Iterator<T> iterator() {
-        return new Iterator<T>() {
-            private final Iterator<Row> rowIterator = rs.iterator();
+  @Override
+  public ExecutionInfo getExecutionInfo() {
+    return rs.getExecutionInfo();
+  }
 
-            @Override
-            public boolean hasNext() {
-                return rowIterator.hasNext();
-            }
+  @Override
+  public List<ExecutionInfo> getAllExecutionInfo() {
+    return rs.getAllExecutionInfo();
+  }
 
-            @Override
-            public T next() {
-                return map(rowIterator.next());
-            }
-
-            @Override
-            public void remove() {
-                throw new UnsupportedOperationException();
-            }
-        };
-    }
-
-    @Override
-    public ExecutionInfo getExecutionInfo() {
-        return rs.getExecutionInfo();
-    }
-
-    @Override
-    public List<ExecutionInfo> getAllExecutionInfo() {
-        return rs.getAllExecutionInfo();
-    }
-
-    @Override
-    public ListenableFuture<Result<T>> fetchMoreResults() {
-        return Futures.transform(rs.fetchMoreResults(), new Function<ResultSet, Result<T>>() {
-            @Override
-            public Result<T> apply(ResultSet rs) {
-                return Result.this;
-            }
+  @Override
+  public ListenableFuture<Result<T>> fetchMoreResults() {
+    return Futures.transform(
+        rs.fetchMoreResults(),
+        new Function<ResultSet, Result<T>>() {
+          @Override
+          public Result<T> apply(ResultSet rs) {
+            return Result.this;
+          }
         });
-    }
+  }
 
-    @Override
-    public boolean isFullyFetched() {
-        return rs.isFullyFetched();
-    }
+  @Override
+  public boolean isFullyFetched() {
+    return rs.isFullyFetched();
+  }
 
-    @Override
-    public int getAvailableWithoutFetching() {
-        return rs.getAvailableWithoutFetching();
-    }
-
+  @Override
+  public int getAvailableWithoutFetching() {
+    return rs.getAvailableWithoutFetching();
+  }
 }

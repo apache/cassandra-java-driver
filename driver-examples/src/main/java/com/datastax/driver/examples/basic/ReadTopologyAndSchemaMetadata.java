@@ -15,50 +15,51 @@
  */
 package com.datastax.driver.examples.basic;
 
-import com.datastax.driver.core.*;
+import com.datastax.driver.core.Cluster;
+import com.datastax.driver.core.Host;
+import com.datastax.driver.core.KeyspaceMetadata;
+import com.datastax.driver.core.Metadata;
+import com.datastax.driver.core.TableMetadata;
 
 /**
- * Gathers information about a Cassandra cluster's topology (which nodes belong to the cluster) and schema (what
- * keyspaces, tables, etc. exist in this cluster).
- * <p/>
- * Preconditions:
- * - a Cassandra cluster is running and accessible through the contacts points identified by CONTACT_POINTS and PORT.
- * <p/>
- * Side effects: none.
+ * Gathers information about a Cassandra cluster's topology (which nodes belong to the cluster) and
+ * schema (what keyspaces, tables, etc. exist in this cluster).
+ *
+ * <p>Preconditions: - a Cassandra cluster is running and accessible through the contacts points
+ * identified by CONTACT_POINTS and PORT.
+ *
+ * <p>Side effects: none.
  *
  * @see <a href="http://datastax.github.io/java-driver/manual/">Java driver online manual</a>
  */
 public class ReadTopologyAndSchemaMetadata {
 
-    static String[] CONTACT_POINTS = {"127.0.0.1"};
-    static int PORT = 9042;
+  static String[] CONTACT_POINTS = {"127.0.0.1"};
+  static int PORT = 9042;
 
-    public static void main(String[] args) {
+  public static void main(String[] args) {
 
-        Cluster cluster = null;
-        try {
-            cluster = Cluster.builder()
-                    .addContactPoints(CONTACT_POINTS).withPort(PORT)
-                    .build();
+    Cluster cluster = null;
+    try {
+      cluster = Cluster.builder().addContactPoints(CONTACT_POINTS).withPort(PORT).build();
 
-            Metadata metadata = cluster.getMetadata();
-            System.out.printf("Connected to cluster: %s%n", metadata.getClusterName());
+      Metadata metadata = cluster.getMetadata();
+      System.out.printf("Connected to cluster: %s%n", metadata.getClusterName());
 
-            for (Host host : metadata.getAllHosts()) {
-                System.out.printf("Datatacenter: %s; Host: %s; Rack: %s%n",
-                        host.getDatacenter(), host.getAddress(), host.getRack());
-            }
+      for (Host host : metadata.getAllHosts()) {
+        System.out.printf(
+            "Datatacenter: %s; Host: %s; Rack: %s%n",
+            host.getDatacenter(), host.getAddress(), host.getRack());
+      }
 
-            for (KeyspaceMetadata keyspace : metadata.getKeyspaces()) {
-                for (TableMetadata table : keyspace.getTables()) {
-                    System.out.printf("Keyspace: %s; Table: %s%n",
-                            keyspace.getName(), table.getName());
-                }
-            }
-
-        } finally {
-            if (cluster != null)
-                cluster.close();
+      for (KeyspaceMetadata keyspace : metadata.getKeyspaces()) {
+        for (TableMetadata table : keyspace.getTables()) {
+          System.out.printf("Keyspace: %s; Table: %s%n", keyspace.getName(), table.getName());
         }
+      }
+
+    } finally {
+      if (cluster != null) cluster.close();
     }
+  }
 }

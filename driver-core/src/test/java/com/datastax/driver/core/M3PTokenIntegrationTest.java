@@ -19,12 +19,12 @@ import com.datastax.driver.core.Token.M3PToken;
 
 public class M3PTokenIntegrationTest extends TokenIntegrationTest {
 
-    public M3PTokenIntegrationTest() {
-        super(DataType.bigint(), false);
-    }
+  public M3PTokenIntegrationTest() {
+    super(DataType.bigint(), false);
+  }
 
-    @Override
-    protected Token.Factory tokenFactory() {
-        return M3PToken.FACTORY;
-    }
+  @Override
+  protected Token.Factory tokenFactory() {
+    return M3PToken.FACTORY;
+  }
 }

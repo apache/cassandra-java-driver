@@ -19,293 +19,293 @@ import com.datastax.driver.core.Frame.Header;
 import com.datastax.driver.core.Requests.QueryFlag;
 import com.datastax.driver.core.exceptions.UnsupportedFeatureException;
 import com.google.common.collect.ImmutableList;
-
 import java.nio.ByteBuffer;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
 
 /**
- * A statement that groups a number of {@link Statement} so they get executed as
- * a batch.
- * <p/>
- * Note: BatchStatement is not supported with the native protocol version 1: you
- * will get an {@link UnsupportedFeatureException} when submitting one if
- * version 1 of the protocol is in use (i.e. if you've force version 1 through
- * {@link Cluster.Builder#withProtocolVersion} or you use Cassandra 1.2). Note
- * however that you can still use <a href="http://cassandra.apache.org/doc/cql3/CQL.html#batchStmt">CQL Batch statements</a>
- * even with the protocol version 1.
- * <p/>
- * Setting a BatchStatement's serial consistency level is only supported with the
- * native protocol version 3 or higher (see {@link #setSerialConsistencyLevel(ConsistencyLevel)}).
+ * A statement that groups a number of {@link Statement} so they get executed as a batch.
+ *
+ * <p>Note: BatchStatement is not supported with the native protocol version 1: you will get an
+ * {@link UnsupportedFeatureException} when submitting one if version 1 of the protocol is in use
+ * (i.e. if you've force version 1 through {@link Cluster.Builder#withProtocolVersion} or you use
+ * Cassandra 1.2). Note however that you can still use <a
+ * href="http://cassandra.apache.org/doc/cql3/CQL.html#batchStmt">CQL Batch statements</a> even with
+ * the protocol version 1.
+ *
+ * <p>Setting a BatchStatement's serial consistency level is only supported with the native protocol
+ * version 3 or higher (see {@link #setSerialConsistencyLevel(ConsistencyLevel)}).
  */
 public class BatchStatement extends Statement {
 
+  /** The type of batch to use. */
+  public enum Type {
     /**
-     * The type of batch to use.
+     * A logged batch: Cassandra will first write the batch to its distributed batch log to ensure
+     * the atomicity of the batch (atomicity meaning that if any statement in the batch succeeds,
+     * all will eventually succeed).
      */
-    public enum Type {
-        /**
-         * A logged batch: Cassandra will first write the batch to its distributed batch log
-         * to ensure the atomicity of the batch (atomicity meaning that if any statement in
-         * the batch succeeds, all will eventually succeed).
-         */
-        LOGGED,
-
-        /**
-         * A batch that doesn't use Cassandra's distributed batch log. Such batch are not
-         * guaranteed to be atomic.
-         */
-        UNLOGGED,
-
-        /**
-         * A counter batch. Note that such batch is the only type that can contain counter
-         * operations and it can only contain these.
-         */
-        COUNTER
-    }
-
-    final Type batchType;
-    private final List<Statement> statements = new ArrayList<Statement>();
+    LOGGED,
 
     /**
-     * Creates a new {@code LOGGED} batch statement.
+     * A batch that doesn't use Cassandra's distributed batch log. Such batch are not guaranteed to
+     * be atomic.
      */
-    public BatchStatement() {
-        this(Type.LOGGED);
-    }
+    UNLOGGED,
 
     /**
-     * Creates a new batch statement of the provided type.
-     *
-     * @param batchType the type of batch.
+     * A counter batch. Note that such batch is the only type that can contain counter operations
+     * and it can only contain these.
      */
-    public BatchStatement(Type batchType) {
-        this.batchType = batchType;
+    COUNTER
+  }
+
+  final Type batchType;
+  private final List<Statement> statements = new ArrayList<Statement>();
+
+  /** Creates a new {@code LOGGED} batch statement. */
+  public BatchStatement() {
+    this(Type.LOGGED);
+  }
+
+  /**
+   * Creates a new batch statement of the provided type.
+   *
+   * @param batchType the type of batch.
+   */
+  public BatchStatement(Type batchType) {
+    this.batchType = batchType;
+  }
+
+  IdAndValues getIdAndValues(ProtocolVersion protocolVersion, CodecRegistry codecRegistry) {
+    IdAndValues idAndVals = new IdAndValues(statements.size());
+    for (Statement statement : statements) {
+      if (statement instanceof StatementWrapper)
+        statement = ((StatementWrapper) statement).getWrappedStatement();
+      if (statement instanceof RegularStatement) {
+        RegularStatement st = (RegularStatement) statement;
+        ByteBuffer[] vals = st.getValues(protocolVersion, codecRegistry);
+        String query = st.getQueryString(codecRegistry);
+        idAndVals.ids.add(query);
+        idAndVals.values.add(
+            vals == null ? Collections.<ByteBuffer>emptyList() : Arrays.asList(vals));
+      } else {
+        // We handle BatchStatement in add() so ...
+        assert statement instanceof BoundStatement;
+        BoundStatement st = (BoundStatement) statement;
+        idAndVals.ids.add(st.statement.getPreparedId().boundValuesMetadata.id);
+        idAndVals.values.add(Arrays.asList(st.wrapper.values));
+      }
+    }
+    return idAndVals;
+  }
+
+  /**
+   * Adds a new statement to this batch.
+   *
+   * <p>Note that {@code statement} can be any {@code Statement}. It is allowed to mix {@code
+   * RegularStatement} and {@code BoundStatement} in the same {@code BatchStatement} in particular.
+   * Adding another {@code BatchStatement} is also allowed for convenience and is equivalent to
+   * adding all the {@code Statement} contained in that other {@code BatchStatement}.
+   *
+   * <p>Due to a protocol-level limitation, adding a {@code RegularStatement} with named values is
+   * currently not supported; an {@code IllegalArgument} will be thrown.
+   *
+   * <p>When adding a {@code BoundStatement}, all of its values must be set, otherwise an {@code
+   * IllegalStateException} will be thrown when submitting the batch statement. See {@link
+   * BoundStatement} for more details, in particular how to handle {@code null} values.
+   *
+   * <p>Please note that the options of the added Statement (all those defined directly by the
+   * {@link Statement} class: consistency level, fetch size, tracing, ...) will be ignored for the
+   * purpose of the execution of the Batch. Instead, the options used are the one of this {@code
+   * BatchStatement} object.
+   *
+   * @param statement the new statement to add.
+   * @return this batch statement.
+   * @throws IllegalStateException if adding the new statement means that this {@code
+   *     BatchStatement} has more than 65536 statements (since this is the maximum number of
+   *     statements for a BatchStatement allowed by the underlying protocol).
+   * @throws IllegalArgumentException if adding a regular statement that uses named values.
+   */
+  public BatchStatement add(Statement statement) {
+    if (statement instanceof StatementWrapper) {
+      statement = ((StatementWrapper) statement).getWrappedStatement();
+    }
+    if ((statement instanceof RegularStatement)
+        && ((RegularStatement) statement).usesNamedValues()) {
+      throw new IllegalArgumentException(
+          "Batch statement cannot contain regular statements with named values ("
+              + ((RegularStatement) statement).getQueryString()
+              + ")");
     }
 
-    IdAndValues getIdAndValues(ProtocolVersion protocolVersion, CodecRegistry codecRegistry) {
-        IdAndValues idAndVals = new IdAndValues(statements.size());
-        for (Statement statement : statements) {
-            if (statement instanceof StatementWrapper)
-                statement = ((StatementWrapper) statement).getWrappedStatement();
-            if (statement instanceof RegularStatement) {
-                RegularStatement st = (RegularStatement) statement;
-                ByteBuffer[] vals = st.getValues(protocolVersion, codecRegistry);
-                String query = st.getQueryString(codecRegistry);
-                idAndVals.ids.add(query);
-                idAndVals.values.add(vals == null ? Collections.<ByteBuffer>emptyList() : Arrays.asList(vals));
-            } else {
-                // We handle BatchStatement in add() so ...
-                assert statement instanceof BoundStatement;
-                BoundStatement st = (BoundStatement) statement;
-                idAndVals.ids.add(st.statement.getPreparedId().boundValuesMetadata.id);
-                idAndVals.values.add(Arrays.asList(st.wrapper.values));
-            }
-        }
-        return idAndVals;
+    // We handle BatchStatement here (rather than in getIdAndValues) as it make it slightly
+    // easier to avoid endless loops if the user mistakenly passes a batch that depends on this
+    // object (or this directly).
+    if (statement instanceof BatchStatement) {
+      for (Statement subStatements : ((BatchStatement) statement).statements) {
+        add(subStatements);
+      }
+    } else {
+      if (statements.size() >= 0xFFFF)
+        throw new IllegalStateException(
+            "Batch statement cannot contain more than " + 0xFFFF + " statements.");
+      statements.add(statement);
     }
+    return this;
+  }
 
-    /**
-     * Adds a new statement to this batch.
-     * <p/>
-     * Note that {@code statement} can be any {@code Statement}. It is allowed to mix
-     * {@code RegularStatement} and {@code BoundStatement} in the same
-     * {@code BatchStatement} in particular. Adding another {@code BatchStatement}
-     * is also allowed for convenience and is equivalent to adding all the {@code Statement}
-     * contained in that other {@code BatchStatement}.
-     * <p/>
-     * Due to a protocol-level limitation, adding a {@code RegularStatement} with named values
-     * is currently not supported; an {@code IllegalArgument} will be thrown.
-     * <p/>
-     * When adding a {@code BoundStatement}, all of its values must be set, otherwise an
-     * {@code IllegalStateException} will be thrown when submitting the batch statement.
-     * See {@link BoundStatement} for more details, in particular how to handle {@code null}
-     * values.
-     * <p/>
-     * Please note that the options of the added Statement (all those defined directly by the
-     * {@link Statement} class: consistency level, fetch size, tracing, ...) will be ignored
-     * for the purpose of the execution of the Batch. Instead, the options used are the one
-     * of this {@code BatchStatement} object.
-     *
-     * @param statement the new statement to add.
-     * @return this batch statement.
-     * @throws IllegalStateException    if adding the new statement means that this
-     *                                  {@code BatchStatement} has more than 65536 statements (since this is the maximum number
-     *                                  of statements for a BatchStatement allowed by the underlying protocol).
-     * @throws IllegalArgumentException if adding a regular statement that uses named values.
-     */
-    public BatchStatement add(Statement statement) {
-        if (statement instanceof StatementWrapper) {
-            statement = ((StatementWrapper) statement).getWrappedStatement();
-        }
-        if ((statement instanceof RegularStatement) && ((RegularStatement) statement).usesNamedValues()) {
-            throw new IllegalArgumentException("Batch statement cannot contain regular statements with named values ("
-                    + ((RegularStatement) statement).getQueryString() + ")");
-        }
+  /**
+   * Adds multiple statements to this batch.
+   *
+   * <p>This is a shortcut method that calls {@link #add} on all the statements from {@code
+   * statements}.
+   *
+   * @param statements the statements to add.
+   * @return this batch statement.
+   */
+  public BatchStatement addAll(Iterable<? extends Statement> statements) {
+    for (Statement statement : statements) add(statement);
+    return this;
+  }
 
-        // We handle BatchStatement here (rather than in getIdAndValues) as it make it slightly
-        // easier to avoid endless loops if the user mistakenly passes a batch that depends on this
-        // object (or this directly).
-        if (statement instanceof BatchStatement) {
-            for (Statement subStatements : ((BatchStatement) statement).statements) {
-                add(subStatements);
-            }
-        } else {
-            if (statements.size() >= 0xFFFF)
-                throw new IllegalStateException("Batch statement cannot contain more than " + 0xFFFF + " statements.");
-            statements.add(statement);
-        }
-        return this;
+  /**
+   * The statements that have been added to this batch so far.
+   *
+   * @return an (immutable) collection of the statements that have been added to this batch so far.
+   */
+  public Collection<Statement> getStatements() {
+    return ImmutableList.copyOf(statements);
+  }
+
+  /**
+   * Clears this batch, removing all statements added so far.
+   *
+   * @return this (now empty) {@code BatchStatement}.
+   */
+  public BatchStatement clear() {
+    statements.clear();
+    return this;
+  }
+
+  /**
+   * Returns the number of elements in this batch.
+   *
+   * @return the number of elements in this batch.
+   */
+  public int size() {
+    return statements.size();
+  }
+
+  @Override
+  public int requestSizeInBytes(ProtocolVersion protocolVersion, CodecRegistry codecRegistry) {
+    int size = Header.lengthFor(protocolVersion) + 3; // type + nb queries
+    try {
+      BatchStatement.IdAndValues idAndVals = getIdAndValues(protocolVersion, codecRegistry);
+      for (int i = 0; i < idAndVals.ids.size(); i++) {
+        Object q = idAndVals.ids.get(i);
+        size +=
+            1
+                + (q instanceof String
+                    ? CBUtil.sizeOfLongString((String) q)
+                    : CBUtil.sizeOfShortBytes(((MD5Digest) q).bytes));
+        size += CBUtil.sizeOfValueList(idAndVals.values.get(i));
+      }
+      switch (protocolVersion) {
+        case V2:
+          size += CBUtil.sizeOfConsistencyLevel(getConsistencyLevel());
+          break;
+        case V3:
+        case V4:
+        case V5:
+          size += CBUtil.sizeOfConsistencyLevel(getConsistencyLevel());
+          size += QueryFlag.serializedSize(protocolVersion);
+          // Serial CL and default timestamp also depend on session-level defaults (QueryOptions).
+          // We always count them to avoid having to inject QueryOptions here, at worst we
+          // overestimate by a
+          // few bytes.
+          size += CBUtil.sizeOfConsistencyLevel(getSerialConsistencyLevel());
+          if (ProtocolFeature.CLIENT_TIMESTAMPS.isSupportedBy(protocolVersion)) {
+            size += 8; // timestamp
+          }
+          if (ProtocolFeature.CUSTOM_PAYLOADS.isSupportedBy(protocolVersion)
+              && getOutgoingPayload() != null) {
+            size += CBUtil.sizeOfBytesMap(getOutgoingPayload());
+          }
+          break;
+        default:
+          throw protocolVersion.unsupported();
+      }
+    } catch (Exception e) {
+      size = -1;
     }
+    return size;
+  }
 
-    /**
-     * Adds multiple statements to this batch.
-     * <p/>
-     * This is a shortcut method that calls {@link #add} on all the statements
-     * from {@code statements}.
-     *
-     * @param statements the statements to add.
-     * @return this batch statement.
-     */
-    public BatchStatement addAll(Iterable<? extends Statement> statements) {
-        for (Statement statement : statements)
-            add(statement);
-        return this;
+  /**
+   * Sets the serial consistency level for the query.
+   *
+   * <p>This is only supported with version 3 or higher of the native protocol. If you call this
+   * method when version 2 is in use, you will get an {@link UnsupportedFeatureException} when
+   * submitting the statement. With version 2, protocol batches with conditions have their serial
+   * consistency level hardcoded to SERIAL; if you need to execute a batch with LOCAL_SERIAL, you
+   * will have to use a CQL batch.
+   *
+   * @param serialConsistency the serial consistency level to set.
+   * @return this {@code Statement} object.
+   * @throws IllegalArgumentException if {@code serialConsistency} is not one of {@code
+   *     ConsistencyLevel.SERIAL} or {@code ConsistencyLevel.LOCAL_SERIAL}.
+   * @see Statement#setSerialConsistencyLevel(ConsistencyLevel)
+   */
+  @Override
+  public BatchStatement setSerialConsistencyLevel(ConsistencyLevel serialConsistency) {
+    return (BatchStatement) super.setSerialConsistencyLevel(serialConsistency);
+  }
+
+  @Override
+  public ByteBuffer getRoutingKey(ProtocolVersion protocolVersion, CodecRegistry codecRegistry) {
+    for (Statement statement : statements) {
+      if (statement instanceof StatementWrapper)
+        statement = ((StatementWrapper) statement).getWrappedStatement();
+      ByteBuffer rk = statement.getRoutingKey(protocolVersion, codecRegistry);
+      if (rk != null) return rk;
     }
+    return null;
+  }
 
-    /**
-     * The statements that have been added to this batch so far.
-     *
-     * @return an (immutable) collection of the statements that have been added
-     * to this batch so far.
-     */
-    public Collection<Statement> getStatements() {
-        return ImmutableList.copyOf(statements);
+  @Override
+  public String getKeyspace() {
+    for (Statement statement : statements) {
+      String keyspace = statement.getKeyspace();
+      if (keyspace != null) return keyspace;
     }
+    return null;
+  }
 
-    /**
-     * Clears this batch, removing all statements added so far.
-     *
-     * @return this (now empty) {@code BatchStatement}.
-     */
-    public BatchStatement clear() {
-        statements.clear();
-        return this;
+  @Override
+  public Boolean isIdempotent() {
+    if (idempotent != null) {
+      return idempotent;
     }
+    return isBatchIdempotent(statements);
+  }
 
-    /**
-     * Returns the number of elements in this batch.
-     *
-     * @return the number of elements in this batch.
-     */
-    public int size() {
-        return statements.size();
+  void ensureAllSet() {
+    for (Statement statement : statements)
+      if (statement instanceof BoundStatement) ((BoundStatement) statement).ensureAllSet();
+  }
+
+  static class IdAndValues {
+
+    public final List<Object> ids;
+    public final List<List<ByteBuffer>> values;
+
+    IdAndValues(int nbstatements) {
+      ids = new ArrayList<Object>(nbstatements);
+      values = new ArrayList<List<ByteBuffer>>(nbstatements);
     }
-
-    @Override
-    public int requestSizeInBytes(ProtocolVersion protocolVersion, CodecRegistry codecRegistry) {
-        int size = Header.lengthFor(protocolVersion) + 3; // type + nb queries
-        try {
-            BatchStatement.IdAndValues idAndVals = getIdAndValues(protocolVersion, codecRegistry);
-            for (int i = 0; i < idAndVals.ids.size(); i++) {
-                Object q = idAndVals.ids.get(i);
-                size += 1 + (q instanceof String
-                        ? CBUtil.sizeOfLongString((String) q)
-                        : CBUtil.sizeOfShortBytes(((MD5Digest) q).bytes));
-                size += CBUtil.sizeOfValueList(idAndVals.values.get(i));
-            }
-            switch (protocolVersion) {
-                case V2:
-                    size += CBUtil.sizeOfConsistencyLevel(getConsistencyLevel());
-                    break;
-                case V3:
-                case V4:
-                case V5:
-                    size += CBUtil.sizeOfConsistencyLevel(getConsistencyLevel());
-                    size += QueryFlag.serializedSize(protocolVersion);
-                    // Serial CL and default timestamp also depend on session-level defaults (QueryOptions).
-                    // We always count them to avoid having to inject QueryOptions here, at worst we overestimate by a
-                    // few bytes.
-                    size += CBUtil.sizeOfConsistencyLevel(getSerialConsistencyLevel());
-                    if (ProtocolFeature.CLIENT_TIMESTAMPS.isSupportedBy(protocolVersion)) {
-                        size += 8; // timestamp
-                    }
-                    if (ProtocolFeature.CUSTOM_PAYLOADS.isSupportedBy(protocolVersion) && getOutgoingPayload() != null) {
-                        size += CBUtil.sizeOfBytesMap(getOutgoingPayload());
-                    }
-                    break;
-                default:
-                    throw protocolVersion.unsupported();
-            }
-        } catch (Exception e) {
-            size = -1;
-        }
-        return size;
-    }
-
-    /**
-     * Sets the serial consistency level for the query.
-     * <p/>
-     * This is only supported with version 3 or higher of the native protocol. If you call
-     * this method when version 2 is in use, you will get an {@link UnsupportedFeatureException}
-     * when submitting the statement. With version 2, protocol batches with conditions
-     * have their serial consistency level hardcoded to SERIAL; if you need to execute a batch
-     * with LOCAL_SERIAL, you will have to use a CQL batch.
-     *
-     * @param serialConsistency the serial consistency level to set.
-     * @return this {@code Statement} object.
-     * @throws IllegalArgumentException if {@code serialConsistency} is not one of
-     *                                  {@code ConsistencyLevel.SERIAL} or {@code ConsistencyLevel.LOCAL_SERIAL}.
-     * @see Statement#setSerialConsistencyLevel(ConsistencyLevel)
-     */
-    @Override
-    public BatchStatement setSerialConsistencyLevel(ConsistencyLevel serialConsistency) {
-        return (BatchStatement) super.setSerialConsistencyLevel(serialConsistency);
-    }
-
-    @Override
-    public ByteBuffer getRoutingKey(ProtocolVersion protocolVersion, CodecRegistry codecRegistry) {
-        for (Statement statement : statements) {
-            if (statement instanceof StatementWrapper)
-                statement = ((StatementWrapper) statement).getWrappedStatement();
-            ByteBuffer rk = statement.getRoutingKey(protocolVersion, codecRegistry);
-            if (rk != null)
-                return rk;
-        }
-        return null;
-    }
-
-    @Override
-    public String getKeyspace() {
-        for (Statement statement : statements) {
-            String keyspace = statement.getKeyspace();
-            if (keyspace != null)
-                return keyspace;
-        }
-        return null;
-    }
-
-    @Override
-    public Boolean isIdempotent() {
-        if (idempotent != null) {
-            return idempotent;
-        }
-        return isBatchIdempotent(statements);
-    }
-
-    void ensureAllSet() {
-        for (Statement statement : statements)
-            if (statement instanceof BoundStatement)
-                ((BoundStatement) statement).ensureAllSet();
-    }
-
-    static class IdAndValues {
-
-        public final List<Object> ids;
-        public final List<List<ByteBuffer>> values;
-
-        IdAndValues(int nbstatements) {
-            ids = new ArrayList<Object>(nbstatements);
-            values = new ArrayList<List<ByteBuffer>>(nbstatements);
-        }
-    }
+  }
 }

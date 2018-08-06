@@ -14,8 +14,7 @@
  * limitations under the License.
  */
 /**
- * This package contains a collection of convenience
- * {@link com.datastax.driver.core.TypeCodec TypeCodec} instances useful for
- * serializing between CQL lists and Java arrays.
+ * This package contains a collection of convenience {@link com.datastax.driver.core.TypeCodec
+ * TypeCodec} instances useful for serializing between CQL lists and Java arrays.
  */
 package com.datastax.driver.extras.codecs.arrays;
