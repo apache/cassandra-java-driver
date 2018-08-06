@@ -19,6 +19,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import com.datastax.oss.driver.api.core.CqlSession;
 import com.datastax.oss.driver.api.core.loadbalancing.NodeDistance;
+import com.datastax.oss.driver.api.testinfra.ccm.CcmBridge;
 import com.datastax.oss.driver.api.testinfra.ccm.CcmRule;
 import com.datastax.oss.driver.api.testinfra.session.SessionRule;
 import com.datastax.oss.driver.api.testinfra.utils.ConditionChecker;
@@ -55,7 +56,10 @@ public class NodeMetadataIT {
         .isEqualTo(node.getConnectAddress().getAddress());
     assertThat(node.getDatacenter()).isEqualTo("dc1");
     assertThat(node.getRack()).isEqualTo("r1");
-    assertThat(node.getCassandraVersion()).isEqualTo(ccmRule.getCassandraVersion());
+    if (!CcmBridge.DSE_ENABLEMENT) {
+      // CcmBridge does not report accurate C* versions for DSE, only approximated values
+      assertThat(node.getCassandraVersion()).isEqualTo(ccmRule.getCassandraVersion());
+    }
     assertThat(node.getState()).isSameAs(NodeState.UP);
     assertThat(node.getDistance()).isSameAs(NodeDistance.LOCAL);
     assertThat(node.getHostId()).isNotNull();
