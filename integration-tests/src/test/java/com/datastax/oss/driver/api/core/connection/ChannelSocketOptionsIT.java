@@ -28,12 +28,14 @@ import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
 import com.datastax.oss.driver.api.core.config.DriverConfigLoader;
 import com.datastax.oss.driver.api.core.config.DriverExecutionProfile;
 import com.datastax.oss.driver.api.core.metadata.Node;
+import com.datastax.oss.driver.api.core.session.Session;
 import com.datastax.oss.driver.api.testinfra.session.SessionRule;
 import com.datastax.oss.driver.api.testinfra.session.SessionUtils;
 import com.datastax.oss.driver.api.testinfra.simulacron.SimulacronRule;
 import com.datastax.oss.driver.categories.ParallelizableTests;
 import com.datastax.oss.driver.internal.core.channel.DriverChannel;
 import com.datastax.oss.driver.internal.core.session.DefaultSession;
+import com.datastax.oss.driver.internal.core.session.SessionWrapper;
 import com.datastax.oss.simulacron.common.cluster.ClusterSpec;
 import io.netty.channel.FixedRecvByteBufAllocator;
 import io.netty.channel.RecvByteBufAllocator;
@@ -64,7 +66,7 @@ public class ChannelSocketOptionsIT {
 
   @Test
   public void should_report_socket_options() {
-    CqlSession session = sessionRule.session();
+    Session session = sessionRule.session();
     DriverExecutionProfile config = session.getContext().getConfig().getDefaultProfile();
     assertThat(config.getBoolean(SOCKET_TCP_NODELAY)).isTrue();
     assertThat(config.getBoolean(SOCKET_KEEP_ALIVE)).isFalse();
@@ -73,7 +75,11 @@ public class ChannelSocketOptionsIT {
     assertThat(config.getInt(SOCKET_RECEIVE_BUFFER_SIZE)).isEqualTo(123456);
     assertThat(config.getInt(SOCKET_SEND_BUFFER_SIZE)).isEqualTo(123456);
     Node node = session.getMetadata().getNodes().values().iterator().next();
-    DriverChannel channel = ((DefaultSession) session).getChannel(node, null);
+    if (session instanceof SessionWrapper) {
+      session = ((SessionWrapper) session).getDelegate();
+    }
+    DriverChannel channel = ((DefaultSession) session).getChannel(node, "test");
+    assertThat(channel).isNotNull();
     assertThat(channel.config()).isInstanceOf(SocketChannelConfig.class);
     SocketChannelConfig socketConfig = (SocketChannelConfig) channel.config();
     assertThat(socketConfig.isTcpNoDelay()).isTrue();
