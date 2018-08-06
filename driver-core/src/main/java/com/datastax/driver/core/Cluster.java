@@ -1726,9 +1726,15 @@ public class Cluster implements Closeable {
         logger.debug("Shutting down");
 
         // stop debouncers
-        nodeListRefreshRequestDebouncer.stop();
-        nodeRefreshRequestDebouncer.stop();
-        schemaRefreshRequestDebouncer.stop();
+        if (nodeListRefreshRequestDebouncer != null) {
+          nodeListRefreshRequestDebouncer.stop();
+        }
+        if (nodeRefreshRequestDebouncer != null) {
+          nodeRefreshRequestDebouncer.stop();
+        }
+        if (schemaRefreshRequestDebouncer != null) {
+          schemaRefreshRequestDebouncer.stop();
+        }
 
         // If we're shutting down, there is no point in waiting on scheduled reconnections, nor on
         // notifications
@@ -1739,7 +1745,9 @@ public class Cluster implements Closeable {
 
         // but for the worker executor, we want to let submitted tasks finish unless the shutdown is
         // forced.
-        executor.shutdown();
+        if (executor != null) {
+          executor.shutdown();
+        }
 
         // We also close the metrics
         if (metrics != null) metrics.shutdown();
@@ -1756,7 +1764,9 @@ public class Cluster implements Closeable {
 
         // Then we shutdown all connections
         List<CloseFuture> futures = new ArrayList<CloseFuture>(sessions.size() + 1);
-        futures.add(controlConnection.closeAsync());
+        if (controlConnection != null) {
+          futures.add(controlConnection.closeAsync());
+        }
         for (Session session : sessions) futures.add(session.closeAsync());
 
         future = new ClusterCloseFuture(futures);
@@ -1771,11 +1781,13 @@ public class Cluster implements Closeable {
     }
 
     private void shutdownNow(ExecutorService executor) {
-      List<Runnable> pendingTasks = executor.shutdownNow();
-      // If some tasks were submitted to this executor but not yet commenced, make sure the
-      // corresponding futures complete
-      for (Runnable pendingTask : pendingTasks) {
-        if (pendingTask instanceof FutureTask<?>) ((FutureTask<?>) pendingTask).cancel(false);
+      if (executor != null) {
+        List<Runnable> pendingTasks = executor.shutdownNow();
+        // If some tasks were submitted to this executor but not yet commenced, make sure the
+        // corresponding futures complete
+        for (Runnable pendingTask : pendingTasks) {
+          if (pendingTask instanceof FutureTask<?>) ((FutureTask<?>) pendingTask).cancel(false);
+        }
       }
     }
 
@@ -2729,17 +2741,27 @@ public class Cluster implements Closeable {
                 // user
                 // call force(), we'll never really block forever.
                 try {
-                  reconnectionExecutor.awaitTermination(Long.MAX_VALUE, TimeUnit.SECONDS);
-                  scheduledTasksExecutor.awaitTermination(Long.MAX_VALUE, TimeUnit.SECONDS);
-                  executor.awaitTermination(Long.MAX_VALUE, TimeUnit.SECONDS);
-                  blockingExecutor.awaitTermination(Long.MAX_VALUE, TimeUnit.SECONDS);
+                  if (reconnectionExecutor != null) {
+                    reconnectionExecutor.awaitTermination(Long.MAX_VALUE, TimeUnit.SECONDS);
+                  }
+                  if (scheduledTasksExecutor != null) {
+                    scheduledTasksExecutor.awaitTermination(Long.MAX_VALUE, TimeUnit.SECONDS);
+                  }
+                  if (executor != null) {
+                    executor.awaitTermination(Long.MAX_VALUE, TimeUnit.SECONDS);
+                  }
+                  if (blockingExecutor != null) {
+                    blockingExecutor.awaitTermination(Long.MAX_VALUE, TimeUnit.SECONDS);
+                  }
 
                   // Some of the jobs on the executors can be doing query stuff, so close the
                   // connectionFactory at the very last
-                  connectionFactory.shutdown();
-
-                  reaper.shutdown();
-
+                  if (connectionFactory != null) {
+                    connectionFactory.shutdown();
+                  }
+                  if (reaper != null) {
+                    reaper.shutdown();
+                  }
                   set(null);
                 } catch (InterruptedException e) {
                   Thread.currentThread().interrupt();
