@@ -21,6 +21,7 @@ import com.datastax.oss.driver.api.core.metadata.schema.ColumnMetadata;
 import com.datastax.oss.driver.api.core.metadata.schema.IndexMetadata;
 import com.datastax.oss.driver.api.core.metadata.schema.TableMetadata;
 import edu.umd.cs.findbugs.annotations.NonNull;
+import edu.umd.cs.findbugs.annotations.Nullable;
 import java.util.*;
 import net.jcip.annotations.Immutable;
 
@@ -29,7 +30,8 @@ public class DefaultTableMetadata implements TableMetadata {
 
   @NonNull private final CqlIdentifier keyspace;
   @NonNull private final CqlIdentifier name;
-  @NonNull private final UUID id;
+  // null for virtual tables
+  @Nullable private final UUID id;
   private final boolean compactStorage;
   private final boolean virtual;
   @NonNull private final List<ColumnMetadata> partitionKey;
@@ -41,7 +43,7 @@ public class DefaultTableMetadata implements TableMetadata {
   public DefaultTableMetadata(
       @NonNull CqlIdentifier keyspace,
       @NonNull CqlIdentifier name,
-      UUID id,
+      @Nullable UUID id,
       boolean compactStorage,
       boolean virtual,
       @NonNull List<ColumnMetadata> partitionKey,
@@ -127,7 +129,7 @@ public class DefaultTableMetadata implements TableMetadata {
       TableMetadata that = (TableMetadata) other;
       return Objects.equals(this.keyspace, that.getKeyspace())
           && Objects.equals(this.name, that.getName())
-          && Objects.equals(Optional.of(this.id), that.getId())
+          && Objects.equals(Optional.ofNullable(this.id), that.getId())
           && this.compactStorage == that.isCompactStorage()
           && Objects.equals(this.partitionKey, that.getPartitionKey())
           && Objects.equals(this.clusteringColumns, that.getClusteringColumns())
