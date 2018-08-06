@@ -318,10 +318,10 @@ public class DefaultTopologyMonitor implements TopologyMonitor {
     if (nativeAddress == null) {
       return null;
     }
-    Integer row_port = row.getInteger("native_port");
-    if (row_port == null || row_port == 0) {
-      row_port = port;
+    Integer rowPort = row.getInteger("native_port");
+    if (rowPort == null || rowPort == 0) {
+      rowPort = port;
     }
-    return addressTranslator.translate(new InetSocketAddress(nativeAddress, row_port));
+    return addressTranslator.translate(new InetSocketAddress(nativeAddress, rowPort));
   }
 }
