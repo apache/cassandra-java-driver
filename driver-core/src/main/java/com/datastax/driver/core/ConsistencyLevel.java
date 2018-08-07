@@ -57,10 +57,11 @@ public enum ConsistencyLevel {
   /**
    * Whether or not this consistency level applies to the local data-center only.
    *
-   * @return whether this consistency level is {@code LOCAL_ONE} or {@code LOCAL_QUORUM}.
+   * @return whether this consistency level is {@code LOCAL_ONE}, {@code LOCAL_QUORUM}, or {@code
+   *     LOCAL_SERIAL}.
    */
   public boolean isDCLocal() {
-    return this == LOCAL_ONE || this == LOCAL_QUORUM;
+    return this == LOCAL_ONE || this == LOCAL_QUORUM || this == LOCAL_SERIAL;
   }
 
   /**

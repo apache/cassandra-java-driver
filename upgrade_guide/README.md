@@ -3,6 +3,13 @@
 The purpose of this guide is to detail changes made by successive
 versions of the Java driver.
 
+### 3.6.0
+
+1.  `ConsistencyLevel.LOCAL_SERIAL.isDCLocal()` now returns true. In driver
+    code, `isDCLocal()` is only used when evaluating a Statement's
+    ConsistencyLevel (which does not include Serial CLs), but as a matter of
+    correctness this was updated.
+
 ### 3.5.0
 
 1.  The `DowngradingConsistencyRetryPolicy` is now deprecated, see [JAVA-1752]. 
