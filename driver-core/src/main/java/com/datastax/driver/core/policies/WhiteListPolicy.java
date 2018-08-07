@@ -18,8 +18,13 @@ package com.datastax.driver.core.policies;
 import com.datastax.driver.core.Host;
 import com.google.common.base.Predicate;
 import com.google.common.collect.ImmutableSet;
+import java.net.InetAddress;
 import java.net.InetSocketAddress;
+import java.net.UnknownHostException;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  * A load balancing policy wrapper that ensure that only hosts from a provided white list will ever
@@ -42,7 +47,7 @@ public class WhiteListPolicy extends HostFilterPolicy {
 
   /**
    * Creates a new policy that wraps the provided child policy but only "allows" hosts from the
-   * provided while list.
+   * provided white list.
    *
    * @param childPolicy the wrapped policy.
    * @param whiteList the white listed hosts. Only hosts from this list may get connected to
@@ -50,6 +55,14 @@ public class WhiteListPolicy extends HostFilterPolicy {
    */
   public WhiteListPolicy(LoadBalancingPolicy childPolicy, Collection<InetSocketAddress> whiteList) {
     super(childPolicy, buildPredicate(whiteList));
+  }
+
+  /**
+   * Private constructor solely for maintaining type from policy created by {@link
+   * #fromHosts(LoadBalancingPolicy, String...)}.
+   */
+  private WhiteListPolicy(LoadBalancingPolicy childPolicy, Predicate<Host> predicate) {
+    super(childPolicy, predicate);
   }
 
   private static Predicate<Host> buildPredicate(Collection<InetSocketAddress> whiteList) {
@@ -60,5 +73,52 @@ public class WhiteListPolicy extends HostFilterPolicy {
         return hosts.contains(host.getSocketAddress());
       }
     };
+  }
+
+  /**
+   * Creates a new policy with the given host names.
+   *
+   * <p>See {@link #fromHosts(LoadBalancingPolicy, String...)} for more details.
+   */
+  public static WhiteListPolicy fromHosts(
+      LoadBalancingPolicy childPolicy, Collection<String> hostnames) {
+    return fromHosts(childPolicy, hostnames.toArray(new String[0]));
+  }
+
+  /**
+   * Creates a new policy that wraps the provided child policy but only "allows" hosts having
+   * addresses that match those from the resolved input host names.
+   *
+   * <p>Note that all host names must be resolvable; if <em>any</em> of them cannot be resolved,
+   * this method will fail.
+   *
+   * @param childPolicy the wrapped policy.
+   * @param hostnames list of host names to resolve white listed addresses from.
+   * @throws IllegalArgumentException if any of the given {@code hostnames} could not be resolved.
+   * @throws NullPointerException If null was provided for a hostname.
+   * @throws SecurityException if a security manager is present and permission to resolve the host
+   *     name is denied.
+   */
+  public static WhiteListPolicy fromHosts(LoadBalancingPolicy childPolicy, String... hostnames) {
+    final Set<InetAddress> validAddresses = new HashSet<InetAddress>();
+    for (String hostname : hostnames) {
+      try {
+        // We explicitly check for nulls because InetAdress.getByName() will happily
+        // accept it and use localhost (while a null here almost likely mean a user error,
+        // not "connect to localhost")
+        if (hostname == null) throw new NullPointerException();
+        Collections.addAll(validAddresses, InetAddress.getAllByName(hostname));
+      } catch (UnknownHostException e) {
+        throw new IllegalArgumentException("Failed to resolve: " + hostname, e);
+      }
+    }
+    return new WhiteListPolicy(
+        childPolicy,
+        new Predicate<Host>() {
+          @Override
+          public boolean apply(Host host) {
+            return validAddresses.contains(host.getAddress());
+          }
+        });
   }
 }
