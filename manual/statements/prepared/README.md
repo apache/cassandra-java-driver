@@ -122,10 +122,10 @@ BoundStatement bound = ps1.bind()
 
 // Using the unset method to unset previously set value.
 // Positional setter:
-bound.unset("description");
+bound.unset(1);
 
 // Named setter:
-bound.unset(1);
+bound.unset("description");
 ```
 
 A bound statement also has getters to retrieve the values. Note that

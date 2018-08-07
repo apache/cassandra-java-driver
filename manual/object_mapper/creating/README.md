@@ -221,7 +221,7 @@ declaration.
 
 [@Computed][computed] can be used on properties that are the result of a
 computation on the Cassandra side, typically a function call. Native
-functions in Cassandra like `writetime()` or [User Defined Functions] are
+functions in Cassandra like `writetime()` or [User-Defined Functions] are
 supported.
 
 ```java
@@ -263,7 +263,7 @@ it should be placed on either the field declaration or the property getter metho
 
 ### Mapping User Types
 
-[User Defined Types] can also be mapped by using [@UDT][udt]:
+[User-Defined Types] can also be mapped by using [@UDT][udt]:
 
 ```
 CREATE TYPE address (street text, zip_code int);
