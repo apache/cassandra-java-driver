@@ -367,7 +367,7 @@ public abstract class TypesafeDriverExecutionProfile implements DriverExecutionP
   }
 
   /**
-   * A profile that was copied from another profile programatically using {@code withXxx} methods.
+   * A profile that was copied from another profile programmatically using {@code withXxx} methods.
    */
   @ThreadSafe
   static class Derived extends TypesafeDriverExecutionProfile {
