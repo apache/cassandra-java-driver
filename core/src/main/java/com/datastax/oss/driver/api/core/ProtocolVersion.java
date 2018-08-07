@@ -43,8 +43,8 @@ public interface ProtocolVersion {
   /**
    * Whether the protocol version is in a beta status.
    *
-   * <p>Beta versions are intended for Cassandra development. They should be used in a regular
-   * application, beta features may break at any point.
+   * <p>Beta versions are intended for Cassandra development. They should not be used in a regular
+   * application, as beta features may break at any point.
    */
   boolean isBeta();
 }

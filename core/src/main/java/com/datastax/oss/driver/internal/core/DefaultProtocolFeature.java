@@ -15,17 +15,25 @@
  */
 package com.datastax.oss.driver.internal.core;
 
-import com.datastax.oss.driver.api.core.ProtocolVersion;
-
 /**
- * A marker interface for features of the native protocol that are only supported by specific
- * {@linkplain ProtocolVersion versions}.
+ * Features that are commonly supported by most Apache Cassandra protocol versions.
  *
- * <p>The only reason to model this as an interface (as opposed to an enum type) is to accommodate
- * for custom protocol extensions. If you're connecting to a standard Apache Cassandra cluster, all
- * {@code ProtocolFeature}s are {@link DefaultProtocolFeature} instances.
- *
- * @see ProtocolVersionRegistry#supports(ProtocolVersion, ProtocolFeature)
- * @see DefaultProtocolFeature
+ * @see com.datastax.oss.driver.api.core.DefaultProtocolVersion
  */
-public interface ProtocolFeature {}
+public enum DefaultProtocolFeature implements ProtocolFeature {
+
+  /**
+   * The ability to leave variables unset in prepared statements.
+   *
+   * @see <a href="https://issues.apache.org/jira/browse/CASSANDRA-7304">CASSANDRA-7304</a>
+   */
+  UNSET_BOUND_VALUES,
+
+  /**
+   * The ability to override the keyspace on a per-request basis.
+   *
+   * @see <a href="https://issues.apache.org/jira/browse/CASSANDRA-10145">CASSANDRA-10145</a>
+   */
+  PER_REQUEST_KEYSPACE,
+  ;
+}

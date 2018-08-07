@@ -36,7 +36,7 @@ import com.datastax.oss.driver.api.core.servererrors.ProtocolError;
 import com.datastax.oss.driver.api.core.servererrors.QueryValidationException;
 import com.datastax.oss.driver.api.core.session.throttling.RequestThrottler;
 import com.datastax.oss.driver.api.core.session.throttling.Throttled;
-import com.datastax.oss.driver.internal.core.ProtocolFeature;
+import com.datastax.oss.driver.internal.core.DefaultProtocolFeature;
 import com.datastax.oss.driver.internal.core.ProtocolVersionRegistry;
 import com.datastax.oss.driver.internal.core.adminrequest.ThrottledAdminRequestHandler;
 import com.datastax.oss.driver.internal.core.channel.DriverChannel;
@@ -149,7 +149,7 @@ public abstract class CqlPrepareHandlerBase implements Throttled {
     ProtocolVersionRegistry registry = context.getProtocolVersionRegistry();
     CqlIdentifier keyspace = request.getKeyspace();
     if (keyspace != null
-        && !registry.supports(protocolVersion, ProtocolFeature.PER_REQUEST_KEYSPACE)) {
+        && !registry.supports(protocolVersion, DefaultProtocolFeature.PER_REQUEST_KEYSPACE)) {
       throw new IllegalArgumentException(
           "Can't use per-request keyspace with protocol " + protocolVersion);
     }

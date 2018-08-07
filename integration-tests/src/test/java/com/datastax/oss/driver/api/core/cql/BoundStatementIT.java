@@ -36,7 +36,7 @@ import com.datastax.oss.driver.api.testinfra.session.SessionRule;
 import com.datastax.oss.driver.api.testinfra.session.SessionUtils;
 import com.datastax.oss.driver.api.testinfra.simulacron.SimulacronRule;
 import com.datastax.oss.driver.categories.ParallelizableTests;
-import com.datastax.oss.driver.internal.core.ProtocolFeature;
+import com.datastax.oss.driver.internal.core.DefaultProtocolFeature;
 import com.datastax.oss.driver.internal.core.ProtocolVersionRegistry;
 import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
 import com.datastax.oss.driver.internal.core.type.codec.CqlIntToStringCodec;
@@ -499,6 +499,6 @@ public class BoundStatementIT {
     InternalDriverContext context = (InternalDriverContext) session.getContext();
     ProtocolVersionRegistry protocolVersionRegistry = context.getProtocolVersionRegistry();
     return protocolVersionRegistry.supports(
-        context.getProtocolVersion(), ProtocolFeature.PER_REQUEST_KEYSPACE);
+        context.getProtocolVersion(), DefaultProtocolFeature.PER_REQUEST_KEYSPACE);
   }
 }
