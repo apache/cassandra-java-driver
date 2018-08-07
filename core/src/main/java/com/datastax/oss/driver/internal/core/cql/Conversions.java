@@ -53,7 +53,7 @@ import com.datastax.oss.driver.api.core.servererrors.WriteFailureException;
 import com.datastax.oss.driver.api.core.servererrors.WriteTimeoutException;
 import com.datastax.oss.driver.api.core.type.codec.TypeCodecs;
 import com.datastax.oss.driver.api.core.type.codec.registry.CodecRegistry;
-import com.datastax.oss.driver.internal.core.ProtocolFeature;
+import com.datastax.oss.driver.internal.core.DefaultProtocolFeature;
 import com.datastax.oss.driver.internal.core.ProtocolVersionRegistry;
 import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
 import com.datastax.oss.driver.internal.core.metadata.token.ByteOrderedToken;
@@ -128,7 +128,7 @@ public class Conversions {
             "Can't have both positional and named values in a statement.");
       }
       if (keyspace != null
-          && !registry.supports(protocolVersion, ProtocolFeature.PER_REQUEST_KEYSPACE)) {
+          && !registry.supports(protocolVersion, DefaultProtocolFeature.PER_REQUEST_KEYSPACE)) {
         throw new IllegalArgumentException(
             "Can't use per-request keyspace with protocol " + protocolVersion);
       }
@@ -146,7 +146,7 @@ public class Conversions {
       return new Query(simpleStatement.getQuery(), queryOptions);
     } else if (statement instanceof BoundStatement) {
       BoundStatement boundStatement = (BoundStatement) statement;
-      if (!registry.supports(protocolVersion, ProtocolFeature.UNSET_BOUND_VALUES)) {
+      if (!registry.supports(protocolVersion, DefaultProtocolFeature.UNSET_BOUND_VALUES)) {
         ensureAllSet(boundStatement);
       }
       boolean skipMetadata =
@@ -171,11 +171,11 @@ public class Conversions {
           queryOptions);
     } else if (statement instanceof BatchStatement) {
       BatchStatement batchStatement = (BatchStatement) statement;
-      if (!registry.supports(protocolVersion, ProtocolFeature.UNSET_BOUND_VALUES)) {
+      if (!registry.supports(protocolVersion, DefaultProtocolFeature.UNSET_BOUND_VALUES)) {
         ensureAllSet(batchStatement);
       }
       if (keyspace != null
-          && !registry.supports(protocolVersion, ProtocolFeature.PER_REQUEST_KEYSPACE)) {
+          && !registry.supports(protocolVersion, DefaultProtocolFeature.PER_REQUEST_KEYSPACE)) {
         throw new IllegalArgumentException(
             "Can't use per-request keyspace with protocol " + protocolVersion);
       }
