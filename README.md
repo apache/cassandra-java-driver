@@ -1,6 +1,6 @@
 # Datastax Java Driver for Apache Cassandra
 
-[![Build Status](https://travis-ci.org/datastax/java-driver.svg?branch=3.0)](https://travis-ci.org/datastax/java-driver)
+[![Build Status](https://travis-ci.org/datastax/java-driver.svg?branch=3.1)](https://travis-ci.org/datastax/java-driver)
 
 *If you're reading this on github.com, please note that this is the readme
 for the development version and that some features described here might
@@ -51,8 +51,6 @@ The driver contains the following modules:
   driver releases and important announcements (low frequency).
   [@DataStaxEng](https://twitter.com/datastaxeng) has more news including
   other drivers, Cassandra, and DSE.
-- DOCS: the [manual](http://docs.datastax.com/en/developer/java-driver/3.1/manual/) has quick
-  start material and technical details about the driver and its features.
 - API: http://www.datastax.com/drivers/java/3.1
 - [changelog](changelog/)
 - [binary tarball](http://downloads.datastax.com/java-driver/cassandra-java-driver-3.1.4.tar.gz)
@@ -102,18 +100,18 @@ is available for download.
 
 ## Compatibility
 
-The Java client driver 3.1.4 ([branch 3.1](https://github.com/datastax/java-driver/tree/3.1)) is compatible with Apache
+The Java client driver 3.1.4 ([branch 3.1.x](https://github.com/datastax/java-driver/tree/3.1.x)) is compatible with Apache
 Cassandra 1.2, 2.0, 2.1, 2.2 and 3.0 (see [this page](http://datastax.github.io/java-driver/manual/native_protocol) for
 the most up-to-date compatibility information).
 
 UDT and tuple support is available only when using Apache Cassandra 2.1 or higher (see [CQL improvements in Cassandra 2.1](http://www.datastax.com/dev/blog/cql-in-2-1)).
 
 Other features are available only when using Apache Cassandra 2.0 or higher (e.g. result set paging,
-[BatchStatement](https://github.com/datastax/java-driver/blob/3.0/driver-core/src/main/java/com/datastax/driver/core/BatchStatement.java),
+[BatchStatement](https://github.com/datastax/java-driver/blob/3.1.x/driver-core/src/main/java/com/datastax/driver/core/BatchStatement.java),
 [lightweight transactions](http://www.datastax.com/documentation/cql/3.1/cql/cql_using/use_ltweight_transaction_t.html) 
 -- see [What's new in Cassandra 2.0](http://www.datastax.com/documentation/cassandra/2.0/cassandra/features/features_key_c.html)). 
 Trying to use these with a cluster running Cassandra 1.2 will result in 
-an [UnsupportedFeatureException](https://github.com/datastax/java-driver/blob/3.0/driver-core/src/main/java/com/datastax/driver/core/exceptions/UnsupportedFeatureException.java) being thrown.
+an [UnsupportedFeatureException](https://github.com/datastax/java-driver/blob/3.1.x/driver-core/src/main/java/com/datastax/driver/core/exceptions/UnsupportedFeatureException.java) being thrown.
 
 
 ## Upgrading from previous versions
