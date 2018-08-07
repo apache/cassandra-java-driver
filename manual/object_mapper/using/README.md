@@ -202,7 +202,7 @@ implementation for it:
 
 ```java
 UserAccessor userAccessor = manager.createAccessor(UserAccessor.class);
-User user = userAccessor.getOne(uuid);
+Result<User> users = userAccessor.getAll();
 ```
 
 Like mappers, accessors are cached at the manager level and thus, are
