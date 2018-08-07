@@ -19,6 +19,7 @@ import com.datastax.oss.driver.api.core.addresstranslation.AddressTranslator;
 import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
 import com.datastax.oss.driver.api.core.config.DriverExecutionProfile;
 import com.datastax.oss.driver.api.core.metadata.Node;
+import com.datastax.oss.driver.api.core.servererrors.InvalidQueryException;
 import com.datastax.oss.driver.internal.core.adminrequest.AdminRequestHandler;
 import com.datastax.oss.driver.internal.core.adminrequest.AdminResult;
 import com.datastax.oss.driver.internal.core.adminrequest.AdminRow;
@@ -166,7 +167,7 @@ public class DefaultTopologyMonitor implements TopologyMonitor {
 
     peersV2Query.whenComplete(
         (r, t) -> {
-          if (t != null) {
+          if (t instanceof InvalidQueryException) {
             // The query to system.peers_v2 failed, we should not attempt this query in the
             // future.
             this.isSchemaV2 = false;
@@ -317,7 +318,10 @@ public class DefaultTopologyMonitor implements TopologyMonitor {
     if (nativeAddress == null) {
       return null;
     }
-    int row_port = port;
-    return addressTranslator.translate(new InetSocketAddress(nativeAddress, row_port));
+    Integer rowPort = row.getInteger("native_port");
+    if (rowPort == null || rowPort == 0) {
+      rowPort = port;
+    }
+    return addressTranslator.translate(new InetSocketAddress(nativeAddress, rowPort));
   }
 }
