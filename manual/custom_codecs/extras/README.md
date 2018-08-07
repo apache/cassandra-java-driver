@@ -217,8 +217,8 @@ session.execute("insert into example (id, owner) values (1, ?)",
 // owner saved as '{"id":1,"name":"root"}'
 ```
 
+[Jackson]: https://github.com/FasterXML/jackson
 [JacksonJsonCodec]: http://docs.datastax.com/en/drivers/java/3.2/com/datastax/driver/extras/codecs/json/JacksonJsonCodec.html
-[Jackson]: http://wiki.fasterxml.com/JacksonHome
 
 
 #### JSR 353
@@ -311,7 +311,7 @@ often.
 
 [OptionalCodec]: http://docs.datastax.com/en/drivers/java/3.2/com/datastax/driver/extras/codecs/jdk8/OptionalCodec.html
 [Optional]: https://docs.oracle.com/javase/8/docs/api/java/util/Optional.html
-[TypeToken]: http://docs.guava-libraries.googlecode.com/git/javadoc/com/google/common/reflect/TypeToken.html
+[TypeToken]: http://google.github.io/guava/releases/19.0/api/docs/com/google/common/reflect/TypeToken.html
 
 #### Guava
 
@@ -353,8 +353,8 @@ session.execute(pst.bind()
 
 See the JDK8 Optional section above for explanations about [TypeToken].
 
+[Optional_guava]: http://google.github.io/guava/releases/19.0/api/docs/com/google/common/base/Optional.html
 [OptionalCodec_guava]: http://docs.datastax.com/en/drivers/java/3.2/com/datastax/driver/extras/codecs/guava/OptionalCodec.html
-[Optional_guava]: http://docs.guava-libraries.googlecode.com/git-history/v16.0.1/javadoc/com/google/common/base/Optional.html
 
 
 ### Arrays
