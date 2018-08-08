@@ -110,6 +110,8 @@ public class CCMBridge implements CCMAccess {
    */
   private static final Map<String, String> dseToCassandraVersions =
       ImmutableMap.<String, String>builder()
+          .put("6.0", "4.0")
+          .put("5.1", "3.11")
           .put("5.0.4", "3.0.10")
           .put("5.0.3", "3.0.9")
           .put("5.0.2", "3.0.8")
