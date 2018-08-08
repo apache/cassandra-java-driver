@@ -107,7 +107,7 @@ public abstract class QueryConsistencyException extends QueryExecutionException
    */
   @Override
   public InetAddress getHost() {
-    return address.getAddress();
+    return address != null ? address.getAddress() : null;
   }
 
   /**
