@@ -13,7 +13,7 @@
 - [improvement] JAVA-1786: Use Google code formatter.
 - [bug] JAVA-1871: Change LOCAL\_SERIAL.isDCLocal() to return true.
 - [documentation] JAVA-1902: Clarify unavailable & request error in DefaultRetryPolicy javadoc.
-- [new feature] JAVA-1771: Send driver name and version in STARTUP message.
+- [improvement] JAVA-1771: Send driver name and version in STARTUP message.
 
 Merged from 3.5.x:
 
