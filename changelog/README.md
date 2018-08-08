@@ -11,7 +11,7 @@
 - [bug] JAVA-1924: StatementWrapper setters should return the wrapping statement.
 - [new feature] JAVA-1532: Add Codec support for Java 8's LocalDateTime and ZoneId.
 - [improvement] JAVA-1786: Use Google code formatter.
-- [new feature] JAVA-1903: Add WhiteListPolicy.fromHosts.
+- [new feature] JAVA-1903: Add WhiteListPolicy.ofHosts.
 
 Merged from 3.5.x:
 

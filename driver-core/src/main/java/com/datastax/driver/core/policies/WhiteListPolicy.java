@@ -21,10 +21,8 @@ import com.google.common.collect.ImmutableSet;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
+import java.util.Arrays;
 import java.util.Collection;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Set;
 
 /**
  * A load balancing policy wrapper that ensure that only hosts from a provided white list will ever
@@ -59,7 +57,7 @@ public class WhiteListPolicy extends HostFilterPolicy {
 
   /**
    * Private constructor solely for maintaining type from policy created by {@link
-   * #fromHosts(LoadBalancingPolicy, String...)}.
+   * #ofHosts(LoadBalancingPolicy, String...)}.
    */
   private WhiteListPolicy(LoadBalancingPolicy childPolicy, Predicate<Host> predicate) {
     super(childPolicy, predicate);
@@ -78,46 +76,47 @@ public class WhiteListPolicy extends HostFilterPolicy {
   /**
    * Creates a new policy with the given host names.
    *
-   * <p>See {@link #fromHosts(LoadBalancingPolicy, String...)} for more details.
+   * <p>See {@link #ofHosts(LoadBalancingPolicy, Iterable)} for more details.
    */
-  public static WhiteListPolicy fromHosts(
-      LoadBalancingPolicy childPolicy, Collection<String> hostnames) {
-    return fromHosts(childPolicy, hostnames.toArray(new String[0]));
+  public static WhiteListPolicy ofHosts(LoadBalancingPolicy childPolicy, String... hostnames) {
+    return ofHosts(childPolicy, Arrays.asList(hostnames));
   }
 
   /**
    * Creates a new policy that wraps the provided child policy but only "allows" hosts having
    * addresses that match those from the resolved input host names.
    *
-   * <p>Note that all host names must be resolvable; if <em>any</em> of them cannot be resolved,
-   * this method will fail.
+   * <p>Note that all host names must be non-null and resolvable; if <em>any</em> of them cannot be
+   * resolved, this method will fail.
    *
    * @param childPolicy the wrapped policy.
-   * @param hostnames list of host names to resolve white listed addresses from.
+   * @param hostnames list of host names to resolve whitelisted addresses from.
    * @throws IllegalArgumentException if any of the given {@code hostnames} could not be resolved.
    * @throws NullPointerException If null was provided for a hostname.
    * @throws SecurityException if a security manager is present and permission to resolve the host
    *     name is denied.
    */
-  public static WhiteListPolicy fromHosts(LoadBalancingPolicy childPolicy, String... hostnames) {
-    final Set<InetAddress> validAddresses = new HashSet<InetAddress>();
+  public static WhiteListPolicy ofHosts(
+      LoadBalancingPolicy childPolicy, Iterable<String> hostnames) {
+    ImmutableSet.Builder<InetAddress> builder = ImmutableSet.builder();
     for (String hostname : hostnames) {
       try {
         // We explicitly check for nulls because InetAdress.getByName() will happily
         // accept it and use localhost (while a null here almost likely mean a user error,
         // not "connect to localhost")
         if (hostname == null) throw new NullPointerException();
-        Collections.addAll(validAddresses, InetAddress.getAllByName(hostname));
+        builder.add(InetAddress.getAllByName(hostname));
       } catch (UnknownHostException e) {
         throw new IllegalArgumentException("Failed to resolve: " + hostname, e);
       }
     }
+    final ImmutableSet<InetAddress> addresses = builder.build();
     return new WhiteListPolicy(
         childPolicy,
         new Predicate<Host>() {
           @Override
           public boolean apply(Host host) {
-            return validAddresses.contains(host.getAddress());
+            return addresses.contains(host.getAddress());
           }
         });
   }

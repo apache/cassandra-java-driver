@@ -101,29 +101,29 @@ public class WhiteListPolicyTest {
   }
 
   /**
-   * Ensures that {@link WhiteListPolicy#fromHosts(LoadBalancingPolicy, String...)} throws an {@link
+   * Ensures that {@link WhiteListPolicy#ofHosts(LoadBalancingPolicy, String...)} throws an {@link
    * IllegalArgumentException} if a name could not be resolved.
    *
    * @test_category load_balancing:white_list
    */
   @Test(groups = "unit", expectedExceptions = IllegalArgumentException.class)
   public void should_throw_IAE_if_name_could_not_be_resolved() {
-    WhiteListPolicy.fromHosts(new RoundRobinPolicy(), "a.b.c.d.e.f.UNRESOLVEABLE");
+    WhiteListPolicy.ofHosts(new RoundRobinPolicy(), "a.b.c.d.e.f.UNRESOLVEABLE");
   }
 
   /**
-   * Ensures that {@link WhiteListPolicy#fromHosts(LoadBalancingPolicy, String...)} throws a {@link
+   * Ensures that {@link WhiteListPolicy#ofHosts(LoadBalancingPolicy, String...)} throws a {@link
    * NullPointerException} if a name provided is null.
    *
    * @test_category load_balancing:white_list
    */
   @Test(groups = "unit", expectedExceptions = NullPointerException.class)
   public void should_throw_NPE_if_null_provided() {
-    WhiteListPolicy.fromHosts(new RoundRobinPolicy(), null, null);
+    WhiteListPolicy.ofHosts(new RoundRobinPolicy(), null, null);
   }
 
   /**
-   * Ensures that {@link WhiteListPolicy#fromHosts(LoadBalancingPolicy, String...)} appropriately
+   * Ensures that {@link WhiteListPolicy#ofHosts(LoadBalancingPolicy, String...)} appropriately
    * choses hosts based on their resolved ip addresses.
    *
    * @test_category load_balancing:white_list
@@ -136,7 +136,7 @@ public class WhiteListPolicyTest {
     // In this case, we can't rely on DNS.  However, node 1 should be 127.0.0.1 which depending on
     // /etc/hosts configuration is likely to resolve the name of the machine running the test.
     WhiteListPolicy policy =
-        WhiteListPolicy.fromHosts(
+        WhiteListPolicy.ofHosts(
             new RoundRobinPolicy(),
             sCluster.address(1).getHostName(),
             sCluster.address(4).getHostName());
