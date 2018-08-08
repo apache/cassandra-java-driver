@@ -1637,10 +1637,10 @@ public class Cluster implements Closeable {
         this.nodeRefreshRequestDebouncer.start();
 
         isFullyInit = true;
-      } catch (Exception e) {
-        close();
+      } catch (RuntimeException e) {
         initException = e;
-        throw new IllegalStateException("Error occurred during cluster initialization", e);
+        close();
+        throw e;
       }
     }
 

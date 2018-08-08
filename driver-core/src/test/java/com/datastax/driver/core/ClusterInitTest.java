@@ -279,6 +279,69 @@ public class ClusterInitTest {
       scassandraCluster.stop();
     }
   }
+  /**
+   * Ensures that if an error occurs doing initialization that subsequent attempts to use the
+   * cluster result in an appropriate error.
+   *
+   * @jira_ticket JAVA-1220
+   * @test_category host:state
+   */
+  @Test(groups = "short")
+  public void should_detect_cluster_init_failure() {
+    Cluster cluster =
+        Cluster.builder()
+            .addContactPointsWithPorts(new InetSocketAddress("127.0.0.1", 65534))
+            .withNettyOptions(nonQuietClusterCloseOptions)
+            .build();
+    try {
+      cluster.connect();
+      fail("Should not have been able to connect.");
+    } catch (NoHostAvailableException e) {
+      try {
+        cluster.connect();
+        fail("Should error when connect is called.");
+      } catch (IllegalStateException e1) {
+        assertThat(
+            e1.getMessage().equals("Error during cluster initialization, please close and retry"));
+      }
+    } finally {
+      cluster.close();
+    }
+  }
+  /**
+   * Ensures that if a cluster is closed, subsequent attempts to the use the session will throw a
+   * useful error.
+   *
+   * @jira_ticket JAVA-1929
+   * @test_category host:state
+   */
+  @Test(groups = "short")
+  public void session_should_detect_cluster_close() {
+    ScassandraCluster scassandraCluster =
+        ScassandraCluster.builder().withIpPrefix(TestUtils.IP_PREFIX).build();
+    Cluster cluster =
+        Cluster.builder()
+            .addContactPoints(scassandraCluster.address(1).getAddress())
+            .withPort(scassandraCluster.getBinaryPort())
+            .withNettyOptions(nonQuietClusterCloseOptions)
+            .build();
+
+    try {
+      scassandraCluster.init();
+      Session session = cluster.connect();
+      cluster.close();
+      try {
+        session.execute("SELECTS * FROM system.peers");
+        fail(
+            "This error when session.execute is called on session associated with closed cluster.");
+      } catch (IllegalStateException e) {
+        assertThat(
+            e.getMessage().equals("Parent cluster is closed. This session is no longer valid."));
+      }
+    } finally {
+      scassandraCluster.stop();
+    }
+  }
 
   private void primePeerRows(Scassandra scassandra, List<FakeHost> otherHosts)
       throws UnknownHostException {
