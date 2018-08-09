@@ -38,8 +38,7 @@ public class StartupOptionTest extends CCMTestsSupport {
 
     for (Row row : result) {
       assertThat(row.getString("driver_version")).isEqualTo(Cluster.getDriverVersion());
-      assertThat(row.getString("driver_name"))
-          .isEqualTo("DataStax Java Driver for Apache Cassandra");
+      assertThat(row.getString("driver_name")).isEqualTo("DataStax Java Driver");
     }
   }
 }
