@@ -19,7 +19,6 @@ import com.datastax.oss.driver.api.core.addresstranslation.AddressTranslator;
 import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
 import com.datastax.oss.driver.api.core.config.DriverExecutionProfile;
 import com.datastax.oss.driver.api.core.metadata.Node;
-import com.datastax.oss.driver.api.core.servererrors.InvalidQueryException;
 import com.datastax.oss.driver.internal.core.adminrequest.AdminRequestHandler;
 import com.datastax.oss.driver.internal.core.adminrequest.AdminResult;
 import com.datastax.oss.driver.internal.core.adminrequest.AdminRow;
@@ -30,6 +29,8 @@ import com.datastax.oss.driver.internal.core.control.ControlConnection;
 import com.datastax.oss.driver.internal.core.util.concurrent.CompletableFutures;
 import com.datastax.oss.driver.shaded.guava.common.annotations.VisibleForTesting;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableMap;
+import com.datastax.oss.protocol.internal.Message;
+import com.datastax.oss.protocol.internal.ProtocolConstants;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
@@ -169,17 +170,21 @@ public class DefaultTopologyMonitor implements TopologyMonitor {
     peersV2Query.whenComplete(
         (r, t) -> {
           if (t != null) {
-            if (t instanceof UnexpectedResponseException
-                && t.getCause() != null
-                && t.getCause() instanceof InvalidQueryException) {
-              // The query to system.peers_v2 failed, we should not attempt this query in the
-              // future.
-              this.isSchemaV2 = false;
-              CompletableFutures.completeFrom(
-                  query(channel, "SELECT * FROM system.peers"), peersQuery);
-            } else {
-              peersQuery.completeExceptionally(t);
+            if (t instanceof UnexpectedResponseException) {
+              UnexpectedResponseException e = (UnexpectedResponseException) t;
+              Message message = e.message;
+              if (message instanceof com.datastax.oss.protocol.internal.response.Error
+                  && ((com.datastax.oss.protocol.internal.response.Error) message).code
+                      == ProtocolConstants.ErrorCode.INVALID) {
+                // The query to system.peers_v2 failed, we should not attempt this query in the
+                // future.
+                this.isSchemaV2 = false;
+                CompletableFutures.completeFrom(
+                    query(channel, "SELECT * FROM system.peers"), peersQuery);
+                return;
+              }
             }
+            peersQuery.completeExceptionally(t);
           } else {
             peersQuery.complete(r);
           }
