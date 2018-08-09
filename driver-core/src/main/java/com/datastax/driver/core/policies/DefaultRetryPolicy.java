@@ -27,9 +27,12 @@ import com.datastax.driver.core.exceptions.DriverException;
  * <p>This policy retries queries in only two cases:
  *
  * <ul>
- *   <li>On a read timeout, if enough replicas replied but data was not retrieved.
- *   <li>On a write timeout, if we timeout while writing the distributed log used by batch
- *       statements.
+ *   <li>On a read timeout, retries once on the same host if enough replicas replied but data was
+ *       not retrieved.
+ *   <li>On a write timeout, retries once on the same host if we timeout while writing the
+ *       distributed log used by batch statements.
+ *   <li>On an unavailable exception, retries once on the next host.
+ *   <li>On a request error, such as a client timeout, the query is retried on the next host.
  * </ul>
  *
  * <p>This retry policy is conservative in that it will never retry with a different consistency

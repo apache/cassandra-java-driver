@@ -11,6 +11,8 @@
 - [bug] JAVA-1924: StatementWrapper setters should return the wrapping statement.
 - [new feature] JAVA-1532: Add Codec support for Java 8's LocalDateTime and ZoneId.
 - [improvement] JAVA-1786: Use Google code formatter.
+- [bug] JAVA-1871: Change LOCAL\_SERIAL.isDCLocal() to return true.
+- [documentation] JAVA-1902: Clarify unavailable & request error in DefaultRetryPolicy javadoc.
 - [new feature] JAVA-1903: Add WhiteListPolicy.ofHosts.
 
 Merged from 3.5.x:
