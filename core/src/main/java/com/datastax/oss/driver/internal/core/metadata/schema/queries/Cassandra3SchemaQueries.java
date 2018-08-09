@@ -23,8 +23,8 @@ import java.util.concurrent.CompletableFuture;
 import net.jcip.annotations.ThreadSafe;
 
 @ThreadSafe
-class Cassandra3SchemaQueries extends CassandraSchemaQueries {
-  Cassandra3SchemaQueries(
+public class Cassandra3SchemaQueries extends CassandraSchemaQueries {
+  public Cassandra3SchemaQueries(
       DriverChannel channel,
       CompletableFuture<Metadata> refreshFuture,
       DriverExecutionProfile config,
