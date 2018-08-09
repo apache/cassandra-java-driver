@@ -18,6 +18,7 @@ package com.datastax.driver.mapping;
 import com.datastax.driver.core.BoundStatement;
 import com.datastax.driver.core.ColumnDefinitions;
 import com.datastax.driver.core.ConsistencyLevel;
+import com.datastax.driver.core.GuavaCompatibility;
 import com.datastax.driver.core.PreparedStatement;
 import com.datastax.driver.core.ResultSet;
 import com.datastax.driver.core.ResultSetFuture;
@@ -27,7 +28,6 @@ import com.datastax.driver.core.TypeCodec;
 import com.datastax.driver.mapping.annotations.Defaults;
 import com.google.common.collect.Sets;
 import com.google.common.reflect.TypeToken;
-import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import java.lang.reflect.Method;
 import java.lang.reflect.ParameterizedType;
@@ -177,8 +177,9 @@ class MethodMapper {
       if (returnMapper == null) return future;
 
       return mapOne
-          ? Futures.transform(future, returnMapper.mapOneFunctionWithoutAliases)
-          : Futures.transform(future, returnMapper.mapAllFunctionWithoutAliases);
+          ? GuavaCompatibility.INSTANCE.transform(future, returnMapper.mapOneFunctionWithoutAliases)
+          : GuavaCompatibility.INSTANCE.transform(
+              future, returnMapper.mapAllFunctionWithoutAliases);
     } else {
       ResultSet rs = session.execute(bs);
       if (returnMapper == null) return rs;

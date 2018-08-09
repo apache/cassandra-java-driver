@@ -228,7 +228,7 @@
                             <manifestLocation>${project.build.outputDirectory}/META-INF</manifestLocation>
                             <instructions>
                                 <!-- JNR does not provide OSGi bundles, so exclude it; the driver can live without it -->
-                                <Import-Package><![CDATA[com.google.common.*;version="[16.0.1,22)",!jnr.*,io.netty.channel.epoll,*]]></Import-Package>
+                                <Import-Package><![CDATA[com.google.common.*;version="16.0.1",!jnr.*,io.netty.channel.epoll,*]]></Import-Package>
                             </instructions>
                         </configuration>
                     </execution>
@@ -246,7 +246,7 @@
                                 JNR does not provide OSGi bundles, so exclude it; the driver can live without it
                                 Explicitly import javax.security.cert because it's required by Netty, but Netty has been explicitly excluded
                                 -->
-                                <Import-Package><![CDATA[com.google.common.*;version="[16.0.1,22)",!jnr.*,!io.netty.*,javax.security.cert,*]]></Import-Package>
+                                <Import-Package><![CDATA[com.google.common.*;version="16.0.1",!jnr.*,!io.netty.*,javax.security.cert,*]]></Import-Package>
                                 <Private-Package>com.datastax.shaded.*</Private-Package>
                             </instructions>
                         </configuration>

@@ -50,7 +50,6 @@ import com.google.common.base.Predicate;
 import com.google.common.base.Throwables;
 import com.google.common.util.concurrent.ForwardingListeningExecutorService;
 import com.google.common.util.concurrent.FutureCallback;
-import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.common.util.concurrent.Uninterruptibles;
@@ -1584,7 +1583,7 @@ public class HostConnectionPoolTest extends ScassandraTestBase.PerClassCluster {
         throws ConnectionException {
       this.connectionFuture = pool.borrowConnection(timeoutMillis, MILLISECONDS, maxQueueSize);
       requestInitialized =
-          Futures.transform(
+          GuavaCompatibility.INSTANCE.transform(
               this.connectionFuture,
               new Function<Connection, Connection.ResponseHandler>() {
                 @Override
@@ -1689,7 +1688,7 @@ public class HostConnectionPoolTest extends ScassandraTestBase.PerClassCluster {
     @Override
     public ListenableFuture<?> submit(Runnable task) {
       ListenableFuture<?> future = super.submit(task);
-      Futures.addCallback(
+      GuavaCompatibility.INSTANCE.addCallback(
           future,
           new FutureCallback<Object>() {
             @Override
