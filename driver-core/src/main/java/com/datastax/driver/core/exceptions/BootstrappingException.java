@@ -41,7 +41,7 @@ public class BootstrappingException extends QueryExecutionException
   /** {@inheritDoc} */
   @Override
   public InetAddress getHost() {
-    return address.getAddress();
+    return address != null ? address.getAddress() : null;
   }
 
   /** {@inheritDoc} */

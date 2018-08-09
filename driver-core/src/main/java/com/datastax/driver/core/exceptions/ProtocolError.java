@@ -46,7 +46,7 @@ public class ProtocolError extends DriverInternalError implements CoordinatorExc
   /** {@inheritDoc} */
   @Override
   public InetAddress getHost() {
-    return address.getAddress();
+    return address != null ? address.getAddress() : null;
   }
 
   /** {@inheritDoc} */

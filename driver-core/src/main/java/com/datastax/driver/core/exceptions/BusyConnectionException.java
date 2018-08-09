@@ -37,7 +37,7 @@ public class BusyConnectionException extends DriverException implements Coordina
 
   @Override
   public InetAddress getHost() {
-    return address.getAddress();
+    return address != null ? address.getAddress() : null;
   }
 
   @Override
