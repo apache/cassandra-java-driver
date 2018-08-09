@@ -23,6 +23,7 @@ import com.datastax.oss.driver.api.core.servererrors.InvalidQueryException;
 import com.datastax.oss.driver.internal.core.adminrequest.AdminRequestHandler;
 import com.datastax.oss.driver.internal.core.adminrequest.AdminResult;
 import com.datastax.oss.driver.internal.core.adminrequest.AdminRow;
+import com.datastax.oss.driver.internal.core.adminrequest.UnexpectedResponseException;
 import com.datastax.oss.driver.internal.core.channel.DriverChannel;
 import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
 import com.datastax.oss.driver.internal.core.control.ControlConnection;
@@ -167,12 +168,18 @@ public class DefaultTopologyMonitor implements TopologyMonitor {
 
     peersV2Query.whenComplete(
         (r, t) -> {
-          if (t instanceof InvalidQueryException) {
-            // The query to system.peers_v2 failed, we should not attempt this query in the
-            // future.
-            this.isSchemaV2 = false;
-            CompletableFutures.completeFrom(
-                query(channel, "SELECT * FROM system.peers"), peersQuery);
+          if (t != null) {
+            if (t instanceof UnexpectedResponseException
+                && t.getCause() != null
+                && t.getCause() instanceof InvalidQueryException) {
+              // The query to system.peers_v2 failed, we should not attempt this query in the
+              // future.
+              this.isSchemaV2 = false;
+              CompletableFutures.completeFrom(
+                  query(channel, "SELECT * FROM system.peers"), peersQuery);
+            } else {
+              peersQuery.completeExceptionally(t);
+            }
           } else {
             peersQuery.complete(r);
           }
