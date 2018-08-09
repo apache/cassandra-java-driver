@@ -67,7 +67,9 @@ public class SortingLoadBalancingPolicy implements LoadBalancingPolicy {
                 return b1 - b2;
               }
             }
-            return 0;
+            int port1 = node1.getBroadcastAddress().map(InetSocketAddress::getPort).orElse(0);
+            int port2 = node2.getBroadcastAddress().map(InetSocketAddress::getPort).orElse(0);
+            return port1 - port2;
           });
 
   public SortingLoadBalancingPolicy() {}

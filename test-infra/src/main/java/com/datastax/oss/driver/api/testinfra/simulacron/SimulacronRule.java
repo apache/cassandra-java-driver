@@ -19,9 +19,9 @@ import com.datastax.oss.driver.api.core.DefaultProtocolVersion;
 import com.datastax.oss.driver.api.core.ProtocolVersion;
 import com.datastax.oss.driver.api.testinfra.CassandraResourceRule;
 import com.datastax.oss.simulacron.common.cluster.ClusterSpec;
-import com.datastax.oss.simulacron.server.AddressResolver;
 import com.datastax.oss.simulacron.server.BoundCluster;
 import com.datastax.oss.simulacron.server.BoundNode;
+import com.datastax.oss.simulacron.server.Inet4Resolver;
 import com.datastax.oss.simulacron.server.Server;
 import java.net.InetSocketAddress;
 import java.util.Set;
@@ -31,7 +31,7 @@ import java.util.stream.Collectors;
 public class SimulacronRule extends CassandraResourceRule {
   // TODO perhaps share server some other way
   public static final Server server =
-      Server.builder().withAddressResolver(new AddressResolver.Inet4Resolver(9043)).build();
+      Server.builder().withAddressResolver(new Inet4Resolver(9043)).build();
 
   private final ClusterSpec clusterSpec;
   private BoundCluster boundCluster;
