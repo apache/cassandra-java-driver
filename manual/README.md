@@ -277,6 +277,11 @@ for (ColumnDefinitions.Definition definition : row.getColumnDefinitions()) {
 }
 ```
 
+### Object mapping
+
+Besides explicit work with queries and rows, you can also use
+[Object Mapper](object_mapper/) to simplify retrieval & store of your data.
+
 
 ### More information
 
