@@ -43,7 +43,7 @@ public class UnpreparedException extends QueryValidationException implements Coo
   /** {@inheritDoc} */
   @Override
   public InetAddress getHost() {
-    return address.getAddress();
+    return address != null ? address.getAddress() : null;
   }
 
   /** {@inheritDoc} */

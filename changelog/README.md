@@ -15,6 +15,7 @@
 - [documentation] JAVA-1902: Clarify unavailable & request error in DefaultRetryPolicy javadoc.
 - [new feature] JAVA-1903: Add WhiteListPolicy.ofHosts.
 - [bug] JAVA-1928: Fix GuavaCompatibility for Guava 26.
+- [bug] JAVA-1935: Add null check in QueryConsistencyException.getHost.
 
 Merged from 3.5.x:
 

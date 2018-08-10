@@ -42,7 +42,7 @@ public class ServerError extends DriverInternalError implements CoordinatorExcep
   /** {@inheritDoc} */
   @Override
   public InetAddress getHost() {
-    return address.getAddress();
+    return address != null ? address.getAddress() : null;
   }
 
   /** {@inheritDoc} */
