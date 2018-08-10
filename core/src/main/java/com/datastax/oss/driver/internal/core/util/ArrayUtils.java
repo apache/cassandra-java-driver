@@ -15,6 +15,7 @@
  */
 package com.datastax.oss.driver.internal.core.util;
 
+import edu.umd.cs.findbugs.annotations.NonNull;
 import java.util.concurrent.ThreadLocalRandom;
 
 public class ArrayUtils {
@@ -50,18 +51,35 @@ public class ArrayUtils {
   /**
    * Shuffles the first n elements of the array in-place.
    *
+   * @param elements the array to shuffle.
+   * @param n the number of elements to shuffle; must be {@code <= elements.length}.
    * @see <a
    *     href="https://en.wikipedia.org/wiki/Fisher%E2%80%93Yates_shuffle#The_modern_algorithm">Modern
    *     Fisher-Yates shuffle</a>
    */
-  public static <T> void shuffleHead(T[] elements, int n) {
+  public static <T> void shuffleHead(@NonNull T[] elements, int n) {
+    shuffleHead(elements, n, ThreadLocalRandom.current());
+  }
+
+  /**
+   * Shuffles the first n elements of the array in-place.
+   *
+   * @param elements the array to shuffle.
+   * @param n the number of elements to shuffle; must be {@code <= elements.length}.
+   * @param random the {@link ThreadLocalRandom} instance to use. This is mainly intended to
+   *     facilitate tests.
+   * @see <a
+   *     href="https://en.wikipedia.org/wiki/Fisher%E2%80%93Yates_shuffle#The_modern_algorithm">Modern
+   *     Fisher-Yates shuffle</a>
+   */
+  public static <T> void shuffleHead(
+      @NonNull T[] elements, int n, @NonNull ThreadLocalRandom random) {
     if (n > elements.length) {
       throw new ArrayIndexOutOfBoundsException(
           String.format(
               "Can't shuffle the first %d elements, there are only %d", n, elements.length));
     }
     if (n > 1) {
-      ThreadLocalRandom random = ThreadLocalRandom.current();
       for (int i = n - 1; i > 0; i--) {
         int j = random.nextInt(i + 1);
         swap(elements, i, j);

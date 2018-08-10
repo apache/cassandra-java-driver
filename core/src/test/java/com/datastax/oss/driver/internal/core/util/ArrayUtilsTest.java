@@ -17,11 +17,9 @@ package com.datastax.oss.driver.internal.core.util;
 
 import static com.datastax.oss.driver.Assertions.assertThat;
 
-import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.concurrent.ThreadLocalRandom;
 import org.junit.Test;
+import org.mockito.Mockito;
 
 public class ArrayUtilsTest {
 
@@ -83,25 +81,22 @@ public class ArrayUtilsTest {
 
   @Test
   public void should_shuffle_head() {
-    // Testing for randomness is hard, so we call the method a large number of times, and check that
-    // we get all permutations with a decent distribution.
-    Map<List<String>, Integer> counts = new HashMap<>();
-    for (int i = 0; i < 6000; i++) {
-      String[] array = {"a", "b", "c", "d", "e"};
-      ArrayUtils.shuffleHead(array, 3);
-
-      // Tail elements should not move
-      assertThat(array[3]).isEqualTo("d");
-      assertThat(array[4]).isEqualTo("e");
-
-      List<String> permutation = ImmutableList.of(array[0], array[1], array[2]);
-      counts.merge(permutation, 1, (a, b) -> a + b);
-    }
-
-    assertThat(counts).hasSize(6);
-    for (Integer count : counts.values()) {
-      assertThat(count).isBetween(900, 1100);
-    }
+    String[] array = {"a", "b", "c", "d", "e"};
+    ThreadLocalRandom random = Mockito.mock(ThreadLocalRandom.class);
+    Mockito.when(random.nextInt(Mockito.anyInt()))
+        .thenAnswer(
+            (invocation) -> {
+              int i = invocation.getArgument(0);
+              // shifts elements by 1 to the right
+              return i - 2;
+            });
+    ArrayUtils.shuffleHead(array, 3, random);
+    assertThat(array[0]).isEqualTo("c");
+    assertThat(array[1]).isEqualTo("a");
+    assertThat(array[2]).isEqualTo("b");
+    // Tail elements should not move
+    assertThat(array[3]).isEqualTo("d");
+    assertThat(array[4]).isEqualTo("e");
   }
 
   @Test(expected = ArrayIndexOutOfBoundsException.class)
