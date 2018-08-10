@@ -58,6 +58,7 @@ import com.tngtech.java.junit.dataprovider.DataProviderRunner;
 import com.tngtech.java.junit.dataprovider.UseDataProvider;
 import java.util.Arrays;
 import java.util.Map;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.ClassRule;
 import org.junit.Rule;
@@ -111,6 +112,7 @@ public class DefaultRetryPolicyIT {
     simulacron.cluster().clearPrimes(true);
   }
 
+  @After
   public void teardown() {
     logger.detachAppender(appender);
     logger.setLevel(oldLevel);
