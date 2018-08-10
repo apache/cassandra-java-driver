@@ -16,10 +16,12 @@
 package com.datastax.driver.core;
 
 import com.datastax.driver.core.exceptions.DriverInternalError;
+import com.google.common.base.Function;
 import com.google.common.collect.BiMap;
 import com.google.common.collect.Maps;
 import com.google.common.reflect.TypeToken;
 import com.google.common.util.concurrent.AsyncFunction;
+import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.FutureFallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -84,6 +86,55 @@ public abstract class GuavaCompatibility {
    */
   public abstract <V> ListenableFuture<V> withFallback(
       ListenableFuture<? extends V> input, AsyncFunction<Throwable, V> fallback, Executor executor);
+
+  /**
+   * Registers separate success and failure callbacks to be run when the {@code Future}'s
+   * computation is {@linkplain java.util.concurrent.Future#isDone() complete} or, if the
+   * computation is already complete, immediately.
+   *
+   * <p>The callback is run in {@link #sameThreadExecutor()}.
+   *
+   * @see Futures#addCallback(ListenableFuture, FutureCallback, Executor)
+   */
+  public <I> void addCallback(ListenableFuture<I> input, FutureCallback<? super I> callback) {
+    addCallback(input, callback, sameThreadExecutor());
+  }
+
+  /**
+   * Registers separate success and failure callbacks to be run when the {@code Future}'s
+   * computation is {@linkplain java.util.concurrent.Future#isDone() complete} or, if the
+   * computation is already complete, immediately.
+   *
+   * @see Futures#addCallback(ListenableFuture, FutureCallback, Executor)
+   */
+  public <I> void addCallback(
+      ListenableFuture<I> input, FutureCallback<? super I> callback, Executor executor) {
+    Futures.addCallback(input, callback, executor);
+  }
+
+  /**
+   * Returns a new {@code ListenableFuture} whose result is the product of applying the given {@code
+   * Function} to the result of the given {@code Future}.
+   *
+   * <p>The callback is run in {@link #sameThreadExecutor()}.
+   *
+   * @see Futures#transform(ListenableFuture, Function, Executor)
+   */
+  public <I, O> ListenableFuture<O> transform(
+      ListenableFuture<I> input, Function<? super I, ? extends O> function) {
+    return transform(input, function, sameThreadExecutor());
+  }
+
+  /**
+   * Returns a new {@code ListenableFuture} whose result is the product of applying the given {@code
+   * Function} to the result of the given {@code Future}.
+   *
+   * @see Futures#transform(ListenableFuture, Function, Executor)
+   */
+  public <I, O> ListenableFuture<O> transform(
+      ListenableFuture<I> input, Function<? super I, ? extends O> function, Executor executor) {
+    return Futures.transform(input, function, executor);
+  }
 
   /**
    * Returns a new {@code ListenableFuture} whose result is asynchronously derived from the result
@@ -204,7 +255,7 @@ public abstract class GuavaCompatibility {
     @Override
     public <V> ListenableFuture<V> withFallback(
         ListenableFuture<? extends V> input, AsyncFunction<Throwable, V> fallback) {
-      return Futures.catchingAsync(input, Throwable.class, fallback);
+      return withFallback(input, fallback, sameThreadExecutor());
     }
 
     @Override
@@ -218,7 +269,7 @@ public abstract class GuavaCompatibility {
     @Override
     public <I, O> ListenableFuture<O> transformAsync(
         ListenableFuture<I> input, AsyncFunction<? super I, ? extends O> function) {
-      return Futures.transformAsync(input, function);
+      return transformAsync(input, function, sameThreadExecutor());
     }
 
     @Override
@@ -242,7 +293,11 @@ public abstract class GuavaCompatibility {
 
   private static boolean isGuava_19_0_OrHigher() {
     return methodExists(
-        Futures.class, "transformAsync", ListenableFuture.class, AsyncFunction.class);
+        Futures.class,
+        "transformAsync",
+        ListenableFuture.class,
+        AsyncFunction.class,
+        Executor.class);
   }
 
   private static boolean isGuava_16_0_1_OrHigher() {

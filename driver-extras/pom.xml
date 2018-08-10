@@ -133,7 +133,7 @@
                 <configuration>
                     <instructions>
                         <Bundle-SymbolicName>com.datastax.driver.extras</Bundle-SymbolicName>
-                        <Import-Package><![CDATA[com.google.common.*;version="[16.0.1,22)",*]]></Import-Package>
+                        <Import-Package><![CDATA[com.google.common.*;version="16.0.1",*]]></Import-Package>
                     </instructions>
                 </configuration>
             </plugin>

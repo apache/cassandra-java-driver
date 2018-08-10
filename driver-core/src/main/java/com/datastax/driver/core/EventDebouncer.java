@@ -22,7 +22,6 @@ import static java.util.concurrent.TimeUnit.SECONDS;
 import com.datastax.driver.core.utils.MoreFutures;
 import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.FutureCallback;
-import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.SettableFuture;
 import java.util.List;
@@ -236,7 +235,7 @@ abstract class EventDebouncer<T> {
     } else {
       logger.trace("{} debouncer: delivering {} events", name, toDeliver.size());
       ListenableFuture<?> delivered = callback.deliver(toDeliver);
-      Futures.addCallback(
+      GuavaCompatibility.INSTANCE.addCallback(
           delivered,
           new FutureCallback<Object>() {
             @Override

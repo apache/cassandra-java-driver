@@ -21,7 +21,6 @@ import static org.testng.Assert.fail;
 
 import com.datastax.driver.core.exceptions.OperationTimedOutException;
 import com.google.common.util.concurrent.FutureCallback;
-import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.Uninterruptibles;
 import java.util.List;
 import java.util.Random;
@@ -95,7 +94,7 @@ public class ReusedStreamIdTest extends CCMTestsSupport {
           String query = String.format("select %s from system.local", column);
           ResultSetFuture future = session().executeAsync(query);
 
-          Futures.addCallback(
+          GuavaCompatibility.INSTANCE.addCallback(
               future,
               new FutureCallback<ResultSet>() {
                 @Override

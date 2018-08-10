@@ -26,7 +26,6 @@ import com.google.common.base.Function;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.AsyncFunction;
-import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.Uninterruptibles;
 import java.nio.ByteBuffer;
@@ -153,7 +152,7 @@ public class AsyncQueryTest extends CCMTestsSupport {
     for (int i = 0; i < 1000; i++) {
       ResultSetFuture f = session().executeAsync("select release_version from system.local");
       ListenableFuture<Thread> f2 =
-          Futures.transform(
+          GuavaCompatibility.INSTANCE.transform(
               f,
               new Function<ResultSet, Thread>() {
                 @Override
@@ -177,7 +176,7 @@ public class AsyncQueryTest extends CCMTestsSupport {
     for (int i = 0; i < 1000; i++) {
       ResultSetFuture f = session.executeAsync("select release_version from system.local");
       ListenableFuture<Thread> f2 =
-          Futures.transform(
+          GuavaCompatibility.INSTANCE.transform(
               f,
               new Function<ResultSet, Thread>() {
                 @Override
@@ -203,7 +202,7 @@ public class AsyncQueryTest extends CCMTestsSupport {
       statement.setFetchSize(10);
       ResultSetFuture f = session().executeAsync(statement);
       ListenableFuture<Thread> f2 =
-          Futures.transform(
+          GuavaCompatibility.INSTANCE.transform(
               f,
               new Function<ResultSet, Thread>() {
                 @Override
@@ -253,7 +252,7 @@ public class AsyncQueryTest extends CCMTestsSupport {
               }
             },
             executor);
-    return Futures.transform(
+    return GuavaCompatibility.INSTANCE.transform(
         queryFuture,
         new Function<ResultSet, Integer>() {
           @Override
