@@ -20,7 +20,7 @@ import java.util.concurrent.ThreadLocalRandom;
 
 public class ArrayUtils {
 
-  public static <T> void swap(T[] elements, int i, int j) {
+  public static <T> void swap(@NonNull T[] elements, int i, int j) {
     if (i != j) {
       T tmp = elements[i];
       elements[i] = elements[j];
@@ -32,7 +32,7 @@ public class ArrayUtils {
    * Moves an element towards the beginning of the array, shifting all the intermediary elements to
    * the right (no-op if {@code targetIndex >= sourceIndex}).
    */
-  public static <T> void bubbleUp(T[] elements, int sourceIndex, int targetIndex) {
+  public static <T> void bubbleUp(@NonNull T[] elements, int sourceIndex, int targetIndex) {
     for (int i = sourceIndex; i > targetIndex; i--) {
       swap(elements, i, i - 1);
     }
@@ -42,7 +42,7 @@ public class ArrayUtils {
    * Moves an element towards the end of the array, shifting all the intermediary elements to the
    * left (no-op if {@code targetIndex <= sourceIndex}).
    */
-  public static <T> void bubbleDown(T[] elements, int sourceIndex, int targetIndex) {
+  public static <T> void bubbleDown(@NonNull T[] elements, int sourceIndex, int targetIndex) {
     for (int i = sourceIndex; i < targetIndex; i++) {
       swap(elements, i, i + 1);
     }
@@ -88,7 +88,7 @@ public class ArrayUtils {
   }
 
   /** Rotates the elements in the specified range by the specified amount (round-robin). */
-  public static <T> void rotate(T[] elements, int startIndex, int length, int amount) {
+  public static <T> void rotate(@NonNull T[] elements, int startIndex, int length, int amount) {
     if (length >= 2) {
       amount = amount % length;
       // Repeatedly shift by 1. This is not the most time-efficient but the array will typically be
