@@ -18,10 +18,10 @@ package com.datastax.oss.driver.api.testinfra.ccm;
 import static io.netty.util.internal.PlatformDependent.isWindows;
 
 import com.datastax.oss.driver.api.core.Version;
+import com.datastax.oss.driver.shaded.guava.common.io.Resources;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -314,16 +314,9 @@ public class CcmBridge implements AutoCloseable {
    */
   private static File createTempStore(String storePath) {
     File f = null;
-    try (InputStream trustStoreIs = CcmBridge.class.getResourceAsStream(storePath)) {
-      f = File.createTempFile("server", ".store");
-      logger.debug("Created store file {} for {}.", f, storePath);
-      try (OutputStream trustStoreOs = new FileOutputStream(f)) {
-        byte[] buffer = new byte[1024];
-        int len;
-        while ((len = trustStoreIs.read(buffer)) != -1) {
-          trustStoreOs.write(buffer, 0, len);
-        }
-      }
+    try (OutputStream os = new FileOutputStream(f = File.createTempFile("server", ".store"))) {
+      f.deleteOnExit();
+      Resources.copy(CcmBridge.class.getResource(storePath), os);
     } catch (IOException e) {
       logger.warn("Failure to write keystore, SSL-enabled servers may fail to start.", e);
     }
@@ -348,6 +341,8 @@ public class CcmBridge implements AutoCloseable {
     private Builder() {
       try {
         this.configDirectory = Files.createTempDirectory("ccm");
+        // mark the ccm temp directories for deletion when the JVM exits
+        this.configDirectory.toFile().deleteOnExit();
       } catch (IOException e) {
         // change to unchecked for now.
         throw new RuntimeException(e);
