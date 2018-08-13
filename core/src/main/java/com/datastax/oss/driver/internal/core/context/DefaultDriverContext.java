@@ -395,7 +395,7 @@ public class DefaultDriverContext implements InternalDriverContext {
 
   protected CodecRegistry buildCodecRegistry(String logPrefix, List<TypeCodec<?>> codecs) {
     TypeCodec<?>[] array = new TypeCodec<?>[codecs.size()];
-    return new DefaultCodecRegistry(logPrefix, codecs.toArray(array));
+    return new DefaultCodecRegistry(logPrefix, this, codecs.toArray(array));
   }
 
   protected SchemaQueriesFactory buildSchemaQueriesFactory() {

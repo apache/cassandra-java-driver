@@ -17,6 +17,9 @@ package com.datastax.oss.driver.api.testinfra.session;
 
 import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.CqlSession;
+import com.datastax.oss.driver.api.core.DefaultProtocolVersion;
+import com.datastax.oss.driver.api.core.ProtocolVersion;
+import com.datastax.oss.driver.api.core.Version;
 import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
 import com.datastax.oss.driver.api.core.config.DriverConfigLoader;
 import com.datastax.oss.driver.api.core.config.DriverExecutionProfile;
@@ -28,6 +31,7 @@ import com.datastax.oss.driver.api.core.metadata.schema.SchemaChangeListener;
 import com.datastax.oss.driver.api.core.session.Session;
 import com.datastax.oss.driver.api.core.session.SessionBuilder;
 import com.datastax.oss.driver.api.testinfra.CassandraResourceRule;
+import com.datastax.oss.driver.api.testinfra.ccm.CcmBridge;
 import com.datastax.oss.driver.internal.core.config.typesafe.DefaultDriverConfigLoader;
 import com.datastax.oss.driver.internal.core.config.typesafe.DefaultDriverConfigLoaderBuilder;
 import java.lang.reflect.Method;
@@ -98,6 +102,35 @@ public class SessionUtils {
             e);
       }
       return DefaultDriverConfigLoader.builder();
+    }
+  }
+
+  /**
+   * @return Resolves the maximum protocol version expected to be used based on the environment
+   *     configuration.
+   */
+  public static ProtocolVersion getMaxProtocolVersion() {
+    try {
+      Class<?> clazz = Class.forName(SESSION_BUILDER_CLASS);
+      Method m = clazz.getMethod("maxProtocolVersion");
+      ProtocolVersion protocolVersion = (ProtocolVersion) m.invoke(null);
+      // only return value if non null.
+      if (protocolVersion != null) {
+        return protocolVersion;
+      }
+    } catch (Exception e) {
+      if (!SESSION_BUILDER_CLASS.equals(DEFAULT_SESSION_CLASS_NAME)) {
+        LOG.warn(
+            "Could not construct max ProtocolVersion from {} using "
+                + "maxProtocolVersion(), resolving from CcmBridge.getGlobalCassandraVersion()",
+            SESSION_BUILDER_CLASS,
+            e);
+      }
+    }
+    if (CcmBridge.getGlobalCassandraVersion().compareTo(Version.V2_2_0) >= 0) {
+      return DefaultProtocolVersion.V4;
+    } else {
+      return DefaultProtocolVersion.V3;
     }
   }
 

@@ -14,6 +14,41 @@
           ]
         }
       }
-    }
+    },
+    "ignore": [
+      {
+        "code": "java.method.removed",
+        "old": "method com.datastax.oss.driver.api.core.ProtocolVersion com.datastax.oss.driver.api.testinfra.CassandraResourceRule::getHighestProtocolVersion()",
+        "package": "com.datastax.oss.driver.api.testinfra",
+        "classQualifiedName": "com.datastax.oss.driver.api.testinfra.CassandraResourceRule",
+        "classSimpleName": "CassandraResourceRule",
+        "methodName": "getHighestProtocolVersion",
+        "oldArchive": "com.datastax.oss:java-driver-test-infra:jar:4.0.0-beta1",
+        "elementKind": "method",
+        "justification": "replaced by SessionUtils.getMaxProtocolVersion"
+      },
+      {
+        "code": "java.method.removed",
+        "old": "method com.datastax.oss.driver.api.core.ProtocolVersion com.datastax.oss.driver.api.testinfra.ccm.BaseCcmRule::getHighestProtocolVersion()",
+        "package": "com.datastax.oss.driver.api.testinfra.ccm",
+        "classQualifiedName": "com.datastax.oss.driver.api.testinfra.ccm.BaseCcmRule",
+        "classSimpleName": "BaseCcmRule",
+        "methodName": "getHighestProtocolVersion",
+        "oldArchive": "com.datastax.oss:java-driver-test-infra:jar:4.0.0-beta1",
+        "elementKind": "method",
+        "justification": "replaced by SessionUtils.getMaxProtocolVersion"
+      },
+      {
+        "code": "java.method.removed",
+        "old": "method com.datastax.oss.driver.api.core.ProtocolVersion com.datastax.oss.driver.api.testinfra.simulacron.SimulacronRule::getHighestProtocolVersion()",
+        "package": "com.datastax.oss.driver.api.testinfra.simulacron",
+        "classQualifiedName": "com.datastax.oss.driver.api.testinfra.simulacron.SimulacronRule",
+        "classSimpleName": "SimulacronRule",
+        "methodName": "getHighestProtocolVersion",
+        "oldArchive": "com.datastax.oss:java-driver-test-infra:jar:4.0.0-beta1",
+        "elementKind": "method",
+        "justification": "replaced by SessionUtils.getMaxProtocolVersion"
+      }
+    ]
   }
 }

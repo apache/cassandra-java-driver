@@ -17,6 +17,7 @@ package com.datastax.oss.driver.internal.core.type.codec.registry;
 
 import com.datastax.oss.driver.api.core.data.TupleValue;
 import com.datastax.oss.driver.api.core.data.UdtValue;
+import com.datastax.oss.driver.api.core.detach.AttachmentPoint;
 import com.datastax.oss.driver.api.core.type.CustomType;
 import com.datastax.oss.driver.api.core.type.DataType;
 import com.datastax.oss.driver.api.core.type.ListType;
@@ -29,6 +30,8 @@ import com.datastax.oss.driver.api.core.type.codec.TypeCodec;
 import com.datastax.oss.driver.api.core.type.codec.TypeCodecs;
 import com.datastax.oss.driver.api.core.type.codec.registry.CodecRegistry;
 import com.datastax.oss.driver.api.core.type.reflect.GenericType;
+import com.datastax.oss.driver.internal.core.type.DefaultTupleType;
+import com.datastax.oss.driver.internal.core.type.DefaultUserDefinedType;
 import com.datastax.oss.driver.shaded.guava.common.base.Preconditions;
 import com.datastax.oss.driver.shaded.guava.common.reflect.TypeToken;
 import com.datastax.oss.protocol.internal.util.IntMap;
@@ -65,13 +68,18 @@ public abstract class CachingCodecRegistry implements CodecRegistry {
   //   traversal is cheap).
 
   protected final String logPrefix;
+  private final AttachmentPoint attachmentPoint;
   private final TypeCodec<?>[] primitiveCodecs;
   private final TypeCodec<?>[] userCodecs;
   private final IntMap<TypeCodec> primitiveCodecsByCode;
 
   protected CachingCodecRegistry(
-      String logPrefix, TypeCodec<?>[] primitiveCodecs, TypeCodec<?>[] userCodecs) {
+      String logPrefix,
+      AttachmentPoint attachmentPoint,
+      TypeCodec<?>[] primitiveCodecs,
+      TypeCodec<?>[] userCodecs) {
     this.logPrefix = logPrefix;
+    this.attachmentPoint = attachmentPoint;
     this.primitiveCodecs = primitiveCodecs;
     this.userCodecs = userCodecs;
     this.primitiveCodecsByCode = sortByProtocolCode(primitiveCodecs);
@@ -327,16 +335,41 @@ public abstract class CachingCodecRegistry implements CodecRegistry {
         return TypeCodecs.mapOf(keyCodec, valueCodec);
       } else if (cqlType instanceof TupleType
           && TupleValue.class.isAssignableFrom(token.getRawType())) {
-        return TypeCodecs.tupleOf((TupleType) cqlType);
+        return createTupleCodec((TupleType) cqlType);
       } else if (cqlType instanceof UserDefinedType
           && UdtValue.class.isAssignableFrom(token.getRawType())) {
-        return TypeCodecs.udtOf((UserDefinedType) cqlType);
+        return createUdtCodec((UserDefinedType) cqlType);
       } else if (cqlType instanceof CustomType
           && ByteBuffer.class.isAssignableFrom(token.getRawType())) {
         return TypeCodecs.custom(cqlType);
       }
       throw new CodecNotFoundException(cqlType, javaType);
     }
+  }
+
+  protected TypeCodec<TupleValue> createTupleCodec(TupleType tupleType) {
+    // if the attachment point of the input tuple does not match the attachment point
+    // for this registry, adapt it.  This is important to ensure decoding of values uses
+    // the appropriate registry and protocol version.  It has no bearing on serialization,
+    // which will use the tuple type of the input tuple value.
+    if (tupleType.getAttachmentPoint() != attachmentPoint) {
+      tupleType = new DefaultTupleType(tupleType.getComponentTypes(), attachmentPoint);
+    }
+    return TypeCodecs.tupleOf(tupleType);
+  }
+
+  protected TypeCodec<UdtValue> createUdtCodec(UserDefinedType udtType) {
+    if (udtType.getAttachmentPoint() != attachmentPoint) {
+      udtType =
+          new DefaultUserDefinedType(
+              udtType.getKeyspace(),
+              udtType.getName(),
+              udtType.isFrozen(),
+              udtType.getFieldNames(),
+              udtType.getFieldTypes(),
+              attachmentPoint);
+    }
+    return TypeCodecs.udtOf(udtType);
   }
 
   // Try to create a codec when we haven't found it in the cache.
@@ -385,9 +418,9 @@ public abstract class CachingCodecRegistry implements CodecRegistry {
       TypeCodec<Object> valueCodec = codecFor(valueType);
       return TypeCodecs.mapOf(keyCodec, valueCodec);
     } else if (cqlType instanceof TupleType) {
-      return TypeCodecs.tupleOf((TupleType) cqlType);
+      return createTupleCodec((TupleType) cqlType);
     } else if (cqlType instanceof UserDefinedType) {
-      return TypeCodecs.udtOf((UserDefinedType) cqlType);
+      return createUdtCodec((UserDefinedType) cqlType);
     } else if (cqlType instanceof CustomType) {
       return TypeCodecs.custom(cqlType);
     }

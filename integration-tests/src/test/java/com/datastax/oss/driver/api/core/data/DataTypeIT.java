@@ -29,6 +29,7 @@ import com.datastax.oss.driver.api.core.cql.ResultSet;
 import com.datastax.oss.driver.api.core.cql.Row;
 import com.datastax.oss.driver.api.core.cql.SimpleStatement;
 import com.datastax.oss.driver.api.core.cql.Statement;
+import com.datastax.oss.driver.api.core.detach.AttachmentPoint;
 import com.datastax.oss.driver.api.core.type.CustomType;
 import com.datastax.oss.driver.api.core.type.DataType;
 import com.datastax.oss.driver.api.core.type.DataTypes;
@@ -38,8 +39,10 @@ import com.datastax.oss.driver.api.core.type.SetType;
 import com.datastax.oss.driver.api.core.type.TupleType;
 import com.datastax.oss.driver.api.core.type.UserDefinedType;
 import com.datastax.oss.driver.api.core.type.codec.TypeCodec;
+import com.datastax.oss.driver.api.core.type.codec.registry.CodecRegistry;
 import com.datastax.oss.driver.api.testinfra.ccm.CcmRule;
 import com.datastax.oss.driver.api.testinfra.session.SessionRule;
+import com.datastax.oss.driver.api.testinfra.session.SessionUtils;
 import com.datastax.oss.driver.categories.ParallelizableTests;
 import com.datastax.oss.driver.internal.core.type.DefaultListType;
 import com.datastax.oss.driver.internal.core.type.DefaultMapType;
@@ -51,6 +54,7 @@ import com.datastax.oss.protocol.internal.util.Bytes;
 import com.tngtech.java.junit.dataprovider.DataProvider;
 import com.tngtech.java.junit.dataprovider.DataProviderRunner;
 import com.tngtech.java.junit.dataprovider.UseDataProvider;
+import edu.umd.cs.findbugs.annotations.NonNull;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.net.InetAddress;
@@ -163,6 +167,24 @@ public class DataTypeIT {
   public static Object[][] typeSamples() {
     Object[][] primitiveSamples = primitiveTypeSamples();
 
+    // Create an attachment point bound to the expected protocol version of the session.
+    ProtocolVersion expectedProtocolVersion = SessionUtils.getMaxProtocolVersion();
+    AttachmentPoint attachmentPoint =
+        new AttachmentPoint() {
+
+          @NonNull
+          @Override
+          public ProtocolVersion getProtocolVersion() {
+            return expectedProtocolVersion;
+          }
+
+          @NonNull
+          @Override
+          public CodecRegistry getCodecRegistry() {
+            return CodecRegistry.DEFAULT;
+          }
+        };
+
     // Build additional data samples from primitive type samples.  For each sample:
     // 1) include the sample itself.
     // 2) include list<type>.
@@ -216,7 +238,7 @@ public class DataTypeIT {
               List<DataType> types = new ArrayList<>();
               types.add(DataTypes.INT);
               types.add(dataType);
-              TupleType tupleType = new DefaultTupleType(types);
+              TupleType tupleType = new DefaultTupleType(types, attachmentPoint);
               TupleValue tupleValue = tupleType.newValue();
               tupleValue.setInt(0, 0);
               setValue(1, tupleValue, dataType, o[1]);
@@ -241,7 +263,8 @@ public class DataTypeIT {
                       CqlIdentifier.fromCql(userTypeFor(types)),
                       false,
                       typeNames,
-                      types);
+                      types,
+                      attachmentPoint);
 
               UdtValue udtValue = udt.newValue();
               udtValue.setInt(0, 0);

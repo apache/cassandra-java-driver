@@ -161,11 +161,15 @@ public class CcmBridge implements AutoCloseable {
     this.dseWorkloads = dseWorkloads;
   }
 
-  public Optional<Version> getDseVersion() {
+  public static Optional<Version> getGlobalDseVersion() {
     return DSE_ENABLEMENT ? Optional.of(VERSION) : Optional.empty();
   }
 
-  public Version getCassandraVersion() {
+  public Optional<Version> getDseVersion() {
+    return getGlobalDseVersion();
+  }
+
+  public static Version getGlobalCassandraVersion() {
     if (!DSE_ENABLEMENT) {
       return VERSION;
     } else {
@@ -180,6 +184,10 @@ public class CcmBridge implements AutoCloseable {
         return V2_1_19;
       }
     }
+  }
+
+  public Version getCassandraVersion() {
+    return getGlobalCassandraVersion();
   }
 
   public void create() {
