@@ -125,7 +125,7 @@ public interface PreparedStatement {
    * Sets a default consistency level for all bound statements created from this prepared statement.
    *
    * <p>If no consistency level is set through this method, the bound statement created from this
-   * object will use the default consistency level (ONE).
+   * object will use the default consistency level (LOCAL_ONE).
    *
    * <p>Changing the default consistency level is not retroactive, it only applies to BoundStatement
    * created after the change.
