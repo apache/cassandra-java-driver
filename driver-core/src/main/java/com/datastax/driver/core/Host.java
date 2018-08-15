@@ -44,12 +44,12 @@ public class Host {
   // We use that internally because
   // that's the 'peer' in the 'System.peers' table and avoids querying the full peers table in
   // ControlConnection.refreshNodeInfo.
-  private volatile InetAddress broadcastAddress;
+  private volatile InetSocketAddress broadcastSocketAddress;
 
   // The listen_address as known by Cassandra.
   // This is usually the same as broadcast_address unless
   // specified otherwise in cassandra.yaml file.
-  private volatile InetAddress listenAddress;
+  private volatile InetSocketAddress listenSocketAddress;
 
   private volatile UUID hostId;
 
@@ -118,12 +118,12 @@ public class Host {
     this.cassandraVersion = versionNumber;
   }
 
-  void setBroadcastAddress(InetAddress broadcastAddress) {
-    this.broadcastAddress = broadcastAddress;
+  void setBroadcastSocketAddress(InetSocketAddress broadcastAddress) {
+    this.broadcastSocketAddress = broadcastAddress;
   }
 
-  void setListenAddress(InetAddress listenAddress) {
-    this.listenAddress = listenAddress;
+  void setListenSocketAddress(InetSocketAddress listenAddress) {
+    this.listenSocketAddress = listenAddress;
   }
 
   void setDseVersion(String dseVersion) {
@@ -194,12 +194,30 @@ public class Host {
   }
 
   /**
-   * Returns the node broadcast address (that is, the IP by which it should be contacted by other
-   * peers in the cluster), if known.
+   * Returns the node broadcast address, if known. Otherwise {@code null}.
+   *
+   * <p>This is a shortcut for {@code getBroadcastSocketAddress().getAddress()}.
+   *
+   * @return the node broadcast address, if known. Otherwise {@code null}.
+   * @see #getBroadcastSocketAddress()
+   * @see <a
+   *     href="https://docs.datastax.com/en/cassandra/2.1/cassandra/configuration/configCassandra_yaml_r.html">The
+   *     cassandra.yaml configuration file</a>
+   */
+  public InetAddress getBroadcastAddress() {
+    return broadcastSocketAddress != null ? broadcastSocketAddress.getAddress() : null;
+  }
+
+  /**
+   * Returns the node broadcast address (that is, the address by which it should be contacted by
+   * other peers in the cluster), if known. Otherwise {@code null}.
+   *
+   * <p>Note that the port of the returned address will be 0 for versions of Cassandra older than
+   * 4.0.
    *
    * <p>This corresponds to the {@code broadcast_address} cassandra.yaml file setting and is by
-   * default the same as {@link #getListenAddress()}, unless specified otherwise in cassandra.yaml.
-   * <em>This is NOT the address clients should use to contact this node</em>.
+   * default the same as {@link #getListenSocketAddress()}, unless specified otherwise in
+   * cassandra.yaml. <em>This is NOT the address clients should use to contact this node</em>.
    *
    * <p>This information is always available for peer hosts. For the control host, it's only
    * available if CASSANDRA-9436 is fixed on the server side (Cassandra versions >= 2.0.16, 2.1.6,
@@ -212,13 +230,31 @@ public class Host {
    *     href="https://docs.datastax.com/en/cassandra/2.1/cassandra/configuration/configCassandra_yaml_r.html">The
    *     cassandra.yaml configuration file</a>
    */
-  public InetAddress getBroadcastAddress() {
-    return broadcastAddress;
+  public InetSocketAddress getBroadcastSocketAddress() {
+    return broadcastSocketAddress;
   }
 
   /**
-   * Returns the node listen address (that is, the IP the node uses to contact other peers in the
-   * cluster), if known.
+   * Returns the node listen address, if known. Otherwise {@code null}.
+   *
+   * <p>This is a shortcut for {@code getListenSocketAddress().getAddress()}.
+   *
+   * @return the node listen address, if known. Otherwise {@code null}.
+   * @see #getListenSocketAddress()
+   * @see <a
+   *     href="https://docs.datastax.com/en/cassandra/2.1/cassandra/configuration/configCassandra_yaml_r.html">The
+   *     cassandra.yaml configuration file</a>
+   */
+  public InetAddress getListenAddress() {
+    return listenSocketAddress != null ? listenSocketAddress.getAddress() : null;
+  }
+
+  /**
+   * Returns the node listen address (that is, the address the node uses to contact other peers in
+   * the cluster), if known. Otherwise {@code null}.
+   *
+   * <p>Note that the port of the returned address will be 0 for versions of Cassandra older than
+   * 4.0.
    *
    * <p>This corresponds to the {@code listen_address} cassandra.yaml file setting. <em>This is NOT
    * the address clients should use to contact this node</em>.
@@ -234,8 +270,8 @@ public class Host {
    *     href="https://docs.datastax.com/en/cassandra/2.1/cassandra/configuration/configCassandra_yaml_r.html">The
    *     cassandra.yaml configuration file</a>
    */
-  public InetAddress getListenAddress() {
-    return listenAddress;
+  public InetSocketAddress getListenSocketAddress() {
+    return listenSocketAddress;
   }
 
   /**

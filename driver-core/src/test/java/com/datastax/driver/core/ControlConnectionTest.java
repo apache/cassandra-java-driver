@@ -39,8 +39,10 @@ import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -233,10 +235,27 @@ public class ControlConnectionTest extends CCMTestsSupport {
     }
   }
 
+  /**
+   * @return Configurations of columns that are missing, whether or not the peers_v2 table should be
+   *     present and whether or not an extended peer check is required to fail validation.
+   */
   @DataProvider
   public static Object[][] disallowedNullColumnsInPeerData() {
     return new Object[][] {
-      {"host_id"}, {"data_center"}, {"rack"}, {"tokens"}, {"host_id,data_center,rack,tokens"}
+      {"host_id", false, true},
+      {"data_center", false, true},
+      {"rack", false, true},
+      {"tokens", false, true},
+      {"host_id,data_center,rack,tokens", false, true},
+      {"rpc_address", false, false},
+      {"host_id", true, true},
+      {"data_center", true, true},
+      {"rack", true, true},
+      {"tokens", true, true},
+      {"host_id,data_center,rack,tokens", true, true},
+      {"native_address", true, false},
+      {"native_port", true, false},
+      {"native_address,native_port", true, false},
     };
   }
 
@@ -250,9 +269,12 @@ public class ControlConnectionTest extends CCMTestsSupport {
    */
   @Test(groups = "isolated", dataProvider = "disallowedNullColumnsInPeerData")
   @CCMConfig(createCcm = false)
-  public void should_ignore_peer_if_extended_peer_check_is_enabled(String columns) {
+  public void should_ignore_peer_if_extended_peer_check_is_enabled(
+      String columns,
+      boolean withPeersV2,
+      @SuppressWarnings("unused") boolean extendPeerCheckRequired) {
     System.setProperty("com.datastax.driver.EXTENDED_PEER_CHECK", "true");
-    run_with_null_peer_info(columns, false);
+    run_with_null_peer_info(columns, false, withPeersV2);
   }
 
   /**
@@ -264,13 +286,20 @@ public class ControlConnectionTest extends CCMTestsSupport {
    */
   @Test(groups = "short", dataProvider = "disallowedNullColumnsInPeerData")
   @CCMConfig(createCcm = false)
-  public void should_ignore_and_warn_peers_with_null_entries_by_default(String columns) {
-    run_with_null_peer_info(columns, false);
+  public void should_ignore_and_warn_peers_with_null_entries_by_default(
+      String columns,
+      boolean withPeersV2,
+      @SuppressWarnings("unused") boolean extendedPeerCheckRequired) {
+    run_with_null_peer_info(columns, false, withPeersV2);
   }
 
-  static void run_with_null_peer_info(String columns, boolean expectPeer2) {
+  static void run_with_null_peer_info(String columns, boolean expectPeer2, boolean withPeersV2) {
     // given: A cluster with peer 2 having a null rack.
     ScassandraCluster.ScassandraClusterBuilder builder = ScassandraCluster.builder().withNodes(3);
+
+    if (withPeersV2) {
+      builder.withPeersV2(true);
+    }
 
     StringBuilder columnDataBuilder = new StringBuilder();
     for (String column : columns.split(",")) {
@@ -374,16 +403,19 @@ public class ControlConnectionTest extends CCMTestsSupport {
       Host host2 = cluster.getMetadata().getHost(node2RpcAddress);
       assertThat(host2).isNotNull();
 
-      InetAddress node2OldBroadcastAddress = host2.getBroadcastAddress();
-      InetAddress node2NewBroadcastAddress = InetAddress.getByName("1.2.3.4");
+      InetSocketAddress node2OldBroadcastAddress = host2.getBroadcastSocketAddress();
+      InetSocketAddress node2NewBroadcastAddress =
+          new InetSocketAddress(InetAddress.getByName("1.2.3.4"), scassandras.getBinaryPort());
 
       // host 2 has the old broadcast_address (which is identical to its rpc_broadcast_address)
-      assertThat(host2.getAddress()).isEqualTo(node2OldBroadcastAddress);
+      assertThat(host2.getSocketAddress().getAddress())
+          .isEqualTo(node2OldBroadcastAddress.getAddress());
 
       // simulate a change in host 2 public IP
       Map<String, ?> rows =
           ImmutableMap.<String, Object>builder()
-              .put("peer", node2NewBroadcastAddress) // new broadcast address for host 2
+              .put(
+                  "peer", node2NewBroadcastAddress.getAddress()) // new broadcast address for host 2
               .put("rpc_address", host2.getAddress()) // rpc_broadcast_address remains unchanged
               .put("host_id", UUID.randomUUID())
               .put("data_center", datacenter(1))
@@ -402,7 +434,9 @@ public class ControlConnectionTest extends CCMTestsSupport {
           .prime(
               PrimingRequest.queryBuilder()
                   .withQuery(
-                      "SELECT * FROM system.peers WHERE peer='" + node2OldBroadcastAddress + "'")
+                      "SELECT * FROM system.peers WHERE peer='"
+                          + node2OldBroadcastAddress.getAddress().getHostAddress()
+                          + "'")
                   .withThen(then().withColumnTypes(SELECT_PEERS).build())
                   .build());
 
@@ -422,7 +456,8 @@ public class ControlConnectionTest extends CCMTestsSupport {
 
       // host2 should now have a new broadcast address
       assertThat(host2).isNotNull();
-      assertThat(host2.getBroadcastAddress()).isEqualTo(node2NewBroadcastAddress);
+      assertThat(host2.getBroadcastSocketAddress().getAddress())
+          .isEqualTo(node2NewBroadcastAddress.getAddress());
 
       // host 2 should keep its old rpc broadcast address
       assertThat(host2.getSocketAddress()).isEqualTo(node2RpcAddress);
@@ -430,6 +465,105 @@ public class ControlConnectionTest extends CCMTestsSupport {
     } finally {
       cluster.close();
       scassandras.stop();
+    }
+  }
+
+  /**
+   * Ensures that multiple C* nodes can share the same ip address (but use different port) if they
+   * support the system.peers_v2 table.
+   *
+   * @jira_ticket JAVA-1388
+   * @since 3.6.0
+   */
+  @Test(groups = "short", dataProviderClass = DataProviders.class, dataProvider = "bool")
+  @CCMConfig(createCcm = false)
+  public void should_use_port_from_peers_v2_table(boolean sharedIP) {
+    ScassandraCluster sCluster =
+        ScassandraCluster.builder().withNodes(5).withPeersV2(true).withSharedIP(sharedIP).build();
+
+    Cluster.Builder builder =
+        Cluster.builder()
+            .addContactPointsWithPorts(sCluster.address(1))
+            .withNettyOptions(nonQuietClusterCloseOptions);
+
+    // need to specify port in non peers_v2 case as driver can't infer ports without it.
+    if (!sharedIP) {
+      builder.withPort(sCluster.getBinaryPort());
+    }
+
+    Cluster cluster = builder.build();
+
+    try {
+      sCluster.init();
+      cluster.connect();
+      assertThat(cluster.getMetadata().getAllHosts()).hasSize(5);
+
+      Set<InetAddress> uniqueAddresses = new HashSet<InetAddress>();
+      Set<InetSocketAddress> uniqueSocketAddresses = new HashSet<InetSocketAddress>();
+      for (int i = 1; i <= 5; i++) {
+        Host host = sCluster.host(cluster, 1, i);
+
+        // host is up and broadcast address matches what was configured.
+        assertThat(host)
+            .isNotNull()
+            .isUp()
+            .hasSocketAddress(sCluster.address(i))
+            .hasBroadcastSocketAddress(sCluster.listenAddress(i));
+
+        // host should only have listen address if it is control connection, and the
+        // address should match what was configured.
+        if (i == 1) {
+          assertThat(host).hasListenSocketAddress(sCluster.listenAddress(i));
+        } else {
+          assertThat(host).hasNoListenSocketAddress();
+        }
+        uniqueAddresses.add(host.getAddress());
+        uniqueSocketAddresses.add(host.getSocketAddress());
+      }
+
+      if (!sharedIP) {
+        // each host should have its own address
+        assertThat(uniqueAddresses).hasSize(5);
+      } else {
+        // all hosts share the same ip...
+        assertThat(uniqueAddresses).hasSize(1);
+        // but have a unique port.
+        assertThat(uniqueSocketAddresses).hasSize(5);
+      }
+    } finally {
+      cluster.close();
+      sCluster.stop();
+    }
+  }
+
+  /**
+   * Ensures that if cluster does not have the system.peers_v2 table that cluster initialization
+   * still succeeds.
+   *
+   * @jira_ticket JAVA-1388
+   * @since 3.6.0
+   */
+  @Test(groups = "short")
+  @CCMConfig(createCcm = false)
+  public void should_connect_when_peers_v2_table_not_present() {
+    ScassandraCluster sCluster =
+        ScassandraCluster.builder().withNodes(5).withPeersV2(false).build();
+
+    Cluster cluster =
+        Cluster.builder()
+            .addContactPointsWithPorts(sCluster.address(1))
+            .withNettyOptions(nonQuietClusterCloseOptions)
+            .withPort(sCluster.getBinaryPort())
+            .build();
+
+    try {
+      sCluster.init();
+      cluster.connect();
+
+      assertThat(cluster.getMetadata().getAllHosts()).hasSize(5);
+    } finally {
+      cluster.close();
+      sCluster.stop();
     }
   }
 

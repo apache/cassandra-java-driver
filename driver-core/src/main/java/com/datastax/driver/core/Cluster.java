@@ -1686,11 +1686,15 @@ public class Cluster implements Closeable {
       return configuration.getPolicies().getReconnectionPolicy();
     }
 
+    InetSocketAddress translateAddress(InetSocketAddress address) {
+      InetSocketAddress translated =
+          configuration.getPolicies().getAddressTranslator().translate(address);
+      return translated == null ? address : translated;
+    }
+
     InetSocketAddress translateAddress(InetAddress address) {
       InetSocketAddress sa = new InetSocketAddress(address, connectionFactory.getPort());
-      InetSocketAddress translated =
-          configuration.getPolicies().getAddressTranslator().translate(sa);
-      return translated == null ? sa : translated;
+      return translateAddress(sa);
     }
 
     private Session newSession() {
