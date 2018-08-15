@@ -287,7 +287,7 @@ public class ClusterInitTest {
    * @test_category host:state
    */
   @Test(groups = "short")
-  public void should_detect_cluster_init_failure() {
+  public void should_detect_cluster_init_failure_and_close_cluster() {
     Cluster cluster =
         Cluster.builder()
             .addContactPointsWithPorts(new InetSocketAddress("127.0.0.1", 65534))
@@ -301,8 +301,9 @@ public class ClusterInitTest {
         cluster.connect();
         fail("Should error when connect is called.");
       } catch (IllegalStateException e1) {
-        assertThat(
-            e1.getMessage().equals("Error during cluster initialization, please close and retry"));
+        assertThat(e1.getMessage())
+            .isEqualTo(
+                "This cluster has been closed due to an error encountered in it's initialization, please create a new Cluster instance");
       }
     } finally {
       cluster.close();
@@ -332,8 +333,7 @@ public class ClusterInitTest {
       cluster.close();
       try {
         session.execute("SELECTS * FROM system.peers");
-        fail(
-            "This error when session.execute is called on session associated with closed cluster.");
+        fail("Should have failed when session.execute was called on cluster that was closed");
       } catch (IllegalStateException e) {
         assertThat(
             e.getMessage().equals("Parent cluster is closed. This session is no longer valid."));

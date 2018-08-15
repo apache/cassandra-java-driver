@@ -633,9 +633,15 @@ public class Cluster implements Closeable {
   }
 
   private static void checkNotClosed(Manager manager) {
-    if (manager.isClosed())
+    if (manager.errorDuringInit()) {
+      throw new IllegalStateException(
+          "This cluster has been closed due to an error encountered in it's initialization, please create a new "
+              + "Cluster instance",
+          manager.getInitException());
+    } else if (manager.isClosed()) {
       throw new IllegalStateException(
           "Can't use this cluster instance because it was previously closed");
+    }
   }
 
   /**
@@ -1385,7 +1391,7 @@ public class Cluster implements Closeable {
   class Manager implements Connection.DefaultResponseHandler {
 
     final String clusterName;
-    private boolean isInit;
+    private volatile boolean isInit;
     private volatile boolean isFullyInit;
     private Exception initException;
     // Initial contacts point
@@ -1449,11 +1455,7 @@ public class Cluster implements Closeable {
     synchronized void init() {
       checkNotClosed(this);
       if (isInit) {
-        if (initException == null) {
-          return;
-        }
-        throw new IllegalStateException(
-            "Error during cluster initialization, please close and retry");
+        return;
       }
       isInit = true;
       try {
@@ -1722,6 +1724,17 @@ public class Cluster implements Closeable {
 
     boolean isClosed() {
       return closeFuture.get() != null;
+    }
+
+    boolean errorDuringInit() {
+      if (isInit && initException != null) {
+        return true;
+      }
+      return false;
+    }
+
+    Exception getInitException() {
+      return initException;
     }
 
     private CloseFuture close() {

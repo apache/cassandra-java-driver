@@ -137,8 +137,12 @@ class SessionManager extends AbstractSession {
 
   @Override
   public ResultSetFuture executeAsync(final Statement statement) {
+    if (this.isClosed()) {
+      throw new IllegalStateException("Could not send request, session is closed");
+    }
+
     if (cluster.isClosed()) {
-      throw new IllegalStateException("Parent cluster is closed. This session is no longer valid.");
+      throw new IllegalStateException("Could not send request, cluster is closed");
     }
     if (isInit) {
       DefaultResultSetFuture future =
@@ -695,8 +699,11 @@ class SessionManager extends AbstractSession {
    * and handle host failover.
    */
   void execute(final RequestHandler.Callback callback, final Statement statement) {
+    if (this.isClosed()) {
+      throw new IllegalStateException("Could not send request, session is closed");
+    }
     if (cluster.isClosed()) {
-      throw new IllegalStateException("Parent cluster is closed. This session is no longer valid.");
+      throw new IllegalStateException("Could not send request, cluster is closed");
     }
     if (isInit) new RequestHandler(this, callback, statement).sendRequest();
     else
