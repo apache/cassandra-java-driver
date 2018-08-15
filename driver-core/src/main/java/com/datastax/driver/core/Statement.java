@@ -252,7 +252,10 @@ public abstract class Statement {
    * value in practice as it will yield very poor performance. If in doubt, leaving the default is
    * probably a good idea.
    *
-   * <p>Only {@code SELECT} queries only ever make use of that setting.
+   * <p>Only {@code SELECT} queries only ever make use of this setting.
+   *
+   * <p>Note that unlike other configuration, when this statement is prepared {@link
+   * BoundStatement}s created off of {@link PreparedStatement} do not inherit this configuration.
    *
    * <p>Note: Paging is not supported with the native protocol version 1. If you call this method
    * with {@code fetchSize &gt; 0} and {@code fetchSize != Integer.MAX_VALUE} and the protocol
@@ -299,6 +302,9 @@ public abstract class Statement {
    * If none of these apply, no timestamp will be sent with the query and Cassandra will generate a
    * server-side one (similar to the pre-V3 behavior).
    *
+   * <p>Note that unlike other configuration, when this statement is prepared {@link
+   * BoundStatement}s created off of {@link PreparedStatement} do not inherit this configuration.
+   *
    * @param defaultTimestamp the default timestamp for this query (must be strictly positive).
    * @return this {@code Statement} object.
    * @see Cluster.Builder#withTimestampGenerator(TimestampGenerator)
@@ -323,6 +329,9 @@ public abstract class Statement {
    *
    * <p>You should override this only for statements for which the coordinator may allow a longer
    * server-side timeout (for example aggregation queries).
+   *
+   * <p>Note that unlike other configuration, when this statement is prepared {@link
+   * BoundStatement}s created off of {@link PreparedStatement} do not inherit this configuration.
    *
    * @param readTimeoutMillis the timeout to set. Negative values are not allowed. If it is 0, the
    *     read timeout will be disabled for this statement.
@@ -627,6 +636,9 @@ public abstract class Statement {
    * completely bypassed. However, if the load balancing policy dictates that the host is at
    * distance {@link HostDistance#IGNORED} or there is no active connectivity to the host, the
    * request will fail with a {@link NoHostAvailableException}.
+   *
+   * <p>Note that unlike other configuration, when this statement is prepared {@link
+   * BoundStatement}s created off of {@link PreparedStatement} do not inherit this configuration.
    *
    * @param host The host that should be used to handle executions of this statement or null to
    *     delegate to the configured load balancing policy.

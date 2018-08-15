@@ -249,9 +249,14 @@ public interface Session extends Closeable {
   /**
    * Prepares the provided query.
    *
-   * <p>This method behaves like {@link #prepare(String)}, but note that the resulting {@code
-   * PreparedStatement} will inherit the query properties set on {@code statement}. Concretely, this
-   * means that in the following code:
+   * <p>This method behaves like {@link #prepare(String)}, but the resulting {@code
+   * PreparedStatement} will inherit some of the properties set on {@code statement}: {@linkplain
+   * Statement#getRoutingKey(ProtocolVersion, CodecRegistry) routing key}, {@linkplain
+   * Statement#getConsistencyLevel() consistency level}, {@linkplain
+   * Statement#getSerialConsistencyLevel() serial consistency level}, {@linkplain
+   * Statement#isTracing() tracing flag}, {@linkplain Statement#getRetryPolicy() retry policy},
+   * {@linkplain Statement#getOutgoingPayload() outgoing payload}, and {@linkplain
+   * Statement#isIdempotent() idempotence}. Concretely, this means that in the following code:
    *
    * <pre>
    * RegularStatement toPrepare = new SimpleStatement("SELECT * FROM test WHERE k=?").setConsistencyLevel(ConsistencyLevel.QUORUM);
