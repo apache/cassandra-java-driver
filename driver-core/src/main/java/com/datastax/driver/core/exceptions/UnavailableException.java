@@ -98,7 +98,7 @@ public class UnavailableException extends QueryExecutionException implements Coo
   /** {@inheritDoc} */
   @Override
   public InetAddress getHost() {
-    return address.getAddress();
+    return address != null ? address.getAddress() : null;
   }
 
   /** {@inheritDoc} */

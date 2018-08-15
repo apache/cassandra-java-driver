@@ -68,7 +68,7 @@ public abstract class CloseFuture extends AbstractFuture<Void> {
     Forwarding(List<CloseFuture> futures) {
       this.futures = futures;
 
-      Futures.addCallback(
+      GuavaCompatibility.INSTANCE.addCallback(
           Futures.allAsList(futures),
           new FutureCallback<List<Void>>() {
             @Override

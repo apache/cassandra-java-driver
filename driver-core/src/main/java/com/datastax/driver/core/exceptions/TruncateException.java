@@ -38,7 +38,7 @@ public class TruncateException extends QueryExecutionException implements Coordi
   /** {@inheritDoc} */
   @Override
   public InetAddress getHost() {
-    return address.getAddress();
+    return address != null ? address.getAddress() : null;
   }
 
   /** {@inheritDoc} */

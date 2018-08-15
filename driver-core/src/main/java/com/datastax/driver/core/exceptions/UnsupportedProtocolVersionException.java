@@ -69,7 +69,7 @@ public class UnsupportedProtocolVersionException extends DriverException
 
   @Override
   public InetAddress getHost() {
-    return address.getAddress();
+    return address != null ? address.getAddress() : null;
   }
 
   @Override

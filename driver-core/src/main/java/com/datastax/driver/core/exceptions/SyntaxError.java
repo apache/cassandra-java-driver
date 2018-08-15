@@ -38,7 +38,7 @@ public class SyntaxError extends QueryValidationException implements Coordinator
   /** {@inheritDoc} */
   @Override
   public InetAddress getHost() {
-    return address.getAddress();
+    return address != null ? address.getAddress() : null;
   }
 
   /** {@inheritDoc} */

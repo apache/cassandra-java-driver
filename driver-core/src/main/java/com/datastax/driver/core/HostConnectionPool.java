@@ -153,7 +153,7 @@ class HostConnectionPool implements Connection.Owner {
     ListenableFuture<List<Void>> allConnectionsFuture = Futures.allAsList(connectionFutures);
 
     final SettableFuture<Void> initFuture = SettableFuture.create();
-    Futures.addCallback(
+    GuavaCompatibility.INSTANCE.addCallback(
         allConnectionsFuture,
         new FutureCallback<List<Void>>() {
           @Override
@@ -416,7 +416,7 @@ class HostConnectionPool implements Connection.Owner {
         } else {
           // Otherwise the keyspace did need to be set, tie the pendingBorrow future to the set
           // keyspace completion.
-          Futures.addCallback(
+          GuavaCompatibility.INSTANCE.addCallback(
               setKeyspaceFuture,
               new FutureCallback<Connection>() {
 

@@ -101,6 +101,74 @@ public class WhiteListPolicyTest {
   }
 
   /**
+   * Ensures that {@link WhiteListPolicy#ofHosts(LoadBalancingPolicy, String...)} throws an {@link
+   * IllegalArgumentException} if a name could not be resolved.
+   *
+   * @test_category load_balancing:white_list
+   */
+  @Test(groups = "unit", expectedExceptions = IllegalArgumentException.class)
+  public void should_throw_IAE_if_name_could_not_be_resolved() {
+    WhiteListPolicy.ofHosts(new RoundRobinPolicy(), "a.b.c.d.e.f.UNRESOLVEABLE");
+  }
+
+  /**
+   * Ensures that {@link WhiteListPolicy#ofHosts(LoadBalancingPolicy, String...)} throws a {@link
+   * NullPointerException} if a name provided is null.
+   *
+   * @test_category load_balancing:white_list
+   */
+  @Test(groups = "unit", expectedExceptions = NullPointerException.class)
+  public void should_throw_NPE_if_null_provided() {
+    WhiteListPolicy.ofHosts(new RoundRobinPolicy(), null, null);
+  }
+
+  /**
+   * Ensures that {@link WhiteListPolicy#ofHosts(LoadBalancingPolicy, String...)} appropriately
+   * choses hosts based on their resolved ip addresses.
+   *
+   * @test_category load_balancing:white_list
+   */
+  @Test(groups = "short")
+  public void should_only_query_hosts_in_white_list_from_hosts() throws Exception {
+    // given: a 5 node cluster with a WhiteListPolicy targeting nodes 1 and 4
+    ScassandraCluster sCluster = ScassandraCluster.builder().withNodes(5).build();
+
+    // In this case, we can't rely on DNS.  However, node 1 should be 127.0.0.1 which depending on
+    // /etc/hosts configuration is likely to resolve the name of the machine running the test.
+    WhiteListPolicy policy =
+        WhiteListPolicy.ofHosts(
+            new RoundRobinPolicy(),
+            sCluster.address(1).getHostName(),
+            sCluster.address(4).getHostName());
+
+    Cluster cluster =
+        Cluster.builder()
+            .addContactPoints(sCluster.address(1).getAddress())
+            .withPort(sCluster.getBinaryPort())
+            .withLoadBalancingPolicy(policy)
+            .withNettyOptions(nonQuietClusterCloseOptions)
+            .build();
+
+    try {
+      sCluster.init();
+
+      Session session = cluster.connect();
+      // when: a query is executed 50 times.
+      queryTracker.query(session, 50);
+
+      // then: only nodes 1 and 4 should have been queried.
+      queryTracker.assertQueried(sCluster, 1, 1, 25);
+      queryTracker.assertQueried(sCluster, 1, 2, 0);
+      queryTracker.assertQueried(sCluster, 1, 3, 0);
+      queryTracker.assertQueried(sCluster, 1, 4, 25);
+      queryTracker.assertQueried(sCluster, 1, 5, 0);
+    } finally {
+      cluster.close();
+      sCluster.stop();
+    }
+  }
+
+  /**
    * Validates that a {@link Cluster} cannot be initiated if using a {@link WhiteListPolicy} and
    * none of the specified contact point addresses are present in the white list.
    *

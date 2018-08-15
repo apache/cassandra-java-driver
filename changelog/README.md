@@ -13,6 +13,9 @@
 - [improvement] JAVA-1786: Use Google code formatter.
 - [bug] JAVA-1871: Change LOCAL\_SERIAL.isDCLocal() to return true.
 - [documentation] JAVA-1902: Clarify unavailable & request error in DefaultRetryPolicy javadoc.
+- [new feature] JAVA-1903: Add WhiteListPolicy.ofHosts.
+- [bug] JAVA-1928: Fix GuavaCompatibility for Guava 26.
+- [bug] JAVA-1935: Add null check in QueryConsistencyException.getHost.
 - [improvement] JAVA-1771: Send driver name and version in STARTUP message.
 
 Merged from 3.5.x:
