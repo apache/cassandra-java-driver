@@ -353,6 +353,7 @@ public class Metrics {
         private final Counter authenticationErrors = registry.counter("authentication-errors");
 
         private final Counter writeTimeouts = registry.counter("write-timeouts");
+        private final Counter readFailures = registry.counter("read-failures");
         private final Counter readTimeouts = registry.counter("read-timeouts");
         private final Counter unavailables = registry.counter("unavailables");
         private final Counter clientTimeouts = registry.counter("client-timeouts");
@@ -361,6 +362,7 @@ public class Metrics {
 
         private final Counter retries = registry.counter("retries");
         private final Counter retriesOnWriteTimeout = registry.counter("retries-on-write-timeout");
+        private final Counter retriesOnReadFailure = registry.counter("retries-on-read-failure");
         private final Counter retriesOnReadTimeout = registry.counter("retries-on-read-timeout");
         private final Counter retriesOnUnavailable = registry.counter("retries-on-unavailable");
         private final Counter retriesOnClientTimeout = registry.counter("retries-on-client-timeout");
@@ -369,6 +371,7 @@ public class Metrics {
 
         private final Counter ignores = registry.counter("ignores");
         private final Counter ignoresOnWriteTimeout = registry.counter("ignores-on-write-timeout");
+        private final Counter ignoresOnReadFailure = registry.counter("ignores-on-read-failure");
         private final Counter ignoresOnReadTimeout = registry.counter("ignores-on-read-timeout");
         private final Counter ignoresOnUnavailable = registry.counter("ignores-on-unavailable");
         private final Counter ignoresOnClientTimeout = registry.counter("ignores-on-client-timeout");
@@ -411,6 +414,16 @@ public class Metrics {
          */
         public Counter getWriteTimeouts() {
             return writeTimeouts;
+        }
+
+        /**
+         * Returns the number of read requests that returned a timeout (independently of the final
+         * decision taken by the {@link com.datastax.driver.core.policies.RetryPolicy}).
+         *
+         * @return the number of read timeout.
+         */
+        public Counter getReadFailures() {
+            return readFailures;
         }
 
         /**
@@ -464,6 +477,17 @@ public class Metrics {
          */
         public Counter getRetries() {
             return retries;
+        }
+
+        /**
+         * Returns the number of times a request was retried due to the {@link
+         * com.datastax.driver.core.policies.RetryPolicy}, after a read failure.
+         *
+         * @return the number of times a request was retried due to the {@link
+         *     com.datastax.driver.core.policies.RetryPolicy}, after a read failure.
+         */
+        public Counter getRetriesOnReadFailure() {
+            return retriesOnReadFailure;
         }
 
         /**
@@ -554,6 +578,17 @@ public class Metrics {
          */
         public Counter getIgnores() {
             return ignores;
+        }
+
+        /**
+         * Returns the number of times a request was ignored due to the {@link
+         * com.datastax.driver.core.policies.RetryPolicy}, after a read failure.
+         *
+         * @return the number of times a request was ignored due to the {@link
+         *     com.datastax.driver.core.policies.RetryPolicy}, after a read failure.
+         */
+        public Counter getIgnoresOnReadFailure() {
+            return ignoresOnReadFailure;
         }
 
         /**
