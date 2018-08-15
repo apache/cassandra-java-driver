@@ -44,6 +44,7 @@ import java.util.concurrent.TimeoutException;
 import org.scassandra.Scassandra;
 import org.scassandra.http.client.PrimingClient;
 import org.scassandra.http.client.PrimingRequest;
+import org.scassandra.http.client.Result;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.testng.annotations.Test;
@@ -309,6 +310,13 @@ public class ClusterInitTest {
         PrimingRequest.queryBuilder()
             .withQuery("SELECT * FROM system.peers")
             .withThen(then().withRows(rows).withColumnTypes(ScassandraCluster.SELECT_PEERS))
+            .build());
+
+    // prime invalid for peers_v2 so peers table is used.
+    primingClient.prime(
+        PrimingRequest.queryBuilder()
+            .withQuery("SELECT * FROM system.peers_v2")
+            .withThen(then().withResult(Result.invalid))
             .build());
   }
 }
