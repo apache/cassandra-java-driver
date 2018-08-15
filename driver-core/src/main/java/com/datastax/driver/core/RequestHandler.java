@@ -561,6 +561,27 @@ class RequestHandler {
                         RetryPolicy.RetryDecision retry = null;
                         RetryPolicy retryPolicy = retryPolicy();
                         switch (err.code) {
+                            case READ_FAILURE:
+                                connection.release();
+                                assert err.infos instanceof ReadFailureException;
+                                ReadFailureException rfe = (ReadFailureException) err.infos;
+                                // note that we call the onReadTimeout retry policy; there is no onReadFailure
+                                retry =
+                                    retryPolicy.onReadTimeout(
+                                        statement,
+                                        rfe.getConsistencyLevel(),
+                                        rfe.getRequiredAcknowledgements(),
+                                        rfe.getReceivedAcknowledgements(),
+                                        rfe.wasDataRetrieved(),
+                                        retriesByPolicy);
+                                if (metricsEnabled()) {
+                                    metrics().getErrorMetrics().getReadFailures().inc();
+                                    if (retry.getType() == Type.RETRY)
+                                        metrics().getErrorMetrics().getRetriesOnReadFailure().inc();
+                                    if (retry.getType() == Type.IGNORE)
+                                        metrics().getErrorMetrics().getIgnoresOnReadFailure().inc();
+                                }
+                                break;
                             case READ_TIMEOUT:
                                 connection.release();
                                 assert err.infos instanceof ReadTimeoutException;
