@@ -18,6 +18,7 @@
 - [bug] JAVA-1935: Add null check in QueryConsistencyException.getHost.
 - [improvement] JAVA-1771: Send driver name and version in STARTUP message.
 - [improvement] JAVA-1388: Add dynamic port discovery for system.peers\_v2.
+- [documentation] JAVA-1810: Note which setters are not propagated to PreparedStatement.
 
 Merged from 3.5.x:
 
