@@ -15,6 +15,7 @@
  */
 package com.datastax.driver.core.utils;
 
+import com.datastax.driver.core.GuavaCompatibility;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -50,7 +51,7 @@ public class MoreFutures {
    */
   public static <T> void propagateFuture(
       final SettableFuture<T> settable, ListenableFuture<T> future) {
-    Futures.addCallback(
+    GuavaCompatibility.INSTANCE.addCallback(
         future,
         new FutureCallback<T>() {
           @Override
