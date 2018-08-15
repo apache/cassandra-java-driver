@@ -76,12 +76,7 @@ public class AuthenticationTest extends CCMTestsSupport {
                 .withPort(ccm().getBinaryPort())
                 .withCredentials("bogus", "bogus")
                 .build());
-    try {
-      cluster.connect();
-    } finally {
-      assertThat(cluster.getMetrics().getErrorMetrics().getAuthenticationErrors().getCount())
-          .isEqualTo(1);
-    }
+    cluster.connect();
   }
 
   @Test(groups = "short", expectedExceptions = AuthenticationException.class)
@@ -92,12 +87,7 @@ public class AuthenticationTest extends CCMTestsSupport {
                 .addContactPoints(getContactPoints())
                 .withPort(ccm().getBinaryPort())
                 .build());
-    try {
-      cluster.connect();
-    } finally {
-      assertThat(cluster.getMetrics().getErrorMetrics().getAuthenticationErrors().getCount())
-          .isEqualTo(1);
-    }
+    cluster.connect();
   }
 
   /**
