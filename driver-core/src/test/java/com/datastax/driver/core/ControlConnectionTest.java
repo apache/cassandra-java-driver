@@ -24,7 +24,6 @@ import static com.datastax.driver.core.TestUtils.nonQuietClusterCloseOptions;
 import static com.google.common.collect.Lists.newArrayList;
 import static org.scassandra.http.client.PrimingRequest.then;
 
-import com.datastax.driver.core.exceptions.NoHostAvailableException;
 import com.datastax.driver.core.policies.ConstantReconnectionPolicy;
 import com.datastax.driver.core.policies.DelegatingLoadBalancingPolicy;
 import com.datastax.driver.core.policies.LoadBalancingPolicy;
@@ -237,9 +236,8 @@ public class ControlConnectionTest extends CCMTestsSupport {
   }
 
   /**
-   * @return Configurations of columns that are missing, whether or not this should be evaluated
-   *     with host port discovery enabled, and whether or not an extended peer check is required to
-   *     fail validation.
+   * @return Configurations of columns that are missing, whether or not the peers_v2 table should be
+   *     present and whether or not an extended peer check is required to fail validation.
    */
   @DataProvider
   public static Object[][] disallowedNullColumnsInPeerData() {
@@ -273,10 +271,10 @@ public class ControlConnectionTest extends CCMTestsSupport {
   @CCMConfig(createCcm = false)
   public void should_ignore_peer_if_extended_peer_check_is_enabled(
       String columns,
-      boolean allowHostPortDiscovery,
+      boolean withPeersV2,
       @SuppressWarnings("unused") boolean extendPeerCheckRequired) {
     System.setProperty("com.datastax.driver.EXTENDED_PEER_CHECK", "true");
-    run_with_null_peer_info(columns, false, allowHostPortDiscovery);
+    run_with_null_peer_info(columns, false, withPeersV2);
   }
 
   /**
@@ -290,17 +288,16 @@ public class ControlConnectionTest extends CCMTestsSupport {
   @CCMConfig(createCcm = false)
   public void should_ignore_and_warn_peers_with_null_entries_by_default(
       String columns,
-      boolean allowHostPortDiscovery,
+      boolean withPeersV2,
       @SuppressWarnings("unused") boolean extendedPeerCheckRequired) {
-    run_with_null_peer_info(columns, false, allowHostPortDiscovery);
+    run_with_null_peer_info(columns, false, withPeersV2);
   }
 
-  static void run_with_null_peer_info(
-      String columns, boolean expectPeer2, boolean allowHostPortDiscovery) {
+  static void run_with_null_peer_info(String columns, boolean expectPeer2, boolean withPeersV2) {
     // given: A cluster with peer 2 having a null rack.
     ScassandraCluster.ScassandraClusterBuilder builder = ScassandraCluster.builder().withNodes(3);
 
-    if (allowHostPortDiscovery) {
+    if (withPeersV2) {
       builder.withPeersV2(true);
     }
 
@@ -317,16 +314,12 @@ public class ControlConnectionTest extends CCMTestsSupport {
 
     ScassandraCluster scassandraCluster = builder.build();
 
-    Cluster.Builder clusterBuilder =
+    Cluster cluster =
         Cluster.builder()
             .addContactPoints(scassandraCluster.address(1).getAddress())
             .withPort(scassandraCluster.getBinaryPort())
-            .withNettyOptions(nonQuietClusterCloseOptions);
-
-    if (allowHostPortDiscovery) {
-      clusterBuilder.allowHostPortDiscovery();
-    }
-    Cluster cluster = clusterBuilder.build();
+            .withNettyOptions(nonQuietClusterCloseOptions)
+            .build();
 
     // Capture logs to ensure appropriate warnings are logged.
     org.apache.log4j.Logger cLogger = org.apache.log4j.Logger.getLogger("com.datastax.driver.core");
@@ -477,22 +470,21 @@ public class ControlConnectionTest extends CCMTestsSupport {
 
   /**
    * Ensures that multiple C* nodes can share the same ip address (but use different port) if they
-   * support the system.peers_v2 table and {@link Cluster.Builder#allowHostPortDiscovery()} is used.
+   * support the system.peers_v2 table.
    *
    * @jira_ticket JAVA-1388
    * @since 3.6.0
    */
   @Test(groups = "short", dataProviderClass = DataProviders.class, dataProvider = "bool")
   @CCMConfig(createCcm = false)
-  public void should_use_port_from_peers_v2_table_when_using_host_port_discovery(boolean sharedIP) {
+  public void should_use_port_from_peers_v2_table(boolean sharedIP) {
     ScassandraCluster sCluster =
         ScassandraCluster.builder().withNodes(5).withPeersV2(true).withSharedIP(sharedIP).build();
 
     Cluster.Builder builder =
         Cluster.builder()
             .addContactPointsWithPorts(sCluster.address(1))
-            .withNettyOptions(nonQuietClusterCloseOptions)
-            .allowHostPortDiscovery();
+            .withNettyOptions(nonQuietClusterCloseOptions);
 
     // need to specify port in non peers_v2 case as driver can't infer ports without it.
     if (!sharedIP) {
@@ -545,16 +537,15 @@ public class ControlConnectionTest extends CCMTestsSupport {
   }
 
   /**
-   * Ensures that if {@link Cluster.Builder#allowHostPortDiscovery()} was used and the cluster does
-   * have the system.peers_v2 table that cluster initialization fails.
+   * Ensures that if cluster does not have the system.peers_v2 table that cluster initialization
+   * still succeeds.
    *
    * @jira_ticket JAVA-1388
    * @since 3.6.0
    */
-  @Test(groups = "short", expectedExceptions = NoHostAvailableException.class)
+  @Test(groups = "short")
   @CCMConfig(createCcm = false)
-  public void
-      should_fail_to_connect_when_using_host_port_discovery_and_peers_v2_table_not_present() {
+  public void should_connect_when_peers_v2_table_not_present() {
     ScassandraCluster sCluster =
         ScassandraCluster.builder().withNodes(5).withPeersV2(false).build();
 
@@ -563,12 +554,13 @@ public class ControlConnectionTest extends CCMTestsSupport {
             .addContactPointsWithPorts(sCluster.address(1))
             .withNettyOptions(nonQuietClusterCloseOptions)
             .withPort(sCluster.getBinaryPort())
-            .allowHostPortDiscovery()
             .build();
 
     try {
       sCluster.init();
       cluster.connect();
+
+      assertThat(cluster.getMetadata().getAllHosts()).hasSize(5);
     } finally {
       cluster.close();
       sCluster.stop();

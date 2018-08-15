@@ -24,11 +24,13 @@ import com.datastax.driver.core.exceptions.DriverInternalError;
 import com.datastax.driver.core.exceptions.InvalidQueryException;
 import com.datastax.driver.core.exceptions.NoHostAvailableException;
 import com.datastax.driver.core.exceptions.UnsupportedProtocolVersionException;
+import com.datastax.driver.core.utils.MoreFutures;
 import com.datastax.driver.core.utils.MoreObjects;
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.base.Function;
+import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.SettableFuture;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
@@ -85,11 +87,12 @@ class ControlConnection implements Connection.Owner {
 
   private volatile boolean isShutdown;
 
-  private final boolean isPeersV2;
+  // set to true initially, if ever fails will be set to false and peers table will be used
+  // from here on out.
+  private volatile boolean isPeersV2 = true;
 
   public ControlConnection(Cluster.Manager manager) {
     this.cluster = manager;
-    this.isPeersV2 = manager.configuration.getProtocolOptions().isAllowHostPortDiscovery();
   }
 
   // Only for the initial connection. Does not schedule retries if it fails
@@ -520,7 +523,7 @@ class ControlConnection implements Connection.Owner {
             "Could not find peer with broadcast address {}, "
                 + "falling back to a full system.peers scan to fetch info for {} "
                 + "(this can happen if the broadcast address changed)",
-            address,
+            addressToUse,
             host);
       }
     }
@@ -613,6 +616,9 @@ class ControlConnection implements Connection.Owner {
     // - rpc_address
     // After CASSANDRA-9603 (2.0.17, 2.1.8, 2.2.0 rc2) local row contains one more column:
     // - listen_address
+    // After CASSANDRA-7544 (4.0) local row also contains:
+    // - broadcast_port
+    // - listen_port
 
     InetSocketAddress broadcastAddress = null;
     if (row.getColumnDefinitions().contains("peer")) { // system.peers
@@ -624,7 +630,7 @@ class ControlConnection implements Connection.Owner {
           row.getColumnDefinitions().contains("broadcast_port") ? row.getInt("broadcast_port") : 0;
       broadcastAddress = new InetSocketAddress(row.getInet("broadcast_address"), broadcastPort);
     }
-    host.setBroadcastAddress(broadcastAddress);
+    host.setBroadcastSocketAddress(broadcastAddress);
 
     // in system.local only for C* versions >= 2.0.17, 2.1.8, 2.2.0 rc2,
     // not yet in system.peers as of C* 3.2
@@ -634,7 +640,7 @@ class ControlConnection implements Connection.Owner {
           row.getColumnDefinitions().contains("listen_port") ? row.getInt("listen_port") : 0;
       listenAddress = new InetSocketAddress(row.getInet("listen_address"), listenPort);
     }
-    host.setListenAddress(listenAddress);
+    host.setListenSocketAddress(listenAddress);
 
     if (row.getColumnDefinitions().contains("workload")) {
       String dseWorkload = row.getString("workload");
@@ -671,36 +677,55 @@ class ControlConnection implements Connection.Owner {
   }
 
   /**
-   * Submits query to the appropriate system.peers table based on whether or not {@link
-   * ProtocolOptions#isAllowHostPortDiscovery()} is enabled.
+   * Resolves peering information by doing the following:
+   *
+   * <ol>
+   *   <li>if <code>isPeersV2</code> is true, query the <code>system.peers_v2</code> table,
+   *       otherwise query <code>system.peers</code>.
+   *   <li>if <code>system.peers_v2</code> query fails, set <code>isPeersV2</code> to false and call
+   *       selectPeersFuture again.
+   * </ol>
    *
    * @param connection connection to send request on.
    * @return result of peers query.
    */
   private ListenableFuture<ResultSet> selectPeersFuture(final Connection connection) {
-    String query = isPeersV2 ? SELECT_PEERS_V2 : SELECT_PEERS;
-    DefaultResultSetFuture peersFuture =
-        new DefaultResultSetFuture(null, cluster.protocolVersion(), new Requests.Query(query));
-    connection.write(peersFuture);
-
     if (isPeersV2) {
-      // throw a specialized error if peers_v2 table query fails.
-      return Futures.catching(
-          peersFuture,
-          InvalidQueryException.class,
-          new Function<InvalidQueryException, ResultSet>() {
+      DefaultResultSetFuture peersV2Future =
+          new DefaultResultSetFuture(
+              null, cluster.protocolVersion(), new Requests.Query(SELECT_PEERS_V2));
+      connection.write(peersV2Future);
+      final SettableFuture<ResultSet> peersFuture = SettableFuture.create();
+      // if peers v2 query fails, query peers table instead.
+      Futures.addCallback(
+          peersV2Future,
+          new FutureCallback<ResultSet>() {
 
             @Override
-            public ResultSet apply(InvalidQueryException e) {
-              throw new DriverException(
-                  "Failure querying system.peers_v2 table. "
-                      + "Use of Cluster.Builder.allowHostPortDiscovery() requires this table to "
-                      + "exist.",
-                  e);
+            public void onSuccess(ResultSet result) {
+              peersFuture.set(result);
+            }
+
+            @Override
+            public void onFailure(Throwable t) {
+              // downgrade to system.peers if we get an invalid query as this indicates
+              // the peers_v2 table does not exist.
+              if (t instanceof InvalidQueryException) {
+                isPeersV2 = false;
+                MoreFutures.propagateFuture(peersFuture, selectPeersFuture(connection));
+              } else {
+                peersFuture.setException(t);
+              }
             }
           });
+      return peersFuture;
+    } else {
+      DefaultResultSetFuture peersFuture =
+          new DefaultResultSetFuture(
+              null, cluster.protocolVersion(), new Requests.Query(SELECT_PEERS));
+      connection.write(peersFuture);
+      return peersFuture;
     }
-    return peersFuture;
   }
 
   private void refreshNodeListAndTokenMap(
@@ -836,8 +861,9 @@ class ControlConnection implements Connection.Owner {
       if (dcs.get(i) != null || racks.get(i) != null)
         updateLocationInfo(host, dcs.get(i), racks.get(i), isInitialConnection, cluster);
       if (cassandraVersions.get(i) != null) host.setVersion(cassandraVersions.get(i));
-      if (broadcastAddresses.get(i) != null) host.setBroadcastAddress(broadcastAddresses.get(i));
-      if (listenAddresses.get(i) != null) host.setListenAddress(listenAddresses.get(i));
+      if (broadcastAddresses.get(i) != null)
+        host.setBroadcastSocketAddress(broadcastAddresses.get(i));
+      if (listenAddresses.get(i) != null) host.setListenSocketAddress(listenAddresses.get(i));
 
       if (dseVersions.get(i) != null) host.setDseVersion(dseVersions.get(i));
       if (dseWorkloads.get(i) != null) host.setDseWorkload(dseWorkloads.get(i));
