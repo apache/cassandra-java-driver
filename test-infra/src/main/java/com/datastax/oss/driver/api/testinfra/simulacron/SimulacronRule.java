@@ -15,8 +15,6 @@
  */
 package com.datastax.oss.driver.api.testinfra.simulacron;
 
-import com.datastax.oss.driver.api.core.DefaultProtocolVersion;
-import com.datastax.oss.driver.api.core.ProtocolVersion;
 import com.datastax.oss.driver.api.testinfra.CassandraResourceRule;
 import com.datastax.oss.simulacron.common.cluster.ClusterSpec;
 import com.datastax.oss.simulacron.server.BoundCluster;
@@ -81,10 +79,5 @@ public class SimulacronRule extends CassandraResourceRule {
         .stream()
         .map(BoundNode::inetSocketAddress)
         .collect(Collectors.toSet());
-  }
-
-  @Override
-  public ProtocolVersion getHighestProtocolVersion() {
-    return DefaultProtocolVersion.V4;
   }
 }

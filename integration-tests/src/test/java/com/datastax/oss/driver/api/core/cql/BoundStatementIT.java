@@ -72,7 +72,7 @@ public class BoundStatementIT {
 
   @ClassRule public static CcmRule ccm = CcmRule.getInstance();
 
-  private static boolean atLeastV4 = ccm.getHighestProtocolVersion().getCode() >= 4;
+  private static boolean atLeastV4 = SessionUtils.getMaxProtocolVersion().getCode() >= 4;
 
   @ClassRule
   public static SessionRule<CqlSession> sessionRule =

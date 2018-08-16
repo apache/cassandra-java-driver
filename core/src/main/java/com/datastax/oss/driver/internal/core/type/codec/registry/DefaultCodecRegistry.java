@@ -16,6 +16,7 @@
 package com.datastax.oss.driver.internal.core.type.codec.registry;
 
 import com.datastax.oss.driver.api.core.DriverExecutionException;
+import com.datastax.oss.driver.api.core.detach.AttachmentPoint;
 import com.datastax.oss.driver.api.core.type.DataType;
 import com.datastax.oss.driver.api.core.type.codec.TypeCodec;
 import com.datastax.oss.driver.api.core.type.reflect.GenericType;
@@ -46,6 +47,8 @@ public class DefaultCodecRegistry extends CachingCodecRegistry {
 
   private final LoadingCache<CacheKey, TypeCodec<?>> cache;
 
+  private final AttachmentPoint attachmentPoint;
+
   /**
    * Creates a new instance, with some amount of control over the cache behavior.
    *
@@ -60,10 +63,12 @@ public class DefaultCodecRegistry extends CachingCodecRegistry {
       BiFunction<CacheKey, TypeCodec<?>, Integer> cacheWeigher,
       int maximumCacheWeight,
       BiConsumer<CacheKey, TypeCodec<?>> cacheRemovalListener,
+      AttachmentPoint attachmentPoint,
       TypeCodec<?>[] primitiveCodecs,
       TypeCodec<?>[] userCodecs) {
 
-    super(logPrefix, primitiveCodecs, userCodecs);
+    super(logPrefix, attachmentPoint, primitiveCodecs, userCodecs);
+    this.attachmentPoint = attachmentPoint;
     CacheBuilder<Object, Object> cacheBuilder = CacheBuilder.newBuilder();
     if (initialCacheCapacity > 0) {
       cacheBuilder.initialCapacity(initialCacheCapacity);
@@ -93,12 +98,20 @@ public class DefaultCodecRegistry extends CachingCodecRegistry {
   }
 
   public DefaultCodecRegistry(String logPrefix, TypeCodec<?>... userCodecs) {
-    this(logPrefix, CodecRegistryConstants.PRIMITIVE_CODECS, userCodecs);
+    this(logPrefix, AttachmentPoint.NONE, userCodecs);
   }
 
   public DefaultCodecRegistry(
-      String logPrefix, TypeCodec<?>[] primitiveCodecs, TypeCodec<?>... userCodecs) {
-    this(logPrefix, 0, null, 0, null, primitiveCodecs, userCodecs);
+      String logPrefix, AttachmentPoint attachmentPoint, TypeCodec<?>... userCodecs) {
+    this(logPrefix, CodecRegistryConstants.PRIMITIVE_CODECS, attachmentPoint, userCodecs);
+  }
+
+  public DefaultCodecRegistry(
+      String logPrefix,
+      TypeCodec<?>[] primitiveCodecs,
+      AttachmentPoint attachmentPoint,
+      TypeCodec<?>... userCodecs) {
+    this(logPrefix, 0, null, 0, null, attachmentPoint, primitiveCodecs, userCodecs);
   }
 
   @Override

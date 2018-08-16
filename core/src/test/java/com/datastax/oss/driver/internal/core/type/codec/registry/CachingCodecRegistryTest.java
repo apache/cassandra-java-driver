@@ -24,6 +24,7 @@ import com.datastax.oss.driver.api.core.ProtocolVersion;
 import com.datastax.oss.driver.api.core.data.CqlDuration;
 import com.datastax.oss.driver.api.core.data.TupleValue;
 import com.datastax.oss.driver.api.core.data.UdtValue;
+import com.datastax.oss.driver.api.core.detach.AttachmentPoint;
 import com.datastax.oss.driver.api.core.type.DataType;
 import com.datastax.oss.driver.api.core.type.DataTypes;
 import com.datastax.oss.driver.api.core.type.ListType;
@@ -556,6 +557,11 @@ public class CachingCodecRegistryTest {
     inOrder.verify(mockCache).lookup(cqlType, GenericType.TUPLE_VALUE, false);
     // field codecs are only looked up when fields are accessed, so no cache hit for list<int> now
 
+    // attachment point should be adapted to the one tied to the codec registry.
+    TupleType codecTupleType = (TupleType) codec.getCqlType();
+    assertThat(codecTupleType.getAttachmentPoint())
+        .isNotEqualTo(cqlType.getAttachmentPoint())
+        .isSameAs(mockAttachmentPoint);
   }
 
   @Test
@@ -573,6 +579,11 @@ public class CachingCodecRegistryTest {
     assertThat(codec.accepts(TupleValue.class)).isTrue();
     assertThat(codec.accepts(value)).isTrue();
     inOrder.verify(mockCache).lookup(cqlType, null, false);
+
+    TupleType codecTupleType = (TupleType) codec.getCqlType();
+    assertThat(codecTupleType.getAttachmentPoint())
+        .isNotEqualTo(cqlType.getAttachmentPoint())
+        .isSameAs(mockAttachmentPoint);
   }
 
   @Test
@@ -592,6 +603,11 @@ public class CachingCodecRegistryTest {
     inOrder.verify(mockCache).lookup(cqlType, GenericType.TUPLE_VALUE, false);
 
     inOrder.verifyNoMoreInteractions();
+
+    TupleType codecTupleType = (TupleType) codec.getCqlType();
+    assertThat(codecTupleType.getAttachmentPoint())
+        .isNotEqualTo(cqlType.getAttachmentPoint())
+        .isSameAs(mockAttachmentPoint);
   }
 
   @Test
@@ -613,6 +629,11 @@ public class CachingCodecRegistryTest {
     inOrder.verify(mockCache).lookup(cqlType, GenericType.TUPLE_VALUE, false);
 
     inOrder.verifyNoMoreInteractions();
+
+    TupleType codecTupleType = (TupleType) codec.getCqlType();
+    assertThat(codecTupleType.getAttachmentPoint())
+        .isNotEqualTo(cqlType.getAttachmentPoint())
+        .isSameAs(mockAttachmentPoint);
   }
 
   @Test
@@ -637,6 +658,11 @@ public class CachingCodecRegistryTest {
     inOrder.verify(mockCache).lookup(cqlType, GenericType.UDT_VALUE, false);
     // field codecs are only looked up when fields are accessed, so no cache hit for list<int> now
 
+    // attachment point should be adapted to the one tied to the codec registry.
+    UserDefinedType codecUdtType = (UserDefinedType) codec.getCqlType();
+    assertThat(codecUdtType.getAttachmentPoint())
+        .isNotEqualTo(cqlType.getAttachmentPoint())
+        .isSameAs(mockAttachmentPoint);
   }
 
   @Test
@@ -659,6 +685,11 @@ public class CachingCodecRegistryTest {
     assertThat(codec.accepts(UdtValue.class)).isTrue();
     assertThat(codec.accepts(value)).isTrue();
     inOrder.verify(mockCache).lookup(cqlType, null, false);
+
+    UserDefinedType codecUdtType = (UserDefinedType) codec.getCqlType();
+    assertThat(codecUdtType.getAttachmentPoint())
+        .isNotEqualTo(cqlType.getAttachmentPoint())
+        .isSameAs(mockAttachmentPoint);
   }
 
   @Test
@@ -683,6 +714,11 @@ public class CachingCodecRegistryTest {
     inOrder.verify(mockCache).lookup(cqlType, GenericType.UDT_VALUE, false);
 
     inOrder.verifyNoMoreInteractions();
+
+    UserDefinedType codecUdtType = (UserDefinedType) codec.getCqlType();
+    assertThat(codecUdtType.getAttachmentPoint())
+        .isNotEqualTo(cqlType.getAttachmentPoint())
+        .isSameAs(mockAttachmentPoint);
   }
 
   @Test
@@ -709,6 +745,11 @@ public class CachingCodecRegistryTest {
     inOrder.verify(mockCache).lookup(cqlType, GenericType.UDT_VALUE, false);
 
     inOrder.verifyNoMoreInteractions();
+
+    UserDefinedType codecUdtType = (UserDefinedType) codec.getCqlType();
+    assertThat(codecUdtType.getAttachmentPoint())
+        .isNotEqualTo(cqlType.getAttachmentPoint())
+        .isSameAs(mockAttachmentPoint);
   }
 
   @Test
@@ -808,13 +849,28 @@ public class CachingCodecRegistryTest {
     inOrder.verifyNoMoreInteractions();
   }
 
+  static final AttachmentPoint mockAttachmentPoint =
+      new AttachmentPoint() {
+        @NonNull
+        @Override
+        public ProtocolVersion getProtocolVersion() {
+          return ProtocolVersion.DEFAULT;
+        }
+
+        @NonNull
+        @Override
+        public CodecRegistry getCodecRegistry() {
+          return CodecRegistry.DEFAULT;
+        }
+      };
+
   // Our intent is not to test Guava cache, so we don't need an actual cache here.
   // The only thing we want to check in our tests is if getCachedCodec was called.
   public static class TestCachingCodecRegistry extends CachingCodecRegistry {
     private final MockCache cache;
 
     public TestCachingCodecRegistry(MockCache cache, TypeCodec<?>... userCodecs) {
-      super("test", CodecRegistryConstants.PRIMITIVE_CODECS, userCodecs);
+      super("test", mockAttachmentPoint, CodecRegistryConstants.PRIMITIVE_CODECS, userCodecs);
       this.cache = cache;
     }
 
