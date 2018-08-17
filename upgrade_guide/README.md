@@ -10,10 +10,10 @@ versions of the Java driver.
     ConsistencyLevel (which does not include Serial CLs), but as a matter of
     correctness this was updated.
 
-2.  `ReadFailureException`, `WriteFailureException` and
-    `FunctionExecutionException` are now surfaced to `RetryPolicy.onRequestError`.
-    Consider updating custom `RetryPolicy` implementations to account for this.
-    In the general case, we recommend using `RetryDecision.rethrow()`, see [JAVA-1944].
+2.  `ReadFailureException` and `WriteFailureException` are now surfaced to
+    `RetryPolicy.onRequestError`. Consider updating custom `RetryPolicy`
+    implementations to account for this. In the general case, we recommend
+    using `RetryDecision.rethrow()`, see [JAVA-1944].
 
 [JAVA-1944]: https://datastax-oss.atlassian.net/browse/JAVA-1944
 

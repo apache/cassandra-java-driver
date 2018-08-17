@@ -22,11 +22,8 @@ import static org.mockito.Matchers.anyBoolean;
 import static org.mockito.Matchers.anyInt;
 import static org.mockito.Mockito.times;
 import static org.scassandra.http.client.PrimingRequest.then;
-import static org.scassandra.http.client.Result.function_failure;
 import static org.scassandra.http.client.Result.overloaded;
-import static org.scassandra.http.client.Result.read_failure;
 import static org.scassandra.http.client.Result.server_error;
-import static org.scassandra.http.client.Result.write_failure;
 
 import com.datastax.driver.core.Cluster;
 import com.datastax.driver.core.ConsistencyLevel;
@@ -44,11 +41,8 @@ import com.datastax.driver.core.Statement;
 import com.datastax.driver.core.TestUtils;
 import com.datastax.driver.core.WriteType;
 import com.datastax.driver.core.exceptions.DriverException;
-import com.datastax.driver.core.exceptions.FunctionExecutionException;
 import com.datastax.driver.core.exceptions.OverloadedException;
-import com.datastax.driver.core.exceptions.ReadFailureException;
 import com.datastax.driver.core.exceptions.ServerError;
-import com.datastax.driver.core.exceptions.WriteFailureException;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import java.util.List;
@@ -222,19 +216,6 @@ public class AbstractRetryPolicyIntegrationTest {
     return new Object[][] {
       {server_error, ServerError.class},
       {overloaded, OverloadedException.class},
-    };
-  }
-
-  /**
-   * @return Server side errors surfaced to onRequestError that should be rethrown by our policy
-   *     implementations.
-   */
-  @DataProvider
-  public static Object[][] rethrowableServerSideErrors() {
-    return new Object[][] {
-      {function_failure, FunctionExecutionException.class},
-      {write_failure, WriteFailureException.class},
-      {read_failure, ReadFailureException.class}
     };
   }
 

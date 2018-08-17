@@ -22,7 +22,6 @@ import com.datastax.driver.core.exceptions.BusyPoolException;
 import com.datastax.driver.core.exceptions.ConnectionException;
 import com.datastax.driver.core.exceptions.DriverException;
 import com.datastax.driver.core.exceptions.DriverInternalError;
-import com.datastax.driver.core.exceptions.FunctionExecutionException;
 import com.datastax.driver.core.exceptions.NoHostAvailableException;
 import com.datastax.driver.core.exceptions.OperationTimedOutException;
 import com.datastax.driver.core.exceptions.OverloadedException;
@@ -780,13 +779,6 @@ class RequestHandler {
                 } else {
                   retry = RetryPolicy.RetryDecision.rethrow();
                 }
-                break;
-              case FUNCTION_FAILURE:
-                assert exceptionToReport instanceof FunctionExecutionException;
-                connection.release();
-                retry =
-                    computeRetryDecisionOnRequestError(
-                        (FunctionExecutionException) exceptionToReport);
                 break;
               default:
                 connection.release();

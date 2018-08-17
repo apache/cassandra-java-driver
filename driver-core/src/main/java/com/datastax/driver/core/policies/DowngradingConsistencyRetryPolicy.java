@@ -20,7 +20,6 @@ import com.datastax.driver.core.ConsistencyLevel;
 import com.datastax.driver.core.Statement;
 import com.datastax.driver.core.WriteType;
 import com.datastax.driver.core.exceptions.DriverException;
-import com.datastax.driver.core.exceptions.FunctionExecutionException;
 import com.datastax.driver.core.exceptions.ReadFailureException;
 import com.datastax.driver.core.exceptions.WriteFailureException;
 
@@ -220,9 +219,7 @@ public class DowngradingConsistencyRetryPolicy implements RetryPolicy {
       Statement statement, ConsistencyLevel cl, DriverException e, int nbRetry) {
     // do not retry these by default as they generally indicate a data problem or
     // other issue that is unlikely to be resolved by a retry.
-    if (e instanceof WriteFailureException
-        || e instanceof ReadFailureException
-        || e instanceof FunctionExecutionException) {
+    if (e instanceof WriteFailureException || e instanceof ReadFailureException) {
       return RetryDecision.rethrow();
     }
     return RetryDecision.tryNextHost(cl);

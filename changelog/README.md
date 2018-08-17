@@ -19,7 +19,7 @@
 - [improvement] JAVA-1771: Send driver name and version in STARTUP message.
 - [improvement] JAVA-1388: Add dynamic port discovery for system.peers\_v2.
 - [documentation] JAVA-1810: Note which setters are not propagated to PreparedStatement.
-- [bug] JAVA-1944: Surface Read, Write and FunctionFailure to RetryPolicy.
+- [bug] JAVA-1944: Surface Read and WriteFailureException to RetryPolicy.
 
 Merged from 3.5.x:
 
