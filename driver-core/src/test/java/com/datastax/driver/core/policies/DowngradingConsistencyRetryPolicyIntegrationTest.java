@@ -519,4 +519,25 @@ public class DowngradingConsistencyRetryPolicyIntegrationTest
     assertQueried(2, 1);
     assertQueried(3, 0);
   }
+
+  @Test(groups = "short", dataProvider = "rethrowableServerSideErrors")
+  public void should_rethrow_on_throwable_server_side_error(
+      Result error, Class<? extends DriverException> exception) {
+    simulateError(1, error);
+
+    try {
+      query();
+      fail("expected a " + exception.getName());
+    } catch (DriverException e) {
+      assertThat(e).isInstanceOf(exception);
+    }
+
+    assertOnRequestErrorWasCalled(1, exception);
+    assertThat(errors.getOthers().getCount()).isEqualTo(1);
+    assertThat(errors.getRetries().getCount()).isEqualTo(0);
+    assertThat(errors.getRetriesOnOtherErrors().getCount()).isEqualTo(0);
+    assertQueried(1, 1);
+    assertQueried(2, 0);
+    assertQueried(3, 0);
+  }
 }

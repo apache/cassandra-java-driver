@@ -20,6 +20,9 @@ import com.datastax.driver.core.ConsistencyLevel;
 import com.datastax.driver.core.Statement;
 import com.datastax.driver.core.WriteType;
 import com.datastax.driver.core.exceptions.DriverException;
+import com.datastax.driver.core.exceptions.FunctionExecutionException;
+import com.datastax.driver.core.exceptions.ReadFailureException;
+import com.datastax.driver.core.exceptions.WriteFailureException;
 
 /**
  * The default retry policy.
@@ -32,7 +35,8 @@ import com.datastax.driver.core.exceptions.DriverException;
  *   <li>On a write timeout, retries once on the same host if we timeout while writing the
  *       distributed log used by batch statements.
  *   <li>On an unavailable exception, retries once on the next host.
- *   <li>On a request error, such as a client timeout, the query is retried on the next host.
+ *   <li>On a request error, such as a client timeout, the query is retried on the next host. Do not
+ *       retry on read, write, or function failures.
  * </ul>
  *
  * <p>This retry policy is conservative in that it will never retry with a different consistency
@@ -137,6 +141,13 @@ public class DefaultRetryPolicy implements RetryPolicy {
   @Override
   public RetryDecision onRequestError(
       Statement statement, ConsistencyLevel cl, DriverException e, int nbRetry) {
+    // do not retry these by default as they generally indicate a data problem or
+    // other issue that is unlikely to be resolved by a retry.
+    if (e instanceof WriteFailureException
+        || e instanceof ReadFailureException
+        || e instanceof FunctionExecutionException) {
+      return RetryDecision.rethrow();
+    }
     return RetryDecision.tryNextHost(cl);
   }
 
