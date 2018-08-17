@@ -141,7 +141,7 @@ class SessionManager extends AbstractSession {
       DefaultResultSetFuture future =
           new DefaultResultSetFuture(
               this, cluster.manager.protocolVersion(), makeRequestMessage(statement, null));
-      new RequestHandler(this, future, statement).sendRequest();
+      execute(future, statement);
       return future;
     } else {
       // If the session is not initialized, we can't call makeRequestMessage() synchronously,
@@ -695,6 +695,7 @@ class SessionManager extends AbstractSession {
     if (this.isClosed()) {
       callback.onException(
           null, new IllegalStateException("Could not send request, session is closed"), 0, 0);
+      return;
     }
     if (isInit) new RequestHandler(this, callback, statement).sendRequest();
     else

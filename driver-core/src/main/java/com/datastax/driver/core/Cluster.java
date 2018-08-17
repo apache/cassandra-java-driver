@@ -1726,10 +1726,7 @@ public class Cluster implements Closeable {
     }
 
     boolean errorDuringInit() {
-      if (isInit && initException != null) {
-        return true;
-      }
-      return false;
+      return (isInit && initException != null);
     }
 
     Exception getInitException() {
