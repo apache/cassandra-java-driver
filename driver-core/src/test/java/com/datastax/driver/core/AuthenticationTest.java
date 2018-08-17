@@ -21,6 +21,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
+import static org.testng.Assert.fail;
 
 import com.datastax.driver.core.exceptions.AuthenticationException;
 import com.google.common.util.concurrent.Uninterruptibles;
@@ -50,7 +51,7 @@ public class AuthenticationTest extends CCMTestsSupport {
   }
 
   @Test(groups = "short")
-  public void should_connect_with_credentials() throws InterruptedException {
+  public void should_connect_with_credentials() {
     PlainTextAuthProvider authProvider = spy(new PlainTextAuthProvider("cassandra", "cassandra"));
     Cluster cluster =
         Cluster.builder()
@@ -67,8 +68,17 @@ public class AuthenticationTest extends CCMTestsSupport {
         .isEqualTo(0);
   }
 
-  @Test(groups = "short", expectedExceptions = AuthenticationException.class)
-  public void should_fail_to_connect_with_wrong_credentials() throws InterruptedException {
+  /**
+   * Validates that if cluster initialization fails, it should fail with an authentication
+   * exception.
+   *
+   * <p>In addition, a repeated attempt to initialize raises an error indicating that it had
+   * previously failed.
+   *
+   * @jira_ticket JAVA-1221
+   */
+  @Test(groups = "short")
+  public void should_fail_to_connect_with_wrong_credentials() {
     Cluster cluster =
         register(
             Cluster.builder()
@@ -76,11 +86,27 @@ public class AuthenticationTest extends CCMTestsSupport {
                 .withPort(ccm().getBinaryPort())
                 .withCredentials("bogus", "bogus")
                 .build());
-    cluster.connect();
+
+    try {
+      cluster.connect();
+      fail("Should throw AuthenticationException when attempting to connect");
+    } catch (AuthenticationException e) {
+      try {
+        cluster.connect();
+        fail("Should throw IllegalStateException when attempting to connect again.");
+      } catch (IllegalStateException e1) {
+        assertThat(e1.getCause()).isSameAs(e);
+        assertThat(e1)
+            .hasMessage(
+                "Can't use this cluster instance because it encountered an error in its initialization");
+      }
+    } finally {
+      cluster.close();
+    }
   }
 
   @Test(groups = "short", expectedExceptions = AuthenticationException.class)
-  public void should_fail_to_connect_without_credentials() throws InterruptedException {
+  public void should_fail_to_connect_without_credentials() {
     Cluster cluster =
         register(
             Cluster.builder()
@@ -97,7 +123,7 @@ public class AuthenticationTest extends CCMTestsSupport {
    */
   @Test(groups = "short")
   @CCMConfig(dirtiesContext = true)
-  public void should_connect_with_slow_server() throws InterruptedException {
+  public void should_connect_with_slow_server() {
     Cluster cluster =
         Cluster.builder()
             .addContactPoints(getContactPoints())
@@ -142,7 +168,7 @@ public class AuthenticationTest extends CCMTestsSupport {
    * @jira_ticket JAVA-1431
    */
   @Test(groups = "short")
-  public void should_not_create_pool_with_wrong_credentials() throws InterruptedException {
+  public void should_not_create_pool_with_wrong_credentials() {
     PlainTextAuthProvider authProvider = new PlainTextAuthProvider("cassandra", "cassandra");
     Cluster cluster =
         register(

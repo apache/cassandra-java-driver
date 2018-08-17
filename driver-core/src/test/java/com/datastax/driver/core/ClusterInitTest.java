@@ -301,9 +301,10 @@ public class ClusterInitTest {
         cluster.connect();
         fail("Should error when connect is called.");
       } catch (IllegalStateException e1) {
-        assertThat(e1.getMessage())
-            .isEqualTo(
-                "This cluster has been closed due to an error encountered in it's initialization, please create a new Cluster instance");
+        assertThat(e1.getCause()).isSameAs(e);
+        assertThat(e1)
+            .hasMessage(
+                "Can't use this cluster instance because it encountered an error in its initialization");
       }
     } finally {
       cluster.close();
@@ -335,8 +336,7 @@ public class ClusterInitTest {
         session.execute("SELECTS * FROM system.peers");
         fail("Should have failed when session.execute was called on cluster that was closed");
       } catch (IllegalStateException e) {
-        assertThat(
-            e.getMessage().equals("Parent cluster is closed. This session is no longer valid."));
+        assertThat(e).hasMessage("Could not send request, session is closed");
       }
     } finally {
       scassandraCluster.stop();

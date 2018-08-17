@@ -635,8 +635,7 @@ public class Cluster implements Closeable {
   private static void checkNotClosed(Manager manager) {
     if (manager.errorDuringInit()) {
       throw new IllegalStateException(
-          "This cluster has been closed due to an error encountered in it's initialization, please create a new "
-              + "Cluster instance",
+          "Can't use this cluster instance because it encountered an error in its initialization",
           manager.getInitException());
     } else if (manager.isClosed()) {
       throw new IllegalStateException(
