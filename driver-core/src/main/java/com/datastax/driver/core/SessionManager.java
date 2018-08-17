@@ -137,13 +137,6 @@ class SessionManager extends AbstractSession {
 
   @Override
   public ResultSetFuture executeAsync(final Statement statement) {
-    if (this.isClosed()) {
-      throw new IllegalStateException("Could not send request, session is closed");
-    }
-
-    if (cluster.isClosed()) {
-      throw new IllegalStateException("Could not send request, cluster is closed");
-    }
     if (isInit) {
       DefaultResultSetFuture future =
           new DefaultResultSetFuture(
@@ -700,10 +693,8 @@ class SessionManager extends AbstractSession {
    */
   void execute(final RequestHandler.Callback callback, final Statement statement) {
     if (this.isClosed()) {
-      throw new IllegalStateException("Could not send request, session is closed");
-    }
-    if (cluster.isClosed()) {
-      throw new IllegalStateException("Could not send request, cluster is closed");
+      callback.onException(
+          null, new IllegalStateException("Could not send request, session is closed"), 0, 0);
     }
     if (isInit) new RequestHandler(this, callback, statement).sendRequest();
     else
