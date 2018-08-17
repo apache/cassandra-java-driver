@@ -27,6 +27,7 @@ import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
 import static org.scassandra.http.client.PrimingRequest.then;
 
+import com.datastax.driver.core.exceptions.DriverInternalError;
 import com.datastax.driver.core.exceptions.NoHostAvailableException;
 import com.datastax.driver.core.policies.ConstantReconnectionPolicy;
 import com.google.common.collect.ImmutableMap;
@@ -335,8 +336,9 @@ public class ClusterInitTest {
       try {
         session.execute("SELECTS * FROM system.peers");
         fail("Should have failed when session.execute was called on cluster that was closed");
-      } catch (IllegalStateException e) {
-        assertThat(e).hasMessage("Could not send request, session is closed");
+      } catch (DriverInternalError e) {
+        assertThat(e.getCause()).isInstanceOf(IllegalStateException.class);
+        assertThat(e.getCause()).hasMessage("Could not send request, session is closed");
       }
     } finally {
       scassandraCluster.stop();
