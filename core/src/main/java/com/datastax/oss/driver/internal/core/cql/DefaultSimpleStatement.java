@@ -19,6 +19,7 @@ import com.datastax.oss.driver.api.core.ConsistencyLevel;
 import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.config.DriverExecutionProfile;
 import com.datastax.oss.driver.api.core.cql.SimpleStatement;
+import com.datastax.oss.driver.api.core.metadata.Node;
 import com.datastax.oss.driver.api.core.metadata.token.Token;
 import com.datastax.oss.protocol.internal.util.collection.NullAllowingImmutableList;
 import com.datastax.oss.protocol.internal.util.collection.NullAllowingImmutableMap;
@@ -52,6 +53,7 @@ public class DefaultSimpleStatement implements SimpleStatement {
   private final ConsistencyLevel consistencyLevel;
   private final ConsistencyLevel serialConsistencyLevel;
   private final Duration timeout;
+  private final Node node;
 
   /** @see SimpleStatement#builder(String) */
   public DefaultSimpleStatement(
@@ -72,7 +74,8 @@ public class DefaultSimpleStatement implements SimpleStatement {
       int pageSize,
       ConsistencyLevel consistencyLevel,
       ConsistencyLevel serialConsistencyLevel,
-      Duration timeout) {
+      Duration timeout,
+      Node node) {
     if (!positionalValues.isEmpty() && !namedValues.isEmpty()) {
       throw new IllegalArgumentException("Can't have both positional and named values");
     }
@@ -94,6 +97,7 @@ public class DefaultSimpleStatement implements SimpleStatement {
     this.consistencyLevel = consistencyLevel;
     this.serialConsistencyLevel = serialConsistencyLevel;
     this.timeout = timeout;
+    this.node = node;
   }
 
   @NonNull
@@ -123,7 +127,8 @@ public class DefaultSimpleStatement implements SimpleStatement {
         pageSize,
         consistencyLevel,
         serialConsistencyLevel,
-        timeout);
+        timeout,
+        node);
   }
 
   @NonNull
@@ -153,7 +158,8 @@ public class DefaultSimpleStatement implements SimpleStatement {
         pageSize,
         consistencyLevel,
         serialConsistencyLevel,
-        timeout);
+        timeout,
+        node);
   }
 
   @NonNull
@@ -183,7 +189,8 @@ public class DefaultSimpleStatement implements SimpleStatement {
         pageSize,
         consistencyLevel,
         serialConsistencyLevel,
-        timeout);
+        timeout,
+        node);
   }
 
   @Nullable
@@ -213,7 +220,8 @@ public class DefaultSimpleStatement implements SimpleStatement {
         pageSize,
         consistencyLevel,
         serialConsistencyLevel,
-        timeout);
+        timeout,
+        node);
   }
 
   @Nullable
@@ -243,7 +251,8 @@ public class DefaultSimpleStatement implements SimpleStatement {
         pageSize,
         consistencyLevel,
         serialConsistencyLevel,
-        timeout);
+        timeout,
+        node);
   }
 
   @Nullable
@@ -273,7 +282,8 @@ public class DefaultSimpleStatement implements SimpleStatement {
         pageSize,
         consistencyLevel,
         serialConsistencyLevel,
-        timeout);
+        timeout,
+        node);
   }
 
   @Nullable
@@ -303,7 +313,39 @@ public class DefaultSimpleStatement implements SimpleStatement {
         pageSize,
         consistencyLevel,
         serialConsistencyLevel,
-        timeout);
+        timeout,
+        node);
+  }
+
+  @NonNull
+  @Override
+  public SimpleStatement setNode(@Nullable Node newNode) {
+    return new DefaultSimpleStatement(
+        query,
+        positionalValues,
+        namedValues,
+        executionProfileName,
+        executionProfile,
+        keyspace,
+        routingKeyspace,
+        routingKey,
+        routingToken,
+        customPayload,
+        idempotent,
+        tracing,
+        timestamp,
+        pagingState,
+        pageSize,
+        consistencyLevel,
+        serialConsistencyLevel,
+        timeout,
+        newNode);
+  }
+
+  @Nullable
+  @Override
+  public Node getNode() {
+    return node;
   }
 
   @Nullable
@@ -333,7 +375,8 @@ public class DefaultSimpleStatement implements SimpleStatement {
         pageSize,
         consistencyLevel,
         serialConsistencyLevel,
-        timeout);
+        timeout,
+        node);
   }
 
   @Nullable
@@ -363,7 +406,8 @@ public class DefaultSimpleStatement implements SimpleStatement {
         pageSize,
         consistencyLevel,
         serialConsistencyLevel,
-        timeout);
+        timeout,
+        node);
   }
 
   @NonNull
@@ -393,7 +437,8 @@ public class DefaultSimpleStatement implements SimpleStatement {
         pageSize,
         consistencyLevel,
         serialConsistencyLevel,
-        timeout);
+        timeout,
+        node);
   }
 
   @Nullable
@@ -423,7 +468,8 @@ public class DefaultSimpleStatement implements SimpleStatement {
         pageSize,
         consistencyLevel,
         serialConsistencyLevel,
-        timeout);
+        timeout,
+        node);
   }
 
   @Override
@@ -452,7 +498,8 @@ public class DefaultSimpleStatement implements SimpleStatement {
         pageSize,
         consistencyLevel,
         serialConsistencyLevel,
-        timeout);
+        timeout,
+        node);
   }
 
   @Override
@@ -481,7 +528,8 @@ public class DefaultSimpleStatement implements SimpleStatement {
         pageSize,
         consistencyLevel,
         serialConsistencyLevel,
-        timeout);
+        timeout,
+        node);
   }
 
   @Nullable
@@ -511,7 +559,8 @@ public class DefaultSimpleStatement implements SimpleStatement {
         pageSize,
         consistencyLevel,
         serialConsistencyLevel,
-        newTimeout);
+        newTimeout,
+        node);
   }
 
   @Nullable
@@ -541,7 +590,8 @@ public class DefaultSimpleStatement implements SimpleStatement {
         pageSize,
         consistencyLevel,
         serialConsistencyLevel,
-        timeout);
+        timeout,
+        node);
   }
 
   @Override
@@ -570,7 +620,8 @@ public class DefaultSimpleStatement implements SimpleStatement {
         newPageSize,
         consistencyLevel,
         serialConsistencyLevel,
-        timeout);
+        timeout,
+        node);
   }
 
   @Nullable
@@ -599,7 +650,8 @@ public class DefaultSimpleStatement implements SimpleStatement {
         pageSize,
         newConsistencyLevel,
         serialConsistencyLevel,
-        timeout);
+        timeout,
+        node);
   }
 
   @Nullable
@@ -630,7 +682,8 @@ public class DefaultSimpleStatement implements SimpleStatement {
         pageSize,
         consistencyLevel,
         newSerialConsistencyLevel,
-        timeout);
+        timeout,
+        node);
   }
 
   public static Map<CqlIdentifier, Object> wrapKeys(Map<String, Object> namedValues) {

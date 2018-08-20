@@ -21,6 +21,7 @@ import com.datastax.oss.driver.api.core.CqlSession;
 import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
 import com.datastax.oss.driver.api.core.config.DriverExecutionProfile;
 import com.datastax.oss.driver.api.core.context.DriverContext;
+import com.datastax.oss.driver.api.core.metadata.Node;
 import com.datastax.oss.driver.api.core.metadata.token.Token;
 import com.datastax.oss.driver.api.core.session.Request;
 import com.datastax.oss.driver.api.core.session.Session;
@@ -92,6 +93,12 @@ public interface Statement<T extends Statement<T>> extends Request {
    */
   @NonNull
   T setRoutingKeyspace(@Nullable CqlIdentifier newRoutingKeyspace);
+
+  @NonNull
+  T setNode(@Nullable Node node);
+
+  @Nullable
+  Node getNode();
 
   /**
    * Shortcut for {@link #setRoutingKeyspace(CqlIdentifier)

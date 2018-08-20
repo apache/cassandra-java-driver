@@ -18,6 +18,7 @@ package com.datastax.oss.driver.api.core.cql;
 import com.datastax.oss.driver.api.core.ConsistencyLevel;
 import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.config.DriverExecutionProfile;
+import com.datastax.oss.driver.api.core.metadata.Node;
 import com.datastax.oss.driver.api.core.metadata.token.Token;
 import com.datastax.oss.protocol.internal.util.collection.NullAllowingImmutableMap;
 import edu.umd.cs.findbugs.annotations.NonNull;
@@ -54,6 +55,7 @@ public abstract class StatementBuilder<T extends StatementBuilder<T, S>, S exten
   @Nullable protected ConsistencyLevel consistencyLevel;
   @Nullable protected ConsistencyLevel serialConsistencyLevel;
   @Nullable protected Duration timeout;
+  @Nullable protected Node node;
 
   protected StatementBuilder() {
     // nothing to do
@@ -78,6 +80,7 @@ public abstract class StatementBuilder<T extends StatementBuilder<T, S>, S exten
     this.consistencyLevel = template.getConsistencyLevel();
     this.serialConsistencyLevel = template.getSerialConsistencyLevel();
     this.timeout = template.getTimeout();
+    this.node = template.getNode();
   }
 
   /** @see Statement#setExecutionProfileName(String) */
@@ -196,6 +199,11 @@ public abstract class StatementBuilder<T extends StatementBuilder<T, S>, S exten
   @NonNull
   public T withTimeout(@Nullable Duration timeout) {
     this.timeout = timeout;
+    return self;
+  }
+
+  public T withNode(@Nullable Node node) {
+    this.node = node;
     return self;
   }
 

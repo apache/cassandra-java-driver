@@ -79,6 +79,7 @@ import java.util.Map;
 import java.util.Queue;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -153,10 +154,16 @@ public abstract class CqlRequestHandlerBase implements Throttled {
               ? config.getDefaultProfile()
               : config.getProfile(profileName);
     }
-    this.queryPlan =
-        context
-            .getLoadBalancingPolicyWrapper()
-            .newQueryPlan(statement, executionProfile.getName(), session);
+    if (this.statement.getNode() != null) {
+      this.queryPlan = new ConcurrentLinkedQueue<Node>();
+      this.queryPlan.add(this.statement.getNode());
+
+    } else {
+      this.queryPlan =
+          context
+              .getLoadBalancingPolicyWrapper()
+              .newQueryPlan(statement, executionProfile.getName(), session);
+    }
     this.retryPolicy = context.getRetryPolicy(executionProfile.getName());
     this.speculativeExecutionPolicy =
         context.getSpeculativeExecutionPolicy(executionProfile.getName());

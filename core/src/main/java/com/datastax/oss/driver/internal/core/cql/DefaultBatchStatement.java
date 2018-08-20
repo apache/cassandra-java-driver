@@ -22,6 +22,7 @@ import com.datastax.oss.driver.api.core.cql.BatchStatement;
 import com.datastax.oss.driver.api.core.cql.BatchType;
 import com.datastax.oss.driver.api.core.cql.BatchableStatement;
 import com.datastax.oss.driver.api.core.cql.SimpleStatement;
+import com.datastax.oss.driver.api.core.metadata.Node;
 import com.datastax.oss.driver.api.core.metadata.token.Token;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableList;
 import com.datastax.oss.driver.shaded.guava.common.collect.Iterables;
@@ -54,6 +55,7 @@ public class DefaultBatchStatement implements BatchStatement {
   private final ConsistencyLevel consistencyLevel;
   private final ConsistencyLevel serialConsistencyLevel;
   private final Duration timeout;
+  private final Node node;
 
   public DefaultBatchStatement(
       BatchType batchType,
@@ -72,7 +74,8 @@ public class DefaultBatchStatement implements BatchStatement {
       int pageSize,
       ConsistencyLevel consistencyLevel,
       ConsistencyLevel serialConsistencyLevel,
-      Duration timeout) {
+      Duration timeout,
+      Node node) {
     this.batchType = batchType;
     this.statements = ImmutableList.copyOf(statements);
     this.executionProfileName = executionProfileName;
@@ -90,6 +93,7 @@ public class DefaultBatchStatement implements BatchStatement {
     this.consistencyLevel = consistencyLevel;
     this.serialConsistencyLevel = serialConsistencyLevel;
     this.timeout = timeout;
+    this.node = node;
   }
 
   @NonNull
@@ -118,7 +122,8 @@ public class DefaultBatchStatement implements BatchStatement {
         pageSize,
         consistencyLevel,
         serialConsistencyLevel,
-        timeout);
+        timeout,
+        node);
   }
 
   @NonNull
@@ -141,7 +146,8 @@ public class DefaultBatchStatement implements BatchStatement {
         pageSize,
         consistencyLevel,
         serialConsistencyLevel,
-        timeout);
+        timeout,
+        node);
   }
 
   @NonNull
@@ -168,7 +174,8 @@ public class DefaultBatchStatement implements BatchStatement {
           pageSize,
           consistencyLevel,
           serialConsistencyLevel,
-          timeout);
+          timeout,
+          node);
     }
   }
 
@@ -199,7 +206,8 @@ public class DefaultBatchStatement implements BatchStatement {
           pageSize,
           consistencyLevel,
           serialConsistencyLevel,
-          timeout);
+          timeout,
+          node);
     }
   }
 
@@ -228,7 +236,8 @@ public class DefaultBatchStatement implements BatchStatement {
         pageSize,
         consistencyLevel,
         serialConsistencyLevel,
-        timeout);
+        timeout,
+        node);
   }
 
   @NonNull
@@ -262,7 +271,8 @@ public class DefaultBatchStatement implements BatchStatement {
         pageSize,
         consistencyLevel,
         serialConsistencyLevel,
-        timeout);
+        timeout,
+        node);
   }
 
   @Override
@@ -290,7 +300,8 @@ public class DefaultBatchStatement implements BatchStatement {
         newPageSize,
         consistencyLevel,
         serialConsistencyLevel,
-        timeout);
+        timeout,
+        node);
   }
 
   @Nullable
@@ -318,7 +329,8 @@ public class DefaultBatchStatement implements BatchStatement {
         pageSize,
         newConsistencyLevel,
         serialConsistencyLevel,
-        timeout);
+        timeout,
+        node);
   }
 
   @Nullable
@@ -348,7 +360,8 @@ public class DefaultBatchStatement implements BatchStatement {
         pageSize,
         consistencyLevel,
         newSerialConsistencyLevel,
-        timeout);
+        timeout,
+        node);
   }
 
   @Override
@@ -376,7 +389,8 @@ public class DefaultBatchStatement implements BatchStatement {
         pageSize,
         consistencyLevel,
         serialConsistencyLevel,
-        timeout);
+        timeout,
+        node);
   }
 
   @Override
@@ -404,7 +418,8 @@ public class DefaultBatchStatement implements BatchStatement {
         pageSize,
         consistencyLevel,
         serialConsistencyLevel,
-        timeout);
+        timeout,
+        node);
   }
 
   @Override
@@ -456,7 +471,38 @@ public class DefaultBatchStatement implements BatchStatement {
         pageSize,
         consistencyLevel,
         serialConsistencyLevel,
-        timeout);
+        timeout,
+        node);
+  }
+
+  @NonNull
+  @Override
+  public BatchStatement setNode(@Nullable Node newNode) {
+    return new DefaultBatchStatement(
+        batchType,
+        statements,
+        executionProfileName,
+        executionProfile,
+        keyspace,
+        routingKeyspace,
+        routingKey,
+        routingToken,
+        customPayload,
+        idempotent,
+        tracing,
+        timestamp,
+        pagingState,
+        pageSize,
+        consistencyLevel,
+        serialConsistencyLevel,
+        timeout,
+        newNode);
+  }
+
+  @Nullable
+  @Override
+  public Node getNode() {
+    return node;
   }
 
   @Override
@@ -494,7 +540,8 @@ public class DefaultBatchStatement implements BatchStatement {
         pageSize,
         consistencyLevel,
         serialConsistencyLevel,
-        timeout);
+        timeout,
+        node);
   }
 
   @Override
@@ -532,7 +579,8 @@ public class DefaultBatchStatement implements BatchStatement {
         pageSize,
         consistencyLevel,
         serialConsistencyLevel,
-        timeout);
+        timeout,
+        node);
   }
 
   @NonNull
@@ -561,7 +609,8 @@ public class DefaultBatchStatement implements BatchStatement {
         pageSize,
         consistencyLevel,
         serialConsistencyLevel,
-        timeout);
+        timeout,
+        node);
   }
 
   @Override
@@ -595,7 +644,8 @@ public class DefaultBatchStatement implements BatchStatement {
         pageSize,
         consistencyLevel,
         serialConsistencyLevel,
-        timeout);
+        timeout,
+        node);
   }
 
   @Override
@@ -623,7 +673,8 @@ public class DefaultBatchStatement implements BatchStatement {
         pageSize,
         consistencyLevel,
         serialConsistencyLevel,
-        timeout);
+        timeout,
+        node);
   }
 
   @Override
@@ -651,7 +702,8 @@ public class DefaultBatchStatement implements BatchStatement {
         pageSize,
         consistencyLevel,
         serialConsistencyLevel,
-        timeout);
+        timeout,
+        node);
   }
 
   @NonNull
@@ -674,6 +726,7 @@ public class DefaultBatchStatement implements BatchStatement {
         pageSize,
         consistencyLevel,
         serialConsistencyLevel,
-        newTimeout);
+        newTimeout,
+        node);
   }
 }

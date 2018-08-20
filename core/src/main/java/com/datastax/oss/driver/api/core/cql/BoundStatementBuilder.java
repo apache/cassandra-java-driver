@@ -167,6 +167,7 @@ public class BoundStatementBuilder extends StatementBuilder<BoundStatementBuilde
         serialConsistencyLevel,
         timeout,
         codecRegistry,
-        protocolVersion);
+        protocolVersion,
+        node);
   }
 }
