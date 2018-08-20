@@ -25,9 +25,11 @@ import com.datastax.driver.core.exceptions.DriverInternalError;
 import com.datastax.driver.core.exceptions.NoHostAvailableException;
 import com.datastax.driver.core.exceptions.OperationTimedOutException;
 import com.datastax.driver.core.exceptions.OverloadedException;
+import com.datastax.driver.core.exceptions.ReadFailureException;
 import com.datastax.driver.core.exceptions.ReadTimeoutException;
 import com.datastax.driver.core.exceptions.ServerError;
 import com.datastax.driver.core.exceptions.UnavailableException;
+import com.datastax.driver.core.exceptions.WriteFailureException;
 import com.datastax.driver.core.exceptions.WriteTimeoutException;
 import com.datastax.driver.core.policies.RetryPolicy;
 import com.datastax.driver.core.policies.RetryPolicy.RetryDecision.Type;
@@ -761,6 +763,23 @@ class RequestHandler {
                 write(connection, prepareAndRetry(toPrepare.getQueryString()));
                 // we're done for now, the prepareAndRetry callback will handle the rest
                 return;
+              case READ_FAILURE:
+                assert exceptionToReport instanceof ReadFailureException;
+                connection.release();
+                retry =
+                    computeRetryDecisionOnRequestError((ReadFailureException) exceptionToReport);
+                break;
+              case WRITE_FAILURE:
+                assert exceptionToReport instanceof WriteFailureException;
+                connection.release();
+                if (statement.isIdempotentWithDefault(
+                    manager.cluster.getConfiguration().getQueryOptions())) {
+                  retry =
+                      computeRetryDecisionOnRequestError((WriteFailureException) exceptionToReport);
+                } else {
+                  retry = RetryPolicy.RetryDecision.rethrow();
+                }
+                break;
               default:
                 connection.release();
                 if (metricsEnabled()) metrics().getErrorMetrics().getOthers().inc();

@@ -19,8 +19,10 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.scassandra.http.client.Consistency.SERIAL;
 import static org.scassandra.http.client.PrimingRequest.then;
 import static org.scassandra.http.client.Result.closed_connection;
+import static org.scassandra.http.client.Result.read_failure;
 import static org.scassandra.http.client.Result.read_request_timeout;
 import static org.scassandra.http.client.Result.unavailable;
+import static org.scassandra.http.client.Result.write_failure;
 import static org.scassandra.http.client.Result.write_request_timeout;
 import static org.scassandra.http.client.WriteTypePrime.UNLOGGED_BATCH;
 import static org.testng.Assert.fail;
@@ -31,9 +33,11 @@ import com.datastax.driver.core.WriteType;
 import com.datastax.driver.core.exceptions.DriverException;
 import com.datastax.driver.core.exceptions.NoHostAvailableException;
 import com.datastax.driver.core.exceptions.OperationTimedOutException;
+import com.datastax.driver.core.exceptions.ReadFailureException;
 import com.datastax.driver.core.exceptions.ReadTimeoutException;
 import com.datastax.driver.core.exceptions.TransportException;
 import com.datastax.driver.core.exceptions.UnavailableException;
+import com.datastax.driver.core.exceptions.WriteFailureException;
 import com.datastax.driver.core.exceptions.WriteTimeoutException;
 import org.assertj.core.api.Assertions;
 import org.assertj.core.api.Fail;
@@ -517,6 +521,46 @@ public class DowngradingConsistencyRetryPolicyIntegrationTest
     assertThat(errors.getRetriesOnUnavailable().getCount()).isEqualTo(1);
     assertQueried(1, 1);
     assertQueried(2, 1);
+    assertQueried(3, 0);
+  }
+
+  @Test(groups = "short")
+  public void should_rethrow_on_read_failure() {
+    simulateError(1, read_failure);
+
+    try {
+      query();
+      fail("expected a ReadFailureException");
+    } catch (DriverException e) {
+      assertThat(e).isInstanceOf(ReadFailureException.class);
+    }
+
+    assertOnRequestErrorWasCalled(1, ReadFailureException.class);
+    assertThat(errors.getOthers().getCount()).isEqualTo(1);
+    assertThat(errors.getRetries().getCount()).isEqualTo(0);
+    assertThat(errors.getRetriesOnOtherErrors().getCount()).isEqualTo(0);
+    assertQueried(1, 1);
+    assertQueried(2, 0);
+    assertQueried(3, 0);
+  }
+
+  @Test(groups = "short")
+  public void should_rethrow_on_write_failure() {
+    simulateError(1, write_failure);
+
+    try {
+      query();
+      fail("expected a WriteFailureException");
+    } catch (DriverException e) {
+      assertThat(e).isInstanceOf(WriteFailureException.class);
+    }
+
+    assertOnRequestErrorWasCalled(1, WriteFailureException.class);
+    assertThat(errors.getOthers().getCount()).isEqualTo(1);
+    assertThat(errors.getRetries().getCount()).isEqualTo(0);
+    assertThat(errors.getRetriesOnOtherErrors().getCount()).isEqualTo(0);
+    assertQueried(1, 1);
+    assertQueried(2, 0);
     assertQueried(3, 0);
   }
 }

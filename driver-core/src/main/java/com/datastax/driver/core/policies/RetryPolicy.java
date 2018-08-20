@@ -267,8 +267,8 @@ public interface RetryPolicy {
    *   <li>On a client timeout, while waiting for the server response (see {@link
    *       SocketOptions#getReadTimeoutMillis()});
    *   <li>On a connection error (socket closed, etc.);
-   *   <li>When the contacted host replies with an {@code OVERLOADED} error or a {@code
-   *       SERVER_ERROR}.
+   *   <li>When the contacted host replies with an {@code OVERLOADED} error, {@code SERVER_ERROR},
+   *       {@code READ_FAILURE} or {@code WRITE_FAILURE}.
    * </ol>
    *
    * <p>Note that when such an error occurs, there is no guarantee that the mutation has been
