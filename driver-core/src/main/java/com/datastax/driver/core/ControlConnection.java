@@ -708,9 +708,11 @@ class ControlConnection implements Connection.Owner {
 
             @Override
             public void onFailure(Throwable t) {
-              // downgrade to system.peers if we get an invalid query or server error as this
-              // indicates the peers_v2 table does not exist.
-              if (t instanceof InvalidQueryException || t instanceof ServerError) {
+              // downgrade to system.peers if we get an invalid query or server error with specific
+              // message as this indicates the peers_v2 table does not exist.
+              if (t instanceof InvalidQueryException
+                  || (t instanceof ServerError
+                      && t.getMessage().contains("Unknown keyspace/cf pair (system.peers_v2)"))) {
                 isPeersV2 = false;
                 MoreFutures.propagateFuture(peersFuture, selectPeersFuture(connection));
               } else {
