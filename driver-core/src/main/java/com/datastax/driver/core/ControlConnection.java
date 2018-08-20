@@ -23,6 +23,7 @@ import com.datastax.driver.core.exceptions.DriverException;
 import com.datastax.driver.core.exceptions.DriverInternalError;
 import com.datastax.driver.core.exceptions.InvalidQueryException;
 import com.datastax.driver.core.exceptions.NoHostAvailableException;
+import com.datastax.driver.core.exceptions.ServerError;
 import com.datastax.driver.core.exceptions.UnsupportedProtocolVersionException;
 import com.datastax.driver.core.utils.MoreFutures;
 import com.datastax.driver.core.utils.MoreObjects;
@@ -707,9 +708,9 @@ class ControlConnection implements Connection.Owner {
 
             @Override
             public void onFailure(Throwable t) {
-              // downgrade to system.peers if we get an invalid query as this indicates
-              // the peers_v2 table does not exist.
-              if (t instanceof InvalidQueryException) {
+              // downgrade to system.peers if we get an invalid query or server error as this
+              // indicates the peers_v2 table does not exist.
+              if (t instanceof InvalidQueryException || t instanceof ServerError) {
                 isPeersV2 = false;
                 MoreFutures.propagateFuture(peersFuture, selectPeersFuture(connection));
               } else {
