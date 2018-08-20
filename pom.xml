@@ -315,8 +315,6 @@
           <target>1.8</target>
           <compilerArgs combine.children="override">
             <compilerArg>-Xep:FutureReturnValueIgnored:OFF</compilerArg>
-            <!-- Too limited, does not detect locks acquired by a calling method: -->
-            <compilerArg>-Xep:GuardedBy:OFF</compilerArg>
           </compilerArgs>
           <showWarnings>true</showWarnings>
           <failOnWarning>true</failOnWarning>
