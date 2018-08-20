@@ -633,9 +633,14 @@ public class Cluster implements Closeable {
   }
 
   private static void checkNotClosed(Manager manager) {
-    if (manager.isClosed())
+    if (manager.errorDuringInit()) {
+      throw new IllegalStateException(
+          "Can't use this cluster instance because it encountered an error in its initialization",
+          manager.getInitException());
+    } else if (manager.isClosed()) {
       throw new IllegalStateException(
           "Can't use this cluster instance because it was previously closed");
+    }
   }
 
   /**
@@ -1385,9 +1390,9 @@ public class Cluster implements Closeable {
   class Manager implements Connection.DefaultResponseHandler {
 
     final String clusterName;
-    private boolean isInit;
+    private volatile boolean isInit;
     private volatile boolean isFullyInit;
-
+    private Exception initException;
     // Initial contacts point
     final List<InetSocketAddress> contactPoints;
     final Set<SessionManager> sessions = new CopyOnWriteArraySet<SessionManager>();
@@ -1448,119 +1453,121 @@ public class Cluster implements Closeable {
     // on it so synchronized is good enough.
     synchronized void init() {
       checkNotClosed(this);
-      if (isInit) return;
-      isInit = true;
-
-      logger.debug("Starting new cluster with contact points " + contactPoints);
-
-      this.configuration.register(this);
-
-      ThreadingOptions threadingOptions = this.configuration.getThreadingOptions();
-
-      // executor
-      ExecutorService tmpExecutor = threadingOptions.createExecutor(clusterName);
-      this.executorQueue =
-          (tmpExecutor instanceof ThreadPoolExecutor)
-              ? ((ThreadPoolExecutor) tmpExecutor).getQueue()
-              : null;
-      this.executor = MoreExecutors.listeningDecorator(tmpExecutor);
-
-      // blocking executor
-      ExecutorService tmpBlockingExecutor = threadingOptions.createBlockingExecutor(clusterName);
-      this.blockingExecutorQueue =
-          (tmpBlockingExecutor instanceof ThreadPoolExecutor)
-              ? ((ThreadPoolExecutor) tmpBlockingExecutor).getQueue()
-              : null;
-      this.blockingExecutor = MoreExecutors.listeningDecorator(tmpBlockingExecutor);
-
-      // reconnection executor
-      this.reconnectionExecutor = threadingOptions.createReconnectionExecutor(clusterName);
-      this.reconnectionExecutorQueue =
-          (reconnectionExecutor instanceof ThreadPoolExecutor)
-              ? ((ThreadPoolExecutor) reconnectionExecutor).getQueue()
-              : null;
-
-      // scheduled tasks executor
-      this.scheduledTasksExecutor = threadingOptions.createScheduledTasksExecutor(clusterName);
-      this.scheduledTasksExecutorQueue =
-          (scheduledTasksExecutor instanceof ThreadPoolExecutor)
-              ? ((ThreadPoolExecutor) scheduledTasksExecutor).getQueue()
-              : null;
-
-      this.reaper = new ConnectionReaper(threadingOptions.createReaperExecutor(clusterName));
-      this.metadata = new Metadata(this);
-      this.connectionFactory = new Connection.Factory(this, configuration);
-      this.controlConnection = new ControlConnection(this);
-      this.metrics = configuration.getMetricsOptions().isEnabled() ? new Metrics(this) : null;
-      this.preparedQueries = new MapMaker().weakValues().makeMap();
-
-      // create debouncers - at this stage, they are not running yet
-      final QueryOptions queryOptions = configuration.getQueryOptions();
-      this.nodeListRefreshRequestDebouncer =
-          new EventDebouncer<NodeListRefreshRequest>(
-              "Node list refresh",
-              scheduledTasksExecutor,
-              new NodeListRefreshRequestDeliveryCallback()) {
-
-            @Override
-            int maxPendingEvents() {
-              return configuration.getQueryOptions().getMaxPendingRefreshNodeListRequests();
-            }
-
-            @Override
-            long delayMs() {
-              return configuration.getQueryOptions().getRefreshNodeListIntervalMillis();
-            }
-          };
-      this.nodeRefreshRequestDebouncer =
-          new EventDebouncer<NodeRefreshRequest>(
-              "Node refresh", scheduledTasksExecutor, new NodeRefreshRequestDeliveryCallback()) {
-
-            @Override
-            int maxPendingEvents() {
-              return configuration.getQueryOptions().getMaxPendingRefreshNodeRequests();
-            }
-
-            @Override
-            long delayMs() {
-              return configuration.getQueryOptions().getRefreshNodeIntervalMillis();
-            }
-          };
-      this.schemaRefreshRequestDebouncer =
-          new EventDebouncer<SchemaRefreshRequest>(
-              "Schema refresh",
-              scheduledTasksExecutor,
-              new SchemaRefreshRequestDeliveryCallback()) {
-
-            @Override
-            int maxPendingEvents() {
-              return configuration.getQueryOptions().getMaxPendingRefreshSchemaRequests();
-            }
-
-            @Override
-            long delayMs() {
-              return configuration.getQueryOptions().getRefreshSchemaIntervalMillis();
-            }
-          };
-
-      this.scheduledTasksExecutor.scheduleWithFixedDelay(
-          new CleanupIdleConnectionsTask(), 10, 10, TimeUnit.SECONDS);
-
-      for (InetSocketAddress address : contactPoints) {
-        // We don't want to signal -- call onAdd() -- because nothing is ready
-        // yet (loadbalancing policy, control connection, ...). All we want is
-        // create the Host object so we can initialize the control connection.
-        metadata.addIfAbsent(metadata.newHost(address));
+      if (isInit) {
+        return;
       }
-
-      Collection<Host> allHosts = metadata.allHosts();
-
-      // At this stage, metadata.allHosts() only contains the contact points, that's what we want to
-      // pass to LBP.init().
-      // But the control connection will initialize first and discover more hosts, so make a copy.
-      Set<Host> contactPointHosts = Sets.newHashSet(allHosts);
-
+      isInit = true;
       try {
+        logger.debug("Starting new cluster with contact points " + contactPoints);
+
+        this.configuration.register(this);
+
+        ThreadingOptions threadingOptions = this.configuration.getThreadingOptions();
+
+        // executor
+        ExecutorService tmpExecutor = threadingOptions.createExecutor(clusterName);
+        this.executorQueue =
+            (tmpExecutor instanceof ThreadPoolExecutor)
+                ? ((ThreadPoolExecutor) tmpExecutor).getQueue()
+                : null;
+        this.executor = MoreExecutors.listeningDecorator(tmpExecutor);
+
+        // blocking executor
+        ExecutorService tmpBlockingExecutor = threadingOptions.createBlockingExecutor(clusterName);
+        this.blockingExecutorQueue =
+            (tmpBlockingExecutor instanceof ThreadPoolExecutor)
+                ? ((ThreadPoolExecutor) tmpBlockingExecutor).getQueue()
+                : null;
+        this.blockingExecutor = MoreExecutors.listeningDecorator(tmpBlockingExecutor);
+
+        // reconnection executor
+        this.reconnectionExecutor = threadingOptions.createReconnectionExecutor(clusterName);
+        this.reconnectionExecutorQueue =
+            (reconnectionExecutor instanceof ThreadPoolExecutor)
+                ? ((ThreadPoolExecutor) reconnectionExecutor).getQueue()
+                : null;
+
+        // scheduled tasks executor
+        this.scheduledTasksExecutor = threadingOptions.createScheduledTasksExecutor(clusterName);
+        this.scheduledTasksExecutorQueue =
+            (scheduledTasksExecutor instanceof ThreadPoolExecutor)
+                ? ((ThreadPoolExecutor) scheduledTasksExecutor).getQueue()
+                : null;
+
+        this.reaper = new ConnectionReaper(threadingOptions.createReaperExecutor(clusterName));
+        this.metadata = new Metadata(this);
+        this.connectionFactory = new Connection.Factory(this, configuration);
+        this.controlConnection = new ControlConnection(this);
+        this.metrics = configuration.getMetricsOptions().isEnabled() ? new Metrics(this) : null;
+        this.preparedQueries = new MapMaker().weakValues().makeMap();
+
+        // create debouncers - at this stage, they are not running yet
+        final QueryOptions queryOptions = configuration.getQueryOptions();
+        this.nodeListRefreshRequestDebouncer =
+            new EventDebouncer<NodeListRefreshRequest>(
+                "Node list refresh",
+                scheduledTasksExecutor,
+                new NodeListRefreshRequestDeliveryCallback()) {
+
+              @Override
+              int maxPendingEvents() {
+                return configuration.getQueryOptions().getMaxPendingRefreshNodeListRequests();
+              }
+
+              @Override
+              long delayMs() {
+                return configuration.getQueryOptions().getRefreshNodeListIntervalMillis();
+              }
+            };
+        this.nodeRefreshRequestDebouncer =
+            new EventDebouncer<NodeRefreshRequest>(
+                "Node refresh", scheduledTasksExecutor, new NodeRefreshRequestDeliveryCallback()) {
+
+              @Override
+              int maxPendingEvents() {
+                return configuration.getQueryOptions().getMaxPendingRefreshNodeRequests();
+              }
+
+              @Override
+              long delayMs() {
+                return configuration.getQueryOptions().getRefreshNodeIntervalMillis();
+              }
+            };
+        this.schemaRefreshRequestDebouncer =
+            new EventDebouncer<SchemaRefreshRequest>(
+                "Schema refresh",
+                scheduledTasksExecutor,
+                new SchemaRefreshRequestDeliveryCallback()) {
+
+              @Override
+              int maxPendingEvents() {
+                return configuration.getQueryOptions().getMaxPendingRefreshSchemaRequests();
+              }
+
+              @Override
+              long delayMs() {
+                return configuration.getQueryOptions().getRefreshSchemaIntervalMillis();
+              }
+            };
+
+        this.scheduledTasksExecutor.scheduleWithFixedDelay(
+            new CleanupIdleConnectionsTask(), 10, 10, TimeUnit.SECONDS);
+
+        for (InetSocketAddress address : contactPoints) {
+          // We don't want to signal -- call onAdd() -- because nothing is ready
+          // yet (loadbalancing policy, control connection, ...). All we want is
+          // create the Host object so we can initialize the control connection.
+          metadata.addIfAbsent(metadata.newHost(address));
+        }
+
+        Collection<Host> allHosts = metadata.allHosts();
+
+        // At this stage, metadata.allHosts() only contains the contact points, that's what we want
+        // to
+        // pass to LBP.init().
+        // But the control connection will initialize first and discover more hosts, so make a copy.
+        Set<Host> contactPointHosts = Sets.newHashSet(allHosts);
+
         negotiateProtocolVersionAndConnect();
 
         // The control connection can mark hosts down if it failed to connect to them, or remove
@@ -1631,7 +1638,8 @@ public class Cluster implements Closeable {
         this.nodeRefreshRequestDebouncer.start();
 
         isFullyInit = true;
-      } catch (NoHostAvailableException e) {
+      } catch (RuntimeException e) {
+        initException = e;
         close();
         throw e;
       }
@@ -1717,6 +1725,14 @@ public class Cluster implements Closeable {
       return closeFuture.get() != null;
     }
 
+    boolean errorDuringInit() {
+      return (isInit && initException != null);
+    }
+
+    Exception getInitException() {
+      return initException;
+    }
+
     private CloseFuture close() {
 
       CloseFuture future = closeFuture.get();
@@ -1726,9 +1742,15 @@ public class Cluster implements Closeable {
         logger.debug("Shutting down");
 
         // stop debouncers
-        nodeListRefreshRequestDebouncer.stop();
-        nodeRefreshRequestDebouncer.stop();
-        schemaRefreshRequestDebouncer.stop();
+        if (nodeListRefreshRequestDebouncer != null) {
+          nodeListRefreshRequestDebouncer.stop();
+        }
+        if (nodeRefreshRequestDebouncer != null) {
+          nodeRefreshRequestDebouncer.stop();
+        }
+        if (schemaRefreshRequestDebouncer != null) {
+          schemaRefreshRequestDebouncer.stop();
+        }
 
         // If we're shutting down, there is no point in waiting on scheduled reconnections, nor on
         // notifications
@@ -1739,7 +1761,9 @@ public class Cluster implements Closeable {
 
         // but for the worker executor, we want to let submitted tasks finish unless the shutdown is
         // forced.
-        executor.shutdown();
+        if (executor != null) {
+          executor.shutdown();
+        }
 
         // We also close the metrics
         if (metrics != null) metrics.shutdown();
@@ -1756,7 +1780,9 @@ public class Cluster implements Closeable {
 
         // Then we shutdown all connections
         List<CloseFuture> futures = new ArrayList<CloseFuture>(sessions.size() + 1);
-        futures.add(controlConnection.closeAsync());
+        if (controlConnection != null) {
+          futures.add(controlConnection.closeAsync());
+        }
         for (Session session : sessions) futures.add(session.closeAsync());
 
         future = new ClusterCloseFuture(futures);
@@ -1771,11 +1797,13 @@ public class Cluster implements Closeable {
     }
 
     private void shutdownNow(ExecutorService executor) {
-      List<Runnable> pendingTasks = executor.shutdownNow();
-      // If some tasks were submitted to this executor but not yet commenced, make sure the
-      // corresponding futures complete
-      for (Runnable pendingTask : pendingTasks) {
-        if (pendingTask instanceof FutureTask<?>) ((FutureTask<?>) pendingTask).cancel(false);
+      if (executor != null) {
+        List<Runnable> pendingTasks = executor.shutdownNow();
+        // If some tasks were submitted to this executor but not yet commenced, make sure the
+        // corresponding futures complete
+        for (Runnable pendingTask : pendingTasks) {
+          if (pendingTask instanceof FutureTask<?>) ((FutureTask<?>) pendingTask).cancel(false);
+        }
       }
     }
 
@@ -2729,17 +2757,27 @@ public class Cluster implements Closeable {
                 // user
                 // call force(), we'll never really block forever.
                 try {
-                  reconnectionExecutor.awaitTermination(Long.MAX_VALUE, TimeUnit.SECONDS);
-                  scheduledTasksExecutor.awaitTermination(Long.MAX_VALUE, TimeUnit.SECONDS);
-                  executor.awaitTermination(Long.MAX_VALUE, TimeUnit.SECONDS);
-                  blockingExecutor.awaitTermination(Long.MAX_VALUE, TimeUnit.SECONDS);
+                  if (reconnectionExecutor != null) {
+                    reconnectionExecutor.awaitTermination(Long.MAX_VALUE, TimeUnit.SECONDS);
+                  }
+                  if (scheduledTasksExecutor != null) {
+                    scheduledTasksExecutor.awaitTermination(Long.MAX_VALUE, TimeUnit.SECONDS);
+                  }
+                  if (executor != null) {
+                    executor.awaitTermination(Long.MAX_VALUE, TimeUnit.SECONDS);
+                  }
+                  if (blockingExecutor != null) {
+                    blockingExecutor.awaitTermination(Long.MAX_VALUE, TimeUnit.SECONDS);
+                  }
 
                   // Some of the jobs on the executors can be doing query stuff, so close the
                   // connectionFactory at the very last
-                  connectionFactory.shutdown();
-
-                  reaper.shutdown();
-
+                  if (connectionFactory != null) {
+                    connectionFactory.shutdown();
+                  }
+                  if (reaper != null) {
+                    reaper.shutdown();
+                  }
                   set(null);
                 } catch (InterruptedException e) {
                   Thread.currentThread().interrupt();

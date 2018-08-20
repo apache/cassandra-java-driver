@@ -27,6 +27,7 @@ import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
 import static org.scassandra.http.client.PrimingRequest.then;
 
+import com.datastax.driver.core.exceptions.DriverInternalError;
 import com.datastax.driver.core.exceptions.NoHostAvailableException;
 import com.datastax.driver.core.policies.ConstantReconnectionPolicy;
 import com.google.common.collect.ImmutableMap;
@@ -276,6 +277,70 @@ public class ClusterInitTest {
       }
     } finally {
       cluster.close();
+      scassandraCluster.stop();
+    }
+  }
+  /**
+   * Ensures that if an error occurs doing initialization that subsequent attempts to use the
+   * cluster result in an appropriate error.
+   *
+   * @jira_ticket JAVA-1220
+   * @test_category host:state
+   */
+  @Test(groups = "short")
+  public void should_detect_cluster_init_failure_and_close_cluster() {
+    Cluster cluster =
+        Cluster.builder()
+            .addContactPointsWithPorts(new InetSocketAddress("127.0.0.1", 65534))
+            .withNettyOptions(nonQuietClusterCloseOptions)
+            .build();
+    try {
+      cluster.connect();
+      fail("Should not have been able to connect.");
+    } catch (NoHostAvailableException e) {
+      try {
+        cluster.connect();
+        fail("Should error when connect is called.");
+      } catch (IllegalStateException e1) {
+        assertThat(e1.getCause()).isSameAs(e);
+        assertThat(e1)
+            .hasMessage(
+                "Can't use this cluster instance because it encountered an error in its initialization");
+      }
+    } finally {
+      cluster.close();
+    }
+  }
+  /**
+   * Ensures that if a cluster is closed, subsequent attempts to the use the session will throw a
+   * useful error.
+   *
+   * @jira_ticket JAVA-1929
+   * @test_category host:state
+   */
+  @Test(groups = "short")
+  public void session_should_detect_cluster_close() {
+    ScassandraCluster scassandraCluster =
+        ScassandraCluster.builder().withIpPrefix(TestUtils.IP_PREFIX).build();
+    Cluster cluster =
+        Cluster.builder()
+            .addContactPoints(scassandraCluster.address(1).getAddress())
+            .withPort(scassandraCluster.getBinaryPort())
+            .withNettyOptions(nonQuietClusterCloseOptions)
+            .build();
+
+    try {
+      scassandraCluster.init();
+      Session session = cluster.connect();
+      cluster.close();
+      try {
+        session.execute("SELECTS * FROM system.peers");
+        fail("Should have failed when session.execute was called on cluster that was closed");
+      } catch (DriverInternalError e) {
+        assertThat(e.getCause()).isInstanceOf(IllegalStateException.class);
+        assertThat(e.getCause()).hasMessage("Could not send request, session is closed");
+      }
+    } finally {
       scassandraCluster.stop();
     }
   }

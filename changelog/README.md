@@ -20,6 +20,9 @@
 - [improvement] JAVA-1388: Add dynamic port discovery for system.peers\_v2.
 - [documentation] JAVA-1810: Note which setters are not propagated to PreparedStatement.
 - [bug] JAVA-1944: Surface Read and WriteFailureException to RetryPolicy.
+- [bug] JAVA-1211: Fix NPE in cluster close when cluster init fails.
+- [bug] JAVA-1220: Fail fast on cluster init if previous init failed.
+- [bug] JAVA-1929: Preempt session execute queries if session was closed.
 
 Merged from 3.5.x:
 
