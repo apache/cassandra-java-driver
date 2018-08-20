@@ -304,8 +304,6 @@ public class CcmBridge implements AutoCloseable {
   /**
    * Extracts a keystore from the classpath into a temporary file.
    *
-   * <p>
-   *
    * <p>This is needed as the keystore could be part of a built test jar used by other projects, and
    * they need to be extracted to a file system so cassandra may use them.
    *
