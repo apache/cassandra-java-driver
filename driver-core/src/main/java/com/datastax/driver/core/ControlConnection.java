@@ -23,6 +23,7 @@ import com.datastax.driver.core.exceptions.DriverException;
 import com.datastax.driver.core.exceptions.DriverInternalError;
 import com.datastax.driver.core.exceptions.InvalidQueryException;
 import com.datastax.driver.core.exceptions.NoHostAvailableException;
+import com.datastax.driver.core.exceptions.ServerError;
 import com.datastax.driver.core.exceptions.UnsupportedProtocolVersionException;
 import com.datastax.driver.core.utils.MoreFutures;
 import com.datastax.driver.core.utils.MoreObjects;
@@ -707,9 +708,13 @@ class ControlConnection implements Connection.Owner {
 
             @Override
             public void onFailure(Throwable t) {
-              // downgrade to system.peers if we get an invalid query as this indicates
-              // the peers_v2 table does not exist.
-              if (t instanceof InvalidQueryException) {
+              // Downgrade to system.peers if we get an invalid query error as this indicates the
+              // peers_v2 table does not exist.
+              // Also downgrade on server error with a specific error message (DSE 6.0.0 to 6.0.2
+              // with search enabled.
+              if (t instanceof InvalidQueryException
+                  || (t instanceof ServerError
+                      && t.getMessage().contains("Unknown keyspace/cf pair (system.peers_v2)"))) {
                 isPeersV2 = false;
                 MoreFutures.propagateFuture(peersFuture, selectPeersFuture(connection));
               } else {
