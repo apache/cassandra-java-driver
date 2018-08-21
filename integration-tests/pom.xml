@@ -134,7 +134,6 @@
             <project.version>${project.version}</project.version>
             <assertj.version>${assertj.version}</assertj.version>
             <config.version>${config.version}</config.version>
-            <jctools.version>${jctools.version}</jctools.version>
             <commons-exec.version>${commons-exec.version}</commons-exec.version>
             <guava.version>${guava.version}</guava.version>
             <hdrhistogram.version>${hdrhistogram.version}</hdrhistogram.version>
@@ -159,7 +158,6 @@
             <project.version>${project.version}</project.version>
             <assertj.version>${assertj.version}</assertj.version>
             <config.version>${config.version}</config.version>
-            <jctools.version>${jctools.version}</jctools.version>
             <commons-exec.version>${commons-exec.version}</commons-exec.version>
             <guava.version>${guava.version}</guava.version>
             <hdrhistogram.version>${hdrhistogram.version}</hdrhistogram.version>

@@ -26,11 +26,11 @@ import java.util.HashSet;
 import java.util.Queue;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import net.jcip.annotations.ThreadSafe;
-import org.jctools.queues.atomic.MpscLinkedAtomicQueue;
 
 /**
  * Default write coalescing strategy.
@@ -55,9 +55,8 @@ public class DefaultWriteCoalescer implements WriteCoalescer {
 
   public DefaultWriteCoalescer(DriverContext context) {
     DriverExecutionProfile config = context.getConfig().getDefaultProfile();
-    this.maxRunsWithNoWork = config.getInt(DefaultDriverOption.COALESCER_MAX_RUNS);
-    this.rescheduleIntervalNanos =
-        config.getDuration(DefaultDriverOption.COALESCER_INTERVAL).toNanos();
+    maxRunsWithNoWork = config.getInt(DefaultDriverOption.COALESCER_MAX_RUNS);
+    rescheduleIntervalNanos = config.getDuration(DefaultDriverOption.COALESCER_INTERVAL).toNanos();
   }
 
   @Override
@@ -77,7 +76,7 @@ public class DefaultWriteCoalescer implements WriteCoalescer {
     private final EventLoop eventLoop;
 
     // These variables are accessed both from client threads and the event loop
-    private final Queue<Write> writes = new MpscLinkedAtomicQueue<>();
+    private final Queue<Write> writes = new ConcurrentLinkedQueue<>();
     private final AtomicBoolean running = new AtomicBoolean();
 
     // These variables are accessed only from runOnEventLoop, they don't need to be thread-safe
