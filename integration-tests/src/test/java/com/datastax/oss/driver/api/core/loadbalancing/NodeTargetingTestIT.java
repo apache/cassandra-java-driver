@@ -51,6 +51,7 @@ public class NodeTargetingTestIT {
   @Before
   public void clear() {
     simulacron.cluster().clearLogs();
+    simulacron.cluster().clearPrimes(true);
   }
 
   @Test
