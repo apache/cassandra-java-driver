@@ -128,22 +128,16 @@
                   Include:
                   - The core driver itself; it is not relocated but needs to be included.
                   - All the dependencies we want to shade & relocate: currently
-                    - all the Netty artifacts;
-                    - JCTools.
+                    - all the Netty artifacts.
                   -->
                   <include>com.datastax.oss:java-driver-core</include>
                   <include>io.netty:*</include>
-                  <include>org.jctools:*</include>
                 </includes>
               </artifactSet>
               <relocations>
                 <relocation>
                   <pattern>io.netty</pattern>
                   <shadedPattern>com.datastax.oss.driver.shaded.netty</shadedPattern>
-                </relocation>
-                <relocation>
-                  <pattern>org.jctools</pattern>
-                  <shadedPattern>com.datastax.oss.driver.shaded.jctools</shadedPattern>
                 </relocation>
               </relocations>
             </configuration>
@@ -176,7 +170,6 @@
               <excludes>
                 META-INF/maven/com.datastax.oss/java-driver-core/**,
                 META-INF/maven/io.netty/**,
-                META-INF/maven/org.jctools/**
               </excludes>
             </configuration>
           </execution>
@@ -209,7 +202,6 @@
                 -->
                 <Import-Package>
                   !com.datastax.oss.driver.shaded.netty.*,
-                  !com.datastax.oss.driver.shaded.jctools.*,
                   !jnr.*,
                   !net.jcip.annotations.*,
                   !edu.umd.cs.findbugs.annotations.*,
@@ -238,7 +230,6 @@
                   com.datastax.oss.driver.api.core.*,
                   com.datastax.oss.driver.internal.core.*,
                   com.datastax.oss.driver.shaded.netty.*,
-                  com.datastax.oss.driver.shaded.jctools.*
                 </Export-Package>
               </instructions>
               <rebuildBundle>true</rebuildBundle>
