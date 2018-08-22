@@ -9,7 +9,7 @@ environment; please refer to our [OSGi examples repository].
 ### How to override Guava's version?
 
 The driver is compatible and tested with all versions of Guava in the range
-`[16.0.1,20)`.
+`[16.0.1,26.0-jre)`.
 
 If using Maven, you can force a more specific version by re-declaring
 the Guava dependency in your project, e.g.:
