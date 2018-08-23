@@ -31,6 +31,7 @@ import com.datastax.oss.driver.api.core.metadata.Node;
 import com.datastax.oss.driver.api.core.servererrors.UnavailableException;
 import com.datastax.oss.driver.api.testinfra.session.SessionRule;
 import com.datastax.oss.driver.api.testinfra.simulacron.SimulacronRule;
+import com.datastax.oss.driver.categories.ParallelizableTests;
 import com.datastax.oss.simulacron.common.cluster.ClusterSpec;
 import com.datastax.oss.simulacron.common.codec.ConsistencyLevel;
 import java.util.ArrayList;
@@ -39,7 +40,9 @@ import java.util.List;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
+import org.junit.experimental.categories.Category;
 
+@Category(ParallelizableTests.class)
 public class NodeTargetingIT {
 
   @Rule public SimulacronRule simulacron = new SimulacronRule(ClusterSpec.builder().withNodes(5));
@@ -94,7 +97,8 @@ public class NodeTargetingIT {
   @Test
   public void should_fail_if_host_is_not_connected() {
     // given a statement with host explicitly set that for which we have no active pool.
-    simulacron.cluster().node(4).close();
+
+    simulacron.cluster().node(4).stop();
     Collection<Node> nodeCol = sessionRule.session().getMetadata().getNodes().values();
     List<Node> nodes = new ArrayList<>(nodeCol);
     Node node4 = nodes.get(4);
