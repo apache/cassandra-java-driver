@@ -31,7 +31,6 @@ import com.datastax.oss.driver.api.core.metadata.Node;
 import com.datastax.oss.driver.api.core.servererrors.UnavailableException;
 import com.datastax.oss.driver.api.testinfra.session.SessionRule;
 import com.datastax.oss.driver.api.testinfra.simulacron.SimulacronRule;
-import com.datastax.oss.driver.categories.ParallelizableTests;
 import com.datastax.oss.simulacron.common.cluster.ClusterSpec;
 import com.datastax.oss.simulacron.common.codec.ConsistencyLevel;
 import java.util.ArrayList;
@@ -40,10 +39,8 @@ import java.util.List;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
-import org.junit.experimental.categories.Category;
 
-public class NodeTargetingIT
-{
+public class NodeTargetingIT {
 
   @Rule public SimulacronRule simulacron = new SimulacronRule(ClusterSpec.builder().withNodes(5));
 
@@ -86,7 +83,7 @@ public class NodeTargetingIT
     Statement statement = SimpleStatement.newInstance(query).setNode(node1);
     // when statement is executed an error should be raised.
     try {
-    sessionRule.session().execute(statement);
+      sessionRule.session().execute(statement);
       fail("Should have thrown NoNodeAvailableException");
     } catch (AllNodesFailedException e) {
       assertThat(e.getErrors().size()).isEqualTo(1);

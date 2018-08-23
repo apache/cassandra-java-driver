@@ -190,7 +190,7 @@ public class DefaultPrepareRequest implements PrepareRequest {
 
   @Nullable
   @Override
-  public Node getNode(){
+  public Node getNode() {
     return statement.getNode();
   }
 
