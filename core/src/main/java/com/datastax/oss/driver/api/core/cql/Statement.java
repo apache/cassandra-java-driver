@@ -94,11 +94,31 @@ public interface Statement<T extends Statement<T>> extends Request {
   @NonNull
   T setRoutingKeyspace(@Nullable CqlIdentifier newRoutingKeyspace);
 
+  /**
+   * Sets the {@link Node} that should handle this query.
+   *
+   * <p>In the general case, use of this method is <em>heavily discouraged</em> and should only be
+   * used in the following cases:
+   *
+   * <ol>
+   *   <li>Querying node-local tables, such as tables in the {@code system} and {@code system_views}
+   *       keyspaces.
+   *   <li>Applying a series of schema changes, where it may be advantageous to execute schema
+   *       changes in sequence on the same node.
+   * </ol>
+   *
+   * <p>Configuring a specific host causes the configured {@link
+   * com.datastax.oss.driver.api.core.loadbalancing.LoadBalancingPolicy} to be completely bypassed.
+   * However, if the load balancing policy dictates that the host is at distance {@link
+   * com.datastax.oss.driver.api.core.loadbalancing.NodeDistance#IGNORED} or there is no active
+   * connectivity to the node, the request will fail with a {@link }.
+   *
+   * @param node The host that should be used to handle executions of this statement or null to
+   *     delegate to the configured load balancing policy.
+   * @return this {@code Statement} object.
+   */
   @NonNull
   T setNode(@Nullable Node node);
-
-  @Nullable
-  Node getNode();
 
   /**
    * Shortcut for {@link #setRoutingKeyspace(CqlIdentifier)

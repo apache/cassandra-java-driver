@@ -103,6 +103,7 @@ public class DefaultPreparedStatement implements PreparedStatement {
     this.consistencyLevelForBoundStatements = consistencyLevelForBoundStatements;
     this.serialConsistencyLevelForBoundStatements = serialConsistencyLevelForBoundStatements;
     this.areBoundStatementsTracing = areBoundStatementsTracing;
+
     this.codecRegistry = codecRegistry;
     this.protocolVersion = protocolVersion;
   }

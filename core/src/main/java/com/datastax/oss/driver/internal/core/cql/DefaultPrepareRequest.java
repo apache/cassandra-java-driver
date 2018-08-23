@@ -21,6 +21,7 @@ import com.datastax.oss.driver.api.core.CqlSession;
 import com.datastax.oss.driver.api.core.config.DriverExecutionProfile;
 import com.datastax.oss.driver.api.core.cql.PrepareRequest;
 import com.datastax.oss.driver.api.core.cql.SimpleStatement;
+import com.datastax.oss.driver.api.core.metadata.Node;
 import com.datastax.oss.driver.api.core.metadata.token.Token;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import edu.umd.cs.findbugs.annotations.Nullable;
@@ -185,6 +186,12 @@ public class DefaultPrepareRequest implements PrepareRequest {
   @Override
   public ConsistencyLevel getSerialConsistencyLevelForBoundStatements() {
     return statement.getSerialConsistencyLevel();
+  }
+
+  @Nullable
+  @Override
+  public Node getNode(){
+    return statement.getNode();
   }
 
   @Override

@@ -4,12 +4,12 @@
 
 ### 4.0.0-beta2 (in progress)
 
+- [new feature] JAVA-1917: Add ability to set node on statement
 - [improvement] JAVA-1940: Clean up test resources when CCM integration tests finish
 - [bug] JAVA-1938: Make CassandraSchemaQueries classes public
 - [improvement] JAVA-1925: Rename context getters
 - [improvement] JAVA-1544: Check API compatibility with Revapi
 - [new feature] JAVA-1900: Add support for virtual tables
-- [new feature] JAVA-1917: Add ability to set node on statement
 
 ### 4.0.0-beta1
 

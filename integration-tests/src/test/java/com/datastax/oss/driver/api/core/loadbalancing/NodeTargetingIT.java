@@ -23,6 +23,7 @@ import static org.assertj.core.api.Fail.fail;
 
 import com.datastax.oss.driver.api.core.AllNodesFailedException;
 import com.datastax.oss.driver.api.core.CqlSession;
+import com.datastax.oss.driver.api.core.NoNodeAvailableException;
 import com.datastax.oss.driver.api.core.cql.ResultSet;
 import com.datastax.oss.driver.api.core.cql.SimpleStatement;
 import com.datastax.oss.driver.api.core.cql.Statement;
@@ -41,8 +42,8 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
-@Category(ParallelizableTests.class)
-public class NodeTargetingTestIT {
+public class NodeTargetingIT
+{
 
   @Rule public SimulacronRule simulacron = new SimulacronRule(ClusterSpec.builder().withNodes(5));
 
@@ -55,9 +56,9 @@ public class NodeTargetingTestIT {
   }
 
   @Test
-  public void should_use_host_on_statement() {
+  public void should_use_node_on_statement() {
     Collection<Node> nodeCol = sessionRule.session().getMetadata().getNodes().values();
-    List<Node> nodes = new ArrayList(nodeCol);
+    List<Node> nodes = new ArrayList<>(nodeCol);
     for (int i = 0; i < 10; i++) {
       int hostIndex = i % 4 + 1;
       Node node = nodes.get(hostIndex);
@@ -68,7 +69,6 @@ public class NodeTargetingTestIT {
       // when statement is executed
       ResultSet result = sessionRule.session().execute(statement);
 
-      Node coordinator = result.getExecutionInfo().getCoordinator();
       // then the query should have been sent to the configured host.
       assertThat(result.getExecutionInfo().getCoordinator()).isEqualTo(node);
     }
@@ -78,7 +78,7 @@ public class NodeTargetingTestIT {
   public void should_fail_if_host_fails_query() {
     String query = "mock";
     Collection<Node> nodeCol = sessionRule.session().getMetadata().getNodes().values();
-    List<Node> nodes = new ArrayList(nodeCol);
+    List<Node> nodes = new ArrayList<>(nodeCol);
     simulacron.cluster().node(3).prime(when(query).then(unavailable(ConsistencyLevel.ALL, 1, 0)));
 
     // given a statement with a host configured to fail the given query.
@@ -86,7 +86,7 @@ public class NodeTargetingTestIT {
     Statement statement = SimpleStatement.newInstance(query).setNode(node1);
     // when statement is executed an error should be raised.
     try {
-      ResultSet result = sessionRule.session().execute(statement);
+    sessionRule.session().execute(statement);
       fail("Should have thrown NoNodeAvailableException");
     } catch (AllNodesFailedException e) {
       assertThat(e.getErrors().size()).isEqualTo(1);
@@ -98,18 +98,16 @@ public class NodeTargetingTestIT {
   public void should_fail_if_host_is_not_connected() {
     // given a statement with host explicitly set that for which we have no active pool.
     simulacron.cluster().node(4).close();
-    ;
     Collection<Node> nodeCol = sessionRule.session().getMetadata().getNodes().values();
-    List<Node> nodes = new ArrayList(nodeCol);
+    List<Node> nodes = new ArrayList<>(nodeCol);
     Node node4 = nodes.get(4);
     Statement statement = SimpleStatement.newInstance("select * system.local").setNode(node4);
     try {
       // when statement is executed
       sessionRule.session().execute(statement);
       fail("Query should have failed");
-    } catch (AllNodesFailedException e) {
+    } catch (NoNodeAvailableException e) {
       assertThat(e.getErrors()).isEmpty();
     }
-    ;
   }
 }

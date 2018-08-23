@@ -53,6 +53,7 @@ import com.datastax.oss.driver.internal.core.metrics.NodeMetricUpdater;
 import com.datastax.oss.driver.internal.core.session.DefaultSession;
 import com.datastax.oss.driver.internal.core.session.RepreparePayload;
 import com.datastax.oss.driver.internal.core.util.Loggers;
+import com.datastax.oss.driver.internal.core.util.collection.QueryPlan;
 import com.datastax.oss.protocol.internal.Frame;
 import com.datastax.oss.protocol.internal.Message;
 import com.datastax.oss.protocol.internal.ProtocolConstants;
@@ -79,7 +80,6 @@ import java.util.Map;
 import java.util.Queue;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -155,8 +155,7 @@ public abstract class CqlRequestHandlerBase implements Throttled {
               : config.getProfile(profileName);
     }
     if (this.statement.getNode() != null) {
-      this.queryPlan = new ConcurrentLinkedQueue<Node>();
-      this.queryPlan.add(this.statement.getNode());
+      this.queryPlan = new QueryPlan(this.statement.getNode());
 
     } else {
       this.queryPlan =

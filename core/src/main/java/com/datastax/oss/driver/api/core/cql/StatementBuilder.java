@@ -202,6 +202,7 @@ public abstract class StatementBuilder<T extends StatementBuilder<T, S>, S exten
     return self;
   }
 
+  /** @see Statement#setNode(Node) */
   public T withNode(@Nullable Node node) {
     this.node = node;
     return self;
