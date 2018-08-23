@@ -98,10 +98,10 @@ public class NodeTargetingIT {
   public void should_fail_if_host_is_not_connected() {
     // given a statement with host explicitly set that for which we have no active pool.
 
-    simulacron.cluster().node(4).stop();
     Collection<Node> nodeCol = sessionRule.session().getMetadata().getNodes().values();
     List<Node> nodes = new ArrayList<>(nodeCol);
     Node node4 = nodes.get(4);
+    simulacron.cluster().node(4).stop();
     Statement statement = SimpleStatement.newInstance("select * system.local").setNode(node4);
     try {
       // when statement is executed
