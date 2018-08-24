@@ -41,6 +41,7 @@ import com.datastax.oss.protocol.internal.FrameCodec;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import edu.umd.cs.findbugs.annotations.Nullable;
 import io.netty.buffer.ByteBuf;
+import java.util.Map;
 import java.util.Optional;
 import java.util.function.Predicate;
 
@@ -128,4 +129,12 @@ public interface InternalDriverContext extends DriverContext {
    */
   @Nullable
   ClassLoader getClassLoader();
+
+  /**
+   * Retrieves the map of options to send in a Startup message. The returned map will be used to
+   * construct a {@link com.datastax.oss.protocol.internal.request.Startup} instance when
+   * initializing the native protocol handshake.
+   */
+  @NonNull
+  Map<String, String> getStartupOptions();
 }

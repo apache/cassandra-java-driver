@@ -142,7 +142,7 @@ class ProtocolInitHandler extends ConnectInitHandler {
     Message getRequest() {
       switch (step) {
         case STARTUP:
-          return new Startup(context.getCompressor().algorithm());
+          return new Startup(context.getStartupOptions());
         case GET_CLUSTER_NAME:
           return CLUSTER_NAME_QUERY;
         case SET_KEYSPACE:
