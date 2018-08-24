@@ -30,7 +30,6 @@ import com.datastax.oss.driver.internal.core.ProtocolVersionRegistry;
 import com.datastax.oss.driver.internal.core.TestResponses;
 import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableList;
-import com.datastax.oss.protocol.internal.Compressor;
 import com.datastax.oss.protocol.internal.Frame;
 import com.datastax.oss.protocol.internal.ProtocolConstants;
 import com.datastax.oss.protocol.internal.request.AuthResponse;
@@ -44,7 +43,6 @@ import com.datastax.oss.protocol.internal.response.Error;
 import com.datastax.oss.protocol.internal.response.Ready;
 import com.datastax.oss.protocol.internal.response.result.SetKeyspace;
 import com.datastax.oss.protocol.internal.util.Bytes;
-import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelFuture;
 import java.net.InetSocketAddress;
 import java.time.Duration;
@@ -64,7 +62,6 @@ public class ProtocolInitHandlerTest extends ChannelHandlerTestBase {
   @Mock private InternalDriverContext internalDriverContext;
   @Mock private DriverConfig driverConfig;
   @Mock private DriverExecutionProfile defaultProfile;
-  @Mock private Compressor<ByteBuf> compressor;
 
   private ProtocolVersionRegistry protocolVersionRegistry =
       new CassandraProtocolVersionRegistry("test");
@@ -83,8 +80,6 @@ public class ProtocolInitHandlerTest extends ChannelHandlerTestBase {
         .thenReturn(Duration.ofSeconds(30));
     Mockito.when(internalDriverContext.getProtocolVersionRegistry())
         .thenReturn(protocolVersionRegistry);
-    Mockito.when(internalDriverContext.getCompressor()).thenReturn(compressor);
-    Mockito.when(compressor.algorithm()).thenReturn(null);
 
     channel
         .pipeline()
@@ -120,8 +115,6 @@ public class ProtocolInitHandlerTest extends ChannelHandlerTestBase {
     // It should send a STARTUP message
     Frame requestFrame = readOutboundFrame();
     assertThat(requestFrame.message).isInstanceOf(Startup.class);
-    Startup startup = (Startup) requestFrame.message;
-    assertThat(startup.options).doesNotContainKey("COMPRESSION");
     assertThat(connectFuture).isNotDone();
 
     // Simulate a READY response
@@ -133,34 +126,6 @@ public class ProtocolInitHandlerTest extends ChannelHandlerTestBase {
     writeInboundFrame(requestFrame, TestResponses.clusterNameResponse("someClusterName"));
 
     // Init should complete
-    assertThat(connectFuture).isSuccess();
-  }
-
-  @Test
-  public void should_initialize_with_compression() {
-    Mockito.when(compressor.algorithm()).thenReturn("lz4");
-    channel
-        .pipeline()
-        .addLast(
-            "init",
-            new ProtocolInitHandler(
-                internalDriverContext,
-                DefaultProtocolVersion.V4,
-                null,
-                DriverChannelOptions.DEFAULT,
-                heartbeatHandler));
-
-    ChannelFuture connectFuture = channel.connect(new InetSocketAddress("localhost", 9042));
-
-    Frame requestFrame = readOutboundFrame();
-    assertThat(requestFrame.message).isInstanceOf(Startup.class);
-    Startup startup = (Startup) requestFrame.message;
-
-    // STARTUP message should request compression
-    assertThat(startup.options).containsEntry("COMPRESSION", "lz4");
-
-    writeInboundFrame(buildInboundFrame(requestFrame, new Ready()));
-    writeInboundFrame(readOutboundFrame(), TestResponses.clusterNameResponse("someClusterName"));
     assertThat(connectFuture).isSuccess();
   }
 
@@ -184,8 +149,6 @@ public class ProtocolInitHandlerTest extends ChannelHandlerTestBase {
     // It should send a STARTUP message
     Frame requestFrame = readOutboundFrame();
     assertThat(requestFrame.message).isInstanceOf(Startup.class);
-    Startup startup = (Startup) requestFrame.message;
-    assertThat(startup.options).doesNotContainKey("COMPRESSION");
     assertThat(connectFuture).isNotDone();
 
     // Simulate a READY response
