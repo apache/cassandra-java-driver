@@ -291,7 +291,7 @@ public class CcmBridge implements AutoCloseable {
       if (watchDog.killedProcess()) {
         throw new RuntimeException("The command '" + command + "' was killed after 10 minutes");
       } else {
-        throw new RuntimeException("The command '" + command + "' failed to execute");
+        throw new RuntimeException("The command '" + command + "' failed to execute", ex);
       }
     }
   }
