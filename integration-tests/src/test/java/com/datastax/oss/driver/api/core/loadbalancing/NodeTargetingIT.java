@@ -87,7 +87,7 @@ public class NodeTargetingIT {
     // when statement is executed an error should be raised.
     try {
       sessionRule.session().execute(statement);
-      fail("Should have thrown NoNodeAvailableException");
+      fail("Should have thrown AllNodesFailedException");
     } catch (AllNodesFailedException e) {
       assertThat(e.getErrors().size()).isEqualTo(1);
       assertThat(e.getErrors().get(node1)).isInstanceOf(UnavailableException.class);
