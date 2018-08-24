@@ -18,9 +18,12 @@ package com.datastax.oss.driver.api.core.cql;
 import com.datastax.oss.driver.api.core.ConsistencyLevel;
 import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.CqlSession;
+import com.datastax.oss.driver.api.core.NoNodeAvailableException;
 import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
 import com.datastax.oss.driver.api.core.config.DriverExecutionProfile;
 import com.datastax.oss.driver.api.core.context.DriverContext;
+import com.datastax.oss.driver.api.core.loadbalancing.LoadBalancingPolicy;
+import com.datastax.oss.driver.api.core.loadbalancing.NodeDistance;
 import com.datastax.oss.driver.api.core.metadata.Node;
 import com.datastax.oss.driver.api.core.metadata.token.Token;
 import com.datastax.oss.driver.api.core.session.Request;
@@ -107,11 +110,10 @@ public interface Statement<T extends Statement<T>> extends Request {
    *       changes in sequence on the same node.
    * </ol>
    *
-   * <p>Configuring a specific node causes the configured {@link
-   * com.datastax.oss.driver.api.core.loadbalancing.LoadBalancingPolicy} to be completely bypassed.
-   * However, if the load balancing policy dictates that the node is at distance {@link
-   * com.datastax.oss.driver.api.core.loadbalancing.NodeDistance#IGNORED} or there is no active
-   * connectivity to the node, the request will fail with a {@link }.
+   * <p>Configuring a specific node causes the configured {@link LoadBalancingPolicy} to be
+   * completely bypassed. However, if the load balancing policy dictates that the node is at
+   * distance {@link NodeDistance#IGNORED} or there is no active connectivity to the node, the
+   * request will fail with a {@link NoNodeAvailableException}.
    *
    * @param node The node that should be used to handle executions of this statement or null to
    *     delegate to the configured load balancing policy.
