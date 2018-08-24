@@ -191,7 +191,8 @@ public class DefaultPrepareRequest implements PrepareRequest {
   @Nullable
   @Override
   public Node getNode() {
-    return statement.getNode();
+    // never target prepare requests
+    return null;
   }
 
   @Override
