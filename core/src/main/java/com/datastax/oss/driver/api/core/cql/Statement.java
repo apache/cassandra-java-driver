@@ -117,7 +117,6 @@ public interface Statement<T extends Statement<T>> extends Request {
    *
    * @param node The node that should be used to handle executions of this statement or null to
    *     delegate to the configured load balancing policy.
-   * @return this {@code Statement} object.
    */
   @NonNull
   T setNode(@Nullable Node node);
