@@ -60,28 +60,28 @@ public class NodeTargetingIT {
     Collection<Node> nodeCol = sessionRule.session().getMetadata().getNodes().values();
     List<Node> nodes = new ArrayList<>(nodeCol);
     for (int i = 0; i < 10; i++) {
-      int hostIndex = i % 4 + 1;
-      Node node = nodes.get(hostIndex);
+      int nodeIndex = i % 4 + 1;
+      Node node = nodes.get(nodeIndex);
 
-      // given a statement with host explicitly set.
+      // given a statement with node explicitly set.
       Statement statement = SimpleStatement.newInstance("select * system.local").setNode(node);
 
       // when statement is executed
       ResultSet result = sessionRule.session().execute(statement);
 
-      // then the query should have been sent to the configured host.
+      // then the query should have been sent to the configured node.
       assertThat(result.getExecutionInfo().getCoordinator()).isEqualTo(node);
     }
   }
 
   @Test
-  public void should_fail_if_host_fails_query() {
+  public void should_fail_if_node_fails_query() {
     String query = "mock";
     Collection<Node> nodeCol = sessionRule.session().getMetadata().getNodes().values();
     List<Node> nodes = new ArrayList<>(nodeCol);
     simulacron.cluster().node(3).prime(when(query).then(unavailable(ConsistencyLevel.ALL, 1, 0)));
 
-    // given a statement with a host configured to fail the given query.
+    // given a statement with a node configured to fail the given query.
     Node node1 = nodes.get(3);
     Statement statement = SimpleStatement.newInstance(query).setNode(node1);
     // when statement is executed an error should be raised.
@@ -95,8 +95,8 @@ public class NodeTargetingIT {
   }
 
   @Test
-  public void should_fail_if_host_is_not_connected() {
-    // given a statement with host explicitly set that for which we have no active pool.
+  public void should_fail_if_node_is_not_connected() {
+    // given a statement with node explicitly set that for which we have no active pool.
 
     Collection<Node> nodeCol = sessionRule.session().getMetadata().getNodes().values();
     List<Node> nodes = new ArrayList<>(nodeCol);

@@ -107,13 +107,13 @@ public interface Statement<T extends Statement<T>> extends Request {
    *       changes in sequence on the same node.
    * </ol>
    *
-   * <p>Configuring a specific host causes the configured {@link
+   * <p>Configuring a specific node causes the configured {@link
    * com.datastax.oss.driver.api.core.loadbalancing.LoadBalancingPolicy} to be completely bypassed.
-   * However, if the load balancing policy dictates that the host is at distance {@link
+   * However, if the load balancing policy dictates that the node is at distance {@link
    * com.datastax.oss.driver.api.core.loadbalancing.NodeDistance#IGNORED} or there is no active
    * connectivity to the node, the request will fail with a {@link }.
    *
-   * @param node The host that should be used to handle executions of this statement or null to
+   * @param node The node that should be used to handle executions of this statement or null to
    *     delegate to the configured load balancing policy.
    * @return this {@code Statement} object.
    */

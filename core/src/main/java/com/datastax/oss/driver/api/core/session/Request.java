@@ -162,7 +162,7 @@ public interface Request {
   @Nullable
   Duration getTimeout();
 
-  /** @return The host configured on this statement, or null if none is configured. */
+  /** @return The node configured on this statement, or null if none is configured. */
   @Nullable
   Node getNode();
 }
