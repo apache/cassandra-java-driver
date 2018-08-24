@@ -112,9 +112,13 @@ public interface CqlSession extends Session {
    *   <li>{@link Request#getRoutingKeyspace() boundStatement.getRoutingKeyspace()} is set from
    *       either {@link Request#getKeyspace() simpleStatement.getKeyspace()} (if it's not {@code
    *       null}), or {@code simpleStatement.getRoutingKeyspace()};
-   *   <li>on the other hand, {@link Statement#getTimestamp() boundStatement.getTimestamp()} is
-   *       <b>not</b> copied from the simple statement. It will be set to {@link Long#MIN_VALUE},
-   *       meaning that the value will be assigned by the session's timestamp generator.
+   *   <li>on the other hand, the following attributes are <b>not</b> propagated:
+   *       <ul>
+   *         <li>{@link Statement#getTimestamp() boundStatement.getTimestamp()} will be set to
+   *             {@link Long#MIN_VALUE}, meaning that the value will be assigned by the session's
+   *             timestamp generator.
+   *         <li>{@link Statement#getNode() boundStatement.getNode()} will always be {@code null}.
+   *       </ul>
    * </ul>
    *
    * If you want to customize this behavior, you can write your own implementation of {@link
