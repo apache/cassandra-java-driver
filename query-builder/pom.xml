@@ -74,6 +74,9 @@
               !edu.umd.cs.findbugs.annotations.*,
               *
             </Import-Package>
+            <Export-Package>
+              com.datastax.oss.driver.*.querybuilder.*
+            </Export-Package>
           </instructions>
         </configuration>
       </plugin>
