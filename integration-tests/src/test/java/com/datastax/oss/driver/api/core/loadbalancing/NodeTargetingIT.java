@@ -53,6 +53,7 @@ public class NodeTargetingIT {
   public void clear() {
     simulacron.cluster().clearLogs();
     simulacron.cluster().clearPrimes(true);
+    simulacron.cluster().node(4).stop();
   }
 
   @Test
@@ -60,7 +61,7 @@ public class NodeTargetingIT {
     Collection<Node> nodeCol = sessionRule.session().getMetadata().getNodes().values();
     List<Node> nodes = new ArrayList<>(nodeCol);
     for (int i = 0; i < 10; i++) {
-      int nodeIndex = i % 4 + 1;
+      int nodeIndex = i % 3 + 1;
       Node node = nodes.get(nodeIndex);
 
       // given a statement with node explicitly set.
@@ -101,7 +102,7 @@ public class NodeTargetingIT {
     Collection<Node> nodeCol = sessionRule.session().getMetadata().getNodes().values();
     List<Node> nodes = new ArrayList<>(nodeCol);
     Node node4 = nodes.get(4);
-    simulacron.cluster().node(4).stop();
+
     Statement statement = SimpleStatement.newInstance("select * system.local").setNode(node4);
     try {
       // when statement is executed
