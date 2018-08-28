@@ -18,9 +18,13 @@ package com.datastax.oss.driver.api.core.cql;
 import com.datastax.oss.driver.api.core.ConsistencyLevel;
 import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.CqlSession;
+import com.datastax.oss.driver.api.core.NoNodeAvailableException;
 import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
 import com.datastax.oss.driver.api.core.config.DriverExecutionProfile;
 import com.datastax.oss.driver.api.core.context.DriverContext;
+import com.datastax.oss.driver.api.core.loadbalancing.LoadBalancingPolicy;
+import com.datastax.oss.driver.api.core.loadbalancing.NodeDistance;
+import com.datastax.oss.driver.api.core.metadata.Node;
 import com.datastax.oss.driver.api.core.metadata.token.Token;
 import com.datastax.oss.driver.api.core.session.Request;
 import com.datastax.oss.driver.api.core.session.Session;
@@ -92,6 +96,30 @@ public interface Statement<T extends Statement<T>> extends Request {
    */
   @NonNull
   T setRoutingKeyspace(@Nullable CqlIdentifier newRoutingKeyspace);
+
+  /**
+   * Sets the {@link Node} that should handle this query.
+   *
+   * <p>In the general case, use of this method is <em>heavily discouraged</em> and should only be
+   * used in the following cases:
+   *
+   * <ol>
+   *   <li>Querying node-local tables, such as tables in the {@code system} and {@code system_views}
+   *       keyspaces.
+   *   <li>Applying a series of schema changes, where it may be advantageous to execute schema
+   *       changes in sequence on the same node.
+   * </ol>
+   *
+   * <p>Configuring a specific node causes the configured {@link LoadBalancingPolicy} to be
+   * completely bypassed. However, if the load balancing policy dictates that the node is at
+   * distance {@link NodeDistance#IGNORED} or there is no active connectivity to the node, the
+   * request will fail with a {@link NoNodeAvailableException}.
+   *
+   * @param node The node that should be used to handle executions of this statement or null to
+   *     delegate to the configured load balancing policy.
+   */
+  @NonNull
+  T setNode(@Nullable Node node);
 
   /**
    * Shortcut for {@link #setRoutingKeyspace(CqlIdentifier)

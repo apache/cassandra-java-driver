@@ -176,6 +176,7 @@ public class SimpleStatementBuilder
         pageSize,
         consistencyLevel,
         serialConsistencyLevel,
-        timeout);
+        timeout,
+        node);
   }
 }

@@ -90,6 +90,7 @@ public class BoundStatementBuilder extends StatementBuilder<BoundStatementBuilde
     this.values = template.getValues().toArray(new ByteBuffer[this.variableDefinitions.size()]);
     this.codecRegistry = template.codecRegistry();
     this.protocolVersion = template.protocolVersion();
+    this.node = template.getNode();
   }
 
   @Override
@@ -167,6 +168,7 @@ public class BoundStatementBuilder extends StatementBuilder<BoundStatementBuilde
         serialConsistencyLevel,
         timeout,
         codecRegistry,
-        protocolVersion);
+        protocolVersion,
+        node);
   }
 }

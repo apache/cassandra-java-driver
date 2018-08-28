@@ -22,6 +22,7 @@ import com.datastax.oss.driver.api.core.config.DriverExecutionProfile;
 import com.datastax.oss.driver.api.core.cql.BoundStatement;
 import com.datastax.oss.driver.api.core.cql.ColumnDefinitions;
 import com.datastax.oss.driver.api.core.cql.PreparedStatement;
+import com.datastax.oss.driver.api.core.metadata.Node;
 import com.datastax.oss.driver.api.core.metadata.token.Token;
 import com.datastax.oss.driver.api.core.type.DataType;
 import com.datastax.oss.driver.api.core.type.codec.registry.CodecRegistry;
@@ -57,6 +58,7 @@ public class DefaultBoundStatement implements BoundStatement {
   private final Duration timeout;
   private final CodecRegistry codecRegistry;
   private final ProtocolVersion protocolVersion;
+  private final Node node;
 
   public DefaultBoundStatement(
       PreparedStatement preparedStatement,
@@ -77,7 +79,8 @@ public class DefaultBoundStatement implements BoundStatement {
       ConsistencyLevel serialConsistencyLevel,
       Duration timeout,
       CodecRegistry codecRegistry,
-      ProtocolVersion protocolVersion) {
+      ProtocolVersion protocolVersion,
+      Node node) {
     this.preparedStatement = preparedStatement;
     this.variableDefinitions = variableDefinitions;
     this.values = values;
@@ -97,6 +100,7 @@ public class DefaultBoundStatement implements BoundStatement {
     this.timeout = timeout;
     this.codecRegistry = codecRegistry;
     this.protocolVersion = protocolVersion;
+    this.node = node;
   }
 
   @Override
@@ -169,7 +173,8 @@ public class DefaultBoundStatement implements BoundStatement {
         serialConsistencyLevel,
         timeout,
         codecRegistry,
-        protocolVersion);
+        protocolVersion,
+        node);
   }
 
   @NonNull
@@ -211,7 +216,8 @@ public class DefaultBoundStatement implements BoundStatement {
         serialConsistencyLevel,
         timeout,
         codecRegistry,
-        protocolVersion);
+        protocolVersion,
+        node);
   }
 
   @Override
@@ -241,7 +247,8 @@ public class DefaultBoundStatement implements BoundStatement {
         serialConsistencyLevel,
         timeout,
         codecRegistry,
-        protocolVersion);
+        protocolVersion,
+        node);
   }
 
   @Override
@@ -278,7 +285,40 @@ public class DefaultBoundStatement implements BoundStatement {
         serialConsistencyLevel,
         timeout,
         codecRegistry,
-        protocolVersion);
+        protocolVersion,
+        node);
+  }
+
+  @NonNull
+  @Override
+  public BoundStatement setNode(@Nullable Node newNode) {
+    return new DefaultBoundStatement(
+        preparedStatement,
+        variableDefinitions,
+        values,
+        executionProfileName,
+        executionProfile,
+        routingKeyspace,
+        routingKey,
+        routingToken,
+        customPayload,
+        idempotent,
+        tracing,
+        timestamp,
+        pagingState,
+        pageSize,
+        consistencyLevel,
+        serialConsistencyLevel,
+        timeout,
+        codecRegistry,
+        protocolVersion,
+        newNode);
+  }
+
+  @Nullable
+  @Override
+  public Node getNode() {
+    return node;
   }
 
   @Override
@@ -328,7 +368,8 @@ public class DefaultBoundStatement implements BoundStatement {
         serialConsistencyLevel,
         timeout,
         codecRegistry,
-        protocolVersion);
+        protocolVersion,
+        node);
   }
 
   @Override
@@ -358,7 +399,8 @@ public class DefaultBoundStatement implements BoundStatement {
         serialConsistencyLevel,
         timeout,
         codecRegistry,
-        protocolVersion);
+        protocolVersion,
+        node);
   }
 
   @NonNull
@@ -389,7 +431,8 @@ public class DefaultBoundStatement implements BoundStatement {
         serialConsistencyLevel,
         timeout,
         codecRegistry,
-        protocolVersion);
+        protocolVersion,
+        node);
   }
 
   @Override
@@ -419,7 +462,8 @@ public class DefaultBoundStatement implements BoundStatement {
         serialConsistencyLevel,
         timeout,
         codecRegistry,
-        protocolVersion);
+        protocolVersion,
+        node);
   }
 
   @Override
@@ -449,7 +493,8 @@ public class DefaultBoundStatement implements BoundStatement {
         serialConsistencyLevel,
         timeout,
         codecRegistry,
-        protocolVersion);
+        protocolVersion,
+        node);
   }
 
   @Override
@@ -479,7 +524,8 @@ public class DefaultBoundStatement implements BoundStatement {
         serialConsistencyLevel,
         timeout,
         codecRegistry,
-        protocolVersion);
+        protocolVersion,
+        node);
   }
 
   @Nullable
@@ -510,7 +556,8 @@ public class DefaultBoundStatement implements BoundStatement {
         serialConsistencyLevel,
         newTimeout,
         codecRegistry,
-        protocolVersion);
+        protocolVersion,
+        node);
   }
 
   @Override
@@ -540,7 +587,8 @@ public class DefaultBoundStatement implements BoundStatement {
         serialConsistencyLevel,
         timeout,
         codecRegistry,
-        protocolVersion);
+        protocolVersion,
+        node);
   }
 
   @Override
@@ -570,7 +618,8 @@ public class DefaultBoundStatement implements BoundStatement {
         serialConsistencyLevel,
         timeout,
         codecRegistry,
-        protocolVersion);
+        protocolVersion,
+        node);
   }
 
   @Nullable
@@ -600,7 +649,8 @@ public class DefaultBoundStatement implements BoundStatement {
         serialConsistencyLevel,
         timeout,
         codecRegistry,
-        protocolVersion);
+        protocolVersion,
+        node);
   }
 
   @Nullable
@@ -632,6 +682,7 @@ public class DefaultBoundStatement implements BoundStatement {
         newSerialConsistencyLevel,
         timeout,
         codecRegistry,
-        protocolVersion);
+        protocolVersion,
+        node);
   }
 }

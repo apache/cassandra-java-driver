@@ -283,6 +283,7 @@ public class StatementSizeTest {
         null,
         null,
         CodecRegistry.DEFAULT,
-        DefaultProtocolVersion.V5);
+        DefaultProtocolVersion.V5,
+        null);
   }
 }

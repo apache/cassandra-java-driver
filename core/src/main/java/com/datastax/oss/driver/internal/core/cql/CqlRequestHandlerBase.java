@@ -53,6 +53,7 @@ import com.datastax.oss.driver.internal.core.metrics.NodeMetricUpdater;
 import com.datastax.oss.driver.internal.core.session.DefaultSession;
 import com.datastax.oss.driver.internal.core.session.RepreparePayload;
 import com.datastax.oss.driver.internal.core.util.Loggers;
+import com.datastax.oss.driver.internal.core.util.collection.QueryPlan;
 import com.datastax.oss.protocol.internal.Frame;
 import com.datastax.oss.protocol.internal.Message;
 import com.datastax.oss.protocol.internal.ProtocolConstants;
@@ -153,10 +154,15 @@ public abstract class CqlRequestHandlerBase implements Throttled {
               ? config.getDefaultProfile()
               : config.getProfile(profileName);
     }
-    this.queryPlan =
-        context
-            .getLoadBalancingPolicyWrapper()
-            .newQueryPlan(statement, executionProfile.getName(), session);
+    if (this.statement.getNode() != null) {
+      this.queryPlan = new QueryPlan(this.statement.getNode());
+
+    } else {
+      this.queryPlan =
+          context
+              .getLoadBalancingPolicyWrapper()
+              .newQueryPlan(statement, executionProfile.getName(), session);
+    }
     this.retryPolicy = context.getRetryPolicy(executionProfile.getName());
     this.speculativeExecutionPolicy =
         context.getSpeculativeExecutionPolicy(executionProfile.getName());

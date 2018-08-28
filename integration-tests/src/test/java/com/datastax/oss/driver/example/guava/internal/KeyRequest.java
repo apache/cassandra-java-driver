@@ -17,6 +17,7 @@ package com.datastax.oss.driver.example.guava.internal;
 
 import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.config.DriverExecutionProfile;
+import com.datastax.oss.driver.api.core.metadata.Node;
 import com.datastax.oss.driver.api.core.metadata.token.Token;
 import com.datastax.oss.driver.api.core.session.Request;
 import com.datastax.oss.protocol.internal.util.collection.NullAllowingImmutableMap;
@@ -83,6 +84,12 @@ public class KeyRequest implements Request {
   @Nullable
   @Override
   public Duration getTimeout() {
+    return null;
+  }
+
+  @Nullable
+  @Override
+  public Node getNode() {
     return null;
   }
 }

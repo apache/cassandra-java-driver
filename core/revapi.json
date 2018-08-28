@@ -499,6 +499,28 @@
         "oldArchive": "com.datastax.oss:java-driver-core:jar:4.0.0-beta1",
         "elementKind": "method",
         "justification": "Renamed context getters for uniformity"
+      },
+      {
+        "code": "java.method.addedToInterface",
+        "new": "method com.datastax.oss.driver.api.core.metadata.Node com.datastax.oss.driver.api.core.session.Request::getNode()",
+        "package": "com.datastax.oss.driver.api.core.session",
+        "classQualifiedName": "com.datastax.oss.driver.api.core.session.Request",
+        "classSimpleName": "Request",
+        "methodName": "getNode",
+        "newArchive": "com.datastax.oss:java-driver-core:jar:4.0.0-beta2-SNAPSHOT",
+        "elementKind": "method",
+        "justification": "Add ability to query specific nodes for virtual tables"
+      },
+      {
+        "code": "java.method.addedToInterface",
+        "new": "method T com.datastax.oss.driver.api.core.cql.Statement<T extends com.datastax.oss.driver.api.core.cql.Statement<T extends com.datastax.oss.driver.api.core.cql.Statement<T>>>::setNode(com.datastax.oss.driver.api.core.metadata.Node)",
+        "package": "com.datastax.oss.driver.api.core.cql",
+        "classQualifiedName": "com.datastax.oss.driver.api.core.cql.Statement",
+        "classSimpleName": "Statement",
+        "methodName": "setNode",
+        "newArchive": "com.datastax.oss:java-driver-core:jar:4.0.0-beta2-SNAPSHOT",
+        "elementKind": "method",
+        "justification": "Add ability to query specific nodes for virtual tables"
       }
     ]
   }

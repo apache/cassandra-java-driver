@@ -172,7 +172,8 @@ public class DefaultPreparedStatement implements PreparedStatement {
         serialConsistencyLevelForBoundStatements,
         timeoutForBoundStatements,
         codecRegistry,
-        protocolVersion);
+        protocolVersion,
+        null);
   }
 
   @NonNull

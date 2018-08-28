@@ -146,6 +146,7 @@ public class BatchStatementBuilder extends StatementBuilder<BatchStatementBuilde
         pageSize,
         consistencyLevel,
         serialConsistencyLevel,
-        timeout);
+        timeout,
+        node);
   }
 }
