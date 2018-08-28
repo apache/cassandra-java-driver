@@ -7,8 +7,9 @@
         "packages": {
           "regex": true,
           "exclude": [
-            "com\\.datastax\\.oss\\.driver\\.internal\\..*",
-            "com\\.datastax\\.oss\\.driver\\.shaded\\..*"
+            "com\\.datastax\\.oss\\.protocol\\.internal(\\..+)?",
+            "com\\.datastax\\.oss\\.driver\\.internal(\\..+)?",
+            "com\\.datastax\\.oss\\.driver\\.shaded(\\..+)?"
           ]
         }
       }
