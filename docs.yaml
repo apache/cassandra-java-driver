@@ -43,6 +43,7 @@ links:
   - title: Releases
     href:  http://downloads.datastax.com/java-driver/
 api_docs:
+  3.6: http://docs.datastax.com/en/drivers/java/3.6
   3.5: http://docs.datastax.com/en/drivers/java/3.5
   3.4: http://docs.datastax.com/en/drivers/java/3.4
   3.3: http://docs.datastax.com/en/drivers/java/3.3
@@ -53,6 +54,8 @@ api_docs:
   2.1: http://docs.datastax.com/en/drivers/java/2.1
   2.0: http://docs.datastax.com/en/drivers/java/2.0
 versions:
+  - name: '3.6'
+    ref: '3.6.0'
   - name: '3.5'
     ref: '3.5.x'
   - name: '3.4'
