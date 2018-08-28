@@ -210,6 +210,7 @@ public class RateLimitingRequestThrottler implements RequestThrottler {
     }
   }
 
+  @SuppressWarnings("GuardedBy") // this method is only called with the lock held
   private int acquire(long currentTimeNanos, int wantedPermits) {
     assert lock.isHeldByCurrentThread() && !closed;
 

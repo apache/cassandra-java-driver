@@ -15,10 +15,16 @@
  */
 package com.datastax.oss.driver.osgi;
 
+import static com.datastax.oss.driver.osgi.BundleOptions.baseOptions;
+import static com.datastax.oss.driver.osgi.BundleOptions.driverCoreBundle;
+import static com.datastax.oss.driver.osgi.BundleOptions.driverQueryBuilderBundle;
+import static org.ops4j.pax.exam.CoreOptions.options;
+
 import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
 import com.datastax.oss.driver.api.core.config.DriverConfigLoader;
 import com.datastax.oss.driver.api.testinfra.loadbalancing.SortingLoadBalancingPolicy;
 import com.datastax.oss.driver.api.testinfra.session.SessionUtils;
+import org.ops4j.pax.exam.Configuration;
 import org.ops4j.pax.exam.Option;
 
 /**
@@ -27,13 +33,14 @@ import org.ops4j.pax.exam.Option;
  * DynamicImport-Package: *</code>.
  */
 public class OsgiCustomLoadBalancingPolicyIT extends OsgiBaseIT {
-  @Override
-  public Option[] additionalOptions() {
-    return new Option[0];
+
+  @Configuration
+  public Option[] config() {
+    return options(driverCoreBundle(), driverQueryBuilderBundle(), baseOptions());
   }
 
   @Override
-  public DriverConfigLoader configLoader() {
+  protected DriverConfigLoader configLoader() {
     return SessionUtils.configLoaderBuilder()
         .withClass(
             DefaultDriverOption.LOAD_BALANCING_POLICY_CLASS, SortingLoadBalancingPolicy.class)

@@ -15,7 +15,9 @@
     limitations under the License.
 
 -->
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
   <modelVersion>4.0.0</modelVersion>
 
   <parent>
@@ -25,6 +27,7 @@
   </parent>
 
   <artifactId>java-driver-core</artifactId>
+  <packaging>bundle</packaging>
 
   <name>DataStax Java driver for Apache Cassandra(R) - core</name>
 
@@ -73,10 +76,6 @@
     <dependency>
       <groupId>org.slf4j</groupId>
       <artifactId>slf4j-api</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.jctools</groupId>
-      <artifactId>jctools-core</artifactId>
     </dependency>
     <dependency>
       <groupId>io.dropwizard.metrics</groupId>
@@ -143,22 +142,12 @@
     <plugins>
       <plugin>
         <artifactId>maven-jar-plugin</artifactId>
-        <configuration>
-          <archive>
-            <manifestFile>${project.build.outputDirectory}/META-INF/MANIFEST.MF</manifestFile>
-          </archive>
-        </configuration>
         <executions>
           <execution>
             <id>test-jar</id>
             <goals>
               <goal>test-jar</goal>
             </goals>
-            <configuration>
-              <excludes>
-                <exclude>logback-test.xml</exclude>
-              </excludes>
-            </configuration>
           </execution>
         </executions>
       </plugin>
@@ -173,114 +162,37 @@
           </properties>
         </configuration>
       </plugin>
-      <!--
-      We avoid packaging bundle because it does not play nicely with the shade plugin, see
-      https://stackoverflow.com/questions/31262032/maven-shade-plugin-and-custom-packaging-type
-      -->
       <plugin>
         <groupId>org.apache.felix</groupId>
         <artifactId>maven-bundle-plugin</artifactId>
-        <configuration>
-          <instructions>
-            <Bundle-SymbolicName>com.datastax.oss.driver.core</Bundle-SymbolicName>
-          </instructions>
-          <!--
-          Prevent customized manifest entries from the project's maven-jar-plugin configuration from being read, see
-          http://apache-felix.18485.x6.nabble.com/how-lt-manifestLocation-gt-is-used-in-maven-bundle-plugin-td4835566.html
-          -->
-          <archive>
-            <forced>true</forced>
-          </archive>
-        </configuration>
+        <extensions>true</extensions>
         <executions>
           <execution>
-            <id>bundle-manifest</id>
-            <phase>process-classes</phase>
             <goals>
-              <goal>manifest</goal>
+              <goal>bundle</goal>
             </goals>
             <configuration>
-              <manifestLocation>${project.build.outputDirectory}/META-INF</manifestLocation>
               <instructions>
-                <!-- Allow importing code from other packages (so reflection-based loading of policies works) -->
+                <Bundle-SymbolicName>com.datastax.oss.driver.core</Bundle-SymbolicName>
+                <!--
+                Allow importing code from other packages
+                (so reflection-based loading of policies works)
+                -->
                 <DynamicImport-Package>*</DynamicImport-Package>
-                <!-- Don't include JNR packages since some JNR modules are not OSGi bundles,
-                     jcip because its not an OSGi bundle, jctools because its shaded.
-                     Import sun.misc as jctools does this. -->
+                <!--
+                Don't include the packages below because they aren't OSGi bundles,
+                and the driver can live without them.
+                -->
                 <Import-Package>
-                  !net.jcip.annotations,!jnr.*,!org.jctools.*,sun.misc;resolution:=optional,*
-                </Import-Package>
-                <!-- Explicitly declare shaded jctools packages since this isn't covered by shade plugin -->
-                <Export-Package>
-                  com.datastax.oss.driver.*.core.*,
-                  com.datastax.oss.driver.shaded.jctools.util;version="${project.version}";uses:="sun.misc",
-                  com.datastax.oss.driver.shaded.jctools.queues;version="${project.version}";uses:="com.datastax.oss.driver.shaded.jctools.queues.spec",
-                  com.datastax.oss.driver.shaded.jctools.queues.spec;version="${project.version}",
-                  com.datastax.oss.driver.shaded.jctools.queues.atomic;version="${project.version}";uses:="com.datastax.oss.driver.shaded.jctools.queues,com.datastax.oss.driver.shaded.jctools.queues.spec",
-                  com.datastax.oss.driver.shaded.jctools.maps;version="${project.version}"
-                </Export-Package>
-              </instructions>
-            </configuration>
-          </execution>
-          <!-- Alternate execution to generate the manifest to be used by the java-driver-core-shaded module -->
-          <execution>
-            <id>bundle-manifest-shaded</id>
-            <phase>process-classes</phase>
-            <goals>
-              <goal>manifest</goal>
-            </goals>
-            <configuration>
-              <manifestLocation>${project.build.directory}/classes/META-INF-shaded</manifestLocation>
-              <instructions>
-                <Bundle-Name>DataStax Java driver for Apache Cassandra(R) - core netty shaded</Bundle-Name>
-                <DynamicImport-Package>*</DynamicImport-Package>
-                <!-- Don't include netty since it will be shaded, import javax.security.cert as needed by netty ssl -->
-                <Import-Package>
-                  !net.jcip.annotations,!jnr.*,!org.jctools.*,sun.misc;resolution:=optional,!io.netty.*,javax.security.cert,*
+                  !net.jcip.annotations.*,
+                  !edu.umd.cs.findbugs.annotations.*,
+                  !jnr.*,
+                  *
                 </Import-Package>
                 <Export-Package>
-                  com.datastax.oss.driver.*.core.*,
-                  com.datastax.oss.driver.shaded.jctools.util;version="${project.version}";uses:="sun.misc",
-                  com.datastax.oss.driver.shaded.jctools.queues;version="${project.version}";uses:="com.datastax.oss.driver.shaded.jctools.queues.spec",
-                  com.datastax.oss.driver.shaded.jctools.queues.spec;version="${project.version}",
-                  com.datastax.oss.driver.shaded.jctools.queues.atomic;version="${project.version}";uses:="com.datastax.oss.driver.shaded.jctools.queues,com.datastax.oss.driver.shaded.jctools.queues.spec",
-                  com.datastax.oss.driver.shaded.jctools.maps;version="${project.version}"
+                  com.datastax.oss.driver.*.core.*
                 </Export-Package>
               </instructions>
-            </configuration>
-          </execution>
-        </executions>
-      </plugin>
-      <!-- shade jctools -->
-      <plugin>
-        <artifactId>maven-shade-plugin</artifactId>
-        <executions>
-          <execution>
-            <phase>package</phase>
-            <goals>
-              <goal>shade</goal>
-            </goals>
-            <configuration>
-              <artifactSet>
-                <includes>
-                  <include>org.jctools:jctools-core</include>
-                </includes>
-              </artifactSet>
-              <relocations>
-                <relocation>
-                  <pattern>org.jctools</pattern>
-                  <shadedPattern>com.datastax.oss.driver.shaded.jctools</shadedPattern>
-                </relocation>
-              </relocations>
-              <transformers>
-                <transformer implementation="org.apache.maven.plugins.shade.resource.DontIncludeResourceTransformer">
-                  <resources>
-                    <resource>META-INF/maven/org.jctools/jctools-core/pom.properties</resource>
-                    <resource>META-INF/maven/org.jctools/jctools-core/pom.xml</resource>
-                  </resources>
-                </transformer>
-              </transformers>
-              <promoteTransitiveDependencies>true</promoteTransitiveDependencies>
             </configuration>
           </execution>
         </executions>

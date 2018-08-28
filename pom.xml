@@ -135,11 +135,6 @@
         <version>${hdrhistogram.version}</version>
       </dependency>
       <dependency>
-        <groupId>org.jctools</groupId>
-        <artifactId>jctools-core</artifactId>
-        <version>2.1.2</version>
-      </dependency>
-      <dependency>
         <groupId>com.github.stephenc.jcip</groupId>
         <artifactId>jcip-annotations</artifactId>
         <version>1.0-1</version>
@@ -197,7 +192,7 @@
       <dependency>
         <groupId>org.apache.felix</groupId>
         <artifactId>org.apache.felix.framework</artifactId>
-        <version>5.6.10</version>
+        <version>6.0.0</version>
       </dependency>
     </dependencies>
   </dependencyManagement>
@@ -229,7 +224,7 @@
         </plugin>
         <plugin>
           <artifactId>maven-shade-plugin</artifactId>
-          <version>3.0.0</version>
+          <version>3.1.1</version>
         </plugin>
         <plugin>
           <artifactId>maven-assembly-plugin</artifactId>
@@ -289,7 +284,7 @@
         <plugin>
           <groupId>org.apache.felix</groupId>
           <artifactId>maven-bundle-plugin</artifactId>
-          <version>3.5.0</version>
+          <version>3.5.1</version>
         </plugin>
         <plugin>
           <groupId>org.revapi</groupId>
@@ -315,8 +310,6 @@
           <target>1.8</target>
           <compilerArgs combine.children="override">
             <compilerArg>-Xep:FutureReturnValueIgnored:OFF</compilerArg>
-            <!-- Too limited, does not detect locks acquired by a calling method: -->
-            <compilerArg>-Xep:GuardedBy:OFF</compilerArg>
           </compilerArgs>
           <showWarnings>true</showWarnings>
           <failOnWarning>true</failOnWarning>
@@ -484,7 +477,7 @@ limitations under the License.]]>
                 <!-- API types do not leak internal types -->
                 <additionalparam>-preventleak</additionalparam>
                 <additionalparam>com.datastax.oss.driver.internal</additionalparam>
-                <!-- Shaded dependencies (Guava, JCTools) -->
+                <!-- Shaded dependencies (Guava, Netty, etc.) -->
                 <additionalparam>-preventleak</additionalparam>
                 <additionalparam>com.datastax.oss.driver.shaded</additionalparam>
                 <!--

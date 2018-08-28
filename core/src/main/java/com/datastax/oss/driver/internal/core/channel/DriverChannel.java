@@ -70,7 +70,7 @@ public class DriverChannel {
       Map<String, ByteBuffer> customPayload,
       ResponseCallback responseCallback) {
     if (closing.get()) {
-      throw new IllegalStateException("Driver channel is closing");
+      return channel.newFailedFuture(new IllegalStateException("Driver channel is closing"));
     }
     RequestMessage message = new RequestMessage(request, tracing, customPayload, responseCallback);
     return writeCoalescer.writeAndFlush(channel, message);

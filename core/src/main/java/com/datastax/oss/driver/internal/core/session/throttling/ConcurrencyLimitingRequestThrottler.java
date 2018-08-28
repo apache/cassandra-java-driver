@@ -143,6 +143,7 @@ public class ConcurrencyLimitingRequestThrottler implements RequestThrottler {
     }
   }
 
+  @SuppressWarnings("GuardedBy") // this method is only called with the lock held
   private void onRequestDone() {
     assert lock.isHeldByCurrentThread();
     if (!closed) {

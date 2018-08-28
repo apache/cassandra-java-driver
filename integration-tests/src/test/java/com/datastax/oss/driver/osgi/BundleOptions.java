@@ -29,6 +29,9 @@ import org.ops4j.pax.exam.util.PathUtils;
 public class BundleOptions {
 
   public static CompositeOption baseOptions() {
+    // Note: the bundles below include Netty; these bundles are not required by
+    // the shaded core driver bundle, but they need to be present in all cases because
+    // the test-infra bundle requires the (non-shaded) Netty bundle.
     return () ->
         options(
             nettyBundles(),
