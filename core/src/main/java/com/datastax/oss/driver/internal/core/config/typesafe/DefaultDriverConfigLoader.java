@@ -83,6 +83,12 @@ public class DefaultDriverConfigLoader implements DriverConfigLoader {
     this.singleThreaded = new SingleThreaded((InternalDriverContext) driverContext);
   }
 
+  /** For internal use only, this leaks a Typesafe config type. */
+  @NonNull
+  public Supplier<Config> getConfigSupplier() {
+    return configSupplier;
+  }
+
   @Override
   public void close() {
     SingleThreaded singleThreaded = this.singleThreaded;
