@@ -146,8 +146,8 @@ reporter.start();
 [Reporters]: http://metrics.dropwizard.io/3.2.2/manual/core.html#reporters
 [MetricRegistry]: http://metrics.dropwizard.io/3.2.2/apidocs/com/codahale/metrics/MetricRegistry.html
 [MXBeans]: https://docs.oracle.com/javase/tutorial/jmx/mbeans/mxbeans.html
-[withClusterName]: https://docs.datastax.com/en/drivers/java/3.5/com/datastax/driver/core/Cluster.Builder.html#withClusterName-java.lang.String-
-[withoutMetrics]: https://docs.datastax.com/en/drivers/java/3.5/com/datastax/driver/core/Cluster.Builder.html#withoutMetrics--
-[withoutJMXReporting]: https://docs.datastax.com/en/drivers/java/3.5/com/datastax/driver/core/Cluster.Builder.html#withoutJMXReporting--
-[getMetrics]: https://docs.datastax.com/en/drivers/java/3.5/com/datastax/driver/core/Cluster.html#getMetrics--
-[Metrics]: http://docs.datastax.com/en/drivers/java/3.5/com/datastax/driver/core/Metrics.html
+[withClusterName]: https://docs.datastax.com/en/drivers/java/3.6/com/datastax/driver/core/Cluster.Builder.html#withClusterName-java.lang.String-
+[withoutMetrics]: https://docs.datastax.com/en/drivers/java/3.6/com/datastax/driver/core/Cluster.Builder.html#withoutMetrics--
+[withoutJMXReporting]: https://docs.datastax.com/en/drivers/java/3.6/com/datastax/driver/core/Cluster.Builder.html#withoutJMXReporting--
+[getMetrics]: https://docs.datastax.com/en/drivers/java/3.6/com/datastax/driver/core/Cluster.html#getMetrics--
+[Metrics]: http://docs.datastax.com/en/drivers/java/3.6/com/datastax/driver/core/Metrics.html
