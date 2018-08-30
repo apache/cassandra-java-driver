@@ -1,6 +1,8 @@
 # Datastax Java Driver for Apache Cassandra®
 
 [![Build Status](https://travis-ci.org/datastax/java-driver.svg?branch=3.x)](https://travis-ci.org/datastax/java-driver)
+[![Code Quality: Java](https://img.shields.io/lgtm/grade/java/g/datastax/java-driver.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/datastax/java-driver/context:java)
+[![Total Alerts](https://img.shields.io/lgtm/alerts/g/datastax/java-driver.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/datastax/java-driver/alerts)
 
 *If you're reading this on github.com, please note that this is the readme
 for the development version and that some features described here might
