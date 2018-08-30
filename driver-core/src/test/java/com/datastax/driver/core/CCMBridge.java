@@ -253,7 +253,8 @@ public class CCMBridge implements CCMAccess {
    *     <ol>
    *       <li>If <= 3.X, use C* 1.2
    *       <li>If 4.X, use 2.1 for >= 4.7, 2.0 otherwise.
-   *       <li>Otherwise 3.0
+   *       <li>If 5.X, use 3.0 for 5.0, 3.11 otherwise.
+   *       <li>Otherwise 4.0
    *     </ol>
    */
   public static VersionNumber getCassandraVersion(VersionNumber dseVersion) {
@@ -268,9 +269,15 @@ public class CCMBridge implements CCMAccess {
       } else {
         return VersionNumber.parse("2.0");
       }
+    } else if (dseVersion.getMajor() == 5) {
+      if (dseVersion.getMinor() == 0) {
+        return VersionNumber.parse("3.0");
+      } else {
+        return VersionNumber.parse("3.11");
+      }
     } else {
-      // Fallback on 3.0 by default.
-      return VersionNumber.parse("3.0");
+      // Fallback on 4.0 by default.
+      return VersionNumber.parse("4.0");
     }
   }
 
