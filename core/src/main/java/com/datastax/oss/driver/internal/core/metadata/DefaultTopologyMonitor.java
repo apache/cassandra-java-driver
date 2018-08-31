@@ -29,8 +29,8 @@ import com.datastax.oss.driver.internal.core.control.ControlConnection;
 import com.datastax.oss.driver.internal.core.util.concurrent.CompletableFutures;
 import com.datastax.oss.driver.shaded.guava.common.annotations.VisibleForTesting;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableMap;
-import com.datastax.oss.protocol.internal.Message;
 import com.datastax.oss.protocol.internal.ProtocolConstants;
+import com.datastax.oss.protocol.internal.response.Error;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
@@ -170,15 +170,16 @@ public class DefaultTopologyMonitor implements TopologyMonitor {
     peersV2Query.whenComplete(
         (r, t) -> {
           if (t != null) {
-            if (t instanceof UnexpectedResponseException) {
-              UnexpectedResponseException e = (UnexpectedResponseException) t;
-              Message message = e.message;
-              if (message instanceof com.datastax.oss.protocol.internal.response.Error
-                  && ((com.datastax.oss.protocol.internal.response.Error) message).code
-                      == ProtocolConstants.ErrorCode.INVALID) {
-                // The query to system.peers_v2 failed, we should not attempt this query in the
-                // future.
-                this.isSchemaV2 = false;
+            // If system.peers_v2 does not exist, downgrade to system.peers
+            if (t instanceof UnexpectedResponseException
+                && ((UnexpectedResponseException) t).message instanceof Error) {
+              Error error = (Error) ((UnexpectedResponseException) t).message;
+              if (error.code == ProtocolConstants.ErrorCode.INVALID
+                  // Also downgrade on server error with a specific error message (DSE 6.0.0 to
+                  // 6.0.2 with search enabled)
+                  || (error.code == ProtocolConstants.ErrorCode.SERVER_ERROR
+                      && error.message.contains("Unknown keyspace/cf pair (system.peers_v2)"))) {
+                this.isSchemaV2 = false; // We should not attempt this query in the future.
                 CompletableFutures.completeFrom(
                     query(channel, "SELECT * FROM system.peers"), peersQuery);
                 return;
