@@ -149,4 +149,8 @@ public class BatchStatementBuilder extends StatementBuilder<BatchStatementBuilde
         timeout,
         node);
   }
+
+  public int getStatementsCount() {
+    return this.statementsCount;
+  }
 }
