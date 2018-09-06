@@ -21,7 +21,6 @@ import com.datastax.oss.driver.api.core.DriverException;
 import com.datastax.oss.driver.api.core.DriverTimeoutException;
 import com.datastax.oss.driver.api.core.RequestThrottlingException;
 import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
-import com.datastax.oss.driver.api.core.config.DriverConfig;
 import com.datastax.oss.driver.api.core.config.DriverExecutionProfile;
 import com.datastax.oss.driver.api.core.connection.FrameTooLongException;
 import com.datastax.oss.driver.api.core.cql.AsyncResultSet;
@@ -143,17 +142,7 @@ public abstract class CqlRequestHandlerBase implements Throttled {
     this.session = session;
     this.keyspace = session.getKeyspace().orElse(null);
     this.context = context;
-
-    if (statement.getExecutionProfile() != null) {
-      this.executionProfile = statement.getExecutionProfile();
-    } else {
-      DriverConfig config = context.getConfig();
-      String profileName = statement.getExecutionProfileName();
-      this.executionProfile =
-          (profileName == null || profileName.isEmpty())
-              ? config.getDefaultProfile()
-              : config.getProfile(profileName);
-    }
+    this.executionProfile = Conversions.resolveExecutionProfile(statement, context);
     if (this.statement.getNode() != null) {
       this.queryPlan = new QueryPlan(this.statement.getNode());
 

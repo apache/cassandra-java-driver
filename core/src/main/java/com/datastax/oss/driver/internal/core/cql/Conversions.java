@@ -20,7 +20,9 @@ import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.CqlSession;
 import com.datastax.oss.driver.api.core.ProtocolVersion;
 import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
+import com.datastax.oss.driver.api.core.config.DriverConfig;
 import com.datastax.oss.driver.api.core.config.DriverExecutionProfile;
+import com.datastax.oss.driver.api.core.context.DriverContext;
 import com.datastax.oss.driver.api.core.cql.AsyncResultSet;
 import com.datastax.oss.driver.api.core.cql.BatchStatement;
 import com.datastax.oss.driver.api.core.cql.BatchableStatement;
@@ -51,6 +53,7 @@ import com.datastax.oss.driver.api.core.servererrors.UnauthorizedException;
 import com.datastax.oss.driver.api.core.servererrors.UnavailableException;
 import com.datastax.oss.driver.api.core.servererrors.WriteFailureException;
 import com.datastax.oss.driver.api.core.servererrors.WriteTimeoutException;
+import com.datastax.oss.driver.api.core.session.Request;
 import com.datastax.oss.driver.api.core.type.codec.TypeCodecs;
 import com.datastax.oss.driver.api.core.type.codec.registry.CodecRegistry;
 import com.datastax.oss.driver.internal.core.DefaultProtocolFeature;
@@ -93,6 +96,19 @@ import java.util.Map;
  * <p>The main goal of this class is to move this code out of the request handlers.
  */
 public class Conversions {
+
+  public static DriverExecutionProfile resolveExecutionProfile(
+      Request request, DriverContext context) {
+    if (request.getExecutionProfile() != null) {
+      return request.getExecutionProfile();
+    } else {
+      DriverConfig config = context.getConfig();
+      String profileName = request.getExecutionProfileName();
+      return (profileName == null || profileName.isEmpty())
+          ? config.getDefaultProfile()
+          : config.getProfile(profileName);
+    }
+  }
 
   public static Message toMessage(
       Statement<?> statement, DriverExecutionProfile config, InternalDriverContext context) {

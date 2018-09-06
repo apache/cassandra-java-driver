@@ -21,7 +21,6 @@ import com.datastax.oss.driver.api.core.DriverTimeoutException;
 import com.datastax.oss.driver.api.core.ProtocolVersion;
 import com.datastax.oss.driver.api.core.RequestThrottlingException;
 import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
-import com.datastax.oss.driver.api.core.config.DriverConfig;
 import com.datastax.oss.driver.api.core.config.DriverExecutionProfile;
 import com.datastax.oss.driver.api.core.cql.PrepareRequest;
 import com.datastax.oss.driver.api.core.cql.PreparedStatement;
@@ -116,17 +115,7 @@ public abstract class CqlPrepareHandlerBase implements Throttled {
     this.preparedStatementsCache = preparedStatementsCache;
     this.session = session;
     this.context = context;
-
-    if (request.getExecutionProfile() != null) {
-      this.executionProfile = request.getExecutionProfile();
-    } else {
-      DriverConfig config = context.getConfig();
-      String profileName = request.getExecutionProfileName();
-      this.executionProfile =
-          (profileName == null || profileName.isEmpty())
-              ? config.getDefaultProfile()
-              : config.getProfile(profileName);
-    }
+    this.executionProfile = Conversions.resolveExecutionProfile(request, context);
     this.queryPlan =
         context
             .getLoadBalancingPolicyWrapper()
