@@ -125,4 +125,32 @@ public class DefaultUdtValueTest extends AccessibleByIdTestBase<UdtValue> {
 
     assertThat(udt.toString()).isEqualTo("{t:'foobar',i:NULL,d:3.14}");
   }
+
+  @Test
+  public void should_equate_instances_with_different_protocol_versions() {
+
+    UserDefinedType type1 =
+        new UserDefinedTypeBuilder(
+                CqlIdentifier.fromInternal("ks"), CqlIdentifier.fromInternal("type"))
+            .withField(CqlIdentifier.fromInternal("t"), DataTypes.TEXT)
+            .withField(CqlIdentifier.fromInternal("i"), DataTypes.INT)
+            .withField(CqlIdentifier.fromInternal("d"), DataTypes.DOUBLE)
+            .build();
+    type1.attach(attachmentPoint);
+
+    // create an idential type, but with a different attachment point
+    UserDefinedType type2 =
+        new UserDefinedTypeBuilder(
+                CqlIdentifier.fromInternal("ks"), CqlIdentifier.fromInternal("type"))
+            .withField(CqlIdentifier.fromInternal("t"), DataTypes.TEXT)
+            .withField(CqlIdentifier.fromInternal("i"), DataTypes.INT)
+            .withField(CqlIdentifier.fromInternal("d"), DataTypes.DOUBLE)
+            .build();
+    type2.attach(v3AttachmentPoint);
+    UdtValue udt1 =
+        type1.newValue().setString("t", "some text string").setInt("i", 42).setDouble("d", 3.14);
+    UdtValue udt2 =
+        type2.newValue().setString("t", "some text string").setInt("i", 42).setDouble("d", 3.14);
+    assertThat(udt1).isEqualTo(udt2);
+  }
 }

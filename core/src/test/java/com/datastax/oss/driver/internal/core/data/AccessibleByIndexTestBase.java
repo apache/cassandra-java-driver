@@ -19,6 +19,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 
+import com.datastax.oss.driver.api.core.DefaultProtocolVersion;
 import com.datastax.oss.driver.api.core.ProtocolVersion;
 import com.datastax.oss.driver.api.core.data.GettableByIndex;
 import com.datastax.oss.driver.api.core.data.SettableByIndex;
@@ -49,6 +50,7 @@ public abstract class AccessibleByIndexTestBase<T extends GettableByIndex & Sett
       List<DataType> dataTypes, List<Object> values, AttachmentPoint attachmentPoint);
 
   @Mock protected AttachmentPoint attachmentPoint;
+  @Mock protected AttachmentPoint v3AttachmentPoint;
   @Mock protected CodecRegistry codecRegistry;
   protected PrimitiveIntCodec intCodec;
   protected TypeCodec<Double> doubleCodec;
@@ -61,6 +63,9 @@ public abstract class AccessibleByIndexTestBase<T extends GettableByIndex & Sett
     Mockito.when(attachmentPoint.getCodecRegistry()).thenReturn(codecRegistry);
     Mockito.when(attachmentPoint.getProtocolVersion()).thenReturn(ProtocolVersion.DEFAULT);
 
+    Mockito.when(v3AttachmentPoint.getCodecRegistry()).thenReturn(codecRegistry);
+    Mockito.when(v3AttachmentPoint.getProtocolVersion()).thenReturn(DefaultProtocolVersion.V3);
+
     intCodec = Mockito.spy(TypeCodecs.INT);
     doubleCodec = Mockito.spy(TypeCodecs.DOUBLE);
     textCodec = Mockito.spy(TypeCodecs.TEXT);
@@ -69,6 +74,10 @@ public abstract class AccessibleByIndexTestBase<T extends GettableByIndex & Sett
     Mockito.when(codecRegistry.codecFor(DataTypes.DOUBLE, Double.class))
         .thenAnswer(i -> doubleCodec);
     Mockito.when(codecRegistry.codecFor(DataTypes.TEXT, String.class)).thenAnswer(i -> textCodec);
+
+    Mockito.when(codecRegistry.codecFor(DataTypes.INT)).thenAnswer(i -> intCodec);
+    Mockito.when(codecRegistry.codecFor(DataTypes.TEXT)).thenAnswer(t -> textCodec);
+    Mockito.when(codecRegistry.codecFor(DataTypes.DOUBLE)).thenAnswer(d -> doubleCodec);
   }
 
   @Test

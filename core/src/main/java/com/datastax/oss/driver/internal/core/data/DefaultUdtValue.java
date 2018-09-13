@@ -130,10 +130,6 @@ public class DefaultUdtValue implements UdtValue, Serializable {
     }
     UdtValue that = (UdtValue) o;
 
-    if (!this.protocolVersion().equals(that.protocolVersion())) {
-      return false;
-    }
-
     if (!type.equals(that.getType())) {
       return false;
     }
@@ -144,11 +140,11 @@ public class DefaultUdtValue implements UdtValue, Serializable {
       DataType innerThatType = that.getType().getFieldTypes().get(i);
 
       Object thisValue =
-          that.codecRegistry()
+          this.codecRegistry()
               .codecFor(innerThisType)
               .decode(this.getBytesUnsafe(i), this.protocolVersion());
       Object thatValue =
-          this.codecRegistry()
+          that.codecRegistry()
               .codecFor(innerThatType)
               .decode(that.getBytesUnsafe(i), that.protocolVersion());
 
