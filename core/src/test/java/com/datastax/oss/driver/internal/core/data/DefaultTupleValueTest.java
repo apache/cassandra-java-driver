@@ -96,4 +96,19 @@ public class DefaultTupleValueTest extends AccessibleByIndexTestBase<TupleValue>
 
     assertThat(tuple1).isNotEqualTo(tuple2);
   }
+
+  @Test
+  public void should_equate_instances_with_different_protocol_versions() {
+    TupleType tupleType1 = DataTypes.tupleOf(DataTypes.TEXT);
+    tupleType1.attach(attachmentPoint);
+
+    // use the V3 attachmentPoint for type2
+    TupleType tupleType2 = DataTypes.tupleOf(DataTypes.TEXT);
+    tupleType2.attach(v3AttachmentPoint);
+
+    TupleValue tuple1 = tupleType1.newValue().setBytesUnsafe(0, Bytes.fromHexString("0x01"));
+    TupleValue tuple2 = tupleType2.newValue().setBytesUnsafe(0, Bytes.fromHexString("0x01"));
+
+    assertThat(tuple1).isEqualTo(tuple2);
+  }
 }

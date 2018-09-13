@@ -123,10 +123,6 @@ public class DefaultTupleValue implements TupleValue, Serializable {
     }
     TupleValue that = (TupleValue) o;
 
-    if (!this.protocolVersion().equals(that.protocolVersion())) {
-      return false;
-    }
-
     if (!type.equals(that.getType())) {
       return false;
     }
