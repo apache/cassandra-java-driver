@@ -40,7 +40,7 @@ public interface LoadBalancingPolicy extends AutoCloseable {
    * @param nodes the nodes discovered by the driver when it connected to the cluster. When this
    *     method is invoked, their state is guaranteed to be either {@link NodeState#UP} or {@link
    *     NodeState#UNKNOWN}. Node states may be updated concurrently while this method executes, but
-   *     if so you will receive a notification
+   *     if so you will receive a notification.
    * @param distanceReporter an object that will be used by the policy to signal distance changes.
    * @param contactPoints the set of contact points that the driver was initialized with (see {@link
    *     SessionBuilder#addContactPoints(Collection)}). This is provided for reference, in case the
