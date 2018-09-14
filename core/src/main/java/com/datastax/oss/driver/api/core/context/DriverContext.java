@@ -54,7 +54,11 @@ public interface DriverContext extends AttachmentPoint {
   @NonNull
   DriverConfigLoader getConfigLoader();
 
-  /** @return The driver's load balancing policies; may be empty but never {@code null}. */
+  /**
+   * @return The driver's load balancing policies, keyed by profile name; the returned map is
+   *     guaranteed to never be {@code null} and to always contain an entry for the {@value
+   *     DriverExecutionProfile#DEFAULT_NAME} profile.
+   */
   @NonNull
   Map<String, LoadBalancingPolicy> getLoadBalancingPolicies();
 
@@ -71,7 +75,11 @@ public interface DriverContext extends AttachmentPoint {
         : getLoadBalancingPolicies().get(DriverExecutionProfile.DEFAULT_NAME);
   }
 
-  /** @return The driver's load balancing policies; may be empty but never {@code null}. */
+  /**
+   * @return The driver's retry policies, keyed by profile name; the returned map is guaranteed to
+   *     never be {@code null} and to always contain an entry for the {@value
+   *     DriverExecutionProfile#DEFAULT_NAME} profile.
+   */
   @NonNull
   Map<String, RetryPolicy> getRetryPolicies();
 
@@ -85,7 +93,11 @@ public interface DriverContext extends AttachmentPoint {
     return (policy != null) ? policy : getRetryPolicies().get(DriverExecutionProfile.DEFAULT_NAME);
   }
 
-  /** @return The driver's load balancing policies; may be empty but never {@code null}. */
+  /**
+   * @return The driver's speculative execution policies, keyed by profile name; the returned map is
+   *     guaranteed to never be {@code null} and to always contain an entry for the {@value
+   *     DriverExecutionProfile#DEFAULT_NAME} profile.
+   */
   @NonNull
   Map<String, SpeculativeExecutionPolicy> getSpeculativeExecutionPolicies();
 
