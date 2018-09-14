@@ -55,7 +55,7 @@ public class DefaultNode implements Node {
   volatile NodeState state;
   volatile int openConnections;
   volatile int reconnections;
-  volatile long upSinceMillis;
+  volatile long upSinceNanos;
 
   volatile NodeDistance distance;
 
@@ -68,7 +68,7 @@ public class DefaultNode implements Node {
     // We leak a reference to a partially constructed object (this), but in practice this won't be a
     // problem because the node updater only needs the connect address to initialize.
     this.metricUpdater = context.getMetricsFactory().newNodeUpdater(this);
-    this.upSinceMillis = -1;
+    this.upSinceNanos = -1;
   }
 
   @NonNull
@@ -132,8 +132,8 @@ public class DefaultNode implements Node {
   }
 
   @Override
-  public long getUpSinceMillis() {
-    return upSinceMillis;
+  public long getUpSinceNanos() {
+    return upSinceNanos;
   }
 
   @Override
