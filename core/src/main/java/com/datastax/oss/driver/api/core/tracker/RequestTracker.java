@@ -41,11 +41,11 @@ public interface RequestTracker extends AutoCloseable {
    * @param executionProfile the execution profile of this request.
    * @param node the node that returned the successful response.
    */
-  void onSuccess(
+  default void onSuccess(
       @NonNull Request request,
       long latencyNanos,
       @NonNull DriverExecutionProfile executionProfile,
-      @NonNull Node node);
+      @NonNull Node node) {}
 
   /**
    * Invoked each time a request fails.
@@ -55,12 +55,12 @@ public interface RequestTracker extends AutoCloseable {
    * @param executionProfile the execution profile of this request.
    * @param node the node that returned the error response, or {@code null} if the error occurred
    */
-  void onError(
+  default void onError(
       @NonNull Request request,
       @NonNull Throwable error,
       long latencyNanos,
       @NonNull DriverExecutionProfile executionProfile,
-      @Nullable Node node);
+      @Nullable Node node) {}
 
   /**
    * Invoked each time a request fails at the node level. Similar to {@link #onError(Request,
@@ -71,12 +71,12 @@ public interface RequestTracker extends AutoCloseable {
    * @param executionProfile the execution profile of this request.
    * @param node the node that returned the error response.
    */
-  void onNodeError(
+  default void onNodeError(
       @NonNull Request request,
       @NonNull Throwable error,
       long latencyNanos,
       @NonNull DriverExecutionProfile executionProfile,
-      @NonNull Node node);
+      @NonNull Node node) {}
 
   /**
    * Invoked each time a request succeeds at the node level. Similar to {@link #onSuccess(Request,
@@ -87,9 +87,9 @@ public interface RequestTracker extends AutoCloseable {
    * @param executionProfile the execution profile of this request.
    * @param node the node that returned the successful response.
    */
-  void onNodeSuccess(
+  default void onNodeSuccess(
       @NonNull Request request,
       long latencyNanos,
       @NonNull DriverExecutionProfile executionProfile,
-      @NonNull Node node);
+      @NonNull Node node) {}
 }
