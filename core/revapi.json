@@ -522,6 +522,28 @@
         "newArchive": "com.datastax.oss:java-driver-core:jar:4.0.0-beta2-SNAPSHOT",
         "elementKind": "method",
         "justification": "Add ability to query specific nodes for virtual tables"
+      },
+      {
+        "code": "java.method.removed",
+        "old": "method long com.datastax.oss.driver.api.core.metadata.Node::getUpSinceMillis()",
+        "package": "com.datastax.oss.driver.api.core.metadata",
+        "classQualifiedName": "com.datastax.oss.driver.api.core.metadata.Node",
+        "classSimpleName": "Node",
+        "methodName": "getUpSinceMillis",
+        "oldArchive": "com.datastax.oss:java-driver-core:jar:4.0.0-beta1",
+        "elementKind": "method",
+        "justification": "Changing from System.currentMillis to System.nanoTime()"
+      },
+      {
+        "code": "java.method.addedToInterface",
+        "new": "method long com.datastax.oss.driver.api.core.metadata.Node::getUpSinceNanos()",
+        "package": "com.datastax.oss.driver.api.core.metadata",
+        "classQualifiedName": "com.datastax.oss.driver.api.core.metadata.Node",
+        "classSimpleName": "Node",
+        "methodName": "getUpSinceNanos",
+        "newArchive": "com.datastax.oss:java-driver-core:jar:4.0.0-beta2-SNAPSHOT",
+        "elementKind": "method",
+        "justification": "Changing from System.currentMillis to System.nanoTime()"
       }
     ]
   }
