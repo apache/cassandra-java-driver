@@ -62,6 +62,7 @@ public class CcmBridge implements AutoCloseable {
 
   private final Map<String, Object> cassandraConfiguration;
   private final Map<String, Object> dseConfiguration;
+  private final List<String> rawDseYaml;
   private final List<String> createOptions;
   private final List<String> dseWorkloads;
 
@@ -127,6 +128,7 @@ public class CcmBridge implements AutoCloseable {
       String ipPrefix,
       Map<String, Object> cassandraConfiguration,
       Map<String, Object> dseConfiguration,
+      List<String> dseConfigurationRawYaml,
       List<String> createOptions,
       Collection<String> jvmArgs,
       List<String> dseWorkloads) {
@@ -145,6 +147,7 @@ public class CcmBridge implements AutoCloseable {
     this.ipPrefix = ipPrefix;
     this.cassandraConfiguration = cassandraConfiguration;
     this.dseConfiguration = dseConfiguration;
+    this.rawDseYaml = dseConfigurationRawYaml;
     this.createOptions = createOptions;
 
     StringBuilder allJvmArgs = new StringBuilder("");
@@ -214,6 +217,9 @@ public class CcmBridge implements AutoCloseable {
         for (Map.Entry<String, Object> conf : dseConfiguration.entrySet()) {
           execute("updatedseconf", String.format("%s:%s", conf.getKey(), conf.getValue()));
         }
+        for (String yaml : rawDseYaml) {
+          executeUnsanitized("updatedseconf", "-y", yaml);
+        }
         if (!dseWorkloads.isEmpty()) {
           execute("setworkload", String.join(",", dseWorkloads));
         }
@@ -259,9 +265,24 @@ public class CcmBridge implements AutoCloseable {
             + String.join(" ", args)
             + " --config-dir="
             + configDirectory.toFile().getAbsolutePath();
-    logger.debug("Executing: " + command);
+
+    execute(CommandLine.parse(command));
+  }
+
+  synchronized void executeUnsanitized(String... args) {
+    String command = "ccm ";
 
     CommandLine cli = CommandLine.parse(command);
+    for (String arg : args) {
+      cli.addArgument(arg, false);
+    }
+    cli.addArgument("--config-dir=" + configDirectory.toFile().getAbsolutePath());
+
+    execute(cli);
+  }
+
+  private void execute(CommandLine cli) {
+    logger.debug("Executing: " + cli);
     ExecuteWatchdog watchDog = new ExecuteWatchdog(TimeUnit.MINUTES.toMillis(10));
     try (LogOutputStream outStream =
             new LogOutputStream() {
@@ -285,13 +306,13 @@ public class CcmBridge implements AutoCloseable {
       int retValue = executor.execute(cli);
       if (retValue != 0) {
         logger.error(
-            "Non-zero exit code ({}) returned from executing ccm command: {}", retValue, command);
+            "Non-zero exit code ({}) returned from executing ccm command: {}", retValue, cli);
       }
     } catch (IOException ex) {
       if (watchDog.killedProcess()) {
-        throw new RuntimeException("The command '" + command + "' was killed after 10 minutes");
+        throw new RuntimeException("The command '" + cli + "' was killed after 10 minutes");
       } else {
-        throw new RuntimeException("The command '" + command + "' failed to execute", ex);
+        throw new RuntimeException("The command '" + cli + "' failed to execute", ex);
       }
     }
   }
@@ -329,6 +350,7 @@ public class CcmBridge implements AutoCloseable {
     private int[] nodes = {1};
     private final Map<String, Object> cassandraConfiguration = new LinkedHashMap<>();
     private final Map<String, Object> dseConfiguration = new LinkedHashMap<>();
+    private final List<String> dseRawYaml = new ArrayList<>();
     private final List<String> jvmArgs = new ArrayList<>();
     private String ipPrefix = "127.0.0.";
     private final List<String> createOptions = new ArrayList<>();
@@ -356,6 +378,11 @@ public class CcmBridge implements AutoCloseable {
 
     public Builder withDseConfiguration(String key, Object value) {
       dseConfiguration.put(key, value);
+      return this;
+    }
+
+    public Builder withDseConfiguration(String rawYaml) {
+      dseRawYaml.add(rawYaml);
       return this;
     }
 
@@ -423,6 +450,7 @@ public class CcmBridge implements AutoCloseable {
           ipPrefix,
           cassandraConfiguration,
           dseConfiguration,
+          dseRawYaml,
           createOptions,
           jvmArgs,
           dseWorkloads);
