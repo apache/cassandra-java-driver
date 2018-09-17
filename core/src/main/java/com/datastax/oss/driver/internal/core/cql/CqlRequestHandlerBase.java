@@ -468,10 +468,12 @@ public abstract class CqlRequestHandlerBase implements Throttled {
                               nextExecution);
                           activeExecutionsCount.incrementAndGet();
                           startedSpeculativeExecutionsCount.incrementAndGet();
+                          // Note: the node to update is the one that caused the speculative
+                          // execution, not the one that is going to handle it.
                           ((DefaultNode) node)
                               .getMetricUpdater()
                               .incrementCounter(
-                                  DefaultNodeMetric.SPECULATIVE_EXECUTIONS,
+                                  DefaultNodeMetric.SPECULATIVE_EXECUTIONS_TRIGGERED,
                                   executionProfile.getName());
                           sendRequest(null, nextExecution, 0, true);
                         }
@@ -490,6 +492,11 @@ public abstract class CqlRequestHandlerBase implements Throttled {
     }
 
     @Override
+    public void onStreamIdAssigned(int streamId) {
+      maybeUpdateSpeculativeExecutionsInFlightCounter(1);
+    }
+
+    @Override
     public void onResponse(Frame responseFrame) {
       ((DefaultNode) node)
           .getMetricUpdater()
@@ -499,6 +506,7 @@ public abstract class CqlRequestHandlerBase implements Throttled {
               System.nanoTime() - start,
               TimeUnit.NANOSECONDS);
       inFlightCallbacks.remove(this);
+      maybeUpdateSpeculativeExecutionsInFlightCounter(-1);
       if (result.isDone()) {
         return;
       }
@@ -726,6 +734,7 @@ public abstract class CqlRequestHandlerBase implements Throttled {
     @Override
     public void onFailure(Throwable error) {
       inFlightCallbacks.remove(this);
+      maybeUpdateSpeculativeExecutionsInFlightCounter(-1);
       if (result.isDone()) {
         return;
       }
@@ -760,6 +769,17 @@ public abstract class CqlRequestHandlerBase implements Throttled {
       context
           .getRequestTracker()
           .onNodeError(statement, error, latencyNanos, executionProfile, node);
+    }
+
+    private void maybeUpdateSpeculativeExecutionsInFlightCounter(int amount) {
+      if (this.execution > 0) {
+        ((DefaultNode) node)
+            .getMetricUpdater()
+            .incrementCounter(
+                DefaultNodeMetric.SPECULATIVE_EXECUTIONS_IN_FLIGHT,
+                executionProfile.getName(),
+                amount);
+      }
     }
 
     @Override

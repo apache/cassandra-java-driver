@@ -522,6 +522,47 @@
         "newArchive": "com.datastax.oss:java-driver-core:jar:4.0.0-beta2-SNAPSHOT",
         "elementKind": "method",
         "justification": "Add ability to query specific nodes for virtual tables"
+      },
+      {
+        "code": "java.field.enumConstantOrderChanged",
+        "old": "field com.datastax.oss.driver.api.core.metrics.DefaultNodeMetric.AUTHENTICATION_ERRORS",
+        "new": "field com.datastax.oss.driver.api.core.metrics.DefaultNodeMetric.AUTHENTICATION_ERRORS",
+        "oldOrdinal": "27",
+        "newOrdinal": "28",
+        "package": "com.datastax.oss.driver.api.core.metrics",
+        "classQualifiedName": "com.datastax.oss.driver.api.core.metrics.DefaultNodeMetric",
+        "classSimpleName": "DefaultNodeMetric",
+        "fieldName": "AUTHENTICATION_ERRORS",
+        "oldArchive": "com.datastax.oss:java-driver-core:jar:4.0.0-beta1",
+        "newArchive": "com.datastax.oss:java-driver-core:jar:4.0.0-beta2-SNAPSHOT",
+        "elementKind": "enumConstant",
+        "justification": "JAVA-1970 added enum constant SPECULATIVE_EXECUTIONS_IN_FLIGHT"
+      },
+      {
+        "code": "java.field.enumConstantOrderChanged",
+        "old": "field com.datastax.oss.driver.api.core.metrics.DefaultNodeMetric.CONNECTION_INIT_ERRORS",
+        "new": "field com.datastax.oss.driver.api.core.metrics.DefaultNodeMetric.CONNECTION_INIT_ERRORS",
+        "oldOrdinal": "26",
+        "newOrdinal": "27",
+        "package": "com.datastax.oss.driver.api.core.metrics",
+        "classQualifiedName": "com.datastax.oss.driver.api.core.metrics.DefaultNodeMetric",
+        "classSimpleName": "DefaultNodeMetric",
+        "fieldName": "CONNECTION_INIT_ERRORS",
+        "oldArchive": "com.datastax.oss:java-driver-core:jar:4.0.0-beta1",
+        "newArchive": "com.datastax.oss:java-driver-core:jar:4.0.0-beta2-SNAPSHOT",
+        "elementKind": "enumConstant",
+        "justification": "JAVA-1970 added enum constant SPECULATIVE_EXECUTIONS_IN_FLIGHT"
+      },
+      {
+        "code": "java.field.removed",
+        "old": "field com.datastax.oss.driver.api.core.metrics.DefaultNodeMetric.SPECULATIVE_EXECUTIONS",
+        "package": "com.datastax.oss.driver.api.core.metrics",
+        "classQualifiedName": "com.datastax.oss.driver.api.core.metrics.DefaultNodeMetric",
+        "classSimpleName": "DefaultNodeMetric",
+        "fieldName": "SPECULATIVE_EXECUTIONS",
+        "oldArchive": "com.datastax.oss:java-driver-core:jar:4.0.0-beta1",
+        "elementKind": "enumConstant",
+        "justification": "JAVA-1970 renamed enum constant to SPECULATIVE_EXECUTIONS_TRIGGERED"
       }
     ]
   }

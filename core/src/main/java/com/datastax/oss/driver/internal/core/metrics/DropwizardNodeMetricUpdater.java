@@ -82,7 +82,8 @@ public class DropwizardNodeMetricUpdater extends DropwizardMetricUpdater<NodeMet
     initializeDefaultCounter(DefaultNodeMetric.IGNORES_ON_WRITE_TIMEOUT, null);
     initializeDefaultCounter(DefaultNodeMetric.IGNORES_ON_UNAVAILABLE, null);
     initializeDefaultCounter(DefaultNodeMetric.IGNORES_ON_OTHER_ERROR, null);
-    initializeDefaultCounter(DefaultNodeMetric.SPECULATIVE_EXECUTIONS, null);
+    initializeDefaultCounter(DefaultNodeMetric.SPECULATIVE_EXECUTIONS_TRIGGERED, null);
+    initializeDefaultCounter(DefaultNodeMetric.SPECULATIVE_EXECUTIONS_IN_FLIGHT, null);
     initializeDefaultCounter(DefaultNodeMetric.CONNECTION_INIT_ERRORS, null);
     initializeDefaultCounter(DefaultNodeMetric.AUTHENTICATION_ERRORS, null);
   }

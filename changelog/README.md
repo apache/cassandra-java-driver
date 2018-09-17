@@ -4,6 +4,7 @@
 
 ### 4.0.0-beta2 (in progress)
 
+- [new feature] JAVA-1970: Expose a counter for in-flight speculative executions
 - [improvement] JAVA-1956: Add statementsCount accessor to BatchStatementBuilder
 - [bug] JAVA-1946: Ignore protocol version in equals comparison for UdtValue/TupleValue
 - [new feature] JAVA-1932: Send Driver Name and Version in Startup message

@@ -46,7 +46,8 @@ public enum DefaultNodeMetric implements NodeMetric {
   IGNORES_ON_WRITE_TIMEOUT("ignores.write-timeout"),
   IGNORES_ON_UNAVAILABLE("ignores.unavailable"),
   IGNORES_ON_OTHER_ERROR("ignores.other"),
-  SPECULATIVE_EXECUTIONS("speculative-executions"),
+  SPECULATIVE_EXECUTIONS_TRIGGERED("speculative-executions.triggered"),
+  SPECULATIVE_EXECUTIONS_IN_FLIGHT("speculative-executions.in-flight"),
   CONNECTION_INIT_ERRORS("errors.connection.init"),
   AUTHENTICATION_ERRORS("errors.connection.auth"),
   ;

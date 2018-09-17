@@ -18,8 +18,10 @@ package com.datastax.oss.driver.internal.core.cql;
 import static com.datastax.oss.driver.Assertions.assertThat;
 import static com.datastax.oss.driver.Assertions.assertThatStage;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.never;
 
 import com.datastax.oss.driver.api.core.AllNodesFailedException;
 import com.datastax.oss.driver.api.core.NoNodeAvailableException;
@@ -29,6 +31,7 @@ import com.datastax.oss.driver.api.core.cql.SimpleStatement;
 import com.datastax.oss.driver.api.core.metadata.Node;
 import com.datastax.oss.driver.api.core.metrics.DefaultNodeMetric;
 import com.datastax.oss.driver.api.core.servererrors.BootstrappingException;
+import com.datastax.oss.driver.api.core.servererrors.OverloadedException;
 import com.datastax.oss.driver.api.core.specex.SpeculativeExecutionPolicy;
 import com.datastax.oss.driver.internal.core.util.concurrent.ScheduledTaskCapturingEventLoop;
 import com.datastax.oss.protocol.internal.ProtocolConstants;
@@ -69,7 +72,7 @@ public class CqlRequestHandlerSpeculativeExecutionTest extends CqlRequestHandler
 
   @Test
   @UseDataProvider("idempotentConfig")
-  public void should_schedule_speculative_executions(
+  public void should_schedule_speculative_executions_and_update_counters(
       boolean defaultIdempotence, SimpleStatement statement) {
     RequestHandlerTestHarness.Builder harnessBuilder =
         RequestHandlerTestHarness.builder().withDefaultIdempotence(defaultIdempotence);
@@ -109,9 +112,19 @@ public class CqlRequestHandlerSpeculativeExecutionTest extends CqlRequestHandler
           .isEqualTo(firstExecutionDelay);
       Mockito.verifyNoMoreInteractions(nodeMetricUpdater1);
       firstExecutionTask.run();
+      // Node1 caused 1 spec exec on Node 2
       Mockito.verify(nodeMetricUpdater1)
           .incrementCounter(
-              DefaultNodeMetric.SPECULATIVE_EXECUTIONS, DriverExecutionProfile.DEFAULT_NAME);
+              DefaultNodeMetric.SPECULATIVE_EXECUTIONS_TRIGGERED,
+              DriverExecutionProfile.DEFAULT_NAME);
+      Mockito.verify(nodeMetricUpdater2)
+          .incrementCounter(
+              DefaultNodeMetric.SPECULATIVE_EXECUTIONS_IN_FLIGHT,
+              DriverExecutionProfile.DEFAULT_NAME,
+              1);
+      Mockito.verifyNoMoreInteractions(nodeMetricUpdater1);
+      Mockito.verifyNoMoreInteractions(nodeMetricUpdater2);
+
       node2Behavior.verifyWrite();
       node2Behavior.setWriteSuccess();
 
@@ -121,17 +134,48 @@ public class CqlRequestHandlerSpeculativeExecutionTest extends CqlRequestHandler
           .isEqualTo(secondExecutionDelay);
       Mockito.verifyNoMoreInteractions(nodeMetricUpdater2);
       secondExecutionTask.run();
+      // Node2 caused 1 spec exec on Node3
       Mockito.verify(nodeMetricUpdater2)
           .incrementCounter(
-              DefaultNodeMetric.SPECULATIVE_EXECUTIONS, DriverExecutionProfile.DEFAULT_NAME);
+              DefaultNodeMetric.SPECULATIVE_EXECUTIONS_TRIGGERED,
+              DriverExecutionProfile.DEFAULT_NAME);
+      Mockito.verify(nodeMetricUpdater3)
+          .incrementCounter(
+              DefaultNodeMetric.SPECULATIVE_EXECUTIONS_IN_FLIGHT,
+              DriverExecutionProfile.DEFAULT_NAME,
+              1);
+      Mockito.verifyNoMoreInteractions(nodeMetricUpdater2);
+      Mockito.verifyNoMoreInteractions(nodeMetricUpdater3);
+
       node3Behavior.verifyWrite();
       node3Behavior.setWriteSuccess();
 
       // No more scheduled tasks since the policy returns 0 on the third call.
       assertThat(harness.nextScheduledTask()).isNull();
 
-      // Note that we don't need to complete any response, the test is just about checking that
-      // executions are started.
+      // Node1 completes, spec exec in-flight counter should not be affected
+      node1Behavior.setResponseSuccess(defaultFrameOf(singleRow()));
+      Mockito.verify(nodeMetricUpdater1, never())
+          .incrementCounter(
+              eq(DefaultNodeMetric.SPECULATIVE_EXECUTIONS_IN_FLIGHT),
+              eq(DriverExecutionProfile.DEFAULT_NAME),
+              anyInt());
+
+      // Node2 completes, spec exec in-flight counter should be decremented
+      node2Behavior.setResponseSuccess(defaultFrameOf(singleRow()));
+      Mockito.verify(nodeMetricUpdater2)
+          .incrementCounter(
+              DefaultNodeMetric.SPECULATIVE_EXECUTIONS_IN_FLIGHT,
+              DriverExecutionProfile.DEFAULT_NAME,
+              -1);
+
+      // Node3 completes with error, spec exec in-flight counter should be decremented
+      node3Behavior.setResponseFailure(new OverloadedException(node3));
+      Mockito.verify(nodeMetricUpdater3)
+          .incrementCounter(
+              DefaultNodeMetric.SPECULATIVE_EXECUTIONS_IN_FLIGHT,
+              DriverExecutionProfile.DEFAULT_NAME,
+              -1);
     }
   }
 
