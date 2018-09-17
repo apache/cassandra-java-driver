@@ -33,7 +33,7 @@ import net.jcip.annotations.ThreadSafe;
 @ThreadSafe
 class ChannelSet implements Iterable<DriverChannel> {
   private volatile DriverChannel[] channels;
-  private ReentrantLock lock = new ReentrantLock(); // must be held when mutating the array
+  private final ReentrantLock lock = new ReentrantLock(); // must be held when mutating the array
 
   ChannelSet() {
     this.channels = new DriverChannel[] {};
