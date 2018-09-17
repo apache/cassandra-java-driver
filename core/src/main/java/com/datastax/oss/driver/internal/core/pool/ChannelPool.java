@@ -235,9 +235,9 @@ public class ChannelPool implements AsyncAutoCloseable {
 
     private NodeDistance distance;
     private int wantedCount;
-    private CompletableFuture<ChannelPool> connectFuture = new CompletableFuture<>();
+    private final CompletableFuture<ChannelPool> connectFuture = new CompletableFuture<>();
     private boolean isConnecting;
-    private CompletableFuture<Void> closeFuture = new CompletableFuture<>();
+    private final CompletableFuture<Void> closeFuture = new CompletableFuture<>();
     private boolean isClosing;
     private CompletableFuture<Void> setKeyspaceFuture;
 
