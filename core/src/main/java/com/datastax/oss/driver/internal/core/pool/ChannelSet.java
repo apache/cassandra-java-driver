@@ -98,6 +98,7 @@ class ChannelSet implements Iterable<DriverChannel> {
     }
   }
 
+  /** @return the number of available stream ids on all channels in this channel set. */
   int getAvailableIds() {
     int availableIds = 0;
     DriverChannel[] snapshot = this.channels;
@@ -107,6 +108,10 @@ class ChannelSet implements Iterable<DriverChannel> {
     return availableIds;
   }
 
+  /**
+   * @return the number of requests currently executing on all channels in this channel set
+   *     (including {@link #getOrphanedIds() orphaned ids}).
+   */
   int getInFlight() {
     int inFlight = 0;
     DriverChannel[] snapshot = this.channels;
@@ -116,6 +121,11 @@ class ChannelSet implements Iterable<DriverChannel> {
     return inFlight;
   }
 
+  /**
+   * @return the number of stream ids for requests in all channels in this channel set that have
+   *     either timed out or been cancelled, but for which we can't release the stream id because a
+   *     request might still come from the server.
+   */
   int getOrphanedIds() {
     int orphanedIds = 0;
     DriverChannel[] snapshot = this.channels;

@@ -154,18 +154,34 @@ public class ChannelPool implements AsyncAutoCloseable {
     return channels.size();
   }
 
+  /** @return the number of available stream ids on all channels in the pool. */
   public int getAvailableIds() {
     return channels.getAvailableIds();
   }
 
+  /**
+   * @return the number of requests currently executing on all channels in this pool (including
+   *     {@link #getOrphanedIds() orphaned ids}).
+   */
   public int getInFlight() {
     return channels.getInFlight();
   }
 
+  /**
+   * @return the number of stream ids for requests in all channels in this pool that have either
+   *     timed out or been cancelled, but for which we can't release the stream id because a request
+   *     might still come from the server.
+   */
   public int getOrphanedIds() {
     return channels.getOrphanedIds();
   }
 
+  /**
+   * Sets a new distance for the node this pool belongs to. This method returns immediately, the new
+   * distance will be set asynchronously.
+   *
+   * @param newDistance the new distance to set.
+   */
   public void resize(NodeDistance newDistance) {
     RunOrSchedule.on(adminExecutor, () -> singleThreaded.resize(newDistance));
   }
