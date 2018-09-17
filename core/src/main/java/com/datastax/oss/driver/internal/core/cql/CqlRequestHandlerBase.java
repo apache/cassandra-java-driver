@@ -423,7 +423,7 @@ public abstract class CqlRequestHandlerBase implements Throttled {
         Throwable error = future.cause();
         if (error instanceof EncoderException
             && error.getCause() instanceof FrameTooLongException) {
-          trackNodeError(node, error.getCause());
+          trackNodeError(error.getCause());
           setFinalError(error.getCause(), node, execution);
         } else {
           LOG.trace(
@@ -432,7 +432,7 @@ public abstract class CqlRequestHandlerBase implements Throttled {
               channel,
               error);
           recordError(node, error);
-          trackNodeError(node, error);
+          trackNodeError(error);
           ((DefaultNode) node)
               .getMetricUpdater()
               .incrementCounter(DefaultNodeMetric.UNSENT_REQUESTS, executionProfile.getName());
@@ -535,12 +535,12 @@ public abstract class CqlRequestHandlerBase implements Throttled {
           LOG.trace("[{}] Got error response, processing", logPrefix);
           processErrorResponse((Error) responseMessage);
         } else {
-          trackNodeError(node, new IllegalStateException("Unexpected response " + responseMessage));
+          trackNodeError(new IllegalStateException("Unexpected response " + responseMessage));
           setFinalError(
               new IllegalStateException("Unexpected response " + responseMessage), node, execution);
         }
       } catch (Throwable t) {
-        trackNodeError(node, t);
+        trackNodeError(t);
         setFinalError(t, node, execution);
       }
     }
@@ -583,18 +583,18 @@ public abstract class CqlRequestHandlerBase implements Throttled {
                             || prepareError instanceof FunctionFailureException
                             || prepareError instanceof ProtocolError) {
                           LOG.trace("[{}] Unrecoverable error on reprepare, rethrowing", logPrefix);
-                          trackNodeError(node, prepareError);
+                          trackNodeError(prepareError);
                           setFinalError(prepareError, node, execution);
                           return null;
                         }
                       }
                     } else if (exception instanceof RequestThrottlingException) {
-                      trackNodeError(node, exception);
+                      trackNodeError(exception);
                       setFinalError(exception, node, execution);
                       return null;
                     }
                     recordError(node, exception);
-                    trackNodeError(node, exception);
+                    trackNodeError(exception);
                     LOG.trace("[{}] Reprepare failed, trying next node", logPrefix);
                     sendRequest(null, execution, retryCount, false);
                   } else {
@@ -610,14 +610,14 @@ public abstract class CqlRequestHandlerBase implements Throttled {
       if (error instanceof BootstrappingException) {
         LOG.trace("[{}] {} is bootstrapping, trying next node", logPrefix, node);
         recordError(node, error);
-        trackNodeError(node, error);
+        trackNodeError(error);
         sendRequest(null, execution, retryCount, false);
       } else if (error instanceof QueryValidationException
           || error instanceof FunctionFailureException
           || error instanceof ProtocolError) {
         LOG.trace("[{}] Unrecoverable error, rethrowing", logPrefix);
         metricUpdater.incrementCounter(DefaultNodeMetric.OTHER_ERRORS, executionProfile.getName());
-        trackNodeError(node, error);
+        trackNodeError(error);
         setFinalError(error, node, execution);
       } else {
         RetryDecision decision;
@@ -691,16 +691,16 @@ public abstract class CqlRequestHandlerBase implements Throttled {
       switch (decision) {
         case RETRY_SAME:
           recordError(node, error);
-          trackNodeError(node, error);
+          trackNodeError(error);
           sendRequest(node, execution, retryCount + 1, false);
           break;
         case RETRY_NEXT:
           recordError(node, error);
-          trackNodeError(node, error);
+          trackNodeError(error);
           sendRequest(null, execution, retryCount + 1, false);
           break;
         case RETHROW:
-          trackNodeError(node, error);
+          trackNodeError(error);
           setFinalError(error, node, execution);
           break;
         case IGNORE:
@@ -764,7 +764,7 @@ public abstract class CqlRequestHandlerBase implements Throttled {
       }
     }
 
-    private void trackNodeError(Node node, Throwable error) {
+    private void trackNodeError(Throwable error) {
       long latencyNanos = System.nanoTime() - this.start;
       context
           .getRequestTracker()
