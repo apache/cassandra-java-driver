@@ -64,7 +64,7 @@ public class NodeMetadataIT {
     assertThat(node.getDistance()).isSameAs(NodeDistance.LOCAL);
     assertThat(node.getHostId()).isNotNull();
     assertThat(node.getSchemaVersion()).isNotNull();
-    long upTime1 = node.getUpSinceMillis();
+    long upTime1 = node.getUpSinceNanos();
     assertThat(upTime1).isGreaterThan(-1);
 
     // Note: open connections and reconnection status are covered in NodeStateIT
@@ -73,10 +73,10 @@ public class NodeMetadataIT {
     EventBus eventBus = ((InternalDriverContext) session.getContext()).getEventBus();
     eventBus.fire(TopologyEvent.forceDown(node.getConnectAddress()));
     ConditionChecker.checkThat(() -> node.getState() == NodeState.FORCED_DOWN).becomesTrue();
-    assertThat(node.getUpSinceMillis()).isEqualTo(-1);
+    assertThat(node.getUpSinceNanos()).isEqualTo(-1);
     eventBus.fire(TopologyEvent.forceUp(node.getConnectAddress()));
     ConditionChecker.checkThat(() -> node.getState() == NodeState.UP).becomesTrue();
-    assertThat(node.getUpSinceMillis()).isGreaterThan(upTime1);
+    assertThat(node.getUpSinceNanos()).isGreaterThan(upTime1);
   }
 
   private static Node getUniqueNode(CqlSession session) {
