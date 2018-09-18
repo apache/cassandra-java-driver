@@ -32,8 +32,10 @@ import java.util.concurrent.CompletionStage;
 import java.util.concurrent.TimeUnit;
 import org.junit.Before;
 import org.junit.ClassRule;
+import org.junit.Rule;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
+import org.junit.rules.ExpectedException;
 
 @Category(ParallelizableTests.class)
 public class ConnectIT {
@@ -42,15 +44,21 @@ public class ConnectIT {
   public static SimulacronRule simulacronRule =
       new SimulacronRule(ClusterSpec.builder().withNodes(1));
 
+  @Rule public ExpectedException thrown = ExpectedException.none();
+
   @Before
   public void setup() {
     simulacronRule.cluster().acceptConnections();
   }
 
-  @Test(expected = AllNodesFailedException.class)
+  @Test
   public void should_fail_fast_if_contact_points_unreachable_and_reconnection_disabled() {
     // Given
     simulacronRule.cluster().rejectConnections(0, RejectScope.STOP);
+
+    thrown.expect(AllNodesFailedException.class);
+    thrown.expectMessage(
+        "Could not reach any contact point, make sure you've provided valid addresses");
 
     // When
     SessionUtils.newSession(simulacronRule);

@@ -4,6 +4,7 @@
 
 ### 4.0.0-beta2 (in progress)
 
+- [improvement] JAVA-1949: Improve error message when contact points are wrong
 - [improvement] JAVA-1956: Add statementsCount accessor to BatchStatementBuilder
 - [bug] JAVA-1946: Ignore protocol version in equals comparison for UdtValue/TupleValue
 - [new feature] JAVA-1932: Send Driver Name and Version in Startup message
