@@ -276,6 +276,15 @@ public class ControlConnection implements EventCallback, AsyncAutoCloseable {
               if (reconnectOnFailure && !closeWasCalled) {
                 reconnection.start();
               } else {
+                // Special case for the initial connection: reword to a more user-friendly error
+                // message
+                if (error instanceof AllNodesFailedException) {
+                  error =
+                      ((AllNodesFailedException) error)
+                          .reword(
+                              "Could not reach any contact point, "
+                                  + "make sure you've provided valid addresses");
+                }
                 initFuture.completeExceptionally(error);
               }
               firstConnectionAttemptFuture.completeExceptionally(error);

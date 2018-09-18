@@ -62,22 +62,25 @@ public class AllNodesFailedException extends DriverException {
       @NonNull String message,
       @Nullable ExecutionInfo executionInfo,
       @NonNull Map<Node, Throwable> errors) {
-    super(message, null, null, true);
+    super(message, executionInfo, null, true);
     this.errors = errors;
   }
 
   private AllNodesFailedException(Map<Node, Throwable> errors) {
-    this(buildMessage(errors), null, errors);
+    this(
+        buildMessage(
+            String.format("All %d node(s) tried for the query failed", errors.size()), errors),
+        null,
+        errors);
   }
 
-  private static String buildMessage(Map<Node, Throwable> errors) {
+  private static String buildMessage(String baseMessage, Map<Node, Throwable> errors) {
     int limit = Math.min(errors.size(), 3);
     String details =
         Joiner.on(", ").withKeyValueSeparator(": ").join(Iterables.limit(errors.entrySet(), limit));
 
     return String.format(
-        "All %d node tried for the query failed (showing first %d, use getErrors() for more: %s)",
-        errors.size(), limit, details);
+        baseMessage + " (showing first %d, use getErrors() for more: %s)", limit, details);
   }
 
   /** The details of the individual error on each node. */
@@ -90,5 +93,11 @@ public class AllNodesFailedException extends DriverException {
   @Override
   public DriverException copy() {
     return new AllNodesFailedException(getMessage(), getExecutionInfo(), errors);
+  }
+
+  @NonNull
+  public AllNodesFailedException reword(String newMessage) {
+    return new AllNodesFailedException(
+        buildMessage(newMessage, errors), getExecutionInfo(), errors);
   }
 }
