@@ -109,10 +109,10 @@ public interface Node {
   NodeState getState();
 
   /**
-   * The last time that this node transitioned to the UP state, in milliseconds since the epoch, or
-   * -1 if it's not up at the moment.
+   * The last time that this node transitioned to the UP state, in nanoseconds as reported by {@link
+   * System#nanoTime()}, or -1 if it's not up at the moment.
    */
-  long getUpSinceMillis();
+  long getUpSinceNanos();
 
   /**
    * The total number of active connections currently open by this driver instance to the node. This
