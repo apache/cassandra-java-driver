@@ -128,13 +128,13 @@ public class DefaultSession implements CqlSession {
 
   @NonNull
   @Override
-  public CompletionStage<Metadata> setSchemaMetadataEnabled(@Nullable Boolean newValue) {
+  public CompletionStage<? extends Metadata> setSchemaMetadataEnabled(@Nullable Boolean newValue) {
     return metadataManager.setSchemaEnabled(newValue);
   }
 
   @NonNull
   @Override
-  public CompletionStage<Metadata> refreshSchemaAsync() {
+  public CompletionStage<? extends Metadata> refreshSchemaAsync() {
     return metadataManager.refreshSchema(null, true, true);
   }
 

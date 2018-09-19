@@ -55,7 +55,7 @@ public class DefaultAsyncResultSetTest {
   public void setup() {
     MockitoAnnotations.initMocks(this);
 
-    Mockito.when(executionInfo.getStatement()).thenReturn((Statement) statement);
+    Mockito.when(executionInfo.getStatement()).thenAnswer(invocation -> statement);
     Mockito.when(context.getCodecRegistry()).thenReturn(CodecRegistry.DEFAULT);
     Mockito.when(context.getProtocolVersion()).thenReturn(DefaultProtocolVersion.DEFAULT);
   }
@@ -85,14 +85,15 @@ public class DefaultAsyncResultSetTest {
     Mockito.when(((Statement) statement).copy(mockPagingState)).thenReturn(mockNextStatement);
 
     CompletableFuture<AsyncResultSet> mockResultFuture = new CompletableFuture<>();
-    Mockito.when(session.executeAsync(Mockito.any(Statement.class))).thenReturn(mockResultFuture);
+    Mockito.when(session.executeAsync(Mockito.any(Statement.class)))
+        .thenAnswer(invocation -> mockResultFuture);
 
     // When
     DefaultAsyncResultSet resultSet =
         new DefaultAsyncResultSet(
             columnDefinitions, executionInfo, new ArrayDeque<>(), session, context);
     assertThat(resultSet.hasMorePages()).isTrue();
-    CompletionStage<AsyncResultSet> nextPageFuture = resultSet.fetchNextPage();
+    CompletionStage<? extends AsyncResultSet> nextPageFuture = resultSet.fetchNextPage();
 
     // Then
     Mockito.verify(statement).copy(mockPagingState);

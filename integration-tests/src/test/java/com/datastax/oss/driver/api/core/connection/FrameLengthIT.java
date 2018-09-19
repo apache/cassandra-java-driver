@@ -92,7 +92,7 @@ public class FrameLengthIT {
 
   @Test
   public void should_fail_if_response_exceeds_max_frame_length() {
-    CompletionStage<AsyncResultSet> slowResultFuture =
+    CompletionStage<? extends AsyncResultSet> slowResultFuture =
         sessionRule.session().executeAsync(SLOW_QUERY);
     try {
       sessionRule.session().execute(LARGE_QUERY);

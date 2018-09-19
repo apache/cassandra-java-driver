@@ -61,7 +61,7 @@ public interface CqlSession extends Session {
    * generally before the result is available).
    */
   @NonNull
-  default CompletionStage<AsyncResultSet> executeAsync(@NonNull Statement<?> statement) {
+  default CompletionStage<? extends AsyncResultSet> executeAsync(@NonNull Statement<?> statement) {
     return Objects.requireNonNull(
         execute(statement, Statement.ASYNC), "The CQL processor should never return a null result");
   }
@@ -71,7 +71,7 @@ public interface CqlSession extends Session {
    * generally before the result is available).
    */
   @NonNull
-  default CompletionStage<AsyncResultSet> executeAsync(@NonNull String query) {
+  default CompletionStage<? extends AsyncResultSet> executeAsync(@NonNull String query) {
     return executeAsync(SimpleStatement.newInstance(query));
   }
 
@@ -167,7 +167,8 @@ public interface CqlSession extends Session {
    * details.
    */
   @NonNull
-  default CompletionStage<PreparedStatement> prepareAsync(@NonNull SimpleStatement statement) {
+  default CompletionStage<? extends PreparedStatement> prepareAsync(
+      @NonNull SimpleStatement statement) {
     return Objects.requireNonNull(
         execute(new DefaultPrepareRequest(statement), PrepareRequest.ASYNC),
         "The CQL prepare processor should never return a null result");
@@ -178,7 +179,7 @@ public interface CqlSession extends Session {
    * sent, generally before the statement is prepared).
    */
   @NonNull
-  default CompletionStage<PreparedStatement> prepareAsync(@NonNull String query) {
+  default CompletionStage<? extends PreparedStatement> prepareAsync(@NonNull String query) {
     return Objects.requireNonNull(
         execute(new DefaultPrepareRequest(query), PrepareRequest.ASYNC),
         "The CQL prepare processor should never return a null result");
@@ -194,7 +195,7 @@ public interface CqlSession extends Session {
    * with {@link PrepareRequest} directly.
    */
   @NonNull
-  default CompletionStage<PreparedStatement> prepareAsync(PrepareRequest request) {
+  default CompletionStage<? extends PreparedStatement> prepareAsync(PrepareRequest request) {
     return Objects.requireNonNull(
         execute(request, PrepareRequest.ASYNC),
         "The CQL prepare processor should never return a null result");
