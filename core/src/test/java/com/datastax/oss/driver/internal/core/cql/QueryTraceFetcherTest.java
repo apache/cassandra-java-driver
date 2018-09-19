@@ -116,7 +116,8 @@ public class QueryTraceFetcherTest {
     CompletionStage<AsyncResultSet> sessionRow = completeSessionRow();
     CompletionStage<AsyncResultSet> eventRows = singlePageEventRows();
     Mockito.when(session.executeAsync(any(SimpleStatement.class)))
-        .thenReturn(sessionRow, eventRows);
+        .thenAnswer(invocation -> sessionRow)
+        .thenAnswer(invocation -> eventRows);
 
     // When
     QueryTraceFetcher fetcher = new QueryTraceFetcher(TRACING_ID, session, context, config);
@@ -167,7 +168,9 @@ public class QueryTraceFetcherTest {
     CompletionStage<AsyncResultSet> eventRows1 = multiPageEventRows1();
     CompletionStage<AsyncResultSet> eventRows2 = multiPageEventRows2();
     Mockito.when(session.executeAsync(any(SimpleStatement.class)))
-        .thenReturn(sessionRow, eventRows1, eventRows2);
+        .thenAnswer(invocation -> sessionRow)
+        .thenAnswer(invocation -> eventRows1)
+        .thenAnswer(invocation -> eventRows2);
 
     // When
     QueryTraceFetcher fetcher = new QueryTraceFetcher(TRACING_ID, session, context, config);
@@ -192,7 +195,9 @@ public class QueryTraceFetcherTest {
     CompletionStage<AsyncResultSet> sessionRow2 = completeSessionRow();
     CompletionStage<AsyncResultSet> eventRows = singlePageEventRows();
     Mockito.when(session.executeAsync(any(SimpleStatement.class)))
-        .thenReturn(sessionRow1, sessionRow2, eventRows);
+        .thenAnswer(invocation -> sessionRow1)
+        .thenAnswer(invocation -> sessionRow2)
+        .thenAnswer(invocation -> eventRows);
 
     // When
     QueryTraceFetcher fetcher = new QueryTraceFetcher(TRACING_ID, session, context, config);
@@ -259,7 +264,9 @@ public class QueryTraceFetcherTest {
     CompletionStage<AsyncResultSet> sessionRow2 = incompleteSessionRow();
     CompletionStage<AsyncResultSet> sessionRow3 = incompleteSessionRow();
     Mockito.when(session.executeAsync(any(SimpleStatement.class)))
-        .thenReturn(sessionRow1, sessionRow2, sessionRow3);
+        .thenAnswer(invocation -> sessionRow1)
+        .thenAnswer(invocation -> sessionRow2)
+        .thenAnswer(invocation -> sessionRow3);
 
     // When
     QueryTraceFetcher fetcher = new QueryTraceFetcher(TRACING_ID, session, context, config);

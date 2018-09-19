@@ -85,7 +85,7 @@ public class AsyncResultSetIT {
   public void should_only_iterate_over_rows_in_current_page() throws Exception {
     // very basic test that just ensures that iterating over an AsyncResultSet only visits the first
     // page.
-    CompletionStage<AsyncResultSet> result =
+    CompletionStage<? extends AsyncResultSet> result =
         sessionRule
             .session()
             .executeAsync(

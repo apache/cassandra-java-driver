@@ -95,7 +95,7 @@ public class DefaultAsyncResultSet implements AsyncResultSet {
 
   @NonNull
   @Override
-  public CompletionStage<AsyncResultSet> fetchNextPage() throws IllegalStateException {
+  public CompletionStage<? extends AsyncResultSet> fetchNextPage() throws IllegalStateException {
     ByteBuffer nextState = executionInfo.getPagingState();
     if (nextState == null) {
       throw new IllegalStateException(
