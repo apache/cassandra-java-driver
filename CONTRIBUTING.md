@@ -211,11 +211,9 @@ the types from `edu.umd.cs.findbugs.annotations`, there are homonyms in the clas
 
 Static imports are permitted in a couple of places:
 * AssertJ's `assertThat` / `fail`.
-* Some Mockito methods, provided that you're already using a non-statically imported method at the
-  beginning of the line. For example:
+* Mockito methods, e.g.:
   ```java
-  // any and eq are statically imported, it's pretty clear that they at least relate to Mockito
-  Mockito.verify(intCodec).decodePrimitive(any(ByteBuffer.class), eq(ProtocolVersion.DEFAULT));
+  verify(intCodec).decodePrimitive(any(ByteBuffer.class), eq(ProtocolVersion.DEFAULT));
   ```
 
 Test methods names use lower snake case, generally start with `should`, and clearly indicate the
