@@ -225,7 +225,7 @@ Test methods names use lower snake case, generally start with `should`, and clea
 purpose of the test, for example: `should_fail_if_key_already_exists`. If you have trouble coming 
 up with a simple name, it might be a sign that your test does too much, and should be split.
 
-We use AssertJ (`assertThat`) for assertions. Don't use TestNG's assertions (`assertEquals`,
+We use AssertJ (`assertThat`) for assertions. Don't use JUnit assertions (`assertEquals`, 
 `assertNull`, etc).
 
 Don't try to generify at all cost: a bit of duplication is acceptable, if that helps keep the tests
