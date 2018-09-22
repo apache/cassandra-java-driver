@@ -198,6 +198,15 @@ Add them for all new code, with the exception of:
 Make sure you import the types from `net.jcip`, there are homonyms in the classpath.
 
 
+### Nullability annotations
+
+We use the [Spotbugs annotations](https://spotbugs.github.io) to document nullability of parameters,
+method return types and class members.
+
+Please annotate any new class or interface with the appropriate annotations: `@NonNull`, `@Nullable`. Make sure you import 
+the types from `edu.umd.cs.findbugs.annotations`, there are homonyms in the classpath.
+
+
 ## Coding style -- test code
 
 Static imports are permitted in a couple of places:
