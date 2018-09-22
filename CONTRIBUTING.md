@@ -210,10 +210,15 @@ the types from `edu.umd.cs.findbugs.annotations`, there are homonyms in the clas
 ## Coding style -- test code
 
 Static imports are permitted in a couple of places:
-* AssertJ's `assertThat` / `fail`.
-* Mockito methods, e.g.:
+* All AssertJ methods, e.g.:
   ```java
-  verify(intCodec).decodePrimitive(any(ByteBuffer.class), eq(ProtocolVersion.DEFAULT));
+  assertThat(node.getDatacenter()).isNotNull();
+  fail("Expecting IllegalStateException to be thrown");
+  ```
+* All Mockito methods, e.g.:
+  ```java
+  when(codecRegistry.codecFor(DataTypes.INT)).thenReturn(codec);
+  verify(codec).decodePrimitive(any(ByteBuffer.class), eq(ProtocolVersion.DEFAULT));
   ```
 
 Test methods names use lower snake case, generally start with `should`, and clearly indicate the
