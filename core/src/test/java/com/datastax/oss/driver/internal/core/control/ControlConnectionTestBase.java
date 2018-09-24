@@ -155,7 +155,7 @@ abstract class ControlConnectionTestBase {
             });
     Mockito.when(driverChannel.closeFuture()).thenReturn(closeFuture);
     Mockito.when(driverChannel.toString()).thenReturn("channel" + id);
-    Mockito.when(driverChannel.remoteAddress())
+    Mockito.when(driverChannel.connectAddress())
         .thenReturn(new InetSocketAddress("127.0.0." + id, 9042));
     return driverChannel;
   }

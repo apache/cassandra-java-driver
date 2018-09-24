@@ -104,7 +104,7 @@ public class DefaultTopologyMonitor implements TopologyMonitor {
     }
     LOG.debug("[{}] Refreshing info for {}", logPrefix, node);
     DriverChannel channel = controlConnection.channel();
-    if (node.getConnectAddress().equals(channel.remoteAddress())) {
+    if (node.getConnectAddress().equals(channel.connectAddress())) {
       // refreshNode is called for nodes that just came up. If the control node just came up, it
       // means the control connection just reconnected, which means we did a full node refresh. So
       // we don't need to process this call.
@@ -159,7 +159,7 @@ public class DefaultTopologyMonitor implements TopologyMonitor {
 
     // This cast always succeeds in production. The only way it could fail is in a test that uses a
     // local channel, and we don't have such tests at the moment.
-    InetSocketAddress controlAddress = (InetSocketAddress) channel.remoteAddress();
+    InetSocketAddress controlAddress = (InetSocketAddress) channel.connectAddress();
 
     savePort(channel);
 
@@ -318,8 +318,8 @@ public class DefaultTopologyMonitor implements TopologyMonitor {
   // nodes. As a consequence, the port is not stored in system tables.
   // We save it the first time we get a control connection channel.
   private void savePort(DriverChannel channel) {
-    if (port < 0 && channel.remoteAddress() instanceof InetSocketAddress) {
-      port = ((InetSocketAddress) channel.remoteAddress()).getPort();
+    if (port < 0 && channel.connectAddress() instanceof InetSocketAddress) {
+      port = ((InetSocketAddress) channel.connectAddress()).getPort();
     }
   }
 

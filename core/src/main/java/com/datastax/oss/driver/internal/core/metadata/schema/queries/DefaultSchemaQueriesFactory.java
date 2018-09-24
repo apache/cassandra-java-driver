@@ -46,11 +46,11 @@ public class DefaultSchemaQueriesFactory implements SchemaQueriesFactory {
       throw new IllegalStateException("Control channel not available, aborting schema refresh");
     }
     @SuppressWarnings("SuspiciousMethodCalls")
-    Node node = context.getMetadataManager().getMetadata().getNodes().get(channel.remoteAddress());
+    Node node = context.getMetadataManager().getMetadata().getNodes().get(channel.connectAddress());
     if (node == null) {
       throw new IllegalStateException(
           "Could not find control node metadata "
-              + channel.remoteAddress()
+              + channel.connectAddress()
               + ", aborting schema refresh");
     }
     return newInstance(node, channel, refreshFuture);

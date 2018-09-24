@@ -46,6 +46,7 @@ public class DriverChannel {
   @SuppressWarnings("RedundantStringConstructorCall")
   static final Object FORCEFUL_CLOSE_MESSAGE = new String("FORCEFUL_CLOSE_MESSAGE");
 
+  private final SocketAddress connectAddress;
   private final Channel channel;
   private final InFlightHandler inFlightHandler;
   private final WriteCoalescer writeCoalescer;
@@ -53,7 +54,12 @@ public class DriverChannel {
   private final AtomicBoolean closing = new AtomicBoolean();
   private final AtomicBoolean forceClosing = new AtomicBoolean();
 
-  DriverChannel(Channel channel, WriteCoalescer writeCoalescer, ProtocolVersion protocolVersion) {
+  DriverChannel(
+      SocketAddress connectAddress,
+      Channel channel,
+      WriteCoalescer writeCoalescer,
+      ProtocolVersion protocolVersion) {
+    this.connectAddress = connectAddress;
     this.channel = channel;
     this.inFlightHandler = channel.pipeline().get(InFlightHandler.class);
     this.writeCoalescer = writeCoalescer;
@@ -147,8 +153,16 @@ public class DriverChannel {
     return protocolVersion;
   }
 
-  public SocketAddress remoteAddress() {
-    return channel.remoteAddress();
+  /**
+   * The address that was used to establish the connection.
+   *
+   * <p>Note that it might be unresolved, and therefore not equal to the underlying Netty channel's
+   * remote address.
+   *
+   * <p>See {@code advanced.resolve-contact-points} in the configuration.
+   */
+  public SocketAddress connectAddress() {
+    return connectAddress;
   }
 
   public SocketAddress localAddress() {

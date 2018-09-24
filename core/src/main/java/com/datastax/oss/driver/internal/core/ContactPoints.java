@@ -34,11 +34,26 @@ public class ContactPoints {
   private static final Logger LOG = LoggerFactory.getLogger(ContactPoints.class);
 
   public static Set<InetSocketAddress> merge(
-      Set<InetSocketAddress> programmaticContactPoints, List<String> configContactPoints) {
+      Set<InetSocketAddress> programmaticContactPoints,
+      List<String> configContactPoints,
+      boolean resolve) {
+
+    if (!resolve) {
+      for (InetSocketAddress address : programmaticContactPoints) {
+        if (!address.isUnresolved()) {
+          LOG.warn(
+              "You configured the driver to not resolve addresses,"
+                  + " but at least one of your programmatic contact points is resolved ({}),"
+                  + " this is probably a mistake",
+              address);
+          break;
+        }
+      }
+    }
 
     Set<InetSocketAddress> result = Sets.newHashSet(programmaticContactPoints);
     for (String spec : configContactPoints) {
-      for (InetSocketAddress address : extract(spec)) {
+      for (InetSocketAddress address : extract(spec, resolve)) {
         boolean wasNew = result.add(address);
         if (!wasNew) {
           LOG.warn("Duplicate contact point {}", address);
@@ -48,7 +63,7 @@ public class ContactPoints {
     return ImmutableSet.copyOf(result);
   }
 
-  private static Set<InetSocketAddress> extract(String spec) {
+  private static Set<InetSocketAddress> extract(String spec, boolean resolve) {
     List<String> hostAndPort = Splitter.on(":").splitToList(spec);
     if (hostAndPort.size() != 2) {
       LOG.warn("Ignoring invalid contact point {} (expecting host:port)", spec);
@@ -65,22 +80,26 @@ public class ContactPoints {
           hostAndPort.get(1));
       return Collections.emptySet();
     }
-    try {
-      InetAddress[] inetAddresses = InetAddress.getAllByName(host);
-      if (inetAddresses.length > 1) {
-        LOG.info(
-            "Contact point {} resolves to multiple addresses, will use them all ({})",
-            spec,
-            Arrays.deepToString(inetAddresses));
+    if (!resolve) {
+      return ImmutableSet.of(InetSocketAddress.createUnresolved(host, port));
+    } else {
+      try {
+        InetAddress[] inetAddresses = InetAddress.getAllByName(host);
+        if (inetAddresses.length > 1) {
+          LOG.info(
+              "Contact point {} resolves to multiple addresses, will use them all ({})",
+              spec,
+              Arrays.deepToString(inetAddresses));
+        }
+        Set<InetSocketAddress> result = new HashSet<>();
+        for (InetAddress inetAddress : inetAddresses) {
+          result.add(new InetSocketAddress(inetAddress, port));
+        }
+        return result;
+      } catch (UnknownHostException e) {
+        LOG.warn("Ignoring invalid contact point {} (unknown host {})", spec, host);
+        return Collections.emptySet();
       }
-      Set<InetSocketAddress> result = new HashSet<>();
-      for (InetAddress inetAddress : inetAddresses) {
-        result.add(new InetSocketAddress(inetAddress, port));
-      }
-      return result;
-    } catch (UnknownHostException e) {
-      LOG.warn("Ignoring invalid contact point {} (unknown host {})", spec, host);
-      return Collections.emptySet();
     }
   }
 }

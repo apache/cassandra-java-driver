@@ -123,8 +123,10 @@ public abstract class SessionBuilder<SelfT extends SessionBuilder, SessionT> {
    * they will be merged. If both are absent, the driver will default to 127.0.0.1:9042.
    *
    * <p>Contrary to the configuration, DNS names with multiple A-records will not be handled here.
-   * If you need that, call {@link java.net.InetAddress#getAllByName(String)} before calling this
-   * method.
+   * If you need that, extract them manually with {@link java.net.InetAddress#getAllByName(String)}
+   * before calling this method. Similarly, if you need connect addresses to stay unresolved, make
+   * sure you pass unresolved instances here (see {@code advanced.resolve-addresses} in the
+   * configuration for more explanations).
    */
   @NonNull
   public SelfT addContactPoints(@NonNull Collection<InetSocketAddress> contactPoints) {
@@ -292,9 +294,11 @@ public abstract class SessionBuilder<SelfT extends SessionBuilder, SessionT> {
       DriverExecutionProfile defaultConfig = configLoader.getInitialConfig().getDefaultProfile();
       List<String> configContactPoints =
           defaultConfig.getStringList(DefaultDriverOption.CONTACT_POINTS, Collections.emptyList());
+      boolean resolveAddresses =
+          defaultConfig.getBoolean(DefaultDriverOption.RESOLVE_CONTACT_POINTS, true);
 
       Set<InetSocketAddress> contactPoints =
-          ContactPoints.merge(programmaticContactPoints, configContactPoints);
+          ContactPoints.merge(programmaticContactPoints, configContactPoints, resolveAddresses);
 
       if (keyspace == null && defaultConfig.isDefined(DefaultDriverOption.SESSION_KEYSPACE)) {
         keyspace =

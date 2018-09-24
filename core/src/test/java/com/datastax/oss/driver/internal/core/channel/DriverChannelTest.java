@@ -60,7 +60,9 @@ public class DriverChannelTest extends ChannelHandlerTestBase {
                 null,
                 "test"));
     writeCoalescer = new MockWriteCoalescer();
-    driverChannel = new DriverChannel(channel, writeCoalescer, DefaultProtocolVersion.V3);
+    driverChannel =
+        new DriverChannel(
+            channel.remoteAddress(), channel, writeCoalescer, DefaultProtocolVersion.V3);
   }
 
   /**

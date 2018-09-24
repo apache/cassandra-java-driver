@@ -84,7 +84,7 @@ public class DefaultTopologyMonitorTest {
     addressTranslator = Mockito.spy(new PassThroughAddressTranslator(context));
     Mockito.when(context.getAddressTranslator()).thenReturn(addressTranslator);
 
-    Mockito.when(channel.remoteAddress()).thenReturn(ADDRESS1);
+    Mockito.when(channel.connectAddress()).thenReturn(ADDRESS1);
     Mockito.when(controlConnection.channel()).thenReturn(channel);
     Mockito.when(context.getControlConnection()).thenReturn(controlConnection);
 
