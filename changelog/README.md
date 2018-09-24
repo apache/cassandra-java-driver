@@ -4,6 +4,7 @@
 
 ### 4.0.0-beta3 (in progress)
 
+- [improvement] JAVA-1978: Add a config option to keep contact points unresolved
 - [bug] JAVA-2000: Fix ConcurrentModificationException during channel shutdown
 - [improvement] JAVA-2002: Reimplement TypeCodec.accepts to improve performance
 - [improvement] JAVA-2011: Re-add ResultSet.getAvailableWithoutFetching() and isFullyFetched()

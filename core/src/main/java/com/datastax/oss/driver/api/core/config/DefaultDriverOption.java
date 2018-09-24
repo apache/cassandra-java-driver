@@ -166,6 +166,8 @@ public enum DefaultDriverOption implements DriverOption {
 
   COALESCER_MAX_RUNS("advanced.coalescer.max-runs-with-no-work"),
   COALESCER_INTERVAL("advanced.coalescer.reschedule-interval"),
+
+  RESOLVE_CONTACT_POINTS("advanced.resolve-contact-points"),
   ;
 
   private final String path;
