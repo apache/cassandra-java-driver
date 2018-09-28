@@ -76,20 +76,20 @@ public class RequestHandlerTestHarness implements AutoCloseable {
   private final ScheduledTaskCapturingEventLoop schedulingEventLoop;
   private final Map<Node, ChannelPool> pools;
 
-  @Mock private InternalDriverContext context;
-  @Mock private DefaultSession session;
-  @Mock private EventLoopGroup eventLoopGroup;
-  @Mock private NettyOptions nettyOptions;
-  @Mock private DriverConfig config;
-  @Mock private DriverExecutionProfile defaultProfile;
-  @Mock private LoadBalancingPolicyWrapper loadBalancingPolicyWrapper;
-  @Mock private RetryPolicy retryPolicy;
-  @Mock private SpeculativeExecutionPolicy speculativeExecutionPolicy;
-  @Mock private TimestampGenerator timestampGenerator;
-  @Mock private ProtocolVersionRegistry protocolVersionRegistry;
-  @Mock private SessionMetricUpdater sessionMetricUpdater;
+  @Mock protected InternalDriverContext context;
+  @Mock protected DefaultSession session;
+  @Mock protected EventLoopGroup eventLoopGroup;
+  @Mock protected NettyOptions nettyOptions;
+  @Mock protected DriverConfig config;
+  @Mock protected DriverExecutionProfile defaultProfile;
+  @Mock protected LoadBalancingPolicyWrapper loadBalancingPolicyWrapper;
+  @Mock protected RetryPolicy retryPolicy;
+  @Mock protected SpeculativeExecutionPolicy speculativeExecutionPolicy;
+  @Mock protected TimestampGenerator timestampGenerator;
+  @Mock protected ProtocolVersionRegistry protocolVersionRegistry;
+  @Mock protected SessionMetricUpdater sessionMetricUpdater;
 
-  private RequestHandlerTestHarness(Builder builder) {
+  protected RequestHandlerTestHarness(Builder builder) {
     MockitoAnnotations.initMocks(this);
 
     this.schedulingEventLoop = new ScheduledTaskCapturingEventLoop(eventLoopGroup);
