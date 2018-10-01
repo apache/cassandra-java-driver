@@ -36,8 +36,8 @@ public interface PagingIterable<S extends PagingIterable<S, T>, T> extends Itera
    *
    * <p>Note that if {@code isFullyFetched()}, then {@link #getAvailableWithoutFetching} will return
    * how many rows remain in the result set before exhaustion. But please note that {@code
-   * !isFullyFetched()} never guarantees that the result set is not exhausted (you should call
-   * {@link #isExhausted()} to verify it).
+   * isFullyFetched()} never guarantees that the result set is exhausted (you should call {@link
+   * #isExhausted()} to verify it).
    *
    * @return whether all results have been fetched.
    */
