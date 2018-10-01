@@ -79,6 +79,15 @@ you were accessing these methods using reflection in which case you need to
 account for these new parameter types.
 
 
+### 3.3.1
+
+Speculative executions can now be scheduled without delay: if
+`SpeculativeExecutionPlan.nextExecution()` returns 0, the next execution will be fired immediately.
+This allows aggressive policies that hit multiple replicas right away, in order to get the fastest
+response possible. Note that this may break existing policies that used 0 to mean "no execution";
+make sure you use a negative value instead.
+
+
 ### 3.2.0
 
 The `SSLOptions` interface is now deprecated in favor of
