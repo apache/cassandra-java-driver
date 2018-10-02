@@ -366,7 +366,11 @@ public class DefaultSession implements CqlSession {
                   }
                 });
       } catch (Throwable throwable) {
-        initFuture.completeExceptionally(throwable);
+        forceCloseAsync()
+            .whenComplete(
+                (v, error) -> {
+                  initFuture.completeExceptionally(throwable);
+                });
       }
     }
 

@@ -15,6 +15,9 @@
  */
 package com.datastax.oss.driver.api.core;
 
+import static com.datastax.oss.driver.api.testinfra.utils.ConditionChecker.checkThat;
+import static java.util.concurrent.TimeUnit.SECONDS;
+import static junit.framework.TestCase.fail;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
@@ -96,6 +99,30 @@ public class ConnectIT {
     Session session = sessionFuture.get(2, TimeUnit.SECONDS);
 
     session.close();
+  }
+
+  /**
+   * Test for JAVA-1948. This ensures that when the LBP initialization fails that any connections
+   * are cleaned up appropriately.
+   */
+  @Test
+  public void should_cleanup_on_lbp_init_failure() {
+    try {
+      DriverConfigLoader loader =
+          SessionUtils.configLoaderBuilder()
+              .without(DefaultDriverOption.LOAD_BALANCING_LOCAL_DATACENTER)
+              .build();
+      CqlSession.builder()
+          .addContactPoints(simulacronRule.getContactPoints())
+          .withConfigLoader(loader)
+          .build();
+      fail("Should have thrown a DriverException for no DC with explicit contact point");
+    } catch (DriverException ignored) {
+    }
+    // One second should be plenty of time for connections to close server side
+    checkThat(() -> simulacronRule.cluster().getConnections().getConnections().isEmpty())
+        .before(1, SECONDS)
+        .becomesTrue();
   }
 
   @SuppressWarnings("unchecked")
