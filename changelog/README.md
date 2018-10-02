@@ -4,6 +4,7 @@
 
 ### 4.0.0-beta2 (in progress)
 
+- [bug] JAVA-1948: Close session properly when LBP fails to initialize
 - [improvement] JAVA-1949: Improve error message when contact points are wrong
 - [improvement] JAVA-1956: Add statementsCount accessor to BatchStatementBuilder
 - [bug] JAVA-1946: Ignore protocol version in equals comparison for UdtValue/TupleValue
