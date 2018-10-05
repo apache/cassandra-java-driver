@@ -41,6 +41,7 @@ public class CqlPrepareAsyncHandler extends CqlPrepareHandlerBase
 
   @Override
   public CompletableFuture<PreparedStatement> handle() {
+    start();
     return result;
   }
 }

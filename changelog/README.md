@@ -4,6 +4,7 @@
 
 ### 4.0.0-beta3 (in progress)
 
+- [improvement] JAVA-1973: Avoid calling public methods in HandlerBase constructors
 - [improvement] JAVA-1918: Document temporal types
 - [improvement] JAVA-1914: Optimize use of System.nanoTime in CqlRequestHandlerBase
 - [improvement] JAVA-1945: Document corner cases around UDT and tuple attachment

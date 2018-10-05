@@ -40,6 +40,7 @@ public class CqlRequestSyncHandler extends CqlRequestHandlerBase
   @Override
   public ResultSet handle() {
     BlockingOperation.checkNotDriverThread();
+    start();
     AsyncResultSet firstPage = CompletableFutures.getUninterruptibly(result);
     return ResultSets.newInstance(firstPage);
   }

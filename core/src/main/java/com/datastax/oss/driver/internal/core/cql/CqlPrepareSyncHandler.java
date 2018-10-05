@@ -42,6 +42,7 @@ public class CqlPrepareSyncHandler extends CqlPrepareHandlerBase
   @Override
   public PreparedStatement handle() {
     BlockingOperation.checkNotDriverThread();
+    start();
     return CompletableFutures.getUninterruptibly(result);
   }
 }

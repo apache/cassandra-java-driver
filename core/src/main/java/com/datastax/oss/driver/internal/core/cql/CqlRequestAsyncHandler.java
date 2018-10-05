@@ -37,6 +37,7 @@ public class CqlRequestAsyncHandler extends CqlRequestHandlerBase
 
   @Override
   public CompletionStage<AsyncResultSet> handle() {
+    start();
     return result;
   }
 }
