@@ -30,13 +30,13 @@ import java.util.Set;
 import net.jcip.annotations.ThreadSafe;
 
 @ThreadSafe
-public class SetCodec<T> implements TypeCodec<Set<T>> {
+public class SetCodec<ElementT> implements TypeCodec<Set<ElementT>> {
 
   private final DataType cqlType;
-  private final GenericType<Set<T>> javaType;
-  private final TypeCodec<T> elementCodec;
+  private final GenericType<Set<ElementT>> javaType;
+  private final TypeCodec<ElementT> elementCodec;
 
-  public SetCodec(DataType cqlType, TypeCodec<T> elementCodec) {
+  public SetCodec(DataType cqlType, TypeCodec<ElementT> elementCodec) {
     this.cqlType = cqlType;
     this.javaType = GenericType.setOf(elementCodec.getJavaType());
     this.elementCodec = elementCodec;
@@ -45,7 +45,7 @@ public class SetCodec<T> implements TypeCodec<Set<T>> {
 
   @NonNull
   @Override
-  public GenericType<Set<T>> getJavaType() {
+  public GenericType<Set<ElementT>> getJavaType() {
     return javaType;
   }
 
@@ -68,7 +68,8 @@ public class SetCodec<T> implements TypeCodec<Set<T>> {
 
   @Nullable
   @Override
-  public ByteBuffer encode(@Nullable Set<T> value, @NonNull ProtocolVersion protocolVersion) {
+  public ByteBuffer encode(
+      @Nullable Set<ElementT> value, @NonNull ProtocolVersion protocolVersion) {
     // An int indicating the number of elements in the set, followed by the elements. Each element
     // is a byte array representing the serialized value, preceded by an int indicating its size.
     if (value == null) {
@@ -77,7 +78,7 @@ public class SetCodec<T> implements TypeCodec<Set<T>> {
       int i = 0;
       ByteBuffer[] encodedElements = new ByteBuffer[value.size()];
       int toAllocate = 4; // initialize with number of elements
-      for (T element : value) {
+      for (ElementT element : value) {
         if (element == null) {
           throw new NullPointerException("Collection elements cannot be null");
         }
@@ -106,13 +107,14 @@ public class SetCodec<T> implements TypeCodec<Set<T>> {
 
   @Nullable
   @Override
-  public Set<T> decode(@Nullable ByteBuffer bytes, @NonNull ProtocolVersion protocolVersion) {
+  public Set<ElementT> decode(
+      @Nullable ByteBuffer bytes, @NonNull ProtocolVersion protocolVersion) {
     if (bytes == null || bytes.remaining() == 0) {
       return new LinkedHashSet<>(0);
     } else {
       ByteBuffer input = bytes.duplicate();
       int size = input.getInt();
-      Set<T> result = Sets.newLinkedHashSetWithExpectedSize(size);
+      Set<ElementT> result = Sets.newLinkedHashSetWithExpectedSize(size);
       for (int i = 0; i < size; i++) {
         int elementSize = input.getInt();
         ByteBuffer encodedElement = input.slice();
@@ -126,13 +128,13 @@ public class SetCodec<T> implements TypeCodec<Set<T>> {
 
   @NonNull
   @Override
-  public String format(@Nullable Set<T> value) {
+  public String format(@Nullable Set<ElementT> value) {
     if (value == null) {
       return "NULL";
     }
     StringBuilder sb = new StringBuilder("{");
     boolean first = true;
-    for (T t : value) {
+    for (ElementT t : value) {
       if (first) {
         first = false;
       } else {
@@ -146,7 +148,7 @@ public class SetCodec<T> implements TypeCodec<Set<T>> {
 
   @Nullable
   @Override
-  public Set<T> parse(@Nullable String value) {
+  public Set<ElementT> parse(@Nullable String value) {
     if (value == null || value.isEmpty() || value.equalsIgnoreCase("NULL")) return null;
 
     int idx = ParseUtils.skipSpaces(value, 0);
@@ -162,7 +164,7 @@ public class SetCodec<T> implements TypeCodec<Set<T>> {
       return new LinkedHashSet<>(0);
     }
 
-    Set<T> set = new LinkedHashSet<>();
+    Set<ElementT> set = new LinkedHashSet<>();
     while (idx < value.length()) {
       int n;
       try {

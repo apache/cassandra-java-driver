@@ -96,7 +96,7 @@ public interface GettableById extends GettableByIndex, AccessibleById {
    * @throws IllegalArgumentException if the id is invalid.
    */
   @Nullable
-  default <T> T get(@NonNull CqlIdentifier id, @NonNull TypeCodec<T> codec) {
+  default <ValueT> ValueT get(@NonNull CqlIdentifier id, @NonNull TypeCodec<ValueT> codec) {
     return get(firstIndexOf(id), codec);
   }
 
@@ -118,7 +118,7 @@ public interface GettableById extends GettableByIndex, AccessibleById {
    * @throws CodecNotFoundException if no codec can perform the conversion.
    */
   @Nullable
-  default <T> T get(@NonNull CqlIdentifier id, @NonNull GenericType<T> targetType) {
+  default <ValueT> ValueT get(@NonNull CqlIdentifier id, @NonNull GenericType<ValueT> targetType) {
     return get(firstIndexOf(id), targetType);
   }
 
@@ -139,7 +139,7 @@ public interface GettableById extends GettableByIndex, AccessibleById {
    * @throws CodecNotFoundException if no codec can perform the conversion.
    */
   @Nullable
-  default <T> T get(@NonNull CqlIdentifier id, @NonNull Class<T> targetClass) {
+  default <ValueT> ValueT get(@NonNull CqlIdentifier id, @NonNull Class<ValueT> targetClass) {
     return get(firstIndexOf(id), targetClass);
   }
 
@@ -551,7 +551,8 @@ public interface GettableById extends GettableByIndex, AccessibleById {
    * @throws IllegalArgumentException if the id is invalid.
    */
   @Nullable
-  default <T> List<T> getList(@NonNull CqlIdentifier id, @NonNull Class<T> elementsClass) {
+  default <ElementT> List<ElementT> getList(
+      @NonNull CqlIdentifier id, @NonNull Class<ElementT> elementsClass) {
     return getList(firstIndexOf(id), elementsClass);
   }
 
@@ -576,7 +577,8 @@ public interface GettableById extends GettableByIndex, AccessibleById {
    * @throws IllegalArgumentException if the id is invalid.
    */
   @Nullable
-  default <T> Set<T> getSet(@NonNull CqlIdentifier id, @NonNull Class<T> elementsClass) {
+  default <ElementT> Set<ElementT> getSet(
+      @NonNull CqlIdentifier id, @NonNull Class<ElementT> elementsClass) {
     return getSet(firstIndexOf(id), elementsClass);
   }
 
@@ -601,8 +603,8 @@ public interface GettableById extends GettableByIndex, AccessibleById {
    * @throws IllegalArgumentException if the id is invalid.
    */
   @Nullable
-  default <K, V> Map<K, V> getMap(
-      @NonNull CqlIdentifier id, @NonNull Class<K> keyClass, @NonNull Class<V> valueClass) {
+  default <KeyT, ValueT> Map<KeyT, ValueT> getMap(
+      @NonNull CqlIdentifier id, @NonNull Class<KeyT> keyClass, @NonNull Class<ValueT> valueClass) {
     return getMap(firstIndexOf(id), keyClass, valueClass);
   }
 

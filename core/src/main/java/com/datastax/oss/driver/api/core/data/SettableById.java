@@ -36,8 +36,8 @@ import java.util.Set;
 import java.util.UUID;
 
 /** A data structure that provides methods to set its values via a CQL identifier. */
-public interface SettableById<T extends SettableById<T>>
-    extends SettableByIndex<T>, AccessibleById {
+public interface SettableById<SelfT extends SettableById<SelfT>>
+    extends SettableByIndex<SelfT>, AccessibleById {
 
   /**
    * Sets the raw binary representation of the value for the first occurrence of {@code id}.
@@ -56,7 +56,7 @@ public interface SettableById<T extends SettableById<T>>
    * @throws IllegalArgumentException if the id is invalid.
    */
   @NonNull
-  default T setBytesUnsafe(@NonNull CqlIdentifier id, @Nullable ByteBuffer v) {
+  default SelfT setBytesUnsafe(@NonNull CqlIdentifier id, @Nullable ByteBuffer v) {
     return setBytesUnsafe(firstIndexOf(id), v);
   }
 
@@ -75,7 +75,7 @@ public interface SettableById<T extends SettableById<T>>
    * @throws IllegalArgumentException if the id is invalid.
    */
   @NonNull
-  default T setToNull(@NonNull CqlIdentifier id) {
+  default SelfT setToNull(@NonNull CqlIdentifier id) {
     return setToNull(firstIndexOf(id));
   }
 
@@ -96,7 +96,8 @@ public interface SettableById<T extends SettableById<T>>
    * @throws IllegalArgumentException if the id is invalid.
    */
   @NonNull
-  default <V> T set(@NonNull CqlIdentifier id, @Nullable V v, @NonNull TypeCodec<V> codec) {
+  default <ValueT> SelfT set(
+      @NonNull CqlIdentifier id, @Nullable ValueT v, @NonNull TypeCodec<ValueT> codec) {
     return set(firstIndexOf(id), v, codec);
   }
 
@@ -115,7 +116,8 @@ public interface SettableById<T extends SettableById<T>>
    * @throws CodecNotFoundException if no codec can perform the conversion.
    */
   @NonNull
-  default <V> T set(@NonNull CqlIdentifier id, @Nullable V v, @NonNull GenericType<V> targetType) {
+  default <ValueT> SelfT set(
+      @NonNull CqlIdentifier id, @Nullable ValueT v, @NonNull GenericType<ValueT> targetType) {
     return set(firstIndexOf(id), v, targetType);
   }
 
@@ -133,7 +135,8 @@ public interface SettableById<T extends SettableById<T>>
    * @throws CodecNotFoundException if no codec can perform the conversion.
    */
   @NonNull
-  default <V> T set(@NonNull CqlIdentifier id, @Nullable V v, @NonNull Class<V> targetClass) {
+  default <ValueT> SelfT set(
+      @NonNull CqlIdentifier id, @Nullable ValueT v, @NonNull Class<ValueT> targetClass) {
     return set(firstIndexOf(id), v, targetClass);
   }
 
@@ -151,7 +154,7 @@ public interface SettableById<T extends SettableById<T>>
    * @throws IllegalArgumentException if the id is invalid.
    */
   @NonNull
-  default T setBoolean(@NonNull CqlIdentifier id, boolean v) {
+  default SelfT setBoolean(@NonNull CqlIdentifier id, boolean v) {
     return setBoolean(firstIndexOf(id), v);
   }
 
@@ -169,7 +172,7 @@ public interface SettableById<T extends SettableById<T>>
    * @throws IllegalArgumentException if the id is invalid.
    */
   @NonNull
-  default T setByte(@NonNull CqlIdentifier id, byte v) {
+  default SelfT setByte(@NonNull CqlIdentifier id, byte v) {
     return setByte(firstIndexOf(id), v);
   }
 
@@ -187,7 +190,7 @@ public interface SettableById<T extends SettableById<T>>
    * @throws IllegalArgumentException if the id is invalid.
    */
   @NonNull
-  default T setDouble(@NonNull CqlIdentifier id, double v) {
+  default SelfT setDouble(@NonNull CqlIdentifier id, double v) {
     return setDouble(firstIndexOf(id), v);
   }
 
@@ -205,7 +208,7 @@ public interface SettableById<T extends SettableById<T>>
    * @throws IllegalArgumentException if the id is invalid.
    */
   @NonNull
-  default T setFloat(@NonNull CqlIdentifier id, float v) {
+  default SelfT setFloat(@NonNull CqlIdentifier id, float v) {
     return setFloat(firstIndexOf(id), v);
   }
 
@@ -223,7 +226,7 @@ public interface SettableById<T extends SettableById<T>>
    * @throws IllegalArgumentException if the id is invalid.
    */
   @NonNull
-  default T setInt(@NonNull CqlIdentifier id, int v) {
+  default SelfT setInt(@NonNull CqlIdentifier id, int v) {
     return setInt(firstIndexOf(id), v);
   }
 
@@ -241,7 +244,7 @@ public interface SettableById<T extends SettableById<T>>
    * @throws IllegalArgumentException if the id is invalid.
    */
   @NonNull
-  default T setLong(@NonNull CqlIdentifier id, long v) {
+  default SelfT setLong(@NonNull CqlIdentifier id, long v) {
     return setLong(firstIndexOf(id), v);
   }
 
@@ -259,7 +262,7 @@ public interface SettableById<T extends SettableById<T>>
    * @throws IllegalArgumentException if the id is invalid.
    */
   @NonNull
-  default T setShort(@NonNull CqlIdentifier id, short v) {
+  default SelfT setShort(@NonNull CqlIdentifier id, short v) {
     return setShort(firstIndexOf(id), v);
   }
 
@@ -274,7 +277,7 @@ public interface SettableById<T extends SettableById<T>>
    * @throws IllegalArgumentException if the id is invalid.
    */
   @NonNull
-  default T setInstant(@NonNull CqlIdentifier id, @Nullable Instant v) {
+  default SelfT setInstant(@NonNull CqlIdentifier id, @Nullable Instant v) {
     return setInstant(firstIndexOf(id), v);
   }
 
@@ -289,7 +292,7 @@ public interface SettableById<T extends SettableById<T>>
    * @throws IllegalArgumentException if the id is invalid.
    */
   @NonNull
-  default T setLocalDate(@NonNull CqlIdentifier id, @Nullable LocalDate v) {
+  default SelfT setLocalDate(@NonNull CqlIdentifier id, @Nullable LocalDate v) {
     return setLocalDate(firstIndexOf(id), v);
   }
 
@@ -304,7 +307,7 @@ public interface SettableById<T extends SettableById<T>>
    * @throws IllegalArgumentException if the id is invalid.
    */
   @NonNull
-  default T setLocalTime(@NonNull CqlIdentifier id, @Nullable LocalTime v) {
+  default SelfT setLocalTime(@NonNull CqlIdentifier id, @Nullable LocalTime v) {
     return setLocalTime(firstIndexOf(id), v);
   }
 
@@ -319,7 +322,7 @@ public interface SettableById<T extends SettableById<T>>
    * @throws IllegalArgumentException if the id is invalid.
    */
   @NonNull
-  default T setByteBuffer(@NonNull CqlIdentifier id, @Nullable ByteBuffer v) {
+  default SelfT setByteBuffer(@NonNull CqlIdentifier id, @Nullable ByteBuffer v) {
     return setByteBuffer(firstIndexOf(id), v);
   }
 
@@ -334,7 +337,7 @@ public interface SettableById<T extends SettableById<T>>
    * @throws IllegalArgumentException if the id is invalid.
    */
   @NonNull
-  default T setString(@NonNull CqlIdentifier id, @Nullable String v) {
+  default SelfT setString(@NonNull CqlIdentifier id, @Nullable String v) {
     return setString(firstIndexOf(id), v);
   }
 
@@ -349,7 +352,7 @@ public interface SettableById<T extends SettableById<T>>
    * @throws IllegalArgumentException if the id is invalid.
    */
   @NonNull
-  default T setBigInteger(@NonNull CqlIdentifier id, @Nullable BigInteger v) {
+  default SelfT setBigInteger(@NonNull CqlIdentifier id, @Nullable BigInteger v) {
     return setBigInteger(firstIndexOf(id), v);
   }
 
@@ -364,7 +367,7 @@ public interface SettableById<T extends SettableById<T>>
    * @throws IllegalArgumentException if the id is invalid.
    */
   @NonNull
-  default T setBigDecimal(@NonNull CqlIdentifier id, @Nullable BigDecimal v) {
+  default SelfT setBigDecimal(@NonNull CqlIdentifier id, @Nullable BigDecimal v) {
     return setBigDecimal(firstIndexOf(id), v);
   }
 
@@ -379,7 +382,7 @@ public interface SettableById<T extends SettableById<T>>
    * @throws IllegalArgumentException if the id is invalid.
    */
   @NonNull
-  default T setUuid(@NonNull CqlIdentifier id, @Nullable UUID v) {
+  default SelfT setUuid(@NonNull CqlIdentifier id, @Nullable UUID v) {
     return setUuid(firstIndexOf(id), v);
   }
 
@@ -394,7 +397,7 @@ public interface SettableById<T extends SettableById<T>>
    * @throws IllegalArgumentException if the id is invalid.
    */
   @NonNull
-  default T setInetAddress(@NonNull CqlIdentifier id, @Nullable InetAddress v) {
+  default SelfT setInetAddress(@NonNull CqlIdentifier id, @Nullable InetAddress v) {
     return setInetAddress(firstIndexOf(id), v);
   }
 
@@ -409,7 +412,7 @@ public interface SettableById<T extends SettableById<T>>
    * @throws IllegalArgumentException if the id is invalid.
    */
   @NonNull
-  default T setCqlDuration(@NonNull CqlIdentifier id, @Nullable CqlDuration v) {
+  default SelfT setCqlDuration(@NonNull CqlIdentifier id, @Nullable CqlDuration v) {
     return setCqlDuration(firstIndexOf(id), v);
   }
 
@@ -426,7 +429,7 @@ public interface SettableById<T extends SettableById<T>>
    * @throws IllegalArgumentException if the index is invalid.
    */
   @NonNull
-  default T setToken(@NonNull CqlIdentifier id, @NonNull Token v) {
+  default SelfT setToken(@NonNull CqlIdentifier id, @NonNull Token v) {
     return setToken(firstIndexOf(id), v);
   }
 
@@ -444,8 +447,10 @@ public interface SettableById<T extends SettableById<T>>
    * @throws IllegalArgumentException if the id is invalid.
    */
   @NonNull
-  default <V> T setList(
-      @NonNull CqlIdentifier id, @Nullable List<V> v, @NonNull Class<V> elementsClass) {
+  default <ElementT> SelfT setList(
+      @NonNull CqlIdentifier id,
+      @Nullable List<ElementT> v,
+      @NonNull Class<ElementT> elementsClass) {
     return setList(firstIndexOf(id), v, elementsClass);
   }
 
@@ -463,8 +468,10 @@ public interface SettableById<T extends SettableById<T>>
    * @throws IllegalArgumentException if the id is invalid.
    */
   @NonNull
-  default <V> T setSet(
-      @NonNull CqlIdentifier id, @Nullable Set<V> v, @NonNull Class<V> elementsClass) {
+  default <ElementT> SelfT setSet(
+      @NonNull CqlIdentifier id,
+      @Nullable Set<ElementT> v,
+      @NonNull Class<ElementT> elementsClass) {
     return setSet(firstIndexOf(id), v, elementsClass);
   }
 
@@ -482,11 +489,11 @@ public interface SettableById<T extends SettableById<T>>
    * @throws IllegalArgumentException if the id is invalid.
    */
   @NonNull
-  default <K, V> T setMap(
+  default <KeyT, ValueT> SelfT setMap(
       @NonNull CqlIdentifier id,
-      @Nullable Map<K, V> v,
-      @NonNull Class<K> keyClass,
-      @NonNull Class<V> valueClass) {
+      @Nullable Map<KeyT, ValueT> v,
+      @NonNull Class<KeyT> keyClass,
+      @NonNull Class<ValueT> valueClass) {
     return setMap(firstIndexOf(id), v, keyClass, valueClass);
   }
 
@@ -501,7 +508,7 @@ public interface SettableById<T extends SettableById<T>>
    * @throws IllegalArgumentException if the id is invalid.
    */
   @NonNull
-  default T setUdtValue(@NonNull CqlIdentifier id, @Nullable UdtValue v) {
+  default SelfT setUdtValue(@NonNull CqlIdentifier id, @Nullable UdtValue v) {
     return setUdtValue(firstIndexOf(id), v);
   }
 
@@ -516,7 +523,7 @@ public interface SettableById<T extends SettableById<T>>
    * @throws IllegalArgumentException if the id is invalid.
    */
   @NonNull
-  default T setTupleValue(@NonNull CqlIdentifier id, @Nullable TupleValue v) {
+  default SelfT setTupleValue(@NonNull CqlIdentifier id, @Nullable TupleValue v) {
     return setTupleValue(firstIndexOf(id), v);
   }
 }

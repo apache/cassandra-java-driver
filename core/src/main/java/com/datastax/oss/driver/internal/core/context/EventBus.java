@@ -55,7 +55,7 @@ public class EventBus {
    *
    * @return a key that is needed to unregister later.
    */
-  public <T> Object register(Class<T> eventClass, Consumer<T> listener) {
+  public <EventT> Object register(Class<EventT> eventClass, Consumer<EventT> listener) {
     LOG.debug("[{}] Registering {} for {}", logPrefix, listener, eventClass);
     listeners.put(eventClass, listener);
     // The reason for the key mechanism is that this will often be used with method references,
@@ -69,7 +69,7 @@ public class EventBus {
    *
    * @param key the key that was returned by {@link #register(Class, Consumer)}
    */
-  public <T> boolean unregister(Object key, Class<T> eventClass) {
+  public <EventT> boolean unregister(Object key, Class<EventT> eventClass) {
     LOG.debug("[{}] Unregistering {} for {}", logPrefix, key, eventClass);
     return listeners.remove(eventClass, key);
   }

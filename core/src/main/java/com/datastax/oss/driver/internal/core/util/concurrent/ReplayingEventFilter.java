@@ -38,7 +38,7 @@ import net.jcip.annotations.ThreadSafe;
  * </ul>
  */
 @ThreadSafe
-public class ReplayingEventFilter<T> {
+public class ReplayingEventFilter<EventT> {
 
   private enum State {
     NEW,
@@ -46,7 +46,7 @@ public class ReplayingEventFilter<T> {
     READY
   }
 
-  private final Consumer<T> consumer;
+  private final Consumer<EventT> consumer;
 
   // Exceptionally, we use a lock: it will rarely be contended, and if so for only a short period.
   private final ReadWriteLock stateLock = new ReentrantReadWriteLock();
@@ -55,9 +55,9 @@ public class ReplayingEventFilter<T> {
   private State state;
 
   @GuardedBy("stateLock")
-  private List<T> recordedEvents;
+  private List<EventT> recordedEvents;
 
-  public ReplayingEventFilter(Consumer<T> consumer) {
+  public ReplayingEventFilter(Consumer<EventT> consumer) {
     this.consumer = consumer;
     this.state = State.NEW;
     this.recordedEvents = new CopyOnWriteArrayList<>();
@@ -76,7 +76,7 @@ public class ReplayingEventFilter<T> {
     stateLock.writeLock().lock();
     try {
       state = State.READY;
-      for (T event : recordedEvents) {
+      for (EventT event : recordedEvents) {
         consumer.accept(event);
       }
     } finally {
@@ -84,7 +84,7 @@ public class ReplayingEventFilter<T> {
     }
   }
 
-  public void accept(T event) {
+  public void accept(EventT event) {
     stateLock.readLock().lock();
     try {
       switch (state) {
@@ -103,7 +103,7 @@ public class ReplayingEventFilter<T> {
   }
 
   @VisibleForTesting
-  public List<T> recordedEvents() {
+  public List<EventT> recordedEvents() {
     stateLock.readLock().lock();
     try {
       return ImmutableList.copyOf(recordedEvents);

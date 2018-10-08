@@ -83,10 +83,10 @@ public class Reflection {
    * @return the new instance, or empty if {@code classNameOption} is not defined in the
    *     configuration.
    */
-  public static <T> Optional<T> buildFromConfig(
+  public static <ComponentT> Optional<ComponentT> buildFromConfig(
       InternalDriverContext context,
       DriverOption classNameOption,
-      Class<T> expectedSuperType,
+      Class<ComponentT> expectedSuperType,
       String... defaultPackages) {
     return buildFromConfig(context, null, classNameOption, expectedSuperType, defaultPackages);
   }
@@ -119,10 +119,10 @@ public class Reflection {
    * @return the policy instances by profile name. If multiple profiles share the same
    *     configuration, a single instance will be shared by all their entries.
    */
-  public static <T> Map<String, T> buildFromConfigProfiles(
+  public static <ComponentT> Map<String, ComponentT> buildFromConfigProfiles(
       InternalDriverContext context,
       DriverOption rootOption,
-      Class<T> expectedSuperType,
+      Class<ComponentT> expectedSuperType,
       String... defaultPackages) {
 
     // Find out how many distinct configurations we have
@@ -133,11 +133,11 @@ public class Reflection {
     }
 
     // Instantiate each distinct configuration, and associate it with the corresponding profiles
-    ImmutableMap.Builder<String, T> result = ImmutableMap.builder();
+    ImmutableMap.Builder<String, ComponentT> result = ImmutableMap.builder();
     for (Collection<String> profiles : profilesByConfig.asMap().values()) {
       // Since all profiles use the same config, we can use any of them
       String profileName = profiles.iterator().next();
-      T policy =
+      ComponentT policy =
           buildFromConfig(
                   context, profileName, classOption(rootOption), expectedSuperType, defaultPackages)
               .orElseThrow(
@@ -158,11 +158,11 @@ public class Reflection {
    *     one-arg constructor. If not null, this is a per-profile policy, look for a two-arg
    *     constructor.
    */
-  public static <T> Optional<T> buildFromConfig(
+  public static <ComponentT> Optional<ComponentT> buildFromConfig(
       InternalDriverContext context,
       String profileName,
       DriverOption classNameOption,
-      Class<T> expectedSuperType,
+      Class<ComponentT> expectedSuperType,
       String... defaultPackages) {
 
     DriverExecutionProfile config =
@@ -205,7 +205,7 @@ public class Reflection {
         configPath,
         expectedSuperType.getName());
 
-    Constructor<? extends T> constructor;
+    Constructor<? extends ComponentT> constructor;
     Class<?>[] argumentTypes =
         (profileName == null)
             ? new Class<?>[] {DriverContext.class}
@@ -221,7 +221,7 @@ public class Reflection {
     }
     try {
       @SuppressWarnings("JavaReflectionInvocation")
-      T instance =
+      ComponentT instance =
           (profileName == null)
               ? constructor.newInstance(context)
               : constructor.newInstance(context, profileName);

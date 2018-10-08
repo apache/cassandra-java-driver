@@ -36,10 +36,11 @@ import net.jcip.annotations.NotThreadSafe;
  * @see PreparedStatement#boundStatementBuilder(Object...)
  */
 @NotThreadSafe
-public abstract class StatementBuilder<T extends StatementBuilder<T, S>, S extends Statement<S>> {
+public abstract class StatementBuilder<
+    SelfT extends StatementBuilder<SelfT, StatementT>, StatementT extends Statement<StatementT>> {
 
   @SuppressWarnings("unchecked")
-  private final T self = (T) this;
+  private final SelfT self = (SelfT) this;
 
   @Nullable protected String executionProfileName;
   @Nullable protected DriverExecutionProfile executionProfile;
@@ -61,7 +62,7 @@ public abstract class StatementBuilder<T extends StatementBuilder<T, S>, S exten
     // nothing to do
   }
 
-  protected StatementBuilder(S template) {
+  protected StatementBuilder(StatementT template) {
     this.executionProfileName = template.getExecutionProfileName();
     this.executionProfile = template.getExecutionProfile();
     this.routingKeyspace = template.getRoutingKeyspace();
@@ -85,14 +86,14 @@ public abstract class StatementBuilder<T extends StatementBuilder<T, S>, S exten
 
   /** @see Statement#setExecutionProfileName(String) */
   @NonNull
-  public T withExecutionProfileName(@Nullable String executionProfileName) {
+  public SelfT withExecutionProfileName(@Nullable String executionProfileName) {
     this.executionProfileName = executionProfileName;
     return self;
   }
 
   /** @see Statement#setExecutionProfile(DriverExecutionProfile) */
   @NonNull
-  public T withExecutionProfile(@Nullable DriverExecutionProfile executionProfile) {
+  public SelfT withExecutionProfile(@Nullable DriverExecutionProfile executionProfile) {
     this.executionProfile = executionProfile;
     this.executionProfileName = null;
     return self;
@@ -100,7 +101,7 @@ public abstract class StatementBuilder<T extends StatementBuilder<T, S>, S exten
 
   /** @see Statement#setRoutingKeyspace(CqlIdentifier) */
   @NonNull
-  public T withRoutingKeyspace(@Nullable CqlIdentifier routingKeyspace) {
+  public SelfT withRoutingKeyspace(@Nullable CqlIdentifier routingKeyspace) {
     this.routingKeyspace = routingKeyspace;
     return self;
   }
@@ -110,28 +111,28 @@ public abstract class StatementBuilder<T extends StatementBuilder<T, S>, S exten
    * withRoutingKeyspace(CqlIdentifier.fromCql(routingKeyspaceName))}.
    */
   @NonNull
-  public T withRoutingKeyspace(@Nullable String routingKeyspaceName) {
+  public SelfT withRoutingKeyspace(@Nullable String routingKeyspaceName) {
     return withRoutingKeyspace(
         routingKeyspaceName == null ? null : CqlIdentifier.fromCql(routingKeyspaceName));
   }
 
   /** @see Statement#setRoutingKey(ByteBuffer) */
   @NonNull
-  public T withRoutingKey(@Nullable ByteBuffer routingKey) {
+  public SelfT withRoutingKey(@Nullable ByteBuffer routingKey) {
     this.routingKey = routingKey;
     return self;
   }
 
   /** @see Statement#setRoutingToken(Token) */
   @NonNull
-  public T withRoutingToken(@Nullable Token routingToken) {
+  public SelfT withRoutingToken(@Nullable Token routingToken) {
     this.routingToken = routingToken;
     return self;
   }
 
   /** @see Statement#setCustomPayload(Map) */
   @NonNull
-  public T addCustomPayload(@NonNull String key, @Nullable ByteBuffer value) {
+  public SelfT addCustomPayload(@NonNull String key, @Nullable ByteBuffer value) {
     if (customPayloadBuilder == null) {
       customPayloadBuilder = NullAllowingImmutableMap.builder();
     }
@@ -141,69 +142,69 @@ public abstract class StatementBuilder<T extends StatementBuilder<T, S>, S exten
 
   /** @see Statement#setCustomPayload(Map) */
   @NonNull
-  public T clearCustomPayload() {
+  public SelfT clearCustomPayload() {
     customPayloadBuilder = null;
     return self;
   }
 
   /** @see Statement#setIdempotent(Boolean) */
   @NonNull
-  public T withIdempotence(@Nullable Boolean idempotent) {
+  public SelfT withIdempotence(@Nullable Boolean idempotent) {
     this.idempotent = idempotent;
     return self;
   }
 
   /** @see Statement#setTracing(boolean) */
   @NonNull
-  public T withTracing() {
+  public SelfT withTracing() {
     this.tracing = true;
     return self;
   }
 
   /** @see Statement#setTimestamp(long) */
   @NonNull
-  public T withTimestamp(long timestamp) {
+  public SelfT withTimestamp(long timestamp) {
     this.timestamp = timestamp;
     return self;
   }
 
   /** @see Statement#setPagingState(ByteBuffer) */
   @NonNull
-  public T withPagingState(@Nullable ByteBuffer pagingState) {
+  public SelfT withPagingState(@Nullable ByteBuffer pagingState) {
     this.pagingState = pagingState;
     return self;
   }
 
   /** @see Statement#setPageSize(int) */
   @NonNull
-  public T withPageSize(int pageSize) {
+  public SelfT withPageSize(int pageSize) {
     this.pageSize = pageSize;
     return self;
   }
 
   /** @see Statement#setConsistencyLevel(ConsistencyLevel) */
   @NonNull
-  public T withConsistencyLevel(@Nullable ConsistencyLevel consistencyLevel) {
+  public SelfT withConsistencyLevel(@Nullable ConsistencyLevel consistencyLevel) {
     this.consistencyLevel = consistencyLevel;
     return self;
   }
 
   /** @see Statement#setSerialConsistencyLevel(ConsistencyLevel) */
   @NonNull
-  public T withSerialConsistencyLevel(@Nullable ConsistencyLevel serialConsistencyLevel) {
+  public SelfT withSerialConsistencyLevel(@Nullable ConsistencyLevel serialConsistencyLevel) {
     this.serialConsistencyLevel = serialConsistencyLevel;
     return self;
   }
 
   /** @see Statement#setTimeout(Duration) */
   @NonNull
-  public T withTimeout(@Nullable Duration timeout) {
+  public SelfT withTimeout(@Nullable Duration timeout) {
     this.timeout = timeout;
     return self;
   }
 
   /** @see Statement#setNode(Node) */
-  public T withNode(@Nullable Node node) {
+  public SelfT withNode(@Nullable Node node) {
     this.node = node;
     return self;
   }
@@ -216,5 +217,5 @@ public abstract class StatementBuilder<T extends StatementBuilder<T, S>, S exten
   }
 
   @NonNull
-  public abstract S build();
+  public abstract StatementT build();
 }

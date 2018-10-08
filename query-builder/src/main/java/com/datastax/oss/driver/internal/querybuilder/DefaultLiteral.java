@@ -25,18 +25,18 @@ import edu.umd.cs.findbugs.annotations.Nullable;
 import net.jcip.annotations.Immutable;
 
 @Immutable
-public class DefaultLiteral<T> implements Literal {
+public class DefaultLiteral<ValueT> implements Literal {
 
-  private final T value;
-  private final TypeCodec<T> codec;
+  private final ValueT value;
+  private final TypeCodec<ValueT> codec;
   private final CqlIdentifier alias;
 
-  public DefaultLiteral(@Nullable T value, @Nullable TypeCodec<T> codec) {
+  public DefaultLiteral(@Nullable ValueT value, @Nullable TypeCodec<ValueT> codec) {
     this(value, codec, null);
   }
 
   public DefaultLiteral(
-      @Nullable T value, @Nullable TypeCodec<T> codec, @Nullable CqlIdentifier alias) {
+      @Nullable ValueT value, @Nullable TypeCodec<ValueT> codec, @Nullable CqlIdentifier alias) {
     Preconditions.checkArgument(
         value == null || codec != null, "Must provide a codec if the value is not null");
     this.value = value;
@@ -68,12 +68,12 @@ public class DefaultLiteral<T> implements Literal {
   }
 
   @Nullable
-  public T getValue() {
+  public ValueT getValue() {
     return value;
   }
 
   @Nullable
-  public TypeCodec<T> getCodec() {
+  public TypeCodec<ValueT> getCodec() {
     return codec;
   }
 

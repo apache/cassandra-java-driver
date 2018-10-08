@@ -37,20 +37,20 @@ import org.slf4j.LoggerFactory;
  * window is reset, and the next flush will now contain both events. If the window keeps getting
  * reset, the debouncer will flush after a given number of accumulated events.
  *
- * @param <T> the type of event.
- * @param <R> the resulting type after the events of a batch have been coalesced.
+ * @param <IncomingT> the type of the incoming events.
+ * @param <CoalescedT> the resulting type after the events of a batch have been coalesced.
  */
 @NotThreadSafe // must be confined to adminExecutor
-public class Debouncer<T, R> {
+public class Debouncer<IncomingT, CoalescedT> {
   private static final Logger LOG = LoggerFactory.getLogger(Debouncer.class);
 
   private final EventExecutor adminExecutor;
-  private final Consumer<R> onFlush;
+  private final Consumer<CoalescedT> onFlush;
   private final Duration window;
   private final long maxEvents;
-  private final Function<List<T>, R> coalescer;
+  private final Function<List<IncomingT>, CoalescedT> coalescer;
 
-  private List<T> currentBatch = new ArrayList<>();
+  private List<IncomingT> currentBatch = new ArrayList<>();
   private ScheduledFuture<?> nextFlush;
   private boolean stopped;
 
@@ -65,8 +65,8 @@ public class Debouncer<T, R> {
    */
   public Debouncer(
       EventExecutor adminExecutor,
-      Function<List<T>, R> coalescer,
-      Consumer<R> onFlush,
+      Function<List<IncomingT>, CoalescedT> coalescer,
+      Consumer<CoalescedT> onFlush,
       Duration window,
       long maxEvents) {
     this.coalescer = coalescer;
@@ -78,7 +78,7 @@ public class Debouncer<T, R> {
   }
 
   /** This must be called on eventExecutor too. */
-  public void receive(T element) {
+  public void receive(IncomingT element) {
     assert adminExecutor.inEventLoop();
     if (stopped) {
       return;

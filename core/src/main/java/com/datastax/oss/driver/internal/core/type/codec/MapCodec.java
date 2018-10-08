@@ -28,14 +28,14 @@ import java.util.Map;
 import net.jcip.annotations.ThreadSafe;
 
 @ThreadSafe
-public class MapCodec<K, V> implements TypeCodec<Map<K, V>> {
+public class MapCodec<KeyT, ValueT> implements TypeCodec<Map<KeyT, ValueT>> {
 
   private final DataType cqlType;
-  private final GenericType<Map<K, V>> javaType;
-  private final TypeCodec<K> keyCodec;
-  private final TypeCodec<V> valueCodec;
+  private final GenericType<Map<KeyT, ValueT>> javaType;
+  private final TypeCodec<KeyT> keyCodec;
+  private final TypeCodec<ValueT> valueCodec;
 
-  public MapCodec(DataType cqlType, TypeCodec<K> keyCodec, TypeCodec<V> valueCodec) {
+  public MapCodec(DataType cqlType, TypeCodec<KeyT> keyCodec, TypeCodec<ValueT> valueCodec) {
     this.cqlType = cqlType;
     this.keyCodec = keyCodec;
     this.valueCodec = valueCodec;
@@ -44,7 +44,7 @@ public class MapCodec<K, V> implements TypeCodec<Map<K, V>> {
 
   @NonNull
   @Override
-  public GenericType<Map<K, V>> getJavaType() {
+  public GenericType<Map<KeyT, ValueT>> getJavaType() {
     return javaType;
   }
 
@@ -70,7 +70,8 @@ public class MapCodec<K, V> implements TypeCodec<Map<K, V>> {
 
   @Override
   @Nullable
-  public ByteBuffer encode(@Nullable Map<K, V> value, @NonNull ProtocolVersion protocolVersion) {
+  public ByteBuffer encode(
+      @Nullable Map<KeyT, ValueT> value, @NonNull ProtocolVersion protocolVersion) {
     // An int indicating the number of key/value pairs in the map, followed by the pairs. Each pair
     // is a byte array representing the serialized key, preceded by an int indicating its size,
     // followed by the value in the same format.
@@ -80,7 +81,7 @@ public class MapCodec<K, V> implements TypeCodec<Map<K, V>> {
       int i = 0;
       ByteBuffer[] encodedElements = new ByteBuffer[value.size() * 2];
       int toAllocate = 4; // initialize with number of elements
-      for (Map.Entry<K, V> entry : value.entrySet()) {
+      for (Map.Entry<KeyT, ValueT> entry : value.entrySet()) {
         if (entry.getKey() == null) {
           throw new NullPointerException("Map keys cannot be null");
         }
@@ -124,25 +125,26 @@ public class MapCodec<K, V> implements TypeCodec<Map<K, V>> {
 
   @Nullable
   @Override
-  public Map<K, V> decode(@Nullable ByteBuffer bytes, @NonNull ProtocolVersion protocolVersion) {
+  public Map<KeyT, ValueT> decode(
+      @Nullable ByteBuffer bytes, @NonNull ProtocolVersion protocolVersion) {
     if (bytes == null || bytes.remaining() == 0) {
       return new LinkedHashMap<>(0);
     } else {
       ByteBuffer input = bytes.duplicate();
       int size = input.getInt();
-      Map<K, V> result = Maps.newLinkedHashMapWithExpectedSize(size);
+      Map<KeyT, ValueT> result = Maps.newLinkedHashMapWithExpectedSize(size);
       for (int i = 0; i < size; i++) {
         int keySize = input.getInt();
         ByteBuffer encodedKey = input.slice();
         encodedKey.limit(keySize);
         input.position(input.position() + keySize);
-        K key = keyCodec.decode(encodedKey, protocolVersion);
+        KeyT key = keyCodec.decode(encodedKey, protocolVersion);
 
         int valueSize = input.getInt();
         ByteBuffer encodedValue = input.slice();
         encodedValue.limit(valueSize);
         input.position(input.position() + valueSize);
-        V value = valueCodec.decode(encodedValue, protocolVersion);
+        ValueT value = valueCodec.decode(encodedValue, protocolVersion);
 
         result.put(key, value);
       }
@@ -152,14 +154,14 @@ public class MapCodec<K, V> implements TypeCodec<Map<K, V>> {
 
   @NonNull
   @Override
-  public String format(@Nullable Map<K, V> value) {
+  public String format(@Nullable Map<KeyT, ValueT> value) {
     if (value == null) {
       return "NULL";
     }
     StringBuilder sb = new StringBuilder();
     sb.append("{");
     boolean first = true;
-    for (Map.Entry<K, V> e : value.entrySet()) {
+    for (Map.Entry<KeyT, ValueT> e : value.entrySet()) {
       if (first) {
         first = false;
       } else {
@@ -175,7 +177,7 @@ public class MapCodec<K, V> implements TypeCodec<Map<K, V>> {
 
   @Nullable
   @Override
-  public Map<K, V> parse(@Nullable String value) {
+  public Map<KeyT, ValueT> parse(@Nullable String value) {
     if (value == null || value.isEmpty() || value.equalsIgnoreCase("NULL")) {
       return null;
     }
@@ -194,7 +196,7 @@ public class MapCodec<K, V> implements TypeCodec<Map<K, V>> {
       return new LinkedHashMap<>(0);
     }
 
-    Map<K, V> map = new LinkedHashMap<>();
+    Map<KeyT, ValueT> map = new LinkedHashMap<>();
     while (idx < value.length()) {
       int n;
       try {
@@ -207,7 +209,7 @@ public class MapCodec<K, V> implements TypeCodec<Map<K, V>> {
             e);
       }
 
-      K k = keyCodec.parse(value.substring(idx, n));
+      KeyT k = keyCodec.parse(value.substring(idx, n));
       idx = n;
 
       idx = ParseUtils.skipSpaces(value, idx);
@@ -229,7 +231,7 @@ public class MapCodec<K, V> implements TypeCodec<Map<K, V>> {
             e);
       }
 
-      V v = valueCodec.parse(value.substring(idx, n));
+      ValueT v = valueCodec.parse(value.substring(idx, n));
       idx = n;
 
       map.put(k, v);

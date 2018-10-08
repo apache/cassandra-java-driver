@@ -25,7 +25,7 @@ import net.jcip.annotations.NotThreadSafe;
  * elements get returned.
  */
 @NotThreadSafe
-public abstract class CountingIterator<T> implements Iterator<T> {
+public abstract class CountingIterator<ElementT> implements Iterator<ElementT> {
 
   protected int remaining;
 
@@ -64,11 +64,11 @@ public abstract class CountingIterator<T> implements Iterator<T> {
   }
 
   private State state = State.NOT_READY;
-  private T next;
+  private ElementT next;
 
-  protected abstract T computeNext();
+  protected abstract ElementT computeNext();
 
-  protected final T endOfData() {
+  protected final ElementT endOfData() {
     state = State.DONE;
     return null;
   }
@@ -97,19 +97,19 @@ public abstract class CountingIterator<T> implements Iterator<T> {
   }
 
   @Override
-  public final T next() {
+  public final ElementT next() {
     if (!hasNext()) {
       throw new NoSuchElementException();
     }
     state = State.NOT_READY;
-    T result = next;
+    ElementT result = next;
     next = null;
     // Added to original Guava code: decrement counter when we return an element
     remaining -= 1;
     return result;
   }
 
-  public final T peek() {
+  public final ElementT peek() {
     if (!hasNext()) {
       throw new NoSuchElementException();
     }
