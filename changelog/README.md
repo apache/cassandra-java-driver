@@ -4,6 +4,7 @@
 
 ### 4.0.0-beta2 (in progress)
 
+- [new feature] JAVA-1919: Provide a timestamp <=> ZonedDateTime codec
 - [improvement] JAVA-1989: Add BatchStatement.newInstance(BatchType, Iterable<BatchableStatement>)
 - [improvement] JAVA-1988: Remove pre-fetching from ResultSet API
 - [bug] JAVA-1948: Close session properly when LBP fails to initialize

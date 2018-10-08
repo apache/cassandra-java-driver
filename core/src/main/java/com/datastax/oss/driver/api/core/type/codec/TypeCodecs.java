@@ -48,6 +48,7 @@ import com.datastax.oss.driver.internal.core.type.codec.TupleCodec;
 import com.datastax.oss.driver.internal.core.type.codec.UdtCodec;
 import com.datastax.oss.driver.internal.core.type.codec.UuidCodec;
 import com.datastax.oss.driver.internal.core.type.codec.VarIntCodec;
+import com.datastax.oss.driver.internal.core.type.codec.ZonedTimestampCodec;
 import com.datastax.oss.driver.shaded.guava.common.base.Charsets;
 import com.datastax.oss.driver.shaded.guava.common.base.Preconditions;
 import edu.umd.cs.findbugs.annotations.NonNull;
@@ -58,6 +59,9 @@ import java.nio.ByteBuffer;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalTime;
+import java.time.ZoneId;
+import java.time.ZoneOffset;
+import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -75,6 +79,35 @@ public class TypeCodecs {
   public static final PrimitiveLongCodec BIGINT = new BigIntCodec();
   public static final PrimitiveShortCodec SMALLINT = new SmallIntCodec();
   public static final TypeCodec<Instant> TIMESTAMP = new TimestampCodec();
+
+  /**
+   * A codec that handles Apache Cassandra(R)'s timestamp type and maps it to Java's {@link
+   * ZonedDateTime}, using the system's {@linkplain ZoneId#systemDefault() default time zone} as its
+   * source of time zone information.
+   *
+   * <p>Note that Apache Cassandra(R)'s timestamp type does not store any time zone; this codec is
+   * provided merely as a convenience for users that need to deal with zoned timestamps in their
+   * applications.
+   *
+   * @see #ZONED_TIMESTAMP_UTC
+   * @see #zonedTimestampAt(ZoneId)
+   */
+  public static final TypeCodec<ZonedDateTime> ZONED_TIMESTAMP_SYSTEM = new ZonedTimestampCodec();
+
+  /**
+   * A codec that handles Apache Cassandra(R)'s timestamp type and maps it to Java's {@link
+   * ZonedDateTime}, using {@link ZoneOffset#UTC} as its source of time zone information.
+   *
+   * <p>Note that Apache Cassandra(R)'s timestamp type does not store any time zone; this codec is
+   * provided merely as a convenience for users that need to deal with zoned timestamps in their
+   * applications.
+   *
+   * @see #ZONED_TIMESTAMP_SYSTEM
+   * @see #zonedTimestampAt(ZoneId)
+   */
+  public static final TypeCodec<ZonedDateTime> ZONED_TIMESTAMP_UTC =
+      new ZonedTimestampCodec(ZoneOffset.UTC);
+
   public static final TypeCodec<LocalDate> DATE = new DateCodec();
   public static final TypeCodec<LocalTime> TIME = new TimeCodec();
   public static final TypeCodec<ByteBuffer> BLOB = new BlobCodec();
@@ -118,5 +151,21 @@ public class TypeCodecs {
   @NonNull
   public static TypeCodec<UdtValue> udtOf(@NonNull UserDefinedType cqlType) {
     return new UdtCodec(cqlType);
+  }
+
+  /**
+   * Returns a codec that handles Apache Cassandra(R)'s timestamp type and maps it to Java's {@link
+   * ZonedDateTime}, using the supplied {@link ZoneId} as its source of time zone information.
+   *
+   * <p>Note that Apache Cassandra(R)'s timestamp type does not store any time zone; the codecs
+   * created by this method are provided merely as a convenience for users that need to deal with
+   * zoned timestamps in their applications.
+   *
+   * @see #ZONED_TIMESTAMP_SYSTEM
+   * @see #ZONED_TIMESTAMP_UTC
+   */
+  @NonNull
+  public static TypeCodec<ZonedDateTime> zonedTimestampAt(@NonNull ZoneId timeZone) {
+    return new ZonedTimestampCodec(timeZone);
   }
 }
