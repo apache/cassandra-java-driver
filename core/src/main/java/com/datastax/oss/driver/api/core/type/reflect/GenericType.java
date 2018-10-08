@@ -34,6 +34,7 @@ import java.nio.ByteBuffer;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalTime;
+import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -90,6 +91,7 @@ public class GenericType<T> {
   public static final GenericType<Long> LONG = of(Long.class);
   public static final GenericType<Short> SHORT = of(Short.class);
   public static final GenericType<Instant> INSTANT = of(Instant.class);
+  public static final GenericType<ZonedDateTime> ZONED_DATE_TIME = of(ZonedDateTime.class);
   public static final GenericType<LocalDate> LOCAL_DATE = of(LocalDate.class);
   public static final GenericType<LocalTime> LOCAL_TIME = of(LocalTime.class);
   public static final GenericType<ByteBuffer> BYTE_BUFFER = of(ByteBuffer.class);
