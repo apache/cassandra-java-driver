@@ -20,9 +20,9 @@ import java.util.concurrent.ThreadLocalRandom;
 
 public class ArrayUtils {
 
-  public static <T> void swap(@NonNull T[] elements, int i, int j) {
+  public static <ElementT> void swap(@NonNull ElementT[] elements, int i, int j) {
     if (i != j) {
-      T tmp = elements[i];
+      ElementT tmp = elements[i];
       elements[i] = elements[j];
       elements[j] = tmp;
     }
@@ -32,7 +32,8 @@ public class ArrayUtils {
    * Moves an element towards the beginning of the array, shifting all the intermediary elements to
    * the right (no-op if {@code targetIndex >= sourceIndex}).
    */
-  public static <T> void bubbleUp(@NonNull T[] elements, int sourceIndex, int targetIndex) {
+  public static <ElementT> void bubbleUp(
+      @NonNull ElementT[] elements, int sourceIndex, int targetIndex) {
     for (int i = sourceIndex; i > targetIndex; i--) {
       swap(elements, i, i - 1);
     }
@@ -42,7 +43,8 @@ public class ArrayUtils {
    * Moves an element towards the end of the array, shifting all the intermediary elements to the
    * left (no-op if {@code targetIndex <= sourceIndex}).
    */
-  public static <T> void bubbleDown(@NonNull T[] elements, int sourceIndex, int targetIndex) {
+  public static <ElementT> void bubbleDown(
+      @NonNull ElementT[] elements, int sourceIndex, int targetIndex) {
     for (int i = sourceIndex; i < targetIndex; i++) {
       swap(elements, i, i + 1);
     }
@@ -57,7 +59,7 @@ public class ArrayUtils {
    *     href="https://en.wikipedia.org/wiki/Fisher%E2%80%93Yates_shuffle#The_modern_algorithm">Modern
    *     Fisher-Yates shuffle</a>
    */
-  public static <T> void shuffleHead(@NonNull T[] elements, int n) {
+  public static <ElementT> void shuffleHead(@NonNull ElementT[] elements, int n) {
     shuffleHead(elements, n, ThreadLocalRandom.current());
   }
 
@@ -72,8 +74,8 @@ public class ArrayUtils {
    *     href="https://en.wikipedia.org/wiki/Fisher%E2%80%93Yates_shuffle#The_modern_algorithm">Modern
    *     Fisher-Yates shuffle</a>
    */
-  public static <T> void shuffleHead(
-      @NonNull T[] elements, int n, @NonNull ThreadLocalRandom random) {
+  public static <ElementT> void shuffleHead(
+      @NonNull ElementT[] elements, int n, @NonNull ThreadLocalRandom random) {
     if (n > elements.length) {
       throw new ArrayIndexOutOfBoundsException(
           String.format(
@@ -88,7 +90,8 @@ public class ArrayUtils {
   }
 
   /** Rotates the elements in the specified range by the specified amount (round-robin). */
-  public static <T> void rotate(@NonNull T[] elements, int startIndex, int length, int amount) {
+  public static <ElementT> void rotate(
+      @NonNull ElementT[] elements, int startIndex, int length, int amount) {
     if (length >= 2) {
       amount = amount % length;
       // Repeatedly shift by 1. This is not the most time-efficient but the array will typically be

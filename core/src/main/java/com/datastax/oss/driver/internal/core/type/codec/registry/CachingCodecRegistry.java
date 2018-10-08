@@ -89,13 +89,14 @@ public abstract class CachingCodecRegistry implements CodecRegistry {
 
   @NonNull
   @Override
-  public <T> TypeCodec<T> codecFor(@NonNull DataType cqlType, @NonNull GenericType<T> javaType) {
+  public <JavaTypeT> TypeCodec<JavaTypeT> codecFor(
+      @NonNull DataType cqlType, @NonNull GenericType<JavaTypeT> javaType) {
     return codecFor(cqlType, javaType, false);
   }
 
   // Not exposed publicly, (isJavaCovariant=true) is only used for internal recursion
-  protected <T> TypeCodec<T> codecFor(
-      DataType cqlType, GenericType<T> javaType, boolean isJavaCovariant) {
+  protected <JavaTypeT> TypeCodec<JavaTypeT> codecFor(
+      DataType cqlType, GenericType<JavaTypeT> javaType, boolean isJavaCovariant) {
     LOG.trace("[{}] Looking up codec for {} <-> {}", logPrefix, cqlType, javaType);
     TypeCodec<?> primitiveCodec = primitiveCodecsByCode.get(cqlType.getProtocolCode());
     if (primitiveCodec != null && matches(primitiveCodec, javaType, isJavaCovariant)) {
@@ -113,7 +114,8 @@ public abstract class CachingCodecRegistry implements CodecRegistry {
 
   @NonNull
   @Override
-  public <T> TypeCodec<T> codecFor(@NonNull DataType cqlType, @NonNull Class<T> javaType) {
+  public <JavaTypeT> TypeCodec<JavaTypeT> codecFor(
+      @NonNull DataType cqlType, @NonNull Class<JavaTypeT> javaType) {
     LOG.trace("[{}] Looking up codec for {} <-> {}", logPrefix, cqlType, javaType);
     TypeCodec<?> primitiveCodec = primitiveCodecsByCode.get(cqlType.getProtocolCode());
     if (primitiveCodec != null && primitiveCodec.getJavaType().__getToken().getType() == javaType) {
@@ -131,7 +133,7 @@ public abstract class CachingCodecRegistry implements CodecRegistry {
 
   @NonNull
   @Override
-  public <T> TypeCodec<T> codecFor(@NonNull DataType cqlType) {
+  public <JavaTypeT> TypeCodec<JavaTypeT> codecFor(@NonNull DataType cqlType) {
     LOG.trace("[{}] Looking up codec for CQL type {}", logPrefix, cqlType);
     TypeCodec<?> primitiveCodec = primitiveCodecsByCode.get(cqlType.getProtocolCode());
     if (primitiveCodec != null) {
@@ -149,7 +151,8 @@ public abstract class CachingCodecRegistry implements CodecRegistry {
 
   @NonNull
   @Override
-  public <T> TypeCodec<T> codecFor(@NonNull DataType cqlType, @NonNull T value) {
+  public <JavaTypeT> TypeCodec<JavaTypeT> codecFor(
+      @NonNull DataType cqlType, @NonNull JavaTypeT value) {
     Preconditions.checkNotNull(cqlType);
     Preconditions.checkNotNull(value);
     LOG.trace("[{}] Looking up codec for CQL type {} and object {}", logPrefix, cqlType, value);
@@ -179,7 +182,7 @@ public abstract class CachingCodecRegistry implements CodecRegistry {
 
   @NonNull
   @Override
-  public <T> TypeCodec<T> codecFor(@NonNull T value) {
+  public <JavaTypeT> TypeCodec<JavaTypeT> codecFor(@NonNull JavaTypeT value) {
     Preconditions.checkNotNull(value);
     LOG.trace("[{}] Looking up codec for object {}", logPrefix, value);
 
@@ -209,12 +212,13 @@ public abstract class CachingCodecRegistry implements CodecRegistry {
 
   @NonNull
   @Override
-  public <T> TypeCodec<T> codecFor(@NonNull GenericType<T> javaType) {
+  public <JavaTypeT> TypeCodec<JavaTypeT> codecFor(@NonNull GenericType<JavaTypeT> javaType) {
     return codecFor(javaType, false);
   }
 
   // Not exposed publicly, (isJavaCovariant=true) is only used for internal recursion
-  protected <T> TypeCodec<T> codecFor(GenericType<T> javaType, boolean isJavaCovariant) {
+  protected <JavaTypeT> TypeCodec<JavaTypeT> codecFor(
+      GenericType<JavaTypeT> javaType, boolean isJavaCovariant) {
     LOG.trace(
         "[{}] Looking up codec for Java type {} (covariant = {})",
         logPrefix,
@@ -403,9 +407,10 @@ public abstract class CachingCodecRegistry implements CodecRegistry {
   }
 
   // We call this after validating the types, so we know the cast will never fail.
-  private static <T, U> TypeCodec<T> uncheckedCast(TypeCodec<U> codec) {
+  private static <DeclaredT, RuntimeT> TypeCodec<DeclaredT> uncheckedCast(
+      TypeCodec<RuntimeT> codec) {
     @SuppressWarnings("unchecked")
-    TypeCodec<T> result = (TypeCodec<T>) codec;
+    TypeCodec<DeclaredT> result = (TypeCodec<DeclaredT>) codec;
     return result;
   }
 }

@@ -41,9 +41,9 @@ import java.util.concurrent.CompletionStage;
 /**
  * A request to execute a CQL query.
  *
- * @param <T> the "self type" used for covariant returns in subtypes.
+ * @param <SelfT> the "self type" used for covariant returns in subtypes.
  */
-public interface Statement<T extends Statement<T>> extends Request {
+public interface Statement<SelfT extends Statement<SelfT>> extends Request {
   // Implementation note: "CqlRequest" would be a better name, but we keep "Statement" to match
   // previous driver versions.
 
@@ -76,7 +76,7 @@ public interface Statement<T extends Statement<T>> extends Request {
    * method. However custom implementations may choose to be mutable and return the same instance.
    */
   @NonNull
-  T setExecutionProfileName(@Nullable String newConfigProfileName);
+  SelfT setExecutionProfileName(@Nullable String newConfigProfileName);
 
   /**
    * Sets the execution profile to use for this statement.
@@ -85,7 +85,7 @@ public interface Statement<T extends Statement<T>> extends Request {
    * method. However custom implementations may choose to be mutable and return the same instance.
    */
   @NonNull
-  T setExecutionProfile(@Nullable DriverExecutionProfile newProfile);
+  SelfT setExecutionProfile(@Nullable DriverExecutionProfile newProfile);
 
   /**
    * Sets the keyspace to use for token-aware routing.
@@ -95,7 +95,7 @@ public interface Statement<T extends Statement<T>> extends Request {
    * @param newRoutingKeyspace The keyspace to use, or {@code null} to disable token-aware routing.
    */
   @NonNull
-  T setRoutingKeyspace(@Nullable CqlIdentifier newRoutingKeyspace);
+  SelfT setRoutingKeyspace(@Nullable CqlIdentifier newRoutingKeyspace);
 
   /**
    * Sets the {@link Node} that should handle this query.
@@ -119,7 +119,7 @@ public interface Statement<T extends Statement<T>> extends Request {
    *     delegate to the configured load balancing policy.
    */
   @NonNull
-  T setNode(@Nullable Node node);
+  SelfT setNode(@Nullable Node node);
 
   /**
    * Shortcut for {@link #setRoutingKeyspace(CqlIdentifier)
@@ -129,7 +129,7 @@ public interface Statement<T extends Statement<T>> extends Request {
    *     routing.
    */
   @NonNull
-  default T setRoutingKeyspace(@Nullable String newRoutingKeyspaceName) {
+  default SelfT setRoutingKeyspace(@Nullable String newRoutingKeyspaceName) {
     return setRoutingKeyspace(
         newRoutingKeyspaceName == null ? null : CqlIdentifier.fromCql(newRoutingKeyspaceName));
   }
@@ -142,7 +142,7 @@ public interface Statement<T extends Statement<T>> extends Request {
    * @param newRoutingKey The routing key to use, or {@code null} to disable token-aware routing.
    */
   @NonNull
-  T setRoutingKey(@Nullable ByteBuffer newRoutingKey);
+  SelfT setRoutingKey(@Nullable ByteBuffer newRoutingKey);
 
   /**
    * Sets the key to use for token-aware routing, when the partition key has multiple components.
@@ -152,7 +152,7 @@ public interface Statement<T extends Statement<T>> extends Request {
    * can be {@code null}.
    */
   @NonNull
-  default T setRoutingKey(@NonNull ByteBuffer... newRoutingKeyComponents) {
+  default SelfT setRoutingKey(@NonNull ByteBuffer... newRoutingKeyComponents) {
     return setRoutingKey(RoutingKey.compose(newRoutingKeyComponents));
   }
 
@@ -165,7 +165,7 @@ public interface Statement<T extends Statement<T>> extends Request {
    *     routing.
    */
   @NonNull
-  T setRoutingToken(@Nullable Token newRoutingToken);
+  SelfT setRoutingToken(@Nullable Token newRoutingToken);
 
   /**
    * Sets the custom payload to use for execution.
@@ -179,7 +179,7 @@ public interface Statement<T extends Statement<T>> extends Request {
    * it's never modified after being set on the statement).
    */
   @NonNull
-  T setCustomPayload(@NonNull Map<String, ByteBuffer> newCustomPayload);
+  SelfT setCustomPayload(@NonNull Map<String, ByteBuffer> newCustomPayload);
 
   /**
    * Sets the idempotence to use for execution.
@@ -191,7 +191,7 @@ public interface Statement<T extends Statement<T>> extends Request {
    *     use the default idempotence defined in the configuration.
    */
   @NonNull
-  T setIdempotent(@Nullable Boolean newIdempotence);
+  SelfT setIdempotent(@Nullable Boolean newIdempotence);
 
   /**
    * Sets tracing for execution.
@@ -200,7 +200,7 @@ public interface Statement<T extends Statement<T>> extends Request {
    * method. However custom implementations may choose to be mutable and return the same instance.
    */
   @NonNull
-  T setTracing(boolean newTracing);
+  SelfT setTracing(boolean newTracing);
 
   /**
    * Returns the query timestamp, in microseconds, to send with the statement.
@@ -224,7 +224,7 @@ public interface Statement<T extends Statement<T>> extends Request {
    * @see TimestampGenerator
    */
   @NonNull
-  T setTimestamp(long newTimestamp);
+  SelfT setTimestamp(long newTimestamp);
 
   /**
    * Sets how long to wait for this request to complete. This is a global limit on the duration of a
@@ -235,7 +235,7 @@ public interface Statement<T extends Statement<T>> extends Request {
    * @see DefaultDriverOption#REQUEST_TIMEOUT
    */
   @NonNull
-  T setTimeout(@Nullable Duration newTimeout);
+  SelfT setTimeout(@Nullable Duration newTimeout);
 
   /**
    * Returns the paging state to send with the statement, or {@code null} if this statement has no
@@ -265,7 +265,7 @@ public interface Statement<T extends Statement<T>> extends Request {
    * if you do so, you must override {@link #copy(ByteBuffer)}.
    */
   @NonNull
-  T setPagingState(@Nullable ByteBuffer newPagingState);
+  SelfT setPagingState(@Nullable ByteBuffer newPagingState);
 
   /**
    * Returns the page size to use for the statement.
@@ -285,7 +285,7 @@ public interface Statement<T extends Statement<T>> extends Request {
    * @see DefaultDriverOption#REQUEST_PAGE_SIZE
    */
   @NonNull
-  T setPageSize(int newPageSize);
+  SelfT setPageSize(int newPageSize);
 
   /**
    * Returns the {@link ConsistencyLevel} to use for the statement.
@@ -304,7 +304,7 @@ public interface Statement<T extends Statement<T>> extends Request {
    *     defined in the configuration.
    * @see DefaultDriverOption#REQUEST_CONSISTENCY
    */
-  T setConsistencyLevel(@Nullable ConsistencyLevel newConsistencyLevel);
+  SelfT setConsistencyLevel(@Nullable ConsistencyLevel newConsistencyLevel);
 
   /**
    * Returns the serial {@link ConsistencyLevel} to use for the statement.
@@ -324,7 +324,7 @@ public interface Statement<T extends Statement<T>> extends Request {
    * @see DefaultDriverOption#REQUEST_SERIAL_CONSISTENCY
    */
   @NonNull
-  T setSerialConsistencyLevel(@Nullable ConsistencyLevel newSerialConsistencyLevel);
+  SelfT setSerialConsistencyLevel(@Nullable ConsistencyLevel newSerialConsistencyLevel);
 
   /** Whether tracing information should be recorded for this statement. */
   boolean isTracing();
@@ -351,7 +351,7 @@ public interface Statement<T extends Statement<T>> extends Request {
    * your own mutable implementation, make sure it returns a different instance.
    */
   @NonNull
-  default T copy(@Nullable ByteBuffer newPagingState) {
+  default SelfT copy(@Nullable ByteBuffer newPagingState) {
     return setPagingState(newPagingState);
   }
 }

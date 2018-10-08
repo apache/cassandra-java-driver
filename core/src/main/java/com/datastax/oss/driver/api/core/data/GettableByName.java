@@ -95,7 +95,7 @@ public interface GettableByName extends GettableByIndex, AccessibleByName {
    * @throws IllegalArgumentException if the name is invalid.
    */
   @Nullable
-  default <T> T get(@NonNull String name, @NonNull TypeCodec<T> codec) {
+  default <ValueT> ValueT get(@NonNull String name, @NonNull TypeCodec<ValueT> codec) {
     return get(firstIndexOf(name), codec);
   }
 
@@ -118,7 +118,7 @@ public interface GettableByName extends GettableByIndex, AccessibleByName {
    * @throws CodecNotFoundException if no codec can perform the conversion.
    */
   @Nullable
-  default <T> T get(@NonNull String name, @NonNull GenericType<T> targetType) {
+  default <ValueT> ValueT get(@NonNull String name, @NonNull GenericType<ValueT> targetType) {
     return get(firstIndexOf(name), targetType);
   }
 
@@ -140,7 +140,7 @@ public interface GettableByName extends GettableByIndex, AccessibleByName {
    * @throws CodecNotFoundException if no codec can perform the conversion.
    */
   @Nullable
-  default <T> T get(@NonNull String name, @NonNull Class<T> targetClass) {
+  default <ValueT> ValueT get(@NonNull String name, @NonNull Class<ValueT> targetClass) {
     return get(firstIndexOf(name), targetClass);
   }
 
@@ -547,7 +547,8 @@ public interface GettableByName extends GettableByIndex, AccessibleByName {
    * @throws IllegalArgumentException if the name is invalid.
    */
   @Nullable
-  default <T> List<T> getList(@NonNull String name, @NonNull Class<T> elementsClass) {
+  default <ElementT> List<ElementT> getList(
+      @NonNull String name, @NonNull Class<ElementT> elementsClass) {
     return getList(firstIndexOf(name), elementsClass);
   }
 
@@ -572,7 +573,8 @@ public interface GettableByName extends GettableByIndex, AccessibleByName {
    * @throws IllegalArgumentException if the name is invalid.
    */
   @Nullable
-  default <T> Set<T> getSet(@NonNull String name, @NonNull Class<T> elementsClass) {
+  default <ElementT> Set<ElementT> getSet(
+      @NonNull String name, @NonNull Class<ElementT> elementsClass) {
     return getSet(firstIndexOf(name), elementsClass);
   }
 
@@ -597,8 +599,8 @@ public interface GettableByName extends GettableByIndex, AccessibleByName {
    * @throws IllegalArgumentException if the name is invalid.
    */
   @Nullable
-  default <K, V> Map<K, V> getMap(
-      @NonNull String name, @NonNull Class<K> keyClass, @NonNull Class<V> valueClass) {
+  default <KeyT, ValueT> Map<KeyT, ValueT> getMap(
+      @NonNull String name, @NonNull Class<KeyT> keyClass, @NonNull Class<ValueT> valueClass) {
     return getMap(firstIndexOf(name), keyClass, valueClass);
   }
 

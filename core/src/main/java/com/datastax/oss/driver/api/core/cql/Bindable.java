@@ -25,8 +25,8 @@ import com.datastax.oss.protocol.internal.ProtocolConstants;
 import edu.umd.cs.findbugs.annotations.NonNull;
 
 /** A data container with the ability to unset values. */
-public interface Bindable<T extends Bindable<T>>
-    extends GettableById, GettableByName, SettableById<T>, SettableByName<T> {
+public interface Bindable<SelfT extends Bindable<SelfT>>
+    extends GettableById, GettableByName, SettableById<SelfT>, SettableByName<SelfT> {
   /**
    * Whether the {@code i}th value has been set.
    *
@@ -70,7 +70,7 @@ public interface Bindable<T extends Bindable<T>>
    * @throws IndexOutOfBoundsException if the index is invalid.
    */
   @NonNull
-  default T unset(int i) {
+  default SelfT unset(int i) {
     return setBytesUnsafe(i, ProtocolConstants.UNSET_VALUE);
   }
 
@@ -81,7 +81,7 @@ public interface Bindable<T extends Bindable<T>>
    * @throws IndexOutOfBoundsException if the id is invalid.
    */
   @NonNull
-  default T unset(@NonNull CqlIdentifier id) {
+  default SelfT unset(@NonNull CqlIdentifier id) {
     return setBytesUnsafe(id, ProtocolConstants.UNSET_VALUE);
   }
 
@@ -92,7 +92,7 @@ public interface Bindable<T extends Bindable<T>>
    * @throws IndexOutOfBoundsException if the name is invalid.
    */
   @NonNull
-  default T unset(@NonNull String name) {
+  default SelfT unset(@NonNull String name) {
     return setBytesUnsafe(name, ProtocolConstants.UNSET_VALUE);
   }
 }

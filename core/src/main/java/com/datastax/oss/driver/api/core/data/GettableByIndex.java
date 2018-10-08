@@ -86,7 +86,7 @@ public interface GettableByIndex extends AccessibleByIndex {
    * @throws IndexOutOfBoundsException if the index is invalid.
    */
   @Nullable
-  default <T> T get(int i, TypeCodec<T> codec) {
+  default <ValueT> ValueT get(int i, TypeCodec<ValueT> codec) {
     return codec.decode(getBytesUnsafe(i), protocolVersion());
   }
 
@@ -102,9 +102,9 @@ public interface GettableByIndex extends AccessibleByIndex {
    * @throws CodecNotFoundException if no codec can perform the conversion.
    */
   @Nullable
-  default <T> T get(int i, GenericType<T> targetType) {
+  default <ValueT> ValueT get(int i, GenericType<ValueT> targetType) {
     DataType cqlType = getType(i);
-    TypeCodec<T> codec = codecRegistry().codecFor(cqlType, targetType);
+    TypeCodec<ValueT> codec = codecRegistry().codecFor(cqlType, targetType);
     return get(i, codec);
   }
 
@@ -119,11 +119,11 @@ public interface GettableByIndex extends AccessibleByIndex {
    * @throws CodecNotFoundException if no codec can perform the conversion.
    */
   @Nullable
-  default <T> T get(int i, Class<T> targetClass) {
+  default <ValueT> ValueT get(int i, Class<ValueT> targetClass) {
     // This is duplicated from the GenericType variant, because we want to give the codec registry
     // a chance to process the unwrapped class directly, if it can do so in a more efficient way.
     DataType cqlType = getType(i);
-    TypeCodec<T> codec = codecRegistry().codecFor(cqlType, targetClass);
+    TypeCodec<ValueT> codec = codecRegistry().codecFor(cqlType, targetClass);
     return get(i, codec);
   }
 
@@ -473,7 +473,7 @@ public interface GettableByIndex extends AccessibleByIndex {
    * @throws IndexOutOfBoundsException if the index is invalid.
    */
   @Nullable
-  default <T> List<T> getList(int i, @NonNull Class<T> elementsClass) {
+  default <ElementT> List<ElementT> getList(int i, @NonNull Class<ElementT> elementsClass) {
     return get(i, GenericType.listOf(elementsClass));
   }
 
@@ -492,7 +492,7 @@ public interface GettableByIndex extends AccessibleByIndex {
    * @throws IndexOutOfBoundsException if the index is invalid.
    */
   @Nullable
-  default <T> Set<T> getSet(int i, @NonNull Class<T> elementsClass) {
+  default <ElementT> Set<ElementT> getSet(int i, @NonNull Class<ElementT> elementsClass) {
     return get(i, GenericType.setOf(elementsClass));
   }
 
@@ -511,7 +511,8 @@ public interface GettableByIndex extends AccessibleByIndex {
    * @throws IndexOutOfBoundsException if the index is invalid.
    */
   @Nullable
-  default <K, V> Map<K, V> getMap(int i, @NonNull Class<K> keyClass, @NonNull Class<V> valueClass) {
+  default <KeyT, ValueT> Map<KeyT, ValueT> getMap(
+      int i, @NonNull Class<KeyT> keyClass, @NonNull Class<ValueT> valueClass) {
     return get(i, GenericType.mapOf(keyClass, valueClass));
   }
 

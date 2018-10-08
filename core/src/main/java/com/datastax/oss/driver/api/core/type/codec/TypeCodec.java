@@ -58,10 +58,10 @@ import java.nio.ByteBuffer;
  *       buffers prior to reading them.
  * </ol>
  */
-public interface TypeCodec<T> {
+public interface TypeCodec<JavaTypeT> {
 
   @NonNull
-  GenericType<T> getJavaType();
+  GenericType<JavaTypeT> getJavaType();
 
   @NonNull
   DataType getCqlType();
@@ -109,7 +109,7 @@ public interface TypeCodec<T> {
    * subtype</em> of the Java type that it has been created for. This is so because codec lookups by
    * arbitrary Java objects only make sense when attempting to encode, never when attempting to
    * decode, and indeed the {@linkplain #encode(Object, ProtocolVersion) encode} method is covariant
-   * with {@code T}.
+   * with {@code JavaTypeT}.
    *
    * <p>It can only handle non-parameterized types; codecs handling parameterized types, such as
    * collection types, must override this method and perform some sort of "manual" inspection of the
@@ -145,7 +145,7 @@ public interface TypeCodec<T> {
    * </ul>
    */
   @Nullable
-  ByteBuffer encode(@Nullable T value, @NonNull ProtocolVersion protocolVersion);
+  ByteBuffer encode(@Nullable JavaTypeT value, @NonNull ProtocolVersion protocolVersion);
 
   /**
    * Decodes a value from the binary format of the CQL type handled by this codec.
@@ -167,7 +167,7 @@ public interface TypeCodec<T> {
    * </ul>
    */
   @Nullable
-  T decode(@Nullable ByteBuffer bytes, @NonNull ProtocolVersion protocolVersion);
+  JavaTypeT decode(@Nullable ByteBuffer bytes, @NonNull ProtocolVersion protocolVersion);
 
   /**
    * Formats the given value as a valid CQL literal according to the CQL type handled by this codec.
@@ -191,7 +191,7 @@ public interface TypeCodec<T> {
    * constant string (for example "XxxCodec.format not implemented").
    */
   @NonNull
-  String format(@Nullable T value);
+  String format(@Nullable JavaTypeT value);
 
   /**
    * Parse the given CQL literal into an instance of the Java type handled by this codec.
@@ -210,5 +210,5 @@ public interface TypeCodec<T> {
    * {@code null}.
    */
   @Nullable
-  T parse(@Nullable String value);
+  JavaTypeT parse(@Nullable String value);
 }

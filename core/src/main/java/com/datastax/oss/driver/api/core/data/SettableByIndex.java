@@ -45,7 +45,7 @@ import java.util.Set;
 import java.util.UUID;
 
 /** A data structure that provides methods to set its values via an integer index. */
-public interface SettableByIndex<T extends SettableByIndex<T>> extends AccessibleByIndex {
+public interface SettableByIndex<SelfT extends SettableByIndex<SelfT>> extends AccessibleByIndex {
 
   /**
    * Sets the raw binary representation of the {@code i}th value.
@@ -61,7 +61,7 @@ public interface SettableByIndex<T extends SettableByIndex<T>> extends Accessibl
    * @throws IndexOutOfBoundsException if the index is invalid.
    */
   @NonNull
-  T setBytesUnsafe(int i, @Nullable ByteBuffer v);
+  SelfT setBytesUnsafe(int i, @Nullable ByteBuffer v);
 
   /**
    * Sets the {@code i}th value to CQL {@code NULL}.
@@ -69,7 +69,7 @@ public interface SettableByIndex<T extends SettableByIndex<T>> extends Accessibl
    * @throws IndexOutOfBoundsException if the index is invalid.
    */
   @NonNull
-  default T setToNull(int i) {
+  default SelfT setToNull(int i) {
     return setBytesUnsafe(i, null);
   }
 
@@ -86,7 +86,7 @@ public interface SettableByIndex<T extends SettableByIndex<T>> extends Accessibl
    * @throws IndexOutOfBoundsException if the index is invalid.
    */
   @NonNull
-  default <V> T set(int i, @Nullable V v, @NonNull TypeCodec<V> codec) {
+  default <ValueT> SelfT set(int i, @Nullable ValueT v, @NonNull TypeCodec<ValueT> codec) {
     return setBytesUnsafe(i, codec.encode(v, protocolVersion()));
   }
 
@@ -102,9 +102,9 @@ public interface SettableByIndex<T extends SettableByIndex<T>> extends Accessibl
    * @throws CodecNotFoundException if no codec can perform the conversion.
    */
   @NonNull
-  default <V> T set(int i, @Nullable V v, @NonNull GenericType<V> targetType) {
+  default <ValueT> SelfT set(int i, @Nullable ValueT v, @NonNull GenericType<ValueT> targetType) {
     DataType cqlType = getType(i);
-    TypeCodec<V> codec = codecRegistry().codecFor(cqlType, targetType);
+    TypeCodec<ValueT> codec = codecRegistry().codecFor(cqlType, targetType);
     return set(i, v, codec);
   }
 
@@ -119,11 +119,11 @@ public interface SettableByIndex<T extends SettableByIndex<T>> extends Accessibl
    * @throws CodecNotFoundException if no codec can perform the conversion.
    */
   @NonNull
-  default <V> T set(int i, @Nullable V v, @NonNull Class<V> targetClass) {
+  default <ValueT> SelfT set(int i, @Nullable ValueT v, @NonNull Class<ValueT> targetClass) {
     // This is duplicated from the GenericType variant, because we want to give the codec registry
     // a chance to process the unwrapped class directly, if it can do so in a more efficient way.
     DataType cqlType = getType(i);
-    TypeCodec<V> codec = codecRegistry().codecFor(cqlType, targetClass);
+    TypeCodec<ValueT> codec = codecRegistry().codecFor(cqlType, targetClass);
     return set(i, v, codec);
   }
 
@@ -138,7 +138,7 @@ public interface SettableByIndex<T extends SettableByIndex<T>> extends Accessibl
    * @throws IndexOutOfBoundsException if the index is invalid.
    */
   @NonNull
-  default T setBoolean(int i, boolean v) {
+  default SelfT setBoolean(int i, boolean v) {
     DataType cqlType = getType(i);
     TypeCodec<Boolean> codec = codecRegistry().codecFor(cqlType, Boolean.class);
     return (codec instanceof PrimitiveBooleanCodec)
@@ -157,7 +157,7 @@ public interface SettableByIndex<T extends SettableByIndex<T>> extends Accessibl
    * @throws IndexOutOfBoundsException if the index is invalid.
    */
   @NonNull
-  default T setByte(int i, byte v) {
+  default SelfT setByte(int i, byte v) {
     DataType cqlType = getType(i);
     TypeCodec<Byte> codec = codecRegistry().codecFor(cqlType, Byte.class);
     return (codec instanceof PrimitiveByteCodec)
@@ -176,7 +176,7 @@ public interface SettableByIndex<T extends SettableByIndex<T>> extends Accessibl
    * @throws IndexOutOfBoundsException if the index is invalid.
    */
   @NonNull
-  default T setDouble(int i, double v) {
+  default SelfT setDouble(int i, double v) {
     DataType cqlType = getType(i);
     TypeCodec<Double> codec = codecRegistry().codecFor(cqlType, Double.class);
     return (codec instanceof PrimitiveDoubleCodec)
@@ -195,7 +195,7 @@ public interface SettableByIndex<T extends SettableByIndex<T>> extends Accessibl
    * @throws IndexOutOfBoundsException if the index is invalid.
    */
   @NonNull
-  default T setFloat(int i, float v) {
+  default SelfT setFloat(int i, float v) {
     DataType cqlType = getType(i);
     TypeCodec<Float> codec = codecRegistry().codecFor(cqlType, Float.class);
     return (codec instanceof PrimitiveFloatCodec)
@@ -214,7 +214,7 @@ public interface SettableByIndex<T extends SettableByIndex<T>> extends Accessibl
    * @throws IndexOutOfBoundsException if the index is invalid.
    */
   @NonNull
-  default T setInt(int i, int v) {
+  default SelfT setInt(int i, int v) {
     DataType cqlType = getType(i);
     TypeCodec<Integer> codec = codecRegistry().codecFor(cqlType, Integer.class);
     return (codec instanceof PrimitiveIntCodec)
@@ -233,7 +233,7 @@ public interface SettableByIndex<T extends SettableByIndex<T>> extends Accessibl
    * @throws IndexOutOfBoundsException if the index is invalid.
    */
   @NonNull
-  default T setLong(int i, long v) {
+  default SelfT setLong(int i, long v) {
     DataType cqlType = getType(i);
     TypeCodec<Long> codec = codecRegistry().codecFor(cqlType, Long.class);
     return (codec instanceof PrimitiveLongCodec)
@@ -252,7 +252,7 @@ public interface SettableByIndex<T extends SettableByIndex<T>> extends Accessibl
    * @throws IndexOutOfBoundsException if the index is invalid.
    */
   @NonNull
-  default T setShort(int i, short v) {
+  default SelfT setShort(int i, short v) {
     DataType cqlType = getType(i);
     TypeCodec<Short> codec = codecRegistry().codecFor(cqlType, Short.class);
     return (codec instanceof PrimitiveShortCodec)
@@ -268,7 +268,7 @@ public interface SettableByIndex<T extends SettableByIndex<T>> extends Accessibl
    * @throws IndexOutOfBoundsException if the index is invalid.
    */
   @NonNull
-  default T setInstant(int i, @Nullable Instant v) {
+  default SelfT setInstant(int i, @Nullable Instant v) {
     return set(i, v, Instant.class);
   }
 
@@ -280,7 +280,7 @@ public interface SettableByIndex<T extends SettableByIndex<T>> extends Accessibl
    * @throws IndexOutOfBoundsException if the index is invalid.
    */
   @NonNull
-  default T setLocalDate(int i, @Nullable LocalDate v) {
+  default SelfT setLocalDate(int i, @Nullable LocalDate v) {
     return set(i, v, LocalDate.class);
   }
 
@@ -292,7 +292,7 @@ public interface SettableByIndex<T extends SettableByIndex<T>> extends Accessibl
    * @throws IndexOutOfBoundsException if the index is invalid.
    */
   @NonNull
-  default T setLocalTime(int i, @Nullable LocalTime v) {
+  default SelfT setLocalTime(int i, @Nullable LocalTime v) {
     return set(i, v, LocalTime.class);
   }
 
@@ -304,7 +304,7 @@ public interface SettableByIndex<T extends SettableByIndex<T>> extends Accessibl
    * @throws IndexOutOfBoundsException if the index is invalid.
    */
   @NonNull
-  default T setByteBuffer(int i, @Nullable ByteBuffer v) {
+  default SelfT setByteBuffer(int i, @Nullable ByteBuffer v) {
     return set(i, v, ByteBuffer.class);
   }
 
@@ -316,7 +316,7 @@ public interface SettableByIndex<T extends SettableByIndex<T>> extends Accessibl
    * @throws IndexOutOfBoundsException if the index is invalid.
    */
   @NonNull
-  default T setString(int i, @Nullable String v) {
+  default SelfT setString(int i, @Nullable String v) {
     return set(i, v, String.class);
   }
 
@@ -328,7 +328,7 @@ public interface SettableByIndex<T extends SettableByIndex<T>> extends Accessibl
    * @throws IndexOutOfBoundsException if the index is invalid.
    */
   @NonNull
-  default T setBigInteger(int i, @Nullable BigInteger v) {
+  default SelfT setBigInteger(int i, @Nullable BigInteger v) {
     return set(i, v, BigInteger.class);
   }
 
@@ -340,7 +340,7 @@ public interface SettableByIndex<T extends SettableByIndex<T>> extends Accessibl
    * @throws IndexOutOfBoundsException if the index is invalid.
    */
   @NonNull
-  default T setBigDecimal(int i, @Nullable BigDecimal v) {
+  default SelfT setBigDecimal(int i, @Nullable BigDecimal v) {
     return set(i, v, BigDecimal.class);
   }
 
@@ -352,7 +352,7 @@ public interface SettableByIndex<T extends SettableByIndex<T>> extends Accessibl
    * @throws IndexOutOfBoundsException if the index is invalid.
    */
   @NonNull
-  default T setUuid(int i, @Nullable UUID v) {
+  default SelfT setUuid(int i, @Nullable UUID v) {
     return set(i, v, UUID.class);
   }
 
@@ -364,7 +364,7 @@ public interface SettableByIndex<T extends SettableByIndex<T>> extends Accessibl
    * @throws IndexOutOfBoundsException if the index is invalid.
    */
   @NonNull
-  default T setInetAddress(int i, @Nullable InetAddress v) {
+  default SelfT setInetAddress(int i, @Nullable InetAddress v) {
     return set(i, v, InetAddress.class);
   }
 
@@ -376,7 +376,7 @@ public interface SettableByIndex<T extends SettableByIndex<T>> extends Accessibl
    * @throws IndexOutOfBoundsException if the index is invalid.
    */
   @NonNull
-  default T setCqlDuration(int i, @Nullable CqlDuration v) {
+  default SelfT setCqlDuration(int i, @Nullable CqlDuration v) {
     return set(i, v, CqlDuration.class);
   }
 
@@ -390,7 +390,7 @@ public interface SettableByIndex<T extends SettableByIndex<T>> extends Accessibl
    * @throws IndexOutOfBoundsException if the index is invalid.
    */
   @NonNull
-  default T setToken(int i, @NonNull Token v) {
+  default SelfT setToken(int i, @NonNull Token v) {
     // Simply enumerate all known implementations. This goes against the concept of TokenFactory,
     // but injecting the factory here is too much of a hassle.
     // The only issue is if someone uses a custom partitioner, but this is highly unlikely, and even
@@ -417,7 +417,8 @@ public interface SettableByIndex<T extends SettableByIndex<T>> extends Accessibl
    * @throws IndexOutOfBoundsException if the index is invalid.
    */
   @NonNull
-  default <V> T setList(int i, @Nullable List<V> v, @NonNull Class<V> elementsClass) {
+  default <ElementT> SelfT setList(
+      int i, @Nullable List<ElementT> v, @NonNull Class<ElementT> elementsClass) {
     return set(i, v, GenericType.listOf(elementsClass));
   }
 
@@ -432,7 +433,8 @@ public interface SettableByIndex<T extends SettableByIndex<T>> extends Accessibl
    * @throws IndexOutOfBoundsException if the index is invalid.
    */
   @NonNull
-  default <V> T setSet(int i, @Nullable Set<V> v, @NonNull Class<V> elementsClass) {
+  default <ElementT> SelfT setSet(
+      int i, @Nullable Set<ElementT> v, @NonNull Class<ElementT> elementsClass) {
     return set(i, v, GenericType.setOf(elementsClass));
   }
 
@@ -447,8 +449,11 @@ public interface SettableByIndex<T extends SettableByIndex<T>> extends Accessibl
    * @throws IndexOutOfBoundsException if the index is invalid.
    */
   @NonNull
-  default <K, V> T setMap(
-      int i, @Nullable Map<K, V> v, @NonNull Class<K> keyClass, @NonNull Class<V> valueClass) {
+  default <KeyT, ValueT> SelfT setMap(
+      int i,
+      @Nullable Map<KeyT, ValueT> v,
+      @NonNull Class<KeyT> keyClass,
+      @NonNull Class<ValueT> valueClass) {
     return set(i, v, GenericType.mapOf(keyClass, valueClass));
   }
 
@@ -460,7 +465,7 @@ public interface SettableByIndex<T extends SettableByIndex<T>> extends Accessibl
    * @throws IndexOutOfBoundsException if the index is invalid.
    */
   @NonNull
-  default T setUdtValue(int i, @Nullable UdtValue v) {
+  default SelfT setUdtValue(int i, @Nullable UdtValue v) {
     return set(i, v, UdtValue.class);
   }
 
@@ -472,7 +477,7 @@ public interface SettableByIndex<T extends SettableByIndex<T>> extends Accessibl
    * @throws IndexOutOfBoundsException if the index is invalid.
    */
   @NonNull
-  default T setTupleValue(int i, @Nullable TupleValue v) {
+  default SelfT setTupleValue(int i, @Nullable TupleValue v) {
     return set(i, v, TupleValue.class);
   }
 }

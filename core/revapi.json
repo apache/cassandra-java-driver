@@ -514,7 +514,7 @@
       },
       {
         "code": "java.method.addedToInterface",
-        "new": "method T com.datastax.oss.driver.api.core.cql.Statement<T extends com.datastax.oss.driver.api.core.cql.Statement<T extends com.datastax.oss.driver.api.core.cql.Statement<T>>>::setNode(com.datastax.oss.driver.api.core.metadata.Node)",
+        "new": "method SelfT com.datastax.oss.driver.api.core.cql.Statement<SelfT extends com.datastax.oss.driver.api.core.cql.Statement<SelfT extends com.datastax.oss.driver.api.core.cql.Statement<SelfT>>>::setNode(com.datastax.oss.driver.api.core.metadata.Node)",
         "package": "com.datastax.oss.driver.api.core.cql",
         "classQualifiedName": "com.datastax.oss.driver.api.core.cql.Statement",
         "classSimpleName": "Statement",
