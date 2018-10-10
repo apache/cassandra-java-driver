@@ -597,6 +597,39 @@
         "newArchive": "com.datastax.oss:java-driver-core:jar:4.0.0-beta2-SNAPSHOT",
         "elementKind": "method",
         "justification": "Return covariant future types from session async methods"
+      },
+      {
+        "code": "java.method.removed",
+        "old": "method void com.datastax.oss.driver.api.core.cql.ResultSet::fetchNextPage()",
+        "package": "com.datastax.oss.driver.api.core.cql",
+        "classQualifiedName": "com.datastax.oss.driver.api.core.cql.ResultSet",
+        "classSimpleName": "ResultSet",
+        "methodName": "fetchNextPage",
+        "oldArchive": "com.datastax.oss:java-driver-core:jar:4.0.0-beta1",
+        "elementKind": "method",
+        "justification": "JAVA-1988: remove pre-fetching from ResultSet API"
+      },
+      {
+        "code": "java.method.removed",
+        "old": "method int com.datastax.oss.driver.api.core.cql.ResultSet::getAvailableWithoutFetching()",
+        "package": "com.datastax.oss.driver.api.core.cql",
+        "classQualifiedName": "com.datastax.oss.driver.api.core.cql.ResultSet",
+        "classSimpleName": "ResultSet",
+        "methodName": "getAvailableWithoutFetching",
+        "oldArchive": "com.datastax.oss:java-driver-core:jar:4.0.0-beta1",
+        "elementKind": "method",
+        "justification": "JAVA-1988: remove pre-fetching from ResultSet API"
+      },
+      {
+        "code": "java.method.removed",
+        "old": "method boolean com.datastax.oss.driver.api.core.cql.ResultSet::isFullyFetched()",
+        "package": "com.datastax.oss.driver.api.core.cql",
+        "classQualifiedName": "com.datastax.oss.driver.api.core.cql.ResultSet",
+        "classSimpleName": "ResultSet",
+        "methodName": "isFullyFetched",
+        "oldArchive": "com.datastax.oss:java-driver-core:jar:4.0.0-beta1",
+        "elementKind": "method",
+        "justification": "JAVA-1988: remove pre-fetching from ResultSet API"
       }
     ]
   }

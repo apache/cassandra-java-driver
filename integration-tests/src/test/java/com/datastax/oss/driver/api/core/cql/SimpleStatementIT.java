@@ -30,12 +30,14 @@ import com.datastax.oss.driver.api.testinfra.session.SessionRule;
 import com.datastax.oss.driver.api.testinfra.session.SessionUtils;
 import com.datastax.oss.driver.api.testinfra.simulacron.SimulacronRule;
 import com.datastax.oss.driver.categories.ParallelizableTests;
+import com.datastax.oss.driver.internal.core.util.concurrent.CompletableFutures;
 import com.datastax.oss.protocol.internal.Message;
 import com.datastax.oss.protocol.internal.request.Query;
 import com.datastax.oss.simulacron.common.cluster.ClusterSpec;
 import com.datastax.oss.simulacron.common.cluster.QueryLog;
 import java.time.Duration;
 import java.util.List;
+import java.util.concurrent.CompletionStage;
 import java.util.concurrent.TimeUnit;
 import org.junit.Before;
 import org.junit.BeforeClass;
@@ -180,10 +182,11 @@ public class SimpleStatementIT {
             .build();
 
     ResultSet result = sessionRule.session().execute(select);
-    assertThat(result.getAvailableWithoutFetching()).isEqualTo(1);
+    List<Row> rows = result.all();
+    assertThat(rows).hasSize(1);
 
     // then the writetime should equal the timestamp provided.
-    Row row = result.iterator().next();
+    Row row = rows.iterator().next();
     assertThat(row.getLong("wv")).isEqualTo(timestamp);
   }
 
@@ -217,9 +220,10 @@ public class SimpleStatementIT {
             .build();
 
     ResultSet result = sessionRule.session().execute(select);
-    assertThat(result.getAvailableWithoutFetching()).isEqualTo(1);
+    List<Row> rows = result.all();
+    assertThat(rows).hasSize(1);
 
-    Row row = result.iterator().next();
+    Row row = rows.iterator().next();
     assertThat(row.getString("k")).isEqualTo(name.getMethodName());
     assertThat(row.getInt("v")).isEqualTo(4);
   }
@@ -243,9 +247,10 @@ public class SimpleStatementIT {
             .build();
 
     ResultSet result = sessionRule.session().execute(select);
-    assertThat(result.getAvailableWithoutFetching()).isEqualTo(1);
+    List<Row> rows = result.all();
+    assertThat(rows).hasSize(1);
 
-    Row row = result.iterator().next();
+    Row row = rows.iterator().next();
     assertThat(row.getString("k")).isEqualTo(name.getMethodName());
     assertThat(row.getObject("v")).isNull();
   }
@@ -297,9 +302,10 @@ public class SimpleStatementIT {
             .build();
 
     ResultSet result = sessionRule.session().execute(select);
-    assertThat(result.getAvailableWithoutFetching()).isEqualTo(1);
+    List<Row> rows = result.all();
+    assertThat(rows).hasSize(1);
 
-    Row row = result.iterator().next();
+    Row row = rows.iterator().next();
     assertThat(row.getString("k")).isEqualTo(name.getMethodName());
     assertThat(row.getInt("v")).isEqualTo(7);
   }
@@ -323,9 +329,10 @@ public class SimpleStatementIT {
             .build();
 
     ResultSet result = sessionRule.session().execute(select);
-    assertThat(result.getAvailableWithoutFetching()).isEqualTo(1);
+    List<Row> rows = result.all();
+    assertThat(rows).hasSize(1);
 
-    Row row = result.iterator().next();
+    Row row = rows.iterator().next();
     assertThat(row.getString("k")).isEqualTo(name.getMethodName());
     assertThat(row.getObject("v")).isNull();
   }
@@ -373,10 +380,11 @@ public class SimpleStatementIT {
   @Test
   public void should_use_page_size() {
     Statement<?> st = SimpleStatement.builder("SELECT v FROM test").withPageSize(10).build();
-    ResultSet result = sessionRule.session().execute(st);
+    CompletionStage<? extends AsyncResultSet> future = sessionRule.session().executeAsync(st);
+    AsyncResultSet result = CompletableFutures.getUninterruptibly(future);
 
     // Should have only fetched 10 (page size) rows.
-    assertThat(result.getAvailableWithoutFetching()).isEqualTo(10);
+    assertThat(result.remaining()).isEqualTo(10);
   }
 
   @Test

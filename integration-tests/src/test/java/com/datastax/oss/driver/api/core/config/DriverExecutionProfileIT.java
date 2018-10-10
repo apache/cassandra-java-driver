@@ -25,11 +25,11 @@ import com.datastax.oss.driver.api.core.AllNodesFailedException;
 import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.CqlSession;
 import com.datastax.oss.driver.api.core.DriverTimeoutException;
+import com.datastax.oss.driver.api.core.cql.AsyncResultSet;
 import com.datastax.oss.driver.api.core.cql.BatchStatement;
 import com.datastax.oss.driver.api.core.cql.BatchStatementBuilder;
 import com.datastax.oss.driver.api.core.cql.DefaultBatchType;
 import com.datastax.oss.driver.api.core.cql.PreparedStatement;
-import com.datastax.oss.driver.api.core.cql.ResultSet;
 import com.datastax.oss.driver.api.core.cql.SimpleStatement;
 import com.datastax.oss.driver.api.core.servererrors.ServerError;
 import com.datastax.oss.driver.api.testinfra.ccm.CcmRule;
@@ -37,10 +37,12 @@ import com.datastax.oss.driver.api.testinfra.session.SessionUtils;
 import com.datastax.oss.driver.api.testinfra.simulacron.SimulacronRule;
 import com.datastax.oss.driver.categories.ParallelizableTests;
 import com.datastax.oss.driver.internal.core.config.typesafe.DefaultDriverConfigLoaderBuilder;
+import com.datastax.oss.driver.internal.core.util.concurrent.CompletableFutures;
 import com.datastax.oss.simulacron.common.cluster.ClusterSpec;
 import com.datastax.oss.simulacron.common.cluster.QueryLog;
 import java.time.Duration;
 import java.util.Optional;
+import java.util.concurrent.CompletionStage;
 import java.util.concurrent.TimeUnit;
 import org.junit.Rule;
 import org.junit.Test;
@@ -222,20 +224,22 @@ public class DriverExecutionProfileIT {
 
       String query = "SELECT * FROM test where k=0";
       // Execute query without profile, should use global page size (100)
-      ResultSet result = session.execute(query);
-      assertThat(result.getAvailableWithoutFetching()).isEqualTo(100);
-      result.fetchNextPage();
+      CompletionStage<? extends AsyncResultSet> future = session.executeAsync(query);
+      AsyncResultSet result = CompletableFutures.getUninterruptibly(future);
+      assertThat(result.remaining()).isEqualTo(100);
+      result = CompletableFutures.getUninterruptibly(result.fetchNextPage());
       // next fetch should also be 100 pages.
-      assertThat(result.getAvailableWithoutFetching()).isEqualTo(200);
+      assertThat(result.remaining()).isEqualTo(100);
 
       // Execute query with profile, should use profile page size
-      result =
-          session.execute(
+      future =
+          session.executeAsync(
               SimpleStatement.builder(query).withExecutionProfileName("smallpages").build());
-      assertThat(result.getAvailableWithoutFetching()).isEqualTo(10);
+      result = CompletableFutures.getUninterruptibly(future);
+      assertThat(result.remaining()).isEqualTo(10);
       // next fetch should also be 10 pages.
-      result.fetchNextPage();
-      assertThat(result.getAvailableWithoutFetching()).isEqualTo(20);
+      result = CompletableFutures.getUninterruptibly(result.fetchNextPage());
+      assertThat(result.remaining()).isEqualTo(10);
 
       SessionUtils.dropKeyspace(session, keyspace, slowProfile);
     }

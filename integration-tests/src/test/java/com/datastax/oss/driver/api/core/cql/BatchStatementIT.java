@@ -27,6 +27,7 @@ import com.datastax.oss.driver.api.testinfra.session.SessionRule;
 import com.datastax.oss.driver.api.testinfra.session.SessionUtils;
 import com.datastax.oss.driver.categories.ParallelizableTests;
 import java.util.Iterator;
+import java.util.List;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -146,11 +147,12 @@ public class BatchStatementIT {
 
     ResultSet result = sessionRule.session().execute(select);
 
-    assertThat(result.getAvailableWithoutFetching()).isEqualTo(100);
+    List<Row> rows = result.all();
+    assertThat(rows).hasSize(100);
 
-    Iterator<Row> rows = result.iterator();
+    Iterator<Row> iterator = rows.iterator();
     for (int i = 0; i < batchCount; i++) {
-      Row row = rows.next();
+      Row row = iterator.next();
       assertThat(row.getString("k0")).isEqualTo(name.getMethodName());
       assertThat(row.getInt("k1")).isEqualTo(i);
       // value should be from first insert (i + 1) if at row divisble by 20, otherwise second.
@@ -269,9 +271,10 @@ public class BatchStatementIT {
                   String.format(
                       "SELECT c from counter%d where k0 = '%s'", i, name.getMethodName()));
 
-      assertThat(result.getAvailableWithoutFetching()).isEqualTo(1);
+      List<Row> rows = result.all();
+      assertThat(rows).hasSize(1);
 
-      Row row = result.iterator().next();
+      Row row = rows.iterator().next();
       assertThat(row.getLong("c")).isEqualTo(i);
     }
   }
@@ -358,11 +361,12 @@ public class BatchStatementIT {
 
     ResultSet result = sessionRule.session().execute(select);
 
-    assertThat(result.getAvailableWithoutFetching()).isEqualTo(100);
+    List<Row> rows = result.all();
+    assertThat(rows).hasSize(100);
 
-    Iterator<Row> rows = result.iterator();
+    Iterator<Row> iterator = rows.iterator();
     for (int i = 0; i < batchCount; i++) {
-      Row row = rows.next();
+      Row row = iterator.next();
       assertThat(row.getString("k0")).isEqualTo(name.getMethodName());
       assertThat(row.getInt("k1")).isEqualTo(i);
       assertThat(row.getInt("v")).isEqualTo(i + 1);

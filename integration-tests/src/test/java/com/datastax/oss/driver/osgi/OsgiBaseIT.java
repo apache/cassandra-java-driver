@@ -26,6 +26,7 @@ import com.datastax.oss.driver.api.core.cql.Row;
 import com.datastax.oss.driver.api.core.session.SessionBuilder;
 import com.datastax.oss.driver.api.testinfra.ccm.CustomCcmRule;
 import com.datastax.oss.driver.categories.IsolatedTests;
+import java.util.List;
 import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
@@ -64,9 +65,10 @@ public abstract class OsgiBaseIT {
     try (CqlSession session = builder.build()) {
       ResultSet result = session.execute(selectFrom("system", "local").all().build());
 
-      assertThat(result.getAvailableWithoutFetching()).isEqualTo(1);
+      List<Row> rows = result.all();
+      assertThat(rows).hasSize(1);
 
-      Row row = result.one();
+      Row row = rows.get(0);
       assertThat(row.getString("key")).isEqualTo("local");
     }
   }

@@ -94,13 +94,24 @@ In 3.x, both synchronous and asynchronous execution models shared a common resul
 implementation. This made asynchronous usage [notably error-prone][3.x async paging], because of the
 risk of accidentally triggering background synchronous fetches.
 
-There are now two separate APIs: synchronous queries return a `ResultSet` which behaves like its 3.x
-counterpart; asynchronous queries return a future of `AsyncResultSet`, a simplified type that only 
-contains the rows of the current page. When iterating asynchronously, you no longer need to stop the
-iteration manually: just consume all the rows in the iterator, and then call `fetchNextPage` to 
-retrieve the next page asynchronously.
+There are now two separate APIs: synchronous queries return a `ResultSet`; asynchronous queries 
+return a future of `AsyncResultSet`.
+
+`ResultSet` behaves much like its 3.x counterpart, except that background pre-fetching was 
+deliberately removed, in order to keep this interface simple and intuitive. This is why methods such 
+as `fetchMoreResults`, `getAvailableWithoutFetching` and `isFullyFetched` have disappeared. If you 
+were using synchronous iterations with background pre-fetching, you should now switch to fully 
+asynchronous iterations (see below).
+
+`AsyncResultSet` is a simplified type that only contains the rows of the current page. When 
+iterating asynchronously, you no longer need to stop the iteration manually: just consume all the 
+rows in the iterator, and then call `fetchNextPage` to retrieve the next page asynchronously. You
+will find more information about asynchronous iterations in the manual pages about [asynchronous 
+programming][4.x async programming] and [paging][4.x paging].
 
 [3.x async paging]: http://docs.datastax.com/en/developer/java-driver/3.2/manual/async/#async-paging
+[4.x async programming]: http://docs.datastax.com/en/developer/java-driver/4.0/manual/core/async/
+[4.x paging]: http://docs.datastax.com/en/developer/java-driver/4.0/manual/core/paging/
 
 #### Simplified request timeout
 

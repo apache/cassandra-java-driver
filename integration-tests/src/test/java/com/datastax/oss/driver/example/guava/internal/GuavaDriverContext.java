@@ -83,6 +83,6 @@ public class GuavaDriverContext extends DefaultDriverContext {
         new GuavaRequestAsyncProcessor<>(
             cqlPrepareAsyncProcessor, PrepareRequest.class, GuavaSession.ASYNC_PREPARED),
         // Register KeyRequestProcessor for handling KeyRequest and returning Integer.
-        new KeyRequestProcessor(cqlRequestSyncProcessor));
+        new KeyRequestProcessor(cqlRequestAsyncProcessor));
   }
 }

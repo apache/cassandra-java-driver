@@ -16,10 +16,9 @@
 package com.datastax.oss.driver.api.core.cql;
 
 import com.datastax.oss.driver.api.core.CqlSession;
-import com.datastax.oss.driver.shaded.guava.common.collect.Iterables;
-import com.datastax.oss.driver.shaded.guava.common.collect.Lists;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import edu.umd.cs.findbugs.annotations.Nullable;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
@@ -98,58 +97,16 @@ public interface ResultSet extends Iterable<Row> {
    */
   @NonNull
   default List<Row> all() {
-    if (!iterator().hasNext()) {
+    Iterator<Row> iterator = iterator();
+    if (!iterator.hasNext()) {
       return Collections.emptyList();
     }
-    // We can't know the actual size in advance since more pages could be fetched, but we can at
-    // least allocate for what we already have.
-    List<Row> result = Lists.newArrayListWithExpectedSize(getAvailableWithoutFetching());
-    Iterables.addAll(result, this);
+    List<Row> result = new ArrayList<>();
+    while (iterator.hasNext()) {
+      result.add(iterator.next());
+    }
     return result;
   }
-
-  /**
-   * Whether all pages have been fetched from the database.
-   *
-   * <p>If this is {@code false}, it means that more blocking background queries will be triggered
-   * as iteration continues.
-   */
-  boolean isFullyFetched();
-
-  /**
-   * The number of rows that can be returned from this result set before a blocking background query
-   * needs to be performed to retrieve more results. In other words, this is the number of rows
-   * remaining in the current page.
-   */
-  int getAvailableWithoutFetching();
-
-  /**
-   * Forces the driver to fetch the next page of results, regardless of whether the current page is
-   * exhausted.
-   *
-   * <p>If all pages have already been fetched ({@code isFullyFetched() == true}), this method has
-   * no effect.
-   *
-   * <p>This can be used to pre-fetch the next page early to improve performance. For example, if
-   * you want to start fetching the next page as soon as you reach the last 100 rows of the current
-   * one, you can use:
-   *
-   * <pre>{@code
-   * Iterator<Row> iterator = rs.iterator();
-   * while (iterator.hasNext()) {
-   *   if (rs.getAvailableWithoutFetching() == 100) {
-   *     rs.fetchNextPage();
-   *   }
-   *   Row row = iterator.next();
-   *   ... process the row ...
-   * }
-   * }</pre>
-   *
-   * <p>Note that, contrary to version 3.x of the driver, this method deliberately avoids returning
-   * a future. If you want to iterate a multi-page result asynchronously with callbacks, use {@link
-   * AsyncResultSet}.
-   */
-  void fetchNextPage();
 
   /**
    * If the query that produced this result was a conditional update, indicate whether it was
