@@ -40,6 +40,7 @@ import com.datastax.oss.driver.internal.core.DefaultProtocolFeature;
 import com.datastax.oss.driver.internal.core.ProtocolVersionRegistry;
 import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
 import com.datastax.oss.driver.internal.core.type.codec.CqlIntToStringCodec;
+import com.datastax.oss.driver.internal.core.util.concurrent.CompletableFutures;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableList;
 import com.datastax.oss.protocol.internal.Message;
 import com.datastax.oss.protocol.internal.request.Execute;
@@ -53,6 +54,7 @@ import java.nio.ByteBuffer;
 import java.time.Duration;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CompletionStage;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import org.junit.Before;
@@ -72,7 +74,7 @@ public class BoundStatementIT {
 
   @ClassRule public static CcmRule ccm = CcmRule.getInstance();
 
-  private static boolean atLeastV4 = ccm.getHighestProtocolVersion().getCode() >= 4;
+  private static final boolean atLeastV4 = ccm.getHighestProtocolVersion().getCode() >= 4;
 
   @ClassRule
   public static SessionRule<CqlSession> sessionRule =
@@ -242,10 +244,11 @@ public class BoundStatementIT {
     try (CqlSession session = SessionUtils.newSession(ccm, sessionRule.keyspace())) {
       SimpleStatement st = SimpleStatement.builder("SELECT v FROM test").withPageSize(10).build();
       PreparedStatement prepared = session.prepare(st);
-      ResultSet result = session.execute(prepared.bind());
+      CompletionStage<? extends AsyncResultSet> future = session.executeAsync(prepared.bind());
+      AsyncResultSet result = CompletableFutures.getUninterruptibly(future);
 
       // Should have only fetched 10 (page size) rows.
-      assertThat(result.getAvailableWithoutFetching()).isEqualTo(10);
+      assertThat(result.remaining()).isEqualTo(10);
     }
   }
 
@@ -256,10 +259,12 @@ public class BoundStatementIT {
       // overridden by bound statement.
       SimpleStatement st = SimpleStatement.builder("SELECT v FROM test").withPageSize(10).build();
       PreparedStatement prepared = session.prepare(st);
-      ResultSet result = session.execute(prepared.bind().setPageSize(12));
+      CompletionStage<? extends AsyncResultSet> future =
+          session.executeAsync(prepared.bind().setPageSize(12));
+      AsyncResultSet result = CompletableFutures.getUninterruptibly(future);
 
-      // Should have only fetched 10 (page size) rows.
-      assertThat(result.getAvailableWithoutFetching()).isEqualTo(12);
+      // Should have fetched 12 (page size) rows.
+      assertThat(result.remaining()).isEqualTo(12);
     }
   }
 

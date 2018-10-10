@@ -15,30 +15,32 @@
  */
 package com.datastax.oss.driver.example.guava.internal;
 
-import com.datastax.oss.driver.api.core.cql.ResultSet;
+import com.datastax.oss.driver.api.core.cql.AsyncResultSet;
 import com.datastax.oss.driver.api.core.cql.SimpleStatement;
 import com.datastax.oss.driver.api.core.cql.Statement;
 import com.datastax.oss.driver.api.core.session.Request;
 import com.datastax.oss.driver.api.core.session.RequestProcessorIT;
 import com.datastax.oss.driver.api.core.type.reflect.GenericType;
 import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
-import com.datastax.oss.driver.internal.core.cql.CqlRequestSyncProcessor;
+import com.datastax.oss.driver.internal.core.cql.CqlRequestAsyncProcessor;
 import com.datastax.oss.driver.internal.core.session.DefaultSession;
 import com.datastax.oss.driver.internal.core.session.RequestHandler;
 import com.datastax.oss.driver.internal.core.session.RequestProcessor;
+import com.datastax.oss.driver.internal.core.util.concurrent.CompletableFutures;
+import java.util.concurrent.CompletionStage;
 
 /**
  * A request processor that takes a given {@link KeyRequest#getKey} and generates a query, delegates
- * it to {@link CqlRequestSyncProcessor} to get the integer value of a row and return it as a
+ * it to {@link CqlRequestAsyncProcessor} to get the integer value of a row and return it as a
  * result.
  */
 public class KeyRequestProcessor implements RequestProcessor<KeyRequest, Integer> {
 
   public static final GenericType<Integer> INT_TYPE = GenericType.of(Integer.class);
 
-  private final CqlRequestSyncProcessor subProcessor;
+  private final CqlRequestAsyncProcessor subProcessor;
 
-  KeyRequestProcessor(CqlRequestSyncProcessor subProcessor) {
+  KeyRequestProcessor(CqlRequestAsyncProcessor subProcessor) {
     this.subProcessor = subProcessor;
   }
 
@@ -57,27 +59,28 @@ public class KeyRequestProcessor implements RequestProcessor<KeyRequest, Integer
     SimpleStatement statement =
         SimpleStatement.newInstance(
             "select v1 from test where k = ? and v0 = ?", RequestProcessorIT.KEY, request.getKey());
-    RequestHandler<Statement<?>, ResultSet> subHandler =
+    RequestHandler<Statement<?>, CompletionStage<AsyncResultSet>> subHandler =
         subProcessor.newHandler(statement, session, context, sessionLogPrefix);
     return new KeyRequestHandler(subHandler);
   }
 
   static class KeyRequestHandler implements RequestHandler<KeyRequest, Integer> {
 
-    private final RequestHandler<Statement<?>, ResultSet> subHandler;
+    private final RequestHandler<Statement<?>, CompletionStage<AsyncResultSet>> subHandler;
 
-    KeyRequestHandler(RequestHandler<Statement<?>, ResultSet> subHandler) {
+    KeyRequestHandler(RequestHandler<Statement<?>, CompletionStage<AsyncResultSet>> subHandler) {
       this.subHandler = subHandler;
     }
 
     @Override
     public Integer handle() {
-      ResultSet result = subHandler.handle();
+      CompletionStage<AsyncResultSet> future = subHandler.handle();
+      AsyncResultSet result = CompletableFutures.getUninterruptibly(future);
       // If not exactly 1 rows were found, return Integer.MIN_VALUE, otherwise return the value.
-      if (result.getAvailableWithoutFetching() != 1) {
+      if (result.remaining() != 1) {
         return Integer.MIN_VALUE;
       } else {
-        return result.iterator().next().getInt("v1");
+        return result.currentPage().iterator().next().getInt("v1");
       }
     }
   }

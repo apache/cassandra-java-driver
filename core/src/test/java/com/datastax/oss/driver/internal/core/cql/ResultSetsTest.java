@@ -46,19 +46,12 @@ public class ResultSetsTest {
     assertThat(resultSet.getColumnDefinitions()).isSameAs(page1.getColumnDefinitions());
     assertThat(resultSet.getExecutionInfo()).isSameAs(page1.getExecutionInfo());
     assertThat(resultSet.getExecutionInfos()).containsExactly(page1.getExecutionInfo());
-    assertThat(resultSet.isFullyFetched()).isTrue();
-    assertThat(resultSet.getAvailableWithoutFetching()).isEqualTo(3);
 
     Iterator<Row> iterator = resultSet.iterator();
 
     assertNextRow(iterator, 0);
-    assertThat(resultSet.getAvailableWithoutFetching()).isEqualTo(2);
-
     assertNextRow(iterator, 1);
-    assertThat(resultSet.getAvailableWithoutFetching()).isEqualTo(1);
-
     assertNextRow(iterator, 2);
-    assertThat(resultSet.getAvailableWithoutFetching()).isEqualTo(0);
 
     assertThat(iterator.hasNext()).isFalse();
   }
@@ -77,41 +70,27 @@ public class ResultSetsTest {
     ResultSet resultSet = ResultSets.newInstance(page1);
 
     // Then
-    assertThat(resultSet.getAvailableWithoutFetching()).isEqualTo(3);
     assertThat(resultSet.iterator().hasNext()).isTrue();
 
     assertThat(resultSet.getColumnDefinitions()).isSameAs(page1.getColumnDefinitions());
     assertThat(resultSet.getExecutionInfo()).isSameAs(page1.getExecutionInfo());
     assertThat(resultSet.getExecutionInfos()).containsExactly(page1.getExecutionInfo());
-    assertThat(resultSet.isFullyFetched()).isFalse();
-    assertThat(resultSet.getAvailableWithoutFetching()).isEqualTo(3);
 
     Iterator<Row> iterator = resultSet.iterator();
 
     assertNextRow(iterator, 0);
-    assertThat(resultSet.getAvailableWithoutFetching()).isEqualTo(2);
-
     assertNextRow(iterator, 1);
-    assertThat(resultSet.getAvailableWithoutFetching()).isEqualTo(1);
-
     assertNextRow(iterator, 2);
-    assertThat(resultSet.getAvailableWithoutFetching()).isEqualTo(0);
 
     assertThat(iterator.hasNext()).isTrue();
     // This should have triggered the fetch of page2
     assertThat(resultSet.getExecutionInfo()).isEqualTo(page2.getExecutionInfo());
     assertThat(resultSet.getExecutionInfos())
         .containsExactly(page1.getExecutionInfo(), page2.getExecutionInfo());
-    assertThat(resultSet.getAvailableWithoutFetching()).isEqualTo(3);
 
     assertNextRow(iterator, 3);
-    assertThat(resultSet.getAvailableWithoutFetching()).isEqualTo(2);
-
     assertNextRow(iterator, 4);
-    assertThat(resultSet.getAvailableWithoutFetching()).isEqualTo(1);
-
     assertNextRow(iterator, 5);
-    assertThat(resultSet.getAvailableWithoutFetching()).isEqualTo(0);
 
     assertThat(iterator.hasNext()).isTrue();
     // This should have triggered the fetch of page3
@@ -119,70 +98,10 @@ public class ResultSetsTest {
     assertThat(resultSet.getExecutionInfos())
         .containsExactly(
             page1.getExecutionInfo(), page2.getExecutionInfo(), page3.getExecutionInfo());
-    assertThat(resultSet.getAvailableWithoutFetching()).isEqualTo(3);
 
     assertNextRow(iterator, 6);
-    assertThat(resultSet.getAvailableWithoutFetching()).isEqualTo(2);
-
     assertNextRow(iterator, 7);
-    assertThat(resultSet.getAvailableWithoutFetching()).isEqualTo(1);
-
     assertNextRow(iterator, 8);
-    assertThat(resultSet.getAvailableWithoutFetching()).isEqualTo(0);
-  }
-
-  @Test
-  public void should_fetch_multiple_pages_in_advance() {
-    // Given
-    AsyncResultSet page1 = mockPage(true, 0, 1, 2);
-    AsyncResultSet page2 = mockPage(true, 3, 4, 5);
-    AsyncResultSet page3 = mockPage(false, 6, 7, 8);
-
-    complete(page1.fetchNextPage(), page2);
-    complete(page2.fetchNextPage(), page3);
-
-    // When
-    ResultSet resultSet = ResultSets.newInstance(page1);
-    resultSet.fetchNextPage();
-
-    // Then
-    assertThat(resultSet.getExecutionInfo()).isEqualTo(page2.getExecutionInfo());
-    assertThat(resultSet.getExecutionInfos())
-        .containsExactly(page1.getExecutionInfo(), page2.getExecutionInfo());
-    assertThat(resultSet.iterator().hasNext()).isTrue();
-    assertThat(resultSet.getAvailableWithoutFetching()).isEqualTo(6);
-
-    // When
-    resultSet.fetchNextPage();
-
-    // Then
-    assertThat(resultSet.getExecutionInfo()).isEqualTo(page3.getExecutionInfo());
-    assertThat(resultSet.getExecutionInfos())
-        .containsExactly(
-            page1.getExecutionInfo(), page2.getExecutionInfo(), page3.getExecutionInfo());
-    assertThat(resultSet.iterator().hasNext()).isTrue();
-    assertThat(resultSet.getAvailableWithoutFetching()).isEqualTo(9);
-
-    Iterator<Row> iterator = resultSet.iterator();
-
-    assertNextRow(iterator, 0);
-    assertThat(resultSet.getAvailableWithoutFetching()).isEqualTo(8);
-    assertNextRow(iterator, 1);
-    assertThat(resultSet.getAvailableWithoutFetching()).isEqualTo(7);
-    assertNextRow(iterator, 2);
-    assertThat(resultSet.getAvailableWithoutFetching()).isEqualTo(6);
-    assertNextRow(iterator, 3);
-    assertThat(resultSet.getAvailableWithoutFetching()).isEqualTo(5);
-    assertNextRow(iterator, 4);
-    assertThat(resultSet.getAvailableWithoutFetching()).isEqualTo(4);
-    assertNextRow(iterator, 5);
-    assertThat(resultSet.getAvailableWithoutFetching()).isEqualTo(3);
-    assertNextRow(iterator, 6);
-    assertThat(resultSet.getAvailableWithoutFetching()).isEqualTo(2);
-    assertNextRow(iterator, 7);
-    assertThat(resultSet.getAvailableWithoutFetching()).isEqualTo(1);
-    assertNextRow(iterator, 8);
-    assertThat(resultSet.getAvailableWithoutFetching()).isEqualTo(0);
   }
 
   private void assertNextRow(Iterator<Row> iterator, int expectedValue) {

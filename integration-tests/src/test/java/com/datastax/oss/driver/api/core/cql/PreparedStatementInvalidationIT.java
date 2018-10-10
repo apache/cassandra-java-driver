@@ -28,10 +28,12 @@ import com.datastax.oss.driver.api.testinfra.ccm.CcmRule;
 import com.datastax.oss.driver.api.testinfra.session.SessionRule;
 import com.datastax.oss.driver.api.testinfra.session.SessionUtils;
 import com.datastax.oss.driver.categories.ParallelizableTests;
+import com.datastax.oss.driver.internal.core.util.concurrent.CompletableFutures;
 import com.datastax.oss.protocol.internal.util.Bytes;
 import com.google.common.collect.ImmutableList;
 import java.nio.ByteBuffer;
 import java.time.Duration;
+import java.util.concurrent.CompletionStage;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -120,15 +122,14 @@ public class PreparedStatementInvalidationIT {
     ByteBuffer idBefore = ps.getResultMetadataId();
     assertThat(ps.getResultSetDefinitions()).hasSize(3);
 
-    ResultSet rows = session.execute(ps.bind());
-    assertThat(rows.isFullyFetched()).isFalse();
+    CompletionStage<? extends AsyncResultSet> future = session.executeAsync(ps.bind());
+    AsyncResultSet rows = CompletableFutures.getUninterruptibly(future);
     assertThat(rows.getColumnDefinitions()).hasSize(3);
     assertThat(rows.getColumnDefinitions().contains("d")).isFalse();
     // Consume the first page
-    int remaining = rows.getAvailableWithoutFetching();
-    while (remaining-- > 0) {
+    for (Row row : rows.currentPage()) {
       try {
-        rows.one().getInt("d");
+        row.getInt("d");
         fail("expected an error");
       } catch (ArrayIndexOutOfBoundsException e) {
         /*expected*/
@@ -144,7 +145,8 @@ public class PreparedStatementInvalidationIT {
     // Then
     // this should trigger a background fetch of the second page, and therefore update the
     // definitions
-    for (Row row : rows) {
+    rows = CompletableFutures.getUninterruptibly(rows.fetchNextPage());
+    for (Row row : rows.currentPage()) {
       assertThat(row.isNull("d")).isTrue();
     }
     assertThat(rows.getColumnDefinitions()).hasSize(4);

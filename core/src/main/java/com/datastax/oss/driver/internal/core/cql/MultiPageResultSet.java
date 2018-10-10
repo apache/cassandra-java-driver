@@ -20,14 +20,11 @@ import com.datastax.oss.driver.api.core.cql.ColumnDefinitions;
 import com.datastax.oss.driver.api.core.cql.ExecutionInfo;
 import com.datastax.oss.driver.api.core.cql.ResultSet;
 import com.datastax.oss.driver.api.core.cql.Row;
-import com.datastax.oss.driver.api.core.type.DataTypes;
-import com.datastax.oss.driver.internal.core.util.CountingIterator;
 import com.datastax.oss.driver.internal.core.util.concurrent.BlockingOperation;
 import com.datastax.oss.driver.internal.core.util.concurrent.CompletableFutures;
+import com.datastax.oss.driver.shaded.guava.common.collect.AbstractIterator;
 import edu.umd.cs.findbugs.annotations.NonNull;
-import java.util.ArrayDeque;
 import java.util.ArrayList;
-import java.util.Deque;
 import java.util.Iterator;
 import java.util.List;
 import net.jcip.annotations.NotThreadSafe;
@@ -58,21 +55,6 @@ public class MultiPageResultSet implements ResultSet {
     return executionInfos;
   }
 
-  @Override
-  public boolean isFullyFetched() {
-    return iterator.isFullyFetched();
-  }
-
-  @Override
-  public int getAvailableWithoutFetching() {
-    return iterator.remaining();
-  }
-
-  @Override
-  public void fetchNextPage() {
-    iterator.fetchNextPage();
-  }
-
   @NonNull
   @Override
   public Iterator<Row> iterator() {
@@ -84,14 +66,12 @@ public class MultiPageResultSet implements ResultSet {
     return iterator.wasApplied();
   }
 
-  private class RowIterator extends CountingIterator<Row> {
-    // The pages fetched so far. The first is the one we're currently iterating.
-    private Deque<AsyncResultSet> pages = new ArrayDeque<>();
+  private class RowIterator extends AbstractIterator<Row> {
+    private AsyncResultSet currentPage;
     private Iterator<Row> currentRows;
 
     private RowIterator(AsyncResultSet firstPage) {
-      super(firstPage.remaining());
-      this.pages.add(firstPage);
+      this.currentPage = firstPage;
       this.currentRows = firstPage.currentPage().iterator();
     }
 
@@ -102,47 +82,21 @@ public class MultiPageResultSet implements ResultSet {
     }
 
     private void maybeMoveToNextPage() {
-      if (!currentRows.hasNext()) {
-        fetchNextPage();
-        // We've just finished iterating the current page, remove it
-        pages.removeFirst();
-        if (!pages.isEmpty()) {
-          AsyncResultSet nextPage = pages.getFirst();
-          // The definitions can change from page to page if this result set was built from a bound
-          // 'SELECT *', and the schema was altered.
-          columnDefinitions = nextPage.getColumnDefinitions();
-          currentRows = nextPage.currentPage().iterator();
-        }
-      }
-    }
-
-    private boolean isFullyFetched() {
-      return pages.isEmpty() || !pages.getLast().hasMorePages();
-    }
-
-    private void fetchNextPage() {
-      if (!pages.isEmpty()) {
-        AsyncResultSet lastPage = pages.getLast();
-        if (lastPage.hasMorePages()) {
-          BlockingOperation.checkNotDriverThread();
-          AsyncResultSet nextPage =
-              CompletableFutures.getUninterruptibly(pages.getLast().fetchNextPage());
-          executionInfos.add(nextPage.getExecutionInfo());
-          pages.offer(nextPage);
-          remaining += nextPage.remaining();
-        }
+      if (!currentRows.hasNext() && currentPage.hasMorePages()) {
+        BlockingOperation.checkNotDriverThread();
+        AsyncResultSet nextPage =
+            CompletableFutures.getUninterruptibly(currentPage.fetchNextPage());
+        currentPage = nextPage;
+        currentRows = nextPage.currentPage().iterator();
+        executionInfos.add(nextPage.getExecutionInfo());
+        // The definitions can change from page to page if this result set was built from a bound
+        // 'SELECT *', and the schema was altered.
+        columnDefinitions = nextPage.getColumnDefinitions();
       }
     }
 
     private boolean wasApplied() {
-      if (!columnDefinitions.contains("[applied]")
-          || !columnDefinitions.get("[applied]").getType().equals(DataTypes.BOOLEAN)) {
-        return true;
-      } else if (pages.isEmpty()) {
-        throw new IllegalStateException("This method must be called before consuming all the rows");
-      } else {
-        return pages.getFirst().wasApplied();
-      }
+      return currentPage.wasApplied();
     }
   }
 }

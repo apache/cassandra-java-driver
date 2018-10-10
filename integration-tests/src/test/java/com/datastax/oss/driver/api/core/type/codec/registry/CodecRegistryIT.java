@@ -40,6 +40,7 @@ import edu.umd.cs.findbugs.annotations.NonNull;
 import java.nio.ByteBuffer;
 import java.util.Collection;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.function.Predicate;
@@ -149,10 +150,11 @@ public class CodecRegistryIT {
                     .addPositionalValue(name.getMethodName())
                     .build());
 
-    assertThat(result.getAvailableWithoutFetching()).isEqualTo(1);
+    List<Row> rows = result.all();
+    assertThat(rows).hasSize(1);
 
     // should not be able to access int column as float as no codec is registered to handle that.
-    Row row = result.iterator().next();
+    Row row = rows.iterator().next();
 
     thrown.expect(CodecNotFoundException.class);
 
@@ -186,11 +188,12 @@ public class CodecRegistryIT {
                   .addPositionalValue(name.getMethodName())
                   .build());
 
-      assertThat(result.getAvailableWithoutFetching()).isEqualTo(1);
+      List<Row> rows = result.all();
+      assertThat(rows).hasSize(1);
 
       // should be able to retrieve value back as float, some precision is lost due to going from
       // int -> float.
-      Row row = result.iterator().next();
+      Row row = rows.iterator().next();
       assertThat(row.getFloat("v")).isEqualTo(3.0f);
       assertThat(row.getFloat(0)).isEqualTo(3.0f);
     }
@@ -270,7 +273,7 @@ public class CodecRegistryIT {
 
     @Override
     protected T encode(Optional<T> value) {
-      return value.isPresent() ? value.get() : null;
+      return value.orElse(null);
     }
   }
 
@@ -339,18 +342,19 @@ public class CodecRegistryIT {
                   .addPositionalValues(name.getMethodName())
                   .build());
 
-      assertThat(result.getAvailableWithoutFetching()).isEqualTo(3);
+      List<Row> rows = result.all();
+      assertThat(rows).hasSize(3);
 
-      Iterator<Row> rows = result.iterator();
+      Iterator<Row> iterator = rows.iterator();
       // row (at key 0) should have v0
-      Row row = rows.next();
+      Row row = iterator.next();
       // should be able to retrieve value back as an optional map.
       assertThat(row.get(0, optionalMapCodec.getJavaType())).isEqualTo(v0Opt);
       // should be able to retrieve value back as map.
       assertThat(row.getMap(0, Integer.class, String.class)).isEqualTo(v0);
 
       // next row (at key 1) should be absent (null value).
-      row = rows.next();
+      row = iterator.next();
       // value should be null.
       assertThat(row.isNull(0)).isTrue();
       // getting with codec should return Optional.empty()
@@ -359,7 +363,7 @@ public class CodecRegistryIT {
       assertThat(row.getMap(0, Integer.class, String.class)).isEmpty();
 
       // next row (at key 2) should have v2
-      row = rows.next();
+      row = iterator.next();
       // getting with codec should return with the correct type.
       assertThat(row.get(0, mapWithOptionalValueCodec.getJavaType())).isEqualTo(v2Map);
       // getting with map should return a map without optional value.

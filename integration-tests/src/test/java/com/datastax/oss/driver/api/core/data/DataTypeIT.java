@@ -623,9 +623,10 @@ public class DataTypeIT {
 
     String columnName = columnNameFor(dataType);
 
-    assertThat(result.getAvailableWithoutFetching()).isEqualTo(1);
+    List<Row> rows = result.all();
+    assertThat(rows).hasSize(1);
 
-    Row row = result.iterator().next();
+    Row row = rows.iterator().next();
 
     K expectedValue = expectedPrimitiveValue != null ? expectedPrimitiveValue : value;
 
