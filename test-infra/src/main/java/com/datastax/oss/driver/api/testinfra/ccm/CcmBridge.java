@@ -304,7 +304,7 @@ public class CcmBridge implements AutoCloseable {
             new LogOutputStream() {
               @Override
               protected void processLine(String line, int logLevel) {
-                logger.warn("ccmerr> {}", line);
+                logger.error("ccmerr> {}", line);
               }
             }) {
       Executor executor = new DefaultExecutor();
