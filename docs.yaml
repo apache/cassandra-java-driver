@@ -63,7 +63,7 @@ versions:
   - name: '3.3'
     ref: '3.3.x'
   - name: '4.0-beta'
-    ref: '4.0.0-beta1'
+    ref: '4.0.0-beta2'
     prerelease: true
   - name: '3.2'
     ref: '3.2.x'
