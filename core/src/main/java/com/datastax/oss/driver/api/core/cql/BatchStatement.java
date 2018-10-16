@@ -70,6 +70,34 @@ public interface BatchStatement extends Statement<BatchStatement>, Iterable<Batc
    */
   @NonNull
   static BatchStatement newInstance(
+      @NonNull BatchType batchType, @NonNull Iterable<BatchableStatement<?>> statements) {
+    return new DefaultBatchStatement(
+        batchType,
+        ImmutableList.copyOf(statements),
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        Collections.emptyMap(),
+        false,
+        false,
+        Long.MIN_VALUE,
+        null,
+        Integer.MIN_VALUE,
+        null,
+        null,
+        null,
+        null);
+  }
+
+  /**
+   * Creates an instance of the default implementation for the given batch type, containing the
+   * given statements.
+   */
+  @NonNull
+  static BatchStatement newInstance(
       @NonNull BatchType batchType, @NonNull BatchableStatement<?>... statements) {
     return new DefaultBatchStatement(
         batchType,
