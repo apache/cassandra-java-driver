@@ -22,7 +22,7 @@
         "classQualifiedName": "com.datastax.oss.driver.api.core.metadata.schema.KeyspaceMetadata",
         "classSimpleName": "KeyspaceMetadata",
         "methodName": "isVirtual",
-        "newArchive": "com.datastax.oss:java-driver-core:jar:4.0.0-beta2-SNAPSHOT",
+        "newArchive": "com.datastax.oss:java-driver-core:jar:4.0.0-beta2",
         "elementKind": "method",
         "justification": "Adding virtual tables"
       },
@@ -37,7 +37,7 @@
         "classSimpleName": "RelationMetadata",
         "methodName": "getId",
         "oldArchive": "com.datastax.oss:java-driver-core:jar:4.0.0-beta1",
-        "newArchive": "com.datastax.oss:java-driver-core:jar:4.0.0-beta2-SNAPSHOT",
+        "newArchive": "com.datastax.oss:java-driver-core:jar:4.0.0-beta2",
         "elementKind": "method",
         "justification": "Adding virtual tables"
       },
@@ -76,7 +76,7 @@
         "classQualifiedName": "com.datastax.oss.driver.api.core.metadata.schema.TableMetadata",
         "classSimpleName": "TableMetadata",
         "methodName": "isVirtual",
-        "newArchive": "com.datastax.oss:java-driver-core:jar:4.0.0-beta2-SNAPSHOT",
+        "newArchive": "com.datastax.oss:java-driver-core:jar:4.0.0-beta2",
         "elementKind": "method",
         "justification": "Adding virtual tables"
       },
@@ -145,7 +145,7 @@
         "classQualifiedName": "com.datastax.oss.driver.api.core.context.DriverContext",
         "classSimpleName": "DriverContext",
         "methodName": "getAddressTranslator",
-        "newArchive": "com.datastax.oss:java-driver-core:jar:4.0.0-beta2-SNAPSHOT",
+        "newArchive": "com.datastax.oss:java-driver-core:jar:4.0.0-beta2",
         "elementKind": "method",
         "justification": "Renamed context getters for uniformity"
       },
@@ -156,7 +156,7 @@
         "classQualifiedName": "com.datastax.oss.driver.api.core.context.DriverContext",
         "classSimpleName": "DriverContext",
         "methodName": "getAuthProvider",
-        "newArchive": "com.datastax.oss:java-driver-core:jar:4.0.0-beta2-SNAPSHOT",
+        "newArchive": "com.datastax.oss:java-driver-core:jar:4.0.0-beta2",
         "elementKind": "method",
         "justification": "Renamed context getters for uniformity"
       },
@@ -167,7 +167,7 @@
         "classQualifiedName": "com.datastax.oss.driver.api.core.context.DriverContext",
         "classSimpleName": "DriverContext",
         "methodName": "getConfig",
-        "newArchive": "com.datastax.oss:java-driver-core:jar:4.0.0-beta2-SNAPSHOT",
+        "newArchive": "com.datastax.oss:java-driver-core:jar:4.0.0-beta2",
         "elementKind": "method",
         "justification": "Renamed context getters for uniformity"
       },
@@ -178,7 +178,7 @@
         "classQualifiedName": "com.datastax.oss.driver.api.core.context.DriverContext",
         "classSimpleName": "DriverContext",
         "methodName": "getConfigLoader",
-        "newArchive": "com.datastax.oss:java-driver-core:jar:4.0.0-beta2-SNAPSHOT",
+        "newArchive": "com.datastax.oss:java-driver-core:jar:4.0.0-beta2",
         "elementKind": "method",
         "justification": "Renamed context getters for uniformity"
       },
@@ -189,7 +189,7 @@
         "classQualifiedName": "com.datastax.oss.driver.api.core.context.DriverContext",
         "classSimpleName": "DriverContext",
         "methodName": "getLoadBalancingPolicies",
-        "newArchive": "com.datastax.oss:java-driver-core:jar:4.0.0-beta2-SNAPSHOT",
+        "newArchive": "com.datastax.oss:java-driver-core:jar:4.0.0-beta2",
         "elementKind": "method",
         "justification": "Renamed context getters for uniformity"
       },
@@ -200,7 +200,7 @@
         "classQualifiedName": "com.datastax.oss.driver.api.core.context.DriverContext",
         "classSimpleName": "DriverContext",
         "methodName": "getNodeStateListener",
-        "newArchive": "com.datastax.oss:java-driver-core:jar:4.0.0-beta2-SNAPSHOT",
+        "newArchive": "com.datastax.oss:java-driver-core:jar:4.0.0-beta2",
         "elementKind": "method",
         "justification": "Renamed context getters for uniformity"
       },
@@ -211,7 +211,7 @@
         "classQualifiedName": "com.datastax.oss.driver.api.core.context.DriverContext",
         "classSimpleName": "DriverContext",
         "methodName": "getReconnectionPolicy",
-        "newArchive": "com.datastax.oss:java-driver-core:jar:4.0.0-beta2-SNAPSHOT",
+        "newArchive": "com.datastax.oss:java-driver-core:jar:4.0.0-beta2",
         "elementKind": "method",
         "justification": "Renamed context getters for uniformity"
       },
@@ -222,7 +222,7 @@
         "classQualifiedName": "com.datastax.oss.driver.api.core.context.DriverContext",
         "classSimpleName": "DriverContext",
         "methodName": "getRequestThrottler",
-        "newArchive": "com.datastax.oss:java-driver-core:jar:4.0.0-beta2-SNAPSHOT",
+        "newArchive": "com.datastax.oss:java-driver-core:jar:4.0.0-beta2",
         "elementKind": "method",
         "justification": "Renamed context getters for uniformity"
       },
@@ -233,7 +233,7 @@
         "classQualifiedName": "com.datastax.oss.driver.api.core.context.DriverContext",
         "classSimpleName": "DriverContext",
         "methodName": "getRequestTracker",
-        "newArchive": "com.datastax.oss:java-driver-core:jar:4.0.0-beta2-SNAPSHOT",
+        "newArchive": "com.datastax.oss:java-driver-core:jar:4.0.0-beta2",
         "elementKind": "method",
         "justification": "Renamed context getters for uniformity"
       },
@@ -244,7 +244,7 @@
         "classQualifiedName": "com.datastax.oss.driver.api.core.context.DriverContext",
         "classSimpleName": "DriverContext",
         "methodName": "getRetryPolicies",
-        "newArchive": "com.datastax.oss:java-driver-core:jar:4.0.0-beta2-SNAPSHOT",
+        "newArchive": "com.datastax.oss:java-driver-core:jar:4.0.0-beta2",
         "elementKind": "method",
         "justification": "Renamed context getters for uniformity"
       },
@@ -255,7 +255,7 @@
         "classQualifiedName": "com.datastax.oss.driver.api.core.context.DriverContext",
         "classSimpleName": "DriverContext",
         "methodName": "getSchemaChangeListener",
-        "newArchive": "com.datastax.oss:java-driver-core:jar:4.0.0-beta2-SNAPSHOT",
+        "newArchive": "com.datastax.oss:java-driver-core:jar:4.0.0-beta2",
         "elementKind": "method",
         "justification": "Renamed context getters for uniformity"
       },
@@ -266,7 +266,7 @@
         "classQualifiedName": "com.datastax.oss.driver.api.core.context.DriverContext",
         "classSimpleName": "DriverContext",
         "methodName": "getSessionName",
-        "newArchive": "com.datastax.oss:java-driver-core:jar:4.0.0-beta2-SNAPSHOT",
+        "newArchive": "com.datastax.oss:java-driver-core:jar:4.0.0-beta2",
         "elementKind": "method",
         "justification": "Renamed context getters for uniformity"
       },
@@ -277,7 +277,7 @@
         "classQualifiedName": "com.datastax.oss.driver.api.core.context.DriverContext",
         "classSimpleName": "DriverContext",
         "methodName": "getSpeculativeExecutionPolicies",
-        "newArchive": "com.datastax.oss:java-driver-core:jar:4.0.0-beta2-SNAPSHOT",
+        "newArchive": "com.datastax.oss:java-driver-core:jar:4.0.0-beta2",
         "elementKind": "method",
         "justification": "Renamed context getters for uniformity"
       },
@@ -288,7 +288,7 @@
         "classQualifiedName": "com.datastax.oss.driver.api.core.context.DriverContext",
         "classSimpleName": "DriverContext",
         "methodName": "getSslEngineFactory",
-        "newArchive": "com.datastax.oss:java-driver-core:jar:4.0.0-beta2-SNAPSHOT",
+        "newArchive": "com.datastax.oss:java-driver-core:jar:4.0.0-beta2",
         "elementKind": "method",
         "justification": "Renamed context getters for uniformity"
       },
@@ -299,7 +299,7 @@
         "classQualifiedName": "com.datastax.oss.driver.api.core.context.DriverContext",
         "classSimpleName": "DriverContext",
         "methodName": "getTimestampGenerator",
-        "newArchive": "com.datastax.oss:java-driver-core:jar:4.0.0-beta2-SNAPSHOT",
+        "newArchive": "com.datastax.oss:java-driver-core:jar:4.0.0-beta2",
         "elementKind": "method",
         "justification": "Renamed context getters for uniformity"
       },
@@ -475,7 +475,7 @@
         "classQualifiedName": "com.datastax.oss.driver.api.core.detach.AttachmentPoint",
         "classSimpleName": "AttachmentPoint",
         "methodName": "getCodecRegistry",
-        "newArchive": "com.datastax.oss:java-driver-core:jar:4.0.0-beta2-SNAPSHOT",
+        "newArchive": "com.datastax.oss:java-driver-core:jar:4.0.0-beta2",
         "elementKind": "method",
         "justification": "Renamed context getters for uniformity"
       },
@@ -486,7 +486,7 @@
         "classQualifiedName": "com.datastax.oss.driver.api.core.detach.AttachmentPoint",
         "classSimpleName": "AttachmentPoint",
         "methodName": "getProtocolVersion",
-        "newArchive": "com.datastax.oss:java-driver-core:jar:4.0.0-beta2-SNAPSHOT",
+        "newArchive": "com.datastax.oss:java-driver-core:jar:4.0.0-beta2",
         "elementKind": "method",
         "justification": "Renamed context getters for uniformity"
       },
@@ -508,7 +508,7 @@
         "classQualifiedName": "com.datastax.oss.driver.api.core.session.Request",
         "classSimpleName": "Request",
         "methodName": "getNode",
-        "newArchive": "com.datastax.oss:java-driver-core:jar:4.0.0-beta2-SNAPSHOT",
+        "newArchive": "com.datastax.oss:java-driver-core:jar:4.0.0-beta2",
         "elementKind": "method",
         "justification": "Add ability to query specific nodes for virtual tables"
       },
@@ -519,7 +519,7 @@
         "classQualifiedName": "com.datastax.oss.driver.api.core.cql.Statement",
         "classSimpleName": "Statement",
         "methodName": "setNode",
-        "newArchive": "com.datastax.oss:java-driver-core:jar:4.0.0-beta2-SNAPSHOT",
+        "newArchive": "com.datastax.oss:java-driver-core:jar:4.0.0-beta2",
         "elementKind": "method",
         "justification": "Add ability to query specific nodes for virtual tables"
       },
@@ -534,7 +534,7 @@
         "classSimpleName": "CqlSession",
         "methodName": "executeAsync",
         "oldArchive": "com.datastax.oss:java-driver-core:jar:4.0.0-beta1",
-        "newArchive": "com.datastax.oss:java-driver-core:jar:4.0.0-beta2-SNAPSHOT",
+        "newArchive": "com.datastax.oss:java-driver-core:jar:4.0.0-beta2",
         "elementKind": "method",
         "justification": "Return covariant future types from session async methods"
       },
@@ -549,7 +549,7 @@
         "classSimpleName": "CqlSession",
         "methodName": "executeAsync",
         "oldArchive": "com.datastax.oss:java-driver-core:jar:4.0.0-beta1",
-        "newArchive": "com.datastax.oss:java-driver-core:jar:4.0.0-beta2-SNAPSHOT",
+        "newArchive": "com.datastax.oss:java-driver-core:jar:4.0.0-beta2",
         "elementKind": "method",
         "justification": "Return covariant future types from session async methods"
       },
@@ -564,7 +564,7 @@
         "classSimpleName": "CqlSession",
         "methodName": "prepareAsync",
         "oldArchive": "com.datastax.oss:java-driver-core:jar:4.0.0-beta1",
-        "newArchive": "com.datastax.oss:java-driver-core:jar:4.0.0-beta2-SNAPSHOT",
+        "newArchive": "com.datastax.oss:java-driver-core:jar:4.0.0-beta2",
         "elementKind": "method",
         "justification": "Return covariant future types from session async methods"
       },
@@ -579,7 +579,7 @@
         "classSimpleName": "CqlSession",
         "methodName": "prepareAsync",
         "oldArchive": "com.datastax.oss:java-driver-core:jar:4.0.0-beta1",
-        "newArchive": "com.datastax.oss:java-driver-core:jar:4.0.0-beta2-SNAPSHOT",
+        "newArchive": "com.datastax.oss:java-driver-core:jar:4.0.0-beta2",
         "elementKind": "method",
         "justification": "Return covariant future types from session async methods"
       },
@@ -594,7 +594,7 @@
         "classSimpleName": "CqlSession",
         "methodName": "prepareAsync",
         "oldArchive": "com.datastax.oss:java-driver-core:jar:4.0.0-beta1",
-        "newArchive": "com.datastax.oss:java-driver-core:jar:4.0.0-beta2-SNAPSHOT",
+        "newArchive": "com.datastax.oss:java-driver-core:jar:4.0.0-beta2",
         "elementKind": "method",
         "justification": "Return covariant future types from session async methods"
       },
