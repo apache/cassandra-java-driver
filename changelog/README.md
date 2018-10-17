@@ -2,6 +2,8 @@
 
 <!-- Note: contrary to 3.x, insert new entries *first* in their section -->
 
+### 4.0.0-beta3 (in progress)
+
 ### 4.0.0-beta2
 
 - [new feature] JAVA-1919: Provide a timestamp <=> ZonedDateTime codec
