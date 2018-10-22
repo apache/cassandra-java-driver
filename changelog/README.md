@@ -1,5 +1,10 @@
 ## Changelog
 
+### 3.6.1 (in progress)
+
+- [improvement] JAVA-2002: Reimplement TypeCodec.accepts to improve performance.
+
+
 ### 3.6.0
 
 - [improvement] JAVA-1394: Add request-queue-depth metric.
