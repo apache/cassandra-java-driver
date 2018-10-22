@@ -4,6 +4,7 @@
 
 ### 4.0.0-beta3 (in progress)
 
+- [improvement] JAVA-2002: Reimplement TypeCodec.accepts to improve performance
 - [improvement] JAVA-2011: Re-add ResultSet.getAvailableWithoutFetching() and isFullyFetched()
 - [improvement] JAVA-2007: Make driver threads extend FastThreadLocalThread
 - [bug] JAVA-2001: Handle zero timeout in admin requests
