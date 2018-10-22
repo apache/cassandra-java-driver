@@ -4,6 +4,8 @@
 
 ### 4.0.0-beta3 (in progress)
 
+- [bug] JAVA-2001: Handle zero timeout in admin requests
+
 ### 4.0.0-beta2
 
 - [new feature] JAVA-1919: Provide a timestamp <=> ZonedDateTime codec
