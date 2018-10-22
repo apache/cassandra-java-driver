@@ -1,5 +1,10 @@
 ## Changelog
 
+### 3.6.1 (in progress)
+
+- [improvement] JAVA-2003: Simplify CBUtil internal API to improve performance.
+
+
 ### 3.6.0
 
 - [improvement] JAVA-1394: Add request-queue-depth metric.
