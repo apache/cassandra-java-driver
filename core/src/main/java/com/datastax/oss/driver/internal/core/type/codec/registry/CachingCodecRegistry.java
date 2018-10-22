@@ -118,7 +118,7 @@ public abstract class CachingCodecRegistry implements CodecRegistry {
       @NonNull DataType cqlType, @NonNull Class<JavaTypeT> javaType) {
     LOG.trace("[{}] Looking up codec for {} <-> {}", logPrefix, cqlType, javaType);
     TypeCodec<?> primitiveCodec = primitiveCodecsByCode.get(cqlType.getProtocolCode());
-    if (primitiveCodec != null && primitiveCodec.getJavaType().__getToken().getType() == javaType) {
+    if (primitiveCodec != null && primitiveCodec.accepts(javaType)) {
       LOG.trace("[{}] Found matching primitive codec {}", logPrefix, primitiveCodec);
       return uncheckedCast(primitiveCodec);
     }
