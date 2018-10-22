@@ -16,9 +16,6 @@
 package com.datastax.driver.core;
 
 import com.datastax.driver.core.exceptions.DriverInternalError;
-import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.ImmutableMap.Builder;
-import java.util.Map;
 
 /** Versions of the native protocol supported by the driver. */
 public enum ProtocolVersion {
@@ -73,16 +70,6 @@ public enum ProtocolVersion {
     return lowerSupported;
   }
 
-  private static final Map<Integer, ProtocolVersion> INT_TO_VERSION;
-
-  static {
-    Builder<Integer, ProtocolVersion> builder = ImmutableMap.builder();
-    for (ProtocolVersion version : values()) {
-      builder.put(version.asInt, version);
-    }
-    INT_TO_VERSION = builder.build();
-  }
-
   /**
    * Returns the value matching an integer version.
    *
@@ -91,9 +78,19 @@ public enum ProtocolVersion {
    * @throws IllegalArgumentException if the argument doesn't match any known version.
    */
   public static ProtocolVersion fromInt(int i) {
-    ProtocolVersion version = INT_TO_VERSION.get(i);
-    if (version == null)
-      throw new IllegalArgumentException("No protocol version matching integer version " + i);
-    return version;
+    switch (i) {
+      case 1:
+        return ProtocolVersion.V1;
+      case 2:
+        return ProtocolVersion.V2;
+      case 3:
+        return ProtocolVersion.V3;
+      case 4:
+        return ProtocolVersion.V4;
+      case 5:
+        return ProtocolVersion.V5;
+      default:
+        throw new IllegalArgumentException("No protocol version matching integer version " + i);
+    }
   }
 }
