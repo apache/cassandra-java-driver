@@ -108,9 +108,13 @@ public class AdminRequestHandler implements ResponseCallback {
   private void onWriteComplete(Future<? super Void> future) {
     if (future.isSuccess()) {
       LOG.debug("[{}] Successfully wrote {}, waiting for response", logPrefix, this);
-      timeoutFuture =
-          channel.eventLoop().schedule(this::fireTimeout, timeout.toNanos(), TimeUnit.NANOSECONDS);
-      timeoutFuture.addListener(UncaughtExceptions::log);
+      if (timeout.toNanos() > 0) {
+        timeoutFuture =
+            channel
+                .eventLoop()
+                .schedule(this::fireTimeout, timeout.toNanos(), TimeUnit.NANOSECONDS);
+        timeoutFuture.addListener(UncaughtExceptions::log);
+      }
     } else {
       setFinalError(future.cause());
     }
