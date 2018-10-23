@@ -25,9 +25,9 @@ import com.datastax.oss.driver.internal.core.channel.DriverChannel.RequestMessag
 import com.datastax.oss.driver.internal.core.channel.DriverChannel.SetKeyspaceEvent;
 import com.datastax.oss.driver.internal.core.protocol.FrameDecodingException;
 import com.datastax.oss.driver.internal.core.util.Loggers;
-import com.datastax.oss.driver.shaded.guava.common.base.MoreObjects;
 import com.datastax.oss.driver.shaded.guava.common.collect.BiMap;
 import com.datastax.oss.driver.shaded.guava.common.collect.HashBiMap;
+import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableSet;
 import com.datastax.oss.protocol.internal.Frame;
 import com.datastax.oss.protocol.internal.Message;
 import com.datastax.oss.protocol.internal.request.Query;
@@ -40,6 +40,7 @@ import io.netty.channel.ChannelPromise;
 import io.netty.util.concurrent.Promise;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 import net.jcip.annotations.NotThreadSafe;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -273,13 +274,16 @@ public class InFlightHandler extends ChannelDuplexHandler {
       LOG.debug("[{}] Error while decoding response on stream id {}", logPrefix, streamId);
       if (streamId >= 0) {
         // We know which request matches the failing response, fail that one only
-        ResponseCallback responseCallback = release(streamId, ctx);
-        try {
-          responseCallback.onFailure(exception.getCause());
-        } catch (Throwable t) {
-          Loggers.warnWithException(
-              LOG, "[{}] Unexpected error while invoking failure handler", logPrefix, t);
+        ResponseCallback responseCallback = inFlight.get(streamId);
+        if (responseCallback != null) {
+          try {
+            responseCallback.onFailure(exception.getCause());
+          } catch (Throwable t) {
+            Loggers.warnWithException(
+                LOG, "[{}] Unexpected error while invoking failure handler", logPrefix, t);
+          }
         }
+        release(streamId, ctx);
       } else {
         Loggers.warnWithException(
             LOG,
@@ -325,19 +329,21 @@ public class InFlightHandler extends ChannelDuplexHandler {
     super.channelInactive(ctx);
   }
 
-  private ResponseCallback release(int streamId, ChannelHandlerContext ctx) {
+  private void release(int streamId, ChannelHandlerContext ctx) {
     LOG.trace("[{}] Releasing stream id {}", logPrefix, streamId);
-    ResponseCallback responseCallback =
-        MoreObjects.firstNonNull(inFlight.remove(streamId), orphaned.remove(streamId));
-    orphanedSize = orphaned.size();
-    streamIds.release(streamId);
-    // If we're in the middle of an orderly close and this was the last request, actually close
-    // the channel now
-    if (closingGracefully && inFlight.isEmpty()) {
-      LOG.debug("[{}] Done handling the last pending query, closing channel", logPrefix);
-      ctx.channel().close();
+    if (inFlight.remove(streamId) != null) {
+      // If we're in the middle of an orderly close and this was the last request, actually close
+      // the channel now
+      if (closingGracefully && inFlight.isEmpty()) {
+        LOG.debug("[{}] Done handling the last pending query, closing channel", logPrefix);
+        ctx.channel().close();
+      }
+    } else if (orphaned.remove(streamId) != null) {
+      orphanedSize = orphaned.size();
     }
-    return responseCallback;
+    // Note: it's possible that the callback is in neither map, if we get here after a call to
+    // abortAllInFlight that already cleared the map (see JAVA-2000)
+    streamIds.release(streamId);
   }
 
   private void abortAllInFlight(DriverException cause) {
@@ -349,14 +355,19 @@ public class InFlightHandler extends ChannelDuplexHandler {
    *     loop)
    */
   private void abortAllInFlight(DriverException cause, ResponseCallback ignore) {
-    for (ResponseCallback responseCallback : inFlight.values()) {
-      if (responseCallback != ignore) {
-        responseCallback.onFailure(cause);
+    if (!inFlight.isEmpty()) {
+      // Clear the map now and iterate on a copy, in case one of the onFailure calls below recurses
+      // back into this method
+      Set<ResponseCallback> toAbort = ImmutableSet.copyOf(inFlight.values());
+      inFlight.clear();
+      for (ResponseCallback responseCallback : toAbort) {
+        if (responseCallback != ignore) {
+          responseCallback.onFailure(cause);
+        }
       }
+      // It's not necessary to release the stream ids, since we always call this method right before
+      // closing the channel
     }
-    inFlight.clear();
-    // It's not necessary to release the stream ids, since we always call this method right before
-    // closing the channel
   }
 
   int getAvailableIds() {
