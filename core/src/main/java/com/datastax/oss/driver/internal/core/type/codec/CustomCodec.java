@@ -54,7 +54,7 @@ public class CustomCodec implements TypeCodec<ByteBuffer> {
 
   @Override
   public boolean accepts(@NonNull Class<?> javaClass) {
-    return ByteBuffer.class.isAssignableFrom(javaClass);
+    return ByteBuffer.class.equals(javaClass);
   }
 
   @Nullable

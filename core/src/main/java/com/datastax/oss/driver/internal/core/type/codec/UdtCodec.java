@@ -57,7 +57,7 @@ public class UdtCodec implements TypeCodec<UdtValue> {
 
   @Override
   public boolean accepts(@NonNull Class<?> javaClass) {
-    return UdtValue.class.isAssignableFrom(javaClass);
+    return UdtValue.class.equals(javaClass);
   }
 
   @Nullable
@@ -196,16 +196,18 @@ public class UdtCodec implements TypeCodec<UdtValue> {
       CqlIdentifier id = CqlIdentifier.fromInternal(value.substring(position, n));
       position = n;
 
-      if (!cqlType.contains(id))
+      if (!cqlType.contains(id)) {
         throw new IllegalArgumentException(
             String.format("Unknown field %s in value \"%s\"", id, value));
+      }
 
       position = ParseUtils.skipSpaces(value, position);
-      if (value.charAt(position++) != ':')
+      if (value.charAt(position++) != ':') {
         throw new IllegalArgumentException(
             String.format(
                 "Cannot parse UDT value from \"%s\", at character %d expecting ':' but got '%c'",
                 value, position, value.charAt(position)));
+      }
       position = ParseUtils.skipSpaces(value, position);
 
       try {
