@@ -47,7 +47,7 @@ public class IntCodec implements PrimitiveIntCodec {
 
   @Override
   public boolean accepts(@NonNull Class<?> javaClass) {
-    return javaClass == Integer.class;
+    return javaClass == Integer.class || javaClass == int.class;
   }
 
   @Nullable

@@ -46,7 +46,7 @@ public class SmallIntCodec implements PrimitiveShortCodec {
 
   @Override
   public boolean accepts(@NonNull Class<?> javaClass) {
-    return javaClass == Short.class;
+    return javaClass == Short.class || javaClass == short.class;
   }
 
   @Nullable

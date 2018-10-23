@@ -46,7 +46,7 @@ public class TinyIntCodec implements PrimitiveByteCodec {
 
   @Override
   public boolean accepts(@NonNull Class<?> javaClass) {
-    return javaClass == Byte.class;
+    return javaClass == Byte.class || javaClass == byte.class;
   }
 
   @Nullable

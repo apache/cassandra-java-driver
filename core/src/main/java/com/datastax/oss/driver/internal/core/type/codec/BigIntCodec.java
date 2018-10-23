@@ -46,7 +46,7 @@ public class BigIntCodec implements PrimitiveLongCodec {
 
   @Override
   public boolean accepts(@NonNull Class<?> javaClass) {
-    return javaClass == Long.class;
+    return javaClass == Long.class || javaClass == long.class;
   }
 
   @Nullable
