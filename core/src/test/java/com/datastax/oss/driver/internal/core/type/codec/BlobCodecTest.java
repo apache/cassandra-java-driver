@@ -19,8 +19,10 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import com.datastax.oss.driver.api.core.ProtocolVersion;
 import com.datastax.oss.driver.api.core.type.codec.TypeCodecs;
+import com.datastax.oss.driver.api.core.type.reflect.GenericType;
 import com.datastax.oss.protocol.internal.util.Bytes;
 import java.nio.ByteBuffer;
+import java.nio.MappedByteBuffer;
 import org.junit.Test;
 
 public class BlobCodecTest extends CodecTestBase<ByteBuffer> {
@@ -81,5 +83,24 @@ public class BlobCodecTest extends CodecTestBase<ByteBuffer> {
   @Test(expected = IllegalArgumentException.class)
   public void should_fail_to_parse_invalid_input() {
     parse("not a blob");
+  }
+
+  @Test
+  public void should_accept_generic_type() {
+    assertThat(codec.accepts(GenericType.of(ByteBuffer.class))).isTrue();
+    assertThat(codec.accepts(GenericType.of(MappedByteBuffer.class)))
+        .isFalse(); // covariance not allowed
+  }
+
+  @Test
+  public void should_accept_raw_type() {
+    assertThat(codec.accepts(ByteBuffer.class)).isTrue();
+    assertThat(codec.accepts(MappedByteBuffer.class)).isFalse(); // covariance not allowed
+  }
+
+  @Test
+  public void should_accept_object() {
+    assertThat(codec.accepts(BUFFER)).isTrue();
+    assertThat(codec.accepts(MappedByteBuffer.allocate(0))).isTrue(); // covariance allowed
   }
 }

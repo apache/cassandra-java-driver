@@ -18,6 +18,7 @@ package com.datastax.oss.driver.internal.core.type.codec;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import com.datastax.oss.driver.api.core.type.codec.TypeCodecs;
+import com.datastax.oss.driver.api.core.type.reflect.GenericType;
 import org.junit.Test;
 
 public class TinyIntCodecTest extends CodecTestBase<Byte> {
@@ -64,5 +65,26 @@ public class TinyIntCodecTest extends CodecTestBase<Byte> {
   @Test(expected = IllegalArgumentException.class)
   public void should_fail_to_parse_invalid_input() {
     parse("not a tinyint");
+  }
+
+  @Test
+  public void should_accept_generic_type() {
+    assertThat(codec.accepts(GenericType.of(Byte.class))).isTrue();
+    assertThat(codec.accepts(GenericType.of(byte.class))).isTrue();
+    assertThat(codec.accepts(GenericType.of(Integer.class))).isFalse();
+  }
+
+  @Test
+  public void should_accept_raw_type() {
+    assertThat(codec.accepts(Byte.class)).isTrue();
+    assertThat(codec.accepts(byte.class)).isTrue();
+    assertThat(codec.accepts(Integer.class)).isFalse();
+  }
+
+  @Test
+  public void should_accept_object() {
+    assertThat(codec.accepts(((byte) 123))).isTrue();
+    assertThat(codec.accepts(Byte.MIN_VALUE)).isTrue();
+    assertThat(codec.accepts(Integer.MIN_VALUE)).isFalse();
   }
 }

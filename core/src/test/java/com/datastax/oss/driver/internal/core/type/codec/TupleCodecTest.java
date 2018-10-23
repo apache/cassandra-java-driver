@@ -26,6 +26,8 @@ import com.datastax.oss.driver.api.core.type.codec.PrimitiveIntCodec;
 import com.datastax.oss.driver.api.core.type.codec.TypeCodec;
 import com.datastax.oss.driver.api.core.type.codec.TypeCodecs;
 import com.datastax.oss.driver.api.core.type.codec.registry.CodecRegistry;
+import com.datastax.oss.driver.api.core.type.reflect.GenericType;
+import com.datastax.oss.driver.internal.core.data.DefaultTupleValue;
 import com.datastax.oss.driver.internal.core.type.DefaultTupleType;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableList;
 import com.datastax.oss.protocol.internal.util.Bytes;
@@ -161,5 +163,25 @@ public class TupleCodecTest extends CodecTestBase<TupleValue> {
   @Test(expected = IllegalArgumentException.class)
   public void should_fail_to_parse_invalid_input() {
     parse("not a tuple");
+  }
+
+  @Test
+  public void should_accept_generic_type() {
+    assertThat(codec.accepts(GenericType.of(TupleValue.class))).isTrue();
+    assertThat(codec.accepts(GenericType.of(DefaultTupleValue.class)))
+        .isFalse(); // covariance not allowed
+  }
+
+  @Test
+  public void should_accept_raw_type() {
+    assertThat(codec.accepts(TupleValue.class)).isTrue();
+    assertThat(codec.accepts(DefaultTupleValue.class)).isFalse(); // covariance not allowed
+  }
+
+  @Test
+  public void should_accept_object() {
+    assertThat(codec.accepts(tupleType.newValue())).isTrue();
+    assertThat(codec.accepts(new DefaultTupleValue(tupleType))).isTrue(); // covariance allowed
+    assertThat(codec.accepts("not a tuple")).isFalse();
   }
 }

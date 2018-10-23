@@ -20,6 +20,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import com.datastax.oss.driver.api.core.type.codec.TypeCodecs;
+import com.datastax.oss.driver.api.core.type.reflect.GenericType;
 import com.tngtech.java.junit.dataprovider.DataProviderRunner;
 import com.tngtech.java.junit.dataprovider.UseDataProvider;
 import java.time.Instant;
@@ -163,5 +164,26 @@ public class ZonedTimestampCodecTest extends CodecTestBase<ZonedDateTime> {
     assertThatThrownBy(() -> parse("'not a timestamp'"))
         .isInstanceOf(IllegalArgumentException.class)
         .hasMessage("Cannot parse timestamp value from \"'not a timestamp'\"");
+  }
+
+  @Test
+  public void should_accept_generic_type() {
+    codec = new ZonedTimestampCodec();
+    assertThat(codec.accepts(GenericType.of(ZonedDateTime.class))).isTrue();
+    assertThat(codec.accepts(GenericType.of(Integer.class))).isFalse();
+  }
+
+  @Test
+  public void should_accept_raw_type() {
+    codec = new ZonedTimestampCodec();
+    assertThat(codec.accepts(ZonedDateTime.class)).isTrue();
+    assertThat(codec.accepts(Integer.class)).isFalse();
+  }
+
+  @Test
+  public void should_accept_object() {
+    codec = new ZonedTimestampCodec();
+    assertThat(codec.accepts(ZonedDateTime.now())).isTrue();
+    assertThat(codec.accepts(Integer.MIN_VALUE)).isFalse();
   }
 }

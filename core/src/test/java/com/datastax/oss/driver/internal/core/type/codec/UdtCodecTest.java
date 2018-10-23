@@ -27,6 +27,8 @@ import com.datastax.oss.driver.api.core.type.codec.PrimitiveIntCodec;
 import com.datastax.oss.driver.api.core.type.codec.TypeCodec;
 import com.datastax.oss.driver.api.core.type.codec.TypeCodecs;
 import com.datastax.oss.driver.api.core.type.codec.registry.CodecRegistry;
+import com.datastax.oss.driver.api.core.type.reflect.GenericType;
+import com.datastax.oss.driver.internal.core.data.DefaultUdtValue;
 import com.datastax.oss.driver.internal.core.type.DefaultUserDefinedType;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableList;
 import com.datastax.oss.protocol.internal.util.Bytes;
@@ -170,5 +172,25 @@ public class UdtCodecTest extends CodecTestBase<UdtValue> {
   @Test(expected = IllegalArgumentException.class)
   public void should_fail_to_parse_invalid_input() {
     parse("not a udt");
+  }
+
+  @Test
+  public void should_accept_generic_type() {
+    assertThat(codec.accepts(GenericType.of(UdtValue.class))).isTrue();
+    assertThat(codec.accepts(GenericType.of(DefaultUdtValue.class)))
+        .isFalse(); // covariance not allowed
+  }
+
+  @Test
+  public void should_accept_raw_type() {
+    assertThat(codec.accepts(UdtValue.class)).isTrue();
+    assertThat(codec.accepts(DefaultUdtValue.class)).isFalse(); // covariance not allowed
+  }
+
+  @Test
+  public void should_accept_object() {
+    assertThat(codec.accepts(userType.newValue())).isTrue();
+    assertThat(codec.accepts(new DefaultUdtValue(userType))).isTrue(); // covariance allowed
+    assertThat(codec.accepts("not a udt")).isFalse();
   }
 }
