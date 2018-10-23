@@ -46,7 +46,7 @@ public class FloatCodec implements PrimitiveFloatCodec {
 
   @Override
   public boolean accepts(@NonNull Class<?> javaClass) {
-    return javaClass == Float.class;
+    return javaClass == Float.class || javaClass == float.class;
   }
 
   @Nullable

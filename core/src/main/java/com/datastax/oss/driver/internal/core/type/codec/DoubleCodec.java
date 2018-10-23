@@ -46,7 +46,7 @@ public class DoubleCodec implements PrimitiveDoubleCodec {
 
   @Override
   public boolean accepts(@NonNull Class<?> javaClass) {
-    return javaClass == Double.class;
+    return javaClass == Double.class || javaClass == double.class;
   }
 
   @Nullable

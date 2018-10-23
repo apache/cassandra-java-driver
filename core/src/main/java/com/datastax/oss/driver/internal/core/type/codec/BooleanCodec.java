@@ -50,7 +50,7 @@ public class BooleanCodec implements PrimitiveBooleanCodec {
 
   @Override
   public boolean accepts(@NonNull Class<?> javaClass) {
-    return javaClass == Boolean.class;
+    return javaClass == Boolean.class || javaClass == boolean.class;
   }
 
   @Nullable
