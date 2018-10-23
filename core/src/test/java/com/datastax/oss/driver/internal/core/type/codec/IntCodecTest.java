@@ -18,6 +18,7 @@ package com.datastax.oss.driver.internal.core.type.codec;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import com.datastax.oss.driver.api.core.type.codec.TypeCodecs;
+import com.datastax.oss.driver.api.core.type.reflect.GenericType;
 import org.junit.Test;
 
 public class IntCodecTest extends CodecTestBase<Integer> {
@@ -69,5 +70,26 @@ public class IntCodecTest extends CodecTestBase<Integer> {
   @Test(expected = IllegalArgumentException.class)
   public void should_fail_to_parse_invalid_input() {
     parse("not an int");
+  }
+
+  @Test
+  public void should_accept_generic_type() {
+    assertThat(codec.accepts(GenericType.of(Integer.class))).isTrue();
+    assertThat(codec.accepts(GenericType.of(int.class))).isTrue();
+    assertThat(codec.accepts(GenericType.of(Long.class))).isFalse();
+  }
+
+  @Test
+  public void should_accept_raw_type() {
+    assertThat(codec.accepts(Integer.class)).isTrue();
+    assertThat(codec.accepts(int.class)).isTrue();
+    assertThat(codec.accepts(Long.class)).isFalse();
+  }
+
+  @Test
+  public void should_accept_object() {
+    assertThat(codec.accepts(123)).isTrue();
+    assertThat(codec.accepts(Integer.MIN_VALUE)).isTrue();
+    assertThat(codec.accepts(Long.MIN_VALUE)).isFalse();
   }
 }

@@ -19,6 +19,7 @@ import static java.time.ZoneOffset.ofHours;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+import com.datastax.oss.driver.api.core.type.reflect.GenericType;
 import com.datastax.oss.driver.shaded.guava.common.collect.Lists;
 import com.tngtech.java.junit.dataprovider.DataProvider;
 import com.tngtech.java.junit.dataprovider.DataProviderRunner;
@@ -170,5 +171,23 @@ public class TimestampCodecTest extends CodecTestBase<Instant> {
     assertThatThrownBy(() -> parse("'not a timestamp'"))
         .isInstanceOf(IllegalArgumentException.class)
         .hasMessage("Cannot parse timestamp value from \"'not a timestamp'\"");
+  }
+
+  @Test
+  public void should_accept_generic_type() {
+    assertThat(codec.accepts(GenericType.of(Instant.class))).isTrue();
+    assertThat(codec.accepts(GenericType.of(Integer.class))).isFalse();
+  }
+
+  @Test
+  public void should_accept_raw_type() {
+    assertThat(codec.accepts(Instant.class)).isTrue();
+    assertThat(codec.accepts(Integer.class)).isFalse();
+  }
+
+  @Test
+  public void should_accept_object() {
+    assertThat(codec.accepts(Instant.EPOCH)).isTrue();
+    assertThat(codec.accepts(Integer.MIN_VALUE)).isFalse();
   }
 }

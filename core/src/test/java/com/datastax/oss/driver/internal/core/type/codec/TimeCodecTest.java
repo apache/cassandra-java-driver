@@ -18,6 +18,7 @@ package com.datastax.oss.driver.internal.core.type.codec;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import com.datastax.oss.driver.api.core.type.codec.TypeCodecs;
+import com.datastax.oss.driver.api.core.type.reflect.GenericType;
 import java.time.LocalTime;
 import java.time.temporal.ChronoUnit;
 import org.junit.Test;
@@ -77,5 +78,23 @@ public class TimeCodecTest extends CodecTestBase<LocalTime> {
   @Test(expected = IllegalArgumentException.class)
   public void should_fail_to_parse_invalid_input() {
     parse("not a time");
+  }
+
+  @Test
+  public void should_accept_generic_type() {
+    assertThat(codec.accepts(GenericType.of(LocalTime.class))).isTrue();
+    assertThat(codec.accepts(GenericType.of(Integer.class))).isFalse();
+  }
+
+  @Test
+  public void should_accept_raw_type() {
+    assertThat(codec.accepts(LocalTime.class)).isTrue();
+    assertThat(codec.accepts(Integer.class)).isFalse();
+  }
+
+  @Test
+  public void should_accept_object() {
+    assertThat(codec.accepts(LocalTime.MIDNIGHT)).isTrue();
+    assertThat(codec.accepts(Integer.MIN_VALUE)).isFalse();
   }
 }
