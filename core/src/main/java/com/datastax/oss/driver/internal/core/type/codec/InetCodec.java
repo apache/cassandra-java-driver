@@ -50,7 +50,7 @@ public class InetCodec implements TypeCodec<InetAddress> {
 
   @Override
   public boolean accepts(@NonNull Class<?> javaClass) {
-    return InetAddress.class.isAssignableFrom(javaClass);
+    return InetAddress.class.equals(javaClass);
   }
 
   @Nullable

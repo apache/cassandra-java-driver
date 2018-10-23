@@ -56,7 +56,7 @@ public class TupleCodec implements TypeCodec<TupleValue> {
 
   @Override
   public boolean accepts(@NonNull Class<?> javaClass) {
-    return TupleValue.class.isAssignableFrom(javaClass);
+    return TupleValue.class.equals(javaClass);
   }
 
   @Nullable
@@ -200,12 +200,15 @@ public class TupleCodec implements TypeCodec<TupleValue> {
       i += 1;
 
       position = ParseUtils.skipSpaces(value, position);
-      if (value.charAt(position) == ')') return tuple;
-      if (value.charAt(position) != ',')
+      if (value.charAt(position) == ')') {
+        return tuple;
+      }
+      if (value.charAt(position) != ',') {
         throw new IllegalArgumentException(
             String.format(
                 "Cannot parse tuple value from \"%s\", at character %d expecting ',' but got '%c'",
                 value, position, value.charAt(position)));
+      }
       ++position; // skip ','
 
       position = ParseUtils.skipSpaces(value, position);
