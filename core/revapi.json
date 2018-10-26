@@ -630,6 +630,28 @@
         "oldArchive": "com.datastax.oss:java-driver-core:jar:4.0.0-beta1",
         "elementKind": "method",
         "justification": "JAVA-1988: remove pre-fetching from ResultSet API"
+      },
+      {
+        "code": "java.method.addedToInterface",
+        "new": "method int com.datastax.oss.driver.api.core.cql.ResultSet::getAvailableWithoutFetching()",
+        "package": "com.datastax.oss.driver.api.core.cql",
+        "classQualifiedName": "com.datastax.oss.driver.api.core.cql.ResultSet",
+        "classSimpleName": "ResultSet",
+        "methodName": "getAvailableWithoutFetching",
+        "newArchive": "com.datastax.oss:java-driver-core:jar:4.0.0-beta3-SNAPSHOT",
+        "elementKind": "method",
+        "justification": "JAVA-2011: Re-add ResultSet.getAvailableWithoutFetching() and isFullyFetched()"
+      },
+      {
+        "code": "java.method.addedToInterface",
+        "new": "method boolean com.datastax.oss.driver.api.core.cql.ResultSet::isFullyFetched()",
+        "package": "com.datastax.oss.driver.api.core.cql",
+        "classQualifiedName": "com.datastax.oss.driver.api.core.cql.ResultSet",
+        "classSimpleName": "ResultSet",
+        "methodName": "isFullyFetched",
+        "newArchive": "com.datastax.oss:java-driver-core:jar:4.0.0-beta3-SNAPSHOT",
+        "elementKind": "method",
+        "justification": "JAVA-2011: Re-add ResultSet.getAvailableWithoutFetching() and isFullyFetched()"
       }
     ]
   }

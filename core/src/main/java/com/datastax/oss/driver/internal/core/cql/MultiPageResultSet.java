@@ -20,9 +20,9 @@ import com.datastax.oss.driver.api.core.cql.ColumnDefinitions;
 import com.datastax.oss.driver.api.core.cql.ExecutionInfo;
 import com.datastax.oss.driver.api.core.cql.ResultSet;
 import com.datastax.oss.driver.api.core.cql.Row;
+import com.datastax.oss.driver.internal.core.util.CountingIterator;
 import com.datastax.oss.driver.internal.core.util.concurrent.BlockingOperation;
 import com.datastax.oss.driver.internal.core.util.concurrent.CompletableFutures;
-import com.datastax.oss.driver.shaded.guava.common.collect.AbstractIterator;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -55,6 +55,16 @@ public class MultiPageResultSet implements ResultSet {
     return executionInfos;
   }
 
+  @Override
+  public boolean isFullyFetched() {
+    return iterator.isFullyFetched();
+  }
+
+  @Override
+  public int getAvailableWithoutFetching() {
+    return iterator.remaining();
+  }
+
   @NonNull
   @Override
   public Iterator<Row> iterator() {
@@ -66,11 +76,12 @@ public class MultiPageResultSet implements ResultSet {
     return iterator.wasApplied();
   }
 
-  private class RowIterator extends AbstractIterator<Row> {
+  private class RowIterator extends CountingIterator<Row> {
     private AsyncResultSet currentPage;
     private Iterator<Row> currentRows;
 
     private RowIterator(AsyncResultSet firstPage) {
+      super(firstPage.remaining());
       this.currentPage = firstPage;
       this.currentRows = firstPage.currentPage().iterator();
     }
@@ -87,12 +98,17 @@ public class MultiPageResultSet implements ResultSet {
         AsyncResultSet nextPage =
             CompletableFutures.getUninterruptibly(currentPage.fetchNextPage());
         currentPage = nextPage;
+        remaining += nextPage.remaining();
         currentRows = nextPage.currentPage().iterator();
         executionInfos.add(nextPage.getExecutionInfo());
         // The definitions can change from page to page if this result set was built from a bound
         // 'SELECT *', and the schema was altered.
         columnDefinitions = nextPage.getColumnDefinitions();
       }
+    }
+
+    private boolean isFullyFetched() {
+      return !currentPage.hasMorePages();
     }
 
     private boolean wasApplied() {

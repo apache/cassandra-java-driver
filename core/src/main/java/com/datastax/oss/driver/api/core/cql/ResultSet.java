@@ -16,9 +16,10 @@
 package com.datastax.oss.driver.api.core.cql;
 
 import com.datastax.oss.driver.api.core.CqlSession;
+import com.datastax.oss.driver.shaded.guava.common.collect.Iterables;
+import com.datastax.oss.driver.shaded.guava.common.collect.Lists;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import edu.umd.cs.findbugs.annotations.Nullable;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
@@ -97,16 +98,36 @@ public interface ResultSet extends Iterable<Row> {
    */
   @NonNull
   default List<Row> all() {
-    Iterator<Row> iterator = iterator();
-    if (!iterator.hasNext()) {
+    if (!iterator().hasNext()) {
       return Collections.emptyList();
     }
-    List<Row> result = new ArrayList<>();
-    while (iterator.hasNext()) {
-      result.add(iterator.next());
-    }
+    // We can't know the actual size in advance since more pages could be fetched, but we can at
+    // least allocate for what we already have.
+    List<Row> result = Lists.newArrayListWithExpectedSize(getAvailableWithoutFetching());
+    Iterables.addAll(result, this);
     return result;
   }
+
+  /**
+   * Whether all pages have been fetched from the database.
+   *
+   * <p>If this is {@code false}, it means that more blocking background queries will be triggered
+   * as iteration continues.
+   */
+  boolean isFullyFetched();
+
+  /**
+   * The number of rows that can be returned from this result set before a blocking background query
+   * needs to be performed to retrieve more results. In other words, this is the number of rows
+   * remaining in the current page.
+   *
+   * <p>This is useful if you use the paging state to pause the iteration and resume it later: after
+   * you've retrieved the state ({@link ExecutionInfo#getPagingState()
+   * getExecutionInfo().getPagingState()}), call this method and iterate the remaining rows; that
+   * way you're not leaving a gap between the last row and the position you'll restart from when you
+   * reinject the state in a new query.
+   */
+  int getAvailableWithoutFetching();
 
   /**
    * If the query that produced this result was a conditional update, indicate whether it was

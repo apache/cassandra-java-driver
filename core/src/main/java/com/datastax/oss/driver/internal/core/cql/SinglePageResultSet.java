@@ -54,6 +54,16 @@ public class SinglePageResultSet implements ResultSet {
     return ImmutableList.of(onlyPage.getExecutionInfo());
   }
 
+  @Override
+  public boolean isFullyFetched() {
+    return true;
+  }
+
+  @Override
+  public int getAvailableWithoutFetching() {
+    return onlyPage.remaining();
+  }
+
   @NonNull
   @Override
   public Iterator<Row> iterator() {
