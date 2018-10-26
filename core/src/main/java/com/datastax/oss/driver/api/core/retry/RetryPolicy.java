@@ -124,10 +124,10 @@ public interface RetryPolicy extends AutoCloseable {
    * heartbeat failure); or if there was an unexpected error while decoding the response (this can
    * only be a driver bug).
    *
-   * <p>Note that this method will only be invoked for {@link Request#isIdempotent()} idempotent}
-   * requests: when execution was aborted before getting a response, it is impossible to determine
-   * with 100% certainty whether a mutation was applied or not, so a write is never safe to retry;
-   * the driver will rethrow the error directly, without invoking the retry policy.
+   * <p>Note that this method will only be invoked for {@linkplain Request#isIdempotent()
+   * idempotent} requests: when execution was aborted before getting a response, it is impossible to
+   * determine with 100% certainty whether a mutation was applied or not, so a write is never safe
+   * to retry; the driver will rethrow the error directly, without invoking the retry policy.
    *
    * @param request the request that was aborted.
    * @param error the error.
