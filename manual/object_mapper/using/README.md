@@ -51,8 +51,8 @@ UUID userId = ...;
 User u = mapper.get(userId);
 ```
 
-`get`'s arguments must match the partition key components (number of
-arguments and their types).
+`get`'s arguments must match the primary key components (number of
+arguments, their types, and order).
 
 --------------
 
