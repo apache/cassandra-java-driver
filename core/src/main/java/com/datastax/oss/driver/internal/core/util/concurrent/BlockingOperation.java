@@ -16,6 +16,7 @@
 package com.datastax.oss.driver.internal.core.util.concurrent;
 
 import edu.umd.cs.findbugs.annotations.NonNull;
+import io.netty.util.concurrent.FastThreadLocalThread;
 import java.util.concurrent.ThreadFactory;
 
 /**
@@ -58,7 +59,7 @@ public class BlockingOperation {
     }
   }
 
-  private static class InternalThread extends Thread {
+  private static class InternalThread extends FastThreadLocalThread {
     private InternalThread(Runnable runnable) {
       super(runnable);
     }
