@@ -362,39 +362,44 @@ The driver team uses annotations to document certain aspects of the code:
 * nullability with [SpotBugs](https://spotbugs.github.io/) annotations `@Nullable` and `@NonNull`.
 
 This is mostly used during development; while these annotations are retained in class files, they
-serve no purpose at runtime. Whether to make them optional dependencies is up for debate:
-
-* if they are required, it's two additional JARs that every client has to pull in (admittedly they
-  are quite small);
-* if they are optional, the bytecode will reference missing classes. This is not a blocker, but it
-  can manifest to the end user in a few ways:
-  
-    * if you navigate to the driver's sources in your IDE, the missing annotations will be
-      highlighted as errors (note however that modern IDEs such as IntelliJ IDEA can analyze
-      nullability annotations even if they are missing from the classpath); 
-    * this produces compiler warnings (see [this discussion][guava] of a similar issue for Google's
-      Guava library).
-
-The Java driver team has decided to make the dependencies optional. If that creates any problem for
-you, the workaround is to redeclare them explicitly in your application:
+serve no purpose at runtime. If you want to minimize the number of JARs in your classpath, you can
+exclude them:
 
 ```xml
 <dependency>
   <groupId>com.datastax.oss</groupId>
   <artifactId>java-driver-core</artifactId>
   <version>4.0.0-beta2</version>
-</dependency>
-<dependency>
-  <groupId>com.github.stephenc.jcip</groupId>
-  <artifactId>jcip-annotations</artifactId>
-  <version>1.0-1</version>
-</dependency>
-<dependency>
-  <groupId>com.github.spotbugs</groupId>
-  <artifactId>spotbugs-annotations</artifactId>
-  <version>3.1.3</version>
+  <exclusions>
+    <exclusion>
+      <groupId>com.github.stephenc.jcip</groupId>
+      <artifactId>jcip-annotations</artifactId>
+    </exclusion>
+    <exclusion>
+      <groupId>com.github.spotbugs</groupId>
+      <artifactId>spotbugs-annotations</artifactId>
+    </exclusion>
+  </exclusions>
 </dependency>
 ```
+
+However, there is one case when excluding those dependencies won't work: if you use [annotation
+processing] in your build, the Java compiler scans the entire classpath -- including the driver's
+classes -- and tries to load all declared annotations. If it can't find the class for an annotation,
+you'll get a compiler error:
+
+```
+error: cannot access ThreadSafe
+  class file for net.jcip.annotations.ThreadSafe not found
+1 error
+```
+
+The workaround is to keep the dependencies.
+
+Sometimes annotation scanning can be triggered involuntarily, if one of your dependencies declares
+a processor via the service provider mechanism (check the `META-INF/services` directory in the
+JARs). If you are sure that you don't need any annotation processing, you can compile with the
+`-proc:none` option and still exclude the dependencies. 
 
 #### Mandatory dependencies
 
@@ -412,6 +417,7 @@ The remaining core driver dependencies are the only ones that are truly mandator
 [gradle_init]: https://guides.gradle.org/creating-new-gradle-builds/
 [downloads]: http://downloads.datastax.com/java-driver/
 [guava]: https://github.com/google/guava/issues/2721
+[annotation processing]: https://docs.oracle.com/javase/8/docs/technotes/tools/windows/javac.html#sthref65
 
 [Session.getMetrics]:             https://docs.datastax.com/en/drivers/java/4.0/com/datastax/oss/driver/api/core/session/Session.html#getMetrics--
 [SessionBuilder.addContactPoint]: https://docs.datastax.com/en/drivers/java/4.0/com/datastax/oss/driver/api/core/session/SessionBuilder.html#addContactPoint-java.net.InetSocketAddress-
