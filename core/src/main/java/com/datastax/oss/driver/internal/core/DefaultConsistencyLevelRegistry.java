@@ -18,26 +18,36 @@ package com.datastax.oss.driver.internal.core;
 import com.datastax.oss.driver.api.core.ConsistencyLevel;
 import com.datastax.oss.driver.api.core.DefaultConsistencyLevel;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableList;
+import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableMap;
 import net.jcip.annotations.ThreadSafe;
 
 @ThreadSafe
 public class DefaultConsistencyLevelRegistry implements ConsistencyLevelRegistry {
 
-  private static final ImmutableList<ConsistencyLevel> values =
+  private static final ImmutableList<ConsistencyLevel> VALUES =
       ImmutableList.<ConsistencyLevel>builder().add(DefaultConsistencyLevel.values()).build();
+  private static final ImmutableMap<String, Integer> NAME_TO_CODE;
+
+  static {
+    ImmutableMap.Builder<String, Integer> nameToCodeBuilder = ImmutableMap.builder();
+    for (DefaultConsistencyLevel consistencyLevel : DefaultConsistencyLevel.values()) {
+      nameToCodeBuilder.put(consistencyLevel.name(), consistencyLevel.getProtocolCode());
+    }
+    NAME_TO_CODE = nameToCodeBuilder.build();
+  }
 
   @Override
-  public ConsistencyLevel fromCode(int code) {
+  public ConsistencyLevel codeToLevel(int code) {
     return DefaultConsistencyLevel.fromCode(code);
   }
 
   @Override
-  public ConsistencyLevel fromName(String name) {
-    return DefaultConsistencyLevel.valueOf(name);
+  public int nameToCode(String name) {
+    return NAME_TO_CODE.get(name);
   }
 
   @Override
   public Iterable<ConsistencyLevel> getValues() {
-    return values;
+    return VALUES;
   }
 }
