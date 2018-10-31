@@ -25,9 +25,9 @@ import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
  */
 public interface ConsistencyLevelRegistry {
 
-  ConsistencyLevel fromCode(int code);
+  ConsistencyLevel codeToLevel(int code);
 
-  ConsistencyLevel fromName(String name);
+  int nameToCode(String name);
 
   /** @return all the values known to this driver instance. */
   Iterable<ConsistencyLevel> getValues();

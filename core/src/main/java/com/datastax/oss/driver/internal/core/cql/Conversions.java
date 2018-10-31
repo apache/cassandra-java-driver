@@ -56,6 +56,7 @@ import com.datastax.oss.driver.api.core.servererrors.WriteTimeoutException;
 import com.datastax.oss.driver.api.core.session.Request;
 import com.datastax.oss.driver.api.core.type.codec.TypeCodecs;
 import com.datastax.oss.driver.api.core.type.codec.registry.CodecRegistry;
+import com.datastax.oss.driver.internal.core.ConsistencyLevelRegistry;
 import com.datastax.oss.driver.internal.core.DefaultProtocolFeature;
 import com.datastax.oss.driver.internal.core.ProtocolVersionRegistry;
 import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
@@ -63,6 +64,7 @@ import com.datastax.oss.driver.internal.core.metadata.token.ByteOrderedToken;
 import com.datastax.oss.driver.internal.core.metadata.token.Murmur3Token;
 import com.datastax.oss.driver.internal.core.metadata.token.RandomToken;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableList;
+import com.datastax.oss.driver.shaded.guava.common.primitives.Ints;
 import com.datastax.oss.protocol.internal.Message;
 import com.datastax.oss.protocol.internal.ProtocolConstants;
 import com.datastax.oss.protocol.internal.request.Batch;
@@ -112,70 +114,74 @@ public class Conversions {
 
   public static Message toMessage(
       Statement<?> statement, DriverExecutionProfile config, InternalDriverContext context) {
-    ConsistencyLevel consistency =
-        statement.getConsistencyLevel() != null
-            ? statement.getConsistencyLevel()
-            : context
-                .getConsistencyLevelRegistry()
-                .fromName(config.getString(DefaultDriverOption.REQUEST_CONSISTENCY));
-    int pageSize =
-        statement.getPageSize() > 0
-            ? statement.getPageSize()
-            : config.getInt(DefaultDriverOption.REQUEST_PAGE_SIZE);
-    ConsistencyLevel serialConsistency =
-        statement.getSerialConsistencyLevel() != null
-            ? statement.getSerialConsistencyLevel()
-            : context
-                .getConsistencyLevelRegistry()
-                .fromName(config.getString(DefaultDriverOption.REQUEST_SERIAL_CONSISTENCY));
+    ConsistencyLevelRegistry consistencyLevelRegistry = context.getConsistencyLevelRegistry();
+    ConsistencyLevel consistency = statement.getConsistencyLevel();
+    int consistencyCode =
+        (consistency == null)
+            ? consistencyLevelRegistry.nameToCode(
+                config.getString(DefaultDriverOption.REQUEST_CONSISTENCY))
+            : consistency.getProtocolCode();
+    int pageSize = statement.getPageSize();
+    if (pageSize <= 0) {
+      pageSize = config.getInt(DefaultDriverOption.REQUEST_PAGE_SIZE);
+    }
+    ConsistencyLevel serialConsistency = statement.getSerialConsistencyLevel();
+    int serialConsistencyCode =
+        (serialConsistency == null)
+            ? consistencyLevelRegistry.nameToCode(
+                config.getString(DefaultDriverOption.REQUEST_SERIAL_CONSISTENCY))
+            : serialConsistency.getProtocolCode();
     long timestamp = statement.getTimestamp();
     if (timestamp == Long.MIN_VALUE) {
       timestamp = context.getTimestampGenerator().next();
     }
     CodecRegistry codecRegistry = context.getCodecRegistry();
     ProtocolVersion protocolVersion = context.getProtocolVersion();
-    ProtocolVersionRegistry registry = context.getProtocolVersionRegistry();
+    ProtocolVersionRegistry protocolVersionRegistry = context.getProtocolVersionRegistry();
     CqlIdentifier keyspace = statement.getKeyspace();
     if (statement instanceof SimpleStatement) {
       SimpleStatement simpleStatement = (SimpleStatement) statement;
-      if (!simpleStatement.getPositionalValues().isEmpty()
-          && !simpleStatement.getNamedValues().isEmpty()) {
+      List<Object> positionalValues = simpleStatement.getPositionalValues();
+      Map<CqlIdentifier, Object> namedValues = simpleStatement.getNamedValues();
+      if (!positionalValues.isEmpty() && !namedValues.isEmpty()) {
         throw new IllegalArgumentException(
             "Can't have both positional and named values in a statement.");
       }
       if (keyspace != null
-          && !registry.supports(protocolVersion, DefaultProtocolFeature.PER_REQUEST_KEYSPACE)) {
+          && !protocolVersionRegistry.supports(
+              protocolVersion, DefaultProtocolFeature.PER_REQUEST_KEYSPACE)) {
         throw new IllegalArgumentException(
             "Can't use per-request keyspace with protocol " + protocolVersion);
       }
       QueryOptions queryOptions =
           new QueryOptions(
-              consistency.getProtocolCode(),
-              encode(simpleStatement.getPositionalValues(), codecRegistry, protocolVersion),
-              encode(simpleStatement.getNamedValues(), codecRegistry, protocolVersion),
+              consistencyCode,
+              encode(positionalValues, codecRegistry, protocolVersion),
+              encode(namedValues, codecRegistry, protocolVersion),
               false,
               pageSize,
               statement.getPagingState(),
-              serialConsistency.getProtocolCode(),
+              serialConsistencyCode,
               timestamp,
               (keyspace == null) ? null : keyspace.asInternal());
       return new Query(simpleStatement.getQuery(), queryOptions);
     } else if (statement instanceof BoundStatement) {
       BoundStatement boundStatement = (BoundStatement) statement;
-      if (!registry.supports(protocolVersion, DefaultProtocolFeature.UNSET_BOUND_VALUES)) {
+      if (!protocolVersionRegistry.supports(
+          protocolVersion, DefaultProtocolFeature.UNSET_BOUND_VALUES)) {
         ensureAllSet(boundStatement);
       }
       boolean skipMetadata =
           boundStatement.getPreparedStatement().getResultSetDefinitions().size() > 0;
       QueryOptions queryOptions =
           new QueryOptions(
-              consistency.getProtocolCode(),
+              consistencyCode,
               boundStatement.getValues(),
               Collections.emptyMap(),
               skipMetadata,
               pageSize,
               statement.getPagingState(),
-              serialConsistency.getProtocolCode(),
+              serialConsistencyCode,
               timestamp,
               null);
       PreparedStatement preparedStatement = boundStatement.getPreparedStatement();
@@ -187,11 +193,13 @@ public class Conversions {
           queryOptions);
     } else if (statement instanceof BatchStatement) {
       BatchStatement batchStatement = (BatchStatement) statement;
-      if (!registry.supports(protocolVersion, DefaultProtocolFeature.UNSET_BOUND_VALUES)) {
+      if (!protocolVersionRegistry.supports(
+          protocolVersion, DefaultProtocolFeature.UNSET_BOUND_VALUES)) {
         ensureAllSet(batchStatement);
       }
       if (keyspace != null
-          && !registry.supports(protocolVersion, DefaultProtocolFeature.PER_REQUEST_KEYSPACE)) {
+          && !protocolVersionRegistry.supports(
+              protocolVersion, DefaultProtocolFeature.PER_REQUEST_KEYSPACE)) {
         throw new IllegalArgumentException(
             "Can't use per-request keyspace with protocol " + protocolVersion);
       }
@@ -222,8 +230,8 @@ public class Conversions {
           batchStatement.getBatchType().getProtocolCode(),
           queriesOrIds,
           values,
-          consistency.getProtocolCode(),
-          serialConsistency.getProtocolCode(),
+          consistencyCode,
+          serialConsistencyCode,
           timestamp,
           (keyspace == null) ? null : keyspace.asInternal());
     } else {
@@ -237,16 +245,12 @@ public class Conversions {
     if (values.isEmpty()) {
       return Collections.emptyList();
     } else {
-      NullAllowingImmutableList.Builder<ByteBuffer> encodedValues =
-          NullAllowingImmutableList.builder(values.size());
+      ByteBuffer[] encodedValues = new ByteBuffer[values.size()];
+      int i = 0;
       for (Object value : values) {
-        if (value == null) {
-          encodedValues.add(null);
-        } else {
-          encodedValues.add(encode(value, codecRegistry, protocolVersion));
-        }
+        encodedValues[i] = (value == null) ? null : encode(value, codecRegistry, protocolVersion);
       }
-      return encodedValues.build();
+      return NullAllowingImmutableList.of(encodedValues);
     }
   }
 
@@ -358,7 +362,7 @@ public class Conversions {
         ByteBuffer.wrap(response.preparedQueryId).asReadOnlyBuffer(),
         request.getQuery(),
         toColumnDefinitions(response.variablesMetadata, context),
-        asList(response.variablesMetadata.pkIndices),
+        Ints.asList(response.variablesMetadata.pkIndices),
         (response.resultMetadataId == null)
             ? null
             : ByteBuffer.wrap(response.resultMetadataId).asReadOnlyBuffer(),
@@ -384,23 +388,12 @@ public class Conversions {
 
   public static ColumnDefinitions toColumnDefinitions(
       RowsMetadata metadata, InternalDriverContext context) {
-    ImmutableList.Builder<ColumnDefinition> definitions = ImmutableList.builder();
+    ColumnDefinition[] values = new ColumnDefinition[metadata.columnSpecs.size()];
+    int i = 0;
     for (ColumnSpec columnSpec : metadata.columnSpecs) {
-      definitions.add(new DefaultColumnDefinition(columnSpec, context));
+      values[i++] = new DefaultColumnDefinition(columnSpec, context);
     }
-    return DefaultColumnDefinitions.valueOf(definitions.build());
-  }
-
-  public static List<Integer> asList(int[] pkIndices) {
-    if (pkIndices == null || pkIndices.length == 0) {
-      return Collections.emptyList();
-    } else {
-      ImmutableList.Builder<Integer> builder = ImmutableList.builder();
-      for (int pkIndex : pkIndices) {
-        builder.add(pkIndex);
-      }
-      return builder.build();
-    }
+    return DefaultColumnDefinitions.valueOf(ImmutableList.copyOf(values));
   }
 
   public static CoordinatorException toThrowable(
@@ -422,7 +415,7 @@ public class Conversions {
         Unavailable unavailable = (Unavailable) errorMessage;
         return new UnavailableException(
             node,
-            context.getConsistencyLevelRegistry().fromCode(unavailable.consistencyLevel),
+            context.getConsistencyLevelRegistry().codeToLevel(unavailable.consistencyLevel),
             unavailable.required,
             unavailable.alive);
       case ProtocolConstants.ErrorCode.OVERLOADED:
@@ -435,7 +428,7 @@ public class Conversions {
         WriteTimeout writeTimeout = (WriteTimeout) errorMessage;
         return new WriteTimeoutException(
             node,
-            context.getConsistencyLevelRegistry().fromCode(writeTimeout.consistencyLevel),
+            context.getConsistencyLevelRegistry().codeToLevel(writeTimeout.consistencyLevel),
             writeTimeout.received,
             writeTimeout.blockFor,
             context.getWriteTypeRegistry().fromName(writeTimeout.writeType));
@@ -443,7 +436,7 @@ public class Conversions {
         ReadTimeout readTimeout = (ReadTimeout) errorMessage;
         return new ReadTimeoutException(
             node,
-            context.getConsistencyLevelRegistry().fromCode(readTimeout.consistencyLevel),
+            context.getConsistencyLevelRegistry().codeToLevel(readTimeout.consistencyLevel),
             readTimeout.received,
             readTimeout.blockFor,
             readTimeout.dataPresent);
@@ -451,7 +444,7 @@ public class Conversions {
         ReadFailure readFailure = (ReadFailure) errorMessage;
         return new ReadFailureException(
             node,
-            context.getConsistencyLevelRegistry().fromCode(readFailure.consistencyLevel),
+            context.getConsistencyLevelRegistry().codeToLevel(readFailure.consistencyLevel),
             readFailure.received,
             readFailure.blockFor,
             readFailure.numFailures,
@@ -463,7 +456,7 @@ public class Conversions {
         WriteFailure writeFailure = (WriteFailure) errorMessage;
         return new WriteFailureException(
             node,
-            context.getConsistencyLevelRegistry().fromCode(writeFailure.consistencyLevel),
+            context.getConsistencyLevelRegistry().codeToLevel(writeFailure.consistencyLevel),
             writeFailure.received,
             writeFailure.blockFor,
             context.getWriteTypeRegistry().fromName(writeFailure.writeType),
