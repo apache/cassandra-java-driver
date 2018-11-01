@@ -245,7 +245,7 @@ It is a required dependency, but we provide a a [shaded JAR](../shaded_jar/) tha
 different Java package; this is useful to avoid dependency hell if you already use Netty in another
 part of your application.
 
-### Typesafe config
+#### Typesafe config
 
 [Typesafe config](https://lightbend.github.io/config/) is used for our file-based
 [configuration](../configuration/).
