@@ -32,7 +32,6 @@ import com.datastax.oss.driver.api.core.cql.Row;
 import com.datastax.oss.driver.api.core.cql.SimpleStatement;
 import com.datastax.oss.driver.api.core.cql.TraceEvent;
 import com.datastax.oss.driver.api.core.uuid.Uuids;
-import com.datastax.oss.driver.internal.core.DefaultConsistencyLevelRegistry;
 import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
 import com.datastax.oss.driver.internal.core.context.NettyOptions;
 import com.datastax.oss.driver.internal.core.util.concurrent.CompletableFutures;
@@ -105,9 +104,6 @@ public class QueryTraceFetcherTest {
             config.withString(
                 DefaultDriverOption.REQUEST_CONSISTENCY, DefaultConsistencyLevel.ONE.name()))
         .thenReturn(traceConfig);
-
-    Mockito.when(context.getConsistencyLevelRegistry())
-        .thenReturn(new DefaultConsistencyLevelRegistry());
   }
 
   @Test

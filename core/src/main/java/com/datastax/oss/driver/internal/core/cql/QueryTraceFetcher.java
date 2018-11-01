@@ -15,7 +15,6 @@
  */
 package com.datastax.oss.driver.internal.core.cql;
 
-import com.datastax.oss.driver.api.core.ConsistencyLevel;
 import com.datastax.oss.driver.api.core.CqlSession;
 import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
 import com.datastax.oss.driver.api.core.config.DriverExecutionProfile;
@@ -56,18 +55,12 @@ class QueryTraceFetcher {
     this.tracingId = tracingId;
     this.session = session;
 
-    ConsistencyLevel regularConsistency =
-        context
-            .getConsistencyLevelRegistry()
-            .fromName(config.getString(DefaultDriverOption.REQUEST_CONSISTENCY));
-    ConsistencyLevel traceConsistency =
-        context
-            .getConsistencyLevelRegistry()
-            .fromName(config.getString(DefaultDriverOption.REQUEST_TRACE_CONSISTENCY));
+    String regularConsistency = config.getString(DefaultDriverOption.REQUEST_CONSISTENCY);
+    String traceConsistency = config.getString(DefaultDriverOption.REQUEST_TRACE_CONSISTENCY);
     this.config =
         (traceConsistency.equals(regularConsistency))
             ? config
-            : config.withString(DefaultDriverOption.REQUEST_CONSISTENCY, traceConsistency.name());
+            : config.withString(DefaultDriverOption.REQUEST_CONSISTENCY, traceConsistency);
 
     this.maxAttempts = config.getInt(DefaultDriverOption.REQUEST_TRACE_ATTEMPTS);
     this.intervalNanos = config.getDuration(DefaultDriverOption.REQUEST_TRACE_INTERVAL).toNanos();
