@@ -185,6 +185,8 @@ public class CqlRequestHandlerSpeculativeExecutionTest extends CqlRequestHandler
       node2Behavior.verifyNoWrite();
 
       Mockito.verify(nodeMetricUpdater1)
+          .isEnabled(DefaultNodeMetric.CQL_MESSAGES, DriverExecutionProfile.DEFAULT_NAME);
+      Mockito.verify(nodeMetricUpdater1)
           .updateTimer(
               eq(DefaultNodeMetric.CQL_MESSAGES),
               eq(DriverExecutionProfile.DEFAULT_NAME),

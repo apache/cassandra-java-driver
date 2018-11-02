@@ -26,6 +26,7 @@ import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
 import com.datastax.oss.driver.api.core.config.DriverConfig;
 import com.datastax.oss.driver.api.core.config.DriverExecutionProfile;
 import com.datastax.oss.driver.api.core.metadata.Node;
+import com.datastax.oss.driver.api.core.metrics.SessionMetric;
 import com.datastax.oss.driver.api.core.retry.RetryPolicy;
 import com.datastax.oss.driver.api.core.session.Request;
 import com.datastax.oss.driver.api.core.session.Session;
@@ -148,6 +149,8 @@ public class RequestHandlerTestHarness implements AutoCloseable {
         .thenReturn(CompletableFuture.completedFuture(null));
 
     Mockito.when(session.getMetricUpdater()).thenReturn(sessionMetricUpdater);
+    Mockito.when(sessionMetricUpdater.isEnabled(any(SessionMetric.class), anyString()))
+        .thenReturn(true);
 
     Mockito.when(session.getMetadata()).thenReturn(DefaultMetadata.EMPTY);
 

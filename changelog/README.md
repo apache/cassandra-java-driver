@@ -4,6 +4,7 @@
 
 ### 4.0.0-beta3 (in progress)
 
+- [improvement] JAVA-1914: Optimize use of System.nanoTime in CqlRequestHandlerBase
 - [improvement] JAVA-1945: Document corner cases around UDT and tuple attachment
 - [improvement] JAVA-2026: Make CqlDuration implement TemporalAmount
 - [improvement] JAVA-2017: Slightly optimize conversion methods on the hot path
