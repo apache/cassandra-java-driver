@@ -42,6 +42,7 @@ import com.datastax.oss.driver.api.core.servererrors.WriteTimeoutException;
 import com.datastax.oss.driver.api.core.session.throttling.RequestThrottler;
 import com.datastax.oss.driver.api.core.session.throttling.Throttled;
 import com.datastax.oss.driver.api.core.specex.SpeculativeExecutionPolicy;
+import com.datastax.oss.driver.api.core.tracker.RequestTracker;
 import com.datastax.oss.driver.internal.core.adminrequest.ThrottledAdminRequestHandler;
 import com.datastax.oss.driver.internal.core.adminrequest.UnexpectedResponseException;
 import com.datastax.oss.driver.internal.core.channel.DriverChannel;
@@ -49,8 +50,10 @@ import com.datastax.oss.driver.internal.core.channel.ResponseCallback;
 import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
 import com.datastax.oss.driver.internal.core.metadata.DefaultNode;
 import com.datastax.oss.driver.internal.core.metrics.NodeMetricUpdater;
+import com.datastax.oss.driver.internal.core.metrics.SessionMetricUpdater;
 import com.datastax.oss.driver.internal.core.session.DefaultSession;
 import com.datastax.oss.driver.internal.core.session.RepreparePayload;
+import com.datastax.oss.driver.internal.core.tracker.NoopRequestTracker;
 import com.datastax.oss.driver.internal.core.util.Loggers;
 import com.datastax.oss.driver.internal.core.util.collection.QueryPlan;
 import com.datastax.oss.protocol.internal.Frame;
@@ -90,6 +93,7 @@ import org.slf4j.LoggerFactory;
 public abstract class CqlRequestHandlerBase implements Throttled {
 
   private static final Logger LOG = LoggerFactory.getLogger(CqlRequestHandlerBase.class);
+  private static final long NANOTIME_NOT_MEASURED_YET = -1;
 
   private final long startTimeNanos;
   private final String logPrefix;
@@ -123,6 +127,8 @@ public abstract class CqlRequestHandlerBase implements Throttled {
   private final RetryPolicy retryPolicy;
   private final SpeculativeExecutionPolicy speculativeExecutionPolicy;
   private final RequestThrottler throttler;
+  private final RequestTracker requestTracker;
+  private final SessionMetricUpdater sessionMetricUpdater;
 
   // The errors on the nodes that were already tried (lazily initialized on the first error).
   // We don't use a map because nodes can appear multiple times.
@@ -186,20 +192,24 @@ public abstract class CqlRequestHandlerBase implements Throttled {
     this.scheduledExecutions = isIdempotent ? new CopyOnWriteArrayList<>() : null;
     this.inFlightCallbacks = new CopyOnWriteArrayList<>();
 
+    this.requestTracker = context.getRequestTracker();
+    this.sessionMetricUpdater = session.getMetricUpdater();
+
     this.throttler = context.getRequestThrottler();
     this.throttler.register(this);
   }
 
   @Override
   public void onThrottleReady(boolean wasDelayed) {
-    if (wasDelayed) {
-      session
-          .getMetricUpdater()
-          .updateTimer(
-              DefaultSessionMetric.THROTTLING_DELAY,
-              executionProfile.getName(),
-              System.nanoTime() - startTimeNanos,
-              TimeUnit.NANOSECONDS);
+    if (wasDelayed
+        // avoid call to nanoTime() if metric is disabled:
+        && sessionMetricUpdater.isEnabled(
+            DefaultSessionMetric.THROTTLING_DELAY, executionProfile.getName())) {
+      sessionMetricUpdater.updateTimer(
+          DefaultSessionMetric.THROTTLING_DELAY,
+          executionProfile.getName(),
+          System.nanoTime() - startTimeNanos,
+          TimeUnit.NANOSECONDS);
     }
     sendRequest(null, 0, 0, true);
   }
@@ -298,22 +308,30 @@ public abstract class CqlRequestHandlerBase implements Throttled {
       if (result.complete(resultSet)) {
         cancelScheduledTasks();
         throttler.signalSuccess(this);
-        long now = System.nanoTime();
-        long totalLatencyNanos = now - startTimeNanos;
-        long nodeLatencyNanos = now - callback.start;
-        context
-            .getRequestTracker()
-            .onNodeSuccess(statement, nodeLatencyNanos, executionProfile, callback.node);
-        context
-            .getRequestTracker()
-            .onSuccess(statement, totalLatencyNanos, executionProfile, callback.node);
-        session
-            .getMetricUpdater()
-            .updateTimer(
-                DefaultSessionMetric.CQL_REQUESTS,
-                executionProfile.getName(),
-                totalLatencyNanos,
-                TimeUnit.NANOSECONDS);
+
+        // Only call nanoTime() if we're actually going to use it
+        long completionTimeNanos = NANOTIME_NOT_MEASURED_YET,
+            totalLatencyNanos = NANOTIME_NOT_MEASURED_YET;
+        if (!(requestTracker instanceof NoopRequestTracker)) {
+          completionTimeNanos = System.nanoTime();
+          totalLatencyNanos = completionTimeNanos - startTimeNanos;
+          long nodeLatencyNanos = completionTimeNanos - callback.nodeStartTimeNanos;
+          requestTracker.onNodeSuccess(
+              statement, nodeLatencyNanos, executionProfile, callback.node);
+          requestTracker.onSuccess(statement, totalLatencyNanos, executionProfile, callback.node);
+        }
+        if (sessionMetricUpdater.isEnabled(
+            DefaultSessionMetric.CQL_REQUESTS, executionProfile.getName())) {
+          if (completionTimeNanos == NANOTIME_NOT_MEASURED_YET) {
+            completionTimeNanos = System.nanoTime();
+            totalLatencyNanos = completionTimeNanos - startTimeNanos;
+          }
+          sessionMetricUpdater.updateTimer(
+              DefaultSessionMetric.CQL_REQUESTS,
+              executionProfile.getName(),
+              totalLatencyNanos,
+              TimeUnit.NANOSECONDS);
+        }
       }
     } catch (Throwable error) {
       setFinalError(error, callback.node, -1);
@@ -343,9 +361,8 @@ public abstract class CqlRequestHandlerBase implements Throttled {
 
   @Override
   public void onThrottleFailure(@NonNull RequestThrottlingException error) {
-    session
-        .getMetricUpdater()
-        .incrementCounter(DefaultSessionMetric.THROTTLING_ERRORS, executionProfile.getName());
+    sessionMetricUpdater.incrementCounter(
+        DefaultSessionMetric.THROTTLING_ERRORS, executionProfile.getName());
     setFinalError(error, null, -1);
   }
 
@@ -368,13 +385,14 @@ public abstract class CqlRequestHandlerBase implements Throttled {
     }
     if (result.completeExceptionally(error)) {
       cancelScheduledTasks();
-      long latencyNanos = System.nanoTime() - startTimeNanos;
-      context.getRequestTracker().onError(statement, error, latencyNanos, executionProfile, node);
+      if (!(requestTracker instanceof NoopRequestTracker)) {
+        long latencyNanos = System.nanoTime() - startTimeNanos;
+        requestTracker.onError(statement, error, latencyNanos, executionProfile, node);
+      }
       if (error instanceof DriverTimeoutException) {
         throttler.signalTimeout(this);
-        session
-            .getMetricUpdater()
-            .incrementCounter(DefaultSessionMetric.CQL_CLIENT_TIMEOUTS, executionProfile.getName());
+        sessionMetricUpdater.incrementCounter(
+            DefaultSessionMetric.CQL_CLIENT_TIMEOUTS, executionProfile.getName());
       } else if (!(error instanceof RequestThrottlingException)) {
         throttler.signalError(this, error);
       }
@@ -389,7 +407,7 @@ public abstract class CqlRequestHandlerBase implements Throttled {
   private class NodeResponseCallback
       implements ResponseCallback, GenericFutureListener<Future<java.lang.Void>> {
 
-    private final long start = System.nanoTime();
+    private final long nodeStartTimeNanos = System.nanoTime();
     private final Node node;
     private final DriverChannel channel;
     // The identifier of the current execution (0 for the initial execution, 1 for the first
@@ -423,7 +441,7 @@ public abstract class CqlRequestHandlerBase implements Throttled {
         Throwable error = future.cause();
         if (error instanceof EncoderException
             && error.getCause() instanceof FrameTooLongException) {
-          trackNodeError(node, error.getCause());
+          trackNodeError(node, error.getCause(), NANOTIME_NOT_MEASURED_YET);
           setFinalError(error.getCause(), node, execution);
         } else {
           LOG.trace(
@@ -432,7 +450,7 @@ public abstract class CqlRequestHandlerBase implements Throttled {
               channel,
               error);
           recordError(node, error);
-          trackNodeError(node, error);
+          trackNodeError(node, error, NANOTIME_NOT_MEASURED_YET);
           ((DefaultNode) node)
               .getMetricUpdater()
               .incrementCounter(DefaultNodeMetric.UNSENT_REQUESTS, executionProfile.getName());
@@ -491,13 +509,17 @@ public abstract class CqlRequestHandlerBase implements Throttled {
 
     @Override
     public void onResponse(Frame responseFrame) {
-      ((DefaultNode) node)
-          .getMetricUpdater()
-          .updateTimer(
-              DefaultNodeMetric.CQL_MESSAGES,
-              executionProfile.getName(),
-              System.nanoTime() - start,
-              TimeUnit.NANOSECONDS);
+      long nodeResponseTimeNanos = NANOTIME_NOT_MEASURED_YET;
+      NodeMetricUpdater nodeMetricUpdater = ((DefaultNode) node).getMetricUpdater();
+      if (nodeMetricUpdater.isEnabled(DefaultNodeMetric.CQL_MESSAGES, executionProfile.getName())) {
+        nodeResponseTimeNanos = System.nanoTime();
+        long nodeLatency = System.nanoTime() - nodeStartTimeNanos;
+        nodeMetricUpdater.updateTimer(
+            DefaultNodeMetric.CQL_MESSAGES,
+            executionProfile.getName(),
+            nodeLatency,
+            TimeUnit.NANOSECONDS);
+      }
       inFlightCallbacks.remove(this);
       if (result.isDone()) {
         return;
@@ -527,12 +549,15 @@ public abstract class CqlRequestHandlerBase implements Throttled {
           LOG.trace("[{}] Got error response, processing", logPrefix);
           processErrorResponse((Error) responseMessage);
         } else {
-          trackNodeError(node, new IllegalStateException("Unexpected response " + responseMessage));
+          trackNodeError(
+              node,
+              new IllegalStateException("Unexpected response " + responseMessage),
+              nodeResponseTimeNanos);
           setFinalError(
               new IllegalStateException("Unexpected response " + responseMessage), node, execution);
         }
       } catch (Throwable t) {
-        trackNodeError(node, t);
+        trackNodeError(node, t, nodeResponseTimeNanos);
         setFinalError(t, node, execution);
       }
     }
@@ -556,7 +581,7 @@ public abstract class CqlRequestHandlerBase implements Throttled {
                 repreparePayload.customPayload,
                 timeout,
                 throttler,
-                session.getMetricUpdater(),
+                sessionMetricUpdater,
                 logPrefix,
                 "Reprepare " + reprepareMessage.toString());
         reprepareHandler
@@ -575,18 +600,17 @@ public abstract class CqlRequestHandlerBase implements Throttled {
                             || prepareError instanceof FunctionFailureException
                             || prepareError instanceof ProtocolError) {
                           LOG.trace("[{}] Unrecoverable error on reprepare, rethrowing", logPrefix);
-                          trackNodeError(node, prepareError);
+                          trackNodeError(node, prepareError, NANOTIME_NOT_MEASURED_YET);
                           setFinalError(prepareError, node, execution);
                           return null;
                         }
                       }
                     } else if (exception instanceof RequestThrottlingException) {
-                      trackNodeError(node, exception);
                       setFinalError(exception, node, execution);
                       return null;
                     }
                     recordError(node, exception);
-                    trackNodeError(node, exception);
+                    trackNodeError(node, exception, NANOTIME_NOT_MEASURED_YET);
                     LOG.trace("[{}] Reprepare failed, trying next node", logPrefix);
                     sendRequest(null, execution, retryCount, false);
                   } else {
@@ -602,14 +626,14 @@ public abstract class CqlRequestHandlerBase implements Throttled {
       if (error instanceof BootstrappingException) {
         LOG.trace("[{}] {} is bootstrapping, trying next node", logPrefix, node);
         recordError(node, error);
-        trackNodeError(node, error);
+        trackNodeError(node, error, NANOTIME_NOT_MEASURED_YET);
         sendRequest(null, execution, retryCount, false);
       } else if (error instanceof QueryValidationException
           || error instanceof FunctionFailureException
           || error instanceof ProtocolError) {
         LOG.trace("[{}] Unrecoverable error, rethrowing", logPrefix);
         metricUpdater.incrementCounter(DefaultNodeMetric.OTHER_ERRORS, executionProfile.getName());
-        trackNodeError(node, error);
+        trackNodeError(node, error, NANOTIME_NOT_MEASURED_YET);
         setFinalError(error, node, execution);
       } else {
         RetryDecision decision;
@@ -683,16 +707,16 @@ public abstract class CqlRequestHandlerBase implements Throttled {
       switch (decision) {
         case RETRY_SAME:
           recordError(node, error);
-          trackNodeError(node, error);
+          trackNodeError(node, error, NANOTIME_NOT_MEASURED_YET);
           sendRequest(node, execution, retryCount + 1, false);
           break;
         case RETRY_NEXT:
           recordError(node, error);
-          trackNodeError(node, error);
+          trackNodeError(node, error, NANOTIME_NOT_MEASURED_YET);
           sendRequest(null, execution, retryCount + 1, false);
           break;
         case RETHROW:
-          trackNodeError(node, error);
+          trackNodeError(node, error, NANOTIME_NOT_MEASURED_YET);
           setFinalError(error, node, execution);
           break;
         case IGNORE:
@@ -755,11 +779,20 @@ public abstract class CqlRequestHandlerBase implements Throttled {
       }
     }
 
-    private void trackNodeError(Node node, Throwable error) {
-      long latencyNanos = System.nanoTime() - this.start;
-      context
-          .getRequestTracker()
-          .onNodeError(statement, error, latencyNanos, executionProfile, node);
+    /**
+     * @param nodeResponseTimeNanos the time we received the response, if it's already been
+     *     measured. If {@link #NANOTIME_NOT_MEASURED_YET}, it hasn't and we need to measure it now
+     *     (this is to avoid unnecessary calls to System.nanoTime)
+     */
+    private void trackNodeError(Node node, Throwable error, long nodeResponseTimeNanos) {
+      if (requestTracker instanceof NoopRequestTracker) {
+        return;
+      }
+      if (nodeResponseTimeNanos == NANOTIME_NOT_MEASURED_YET) {
+        nodeResponseTimeNanos = System.nanoTime();
+      }
+      long latencyNanos = nodeResponseTimeNanos - this.nodeStartTimeNanos;
+      requestTracker.onNodeError(statement, error, latencyNanos, executionProfile, node);
     }
 
     @Override

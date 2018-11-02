@@ -15,9 +15,13 @@
  */
 package com.datastax.oss.driver.internal.core.cql;
 
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+
 import com.datastax.oss.driver.TestDataProviders;
 import com.datastax.oss.driver.api.core.DefaultProtocolVersion;
 import com.datastax.oss.driver.api.core.cql.SimpleStatement;
+import com.datastax.oss.driver.api.core.metrics.NodeMetric;
 import com.datastax.oss.driver.internal.core.metadata.DefaultNode;
 import com.datastax.oss.driver.internal.core.metrics.NodeMetricUpdater;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableList;
@@ -68,8 +72,11 @@ public abstract class CqlRequestHandlerTestBase {
     MockitoAnnotations.initMocks(this);
 
     Mockito.when(node1.getMetricUpdater()).thenReturn(nodeMetricUpdater1);
+    Mockito.when(nodeMetricUpdater1.isEnabled(any(NodeMetric.class), anyString())).thenReturn(true);
     Mockito.when(node2.getMetricUpdater()).thenReturn(nodeMetricUpdater2);
+    Mockito.when(nodeMetricUpdater2.isEnabled(any(NodeMetric.class), anyString())).thenReturn(true);
     Mockito.when(node3.getMetricUpdater()).thenReturn(nodeMetricUpdater3);
+    Mockito.when(nodeMetricUpdater3.isEnabled(any(NodeMetric.class), anyString())).thenReturn(true);
   }
 
   protected static Frame defaultFrameOf(Message responseMessage) {
