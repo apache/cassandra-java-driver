@@ -348,7 +348,7 @@ public interface OngoingSelection {
    * @see Selector#range(Selector, Term, Term)
    */
   @NonNull
-  default Select range(@NonNull Selector collection, @NonNull Term left, @NonNull Term right) {
+  default Select range(@NonNull Selector collection, @Nullable Term left, @Nullable Term right) {
     return selector(Selector.range(collection, left, right));
   }
 
@@ -362,7 +362,7 @@ public interface OngoingSelection {
    */
   @NonNull
   default Select range(
-      @NonNull CqlIdentifier collectionId, @NonNull Term left, @NonNull Term right) {
+      @NonNull CqlIdentifier collectionId, @Nullable Term left, @Nullable Term right) {
     return range(Selector.column(collectionId), left, right);
   }
 
@@ -373,7 +373,7 @@ public interface OngoingSelection {
    * @see Selector#range(String, Term, Term)
    */
   @NonNull
-  default Select range(@NonNull String collectionName, @NonNull Term left, @NonNull Term right) {
+  default Select range(@NonNull String collectionName, @Nullable Term left, @Nullable Term right) {
     return range(CqlIdentifier.fromCql(collectionName), left, right);
   }
 

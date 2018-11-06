@@ -238,7 +238,7 @@ public interface Selector extends CqlSnippet {
    *     only left-bound.
    */
   @NonNull
-  static Selector range(@NonNull Selector collection, @NonNull Term left, @NonNull Term right) {
+  static Selector range(@NonNull Selector collection, @Nullable Term left, @Nullable Term right) {
     return new RangeSelector(collection, left, right);
   }
 
@@ -250,7 +250,7 @@ public interface Selector extends CqlSnippet {
    */
   @NonNull
   static Selector range(
-      @NonNull CqlIdentifier collectionId, @NonNull Term left, @NonNull Term right) {
+      @NonNull CqlIdentifier collectionId, @Nullable Term left, @Nullable Term right) {
     return range(column(collectionId), left, right);
   }
 
@@ -259,7 +259,7 @@ public interface Selector extends CqlSnippet {
    * range(CqlIdentifier.fromCql(collectionName), left, right)}.
    */
   @NonNull
-  static Selector range(@NonNull String collectionName, @NonNull Term left, @NonNull Term right) {
+  static Selector range(@NonNull String collectionName, @Nullable Term left, @Nullable Term right) {
     return range(CqlIdentifier.fromCql(collectionName), left, right);
   }
 
