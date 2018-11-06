@@ -32,14 +32,18 @@ import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
+import org.junit.rules.RuleChain;
 import org.junit.rules.TestName;
+import org.junit.rules.TestRule;
 
 @Category(ParallelizableTests.class)
 public class BatchStatementIT {
 
-  @Rule public CcmRule ccm = CcmRule.getInstance();
+  private CcmRule ccm = CcmRule.getInstance();
 
-  @Rule public SessionRule<CqlSession> sessionRule = SessionRule.builder(ccm).build();
+  private SessionRule<CqlSession> sessionRule = SessionRule.builder(ccm).build();
+
+  @Rule public TestRule chain = RuleChain.outerRule(ccm).around(sessionRule);
 
   @Rule public TestName name = new TestName();
 

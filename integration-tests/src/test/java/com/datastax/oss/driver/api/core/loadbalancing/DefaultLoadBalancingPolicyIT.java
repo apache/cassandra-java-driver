@@ -49,15 +49,16 @@ import java.util.Set;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Test;
+import org.junit.rules.RuleChain;
+import org.junit.rules.TestRule;
 
 public class DefaultLoadBalancingPolicyIT {
 
   private static final String LOCAL_DC = "dc1";
 
-  @ClassRule public static CustomCcmRule ccmRule = CustomCcmRule.builder().withNodes(4, 1).build();
+  private static CustomCcmRule ccmRule = CustomCcmRule.builder().withNodes(4, 1).build();
 
-  @ClassRule
-  public static SessionRule<CqlSession> sessionRule =
+  private static SessionRule<CqlSession> sessionRule =
       SessionRule.builder(ccmRule)
           .withKeyspace(false)
           .withConfigLoader(
@@ -65,6 +66,8 @@ public class DefaultLoadBalancingPolicyIT {
                   .withDuration(DefaultDriverOption.REQUEST_TIMEOUT, Duration.ofSeconds(30))
                   .build())
           .build();
+
+  @ClassRule public static TestRule chain = RuleChain.outerRule(ccmRule).around(sessionRule);
 
   @BeforeClass
   public static void setup() {

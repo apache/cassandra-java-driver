@@ -43,12 +43,13 @@ import io.netty.channel.socket.SocketChannelConfig;
 import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
+import org.junit.rules.RuleChain;
+import org.junit.rules.TestRule;
 
 @Category(ParallelizableTests.class)
 public class ChannelSocketOptionsIT {
 
-  public static @ClassRule SimulacronRule simulacron =
-      new SimulacronRule(ClusterSpec.builder().withNodes(1));
+  private static SimulacronRule simulacron = new SimulacronRule(ClusterSpec.builder().withNodes(1));
 
   private static DriverConfigLoader loader =
       SessionUtils.configLoaderBuilder()
@@ -60,9 +61,10 @@ public class ChannelSocketOptionsIT {
           .withInt(DefaultDriverOption.SOCKET_SEND_BUFFER_SIZE, 123456)
           .build();
 
-  @ClassRule
-  public static SessionRule<CqlSession> sessionRule =
+  private static SessionRule<CqlSession> sessionRule =
       SessionRule.builder(simulacron).withConfigLoader(loader).build();
+
+  @ClassRule public static TestRule chain = RuleChain.outerRule(simulacron).around(sessionRule);
 
   @Test
   public void should_report_socket_options() {

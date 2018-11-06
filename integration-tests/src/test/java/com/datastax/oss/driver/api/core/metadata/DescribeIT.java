@@ -38,6 +38,8 @@ import java.util.Optional;
 import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
+import org.junit.rules.RuleChain;
+import org.junit.rules.TestRule;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -46,11 +48,10 @@ public class DescribeIT {
 
   private static final Logger logger = LoggerFactory.getLogger(DescribeIT.class);
 
-  @ClassRule public static CcmRule ccmRule = CcmRule.getInstance();
+  private static CcmRule ccmRule = CcmRule.getInstance();
 
   // disable debouncer to speed up test.
-  @ClassRule
-  public static SessionRule<CqlSession> sessionRule =
+  private static SessionRule<CqlSession> sessionRule =
       SessionRule.builder(ccmRule)
           .withKeyspace(false)
           .withConfigLoader(
@@ -59,6 +60,8 @@ public class DescribeIT {
                   .withDuration(DefaultDriverOption.METADATA_SCHEMA_WINDOW, Duration.ofSeconds(0))
                   .build())
           .build();
+
+  @ClassRule public static TestRule chain = RuleChain.outerRule(ccmRule).around(sessionRule);
 
   /**
    * Creates a keyspace using a variety of features and ensures {@link

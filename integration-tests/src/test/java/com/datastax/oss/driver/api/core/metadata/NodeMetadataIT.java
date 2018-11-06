@@ -29,16 +29,19 @@ import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
 import com.datastax.oss.driver.internal.core.metadata.TopologyEvent;
 import java.util.Collection;
 import org.junit.ClassRule;
-import org.junit.Rule;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
+import org.junit.rules.RuleChain;
+import org.junit.rules.TestRule;
 
 @Category(ParallelizableTests.class)
 public class NodeMetadataIT {
 
-  @ClassRule public static CcmRule ccmRule = CcmRule.getInstance();
+  private static CcmRule ccmRule = CcmRule.getInstance();
 
-  @Rule public SessionRule<CqlSession> sessionRule = SessionRule.builder(ccmRule).build();
+  private static SessionRule<CqlSession> sessionRule = SessionRule.builder(ccmRule).build();
+
+  @ClassRule public static TestRule chain = RuleChain.outerRule(ccmRule).around(sessionRule);
 
   @Test
   public void should_expose_node_metadata() {

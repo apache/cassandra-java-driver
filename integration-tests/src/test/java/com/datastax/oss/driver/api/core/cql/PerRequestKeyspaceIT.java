@@ -30,7 +30,9 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.junit.rules.ExpectedException;
+import org.junit.rules.RuleChain;
 import org.junit.rules.TestName;
+import org.junit.rules.TestRule;
 
 /**
  * Note: at the time of writing, this test exercises features of an unreleased Cassandra version. To
@@ -43,9 +45,11 @@ import org.junit.rules.TestName;
 @Category(ParallelizableTests.class)
 public class PerRequestKeyspaceIT {
 
-  @Rule public CcmRule ccmRule = CcmRule.getInstance();
+  private CcmRule ccmRule = CcmRule.getInstance();
 
-  @Rule public SessionRule<CqlSession> sessionRule = SessionRule.builder(ccmRule).build();
+  private SessionRule<CqlSession> sessionRule = SessionRule.builder(ccmRule).build();
+
+  @Rule public TestRule chain = RuleChain.outerRule(ccmRule).around(sessionRule);
 
   @Rule public ExpectedException thrown = ExpectedException.none();
   @Rule public TestName nameRule = new TestName();

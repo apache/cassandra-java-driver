@@ -51,14 +51,18 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.junit.rules.ExpectedException;
+import org.junit.rules.RuleChain;
 import org.junit.rules.TestName;
+import org.junit.rules.TestRule;
 
 @Category(ParallelizableTests.class)
 public class CodecRegistryIT {
 
-  @ClassRule public static CcmRule ccm = CcmRule.getInstance();
+  private static CcmRule ccm = CcmRule.getInstance();
 
-  @ClassRule public static SessionRule<CqlSession> sessionRule = SessionRule.builder(ccm).build();
+  private static SessionRule<CqlSession> sessionRule = SessionRule.builder(ccm).build();
+
+  @ClassRule public static TestRule chain = RuleChain.outerRule(ccm).around(sessionRule);
 
   @Rule public TestName name = new TestName();
 

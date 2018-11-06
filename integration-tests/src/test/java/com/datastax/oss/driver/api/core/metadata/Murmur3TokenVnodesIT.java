@@ -24,15 +24,15 @@ import com.datastax.oss.driver.internal.core.metadata.token.Murmur3Token;
 import java.time.Duration;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
+import org.junit.rules.RuleChain;
+import org.junit.rules.TestRule;
 
 public class Murmur3TokenVnodesIT extends TokenITBase {
 
-  @ClassRule
-  public static CustomCcmRule ccmRule =
+  private static CustomCcmRule ccmRule =
       CustomCcmRule.builder().withNodes(3).withCreateOption("--vnodes").build();
 
-  @ClassRule
-  public static SessionRule<CqlSession> sessionRule =
+  private static SessionRule<CqlSession> sessionRule =
       SessionRule.builder(ccmRule)
           .withKeyspace(false)
           .withConfigLoader(
@@ -40,6 +40,8 @@ public class Murmur3TokenVnodesIT extends TokenITBase {
                   .withDuration(DefaultDriverOption.REQUEST_TIMEOUT, Duration.ofSeconds(30))
                   .build())
           .build();
+
+  @ClassRule public static TestRule chain = RuleChain.outerRule(ccmRule).around(sessionRule);
 
   public Murmur3TokenVnodesIT() {
     super(Murmur3Token.class, true);

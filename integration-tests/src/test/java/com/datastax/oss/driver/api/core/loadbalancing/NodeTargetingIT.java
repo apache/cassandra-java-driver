@@ -41,13 +41,17 @@ import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
+import org.junit.rules.RuleChain;
+import org.junit.rules.TestRule;
 
 @Category(ParallelizableTests.class)
 public class NodeTargetingIT {
 
-  @Rule public SimulacronRule simulacron = new SimulacronRule(ClusterSpec.builder().withNodes(5));
+  private SimulacronRule simulacron = new SimulacronRule(ClusterSpec.builder().withNodes(5));
 
-  @Rule public SessionRule<CqlSession> sessionRule = SessionRule.builder(simulacron).build();
+  private SessionRule<CqlSession> sessionRule = SessionRule.builder(simulacron).build();
+
+  @Rule public TestRule chain = RuleChain.outerRule(simulacron).around(sessionRule);
 
   @Before
   public void clear() {

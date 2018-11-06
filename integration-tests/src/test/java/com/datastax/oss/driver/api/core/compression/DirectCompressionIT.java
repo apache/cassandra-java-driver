@@ -34,20 +34,23 @@ import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
+import org.junit.rules.RuleChain;
+import org.junit.rules.TestRule;
 
 @Category(ParallelizableTests.class)
 public class DirectCompressionIT {
 
-  @ClassRule public static CcmRule ccmRule = CcmRule.getInstance();
+  private static CcmRule ccmRule = CcmRule.getInstance();
 
-  @ClassRule
-  public static SessionRule<CqlSession> schemaSessionRule =
+  private static SessionRule<CqlSession> schemaSessionRule =
       SessionRule.builder(ccmRule)
           .withConfigLoader(
               SessionUtils.configLoaderBuilder()
                   .withDuration(DefaultDriverOption.REQUEST_TIMEOUT, Duration.ofSeconds(30))
                   .build())
           .build();
+
+  @ClassRule public static TestRule chain = RuleChain.outerRule(ccmRule).around(schemaSessionRule);
 
   @BeforeClass
   public static void setup() {

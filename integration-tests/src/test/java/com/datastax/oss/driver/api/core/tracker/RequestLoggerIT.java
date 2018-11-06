@@ -50,6 +50,8 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.RuleChain;
+import org.junit.rules.TestRule;
 import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
@@ -65,8 +67,7 @@ public class RequestLoggerIT {
 
   private static final String QUERY = "SELECT release_version FROM system.local";
 
-  @Rule
-  public SimulacronRule simulacronRule = new SimulacronRule(ClusterSpec.builder().withNodes(3));
+  private SimulacronRule simulacronRule = new SimulacronRule(ClusterSpec.builder().withNodes(3));
 
   private final DefaultDriverConfigLoaderBuilder.Profile lowThresholdProfile =
       DefaultDriverConfigLoaderBuilder.profileBuilder()
@@ -101,8 +102,7 @@ public class RequestLoggerIT {
           .withProfile("no-traces", noTracesProfile)
           .build();
 
-  @Rule
-  public SessionRule<CqlSession> sessionRuleRequest =
+  private SessionRule<CqlSession> sessionRuleRequest =
       SessionRule.builder(simulacronRule).withConfigLoader(requestLoader).build();
 
   private final DriverConfigLoader nodeLoader =
@@ -121,12 +121,10 @@ public class RequestLoggerIT {
           .withProfile("no-traces", noTracesProfile)
           .build();
 
-  @Rule
-  public SessionRule<CqlSession> sessionRuleNode =
+  private SessionRule<CqlSession> sessionRuleNode =
       SessionRule.builder(simulacronRule).withConfigLoader(nodeLoader).build();
 
-  @Rule
-  public SessionRule<CqlSession> sessionRuleDefaults =
+  private SessionRule<CqlSession> sessionRuleDefaults =
       SessionRule.builder(simulacronRule)
           .withConfigLoader(
               SessionUtils.configLoaderBuilder()
@@ -138,6 +136,13 @@ public class RequestLoggerIT {
                   .withProfile("no-traces", noTracesProfile)
                   .build())
           .build();
+
+  @Rule
+  public TestRule chain =
+      RuleChain.outerRule(simulacronRule)
+          .around(sessionRuleRequest)
+          .around(sessionRuleNode)
+          .around(sessionRuleDefaults);
 
   @Captor private ArgumentCaptor<ILoggingEvent> loggingEventCaptor;
   @Mock private Appender<ILoggingEvent> appender;

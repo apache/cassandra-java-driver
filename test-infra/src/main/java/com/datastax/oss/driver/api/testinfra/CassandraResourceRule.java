@@ -16,18 +16,26 @@
 package com.datastax.oss.driver.api.testinfra;
 
 import com.datastax.oss.driver.api.core.ProtocolVersion;
+import com.datastax.oss.driver.api.testinfra.session.SessionRule;
 import java.net.InetSocketAddress;
 import java.util.Collections;
 import java.util.Set;
 import org.junit.rules.ExternalResource;
+import org.junit.rules.RuleChain;
 
 /**
- * An {@link ExternalResource} which provides a {@link #setUp()} method for initializing the
- * resource externally (instead of making users use rule chains) and a {@link #getContactPoints()}
- * for accessing the contact points of the cassandra cluster.
+ * An {@link ExternalResource} which provides a {@link #getContactPoints()} for accessing the
+ * contact points of the cassandra cluster.
  */
 public abstract class CassandraResourceRule extends ExternalResource {
 
+  /**
+   * @deprecated this method is preserved for backward compatibility only. The correct way to ensure
+   *     that a {@code CassandraResourceRule} gets initialized before a {@link SessionRule} is to
+   *     wrap them into a {@link RuleChain}. Therefore there is no need to force the initialization
+   *     of a {@code CassandraResourceRule} explicitly anymore.
+   */
+  @Deprecated
   public synchronized void setUp() {
     try {
       this.before();

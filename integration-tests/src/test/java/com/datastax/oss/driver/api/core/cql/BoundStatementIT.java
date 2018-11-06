@@ -64,7 +64,9 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.junit.rules.ExpectedException;
+import org.junit.rules.RuleChain;
 import org.junit.rules.TestName;
+import org.junit.rules.TestRule;
 
 @Category(ParallelizableTests.class)
 public class BoundStatementIT {
@@ -72,18 +74,19 @@ public class BoundStatementIT {
   @ClassRule
   public static SimulacronRule simulacron = new SimulacronRule(ClusterSpec.builder().withNodes(1));
 
-  @ClassRule public static CcmRule ccm = CcmRule.getInstance();
+  private static CcmRule ccm = CcmRule.getInstance();
 
   private static final boolean atLeastV4 = ccm.getHighestProtocolVersion().getCode() >= 4;
 
-  @ClassRule
-  public static SessionRule<CqlSession> sessionRule =
+  private static SessionRule<CqlSession> sessionRule =
       SessionRule.builder(ccm)
           .withConfigLoader(
               SessionUtils.configLoaderBuilder()
                   .withInt(DefaultDriverOption.REQUEST_PAGE_SIZE, 20)
                   .build())
           .build();
+
+  @ClassRule public static TestRule chain = RuleChain.outerRule(ccm).around(sessionRule);
 
   @Rule public TestName name = new TestName();
 
