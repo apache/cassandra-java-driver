@@ -39,6 +39,8 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.junit.rules.ExpectedException;
+import org.junit.rules.RuleChain;
+import org.junit.rules.TestRule;
 
 /**
  * Note: at the time of writing, some of these tests exercises features of an unreleased Cassandra
@@ -51,10 +53,9 @@ import org.junit.rules.ExpectedException;
 @Category(ParallelizableTests.class)
 public class PreparedStatementInvalidationIT {
 
-  @Rule public CcmRule ccmRule = CcmRule.getInstance();
+  private CcmRule ccmRule = CcmRule.getInstance();
 
-  @Rule
-  public SessionRule<CqlSession> sessionRule =
+  private SessionRule<CqlSession> sessionRule =
       SessionRule.builder(ccmRule)
           .withConfigLoader(
               SessionUtils.configLoaderBuilder()
@@ -62,6 +63,8 @@ public class PreparedStatementInvalidationIT {
                   .withDuration(DefaultDriverOption.REQUEST_TIMEOUT, Duration.ofSeconds(30))
                   .build())
           .build();
+
+  @Rule public TestRule chain = RuleChain.outerRule(ccmRule).around(sessionRule);
 
   @Rule public ExpectedException thrown = ExpectedException.none();
 

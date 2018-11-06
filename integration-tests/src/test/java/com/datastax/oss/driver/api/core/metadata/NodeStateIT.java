@@ -64,6 +64,8 @@ import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
+import org.junit.rules.RuleChain;
+import org.junit.rules.TestRule;
 import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
@@ -75,12 +77,12 @@ import org.mockito.junit.MockitoJUnitRunner;
 @RunWith(MockitoJUnitRunner.class)
 public class NodeStateIT {
 
-  public @Rule SimulacronRule simulacron = new SimulacronRule(ClusterSpec.builder().withNodes(2));
+  private SimulacronRule simulacron = new SimulacronRule(ClusterSpec.builder().withNodes(2));
 
   private NodeStateListener nodeStateListener = Mockito.mock(NodeStateListener.class);
   private InOrder inOrder;
 
-  public @Rule SessionRule<CqlSession> sessionRule =
+  private SessionRule<CqlSession> sessionRule =
       SessionRule.builder(simulacron)
           .withConfigLoader(
               SessionUtils.configLoaderBuilder()
@@ -92,6 +94,8 @@ public class NodeStateIT {
                   .build())
           .withNodeStateListener(nodeStateListener)
           .build();
+
+  @Rule public TestRule chain = RuleChain.outerRule(simulacron).around(sessionRule);
 
   private @Captor ArgumentCaptor<DefaultNode> nodeCaptor;
 

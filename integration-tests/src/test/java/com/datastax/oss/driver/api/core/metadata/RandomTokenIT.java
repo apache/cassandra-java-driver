@@ -24,15 +24,15 @@ import com.datastax.oss.driver.internal.core.metadata.token.RandomToken;
 import java.time.Duration;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
+import org.junit.rules.RuleChain;
+import org.junit.rules.TestRule;
 
 public class RandomTokenIT extends TokenITBase {
 
-  @ClassRule
-  public static CustomCcmRule ccmRule =
+  private static CustomCcmRule ccmRule =
       CustomCcmRule.builder().withNodes(3).withCreateOption("-p RandomPartitioner").build();
 
-  @ClassRule
-  public static SessionRule<CqlSession> sessionRule =
+  private static SessionRule<CqlSession> sessionRule =
       SessionRule.builder(ccmRule)
           .withKeyspace(false)
           .withConfigLoader(
@@ -40,6 +40,8 @@ public class RandomTokenIT extends TokenITBase {
                   .withDuration(DefaultDriverOption.REQUEST_TIMEOUT, Duration.ofSeconds(30))
                   .build())
           .build();
+
+  @ClassRule public static TestRule chain = RuleChain.outerRule(ccmRule).around(sessionRule);
 
   public RandomTokenIT() {
     super(RandomToken.class, false);

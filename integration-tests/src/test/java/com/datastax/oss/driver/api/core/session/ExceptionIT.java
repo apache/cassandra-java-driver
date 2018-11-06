@@ -41,15 +41,15 @@ import org.junit.Before;
 import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
+import org.junit.rules.RuleChain;
+import org.junit.rules.TestRule;
 
 @Category(ParallelizableTests.class)
 public class ExceptionIT {
 
-  @ClassRule
-  public static SimulacronRule simulacron = new SimulacronRule(ClusterSpec.builder().withNodes(2));
+  private static SimulacronRule simulacron = new SimulacronRule(ClusterSpec.builder().withNodes(2));
 
-  @ClassRule
-  public static SessionRule<CqlSession> sessionRule =
+  private static SessionRule<CqlSession> sessionRule =
       SessionRule.builder(simulacron)
           .withConfigLoader(
               SessionUtils.configLoaderBuilder()
@@ -59,6 +59,8 @@ public class ExceptionIT {
                   .withClass(DefaultDriverOption.RETRY_POLICY_CLASS, DefaultRetryPolicy.class)
                   .build())
           .build();
+
+  @ClassRule public static TestRule chain = RuleChain.outerRule(simulacron).around(sessionRule);
 
   private static String QUERY_STRING = "select * from foo";
 

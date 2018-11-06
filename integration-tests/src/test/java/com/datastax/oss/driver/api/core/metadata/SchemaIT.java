@@ -38,13 +38,17 @@ import java.util.Map;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
+import org.junit.rules.RuleChain;
+import org.junit.rules.TestRule;
 
 @Category(ParallelizableTests.class)
 public class SchemaIT {
 
-  @Rule public CcmRule ccmRule = CcmRule.getInstance();
+  private CcmRule ccmRule = CcmRule.getInstance();
 
-  @Rule public SessionRule<CqlSession> sessionRule = SessionRule.builder(ccmRule).build();
+  private SessionRule<CqlSession> sessionRule = SessionRule.builder(ccmRule).build();
+
+  @Rule public TestRule chain = RuleChain.outerRule(ccmRule).around(sessionRule);
 
   @Test
   public void should_expose_system_and_test_keyspace() {

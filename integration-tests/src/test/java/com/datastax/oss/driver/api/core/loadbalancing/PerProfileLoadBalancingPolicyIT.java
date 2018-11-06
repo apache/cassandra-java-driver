@@ -38,16 +38,18 @@ import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
+import org.junit.rules.RuleChain;
+import org.junit.rules.TestRule;
 
 @Category(ParallelizableTests.class)
 public class PerProfileLoadBalancingPolicyIT {
 
   // 3 2-node DCs
-  public static @ClassRule SimulacronRule simulacron =
+  private static SimulacronRule simulacron =
       new SimulacronRule(ClusterSpec.builder().withNodes(2, 2, 2));
 
   // default lb policy should consider dc1 local, profile1 dc3, profile2 empty.
-  public static @ClassRule SessionRule<CqlSession> sessionRule =
+  private static SessionRule<CqlSession> sessionRule =
       SessionRule.builder(simulacron)
           .withConfigLoader(
               SessionUtils.configLoaderBuilder()
@@ -64,6 +66,8 @@ public class PerProfileLoadBalancingPolicyIT {
                           .build())
                   .build())
           .build();
+
+  @ClassRule public static TestRule chain = RuleChain.outerRule(simulacron).around(sessionRule);
 
   private static String QUERY_STRING = "select * from foo";
   private static final SimpleStatement QUERY = SimpleStatement.newInstance(QUERY_STRING);

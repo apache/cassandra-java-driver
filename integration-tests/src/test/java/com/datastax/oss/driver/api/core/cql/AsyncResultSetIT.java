@@ -31,6 +31,8 @@ import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
+import org.junit.rules.RuleChain;
+import org.junit.rules.TestRule;
 
 @Category(ParallelizableTests.class)
 public class AsyncResultSetIT {
@@ -40,16 +42,17 @@ public class AsyncResultSetIT {
   private static final String PARTITION_KEY1 = "part";
   private static final String PARTITION_KEY2 = "part2";
 
-  @ClassRule public static CcmRule ccm = CcmRule.getInstance();
+  private static CcmRule ccm = CcmRule.getInstance();
 
-  @ClassRule
-  public static SessionRule<CqlSession> sessionRule =
+  private static SessionRule<CqlSession> sessionRule =
       SessionRule.builder(ccm)
           .withConfigLoader(
               SessionUtils.configLoaderBuilder()
                   .withInt(DefaultDriverOption.REQUEST_PAGE_SIZE, PAGE_SIZE)
                   .build())
           .build();
+
+  @ClassRule public static TestRule chain = RuleChain.outerRule(ccm).around(sessionRule);
 
   @BeforeClass
   public static void setupSchema() {

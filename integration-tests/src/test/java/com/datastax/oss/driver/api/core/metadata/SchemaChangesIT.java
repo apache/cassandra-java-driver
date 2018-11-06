@@ -43,16 +43,17 @@ import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
+import org.junit.rules.RuleChain;
+import org.junit.rules.TestRule;
 import org.mockito.Mockito;
 
 @Category(ParallelizableTests.class)
 public class SchemaChangesIT {
 
-  @Rule public CcmRule ccmRule = CcmRule.getInstance();
+  private CcmRule ccmRule = CcmRule.getInstance();
 
   // A client that we only use to set up the tests
-  @Rule
-  public SessionRule<CqlSession> adminSessionRule =
+  private SessionRule<CqlSession> adminSessionRule =
       SessionRule.builder(ccmRule)
           .withConfigLoader(
               SessionUtils.configLoaderBuilder()
@@ -60,6 +61,8 @@ public class SchemaChangesIT {
                   .withDuration(DefaultDriverOption.METADATA_SCHEMA_WINDOW, Duration.ofSeconds(0))
                   .build())
           .build();
+
+  @Rule public TestRule chain = RuleChain.outerRule(ccmRule).around(adminSessionRule);
 
   @Before
   public void setup() {
