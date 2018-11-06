@@ -40,6 +40,12 @@ import edu.umd.cs.findbugs.annotations.NonNull;
  * <p>For each request, the driver gets a "query plan" (a list of coordinators to try) from the
  * {@link LoadBalancingPolicy}, and tries each node in sequence. This policy is invoked if the
  * request to that node fails.
+ *
+ * <p>The methods of this interface are invoked on I/O threads, therefore <b>implementations should
+ * never block</b>. In particular, don't call {@link Thread#sleep(long)} to retry after a delay:
+ * this would prevent asynchronous processing of other requests, and very negatively impact
+ * throughput. If the application needs to back off and retry later, this should be implemented in
+ * client code, not in this policy.
  */
 public interface RetryPolicy extends AutoCloseable {
 
