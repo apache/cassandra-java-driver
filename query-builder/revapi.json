@@ -15,7 +15,97 @@
           ]
         }
       }
-    }
+    },
+    "ignore": [
+      {
+        "regex": true,
+        "code": "java\\.annotation\\.removed",
+        "old": "parameter com\\.datastax\\.oss\\.driver\\.api\\.querybuilder\\.select\\.Selector com\\.datastax\\.oss\\.driver\\.api\\.querybuilder\\.select\\.Selector::range\\(.*, ===com\\.datastax\\.oss\\.driver\\.api\\.querybuilder\\.term\\.Term===, com\\.datastax\\.oss\\.driver\\.api\\.querybuilder\\.term\\.Term\\).*",
+        "new": "parameter com\\.datastax\\.oss\\.driver\\.api\\.querybuilder\\.select\\.Selector com\\.datastax\\.oss\\.driver\\.api\\.querybuilder\\.select\\.Selector::range\\(.*, ===com\\.datastax\\.oss\\.driver\\.api\\.querybuilder\\.term\\.Term===, com\\.datastax\\.oss\\.driver\\.api\\.querybuilder\\.term\\.Term\\).*",
+        "annotationType": "edu.umd.cs.findbugs.annotations.NonNull",
+        "package": "com.datastax.oss.driver.api.querybuilder.*",
+        "oldArchive": "com.datastax.oss:java-driver-query-builder:jar:4.0.0-beta2",
+        "elementKind": "parameter",
+        "justification": "Fix nullability annotations on query builder range selectors"
+      },
+      {
+        "regex": true,
+        "code": "java\\.annotation\\.added",
+        "old": "parameter com\\.datastax\\.oss\\.driver\\.api\\.querybuilder\\.select\\.Selector com\\.datastax\\.oss\\.driver\\.api\\.querybuilder\\.select\\.Selector::range\\(.*, ===com\\.datastax\\.oss\\.driver\\.api\\.querybuilder\\.term\\.Term===, com\\.datastax\\.oss\\.driver\\.api\\.querybuilder\\.term\\.Term\\).*",
+        "new": "parameter com\\.datastax\\.oss\\.driver\\.api\\.querybuilder\\.select\\.Selector com\\.datastax\\.oss\\.driver\\.api\\.querybuilder\\.select\\.Selector::range\\(.*, ===com\\.datastax\\.oss\\.driver\\.api\\.querybuilder\\.term\\.Term===, com\\.datastax\\.oss\\.driver\\.api\\.querybuilder\\.term\\.Term\\).*",
+        "annotationType": "edu.umd.cs.findbugs.annotations.Nullable",
+        "package": "com.datastax.oss.driver.api.querybuilder.*",
+        "newArchive": "com.datastax.oss:java-driver-query-builder:jar:4.0.0-beta3-SNAPSHOT",
+        "elementKind": "parameter",
+        "justification": "Fix nullability annotations on query builder range selectors"
+      },
+      {
+        "regex": true,
+        "code": "java\\.annotation\\.removed",
+        "old": "parameter com\\.datastax\\.oss\\.driver\\.api\\.querybuilder\\.select\\.Selector com\\.datastax\\.oss\\.driver\\.api\\.querybuilder\\.select\\.Selector::range\\(.*, com\\.datastax\\.oss\\.driver\\.api\\.querybuilder\\.term\\.Term, ===com\\.datastax\\.oss\\.driver\\.api\\.querybuilder\\.term\\.Term===\\).*",
+        "new": "parameter com\\.datastax\\.oss\\.driver\\.api\\.querybuilder\\.select\\.Selector com\\.datastax\\.oss\\.driver\\.api\\.querybuilder\\.select\\.Selector::range\\(.*, com\\.datastax\\.oss\\.driver\\.api\\.querybuilder\\.term\\.Term, ===com\\.datastax\\.oss\\.driver\\.api\\.querybuilder\\.term\\.Term===\\).*",
+        "annotationType": "edu.umd.cs.findbugs.annotations.NonNull",
+        "package": "com.datastax.oss.driver.api.querybuilder.*",
+        "oldArchive": "com.datastax.oss:java-driver-query-builder:jar:4.0.0-beta2",
+        "elementKind": "parameter",
+        "justification": "Fix nullability annotations on query builder range selectors"
+      },
+      {
+        "regex": true,
+        "code": "java\\.annotation\\.added",
+        "old": "parameter com\\.datastax\\.oss\\.driver\\.api\\.querybuilder\\.select\\.Selector com\\.datastax\\.oss\\.driver\\.api\\.querybuilder\\.select\\.Selector::range\\(.*, com\\.datastax\\.oss\\.driver\\.api\\.querybuilder\\.term\\.Term, ===com\\.datastax\\.oss\\.driver\\.api\\.querybuilder\\.term\\.Term===\\).*",
+        "new": "parameter com\\.datastax\\.oss\\.driver\\.api\\.querybuilder\\.select\\.Selector com\\.datastax\\.oss\\.driver\\.api\\.querybuilder\\.select\\.Selector::range\\(.*, com\\.datastax\\.oss\\.driver\\.api\\.querybuilder\\.term\\.Term, ===com\\.datastax\\.oss\\.driver\\.api\\.querybuilder\\.term\\.Term===\\).*",
+        "annotationType": "edu.umd.cs.findbugs.annotations.Nullable",
+        "package": "com.datastax.oss.driver.api.querybuilder.*",
+        "newArchive": "com.datastax.oss:java-driver-query-builder:jar:4.0.0-beta3-SNAPSHOT",
+        "elementKind": "parameter",
+        "justification": "Fix nullability annotations on query builder range selectors"
+      },
+      {
+        "regex": true,
+        "code": "java\\.annotation\\.removed",
+        "old": "parameter com\\.datastax\\.oss\\.driver\\.api\\.querybuilder\\.select\\.Select com\\.datastax\\.oss\\.driver\\.api\\.querybuilder\\.select\\.OngoingSelection::range\\(.*, ===com\\.datastax\\.oss\\.driver\\.api\\.querybuilder\\.term\\.Term===, com\\.datastax\\.oss\\.driver\\.api\\.querybuilder\\.term\\.Term\\).*",
+        "new": "parameter com\\.datastax\\.oss\\.driver\\.api\\.querybuilder\\.select\\.Select com\\.datastax\\.oss\\.driver\\.api\\.querybuilder\\.select\\.OngoingSelection::range\\(.*, ===com\\.datastax\\.oss\\.driver\\.api\\.querybuilder\\.term\\.Term===, com\\.datastax\\.oss\\.driver\\.api\\.querybuilder\\.term\\.Term\\).*",
+        "annotationType": "edu.umd.cs.findbugs.annotations.NonNull",
+        "package": "com.datastax.oss.driver.api.querybuilder.select",
+        "oldArchive": "com.datastax.oss:java-driver-query-builder:jar:4.0.0-beta2",
+        "elementKind": "parameter",
+        "justification": "Fix nullability annotations on query builder range selectors"
+      },
+      {
+        "regex": true,
+        "code": "java\\.annotation\\.added",
+        "old": "parameter com\\.datastax\\.oss\\.driver\\.api\\.querybuilder\\.select\\.Select com\\.datastax\\.oss\\.driver\\.api\\.querybuilder\\.select\\.OngoingSelection::range\\(.*, ===com\\.datastax\\.oss\\.driver\\.api\\.querybuilder\\.term\\.Term===, com\\.datastax\\.oss\\.driver\\.api\\.querybuilder\\.term\\.Term\\).*",
+        "new": "parameter com\\.datastax\\.oss\\.driver\\.api\\.querybuilder\\.select\\.Select com\\.datastax\\.oss\\.driver\\.api\\.querybuilder\\.select\\.OngoingSelection::range\\(.*, ===com\\.datastax\\.oss\\.driver\\.api\\.querybuilder\\.term\\.Term===, com\\.datastax\\.oss\\.driver\\.api\\.querybuilder\\.term\\.Term\\).*",
+        "annotationType": "edu.umd.cs.findbugs.annotations.Nullable",
+        "package": "com.datastax.oss.driver.api.querybuilder.select",
+        "newArchive": "com.datastax.oss:java-driver-query-builder:jar:4.0.0-beta3-SNAPSHOT",
+        "elementKind": "parameter",
+        "justification": "Fix nullability annotations on query builder range selectors"
+      },
+      {
+        "regex": true,
+        "code": "java\\.annotation\\.removed",
+        "old": "parameter com\\.datastax\\.oss\\.driver\\.api\\.querybuilder\\.select\\.Select com\\.datastax\\.oss\\.driver\\.api\\.querybuilder\\.select\\.OngoingSelection::range\\(.*, com\\.datastax\\.oss\\.driver\\.api\\.querybuilder\\.term\\.Term, ===com\\.datastax\\.oss\\.driver\\.api\\.querybuilder\\.term\\.Term===\\).*",
+        "new": "parameter com\\.datastax\\.oss\\.driver\\.api\\.querybuilder\\.select\\.Select com\\.datastax\\.oss\\.driver\\.api\\.querybuilder\\.select\\.OngoingSelection::range\\(.*, com\\.datastax\\.oss\\.driver\\.api\\.querybuilder\\.term\\.Term, ===com\\.datastax\\.oss\\.driver\\.api\\.querybuilder\\.term\\.Term===\\).*",
+        "annotationType": "edu.umd.cs.findbugs.annotations.NonNull",
+        "package": "com.datastax.oss.driver.api.querybuilder.select",
+        "oldArchive": "com.datastax.oss:java-driver-query-builder:jar:4.0.0-beta2",
+        "elementKind": "parameter",
+        "justification": "Fix nullability annotations on query builder range selectors"
+      },
+      {
+        "regex": true,
+        "code": "java\\.annotation\\.added",
+        "old": "parameter com\\.datastax\\.oss\\.driver\\.api\\.querybuilder\\.select\\.Select com\\.datastax\\.oss\\.driver\\.api\\.querybuilder\\.select\\.OngoingSelection::range\\(.*, com\\.datastax\\.oss\\.driver\\.api\\.querybuilder\\.term\\.Term, ===com\\.datastax\\.oss\\.driver\\.api\\.querybuilder\\.term\\.Term===\\).*",
+        "new": "parameter com\\.datastax\\.oss\\.driver\\.api\\.querybuilder\\.select\\.Select com\\.datastax\\.oss\\.driver\\.api\\.querybuilder\\.select\\.OngoingSelection::range\\(.*, com\\.datastax\\.oss\\.driver\\.api\\.querybuilder\\.term\\.Term, ===com\\.datastax\\.oss\\.driver\\.api\\.querybuilder\\.term\\.Term===\\).*",
+        "annotationType": "edu.umd.cs.findbugs.annotations.Nullable",
+        "package": "com.datastax.oss.driver.api.querybuilder.select",
+        "newArchive": "com.datastax.oss:java-driver-query-builder:jar:4.0.0-beta3-SNAPSHOT",
+        "elementKind": "parameter",
+        "justification": "Fix nullability annotations on query builder range selectors"
+      }
+    ]
   }
 }
 
