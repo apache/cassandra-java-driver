@@ -179,35 +179,34 @@ See [AccessibleByName] for an explanation of the conversion rules.
 
 ##### CQL to Java type mapping
 
-<table border="1" style="text-align:center; width:100%;margin-bottom:1em;">
-    <tr> <td><b>CQL3 data type</b></td> <td><b>Getter name</b></td> <td><b>Java type</b></td> </tr>
-    <tr> <td>ascii</td> <td>getString</td> <td>java.lang.String</td> </tr>
-    <tr> <td>bigint</td> <td>getLong</td> <td>long</td> </tr>
-    <tr> <td>blob</td> <td>getBytes</td> <td>java.nio.ByteBuffer</td> </tr>
-    <tr> <td>boolean</td> <td>getBoolean</td> <td>boolean</td> </tr>
-    <tr> <td>counter</td> <td>getLong</td> <td>long</td> </tr>
-    <tr> <td>date</td> <td>getLocalDate</td> <td>java.time.LocalDate</td> </tr>
-    <tr> <td>decimal</td> <td>getBigDecimal</td> <td>java.math.BigDecimal</td> </tr>
-    <tr> <td>double</td> <td>getDouble</td> <td>double</td> </tr>
-    <tr> <td>duration</td> <td>getCqlDuration</td> <td>CqlDuration</td> </tr>
-    <tr> <td>float</td> <td>getFloat</td> <td>float</td> </tr>
-    <tr> <td>inet</td> <td>getInetAddress</td> <td>java.net.InetAddress</td> </tr>
-    <tr> <td>int</td> <td>getInt</td> <td>int</td> </tr>
-    <tr> <td>list</td> <td>getList</td> <td>java.util.List<T></td> </tr>
-    <tr> <td>map</td> <td>getMap</td> <td>java.util.Map<K, V></td> </tr>
-    <tr> <td>set</td> <td>getSet</td> <td>java.util.Set<T></td> </tr>
-    <tr> <td>smallint</td> <td>getShort</td> <td>short</td> </tr>
-    <tr> <td>text</td> <td>getString</td> <td>java.lang.String</td> </tr>
-    <tr> <td>time</td> <td>getLocalTime</td> <td>java.time.LocalTime</td> </tr>
-    <tr> <td>timestamp</td> <td>getInstant</td> <td>java.time.Instant</td> </tr>
-    <tr> <td>timeuuid</td> <td>getUuid</td> <td>java.util.UUID</td> </tr>
-    <tr> <td>tinyint</td> <td>getByte</td> <td>byte</td> </tr>
-    <tr> <td>tuple</td> <td>getTupleValue</td> <td>TupleValue</td> </tr>
-    <tr> <td>user-defined types</td> <td>getUDTValue</td> <td>UDTValue</td> </tr>
-    <tr> <td>uuid</td> <td>getUuid</td> <td>java.util.UUID</td> </tr>
-    <tr> <td>varchar</td> <td>getString</td> <td>java.lang.String</td> </tr>
-    <tr> <td>varint</td> <td>getVarint</td> <td>java.math.BigInteger</td> </tr>
-</table>
+| CQL3 data type      | Getter name    | Java type            | See also                            |
+|---------------------|----------------|----------------------|-------------------------------------|
+| ascii               | getString      | java.lang.String     |                                     |
+| bigint              | getLong        | long                 |                                     |
+| blob                | getBytes       | java.nio.ByteBuffer  |                                     |
+| boolean             | getBoolean     | boolean              |                                     |
+| counter             | getLong        | long                 |                                     |
+| date                | getLocalDate   | java.time.LocalDate  | [Temporal types](temporal_types/)   |
+| decimal             | getBigDecimal  | java.math.BigDecimal |                                     |
+| double              | getDouble      | double               |                                     |
+| duration            | getCqlDuration | [CqlDuration]        | [Temporal types](temporal_types/)   |
+| float               | getFloat       | float                |                                     |
+| inet                | getInetAddress | java.net.InetAddress |                                     |
+| int                 | getInt         | int                  |                                     |
+| list                | getList        | java.util.List<T>    |                                     |
+| map                 | getMap         | java.util.Map<K, V>  |                                     |
+| set                 | getSet         | java.util.Set<T>     |                                     |
+| smallint            | getShort       | short                |                                     |
+| text                | getString      | java.lang.String     |                                     |
+| time                | getLocalTime   | java.time.LocalTime  | [Temporal types](temporal_types/)   |
+| timestamp           | getInstant     | java.time.Instant    | [Temporal types](temporal_types/)   |
+| timeuuid            | getUuid        | java.util.UUID       |                                     |
+| tinyint             | getByte        | byte                 |                                     |
+| tuple               | getTupleValue  | [TupleValue]         | [Tuples](tuples/)                   |
+| user-defined types  | getUDTValue    | [UDTValue]           | [User-defined types](udts/)         |
+| uuid                | getUuid        | java.util.UUID       |                                     |
+| varchar             | getString      | java.lang.String     |                                     |
+| varint              | getVarint      | java.math.BigInteger |                                     |
 
 Sometimes the driver has to infer a CQL type from a Java type (for example when handling the values 
 of [simple statements](statements/simple/)); for those that have multiple CQL equivalents, it makes
@@ -270,5 +269,8 @@ for (ColumnDefinitions.Definition definition : row.getColumnDefinitions()) {
 [CqlIdentifier]:        http://docs.datastax.com/en/drivers/java/4.0/com/datastax/oss/driver/api/core/CqlIdentifier.html
 [AccessibleByName]:     http://docs.datastax.com/en/drivers/java/4.0/com/datastax/oss/driver/api/core/data/AccessibleByName.html
 [GenericType]:          http://docs.datastax.com/en/drivers/java/4.0/com/datastax/oss/driver/api/core/type/reflect/GenericType.html
+[CqlDuration]:          https://docs.datastax.com/en/drivers/java/4.0/com/datastax/oss/driver/api/core/data/CqlDuration.html
+[TupleValue]:           https://docs.datastax.com/en/drivers/java/4.0/com/datastax/oss/driver/api/core/data/TupleValue.html
+[UdtValue]:             https://docs.datastax.com/en/drivers/java/4.0/com/datastax/oss/driver/api/core/data/UdtValue.html
 
 [CASSANDRA-10145]: https://issues.apache.org/jira/browse/CASSANDRA-10145
