@@ -1,5 +1,10 @@
 ## Changelog
 
+### 3.7.0
+
+- [improvement] JAVA-2025: Include exception message in AbstractCollectionCodec.accepts(null).
+
+
 ### 3.6.0
 
 - [improvement] JAVA-1394: Add request-queue-depth metric.
