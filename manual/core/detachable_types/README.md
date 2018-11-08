@@ -87,6 +87,34 @@ TupleValue tupleValue = tupleType.newValue().setString(0, "foo");
 When you pass a detached type to the session (for example by executing a request with a tuple value
 based on a detached tuple type), it will automatically be reattached.
 
+### Sharing data across sessions
+
+If you're reading data from one session and writing it into another, you should take a few extra
+precautions:
+
+* if you use custom codecs, they should obviously be registered with both sessions;
+
+* if the protocol version is different, you should avoid sharing UDT and tuple types; keep a
+  separate set of definitions for each session, and copy the values field by field:
+  
+    ```java
+    Row row = session1.execute("SELECT QUERY...").one();
+    UdtValue user1 = row.getUdtValue("user");
+
+    // Don't pass user1 to session2: create a new copy from userType2 instead
+    UserDefinedType userType2 =
+        session2.getMetadata().getKeyspace("ks").flatMap(ks -> ks.getUserDefinedType("user")).get();
+    UdtValue user2 = userType2.newValue();
+    user2.setString("first_name", user1.getString("first_name"));
+    user2.setString("last_name", user1.getString("last_name"));
+
+    session2.execute(SimpleStatement.newInstance("INSERT QUERY...", user2));
+    ```
+    
+    This will ensure that UDT definition are not accidentally reattached to the wrong session, and
+    use the correct protocol version to encode values.
+    
+
 ### Bottom line
 
 You only need to worry about detachable types if you serialize driver rows or data types, or if you
