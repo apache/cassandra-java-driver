@@ -27,7 +27,7 @@ import org.junit.Test;
 public class CqlDurationTest {
 
   @Test
-  public void testFromStringWithStandardPattern() {
+  public void should_parse_from_string_with_standard_pattern() {
     assertThat(CqlDuration.from("1y2mo")).isEqualTo(CqlDuration.newInstance(14, 0, 0));
     assertThat(CqlDuration.from("-1y2mo")).isEqualTo(CqlDuration.newInstance(-14, 0, 0));
     assertThat(CqlDuration.from("1Y2MO")).isEqualTo(CqlDuration.newInstance(14, 0, 0));
@@ -59,7 +59,7 @@ public class CqlDurationTest {
   }
 
   @Test
-  public void testFromStringWithIso8601Pattern() {
+  public void should_parse_from_string_with_iso8601_pattern() {
     assertThat(CqlDuration.from("P1Y2D")).isEqualTo(CqlDuration.newInstance(12, 2, 0));
     assertThat(CqlDuration.from("P1Y2M")).isEqualTo(CqlDuration.newInstance(14, 0, 0));
     assertThat(CqlDuration.from("P2W")).isEqualTo(CqlDuration.newInstance(0, 14, 0));
@@ -82,7 +82,7 @@ public class CqlDurationTest {
   }
 
   @Test
-  public void testFromStringWithIso8601AlternativePattern() {
+  public void should_parse_from_string_with_iso8601_alternative_pattern() {
     assertThat(CqlDuration.from("P0001-00-02T00:00:00"))
         .isEqualTo(CqlDuration.newInstance(12, 2, 0));
     assertThat(CqlDuration.from("P0001-02-00T00:00:00"))
@@ -108,7 +108,7 @@ public class CqlDurationTest {
   }
 
   @Test
-  public void testInvalidDurations() {
+  public void should_fail_to_parse_invalid_durations() {
     assertInvalidDuration(
         Long.MAX_VALUE + "d",
         "Invalid duration. The total number of days must be less or equal to 2147483647");
