@@ -4,6 +4,7 @@
 
 ### 4.0.0-beta3 (in progress)
 
+- [improvement] JAVA-2026: Make CqlDuration implement TemporalAmount
 - [improvement] JAVA-2017: Slightly optimize conversion methods on the hot path
 - [improvement] JAVA-2010: Make dependencies to annotations required again
 - [improvement] JAVA-1978: Add a config option to keep contact points unresolved
