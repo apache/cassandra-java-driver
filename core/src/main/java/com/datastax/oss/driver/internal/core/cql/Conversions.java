@@ -248,7 +248,7 @@ public class Conversions {
       ByteBuffer[] encodedValues = new ByteBuffer[values.size()];
       int i = 0;
       for (Object value : values) {
-        encodedValues[i] = (value == null) ? null : encode(value, codecRegistry, protocolVersion);
+        encodedValues[i++] = (value == null) ? null : encode(value, codecRegistry, protocolVersion);
       }
       return NullAllowingImmutableList.of(encodedValues);
     }
