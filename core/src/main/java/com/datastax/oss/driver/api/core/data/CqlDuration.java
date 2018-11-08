@@ -18,7 +18,16 @@ package com.datastax.oss.driver.api.core.data;
 import com.datastax.oss.driver.shaded.guava.common.annotations.VisibleForTesting;
 import com.datastax.oss.driver.shaded.guava.common.base.Objects;
 import com.datastax.oss.driver.shaded.guava.common.base.Preconditions;
+import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableList;
 import edu.umd.cs.findbugs.annotations.NonNull;
+import java.time.Duration;
+import java.time.Period;
+import java.time.temporal.ChronoUnit;
+import java.time.temporal.Temporal;
+import java.time.temporal.TemporalAmount;
+import java.time.temporal.TemporalUnit;
+import java.time.temporal.UnsupportedTemporalTypeException;
+import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import net.jcip.annotations.Immutable;
@@ -32,7 +41,7 @@ import net.jcip.annotations.Immutable;
  * in time, regardless of the calendar).
  */
 @Immutable
-public final class CqlDuration {
+public final class CqlDuration implements TemporalAmount {
 
   @VisibleForTesting static final long NANOS_PER_MICRO = 1000L;
   @VisibleForTesting static final long NANOS_PER_MILLI = 1000 * NANOS_PER_MICRO;
@@ -61,6 +70,9 @@ public final class CqlDuration {
   /** The Regexp used to parse the duration when provided in the ISO 8601 alternative format. */
   private static final Pattern ISO8601_ALTERNATIVE_PATTERN =
       Pattern.compile("P(\\d{4})-(\\d{2})-(\\d{2})T(\\d{2}):(\\d{2}):(\\d{2})");
+
+  private static final ImmutableList<TemporalUnit> TEMPORAL_UNITS =
+      ImmutableList.of(ChronoUnit.MONTHS, ChronoUnit.DAYS, ChronoUnit.NANOS);
 
   private final int months;
   private final int days;
@@ -288,6 +300,54 @@ public final class CqlDuration {
    */
   public long getNanoseconds() {
     return nanoseconds;
+  }
+
+  /**
+   * {@inheritDoc}
+   *
+   * <p>This implementation converts the months and days components to a {@link Period}, and the
+   * nanosecond component to a {@link Duration}, and adds those two amounts to the temporal object.
+   * Therefore the chronology of the temporal must be either the ISO chronology or null.
+   *
+   * @see Period#addTo(Temporal)
+   * @see Duration#addTo(Temporal)
+   */
+  @Override
+  public Temporal addTo(Temporal temporal) {
+    return temporal.plus(Period.of(0, months, days)).plus(Duration.ofNanos(nanoseconds));
+  }
+
+  /**
+   * {@inheritDoc}
+   *
+   * <p>This implementation converts the months and days components to a {@link Period}, and the
+   * nanosecond component to a {@link Duration}, and subtracts those two amounts to the temporal
+   * object. Therefore the chronology of the temporal must be either the ISO chronology or null.
+   *
+   * @see Period#subtractFrom(Temporal)
+   * @see Duration#subtractFrom(Temporal)
+   */
+  @Override
+  public Temporal subtractFrom(Temporal temporal) {
+    return temporal.minus(Period.of(0, months, days)).minus(Duration.ofNanos(nanoseconds));
+  }
+
+  @Override
+  public long get(TemporalUnit unit) {
+    if (unit == ChronoUnit.MONTHS) {
+      return months;
+    } else if (unit == ChronoUnit.DAYS) {
+      return days;
+    } else if (unit == ChronoUnit.NANOS) {
+      return nanoseconds;
+    } else {
+      throw new UnsupportedTemporalTypeException("Unsupported unit: " + unit);
+    }
+  }
+
+  @Override
+  public List<TemporalUnit> getUnits() {
+    return TEMPORAL_UNITS;
   }
 
   @Override

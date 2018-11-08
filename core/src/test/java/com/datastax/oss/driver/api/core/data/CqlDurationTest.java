@@ -16,8 +16,12 @@
 package com.datastax.oss.driver.api.core.data;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.assertj.core.api.Assertions.fail;
 
+import java.time.ZonedDateTime;
+import java.time.temporal.ChronoUnit;
+import java.time.temporal.UnsupportedTemporalTypeException;
 import org.junit.Test;
 
 public class CqlDurationTest {
@@ -127,5 +131,36 @@ public class CqlDurationTest {
     } catch (RuntimeException e) {
       assertThat(e.getMessage()).isEqualTo(expectedErrorMessage);
     }
+  }
+
+  @Test
+  public void should_get_by_unit() {
+    CqlDuration duration = CqlDuration.from("3mo2d15s");
+    assertThat(duration.get(ChronoUnit.MONTHS)).isEqualTo(3);
+    assertThat(duration.get(ChronoUnit.DAYS)).isEqualTo(2);
+    assertThat(duration.get(ChronoUnit.NANOS)).isEqualTo(15 * CqlDuration.NANOS_PER_SECOND);
+    assertThatThrownBy(() -> duration.get(ChronoUnit.YEARS))
+        .isInstanceOf(UnsupportedTemporalTypeException.class);
+  }
+
+  @Test
+  public void should_add_to_temporal() {
+    ZonedDateTime dateTime = ZonedDateTime.parse("2018-10-04T00:00-07:00[America/Los_Angeles]");
+    assertThat(dateTime.plus(CqlDuration.from("1mo")))
+        .isEqualTo("2018-11-04T00:00-07:00[America/Los_Angeles]");
+    assertThat(dateTime.plus(CqlDuration.from("1mo1h10s")))
+        .isEqualTo("2018-11-04T01:00:10-07:00[America/Los_Angeles]");
+    // 11-04 2:00 is daylight saving time end
+    assertThat(dateTime.plus(CqlDuration.from("1mo3h")))
+        .isEqualTo("2018-11-04T02:00-08:00[America/Los_Angeles]");
+  }
+
+  @Test
+  public void should_subtract_from_temporal() {
+    ZonedDateTime dateTime = ZonedDateTime.parse("2018-10-04T00:00-07:00[America/Los_Angeles]");
+    assertThat(dateTime.minus(CqlDuration.from("2mo")))
+        .isEqualTo("2018-08-04T00:00-07:00[America/Los_Angeles]");
+    assertThat(dateTime.minus(CqlDuration.from("1h15s15ns")))
+        .isEqualTo("2018-10-03T22:59:44.999999985-07:00[America/Los_Angeles]");
   }
 }
