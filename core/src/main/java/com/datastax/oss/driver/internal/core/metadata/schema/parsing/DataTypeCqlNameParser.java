@@ -119,7 +119,7 @@ public class DataTypeCqlNameParser implements DataTypeParser {
     }
 
     // Otherwise it's a UDT
-    CqlIdentifier name = CqlIdentifier.fromInternal(type);
+    CqlIdentifier name = CqlIdentifier.fromCql(type);
     if (userTypes != null) {
       UserDefinedType userType = userTypes.get(name);
       if (userType == null) {
