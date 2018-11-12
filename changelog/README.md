@@ -1,6 +1,6 @@
 ## Changelog
 
-### 3.7.0
+### 3.7.0 (In progress)
 
 - [improvement] JAVA-2025: Include exception message in AbstractCollectionCodec.accepts(null).
 
