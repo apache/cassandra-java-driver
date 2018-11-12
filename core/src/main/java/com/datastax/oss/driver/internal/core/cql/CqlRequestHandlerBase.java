@@ -532,7 +532,19 @@ public abstract class CqlRequestHandlerBase implements Throttled {
               .getTopologyMonitor()
               .checkSchemaAgreement()
               .thenCombine(
-                  context.getMetadataManager().refreshSchema(schemaChange.keyspace, false, false),
+                  context
+                      .getMetadataManager()
+                      .refreshSchema(schemaChange.keyspace, false, false)
+                      .exceptionally(
+                          error -> {
+                            Loggers.warnWithException(
+                                LOG,
+                                "[{}] Error while refreshing schema after DDL query, "
+                                    + "new metadata might be incomplete",
+                                logPrefix,
+                                error);
+                            return null;
+                          }),
                   (schemaInAgreement, metadata) -> schemaInAgreement)
               .whenComplete(
                   ((schemaInAgreement, error) ->
