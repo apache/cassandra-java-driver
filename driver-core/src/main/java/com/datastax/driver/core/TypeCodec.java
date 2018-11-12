@@ -1850,6 +1850,7 @@ public abstract class TypeCodec<T> {
 
     @Override
     public boolean accepts(Object value) {
+      checkNotNull(value, "Parameter value cannot be null");
       if (getJavaType().getRawType().isAssignableFrom(value.getClass())) {
         // runtime type ok, now check element type
         Collection<?> coll = (Collection<?>) value;
