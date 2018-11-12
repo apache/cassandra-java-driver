@@ -90,7 +90,7 @@ public abstract class CqlPrepareHandlerBase implements Throttled {
   private final Message message;
   private final EventExecutor scheduler;
   private final Duration timeout;
-  private volatile ScheduledFuture<?> timeoutFuture;
+  private final ScheduledFuture<?> timeoutFuture;
   private final RetryPolicy retryPolicy;
   private final RequestThrottler throttler;
   private final Boolean prepareOnAllNodes;
@@ -150,13 +150,13 @@ public abstract class CqlPrepareHandlerBase implements Throttled {
         request.getTimeout() != null
             ? request.getTimeout()
             : executionProfile.getDuration(DefaultDriverOption.REQUEST_TIMEOUT);
+    this.timeoutFuture = scheduleTimeout(timeout);
     this.prepareOnAllNodes = executionProfile.getBoolean(DefaultDriverOption.PREPARE_ON_ALL_NODES);
 
     this.throttler = context.getRequestThrottler();
   }
 
   protected void start() {
-    this.timeoutFuture = scheduleTimeout();
     this.throttler.register(this);
   }
 
@@ -174,7 +174,7 @@ public abstract class CqlPrepareHandlerBase implements Throttled {
     sendRequest(null, 0);
   }
 
-  private ScheduledFuture<?> scheduleTimeout() {
+  private ScheduledFuture<?> scheduleTimeout(Duration timeout) {
     if (timeout.toNanos() > 0) {
       return scheduler.schedule(
           () -> {

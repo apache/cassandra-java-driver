@@ -121,7 +121,7 @@ public abstract class CqlRequestHandlerBase implements Throttled {
   private final AtomicInteger startedSpeculativeExecutionsCount;
 
   private final Duration timeout;
-  private volatile ScheduledFuture<?> timeoutFuture;
+  private final ScheduledFuture<?> timeoutFuture;
   private final List<ScheduledFuture<?>> scheduledExecutions;
   private final List<NodeResponseCallback> inFlightCallbacks;
   private final RetryPolicy retryPolicy;
@@ -185,6 +185,7 @@ public abstract class CqlRequestHandlerBase implements Throttled {
         statement.getTimeout() != null
             ? statement.getTimeout()
             : executionProfile.getDuration(DefaultDriverOption.REQUEST_TIMEOUT);
+    this.timeoutFuture = scheduleTimeout(timeout);
 
     this.activeExecutionsCount = new AtomicInteger(1);
     this.startedSpeculativeExecutionsCount = new AtomicInteger(0);
@@ -198,7 +199,6 @@ public abstract class CqlRequestHandlerBase implements Throttled {
   }
 
   protected void start() {
-    this.timeoutFuture = scheduleTimeout();
     this.throttler.register(this);
   }
 
@@ -217,7 +217,7 @@ public abstract class CqlRequestHandlerBase implements Throttled {
     sendRequest(null, 0, 0, true);
   }
 
-  private ScheduledFuture<?> scheduleTimeout() {
+  private ScheduledFuture<?> scheduleTimeout(Duration timeout) {
     if (timeout.toNanos() > 0) {
       return scheduler.schedule(
           () ->
