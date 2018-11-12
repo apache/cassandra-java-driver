@@ -4,6 +4,7 @@
 
 ### 4.0.0-beta3 (in progress)
 
+- [bug] JAVA-1947: Make schema parsing more lenient and allow missing system_virtual_schema
 - [bug] JAVA-2028: Use CQL form when parsing UDT types in system tables
 - [improvement] JAVA-1918: Document temporal types
 - [improvement] JAVA-1914: Optimize use of System.nanoTime in CqlRequestHandlerBase

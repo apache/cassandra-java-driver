@@ -22,6 +22,7 @@ import com.datastax.oss.driver.internal.core.adminrequest.AdminRequestHandler;
 import com.datastax.oss.driver.internal.core.adminrequest.AdminResult;
 import com.datastax.oss.driver.internal.core.adminrequest.AdminRow;
 import com.datastax.oss.driver.internal.core.channel.DriverChannel;
+import com.datastax.oss.driver.internal.core.util.Loggers;
 import com.datastax.oss.driver.internal.core.util.NanoTime;
 import com.datastax.oss.driver.internal.core.util.concurrent.RunOrSchedule;
 import com.datastax.oss.driver.shaded.guava.common.annotations.VisibleForTesting;
@@ -131,35 +132,40 @@ public abstract class CassandraSchemaQueries implements SchemaQueries {
 
     schemaRowsBuilder = new CassandraSchemaRows.Builder(isCassandraV3, refreshFuture, logPrefix);
 
-    query(selectKeyspacesQuery() + whereClause, schemaRowsBuilder::withKeyspaces);
-    query(selectTypesQuery() + whereClause, schemaRowsBuilder::withTypes);
-    query(selectTablesQuery() + whereClause, schemaRowsBuilder::withTables);
-    query(selectColumnsQuery() + whereClause, schemaRowsBuilder::withColumns);
+    query(selectKeyspacesQuery() + whereClause, schemaRowsBuilder::withKeyspaces, true);
+    query(selectTypesQuery() + whereClause, schemaRowsBuilder::withTypes, true);
+    query(selectTablesQuery() + whereClause, schemaRowsBuilder::withTables, true);
+    query(selectColumnsQuery() + whereClause, schemaRowsBuilder::withColumns, true);
     selectIndexesQuery()
-        .ifPresent(select -> query(select + whereClause, schemaRowsBuilder::withIndexes));
+        .ifPresent(select -> query(select + whereClause, schemaRowsBuilder::withIndexes, true));
     selectViewsQuery()
-        .ifPresent(select -> query(select + whereClause, schemaRowsBuilder::withViews));
+        .ifPresent(select -> query(select + whereClause, schemaRowsBuilder::withViews, true));
     selectFunctionsQuery()
-        .ifPresent(select -> query(select + whereClause, schemaRowsBuilder::withFunctions));
+        .ifPresent(select -> query(select + whereClause, schemaRowsBuilder::withFunctions, true));
     selectAggregatesQuery()
-        .ifPresent(select -> query(select + whereClause, schemaRowsBuilder::withAggregates));
+        .ifPresent(select -> query(select + whereClause, schemaRowsBuilder::withAggregates, true));
     selectVirtualKeyspacesQuery()
-        .ifPresent(select -> query(select + whereClause, schemaRowsBuilder::withVirtualKeyspaces));
+        .ifPresent(
+            select -> query(select + whereClause, schemaRowsBuilder::withVirtualKeyspaces, false));
     selectVirtualTablesQuery()
-        .ifPresent(select -> query(select + whereClause, schemaRowsBuilder::withVirtualTables));
+        .ifPresent(
+            select -> query(select + whereClause, schemaRowsBuilder::withVirtualTables, false));
     selectVirtualColumnsQuery()
-        .ifPresent(select -> query(select + whereClause, schemaRowsBuilder::withVirtualColumns));
+        .ifPresent(
+            select -> query(select + whereClause, schemaRowsBuilder::withVirtualColumns, false));
   }
 
   private void query(
       String queryString,
-      Function<Iterable<AdminRow>, CassandraSchemaRows.Builder> builderUpdater) {
+      Function<Iterable<AdminRow>, CassandraSchemaRows.Builder> builderUpdater,
+      boolean warnIfMissing) {
     assert adminExecutor.inEventLoop();
 
     pendingQueries += 1;
     query(queryString)
         .whenCompleteAsync(
-            (result, error) -> handleResult(result, error, builderUpdater), adminExecutor);
+            (result, error) -> handleResult(result, error, builderUpdater, warnIfMissing),
+            adminExecutor);
   }
 
   @VisibleForTesting
@@ -167,34 +173,48 @@ public abstract class CassandraSchemaQueries implements SchemaQueries {
     return AdminRequestHandler.query(channel, query, timeout, pageSize, logPrefix).start();
   }
 
+  /**
+   * @param warnIfMissing whether to log a warning if the queried table does not exist: some DDAC
+   *     versions report release_version > 4, but don't have a system_virtual_schema keyspace, so we
+   *     want to ignore those errors silently.
+   */
   private void handleResult(
       AdminResult result,
       Throwable error,
-      Function<Iterable<AdminRow>, CassandraSchemaRows.Builder> builderUpdater) {
-    if (schemaRowsFuture.isDone()) { // Another query failed already, ignore
-      return;
-    }
+      Function<Iterable<AdminRow>, CassandraSchemaRows.Builder> builderUpdater,
+      boolean warnIfMissing) {
     if (error != null) {
-      // Any error fails the whole refresh
-      schemaRowsFuture.completeExceptionally(error);
+      if (warnIfMissing || !error.getMessage().contains("does not exist")) {
+        Loggers.warnWithException(
+            LOG,
+            "[{}] Error during schema refresh, new metadata might be incomplete",
+            logPrefix,
+            error);
+      }
+      // Proceed without the results of this query, the rest of the schema refresh will run on a
+      // "best effort" basis
+      markQueryComplete();
     } else {
       // Store the rows of the current page in the builder
       schemaRowsBuilder = builderUpdater.apply(result);
-      // Move to the next page, or complete if we're the last query
       if (result.hasNextPage()) {
         result
             .nextPage()
             .whenCompleteAsync(
-                (nextResult, nextError) -> handleResult(nextResult, nextError, builderUpdater),
+                (nextResult, nextError) ->
+                    handleResult(nextResult, nextError, builderUpdater, warnIfMissing),
                 adminExecutor);
       } else {
-        pendingQueries -= 1;
-        if (pendingQueries == 0) {
-          LOG.debug(
-              "[{}] Schema queries took {}", logPrefix, NanoTime.formatTimeSince(startTimeNs));
-          schemaRowsFuture.complete(schemaRowsBuilder.build());
-        }
+        markQueryComplete();
       }
+    }
+  }
+
+  private void markQueryComplete() {
+    pendingQueries -= 1;
+    if (pendingQueries == 0) {
+      LOG.debug("[{}] Schema queries took {}", logPrefix, NanoTime.formatTimeSince(startTimeNs));
+      schemaRowsFuture.complete(schemaRowsBuilder.build());
     }
   }
 }
