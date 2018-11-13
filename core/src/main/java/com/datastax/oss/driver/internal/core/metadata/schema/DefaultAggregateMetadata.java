@@ -149,4 +149,15 @@ public class DefaultAggregateMetadata implements AggregateMetadata {
         stateFuncSignature,
         stateType);
   }
+
+  @Override
+  public String toString() {
+    return "DefaultAggregateMetadata@"
+        + Integer.toHexString(hashCode())
+        + "("
+        + keyspace.asInternal()
+        + "."
+        + signature
+        + ")";
+  }
 }
