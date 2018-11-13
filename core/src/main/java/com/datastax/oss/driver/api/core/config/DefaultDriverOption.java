@@ -168,6 +168,9 @@ public enum DefaultDriverOption implements DriverOption {
   COALESCER_INTERVAL("advanced.coalescer.reschedule-interval"),
 
   RESOLVE_CONTACT_POINTS("advanced.resolve-contact-points"),
+
+  NETTY_TIMER_TICK_DURATION("advanced.netty.timer.tick-duration"),
+  NETTY_TIMER_TICKS_PER_WHEEL("advanced.netty.timer.ticks-per-wheel"),
   ;
 
   private final String path;

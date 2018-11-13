@@ -20,6 +20,7 @@ import io.netty.bootstrap.Bootstrap;
 import io.netty.buffer.ByteBufAllocator;
 import io.netty.channel.Channel;
 import io.netty.channel.EventLoopGroup;
+import io.netty.util.Timer;
 import io.netty.util.concurrent.EventExecutorGroup;
 import io.netty.util.concurrent.Future;
 
@@ -80,4 +81,12 @@ public interface NettyOptions {
    * groups.
    */
   Future<Void> onClose();
+
+  /**
+   * The Timer on which non-I/O events should be scheduled. This must always return the same
+   * instance. This timer should be used for things like request timeout events and scheduling
+   * speculative executions. Under high load, scheduling these non-I/O events on a separate, lower
+   * resolution timer will allow for higher overall I/O throughput.
+   */
+  Timer getTimer();
 }

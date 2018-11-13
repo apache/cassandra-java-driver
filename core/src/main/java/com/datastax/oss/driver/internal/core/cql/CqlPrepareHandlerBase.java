@@ -51,10 +51,10 @@ import com.datastax.oss.protocol.internal.request.Prepare;
 import com.datastax.oss.protocol.internal.response.Error;
 import com.datastax.oss.protocol.internal.response.result.Prepared;
 import edu.umd.cs.findbugs.annotations.NonNull;
-import io.netty.util.concurrent.EventExecutor;
+import io.netty.util.Timeout;
+import io.netty.util.Timer;
 import io.netty.util.concurrent.Future;
 import io.netty.util.concurrent.GenericFutureListener;
-import io.netty.util.concurrent.ScheduledFuture;
 import java.nio.ByteBuffer;
 import java.time.Duration;
 import java.util.AbstractMap;
@@ -88,9 +88,9 @@ public abstract class CqlPrepareHandlerBase implements Throttled {
   private final Queue<Node> queryPlan;
   protected final CompletableFuture<PreparedStatement> result;
   private final Message message;
-  private final EventExecutor scheduler;
+  private final Timer timer;
   private final Duration timeout;
-  private final ScheduledFuture<?> timeoutFuture;
+  private final Timeout scheduledTimeout;
   private final RetryPolicy retryPolicy;
   private final RequestThrottler throttler;
   private final Boolean prepareOnAllNodes;
@@ -144,13 +144,13 @@ public abstract class CqlPrepareHandlerBase implements Throttled {
     }
     this.message =
         new Prepare(request.getQuery(), (keyspace == null) ? null : keyspace.asInternal());
-    this.scheduler = context.getNettyOptions().ioEventLoopGroup().next();
+    this.timer = context.getNettyOptions().getTimer();
 
     this.timeout =
         request.getTimeout() != null
             ? request.getTimeout()
             : executionProfile.getDuration(DefaultDriverOption.REQUEST_TIMEOUT);
-    this.timeoutFuture = scheduleTimeout(timeout);
+    this.scheduledTimeout = scheduleTimeout(timeout);
     this.prepareOnAllNodes = executionProfile.getBoolean(DefaultDriverOption.PREPARE_ON_ALL_NODES);
 
     this.throttler = context.getRequestThrottler();
@@ -171,16 +171,16 @@ public abstract class CqlPrepareHandlerBase implements Throttled {
     sendRequest(null, 0);
   }
 
-  private ScheduledFuture<?> scheduleTimeout(Duration timeout) {
-    if (timeout.toNanos() > 0) {
-      return scheduler.schedule(
-          () -> {
-            setFinalError(new DriverTimeoutException("Query timed out after " + timeout));
+  private Timeout scheduleTimeout(Duration timeoutDuration) {
+    if (timeoutDuration.toNanos() > 0) {
+      return this.timer.newTimeout(
+          (Timeout timeout1) -> {
+            setFinalError(new DriverTimeoutException("Query timed out after " + timeoutDuration));
             if (initialCallback != null) {
               initialCallback.cancel();
             }
           },
-          timeout.toNanos(),
+          timeoutDuration.toNanos(),
           TimeUnit.NANOSECONDS);
     } else {
       return null;
@@ -188,8 +188,8 @@ public abstract class CqlPrepareHandlerBase implements Throttled {
   }
 
   private void cancelTimeout() {
-    if (this.timeoutFuture != null) {
-      this.timeoutFuture.cancel(false);
+    if (this.scheduledTimeout != null) {
+      this.scheduledTimeout.cancel();
     }
   }
 

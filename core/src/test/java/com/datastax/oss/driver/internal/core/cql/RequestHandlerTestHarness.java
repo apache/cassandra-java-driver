@@ -47,9 +47,11 @@ import com.datastax.oss.driver.internal.core.session.DefaultSession;
 import com.datastax.oss.driver.internal.core.session.throttling.PassThroughRequestThrottler;
 import com.datastax.oss.driver.internal.core.tracker.NoopRequestTracker;
 import com.datastax.oss.driver.internal.core.type.codec.registry.DefaultCodecRegistry;
-import com.datastax.oss.driver.internal.core.util.concurrent.ScheduledTaskCapturingEventLoop;
+import com.datastax.oss.driver.internal.core.util.concurrent.CapturingTimer;
+import com.datastax.oss.driver.internal.core.util.concurrent.CapturingTimer.CapturedTimeout;
 import com.datastax.oss.protocol.internal.Frame;
 import io.netty.channel.EventLoopGroup;
+import io.netty.util.TimerTask;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -74,7 +76,7 @@ public class RequestHandlerTestHarness implements AutoCloseable {
     return new Builder();
   }
 
-  private final ScheduledTaskCapturingEventLoop schedulingEventLoop;
+  private final CapturingTimer timer = new CapturingTimer();
   private final Map<Node, ChannelPool> pools;
 
   @Mock protected InternalDriverContext context;
@@ -93,8 +95,7 @@ public class RequestHandlerTestHarness implements AutoCloseable {
   protected RequestHandlerTestHarness(Builder builder) {
     MockitoAnnotations.initMocks(this);
 
-    this.schedulingEventLoop = new ScheduledTaskCapturingEventLoop(eventLoopGroup);
-    Mockito.when(eventLoopGroup.next()).thenReturn(schedulingEventLoop);
+    Mockito.when(nettyOptions.getTimer()).thenReturn(timer);
     Mockito.when(nettyOptions.ioEventLoopGroup()).thenReturn(eventLoopGroup);
     Mockito.when(context.getNettyOptions()).thenReturn(nettyOptions);
 
@@ -192,13 +193,17 @@ public class RequestHandlerTestHarness implements AutoCloseable {
    * Returns the next task that was scheduled on the request handler's admin executor. The test must
    * run it manually.
    */
-  public ScheduledTaskCapturingEventLoop.CapturedTask<?> nextScheduledTask() {
-    return schedulingEventLoop.nextTask();
+  public CapturedTimeout nextScheduledTimeout() {
+    return timer.getNextTimeout();
+  }
+
+  public void runNextTask() {
+    TimerTask task = timer.getNextTimeout().task();
   }
 
   @Override
   public void close() {
-    schedulingEventLoop.shutdownGracefully().getNow();
+    timer.stop();
   }
 
   public static class Builder {
