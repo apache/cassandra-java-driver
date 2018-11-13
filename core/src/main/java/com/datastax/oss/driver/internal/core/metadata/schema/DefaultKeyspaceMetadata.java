@@ -138,4 +138,13 @@ public class DefaultKeyspaceMetadata implements KeyspaceMetadata {
     return Objects.hash(
         name, durableWrites, replication, types, tables, views, functions, aggregates);
   }
+
+  @Override
+  public String toString() {
+    return "DefaultKeyspaceMetadata@"
+        + Integer.toHexString(hashCode())
+        + "("
+        + name.asInternal()
+        + ")";
+  }
 }

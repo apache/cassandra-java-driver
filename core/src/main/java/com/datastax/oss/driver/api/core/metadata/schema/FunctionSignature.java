@@ -95,4 +95,19 @@ public class FunctionSignature {
   public int hashCode() {
     return Objects.hash(name, parameterTypes);
   }
+
+  @Override
+  public String toString() {
+    StringBuilder builder = new StringBuilder(name.asInternal()).append('(');
+    boolean first = true;
+    for (DataType type : parameterTypes) {
+      if (first) {
+        first = false;
+      } else {
+        builder.append(", ");
+      }
+      builder.append(type.asCql(true, true));
+    }
+    return builder.append(')').toString();
+  }
 }

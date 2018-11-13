@@ -92,4 +92,19 @@ public class DefaultColumnMetadata implements ColumnMetadata {
   public int hashCode() {
     return Objects.hash(keyspace, parent, name, dataType, isStatic);
   }
+
+  @Override
+  public String toString() {
+    return "DefaultColumnMetadata@"
+        + Integer.toHexString(hashCode())
+        + "("
+        + keyspace.asInternal()
+        + "."
+        + parent.asInternal()
+        + "."
+        + name.asInternal()
+        + " "
+        + dataType.asCql(true, false)
+        + ")";
+  }
 }

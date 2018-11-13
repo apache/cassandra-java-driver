@@ -122,4 +122,15 @@ public class DefaultFunctionMetadata implements FunctionMetadata {
     return Objects.hash(
         keyspace, signature, parameterNames, body, calledOnNullInput, language, returnType);
   }
+
+  @Override
+  public String toString() {
+    return "DefaultFunctionMetadata@"
+        + Integer.toHexString(hashCode())
+        + "("
+        + keyspace.asInternal()
+        + "."
+        + signature
+        + ")";
+  }
 }

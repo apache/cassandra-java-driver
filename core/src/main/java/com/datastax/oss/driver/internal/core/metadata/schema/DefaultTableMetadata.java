@@ -22,7 +22,11 @@ import com.datastax.oss.driver.api.core.metadata.schema.IndexMetadata;
 import com.datastax.oss.driver.api.core.metadata.schema.TableMetadata;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import edu.umd.cs.findbugs.annotations.Nullable;
-import java.util.*;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.UUID;
 import net.jcip.annotations.Immutable;
 
 @Immutable
@@ -144,5 +148,16 @@ public class DefaultTableMetadata implements TableMetadata {
   public int hashCode() {
     return Objects.hash(
         keyspace, name, id, compactStorage, partitionKey, clusteringColumns, columns, indexes);
+  }
+
+  @Override
+  public String toString() {
+    return "DefaultTableMetadata@"
+        + Integer.toHexString(hashCode())
+        + "("
+        + keyspace.asInternal()
+        + "."
+        + name.asInternal()
+        + ")";
   }
 }

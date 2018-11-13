@@ -161,4 +161,15 @@ public class DefaultViewMetadata implements ViewMetadata {
         columns,
         options);
   }
+
+  @Override
+  public String toString() {
+    return "DefaultViewMetadata@"
+        + Integer.toHexString(hashCode())
+        + "("
+        + keyspace.asInternal()
+        + "."
+        + name.asInternal()
+        + ")";
+  }
 }

@@ -105,4 +105,17 @@ public class DefaultIndexMetadata implements IndexMetadata {
   public int hashCode() {
     return Objects.hash(keyspace, table, name, kind, target, options);
   }
+
+  @Override
+  public String toString() {
+    return "DefaultIndexMetadata@"
+        + Integer.toHexString(hashCode())
+        + "("
+        + keyspace.asInternal()
+        + "."
+        + table.asInternal()
+        + "."
+        + name.asInternal()
+        + ")";
+  }
 }
