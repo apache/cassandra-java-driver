@@ -26,6 +26,8 @@ import io.netty.channel.DefaultEventLoopGroup;
 import io.netty.channel.EventLoopGroup;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.nio.NioSocketChannel;
+import io.netty.util.HashedWheelTimer;
+import io.netty.util.Timer;
 import io.netty.util.concurrent.DefaultPromise;
 import io.netty.util.concurrent.EventExecutorGroup;
 import io.netty.util.concurrent.Future;
@@ -45,6 +47,7 @@ public class DefaultNettyOptions implements NettyOptions {
   private final int adminShutdownQuietPeriod;
   private final int adminShutdownTimeout;
   private final TimeUnit adminShutdownUnit;
+  private final Timer timer;
 
   public DefaultNettyOptions(InternalDriverContext context) {
     DriverExecutionProfile config = context.getConfig().getDefaultProfile();
@@ -74,6 +77,18 @@ public class DefaultNettyOptions implements NettyOptions {
             .setNameFormat(context.getSessionName() + "-admin-%d")
             .build();
     this.adminEventLoopGroup = new DefaultEventLoopGroup(adminGroupSize, adminThreadFactory);
+    // setup the Timer
+    ThreadFactory timerThreadFactory =
+        new ThreadFactoryBuilder()
+            .setThreadFactory(safeFactory)
+            .setNameFormat(context.getSessionName() + "-timer-%d")
+            .build();
+    timer =
+        new HashedWheelTimer(
+            timerThreadFactory,
+            config.getDuration(DefaultDriverOption.NETTY_TIMER_TICK_DURATION).toNanos(),
+            TimeUnit.NANOSECONDS,
+            config.getInt(DefaultDriverOption.NETTY_TIMER_TICKS_PER_WHEEL));
   }
 
   @Override
@@ -117,6 +132,13 @@ public class DefaultNettyOptions implements NettyOptions {
             ioShutdownQuietPeriod, ioShutdownTimeout, ioShutdownUnit));
     DefaultPromise<Void> closeFuture = new DefaultPromise<>(GlobalEventExecutor.INSTANCE);
     combiner.finish(closeFuture);
+    // stop the timer as well
+    timer.stop();
     return closeFuture;
+  }
+
+  @Override
+  public synchronized Timer getTimer() {
+    return timer;
   }
 }

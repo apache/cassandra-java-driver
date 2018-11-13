@@ -70,10 +70,10 @@ import com.datastax.oss.protocol.internal.response.result.Void;
 import com.datastax.oss.protocol.internal.util.Bytes;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import io.netty.handler.codec.EncoderException;
-import io.netty.util.concurrent.EventExecutor;
+import io.netty.util.Timeout;
+import io.netty.util.Timer;
 import io.netty.util.concurrent.Future;
 import io.netty.util.concurrent.GenericFutureListener;
-import io.netty.util.concurrent.ScheduledFuture;
 import java.nio.ByteBuffer;
 import java.time.Duration;
 import java.util.AbstractMap;
@@ -106,7 +106,7 @@ public abstract class CqlRequestHandlerBase implements Throttled {
   private final boolean isIdempotent;
   protected final CompletableFuture<AsyncResultSet> result;
   private final Message message;
-  private final EventExecutor scheduler;
+  private final Timer timer;
   /**
    * How many speculative executions are currently running (including the initial execution). We
    * track this in order to know when to fail the request if all executions have reached the end of
@@ -121,8 +121,8 @@ public abstract class CqlRequestHandlerBase implements Throttled {
   private final AtomicInteger startedSpeculativeExecutionsCount;
 
   private final Duration timeout;
-  private final ScheduledFuture<?> timeoutFuture;
-  private final List<ScheduledFuture<?>> scheduledExecutions;
+  final Timeout scheduledTimeout;
+  final List<Timeout> scheduledExecutions;
   private final List<NodeResponseCallback> inFlightCallbacks;
   private final RetryPolicy retryPolicy;
   private final SpeculativeExecutionPolicy speculativeExecutionPolicy;
@@ -179,13 +179,13 @@ public abstract class CqlRequestHandlerBase implements Throttled {
           return null;
         });
     this.message = Conversions.toMessage(statement, executionProfile, context);
-    this.scheduler = context.getNettyOptions().ioEventLoopGroup().next();
+    this.timer = context.getNettyOptions().getTimer();
 
     this.timeout =
         statement.getTimeout() != null
             ? statement.getTimeout()
             : executionProfile.getDuration(DefaultDriverOption.REQUEST_TIMEOUT);
-    this.timeoutFuture = scheduleTimeout(timeout);
+    this.scheduledTimeout = scheduleTimeout(timeout);
 
     this.activeExecutionsCount = new AtomicInteger(1);
     this.startedSpeculativeExecutionsCount = new AtomicInteger(0);
@@ -214,13 +214,14 @@ public abstract class CqlRequestHandlerBase implements Throttled {
     sendRequest(null, 0, 0, true);
   }
 
-  private ScheduledFuture<?> scheduleTimeout(Duration timeout) {
-    if (timeout.toNanos() > 0) {
-      return scheduler.schedule(
-          () ->
-              setFinalError(
-                  new DriverTimeoutException("Query timed out after " + timeout), null, -1),
-          timeout.toNanos(),
+  private Timeout scheduleTimeout(Duration timeoutDuration) {
+    if (timeoutDuration.toNanos() > 0) {
+      return this.timer.newTimeout(
+          (Timeout timeout1) -> {
+            setFinalError(
+                new DriverTimeoutException("Query timed out after " + timeoutDuration), null, -1);
+          },
+          timeoutDuration.toNanos(),
           TimeUnit.NANOSECONDS);
     } else {
       return null;
@@ -282,12 +283,12 @@ public abstract class CqlRequestHandlerBase implements Throttled {
   }
 
   private void cancelScheduledTasks() {
-    if (this.timeoutFuture != null) {
-      this.timeoutFuture.cancel(false);
+    if (this.scheduledTimeout != null) {
+      this.scheduledTimeout.cancel();
     }
     if (scheduledExecutions != null) {
-      for (ScheduledFuture<?> future : scheduledExecutions) {
-        future.cancel(false);
+      for (Timeout scheduledExecution : scheduledExecutions) {
+        scheduledExecution.cancel();
       }
     }
     for (NodeResponseCallback callback : inFlightCallbacks) {
@@ -477,8 +478,8 @@ public abstract class CqlRequestHandlerBase implements Throttled {
                   nextExecution,
                   nextDelay);
               scheduledExecutions.add(
-                  scheduler.schedule(
-                      () -> {
+                  timer.newTimeout(
+                      (Timeout timeout1) -> {
                         if (!result.isDone()) {
                           LOG.trace(
                               "[{}] Starting speculative execution {}",

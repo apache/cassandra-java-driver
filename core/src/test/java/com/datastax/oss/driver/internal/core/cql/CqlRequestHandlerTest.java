@@ -29,7 +29,7 @@ import com.datastax.oss.driver.api.core.cql.ExecutionInfo;
 import com.datastax.oss.driver.api.core.cql.PreparedStatement;
 import com.datastax.oss.driver.api.core.cql.Row;
 import com.datastax.oss.driver.internal.core.session.RepreparePayload;
-import com.datastax.oss.driver.internal.core.util.concurrent.ScheduledTaskCapturingEventLoop;
+import com.datastax.oss.driver.internal.core.util.concurrent.CapturingTimer.CapturedTimeout;
 import com.datastax.oss.protocol.internal.request.Prepare;
 import com.datastax.oss.protocol.internal.response.error.Unprepared;
 import com.datastax.oss.protocol.internal.response.result.Prepared;
@@ -103,7 +103,7 @@ public class CqlRequestHandlerTest extends CqlRequestHandlerTestBase {
   }
 
   @Test
-  public void should_time_out_if_first_node_takes_too_long_to_respond() {
+  public void should_time_out_if_first_node_takes_too_long_to_respond() throws Exception {
     RequestHandlerTestHarness.Builder harnessBuilder = RequestHandlerTestHarness.builder();
     PoolBehavior node1Behavior = harnessBuilder.customBehavior(node1);
     node1Behavior.setWriteSuccess();
@@ -119,16 +119,16 @@ public class CqlRequestHandlerTest extends CqlRequestHandlerTestBase {
               .handle();
 
       // First scheduled task is the timeout, run it before node1 has responded
-      ScheduledTaskCapturingEventLoop.CapturedTask<?> scheduledTask = harness.nextScheduledTask();
-      Duration configuredTimeout =
+      CapturedTimeout requestTimeout = harness.nextScheduledTimeout();
+      Duration configuredTimeoutDuration =
           harness
               .getContext()
               .getConfig()
               .getDefaultProfile()
               .getDuration(DefaultDriverOption.REQUEST_TIMEOUT);
-      assertThat(scheduledTask.getInitialDelay(TimeUnit.NANOSECONDS))
-          .isEqualTo(configuredTimeout.toNanos());
-      scheduledTask.run();
+      assertThat(requestTimeout.getDelay(TimeUnit.NANOSECONDS))
+          .isEqualTo(configuredTimeoutDuration.toNanos());
+      requestTimeout.task().run(requestTimeout);
 
       assertThatStage(resultSetFuture)
           .isFailed(t -> assertThat(t).isInstanceOf(DriverTimeoutException.class));

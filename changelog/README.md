@@ -4,6 +4,7 @@
 
 ### 4.0.0-beta3 (in progress)
 
+- [improvement] JAVA-2014: Schedule timeouts on a separate Timer
 - [bug] JAVA-2029: Handle schema refresh failure after a DDL query
 - [bug] JAVA-1947: Make schema parsing more lenient and allow missing system_virtual_schema
 - [bug] JAVA-2028: Use CQL form when parsing UDT types in system tables
