@@ -94,14 +94,30 @@ public class DefaultSession implements CqlSession {
 
   private DefaultSession(InternalDriverContext context, Set<InetSocketAddress> contactPoints) {
     LOG.debug("Creating new session {}", context.getSessionName());
-    this.adminExecutor = context.getNettyOptions().adminEventExecutorGroup().next();
-    this.context = context;
-    this.singleThreaded = new SingleThreaded(context, contactPoints);
-    this.metadataManager = context.getMetadataManager();
-    this.processorRegistry = context.getRequestProcessorRegistry();
-    this.poolManager = context.getPoolManager();
     this.logPrefix = context.getSessionName();
-    this.metricUpdater = context.getMetricsFactory().getSessionUpdater();
+    this.adminExecutor = context.getNettyOptions().adminEventExecutorGroup().next();
+    try {
+      this.context = context;
+      this.singleThreaded = new SingleThreaded(context, contactPoints);
+      this.metadataManager = context.getMetadataManager();
+      this.processorRegistry = context.getRequestProcessorRegistry();
+      this.poolManager = context.getPoolManager();
+      this.metricUpdater = context.getMetricsFactory().getSessionUpdater();
+    } catch (Throwable t) {
+      // Rethrow but make sure we release any resources allocated by Netty. At this stage there are
+      // no scheduled tasks on the event loops so getNow() won't block.
+      try {
+        context.getNettyOptions().onClose().getNow();
+      } catch (Throwable suppressed) {
+        Loggers.warnWithException(
+            LOG,
+            "[{}] Error while closing NettyOptions "
+                + "(suppressed because we're already handling an init failure)",
+            logPrefix,
+            suppressed);
+      }
+      throw t;
+    }
   }
 
   private CompletionStage<CqlSession> init(CqlIdentifier keyspace) {
@@ -288,8 +304,22 @@ public class DefaultSession implements CqlSession {
         context.getSslHandlerFactory();
         context.getTimestampGenerator();
       } catch (Throwable error) {
-        initFuture.completeExceptionally(error);
         RunOrSchedule.on(adminExecutor, this::closePolicies);
+        context
+            .getNettyOptions()
+            .onClose()
+            .addListener(
+                f -> {
+                  if (!f.isSuccess()) {
+                    Loggers.warnWithException(
+                        LOG,
+                        "[{}] Error while closing NettyOptions "
+                            + "(suppressed because we're already handling an init failure)",
+                        logPrefix,
+                        f.cause());
+                  }
+                  initFuture.completeExceptionally(error);
+                });
         return;
       }
 
