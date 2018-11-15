@@ -275,6 +275,10 @@ executed:
       <td><code>ListenableFuture&lt;Result&lt;T&gt;&gt;</code></td>
       <td><code>T</code> must be a mapped class.<br/>Asynchronous execution, returns a list of mapped objects.</td>
     </tr>
+    <tr>
+      <td><code>Statement</code></td>
+      <td>Instance of <code>Statement</code> that could be executed via <code>Session</code> object.</td>
+    </tr>
 </table>
 
 Example:
