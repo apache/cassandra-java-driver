@@ -277,7 +277,7 @@ executed:
     </tr>
     <tr>
       <td><code>Statement</code></td>
-      <td>Instance of <code>Statement</code> that could be executed via <code>Session</code> object.</td>
+      <td>Object mapper doesn't execute query, but returns an instance of <code>BoundStatement</code> that could be executed via <code>Session</code> object. </td>
     </tr>
 </table>
 
