@@ -33,16 +33,16 @@ import java.util.concurrent.CompletionStage;
  * @param <U> The type of responses enclosed in the future response.
  */
 public class GuavaRequestAsyncProcessor<T extends Request, U>
-    implements RequestProcessor<T, ListenableFuture<U>> {
+    implements RequestProcessor<T, ListenableFuture<? extends U>> {
 
-  private final RequestProcessor<T, CompletionStage<U>> subProcessor;
+  private final RequestProcessor<T, CompletionStage<? extends U>> subProcessor;
 
   private final GenericType resultType;
 
   private final Class<?> requestClass;
 
   GuavaRequestAsyncProcessor(
-      RequestProcessor<T, CompletionStage<U>> subProcessor,
+      RequestProcessor<T, CompletionStage<? extends U>> subProcessor,
       Class<?> requestClass,
       GenericType resultType) {
     this.subProcessor = subProcessor;
@@ -56,22 +56,22 @@ public class GuavaRequestAsyncProcessor<T extends Request, U>
   }
 
   @Override
-  public RequestHandler<T, ListenableFuture<U>> newHandler(
+  public RequestHandler<T, ListenableFuture<? extends U>> newHandler(
       T request, DefaultSession session, InternalDriverContext context, String sessionLogPrefix) {
     return new GuavaRequestHandler(
         subProcessor.newHandler(request, session, context, sessionLogPrefix));
   }
 
-  class GuavaRequestHandler implements RequestHandler<T, ListenableFuture<U>> {
+  class GuavaRequestHandler implements RequestHandler<T, ListenableFuture<? extends U>> {
 
-    private final RequestHandler<T, CompletionStage<U>> subHandler;
+    private final RequestHandler<T, CompletionStage<? extends U>> subHandler;
 
-    GuavaRequestHandler(RequestHandler<T, CompletionStage<U>> subHandler) {
+    GuavaRequestHandler(RequestHandler<T, CompletionStage<? extends U>> subHandler) {
       this.subHandler = subHandler;
     }
 
     @Override
-    public ListenableFuture<U> handle() {
+    public ListenableFuture<? extends U> handle() {
       // convert CompletionStage to ListenableFuture by adding a whenComplete listener that sets the
       // listenable future's result.
       SettableFuture<U> future = SettableFuture.create();

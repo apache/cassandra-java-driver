@@ -66,7 +66,7 @@ public class CqlPrepareHandlerTest {
   @Mock private Node node2;
   @Mock private Node node3;
 
-  private ConcurrentMap<ByteBuffer, DefaultPreparedStatement> preparedStatementsCache =
+  private final ConcurrentMap<ByteBuffer, DefaultPreparedStatement> preparedStatementsCache =
       new ConcurrentHashMap<>();
   private final Map<String, ByteBuffer> payload =
       ImmutableMap.of("key1", ByteBuffer.wrap(new byte[] {1, 2, 3, 4}));
@@ -88,7 +88,7 @@ public class CqlPrepareHandlerTest {
 
     try (RequestHandlerTestHarness harness = harnessBuilder.build()) {
 
-      CompletionStage<PreparedStatement> prepareFuture =
+      CompletionStage<? extends PreparedStatement> prepareFuture =
           new CqlPrepareAsyncHandler(
                   PREPARE_REQUEST,
                   preparedStatementsCache,
@@ -129,7 +129,7 @@ public class CqlPrepareHandlerTest {
       DriverExecutionProfile config = harness.getContext().getConfig().getDefaultProfile();
       Mockito.when(config.getBoolean(DefaultDriverOption.PREPARE_ON_ALL_NODES)).thenReturn(false);
 
-      CompletionStage<PreparedStatement> prepareFuture =
+      CompletionStage<? extends PreparedStatement> prepareFuture =
           new CqlPrepareAsyncHandler(
                   PREPARE_REQUEST,
                   preparedStatementsCache,
@@ -164,7 +164,7 @@ public class CqlPrepareHandlerTest {
 
     try (RequestHandlerTestHarness harness = harnessBuilder.build()) {
 
-      CompletionStage<PreparedStatement> prepareFuture =
+      CompletionStage<? extends PreparedStatement> prepareFuture =
           new CqlPrepareAsyncHandler(
                   PREPARE_REQUEST,
                   preparedStatementsCache,
@@ -198,7 +198,7 @@ public class CqlPrepareHandlerTest {
 
     try (RequestHandlerTestHarness harness = harnessBuilder.build()) {
 
-      CompletionStage<PreparedStatement> prepareFuture =
+      CompletionStage<? extends PreparedStatement> prepareFuture =
           new CqlPrepareAsyncHandler(
                   PREPARE_REQUEST,
                   preparedStatementsCache,
@@ -242,7 +242,7 @@ public class CqlPrepareHandlerTest {
                   .onErrorResponse(eq(PREPARE_REQUEST), any(OverloadedException.class), eq(0)))
           .thenReturn(RetryDecision.RETRY_NEXT);
 
-      CompletionStage<PreparedStatement> prepareFuture =
+      CompletionStage<? extends PreparedStatement> prepareFuture =
           new CqlPrepareAsyncHandler(
                   PREPARE_REQUEST,
                   preparedStatementsCache,
@@ -281,7 +281,7 @@ public class CqlPrepareHandlerTest {
                   .onErrorResponse(eq(PREPARE_REQUEST), any(OverloadedException.class), eq(0)))
           .thenReturn(RetryDecision.RETHROW);
 
-      CompletionStage<PreparedStatement> prepareFuture =
+      CompletionStage<? extends PreparedStatement> prepareFuture =
           new CqlPrepareAsyncHandler(
                   PREPARE_REQUEST,
                   preparedStatementsCache,
@@ -321,7 +321,7 @@ public class CqlPrepareHandlerTest {
                   eq(PREPARE_REQUEST), any(OverloadedException.class), eq(0)))
           .thenReturn(RetryDecision.IGNORE);
 
-      CompletionStage<PreparedStatement> prepareFuture =
+      CompletionStage<? extends PreparedStatement> prepareFuture =
           new CqlPrepareAsyncHandler(
                   PREPARE_REQUEST,
                   preparedStatementsCache,
@@ -358,7 +358,7 @@ public class CqlPrepareHandlerTest {
     try (RequestHandlerTestHarness harness = harnessBuilder.build()) {
       DriverExecutionProfile config = harness.getContext().getConfig().getDefaultProfile();
       Mockito.when(config.getBoolean(DefaultDriverOption.PREPARE_ON_ALL_NODES)).thenReturn(false);
-      CompletionStage<PreparedStatement> prepareFuture =
+      CompletionStage<? extends PreparedStatement> prepareFuture =
           new CqlPrepareAsyncHandler(
                   prepareRequest,
                   preparedStatementsCache,
@@ -389,7 +389,7 @@ public class CqlPrepareHandlerTest {
     try (RequestHandlerTestHarness harness = harnessBuilder.build()) {
       DriverExecutionProfile config = harness.getContext().getConfig().getDefaultProfile();
       Mockito.when(config.getBoolean(DefaultDriverOption.PREPARE_ON_ALL_NODES)).thenReturn(true);
-      CompletionStage<PreparedStatement> prepareFuture =
+      CompletionStage<? extends PreparedStatement> prepareFuture =
           new CqlPrepareAsyncHandler(
                   prepareRequest,
                   preparedStatementsCache,

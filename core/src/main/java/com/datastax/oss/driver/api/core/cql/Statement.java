@@ -63,8 +63,8 @@ public interface Statement<SelfT extends Statement<SelfT>> extends Request {
    * Session#execute(Request, GenericType)}), but CQL statements will generally be run with one of
    * the driver's built-in helper methods (such as {@link CqlSession#executeAsync(Statement)}).
    */
-  GenericType<CompletionStage<AsyncResultSet>> ASYNC =
-      new GenericType<CompletionStage<AsyncResultSet>>() {};
+  GenericType<CompletionStage<? extends AsyncResultSet>> ASYNC =
+      new GenericType<CompletionStage<? extends AsyncResultSet>>() {};
 
   /**
    * Sets the name of the execution profile that will be used for this statement.

@@ -30,7 +30,7 @@ import net.jcip.annotations.ThreadSafe;
 
 @ThreadSafe
 public class CqlPrepareAsyncProcessor
-    implements RequestProcessor<PrepareRequest, CompletionStage<PreparedStatement>> {
+    implements RequestProcessor<PrepareRequest, CompletionStage<? extends PreparedStatement>> {
 
   private final ConcurrentMap<ByteBuffer, DefaultPreparedStatement> preparedStatementsCache;
 
@@ -45,7 +45,7 @@ public class CqlPrepareAsyncProcessor
   }
 
   @Override
-  public RequestHandler<PrepareRequest, CompletionStage<PreparedStatement>> newHandler(
+  public RequestHandler<PrepareRequest, CompletionStage<? extends PreparedStatement>> newHandler(
       PrepareRequest request,
       DefaultSession session,
       InternalDriverContext context,

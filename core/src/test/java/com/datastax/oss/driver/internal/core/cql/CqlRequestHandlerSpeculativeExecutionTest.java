@@ -153,7 +153,7 @@ public class CqlRequestHandlerSpeculativeExecutionTest extends CqlRequestHandler
 
       CqlRequestAsyncHandler requestHandler =
           new CqlRequestAsyncHandler(statement, harness.getSession(), harness.getContext(), "test");
-      CompletionStage<AsyncResultSet> resultSetFuture = requestHandler.handle();
+      CompletionStage<? extends AsyncResultSet> resultSetFuture = requestHandler.handle();
       node1Behavior.verifyWrite();
       node1Behavior.setWriteSuccess();
 
@@ -209,7 +209,7 @@ public class CqlRequestHandlerSpeculativeExecutionTest extends CqlRequestHandler
                   any(Node.class), eq(null), eq(statement), eq(1)))
           .thenReturn(firstExecutionDelay);
 
-      CompletionStage<AsyncResultSet> resultSetFuture =
+      CompletionStage<? extends AsyncResultSet> resultSetFuture =
           new CqlRequestAsyncHandler(statement, harness.getSession(), harness.getContext(), "test")
               .handle();
 
@@ -240,7 +240,7 @@ public class CqlRequestHandlerSpeculativeExecutionTest extends CqlRequestHandler
                   any(Node.class), eq(null), eq(statement), eq(1)))
           .thenReturn(firstExecutionDelay);
 
-      CompletionStage<AsyncResultSet> resultSetFuture =
+      CompletionStage<? extends AsyncResultSet> resultSetFuture =
           new CqlRequestAsyncHandler(statement, harness.getSession(), harness.getContext(), "test")
               .handle();
       node1Behavior.verifyWrite();
@@ -293,7 +293,7 @@ public class CqlRequestHandlerSpeculativeExecutionTest extends CqlRequestHandler
                   any(Node.class), eq(null), eq(statement), eq(1)))
           .thenReturn(firstExecutionDelay);
 
-      CompletionStage<AsyncResultSet> resultSetFuture =
+      CompletionStage<? extends AsyncResultSet> resultSetFuture =
           new CqlRequestAsyncHandler(statement, harness.getSession(), harness.getContext(), "test")
               .handle();
       node1Behavior.verifyWrite();
@@ -349,7 +349,7 @@ public class CqlRequestHandlerSpeculativeExecutionTest extends CqlRequestHandler
                   any(Node.class), eq(null), eq(statement), eq(1)))
           .thenReturn(firstExecutionDelay);
 
-      CompletionStage<AsyncResultSet> resultSetFuture =
+      CompletionStage<? extends AsyncResultSet> resultSetFuture =
           new CqlRequestAsyncHandler(statement, harness.getSession(), harness.getContext(), "test")
               .handle();
       node1Behavior.verifyWrite();
@@ -398,7 +398,7 @@ public class CqlRequestHandlerSpeculativeExecutionTest extends CqlRequestHandler
               speculativeExecutionPolicy.nextExecution(
                   any(Node.class), eq(null), eq(statement), eq(1)))
           .thenReturn(firstExecutionDelay);
-      CompletionStage<AsyncResultSet> resultSetFuture =
+      CompletionStage<? extends AsyncResultSet> resultSetFuture =
           new CqlRequestAsyncHandler(statement, harness.getSession(), harness.getContext(), "test")
               .handle();
       node1Behavior.verifyWrite();

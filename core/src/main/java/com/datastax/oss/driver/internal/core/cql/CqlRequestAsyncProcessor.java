@@ -28,7 +28,7 @@ import net.jcip.annotations.ThreadSafe;
 
 @ThreadSafe
 public class CqlRequestAsyncProcessor
-    implements RequestProcessor<Statement<?>, CompletionStage<AsyncResultSet>> {
+    implements RequestProcessor<Statement<?>, CompletionStage<? extends AsyncResultSet>> {
 
   @Override
   public boolean canProcess(Request request, GenericType<?> resultType) {
@@ -36,7 +36,7 @@ public class CqlRequestAsyncProcessor
   }
 
   @Override
-  public RequestHandler<Statement<?>, CompletionStage<AsyncResultSet>> newHandler(
+  public RequestHandler<Statement<?>, CompletionStage<? extends AsyncResultSet>> newHandler(
       Statement<?> request,
       DefaultSession session,
       InternalDriverContext context,

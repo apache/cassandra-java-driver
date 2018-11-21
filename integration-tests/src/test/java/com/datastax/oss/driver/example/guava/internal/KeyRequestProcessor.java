@@ -59,22 +59,24 @@ public class KeyRequestProcessor implements RequestProcessor<KeyRequest, Integer
     SimpleStatement statement =
         SimpleStatement.newInstance(
             "select v1 from test where k = ? and v0 = ?", RequestProcessorIT.KEY, request.getKey());
-    RequestHandler<Statement<?>, CompletionStage<AsyncResultSet>> subHandler =
+    RequestHandler<Statement<?>, CompletionStage<? extends AsyncResultSet>> subHandler =
         subProcessor.newHandler(statement, session, context, sessionLogPrefix);
     return new KeyRequestHandler(subHandler);
   }
 
   static class KeyRequestHandler implements RequestHandler<KeyRequest, Integer> {
 
-    private final RequestHandler<Statement<?>, CompletionStage<AsyncResultSet>> subHandler;
+    private final RequestHandler<Statement<?>, CompletionStage<? extends AsyncResultSet>>
+        subHandler;
 
-    KeyRequestHandler(RequestHandler<Statement<?>, CompletionStage<AsyncResultSet>> subHandler) {
+    KeyRequestHandler(
+        RequestHandler<Statement<?>, CompletionStage<? extends AsyncResultSet>> subHandler) {
       this.subHandler = subHandler;
     }
 
     @Override
     public Integer handle() {
-      CompletionStage<AsyncResultSet> future = subHandler.handle();
+      CompletionStage<? extends AsyncResultSet> future = subHandler.handle();
       AsyncResultSet result = CompletableFutures.getUninterruptibly(future);
       // If not exactly 1 rows were found, return Integer.MIN_VALUE, otherwise return the value.
       if (result.remaining() != 1) {

@@ -61,8 +61,8 @@ public interface PrepareRequest extends Request {
    * of the driver's built-in helper methods (such as {@link
    * CqlSession#prepareAsync(SimpleStatement)}.
    */
-  GenericType<CompletionStage<PreparedStatement>> ASYNC =
-      new GenericType<CompletionStage<PreparedStatement>>() {};
+  GenericType<CompletionStage<? extends PreparedStatement>> ASYNC =
+      new GenericType<CompletionStage<? extends PreparedStatement>>() {};
 
   /** The CQL query to prepare. */
   @NonNull

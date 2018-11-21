@@ -55,7 +55,7 @@ public class CqlRequestHandlerTest extends CqlRequestHandlerTestBase {
             .withResponse(node1, defaultFrameOf(singleRow()))
             .build()) {
 
-      CompletionStage<AsyncResultSet> resultSetFuture =
+      CompletionStage<? extends AsyncResultSet> resultSetFuture =
           new CqlRequestAsyncHandler(
                   UNDEFINED_IDEMPOTENCE_STATEMENT,
                   harness.getSession(),
@@ -89,7 +89,7 @@ public class CqlRequestHandlerTest extends CqlRequestHandlerTestBase {
             // Mock no responses => this will produce an empty query plan
             .build()) {
 
-      CompletionStage<AsyncResultSet> resultSetFuture =
+      CompletionStage<? extends AsyncResultSet> resultSetFuture =
           new CqlRequestAsyncHandler(
                   UNDEFINED_IDEMPOTENCE_STATEMENT,
                   harness.getSession(),
@@ -110,7 +110,7 @@ public class CqlRequestHandlerTest extends CqlRequestHandlerTestBase {
 
     try (RequestHandlerTestHarness harness = harnessBuilder.build()) {
 
-      CompletionStage<AsyncResultSet> resultSetFuture =
+      CompletionStage<? extends AsyncResultSet> resultSetFuture =
           new CqlRequestAsyncHandler(
                   UNDEFINED_IDEMPOTENCE_STATEMENT,
                   harness.getSession(),
@@ -142,7 +142,7 @@ public class CqlRequestHandlerTest extends CqlRequestHandlerTestBase {
             .withResponse(node1, defaultFrameOf(new SetKeyspace("newKeyspace")))
             .build()) {
 
-      CompletionStage<AsyncResultSet> resultSetFuture =
+      CompletionStage<? extends AsyncResultSet> resultSetFuture =
           new CqlRequestAsyncHandler(
                   UNDEFINED_IDEMPOTENCE_STATEMENT,
                   harness.getSession(),
@@ -185,7 +185,7 @@ public class CqlRequestHandlerTest extends CqlRequestHandlerTestBase {
           mockId, new RepreparePayload(mockId, "mock query", null, Collections.emptyMap()));
       Mockito.when(harness.getSession().getRepreparePayloads()).thenReturn(repreparePayloads);
 
-      CompletionStage<AsyncResultSet> resultSetFuture =
+      CompletionStage<? extends AsyncResultSet> resultSetFuture =
           new CqlRequestAsyncHandler(
                   boundStatement, harness.getSession(), harness.getContext(), "test")
               .handle();

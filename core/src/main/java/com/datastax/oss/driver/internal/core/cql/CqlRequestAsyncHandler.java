@@ -25,7 +25,7 @@ import net.jcip.annotations.ThreadSafe;
 
 @ThreadSafe
 public class CqlRequestAsyncHandler extends CqlRequestHandlerBase
-    implements RequestHandler<Statement<?>, CompletionStage<AsyncResultSet>> {
+    implements RequestHandler<Statement<?>, CompletionStage<? extends AsyncResultSet>> {
 
   CqlRequestAsyncHandler(
       Statement<?> statement,
@@ -36,7 +36,7 @@ public class CqlRequestAsyncHandler extends CqlRequestHandlerBase
   }
 
   @Override
-  public CompletionStage<AsyncResultSet> handle() {
+  public CompletionStage<? extends AsyncResultSet> handle() {
     return result;
   }
 }

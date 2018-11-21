@@ -28,7 +28,7 @@ import net.jcip.annotations.ThreadSafe;
 
 @ThreadSafe
 public class CqlPrepareAsyncHandler extends CqlPrepareHandlerBase
-    implements RequestHandler<PrepareRequest, CompletionStage<PreparedStatement>> {
+    implements RequestHandler<PrepareRequest, CompletionStage<? extends PreparedStatement>> {
 
   CqlPrepareAsyncHandler(
       PrepareRequest request,
@@ -40,7 +40,7 @@ public class CqlPrepareAsyncHandler extends CqlPrepareHandlerBase
   }
 
   @Override
-  public CompletableFuture<PreparedStatement> handle() {
+  public CompletableFuture<? extends PreparedStatement> handle() {
     return result;
   }
 }

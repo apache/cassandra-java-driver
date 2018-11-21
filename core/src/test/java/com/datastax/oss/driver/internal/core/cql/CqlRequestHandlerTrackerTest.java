@@ -49,7 +49,7 @@ public class CqlRequestHandlerTrackerTest extends CqlRequestHandlerTestBase {
       RequestTracker requestTracker = Mockito.mock(RequestTracker.class);
       Mockito.when(harness.getContext().getRequestTracker()).thenReturn(requestTracker);
 
-      CompletionStage<AsyncResultSet> resultSetFuture =
+      CompletionStage<? extends AsyncResultSet> resultSetFuture =
           new CqlRequestAsyncHandler(
                   UNDEFINED_IDEMPOTENCE_STATEMENT,
                   harness.getSession(),
@@ -99,7 +99,7 @@ public class CqlRequestHandlerTrackerTest extends CqlRequestHandlerTestBase {
       RequestTracker requestTracker = spy(new NoopRequestTracker(harness.getContext()));
       Mockito.when(harness.getContext().getRequestTracker()).thenReturn(requestTracker);
 
-      CompletionStage<AsyncResultSet> resultSetFuture =
+      CompletionStage<? extends AsyncResultSet> resultSetFuture =
           new CqlRequestAsyncHandler(
                   UNDEFINED_IDEMPOTENCE_STATEMENT,
                   harness.getSession(),
