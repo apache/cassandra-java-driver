@@ -51,11 +51,11 @@ import org.junit.rules.TestRule;
  * </pre>
  */
 @Category(ParallelizableTests.class)
-public class PreparedStatementInvalidationIT {
+public class PreparedStatementIT {
 
-  private CcmRule ccmRule = CcmRule.getInstance();
+  private final CcmRule ccmRule = CcmRule.getInstance();
 
-  private SessionRule<CqlSession> sessionRule =
+  private final SessionRule<CqlSession> sessionRule =
       SessionRule.builder(ccmRule)
           .withConfigLoader(
               SessionUtils.configLoaderBuilder()
@@ -72,11 +72,11 @@ public class PreparedStatementInvalidationIT {
   public void setupSchema() {
     for (String query :
         ImmutableList.of(
-            "CREATE TABLE prepared_statement_invalidation_test (a int PRIMARY KEY, b int, c int)",
-            "INSERT INTO prepared_statement_invalidation_test (a, b, c) VALUES (1, 1, 1)",
-            "INSERT INTO prepared_statement_invalidation_test (a, b, c) VALUES (2, 2, 2)",
-            "INSERT INTO prepared_statement_invalidation_test (a, b, c) VALUES (3, 3, 3)",
-            "INSERT INTO prepared_statement_invalidation_test (a, b, c) VALUES (4, 4, 4)")) {
+            "CREATE TABLE prepared_statement_test (a int PRIMARY KEY, b int, c int)",
+            "INSERT INTO prepared_statement_test (a, b, c) VALUES (1, 1, 1)",
+            "INSERT INTO prepared_statement_test (a, b, c) VALUES (2, 2, 2)",
+            "INSERT INTO prepared_statement_test (a, b, c) VALUES (3, 3, 3)",
+            "INSERT INTO prepared_statement_test (a, b, c) VALUES (4, 4, 4)")) {
       sessionRule
           .session()
           .execute(
@@ -87,17 +87,60 @@ public class PreparedStatementInvalidationIT {
   }
 
   @Test
+  public void should_have_empty_result_definitions_for_insert_query_without_bound_variable() {
+    try (CqlSession session = SessionUtils.newSession(ccmRule, sessionRule.keyspace())) {
+      PreparedStatement prepared =
+          session.prepare("INSERT INTO prepared_statement_test (a, b, c) VALUES (1, 1, 1)");
+      assertThat(prepared.getVariableDefinitions()).isEmpty();
+      assertThat(prepared.getPartitionKeyIndices()).isEmpty();
+      assertThat(prepared.getResultSetDefinitions()).isEmpty();
+    }
+  }
+
+  @Test
+  public void should_have_non_empty_result_definitions_for_insert_query_with_bound_variable() {
+    try (CqlSession session = SessionUtils.newSession(ccmRule, sessionRule.keyspace())) {
+      PreparedStatement prepared =
+          session.prepare("INSERT INTO prepared_statement_test (a, b, c) VALUES (?, ?, ?)");
+      assertThat(prepared.getVariableDefinitions()).hasSize(3);
+      assertThat(prepared.getPartitionKeyIndices()).hasSize(1);
+      assertThat(prepared.getResultSetDefinitions()).isEmpty();
+    }
+  }
+
+  @Test
+  public void should_have_empty_variable_definitions_for_select_query_without_bound_variable() {
+    try (CqlSession session = SessionUtils.newSession(ccmRule, sessionRule.keyspace())) {
+      PreparedStatement prepared =
+          session.prepare("SELECT a,b,c FROM prepared_statement_test WHERE a = 1");
+      assertThat(prepared.getVariableDefinitions()).isEmpty();
+      assertThat(prepared.getPartitionKeyIndices()).isEmpty();
+      assertThat(prepared.getResultSetDefinitions()).hasSize(3);
+    }
+  }
+
+  @Test
+  public void should_have_non_empty_variable_definitions_for_select_query_with_bound_variable() {
+    try (CqlSession session = SessionUtils.newSession(ccmRule, sessionRule.keyspace())) {
+      PreparedStatement prepared =
+          session.prepare("SELECT a,b,c FROM prepared_statement_test WHERE a = ?");
+      assertThat(prepared.getVariableDefinitions()).hasSize(1);
+      assertThat(prepared.getPartitionKeyIndices()).hasSize(1);
+      assertThat(prepared.getResultSetDefinitions()).hasSize(3);
+    }
+  }
+
+  @Test
   @CassandraRequirement(min = "4.0")
   public void should_update_metadata_when_schema_changed_across_executions() {
     // Given
     CqlSession session = sessionRule.session();
-    PreparedStatement ps =
-        session.prepare("SELECT * FROM prepared_statement_invalidation_test WHERE a = ?");
+    PreparedStatement ps = session.prepare("SELECT * FROM prepared_statement_test WHERE a = ?");
     ByteBuffer idBefore = ps.getResultMetadataId();
 
     // When
     session.execute(
-        SimpleStatement.builder("ALTER TABLE prepared_statement_invalidation_test ADD d int")
+        SimpleStatement.builder("ALTER TABLE prepared_statement_test ADD d int")
             .withExecutionProfile(sessionRule.slowProfile())
             .build());
     BoundStatement bs = ps.bind(1);
@@ -121,7 +164,7 @@ public class PreparedStatementInvalidationIT {
   public void should_update_metadata_when_schema_changed_across_pages() {
     // Given
     CqlSession session = sessionRule.session();
-    PreparedStatement ps = session.prepare("SELECT * FROM prepared_statement_invalidation_test");
+    PreparedStatement ps = session.prepare("SELECT * FROM prepared_statement_test");
     ByteBuffer idBefore = ps.getResultMetadataId();
     assertThat(ps.getResultSetDefinitions()).hasSize(3);
 
@@ -141,7 +184,7 @@ public class PreparedStatementInvalidationIT {
 
     // When
     session.execute(
-        SimpleStatement.builder("ALTER TABLE prepared_statement_invalidation_test ADD d int")
+        SimpleStatement.builder("ALTER TABLE prepared_statement_test ADD d int")
             .withExecutionProfile(sessionRule.slowProfile())
             .build());
 
@@ -168,10 +211,8 @@ public class PreparedStatementInvalidationIT {
     CqlSession session1 = sessionRule.session();
     CqlSession session2 = SessionUtils.newSession(ccmRule, sessionRule.keyspace());
 
-    PreparedStatement ps1 =
-        session1.prepare("SELECT * FROM prepared_statement_invalidation_test WHERE a = ?");
-    PreparedStatement ps2 =
-        session2.prepare("SELECT * FROM prepared_statement_invalidation_test WHERE a = ?");
+    PreparedStatement ps1 = session1.prepare("SELECT * FROM prepared_statement_test WHERE a = ?");
+    PreparedStatement ps2 = session2.prepare("SELECT * FROM prepared_statement_test WHERE a = ?");
 
     ByteBuffer id1a = ps1.getResultMetadataId();
     ByteBuffer id2a = ps2.getResultMetadataId();
@@ -185,7 +226,7 @@ public class PreparedStatementInvalidationIT {
     assertThat(rows2.getColumnDefinitions().contains("d")).isFalse();
 
     // When
-    session1.execute("ALTER TABLE prepared_statement_invalidation_test ADD d int");
+    session1.execute("ALTER TABLE prepared_statement_test ADD d int");
 
     rows1 = session1.execute(ps1.bind(1));
     rows2 = session2.execute(ps2.bind(1));
@@ -215,10 +256,10 @@ public class PreparedStatementInvalidationIT {
   public void should_fail_to_reprepare_if_query_becomes_invalid() {
     // Given
     CqlSession session = sessionRule.session();
-    session.execute("ALTER TABLE prepared_statement_invalidation_test ADD d int");
+    session.execute("ALTER TABLE prepared_statement_test ADD d int");
     PreparedStatement ps =
-        session.prepare("SELECT a, b, c, d FROM prepared_statement_invalidation_test WHERE a = ?");
-    session.execute("ALTER TABLE prepared_statement_invalidation_test DROP d");
+        session.prepare("SELECT a, b, c, d FROM prepared_statement_test WHERE a = ?");
+    session.execute("ALTER TABLE prepared_statement_test DROP d");
 
     thrown.expect(InvalidQueryException.class);
     thrown.expectMessage("Undefined column name d");
@@ -250,7 +291,7 @@ public class PreparedStatementInvalidationIT {
     // Given
     PreparedStatement ps =
         session.prepare(
-            "INSERT INTO prepared_statement_invalidation_test (a, b, c) VALUES (?, ?, ?) IF NOT EXISTS");
+            "INSERT INTO prepared_statement_test (a, b, c) VALUES (?, ?, ?) IF NOT EXISTS");
 
     // Never store metadata in the prepared statement for conditional updates, since the result set
     // can change
@@ -287,7 +328,7 @@ public class PreparedStatementInvalidationIT {
     assertThat(Bytes.toHexString(ps.getResultMetadataId())).isEqualTo(Bytes.toHexString(idBefore));
 
     // When
-    session.execute("ALTER TABLE prepared_statement_invalidation_test ADD d int");
+    session.execute("ALTER TABLE prepared_statement_test ADD d int");
     rs = session.execute(ps.bind(5, 5, 5));
 
     // Then

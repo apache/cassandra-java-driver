@@ -362,7 +362,7 @@ public class Conversions {
         ByteBuffer.wrap(response.preparedQueryId).asReadOnlyBuffer(),
         request.getQuery(),
         toColumnDefinitions(response.variablesMetadata, context),
-        Ints.asList(response.variablesMetadata.pkIndices),
+        asList(response.variablesMetadata.pkIndices),
         (response.resultMetadataId == null)
             ? null
             : ByteBuffer.wrap(response.resultMetadataId).asReadOnlyBuffer(),
@@ -394,6 +394,14 @@ public class Conversions {
       values[i++] = new DefaultColumnDefinition(columnSpec, context);
     }
     return DefaultColumnDefinitions.valueOf(ImmutableList.copyOf(values));
+  }
+
+  public static List<Integer> asList(int[] pkIndices) {
+    if (pkIndices == null || pkIndices.length == 0) {
+      return Collections.emptyList();
+    } else {
+      return Ints.asList(pkIndices);
+    }
   }
 
   public static CoordinatorException toThrowable(
