@@ -37,6 +37,8 @@ described in the next section).  The number of stream ids depends on the
 +-------+     +-------+     +----+     +----------+           +-------+
 ```
 
+If there are several connections in pool, driver evenly spreads new requests between connections.
+
 ### Configuring the connection pool
 
 Connections pools are configured with a [PoolingOptions][pooling_options] object, which 
