@@ -19,6 +19,7 @@ import static junit.framework.TestCase.fail;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import com.datastax.oss.driver.api.core.CqlSession;
+import com.datastax.oss.driver.api.core.DefaultProtocolVersion;
 import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
 import com.datastax.oss.driver.api.core.config.DriverConfigLoader;
 import com.datastax.oss.driver.api.core.servererrors.InvalidQueryException;
@@ -103,7 +104,13 @@ public class PreparedStatementIT {
       PreparedStatement prepared =
           session.prepare("INSERT INTO prepared_statement_test (a, b, c) VALUES (?, ?, ?)");
       assertThat(prepared.getVariableDefinitions()).hasSize(3);
-      assertThat(prepared.getPartitionKeyIndices()).hasSize(1);
+      if (sessionRule.session().getContext().getProtocolVersion().getCode()
+          >= DefaultProtocolVersion.V4.getCode()) {
+        // partition key indices were introduced in V4
+        assertThat(prepared.getPartitionKeyIndices()).hasSize(1);
+      } else {
+        assertThat(prepared.getPartitionKeyIndices()).isEmpty();
+      }
       assertThat(prepared.getResultSetDefinitions()).isEmpty();
     }
   }
@@ -125,7 +132,13 @@ public class PreparedStatementIT {
       PreparedStatement prepared =
           session.prepare("SELECT a,b,c FROM prepared_statement_test WHERE a = ?");
       assertThat(prepared.getVariableDefinitions()).hasSize(1);
-      assertThat(prepared.getPartitionKeyIndices()).hasSize(1);
+      if (sessionRule.session().getContext().getProtocolVersion().getCode()
+          >= DefaultProtocolVersion.V4.getCode()) {
+        // partition key indices were introduced in V4
+        assertThat(prepared.getPartitionKeyIndices()).hasSize(1);
+      } else {
+        assertThat(prepared.getPartitionKeyIndices()).isEmpty();
+      }
       assertThat(prepared.getResultSetDefinitions()).hasSize(3);
     }
   }
