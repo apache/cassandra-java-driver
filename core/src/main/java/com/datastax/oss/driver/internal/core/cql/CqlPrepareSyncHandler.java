@@ -30,7 +30,7 @@ import net.jcip.annotations.ThreadSafe;
 public class CqlPrepareSyncHandler extends CqlPrepareHandlerBase
     implements RequestHandler<PrepareRequest, PreparedStatement> {
 
-  CqlPrepareSyncHandler(
+  public CqlPrepareSyncHandler(
       PrepareRequest request,
       ConcurrentMap<ByteBuffer, DefaultPreparedStatement> preparedStatementsCache,
       DefaultSession session,

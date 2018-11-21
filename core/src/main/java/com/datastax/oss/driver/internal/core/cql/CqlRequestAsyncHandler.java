@@ -27,7 +27,7 @@ import net.jcip.annotations.ThreadSafe;
 public class CqlRequestAsyncHandler extends CqlRequestHandlerBase
     implements RequestHandler<Statement<?>, CompletionStage<AsyncResultSet>> {
 
-  CqlRequestAsyncHandler(
+  public CqlRequestAsyncHandler(
       Statement<?> statement,
       DefaultSession session,
       InternalDriverContext context,
