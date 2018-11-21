@@ -29,7 +29,7 @@ import net.jcip.annotations.ThreadSafe;
 public class CqlRequestSyncHandler extends CqlRequestHandlerBase
     implements RequestHandler<Statement<?>, ResultSet> {
 
-  CqlRequestSyncHandler(
+  public CqlRequestSyncHandler(
       Statement<?> statement,
       DefaultSession session,
       InternalDriverContext context,
