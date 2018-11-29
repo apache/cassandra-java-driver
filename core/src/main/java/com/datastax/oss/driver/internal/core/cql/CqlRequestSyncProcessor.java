@@ -41,4 +41,9 @@ public class CqlRequestSyncProcessor implements RequestProcessor<Statement<?>, R
       String sessionLogPrefix) {
     return new CqlRequestSyncHandler(request, session, context, sessionLogPrefix);
   }
+
+  @Override
+  public ResultSet newFailure(RuntimeException error) {
+    throw error;
+  }
 }
