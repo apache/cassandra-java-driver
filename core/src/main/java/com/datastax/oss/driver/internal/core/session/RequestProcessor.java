@@ -46,4 +46,7 @@ public interface RequestProcessor<RequestT extends Request, ResultT> {
       DefaultSession session,
       InternalDriverContext context,
       String sessionLogPrefix);
+
+  /** Builds a failed result to directly report the given error. */
+  ResultT newFailure(RuntimeException error);
 }

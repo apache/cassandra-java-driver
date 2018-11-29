@@ -212,16 +212,25 @@ public abstract class CqlRequestHandlerBase implements Throttled {
 
   private Timeout scheduleTimeout(Duration timeoutDuration) {
     if (timeoutDuration.toNanos() > 0) {
-      return this.timer.newTimeout(
-          (Timeout timeout1) -> {
-            setFinalError(
-                new DriverTimeoutException("Query timed out after " + timeoutDuration), null, -1);
-          },
-          timeoutDuration.toNanos(),
-          TimeUnit.NANOSECONDS);
-    } else {
-      return null;
+      try {
+        return this.timer.newTimeout(
+            (Timeout timeout1) ->
+                setFinalError(
+                    new DriverTimeoutException("Query timed out after " + timeoutDuration),
+                    null,
+                    -1),
+            timeoutDuration.toNanos(),
+            TimeUnit.NANOSECONDS);
+      } catch (IllegalStateException e) {
+        // If we raced with session shutdown the timer might be closed already, rethrow with a more
+        // explicit message
+        result.completeExceptionally(
+            ("cannot be started once stopped".equals(e.getMessage()))
+                ? new IllegalStateException("Session is closed")
+                : e);
+      }
     }
+    return null;
   }
 
   /**
@@ -479,36 +488,10 @@ public abstract class CqlRequestHandlerBase implements Throttled {
           inFlightCallbacks.add(this);
           if (scheduleNextExecution && isIdempotent) {
             int nextExecution = execution + 1;
-            // Note that `node` is the first node of the execution, it might not be the "slow" one
-            // if there were retries, but in practice retries are rare.
             long nextDelay =
                 speculativeExecutionPolicy.nextExecution(node, keyspace, statement, nextExecution);
             if (nextDelay >= 0) {
-              LOG.trace(
-                  "[{}] Scheduling speculative execution {} in {} ms",
-                  logPrefix,
-                  nextExecution,
-                  nextDelay);
-              scheduledExecutions.add(
-                  timer.newTimeout(
-                      (Timeout timeout1) -> {
-                        if (!result.isDone()) {
-                          LOG.trace(
-                              "[{}] Starting speculative execution {}",
-                              CqlRequestHandlerBase.this.logPrefix,
-                              nextExecution);
-                          activeExecutionsCount.incrementAndGet();
-                          startedSpeculativeExecutionsCount.incrementAndGet();
-                          ((DefaultNode) node)
-                              .getMetricUpdater()
-                              .incrementCounter(
-                                  DefaultNodeMetric.SPECULATIVE_EXECUTIONS,
-                                  executionProfile.getName());
-                          sendRequest(null, queryPlan, nextExecution, 0, true);
-                        }
-                      },
-                      nextDelay,
-                      TimeUnit.MILLISECONDS));
+              scheduleSpeculativeExecution(nextExecution, nextDelay);
             } else {
               LOG.trace(
                   "[{}] Speculative execution policy returned {}, no next execution",
@@ -516,6 +499,41 @@ public abstract class CqlRequestHandlerBase implements Throttled {
                   nextDelay);
             }
           }
+        }
+      }
+    }
+
+    private void scheduleSpeculativeExecution(int index, long delay) {
+      LOG.trace("[{}] Scheduling speculative execution {} in {} ms", logPrefix, index, delay);
+      try {
+        scheduledExecutions.add(
+            timer.newTimeout(
+                (Timeout timeout1) -> {
+                  if (!result.isDone()) {
+                    LOG.trace(
+                        "[{}] Starting speculative execution {}",
+                        CqlRequestHandlerBase.this.logPrefix,
+                        index);
+                    activeExecutionsCount.incrementAndGet();
+                    startedSpeculativeExecutionsCount.incrementAndGet();
+                    // Note that `node` is the first node of the execution, it might not be the
+                    // "slow"
+                    // one if there were retries, but in practice retries are rare.
+                    ((DefaultNode) node)
+                        .getMetricUpdater()
+                        .incrementCounter(
+                            DefaultNodeMetric.SPECULATIVE_EXECUTIONS, executionProfile.getName());
+                    sendRequest(null, queryPlan, index, 0, true);
+                  }
+                },
+                delay,
+                TimeUnit.MILLISECONDS));
+      } catch (IllegalStateException e) {
+        // If we're racing with session shutdown, the timer might be stopped already. We don't want
+        // to schedule more executions anyway, so swallow the error.
+        if (!"cannot be started once stopped".equals(e.getMessage())) {
+          Loggers.warnWithException(
+              LOG, "[{}] Error while scheduling speculative execution", logPrefix, e);
         }
       }
     }

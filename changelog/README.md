@@ -4,6 +4,7 @@
 
 ### 4.0.0-beta3 (in progress)
 
+- [improvement] JAVA-1943: Fail fast in execute() when the session is closed
 - [improvement] JAVA-2056: Reduce HashedWheelTimer tick duration
 - [bug] JAVA-2057: Do not create pool when SUGGEST\_UP topology event received
 - [improvement] JAVA-2049: Add shorthand method to SessionBuilder to specify local DC

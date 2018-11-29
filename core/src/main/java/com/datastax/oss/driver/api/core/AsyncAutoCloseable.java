@@ -36,6 +36,15 @@ public interface AsyncAutoCloseable extends AutoCloseable {
   CompletionStage<Void> closeFuture();
 
   /**
+   * Whether shutdown has completed.
+   *
+   * <p>This is a shortcut for {@code closeFuture().toCompletableFuture().isDone()}.
+   */
+  default boolean isClosed() {
+    return closeFuture().toCompletableFuture().isDone();
+  }
+
+  /**
    * Initiates an orderly shutdown: no new requests are accepted, but all pending requests are
    * allowed to complete normally.
    *

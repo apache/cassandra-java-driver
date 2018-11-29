@@ -52,4 +52,9 @@ public class CqlPrepareSyncProcessor
     return new CqlPrepareSyncHandler(
         request, preparedStatementsCache, session, context, sessionLogPrefix);
   }
+
+  @Override
+  public PreparedStatement newFailure(RuntimeException error) {
+    throw error;
+  }
 }

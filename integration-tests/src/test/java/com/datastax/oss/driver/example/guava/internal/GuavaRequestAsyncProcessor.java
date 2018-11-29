@@ -21,6 +21,7 @@ import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
 import com.datastax.oss.driver.internal.core.session.DefaultSession;
 import com.datastax.oss.driver.internal.core.session.RequestHandler;
 import com.datastax.oss.driver.internal.core.session.RequestProcessor;
+import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.SettableFuture;
 import java.util.concurrent.CompletionStage;
@@ -87,5 +88,10 @@ public class GuavaRequestAsyncProcessor<T extends Request, U>
               });
       return future;
     }
+  }
+
+  @Override
+  public ListenableFuture<U> newFailure(RuntimeException error) {
+    return Futures.immediateFailedFuture(error);
   }
 }

@@ -23,6 +23,7 @@ import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
 import com.datastax.oss.driver.internal.core.session.DefaultSession;
 import com.datastax.oss.driver.internal.core.session.RequestHandler;
 import com.datastax.oss.driver.internal.core.session.RequestProcessor;
+import com.datastax.oss.driver.internal.core.util.concurrent.CompletableFutures;
 import java.util.concurrent.CompletionStage;
 import net.jcip.annotations.ThreadSafe;
 
@@ -42,5 +43,10 @@ public class CqlRequestAsyncProcessor
       InternalDriverContext context,
       String sessionLogPrefix) {
     return new CqlRequestAsyncHandler(request, session, context, sessionLogPrefix);
+  }
+
+  @Override
+  public CompletionStage<AsyncResultSet> newFailure(RuntimeException error) {
+    return CompletableFutures.failedFuture(error);
   }
 }

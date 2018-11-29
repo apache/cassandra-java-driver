@@ -84,4 +84,9 @@ public class KeyRequestProcessor implements RequestProcessor<KeyRequest, Integer
       }
     }
   }
+
+  @Override
+  public Integer newFailure(RuntimeException error) {
+    throw error;
+  }
 }
