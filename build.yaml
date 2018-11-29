@@ -11,6 +11,8 @@ schedules:
         # Exclude java8 with all versions exception 2.1 and latest
         - java: openjdk8
           cassandra: ['2.2', '3.0']
+        - java: openjdk11
+          cassandra: ['2.1', '2.2', '3.0']
     env_vars: |
       TEST_GROUP="short"
     disable_commit_status: true
@@ -22,9 +24,9 @@ schedules:
     schedule: nightly
     matrix:
       exclude:
-        # Run jdk8 on bionic, 6 and 7 on trusty
+        # Run jdk8 and 11 on bionic, 6 and 7 on trusty
         - os: ubuntu/trusty64/java-driver
-          java: ['openjdk8']
+          java: ['openjdk8','openjdk11']
         - os: ubuntu/bionic64/java-driver
           java: ['openjdk6','openjdk7']
     branches:
@@ -41,9 +43,9 @@ schedules:
     schedule: adhoc
     matrix:
       exclude:
-        # Run jdk8 on bionic, 6 and 7 on trusty
+        # Run jdk8 and 11 on bionic, 6 and 7 on trusty
         - os: ubuntu/trusty64/java-driver
-          java: ['openjdk8']
+          java: ['openjdk8','openjdk11']
         - os: ubuntu/bionic64/java-driver
           java: ['openjdk6','openjdk7']
     branches:
@@ -59,6 +61,7 @@ java:
   - openjdk6
   - openjdk7
   - openjdk8
+  - openjdk11
 os:
   - ubuntu/trusty64/java-driver
   - ubuntu/bionic64/java-driver
