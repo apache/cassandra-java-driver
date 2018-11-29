@@ -1,0 +1,86 @@
+<!--
+
+    Copyright DataStax, Inc.
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<archetype-descriptor
+  xmlns="http://maven.apache.org/plugins/maven-archetype-plugin/archetype-descriptor/1.0.0"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://maven.apache.org/plugins/maven-archetype-plugin/archetype-descriptor/1.0.0 http://maven.apache.org/xsd/archetype-descriptor-1.0.0.xsd"
+  name="datastax-java-driver-archetype"
+  partial="false">
+  <requiredProperties>
+    <!--
+    Sets the logging level of the archetype project. Can be overridden when generating the project.
+    -->
+    <requiredProperty key="logging-level">
+      <defaultValue>DEBUG</defaultValue>
+      <validationRegex>TRACE|DEBUG|INFO|WARN|ERROR</validationRegex>
+    </requiredProperty>
+    <requiredProperty key="cassandra-host">
+      <defaultValue>127.0.0.1</defaultValue>
+    </requiredProperty>
+    <requiredProperty key="cassandra-port">
+      <defaultValue>9042</defaultValue>
+    </requiredProperty>
+    <requiredProperty key="datacenter">
+      <defaultValue>datacenter1</defaultValue>
+    </requiredProperty>
+  </requiredProperties>
+
+  <fileSets>
+    <!-- 
+    setting "filtered" to "true" means the selected files will be used as Velocity templates.
+    setting "packaged" to "true" means the selected files will be generated/copied in a
+    directory structure that is prepended by the package property.
+    -->
+    <fileSet filtered="true" packaged="true" encoding="UTF-8" >
+      <directory>src/main/java</directory>
+      <includes>
+        <include>**/*.java</include>
+      </includes>
+      <excludes/>
+    </fileSet>
+    <fileSet filtered="true" packaged="false" encoding="UTF-8" >
+      <directory>src/main/resources</directory>
+      <includes>
+        <include>**/*</include>
+      </includes>
+      <excludes/>
+    </fileSet>
+    <fileSet filtered="true" packaged="true" encoding="UTF-8" >
+      <directory>src/test/java</directory>
+      <includes>
+        <include>**/*.java</include>
+      </includes>
+      <excludes/>
+    </fileSet>
+    <fileSet filtered="true" packaged="false" encoding="UTF-8" >
+      <directory>src/test/resources</directory>
+      <includes>
+        <include>**/*</include>
+      </includes>
+      <excludes/>
+    </fileSet>
+    <fileSet filtered="false" packaged="false" encoding="UTF-8" >
+      <directory/>
+      <includes>
+        <include>README.md</include>
+      </includes>
+      <excludes/>
+    </fileSet>
+  </fileSets>
+  <modules/>
+</archetype-descriptor>

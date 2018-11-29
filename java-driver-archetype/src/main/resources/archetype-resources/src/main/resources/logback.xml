@@ -1,0 +1,14 @@
+<configuration>
+  <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
+    <encoder>
+      <pattern>%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n</pattern> 
+    </encoder>
+  </appender>
+  <root level="WARN">
+    <appender-ref ref="STDOUT" />
+  </root>
+  <!-- Adjust the Cassandra Driver logging level here if you want more(DEBUG) or less(WARN) logs -->
+  <logger name="com.datastax.oss.driver" level="INFO" />
+  <!-- Set the log level for all logs in the archetype project to DEBUG -->
+  <logger name="${package}" level="${logging-level}" />
+</configuration>
