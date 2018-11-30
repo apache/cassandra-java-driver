@@ -101,7 +101,6 @@ public abstract class CqlRequestHandlerBase implements Throttled {
   private final DefaultSession session;
   private final CqlIdentifier keyspace;
   private final InternalDriverContext context;
-  private final Queue<Node> queryPlan;
   @NonNull private final DriverExecutionProfile executionProfile;
   private final boolean isIdempotent;
   protected final CompletableFuture<AsyncResultSet> result;
@@ -149,15 +148,6 @@ public abstract class CqlRequestHandlerBase implements Throttled {
     this.keyspace = session.getKeyspace().orElse(null);
     this.context = context;
     this.executionProfile = Conversions.resolveExecutionProfile(statement, context);
-    if (this.statement.getNode() != null) {
-      this.queryPlan = new QueryPlan(this.statement.getNode());
-
-    } else {
-      this.queryPlan =
-          context
-              .getLoadBalancingPolicyWrapper()
-              .newQueryPlan(statement, executionProfile.getName(), session);
-    }
     this.retryPolicy = context.getRetryPolicy(executionProfile.getName());
     this.speculativeExecutionPolicy =
         context.getSpeculativeExecutionPolicy(executionProfile.getName());
@@ -211,7 +201,13 @@ public abstract class CqlRequestHandlerBase implements Throttled {
           System.nanoTime() - startTimeNanos,
           TimeUnit.NANOSECONDS);
     }
-    sendRequest(null, 0, 0, true);
+    Queue<Node> queryPlan =
+        this.statement.getNode() != null
+            ? new QueryPlan(this.statement.getNode())
+            : context
+                .getLoadBalancingPolicyWrapper()
+                .newQueryPlan(statement, executionProfile.getName(), session);
+    sendRequest(null, queryPlan, 0, 0, true);
   }
 
   private Timeout scheduleTimeout(Duration timeoutDuration) {
@@ -231,7 +227,8 @@ public abstract class CqlRequestHandlerBase implements Throttled {
   /**
    * Sends the request to the next available node.
    *
-   * @param node if not null, it will be attempted first before the rest of the query plan.
+   * @param retriedNode if not null, it will be attempted first before the rest of the query plan.
+   * @param queryPlan the list of nodes to try (shared with all other executions)
    * @param currentExecutionIndex 0 for the initial execution, 1 for the first speculative one, etc.
    * @param retryCount the number of times that the retry policy was invoked for this execution
    *     already (note that some internal retries don't go through the policy, and therefore don't
@@ -239,10 +236,15 @@ public abstract class CqlRequestHandlerBase implements Throttled {
    * @param scheduleNextExecution whether to schedule the next speculative execution
    */
   private void sendRequest(
-      Node node, int currentExecutionIndex, int retryCount, boolean scheduleNextExecution) {
+      Node retriedNode,
+      Queue<Node> queryPlan,
+      int currentExecutionIndex,
+      int retryCount,
+      boolean scheduleNextExecution) {
     if (result.isDone()) {
       return;
     }
+    Node node = retriedNode;
     DriverChannel channel = null;
     if (node == null || (channel = session.getChannel(node, logPrefix)) == null) {
       while (!result.isDone() && (node = queryPlan.poll()) != null) {
@@ -261,7 +263,13 @@ public abstract class CqlRequestHandlerBase implements Throttled {
     } else {
       NodeResponseCallback nodeResponseCallback =
           new NodeResponseCallback(
-              node, channel, currentExecutionIndex, retryCount, scheduleNextExecution, logPrefix);
+              node,
+              queryPlan,
+              channel,
+              currentExecutionIndex,
+              retryCount,
+              scheduleNextExecution,
+              logPrefix);
       channel
           .write(message, statement.isTracing(), statement.getCustomPayload(), nodeResponseCallback)
           .addListener(nodeResponseCallback);
@@ -410,6 +418,7 @@ public abstract class CqlRequestHandlerBase implements Throttled {
 
     private final long nodeStartTimeNanos = System.nanoTime();
     private final Node node;
+    private final Queue<Node> queryPlan;
     private final DriverChannel channel;
     // The identifier of the current execution (0 for the initial execution, 1 for the first
     // speculative execution, etc.)
@@ -422,12 +431,14 @@ public abstract class CqlRequestHandlerBase implements Throttled {
 
     private NodeResponseCallback(
         Node node,
+        Queue<Node> queryPlan,
         DriverChannel channel,
         int execution,
         int retryCount,
         boolean scheduleNextExecution,
         String logPrefix) {
       this.node = node;
+      this.queryPlan = queryPlan;
       this.channel = channel;
       this.execution = execution;
       this.retryCount = retryCount;
@@ -455,7 +466,8 @@ public abstract class CqlRequestHandlerBase implements Throttled {
           ((DefaultNode) node)
               .getMetricUpdater()
               .incrementCounter(DefaultNodeMetric.UNSENT_REQUESTS, executionProfile.getName());
-          sendRequest(null, execution, retryCount, scheduleNextExecution); // try next node
+          sendRequest(
+              null, queryPlan, execution, retryCount, scheduleNextExecution); // try next node
         }
       } else {
         LOG.trace("[{}] Request sent on {}", logPrefix, channel);
@@ -492,7 +504,7 @@ public abstract class CqlRequestHandlerBase implements Throttled {
                               .incrementCounter(
                                   DefaultNodeMetric.SPECULATIVE_EXECUTIONS,
                                   executionProfile.getName());
-                          sendRequest(null, nextExecution, 0, true);
+                          sendRequest(null, queryPlan, nextExecution, 0, true);
                         }
                       },
                       nextDelay,
@@ -625,10 +637,10 @@ public abstract class CqlRequestHandlerBase implements Throttled {
                     recordError(node, exception);
                     trackNodeError(node, exception, NANOTIME_NOT_MEASURED_YET);
                     LOG.trace("[{}] Reprepare failed, trying next node", logPrefix);
-                    sendRequest(null, execution, retryCount, false);
+                    sendRequest(null, queryPlan, execution, retryCount, false);
                   } else {
                     LOG.trace("[{}] Reprepare sucessful, retrying", logPrefix);
-                    sendRequest(node, execution, retryCount, false);
+                    sendRequest(node, queryPlan, execution, retryCount, false);
                   }
                   return null;
                 });
@@ -640,7 +652,7 @@ public abstract class CqlRequestHandlerBase implements Throttled {
         LOG.trace("[{}] {} is bootstrapping, trying next node", logPrefix, node);
         recordError(node, error);
         trackNodeError(node, error, NANOTIME_NOT_MEASURED_YET);
-        sendRequest(null, execution, retryCount, false);
+        sendRequest(null, queryPlan, execution, retryCount, false);
       } else if (error instanceof QueryValidationException
           || error instanceof FunctionFailureException
           || error instanceof ProtocolError) {
@@ -721,12 +733,12 @@ public abstract class CqlRequestHandlerBase implements Throttled {
         case RETRY_SAME:
           recordError(node, error);
           trackNodeError(node, error, NANOTIME_NOT_MEASURED_YET);
-          sendRequest(node, execution, retryCount + 1, false);
+          sendRequest(node, queryPlan, execution, retryCount + 1, false);
           break;
         case RETRY_NEXT:
           recordError(node, error);
           trackNodeError(node, error, NANOTIME_NOT_MEASURED_YET);
-          sendRequest(null, execution, retryCount + 1, false);
+          sendRequest(null, queryPlan, execution, retryCount + 1, false);
           break;
         case RETHROW:
           trackNodeError(node, error, NANOTIME_NOT_MEASURED_YET);
