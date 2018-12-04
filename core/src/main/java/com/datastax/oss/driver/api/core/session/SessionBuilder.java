@@ -68,6 +68,7 @@ public abstract class SessionBuilder<SelfT extends SessionBuilder, SessionT> {
   private NodeStateListener nodeStateListener;
   private SchemaChangeListener schemaChangeListener;
   protected RequestTracker requestTracker;
+  private ImmutableMap.Builder<String, String> localDatacenters = ImmutableMap.builder();
   private ImmutableMap.Builder<String, Predicate<Node>> nodeFilters = ImmutableMap.builder();
   protected CqlIdentifier keyspace;
   private ClassLoader classLoader = null;
@@ -195,6 +196,27 @@ public abstract class SessionBuilder<SelfT extends SessionBuilder, SessionT> {
   }
 
   /**
+   * Specifies the datacenter that is considered "local" by the load balancing policy.
+   *
+   * <p>This is a programmatic alternative to the configuration option {@code
+   * basic.load-balancing-policy.local-datacenter}. If this method is used, it takes precedence and
+   * overrides the configuration.
+   *
+   * <p>Note that this setting may or may not be relevant depending on the load balancing policy
+   * implementation in use. The driver's built-in {@code DefaultLoadBalancingPolicy} relies on it;
+   * if you use a third-party implementation, refer to their documentation.
+   */
+  public SelfT withLocalDatacenter(@NonNull String profileName, @NonNull String localDatacenter) {
+    this.localDatacenters.put(profileName, localDatacenter);
+    return self;
+  }
+
+  /** Alias to {@link #withLocalDatacenter(String, String)} for the default profile. */
+  public SelfT withLocalDatacenter(@NonNull String localDatacenter) {
+    return withLocalDatacenter(DriverExecutionProfile.DEFAULT_NAME, localDatacenter);
+  }
+
+  /**
    * Adds a custom filter to include/exclude nodes for a particular execution profile. This assumes
    * that you're also using a dedicated load balancing policy for that profile.
    *
@@ -313,6 +335,7 @@ public abstract class SessionBuilder<SelfT extends SessionBuilder, SessionT> {
                   nodeStateListener,
                   schemaChangeListener,
                   requestTracker,
+                  localDatacenters.build(),
                   nodeFilters.build(),
                   classLoader),
           contactPoints,
@@ -335,6 +358,7 @@ public abstract class SessionBuilder<SelfT extends SessionBuilder, SessionT> {
       NodeStateListener nodeStateListener,
       SchemaChangeListener schemaChangeListener,
       RequestTracker requestTracker,
+      Map<String, String> localDatacenters,
       Map<String, Predicate<Node>> nodeFilters,
       ClassLoader classLoader) {
     return new DefaultDriverContext(
@@ -343,6 +367,7 @@ public abstract class SessionBuilder<SelfT extends SessionBuilder, SessionT> {
         nodeStateListener,
         schemaChangeListener,
         requestTracker,
+        localDatacenters,
         nodeFilters,
         classLoader);
   }

@@ -4,6 +4,7 @@
 
 ### 4.0.0-beta3 (in progress)
 
+- [improvement] JAVA-2049: Add shorthand method to SessionBuilder to specify local DC
 - [bug] JAVA-2037: Fix NPE when preparing statement with no bound variables
 - [improvement] JAVA-2014: Schedule timeouts on a separate Timer
 - [bug] JAVA-2029: Handle schema refresh failure after a DDL query

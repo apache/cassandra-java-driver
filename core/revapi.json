@@ -652,6 +652,19 @@
         "newArchive": "com.datastax.oss:java-driver-core:jar:4.0.0-beta3-SNAPSHOT",
         "elementKind": "method",
         "justification": "JAVA-2011: Re-add ResultSet.getAvailableWithoutFetching() and isFullyFetched()"
+      },
+      {
+        "code": "java.method.numberOfParametersChanged",
+        "old": "method com.datastax.oss.driver.api.core.context.DriverContext com.datastax.oss.driver.api.core.session.SessionBuilder<SelfT extends com.datastax.oss.driver.api.core.session.SessionBuilder, SessionT>::buildContext(com.datastax.oss.driver.api.core.config.DriverConfigLoader, java.util.List<com.datastax.oss.driver.api.core.type.codec.TypeCodec<?>>, com.datastax.oss.driver.api.core.metadata.NodeStateListener, com.datastax.oss.driver.api.core.metadata.schema.SchemaChangeListener, com.datastax.oss.driver.api.core.tracker.RequestTracker, java.util.Map<java.lang.String, java.util.function.Predicate<com.datastax.oss.driver.api.core.metadata.Node>>, java.lang.ClassLoader)",
+        "new": "method com.datastax.oss.driver.api.core.context.DriverContext com.datastax.oss.driver.api.core.session.SessionBuilder<SelfT extends com.datastax.oss.driver.api.core.session.SessionBuilder, SessionT>::buildContext(com.datastax.oss.driver.api.core.config.DriverConfigLoader, java.util.List<com.datastax.oss.driver.api.core.type.codec.TypeCodec<?>>, com.datastax.oss.driver.api.core.metadata.NodeStateListener, com.datastax.oss.driver.api.core.metadata.schema.SchemaChangeListener, com.datastax.oss.driver.api.core.tracker.RequestTracker, java.util.Map<java.lang.String, java.lang.String>, java.util.Map<java.lang.String, java.util.function.Predicate<com.datastax.oss.driver.api.core.metadata.Node>>, java.lang.ClassLoader)",
+        "package": "com.datastax.oss.driver.api.core.session",
+        "classQualifiedName": "com.datastax.oss.driver.api.core.session.SessionBuilder",
+        "classSimpleName": "SessionBuilder",
+        "methodName": "buildContext",
+        "oldArchive": "com.datastax.oss:java-driver-core:jar:4.0.0-beta2",
+        "newArchive": "com.datastax.oss:java-driver-core:jar:4.0.0-beta3-SNAPSHOT",
+        "elementKind": "method",
+        "justification": "JAVA-2049: Add shorthand method to SessionBuilder to specify local DC"
       }
     ]
   }

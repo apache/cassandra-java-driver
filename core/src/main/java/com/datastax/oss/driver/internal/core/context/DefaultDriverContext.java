@@ -192,6 +192,7 @@ public class DefaultDriverContext implements InternalDriverContext {
   private final NodeStateListener nodeStateListenerFromBuilder;
   private final SchemaChangeListener schemaChangeListenerFromBuilder;
   private final RequestTracker requestTrackerFromBuilder;
+  private final Map<String, String> localDatacentersFromBuilder;
   private final Map<String, Predicate<Node>> nodeFiltersFromBuilder;
   private final ClassLoader classLoader;
 
@@ -201,6 +202,7 @@ public class DefaultDriverContext implements InternalDriverContext {
       NodeStateListener nodeStateListener,
       SchemaChangeListener schemaChangeListener,
       RequestTracker requestTracker,
+      Map<String, String> localDatacenters,
       Map<String, Predicate<Node>> nodeFilters,
       ClassLoader classLoader) {
     this.config = configLoader.getInitialConfig();
@@ -211,6 +213,7 @@ public class DefaultDriverContext implements InternalDriverContext {
     } else {
       this.sessionName = "s" + SESSION_NAME_COUNTER.getAndIncrement();
     }
+    this.localDatacentersFromBuilder = localDatacenters;
     this.codecRegistry = buildCodecRegistry(this.sessionName, typeCodecs);
     this.nodeStateListenerFromBuilder = nodeStateListener;
     this.nodeStateListenerRef =
@@ -717,6 +720,12 @@ public class DefaultDriverContext implements InternalDriverContext {
   @Override
   public RequestTracker getRequestTracker() {
     return requestTrackerRef.get();
+  }
+
+  @Nullable
+  @Override
+  public String getLocalDatacenter(@NonNull String profileName) {
+    return localDatacentersFromBuilder.get(profileName);
   }
 
   @Nullable
